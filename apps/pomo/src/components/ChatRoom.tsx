@@ -50,7 +50,7 @@ const ProcessedKoreanText = (props: ProcessedKoreanTextProps) => {
 const ChatBubble = (props: ChatBubbleProps) => (
   <article
     class={cx(
-      'max-w-[86%] whitespace-pre-wrap rounded-6 px-4 py-3 text-[15px] leading-7 sm:max-w-[76%]',
+      'max-w-[86%] whitespace-pre-wrap rounded-6 px-4 py-3 text-[15px] leading-7 xs:max-w-[76%]',
       props.message.role === 'user'
         ? 'ml-auto rounded-br-2 bg-#9ed6bb text-#13231c'
         : 'mr-auto rounded-bl-2 bg-white/7 text-#eee5ef',
@@ -83,21 +83,21 @@ const ChatHeader = (props: ChatHeaderProps) => (
   <header
     class={cx(
       'flex flex-col gap-5 border-b border-white/8 px-5 py-5',
-      'sm:flex-row sm:items-start sm:justify-between sm:px-7',
+      'xs:flex-row xs:items-start xs:justify-between xs:px-7',
     )}
   >
     <div>
       <p class="m-0 text-xs font-700 tracking-[0.24em] text-#9ed6bb uppercase">
         Private on-device chat
       </p>
-      <h1 class="mb-0 mt-2 text-2xl font-780 tracking--0.025em sm:text-3xl">
+      <h1 class="mb-0 mt-2 text-2xl font-780 tracking--0.025em xs:text-3xl">
         로컬 모델과 이어서 대화해요
       </h1>
       <p class="mb-0 mt-2 text-sm leading-6 text-#aaa0b1">
         오래된 대화는 중요한 기억만 남기고 자동으로 압축해요.
       </p>
     </div>
-    <div class="w-full shrink-0 sm:w-64">
+    <div class="w-full shrink-0 xs:w-64">
       <PSelect
         disabled={props.disabled}
         hideLabel
@@ -128,7 +128,7 @@ const ChatTranscript = (props: ChatTranscriptProps) => {
   return (
     <div
       aria-live="polite"
-      class="max-h-[58dvh] min-h-96 overflow-y-auto px-5 py-6 sm:px-7"
+      class="max-h-[58dvh] min-h-96 overflow-y-auto px-5 py-6 xs:px-7"
       ref={props.setMessageList}
     >
       <Show
@@ -162,7 +162,7 @@ const ChatTranscript = (props: ChatTranscriptProps) => {
             <article
               class={cx(
                 'mr-auto max-w-[86%] whitespace-pre-wrap rounded-6 rounded-bl-2 bg-white/7',
-                'px-4 py-3 text-[15px] leading-7 text-#eee5ef sm:max-w-[76%]',
+                'px-4 py-3 text-[15px] leading-7 text-#eee5ef xs:max-w-[76%]',
               )}
             >
               <ProcessedKoreanText text={props.chat.streamingText()} />
@@ -227,7 +227,7 @@ const ChatComposer = (props: ChatComposerProps) => {
   }
 
   return (
-    <form class="border-t border-white/8 p-4 sm:p-5" onSubmit={handleSubmit}>
+    <form class="border-t border-white/8 p-4 xs:p-5" onSubmit={handleSubmit}>
       <label class="grid gap-2">
         <span class="sr-only">메시지</span>
         <textarea
@@ -328,7 +328,7 @@ interface ContextSidebarProps {
 }
 
 const ContextSidebar = (props: ContextSidebarProps) => (
-  <aside class="border-t border-white/8 bg-#17131f/45 p-5 lg:border-l lg:border-t-0">
+  <aside class="border-t border-white/8 bg-#17131f/45 p-5 2xl:border-l 2xl:border-t-0">
     <h2 class="m-0 text-sm font-700 text-#eee5ef">대화 컨텍스트</h2>
     <p class="mb-0 mt-2 text-xs leading-5 text-#918697">
       최근 대화는 원문으로, 오래된 대화는 사실과 선호 중심의 기억 메모로 유지해요.
@@ -561,7 +561,7 @@ const ChatRoom = () => {
         onModelChange={handleModelChange}
       />
 
-      <div class="grid min-h-[68dvh] lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <div class="grid min-h-[68dvh] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
         <div class="grid min-h-0 grid-rows-[1fr_auto]">
           <ChatTranscript chat={chat} setMessageList={setMessageList} voice={voice} />
           <ChatComposer

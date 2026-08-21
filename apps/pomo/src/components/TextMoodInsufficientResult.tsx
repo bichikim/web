@@ -1,7 +1,7 @@
 export const TextMoodInsufficientResult = () => (
   <article
     aria-labelledby="text-mood-insufficient-title"
-    class="mt-8 rounded-6 border border-#c99b6e/45 bg-#33282f p-5 sm:p-7"
+    class="mt-8 rounded-6 border border-#c99b6e/45 bg-#33282f p-5 xs:p-7"
   >
     <div class="flex items-start gap-4">
       <span aria-hidden="true" class="text-4xl leading-none">

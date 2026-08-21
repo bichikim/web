@@ -3,11 +3,15 @@ import {createEffect, createMemo, createSignal, For, Show, untrack} from 'solid-
 
 import breakStatusIcon from './assets/pomodoro-status-icons/break.webp'
 import focusStatusIcon from './assets/pomodoro-status-icons/focus.webp'
+import scribbleBreakStatusIcon from './assets/pomodoro-status-icons/scribble/break.webp'
+import scribbleFocusStatusIcon from './assets/pomodoro-status-icons/scribble/focus.webp'
+import {getPomoIconClass} from '../design-system/icon-style'
 import {PButton} from '../design-system/PButton'
 import {PCharacterEmotion, type PCharacterEmotionType} from '../design-system/PCharacterEmotion'
 import {PIconButton} from '../design-system/PIconButton'
 import {PModal} from '../design-system/PModal'
 import {PSwitch} from '../design-system/PSwitch'
+import type {PSceneStyle} from '../features/focus-room-animation'
 import {
   formatPomodoroTime,
   type PomodoroPhase,
@@ -16,12 +20,14 @@ import {
   usePomodoroTimer,
 } from '../features/pomodoro-timer'
 import {PPomodoroDurationEditor} from './PPomodoroDurationEditor'
+import {PScribbleCircleFrame} from './PScribbleCircleFrame'
+import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from './PScribbleFrame'
 
 const CLASSES = {
   pomodoro: [
-    'pomo-pomodoro absolute top-[calc(1rem_+_env(safe-area-inset-top))]',
-    'left-[calc(1rem_+_env(safe-area-inset-left))] min-[40rem]:top-[1.5rem]',
-    'min-[40rem]:left-[1.75rem] pointer-events-auto',
+    'pomo-pomodoro absolute top-[calc(1rem_+_var(--pomo-safe-area-inset-top))]',
+    'left-[calc(1rem_+_var(--pomo-safe-area-inset-left))] lg:top-[1.5rem]',
+    'lg:left-[1.75rem] pointer-events-auto',
   ].join(' '),
   pomodoroActionIcon: 'pomo-pomodoro__action-icon w-3 h-3',
   pomodoroActionIndicator: [
@@ -70,8 +76,8 @@ const CLASSES = {
     'motion-reduce:transition-[none]',
   ].join(' '),
   pomodoroTrigger: [
-    'pomo-pomodoro__trigger inline-flex box-border h-control-md min-w-27',
-    'items-center overflow-visible rounded-control bg-surface',
+    'pomo-pomodoro__trigger relative inline-flex box-border h-control-md min-w-27',
+    'items-center overflow-visible',
     'text-foreground shadow-panel',
     'transition-[border-color_160ms_ease,_background-color_160ms_ease]',
     'motion-reduce:transition-[none]',
@@ -84,7 +90,6 @@ const CLASSES = {
 
 interface PhasePresentation {
   readonly characterEmotion: PCharacterEmotionType
-  readonly characterImage: string
   readonly icon: string
   readonly label: string
   readonly startLabel: string
@@ -93,38 +98,48 @@ interface PhasePresentation {
 const PHASE_PRESENTATIONS = {
   focus: {
     characterEmotion: 'focus',
-    characterImage: focusStatusIcon,
     icon: 'i-tabler-focus-2',
     label: '집중',
     startLabel: '집중 시작',
   },
   longBreak: {
     characterEmotion: 'rest',
-    characterImage: breakStatusIcon,
     icon: 'i-tabler-armchair-2',
     label: '긴 휴식',
     startLabel: '긴 휴식 시작',
   },
   shortBreak: {
     characterEmotion: 'rest',
-    characterImage: breakStatusIcon,
     icon: 'i-tabler-coffee',
     label: '휴식',
     startLabel: '휴식 시작',
   },
 } as const satisfies Record<PomodoroPhase, PhasePresentation>
+
+const CHARACTER_IMAGES = {
+  original: {
+    focus: focusStatusIcon,
+    rest: breakStatusIcon,
+  },
+  scribble: {
+    focus: scribbleFocusStatusIcon,
+    rest: scribbleBreakStatusIcon,
+  },
+} as const satisfies Record<PSceneStyle, Record<PCharacterEmotionType, string>>
 const DEGREES_PER_CIRCLE = 360
 
 interface PomodoroSessionProgressProps {
   readonly completedCount: number
   readonly onReset: () => void
   readonly positions: readonly number[]
+  readonly sceneStyle?: PSceneStyle
   readonly sessionCount: number
 }
 
 export interface PPomodoroProps {
   readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
   readonly onPresentationChange?: (presentation: PPomodoroPresentation) => void
+  readonly sceneStyle?: PSceneStyle
 }
 
 export interface PPomodoroPresentation {
@@ -142,12 +157,12 @@ interface PomodoroQuickControlsProps {
   readonly phase: PomodoroPhase
   readonly primaryIcon: string
   readonly primaryLabel: string
+  readonly sceneStyle?: PSceneStyle
   readonly statusLabel: string
   readonly timeLabel: string
 }
 
-const QUICK_CONTROLS_GROUP_CLASSES = [
-  'border border-solid border-border backdrop-blur-surface',
+const QUICK_CONTROLS_INTERACTION_CLASSES = [
   '[&:has([data-glass-part]:hover)]:border-border-hover',
   '[&:has([data-glass-part]:focus-visible)]:border-highlight',
   '[&:has([data-glass-part][data-expanded])]:border-highlight',
@@ -165,49 +180,85 @@ const INTERACTIVE_GLASS_PART_CLASSES = [
 const STRONG_FOCUS_RING_CLASSES =
   'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2 ' +
   'focus-visible:outline-highlight'
+const SCRIBBLE_MASK_CLASSES = [
+  '[mask-image:var(--pomo-pomodoro-scribble-mask)]',
+  '[-webkit-mask-image:var(--pomo-pomodoro-scribble-mask)]',
+  '[mask-mode:alpha] [mask-position:center] [mask-repeat:no-repeat] [mask-size:100%_100%]',
+  '[-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat]',
+  '[-webkit-mask-size:100%_100%]',
+].join(' ')
+
+const getQuickFrameClasses = (sceneStyle?: PSceneStyle) =>
+  sceneStyle === 'scribble'
+    ? 'rounded-none border-0 bg-transparent'
+    : cx(
+        QUICK_CONTROLS_INTERACTION_CLASSES,
+        'rounded-control border border-solid border-border bg-surface backdrop-blur-surface',
+      )
 
 const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
-  <div
-    aria-label="포모도로 간편 조작"
-    class={cx(QUICK_CONTROLS_GROUP_CLASSES, CLASSES.pomodoroTrigger)}
-    data-phase={props.phase}
-    role="group"
-  >
-    <button
-      aria-label={props.primaryLabel}
-      class={cx(
-        INTERACTIVE_GLASS_PART_CLASSES,
-        STRONG_FOCUS_RING_CLASSES,
-        CLASSES.pomodoroEmotionAction,
-      )}
-      data-glass-part=""
-      onClick={() => props.onPrimaryPress()}
-      type="button"
-    >
-      <PCharacterEmotion
-        active={props.isActive}
-        emotion={props.characterEmotion}
-        image={props.characterImage}
+  <div class="pomo-pomodoro-frame relative inline-flex w-fit overflow-visible">
+    <Show when={props.sceneStyle === 'scribble'}>
+      <div
+        aria-hidden="true"
+        class={cx(
+          'pomo-pomodoro__scribble-surface pointer-events-none absolute inset-0',
+          'bg-surface backdrop-blur-surface',
+          SCRIBBLE_MASK_CLASSES,
+        )}
+        style={{'--pomo-pomodoro-scribble-mask': SCRIBBLE_MASK_IMAGE}}
       />
-      <span aria-hidden="true" class={CLASSES.pomodoroActionIndicator}>
-        <span class={cx(props.primaryIcon, CLASSES.pomodoroActionIcon)} />
-      </span>
-    </button>
-    <button
-      aria-haspopup="dialog"
-      aria-label={`포모도로 열기, ${props.statusLabel}, ${props.timeLabel}`}
-      class={cx(
-        INTERACTIVE_GLASS_PART_CLASSES,
-        STRONG_FOCUS_RING_CLASSES,
-        CLASSES.pomodoroTimeAction,
-      )}
-      data-glass-part=""
-      data-glass-trigger=""
-      onClick={(event) => props.onOpen(event.currentTarget)}
-      type="button"
+    </Show>
+
+    <Show when={props.sceneStyle === 'scribble'}>
+      <PScribbleFrame class="pomo-pomodoro__scribble-border" />
+    </Show>
+
+    <div
+      aria-label="포모도로 간편 조작"
+      class={cx(CLASSES.pomodoroTrigger, getQuickFrameClasses(props.sceneStyle))}
+      data-phase={props.phase}
+      role="group"
     >
-      <span class={CLASSES.pomodoroTriggerTime}>{props.timeLabel}</span>
-    </button>
+      <button
+        aria-label={props.primaryLabel}
+        class={cx(
+          INTERACTIVE_GLASS_PART_CLASSES,
+          STRONG_FOCUS_RING_CLASSES,
+          CLASSES.pomodoroEmotionAction,
+        )}
+        data-glass-part=""
+        onClick={() => props.onPrimaryPress()}
+        type="button"
+      >
+        <PCharacterEmotion
+          active={props.isActive}
+          emotion={props.characterEmotion}
+          image={props.characterImage}
+        />
+        <span aria-hidden="true" class={CLASSES.pomodoroActionIndicator}>
+          <Show when={props.sceneStyle === 'scribble'}>
+            <PScribbleCircleFrame class="pomo-pomodoro__action-scribble-border" />
+          </Show>
+          <span class={cx(props.primaryIcon, CLASSES.pomodoroActionIcon)} />
+        </span>
+      </button>
+      <button
+        aria-haspopup="dialog"
+        aria-label={`포모도로 열기, ${props.statusLabel}, ${props.timeLabel}`}
+        class={cx(
+          INTERACTIVE_GLASS_PART_CLASSES,
+          STRONG_FOCUS_RING_CLASSES,
+          CLASSES.pomodoroTimeAction,
+        )}
+        data-glass-part=""
+        data-glass-trigger=""
+        onClick={(event) => props.onOpen(event.currentTarget)}
+        type="button"
+      >
+        <span class={CLASSES.pomodoroTriggerTime}>{props.timeLabel}</span>
+      </button>
+    </div>
   </div>
 )
 
@@ -233,7 +284,10 @@ const PomodoroSessionProgress = (props: PomodoroSessionProgressProps) => (
         onClick={() => props.onReset()}
         type="button"
       >
-        <span aria-hidden="true" class="i-tabler-refresh size-3.5" />
+        <span
+          aria-hidden="true"
+          class={cx(getPomoIconClass('i-tabler-refresh', props.sceneStyle), 'size-3.5')}
+        />
         세션 초기화
       </button>
     </Show>
@@ -310,6 +364,12 @@ const getCompletedInCycle = (state: PomodoroTimerState, focusSessionsPerCycle: n
   return state.completedFocusSessions % focusSessionsPerCycle
 }
 
+const getPrimaryIcon = (state: PomodoroTimerState, sceneStyle?: PSceneStyle) =>
+  getPomoIconClass(
+    state.status === 'running' ? 'i-tabler-player-pause' : 'i-tabler-player-play',
+    sceneStyle,
+  )
+
 export const PPomodoro = (props: PPomodoroProps) => {
   const timer = usePomodoroTimer({onEvents: (events) => props.onEvents?.(events)})
   const [isOpen, setIsOpen] = createSignal(false)
@@ -335,9 +395,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
 
     return currentState.status === 'running' ? '일시정지' : phasePresentation().startLabel
   })
-  const primaryIcon = createMemo(() =>
-    timer.state().status === 'running' ? 'i-tabler-player-pause' : 'i-tabler-player-play',
-  )
+  const primaryIcon = createMemo(() => getPrimaryIcon(timer.state(), props.sceneStyle))
   const handleOpenChange = (nextOpen: boolean) => {
     setIsOpen(nextOpen)
     if (!nextOpen) {
@@ -375,20 +433,22 @@ export const PPomodoro = (props: PPomodoroProps) => {
       <div class={CLASSES.pomodoro}>
         <PomodoroQuickControls
           characterEmotion={phasePresentation().characterEmotion}
-          characterImage={phasePresentation().characterImage}
+          characterImage={
+            CHARACTER_IMAGES[props.sceneStyle ?? 'original'][phasePresentation().characterEmotion]
+          }
           isActive={timer.state().status === 'running'}
           onOpen={handleOpen}
           onPrimaryPress={handlePrimaryPress}
           phase={timer.state().phase}
           primaryIcon={primaryIcon()}
           primaryLabel={primaryLabel()}
+          sceneStyle={props.sceneStyle}
           statusLabel={statusLabel()}
           timeLabel={timeLabel()}
         />
       </div>
 
       <PModal
-        contentOverflow={isEditingDurations() ? 'auto' : 'hidden'}
         getInitialFocus={getInitialFocus}
         headerMode="closeOnly"
         isOpen={isOpen()}
@@ -403,7 +463,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
         >
           <Show when={!isEditingDurations()}>
             <PomodoroTimerRing
-              icon={phasePresentation().icon}
+              icon={getPomoIconClass(phasePresentation().icon, props.sceneStyle)}
               label={phasePresentation().label}
               progress={progressDegrees()}
               timeLabel={timeLabel()}
@@ -413,6 +473,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
               completedCount={completedInCycle()}
               onReset={timer.onReset}
               positions={sessionPositions()}
+              sceneStyle={props.sceneStyle}
               sessionCount={timer.config().focusSessionsPerCycle}
             />
           </Show>
@@ -434,7 +495,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
               accessibleLabel="다음 단계로 이동"
               class={CLASSES.pomodoroPanelCompactAction}
               feedback="다음 단계"
-              icon="i-tabler-player-track-next"
+              icon={getPomoIconClass('i-tabler-player-track-next', props.sceneStyle)}
               onPress={timer.onNextPhase}
             />
             <Show when={timer.state().status !== 'idle'}>
@@ -445,7 +506,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
                   CLASSES.pomodoroPanelCompactActionDanger,
                 )}
                 feedback="세션 종료"
-                icon="i-tabler-square"
+                icon={getPomoIconClass('i-tabler-square', props.sceneStyle)}
                 onPress={timer.onStop}
               />
             </Show>

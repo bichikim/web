@@ -1,3 +1,4 @@
+/* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const DIALOGUE_DRAFT_KEY_PREFIX = 'pomo:focus-room-dialogue:draft:'
 
 export const getDialogueDraftKey = (dialogueId: string | null) =>

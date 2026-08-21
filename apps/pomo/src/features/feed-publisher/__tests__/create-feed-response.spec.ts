@@ -11,14 +11,14 @@ const ENTRY: FeedEntry = {
   summary: '역사적 순간의 요약',
   title: '역사적 순간',
   updatedAt: '2026-08-15T01:00:00.000Z',
-  url: 'https://pomo.example/feeds/today-in-history#one',
+  url: 'https://pomo.example/api/feeds/today-in-history#one',
 }
 
 const createProvider = (listEntries = async (): Promise<ReadonlyArray<FeedEntry>> => [ENTRY]) =>
   ({
     definition: {
       description: '오늘과 같은 날짜의 역사적 순간',
-      homeUrl: 'https://pomo.example/feeds',
+      homeUrl: 'https://pomo.example/api/feeds',
       language: 'ko-KR',
       slug: 'today-in-history',
       title: '오늘 있었던 역사적 순간',
@@ -42,7 +42,7 @@ const createResponse = (
 describe('createFeedResponse', () => {
   it('should return a cacheable RSS document with validators', async () => {
     const response = await createResponse(
-      new Request('https://pomo.example/feeds/today-in-history/rss.xml'),
+      new Request('https://pomo.example/api/feeds/today-in-history/rss.xml'),
     )
 
     expect(response.status).toBe(200)
@@ -61,7 +61,7 @@ describe('createFeedResponse', () => {
 
   it('should return Atom with the Atom content type', async () => {
     const response = await createResponse(
-      new Request('https://pomo.example/feeds/today-in-history/atom.xml'),
+      new Request('https://pomo.example/api/feeds/today-in-history/atom.xml'),
     )
 
     await expect(response.text()).resolves.toContain('<feed xmlns="http://www.w3.org/2005/Atom"')
@@ -70,16 +70,16 @@ describe('createFeedResponse', () => {
 
   it('should use the provider origin for a production canonical self URL', async () => {
     const response = await createResponse(
-      new Request('https://deployment.vercel.app/feeds/today-in-history/rss.xml'),
+      new Request('https://deployment.vercel.app/api/feeds/today-in-history/rss.xml'),
     )
 
     await expect(response.text()).resolves.toContain(
-      'href="https://pomo.example/feeds/today-in-history/rss.xml" rel="self"',
+      'href="https://pomo.example/api/feeds/today-in-history/rss.xml" rel="self"',
     )
   })
 
   it('should return matching headers without a body for HEAD', async () => {
-    const url = 'https://pomo.example/feeds/today-in-history/rss.xml'
+    const url = 'https://pomo.example/api/feeds/today-in-history/rss.xml'
     const getResponse = await createResponse(new Request(url))
     const headResponse = await createResponse(new Request(url, {method: 'HEAD'}))
 
@@ -89,7 +89,7 @@ describe('createFeedResponse', () => {
   })
 
   it('should return 304 when the request entity tag matches', async () => {
-    const url = 'https://pomo.example/feeds/today-in-history/rss.xml'
+    const url = 'https://pomo.example/api/feeds/today-in-history/rss.xml'
     const firstResponse = await createResponse(new Request(url))
     const entityTag = firstResponse.headers.get('ETag')
 
@@ -107,19 +107,19 @@ describe('createFeedResponse', () => {
 
   it('should redirect query variants to the canonical URL without long-lived caching', async () => {
     const response = await createResponse(
-      new Request('https://pomo.example/feeds/today-in-history/rss.xml?source=reader'),
+      new Request('https://pomo.example/api/feeds/today-in-history/rss.xml?source=reader'),
     )
 
     expect(response.status).toBe(308)
     expect(response.headers.get('Location')).toBe(
-      'https://pomo.example/feeds/today-in-history/rss.xml',
+      'https://pomo.example/api/feeds/today-in-history/rss.xml',
     )
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(response.headers.has('Vercel-CDN-Cache-Control')).toBe(false)
   })
 
   it('should return 404 for an unknown feed', async () => {
-    const request = new Request('https://pomo.example/feeds/unknown/rss.xml')
+    const request = new Request('https://pomo.example/api/feeds/unknown/rss.xml')
     const response = await createFeedResponse({
       format: 'rss',
       registry: createFeedRegistry([]),
@@ -133,7 +133,7 @@ describe('createFeedResponse', () => {
 
   it('should return 405 with the supported methods', async () => {
     const response = await createResponse(
-      new Request('https://pomo.example/feeds/today-in-history/rss.xml', {method: 'POST'}),
+      new Request('https://pomo.example/api/feeds/today-in-history/rss.xml', {method: 'POST'}),
     )
 
     expect(response.status).toBe(405)
@@ -145,7 +145,7 @@ describe('createFeedResponse', () => {
     const logger = {error: vi.fn()}
     const provider = createProvider(async () => Promise.reject(cause))
     const response = await createResponse(
-      new Request('https://pomo.example/feeds/today-in-history/rss.xml'),
+      new Request('https://pomo.example/api/feeds/today-in-history/rss.xml'),
       provider,
       logger,
     )
@@ -162,7 +162,7 @@ describe('createFeedResponse', () => {
 
     try {
       const response = await createResponse(
-        new Request('https://pomo.example/feeds/today-in-history/rss.xml'),
+        new Request('https://pomo.example/api/feeds/today-in-history/rss.xml'),
         provider,
       )
 
@@ -177,7 +177,7 @@ describe('createFeedResponse', () => {
     const logger = {error: vi.fn()}
     const provider = createProvider(async () => [{...ENTRY, contentHtml: '가'.repeat(512 * 1024)}])
     const response = await createResponse(
-      new Request('https://pomo.example/feeds/today-in-history/rss.xml'),
+      new Request('https://pomo.example/api/feeds/today-in-history/rss.xml'),
       provider,
       logger,
     )

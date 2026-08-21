@@ -15,12 +15,12 @@ const SAMPLE_TEXTS = [
 
 const PANEL_CLASSES = cx(
   'w-full rounded-8 border border-white/10 bg-#211a2b/94 p-5',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl sm:p-8',
+  'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 const TEXTAREA_CLASSES = cx(
   'min-h-44 w-full resize-y rounded-5 border border-white/10 bg-#17131f p-5',
   'text-base leading-7 text-#f8edf1 outline-none transition placeholder:text-#655b6c',
-  'focus:border-#9ed6bb/65 sm:min-h-52 sm:text-lg sm:leading-8',
+  'focus:border-#9ed6bb/65 xs:min-h-52 xs:text-lg xs:leading-8',
 )
 const PRIMARY_BUTTON_CLASSES = cx(
   'min-h-12 rounded-full border-0 bg-#9ed6bb px-6 text-sm font-800 text-#173126 transition',
@@ -47,10 +47,10 @@ export const TextMoodLab = () => {
         <p class="m-0 text-xs font-750 tracking-[0.24em] text-#9ed6bb uppercase">
           Korean text mood · On-device
         </p>
-        <h1 class="mb-0 mt-3 text-3xl font-800 tracking--0.04em sm:text-5xl">
+        <h1 class="mb-0 mt-3 text-3xl font-800 tracking--0.04em xs:text-5xl">
           문장의 분위기를 열두 갈래로 읽어요
         </h1>
-        <p class="mb-0 mt-4 text-sm leading-6 text-#bdb2c4 sm:text-base sm:leading-7">
+        <p class="mb-0 mt-4 text-sm leading-6 text-#bdb2c4 xs:text-base xs:leading-7">
           MiniLM이 만든 384차원 의미 벡터를 직접 만든 한국어 분위기 분류기에 넣습니다. 입력은 서버로
           보내지 않으며 첫 실행 때만 모델 파일을 내려받아요.
         </p>

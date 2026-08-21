@@ -2,6 +2,7 @@ import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 
+import {usePSceneStyle} from '../features/focus-room-animation'
 import {
   usePDialogueEditor,
   type UsePDialogueEditorProps,
@@ -12,23 +13,24 @@ import {
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
 } from '../features/supertonic'
-import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
+import {getPrimaryMood} from '../features/text-mood'
+import {PFaceIcon} from './PFaceIcon'
 
 const CLASSES = {
   dialogueEditor: [
     'pomo-dialogue-editor min-h-dvh box-border',
     'bg-[radial-gradient(circle_at_15%_0%,_rgb(122_83_53_/_20%),_transparent_32rem),_#17130f]',
-    'pt-[max(1.25rem,_env(safe-area-inset-top))]',
-    'pr-[max(1.25rem,_env(safe-area-inset-right))]',
-    'pb-[max(6rem,_calc(1.25rem_+_env(safe-area-inset-bottom)))]',
-    'pl-[max(1.25rem,_env(safe-area-inset-left))]',
+    'pt-[max(1.25rem,_var(--pomo-safe-area-inset-top))]',
+    'pr-[max(1.25rem,_var(--pomo-safe-area-inset-right))]',
+    'pb-[max(1.25rem,_calc(1.25rem_+_var(--pomo-safe-area-inset-bottom)))]',
+    'pl-[max(1.25rem,_var(--pomo-safe-area-inset-left))]',
     'text-[#fffaf1]',
   ].join(' '),
   dialogueEditorBack: [
     'pomo-dialogue-editor__back flex min-h-11 box-border flex-none items-center gap-2',
     '[border:1px_solid_rgb(255_255_255_/_12%)] rounded-full py-0 px-4 text-[#fffaf1] no-underline',
     '[&:focus-visible]:[outline:2px_solid_#d6b585] [&:focus-visible]:[outline-offset:2px]',
-    'max-[48rem]:[justify-self:start]',
+    'max-xl:[justify-self:start]',
   ].join(' '),
   dialogueEditorButton: [
     'pomo-dialogue-editor__button [&:focus-visible]:[outline:2px_solid_#d6b585]',
@@ -43,10 +45,6 @@ const CLASSES = {
   dialogueEditorEmpty: [
     'pomo-dialogue-editor__empty m-0 text-[#ddd2c6] text-[0.85rem] leading-[1.6] rounded-xl',
     'bg-[rgb(255_255_255_/_3%)] p-6 text-center',
-  ].join(' '),
-  dialogueEditorEyebrow: [
-    'pomo-dialogue-editor__eyebrow m-[0_0_0.5rem] text-[#d6b585] text-xs font-[750]',
-    'tracking-[0.16em] uppercase',
   ].join(' '),
   dialogueEditorField: [
     'pomo-dialogue-editor__field grid gap-2 text-[#eee4d9] text-[0.82rem] font-bold',
@@ -66,31 +64,25 @@ const CLASSES = {
   ].join(' '),
   dialogueEditorFieldLabel: 'pomo-dialogue-editor__field-label flex justify-between gap-4',
   dialogueEditorFooter: [
-    'pomo-dialogue-editor__footer w-[min(100%,_68rem)] [margin-inline:auto] flex justify-end',
-    'gap-3 fixed right-[max(1rem,_env(safe-area-inset-right))]',
-    'bottom-[max(1rem,_env(safe-area-inset-bottom))] left-[max(1rem,_env(safe-area-inset-left))]',
-    'w-auto items-center [border:1px_solid_rgb(255_255_255_/_12%)] rounded-2xl',
+    'pomo-dialogue-editor__footer w-[min(100%,_68rem)] [margin:1rem_auto_0] flex justify-end',
+    'gap-3 items-center [border:1px_solid_rgb(255_255_255_/_12%)] rounded-2xl',
     'bg-[rgb(29_23_18_/_94%)] p-3 shadow-[0_1rem_4rem_rgb(0_0_0_/_35%)] [&_p]:m-[0_auto_0_0]',
-    '[&_p]:text-[#a99d90] [&_p]:text-xs max-[48rem]:[&_p]:hidden',
+    '[&_p]:text-[#a99d90] [&_p]:text-xs max-xl:[&_p]:hidden',
   ].join(' '),
   dialogueEditorHeader: [
-    'pomo-dialogue-editor__header w-[min(100%,_68rem)] [margin-inline:auto] flex items-start',
-    'justify-between gap-8 [padding-block:1rem_2rem] [&_h1]:m-0',
+    'pomo-dialogue-editor__header w-[min(100%,_68rem)] [margin-inline:auto] flex items-center',
+    'justify-between gap-8 pb-4 [&_h1]:m-0',
     '[&_h1]:text-[clamp(1.75rem,_4vw,_2.5rem)] [&_h1]:leading-[1.2]',
-    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:max-w-[42rem]',
-    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:m-[0.75rem_0_0]',
-    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:text-[#c8baaa]',
-    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:leading-[1.6] max-[48rem]:grid',
-    'max-[48rem]:gap-4',
+    'max-xl:gap-4',
   ].join(' '),
   dialogueEditorLayout: [
     'pomo-dialogue-editor__layout w-[min(100%,_68rem)] [margin-inline:auto] grid',
-    'grid-cols-[repeat(2,_minmax(0,_1fr))] gap-4 max-[48rem]:grid-cols-[1fr]',
+    'grid-cols-[repeat(2,_minmax(0,_1fr))] gap-4 max-xl:grid-cols-[1fr]',
   ].join(' '),
   dialogueEditorMood: [
     'pomo-dialogue-editor__mood grid grid-cols-[2.75rem_minmax(0,_1fr)] items-center',
     'gap-[0.55rem] text-[#ddd2c6] [&_img]:w-11 [&_img]:h-11 [&_img]:object-contain',
-    '[&_span]:text-[#d8caba] [&_span]:leading-[1.35] max-[48rem]:[grid-column:2]',
+    '[&_span]:text-[#d8caba] [&_span]:leading-[1.35] max-xl:[grid-column:2]',
   ].join(' '),
   dialogueEditorPanel: [
     'pomo-dialogue-editor__panel grid content-start gap-5',
@@ -110,18 +102,18 @@ const CLASSES = {
   ].join(' '),
   dialogueEditorSegmentButton: [
     'pomo-dialogue-editor__segment-button min-h-9 px-[0.9rem] text-xs whitespace-nowrap',
-    'max-[48rem]:[grid-column:2] max-[48rem]:justify-self-end',
+    'max-xl:[grid-column:2] max-xl:justify-self-end',
   ].join(' '),
   dialogueEditorSegments: [
     'pomo-dialogue-editor__segments grid gap-[0.6rem] m-0 p-0 list-none [&_li]:grid',
     '[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)_10rem_auto] [&_li]:items-center [&_li]:gap-3',
     '[&_li]:rounded-xl [&_li]:bg-[rgb(255_255_255_/_4%)] [&_li]:p-3 [&_span]:text-[#d6b585]',
     '[&_span]:text-xs [&_span]:font-[750] [&_p]:m-0 [&_p]:text-[#ddd2c6] [&_p]:text-[0.85rem]',
-    '[&_p]:leading-[1.6] max-[48rem]:[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)]',
+    '[&_p]:leading-[1.6] max-xl:[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)]',
   ].join(' '),
   dialogueEditorSelects: [
     'pomo-dialogue-editor__selects grid grid-cols-[repeat(3,_minmax(0,_1fr))] gap-3',
-    'max-[28rem]:grid-cols-[1fr]',
+    'max-sm:grid-cols-[1fr]',
   ].join(' '),
   dialogueEditorStatus: [
     'pomo-dialogue-editor__status flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
@@ -129,7 +121,7 @@ const CLASSES = {
     '[&_strong]:text-[#e6c998]',
   ].join(' '),
   dialogueEditorTimelinePanel:
-    'pomo-dialogue-editor__timeline-panel col-span-full max-[48rem]:[grid-column:auto]',
+    'pomo-dialogue-editor__timeline-panel col-span-full max-xl:[grid-column:auto]',
   dialogueEditorVoiceActions: 'pomo-dialogue-editor__voice-actions flex justify-end gap-3',
 } as const
 
@@ -152,6 +144,7 @@ const formatDuration = (durationMs: number) => {
 export default function PDialogueEditor(props: PDialogueEditorProps) {
   const navigate = useNavigate()
   const events = usePEvents()
+  const sceneStyleController = usePSceneStyle()
   const editorProps: UsePDialogueEditorProps = {dialogueId: () => props.dialogueId}
   const editor = usePDialogueEditor(editorProps)
   const isBusy = () => {
@@ -202,16 +195,10 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
   return (
     <main class={CLASSES.dialogueEditor}>
       <header class={CLASSES.dialogueEditorHeader}>
-        <div>
-          <p class={CLASSES.dialogueEditorEyebrow} data-pomo-dialogue-editor-eyebrow="">
-            Pomo 대화
-          </p>
-          <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
-          <p>긴 대사는 음성에 맞게 나뉘며, 각 구간의 텍스트와 감정이 말풍선에 순서대로 표시돼요.</p>
-        </div>
+        <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
         <A class={CLASSES.dialogueEditorBack} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
-          Pomo로
+          Pomofi로
         </A>
       </header>
 
@@ -220,8 +207,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           <div class={CLASSES.dialogueEditorSectionHeading}>
             <span>1</span>
             <div>
-              <h2 id="dialogue-content-title">대화 내용</h2>
-              <p>Pomo에서 캐릭터가 말할 문장을 입력하세요.</p>
+              <h2 id="dialogue-content-title">대사 입력</h2>
             </div>
           </div>
 
@@ -236,7 +222,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
               disabled={isBusy()}
               maxlength={MAXIMUM_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
-              placeholder="Pomo를 시작할 때 캐릭터가 말할 내용을 입력하세요."
+              placeholder="Pomofi에 들어올 때 Pomo가 말할 내용을 입력하세요."
               value={editor.text()}
             />
           </label>
@@ -246,12 +232,23 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           <div class={CLASSES.dialogueEditorSectionHeading}>
             <span>2</span>
             <div>
-              <h2 id="dialogue-voice-title">목소리와 음성</h2>
-              <p>대사를 음성으로 만드세요. 필요한 모델은 자동으로 준비돼요.</p>
+              <h2 id="dialogue-voice-title">목소리 선택과 음성 만들기</h2>
             </div>
           </div>
 
           <div class={CLASSES.dialogueEditorSelects}>
+            <label class={CLASSES.dialogueEditorField}>
+              <span>목소리</span>
+              <select
+                disabled={isBusy()}
+                onChange={(event) => handleVoiceChange(event.currentTarget.value)}
+                value={editor.voiceId()}
+              >
+                <For each={SUPERTONIC_VOICES}>
+                  {(voice) => <option value={voice.id}>{voice.label}</option>}
+                </For>
+              </select>
+            </label>
             <label class={CLASSES.dialogueEditorField}>
               <span>언어</span>
               <select
@@ -273,18 +270,6 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
               >
                 <For each={SUPERTONIC_MODELS}>
                   {(model) => <option value={model.id}>{model.label}</option>}
-                </For>
-              </select>
-            </label>
-            <label class={CLASSES.dialogueEditorField}>
-              <span>목소리</span>
-              <select
-                disabled={isBusy()}
-                onChange={(event) => handleVoiceChange(event.currentTarget.value)}
-                value={editor.voiceId()}
-              >
-                <For each={SUPERTONIC_VOICES}>
-                  {(voice) => <option value={voice.id}>{voice.label}</option>}
                 </For>
               </select>
             </label>
@@ -338,8 +323,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           <div class={CLASSES.dialogueEditorSectionHeading}>
             <span>3</span>
             <div>
-              <h2 id="dialogue-timeline-title">말풍선 타임라인</h2>
-              <p>전체 음성을 새로 만든 현재 편집에서만 말풍선 음성을 다시 만들 수 있어요.</p>
+              <h2 id="dialogue-timeline-title">말풍선 확인</h2>
             </div>
           </div>
 
@@ -363,10 +347,10 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
 
                         return (
                           <div class={CLASSES.dialogueEditorMood}>
-                            <img
+                            <PFaceIcon
                               alt=""
-                              aria-hidden="true"
-                              src={getPrimaryMoodIcon(definition.id)}
+                              mood={definition.id}
+                              sceneStyle={sceneStyleController.sceneStyle()}
                             />
                             <span>{definition.label}</span>
                           </div>

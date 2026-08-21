@@ -5,7 +5,7 @@ import {cx} from 'class-variance-authority'
 
 const ChatRoom = clientOnly(() => import('src/components/ChatRoom'), {lazy: true})
 const MAIN_CLASSES = cx(
-  'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-7 text-#f8edf1 sm:px-7 sm:py-10',
+  'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-7 text-#f8edf1 xs:px-7 xs:py-10',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',
@@ -19,7 +19,7 @@ const FALLBACK_CLASSES = cx(
 export default function ChatPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — On-device Chat</Title>
+      <Title>Pomofi — On-device Chat</Title>
       <div class={BACKGROUND_CLASSES} />
       <div class="relative mx-auto grid w-full max-w-6xl gap-4">
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">

@@ -2,13 +2,16 @@ import {cx} from 'class-variance-authority'
 import {createMemo, For, Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
+import type {PSceneStyle} from '../features/focus-room-animation'
 import {type DialogueSegmentMood, usePEvents} from '../features/focus-room-dialogue/PEventContext'
-import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
+import {getPrimaryMood} from '../features/text-mood'
+import {PFaceIcon} from './PFaceIcon'
+import {PScribblePanel} from './PScribblePanel'
 
 const CLASSES = {
   dialogueBubble: [
-    'pomo-dialogue-bubble w-full min-h-0 max-h-full box-border overflow-hidden border',
-    'border-solid rounded-2xl p-4 text-foreground',
+    'pomo-dialogue-bubble w-full min-h-0 max-h-full box-border overflow-hidden p-4',
+    'text-foreground',
     'shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] backdrop-blur-[0.75rem]',
     '[-webkit-backdrop-filter:blur(0.75rem)] [&_p]:min-h-0 [&_p]:overflow-y-auto [&_p]:m-0',
     '[&_p]:pr-1 [&_p]:text-[clamp(0.9rem,_2.5vw,_1rem)]',
@@ -52,24 +55,56 @@ const CLASSES = {
 
 const SKIP_BUTTON_CLASS = cx(
   CLASSES.dialogueBubbleSkip,
-  'max-[40rem]:gap-2 max-[40rem]:px-3',
-  'max-[40rem]:py-2 max-[23rem]:gap-0',
+  'max-lg:gap-2 max-lg:px-3',
+  'max-lg:py-2 max-xs:gap-0',
 )
 
-const STOP_BUTTON_CLASS = cx(
-  CLASSES.dialogueBubbleStop,
-  'max-[40rem]:gap-2 max-[40rem]:px-3',
-  'max-[40rem]:py-2',
-)
+const STOP_BUTTON_CLASS = cx(CLASSES.dialogueBubbleStop, 'max-lg:gap-2 max-lg:px-3', 'max-lg:py-2')
+
+const getDialogueBubbleShapeClasses = (sceneStyle?: PSceneStyle) =>
+  sceneStyle === 'scribble' ? 'rounded-none border-0' : 'rounded-2xl border border-solid'
 
 export interface PDialoguePlayerProps {
   readonly externalText?: string | null
   readonly onStopExternalSpeech?: () => void
+  readonly sceneStyle?: PSceneStyle
 }
+
+interface BlockedDialogueBubbleProps {
+  readonly onRetry: () => void
+  readonly sceneStyle?: PSceneStyle
+}
+
+const BlockedDialogueBubble = (props: BlockedDialogueBubbleProps) => (
+  <PScribblePanel
+    class="pomo-dialogue-bubble-frame flex w-full"
+    enabled={props.sceneStyle === 'scribble'}
+    frameClass="pomo-dialogue-bubble__scribble-border"
+  >
+    <button
+      class={cx(
+        CLASSES.dialogueBubble,
+        CLASSES.dialogueBubblePlay,
+        getDialogueBubbleShapeClasses(props.sceneStyle),
+        'border-highlight bg-surface-interactive',
+      )}
+      onClick={() => props.onRetry()}
+      type="button"
+    >
+      <span aria-hidden="true" class={CLASSES.dialogueBubblePlayIcon}>
+        <span class="i-tabler-volume size-5" />
+      </span>
+      <span>
+        <strong>이벤트 음성 재생</strong>
+        <small>브라우저에서 차단된 소리를 시작해요.</small>
+      </span>
+    </button>
+  </PScribblePanel>
+)
 
 const getMoodPresentation = (mood: DialogueSegmentMood | null) => {
   const definition = getPrimaryMood(mood?.primary.id ?? 'neutral')
-  return {definition, source: getPrimaryMoodIcon(definition.id)}
+  return {definition}
 }
 
 export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
@@ -129,100 +164,97 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
     <>
       <Show when={displayText()}>
         {(text) => (
-          <div
-            class={cx(
-              CLASSES.dialogueBubble,
-              CLASSES.dialogueBubbleMessage,
-              'border-highlight bg-surface-interactive',
-            )}
+          <PScribblePanel
+            class="pomo-dialogue-bubble-frame flex w-full min-h-0 max-h-full [flex:0_1_auto]"
+            enabled={props.sceneStyle === 'scribble'}
+            frameClass="pomo-dialogue-bubble__scribble-border"
           >
-            <div class={CLASSES.dialogueBubbleHeader}>
-              <div class={CLASSES.dialogueBubbleSpeakerGroup}>
-                <img
-                  alt={`${moodPresentation().definition.label} 감정`}
-                  class={CLASSES.dialogueBubbleMood}
-                  src={moodPresentation().source}
-                />
-                <Show
-                  when={
-                    !isExternalSpeech() &&
-                    events.activeSegmentCount() > 1 &&
-                    events.activeSegmentPosition() !== null
-                  }
-                >
-                  <span
-                    aria-label={progressLabel()}
-                    class={CLASSES.dialogueBubbleProgress}
-                    role="img"
+            <div
+              class={cx(
+                CLASSES.dialogueBubble,
+                CLASSES.dialogueBubbleMessage,
+                getDialogueBubbleShapeClasses(props.sceneStyle),
+                'border-highlight bg-surface-interactive',
+              )}
+            >
+              <div class={CLASSES.dialogueBubbleHeader}>
+                <div class={CLASSES.dialogueBubbleSpeakerGroup}>
+                  <PFaceIcon
+                    alt={`${moodPresentation().definition.label} 감정`}
+                    class={CLASSES.dialogueBubbleMood}
+                    mood={moodPresentation().definition.id}
+                    sceneStyle={props.sceneStyle}
+                  />
+                  <Show
+                    when={
+                      !isExternalSpeech() &&
+                      events.activeSegmentCount() > 1 &&
+                      events.activeSegmentPosition() !== null
+                    }
                   >
-                    <For each={segmentPositions()}>
-                      {(position) => (
-                        <span
-                          aria-hidden="true"
-                          class={CLASSES.dialogueBubbleProgressDot}
-                          data-complete={isSegmentComplete(position) ? '' : undefined}
-                        />
-                      )}
-                    </For>
-                  </span>
-                </Show>
-              </div>
-              <div class={CLASSES.dialogueBubbleActions}>
-                <Show when={!isExternalSpeech()}>
+                    <span
+                      aria-label={progressLabel()}
+                      class={CLASSES.dialogueBubbleProgress}
+                      role="img"
+                    >
+                      <For each={segmentPositions()}>
+                        {(position) => (
+                          <span
+                            aria-hidden="true"
+                            class={CLASSES.dialogueBubbleProgressDot}
+                            data-complete={isSegmentComplete(position) ? '' : undefined}
+                          />
+                        )}
+                      </For>
+                    </span>
+                  </Show>
+                </div>
+                <div class={CLASSES.dialogueBubbleActions}>
+                  <Show when={!isExternalSpeech()}>
+                    <PButton
+                      accessibleLabel="대화 건너뛰기"
+                      class={SKIP_BUTTON_CLASS}
+                      icon="i-tabler-player-track-next"
+                      onPress={handleSkip}
+                      size="small"
+                      tone="secondary"
+                    >
+                      <span class="hidden dialogue-controls-wide:inline">대화 건너뛰기</span>
+                      <span class="hidden dialogue-controls-readable:inline dialogue-controls-wide:hidden">
+                        건너뛰기
+                      </span>
+                    </PButton>
+                  </Show>
                   <PButton
-                    accessibleLabel="대화 건너뛰기"
-                    class={SKIP_BUTTON_CLASS}
-                    icon="i-tabler-player-track-next"
-                    onPress={handleSkip}
+                    accessibleLabel={stopLabel()}
+                    class={STOP_BUTTON_CLASS}
+                    icon="i-tabler-player-stop"
+                    onPress={handleStop}
                     size="small"
                     tone="secondary"
                   >
-                    <span class="hidden min-[34.0625rem]:inline">대화 건너뛰기</span>
-                    <span class="hidden min-[23.0625rem]:inline min-[34.0625rem]:hidden">
-                      건너뛰기
+                    <span class="hidden dialogue-controls-wide:inline">{stopLabel()}</span>
+                    <span class="hidden dialogue-controls-readable:inline dialogue-controls-wide:hidden">
+                      {connectedSpeechCount()}개 중지
+                    </span>
+                    <span class="inline dialogue-controls-readable:hidden">
+                      {connectedSpeechCount()}개
                     </span>
                   </PButton>
-                </Show>
-                <PButton
-                  accessibleLabel={stopLabel()}
-                  class={STOP_BUTTON_CLASS}
-                  icon="i-tabler-player-stop"
-                  onPress={handleStop}
-                  size="small"
-                  tone="secondary"
-                >
-                  <span class="hidden min-[34.0625rem]:inline">{stopLabel()}</span>
-                  <span class="hidden min-[23.0625rem]:inline min-[34.0625rem]:hidden">
-                    {connectedSpeechCount()}개 중지
-                  </span>
-                  <span class="inline min-[23.0625rem]:hidden">{connectedSpeechCount()}개</span>
-                </PButton>
+                </div>
               </div>
+              <p aria-live="polite" role="status">
+                {text()}
+              </p>
             </div>
-            <p aria-live="polite" role="status">
-              {text()}
-            </p>
-          </div>
+          </PScribblePanel>
         )}
       </Show>
       <Show when={!isExternalSpeech() && events.isDialoguePlaybackBlocked()}>
-        <button
-          class={cx(
-            CLASSES.dialogueBubble,
-            CLASSES.dialogueBubblePlay,
-            'border-highlight bg-surface-interactive',
-          )}
-          onClick={() => events.retryDialoguePlayback()}
-          type="button"
-        >
-          <span aria-hidden="true" class={CLASSES.dialogueBubblePlayIcon}>
-            <span class="i-tabler-volume size-5" />
-          </span>
-          <span>
-            <strong>이벤트 음성 재생</strong>
-            <small>브라우저에서 차단된 소리를 시작해요.</small>
-          </span>
-        </button>
+        <BlockedDialogueBubble
+          onRetry={events.retryDialoguePlayback}
+          sceneStyle={props.sceneStyle}
+        />
       </Show>
     </>
   )

@@ -2,6 +2,9 @@ import {RadioGroup} from '@kobalte/core/radio-group'
 import {cx} from 'class-variance-authority'
 import {For, type JSX, Show} from 'solid-js'
 
+import type {PSceneStyle} from '../features/focus-room-animation'
+import {getPomoIconClass} from './icon-style'
+
 export interface PRadioSwitchOption<TValue extends string> {
   readonly icon?: string
   readonly label: string
@@ -13,6 +16,7 @@ export interface PRadioSwitchProps<TValue extends string> {
   readonly label: string
   readonly onChange: (value: TValue) => void
   readonly options: readonly PRadioSwitchOption<TValue>[]
+  readonly sceneStyle?: PSceneStyle
   readonly value: TValue
 }
 
@@ -88,20 +92,26 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                   'hover:bg-secondary-soft hover:text-foreground ' +
                   'ui-checked:bg-primary-soft ui-checked:text-foreground ' +
                   'group-focus-within:shadow-focus ' +
-                  'max-[23rem]:gap-1 max-[23rem]:text-[0.6875rem] motion-reduce:transition-none'
+                  'max-xs:gap-1 max-xs:text-[0.6875rem] motion-reduce:transition-none'
                 }
               >
                 <Show when={option.icon}>
                   {(icon) => (
                     <span
                       aria-hidden="true"
-                      class={cx('size-4 flex-none text-highlight max-[23rem]:hidden', icon())}
+                      class={cx(
+                        'size-4 flex-none text-highlight max-xs:hidden',
+                        getPomoIconClass(icon(), props.sceneStyle),
+                      )}
                     />
                   )}
                 </Show>
                 <span>{option.label}</span>
                 <RadioGroup.ItemIndicator class="inline-flex flex-none text-primary">
-                  <span aria-hidden="true" class="i-tabler-check size-4" />
+                  <span
+                    aria-hidden="true"
+                    class={cx(getPomoIconClass('i-tabler-check', props.sceneStyle), 'size-4')}
+                  />
                 </RadioGroup.ItemIndicator>
               </RadioGroup.ItemControl>
             </RadioGroup.Item>

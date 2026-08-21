@@ -18,7 +18,7 @@ const modalContentClasses = cva(
         center: 'top-1/2 -translate-y-1/2 animate-modal-content-in',
         top:
           `top-modal-top max-h-modal-top translate-y-0 animate-modal-content-in-top ` +
-          `max-[36rem]:top-modal-top-compact max-[36rem]:max-h-modal-top-compact`,
+          `max-md:top-modal-top-compact max-md:max-h-modal-top-compact`,
       },
       size: {
         regular: '',
@@ -41,8 +41,8 @@ const modalHeaderClasses = cva('flex-none', {
       navigation:
         'grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-0 ' +
         'border-b border-solid border-border px-5 py-0 ' +
-        'max-[36rem]:grid-cols-[minmax(0,1fr)_auto] max-[36rem]:px-4 ' +
-        'max-[36rem]:pb-0 max-[36rem]:pt-3',
+        'max-md:grid-cols-[minmax(0,1fr)_auto] max-md:px-4 ' +
+        'max-md:pb-0 max-md:pt-3',
       navigationVisuallyHidden:
         'grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-stretch gap-0 ' +
         'border-b border-solid border-border p-0',
@@ -163,9 +163,8 @@ export const PModal = (props: PModalProps) => (
                 class={cx(
                   'min-w-0 overflow-hidden',
                   props.titleVisibility === 'visually-hidden'
-                    ? 'pl-1 max-[36rem]:col-span-1 ' +
-                        'max-[36rem]:col-start-1 max-[36rem]:row-start-1'
-                    : 'mx-6 max-[36rem]:col-span-full max-[36rem]:row-start-2 max-[36rem]:mx-0',
+                    ? 'pl-1 max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
+                    : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
                 )}
               >
                 {navigation()}
@@ -179,8 +178,8 @@ export const PModal = (props: PModalProps) => (
               props.navigation !== undefined &&
                 props.titleVisibility === 'visually-hidden' &&
                 'border-l border-solid border-border px-3 ' +
-                  'max-[36rem]:col-start-2 max-[36rem]:row-start-1 ' +
-                  'max-[36rem]:px-2',
+                  'max-md:col-start-2 max-md:row-start-1 ' +
+                  'max-md:px-2',
             )}
           >
             <Dialog.CloseButton
@@ -190,10 +189,7 @@ export const PModal = (props: PModalProps) => (
                   'rounded-control bg-transparent text-muted-foreground ' +
                   'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
                   'hover:bg-secondary-soft hover:text-foreground ' +
-                  'focus-visible:shadow-focus motion-reduce:transition-none',
-                props.navigation !== undefined && props.titleVisibility === 'visually-hidden'
-                  ? 'size-11'
-                  : 'size-9',
+                  'focus-visible:shadow-focus motion-reduce:transition-none size-11',
               )}
             >
               <span aria-hidden="true" class="i-tabler-x size-5" />
@@ -204,6 +200,7 @@ export const PModal = (props: PModalProps) => (
           class={cx(
             'min-h-0 overscroll-contain p-5 ' +
               '[scrollbar-color:rgb(255_250_241_/_24%)_transparent] [scrollbar-width:thin]',
+            props.navigation !== undefined && 'settings-compact:p-4',
             (props.contentOverflow ?? 'auto') === 'hidden' ? 'overflow-hidden' : 'overflow-y-auto',
           )}
         >

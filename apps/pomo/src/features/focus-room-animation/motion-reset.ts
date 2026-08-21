@@ -3,6 +3,7 @@ import type {Container, Sprite} from 'pixi.js'
 import {applyLoopingTranslation} from './looping-translation'
 import type {PixiSceneMotion, PixiScenePoint} from './layer-scene-definition'
 import {applyOpacityPulse} from './opacity-pulse'
+import {applyVisibilityCycle} from './visibility-cycle'
 
 interface ResetMotionPresentationOptions {
   readonly container: Container
@@ -31,5 +32,9 @@ export const resetMotionPresentation = (options: ResetMotionPresentationOptions)
   if (motion.kind === 'opacity-pulse') {
     const easedPhase = (1 - Math.cos(phase * Math.PI)) / 2
     applyOpacityPulse(sprite, motion, easedPhase)
+  }
+
+  if (motion.kind === 'visibility-cycle') {
+    applyVisibilityCycle(sprite, motion, phase)
   }
 }

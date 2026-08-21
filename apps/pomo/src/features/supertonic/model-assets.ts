@@ -39,7 +39,7 @@ interface InitializationAssetValues {
 }
 
 const modelAssetSchema = z.object({
-  url: z.string().url(),
+  url: z.url(),
 })
 
 const modelAssetsSchema = z.object({

@@ -43,6 +43,7 @@ export class SteamParticleSystem {
   #frame: number | null = null
   #started = false
   #startedAt = 0
+  #visible = true
 
   constructor(options: SteamParticleSystemOptions) {
     this.#onRender = options.onRender
@@ -74,6 +75,10 @@ export class SteamParticleSystem {
     this.#started = true
     this.#startedAt = window.performance.now()
 
+    if (!this.#visible) {
+      return
+    }
+
     if (this.#prefersReducedMotion) {
       this.#renderParticles(MINIMUM_LIFETIME * 0.42)
       this.#onRender()
@@ -99,6 +104,10 @@ export class SteamParticleSystem {
       this.#frame = null
     }
 
+    if (!this.#visible) {
+      return
+    }
+
     if (prefersReducedMotion) {
       this.#renderParticles(MINIMUM_LIFETIME * 0.42)
       this.#onRender()
@@ -107,6 +116,40 @@ export class SteamParticleSystem {
 
     this.#startedAt = window.performance.now()
     this.#requestFrame()
+  }
+
+  setVisible(visible: boolean) {
+    if (this.#destroyed || visible === this.#visible) {
+      return
+    }
+
+    this.#visible = visible
+    this.container.visible = visible
+
+    if (!this.#started) {
+      return
+    }
+
+    if (this.#frame !== null) {
+      window.cancelAnimationFrame(this.#frame)
+      this.#frame = null
+    }
+
+    if (!visible) {
+      this.#onRender()
+      return
+    }
+
+    this.#startedAt = window.performance.now()
+
+    if (this.#prefersReducedMotion) {
+      this.#renderParticles(MINIMUM_LIFETIME * 0.42)
+      this.#onRender()
+      return
+    }
+
+    this.#requestFrame()
+    this.#onRender()
   }
 
   setParallaxOffset(x: number, y: number) {
@@ -130,7 +173,7 @@ export class SteamParticleSystem {
   }
 
   #requestFrame() {
-    if (this.#frame !== null || this.#destroyed) {
+    if (this.#frame !== null || this.#destroyed || !this.#visible) {
       return
     }
 

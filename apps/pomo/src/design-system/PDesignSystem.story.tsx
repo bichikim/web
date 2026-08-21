@@ -31,7 +31,7 @@ export const Foundation: Story = {
   },
   render: () => (
     <main
-      class="min-h-screen bg-cover bg-center p-6 sm:p-10"
+      class="min-h-screen bg-cover bg-center p-6 xs:p-10"
       style={{
         'background-image': `linear-gradient(rgb(12 9 7 / 38%), rgb(12 9 7 / 68%)), url(${dayReadingImage})`,
       }}
@@ -53,7 +53,7 @@ export const Foundation: Story = {
             <h2 class="mb-3 text-sm font-700" id="palette-title">
               Color
             </h2>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div class="grid grid-cols-2 gap-3 xs:grid-cols-3 2xl:grid-cols-6">
               <For each={SWATCHES}>
                 {(swatch) => (
                   <article class={'overflow-hidden rounded-4 border border-border bg-black/22'}>

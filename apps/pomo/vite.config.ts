@@ -1,14 +1,20 @@
+import {fileURLToPath} from 'node:url'
+
 import {solidStart} from '@solidjs/start/config'
 import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {nitro} from 'nitro/vite'
 import UnoCSS from 'unocss/vite'
-import {defineConfig} from 'vite'
+import {defineConfig, type Plugin} from 'vite'
 
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const appsInTossApiOrigin = new URL(
+  process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
+).origin
 const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
+const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
@@ -53,6 +59,28 @@ const excludeArchivedAssets = {
   },
 }
 
+const restartOnScribbleIconChange = {
+  configureServer(server) {
+    const restartServer = (changedPath: string) => {
+      if (changedPath !== scribbleIconSetPath) {
+        return
+      }
+
+      server.config.logger.info('scribble.json changed, restarting server...')
+      server.restart().catch((error: unknown) => {
+        const restartError = error instanceof Error ? error : new Error(String(error))
+        server.config.logger.error('Failed to reload the scribble icon set.', {
+          error: restartError,
+        })
+      })
+    }
+
+    server.watcher.add(scribbleIconSetPath)
+    server.watcher.on('change', restartServer)
+  },
+  name: 'restart-on-scribble-icon-change',
+} satisfies Plugin
+
 const useStaticNitroEntry = {
   configEnvironment(name: string, config: {build?: {rolldownOptions?: {input?: string}}}) {
     if (isAppsInToss && name === 'nitro') {
@@ -76,6 +104,10 @@ const useStaticNitroEntry = {
 }
 
 export default defineConfig({
+  define: {
+    'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
+    'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
+  },
   nitro: isAppsInToss
     ? {
         prerender: {
@@ -93,6 +125,7 @@ export default defineConfig({
             '/dialogue',
             '/focus-room',
             '/focus-room-dialogue',
+            '/refund-policy',
           ],
         },
         preset: 'static',
@@ -108,11 +141,17 @@ export default defineConfig({
     solidStart({devOverlay: false, middleware: './src/middleware/index.ts'}),
     createDevFeedPlugin(),
     excludeArchivedAssets,
+    restartOnScribbleIconChange,
     nitro(),
     useStaticNitroEntry,
   ],
   resolve: {
     tsconfigPaths: true,
+  },
+  server: {
+    watch: {
+      ignored: [assetLibraryPattern],
+    },
   },
   worker: {format: 'es'},
 })

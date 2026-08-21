@@ -6,7 +6,7 @@ const METRIC_DIGITS = 3
 const formatPercentage = (value: number) => `${Math.round(value * MAXIMUM_PERCENTAGE)}%`
 
 export const TextMoodEvaluation = () => (
-  <footer class="mt-10 grid gap-4 border-t border-white/8 pt-6 lg:grid-cols-[1fr_auto] lg:items-end">
+  <footer class="mt-10 grid gap-4 border-t border-white/8 pt-6 2xl:grid-cols-[1fr_auto] 2xl:items-end">
     <div>
       <h2 class="m-0 text-sm font-800">현재 파일럿 성능</h2>
       <p class="mb-0 mt-2 max-w-2xl text-xs leading-5 text-#8f8297">
@@ -41,7 +41,7 @@ export const TextMoodEvaluation = () => (
         </dd>
       </div>
     </dl>
-    <p class="m-0 text-[11px] leading-5 text-#655b6c lg:col-span-2">
+    <p class="m-0 text-[11px] leading-5 text-#655b6c 2xl:col-span-2">
       {TEXT_MOOD_MODEL.repositoryId} · q8 · mean pooling · {TEXT_MOOD_CLASSIFIER_INFO.modelKind}
     </p>
   </footer>

@@ -1,90 +1,158 @@
-import {describe, expect, it} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {applyCorsPreflightHeaders, applyCorsResponseHeaders, isCorsOriginAllowed} from '../cors.ts'
+import {corsMiddleware} from '../cors.ts'
 
-describe('isCorsOriginAllowed', () => {
+const VERCEL_HOST_VARIABLES = [
+  'VERCEL_URL',
+  'VERCEL_BRANCH_URL',
+  'VERCEL_PROJECT_PRODUCTION_URL',
+] as const
+
+const createMiddlewareEvent = (request: Request) => ({
+  req: request,
+  res: {headers: new Headers()},
+})
+
+const applyResponseMiddleware = async (
+  request: Request,
+  response = new Response(null, {status: 200}),
+): Promise<Response> => {
+  const result = await corsMiddleware(createMiddlewareEvent(request), async () => response)
+
+  if (!(result instanceof Response)) {
+    throw new TypeError('Expected middleware to return a Response')
+  }
+
+  return result
+}
+
+const useProductionEnvironment = (): void => {
+  for (const variable of VERCEL_HOST_VARIABLES) {
+    vi.stubEnv(variable, '')
+  }
+}
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+describe('corsMiddleware', () => {
   it.each([
     'https://pomofi.io',
     'https://www.pomofi.io',
     'https://pomo-app.apps.tossmini.com',
     'https://pomo-app.private-apps.tossmini.com',
-  ])('should allow %s', (origin) => {
-    expect(isCorsOriginAllowed(origin, 'https://deployment.vercel.app')).toBe(true)
-  })
-
-  it.each([
-    'http://localhost:3000',
-    'http://localhost:3100',
-    'http://localhost:3200',
-    'http://localhost:3300',
-    'http://localhost:3400',
-  ])('should allow %s during development', (origin) => {
-    expect(import.meta.env.DEV).toBe(true)
-    expect(isCorsOriginAllowed(origin, 'https://deployment.vercel.app')).toBe(true)
-  })
-
-  it('should allow the current deployment origin', () => {
-    const selfOrigin = 'https://pomo-git-feature.example.vercel.app'
-
-    expect(isCorsOriginAllowed(selfOrigin, selfOrigin)).toBe(true)
-  })
-
-  it.each([
-    null,
-    'https://pomofi.com',
-    'https://www.pomofi.com',
-    'https://evil.pomofi.io',
-    'https://pomofi.io.evil.example',
-  ])('should reject %s', (origin) => {
-    expect(isCorsOriginAllowed(origin, 'https://deployment.vercel.app')).toBe(false)
-  })
-})
-
-describe('applyCorsResponseHeaders', () => {
-  it('should add credentialed response headers for an allowed origin', () => {
-    const headers = new Headers({Vary: 'Accept-Encoding'})
-
-    expect(
-      applyCorsResponseHeaders(headers, 'https://pomofi.io', 'https://deployment.vercel.app'),
-    ).toBe(true)
-    expect(Object.fromEntries(headers)).toMatchObject({
-      'access-control-allow-credentials': 'true',
-      'access-control-allow-origin': 'https://pomofi.io',
-      vary: 'Accept-Encoding, Origin',
-    })
-    expect(headers.get('Access-Control-Expose-Headers')).toContain('ETag')
-  })
-
-  it('should only vary the response for a rejected origin', () => {
-    const headers = new Headers()
-
-    expect(
-      applyCorsResponseHeaders(headers, 'https://pomofi.com', 'https://deployment.vercel.app'),
-    ).toBe(false)
-    expect(Object.fromEntries(headers)).toEqual({vary: 'Origin'})
-  })
-
-  it('should not duplicate an existing Origin vary value', () => {
-    const headers = new Headers({Vary: 'Accept-Encoding, origin'})
-
-    applyCorsResponseHeaders(headers, null, 'https://deployment.vercel.app')
-
-    expect(headers.get('Vary')).toBe('Accept-Encoding, origin')
-  })
-})
-
-describe('applyCorsPreflightHeaders', () => {
-  it('should add API methods, request headers, and cache duration', () => {
-    const headers = new Headers()
-
-    applyCorsPreflightHeaders(headers)
-
-    expect(headers.get('Access-Control-Allow-Methods')).toBe(
-      'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS',
+    'https://pomo-app.private-web.tossmini.com',
+    'https://pomo-app.web.tossmini.com',
+  ])('should allow the static origin %s', async (origin) => {
+    useProductionEnvironment()
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/test', {headers: {Origin: origin}}),
     )
-    expect(headers.get('Access-Control-Allow-Headers')).toBe(
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+    expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true')
+    expect(response.headers.get('Vary')).toBe('Origin')
+  })
+
+  it('should allow the request self origin', async () => {
+    useProductionEnvironment()
+    const origin = 'https://preview.example'
+    const response = await applyResponseMiddleware(
+      new Request(`${origin}/api/test`, {headers: {Origin: origin}}),
+    )
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+  })
+
+  it.each(VERCEL_HOST_VARIABLES)('should allow the Vercel origin from %s', async (variable) => {
+    useProductionEnvironment()
+    const host = `${variable.toLowerCase().replaceAll('_', '-')}.vercel.app`
+    vi.stubEnv(variable, host)
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/test', {
+        headers: {Origin: `https://${host}`},
+      }),
+    )
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(`https://${host}`)
+  })
+
+  it('should answer an allowed preflight request', async () => {
+    useProductionEnvironment()
+    const origin = 'https://pomo-app.apps.tossmini.com'
+    const next = vi.fn()
+    const response = await corsMiddleware(
+      createMiddlewareEvent(
+        new Request('https://api.pomofi.example/api/test', {
+          headers: {
+            'Access-Control-Request-Headers': 'authorization, content-type',
+            'Access-Control-Request-Method': 'POST',
+            Origin: origin,
+          },
+          method: 'OPTIONS',
+        }),
+      ),
+      next,
+    )
+
+    expect(response).toBeInstanceOf(Response)
+    if (!(response instanceof Response)) {
+      throw new TypeError('Expected preflight middleware to return a Response')
+    }
+
+    expect(response.status).toBe(204)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE',
+    )
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
       'Authorization, Content-Type, Range, X-CSRF-Token',
     )
-    expect(headers.get('Access-Control-Max-Age')).toBe('86400')
+    expect(response.headers.get('Access-Control-Max-Age')).toBe('86400')
+    expect(response.headers.get('Vary')).toBe(
+      'Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
+    )
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should omit CORS permission for an untrusted origin', async () => {
+    useProductionEnvironment()
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/test', {
+        headers: {Origin: 'https://untrusted.example'},
+      }),
+    )
+
+    expect(response.headers.has('Access-Control-Allow-Origin')).toBe(false)
+    expect(response.headers.get('Vary')).toBe('Origin')
+  })
+
+  it('should not add CORS headers outside the API namespace', async () => {
+    useProductionEnvironment()
+    const originalResponse = new Response(null, {status: 200})
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/outside', {
+        headers: {Origin: 'https://pomofi.io'},
+      }),
+      originalResponse,
+    )
+
+    expect(response).toBe(originalResponse)
+    expect(response.headers.has('Access-Control-Allow-Origin')).toBe(false)
+    expect(response.headers.has('Vary')).toBe(false)
+  })
+
+  it('should add CORS headers to API output that is not a Response', async () => {
+    useProductionEnvironment()
+    const origin = 'https://pomofi.io'
+    const event = createMiddlewareEvent(
+      new Request('https://api.pomofi.example/api/test', {headers: {Origin: origin}}),
+    )
+    const body = {ok: true}
+
+    await expect(corsMiddleware(event, async () => body)).resolves.toBe(body)
+    expect(event.res.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+    expect(event.res.headers.get('Vary')).toBe('Origin')
   })
 })

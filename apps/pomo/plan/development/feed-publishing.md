@@ -28,7 +28,7 @@ Pomo 발행 기능
 
 ## 확정 사항
 
-- 공개 URL은 `/feeds/:slug/rss.xml`과 `/feeds/:slug/atom.xml`이다.
+- 공개 URL은 `/api/feeds/:slug/rss.xml`과 `/api/feeds/:slug/atom.xml`이다.
 - RSS와 Atom은 하나의 내부 피드 모델과 provider를 공유한다.
 - 첫 공개 채널은 Neon의 `historical_moments`에서 당일의 발행 항목을 읽는
   `today-in-history`다. Auth와 관리 UI는 요구하지 않으며 콘텐츠 생성은 Vercel Cron과 OpenAI
@@ -44,11 +44,11 @@ Pomo 발행 기능
 ### URL과 메서드
 
 ```text
-GET  /feeds/:slug/rss.xml
-HEAD /feeds/:slug/rss.xml
+GET  /api/feeds/:slug/rss.xml
+HEAD /api/feeds/:slug/rss.xml
 
-GET  /feeds/:slug/atom.xml
-HEAD /feeds/:slug/atom.xml
+GET  /api/feeds/:slug/atom.xml
+HEAD /api/feeds/:slug/atom.xml
 ```
 
 - 등록되지 않은 `slug`는 `404`를 반환한다.
@@ -98,7 +98,7 @@ src/server/functions/feed-publisher/
   invalidate-feed-cache.ts
   publish-feed.ts
 
-src/routes/feeds/
+src/routes/api/feeds/
   index.tsx
   [slug]/
     rss.xml.ts
@@ -396,9 +396,9 @@ Webhook을 반복 호출해도 사건·출처가 중복되지 않으며 다른 �
 검증 명령 예시:
 
 ```sh
-curl -sS -D - -o /dev/null https://<preview>/feeds/<slug>/rss.xml
-curl -sS -D - -o /dev/null https://<preview>/feeds/<slug>/rss.xml
-curl -sS https://<preview>/feeds/<slug>/atom.xml
+curl -sS -D - -o /dev/null https://<preview>/api/feeds/<slug>/rss.xml
+curl -sS -D - -o /dev/null https://<preview>/api/feeds/<slug>/rss.xml
+curl -sS https://<preview>/api/feeds/<slug>/atom.xml
 ```
 
 두 번째 GET은 정상적으로 데워진 동일 지역에서 `x-vercel-cache: HIT`가 되어야 한다. Preview 배포가

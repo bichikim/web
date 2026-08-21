@@ -30,7 +30,11 @@ const DEGREES_PER_HALF_TURN = 180
 
 export const positionLayerContainer = (options: PositionLayerContainerOptions) => {
   if (options.pivotMotion !== undefined) {
-    options.container.pivot.set(options.pivotMotion.center.x, options.pivotMotion.center.y)
+    const position = options.position ?? {x: 0, y: 0}
+    options.container.pivot.set(
+      options.pivotMotion.center.x - position.x,
+      options.pivotMotion.center.y - position.y,
+    )
     options.container.position.set(options.pivotMotion.center.x, options.pivotMotion.center.y)
   } else if (options.position !== undefined) {
     const rotationRadians = ((options.rotationDegrees ?? 0) * Math.PI) / DEGREES_PER_HALF_TURN

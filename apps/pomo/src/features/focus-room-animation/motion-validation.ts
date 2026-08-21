@@ -32,6 +32,7 @@ export const validateSceneMotion = (layerId: string, motion: PixiSceneMotion, sc
   validateLoopingTranslation(layerId, motion)
   validateOpacityPulse(layerId, motion)
   validateOpacityTwinkle(layerId, motion)
+  validateVisibilityCycle(layerId, motion)
   validateEffects(layerId, motion, scene)
 }
 
@@ -152,6 +153,20 @@ const validateOpacityTwinkle = (layerId: string, motion: PixiSceneMotion) => {
     motion.flashFall.maximumSeconds < motion.flashFall.minimumSeconds
   ) {
     throw new Error(`Invalid opacity twinkle configuration for layer: ${layerId}`)
+  }
+}
+
+const validateVisibilityCycle = (layerId: string, motion: PixiSceneMotion) => {
+  if (motion.kind !== 'visibility-cycle') {
+    return
+  }
+
+  if (motion.visibleFraction <= 0 || motion.visibleFraction > 1) {
+    throw new Error(`Visibility cycle fraction must be in (0, 1]: ${layerId}`)
+  }
+
+  if (motion.phase !== undefined && (motion.phase < 0 || motion.phase >= 1)) {
+    throw new Error(`Visibility cycle phase must be in [0, 1): ${layerId}`)
   }
 }
 

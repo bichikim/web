@@ -1,19 +1,44 @@
 import baseConfig from '@winter-love/unocss-config'
-import {defineConfig, mergeConfigs, type PresetWind3Theme} from 'unocss'
+import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 
-export default mergeConfigs([
+import scribbleIcons from './icon-sets/scribble.json'
+import albumData from './public/audio/albums.json'
+
+const createParentVariant = (name: string, parent: string): Variant => {
+  return (matcher) => {
+    const prefix = `${name}:`
+
+    if (!matcher.startsWith(prefix)) {
+      return
+    }
+
+    return {
+      matcher: matcher.slice(prefix.length),
+      parent,
+    }
+  }
+}
+
+const isPresetNamed = (preset: unknown, name: string) =>
+  typeof preset === 'object' && preset !== null && 'name' in preset && preset.name === name
+
+const config = mergeConfigs([
   baseConfig,
   defineConfig<PresetWind3Theme>({
     extendTheme: (theme) => {
       const spacing = (units: string) => `calc(${theme.spacing?.DEFAULT ?? '1rem'} / 4 * ${units})`
       const controlMedium = spacing('11')
       const controlSmall = spacing('8')
-      const layoutSpacing = spacing('4')
-      const layoutSpacingWide = spacing('6')
+      const layoutSpacing = spacing('6')
+      const mobileLayoutSpacing = spacing('4')
       const modalSpacing = spacing('8')
       const modalSpacingCompact = spacing('5')
       const panelInset = spacing('2')
       const panelRadius = theme.borderRadius?.panel ?? '1.25rem'
+      const safeAreaBottom = 'var(--pomo-safe-area-inset-bottom)'
+      const safeAreaLeft = 'var(--pomo-safe-area-inset-left)'
+      const safeAreaRight = 'var(--pomo-safe-area-inset-right)'
+      const safeAreaTop = 'var(--pomo-safe-area-inset-top)'
 
       theme.borderRadius = {
         ...theme.borderRadius,
@@ -23,22 +48,12 @@ export default mergeConfigs([
         ...theme.height,
         'control-md': controlMedium,
         'control-sm': controlSmall,
-        'media-dock':
-          `calc(100dvh - ${layoutSpacing} - ${layoutSpacing} - ` +
-          'env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-        'media-dock-wide':
-          `calc(100dvh - ${layoutSpacingWide} - ${layoutSpacingWide} - ` +
-          'env(safe-area-inset-top) - env(safe-area-inset-bottom))',
       }
       theme.maxHeight = {
         ...theme.maxHeight,
-        modal:
-          `calc(100dvh - (${layoutSpacing} * 2) - ` +
-          'env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-        'modal-top': `calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (${modalSpacing} * 2))`,
-        'modal-top-compact':
-          'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - ' +
-          `(${modalSpacingCompact} * 2))`,
+        modal: `calc(100dvh - (${layoutSpacing} * 2) - ${safeAreaTop} - ${safeAreaBottom})`,
+        'modal-top': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacing} * 2))`,
+        'modal-top-compact': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacingCompact} * 2))`,
       }
       theme.minHeight = {
         ...theme.minHeight,
@@ -52,15 +67,18 @@ export default mergeConfigs([
       }
       theme.spacing = {
         ...theme.spacing,
-        'modal-top': `calc(env(safe-area-inset-top) + ${modalSpacing})`,
-        'modal-top-compact': `calc(env(safe-area-inset-top) + ${modalSpacingCompact})`,
-        'player-bottom': `calc(${layoutSpacing} + env(safe-area-inset-bottom))`,
-        'safe-bottom': `max(${layoutSpacing}, calc(${layoutSpacing} + env(safe-area-inset-bottom)))`,
-        'safe-bottom-wide': `max(${layoutSpacingWide}, calc(${layoutSpacingWide} + env(safe-area-inset-bottom)))`,
-        'safe-left': `max(${layoutSpacing}, env(safe-area-inset-left))`,
-        'safe-left-wide': `max(${layoutSpacingWide}, env(safe-area-inset-left))`,
-        'safe-right': `max(${layoutSpacing}, env(safe-area-inset-right))`,
-        'safe-right-wide': `max(${layoutSpacingWide}, env(safe-area-inset-right))`,
+        layout: layoutSpacing,
+        'layout-mobile': mobileLayoutSpacing,
+        'modal-top': `calc(${safeAreaTop} + ${modalSpacing})`,
+        'modal-top-compact': `calc(${safeAreaTop} + ${modalSpacingCompact})`,
+        'player-bottom': `calc(${layoutSpacing} + ${safeAreaBottom})`,
+        'player-bottom-mobile': `calc(${mobileLayoutSpacing} + ${safeAreaBottom})`,
+        'safe-bottom': `max(${layoutSpacing}, calc(${layoutSpacing} + ${safeAreaBottom}))`,
+        'safe-bottom-mobile': `max(${mobileLayoutSpacing}, calc(${mobileLayoutSpacing} + ${safeAreaBottom}))`,
+        'safe-left': `max(${layoutSpacing}, ${safeAreaLeft})`,
+        'safe-left-mobile': `max(${mobileLayoutSpacing}, ${safeAreaLeft})`,
+        'safe-right': `max(${layoutSpacing}, ${safeAreaRight})`,
+        'safe-right-mobile': `max(${mobileLayoutSpacing}, ${safeAreaRight})`,
       }
       theme.width = {
         ...theme.width,
@@ -72,6 +90,10 @@ export default mergeConfigs([
       {
         getCSS: ({theme}) => `
 :root {
+  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0px);
   color-scheme: dark;
   font-family: ${theme.fontFamily?.sans};
   background: ${theme.colors?.background};
@@ -95,6 +117,7 @@ body {
 `,
       },
     ],
+    safelist: albumData.albums.map((album) => album.icon),
     theme: {
       animation: {
         counts: {
@@ -207,6 +230,14 @@ body {
         'tab-active': 'inset 0 -0.1875rem 0 #d9b98a',
         'track-active': 'inset 2px 0 0 #d86845',
       },
+      breakpoints: {
+        '2xl': '64rem',
+        lg: '40rem',
+        md: '36rem',
+        sm: '28rem',
+        xl: '48rem',
+        xs: '24rem',
+      },
       colors: {
         background: '#17130f',
         border: 'rgb(255 250 241 / 14%)',
@@ -232,18 +263,27 @@ body {
       },
     },
     variants: [
-      (matcher) => {
-        const prefix = 'dialogue-library-compact:'
-
-        if (!matcher.startsWith(prefix)) {
-          return
-        }
-
-        return {
-          matcher: matcher.slice(prefix.length),
-          parent: '@container pomo-dialogue-library-item (width < 19rem)',
-        }
-      },
+      createParentVariant('player-compact', '@container pomo-player (width < 24rem)'),
+      createParentVariant(
+        'dialogue-library-compact',
+        '@container pomo-dialogue-library-item (width < 19rem)',
+      ),
+      createParentVariant('settings-compact', '@media (width < 42rem)'),
+      createParentVariant('feed-status-compact', '@media (width < 34rem)'),
+      createParentVariant('automatic-dialogue-compact', '@media (width < 32rem)'),
+      createParentVariant('dialogue-controls-readable', '@media (width >= 23.0625rem)'),
+      createParentVariant('dialogue-controls-wide', '@media (width >= 34.0625rem)'),
     ],
   }),
 ])
+
+config.presets = [
+  ...(config.presets ?? []).filter((preset) => !isPresetNamed(preset, '@unocss/preset-icons')),
+  presetIcons({
+    collections: {
+      'pomo-scribble': () => scribbleIcons,
+    },
+  }),
+]
+
+export default config

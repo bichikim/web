@@ -44,16 +44,16 @@ const TextMoodCard = () => (
 export default function HomePage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — Creative Labs</Title>
+      <Title>Pomofi — Creative Labs</Title>
       <div class={BACKGROUND_CLASSES} />
       <section class="relative w-full max-w-5xl">
         <A class={POMO_LINK_CLASSES} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-4" />
-          Pomo로 돌아가기
+          Pomofi로 돌아가기
         </A>
         <header class="max-w-2xl">
           <p class="m-0 text-xs font-750 tracking-[0.28em] text-#f2a7b8 uppercase">
-            Pomo creative labs
+            Pomofi creative labs
           </p>
           <h1 class="mb-0 mt-4 text-4xl font-800 tracking--0.045em sm:text-6xl">
             캐릭터를 만들고,
@@ -67,6 +67,24 @@ export default function HomePage() {
         </header>
 
         <div class="mt-10 grid gap-4 md:grid-cols-2">
+          <A class={CARD_CLASSES} href="/dev/focus-room-layer-review">
+            <div class="flex items-start justify-between gap-5">
+              <div>
+                <p class="m-0 text-xs font-700 tracking-[0.2em] text-#f0c99a uppercase">
+                  PixiJS · Layer review
+                </p>
+                <h2 class="mb-0 mt-3 text-2xl font-750">집중방 캐릭터 프리뷰</h2>
+                <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
+                  시간대·행동·시선별 장면과 캐릭터 레이어, 움직임을 한 화면에서 확인해요.
+                </p>
+              </div>
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#f0c99a/12 text-xl text-#f4d7b5">
+                ◉
+              </span>
+            </div>
+            <span class="mt-8 text-sm font-700 text-#f4d7b5">프리뷰 열기 →</span>
+          </A>
+
           <A class={CARD_CLASSES} href="/dev/character">
             <div class="flex items-start justify-between gap-5">
               <div>

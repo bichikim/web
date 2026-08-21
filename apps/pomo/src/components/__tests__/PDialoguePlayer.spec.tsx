@@ -109,6 +109,39 @@ it('should show the neutral face when an active segment has no mood analysis', (
   expect(screen.getByRole('img', {name: '중립 감정'})).toBeDefined()
 })
 
+it('should replace the dialogue border only in scribble style', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents({activeText: () => '하찮은 대화'}))
+
+  const originalResult = render(() => <PDialoguePlayer />)
+  const originalBubble = originalResult.container.querySelector('.pomo-dialogue-bubble')
+
+  expect(
+    originalResult.container.querySelector('.pomo-dialogue-bubble__scribble-border'),
+  ).toBeNull()
+  expect(originalBubble?.classList).toContain('rounded-2xl')
+  expect(originalBubble?.classList).toContain('border')
+
+  originalResult.unmount()
+  const scribbleResult = render(() => <PDialoguePlayer sceneStyle="scribble" />)
+  const scribbleBubble = scribbleResult.container.querySelector('.pomo-dialogue-bubble')
+  const scribbleBorder = scribbleResult.container.querySelector(
+    '.pomo-dialogue-bubble__scribble-border',
+  )
+  const scribbleSurface = scribbleResult.container.querySelector(
+    '.pomo-dialogue-bubble-frame .pomo-scribble-panel__surface',
+  ) as HTMLElement
+
+  expect(scribbleBorder).toBeInstanceOf(SVGElement)
+  expect(scribbleBorder?.parentElement?.classList).toContain('pomo-dialogue-bubble-frame')
+  expect(scribbleSurface.classList).toContain('[mask-image:var(--pomo-scribble-panel-mask)]')
+  expect(scribbleSurface.style.getPropertyValue('--pomo-scribble-panel-mask')).toContain(
+    'data:image/svg+xml',
+  )
+  expect(scribbleSurface.contains(scribbleBorder)).toBe(false)
+  expect(scribbleBubble?.classList).toContain('rounded-none')
+  expect(scribbleBubble?.classList).toContain('border-0')
+})
+
 it('should route the stop action to an external speech owner', () => {
   const onStopDialoguePlayback = vi.fn()
   const onStopExternalSpeech = vi.fn()

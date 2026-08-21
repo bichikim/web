@@ -10,7 +10,7 @@
     "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
     "build:apps-in-toss-ssg": "cross-env POMO_BUILD_TARGET=apps-in-toss vite build",
-    "build:apps-in-toss-package": "ait build",
+    "build:apps-in-toss-package": "pnpm run prepare:apps-in-toss-package && ait build",
     "build:web": "vite build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -21,14 +21,13 @@
     "lint:fix": "oxlint src --fix",
     "prebuild:apps-in-toss-package": "node scripts/reset-apps-in-toss-output.mjs",
     "prepare:apps-in-toss-package": "pnpm run build:apps-in-toss-ssg && node scripts/prepare-apps-in-toss-output.mjs",
-    "preview:apps-in-toss-ssg": "vite preview --host --outDir .output/public",
+    "preview:apps-in-toss-ssg": "vite preview --config preview.config.ts --host --outDir .output/public",
     "preview:web": "node .output/server/index.mjs",
     "text-mood:train": "node scripts/text-mood/train.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@apps-in-toss/bridge-core": "2.4.1",
-    "@apps-in-toss/web-bridge": "2.4.1",
+    "@apps-in-toss/web-framework": "3.0.3",
     "@babylonjs/core": "9.18.0",
     "@babylonjs/loaders": "9.18.0",
     "@huggingface/transformers": "4.2.0",
@@ -55,7 +54,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@apps-in-toss/web-framework": "2.4.1",
     "@iconify-json/tabler": "^1.2.33",
     "@types/node": "catalog:",
     "@winter-love/unocss-config": "workspace:*",

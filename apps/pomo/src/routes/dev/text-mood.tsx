@@ -6,7 +6,7 @@ import {cx} from 'class-variance-authority'
 const TextMoodLab = clientOnly(() => import('src/components/TextMoodLab'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-8 text-#f8edf1',
-  'sm:px-8 sm:py-12',
+  'xs:px-8 xs:py-12',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',
@@ -20,7 +20,7 @@ const FALLBACK_CLASSES = cx(
 export default function TextMoodPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — 글 분위기 분석 실험실</Title>
+      <Title>Pomofi — 글 분위기 분석 실험실</Title>
       <div class={BACKGROUND_CLASSES} />
       <div class="relative mx-auto grid w-full max-w-6xl gap-4">
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">

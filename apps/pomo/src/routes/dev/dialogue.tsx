@@ -5,7 +5,7 @@ import {cx} from 'class-variance-authority'
 
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-x-hidden',
-  'bg-#17131f px-5 py-10 text-#f8edf1 sm:px-8',
+  'bg-#17131f px-5 py-10 text-#f8edf1 xs:px-8',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',
@@ -20,7 +20,7 @@ const DialogueWriter = clientOnly(() => import('src/components/DialogueWriter'),
 export default function DirectAnswerPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — Direct Answer Lab</Title>
+      <Title>Pomofi — Direct Answer Lab</Title>
       <div class={BACKGROUND_CLASSES} />
       <div class="relative grid w-full max-w-6xl gap-4">
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">

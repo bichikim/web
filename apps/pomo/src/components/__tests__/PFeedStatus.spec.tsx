@@ -70,9 +70,30 @@ afterEach(() => {
 it('should show a ready feed notice', () => {
   vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
 
-  render(() => <PFeedStatus />)
+  const originalResult = render(() => <PFeedStatus />)
 
   expect(screen.getByText('새 피드 대화가 준비됐어요')).toBeDefined()
+  expect(originalResult.container.querySelector('.pomo-feed-status__scribble-border')).toBeNull()
+
+  originalResult.unmount()
+  const scribbleResult = render(() => <PFeedStatus sceneStyle="scribble" />)
+  const scribbleStatus = scribbleResult.container.querySelector('.pomo-feed-status')
+  const scribbleBorder = scribbleResult.container.querySelector(
+    '.pomo-feed-status__scribble-border',
+  )
+  const scribbleSurface = scribbleResult.container.querySelector(
+    '.pomo-feed-status-frame .pomo-scribble-panel__surface',
+  ) as HTMLElement
+
+  expect(scribbleBorder).toBeInstanceOf(SVGElement)
+  expect(scribbleBorder?.parentElement?.classList).toContain('pomo-feed-status-frame')
+  expect(scribbleSurface.classList).toContain('[mask-image:var(--pomo-scribble-panel-mask)]')
+  expect(scribbleSurface.style.getPropertyValue('--pomo-scribble-panel-mask')).toContain(
+    'data:image/svg+xml',
+  )
+  expect(scribbleSurface.contains(scribbleBorder)).toBe(false)
+  expect(scribbleStatus?.classList).toContain('rounded-none')
+  expect(scribbleStatus?.classList).toContain('border-0')
 })
 
 it('should play all accumulated feed dialogues with one action', () => {

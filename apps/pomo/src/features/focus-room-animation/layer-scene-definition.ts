@@ -80,6 +80,14 @@ export interface PixiSceneOpacityPulse {
   readonly travel: PixiSceneTravelRange
 }
 
+export interface PixiSceneVisibilityCycle {
+  readonly channel?: string
+  readonly kind: 'visibility-cycle'
+  readonly phase?: number
+  readonly travel: PixiSceneTravelRange
+  readonly visibleFraction: number
+}
+
 export interface PixiSceneOpacityTwinkle {
   readonly channel?: string
   readonly fall: PixiSceneTravelRange
@@ -118,6 +126,7 @@ export type PixiSceneMotion =
   | PixiScenePivotRotation
   | PixiScenePixelOscillation
   | PixiSceneTranslation
+  | PixiSceneVisibilityCycle
 
 export interface PixiSceneLayerDefinition {
   readonly attachmentId?: string

@@ -1,22 +1,24 @@
-import {Show} from 'solid-js'
+import {cx} from 'class-variance-authority'
+import {type JSX, Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
+import type {PSceneStyle} from '../features/focus-room-animation'
 import {usePFeedContext} from '../features/focus-room-feed'
-import {cx} from 'class-variance-authority'
+import {PScribblePanel} from './PScribblePanel'
 
 const CLASSES = {
   feedStatus: [
     'pomo-feed-status flex w-[min(36rem,_100%)] box-border items-center gap-3',
-    'border border-solid rounded-2xl p-[0.8rem_0.9rem]',
+    'p-[0.8rem_0.9rem]',
     'text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
     'backdrop-blur-[0.75rem] [-webkit-backdrop-filter:blur(0.75rem)]',
     "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-highlight",
-    "max-[34rem]:[&[data-state='recovery']]:flex-wrap",
+    "feed-status-compact:[&[data-state='recovery']]:flex-wrap",
   ].join(' '),
   feedStatusAction: 'pomo-feed-status__action flex-none whitespace-nowrap',
   feedStatusActions: [
     'pomo-feed-status__actions flex flex-none gap-[0.35rem]',
-    'max-[34rem]:w-full max-[34rem]:[&_button]:flex-1',
+    'feed-status-compact:w-full feed-status-compact:[&_button]:flex-1',
   ].join(' '),
   feedStatusCopy: [
     'pomo-feed-status__copy grid min-w-0 flex-1 gap-[0.15rem] [&_strong]:overflow-hidden',
@@ -31,7 +33,50 @@ const CLASSES = {
   ].join(' '),
 } as const
 
-export const PFeedStatus = () => {
+interface PFeedStatusProps {
+  readonly sceneStyle?: PSceneStyle
+}
+
+interface FeedStatusFrameProps {
+  readonly children: JSX.Element
+  readonly sceneStyle?: PSceneStyle
+}
+
+interface FeedStatusSurfaceProps extends FeedStatusFrameProps {
+  readonly state: string
+}
+
+const getFeedStatusShapeClasses = (sceneStyle?: PSceneStyle) =>
+  sceneStyle === 'scribble' ? 'rounded-none border-0' : 'rounded-2xl border border-solid'
+
+const FeedStatusFrame = (props: FeedStatusFrameProps) => (
+  <PScribblePanel
+    class="pomo-feed-status-frame flex w-[min(36rem,_100%)]"
+    enabled={props.sceneStyle === 'scribble'}
+    frameClass="pomo-feed-status__scribble-border"
+  >
+    {props.children}
+  </PScribblePanel>
+)
+
+const FeedStatusSurface = (props: FeedStatusSurfaceProps) => (
+  <FeedStatusFrame sceneStyle={props.sceneStyle}>
+    <div
+      aria-live="polite"
+      class={cx(
+        CLASSES.feedStatus,
+        getFeedStatusShapeClasses(props.sceneStyle),
+        'border-highlight bg-surface-interactive',
+      )}
+      data-state={props.state}
+      role="status"
+    >
+      {props.children}
+    </div>
+  </FeedStatusFrame>
+)
+
+export const PFeedStatus = (props: PFeedStatusProps) => {
   const feeds = usePFeedContext()
   const handleListenAll = () => {
     feeds.listenAll().catch((error: unknown) => {
@@ -58,12 +103,7 @@ export const PFeedStatus = () => {
             when={feeds.latestReady()}
             fallback={
               <Show when={feeds.state().status !== 'idle'}>
-                <div
-                  aria-live="polite"
-                  class={cx(CLASSES.feedStatus, 'border-highlight bg-surface-interactive')}
-                  data-state={feeds.state().status}
-                  role="status"
-                >
+                <FeedStatusSurface sceneStyle={props.sceneStyle} state={feeds.state().status}>
                   <span
                     aria-hidden="true"
                     class={
@@ -88,17 +128,12 @@ export const PFeedStatus = () => {
                       다시 확인
                     </PButton>
                   </Show>
-                </div>
+                </FeedStatusSurface>
               </Show>
             }
           >
             {(ready) => (
-              <div
-                aria-live="polite"
-                class={cx(CLASSES.feedStatus, 'border-highlight bg-surface-interactive')}
-                data-state="ready"
-                role="status"
-              >
+              <FeedStatusSurface sceneStyle={props.sceneStyle} state="ready">
                 <span aria-hidden="true" class="i-tabler-rss size-5" />
                 <span class={CLASSES.feedStatusCopy}>
                   <strong>
@@ -118,17 +153,12 @@ export const PFeedStatus = () => {
                 >
                   {feeds.unlistenedDialogues().length > 1 ? '연속 듣기' : '듣기'}
                 </PButton>
-              </div>
+              </FeedStatusSurface>
             )}
           </Show>
         }
       >
-        <div
-          aria-live="polite"
-          class={cx(CLASSES.feedStatus, 'border-highlight bg-surface-interactive')}
-          data-state="recovery"
-          role="status"
-        >
+        <FeedStatusSurface sceneStyle={props.sceneStyle} state="recovery">
           <span aria-hidden="true" class="i-tabler-refresh size-5" />
           <span class={CLASSES.feedStatusCopy}>
             <strong>미완성 피드 대화 {feeds.recoveryJobs().length}개</strong>
@@ -160,7 +190,7 @@ export const PFeedStatus = () => {
               삭제
             </PButton>
           </span>
-        </div>
+        </FeedStatusSurface>
       </Show>
     </Show>
   )

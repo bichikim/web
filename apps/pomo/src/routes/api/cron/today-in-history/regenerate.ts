@@ -11,14 +11,13 @@ const MAX_MOMENT_COUNT = 5
 const MAX_TITLE_LENGTH = 50
 
 const requestSchema = z
-  .object({
+  .strictObject({
     targetDate: z.iso.date(),
     titles: z
       .array(z.string().trim().min(1).max(MAX_TITLE_LENGTH))
       .min(MIN_MOMENT_COUNT)
       .max(MAX_MOMENT_COUNT),
   })
-  .strict()
   .superRefine((request, context) => {
     if (new Set(request.titles).size !== request.titles.length) {
       context.addIssue({code: 'custom', message: 'Titles must be unique', path: ['titles']})

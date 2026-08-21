@@ -1,6 +1,7 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createEffect, createMemo, createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
+import {getPomoIconClass} from '../design-system/icon-style'
 import {PIconButton} from '../design-system/PIconButton'
 import {PModal} from '../design-system/PModal'
 import {PRadioSwitch} from '../design-system/PRadioSwitch'
@@ -8,11 +9,13 @@ import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {PSwitch} from '../design-system/PSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
+import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
+import {PScribbleCircleControl} from './PScribbleCircleControl'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -27,7 +30,7 @@ const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
   settingsScene: [
     'pomo-settings__scene grid gap-4 pb-5',
-    'border-b border-solid border-border min-[40rem]:hidden',
+    'border-b border-solid border-border lg:hidden',
   ].join(' '),
   settingsScreenSaver: [
     'pomo-settings__screen-saver grid gap-2 pt-4',
@@ -46,8 +49,10 @@ export interface PSettingsProps {
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange?: (motionMode: PSceneMotionMode) => void
   readonly onScreenSaverDelayChange?: (delay: ScreenSaverDelay) => void
+  readonly onSceneStyleChange?: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange?: (timeMode: SceneTimeMode) => void
   readonly screenSaverDelay?: ScreenSaverDelay
+  readonly sceneStyle?: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode?: PSceneMotionMode
   readonly timeMode?: SceneTimeMode
@@ -223,12 +228,14 @@ export const PSettings = (props: PSettingsProps) => {
 
   return (
     <>
-      <PIconButton
-        accessibleLabel="설정 열기"
-        feedback="설정"
-        icon="i-tabler-settings"
-        onPress={handleOpen}
-      />
+      <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+        <PIconButton
+          accessibleLabel="설정 열기"
+          feedback="설정"
+          icon={getPomoIconClass('i-tabler-settings', props.sceneStyle)}
+          onPress={handleOpen}
+        />
+      </PScribbleCircleControl>
       <Tabs value={activeTab()} onChange={setActiveTab}>
         <PModal
           isOpen={isOpen()}
@@ -237,7 +244,7 @@ export const PSettings = (props: PSettingsProps) => {
           onOpenChange={setIsOpen}
           placement="top"
           size="wide"
-          title="Pomo 설정"
+          title="Pomofi 설정"
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">
@@ -247,22 +254,33 @@ export const PSettings = (props: PSettingsProps) => {
                   label="시간"
                   onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}
                   options={FOCUS_ROOM_TIME_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.timeMode ?? 'day'}
                 />
                 <PRadioSwitch
                   label="행동"
                   onChange={(activity) => props.onActivityChange?.(activity)}
                   options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.activity ?? 'reading'}
                 />
                 <PRadioSwitch
                   label="보기"
                   onChange={(gaze) => props.onGazeChange?.(gaze)}
                   options={FOCUS_ROOM_GAZE_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.gaze ?? 'focused'}
                 />
               </div>
               <div class="grid gap-4 border-b border-solid border-border pb-5">
+                <PSwitch
+                  checked={(props.sceneStyle ?? 'original') === 'scribble'}
+                  description="준비된 장면을 일부러 서툴게 그린 하찮은 그림으로 바꿔요."
+                  label="하찮은 스타일"
+                  onChange={(isChecked) =>
+                    props.onSceneStyleChange?.(isChecked ? 'scribble' : 'original')
+                  }
+                />
                 <PRadioSwitch
                   label="장면 움직임"
                   onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}

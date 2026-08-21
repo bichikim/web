@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "albums": [
+    {
+      "id": "morning-focus",
+      "title": "아침의 카페",
+      "description": "맑은 리듬으로 집중을 시작해요",
+      "icon": "i-tabler-sunrise",
+      "trackIds": [
+        "brunch-terrace",
+        "park-bench-polaroid",
+        "polaroid-park",
+        "cafe-at-eleven",
+        "blue-sky-balcony",
+        "sunday-morning-coffee",
+        "sunday-bookstore-glow",
+        "sunrise-pastry-run",
+        "bakery-window-bounce"
+      ]
+    },
+    {
+      "id": "cafe-focus",
+      "title": "카페의 오후",
+      "description": "카페처럼 편안한 오후의 사운드",
+      "icon": "i-tabler-coffee",
+      "trackIds": ["polaroid-parkside", "peach-soda"]
+    },
+    {
+      "id": "tension-focus",
+      "title": "텐션 업, 몰입 온",
+      "description": "경쾌한 리듬으로 몰입을 끌어올려요",
+      "icon": "i-tabler-bolt",
+      "trackIds": [
+        "sunlit-sidewalk-loop",
+        "sidewalk-swing",
+        "citrus-park-loop",
+        "dappled-groove",
+        "rooftop-orange-juice",
+        "sunlit-brass-bounce"
+      ]
+    },
+    {
+      "id": "happy-detour",
+      "title": "기분 좋은 딴짓",
+      "description": "잠깐 리듬을 타며 기분 좋게 쉬어가요",
+      "icon": "i-tabler-mood-smile",
+      "trackIds": ["lunchline-grooves", "clavinet-crosswalk"]
+    },
+    {
+      "id": "quiet-pages",
+      "title": "조용한 페이지",
+      "description": "페이지를 넘기듯 잔잔하게 이어져요",
+      "icon": "i-tabler-book-2",
+      "trackIds": [
+        "deskside-sun-fade",
+        "sunlit-desk-notes",
+        "picnic-under-trees",
+        "breeze-between-pages"
+      ]
+    }
+  ]
+}

@@ -46,6 +46,7 @@ const rendererHarness = vi.hoisted(() => {
     applications: [] as Array<{canvas: HTMLCanvasElement; stage: TestContainer}>,
     createContainer,
     deferApplication: false,
+    eyes: [] as Array<{setMode: (mode: string) => void}>,
     resolvers: new Map<string, Resolve>(),
     scenes: [] as Array<{container: TestContainer; definitionId: string; destroyed: boolean}>,
   }
@@ -77,8 +78,13 @@ vi.mock('../../focus-room-animation/eye-animation-controller', () => ({
     readonly container = rendererHarness.createContainer()
     readonly destroy = vi.fn(() => this.container.destroy())
     readonly initialize = vi.fn(async () => undefined)
+    readonly setMode = vi.fn()
     readonly setSceneReady = vi.fn()
     readonly update = vi.fn()
+
+    constructor() {
+      rendererHarness.eyes.push(this)
+    }
   },
 }))
 
@@ -137,6 +143,7 @@ import {PLayerReviewRenderer, type PLayerReviewState} from '../scene-renderer'
 const state: PLayerReviewState = {
   activity: 'reading',
   animationEnabled: true,
+  eyeMode: 'auto',
   eyesVisible: true,
   gaze: 'focused',
   handsVisible: true,
@@ -159,6 +166,7 @@ beforeEach(() => {
   rendererHarness.applicationResolver = null
   rendererHarness.applications.length = 0
   rendererHarness.deferApplication = false
+  rendererHarness.eyes.length = 0
   rendererHarness.resolvers.clear()
   rendererHarness.scenes.length = 0
 })
@@ -204,5 +212,19 @@ it('should keep the latest preview when it loads before the initial scene', asyn
   expect(stage?.children).toContain(replacementScene?.container)
   expect(stage?.children).not.toContain(initialScene?.container)
   expect(host.querySelector('canvas')).not.toBeNull()
+  renderer.destroy()
+})
+
+it('should forward a fixed eye frame to the eye controller', async () => {
+  const host = document.createElement('div')
+  const renderer = new PLayerReviewRenderer(host, {definition: createDefinition('initial')})
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  renderer.update({...state, eyeMode: 'closed'})
+
+  expect(rendererHarness.eyes[0]?.setMode).toHaveBeenLastCalledWith('closed')
   renderer.destroy()
 })

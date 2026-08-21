@@ -5,8 +5,10 @@ import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
 
 import {
   FOCUS_ROOM_SCENES,
+  type PEyeMode,
   type PSceneCatalogEntry,
   type PSceneId,
+  type PSceneStyle,
 } from '../features/focus-room-animation'
 import {P_VISEMES, type PViseme} from '../features/lip-sync'
 
@@ -23,6 +25,7 @@ interface LayerToggleProps {
 
 interface ReviewControlsProps {
   readonly animationEnabled: boolean
+  readonly eyeMode: PEyeMode
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
@@ -30,14 +33,17 @@ interface ReviewControlsProps {
   readonly onAnimationChange: (enabled: boolean) => void
   readonly onCollapse: () => void
   readonly onEyesChange: (visible: boolean) => void
+  readonly onEyeModeChange: (eyeMode: PEyeMode) => void
   readonly onHandsChange: (visible: boolean) => void
   readonly onHeadChange: (visible: boolean) => void
   readonly onHideAll: () => void
   readonly onMouthChange: (visible: boolean) => void
   readonly onReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent>
+  readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onShowAll: () => void
   readonly referenceOpacity: number
   readonly referencePercentage: number
+  readonly sceneStyle: PSceneStyle
   readonly viseme: PViseme
   readonly onVisemeChange: (viseme: PViseme) => void
 }
@@ -49,6 +55,14 @@ const VISEME_LABELS: Readonly<Record<PViseme, string>> = {
   rest: '기본 미소 · 무음',
   round: '둥근 입 · ㅗ/ㅜ',
   wide: '넓은 입 · ㅐ/ㅔ/ㅣ',
+}
+
+const EYE_MODES = ['auto', 'open', 'half', 'closed'] as const satisfies ReadonlyArray<PEyeMode>
+const EYE_MODE_LABELS: Readonly<Record<PEyeMode, string>> = {
+  auto: '자동 깜박임',
+  closed: '완전히 감은 눈',
+  half: '반쯤 감은 눈',
+  open: '열린 눈',
 }
 
 const PANEL_CLASSES = cx(
@@ -78,6 +92,27 @@ const LayerToggle = (props: LayerToggleProps) => {
     </label>
   )
 }
+
+const EyeModePicker = (props: {
+  readonly eyeMode: PEyeMode
+  readonly onChange: (eyeMode: PEyeMode) => void
+}) => (
+  <label class="mt-3 block border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
+    <span class="block text-sm font-700 text-#fffaf1">눈 깜박임 단계</span>
+    <span class="mt-1 block text-xs leading-5 text-#a99fac">
+      자동 움직임이나 눈 프레임 한 단계를 고정해서 검사합니다.
+    </span>
+    <select
+      class="mt-2 h-10 w-full rounded-3 border border-white/12 bg-#211a24 px-3 text-sm text-#fffaf1"
+      onChange={(event) => props.onChange(event.currentTarget.value as PEyeMode)}
+      value={props.eyeMode}
+    >
+      <For each={EYE_MODES}>
+        {(eyeMode) => <option value={eyeMode}>{EYE_MODE_LABELS[eyeMode]}</option>}
+      </For>
+    </select>
+  </label>
+)
 
 const ScenePicker = (props: {
   readonly onSelect: (id: PSceneId) => void
@@ -132,7 +167,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
       </div>
       <div class="flex shrink-0 items-center gap-2">
         <span class="whitespace-nowrap rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
-          원본 픽셀
+          {props.sceneStyle === 'scribble' ? '하찮은 픽셀' : '원본 픽셀'}
         </span>
         <button
           aria-controls="layer-review-controls"
@@ -149,6 +184,15 @@ const ReviewControls = (props: ReviewControlsProps) => (
           <span aria-hidden="true" class="i-tabler-layout-sidebar-right-collapse size-4" />
         </button>
       </div>
+    </div>
+
+    <div class="mt-3 border-t border-white/8 pt-1 sm:mt-4 sm:pt-2">
+      <LayerToggle
+        checked={props.sceneStyle === 'scribble'}
+        description="준비된 낮 장면을 일부러 서툴게 그린 이미지로 바꿉니다."
+        label="하찮은 스타일"
+        onChange={(checked) => props.onSceneStyleChange(checked ? 'scribble' : 'original')}
+      />
     </div>
 
     <label
@@ -197,6 +241,8 @@ const ReviewControls = (props: ReviewControlsProps) => (
         onChange={props.onHandsChange}
       />
     </div>
+
+    <EyeModePicker eyeMode={props.eyeMode} onChange={props.onEyeModeChange} />
 
     <label class="mt-3 block border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
       <span class="block text-sm font-700 text-#fffaf1">입 모양</span>
@@ -259,10 +305,12 @@ const ReviewControls = (props: ReviewControlsProps) => (
 
 export const PLayerReview = () => {
   const [selectedId, setSelectedId] = createSignal<PSceneId>(INITIAL_SCENE_ID)
+  const [sceneStyle, setSceneStyle] = createSignal<PSceneStyle>('original')
   const [controlsExpanded, setControlsExpanded] = createSignal(true)
   const [headVisible, setHeadVisible] = createSignal(true)
   const [handsVisible, setHandsVisible] = createSignal(true)
   const [animationEnabled, setAnimationEnabled] = createSignal(true)
+  const [eyeMode, setEyeMode] = createSignal<PEyeMode>('auto')
   const [eyesVisible, setEyesVisible] = createSignal(true)
   const [mouthVisible, setMouthVisible] = createSignal(true)
   const [referenceOpacity, setReferenceOpacity] = createSignal(0)
@@ -308,6 +356,7 @@ export const PLayerReview = () => {
         <PLayerReviewCanvas
           activity={selectedScene().activity}
           animationEnabled={animationEnabled()}
+          eyeMode={eyeMode()}
           eyesVisible={eyesVisible()}
           fallback={
             <div class="grid h-full place-items-center text-sm text-#a99fac">PixiJS 준비 중</div>
@@ -318,6 +367,7 @@ export const PLayerReview = () => {
           mouthVisible={mouthVisible()}
           referenceOpacity={referenceOpacity()}
           sceneId={selectedScene().id}
+          sceneStyle={sceneStyle()}
           time={selectedScene().time}
           viseme={viseme()}
         />
@@ -339,7 +389,7 @@ export const PLayerReview = () => {
             {selectedScene().label}
           </h1>
           <A class="text-xs font-700 text-#d7c7b3 no-underline hover:text-white" href="/">
-            Pomo로 →
+            Pomofi로 →
           </A>
         </div>
         <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · 분리 레이어</p>
@@ -367,6 +417,7 @@ export const PLayerReview = () => {
       >
         <ReviewControls
           animationEnabled={animationEnabled()}
+          eyeMode={eyeMode()}
           eyesVisible={eyesVisible()}
           handsVisible={handsVisible()}
           headVisible={headVisible()}
@@ -374,15 +425,18 @@ export const PLayerReview = () => {
           onAnimationChange={setAnimationEnabled}
           onCollapse={() => setControlsExpanded(false)}
           onEyesChange={setEyesVisible}
+          onEyeModeChange={setEyeMode}
           onHandsChange={setHandsVisible}
           onHeadChange={setHeadVisible}
           onHideAll={handleHideAll}
           onMouthChange={setMouthVisible}
           onReferenceChange={handleReferenceChange}
+          onSceneStyleChange={setSceneStyle}
           onShowAll={handleShowAll}
           onVisemeChange={setViseme}
           referenceOpacity={referenceOpacity()}
           referencePercentage={referencePercentage()}
+          sceneStyle={sceneStyle()}
           viseme={viseme()}
         />
       </Show>

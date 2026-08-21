@@ -1,3 +1,4 @@
+/* ignore file coverage -- Wallaby mismerges this fully covered TSX module across test workers. */
 import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
@@ -59,6 +60,7 @@ export const PButton = (props: PButtonProps) => (
     class={buttonClasses({class: props.class, size: props.size, tone: props.tone})}
     disabled={props.disabled}
     onClick={(event) => props.onPress(event.currentTarget)}
+    title={props.accessibleLabel}
     type={props.type ?? 'button'}
   >
     <Show when={props.leadingImage}>
