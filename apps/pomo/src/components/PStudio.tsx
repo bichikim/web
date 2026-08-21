@@ -180,14 +180,19 @@ const findLabel = <TValue extends string>(
   value: TValue,
 ) => options.find((option) => option.value === value)?.label ?? value
 
-const getSceneAsset = (time: SceneTime, activity: PActivity, gaze: PGaze): SceneAsset => {
+const getSceneAsset = (
+  time: SceneTime,
+  activity: PActivity,
+  gaze: PGaze,
+  sceneStyle: PSceneStyle,
+): SceneAsset => {
   const timeLabel = findLabel(FOCUS_ROOM_TIME_OPTIONS, time)
   const activityLabel = findLabel(FOCUS_ROOM_ACTIVITY_OPTIONS, activity)
   const gazeLabel = findLabel(FOCUS_ROOM_GAZE_OPTIONS, gaze)
   const scene = getPScene(time, activity, gaze)
 
   return {
-    depthSource: scene.depthSource,
+    depthSource: scene.depthSources[sceneStyle],
     id: scene.id,
     label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
     source: scene.source,
@@ -404,7 +409,9 @@ export const PStudio = () => {
   const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
-  const selectedScene = createMemo(() => getSceneAsset(time(), activity(), sceneGaze()))
+  const selectedScene = createMemo(() =>
+    getSceneAsset(time(), activity(), sceneGaze(), sceneStyleController.sceneStyle()),
+  )
   const activeViseme = createMemo(() => {
     return resolvePSceneViseme(
       events.activeViseme(),

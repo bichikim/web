@@ -115,6 +115,19 @@ describe('focus room scene catalog', () => {
     }
   })
 
+  it('should provide a dedicated depth map for every scene style', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const gazeName = scene.gaze === 'focused' ? 'focused' : 'user-gaze'
+      const scribbleDepthName = `${scene.time}-${scene.activity}-${gazeName}-scribble`
+
+      expect(scene.depthSources.original).toContain('/depth/')
+      expect(scene.depthSources.original).not.toContain('scribble')
+      expect(scene.depthSources.scribble).toContain('/depth/')
+      expect(scene.depthSources.scribble).toContain(scribbleDepthName)
+      expect(scene.depthSources.scribble).not.toBe(scene.depthSources.original)
+    }
+  })
+
   it('should share six full-head mouth stages across every scribble user-facing scene', () => {
     const expectedMouthIds = [
       'mouth-rest',
