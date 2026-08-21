@@ -1,12 +1,15 @@
 import {createSignal, lazy, Show} from 'solid-js'
 
+import {getPomoIconClass} from '../design-system/icon-style'
 import type {PTrack} from '../features/focus-room-audio'
+import type {PSceneStyle} from '../features/focus-room-animation'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
 
 const PAlbumLibraryContent = lazy(() => import('./PAlbumLibraryContent'))
 
 export interface PAlbumLibraryProps {
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
+  readonly sceneStyle?: PSceneStyle
   readonly tracks: readonly PTrack[]
 }
 
@@ -18,7 +21,7 @@ export const PAlbumLibrary = (props: PAlbumLibraryProps) => {
     <>
       <PPlayerUtilityButton
         accessibleLabel="앨범 추가"
-        icon="i-tabler-album"
+        icon={getPomoIconClass('i-tabler-album', props.sceneStyle)}
         onPress={(source) => {
           setTriggerElement(source)
           setIsOpen(true)

@@ -3,7 +3,7 @@
 import {render} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {type PSceneStyleController, usePSceneStyle} from '../index'
+import {type PSceneStyle, type PSceneStyleController, usePSceneStyle} from '../index'
 
 const storageMocks = vi.hoisted(() => ({
   read: vi.fn(),
@@ -27,11 +27,11 @@ const SceneStyleHarness = (props: SceneStyleHarnessProps) => {
 }
 
 beforeEach(() => {
-  storageMocks.read.mockReset().mockReturnValue('scribble')
-  storageMocks.write.mockReset()
+  storageMocks.read.mockReset().mockResolvedValue('scribble')
+  storageMocks.write.mockReset().mockResolvedValue(undefined)
 })
 
-it('should restore the stored scene style after mounting', () => {
+it('should restore the stored scene style after mounting', async () => {
   let controller: PSceneStyleController | undefined
 
   render(() => (
@@ -42,7 +42,7 @@ it('should restore the stored scene style after mounting', () => {
     />
   ))
 
-  expect(controller?.sceneStyle()).toBe('scribble')
+  await vi.waitFor(() => expect(controller?.sceneStyle()).toBe('scribble'))
 })
 
 it('should update and persist both scene style choices', () => {
@@ -63,4 +63,28 @@ it('should update and persist both scene style choices', () => {
   controller?.onSceneStyleChange('scribble')
   expect(controller?.sceneStyle()).toBe('scribble')
   expect(storageMocks.write).toHaveBeenLastCalledWith('scribble')
+})
+
+it('should not overwrite a newer choice when stored style restoration finishes late', async () => {
+  let completeRead: (sceneStyle: PSceneStyle) => void = () => undefined
+  storageMocks.read.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  let controller: PSceneStyleController | undefined
+
+  render(() => (
+    <SceneStyleHarness
+      onController={(nextController) => {
+        controller = nextController
+      }}
+    />
+  ))
+
+  controller?.onSceneStyleChange('original')
+  completeRead('scribble')
+
+  await Promise.resolve()
+  expect(controller?.sceneStyle()).toBe('original')
 })

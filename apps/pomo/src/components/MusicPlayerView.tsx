@@ -502,7 +502,11 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
               </p>
             </div>
 
-            <PAlbumLibrary onAddTracks={handleAlbumAdd} tracks={props.tracks} />
+            <PAlbumLibrary
+              onAddTracks={handleAlbumAdd}
+              sceneStyle={props.sceneStyle}
+              tracks={props.tracks}
+            />
 
             <PPlayerUtilityButton
               accessibleLabel={props.expanded ? '플레이어 접기' : '플레이어 펼치기'}

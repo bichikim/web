@@ -1,14 +1,17 @@
+import {fileURLToPath} from 'node:url'
+
 import {solidStart} from '@solidjs/start/config'
 import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {nitro} from 'nitro/vite'
 import UnoCSS from 'unocss/vite'
-import {defineConfig} from 'vite'
+import {defineConfig, type Plugin} from 'vite'
 
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
+const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
@@ -52,6 +55,28 @@ const excludeArchivedAssets = {
     }
   },
 }
+
+const restartOnScribbleIconChange = {
+  configureServer(server) {
+    const restartServer = (changedPath: string) => {
+      if (changedPath !== scribbleIconSetPath) {
+        return
+      }
+
+      server.config.logger.info('scribble.json changed, restarting server...')
+      server.restart().catch((error: unknown) => {
+        const restartError = error instanceof Error ? error : new Error(String(error))
+        server.config.logger.error('Failed to reload the scribble icon set.', {
+          error: restartError,
+        })
+      })
+    }
+
+    server.watcher.add(scribbleIconSetPath)
+    server.watcher.on('change', restartServer)
+  },
+  name: 'restart-on-scribble-icon-change',
+} satisfies Plugin
 
 const useStaticNitroEntry = {
   configEnvironment(name: string, config: {build?: {rolldownOptions?: {input?: string}}}) {
@@ -112,6 +137,7 @@ export default defineConfig({
     solidStart({devOverlay: false}),
     createDevFeedPlugin(),
     excludeArchivedAssets,
+    restartOnScribbleIconChange,
     nitro(),
     useStaticNitroEntry,
   ],

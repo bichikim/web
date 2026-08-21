@@ -1,21 +1,21 @@
-import dayFocusedScribbleHeadSource from './assets/concept-art/day-focused-scribble-head.png'
-import dayUserScribbleMouthClosedSource from './assets/animation/mouths/day-user-scribble/closed.png'
-import dayUserScribbleMouthNarrowSource from './assets/animation/mouths/day-user-scribble/narrow.png'
-import dayUserScribbleMouthOpenSource from './assets/animation/mouths/day-user-scribble/open.png'
-import dayUserScribbleMouthRestSource from './assets/animation/mouths/day-user-scribble/rest.png'
-import dayUserScribbleMouthRoundSource from './assets/animation/mouths/day-user-scribble/round.png'
-import dayUserScribbleMouthWideSource from './assets/animation/mouths/day-user-scribble/wide.png'
-import scribbleSteam01Source from './assets/animation/steam/scribble/01.png'
-import scribbleSteam02Source from './assets/animation/steam/scribble/02.png'
-import scribbleSteam03Source from './assets/animation/steam/scribble/03.png'
-import scribbleSteam04Source from './assets/animation/steam/scribble/04.png'
-import dayReadingScribbleBackgroundSource from './assets/concept-art/day-reading-focused-scribble-background-cup.png'
-import dayTypingFocusedScribbleBackgroundSource from './assets/concept-art/day-typing-focused-scribble-background.png'
-import dayUserScribbleHeadSource from './assets/concept-art/day-user-scribble-head.png'
-import dayWritingFocusedScribbleBackgroundSource from './assets/concept-art/day-writing-focused-scribble-background.png'
-import nightReadingScribbleBackgroundSource from './assets/concept-art/night-reading-focused-scribble-background.png'
-import nightTypingScribbleBackgroundSource from './assets/concept-art/night-typing-focused-scribble-background.png'
-import nightWritingScribbleBackgroundSource from './assets/concept-art/night-writing-focused-scribble-background.png'
+import dayFocusedScribbleHeadSource from './assets/concept-art/day-focused-scribble-head.webp'
+import dayUserScribbleMouthClosedSource from './assets/animation/mouths/day-user-scribble/closed.webp'
+import dayUserScribbleMouthNarrowSource from './assets/animation/mouths/day-user-scribble/narrow.webp'
+import dayUserScribbleMouthOpenSource from './assets/animation/mouths/day-user-scribble/open.webp'
+import dayUserScribbleMouthRestSource from './assets/animation/mouths/day-user-scribble/rest.webp'
+import dayUserScribbleMouthRoundSource from './assets/animation/mouths/day-user-scribble/round.webp'
+import dayUserScribbleMouthWideSource from './assets/animation/mouths/day-user-scribble/wide.webp'
+import scribbleSteam01Source from './assets/animation/steam/scribble/01.webp'
+import scribbleSteam02Source from './assets/animation/steam/scribble/02.webp'
+import scribbleSteam03Source from './assets/animation/steam/scribble/03.webp'
+import scribbleSteam04Source from './assets/animation/steam/scribble/04.webp'
+import dayReadingScribbleBackgroundSource from './assets/concept-art/day-reading-focused-scribble-background-cup.webp'
+import dayTypingFocusedScribbleBackgroundSource from './assets/concept-art/day-typing-focused-scribble-background.webp'
+import dayUserScribbleHeadSource from './assets/concept-art/day-user-scribble-head.webp'
+import dayWritingScribbleBackgroundSource from './assets/concept-art/day-writing-focused-scribble-background.webp'
+import nightReadingScribbleBackgroundSource from './assets/concept-art/night-reading-focused-scribble-background.webp'
+import nightTypingScribbleBackgroundSource from './assets/concept-art/night-typing-focused-scribble-background.webp'
+import nightWritingScribbleBackgroundSource from './assets/concept-art/night-writing-focused-scribble-background.webp'
 import {DAY_READING_FOCUSED_LAYER_SCENE} from './day-reading-focused-layer-scene'
 import {DAY_WRITING_LAYER_SCENE} from './day-writing-layer-scene'
 import {GENERATED_LAYER_SCENES} from './generated-layer-scenes'
@@ -167,11 +167,11 @@ const SCRIBBLE_LAYER_SCENES = {
   ),
   'day-writing-focused': createScribbleLayerScene(
     'day-writing-focused',
-    dayWritingFocusedScribbleBackgroundSource,
+    dayWritingScribbleBackgroundSource,
   ),
   'day-writing-user': createScribbleLayerScene(
     'day-writing-user',
-    dayWritingFocusedScribbleBackgroundSource,
+    dayWritingScribbleBackgroundSource,
     dayUserScribbleHeadSource,
     SCRIBBLE_USER_MOUTH_SOURCES,
   ),

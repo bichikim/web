@@ -1,6 +1,7 @@
 import type {PSceneStyle} from '../features/focus-room-animation'
 
 const SCRIBBLE_ICON_CLASSES: Readonly<Record<string, string>> = {
+  'i-tabler-album': 'i-pomo-scribble:album',
   'i-tabler-armchair-2': 'i-pomo-scribble:armchair',
   'i-tabler-arrows-shuffle': 'i-pomo-scribble:shuffle',
   'i-tabler-book-2': 'i-pomo-scribble:book',

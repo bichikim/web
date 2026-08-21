@@ -8,6 +8,7 @@ describe('getPomoIconClass', () => {
   })
 
   it('should replace supported controls in scribble style', () => {
+    expect(getPomoIconClass('i-tabler-album', 'scribble')).toBe('i-pomo-scribble:album')
     expect(getPomoIconClass('i-tabler-player-play', 'scribble')).toBe('i-pomo-scribble:play')
     expect(getPomoIconClass('i-tabler-volume-off', 'scribble')).toBe('i-pomo-scribble:volume-off')
   })

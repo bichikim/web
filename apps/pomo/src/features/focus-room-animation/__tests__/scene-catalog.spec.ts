@@ -165,7 +165,7 @@ describe('focus room scene catalog', () => {
         scribbleSteamLayers.every(
           (layer) =>
             layer.source.includes('steam/scribble/') &&
-            layer.source.endsWith('.png') &&
+            layer.source.endsWith('.webp') &&
             layer.motions?.some((motion) => motion.kind === 'looping-translation') === true &&
             layer.motions.some((motion) => motion.kind === 'visibility-cycle'),
         ),

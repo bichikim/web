@@ -85,6 +85,8 @@ describe('MusicPlayerView', () => {
       HTMLElement,
     )
     expect(originalResult.container.querySelector('.i-pomo-scribble\\:play')).toBeNull()
+    expect(originalResult.container.querySelector('.i-tabler-album')).toBeInstanceOf(HTMLElement)
+    expect(originalResult.container.querySelector('.i-pomo-scribble\\:album')).toBeNull()
     expect(
       originalResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
     ).toHaveLength(0)
@@ -101,7 +103,11 @@ describe('MusicPlayerView', () => {
     expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:shuffle')).toBeInstanceOf(
       HTMLElement,
     )
+    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:album')).toBeInstanceOf(
+      HTMLElement,
+    )
     expect(scribbleResult.container.querySelector('.i-tabler-player-play')).toBeNull()
+    expect(scribbleResult.container.querySelector('.i-tabler-album')).toBeNull()
     expect(
       scribbleResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
     ).toHaveLength(2)
