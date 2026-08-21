@@ -14,10 +14,13 @@ import {
   createEntryPlaybackController,
   type PlayPDialogueSequenceOptions,
 } from './entry-playback-controller'
+import {selectEventDialogues} from './event-playback'
 import type {PDialogueRepository} from './repository'
 import {
+  DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
   type DialogueEventBinding,
   type DialogueEventId,
+  type DialogueEventPlaybackMode,
   type DialogueSegmentMood,
   FOCUS_ROOM_ENTRY_EVENT,
   type PDialogue,
@@ -27,6 +30,7 @@ export type {PlayPDialogueSequenceOptions} from './entry-playback-controller'
 export type {DialogueSegmentMood} from './schema'
 
 type EventDialogueIds = Readonly<Partial<Record<DialogueEventId, ReadonlyArray<string>>>>
+type EventPlaybackModes = Readonly<Partial<Record<DialogueEventId, DialogueEventPlaybackMode>>>
 
 export interface PEventContextValue {
   readonly activeDialogueId: Accessor<string | null>
@@ -41,6 +45,7 @@ export interface PEventContextValue {
   readonly entryDialogueIds: Accessor<ReadonlyArray<string>>
   readonly errorMessage: Accessor<string | null>
   readonly eventDialogueIds: Accessor<EventDialogueIds>
+  readonly eventPlaybackModes: Accessor<EventPlaybackModes>
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
   readonly hasEnteredFocusRoom: Accessor<boolean>
   readonly isDialoguePlaybackBlocked: Accessor<boolean>
@@ -69,6 +74,10 @@ export interface PEventContextValue {
     eventId: DialogueEventId,
     dialogueIds: ReadonlyArray<string>,
   ) => Promise<void>
+  readonly setEventPlaybackMode: (
+    eventId: DialogueEventId,
+    playbackMode: DialogueEventPlaybackMode,
+  ) => Promise<void>
 }
 
 export interface PEventProviderProps {
@@ -80,6 +89,9 @@ const PEventContext = createContext<PEventContextValue>()
 
 const getEventDialogueIds = (bindings: ReadonlyArray<DialogueEventBinding>): EventDialogueIds =>
   Object.fromEntries(bindings.map((binding) => [binding.event, binding.dialogueIds]))
+
+const getEventPlaybackModes = (bindings: ReadonlyArray<DialogueEventBinding>): EventPlaybackModes =>
+  Object.fromEntries(bindings.map((binding) => [binding.event, binding.playbackMode]))
 
 const removeDialogueFromBindings = (
   bindings: EventDialogueIds,
@@ -108,11 +120,28 @@ const updateEventBinding = (
   return nextBindings
 }
 
+const updateEventPlaybackMode = (
+  modes: EventPlaybackModes,
+  eventId: DialogueEventId,
+  playbackMode: DialogueEventPlaybackMode | null,
+): EventPlaybackModes => {
+  const nextModes = {...modes}
+
+  if (playbackMode === null) {
+    delete nextModes[eventId]
+  } else {
+    nextModes[eventId] = playbackMode
+  }
+
+  return nextModes
+}
+
 // oxlint-disable-next-line eslint/max-lines-per-function -- One provider coordinates repository initialization, bindings, and queued playback lifecycle.
 export const PEventProvider = (props: PEventProviderProps) => {
   const playback = createEntryPlaybackController()
   const [dialogues, setDialogues] = createSignal<ReadonlyArray<PDialogue>>([])
   const [eventDialogueIds, setEventDialogueIds] = createSignal<EventDialogueIds>({})
+  const [eventPlaybackModes, setEventPlaybackModes] = createSignal<EventPlaybackModes>({})
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   const [isLoading, setIsLoading] = createSignal(true)
@@ -120,8 +149,10 @@ export const PEventProvider = (props: PEventProviderProps) => {
   let isDisposed = false
   let bindingUpdate = Promise.resolve()
   let bindingRevision = 0
+  const eventBindingRevisions: Partial<Record<DialogueEventId, number>> = {}
   let hasStartedEntryPlayback = false
   let persistedBindings: EventDialogueIds = {}
+  let persistedPlaybackModes: EventPlaybackModes = {}
   let resolveInitialization: (() => void) | null = null
   const initialization = new Promise<void>((resolve) => {
     resolveInitialization = resolve
@@ -147,8 +178,14 @@ export const PEventProvider = (props: PEventProviderProps) => {
     }
 
     const entryDialogueIds = eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? []
+    const playbackMode =
+      eventPlaybackModes()[FOCUS_ROOM_ENTRY_EVENT] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE
+    const selectedDialogueIds = selectEventDialogues({
+      dialogueIds: entryDialogueIds,
+      playbackMode,
+    })
 
-    if (entryDialogueIds.length === 0) {
+    if (selectedDialogueIds.length === 0) {
       return
     }
 
@@ -156,7 +193,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
 
     playback
       .playSequence(repository, {
-        dialogueIds: entryDialogueIds,
+        dialogueIds: selectedDialogueIds,
         onDialogueStart: () => undefined,
         onSequenceStop: () => undefined,
       })
@@ -185,9 +222,12 @@ export const PEventProvider = (props: PEventProviderProps) => {
       }
 
       const storedBindings = getEventDialogueIds(eventBindings)
+      const storedPlaybackModes = getEventPlaybackModes(eventBindings)
       setDialogues(storedDialogues)
       persistedBindings = storedBindings
+      persistedPlaybackModes = storedPlaybackModes
       setEventDialogueIds(storedBindings)
+      setEventPlaybackModes(storedPlaybackModes)
       setErrorMessage(null)
 
       playEntryDialogue()
@@ -207,24 +247,38 @@ export const PEventProvider = (props: PEventProviderProps) => {
     }
   }
 
-  const setEventDialogues = async (
+  const persistEventBinding = async (
     eventId: DialogueEventId,
     dialogueIds: ReadonlyArray<string>,
+    playbackMode: DialogueEventPlaybackMode,
   ) => {
     const uniqueDialogueIds = [...new Set(dialogueIds)]
     bindingRevision += 1
-    const currentRevision = bindingRevision
+    const currentEventRevision = (eventBindingRevisions[eventId] ?? 0) + 1
+    eventBindingRevisions[eventId] = currentEventRevision
     setEventDialogueIds((currentBindings) =>
       updateEventBinding(currentBindings, eventId, uniqueDialogueIds),
     )
+    setEventPlaybackModes((currentModes) =>
+      updateEventPlaybackMode(
+        currentModes,
+        eventId,
+        uniqueDialogueIds.length === 0 ? null : playbackMode,
+      ),
+    )
     const update = bindingUpdate
       .catch(() => undefined)
-      .then(() => getRepository().setEventBinding(eventId, uniqueDialogueIds))
+      .then(() => getRepository().setEventBinding(eventId, uniqueDialogueIds, playbackMode))
     bindingUpdate = update
 
     try {
       await update
       persistedBindings = updateEventBinding(persistedBindings, eventId, uniqueDialogueIds)
+      persistedPlaybackModes = updateEventPlaybackMode(
+        persistedPlaybackModes,
+        eventId,
+        uniqueDialogueIds.length === 0 ? null : playbackMode,
+      )
 
       if (!isDisposed) {
         playback.stop()
@@ -234,8 +288,13 @@ export const PEventProvider = (props: PEventProviderProps) => {
         }
       }
     } catch (error: unknown) {
-      if (!isDisposed && currentRevision === bindingRevision) {
-        setEventDialogueIds(persistedBindings)
+      if (!isDisposed && currentEventRevision === eventBindingRevisions[eventId]) {
+        setEventDialogueIds((currentBindings) =>
+          updateEventBinding(currentBindings, eventId, persistedBindings[eventId] ?? []),
+        )
+        setEventPlaybackModes((currentModes) =>
+          updateEventPlaybackMode(currentModes, eventId, persistedPlaybackModes[eventId] ?? null),
+        )
       }
 
       throw error
@@ -262,8 +321,15 @@ export const PEventProvider = (props: PEventProviderProps) => {
       )
       bindingRevision += 1
       const remainingBindings = removeDialogueFromBindings(eventDialogueIds(), dialogueId)
+      const remainingPlaybackModes = Object.fromEntries(
+        Object.entries(eventPlaybackModes()).filter(
+          ([eventId]) => remainingBindings[eventId as DialogueEventId] !== undefined,
+        ),
+      ) satisfies EventPlaybackModes
       persistedBindings = remainingBindings
+      persistedPlaybackModes = remainingPlaybackModes
       setEventDialogueIds(remainingBindings)
+      setEventPlaybackModes(remainingPlaybackModes)
 
       if (playback.isDialogueScheduled(dialogueId)) {
         playback.cancel()
@@ -282,6 +348,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
     entryDialogueIds: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? [],
     errorMessage,
     eventDialogueIds,
+    eventPlaybackModes,
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
     hasEnteredFocusRoom,
     isDialoguePlaybackBlocked: playback.isBlocked,
@@ -318,7 +385,13 @@ export const PEventProvider = (props: PEventProviderProps) => {
       }
 
       const bindings = eventDialogueIds()
-      const dialogueIds = eventIds.flatMap((eventId) => bindings[eventId] ?? [])
+      const playbackModes = eventPlaybackModes()
+      const dialogueIds = eventIds.flatMap((eventId) =>
+        selectEventDialogues({
+          dialogueIds: bindings[eventId] ?? [],
+          playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+        }),
+      )
 
       if (dialogueIds.length > 0) {
         onBeforePlayback?.()
@@ -361,8 +434,11 @@ export const PEventProvider = (props: PEventProviderProps) => {
 
         if (refreshRevision === bindingRevision) {
           const storedBindings = getEventDialogueIds(eventBindings)
+          const storedPlaybackModes = getEventPlaybackModes(eventBindings)
           persistedBindings = storedBindings
+          persistedPlaybackModes = storedPlaybackModes
           setEventDialogueIds(storedBindings)
+          setEventPlaybackModes(storedPlaybackModes)
         }
       }
     },
@@ -378,11 +454,38 @@ export const PEventProvider = (props: PEventProviderProps) => {
     },
     scheduledDialogueCount: playback.scheduledDialogueCount,
     setEntryDialogue: (dialogueId) =>
-      setEventDialogues(FOCUS_ROOM_ENTRY_EVENT, dialogueId === null ? [] : [dialogueId]),
-    setEntryDialogues: (dialogueIds) => setEventDialogues(FOCUS_ROOM_ENTRY_EVENT, dialogueIds),
+      persistEventBinding(
+        FOCUS_ROOM_ENTRY_EVENT,
+        dialogueId === null ? [] : [dialogueId],
+        eventPlaybackModes()[FOCUS_ROOM_ENTRY_EVENT] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+      ),
+    setEntryDialogues: (dialogueIds) =>
+      persistEventBinding(
+        FOCUS_ROOM_ENTRY_EVENT,
+        dialogueIds,
+        eventPlaybackModes()[FOCUS_ROOM_ENTRY_EVENT] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+      ),
     setEventDialogue: (eventId, dialogueId) =>
-      setEventDialogues(eventId, dialogueId === null ? [] : [dialogueId]),
-    setEventDialogues,
+      persistEventBinding(
+        eventId,
+        dialogueId === null ? [] : [dialogueId],
+        eventPlaybackModes()[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+      ),
+    setEventDialogues: (eventId, dialogueIds) =>
+      persistEventBinding(
+        eventId,
+        dialogueIds,
+        eventPlaybackModes()[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+      ),
+    setEventPlaybackMode: (eventId, playbackMode) => {
+      const dialogueIds = eventDialogueIds()[eventId] ?? []
+
+      if (dialogueIds.length === 0) {
+        return Promise.resolve()
+      }
+
+      return persistEventBinding(eventId, dialogueIds, playbackMode)
+    },
     skipDialoguePlayback: playback.skip,
   }
 

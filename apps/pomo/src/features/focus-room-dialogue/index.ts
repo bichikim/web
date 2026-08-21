@@ -9,6 +9,9 @@ export type {
 export {
   dialogueEventBindingSchema,
   dialogueEventIdSchema,
+  dialogueEventPlaybackModeSchema,
+  DIALOGUE_EVENT_PLAYBACK_MODES,
+  DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
   dialogueSegmentMoodSchema,
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
@@ -17,6 +20,7 @@ export {
 export type {
   DialogueEventBinding,
   DialogueEventId,
+  DialogueEventPlaybackMode,
   DialogueSegment,
   DialogueSegmentMood,
   PDialogue,

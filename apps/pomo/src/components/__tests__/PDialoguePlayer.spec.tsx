@@ -29,6 +29,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   entryDialogueIds: () => [],
   errorMessage: () => null,
   eventDialogueIds: () => ({}),
+  eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
   hasEnteredFocusRoom: () => true,
   isDialoguePlaybackBlocked: () => false,
@@ -49,6 +50,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
   ...overrides,
 })
