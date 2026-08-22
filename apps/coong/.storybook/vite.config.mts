@@ -7,7 +7,7 @@ export default defineConfig({
     unoCss({
       configFile: fileURLToPath(new URL('../uno.config.ts', import.meta.url)),
       content: {
-        filesystem: [fileURLToPath(new URL('../packages/*/src/**/*.{ts,tsx}', import.meta.url))],
+        filesystem: [fileURLToPath(new URL('../src/**/*.{ts,tsx}', import.meta.url))],
       },
     }),
   ],
