@@ -4,7 +4,7 @@ import {type JSX, Show} from 'solid-js'
 
 const modalContentClasses = cva(
   `fixed left-1/2 flex max-h-modal border border-solid border-border backdrop-blur-surface ` +
-    `w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 flex-col overflow-hidden ` +
+    `w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 flex-col overflow-clip ` +
     `box-border rounded-panel bg-surface-strong ` +
     `text-foreground shadow-panel outline-none ` +
     `focus-visible:border-highlight motion-reduce:animate-none`,

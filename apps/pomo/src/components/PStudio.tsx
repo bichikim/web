@@ -8,7 +8,7 @@ import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
 import {PSelect} from '../design-system/PSelect'
 import type {PTrack} from '../features/focus-room-audio'
-import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import {RANDOM_DIALOGUE_EVENT, usePEvents, useRandomEvent} from '../features/focus-room-dialogue'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
   getPScene,
@@ -349,11 +349,12 @@ const PSceneFallback = () => (
 
 const PStudioEvents = (props: PStudioEventsProps) => {
   const events = usePEvents()
-  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) => {
+  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) =>
     events.playDialogueEvents(eventIds, props.pomoSay.stop).catch((error: unknown) => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
     })
-  }
+
+  useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
 
   return (
     <>

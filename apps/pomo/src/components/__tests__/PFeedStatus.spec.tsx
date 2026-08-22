@@ -109,11 +109,14 @@ const renderModal = () => {
 }
 
 it('should show a ready feed notice', () => {
-  vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
+  const feeds = createFeeds()
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
 
   const originalResult = render(() => <PFeedStatus />)
 
   expect(screen.getByText('새 피드 대화가 준비됐어요')).toBeDefined()
+  expect(feeds.listen).not.toHaveBeenCalled()
+  expect(feeds.listenAll).not.toHaveBeenCalled()
   expect(originalResult.container.querySelector('.pomo-feed-status__scribble-border')).toBeNull()
 
   originalResult.unmount()

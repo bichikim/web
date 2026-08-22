@@ -255,6 +255,7 @@ describe('PPomodoro', () => {
   })
 
   it('should continuously play focus and break phases when automatic playback is enabled', async () => {
+    const onEvents = vi.fn()
     localStorage.setItem(
       'pomo:timer-config:v1',
       JSON.stringify({
@@ -264,7 +265,7 @@ describe('PPomodoro', () => {
         shortBreakSeconds: 1,
       }),
     )
-    render(() => <PPomodoro />)
+    render(() => <PPomodoro onEvents={onEvents} />)
     await vi.advanceTimersByTimeAsync(0)
 
     const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
@@ -286,11 +287,25 @@ describe('PPomodoro', () => {
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'break-start'])
 
     vi.advanceTimersByTime(1_000)
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
     ).toBeDefined()
+    expect(onEvents).toHaveBeenLastCalledWith(['break-end', 'focus-start'])
+
+    vi.advanceTimersByTime(1_000)
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 긴 휴식 중, 00:01'}),
+    ).toBeDefined()
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'long-break-start'])
+
+    vi.advanceTimersByTime(1_000)
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
+    ).toBeDefined()
+    expect(onEvents).toHaveBeenLastCalledWith(['long-break-end', 'focus-start'])
   })
 
   it('should report focus and break lifecycle events without replaying starts on resume', async () => {
