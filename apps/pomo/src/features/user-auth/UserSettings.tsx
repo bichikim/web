@@ -3,6 +3,7 @@ import {createMemo, createSignal, Match, onMount, Show, Switch} from 'solid-js'
 
 import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
 import {readAccountSession} from './web-session'
+import {PServicePolicyLinks} from '../service-terms'
 
 type UserSettingsState =
   | {readonly kind: 'anonymous'}
@@ -117,6 +118,16 @@ export const UserSettings = () => {
           <span aria-hidden="true" class="i-tabler-user-circle size-4.5" />
           {state().kind === 'authenticated' ? '계정 관리' : '로그인 / 가입'}
         </a>
+
+        <section
+          aria-labelledby="pomo-service-information-title"
+          class="grid gap-3 border-t border-solid border-border pt-5"
+        >
+          <h3 class="m-0 text-sm font-750 text-foreground" id="pomo-service-information-title">
+            서비스 정보
+          </h3>
+          <PServicePolicyLinks />
+        </section>
       </section>
     </Tabs.Content>
   )

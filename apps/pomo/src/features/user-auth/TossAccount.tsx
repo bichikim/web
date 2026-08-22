@@ -137,7 +137,7 @@ export const TossAccount = () => {
             <div>
               <h2 class="m-0 text-base font-750">웹에서도 사용하기</h2>
               <p class="mb-0 mt-1 text-xs leading-5 text-white/50">
-                이메일 링크를 확인하면 웹에서도 같은 계정과 데이터를 사용할 수 있습니다.
+                이메일 링크를 확인하면 웹에서도 같은 계정으로 로그인할 수 있습니다.
               </p>
             </div>
             <label class="grid gap-2 text-sm font-650">

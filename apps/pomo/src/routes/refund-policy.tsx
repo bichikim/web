@@ -1,6 +1,9 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
+import {SERVICE_OPERATOR} from 'src/features/service-operator'
+import {PServicePolicyLinks} from 'src/features/service-terms'
+
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1',
   'xs:px-8 xs:py-16',
@@ -23,10 +26,6 @@ const CONTENT_LINK_CLASSES = cx(
   'text-#d8cbd9 underline decoration-white/25 underline-offset-4 transition-colors',
   'hover:text-white focus-visible:text-white',
 )
-const FORMULA_CLASSES = cx(
-  'mb-0 mt-5 rounded-5 border border-#f2a7b8/20 bg-#f2a7b8/7 px-5 py-4',
-  'text-center text-sm font-750 leading-7 text-#ffd4de xs:text-base',
-)
 const FOOTER_CLASSES = cx(
   'grid gap-3 border-t border-white/8 pt-6 text-xs leading-6 text-#8f8297',
   'sm:flex sm:items-end sm:justify-between',
@@ -41,9 +40,9 @@ const PolicyIntro = () => (
       Pomofi 환불 및 청약철회 정책
     </h1>
     <p class="mb-0 mt-5 max-w-3xl text-sm leading-7 text-#d8cbd9 xs:text-base xs:leading-8">
-      실물 응원 굿즈와 주간·월간 서비스 접근권의 청약철회, 계약 해지 및 환불 기준을 안내합니다.
+      앱인토스에서 1회 결제로 판매하는 곡·앨범 단위 음악 이용권의 청약철회와 환불 기준을 안내합니다.
     </p>
-    <p class="mb-0 mt-3 text-xs text-#a99cab">시행일 2026년 8월 19일 · 문서 버전 1.0</p>
+    <p class="mb-0 mt-3 text-xs text-#a99cab">시행일 2026년 8월 22일 · 문서 버전 1.1</p>
   </header>
 )
 
@@ -52,38 +51,33 @@ const PolicyNavigation = () => (
     <p class="m-0 text-xs font-750 tracking-[0.18em] text-#8f8297 uppercase">Contents</p>
     <ol class="mb-0 mt-4 grid list-none gap-3 p-0 text-sm">
       <li>
-        <a class={CONTENT_LINK_CLASSES} href="#withdrawal-period">
-          1. 청약철회 신청 기간
+        <a class={CONTENT_LINK_CLASSES} href="#music-license">
+          1. 음악 이용권
         </a>
       </li>
       <li>
-        <a class={CONTENT_LINK_CLASSES} href="#goods">
-          2. 실물 응원 굿즈
-        </a>
-      </li>
-      <li>
-        <a class={CONTENT_LINK_CLASSES} href="#access-pass">
-          3. 주간·월간 접근권
+        <a class={CONTENT_LINK_CLASSES} href="#withdrawal">
+          2. 청약철회
         </a>
       </li>
       <li>
         <a class={CONTENT_LINK_CLASSES} href="#nonconforming">
-          4. 계약과 다른 제공
+          3. 계약과 다른 제공
         </a>
       </li>
       <li>
         <a class={CONTENT_LINK_CLASSES} href="#request">
-          5. 신청 및 반환 방법
+          4. 신청 및 처리 방법
         </a>
       </li>
       <li>
         <a class={CONTENT_LINK_CLASSES} href="#refund">
-          6. 반품 비용과 환불 시점
+          5. 환불 시점
         </a>
       </li>
       <li>
         <a class={CONTENT_LINK_CLASSES} href="#disputes">
-          7. 증명, 분쟁 및 법령
+          6. 증명, 분쟁 및 법령
         </a>
       </li>
     </ol>
@@ -92,86 +86,39 @@ const PolicyNavigation = () => (
 
 const PurchasePolicySections = () => (
   <>
-    <section class={SECTION_CLASSES} id="withdrawal-period">
-      <h2 class={HEADING_CLASSES}>1. 청약철회 신청 기간</h2>
+    <section class={SECTION_CLASSES} id="music-license">
+      <h2 class={HEADING_CLASSES}>1. 음악 이용권</h2>
       <p class={PARAGRAPH_CLASSES}>
-        소비자는 계약내용에 관한 서면(전자문서 포함)을 받은 날부터{' '}
-        <strong class={EMPHASIS_CLASSES}>7일 이내</strong>에 청약철회를 신청할 수 있습니다. 재화
-        또는 서비스의 공급이 더 늦게 시작된 경우에는 공급받거나 공급이 시작된 날부터 7일 이내에
-        신청할 수 있습니다.
+        Pomofi는 앱인토스에서 곡 또는 앨범 단위의 음악 이용권을 1회 결제로 판매합니다. 이용권에는
+        정기결제나 자동 갱신이 없으며, 구매한 앱인토스 계정으로 Pomofi 서비스가 존속하는 동안 해당
+        음악을 계속 이용할 수 있습니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        계약내용에 관한 서면을 받지 못했거나 Pomofi의 주소 등이 적히지 않은 서면을 받은 경우에는
-        Pomofi의 주소를 안 날 또는 알 수 있었던 날부터 7일 이내에 신청할 수 있습니다. 청약철회 방해
-        행위가 있었던 경우에는 그 행위가 끝난 날부터 7일 이내에 신청할 수 있습니다.
+        음악 이용권은 음원 파일의 소유권이나 지식재산권을 이전하는 상품이 아닙니다. Pomofi는 음악
+        파일의 다운로드 기능을 제공하지 않으며, 이용권은 다른 계정이나 사람에게 양도할 수 없습니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        상품 또는 서비스가 표시·광고 내용과 다르거나 계약내용과 다르게 제공된 경우에는{' '}
-        <strong class={EMPHASIS_CLASSES}>
-          공급받은 날부터 3개월 이내이면서 그 사실을 안 날 또는 알 수 있었던 날부터 30일 이내
-        </strong>
-        에 신청할 수 있습니다.
+        가격, 이용 가능한 곡 또는 앨범, 제공 내용과 이용 조건은 구매 전에 표시합니다. Pomofi가
+        서비스를 종료하여 구매한 음악을 더 이상 제공할 수 없는 경우에는 관계 법령과
+        소비자분쟁해결기준에 따라 처리합니다.
       </p>
     </section>
 
-    <section class={SECTION_CLASSES} id="goods">
-      <h2 class={HEADING_CLASSES}>2. 실물 응원 굿즈</h2>
+    <section class={SECTION_CLASSES} id="withdrawal">
+      <h2 class={HEADING_CLASSES}>2. 청약철회</h2>
       <p class={PARAGRAPH_CLASSES}>
-        단순 변심에 따른 청약철회는 제1항의 기간 안에 신청할 수 있습니다. 소비자는 상품을 받은 상태
-        그대로 반환해야 하며, 상품 내용을 확인하기 위한 통상적인 포장 개봉만으로 청약철회가
-        제한되지는 않습니다.
+        소비자는 계약내용에 관한 전자문서를 받은 날부터{' '}
+        <strong class={EMPHASIS_CLASSES}>7일 이내</strong>에 청약철회를 신청할 수 있습니다. 음악
+        이용권이 더 늦게 활성화된 경우에는 활성화된 날부터 7일 이내에 신청할 수 있습니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        다음 사유가 소비자에게 책임 있는 사유로 발생한 경우에는 청약철회가 제한될 수 있습니다.
-      </p>
-      <ul class={LIST_CLASSES}>
-        <li>상품이 멸실되거나 훼손된 경우(내용 확인을 위한 포장 훼손은 제외)</li>
-        <li>사용 또는 일부 소비로 상품 가치가 현저히 감소한 경우</li>
-        <li>시간이 지나 재판매가 곤란할 정도로 상품 가치가 현저히 감소한 경우</li>
-        <li>복제 가능한 상품의 포장을 훼손한 경우</li>
-        <li>
-          소비자의 주문에 따라 개별 제작되는 상품으로서 청약철회를 인정하면 Pomofi에 회복하기 어려운
-          중대한 피해가 예상되고, Pomofi가 주문 전에 그 사실을 별도로 고지하여 소비자의 전자적
-          동의를 받은 경우
-        </li>
-      </ul>
-      <p class={PARAGRAPH_CLASSES}>
-        Pomofi는 청약철회 제한 사유를 상품 상세 화면 또는 소비자가 쉽게 볼 수 있는 곳에 명확히
-        표시합니다. 필요한 표시나 별도 동의를 갖추지 않은 경우에는 관계 법령이 허용하는 범위에서
-        청약철회를 제한하지 않습니다.
-      </p>
-    </section>
-
-    <section class={SECTION_CLASSES} id="access-pass">
-      <h2 class={HEADING_CLASSES}>3. 주간·월간 서비스 접근권</h2>
-      <p class={PARAGRAPH_CLASSES}>
-        서비스 접근권은 결제가 완료되고 소비자 계정에 이용 권한이 활성화된 때부터 제공이 시작됩니다.
-      </p>
-      <ul class={LIST_CLASSES}>
-        <li>
-          <strong class={EMPHASIS_CLASSES}>이용 권한 활성화 전</strong> — 제1항의 기간 안에
-          청약철회하면 결제금액 전액을 환불합니다.
-        </li>
-        <li>
-          <strong class={EMPHASIS_CLASSES}>이용 권한 활성화 후</strong> — Pomofi는 소비자에게 유리한
-          자율 기준으로 언제든 해지를 허용하고, 환불 신청 접수 시점부터 남은 이용시간에 해당하는
-          금액을 환불합니다.
-        </li>
-        <li>
-          <strong class={EMPHASIS_CLASSES}>이용기간 종료 후</strong> — 남은 이용시간이 없으므로
-          환불금이 발생하지 않습니다. 다만, 표시·광고 또는 계약과 다르게 제공된 경우의 권리는
-          제한되지 않습니다.
-        </li>
-      </ul>
-      <p class={FORMULA_CLASSES}>환불금 = 실제 결제금액 × (남은 이용시간 ÷ 전체 이용시간)</p>
-      <p class={PARAGRAPH_CLASSES}>
-        원 미만 금액은 소비자에게 유리하게 올림합니다. 할인된 접근권은 정가가 아닌 실제 결제금액을
-        기준으로 계산합니다. 환불 신청이 접수되면 해당 접근권의 이용은 종료됩니다.
+        구매한 음악의 재생이 시작되면 디지털콘텐츠의 제공이 개시된 것으로 볼 수 있어 청약철회가
+        제한될 수 있습니다. Pomofi는 이러한 제한을 적용하려면 구매 전에 제한 사실을 명확히 알리고
+        관계 법령이 요구하는 동의를 받으며, 미리듣기 또는 이에 준하는 정보를 제공합니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        상품과 접근권을 함께 판매한 경우에는 각 항목의 실제 결제금액을 구분하여 이 정책에 따라 각각
-        환불합니다. Pomofi가 자동 갱신을 제공하는 경우 소비자는 다음 결제 전에 언제든 갱신을 해지할
-        수 있으며, 이미 갱신된 이용권은 위 기준에 따라 환불합니다.
+        필요한 사전 고지·동의 또는 시험 사용 수단을 제공하지 않은 경우에는 관계 법령이 보장하는
+        청약철회 권리를 제한하지 않습니다.
       </p>
     </section>
   </>
@@ -180,59 +127,51 @@ const PurchasePolicySections = () => (
 const RefundProcessSections = () => (
   <>
     <section class={SECTION_CLASSES} id="nonconforming">
-      <h2 class={HEADING_CLASSES}>4. 표시·광고 또는 계약과 다른 제공</h2>
+      <h2 class={HEADING_CLASSES}>3. 표시·광고 또는 계약과 다른 제공</h2>
       <p class={PARAGRAPH_CLASSES}>
-        상품 또는 서비스가 표시·광고 내용과 다르거나 계약과 다르게 제공된 경우 소비자는 제1항의 특별
-        청약철회 기간 안에 환불, 교환 또는 계약 이행을 요구할 수 있습니다. 이 경우 반품에 필요한
-        비용은 Pomofi가 부담합니다.
+        음악 이용권이 표시·광고 내용과 다르거나 계약내용과 다르게 제공된 경우 소비자는 공급받은
+        날부터 <strong class={EMPHASIS_CLASSES}>3개월 이내</strong>이면서 그 사실을 안 날 또는 알 수
+        있었던 날부터 <strong class={EMPHASIS_CLASSES}>30일 이내</strong>에 청약철회 또는 계약
+        이행을 요구할 수 있습니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        Pomofi의 책임으로 서비스를 전혀 이용할 수 없었고 합리적인 기간 안에 복구되지 않은 경우에는
-        이용하지 못한 기간에 해당하는 금액을 환불하거나 소비자와 합의하여 이용기간을 연장합니다.
-        관계 법령 또는 소비자분쟁해결기준이 더 유리한 권리를 정한 경우에는 그 기준을 적용합니다.
+        Pomofi의 책임으로 구매한 음악을 이용할 수 없고 합리적인 기간 안에 복구되지 않은 경우에는
+        관계 법령과 소비자분쟁해결기준에 따라 환불 또는 이에 상응하는 조치를 제공합니다.
       </p>
     </section>
 
     <section class={SECTION_CLASSES} id="request">
-      <h2 class={HEADING_CLASSES}>5. 신청 및 반환 방법</h2>
-      <p class={PARAGRAPH_CLASSES}>
-        소비자는 <strong class={EMPHASIS_CLASSES}>Pomofi 앱 내 고객지원</strong> 또는{' '}
-        <strong class={EMPHASIS_CLASSES}>구매·결제 화면의 환불 요청 기능</strong>으로 다음 정보를
-        보내 신청할 수 있습니다.
-      </p>
+      <h2 class={HEADING_CLASSES}>4. 신청 및 처리 방법</h2>
       <ul class={LIST_CLASSES}>
-        <li>주문번호 또는 결제 식별정보</li>
-        <li>구매자 확인에 필요한 최소 정보</li>
-        <li>환불을 요청하는 상품 또는 접근권</li>
-        <li>표시·광고 또는 계약과 다른 제공을 이유로 하는 경우 그 내용을 확인할 수 있는 자료</li>
+        <li>
+          Android 결제는 토스 앱의 환불 신청 절차를 이용하며, 쿠웅의 검토 후 Google Play에서 최종
+          처리합니다.
+        </li>
+        <li>iOS 결제의 환불 신청과 결정은 Apple의 환불 절차에 따릅니다.</li>
+        <li>
+          절차 안내나 추가 지원이 필요하면 주문번호 또는 결제 식별정보와 구매 상품을{' '}
+          <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+            {SERVICE_OPERATOR.supportEmail}
+          </a>
+          로 보내 문의할 수 있습니다.
+        </li>
       </ul>
       <p class={PARAGRAPH_CLASSES}>
-        서면으로 청약철회를 신청한 경우에는 서면을 발송한 날에 효력이 발생합니다. 실물 상품은 신청
-        안내에 표시된 반품 주소와 방법에 따라 반환합니다. Pomofi는 신청 접수 사실과 처리 결과를
-        전자문서로 안내합니다.
+        쿠웅은 환불 처리에 필요한 최소 정보만 요청하며, 신청 접수 및 처리 결과는 앱인토스 또는
+        운영체제별 앱 마켓이 제공하는 방법으로 안내될 수 있습니다.
       </p>
     </section>
 
     <section class={SECTION_CLASSES} id="refund">
-      <h2 class={HEADING_CLASSES}>6. 반품 비용과 환불 시점</h2>
+      <h2 class={HEADING_CLASSES}>5. 환불 시점</h2>
       <p class={PARAGRAPH_CLASSES}>
-        단순 변심에 따른 실물 상품의 반환 비용은 소비자가 부담합니다. Pomofi는 단순 변심을 이유로
-        위약금이나 손해배상을 청구하지 않습니다. 상품이 표시·광고 또는 계약과 다르게 제공된 경우의
-        반환 비용은 Pomofi가 부담합니다.
+        쿠웅이 직접 환급할 의무가 있는 경우 청약철회 또는 환불 신청을 받은 날부터{' '}
+        <strong class={EMPHASIS_CLASSES}>3영업일 이내</strong>에 결제금액을 환급하거나 환급에 필요한
+        조치를 합니다. 법정 기한을 넘긴 경우에는 관계 법령에 따른 지연배상금을 지급합니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        Pomofi는 다음 기준일부터 <strong class={EMPHASIS_CLASSES}>3영업일 이내</strong>에 결제금액을
-        환불하거나 환불에 필요한 조치를 합니다.
-      </p>
-      <ul class={LIST_CLASSES}>
-        <li>실물 상품 — 반환된 상품을 받은 날</li>
-        <li>서비스 접근권 — 청약철회 또는 환불 신청을 받은 날</li>
-        <li>아직 공급하지 않은 상품 또는 서비스 — 청약철회 신청을 받은 날</li>
-      </ul>
-      <p class={PARAGRAPH_CLASSES}>
-        카드 등 결제수단을 사용한 경우 Pomofi는 지체 없이 결제 취소 또는 환급을 요청합니다.
-        결제사업자의 처리 일정에 따라 실제 입금 시점은 달라질 수 있습니다. Pomofi가 법정 환급기한을
-        넘긴 경우에는 관계 법령에 따른 지연배상금을 지급합니다.
+        앱 마켓이 환불을 처리하는 경우 실제 취소 또는 입금 시점은 해당 앱 마켓과 결제수단의 처리
+        일정에 따라 달라질 수 있습니다. 환불이 완료되면 해당 음악 이용권은 회수될 수 있습니다.
       </p>
     </section>
   </>
@@ -240,15 +179,15 @@ const RefundProcessSections = () => (
 
 const LegalPolicySection = () => (
   <section class={SECTION_CLASSES} id="disputes">
-    <h2 class={HEADING_CLASSES}>7. 증명, 분쟁 및 법령의 우선 적용</h2>
+    <h2 class={HEADING_CLASSES}>6. 증명, 분쟁 및 법령의 우선 적용</h2>
     <p class={PARAGRAPH_CLASSES}>
-      계약 체결·공급 시기, 이용 개시 여부, 상품 훼손의 책임 등 청약철회 제한과 관련하여 다툼이 있는
-      경우 관계 법령에 따라 Pomofi가 필요한 사실을 증명합니다.
+      계약 체결·공급 시기, 음악 재생 개시 여부 등 청약철회 제한과 관련하여 다툼이 있는 경우 관계
+      법령에 따라 쿠웅이 필요한 사실을 증명합니다.
     </p>
     <p class={PARAGRAPH_CLASSES}>
       이 정책은{' '}
       <a
-        class="font-700 text-#ffc0ce underline underline-offset-4 hover:text-#ffd4de"
+        class={CONTENT_LINK_CLASSES}
         href="https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률"
         rel="noreferrer"
         target="_blank"
@@ -278,9 +217,12 @@ export default function RefundPolicyPage() {
       <div class={BACKGROUND_CLASSES} />
 
       <div class="relative mx-auto grid w-full max-w-6xl gap-8">
-        <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
-          ← Pomofi로 돌아가기
-        </A>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
+            ← Pomofi로 돌아가기
+          </A>
+          <PServicePolicyLinks currentPolicy="refund" platform="apps-in-toss" tone="overlay" />
+        </div>
 
         <PolicyIntro />
         <div class="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
@@ -291,7 +233,11 @@ export default function RefundPolicyPage() {
         <footer class={FOOTER_CLASSES}>
           <div>
             <p class="m-0 font-700 text-#a99cab">환불 접수 및 문의</p>
-            <p class="mb-0 mt-1">Pomofi 앱 내 고객지원 또는 구매·결제 화면의 환불 요청 기능</p>
+            <p class="mb-0 mt-1">
+              <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+                {SERVICE_OPERATOR.supportEmail}
+              </a>
+            </p>
           </div>
           <span>© Pomofi</span>
         </footer>

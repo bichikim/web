@@ -28,10 +28,12 @@ import {
 } from '../features/focus-room-time'
 import {type PSayController, usePSay} from '../features/pomo-webmcp'
 import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
+import {PServicePolicyLinks} from '../features/service-terms'
 import {PMusicPlayer} from './PMusicPlayer'
 import {PFeedStatus} from './PFeedStatus'
 import {PDialoguePlayer} from './PDialoguePlayer'
 import {PPomodoro, type PPomodoroPresentation} from './PPomodoro'
+import {PServiceOperatorFooter} from './PServiceOperatorFooter'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -59,7 +61,7 @@ const CLASSES = {
   entryContent: [
     'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
     'box-border flex-col items-start gap-4',
-    '[margin-block-end:calc(1.5rem_+_var(--pomo-safe-area-inset-bottom))]',
+    '[margin-block-end:calc(9rem_+_var(--pomo-safe-area-inset-bottom))]',
     '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
     'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
@@ -319,17 +321,20 @@ const PEntry = (props: PEntryProps) => (
     }}
   >
     <div class={CLASSES.entryContent}>
-      <PButton
-        class={CLASSES.entryAction}
-        disabled={props.isExiting}
-        leadingImage={smilingFaceSource}
-        leadingImageClass={CLASSES.entryLeadingImage}
-        onPress={() => props.onEnter()}
-        tone="primary"
-        trailingIcon="i-tabler-arrow-right"
-      >
-        포모와 시작하기
-      </PButton>
+      <div class="grid gap-3">
+        <PButton
+          class={CLASSES.entryAction}
+          disabled={props.isExiting}
+          leadingImage={smilingFaceSource}
+          leadingImageClass={CLASSES.entryLeadingImage}
+          onPress={() => props.onEnter()}
+          tone="primary"
+          trailingIcon="i-tabler-arrow-right"
+        >
+          포모와 시작하기
+        </PButton>
+        <PServicePolicyLinks tone="overlay" />
+      </div>
     </div>
   </section>
 )
@@ -531,6 +536,7 @@ export const PStudio = () => {
           onExitComplete={() => setIsEntryVisible(false)}
         />
       </Show>
+      <PServiceOperatorFooter placement={hasEntered() ? 'studio' : 'entry'} />
       <PScreenSaver
         isActive={hasEntered() && screenSaver.isActive()}
         onDismiss={screenSaver.onDismiss}

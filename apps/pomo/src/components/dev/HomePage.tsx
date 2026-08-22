@@ -184,8 +184,8 @@ function HomePage() {
         </div>
 
         <footer class="mt-8 flex justify-end">
-          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/dev/terms">
-            서비스 이용약관 초안
+          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/web/terms">
+            서비스 이용약관
           </A>
         </footer>
       </section>
