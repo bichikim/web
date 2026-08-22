@@ -28,6 +28,15 @@ export type {
 export {analyzeDialogueSegmentMoods} from './segment-mood'
 export type {AnalyzeDialogueSegmentMoodsOptions} from './segment-mood'
 export {
+  createDialogueScriptRequest,
+  DEFAULT_DIALOGUE_SCRIPT_LENGTH,
+  MAXIMUM_DIALOGUE_SCRIPT_LENGTH,
+  MINIMUM_DIALOGUE_SCRIPT_LENGTH,
+} from './script-prompt'
+export {calculateDialogueScriptProgress} from './progress'
+export type {CalculateDialogueScriptProgressOptions} from './progress'
+export type {CreateDialogueScriptRequestOptions} from './script-prompt'
+export {
   createDialogueTimeline,
   getDialoguePositionAtTime,
   getDialogueTextAtTime,

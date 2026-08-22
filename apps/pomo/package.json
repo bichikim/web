@@ -25,6 +25,7 @@
     "preview:apps-in-toss-ssg": "vite preview --config preview.config.ts --host --outDir .output/public",
     "preview:web": "node .output/server/index.mjs",
     "text-mood:train": "node scripts/text-mood/train.mjs",
+    "text-generation:verify-assets": "node scripts/text-generation/verify-assets.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

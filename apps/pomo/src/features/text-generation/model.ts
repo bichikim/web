@@ -17,13 +17,36 @@ export interface TextModelDefinition {
 
 export interface TextModelImplementation extends TextModelDefinition {
   readonly architecture: 'gemma-4' | 'qwen-3.5'
+  readonly assetSource: TextModelAssetSource
   readonly quantization: 'q2f16' | 'q4'
   readonly repositoryId: string
 }
 
+export interface TextModelAssetSource {
+  readonly host: string
+  readonly pathTemplate: string
+  readonly revision: string
+}
+
+const HUGGING_FACE_MODEL_SOURCE = {
+  host: 'https://huggingface.co/',
+  pathTemplate: '{model}/resolve/{revision}/',
+  revision: 'main',
+} as const
+
+const POMO_R2_MODEL_HOST = 'https://storage.pomofi.io/'
+const POMO_R2_TEXT_MODEL_PATH_TEMPLATE = 'models/text-generation/{model}/{revision}/'
+
+const createPomoR2ModelSource = (revision: string): TextModelAssetSource => ({
+  host: POMO_R2_MODEL_HOST,
+  pathTemplate: POMO_R2_TEXT_MODEL_PATH_TEMPLATE,
+  revision,
+})
+
 const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> = {
   'gemma-4-e2b': {
     architecture: 'gemma-4',
+    assetSource: createPomoR2ModelSource('9f4bef82ea6e296bc69f8a2f5939f73af81b07a6'),
     description: '다른 모델 계열의 한국어 표현 비교용',
     downloadSize: '약 3.7GB',
     id: 'gemma-4-e2b',
@@ -33,6 +56,7 @@ const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> =
   },
   'gemma-4-e2b-mobile': {
     architecture: 'gemma-4',
+    assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: 'q2f16 모바일 양자화 품질 비교용',
     downloadSize: '약 2.3GB',
     id: 'gemma-4-e2b-mobile',
@@ -42,6 +66,7 @@ const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> =
   },
   'qwen-0.8b': {
     architecture: 'qwen-3.5',
+    assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: '빠른 초안과 간단한 요청',
     downloadSize: '약 450MB',
     id: 'qwen-0.8b',
@@ -51,6 +76,7 @@ const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> =
   },
   'qwen-2b': {
     architecture: 'qwen-3.5',
+    assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: '더 자연스러운 장문 원고',
     downloadSize: '약 1.8GB',
     id: 'qwen-2b',
@@ -60,6 +86,7 @@ const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> =
   },
   'qwen-4b': {
     architecture: 'qwen-3.5',
+    assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: '한국어 문맥과 표현력 비교용',
     downloadSize: '약 3.3GB',
     id: 'qwen-4b',

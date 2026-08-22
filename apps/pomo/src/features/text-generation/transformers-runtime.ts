@@ -32,6 +32,7 @@ const CHAT_TEMPLATE_OPTIONS = {
   enable_thinking: false,
   tokenize: false,
 }
+const GEMMA_TOKENIZER_CACHE_MIGRATION_VERSION = 1
 
 type TextGenerationModel =
   | Awaited<ReturnType<typeof Gemma4ForCausalLM.from_pretrained>>
@@ -48,6 +49,7 @@ const loadModel = (
       embed_tokens: modelDefinition.quantization,
     },
     progress_callback: reportProgress,
+    revision: modelDefinition.assetSource.revision,
   } as const
 
   switch (modelDefinition.architecture) {
@@ -64,10 +66,12 @@ export const createTransformersRuntime = (
   options: CreateTextGenerationRuntimeOptions,
 ): TextGenerationRuntime => {
   const resumableModelFetch = createResumableModelFetch()
+  const versionedCacheKeys = new Map<string, string>()
   env.fetch = resumableModelFetch.fetch
   env.useBrowserCache = false
   env.useCustomCache = true
   env.customCache = createTransformersModelCache({
+    getStorageKey: (request) => versionedCacheKeys.get(request) ?? request,
     onError: reportModelStorageError,
     onStored: resumableModelFetch.deletePartial,
     storage: createModelStorage(),
@@ -104,11 +108,27 @@ export const createTransformersRuntime = (
     if (preparePromise === null) {
       activeModelId = modelId
       const modelDefinition = getTextModelImplementation(modelId)
+      const {assetSource} = modelDefinition
+      env.allowLocalModels = false
+      env.allowRemoteModels = true
+      env.remoteHost = assetSource.host
+      env.remotePathTemplate = assetSource.pathTemplate
       preparePromise = (async () => {
-        const [nextProcessor, nextModel] = await Promise.all([
-          AutoProcessor.from_pretrained(modelDefinition.repositoryId),
-          loadModel(modelDefinition, reportProgress),
-        ])
+        if (modelId === 'gemma-4-e2b') {
+          const modelPath = assetSource.pathTemplate
+            .replaceAll('{model}', modelDefinition.repositoryId)
+            .replaceAll('{revision}', assetSource.revision)
+          const tokenizerUrl = new URL(`${modelPath}tokenizer.json`, assetSource.host).href
+          versionedCacheKeys.set(
+            tokenizerUrl,
+            `${tokenizerUrl}?pomo-cache-version=${GEMMA_TOKENIZER_CACHE_MIGRATION_VERSION}`,
+          )
+        }
+        const processorPromise = AutoProcessor.from_pretrained(modelDefinition.repositoryId, {
+          revision: assetSource.revision,
+        })
+        const modelPromise = loadModel(modelDefinition, reportProgress)
+        const [nextProcessor, nextModel] = await Promise.all([processorPromise, modelPromise])
 
         processor = nextProcessor
         model = nextModel
