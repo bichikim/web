@@ -42,6 +42,8 @@ it.each([
   ['/', true],
   ['/refund-policy', true],
   ['/refund-policy/', true],
+  ['/third-party-notices', true],
+  ['/third-party-notices/', true],
   ['/account', false],
   ['/admin/login', false],
   ['/dev/terms', false],

@@ -3,6 +3,7 @@ import {createMemo, createSignal, Match, onMount, Show, Switch} from 'solid-js'
 
 import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
 import {readAccountSession} from './web-session'
+import {PServicePolicyLinks} from '../service-terms'
 
 type UserSettingsState =
   | {readonly kind: 'anonymous'}
@@ -55,19 +56,7 @@ export const UserSettings = () => {
 
   return (
     <Tabs.Content value="user">
-      <section aria-labelledby="pomo-user-settings-title" class="grid gap-6">
-        <header>
-          <p class="m-0 text-xs font-750 tracking-[0.18em] text-highlight uppercase">
-            Pomo account
-          </p>
-          <h2 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em" id="pomo-user-settings-title">
-            사용자
-          </h2>
-          <p class="mb-0 mt-2 text-sm leading-6 text-muted-foreground">
-            현재 로그인 상태와 연결된 계정을 확인할 수 있어요.
-          </p>
-        </header>
-
+      <section class="grid gap-6">
         <div class="rounded-4 border border-solid border-border bg-secondary-soft p-5">
           <Switch>
             <Match when={state().kind === 'loading'}>
@@ -129,6 +118,16 @@ export const UserSettings = () => {
           <span aria-hidden="true" class="i-tabler-user-circle size-4.5" />
           {state().kind === 'authenticated' ? '계정 관리' : '로그인 / 가입'}
         </a>
+
+        <section
+          aria-labelledby="pomo-service-information-title"
+          class="grid gap-3 border-t border-solid border-border pt-5"
+        >
+          <h3 class="m-0 text-sm font-750 text-foreground" id="pomo-service-information-title">
+            서비스 정보
+          </h3>
+          <PServicePolicyLinks />
+        </section>
       </section>
     </Tabs.Content>
   )

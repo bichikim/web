@@ -22,6 +22,9 @@ describe('sitemap API', () => {
   <url>
     <loc>https://www.pomofi.io/refund-policy</loc>
   </url>
+  <url>
+    <loc>https://www.pomofi.io/third-party-notices</loc>
+  </url>
 </urlset>
 `)
   })

@@ -14,6 +14,7 @@ import type {ScreenSaverDelay} from '../features/screen-saver'
 import type {WeatherCitySlug} from '../features/weather'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {UserSettings} from '../features/user-auth/UserSettings'
+import {PCreditsSettings} from './PCreditsSettings'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
@@ -175,6 +176,10 @@ const PSettingsTabList = () => {
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="guide">
           <span aria-hidden="true" class="i-tabler-help-circle size-4" />
           <span>설명서</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="credits">
+          <span aria-hidden="true" class="i-tabler-heart size-4" />
+          <span>크레딧</span>
         </Tabs.Trigger>
       </Tabs.List>
       <Show when={canScrollTabsLeft()}>
@@ -340,6 +345,7 @@ export const PSettings = (props: PSettingsProps) => {
             onCityChange={props.onWeatherCityChange}
             onEnabledChange={props.onWeatherEnabledChange}
           />
+          <PCreditsSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
           <UserSettings />
