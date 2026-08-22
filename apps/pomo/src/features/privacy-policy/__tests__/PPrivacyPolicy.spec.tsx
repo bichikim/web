@@ -33,7 +33,7 @@ it('should replace only the account details for Apps in Toss', () => {
 
   expect(screen.getByRole('heading', {name: '앱인토스 계정'})).toBeTruthy()
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
-    '/apps-in-toss/terms',
+    '/app-in-toss/terms',
   )
   expect(screen.getByText(/앱별 사용자 식별값\(userKey\)/u)).toBeTruthy()
   expect(screen.getByText(/웹 계정과 앱인토스 계정은 별도로 관리/u)).toBeTruthy()

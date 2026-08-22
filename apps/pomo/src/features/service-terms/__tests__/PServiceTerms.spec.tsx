@@ -33,7 +33,7 @@ it('should replace only the platform terms on the Apps in Toss page', () => {
 
   expect(screen.getByRole('heading', {name: '제7조 AI 음성 기능'})).toBeTruthy()
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
-    '/apps-in-toss/privacy',
+    '/app-in-toss/privacy',
   )
   expect(screen.getByText(/토스 앱 안의 미니앱 환경/u)).toBeTruthy()
   expect(screen.getByText(/곡 또는 앨범 단위의 음악 이용권/u)).toBeTruthy()

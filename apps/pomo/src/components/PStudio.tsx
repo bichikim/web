@@ -34,7 +34,6 @@ import {PMusicPlayer} from './PMusicPlayer'
 import {PFeedStatus} from './PFeedStatus'
 import {PDialoguePlayer} from './PDialoguePlayer'
 import {PPomodoro, type PPomodoroPresentation} from './PPomodoro'
-import {PServiceOperatorFooter} from './PServiceOperatorFooter'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -554,7 +553,6 @@ export const PStudio = () => {
           onExitComplete={() => setIsEntryVisible(false)}
         />
       </Show>
-      <PServiceOperatorFooter placement={hasEntered() ? 'studio' : 'entry'} />
       <PScreenSaver
         isActive={hasEntered() && screenSaver.isActive()}
         onDismiss={screenSaver.onDismiss}

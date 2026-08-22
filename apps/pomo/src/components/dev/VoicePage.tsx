@@ -3,6 +3,7 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
 import {VoiceGenerator} from 'src/components/VoiceGenerator'
+import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
 
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-x-hidden',
@@ -28,7 +29,10 @@ function VoicePage() {
           <A class="text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
             ← 실험실 목록
           </A>
-          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/web/terms">
+          <A
+            class="text-xs font-650 text-#8f8297 no-underline hover:text-white"
+            href={SERVICE_POLICY_PATHS.web.terms}
+          >
             서비스 이용약관
           </A>
         </nav>
