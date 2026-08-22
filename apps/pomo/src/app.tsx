@@ -15,13 +15,27 @@ const DEFAULT_DESCRIPTION =
 const HOME_DESCRIPTION =
   'Pomo와 함께 장면, 포모도로, 음악, 대화와 피드를 한곳에서 사용하는 집중 앱 Pomofi입니다.'
 const REFUND_POLICY_DESCRIPTION =
-  'Pomofi 실물 응원 굿즈와 주간·월간 서비스 접근권의 환불 및 청약철회 기준을 안내합니다.'
-const TERMS_DESCRIPTION = 'Pomofi AI 음성 생성 기능과 Supertonic 3 모델의 이용 조건을 안내합니다.'
+  'Pomofi 앱인토스 곡·앨범 단위 음악 이용권의 환불 및 청약철회 기준을 안내합니다.'
+const TERMS_DESCRIPTION =
+  'Pomofi 집중 도구, 콘텐츠, AI 음성 기능의 이용 조건과 이용자의 권리·의무를 안내합니다.'
+const PRIVACY_DESCRIPTION =
+  'Pomofi가 처리하는 계정·세션 정보와 기기에만 저장되는 정보, 이용자의 권리를 안내합니다.'
 
 const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
+    case '/apps-in-toss/privacy':
+      return 'Pomofi — 앱인토스 개인정보처리방침'
     case '/refund-policy':
       return 'Pomofi — 환불 및 청약철회 정책'
+    case '/apps-in-toss/terms':
+      return 'Pomofi — 앱인토스 서비스 이용약관'
+    case '/dev/terms':
+    case '/terms':
+    case '/web/terms':
+      return 'Pomofi — 서비스 이용약관'
+    case '/privacy':
+    case '/web/privacy':
+      return 'Pomofi — 개인정보처리방침'
     default:
       return 'Pomofi'
   }
@@ -33,7 +47,14 @@ const getDescription = (pathname: string) => {
       return HOME_DESCRIPTION
     case '/refund-policy':
       return REFUND_POLICY_DESCRIPTION
+    case '/apps-in-toss/privacy':
+    case '/privacy':
+    case '/web/privacy':
+      return PRIVACY_DESCRIPTION
+    case '/apps-in-toss/terms':
     case '/dev/terms':
+    case '/terms':
+    case '/web/terms':
       return TERMS_DESCRIPTION
     default:
       return DEFAULT_DESCRIPTION

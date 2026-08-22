@@ -28,8 +28,8 @@ export default function VoicePage() {
           <A class="text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
             ← 실험실 목록
           </A>
-          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/dev/terms">
-            이용약관 초안
+          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/web/terms">
+            서비스 이용약관
           </A>
         </nav>
         <VoiceGenerator />

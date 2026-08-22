@@ -44,6 +44,13 @@ it('should provide the login entry for an anonymous user', async () => {
 
   await waitFor(() => expect(screen.queryByText('로그인하지 않았어요.')).not.toBeNull())
   expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe('/account')
+  expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
+    '/web/terms',
+  )
+  expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
+    '/web/privacy',
+  )
+  expect(screen.queryByRole('link', {name: '환불 및 청약철회 정책'})).toBeNull()
 })
 
 it('should show the Toss login method for an app session', async () => {
