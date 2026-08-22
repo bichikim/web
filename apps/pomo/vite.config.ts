@@ -6,6 +6,7 @@ import {nitro} from 'nitro/vite'
 import UnoCSS from 'unocss/vite'
 import {defineConfig, type Plugin} from 'vite'
 
+import {SERVICE_POLICY_PATHS} from './src/config/service-policy.ts'
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
@@ -114,19 +115,17 @@ export default defineConfig({
           routes: [
             '/',
             '/account',
-            '/app-in-toss/privacy',
-            '/app-in-toss/terms',
-            '/apps-in-toss/privacy',
-            '/apps-in-toss/terms',
+            SERVICE_POLICY_PATHS.appsInToss.privacy,
+            SERVICE_POLICY_PATHS.appsInToss.terms,
             '/dialogue',
             '/focus-room',
             '/focus-room-dialogue',
-            '/privacy',
-            '/refund-policy',
-            '/terms',
+            SERVICE_POLICY_PATHS.legacy.privacy,
+            SERVICE_POLICY_PATHS.refund,
+            SERVICE_POLICY_PATHS.legacy.terms,
             '/third-party-notices',
-            '/web/privacy',
-            '/web/terms',
+            SERVICE_POLICY_PATHS.web.privacy,
+            SERVICE_POLICY_PATHS.web.terms,
           ],
         },
         preset: 'static',

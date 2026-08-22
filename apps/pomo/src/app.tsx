@@ -9,6 +9,7 @@ import {ErrorBoundary, Suspense} from 'solid-js'
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {isSearchIndexablePath, normalizePathname} from './components/pomo-route'
 import {SEARCH_CONFIG} from './config/search'
+import {SERVICE_POLICY_PATHS} from './config/service-policy'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
 
 const DEFAULT_DESCRIPTION =
@@ -29,20 +30,18 @@ const PRIVATE_ROBOTS = 'noindex, nofollow'
 
 const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
-    case '/app-in-toss/privacy':
-    case '/apps-in-toss/privacy':
+    case SERVICE_POLICY_PATHS.appsInToss.privacy:
       return 'Pomofi — 앱인토스 개인정보처리방침'
-    case '/refund-policy':
+    case SERVICE_POLICY_PATHS.refund:
       return 'Pomofi — 환불 및 청약철회 정책'
-    case '/app-in-toss/terms':
-    case '/apps-in-toss/terms':
+    case SERVICE_POLICY_PATHS.appsInToss.terms:
       return 'Pomofi — 앱인토스 서비스 이용약관'
     case '/dev/terms':
-    case '/terms':
-    case '/web/terms':
+    case SERVICE_POLICY_PATHS.legacy.terms:
+    case SERVICE_POLICY_PATHS.web.terms:
       return 'Pomofi — 서비스 이용약관'
-    case '/privacy':
-    case '/web/privacy':
+    case SERVICE_POLICY_PATHS.legacy.privacy:
+    case SERVICE_POLICY_PATHS.web.privacy:
       return 'Pomofi — 개인정보처리방침'
     case '/third-party-notices':
       return 'Pomofi — 제3자 라이선스 및 배포 고지'
@@ -55,18 +54,16 @@ const getDescription = (pathname: string) => {
   switch (normalizePathname(pathname)) {
     case '/':
       return HOME_DESCRIPTION
-    case '/refund-policy':
+    case SERVICE_POLICY_PATHS.refund:
       return REFUND_POLICY_DESCRIPTION
-    case '/app-in-toss/privacy':
-    case '/apps-in-toss/privacy':
-    case '/privacy':
-    case '/web/privacy':
+    case SERVICE_POLICY_PATHS.appsInToss.privacy:
+    case SERVICE_POLICY_PATHS.legacy.privacy:
+    case SERVICE_POLICY_PATHS.web.privacy:
       return PRIVACY_DESCRIPTION
-    case '/app-in-toss/terms':
-    case '/apps-in-toss/terms':
+    case SERVICE_POLICY_PATHS.appsInToss.terms:
     case '/dev/terms':
-    case '/terms':
-    case '/web/terms':
+    case SERVICE_POLICY_PATHS.legacy.terms:
+    case SERVICE_POLICY_PATHS.web.terms:
       return TERMS_DESCRIPTION
     case '/third-party-notices':
       return THIRD_PARTY_NOTICES_DESCRIPTION

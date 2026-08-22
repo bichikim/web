@@ -2,6 +2,8 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
+import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
+
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-hidden',
   'bg-#17131f px-5 py-12 text-#f8edf1 sm:px-8',
@@ -184,7 +186,10 @@ function HomePage() {
         </div>
 
         <footer class="mt-8 flex justify-end">
-          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/web/terms">
+          <A
+            class="text-xs font-650 text-#8f8297 no-underline hover:text-white"
+            href={SERVICE_POLICY_PATHS.web.terms}
+          >
             서비스 이용약관
           </A>
         </footer>
