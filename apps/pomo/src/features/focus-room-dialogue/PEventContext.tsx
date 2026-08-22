@@ -281,8 +281,6 @@ export const PEventProvider = (props: PEventProviderProps) => {
       )
 
       if (!isDisposed) {
-        playback.stop()
-
         if (eventId === FOCUS_ROOM_ENTRY_EVENT) {
           playEntryDialogue()
         }
@@ -330,10 +328,6 @@ export const PEventProvider = (props: PEventProviderProps) => {
       persistedPlaybackModes = remainingPlaybackModes
       setEventDialogueIds(remainingBindings)
       setEventPlaybackModes(remainingPlaybackModes)
-
-      if (playback.isDialogueScheduled(dialogueId)) {
-        playback.cancel()
-      }
     },
     dialogues,
     enterFocusRoom() {

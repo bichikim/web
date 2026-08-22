@@ -8,6 +8,7 @@ import {
   type DialogueEventId,
   type DialogueEventPlaybackMode,
   type PDialogue,
+  RANDOM_DIALOGUE_EVENT,
   usePEvents,
 } from '../features/focus-room-dialogue'
 import {excludeFeedDialogues, usePFeedContext} from '../features/focus-room-feed'
@@ -18,6 +19,7 @@ import {DialogueConnectionMenu} from './DialogueConnectionMenu'
 import {DialogueEventSettingRow} from './DialogueEventSettingRow'
 import {DialoguePlaybackButton} from './DialoguePlaybackButton'
 import {DialoguePlaybackModeSelect} from './DialoguePlaybackModeSelect'
+import {RandomEventSettings} from './RandomEventSettings'
 
 const CLASSES = {
   dialogueSettings: 'pomo-dialogue-settings grid gap-4.5 settings-compact:gap-4',
@@ -52,7 +54,7 @@ const CLASSES = {
   ].join(' '),
   dialogueSettingsAudio: 'pomo-dialogue-settings__audio hidden',
   dialogueSettingsCreate: [
-    'pomo-dialogue-settings__create inline-flex min-h-9 box-border cursor-pointer items-center',
+    'pomo-dialogue-settings__create ml-auto inline-flex min-h-9 box-border cursor-pointer items-center',
     'justify-center gap-[0.35rem] border border-solid border-border',
     'rounded-control bg-transparent py-0 px-3',
     'text-muted-foreground [font:inherit] text-[0.7rem] font-bold no-underline',
@@ -85,16 +87,9 @@ const CLASSES = {
     'pomo-dialogue-settings__event-symbol grid w-9 h-9 place-items-center rounded-full',
     'bg-secondary-soft text-highlight',
   ].join(' '),
-  dialogueSettingsHeading: [
-    'pomo-dialogue-settings__heading flex items-center justify-between gap-4 [&_>_div]:min-w-0',
-    'settings-compact:gap-3',
-    '[&_h3]:m-0 [&_h3]:text-foreground [&_h3]:text-[0.9375rem] [&_h3]:font-[750]',
-    '[&_p]:m-[0.25rem_0_0] [&_p]:text-muted-foreground [&_p]:text-[0.6875rem]',
-    '[&_p]:leading-[1.5]',
-  ].join(' '),
   dialogueSettingsLibraryHeading: [
-    'pomo-dialogue-settings__library-heading [&_h4]:m-0 [&_h4]:text-foreground',
-    '[&_h4]:text-[0.9375rem] [&_h4]:font-[750] flex items-center gap-[0.45rem]',
+    'pomo-dialogue-settings__library-heading [&_h3]:m-0 [&_h3]:text-foreground',
+    '[&_h3]:text-[0.9375rem] [&_h3]:font-[750] flex items-center gap-[0.45rem]',
     'border-t border-solid border-border pt-4',
     '[&_>_span]:text-muted-foreground [&_>_span]:text-[0.6875rem]',
   ].join(' '),
@@ -238,7 +233,6 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
 
   const handleCharacterPlayback = (dialogue: PDialogue) => {
     stopPlayback()
-    events.onStopDialoguePlayback()
     const playback = events.playDialogue(dialogue.id)
 
     props.onRequestClose?.()
@@ -297,16 +291,9 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
         ref={setAudioElement}
       />
       <Tabs.Content value="events">
-        <section class={CLASSES.dialogueSettings} aria-labelledby="pomo-events-title">
-          <div class={CLASSES.dialogueSettingsHeading}>
-            <div>
-              <h3 id="pomo-events-title">이벤트별 대화</h3>
-              <p>여러 대화를 연결하고 이벤트별 재생 방식을 선택할 수 있어요.</p>
-            </div>
-          </div>
-
+        <section class={CLASSES.dialogueSettings}>
           <div class={CLASSES.dialogueSettingsLibraryHeading}>
-            <h4 id="pomo-dialogue-events-title">이벤트</h4>
+            <h3 id="pomo-dialogue-events-title">이벤트</h3>
             <span>{DIALOGUE_EVENTS.length}개</span>
           </div>
 
@@ -343,6 +330,10 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                           <p>{event.description}</p>
                         </div>
                       </div>
+
+                      <Show when={event.id === RANDOM_DIALOGUE_EVENT}>
+                        <RandomEventSettings />
+                      </Show>
 
                       <DialogueEventSettingRow
                         description={
@@ -395,23 +386,16 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
       </Tabs.Content>
 
       <Tabs.Content value="dialogue-library">
-        <section class={CLASSES.dialogueSettings} aria-labelledby="pomo-dialogue-library-title">
-          <div class={CLASSES.dialogueSettingsHeading}>
-            <div>
-              <h3 id="pomo-dialogue-library-title">내 대화</h3>
-              <p>저장된 대화를 듣거나 관리할 수 있어요.</p>
-            </div>
+        <section class={CLASSES.dialogueSettings}>
+          <AutomaticDialogueSettings />
+
+          <div class={CLASSES.dialogueSettingsLibraryHeading}>
+            <h3 id="pomo-dialogue-library-list-title">저장된 대화</h3>
+            <span>{savedDialogues().length}개</span>
             <A class={CLASSES.dialogueSettingsCreate} href="/dialogue">
               <span aria-hidden="true" class="i-tabler-plus size-4" />
               새 대화
             </A>
-          </div>
-
-          <AutomaticDialogueSettings />
-
-          <div class={CLASSES.dialogueSettingsLibraryHeading}>
-            <h4 id="pomo-dialogue-library-list-title">저장된 대화</h4>
-            <span>{savedDialogues().length}개</span>
           </div>
 
           <Show when={events.isLoading()}>

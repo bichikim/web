@@ -52,6 +52,8 @@ export default defineConfig({
         },
       },
       './vitest.storybook.config.mts',
+      './apps/coong/vitest.storybook.config.mts',
+      './apps/pomo/vitest.storybook.config.mts',
     ],
   },
 })

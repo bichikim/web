@@ -39,6 +39,7 @@ import {
   FEED_POLLING_INTERVAL_MS,
   getFeedGenerationProgress,
 } from './feed-runtime'
+import {processScheduledFeedJob, type ScheduledFeedJob, scheduleFeedJobs} from './generation-queue'
 import {FEED_CONNECTIONS_CHANGED_EVENT} from './use-feed-connections'
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns a single disposable feed synchronization and model lifecycle.
@@ -63,7 +64,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   let isGenerating = false
   let isSyncing = false
   let preparedModelId: SupertonicModelId | null = null
-  const scheduledJobIds: Array<string> = []
+  const scheduledJobs: Array<ScheduledFeedJob> = []
   const dismissedRecoveryIds = new Set<string>()
   const setFeedState = (nextState: PFeedState) => {
     if (!isDisposed) {
@@ -180,8 +181,8 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     }
 
     const discardedIds = new Set(jobIds)
-    const remainingIds = scheduledJobIds.filter((jobId) => !discardedIds.has(jobId))
-    scheduledJobIds.splice(0, scheduledJobIds.length, ...remainingIds)
+    const remainingJobs = scheduledJobs.filter((job) => !discardedIds.has(job.id))
+    scheduledJobs.splice(0, scheduledJobs.length, ...remainingJobs)
     await reloadRecovery()
   }
   const prepareModel = async (modelId: SupertonicModelId) => {
@@ -304,7 +305,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
 
     await Promise.all([reloadDialogues(), reloadIssues(), props.events.refreshDialogues()])
   }
-  const generateJob = async (job: FeedDialogueJob) => {
+  const generateJob = async (job: FeedDialogueJob, allowModelDownload: boolean) => {
     if (await discardUnsubscribedJob(job)) {
       return
     }
@@ -312,6 +313,13 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     const repositories = getRepositories()
     const now = new Date().toISOString()
     await repositories.feedRepository.updateJob({...job, status: 'generating', updatedAt: now})
+    const isModelDownloaded = await feedGenerationRuntime.isModelDownloaded(job.modelId)
+
+    if (!allowModelDownload && !isModelDownloaded) {
+      await failJob(job, '음성 모델 다운로드에 동의한 뒤 다시 시도해 주세요.')
+      return
+    }
+
     const isPrepared = await prepareModel(job.modelId)
 
     if (await discardUnsubscribedJob(job)) {
@@ -375,21 +383,20 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     isGenerating = true
 
     try {
-      while (scheduledJobIds.length > 0) {
+      while (scheduledJobs.length > 0) {
         if (isDisposed) {
           return
         }
 
-        const jobId = scheduledJobIds.shift()
-        const jobs = await getRepositories().feedRepository.listJobs()
-        const job = jobs.find((item) => item.id === jobId && item.status === 'queued')
+        const scheduledJob = scheduledJobs.shift()
 
-        if (job !== undefined) {
-          try {
-            await generateJob(job)
-          } catch (error: unknown) {
-            await handleJobFailure(job, error)
-          }
+        if (scheduledJob !== undefined) {
+          await processScheduledFeedJob({
+            generate: generateJob,
+            handleFailure: handleJobFailure,
+            listJobs: () => getRepositories().feedRepository.listJobs(),
+            scheduledJob,
+          })
         }
       }
     } finally {
@@ -400,20 +407,8 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       }
     }
   }
-  const scheduleJobs = (jobIds: ReadonlyArray<string>) => {
-    for (const jobId of jobIds) {
-      if (!scheduledJobIds.includes(jobId)) {
-        scheduledJobIds.push(jobId)
-      }
-    }
-
-    if (jobIds.length === 0) {
-      return
-    }
-
-    runScheduledJobs().catch((error: unknown) => {
-      console.error('Unexpected feed generation queue failure.', error)
-    })
+  const scheduleJobs = (jobIds: ReadonlyArray<string>, allowModelDownload = false) => {
+    scheduleFeedJobs(scheduledJobs, jobIds, runScheduledJobs, allowModelDownload)
   }
   const syncNow = async () => {
     if (isSyncing || isDisposed) {
@@ -590,7 +585,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       const jobIds = jobs.map((job) => job.id)
       await getRepositories().feedRepository.retryJobs(jobIds, new Date().toISOString())
       setRecoveryJobs([])
-      scheduleJobs(jobIds)
+      scheduleJobs(jobIds, true)
     },
     state,
     syncNow,

@@ -7,7 +7,7 @@ import {createLazyClient} from '../text-generation/lazy-client'
 import type {TextModelId} from '../text-generation/model'
 import type {TextGenerationProgress} from '../text-generation/progress'
 
-const INITIAL_STATUS_MESSAGE = '모델은 처음 한 번만 내려받고 브라우저 캐시에 보관해요.'
+const INITIAL_STATUS_MESSAGE = '모델은 처음 한 번만 내려받고 보관해요.'
 const MAXIMUM_PROGRESS = 100
 
 interface IdleState {
@@ -42,6 +42,7 @@ export type DialogueWriterState =
 export interface UseDialogueWriterProps {
   readonly initialRequest?: string
   readonly modelId: TextModelId
+  readonly onComplete?: (output: string) => void
   readonly runtime?: DialogueWriterRuntime
 }
 
@@ -56,6 +57,7 @@ export interface DialogueWriterController {
   readonly canPrepare: Accessor<boolean>
   readonly copyOutput: () => Promise<void>
   readonly generate: () => void
+  readonly generateWithPreparation: () => void
   readonly isBusy: Accessor<boolean>
   readonly isModelReady: Accessor<boolean>
   readonly output: Accessor<string>
@@ -112,6 +114,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   const [state, setState] = createSignal<DialogueWriterState>(
     runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
   )
+  let shouldGenerateAfterPreparation = false
   const isBusy = createMemo(() => isDialogueBusy(state()))
   const isModelReady = createMemo(() => isDialogueModelReady(state()))
   const canPrepare = createMemo(() => {
@@ -142,6 +145,10 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
       case 'idle':
         return INITIAL_STATUS_MESSAGE
       case 'loading':
+        if (currentState.percentage === MAXIMUM_PROGRESS) {
+          return '다운로드 완료 · 모델 시작 중…'
+        }
+
         return `모델 전체 내려받는 중 · ${currentState.percentage}%`
       case 'ready':
         return '모델 준비가 끝났어요. 입력한 내용에 바로 답해요.'
@@ -156,9 +163,11 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     switch (response.type) {
       case 'complete':
         setOutput(response.text)
+        props.onComplete?.(response.text)
         setState({status: 'complete'})
         return
       case 'error': {
+        shouldGenerateAfterPreparation = false
         const modelReady = !response.restartRequired && isModelReady()
 
         if (response.restartRequired) {
@@ -173,6 +182,12 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
         return
       case 'ready':
         setState({status: 'ready'})
+
+        if (shouldGenerateAfterPreparation) {
+          shouldGenerateAfterPreparation = false
+          generate()
+        }
+
         return
       case 'started':
         setOutput('')
@@ -204,9 +219,24 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
       return
     }
 
+    shouldGenerateAfterPreparation = false
     setState({status: 'generating'})
     setOutput('')
     clientOwner.get().generate(request().trim())
+  }
+
+  const generateWithPreparation = () => {
+    if (isBusy() || request().trim().length === 0 || state().status === 'unsupported') {
+      return
+    }
+
+    if (isModelReady()) {
+      generate()
+      return
+    }
+
+    shouldGenerateAfterPreparation = true
+    prepare()
   }
 
   const copyOutput = async () => {
@@ -216,6 +246,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   }
 
   const release = () => {
+    shouldGenerateAfterPreparation = false
     clientOwner.dispose()
     setState(runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'})
   }
@@ -228,6 +259,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     canPrepare,
     copyOutput,
     generate,
+    generateWithPreparation,
     isBusy,
     isModelReady,
     output,

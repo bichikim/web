@@ -1,13 +1,14 @@
 import '@unocss/reset/tailwind.css'
 import 'virtual:uno.css'
 
-import {Meta, MetaProvider, Title} from '@solidjs/meta'
+import {Link, Meta, MetaProvider, Title} from '@solidjs/meta'
 import {Router, useLocation} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {ErrorBoundary, Suspense} from 'solid-js'
 
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
-import {normalizePathname} from './components/pomo-route'
+import {isSearchIndexablePath, normalizePathname} from './components/pomo-route'
+import {SEARCH_CONFIG} from './config/search'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
 
 const DEFAULT_DESCRIPTION =
@@ -20,6 +21,11 @@ const TERMS_DESCRIPTION =
   'Pomofi 집중 도구, 콘텐츠, AI 음성 기능의 이용 조건과 이용자의 권리·의무를 안내합니다.'
 const PRIVACY_DESCRIPTION =
   'Pomofi가 처리하는 계정·세션 정보와 기기에만 저장되는 정보, 이용자의 권리를 안내합니다.'
+const THIRD_PARTY_NOTICES_DESCRIPTION =
+  'Pomofi가 사용하는 제3자 소프트웨어와 공개 가중치 모델의 라이선스 및 배포 조건을 안내합니다.'
+const INDEXABLE_ROBOTS =
+  'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+const PRIVATE_ROBOTS = 'noindex, nofollow'
 
 const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
@@ -36,6 +42,8 @@ const getTitle = (pathname: string) => {
     case '/privacy':
     case '/web/privacy':
       return 'Pomofi — 개인정보처리방침'
+    case '/third-party-notices':
+      return 'Pomofi — 제3자 라이선스 및 배포 고지'
     default:
       return 'Pomofi'
   }
@@ -56,6 +64,8 @@ const getDescription = (pathname: string) => {
     case '/terms':
     case '/web/terms':
       return TERMS_DESCRIPTION
+    case '/third-party-notices':
+      return THIRD_PARTY_NOTICES_DESCRIPTION
     default:
       return DEFAULT_DESCRIPTION
   }
@@ -63,11 +73,19 @@ const getDescription = (pathname: string) => {
 
 const PDocumentMetadata = () => {
   const location = useLocation()
+  const canonicalUrl = () =>
+    new URL(normalizePathname(location.pathname), SEARCH_CONFIG.origin).href
 
   return (
     <>
       <Title>{getTitle(location.pathname)}</Title>
       <Meta content={getDescription(location.pathname)} name="description" />
+      <Meta
+        content={isSearchIndexablePath(location.pathname) ? INDEXABLE_ROBOTS : PRIVATE_ROBOTS}
+        name="robots"
+      />
+      <Link href={canonicalUrl()} rel="canonical" />
+      <Link href="/llms.txt" rel="describedby" type="text/markdown" />
     </>
   )
 }

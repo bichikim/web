@@ -96,7 +96,7 @@ const getStatusMessage = (state: ChatState, modelId: TextModelId) => {
     case 'generating':
       return '답변을 만들고 있어요…'
     case 'idle':
-      return `${model.downloadSize} 모델을 처음 한 번 내려받아 브라우저 캐시에 보관해요.`
+      return `${model.downloadSize} 모델을 처음 한 번 내려받아 보관해요.`
     case 'loading':
       return `${model.label} 내려받는 중 · ${state.percentage}%`
     case 'ready':

@@ -101,7 +101,7 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
       case 'error':
         return currentState.message
       case 'idle':
-        return '처음 분석할 때 모델을 내려받아 브라우저 캐시에 보관해요.'
+        return '처음 분석할 때 모델을 내려받아 보관해요.'
       case 'insufficient':
         return '분위기를 판단할 단서가 부족해요. 짧은 상황을 함께 적어 주세요.'
       case 'loading':

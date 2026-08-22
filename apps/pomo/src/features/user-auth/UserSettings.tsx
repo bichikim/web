@@ -56,19 +56,7 @@ export const UserSettings = () => {
 
   return (
     <Tabs.Content value="user">
-      <section aria-labelledby="pomo-user-settings-title" class="grid gap-6">
-        <header>
-          <p class="m-0 text-xs font-750 tracking-[0.18em] text-highlight uppercase">
-            Pomo account
-          </p>
-          <h2 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em" id="pomo-user-settings-title">
-            사용자
-          </h2>
-          <p class="mb-0 mt-2 text-sm leading-6 text-muted-foreground">
-            현재 로그인 상태와 연결된 계정을 확인할 수 있어요.
-          </p>
-        </header>
-
+      <section class="grid gap-6">
         <div class="rounded-4 border border-solid border-border bg-secondary-soft p-5">
           <Switch>
             <Match when={state().kind === 'loading'}>
