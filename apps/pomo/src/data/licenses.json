@@ -195,7 +195,7 @@
         {
           "name": "Gemma 4 E2B ONNX",
           "license": "Apache-2.0",
-          "use": "브라우저 내 텍스트 생성 실험",
+          "use": "브라우저 안에서 대화 초안 생성",
           "condition": "모델 저장소의 LICENSE, NOTICE 및 저작권 고지를 배포물에 보존합니다.",
           "links": [
             {

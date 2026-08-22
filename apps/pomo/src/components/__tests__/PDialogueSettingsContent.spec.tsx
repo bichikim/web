@@ -230,13 +230,19 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
   const modeControlLayout = modeLayout?.lastElementChild
   expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
-  expect(settingRows).toHaveLength(6)
+  expect(settingRows).toHaveLength(10)
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
   expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
   expect(modeControlLayout?.classList).toContain('w-full')
   expect(screen.getByText('2개 대화 연결됨')).toBeDefined()
-  expect(screen.getAllByText('대화 선택')).toHaveLength(4)
+  expect(screen.getAllByText('대화 선택')).toHaveLength(7)
   expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 연결'})).toBeDefined()
+  expect(screen.queryByRole('switch', {name: '랜덤 이벤트 사용'})).toBeNull()
   expect(screen.getByRole('button', {name: '입장 대화 연결'})).toBeDefined()
   expect(screen.getByText('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')).toBeDefined()
   expect(screen.queryByRole('list', {name: '포모도르 집중 시작 대화 재생 대상'})).toBeNull()
@@ -245,7 +251,7 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
 })
 
-it('should play a saved dialogue once through the character without changing event bindings', () => {
+it('should queue a saved dialogue through the character without stopping existing playback', () => {
   const onRequestClose = vi.fn()
   const events = createEvents()
   const pauseAudio = vi
@@ -259,7 +265,7 @@ it('should play a saved dialogue once through the character without changing eve
 
   expect(pauseAudio).toHaveBeenCalledOnce()
   expect(loadAudio).toHaveBeenCalledOnce()
-  expect(events.onStopDialoguePlayback).toHaveBeenCalledOnce()
+  expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
   expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
   expect(events.setEventDialogues).not.toHaveBeenCalled()
   expect(onRequestClose).toHaveBeenCalledOnce()

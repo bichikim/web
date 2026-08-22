@@ -5,6 +5,7 @@ import {SUPERTONIC_LANGUAGES, type SupertonicLanguage} from '../supertonic/langu
 import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
 
 export const DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE = 'ko' satisfies SupertonicLanguage
+export const RANDOM_DIALOGUE_EVENT = 'random' as const
 
 export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'room-enter',
@@ -12,6 +13,9 @@ export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'focus-end',
   'break-start',
   'break-end',
+  'long-break-start',
+  'long-break-end',
+  RANDOM_DIALOGUE_EVENT,
 ] as const
 export const FOCUS_ROOM_ENTRY_EVENT = 'room-enter' as const
 export const dialogueEventIdSchema = z.enum(FOCUS_ROOM_DIALOGUE_EVENTS)

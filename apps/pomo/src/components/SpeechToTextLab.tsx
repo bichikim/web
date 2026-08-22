@@ -150,7 +150,7 @@ const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
           'xs:flex xs:items-center xs:justify-between xs:gap-4',
         )}
       >
-        <span>모델별 첫 사용 시 파일을 내려받아 브라우저 캐시에 저장해요.</span>
+        <span>모델별 첫 사용 시 파일을 내려받아 보관해요.</span>
         <span>WebGPU를 쓸 수 없으면 WASM으로 실행해요.</span>
       </footer>
     </div>

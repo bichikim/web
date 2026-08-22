@@ -303,6 +303,44 @@ it('should append feed playback behind active event dialogues', async () => {
   result.unmount()
 })
 
+it('should skip a deleted queued dialogue without clearing the remaining queue', async () => {
+  const dialogues = [
+    createDialogue('active'),
+    createDialogue('deleted'),
+    createDialogue('remaining'),
+  ]
+  const storedDialogues = new Map(dialogues.map((dialogue) => [dialogue.id, dialogue]))
+  const repository = {
+    ...createRepository(dialogues),
+    deleteDialogue: vi.fn(async (dialogueId: string) => {
+      storedDialogues.delete(dialogueId)
+    }),
+    getDialogue: vi.fn(async (dialogueId: string) => storedDialogues.get(dialogueId) ?? null),
+  }
+  const audioElements = [document.createElement('audio'), document.createElement('audio')]
+  repositoryMocks.create.mockReturnValue(repository)
+  stubAudioElements(audioElements)
+  const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const {events, result} = await renderContext()
+
+  const activePlayback = events.playDialogue('active')
+  await waitFor(() => expect(playAudio).toHaveBeenCalledOnce())
+  const deletedPlayback = events.playDialogue('deleted')
+  const remainingPlayback = events.playDialogue('remaining')
+  await waitFor(() => expect(events.scheduledDialogueCount()).toBe(3))
+
+  await events.deleteDialogue('deleted')
+  audioElements[0]?.dispatchEvent(new Event('ended'))
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledWith('remaining'))
+  await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(2))
+  audioElements[1]?.dispatchEvent(new Event('ended'))
+  await Promise.all([activePlayback, deletedPlayback, remainingPlayback])
+
+  expect(repository.getDialogue.mock.calls).toEqual([['active'], ['deleted'], ['remaining']])
+  expect(events.scheduledDialogueCount()).toBe(0)
+  result.unmount()
+})
+
 it('should reduce the connected count and skip only the active dialogue', async () => {
   const dialogues = [createDialogue('first'), createDialogue('second'), createDialogue('third')]
   const repository = createRepository(dialogues)
@@ -544,12 +582,13 @@ it('should play entry dialogue after the binding is configured after entering', 
   result.unmount()
 })
 
-it('should stop stale playback without replaying a changed event binding', async () => {
+it('should preserve queued playback without replaying a changed event binding', async () => {
   const entryDialogue = createDialogue('entry-dialogue', ['입장 대사'])
-  const nextDialogue = createDialogue('next-dialogue', ['새 입장 대사'])
-  const audio = document.createElement('audio')
+  const queuedDialogue = createDialogue('queued-dialogue', ['대기 중인 대사'])
+  const nextEntryDialogue = createDialogue('next-entry-dialogue', ['새 입장 대사'])
+  const audioElements = [document.createElement('audio'), document.createElement('audio')]
   const repository = createRepository(
-    [entryDialogue, nextDialogue],
+    [entryDialogue, queuedDialogue, nextEntryDialogue],
     [
       {
         dialogueIds: [entryDialogue.id],
@@ -560,7 +599,7 @@ it('should stop stale playback without replaying a changed event binding', async
     ],
   )
   repositoryMocks.create.mockReturnValue(repository)
-  stubAudioElements([audio])
+  stubAudioElements(audioElements)
   stubAnimationFrame()
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
   const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause')
@@ -584,17 +623,25 @@ it('should stop stale playback without replaying a changed event binding', async
     throw new Error('Expected the focus room event context to be captured.')
   }
 
+  const queuedPlayback = events.playDialogue(queuedDialogue.id)
+  await waitFor(() => expect(events.scheduledDialogueCount()).toBe(2))
   pause.mockClear()
-  await events.setEventDialogue('room-enter', nextDialogue.id)
-  expect(events.eventDialogueIds()['room-enter']).toEqual([nextDialogue.id])
-  expect(events.activeText()).toBeNull()
+  await events.setEventDialogue('room-enter', nextEntryDialogue.id)
+  expect(events.eventDialogueIds()['room-enter']).toEqual([nextEntryDialogue.id])
+  expect(events.activeText()).toBe('입장 대사')
+  expect(events.scheduledDialogueCount()).toBe(2)
   expect(repository.setEventBinding).toHaveBeenCalledWith(
     'room-enter',
-    [nextDialogue.id],
+    [nextEntryDialogue.id],
     'sequential-all',
   )
-  expect(repository.getDialogue).not.toHaveBeenCalledWith(nextDialogue.id)
-  expect(pause).toHaveBeenCalledOnce()
+  expect(repository.getDialogue).not.toHaveBeenCalledWith(nextEntryDialogue.id)
+  expect(pause).not.toHaveBeenCalled()
+
+  audioElements[0]?.dispatchEvent(new Event('ended'))
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledWith(queuedDialogue.id))
+  audioElements[1]?.dispatchEvent(new Event('ended'))
+  await queuedPlayback
 
   result.unmount()
 })

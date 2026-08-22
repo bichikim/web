@@ -8,6 +8,7 @@ import {
   type DialogueEventId,
   type DialogueEventPlaybackMode,
   type PDialogue,
+  RANDOM_DIALOGUE_EVENT,
   usePEvents,
 } from '../features/focus-room-dialogue'
 import {excludeFeedDialogues, usePFeedContext} from '../features/focus-room-feed'
@@ -18,6 +19,7 @@ import {DialogueConnectionMenu} from './DialogueConnectionMenu'
 import {DialogueEventSettingRow} from './DialogueEventSettingRow'
 import {DialoguePlaybackButton} from './DialoguePlaybackButton'
 import {DialoguePlaybackModeSelect} from './DialoguePlaybackModeSelect'
+import {RandomEventSettings} from './RandomEventSettings'
 
 const CLASSES = {
   dialogueSettings: 'pomo-dialogue-settings grid gap-4.5 settings-compact:gap-4',
@@ -231,7 +233,6 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
 
   const handleCharacterPlayback = (dialogue: PDialogue) => {
     stopPlayback()
-    events.onStopDialoguePlayback()
     const playback = events.playDialogue(dialogue.id)
 
     props.onRequestClose?.()
@@ -329,6 +330,10 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                           <p>{event.description}</p>
                         </div>
                       </div>
+
+                      <Show when={event.id === RANDOM_DIALOGUE_EVENT}>
+                        <RandomEventSettings />
+                      </Show>
 
                       <DialogueEventSettingRow
                         description={

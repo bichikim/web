@@ -93,4 +93,26 @@ describe('dialogueEventBindingSchema', () => {
       version: 3,
     })
   })
+
+  it('should accept a long break event binding', () => {
+    expect(
+      dialogueEventBindingSchema.parse({
+        dialogueIds: ['first'],
+        event: 'long-break-start',
+        playbackMode: 'sequential-all',
+        version: 3,
+      }),
+    ).toMatchObject({event: 'long-break-start'})
+  })
+
+  it('should accept a random event binding', () => {
+    expect(
+      dialogueEventBindingSchema.parse({
+        dialogueIds: ['first'],
+        event: 'random',
+        playbackMode: 'random-one',
+        version: 3,
+      }),
+    ).toMatchObject({event: 'random'})
+  })
 })

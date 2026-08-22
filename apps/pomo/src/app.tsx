@@ -1,13 +1,14 @@
 import '@unocss/reset/tailwind.css'
 import 'virtual:uno.css'
 
-import {Meta, MetaProvider, Title} from '@solidjs/meta'
+import {Link, Meta, MetaProvider, Title} from '@solidjs/meta'
 import {Router, useLocation} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {ErrorBoundary, Suspense} from 'solid-js'
 
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
-import {normalizePathname} from './components/pomo-route'
+import {isSearchIndexablePath, normalizePathname} from './components/pomo-route'
+import {SEARCH_CONFIG} from './config/search'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
 
 const DEFAULT_DESCRIPTION =
@@ -19,6 +20,9 @@ const REFUND_POLICY_DESCRIPTION =
 const TERMS_DESCRIPTION = 'Pomofi AI 음성 생성 기능과 Supertonic 3 모델의 이용 조건을 안내합니다.'
 const THIRD_PARTY_NOTICES_DESCRIPTION =
   'Pomofi가 사용하는 제3자 소프트웨어와 공개 가중치 모델의 라이선스 및 배포 조건을 안내합니다.'
+const INDEXABLE_ROBOTS =
+  'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+const PRIVATE_ROBOTS = 'noindex, nofollow'
 
 const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
@@ -48,11 +52,19 @@ const getDescription = (pathname: string) => {
 
 const PDocumentMetadata = () => {
   const location = useLocation()
+  const canonicalUrl = () =>
+    new URL(normalizePathname(location.pathname), SEARCH_CONFIG.origin).href
 
   return (
     <>
       <Title>{getTitle(location.pathname)}</Title>
       <Meta content={getDescription(location.pathname)} name="description" />
+      <Meta
+        content={isSearchIndexablePath(location.pathname) ? INDEXABLE_ROBOTS : PRIVATE_ROBOTS}
+        name="robots"
+      />
+      <Link href={canonicalUrl()} rel="canonical" />
+      <Link href="/llms.txt" rel="describedby" type="text/markdown" />
     </>
   )
 }

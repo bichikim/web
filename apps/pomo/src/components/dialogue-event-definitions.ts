@@ -38,4 +38,22 @@ export const DIALOGUE_EVENTS: ReadonlyArray<DialogueEventDefinition> = [
     id: 'break-end',
     label: '포모도르 휴식 종료',
   },
+  {
+    description: '긴 휴식 시간이 시작될 때 재생',
+    icon: 'i-tabler-armchair',
+    id: 'long-break-start',
+    label: '포모도르 긴 휴식 시작',
+  },
+  {
+    description: '긴 휴식 시간이 끝날 때 재생',
+    icon: 'i-tabler-clock-stop',
+    id: 'long-break-end',
+    label: '포모도르 긴 휴식 종료',
+  },
+  {
+    description: '설정한 랜덤 간격마다 재생',
+    icon: 'i-tabler-dice-5',
+    id: 'random',
+    label: '랜덤 이벤트',
+  },
 ]

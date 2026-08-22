@@ -46,6 +46,7 @@ it('should show license groups, distribution conditions, and original sources', 
   expect(screen.queryByText(/AI 생성 음성임을 표시합니다/u)).toBeNull()
   expect(screen.getByText(/라이선스 사본과 관련 고지를 제공합니다/u)).toBeTruthy()
   expect(screen.getByRole('link', {name: 'Supertonic 3 라이선스 원문 새 창에서 열기'})).toBeTruthy()
+  expect(screen.getByText('브라우저 안에서 대화 초안 생성')).toBeTruthy()
   expect(
     screen.getByRole('link', {name: 'Gemma 4 라이선스 원문 새 창에서 열기'}).getAttribute('href'),
   ).toBe('https://ai.google.dev/gemma/apache_2')

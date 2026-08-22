@@ -12,3 +12,4 @@ export {
   type ModelStorageError,
 } from './storage'
 export {createTransformersModelCache, type TransformersModelCache} from './transformers'
+export {formatModelDownloadSize} from './size'
