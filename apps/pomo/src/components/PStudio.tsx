@@ -28,6 +28,7 @@ import {
 } from '../features/focus-room-time'
 import {type PSayController, usePSay} from '../features/pomo-webmcp'
 import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
+import {useWeather, type WeatherCitySlug, type WeatherState} from '../features/weather'
 import {PMusicPlayer} from './PMusicPlayer'
 import {PFeedStatus} from './PFeedStatus'
 import {PDialoguePlayer} from './PDialoguePlayer'
@@ -41,6 +42,7 @@ import {
   resolvePSceneViseme,
 } from './pomo-scene-options'
 import {PScreenSaver} from './PScreenSaver'
+import {PWeatherStatus} from './PWeatherStatus'
 import {PScribbleCircleControl} from './PScribbleCircleControl'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
@@ -155,12 +157,17 @@ interface SceneToolbarProps {
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
+  readonly onWeatherCityChange: (citySlug: WeatherCitySlug) => void
+  readonly onWeatherEnabledChange: (enabled: boolean) => void
   readonly screenSaverDelay: ScreenSaverDelay
   readonly sceneStyle: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
   readonly time: SceneTime
   readonly timeMode: SceneTimeMode
+  readonly weatherCitySlug: WeatherCitySlug
+  readonly weatherEnabled: boolean
+  readonly weatherState: WeatherState
 }
 
 interface PEntryProps {
@@ -267,11 +274,15 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           onScreenSaverDelayChange={props.onScreenSaverDelayChange}
           onSceneStyleChange={props.onSceneStyleChange}
           onTimeModeChange={props.onTimeModeChange}
+          onWeatherCityChange={props.onWeatherCityChange}
+          onWeatherEnabledChange={props.onWeatherEnabledChange}
           screenSaverDelay={props.screenSaverDelay}
           sceneStyle={props.sceneStyle}
           motionInput={props.motionInput}
           motionMode={props.motionMode}
           timeMode={props.timeMode}
+          weatherCitySlug={props.weatherCitySlug}
+          weatherEnabled={props.weatherEnabled}
           fallback={
             <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
               <span
@@ -292,6 +303,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           }
         />
       </div>
+      <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
       <Show when={props.isSceneTransitioning}>
         <span
           aria-live="polite"
@@ -414,6 +426,7 @@ export const PStudio = () => {
     INITIAL_POMODORO_PRESENTATION,
   )
   const screenSaver = useScreenSaver()
+  const weather = useWeather()
   const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
@@ -515,12 +528,17 @@ export const PStudio = () => {
             onScreenSaverDelayChange={screenSaver.onDelayChange}
             onSceneStyleChange={sceneStyleController.onSceneStyleChange}
             onTimeModeChange={setTimeMode}
+            onWeatherCityChange={weather.onCityChange}
+            onWeatherEnabledChange={weather.onEnabledChange}
             screenSaverDelay={screenSaver.delay()}
             sceneStyle={sceneStyleController.sceneStyle()}
             motionInput={motionInput()}
             motionMode={motionMode()}
             time={time()}
             timeMode={timeMode()}
+            weatherCitySlug={weather.citySlug()}
+            weatherEnabled={weather.enabled()}
+            weatherState={weather.state()}
           />
         </Show>
       </div>

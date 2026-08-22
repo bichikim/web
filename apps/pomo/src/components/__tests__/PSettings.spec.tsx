@@ -16,6 +16,7 @@ vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/design-system/PSwitch', () => ({PSwitch: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
 vi.mock('../PFeedSettings', () => ({PFeedSettings: vi.fn()}))
+vi.mock('../PWeatherSettings', () => ({PWeatherSettings: vi.fn()}))
 vi.mock('../../features/user-auth/UserSettings', () => ({UserSettings: vi.fn()}))
 
 interface TabsRootProps {
@@ -60,11 +61,15 @@ it('should expose the guide as the last tab inside settings', () => {
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '일반',
     '이벤트',
+    '날씨',
     '피드',
     '대화',
     '사용자',
     '설명서',
   ])
+  expect(
+    screen.getByRole('tab', {name: '날씨'}).querySelector('.i-pomo-scribble-clouds'),
+  ).not.toBeNull()
 })
 
 it('should map the scribble style switch to the scene style value', () => {

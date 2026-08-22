@@ -1,0 +1,4 @@
+ALTER TABLE "weather_collection_state" ADD COLUMN "lease_expires_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "weather_collection_state" ADD COLUMN "lease_key" varchar(255);--> statement-breakpoint
+ALTER TABLE "weather_collection_state" ADD COLUMN "lease_token" uuid;--> statement-breakpoint
+ALTER TABLE "weather_collection_state" ADD CONSTRAINT "weather_collection_state_lease_complete" CHECK (("weather_collection_state"."lease_expires_at" is null and "weather_collection_state"."lease_key" is null and "weather_collection_state"."lease_token" is null) or ("weather_collection_state"."lease_expires_at" is not null and "weather_collection_state"."lease_key" is not null and "weather_collection_state"."lease_token" is not null));
