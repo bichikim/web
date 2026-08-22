@@ -16,6 +16,7 @@ export {
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
   focusRoomDialogueSchema,
+  RANDOM_DIALOGUE_EVENT,
 } from './schema'
 export type {
   DialogueEventBinding,
@@ -57,6 +58,15 @@ export {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
 } from './automatic-dialogue-settings-contract'
+export {
+  DEFAULT_RANDOM_EVENT_SETTINGS,
+  RANDOM_EVENT_SETTINGS_CHANGED_EVENT,
+  readRandomEventSettings,
+  writeRandomEventSettings,
+} from './random-event-settings'
+export type {RandomEventSettings} from './random-event-settings'
+export {useRandomEvent} from './use-random-event'
+export type {UseRandomEventProps} from './use-random-event'
 export type {
   AutomaticDialogueSettings,
   AutomaticDialogueSettingsRepository,
