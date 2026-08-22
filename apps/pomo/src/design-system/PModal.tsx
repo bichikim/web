@@ -52,6 +52,7 @@ const modalHeaderClasses = cva('flex-none', {
 
 export interface PModalProps {
   readonly children: JSX.Element
+  readonly closeButtonVisibility?: 'hidden' | 'visible'
   readonly contentOverflow?: 'auto' | 'hidden'
   readonly description?: string
   readonly getInitialFocus?: () => HTMLElement | null
@@ -171,30 +172,32 @@ export const PModal = (props: PModalProps) => (
               </div>
             )}
           </Show>
-          <div
-            class={cx(
-              'flex flex-none items-center justify-center',
-              props.navigation !== undefined && 'self-stretch',
-              props.navigation !== undefined &&
-                props.titleVisibility === 'visually-hidden' &&
-                'border-l border-solid border-border px-3 ' +
-                  'max-md:col-start-2 max-md:row-start-1 ' +
-                  'max-md:px-2',
-            )}
-          >
-            <Dialog.CloseButton
-              aria-label="닫기"
+          <Show when={(props.closeButtonVisibility ?? 'visible') === 'visible'}>
+            <div
               class={cx(
-                'grid flex-none cursor-pointer place-items-center border-0 ' +
-                  'rounded-control bg-transparent text-muted-foreground ' +
-                  'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
-                  'hover:bg-secondary-soft hover:text-foreground ' +
-                  'focus-visible:shadow-focus motion-reduce:transition-none size-11',
+                'flex flex-none items-center justify-center',
+                props.navigation !== undefined && 'self-stretch',
+                props.navigation !== undefined &&
+                  props.titleVisibility === 'visually-hidden' &&
+                  'border-l border-solid border-border px-3 ' +
+                    'max-md:col-start-2 max-md:row-start-1 ' +
+                    'max-md:px-2',
               )}
             >
-              <span aria-hidden="true" class="i-tabler-x size-5" />
-            </Dialog.CloseButton>
-          </div>
+              <Dialog.CloseButton
+                aria-label="닫기"
+                class={cx(
+                  'grid flex-none cursor-pointer place-items-center border-0 ' +
+                    'rounded-control bg-transparent text-muted-foreground ' +
+                    'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
+                    'hover:bg-secondary-soft hover:text-foreground ' +
+                    'focus-visible:shadow-focus motion-reduce:transition-none size-11',
+                )}
+              >
+                <span aria-hidden="true" class="i-tabler-x size-5" />
+              </Dialog.CloseButton>
+            </div>
+          </Show>
         </header>
         <div
           class={cx(
