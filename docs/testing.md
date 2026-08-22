@@ -17,7 +17,7 @@ Vite 8의 [`resolve.tsconfigPaths`](https://vite.dev/config/shared-options#resol
 | -------------- | ------------------- | ---------------------- | -------------------------------------- |
 | `unit`         | jsdom               | `virtual:uno.css` 대체 | 로직, DOM 구조와 동작                  |
 | `browser-pomo` | Playwright Chromium | Pomo UnoCSS            | 실제 렌더링, 브라우저 동작과 시각 회귀 |
-| `storybook`    | Playwright Chromium | Storybook 공통 UnoCSS  | story, play, 접근성 통합               |
+| `storybook`    | Playwright Chromium | Storybook 공통 UnoCSS  | 공용 패키지 story, play, 접근성 통합   |
 | E2E            | Playwright          | 배포 앱 CSS            | 핵심 사용자 흐름                       |
 
 ## 시각 회귀 테스트
