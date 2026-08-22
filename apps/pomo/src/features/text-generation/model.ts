@@ -1,12 +1,14 @@
-export const TEXT_MODEL_IDS = [
-  'qwen-0.8b',
-  'qwen-2b',
-  'qwen-4b',
-  'gemma-4-e2b',
-  'gemma-4-e2b-mobile',
-] as const
+const DEVELOPMENT_TEXT_MODEL_IDS = ['qwen-0.8b', 'qwen-2b', 'qwen-4b'] as const
 
-export type TextModelId = (typeof TEXT_MODEL_IDS)[number]
+const PRODUCTION_TEXT_MODEL_IDS = ['gemma-4-e2b', 'gemma-4-e2b-mobile'] as const
+
+export type TextModelId =
+  | (typeof DEVELOPMENT_TEXT_MODEL_IDS)[number]
+  | (typeof PRODUCTION_TEXT_MODEL_IDS)[number]
+
+export const TEXT_MODEL_IDS: ReadonlyArray<TextModelId> = import.meta.env.DEV
+  ? [...DEVELOPMENT_TEXT_MODEL_IDS, ...PRODUCTION_TEXT_MODEL_IDS]
+  : PRODUCTION_TEXT_MODEL_IDS
 
 export interface TextModelDefinition {
   readonly description: string
@@ -43,7 +45,10 @@ const createPomoR2ModelSource = (revision: string): TextModelAssetSource => ({
   revision,
 })
 
-const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> = {
+const PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS: Record<
+  (typeof PRODUCTION_TEXT_MODEL_IDS)[number],
+  TextModelImplementation
+> = {
   'gemma-4-e2b': {
     architecture: 'gemma-4',
     assetSource: createPomoR2ModelSource('9f4bef82ea6e296bc69f8a2f5939f73af81b07a6'),
@@ -64,6 +69,9 @@ const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> =
     quantization: 'q2f16',
     repositoryId: 'onnx-community/gemma-4-E2B-it-qat-mobile-ONNX',
   },
+}
+
+const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImplementation>> => ({
   'qwen-0.8b': {
     architecture: 'qwen-3.5',
     assetSource: HUGGING_FACE_MODEL_SOURCE,
@@ -94,14 +102,28 @@ const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> =
     quantization: 'q4',
     repositoryId: 'onnx-community/Qwen3.5-4B-ONNX',
   },
+})
+
+const TEXT_MODEL_IMPLEMENTATIONS: Partial<Record<TextModelId, TextModelImplementation>> = {
+  ...PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS,
+  ...(import.meta.env.DEV ? createDevelopmentTextModels() : {}),
 }
 
-export const TEXT_MODELS: ReadonlyArray<TextModelDefinition> = TEXT_MODEL_IDS.map(
-  (modelId) => TEXT_MODEL_IMPLEMENTATIONS[modelId],
-)
+const getAvailableTextModel = (modelId: TextModelId): TextModelImplementation => {
+  const model = TEXT_MODEL_IMPLEMENTATIONS[modelId]
+
+  if (model === undefined) {
+    throw new Error(`현재 빌드에서 사용할 수 없는 텍스트 모델이에요: ${modelId}`)
+  }
+
+  return model
+}
+
+export const TEXT_MODELS: ReadonlyArray<TextModelDefinition> =
+  TEXT_MODEL_IDS.map(getAvailableTextModel)
 
 export const getTextModel = (modelId: TextModelId): TextModelDefinition =>
-  TEXT_MODEL_IMPLEMENTATIONS[modelId]
+  getAvailableTextModel(modelId)
 
 export const getTextModelImplementation = (modelId: TextModelId): TextModelImplementation =>
-  TEXT_MODEL_IMPLEMENTATIONS[modelId]
+  getAvailableTextModel(modelId)

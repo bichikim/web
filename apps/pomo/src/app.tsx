@@ -18,6 +18,8 @@ const HOME_DESCRIPTION =
 const REFUND_POLICY_DESCRIPTION =
   'Pomofi 실물 응원 굿즈와 주간·월간 서비스 접근권의 환불 및 청약철회 기준을 안내합니다.'
 const TERMS_DESCRIPTION = 'Pomofi AI 음성 생성 기능과 Supertonic 3 모델의 이용 조건을 안내합니다.'
+const THIRD_PARTY_NOTICES_DESCRIPTION =
+  'Pomofi가 사용하는 제3자 소프트웨어와 공개 가중치 모델의 라이선스 및 배포 조건을 안내합니다.'
 const INDEXABLE_ROBOTS =
   'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
 const PRIVATE_ROBOTS = 'noindex, nofollow'
@@ -26,6 +28,8 @@ const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
     case '/refund-policy':
       return 'Pomofi — 환불 및 청약철회 정책'
+    case '/third-party-notices':
+      return 'Pomofi — 제3자 라이선스 및 배포 고지'
     default:
       return 'Pomofi'
   }
@@ -37,6 +41,8 @@ const getDescription = (pathname: string) => {
       return HOME_DESCRIPTION
     case '/refund-policy':
       return REFUND_POLICY_DESCRIPTION
+    case '/third-party-notices':
+      return THIRD_PARTY_NOTICES_DESCRIPTION
     case '/dev/terms':
       return TERMS_DESCRIPTION
     default:

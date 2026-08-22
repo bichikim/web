@@ -7,12 +7,12 @@ import {
   env,
   Gemma4ForCausalLM,
   type ProgressInfo,
-  Qwen3_5ForCausalLM,
   TextStreamer,
 } from '@huggingface/transformers'
 
 import {getTextModelImplementation, type TextModelId, type TextModelImplementation} from './model'
 import {createTextGenerationProgress} from './progress'
+import type {QwenTextGenerationModel} from './qwen-model'
 import type {
   CreateTextGenerationRuntimeOptions,
   GenerateTextOptions,
@@ -36,7 +36,7 @@ const GEMMA_TOKENIZER_CACHE_MIGRATION_VERSION = 1
 
 type TextGenerationModel =
   | Awaited<ReturnType<typeof Gemma4ForCausalLM.from_pretrained>>
-  | Awaited<ReturnType<typeof Qwen3_5ForCausalLM.from_pretrained>>
+  | QwenTextGenerationModel
 
 const loadModel = (
   modelDefinition: TextModelImplementation,
@@ -55,8 +55,15 @@ const loadModel = (
   switch (modelDefinition.architecture) {
     case 'gemma-4':
       return Gemma4ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
-    case 'qwen-3.5':
-      return Qwen3_5ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
+    case 'qwen-3.5': {
+      if (!import.meta.env.DEV) {
+        throw new Error('Qwen 텍스트 모델은 개발 빌드에서만 사용할 수 있어요.')
+      }
+
+      return import('./qwen-model').then(({loadQwenModel}) =>
+        loadQwenModel({model: modelDefinition, onProgress: reportProgress}),
+      )
+    }
   }
 
   modelDefinition.architecture satisfies never
