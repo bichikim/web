@@ -6,6 +6,9 @@ interface CreateStorybookConfigOptions {
   readonly viteConfigPath: string
 }
 
+const pretendardStylesheet =
+  'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'
+
 export const createStorybookConfig = (options: CreateStorybookConfigOptions): StorybookConfig => ({
   addons: [
     '@storybook/addon-onboarding',
@@ -31,6 +34,7 @@ export const createStorybookConfig = (options: CreateStorybookConfigOptions): St
       docgen: false,
     },
   },
+  previewHead: (head) => `${head}<link rel="stylesheet" href="${pretendardStylesheet}" />`,
   stories: options.stories,
   async viteFinal(config) {
     return mergeConfig(config, {

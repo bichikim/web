@@ -13,12 +13,14 @@ Vite 8의 [`resolve.tsconfigPaths`](https://vite.dev/config/shared-options#resol
 활성화하고 각 workspace의 `tsconfig.json`을 별칭의 단일 진실 공급원으로 사용한다. Vitest는
 공식 [test projects](https://vitest.dev/guide/workspace.html)로 실행 환경을 분리한다.
 
-| 프로젝트       | 런타임              | 스타일                 | 책임                                   |
-| -------------- | ------------------- | ---------------------- | -------------------------------------- |
-| `unit`         | jsdom               | `virtual:uno.css` 대체 | 로직, DOM 구조와 동작                  |
-| `browser-pomo` | Playwright Chromium | Pomo UnoCSS            | 실제 렌더링, 브라우저 동작과 시각 회귀 |
-| `storybook`    | Playwright Chromium | Storybook 공통 UnoCSS  | 공용 패키지 story, play, 접근성 통합   |
-| E2E            | Playwright          | 배포 앱 CSS            | 핵심 사용자 흐름                       |
+| 프로젝트          | 런타임              | 스타일                 | 책임                                   |
+| ----------------- | ------------------- | ---------------------- | -------------------------------------- |
+| `unit`            | jsdom               | `virtual:uno.css` 대체 | 로직, DOM 구조와 동작                  |
+| `browser-pomo`    | Playwright Chromium | Pomo UnoCSS            | 실제 렌더링, 브라우저 동작과 시각 회귀 |
+| `storybook`       | Playwright Chromium | Storybook 공통 UnoCSS  | 공용 패키지 story, play, 접근성 통합   |
+| `storybook-coong` | Playwright Chromium | Coong UnoCSS           | Coong story, play, 접근성 통합         |
+| `storybook-pomo`  | Playwright Chromium | Pomo UnoCSS            | Pomo story, play, 접근성 통합          |
+| E2E               | Playwright          | 배포 앱 CSS            | 핵심 사용자 흐름                       |
 
 ## 시각 회귀 테스트
 
