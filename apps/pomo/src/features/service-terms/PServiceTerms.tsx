@@ -428,7 +428,11 @@ export const PServiceTerms = (props: PServiceTermsProps) => (
         <a class={BACK_LINK_CLASSES} href={props.backHref ?? '/'}>
           ← {props.backLabel ?? 'Pomofi로 돌아가기'}
         </a>
-        <PServicePolicyLinks platform={props.platform ?? 'web'} tone="overlay" />
+        <PServicePolicyLinks
+          currentPolicy="terms"
+          platform={props.platform ?? 'web'}
+          tone="overlay"
+        />
       </div>
       <TermsIntro platform={props.platform} />
       <aside class="rounded-5 border border-#f2a7b8/20 bg-#f2a7b8/7 p-5" role="note">

@@ -18,6 +18,8 @@ it('should describe only the current Apps in Toss music purchase', () => {
   expect(screen.getByText(/음악 파일의 다운로드 기능을 제공하지 않으며/u)).toBeTruthy()
   expect(screen.getByText(/Android 결제는 토스 앱의 환불 신청 절차/u)).toBeTruthy()
   expect(screen.getByText(/iOS 결제의 환불 신청과 결정은 Apple/u)).toBeTruthy()
+  expect(screen.queryByRole('link', {name: '환불 및 청약철회 정책'})).toBeNull()
+  expect(screen.getByText('환불 및 청약철회 정책').getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
     '/apps-in-toss/privacy',
   )

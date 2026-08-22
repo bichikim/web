@@ -221,7 +221,7 @@ export default function RefundPolicyPage() {
           <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
             ← Pomofi로 돌아가기
           </A>
-          <PServicePolicyLinks platform="apps-in-toss" tone="overlay" />
+          <PServicePolicyLinks currentPolicy="refund" platform="apps-in-toss" tone="overlay" />
         </div>
 
         <PolicyIntro />

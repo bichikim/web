@@ -9,6 +9,8 @@ it('should share the core terms on the web page', () => {
   render(() => <PServiceTerms platform="web" />)
 
   expect(screen.getByRole('heading', {name: 'Pomofi 서비스 이용약관'})).toBeTruthy()
+  expect(screen.queryByRole('link', {name: '서비스 이용약관'})).toBeNull()
+  expect(screen.getByText('서비스 이용약관').getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
     '/web/privacy',
   )
