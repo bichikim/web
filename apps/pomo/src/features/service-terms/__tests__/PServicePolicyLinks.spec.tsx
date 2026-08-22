@@ -27,10 +27,10 @@ it('should link to the Apps in Toss policies in the app build', () => {
   render(() => <PServicePolicyLinks />)
 
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
-    '/apps-in-toss/terms',
+    '/app-in-toss/terms',
   )
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
-    '/apps-in-toss/privacy',
+    '/app-in-toss/privacy',
   )
   expect(screen.getByRole('link', {name: '환불 및 청약철회 정책'}).getAttribute('href')).toBe(
     '/refund-policy',

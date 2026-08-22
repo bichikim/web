@@ -44,9 +44,9 @@ interface PolicyLinkProps extends VariantProps<typeof policyLinkClasses> {
 }
 
 const serviceTermsPath = (platform: 'apps-in-toss' | 'web') =>
-  platform === 'apps-in-toss' ? '/apps-in-toss/terms' : '/web/terms'
+  platform === 'apps-in-toss' ? '/app-in-toss/terms' : '/web/terms'
 const privacyPolicyPath = (platform: 'apps-in-toss' | 'web') =>
-  platform === 'apps-in-toss' ? '/apps-in-toss/privacy' : '/web/privacy'
+  platform === 'apps-in-toss' ? '/app-in-toss/privacy' : '/web/privacy'
 
 const PolicyLink = (props: PolicyLinkProps) => (
   <Show

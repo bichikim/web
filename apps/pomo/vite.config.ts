@@ -114,6 +114,8 @@ export default defineConfig({
           routes: [
             '/',
             '/account',
+            '/app-in-toss/privacy',
+            '/app-in-toss/terms',
             '/apps-in-toss/privacy',
             '/apps-in-toss/terms',
             '/dialogue',

@@ -29,10 +29,12 @@ const PRIVATE_ROBOTS = 'noindex, nofollow'
 
 const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
+    case '/app-in-toss/privacy':
     case '/apps-in-toss/privacy':
       return 'Pomofi — 앱인토스 개인정보처리방침'
     case '/refund-policy':
       return 'Pomofi — 환불 및 청약철회 정책'
+    case '/app-in-toss/terms':
     case '/apps-in-toss/terms':
       return 'Pomofi — 앱인토스 서비스 이용약관'
     case '/dev/terms':
@@ -55,10 +57,12 @@ const getDescription = (pathname: string) => {
       return HOME_DESCRIPTION
     case '/refund-policy':
       return REFUND_POLICY_DESCRIPTION
+    case '/app-in-toss/privacy':
     case '/apps-in-toss/privacy':
     case '/privacy':
     case '/web/privacy':
       return PRIVACY_DESCRIPTION
+    case '/app-in-toss/terms':
     case '/apps-in-toss/terms':
     case '/dev/terms':
     case '/terms':

@@ -1,5 +1,5 @@
-import {PPrivacyPolicy} from 'src/features/privacy-policy'
+import {Navigate} from '@solidjs/router'
 
 export default function AppsInTossPrivacyPage() {
-  return <PPrivacyPolicy platform="apps-in-toss" />
+  return <Navigate href="/app-in-toss/privacy" />
 }
