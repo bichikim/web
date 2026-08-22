@@ -62,11 +62,6 @@ const CLASSES = {
     'settings-compact:grid-cols-[minmax(0,_1fr)_auto]',
     'max-sm:grid-cols-[minmax(0,_1fr)]',
   ].join(' '),
-  feedSettingsHeading: [
-    'pomo-feed-settings__heading [&_h3]:m-0 [&_h3]:text-foreground',
-    '[&_h3]:text-[0.9375rem] [&_h3]:font-[750] [&_p]:m-[0.25rem_0_0]',
-    '[&_p]:text-muted-foreground [&_p]:text-[0.6875rem] [&_p]:leading-[1.5]',
-  ].join(' '),
   feedSettingsList: [
     'pomo-feed-settings__list grid gap-3 m-0 p-0 list-none [&_>_li]:grid',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
@@ -81,8 +76,8 @@ const CLASSES = {
     'max-sm:[&_>_li]:grid-cols-[minmax(0,_1fr)]',
   ].join(' '),
   feedSettingsListHeading: [
-    'pomo-feed-settings__list-heading [&_h4]:m-0 [&_h4]:text-foreground',
-    '[&_h4]:text-[0.9375rem] [&_h4]:font-[750] flex items-center gap-[0.45rem]',
+    'pomo-feed-settings__list-heading [&_h3]:m-0 [&_h3]:text-foreground',
+    '[&_h3]:text-[0.9375rem] [&_h3]:font-[750] flex items-center gap-[0.45rem]',
     'border-t border-solid border-border pt-4',
     '[&_>_span]:text-muted-foreground [&_>_span]:text-[0.6875rem]',
   ].join(' '),
@@ -206,12 +201,7 @@ export default function PFeedSettingsContent() {
 
   return (
     <Tabs.Content value="feeds">
-      <section class={CLASSES.feedSettings} aria-labelledby="pomo-feeds-title">
-        <div class={CLASSES.feedSettingsHeading}>
-          <h3 id="pomo-feeds-title">구독 피드</h3>
-          <p>대화 탭의 공통 모델과 각 피드에 저장된 음성으로 새 글을 읽어 줘요.</p>
-        </div>
-
+      <section class={CLASSES.feedSettings}>
         <form class={CLASSES.feedSettingsForm} onSubmit={handleSubmit}>
           <label class={CLASSES.feedSettingsUrlField} for="pomo-feed-url">
             <span>피드 주소</span>
@@ -232,7 +222,7 @@ export default function PFeedSettingsContent() {
         </form>
 
         <div class={CLASSES.feedSettingsListHeading}>
-          <h4 id="pomo-feed-list-title">저장된 피드</h4>
+          <h3 id="pomo-feed-list-title">저장된 피드</h3>
           <span>{feeds.connections().length}개</span>
         </div>
 

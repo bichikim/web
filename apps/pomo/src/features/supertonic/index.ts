@@ -7,6 +7,8 @@ export type {
 export {createSupertonicAudioPlayer} from './audio-player'
 export type {CreateSupertonicAudioPlayerOptions, SupertonicAudioPlayer} from './audio-player'
 export {joinAudioChunks} from './audio'
+export {isSupertonicModelDownloaded} from './download'
+export type {IsSupertonicModelDownloadedOptions} from './download'
 export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
 export {SUPERTONIC_LANGUAGES, SUPERTONIC_LANGUAGE_OPTIONS} from './language'

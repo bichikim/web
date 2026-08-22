@@ -14,8 +14,10 @@ vi.mock('src/design-system/PModal', () => ({PModal: vi.fn()}))
 vi.mock('src/design-system/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
 vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/design-system/PSwitch', () => ({PSwitch: vi.fn()}))
+vi.mock('../PCreditsSettings', () => ({PCreditsSettings: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
 vi.mock('../PFeedSettings', () => ({PFeedSettings: vi.fn()}))
+vi.mock('../../features/user-auth/UserSettings', () => ({UserSettings: vi.fn()}))
 
 interface TabsRootProps {
   readonly children?: JSX.Element
@@ -48,7 +50,7 @@ beforeEach(() => {
   ))
 })
 
-it('should expose the guide as the last tab inside settings', () => {
+it('should expose the guide and credits as the final settings tabs', () => {
   render(() => <PSettings />)
 
   expect(screen.queryByRole('button', {name: 'Pomofi 설명서'})).toBeNull()
@@ -61,7 +63,9 @@ it('should expose the guide as the last tab inside settings', () => {
     '이벤트',
     '피드',
     '대화',
+    '사용자',
     '설명서',
+    '크레딧',
   ])
 })
 

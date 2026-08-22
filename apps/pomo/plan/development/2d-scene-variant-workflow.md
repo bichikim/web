@@ -196,15 +196,36 @@ pnpm assets:compress-focus-room
 
 깊이맵은 필터 내부 렌더 타깃의 `vTextureCoord`가 아니라 원본 장면의 정규화 좌표인 `aPosition`으로 샘플링한다. PixiJS 필터 렌더 타깃에는 여유 영역이 생길 수 있어서 `vTextureCoord`를 사용하면 깊이 경계가 좌우로 밀린다.
 
+### 깊이맵을 다시 생성한다
+
+입력은 눈과 배경까지 합성한 1672×941 무손실 PNG이며 `focus-room-<장면>-concept.png`로 이름 짓는다. 하찮은 스타일은 `<장면>` 끝에 `-scribble`을 붙인다. 다음 명령은 저장소 루트에서 실행한다.
+
+최초 한 번 DA3 실행 환경을 준비한다. 모델 체크포인트 revision은 생성 스크립트가 고정하며, 아래 커밋은 현재 검증한 DA3 코드 revision이다.
+
 ```bash
-python scripts/create-focus-room-depth-maps.py \
-  --da3-source <Depth-Anything-3 저장소> \
-  --input-dir asset-library/focus-room-source/concept-art \
-  --output-dir asset-library/focus-room-source/depth
-pnpm assets:compress-focus-room
+git clone https://github.com/ByteDance-Seed/depth-anything-3.git .temp/depth-anything-3
+git -C .temp/depth-anything-3 checkout 3d835ec1a5802d64a8b8b15f817a1ab54809bfe4
+UV_CACHE_DIR=.temp/uv-cache uv venv .temp/da3-venv --python 3.12
+UV_CACHE_DIR=.temp/uv-cache uv pip install --python .temp/da3-venv/bin/python \
+  torch torchvision numpy==1.26.4 pillow opencv-python-headless einops \
+  huggingface-hub safetensors omegaconf addict evo trimesh imageio plyfile e3nn \
+  'moviepy<2' pycolmap
 ```
 
-생성 설정과 원본 SHA-256은 `asset-library/focus-room-source/depth/manifest.json`에 기록한다. 원본 8-bit grayscale PNG는 이 경로에 보존하고 런타임은 픽셀 값이 동일한 무손실 WebP만 로드한다.
+전체 입력을 생성한 뒤 런타임용 무손실 WebP로 변환한다.
+
+```bash
+HF_HOME=.temp/da3-cache MPLCONFIGDIR=.temp/matplotlib-cache KMP_DUPLICATE_LIB_OK=TRUE \
+  .temp/da3-venv/bin/python apps/pomo/scripts/create-focus-room-depth-maps.py \
+  --da3-source .temp/depth-anything-3 \
+  --input-dir apps/pomo/asset-library/focus-room-source/concept-art \
+  --output-dir apps/pomo/asset-library/focus-room-source/depth
+pnpm --filter @apps/pomo assets:compress-focus-room-depth
+```
+
+일부 장면만 갱신할 때는 `--only focus-room-<장면>-concept`를 장면마다 반복한다. 이 방식은 선택하지 않은 입력과 깊이맵의 해시가 모두 일치하는 완전한 기존 manifest가 있어야 실행된다.
+
+생성 설정과 원본 SHA-256은 `asset-library/focus-room-source/depth/manifest.json`에 기록한다. 결과가 입력과 같은 크기의 8-bit grayscale PNG인지 확인한다. 원본 PNG는 이 경로에 보존하고 런타임은 픽셀 값이 동일한 무손실 WebP만 로드한다.
 
 ## 11. 런타임 장면을 고품질로 압축한다
 

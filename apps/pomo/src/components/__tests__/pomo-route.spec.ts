@@ -1,6 +1,11 @@
 import {expect, it} from 'vitest'
 
-import {isPomoHomePath, normalizePathname, usesPomoLayout} from '../pomo-route'
+import {
+  isPomoHomePath,
+  isSearchIndexablePath,
+  normalizePathname,
+  usesPomoLayout,
+} from '../pomo-route'
 
 it.each([
   ['/', '/'],
@@ -32,3 +37,17 @@ it.each([
     expect(isPomoHomePath(pathname)).toBe(expected)
   },
 )
+
+it.each([
+  ['/', true],
+  ['/refund-policy', true],
+  ['/refund-policy/', true],
+  ['/third-party-notices', true],
+  ['/third-party-notices/', true],
+  ['/account', false],
+  ['/admin/login', false],
+  ['/dev/terms', false],
+  ['/dialogue', false],
+])('should expose %s to search indexing when expected', (pathname, expected) => {
+  expect(isSearchIndexablePath(pathname)).toBe(expected)
+})

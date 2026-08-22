@@ -15,7 +15,7 @@ export const PSwitch = (props: PSwitchProps) => (
   <Switch
     checked={props.checked}
     class={cx(
-      'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 ui-disabled:opacity-45',
+      'relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 ui-disabled:opacity-45',
       props.class,
     )}
     disabled={props.disabled}

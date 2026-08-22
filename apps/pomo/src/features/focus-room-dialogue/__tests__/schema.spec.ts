@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {focusRoomDialogueSchema} from '../schema'
+import {dialogueEventBindingSchema, focusRoomDialogueSchema} from '../schema'
 
 const baseDialogue = {
   audioKey: 'audio-key',
@@ -64,5 +64,55 @@ describe('focusRoomDialogueSchema', () => {
     })
 
     expect(dialogue.segments[0].mood).toEqual(mood)
+  })
+})
+
+describe('dialogueEventBindingSchema', () => {
+  it.each([
+    [{dialogueId: 'first', event: 'room-enter', version: 1}],
+    [{dialogueIds: ['first', 'second'], event: 'focus-start', version: 2}],
+  ])('should migrate version %s bindings to sequential playback', (storedBinding) => {
+    expect(dialogueEventBindingSchema.parse(storedBinding)).toMatchObject({
+      playbackMode: 'sequential-all',
+      version: 3,
+    })
+  })
+
+  it('should preserve the selected playback mode', () => {
+    expect(
+      dialogueEventBindingSchema.parse({
+        dialogueIds: ['first', 'second'],
+        event: 'break-start',
+        playbackMode: 'random-one',
+        version: 3,
+      }),
+    ).toEqual({
+      dialogueIds: ['first', 'second'],
+      event: 'break-start',
+      playbackMode: 'random-one',
+      version: 3,
+    })
+  })
+
+  it('should accept a long break event binding', () => {
+    expect(
+      dialogueEventBindingSchema.parse({
+        dialogueIds: ['first'],
+        event: 'long-break-start',
+        playbackMode: 'sequential-all',
+        version: 3,
+      }),
+    ).toMatchObject({event: 'long-break-start'})
+  })
+
+  it('should accept a random event binding', () => {
+    expect(
+      dialogueEventBindingSchema.parse({
+        dialogueIds: ['first'],
+        event: 'random',
+        playbackMode: 'random-one',
+        version: 3,
+      }),
+    ).toMatchObject({event: 'random'})
   })
 })

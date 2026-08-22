@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {FOCUS_ROOM_JAW_CHANNEL} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
-import {getPSceneLayer} from '../scene-layer-catalog'
+import {getPSceneLayer, getPSceneReviewLayer} from '../scene-layer-catalog'
 
 describe('focus room scene catalog', () => {
   it('should provide all twelve unique scene combinations', () => {
@@ -115,6 +115,19 @@ describe('focus room scene catalog', () => {
     }
   })
 
+  it('should provide a dedicated depth map for every scene style', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const gazeName = scene.gaze === 'focused' ? 'focused' : 'user-gaze'
+      const scribbleDepthName = `${scene.time}-${scene.activity}-${gazeName}-scribble`
+
+      expect(scene.depthSources.original).toContain('/depth/')
+      expect(scene.depthSources.original).not.toContain('scribble')
+      expect(scene.depthSources.scribble).toContain('/depth/')
+      expect(scene.depthSources.scribble).toContain(scribbleDepthName)
+      expect(scene.depthSources.scribble).not.toBe(scene.depthSources.original)
+    }
+  })
+
   it('should share six full-head mouth stages across every scribble user-facing scene', () => {
     const expectedMouthIds = [
       'mouth-rest',
@@ -175,7 +188,7 @@ describe('focus room scene catalog', () => {
 
   it('should use true separated structural layers in every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const layerScene = getPSceneLayer(scene.id)
+      const layerScene = getPSceneReviewLayer(scene.id)
       const structuralLayers = layerScene.layers.filter((layer) => !layer.id.startsWith('mouth-'))
       const expectedStructuralLayerCount =
         scene.id === 'night-reading-focused'
@@ -448,9 +461,15 @@ describe('focus room scene catalog', () => {
     expect(new Set(nightFocusedHeadSources).size).toBe(1)
   })
 
+  it('should omit review-only reference imagery from every runtime scene', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      expect(getPSceneLayer(scene.id).layers.some((layer) => layer.id === 'reference')).toBe(false)
+    }
+  })
+
   it('should expose the complete review panel channels for every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const channels = getPSceneLayer(scene.id).layers.flatMap((layer) => [
+      const channels = getPSceneReviewLayer(scene.id).layers.flatMap((layer) => [
         ...(layer.channel === undefined ? [] : [layer.channel]),
         ...(layer.motion?.channel === undefined ? [] : [layer.motion.channel]),
         ...(layer.motions?.flatMap((motion) =>

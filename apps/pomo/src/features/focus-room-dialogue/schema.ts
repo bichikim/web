@@ -5,6 +5,7 @@ import {SUPERTONIC_LANGUAGES, type SupertonicLanguage} from '../supertonic/langu
 import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
 
 export const DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE = 'ko' satisfies SupertonicLanguage
+export const RANDOM_DIALOGUE_EVENT = 'random' as const
 
 export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'room-enter',
@@ -12,9 +13,17 @@ export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'focus-end',
   'break-start',
   'break-end',
+  'long-break-start',
+  'long-break-end',
+  RANDOM_DIALOGUE_EVENT,
 ] as const
 export const FOCUS_ROOM_ENTRY_EVENT = 'room-enter' as const
 export const dialogueEventIdSchema = z.enum(FOCUS_ROOM_DIALOGUE_EVENTS)
+export const DIALOGUE_EVENT_PLAYBACK_MODES = ['sequential-all', 'random-all', 'random-one'] as const
+export const DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE = 'sequential-all' as const
+export const dialogueEventPlaybackModeSchema = z.enum(DIALOGUE_EVENT_PLAYBACK_MODES)
+// oxlint-disable-next-line eslint/no-magic-numbers -- Persisted binding schema version.
+export const CURRENT_DIALOGUE_EVENT_BINDING_VERSION = 3 as const
 
 const moodScoreSchema = z.object({
   id: z.enum(PRIMARY_MOOD_IDS),
@@ -70,24 +79,40 @@ const legacyDialogueEventBindingSchema = z.object({
   event: dialogueEventIdSchema,
   version: z.literal(1),
 })
-const currentDialogueEventBindingSchema = z.object({
+const orderedDialogueEventBindingSchema = z.object({
   dialogueIds: z.array(z.string().min(1)).min(1).readonly(),
   event: dialogueEventIdSchema,
   version: z.literal(2),
+})
+const currentDialogueEventBindingSchema = z.object({
+  dialogueIds: z.array(z.string().min(1)).min(1).readonly(),
+  event: dialogueEventIdSchema,
+  playbackMode: dialogueEventPlaybackModeSchema,
+  version: z.literal(CURRENT_DIALOGUE_EVENT_BINDING_VERSION),
 })
 
 export type DialogueEventBinding = z.infer<typeof currentDialogueEventBindingSchema>
 
 export const dialogueEventBindingSchema = z
-  .union([legacyDialogueEventBindingSchema, currentDialogueEventBindingSchema])
+  .union([
+    legacyDialogueEventBindingSchema,
+    orderedDialogueEventBindingSchema,
+    currentDialogueEventBindingSchema,
+  ])
   .transform(
     (binding): DialogueEventBinding =>
-      binding.version === 1
-        ? {dialogueIds: [binding.dialogueId], event: binding.event, version: 2}
-        : binding,
+      binding.version === CURRENT_DIALOGUE_EVENT_BINDING_VERSION
+        ? binding
+        : {
+            dialogueIds: binding.version === 1 ? [binding.dialogueId] : binding.dialogueIds,
+            event: binding.event,
+            playbackMode: DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+            version: CURRENT_DIALOGUE_EVENT_BINDING_VERSION,
+          },
   )
 
 export type DialogueSegment = z.infer<typeof dialogueSegmentSchema>
 export type DialogueSegmentMood = z.infer<typeof dialogueSegmentMoodSchema>
 export type PDialogue = z.infer<typeof focusRoomDialogueSchema>
 export type DialogueEventId = z.infer<typeof dialogueEventIdSchema>
+export type DialogueEventPlaybackMode = z.infer<typeof dialogueEventPlaybackModeSchema>

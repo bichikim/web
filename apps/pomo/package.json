@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "assets:compress-focus-room": "node scripts/compress-focus-room-scenes.mjs",
+    "assets:compress-focus-room-depth": "node scripts/compress-focus-room-scenes.mjs --depth-only",
     "assets:create-mouths": "node scripts/create-focus-room-mouth-assets.mjs",
     "blender:export": "blender --background blender/character-studio.blend --python blender/export_glb.py",
     "blender:open": "blender blender/character-studio.blend",
@@ -24,14 +25,14 @@
     "preview:apps-in-toss-ssg": "vite preview --config preview.config.ts --host --outDir .output/public",
     "preview:web": "node .output/server/index.mjs",
     "text-mood:train": "node scripts/text-mood/train.mjs",
+    "text-generation:verify-assets": "node scripts/text-generation/verify-assets.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "3.0.3",
-    "@babylonjs/core": "9.18.0",
-    "@babylonjs/loaders": "9.18.0",
+    "@apps-in-toss/web-framework": "3.0.4",
     "@huggingface/transformers": "4.2.0",
     "@kobalte/core": "^0.13.11",
+    "@neondatabase/auth": "0.5.0-beta",
     "@neondatabase/serverless": "^1.1.0",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
@@ -41,7 +42,8 @@
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
     "dexie": "^4.4.4",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.2",
+    "h3": "catalog:",
     "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
     "nitro": "catalog:",
@@ -54,6 +56,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@babylonjs/core": "9.18.0",
+    "@babylonjs/loaders": "9.18.0",
     "@iconify-json/tabler": "^1.2.33",
     "@types/node": "catalog:",
     "@winter-love/unocss-config": "workspace:*",

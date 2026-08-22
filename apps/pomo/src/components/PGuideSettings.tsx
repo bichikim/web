@@ -69,17 +69,7 @@ const GUIDE_SECTIONS = [
 
 export const PGuideSettings = () => (
   <Tabs.Content value="guide">
-    <section aria-labelledby="pomo-guide-title" class="grid gap-6">
-      <header>
-        <p class="m-0 text-xs font-750 tracking-[0.18em] text-highlight uppercase">Pomofi guide</p>
-        <h2 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em" id="pomo-guide-title">
-          Pomofi 설명서
-        </h2>
-        <p class="mb-0 mt-2 text-sm leading-6 text-muted-foreground">
-          장면 속 Pomo와 함께 집중하고 쉬는 방법을 알아보세요.
-        </p>
-      </header>
-
+    <section class="grid gap-6">
       <div class="divide-y divide-border">
         <For each={GUIDE_SECTIONS}>
           {(section) => (

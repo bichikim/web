@@ -90,7 +90,8 @@ const CLASSES = {
     'motion-reduce:[--media-range-thumb-transition:none]',
   ].join(' '),
   playerProgressCollapsed: [
-    'pomo-player__progress--collapsed pointer-events-none absolute inset-0 h-full w-full',
+    'pomo-player__progress--collapsed pointer-events-none cursor-default absolute inset-0 h-full w-full',
+    '[--media-cursor:default]',
     '[--media-control-height:100%] [--media-range-padding:0px]',
     '[--media-range-track-height:100%] [--media-range-track-border-radius:0px]',
     '[--media-range-bar-color:rgb(0_0_0_/_25%)]',
@@ -357,8 +358,9 @@ const ExpandedPlayerProgress = (props: Pick<MusicPlayerViewProps, 'expanded'>) =
       CLASSES.playerProgressExpanded,
       MEDIA_FOCUS_CLASSES,
       props.expanded && 'is-expanded',
+      !props.expanded && 'pointer-events-none cursor-default [--media-cursor:default]',
     )}
-    disabled={!props.expanded}
+    bool:disabled={!props.expanded}
     title="재생 위치 조절"
   />
 )
@@ -480,7 +482,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
               CLASSES.playerProgressCollapsed,
               props.expanded && 'is-hidden',
             )}
-            disabled={true}
+            bool:disabled={true}
           />
 
           <div class={CLASSES.playerSummary}>
@@ -516,6 +518,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
                 props.sceneStyle,
               )}
               onPress={() => props.onExpandedChange()}
+              purpose="expand"
             />
           </div>
 

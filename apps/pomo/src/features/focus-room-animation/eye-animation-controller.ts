@@ -44,6 +44,13 @@ interface EyeAsset {
   readonly top: number
 }
 
+interface AcquiredEyeTextures {
+  readonly leases: readonly TextureLease[]
+  readonly sourceKey: string
+  readonly sources: readonly string[]
+  readonly state: PEyeState
+}
+
 type EyeFrame = Exclude<PEyeMode, 'auto'>
 
 const EYE_ASSETS = {
@@ -90,24 +97,6 @@ const EYE_OFFSETS = {
   Record<PGaze, Record<PActivity, {readonly x: number; readonly y: number}>>
 >
 
-const EYE_SOURCES = [
-  dayFocusedHalfImage,
-  dayFocusedClosedImage,
-  dayUserHalfImage,
-  dayUserClosedImage,
-  nightFocusedHalfImage,
-  nightFocusedClosedImage,
-  nightUserHalfImage,
-  nightUserClosedImage,
-  dayFocusedScribbleHalfImage,
-  dayFocusedScribbleClosedImage,
-  dayFocusedScribbleOpenImage,
-  dayFocusedScribblePupilsImage,
-  dayUserScribbleHalfImage,
-  dayUserScribbleClosedImage,
-  dayUserScribbleOpenImage,
-  dayUserScribblePupilsImage,
-] as const
 const HALF_FRAME_DURATION = 48
 const CLOSED_FRAME_DURATION = 72
 const PUPIL_MAXIMUM_DELAY = 3_200
@@ -119,6 +108,10 @@ const wait = (duration: number) =>
     window.setTimeout(resolve, duration)
   })
 
+const reportError = (error: unknown) => {
+  globalThis.reportError(error)
+}
+
 const getEyeAsset = (state: PEyeState): EyeAsset => {
   if (state.sceneStyle === 'scribble') {
     return state.gaze === 'focused' ? SCRIBBLE_DAY_FOCUSED_EYE_ASSET : SCRIBBLE_DAY_USER_EYE_ASSET
@@ -127,11 +120,25 @@ const getEyeAsset = (state: PEyeState): EyeAsset => {
   return EYE_ASSETS[state.time][state.gaze]
 }
 
+const getEyeSources = (state: PEyeState): readonly string[] => {
+  const asset = getEyeAsset(state)
+
+  return [
+    asset.half,
+    asset.closed,
+    ...(asset.open === undefined ? [] : [asset.open]),
+    ...(asset.pupils === undefined ? [] : [asset.pupils]),
+  ]
+}
+
+const getSourceKey = (sources: readonly string[]) => sources.join('\u0000')
+
 /** Owns blink scheduling, eye textures, and the eye overlay container. */
 export class PEyeController {
   readonly container = new Container()
   readonly #onRender: () => void
   #destroyed = false
+  #initialized = false
   #mode: PEyeMode = 'auto'
   #pupilOffset: PixiScenePoint = CENTERED_PUPIL_OFFSET
   #pupilSprite: Sprite | null = null
@@ -139,10 +146,14 @@ export class PEyeController {
   #sceneReady = false
   #scheduler: BlinkScheduler | null = null
   #sequence = 0
+  #sourceKey: string | null = null
   #sprite: Sprite | null = null
   #state: PEyeState | null = null
   #textureLeases: readonly TextureLease[] = []
+  #textureRevision = 0
   #textures: ReadonlyMap<string, Texture> | null = null
+  #requestedSourceKey: string | null = null
+  #renderState: PEyeState | null = null
 
   constructor(onRender: () => void) {
     this.#onRender = onRender
@@ -150,20 +161,17 @@ export class PEyeController {
 
   async initialize(state: PEyeState) {
     this.#state = state
-    const leases = await acquireTextureGroup(EYE_SOURCES)
+    const acquired = await this.#acquireCurrentTextures()
 
-    if (this.#destroyed) {
-      releaseTextureGroup(leases)
+    if (acquired === null) {
       return
     }
 
-    this.#textureLeases = leases
-    this.#textures = new Map(
-      EYE_SOURCES.map((source, index) => [source, leases[index].texture] as const),
-    )
-    this.#sprite = new Sprite(leases[0].texture)
+    this.#setTextures(acquired)
+    this.#renderState = acquired.state
+    this.#sprite = new Sprite(acquired.leases[0].texture)
     this.#sprite.visible = false
-    this.#pupilSprite = new Sprite(leases[0].texture)
+    this.#pupilSprite = new Sprite(acquired.leases[0].texture)
     this.#pupilSprite.visible = false
     this.container.addChild(this.#sprite, this.#pupilSprite)
     this.#scheduler = createBlinkScheduler({
@@ -171,6 +179,7 @@ export class PEyeController {
       minimumDelay: 2_000,
       onBlink: () => this.#playBlink(),
     })
+    this.#initialized = true
 
     if (this.#sceneReady) {
       this.#scheduler.start()
@@ -183,7 +192,32 @@ export class PEyeController {
     this.#state = state
     this.#sequence += 1
     this.#pupilOffset = CENTERED_PUPIL_OFFSET
-    this.#render('open')
+
+    if (!this.#initialized) {
+      return
+    }
+
+    const sources = getEyeSources(state)
+    const sourceKey = getSourceKey(sources)
+
+    if (sourceKey === this.#sourceKey) {
+      this.#textureRevision += 1
+      this.#requestedSourceKey = null
+      this.#renderState = state
+      this.#render('open')
+    } else if (sourceKey !== this.#requestedSourceKey) {
+      this.#textureRevision += 1
+      this.#requestedSourceKey = sourceKey
+      const revision = this.#textureRevision
+      this.#replaceTextures(sources, sourceKey, revision).catch((error: unknown) => {
+        if (revision === this.#textureRevision && sourceKey === this.#requestedSourceKey) {
+          this.#requestedSourceKey = null
+        }
+
+        reportError(error)
+      })
+    }
+
     if (this.#mode === 'auto') {
       this.#scheduler?.start()
     }
@@ -225,6 +259,7 @@ export class PEyeController {
 
     this.#destroyed = true
     this.#sequence += 1
+    this.#textureRevision += 1
     this.#scheduler?.destroy()
     this.#scheduler = null
     this.#clearPupilTimer()
@@ -234,6 +269,65 @@ export class PEyeController {
     releaseTextureGroup(this.#textureLeases)
     this.#textureLeases = []
     this.#textures = null
+    this.#renderState = null
+  }
+
+  async #acquireCurrentTextures(): Promise<AcquiredEyeTextures | null> {
+    const state = this.#state
+
+    if (this.#destroyed || state === null) {
+      return null
+    }
+
+    const sources = getEyeSources(state)
+    const sourceKey = getSourceKey(sources)
+    const leases = await acquireTextureGroup(sources)
+
+    if (this.#destroyed) {
+      releaseTextureGroup(leases)
+      return null
+    }
+
+    const latestState = this.#state
+    const latestSourceKey = latestState === null ? null : getSourceKey(getEyeSources(latestState))
+
+    if (latestState !== null && sourceKey === latestSourceKey) {
+      return {leases, sourceKey, sources, state: latestState}
+    }
+
+    releaseTextureGroup(leases)
+    return this.#acquireCurrentTextures()
+  }
+
+  async #replaceTextures(sources: readonly string[], sourceKey: string, revision: number) {
+    const leases = await acquireTextureGroup(sources)
+    const latestState = this.#state
+    const latestSourceKey = latestState === null ? null : getSourceKey(getEyeSources(latestState))
+
+    if (
+      this.#destroyed ||
+      revision !== this.#textureRevision ||
+      latestState === null ||
+      sourceKey !== latestSourceKey
+    ) {
+      releaseTextureGroup(leases)
+      return
+    }
+
+    const previousLeases = this.#textureLeases
+    this.#setTextures({leases, sourceKey, sources, state: latestState})
+    this.#renderState = latestState
+    this.#requestedSourceKey = null
+    this.#render('open')
+    releaseTextureGroup(previousLeases)
+  }
+
+  #setTextures(acquired: AcquiredEyeTextures) {
+    this.#textureLeases = acquired.leases
+    this.#sourceKey = acquired.sourceKey
+    this.#textures = new Map(
+      acquired.sources.map((source, index) => [source, acquired.leases[index].texture] as const),
+    )
   }
 
   async #playBlink() {
@@ -269,7 +363,7 @@ export class PEyeController {
     const sprite = this.#sprite
     const pupilSprite = this.#pupilSprite
     const textures = this.#textures
-    const state = this.#state
+    const state = this.#renderState
 
     if (sprite === null || pupilSprite === null || textures === null || state === null) {
       return
@@ -288,15 +382,15 @@ export class PEyeController {
       const texture = textures.get(source)
 
       if (texture === undefined) {
-        return
+        sprite.visible = false
+      } else {
+        sprite.texture = texture
+        sprite.position.set(
+          asset.left + offset.x + (frameOffset?.x ?? 0),
+          asset.top + offset.y + (frameOffset?.y ?? 0),
+        )
+        sprite.visible = true
       }
-
-      sprite.texture = texture
-      sprite.position.set(
-        asset.left + offset.x + (frameOffset?.x ?? 0),
-        asset.top + offset.y + (frameOffset?.y ?? 0),
-      )
-      sprite.visible = true
     }
 
     const pupilTexture = asset.pupils === undefined ? undefined : textures.get(asset.pupils)

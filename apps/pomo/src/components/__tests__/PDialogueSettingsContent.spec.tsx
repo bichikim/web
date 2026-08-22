@@ -2,7 +2,7 @@
 
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {For, type JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {PSelect} from 'src/design-system/PSelect'
@@ -74,6 +74,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   entryDialogueIds: () => [],
   errorMessage: () => null,
   eventDialogueIds: () => ({}),
+  eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
   hasEnteredFocusRoom: () => true,
   isDialoguePlaybackBlocked: () => false,
@@ -94,6 +95,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
   ...overrides,
 })
@@ -128,15 +130,23 @@ it('should keep saved dialogue content full-width with bounded text and actions'
 
   render(() => <PDialogueSettingsContent />)
 
+  expect(screen.queryByRole('heading', {name: '이벤트별 대화'})).toBeNull()
+  expect(
+    screen.queryByText('여러 대화를 연결하고 이벤트별 재생 방식을 선택할 수 있어요.'),
+  ).toBeNull()
+  expect(screen.queryByRole('heading', {name: '내 대화'})).toBeNull()
+  expect(screen.queryByText('저장된 대화를 듣거나 관리할 수 있어요.')).toBeNull()
   const library = screen.getByRole('list', {name: '저장된 대화'})
   const summary = within(library).getByText(DIALOGUE.text)
   const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
   const listenButton = within(library).getByRole('button', {name: '듣기'})
+  const createLink = screen.getByRole('link', {name: '새 대화'})
 
   expect(row?.className).toContain('max-md:items-stretch')
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
-  expect(screen.getByRole('link', {name: '새 대화'}).getAttribute('href')).toBe('/dialogue')
+  expect(createLink.getAttribute('href')).toBe('/dialogue')
+  expect(createLink.closest('.pomo-dialogue-settings__library-heading')).not.toBeNull()
   expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
     '/dialogue?dialogueId=saved-dialogue',
   )
@@ -165,7 +175,83 @@ it('should apply compact spacing to dialogue settings groups', () => {
   expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
 })
 
-it('should play a saved dialogue once through the character without changing event bindings', () => {
+it('should offer and save a playback mode when an event has multiple dialogues', () => {
+  const secondDialogue = {
+    ...DIALOGUE,
+    audioKey: 'audio-second',
+    id: 'second-dialogue',
+    text: '두 번째 대화',
+  } satisfies PDialogue
+  const events = createEvents({
+    dialogues: () => [DIALOGUE, secondDialogue],
+    eventDialogueIds: () => ({'focus-start': [DIALOGUE.id, secondDialogue.id]}),
+    eventPlaybackModes: () => ({'focus-start': 'random-all'}),
+  })
+  vi.mocked(PSelect).mockImplementation((selectProps) => {
+    if (selectProps.multiple === true) {
+      const selectedOptions = selectProps.options.filter((option) =>
+        selectProps.value.includes(option.value),
+      )
+
+      return (
+        <button aria-label={selectProps.accessibleLabel} type="button">
+          {selectedOptions.length === 0
+            ? selectProps.placeholder
+            : selectProps.selectionLabel?.(selectedOptions)}
+        </button>
+      )
+    }
+
+    return (
+      <label>
+        {selectProps.label}
+        <select
+          aria-label={selectProps.accessibleLabel}
+          onChange={(event) => selectProps.onChange(event.currentTarget.value)}
+          value={selectProps.value}
+        >
+          <For each={selectProps.options}>
+            {(option) => <option value={option.value}>{option.label}</option>}
+          </For>
+        </select>
+      </label>
+    )
+  })
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
+  vi.mocked(usePEvents).mockReturnValue(events)
+
+  const result = render(() => <PDialogueSettingsContent />)
+
+  const modeSelect = screen.getByRole('combobox', {name: '포모도르 집중 시작 재생 방식'})
+  const settingRows = result.container.querySelectorAll(
+    '.pomo-dialogue-settings__event-setting-row',
+  )
+  const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
+  const modeControlLayout = modeLayout?.lastElementChild
+  expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
+  expect(settingRows).toHaveLength(10)
+  expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
+  expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
+  expect(modeControlLayout?.classList).toContain('w-full')
+  expect(screen.getByText('2개 대화 연결됨')).toBeDefined()
+  expect(screen.getAllByText('대화 선택')).toHaveLength(7)
+  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 연결'})).toBeDefined()
+  expect(screen.queryByRole('switch', {name: '랜덤 이벤트 사용'})).toBeNull()
+  expect(screen.getByRole('button', {name: '입장 대화 연결'})).toBeDefined()
+  expect(screen.getByText('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')).toBeDefined()
+  expect(screen.queryByRole('list', {name: '포모도르 집중 시작 대화 재생 대상'})).toBeNull()
+
+  fireEvent.change(modeSelect, {target: {value: 'random-one'}})
+  expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
+})
+
+it('should queue a saved dialogue through the character without stopping existing playback', () => {
   const onRequestClose = vi.fn()
   const events = createEvents()
   const pauseAudio = vi
@@ -179,7 +265,7 @@ it('should play a saved dialogue once through the character without changing eve
 
   expect(pauseAudio).toHaveBeenCalledOnce()
   expect(loadAudio).toHaveBeenCalledOnce()
-  expect(events.onStopDialoguePlayback).toHaveBeenCalledOnce()
+  expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
   expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
   expect(events.setEventDialogues).not.toHaveBeenCalled()
   expect(onRequestClose).toHaveBeenCalledOnce()

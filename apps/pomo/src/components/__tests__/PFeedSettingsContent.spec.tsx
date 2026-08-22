@@ -16,20 +16,26 @@ const renderSettings = () => render(() => <PFeedSettingsContent />)
 beforeEach(() => {
   localStorage.clear()
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
-  vi.mocked(PSelect).mockImplementation((props) => (
-    <label>
-      {props.label}
-      <select
-        aria-label={`${props.label} ${props.accessibleLabel ?? ''}`.trim()}
-        onChange={(event) => props.onChange(event.currentTarget.value)}
-        value={props.value}
-      >
-        <For each={props.options}>
-          {(option) => <option value={option.value}>{option.label}</option>}
-        </For>
-      </select>
-    </label>
-  ))
+  vi.mocked(PSelect).mockImplementation((props) => {
+    if (props.multiple === true) {
+      return null
+    }
+
+    return (
+      <label>
+        {props.label}
+        <select
+          aria-label={`${props.label} ${props.accessibleLabel ?? ''}`.trim()}
+          onChange={(event) => props.onChange(event.currentTarget.value)}
+          value={props.value}
+        >
+          <For each={props.options}>
+            {(option) => <option value={option.value}>{option.label}</option>}
+          </For>
+        </select>
+      </label>
+    )
+  })
 })
 
 afterEach(() => {
@@ -40,6 +46,10 @@ it('should add, update, restore, and delete a feed connection with its voice', (
   const firstRender = renderSettings()
   const address = 'https://example.com/feed.xml'
 
+  expect(screen.queryByRole('heading', {name: '구독 피드'})).toBeNull()
+  expect(
+    screen.queryByText('대화 탭의 공통 모델과 각 피드에 저장된 음성으로 새 글을 읽어 줘요.'),
+  ).toBeNull()
   fireEvent.input(screen.getByRole('textbox', {name: '피드 주소'}), {
     target: {value: address},
   })

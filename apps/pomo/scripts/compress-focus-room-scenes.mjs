@@ -2,6 +2,14 @@ import {createRequire} from 'node:module'
 import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 
+const commandArguments = process.argv.slice(2)
+const unsupportedArguments = commandArguments.filter((argument) => argument !== '--depth-only')
+
+if (unsupportedArguments.length > 0) {
+  throw new Error(`Unsupported argument(s): ${unsupportedArguments.join(', ')}`)
+}
+
+const depthOnly = commandArguments.includes('--depth-only')
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
 const sharp = require('sharp')
 
@@ -386,13 +394,45 @@ const writeLayerLayouts = (scenes) =>
     }),
   )
 
+const createDepthCompressionPlan = async () => {
+  const names = await readMatchingNames(sourceDepthDirectory, pngPattern)
+
+  return {
+    jobs: names.map(
+      (name) => () =>
+        writeAtomicWebp({
+          options: {lossless: true},
+          outputPath: path.join(runtimeDepthDirectory, getRuntimeDepthName(name)),
+          sourcePath: path.join(sourceDepthDirectory, name),
+          validate: assertExactRenderedPixels,
+        }),
+    ),
+    names,
+    outputPaths: names.map((name) => path.join(runtimeDepthDirectory, getRuntimeDepthName(name))),
+  }
+}
+
+const compressDepthAssets = async () => {
+  const depthPlan = await createDepthCompressionPlan()
+
+  await runCompressionJobs(depthPlan.jobs)
+  const prunedAssetCount = await removeStaleWebps({
+    directories: [runtimeDepthDirectory],
+    expectedPaths: new Set(depthPlan.outputPaths),
+  })
+
+  console.log(
+    `Compressed ${depthPlan.names.length} depth maps and pruned ${prunedAssetCount} stale depth assets.`,
+  )
+}
+
 const compressAssets = async () => {
   const sceneNames = await readMatchingNames(sourceConceptArtDirectory, scenePattern)
   const layerSceneNames = (await readdir(sourceLayerDirectory, {withFileTypes: true}))
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
   const animationNames = await readMatchingNames(sourceAnimationDirectory, runtimeAnimationPattern)
-  const depthNames = await readMatchingNames(sourceDepthDirectory, pngPattern)
+  const depthPlan = await createDepthCompressionPlan()
   const statusIconNames = await readMatchingNames(
     sourceStatusIconDirectory,
     runtimeStatusIconPattern,
@@ -466,15 +506,6 @@ const compressAssets = async () => {
         sourcePath: path.join(sourceAnimationDirectory, animationName),
       }),
   )
-  const depthJobs = depthNames.map(
-    (depthName) => () =>
-      writeAtomicWebp({
-        options: {lossless: true},
-        outputPath: path.join(runtimeDepthDirectory, getRuntimeDepthName(depthName)),
-        sourcePath: path.join(sourceDepthDirectory, depthName),
-        validate: assertExactRenderedPixels,
-      }),
-  )
   const statusIconJobs = statusIconNames.map(
     (statusIconName) => () =>
       writeSmallestAlphaWebp({
@@ -489,7 +520,7 @@ const compressAssets = async () => {
     ...sceneJobs,
     ...layerJobsByScene.flatMap((scene) => scene.jobs),
     ...animationJobs,
-    ...depthJobs,
+    ...depthPlan.jobs,
     ...statusIconJobs,
   ])
 
@@ -503,9 +534,7 @@ const compressAssets = async () => {
     ...animationNames.map((animationName) =>
       path.join(runtimeAnimationDirectory, getRuntimeAnimationPath(animationName)),
     ),
-    ...depthNames.map((depthName) =>
-      path.join(runtimeDepthDirectory, getRuntimeDepthName(depthName)),
-    ),
+    ...depthPlan.outputPaths,
     ...statusIconNames.map((statusIconName) =>
       path.join(runtimeStatusIconDirectory, getRuntimeStatusIconName(statusIconName)),
     ),
@@ -528,7 +557,7 @@ const compressAssets = async () => {
     [
       `Compressed ${sceneNames.length} scenes and ${layerBaseCount} layer bases`,
       `at WebP quality ${SCENE_QUALITY}. Compressed ${layerAssetCount} layers,`,
-      `${animationNames.length} animations, ${depthNames.length} depth maps,`,
+      `${animationNames.length} animations, ${depthPlan.names.length} depth maps,`,
       `${statusIconNames.length} status icons, and pruned ${prunedAssetCount} stale assets`,
       `from ${prunedDirectoryCount} stale layer directories.`,
     ].join(' '),
@@ -536,7 +565,7 @@ const compressAssets = async () => {
 }
 
 try {
-  await compressAssets()
+  await (depthOnly ? compressDepthAssets() : compressAssets())
 } finally {
   await rm(temporaryDirectory, {force: true, recursive: true})
 }

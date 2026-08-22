@@ -12,6 +12,8 @@ import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-a
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
+import {UserSettings} from '../features/user-auth/UserSettings'
+import {PCreditsSettings} from './PCreditsSettings'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
@@ -157,9 +159,17 @@ const PSettingsTabList = () => {
           <span aria-hidden="true" class="i-tabler-message-circle size-4" />
           <span>대화</span>
         </Tabs.Trigger>
+        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="user">
+          <span aria-hidden="true" class="i-tabler-user-circle size-4" />
+          <span>사용자</span>
+        </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="guide">
           <span aria-hidden="true" class="i-tabler-help-circle size-4" />
           <span>설명서</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="credits">
+          <span aria-hidden="true" class="i-tabler-heart size-4" />
+          <span>크레딧</span>
         </Tabs.Trigger>
       </Tabs.List>
       <Show when={canScrollTabsLeft()}>
@@ -319,8 +329,10 @@ export const PSettings = (props: PSettingsProps) => {
             </div>
           </Tabs.Content>
           <PGuideSettings />
+          <PCreditsSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
+          <UserSettings />
         </PModal>
       </Tabs>
     </>
