@@ -1,12 +1,7 @@
-import {Title} from '@solidjs/meta'
+import {lazy} from 'solid-js'
 
-import {PLayerReview} from 'src/components/PLayerReview'
+const LayerReviewPage = import.meta.env.DEV
+  ? lazy(() => import('src/components/dev/LayerReviewPage'))
+  : () => null
 
-export default function PLayerReviewPage() {
-  return (
-    <main class="h-dvh overflow-hidden bg-#17131f text-#f8edf1">
-      <Title>Pomofi — Focus Room Layer Review</Title>
-      <PLayerReview />
-    </main>
-  )
-}
+export default LayerReviewPage

@@ -130,15 +130,23 @@ it('should keep saved dialogue content full-width with bounded text and actions'
 
   render(() => <PDialogueSettingsContent />)
 
+  expect(screen.queryByRole('heading', {name: '이벤트별 대화'})).toBeNull()
+  expect(
+    screen.queryByText('여러 대화를 연결하고 이벤트별 재생 방식을 선택할 수 있어요.'),
+  ).toBeNull()
+  expect(screen.queryByRole('heading', {name: '내 대화'})).toBeNull()
+  expect(screen.queryByText('저장된 대화를 듣거나 관리할 수 있어요.')).toBeNull()
   const library = screen.getByRole('list', {name: '저장된 대화'})
   const summary = within(library).getByText(DIALOGUE.text)
   const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
   const listenButton = within(library).getByRole('button', {name: '듣기'})
+  const createLink = screen.getByRole('link', {name: '새 대화'})
 
   expect(row?.className).toContain('max-md:items-stretch')
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
-  expect(screen.getByRole('link', {name: '새 대화'}).getAttribute('href')).toBe('/dialogue')
+  expect(createLink.getAttribute('href')).toBe('/dialogue')
+  expect(createLink.closest('.pomo-dialogue-settings__library-heading')).not.toBeNull()
   expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
     '/dialogue?dialogueId=saved-dialogue',
   )

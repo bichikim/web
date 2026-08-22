@@ -19,7 +19,9 @@ afterEach(() => {
 it('should explain the complete Pomofi experience inside the settings tab', () => {
   render(() => <PGuideSettings />)
 
-  expect(screen.getByRole('heading', {level: 2, name: 'Pomofi 설명서'})).toBeDefined()
+  expect(screen.queryByText('Pomofi guide')).toBeNull()
+  expect(screen.queryByRole('heading', {name: 'Pomofi 설명서'})).toBeNull()
+  expect(screen.queryByText('장면 속 Pomo와 함께 집중하고 쉬는 방법을 알아보세요.')).toBeNull()
   expect(screen.getByText(/집중 25분과 짧은 휴식 5분/)).toBeDefined()
   expect(screen.getByText(/집중 4회를 마치면 긴 휴식 15분/)).toBeDefined()
   expect(screen.getByRole('heading', {name: '장면'})).toBeDefined()
