@@ -95,7 +95,7 @@ it('should finish metadata deletion when obsolete audio cleanup fails', async ()
   expect(databaseMocks.close).toHaveBeenCalledOnce()
 })
 
-it('should normalize a legacy entry binding to a dialogue sequence', async () => {
+it('should normalize a legacy entry binding to a sequential dialogue sequence', async () => {
   databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
     event === 'room-enter'
       ? {dialogueId: 'legacy-dialogue', event: 'room-enter', version: 1}
@@ -104,7 +104,12 @@ it('should normalize a legacy entry binding to a dialogue sequence', async () =>
   const repository = createPDialogueRepository()
 
   await expect(repository.listEventBindings()).resolves.toEqual([
-    {dialogueIds: ['legacy-dialogue'], event: 'room-enter', version: 2},
+    {
+      dialogueIds: ['legacy-dialogue'],
+      event: 'room-enter',
+      playbackMode: 'sequential-all',
+      version: 3,
+    },
   ])
 })
 
@@ -118,7 +123,22 @@ it('should persist unique entry dialogues in their selected order', async () => 
   expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
     dialogueIds: ['first', 'second'],
     event: 'room-enter',
-    version: 2,
+    playbackMode: 'sequential-all',
+    version: 3,
+  })
+})
+
+it('should persist an event playback mode with its dialogue sequence', async () => {
+  databaseMocks.dialogues.get.mockResolvedValue({id: 'stored'})
+  const repository = createPDialogueRepository()
+
+  await repository.setEventBinding('focus-start', ['first', 'second'], 'random-one')
+
+  expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
+    dialogueIds: ['first', 'second'],
+    event: 'focus-start',
+    playbackMode: 'random-one',
+    version: 3,
   })
 })
 
@@ -137,7 +157,12 @@ it('should preserve remaining event dialogues when deleting one dialogue', async
   })
   databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
     event === 'room-enter'
-      ? {dialogueIds: ['first', 'second'], event: 'room-enter', version: 2}
+      ? {
+          dialogueIds: ['first', 'second'],
+          event: 'room-enter',
+          playbackMode: 'random-all',
+          version: 3,
+        }
       : undefined,
   )
   storageMocks.delete.mockResolvedValue({ok: true, value: true})
@@ -148,7 +173,8 @@ it('should preserve remaining event dialogues when deleting one dialogue', async
   expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
     dialogueIds: ['second'],
     event: 'room-enter',
-    version: 2,
+    playbackMode: 'random-all',
+    version: 3,
   })
   expect(databaseMocks.eventBindings.delete).not.toHaveBeenCalled()
 })
@@ -306,13 +332,19 @@ it('should persist and remove bindings for every supported dialogue event', asyn
   const repository = createPDialogueRepository()
 
   await expect(repository.listEventBindings()).resolves.toEqual([
-    {dialogueIds: ['dialogue-id'], event: 'focus-start', version: 2},
+    {
+      dialogueIds: ['dialogue-id'],
+      event: 'focus-start',
+      playbackMode: 'sequential-all',
+      version: 3,
+    },
   ])
-  await repository.setEventBinding('break-end', 'dialogue-id')
+  await repository.setEventBinding('break-end', 'dialogue-id', 'random-all')
   expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
     dialogueIds: ['dialogue-id'],
     event: 'break-end',
-    version: 2,
+    playbackMode: 'random-all',
+    version: 3,
   })
 
   await repository.setEventBinding('break-end', null)

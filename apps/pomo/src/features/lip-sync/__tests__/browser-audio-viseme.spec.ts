@@ -1,7 +1,45 @@
-import {describe, expect, it} from 'vitest'
+/** @vitest-environment jsdom */
+
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {createPVisemeDriver} from '../audio-driven-viseme'
-import {resolvePBrowserAudioVisemeFrame} from '../browser-audio-viseme'
+import {
+  createPBrowserAudioVisemeAnalyzer,
+  resolvePBrowserAudioVisemeFrame,
+} from '../browser-audio-viseme'
+
+const wlipsyncMocks = vi.hoisted(() => ({
+  createNode: vi.fn(),
+  parseProfile: vi.fn(() => ({})),
+}))
+
+vi.mock('wlipsync', () => ({
+  createWLipSyncNode: wlipsyncMocks.createNode,
+  parseBinaryProfile: wlipsyncMocks.parseProfile,
+}))
+
+const createAudioHarness = () => {
+  const destination = {}
+  const context = {audioWorklet: {}, destination} as unknown as AudioContext
+  const node = {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    maxVolume: 0,
+    minVolume: 0,
+    smoothness: 0,
+    volume: 0.8,
+    weights: {A: 1},
+  }
+  const source = {connect: vi.fn(), disconnect: vi.fn()} as unknown as AudioNode
+
+  vi.stubGlobal('AudioWorkletNode', class {})
+  return {context, destination, node, source}
+}
+
+afterEach(() => {
+  vi.clearAllMocks()
+  vi.unstubAllGlobals()
+})
 
 describe('resolvePBrowserAudioVisemeFrame', () => {
   it.each([
@@ -90,5 +128,44 @@ describe('resolvePBrowserAudioVisemeFrame', () => {
     })
 
     expect(driver.update({currentTimeMs: 0, ...frame})).toBe('closed')
+  })
+})
+
+describe('createPBrowserAudioVisemeAnalyzer', () => {
+  it('should connect, read, and release an analyzed source', async () => {
+    const {context, destination, node, source} = createAudioHarness()
+    wlipsyncMocks.createNode.mockResolvedValue(node)
+    const analyzer = createPBrowserAudioVisemeAnalyzer(context)
+
+    await analyzer.connect(source)
+
+    expect(source.connect).toHaveBeenCalledWith(node)
+    expect(node.connect).toHaveBeenCalledWith(destination)
+    expect(analyzer.getFrame('rest')).toEqual({intensity: 0.8, viseme: 'open'})
+
+    analyzer.disconnect(source)
+    expect(source.disconnect).toHaveBeenCalledWith(node)
+
+    analyzer.dispose()
+    expect(node.disconnect).toHaveBeenCalledOnce()
+    expect(analyzer.getFrame('rest')).toBeNull()
+  })
+
+  it('should not reconnect a source cancelled while the analyzer initializes', async () => {
+    const {context, node, source} = createAudioHarness()
+    let resolveNode: ((value: typeof node) => void) | undefined
+    wlipsyncMocks.createNode.mockReturnValue(
+      new Promise((resolve) => {
+        resolveNode = resolve
+      }),
+    )
+    const analyzer = createPBrowserAudioVisemeAnalyzer(context)
+    const connection = analyzer.connect(source)
+
+    analyzer.disconnect(source)
+    resolveNode?.(node)
+    await connection
+
+    expect(source.connect).not.toHaveBeenCalled()
   })
 })

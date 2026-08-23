@@ -17,6 +17,10 @@ type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {
 
 declare module 'solid-js' {
   namespace JSX {
+    interface ExplicitBoolAttributes {
+      disabled: boolean
+    }
+
     interface IntrinsicElements {
       'media-control-bar': MediaChromeAttributes
       'media-controller': MediaChromeAttributes

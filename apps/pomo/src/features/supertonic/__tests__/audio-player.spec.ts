@@ -5,6 +5,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createSupertonicAudioPlayer} from '../audio-player'
 
 interface AudioSourceHarness {
+  readonly disconnect: ReturnType<typeof vi.fn>
   readonly end: () => void
 }
 
@@ -41,10 +42,11 @@ const installAudioRuntime = () => {
         },
         buffer: null,
         connect: vi.fn(),
+        disconnect: vi.fn(),
         start: vi.fn(),
         stop: vi.fn(),
       }
-      runtime.sources.push({end: () => onEnded()})
+      runtime.sources.push({disconnect: source.disconnect, end: () => onEnded()})
       return source
     }
 
@@ -99,6 +101,7 @@ describe('createSupertonicAudioPlayer', () => {
     runtime.sources[0]?.end()
 
     expect(onPlaybackEnd).toHaveBeenCalledOnce()
+    expect(runtime.sources[0]?.disconnect).toHaveBeenCalledOnce()
     expect(onVisemeChange).toHaveBeenLastCalledWith('open')
     vi.advanceTimersByTime(299)
     expect(onVisemeChange).toHaveBeenLastCalledWith('open')
@@ -121,5 +124,22 @@ describe('createSupertonicAudioPlayer', () => {
 
     expect(window.cancelAnimationFrame).toHaveBeenCalled()
     expect(onVisemeChange).toHaveBeenLastCalledWith('rest')
+  })
+
+  it('should ignore delayed source endings after disposal', () => {
+    const runtime = installAudioRuntime()
+    const onPlaybackEnd = vi.fn()
+    const player = createSupertonicAudioPlayer({onPlaybackEnd})
+
+    player.enqueue(
+      {generationTime: 1, sampleRate: 1_000, samples: new Float32Array(500).fill(0.5)},
+      0,
+      '아',
+    )
+    player.finish()
+    player.dispose()
+    runtime.sources[0]?.end()
+
+    expect(onPlaybackEnd).not.toHaveBeenCalled()
   })
 })

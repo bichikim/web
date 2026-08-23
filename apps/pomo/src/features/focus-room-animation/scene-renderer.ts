@@ -1,9 +1,5 @@
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
-import steamImage1 from './assets/animation/steam/01.webp'
-import steamImage2 from './assets/animation/steam/02.webp'
-import steamImage3 from './assets/animation/steam/03.webp'
-import steamImage4 from './assets/animation/steam/04.webp'
 import {DepthParallaxFilter} from './depth-parallax-filter'
 import {PEyeController} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'
@@ -12,7 +8,7 @@ import {getPScenePanPosition} from './scene-motion'
 import {SceneLoadingState} from './scene-loading-state'
 import type {PSceneRendererOptions, PSceneState} from './scene-state'
 import {createPSceneMouthController} from './scene-mouth-controller'
-import {SteamParticleSystem} from './steam-particle-system'
+import {PSceneSteamController} from './scene-steam-controller'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from './layer-scene'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
@@ -30,7 +26,6 @@ const SCENE_TRANSITION_DURATION = 600
 const DEPTH_PARALLAX_MAXIMUM_X = 9
 const DEPTH_PARALLAX_MAXIMUM_Y = 6
 const STEAM_PARALLAX_DEPTH = 0.55
-const STEAM_SOURCES = [steamImage1, steamImage2, steamImage3, steamImage4] as const
 
 const reportError = (error: unknown) => {
   globalThis.reportError(error)
@@ -45,6 +40,7 @@ export class PSceneRenderer {
   readonly #parallax: ParallaxController
   readonly #sceneLayer = new Container()
   readonly #sceneTransitions = createSceneTransitions(this.#application, this.#sceneLayer)
+  readonly #steam: PSceneSteamController
   #applicationReady = false
   #currentDepthSource: string | null = null
   #currentLayerScene: PixiLayerScene | null = null
@@ -65,8 +61,6 @@ export class PSceneRenderer {
   #requestedLayerSceneId: string | null = null
   #requestedSource: string | null = null
   #state: PSceneState | null = null
-  #steam: SteamParticleSystem | null = null
-  #steamTextureLeases: readonly TextureLease[] = []
   #transitionFrame: number | null = null
   #transitionVersion = 0
 
@@ -92,6 +86,11 @@ export class PSceneRenderer {
           this.#setReducedMotion(prefersReducedMotion),
       },
     )
+    this.#steam = new PSceneSteamController({
+      getPrefersReducedMotion: () => this.#parallax.prefersReducedMotion,
+      onRender: () => this.#application.render(),
+      stage: this.#application.stage,
+    })
   }
 
   async initialize(state: PSceneState) {
@@ -125,7 +124,7 @@ export class PSceneRenderer {
       await Promise.all([
         this.#loadInitialScene(state.source, state.depthSource, state.layerScene),
         this.#eyes.initialize(state),
-        this.#loadSteam(),
+        this.#steam.ensure(state.sceneStyle),
       ])
     } catch (error: unknown) {
       this.destroy()
@@ -139,9 +138,10 @@ export class PSceneRenderer {
     this.#initialized = true
     const latestState = this.#state
 
+    this.#steam.ensure(latestState?.sceneStyle).catch(reportError)
     this.#parallax.setInputMode(latestState?.motionInput ?? 'drag')
     this.#parallax.start()
-    this.#steam?.start()
+    this.#steam.start()
     this.#eyes.setSceneReady(true)
     this.#application.render()
     this.#loading.finishAfterPaint()
@@ -161,12 +161,14 @@ export class PSceneRenderer {
     const previousMotionMode = this.#state?.motionMode ?? 'depth'
     const previousViseme = this.#state?.viseme ?? state.viseme
     this.#state = state
-    this.#steam?.setVisible(state.sceneStyle !== 'scribble')
+    this.#steam.setSceneStyle(state.sceneStyle)
     this.#eyes.update(state)
 
     this.#mouth.update(previousViseme, state.viseme, this.#parallax.prefersReducedMotion)
 
     if (this.#initialized) {
+      this.#steam.ensure(state.sceneStyle).catch(reportError)
+
       if (previousMotionInput !== (state.motionInput ?? 'drag')) {
         this.#parallax.setInputMode(state.motionInput ?? 'drag')
       }
@@ -183,7 +185,7 @@ export class PSceneRenderer {
   #applySceneMotion() {
     if ((this.#state?.motionMode ?? 'depth') === 'pan') {
       this.#depthFilter?.setPointerOffset(0, 0)
-      this.#steam?.setParallaxOffset(0, 0)
+      this.#steam.setParallaxOffset(0, 0)
       this.#application.canvas.style.objectPosition = `${getPScenePanPosition(
         this.#motionPositionX,
       )}% center`
@@ -194,7 +196,7 @@ export class PSceneRenderer {
     const depthOffsetY = this.#motionPositionY * DEPTH_PARALLAX_MAXIMUM_Y
     this.#application.canvas.style.objectPosition = `${getPScenePanPosition(0)}% center`
     this.#depthFilter?.setPointerOffset(depthOffsetX, depthOffsetY)
-    this.#steam?.setParallaxOffset(
+    this.#steam.setParallaxOffset(
       -depthOffsetX * STEAM_PARALLAX_DEPTH,
       -depthOffsetY * STEAM_PARALLAX_DEPTH,
     )
@@ -221,7 +223,7 @@ export class PSceneRenderer {
   #setReducedMotion(prefersReducedMotion: boolean) {
     this.#currentLayerScene?.setAnimationEnabled(!prefersReducedMotion)
     this.#incomingLayerScene?.setAnimationEnabled(!prefersReducedMotion)
-    this.#steam?.setReducedMotion(prefersReducedMotion)
+    this.#steam.setReducedMotion(prefersReducedMotion)
 
     this.#mouth.setReducedMotion(this.#state?.viseme ?? 'rest', prefersReducedMotion)
 
@@ -263,7 +265,7 @@ export class PSceneRenderer {
     this.#eyes.destroy()
 
     this.#destroyCurrentScene()
-    this.#steam?.destroy()
+    this.#steam.destroy()
     this.#sceneLayer.filters = null
     this.#depthFilter?.destroy()
     this.#depthFilter = null
@@ -275,9 +277,7 @@ export class PSceneRenderer {
     }
 
     releaseTextureGroup(this.#currentTextures)
-    releaseTextureGroup(this.#steamTextureLeases)
     this.#currentTextures = []
-    this.#steamTextureLeases = []
   }
 
   async #loadInitialScene(
@@ -307,24 +307,6 @@ export class PSceneRenderer {
     this.#currentScene = prepared.scene
     this.#currentSource = source
     this.#currentTextures = prepared.textures
-  }
-
-  async #loadSteam() {
-    const textures = await acquireTextureGroup(STEAM_SOURCES)
-
-    if (this.#destroyed) {
-      releaseTextureGroup(textures)
-      return
-    }
-
-    this.#steamTextureLeases = textures
-    this.#steam = new SteamParticleSystem({
-      onRender: () => this.#application.render(),
-      prefersReducedMotion: this.#parallax.prefersReducedMotion,
-      textures: textures.map((lease) => lease.texture),
-    })
-    this.#steam.setVisible(this.#state?.sceneStyle !== 'scribble')
-    this.#application.stage.addChild(this.#steam.container)
   }
 
   async #transitionTo(

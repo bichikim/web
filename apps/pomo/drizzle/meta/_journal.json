@@ -22,6 +22,34 @@
       "when": 1786773717557,
       "tag": "0002_fuzzy_praxagora",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787325920426,
+      "tag": "0003_round_mister_sinister",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787408352261,
+      "tag": "0004_tiny_morlun",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787410399070,
+      "tag": "0005_sweet_reavers",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787415488072,
+      "tag": "0006_quiet_molly_hayes",
+      "breakpoints": true
     }
   ]
 }

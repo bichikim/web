@@ -6,9 +6,9 @@ import smilingFaceSource from './assets/pomodoro-status-icons/break.webp'
 import {getPomoIconClass} from '../design-system/icon-style'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
-import {PIconSelect} from '../design-system/PIconSelect'
+import {PSelect} from '../design-system/PSelect'
 import type {PTrack} from '../features/focus-room-audio'
-import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import {RANDOM_DIALOGUE_EVENT, usePEvents, useRandomEvent} from '../features/focus-room-dialogue'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
   getPScene,
@@ -28,6 +28,8 @@ import {
 } from '../features/focus-room-time'
 import {type PSayController, usePSay} from '../features/pomo-webmcp'
 import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
+import {PServicePolicyLinks} from '../features/service-terms'
+import {useWeather, type WeatherCitySlug, type WeatherState} from '../features/weather'
 import {PMusicPlayer} from './PMusicPlayer'
 import {PFeedStatus} from './PFeedStatus'
 import {PDialoguePlayer} from './PDialoguePlayer'
@@ -42,6 +44,7 @@ import {
 } from './pomo-scene-options'
 import {PScreenSaver} from './PScreenSaver'
 import {PScribbleCircleControl} from './PScribbleCircleControl'
+import {PWeatherStatus} from './PWeatherStatus'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
 const CLASSES = {
@@ -59,7 +62,7 @@ const CLASSES = {
   entryContent: [
     'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
     'box-border flex-col items-start gap-4',
-    '[margin-block-end:calc(1.5rem_+_var(--pomo-safe-area-inset-bottom))]',
+    '[margin-block-end:calc(9rem_+_var(--pomo-safe-area-inset-bottom))]',
     '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
     'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
@@ -92,7 +95,10 @@ const CLASSES = {
     '[&_.pomo-dialogue-bubble]:max-h-full [&_.pomo-dialogue-bubble]:[flex:0_1_auto]',
     '[&_.pomo-dialogue-bubble]:pointer-events-auto',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
+    '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player__summary]:justify-center',
+    '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player__play-summary-frame]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
+    '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-utility=album]]:hidden',
     '[&[data-player-expanded]_.pomo-player-stage]:[flex:1_1_0%]',
     '[&[data-player-expanded]_.pomo-player-stage]:[container-type:size]',
     '[&[data-player-expanded]_.pomo-player-stage]:max-h-[19.875rem]',
@@ -152,12 +158,17 @@ interface SceneToolbarProps {
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
+  readonly onWeatherCityChange: (citySlug: WeatherCitySlug) => void
+  readonly onWeatherEnabledChange: (enabled: boolean) => void
   readonly screenSaverDelay: ScreenSaverDelay
   readonly sceneStyle: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
   readonly time: SceneTime
   readonly timeMode: SceneTimeMode
+  readonly weatherCitySlug: WeatherCitySlug
+  readonly weatherEnabled: boolean
+  readonly weatherState: WeatherState
 }
 
 interface PEntryProps {
@@ -180,14 +191,19 @@ const findLabel = <TValue extends string>(
   value: TValue,
 ) => options.find((option) => option.value === value)?.label ?? value
 
-const getSceneAsset = (time: SceneTime, activity: PActivity, gaze: PGaze): SceneAsset => {
+const getSceneAsset = (
+  time: SceneTime,
+  activity: PActivity,
+  gaze: PGaze,
+  sceneStyle: PSceneStyle,
+): SceneAsset => {
   const timeLabel = findLabel(FOCUS_ROOM_TIME_OPTIONS, time)
   const activityLabel = findLabel(FOCUS_ROOM_ACTIVITY_OPTIONS, activity)
   const gazeLabel = findLabel(FOCUS_ROOM_GAZE_OPTIONS, gaze)
   const scene = getPScene(time, activity, gaze)
 
   return {
-    depthSource: scene.depthSource,
+    depthSource: scene.depthSources[sceneStyle],
     id: scene.id,
     label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
     source: scene.source,
@@ -225,22 +241,26 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           />
         </PScribbleCircleControl>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
-          <PIconSelect
+          <PSelect
+            appearance="icon"
             class={CLASSES.sceneControl}
+            getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
+            hideLabel
             label="행동"
             onChange={props.onActivityChange}
             options={FOCUS_ROOM_ACTIVITY_OPTIONS}
-            sceneStyle={props.sceneStyle}
             value={props.activity}
           />
         </PScribbleCircleControl>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
-          <PIconSelect
+          <PSelect
+            appearance="icon"
             class={CLASSES.sceneControl}
+            getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
+            hideLabel
             label="보기"
             onChange={props.onGazeChange}
             options={FOCUS_ROOM_GAZE_OPTIONS}
-            sceneStyle={props.sceneStyle}
             value={props.gaze}
           />
         </PScribbleCircleControl>
@@ -255,11 +275,15 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           onScreenSaverDelayChange={props.onScreenSaverDelayChange}
           onSceneStyleChange={props.onSceneStyleChange}
           onTimeModeChange={props.onTimeModeChange}
+          onWeatherCityChange={props.onWeatherCityChange}
+          onWeatherEnabledChange={props.onWeatherEnabledChange}
           screenSaverDelay={props.screenSaverDelay}
           sceneStyle={props.sceneStyle}
           motionInput={props.motionInput}
           motionMode={props.motionMode}
           timeMode={props.timeMode}
+          weatherCitySlug={props.weatherCitySlug}
+          weatherEnabled={props.weatherEnabled}
           fallback={
             <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
               <span
@@ -280,6 +304,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           }
         />
       </div>
+      <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
       <Show when={props.isSceneTransitioning}>
         <span
           aria-live="polite"
@@ -307,17 +332,20 @@ const PEntry = (props: PEntryProps) => (
     }}
   >
     <div class={CLASSES.entryContent}>
-      <PButton
-        class={CLASSES.entryAction}
-        disabled={props.isExiting}
-        leadingImage={smilingFaceSource}
-        leadingImageClass={CLASSES.entryLeadingImage}
-        onPress={() => props.onEnter()}
-        tone="primary"
-        trailingIcon="i-tabler-arrow-right"
-      >
-        포모와 시작하기
-      </PButton>
+      <div class="grid gap-3">
+        <PButton
+          class={CLASSES.entryAction}
+          disabled={props.isExiting}
+          leadingImage={smilingFaceSource}
+          leadingImageClass={CLASSES.entryLeadingImage}
+          onPress={() => props.onEnter()}
+          tone="primary"
+          trailingIcon="i-tabler-arrow-right"
+        >
+          포모와 시작하기
+        </PButton>
+        <PServicePolicyLinks tone="overlay" />
+      </div>
     </div>
   </section>
 )
@@ -337,11 +365,12 @@ const PSceneFallback = () => (
 
 const PStudioEvents = (props: PStudioEventsProps) => {
   const events = usePEvents()
-  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) => {
+  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) =>
     events.playDialogueEvents(eventIds, props.pomoSay.stop).catch((error: unknown) => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
     })
-  }
+
+  useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
 
   return (
     <>
@@ -401,10 +430,13 @@ export const PStudio = () => {
     INITIAL_POMODORO_PRESENTATION,
   )
   const screenSaver = useScreenSaver()
+  const weather = useWeather()
   const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
-  const selectedScene = createMemo(() => getSceneAsset(time(), activity(), sceneGaze()))
+  const selectedScene = createMemo(() =>
+    getSceneAsset(time(), activity(), sceneGaze(), sceneStyleController.sceneStyle()),
+  )
   const activeViseme = createMemo(() => {
     return resolvePSceneViseme(
       events.activeViseme(),
@@ -460,20 +492,22 @@ export const PStudio = () => {
         <Show when={!hasSceneRendered()}>
           <PSceneFallback />
         </Show>
-        <PSceneCanvas
-          activity={activity()}
-          depthSource={selectedScene().depthSource}
-          gaze={sceneGaze()}
-          motionInput={motionInput()}
-          motionMode={motionMode()}
-          onLoadingChange={handleLoadingChange}
-          onMotionInputChange={setMotionInput}
-          source={selectedScene().source}
-          sceneId={selectedScene().id}
-          sceneStyle={sceneStyleController.sceneStyle()}
-          time={time()}
-          viseme={activeViseme()}
-        />
+        <Show when={sceneStyleController.isReady()}>
+          <PSceneCanvas
+            activity={activity()}
+            depthSource={selectedScene().depthSource}
+            gaze={sceneGaze()}
+            motionInput={motionInput()}
+            motionMode={motionMode()}
+            onLoadingChange={handleLoadingChange}
+            onMotionInputChange={setMotionInput}
+            source={selectedScene().source}
+            sceneId={selectedScene().id}
+            sceneStyle={sceneStyleController.sceneStyle()}
+            time={time()}
+            viseme={activeViseme()}
+          />
+        </Show>
       </figure>
 
       <div class={CLASSES.ui} hidden={!hasEntered()}>
@@ -498,12 +532,17 @@ export const PStudio = () => {
             onScreenSaverDelayChange={screenSaver.onDelayChange}
             onSceneStyleChange={sceneStyleController.onSceneStyleChange}
             onTimeModeChange={setTimeMode}
+            onWeatherCityChange={weather.onCityChange}
+            onWeatherEnabledChange={weather.onEnabledChange}
             screenSaverDelay={screenSaver.delay()}
             sceneStyle={sceneStyleController.sceneStyle()}
             motionInput={motionInput()}
             motionMode={motionMode()}
             time={time()}
             timeMode={timeMode()}
+            weatherCitySlug={weather.citySlug()}
+            weatherEnabled={weather.enabled()}
+            weatherState={weather.state()}
           />
         </Show>
       </div>

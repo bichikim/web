@@ -43,6 +43,7 @@ export const createSupertonicAudioPlayer = (
   const visemeDriver = createPVisemeDriver()
   let animationFrame: number | null = null
   let activeViseme: PViseme = 'rest'
+  let disposed = false
   let finished = false
   let playbackEndReported = false
   let restReturnTimer: number | null = null
@@ -107,6 +108,10 @@ export const createSupertonicAudioPlayer = (
   }
 
   const closeIfFinished = () => {
+    if (disposed) {
+      return
+    }
+
     if (finished && sources.size === 0 && context.state !== 'closed') {
       context.close().catch(() => undefined)
     }
@@ -128,6 +133,8 @@ export const createSupertonicAudioPlayer = (
     audioVisemeAnalyzer.connect(source).catch(() => undefined)
     sources.add(source)
     source.addEventListener('ended', () => {
+      audioVisemeAnalyzer.disconnect(source)
+      source.disconnect()
       sources.delete(source)
       closeIfFinished()
     })
@@ -149,8 +156,12 @@ export const createSupertonicAudioPlayer = (
   }
 
   const dispose = () => {
+    disposed = true
+
     for (const source of sources) {
+      audioVisemeAnalyzer.disconnect(source)
       source.stop()
+      source.disconnect()
     }
 
     sources.clear()

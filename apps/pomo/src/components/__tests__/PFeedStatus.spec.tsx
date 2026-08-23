@@ -1,18 +1,30 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {Show} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
+import {PModal, type PModalProps} from 'src/design-system/PModal'
 import {
+  type FeedDialogueJob,
   type FeedDialogueListItem,
   type PFeedController,
   usePFeedContext,
 } from 'src/features/focus-room-feed'
+import {isSupertonicModelDownloaded} from 'src/features/supertonic'
 import {PFeedStatus} from '../PFeedStatus'
 
 vi.mock('src/features/focus-room-feed', () => ({
   usePFeedContext: vi.fn(),
 }))
+
+vi.mock('src/design-system/PModal', () => ({PModal: vi.fn()}))
+
+vi.mock('src/features/supertonic', async () => {
+  const actual: typeof import('src/features/supertonic') =
+    await vi.importActual('src/features/supertonic')
+  return {...actual, isSupertonicModelDownloaded: vi.fn()}
+})
 
 const READY_DIALOGUE: FeedDialogueListItem = {
   dialogue: {
@@ -43,9 +55,28 @@ const READY_DIALOGUE: FeedDialogueListItem = {
   },
 }
 
+const RECOVERY_JOB: FeedDialogueJob = {
+  createdAt: '2026-08-14T00:00:00.000Z',
+  errorMessage: '음성 모델 다운로드에 동의한 뒤 다시 시도해 주세요.',
+  feedConnectionId: 'feed-1',
+  feedItemId: 'item-1',
+  id: 'job-1',
+  itemTitle: '새로운 소식',
+  modelId: 'full',
+  publishedAt: '2026-08-14T00:00:00.000Z',
+  script: '피드 음성 대사',
+  sourceTitle: '테스트 피드',
+  sourceUrl: 'https://example.com/article',
+  status: 'failed',
+  updatedAt: '2026-08-14T00:00:00.000Z',
+  version: 1,
+  voiceId: 'Yuna',
+}
+
 const createFeeds = (
   dialogues: ReadonlyArray<FeedDialogueListItem> = [READY_DIALOGUE],
   isListening = false,
+  recoveryJobs: ReadonlyArray<FeedDialogueJob> = [],
 ): PFeedController => ({
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => dialogues,
@@ -56,7 +87,7 @@ const createFeeds = (
   listen: vi.fn(async () => undefined),
   listenAll: vi.fn(async () => undefined),
   onDeleteDialogue: vi.fn(async () => undefined),
-  recoveryJobs: () => [],
+  recoveryJobs: () => recoveryJobs,
   retryRecovery: vi.fn(async () => undefined),
   state: () => ({message: '대기 중', status: 'idle'}),
   syncNow: vi.fn(async () => undefined),
@@ -67,12 +98,25 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+const renderModal = () => {
+  vi.mocked(PModal).mockImplementation((props: PModalProps) => (
+    <Show when={props.isOpen}>
+      <div aria-label={props.title} role="dialog">
+        {props.children}
+      </div>
+    </Show>
+  ))
+}
+
 it('should show a ready feed notice', () => {
-  vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
+  const feeds = createFeeds()
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
 
   const originalResult = render(() => <PFeedStatus />)
 
   expect(screen.getByText('새 피드 대화가 준비됐어요')).toBeDefined()
+  expect(feeds.listen).not.toHaveBeenCalled()
+  expect(feeds.listenAll).not.toHaveBeenCalled()
   expect(originalResult.container.querySelector('.pomo-feed-status__scribble-border')).toBeNull()
 
   originalResult.unmount()
@@ -123,4 +167,34 @@ it('should hide the ready notice while queued dialogues are playing', () => {
   render(() => <PFeedStatus />)
 
   expect(screen.queryByText('새 피드 대화가 준비됐어요')).toBeNull()
+})
+
+it('should require download consent before retrying a feed without a cached model', async () => {
+  renderModal()
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+  render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+
+  const dialog = await screen.findByRole('dialog', {name: /모델을 받을까요/})
+  expect(dialog.textContent).toContain('데이터 요금이 발생할 수 있어요')
+  expect(feeds.retryRecovery).not.toHaveBeenCalled()
+
+  fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
+  expect(feeds.retryRecovery).toHaveBeenCalledTimes(1)
+})
+
+it('should retry immediately when every feed model is already cached', async () => {
+  renderModal()
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+  render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+
+  await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledTimes(1))
+  expect(screen.queryByRole('dialog', {name: /모델을 받을까요/})).toBeNull()
 })

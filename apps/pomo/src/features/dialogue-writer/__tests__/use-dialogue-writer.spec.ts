@@ -46,13 +46,17 @@ const createRuntime = (supported: boolean): TestRuntime => {
   }
 }
 
-const createDialogueRoot = (runtime: DialogueWriterRuntime): DialogueTestRoot => {
+const createDialogueRoot = (
+  runtime: DialogueWriterRuntime,
+  onComplete?: (output: string) => void,
+): DialogueTestRoot => {
   let disposeRoot: () => void = () => undefined
   const controller = createRoot((dispose) => {
     disposeRoot = dispose
     return useDialogueWriter({
       initialRequest: '  삶의 행복  ',
       modelId: 'qwen-2b',
+      onComplete,
       runtime,
     })
   })
@@ -82,13 +86,15 @@ describe('useDialogueWriter', () => {
   })
 
   it('should prepare, stream, complete, copy, and dispose one client session', async () => {
+    const onComplete = vi.fn()
     const writeText = vi.fn(async () => undefined)
     vi.stubGlobal('navigator', {clipboard: {writeText}})
     const runtime = createRuntime(true)
-    const root = createDialogueRoot(runtime)
+    const root = createDialogueRoot(runtime, onComplete)
 
     expect(root.controller.state()).toEqual({status: 'idle'})
     expect(root.controller.statusMessage()).toContain('처음 한 번만 내려받고')
+    expect(root.controller.statusMessage()).not.toContain('브라우저')
     root.controller.prepare()
     root.controller.prepare()
     expect(root.controller.state()).toMatchObject({percentage: 0, status: 'loading'})
@@ -103,6 +109,8 @@ describe('useDialogueWriter', () => {
       type: 'loading',
     })
     expect(root.controller.statusMessage()).toBe('모델 전체 내려받는 중 · 50%')
+    runtime.emit({files: [], loadedBytes: 100, percentage: 100, totalBytes: 100, type: 'loading'})
+    expect(root.controller.statusMessage()).toBe('다운로드 완료 · 모델 시작 중…')
     runtime.emit({type: 'ready'})
     expect(root.controller.canGenerate()).toBe(true)
     expect(root.controller.statusMessage()).toContain('모델 준비가 끝났어요')
@@ -119,11 +127,46 @@ describe('useDialogueWriter', () => {
     runtime.emit({text: '행복은 가까이에 있어요.', type: 'complete'})
     expect(root.controller.canCopy()).toBe(true)
     expect(root.controller.statusMessage()).toContain('완성했어요')
+    expect(onComplete).toHaveBeenCalledWith('행복은 가까이에 있어요.')
     await root.controller.copyOutput()
     expect(writeText).toHaveBeenCalledWith('행복은 가까이에 있어요.')
 
     root.dispose()
     expect(runtime.client.dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('should apply completed output before reporting completion', () => {
+    const runtime = createRuntime(true)
+    let controller: DialogueWriterController | null = null
+    let stateDuringCompletion: ReturnType<DialogueWriterController['state']> | null = null
+    const root = createDialogueRoot(runtime, () => {
+      stateDuringCompletion = controller?.state() ?? null
+    })
+    controller = root.controller
+    controller.prepare()
+    runtime.emit({type: 'ready'})
+    controller.generate()
+    runtime.emit({type: 'started'})
+
+    runtime.emit({text: '완성된 대사예요.', type: 'complete'})
+
+    expect(stateDuringCompletion).toEqual({status: 'generating'})
+    expect(controller.state()).toEqual({status: 'complete'})
+    root.dispose()
+  })
+
+  it('should prepare and then generate from one request', () => {
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    root.controller.generateWithPreparation()
+    expect(runtime.client.prepare).toHaveBeenCalledTimes(1)
+    expect(runtime.client.generate).not.toHaveBeenCalled()
+
+    runtime.emit({type: 'ready'})
+    expect(runtime.client.generate).toHaveBeenCalledWith('삶의 행복')
+
+    root.dispose()
   })
 
   it('should preserve model readiness after a generation error and allow retry', () => {

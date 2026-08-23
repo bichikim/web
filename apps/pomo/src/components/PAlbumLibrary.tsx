@@ -26,6 +26,7 @@ export const PAlbumLibrary = (props: PAlbumLibraryProps) => {
           setTriggerElement(source)
           setIsOpen(true)
         }}
+        purpose="album"
       />
       <Show when={isOpen()}>
         <PAlbumLibraryContent

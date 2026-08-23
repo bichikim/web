@@ -9,6 +9,7 @@ export interface PBrowserAudioVisemeFrame {
 
 export interface PBrowserAudioVisemeAnalyzer {
   readonly connect: (source: AudioNode) => Promise<void>
+  readonly disconnect: (source: AudioNode) => void
   readonly dispose: () => void
   readonly getFrame: (fallbackViseme: PViseme) => PBrowserAudioVisemeFrame | null
 }
@@ -147,6 +148,8 @@ export const createPBrowserAudioVisemeAnalyzer = (
 ): PBrowserAudioVisemeAnalyzer => {
   let isDisposed = false
   let node: WLipSyncAudioNode | null = null
+  const connectedSources = new WeakSet<AudioNode>()
+  const disconnectedSources = new WeakSet<AudioNode>()
   const nodePromise = createNode(context).then((createdNode) => {
     if (isDisposed) {
       createdNode?.disconnect()
@@ -160,9 +163,19 @@ export const createPBrowserAudioVisemeAnalyzer = (
   const connect = async (source: AudioNode) => {
     const currentNode = await nodePromise
 
-    if (!isDisposed && currentNode !== null) {
+    if (!isDisposed && currentNode !== null && !disconnectedSources.has(source)) {
       source.connect(currentNode)
+      connectedSources.add(source)
       currentNode.connect(context.destination)
+    }
+  }
+
+  const disconnect = (source: AudioNode) => {
+    disconnectedSources.add(source)
+
+    if (node !== null && connectedSources.has(source)) {
+      source.disconnect(node)
+      connectedSources.delete(source)
     }
   }
 
@@ -184,5 +197,5 @@ export const createPBrowserAudioVisemeAnalyzer = (
     node = null
   }
 
-  return {connect, dispose, getFrame}
+  return {connect, disconnect, dispose, getFrame}
 }

@@ -226,7 +226,11 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const clearPlayback = (visemeResetTiming: VisemeResetTiming = 'immediate') => {
     cancelFrame()
     audio?.pause()
-    audioSource?.disconnect()
+    if (audioSource !== null) {
+      audioVisemeAnalyzer?.disconnect(audioSource)
+      audioSource.disconnect()
+    }
+
     audioSource = null
     audio = null
     audioEnvelope = null

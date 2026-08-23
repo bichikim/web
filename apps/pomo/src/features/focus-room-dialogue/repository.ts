@@ -6,9 +6,12 @@ import {
 import {compressLegacyWave} from './compress-legacy-wave'
 import {createPDatabase} from './database'
 import {
+  CURRENT_DIALOGUE_EVENT_BINDING_VERSION,
+  DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
   type DialogueEventBinding,
   dialogueEventBindingSchema,
   type DialogueEventId,
+  type DialogueEventPlaybackMode,
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
   focusRoomDialogueSchema,
@@ -37,6 +40,7 @@ export interface PDialogueRepository {
   readonly setEventBinding: (
     event: DialogueEventId,
     dialogueIds: ReadonlyArray<string> | string | null,
+    playbackMode?: DialogueEventPlaybackMode,
   ) => Promise<void>
 }
 
@@ -122,6 +126,7 @@ export const createPDialogueRepository = (): PDialogueRepository => {
   const setEventBinding = async (
     event: DialogueEventId,
     dialogueIds: ReadonlyArray<string> | string | null,
+    playbackMode: DialogueEventPlaybackMode = DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
   ) => {
     const requestedIds =
       typeof dialogueIds === 'string' ? [dialogueIds] : dialogueIds === null ? [] : dialogueIds
@@ -143,7 +148,8 @@ export const createPDialogueRepository = (): PDialogueRepository => {
     await database.eventBindings.put({
       dialogueIds: uniqueDialogueIds,
       event,
-      version: 2,
+      playbackMode,
+      version: CURRENT_DIALOGUE_EVENT_BINDING_VERSION,
     } satisfies DialogueEventBinding)
   }
   return {

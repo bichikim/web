@@ -13,12 +13,17 @@ const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'two', source: '/two.mp3', title: 'Two'},
 ] as const
 
-const renderMusicPlayerView = (sceneStyle: PSceneStyle = 'original') =>
+interface RenderMusicPlayerViewOptions {
+  readonly expanded?: boolean
+  readonly sceneStyle?: PSceneStyle
+}
+
+const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) =>
   render(() => (
     <MusicPlayerView
       currentIndex={0}
       currentTrack={TRACKS[0]}
-      expanded={true}
+      expanded={options.expanded ?? true}
       isPlaying={false}
       levels={[]}
       onAudioElement={vi.fn()}
@@ -29,14 +34,143 @@ const renderMusicPlayerView = (sceneStyle: PSceneStyle = 'original') =>
       onShuffleChange={vi.fn()}
       onTrackSelect={vi.fn()}
       repeatMode="repeat-all"
-      sceneStyle={sceneStyle}
+      sceneStyle={options.sceneStyle ?? 'original'}
       shuffleEnabled={true}
       tracks={TRACKS}
     />
   ))
 
+const getProgressRanges = (container: HTMLElement) => {
+  const collapsedRange = container.querySelector('.pomo-player__progress--collapsed')
+  const expandedRange = container.querySelector('.pomo-player__progress--expanded')
+
+  if (!(collapsedRange instanceof HTMLElement) || !(expandedRange instanceof HTMLElement)) {
+    throw new TypeError('Expected both Pomo progress ranges to be rendered')
+  }
+
+  return {collapsedRange, expandedRange}
+}
+
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
+
+  it('should keep the collapsed player layers visually present but inactive', () => {
+    const result = renderMusicPlayerView({expanded: false})
+    const controller = result.container.querySelector('media-controller')
+    const playerBase = result.container.querySelector('.pomo-player__base')
+    const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
+    const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
+    const expandedInner = result.container.querySelector('.pomo-player__expanded-inner')
+
+    for (const element of [controller, playerBase, visualizerFrame, expandedFrame, expandedInner]) {
+      expect(element).toBeInstanceOf(HTMLElement)
+    }
+
+    expect(controller?.classList.contains('overflow-hidden')).toBe(true)
+    expect(controller?.classList.contains('overflow-visible')).toBe(false)
+    expect(controller?.classList.contains('pb-0.5')).toBe(true)
+    expect(playerBase?.classList.contains('rounded-panel')).toBe(true)
+    expect(visualizerFrame?.classList.contains('overflow-hidden')).toBe(true)
+    expect(visualizerFrame?.classList.contains('rounded-panel')).toBe(true)
+    expect(expandedFrame?.classList.contains('grid-rows-[0fr]')).toBe(true)
+    expect(expandedFrame?.classList.contains('is-expanded')).toBe(false)
+    expect(expandedFrame?.getAttribute('aria-hidden')).toBe('true')
+    expect(Reflect.get(expandedFrame ?? {}, 'inert')).toBe(true)
+    expect(expandedInner?.classList.contains('opacity-0')).toBe(true)
+    expect(expandedInner?.classList.contains('pointer-events-none')).toBe(true)
+    expect(expandedInner?.classList.contains('overflow-x-clip')).toBe(true)
+    expect(expandedInner?.classList.contains('overflow-y-auto')).toBe(true)
+    expect(expandedInner?.classList.contains('overscroll-contain')).toBe(true)
+    expect(expandedInner?.classList.contains('is-expanded')).toBe(false)
+  })
+
+  it('should disable both progress ranges while collapsed', () => {
+    const result = renderMusicPlayerView({expanded: false})
+    const {collapsedRange, expandedRange} = getProgressRanges(result.container)
+
+    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(2)
+    expect(collapsedRange.classList.contains('flex')).toBe(true)
+    expect(collapsedRange.classList.contains('absolute')).toBe(true)
+    expect(collapsedRange.classList.contains('inset-0')).toBe(true)
+    expect(collapsedRange.classList.contains('h-full')).toBe(true)
+    expect(collapsedRange.classList.contains('w-full')).toBe(true)
+    expect(collapsedRange.classList.contains('pointer-events-none')).toBe(true)
+    expect(collapsedRange.classList.contains('cursor-default')).toBe(true)
+    expect(collapsedRange.classList.contains('[--media-cursor:default]')).toBe(true)
+    expect(collapsedRange.classList.contains('is-hidden')).toBe(false)
+    expect(collapsedRange.hasAttribute('disabled')).toBe(true)
+    expect(collapsedRange.getAttribute('aria-hidden')).toBe('true')
+    expect(collapsedRange.classList.contains('[--media-range-track-height:100%]')).toBe(true)
+    expect(collapsedRange.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]')).toBe(
+      true,
+    )
+    expect(
+      collapsedRange.classList.contains('[--media-time-range-buffered-color:transparent]'),
+    ).toBe(true)
+    expect(collapsedRange.classList.contains('[--media-range-track-background:transparent]')).toBe(
+      true,
+    )
+    expect(collapsedRange.classList.contains('[--media-range-padding:0px]')).toBe(true)
+    expect(collapsedRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
+    expect(collapsedRange.classList.contains('[&.is-hidden]:opacity-0')).toBe(true)
+    expect(collapsedRange.classList.contains('motion-reduce:transition-none')).toBe(true)
+
+    expect(expandedRange.hasAttribute('disabled')).toBe(true)
+    expect(expandedRange.classList.contains('is-expanded')).toBe(false)
+    expect(expandedRange.classList.contains('pointer-events-none')).toBe(true)
+    expect(expandedRange.classList.contains('cursor-default')).toBe(true)
+    expect(expandedRange.classList.contains('[--media-cursor:default]')).toBe(true)
+    expect(expandedRange.getAttribute('aria-hidden')).toBe('true')
+    expect(expandedRange.getAttribute('aria-label')).toBe('재생 위치 조절')
+    expect(expandedRange.getAttribute('title')).toBe('재생 위치 조절')
+    expect(collapsedRange.hasAttribute('title')).toBe(false)
+  })
+
+  it('should activate only the expanded progress range while expanded', () => {
+    const result = renderMusicPlayerView()
+    const controller = result.container.querySelector('media-controller')
+    const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
+    const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
+    const expandedInner = result.container.querySelector('.pomo-player__expanded-inner')
+    const {collapsedRange, expandedRange} = getProgressRanges(result.container)
+
+    expect(controller?.classList.contains('overflow-hidden')).toBe(false)
+    expect(controller?.classList.contains('overflow-visible')).toBe(true)
+    expect(controller?.classList.contains('pb-0.5')).toBe(true)
+    expect(visualizerFrame?.classList.contains('rounded-panel')).toBe(false)
+    expect(visualizerFrame?.classList.contains('rounded-t-panel')).toBe(true)
+    expect(collapsedRange.classList.contains('is-hidden')).toBe(true)
+    expect(collapsedRange.hasAttribute('disabled')).toBe(true)
+    expect(expandedFrame?.classList.contains('is-expanded')).toBe(true)
+    expect(expandedFrame?.getAttribute('aria-hidden')).toBeNull()
+    expect(Reflect.get(expandedFrame ?? {}, 'inert')).toBe(false)
+    expect(expandedInner?.classList.contains('is-expanded')).toBe(true)
+    expect(expandedRange.hasAttribute('disabled')).toBe(false)
+    expect(expandedRange.classList.contains('is-expanded')).toBe(true)
+    expect(expandedRange.classList.contains('pointer-events-none')).toBe(false)
+    expect(expandedRange.classList.contains('cursor-default')).toBe(false)
+    expect(expandedRange.classList.contains('[--media-cursor:default]')).toBe(false)
+    expect(expandedRange.getAttribute('aria-hidden')).toBeNull()
+    expect(expandedRange.classList.contains('[&.is-expanded]:h-0.5')).toBe(true)
+    expect(expandedRange.classList.contains('overflow-visible')).toBe(true)
+    expect(expandedRange.classList.contains('-mx-2')).toBe(true)
+    expect(expandedRange.classList.contains('w-[calc(100%+1rem)]')).toBe(true)
+    expect(expandedRange.parentElement).toBe(controller)
+    expect(expandedFrame?.contains(expandedRange)).toBe(false)
+    expect(expandedRange.classList.contains('[--media-range-bar-color:#fffaf1]')).toBe(true)
+    expect(
+      expandedRange.classList.contains(
+        '[--media-time-range-buffered-color:rgb(255_250_241_/_40%)]',
+      ),
+    ).toBe(true)
+    expect(
+      expandedRange.classList.contains('[--media-range-track-background:rgb(255_250_241_/_22%)]'),
+    ).toBe(true)
+    expect(expandedRange.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(true)
+    expect(expandedRange.classList.contains('focus-within:[--media-range-thumb-opacity:1]')).toBe(
+      true,
+    )
+  })
 
   it('should replace the regular frame only in scribble style', () => {
     const originalResult = renderMusicPlayerView()
@@ -53,7 +187,7 @@ describe('MusicPlayerView', () => {
     expect(originalBase?.classList.contains('border-transparent')).toBe(false)
 
     cleanup()
-    const scribbleResult = renderMusicPlayerView('scribble')
+    const scribbleResult = renderMusicPlayerView({sceneStyle: 'scribble'})
     const scribbleBase = scribbleResult.container.querySelector('.pomo-player__base')
     const scribbleBorder = scribbleResult.container.querySelector('.pomo-player__scribble-border')
     const scribbleFrame = scribbleResult.container.querySelector('.pomo-player-frame')
@@ -92,7 +226,7 @@ describe('MusicPlayerView', () => {
     ).toHaveLength(0)
 
     cleanup()
-    const scribbleResult = renderMusicPlayerView('scribble')
+    const scribbleResult = renderMusicPlayerView({sceneStyle: 'scribble'})
 
     expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:play')).toBeInstanceOf(
       HTMLElement,
@@ -134,6 +268,12 @@ describe('MusicPlayerView', () => {
     expect(controller.querySelector('media-mute-button')?.getAttribute('title')).toBe(
       '음소거 켜기/끄기',
     )
+    expect(
+      controller.querySelector('[aria-label="앨범 추가"]')?.getAttribute('data-player-utility'),
+    ).toBe('album')
+    expect(
+      controller.querySelector('[aria-label="플레이어 접기"]')?.getAttribute('data-player-utility'),
+    ).toBe('expand')
   })
 
   it('should keep the summary play button stationary on hover', () => {

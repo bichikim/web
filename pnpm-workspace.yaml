@@ -35,6 +35,7 @@ catalog:
   dotenv: ^16.6.1
   es-toolkit: ^1.46.1
   execa: ^9.6.1
+  h3: 2.0.1-rc.26
   js-cookie: ^3.0.5
   jiti: ^2.7.0
   nitro: 3.0.260610-beta
@@ -106,10 +107,11 @@ overrides:
   'sharp@<0.32.6': '0.32.6'
   'simple-get@<2.8.2': '2.8.2'
   'tar@<7.5.8': '7.5.8'
-  'tmp@<=0.2.3': '0.2.4'
+  'tmp@<0.2.7': '0.2.7'
   'trim@<0.0.3': '0.0.3'
   'trim-newlines@<3.0.1': '3.0.1'
   'uuid@<7.0.3': '7.0.3'
+  'yaml@<2.8.3': '2.8.3'
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true

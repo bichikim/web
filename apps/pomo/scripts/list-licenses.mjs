@@ -3,6 +3,7 @@ import {dirname, join, parse} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 const LICENSE_FILE_NAMES = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'LICENCE', 'LICENCE.md']
+const NON_RUNTIME_PACKAGE_NAMES = new Set(['@apps-in-toss/cli'])
 const packageFilePath = fileURLToPath(new URL('../package.json', import.meta.url))
 
 const readPackage = async (path) => JSON.parse(await readFile(path, 'utf8'))
@@ -61,6 +62,10 @@ const getLicense = async (packageData, packagePath) => {
 const licenses = new Map()
 
 const visitDependency = async (packageName, importerPath, optional = false) => {
+  if (NON_RUNTIME_PACKAGE_NAMES.has(packageName)) {
+    return
+  }
+
   let dependencyPath
 
   try {

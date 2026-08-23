@@ -22,7 +22,20 @@ import nightTypingDepth from './assets/depth/night-typing.webp'
 import nightTypingGazeDepth from './assets/depth/night-typing-user-gaze.webp'
 import nightWritingDepth from './assets/depth/night-writing.webp'
 import nightWritingGazeDepth from './assets/depth/night-writing-user-gaze.webp'
+import scribbleDayReadingDepth from './assets/depth/day-reading-focused-scribble.webp'
+import scribbleDayReadingGazeDepth from './assets/depth/day-reading-user-gaze-scribble.webp'
+import scribbleDayTypingDepth from './assets/depth/day-typing-focused-scribble.webp'
+import scribbleDayTypingGazeDepth from './assets/depth/day-typing-user-gaze-scribble.webp'
+import scribbleDayWritingDepth from './assets/depth/day-writing-focused-scribble.webp'
+import scribbleDayWritingGazeDepth from './assets/depth/day-writing-user-gaze-scribble.webp'
+import scribbleNightReadingDepth from './assets/depth/night-reading-focused-scribble.webp'
+import scribbleNightReadingGazeDepth from './assets/depth/night-reading-user-gaze-scribble.webp'
+import scribbleNightTypingDepth from './assets/depth/night-typing-focused-scribble.webp'
+import scribbleNightTypingGazeDepth from './assets/depth/night-typing-user-gaze-scribble.webp'
+import scribbleNightWritingDepth from './assets/depth/night-writing-focused-scribble.webp'
+import scribbleNightWritingGazeDepth from './assets/depth/night-writing-user-gaze-scribble.webp'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
+import type {PSceneStyle} from './scene-style'
 export {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
 export type PActivity = 'reading' | 'typing' | 'writing'
@@ -32,7 +45,7 @@ export type PSceneId = `${PTime}-${PActivity}-${PGaze}`
 
 export interface PSceneCatalogEntry {
   readonly activity: PActivity
-  readonly depthSource: string
+  readonly depthSources: Readonly<Record<PSceneStyle, string>>
   readonly gaze: PGaze
   readonly id: PSceneId
   readonly label: string
@@ -41,37 +54,79 @@ export interface PSceneCatalogEntry {
 }
 
 interface SceneSourcePair {
-  readonly depthSource: string
+  readonly depthSources: Readonly<Record<PSceneStyle, string>>
   readonly source: string
 }
 
 const SCENE_SOURCES = {
   day: {
     reading: {
-      focused: {depthSource: dayReadingDepth, source: dayReadingImage},
-      user: {depthSource: dayReadingGazeDepth, source: dayReadingGazeImage},
+      focused: {
+        depthSources: {original: dayReadingDepth, scribble: scribbleDayReadingDepth},
+        source: dayReadingImage,
+      },
+      user: {
+        depthSources: {original: dayReadingGazeDepth, scribble: scribbleDayReadingGazeDepth},
+        source: dayReadingGazeImage,
+      },
     },
     typing: {
-      focused: {depthSource: dayTypingDepth, source: dayTypingImage},
-      user: {depthSource: dayTypingGazeDepth, source: dayTypingGazeImage},
+      focused: {
+        depthSources: {original: dayTypingDepth, scribble: scribbleDayTypingDepth},
+        source: dayTypingImage,
+      },
+      user: {
+        depthSources: {original: dayTypingGazeDepth, scribble: scribbleDayTypingGazeDepth},
+        source: dayTypingGazeImage,
+      },
     },
     writing: {
-      focused: {depthSource: dayWritingDepth, source: dayWritingImage},
-      user: {depthSource: dayWritingGazeDepth, source: dayWritingGazeImage},
+      focused: {
+        depthSources: {original: dayWritingDepth, scribble: scribbleDayWritingDepth},
+        source: dayWritingImage,
+      },
+      user: {
+        depthSources: {original: dayWritingGazeDepth, scribble: scribbleDayWritingGazeDepth},
+        source: dayWritingGazeImage,
+      },
     },
   },
   night: {
     reading: {
-      focused: {depthSource: nightReadingDepth, source: nightReadingImage},
-      user: {depthSource: nightReadingGazeDepth, source: nightReadingGazeImage},
+      focused: {
+        depthSources: {original: nightReadingDepth, scribble: scribbleNightReadingDepth},
+        source: nightReadingImage,
+      },
+      user: {
+        depthSources: {
+          original: nightReadingGazeDepth,
+          scribble: scribbleNightReadingGazeDepth,
+        },
+        source: nightReadingGazeImage,
+      },
     },
     typing: {
-      focused: {depthSource: nightTypingDepth, source: nightTypingImage},
-      user: {depthSource: nightTypingGazeDepth, source: nightTypingGazeImage},
+      focused: {
+        depthSources: {original: nightTypingDepth, scribble: scribbleNightTypingDepth},
+        source: nightTypingImage,
+      },
+      user: {
+        depthSources: {original: nightTypingGazeDepth, scribble: scribbleNightTypingGazeDepth},
+        source: nightTypingGazeImage,
+      },
     },
     writing: {
-      focused: {depthSource: nightWritingDepth, source: nightWritingImage},
-      user: {depthSource: nightWritingGazeDepth, source: nightWritingGazeImage},
+      focused: {
+        depthSources: {original: nightWritingDepth, scribble: scribbleNightWritingDepth},
+        source: nightWritingImage,
+      },
+      user: {
+        depthSources: {
+          original: nightWritingGazeDepth,
+          scribble: scribbleNightWritingGazeDepth,
+        },
+        source: nightWritingGazeImage,
+      },
     },
   },
 } satisfies Record<PTime, Record<PActivity, Record<PGaze, SceneSourcePair>>>
@@ -94,7 +149,7 @@ export const FOCUS_ROOM_SCENES: readonly PSceneCatalogEntry[] = TIMES.flatMap((t
 
       return {
         activity,
-        depthSource: asset.depthSource,
+        depthSources: asset.depthSources,
         gaze,
         id,
         label: `${LABELS.time[time]} · ${LABELS.activity[activity]} · ${LABELS.gaze[gaze]}`,
