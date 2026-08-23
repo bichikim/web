@@ -171,6 +171,29 @@ describe('corsMiddleware', () => {
     expect(response.headers.get('Vary')).toBe('Origin')
   })
 
+  it('should expose the retry delay to an allowed Apps in Toss origin', async () => {
+    useProductionEnvironment()
+    const origin = 'https://pomo-app.apps.tossmini.com'
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/weather/feeds', {
+        headers: {Origin: origin},
+      }),
+      Response.json(
+        {code: 'weather_collecting'},
+        {
+          headers: {'Retry-After': '2'},
+          status: 503,
+        },
+      ),
+    )
+
+    expect(response.status).toBe(503)
+    expect(response.headers.get('Retry-After')).toBe('2')
+    expect(response.headers.get('Access-Control-Expose-Headers')?.split(', ')).toContain(
+      'Retry-After',
+    )
+  })
+
   it('should preserve multiple cookies while adding CORS to a Response', async () => {
     useProductionEnvironment()
     const headers = new Headers()
