@@ -12,7 +12,7 @@ Pomo가 배포하거나 실행 중 내려받는 외부 소프트웨어, 모델, 
 - npm 런타임 의존성은 `package.json`과 `pnpm-lock.yaml`로 버전을 고정하고
   `pnpm --filter @apps/pomo licenses:list`로 설치된 전체 라이선스를 점검한다. `UNKNOWN`이
   나오면 명시적인 라이선스 확인 전까지 출시하지 않는다.
-- 이 문서는 외부 약관 변경에 맞춰 갱신해야 한다. 마지막 확인일은 2026-08-11이다.
+- 이 문서는 외부 약관 변경에 맞춰 갱신해야 한다. 마지막 확인일은 2026-08-23이다.
 
 ## 배포·실행 항목
 
@@ -23,6 +23,7 @@ Pomo가 배포하거나 실행 중 내려받는 외부 소프트웨어, 모델, 
 | [Babylon.js](https://github.com/BabylonJS/Babylon.js/blob/master/license.md)                        | 3D 장면 실행 및 표준 GLB 로딩                                      | Apache-2.0                       | 저작권·라이선스 고지를 배포물에 보존한다.                                    |
 | [Qwen3.5 ONNX](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX) 0.8B, 2B, 4B                | 브라우저 내 텍스트 생성                                            | Apache-2.0                       | 모델 저장소의 LICENSE·NOTICE와 저작권 고지를 배포물에 보존한다.              |
 | [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) Full 및 INT8                          | 브라우저 내 음성 합성                                              | 모델: OpenRAIL-M, 예제 코드: MIT | 모델 사용 제한과 고지 의무를 따른다. INT8은 sherpa-onnx용 양자화 배포본이다. |
+| [wLipSync](https://github.com/mrxz/wLipSync) 1.3.1                                                  | 브라우저 내 MFCC 기반 입모양 분석 및 공식 예제 프로필              | MIT                              | hecomi와 Noeri Huisman의 저작권·라이선스 고지를 배포물에 보존한다.           |
 
 `scene.glb`는 Pomo의 Blender 프로젝트에서 생성하지만 RobotExpressive 모델과 Ninomaru
 Teien HDRI를 포함하거나 참조하므로 두 원본의 조건도 함께 적용된다.
@@ -48,6 +49,28 @@ Supertonic 추론 흐름은 공식
 MIT License
 
 Copyright (c) 2025 Supertone Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## wLipSync 고지
+
+The MIT License (MIT)
+
+Copyright (c) 2021 hecomi
+Copyright (c) 2024 Noeri Huisman
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 and associated documentation files (the "Software"), to deal in the Software without

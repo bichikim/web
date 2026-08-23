@@ -8,6 +8,7 @@ import {
   type PViseme,
   type PVisemeCue,
 } from '../lip-sync'
+import {createPBrowserAudioVisemeAnalyzer} from '../lip-sync/browser-audio-viseme'
 import type {SupertonicAudio} from './messages'
 
 export interface SupertonicAudioPlayer {
@@ -36,6 +37,7 @@ export const createSupertonicAudioPlayer = (
   options: CreateSupertonicAudioPlayerOptions = {},
 ): SupertonicAudioPlayer => {
   const context = new AudioContext()
+  const audioVisemeAnalyzer = createPBrowserAudioVisemeAnalyzer(context)
   const sources = new Set<AudioBufferSourceNode>()
   const visemeTracks: Array<ScheduledVisemeTrack> = []
   const visemeDriver = createPVisemeDriver()
@@ -78,10 +80,12 @@ export const createSupertonicAudioPlayer = (
     const trackTimeMs =
       track === undefined ? 0 : (currentTime - track.startTime) * MILLISECONDS_PER_SECOND
     if (track !== undefined) {
+      const textViseme = getPCoarticulatedVisemeAtTime(track.cues, trackTimeMs)
+      const audioFrame = audioVisemeAnalyzer.getFrame(textViseme)
       const nextViseme = visemeDriver.update({
         currentTimeMs: currentTime * MILLISECONDS_PER_SECOND,
-        intensity: getPAudioEnvelopeLevel(track.envelope, trackTimeMs),
-        viseme: getPCoarticulatedVisemeAtTime(track.cues, trackTimeMs),
+        intensity: audioFrame?.intensity ?? getPAudioEnvelopeLevel(track.envelope, trackTimeMs),
+        viseme: audioFrame?.viseme ?? textViseme,
       })
 
       if (nextViseme !== 'rest') {
@@ -121,6 +125,7 @@ export const createSupertonicAudioPlayer = (
     const source = context.createBufferSource()
     source.buffer = buffer
     source.connect(context.destination)
+    audioVisemeAnalyzer.connect(source).catch(() => undefined)
     sources.add(source)
     source.addEventListener('ended', () => {
       sources.delete(source)
@@ -159,6 +164,7 @@ export const createSupertonicAudioPlayer = (
     }
 
     setViseme('rest')
+    audioVisemeAnalyzer.dispose()
 
     if (context.state !== 'closed') {
       context.close().catch(() => undefined)

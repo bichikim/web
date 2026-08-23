@@ -48,7 +48,12 @@ const rendererHarness = vi.hoisted(() => {
     deferApplication: false,
     eyes: [] as Array<{setMode: (mode: string) => void}>,
     resolvers: new Map<string, Resolve>(),
-    scenes: [] as Array<{container: TestContainer; definitionId: string; destroyed: boolean}>,
+    scenes: [] as Array<{
+      container: TestContainer
+      definitionId: string
+      destroyed: boolean
+      update: ReturnType<typeof vi.fn>
+    }>,
   }
 })
 
@@ -132,12 +137,33 @@ vi.mock('../../focus-room-animation/scene-catalog-channels', () => ({
     round: 'mouth-round',
     wide: 'mouth-wide',
   },
+  FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS: {
+    'closed-round-early': 'mouth-transition-closed-round-early',
+    'closed-round-late': 'mouth-transition-closed-round-late',
+    'closed-wide-early': 'mouth-transition-closed-wide-early',
+    'closed-wide-late': 'mouth-transition-closed-wide-late',
+    'half-open': 'mouth-transition-half-open',
+    'narrow-round-early': 'mouth-transition-narrow-round-early',
+    'narrow-round-late': 'mouth-transition-narrow-round-late',
+    'narrow-round-middle': 'mouth-transition-narrow-round-middle',
+    'narrow-wide-early': 'mouth-transition-narrow-wide-early',
+    'narrow-wide-late': 'mouth-transition-narrow-wide-late',
+    'narrow-wide-middle': 'mouth-transition-narrow-wide-middle',
+    'open-round-early': 'mouth-transition-open-round-early',
+    'open-round-late': 'mouth-transition-open-round-late',
+    'open-round-middle': 'mouth-transition-open-round-middle',
+    'open-wide-early': 'mouth-transition-open-wide-early',
+    'open-wide-late': 'mouth-transition-open-wide-late',
+    release: 'mouth-transition-release',
+    'small-open': 'mouth-transition-small-open',
+  },
 }))
 
 vi.mock('../../focus-room-animation/scene-layer-state', () => ({
-  createFocusRoomLayerState: () => ({channels: {}}),
+  createFocusRoomLayerState: vi.fn(() => ({channels: {}})),
 }))
 
+import {createFocusRoomLayerState} from '../../focus-room-animation/scene-layer-state'
 import {PLayerReviewRenderer, type PLayerReviewState} from '../scene-renderer'
 
 const state: PLayerReviewState = {
@@ -148,6 +174,8 @@ const state: PLayerReviewState = {
   gaze: 'focused',
   handsVisible: true,
   headVisible: true,
+  mouthFrame: null,
+  mouthPositionComparison: false,
   mouthVisible: true,
   referenceOpacity: 0,
   time: 'day',
@@ -226,5 +254,77 @@ it('should forward a fixed eye frame to the eye controller', async () => {
   renderer.update({...state, eyeMode: 'closed'})
 
   expect(rendererHarness.eyes[0]?.setMode).toHaveBeenLastCalledWith('closed')
+  renderer.destroy()
+})
+
+it('should animate from the previous mouth shape when the review selection changes', async () => {
+  const host = document.createElement('div')
+  const renderer = new PLayerReviewRenderer(host, {definition: createDefinition('initial')})
+  const initialization = renderer.initialize({...state, viseme: 'closed'})
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  renderer.update({...state, viseme: 'open'})
+
+  expect(createFocusRoomLayerState).toHaveBeenLastCalledWith('open', false, {
+    from: 'closed',
+    progress: 0,
+    to: 'open',
+  })
+  renderer.destroy()
+})
+
+it('should show one selected mouth image without running a transition', async () => {
+  const host = document.createElement('div')
+  const renderer = new PLayerReviewRenderer(host, {definition: createDefinition('initial')})
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  renderer.update({...state, mouthFrame: 'open-round-middle'})
+
+  const scene = rendererHarness.scenes[0]
+  const latestSceneState = vi.mocked(scene?.update).mock.lastCall?.[0] as {
+    readonly channels: Readonly<
+      Record<string, {readonly opacity?: number; readonly visible?: boolean}>
+    >
+  }
+
+  expect(latestSceneState.channels['mouth-transition-open-round-middle']).toEqual({
+    opacity: 1,
+    visible: true,
+  })
+  expect(latestSceneState.channels['mouth-open']?.visible).toBe(false)
+  renderer.destroy()
+})
+
+it('should overlay the selected mouth at half opacity above the rest mouth for comparison', async () => {
+  const host = document.createElement('div')
+  const renderer = new PLayerReviewRenderer(host, {definition: createDefinition('initial')})
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  renderer.update({
+    ...state,
+    mouthFrame: 'open-round-middle',
+    mouthPositionComparison: true,
+  })
+
+  const scene = rendererHarness.scenes[0]
+  const latestSceneState = vi.mocked(scene?.update).mock.lastCall?.[0] as {
+    readonly channels: Readonly<
+      Record<string, {readonly opacity?: number; readonly visible?: boolean}>
+    >
+  }
+
+  expect(latestSceneState.channels['mouth-rest']).toEqual({opacity: 1, visible: true})
+  expect(latestSceneState.channels['mouth-transition-open-round-middle']).toEqual({
+    opacity: 0.5,
+    visible: true,
+  })
   renderer.destroy()
 })

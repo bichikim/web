@@ -85,6 +85,10 @@ describe('createSupertonicAudioPlayer', () => {
 
     runtime.currentTime = 0.1
     runtime.frames.shift()?.(100)
+    expect(onVisemeChange).toHaveBeenLastCalledWith('narrow')
+
+    runtime.currentTime = 0.15
+    runtime.frames.shift()?.(150)
     expect(onVisemeChange).toHaveBeenLastCalledWith('open')
 
     runtime.currentTime = 0.6

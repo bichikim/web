@@ -1,0 +1,199 @@
+{
+  "92": {
+    "inputs": {
+      "filename_prefix": "video/pomo_day_mouth_open_to_wide_v5_bounded",
+      "format": "auto",
+      "codec": "auto",
+      "video": ["105:91", 0]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "Save Video"
+    }
+  },
+  "120": {
+    "class_type": "GetImageSize",
+    "inputs": {
+      "image": ["121", 0]
+    },
+    "_meta": {
+      "title": "GetImageSize"
+    }
+  },
+  "121": {
+    "inputs": {
+      "image": "pomo-day-mouth-open-1024x576.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image 1"
+    }
+  },
+  "125": {
+    "inputs": {
+      "image": "pomo-day-mouth-wide-1024x576.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image 2"
+    }
+  },
+  "105:11": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "105:24": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "105:23": {
+    "inputs": {
+      "samples": ["105:14", 0],
+      "vae": ["105:24", 0]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE Decode Audio"
+    }
+  },
+  "105:10": {
+    "inputs": {
+      "samples": ["105:14", 0],
+      "vae": ["105:11", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "105:17": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "105:9": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 10,
+      "denoise": 1,
+      "model": ["105:119", 0]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "105:14": {
+    "inputs": {
+      "noise": ["105:15", 0],
+      "guider": ["105:16", 0],
+      "sampler": ["105:17", 0],
+      "sigmas": ["105:9", 0],
+      "latent_image": ["105:104", 1]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "105:16": {
+    "inputs": {
+      "model": ["105:119", 0],
+      "conditioning": ["105:104", 0]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "Basic Guider"
+    }
+  },
+  "105:15": {
+    "inputs": {
+      "noise_seed": 4381509276142
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "105:91": {
+    "inputs": {
+      "fps": 24,
+      "bit_depth": 8,
+      "images": ["105:10", 0],
+      "audio": ["105:23", 0]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "Create Video"
+    }
+  },
+  "105:104": {
+    "inputs": {
+      "prompt": "Create one restrained geometric mouth transition between the exact supplied first and last images. This is a subtle image interpolation, not a facial performance. Keep the mouth naturally small and proportional to the face in every frame. At the largest intermediate frame, the outer-lip width is at most 1.2 times the starting width, the outer-lip height is at most 1.15 times the starting height, and the dark inner-mouth opening is at most 1.2 times the starting opening. Start from the exact supplied open mouth. Gently widen both mouth corners while slightly raising the lower jaw, moving directly toward the exact supplied final shape. Use one continuous transition with no extra intermediate pose or size peak. Briefly hold the initial shape, change gradually through the middle, then briefly hold the final shape. Preserve the character's small mouth and delicate facial proportions. Only the lips, lower jaw, and chin move subtly. Keep the head, eyes, nose, hair, body, hands, book, camera, lighting, colors, illustration style, and background completely unchanged. No speech, pronunciation, acting, surprise, smile, singing, teeth emphasis, tongue, dramatic opening, lip stretching, overshoot, reversal, repetition, pulsing, chewing, blinking, head movement, or camera movement.",
+      "width": ["120", 0],
+      "height": ["120", 1],
+      "length": ["105:107", 1],
+      "clip": ["105:120", 0],
+      "vae": ["105:11", 0],
+      "first_frame": ["121", 0],
+      "last_frame": ["125", 0]
+    },
+    "class_type": "MiniMaxH3ImageToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Image to Video"
+    }
+  },
+  "105:107": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": ["105:111", 0]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "Math Expression"
+    }
+  },
+  "105:111": {
+    "inputs": {
+      "value": 1.5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Float (duration)"
+    }
+  },
+  "105:119": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "UNETLoader"
+    }
+  },
+  "105:120": {
+    "inputs": {
+      "clip_name": "qwen3vl-32B-MiniMax-H3-Q4_K_M.gguf",
+      "type": "minimax"
+    },
+    "class_type": "CLIPLoaderGGUF",
+    "_meta": {
+      "title": "CLIPLoader (GGUF)"
+    }
+  }
+}
