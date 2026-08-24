@@ -12,6 +12,7 @@
     "build": "pnpm run build:web",
     "build:apps-in-toss-ssg": "cross-env POMO_BUILD_TARGET=apps-in-toss vite build",
     "build:apps-in-toss-package": "pnpm run prepare:apps-in-toss-package && ait build",
+    "build:vercel": "node scripts/database/migrate-preview.mjs && pnpm run build:web",
     "build:web": "vite build",
     "db:check-production-migrations": "node scripts/database/check-production-migrations.mjs",
     "db:generate": "drizzle-kit generate",
