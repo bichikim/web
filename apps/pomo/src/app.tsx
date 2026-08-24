@@ -12,6 +12,7 @@ import {isSearchIndexablePath, normalizePathname} from './components/pomo-route'
 import {SEARCH_CONFIG} from './config/search'
 import {SERVICE_POLICY_PATHS} from './config/service-policy'
 import {useApplicationRecovery} from './features/application-recovery'
+import {useAppsInTossDevtools} from './features/apps-in-toss-devtools'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
 
 const DEFAULT_DESCRIPTION =
@@ -92,6 +93,7 @@ const PDocumentMetadata = () => {
 }
 
 export default function App() {
+  useAppsInTossDevtools()
   useAppsInTossSafeArea()
   const applicationRecovery = useApplicationRecovery()
 
