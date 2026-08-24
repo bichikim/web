@@ -15,6 +15,7 @@ import {
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const shortCommitShaLength = 12
 const appsInTossApiOrigin = new URL(
   process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
 ).origin
@@ -23,7 +24,9 @@ const deploymentEnvironment =
   process.env.VERCEL_ENV?.trim() ||
   (process.env.NODE_ENV === 'production' ? 'production' : 'development')
 const release =
-  process.env.POMO_RELEASE?.trim() || process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) || 'local'
+  process.env.POMO_RELEASE?.trim() ||
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, shortCommitShaLength) ||
+  'local'
 const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
