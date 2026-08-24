@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {PAlbumTrackList} from '../PAlbumTrackList'
@@ -41,6 +42,38 @@ it('should use full sources for playable tracks and access resolution for catalo
     id: 'unowned-track',
     loadSource: expect.any(Function),
   })
+})
+
+it('should visibly identify a limited preview only while it is playing', () => {
+  const [playingTrackId, setPlayingTrackId] = createSignal<string | null>(null)
+  const playableTrack = {
+    artist: 'Artist',
+    durationSeconds: 180,
+    id: 'playable-track',
+    source: '/audio/playable.mp3',
+    title: 'Playable Track',
+  }
+
+  render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={vi.fn()}
+      onPreview={vi.fn()}
+      pendingTrackId={null}
+      playableTracks={[playableTrack]}
+      playingTrackId={playingTrackId()}
+      trackIds={new Set()}
+      tracks={[playableTrack, {artist: 'Artist', id: 'limited-track', title: 'Limited Track'}]}
+    />
+  ))
+
+  expect(screen.queryByText('30초 미리듣기')).toBeNull()
+
+  setPlayingTrackId('limited-track')
+  expect(screen.getByText('30초 미리듣기').getAttribute('data-pomo-tag')).toBe('')
+
+  setPlayingTrackId('playable-track')
+  expect(screen.queryByText('30초 미리듣기')).toBeNull()
 })
 
 it('should indicate that more tracks remain below until the list reaches the bottom', () => {

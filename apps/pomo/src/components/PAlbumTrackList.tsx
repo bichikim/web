@@ -1,5 +1,6 @@
-import {createSignal, For, onCleanup, onMount, Show} from 'solid-js'
+import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
 
+import {PTag} from '../design-system/PTag'
 import {
   loadTrackPreviewSource,
   type PTrack,
@@ -102,10 +103,12 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
       >
         <For each={props.tracks}>
           {(track, trackIndex) => {
-            const playableTrack = () =>
-              props.playableTracks.find((candidate) => candidate.id === track.id)
+            const playableTrack = createMemo(() =>
+              props.playableTracks.find((candidate) => candidate.id === track.id),
+            )
             const isInPlayer = () => props.trackIds.has(track.id)
             const isPreviewing = () => props.playingTrackId === track.id
+            const isLimited = () => playableTrack() === undefined
 
             return (
               <li class="flex min-w-0 items-center gap-2 py-1 text-xs text-muted-foreground">
@@ -114,10 +117,17 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                 </span>
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-foreground">{track.title}</span>
-                  <span class="mt-0.5 block truncate text-[0.6875rem]">{track.artist}</span>
+                  <span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.6875rem]">
+                    <span class="min-w-0 truncate">{track.artist}</span>
+                    <Show when={isPreviewing() && isLimited()}>
+                      <PTag class="flex-none" tone="highlight">
+                        30초 미리듣기
+                      </PTag>
+                    </Show>
+                  </span>
                 </span>
                 <PreviewButton
-                  isLimited={playableTrack() === undefined}
+                  isLimited={isLimited()}
                   isPending={props.pendingTrackId === track.id}
                   isPlaying={isPreviewing()}
                   onPress={() => {
