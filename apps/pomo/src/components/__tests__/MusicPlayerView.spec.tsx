@@ -157,14 +157,18 @@ describe('MusicPlayerView', () => {
     expect(expandedRange.classList.contains('w-[calc(100%+1rem)]')).toBe(true)
     expect(expandedRange.parentElement).toBe(controller)
     expect(expandedFrame?.contains(expandedRange)).toBe(false)
-    expect(expandedRange.classList.contains('[--media-range-bar-color:#fffaf1]')).toBe(true)
+    expect(
+      expandedRange.classList.contains('[--media-range-bar-color:var(--pomo-color-foreground)]'),
+    ).toBe(true)
     expect(
       expandedRange.classList.contains(
-        '[--media-time-range-buffered-color:rgb(255_250_241_/_40%)]',
+        '[--media-time-range-buffered-color:var(--pomo-color-muted-foreground)]',
       ),
     ).toBe(true)
     expect(
-      expandedRange.classList.contains('[--media-range-track-background:rgb(255_250_241_/_22%)]'),
+      expandedRange.classList.contains(
+        '[--media-range-track-background:var(--pomo-color-range-track)]',
+      ),
     ).toBe(true)
     expect(expandedRange.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(true)
     expect(expandedRange.classList.contains('focus-within:[--media-range-thumb-opacity:1]')).toBe(

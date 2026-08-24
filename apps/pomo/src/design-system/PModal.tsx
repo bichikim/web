@@ -88,7 +88,7 @@ export const PModal = (props: PModalProps) => (
     <Dialog.Portal>
       <Dialog.Overlay
         class={
-          'fixed inset-0 bg-[rgb(8_6_4_/_68%)] backdrop-blur-[12px] ' +
+          'fixed inset-0 bg-backdrop backdrop-blur-[12px] ' +
           'animate-modal-overlay-in motion-reduce:animate-none'
         }
       />
