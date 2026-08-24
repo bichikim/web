@@ -102,7 +102,9 @@ describe('app session lifecycle', () => {
       .mockResolvedValue(Response.json({error: 'invalid_email'}, {status: 400}))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toBe(false)
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      status: 'not-sent',
+    })
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/account/link-email',
       expect.objectContaining({
@@ -110,5 +112,34 @@ describe('app session lifecycle', () => {
         method: 'POST',
       }),
     )
+  })
+
+  it('should report a successful account link email request', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      status: 'sent',
+    })
+  })
+
+  it('should preserve the account link retry delay', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, {headers: {'Retry-After': '42'}, status: 429})),
+    )
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      retryAfterSeconds: 42,
+      status: 'rate-limited',
+    })
+  })
+
+  it('should tolerate a missing account link retry delay', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 429})))
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      retryAfterSeconds: null,
+      status: 'rate-limited',
+    })
   })
 })
