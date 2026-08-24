@@ -36,6 +36,11 @@ it('should show license groups, distribution conditions, and original sources', 
   expect(screen.getByRole('heading', {name: 'Dexie'})).toBeTruthy()
   expect(screen.getByText('로컬 대화 저장')).toBeTruthy()
   expect(screen.getByText('음악 플레이어 컨트롤')).toBeTruthy()
+  expect(screen.getByRole('heading', {name: 'wLipSync'})).toBeTruthy()
+  expect(screen.getByText('기기 안에서 재생 음성의 입모양 분석')).toBeTruthy()
+  expect(
+    screen.getByRole('link', {name: 'wLipSync 라이선스 원문 새 창에서 열기'}).getAttribute('href'),
+  ).toBe('https://github.com/mrxz/wLipSync/blob/main/LICENSE')
   expect(screen.getByText('로그인과 PostgreSQL 연결')).toBeTruthy()
   expect(screen.getByText('서버 데이터베이스 스키마와 쿼리')).toBeTruthy()
   expect(screen.getByText('서버 응답 캐시 무효화')).toBeTruthy()

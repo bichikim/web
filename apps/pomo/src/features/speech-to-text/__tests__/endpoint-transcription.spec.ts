@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from 'vitest'
 
 import {createEndpointTranscription} from '../endpoint-transcription'
 import type {SpeechRecording} from '../recorder'
-import {speechFailure, speechSuccess} from '../result'
+import {failureResult, successResult} from '../../result'
 
 const createDeferred = <Value>() => {
   let resolve: (value: Value) => void = () => undefined
@@ -16,7 +16,7 @@ describe('createEndpointTranscription', () => {
   it('should wait for an in-flight segment before stopping and preserve transcription order', async () => {
     const segment = Float32Array.of(1)
     const finalSegment = Float32Array.of(2)
-    const segmentResult = createDeferred<ReturnType<typeof speechSuccess<Float32Array>>>()
+    const segmentResult = createDeferred<ReturnType<typeof successResult<Float32Array>>>()
     const events: Array<string> = []
     let onSpeechEnd: () => void = () => undefined
     const recording: SpeechRecording = {
@@ -27,7 +27,7 @@ describe('createEndpointTranscription', () => {
       },
       stop: vi.fn(async () => {
         events.push('stop')
-        return speechSuccess(finalSegment)
+        return successResult(finalSegment)
       }),
       takeSegment: vi.fn(() => segmentResult.promise),
     }
@@ -45,7 +45,7 @@ describe('createEndpointTranscription', () => {
     const stop = endpoint.stop(recording)
     expect(recording.stop).not.toHaveBeenCalled()
 
-    segmentResult.resolve(speechSuccess(segment))
+    segmentResult.resolve(successResult(segment))
     await expect(stop).resolves.toEqual({ok: true, value: finalSegment})
     expect(events).toEqual(['transcribe-1', 'stop', 'transcribe-2'])
   })
@@ -59,9 +59,9 @@ describe('createEndpointTranscription', () => {
         onSpeechEnd = handler
         return vi.fn()
       },
-      stop: vi.fn(async () => speechSuccess(Float32Array.of(1))),
+      stop: vi.fn(async () => successResult(Float32Array.of(1))),
       takeSegment: vi.fn(async () =>
-        speechFailure({code: 'capture-failed' as const, retryable: true}),
+        failureResult({code: 'capture-failed' as const, retryable: true}),
       ),
     }
     const endpoint = createEndpointTranscription({

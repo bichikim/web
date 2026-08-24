@@ -1,3 +1,4 @@
+import {httpFetch} from '../http-client'
 import type {FeedDialogueMetadata} from './feed-dialogue-schema'
 
 const FEED_REQUEST_TIMEOUT_MS = 15_000
@@ -7,7 +8,7 @@ export const FEED_POLLING_INTERVAL_MS = 60_000
 export const getFeedGenerationProgress = (loadedBytes: number, totalBytes: number) =>
   Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
 export const createFeedFetcher = () => (url: string) =>
-  fetch(url, {cache: 'no-store', signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS)})
+  httpFetch(url, {cache: 'no-store', signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS)})
 
 export interface FindRemovableExpiredDialoguesOptions {
   readonly expired: ReadonlyArray<FeedDialogueMetadata>

@@ -17,7 +17,7 @@ import {
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from './model'
-import type {Result} from './result'
+import type {Result} from '../result'
 import {createWaveBlob} from './wav'
 import type {SupertonicVoiceStyle} from './voice-style'
 

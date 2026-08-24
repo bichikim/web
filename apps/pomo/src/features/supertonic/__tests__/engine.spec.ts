@@ -9,7 +9,7 @@ import {
   SupertonicEngine,
   type SupertonicSessions,
 } from '../engine'
-import type {Result} from '../result'
+import type {Result} from '../../result'
 
 const createConfig = () => ({
   ae: {base_chunk_size: 2, sample_rate: 4},

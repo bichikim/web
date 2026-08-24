@@ -30,8 +30,6 @@ export type {
 export {createOpusBlob} from './opus-client'
 export type {CreateOpusBlobOptions} from './opus-client'
 export {createWaveBlob} from './wav'
-export {failureResult, successResult} from './result'
-export type {FailureResult, Result, SuccessResult} from './result'
 export {useSupertonicVoiceLab} from './use-supertonic-voice-lab'
 export type {
   SupertonicVoiceLabClient,

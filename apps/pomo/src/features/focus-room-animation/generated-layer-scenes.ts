@@ -1,7 +1,12 @@
 import type {PSceneId} from './scene-catalog'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
 import {createEyeMotion} from './eye-motion'
-import {createMouthLayers, type PVisemeSources} from './mouth-layers'
+import {
+  createMouthLayers,
+  createMouthTransitionLayers,
+  type PMouthTransitionSources,
+  type PVisemeSources,
+} from './mouth-layers'
 import {NIGHT_READING_FAINT_STAR_LAYERS} from './night-reading-faint-star-layers'
 import {type PositionedLayerSource, positionNightReadingLayer} from './night-reading-layer-position'
 import {NIGHT_READING_STAR_LAYERS} from './night-reading-star-layers'
@@ -10,12 +15,31 @@ import {FOCUS_ROOM_JAW_CHANNEL, FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catal
 import dayReadingUserBase from './assets/layers/day-reading-user/base.webp'
 import dayReadingUserEyeIrises from './assets/layers/day-reading-user/eyes.webp'
 import dayReadingUserHead from './assets/layers/day-reading-user/head.webp'
+import dayReadingJawMask from './assets/layers/day-reading-user/layer-mask-jaw-displacement.webp'
 import dayReadingUserLeftHand from './assets/layers/day-reading-user/left-hand.webp'
 import dayReadingUserMouthClosed from './assets/layers/day-reading-user/layer-mouth-closed.webp'
+import dayReadingUserMouthClosedRoundEarly from './assets/layers/day-reading-user/layer-mouth-closed-round-early.webp'
+import dayReadingUserMouthClosedRoundLate from './assets/layers/day-reading-user/layer-mouth-closed-round-late.webp'
+import dayReadingUserMouthClosedWideEarly from './assets/layers/day-reading-user/layer-mouth-closed-wide-early.webp'
+import dayReadingUserMouthClosedWideLate from './assets/layers/day-reading-user/layer-mouth-closed-wide-late.webp'
 import dayReadingUserMouthNarrow from './assets/layers/day-reading-user/layer-mouth-narrow.webp'
+import dayReadingUserMouthNarrowRoundEarly from './assets/layers/day-reading-user/layer-mouth-narrow-round-early.webp'
+import dayReadingUserMouthNarrowRoundLate from './assets/layers/day-reading-user/layer-mouth-narrow-round-late.webp'
+import dayReadingUserMouthNarrowRoundMiddle from './assets/layers/day-reading-user/layer-mouth-narrow-round-middle.webp'
+import dayReadingUserMouthNarrowWideEarly from './assets/layers/day-reading-user/layer-mouth-narrow-wide-early.webp'
+import dayReadingUserMouthNarrowWideLate from './assets/layers/day-reading-user/layer-mouth-narrow-wide-late.webp'
+import dayReadingUserMouthNarrowWideMiddle from './assets/layers/day-reading-user/layer-mouth-narrow-wide-middle.webp'
 import dayReadingUserMouthOpen from './assets/layers/day-reading-user/layer-mouth-open.webp'
+import dayReadingUserMouthOpenRoundEarly from './assets/layers/day-reading-user/layer-mouth-open-round-early.webp'
+import dayReadingUserMouthOpenRoundLate from './assets/layers/day-reading-user/layer-mouth-open-round-late.webp'
+import dayReadingUserMouthOpenRoundMiddle from './assets/layers/day-reading-user/layer-mouth-open-round-middle.webp'
+import dayReadingUserMouthOpenWideEarly from './assets/layers/day-reading-user/layer-mouth-open-wide-early.webp'
+import dayReadingUserMouthOpenWideLate from './assets/layers/day-reading-user/layer-mouth-open-wide-late.webp'
+import dayReadingUserMouthHalfOpen from './assets/layers/day-reading-user/layer-mouth-half-open.webp'
 import dayReadingUserMouthRest from './assets/layers/day-reading-user/layer-mouth-rest.webp'
+import dayReadingUserMouthRelease from './assets/layers/day-reading-user/layer-mouth-release.webp'
 import dayReadingUserMouthRound from './assets/layers/day-reading-user/layer-mouth-round.webp'
+import dayReadingUserMouthSmallOpen from './assets/layers/day-reading-user/layer-mouth-small-open.webp'
 import dayReadingUserMouthWide from './assets/layers/day-reading-user/layer-mouth-wide.webp'
 import dayReadingUserRightHand from './assets/layers/day-reading-user/right-hand.webp'
 import dayReadingUserReference from './assets/concept-art/day-reading-user-gaze.webp'
@@ -85,6 +109,7 @@ interface SeparatedSceneAssets {
   readonly headJawMask?: string
   readonly leftHand: string
   readonly mouth?: PVisemeSources
+  readonly mouthTransition?: PMouthTransitionSources
   readonly reference: string
   readonly rightHand: string
   readonly starLayers?: readonly PositionedLayerSource[]
@@ -115,6 +140,26 @@ const DAY_USER_MOUTH_SOURCES = {
   round: dayReadingUserMouthRound,
   wide: dayReadingUserMouthWide,
 } satisfies PVisemeSources
+const DAY_USER_MOUTH_TRANSITION_SOURCES = {
+  'closed-round-early': dayReadingUserMouthClosedRoundEarly,
+  'closed-round-late': dayReadingUserMouthClosedRoundLate,
+  'closed-wide-early': dayReadingUserMouthClosedWideEarly,
+  'closed-wide-late': dayReadingUserMouthClosedWideLate,
+  'half-open': dayReadingUserMouthHalfOpen,
+  'narrow-round-early': dayReadingUserMouthNarrowRoundEarly,
+  'narrow-round-late': dayReadingUserMouthNarrowRoundLate,
+  'narrow-round-middle': dayReadingUserMouthNarrowRoundMiddle,
+  'narrow-wide-early': dayReadingUserMouthNarrowWideEarly,
+  'narrow-wide-late': dayReadingUserMouthNarrowWideLate,
+  'narrow-wide-middle': dayReadingUserMouthNarrowWideMiddle,
+  'open-round-early': dayReadingUserMouthOpenRoundEarly,
+  'open-round-late': dayReadingUserMouthOpenRoundLate,
+  'open-round-middle': dayReadingUserMouthOpenRoundMiddle,
+  'open-wide-early': dayReadingUserMouthOpenWideEarly,
+  'open-wide-late': dayReadingUserMouthOpenWideLate,
+  release: dayReadingUserMouthRelease,
+  'small-open': dayReadingUserMouthSmallOpen,
+} satisfies PMouthTransitionSources
 const NIGHT_USER_MOUTH_SOURCES = {
   closed: nightReadingUserMouthClosed,
   narrow: nightReadingUserMouthNarrow,
@@ -122,7 +167,6 @@ const NIGHT_USER_MOUTH_SOURCES = {
   round: nightReadingUserMouthRound,
   wide: nightReadingUserMouthWide,
 } satisfies PVisemeSources
-
 const NIGHT_BUILDING_LAYERS = [
   positionNightReadingLayer('building-lights-01', buildingLights01),
   positionNightReadingLayer('building-lights-02', buildingLights02),
@@ -238,6 +282,14 @@ const createSeparatedScene = (
           rotationDegrees: pivots.mouth.rotationDegrees,
           sources: assets.mouth,
         })),
+    ...(assets.mouthTransition === undefined || pivots.mouth === undefined
+      ? []
+      : createMouthTransitionLayers({
+          parentAttachmentId: 'eyes',
+          position: pivots.mouth,
+          rotationDegrees: pivots.mouth.rotationDegrees,
+          sources: assets.mouthTransition,
+        })),
     {
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.hands,
       id: 'left-hand',
@@ -277,8 +329,10 @@ export const GENERATED_LAYER_SCENES = {
     {
       base: dayReadingUserBase,
       head: dayReadingUserHead,
+      headJawMask: dayReadingJawMask,
       leftHand: dayReadingUserLeftHand,
       mouth: DAY_USER_MOUTH_SOURCES,
+      mouthTransition: DAY_USER_MOUTH_TRANSITION_SOURCES,
       reference: dayReadingUserReference,
       rightHand: dayReadingUserRightHand,
     },
@@ -342,8 +396,10 @@ export const GENERATED_LAYER_SCENES = {
     {
       base: dayTypingUserBase,
       head: dayTypingUserHead,
+      headJawMask: dayReadingJawMask,
       leftHand: dayTypingUserLeftHand,
       mouth: DAY_USER_MOUTH_SOURCES,
+      mouthTransition: DAY_USER_MOUTH_TRANSITION_SOURCES,
       reference: dayTypingUserReference,
       rightHand: dayTypingUserRightHand,
     },
@@ -360,8 +416,10 @@ export const GENERATED_LAYER_SCENES = {
     {
       base: dayWritingUserBase,
       head: dayWritingUserHead,
+      headJawMask: dayReadingJawMask,
       leftHand: dayWritingUserLeftHand,
       mouth: DAY_USER_MOUTH_SOURCES,
+      mouthTransition: DAY_USER_MOUTH_TRANSITION_SOURCES,
       reference: dayWritingUserReference,
       rightHand: dayWritingUserRightHand,
     },

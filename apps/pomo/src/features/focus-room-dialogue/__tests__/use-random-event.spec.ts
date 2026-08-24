@@ -35,7 +35,7 @@ it('should calculate a delay within the configured interval', () => {
   )
 })
 
-it('should keep triggering random events while earlier playback is still queued', async () => {
+it('should wait for earlier playback before scheduling another random event', async () => {
   const settings = {maximumMinutes: 2, minimumMinutes: 2, version: 1} as const
   await writeRandomEventSettings(settings)
   const playbackResolvers: Array<() => void> = []
@@ -50,11 +50,12 @@ it('should keep triggering random events while earlier playback is still queued'
 
   await vi.advanceTimersByTimeAsync(2 * 60_000)
   expect(onEvent).toHaveBeenCalledOnce()
+  await vi.advanceTimersByTimeAsync(4 * 60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  playbackResolvers[0]?.()
   await vi.advanceTimersByTimeAsync(2 * 60_000)
   expect(onEvent).toHaveBeenCalledTimes(2)
-  await vi.advanceTimersByTimeAsync(2 * 60_000)
-  expect(onEvent).toHaveBeenCalledTimes(3)
-  playbackResolvers.forEach((resolve) => resolve())
+  playbackResolvers[1]?.()
   result.unmount()
 })
 
@@ -91,7 +92,7 @@ it('should apply changed interval settings while running', async () => {
   result.unmount()
 })
 
-it('should apply a changed interval while earlier playback is still queued', async () => {
+it('should apply a changed interval after earlier playback completes', async () => {
   await writeRandomEventSettings({maximumMinutes: 1, minimumMinutes: 1, version: 1})
   const playbackResolvers: Array<() => void> = []
   const onEvent = vi.fn(
@@ -110,7 +111,10 @@ it('should apply a changed interval while earlier playback is still queued', asy
   )
 
   await vi.advanceTimersByTimeAsync(2 * 60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  playbackResolvers[0]?.()
+  await vi.advanceTimersByTimeAsync(2 * 60_000)
   expect(onEvent).toHaveBeenCalledTimes(2)
-  playbackResolvers.forEach((resolve) => resolve())
+  playbackResolvers[1]?.()
   result.unmount()
 })

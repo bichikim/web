@@ -1,4 +1,4 @@
-import {createHash} from 'node:crypto'
+import {createHash, randomUUID} from 'node:crypto'
 import {and, eq, inArray, isNull, lt} from 'drizzle-orm'
 
 import {
@@ -30,6 +30,7 @@ const STALE_PREPARING_DELAY_MS =
 export interface GenerationRun {
   readonly id: string
   readonly openAiResponseId: string | null
+  readonly openAiSubmissionKey: string
   readonly sourcePolicyVersion: string
   readonly status: 'preparing' | 'submitted' | 'completed' | 'failed' | 'rejected'
   readonly targetDate: string
@@ -94,10 +95,31 @@ const getChannelId = async (database: Database): Promise<string> => {
 const mapRun = (run: typeof historicalGenerationRuns.$inferSelect): GenerationRun => ({
   id: run.id,
   openAiResponseId: run.openAiResponseId,
+  openAiSubmissionKey: run.openAiSubmissionKey,
   sourcePolicyVersion: run.sourcePolicyVersion,
   status: run.status,
   targetDate: run.targetDate,
 })
+
+const canPrepareRerun = (
+  run: typeof historicalGenerationRuns.$inferSelect,
+  stalePreparingBefore: Date,
+): boolean => {
+  switch (run.status) {
+    case 'completed':
+    case 'failed':
+    case 'rejected':
+      return true
+    case 'preparing':
+      return run.openAiResponseId === null && run.updatedAt < stalePreparingBefore
+    case 'submitted':
+      return false
+    default: {
+      const unhandledStatus: never = run.status
+      throw new Error(`Unhandled generation status: ${unhandledStatus}`)
+    }
+  }
+}
 
 /** Creates the unique daily generation run or returns the existing run. */
 export const prepareGenerationRun = async (
@@ -142,6 +164,8 @@ export const prepareGenerationRun = async (
         attemptCount: existing.attemptCount + 1,
         errorMessage: null,
         openAiResponseId: null,
+        openAiSubmissionKey:
+          existing.openAiResponseId === null ? existing.openAiSubmissionKey : randomUUID(),
         status: 'preparing',
         updatedAt: new Date(),
       })
@@ -214,6 +238,27 @@ export const prepareGenerationRerun = async (
     throw new Error('Every regeneration title must match an existing published moment')
   }
 
+  const [existing] = await database
+    .select()
+    .from(historicalGenerationRuns)
+    .where(
+      and(
+        eq(historicalGenerationRuns.channelId, channelId),
+        eq(historicalGenerationRuns.targetDate, options.targetDate.isoDate),
+      ),
+    )
+    .limit(1)
+  const stalePreparingBefore = new Date(Date.now() - STALE_PREPARING_DELAY_MS)
+
+  if (existing === undefined || !canPrepareRerun(existing, stalePreparingBefore)) {
+    throw new Error(`Inactive generation run not found: ${options.targetDate.isoDate}`)
+  }
+
+  const claimCondition =
+    existing.status === 'preparing'
+      ? lt(historicalGenerationRuns.updatedAt, stalePreparingBefore)
+      : eq(historicalGenerationRuns.attemptCount, existing.attemptCount)
+
   const [updated] = await database
     .update(historicalGenerationRuns)
     .set({
@@ -221,6 +266,8 @@ export const prepareGenerationRerun = async (
       completedAt: null,
       errorMessage: null,
       openAiResponseId: null,
+      openAiSubmissionKey:
+        existing.openAiResponseId === null ? existing.openAiSubmissionKey : randomUUID(),
       promptVersion: options.promptVersion,
       sourcePolicyVersion: options.sourcePolicyVersion,
       status: 'preparing',
@@ -228,9 +275,9 @@ export const prepareGenerationRerun = async (
     })
     .where(
       and(
-        eq(historicalGenerationRuns.channelId, channelId),
-        eq(historicalGenerationRuns.targetDate, options.targetDate.isoDate),
-        inArray(historicalGenerationRuns.status, ['completed', 'failed', 'rejected']),
+        eq(historicalGenerationRuns.id, existing.id),
+        eq(historicalGenerationRuns.status, existing.status),
+        claimCondition,
       ),
     )
     .returning()
@@ -268,7 +315,13 @@ export const markGenerationFailed = async (
   await database
     .update(historicalGenerationRuns)
     .set({errorMessage, status: 'failed', updatedAt: new Date()})
-    .where(eq(historicalGenerationRuns.id, runId))
+    .where(
+      and(
+        eq(historicalGenerationRuns.id, runId),
+        eq(historicalGenerationRuns.status, 'preparing'),
+        isNull(historicalGenerationRuns.openAiResponseId),
+      ),
+    )
 }
 
 /** Finds the local generation run owned by an OpenAI response. */

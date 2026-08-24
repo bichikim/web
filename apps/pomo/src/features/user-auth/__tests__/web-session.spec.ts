@@ -23,6 +23,7 @@ it('should distinguish an anonymous session from an auth service outage', async 
     .fn()
     .mockResolvedValueOnce(new Response(null, {status: 401}))
     .mockResolvedValueOnce(new Response(null, {status: 503}))
+    .mockResolvedValueOnce(new Response(null, {status: 503}))
   vi.stubGlobal('fetch', fetchMock)
 
   await expect(readAccountSession()).resolves.toBeNull()

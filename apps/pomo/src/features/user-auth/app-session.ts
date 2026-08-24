@@ -1,3 +1,5 @@
+import {apiFetch} from '../http-client'
+
 const APP_SESSION_STORAGE_KEY = 'pomo:app-session:v1'
 const HTTP_UNAUTHORIZED = 401
 const HTTP_TOO_MANY_REQUESTS = 429
@@ -20,8 +22,6 @@ export type AccountLinkEmailResult =
   | RejectedAccountLinkEmail
   | RateLimitedAccountLinkEmail
 
-const getApiOrigin = (): string => import.meta.env.POMO_PUBLIC_ORIGIN
-
 const getAuthorizationHeaders = (token: string): HeadersInit => ({
   Authorization: `Bearer ${token}`,
 })
@@ -42,7 +42,7 @@ export const clearStoredAppSession = async (): Promise<void> => {
 }
 
 export const validateAppSession = async (token: string): Promise<boolean> => {
-  const response = await fetch(new URL('/api/app-auth/session', getApiOrigin()), {
+  const response = await apiFetch('app-auth/session', {
     headers: getAuthorizationHeaders(token),
   })
 
@@ -60,7 +60,7 @@ export const validateAppSession = async (token: string): Promise<boolean> => {
 export const createTossLoginSession = async (): Promise<string> => {
   const {TossAuth} = await import('@apps-in-toss/web-framework')
   const authorization = await TossAuth.login()
-  const response = await fetch(new URL('/api/app-auth/exchange', getApiOrigin()), {
+  const response = await apiFetch('app-auth/exchange', {
     body: JSON.stringify(authorization),
     headers: {'Content-Type': 'application/json'},
     method: 'POST',
@@ -86,7 +86,7 @@ export const createTossLoginSession = async (): Promise<string> => {
 }
 
 export const revokeTossLoginSession = async (token: string): Promise<void> => {
-  const response = await fetch(new URL('/api/app-auth/session', getApiOrigin()), {
+  const response = await apiFetch('app-auth/session', {
     headers: getAuthorizationHeaders(token),
     method: 'DELETE',
   })
@@ -102,7 +102,7 @@ export const requestAccountLinkEmail = async (
   token: string,
   email: string,
 ): Promise<AccountLinkEmailResult> => {
-  const response = await fetch(new URL('/api/account/link-email', getApiOrigin()), {
+  const response = await apiFetch('account/link-email', {
     body: JSON.stringify({email}),
     headers: {
       ...getAuthorizationHeaders(token),

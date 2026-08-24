@@ -1,8 +1,14 @@
 import {P_VISEMES, type PViseme} from '../lip-sync'
 import type {PixiSceneLayerDefinition, PixiScenePoint} from './layer-scene'
-import {FOCUS_ROOM_MOUTH_CHANNELS} from './scene-catalog-channels'
+import {
+  FOCUS_ROOM_MOUTH_CHANNELS,
+  FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS,
+  P_MOUTH_TRANSITION_STAGES,
+  type PMouthTransitionStage,
+} from './scene-catalog-channels'
 
 export type PVisemeSources = Readonly<Partial<Record<PViseme, string>>>
+export type PMouthTransitionSources = Readonly<Partial<Record<PMouthTransitionStage, string>>>
 
 export interface CreateMouthLayersOptions {
   readonly parentAttachmentId: string
@@ -24,6 +30,30 @@ export const createMouthLayers = (
           {
             channel: FOCUS_ROOM_MOUTH_CHANNELS[viseme],
             id: `mouth-${viseme}`,
+            parentAttachmentId: options.parentAttachmentId,
+            position: options.position,
+            rotationDegrees: options.rotationDegrees,
+            source,
+            visible: false,
+          },
+        ]
+  })
+
+/** Creates optional viseme bridge layers in the same lower-face coordinate system. */
+export const createMouthTransitionLayers = (
+  options: Omit<CreateMouthLayersOptions, 'sources'> & {
+    readonly sources: PMouthTransitionSources
+  },
+): ReadonlyArray<PixiSceneLayerDefinition> =>
+  P_MOUTH_TRANSITION_STAGES.flatMap((stage) => {
+    const source = options.sources[stage]
+
+    return source === undefined
+      ? []
+      : [
+          {
+            channel: FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage],
+            id: `mouth-transition-${stage}`,
             parentAttachmentId: options.parentAttachmentId,
             position: options.position,
             rotationDegrees: options.rotationDegrees,

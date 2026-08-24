@@ -35,6 +35,7 @@ export const historicalGenerationRuns = pgTable(
     errorMessage: text(),
     id: uuid().primaryKey().defaultRandom(),
     openAiResponseId: varchar({length: 128}),
+    openAiSubmissionKey: uuid().notNull().defaultRandom(),
     promptVersion: varchar({length: 64}).notNull(),
     sourcePolicyVersion: varchar({length: 64}).notNull(),
     sourceUrls: jsonb()

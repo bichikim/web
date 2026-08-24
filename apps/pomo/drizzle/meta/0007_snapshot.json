@@ -1,5 +1,5 @@
 {
-  "id": "d0f7b9fa-48c0-4056-be6d-cf126b9c93c2",
+  "id": "ae335657-b55d-4352-80cd-1a35cafccd71",
   "prevId": "e4ed658d-b94a-4d28-9981-4e443bd1a111",
   "version": "7",
   "dialect": "postgresql",
@@ -123,6 +123,13 @@
           "type": "varchar(128)",
           "primaryKey": false,
           "notNull": false
+        },
+        "open_ai_submission_key": {
+          "name": "open_ai_submission_key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "prompt_version": {
           "name": "prompt_version",
@@ -544,53 +551,6 @@
         "historical_moments_event_day_check": {
           "name": "historical_moments_event_day_check",
           "value": "\"historical_moments\".\"event_day\" between 1 and 31"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.pomo_account_link_attempt_limits": {
-      "name": "pomo_account_link_attempt_limits",
-      "schema": "",
-      "columns": {
-        "attempt_count": {
-          "name": "attempt_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "window_started_at": {
-          "name": "window_started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "pomo_account_link_attempt_limits_user_id_pomo_users_id_fk": {
-          "name": "pomo_account_link_attempt_limits_user_id_pomo_users_id_fk",
-          "tableFrom": "pomo_account_link_attempt_limits",
-          "tableTo": "pomo_users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "pomo_account_link_attempt_limits_positive_count_check": {
-          "name": "pomo_account_link_attempt_limits_positive_count_check",
-          "value": "\"pomo_account_link_attempt_limits\".\"attempt_count\" > 0"
         }
       },
       "isRLSEnabled": false

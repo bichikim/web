@@ -24,7 +24,7 @@ import {
   createDialogueAudioSamples,
   generateDialogueAudio,
   regenerateDialogueSegmentAudio,
-} from './generate-dialogue-audio'
+} from './dialogue-audio-runtime'
 import {createPDialogueRepository} from './repository'
 import {DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE, type PDialogue} from './schema'
 import {analyzeDialogueSegmentMoods} from './segment-mood'
@@ -383,7 +383,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     }
 
     try {
-      replaceAudio(createDialogueAudioPreview(generatedAudio, selectedModelId))
+      replaceAudio(await createDialogueAudioPreview(generatedAudio, selectedModelId))
       setEditableAudio(generatedAudio)
       setSegments(generatedAudio.segments)
       setDurationMs(generatedAudio.durationMs)
@@ -476,7 +476,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
     try {
       const nextAudio = regenerated.value
-      replaceAudio(createDialogueAudioPreview(nextAudio, modelId()))
+      replaceAudio(await createDialogueAudioPreview(nextAudio, modelId()))
       setEditableAudio(nextAudio)
       setSegments(nextAudio.segments)
       setDurationMs(nextAudio.durationMs)
@@ -519,7 +519,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
         audioNeedsWrite && currentAudio !== null
           ? await createOpusBlob({
               sampleRate: currentAudio.sampleRate,
-              samples: createDialogueAudioSamples(currentAudio, modelId()),
+              samples: await createDialogueAudioSamples(currentAudio, modelId()),
               signal: opusEncodingSignal,
             })
           : undefined

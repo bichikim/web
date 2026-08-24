@@ -1,3 +1,5 @@
+import 'server-only'
+
 import {z} from 'zod'
 
 import type {WeatherPrecipitation, WeatherSky} from 'src/features/weather'

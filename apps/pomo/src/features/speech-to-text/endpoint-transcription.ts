@@ -1,9 +1,9 @@
 import type {SpeechCaptureError} from './errors'
 import type {SpeechRecording} from './recorder'
-import {speechFailure, type SpeechResult} from './result'
+import {failureResult, type Result} from '../result'
 
-const createCancelledResult = (): SpeechResult<Float32Array, SpeechCaptureError> =>
-  speechFailure({code: 'capture-cancelled', retryable: true})
+const createCancelledResult = (): Result<Float32Array, SpeechCaptureError> =>
+  failureResult({code: 'capture-cancelled', retryable: true})
 
 interface CreateEndpointTranscriptionOptions {
   readonly isDisposed: () => boolean
@@ -15,9 +15,7 @@ interface CreateEndpointTranscriptionOptions {
 export interface EndpointTranscription {
   readonly dispose: () => void
   readonly start: (recording: SpeechRecording) => void
-  readonly stop: (
-    recording: SpeechRecording,
-  ) => Promise<SpeechResult<Float32Array, SpeechCaptureError>>
+  readonly stop: (recording: SpeechRecording) => Promise<Result<Float32Array, SpeechCaptureError>>
 }
 
 /** Rotates recordings at detected speech boundaries while preserving one microphone stream. */

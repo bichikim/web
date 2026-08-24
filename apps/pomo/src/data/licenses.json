@@ -1,5 +1,5 @@
 {
-  "lastReviewed": "2026년 8월 22일",
+  "lastReviewed": "2026년 8월 23일",
   "groups": [
     {
       "id": "core-software",
@@ -92,6 +92,18 @@
             {
               "label": "media-chrome 라이선스 원문",
               "url": "https://github.com/muxinc/media-chrome/blob/main/LICENSE"
+            }
+          ]
+        },
+        {
+          "name": "wLipSync",
+          "license": "MIT",
+          "use": "기기 안에서 재생 음성의 입모양 분석",
+          "condition": "hecomi와 Noeri Huisman의 저작권 및 MIT 라이선스 고지를 배포물에 보존합니다.",
+          "links": [
+            {
+              "label": "wLipSync 라이선스 원문",
+              "url": "https://github.com/mrxz/wLipSync/blob/main/LICENSE"
             }
           ]
         },
