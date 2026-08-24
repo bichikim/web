@@ -4,11 +4,10 @@ import {describe, expect, it, vi} from 'vitest'
 import {type ChatVoiceController, type ChatVoiceRuntime, useChatVoice} from '../index'
 import {
   type CreateSupertonicAudioPlayerOptions,
-  failureResult,
-  successResult,
   type SupertonicAudioPlayer,
   type SupertonicClient,
 } from '../../supertonic'
+import {failureResult, successResult} from '../../result'
 
 const SAMPLE_RATE = 24_000
 

@@ -6,11 +6,11 @@ import type {
   SpeechRecognizerReady,
   SpeechTranscript,
 } from './recognizer'
-import {speechFailure, type SpeechResult, speechSuccess} from './result'
+import {failureResult, type Result, successResult} from '../result'
 
 interface PendingRequest<Value> {
   readonly requestId: number
-  readonly resolve: (result: SpeechResult<Value, SpeechRecognitionError>) => void
+  readonly resolve: (result: Result<Value, SpeechRecognitionError>) => void
 }
 
 const createCancelledError = (phase: SpeechRecognitionPhase): SpeechRecognitionError => ({
@@ -94,8 +94,7 @@ export const createSpeechRecognizer = (
   const getRequestId = createRequestId()
   let pendingPrepare: PendingRequest<SpeechRecognizerReady> | null = null
   let pendingTranscription: PendingRequest<SpeechTranscript> | null = null
-  let preparePromise: Promise<SpeechResult<SpeechRecognizerReady, SpeechRecognitionError>> | null =
-    null
+  let preparePromise: Promise<Result<SpeechRecognizerReady, SpeechRecognitionError>> | null = null
   let workerFailure: string | null = null
   const terminateWorker = createWorkerTerminator(worker)
 
@@ -105,8 +104,8 @@ export const createSpeechRecognizer = (
     }
 
     workerFailure = detail
-    pendingPrepare?.resolve(speechFailure(createWorkerError('prepare', detail)))
-    pendingTranscription?.resolve(speechFailure(createWorkerError('transcribe', detail)))
+    pendingPrepare?.resolve(failureResult(createWorkerError('prepare', detail)))
+    pendingTranscription?.resolve(failureResult(createWorkerError('transcribe', detail)))
     pendingPrepare = null
     pendingTranscription = null
     preparePromise = null
@@ -115,14 +114,14 @@ export const createSpeechRecognizer = (
 
   const handleError = (response: Extract<SpeechWorkerResponse, {readonly type: 'error'}>) => {
     if (pendingPrepare?.requestId === response.requestId) {
-      pendingPrepare.resolve(speechFailure(response.error))
+      pendingPrepare.resolve(failureResult(response.error))
       pendingPrepare = null
       preparePromise = null
       return
     }
 
     if (pendingTranscription?.requestId === response.requestId) {
-      pendingTranscription.resolve(speechFailure(response.error))
+      pendingTranscription.resolve(failureResult(response.error))
       pendingTranscription = null
     }
   }
@@ -141,7 +140,7 @@ export const createSpeechRecognizer = (
           activeBackend = {backend: response.backend}
           options.onBackendChange(response.backend)
           pendingTranscription.resolve(
-            speechSuccess({backend: response.backend, text: response.text}),
+            successResult({backend: response.backend, text: response.text}),
           )
           pendingTranscription = null
         }
@@ -156,7 +155,7 @@ export const createSpeechRecognizer = (
         if (pendingPrepare?.requestId === response.requestId) {
           activeBackend = {backend: response.backend}
           options.onBackendChange(response.backend)
-          pendingPrepare.resolve(speechSuccess(activeBackend))
+          pendingPrepare.resolve(successResult(activeBackend))
           pendingPrepare = null
           preparePromise = null
         }
@@ -170,13 +169,13 @@ export const createSpeechRecognizer = (
 
   const getUnavailableResult = <Value>(
     phase: SpeechRecognitionPhase,
-  ): SpeechResult<Value, SpeechRecognitionError> | null => {
+  ): Result<Value, SpeechRecognitionError> | null => {
     if (disposed) {
-      return speechFailure(createCancelledError(phase))
+      return failureResult(createCancelledError(phase))
     }
 
     if (workerFailure !== null) {
-      return speechFailure(createWorkerError(phase, workerFailure))
+      return failureResult(createWorkerError(phase, workerFailure))
     }
 
     return null
@@ -190,7 +189,7 @@ export const createSpeechRecognizer = (
     }
 
     if (activeBackend !== null) {
-      return Promise.resolve(speechSuccess(activeBackend))
+      return Promise.resolve(successResult(activeBackend))
     }
 
     if (preparePromise !== null) {
@@ -214,7 +213,7 @@ export const createSpeechRecognizer = (
     }
 
     if (pendingTranscription !== null) {
-      return Promise.resolve(speechFailure({code: 'busy', phase: 'transcribe', retryable: true}))
+      return Promise.resolve(failureResult({code: 'busy', phase: 'transcribe', retryable: true}))
     }
 
     const requestId = getRequestId()
@@ -243,8 +242,8 @@ export const createSpeechRecognizer = (
     }
 
     disposed = true
-    pendingPrepare?.resolve(speechFailure(createCancelledError('prepare')))
-    pendingTranscription?.resolve(speechFailure(createCancelledError('transcribe')))
+    pendingPrepare?.resolve(failureResult(createCancelledError('prepare')))
+    pendingTranscription?.resolve(failureResult(createCancelledError('transcribe')))
     pendingPrepare = null
     pendingTranscription = null
     preparePromise = null
