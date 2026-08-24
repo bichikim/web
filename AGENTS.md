@@ -65,6 +65,10 @@
 - Start new worktrees from the latest `origin/dev` commit.
 - Do not automatically merge, rebase, or reset an existing worktree with in-progress changes.
 
+## Pomo local servers
+
+- Run Pomo commands that bind a local port—including Vite, Playwright, Storybook browser tests, Wallaby, and Wrangler local tooling—with escalated permissions on the first attempt. Treat loopback `listen EPERM` as a sandbox restriction, retry the same command in the approved context, and verify it there before attributing the failure to product code.
+
 ## Required after changes
 
 1. Fix oxlint errors
