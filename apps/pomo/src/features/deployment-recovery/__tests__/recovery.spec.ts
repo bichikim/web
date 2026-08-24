@@ -1,6 +1,6 @@
 import {expect, it, vi} from 'vitest'
 
-import {registerPreloadErrorRecovery} from '..'
+import {registerPreloadErrorRecovery} from '../recovery'
 
 const createRuntime = () => {
   const listeners = new Set<(event: Event) => void>()

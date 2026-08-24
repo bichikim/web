@@ -25,6 +25,7 @@ export const createDialogueClient = (options: CreateDialogueClientOptions): Dial
       restartRequired: true,
       type: 'error',
     }),
+    feature: 'dialogue-model',
     onResponse: options.onResponse,
     worker,
   })

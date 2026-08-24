@@ -2,6 +2,7 @@ import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './analysis'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
+import {reportClientError} from '../client-error-reporter'
 import {failureResult, type Result, successResult} from '../result'
 
 export interface AnalyzeTextMoodOptions {
@@ -69,6 +70,31 @@ const createWorkerError = (phase: TextMoodPhase, detail: string): TextMoodError 
   retryable: true,
 })
 
+interface ObserveTextMoodWorkerOptions {
+  readonly onFailure: (detail: string) => void
+  readonly worker: Worker
+}
+
+const observeTextMoodWorker = (options: ObserveTextMoodWorkerOptions) => {
+  options.worker.addEventListener('error', (event) => {
+    reportClientError(event.error ?? {message: 'Worker execution failed', name: 'WorkerError'}, {
+      feature: 'text-mood-model',
+      source: 'worker',
+    })
+    options.onFailure(event.message || '분위기 분석 Worker 실행 오류')
+  })
+  options.worker.addEventListener('messageerror', () => {
+    reportClientError(
+      {message: 'Worker response deserialization failed', name: 'WorkerError'},
+      {
+        feature: 'text-mood-model',
+        source: 'worker',
+      },
+    )
+    options.onFailure('분위기 분석 Worker 응답을 읽지 못했습니다.')
+  })
+}
+
 /** Owns one embedding Worker and resolves feature requests by request id. */
 export const createTextMoodAnalyzer = (
   options: CreateTextMoodAnalyzerOptions = {},
@@ -107,6 +133,7 @@ export const createTextMoodAnalyzer = (
     }
 
     if (pendingPrepare?.requestId === response.requestId) {
+      reportClientError(response.error, {feature: 'text-mood-model', source: 'worker'})
       pendingPrepare.resolve(failureResult(response.error))
       pendingPrepare = null
     }
@@ -156,13 +183,12 @@ export const createTextMoodAnalyzer = (
 
     response satisfies never
   })
-  worker.addEventListener('error', (event) => {
-    failPending(event.message || '분위기 분석 Worker 실행 오류')
-    terminateWorker()
-  })
-  worker.addEventListener('messageerror', () => {
-    failPending('분위기 분석 Worker 응답을 읽지 못했습니다.')
-    terminateWorker()
+  observeTextMoodWorker({
+    onFailure: (detail) => {
+      failPending(detail)
+      terminateWorker()
+    },
+    worker,
   })
 
   const sendRequest = (request: TextMoodWorkerRequest) => worker.postMessage(request)

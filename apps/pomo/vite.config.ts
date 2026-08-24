@@ -18,6 +18,12 @@ const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 const appsInTossApiOrigin = new URL(
   process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
 ).origin
+const deploymentEnvironment =
+  process.env.POMO_ENVIRONMENT?.trim() ||
+  process.env.VERCEL_ENV?.trim() ||
+  (process.env.NODE_ENV === 'production' ? 'production' : 'development')
+const release =
+  process.env.POMO_RELEASE?.trim() || process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) || 'local'
 const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
@@ -132,8 +138,10 @@ const useStaticNitroEntry = {
 
 export default defineConfig({
   define: {
+    'import.meta.env.POMO_ENVIRONMENT': JSON.stringify(deploymentEnvironment),
     'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
     'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
+    'import.meta.env.POMO_RELEASE': JSON.stringify(release),
   },
   nitro: {
     prerender: {

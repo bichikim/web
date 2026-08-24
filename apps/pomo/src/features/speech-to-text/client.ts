@@ -6,6 +6,7 @@ import type {
   SpeechRecognizerReady,
   SpeechTranscript,
 } from './recognizer'
+import {reportClientError} from '../client-error-reporter'
 import {failureResult, type Result, successResult} from '../result'
 import {createWorkerRpcTransport, isWorkerRpcFailure, type WorkerRpcFailure} from '../worker-rpc'
 
@@ -47,13 +48,23 @@ const getUnexpectedResponse = <Value>(
 ): Result<Value, SpeechRecognitionError> =>
   failureResult(createWorkerError(phase, 'Worker가 예상하지 않은 응답을 반환했습니다.'))
 
+const reportSpeechWorkerFailure = (failure: WorkerRpcFailure) => {
+  if (failure.code !== 'disposed') {
+    reportClientError(failure, {feature: 'speech-to-text-model', source: 'worker'})
+  }
+}
+
 const getUnknownFailureResult = <Value>(
   error: unknown,
   phase: SpeechRecognitionPhase,
-): Result<Value, SpeechRecognitionError> =>
-  isWorkerRpcFailure(error)
-    ? getFailureResult(error, phase)
-    : failureResult(createWorkerError(phase, 'Worker 요청을 완료하지 못했습니다.'))
+): Result<Value, SpeechRecognitionError> => {
+  if (isWorkerRpcFailure(error)) {
+    reportSpeechWorkerFailure(error)
+    return getFailureResult(error, phase)
+  }
+
+  return failureResult(createWorkerError(phase, 'Worker 요청을 완료하지 못했습니다.'))
+}
 
 /** Creates an isolated speech recognizer and owns its Worker until disposal. */
 export const createSpeechRecognizer = (
@@ -89,6 +100,7 @@ export const createSpeechRecognizer = (
 
       response satisfies never
     },
+    onFailure: reportSpeechWorkerFailure,
     worker,
   })
 
@@ -97,6 +109,7 @@ export const createSpeechRecognizer = (
   ): Result<SpeechRecognizerReady, SpeechRecognitionError> => {
     switch (response.type) {
       case 'error':
+        reportClientError(response.error, {feature: 'speech-to-text-model', source: 'worker'})
         return failureResult(response.error)
       case 'ready':
         activeBackend = {backend: response.backend}

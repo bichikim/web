@@ -8,6 +8,7 @@ import {
 import {getPSceneLayer} from '../features/focus-room-animation/scene-layer-catalog'
 import type {PSceneId} from '../features/focus-room-animation/scene-catalog'
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
+import {reportClientError} from '../features/client-error-reporter'
 
 export interface PSceneCanvasProps extends Omit<PSceneState, 'layerScene'> {
   readonly onLoadingChange?: (isLoading: boolean) => void
@@ -45,7 +46,7 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
     renderer = new PSceneRenderer(host, {onLoadingChange, onMotionInputChange})
     renderer.initialize(untrack(getSceneState)).catch((error: unknown) => {
       onLoadingChange?.(false)
-      globalThis.reportError(error)
+      reportClientError(error, {feature: 'focus-room-scene', source: 'direct'})
     })
 
     onCleanup(() => {
