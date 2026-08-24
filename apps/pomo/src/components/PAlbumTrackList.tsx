@@ -119,7 +119,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                   <span class="block truncate text-foreground">{track.title}</span>
                   <span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.6875rem]">
                     <span class="min-w-0 truncate">{track.artist}</span>
-                    <Show when={isPreviewing() && isLimited()}>
+                    <Show when={isPreviewing() && props.pendingTrackId !== track.id && isLimited()}>
                       <PTag class="flex-none" tone="highlight">
                         30초 미리듣기
                       </PTag>

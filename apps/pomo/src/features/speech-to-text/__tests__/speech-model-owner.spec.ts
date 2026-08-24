@@ -1,11 +1,12 @@
 import {describe, expect, it, vi} from 'vitest'
 
-import {createSpeechModelOwner, speechFailure, type SpeechRecognizer, speechSuccess} from '../index'
+import {failureResult, successResult} from '../../result'
+import {createSpeechModelOwner, type SpeechRecognizer} from '../index'
 
 const createSuccessfulRecognizer = (): SpeechRecognizer => ({
   dispose: vi.fn(),
-  prepare: vi.fn(async () => speechSuccess({backend: 'wasm' as const})),
-  transcribe: vi.fn(async () => speechSuccess({backend: 'wasm' as const, text: '완료'})),
+  prepare: vi.fn(async () => successResult({backend: 'wasm' as const})),
+  transcribe: vi.fn(async () => successResult({backend: 'wasm' as const, text: '완료'})),
 })
 
 describe('createSpeechModelOwner', () => {
@@ -13,7 +14,7 @@ describe('createSpeechModelOwner', () => {
     const failedRecognizer: SpeechRecognizer = {
       ...createSuccessfulRecognizer(),
       prepare: vi.fn(async () =>
-        speechFailure({
+        failureResult({
           code: 'worker-failed' as const,
           detail: 'Worker 중단',
           phase: 'prepare' as const,

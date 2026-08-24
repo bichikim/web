@@ -1,11 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
-import {
-  type TextMoodAnalysis,
-  type TextMoodAnalyzer,
-  textMoodFailure,
-  textMoodSuccess,
-} from '../../text-mood'
+import {failureResult, successResult} from '../../result'
+import {type TextMoodAnalysis, type TextMoodAnalyzer} from '../../text-mood'
 import {analyzeDialogueSegmentMoods} from '../segment-mood'
 
 const cheerfulAnalysis: TextMoodAnalysis = {
@@ -33,10 +29,10 @@ describe('analyzeDialogueSegmentMoods', () => {
     const analyze = vi
       .fn<TextMoodAnalyzer['analyze']>()
       .mockResolvedValueOnce(
-        textMoodSuccess({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+        successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
       )
       .mockResolvedValueOnce(
-        textMoodSuccess({
+        successResult({
           elapsedMilliseconds: 8,
           status: 'insufficient',
           sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
@@ -65,7 +61,7 @@ describe('analyzeDialogueSegmentMoods', () => {
     const error = {code: 'worker-failed', phase: 'analyze', retryable: true} as const
     const analyze = vi
       .fn<TextMoodAnalyzer['analyze']>()
-      .mockResolvedValueOnce(textMoodFailure(error))
+      .mockResolvedValueOnce(failureResult(error))
       .mockRejectedValueOnce(new Error('unexpected failure'))
     const onError = vi.fn()
 

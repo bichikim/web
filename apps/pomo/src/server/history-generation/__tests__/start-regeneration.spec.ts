@@ -5,6 +5,7 @@ import {startHistoryRegeneration} from '../start-regeneration'
 const RUN = {
   id: 'run-1',
   openAiResponseId: null,
+  openAiSubmissionKey: '019d0000-0000-7000-8000-000000000002',
   sourcePolicyVersion: 'history-sources-v1',
   status: 'preparing' as const,
   targetDate: '2026-08-16',
@@ -41,7 +42,10 @@ it('should submit selected moments against the reopened daily run', async () => 
     expect.objectContaining({requiredTitles: OPTIONS.requiredTitles}),
   )
   expect(submit).toHaveBeenCalledWith(
-    expect.objectContaining({requiredTitles: OPTIONS.requiredTitles}),
+    expect.objectContaining({
+      idempotencyKey: RUN.openAiSubmissionKey,
+      requiredTitles: OPTIONS.requiredTitles,
+    }),
   )
   expect(markSubmitted).toHaveBeenCalledWith('run-1', 'resp-radio')
 })
@@ -59,4 +63,19 @@ it('should mark a reopened run as failed when submission fails', async () => {
     }),
   ).rejects.toBe(error)
   expect(markFailed).toHaveBeenCalledWith('run-1', 'OpenAI unavailable')
+})
+
+it('should preserve a retryable reopened run when response ID persistence fails', async () => {
+  const error = new Error('Database unavailable')
+  const markFailed = vi.fn()
+
+  await expect(
+    startHistoryRegeneration(OPTIONS, {
+      markFailed,
+      markSubmitted: vi.fn().mockRejectedValue(error),
+      prepare: vi.fn().mockResolvedValue(RUN),
+      submit: vi.fn().mockResolvedValue({responseId: 'resp-accepted'}),
+    }),
+  ).rejects.toBe(error)
+  expect(markFailed).toHaveBeenCalledWith('run-1', 'Database unavailable')
 })

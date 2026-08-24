@@ -55,7 +55,9 @@
 | [유료 음악과 앨범 관리](./development/paid-albums.md)                | 관리자 앨범 등록, 비공개 R2, 구매 권한과 유료 재생을 다룰 때               |
 | [3D 장면과 상호작용](./development/3d.md)                            | 캐릭터, 애니메이션, 카메라, 3D UI와 성능을 다룰 때                         |
 | [2D 동일 장면 변형 제작](./development/2d-scene-variant-workflow.md) | 같은 배경에서 행동·시선만 다른 2D 이미지 세트를 제작할 때                  |
+| [2D 입모양과 턱 전환](./development/2d-mouth-animation.md)           | 대사 립싱크용 입모양, 중간 프레임과 턱 움직임을 제작·연결할 때             |
 | [빌드·플랫폼·검증](./development/delivery-testing.md)                | SSG·SSR, Vercel, 앱인토스 생명주기, CI와 테스트를 다룰 때                  |
+| [앱인토스 원격 함수](./development/remote-functions.md)              | 앱인토스에서 SolidStart 서버 함수를 사용하기 위한 추후 작업을 진행할 때    |
 
 ## 공통 원칙
 

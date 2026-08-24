@@ -642,14 +642,8 @@ importers:
   apps/pomo:
     dependencies:
       '@apps-in-toss/web-framework':
-        specifier: 3.0.3
-        version: 3.0.3(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)(typescript@5.9.3)
-      '@babylonjs/core':
-        specifier: 9.18.0
-        version: 9.18.0
-      '@babylonjs/loaders':
-        specifier: 9.18.0
-        version: 9.18.0(@babylonjs/core@9.18.0)(babylonjs-gltf2interface@9.20.0)
+        specifier: 3.0.4
+        version: 3.0.4(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)(typescript@5.9.3)
       '@huggingface/transformers':
         specifier: 4.2.0
         version: 4.2.0
@@ -683,6 +677,9 @@ importers:
       aws4fetch:
         specifier: 1.0.20
         version: 1.0.20
+      '@winter-love/solid-use':
+        specifier: workspace:*
+        version: link:../../packages/solid-use
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -710,6 +707,9 @@ importers:
       nitro:
         specifier: 'catalog:'
         version: 3.0.260610-beta(@vercel/functions@3.9.3(ws@8.21.3))(aws4fetch@1.0.20)(chokidar@5.0.0)(dotenv@16.6.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.29.5)(postgres@3.4.9))(giget@3.2.0)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.5)(rollup@4.62.4)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))(wrangler@4.125.0(@cloudflare/workers-types@5.20260822.1))(xml2js@0.6.2)
+      ofetch:
+        specifier: ^1.5.1
+        version: 1.5.1
       onnxruntime-web:
         specifier: 1.23.2
         version: 1.23.2
@@ -719,6 +719,9 @@ importers:
       pixi.js:
         specifier: ^8.19.0
         version: 8.19.0
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
       solid-js:
         specifier: 'catalog:'
         version: 1.9.14
@@ -728,10 +731,19 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
+      wlipsync:
+        specifier: ^1.3.1
+        version: 1.3.1
       zod:
         specifier: 'catalog:'
         version: 4.4.2
     devDependencies:
+      '@babylonjs/core':
+        specifier: 9.18.0
+        version: 9.18.0
+      '@babylonjs/loaders':
+        specifier: 9.18.0
+        version: 9.18.0(@babylonjs/core@9.18.0)(babylonjs-gltf2interface@9.20.0)
       '@iconify-json/tabler':
         specifier: ^1.2.33
         version: 1.2.33
@@ -1118,12 +1130,12 @@ packages:
     resolution: {integrity: sha512-1no0CXOhPEeSCrGduT37KMmCqA6irhowXa0S7AaPHb4RQSHGioR3wvvD7HHBCaUriMYs0EvtqRJfOgYd0ycKlQ==}
     engines: {node: '>=24'}
 
-  '@apps-in-toss/cli@3.0.3':
-    resolution: {integrity: sha512-1537v+CX13H+DX2Q8sP+kmfG6djb4jxUlT4IS8Dk3USaEbK+WY5H2xalG9VQTMILDxeI+HgWruPmL4ra+oDLJA==}
+  '@apps-in-toss/cli@3.0.4':
+    resolution: {integrity: sha512-Ie1dn5bMO/a8/L4uuV73UlmGEuApiYbi1BYf4nWzjDblXSPbludexpAn2WZKrhpD38E77u6JxHi8DHiok5TAWw==}
     hasBin: true
 
-  '@apps-in-toss/web-framework@3.0.3':
-    resolution: {integrity: sha512-OF97r3wGujYDcK3bTjyLda9qFO6QUTXyoFwGE7gfXLY6fwfSw0NUT7UTn3lgunpwdlXaTJ39+f6ENxV05skkhg==}
+  '@apps-in-toss/web-framework@3.0.4':
+    resolution: {integrity: sha512-cKbPPmANJ5ncCwoSiVZRfj7PfAf8GUfh/NDMpJqmhkRdlyTB5eU5aovbz55egQtuOxCls6VE09QoA4HhvAwzeQ==}
     hasBin: true
 
   '@asamuzakjp/css-color@3.2.0':
@@ -6977,14 +6989,14 @@ packages:
   '@webgpu/types@0.1.71':
     resolution: {integrity: sha512-mMy8/ODcKhab808co15eW+yN+HgXoQxRQHTiBV9Mrvl1r0ufnid7YOcI+gi4eUWSWl9ezD6TW2KXccrL8HCh2A==}
 
-  '@webview-bridge/types@1.7.9':
-    resolution: {integrity: sha512-Xqi6opGJB+LVpyb+2ZxqpKv2ox2/cnkbp0G2OMCnSNi/D6U5HkMsSbaW8GrXGEVwbybltK7uLKN+el1CqEGiRg==}
+  '@webview-bridge/types@1.7.10':
+    resolution: {integrity: sha512-s5JfIzkKo6SIMErw1u/UVHM8/rh4kRAuaQPeSk3iXH2momsv4GFY9U3NKUr+Wq2V4Nalrzx0dNxqFad6UcvX/Q==}
 
-  '@webview-bridge/utils@1.7.9':
-    resolution: {integrity: sha512-qTgppsE7ydroMJTeIpLiS7TIdKmdw2z6CtakPDutivkG2pztKa8CCB8ap1UkUoaE6RHQS1XeEBEII3HasW/WRw==}
+  '@webview-bridge/utils@1.7.10':
+    resolution: {integrity: sha512-otH5LE6P7F3nVZUqgxVcmNVsMioZBx6l+Djyl1cNwIBL3607b4Y5V1mt8lTSu6byCly2ADx6kxM2oldxBvgZzw==}
 
-  '@webview-bridge/web@1.7.9':
-    resolution: {integrity: sha512-CxOOGpE4yOwdpm15S6i/KagwYXX5W6CedPRKor+ublk8sDkbotWImSdO99L7Z1wEoSic0EF3fN3MeU7dObBG3w==}
+  '@webview-bridge/web@1.7.10':
+    resolution: {integrity: sha512-E38r69W13RwizgtbQwMh7qf6Fk3VW0YzeasYpx7+RhNSufegCrIAtwEaGHLNJsnu2X0Od38gNOI4iWtTOSpFdg==}
 
   '@wojtekmaj/react-recaptcha-v3@0.1.4':
     resolution: {integrity: sha512-zszMOdgI+y1Dz3496pRFr3t68n9+OmX/puLQNnOBDC7WrjM+nOKGyjIMCTe+3J14KDvzcxETeiglyDMGl0Yh/Q==}
@@ -10812,6 +10824,9 @@ packages:
     resolution: {integrity: sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw==}
     engines: {node: '>= 18'}
 
+  server-only@0.0.1:
+    resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
+
   set-cookie-parser@3.1.2:
     resolution: {integrity: sha512-5/r/lTwbJ3zQ+qwdUFZYeRNqda7P5HD8zQKqlSjdGt1/S0cjLAphHusj4Y58ahDtWn/g32xrIS58/ikOvwl0Lw==}
 
@@ -12247,6 +12262,8 @@ packages:
 
   win-guid@0.2.1:
     resolution: {integrity: sha512-gEIQU4mkgl2OPeoNrWflcJFJ3Ae2BPd4eCsHHA/XikslkIVms/nHhvnvzIZV7VLmBvtFlDOzLt9rrZT+n6D67A==}
+  wlipsync@1.3.1:
+    resolution: {integrity: sha512-R7m2b7UkfpXxvQYxypIkJqtmgmgMXNZ/z3558u9S0rI0HoMhKusXz4tFdDSsct3eRoZg1WBan6YfcawGxJqP1g==}
 
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
@@ -12442,13 +12459,14 @@ snapshots:
       '@apps-in-toss/ait-format-proto': 1.0.0
       fflate: 0.8.3
 
-  '@apps-in-toss/cli@3.0.3(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)':
+  '@apps-in-toss/cli@3.0.4(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)':
     dependencies:
       '@apps-in-toss/ait-format': 1.0.0
       '@clack/prompts': 1.7.0
       c12: 3.3.4(magicast@0.5.2)
       clipanion: 4.0.0-rc.4(typanion@3.14.0)
       jscodeshift: 17.4.0(@babel/preset-env@7.29.7(@babel/core@7.29.7))
+      picocolors: 1.1.1
       uuidv7: 1.2.1
     transitivePeerDependencies:
       - '@babel/preset-env'
@@ -12456,10 +12474,10 @@ snapshots:
       - supports-color
       - typanion
 
-  '@apps-in-toss/web-framework@3.0.3(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)(typescript@5.9.3)':
+  '@apps-in-toss/web-framework@3.0.4(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)(typescript@5.9.3)':
     dependencies:
-      '@apps-in-toss/cli': 3.0.3(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)
-      '@webview-bridge/web': 1.7.9
+      '@apps-in-toss/cli': 3.0.4(@babel/preset-env@7.29.7(@babel/core@7.29.7))(magicast@0.5.2)(typanion@3.14.0)
+      '@webview-bridge/web': 1.7.10
       semver: 7.8.5
       valibot: 1.4.2(typescript@5.9.3)
     transitivePeerDependencies:
@@ -18401,14 +18419,14 @@ snapshots:
 
   '@webgpu/types@0.1.71': {}
 
-  '@webview-bridge/types@1.7.9': {}
+  '@webview-bridge/types@1.7.10': {}
 
-  '@webview-bridge/utils@1.7.9': {}
+  '@webview-bridge/utils@1.7.10': {}
 
-  '@webview-bridge/web@1.7.9':
+  '@webview-bridge/web@1.7.10':
     dependencies:
-      '@webview-bridge/types': 1.7.9
-      '@webview-bridge/utils': 1.7.9
+      '@webview-bridge/types': 1.7.10
+      '@webview-bridge/utils': 1.7.10
 
   '@wojtekmaj/react-recaptcha-v3@0.1.4(@types/react@19.2.7)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
@@ -22478,6 +22496,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  server-only@0.0.1: {}
+
   set-cookie-parser@3.1.2: {}
 
   setprototypeof@1.2.0: {}
@@ -23957,6 +23977,7 @@ snapshots:
       string-width: 7.2.0
 
   win-guid@0.2.1: {}
+  wlipsync@1.3.1: {}
 
   word-wrap@1.2.5: {}
 

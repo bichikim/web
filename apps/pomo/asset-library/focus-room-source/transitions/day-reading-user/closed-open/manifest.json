@@ -1,0 +1,57 @@
+{
+  "canvas": {
+    "width": 1024,
+    "height": 576,
+    "fps": 24,
+    "durationSeconds": 3.042
+  },
+  "crop": {
+    "x": 420,
+    "y": 0,
+    "width": 420,
+    "height": 420
+  },
+  "generatedFull": {
+    "width": 1672,
+    "height": 941,
+    "directory": "generated-full",
+    "method": "ChatGPT image edit using the original full-resolution scene as the authoritative target and each H3-extracted frame as a mouth/lower-jaw pose reference",
+    "cropped": false,
+    "runtimeApplied": true
+  },
+  "lowerFaceCrop": {
+    "x": 930,
+    "y": 285,
+    "width": 260,
+    "height": 180,
+    "edgeFeatherPixels": 10,
+    "format": "PNG with alpha",
+    "directory": "lower-face-crops",
+    "runtimeDirectory": "src/features/focus-room-animation/assets/layers/day-reading-user",
+    "runtimeScenes": ["day-reading-user", "day-typing-user", "day-writing-user"]
+  },
+  "stages": [
+    {
+      "name": "closed",
+      "source": "exact-input-endpoint"
+    },
+    {
+      "name": "release",
+      "source": "generated-frame-45"
+    },
+    {
+      "name": "small-open",
+      "source": "generated-frame-49"
+    },
+    {
+      "name": "half-open",
+      "source": "generated-frame-53"
+    },
+    {
+      "name": "open",
+      "source": "exact-input-endpoint"
+    }
+  ],
+  "usage": "lower-face-crops/ is connected to the daytime user-facing runtime mouth layers. generated-full/ and frames/ remain editable source material.",
+  "note": "frames/ contains the H3 video extractions. generated-full/ contains original-resolution full-scene candidates: closed/open are exact source composites, while release/small-open/half-open are ChatGPT-generated edits. lower-face-crops/ contains the deterministic 260x180 ComfyUI crops with a 10px feathered alpha edge; refine these PNG masks when preparing the final mouth-only cutouts."
+}

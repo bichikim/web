@@ -1,3 +1,5 @@
+import 'server-only'
+
 // oxlint-disable eslint-js/camelcase -- OpenAI request fields follow the external API contract.
 import OpenAI from 'openai'
 import {zodTextFormat} from 'openai/helpers/zod'
@@ -12,6 +14,7 @@ import {getOpenAiConfiguration, getOpenAiWebhookSecret} from '../ai/environment'
 
 export interface SubmitHistoryResponseOptions {
   readonly generationRunId: string
+  readonly idempotencyKey: string
   readonly policy: HistorySourcePolicy
   readonly promptVersion: string
   readonly requiredTitles?: ReadonlyArray<string>
@@ -51,37 +54,40 @@ export const submitHistoryResponse = async (
     metadata.required_titles = JSON.stringify(options.requiredTitles)
   }
 
-  const response = await getOpenAiClient().responses.create({
-    background: true,
-    include: ['web_search_call.action.sources'],
-    input: buildHistoryPrompt({
-      policy: options.policy,
-      requiredTitles: options.requiredTitles,
-      targetDate: options.targetDate,
-    }),
-    metadata,
-    model: configuration.model,
-    reasoning: {effort: configuration.reasoningEffort},
-    service_tier: configuration.serviceTier,
-    store: true,
-    text: {
-      format: zodTextFormat(historyGenerationOpenAiOutputSchema, 'history_generation'),
-      verbosity: 'low',
-    },
-    tool_choice: 'required',
-    tools: [
-      {
-        filters: {allowed_domains: [...options.policy.allowedDomains]},
-        search_context_size: 'medium',
-        type: 'web_search',
-        user_location: {
-          country: 'KR',
-          timezone: 'Asia/Seoul',
-          type: 'approximate',
-        },
+  const response = await getOpenAiClient().responses.create(
+    {
+      background: true,
+      include: ['web_search_call.action.sources'],
+      input: buildHistoryPrompt({
+        policy: options.policy,
+        requiredTitles: options.requiredTitles,
+        targetDate: options.targetDate,
+      }),
+      metadata,
+      model: configuration.model,
+      reasoning: {effort: configuration.reasoningEffort},
+      service_tier: configuration.serviceTier,
+      store: true,
+      text: {
+        format: zodTextFormat(historyGenerationOpenAiOutputSchema, 'history_generation'),
+        verbosity: 'low',
       },
-    ],
-  })
+      tool_choice: 'required',
+      tools: [
+        {
+          filters: {allowed_domains: [...options.policy.allowedDomains]},
+          search_context_size: 'medium',
+          type: 'web_search',
+          user_location: {
+            country: 'KR',
+            timezone: 'Asia/Seoul',
+            type: 'approximate',
+          },
+        },
+      ],
+    },
+    {idempotencyKey: options.idempotencyKey},
+  )
 
   return {responseId: response.id}
 }

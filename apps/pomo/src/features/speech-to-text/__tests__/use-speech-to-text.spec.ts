@@ -3,16 +3,15 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   type SpeechBackend,
-  speechFailure,
   type SpeechRecognizer,
   type SpeechRecorder,
   type SpeechRecording,
-  speechSuccess,
   type SpeechToTextController,
   type SpeechToTextRuntime,
   useSpeechToText,
   type UseSpeechToTextProps,
 } from '../index'
+import {failureResult, successResult} from '../../result'
 
 interface SpeechTestRoot {
   readonly controller: SpeechToTextController
@@ -30,14 +29,14 @@ const createDeferred = <Value>() => {
 const createRecording = (): SpeechRecording => ({
   cancel: vi.fn(),
   onSpeechEnd: vi.fn(() => () => undefined),
-  stop: vi.fn(async () => speechSuccess(new Float32Array(4_000).fill(0.1))),
-  takeSegment: vi.fn(async () => speechSuccess(new Float32Array(4_000).fill(0.1))),
+  stop: vi.fn(async () => successResult(new Float32Array(4_000).fill(0.1))),
+  takeSegment: vi.fn(async () => successResult(new Float32Array(4_000).fill(0.1))),
 })
 
 const createRecognizer = (): SpeechRecognizer => ({
   dispose: vi.fn(),
-  prepare: vi.fn(async () => speechSuccess({backend: 'wasm' as const})),
-  transcribe: vi.fn(async () => speechSuccess({backend: 'wasm' as const, text: '테스트 문장'})),
+  prepare: vi.fn(async () => successResult({backend: 'wasm' as const})),
+  transcribe: vi.fn(async () => successResult({backend: 'wasm' as const, text: '테스트 문장'})),
 })
 
 const createRuntime = (
@@ -68,7 +67,7 @@ afterEach(() => {
 
 describe('useSpeechToText', () => {
   it('should prevent duplicate capture while microphone permission is pending', async () => {
-    const startResult = createDeferred<ReturnType<typeof speechSuccess<SpeechRecording>>>()
+    const startResult = createDeferred<ReturnType<typeof successResult<SpeechRecording>>>()
     const recording = createRecording()
     const recorder: SpeechRecorder = {
       isSupported: () => true,
@@ -81,7 +80,7 @@ describe('useSpeechToText', () => {
     expect(root.controller.activity()).toBe('requesting')
     expect(recorder.start).toHaveBeenCalledTimes(1)
 
-    startResult.resolve(speechSuccess(recording))
+    startResult.resolve(successResult(recording))
     await Promise.all([firstStart, secondStart])
     expect(root.controller.activity()).toBe('recording')
     root.dispose()
@@ -92,7 +91,7 @@ describe('useSpeechToText', () => {
     const recording = createRecording()
     const recorder: SpeechRecorder = {
       isSupported: () => true,
-      start: vi.fn(async () => speechSuccess(recording)),
+      start: vi.fn(async () => successResult(recording)),
     }
     const recognizer = createRecognizer()
     const onTranscript = vi.fn()
@@ -124,7 +123,7 @@ describe('useSpeechToText', () => {
     })
     const recorder: SpeechRecorder = {
       isSupported: () => true,
-      start: vi.fn(async () => speechSuccess(recording)),
+      start: vi.fn(async () => successResult(recording)),
     }
     const recognizer = createRecognizer()
     const onTranscript = vi.fn()
@@ -152,7 +151,7 @@ describe('useSpeechToText', () => {
     const recorder: SpeechRecorder = {
       isSupported: () => true,
       start: vi.fn(async () =>
-        speechFailure({code: 'permission-denied' as const, retryable: true}),
+        failureResult({code: 'permission-denied' as const, retryable: true}),
       ),
     }
     const recognizer = createRecognizer()
@@ -166,7 +165,7 @@ describe('useSpeechToText', () => {
   })
 
   it('should cancel a capture that resolves after disposal', async () => {
-    const startResult = createDeferred<ReturnType<typeof speechSuccess<SpeechRecording>>>()
+    const startResult = createDeferred<ReturnType<typeof successResult<SpeechRecording>>>()
     const recording = createRecording()
     const recorder: SpeechRecorder = {
       isSupported: () => true,
@@ -176,7 +175,7 @@ describe('useSpeechToText', () => {
     const start = root.controller.startRecording()
 
     root.dispose()
-    startResult.resolve(speechSuccess(recording))
+    startResult.resolve(successResult(recording))
     await start
 
     expect(recording.cancel).toHaveBeenCalledTimes(1)

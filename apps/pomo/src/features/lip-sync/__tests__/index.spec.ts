@@ -84,8 +84,32 @@ describe('audio-driven visemes', () => {
 
     expect(driver.update({currentTimeMs: 0, intensity: 1, viseme: 'open'})).toBe('narrow')
     expect(driver.update({currentTimeMs: 50, intensity: 1, viseme: 'round'})).toBe('narrow')
-    expect(driver.update({currentTimeMs: 100, intensity: 1, viseme: 'round'})).toBe('round')
-    expect(driver.update({currentTimeMs: 120, intensity: 0, viseme: 'rest'})).toBe('rest')
+    expect(driver.update({currentTimeMs: 100, intensity: 1, viseme: 'round'})).toBe('narrow')
+    expect(driver.update({currentTimeMs: 150, intensity: 1, viseme: 'round'})).toBe('round')
+    expect(driver.update({currentTimeMs: 170, intensity: 0, viseme: 'rest'})).toBe('round')
+    expect(driver.update({currentTimeMs: 500, intensity: 0, viseme: 'rest'})).toBe('rest')
+  })
+
+  it('should keep the full mouth stable while volume moves near its shape threshold', () => {
+    const driver = createPVisemeDriver()
+
+    expect(driver.update({currentTimeMs: 0, intensity: 1, viseme: 'open'})).toBe('narrow')
+    expect(driver.update({currentTimeMs: 150, intensity: 1, viseme: 'open'})).toBe('open')
+    expect(driver.update({currentTimeMs: 250, intensity: 0, viseme: 'open'})).toBe('open')
+    expect(driver.update({currentTimeMs: 300, intensity: 0, viseme: 'open'})).toBe('open')
+    expect(driver.update({currentTimeMs: 350, intensity: 0, viseme: 'open'})).toBe('narrow')
+    expect(driver.update({currentTimeMs: 400, intensity: 0.5, viseme: 'open'})).toBe('narrow')
+    expect(driver.update({currentTimeMs: 500, intensity: 1, viseme: 'open'})).toBe('narrow')
+    expect(driver.update({currentTimeMs: 530, intensity: 1, viseme: 'open'})).toBe('open')
+  })
+
+  it('should hold settled speech shapes longer than the initial mouth opening', () => {
+    const driver = createPVisemeDriver()
+
+    expect(driver.update({currentTimeMs: 0, intensity: 1, viseme: 'open'})).toBe('narrow')
+    expect(driver.update({currentTimeMs: 150, intensity: 1, viseme: 'open'})).toBe('open')
+    expect(driver.update({currentTimeMs: 280, intensity: 1, viseme: 'wide'})).toBe('open')
+    expect(driver.update({currentTimeMs: 340, intensity: 1, viseme: 'wide'})).toBe('wide')
   })
 
   it('should read Pomo mono PCM WAV audio into an envelope', () => {

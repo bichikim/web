@@ -82,6 +82,7 @@ export const commerceOffers = pgTable(
       table.provider,
       table.externalProductId,
     ),
+    uniqueIndex('commerce_offers_product_provider_index').on(table.productId, table.provider),
     index('commerce_offers_product_status_index').on(table.productId, table.status),
   ],
 )

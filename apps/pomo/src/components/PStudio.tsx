@@ -8,7 +8,7 @@ import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
 import {PSelect} from '../design-system/PSelect'
 import type {PTrack} from '../features/focus-room-audio'
-import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import {RANDOM_DIALOGUE_EVENT, usePEvents, useRandomEvent} from '../features/focus-room-dialogue'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
   getPScene,
@@ -26,22 +26,26 @@ import {
   type ScenePeriod,
   type SceneTimeMode,
 } from '../features/focus-room-time'
-import {type PSayController, usePSay} from '../features/pomo-webmcp'
-import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
-import {PMusicPlayer} from './PMusicPlayer'
-import {PFeedStatus} from './PFeedStatus'
-import {PDialoguePlayer} from './PDialoguePlayer'
-import {PPomodoro, type PPomodoroPresentation} from './PPomodoro'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
   FOCUS_ROOM_TIME_OPTIONS,
   type PActivity,
   type PGaze,
-  resolvePSceneViseme,
-} from './pomo-scene-options'
+  usePScenePreferences,
+} from '../features/focus-room-scene-preferences'
+import {type PSayController, usePSay} from '../features/pomo-webmcp'
+import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
+import {PServicePolicyLinks} from '../features/service-terms'
+import {useWeather, type WeatherCitySlug, type WeatherState} from '../features/weather'
+import {PMusicPlayer} from './PMusicPlayer'
+import {PFeedStatus} from './PFeedStatus'
+import {PDialoguePlayer} from './PDialoguePlayer'
+import {PPomodoro, type PPomodoroPresentation} from './PPomodoro'
+import {resolvePSceneViseme} from './pomo-scene-options'
 import {PScreenSaver} from './PScreenSaver'
 import {PScribbleCircleControl} from './PScribbleCircleControl'
+import {PWeatherStatus} from './PWeatherStatus'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
 const CLASSES = {
@@ -59,7 +63,7 @@ const CLASSES = {
   entryContent: [
     'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
     'box-border flex-col items-start gap-4',
-    '[margin-block-end:calc(1.5rem_+_var(--pomo-safe-area-inset-bottom))]',
+    '[margin-block-end:calc(9rem_+_var(--pomo-safe-area-inset-bottom))]',
     '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
     'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
@@ -155,12 +159,17 @@ interface SceneToolbarProps {
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
+  readonly onWeatherCityChange: (citySlug: WeatherCitySlug) => void
+  readonly onWeatherEnabledChange: (enabled: boolean) => void
   readonly screenSaverDelay: ScreenSaverDelay
   readonly sceneStyle: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
   readonly time: SceneTime
   readonly timeMode: SceneTimeMode
+  readonly weatherCitySlug: WeatherCitySlug
+  readonly weatherEnabled: boolean
+  readonly weatherState: WeatherState
 }
 
 interface PEntryProps {
@@ -267,11 +276,15 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           onScreenSaverDelayChange={props.onScreenSaverDelayChange}
           onSceneStyleChange={props.onSceneStyleChange}
           onTimeModeChange={props.onTimeModeChange}
+          onWeatherCityChange={props.onWeatherCityChange}
+          onWeatherEnabledChange={props.onWeatherEnabledChange}
           screenSaverDelay={props.screenSaverDelay}
           sceneStyle={props.sceneStyle}
           motionInput={props.motionInput}
           motionMode={props.motionMode}
           timeMode={props.timeMode}
+          weatherCitySlug={props.weatherCitySlug}
+          weatherEnabled={props.weatherEnabled}
           fallback={
             <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
               <span
@@ -292,6 +305,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           }
         />
       </div>
+      <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
       <Show when={props.isSceneTransitioning}>
         <span
           aria-live="polite"
@@ -319,17 +333,20 @@ const PEntry = (props: PEntryProps) => (
     }}
   >
     <div class={CLASSES.entryContent}>
-      <PButton
-        class={CLASSES.entryAction}
-        disabled={props.isExiting}
-        leadingImage={smilingFaceSource}
-        leadingImageClass={CLASSES.entryLeadingImage}
-        onPress={() => props.onEnter()}
-        tone="primary"
-        trailingIcon="i-tabler-arrow-right"
-      >
-        포모와 시작하기
-      </PButton>
+      <div class="grid gap-3">
+        <PButton
+          class={CLASSES.entryAction}
+          disabled={props.isExiting}
+          leadingImage={smilingFaceSource}
+          leadingImageClass={CLASSES.entryLeadingImage}
+          onPress={() => props.onEnter()}
+          tone="primary"
+          trailingIcon="i-tabler-arrow-right"
+        >
+          포모와 시작하기
+        </PButton>
+        <PServicePolicyLinks tone="overlay" />
+      </div>
     </div>
   </section>
 )
@@ -337,7 +354,7 @@ const PEntry = (props: PEntryProps) => (
 const PSceneFallback = () => (
   <div
     aria-live="polite"
-    class="pomo-scene-fallback pointer-events-none absolute inset-0 grid place-items-center text-[#fff9f1]"
+    class="pomo-scene-fallback pointer-events-none absolute inset-0 grid place-items-center text-foreground"
     role="status"
   >
     <span class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}>
@@ -349,11 +366,12 @@ const PSceneFallback = () => (
 
 const PStudioEvents = (props: PStudioEventsProps) => {
   const events = usePEvents()
-  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) => {
+  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) =>
     events.playDialogueEvents(eventIds, props.pomoSay.stop).catch((error: unknown) => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
     })
-  }
+
+  useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
 
   return (
     <>
@@ -396,10 +414,7 @@ const PStudioEvents = (props: PStudioEventsProps) => {
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
-  const [timeMode, setTimeMode] = createSignal<SceneTimeMode>('day')
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
-  const [activity, setActivity] = createSignal<PActivity>('reading')
-  const [gaze, setGaze] = createSignal<PGaze>('focused')
   const [motionInput, setMotionInput] = createSignal<PSceneMotionInput>('drag')
   const [motionMode, setMotionMode] = createSignal<PSceneMotionMode>('depth')
   const [canUseGyroscope, setCanUseGyroscope] = createSignal(false)
@@ -413,26 +428,30 @@ export const PStudio = () => {
     INITIAL_POMODORO_PRESENTATION,
   )
   const screenSaver = useScreenSaver()
+  const weather = useWeather()
+  const scenePreferences = usePScenePreferences()
   const sceneStyleController = usePSceneStyle()
-  const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
-  const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
-  const selectedScene = createMemo(() =>
-    getSceneAsset(time(), activity(), sceneGaze(), sceneStyleController.sceneStyle()),
+  const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
+  const sceneGaze = useDialogueSceneGaze(
+    scenePreferences.gaze,
+    events.isDialoguePlaying,
+    pomoSay.isPlaying,
   )
-  const activeViseme = createMemo(() => {
-    return resolvePSceneViseme(
+  const {sceneStyle} = sceneStyleController
+  const selectedScene = createMemo(() =>
+    getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), sceneStyle()),
+  )
+  const activeViseme = createMemo(() =>
+    resolvePSceneViseme(
       events.activeViseme(),
       events.isDialoguePlaying(),
       pomoSay.speechText(),
       pomoSay.activeViseme(),
-    )
-  })
+    ),
+  )
   const handleLoadingChange = (isLoading: boolean) => {
     setIsSceneLoading(isLoading)
-
-    if (!isLoading) {
-      setHasSceneRendered(true)
-    }
+    setHasSceneRendered((hasRendered) => hasRendered || !isLoading)
   }
   const handleEnter = () => {
     writeFocusRoomEntrySession()
@@ -468,15 +487,15 @@ export const PStudio = () => {
     <section aria-label="Pomo" class="pomo-studio relative h-dvh w-full overflow-hidden">
       <figure
         aria-label={selectedScene().label}
-        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-#17130f"
+        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
         role="img"
       >
         <Show when={!hasSceneRendered()}>
           <PSceneFallback />
         </Show>
-        <Show when={sceneStyleController.isReady()}>
+        <Show when={scenePreferences.isReady() && sceneStyleController.isReady()}>
           <PSceneCanvas
-            activity={activity()}
+            activity={scenePreferences.activity()}
             depthSource={selectedScene().depthSource}
             gaze={sceneGaze()}
             motionInput={motionInput()}
@@ -502,25 +521,32 @@ export const PStudio = () => {
             pomoSay={pomoSay}
             sceneStyle={sceneStyleController.sceneStyle()}
           />
-          <SceneToolbar
-            activity={activity()}
-            canUseGyroscope={canUseGyroscope()}
-            gaze={sceneGaze()}
-            isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
-            onActivityChange={setActivity}
-            onGazeChange={setGaze}
-            onMotionInputChange={setMotionInput}
-            onMotionModeChange={setMotionMode}
-            onScreenSaverDelayChange={screenSaver.onDelayChange}
-            onSceneStyleChange={sceneStyleController.onSceneStyleChange}
-            onTimeModeChange={setTimeMode}
-            screenSaverDelay={screenSaver.delay()}
-            sceneStyle={sceneStyleController.sceneStyle()}
-            motionInput={motionInput()}
-            motionMode={motionMode()}
-            time={time()}
-            timeMode={timeMode()}
-          />
+          <Show when={scenePreferences.isReady()}>
+            <SceneToolbar
+              activity={scenePreferences.activity()}
+              canUseGyroscope={canUseGyroscope()}
+              gaze={sceneGaze()}
+              isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
+              onActivityChange={scenePreferences.onActivityChange}
+              onGazeChange={scenePreferences.onGazeChange}
+              onMotionInputChange={setMotionInput}
+              onMotionModeChange={setMotionMode}
+              onScreenSaverDelayChange={screenSaver.onDelayChange}
+              onSceneStyleChange={sceneStyleController.onSceneStyleChange}
+              onTimeModeChange={scenePreferences.onTimeModeChange}
+              onWeatherCityChange={weather.onCityChange}
+              onWeatherEnabledChange={weather.onEnabledChange}
+              screenSaverDelay={screenSaver.delay()}
+              sceneStyle={sceneStyleController.sceneStyle()}
+              motionInput={motionInput()}
+              motionMode={motionMode()}
+              time={time()}
+              timeMode={scenePreferences.timeMode()}
+              weatherCitySlug={weather.citySlug()}
+              weatherEnabled={weather.enabled()}
+              weatherState={weather.state()}
+            />
+          </Show>
         </Show>
       </div>
       <Show when={isEntryVisible()}>

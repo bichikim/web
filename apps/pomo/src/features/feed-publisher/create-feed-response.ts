@@ -1,5 +1,7 @@
 import {createHash} from 'node:crypto'
 
+import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../../server/http/headers'
+
 import type {FeedFormat} from './contract'
 import type {FeedRegistry} from './feed-registry'
 import {normalizeFeed} from './normalize-feed'
@@ -70,9 +72,9 @@ const createDocumentHeaders = (
       'Content-Type': getContentType(format),
       ETag: entityTag,
       'Last-Modified': new Date(updatedAt).toUTCString(),
-      'Vercel-Cache-Tag': `feed:${slug}`,
+      [VERCEL_CDN_CACHE_CONTROL_HEADER]: `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`,
       // AI_NOTE - Calendar feeds change at Korean midnight without a publish event, so long CDN freshness can serve yesterday's entries.
-      'Vercel-CDN-Cache-Control': `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`,
+      'Vercel-Cache-Tag': `feed:${slug}`,
       'X-Content-Type-Options': 'nosniff',
     }),
   }

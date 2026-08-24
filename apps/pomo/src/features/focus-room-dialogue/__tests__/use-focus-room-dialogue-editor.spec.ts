@@ -2,13 +2,9 @@
 import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {type CreateOpusBlobOptions, successResult, type SupertonicClient} from '../../supertonic'
-import {
-  type TextMoodAnalysis,
-  type TextMoodAnalyzer,
-  type TextMoodRuntime,
-  textMoodSuccess,
-} from '../../text-mood'
+import {successResult} from '../../result'
+import {type CreateOpusBlobOptions, type SupertonicClient} from '../../supertonic'
+import {type TextMoodAnalysis, type TextMoodAnalyzer, type TextMoodRuntime} from '../../text-mood'
 import type {PDialogue} from '../schema'
 import {type PDialogueEditorController, usePDialogueEditor} from '../use-focus-room-dialogue-editor'
 
@@ -28,6 +24,7 @@ const moodAnalyzerMocks = {
   prepare: vi.fn<TextMoodAnalyzer['prepare']>(),
 }
 const moodRuntime: TextMoodRuntime = {createAnalyzer: vi.fn(() => moodAnalyzerMocks)}
+const NativeUrl = globalThis.URL
 
 const cheerfulAnalysis: TextMoodAnalysis = {
   margin: 0.6,
@@ -99,17 +96,20 @@ beforeEach(() => {
     new Blob(['opus'], {type: 'audio/ogg; codecs=opus'}),
   )
   moodAnalyzerMocks.analyze.mockResolvedValue(
-    textMoodSuccess({
+    successResult({
       elapsedMilliseconds: 1,
       status: 'insufficient',
       sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
     }),
   )
   sessionStorage.clear()
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => 'blob:dialogue'),
-    revokeObjectURL: vi.fn(),
-  })
+  vi.stubGlobal(
+    'URL',
+    class extends NativeUrl {
+      static createObjectURL = vi.fn(() => 'blob:dialogue')
+      static revokeObjectURL = vi.fn()
+    },
+  )
   vi.stubGlobal('crypto', {randomUUID: vi.fn(() => 'dialogue-id')})
 })
 
@@ -267,7 +267,7 @@ describe('usePDialogueEditor', () => {
     const client = createClient([])
     supertonicMocks.createClient.mockReturnValue(client)
     moodAnalyzerMocks.analyze.mockResolvedValueOnce(
-      textMoodSuccess({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+      successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
     )
     const editor = createEditorRoot()
     editor.controller.setText('오늘은 정말 신나는 날이야!')

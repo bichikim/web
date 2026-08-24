@@ -1,3 +1,5 @@
+import 'server-only'
+
 import {request as httpsRequest} from 'node:https'
 
 import {z} from 'zod'

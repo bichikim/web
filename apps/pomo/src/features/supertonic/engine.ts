@@ -1,11 +1,12 @@
 // oxlint-disable eslint-js/camelcase -- Supertonic ONNX tensor names and model JSON fields are fixed external contracts.
 // oxlint-disable no-await-in-loop -- Every denoising step consumes the result of the previous step.
-import {InferenceSession, Tensor} from 'onnxruntime-web/all'
+import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'
 import {z} from 'zod'
 
 import type {InvalidModelDataError} from './errors'
 import type {SupertonicLanguage} from './language'
-import {failureResult, type Result, successResult} from './result'
+import type {SupertonicRuntime} from './runtime'
+import {failureResult, type Result, successResult} from '../result'
 import {parseSupertonicVoiceStyle, type SupertonicVoiceStyle} from './voice-style'
 
 const configSchema = z.object({
@@ -43,12 +44,18 @@ const createDataError = (asset: InvalidModelDataError['asset']): InvalidModelDat
   retryable: false,
 })
 
-const createFloatTensor = (values: ReadonlyArray<number>, dimensions: ReadonlyArray<number>) =>
-  new Tensor('float32', Float32Array.from(values), Array.from(dimensions))
+const createFloatTensor = (
+  runtime: SupertonicRuntime,
+  values: ReadonlyArray<number>,
+  dimensions: ReadonlyArray<number>,
+) => new runtime.Tensor('float32', Float32Array.from(values), Array.from(dimensions))
 
-export const createSupertonicVoice = (style: SupertonicVoiceStyle): SupertonicVoice => ({
-  durationStyle: createFloatTensor(style.duration.data, style.duration.dimensions),
-  speechStyle: createFloatTensor(style.speech.data, style.speech.dimensions),
+export const createSupertonicVoice = (
+  runtime: SupertonicRuntime,
+  style: SupertonicVoiceStyle,
+): SupertonicVoice => ({
+  durationStyle: createFloatTensor(runtime, style.duration.data, style.duration.dimensions),
+  speechStyle: createFloatTensor(runtime, style.speech.data, style.speech.dimensions),
 })
 
 export const parseSupertonicConfig = (
@@ -66,6 +73,7 @@ export const parseSupertonicIndexer = (
 }
 
 export const parseSupertonicVoice = (
+  runtime: SupertonicRuntime,
   value: unknown,
 ): Result<SupertonicVoice, InvalidModelDataError> => {
   const voiceStyle = parseSupertonicVoiceStyle(value)
@@ -74,7 +82,7 @@ export const parseSupertonicVoice = (
     return voiceStyle
   }
 
-  return successResult(createSupertonicVoice(voiceStyle.value))
+  return successResult(createSupertonicVoice(runtime, voiceStyle.value))
 }
 
 export type SupertonicConfig = z.infer<typeof configSchema>
@@ -100,6 +108,7 @@ const preprocessText = (input: string, language: SupertonicLanguage) => {
 }
 
 const createTextInput = (
+  runtime: SupertonicRuntime,
   text: string,
   language: SupertonicLanguage,
   indexer: SupertonicIndexer,
@@ -114,8 +123,12 @@ const createTextInput = (
 
     return indexer[codePoint] ?? -1
   })
-  const textIds = new Tensor('int64', BigInt64Array.from(ids, BigInt), [1, ids.length])
-  const textMask = new Tensor('float32', new Float32Array(ids.length).fill(1), [1, 1, ids.length])
+  const textIds = new runtime.Tensor('int64', BigInt64Array.from(ids, BigInt), [1, ids.length])
+  const textMask = new runtime.Tensor('float32', new Float32Array(ids.length).fill(1), [
+    1,
+    1,
+    ids.length,
+  ])
 
   return {textIds, textMask}
 }
@@ -145,11 +158,18 @@ const createNoise = (length: number) => {
 export class SupertonicEngine {
   readonly #config: SupertonicConfig
   readonly #indexer: SupertonicIndexer
+  readonly #runtime: SupertonicRuntime
   readonly #sessions: SupertonicSessions
 
-  constructor(config: SupertonicConfig, indexer: SupertonicIndexer, sessions: SupertonicSessions) {
+  constructor(
+    config: SupertonicConfig,
+    indexer: SupertonicIndexer,
+    sessions: SupertonicSessions,
+    runtime: SupertonicRuntime,
+  ) {
     this.#config = config
     this.#indexer = indexer
+    this.#runtime = runtime
     this.#sessions = sessions
   }
 
@@ -158,7 +178,12 @@ export class SupertonicEngine {
   }
 
   async generate(options: GenerateAudioOptions): Promise<Float32Array> {
-    const {textIds, textMask} = createTextInput(options.text, options.language, this.#indexer)
+    const {textIds, textMask} = createTextInput(
+      this.#runtime,
+      options.text,
+      options.language,
+      this.#indexer,
+    )
     const durationResult = await this.#sessions.durationPredictor.run({
       style_dp: options.voice.durationStyle,
       text_ids: textIds,
@@ -176,21 +201,21 @@ export class SupertonicEngine {
     const latentLength = Math.ceil((duration * this.sampleRate) / chunkSize)
     const latentDimension = this.#config.ttl.latent_dim * this.#config.ttl.chunk_compress_factor
     const latentShape = [1, latentDimension, latentLength]
-    const latentMask = new Tensor('float32', new Float32Array(latentLength).fill(1), [
+    const latentMask = new this.#runtime.Tensor('float32', new Float32Array(latentLength).fill(1), [
       1,
       1,
       latentLength,
     ])
     const totalSteps = 8
-    const totalStepTensor = new Tensor('float32', Float32Array.of(totalSteps), [1])
+    const totalStepTensor = new this.#runtime.Tensor('float32', Float32Array.of(totalSteps), [1])
     const latent = createNoise(latentDimension * latentLength)
 
     for (let step = 0; step < totalSteps; step += 1) {
       options.onProgress(step + 1, totalSteps)
       const result = await this.#sessions.vectorEstimator.run({
-        current_step: new Tensor('float32', Float32Array.of(step), [1]),
+        current_step: new this.#runtime.Tensor('float32', Float32Array.of(step), [1]),
         latent_mask: latentMask,
-        noisy_latent: new Tensor('float32', latent, latentShape),
+        noisy_latent: new this.#runtime.Tensor('float32', latent, latentShape),
         style_ttl: options.voice.speechStyle,
         text_emb: textResult.text_emb,
         text_mask: textMask,
@@ -200,7 +225,7 @@ export class SupertonicEngine {
     }
 
     const vocoderResult = await this.#sessions.vocoder.run({
-      latent: new Tensor('float32', latent, latentShape),
+      latent: new this.#runtime.Tensor('float32', latent, latentShape),
     })
     const samples = getFloatData(vocoderResult.wav_tts)
     return samples.slice(0, Math.floor(this.sampleRate * duration))

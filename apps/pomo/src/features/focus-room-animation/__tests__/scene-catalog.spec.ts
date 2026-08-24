@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {FOCUS_ROOM_JAW_CHANNEL} from '../scene-catalog-channels'
+import {FOCUS_ROOM_JAW_CHANNEL, P_MOUTH_TRANSITION_STAGES} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
 import {getPSceneLayer, getPSceneReviewLayer} from '../scene-layer-catalog'
 
@@ -389,11 +389,19 @@ describe('focus room scene catalog', () => {
 
     expect(dayUserScenes).toHaveLength(3)
     expect(
-      dayUserScenes.every(
-        (scene) =>
-          getPSceneLayer(scene.id).layers.filter((layer) => layer.id.startsWith('mouth-'))
-            .length === 6,
-      ),
+      dayUserScenes.every((scene) => {
+        const mouthLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
+          layer.id.startsWith('mouth-'),
+        )
+        const transitionLayers = mouthLayers.filter((layer) =>
+          layer.id.startsWith('mouth-transition-'),
+        )
+
+        return (
+          mouthLayers.length - transitionLayers.length === 6 &&
+          transitionLayers.length === P_MOUTH_TRANSITION_STAGES.length
+        )
+      }),
     ).toBe(true)
     expect(nightUserScenes).toHaveLength(3)
     expect(
@@ -407,7 +415,7 @@ describe('focus room scene catalog', () => {
     ).toBe(true)
   })
 
-  it('should move only the regular night reading head while keeping every mouth layer untouched', () => {
+  it('should move each configured user-facing jaw while keeping every mouth layer untouched', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
       const layerScene = getPSceneLayer(scene.id)
       const head = layerScene.layers.find((layer) => layer.id === 'head')
@@ -415,7 +423,7 @@ describe('focus room scene catalog', () => {
 
       expect(mouthLayers.every((layer) => layer.statePixelPush === undefined)).toBe(true)
 
-      if (scene.id === 'night-reading-user') {
+      if ((scene.time === 'day' && scene.gaze === 'user') || scene.id === 'night-reading-user') {
         expect(head?.statePixelPush).toMatchObject({
           channel: FOCUS_ROOM_JAW_CHANNEL,
           effect: {

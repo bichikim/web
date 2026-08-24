@@ -60,24 +60,40 @@ export const startHistoryGeneration = async (
     }
   }
 
+  let submitted: Awaited<ReturnType<typeof submitHistoryResponse>>
+
   try {
-    const submitted = await dependencies.submit({
+    submitted = await dependencies.submit({
       generationRunId: prepared.run.id,
+      idempotencyKey: prepared.run.openAiSubmissionKey,
       policy: HISTORY_SOURCE_POLICY,
       promptVersion: HISTORY_PROMPT_VERSION,
       targetDate,
     })
-
-    await dependencies.markSubmitted(prepared.run.id, submitted.responseId)
-
-    return {
-      responseId: submitted.responseId,
-      runId: prepared.run.id,
-      status: 'submitted',
-      targetDate: targetDate.isoDate,
-    }
   } catch (error) {
     await dependencies.markFailed(prepared.run.id, getErrorMessage(error))
     throw error
+  }
+
+  try {
+    await dependencies.markSubmitted(prepared.run.id, submitted.responseId)
+  } catch (error) {
+    try {
+      await dependencies.markFailed(prepared.run.id, getErrorMessage(error))
+    } catch (markFailedError) {
+      throw new AggregateError(
+        [error, markFailedError],
+        'Failed to persist the OpenAI response ID and retryable run state',
+      )
+    }
+
+    throw error
+  }
+
+  return {
+    responseId: submitted.responseId,
+    runId: prepared.run.id,
+    status: 'submitted',
+    targetDate: targetDate.isoDate,
   }
 }

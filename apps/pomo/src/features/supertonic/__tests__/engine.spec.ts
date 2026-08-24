@@ -1,5 +1,6 @@
 // oxlint-disable no-magic-numbers -- Compact model fixtures intentionally use explicit tensor dimensions.
-import {type InferenceSession, Tensor} from 'onnxruntime-web/all'
+import * as runtime from 'onnxruntime-web/wasm'
+import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'
 import {describe, expect, it, vi} from 'vitest'
 
 import {
@@ -9,7 +10,7 @@ import {
   SupertonicEngine,
   type SupertonicSessions,
 } from '../engine'
-import type {Result} from '../result'
+import type {Result} from '../../result'
 
 const createConfig = () => ({
   ae: {base_chunk_size: 2, sample_rate: 4},
@@ -42,7 +43,7 @@ describe('Supertonic parsers', () => {
 
   it('should parse nested voice data into float tensors', () => {
     const voice = getResultValue(
-      parseSupertonicVoice({
+      parseSupertonicVoice(runtime, {
         style_dp: {data: [[0.1, 0.2]], dims: [1, 2]},
         style_ttl: {data: [[[0.3]]], dims: [1, 1, 1]},
       }),
@@ -58,19 +59,19 @@ describe('Supertonic parsers', () => {
 
   it('should reject invalid voice dimensions and nonnumeric data', () => {
     expect(
-      parseSupertonicVoice({
+      parseSupertonicVoice(runtime, {
         style_dp: {data: ['invalid'], dims: [1]},
         style_ttl: {data: [0], dims: [0]},
       }),
     ).toMatchObject({error: {asset: 'voice', code: 'invalid-model-data'}, ok: false})
     expect(
-      parseSupertonicVoice({
+      parseSupertonicVoice(runtime, {
         style_dp: {data: ['invalid'], dims: [1]},
         style_ttl: {data: [0], dims: [1]},
       }),
     ).toMatchObject({error: {asset: 'voice', code: 'invalid-model-data'}, ok: false})
     expect(
-      parseSupertonicVoice({
+      parseSupertonicVoice(runtime, {
         style_dp: {data: [0], dims: [1, 2]},
         style_ttl: {data: [0], dims: [1]},
       }),
@@ -81,16 +82,16 @@ describe('Supertonic parsers', () => {
 describe('SupertonicEngine', () => {
   it('should execute duration, text, eight denoising steps, and vocoder in order', async () => {
     const durationRun = vi.fn(async (_feeds: Record<string, Tensor>) => ({
-      duration: new Tensor('float32', Float32Array.of(1), [1]),
+      duration: new runtime.Tensor('float32', Float32Array.of(1), [1]),
     }))
     const textRun = vi.fn(async () => ({
-      text_emb: new Tensor('float32', Float32Array.of(1), [1]),
+      text_emb: new runtime.Tensor('float32', Float32Array.of(1), [1]),
     }))
     const vectorRun = vi.fn(async () => ({
-      denoised_latent: new Tensor('float32', Float32Array.of(0, 0), [1, 1, 2]),
+      denoised_latent: new runtime.Tensor('float32', Float32Array.of(0, 0), [1, 1, 2]),
     }))
     const vocoderRun = vi.fn(async () => ({
-      wav_tts: new Tensor('float32', Float32Array.of(0.1, 0.2, 0.3, 0.4), [1, 1, 4]),
+      wav_tts: new runtime.Tensor('float32', Float32Array.of(0.1, 0.2, 0.3, 0.4), [1, 1, 4]),
     }))
     const sessions: SupertonicSessions = {
       durationPredictor: createSession(durationRun),
@@ -102,10 +103,11 @@ describe('SupertonicEngine', () => {
       getResultValue(parseSupertonicConfig(createConfig())),
       getResultValue(parseSupertonicIndexer(Array.from({length: 128}, (_, index) => index))),
       sessions,
+      runtime,
     )
     const onProgress = vi.fn()
     const voice = getResultValue(
-      parseSupertonicVoice({
+      parseSupertonicVoice(runtime, {
         style_dp: {data: [0], dims: [1]},
         style_ttl: {data: [0], dims: [1]},
       }),
@@ -149,7 +151,9 @@ describe('SupertonicEngine', () => {
   it('should reject non-float model outputs', async () => {
     const sessions: SupertonicSessions = {
       durationPredictor: createSession(
-        vi.fn(async () => ({duration: new Tensor('int64', BigInt64Array.of(1n), [1])})),
+        vi.fn(async () => ({
+          duration: new runtime.Tensor('int64', BigInt64Array.of(1n), [1]),
+        })),
       ),
       textEncoder: createSession(vi.fn()),
       vectorEstimator: createSession(vi.fn()),
@@ -159,9 +163,10 @@ describe('SupertonicEngine', () => {
       getResultValue(parseSupertonicConfig(createConfig())),
       getResultValue(parseSupertonicIndexer([])),
       sessions,
+      runtime,
     )
     const voice = getResultValue(
-      parseSupertonicVoice({
+      parseSupertonicVoice(runtime, {
         style_dp: {data: [0], dims: [1]},
         style_ttl: {data: [0], dims: [1]},
       }),

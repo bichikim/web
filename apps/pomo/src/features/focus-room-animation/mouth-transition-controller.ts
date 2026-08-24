@@ -1,5 +1,7 @@
-import {P_VISEME_COARTICULATION_MS, type PViseme} from '../lip-sync'
+import type {PViseme} from '../lip-sync'
 import type {PVisemeTransition} from './scene-layer-state'
+
+export const P_MOUTH_TRANSITION_DURATION_MS = 100
 
 export interface PMouthTransitionController {
   readonly current: PVisemeTransition | null
@@ -10,11 +12,14 @@ export interface PMouthTransitionController {
 
 const SMOOTHSTEP_SCALE = 3
 const SMOOTHSTEP_CURVE = 2
-
-export const getPVisemeTransitionProgress = (elapsedMs: number) => {
-  const linearProgress = Math.min(1, Math.max(0, elapsedMs / P_VISEME_COARTICULATION_MS))
+const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
+const getSmoothedUnitProgress = (progress: number) => {
+  const linearProgress = clampUnit(progress)
   return linearProgress * linearProgress * (SMOOTHSTEP_SCALE - SMOOTHSTEP_CURVE * linearProgress)
 }
+
+export const getPVisemeTransitionProgress = (elapsedMs: number) =>
+  getSmoothedUnitProgress(elapsedMs / P_MOUTH_TRANSITION_DURATION_MS)
 
 /** Owns the short requestAnimationFrame loop used to crossfade mouth sprites. */
 export const createPMouthTransitionController = (
@@ -34,6 +39,13 @@ export const createPMouthTransitionController = (
   }
 
   const start = (from: PViseme, to: PViseme, prefersReducedMotion: boolean) => {
+    const previousTransition = current
+    const reversesCurrentTransition =
+      previousTransition?.from === to && previousTransition.to === from
+    const transitionFrom = reversesCurrentTransition ? previousTransition.from : from
+    const transitionTo = reversesCurrentTransition ? previousTransition.to : to
+    const startProgress = reversesCurrentTransition ? previousTransition.progress : 0
+    const endProgress = reversesCurrentTransition ? 0 : 1
     cancel()
 
     if (prefersReducedMotion || from === to) {
@@ -41,8 +53,15 @@ export const createPMouthTransitionController = (
       return
     }
 
+    const durationMs = Math.abs(endProgress - startProgress) * P_MOUTH_TRANSITION_DURATION_MS
+
+    if (durationMs === 0) {
+      onTransitionChange()
+      return
+    }
+
     const startedAt = window.performance.now()
-    current = {from, progress: 0, to}
+    current = {from: transitionFrom, progress: startProgress, to: transitionTo}
     onTransitionChange()
 
     const renderFrame = (timestamp: number) => {
@@ -50,11 +69,12 @@ export const createPMouthTransitionController = (
         return
       }
 
-      const progress = getPVisemeTransitionProgress(timestamp - startedAt)
-      current = {from, progress, to}
+      const phase = getSmoothedUnitProgress((timestamp - startedAt) / durationMs)
+      const progress = startProgress + (endProgress - startProgress) * phase
+      current = {from: transitionFrom, progress, to: transitionTo}
       onTransitionChange()
 
-      if (progress < 1) {
+      if (phase < 1) {
         frame = window.requestAnimationFrame(renderFrame)
         return
       }

@@ -61,6 +61,22 @@ describe('getOpenAiConfiguration', () => {
     },
   )
 
+  it('should preserve minimal reasoning for a configured model that supports it', () => {
+    expect(
+      getOpenAiConfiguration({
+        ...REQUIRED_ENVIRONMENT,
+        OPENAI_MODEL: 'gpt-5',
+        OPENAI_REASONING_EFFORT: 'minimal',
+      }).reasoningEffort,
+    ).toBe('minimal')
+  })
+
+  it('should reject minimal reasoning for the default GPT-5.6 model', () => {
+    expect(() =>
+      getOpenAiConfiguration({...REQUIRED_ENVIRONMENT, OPENAI_REASONING_EFFORT: 'minimal'}),
+    ).toThrow('OPENAI_REASONING_EFFORT must be one of: none, low, medium, high, xhigh, max')
+  })
+
   it.each(OPENAI_SERVICE_TIERS)('should accept every supported service tier', (serviceTier) => {
     expect(
       getOpenAiConfiguration({...REQUIRED_ENVIRONMENT, OPENAI_SERVICE_TIER: serviceTier})
@@ -71,9 +87,7 @@ describe('getOpenAiConfiguration', () => {
   it('should reject an unsupported reasoning effort', () => {
     expect(() =>
       getOpenAiConfiguration({...REQUIRED_ENVIRONMENT, OPENAI_REASONING_EFFORT: 'ultra'}),
-    ).toThrow(
-      'OPENAI_REASONING_EFFORT must be one of: none, minimal, low, medium, high, xhigh, max',
-    )
+    ).toThrow('OPENAI_REASONING_EFFORT must be one of: none, low, medium, high, xhigh, max')
   })
 
   it('should reject an unsupported service tier', () => {

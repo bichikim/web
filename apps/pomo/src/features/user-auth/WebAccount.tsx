@@ -24,20 +24,35 @@ export const WebAccount = () => {
   const [successMessage, setSuccessMessage] = createSignal<string | null>(null)
 
   onMount(() => {
+    let accountCallbackErrorMessage: string | null = null
+
     const loadAccount = async () => {
       const url = new URL(window.location.href)
+      const linkError = url.searchParams.get('link_error')
       const linkToken = url.searchParams.get('link_token')
 
       if (linkToken !== null) {
         const linkResult = await completeAccountLink(linkToken)
         url.searchParams.delete('link_token')
+
+        if (linkError === 'email') {
+          url.searchParams.delete('link_error')
+        }
+
         window.history.replaceState(null, '', url)
 
         if (linkResult === 'linked') {
           setSuccessMessage('토스 계정과 이메일 연결을 완료했습니다.')
         } else {
-          setErrorMessage('계정 연결이 만료되었거나 다른 계정에 연결된 이메일입니다.')
+          accountCallbackErrorMessage = '계정 연결이 만료되었거나 다른 계정에 연결된 이메일입니다.'
+          setErrorMessage(accountCallbackErrorMessage)
         }
+      } else if (linkError === 'email') {
+        url.searchParams.delete('link_error')
+        window.history.replaceState(null, '', url)
+        accountCallbackErrorMessage =
+          '계정 연결 이메일을 확인하지 못했습니다. 토스 앱에서 새 연결 이메일을 요청해 주세요.'
+        setErrorMessage(accountCallbackErrorMessage)
       }
 
       setSession(await readAccountSession())
@@ -45,7 +60,12 @@ export const WebAccount = () => {
     }
 
     loadAccount().catch(() => {
-      setErrorMessage('계정 정보를 불러오지 못했습니다.')
+      setSuccessMessage(null)
+
+      if (accountCallbackErrorMessage === null) {
+        setErrorMessage('계정 정보를 불러오지 못했습니다.')
+      }
+
       setIsLoading(false)
     })
   })
@@ -94,50 +114,62 @@ export const WebAccount = () => {
   }
 
   return (
-    <Show when={!isLoading()} fallback={<p class="m-0 text-sm text-white/60">계정 확인 중…</p>}>
-      <Show
-        when={session()}
-        fallback={
-          <form action="/api/auth/sign-in/magic-link" class="grid gap-5" onSubmit={handleSubmit}>
-            <p class="m-0 text-sm leading-6 text-white/60">
-              이메일 링크로 로그인합니다. 처음 로그인하면 Pomo 계정이 생성됩니다.
-            </p>
-            <label class="grid gap-2 text-sm font-650">
-              이메일
-              <input
-                autocomplete="email"
-                class={ACCOUNT_FIELD_CLASSES}
-                inputmode="email"
-                onInput={(event) => setEmail(event.currentTarget.value)}
-                required
-                type="email"
-                value={email()}
-              />
-            </label>
-            <button class={ACCOUNT_PRIMARY_BUTTON_CLASSES} disabled={isSubmitting()} type="submit">
-              {isSubmitting() ? '이메일 전송 중…' : '로그인 링크 받기'}
-            </button>
-          </form>
-        }
-      >
-        {(account) => (
-          <div class="grid gap-5">
-            <div class="rounded-3 border border-white/10 bg-white/5 px-4 py-4">
-              <p class="m-0 text-xs text-white/45">로그인된 이메일</p>
-              <p class="mb-0 mt-1 break-all text-sm font-700">{account().email}</p>
+    <>
+      <Show when={!isLoading()} fallback={<p class="m-0 text-sm text-white/60">계정 확인 중…</p>}>
+        <Show
+          when={session()}
+          fallback={
+            <form action="/api/auth/sign-in/magic-link" class="grid gap-5" onSubmit={handleSubmit}>
+              <p class="m-0 text-sm leading-6 text-white/60">
+                이메일 링크로 로그인합니다. 처음 로그인하면 Pomo 계정이 생성됩니다.
+              </p>
+              <label class="grid gap-2 text-sm font-650">
+                이메일
+                <input
+                  autocomplete="email"
+                  class={ACCOUNT_FIELD_CLASSES}
+                  inputmode="email"
+                  onInput={(event) => setEmail(event.currentTarget.value)}
+                  required
+                  type="email"
+                  value={email()}
+                />
+              </label>
+              <button
+                class={ACCOUNT_PRIMARY_BUTTON_CLASSES}
+                disabled={isSubmitting()}
+                type="submit"
+              >
+                {isSubmitting() ? '이메일 전송 중…' : '로그인 링크 받기'}
+              </button>
+            </form>
+          }
+        >
+          {(account) => (
+            <div class="grid gap-5">
+              <div class="rounded-3 border border-white/10 bg-white/5 px-4 py-4">
+                <p class="m-0 text-xs text-white/45">로그인된 이메일</p>
+                <p class="mb-0 mt-1 break-all text-sm font-700">{account().email}</p>
+              </div>
+              <button
+                class={ACCOUNT_SECONDARY_BUTTON_CLASSES}
+                disabled={isSubmitting()}
+                onClick={handleSignOut}
+                type="button"
+              >
+                로그아웃
+              </button>
             </div>
-            <button
-              class={ACCOUNT_SECONDARY_BUTTON_CLASSES}
-              disabled={isSubmitting()}
-              onClick={handleSignOut}
-              type="button"
-            >
-              로그아웃
-            </button>
-          </div>
-        )}
+          )}
+        </Show>
+        <Show when={successMessage()}>
+          {(message) => (
+            <p class={`${ACCOUNT_SUCCESS_CLASSES} mt-5`} role="status">
+              {message()}
+            </p>
+          )}
+        </Show>
       </Show>
-
       <Show when={errorMessage()}>
         {(message) => (
           <p class={`${ACCOUNT_ERROR_CLASSES} mt-5`} role="alert">
@@ -145,13 +177,6 @@ export const WebAccount = () => {
           </p>
         )}
       </Show>
-      <Show when={successMessage()}>
-        {(message) => (
-          <p class={`${ACCOUNT_SUCCESS_CLASSES} mt-5`} role="status">
-            {message()}
-          </p>
-        )}
-      </Show>
-    </Show>
+    </>
   )
 }

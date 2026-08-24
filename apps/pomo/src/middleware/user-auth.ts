@@ -3,6 +3,7 @@ import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 import {getNeonAuthProxyConfig} from '../server/auth/environment'
 
 const ACCOUNT_PATH = '/account'
+const ACCOUNT_PATH_WITH_TRAILING_SLASH = `${ACCOUNT_PATH}/`
 const SESSION_VERIFIER_PARAM = 'neon_auth_session_verifier'
 
 interface UserAuthRequest {
@@ -30,7 +31,10 @@ const createSessionRequest = (request: Request): Request => {
 }
 
 export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Response | null> => {
-  if (input.url.pathname !== ACCOUNT_PATH) {
+  if (
+    input.url.pathname !== ACCOUNT_PATH &&
+    input.url.pathname !== ACCOUNT_PATH_WITH_TRAILING_SLASH
+  ) {
     return null
   }
 

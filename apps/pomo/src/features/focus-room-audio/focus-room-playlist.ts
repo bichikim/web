@@ -1,3 +1,5 @@
+import {apiFetch, audioFetch, httpFetch} from '../http-client'
+
 export interface PTrack {
   readonly artist: string
   readonly durationSeconds: number
@@ -268,11 +270,14 @@ const getCoverIcon = (fallback: PublishedAlbum['coverFallback']): string => {
 }
 
 const loadPublishedAlbums = async (
-  url: string,
+  overrideUrl: string | undefined,
   signal?: AbortSignal,
 ): Promise<ReadonlyArray<PResolvedAlbum>> => {
   try {
-    const response = await fetch(url, createRequestInit(signal))
+    const response =
+      overrideUrl === undefined
+        ? await apiFetch('music/albums', createRequestInit(signal))
+        : await httpFetch(overrideUrl, createRequestInit(signal))
 
     if (!response.ok) {
       return []
@@ -304,13 +309,22 @@ const loadPublishedAlbums = async (
   }
 }
 
+const fetchAudioJson = (
+  defaultPath: string,
+  overrideUrl: string | undefined,
+  signal?: AbortSignal,
+) =>
+  overrideUrl === undefined
+    ? audioFetch(defaultPath, createRequestInit(signal))
+    : httpFetch(overrideUrl, createRequestInit(signal))
+
 /** Loads and validates the bundled focus-room albums and their tracks. */
 export const loadPAlbums = async (
   options: LoadPAlbumsOptions = {},
 ): Promise<readonly PResolvedAlbum[]> => {
   const [tracksResponse, albumsResponse] = await Promise.all([
-    fetch(options.tracksUrl ?? FOCUS_ROOM_TRACKS_URL, createRequestInit(options.signal)),
-    fetch(options.albumsUrl ?? FOCUS_ROOM_ALBUMS_URL, createRequestInit(options.signal)),
+    fetchAudioJson('tracks.json', options.tracksUrl, options.signal),
+    fetchAudioJson('albums.json', options.albumsUrl, options.signal),
   ])
 
   if (!tracksResponse.ok) {
@@ -342,10 +356,7 @@ export const loadPAlbums = async (
       'Focus-room albums reference unknown tracks',
     ),
   }))
-  const publishedAlbums = await loadPublishedAlbums(
-    options.publishedAlbumsUrl ?? PUBLISHED_ALBUMS_URL,
-    options.signal,
-  )
+  const publishedAlbums = await loadPublishedAlbums(options.publishedAlbumsUrl, options.signal)
 
   return [...bundledAlbums, ...publishedAlbums]
 }
@@ -353,8 +364,8 @@ export const loadPAlbums = async (
 /** Loads and validates the bundled focus-room playlist. */
 export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<readonly PTrack[]> => {
   const [tracksResponse, playlistResponse] = await Promise.all([
-    fetch(options.tracksUrl ?? FOCUS_ROOM_TRACKS_URL, createRequestInit(options.signal)),
-    fetch(options.playlistUrl ?? FOCUS_ROOM_PLAYLIST_URL, createRequestInit(options.signal)),
+    fetchAudioJson('tracks.json', options.tracksUrl, options.signal),
+    fetchAudioJson('playlist.json', options.playlistUrl, options.signal),
   ])
 
   if (!tracksResponse.ok) {

@@ -7,6 +7,7 @@ import {
   createTrackUpload,
   deleteTrackObject,
   inspectTrackUpload,
+  isTrackValidationError,
 } from '../track-upload'
 
 const OBJECT_KEY =
@@ -82,6 +83,15 @@ describe('inspectTrackUpload', () => {
         signRequest: async (request) => request,
       }),
     ).rejects.toThrow('invalid_mp3'))
+})
+
+describe('isTrackValidationError', () => {
+  it('should recognize only expected MP3 validation failures', () => {
+    expect(isTrackValidationError(new TypeError('invalid_mp3'))).toBe(true)
+    expect(isTrackValidationError(new TypeError('invalid_mp3_frames'))).toBe(true)
+    expect(isTrackValidationError(new TypeError('CLOUDFLARE_R2_ACCOUNT_ID is not set'))).toBe(false)
+    expect(isTrackValidationError(new Error('invalid_mp3'))).toBe(false)
+  })
 })
 
 describe('deleteTrackObject', () => {

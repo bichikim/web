@@ -14,6 +14,7 @@ import {
   createTrackPreviewObject,
   createTrackUpload,
   inspectTrackUpload,
+  isTrackValidationError,
 } from 'src/server/music/track-upload'
 
 const MAXIMUM_BODY_SIZE = 1024
@@ -110,7 +111,7 @@ export const PUT = async (event: APIEvent): Promise<Response> => {
   } catch (error) {
     console.error('Failed to validate a music track asset', error)
 
-    if (!(error instanceof TypeError)) {
+    if (!isTrackValidationError(error)) {
       return noStoreJson(
         {error: 'track_validation_unavailable'},
         {cookies: authorization.cookies, status: HTTP_SERVICE_UNAVAILABLE},

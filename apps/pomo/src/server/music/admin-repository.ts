@@ -307,8 +307,13 @@ export const connectAlbumOffer = async (
           status: 'active',
         })
         .onConflictDoUpdate({
-          set: {billingType: 'one_time', status: 'active', updatedAt: new Date()},
-          target: [commerceOffers.provider, commerceOffers.externalProductId],
+          set: {
+            billingType: 'one_time',
+            externalProductId: input.externalProductId,
+            status: 'active',
+            updatedAt: new Date(),
+          },
+          target: [commerceOffers.productId, commerceOffers.provider],
         })
 
       return {success: true}

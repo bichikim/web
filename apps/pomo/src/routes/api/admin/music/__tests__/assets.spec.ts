@@ -11,6 +11,7 @@ const uploadMocks = vi.hoisted(() => ({
   createTrackPreviewObject: vi.fn(),
   createTrackUpload: vi.fn(),
   inspectTrackUpload: vi.fn(),
+  isTrackValidationError: vi.fn(),
 }))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
@@ -51,6 +52,11 @@ describe('admin music asset route', () => {
       sizeBytes: 1234n,
     })
     uploadMocks.createTrackPreviewObject.mockReset().mockResolvedValue(undefined)
+    uploadMocks.isTrackValidationError
+      .mockReset()
+      .mockImplementation(
+        (error: unknown) => error instanceof TypeError && error.message === 'invalid_mp3',
+      )
   })
 
   it('should reserve a server-owned object key for an administrator', async () => {
@@ -85,6 +91,17 @@ describe('admin music asset route', () => {
 
   it('should preserve a pending asset when R2 validation is temporarily unavailable', async () => {
     uploadMocks.inspectTrackUpload.mockRejectedValue(new Error('R2 unavailable'))
+
+    const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
+
+    expect(response.status).toBe(503)
+    expect(repositoryMocks.failTrackAsset).not.toHaveBeenCalled()
+  })
+
+  it('should preserve a pending asset when R2 configuration is unavailable', async () => {
+    uploadMocks.inspectTrackUpload.mockRejectedValue(
+      new TypeError('CLOUDFLARE_R2_ACCOUNT_ID is not set'),
+    )
 
     const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
 

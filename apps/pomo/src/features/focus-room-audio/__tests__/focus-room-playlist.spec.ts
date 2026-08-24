@@ -25,14 +25,16 @@ describe('loadPTracks', () => {
 
     const result = loadPTracks()
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/audio/tracks.json', {
-      cache: 'no-store',
-      signal: undefined,
-    })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/audio/playlist.json', {
-      cache: 'no-store',
-      signal: undefined,
-    })
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/audio/tracks.json',
+      expect.objectContaining({cache: 'no-store', signal: undefined}),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/audio/playlist.json',
+      expect.objectContaining({cache: 'no-store', signal: undefined}),
+    )
     return expect(result).resolves.toEqual([TRACKS[1], TRACKS[0]])
   })
 
@@ -101,14 +103,16 @@ describe('loadPAlbums', () => {
 
     const result = loadPAlbums()
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/audio/tracks.json', {
-      cache: 'no-store',
-      signal: undefined,
-    })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/audio/albums.json', {
-      cache: 'no-store',
-      signal: undefined,
-    })
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/audio/tracks.json',
+      expect.objectContaining({cache: 'no-store', signal: undefined}),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/audio/albums.json',
+      expect.objectContaining({cache: 'no-store', signal: undefined}),
+    )
     return expect(result).resolves.toEqual([
       {...albums[0], tracks: [TRACKS[1], TRACKS[0]]},
       {...albums[1], tracks: []},
@@ -159,10 +163,11 @@ describe('loadPAlbums', () => {
         tracks: [],
       },
     ])
-    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/music/albums', {
-      cache: 'no-store',
-      signal: undefined,
-    })
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      '/api/music/albums',
+      expect.objectContaining({cache: 'no-store', signal: undefined}),
+    )
   })
 
   it('should preserve bundled albums when the published catalog is unavailable', async () => {

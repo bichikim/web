@@ -1,4 +1,5 @@
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 
 export type ScreenWakeLockAvailability = 'checking' | 'supported' | 'unsupported'
 
@@ -184,11 +185,10 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
         }
       }
 
-      document.addEventListener('visibilitychange', handleVisibilityChange)
+      useEvent(document, 'visibilitychange', handleVisibilityChange)
       onCleanup(() => {
         disposed = true
         setIsEnabled(false)
-        document.removeEventListener('visibilitychange', handleVisibilityChange)
 
         if (appsInTossWakeLockRequested) {
           setAppsInTossWakeLock(false, false)

@@ -77,6 +77,16 @@ export interface TrackPreviewObject {
   readonly etag: string | null
 }
 
+const TRACK_VALIDATION_FAILURE_CODES = new Set([
+  'invalid_mp3',
+  'invalid_mp3_frames',
+  'invalid_mp3_id3',
+  'invalid_track_metadata',
+])
+
+export const isTrackValidationError = (error: unknown): error is TypeError =>
+  error instanceof TypeError && TRACK_VALIDATION_FAILURE_CODES.has(error.message)
+
 const requireEnvironmentValue = (
   name: keyof PaidAudioEnvironment,
   value: string | undefined,

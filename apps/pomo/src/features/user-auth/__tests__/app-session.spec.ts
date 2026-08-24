@@ -12,7 +12,12 @@ vi.mock('@apps-in-toss/web-framework', () => ({
   TossAuth: tossAuthMocks,
 }))
 
-import {createTossLoginSession, revokeTossLoginSession, validateAppSession} from '../app-session'
+import {
+  createTossLoginSession,
+  requestAccountLinkEmail,
+  revokeTossLoginSession,
+  validateAppSession,
+} from '../app-session'
 
 describe('app session lifecycle', () => {
   beforeEach(() => {
@@ -20,32 +25,6 @@ describe('app session lifecycle', () => {
     storageMocks.removeItem.mockReset().mockResolvedValue(undefined)
     storageMocks.setItem.mockReset().mockResolvedValue(undefined)
     tossAuthMocks.login.mockReset()
-  })
-
-  it('should exchange a Sandbox authorization and store the Pomo session', async () => {
-    tossAuthMocks.login.mockResolvedValue({
-      authorizationCode: 'sandbox-authorization',
-      referrer: 'SANDBOX',
-    })
-    const fetchMock = vi.fn().mockResolvedValue(
-      Response.json({
-        expiresAt: '2026-09-21T00:00:00.000Z',
-        token: 'pomo-session',
-        userId: 'pomo-user-id',
-      }),
-    )
-    vi.stubGlobal('fetch', fetchMock)
-
-    await expect(createTossLoginSession()).resolves.toBe('pomo-session')
-    expect(fetchMock).toHaveBeenCalledWith(new URL('https://www.pomofi.io/api/app-auth/exchange'), {
-      body: JSON.stringify({
-        authorizationCode: 'sandbox-authorization',
-        referrer: 'SANDBOX',
-      }),
-      headers: {'Content-Type': 'application/json'},
-      method: 'POST',
-    })
-    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'pomo-session')
   })
 
   afterEach(() => {
@@ -78,5 +57,89 @@ describe('app session lifecycle', () => {
 
     await expect(revokeTossLoginSession('token')).rejects.toThrow('App session revocation failed')
     expect(storageMocks.removeItem).not.toHaveBeenCalled()
+  })
+
+  it('should exchange a Toss authorization object for a validated stored session', async () => {
+    const authorization = {authorizationCode: 'authorization', referrer: 'DEFAULT'} as const
+    tossAuthMocks.login.mockResolvedValue(authorization)
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(Response.json({token: 'session-token'}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(createTossLoginSession()).resolves.toBe('session-token')
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/app-auth/exchange',
+      expect.objectContaining({body: JSON.stringify(authorization), method: 'POST'}),
+    )
+    const init = fetchMock.mock.calls[0]?.[1]
+    expect(new Headers(init?.headers).get('Content-Type')).toBe('application/json')
+    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'session-token')
+  })
+
+  it('should preserve the Toss exchange HTTP error contract', async () => {
+    tossAuthMocks.login.mockResolvedValue({authorizationCode: 'authorization', referrer: 'DEFAULT'})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(Response.json({error: 'failed'}, {status: 502})),
+    )
+
+    await expect(createTossLoginSession()).rejects.toThrow('Toss login exchange failed')
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+  })
+
+  it('should preserve the invalid Toss session response contract', async () => {
+    tossAuthMocks.login.mockResolvedValue({authorizationCode: 'authorization', referrer: 'DEFAULT'})
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json({token: 1})))
+
+    await expect(createTossLoginSession()).rejects.toThrow('Toss login returned an invalid session')
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+  })
+
+  it('should serialize an account-link email while preserving the status result', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(Response.json({error: 'invalid_email'}, {status: 400}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      status: 'not-sent',
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/account/link-email',
+      expect.objectContaining({
+        body: JSON.stringify({email: 'user@example.com'}),
+        method: 'POST',
+      }),
+    )
+  })
+
+  it('should report a successful account link email request', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      status: 'sent',
+    })
+  })
+
+  it('should preserve the account link retry delay', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, {headers: {'Retry-After': '42'}, status: 429})),
+    )
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      retryAfterSeconds: 42,
+      status: 'rate-limited',
+    })
+  })
+
+  it('should tolerate a missing account link retry delay', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 429})))
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      retryAfterSeconds: null,
+      status: 'rate-limited',
+    })
   })
 })

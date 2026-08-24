@@ -19,8 +19,6 @@ export type {
   SpeechTranscript,
   TranscribeSpeechOptions,
 } from './recognizer'
-export {speechFailure, speechSuccess} from './result'
-export type {SpeechResult} from './result'
 export {appendSpeechTranscript} from './transcript'
 export {createSpeechModelOwner} from './speech-model-owner'
 export type {

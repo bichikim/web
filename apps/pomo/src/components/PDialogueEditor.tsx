@@ -1,6 +1,6 @@
 import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {For, Show} from 'solid-js'
+import {createSignal, For, onCleanup, Show} from 'solid-js'
 
 import {usePSceneStyle} from '../features/focus-room-animation'
 import {
@@ -8,13 +8,19 @@ import {
   type UsePDialogueEditorProps,
   usePEvents,
 } from '../features/focus-room-dialogue'
+import {formatModelDownloadSize} from '../features/model-storage'
 import {
+  getSupertonicModel,
+  isSupertonicModelDownloaded,
   SUPERTONIC_LANGUAGE_OPTIONS,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
 } from '../features/supertonic'
 import {getPrimaryMood} from '../features/text-mood'
+import PDialogueDraftGenerator from './PDialogueDraftGenerator'
 import {PFaceIcon} from './PFaceIcon'
+import {PGenerationStatus} from './PGenerationStatus'
+import {PModelDownloadConsent} from './PModelDownloadConsent'
 
 const CLASSES = {
   dialogueEditor: [
@@ -115,11 +121,6 @@ const CLASSES = {
     'pomo-dialogue-editor__selects grid grid-cols-[repeat(3,_minmax(0,_1fr))] gap-3',
     'max-sm:grid-cols-[1fr]',
   ].join(' '),
-  dialogueEditorStatus: [
-    'pomo-dialogue-editor__status flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
-    'bg-[rgb(214_181_133_/_9%)] p-3 text-[#d8caba] text-[0.8rem] leading-[1.4] [&_strong]:ml-auto',
-    '[&_strong]:text-[#e6c998]',
-  ].join(' '),
   dialogueEditorTimelinePanel:
     'pomo-dialogue-editor__timeline-panel col-span-full max-xl:[grid-column:auto]',
   dialogueEditorVoiceActions: 'pomo-dialogue-editor__voice-actions flex justify-end gap-3',
@@ -147,7 +148,14 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
   const sceneStyleController = usePSceneStyle()
   const editorProps: UsePDialogueEditorProps = {dialogueId: () => props.dialogueId}
   const editor = usePDialogueEditor(editorProps)
-  const isBusy = () => {
+  const [draftGenerationBusy, setDraftGenerationBusy] = createSignal(false)
+  const [audioDownloadConsentOpen, setAudioDownloadConsentOpen] = createSignal(false)
+  const [isCheckingAudioModel, setIsCheckingAudioModel] = createSignal(false)
+  let isDisposed = false
+  onCleanup(() => {
+    isDisposed = true
+  })
+  const isAudioBusy = () => {
     const {status} = editor.state()
     return (
       status === 'generating' ||
@@ -157,6 +165,8 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
       status === 'saving'
     )
   }
+  const isBusy = () => isAudioBusy() || draftGenerationBusy() || isCheckingAudioModel()
+  const audioProgress = () => (editor.state().status === 'preparing' ? editor.progress() : null)
   const handleSave = async () => {
     const dialogueId = await editor.save()
 
@@ -191,6 +201,34 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
       editor.setVoiceId(voice.id)
     }
   }
+  const handleAudioGenerate = async () => {
+    if (isBusy() || !editor.canGenerate()) {
+      return
+    }
+
+    const selectedModelId = editor.modelId()
+    setIsCheckingAudioModel(true)
+    const isDownloaded = await isSupertonicModelDownloaded({modelId: selectedModelId})
+
+    if (isDisposed) {
+      return
+    }
+
+    setIsCheckingAudioModel(false)
+
+    if (isDownloaded) {
+      await editor.generate()
+      return
+    }
+
+    setAudioDownloadConsentOpen(true)
+  }
+  const handleConfirmAudioDownload = () => {
+    setAudioDownloadConsentOpen(false)
+    editor.generate().catch((error: unknown) => {
+      console.error('Failed to generate confirmed dialogue audio.', error)
+    })
+  }
 
   return (
     <main class={CLASSES.dialogueEditor}>
@@ -211,6 +249,12 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             </div>
           </div>
 
+          <PDialogueDraftGenerator
+            disabled={isAudioBusy()}
+            onBusyChange={setDraftGenerationBusy}
+            onGenerated={editor.setText}
+          />
+
           <label class={CLASSES.dialogueEditorField}>
             <span class={CLASSES.dialogueEditorFieldLabel}>
               대사
@@ -222,7 +266,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
               disabled={isBusy()}
               maxlength={MAXIMUM_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
-              placeholder="Pomofi에 들어올 때 Pomo가 말할 내용을 입력하세요."
+              placeholder="원하는 대사를 입력하세요"
               value={editor.text()}
             />
           </label>
@@ -279,19 +323,18 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             </label>
           </div>
 
-          <div aria-live="polite" class={CLASSES.dialogueEditorStatus} role="status">
-            <span aria-hidden="true" class="i-tabler-wave-sine size-5" />
-            <span>{editor.state().message}</span>
-            <Show when={editor.state().status === 'preparing'}>
-              <strong>{editor.progress()}%</strong>
-            </Show>
-          </div>
+          <PGenerationStatus
+            kind="voice"
+            message={editor.state().message}
+            progress={audioProgress()}
+            progressLabel="음성 모델 준비 진행률"
+          />
 
           <div class={CLASSES.dialogueEditorVoiceActions}>
             <button
               class={cx(CLASSES.dialogueEditorButton, CLASSES.dialogueEditorButtonPrimary)}
-              disabled={!editor.canGenerate()}
-              onClick={editor.generate}
+              disabled={isBusy() || !editor.canGenerate()}
+              onClick={handleAudioGenerate}
               type="button"
             >
               음성 만들기
@@ -314,6 +357,13 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
               </div>
             )}
           </Show>
+          <PModelDownloadConsent
+            actionLabel="음성 만들기"
+            downloadSize={formatModelDownloadSize(getSupertonicModel(editor.modelId()).size)}
+            isOpen={audioDownloadConsentOpen()}
+            onCancel={() => setAudioDownloadConsentOpen(false)}
+            onConfirm={handleConfirmAudioDownload}
+          />
         </section>
 
         <section
@@ -368,7 +418,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
                         CLASSES.dialogueEditorButtonSecondary,
                         CLASSES.dialogueEditorSegmentButton,
                       )}
-                      disabled={!editor.canRegenerateSegments()}
+                      disabled={isBusy() || !editor.canRegenerateSegments()}
                       onClick={() => editor.regenerateSegment(position())}
                       title="전체 음성을 새로 만든 뒤 사용할 수 있어요."
                       type="button"
@@ -392,7 +442,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
         <p>음성을 다시 만들기 전까지 변경한 대사나 목소리는 저장할 수 없어요.</p>
         <button
           class={cx(CLASSES.dialogueEditorButton, CLASSES.dialogueEditorButtonPrimary)}
-          disabled={!editor.canSave()}
+          disabled={isBusy() || !editor.canSave()}
           onClick={handleSave}
           type="button"
         >

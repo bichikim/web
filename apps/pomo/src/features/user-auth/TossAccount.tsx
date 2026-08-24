@@ -1,6 +1,7 @@
 import {createSignal, type JSX, onMount, Show} from 'solid-js'
 
 import {
+  type AccountLinkEmailResult,
   clearStoredAppSession,
   createTossLoginSession,
   readStoredAppSession,
@@ -15,6 +16,37 @@ import {
   ACCOUNT_SECONDARY_BUTTON_CLASSES,
   ACCOUNT_SUCCESS_CLASSES,
 } from './styles'
+
+interface AccountLinkFeedback {
+  readonly errorMessage: string | null
+  readonly successMessage: string | null
+}
+
+const getAccountLinkFeedback = (result: AccountLinkEmailResult): AccountLinkFeedback => {
+  switch (result.status) {
+    case 'sent': {
+      return {
+        errorMessage: null,
+        successMessage: '웹 로그인 연결 링크를 이메일로 보냈습니다.',
+      }
+    }
+    case 'not-sent': {
+      return {errorMessage: '연결 이메일을 보내지 못했습니다.', successMessage: null}
+    }
+    case 'rate-limited': {
+      const errorMessage =
+        result.retryAfterSeconds === null
+          ? '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.'
+          : `요청이 너무 많습니다. ${result.retryAfterSeconds}초 후 다시 시도해 주세요.`
+
+      return {errorMessage, successMessage: null}
+    }
+    default: {
+      const unhandledResult: never = result
+      return unhandledResult
+    }
+  }
+}
 
 export const TossAccount = () => {
   const [token, setToken] = createSignal<string | null>(null)
@@ -91,13 +123,10 @@ export const TossAccount = () => {
     setIsSubmitting(true)
 
     try {
-      const wasSent = await requestAccountLinkEmail(currentToken, email())
-
-      if (wasSent) {
-        setSuccessMessage('웹 로그인 연결 링크를 이메일로 보냈습니다.')
-      } else {
-        setErrorMessage('연결 이메일을 보내지 못했습니다.')
-      }
+      const result = await requestAccountLinkEmail(currentToken, email())
+      const feedback = getAccountLinkFeedback(result)
+      setErrorMessage(feedback.errorMessage)
+      setSuccessMessage(feedback.successMessage)
     } catch {
       setErrorMessage('계정 연결 서버에 접속하지 못했습니다.')
     } finally {
@@ -137,7 +166,7 @@ export const TossAccount = () => {
             <div>
               <h2 class="m-0 text-base font-750">웹에서도 사용하기</h2>
               <p class="mb-0 mt-1 text-xs leading-5 text-white/50">
-                이메일 링크를 확인하면 웹에서도 같은 계정과 데이터를 사용할 수 있습니다.
+                이메일 링크를 확인하면 웹에서도 같은 계정으로 로그인할 수 있습니다.
               </p>
             </div>
             <label class="grid gap-2 text-sm font-650">

@@ -40,8 +40,14 @@ fi
 if [ -f "$REPOSITORY_PATH/apps/coong/.env" ]; then
   cp "$REPOSITORY_PATH/apps/coong/.env" apps/coong/.env
 fi
+if [ -f "$REPOSITORY_PATH/apps/coong/.env.local" ]; then
+  cp "$REPOSITORY_PATH/apps/coong/.env.local" apps/coong/.env.local
+fi
 if [ -f "$REPOSITORY_PATH/apps/pomo/.env" ]; then
   cp "$REPOSITORY_PATH/apps/pomo/.env" apps/pomo/.env
+fi
+if [ -f "$REPOSITORY_PATH/apps/pomo/.env.local" ]; then
+  cp "$REPOSITORY_PATH/apps/pomo/.env.local" apps/pomo/.env.local
 fi
 # Mirror .cursor/worktrees.json: reuse main worktree Turbo cache before install/prepare-build.
 if [ -d "$REPOSITORY_PATH/.turbo" ]; then

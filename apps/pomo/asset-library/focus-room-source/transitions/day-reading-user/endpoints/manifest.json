@@ -1,0 +1,30 @@
+{
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "videoInput": {
+    "width": 1024,
+    "height": 576
+  },
+  "crop": {
+    "planned": {
+      "x": 930,
+      "y": 285,
+      "width": 260,
+      "height": 180
+    },
+    "method": "sharp rectangular extraction with no blur, feather, or alpha processing; user will refine masks"
+  },
+  "states": ["closed", "open", "wide", "round", "narrow"],
+  "transitions": [
+    "closed-wide",
+    "closed-round",
+    "open-wide",
+    "open-round",
+    "narrow-wide",
+    "narrow-round"
+  ],
+  "workflowSource": "Recovered from the embedded API-format prompt metadata in closed-open/transition.mp4; local MiniMax H3 model graph",
+  "runtimeApplied": false
+}

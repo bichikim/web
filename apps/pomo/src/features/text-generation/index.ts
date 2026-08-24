@@ -1,4 +1,6 @@
 export {trimRepetitiveTail} from './answer'
+export {isTextModelDownloaded} from './download'
+export type {IsTextModelDownloadedOptions} from './download'
 export {supportsWebGpu} from './environment'
 export {createLazyClient} from './lazy-client'
 export type {LazyClient} from './lazy-client'

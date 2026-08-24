@@ -1,37 +1,11 @@
 import {createSignal, type JSX} from 'solid-js'
-import {z} from 'zod'
 
-import {uploadTrackAudio, validateTrackAudio} from './track-upload'
-
-const createdTrackSchema = z.object({id: z.string().uuid()})
+import {createTrackWithAudio, removeTrack} from './track-creation'
+import {validateTrackAudio} from './track-upload'
 
 interface UseTrackManagementProps {
   readonly refreshCatalog: () => Promise<void>
   readonly setMessage: (message: string | null) => void
-}
-
-const createTrack = async (body: Readonly<Record<string, unknown>>): Promise<string> => {
-  const response = await fetch('/api/admin/music/tracks', {
-    body: JSON.stringify(body),
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-  })
-
-  if (!response.ok) {
-    throw new Error('곡 정보를 저장하지 못했습니다.')
-  }
-
-  return createdTrackSchema.parse(await response.json()).id
-}
-
-const deleteTrack = async (trackId: string): Promise<void> => {
-  const response = await fetch(`/api/admin/music/tracks/${encodeURIComponent(trackId)}`, {
-    method: 'DELETE',
-  })
-
-  if (!response.ok) {
-    throw new Error('수록곡을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.')
-  }
 }
 
 export const useTrackManagement = (props: UseTrackManagementProps) => {
@@ -48,7 +22,6 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
     props.setMessage(null)
     const form = new FormData(trackForm)
     const audio = form.get('audio')
-    let didCreateTrack = false
 
     try {
       if (!(audio instanceof File)) {
@@ -56,13 +29,25 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       }
 
       validateTrackAudio(audio)
-      const trackId = await createTrack({
+      const result = await createTrackWithAudio({
         albumId: String(form.get('albumId') ?? ''),
         artist: String(form.get('artist') ?? ''),
+        audio,
         title: String(form.get('title') ?? ''),
       })
-      didCreateTrack = true
-      await uploadTrackAudio(trackId, audio)
+
+      if (!result.success) {
+        const detail =
+          result.error instanceof Error ? result.error.message : '곡을 저장하지 못했습니다.'
+        await props.refreshCatalog().catch(() => undefined)
+        props.setMessage(
+          result.cleanupSucceeded
+            ? `${detail} 생성된 곡 정보는 정리했습니다.`
+            : `${detail} 생성된 곡 정보를 정리하지 못했습니다. 다시 삭제해 주세요.`,
+        )
+        return
+      }
+
       setTrackArtist('')
       setTrackTitle('')
       setTrackResetVersion((version) => version + 1)
@@ -70,12 +55,8 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       await props.refreshCatalog()
       props.setMessage('곡과 MP3를 앨범에 추가하고 활성화했습니다.')
     } catch (error) {
-      if (didCreateTrack) {
-        await props.refreshCatalog().catch(() => undefined)
-      }
-
       const detail = error instanceof Error ? error.message : '곡을 저장하지 못했습니다.'
-      props.setMessage(didCreateTrack ? `곡 정보는 저장했습니다. ${detail}` : detail)
+      props.setMessage(detail)
     } finally {
       setIsSavingTrack(false)
     }
@@ -86,7 +67,7 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
     props.setMessage(null)
 
     try {
-      await deleteTrack(trackId)
+      await removeTrack(trackId)
       await props.refreshCatalog()
       props.setMessage('수록곡과 MP3 파일을 삭제했습니다.')
     } catch (error) {

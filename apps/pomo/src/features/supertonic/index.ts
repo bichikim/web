@@ -7,6 +7,8 @@ export type {
 export {createSupertonicAudioPlayer} from './audio-player'
 export type {CreateSupertonicAudioPlayerOptions, SupertonicAudioPlayer} from './audio-player'
 export {joinAudioChunks} from './audio'
+export {isSupertonicModelDownloaded} from './download'
+export type {IsSupertonicModelDownloadedOptions} from './download'
 export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
 export {SUPERTONIC_LANGUAGES, SUPERTONIC_LANGUAGE_OPTIONS} from './language'
@@ -28,8 +30,6 @@ export type {
 export {createOpusBlob} from './opus-client'
 export type {CreateOpusBlobOptions} from './opus-client'
 export {createWaveBlob} from './wav'
-export {failureResult, successResult} from './result'
-export type {FailureResult, Result, SuccessResult} from './result'
 export {useSupertonicVoiceLab} from './use-supertonic-voice-lab'
 export type {
   SupertonicVoiceLabClient,
