@@ -1,8 +1,15 @@
-import {Storage} from '@apps-in-toss/web-framework'
 import {z} from 'zod'
 
+import {
+  createLatestNativeStorageWriter,
+  hasNativeStorageBridge,
+  readNativeStorageJson,
+  readWebStorageJson,
+  writeWebStorageJson,
+} from 'src/features/runtime-storage'
+
 const PLAYBACK_STORAGE_KEY = 'pomo:focus-room-playback:v1'
-let latestNativePlayback: StoredPlaybackState | null = null
+const nativeWriter = createLatestNativeStorageWriter(PLAYBACK_STORAGE_KEY)
 
 const storedPlaybackSchema = z.object({
   isPlaying: z.boolean().default(false),
@@ -21,35 +28,17 @@ interface StoredPlaybackState extends PPlaybackState {
   readonly savedAt: number
 }
 
-const parseStoredPlayback = (storedValue: string | null): StoredPlaybackState | null => {
-  if (storedValue === null) {
-    return null
-  }
-
-  try {
-    const result = storedPlaybackSchema.safeParse(JSON.parse(storedValue) as unknown)
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
+const parseStoredPlayback = (value: unknown): StoredPlaybackState | null => {
+  const result = storedPlaybackSchema.safeParse(value)
+  return result.success ? result.data : null
 }
 
-const hasNativeBridge = () => 'ReactNativeWebView' in window
-
 const readWebPlayback = () => {
-  try {
-    return parseStoredPlayback(localStorage.getItem(PLAYBACK_STORAGE_KEY))
-  } catch {
-    return null
-  }
+  return readWebStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback)
 }
 
 const writeWebPlayback = (state: StoredPlaybackState) => {
-  try {
-    localStorage.setItem(PLAYBACK_STORAGE_KEY, JSON.stringify(state))
-  } catch {
-    // Browser storage is best-effort; playback remains usable for this session.
-  }
+  writeWebStorageJson(PLAYBACK_STORAGE_KEY, state)
 }
 
 const selectLatestPlayback = (
@@ -76,43 +65,16 @@ const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | nu
   return {isPlaying, positionSeconds, trackId}
 }
 
-const setNativePlayback = async (state: StoredPlaybackState) => {
-  try {
-    await Storage.setItem(PLAYBACK_STORAGE_KEY, JSON.stringify(state))
-    return true
-  } catch {
-    // The synchronous web copy remains available when native storage is temporarily unavailable.
-    return false
-  }
-}
-
-const convergeNativePlayback = async (state: StoredPlaybackState): Promise<void> => {
-  if (!(await setNativePlayback(state))) {
-    return
-  }
-
-  const latestPlayback = latestNativePlayback
-  if (latestPlayback !== state && latestPlayback !== null) {
-    // An older request may finish last, so converge native storage back to the newest state.
-    await convergeNativePlayback(latestPlayback)
-  }
-}
-
-const writeNativePlayback = async (state: StoredPlaybackState) => {
-  latestNativePlayback = state
-  await convergeNativePlayback(state)
-}
-
 /** Reads the latest playback position saved by either the app or browser runtime. */
 export const readPPlayback = async (): Promise<PPlaybackState | null> => {
   const webPlayback = readWebPlayback()
 
-  if (!hasNativeBridge()) {
+  if (!hasNativeStorageBridge()) {
     return toPlaybackState(webPlayback)
   }
 
   try {
-    const nativePlayback = parseStoredPlayback(await Storage.getItem(PLAYBACK_STORAGE_KEY))
+    const nativePlayback = await readNativeStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback)
     return toPlaybackState(selectLatestPlayback(webPlayback, nativePlayback))
   } catch {
     return toPlaybackState(webPlayback)
@@ -124,9 +86,9 @@ export const writePPlayback = async (state: PPlaybackState): Promise<void> => {
   const storedState = {...state, savedAt: Date.now()} satisfies StoredPlaybackState
   writeWebPlayback(storedState)
 
-  if (!hasNativeBridge()) {
+  if (!hasNativeStorageBridge()) {
     return
   }
 
-  await writeNativePlayback(storedState)
+  await nativeWriter.write(storedState)
 }
