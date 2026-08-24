@@ -1,15 +1,7 @@
 // @refresh reload
 import {createHandler, StartServer} from '@solidjs/start/server'
-import {Show} from 'solid-js'
 
-import {LOCALIZED_STATIC_ROUTES} from './config/static-localization.ts'
-import {
-  cookieName,
-  getLocale,
-  getTextDirection,
-  locales,
-  localStorageKey,
-} from './paraglide/runtime.js'
+import {getLocale, getTextDirection} from './paraglide/runtime.js'
 
 const viewport =
   process.env.POMO_BUILD_TARGET === 'apps-in-toss'
@@ -77,15 +69,6 @@ export default createHandler(
           <head>
             <meta charset="utf-8" />
             <meta name="viewport" content={viewport} />
-            <Show when={import.meta.env.POMO_IS_APPS_IN_TOSS}>
-              <script
-                data-cookie-name={cookieName}
-                data-locales={locales.join(',')}
-                data-localized-routes={LOCALIZED_STATIC_ROUTES.join(',')}
-                data-storage-key={localStorageKey}
-                src="/localization/redirect.js"
-              />
-            </Show>
             <meta name="theme-color" content={documentThemeColor} />
             <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
             <style nonce={event.locals.securityNonce}>{CRITICAL_LAYOUT_CSS}</style>

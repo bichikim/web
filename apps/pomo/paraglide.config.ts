@@ -5,6 +5,11 @@ export const PARAGLIDE_ROUTE_STRATEGIES = [
   {exclude: true, match: '/workers/:path(.*)?'},
 ] satisfies NonNullable<CompilerOptions['routeStrategies']>
 
+export const PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES = [
+  ...PARAGLIDE_ROUTE_STRATEGIES,
+  {match: '/', strategy: ['localStorage', 'cookie', 'baseLocale']},
+] satisfies NonNullable<CompilerOptions['routeStrategies']>
+
 export const PARAGLIDE_URL_PATTERNS = [
   {
     localized: [

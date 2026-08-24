@@ -3,7 +3,7 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {localStorageKey} from '../../../paraglide/runtime.js'
-import {getLocaleRedirect} from '../bootstrap'
+import {getInitialAppsInTossLocale} from '../bootstrap'
 
 const deviceMocks = vi.hoisted(() => ({
   Device: {locale: 'ko-KR'} as {locale: string} | undefined,
@@ -23,25 +23,21 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('should read the Apps in Toss SDK locale before returning the SSG redirect', async () => {
+it('should read the Apps in Toss SDK locale', async () => {
   if (deviceMocks.Device === undefined) {
     throw new Error('Expected the native Device mock')
   }
 
   deviceMocks.Device.locale = 'en-US'
 
-  await expect(getLocaleRedirect(new URL('https://pomo.test/'))).resolves.toMatchObject({
-    pathname: '/en/',
-  })
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('en')
 })
 
 it('should read the async Apps in Toss DevTools locale fallback', async () => {
   deviceMocks.Device = undefined
   deviceMocks.getLocale.mockResolvedValue('en-US')
 
-  await expect(getLocaleRedirect(new URL('https://pomo.test/'))).resolves.toMatchObject({
-    pathname: '/en/',
-  })
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('en')
 })
 
 it('should keep the persisted Pomo locale ahead of the Apps in Toss locale', async () => {
@@ -52,7 +48,5 @@ it('should keep the persisted Pomo locale ahead of the Apps in Toss locale', asy
   deviceMocks.Device.locale = 'en-US'
   localStorage.setItem(localStorageKey, 'ko')
 
-  await expect(getLocaleRedirect(new URL('https://pomo.test/en/'))).resolves.toMatchObject({
-    pathname: '/ko/',
-  })
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('ko')
 })

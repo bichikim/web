@@ -22,7 +22,8 @@ export const getCanonicalPathname = (pathname: string) => {
 }
 
 export const isPomoHomePath = (pathname: string) =>
-  getPathLocale(pathname) !== undefined && normalizePathname(pathname) === '/'
+  normalizePathname(pathname) === '/' &&
+  (import.meta.env.POMO_IS_APPS_IN_TOSS || getPathLocale(pathname) !== undefined)
 
 export const isSearchIndexablePath = (pathname: string) => {
   const canonicalPathname = normalizePathname(pathname)
@@ -39,6 +40,10 @@ export const usesPomoLayout = (pathname: string) => {
 
   return (
     POMO_LAYOUT_PATHS.has(canonicalPathname) &&
-    !(canonicalPathname === '/' && getPathLocale(pathname) === undefined)
+    !(
+      canonicalPathname === '/' &&
+      !import.meta.env.POMO_IS_APPS_IN_TOSS &&
+      getPathLocale(pathname) === undefined
+    )
   )
 }

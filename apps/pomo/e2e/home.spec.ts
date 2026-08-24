@@ -29,3 +29,27 @@ test('hydrates the home route in its configured runtime', async ({page}, testInf
     isAppsInToss ? PRIVATE_ROBOTS : INDEXABLE_ROBOTS,
   )
 })
+
+test('initializes the Apps in Toss locale without leaving the launch path', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'apps-in-toss')
+
+  const documentRequestUrls: Array<string> = []
+  page.on('request', (request) => {
+    if (request.resourceType() === 'document' && request.frame() === page.mainFrame()) {
+      documentRequestUrls.push(request.url())
+    }
+  })
+  await page.addInitScript(() => {
+    window.localStorage.setItem('PARAGLIDE_LOCALE', 'en')
+  })
+
+  const response = await page.goto('/')
+
+  expect(response?.ok()).toBe(true)
+  await expect(page).toHaveURL(/\/$/u)
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await expect(page.getByRole('button', {name: 'Start with Pomo'})).toBeVisible()
+  expect(documentRequestUrls).toEqual([response?.url()])
+})
