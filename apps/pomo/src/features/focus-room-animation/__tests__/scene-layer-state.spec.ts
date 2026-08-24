@@ -1,6 +1,10 @@
 import {describe, expect, it} from 'vitest'
 
-import {FOCUS_ROOM_JAW_CHANNEL, FOCUS_ROOM_MOUTH_CHANNELS} from '../scene-catalog-channels'
+import {
+  FOCUS_ROOM_JAW_CHANNEL,
+  FOCUS_ROOM_MOUTH_CHANNELS,
+  FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS,
+} from '../scene-catalog-channels'
 import {createFocusRoomLayerState} from '../scene-layer-state'
 
 describe('createFocusRoomLayerState', () => {
@@ -19,17 +23,17 @@ describe('createFocusRoomLayerState', () => {
   })
 
   it('should crossfade the current and next mouth with complementary opacity', () => {
-    const state = createFocusRoomLayerState('round', false, {
+    const state = createFocusRoomLayerState('narrow', false, {
       from: 'open',
       progress: 0.25,
-      to: 'round',
+      to: 'narrow',
     })
 
     expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]).toEqual({
       opacity: 0.75,
       visible: true,
     })
-    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]).toEqual({
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.narrow]).toEqual({
       opacity: 0.25,
       visible: true,
     })
@@ -37,7 +41,7 @@ describe('createFocusRoomLayerState', () => {
       opacity: 0,
       visible: false,
     })
-    expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]).toEqual({pixelPushProgress: 0.875})
+    expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]?.pixelPushProgress).toBeCloseTo(0.78)
   })
 
   it('should interpolate jaw movement without altering the mouth transition timing', () => {
@@ -50,6 +54,97 @@ describe('createFocusRoomLayerState', () => {
     expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]?.pixelPushProgress).toBe(0.5)
     expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]?.pixelPushProgress).toBeUndefined()
     expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]?.pixelPushProgress).toBeUndefined()
+  })
+
+  it('should pass closed-to-open transitions through the lower-face bridge frames', () => {
+    const release = createFocusRoomLayerState('open', false, {
+      from: 'closed',
+      progress: 0.25,
+      to: 'open',
+    })
+    const betweenStages = createFocusRoomLayerState('open', false, {
+      from: 'closed',
+      progress: 0.375,
+      to: 'open',
+    })
+
+    expect(release.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS.release]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
+    expect(release.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.closed]?.opacity).toBe(0)
+    expect(release.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]?.opacity).toBe(0)
+    expect(betweenStages.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS.release]?.opacity).toBe(
+      0.5,
+    )
+    expect(
+      betweenStages.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['small-open']]?.opacity,
+    ).toBe(0.5)
+  })
+
+  it('should use the configured bridge frames for every generated transition path', () => {
+    const forward = createFocusRoomLayerState('wide', false, {
+      from: 'closed',
+      progress: 1 / 3,
+      to: 'wide',
+    })
+    const reverse = createFocusRoomLayerState('closed', false, {
+      from: 'wide',
+      progress: 1 / 3,
+      to: 'closed',
+    })
+
+    expect(forward.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['closed-wide-early']]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
+    expect(reverse.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['closed-wide-late']]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
+  })
+
+  it('should render the four registered closed-to-round frames in both directions', () => {
+    const early = createFocusRoomLayerState('round', false, {
+      from: 'closed',
+      progress: 1 / 3,
+      to: 'round',
+    })
+    const late = createFocusRoomLayerState('round', false, {
+      from: 'closed',
+      progress: 2 / 3,
+      to: 'round',
+    })
+    const reverseEarly = createFocusRoomLayerState('closed', false, {
+      from: 'round',
+      progress: 1 / 3,
+      to: 'closed',
+    })
+
+    expect(early.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['closed-round-early']]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
+    expect(late.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['closed-round-late']]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
+    expect(
+      reverseEarly.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['closed-round-late']],
+    ).toEqual({opacity: 1, visible: true})
+  })
+
+  it('should reuse the bridge frames in reverse for open-to-closed transitions', () => {
+    const state = createFocusRoomLayerState('closed', false, {
+      from: 'open',
+      progress: 0.25,
+      to: 'closed',
+    })
+
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['half-open']]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
   })
 
   it('should clamp transition progress at both ends', () => {
