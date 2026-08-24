@@ -97,6 +97,9 @@ it('should indicate that more tracks remain below until the list reaches the bot
   const list = screen.getByRole('list', {name: 'Album 수록곡'})
   let scrollTop = 0
 
+  expect(list.classList.contains('overscroll-auto')).toBe(true)
+  expect(list.classList.contains('overscroll-contain')).toBe(false)
+
   Object.defineProperties(list, {
     clientHeight: {configurable: true, value: 84},
     scrollHeight: {configurable: true, value: 126},
