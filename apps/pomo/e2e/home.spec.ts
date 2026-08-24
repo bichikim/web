@@ -10,14 +10,12 @@ test('hydrates the home route in its configured runtime', async ({page}, testInf
 
   expect(response?.ok()).toBe(true)
   if (isAppsInToss) {
+    await expect(page).toHaveURL(/\/(?:en|ko)\/?$/u)
     await page.waitForFunction(() => '__ait' in window)
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-top'),
-        ),
-      )
-      .toBe('54px')
+    await expect(page.locator('html')).toHaveAttribute(
+      'style',
+      /--pomo-safe-area-inset-top:\s*0px/u,
+    )
   } else {
     expect(await page.evaluate(() => '__ait' in window)).toBe(false)
   }
