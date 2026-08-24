@@ -50,6 +50,7 @@
     "onnxruntime-web": "1.23.2",
     "openai": "^7.4.0",
     "pixi.js": "^8.19.0",
+    "server-only": "^0.0.1",
     "solid-js": "catalog:",
     "unocss": "catalog:",
     "vite": "catalog:",

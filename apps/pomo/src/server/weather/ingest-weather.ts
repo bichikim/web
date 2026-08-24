@@ -1,3 +1,5 @@
+import 'server-only'
+
 import type {WeatherCitySlug} from 'src/features/weather'
 import {withTransactionalDatabase} from '../database'
 import {fetchKmaObservation, fetchKmaSky} from './kma-client'

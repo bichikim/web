@@ -1,3 +1,5 @@
+import 'server-only'
+
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
 import {withNoStore} from '../http/response'
