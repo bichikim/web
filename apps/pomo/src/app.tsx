@@ -36,7 +36,6 @@ const getTitle = (pathname: string) => {
       return 'Pomofi — 환불 및 청약철회 정책'
     case SERVICE_POLICY_PATHS.appsInToss.terms:
       return 'Pomofi — 앱인토스 서비스 이용약관'
-    case '/dev/terms':
     case SERVICE_POLICY_PATHS.legacy.terms:
     case SERVICE_POLICY_PATHS.web.terms:
       return 'Pomofi — 서비스 이용약관'
@@ -61,7 +60,6 @@ const getDescription = (pathname: string) => {
     case SERVICE_POLICY_PATHS.web.privacy:
       return PRIVACY_DESCRIPTION
     case SERVICE_POLICY_PATHS.appsInToss.terms:
-    case '/dev/terms':
     case SERVICE_POLICY_PATHS.legacy.terms:
     case SERVICE_POLICY_PATHS.web.terms:
       return TERMS_DESCRIPTION
