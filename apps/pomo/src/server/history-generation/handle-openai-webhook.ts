@@ -3,6 +3,7 @@ import {z, ZodError} from 'zod'
 
 import {HISTORY_SOURCE_POLICY, validateHistoryOutput} from 'src/features/history-generation'
 import {
+  associateGenerationResponse,
   failHistoryResponse,
   findGenerationRun,
   publishHistoryResponse,
@@ -56,16 +57,37 @@ const getRequiredTitles = (
 /** Processes one verified OpenAI response event. */
 export const handleOpenAiResponseEvent = async (event: ResponseWebhookEvent): Promise<void> => {
   const responseId = event.data.id
+  const response = await retrieveHistoryResponse(responseId)
+  let run = await findGenerationRun(responseId)
+
+  if (run === undefined) {
+    const generationRunId = response.metadata.generation_run_id
+    const submissionKey = response.metadata.submission_key
+
+    if (generationRunId === undefined || submissionKey === undefined) {
+      throw new TypeError('OpenAI response metadata does not identify a generation submission')
+    }
+
+    run = await associateGenerationResponse(responseId, generationRunId, submissionKey)
+  }
+
+  if (run === undefined) {
+    throw new Error(`Generation run not found for response: ${responseId}`)
+  }
+
+  if (response.metadata.generation_run_id !== run.id) {
+    throw new TypeError('OpenAI response metadata does not match the generation run')
+  }
+
+  const responseSubmissionKey = response.metadata.submission_key
+
+  if (responseSubmissionKey !== undefined && responseSubmissionKey !== run.openAiSubmissionKey) {
+    throw new TypeError('OpenAI response metadata does not match the generation submission')
+  }
 
   if (event.type !== 'response.completed') {
     await failHistoryResponse(event.id, responseId, `OpenAI ended with ${event.type}`)
     return
-  }
-
-  const run = await findGenerationRun(responseId)
-
-  if (run === undefined) {
-    throw new Error(`Generation run not found for response: ${responseId}`)
   }
 
   if (run.sourcePolicyVersion !== HISTORY_SOURCE_POLICY.version) {
@@ -74,15 +96,10 @@ export const handleOpenAiResponseEvent = async (event: ResponseWebhookEvent): Pr
   }
 
   try {
-    const response = await retrieveHistoryResponse(responseId)
     const target = getTargetMonthDay(run.targetDate)
 
     if (response.status !== 'completed') {
       throw new TypeError(`OpenAI response is not complete: ${response.status}`)
-    }
-
-    if (response.metadata.generation_run_id !== run.id) {
-      throw new TypeError('OpenAI response metadata does not match the generation run')
     }
 
     const requiredTitles = getRequiredTitles(response.metadata)
