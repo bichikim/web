@@ -11,7 +11,7 @@ vi.mock('@apps-in-toss/web-framework', () => ({
   TossAuth: {login: vi.fn()},
 }))
 
-import {revokeTossLoginSession, validateAppSession} from '../app-session'
+import {requestAccountLinkEmail, revokeTossLoginSession, validateAppSession} from '../app-session'
 
 describe('app session lifecycle', () => {
   beforeEach(() => {
@@ -49,5 +49,42 @@ describe('app session lifecycle', () => {
 
     await expect(revokeTossLoginSession('token')).rejects.toThrow('App session revocation failed')
     expect(storageMocks.removeItem).not.toHaveBeenCalled()
+  })
+
+  it('should report a successful account link email request', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      status: 'sent',
+    })
+  })
+
+  it('should preserve the account link retry delay', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, {headers: {'Retry-After': '42'}, status: 429})),
+    )
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      retryAfterSeconds: 42,
+      status: 'rate-limited',
+    })
+  })
+
+  it('should tolerate a missing account link retry delay', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 429})))
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      retryAfterSeconds: null,
+      status: 'rate-limited',
+    })
+  })
+
+  it('should report other account link failures without retry metadata', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 502})))
+
+    await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+      status: 'not-sent',
+    })
   })
 })

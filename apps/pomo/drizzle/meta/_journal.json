@@ -50,6 +50,13 @@
       "when": 1787415488072,
       "tag": "0006_quiet_molly_hayes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787568089518,
+      "tag": "0007_fresh_mister_fear",
+      "breakpoints": true
     }
   ]
 }
