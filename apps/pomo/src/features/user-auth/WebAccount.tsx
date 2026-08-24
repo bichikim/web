@@ -1,5 +1,7 @@
 import {createSignal, type JSX, onMount, Show} from 'solid-js'
 
+import * as m from '../../paraglide/messages.js'
+
 import {requestUserMagicLink} from './magic-link'
 import {
   ACCOUNT_ERROR_CLASSES,
@@ -42,16 +44,15 @@ export const WebAccount = () => {
         window.history.replaceState(null, '', url)
 
         if (linkResult === 'linked') {
-          setSuccessMessage('토스 계정과 이메일 연결을 완료했습니다.')
+          setSuccessMessage(m.web_account_linked())
         } else {
-          accountCallbackErrorMessage = '계정 연결이 만료되었거나 다른 계정에 연결된 이메일입니다.'
+          accountCallbackErrorMessage = m.web_account_link_expired()
           setErrorMessage(accountCallbackErrorMessage)
         }
       } else if (linkError === 'email') {
         url.searchParams.delete('link_error')
         window.history.replaceState(null, '', url)
-        accountCallbackErrorMessage =
-          '계정 연결 이메일을 확인하지 못했습니다. 토스 앱에서 새 연결 이메일을 요청해 주세요.'
+        accountCallbackErrorMessage = m.web_account_link_invalid()
         setErrorMessage(accountCallbackErrorMessage)
       }
 
@@ -63,7 +64,7 @@ export const WebAccount = () => {
       setSuccessMessage(null)
 
       if (accountCallbackErrorMessage === null) {
-        setErrorMessage('계정 정보를 불러오지 못했습니다.')
+        setErrorMessage(m.web_account_load_failed())
       }
 
       setIsLoading(false)
@@ -83,12 +84,12 @@ export const WebAccount = () => {
       })
 
       if (wasSent) {
-        setSuccessMessage('로그인 링크를 이메일로 보냈습니다. 처음이라면 계정도 함께 생성됩니다.')
+        setSuccessMessage(m.web_account_magic_link_sent())
       } else {
-        setErrorMessage('로그인 이메일을 보내지 못했습니다.')
+        setErrorMessage(m.web_account_magic_link_failed())
       }
     } catch {
-      setErrorMessage('로그인 서버에 연결하지 못했습니다.')
+      setErrorMessage(m.web_account_server_failed())
     } finally {
       setIsSubmitting(false)
     }
@@ -105,9 +106,9 @@ export const WebAccount = () => {
       }
 
       setSession(null)
-      setSuccessMessage('로그아웃했습니다.')
+      setSuccessMessage(m.web_account_signed_out())
     } catch {
-      setErrorMessage('로그아웃하지 못했습니다.')
+      setErrorMessage(m.web_account_sign_out_failed())
     } finally {
       setIsSubmitting(false)
     }
@@ -115,16 +116,17 @@ export const WebAccount = () => {
 
   return (
     <>
-      <Show when={!isLoading()} fallback={<p class="m-0 text-sm text-white/60">계정 확인 중…</p>}>
+      <Show
+        when={!isLoading()}
+        fallback={<p class="m-0 text-sm text-white/60">{m.web_account_checking()}</p>}
+      >
         <Show
           when={session()}
           fallback={
             <form action="/api/auth/sign-in/magic-link" class="grid gap-5" onSubmit={handleSubmit}>
-              <p class="m-0 text-sm leading-6 text-white/60">
-                이메일 링크로 로그인합니다. 처음 로그인하면 Pomo 계정이 생성됩니다.
-              </p>
+              <p class="m-0 text-sm leading-6 text-white/60">{m.web_account_intro()}</p>
               <label class="grid gap-2 text-sm font-650">
-                이메일
+                {m.web_account_email()}
                 <input
                   autocomplete="email"
                   class={ACCOUNT_FIELD_CLASSES}
@@ -140,7 +142,7 @@ export const WebAccount = () => {
                 disabled={isSubmitting()}
                 type="submit"
               >
-                {isSubmitting() ? '이메일 전송 중…' : '로그인 링크 받기'}
+                {isSubmitting() ? m.web_account_sending() : m.web_account_send()}
               </button>
             </form>
           }
@@ -148,7 +150,7 @@ export const WebAccount = () => {
           {(account) => (
             <div class="grid gap-5">
               <div class="rounded-3 border border-white/10 bg-white/5 px-4 py-4">
-                <p class="m-0 text-xs text-white/45">로그인된 이메일</p>
+                <p class="m-0 text-xs text-white/45">{m.web_account_signed_in_email()}</p>
                 <p class="mb-0 mt-1 break-all text-sm font-700">{account().email}</p>
               </div>
               <button
@@ -157,7 +159,7 @@ export const WebAccount = () => {
                 onClick={handleSignOut}
                 type="button"
               >
-                로그아웃
+                {m.web_account_sign_out()}
               </button>
             </div>
           )}

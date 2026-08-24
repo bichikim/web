@@ -8,19 +8,20 @@ import {
   type PSceneMotionMode,
   type PSceneStyle,
 } from '../../features/focus-room-animation/index'
+import {type PActivity, type PGaze} from '../../features/focus-room-scene-preferences/index'
 import {
-  FOCUS_ROOM_ACTIVITY_OPTIONS,
-  FOCUS_ROOM_GAZE_OPTIONS,
-  FOCUS_ROOM_TIME_OPTIONS,
-  type PActivity,
-  type PGaze,
-} from '../../features/focus-room-scene-preferences/index'
+  getLocalizedActivityOptions,
+  getLocalizedGazeOptions,
+  getLocalizedTimeLabel,
+  getLocalizedTimeOptions,
+} from '../../features/localization/index'
 import {getNextTimeMode, type SceneTimeMode} from '../../features/focus-room-time/index'
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
 import {type WeatherCitySlug, type WeatherState} from '../../features/weather/index'
+import * as m from '../../paraglide/messages.js'
 import {PScribbleCircleControl} from '../PScribbleCircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
-import {CLASSES, findLabel, SceneTime} from './shared'
+import {CLASSES, SceneTime} from './shared'
 import {PWeatherStatus} from '../PWeatherStatus'
 
 interface SceneToolbarProps {
@@ -50,14 +51,14 @@ interface SceneToolbarProps {
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
   const timeModeOption = () =>
-    FOCUS_ROOM_TIME_OPTIONS.find((option) => option.value === props.timeMode) ??
-    FOCUS_ROOM_TIME_OPTIONS[0]
+    getLocalizedTimeOptions().find((option) => option.value === props.timeMode) ??
+    getLocalizedTimeOptions()[0]
   const timeAccessibleLabel = () => {
     const option = timeModeOption()
 
     return option.value === 'auto'
-      ? `시간대 자동, 현재 ${findLabel(FOCUS_ROOM_TIME_OPTIONS, props.time)}`
-      : `시간대 ${option.label}`
+      ? m.scene_time_automatic({time: getLocalizedTimeLabel(props.time)})
+      : m.scene_time_selected({time: option.label})
   }
 
   return (
@@ -68,7 +69,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         'xs:right-7 lg:top-6',
       )}
     >
-      <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
+      <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
           <PIconButton
             accessibleLabel={timeAccessibleLabel()}
@@ -84,9 +85,9 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             class={CLASSES.sceneControl}
             getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
             hideLabel
-            label="행동"
+            label={m.settings_activity()}
             onChange={props.onActivityChange}
-            options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+            options={getLocalizedActivityOptions()}
             value={props.activity}
           />
         </PScribbleCircleControl>
@@ -96,9 +97,9 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             class={CLASSES.sceneControl}
             getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
             hideLabel
-            label="보기"
+            label={m.settings_view()}
             onChange={props.onGazeChange}
-            options={FOCUS_ROOM_GAZE_OPTIONS}
+            options={getLocalizedGazeOptions()}
             value={props.gaze}
           />
         </PScribbleCircleControl>
@@ -150,7 +151,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           role="status"
         >
           <span aria-hidden="true" class={CLASSES.loadingSpinner} />
-          장면 전환 중
+          {m.scene_transitioning()}
         </span>
       </Show>
     </div>

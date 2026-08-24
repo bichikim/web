@@ -15,6 +15,7 @@ import {
   type PomodoroTimerState,
   usePomodoroTimer,
 } from '../features/pomodoro-timer'
+import * as m from '../paraglide/messages.js'
 import breakStatusIcon from './assets/pomodoro-status-icons/break.webp'
 import focusStatusIcon from './assets/pomodoro-status-icons/focus.webp'
 import scribbleBreakStatusIcon from './assets/pomodoro-status-icons/scribble/break.webp'
@@ -32,26 +33,31 @@ interface PhasePresentation {
   readonly startLabel: string
 }
 
-const PHASE_PRESENTATIONS = {
-  focus: {
-    characterEmotion: 'focus',
-    icon: 'i-tabler-focus-2',
-    label: '집중',
-    startLabel: '집중 시작',
-  },
-  longBreak: {
-    characterEmotion: 'rest',
-    icon: 'i-tabler-armchair-2',
-    label: '긴 휴식',
-    startLabel: '긴 휴식 시작',
-  },
-  shortBreak: {
-    characterEmotion: 'rest',
-    icon: 'i-tabler-coffee',
-    label: '휴식',
-    startLabel: '휴식 시작',
-  },
-} as const satisfies Record<PomodoroPhase, PhasePresentation>
+const getPhasePresentation = (phase: PomodoroPhase): PhasePresentation => {
+  switch (phase) {
+    case 'focus':
+      return {
+        characterEmotion: 'focus',
+        icon: 'i-tabler-focus-2',
+        label: m.pomodoro_focus(),
+        startLabel: m.pomodoro_focus_start(),
+      }
+    case 'longBreak':
+      return {
+        characterEmotion: 'rest',
+        icon: 'i-tabler-armchair-2',
+        label: m.pomodoro_long_break(),
+        startLabel: m.pomodoro_long_break_start(),
+      }
+    case 'shortBreak':
+      return {
+        characterEmotion: 'rest',
+        icon: 'i-tabler-coffee',
+        label: m.pomodoro_break(),
+        startLabel: m.pomodoro_break_start(),
+      }
+  }
+}
 
 const CHARACTER_IMAGES = {
   original: {
@@ -80,11 +86,13 @@ export interface PPomodoroPresentation {
 const getStatusLabel = (state: PomodoroTimerState) => {
   switch (state.status) {
     case 'idle':
-      return state.phase === 'focus' ? '집중 준비' : '휴식 준비'
+      return state.phase === 'focus' ? m.pomodoro_focus_ready() : m.pomodoro_break_ready()
     case 'paused':
-      return '일시정지'
+      return m.pomodoro_paused()
     case 'running':
-      return state.phase === 'focus' ? '집중 중' : `${PHASE_PRESENTATIONS[state.phase].label} 중`
+      return state.phase === 'focus'
+        ? m.pomodoro_focus_running()
+        : m.pomodoro_phase_running({phase: getPhasePresentation(state.phase).label})
   }
 
   const exhaustiveStatus: never = state
@@ -111,7 +119,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
   const [isEditingDurations, setIsEditingDurations] = createSignal(false)
   const [actionContainer, setActionContainer] = createSignal<HTMLDivElement | null>(null)
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
-  const phasePresentation = createMemo(() => PHASE_PRESENTATIONS[timer.state().phase])
+  const phasePresentation = createMemo(() => getPhasePresentation(timer.state().phase))
   const statusLabel = createMemo(() => getStatusLabel(timer.state()))
   const timeLabel = createMemo(() => formatPomodoroTime(timer.remainingSeconds()))
   const completedInCycle = createMemo(() =>
@@ -125,10 +133,10 @@ export const PPomodoro = (props: PPomodoroProps) => {
     const currentState = timer.state()
 
     if (currentState.status === 'paused') {
-      return '계속하기'
+      return m.pomodoro_continue()
     }
 
-    return currentState.status === 'running' ? '일시정지' : phasePresentation().startLabel
+    return currentState.status === 'running' ? m.pomodoro_paused() : phasePresentation().startLabel
   })
   const primaryIcon = createMemo(() => getPrimaryIcon(timer.state(), props.sceneStyle))
   const handleOpenChange = (nextOpen: boolean) => {
@@ -189,10 +197,10 @@ export const PPomodoro = (props: PPomodoroProps) => {
         isOpen={isOpen()}
         onCloseAutoFocus={handleCloseAutoFocus}
         onOpenChange={handleOpenChange}
-        title="포모도로"
+        title={m.pomodoro_title()}
       >
         <section
-          aria-label="포모도로 타이머"
+          aria-label={m.pomodoro_timer_label()}
           class={CLASSES.pomodoroPanel}
           data-phase={timer.state().phase}
         >
@@ -227,20 +235,20 @@ export const PPomodoro = (props: PPomodoroProps) => {
               {primaryLabel()}
             </PButton>
             <PIconButton
-              accessibleLabel="다음 단계로 이동"
+              accessibleLabel={m.pomodoro_next_phase()}
               class={CLASSES.pomodoroPanelCompactAction}
-              feedback="다음 단계"
+              feedback={m.pomodoro_next_phase_feedback()}
               icon={getPomoIconClass('i-tabler-player-track-next', props.sceneStyle)}
               onPress={timer.onNextPhase}
             />
             <Show when={timer.state().status !== 'idle'}>
               <PIconButton
-                accessibleLabel="현재 세션 종료"
+                accessibleLabel={m.pomodoro_end_session()}
                 class={cx(
                   CLASSES.pomodoroPanelCompactAction,
                   CLASSES.pomodoroPanelCompactActionDanger,
                 )}
-                feedback="세션 종료"
+                feedback={m.pomodoro_end_session_feedback()}
                 icon={getPomoIconClass('i-tabler-square', props.sceneStyle)}
                 onPress={timer.onStop}
               />
@@ -250,8 +258,8 @@ export const PPomodoro = (props: PPomodoroProps) => {
           <PSwitch
             checked={timer.isAutoStartEnabled()}
             class={CLASSES.pomodoroPanelAutoStart}
-            description="타이머가 끝나면 다음 집중 또는 휴식을 바로 시작해요."
-            label="집중·휴식 자동 재생"
+            description={m.pomodoro_auto_play_description()}
+            label={m.pomodoro_auto_play()}
             onChange={timer.onAutoStartChange}
           />
 

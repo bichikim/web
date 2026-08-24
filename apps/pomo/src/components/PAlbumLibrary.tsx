@@ -3,6 +3,7 @@ import {createSignal, Show} from 'solid-js'
 import {getPomoIconClass} from '../design-system/icon-style'
 import type {PTrack} from '../features/focus-room-audio'
 import type {PSceneStyle} from '../features/focus-room-animation'
+import * as m from '../paraglide/messages.js'
 import {PAlbumLibraryPanel} from './album-library/Panel'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
 
@@ -22,7 +23,7 @@ export const PAlbumLibrary = (props: PAlbumLibraryProps) => {
   return (
     <>
       <PPlayerUtilityButton
-        accessibleLabel="앨범 추가"
+        accessibleLabel={m.album_open()}
         icon={getPomoIconClass('i-tabler-album', props.sceneStyle)}
         onPress={(source) => {
           setTriggerElement(source)

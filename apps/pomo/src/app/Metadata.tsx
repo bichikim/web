@@ -1,14 +1,13 @@
 import {Link, Meta, Title} from '@solidjs/meta'
 import {useLocation} from '@solidjs/router'
-import {isSearchIndexablePath, normalizePathname} from '../components/pomo-route'
+import {
+  getCanonicalPathname,
+  isSearchIndexablePath,
+  normalizePathname,
+} from '../components/pomo-route'
 import {SEARCH_CONFIG} from '../config/search'
 import {SERVICE_POLICY_PATHS} from '../config/service-policy'
-
-const DEFAULT_DESCRIPTION =
-  'Pomo와 함께 포모도로 타이머와 집중 음악을 사용하는 집중 앱 Pomofi입니다.'
-
-const HOME_DESCRIPTION =
-  'Pomo와 함께 장면, 포모도로, 음악, 대화와 피드를 한곳에서 사용하는 집중 앱 Pomofi입니다.'
+import * as m from '../paraglide/messages.js'
 
 const REFUND_POLICY_DESCRIPTION =
   'Pomofi 앱인토스 곡·앨범 단위 음악 이용권의 환불 및 청약철회 기준을 안내합니다.'
@@ -51,7 +50,7 @@ const getTitle = (pathname: string) => {
 const getDescription = (pathname: string) => {
   switch (normalizePathname(pathname)) {
     case '/':
-      return HOME_DESCRIPTION
+      return m.app_home_description()
     case SERVICE_POLICY_PATHS.refund:
       return REFUND_POLICY_DESCRIPTION
     case SERVICE_POLICY_PATHS.appsInToss.privacy:
@@ -65,14 +64,14 @@ const getDescription = (pathname: string) => {
     case '/third-party-notices':
       return THIRD_PARTY_NOTICES_DESCRIPTION
     default:
-      return DEFAULT_DESCRIPTION
+      return m.app_default_description()
   }
 }
 
 export const PDocumentMetadata = () => {
   const location = useLocation()
   const canonicalUrl = () =>
-    new URL(normalizePathname(location.pathname), SEARCH_CONFIG.origin).href
+    new URL(getCanonicalPathname(location.pathname), SEARCH_CONFIG.origin).href
 
   return (
     <>

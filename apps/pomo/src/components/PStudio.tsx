@@ -13,13 +13,11 @@ import type {PTrack} from '../features/focus-room-audio'
 import {usePEvents} from '../features/focus-room-dialogue'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
-  FOCUS_ROOM_ACTIVITY_OPTIONS,
-  FOCUS_ROOM_GAZE_OPTIONS,
-  FOCUS_ROOM_TIME_OPTIONS,
   type PActivity,
   type PGaze,
   usePScenePreferences,
 } from '../features/focus-room-scene-preferences'
+import {getLocalizedSceneLabel} from '../features/localization'
 import {
   getAutomaticScenePeriod,
   resolveScenePeriod,
@@ -28,23 +26,25 @@ import {
 import {usePSay} from '../features/pomo-webmcp'
 import {useScreenSaver} from '../features/screen-saver'
 import {useWeather} from '../features/weather'
+import * as m from '../paraglide/messages.js'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
 import {type PPomodoroPresentation} from './PPomodoro'
 import {PSceneFallback} from './p-studio/SceneFallback'
 import {PScreenSaver} from './PScreenSaver'
-import {CLASSES, findLabel, SceneTime} from './p-studio/shared'
+import {CLASSES, SceneTime} from './p-studio/shared'
 import {PStudioScene} from './p-studio/Scene'
 import {PStudioEvents} from './p-studio/Events'
 import {SceneToolbar} from './p-studio/Toolbar'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
-const INITIAL_POMODORO_PRESENTATION = {
-  phaseLabel: '집중',
-  statusLabel: '집중 준비',
-  timeLabel: '25:00',
-} satisfies PPomodoroPresentation
+const getInitialPomodoroPresentation = () =>
+  ({
+    phaseLabel: m.pomodoro_focus(),
+    statusLabel: m.pomodoro_focus_ready(),
+    timeLabel: '25:00',
+  }) satisfies PPomodoroPresentation
 
 interface SceneAsset {
   readonly depthSource: string
@@ -59,15 +59,12 @@ const getSceneAsset = (
   gaze: PGaze,
   sceneStyle: PSceneStyle,
 ): SceneAsset => {
-  const timeLabel = findLabel(FOCUS_ROOM_TIME_OPTIONS, time)
-  const activityLabel = findLabel(FOCUS_ROOM_ACTIVITY_OPTIONS, activity)
-  const gazeLabel = findLabel(FOCUS_ROOM_GAZE_OPTIONS, gaze)
   const scene = getPScene(time, activity, gaze)
 
   return {
     depthSource: scene.depthSources[sceneStyle],
     id: scene.id,
-    label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
+    label: getLocalizedSceneLabel(time, activity, gaze),
     source: scene.source,
   }
 }
@@ -86,7 +83,7 @@ export const PStudio = () => {
   const [isEntryVisible, setIsEntryVisible] = createSignal(false)
   const [currentTrack, setCurrentTrack] = createSignal<PTrack | null>(null)
   const [pomodoroPresentation, setPomodoroPresentation] = createSignal<PPomodoroPresentation>(
-    INITIAL_POMODORO_PRESENTATION,
+    getInitialPomodoroPresentation(),
   )
   const screenSaver = useScreenSaver()
   const weather = useWeather()

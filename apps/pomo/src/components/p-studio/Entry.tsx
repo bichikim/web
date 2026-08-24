@@ -1,6 +1,7 @@
 import {type JSX} from 'solid-js'
 import {PButton} from '../../design-system/PButton'
 import {PServicePolicyLinks} from '../../features/service-terms/index'
+import * as m from '../../paraglide/messages.js'
 import smilingFaceSource from '../assets/pomodoro-status-icons/break.webp'
 import {CLASSES} from './shared'
 
@@ -20,7 +21,7 @@ interface PEntryProps {
 
 export const PEntry = (props: PEntryProps) => (
   <section
-    aria-label="Pomo 시작"
+    aria-label={m.scene_start_label()}
     class={CLASSES.entry}
     data-exiting={props.isExiting ? '' : undefined}
     style={ENTRY_STYLE}
@@ -41,7 +42,7 @@ export const PEntry = (props: PEntryProps) => (
           tone="primary"
           trailingIcon="i-tabler-arrow-right"
         >
-          포모와 시작하기
+          {m.scene_start_action()}
         </PButton>
         <PServicePolicyLinks tone="overlay" />
       </div>

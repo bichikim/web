@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 import {getPomoIconClass} from '../../design-system/icon-style'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
+import * as m from '../../paraglide/messages.js'
 import {CLASSES} from './shared'
 
 interface PomodoroSessionProgressProps {
@@ -15,7 +16,10 @@ interface PomodoroSessionProgressProps {
 export const PomodoroSessionProgress = (props: PomodoroSessionProgressProps) => (
   <div class={CLASSES.pomodoroPanelSessionRow}>
     <div
-      aria-label={`${props.sessionCount}회 중 ${props.completedCount}회 집중 완료`}
+      aria-label={m.pomodoro_progress({
+        completed: props.completedCount,
+        total: props.sessionCount,
+      })}
       class={CLASSES.pomodoroPanelSessions}
     >
       <For each={props.positions}>
@@ -38,7 +42,7 @@ export const PomodoroSessionProgress = (props: PomodoroSessionProgressProps) => 
           aria-hidden="true"
           class={cx(getPomoIconClass('i-tabler-refresh', props.sceneStyle), 'size-3.5')}
         />
-        세션 초기화
+        {m.pomodoro_reset()}
       </button>
     </Show>
   </div>

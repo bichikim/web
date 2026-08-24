@@ -4,6 +4,7 @@ import {For} from 'solid-js'
 import {getPomoIconClass} from '../design-system/icon-style'
 import type {RepeatMode} from '../features/focus-room-audio'
 import type {PSceneStyle} from '../features/focus-room-animation'
+import * as m from '../paraglide/messages.js'
 
 const CLASSES = {
   playerMode: [
@@ -17,8 +18,8 @@ const CLASSES = {
 } as const
 
 const REPEAT_MODES = [
-  {icon: 'i-tabler-repeat', label: '전체 반복', value: 'repeat-all'},
-  {icon: 'i-tabler-repeat-once', label: '한 곡 반복', value: 'repeat-one'},
+  {icon: 'i-tabler-repeat', label: m.player_repeat_all, value: 'repeat-all'},
+  {icon: 'i-tabler-repeat-once', label: m.player_repeat_one, value: 'repeat-one'},
 ] as const
 
 export interface PPlaybackModesProps {
@@ -31,11 +32,11 @@ export interface PPlaybackModesProps {
 
 export const PPlaybackModes = (props: PPlaybackModesProps) => (
   <div class={cx(CLASSES.playerModes, 'flex w-fit items-center gap-0.5 rounded-full p-1')}>
-    <div class="contents" role="group" aria-label="반복 방식">
+    <div class="contents" role="group" aria-label={m.player_repeat_mode()}>
       <For each={REPEAT_MODES}>
         {(mode) => (
           <button
-            aria-label={mode.label}
+            aria-label={mode.label()}
             aria-pressed={props.repeatMode === mode.value}
             class={cx(
               CLASSES.playerMode,
@@ -43,7 +44,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
               props.repeatMode === mode.value && 'is-active',
             )}
             onClick={() => props.onRepeatModeChange(mode.value)}
-            title={mode.label}
+            title={mode.label()}
             type="button"
           >
             <span
@@ -56,7 +57,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
     </div>
     <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-border" />
     <button
-      aria-label="랜덤 재생"
+      aria-label={m.player_shuffle()}
       aria-pressed={props.shuffleEnabled}
       class={cx(
         CLASSES.playerMode,
@@ -64,7 +65,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
         props.shuffleEnabled && 'is-active',
       )}
       onClick={() => props.onShuffleChange()}
-      title="랜덤 재생"
+      title={m.player_shuffle()}
       type="button"
     >
       <span

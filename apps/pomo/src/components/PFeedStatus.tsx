@@ -5,6 +5,7 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 import {type FeedDialogueJob, usePFeedContext} from '../features/focus-room-feed'
 import {formatModelDownloadSize} from '../features/model-storage'
 import {getSupertonicModel, isSupertonicModelDownloaded} from '../features/supertonic'
+import * as m from '../paraglide/messages.js'
 import {FeedStatusSurface} from './feed-status/Surface'
 import {CLASSES} from './feed-status/shared'
 import {PModelDownloadConsent} from './PModelDownloadConsent'
@@ -87,7 +88,9 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                     />
                     <span class={CLASSES.feedStatusCopy}>
                       <strong>
-                        {feeds.state().status === 'error' ? '피드 확인 필요' : '피드 읽는 중'}
+                        {feeds.state().status === 'error'
+                          ? m.feed_needs_attention()
+                          : m.feed_reading()}
                       </strong>
                       <small>{feeds.state().message}</small>
                     </span>
@@ -98,7 +101,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                         size="small"
                         tone="secondary"
                       >
-                        다시 확인
+                        {m.feed_check_again()}
                       </PButton>
                     </Show>
                   </FeedStatusSurface>
@@ -111,8 +114,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                   <span class={CLASSES.feedStatusCopy}>
                     <strong>
                       {feeds.unlistenedDialogues().length > 1
-                        ? `새 피드 대화 ${feeds.unlistenedDialogues().length}개가 준비됐어요`
-                        : '새 피드 대화가 준비됐어요'}
+                        ? m.feed_ready_count({count: feeds.unlistenedDialogues().length})
+                        : m.feed_ready_one()}
                     </strong>
                     <small>
                       {ready().metadata.sourceTitle} · {ready().metadata.itemTitle}
@@ -124,7 +127,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                     size="small"
                     tone="secondary"
                   >
-                    {feeds.unlistenedDialogues().length > 1 ? '연속 듣기' : '듣기'}
+                    {feeds.unlistenedDialogues().length > 1 ? m.feed_listen_all() : m.feed_listen()}
                   </PButton>
                 </FeedStatusSurface>
               )}
@@ -134,8 +137,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
           <FeedStatusSurface sceneStyle={props.sceneStyle} state="recovery">
             <span aria-hidden="true" class="i-tabler-refresh size-5" />
             <span class={CLASSES.feedStatusCopy}>
-              <strong>미완성 피드 대화 {feeds.recoveryJobs().length}개</strong>
-              <small>처음부터 다시 만들까요?</small>
+              <strong>{m.feed_incomplete_count({count: feeds.recoveryJobs().length})}</strong>
+              <small>{m.feed_retry_question()}</small>
             </span>
             <span class={CLASSES.feedStatusActions}>
               <PButton
@@ -145,7 +148,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                 size="small"
                 tone="secondary"
               >
-                {isCheckingModel() ? '확인 중…' : '다시 시도'}
+                {isCheckingModel() ? m.feed_checking() : m.feed_retry()}
               </PButton>
               <PButton
                 class={CLASSES.feedStatusAction}
@@ -153,7 +156,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                 size="small"
                 tone="secondary"
               >
-                나중에
+                {m.feed_later()}
               </PButton>
               <PButton
                 class={CLASSES.feedStatusAction}
@@ -161,14 +164,14 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                 size="small"
                 tone="danger"
               >
-                삭제
+                {m.feed_delete()}
               </PButton>
             </span>
           </FeedStatusSurface>
         </Show>
       </Show>
       <PModelDownloadConsent
-        actionLabel="피드 음성 만들기"
+        actionLabel={m.feed_create_voice()}
         downloadSize={downloadSize() ?? ''}
         isOpen={downloadSize() !== null}
         onCancel={() => setDownloadSize(null)}

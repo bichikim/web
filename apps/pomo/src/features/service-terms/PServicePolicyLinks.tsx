@@ -2,6 +2,7 @@ import {cva, type VariantProps} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
 import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
+import * as m from '../../paraglide/messages.js'
 import {PolicyLink} from './PolicyLink'
 
 const policyLinksClasses = cva('flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5', {
@@ -35,18 +36,18 @@ export const PServicePolicyLinks = (props: PServicePolicyLinksProps) => {
     props.platform ?? (import.meta.env.POMO_IS_APPS_IN_TOSS ? 'apps-in-toss' : 'web')
 
   return (
-    <nav aria-label="서비스 정책" class={policyLinksClasses({tone: props.tone})}>
+    <nav aria-label={m.policy_navigation()} class={policyLinksClasses({tone: props.tone})}>
       <PolicyLink
         current={props.currentPolicy === 'terms'}
         href={serviceTermsPath(platform())}
-        label="서비스 이용약관"
+        label={m.policy_terms()}
         tone={props.tone}
       />
       <span aria-hidden="true">·</span>
       <PolicyLink
         current={props.currentPolicy === 'privacy'}
         href={privacyPolicyPath(platform())}
-        label="개인정보처리방침"
+        label={m.policy_privacy()}
         tone={props.tone}
       />
       <Show when={platform() === 'apps-in-toss'}>
@@ -54,7 +55,7 @@ export const PServicePolicyLinks = (props: PServicePolicyLinksProps) => {
         <PolicyLink
           current={props.currentPolicy === 'refund'}
           href={SERVICE_POLICY_PATHS.refund}
-          label="환불 및 청약철회 정책"
+          label={m.policy_refund()}
           tone={props.tone}
         />
       </Show>

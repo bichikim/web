@@ -1,5 +1,6 @@
 import {createMiddleware} from '@solidjs/start/middleware'
 
+import {paraglideMiddleware} from '../paraglide/server.js'
 import {handleAdminAuthRequest} from './admin-auth.ts'
 import {corsMiddleware} from './cors.ts'
 import {handleLegacyRedirectRequest} from './legacy-redirect.ts'
@@ -9,6 +10,7 @@ import {handleUserAuthRequest} from './user-auth.ts'
 export default createMiddleware([
   securityHeadersMiddleware,
   corsMiddleware,
+  (event, next) => paraglideMiddleware(event.req, () => next()),
   async (event, next) => {
     if (!import.meta.env.POMO_IS_APPS_IN_TOSS) {
       const legacyRedirect = handleLegacyRedirectRequest(event.req)
