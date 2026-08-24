@@ -107,7 +107,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
     <div class="relative border-t border-solid border-border px-4 py-3">
       <ol
         aria-label={m.album_track_list({title: props.albumTitle})}
-        class="m-0 grid max-h-[10.5rem] list-none gap-x-5 overflow-y-auto overscroll-contain
+        class="m-0 grid max-h-[10.5rem] list-none gap-x-5 overflow-y-auto overscroll-auto
           p-0 pr-1 outline-none [scrollbar-gutter:stable] focus-visible:shadow-focus
           sm:max-h-[5.25rem] sm:grid-cols-2 2xl:max-h-[10.5rem] 2xl:grid-cols-1"
         onScroll={updateOverflow}
