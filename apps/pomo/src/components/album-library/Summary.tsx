@@ -1,4 +1,5 @@
 import {Show} from 'solid-js'
+
 import {type PResolvedAlbum, type PTrack} from '../../features/focus-room-audio/index'
 
 const SECONDS_PER_MINUTE = 60
@@ -28,47 +29,52 @@ const ALBUM_ART_CLASSES = [
   ].join(''),
 ] as const
 
-export const AlbumSummary = (props: {
+interface AlbumSummaryProps {
   readonly album: PResolvedAlbum
-  readonly expanded: boolean
-  readonly expandable: boolean
   readonly index: number
-}) => (
+}
+
+export const AlbumSummary = (props: AlbumSummaryProps) => (
   <div class="flex gap-3.5 p-4">
-    <div
-      aria-hidden="true"
-      class={[
-        'grid size-16 flex-none place-items-center rounded-4 text-white shadow-panel',
-        ALBUM_ART_CLASSES[props.index % ALBUM_ART_CLASSES.length],
-      ].join(' ')}
+    <Show
+      fallback={
+        <div
+          aria-hidden="true"
+          class={[
+            'grid size-16 flex-none place-items-center rounded-4 text-white shadow-panel',
+            ALBUM_ART_CLASSES[props.index % ALBUM_ART_CLASSES.length],
+          ].join(' ')}
+        >
+          <span class={`${props.album.icon} size-6.5 opacity-90`} />
+        </div>
+      }
+      when={props.album.coverImageUrl}
     >
-      <span class={`${props.album.icon} size-6.5 opacity-90`} />
-    </div>
+      {(coverImageUrl) => (
+        <img
+          alt={`${props.album.title} 앨범 커버`}
+          class="size-16 flex-none rounded-4 object-cover shadow-panel"
+          src={coverImageUrl()}
+        />
+      )}
+    </Show>
     <div class="min-w-0 flex-1 py-0.5">
       <h3 class="m-0 truncate text-base font-750 leading-5 text-foreground">{props.album.title}</h3>
       <p class="mb-0 mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
         {props.album.description}
       </p>
-      <Show when={props.album.tracks.length > 0}>
+      <Show when={(props.album.trackCount ?? props.album.tracks.length) > 0}>
         <p class="mb-0 mt-2 flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground">
           <span aria-hidden="true" class="i-tabler-music size-3.5" />
-          <span>{props.album.tracks.length}곡</span>
-          <span aria-hidden="true" class="opacity-50">
-            ·
-          </span>
-          <span>{formatDuration(props.album.tracks)}</span>
+          <span>{props.album.trackCount ?? props.album.tracks.length}곡</span>
+          <Show when={props.album.tracks.length > 0}>
+            <span aria-hidden="true" class="opacity-50">
+              ·
+            </span>
+            <span>{formatDuration(props.album.tracks)}</span>
+          </Show>
         </p>
       </Show>
     </div>
-    <Show when={props.expandable}>
-      <span
-        aria-hidden="true"
-        class={[
-          'i-tabler-chevron-down mt-1 size-4 flex-none text-muted-foreground',
-          'transition-transform motion-reduce:transition-none',
-          props.expanded ? 'rotate-180' : '',
-        ].join(' ')}
-      />
-    </Show>
   </div>
 )

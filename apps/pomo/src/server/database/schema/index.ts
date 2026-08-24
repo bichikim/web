@@ -1,5 +1,7 @@
+export * from './commerce'
 export * from './feed-channels'
 export * from './historical-generation-runs'
 export * from './historical-moments'
+export * from './music'
 export * from './users'
 export * from './weather'

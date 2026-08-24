@@ -43,7 +43,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
-    "concurrently": "^9.2.1",
+    "concurrently": "^9.2.3",
     "vite": "catalog:"
   }
 }

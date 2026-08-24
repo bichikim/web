@@ -6,14 +6,14 @@ import {For, Show} from 'solid-js'
 import {getPomoIconClass} from '../design-system/icon-style'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
-import {ExpandedPlayerControls} from './music-player-view/ExpandedControls'
-import {ExpandedPlayerProgress} from './music-player-view/ExpandedProgress'
 import {PAlbumLibrary} from './PAlbumLibrary'
 import {POverflowMarquee} from './POverflowMarquee'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
 import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from './PScribbleFrame'
+import {ExpandedPlayerControls} from './music-player-view/ExpandedControls'
+import {ExpandedPlayerProgress} from './music-player-view/ExpandedProgress'
 import {SummaryPlayButton} from './music-player-view/SummaryPlayButton'
-import {CLASSES, MusicPlayerViewProps} from './music-player-view/shared'
+import {CLASSES, type MusicPlayerViewProps} from './music-player-view/shared'
 
 const ACTIVE_VISUALIZER_OPACITY = 0.76
 const FALLBACK_TRACK_ARTIST = 'MP3를 연결하면 이곳에서 재생돼요'
@@ -137,6 +137,9 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
 
             <PAlbumLibrary
               onAddTracks={handleAlbumAdd}
+              onClearTracks={props.onAlbumClear}
+              onPreviewEnd={props.onPreviewEnd}
+              onPreviewStart={props.onPreviewStart}
               sceneStyle={props.sceneStyle}
               tracks={props.tracks}
             />

@@ -52,6 +52,7 @@
 | [자체 RSS·Atom 발행 서비스](./development/feed-publishing.md)        | Pomo가 여러 공개 피드를 발행하고 Vercel CDN 캐시를 구성할 때               |
 | [타이머와 음악](./development/timer-audio.md)                        | 뽀모도로 상태, 음악 재생과 오디오 제어를 다룰 때                           |
 | [음악 라이브러리와 재생목록](./development/audio-library.md)         | 곡·앨범 JSON, 기본 재생목록과 사용자 목록 저장을 다룰 때                   |
+| [유료 음악과 앨범 관리](./development/paid-albums.md)                | 관리자 앨범 등록, 비공개 R2, 구매 권한과 유료 재생을 다룰 때               |
 | [3D 장면과 상호작용](./development/3d.md)                            | 캐릭터, 애니메이션, 카메라, 3D UI와 성능을 다룰 때                         |
 | [2D 동일 장면 변형 제작](./development/2d-scene-variant-workflow.md) | 같은 배경에서 행동·시선만 다른 2D 이미지 세트를 제작할 때                  |
 | [2D 입모양과 턱 전환](./development/2d-mouth-animation.md)           | 대사 립싱크용 입모양, 중간 프레임과 턱 움직임을 제작·연결할 때             |
