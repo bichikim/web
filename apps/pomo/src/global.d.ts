@@ -10,6 +10,12 @@ interface ImportMetaEnv {
   readonly POMO_RELEASE: string
 }
 
+declare namespace App {
+  interface RequestEventLocals {
+    securityNonce: string
+  }
+}
+
 type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {
   readonly audio?: string
   readonly disabled?: boolean
