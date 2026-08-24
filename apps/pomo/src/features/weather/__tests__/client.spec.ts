@@ -65,3 +65,18 @@ it('should distinguish a provider failure from an active collection', async () =
     status: 'unavailable',
   })
 })
+
+it('should distinguish an invalid JSON weather response', () => {
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response('{')))
+
+  return expect(fetchWeatherFeed('seoul')).rejects.toMatchObject({kind: 'parse'})
+})
+
+it('should distinguish a weather response schema mismatch', () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn<typeof fetch>().mockResolvedValue(Response.json({...feed, stale: 1})),
+  )
+
+  return expect(fetchWeatherFeed('seoul')).rejects.toMatchObject({kind: 'schema'})
+})
