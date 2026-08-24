@@ -1,3 +1,4 @@
+import {sql} from 'drizzle-orm'
 import {index, pgEnum, pgTable, timestamp, uniqueIndex, uuid, varchar} from 'drizzle-orm/pg-core'
 
 export const pomoIdentityProviderEnum = pgEnum('pomo_identity_provider', ['neon', 'toss'])
@@ -41,6 +42,10 @@ export const pomoAppSessions = pgTable(
   },
   (table) => [
     uniqueIndex('pomo_app_sessions_token_hash_index').on(table.tokenHash),
+    index('pomo_app_sessions_expiry_index').on(table.expiresAt),
+    index('pomo_app_sessions_revoked_index')
+      .on(table.revokedAt)
+      .where(sql`${table.revokedAt} is not null`),
     index('pomo_app_sessions_user_expiry_index').on(table.userId, table.expiresAt),
   ],
 )

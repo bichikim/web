@@ -1,0 +1,2 @@
+CREATE INDEX "pomo_app_sessions_expiry_index" ON "pomo_app_sessions" USING btree ("expires_at");--> statement-breakpoint
+CREATE INDEX "pomo_app_sessions_revoked_index" ON "pomo_app_sessions" USING btree ("revoked_at") WHERE "pomo_app_sessions"."revoked_at" is not null;
