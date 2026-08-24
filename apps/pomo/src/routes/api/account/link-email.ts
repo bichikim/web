@@ -5,7 +5,10 @@ import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {authenticateAppRequest} from 'src/server/user-auth/http'
 import {sendAccountLinkEmail} from 'src/server/user-auth/magic-link'
-import {createAccountLinkChallenge} from 'src/server/user-auth/repository'
+import {
+  createAccountLinkChallenge,
+  invalidateAccountLinkChallenge,
+} from 'src/server/user-auth/repository'
 
 const MAXIMUM_BODY_SIZE = 4096
 const MAX_EMAIL_LENGTH = 320
@@ -54,6 +57,7 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     })
 
     if (!wasSent) {
+      await invalidateAccountLinkChallenge(challenge.token)
       return noStoreJson({error: 'email_not_sent'}, {status: HTTP_BAD_GATEWAY})
     }
 
