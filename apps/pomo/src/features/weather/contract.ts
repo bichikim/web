@@ -43,7 +43,7 @@ export interface WeatherFeed {
   readonly updatedAt: string
 }
 
-const weatherFeedSchema: z.ZodType<WeatherFeed> = z.object({
+export const weatherFeedSchema: z.ZodType<WeatherFeed> = z.object({
   city: z.object({label: z.string().min(1), slug: z.enum(WEATHER_CITY_SLUGS)}),
   current: z.object({
     condition: z.enum(WEATHER_CONDITIONS),

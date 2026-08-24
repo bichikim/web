@@ -1,4 +1,15 @@
-import {index, pgEnum, pgTable, timestamp, uniqueIndex, uuid, varchar} from 'drizzle-orm/pg-core'
+import {sql} from 'drizzle-orm'
+import {
+  check,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 export const pomoIdentityProviderEnum = pgEnum('pomo_identity_provider', ['neon', 'toss'])
 
@@ -42,6 +53,20 @@ export const pomoAppSessions = pgTable(
   (table) => [
     uniqueIndex('pomo_app_sessions_token_hash_index').on(table.tokenHash),
     index('pomo_app_sessions_user_expiry_index').on(table.userId, table.expiresAt),
+  ],
+)
+
+export const pomoAccountLinkAttemptLimits = pgTable(
+  'pomo_account_link_attempt_limits',
+  {
+    attemptCount: integer().notNull().default(1),
+    userId: uuid()
+      .primaryKey()
+      .references(() => pomoUsers.id, {onDelete: 'cascade'}),
+    windowStartedAt: timestamp({withTimezone: true}).notNull(),
+  },
+  (table) => [
+    check('pomo_account_link_attempt_limits_positive_count_check', sql`${table.attemptCount} > 0`),
   ],
 )
 

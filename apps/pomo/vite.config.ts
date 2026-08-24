@@ -7,6 +7,11 @@ import UnoCSS from 'unocss/vite'
 import {defineConfig, type Plugin} from 'vite'
 
 import {SERVICE_POLICY_PATHS} from './src/config/service-policy.ts'
+import {
+  BASE_SECURITY_HEADERS,
+  STATIC_SECURITY_HEADERS,
+  WORKER_SECURITY_HEADERS,
+} from './src/config/security-headers.ts'
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
@@ -17,24 +22,27 @@ const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
-const publicStaticRoutes = [
+const sharedStaticRoutes = [
   '/',
   SERVICE_POLICY_PATHS.appsInToss.privacy,
   SERVICE_POLICY_PATHS.appsInToss.terms,
-  SERVICE_POLICY_PATHS.legacy.privacy,
   SERVICE_POLICY_PATHS.refund,
-  SERVICE_POLICY_PATHS.legacy.terms,
   '/third-party-notices',
   SERVICE_POLICY_PATHS.web.privacy,
   SERVICE_POLICY_PATHS.web.terms,
 ]
 const appsInTossStaticRoutes = [
-  ...publicStaticRoutes,
+  ...sharedStaticRoutes,
+  SERVICE_POLICY_PATHS.legacy.privacy,
+  SERVICE_POLICY_PATHS.legacy.terms,
   '/account',
   '/dialogue',
   '/focus-room',
   '/focus-room-dialogue',
 ]
+const prerenderSecurityRules = Object.fromEntries(
+  sharedStaticRoutes.map((route) => [route, {headers: STATIC_SECURITY_HEADERS}]),
+)
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
 
@@ -129,7 +137,12 @@ export default defineConfig({
   },
   nitro: {
     prerender: {
-      routes: isAppsInToss ? appsInTossStaticRoutes : publicStaticRoutes,
+      routes: isAppsInToss ? appsInTossStaticRoutes : sharedStaticRoutes,
+    },
+    routeRules: {
+      '/**': {headers: BASE_SECURITY_HEADERS},
+      '/workers/**': {headers: WORKER_SECURITY_HEADERS},
+      ...prerenderSecurityRules,
     },
     ...(isAppsInToss ? {preset: 'static'} : {}),
   },
@@ -140,7 +153,11 @@ export default defineConfig({
     createUnoCssInlineResolver(),
     resolveBuildUnoCss,
     ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
-    solidStart({devOverlay: false, middleware: './src/middleware/index.ts'}),
+    solidStart({
+      devOverlay: false,
+      middleware: './src/middleware/index.ts',
+      serialization: {mode: 'json'},
+    }),
     createDevFeedPlugin(),
     excludeArchivedAssets,
     restartOnScribbleIconChange,
@@ -155,5 +172,10 @@ export default defineConfig({
       ignored: [assetLibraryPattern],
     },
   },
-  worker: {format: 'es'},
+  worker: {
+    format: 'es',
+    rolldownOptions: {
+      output: {entryFileNames: 'workers/[name]-[hash].js'},
+    },
+  },
 })

@@ -17,3 +17,7 @@ it('should authorize only the configured bearer token', () => {
   expect(isAuthorizedCronRequest(request, {CRON_SECRET: 'cron-secret-1234'})).toBe(true)
   expect(isAuthorizedCronRequest(request, {CRON_SECRET: 'cron-secret-5678'})).toBe(false)
 })
+
+it('should trim the configured bearer token', () => {
+  expect(getCronSecret({CRON_SECRET: '  cron-secret-1234  '})).toBe('cron-secret-1234')
+})

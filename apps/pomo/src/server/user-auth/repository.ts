@@ -4,6 +4,7 @@ import {and, desc, eq, gt, isNull, sql} from 'drizzle-orm'
 
 import {
   getDatabase,
+  pomoAccountLinkAttemptLimits,
   pomoAccountLinkChallenges,
   pomoAppSessions,
   pomoIdentities,
@@ -11,6 +12,7 @@ import {
   type TransactionalDatabase,
   withTransactionalDatabase,
 } from '../database'
+import {getAccountLinkAttemptDecision} from './account-link-attempt-limit'
 import {createOpaqueToken, hashOpaqueToken} from './token'
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -75,6 +77,43 @@ const lockIdentity = async (
   providerSubject: string,
 ): Promise<void> => {
   await lockTransactionKey(database, `${provider}:${providerSubject}`)
+}
+
+const recordAccountLinkAttempt = async (
+  database: UserAuthTransaction,
+  userId: string,
+  now: Date,
+): Promise<RateLimitedAccountLinkChallenge | null> => {
+  const [currentWindow] = await database
+    .select({
+      attemptCount: pomoAccountLinkAttemptLimits.attemptCount,
+      windowStartedAt: pomoAccountLinkAttemptLimits.windowStartedAt,
+    })
+    .from(pomoAccountLinkAttemptLimits)
+    .where(eq(pomoAccountLinkAttemptLimits.userId, userId))
+    .limit(1)
+  const decision = getAccountLinkAttemptDecision(currentWindow, now)
+
+  if (decision.status === 'rate-limited') {
+    return decision
+  }
+
+  await database
+    .insert(pomoAccountLinkAttemptLimits)
+    .values({
+      attemptCount: decision.attemptCount,
+      userId,
+      windowStartedAt: decision.windowStartedAt,
+    })
+    .onConflictDoUpdate({
+      set: {
+        attemptCount: decision.attemptCount,
+        windowStartedAt: decision.windowStartedAt,
+      },
+      target: pomoAccountLinkAttemptLimits.userId,
+    })
+
+  return null
 }
 
 const findOrCreateUser = async (
@@ -245,6 +284,12 @@ export const createAccountLinkChallenge = async (
         }
       }
 
+      const attemptLimit = await recordAccountLinkAttempt(transaction, userId, now)
+
+      if (attemptLimit !== null) {
+        return attemptLimit
+      }
+
       await transaction
         .delete(pomoAccountLinkChallenges)
         .where(eq(pomoAccountLinkChallenges.userId, userId))
@@ -257,6 +302,14 @@ export const createAccountLinkChallenge = async (
 
       return {expiresAt, status: 'created', token}
     }),
+  )
+}
+
+export const invalidateAccountLinkChallenge = async (token: string): Promise<void> => {
+  await withTransactionalDatabase((database) =>
+    database
+      .delete(pomoAccountLinkChallenges)
+      .where(eq(pomoAccountLinkChallenges.tokenHash, hashOpaqueToken(token))),
   )
 }
 
