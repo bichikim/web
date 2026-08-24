@@ -1,11 +1,6 @@
-import {clientOnly} from '@solidjs/start'
-
 import type {PTrack} from '../features/focus-room-audio'
 import type {PSceneStyle} from '../features/focus-room-animation'
-
-const PMusicPlayerContent = clientOnly(() => import('./PMusicPlayerContent'), {
-  lazy: true,
-})
+import {PMusicPlayerPanel} from './music-player/Panel'
 
 export interface PMusicPlayerProps {
   readonly expanded?: boolean
@@ -15,7 +10,7 @@ export interface PMusicPlayerProps {
 }
 
 export const PMusicPlayer = (props: PMusicPlayerProps) => (
-  <PMusicPlayerContent
+  <PMusicPlayerPanel
     expanded={props.expanded}
     onExpandedChange={(expanded) => props.onExpandedChange?.(expanded)}
     onTrackChange={(track) => props.onTrackChange?.(track)}
