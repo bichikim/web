@@ -18,10 +18,33 @@ import.meta.hot?.dispose(() => {
   preloadRecovery.dispose()
 })
 
-try {
-  mount(() => <StartClient />, root)
-  preloadRecovery.markAppStarted()
-} catch (error) {
-  preloadRecovery.dispose()
-  throw error
+const getInitialRedirect = async () => {
+  if (!import.meta.env.POMO_IS_APPS_IN_TOSS) {
+    return undefined
+  }
+
+  const {getLocaleRedirect} = await import('./features/apps-in-toss-locale/bootstrap')
+  return getLocaleRedirect(new URL(window.location.href))
 }
+
+const startApp = async () => {
+  try {
+    const redirectUrl = await getInitialRedirect()
+
+    if (redirectUrl !== undefined) {
+      preloadRecovery.dispose()
+      window.location.replace(redirectUrl)
+      return
+    }
+
+    mount(() => <StartClient />, root)
+    preloadRecovery.markAppStarted()
+  } catch (error) {
+    preloadRecovery.dispose()
+    queueMicrotask(() => {
+      throw error
+    })
+  }
+}
+
+startApp()

@@ -1,6 +1,7 @@
 import {createSignal, onCleanup} from 'solid-js'
 
 import type {TrackPreviewSourceResult} from './track-preview-access'
+import * as m from '../../paraglide/messages.js'
 
 interface PStaticTrackPreviewRequest {
   readonly id: string
@@ -86,7 +87,7 @@ export const useTrackPreview = (options: UseTrackPreviewOptions) => {
       }
 
       if (!sourceResult.ok) {
-        setErrorMessage('로그인 후 30초 미리듣기를 이용할 수 있어요.')
+        setErrorMessage(m.album_preview_login_required())
         stopPreview()
         return
       }
@@ -103,7 +104,7 @@ export const useTrackPreview = (options: UseTrackPreviewOptions) => {
       }
 
       console.error('Failed to play album track preview.', error)
-      setErrorMessage('미리듣기를 재생하지 못했어요. 잠시 후 다시 시도해 주세요.')
+      setErrorMessage(m.album_preview_failed())
       stopPreview()
     }
   }
@@ -122,7 +123,7 @@ export const useTrackPreview = (options: UseTrackPreviewOptions) => {
         readyState: audioElement?.readyState ?? null,
       }),
     )
-    setErrorMessage('미리듣기를 재생하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    setErrorMessage(m.album_preview_failed())
     stopPreview()
   }
 

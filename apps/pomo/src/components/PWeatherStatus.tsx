@@ -2,13 +2,18 @@ import {cx} from 'class-variance-authority'
 import {Match, Show, Switch} from 'solid-js'
 
 import type {PSceneStyle} from '../features/focus-room-animation'
+import {getLocalizedWeatherLabel} from '../features/localization'
 import {getWeatherPresentation, type WeatherState} from '../features/weather'
+import * as m from '../paraglide/messages.js'
 import {WeatherStatusSurface} from './weather-status/Surface'
 
 export interface PWeatherStatusProps {
   readonly sceneStyle?: PSceneStyle
   readonly state: WeatherState
 }
+
+const getLocalizedCityLabel = (cityLabel: string) =>
+  cityLabel === '서울' ? m.weather_seoul() : cityLabel
 
 export const PWeatherStatus = (props: PWeatherStatusProps) => (
   <Switch>
@@ -19,7 +24,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
             aria-hidden="true"
             class="i-tabler-loader-2 size-4 animate-spin motion-reduce:animate-none"
           />
-          {state().cityLabel} 날씨 확인 중
+          {m.weather_loading({city: getLocalizedCityLabel(state().cityLabel)})}
         </WeatherStatusSurface>
       )}
     </Match>
@@ -27,7 +32,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
       {(state) => (
         <WeatherStatusSurface sceneStyle={props.sceneStyle}>
           <span aria-hidden="true" class="i-tabler-cloud-off size-4 text-muted-foreground" />
-          {state().cityLabel} 날씨를 확인하지 못했어요
+          {m.weather_error({city: getLocalizedCityLabel(state().cityLabel)})}
         </WeatherStatusSurface>
       )}
     </Match>
@@ -43,9 +48,10 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
           <WeatherStatusSurface sceneStyle={props.sceneStyle}>
             <span aria-hidden="true" class={cx(presentation().icon, 'size-4 text-highlight')} />
             <span>
-              {state().feed.city.label} · {presentation().label}
+              {getLocalizedCityLabel(state().feed.city.label)} ·{' '}
+              {getLocalizedWeatherLabel(state().feed.current.condition)}
               <Show when={temperatureLabel()}>{(label) => label()}</Show>
-              <Show when={state().feed.stale}> · 업데이트 지연</Show>
+              <Show when={state().feed.stale}> · {m.weather_stale()}</Show>
             </span>
           </WeatherStatusSurface>
         )

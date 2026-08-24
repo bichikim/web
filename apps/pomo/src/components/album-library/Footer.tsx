@@ -1,5 +1,7 @@
 import {Show} from 'solid-js'
 
+import * as m from '../../paraglide/messages.js'
+
 interface PlaylistFooterProps {
   readonly canClear: boolean
   readonly clearedTrackCount: number
@@ -14,17 +16,20 @@ export const PlaylistFooter = (props: PlaylistFooterProps) => (
       fallback={
         <div class="flex min-h-11 items-center justify-between gap-4">
           <span class="text-sm text-muted-foreground">
-            현재 재생목록 <strong class="font-750 text-foreground">{props.trackCount}곡</strong>
+            {m.album_playlist_current()}{' '}
+            <strong class="font-750 text-foreground">
+              {m.album_track_count({count: props.trackCount})}
+            </strong>
           </span>
           <button
-            aria-label="재생목록 모두 비우기"
+            aria-label={m.album_playlist_clear_all()}
             class="min-h-11 cursor-pointer rounded-control border-0 bg-transparent px-3 text-sm
               font-700 text-muted-foreground outline-none transition-colors hover:bg-danger/10
               hover:text-danger focus-visible:shadow-focus motion-reduce:transition-none"
             onClick={() => props.onClear()}
             type="button"
           >
-            비우기
+            {m.album_playlist_clear()}
           </button>
         </div>
       }
@@ -35,7 +40,7 @@ export const PlaylistFooter = (props: PlaylistFooterProps) => (
         class="flex min-h-11 items-center justify-between gap-4"
         role="status"
       >
-        <span class="text-sm text-muted-foreground">재생목록을 비웠어요</span>
+        <span class="text-sm text-muted-foreground">{m.album_playlist_cleared()}</span>
         <button
           class="min-h-11 cursor-pointer rounded-control border-0 bg-transparent px-3 text-sm
             font-750 text-highlight outline-none transition-colors hover:bg-surface
@@ -43,7 +48,7 @@ export const PlaylistFooter = (props: PlaylistFooterProps) => (
           onClick={() => props.onRestore()}
           type="button"
         >
-          되돌리기
+          {m.album_playlist_restore()}
         </button>
       </div>
     </Show>

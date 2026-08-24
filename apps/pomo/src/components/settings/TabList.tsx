@@ -1,5 +1,6 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createEffect, createSignal, type JSX, onCleanup, Show} from 'solid-js'
+import * as m from '../../paraglide/messages.js'
 
 const SETTINGS_TAB_LIST_CLASSES =
   'pomo-settings__tabs flex h-full w-full min-w-0 flex-1 overflow-x-auto overscroll-x-contain ' +
@@ -73,45 +74,45 @@ export const PSettingsTabList = () => {
       <Tabs.List
         ref={setTabListElement}
         class={SETTINGS_TAB_LIST_CLASSES}
-        aria-label="설정 종류"
+        aria-label={m.settings_category_label()}
         onScroll={handleTabListScroll}
       >
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="general">
           <span aria-hidden="true" class="i-tabler-adjustments-horizontal size-4" />
-          <span>일반</span>
+          <span>{m.settings_tab_general()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="events">
           <span aria-hidden="true" class="i-tabler-bolt size-4" />
-          <span>이벤트</span>
+          <span>{m.settings_tab_events()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="weather">
           <span aria-hidden="true" class="i-pomo-scribble-clouds size-4" />
-          <span>날씨</span>
+          <span>{m.settings_tab_weather()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="feeds">
           <span aria-hidden="true" class="i-tabler-rss size-4" />
-          <span>피드</span>
+          <span>{m.settings_tab_feeds()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="dialogue-library">
           <span aria-hidden="true" class="i-tabler-message-circle size-4" />
-          <span>대화</span>
+          <span>{m.settings_tab_dialogue()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="user">
           <span aria-hidden="true" class="i-tabler-user-circle size-4" />
-          <span>사용자</span>
+          <span>{m.settings_tab_user()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="guide">
           <span aria-hidden="true" class="i-tabler-help-circle size-4" />
-          <span>설명서</span>
+          <span>{m.settings_tab_guide()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="credits">
           <span aria-hidden="true" class="i-tabler-heart size-4" />
-          <span>크레딧</span>
+          <span>{m.settings_tab_credits()}</span>
         </Tabs.Trigger>
       </Tabs.List>
       <Show when={canScrollTabsLeft()}>
         <button
-          aria-label="이전 설정 탭 보기"
+          aria-label={m.settings_previous_tab()}
           class={
             `${SETTINGS_TAB_SCROLL_BUTTON_CLASSES} left-0 justify-start ` +
             'bg-gradient-to-r from-surface-strong to-transparent'
@@ -124,7 +125,7 @@ export const PSettingsTabList = () => {
       </Show>
       <Show when={canScrollTabsRight()}>
         <button
-          aria-label="다음 설정 탭 보기"
+          aria-label={m.settings_next_tab()}
           class={
             `${SETTINGS_TAB_SCROLL_BUTTON_CLASSES} right-0 justify-end ` +
             'bg-gradient-to-r from-transparent to-surface-strong'

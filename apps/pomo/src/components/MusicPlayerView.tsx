@@ -6,6 +6,7 @@ import {For, Show} from 'solid-js'
 import {getPomoIconClass} from '../design-system/icon-style'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
+import * as m from '../paraglide/messages.js'
 import {PAlbumLibrary} from './PAlbumLibrary'
 import {POverflowMarquee} from './POverflowMarquee'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
@@ -16,8 +17,6 @@ import {SummaryPlayButton} from './music-player-view/SummaryPlayButton'
 import {CLASSES, type MusicPlayerViewProps} from './music-player-view/shared'
 
 const ACTIVE_VISUALIZER_OPACITY = 0.76
-const FALLBACK_TRACK_ARTIST = 'MP3를 연결하면 이곳에서 재생돼요'
-const FALLBACK_TRACK_TITLE = '집중 음악을 준비 중이에요'
 const IDLE_VISUALIZER_OPACITY = 0.34
 const SCRIBBLE_MASK_CLASSES = [
   '[mask-image:var(--pomo-player-scribble-mask)]',
@@ -83,7 +82,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
             )}
           >
             <div
-              aria-label="오디오 주파수 레벨"
+              aria-label={m.player_audio_levels()}
               class={cx(CLASSES.playerVisualizer, 'absolute flex items-end gap-0.5')}
             >
               <For each={props.levels}>
@@ -128,10 +127,10 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
               data-pomo-player-title=""
             >
               <p class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
-                <POverflowMarquee text={props.currentTrack?.title ?? FALLBACK_TRACK_TITLE} />
+                <POverflowMarquee text={props.currentTrack?.title ?? m.player_fallback_title()} />
               </p>
               <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
-                <POverflowMarquee text={props.currentTrack?.artist ?? FALLBACK_TRACK_ARTIST} />
+                <POverflowMarquee text={props.currentTrack?.artist ?? m.player_fallback_artist()} />
               </p>
             </div>
 
@@ -145,7 +144,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
             />
 
             <PPlayerUtilityButton
-              accessibleLabel={props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
+              accessibleLabel={props.expanded ? m.player_collapse() : m.player_expand()}
               expanded={props.expanded}
               icon={getPomoIconClass(
                 props.expanded ? 'i-tabler-chevron-down' : 'i-tabler-chevron-up',

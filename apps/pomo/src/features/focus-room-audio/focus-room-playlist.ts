@@ -1,4 +1,6 @@
 import {apiFetch, audioFetch, httpFetch} from '../http-client'
+import * as m from '../../paraglide/messages.js'
+import type {Locale} from '../../paraglide/runtime.js'
 
 export interface PTrack {
   readonly artist: string
@@ -82,6 +84,7 @@ export interface LoadPTracksOptions {
 
 export interface LoadPAlbumsOptions {
   readonly albumsUrl?: string
+  readonly locale?: Locale
   readonly publishedAlbumsUrl?: string
   readonly signal?: AbortSignal
   readonly tracksUrl?: string
@@ -271,13 +274,19 @@ const getCoverIcon = (fallback: PublishedAlbum['coverFallback']): string => {
 
 const loadPublishedAlbums = async (
   overrideUrl: string | undefined,
+  locale: Locale | undefined,
   signal?: AbortSignal,
 ): Promise<ReadonlyArray<PResolvedAlbum>> => {
   try {
+    const albumsUrl = overrideUrl ?? 'music/albums'
+    const localizedAlbumsUrl =
+      locale === undefined
+        ? albumsUrl
+        : `${albumsUrl}${albumsUrl.includes('?') ? '&' : '?'}locale=${encodeURIComponent(locale)}`
     const response =
       overrideUrl === undefined
-        ? await apiFetch('music/albums', createRequestInit(signal))
-        : await httpFetch(overrideUrl, createRequestInit(signal))
+        ? await apiFetch(localizedAlbumsUrl, createRequestInit(signal))
+        : await httpFetch(localizedAlbumsUrl, createRequestInit(signal))
 
     if (!response.ok) {
       return []
@@ -296,8 +305,12 @@ const loadPublishedAlbums = async (
       id: album.id,
       sale:
         album.sale.state === 'preparing'
-          ? {state: 'preparing', statusLabel: '판매 준비중'}
-          : {priceLabel: '[가격 확인]', state: 'configured', statusLabel: '상품 연결됨'},
+          ? {state: 'preparing', statusLabel: m.album_sale_preparing({}, {locale})}
+          : {
+              priceLabel: m.album_sale_price_pending({}, {locale}),
+              state: 'configured',
+              statusLabel: m.album_sale_connected({}, {locale}),
+            },
       title: album.title,
       trackCount: album.trackCount,
       trackIds: [],
@@ -306,6 +319,45 @@ const loadPublishedAlbums = async (
     }))
   } catch {
     return []
+  }
+}
+
+const localizeBundledAlbum = (album: PAlbum, locale: Locale | undefined): PAlbum => {
+  const options = {locale}
+
+  switch (album.id) {
+    case 'morning-focus':
+      return {
+        ...album,
+        description: m.album_morning_focus_description({}, options),
+        title: m.album_morning_focus_title({}, options),
+      }
+    case 'cafe-focus':
+      return {
+        ...album,
+        description: m.album_cafe_focus_description({}, options),
+        title: m.album_cafe_focus_title({}, options),
+      }
+    case 'tension-focus':
+      return {
+        ...album,
+        description: m.album_tension_focus_description({}, options),
+        title: m.album_tension_focus_title({}, options),
+      }
+    case 'happy-detour':
+      return {
+        ...album,
+        description: m.album_happy_detour_description({}, options),
+        title: m.album_happy_detour_title({}, options),
+      }
+    case 'quiet-pages':
+      return {
+        ...album,
+        description: m.album_quiet_pages_description({}, options),
+        title: m.album_quiet_pages_title({}, options),
+      }
+    default:
+      return album
   }
 }
 
@@ -349,14 +401,18 @@ export const loadPAlbums = async (
   }
 
   const bundledAlbums = albumCollection.albums.map((album) => ({
-    ...album,
+    ...localizeBundledAlbum(album, options.locale),
     tracks: resolveTrackIds(
       album.trackIds,
       trackCollection.tracks,
       'Focus-room albums reference unknown tracks',
     ),
   }))
-  const publishedAlbums = await loadPublishedAlbums(options.publishedAlbumsUrl, options.signal)
+  const publishedAlbums = await loadPublishedAlbums(
+    options.publishedAlbumsUrl,
+    options.locale,
+    options.signal,
+  )
 
   return [...bundledAlbums, ...publishedAlbums]
 }

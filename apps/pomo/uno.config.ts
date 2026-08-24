@@ -8,8 +8,8 @@ const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 
 const colors = isAppsInToss
   ? {
-      background: '#f7f8fa',
       backdrop: 'rgb(25 31 40 / 48%)',
+      background: '#f7f8fa',
       border: 'rgb(2 32 71 / 16%)',
       'border-hover': 'rgb(2 32 71 / 28%)',
       danger: '#b42318',
@@ -29,8 +29,8 @@ const colors = isAppsInToss
       'surface-strong': '#ffffff',
     }
   : {
-      background: '#17130f',
       backdrop: 'rgb(8 6 4 / 68%)',
+      background: '#17130f',
       border: 'rgb(255 250 241 / 14%)',
       'border-hover': 'rgb(255 250 241 / 28%)',
       danger: '#ef8a74',
@@ -71,6 +71,11 @@ const isPresetNamed = (preset: unknown, name: string) =>
 const config = mergeConfigs([
   baseConfig,
   defineConfig<PresetWind3Theme>({
+    content: {
+      pipeline: {
+        exclude: ['**/src/paraglide/**'],
+      },
+    },
     extendTheme: (theme) => {
       const spacing = (units: string) => `calc(${theme.spacing?.DEFAULT ?? '1rem'} / 4 * ${units})`
       const controlMedium = spacing('11')

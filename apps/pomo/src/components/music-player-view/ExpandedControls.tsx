@@ -1,4 +1,5 @@
 import {cx} from 'class-variance-authority'
+import * as m from '../../paraglide/messages.js'
 import {PPlaybackModes} from '../PPlaybackModes'
 import {PScribbleCircleControl} from '../PScribbleCircleControl'
 import {PTrackList} from '../PTrackList'
@@ -59,11 +60,11 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
         )}
       >
         <button
-          aria-label="이전 곡"
+          aria-label={m.player_previous()}
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onPreviousTrack()}
-          title="이전 곡"
+          title={m.player_previous()}
           type="button"
         >
           <PlayerIcon
@@ -77,11 +78,11 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           enabled={props.sceneStyle === 'scribble'}
         >
           <media-play-button
-            aria-label="재생 또는 일시 정지"
+            aria-label={m.player_toggle_playback()}
             class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge, 'player-compact:size-12')}
             disabled={!props.currentTrack}
             notooltip
-            title="재생 또는 일시 정지"
+            title={m.player_toggle_playback()}
           >
             <PlayerIcon
               icon="i-tabler-player-play"
@@ -98,11 +99,11 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           </media-play-button>
         </PScribbleCircleControl>
         <button
-          aria-label="다음 곡"
+          aria-label={m.player_next()}
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onNextTrack()}
-          title="다음 곡"
+          title={m.player_next()}
           type="button"
         >
           <PlayerIcon
@@ -120,10 +121,10 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
         )}
       >
         <media-mute-button
-          aria-label="음소거"
+          aria-label={m.player_mute()}
           class={CLASSES.playerMute}
           notooltip
-          title="음소거 켜기/끄기"
+          title={m.player_toggle_mute()}
         >
           <PlayerIcon
             icon="i-tabler-volume-off"
@@ -150,7 +151,11 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
             slot="high"
           />
         </media-mute-button>
-        <media-volume-range aria-label="음량 조절" class={CLASSES.playerVolume} title="음량 조절" />
+        <media-volume-range
+          aria-label={m.player_volume()}
+          class={CLASSES.playerVolume}
+          title={m.player_volume()}
+        />
       </div>
     </div>
 

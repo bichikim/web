@@ -1,6 +1,7 @@
 import {Show} from 'solid-js'
 
 import {type PResolvedAlbum, type PTrack} from '../../features/focus-room-audio/index'
+import * as m from '../../paraglide/messages.js'
 
 const SECONDS_PER_MINUTE = 60
 
@@ -11,7 +12,7 @@ const formatDuration = (tracks: readonly PTrack[]) => {
   const minutes = Math.floor(durationSeconds / SECONDS_PER_MINUTE)
   const seconds = durationSeconds % SECONDS_PER_MINUTE
 
-  return `${minutes}분 ${seconds.toString().padStart(2, '0')}초`
+  return m.album_duration({minutes, seconds: seconds.toString().padStart(2, '0')})
 }
 
 const ALBUM_ART_CLASSES = [
@@ -52,7 +53,7 @@ export const AlbumSummary = (props: AlbumSummaryProps) => (
     >
       {(coverImageUrl) => (
         <img
-          alt={`${props.album.title} 앨범 커버`}
+          alt={m.album_cover_alt({title: props.album.title})}
           class="size-16 flex-none rounded-4 object-cover shadow-panel"
           src={coverImageUrl()}
         />
@@ -66,7 +67,9 @@ export const AlbumSummary = (props: AlbumSummaryProps) => (
       <Show when={(props.album.trackCount ?? props.album.tracks.length) > 0}>
         <p class="mb-0 mt-2 flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground">
           <span aria-hidden="true" class="i-tabler-music size-3.5" />
-          <span>{props.album.trackCount ?? props.album.tracks.length}곡</span>
+          <span>
+            {m.album_track_count({count: props.album.trackCount ?? props.album.tracks.length})}
+          </span>
           <Show when={props.album.tracks.length > 0}>
             <span aria-hidden="true" class="opacity-50">
               ·

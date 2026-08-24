@@ -1,14 +1,44 @@
 import {SEARCH_CONFIG} from '../config/search'
+import {deLocalizeHref, type Locale, locales, localizeHref} from '../paraglide/runtime.js'
 
 const POMO_LAYOUT_PATHS: ReadonlySet<string> = new Set(['/', '/dialogue'])
 const SEARCH_INDEXABLE_PATHS: ReadonlySet<string> = new Set(SEARCH_CONFIG.indexablePaths)
 
-export const normalizePathname = (pathname: string) => pathname.replace(/\/+$/u, '') || '/'
+export const normalizePathname = (pathname: string) => {
+  const pathWithoutTrailingSlash = pathname.replace(/\/+$/u, '') || '/'
+  return deLocalizeHref(pathWithoutTrailingSlash).replace(/\/+$/u, '') || '/'
+}
 
-export const isPomoHomePath = (pathname: string) => normalizePathname(pathname) === '/'
+const getPathLocale = (pathname: string): Locale | undefined => {
+  const [, pathLocale] = pathname.split('/')
+  return locales.find((locale) => locale === pathLocale)
+}
 
-export const isSearchIndexablePath = (pathname: string) =>
-  !import.meta.env.POMO_IS_APPS_IN_TOSS && SEARCH_INDEXABLE_PATHS.has(normalizePathname(pathname))
+export const getCanonicalPathname = (pathname: string) => {
+  const locale = getPathLocale(pathname)
+  const canonicalPathname = normalizePathname(pathname)
 
-export const usesPomoLayout = (pathname: string) =>
-  POMO_LAYOUT_PATHS.has(normalizePathname(pathname))
+  return locale === undefined ? canonicalPathname : localizeHref(canonicalPathname, {locale})
+}
+
+export const isPomoHomePath = (pathname: string) =>
+  getPathLocale(pathname) !== undefined && normalizePathname(pathname) === '/'
+
+export const isSearchIndexablePath = (pathname: string) => {
+  const canonicalPathname = normalizePathname(pathname)
+
+  return (
+    !import.meta.env.POMO_IS_APPS_IN_TOSS &&
+    !(canonicalPathname === '/' && getPathLocale(pathname) === undefined) &&
+    SEARCH_INDEXABLE_PATHS.has(canonicalPathname)
+  )
+}
+
+export const usesPomoLayout = (pathname: string) => {
+  const canonicalPathname = normalizePathname(pathname)
+
+  return (
+    POMO_LAYOUT_PATHS.has(canonicalPathname) &&
+    !(canonicalPathname === '/' && getPathLocale(pathname) === undefined)
+  )
+}

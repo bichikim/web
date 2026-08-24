@@ -7,6 +7,7 @@ import {
   type PTrackListing,
   type PTrackPreviewRequest,
 } from '../features/focus-room-audio'
+import * as m from '../paraglide/messages.js'
 
 interface PreviewButtonProps {
   readonly isLimited: boolean
@@ -18,8 +19,14 @@ interface PreviewButtonProps {
 
 const PreviewButton = (props: PreviewButtonProps) => (
   <button
-    aria-label={`${props.title} ${props.isLimited ? '30초 ' : ''}미리듣기${
-      props.isPlaying ? ' 정지' : ''
+    aria-label={`${props.title} ${
+      props.isLimited
+        ? props.isPlaying
+          ? m.album_preview_limited_stop()
+          : m.album_preview_limited()
+        : props.isPlaying
+          ? m.album_preview_stop()
+          : m.album_preview()
     }`}
     aria-pressed={props.isPlaying}
     class="grid size-8 flex-none cursor-pointer place-items-center rounded-control border
@@ -27,7 +34,15 @@ const PreviewButton = (props: PreviewButtonProps) => (
       hover:border-border-hover hover:bg-surface focus-visible:shadow-focus
       motion-reduce:transition-none"
     onClick={() => props.onPress()}
-    title={props.isPlaying ? '미리듣기 정지' : props.isLimited ? '30초 미리듣기' : '미리듣기'}
+    title={
+      props.isLimited
+        ? props.isPlaying
+          ? m.album_preview_limited_stop()
+          : m.album_preview_limited()
+        : props.isPlaying
+          ? m.album_preview_stop()
+          : m.album_preview()
+    }
     type="button"
   >
     <span
@@ -91,7 +106,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
   return (
     <div class="relative border-t border-solid border-border px-4 py-3">
       <ol
-        aria-label={`${props.albumTitle} 수록곡`}
+        aria-label={m.album_track_list({title: props.albumTitle})}
         class="m-0 grid max-h-[10.5rem] list-none gap-x-5 overflow-y-auto overscroll-contain
           p-0 pr-1 outline-none [scrollbar-gutter:stable] focus-visible:shadow-focus
           sm:max-h-[5.25rem] sm:grid-cols-2 2xl:max-h-[10.5rem] 2xl:grid-cols-1"
@@ -121,7 +136,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                     <span class="min-w-0 truncate">{track.artist}</span>
                     <Show when={isPreviewing() && props.pendingTrackId !== track.id && isLimited()}>
                       <PTag class="flex-none" tone="highlight">
-                        30초 미리듣기
+                        {m.album_preview_limited()}
                       </PTag>
                     </Show>
                   </span>
@@ -146,8 +161,8 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                       <button
                         aria-label={
                           isInPlayer()
-                            ? `${track.title}, 플레이어에 있음`
-                            : `${track.title} 플레이어에 추가`
+                            ? m.album_track_in_player({title: track.title})
+                            : m.album_track_add({title: track.title})
                         }
                         class="grid size-8 flex-none cursor-pointer place-items-center
                           rounded-control border border-solid border-border bg-transparent
@@ -157,7 +172,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                           disabled:hover:bg-transparent motion-reduce:transition-none"
                         disabled={isInPlayer()}
                         onClick={() => props.onAddTrack(playable())}
-                        title={isInPlayer() ? '플레이어에 있음' : '플레이어에 추가'}
+                        title={isInPlayer() ? m.album_in_player() : m.album_add_to_player()}
                         type="button"
                       >
                         <span

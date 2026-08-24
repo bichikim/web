@@ -1,5 +1,6 @@
 import {For} from 'solid-js'
 import {type LicenseEntry} from 'src/features/licenses'
+import * as m from '../../paraglide/messages.js'
 
 export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>}) => (
   <ul class="m-0 grid list-none gap-3 p-0">
@@ -20,7 +21,7 @@ export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>
                   target="_blank"
                 >
                   {link.label}
-                  <span class="sr-only"> 새 창에서 열기</span>
+                  <span class="sr-only"> {m.credits_new_window()}</span>
                 </a>
               )}
             </For>

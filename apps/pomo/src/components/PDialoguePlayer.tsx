@@ -6,6 +6,7 @@ import {PTag} from '../design-system/PTag'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type DialogueSegmentMood, usePEvents} from '../features/focus-room-dialogue/PEventContext'
 import {getPrimaryMood} from '../features/text-mood'
+import * as m from '../paraglide/messages.js'
 import {BlockedDialogueBubble} from './dialogue-player/BlockedBubble'
 import {CLASSES, getDialogueBubbleShapeClasses} from './dialogue-player/shared'
 import {PFaceIcon} from './PFaceIcon'
@@ -59,7 +60,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
   const connectedSpeechCount = createMemo(() =>
     isExternalSpeech() ? 1 : Math.max(1, events.scheduledDialogueCount()),
   )
-  const stopLabel = () => `${connectedSpeechCount()}개 모두 중지`
+  const stopLabel = () => m.dialogue_stop_all({count: connectedSpeechCount()})
   const handleStop = () => {
     if (isExternalSpeech()) {
       props.onStopExternalSpeech?.()
@@ -75,7 +76,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
     const segmentCount = events.activeSegmentCount()
     const activePosition = events.activeSegmentPosition() ?? 0
 
-    return `총 ${segmentCount}개 중 ${activePosition + 1}번째 대사 읽는 중`
+    return m.dialogue_progress({current: activePosition + 1, total: segmentCount})
   }
   const isSegmentComplete = (position: number) => {
     const activePosition = events.activeSegmentPosition()
@@ -103,7 +104,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
               <div class={CLASSES.dialogueBubbleHeader}>
                 <div class={CLASSES.dialogueBubbleSpeakerGroup}>
                   <PFaceIcon
-                    alt={`${moodPresentation().definition.label} 감정`}
+                    alt={m.dialogue_mood_alt({mood: moodPresentation().definition.label})}
                     class={CLASSES.dialogueBubbleMood}
                     mood={moodPresentation().definition.id}
                     sceneStyle={props.sceneStyle}
@@ -135,16 +136,16 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                 <div class={CLASSES.dialogueBubbleActions}>
                   <Show when={!isExternalSpeech()}>
                     <PButton
-                      accessibleLabel="대화 건너뛰기"
+                      accessibleLabel={m.dialogue_skip()}
                       class={SKIP_BUTTON_CLASS}
                       icon="i-tabler-player-track-next"
                       onPress={handleSkip}
                       size="small"
                       tone="secondary"
                     >
-                      <span class="hidden dialogue-controls-wide:inline">대화 건너뛰기</span>
+                      <span class="hidden dialogue-controls-wide:inline">{m.dialogue_skip()}</span>
                       <span class="hidden dialogue-controls-readable:inline dialogue-controls-wide:hidden">
-                        건너뛰기
+                        {m.dialogue_skip_short()}
                       </span>
                     </PButton>
                   </Show>
@@ -158,16 +159,16 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                   >
                     <span class="hidden dialogue-controls-wide:inline">{stopLabel()}</span>
                     <span class="hidden dialogue-controls-readable:inline dialogue-controls-wide:hidden">
-                      {connectedSpeechCount()}개 중지
+                      {m.dialogue_stop_count({count: connectedSpeechCount()})}
                     </span>
                     <span class="inline dialogue-controls-readable:hidden">
-                      {connectedSpeechCount()}개
+                      {m.dialogue_count({count: connectedSpeechCount()})}
                     </span>
                   </PButton>
                 </div>
               </div>
               <p aria-live="polite" role="status">
-                {text()} <PTag class="ml-[0.45em] align-[0.08em]">AI 음성</PTag>
+                {text()} <PTag class="ml-[0.45em] align-[0.08em]">{m.common_ai_voice()}</PTag>
               </p>
             </div>
           </PScribblePanel>

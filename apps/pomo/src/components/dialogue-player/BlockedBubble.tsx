@@ -1,5 +1,6 @@
 import {cx} from 'class-variance-authority'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
+import * as m from '../../paraglide/messages.js'
 import {PScribblePanel} from '../PScribblePanel'
 import {CLASSES, getDialogueBubbleShapeClasses} from './shared'
 
@@ -28,8 +29,8 @@ export const BlockedDialogueBubble = (props: BlockedDialogueBubbleProps) => (
         <span class="i-tabler-volume size-5" />
       </span>
       <span>
-        <strong>이벤트 음성 재생</strong>
-        <small>브라우저에서 차단된 소리를 시작해요.</small>
+        <strong>{m.dialogue_blocked_title()}</strong>
+        <small>{m.dialogue_blocked_description()}</small>
       </span>
     </button>
   </PScribblePanel>

@@ -1,6 +1,7 @@
 import {expect, it} from 'vitest'
 
 import {
+  getCanonicalPathname,
   isPomoHomePath,
   isSearchIndexablePath,
   normalizePathname,
@@ -12,14 +13,20 @@ it.each([
   ['///', '/'],
   ['/dev/terms', '/dev/terms'],
   ['/dev/terms/', '/dev/terms'],
+  ['/en', '/'],
+  ['/ko/', '/'],
+  ['/en/dialogue/', '/dialogue'],
 ])('should normalize %s to %s', (pathname, expected) => {
   expect(normalizePathname(pathname)).toBe(expected)
 })
 
 it.each([
-  ['/', true],
+  ['/', false],
   ['/dialogue', true],
   ['/dialogue/', true],
+  ['/en', true],
+  ['/ko/', true],
+  ['/en/dialogue', true],
   ['/dev', false],
   ['/dev/dialogue', false],
 ])('should classify %s as a Pomo layout route when expected', (pathname, expected) => {
@@ -27,10 +34,13 @@ it.each([
 })
 
 it.each([
-  ['/', true],
-  ['///', true],
+  ['/', false],
+  ['///', false],
   ['/dialogue', false],
   ['/dialogue/', false],
+  ['/en', true],
+  ['/ko/', true],
+  ['/en/dialogue', false],
 ])(
   'should enable entry playback for %s only when it is the Pomo home route',
   (pathname, expected) => {
@@ -39,7 +49,9 @@ it.each([
 )
 
 it.each([
-  ['/', true],
+  ['/', false],
+  ['/ko/', true],
+  ['/en/', true],
   ['/refund-policy', true],
   ['/refund-policy/', true],
   ['/third-party-notices', true],
@@ -50,4 +62,13 @@ it.each([
   ['/dialogue', false],
 ])('should expose %s to search indexing when expected', (pathname, expected) => {
   expect(isSearchIndexablePath(pathname)).toBe(expected)
+})
+
+it.each([
+  ['/', '/'],
+  ['/refund-policy/', '/refund-policy'],
+  ['/ko/', '/ko/'],
+  ['/en/account', '/en/account/'],
+])('should resolve the canonical pathname for %s', (pathname, expected) => {
+  expect(getCanonicalPathname(pathname)).toBe(expected)
 })

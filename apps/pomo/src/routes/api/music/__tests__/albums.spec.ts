@@ -26,7 +26,7 @@ describe('published music albums route', () => {
   })
 
   it('should expose published albums without requiring a configured product', async () => {
-    const response = await GET()
+    const response = await GET({request: new Request('https://pomo.test/api/music/albums')})
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({
@@ -47,13 +47,20 @@ describe('published music albums route', () => {
       ],
       version: 1,
     })
+    expect(repositoryMocks.listPublishedAlbums).toHaveBeenCalledWith('ko')
+  })
+
+  it('should request English album translations for the English catalog', async () => {
+    await GET({request: new Request('https://pomo.test/api/music/albums?locale=en')})
+
+    expect(repositoryMocks.listPublishedAlbums).toHaveBeenCalledWith('en')
   })
 
   it('should not cache a catalog failure', async () => {
     repositoryMocks.listPublishedAlbums.mockRejectedValue(new Error('database unavailable'))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
-    const response = await GET()
+    const response = await GET({request: new Request('https://pomo.test/api/music/albums')})
 
     expect(response.status).toBe(500)
     expect(response.headers.get('Cache-Control')).toBe('no-store')

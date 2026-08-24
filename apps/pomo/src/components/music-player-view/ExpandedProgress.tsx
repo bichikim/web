@@ -1,4 +1,5 @@
 import {cx} from 'class-variance-authority'
+import * as m from '../../paraglide/messages.js'
 import {CLASSES, MusicPlayerViewProps} from './shared'
 
 const MEDIA_FOCUS_CLASSES =
@@ -7,7 +8,7 @@ const MEDIA_FOCUS_CLASSES =
 export const ExpandedPlayerProgress = (props: Pick<MusicPlayerViewProps, 'expanded'>) => (
   <media-time-range
     aria-hidden={props.expanded ? undefined : 'true'}
-    aria-label="재생 위치 조절"
+    aria-label={m.player_seek()}
     class={cx(
       CLASSES.playerProgress,
       CLASSES.playerProgressExpanded,
@@ -16,6 +17,6 @@ export const ExpandedPlayerProgress = (props: Pick<MusicPlayerViewProps, 'expand
       !props.expanded && 'pointer-events-none cursor-default [--media-cursor:default]',
     )}
     bool:disabled={!props.expanded}
-    title="재생 위치 조절"
+    title={m.player_seek()}
   />
 )
