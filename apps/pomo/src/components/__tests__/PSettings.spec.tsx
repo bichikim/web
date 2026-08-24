@@ -62,16 +62,13 @@ it('should expose the guide and credits as the final settings tabs', () => {
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '일반',
     '이벤트',
-    '날씨',
     '피드',
     '대화',
     '사용자',
     '설명서',
     '크레딧',
   ])
-  expect(
-    screen.getByRole('tab', {name: '날씨'}).querySelector('.i-pomo-scribble-clouds'),
-  ).not.toBeNull()
+  expect(screen.queryByRole('tab', {name: '날씨'})).toBeNull()
 })
 
 it('should map the scribble style switch to the scene style value', () => {

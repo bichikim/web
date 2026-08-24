@@ -1,6 +1,15 @@
 import {z} from 'zod'
 
-export const WEATHER_CITY_SLUGS = ['seoul'] as const
+export const WEATHER_CITY_SLUGS = [
+  'seoul',
+  'busan',
+  'daegu',
+  'incheon',
+  'gwangju',
+  'daejeon',
+  'ulsan',
+  'jeju',
+] as const
 export type WeatherCitySlug = (typeof WEATHER_CITY_SLUGS)[number]
 const weatherCitySlugSchema = z.enum(WEATHER_CITY_SLUGS)
 
