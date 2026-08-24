@@ -84,6 +84,19 @@ jobs:
               exec pnpm --dir apps/pomo db:migrate
             '
 
+      - name: Capture current default deployment
+        id: previous
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} \
+            --token="${VERCEL_TOKEN}" \
+            inspect "https://pomo-bichis-projects.vercel.app" \
+            --json)"
+          deployment_url="$(jq -er '.url | select(type == "string" and length > 0)' \
+            <<< "${deployment_json}")"
+          echo "url=https://${deployment_url}" >> "${GITHUB_OUTPUT}"
+
       - name: Stage production artifact
         id: stage
         env:
@@ -97,15 +110,28 @@ jobs:
             --token="${VERCEL_TOKEN}")"
           echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
 
+      - name: Validate staged build outputs
+        env:
+          DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} \
+            --token="${VERCEL_TOKEN}" \
+            inspect "${DEPLOYMENT_URL}" \
+            --json)"
+          jq -e '
+            .readyState == "READY" and
+            any(.builds[]?.output[]?; .type == "lambda" and .path == "__server")
+          ' <<< "${deployment_json}" > /dev/null
+
       - name: Smoke test staged deployment
         env:
           DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           for path in / /api/feeds/today-in-history/rss.xml; do
-            pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "${path}" \
+            pnpm dlx vercel@${VERCEL_CLI_VERSION} --token="${VERCEL_TOKEN}" curl "${path}" \
               --deployment="${DEPLOYMENT_URL}" \
-              --token="${VERCEL_TOKEN}" \
               -- \
               --fail \
               --silent \
@@ -119,6 +145,16 @@ jobs:
           DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: >-
-          pnpm dlx vercel@${VERCEL_CLI_VERSION} promote "${DEPLOYMENT_URL}"
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} --token="${VERCEL_TOKEN}"
+          promote "${DEPLOYMENT_URL}"
           --yes
-          --token="${VERCEL_TOKEN}"
+
+      - name: Restore default deployment after failure
+        if: ${{ failure() && steps.stage.outcome == 'success' }}
+        env:
+          PREVIOUS_DEPLOYMENT_URL: ${{ steps.previous.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} --token="${VERCEL_TOKEN}"
+          alias set "${PREVIOUS_DEPLOYMENT_URL}"
+          pomo-bichis-projects.vercel.app
