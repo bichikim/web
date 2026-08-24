@@ -38,6 +38,7 @@ export interface WorkerRpcTransport<Request, Response> {
 
 export interface CreateWorkerRpcTransportOptions<Response> {
   readonly getRequestId: (response: Response) => number | null
+  readonly onFailure?: (failure: WorkerRpcFailure) => void
   readonly onEvent: (response: Response) => void
   readonly worker: Worker
 }
@@ -97,6 +98,12 @@ export const createWorkerRpcTransport = <Request, Response>(
     }
 
     failure = nextFailure
+
+    try {
+      options.onFailure?.(nextFailure)
+    } catch {
+      // Failure observation must not replace Worker lifecycle cleanup.
+    }
 
     for (const pendingRequest of pendingRequests.values()) {
       pendingRequest.reject(nextFailure)

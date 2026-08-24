@@ -10,6 +10,8 @@ import {Scene} from '@babylonjs/core/scene'
 import '@babylonjs/loaders/glTF'
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
+import {reportClientError} from '../features/client-error-reporter'
+
 interface CharacterCanvasProps {
   readonly modelUrl: string
   readonly onLoadError: () => void
@@ -103,7 +105,7 @@ const CharacterCanvas = (props: CharacterCanvasProps) => {
         true,
       )
     } catch (error: unknown) {
-      console.error('Babylon.js engine initialization failed', error)
+      reportClientError(error, {feature: 'character-renderer', source: 'direct'})
       props.onLoadError()
       return
     }
@@ -194,7 +196,7 @@ const CharacterCanvas = (props: CharacterCanvasProps) => {
             return
           }
 
-          console.error('Babylon.js character model loading failed', error)
+          reportClientError(error, {feature: 'character-model', source: 'direct'})
           unloadModel()
           onLoadError()
         })
