@@ -22,6 +22,7 @@
     "dev:storybook:https": "storybook dev --https --ssl-cert .cert/localhost.crt --ssl-key .cert/localhost.key -p 5555",
     "generate": "turbo gen",
     "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "test": "vitest run --reporter=dot",

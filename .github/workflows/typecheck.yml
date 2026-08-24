@@ -2,7 +2,6 @@ name: Typecheck
 
 on:
   pull_request:
-    branches: [dev, master]
 
 concurrency:
   group: typecheck-${{ github.event.pull_request.number }}
@@ -31,7 +30,16 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
+        id: install
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Run Oxlint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm lint
+
+      - name: Check formatting
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm format:check
