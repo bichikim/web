@@ -1,5 +1,7 @@
 import 'server-only'
 
+import {readPem, readString} from '../environment/schema'
+
 export interface TossAuthEnvironment {
   readonly POMO_TOSS_CALLBACK_AUTHORIZATION?: string
   readonly POMO_TOSS_MTLS_CERT?: string
@@ -11,7 +13,10 @@ const BASIC_AUTH_PREFIX = 'Basic '
 export const getTossCallbackAuthorization = (
   environment: TossAuthEnvironment = process.env,
 ): string => {
-  const authorization = environment.POMO_TOSS_CALLBACK_AUTHORIZATION?.trim()
+  const authorization = readString(
+    'POMO_TOSS_CALLBACK_AUTHORIZATION',
+    environment.POMO_TOSS_CALLBACK_AUTHORIZATION,
+  )
 
   if (
     !authorization?.startsWith(BASIC_AUTH_PREFIX) ||
@@ -28,19 +33,13 @@ export interface TossMtlsCredentials {
   readonly privateKey: string
 }
 
-const readPem = (name: string, value: string | undefined): string => {
-  const pem = value?.replaceAll('\\n', '\n').trim()
-
-  if (!pem) {
-    throw new TypeError(`${name} is not set`)
-  }
-
-  return pem
-}
-
 export const getTossMtlsCredentials = (
   environment: TossAuthEnvironment = process.env,
 ): TossMtlsCredentials => ({
-  certificate: readPem('POMO_TOSS_MTLS_CERT', environment.POMO_TOSS_MTLS_CERT),
-  privateKey: readPem('POMO_TOSS_MTLS_KEY', environment.POMO_TOSS_MTLS_KEY),
+  certificate: readPem('POMO_TOSS_MTLS_CERT', environment.POMO_TOSS_MTLS_CERT, ['CERTIFICATE']),
+  privateKey: readPem('POMO_TOSS_MTLS_KEY', environment.POMO_TOSS_MTLS_KEY, [
+    'PRIVATE KEY',
+    'RSA PRIVATE KEY',
+    'EC PRIVATE KEY',
+  ]),
 })
