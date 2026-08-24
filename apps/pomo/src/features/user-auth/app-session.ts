@@ -5,7 +5,26 @@ import {apiFetch} from '../http-client'
 
 const APP_SESSION_STORAGE_KEY = 'pomo:app-session:v1'
 const HTTP_UNAUTHORIZED = 401
+const HTTP_TOO_MANY_REQUESTS = 429
 const tossLoginSessionSchema = z.object({token: z.string()})
+
+interface SentAccountLinkEmail {
+  readonly status: 'sent'
+}
+
+interface RejectedAccountLinkEmail {
+  readonly status: 'not-sent'
+}
+
+interface RateLimitedAccountLinkEmail {
+  readonly retryAfterSeconds: number | null
+  readonly status: 'rate-limited'
+}
+
+export type AccountLinkEmailResult =
+  | SentAccountLinkEmail
+  | RejectedAccountLinkEmail
+  | RateLimitedAccountLinkEmail
 
 const getAuthorizationHeaders = (token: string): HeadersInit => ({
   Authorization: `Bearer ${token}`,
@@ -82,12 +101,32 @@ export const revokeTossLoginSession = async (token: string): Promise<void> => {
   await clearStoredAppSession()
 }
 
-export const requestAccountLinkEmail = async (token: string, email: string): Promise<boolean> => {
+export const requestAccountLinkEmail = async (
+  token: string,
+  email: string,
+): Promise<AccountLinkEmailResult> => {
   const response = await apiJsonRequest('account/link-email', {
     body: {email},
     headers: getAuthorizationHeaders(token),
     method: 'POST',
   })
 
-  return response.ok
+  if (response.ok) {
+    return {status: 'sent'}
+  }
+
+  if (response.status === HTTP_TOO_MANY_REQUESTS) {
+    const retryAfterHeader = response.headers.get('Retry-After')
+    const retryAfterSeconds = Number(retryAfterHeader)
+
+    return {
+      retryAfterSeconds:
+        retryAfterHeader !== null && Number.isInteger(retryAfterSeconds) && retryAfterSeconds > 0
+          ? retryAfterSeconds
+          : null,
+      status: 'rate-limited',
+    }
+  }
+
+  return {status: 'not-sent'}
 }

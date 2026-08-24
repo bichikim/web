@@ -1,0 +1,124 @@
+name: Deploy Pomo Production
+
+on:
+  push:
+    branches:
+      - main-pomo
+  workflow_dispatch:
+
+concurrency:
+  group: pomo-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24
+  PNPM_VERSION: 11.8.0
+  VERCEL_CLI_VERSION: 59.5.0
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: prj_1GOayEsbALkhBglgOzza5COVs1tC
+
+jobs:
+  deploy:
+    name: Migrate and deploy
+    if: github.ref == 'refs/heads/main-pomo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: Production – pomo
+      url: ${{ steps.stage.outputs.url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check production migration safety
+        run: pnpm --dir apps/pomo db:check-production-migrations
+
+      - name: Pull Vercel production settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull
+          --yes
+          --environment=production
+          --token="${VERCEL_TOKEN}"
+
+      - name: Build production artifact
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} build
+          --prod
+          --token="${VERCEL_TOKEN}"
+
+      - name: Migrate production database
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} env run \
+            --environment=production \
+            --token="${VERCEL_TOKEN}" \
+            -- sh -eu -c '
+              if [ -z "${DATABASE_URL_UNPOOLED:-}" ]; then
+                echo "DATABASE_URL_UNPOOLED is required for production migrations." >&2
+                exit 1
+              fi
+              pnpm --dir apps/pomo exec drizzle-kit check
+              exec pnpm --dir apps/pomo db:migrate
+            '
+
+      - name: Stage production artifact
+        id: stage
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+            --prebuilt \
+            --prod \
+            --skip-domain \
+            --archive=tgz \
+            --token="${VERCEL_TOKEN}")"
+          echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Smoke test staged deployment
+        env:
+          DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for path in / /api/feeds/today-in-history/rss.xml; do
+            pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "${path}" \
+              --deployment="${DEPLOYMENT_URL}" \
+              --token="${VERCEL_TOKEN}" \
+              -- \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 30 \
+              --output /dev/null
+          done
+
+      - name: Promote staged deployment
+        env:
+          DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} promote "${DEPLOYMENT_URL}"
+          --yes
+          --token="${VERCEL_TOKEN}"

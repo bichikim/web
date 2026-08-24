@@ -59,23 +59,26 @@ body {
 }
 `
 
-export default createHandler(() => (
-  <StartServer
-    document={(props) => (
-      <html data-color-scheme={documentColorScheme} lang="ko">
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content={viewport} />
-          <meta name="theme-color" content={documentThemeColor} />
-          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-          <style>{CRITICAL_LAYOUT_CSS}</style>
-          {props.assets}
-        </head>
-        <body>
-          <div id="root">{props.children}</div>
-          {props.scripts}
-        </body>
-      </html>
-    )}
-  />
-))
+export default createHandler(
+  (event) => (
+    <StartServer
+      document={(props) => (
+        <html data-color-scheme={documentColorScheme} lang="ko">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content={viewport} />
+            <meta name="theme-color" content={documentThemeColor} />
+            <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+            <style nonce={event.locals.securityNonce}>{CRITICAL_LAYOUT_CSS}</style>
+            {props.assets}
+          </head>
+          <body>
+            <div id="root">{props.children}</div>
+            {props.scripts}
+          </body>
+        </html>
+      )}
+    />
+  ),
+  (event) => ({nonce: event.locals.securityNonce}),
+)
