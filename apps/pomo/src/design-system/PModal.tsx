@@ -2,6 +2,8 @@ import {Dialog} from '@kobalte/core/dialog'
 import {cva, cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
+import * as m from '../paraglide/messages.js'
+
 const modalContentClasses = cva(
   `fixed left-1/2 flex max-h-modal border border-solid border-border backdrop-blur-surface ` +
     `w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 flex-col overflow-clip ` +
@@ -187,7 +189,7 @@ export const PModal = (props: PModalProps) => (
               )}
             >
               <Dialog.CloseButton
-                aria-label="닫기"
+                aria-label={m.common_close()}
                 class={cx(
                   'grid flex-none cursor-pointer place-items-center border-0 ' +
                     'rounded-control bg-transparent text-muted-foreground ' +

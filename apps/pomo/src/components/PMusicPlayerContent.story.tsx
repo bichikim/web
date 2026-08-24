@@ -2,6 +2,7 @@ import {expect, userEvent, waitFor, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 import dayReadingImage from '../features/focus-room-animation/assets/concept-art/day-reading.webp'
+import * as m from '../paraglide/messages.js'
 import PMusicPlayerContent from './PMusicPlayerContent'
 
 const meta = {
@@ -58,9 +59,11 @@ export const Expanded: Story = {
   },
   play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
     const canvas = within(canvasElement)
-    const expandButton = canvas.getByRole('button', {name: '플레이어 펼치기'})
+    const expandButton = canvas.getByRole('button', {name: m.player_expand()})
     await userEvent.click(expandButton)
-    await waitFor(() => expect(canvas.getByRole('button', {name: '플레이어 접기'})).toBeVisible())
+    await waitFor(() =>
+      expect(canvas.getByRole('button', {name: m.player_collapse()})).toBeVisible(),
+    )
     await waitFor(() => expect(canvas.getByRole('button', {name: /Quiet Pages/u})).toBeEnabled())
   },
 }

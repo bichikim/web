@@ -1,6 +1,7 @@
 import {fileURLToPath} from 'node:url'
 
 import {solidStart} from '@solidjs/start/config'
+import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {nitro} from 'nitro/vite'
 import UnoCSS from 'unocss/vite'
@@ -13,12 +14,25 @@ import {
   type UserConfig,
 } from 'vite'
 
+import {
+  PARAGLIDE_APPS_IN_TOSS_STRATEGY,
+  PARAGLIDE_OUTPUT_STRUCTURE,
+  PARAGLIDE_ROUTE_STRATEGIES,
+  PARAGLIDE_TRAILING_SLASH,
+  PARAGLIDE_URL_PATTERNS,
+  PARAGLIDE_WEB_STRATEGY,
+} from './paraglide.config.ts'
+import projectSettings from './project.inlang/settings.json' with {type: 'json'}
 import {SERVICE_POLICY_PATHS} from './src/config/service-policy.ts'
 import {
   BASE_SECURITY_HEADERS,
   STATIC_SECURITY_HEADERS,
   WORKER_SECURITY_HEADERS,
 } from './src/config/security-headers.ts'
+import {
+  createLocalizedStaticRoutes,
+  LOCALIZED_STATIC_ROUTES,
+} from './src/config/static-localization.ts'
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInTossBuild = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
@@ -52,7 +66,7 @@ const sharedStaticRoutes = [
   SERVICE_POLICY_PATHS.web.privacy,
   SERVICE_POLICY_PATHS.web.terms,
 ]
-const appsInTossStaticRoutes = [
+const appsInTossBaseStaticRoutes = [
   ...sharedStaticRoutes,
   SERVICE_POLICY_PATHS.legacy.privacy,
   SERVICE_POLICY_PATHS.legacy.terms,
@@ -61,8 +75,17 @@ const appsInTossStaticRoutes = [
   '/focus-room',
   '/focus-room-dialogue',
 ]
+const localizedStaticRoutes = createLocalizedStaticRoutes({
+  locales: projectSettings.locales,
+  routes: LOCALIZED_STATIC_ROUTES,
+})
+const appsInTossStaticRoutes = [
+  ...new Set([...appsInTossBaseStaticRoutes, ...localizedStaticRoutes]),
+]
 const prerenderSecurityRules = Object.fromEntries(
-  sharedStaticRoutes.map((route) => [route, {headers: STATIC_SECURITY_HEADERS}]),
+  (isAppsInTossBuild ? [...sharedStaticRoutes, ...localizedStaticRoutes] : sharedStaticRoutes).map(
+    (route) => [route, {headers: STATIC_SECURITY_HEADERS}],
+  ),
 )
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
@@ -152,6 +175,16 @@ const useStaticNitroEntry = {
 } satisfies Plugin
 
 const createPlugins = (command: ConfigEnv['command']): PluginOption[] => [
+  paraglideVitePlugin({
+    emitTsDeclarations: true,
+    outdir: './src/paraglide',
+    outputStructure: PARAGLIDE_OUTPUT_STRUCTURE,
+    project: './project.inlang',
+    routeStrategies: PARAGLIDE_ROUTE_STRATEGIES,
+    strategy: isAppsInTossBuild ? PARAGLIDE_APPS_IN_TOSS_STRATEGY : PARAGLIDE_WEB_STRATEGY,
+    trailingSlash: PARAGLIDE_TRAILING_SLASH,
+    urlPatterns: PARAGLIDE_URL_PATTERNS,
+  }),
   createUnoCssInlineResolver(),
   resolveBuildUnoCss,
   ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),

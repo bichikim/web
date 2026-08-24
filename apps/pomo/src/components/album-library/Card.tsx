@@ -9,6 +9,7 @@ import {
   type PTrackPreviewRequest,
 } from '../../features/focus-room-audio/index'
 import {PAlbumTrackList} from '../PAlbumTrackList'
+import * as m from '../../paraglide/messages.js'
 import {AlbumSummary} from './Summary'
 
 const ALBUM_CARD_CLASSES = [
@@ -66,7 +67,7 @@ export const AlbumCard = (props: AlbumCardProps) => {
             text-muted-foreground"
         >
           <span aria-hidden="true" class="i-tabler-clock-hour-4 size-4 text-highlight" />
-          <span>수록곡을 준비하고 있어요</span>
+          <span>{m.album_tracks_preparing()}</span>
         </div>
       </Show>
       <Show when={props.album.sale === undefined && props.album.tracks.length > 0}>
@@ -79,7 +80,7 @@ export const AlbumCard = (props: AlbumCardProps) => {
             size="small"
             tone={props.isInPlayer ? 'secondary' : 'primary'}
           >
-            앨범 모두 추가
+            {m.album_add_all()}
           </PButton>
         </div>
       </Show>

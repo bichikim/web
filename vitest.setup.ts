@@ -25,6 +25,10 @@ if (typeof HTMLMediaElement !== 'undefined') {
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
 }
 
+if (typeof document !== 'undefined') {
+  document.cookie = 'PARAGLIDE_LOCALE=ko; path=/'
+}
+
 // render()로 남은 컴포넌트·DOM이 다음 테스트로 새지 않게 한다.
 afterEach(() => {
   cleanup()

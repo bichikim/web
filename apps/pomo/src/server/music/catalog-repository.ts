@@ -1,4 +1,4 @@
-import {and, asc, desc, eq, gt, isNull, lte, or} from 'drizzle-orm'
+import {and, asc, desc, eq, gt, inArray, isNull, lte, or} from 'drizzle-orm'
 
 import {
   commerceEntitlementGrants,
@@ -40,6 +40,8 @@ export interface PublishedAlbum {
   readonly trackCount: number
   readonly tracks: ReadonlyArray<PublishedAlbumTrack>
 }
+
+export type PublishedAlbumLocale = 'en' | 'ko'
 
 export interface TrackAccessAsset {
   readonly assetId: string
@@ -110,26 +112,31 @@ export const findEntitledTrackPlaybackAsset = async (
     : {assetId: asset.assetId, durationMs: asset.durationMs, objectKey: asset.objectKey}
 }
 
-export const listPublishedAlbums = async (): Promise<ReadonlyArray<PublishedAlbum>> => {
+export const listPublishedAlbums = async (
+  locale: PublishedAlbumLocale = 'ko',
+): Promise<ReadonlyArray<PublishedAlbum>> => {
   const database = getDatabase()
-  const [albums, albumTracks, offers] = await Promise.all([
+  const requestedLocales: ReadonlyArray<PublishedAlbumLocale> =
+    locale === 'ko' ? ['ko'] : ['en', 'ko']
+  const [albumTranslations, albumTracks, offers] = await Promise.all([
     database
       .select({
         coverFallback: musicAlbums.coverFallback,
         coverImageUrl: musicAlbums.coverImageUrl,
         description: musicAlbumTranslations.description,
         id: musicAlbums.id,
+        locale: musicAlbumTranslations.locale,
+        publishedAt: musicAlbums.publishedAt,
         title: musicAlbumTranslations.title,
       })
       .from(musicAlbums)
-      .innerJoin(
-        musicAlbumTranslations,
+      .innerJoin(musicAlbumTranslations, eq(musicAlbumTranslations.albumId, musicAlbums.id))
+      .where(
         and(
-          eq(musicAlbumTranslations.albumId, musicAlbums.id),
-          eq(musicAlbumTranslations.locale, 'ko'),
+          eq(musicAlbums.status, 'published'),
+          inArray(musicAlbumTranslations.locale, requestedLocales),
         ),
       )
-      .where(eq(musicAlbums.status, 'published'))
       .orderBy(desc(musicAlbums.publishedAt)),
     database
       .select({
@@ -165,6 +172,15 @@ export const listPublishedAlbums = async (): Promise<ReadonlyArray<PublishedAlbu
   ])
   const tracksByAlbum = new Map<string, PublishedAlbumTrack[]>()
   const offersByAlbum = new Map(offers.map((offer) => [offer.albumId, offer.externalProductId]))
+  const albumsById: Map<string, (typeof albumTranslations)[number]> = new Map()
+
+  for (const translation of albumTranslations) {
+    const current = albumsById.get(translation.id)
+
+    if (current === undefined || translation.locale === locale) {
+      albumsById.set(translation.id, translation)
+    }
+  }
 
   for (const track of albumTracks) {
     const tracks = tracksByAlbum.get(track.albumId) ?? []
@@ -172,7 +188,7 @@ export const listPublishedAlbums = async (): Promise<ReadonlyArray<PublishedAlbu
     tracksByAlbum.set(track.albumId, tracks)
   }
 
-  return albums.map((album) => {
+  return [...albumsById.values()].map((album) => {
     const externalProductId = offersByAlbum.get(album.id)
     const sale: PublishedAlbumSale =
       externalProductId === undefined
@@ -180,6 +196,15 @@ export const listPublishedAlbums = async (): Promise<ReadonlyArray<PublishedAlbu
         : {externalProductId, state: 'configured'}
 
     const tracks = tracksByAlbum.get(album.id) ?? []
-    return {...album, sale, trackCount: tracks.length, tracks}
+    return {
+      coverFallback: album.coverFallback,
+      coverImageUrl: album.coverImageUrl,
+      description: album.description,
+      id: album.id,
+      sale,
+      title: album.title,
+      trackCount: tracks.length,
+      tracks,
+    }
   })
 }

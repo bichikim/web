@@ -2,6 +2,7 @@ import {createSignal, untrack} from 'solid-js'
 import {expect, fn, userEvent, waitFor, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
+import * as m from '../paraglide/messages.js'
 import {PModal} from './PModal'
 
 interface ModalPlayContext {
@@ -79,7 +80,7 @@ export const Default: Story = {
     const dialog = page.getByRole('dialog', {name: '설정'})
 
     await waitFor(() => expect(dialog).toBeVisible())
-    await userEvent.click(page.getByRole('button', {name: '닫기'}))
+    await userEvent.click(page.getByRole('button', {name: m.common_close()}))
     await waitFor(() => expect(page.queryByRole('dialog', {name: '설정'})).not.toBeInTheDocument())
     await waitFor(() => expect(page.getByRole('button', {name: '모달 열기'})).toHaveFocus())
   },

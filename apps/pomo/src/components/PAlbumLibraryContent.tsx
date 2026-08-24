@@ -19,6 +19,8 @@ import {
 } from '../features/focus-room-audio'
 import {AlbumCard} from './album-library/Card'
 import {PlaylistFooter} from './album-library/Footer'
+import * as m from '../paraglide/messages.js'
+import {getLocale} from '../paraglide/runtime.js'
 
 export interface PAlbumLibraryContentProps {
   readonly isOpen: boolean
@@ -32,7 +34,7 @@ export interface PAlbumLibraryContentProps {
 }
 
 export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
-  const [albums, {refetch}] = createResource(() => loadPAlbums())
+  const [albums, {refetch}] = createResource(() => loadPAlbums({locale: getLocale()}))
   const [clearedTracks, setClearedTracks] = createSignal<readonly PTrack[]>([])
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>
@@ -69,7 +71,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
 
   return (
     <PModal
-      description="곡 하나씩 또는 앨범 전체를 플레이어에 담아보세요."
+      description={m.album_description()}
       footer={
         <PlaylistFooter
           canClear={props.onClearTracks !== undefined}
@@ -84,7 +86,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
       onOpenChange={props.onOpenChange}
       placement="top"
       size="full"
-      title="앨범"
+      title={m.album_title()}
     >
       <audio
         class="hidden"
@@ -119,7 +121,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                   aria-hidden="true"
                   class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
                 />
-                <p class="m-0 text-sm font-650">앨범을 불러오지 못했어요</p>
+                <p class="m-0 text-sm font-650">{m.album_load_failed()}</p>
                 <PButton
                   class="mt-3"
                   onPress={() => {
@@ -129,7 +131,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                   size="small"
                   tone="secondary"
                 >
-                  다시 시도
+                  {m.album_retry()}
                 </PButton>
               </div>
             </div>
@@ -139,7 +141,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
         <Suspense
           fallback={
             <div class="grid min-h-32 place-items-center text-sm text-muted-foreground">
-              앨범 불러오는 중
+              {m.album_loading()}
             </div>
           }
         >
@@ -154,7 +156,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                     aria-hidden="true"
                     class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
                   />
-                  <p class="m-0 text-sm font-650">등록된 앨범이 없어요</p>
+                  <p class="m-0 text-sm font-650">{m.album_empty()}</p>
                 </div>
               </div>
             }

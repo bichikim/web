@@ -170,6 +170,57 @@ describe('loadPAlbums', () => {
     )
   })
 
+  it('should localize bundled and published albums for English', async () => {
+    const bundledAlbum = {
+      description: '한국어 설명',
+      icon: 'i-tabler-sunrise',
+      id: 'morning-focus',
+      title: '아침의 카페',
+      trackIds: [],
+    }
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [bundledAlbum], version: 1}))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          albums: [
+            {
+              coverFallback: 'music',
+              coverImageUrl: null,
+              description: 'Published description',
+              id: 'published',
+              sale: {state: 'preparing'},
+              title: 'Published album',
+              trackCount: 0,
+              tracks: [],
+            },
+          ],
+          version: 1,
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(loadPAlbums({locale: 'en'})).resolves.toEqual([
+      {
+        ...bundledAlbum,
+        description: 'Start focusing with bright, clear rhythms.',
+        title: 'Morning Café',
+        tracks: [],
+      },
+      expect.objectContaining({
+        description: 'Published description',
+        sale: {state: 'preparing', statusLabel: 'Preparing for sale'},
+        title: 'Published album',
+      }),
+    ])
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      '/api/music/albums?locale=en',
+      expect.objectContaining({cache: 'no-store', signal: undefined}),
+    )
+  })
+
   it('should preserve bundled albums when the published catalog is unavailable', async () => {
     const album = {
       description: '기본 앨범',
@@ -188,6 +239,26 @@ describe('loadPAlbums', () => {
     )
 
     await expect(loadPAlbums()).resolves.toEqual([{...album, tracks: []}])
+  })
+
+  it('should preserve an override URL query when requesting a localized catalog', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await loadPAlbums({
+      locale: 'en',
+      publishedAlbumsUrl: 'https://pomo.test/albums?channel=toss',
+    })
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      'https://pomo.test/albums?channel=toss&locale=en',
+      expect.objectContaining({cache: 'no-store', signal: undefined}),
+    )
   })
 
   it('should reject album IDs missing from the track catalog', () => {

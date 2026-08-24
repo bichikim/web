@@ -1,6 +1,7 @@
 import {createEffect, onMount, Show} from 'solid-js'
 
 import {POverflowMarquee} from './POverflowMarquee'
+import * as m from '../paraglide/messages.js'
 
 const CLASSES = {
   screenSaver: [
@@ -89,7 +90,7 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
 
   return (
     <dialog
-      aria-label="스크린 세이버"
+      aria-label={m.screen_saver_label()}
       class={CLASSES.screenSaver}
       onCancel={(event) => {
         event.preventDefault()
@@ -105,7 +106,7 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
         <div class={CLASSES.screenSaverContent}>
           <Show when={props.timer}>
             {(timer) => (
-              <section aria-label="포모도로 상태" class={CLASSES.screenSaverTimer}>
+              <section aria-label={m.screen_saver_pomodoro()} class={CLASSES.screenSaverTimer}>
                 <span>{timer().status}</span>
                 <strong>{timer().time}</strong>
               </section>
@@ -113,7 +114,7 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
           </Show>
           <Show when={props.track}>
             {(track) => (
-              <section aria-label="현재 음악" class={CLASSES.screenSaverTrack}>
+              <section aria-label={m.screen_saver_music()} class={CLASSES.screenSaverTrack}>
                 <p>
                   <POverflowMarquee focusable={false} text={track().title} />
                 </p>
@@ -124,13 +125,11 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
             )}
           </Show>
           <p aria-hidden="true" class={CLASSES.screenSaverHint}>
-            터치하거나 마우스를 움직이거나 클릭하면 돌아가요
+            {m.screen_saver_hint()}
           </p>
         </div>
       </div>
-      <span class="sr-only">
-        화면을 터치하거나 마우스를 움직이거나 클릭하거나 아무 키나 누르면 Pomofi로 돌아갑니다.
-      </span>
+      <span class="sr-only">{m.screen_saver_instructions()}</span>
     </dialog>
   )
 }

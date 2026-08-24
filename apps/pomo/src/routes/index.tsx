@@ -1,24 +1,21 @@
 import {Title} from '@solidjs/meta'
-import {cx} from 'class-variance-authority'
-import {Suspense} from 'solid-js'
-import {HomeStudio} from '../components/home-page/Studio'
+import {onMount} from 'solid-js'
 
-const MAIN_CLASSES = cx(
-  'pomo-home',
-  'relative h-dvh w-full overflow-hidden bg-background text-foreground',
-  !import.meta.env.POMO_IS_APPS_IN_TOSS &&
-    'bg-[radial-gradient(circle_at_50%_0%,#3c3329_0%,#211b16_38%,#120f0d_76%)]',
-)
+import * as m from '../paraglide/messages.js'
+import {getLocale, localizeUrl} from '../paraglide/runtime.js'
 
-export default function HomePage() {
+export default function LocaleRedirectPage() {
+  onMount(() => {
+    const redirectUrl = localizeUrl(new URL(window.location.href), {locale: getLocale()})
+    window.location.replace(redirectUrl)
+  })
+
   return (
-    <main class={MAIN_CLASSES}>
+    <main class="grid min-h-dvh place-items-center bg-background p-6 text-foreground">
       <Title>Pomofi</Title>
-      <div class="pomo-home-stage relative h-full w-full">
-        <Suspense fallback={<div class="pomo-scene-fallback">Pomo를 준비하고 있어요…</div>}>
-          <HomeStudio />
-        </Suspense>
-      </div>
+      <p class="m-0 text-sm text-muted-foreground" role="status">
+        {m.app_loading()}
+      </p>
     </main>
   )
 }

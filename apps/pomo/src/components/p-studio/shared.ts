@@ -72,8 +72,3 @@ export const CLASSES = {
 } as const
 
 export type SceneTime = ScenePeriod
-
-export const findLabel = <TValue extends string>(
-  options: readonly {readonly label: string; readonly value: TValue}[],
-  value: TValue,
-) => options.find((option) => option.value === value)?.label ?? value

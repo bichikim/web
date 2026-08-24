@@ -2,6 +2,7 @@ import {createMemo, createSignal, Show, untrack} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
 import type {PomodoroTimerConfig} from '../features/pomodoro-timer'
+import * as m from '../paraglide/messages.js'
 import {DurationField} from './pomodoro-duration-editor/Field'
 import {CLASSES} from './pomodoro-duration-editor/shared'
 
@@ -51,9 +52,12 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
     untrack(() => createDurationDraft(props.config)),
   )
   const summary = () =>
-    `${props.config.focusSessionsPerCycle}세션 · 집중 ${props.config.focusSeconds / SECONDS_PER_MINUTE}분 · ` +
-    `짧은 휴식 ${props.config.shortBreakSeconds / SECONDS_PER_MINUTE}분 · ` +
-    `긴 휴식 ${props.config.longBreakSeconds / SECONDS_PER_MINUTE}분`
+    m.pomodoro_cycle_summary({
+      focus: props.config.focusSeconds / SECONDS_PER_MINUTE,
+      longBreak: props.config.longBreakSeconds / SECONDS_PER_MINUTE,
+      sessions: props.config.focusSessionsPerCycle,
+      shortBreak: props.config.shortBreakSeconds / SECONDS_PER_MINUTE,
+    })
   const nextConfig = createMemo(() => {
     const durationDraft = draft()
     const focusMinutes = parseDurationMinutes(durationDraft.focus)
@@ -115,39 +119,39 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
         <div class={CLASSES.pomodoroPanelDurationEditor}>
           <div class={CLASSES.pomodoroPanelDurationFields}>
             <DurationField
-              accessibleLabel="집중 횟수(회)"
-              label="집중 횟수"
+              accessibleLabel={m.pomodoro_focus_count_accessible()}
+              label={m.pomodoro_focus_count_label()}
               max={MAX_FOCUS_SESSIONS}
               min={MIN_FOCUS_SESSIONS}
               onInput={(value) => setDraft((current) => ({...current, sessions: value}))}
-              suffix="회"
+              suffix={m.pomodoro_count_suffix()}
               value={draft().sessions}
             />
             <DurationField
-              accessibleLabel="집중 시간(분)"
-              label="집중"
+              accessibleLabel={m.pomodoro_focus_duration_accessible()}
+              label={m.pomodoro_focus_duration()}
               max={MAX_DURATION_MINUTES}
               min={MIN_DURATION_MINUTES}
               onInput={(value) => setDraft((current) => ({...current, focus: value}))}
-              suffix="분"
+              suffix={m.pomodoro_minute_suffix()}
               value={draft().focus}
             />
             <DurationField
-              accessibleLabel="짧은 휴식 시간(분)"
-              label="짧은 휴식"
+              accessibleLabel={m.pomodoro_short_break_accessible()}
+              label={m.pomodoro_short_break()}
               max={MAX_DURATION_MINUTES}
               min={MIN_DURATION_MINUTES}
               onInput={(value) => setDraft((current) => ({...current, shortBreak: value}))}
-              suffix="분"
+              suffix={m.pomodoro_minute_suffix()}
               value={draft().shortBreak}
             />
             <DurationField
-              accessibleLabel="긴 휴식 시간(분)"
-              label="긴 휴식"
+              accessibleLabel={m.pomodoro_long_break_accessible()}
+              label={m.pomodoro_long_break_duration()}
               max={MAX_DURATION_MINUTES}
               min={MIN_DURATION_MINUTES}
               onInput={(value) => setDraft((current) => ({...current, longBreak: value}))}
-              suffix="분"
+              suffix={m.pomodoro_minute_suffix()}
               value={draft().longBreak}
             />
           </div>
@@ -160,7 +164,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
               size="small"
               tone="secondary"
             >
-              설정 저장
+              {m.pomodoro_save()}
             </PButton>
             <PButton
               class="w-full"
@@ -169,10 +173,10 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
               size="small"
               tone="secondary"
             >
-              취소
+              {m.pomodoro_cancel()}
             </PButton>
           </div>
-          <p class={CLASSES.pomodoroPanelDurationHelp}>집중 횟수 1~12회 · 시간 1~120분</p>
+          <p class={CLASSES.pomodoroPanelDurationHelp}>{m.pomodoro_duration_help()}</p>
         </div>
       </Show>
     </>

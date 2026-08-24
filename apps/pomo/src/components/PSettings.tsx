@@ -9,18 +9,21 @@ import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {PSwitch} from '../design-system/PSwitch'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
+import type {PActivity, PGaze} from '../features/focus-room-scene-preferences'
 import {
-  FOCUS_ROOM_ACTIVITY_OPTIONS,
-  FOCUS_ROOM_GAZE_OPTIONS,
-  FOCUS_ROOM_TIME_OPTIONS,
-  type PActivity,
-  type PGaze,
-} from '../features/focus-room-scene-preferences'
+  getLocalizedActivityOptions,
+  getLocalizedGazeOptions,
+  getLocalizedMotionInputOptions,
+  getLocalizedMotionOptions,
+  getLocalizedTimeOptions,
+} from '../features/localization'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {UserSettings} from '../features/user-auth/UserSettings'
 import type {WeatherCitySlug} from '../features/weather'
+import * as m from '../paraglide/messages.js'
+import {getLocale, type Locale, setLocale} from '../paraglide/runtime.js'
 import {PCreditsSettings} from './PCreditsSettings'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
@@ -66,13 +69,19 @@ export interface PSettingsProps {
   readonly weatherEnabled?: boolean
 }
 
-const SCREEN_SAVER_DELAY_OPTIONS = [
-  {label: '끄기', value: 'off'},
-  {label: '1분 후', value: '1m'},
-  {label: '10분 후', value: '10m'},
-  {label: '20분 후', value: '20m'},
-  {label: '1시간 후', value: '1h'},
-] satisfies readonly PSelectOption<ScreenSaverDelay>[]
+const LANGUAGE_OPTIONS = [
+  {label: '한국어', value: 'ko'},
+  {label: 'English', value: 'en'},
+] satisfies readonly PSelectOption<Locale>[]
+
+const getScreenSaverDelayOptions = () =>
+  [
+    {label: m.settings_delay_off(), value: 'off'},
+    {label: m.settings_delay_one_minute(), value: '1m'},
+    {label: m.settings_delay_ten_minutes(), value: '10m'},
+    {label: m.settings_delay_twenty_minutes(), value: '20m'},
+    {label: m.settings_delay_one_hour(), value: '1h'},
+  ] satisfies readonly PSelectOption<ScreenSaverDelay>[]
 
 export const PSettings = (props: PSettingsProps) => {
   const [isOpen, setIsOpen] = createSignal(false)
@@ -89,13 +98,13 @@ export const PSettings = (props: PSettingsProps) => {
     const availability = wakeLock.availability()
     switch (availability) {
       case 'checking':
-        return '화면 유지 기능을 사용할 수 있는지 확인하고 있어요.'
+        return m.settings_wake_lock_checking()
       case 'supported':
         return wakeLock.isRequestPending()
-          ? '화면을 계속 켜 두도록 요청하고 있어요.'
-          : '집중하는 동안 화면이 어두워지거나 잠기지 않게 유지해요.'
+          ? m.settings_wake_lock_requesting()
+          : m.settings_wake_lock_supported()
       case 'unsupported':
-        return '이 브라우저에서는 화면 유지 기능을 지원하지 않아요.'
+        return m.settings_wake_lock_unsupported()
     }
 
     const exhaustiveAvailability: never = availability
@@ -112,8 +121,8 @@ export const PSettings = (props: PSettingsProps) => {
     <>
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
         <PIconButton
-          accessibleLabel="설정 열기"
-          feedback="설정"
+          accessibleLabel={m.settings_open()}
+          feedback={m.settings_feedback()}
           icon={getPomoIconClass('i-tabler-settings', props.sceneStyle)}
           onPress={handleOpen}
         />
@@ -126,30 +135,36 @@ export const PSettings = (props: PSettingsProps) => {
           onOpenChange={setIsOpen}
           placement="top"
           size="wide"
-          title="Pomofi 설정"
+          title={m.settings_title()}
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">
             <div class={CLASSES.settingsContent}>
+              <PSelect
+                label={m.settings_language()}
+                onChange={setLocale}
+                options={LANGUAGE_OPTIONS}
+                value={getLocale()}
+              />
               <div class={CLASSES.settingsScene}>
                 <PRadioSwitch
-                  label="시간"
+                  label={m.settings_time()}
                   onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}
-                  options={FOCUS_ROOM_TIME_OPTIONS}
+                  options={getLocalizedTimeOptions()}
                   sceneStyle={props.sceneStyle}
                   value={props.timeMode ?? 'day'}
                 />
                 <PRadioSwitch
-                  label="행동"
+                  label={m.settings_activity()}
                   onChange={(activity) => props.onActivityChange?.(activity)}
-                  options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+                  options={getLocalizedActivityOptions()}
                   sceneStyle={props.sceneStyle}
                   value={props.activity ?? 'reading'}
                 />
                 <PRadioSwitch
-                  label="보기"
+                  label={m.settings_view()}
                   onChange={(gaze) => props.onGazeChange?.(gaze)}
-                  options={FOCUS_ROOM_GAZE_OPTIONS}
+                  options={getLocalizedGazeOptions()}
                   sceneStyle={props.sceneStyle}
                   value={props.gaze ?? 'focused'}
                 />
@@ -157,23 +172,23 @@ export const PSettings = (props: PSettingsProps) => {
               <div class="grid gap-4 border-b border-solid border-border pb-5">
                 <PSwitch
                   checked={(props.sceneStyle ?? 'original') === 'scribble'}
-                  description="준비된 장면을 일부러 서툴게 그린 하찮은 그림으로 바꿔요."
-                  label="하찮은 스타일"
+                  description={m.settings_scribble_description()}
+                  label={m.settings_scribble_style()}
                   onChange={(isChecked) =>
                     props.onSceneStyleChange?.(isChecked ? 'scribble' : 'original')
                   }
                 />
                 <PRadioSwitch
-                  label="장면 움직임"
+                  label={m.settings_scene_motion()}
                   onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}
-                  options={P_SCENE_MOTION_OPTIONS}
+                  options={getLocalizedMotionOptions(P_SCENE_MOTION_OPTIONS)}
                   value={props.motionMode ?? 'depth'}
                 />
                 <Show when={props.canUseGyroscope}>
                   <PRadioSwitch
-                    label="장면 조작 방식"
+                    label={m.settings_scene_control()}
                     onChange={(motionInput) => props.onMotionInputChange?.(motionInput)}
-                    options={P_SCENE_MOTION_INPUT_OPTIONS}
+                    options={getLocalizedMotionInputOptions(P_SCENE_MOTION_INPUT_OPTIONS)}
                     value={props.motionInput ?? 'drag'}
                   />
                 </Show>
@@ -183,20 +198,17 @@ export const PSettings = (props: PSettingsProps) => {
                 class={CLASSES.settingsWakeLock}
                 description={wakeLockDescription()}
                 disabled={isWakeLockDisabled()}
-                label="화면 자동 꺼짐 방지"
+                label={m.settings_wake_lock()}
                 onChange={wakeLock.onEnabledChange}
               />
               <div class={CLASSES.settingsScreenSaver}>
                 <PSelect
-                  label="스크린 세이버"
+                  label={m.settings_screen_saver()}
                   onChange={(delay) => props.onScreenSaverDelayChange?.(delay)}
-                  options={SCREEN_SAVER_DELAY_OPTIONS}
+                  options={getScreenSaverDelayOptions()}
                   value={props.screenSaverDelay ?? '10m'}
                 />
-                <p>
-                  조작이 없으면 화면을 검게 가려 밝은 고정 화면이 오래 노출되지 않게 해요. 화면을
-                  터치하거나 마우스를 움직이거나 클릭하면 바로 돌아옵니다.
-                </p>
+                <p>{m.settings_screen_saver_description()}</p>
               </div>
             </div>
           </Tabs.Content>

@@ -3,6 +3,7 @@ import {Show} from 'solid-js'
 import {PCharacterEmotion, type PCharacterEmotionType} from '../../design-system/PCharacterEmotion'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import {type PomodoroPhase} from '../../features/pomodoro-timer/index'
+import * as m from '../../paraglide/messages.js'
 import {PScribbleCircleFrame} from '../PScribbleCircleFrame'
 import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from '../PScribbleFrame'
 import {CLASSES} from './shared'
@@ -75,7 +76,7 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
     </Show>
 
     <div
-      aria-label="포모도로 간편 조작"
+      aria-label={m.pomodoro_quick_controls()}
       class={cx(CLASSES.pomodoroTrigger, getQuickFrameClasses(props.sceneStyle))}
       data-phase={props.phase}
       role="group"
@@ -105,7 +106,7 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
       </button>
       <button
         aria-haspopup="dialog"
-        aria-label={`포모도로 열기, ${props.statusLabel}, ${props.timeLabel}`}
+        aria-label={m.pomodoro_open({status: props.statusLabel, time: props.timeLabel})}
         class={cx(
           INTERACTIVE_GLASS_PART_CLASSES,
           STRONG_FOCUS_RING_CLASSES,
