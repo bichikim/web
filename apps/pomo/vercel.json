@@ -13,6 +13,10 @@
     {
       "path": "/api/cron/auth-maintenance",
       "schedule": "17 18 * * *"
+    },
+    {
+      "path": "/api/cron/music-track-deletions",
+      "schedule": "37 18 * * *"
     }
   ],
   "git": {

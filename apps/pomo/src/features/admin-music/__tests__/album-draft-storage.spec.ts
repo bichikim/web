@@ -6,6 +6,7 @@ import {type AlbumDraftData, createEmptyAlbumTranslations} from '../album-draft'
 import {
   type AlbumDraftStorage,
   deleteAlbumDraft,
+  deleteExpiredAlbumDraftCovers,
   readAlbumDraftCover,
   readAlbumDraftData,
   writeAlbumDraftCover,
@@ -13,23 +14,35 @@ import {
 } from '../album-draft-storage'
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
 const createStorage = () => {
   const covers = new Map<string, Blob>()
+  const coverSavedAt = new Map<string, number>()
   let data: string | null = null
   const storage: AlbumDraftStorage = {
     deleteCover: vi.fn(async (id) => {
       covers.delete(id)
+      coverSavedAt.delete(id)
     }),
     deleteData: vi.fn(() => {
       data = null
+    }),
+    deleteExpiredCovers: vi.fn(async ({expiresBefore, protectedId}) => {
+      for (const [id, savedAt] of coverSavedAt) {
+        if (savedAt < expiresBefore && id !== protectedId) {
+          covers.delete(id)
+          coverSavedAt.delete(id)
+        }
+      }
     }),
     readCover: vi.fn(async (id) => covers.get(id) ?? null),
     readData: vi.fn(() => data),
     writeCover: vi.fn(async (id, nextCover) => {
       covers.set(id, nextCover)
+      coverSavedAt.set(id, Date.now())
     }),
     writeData: vi.fn((nextData) => {
       data = nextData
@@ -71,6 +84,42 @@ describe('album draft data storage', () => {
 })
 
 describe('album draft cover storage', () => {
+  it('should delete covers older than 30 days while preserving the active draft', async () => {
+    vi.useFakeTimers()
+    const storage = createStorage()
+    const now = new Date('2026-08-25T00:00:00.000Z')
+    const oldCover = new File(['old'], 'cover.webp', {type: 'image/webp'})
+
+    vi.setSystemTime(new Date('2026-07-25T23:59:59.999Z'))
+    await writeAlbumDraftCover('expired', oldCover, storage)
+    await writeAlbumDraftCover('active', oldCover, storage)
+    vi.setSystemTime(new Date('2026-07-26T00:00:00.000Z'))
+    await writeAlbumDraftCover('boundary', oldCover, storage)
+    vi.setSystemTime(now)
+
+    await deleteExpiredAlbumDraftCovers({
+      activeCoverDraftId: 'active',
+      now: () => now.getTime(),
+      storage,
+    })
+
+    await expect(readAlbumDraftCover('expired', storage)).resolves.toBeNull()
+    await expect(readAlbumDraftCover('active', storage)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCover('boundary', storage)).resolves.not.toBeNull()
+  })
+
+  it('should report an expired cover cleanup failure without throwing', async () => {
+    const storage = createStorage()
+    const error = new Error('indexed db unavailable')
+    vi.mocked(storage.deleteExpiredCovers).mockRejectedValueOnce(error)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await expect(
+      deleteExpiredAlbumDraftCovers({activeCoverDraftId: null, storage}),
+    ).resolves.toEqual({error, success: false})
+    expect(warn).toHaveBeenCalledOnce()
+  })
+
   it('should restore the prepared WebP file and delete the full draft after creation', async () => {
     const storage = createStorage()
     const draft = createDraft()

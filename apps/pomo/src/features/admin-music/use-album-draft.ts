@@ -101,9 +101,14 @@ interface RestoredAlbumDraft {
 }
 
 const restoreAlbumDraft = async (): Promise<RestoredAlbumDraft | null> => {
-  const {readAlbumDraftCover, readAlbumDraftData, writeAlbumDraftData} =
-    await getAlbumDraftStorage()
+  const {
+    deleteExpiredAlbumDraftCovers,
+    readAlbumDraftCover,
+    readAlbumDraftData,
+    writeAlbumDraftData,
+  } = await getAlbumDraftStorage()
   const draft = readAlbumDraftData()
+  await deleteExpiredAlbumDraftCovers({activeCoverDraftId: draft?.coverDraftId ?? null})
 
   if (draft === null) {
     return null
@@ -223,6 +228,7 @@ export const useAlbumDraft = (options: AlbumDraftOptions) => {
   const [coverFallback, setCoverFallback] = createSignal<AlbumDraftData['coverFallback']>('lp')
   const [coverDraftId, setCoverDraftId] = createSignal<string | null>(null)
   let coverPreparationId = 0
+  let isDisposed = false
 
   const getDraftData = (): AlbumDraftData => ({
     coverDraftId: coverDraftId(),
@@ -245,13 +251,16 @@ export const useAlbumDraft = (options: AlbumDraftOptions) => {
     setIsProcessingCover(false)
   }
 
-  onCleanup(clearPreparedCover)
+  onCleanup(() => {
+    isDisposed = true
+    clearPreparedCover()
+  })
 
   onMount(async () => {
     try {
       const restoredDraft = await restoreAlbumDraft()
 
-      if (restoredDraft === null) {
+      if (isDisposed || restoredDraft === null) {
         return
       }
 
@@ -268,12 +277,18 @@ export const useAlbumDraft = (options: AlbumDraftOptions) => {
 
       options.setMessage('작성 중이던 앨범 초안을 복원했습니다.')
     } catch (error) {
+      if (isDisposed) {
+        return
+      }
+
       console.warn('Failed to restore the admin album draft.', error)
       options.setMessage(
         '브라우저 초안을 복원하지 못했습니다. 새로 입력한 내용은 이 탭에 유지됩니다.',
       )
     } finally {
-      setIsRestoringDraft(false)
+      if (!isDisposed) {
+        setIsRestoringDraft(false)
+      }
     }
   })
 
