@@ -2,10 +2,13 @@ import {type ClientErrorReporter, reportClientError} from './reporter'
 
 interface ClientErrorHandlerState {
   readonly previousReportErrorDescriptor: PropertyDescriptor | undefined
-  references: number
-  reporter: ClientErrorReporter
+  readonly registrations: Array<ClientErrorHandlerRegistration>
   readonly reportError: (error: unknown) => void
   readonly removeListeners: () => void
+}
+
+interface ClientErrorHandlerRegistration {
+  readonly reporter: ClientErrorReporter
 }
 
 const HANDLER_STATE = Symbol.for('pomofi.client-error-handlers.v1')
@@ -22,7 +25,7 @@ const reportSafely = (
   source: 'global-error' | 'report-error' | 'unhandled-rejection',
 ) => {
   try {
-    state.reporter.report(error, {feature: 'application', source})
+    state.registrations.at(-1)?.reporter.report(error, {feature: 'application', source})
   } catch {
     // A replacement reporter cannot be allowed to recurse through global error handling.
   }
@@ -52,9 +55,22 @@ const installReportError = (state: ClientErrorHandlerState) => {
   }
 }
 
-const createHandlerState = (reporter: ClientErrorReporter): ClientErrorHandlerState => {
+const readPreviousReportError = (
+  descriptor: PropertyDescriptor | undefined,
+): ((error: unknown) => void) | undefined => {
+  try {
+    const value = descriptor === undefined ? undefined : Reflect.get(globalThis, 'reportError')
+    return typeof value === 'function' ? value : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const createHandlerState = (
+  registration: ClientErrorHandlerRegistration,
+): ClientErrorHandlerState => {
   const previousReportErrorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'reportError')
-  const previousReportError = globalThis.reportError
+  const previousReportError = readPreviousReportError(previousReportErrorDescriptor)
   const handleError = (event: ErrorEvent) => {
     reportSafely(state, getErrorEventValue(event), 'global-error')
   }
@@ -63,12 +79,11 @@ const createHandlerState = (reporter: ClientErrorReporter): ClientErrorHandlerSt
   }
   const state = {
     previousReportErrorDescriptor,
-    references: 1,
+    registrations: [registration],
     removeListeners: () => {
       window.removeEventListener('error', handleError)
       window.removeEventListener('unhandledrejection', handleRejection)
     },
-    reporter,
     reportError: (error: unknown) => {
       reportSafely(state, error, 'report-error')
       try {
@@ -99,13 +114,13 @@ export const installClientErrorHandlers = (
       errorId: reportClientError(error, reportOptions),
     }),
   }
+  const registration = {reporter} satisfies ClientErrorHandlerRegistration
   const existingState = host[HANDLER_STATE]
 
   if (existingState === undefined) {
-    host[HANDLER_STATE] = createHandlerState(reporter)
+    host[HANDLER_STATE] = createHandlerState(registration)
   } else {
-    existingState.references += 1
-    existingState.reporter = reporter
+    existingState.registrations.push(registration)
   }
 
   let disposed = false
@@ -121,8 +136,13 @@ export const installClientErrorHandlers = (
       return
     }
 
-    state.references -= 1
-    if (state.references > 0) {
+    const registrationIndex = state.registrations.indexOf(registration)
+    if (registrationIndex === -1) {
+      return
+    }
+
+    state.registrations.splice(registrationIndex, 1)
+    if (state.registrations.length > 0) {
       return
     }
 

@@ -63,6 +63,7 @@ const MAXIMUM_FIELD_LENGTH = 80
 const MAXIMUM_MESSAGE_LENGTH = 500
 const MAXIMUM_STACK_LENGTH = 4_000
 const IDENTIFIER_RADIX = 36
+const MAXIMUM_DATE_MILLISECONDS = 8_640_000_000_000_000
 const REDACTED = '[REDACTED]'
 const REDACTED_EMAIL = '[REDACTED_EMAIL]'
 const OMITTED_NON_ERROR = '[Non-Error value omitted]'
@@ -89,7 +90,7 @@ const AUTHORIZATION_PATTERN = /\b(?:authorization|cookie|set-cookie)\s*[:=]\s*[^
 const BEARER_PATTERN = /\bbearer\s+[\w.~+/=-]+/giu
 const SENSITIVE_VALUE_PATTERN =
   // oxlint-disable-next-line eslint-js/max-len -- One explicit policy pattern is easier to audit than dynamically assembled fragments.
-  /\b(?:access_token|body|content|conversation|cookie|dialogue|email|link_token|password|refresh_token|response|secret|subject|toss_subject|transcript|verifier|voice)\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^\s,;]+)/giu
+  /\b(?:access_token|body|content|conversation|cookie|dialogue|email|link_token|password|refresh_token|response|secret|subject|toss_subject|transcript|verifier|voice)\s*[:=][^\n]*/giu
 const TOKEN_QUERY_PATTERN =
   /(?<prefix>[?&](?:link_token|verifier|access_token|refresh_token|token)=)[^&#\s]*/giu
 const IDENTIFIER_PATTERN =
@@ -275,7 +276,9 @@ export const createClientErrorReporter = (
   const getCurrentTime = () => {
     try {
       const currentTime = now()
-      return Number.isFinite(currentTime) ? currentTime : Date.now()
+      return Number.isFinite(currentTime) && Math.abs(currentTime) <= MAXIMUM_DATE_MILLISECONDS
+        ? currentTime
+        : Date.now()
     } catch {
       return Date.now()
     }
@@ -307,9 +310,13 @@ export const createClientErrorReporter = (
     const identity = getErrorIdentity(error)
     const identityEntry = identity === null ? undefined : identities.get(identity)
 
+    const elapsedTime = identityEntry === undefined ? null : currentTime - identityEntry.time
+
     if (
       identityEntry !== undefined &&
-      currentTime - identityEntry.time <= IDENTITY_DEDUPLICATION_WINDOW_MILLISECONDS
+      elapsedTime !== null &&
+      elapsedTime >= 0 &&
+      elapsedTime <= IDENTITY_DEDUPLICATION_WINDOW_MILLISECONDS
     ) {
       return {...identityEntry.receipt, deduplicated: true}
     }

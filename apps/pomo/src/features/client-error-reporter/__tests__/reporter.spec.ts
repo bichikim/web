@@ -56,6 +56,16 @@ describe('normalizeClientError', () => {
     })
   })
 
+  it('should redact unquoted multi-word user content through the end of the line', () => {
+    const normalized = normalizeClientError(
+      new Error('Worker failed transcript=첫 문장 둘째 문장\n    diagnostic follows'),
+    )
+
+    expect(normalized.message).toBe('Worker failed [REDACTED]\n    diagnostic follows')
+    expect(JSON.stringify(normalized)).not.toContain('첫 문장')
+    expect(JSON.stringify(normalized)).not.toContain('둘째 문장')
+  })
+
   it('should keep only safe Worker error fields', () => {
     const normalized = normalizeClientError({
       body: 'full response body',
@@ -191,6 +201,45 @@ describe('createClientErrorReporter', () => {
         route: {origin: 'unknown', template: '/unknown'},
       }),
     )
+  })
+
+  it('should replace out-of-range timestamps without throwing', () => {
+    const send = vi.fn()
+    const reporter = createClientErrorReporter({
+      createId: () => 'POMO-INVALID-TIME',
+      getContext: () => CONTEXT,
+      now: () => Number.MAX_VALUE,
+      send,
+    })
+
+    expect(() =>
+      reporter.report(new Error('application failed'), {
+        feature: 'application',
+        source: 'direct',
+      }),
+    ).not.toThrow()
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/u)}),
+    )
+  })
+
+  it('should report again when the clock moves backwards', () => {
+    let currentTime = 2_000
+    const send = vi.fn()
+    const reporter = createClientErrorReporter({
+      createId: () => `POMO-${currentTime}`,
+      getContext: () => CONTEXT,
+      now: () => currentTime,
+      send,
+    })
+    const error = new Error('retryable failure')
+
+    reporter.report(error, {feature: 'scene', source: 'direct'})
+    currentTime = 1_000
+    const second = reporter.report(error, {feature: 'scene', source: 'direct'})
+
+    expect(second.deduplicated).toBe(false)
+    expect(send).toHaveBeenCalledTimes(2)
   })
 
   it('should isolate synchronous and asynchronous delivery failures', async () => {

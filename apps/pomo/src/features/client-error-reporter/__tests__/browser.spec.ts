@@ -92,6 +92,20 @@ describe('installClientErrorHandlers', () => {
     expect(second.send).toHaveBeenCalledTimes(2)
   })
 
+  it('should restore the previous active reporter when a newer registration is cleaned up', () => {
+    const first = createReporter()
+    const second = createReporter()
+    const cleanupFirst = installClientErrorHandlers({reporter: first.reporter})
+    const cleanupSecond = installClientErrorHandlers({reporter: second.reporter})
+    cleanups.push(cleanupFirst, cleanupSecond)
+
+    cleanupSecond()
+    window.dispatchEvent(new ErrorEvent('error', {error: new Error('remaining registration')}))
+
+    expect(first.send).toHaveBeenCalledTimes(1)
+    expect(second.send).not.toHaveBeenCalled()
+  })
+
   it('should restore the native reportError function and make cleanup idempotent', () => {
     const previousReportError = vi.fn()
     Object.defineProperty(globalThis, 'reportError', {
@@ -106,6 +120,25 @@ describe('installClientErrorHandlers', () => {
     cleanup()
 
     expect(globalThis.reportError).toBe(previousReportError)
+  })
+
+  it('should tolerate and restore a throwing reportError accessor', () => {
+    const reportErrorDescriptor = {
+      configurable: true,
+      get: () => {
+        throw new Error('host accessor failed')
+      },
+    } satisfies PropertyDescriptor
+    Object.defineProperty(globalThis, 'reportError', reportErrorDescriptor)
+    const installedDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'reportError')
+    const {reporter, send} = createReporter()
+
+    const cleanup = installClientErrorHandlers({reporter})
+    window.dispatchEvent(new ErrorEvent('error', {error: new Error('application failed')}))
+    cleanup()
+
+    expect(send).toHaveBeenCalledTimes(1)
+    expect(Object.getOwnPropertyDescriptor(globalThis, 'reportError')).toEqual(installedDescriptor)
   })
 
   it('should isolate a replacement reporter failure from global handlers', () => {
