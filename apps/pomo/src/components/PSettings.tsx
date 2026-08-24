@@ -10,6 +10,13 @@ import {PSwitch} from '../design-system/PSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
+import {
+  FOCUS_ROOM_ACTIVITY_OPTIONS,
+  FOCUS_ROOM_GAZE_OPTIONS,
+  FOCUS_ROOM_TIME_OPTIONS,
+  type PActivity,
+  type PGaze,
+} from '../features/focus-room-scene-preferences'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import type {WeatherCitySlug} from '../features/weather'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
@@ -20,15 +27,7 @@ import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
 import {PWeatherSettings} from './PWeatherSettings'
 import {PScribbleCircleControl} from './PScribbleCircleControl'
-import {
-  FOCUS_ROOM_ACTIVITY_OPTIONS,
-  FOCUS_ROOM_GAZE_OPTIONS,
-  FOCUS_ROOM_TIME_OPTIONS,
-  P_SCENE_MOTION_INPUT_OPTIONS,
-  P_SCENE_MOTION_OPTIONS,
-  type PActivity,
-  type PGaze,
-} from './pomo-scene-options'
+import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from './pomo-scene-options'
 
 const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
