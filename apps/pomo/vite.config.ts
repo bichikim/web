@@ -17,19 +17,19 @@ const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
-const publicStaticRoutes = [
+const sharedStaticRoutes = [
   '/',
   SERVICE_POLICY_PATHS.appsInToss.privacy,
   SERVICE_POLICY_PATHS.appsInToss.terms,
-  SERVICE_POLICY_PATHS.legacy.privacy,
   SERVICE_POLICY_PATHS.refund,
-  SERVICE_POLICY_PATHS.legacy.terms,
   '/third-party-notices',
   SERVICE_POLICY_PATHS.web.privacy,
   SERVICE_POLICY_PATHS.web.terms,
 ]
 const appsInTossStaticRoutes = [
-  ...publicStaticRoutes,
+  ...sharedStaticRoutes,
+  SERVICE_POLICY_PATHS.legacy.privacy,
+  SERVICE_POLICY_PATHS.legacy.terms,
   '/account',
   '/dialogue',
   '/focus-room',
@@ -129,7 +129,7 @@ export default defineConfig({
   },
   nitro: {
     prerender: {
-      routes: isAppsInToss ? appsInTossStaticRoutes : publicStaticRoutes,
+      routes: isAppsInToss ? appsInTossStaticRoutes : sharedStaticRoutes,
     },
     ...(isAppsInToss ? {preset: 'static'} : {}),
   },
