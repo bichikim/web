@@ -57,7 +57,7 @@ export interface CreateClientErrorReporterOptions {
   readonly send: (event: ClientErrorEvent) => Promise<void> | void
 }
 
-const DEDUPLICATION_WINDOW_MILLISECONDS = 2_000
+const IDENTITY_DEDUPLICATION_WINDOW_MILLISECONDS = 2_000
 const MAXIMUM_CAUSE_DEPTH = 3
 const MAXIMUM_FIELD_LENGTH = 80
 const MAXIMUM_MESSAGE_LENGTH = 500
@@ -259,15 +259,6 @@ const getClientErrorContext = (): ClientErrorContext => ({
 const getErrorIdentity = (value: unknown): object | null =>
   (typeof value === 'object' && value !== null) || typeof value === 'function' ? value : null
 
-const getErrorFingerprint = (error: NormalizedClientError): string =>
-  JSON.stringify({
-    ...(error.cause === undefined ? {} : {cause: getErrorFingerprint(error.cause)}),
-    ...(error.code === undefined ? {} : {code: error.code}),
-    message: error.message,
-    name: error.name,
-    ...(error.phase === undefined ? {} : {phase: error.phase}),
-  })
-
 const ignoreDeliveryFailure = () => undefined
 
 export const createClientErrorReporter = (
@@ -276,48 +267,57 @@ export const createClientErrorReporter = (
   const createId = options.createId ?? createClientErrorId
   const getContext = options.getContext ?? getClientErrorContext
   const now = options.now ?? Date.now
-  const identities = new WeakMap<object, ClientErrorReceipt>()
-  const fingerprints = new Map<
-    string,
+  const identities = new WeakMap<
+    object,
     {readonly receipt: ClientErrorReceipt; readonly time: number}
   >()
 
-  const report: ClientErrorReporter['report'] = (error, reportOptions) => {
-    const currentTime = now()
-    const identity = getErrorIdentity(error)
-    const identityReceipt = identity === null ? undefined : identities.get(identity)
+  const getCurrentTime = () => {
+    try {
+      const currentTime = now()
+      return Number.isFinite(currentTime) ? currentTime : Date.now()
+    } catch {
+      return Date.now()
+    }
+  }
 
-    if (identityReceipt !== undefined) {
-      return {...identityReceipt, deduplicated: true}
+  const getCurrentContext = () => {
+    try {
+      return getContext()
+    } catch {
+      return {
+        environment: 'unknown',
+        platform: 'web',
+        release: 'unknown',
+        route: {origin: 'unknown', template: '/unknown'},
+      } satisfies ClientErrorContext
+    }
+  }
+
+  const createReceipt = (reportOptions: ReportClientErrorOptions): ClientErrorReceipt => {
+    try {
+      return {deduplicated: false, errorId: reportOptions.errorId ?? createId()}
+    } catch {
+      return {deduplicated: false, errorId: createClientErrorId()}
+    }
+  }
+
+  const report: ClientErrorReporter['report'] = (error, reportOptions) => {
+    const currentTime = getCurrentTime()
+    const identity = getErrorIdentity(error)
+    const identityEntry = identity === null ? undefined : identities.get(identity)
+
+    if (
+      identityEntry !== undefined &&
+      currentTime - identityEntry.time <= IDENTITY_DEDUPLICATION_WINDOW_MILLISECONDS
+    ) {
+      return {...identityEntry.receipt, deduplicated: true}
     }
 
     const normalizedError = normalizeClientError(error)
-    const fingerprint = getErrorFingerprint(normalizedError)
-    const fingerprintEntry = fingerprints.get(fingerprint)
-
-    if (
-      fingerprintEntry !== undefined &&
-      currentTime - fingerprintEntry.time <= DEDUPLICATION_WINDOW_MILLISECONDS
-    ) {
-      const duplicateReceipt = {...fingerprintEntry.receipt, deduplicated: true}
-      if (identity !== null) {
-        identities.set(identity, duplicateReceipt)
-      }
-      return duplicateReceipt
-    }
-
-    for (const [key, entry] of fingerprints) {
-      if (currentTime - entry.time > DEDUPLICATION_WINDOW_MILLISECONDS) {
-        fingerprints.delete(key)
-      }
-    }
-
-    const receipt = {
-      deduplicated: false,
-      errorId: reportOptions.errorId ?? createId(),
-    } satisfies ClientErrorReceipt
+    const receipt = createReceipt(reportOptions)
     const event = {
-      ...getContext(),
+      ...getCurrentContext(),
       error: normalizedError,
       errorId: receipt.errorId,
       feature: reportOptions.feature,
@@ -326,9 +326,8 @@ export const createClientErrorReporter = (
     } satisfies ClientErrorEvent
 
     if (identity !== null) {
-      identities.set(identity, receipt)
+      identities.set(identity, {receipt, time: currentTime})
     }
-    fingerprints.set(fingerprint, {receipt, time: currentTime})
 
     try {
       Promise.resolve(options.send(event)).catch(ignoreDeliveryFailure)

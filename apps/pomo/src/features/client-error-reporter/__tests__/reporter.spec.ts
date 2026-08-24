@@ -122,7 +122,7 @@ describe('createClientErrorReporter', () => {
     })
   })
 
-  it('should deduplicate the same object and equivalent global copies', () => {
+  it('should deduplicate the same object without collapsing equivalent failures', () => {
     const send = vi.fn()
     const reporter = createReporter(send)
     const error = new Error('same failure')
@@ -136,8 +136,8 @@ describe('createClientErrorReporter', () => {
 
     expect(first.deduplicated).toBe(false)
     expect(sameObject).toEqual({deduplicated: true, errorId: first.errorId})
-    expect(equivalentCopy).toEqual({deduplicated: true, errorId: first.errorId})
-    expect(send).toHaveBeenCalledTimes(1)
+    expect(equivalentCopy.deduplicated).toBe(false)
+    expect(send).toHaveBeenCalledTimes(2)
   })
 
   it('should allow the same fingerprint after the deduplication window', () => {
@@ -150,15 +150,47 @@ describe('createClientErrorReporter', () => {
       send,
     })
 
-    reporter.report(new Error('retryable failure'), {feature: 'scene', source: 'direct'})
+    const error = new Error('retryable failure')
+    reporter.report(error, {feature: 'scene', source: 'direct'})
     currentTime = 2_001
-    const second = reporter.report(new Error('retryable failure'), {
+    const second = reporter.report(error, {
       feature: 'scene',
       source: 'direct',
     })
 
     expect(second).toEqual({deduplicated: false, errorId: 'POMO-2001'})
     expect(send).toHaveBeenCalledTimes(2)
+  })
+
+  it('should isolate context, clock, and identifier failures', () => {
+    const send = vi.fn()
+    const reporter = createClientErrorReporter({
+      createId: () => {
+        throw new Error('identifier failed')
+      },
+      getContext: () => {
+        throw new Error('context failed')
+      },
+      now: () => {
+        throw new Error('clock failed')
+      },
+      send,
+    })
+
+    const receipt = reporter.report(new Error('application failed'), {
+      feature: 'application',
+      source: 'direct',
+    })
+
+    expect(receipt.errorId).toMatch(/^POMO-/u)
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        environment: 'unknown',
+        platform: 'web',
+        release: 'unknown',
+        route: {origin: 'unknown', template: '/unknown'},
+      }),
+    )
   })
 
   it('should isolate synchronous and asynchronous delivery failures', async () => {

@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal, Show} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
 import {PRecoveryBoundary} from 'src/features/client-error-reporter'
@@ -44,4 +45,56 @@ it('should stop offering reset after the recovered subtree fails again', () => {
   expect(screen.getByText(/자동 복구를 중단했어요/u)).toBeTruthy()
   expect(screen.getByRole('button', {name: '새로고침'})).toBeTruthy()
   expect(reportError).toHaveBeenCalledTimes(2)
+})
+
+it('should restore one retry after the recovered subtree mounts successfully', () => {
+  const [failure, setFailure] = createSignal<'initial' | 'later' | null>('initial')
+  let initialFailureHandled = false
+  const SometimesBroken = () => {
+    if (failure() === 'initial' && !initialFailureHandled) {
+      initialFailureHandled = true
+      throw new Error('initial failure')
+    }
+
+    const LaterFailure = () => {
+      throw new Error('later failure')
+    }
+
+    return (
+      <Show fallback={<LaterFailure />} when={failure() !== 'later'}>
+        <button onClick={() => setFailure('later')}>나중에 실패</button>
+      </Show>
+    )
+  }
+
+  render(() => (
+    <PRecoveryBoundary onReload={vi.fn()} reportError={() => 'POMO-RECOVERED'}>
+      <SometimesBroken />
+    </PRecoveryBoundary>
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+  fireEvent.click(screen.getByRole('button', {name: '나중에 실패'}))
+
+  expect(screen.getByRole('button', {name: '다시 시도'})).toBeTruthy()
+})
+
+it('should preserve the recovery UI when reporting fails', () => {
+  const Broken = () => {
+    throw new Error('render failure')
+  }
+
+  render(() => (
+    <PRecoveryBoundary
+      onReload={vi.fn()}
+      reportError={() => {
+        throw new Error('reporter failure')
+      }}
+    >
+      <Broken />
+    </PRecoveryBoundary>
+  ))
+
+  expect(screen.getByRole('heading', {name: 'Pomofi를 불러오지 못했어요'})).toBeTruthy()
+  expect(screen.getByText(/POMO-/u)).toBeTruthy()
 })

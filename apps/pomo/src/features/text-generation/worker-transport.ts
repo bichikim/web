@@ -5,8 +5,12 @@ export interface WorkerTransport<Request> {
   readonly send: (request: Request) => void
 }
 
+export interface WorkerTransportError {
+  readonly message: string
+}
+
 export interface CreateWorkerTransportOptions<Response> {
-  readonly createErrorResponse: (event: ErrorEvent) => Response
+  readonly createErrorResponse: (error: WorkerTransportError) => Response
   readonly feature: string
   readonly onResponse: (response: Response) => void
   readonly worker: Worker
@@ -27,6 +31,7 @@ export const createWorkerTransport = <Request, Response>(
     options.onResponse(options.createErrorResponse(event))
   })
   options.worker.addEventListener('messageerror', () => {
+    const error = {message: 'Worker 응답을 읽지 못했습니다.'}
     reportClientError(
       {message: 'Worker response deserialization failed', name: 'WorkerError'},
       {
@@ -34,6 +39,7 @@ export const createWorkerTransport = <Request, Response>(
         source: 'worker',
       },
     )
+    options.onResponse(options.createErrorResponse(error))
   })
 
   return {

@@ -1,4 +1,4 @@
-import {ErrorBoundary, type JSX, Show} from 'solid-js'
+import {ErrorBoundary, type JSX, onMount, Show} from 'solid-js'
 import {isServer} from 'solid-js/web'
 
 import {PButton} from '../../design-system/PButton'
@@ -8,6 +8,31 @@ export interface PRecoveryBoundaryProps {
   readonly children?: JSX.Element
   readonly onReload?: () => void
   readonly reportError?: (error: unknown) => string
+}
+
+interface RecoveryAttemptProps {
+  readonly children?: JSX.Element
+  readonly onReady: () => void
+}
+
+const RecoveryAttempt = (props: RecoveryAttemptProps) => {
+  onMount(() => props.onReady())
+  return <>{props.children}</>
+}
+
+const getRecoveryErrorId = (error: unknown, reportError?: (error: unknown) => string) => {
+  if (isServer) {
+    return createClientErrorId()
+  }
+
+  try {
+    return (
+      reportError?.(error) ??
+      reportClientError(error, {feature: 'application', source: 'error-boundary'})
+    )
+  } catch {
+    return createClientErrorId()
+  }
 }
 
 export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
@@ -25,10 +50,7 @@ export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
   return (
     <ErrorBoundary
       fallback={(error, reset) => {
-        const errorId = isServer
-          ? createClientErrorId()
-          : (props.reportError?.(error) ??
-            reportClientError(error, {feature: 'application', source: 'error-boundary'}))
+        const errorId = getRecoveryErrorId(error, props.reportError)
         const canRetry = retryCount === 0
         const retry = () => {
           retryCount += 1
@@ -65,7 +87,7 @@ export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
         )
       }}
     >
-      {props.children}
+      <RecoveryAttempt onReady={() => (retryCount = 0)}>{props.children}</RecoveryAttempt>
     </ErrorBoundary>
   )
 }

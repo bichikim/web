@@ -3,6 +3,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   type ClientErrorContext,
+  type ClientErrorReporter,
   createClientErrorReporter,
   installClientErrorHandlers,
 } from 'src/features/client-error-reporter'
@@ -105,5 +106,27 @@ describe('installClientErrorHandlers', () => {
     cleanup()
 
     expect(globalThis.reportError).toBe(previousReportError)
+  })
+
+  it('should isolate a replacement reporter failure from global handlers', () => {
+    const previousReportError = vi.fn()
+    Object.defineProperty(globalThis, 'reportError', {
+      configurable: true,
+      value: previousReportError,
+      writable: true,
+    })
+    const reporter = {
+      report: () => {
+        throw new Error('reporter failed')
+      },
+    } satisfies ClientErrorReporter
+    const cleanup = installClientErrorHandlers({reporter})
+    cleanups.push(cleanup)
+
+    expect(() => globalThis.reportError(new Error('application failed'))).not.toThrow()
+    expect(() =>
+      window.dispatchEvent(new ErrorEvent('error', {error: new Error('render failed')})),
+    ).not.toThrow()
+    expect(previousReportError).toHaveBeenCalledTimes(1)
   })
 })

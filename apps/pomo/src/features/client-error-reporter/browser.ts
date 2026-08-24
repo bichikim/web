@@ -16,6 +16,18 @@ const getHandlerHost = () =>
 const getErrorEventValue = (event: ErrorEvent): unknown =>
   event.error ?? {message: 'Browser error without an Error object', name: 'ErrorEvent'}
 
+const reportSafely = (
+  state: ClientErrorHandlerState,
+  error: unknown,
+  source: 'global-error' | 'report-error' | 'unhandled-rejection',
+) => {
+  try {
+    state.reporter.report(error, {feature: 'application', source})
+  } catch {
+    // A replacement reporter cannot be allowed to recurse through global error handling.
+  }
+}
+
 const restoreReportError = (state: ClientErrorHandlerState) => {
   try {
     if (state.previousReportErrorDescriptor === undefined) {
@@ -44,16 +56,10 @@ const createHandlerState = (reporter: ClientErrorReporter): ClientErrorHandlerSt
   const previousReportErrorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'reportError')
   const previousReportError = globalThis.reportError
   const handleError = (event: ErrorEvent) => {
-    state.reporter.report(getErrorEventValue(event), {
-      feature: 'application',
-      source: 'global-error',
-    })
+    reportSafely(state, getErrorEventValue(event), 'global-error')
   }
   const handleRejection = (event: PromiseRejectionEvent) => {
-    state.reporter.report(event.reason, {
-      feature: 'application',
-      source: 'unhandled-rejection',
-    })
+    reportSafely(state, event.reason, 'unhandled-rejection')
   }
   const state = {
     previousReportErrorDescriptor,
@@ -64,7 +70,7 @@ const createHandlerState = (reporter: ClientErrorReporter): ClientErrorHandlerSt
     },
     reporter,
     reportError: (error: unknown) => {
-      state.reporter.report(error, {feature: 'application', source: 'report-error'})
+      reportSafely(state, error, 'report-error')
       try {
         previousReportError?.call(globalThis, error)
       } catch {
