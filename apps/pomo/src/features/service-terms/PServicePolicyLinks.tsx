@@ -2,6 +2,7 @@ import {cva, type VariantProps} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
 import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
+import {PolicyLink} from './PolicyLink'
 
 const policyLinksClasses = cva('flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5', {
   defaultVariants: {
@@ -15,34 +16,9 @@ const policyLinksClasses = cva('flex flex-wrap items-center gap-x-2 gap-y-1 text
   },
 })
 
-const policyLinkClasses = cva('rounded-sm text-inherit', {
-  defaultVariants: {
-    current: false,
-    tone: 'surface',
-  },
-  variants: {
-    current: {
-      false:
-        'underline decoration-current/45 underline-offset-3 transition-colors ' +
-        'hover:text-foreground focus-visible:text-foreground focus-visible:shadow-focus ' +
-        'focus-visible:outline-none motion-reduce:transition-none',
-      true: 'font-700 no-underline',
-    },
-    tone: {
-      overlay: 'hover:text-white focus-visible:text-white',
-      surface: '',
-    },
-  },
-})
-
 export interface PServicePolicyLinksProps extends VariantProps<typeof policyLinksClasses> {
   currentPolicy?: 'privacy' | 'refund' | 'terms'
   platform?: 'apps-in-toss' | 'web'
-}
-
-interface PolicyLinkProps extends VariantProps<typeof policyLinkClasses> {
-  href: string
-  label: string
 }
 
 const serviceTermsPath = (platform: 'apps-in-toss' | 'web') =>
@@ -53,21 +29,6 @@ const privacyPolicyPath = (platform: 'apps-in-toss' | 'web') =>
   platform === 'apps-in-toss'
     ? SERVICE_POLICY_PATHS.appsInToss.privacy
     : SERVICE_POLICY_PATHS.web.privacy
-
-const PolicyLink = (props: PolicyLinkProps) => (
-  <Show
-    fallback={
-      <a class={policyLinkClasses({tone: props.tone})} href={props.href}>
-        {props.label}
-      </a>
-    }
-    when={props.current}
-  >
-    <span aria-current="page" class={policyLinkClasses({current: true, tone: props.tone})}>
-      {props.label}
-    </span>
-  </Show>
-)
 
 export const PServicePolicyLinks = (props: PServicePolicyLinksProps) => {
   const platform = () =>

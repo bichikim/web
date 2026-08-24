@@ -91,6 +91,8 @@ coverage
 .cache
 apps/pomo/scripts/text-mood/embeddings.*.json
 .vitest-attachments
+apps/pomo/playwright-report
+apps/pomo/test-results
 .turbo
 .cert
 

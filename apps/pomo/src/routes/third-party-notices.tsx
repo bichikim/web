@@ -2,7 +2,9 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
-import {licenseData, type LicenseEntry, type LicenseGroup} from 'src/features/licenses'
+import {licenseData} from 'src/features/licenses'
+import {NoticeGroupSection} from '../features/third-party-notices/GroupSection'
+import {LINK_CLASSES} from '../features/third-party-notices/shared'
 
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1',
@@ -15,51 +17,6 @@ const BACKGROUND_CLASSES = cx(
 const PANEL_CLASSES = cx(
   'rounded-8 border border-white/10 bg-#211a2b/88 p-5',
   'shadow-[0_28px_100px_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8 lg:p-10',
-)
-const LINK_CLASSES = cx(
-  'font-650 text-#ffc0ce underline decoration-white/25 underline-offset-4 transition-colors',
-  'hover:text-#ffd4de focus-visible:text-#ffd4de',
-)
-
-const NoticeEntryCard = (props: {readonly entry: LicenseEntry}) => (
-  <li class="rounded-5 border border-white/8 bg-white/[0.035] p-5">
-    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-      <h3 class="m-0 text-base font-750 text-#f8edf1">{props.entry.name}</h3>
-      <span class="text-xs font-750 text-#f2a7b8">{props.entry.license}</span>
-    </div>
-    <dl class="mb-0 mt-4 grid gap-3 text-sm leading-6">
-      <div class="grid gap-1 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3">
-        <dt class="font-700 text-#a99cab">사용 범위</dt>
-        <dd class="m-0 text-#d8cbd9">{props.entry.use}</dd>
-      </div>
-      <div class="grid gap-1 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3">
-        <dt class="font-700 text-#a99cab">배포 조치</dt>
-        <dd class="m-0 text-#d8cbd9">{props.entry.condition}</dd>
-      </div>
-    </dl>
-    <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs">
-      <For each={props.entry.links}>
-        {(link) => (
-          <a class={LINK_CLASSES} href={link.url} rel="noreferrer" target="_blank">
-            {link.label}
-            <span class="sr-only"> 새 창에서 열기</span>
-          </a>
-        )}
-      </For>
-    </div>
-  </li>
-)
-
-const NoticeGroupSection = (props: {readonly group: LicenseGroup}) => (
-  <section aria-labelledby={`${props.group.id}-title`} class="scroll-mt-8" id={props.group.id}>
-    <h2 class="m-0 text-xl font-750 tracking--0.02em" id={`${props.group.id}-title`}>
-      {props.group.title}
-    </h2>
-    <p class="mb-0 mt-2 text-sm leading-6 text-#bdb2c4">{props.group.description}</p>
-    <ul class="mb-0 mt-5 grid list-none gap-3 p-0">
-      <For each={props.group.entries}>{(entry) => <NoticeEntryCard entry={entry} />}</For>
-    </ul>
-  </section>
 )
 
 export default function ThirdPartyNoticesPage() {
