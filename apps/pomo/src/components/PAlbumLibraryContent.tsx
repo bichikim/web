@@ -10,17 +10,28 @@ import {
 
 import {PButton} from '../design-system/PButton'
 import {PModal} from '../design-system/PModal'
-import {loadPAlbums, type PResolvedAlbum, type PTrack} from '../features/focus-room-audio'
+import {
+  loadPAlbums,
+  type PAlbumSale,
+  type PResolvedAlbum,
+  type PTrack,
+  type PTrackListing,
+  type PTrackPreviewRequest,
+  useTrackPreview,
+} from '../features/focus-room-audio'
+import {PAlbumTrackList} from './PAlbumTrackList'
 
 export interface PAlbumLibraryContentProps {
   readonly isOpen: boolean
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
+  readonly onClearTracks?: () => void
   readonly onCloseAutoFocus: () => void
   readonly onOpenChange: (isOpen: boolean) => void
+  readonly onPreviewEnd?: () => void
+  readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly tracks: readonly PTrack[]
 }
 
-const PREVIEW_TRACK_COUNT = 4
 const SECONDS_PER_MINUTE = 60
 
 const formatDuration = (tracks: readonly PTrack[]) => {
@@ -53,49 +64,112 @@ const ALBUM_CARD_CLASSES = [
   'bg-surface-interactive',
 ] as const
 
-const AlbumSummary = (props: {
-  readonly album: PResolvedAlbum
-  readonly expanded: boolean
-  readonly expandable: boolean
-  readonly index: number
-}) => (
+const AlbumSummary = (props: {readonly album: PResolvedAlbum; readonly index: number}) => (
   <div class="flex gap-3.5 p-4">
-    <div
-      aria-hidden="true"
-      class={[
-        'grid size-16 flex-none place-items-center rounded-4 text-white shadow-panel',
-        ALBUM_ART_CLASSES[props.index % ALBUM_ART_CLASSES.length],
-      ].join(' ')}
+    <Show
+      fallback={
+        <div
+          aria-hidden="true"
+          class={[
+            'grid size-16 flex-none place-items-center rounded-4 text-white shadow-panel',
+            ALBUM_ART_CLASSES[props.index % ALBUM_ART_CLASSES.length],
+          ].join(' ')}
+        >
+          <span class={`${props.album.icon} size-6.5 opacity-90`} />
+        </div>
+      }
+      when={props.album.coverImageUrl}
     >
-      <span class={`${props.album.icon} size-6.5 opacity-90`} />
-    </div>
+      {(coverImageUrl) => (
+        <img
+          alt={`${props.album.title} 앨범 커버`}
+          class="size-16 flex-none rounded-4 object-cover shadow-panel"
+          src={coverImageUrl()}
+        />
+      )}
+    </Show>
     <div class="min-w-0 flex-1 py-0.5">
       <h3 class="m-0 truncate text-base font-750 leading-5 text-foreground">{props.album.title}</h3>
       <p class="mb-0 mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
         {props.album.description}
       </p>
-      <Show when={props.album.tracks.length > 0}>
+      <Show when={(props.album.trackCount ?? props.album.tracks.length) > 0}>
         <p class="mb-0 mt-2 flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground">
           <span aria-hidden="true" class="i-tabler-music size-3.5" />
-          <span>{props.album.tracks.length}곡</span>
-          <span aria-hidden="true" class="opacity-50">
-            ·
-          </span>
-          <span>{formatDuration(props.album.tracks)}</span>
+          <span>{props.album.trackCount ?? props.album.tracks.length}곡</span>
+          <Show when={props.album.tracks.length > 0}>
+            <span aria-hidden="true" class="opacity-50">
+              ·
+            </span>
+            <span>{formatDuration(props.album.tracks)}</span>
+          </Show>
         </p>
       </Show>
     </div>
-    <Show when={props.expandable}>
-      <span
-        aria-hidden="true"
-        class={[
-          'i-tabler-chevron-down mt-1 size-4 flex-none text-muted-foreground',
-          'transition-transform motion-reduce:transition-none',
-          props.expanded ? 'rotate-180' : '',
-        ].join(' ')}
-      />
-    </Show>
   </div>
+)
+
+interface AlbumSaleStatusProps {
+  readonly sale: PAlbumSale
+}
+
+const AlbumSaleStatus = (props: AlbumSaleStatusProps) => (
+  <div class="flex items-center justify-between gap-3 border-t border-solid border-border px-4 py-3">
+    <Show when={props.sale.priceLabel}>
+      {(priceLabel) => <span class="text-sm font-750 text-foreground">{priceLabel()}</span>}
+    </Show>
+    <span class="ml-auto text-xs font-700 text-highlight">{props.sale.statusLabel}</span>
+  </div>
+)
+
+interface PlaylistFooterProps {
+  readonly canClear: boolean
+  readonly clearedTrackCount: number
+  readonly onClear: () => void
+  readonly onRestore: () => void
+  readonly trackCount: number
+}
+
+const PlaylistFooter = (props: PlaylistFooterProps) => (
+  <Show when={props.canClear && (props.trackCount > 0 || props.clearedTrackCount > 0)}>
+    <Show
+      fallback={
+        <div class="flex min-h-11 items-center justify-between gap-4">
+          <span class="text-sm text-muted-foreground">
+            현재 재생목록 <strong class="font-750 text-foreground">{props.trackCount}곡</strong>
+          </span>
+          <button
+            aria-label="재생목록 모두 비우기"
+            class="min-h-11 cursor-pointer rounded-control border-0 bg-transparent px-3 text-sm
+              font-700 text-muted-foreground outline-none transition-colors hover:bg-danger/10
+              hover:text-danger focus-visible:shadow-focus motion-reduce:transition-none"
+            onClick={() => props.onClear()}
+            type="button"
+          >
+            비우기
+          </button>
+        </div>
+      }
+      when={props.trackCount === 0 && props.clearedTrackCount > 0}
+    >
+      <div
+        aria-live="polite"
+        class="flex min-h-11 items-center justify-between gap-4"
+        role="status"
+      >
+        <span class="text-sm text-muted-foreground">재생목록을 비웠어요</span>
+        <button
+          class="min-h-11 cursor-pointer rounded-control border-0 bg-transparent px-3 text-sm
+            font-750 text-highlight outline-none transition-colors hover:bg-surface
+            focus-visible:shadow-focus motion-reduce:transition-none"
+          onClick={() => props.onRestore()}
+          type="button"
+        >
+          되돌리기
+        </button>
+      </div>
+    </Show>
+  </Show>
 )
 
 const AlbumCard = (props: {
@@ -104,128 +178,39 @@ const AlbumCard = (props: {
   readonly isInPlayer: boolean
   readonly onAddAlbum: (album: PResolvedAlbum) => void
   readonly onAddTrack: (track: PTrack) => void
+  readonly onPreview: (request: PTrackPreviewRequest) => void
+  readonly pendingTrackId: string | null
+  readonly playingTrackId: string | null
   readonly trackIds: ReadonlySet<string>
 }) => {
-  const [isExpanded, setIsExpanded] = createSignal(false)
-  const hasMoreTracks = () => props.album.tracks.length > PREVIEW_TRACK_COUNT
-  const hiddenTrackCount = () => props.album.tracks.length - PREVIEW_TRACK_COUNT
-  const visibleTracks = () =>
-    isExpanded() ? props.album.tracks : props.album.tracks.slice(0, PREVIEW_TRACK_COUNT)
-  const toggleExpanded = () => {
-    if (hasMoreTracks()) {
-      setIsExpanded((expanded) => !expanded)
-    }
-  }
+  const listedTracks = (): readonly PTrackListing[] =>
+    props.album.trackListings ?? props.album.tracks
 
   return (
     <article class={ALBUM_CARD_CLASSES.join(' ')}>
-      <Show
-        fallback={
-          <AlbumSummary
-            album={props.album}
-            expanded={false}
-            expandable={false}
-            index={props.index}
-          />
-        }
-        when={hasMoreTracks()}
-      >
+      <AlbumSummary album={props.album} index={props.index} />
+      <Show when={listedTracks().length > 0}>
+        <PAlbumTrackList
+          albumTitle={props.album.title}
+          onAddTrack={props.onAddTrack}
+          onPreview={props.onPreview}
+          pendingTrackId={props.pendingTrackId}
+          playableTracks={props.album.sale === undefined ? props.album.tracks : []}
+          playingTrackId={props.playingTrackId}
+          trackIds={props.trackIds}
+          tracks={listedTracks()}
+        />
+      </Show>
+      <Show when={props.album.sale === undefined && props.album.tracks.length === 0}>
         <div
-          aria-controls={`${props.album.id}-tracks`}
-          aria-expanded={isExpanded()}
-          aria-label={`${props.album.title} 곡 목록 ${isExpanded() ? '접기' : '전체 보기'}`}
-          class="cursor-pointer outline-none transition-colors hover:bg-surface
-            focus-visible:shadow-focus motion-reduce:transition-none"
-          onClick={toggleExpanded}
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter' && event.key !== ' ') {
-              return
-            }
-
-            event.preventDefault()
-            toggleExpanded()
-          }}
-          role="button"
-          tabIndex={0}
+          class="flex items-center gap-2 border-t border-solid border-border px-4 py-3 text-xs
+            text-muted-foreground"
         >
-          <AlbumSummary
-            album={props.album}
-            expanded={isExpanded()}
-            expandable={true}
-            index={props.index}
-          />
+          <span aria-hidden="true" class="i-tabler-clock-hour-4 size-4 text-highlight" />
+          <span>수록곡을 준비하고 있어요</span>
         </div>
       </Show>
-      <Show
-        fallback={
-          <div
-            class="flex items-center gap-2 border-t border-solid border-border px-4 py-3 text-xs
-              text-muted-foreground"
-          >
-            <span aria-hidden="true" class="i-tabler-clock-hour-4 size-4 text-highlight" />
-            <span>수록곡을 준비하고 있어요</span>
-          </div>
-        }
-        when={props.album.tracks.length > 0}
-      >
-        <div class="border-t border-solid border-border px-4 py-3" id={`${props.album.id}-tracks`}>
-          <div class="grid gap-x-5 gap-y-1.5 sm:grid-cols-2">
-            <For each={visibleTracks()}>
-              {(track, trackIndex) => {
-                const isInPlayer = () => props.trackIds.has(track.id)
-
-                return (
-                  <div class="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                    <span class="w-3 flex-none text-center tabular-nums opacity-50">
-                      {trackIndex() + 1}
-                    </span>
-                    <span class="min-w-0 flex-1 truncate">{track.title}</span>
-                    <button
-                      aria-label={
-                        isInPlayer()
-                          ? `${track.title}, 플레이어에 있음`
-                          : `${track.title} 플레이어에 추가`
-                      }
-                      class="grid size-8 flex-none cursor-pointer place-items-center
-                        rounded-control border border-solid border-border bg-transparent
-                        text-highlight outline-none transition-colors hover:border-border-hover
-                        hover:bg-surface focus-visible:shadow-focus disabled:cursor-not-allowed
-                        disabled:opacity-45 disabled:hover:border-border
-                        disabled:hover:bg-transparent motion-reduce:transition-none"
-                      disabled={isInPlayer()}
-                      onClick={() => props.onAddTrack(track)}
-                      title={isInPlayer() ? '플레이어에 있음' : '플레이어에 추가'}
-                      type="button"
-                    >
-                      <span
-                        aria-hidden="true"
-                        class={isInPlayer() ? 'i-tabler-check size-4' : 'i-tabler-plus size-4'}
-                      />
-                    </button>
-                  </div>
-                )
-              }}
-            </For>
-            <Show when={hasMoreTracks()}>
-              <button
-                class="col-span-full flex min-h-8 cursor-pointer items-center justify-center gap-1.5
-                  rounded-3 border-0 bg-transparent px-3 text-xs font-650 text-highlight
-                  outline-none transition-colors hover:bg-surface focus-visible:shadow-focus
-                  sm:col-span-2 motion-reduce:transition-none"
-                onClick={toggleExpanded}
-                type="button"
-              >
-                <span>{isExpanded() ? '곡 목록 접기' : `더 많은 곡 ${hiddenTrackCount()}개`}</span>
-                <span
-                  aria-hidden="true"
-                  class={
-                    isExpanded() ? 'i-tabler-chevron-up size-4' : 'i-tabler-chevron-down size-4'
-                  }
-                />
-              </button>
-            </Show>
-          </div>
-        </div>
+      <Show when={props.album.sale === undefined && props.album.tracks.length > 0}>
         <div class="px-4 pb-4">
           <PButton
             class="w-full"
@@ -239,28 +224,85 @@ const AlbumCard = (props: {
           </PButton>
         </div>
       </Show>
+      <Show when={props.album.sale}>{(sale) => <AlbumSaleStatus sale={sale()} />}</Show>
     </article>
   )
 }
 
 export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
   const [albums, {refetch}] = createResource(() => loadPAlbums())
+  const [clearedTracks, setClearedTracks] = createSignal<readonly PTrack[]>([])
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>
     album.tracks.length > 0 && album.tracks.every((track) => trackIds().has(track.id))
-  const handleAlbumAdd = (album: PResolvedAlbum) => props.onAddTracks(album.tracks)
-  const handleTrackAdd = (track: PTrack) => props.onAddTracks([track])
+  const addTracks = (tracks: readonly PTrack[]) => {
+    setClearedTracks([])
+    props.onAddTracks(tracks)
+  }
+  const handleAlbumAdd = (album: PResolvedAlbum) => addTracks(album.tracks)
+  const handleTrackAdd = (track: PTrack) => addTracks([track])
+  const handleClearTracks = () => {
+    const currentTracks = props.tracks
+
+    if (currentTracks.length === 0 || props.onClearTracks === undefined) {
+      return
+    }
+
+    setClearedTracks(currentTracks)
+    props.onClearTracks()
+  }
+  const handleRestoreTracks = () => {
+    const tracksToRestore = clearedTracks()
+
+    if (tracksToRestore.length === 0) {
+      return
+    }
+
+    addTracks(tracksToRestore)
+  }
+  const preview = useTrackPreview({
+    onEnd: () => props.onPreviewEnd?.(),
+    onStart: (stopPreview) => props.onPreviewStart?.(stopPreview),
+  })
 
   return (
     <PModal
       description="곡 하나씩 또는 앨범 전체를 플레이어에 담아보세요."
+      footer={
+        <PlaylistFooter
+          canClear={props.onClearTracks !== undefined}
+          clearedTrackCount={clearedTracks().length}
+          onClear={handleClearTracks}
+          onRestore={handleRestoreTracks}
+          trackCount={props.tracks.length}
+        />
+      }
       isOpen={props.isOpen}
       onCloseAutoFocus={props.onCloseAutoFocus}
       onOpenChange={props.onOpenChange}
       placement="top"
-      size="wide"
+      size="full"
       title="앨범"
     >
+      <audio
+        class="hidden"
+        onEnded={preview.handleEnded}
+        onError={preview.handleError}
+        preload="none"
+        ref={preview.setAudioElement}
+      />
+      <Show when={preview.errorMessage()}>
+        {(message) => (
+          <p
+            aria-live="polite"
+            class="mb-3 mt-0 rounded-control border border-solid border-danger/45 bg-danger/10
+              px-3 py-2 text-xs text-danger"
+            role="status"
+          >
+            {message()}
+          </p>
+        )}
+      </Show>
       <ErrorBoundary
         fallback={(_error, reset) => (
           <div
@@ -312,7 +354,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
             }
             when={(albums() ?? []).length > 0}
           >
-            <div class="grid gap-3">
+            <div class="grid gap-3 2xl:grid-cols-2">
               <For each={albums() ?? []}>
                 {(album, index) => (
                   <AlbumCard
@@ -321,6 +363,13 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                     isInPlayer={isAlbumInPlayer(album)}
                     onAddAlbum={handleAlbumAdd}
                     onAddTrack={handleTrackAdd}
+                    onPreview={(request) => {
+                      preview.togglePreview(request).catch((error: unknown) => {
+                        console.error('Failed to toggle album track preview.', error)
+                      })
+                    }}
+                    pendingTrackId={preview.pendingTrackId()}
+                    playingTrackId={preview.playingTrackId()}
                     trackIds={trackIds()}
                   />
                 )}

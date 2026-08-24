@@ -183,9 +183,12 @@ interface MusicPlayerViewProps {
   readonly levels: readonly number[]
   readonly onAudioElement: (element: HTMLAudioElement) => void
   readonly onAlbumAdd?: (tracks: readonly PTrack[]) => void
+  readonly onAlbumClear?: () => void
   readonly onExpandedChange: () => void
   readonly onNextTrack: () => void
   readonly onPreviousTrack: () => void
+  readonly onPreviewEnd?: () => void
+  readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly onRepeatModeChange: (mode: Exclude<RepeatMode, 'none'>) => void
   readonly onShuffleChange: () => void
   readonly onTrackRemove?: (index: number) => void
@@ -506,6 +509,9 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
 
             <PAlbumLibrary
               onAddTracks={handleAlbumAdd}
+              onClearTracks={props.onAlbumClear}
+              onPreviewEnd={props.onPreviewEnd}
+              onPreviewStart={props.onPreviewStart}
               sceneStyle={props.sceneStyle}
               tracks={props.tracks}
             />

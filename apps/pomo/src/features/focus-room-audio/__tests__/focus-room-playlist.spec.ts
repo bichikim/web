@@ -115,6 +115,76 @@ describe('loadPAlbums', () => {
     ])
   })
 
+  it('should merge a published album without a product as sale preparation', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          albums: [
+            {
+              coverFallback: 'lp',
+              coverImageUrl: 'https://storage.pomofi.io/first.webp',
+              description: '곧 판매할 앨범',
+              id: 'paid-album-id',
+              sale: {state: 'preparing'},
+              title: '유료 앨범',
+              trackCount: 2,
+              tracks: [
+                {artist: '첫 가수', id: 'paid-one', title: '첫 유료곡'},
+                {artist: '둘째 가수', id: 'paid-two', title: '둘째 유료곡'},
+              ],
+            },
+          ],
+          version: 1,
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(loadPAlbums()).resolves.toEqual([
+      {
+        coverImageUrl: 'https://storage.pomofi.io/first.webp',
+        description: '곧 판매할 앨범',
+        icon: 'i-tabler-vinyl',
+        id: 'paid-album-id',
+        sale: {state: 'preparing', statusLabel: '판매 준비중'},
+        title: '유료 앨범',
+        trackCount: 2,
+        trackIds: [],
+        trackListings: [
+          {artist: '첫 가수', id: 'paid-one', title: '첫 유료곡'},
+          {artist: '둘째 가수', id: 'paid-two', title: '둘째 유료곡'},
+        ],
+        tracks: [],
+      },
+    ])
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/music/albums', {
+      cache: 'no-store',
+      signal: undefined,
+    })
+  })
+
+  it('should preserve bundled albums when the published catalog is unavailable', async () => {
+    const album = {
+      description: '기본 앨범',
+      icon: 'i-tabler-music',
+      id: 'included',
+      title: '기본 음악',
+      trackIds: [],
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({albums: [album], version: 1}))
+        .mockRejectedValueOnce(new Error('catalog unavailable')),
+    )
+
+    await expect(loadPAlbums()).resolves.toEqual([{...album, tracks: []}])
+  })
+
   it('should reject album IDs missing from the track catalog', () => {
     const albums = [
       {

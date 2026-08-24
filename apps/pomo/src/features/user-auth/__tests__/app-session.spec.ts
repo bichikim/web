@@ -5,18 +5,47 @@ const storageMocks = vi.hoisted(() => ({
   removeItem: vi.fn(),
   setItem: vi.fn(),
 }))
+const tossAuthMocks = vi.hoisted(() => ({login: vi.fn()}))
 
 vi.mock('@apps-in-toss/web-framework', () => ({
   Storage: storageMocks,
-  TossAuth: {login: vi.fn()},
+  TossAuth: tossAuthMocks,
 }))
 
-import {revokeTossLoginSession, validateAppSession} from '../app-session'
+import {createTossLoginSession, revokeTossLoginSession, validateAppSession} from '../app-session'
 
 describe('app session lifecycle', () => {
   beforeEach(() => {
     vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
     storageMocks.removeItem.mockReset().mockResolvedValue(undefined)
+    storageMocks.setItem.mockReset().mockResolvedValue(undefined)
+    tossAuthMocks.login.mockReset()
+  })
+
+  it('should exchange a Sandbox authorization and store the Pomo session', async () => {
+    tossAuthMocks.login.mockResolvedValue({
+      authorizationCode: 'sandbox-authorization',
+      referrer: 'SANDBOX',
+    })
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        expiresAt: '2026-09-21T00:00:00.000Z',
+        token: 'pomo-session',
+        userId: 'pomo-user-id',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(createTossLoginSession()).resolves.toBe('pomo-session')
+    expect(fetchMock).toHaveBeenCalledWith(new URL('https://www.pomofi.io/api/app-auth/exchange'), {
+      body: JSON.stringify({
+        authorizationCode: 'sandbox-authorization',
+        referrer: 'SANDBOX',
+      }),
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'pomo-session')
   })
 
   afterEach(() => {

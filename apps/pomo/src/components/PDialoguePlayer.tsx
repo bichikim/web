@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {createMemo, For, Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
+import {PTag} from '../design-system/PTag'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type DialogueSegmentMood, usePEvents} from '../features/focus-room-dialogue/PEventContext'
 import {getPrimaryMood} from '../features/text-mood'
@@ -244,7 +245,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                 </div>
               </div>
               <p aria-live="polite" role="status">
-                {text()}
+                {text()} <PTag class="ml-[0.45em] align-[0.08em]">AI 음성</PTag>
               </p>
             </div>
           </PScribblePanel>

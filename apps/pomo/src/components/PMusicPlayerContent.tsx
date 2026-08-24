@@ -1,6 +1,7 @@
 import {batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 
 import {
+  appendUniqueTracks,
   createInitialPlaybackState,
   createShuffleQueue,
   loadPTracks,
@@ -37,20 +38,6 @@ interface SelectRandomTrackOptions {
 const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === 'AbortError'
 
-const appendUniqueTracks = (tracks: readonly PTrack[], tracksToAdd: readonly PTrack[]) => {
-  const trackIds = new Set(tracks.map((track) => track.id))
-  const uniqueTracksToAdd = tracksToAdd.filter((track) => {
-    if (trackIds.has(track.id)) {
-      return false
-    }
-
-    trackIds.add(track.id)
-    return true
-  })
-
-  return uniqueTracksToAdd.length === 0 ? tracks : [...tracks, ...uniqueTracksToAdd]
-}
-
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Media Chrome's control tree is one semantic unit.
 export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   const initialTracks = untrack(() => props.tracks ?? [])
@@ -67,11 +54,14 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   const currentTrack = createMemo(() => tracks()[currentIndex()])
   const playlistRequest = new AbortController()
   let audioElement: HTMLAudioElement | undefined
+  let activePreviewStop: (() => void) | undefined
+  let resumeAfterPreview = false
   let destroyed = false
   let playbackRequestRevision = 0
   let playbackRevision = 0
   let queueRevision = 0
   let initialPlaylistResolved = untrack(() => props.tracks !== undefined)
+  let wasClearedBeforeInitialLoad = false
   const removedTrackIdsBeforeInitialLoad = new Set<string>()
   let shuffleQueue = initialState.queue
   let shuffleHistory: number[] = []
@@ -176,6 +166,14 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   }
 
   const handlePlay = () => {
+    const stopPreview = activePreviewStop
+
+    if (stopPreview !== undefined) {
+      activePreviewStop = undefined
+      resumeAfterPreview = false
+      stopPreview()
+    }
+
     playbackRequestRevision += 1
     playbackRevision += 1
     setIsPlaying(true)
@@ -194,6 +192,34 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
     setIsPlaying(false)
     visualizer.stop()
     playbackPersistence.persistCurrentPlayback()
+  }
+
+  const handlePreviewStart = (stopPreview: () => void) => {
+    const previousStop = activePreviewStop
+
+    if (previousStop !== undefined) {
+      activePreviewStop = undefined
+      resumeAfterPreview = false
+      previousStop()
+    }
+
+    resumeAfterPreview = isPlaying()
+    activePreviewStop = stopPreview
+    audioElement?.pause()
+  }
+
+  const handlePreviewEnd = () => {
+    if (activePreviewStop === undefined) {
+      return
+    }
+
+    activePreviewStop = undefined
+    const shouldResume = resumeAfterPreview
+    resumeAfterPreview = false
+
+    if (shouldResume) {
+      playAudio()
+    }
   }
 
   const resetShuffleQueue = (currentTrackIndex = currentIndex()) => {
@@ -350,6 +376,34 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
     }
   }
 
+  const clearTrackQueue = () => {
+    const currentTracks = tracks()
+
+    if (props.tracks !== undefined || currentTracks.length === 0) {
+      return
+    }
+
+    if (!initialPlaylistResolved) {
+      wasClearedBeforeInitialLoad = true
+    }
+
+    playbackRequestRevision += 1
+    playbackRevision += 1
+    queueRevision += 1
+    resumeAfterPreview = false
+    playbackPersistence.setPendingPosition(null)
+
+    batch(() => {
+      setLoadedTracks([])
+      setCurrentIndex(0)
+      setIsPlaying(false)
+    })
+    shuffleQueue = []
+    shuffleHistory = []
+    visualizer.stop()
+    audioElement?.pause()
+  }
+
   const restartCurrentTrack = () => {
     if (!audioElement) {
       return
@@ -436,9 +490,9 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
           }
 
           initialPlaylistResolved = true
-          const availableTracks = nextTracks.filter(
-            (track) => !removedTrackIdsBeforeInitialLoad.has(track.id),
-          )
+          const availableTracks = wasClearedBeforeInitialLoad
+            ? []
+            : nextTracks.filter((track) => !removedTrackIdsBeforeInitialLoad.has(track.id))
 
           if (queueRevision === restoreQueueRevision) {
             initializePlayback(availableTracks, null)
@@ -519,9 +573,12 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
         audioElement = element
       }}
       onAlbumAdd={addTracksToQueue}
+      onAlbumClear={props.tracks === undefined ? clearTrackQueue : undefined}
       onExpandedChange={toggleExpanded}
       onNextTrack={selectNextTrack}
       onPreviousTrack={selectPreviousTrack}
+      onPreviewEnd={handlePreviewEnd}
+      onPreviewStart={handlePreviewStart}
       onRepeatModeChange={toggleRepeatMode}
       onShuffleChange={toggleShuffle}
       onTrackRemove={props.tracks === undefined ? removeTrackFromQueue : undefined}
