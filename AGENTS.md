@@ -12,6 +12,11 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Scripts
+
+- Treat code under `scripts` as standalone; it must not import or use code from `src`.
+- If reusing `src` from a script appears necessary, obtain explicit user approval before adding the dependency.
+
 ## File naming
 
 - Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory without repeating parent-directory context; use meaningful subdirectories for context shared by siblings.

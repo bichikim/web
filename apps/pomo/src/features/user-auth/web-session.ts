@@ -1,3 +1,5 @@
+import {apiFetch} from '../http-client'
+
 export interface AccountSession {
   readonly email: string
 }
@@ -9,7 +11,7 @@ const HTTP_CONFLICT = 409
 const HTTP_GONE = 410
 
 export const readAccountSession = async (): Promise<AccountSession | null> => {
-  const response = await fetch('/api/account', {credentials: 'include'})
+  const response = await apiFetch('account', {credentials: 'include'})
 
   if (!response.ok) {
     if (response.status === HTTP_UNAUTHORIZED) {
@@ -34,7 +36,7 @@ export const readAccountSession = async (): Promise<AccountSession | null> => {
 }
 
 export const completeAccountLink = async (token: string): Promise<CompleteWebAccountLinkResult> => {
-  const response = await fetch('/api/account/complete-link', {
+  const response = await apiFetch('account/complete-link', {
     body: JSON.stringify({token}),
     credentials: 'include',
     headers: {'Content-Type': 'application/json'},
@@ -53,7 +55,7 @@ export const completeAccountLink = async (token: string): Promise<CompleteWebAcc
 }
 
 export const signOutWebSession = async (): Promise<boolean> => {
-  const response = await fetch('/api/auth/sign-out', {
+  const response = await apiFetch('auth/sign-out', {
     credentials: 'include',
     method: 'POST',
   })

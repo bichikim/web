@@ -4,13 +4,14 @@
 
 import {env, InferenceSession} from 'onnxruntime-web/all'
 
-import {joinAudioChunks} from './audio'
+import {httpFetch} from '../http-client'
 import {
   createModelStorage,
   loadModelResource,
   type ModelStorageError,
   reportModelStorageError,
 } from '../model-storage'
+import {joinAudioChunks} from './audio'
 import {
   createSupertonicVoice,
   parseSupertonicVoice,
@@ -286,7 +287,7 @@ const fetchModelAssets = async (
   }
 
   try {
-    const response = await fetch(options.url, {cache: 'no-store', signal})
+    const response = await httpFetch(options.url, {cache: 'no-store', signal})
 
     if (!response.ok) {
       return failureResult(createDownloadError(options, response.status))

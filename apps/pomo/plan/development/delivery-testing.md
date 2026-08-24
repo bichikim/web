@@ -19,10 +19,13 @@ build:apps-in-toss-package  → SSG 빌드와 앱인토스 패키징
 build:web                    → 브라우저용 SSR 빌드
 ```
 
-앱인토스 SSG에는 서버 런타임과 비밀 값을 포함하지 않는다. 실행 중 필요한 서버 함수는 브라우저용 SSR 서버에 연결한다. 두 빌드는 같은 소스 리비전의 서버 함수 계약을 사용한다.
+앱인토스 SSG에는 서버 런타임과 비밀 값을 포함하지 않는다. 현재 앱인토스가 Pomo SSR 서버 기능을
+호출할 때는 `/api/*` HTTP API를 사용한다. SolidStart 서버 함수의 교차 Origin 호출은
+[앱인토스 원격 함수 계획](./remote-functions.md)을 완료한 뒤 사용한다.
 
 앱인토스 SSG가 연결할 SSR 서버 Origin은 `POMO_PUBLIC_ORIGIN`으로 주입하며, 생략하면
-`https://www.pomofi.io`를 사용한다. 일반 웹 빌드는 현재 페이지의 self Origin을 사용한다.
+`https://www.pomofi.io`를 사용한다. 일반 웹 빌드의 서버 호출은 현재 페이지의 self Origin을
+사용한다.
 
 Vercel 서버 함수를 포함한 `/api/*` HTTP API는 환경별 CORS 허용 출처 목록만 허용한다. 앱인토스 출처는 아래 네 개를 사용하며, Origin은 경로와 끝 `/`없이 정확히 비교한다.
 
@@ -41,16 +44,18 @@ Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도�
 
 배포 순서:
 
-1. 브라우저 SSR 서버를 배포하고 서버 함수가 동작하는지 확인한다.
+1. 브라우저 SSR 서버를 배포하고 앱인토스가 사용할 HTTP API가 동작하는지 확인한다.
 2. 같은 소스 리비전으로 앱인토스 SSG를 빌드한다.
-3. 앱인토스 번들을 업로드하고 실제 토스 WebView에서 서버 함수 연결을 확인한다.
+3. 앱인토스 번들을 업로드하고 실제 토스 WebView에서 서버 연결을 확인한다.
 4. 문제가 발생하면 SSR 서버와 앱인토스 빌드를 호환되는 리비전으로 되돌린다.
 
 브라우저 SSR은 Vercel Git 연동을 사용해 모든 PR에 Preview Deployment를 자동 생성한다. GitHub Actions는 미리보기 배포를 별도로 실행하지 않는다.
 
 Vercel Preview Deployment는 운영 Public Blob의 검증된 TTS 모델과 manifest를 읽기 전용으로 사용하며 모델을 업로드하거나 동기화하지 않는다.
 
-일반 브라우저 사용자는 SSR 배포 주소로 접속한다. 앱인토스와 브라우저는 UI, Babylon.js 장면, Query·Action과 서버 함수 구현을 공유한다.
+일반 브라우저 사용자는 SSR 배포 주소로 접속한다. 앱인토스와 브라우저는 UI, Babylon.js 장면과
+공유 가능한 기능 계약을 사용한다. 앱인토스의 SolidStart 서버 함수 직접 사용은 별도 계획의 완료
+조건을 통과한 뒤 활성화한다.
 
 ## 앱인토스 환경
 
