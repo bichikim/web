@@ -9,10 +9,12 @@ import {Suspense} from 'solid-js'
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {PRecoveryBoundary} from './components/PRecoveryBoundary'
 import {useApplicationRecovery} from './features/application-recovery'
+import {useAppsInTossDevtools} from './features/apps-in-toss-devtools'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
 import {PDocumentMetadata} from './app/Metadata'
 
 export default function App() {
+  useAppsInTossDevtools()
   useAppsInTossSafeArea()
   const applicationRecovery = useApplicationRecovery()
 
