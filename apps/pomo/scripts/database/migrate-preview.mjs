@@ -9,6 +9,8 @@ if (process.env.VERCEL_ENV === 'preview') {
   const packageDirectory = fileURLToPath(new URL('../../', import.meta.url))
   const options = {cwd: packageDirectory, env: process.env, stdio: 'inherit'}
 
+  process.stdout.write('Validating and migrating the Preview database.\n')
   execFileSync('pnpm', ['exec', 'drizzle-kit', 'check'], options)
   execFileSync('pnpm', ['db:migrate'], options)
+  process.stdout.write('Preview database migration completed.\n')
 }
