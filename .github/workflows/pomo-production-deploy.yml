@@ -106,7 +106,6 @@ jobs:
             --prebuilt \
             --prod \
             --skip-domain \
-            --archive=tgz \
             --token="${VERCEL_TOKEN}")"
           echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
 
