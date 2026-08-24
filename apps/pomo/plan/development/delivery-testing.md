@@ -54,6 +54,8 @@ Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도�
 Vercel–Neon 연동은 Preview Deployment마다 Neon 기본 브랜치에서 분기한 DB와 연결 문자열을
 제공한다. Preview 빌드는 해당 연결 문자열로 Drizzle migration을 먼저 적용하고, 성공한 경우에만
 앱을 빌드한다. 각 Preview는 해당 리비전의 스키마를 독립적으로 검증한다.
+PR이 병합되거나 Git 브랜치가 삭제되면 Neon 연동의 자동 정리로 해당 Preview DB
+브랜치를 삭제한다.
 
 `main-pomo`의 운영 배포는 `.github/workflows/pomo-production-deploy.yml`에서 직렬 실행한다. 먼저
 운영 환경 설정으로 빌드한다. Vercel Production 환경의 Neon 직접 연결 URL인
