@@ -95,7 +95,7 @@ describe('useEvent', () => {
     const add = vi.spyOn(target, 'addEventListener')
     const remove = vi.spyOn(target, 'removeEventListener')
     const receivers: EventTarget[] = []
-    const callback = vi.fn(function (this: EventTarget) {
+    const callback = vi.fn(function recordReceiver(this: EventTarget) {
       receivers.push(this)
     })
     const options = {capture: true, once: true, passive: true}
