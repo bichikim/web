@@ -28,6 +28,13 @@ describe('deletePreviewBranch', () => {
     expect(result).toBe('deleted')
     expect(fetchImplementation).toHaveBeenCalledTimes(2)
     expect(fetchImplementation).toHaveBeenNthCalledWith(
+      1,
+      new URL(
+        'https://console.neon.tech/api/v2/projects/falling-leaf-73334177/branches?limit=10000&search=preview%2Fcodex%2Fpreview-cleanup',
+      ),
+      expect.objectContaining({headers: expect.any(Object)}),
+    )
+    expect(fetchImplementation).toHaveBeenNthCalledWith(
       2,
       new URL(
         'https://console.neon.tech/api/v2/projects/falling-leaf-73334177/branches/br-preview',

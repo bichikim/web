@@ -43,8 +43,9 @@ export const deletePreviewBranch = async (
   }
 
   const projectPath = `/api/v2/projects/${encodeURIComponent(normalizedProjectId)}`
+  const branchSearch = new URLSearchParams({limit: '10000', search: normalizedBranchName})
   const response = await requestNeon(
-    `${projectPath}/branches`,
+    `${projectPath}/branches?${branchSearch}`,
     normalizedApiKey,
     {},
     fetchImplementation,
