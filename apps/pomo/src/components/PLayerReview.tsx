@@ -5,11 +5,13 @@ import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
 
 import {
   FOCUS_ROOM_SCENES,
+  P_MOUTH_TRANSITION_PATHS,
   type PEyeMode,
   type PSceneCatalogEntry,
   type PSceneId,
   type PSceneStyle,
 } from '../features/focus-room-animation'
+import type {PReviewMouthFrame} from '../features/focus-room-layer-review/scene-renderer'
 import {P_VISEMES, type PViseme} from '../features/lip-sync'
 
 const PLayerReviewCanvas = clientOnly(() => import('./PLayerReviewCanvas'), {
@@ -29,6 +31,8 @@ interface ReviewControlsProps {
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
+  readonly mouthFrame: PReviewMouthFrame | null
+  readonly mouthPositionComparison: boolean
   readonly mouthVisible: boolean
   readonly onAnimationChange: (enabled: boolean) => void
   readonly onCollapse: () => void
@@ -38,6 +42,8 @@ interface ReviewControlsProps {
   readonly onHeadChange: (visible: boolean) => void
   readonly onHideAll: () => void
   readonly onMouthChange: (visible: boolean) => void
+  readonly onMouthFrameChange: (mouthFrame: PReviewMouthFrame | null) => void
+  readonly onMouthPositionComparisonChange: (enabled: boolean) => void
   readonly onReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent>
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onShowAll: () => void
@@ -56,6 +62,35 @@ const VISEME_LABELS: Readonly<Record<PViseme, string>> = {
   round: '둥근 입 · ㅗ/ㅜ',
   wide: '넓은 입 · ㅐ/ㅔ/ㅣ',
 }
+const EARLY_MOUTH_STAGE_POSITION = 1
+const MIDDLE_MOUTH_STAGE_POSITION = 2
+const LATE_MOUTH_STAGE_POSITION = 3
+
+const getMouthStagePosition = (stage: string, index: number) => {
+  if (stage.endsWith('-early')) {
+    return EARLY_MOUTH_STAGE_POSITION
+  }
+
+  if (stage.endsWith('-middle')) {
+    return MIDDLE_MOUTH_STAGE_POSITION
+  }
+
+  if (stage.endsWith('-late')) {
+    return LATE_MOUTH_STAGE_POSITION
+  }
+
+  return index + 1
+}
+
+const MOUTH_FRAME_OPTIONS = [
+  ...P_VISEMES.map((viseme) => ({label: VISEME_LABELS[viseme], value: viseme})),
+  ...P_MOUTH_TRANSITION_PATHS.flatMap((path) =>
+    path.stages.map((stage, index) => ({
+      label: `${path.from} → ${path.to} · 중간 ${getMouthStagePosition(stage, index)}`,
+      value: stage,
+    })),
+  ),
+] as const satisfies ReadonlyArray<{readonly label: string; readonly value: PReviewMouthFrame}>
 
 const EYE_MODES = ['auto', 'open', 'half', 'closed'] as const satisfies ReadonlyArray<PEyeMode>
 const EYE_MODE_LABELS: Readonly<Record<PEyeMode, string>> = {
@@ -114,6 +149,27 @@ const EyeModePicker = (props: {
   </label>
 )
 
+const VisemePicker = (props: {
+  readonly onChange: (viseme: PViseme) => void
+  readonly viseme: PViseme
+}) => (
+  <label class="mt-3 block border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
+    <span class="block text-sm font-700 text-#fffaf1">입 모양</span>
+    <span class="mt-1 block text-xs leading-5 text-#a99fac">
+      발음별 패치의 위치와 얼굴 이음새를 검사합니다.
+    </span>
+    <select
+      class="mt-2 h-10 w-full rounded-3 border border-white/12 bg-#211a24 px-3 text-sm text-#fffaf1"
+      onChange={(event) => props.onChange(event.currentTarget.value as PViseme)}
+      value={props.viseme}
+    >
+      <For each={P_VISEMES}>
+        {(viseme) => <option value={viseme}>{VISEME_LABELS[viseme]}</option>}
+      </For>
+    </select>
+  </label>
+)
+
 const ScenePicker = (props: {
   readonly onSelect: (id: PSceneId) => void
   readonly selectedId: PSceneId
@@ -146,6 +202,46 @@ const ScenePicker = (props: {
       )}
     </For>
   </nav>
+)
+
+const MouthFramePicker = (props: {
+  readonly mouthFrame: PReviewMouthFrame | null
+  readonly mouthPositionComparison: boolean
+  readonly onChange: (mouthFrame: PReviewMouthFrame | null) => void
+  readonly onPositionComparisonChange: (enabled: boolean) => void
+}) => (
+  <>
+    <label class="mt-3 block border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
+      <span class="block text-sm font-700 text-#fffaf1">개별 입 이미지</span>
+      <span class="mt-1 block text-xs leading-5 text-#a99fac">
+        기본 입과 모든 중간 프레임을 낮 사용자 얼굴 위에 한 장씩 고정해서 검사합니다.
+      </span>
+      <select
+        class="mt-2 h-10 w-full rounded-3 border border-white/12 bg-#211a24 px-3 text-sm text-#fffaf1"
+        onChange={(event) =>
+          props.onChange(
+            event.currentTarget.value === ''
+              ? null
+              : (event.currentTarget.value as PReviewMouthFrame),
+          )
+        }
+        value={props.mouthFrame ?? ''}
+      >
+        <option value="">전환 애니메이션으로 확인</option>
+        <For each={MOUTH_FRAME_OPTIONS}>
+          {(option) => <option value={option.value}>{option.label}</option>}
+        </For>
+      </select>
+    </label>
+    <div class="mt-1 border-t border-white/8 pt-1">
+      <LayerToggle
+        checked={props.mouthPositionComparison}
+        description="기본 미소 100% 위에 선택 이미지를 50% 투명도로 겹칩니다."
+        label="입 위치 비교"
+        onChange={props.onPositionComparisonChange}
+      />
+    </div>
+  </>
 )
 
 const ReviewControls = (props: ReviewControlsProps) => (
@@ -244,21 +340,14 @@ const ReviewControls = (props: ReviewControlsProps) => (
 
     <EyeModePicker eyeMode={props.eyeMode} onChange={props.onEyeModeChange} />
 
-    <label class="mt-3 block border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
-      <span class="block text-sm font-700 text-#fffaf1">입 모양</span>
-      <span class="mt-1 block text-xs leading-5 text-#a99fac">
-        발음별 패치의 위치와 얼굴 이음새를 검사합니다.
-      </span>
-      <select
-        class="mt-2 h-10 w-full rounded-3 border border-white/12 bg-#211a24 px-3 text-sm text-#fffaf1"
-        onChange={(event) => props.onVisemeChange(event.currentTarget.value as PViseme)}
-        value={props.viseme}
-      >
-        <For each={P_VISEMES}>
-          {(viseme) => <option value={viseme}>{VISEME_LABELS[viseme]}</option>}
-        </For>
-      </select>
-    </label>
+    <VisemePicker onChange={props.onVisemeChange} viseme={props.viseme} />
+
+    <MouthFramePicker
+      mouthFrame={props.mouthFrame}
+      mouthPositionComparison={props.mouthPositionComparison}
+      onChange={props.onMouthFrameChange}
+      onPositionComparisonChange={props.onMouthPositionComparisonChange}
+    />
 
     <div class="mt-3 grid grid-cols-2 gap-2 sm:mt-4">
       <button
@@ -313,6 +402,8 @@ export const PLayerReview = () => {
   const [eyeMode, setEyeMode] = createSignal<PEyeMode>('auto')
   const [eyesVisible, setEyesVisible] = createSignal(true)
   const [mouthVisible, setMouthVisible] = createSignal(true)
+  const [mouthFrame, setMouthFrame] = createSignal<PReviewMouthFrame | null>(null)
+  const [mouthPositionComparison, setMouthPositionComparison] = createSignal(false)
   const [referenceOpacity, setReferenceOpacity] = createSignal(0)
   const [viseme, setViseme] = createSignal<PViseme>('rest')
   const selectedScene = createMemo<PSceneCatalogEntry>(() => {
@@ -324,7 +415,6 @@ export const PLayerReview = () => {
 
     return scene
   })
-  const referencePercentage = () => Math.round(referenceOpacity() * PERCENT_SCALE)
   const handleReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
     setReferenceOpacity(event.currentTarget.valueAsNumber)
   }
@@ -336,18 +426,23 @@ export const PLayerReview = () => {
     setHandsVisible(true)
     setReferenceOpacity(0)
     setViseme('rest')
+    setMouthFrame(null)
   }
-  const handleShowAll = () => {
-    setHeadVisible(true)
-    setEyesVisible(true)
-    setMouthVisible(true)
-    setHandsVisible(true)
+  const setAllLayersVisible = (visible: boolean) => {
+    setHeadVisible(visible)
+    setEyesVisible(visible)
+    setMouthVisible(visible)
+    setHandsVisible(visible)
   }
-  const handleHideAll = () => {
-    setHeadVisible(false)
-    setEyesVisible(false)
-    setMouthVisible(false)
-    setHandsVisible(false)
+  const handleMouthFrameChange = (nextMouthFrame: PReviewMouthFrame | null) => {
+    setMouthFrame(nextMouthFrame)
+
+    if (nextMouthFrame !== null) {
+      setSelectedId(`day-${selectedScene().activity}-user`)
+      setSceneStyle('original')
+      setHeadVisible(true)
+      setMouthVisible(true)
+    }
   }
 
   return (
@@ -365,6 +460,8 @@ export const PLayerReview = () => {
           headVisible={headVisible()}
           gaze={selectedScene().gaze}
           mouthVisible={mouthVisible()}
+          mouthFrame={mouthFrame()}
+          mouthPositionComparison={mouthPositionComparison()}
           referenceOpacity={referenceOpacity()}
           sceneId={selectedScene().id}
           sceneStyle={sceneStyle()}
@@ -422,20 +519,27 @@ export const PLayerReview = () => {
           handsVisible={handsVisible()}
           headVisible={headVisible()}
           mouthVisible={mouthVisible()}
+          mouthFrame={mouthFrame()}
+          mouthPositionComparison={mouthPositionComparison()}
           onAnimationChange={setAnimationEnabled}
           onCollapse={() => setControlsExpanded(false)}
           onEyesChange={setEyesVisible}
           onEyeModeChange={setEyeMode}
           onHandsChange={setHandsVisible}
           onHeadChange={setHeadVisible}
-          onHideAll={handleHideAll}
+          onHideAll={() => setAllLayersVisible(false)}
           onMouthChange={setMouthVisible}
+          onMouthFrameChange={handleMouthFrameChange}
+          onMouthPositionComparisonChange={setMouthPositionComparison}
           onReferenceChange={handleReferenceChange}
           onSceneStyleChange={setSceneStyle}
-          onShowAll={handleShowAll}
-          onVisemeChange={setViseme}
+          onShowAll={() => setAllLayersVisible(true)}
+          onVisemeChange={(nextViseme) => {
+            setViseme(nextViseme)
+            setMouthFrame(null)
+          }}
           referenceOpacity={referenceOpacity()}
-          referencePercentage={referencePercentage()}
+          referencePercentage={Math.round(referenceOpacity() * PERCENT_SCALE)}
           sceneStyle={sceneStyle()}
           viseme={viseme()}
         />

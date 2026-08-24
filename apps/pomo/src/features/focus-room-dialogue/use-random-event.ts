@@ -27,6 +27,7 @@ export const getRandomEventDelay = (
 /** Repeats an event at a newly randomized interval after the focus room starts. */
 export const useRandomEvent = (props: UseRandomEventProps) => {
   const [settings, setSettings] = createSignal<RandomEventSettings>(DEFAULT_RANDOM_EVENT_SETTINGS)
+  const [isEventPending, setIsEventPending] = createSignal(false)
   const [isReady, setIsReady] = createSignal(false)
   let isDisposed = false
   let settingsRevision = 0
@@ -72,32 +73,29 @@ export const useRandomEvent = (props: UseRandomEventProps) => {
   createEffect(() => {
     const currentSettings = settings()
 
-    if (!isReady()) {
+    if (!isReady() || isEventPending()) {
       return
     }
 
-    let timerId: number | null = null
-    const scheduleNextEvent = () => {
-      timerId = window.setTimeout(
-        () => {
-          timerId = null
-          scheduleNextEvent()
-          Promise.resolve()
-            .then(() => props.onEvent())
-            .catch((error: unknown) => {
-              console.error('Failed to queue a random dialogue event.', error)
-            })
-        },
-        getRandomEventDelay(currentSettings, props.random ?? Math.random),
-      )
-    }
-
-    scheduleNextEvent()
+    const timerId = window.setTimeout(
+      () => {
+        setIsEventPending(true)
+        Promise.resolve()
+          .then(() => props.onEvent())
+          .catch((error: unknown) => {
+            console.error('Failed to queue a random dialogue event.', error)
+          })
+          .finally(() => {
+            if (!isDisposed) {
+              setIsEventPending(false)
+            }
+          })
+      },
+      getRandomEventDelay(currentSettings, props.random ?? Math.random),
+    )
 
     onCleanup(() => {
-      if (timerId !== null) {
-        window.clearTimeout(timerId)
-      }
+      window.clearTimeout(timerId)
     })
   })
 }

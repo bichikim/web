@@ -1,0 +1,26 @@
+{
+  "canvas": {"width": 1672, "height": 941},
+  "video": {"width": 1024, "height": 576, "fps": 24, "frames": 73},
+  "crop": {
+    "x": 930,
+    "y": 285,
+    "width": 260,
+    "height": 180,
+    "alpha": "fully opaque before user mask refinement",
+    "blur": false,
+    "feather": false
+  },
+  "stages": ["early", "middle", "late"],
+  "stageOverrides": {"closed-round": ["closed", "early", "late", "round"]},
+  "transitions": [
+    "closed-open",
+    "closed-wide",
+    "closed-round",
+    "open-wide",
+    "open-round",
+    "narrow-wide",
+    "narrow-round"
+  ],
+  "runtimeScenes": ["day-reading-user", "day-typing-user", "day-writing-user"],
+  "usage": "generated-full contains ChatGPT full-scene edits; lower-face-crops contains unblurred rectangular PNGs for user mask refinement; runtime WebP assets are lossless conversions."
+}

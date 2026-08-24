@@ -8,6 +8,10 @@ import {
   type PAudioEnvelope,
   type PViseme,
 } from '../lip-sync'
+import {
+  createPBrowserAudioVisemeAnalyzer,
+  type PBrowserAudioVisemeAnalyzer,
+} from '../lip-sync/browser-audio-viseme'
 import type {PDialogueRepository} from './repository'
 import type {DialogueSegmentMood, PDialogue} from './schema'
 import {getDialoguePositionAtTime, getDialogueVisemeAtTime} from './timeline'
@@ -124,8 +128,11 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const visemeDriver = createPVisemeDriver()
   let animationFrame: number | null = null
   let audio: HTMLAudioElement | null = null
+  let audioContext: AudioContext | null = null
   let audioEnvelope: PAudioEnvelope | null = null
+  let audioSource: MediaElementAudioSourceNode | null = null
   let audioUrl: string | null = null
+  let audioVisemeAnalyzer: PBrowserAudioVisemeAnalyzer | null = null
   let dialogue: PDialogue | null = null
   let activeRequest: PlaybackQueueRequest | null = null
   let isDraining = false
@@ -195,10 +202,13 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     setActiveSegmentPosition(activePosition?.position ?? null)
     setActiveText(activePosition?.text ?? null)
     const targetViseme = getDialogueVisemeAtTime(dialogue.segments, currentTimeMs)
+    const audioFrame = audioVisemeAnalyzer?.getFrame(targetViseme) ?? null
     const nextViseme = visemeDriver.update({
       currentTimeMs,
-      intensity: audioEnvelope === null ? 1 : getPAudioEnvelopeLevel(audioEnvelope, currentTimeMs),
-      viseme: targetViseme,
+      intensity:
+        audioFrame?.intensity ??
+        (audioEnvelope === null ? 1 : getPAudioEnvelopeLevel(audioEnvelope, currentTimeMs)),
+      viseme: audioFrame?.viseme ?? targetViseme,
     })
 
     if (nextViseme !== 'rest') {
@@ -216,6 +226,12 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const clearPlayback = (visemeResetTiming: VisemeResetTiming = 'immediate') => {
     cancelFrame()
     audio?.pause()
+    if (audioSource !== null) {
+      audioVisemeAnalyzer?.disconnect(audioSource)
+      audioSource.disconnect()
+    }
+
+    audioSource = null
     audio = null
     audioEnvelope = null
     visemeDriver.reset()
@@ -248,6 +264,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
 
     try {
+      await audioContext?.resume()
       await currentAudio.play()
 
       if (audio !== currentAudio || isDisposed) {
@@ -304,6 +321,15 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     setActiveSegmentCount(storedDialogue.segments.length)
     audioUrl = URL.createObjectURL(storedAudio)
     audio = new Audio(audioUrl)
+
+    if (typeof AudioContext !== 'undefined') {
+      audioContext ??= new AudioContext()
+      audioVisemeAnalyzer ??= createPBrowserAudioVisemeAnalyzer(audioContext)
+      audioSource = audioContext.createMediaElementSource(audio)
+      audioSource.connect(audioContext.destination)
+      await audioVisemeAnalyzer.connect(audioSource)
+    }
+
     return audio
   }
 
@@ -510,6 +536,14 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     dispose() {
       isDisposed = true
       cancel()
+      audioVisemeAnalyzer?.dispose()
+      audioVisemeAnalyzer = null
+
+      if (audioContext?.state !== 'closed') {
+        audioContext?.close().catch(() => undefined)
+      }
+
+      audioContext = null
     },
     isBlocked,
     isDialogueScheduled: (dialogueId) =>

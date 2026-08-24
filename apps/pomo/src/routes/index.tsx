@@ -1,7 +1,11 @@
 import {Title} from '@solidjs/meta'
 import {cx} from 'class-variance-authority'
+import {lazy, Suspense} from 'solid-js'
 
-import {PStudio} from '../components/PStudio'
+const PStudio = lazy(async () => {
+  const studioModule = await import('../components/PStudio')
+  return {default: studioModule.PStudio}
+})
 
 const MAIN_CLASSES = cx(
   'pomo-home',
@@ -14,7 +18,9 @@ export default function HomePage() {
     <main class={MAIN_CLASSES}>
       <Title>Pomofi</Title>
       <div class="pomo-home-stage relative h-full w-full">
-        <PStudio />
+        <Suspense fallback={<div class="pomo-scene-fallback">Pomo를 준비하고 있어요…</div>}>
+          <PStudio />
+        </Suspense>
       </div>
     </main>
   )
