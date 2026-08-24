@@ -8,14 +8,34 @@ describe('getDatabaseUrl', () => {
     expect(getDatabaseUrl({DATABASE_URL: url})).toBe(url)
   })
 
+  it('should trim a valid URL', () => {
+    const url = 'postgresql://user:password@example.com/pomo?sslmode=require'
+
+    expect(getDatabaseUrl({DATABASE_URL: ` ${url} `})).toBe(url)
+  })
+
   it('should reject a missing URL', () => {
     expect(() => getDatabaseUrl({})).toThrow('DATABASE_URL is not set')
   })
 
   it('should reject a non-Postgres URL', () => {
     expect(() => getDatabaseUrl({DATABASE_URL: 'https://example.com/database'})).toThrow(
-      'DATABASE_URL must use the postgres or postgresql protocol',
+      'DATABASE_URL must use postgres: or postgresql:',
     )
+  })
+
+  it('should reject an invalid URL without echoing its value', () => {
+    const invalidUrl = 'not-a-url-with-sensitive-text'
+
+    expect(() => getDatabaseUrl({DATABASE_URL: invalidUrl})).toThrow(
+      'DATABASE_URL must be a valid URL',
+    )
+
+    try {
+      getDatabaseUrl({DATABASE_URL: invalidUrl})
+    } catch (error) {
+      expect(String(error)).not.toContain(invalidUrl)
+    }
   })
 })
 
