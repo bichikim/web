@@ -15,13 +15,11 @@ export const AdminDashboard = () => {
   const navigate = useNavigate()
   const [isSigningOut, setIsSigningOut] = createSignal(false)
 
-  const handleSignOut: JSX.EventHandler<HTMLButtonElement, MouseEvent> = async (event) => {
+  const handleSignOut: JSX.EventHandler<HTMLButtonElement, MouseEvent> = async () => {
     setIsSigningOut(true)
 
     try {
-      const {ownerDocument} = event.currentTarget
-      const {origin} = ownerDocument.location
-      const wasSignedOut = await signOutAdminSession({origin})
+      const wasSignedOut = await signOutAdminSession()
 
       if (!wasSignedOut) {
         throw new Error('Admin sign-out failed')

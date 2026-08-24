@@ -357,14 +357,16 @@ describe('PMusicPlayerContent', () => {
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
 
-    expect(fetch).toHaveBeenNthCalledWith(1, '/audio/tracks.json', {
-      cache: 'no-store',
-      signal: expect.any(AbortSignal),
-    })
-    expect(fetch).toHaveBeenNthCalledWith(2, '/audio/playlist.json', {
-      cache: 'no-store',
-      signal: expect.any(AbortSignal),
-    })
+    expect(fetch).toHaveBeenNthCalledWith(
+      1,
+      '/audio/tracks.json',
+      expect.objectContaining({cache: 'no-store', signal: expect.any(AbortSignal)}),
+    )
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      '/audio/playlist.json',
+      expect.objectContaining({cache: 'no-store', signal: expect.any(AbortSignal)}),
+    )
   })
 
   it('should preserve album additions when native playback restoration finishes later', async () => {

@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {apiFetch} from '../http-client'
 import {parseWeatherFeed, type WeatherCitySlug, type WeatherFeed} from './contract'
 
 const MILLISECONDS_PER_SECOND = 1_000
@@ -28,14 +29,6 @@ export type WeatherFeedRequestResult =
   | CollectingWeatherFeedResult
   | UnavailableWeatherFeedResult
 
-const getWeatherFeedUrl = (citySlug: WeatherCitySlug): URL => {
-  const origin = import.meta.env.POMO_IS_APPS_IN_TOSS
-    ? import.meta.env.POMO_PUBLIC_ORIGIN
-    : window.location.origin
-
-  return new URL(`/api/weather/feeds/${citySlug}.json`, origin)
-}
-
 const parseRetryAfterMilliseconds = (value: string | null): number | null => {
   if (value === null) {
     return null
@@ -50,7 +43,7 @@ const parseRetryAfterMilliseconds = (value: string | null): number | null => {
 export const fetchWeatherFeed = async (
   citySlug: WeatherCitySlug,
 ): Promise<WeatherFeedRequestResult> => {
-  const response = await fetch(getWeatherFeedUrl(citySlug), {
+  const response = await apiFetch(`weather/feeds/${citySlug}.json`, {
     headers: {accept: 'application/json'},
   })
 

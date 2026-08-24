@@ -652,6 +652,9 @@ importers:
       nitro:
         specifier: 'catalog:'
         version: 3.0.260610-beta(@vercel/functions@3.9.3(ws@8.21.3))(chokidar@5.0.0)(dotenv@16.6.1)(drizzle-orm@0.45.2(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.29.5)(postgres@3.4.9))(giget@3.2.0)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.5)(rollup@4.62.4)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))(xml2js@0.6.2)
+      ofetch:
+        specifier: ^1.5.1
+        version: 1.5.1
       onnxruntime-web:
         specifier: 1.23.2
         version: 1.23.2

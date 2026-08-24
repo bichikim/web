@@ -1,3 +1,4 @@
+import {httpFetch} from '../http-client'
 import {type Result, successResult} from './result'
 import type {ModelStorage, ModelStorageError} from './storage'
 
@@ -33,7 +34,7 @@ export const loadModelResource = async (
     options.onStorageError?.(storedResult.error)
   }
 
-  const response = await (options.fetcher ?? fetch)(options.url, {
+  const response = await (options.fetcher ?? httpFetch)(options.url, {
     cache: 'no-store',
     signal: options.signal,
   })

@@ -47,6 +47,7 @@
     "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
     "nitro": "catalog:",
+    "ofetch": "^1.5.1",
     "onnxruntime-web": "1.23.2",
     "openai": "^7.4.0",
     "pixi.js": "^8.19.0",
