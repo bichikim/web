@@ -1,7 +1,12 @@
 import {Title} from '@solidjs/meta'
-import {A} from '@solidjs/router'
+import {A, useLocation} from '@solidjs/router'
 import {HttpStatusCode} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
+import {lazy, Show} from 'solid-js'
+
+const DevPageDispatcher = import.meta.env.DEV
+  ? lazy(() => import('src/dev/DevPageDispatcher'))
+  : undefined
 
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-hidden bg-#17131f px-5 py-12 text-#f8edf1',
@@ -12,7 +17,7 @@ const LINK_CLASSES = cx(
   'font-750 text-#211a2b no-underline transition-colors hover:bg-#ffd4de focus-visible:bg-#ffd4de',
 )
 
-export default function NotFoundPage() {
+const NotFoundContent = () => {
   return (
     <main class={MAIN_CLASSES}>
       <Title>페이지를 찾을 수 없어요 — Pomofi</Title>
@@ -30,5 +35,22 @@ export default function NotFoundPage() {
         </A>
       </section>
     </main>
+  )
+}
+
+export default function NotFoundPage() {
+  const location = useLocation()
+  const pathname = () => location.pathname.replace(/\/+$/u, '') || '/'
+  const Dispatcher = () =>
+    import.meta.env.DEV &&
+    (pathname() === '/dev' || pathname().startsWith('/dev/')) &&
+    DevPageDispatcher !== undefined
+      ? DevPageDispatcher
+      : undefined
+
+  return (
+    <Show keyed fallback={<NotFoundContent />} when={Dispatcher()}>
+      {(Dispatcher) => <Dispatcher fallback={<NotFoundContent />} pathname={pathname()} />}
+    </Show>
   )
 }
