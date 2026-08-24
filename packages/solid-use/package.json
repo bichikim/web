@@ -16,7 +16,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./*": "./*"
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs"
+    }
   },
   "publishConfig": {
     "access": "public"

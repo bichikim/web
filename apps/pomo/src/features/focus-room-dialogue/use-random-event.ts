@@ -1,4 +1,5 @@
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 
 import {
   DEFAULT_RANDOM_EVENT_SETTINGS,
@@ -48,7 +49,7 @@ export const useRandomEvent = (props: UseRandomEventProps) => {
       }
     }
 
-    window.addEventListener(RANDOM_EVENT_SETTINGS_CHANGED_EVENT, handleSettingsChange)
+    useEvent(window, RANDOM_EVENT_SETTINGS_CHANGED_EVENT, handleSettingsChange)
     readRandomEventSettings()
       .then((storedSettings) => {
         if (!isDisposed && settingsRevision === initialRevision) {
@@ -66,7 +67,6 @@ export const useRandomEvent = (props: UseRandomEventProps) => {
 
     onCleanup(() => {
       isDisposed = true
-      window.removeEventListener(RANDOM_EVENT_SETTINGS_CHANGED_EVENT, handleSettingsChange)
     })
   })
 

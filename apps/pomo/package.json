@@ -40,6 +40,7 @@
     "@solidjs/start": "catalog:",
     "@unocss/reset": "catalog:",
     "@vercel/functions": "^3.9.3",
+    "@winter-love/solid-use": "workspace:*",
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
     "dexie": "^4.4.4",

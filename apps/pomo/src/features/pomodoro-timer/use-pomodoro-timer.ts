@@ -1,4 +1,5 @@
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 import {z} from 'zod'
 
 import {readAutoStartPreference, writeAutoStartPreference} from './auto-start-storage'
@@ -205,12 +206,11 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     initializeAutoStart()
 
     const refreshTimer = window.setInterval(refresh, TIMER_REFRESH_INTERVAL)
-    document.addEventListener('visibilitychange', refresh)
+    useEvent(document, 'visibilitychange', refresh)
 
     onCleanup(() => {
       isDisposed = true
       window.clearInterval(refreshTimer)
-      document.removeEventListener('visibilitychange', refresh)
     })
   })
 

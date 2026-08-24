@@ -1,4 +1,5 @@
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 
 import {
   getScreenSaverDelayMilliseconds,
@@ -70,9 +71,9 @@ export const useScreenSaver = (): ScreenSaverController => {
 
     const activityEvents = ['keydown', 'pointerdown', 'pointermove', 'scroll', 'wheel'] as const
     for (const eventName of activityEvents) {
-      window.addEventListener(eventName, recordActivity, {passive: true})
+      useEvent(window, eventName, recordActivity, {passive: true})
     }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    useEvent(document, 'visibilitychange', handleVisibilityChange)
 
     createEffect(() => {
       const currentDelay = delay()
@@ -91,10 +92,6 @@ export const useScreenSaver = (): ScreenSaverController => {
 
     onCleanup(() => {
       isDisposed = true
-      for (const eventName of activityEvents) {
-        window.removeEventListener(eventName, recordActivity)
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     })
   })
 
