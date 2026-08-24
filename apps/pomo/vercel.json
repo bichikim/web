@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
       "path": "/api/cron/today-in-history",
@@ -12,5 +13,10 @@
       "path": "/api/cron/auth-maintenance",
       "schedule": "17 18 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main-pomo": false
+    }
+  }
 }

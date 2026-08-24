@@ -1,7 +1,30 @@
+import {z} from 'zod'
+
+import {apiJson, ApiJsonError, apiJsonRequest} from '../api-json'
 import {apiFetch} from '../http-client'
 
 const APP_SESSION_STORAGE_KEY = 'pomo:app-session:v1'
 const HTTP_UNAUTHORIZED = 401
+const HTTP_TOO_MANY_REQUESTS = 429
+const tossLoginSessionSchema = z.object({token: z.string()})
+
+interface SentAccountLinkEmail {
+  readonly status: 'sent'
+}
+
+interface RejectedAccountLinkEmail {
+  readonly status: 'not-sent'
+}
+
+interface RateLimitedAccountLinkEmail {
+  readonly retryAfterSeconds: number | null
+  readonly status: 'rate-limited'
+}
+
+export type AccountLinkEmailResult =
+  | SentAccountLinkEmail
+  | RejectedAccountLinkEmail
+  | RateLimitedAccountLinkEmail
 
 const getAuthorizationHeaders = (token: string): HeadersInit => ({
   Authorization: `Bearer ${token}`,
@@ -41,25 +64,24 @@ export const validateAppSession = async (token: string): Promise<boolean> => {
 export const createTossLoginSession = async (): Promise<string> => {
   const {TossAuth} = await import('@apps-in-toss/web-framework')
   const authorization = await TossAuth.login()
-  const response = await apiFetch('app-auth/exchange', {
-    body: JSON.stringify(authorization),
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-  })
+  let body: z.infer<typeof tossLoginSessionSchema>
 
-  if (!response.ok) {
-    throw new Error('Toss login exchange failed')
-  }
+  try {
+    body = await apiJson('app-auth/exchange', {
+      body: authorization,
+      method: 'POST',
+      responseSchema: tossLoginSessionSchema,
+    })
+  } catch (error: unknown) {
+    if (error instanceof ApiJsonError && error.kind === 'http') {
+      throw new Error('Toss login exchange failed', {cause: error})
+    }
 
-  const body: unknown = await response.json()
+    if (error instanceof ApiJsonError && error.kind === 'schema') {
+      throw new Error('Toss login returned an invalid session', {cause: error})
+    }
 
-  if (
-    typeof body !== 'object' ||
-    body === null ||
-    !('token' in body) ||
-    typeof body.token !== 'string'
-  ) {
-    throw new Error('Toss login returned an invalid session')
+    throw error
   }
 
   await storeAppSession(body.token)
@@ -79,15 +101,32 @@ export const revokeTossLoginSession = async (token: string): Promise<void> => {
   await clearStoredAppSession()
 }
 
-export const requestAccountLinkEmail = async (token: string, email: string): Promise<boolean> => {
-  const response = await apiFetch('account/link-email', {
-    body: JSON.stringify({email}),
-    headers: {
-      ...getAuthorizationHeaders(token),
-      'Content-Type': 'application/json',
-    },
+export const requestAccountLinkEmail = async (
+  token: string,
+  email: string,
+): Promise<AccountLinkEmailResult> => {
+  const response = await apiJsonRequest('account/link-email', {
+    body: {email},
+    headers: getAuthorizationHeaders(token),
     method: 'POST',
   })
 
-  return response.ok
+  if (response.ok) {
+    return {status: 'sent'}
+  }
+
+  if (response.status === HTTP_TOO_MANY_REQUESTS) {
+    const retryAfterHeader = response.headers.get('Retry-After')
+    const retryAfterSeconds = Number(retryAfterHeader)
+
+    return {
+      retryAfterSeconds:
+        retryAfterHeader !== null && Number.isInteger(retryAfterSeconds) && retryAfterSeconds > 0
+          ? retryAfterSeconds
+          : null,
+      status: 'rate-limited',
+    }
+  }
+
+  return {status: 'not-sent'}
 }

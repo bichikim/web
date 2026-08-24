@@ -128,9 +128,8 @@ describe('auto-start-storage', () => {
 
     const firstWrite = writeAutoStartPreference(true)
     const secondWrite = writeAutoStartPreference(false)
-    await Promise.resolve()
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
 
-    expect(storageMocks.setItem).toHaveBeenCalledTimes(2)
     completions[1]?.()
     await secondWrite
     completions[0]?.()

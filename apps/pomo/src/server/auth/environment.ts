@@ -1,8 +1,11 @@
 import 'server-only'
 
+import {readEnum, readString, readUrl} from '../environment/schema'
+
 export interface NeonAuthEnvironment {
   readonly NEON_AUTH_BASE_URL?: string
   readonly NEON_AUTH_COOKIE_SECRET?: string
+  readonly NODE_ENV?: string
 }
 
 export interface NeonAuthProxyConfig {
@@ -12,33 +15,33 @@ export interface NeonAuthProxyConfig {
 }
 
 const MINIMUM_COOKIE_SECRET_LENGTH = 32
+const NODE_ENVIRONMENTS = ['development', 'production', 'test'] as const
 
-const readBaseUrl = (value: string | undefined): string => {
-  if (!value?.trim()) {
-    throw new TypeError('NEON_AUTH_BASE_URL is not set')
-  }
+const readBaseUrl = (environment: NeonAuthEnvironment): string => {
+  const nodeEnvironment = readEnum(
+    'NODE_ENV',
+    environment.NODE_ENV,
+    NODE_ENVIRONMENTS,
+    'production',
+  )
+  const url = readUrl('NEON_AUTH_BASE_URL', environment.NEON_AUTH_BASE_URL, {
+    protocols: ['https:', 'http:'],
+  })
 
-  const url = new URL(value)
-
-  if (url.protocol !== 'https:' && !import.meta.env.DEV) {
+  if (url.protocol !== 'https:' && nodeEnvironment !== 'development') {
     throw new TypeError('NEON_AUTH_BASE_URL must use HTTPS outside development')
   }
 
   return url.toString().replace(/\/$/u, '')
 }
 
-const readCookieSecret = (value: string | undefined): string => {
-  if (!value || value.length < MINIMUM_COOKIE_SECRET_LENGTH) {
-    throw new TypeError('NEON_AUTH_COOKIE_SECRET must contain at least 32 characters')
-  }
-
-  return value
-}
+const readCookieSecret = (value: string | undefined): string =>
+  readString('NEON_AUTH_COOKIE_SECRET', value, {minimumLength: MINIMUM_COOKIE_SECRET_LENGTH})
 
 export const getNeonAuthProxyConfig = (
   environment: NeonAuthEnvironment = process.env,
 ): NeonAuthProxyConfig => ({
-  baseUrl: readBaseUrl(environment.NEON_AUTH_BASE_URL),
+  baseUrl: readBaseUrl(environment),
   cookieSecret: readCookieSecret(environment.NEON_AUTH_COOKIE_SECRET),
   sameSite: 'lax',
 })

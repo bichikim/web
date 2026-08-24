@@ -1,5 +1,12 @@
-import {Storage} from '@apps-in-toss/web-framework'
 import {z} from 'zod'
+
+import {
+  createSerialNativeStorageWriter,
+  hasNativeStorageBridge,
+  readNativeStorageJson,
+  readWebStorageJson,
+  writeWebStorageJson,
+} from 'src/features/runtime-storage'
 
 import {DEFAULT_P_SCENE_PREFERENCES, type PScenePreferences} from './model'
 
@@ -10,49 +17,19 @@ const scenePreferencesSchema = z.object({
   timeMode: z.enum(['day', 'night', 'auto']),
 })
 let preferenceWriteRevision = 0
-let nativeWriteQueue = Promise.resolve()
+const nativeWriter = createSerialNativeStorageWriter()
 
-const parseScenePreferences = (storedValue: string | null): PScenePreferences | null => {
-  if (storedValue === null) {
-    return null
-  }
-
-  try {
-    const result = scenePreferencesSchema.safeParse(JSON.parse(storedValue) as unknown)
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
+const parseScenePreferences = (value: unknown): PScenePreferences | null => {
+  const result = scenePreferencesSchema.safeParse(value)
+  return result.success ? result.data : null
 }
 
-const hasNativeBridge = () => 'ReactNativeWebView' in window
-
 const readWebPreferences = (): PScenePreferences | null => {
-  try {
-    return parseScenePreferences(localStorage.getItem(SCENE_PREFERENCES_STORAGE_KEY))
-  } catch {
-    return null
-  }
+  return readWebStorageJson(SCENE_PREFERENCES_STORAGE_KEY, parseScenePreferences)
 }
 
 const writeWebPreferences = (preferences: PScenePreferences) => {
-  try {
-    localStorage.setItem(SCENE_PREFERENCES_STORAGE_KEY, JSON.stringify(preferences))
-  } catch {
-    // Browser storage is best-effort; the in-memory preferences remain active for this session.
-  }
-}
-
-const enqueueNativeWrite = (preferences: PScenePreferences) => {
-  nativeWriteQueue = nativeWriteQueue.then(async () => {
-    try {
-      await Storage.setItem(SCENE_PREFERENCES_STORAGE_KEY, JSON.stringify(preferences))
-    } catch {
-      // The authoritative web copy remains available when native storage is unavailable.
-    }
-  })
-
-  return nativeWriteQueue
+  writeWebStorageJson(SCENE_PREFERENCES_STORAGE_KEY, preferences)
 }
 
 /** Reads scene preferences from storage whose lifetime matches the current runtime. */
@@ -61,20 +38,23 @@ export const readPScenePreferences = async (): Promise<PScenePreferences> => {
   const webPreferences = readWebPreferences()
 
   if (webPreferences !== null) {
-    if (hasNativeBridge()) {
-      enqueueNativeWrite(webPreferences).catch(globalThis.reportError)
+    if (hasNativeStorageBridge()) {
+      nativeWriter
+        .write(SCENE_PREFERENCES_STORAGE_KEY, webPreferences)
+        .catch(globalThis.reportError)
     }
 
     return webPreferences
   }
 
-  if (!hasNativeBridge()) {
+  if (!hasNativeStorageBridge()) {
     return DEFAULT_P_SCENE_PREFERENCES
   }
 
   try {
-    const nativePreferences = parseScenePreferences(
-      await Storage.getItem(SCENE_PREFERENCES_STORAGE_KEY),
+    const nativePreferences = await readNativeStorageJson(
+      SCENE_PREFERENCES_STORAGE_KEY,
+      parseScenePreferences,
     )
 
     if (preferenceWriteRevision !== initialWriteRevision) {
@@ -97,9 +77,9 @@ export const writePScenePreferences = async (preferences: PScenePreferences): Pr
   preferenceWriteRevision += 1
   writeWebPreferences(preferences)
 
-  if (!hasNativeBridge()) {
+  if (!hasNativeStorageBridge()) {
     return
   }
 
-  await enqueueNativeWrite(preferences)
+  await nativeWriter.write(SCENE_PREFERENCES_STORAGE_KEY, preferences)
 }

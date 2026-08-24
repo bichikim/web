@@ -1,7 +1,8 @@
 import {z} from 'zod'
 
+import {parseJsonResponse} from '../api-json'
 import {apiFetch} from '../http-client'
-import {parseWeatherFeed, type WeatherCitySlug, type WeatherFeed} from './contract'
+import {type WeatherCitySlug, type WeatherFeed, weatherFeedSchema} from './contract'
 
 const MILLISECONDS_PER_SECOND = 1_000
 const HTTP_SERVICE_UNAVAILABLE = 503
@@ -48,7 +49,7 @@ export const fetchWeatherFeed = async (
   })
 
   if (response.status === HTTP_SERVICE_UNAVAILABLE) {
-    const unavailable = weatherUnavailableSchema.parse(await response.json())
+    const unavailable = await parseJsonResponse(response, weatherUnavailableSchema)
     const retryAfterMilliseconds = parseRetryAfterMilliseconds(response.headers.get('Retry-After'))
 
     return unavailable.code === 'weather_collecting'
@@ -60,6 +61,5 @@ export const fetchWeatherFeed = async (
     throw new Error(`Weather feed request failed with status ${response.status}`)
   }
 
-  const value: unknown = await response.json()
-  return {feed: parseWeatherFeed(value), status: 'available'}
+  return {feed: await parseJsonResponse(response, weatherFeedSchema), status: 'available'}
 }

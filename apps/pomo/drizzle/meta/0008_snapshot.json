@@ -1,5 +1,5 @@
 {
-  "id": "13c1a959-5970-44aa-a148-d5c5fcb70194",
+  "id": "97388b13-830c-4261-b981-e452621dd88e",
   "prevId": "ae335657-b55d-4352-80cd-1a35cafccd71",
   "version": "7",
   "dialect": "postgresql",
@@ -555,6 +555,53 @@
       },
       "isRLSEnabled": false
     },
+    "public.pomo_account_link_attempt_limits": {
+      "name": "pomo_account_link_attempt_limits",
+      "schema": "",
+      "columns": {
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "window_started_at": {
+          "name": "window_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pomo_account_link_attempt_limits_user_id_pomo_users_id_fk": {
+          "name": "pomo_account_link_attempt_limits_user_id_pomo_users_id_fk",
+          "tableFrom": "pomo_account_link_attempt_limits",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "pomo_account_link_attempt_limits_positive_count_check": {
+          "name": "pomo_account_link_attempt_limits_positive_count_check",
+          "value": "\"pomo_account_link_attempt_limits\".\"attempt_count\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.pomo_account_link_challenges": {
       "name": "pomo_account_link_challenges",
       "schema": "",
@@ -715,37 +762,6 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "pomo_app_sessions_expiry_index": {
-          "name": "pomo_app_sessions_expiry_index",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "pomo_app_sessions_revoked_index": {
-          "name": "pomo_app_sessions_revoked_index",
-          "columns": [
-            {
-              "expression": "revoked_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"pomo_app_sessions\".\"revoked_at\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}

@@ -33,6 +33,12 @@ class FakeWorker {
       listener({data: message} as MessageEvent<SpeechWorkerResponse>)
     }
   }
+
+  emitMessageError() {
+    for (const listener of this.#listeners.get('messageerror') ?? []) {
+      listener({} as MessageEvent)
+    }
+  }
 }
 
 const getWorker = () => {
@@ -125,7 +131,53 @@ describe('createSpeechRecognizer', () => {
     expect(audio.byteLength).toBeGreaterThan(0)
   })
 
-  it('should resolve pending work on worker failure and cancellation', async () => {
+  it('should preserve domain failures from preparation and transcription', async () => {
+    const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-tiny',
+      onBackendChange: vi.fn(),
+      onProgress: vi.fn(),
+      preferredBackend: 'wasm',
+    })
+    const worker = getWorker()
+    const preparation = recognizer.prepare()
+
+    worker.emitMessage({
+      error: {code: 'model-failed', detail: '모델 오류', phase: 'prepare', retryable: true},
+      requestId: 1,
+      type: 'error',
+    })
+    await expect(preparation).resolves.toEqual({
+      error: {code: 'model-failed', detail: '모델 오류', phase: 'prepare', retryable: true},
+      ok: false,
+    })
+
+    const transcription = recognizer.transcribe({
+      audio: Float32Array.of(0.1),
+      language: 'korean',
+    })
+    worker.emitMessage({
+      error: {
+        code: 'transcription-failed',
+        detail: '변환 오류',
+        phase: 'transcribe',
+        retryable: true,
+      },
+      requestId: 2,
+      type: 'error',
+    })
+
+    await expect(transcription).resolves.toEqual({
+      error: {
+        code: 'transcription-failed',
+        detail: '변환 오류',
+        phase: 'transcribe',
+        retryable: true,
+      },
+      ok: false,
+    })
+  })
+
+  it('should resolve pending work on worker failure', async () => {
     const recognizer = createSpeechRecognizer({
       modelId: 'moonshine-tiny-ko',
       onBackendChange: vi.fn(),
@@ -165,6 +217,104 @@ describe('createSpeechRecognizer', () => {
       error: {code: 'worker-failed'},
       ok: false,
     })
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should reject cached preparation after an idle worker failure', async () => {
+    const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-tiny',
+      onBackendChange: vi.fn(),
+      onProgress: vi.fn(),
+      preferredBackend: 'wasm',
+    })
+    const worker = getWorker()
+    const preparation = recognizer.prepare()
+    worker.emitMessage({backend: 'wasm', requestId: 1, type: 'ready'})
+    await expect(preparation).resolves.toEqual({ok: true, value: {backend: 'wasm'}})
+
+    worker.emitError('idle Worker 중단')
+
+    await expect(recognizer.prepare()).resolves.toEqual({
+      error: {
+        code: 'worker-failed',
+        detail: 'idle Worker 중단',
+        phase: 'prepare',
+        retryable: true,
+      },
+      ok: false,
+    })
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should resolve pending work on message deserialization failure', async () => {
+    const recognizer = createSpeechRecognizer({
+      modelId: 'moonshine-tiny-ko',
+      onBackendChange: vi.fn(),
+      onProgress: vi.fn(),
+      preferredBackend: 'wasm',
+    })
+    const worker = getWorker()
+    const preparation = recognizer.prepare()
+    const transcription = recognizer.transcribe({
+      audio: Float32Array.of(0.1),
+      language: 'korean',
+    })
+
+    worker.emitMessageError()
+
+    await expect(preparation).resolves.toMatchObject({
+      error: {code: 'worker-failed', phase: 'prepare'},
+      ok: false,
+    })
+    await expect(transcription).resolves.toMatchObject({
+      error: {code: 'worker-failed', phase: 'transcribe'},
+      ok: false,
+    })
+    await expect(recognizer.prepare()).resolves.toMatchObject({
+      error: {code: 'worker-failed', phase: 'prepare'},
+      ok: false,
+    })
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should cancel pending work and ignore late responses after disposal', async () => {
+    const onBackendChange = vi.fn()
+    const onProgress = vi.fn()
+    const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-base',
+      onBackendChange,
+      onProgress,
+      preferredBackend: 'webgpu',
+    })
+    const worker = getWorker()
+    const preparation = recognizer.prepare()
+    const transcription = recognizer.transcribe({
+      audio: Float32Array.of(0.1),
+      language: 'korean',
+    })
+
+    recognizer.dispose()
+    worker.emitMessage({progress: 80, type: 'loading'})
+    worker.emitMessage({backend: 'wasm', type: 'backend-changed'})
+    worker.emitMessage({backend: 'wasm', requestId: 1, type: 'ready'})
+    worker.emitMessage({backend: 'wasm', requestId: 2, text: '늦은 응답', type: 'complete'})
+
+    await expect(preparation).resolves.toEqual({
+      error: {code: 'cancelled', phase: 'prepare', retryable: false},
+      ok: false,
+    })
+    await expect(transcription).resolves.toEqual({
+      error: {code: 'cancelled', phase: 'transcribe', retryable: false},
+      ok: false,
+    })
+    await expect(
+      recognizer.transcribe({audio: Float32Array.of(0.2), language: 'korean'}),
+    ).resolves.toEqual({
+      error: {code: 'cancelled', phase: 'transcribe', retryable: false},
+      ok: false,
+    })
+    expect(onBackendChange).not.toHaveBeenCalled()
+    expect(onProgress).not.toHaveBeenCalled()
     expect(worker.terminate).toHaveBeenCalledTimes(1)
   })
 })

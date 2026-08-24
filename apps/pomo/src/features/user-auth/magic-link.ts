@@ -1,4 +1,4 @@
-import {apiFetch} from '../http-client'
+import {apiJsonRequest} from '../api-json'
 
 interface RequestUserMagicLinkInput {
   readonly email: string
@@ -7,14 +7,13 @@ interface RequestUserMagicLinkInput {
 
 export const requestUserMagicLink = async (input: RequestUserMagicLinkInput): Promise<boolean> => {
   const callbackUrl = new URL('/account', input.origin)
-  const response = await apiFetch('auth/sign-in/magic-link', {
-    body: JSON.stringify({
+  const response = await apiJsonRequest('auth/sign-in/magic-link', {
+    body: {
       callbackURL: callbackUrl.toString(),
       email: input.email,
       errorCallbackURL: callbackUrl.toString(),
-    }),
+    },
     credentials: 'include',
-    headers: {'Content-Type': 'application/json'},
     method: 'POST',
   })
 

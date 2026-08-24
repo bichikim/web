@@ -51,6 +51,19 @@ Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도�
 
 브라우저 SSR은 Vercel Git 연동을 사용해 모든 PR에 Preview Deployment를 자동 생성한다. GitHub Actions는 미리보기 배포를 별도로 실행하지 않는다.
 
+`main-pomo`의 운영 배포는 `.github/workflows/pomo-production-deploy.yml`에서 직렬 실행한다. 먼저
+운영 환경 설정으로 빌드한다. Vercel Production 환경의 Neon 직접 연결 URL인
+`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로
+배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로
+승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복
+배포를 막기 위해 `main-pomo`의 Vercel Git 자동 배포는 끄고, 다른 브랜치의 Preview 자동 배포는
+유지한다. GitHub에는 `VERCEL_TOKEN` secret을 설정한다.
+
+자동 운영 배포에는 기존 앱과 호환되는 expand migration만 넣는다. `DROP`, `RENAME`,
+`ALTER COLUMN`, `SET NOT NULL`이나 기존 데이터를 변경하는 `UPDATE`, `DELETE`, `TRUNCATE`가
+있으면 배포를 중단한다. backfill과 contract migration은 자동 적용되는 `drizzle/` 밖에서
+관리한다. 호환 코드를 먼저 운영에 배포한 뒤 별도 작업으로 실행한다.
+
 Vercel Preview Deployment는 운영 Public Blob의 검증된 TTS 모델과 manifest를 읽기 전용으로 사용하며 모델을 업로드하거나 동기화하지 않는다.
 
 일반 브라우저 사용자는 SSR 배포 주소로 접속한다. 앱인토스와 브라우저는 UI, Babylon.js 장면과
