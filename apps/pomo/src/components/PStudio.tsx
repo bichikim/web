@@ -26,6 +26,14 @@ import {
   type ScenePeriod,
   type SceneTimeMode,
 } from '../features/focus-room-time'
+import {
+  FOCUS_ROOM_ACTIVITY_OPTIONS,
+  FOCUS_ROOM_GAZE_OPTIONS,
+  FOCUS_ROOM_TIME_OPTIONS,
+  type PActivity,
+  type PGaze,
+  usePScenePreferences,
+} from '../features/focus-room-scene-preferences'
 import {type PSayController, usePSay} from '../features/pomo-webmcp'
 import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
 import {PServicePolicyLinks} from '../features/service-terms'
@@ -34,14 +42,7 @@ import {PMusicPlayer} from './PMusicPlayer'
 import {PFeedStatus} from './PFeedStatus'
 import {PDialoguePlayer} from './PDialoguePlayer'
 import {PPomodoro, type PPomodoroPresentation} from './PPomodoro'
-import {
-  FOCUS_ROOM_ACTIVITY_OPTIONS,
-  FOCUS_ROOM_GAZE_OPTIONS,
-  FOCUS_ROOM_TIME_OPTIONS,
-  type PActivity,
-  type PGaze,
-  resolvePSceneViseme,
-} from './pomo-scene-options'
+import {resolvePSceneViseme} from './pomo-scene-options'
 import {PScreenSaver} from './PScreenSaver'
 import {PScribbleCircleControl} from './PScribbleCircleControl'
 import {PWeatherStatus} from './PWeatherStatus'
@@ -413,10 +414,7 @@ const PStudioEvents = (props: PStudioEventsProps) => {
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
-  const [timeMode, setTimeMode] = createSignal<SceneTimeMode>('day')
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
-  const [activity, setActivity] = createSignal<PActivity>('reading')
-  const [gaze, setGaze] = createSignal<PGaze>('focused')
   const [motionInput, setMotionInput] = createSignal<PSceneMotionInput>('drag')
   const [motionMode, setMotionMode] = createSignal<PSceneMotionMode>('depth')
   const [canUseGyroscope, setCanUseGyroscope] = createSignal(false)
@@ -431,26 +429,29 @@ export const PStudio = () => {
   )
   const screenSaver = useScreenSaver()
   const weather = useWeather()
+  const scenePreferences = usePScenePreferences()
   const sceneStyleController = usePSceneStyle()
-  const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
-  const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
-  const selectedScene = createMemo(() =>
-    getSceneAsset(time(), activity(), sceneGaze(), sceneStyleController.sceneStyle()),
+  const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
+  const sceneGaze = useDialogueSceneGaze(
+    scenePreferences.gaze,
+    events.isDialoguePlaying,
+    pomoSay.isPlaying,
   )
-  const activeViseme = createMemo(() => {
-    return resolvePSceneViseme(
+  const {sceneStyle} = sceneStyleController
+  const selectedScene = createMemo(() =>
+    getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), sceneStyle()),
+  )
+  const activeViseme = createMemo(() =>
+    resolvePSceneViseme(
       events.activeViseme(),
       events.isDialoguePlaying(),
       pomoSay.speechText(),
       pomoSay.activeViseme(),
-    )
-  })
+    ),
+  )
   const handleLoadingChange = (isLoading: boolean) => {
     setIsSceneLoading(isLoading)
-
-    if (!isLoading) {
-      setHasSceneRendered(true)
-    }
+    setHasSceneRendered((hasRendered) => hasRendered || !isLoading)
   }
   const handleEnter = () => {
     writeFocusRoomEntrySession()
@@ -492,9 +493,9 @@ export const PStudio = () => {
         <Show when={!hasSceneRendered()}>
           <PSceneFallback />
         </Show>
-        <Show when={sceneStyleController.isReady()}>
+        <Show when={scenePreferences.isReady() && sceneStyleController.isReady()}>
           <PSceneCanvas
-            activity={activity()}
+            activity={scenePreferences.activity()}
             depthSource={selectedScene().depthSource}
             gaze={sceneGaze()}
             motionInput={motionInput()}
@@ -520,30 +521,32 @@ export const PStudio = () => {
             pomoSay={pomoSay}
             sceneStyle={sceneStyleController.sceneStyle()}
           />
-          <SceneToolbar
-            activity={activity()}
-            canUseGyroscope={canUseGyroscope()}
-            gaze={sceneGaze()}
-            isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
-            onActivityChange={setActivity}
-            onGazeChange={setGaze}
-            onMotionInputChange={setMotionInput}
-            onMotionModeChange={setMotionMode}
-            onScreenSaverDelayChange={screenSaver.onDelayChange}
-            onSceneStyleChange={sceneStyleController.onSceneStyleChange}
-            onTimeModeChange={setTimeMode}
-            onWeatherCityChange={weather.onCityChange}
-            onWeatherEnabledChange={weather.onEnabledChange}
-            screenSaverDelay={screenSaver.delay()}
-            sceneStyle={sceneStyleController.sceneStyle()}
-            motionInput={motionInput()}
-            motionMode={motionMode()}
-            time={time()}
-            timeMode={timeMode()}
-            weatherCitySlug={weather.citySlug()}
-            weatherEnabled={weather.enabled()}
-            weatherState={weather.state()}
-          />
+          <Show when={scenePreferences.isReady()}>
+            <SceneToolbar
+              activity={scenePreferences.activity()}
+              canUseGyroscope={canUseGyroscope()}
+              gaze={sceneGaze()}
+              isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
+              onActivityChange={scenePreferences.onActivityChange}
+              onGazeChange={scenePreferences.onGazeChange}
+              onMotionInputChange={setMotionInput}
+              onMotionModeChange={setMotionMode}
+              onScreenSaverDelayChange={screenSaver.onDelayChange}
+              onSceneStyleChange={sceneStyleController.onSceneStyleChange}
+              onTimeModeChange={scenePreferences.onTimeModeChange}
+              onWeatherCityChange={weather.onCityChange}
+              onWeatherEnabledChange={weather.onEnabledChange}
+              screenSaverDelay={screenSaver.delay()}
+              sceneStyle={sceneStyleController.sceneStyle()}
+              motionInput={motionInput()}
+              motionMode={motionMode()}
+              time={time()}
+              timeMode={scenePreferences.timeMode()}
+              weatherCitySlug={weather.citySlug()}
+              weatherEnabled={weather.enabled()}
+              weatherState={weather.state()}
+            />
+          </Show>
         </Show>
       </div>
       <Show when={isEntryVisible()}>
