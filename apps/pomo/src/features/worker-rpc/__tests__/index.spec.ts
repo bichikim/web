@@ -96,7 +96,16 @@ describe('createWorkerRpcTransport', () => {
 
   it('should reject all work and future requests after a worker error', async () => {
     const worker = new FakeWorker()
-    const transport = createTransport(worker)
+    const onFailure = vi.fn()
+    const transport = createWorkerRpcTransport<
+      {readonly requestId: number; readonly value: string},
+      TestResponse
+    >({
+      getRequestId: (response) => (response.type === 'result' ? response.requestId : null),
+      onEvent: vi.fn(),
+      onFailure,
+      worker: worker as unknown as Worker,
+    })
     const firstRequest = transport.request({
       createRequest: (requestId) => ({requestId, value: 'first'}),
     })
@@ -114,6 +123,32 @@ describe('createWorkerRpcTransport', () => {
     ).rejects.toMatchObject({code: 'worker-error', detail: '연결 끊김'})
     expect(transport.getFailure()).toMatchObject({code: 'worker-error', detail: '연결 끊김'})
     transport.dispose()
+    expect(onFailure).toHaveBeenCalledTimes(1)
+    expect(onFailure).toHaveBeenCalledWith(
+      expect.objectContaining({code: 'worker-error', detail: '연결 끊김'}),
+    )
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should isolate failure observers', async () => {
+    const worker = new FakeWorker()
+    const transport = createWorkerRpcTransport<
+      {readonly requestId: number; readonly value: string},
+      TestResponse
+    >({
+      getRequestId: (response) => (response.type === 'result' ? response.requestId : null),
+      onEvent: vi.fn(),
+      onFailure: () => {
+        throw new Error('observer failed')
+      },
+      worker: worker as unknown as Worker,
+    })
+    const request = transport.request({
+      createRequest: (requestId) => ({requestId, value: 'request'}),
+    })
+
+    expect(() => worker.emitError('연결 끊김')).not.toThrow()
+    await expect(request).rejects.toMatchObject({code: 'worker-error', detail: '연결 끊김'})
     expect(worker.terminate).toHaveBeenCalledTimes(1)
   })
 

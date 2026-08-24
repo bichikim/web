@@ -30,6 +30,7 @@ export const createAlbumTranslationClient = (
       restartRequired: true,
       type: 'error',
     }),
+    feature: 'album-translation',
     onResponse: options.onResponse,
     worker,
   })

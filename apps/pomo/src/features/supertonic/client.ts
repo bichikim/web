@@ -11,6 +11,7 @@ import type {
   SupertonicWorkerOutput,
 } from './messages'
 import type {SupertonicModelId} from './model'
+import {reportClientError} from '../client-error-reporter'
 import {failureResult, type Result, successResult} from '../result'
 
 export interface InitializeSupertonicOptions {
@@ -69,6 +70,115 @@ const getAudioChunk = (
   total: message.total,
 })
 
+const createWorkerFailureState = (worker: Worker) => {
+  let failure: WorkerFailedError | null = null
+  let terminated = false
+
+  return {
+    getFailure: () => failure,
+    recordFailure: (error: WorkerFailedError) => {
+      if (failure !== null) {
+        return false
+      }
+
+      failure = error
+      if (!terminated) {
+        terminated = true
+        worker.terminate()
+      }
+      return true
+    },
+    terminate: () => {
+      if (!terminated) {
+        terminated = true
+        worker.terminate()
+      }
+    },
+  }
+}
+
+interface ObserveSupertonicWorkerOptions {
+  readonly onFailure: (error: WorkerFailedError) => void
+  readonly onMessage: (message: SupertonicWorkerOutput) => void
+  readonly worker: Worker
+}
+
+const observeSupertonicWorker = (options: ObserveSupertonicWorkerOptions) => {
+  options.worker.addEventListener('message', (event: MessageEvent<SupertonicWorkerOutput>) => {
+    options.onMessage(event.data)
+  })
+  options.worker.addEventListener('error', (event) => {
+    reportClientError(event.error ?? {message: 'Worker execution failed', name: 'WorkerError'}, {
+      feature: 'supertonic-model',
+      source: 'worker',
+    })
+    options.onFailure({
+      code: 'worker-failed',
+      detail: event.message || 'Worker 실행 오류',
+      phase: 'initialize',
+      retryable: true,
+    })
+  })
+  options.worker.addEventListener('messageerror', () => {
+    reportClientError(
+      {message: 'Worker response deserialization failed', name: 'WorkerError'},
+      {
+        feature: 'supertonic-model',
+        source: 'worker',
+      },
+    )
+    options.onFailure({
+      code: 'worker-failed',
+      detail: 'Worker 응답을 읽지 못했습니다.',
+      phase: 'initialize',
+      retryable: true,
+    })
+  })
+}
+
+type SupertonicGenerateRequest = (
+  options: GenerateSupertonicOptions,
+  onChunk: (audio: SupertonicAudioChunk) => void,
+) => Promise<Result<SupertonicAudio, SupertonicError>>
+
+async function* generateSupertonicStream(
+  options: GenerateSupertonicOptions,
+  generateRequest: SupertonicGenerateRequest,
+): AsyncGenerator<Result<SupertonicGenerationEvent, SupertonicError>> {
+  const chunks: Array<SupertonicAudioChunk> = []
+  let isComplete = false
+  let wakeConsumer: (() => void) | null = null
+  const wake = () => {
+    wakeConsumer?.()
+    wakeConsumer = null
+  }
+  const generation = generateRequest(options, (audio) => {
+    chunks.push(audio)
+    wake()
+  }).then((result) => {
+    isComplete = true
+    wake()
+    return result
+  })
+
+  while (!isComplete || chunks.length > 0) {
+    const chunk = chunks.shift()
+
+    if (chunk !== undefined) {
+      yield successResult({audio: chunk, type: 'chunk'})
+    } else if (!isComplete) {
+      await new Promise<void>((resolve) => {
+        wakeConsumer = resolve
+      })
+    }
+  }
+
+  const result = await generation
+  yield result.ok
+    ? successResult({audio: result.value, type: 'complete'})
+    : failureResult(result.error)
+}
+
 /** Creates an isolated Supertonic Worker client and owns it until disposal. */
 export const createSupertonicClient = (): SupertonicClient => {
   const worker = new Worker(new URL('./worker.ts', import.meta.url), {type: 'module'})
@@ -77,8 +187,14 @@ export const createSupertonicClient = (): SupertonicClient => {
   let onProgress: ((progress: SupertonicProgress) => void) | null = null
   let onStatus: ((message: string) => void) | null = null
   let pendingRequest: PendingRequest | null = null
+  let disposed = false
+  const workerFailureState = createWorkerFailureState(worker)
 
   const resolveFailures = (error: WorkerFailedError) => {
+    if (!workerFailureState.recordFailure(error)) {
+      return
+    }
+
     initializeResolve?.(failureResult(error))
     pendingRequest?.resolve(
       failureResult({...error, phase: 'generate'} satisfies WorkerFailedError),
@@ -93,10 +209,11 @@ export const createSupertonicClient = (): SupertonicClient => {
         pendingRequest?.onChunk(getAudioChunk(message))
         return
       case 'disposed':
-        worker.terminate()
+        workerFailureState.terminate()
         return
       case 'error':
         if (message.requestId === null) {
+          reportClientError(message.error, {feature: 'supertonic-model', source: 'worker'})
           initializeResolve?.(failureResult(message.error))
           initializeResolve = null
         } else {
@@ -129,19 +246,18 @@ export const createSupertonicClient = (): SupertonicClient => {
     message satisfies never
   }
 
-  worker.addEventListener('message', (event: MessageEvent<SupertonicWorkerOutput>) => {
-    handleMessage(event.data)
-  })
-  worker.addEventListener('error', (event) => {
-    resolveFailures({
-      code: 'worker-failed',
-      detail: event.message || 'Worker 실행 오류',
-      phase: 'initialize',
-      retryable: true,
-    })
-  })
+  observeSupertonicWorker({onFailure: resolveFailures, onMessage: handleMessage, worker})
 
   const initialize: SupertonicClient['initialize'] = (options) => {
+    if (disposed) {
+      return Promise.resolve(failureResult(createCancelledError('initialize')))
+    }
+
+    const workerFailure = workerFailureState.getFailure()
+    if (workerFailure !== null) {
+      return Promise.resolve(failureResult({...workerFailure, phase: 'initialize'}))
+    }
+
     const {modelId, onProgress: progressCallback, onStatus: statusCallback} = options
     onProgress = progressCallback
     onStatus = statusCallback
@@ -156,6 +272,15 @@ export const createSupertonicClient = (): SupertonicClient => {
     options: GenerateSupertonicOptions,
     onChunk: (audio: SupertonicAudioChunk) => void,
   ): Promise<Result<SupertonicAudio, SupertonicError>> => {
+    if (disposed) {
+      return Promise.resolve(failureResult(createCancelledError('generate')))
+    }
+
+    const workerFailure = workerFailureState.getFailure()
+    if (workerFailure !== null) {
+      return Promise.resolve(failureResult({...workerFailure, phase: 'generate'}))
+    }
+
     if (pendingRequest !== null) {
       return Promise.resolve(
         failureResult({
@@ -185,50 +310,23 @@ export const createSupertonicClient = (): SupertonicClient => {
   const generate: SupertonicClient['generate'] = (options) => generateRequest(options, ignoreChunk)
 
   const cancelGeneration = () => {
-    if (pendingRequest !== null) {
+    if (!disposed && pendingRequest !== null && workerFailureState.getFailure() === null) {
       worker.postMessage({type: 'cancel-generation'} satisfies SupertonicWorkerInput)
     }
   }
 
-  async function* generateStream(
-    options: GenerateSupertonicOptions,
-  ): AsyncGenerator<Result<SupertonicGenerationEvent, SupertonicError>> {
-    const chunks: Array<SupertonicAudioChunk> = []
-    let isComplete = false
-    let wakeConsumer: (() => void) | null = null
-    const wake = () => {
-      wakeConsumer?.()
-      wakeConsumer = null
-    }
-    const generation = generateRequest(options, (audio) => {
-      chunks.push(audio)
-      wake()
-    }).then((result) => {
-      isComplete = true
-      wake()
-      return result
-    })
-
-    while (!isComplete || chunks.length > 0) {
-      const chunk = chunks.shift()
-
-      if (chunk !== undefined) {
-        yield successResult({audio: chunk, type: 'chunk'})
-      } else if (!isComplete) {
-        await new Promise<void>((resolve) => {
-          wakeConsumer = resolve
-        })
-      }
-    }
-
-    const result = await generation
-    yield result.ok
-      ? successResult({audio: result.value, type: 'complete'})
-      : failureResult(result.error)
-  }
+  const generateStream: SupertonicClient['generateStream'] = (options) =>
+    generateSupertonicStream(options, generateRequest)
 
   const dispose = () => {
-    worker.postMessage({type: 'dispose'} satisfies SupertonicWorkerInput)
+    if (disposed) {
+      return
+    }
+
+    disposed = true
+    if (workerFailureState.getFailure() === null) {
+      worker.postMessage({type: 'dispose'} satisfies SupertonicWorkerInput)
+    }
     initializeResolve?.(failureResult(createCancelledError('initialize')))
     pendingRequest?.resolve(failureResult(createCancelledError('generate')))
     initializeResolve = null

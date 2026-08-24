@@ -10,6 +10,7 @@ import {
 
 import {PButton} from '../design-system/PButton'
 import {PModal} from '../design-system/PModal'
+import {reportClientError} from '../features/client-error-reporter'
 import {
   loadPAlbums,
   type PAlbumSale,
@@ -304,31 +305,35 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
         )}
       </Show>
       <ErrorBoundary
-        fallback={(_error, reset) => (
-          <div
-            class="grid min-h-32 place-items-center rounded-control border border-dashed
+        fallback={(error, reset) => {
+          reportClientError(error, {feature: 'album-library', source: 'error-boundary'})
+
+          return (
+            <div
+              class="grid min-h-32 place-items-center rounded-control border border-dashed
               border-border p-5 text-center"
-          >
-            <div>
-              <span
-                aria-hidden="true"
-                class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
-              />
-              <p class="m-0 text-sm font-650">앨범을 불러오지 못했어요</p>
-              <PButton
-                class="mt-3"
-                onPress={() => {
-                  reset()
-                  return refetch()
-                }}
-                size="small"
-                tone="secondary"
-              >
-                다시 시도
-              </PButton>
+            >
+              <div>
+                <span
+                  aria-hidden="true"
+                  class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
+                />
+                <p class="m-0 text-sm font-650">앨범을 불러오지 못했어요</p>
+                <PButton
+                  class="mt-3"
+                  onPress={() => {
+                    reset()
+                    return refetch()
+                  }}
+                  size="small"
+                  tone="secondary"
+                >
+                  다시 시도
+                </PButton>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        }}
       >
         <Suspense
           fallback={

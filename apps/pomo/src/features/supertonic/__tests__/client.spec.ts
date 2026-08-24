@@ -281,7 +281,7 @@ describe('createSupertonicClient', () => {
     expect(await generation).toEqual({error: generationError, ok: false})
   })
 
-  it('should reject pending work on worker failure and terminate after disposal', async () => {
+  it('should reject pending and later work after a Worker failure', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
     const initialization = client.initialize({
@@ -300,22 +300,45 @@ describe('createSupertonicClient', () => {
       ok: false,
     })
 
-    client.dispose()
-    expect(worker.postMessage).toHaveBeenCalledWith({type: 'dispose'})
-    worker.emitMessage({type: 'disposed'})
     expect(worker.terminate).toHaveBeenCalledTimes(1)
+    expect(await client.generate({text: '다시', voice: {id: 'F1', kind: 'preset'}})).toEqual({
+      error: {
+        code: 'worker-failed',
+        detail: 'Worker 실행 오류',
+        phase: 'generate',
+        retryable: true,
+      },
+      ok: false,
+    })
+    expect(worker.postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type: 'generate'}))
+
+    client.dispose()
+    expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'dispose'})
   })
 
   it('should resolve pending generation as cancelled on disposal', async () => {
     const client = createSupertonicClient()
+    const worker = getWorker()
     const generation = client.generate({text: '안녕', voice: {id: 'F1', kind: 'preset'}})
 
+    client.dispose()
     client.dispose()
 
     expect(await generation).toEqual({
       error: {code: 'cancelled', phase: 'generate', retryable: false},
       ok: false,
     })
+    expect(
+      await client.initialize({modelId: 'int8', onProgress: vi.fn(), onStatus: vi.fn()}),
+    ).toEqual({
+      error: {code: 'cancelled', phase: 'initialize', retryable: false},
+      ok: false,
+    })
+    expect(await client.generate({text: '다시', voice: {id: 'F1', kind: 'preset'}})).toEqual({
+      error: {code: 'cancelled', phase: 'generate', retryable: false},
+      ok: false,
+    })
+    expect(worker.postMessage).toHaveBeenCalledTimes(2)
   })
 
   it('should request generation cancellation without disposing the model', async () => {
