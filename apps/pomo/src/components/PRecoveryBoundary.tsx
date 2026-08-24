@@ -1,13 +1,14 @@
-import {ErrorBoundary, type JSX, onMount, Show} from 'solid-js'
-import {isServer} from 'solid-js/web'
+import {type Accessor, ErrorBoundary, type JSX, onMount, Show} from 'solid-js'
 
-import {PButton} from '../../design-system/PButton'
-import {createClientErrorId, reportClientError} from './reporter'
+import {PButton} from '../design-system/PButton'
 
 export interface PRecoveryBoundaryProps {
+  readonly canRetry: Accessor<boolean>
   readonly children?: JSX.Element
-  readonly onReload?: () => void
-  readonly reportError?: (error: unknown) => string
+  readonly onError: (error: unknown) => string
+  readonly onReady: () => void
+  readonly onReload: () => void
+  readonly onRetry: (reset: () => void) => void
 }
 
 interface RecoveryAttemptProps {
@@ -20,42 +21,11 @@ const RecoveryAttempt = (props: RecoveryAttemptProps) => {
   return <>{props.children}</>
 }
 
-const getRecoveryErrorId = (error: unknown, reportError?: (error: unknown) => string) => {
-  if (isServer) {
-    return createClientErrorId()
-  }
-
-  try {
-    return (
-      reportError?.(error) ??
-      reportClientError(error, {feature: 'application', source: 'error-boundary'})
-    )
-  } catch {
-    return createClientErrorId()
-  }
-}
-
 export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
-  let retryCount = 0
-
-  const reload = () => {
-    if (props.onReload !== undefined) {
-      props.onReload()
-      return
-    }
-
-    window.location.reload()
-  }
-
   return (
     <ErrorBoundary
       fallback={(error, reset) => {
-        const errorId = getRecoveryErrorId(error, props.reportError)
-        const canRetry = retryCount === 0
-        const retry = () => {
-          retryCount += 1
-          reset()
-        }
+        const errorId = props.onError(error)
 
         return (
           <main class="grid min-h-dvh place-items-center bg-background p-6 text-foreground">
@@ -73,13 +43,13 @@ export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
                     다시 오류가 발생해 자동 복구를 중단했어요. 새로고침해 주세요.
                   </p>
                 }
-                when={canRetry}
+                when={props.canRetry()}
               >
-                <PButton class="mt-5" onPress={retry}>
+                <PButton class="mt-5" onPress={() => props.onRetry(reset)}>
                   다시 시도
                 </PButton>
               </Show>
-              <PButton class="mt-3" onPress={reload} tone="secondary">
+              <PButton class="mt-3" onPress={props.onReload} tone="secondary">
                 새로고침
               </PButton>
             </section>
@@ -87,7 +57,7 @@ export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
         )
       }}
     >
-      <RecoveryAttempt onReady={() => (retryCount = 0)}>{props.children}</RecoveryAttempt>
+      <RecoveryAttempt onReady={props.onReady}>{props.children}</RecoveryAttempt>
     </ErrorBoundary>
   )
 }

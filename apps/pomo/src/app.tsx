@@ -7,11 +7,12 @@ import {FileRoutes} from '@solidjs/start/router'
 import {Suspense} from 'solid-js'
 
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
+import {PRecoveryBoundary} from './components/PRecoveryBoundary'
 import {isSearchIndexablePath, normalizePathname} from './components/pomo-route'
 import {SEARCH_CONFIG} from './config/search'
 import {SERVICE_POLICY_PATHS} from './config/service-policy'
+import {useApplicationRecovery} from './features/application-recovery'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
-import {PRecoveryBoundary} from './features/client-error-reporter'
 
 const DEFAULT_DESCRIPTION =
   'Pomo와 함께 포모도로 타이머와 집중 음악을 사용하는 집중 앱 Pomofi입니다.'
@@ -92,13 +93,20 @@ const PDocumentMetadata = () => {
 
 export default function App() {
   useAppsInTossSafeArea()
+  const applicationRecovery = useApplicationRecovery()
 
   return (
     <Router
       root={(props) => (
         <MetaProvider>
           <PDocumentMetadata />
-          <PRecoveryBoundary>
+          <PRecoveryBoundary
+            canRetry={applicationRecovery.canRetry}
+            onError={applicationRecovery.onError}
+            onReady={applicationRecovery.onReady}
+            onReload={applicationRecovery.onReload}
+            onRetry={applicationRecovery.onRetry}
+          >
             <Suspense>
               <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
             </Suspense>

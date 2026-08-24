@@ -1,5 +1,4 @@
 export {installClientErrorHandlers} from './browser'
-export {PRecoveryBoundary} from './PRecoveryBoundary'
 export {
   createClientErrorId,
   createClientErrorReporter,

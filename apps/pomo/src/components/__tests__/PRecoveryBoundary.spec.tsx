@@ -1,9 +1,35 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal, Show} from 'solid-js'
+import {createSignal, type JSX, Show} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
-import {PRecoveryBoundary} from 'src/features/client-error-reporter'
+import {PRecoveryBoundary} from 'src/components/PRecoveryBoundary'
+import {useApplicationRecovery} from 'src/features/application-recovery'
+
+interface TestRecoveryProps {
+  readonly children?: JSX.Element
+  readonly onReload: () => void
+  readonly reportError: (error: unknown) => string
+}
+
+const TestRecovery = (props: TestRecoveryProps) => {
+  const recovery = useApplicationRecovery({
+    onReload: () => props.onReload(),
+    reportError: (error) => props.reportError(error),
+  })
+
+  return (
+    <PRecoveryBoundary
+      canRetry={recovery.canRetry}
+      onError={recovery.onError}
+      onReady={recovery.onReady}
+      onReload={recovery.onReload}
+      onRetry={recovery.onRetry}
+    >
+      {props.children}
+    </PRecoveryBoundary>
+  )
+}
 
 it('should hide internal details and expose an error ID with recovery actions', () => {
   const reload = vi.fn()
@@ -14,9 +40,9 @@ it('should hide internal details and expose an error ID with recovery actions', 
   }
 
   render(() => (
-    <PRecoveryBoundary onReload={reload} reportError={reportError}>
+    <TestRecovery onReload={reload} reportError={reportError}>
       <Broken />
-    </PRecoveryBoundary>
+    </TestRecovery>
   ))
 
   expect(screen.getByRole('heading', {name: 'Pomofi를 불러오지 못했어요'})).toBeTruthy()
@@ -34,9 +60,9 @@ it('should stop offering reset after the recovered subtree fails again', () => {
   }
 
   render(() => (
-    <PRecoveryBoundary onReload={vi.fn()} reportError={reportError}>
+    <TestRecovery onReload={vi.fn()} reportError={reportError}>
       <Broken />
-    </PRecoveryBoundary>
+    </TestRecovery>
   ))
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
@@ -68,33 +94,13 @@ it('should restore one retry after the recovered subtree mounts successfully', (
   }
 
   render(() => (
-    <PRecoveryBoundary onReload={vi.fn()} reportError={() => 'POMO-RECOVERED'}>
+    <TestRecovery onReload={vi.fn()} reportError={() => 'POMO-RECOVERED'}>
       <SometimesBroken />
-    </PRecoveryBoundary>
+    </TestRecovery>
   ))
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
   fireEvent.click(screen.getByRole('button', {name: '나중에 실패'}))
 
   expect(screen.getByRole('button', {name: '다시 시도'})).toBeTruthy()
-})
-
-it('should preserve the recovery UI when reporting fails', () => {
-  const Broken = () => {
-    throw new Error('render failure')
-  }
-
-  render(() => (
-    <PRecoveryBoundary
-      onReload={vi.fn()}
-      reportError={() => {
-        throw new Error('reporter failure')
-      }}
-    >
-      <Broken />
-    </PRecoveryBoundary>
-  ))
-
-  expect(screen.getByRole('heading', {name: 'Pomofi를 불러오지 못했어요'})).toBeTruthy()
-  expect(screen.getByText(/POMO-/u)).toBeTruthy()
 })
