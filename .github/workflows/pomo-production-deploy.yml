@@ -120,7 +120,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           for path in / /api/feeds/today-in-history/rss.xml; do
-            pnpm dlx vercel@${VERCEL_CLI_VERSION} --token="${VERCEL_TOKEN}" curl "${path}" \
+            pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "${path}" \
               --deployment="${DEPLOYMENT_URL}" \
               -- \
               --fail \
