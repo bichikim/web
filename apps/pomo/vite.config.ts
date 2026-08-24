@@ -15,6 +15,7 @@ import {
 } from 'vite'
 
 import {
+  PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES,
   PARAGLIDE_APPS_IN_TOSS_STRATEGY,
   PARAGLIDE_OUTPUT_STRUCTURE,
   PARAGLIDE_ROUTE_STRATEGIES,
@@ -180,8 +181,10 @@ const createPlugins = (command: ConfigEnv['command']): PluginOption[] => [
     outdir: './src/paraglide',
     outputStructure: PARAGLIDE_OUTPUT_STRUCTURE,
     project: './project.inlang',
-    routeStrategies: PARAGLIDE_ROUTE_STRATEGIES,
-    strategy: isAppsInTossBuild ? PARAGLIDE_APPS_IN_TOSS_STRATEGY : PARAGLIDE_WEB_STRATEGY,
+    routeStrategies: isAppsInTossRuntime
+      ? PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES
+      : PARAGLIDE_ROUTE_STRATEGIES,
+    strategy: isAppsInTossRuntime ? PARAGLIDE_APPS_IN_TOSS_STRATEGY : PARAGLIDE_WEB_STRATEGY,
     trailingSlash: PARAGLIDE_TRAILING_SLASH,
     urlPatterns: PARAGLIDE_URL_PATTERNS,
   }),

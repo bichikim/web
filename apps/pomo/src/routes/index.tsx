@@ -1,10 +1,20 @@
 import {Title} from '@solidjs/meta'
-import {onMount} from 'solid-js'
+import {clientOnly} from '@solidjs/start'
+import {onMount, Show} from 'solid-js'
 
+import {AppsInTossLoadingPage} from '../components/AppsInTossLoadingPage.tsx'
 import * as m from '../paraglide/messages.js'
 import {getLocale, localizeUrl} from '../paraglide/runtime.js'
 
-export default function LocaleRedirectPage() {
+const AppsInTossHomePage = clientOnly(
+  async () => {
+    const homeModule = await import('../components/AppsInTossHomePage.tsx')
+    return {default: homeModule.AppsInTossHomePage}
+  },
+  {lazy: true},
+)
+
+const LocaleRedirectPage = () => {
   onMount(() => {
     const redirectUrl = localizeUrl(new URL(window.location.href), {locale: getLocale()})
     window.location.replace(redirectUrl)
@@ -17,5 +27,13 @@ export default function LocaleRedirectPage() {
         {m.app_loading()}
       </p>
     </main>
+  )
+}
+
+export default function RootPage() {
+  return (
+    <Show fallback={<LocaleRedirectPage />} when={import.meta.env.POMO_IS_APPS_IN_TOSS}>
+      <AppsInTossHomePage fallback={<AppsInTossLoadingPage />} />
+    </Show>
   )
 }

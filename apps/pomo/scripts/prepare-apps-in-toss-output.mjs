@@ -3,6 +3,7 @@ import path from 'node:path'
 
 const outputDirectory = path.resolve('.output/public')
 const precompressedSuffixes = ['.br', '.gz']
+const excludedPackagePaths = new Set([path.join('localization', 'redirect.js')])
 
 const listFiles = async (directory) => {
   const entries = await readdir(directory, {withFileTypes: true})
@@ -33,6 +34,10 @@ const isPrecompressedCopy = (filePath, availableFiles) => {
 
 const isRedundantPackageAsset = (filePath, availableFiles) => {
   const fileName = path.basename(filePath)
+
+  if (excludedPackagePaths.has(path.relative(outputDirectory, filePath))) {
+    return true
+  }
 
   if (isPrecompressedCopy(filePath, availableFiles)) {
     return true
