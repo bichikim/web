@@ -61,6 +61,23 @@ export const validateAppSession = async (token: string): Promise<boolean> => {
   throw new Error('App session validation failed')
 }
 
+const revokeServerSession = async (token: string): Promise<void> => {
+  const response = await apiFetch('app-auth/session', {
+    headers: getAuthorizationHeaders(token),
+    method: 'DELETE',
+  })
+
+  if (!response.ok && response.status !== HTTP_UNAUTHORIZED) {
+    throw new Error('App session revocation failed')
+  }
+}
+
+const revokeCreatedSession = (token: string): void => {
+  revokeServerSession(token).catch((revocationError: unknown) => {
+    console.error('Failed to revoke Toss session after storage failure', revocationError)
+  })
+}
+
 export const createTossLoginSession = async (): Promise<string> => {
   const {TossAuth} = await import('@apps-in-toss/web-framework')
   const authorization = await TossAuth.login()
@@ -84,20 +101,18 @@ export const createTossLoginSession = async (): Promise<string> => {
     throw error
   }
 
-  await storeAppSession(body.token)
+  try {
+    await storeAppSession(body.token)
+  } catch (storageError: unknown) {
+    revokeCreatedSession(body.token)
+    throw storageError
+  }
+
   return body.token
 }
 
 export const revokeTossLoginSession = async (token: string): Promise<void> => {
-  const response = await apiFetch('app-auth/session', {
-    headers: getAuthorizationHeaders(token),
-    method: 'DELETE',
-  })
-
-  if (!response.ok && response.status !== HTTP_UNAUTHORIZED) {
-    throw new Error('App session revocation failed')
-  }
-
+  await revokeServerSession(token)
   await clearStoredAppSession()
 }
 
