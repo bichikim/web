@@ -101,9 +101,8 @@ describe('playback-storage', () => {
       positionSeconds: 2,
       trackId: 'track-two',
     })
-    await Promise.resolve()
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
 
-    expect(storageMocks.setItem).toHaveBeenCalledTimes(2)
     completions[1]?.()
     await secondWrite
     completions[0]?.()
@@ -136,7 +135,7 @@ describe('playback-storage', () => {
       positionSeconds: 2,
       trackId: 'track-two',
     })
-    await Promise.resolve()
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
     completions[1]?.()
     await secondWrite
     completions[0]?.()
