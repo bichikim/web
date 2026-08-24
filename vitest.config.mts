@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type {Plugin} from 'vite'
 import {defineConfig} from 'vitest/config'
 import solid from 'vite-plugin-solid'
@@ -28,6 +29,12 @@ export default defineConfig({
   ],
   // 모듈 resolve 옵션
   resolve: {
+    alias: {
+      'server-only': path.resolve(
+        import.meta.dirname,
+        'apps/pomo/node_modules/server-only/empty.js',
+      ),
+    },
     // Solid.js 테스트용 export condition (development + browser)
     conditions: ['development', 'browser'],
     tsconfigPaths: true,

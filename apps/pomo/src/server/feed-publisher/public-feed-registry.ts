@@ -1,3 +1,5 @@
+import 'server-only'
+
 import {createFeedRegistry, createHistoricalMomentsProvider} from 'src/features/feed-publisher'
 import {historicalMomentsSource} from './historical-moments-source'
 

@@ -1,3 +1,5 @@
+import 'server-only'
+
 export interface WeatherEnvironment {
   readonly KMA_SERVICE_KEY?: string
 }
