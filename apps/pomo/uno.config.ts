@@ -4,6 +4,52 @@ import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Var
 import scribbleIcons from './icon-sets/scribble.json'
 import albumData from './public/audio/albums.json'
 
+const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+
+const colors = isAppsInToss
+  ? {
+      background: '#f7f8fa',
+      backdrop: 'rgb(25 31 40 / 48%)',
+      border: 'rgb(2 32 71 / 16%)',
+      'border-hover': 'rgb(2 32 71 / 28%)',
+      danger: '#b42318',
+      foreground: '#191f28',
+      highlight: '#8a5a32',
+      'muted-foreground': '#4e5968',
+      primary: '#c34f2f',
+      'primary-soft': 'rgb(195 79 47 / 12%)',
+      'primary-strong': '#a83b20',
+      'primary-strong-hover': '#8f2f18',
+      secondary: '#667052',
+      'secondary-soft': 'rgb(102 112 82 / 14%)',
+      'secondary-strong': '#525b41',
+      surface: 'rgb(255 255 255 / 88%)',
+      'surface-interactive': 'rgb(255 255 255 / 98%)',
+      'surface-overlay': 'rgb(25 31 40 / 10%)',
+      'surface-strong': '#ffffff',
+    }
+  : {
+      background: '#17130f',
+      backdrop: 'rgb(8 6 4 / 68%)',
+      border: 'rgb(255 250 241 / 14%)',
+      'border-hover': 'rgb(255 250 241 / 28%)',
+      danger: '#ef8a74',
+      foreground: '#fffaf1',
+      highlight: '#d9b98a',
+      'muted-foreground': '#c9c0b5',
+      primary: '#d86845',
+      'primary-soft': 'rgb(216 104 69 / 18%)',
+      'primary-strong': '#a94329',
+      'primary-strong-hover': '#b84f32',
+      secondary: '#727b60',
+      'secondary-soft': 'rgb(114 123 96 / 20%)',
+      'secondary-strong': '#5f684e',
+      surface: 'rgb(10 10 10 / 68%)',
+      'surface-interactive': 'rgb(10 10 10 / 78%)',
+      'surface-overlay': 'rgb(10 10 10 / 31.25%)',
+      'surface-strong': 'rgb(10 10 10 / 68%)',
+    }
+
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
     const prefix = `${name}:`
@@ -94,7 +140,11 @@ const config = mergeConfigs([
   --pomo-safe-area-inset-left: env(safe-area-inset-left, 0px);
   --pomo-safe-area-inset-right: env(safe-area-inset-right, 0px);
   --pomo-safe-area-inset-top: env(safe-area-inset-top, 0px);
-  color-scheme: dark;
+  --pomo-color-foreground: ${theme.colors?.foreground};
+  --pomo-color-muted-foreground: ${theme.colors?.['muted-foreground']};
+  --pomo-color-range-track: ${isAppsInToss ? 'rgb(25 31 40 / 22%)' : 'rgb(255 250 241 / 22%)'};
+  --pomo-color-secondary-soft: ${theme.colors?.['secondary-soft']};
+  color-scheme: ${isAppsInToss ? 'light' : 'dark'};
   font-family: ${theme.fontFamily?.sans};
   background: ${theme.colors?.background};
   color: ${theme.colors?.foreground};
@@ -225,10 +275,10 @@ body {
         panel: '1.25rem',
       },
       boxShadow: {
-        focus: '0 0 0 2px #d9b98a',
-        panel: '0 18px 54px rgb(8 6 4 / 42%)',
-        'tab-active': 'inset 0 -0.1875rem 0 #d9b98a',
-        'track-active': 'inset 2px 0 0 #d86845',
+        focus: `0 0 0 2px ${colors.highlight}`,
+        panel: isAppsInToss ? '0 18px 54px rgb(25 31 40 / 16%)' : '0 18px 54px rgb(8 6 4 / 42%)',
+        'tab-active': `inset 0 -0.1875rem 0 ${colors.highlight}`,
+        'track-active': `inset 2px 0 0 ${colors.primary}`,
       },
       breakpoints: {
         '2xl': '64rem',
@@ -238,26 +288,7 @@ body {
         xl: '48rem',
         xs: '24rem',
       },
-      colors: {
-        background: '#17130f',
-        border: 'rgb(255 250 241 / 14%)',
-        'border-hover': 'rgb(255 250 241 / 28%)',
-        danger: '#ef8a74',
-        foreground: '#fffaf1',
-        highlight: '#d9b98a',
-        'muted-foreground': '#c9c0b5',
-        primary: '#d86845',
-        'primary-soft': 'rgb(216 104 69 / 18%)',
-        'primary-strong': '#a94329',
-        'primary-strong-hover': '#b84f32',
-        secondary: '#727b60',
-        'secondary-soft': 'rgb(114 123 96 / 20%)',
-        'secondary-strong': '#5f684e',
-        surface: 'rgb(10 10 10 / 68%)',
-        'surface-interactive': 'rgb(10 10 10 / 78%)',
-        'surface-overlay': 'rgb(10 10 10 / 31.25%)',
-        'surface-strong': 'rgb(10 10 10 / 68%)',
-      },
+      colors,
       fontFamily: {
         sans: "Inter, Pretendard, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       },

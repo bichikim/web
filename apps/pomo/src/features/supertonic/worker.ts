@@ -2,8 +2,6 @@
 
 // oxlint-disable no-await-in-loop -- Model streams and sessions are loaded sequentially to cap peak browser memory.
 
-import {env, InferenceSession} from 'onnxruntime-web/all'
-
 import {httpFetch} from '../http-client'
 import {
   createModelStorage,
@@ -20,7 +18,6 @@ import {
   type SupertonicVoice,
 } from './engine'
 import {
-  type BackendFailedError,
   type CancelledError,
   type DownloadFailedError,
   getErrorDetail,
@@ -37,12 +34,12 @@ import {
 import {
   getSupertonicAssetUrl,
   getSupertonicModel,
-  getSupertonicModelFileUrl,
   SUPERTONIC_MODEL_ASSETS_URL,
-  SUPERTONIC_ORT_WASM_URL,
   type SupertonicModel,
   type SupertonicVoiceId,
 } from './model'
+import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} from './runtime'
+import {type LoadBufferOptions, loadSessions, releaseSessions} from './sessions'
 import {failureResult, type Result, successResult} from '../result'
 import {splitSpeechText} from './text-chunking'
 
@@ -57,19 +54,7 @@ let activeModel: SupertonicModel | null = null
 let activeModelAssets: ModelAssets | null = null
 let activeAbortController: AbortController | null = null
 let activeGenerationAbortController: AbortController | null = null
-
-type MutableSupertonicSessions = {
-  -readonly [Key in keyof SupertonicSessions]?: SupertonicSessions[Key]
-}
-
-interface FetchBufferOptions {
-  readonly expectedSize: number
-  readonly fileName: string
-  readonly loadedBefore: number
-  readonly signal: AbortSignal
-  readonly totalBytes: number
-  readonly url: string
-}
+let activeRuntime: SupertonicRuntime | null = null
 
 interface FetchJsonOptions {
   readonly fileName: string
@@ -83,7 +68,7 @@ interface GeneratedAudio {
   readonly samples: Float32Array
 }
 
-type Backend = 'wasm' | 'webgpu'
+type Backend = SupertonicBackend
 
 const finishCacheWrite = async (cacheWrite: Promise<Result<void, ModelStorageError>>) => {
   const result = await cacheWrite
@@ -110,7 +95,7 @@ const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === 'AbortError'
 
 const createDownloadError = (
-  options: Pick<FetchBufferOptions, 'fileName'> | Pick<FetchJsonOptions, 'fileName'>,
+  options: Pick<LoadBufferOptions, 'fileName'> | Pick<FetchJsonOptions, 'fileName'>,
   status: number | null,
 ): DownloadFailedError => ({
   code: 'download-failed',
@@ -124,14 +109,6 @@ const createDownloadError = (
   status,
 })
 
-const createBackendError = (backend: Backend, error: unknown): BackendFailedError => ({
-  backend,
-  code: 'backend-failed',
-  detail: getErrorDetail(error),
-  phase: 'initialize',
-  retryable: backend === 'webgpu',
-})
-
 const createWorkerError = (
   phase: WorkerFailedError['phase'],
   error: unknown,
@@ -143,7 +120,7 @@ const createWorkerError = (
 })
 
 const fetchBuffer = async (
-  options: FetchBufferOptions,
+  options: LoadBufferOptions,
 ): Promise<Result<ArrayBuffer, CancelledError | DownloadFailedError>> => {
   try {
     const resource = await loadModelResource({
@@ -202,53 +179,6 @@ const fetchBuffer = async (
       isAbortError(error) ? createCancelledError('download') : createDownloadError(options, null),
     )
   }
-}
-
-const releaseSessions = async (sessions: MutableSupertonicSessions) => {
-  await Promise.all(
-    Object.values(sessions).map(async (session) => {
-      await session.release()
-    }),
-  )
-}
-
-const loadSessions = async (
-  backend: Backend,
-  model: SupertonicModel,
-  signal: AbortSignal,
-): Promise<Result<SupertonicSessions, SupertonicError>> => {
-  const sessions: MutableSupertonicSessions = {}
-  let loadedBytes = 0
-
-  for (const file of model.files) {
-    const bufferResult = await fetchBuffer({
-      expectedSize: file.size,
-      fileName: file.name,
-      loadedBefore: loadedBytes,
-      signal,
-      totalBytes: model.size,
-      url: getSupertonicModelFileUrl(model, file),
-    })
-
-    if (!bufferResult.ok) {
-      await releaseSessions(sessions)
-      return bufferResult
-    }
-
-    try {
-      sessions[file.key] = await InferenceSession.create(bufferResult.value, {
-        executionProviders: [backend],
-        graphOptimizationLevel: 'all',
-        logSeverityLevel: 3,
-      })
-      loadedBytes += file.size
-    } catch (error: unknown) {
-      await releaseSessions(sessions)
-      return failureResult(createBackendError(backend, error))
-    }
-  }
-
-  return successResult(sessions as SupertonicSessions)
 }
 
 const fetchJson = async (
@@ -341,21 +271,27 @@ const loadInitializationAssets = async (
 const initialize = async (model: SupertonicModel): Promise<Result<Backend, SupertonicError>> => {
   const abortController = new AbortController()
   activeAbortController = abortController
-  env.wasm.numThreads = 1
-  env.wasm.wasmPaths = SUPERTONIC_ORT_WASM_URL
   const workerNavigator = workerScope.navigator as WorkerNavigator & {gpu?: unknown}
   const canUseWebGpu = workerNavigator.gpu !== undefined && model.preferredBackend === 'webgpu'
   let backend: Backend = canUseWebGpu ? 'webgpu' : 'wasm'
+  let runtime: SupertonicRuntime
   let sessions: SupertonicSessions
 
   try {
+    runtime = await loadSupertonicRuntime(backend)
     const assetsResult = await loadInitializationAssets(abortController.signal)
 
     if (!assetsResult.ok) {
       return failureResult(assetsResult.error)
     }
 
-    let sessionResult = await loadSessions(backend, model, abortController.signal)
+    let sessionResult = await loadSessions({
+      backend,
+      loadBuffer: fetchBuffer,
+      model,
+      runtime,
+      signal: abortController.signal,
+    })
 
     if (
       !sessionResult.ok &&
@@ -367,7 +303,14 @@ const initialize = async (model: SupertonicModel): Promise<Result<Backend, Super
         type: 'status',
       })
       backend = 'wasm'
-      sessionResult = await loadSessions(backend, model, abortController.signal)
+      runtime = await loadSupertonicRuntime(backend)
+      sessionResult = await loadSessions({
+        backend,
+        loadBuffer: fetchBuffer,
+        model,
+        runtime,
+        signal: abortController.signal,
+      })
     }
 
     if (!sessionResult.ok) {
@@ -381,9 +324,15 @@ const initialize = async (model: SupertonicModel): Promise<Result<Backend, Super
       return failureResult(createCancelledError('initialize'))
     }
 
-    engine = new SupertonicEngine(assetsResult.value.config, assetsResult.value.indexer, sessions)
+    engine = new SupertonicEngine(
+      assetsResult.value.config,
+      assetsResult.value.indexer,
+      sessions,
+      runtime,
+    )
     activeModel = model
     activeModelAssets = assetsResult.value.modelAssets
+    activeRuntime = runtime
     voiceCache.clear()
     return successResult(backend)
   } finally {
@@ -397,8 +346,18 @@ const getVoice = async (
   voice: SupertonicVoiceSource,
   signal: AbortSignal,
 ): Promise<Result<SupertonicVoice, SupertonicError>> => {
+  const runtime = activeRuntime
+
+  if (runtime === null) {
+    return failureResult({
+      code: 'model-not-ready',
+      phase: 'generate',
+      retryable: false,
+    })
+  }
+
   if (voice.kind === 'custom') {
-    return successResult(createSupertonicVoice(voice.value))
+    return successResult(createSupertonicVoice(runtime, voice.value))
   }
 
   const cachedVoice = voiceCache.get(voice.id)
@@ -425,7 +384,7 @@ const getVoice = async (
     return response
   }
 
-  const voiceResult = parseSupertonicVoice(response.value)
+  const voiceResult = parseSupertonicVoice(runtime, response.value)
 
   if (voiceResult.ok) {
     voiceCache.set(voice.id, voiceResult.value)
@@ -534,6 +493,7 @@ workerScope.onmessage = async (event: MessageEvent<SupertonicWorkerInput>) => {
         await engine?.release()
         engine = null
         activeModel = null
+        activeRuntime = null
         voiceCache.clear()
         postMessage({type: 'disposed'})
         return

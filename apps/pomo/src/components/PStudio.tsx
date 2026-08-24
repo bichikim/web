@@ -354,7 +354,7 @@ const PEntry = (props: PEntryProps) => (
 const PSceneFallback = () => (
   <div
     aria-live="polite"
-    class="pomo-scene-fallback pointer-events-none absolute inset-0 grid place-items-center text-[#fff9f1]"
+    class="pomo-scene-fallback pointer-events-none absolute inset-0 grid place-items-center text-foreground"
     role="status"
   >
     <span class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}>
@@ -487,7 +487,7 @@ export const PStudio = () => {
     <section aria-label="Pomo" class="pomo-studio relative h-dvh w-full overflow-hidden">
       <figure
         aria-label={selectedScene().label}
-        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-#17130f"
+        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
         role="img"
       >
         <Show when={!hasSceneRendered()}>
