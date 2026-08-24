@@ -1,9 +1,8 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
-import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
+import {SpeechToTextWorkspace} from './speech-to-text/Workspace'
 
-const SpeechToTextLab = clientOnly(() => import('src/components/SpeechToTextLab'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-x-hidden',
   'bg-#17131f px-4 py-8 text-#f8edf1 xs:px-8 xs:py-12',
@@ -26,7 +25,7 @@ function SpeechToTextPage() {
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
           ← 실험실 목록
         </A>
-        <SpeechToTextLab
+        <SpeechToTextWorkspace
           fallback={
             <section aria-live="polite" class={FALLBACK_CLASSES}>
               브라우저의 마이크와 음성 인식 환경을 확인하고 있어요…

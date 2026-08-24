@@ -1,6 +1,7 @@
-import {type Accessor, ErrorBoundary, type JSX, onMount, Show} from 'solid-js'
+import {type Accessor, ErrorBoundary, type JSX, Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
+import {RecoveryAttempt} from './recovery-boundary/Attempt'
 
 export interface PRecoveryBoundaryProps {
   readonly canRetry: Accessor<boolean>
@@ -9,16 +10,6 @@ export interface PRecoveryBoundaryProps {
   readonly onReady: () => void
   readonly onReload: () => void
   readonly onRetry: (reset: () => void) => void
-}
-
-interface RecoveryAttemptProps {
-  readonly children?: JSX.Element
-  readonly onReady: () => void
-}
-
-const RecoveryAttempt = (props: RecoveryAttemptProps) => {
-  onMount(() => props.onReady())
-  return <>{props.children}</>
 }
 
 export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
