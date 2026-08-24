@@ -20,7 +20,10 @@ import {
 import {createFeedDialogueRepository, type FeedDialogueRepository} from './feed-dialogue-repository'
 import {repairStoredDevFeedDialogues} from './feed-dialogue-repair'
 import {feedGenerationRuntime} from './generation-runtime'
+import {prepareFeedGeneration} from './generation-preparation'
+import {resolveCurrentGenerationSettings} from './generation-settings-runtime'
 import {createFeedConnectionRepository} from './repository'
+import {beginFeedSync, createFeedSyncGate, finishFeedSync} from './sync-gate'
 import {synchronizeFeeds} from './feed-sync'
 import {
   type FeedDialogueListItem,
@@ -63,7 +66,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   let isDisposed = false
   const opusAbortController = new AbortController()
   let isGenerating = false
-  let isSyncing = false
+  const syncGate = createFeedSyncGate()
   let preparedModelId: SupertonicModelId | null = null
   const scheduledJobs: Array<ScheduledFeedJob> = []
   const dismissedRecoveryIds = new Set<string>()
@@ -311,61 +314,69 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       return
     }
 
-    const repositories = getRepositories()
-    const now = new Date().toISOString()
-    await repositories.feedRepository.updateJob({...job, status: 'generating', updatedAt: now})
-    const isModelDownloaded = await feedGenerationRuntime.isModelDownloaded(job.modelId)
-
-    if (!allowModelDownload && !isModelDownloaded) {
-      await failJob(job, '음성 모델 다운로드에 동의한 뒤 다시 시도해 주세요.')
-      return
+    const preparation = await prepareFeedGeneration({
+      allowModelDownload,
+      isModelDownloaded: feedGenerationRuntime.isModelDownloaded,
+      job,
+      now: () => new Date().toISOString(),
+      prepareModel,
+      repository: getRepositories().feedRepository,
+      resolveGenerationSettings: resolveCurrentGenerationSettings,
+    })
+    switch (preparation.status) {
+      case 'connection-missing':
+        await discardUnsubscribedJob(job)
+        return
+      case 'model-download-required':
+        await failJob(preparation.job, '음성 모델 다운로드에 동의한 뒤 다시 시도해 주세요.')
+        return
+      case 'model-preparation-failed':
+        await failJob(preparation.job, '피드 음성 모델을 준비하지 못했어요.')
+        return
+      case 'ready':
+        break
     }
 
-    const isPrepared = await prepareModel(job.modelId)
-
-    if (await discardUnsubscribedJob(job)) {
-      return
-    }
-
-    if (!isPrepared || client === null) {
-      await failJob(job, '피드 음성 모델을 준비하지 못했어요.')
+    const currentJob = preparation.job
+    if (client === null) {
+      await failJob(currentJob, '피드 음성 모델을 준비하지 못했어요.')
       return
     }
 
     const currentClient = client
     setFeedState({
-      message: `${job.itemTitle} 음성을 만들고 있어요.`,
+      message: `${currentJob.itemTitle} 음성을 만들고 있어요.`,
       progress: null,
       status: 'generating',
     })
     const generated = await feedGenerationRuntime.generateDialogueAudio({
       client: currentClient,
       language: 'ko',
-      modelId: job.modelId,
+      modelId: currentJob.modelId,
       onChunk: (completed, total) => {
         if (client === currentClient && !isDisposed) {
           setFeedState({
-            message: `${job.itemTitle} · ${completed}/${total} 구간 생성 중`,
+            message: `${currentJob.itemTitle} · ${completed}/${total} 구간 생성 중`,
             progress: getFeedGenerationProgress(completed, total),
             status: 'generating',
           })
         }
       },
       signal: opusAbortController.signal,
-      text: job.script,
-      voiceId: job.voiceId,
+      text: currentJob.script,
+      voiceId: currentJob.voiceId,
     })
 
-    if (isDisposed || client !== currentClient || (await discardUnsubscribedJob(job))) {
+    if (isDisposed || client !== currentClient || (await discardUnsubscribedJob(currentJob))) {
       return
     }
 
     if (!generated.ok) {
-      await failJob(job, generated.message)
+      await failJob(currentJob, generated.message)
       return
     }
 
-    await completeJob(job, generated)
+    await completeJob(currentJob, generated)
   }
   const handleJobFailure = async (job: FeedDialogueJob, error: unknown) => {
     console.error('Failed to process feed dialogue job.', error)
@@ -412,11 +423,10 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     scheduleFeedJobs(scheduledJobs, jobIds, runScheduledJobs, allowModelDownload)
   }
   const syncNow = async () => {
-    if (isSyncing || isDisposed) {
+    if (isDisposed || !beginFeedSync(syncGate)) {
       return
     }
 
-    isSyncing = true
     const now = new Date()
 
     try {
@@ -434,18 +444,14 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         return
       }
 
-      const automaticSettings = await feedGenerationRuntime.loadAutomaticDialogueSettings(
-        window.localStorage,
-      )
       setFeedState({message: '새 피드를 확인하고 있어요…', progress: null, status: 'syncing'})
       const summary = await synchronizeFeeds({
         connections,
         createId: () => crypto.randomUUID(),
-        defaultVoiceId: automaticSettings.voiceId,
         fetcher: createFeedFetcher(),
-        modelId: automaticSettings.modelId,
         now,
         repository: getRepositories().feedRepository,
+        resolveGenerationSettings: resolveCurrentGenerationSettings,
       })
 
       if (summary.failures.length > 0) {
@@ -462,7 +468,9 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       console.error('Failed to synchronize focus room feeds.', error)
       setFeedState({message: '피드를 확인하지 못했어요.', status: 'error'})
     } finally {
-      isSyncing = false
+      if (finishFeedSync(syncGate) && !isDisposed) {
+        await syncNow()
+      }
     }
   }
 

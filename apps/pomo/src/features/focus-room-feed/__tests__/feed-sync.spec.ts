@@ -16,6 +16,15 @@ const CONNECTION: FeedConnection = {
   voiceId: 'M2',
 }
 const DEFAULT_CONNECTION: FeedConnection = {...CONNECTION, id: 'feed-default', voiceId: 'default'}
+const createSettingsResolver = (connection: FeedConnection = CONNECTION) =>
+  vi.fn(async (connectionId: string) =>
+    connectionId === connection.id
+      ? {
+          modelId: 'int8' as const,
+          voiceId: connection.voiceId === 'default' ? ('Yuna' as const) : connection.voiceId,
+        }
+      : null,
+  )
 
 const createRepository = () => {
   const items: Array<FeedItemRecord> = []
@@ -64,7 +73,6 @@ it('should queue only the newest item on the first subscription sync', async () 
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'job-1',
-    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(
@@ -74,9 +82,9 @@ it('should queue only the newest item on the first subscription sync', async () 
           ]),
         ),
     ),
-    modelId: 'int8',
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(),
   })
 
   expect(summary).toEqual({failures: [], queuedJobIds: ['job-1'], successfulConnections: 1})
@@ -101,14 +109,49 @@ it('should resolve a default feed voice from the automatic dialogue settings', a
   await synchronizeFeeds({
     connections: [DEFAULT_CONNECTION],
     createId: () => 'default-voice-job',
-    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}]))),
-    modelId: 'int8',
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(DEFAULT_CONNECTION),
   })
 
   expect(jobs[0]).toMatchObject({modelId: 'int8', voiceId: 'Yuna'})
+})
+
+it('should queue with generation settings resolved after fetching the feed item', async () => {
+  const {jobs, repository} = createRepository()
+  const resolveGenerationSettings = vi.fn(async () => ({
+    modelId: 'full' as const,
+    voiceId: 'Yuna' as const,
+  }))
+
+  await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'latest-settings-job',
+    fetcher: vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}]))),
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings,
+  })
+
+  expect(resolveGenerationSettings).toHaveBeenCalledWith(CONNECTION.id)
+  expect(jobs[0]).toMatchObject({modelId: 'full', voiceId: 'Yuna'})
+})
+
+it('should not queue an item whose connection was removed during synchronization', async () => {
+  const {jobs, repository} = createRepository()
+
+  const summary = await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'removed-connection-job',
+    fetcher: vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}]))),
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: vi.fn(async () => null),
+  })
+
+  expect(summary.queuedJobIds).toEqual([])
+  expect(jobs).toHaveLength(0)
 })
 
 it('should ignore feed items published more than three days ago', async () => {
@@ -116,7 +159,6 @@ it('should ignore feed items published more than three days ago', async () => {
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
-    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(`<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
@@ -124,9 +166,9 @@ it('should ignore feed items published more than three days ago', async () => {
           <link>https://example.com/stale</link><pubDate>Mon, 10 Aug 2026 00:00:00 GMT</pubDate>
           <content:encoded>지난 소식 본문</content:encoded></item></channel></rss>`),
     ),
-    modelId: 'int8',
     now: new Date('2026-08-14T00:00:01.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(),
   })
 
   expect(summary.queuedJobIds).toEqual([])
@@ -143,7 +185,6 @@ it('should accept a feed item published exactly three days ago', async () => {
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'job-at-cutoff',
-    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(`<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
@@ -151,9 +192,9 @@ it('should accept a feed item published exactly three days ago', async () => {
           <link>https://example.com/cutoff</link><pubDate>Tue, 11 Aug 2026 00:00:00 GMT</pubDate>
           <content:encoded>3일 전 소식 본문</content:encoded></item></channel></rss>`),
     ),
-    modelId: 'int8',
     now: new Date('2026-08-14T00:00:00.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(),
   })
 
   expect(summary.queuedJobIds).toEqual(['job-at-cutoff'])
@@ -166,16 +207,15 @@ it('should retain an over-limit item without creating a partial speech job', asy
   await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
-    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(
           `<rss xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>긴 글</title><item><title>제목</title><guid>long</guid><link>https://example.com/long</link><content:encoded>${longText}</content:encoded></item></channel></rss>`,
         ),
     ),
-    modelId: 'int8',
     now: new Date('2026-08-14T00:00:00.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(),
   })
 
   expect(jobs).toHaveLength(0)
@@ -193,7 +233,6 @@ it('should queue every item published after the subscription was created', async
       nextId += 1
       return `job-${nextId}`
     },
-    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(
@@ -203,9 +242,9 @@ it('should queue every item published after the subscription was created', async
           ]),
         ),
     ),
-    modelId: 'int8',
     now: new Date('2026-08-14T00:11:00.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(),
   })
 
   expect(jobs.map((job) => job.feedItemId)).toEqual(['first', 'second'])
@@ -225,11 +264,10 @@ it('should not treat the feed XML itself as an article document', async () => {
   await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
-    defaultVoiceId: 'Yuna',
     fetcher,
-    modelId: 'int8',
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(),
   })
 
   expect(fetcher).toHaveBeenCalledOnce()
@@ -245,16 +283,15 @@ it('should reject an oversized feed response before parsing it', async () => {
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
-    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response('<rss />', {
           headers: {'Content-Length': '2000001'},
         }),
     ),
-    modelId: 'int8',
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
+    resolveGenerationSettings: createSettingsResolver(),
   })
 
   expect(summary).toEqual({

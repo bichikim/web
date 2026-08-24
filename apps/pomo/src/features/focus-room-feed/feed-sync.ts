@@ -1,6 +1,6 @@
 // oxlint-disable no-await-in-loop -- A response stream must be read and size-checked in order.
-import type {SupertonicModelId, SupertonicVoiceId} from '../supertonic'
-import {DEFAULT_FEED_VOICE_ID, type FeedConnection} from './schema'
+import type {FeedGenerationSettings} from './generation-settings'
+import type {FeedConnection} from './schema'
 import {
   type FeedDialogueJob,
   type FeedItemRecord,
@@ -38,11 +38,12 @@ export interface FeedFetcher {
 export interface SynchronizeFeedsOptions {
   readonly connections: ReadonlyArray<FeedConnection>
   readonly createId: () => string
-  readonly defaultVoiceId: SupertonicVoiceId
   readonly fetcher: FeedFetcher
-  readonly modelId: SupertonicModelId
   readonly now: Date
   readonly repository: FeedDialogueRepository
+  readonly resolveGenerationSettings: (
+    connectionId: string,
+  ) => Promise<FeedGenerationSettings | null>
 }
 
 export interface FeedSyncFailure {
@@ -151,13 +152,12 @@ const sortItems = (items: ReadonlyArray<ParsedFeedItem>) =>
 interface ProcessFeedItemOptions {
   readonly connection: FeedConnection
   readonly createId: () => string
-  readonly defaultVoiceId: SupertonicVoiceId
   readonly feedTitle: string
   readonly fetcher: FeedFetcher
   readonly item: ParsedFeedItem
-  readonly modelId: SupertonicModelId
   readonly nowIso: string
   readonly repository: FeedDialogueRepository
+  readonly resolveGenerationSettings: SynchronizeFeedsOptions['resolveGenerationSettings']
 }
 
 const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string | null> => {
@@ -218,6 +218,12 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     return null
   }
 
+  const generationSettings = await options.resolveGenerationSettings(options.connection.id)
+
+  if (generationSettings === null) {
+    return null
+  }
+
   const jobId = options.createId()
   const item = {
     ...recordBase,
@@ -232,7 +238,7 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     feedItemId: options.item.id,
     id: jobId,
     itemTitle,
-    modelId: options.modelId,
+    modelId: generationSettings.modelId,
     publishedAt,
     script,
     sourceTitle: recordBase.sourceTitle,
@@ -240,10 +246,7 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     status: 'queued',
     updatedAt: options.nowIso,
     version: 1,
-    voiceId:
-      options.connection.voiceId === DEFAULT_FEED_VOICE_ID
-        ? options.defaultVoiceId
-        : options.connection.voiceId,
+    voiceId: generationSettings.voiceId,
   } satisfies FeedDialogueJob
   await options.repository.queue(job, item)
   return jobId
@@ -334,13 +337,12 @@ const synchronizeConnection = async (
       processFeedItem({
         connection,
         createId: options.createId,
-        defaultVoiceId: options.defaultVoiceId,
         feedTitle: feed.title,
         fetcher: options.fetcher,
         item,
-        modelId: options.modelId,
         nowIso,
         repository: options.repository,
+        resolveGenerationSettings: options.resolveGenerationSettings,
       }),
     ),
   )
