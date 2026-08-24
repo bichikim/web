@@ -28,6 +28,8 @@ describe('app session lifecycle', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
+    vi.useRealTimers()
     vi.unstubAllEnvs()
     vi.unstubAllGlobals()
   })
@@ -75,6 +77,80 @@ describe('app session lifecycle', () => {
     const init = fetchMock.mock.calls[0]?.[1]
     expect(new Headers(init?.headers).get('Content-Type')).toBe('application/json')
     expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'session-token')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('should revoke a created server session when native storage fails', async () => {
+    const storageError = new Error('native storage unavailable')
+    tossAuthMocks.login.mockResolvedValue({authorizationCode: 'authorization', referrer: 'DEFAULT'})
+    storageMocks.setItem.mockRejectedValue(storageError)
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({token: 'session-token'}))
+      .mockResolvedValueOnce(new Response(null))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(createTossLoginSession()).rejects.toBe(storageError)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/app-auth/session',
+      expect.objectContaining({
+        headers: expect.any(Headers),
+        method: 'DELETE',
+      }),
+    )
+    const revokeHeaders = new Headers(fetchMock.mock.calls[1]?.[1]?.headers)
+    expect(revokeHeaders.get('Authorization')).toBe('Bearer session-token')
+  })
+
+  it('should preserve the storage error when compensating revocation fails', async () => {
+    const storageError = new Error('native storage unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    tossAuthMocks.login.mockResolvedValue({authorizationCode: 'authorization', referrer: 'DEFAULT'})
+    storageMocks.setItem.mockRejectedValue(storageError)
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({token: 'session-token'}))
+      .mockResolvedValueOnce(new Response(null, {status: 503}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(createTossLoginSession()).rejects.toBe(storageError)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+      'Failed to revoke Toss session after storage failure',
+      expect.any(Error),
+    )
+  })
+
+  it('should report the storage error without waiting for compensating revocation', async () => {
+    vi.useFakeTimers()
+    const storageError = new Error('native storage unavailable')
+    tossAuthMocks.login.mockResolvedValue({authorizationCode: 'authorization', referrer: 'DEFAULT'})
+    storageMocks.setItem.mockRejectedValue(storageError)
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({token: 'session-token'}))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>(() => {
+            // The compensation request deliberately remains pending.
+          }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const timeoutResult = 'compensation-pending'
+    const resultPromise = Promise.race([
+      createTossLoginSession().catch((error: unknown) => error),
+      new Promise<string>((resolve) => {
+        setTimeout(resolve, 1, timeoutResult)
+      }),
+    ])
+
+    await vi.advanceTimersByTimeAsync(1)
+    const result = await resultPromise
+
+    expect(result).toBe(storageError)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it('should preserve the Toss exchange HTTP error contract', async () => {

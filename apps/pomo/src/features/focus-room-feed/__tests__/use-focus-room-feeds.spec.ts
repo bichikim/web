@@ -1,5 +1,5 @@
 import {renderHook} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
   type FeedDialogueListItem,
@@ -7,9 +7,17 @@ import {
   findRemovableExpiredDialogues,
 } from '..'
 import type {PEventContextValue} from '../../focus-room-dialogue'
+import type {SupertonicClient} from '../../supertonic'
 import {feedGenerationRuntime} from '../generation-runtime'
+import type {FeedDialogueJob, FeedItemRecord} from '../feed-dialogue-schema'
+import type {FeedSyncSummary, SynchronizeFeedsOptions} from '../feed-sync'
+import type {FeedConnection} from '../schema'
 import {FEED_CONNECTIONS_CHANGED_EVENT} from '../use-feed-connections'
 import {usePFeeds} from '../use-focus-room-feeds'
+
+const syncMocks = vi.hoisted(() => ({
+  synchronizeFeeds: vi.fn(),
+}))
 
 const repositoryMocks = vi.hoisted(() => {
   const dialogueRepository = {
@@ -26,9 +34,14 @@ const repositoryMocks = vi.hoisted(() => {
     listJobs: vi.fn().mockResolvedValue([]),
     listMetadata: vi.fn().mockResolvedValue([]),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
+    updateJob: vi.fn().mockResolvedValue(undefined),
   }
 
-  return {dialogueRepository, feedRepository, listConnections: vi.fn(() => [])}
+  return {
+    dialogueRepository,
+    feedRepository,
+    listConnections: vi.fn<() => ReadonlyArray<FeedConnection>>(() => []),
+  }
 })
 
 vi.mock('../../focus-room-dialogue/repository', () => ({
@@ -43,6 +56,19 @@ vi.mock('../feed-dialogue-repair', () => ({
 vi.mock('../repository', () => ({
   createFeedConnectionRepository: () => ({list: repositoryMocks.listConnections}),
 }))
+vi.mock('../feed-sync', () => ({
+  synchronizeFeeds: syncMocks.synchronizeFeeds,
+}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  repositoryMocks.listConnections.mockReturnValue([])
+  syncMocks.synchronizeFeeds.mockResolvedValue({
+    failures: [],
+    queuedJobIds: [],
+    successfulConnections: 0,
+  })
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -184,4 +210,118 @@ it('should refresh from lifecycle events and remove every listener on cleanup', 
     expect.any(Function),
     {},
   )
+})
+
+it('should synchronize again with changed connections after an active sync', async () => {
+  const firstSync = Promise.withResolvers<FeedSyncSummary>()
+  const initialConnection = {
+    createdAt: '2026-08-14T00:00:00.000Z',
+    id: 'feed-1',
+    updatedAt: '2026-08-14T00:00:00.000Z',
+    url: 'https://example.com/feed.xml',
+    version: 1 as const,
+    voiceId: 'default' as const,
+  }
+  repositoryMocks.listConnections.mockReturnValue([initialConnection])
+  syncMocks.synchronizeFeeds.mockImplementationOnce(() => firstSync.promise)
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  await vi.waitFor(() => expect(syncMocks.synchronizeFeeds).toHaveBeenCalledTimes(1))
+
+  repositoryMocks.listConnections.mockReturnValue([
+    {...initialConnection, updatedAt: '2026-08-14T00:01:00.000Z', voiceId: 'Yuna'},
+  ])
+  window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+  firstSync.resolve({failures: [], queuedJobIds: [], successfulConnections: 1})
+
+  await vi.waitFor(() => expect(syncMocks.synchronizeFeeds).toHaveBeenCalledTimes(2))
+  expect(syncMocks.synchronizeFeeds).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      connections: [expect.objectContaining({id: 'feed-1', voiceId: 'Yuna'})],
+    }),
+  )
+  view.cleanup()
+})
+
+it('should generate with a voice changed after the feed job settings were resolved', async () => {
+  const jobUpdate = Promise.withResolvers<void>()
+  const initialConnection: FeedConnection = {
+    createdAt: '2026-08-14T00:00:00.000Z',
+    id: 'feed-1',
+    updatedAt: '2026-08-14T00:00:00.000Z',
+    url: 'https://example.com/feed.xml',
+    version: 1,
+    voiceId: 'M1',
+  }
+  const item: FeedItemRecord = {
+    contentLength: 5,
+    discoveredAt: '2026-08-14T00:00:00.000Z',
+    feedConnectionId: initialConnection.id,
+    feedItemId: 'item-1',
+    id: 'feed-1\u0000item-1',
+    itemTitle: '새 피드',
+    message: null,
+    publishedAt: '2026-08-14T00:00:00.000Z',
+    sourceTitle: '테스트 피드',
+    sourceUrl: 'https://example.com/item-1',
+    status: 'queued',
+    updatedAt: '2026-08-14T00:00:00.000Z',
+    version: 1,
+  }
+  const job: FeedDialogueJob = {
+    createdAt: item.discoveredAt,
+    errorMessage: null,
+    feedConnectionId: initialConnection.id,
+    feedItemId: item.feedItemId,
+    id: 'job-1',
+    itemTitle: item.itemTitle,
+    modelId: 'int8',
+    publishedAt: item.publishedAt,
+    script: '새 소식',
+    sourceTitle: item.sourceTitle,
+    sourceUrl: item.sourceUrl,
+    status: 'queued',
+    updatedAt: item.updatedAt,
+    version: 1,
+    voiceId: 'M1',
+  }
+  const voiceClient: SupertonicClient = {
+    cancelGeneration: vi.fn(),
+    dispose: vi.fn(),
+    generate: vi.fn<SupertonicClient['generate']>(),
+    generateStream: vi.fn<SupertonicClient['generateStream']>(),
+    initialize: vi.fn(async () => ({ok: true as const, value: undefined})),
+  }
+  const generateDialogueAudio = vi
+    .spyOn(feedGenerationRuntime, 'generateDialogueAudio')
+    .mockResolvedValue({message: '진단 완료', ok: false})
+  vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockResolvedValue(voiceClient)
+  vi.spyOn(feedGenerationRuntime, 'isModelDownloaded').mockResolvedValue(true)
+  repositoryMocks.listConnections.mockReturnValue([initialConnection])
+  repositoryMocks.feedRepository.listItems.mockResolvedValue([item])
+  repositoryMocks.feedRepository.updateJob.mockImplementationOnce(() => jobUpdate.promise)
+  syncMocks.synchronizeFeeds.mockImplementationOnce(async (options: SynchronizeFeedsOptions) => {
+    expect(await options.resolveGenerationSettings(initialConnection.id)).toMatchObject({
+      voiceId: 'M1',
+    })
+    repositoryMocks.feedRepository.listJobs.mockResolvedValue([job])
+    repositoryMocks.listConnections.mockReturnValue([
+      {...initialConnection, updatedAt: '2026-08-14T00:01:00.000Z', voiceId: 'Yuna'},
+    ])
+    window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+    return {failures: [], queuedJobIds: [job.id], successfulConnections: 1}
+  })
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+
+  await vi.waitFor(() => expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalledOnce())
+  repositoryMocks.listConnections.mockReturnValue([
+    {...initialConnection, updatedAt: '2026-08-14T00:02:00.000Z', voiceId: 'M2'},
+  ])
+  window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+  jobUpdate.resolve()
+
+  await vi.waitFor(() => expect(generateDialogueAudio).toHaveBeenCalledOnce())
+  const generationOptions = generateDialogueAudio.mock.calls[0]?.[0]
+  view.cleanup()
+
+  expect(generationOptions).toMatchObject({modelId: 'int8', voiceId: 'M2'})
 })
