@@ -4,13 +4,14 @@ import 'virtual:uno.css'
 import {Link, Meta, MetaProvider, Title} from '@solidjs/meta'
 import {Router, useLocation} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
-import {ErrorBoundary, Suspense} from 'solid-js'
+import {Suspense} from 'solid-js'
 
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {isSearchIndexablePath, normalizePathname} from './components/pomo-route'
 import {SEARCH_CONFIG} from './config/search'
 import {SERVICE_POLICY_PATHS} from './config/service-policy'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
+import {PRecoveryBoundary} from './features/client-error-reporter'
 
 const DEFAULT_DESCRIPTION =
   'Pomo와 함께 포모도로 타이머와 집중 음악을 사용하는 집중 앱 Pomofi입니다.'
@@ -97,20 +98,11 @@ export default function App() {
       root={(props) => (
         <MetaProvider>
           <PDocumentMetadata />
-          <ErrorBoundary
-            fallback={(error) => (
-              <main class="grid min-h-dvh place-items-center bg-background p-6 text-foreground">
-                <section class="max-w-md text-center">
-                  <h1 class="text-2xl font-700">Pomofi를 불러오지 못했어요</h1>
-                  <p class="mt-3 opacity-70">{String(error)}</p>
-                </section>
-              </main>
-            )}
-          >
+          <PRecoveryBoundary>
             <Suspense>
               <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
             </Suspense>
-          </ErrorBoundary>
+          </PRecoveryBoundary>
         </MetaProvider>
       )}
     >

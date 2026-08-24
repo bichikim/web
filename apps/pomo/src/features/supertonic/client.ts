@@ -11,6 +11,7 @@ import type {
   SupertonicWorkerOutput,
 } from './messages'
 import type {SupertonicModelId} from './model'
+import {reportClientError} from '../client-error-reporter'
 import {failureResult, type Result, successResult} from '../result'
 
 export interface InitializeSupertonicOptions {
@@ -69,6 +70,45 @@ const getAudioChunk = (
   total: message.total,
 })
 
+interface ObserveSupertonicWorkerOptions {
+  readonly onFailure: (error: WorkerFailedError) => void
+  readonly onMessage: (message: SupertonicWorkerOutput) => void
+  readonly worker: Worker
+}
+
+const observeSupertonicWorker = (options: ObserveSupertonicWorkerOptions) => {
+  options.worker.addEventListener('message', (event: MessageEvent<SupertonicWorkerOutput>) => {
+    options.onMessage(event.data)
+  })
+  options.worker.addEventListener('error', (event) => {
+    reportClientError(event.error ?? {message: 'Worker execution failed', name: 'WorkerError'}, {
+      feature: 'supertonic-model',
+      source: 'worker',
+    })
+    options.onFailure({
+      code: 'worker-failed',
+      detail: event.message || 'Worker 실행 오류',
+      phase: 'initialize',
+      retryable: true,
+    })
+  })
+  options.worker.addEventListener('messageerror', () => {
+    reportClientError(
+      {message: 'Worker response deserialization failed', name: 'WorkerError'},
+      {
+        feature: 'supertonic-model',
+        source: 'worker',
+      },
+    )
+    options.onFailure({
+      code: 'worker-failed',
+      detail: 'Worker 응답을 읽지 못했습니다.',
+      phase: 'initialize',
+      retryable: true,
+    })
+  })
+}
+
 /** Creates an isolated Supertonic Worker client and owns it until disposal. */
 export const createSupertonicClient = (): SupertonicClient => {
   const worker = new Worker(new URL('./worker.ts', import.meta.url), {type: 'module'})
@@ -97,6 +137,7 @@ export const createSupertonicClient = (): SupertonicClient => {
         return
       case 'error':
         if (message.requestId === null) {
+          reportClientError(message.error, {feature: 'supertonic-model', source: 'worker'})
           initializeResolve?.(failureResult(message.error))
           initializeResolve = null
         } else {
@@ -129,17 +170,7 @@ export const createSupertonicClient = (): SupertonicClient => {
     message satisfies never
   }
 
-  worker.addEventListener('message', (event: MessageEvent<SupertonicWorkerOutput>) => {
-    handleMessage(event.data)
-  })
-  worker.addEventListener('error', (event) => {
-    resolveFailures({
-      code: 'worker-failed',
-      detail: event.message || 'Worker 실행 오류',
-      phase: 'initialize',
-      retryable: true,
-    })
-  })
+  observeSupertonicWorker({onFailure: resolveFailures, onMessage: handleMessage, worker})
 
   const initialize: SupertonicClient['initialize'] = (options) => {
     const {modelId, onProgress: progressCallback, onStatus: statusCallback} = options

@@ -29,6 +29,7 @@ export const createChatClient = (options: CreateChatClientOptions): ChatClient =
       restartRequired: true,
       type: 'error',
     }),
+    feature: 'chat-model',
     onResponse: options.onResponse,
     worker,
   })
