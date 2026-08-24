@@ -1,3 +1,5 @@
+import {httpFetch} from '../http-client'
+
 const PARTIAL_DIRECTORY_NAME = 'pomo-model-downloads'
 const BYTES_PER_KIBIBYTE = 1024
 const BYTES_PER_MEBIBYTE = BYTES_PER_KIBIBYTE * BYTES_PER_KIBIBYTE
@@ -493,7 +495,7 @@ const resumePartialDownload = async (
 export const createResumableModelFetch = (
   options: CreateResumableModelFetchOptions = {},
 ): ResumableModelFetch => {
-  const fetcher = options.fetcher ?? fetch.bind(globalThis)
+  const fetcher = options.fetcher ?? httpFetch
   const storage =
     'partialStorage' in options
       ? (options.partialStorage ?? null)

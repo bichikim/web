@@ -8,7 +8,8 @@ import {
   markGenerationSubmitted,
   prepareGenerationRerun,
 } from './generation-repository'
-import {submitHistoryResponse} from './openai-client'
+import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
+import {persistGenerationSubmission} from './submission-persistence'
 
 const MAX_ERROR_LENGTH = 2000
 
@@ -60,31 +61,21 @@ export const startHistoryRegeneration = async (
   try {
     submitted = await dependencies.submit({
       generationRunId: run.id,
-      idempotencyKey: run.openAiSubmissionKey,
       policy: HISTORY_SOURCE_POLICY,
       promptVersion: HISTORY_PROMPT_VERSION,
       requiredTitles: options.requiredTitles,
+      submissionKey: run.openAiSubmissionKey,
       targetDate: options.targetDate,
     })
   } catch (error) {
-    await dependencies.markFailed(run.id, getErrorMessage(error))
-    throw error
-  }
-
-  try {
-    await dependencies.markSubmitted(run.id, submitted.responseId)
-  } catch (error) {
-    try {
+    if (error instanceof HistorySubmissionError && error.acceptance === 'rejected') {
       await dependencies.markFailed(run.id, getErrorMessage(error))
-    } catch (markFailedError) {
-      throw new AggregateError(
-        [error, markFailedError],
-        'Failed to persist the OpenAI response ID and retryable run state',
-      )
     }
 
     throw error
   }
+
+  await persistGenerationSubmission(run.id, submitted.responseId, dependencies.markSubmitted)
 
   return {
     responseId: submitted.responseId,

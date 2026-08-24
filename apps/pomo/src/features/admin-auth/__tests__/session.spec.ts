@@ -10,9 +10,9 @@ it('should report a successful server-side session revocation', async () => {
   const fetchMock = vi.fn().mockResolvedValue(new Response(null, {status: 200}))
   vi.stubGlobal('fetch', fetchMock)
 
-  await expect(signOutAdminSession({origin: 'https://pomo.example'})).resolves.toBe(true)
+  await expect(signOutAdminSession()).resolves.toBe(true)
   expect(fetchMock).toHaveBeenCalledWith(
-    new URL('https://pomo.example/api/auth/sign-out'),
+    '/api/auth/sign-out',
     expect.objectContaining({credentials: 'include', method: 'POST'}),
   )
 })
@@ -20,5 +20,5 @@ it('should report a successful server-side session revocation', async () => {
 it('should keep the admin signed in when server-side revocation fails', () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 503})))
 
-  return expect(signOutAdminSession({origin: 'https://pomo.example'})).resolves.toBe(false)
+  return expect(signOutAdminSession()).resolves.toBe(false)
 })

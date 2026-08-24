@@ -6,12 +6,9 @@ import type {
   SpeechRecognizerReady,
   SpeechTranscript,
 } from './recognizer'
-import {speechFailure, type SpeechResult, speechSuccess} from './result'
-
-interface PendingRequest<Value> {
-  readonly requestId: number
-  readonly resolve: (result: SpeechResult<Value, SpeechRecognitionError>) => void
-}
+import {reportClientError} from '../client-error-reporter'
+import {failureResult, type Result, successResult} from '../result'
+import {createWorkerRpcTransport, isWorkerRpcFailure, type WorkerRpcFailure} from '../worker-rpc'
 
 const createCancelledError = (phase: SpeechRecognitionPhase): SpeechRecognitionError => ({
   code: 'cancelled',
@@ -24,62 +21,50 @@ const createWorkerError = (
   detail: string,
 ): SpeechRecognitionError => ({code: 'worker-failed', detail, phase, retryable: true})
 
-interface ObserveSpeechWorkerOptions {
-  readonly onFailure: (detail: string) => void
-  readonly onResponse: (response: SpeechWorkerResponse) => void
-  readonly worker: Worker
+const getRequestId = (response: SpeechWorkerResponse) => {
+  switch (response.type) {
+    case 'backend-changed':
+    case 'loading':
+      return null
+    case 'complete':
+    case 'error':
+    case 'ready':
+      return response.requestId
+  }
+
+  response satisfies never
 }
 
-const observeSpeechWorker = (options: ObserveSpeechWorkerOptions) => {
-  options.worker.addEventListener('message', (event: MessageEvent<SpeechWorkerResponse>) => {
-    options.onResponse(event.data)
-  })
-  options.worker.addEventListener('error', (event) => {
-    options.onFailure(event.message || 'Worker 실행 오류')
-  })
-  options.worker.addEventListener('messageerror', () => {
-    options.onFailure('Worker 응답을 읽지 못했습니다.')
-  })
-}
+const getFailureResult = <Value>(
+  failure: WorkerRpcFailure,
+  phase: SpeechRecognitionPhase,
+): Result<Value, SpeechRecognitionError> =>
+  failure.code === 'disposed'
+    ? failureResult(createCancelledError(phase))
+    : failureResult(createWorkerError(phase, failure.detail))
 
-const createRequestId = () => {
-  let nextRequestId = 1
+const getUnexpectedResponse = <Value>(
+  phase: SpeechRecognitionPhase,
+): Result<Value, SpeechRecognitionError> =>
+  failureResult(createWorkerError(phase, 'Worker가 예상하지 않은 응답을 반환했습니다.'))
 
-  return () => {
-    const requestId = nextRequestId
-    nextRequestId += 1
-    return requestId
+const reportSpeechWorkerFailure = (failure: WorkerRpcFailure) => {
+  if (failure.code !== 'disposed') {
+    reportClientError(failure, {feature: 'speech-to-text-model', source: 'worker'})
   }
 }
 
-const createWorkerTerminator = (worker: Worker) => {
-  let closed = false
-
-  return () => {
-    if (!closed) {
-      closed = true
-      worker.terminate()
-    }
+const getUnknownFailureResult = <Value>(
+  error: unknown,
+  phase: SpeechRecognitionPhase,
+): Result<Value, SpeechRecognitionError> => {
+  if (isWorkerRpcFailure(error)) {
+    reportSpeechWorkerFailure(error)
+    return getFailureResult(error, phase)
   }
+
+  return failureResult(createWorkerError(phase, 'Worker 요청을 완료하지 못했습니다.'))
 }
-
-const sendRequest = (
-  worker: Worker,
-  request: SpeechWorkerRequest,
-  transfer: Array<Transferable> = [],
-) => worker.postMessage(request, transfer)
-
-const sendPrepareRequest = (
-  worker: Worker,
-  options: CreateSpeechRecognizerOptions,
-  requestId: number,
-) =>
-  sendRequest(worker, {
-    modelId: options.modelId,
-    preferredBackend: options.preferredBackend,
-    requestId,
-    type: 'prepare',
-  })
 
 /** Creates an isolated speech recognizer and owns its Worker until disposal. */
 export const createSpeechRecognizer = (
@@ -91,150 +76,156 @@ export const createSpeechRecognizer = (
   })
   let activeBackend: SpeechRecognizerReady | null = null
   let disposed = false
-  const getRequestId = createRequestId()
-  let pendingPrepare: PendingRequest<SpeechRecognizerReady> | null = null
-  let pendingTranscription: PendingRequest<SpeechTranscript> | null = null
-  let preparePromise: Promise<SpeechResult<SpeechRecognizerReady, SpeechRecognitionError>> | null =
-    null
-  let workerFailure: string | null = null
-  const terminateWorker = createWorkerTerminator(worker)
+  let preparePromise: Promise<Result<SpeechRecognizerReady, SpeechRecognitionError>> | null = null
+  let transcriptionPending = false
+  const transport = createWorkerRpcTransport<SpeechWorkerRequest, SpeechWorkerResponse>({
+    getRequestId,
+    onEvent: (response) => {
+      if (disposed) {
+        return
+      }
 
-  const resolveWorkerFailure = (detail: string) => {
-    if (workerFailure !== null) {
-      return
-    }
+      switch (response.type) {
+        case 'backend-changed':
+          options.onBackendChange(response.backend)
+          return
+        case 'loading':
+          options.onProgress(response.progress)
+          return
+        case 'complete':
+        case 'error':
+        case 'ready':
+          return
+      }
 
-    workerFailure = detail
-    pendingPrepare?.resolve(speechFailure(createWorkerError('prepare', detail)))
-    pendingTranscription?.resolve(speechFailure(createWorkerError('transcribe', detail)))
-    pendingPrepare = null
-    pendingTranscription = null
-    preparePromise = null
-    terminateWorker()
-  }
+      response satisfies never
+    },
+    onFailure: reportSpeechWorkerFailure,
+    worker,
+  })
 
-  const handleError = (response: Extract<SpeechWorkerResponse, {readonly type: 'error'}>) => {
-    if (pendingPrepare?.requestId === response.requestId) {
-      pendingPrepare.resolve(speechFailure(response.error))
-      pendingPrepare = null
-      preparePromise = null
-      return
-    }
-
-    if (pendingTranscription?.requestId === response.requestId) {
-      pendingTranscription.resolve(speechFailure(response.error))
-      pendingTranscription = null
-    }
-  }
-
-  const handleResponse = (response: SpeechWorkerResponse) => {
-    if (disposed) {
-      return
-    }
-
+  const resolvePrepareResponse = (
+    response: SpeechWorkerResponse,
+  ): Result<SpeechRecognizerReady, SpeechRecognitionError> => {
     switch (response.type) {
-      case 'backend-changed':
-        options.onBackendChange(response.backend)
-        return
-      case 'complete':
-        if (pendingTranscription?.requestId === response.requestId) {
-          activeBackend = {backend: response.backend}
-          options.onBackendChange(response.backend)
-          pendingTranscription.resolve(
-            speechSuccess({backend: response.backend, text: response.text}),
-          )
-          pendingTranscription = null
-        }
-        return
       case 'error':
-        handleError(response)
-        return
-      case 'loading':
-        options.onProgress(response.progress)
-        return
+        reportClientError(response.error, {feature: 'speech-to-text-model', source: 'worker'})
+        return failureResult(response.error)
       case 'ready':
-        if (pendingPrepare?.requestId === response.requestId) {
-          activeBackend = {backend: response.backend}
-          options.onBackendChange(response.backend)
-          pendingPrepare.resolve(speechSuccess(activeBackend))
-          pendingPrepare = null
-          preparePromise = null
-        }
-        return
+        activeBackend = {backend: response.backend}
+        options.onBackendChange(response.backend)
+        return successResult(activeBackend)
+      case 'backend-changed':
+      case 'complete':
+      case 'loading':
+        return getUnexpectedResponse('prepare')
     }
 
     response satisfies never
   }
 
-  observeSpeechWorker({onFailure: resolveWorkerFailure, onResponse: handleResponse, worker})
+  const executePrepare = async (): Promise<
+    Result<SpeechRecognizerReady, SpeechRecognitionError>
+  > => {
+    try {
+      const response = await transport.request({
+        createRequest: (requestId) => ({
+          modelId: options.modelId,
+          preferredBackend: options.preferredBackend,
+          requestId,
+          type: 'prepare',
+        }),
+      })
+      return resolvePrepareResponse(response)
+    } catch (error) {
+      return getUnknownFailureResult(error, 'prepare')
+    } finally {
+      preparePromise = null
+    }
+  }
 
   const getUnavailableResult = <Value>(
     phase: SpeechRecognitionPhase,
-  ): SpeechResult<Value, SpeechRecognitionError> | null => {
+  ): Result<Value, SpeechRecognitionError> | null => {
     if (disposed) {
-      return speechFailure(createCancelledError(phase))
+      return failureResult(createCancelledError(phase))
     }
 
-    if (workerFailure !== null) {
-      return speechFailure(createWorkerError(phase, workerFailure))
+    const failure = transport.getFailure()
+
+    if (failure !== null) {
+      return getFailureResult(failure, phase)
     }
 
     return null
   }
 
   const prepare: SpeechRecognizer['prepare'] = () => {
-    const unavailable = getUnavailableResult<SpeechRecognizerReady>('prepare')
+    const unavailableResult = getUnavailableResult<SpeechRecognizerReady>('prepare')
 
-    if (unavailable !== null) {
-      return Promise.resolve(unavailable)
+    if (unavailableResult !== null) {
+      return Promise.resolve(unavailableResult)
     }
 
     if (activeBackend !== null) {
-      return Promise.resolve(speechSuccess(activeBackend))
+      return Promise.resolve(successResult(activeBackend))
     }
 
     if (preparePromise !== null) {
       return preparePromise
     }
 
-    const requestId = getRequestId()
-
-    preparePromise = new Promise((resolve) => {
-      pendingPrepare = {requestId, resolve}
-      sendPrepareRequest(worker, options, requestId)
-    })
-    return preparePromise
+    const currentPreparation = executePrepare()
+    preparePromise = currentPreparation
+    return currentPreparation
   }
 
-  const transcribe: SpeechRecognizer['transcribe'] = (transcriptionOptions) => {
-    const unavailable = getUnavailableResult<SpeechTranscript>('transcribe')
+  const transcribe: SpeechRecognizer['transcribe'] = async (transcriptionOptions) => {
+    const unavailableResult = getUnavailableResult<SpeechTranscript>('transcribe')
 
-    if (unavailable !== null) {
-      return Promise.resolve(unavailable)
+    if (unavailableResult !== null) {
+      return unavailableResult
     }
 
-    if (pendingTranscription !== null) {
-      return Promise.resolve(speechFailure({code: 'busy', phase: 'transcribe', retryable: true}))
+    if (transcriptionPending) {
+      return failureResult({code: 'busy', phase: 'transcribe', retryable: true})
     }
 
-    const requestId = getRequestId()
     const transferableAudio = transcriptionOptions.audio.slice()
+    transcriptionPending = true
 
-    return new Promise((resolve) => {
-      pendingTranscription = {requestId, resolve}
-      sendRequest(
-        worker,
-        {
+    try {
+      const response = await transport.request({
+        createRequest: (requestId) => ({
           audio: transferableAudio,
           language: transcriptionOptions.language,
           modelId: options.modelId,
           preferredBackend: options.preferredBackend,
           requestId,
           type: 'transcribe',
-        },
-        [transferableAudio.buffer],
-      )
-    })
+        }),
+        transfer: [transferableAudio.buffer],
+      })
+
+      switch (response.type) {
+        case 'complete':
+          activeBackend = {backend: response.backend}
+          options.onBackendChange(response.backend)
+          return successResult({backend: response.backend, text: response.text})
+        case 'error':
+          return failureResult(response.error)
+        case 'backend-changed':
+        case 'loading':
+        case 'ready':
+          return getUnexpectedResponse('transcribe')
+      }
+
+      response satisfies never
+    } catch (error) {
+      return getUnknownFailureResult(error, 'transcribe')
+    } finally {
+      transcriptionPending = false
+    }
   }
 
   const dispose = () => {
@@ -243,12 +234,7 @@ export const createSpeechRecognizer = (
     }
 
     disposed = true
-    pendingPrepare?.resolve(speechFailure(createCancelledError('prepare')))
-    pendingTranscription?.resolve(speechFailure(createCancelledError('transcribe')))
-    pendingPrepare = null
-    pendingTranscription = null
-    preparePromise = null
-    terminateWorker()
+    transport.dispose()
   }
 
   return {dispose, prepare, transcribe}

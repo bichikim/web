@@ -1,11 +1,7 @@
-interface SignOutAdminSessionOptions {
-  readonly origin: string
-}
+import {apiFetch} from '../http-client'
 
-export const signOutAdminSession = async (
-  options: SignOutAdminSessionOptions,
-): Promise<boolean> => {
-  const response = await fetch(new URL('/api/auth/sign-out', options.origin), {
+export const signOutAdminSession = async (): Promise<boolean> => {
+  const response = await apiFetch('auth/sign-out', {
     credentials: 'include',
     method: 'POST',
   })

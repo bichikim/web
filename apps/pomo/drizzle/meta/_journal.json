@@ -57,6 +57,27 @@
       "when": 1787536969378,
       "tag": "0007_silly_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787571005545,
+      "tag": "0008_common_rockslide",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787576469453,
+      "tag": "0009_handy_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787583067011,
+      "tag": "0010_special_tyrannus",
+      "breakpoints": true
     }
   ]
 }

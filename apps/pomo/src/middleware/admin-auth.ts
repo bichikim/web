@@ -1,10 +1,9 @@
-import {handleAuthProxyRequest} from '@neondatabase/auth/server'
+import {getAdminSession} from '../server/admin-auth/session.ts'
 
-import {getNeonAuthProxyConfig} from '../server/auth/environment.ts'
+export {classifyAdminAccess, hasAdminRole} from '../server/admin-auth/access.ts'
 
 const ADMIN_PATH = '/admin'
 const ADMIN_LOGIN_PATH = '/admin/login'
-const ADMIN_ROLE = 'admin'
 const SESSION_VERIFIER_PARAM = 'neon_auth_session_verifier'
 const HTTP_FORBIDDEN = 403
 const HTTP_SERVICE_UNAVAILABLE = 503
@@ -15,8 +14,6 @@ interface AdminAuthRequest {
   readonly responseHeaders: Headers
   readonly url: URL
 }
-
-type AdminAccess = 'admin' | 'anonymous' | 'forbidden' | 'invalid'
 
 export const isProtectedAdminPath = (pathname: string): boolean =>
   (pathname === ADMIN_PATH || pathname.startsWith(`${ADMIN_PATH}/`)) &&
@@ -32,39 +29,6 @@ export const getCleanAuthCallbackUrl = (url: URL): URL | null => {
   return cleanUrl
 }
 
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === 'object' && value !== null
-
-export const hasAdminRole = (role: unknown): boolean => {
-  if (typeof role === 'string') {
-    return role.split(',').some((value) => value.trim() === ADMIN_ROLE)
-  }
-
-  return Array.isArray(role) && role.some((value) => value === ADMIN_ROLE)
-}
-
-export const classifyAdminAccess = (sessionData: unknown): AdminAccess => {
-  if (sessionData === null) {
-    return 'anonymous'
-  }
-
-  if (!isRecord(sessionData)) {
-    return 'invalid'
-  }
-
-  const {session, user} = sessionData
-
-  if (session === null && user === null) {
-    return 'anonymous'
-  }
-
-  if (!isRecord(session) || !isRecord(user)) {
-    return 'invalid'
-  }
-
-  return hasAdminRole(user.role) ? 'admin' : 'forbidden'
-}
-
 const appendCookies = (headers: Headers, cookies: readonly string[]): void => {
   for (const cookie of cookies) {
     headers.append('Set-Cookie', cookie)
@@ -74,18 +38,6 @@ const appendCookies = (headers: Headers, cookies: readonly string[]): void => {
 const applyAdminSecurityHeaders = (headers: Headers): void => {
   headers.set('Cache-Control', NO_STORE)
   headers.set('Referrer-Policy', 'no-referrer')
-}
-
-const createSessionRequest = (request: Request): Request => {
-  const url = new URL(request.url)
-  const headers = new Headers(request.headers)
-
-  url.searchParams.set('disableCookieCache', 'true')
-  headers.delete('Content-Length')
-  headers.delete('Content-Type')
-  headers.delete('Transfer-Encoding')
-
-  return new Request(url, {headers, method: 'GET'})
 }
 
 const createLoginRedirect = (input: AdminAuthRequest, cookies: readonly string[]): Response => {
@@ -142,26 +94,16 @@ export const handleAdminAuthRequest = async (input: AdminAuthRequest): Promise<R
 
   applyAdminSecurityHeaders(input.responseHeaders)
 
-  let sessionResponse: Response
+  let sessionResult: Awaited<ReturnType<typeof getAdminSession>>
 
   try {
-    sessionResponse = await handleAuthProxyRequest({
-      ...getNeonAuthProxyConfig(),
-      path: 'get-session',
-      request: createSessionRequest(input.request),
-    })
+    sessionResult = await getAdminSession(input.request)
   } catch (error) {
     console.error('Pomo admin authentication is unavailable', error)
     return createUnavailableResponse(input)
   }
 
-  const cookies = sessionResponse.headers.getSetCookie()
-
-  if (!sessionResponse.ok) {
-    return createUnavailableResponse(input, cookies)
-  }
-
-  const access = classifyAdminAccess(await sessionResponse.json().catch(() => undefined))
+  const {access, cookies} = sessionResult
 
   switch (access) {
     case 'admin': {

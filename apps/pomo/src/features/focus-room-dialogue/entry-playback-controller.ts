@@ -129,6 +129,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let animationFrame: number | null = null
   let audio: HTMLAudioElement | null = null
   let audioContext: AudioContext | null = null
+  let audioContextSuspension: Promise<void> | null = null
   let audioEnvelope: PAudioEnvelope | null = null
   let audioSource: MediaElementAudioSourceNode | null = null
   let audioUrl: string | null = null
@@ -223,6 +224,16 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     resolve?.(completion)
   }
 
+  const suspendAudioContext = () => {
+    const context = audioContext
+
+    if (context === null || context.state === 'closed') {
+      return
+    }
+
+    audioContextSuspension = context.suspend().catch(() => undefined)
+  }
+
   const clearPlayback = (visemeResetTiming: VisemeResetTiming = 'immediate') => {
     cancelFrame()
     audio?.pause()
@@ -232,6 +243,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
 
     audioSource = null
+    suspendAudioContext()
     audio = null
     audioEnvelope = null
     visemeDriver.reset()
@@ -264,6 +276,16 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
 
     try {
+      const suspension = audioContextSuspension
+
+      if (suspension !== null) {
+        await suspension
+      }
+
+      if (audio !== currentAudio || isDisposed) {
+        return
+      }
+
       await audioContext?.resume()
       await currentAudio.play()
 
@@ -544,6 +566,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       }
 
       audioContext = null
+      audioContextSuspension = null
     },
     isBlocked,
     isDialogueScheduled: (dialogueId) =>

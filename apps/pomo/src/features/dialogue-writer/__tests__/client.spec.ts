@@ -33,6 +33,12 @@ class FakeWorker {
       listener({data: message} as MessageEvent<DialogueWorkerResponse>)
     }
   }
+
+  emitMessageError() {
+    for (const listener of this.#listeners.get('messageerror') ?? []) {
+      listener({} as MessageEvent<DialogueWorkerResponse>)
+    }
+  }
 }
 
 const getWorker = () => {
@@ -104,5 +110,19 @@ describe('createDialogueClient', () => {
     client.dispose()
 
     expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should translate unreadable Worker responses into restartable errors', () => {
+    const onResponse = vi.fn()
+    createDialogueClient({modelId: 'qwen-0.8b', onResponse})
+    const worker = getWorker()
+
+    worker.emitMessageError()
+
+    expect(onResponse).toHaveBeenCalledWith({
+      message: 'Worker 응답을 읽지 못했습니다.',
+      restartRequired: true,
+      type: 'error',
+    })
   })
 })

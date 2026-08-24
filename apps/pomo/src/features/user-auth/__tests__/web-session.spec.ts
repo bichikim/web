@@ -23,10 +23,39 @@ it('should distinguish an anonymous session from an auth service outage', async 
     .fn()
     .mockResolvedValueOnce(new Response(null, {status: 401}))
     .mockResolvedValueOnce(new Response(null, {status: 503}))
+    .mockResolvedValueOnce(new Response(null, {status: 503}))
   vi.stubGlobal('fetch', fetchMock)
 
   await expect(readAccountSession()).resolves.toBeNull()
   await expect(readAccountSession()).rejects.toThrow('Web account session is unavailable')
+})
+
+it('should return a validated account session and preserve an invalid session body as absence', async () => {
+  const fetchMock = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({email: 'user@example.com'}))
+    .mockResolvedValueOnce(Response.json({email: 1}))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await expect(readAccountSession()).resolves.toEqual({email: 'user@example.com'})
+  await expect(readAccountSession()).resolves.toBeNull()
+})
+
+it('should serialize an account-link completion and preserve a successful status', async () => {
+  const fetchMock = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(Response.json({linked: true, userId: 'user'}))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await expect(completeAccountLink('challenge')).resolves.toBe('linked')
+  expect(fetchMock).toHaveBeenCalledWith(
+    '/api/account/complete-link',
+    expect.objectContaining({
+      body: JSON.stringify({token: 'challenge'}),
+      credentials: 'include',
+      method: 'POST',
+    }),
+  )
 })
 
 it('should preserve a link token when completion is unavailable', async () => {

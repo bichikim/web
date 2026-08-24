@@ -7,11 +7,10 @@ import {
   type TextMoodAnalysis,
   type TextMoodAnalyzer,
   type TextMoodController,
-  textMoodFailure,
   type TextMoodRuntime,
-  textMoodSuccess,
   useTextMood,
 } from '../index'
+import {failureResult, successResult} from '../../result'
 
 const ANALYSIS: TextMoodAnalysis = {
   margin: 0.5,
@@ -39,11 +38,11 @@ const createRuntime = (): TestRuntime => {
   let onProgress: ((progress: number) => void) | null = null
   const analyzer: TextMoodAnalyzer = {
     analyze: vi.fn(async () =>
-      textMoodSuccess({analysis: ANALYSIS, elapsedMilliseconds: 18, status: 'complete' as const}),
+      successResult({analysis: ANALYSIS, elapsedMilliseconds: 18, status: 'complete' as const}),
     ),
     dispose: vi.fn(),
     prepare: vi.fn(async () =>
-      textMoodSuccess({repositoryId: 'Xenova/paraphrase-multilingual-MiniLM-L12-v2'}),
+      successResult({repositoryId: 'Xenova/paraphrase-multilingual-MiniLM-L12-v2'}),
     ),
   }
 
@@ -104,7 +103,7 @@ describe('useTextMood', () => {
   it('should block empty input and translate expected failures', async () => {
     const runtime = createRuntime()
     vi.mocked(runtime.analyzer.prepare).mockResolvedValueOnce(
-      textMoodFailure({code: 'model-failed', phase: 'prepare', retryable: true}),
+      failureResult({code: 'model-failed', phase: 'prepare', retryable: true}),
     )
     const root = createTextMoodRoot(runtime)
 
@@ -123,7 +122,7 @@ describe('useTextMood', () => {
   it('should expose insufficiency returned by the learned model gate', async () => {
     const runtime = createRuntime()
     vi.mocked(runtime.analyzer.analyze).mockResolvedValueOnce(
-      textMoodSuccess({
+      successResult({
         elapsedMilliseconds: 17,
         status: 'insufficient',
         sufficiency: {insufficient: true, probability: 0.97, threshold: 0.94},
@@ -160,7 +159,7 @@ describe('useTextMood', () => {
 
     root.controller.setText('입력을 바꿨어요.')
     resolveAnalysis(
-      textMoodSuccess({analysis: ANALYSIS, elapsedMilliseconds: 18, status: 'complete'}),
+      successResult({analysis: ANALYSIS, elapsedMilliseconds: 18, status: 'complete'}),
     )
     await analysis
 

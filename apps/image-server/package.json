@@ -15,7 +15,7 @@
     "dotenv": "catalog:",
     "express": "^4.22.1",
     "got": "^14.6.6",
-    "qs": "^6.15.1",
+    "qs": "^6.15.3",
     "reflect-metadata": "^0.2.2",
     "sharp": "^0.33.5",
     "ufo": "catalog:"

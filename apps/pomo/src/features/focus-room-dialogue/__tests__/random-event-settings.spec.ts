@@ -100,3 +100,42 @@ it('should retain a successful browser save when native storage is unavailable',
     writeRandomEventSettings({maximumMinutes: 30, minimumMinutes: 15, version: 1}),
   ).resolves.toBeUndefined()
 })
+
+it('should not let a pending native read replace a newer browser copy', async () => {
+  const settings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+  const nextSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  let completeRead: (value: string) => void = () => undefined
+  storageMocks.getItem.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  storageMocks.setItem.mockResolvedValue()
+
+  const pendingRead = readRandomEventSettings()
+  await writeRandomEventSettings(nextSettings)
+  completeRead(JSON.stringify(settings))
+
+  await expect(pendingRead).resolves.toEqual(settings)
+  expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(
+    nextSettings,
+  )
+})
+
+it('should preserve native write order during rapid settings changes', async () => {
+  const firstSettings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+  const secondSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+  const nativeWrites: string[] = []
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.setItem.mockImplementation(async (_key, value) => {
+    nativeWrites.push(value)
+  })
+
+  await Promise.all([
+    writeRandomEventSettings(firstSettings),
+    writeRandomEventSettings(secondSettings),
+  ])
+
+  expect(nativeWrites).toEqual([JSON.stringify(firstSettings), JSON.stringify(secondSettings)])
+})

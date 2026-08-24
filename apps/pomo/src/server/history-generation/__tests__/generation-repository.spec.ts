@@ -4,9 +4,11 @@ import {PgDialect} from 'drizzle-orm/pg-core'
 
 import type {HistoryGenerationOutput} from 'src/features/history-generation'
 import {
+  associateGenerationResponse,
   failHistoryResponse,
   type GenerationRun,
   markGenerationFailed,
+  markGenerationSubmitted,
   prepareGenerationRerun,
   prepareGenerationRun,
   publishHistoryResponse,
@@ -190,83 +192,49 @@ const GENERATION = {
   ],
 } satisfies HistoryGenerationOutput
 
-it('should reclaim a stale preparing run without a submitted response', async () => {
-  vi.useFakeTimers()
-  vi.setSystemTime(new Date('2026-08-16T00:31:00.000Z'))
+it('should not reclaim an ambiguous preparing run', async () => {
+  const existing = createRun('preparing', null)
+  const {database, update} = createGenerationDatabase(existing, existing)
 
-  try {
-    const existing = createRun('preparing', null)
-    const reclaimed = createRun('preparing', null, new Date())
-    const {database, set, update} = createGenerationDatabase(existing, reclaimed)
-
-    await expect(
-      prepareGenerationRun(
-        {
-          promptVersion: 'history-prompt-v1',
-          sourcePolicyVersion: 'history-sources-v1',
-          targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
-        },
-        database,
-      ),
-    ).resolves.toEqual({
-      created: true,
-      run: expect.objectContaining({id: RUN_ID, status: 'preparing'}),
-    })
-
-    expect(update).toHaveBeenCalledOnce()
-    expect(set).toHaveBeenCalledWith(
-      expect.not.objectContaining({openAiSubmissionKey: expect.anything()}),
-    )
-  } finally {
-    vi.useRealTimers()
-  }
+  await expect(
+    prepareGenerationRun(
+      {
+        promptVersion: 'history-prompt-v1',
+        sourcePolicyVersion: 'history-sources-v1',
+        targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
+      },
+      database,
+    ),
+  ).resolves.toEqual({created: false, run: expect.objectContaining({status: 'preparing'})})
+  expect(update).not.toHaveBeenCalled()
 })
 
-it('should reuse the submission key after an ambiguous submission failure', async () => {
+it('should retry a confirmed failed submission', async () => {
   const existing = createRun('failed', null)
   const retried = {...existing, attemptCount: 2, status: 'preparing' as const}
   const {database, set} = createGenerationDatabase(existing, retried)
 
-  await prepareGenerationRun(
-    {
-      promptVersion: 'history-prompt-v1',
-      sourcePolicyVersion: 'history-sources-v1',
-      targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
-    },
-    database,
-  )
-
-  expect(set).toHaveBeenCalledWith(
-    expect.objectContaining({openAiSubmissionKey: existing.openAiSubmissionKey}),
-  )
-})
-
-it('should rotate the submission key after a confirmed terminal response failure', async () => {
-  const existing = createRun('failed')
-  const retried = {...existing, attemptCount: 2, status: 'preparing' as const}
-  const {database, set} = createGenerationDatabase(existing, retried)
-
-  await prepareGenerationRun(
-    {
-      promptVersion: 'history-prompt-v1',
-      sourcePolicyVersion: 'history-sources-v1',
-      targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
-    },
-    database,
-  )
-
-  const openAiSubmissionKey = set.mock.calls[0]?.[0].openAiSubmissionKey
-  expect(openAiSubmissionKey).not.toBe(existing.openAiSubmissionKey)
-  expect(openAiSubmissionKey).toEqual(
+  await expect(
+    prepareGenerationRun(
+      {
+        promptVersion: 'history-prompt-v1',
+        sourcePolicyVersion: 'history-sources-v1',
+        targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
+      },
+      database,
+    ),
+  ).resolves.toEqual({created: true, run: expect.objectContaining({status: 'preparing'})})
+  const submissionKey = set.mock.calls[0]?.[0].openAiSubmissionKey
+  expect(submissionKey).not.toBe(existing.openAiSubmissionKey)
+  expect(submissionKey).toEqual(
     expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u),
   )
 })
 
-it('should reuse the submission key when retrying a failed regeneration persistence', async () => {
+it('should not reopen an ambiguous preparing run for regeneration', async () => {
   const requiredTitles = ['사건 A', '사건 B', '사건 C']
-  const existing = createRun('failed', null)
-  const updated = {...existing, status: 'preparing' as const}
-  const {database, set} = createRerunDatabase(existing, updated, requiredTitles)
+  const existing = createRun('preparing', null)
+  const {database} = createRerunDatabase(existing, existing, requiredTitles)
 
   await expect(
     prepareGenerationRerun(
@@ -278,41 +246,7 @@ it('should reuse the submission key when retrying a failed regeneration persiste
       },
       database,
     ),
-  ).resolves.toEqual(expect.objectContaining({openAiSubmissionKey: existing.openAiSubmissionKey}))
-  expect(set).toHaveBeenCalledWith(
-    expect.objectContaining({openAiSubmissionKey: existing.openAiSubmissionKey}),
-  )
-})
-
-it('should reclaim a stale regeneration when retryable-state persistence also failed', async () => {
-  vi.useFakeTimers()
-  vi.setSystemTime(new Date('2026-08-16T01:00:00.000Z'))
-
-  try {
-    const requiredTitles = ['사건 A', '사건 B', '사건 C']
-    const existing = createRun('preparing', null, new Date('2026-08-16T00:00:00.000Z'))
-    const updated = {...existing, status: 'preparing' as const, updatedAt: new Date()}
-    const {database, set, where} = createRerunDatabase(existing, updated, requiredTitles)
-
-    await prepareGenerationRerun(
-      {
-        promptVersion: 'history-prompt-v1',
-        requiredTitles,
-        sourcePolicyVersion: 'history-sources-v1',
-        targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
-      },
-      database,
-    )
-
-    expect(set).toHaveBeenCalledWith(
-      expect.objectContaining({openAiSubmissionKey: existing.openAiSubmissionKey}),
-    )
-    const condition = where.mock.calls[0]?.[0]
-    const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
-    expect(query.sql).toContain('"updated_at" < $3')
-  } finally {
-    vi.useRealTimers()
-  }
+  ).rejects.toThrow('Inactive generation run not found')
 })
 
 it('should not overwrite a submission that committed before its database acknowledgement failed', async () => {
@@ -328,6 +262,68 @@ it('should not overwrite a submission that committed before its database acknowl
   expect(query.sql).toContain('"status" = $2')
   expect(query.sql).toContain('"open_ai_response_id" is null')
   expect(query.params).toEqual([RUN_ID, 'preparing'])
+})
+
+it('should accept a repeated persistence acknowledgement for the same response', async () => {
+  const returning = vi.fn(async () => [])
+  const database = {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({limit: vi.fn(async () => [{responseId: RESPONSE_ID}])})),
+      })),
+    })),
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({where: vi.fn(() => ({returning}))})),
+    })),
+  } as unknown as Database
+
+  await expect(markGenerationSubmitted(RUN_ID, RESPONSE_ID, database)).resolves.toBeUndefined()
+})
+
+it('should reject persistence when a different response owns the run', async () => {
+  const returning = vi.fn(async () => [])
+  const database = {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({limit: vi.fn(async () => [{responseId: 'resp-other'}])})),
+      })),
+    })),
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({where: vi.fn(() => ({returning}))})),
+    })),
+  } as unknown as Database
+
+  await expect(markGenerationSubmitted(RUN_ID, RESPONSE_ID, database)).rejects.toThrow(
+    'Generation run did not accept response',
+  )
+})
+
+it('should associate a webhook response with an ambiguous preparing run', async () => {
+  const associated = createRun('submitted')
+  const select = vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => ({limit: vi.fn(async () => [])})),
+    })),
+  }))
+  const returning = vi.fn(async () => [associated])
+  const where = vi.fn((_condition: SQL) => ({returning}))
+  const set = vi.fn((_values: Record<string, unknown>) => ({where}))
+  const database = {select, update: vi.fn(() => ({set}))} as unknown as Database
+
+  await expect(
+    associateGenerationResponse(RESPONSE_ID, RUN_ID, associated.openAiSubmissionKey, database),
+  ).resolves.toMatchObject({id: RUN_ID, openAiResponseId: RESPONSE_ID, status: 'submitted'})
+  expect(set).toHaveBeenCalledWith(
+    expect.objectContaining({openAiResponseId: RESPONSE_ID, status: 'submitted'}),
+  )
+
+  const condition = where.mock.calls[0]?.[0]
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+  expect(query.sql).toContain('"id" = $1')
+  expect(query.sql).toContain('"status" = $2')
+  expect(query.sql).toContain('"open_ai_submission_key" = $3')
+  expect(query.sql).toContain('"open_ai_response_id" is null')
+  expect(query.params).toEqual([RUN_ID, 'preparing', associated.openAiSubmissionKey])
 })
 
 it('should ignore publish when the generation run is no longer submitted', async () => {

@@ -277,6 +277,10 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             <span>2</span>
             <div>
               <h2 id="dialogue-voice-title">목소리 선택과 음성 만들기</h2>
+              <p>
+                AI 생성 음성을 타인 사칭이나 괴롭힘 등에 악용할 수 없으며, 공개할 때는 AI 생성
+                음성임을 밝혀야 해요.
+              </p>
             </div>
           </div>
 

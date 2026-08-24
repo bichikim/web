@@ -3,15 +3,12 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
 import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
+import {TextMoodCard} from './home/TextMoodCard'
+import {CARD_CLASSES} from './home/shared'
 
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-hidden',
   'bg-#17131f px-5 py-12 text-#f8edf1 sm:px-8',
-)
-const CARD_CLASSES = cx(
-  'group grid min-h-60 content-between overflow-hidden rounded-7 border border-white/10 p-6',
-  'bg-white/4 text-inherit no-underline shadow-[0_24px_70px_rgba(5,2,10,0.28)]',
-  'transition hover:-translate-y-1 hover:border-#f2a7b8/35 hover:bg-white/7',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',
@@ -21,26 +18,6 @@ const POMO_LINK_CLASSES = cx(
   'mb-8 inline-flex min-h-11 items-center gap-2 text-sm font-700 text-#f4d7b5',
   'no-underline hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4',
   'focus-visible:outline-#f4d7b5',
-)
-
-const TextMoodCard = () => (
-  <A class={CARD_CLASSES} href="/dev/text-mood">
-    <div class="flex items-start justify-between gap-5">
-      <div>
-        <p class="m-0 text-xs font-700 tracking-[0.2em] text-#f0c99a uppercase">
-          MiniLM · 12 moods
-        </p>
-        <h2 class="mb-0 mt-3 text-2xl font-750">글 분위기 분석</h2>
-        <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
-          한국어 문장을 열두 가지 주 분위기와 장난·냉소 말투로 나눠 점수를 비교해요.
-        </p>
-      </div>
-      <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#f0c99a/12 text-xl text-#f4d7b5">
-        😶‍🌫️
-      </span>
-    </div>
-    <span class="mt-8 text-sm font-700 text-#f4d7b5">분위기 실험실 열기 →</span>
-  </A>
 )
 
 function HomePage() {

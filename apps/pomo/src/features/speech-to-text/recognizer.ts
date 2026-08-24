@@ -1,6 +1,6 @@
 import type {SpeechRecognitionError} from './errors'
 import type {SpeechModelId} from './models'
-import type {SpeechResult} from './result'
+import type {Result} from '../result'
 
 export type SpeechBackend = 'wasm' | 'webgpu'
 
@@ -19,10 +19,10 @@ export interface TranscribeSpeechOptions {
 
 export interface SpeechRecognizer {
   readonly dispose: () => void
-  readonly prepare: () => Promise<SpeechResult<SpeechRecognizerReady, SpeechRecognitionError>>
+  readonly prepare: () => Promise<Result<SpeechRecognizerReady, SpeechRecognitionError>>
   readonly transcribe: (
     options: TranscribeSpeechOptions,
-  ) => Promise<SpeechResult<SpeechTranscript, SpeechRecognitionError>>
+  ) => Promise<Result<SpeechTranscript, SpeechRecognitionError>>
 }
 
 export interface CreateSpeechRecognizerOptions {

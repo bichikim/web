@@ -107,7 +107,10 @@ export const AutomaticDialogueSettings = () => {
     >
       <div>
         <h4 id="pomo-automatic-dialogue-title">자동 음성 생성</h4>
-        <p>모든 자동 음성 생성에 사용할 모델과 음성 기본값이에요.</p>
+        <p>
+          모든 자동 음성 생성에 사용할 모델과 음성 기본값이에요. AI 생성 음성을 타인 사칭이나 괴롭힘
+          등에 악용할 수 없으며, 공개할 때는 AI 생성 음성임을 밝혀야 해요.
+        </p>
       </div>
       <Show
         when={!isLoading()}

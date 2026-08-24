@@ -2,7 +2,7 @@
 import {z} from 'zod'
 
 import type {InvalidModelDataError} from './errors'
-import {failureResult, type Result, successResult} from './result'
+import {failureResult, type Result, successResult} from '../result'
 
 const voiceFieldSchema = z.object({data: z.unknown(), dims: z.array(z.number().int().positive())})
 const voiceSchema = z.object({style_dp: voiceFieldSchema, style_ttl: voiceFieldSchema})

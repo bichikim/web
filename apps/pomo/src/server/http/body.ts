@@ -36,7 +36,7 @@ interface BoundedRequestFailure {
 
 export type BoundedRequestResult = BoundedRequestFailure | BoundedRequestSuccess
 
-type ApiRequestEvent = Pick<APIEvent, 'nativeEvent' | 'request'>
+type ApiRequestEvent = Pick<APIEvent, 'nativeEvent'>
 
 const isJsonBodyFailureStatus = (status: number): status is JsonBodyFailureStatus => {
   switch (status) {
@@ -79,20 +79,17 @@ export const readBoundedRequest = async (
 ): Promise<BoundedRequestResult> => {
   try {
     assertBodySize(event.nativeEvent, maximumBytes)
-
-    if (event.nativeEvent.req.body === null) {
-      return {request: event.request, success: true}
-    }
-
-    const body = await event.nativeEvent.req.arrayBuffer()
-    const headers = new Headers(event.request.headers)
+    const sourceRequest = event.nativeEvent.req
+    const headers = new Headers(sourceRequest.headers)
     headers.delete('Content-Length')
     headers.delete('Transfer-Encoding')
+
+    const body = sourceRequest.body === null ? undefined : await sourceRequest.arrayBuffer()
 
     return {
       // The bounded proxy helper is called only by request methods that permit a body.
       // oxlint-disable-next-line unicorn/no-invalid-fetch-options
-      request: new Request(event.request, {body, headers}),
+      request: new Request(sourceRequest.url, {body, headers, method: sourceRequest.method}),
       success: true,
     }
   } catch (error) {

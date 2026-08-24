@@ -21,11 +21,6 @@ import {
 const CHANNEL_SLUG = 'today-in-history'
 const MAX_RECOVERY_RUNS = 10
 const MAX_GENERATION_ATTEMPTS = 2
-const MINUTES_PER_STALE_PREPARING_DELAY = 30
-const SECONDS_PER_MINUTE = 60
-const MILLISECONDS_PER_SECOND = 1000
-const STALE_PREPARING_DELAY_MS =
-  MINUTES_PER_STALE_PREPARING_DELAY * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 
 export interface GenerationRun {
   readonly id: string
@@ -101,17 +96,13 @@ const mapRun = (run: typeof historicalGenerationRuns.$inferSelect): GenerationRu
   targetDate: run.targetDate,
 })
 
-const canPrepareRerun = (
-  run: typeof historicalGenerationRuns.$inferSelect,
-  stalePreparingBefore: Date,
-): boolean => {
+const canPrepareRerun = (run: typeof historicalGenerationRuns.$inferSelect): boolean => {
   switch (run.status) {
     case 'completed':
     case 'failed':
     case 'rejected':
       return true
     case 'preparing':
-      return run.openAiResponseId === null && run.updatedAt < stalePreparingBefore
     case 'submitted':
       return false
     default: {
@@ -164,8 +155,7 @@ export const prepareGenerationRun = async (
         attemptCount: existing.attemptCount + 1,
         errorMessage: null,
         openAiResponseId: null,
-        openAiSubmissionKey:
-          existing.openAiResponseId === null ? existing.openAiSubmissionKey : randomUUID(),
+        openAiSubmissionKey: randomUUID(),
         status: 'preparing',
         updatedAt: new Date(),
       })
@@ -180,34 +170,6 @@ export const prepareGenerationRun = async (
 
     if (retried !== undefined) {
       return {created: true, run: mapRun(retried)}
-    }
-  }
-
-  const stalePreparingBefore = new Date(Date.now() - STALE_PREPARING_DELAY_MS)
-
-  if (
-    existing.status === 'preparing' &&
-    existing.openAiResponseId === null &&
-    existing.updatedAt < stalePreparingBefore
-  ) {
-    const [reclaimed] = await database
-      .update(historicalGenerationRuns)
-      .set({
-        errorMessage: null,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(historicalGenerationRuns.id, existing.id),
-          eq(historicalGenerationRuns.status, 'preparing'),
-          isNull(historicalGenerationRuns.openAiResponseId),
-          lt(historicalGenerationRuns.updatedAt, stalePreparingBefore),
-        ),
-      )
-      .returning()
-
-    if (reclaimed !== undefined) {
-      return {created: true, run: mapRun(reclaimed)}
     }
   }
 
@@ -248,16 +210,9 @@ export const prepareGenerationRerun = async (
       ),
     )
     .limit(1)
-  const stalePreparingBefore = new Date(Date.now() - STALE_PREPARING_DELAY_MS)
-
-  if (existing === undefined || !canPrepareRerun(existing, stalePreparingBefore)) {
+  if (existing === undefined || !canPrepareRerun(existing)) {
     throw new Error(`Inactive generation run not found: ${options.targetDate.isoDate}`)
   }
-
-  const claimCondition =
-    existing.status === 'preparing'
-      ? lt(historicalGenerationRuns.updatedAt, stalePreparingBefore)
-      : eq(historicalGenerationRuns.attemptCount, existing.attemptCount)
 
   const [updated] = await database
     .update(historicalGenerationRuns)
@@ -266,8 +221,7 @@ export const prepareGenerationRerun = async (
       completedAt: null,
       errorMessage: null,
       openAiResponseId: null,
-      openAiSubmissionKey:
-        existing.openAiResponseId === null ? existing.openAiSubmissionKey : randomUUID(),
+      openAiSubmissionKey: randomUUID(),
       promptVersion: options.promptVersion,
       sourcePolicyVersion: options.sourcePolicyVersion,
       status: 'preparing',
@@ -277,7 +231,7 @@ export const prepareGenerationRerun = async (
       and(
         eq(historicalGenerationRuns.id, existing.id),
         eq(historicalGenerationRuns.status, existing.status),
-        claimCondition,
+        eq(historicalGenerationRuns.attemptCount, existing.attemptCount),
       ),
     )
     .returning()
@@ -295,7 +249,7 @@ export const markGenerationSubmitted = async (
   responseId: string,
   database: Database = getDatabase(),
 ): Promise<void> => {
-  await database
+  const [updated] = await database
     .update(historicalGenerationRuns)
     .set({
       errorMessage: null,
@@ -303,7 +257,28 @@ export const markGenerationSubmitted = async (
       status: 'submitted',
       updatedAt: new Date(),
     })
+    .where(
+      and(
+        eq(historicalGenerationRuns.id, runId),
+        eq(historicalGenerationRuns.status, 'preparing'),
+        isNull(historicalGenerationRuns.openAiResponseId),
+      ),
+    )
+    .returning({responseId: historicalGenerationRuns.openAiResponseId})
+
+  if (updated !== undefined) {
+    return
+  }
+
+  const [existing] = await database
+    .select({responseId: historicalGenerationRuns.openAiResponseId})
+    .from(historicalGenerationRuns)
     .where(eq(historicalGenerationRuns.id, runId))
+    .limit(1)
+
+  if (existing?.responseId !== responseId) {
+    throw new Error(`Generation run did not accept response: ${runId}`)
+  }
 }
 
 /** Records a generation failure without exposing it through the public feed. */
@@ -336,6 +311,34 @@ export const findGenerationRun = async (
     .limit(1)
 
   return run === undefined ? undefined : mapRun(run)
+}
+
+/** Associates an unrecorded OpenAI response with its exact prepared submission attempt. */
+export const associateGenerationResponse = async (
+  responseId: string,
+  generationRunId: string,
+  submissionKey: string,
+  database: Database = getDatabase(),
+): Promise<GenerationRun | undefined> => {
+  const [associated] = await database
+    .update(historicalGenerationRuns)
+    .set({
+      errorMessage: null,
+      openAiResponseId: responseId,
+      status: 'submitted',
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(historicalGenerationRuns.id, generationRunId),
+        eq(historicalGenerationRuns.status, 'preparing'),
+        eq(historicalGenerationRuns.openAiSubmissionKey, submissionKey),
+        isNull(historicalGenerationRuns.openAiResponseId),
+      ),
+    )
+    .returning()
+
+  return associated === undefined ? findGenerationRun(responseId, database) : mapRun(associated)
 }
 
 const claimWebhookEvent = async (

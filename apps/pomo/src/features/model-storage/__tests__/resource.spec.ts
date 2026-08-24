@@ -1,7 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import {loadModelResource} from '../resource'
-import {failureResult, successResult} from '../result'
+import {failureResult, successResult} from '../../result'
 import type {ModelStorage} from '../storage'
 
 const createStorage = (): ModelStorage => ({

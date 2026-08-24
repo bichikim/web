@@ -2,7 +2,7 @@ import type {APIEvent} from '@solidjs/start/server'
 import {mockEvent} from 'h3'
 import {describe, expect, it} from 'vitest'
 
-import {readJsonBody} from '../body'
+import {readBoundedRequest, readJsonBody} from '../body'
 
 const createApiEvent = (request: Request): Pick<APIEvent, 'nativeEvent'> => ({
   nativeEvent: mockEvent(request),
@@ -64,5 +64,28 @@ describe('readJsonBody', () => {
     const result = await readJsonBody(createApiEvent(request), 4)
 
     expect(result).toEqual({status: 413, success: false})
+  })
+})
+
+describe('readBoundedRequest', () => {
+  it('should reconstruct the request without copying a runtime-specific Request object', async () => {
+    const request = createJsonRequest('{"ok":true}', {
+      'Content-Length': '11',
+      'X-Request-Context': 'test',
+    })
+    const result = await readBoundedRequest(createApiEvent(request), 128)
+
+    expect(result.success).toBe(true)
+
+    if (!result.success) {
+      return
+    }
+
+    expect(result.request).not.toBe(request)
+    expect(result.request.url).toBe(request.url)
+    expect(result.request.method).toBe('POST')
+    expect(result.request.headers.get('Content-Length')).toBeNull()
+    expect(result.request.headers.get('X-Request-Context')).toBe('test')
+    await expect(result.request.json()).resolves.toEqual({ok: true})
   })
 })

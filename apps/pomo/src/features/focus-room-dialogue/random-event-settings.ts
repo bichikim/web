@@ -1,5 +1,12 @@
-import {Storage} from '@apps-in-toss/web-framework'
 import {z} from 'zod'
+
+import {
+  createSerialNativeStorageWriter,
+  hasNativeStorageBridge,
+  readNativeStorageJson,
+  readWebStorageJson,
+  writeWebStorageJson,
+} from 'src/features/runtime-storage'
 
 export const RANDOM_EVENT_SETTINGS_CHANGED_EVENT = 'pomo:random-event-settings-changed'
 
@@ -26,56 +33,19 @@ const randomEventSettingsSchema: z.ZodType<RandomEventSettings> = z
   })
   .refine((settings) => settings.minimumMinutes <= settings.maximumMinutes)
 let preferenceWriteRevision = 0
-let nativeWriteQueue = Promise.resolve()
+const nativeWriter = createSerialNativeStorageWriter()
 
 export const parseRandomEventSettings = (value: unknown): RandomEventSettings | null => {
   const result = randomEventSettingsSchema.safeParse(value)
   return result.success ? result.data : null
 }
 
-const parseStoredSettings = (storedValue: string | null) => {
-  if (storedValue === null) {
-    return null
-  }
-
-  try {
-    return parseRandomEventSettings(JSON.parse(storedValue) as unknown)
-  } catch {
-    return null
-  }
-}
-
-const hasNativeBridge = () => 'ReactNativeWebView' in window
-
 const readWebSettings = () => {
-  try {
-    return parseStoredSettings(localStorage.getItem(STORAGE_KEY))
-  } catch {
-    return null
-  }
+  return readWebStorageJson(STORAGE_KEY, parseRandomEventSettings)
 }
 
 const writeWebSettings = (settings: RandomEventSettings) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-    return null
-  } catch (error: unknown) {
-    return error
-  }
-}
-
-const enqueueNativeWrite = (settings: RandomEventSettings) => {
-  const write = nativeWriteQueue.then(async () => {
-    try {
-      await Storage.setItem(STORAGE_KEY, JSON.stringify(settings))
-      return null
-    } catch (error: unknown) {
-      return error
-    }
-  })
-  nativeWriteQueue = write.then(() => undefined)
-
-  return write
+  return writeWebStorageJson(STORAGE_KEY, settings)
 }
 
 /** Reads the random event settings from storage whose lifetime matches the current runtime. */
@@ -87,12 +57,12 @@ export const readRandomEventSettings = async (): Promise<RandomEventSettings> =>
     return webSettings
   }
 
-  if (!hasNativeBridge()) {
+  if (!hasNativeStorageBridge()) {
     return DEFAULT_RANDOM_EVENT_SETTINGS
   }
 
   try {
-    const nativeSettings = parseStoredSettings(await Storage.getItem(STORAGE_KEY))
+    const nativeSettings = await readNativeStorageJson(STORAGE_KEY, parseRandomEventSettings)
 
     if (nativeSettings === null) {
       return DEFAULT_RANDOM_EVENT_SETTINGS
@@ -114,7 +84,7 @@ export const writeRandomEventSettings = async (settings: RandomEventSettings): P
   preferenceWriteRevision += 1
   const webWriteError = writeWebSettings(snapshot)
 
-  if (!hasNativeBridge()) {
+  if (!hasNativeStorageBridge()) {
     if (webWriteError !== null) {
       throw new Error('Failed to persist random event settings.', {cause: webWriteError})
     }
@@ -122,7 +92,7 @@ export const writeRandomEventSettings = async (settings: RandomEventSettings): P
     return
   }
 
-  const nativeWriteError = await enqueueNativeWrite(snapshot)
+  const nativeWriteError = await nativeWriter.write(STORAGE_KEY, snapshot)
 
   if (webWriteError !== null && nativeWriteError !== null) {
     throw new Error('Failed to persist random event settings.', {cause: nativeWriteError})

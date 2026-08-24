@@ -145,9 +145,10 @@ describe('createPBrowserAudioVisemeAnalyzer', () => {
 
     analyzer.disconnect(source)
     expect(source.disconnect).toHaveBeenCalledWith(node)
+    expect(node.disconnect).toHaveBeenCalledWith(destination)
 
     analyzer.dispose()
-    expect(node.disconnect).toHaveBeenCalledOnce()
+    expect(node.disconnect).toHaveBeenCalledTimes(2)
     expect(analyzer.getFrame('rest')).toBeNull()
   })
 
@@ -167,5 +168,31 @@ describe('createPBrowserAudioVisemeAnalyzer', () => {
     await connection
 
     expect(source.connect).not.toHaveBeenCalled()
+  })
+
+  it('should disconnect the worklet while idle and reconnect it for a later source', async () => {
+    const {context, destination, node, source: firstSource} = createAudioHarness()
+    const secondSource = {connect: vi.fn(), disconnect: vi.fn()} as unknown as AudioNode
+    const laterSource = {connect: vi.fn(), disconnect: vi.fn()} as unknown as AudioNode
+    wlipsyncMocks.createNode.mockResolvedValue(node)
+    const analyzer = createPBrowserAudioVisemeAnalyzer(context)
+
+    await analyzer.connect(firstSource)
+    await analyzer.connect(secondSource)
+
+    expect(node.connect).toHaveBeenCalledOnce()
+    analyzer.disconnect(firstSource)
+    expect(node.disconnect).not.toHaveBeenCalled()
+
+    analyzer.disconnect(secondSource)
+    expect(node.disconnect).toHaveBeenCalledWith(destination)
+
+    await analyzer.connect(laterSource)
+    expect(node.connect).toHaveBeenCalledTimes(2)
+    expect(node.connect).toHaveBeenLastCalledWith(destination)
+
+    analyzer.disconnect(laterSource)
+    expect(node.disconnect).toHaveBeenCalledTimes(2)
+    expect(node.disconnect).toHaveBeenLastCalledWith(destination)
   })
 })

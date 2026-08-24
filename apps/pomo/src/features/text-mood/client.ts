@@ -2,7 +2,8 @@ import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './analysis'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
-import {textMoodFailure, type TextMoodResult, textMoodSuccess} from './result'
+import {reportClientError} from '../client-error-reporter'
+import {failureResult, type Result, successResult} from '../result'
 
 export interface AnalyzeTextMoodOptions {
   readonly context?: string
@@ -36,14 +37,14 @@ export interface CreateTextMoodAnalyzerOptions {
 export interface TextMoodAnalyzer {
   readonly analyze: (
     options: AnalyzeTextMoodOptions,
-  ) => Promise<TextMoodResult<TextMoodAnalyzerResult, TextMoodError>>
+  ) => Promise<Result<TextMoodAnalyzerResult, TextMoodError>>
   readonly dispose: () => void
-  readonly prepare: () => Promise<TextMoodResult<TextMoodAnalyzerReady, TextMoodError>>
+  readonly prepare: () => Promise<Result<TextMoodAnalyzerReady, TextMoodError>>
 }
 
 interface PendingRequest<Value> {
   readonly requestId: number
-  readonly resolve: (result: TextMoodResult<Value, TextMoodError>) => void
+  readonly resolve: (result: Result<Value, TextMoodError>) => void
 }
 
 const createRequestId = () => {
@@ -69,6 +70,31 @@ const createWorkerError = (phase: TextMoodPhase, detail: string): TextMoodError 
   retryable: true,
 })
 
+interface ObserveTextMoodWorkerOptions {
+  readonly onFailure: (detail: string) => void
+  readonly worker: Worker
+}
+
+const observeTextMoodWorker = (options: ObserveTextMoodWorkerOptions) => {
+  options.worker.addEventListener('error', (event) => {
+    reportClientError(event.error ?? {message: 'Worker execution failed', name: 'WorkerError'}, {
+      feature: 'text-mood-model',
+      source: 'worker',
+    })
+    options.onFailure(event.message || '분위기 분석 Worker 실행 오류')
+  })
+  options.worker.addEventListener('messageerror', () => {
+    reportClientError(
+      {message: 'Worker response deserialization failed', name: 'WorkerError'},
+      {
+        feature: 'text-mood-model',
+        source: 'worker',
+      },
+    )
+    options.onFailure('분위기 분석 Worker 응답을 읽지 못했습니다.')
+  })
+}
+
 /** Owns one embedding Worker and resolves feature requests by request id. */
 export const createTextMoodAnalyzer = (
   options: CreateTextMoodAnalyzerOptions = {},
@@ -93,21 +119,22 @@ export const createTextMoodAnalyzer = (
 
   const failPending = (detail: string) => {
     workerFailure ??= detail
-    pendingAnalyze?.resolve(textMoodFailure(createWorkerError('analyze', detail)))
-    pendingPrepare?.resolve(textMoodFailure(createWorkerError('prepare', detail)))
+    pendingAnalyze?.resolve(failureResult(createWorkerError('analyze', detail)))
+    pendingPrepare?.resolve(failureResult(createWorkerError('prepare', detail)))
     pendingAnalyze = null
     pendingPrepare = null
   }
 
   const handleError = (response: Extract<TextMoodWorkerResponse, {readonly type: 'error'}>) => {
     if (pendingAnalyze?.requestId === response.requestId) {
-      pendingAnalyze.resolve(textMoodFailure(response.error))
+      pendingAnalyze.resolve(failureResult(response.error))
       pendingAnalyze = null
       return
     }
 
     if (pendingPrepare?.requestId === response.requestId) {
-      pendingPrepare.resolve(textMoodFailure(response.error))
+      reportClientError(response.error, {feature: 'text-mood-model', source: 'worker'})
+      pendingPrepare.resolve(failureResult(response.error))
       pendingPrepare = null
     }
   }
@@ -119,7 +146,7 @@ export const createTextMoodAnalyzer = (
       case 'complete':
         if (pendingAnalyze?.requestId === response.requestId) {
           pendingAnalyze.resolve(
-            textMoodSuccess({
+            successResult({
               analysis: response.analysis,
               elapsedMilliseconds: response.elapsedMilliseconds,
               status: 'complete',
@@ -131,7 +158,7 @@ export const createTextMoodAnalyzer = (
       case 'insufficient':
         if (pendingAnalyze?.requestId === response.requestId) {
           pendingAnalyze.resolve(
-            textMoodSuccess({
+            successResult({
               elapsedMilliseconds: response.elapsedMilliseconds,
               status: 'insufficient',
               sufficiency: response.sufficiency,
@@ -148,7 +175,7 @@ export const createTextMoodAnalyzer = (
         return
       case 'ready':
         if (pendingPrepare?.requestId === response.requestId) {
-          pendingPrepare.resolve(textMoodSuccess({repositoryId: TEXT_MOOD_MODEL.repositoryId}))
+          pendingPrepare.resolve(successResult({repositoryId: TEXT_MOOD_MODEL.repositoryId}))
           pendingPrepare = null
         }
         return
@@ -156,29 +183,28 @@ export const createTextMoodAnalyzer = (
 
     response satisfies never
   })
-  worker.addEventListener('error', (event) => {
-    failPending(event.message || '분위기 분석 Worker 실행 오류')
-    terminateWorker()
-  })
-  worker.addEventListener('messageerror', () => {
-    failPending('분위기 분석 Worker 응답을 읽지 못했습니다.')
-    terminateWorker()
+  observeTextMoodWorker({
+    onFailure: (detail) => {
+      failPending(detail)
+      terminateWorker()
+    },
+    worker,
   })
 
   const sendRequest = (request: TextMoodWorkerRequest) => worker.postMessage(request)
 
   const prepare: TextMoodAnalyzer['prepare'] = () => {
     if (disposed) {
-      return Promise.resolve(textMoodFailure(createCancelledError('prepare')))
+      return Promise.resolve(failureResult(createCancelledError('prepare')))
     }
 
     if (workerFailure !== null) {
-      return Promise.resolve(textMoodFailure(createWorkerError('prepare', workerFailure)))
+      return Promise.resolve(failureResult(createWorkerError('prepare', workerFailure)))
     }
 
     if (pendingPrepare !== null) {
       return Promise.resolve(
-        textMoodFailure({
+        failureResult({
           code: 'model-failed',
           detail: '모델을 이미 준비하고 있어요.',
           phase: 'prepare',
@@ -196,16 +222,16 @@ export const createTextMoodAnalyzer = (
 
   const analyze: TextMoodAnalyzer['analyze'] = (requestOptions) => {
     if (disposed) {
-      return Promise.resolve(textMoodFailure(createCancelledError('analyze')))
+      return Promise.resolve(failureResult(createCancelledError('analyze')))
     }
 
     if (workerFailure !== null) {
-      return Promise.resolve(textMoodFailure(createWorkerError('analyze', workerFailure)))
+      return Promise.resolve(failureResult(createWorkerError('analyze', workerFailure)))
     }
 
     if (pendingAnalyze !== null) {
       return Promise.resolve(
-        textMoodFailure({
+        failureResult({
           code: 'classification-failed',
           detail: '다른 문장을 분석하고 있어요.',
           phase: 'analyze',
@@ -227,8 +253,8 @@ export const createTextMoodAnalyzer = (
     }
 
     disposed = true
-    pendingAnalyze?.resolve(textMoodFailure(createCancelledError('analyze')))
-    pendingPrepare?.resolve(textMoodFailure(createCancelledError('prepare')))
+    pendingAnalyze?.resolve(failureResult(createCancelledError('analyze')))
+    pendingPrepare?.resolve(failureResult(createCancelledError('prepare')))
     pendingAnalyze = null
     pendingPrepare = null
     terminateWorker()

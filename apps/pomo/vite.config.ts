@@ -4,37 +4,66 @@ import {solidStart} from '@solidjs/start/config'
 import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {nitro} from 'nitro/vite'
 import UnoCSS from 'unocss/vite'
-import {defineConfig, type Plugin} from 'vite'
+import {
+  type ConfigEnv,
+  defaultServerConditions,
+  defineConfig,
+  type Plugin,
+  type PluginOption,
+  type UserConfig,
+} from 'vite'
 
 import {SERVICE_POLICY_PATHS} from './src/config/service-policy.ts'
+import {
+  BASE_SECURITY_HEADERS,
+  STATIC_SECURITY_HEADERS,
+  WORKER_SECURITY_HEADERS,
+} from './src/config/security-headers.ts'
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
-const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const isAppsInTossBuild = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const isAppsInTossRuntime = isAppsInTossBuild || process.env.POMO_RUNTIME_TARGET === 'apps-in-toss'
+const usesAppsInTossDevtools =
+  isAppsInTossRuntime && process.env.POMO_APPS_IN_TOSS_DEVTOOLS === 'true'
 const appsInTossApiOrigin = new URL(
   process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
 ).origin
+const deploymentEnvironment =
+  process.env.POMO_ENVIRONMENT?.trim() ||
+  process.env.VERCEL_ENV?.trim() ||
+  (process.env.NODE_ENV === 'production' ? 'production' : 'development')
+const shortCommitHashLength = 12
+const release =
+  process.env.POMO_RELEASE?.trim() ||
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, shortCommitHashLength) ||
+  'local'
 const assetLibraryPattern = /[/\\]asset-library[/\\]/u
+const appsInTossFrameworkId = '@apps-in-toss/web-framework'
+const appsInTossMockId = '@ait-co/devtools/mock'
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
-const publicStaticRoutes = [
+const sharedStaticRoutes = [
   '/',
   SERVICE_POLICY_PATHS.appsInToss.privacy,
   SERVICE_POLICY_PATHS.appsInToss.terms,
-  SERVICE_POLICY_PATHS.legacy.privacy,
   SERVICE_POLICY_PATHS.refund,
-  SERVICE_POLICY_PATHS.legacy.terms,
   '/third-party-notices',
   SERVICE_POLICY_PATHS.web.privacy,
   SERVICE_POLICY_PATHS.web.terms,
 ]
 const appsInTossStaticRoutes = [
-  ...publicStaticRoutes,
+  ...sharedStaticRoutes,
+  SERVICE_POLICY_PATHS.legacy.privacy,
+  SERVICE_POLICY_PATHS.legacy.terms,
   '/account',
   '/dialogue',
   '/focus-room',
   '/focus-room-dialogue',
 ]
+const prerenderSecurityRules = Object.fromEntries(
+  sharedStaticRoutes.map((route) => [route, {headers: STATIC_SECURITY_HEADERS}]),
+)
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
 
@@ -101,8 +130,8 @@ const restartOnScribbleIconChange = {
 } satisfies Plugin
 
 const useStaticNitroEntry = {
-  configEnvironment(name: string, config: {build?: {rolldownOptions?: {input?: string}}}) {
-    if (isAppsInToss && name === 'nitro') {
+  configEnvironment(name, config) {
+    if (isAppsInTossBuild && name === 'nitro') {
       config.build ??= {}
       config.build.rolldownOptions ??= {}
       // Nitro 3 beta still builds its server environment after static prerendering.
@@ -120,34 +149,51 @@ const useStaticNitroEntry = {
       return id
     }
   },
-}
+} satisfies Plugin
 
-export default defineConfig({
+const createPlugins = (command: ConfigEnv['command']): PluginOption[] => [
+  createUnoCssInlineResolver(),
+  resolveBuildUnoCss,
+  ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
+  solidStart({
+    devOverlay: false,
+    middleware: './src/middleware/index.ts',
+    serialization: {mode: 'json'},
+  }),
+  createDevFeedPlugin(),
+  excludeArchivedAssets,
+  restartOnScribbleIconChange,
+  nitro(),
+  ...(isAppsInTossBuild && command === 'build' ? [useStaticNitroEntry] : []),
+]
+
+const createConfig = ({command}: ConfigEnv): UserConfig => ({
+  cacheDir: usesAppsInTossDevtools ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
   define: {
-    'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
+    'import.meta.env.POMO_ENVIRONMENT': JSON.stringify(deploymentEnvironment),
+    'import.meta.env.POMO_HAS_APPS_IN_TOSS_DEVTOOLS': JSON.stringify(usesAppsInTossDevtools),
+    'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInTossRuntime),
     'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
+    'import.meta.env.POMO_RELEASE': JSON.stringify(release),
   },
   nitro: {
     prerender: {
-      routes: isAppsInToss ? appsInTossStaticRoutes : publicStaticRoutes,
+      routes:
+        isAppsInTossBuild && command === 'build' ? appsInTossStaticRoutes : sharedStaticRoutes,
     },
-    ...(isAppsInToss ? {preset: 'static'} : {}),
+    routeRules: {
+      '/**': {headers: BASE_SECURITY_HEADERS},
+      '/workers/**': {headers: WORKER_SECURITY_HEADERS},
+      ...prerenderSecurityRules,
+    },
+    ...(isAppsInTossBuild && command === 'build' ? {preset: 'static'} : {}),
   },
   optimizeDeps: {
     include: ['onnxruntime-web/all', 'zod'],
   },
-  plugins: [
-    createUnoCssInlineResolver(),
-    resolveBuildUnoCss,
-    ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
-    solidStart({devOverlay: false, middleware: './src/middleware/index.ts'}),
-    createDevFeedPlugin(),
-    excludeArchivedAssets,
-    restartOnScribbleIconChange,
-    nitro(),
-    useStaticNitroEntry,
-  ],
+  plugins: createPlugins(command),
   resolve: {
+    ...(usesAppsInTossDevtools ? {alias: {[appsInTossFrameworkId]: appsInTossMockId}} : {}),
     tsconfigPaths: true,
   },
   server: {
@@ -155,5 +201,18 @@ export default defineConfig({
       ignored: [assetLibraryPattern],
     },
   },
-  worker: {format: 'es'},
+  ssr: {
+    noExternal: ['server-only'],
+    resolve: {
+      conditions: ['react-server', ...defaultServerConditions],
+    },
+  },
+  worker: {
+    format: 'es',
+    rolldownOptions: {
+      output: {entryFileNames: 'workers/[name]-[hash].js'},
+    },
+  },
 })
+
+export default defineConfig(createConfig)

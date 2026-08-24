@@ -1,3 +1,8 @@
+import {z} from 'zod'
+
+import {apiJson, ApiJsonError, apiJsonRequest} from '../api-json'
+import {apiFetch} from '../http-client'
+
 export interface AccountSession {
   readonly email: string
 }
@@ -7,37 +12,39 @@ export type CompleteWebAccountLinkResult = 'invalid' | 'linked'
 const HTTP_UNAUTHORIZED = 401
 const HTTP_CONFLICT = 409
 const HTTP_GONE = 410
+const accountSessionSchema: z.ZodType<AccountSession> = z.object({email: z.string()})
 
 export const readAccountSession = async (): Promise<AccountSession | null> => {
-  const response = await fetch('/api/account', {credentials: 'include'})
-
-  if (!response.ok) {
-    if (response.status === HTTP_UNAUTHORIZED) {
+  try {
+    return await apiJson('account', {
+      credentials: 'include',
+      responseSchema: accountSessionSchema,
+    })
+  } catch (error: unknown) {
+    if (
+      error instanceof ApiJsonError &&
+      error.kind === 'http' &&
+      error.response.status === HTTP_UNAUTHORIZED
+    ) {
       return null
     }
 
-    throw new Error('Web account session is unavailable')
+    if (error instanceof ApiJsonError && error.kind === 'http') {
+      throw new Error('Web account session is unavailable')
+    }
+
+    if (error instanceof ApiJsonError && error.kind === 'schema') {
+      return null
+    }
+
+    throw error
   }
-
-  const body: unknown = await response.json()
-
-  if (
-    typeof body !== 'object' ||
-    body === null ||
-    !('email' in body) ||
-    typeof body.email !== 'string'
-  ) {
-    return null
-  }
-
-  return {email: body.email}
 }
 
 export const completeAccountLink = async (token: string): Promise<CompleteWebAccountLinkResult> => {
-  const response = await fetch('/api/account/complete-link', {
-    body: JSON.stringify({token}),
+  const response = await apiJsonRequest('account/complete-link', {
+    body: {token},
     credentials: 'include',
-    headers: {'Content-Type': 'application/json'},
     method: 'POST',
   })
 
@@ -53,7 +60,7 @@ export const completeAccountLink = async (token: string): Promise<CompleteWebAcc
 }
 
 export const signOutWebSession = async (): Promise<boolean> => {
-  const response = await fetch('/api/auth/sign-out', {
+  const response = await apiFetch('auth/sign-out', {
     credentials: 'include',
     method: 'POST',
   })

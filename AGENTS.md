@@ -12,6 +12,11 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Scripts
+
+- Treat code under `scripts` as standalone; it must not import or use code from `src`.
+- If reusing `src` from a script appears necessary, obtain explicit user approval before adding the dependency.
+
 ## File naming
 
 - Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory without repeating parent-directory context; use meaningful subdirectories for context shared by siblings.
@@ -59,6 +64,10 @@
 
 - Start new worktrees from the latest `origin/dev` commit.
 - Do not automatically merge, rebase, or reset an existing worktree with in-progress changes.
+
+## Pomo local servers
+
+- Run Pomo commands that bind a local port—including Vite, Playwright, Storybook browser tests, Wallaby, and Wrangler local tooling—with escalated permissions on the first attempt. Treat loopback `listen EPERM` as a sandbox restriction, retry the same command in the approved context, and verify it there before attributing the failure to product code.
 
 ## Required after changes
 

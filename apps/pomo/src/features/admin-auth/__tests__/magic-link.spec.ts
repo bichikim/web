@@ -14,7 +14,7 @@ it('should request a magic link that returns to the admin page', async () => {
     requestAdminMagicLink({email: 'admin@example.com', origin: 'https://pomo.example'}),
   ).resolves.toBe(true)
   expect(fetchMock).toHaveBeenCalledWith(
-    new URL('https://pomo.example/api/auth/sign-in/magic-link'),
+    '/api/auth/sign-in/magic-link',
     expect.objectContaining({
       body: JSON.stringify({
         callbackURL: 'https://pomo.example/admin',

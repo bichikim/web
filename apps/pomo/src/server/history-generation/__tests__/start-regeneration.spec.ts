@@ -1,5 +1,6 @@
 import {expect, it, vi} from 'vitest'
 
+import {HistorySubmissionError} from '../openai-client'
 import {startHistoryRegeneration} from '../start-regeneration'
 
 const RUN = {
@@ -43,15 +44,15 @@ it('should submit selected moments against the reopened daily run', async () => 
   )
   expect(submit).toHaveBeenCalledWith(
     expect.objectContaining({
-      idempotencyKey: RUN.openAiSubmissionKey,
       requiredTitles: OPTIONS.requiredTitles,
+      submissionKey: RUN.openAiSubmissionKey,
     }),
   )
   expect(markSubmitted).toHaveBeenCalledWith('run-1', 'resp-radio')
 })
 
-it('should mark a reopened run as failed when submission fails', async () => {
-  const error = new Error('OpenAI unavailable')
+it('should mark a reopened run as failed after a confirmed rejection', async () => {
+  const error = new HistorySubmissionError('rejected', new Error('Invalid request'))
   const markFailed = vi.fn().mockResolvedValue(undefined)
 
   await expect(
@@ -62,20 +63,39 @@ it('should mark a reopened run as failed when submission fails', async () => {
       submit: vi.fn().mockRejectedValue(error),
     }),
   ).rejects.toBe(error)
-  expect(markFailed).toHaveBeenCalledWith('run-1', 'OpenAI unavailable')
+  expect(markFailed).toHaveBeenCalledWith('run-1', 'Invalid request')
 })
 
-it('should preserve a retryable reopened run when response ID persistence fails', async () => {
-  const error = new Error('Database unavailable')
+it('should preserve an ambiguous reopened submission for webhook recovery', async () => {
+  const error = new HistorySubmissionError('unknown', new Error('Response lost'))
   const markFailed = vi.fn()
 
   await expect(
     startHistoryRegeneration(OPTIONS, {
       markFailed,
-      markSubmitted: vi.fn().mockRejectedValue(error),
+      markSubmitted: vi.fn(),
       prepare: vi.fn().mockResolvedValue(RUN),
-      submit: vi.fn().mockResolvedValue({responseId: 'resp-accepted'}),
+      submit: vi.fn().mockRejectedValue(error),
     }),
   ).rejects.toBe(error)
-  expect(markFailed).toHaveBeenCalledWith('run-1', 'Database unavailable')
+  expect(markFailed).not.toHaveBeenCalled()
+})
+
+it('should retry reopened response ID persistence without submitting again', async () => {
+  const error = new Error('Database unavailable')
+  const markFailed = vi.fn()
+  const markSubmitted = vi.fn().mockRejectedValueOnce(error).mockResolvedValue(undefined)
+  const submit = vi.fn().mockResolvedValue({responseId: 'resp-accepted'})
+
+  await expect(
+    startHistoryRegeneration(OPTIONS, {
+      markFailed,
+      markSubmitted,
+      prepare: vi.fn().mockResolvedValue(RUN),
+      submit,
+    }),
+  ).resolves.toMatchObject({responseId: 'resp-accepted', status: 'submitted'})
+  expect(submit).toHaveBeenCalledOnce()
+  expect(markSubmitted).toHaveBeenCalledTimes(2)
+  expect(markFailed).not.toHaveBeenCalled()
 })

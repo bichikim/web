@@ -170,6 +170,68 @@ it('should play every entry event dialogue continuously', async () => {
   result.unmount()
 })
 
+it('should suspend audio processing between queued dialogues before resuming', async () => {
+  const dialogues = [createDialogue('first'), createDialogue('second')]
+  const repository = createRepository(dialogues)
+  const audioElements = dialogues.map(() => document.createElement('audio'))
+  let resolveSuspension: () => void = () => undefined
+  const firstSuspension = new Promise<void>((resolve) => {
+    resolveSuspension = resolve
+  })
+  const suspend = vi
+    .fn<() => Promise<void>>()
+    .mockReturnValueOnce(firstSuspension)
+    .mockResolvedValue(undefined)
+  const resume = vi.fn(async () => undefined)
+
+  class AudioContextMock {
+    readonly destination = {}
+    state: AudioContextState = 'running'
+
+    close = vi.fn(async () => {
+      this.state = 'closed'
+    })
+
+    createMediaElementSource = vi.fn(
+      () =>
+        ({
+          connect: vi.fn(),
+          disconnect: vi.fn(),
+        }) as unknown as MediaElementAudioSourceNode,
+    )
+
+    resume = resume
+    suspend = suspend
+  }
+
+  repositoryMocks.create.mockReturnValue(repository)
+  stubAudioElements(audioElements)
+  vi.stubGlobal('AudioContext', AudioContextMock)
+  vi.stubGlobal('AudioWorkletNode', undefined)
+  const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const {events, result} = await renderContext()
+  const playback = events.playDialogueSequence({
+    dialogueIds: dialogues.map((dialogue) => dialogue.id),
+    onDialogueStart: vi.fn(),
+    onSequenceStop: vi.fn(),
+  })
+
+  await waitFor(() => expect(playAudio).toHaveBeenCalledOnce())
+  expect(resume).toHaveBeenCalledOnce()
+  audioElements[0]?.dispatchEvent(new Event('ended'))
+  await waitFor(() => expect(suspend).toHaveBeenCalledOnce())
+  expect(playAudio).toHaveBeenCalledOnce()
+
+  resolveSuspension()
+  await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(2))
+  expect(resume).toHaveBeenCalledTimes(2)
+
+  audioElements[1]?.dispatchEvent(new Event('ended'))
+  await playback
+  expect(suspend).toHaveBeenCalledTimes(2)
+  result.unmount()
+})
+
 it('should hold a speaking mouth between dialogues and rest 300ms after the final audio', async () => {
   const dialogues = [createDialogue('first'), createDialogue('second')]
   const repository = createRepository(dialogues, [

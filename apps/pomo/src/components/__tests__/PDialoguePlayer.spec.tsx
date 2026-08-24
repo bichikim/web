@@ -92,6 +92,8 @@ it('should show segment progress and stop the current dialogue playback', () => 
   expect(screen.getByRole('img', {name: '총 3개 중 2번째 대사 읽는 중'})).toBeDefined()
   expect(screen.getByRole('img', {name: '밝음·즐거움 감정'}).classList).toContain('scale-[1.5556]')
   expect(screen.queryByText('Pomo')).toBeNull()
+  expect(screen.getByRole('status').textContent).toBe('집중을 시작해 볼까요? AI 음성')
+  expect(screen.getByText('AI 음성').getAttribute('data-pomo-tag')).toBe('')
   expect(
     result.container.querySelectorAll('.pomo-dialogue-bubble__progress-dot[data-complete]'),
   ).toHaveLength(2)
@@ -162,7 +164,7 @@ it('should route the stop action to an external speech owner', () => {
   ))
   fireEvent.click(screen.getByRole('button', {name: '1개 모두 중지'}))
 
-  expect(screen.getByText('WebMCP 대사').textContent).toBe('WebMCP 대사')
+  expect(screen.getByText('WebMCP 대사').textContent).toBe('WebMCP 대사 AI 음성')
   expect(screen.getByRole('img', {name: '중립 감정'})).toBeDefined()
   expect(screen.queryByRole('img', {name: /번째 대사 읽는 중/})).toBeNull()
   expect(screen.queryByRole('button', {name: '대화 건너뛰기'})).toBeNull()
@@ -181,11 +183,11 @@ it('should keep one dialogue container between queued dialogue items', () => {
 
   setActiveText(null)
   expect(result.container.querySelector('.pomo-dialogue-bubble')).toBe(dialogueBubble)
-  expect(screen.getByRole('status').textContent).toBe('첫 번째 대화')
+  expect(screen.getByRole('status').textContent).toBe('첫 번째 대화 AI 음성')
 
   setActiveText('두 번째 대화')
   expect(result.container.querySelector('.pomo-dialogue-bubble')).toBe(dialogueBubble)
-  expect(screen.getByRole('status').textContent).toBe('두 번째 대화')
+  expect(screen.getByRole('status').textContent).toBe('두 번째 대화 AI 음성')
 
   setActiveText(null)
   setScheduledDialogueCount(0)

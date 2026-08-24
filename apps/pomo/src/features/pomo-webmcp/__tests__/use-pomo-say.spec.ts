@@ -7,10 +7,10 @@ import type {ChatVoiceController, ChatVoiceRuntime} from '../../chat-voice'
 import {useLazyChatVoice} from '../../chat-voice/lazy'
 import {
   type CreateSupertonicAudioPlayerOptions,
-  successResult,
   type SupertonicAudioPlayer,
   type SupertonicClient,
 } from '../../supertonic'
+import {successResult} from '../../result'
 import {usePSay} from '../use-pomo-say'
 
 vi.mock('../../chat-voice/lazy', () => ({

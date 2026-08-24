@@ -1,83 +1,17 @@
-import {cx} from 'class-variance-authority'
-import {createSignal, type JSX, Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type FeedDialogueJob, usePFeedContext} from '../features/focus-room-feed'
 import {formatModelDownloadSize} from '../features/model-storage'
 import {getSupertonicModel, isSupertonicModelDownloaded} from '../features/supertonic'
+import {FeedStatusSurface} from './feed-status/Surface'
+import {CLASSES} from './feed-status/shared'
 import {PModelDownloadConsent} from './PModelDownloadConsent'
-import {PScribblePanel} from './PScribblePanel'
-
-const CLASSES = {
-  feedStatus: [
-    'pomo-feed-status flex w-[min(36rem,_100%)] box-border items-center gap-3',
-    'p-[0.8rem_0.9rem]',
-    'text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
-    'backdrop-blur-[0.75rem] [-webkit-backdrop-filter:blur(0.75rem)]',
-    "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-highlight",
-    "feed-status-compact:[&[data-state='recovery']]:flex-wrap",
-  ].join(' '),
-  feedStatusAction: 'pomo-feed-status__action flex-none whitespace-nowrap',
-  feedStatusActions: [
-    'pomo-feed-status__actions flex flex-none gap-[0.35rem]',
-    'feed-status-compact:w-full feed-status-compact:[&_button]:flex-1',
-  ].join(' '),
-  feedStatusCopy: [
-    'pomo-feed-status__copy grid min-w-0 flex-1 gap-[0.15rem] [&_strong]:overflow-hidden',
-    '[&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_small]:overflow-hidden',
-    '[&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_strong]:text-[0.78rem]',
-    '[&_small]:text-muted-foreground [&_small]:text-[0.68rem]',
-  ].join(' '),
-  feedStatusSpinner: [
-    'pomo-feed-status__spinner w-4 h-4 box-border flex-none',
-    'animate-spin [border:2px_solid_rgb(255_255_255_/_24%)]',
-    'border-t-highlight rounded-full motion-reduce:animate-[none]',
-  ].join(' '),
-} as const
 
 interface PFeedStatusProps {
   readonly sceneStyle?: PSceneStyle
 }
-
-interface FeedStatusFrameProps {
-  readonly children: JSX.Element
-  readonly sceneStyle?: PSceneStyle
-}
-
-interface FeedStatusSurfaceProps extends FeedStatusFrameProps {
-  readonly state: string
-}
-
-const getFeedStatusShapeClasses = (sceneStyle?: PSceneStyle) =>
-  sceneStyle === 'scribble' ? 'rounded-none border-0' : 'rounded-2xl border border-solid'
-
-const FeedStatusFrame = (props: FeedStatusFrameProps) => (
-  <PScribblePanel
-    class="pomo-feed-status-frame flex w-[min(36rem,_100%)]"
-    enabled={props.sceneStyle === 'scribble'}
-    frameClass="pomo-feed-status__scribble-border"
-  >
-    {props.children}
-  </PScribblePanel>
-)
-
-const FeedStatusSurface = (props: FeedStatusSurfaceProps) => (
-  <FeedStatusFrame sceneStyle={props.sceneStyle}>
-    <div
-      aria-live="polite"
-      class={cx(
-        CLASSES.feedStatus,
-        getFeedStatusShapeClasses(props.sceneStyle),
-        'border-highlight bg-surface-interactive',
-      )}
-      data-state={props.state}
-      role="status"
-    >
-      {props.children}
-    </div>
-  </FeedStatusFrame>
-)
 
 const getMissingModelDownloadSize = async (jobs: ReadonlyArray<FeedDialogueJob>) => {
   const modelIds = [...new Set(jobs.map((job) => job.modelId))]

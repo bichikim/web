@@ -21,6 +21,7 @@ const modalContentClasses = cva(
           `max-md:top-modal-top-compact max-md:max-h-modal-top-compact`,
       },
       size: {
+        full: 'w-[min(calc(100vw-2rem),calc(1920px-2rem))]',
         regular: '',
         wide: 'w-[min(calc(100vw-2rem),42rem)]',
       },
@@ -55,6 +56,7 @@ export interface PModalProps {
   readonly closeButtonVisibility?: 'hidden' | 'visible'
   readonly contentOverflow?: 'auto' | 'hidden'
   readonly description?: string
+  readonly footer?: JSX.Element
   readonly getInitialFocus?: () => HTMLElement | null
   readonly headerMode?: 'closeOnly' | 'default'
   readonly isOpen: boolean
@@ -62,7 +64,7 @@ export interface PModalProps {
   readonly onCloseAutoFocus?: () => void
   readonly onOpenChange: (isOpen: boolean) => void
   readonly placement?: 'center' | 'top'
-  readonly size?: 'regular' | 'wide'
+  readonly size?: 'full' | 'regular' | 'wide'
   readonly title: string
   readonly titleVisibility?: 'visible' | 'visually-hidden'
 }
@@ -88,7 +90,7 @@ export const PModal = (props: PModalProps) => (
     <Dialog.Portal>
       <Dialog.Overlay
         class={
-          'fixed inset-0 bg-[rgb(8_6_4_/_68%)] backdrop-blur-[12px] ' +
+          'fixed inset-0 bg-backdrop backdrop-blur-[12px] ' +
           'animate-modal-overlay-in motion-reduce:animate-none'
         }
       />
@@ -209,6 +211,13 @@ export const PModal = (props: PModalProps) => (
         >
           {props.children}
         </div>
+        <Show when={props.footer}>
+          {(footer) => (
+            <footer class="flex-none border-t border-solid border-border px-5 py-3">
+              {footer()}
+            </footer>
+          )}
+        </Show>
       </Dialog.Content>
     </Dialog.Portal>
   </Dialog>

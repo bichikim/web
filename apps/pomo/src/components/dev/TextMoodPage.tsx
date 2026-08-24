@@ -1,9 +1,8 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
-import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
+import {TextMoodWorkspace} from './text-mood/Workspace'
 
-const TextMoodLab = clientOnly(() => import('src/components/TextMoodLab'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-8 text-#f8edf1',
   'xs:px-8 xs:py-12',
@@ -26,7 +25,7 @@ function TextMoodPage() {
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
           ← 실험실 목록
         </A>
-        <TextMoodLab
+        <TextMoodWorkspace
           fallback={
             <section aria-live="polite" class={FALLBACK_CLASSES}>
               브라우저의 온디바이스 분석 환경을 확인하고 있어요…

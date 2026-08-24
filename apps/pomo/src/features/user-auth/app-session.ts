@@ -1,7 +1,30 @@
+import {z} from 'zod'
+
+import {apiJson, ApiJsonError, apiJsonRequest} from '../api-json'
+import {apiFetch} from '../http-client'
+
 const APP_SESSION_STORAGE_KEY = 'pomo:app-session:v1'
 const HTTP_UNAUTHORIZED = 401
+const HTTP_TOO_MANY_REQUESTS = 429
+const tossLoginSessionSchema = z.object({token: z.string()})
 
-const getApiOrigin = (): string => import.meta.env.POMO_PUBLIC_ORIGIN
+interface SentAccountLinkEmail {
+  readonly status: 'sent'
+}
+
+interface RejectedAccountLinkEmail {
+  readonly status: 'not-sent'
+}
+
+interface RateLimitedAccountLinkEmail {
+  readonly retryAfterSeconds: number | null
+  readonly status: 'rate-limited'
+}
+
+export type AccountLinkEmailResult =
+  | SentAccountLinkEmail
+  | RejectedAccountLinkEmail
+  | RateLimitedAccountLinkEmail
 
 const getAuthorizationHeaders = (token: string): HeadersInit => ({
   Authorization: `Bearer ${token}`,
@@ -23,7 +46,7 @@ export const clearStoredAppSession = async (): Promise<void> => {
 }
 
 export const validateAppSession = async (token: string): Promise<boolean> => {
-  const response = await fetch(new URL('/api/app-auth/session', getApiOrigin()), {
+  const response = await apiFetch('app-auth/session', {
     headers: getAuthorizationHeaders(token),
   })
 
@@ -38,36 +61,8 @@ export const validateAppSession = async (token: string): Promise<boolean> => {
   throw new Error('App session validation failed')
 }
 
-export const createTossLoginSession = async (): Promise<string> => {
-  const {TossAuth} = await import('@apps-in-toss/web-framework')
-  const authorization = await TossAuth.login()
-  const response = await fetch(new URL('/api/app-auth/exchange', getApiOrigin()), {
-    body: JSON.stringify(authorization),
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-  })
-
-  if (!response.ok) {
-    throw new Error('Toss login exchange failed')
-  }
-
-  const body: unknown = await response.json()
-
-  if (
-    typeof body !== 'object' ||
-    body === null ||
-    !('token' in body) ||
-    typeof body.token !== 'string'
-  ) {
-    throw new Error('Toss login returned an invalid session')
-  }
-
-  await storeAppSession(body.token)
-  return body.token
-}
-
-export const revokeTossLoginSession = async (token: string): Promise<void> => {
-  const response = await fetch(new URL('/api/app-auth/session', getApiOrigin()), {
+const revokeServerSession = async (token: string): Promise<void> => {
+  const response = await apiFetch('app-auth/session', {
     headers: getAuthorizationHeaders(token),
     method: 'DELETE',
   })
@@ -75,19 +70,78 @@ export const revokeTossLoginSession = async (token: string): Promise<void> => {
   if (!response.ok && response.status !== HTTP_UNAUTHORIZED) {
     throw new Error('App session revocation failed')
   }
+}
 
+const revokeCreatedSession = (token: string): void => {
+  revokeServerSession(token).catch((revocationError: unknown) => {
+    console.error('Failed to revoke Toss session after storage failure', revocationError)
+  })
+}
+
+export const createTossLoginSession = async (): Promise<string> => {
+  const {TossAuth} = await import('@apps-in-toss/web-framework')
+  const authorization = await TossAuth.login()
+  let body: z.infer<typeof tossLoginSessionSchema>
+
+  try {
+    body = await apiJson('app-auth/exchange', {
+      body: authorization,
+      method: 'POST',
+      responseSchema: tossLoginSessionSchema,
+    })
+  } catch (error: unknown) {
+    if (error instanceof ApiJsonError && error.kind === 'http') {
+      throw new Error('Toss login exchange failed', {cause: error})
+    }
+
+    if (error instanceof ApiJsonError && error.kind === 'schema') {
+      throw new Error('Toss login returned an invalid session', {cause: error})
+    }
+
+    throw error
+  }
+
+  try {
+    await storeAppSession(body.token)
+  } catch (storageError: unknown) {
+    revokeCreatedSession(body.token)
+    throw storageError
+  }
+
+  return body.token
+}
+
+export const revokeTossLoginSession = async (token: string): Promise<void> => {
+  await revokeServerSession(token)
   await clearStoredAppSession()
 }
 
-export const requestAccountLinkEmail = async (token: string, email: string): Promise<boolean> => {
-  const response = await fetch(new URL('/api/account/link-email', getApiOrigin()), {
-    body: JSON.stringify({email}),
-    headers: {
-      ...getAuthorizationHeaders(token),
-      'Content-Type': 'application/json',
-    },
+export const requestAccountLinkEmail = async (
+  token: string,
+  email: string,
+): Promise<AccountLinkEmailResult> => {
+  const response = await apiJsonRequest('account/link-email', {
+    body: {email},
+    headers: getAuthorizationHeaders(token),
     method: 'POST',
   })
 
-  return response.ok
+  if (response.ok) {
+    return {status: 'sent'}
+  }
+
+  if (response.status === HTTP_TOO_MANY_REQUESTS) {
+    const retryAfterHeader = response.headers.get('Retry-After')
+    const retryAfterSeconds = Number(retryAfterHeader)
+
+    return {
+      retryAfterSeconds:
+        retryAfterHeader !== null && Number.isInteger(retryAfterSeconds) && retryAfterSeconds > 0
+          ? retryAfterSeconds
+          : null,
+      status: 'rate-limited',
+    }
+  }
+
+  return {status: 'not-sent'}
 }
