@@ -28,8 +28,6 @@ export {
 } from './labels'
 export type {MoodDefinition, MoodModifierDefinition, MoodModifierId, PrimaryMoodId} from './labels'
 export {TEXT_MOOD_MODEL} from './model'
-export {textMoodFailure, textMoodSuccess} from './result'
-export type {TextMoodResult} from './result'
 export {useTextMood} from './use-text-mood'
 export type {
   TextMoodController,

@@ -1,5 +1,5 @@
 import {httpFetch} from '../http-client'
-import {type Result, successResult} from './result'
+import {type Result, successResult} from '../result'
 import type {ModelStorage, ModelStorageError} from './storage'
 
 export interface LoadModelResourceOptions {

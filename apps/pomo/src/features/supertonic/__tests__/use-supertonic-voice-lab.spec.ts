@@ -3,14 +3,13 @@ import {createRoot} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
 import {
-  failureResult,
-  successResult,
   type SupertonicVoiceLabClient,
   type SupertonicVoiceLabController,
   type SupertonicVoiceLabRuntime,
   useSupertonicVoiceLab,
 } from '../index'
 import type {SupertonicAudioPlayer} from '../audio-player'
+import {failureResult, successResult} from '../../result'
 
 const SAMPLE_RATE = 24_000
 const GENERATION_TIME = 1_200

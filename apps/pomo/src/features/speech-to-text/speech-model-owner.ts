@@ -7,7 +7,7 @@ import type {
   SpeechRecognizerReady,
   SpeechTranscript,
 } from './recognizer'
-import type {SpeechResult} from './result'
+import type {Result} from '../result'
 
 interface IdleModelState {
   readonly status: 'idle'
@@ -38,10 +38,10 @@ export interface CreateSpeechModelOwnerOptions {
 
 export interface SpeechModelOwner {
   readonly dispose: () => void
-  readonly prepare: () => Promise<SpeechResult<SpeechRecognizerReady, SpeechRecognitionError>>
+  readonly prepare: () => Promise<Result<SpeechRecognizerReady, SpeechRecognitionError>>
   readonly transcribe: (
     audio: Float32Array,
-  ) => Promise<SpeechResult<SpeechTranscript, SpeechRecognitionError>>
+  ) => Promise<Result<SpeechTranscript, SpeechRecognitionError>>
 }
 
 const shouldReplaceRecognizer = (error: SpeechRecognitionError) =>
@@ -51,8 +51,7 @@ const shouldReplaceRecognizer = (error: SpeechRecognitionError) =>
 export const createSpeechModelOwner = (
   options: CreateSpeechModelOwnerOptions,
 ): SpeechModelOwner => {
-  let preparation: Promise<SpeechResult<SpeechRecognizerReady, SpeechRecognitionError>> | null =
-    null
+  let preparation: Promise<Result<SpeechRecognizerReady, SpeechRecognitionError>> | null = null
   let recognizer: SpeechRecognizer | null = null
   let readyBackend: SpeechBackend | null = null
 

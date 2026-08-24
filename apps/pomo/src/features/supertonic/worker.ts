@@ -43,7 +43,7 @@ import {
   type SupertonicModel,
   type SupertonicVoiceId,
 } from './model'
-import {failureResult, type Result, successResult} from './result'
+import {failureResult, type Result, successResult} from '../result'
 import {splitSpeechText} from './text-chunking'
 
 const workerScope = self as DedicatedWorkerGlobalScope
