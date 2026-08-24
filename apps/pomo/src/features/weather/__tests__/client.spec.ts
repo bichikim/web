@@ -34,6 +34,12 @@ it('should return a validated available feed', async () => {
   await expect(fetchWeatherFeed('seoul')).resolves.toEqual({feed, status: 'available'})
 })
 
+it('should reject a feed for a different city than requested', () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(feed)))
+
+  return expect(fetchWeatherFeed('busan')).rejects.toMatchObject({kind: 'schema'})
+})
+
 it('should expose the server collection retry delay', async () => {
   vi.stubGlobal(
     'fetch',

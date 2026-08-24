@@ -30,7 +30,7 @@ beforeEach(() => {
 })
 
 it('should reject a city outside the configured public feed contract', async () => {
-  const response = await createWeatherFeedResponse('busan')
+  const response = await createWeatherFeedResponse('tokyo')
 
   expect(response.status).toBe(404)
   await expect(response.json()).resolves.toEqual({code: 'weather_city_not_found'})

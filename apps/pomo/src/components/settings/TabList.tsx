@@ -85,10 +85,6 @@ export const PSettingsTabList = () => {
           <span aria-hidden="true" class="i-tabler-bolt size-4" />
           <span>{m.settings_tab_events()}</span>
         </Tabs.Trigger>
-        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="weather">
-          <span aria-hidden="true" class="i-pomo-scribble-clouds size-4" />
-          <span>{m.settings_tab_weather()}</span>
-        </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="feeds">
           <span aria-hidden="true" class="i-tabler-rss size-4" />
           <span>{m.settings_tab_feeds()}</span>

@@ -61,5 +61,10 @@ export const fetchWeatherFeed = async (
     throw new Error(`Weather feed request failed with status ${response.status}`)
   }
 
-  return {feed: await parseJsonResponse(response, weatherFeedSchema), status: 'available'}
+  const requestedCityFeedSchema = weatherFeedSchema.refine((feed) => feed.city.slug === citySlug, {
+    message: 'Weather feed city does not match the requested city',
+    path: ['city', 'slug'],
+  })
+
+  return {feed: await parseJsonResponse(response, requestedCityFeedSchema), status: 'available'}
 }

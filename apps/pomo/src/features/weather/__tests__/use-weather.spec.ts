@@ -108,7 +108,7 @@ it('should poll at the server delay while another instance collects', async () =
   const root = createWeatherRoot()
   await flushPromises()
 
-  expect(root.controller.state()).toEqual({cityLabel: '서울', status: 'loading'})
+  expect(root.controller.state()).toEqual({citySlug: 'seoul', status: 'loading'})
 
   await vi.advanceTimersByTimeAsync(1_999)
   expect(clientMocks.fetchWeatherFeed).toHaveBeenCalledTimes(1)

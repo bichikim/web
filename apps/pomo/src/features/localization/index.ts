@@ -7,7 +7,7 @@ import {
 } from '../focus-room-scene-preferences'
 import type {PSceneMotionInput, PSceneMotionMode} from '../focus-room-animation'
 import type {SceneTimeMode} from '../focus-room-time'
-import type {WeatherCondition} from '../weather'
+import {WEATHER_CITY_SLUGS, type WeatherCitySlug, type WeatherCondition} from '../weather'
 import * as m from '../../paraglide/messages.js'
 import type {Locale} from '../../paraglide/runtime.js'
 
@@ -137,3 +137,33 @@ export const getLocalizedWeatherLabel = (
       return m.weather_condition_unknown({}, options)
   }
 }
+
+export const getLocalizedWeatherCityLabel = (
+  citySlug: WeatherCitySlug,
+  options: LocalizationOptions = {},
+) => {
+  switch (citySlug) {
+    case 'busan':
+      return m.weather_busan({}, options)
+    case 'daegu':
+      return m.weather_daegu({}, options)
+    case 'daejeon':
+      return m.weather_daejeon({}, options)
+    case 'gwangju':
+      return m.weather_gwangju({}, options)
+    case 'incheon':
+      return m.weather_incheon({}, options)
+    case 'jeju':
+      return m.weather_jeju({}, options)
+    case 'seoul':
+      return m.weather_seoul({}, options)
+    case 'ulsan':
+      return m.weather_ulsan({}, options)
+  }
+}
+
+export const getLocalizedWeatherCityOptions = (options: LocalizationOptions = {}) =>
+  WEATHER_CITY_SLUGS.map((citySlug) => ({
+    label: getLocalizedWeatherCityLabel(citySlug, options),
+    value: citySlug,
+  }))

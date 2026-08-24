@@ -193,6 +193,12 @@ export const PSettings = (props: PSettingsProps) => {
                   />
                 </Show>
               </div>
+              <PWeatherSettings
+                citySlug={props.weatherCitySlug}
+                enabled={props.weatherEnabled}
+                onCityChange={props.onWeatherCityChange}
+                onEnabledChange={props.onWeatherEnabledChange}
+              />
               <PSwitch
                 checked={wakeLock.isEnabled()}
                 class={CLASSES.settingsWakeLock}
@@ -213,12 +219,6 @@ export const PSettings = (props: PSettingsProps) => {
             </div>
           </Tabs.Content>
           <PGuideSettings />
-          <PWeatherSettings
-            citySlug={props.weatherCitySlug}
-            enabled={props.weatherEnabled}
-            onCityChange={props.onWeatherCityChange}
-            onEnabledChange={props.onWeatherEnabledChange}
-          />
           <PCreditsSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
