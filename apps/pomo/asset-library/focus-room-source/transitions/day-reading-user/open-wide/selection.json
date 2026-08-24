@@ -1,0 +1,12 @@
+{
+  "early": "generated-full/open.png",
+  "middle": "generated-full-v5-selection-v3/02-frame-009.png",
+  "late": "generated-full-v5-selection-v3/03-frame-011.png",
+  "crop": {
+    "left": 930,
+    "top": 285,
+    "width": 260,
+    "height": 180
+  },
+  "reason": "Use the actual open endpoint followed by GPT-restored H3 frames 009 and 011 so the mouth opens and widens monotonically without the smaller generated frame 001."
+}

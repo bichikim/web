@@ -1,3 +1,5 @@
+import 'server-only'
+
 export interface TossAuthEnvironment {
   readonly POMO_TOSS_CALLBACK_AUTHORIZATION?: string
   readonly POMO_TOSS_MTLS_CERT?: string

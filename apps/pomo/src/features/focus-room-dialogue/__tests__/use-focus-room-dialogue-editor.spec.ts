@@ -28,6 +28,7 @@ const moodAnalyzerMocks = {
   prepare: vi.fn<TextMoodAnalyzer['prepare']>(),
 }
 const moodRuntime: TextMoodRuntime = {createAnalyzer: vi.fn(() => moodAnalyzerMocks)}
+const NativeUrl = globalThis.URL
 
 const cheerfulAnalysis: TextMoodAnalysis = {
   margin: 0.6,
@@ -106,10 +107,13 @@ beforeEach(() => {
     }),
   )
   sessionStorage.clear()
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => 'blob:dialogue'),
-    revokeObjectURL: vi.fn(),
-  })
+  vi.stubGlobal(
+    'URL',
+    class extends NativeUrl {
+      static createObjectURL = vi.fn(() => 'blob:dialogue')
+      static revokeObjectURL = vi.fn()
+    },
+  )
   vi.stubGlobal('crypto', {randomUUID: vi.fn(() => 'dialogue-id')})
 })
 

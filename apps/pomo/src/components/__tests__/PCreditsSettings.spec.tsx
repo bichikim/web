@@ -51,6 +51,8 @@ it('should credit the creator and disclose current software and model licenses',
   expect(openSourceCredit).not.toBeNull()
   expect(openSourceCredit?.className).not.toContain('border')
   expect(screen.getByRole('heading', {name: 'media-chrome'})).toBeTruthy()
+  expect(screen.getByRole('heading', {name: 'wLipSync'})).toBeTruthy()
+  expect(screen.getByRole('link', {name: 'wLipSync 라이선스 원문 새 창에서 열기'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'Dexie'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'Neon Database'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'Drizzle ORM'})).toBeTruthy()

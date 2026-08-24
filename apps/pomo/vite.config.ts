@@ -6,6 +6,7 @@ import {nitro} from 'nitro/vite'
 import UnoCSS from 'unocss/vite'
 import {defineConfig, type Plugin} from 'vite'
 
+import {SERVICE_POLICY_PATHS} from './src/config/service-policy.ts'
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
@@ -16,6 +17,24 @@ const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
+const publicStaticRoutes = [
+  '/',
+  SERVICE_POLICY_PATHS.appsInToss.privacy,
+  SERVICE_POLICY_PATHS.appsInToss.terms,
+  SERVICE_POLICY_PATHS.legacy.privacy,
+  SERVICE_POLICY_PATHS.refund,
+  SERVICE_POLICY_PATHS.legacy.terms,
+  '/third-party-notices',
+  SERVICE_POLICY_PATHS.web.privacy,
+  SERVICE_POLICY_PATHS.web.terms,
+]
+const appsInTossStaticRoutes = [
+  ...publicStaticRoutes,
+  '/account',
+  '/dialogue',
+  '/focus-room',
+  '/focus-room-dialogue',
+]
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
 
@@ -108,28 +127,12 @@ export default defineConfig({
     'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
     'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
   },
-  nitro: isAppsInToss
-    ? {
-        prerender: {
-          routes: [
-            '/',
-            '/account',
-            '/apps-in-toss/privacy',
-            '/apps-in-toss/terms',
-            '/dialogue',
-            '/focus-room',
-            '/focus-room-dialogue',
-            '/privacy',
-            '/refund-policy',
-            '/terms',
-            '/third-party-notices',
-            '/web/privacy',
-            '/web/terms',
-          ],
-        },
-        preset: 'static',
-      }
-    : {},
+  nitro: {
+    prerender: {
+      routes: isAppsInToss ? appsInTossStaticRoutes : publicStaticRoutes,
+    },
+    ...(isAppsInToss ? {preset: 'static'} : {}),
+  },
   optimizeDeps: {
     include: ['onnxruntime-web/all', 'zod'],
   },

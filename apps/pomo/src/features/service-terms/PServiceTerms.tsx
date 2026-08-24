@@ -1,6 +1,7 @@
 import {Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
+import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
 
 import {PServicePolicyLinks} from './PServicePolicyLinks'
@@ -356,7 +357,7 @@ const OperationTermsSections = (props: PServiceTermsProps) => (
         <p class={PARAGRAPH_CLASSES}>
           가격, 대상 음악, 제공 내용과 결제 조건은 구매 전에 안내합니다. 결제 및 환불에는 앱인토스와
           운영체제별 앱 마켓의 절차 및{' '}
-          <a class={CONTENT_LINK_CLASSES} href="/refund-policy">
+          <a class={CONTENT_LINK_CLASSES} href={SERVICE_POLICY_PATHS.refund}>
             환불 및 청약철회 정책
           </a>
           이 함께 적용됩니다. 본 약관이나 별도 정책은 관계 법령이 보장하는 이용자의 권리를 제한하지

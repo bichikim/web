@@ -77,7 +77,7 @@ export {
   generateCompressedDialogueAudio,
   generateDialogueAudio,
   regenerateDialogueSegmentAudio,
-} from './generate-dialogue-audio'
+} from './dialogue-audio-runtime'
 export type {
   GeneratedCompressedDialogueAudio,
   GeneratedDialogueAudio,

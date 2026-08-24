@@ -10,23 +10,24 @@ import {PSwitch} from '../design-system/PSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
+import {
+  FOCUS_ROOM_ACTIVITY_OPTIONS,
+  FOCUS_ROOM_GAZE_OPTIONS,
+  FOCUS_ROOM_TIME_OPTIONS,
+  type PActivity,
+  type PGaze,
+} from '../features/focus-room-scene-preferences'
 import type {ScreenSaverDelay} from '../features/screen-saver'
+import type {WeatherCitySlug} from '../features/weather'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {UserSettings} from '../features/user-auth/UserSettings'
 import {PCreditsSettings} from './PCreditsSettings'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
+import {PWeatherSettings} from './PWeatherSettings'
 import {PScribbleCircleControl} from './PScribbleCircleControl'
-import {
-  FOCUS_ROOM_ACTIVITY_OPTIONS,
-  FOCUS_ROOM_GAZE_OPTIONS,
-  FOCUS_ROOM_TIME_OPTIONS,
-  P_SCENE_MOTION_INPUT_OPTIONS,
-  P_SCENE_MOTION_OPTIONS,
-  type PActivity,
-  type PGaze,
-} from './pomo-scene-options'
+import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from './pomo-scene-options'
 
 const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
@@ -53,11 +54,15 @@ export interface PSettingsProps {
   readonly onScreenSaverDelayChange?: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange?: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange?: (timeMode: SceneTimeMode) => void
+  readonly onWeatherCityChange?: (citySlug: WeatherCitySlug) => void
+  readonly onWeatherEnabledChange?: (enabled: boolean) => void
   readonly screenSaverDelay?: ScreenSaverDelay
   readonly sceneStyle?: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode?: PSceneMotionMode
   readonly timeMode?: SceneTimeMode
+  readonly weatherCitySlug?: WeatherCitySlug
+  readonly weatherEnabled?: boolean
 }
 
 const SCREEN_SAVER_DELAY_OPTIONS = [
@@ -150,6 +155,10 @@ const PSettingsTabList = () => {
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="events">
           <span aria-hidden="true" class="i-tabler-bolt size-4" />
           <span>이벤트</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="weather">
+          <span aria-hidden="true" class="i-pomo-scribble-clouds size-4" />
+          <span>날씨</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="feeds">
           <span aria-hidden="true" class="i-tabler-rss size-4" />
@@ -329,6 +338,12 @@ export const PSettings = (props: PSettingsProps) => {
             </div>
           </Tabs.Content>
           <PGuideSettings />
+          <PWeatherSettings
+            citySlug={props.weatherCitySlug}
+            enabled={props.weatherEnabled}
+            onCityChange={props.onWeatherCityChange}
+            onEnabledChange={props.onWeatherEnabledChange}
+          />
           <PCreditsSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />

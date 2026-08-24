@@ -6,10 +6,17 @@ import {
   type PEyeState,
 } from '../focus-room-animation/eye-animation-controller'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
+import {createPMouthTransitionController} from '../focus-room-animation/mouth-transition-controller'
 import {createFocusRoomLayerState} from '../focus-room-animation/scene-layer-state'
-import {FOCUS_ROOM_MOUTH_CHANNELS} from '../focus-room-animation/scene-catalog-channels'
+import {
+  FOCUS_ROOM_MOUTH_CHANNELS,
+  FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS,
+  type PMouthTransitionStage,
+} from '../focus-room-animation/scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
 import type {PViseme} from '../lip-sync'
+
+export type PReviewMouthFrame = PMouthTransitionStage | PViseme
 
 export interface PLayerReviewState extends PEyeState {
   readonly animationEnabled: boolean
@@ -17,6 +24,8 @@ export interface PLayerReviewState extends PEyeState {
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
+  readonly mouthFrame: PReviewMouthFrame | null
+  readonly mouthPositionComparison: boolean
   readonly mouthVisible: boolean
   readonly referenceOpacity: number
   readonly viseme: PViseme
@@ -27,12 +36,18 @@ export interface PLayerReviewRendererOptions {
 }
 
 const clampOpacity = (value: number) => Math.min(1, Math.max(0, value))
+const COMPARISON_MOUTH_OPACITY = 0.5
+const MOUTH_CHANNELS = [
+  ...Object.values(FOCUS_ROOM_MOUTH_CHANNELS),
+  ...Object.values(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS),
+]
 
 export class PLayerReviewRenderer {
   readonly #application = new Application()
   readonly #eyes: PEyeController
   readonly #initialDefinition: PixiLayerSceneDefinition
   readonly #host: HTMLDivElement
+  readonly #mouthTransition = createPMouthTransitionController(() => this.#syncScenes())
   #applicationReady = false
   #currentDefinitionId: string | null = null
   #destroyed = false
@@ -132,12 +147,25 @@ export class PLayerReviewRenderer {
   }
 
   update(state: PLayerReviewState) {
+    const previousState = this.#state
+    const previousViseme = previousState?.viseme ?? state.viseme
     this.#state = state
     this.#eyes.setMode(state.eyeMode)
     this.#eyes.update(state)
     this.#syncEyes(state)
-    this.#scene?.update(this.#toSceneState(state))
-    this.#incomingScene?.update(this.#toSceneState(state))
+
+    if (state.mouthFrame !== null || previousState?.mouthFrame !== null) {
+      this.#mouthTransition.cancel()
+      this.#syncScenes()
+      return
+    }
+
+    if (previousViseme !== state.viseme) {
+      this.#mouthTransition.start(previousViseme, state.viseme, false)
+      return
+    }
+
+    this.#syncScenes()
   }
 
   async replaceDefinition(definition: PixiLayerSceneDefinition) {
@@ -226,6 +254,7 @@ export class PLayerReviewRenderer {
     this.#incomingScene = null
     this.#eyes.container.removeFromParent()
     this.#eyes.destroy()
+    this.#mouthTransition.destroy()
     this.#scene?.destroy()
     this.#scene = null
     this.#state = null
@@ -255,19 +284,58 @@ export class PLayerReviewRenderer {
     this.#eyes.container.visible = state.eyesVisible
   }
 
+  #syncScenes() {
+    const state = this.#state
+
+    if (state === null) {
+      return
+    }
+
+    const sceneState = this.#toSceneState(state)
+    this.#scene?.update(sceneState)
+    this.#incomingScene?.update(sceneState)
+  }
+
   #toSceneState(state: PLayerReviewState) {
     const referenceOpacity = clampOpacity(state.referenceOpacity)
-    const mouthState = createFocusRoomLayerState(state.viseme, false)
+    const mouthState = createFocusRoomLayerState(
+      state.viseme,
+      false,
+      this.#mouthTransition.current ?? undefined,
+    )
+    const fixedMouthChannel =
+      state.mouthFrame === null
+        ? null
+        : ((FOCUS_ROOM_MOUTH_CHANNELS as Readonly<Partial<Record<PReviewMouthFrame, string>>>)[
+            state.mouthFrame
+          ] ?? FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[state.mouthFrame as PMouthTransitionStage])
+    const restMouthChannel = FOCUS_ROOM_MOUTH_CHANNELS.rest
+    const mouthPositionComparison =
+      state.mouthPositionComparison &&
+      fixedMouthChannel !== null &&
+      fixedMouthChannel !== restMouthChannel
+
     return {
       animationEnabled: state.animationEnabled,
       channels: {
         ...mouthState.channels,
         ...Object.fromEntries(
-          Object.entries(FOCUS_ROOM_MOUTH_CHANNELS).map(([viseme, channel]) => [
+          MOUTH_CHANNELS.map((channel) => [
             channel,
             {
               ...mouthState.channels?.[channel],
-              visible: state.mouthVisible && viseme === state.viseme,
+              opacity:
+                fixedMouthChannel === null
+                  ? mouthState.channels?.[channel]?.opacity
+                  : mouthPositionComparison && channel === fixedMouthChannel
+                    ? COMPARISON_MOUTH_OPACITY
+                    : 1,
+              visible:
+                state.mouthVisible &&
+                (fixedMouthChannel === null
+                  ? mouthState.channels?.[channel]?.visible === true
+                  : channel === fixedMouthChannel ||
+                    (mouthPositionComparison && channel === restMouthChannel)),
             },
           ]),
         ),

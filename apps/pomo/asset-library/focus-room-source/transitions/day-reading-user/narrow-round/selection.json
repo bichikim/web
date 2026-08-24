@@ -1,0 +1,6 @@
+{
+  "early": 17,
+  "middle": 57,
+  "late": 69,
+  "reason": "Frame 17 preserves the narrow start, frame 57 captures lip contraction before opening, and frame 69 is the stable approach to the round endpoint; smile overshoots were rejected."
+}

@@ -27,9 +27,11 @@ const DEFAULT_FRAME_DURATION_MS = 16
 const ENVELOPE_FRAME_DURATION_MS = 20
 const ENVELOPE_WINDOW_DURATION_MS = 40
 const MILLISECONDS_PER_SECOND = 1000
-const MINIMUM_VISEME_HOLD_MS = 60
+const INITIAL_VISEME_HOLD_MS = 120
+const SETTLED_VISEME_HOLD_MS = 180
 const REST_THRESHOLD = 0.14
-const FULL_SHAPE_THRESHOLD = 0.48
+const FULL_SHAPE_ENTER_THRESHOLD = 0.55
+const FULL_SHAPE_EXIT_THRESHOLD = 0.32
 const PEAK_REFERENCE_PERCENTILE = 0.9
 const REFERENCE_FLOOR = 0.000_1
 const SILENCE_FLOOR_RATIO = 0.08
@@ -196,27 +198,19 @@ const smoothIntensity = (current: number, target: number, elapsedMs: number) => 
   return current + (target - current) * progress
 }
 
-const getIntensityViseme = (viseme: PViseme, intensity: number): PViseme => {
-  if (viseme === 'rest' || intensity < REST_THRESHOLD) {
-    return 'rest'
-  }
-
-  if (viseme !== 'closed' && intensity < FULL_SHAPE_THRESHOLD) {
-    return 'narrow'
-  }
-
-  return viseme
-}
-
 /** Smooths PCM volume and limits hard mouth swaps to a natural animation cadence. */
 export const createPVisemeDriver = (): PVisemeDriver => {
   let activeViseme: PViseme = 'rest'
+  let hasFullShape = false
+  let hasSettledSpeechShape = false
   let intensity = 0
   let lastChangeMs = Number.NEGATIVE_INFINITY
   let previousTimeMs: number | null = null
 
   const reset = () => {
     activeViseme = 'rest'
+    hasFullShape = false
+    hasSettledSpeechShape = false
     intensity = 0
     lastChangeMs = Number.NEGATIVE_INFINITY
     previousTimeMs = null
@@ -229,14 +223,33 @@ export const createPVisemeDriver = (): PVisemeDriver => {
         : Math.max(1, frame.currentTimeMs - previousTimeMs)
     previousTimeMs = frame.currentTimeMs
     intensity = smoothIntensity(intensity, clampUnit(frame.intensity), elapsedMs)
-    const nextViseme = getIntensityViseme(frame.viseme, intensity)
+    let nextViseme = frame.viseme
+
+    if (frame.viseme === 'closed') {
+      nextViseme = 'closed'
+    } else if (intensity < REST_THRESHOLD) {
+      hasFullShape = false
+      hasSettledSpeechShape = false
+      nextViseme = 'rest'
+    } else if (frame.viseme === 'rest') {
+      nextViseme = activeViseme === 'rest' ? 'narrow' : activeViseme
+    } else {
+      hasFullShape = hasFullShape
+        ? intensity >= FULL_SHAPE_EXIT_THRESHOLD
+        : intensity >= FULL_SHAPE_ENTER_THRESHOLD
+      nextViseme = hasFullShape ? frame.viseme : 'narrow'
+    }
+
+    const minimumHoldMs = hasSettledSpeechShape ? SETTLED_VISEME_HOLD_MS : INITIAL_VISEME_HOLD_MS
 
     if (
       nextViseme !== activeViseme &&
-      (nextViseme === 'rest' || frame.currentTimeMs - lastChangeMs >= MINIMUM_VISEME_HOLD_MS)
+      (nextViseme === 'rest' || frame.currentTimeMs - lastChangeMs >= minimumHoldMs)
     ) {
       activeViseme = nextViseme
       lastChangeMs = frame.currentTimeMs
+      hasSettledSpeechShape ||=
+        activeViseme === 'open' || activeViseme === 'wide' || activeViseme === 'round'
     }
 
     return activeViseme

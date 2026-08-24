@@ -29,6 +29,7 @@ const EXPOSED_HEADERS = [
   'Content-Type',
   'ETag',
   'Last-Modified',
+  'Retry-After',
 ]
 const PREFLIGHT_VARY_HEADERS = [
   'Origin',

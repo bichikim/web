@@ -1,4 +1,5 @@
 export * from './scene-catalog'
+export {P_MOUTH_TRANSITION_PATHS} from './scene-catalog-channels'
 export * from './scene-layout'
 export * from './scene-motion'
 export * from './scene-style'

@@ -1,6 +1,8 @@
 import {cva, type VariantProps} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
+import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
+
 const policyLinksClasses = cva('flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5', {
   defaultVariants: {
     tone: 'surface',
@@ -44,9 +46,13 @@ interface PolicyLinkProps extends VariantProps<typeof policyLinkClasses> {
 }
 
 const serviceTermsPath = (platform: 'apps-in-toss' | 'web') =>
-  platform === 'apps-in-toss' ? '/apps-in-toss/terms' : '/web/terms'
+  platform === 'apps-in-toss'
+    ? SERVICE_POLICY_PATHS.appsInToss.terms
+    : SERVICE_POLICY_PATHS.web.terms
 const privacyPolicyPath = (platform: 'apps-in-toss' | 'web') =>
-  platform === 'apps-in-toss' ? '/apps-in-toss/privacy' : '/web/privacy'
+  platform === 'apps-in-toss'
+    ? SERVICE_POLICY_PATHS.appsInToss.privacy
+    : SERVICE_POLICY_PATHS.web.privacy
 
 const PolicyLink = (props: PolicyLinkProps) => (
   <Show
@@ -86,7 +92,7 @@ export const PServicePolicyLinks = (props: PServicePolicyLinksProps) => {
         <span aria-hidden="true">·</span>
         <PolicyLink
           current={props.currentPolicy === 'refund'}
-          href="/refund-policy"
+          href={SERVICE_POLICY_PATHS.refund}
           label="환불 및 청약철회 정책"
           tone={props.tone}
         />

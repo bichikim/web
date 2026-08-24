@@ -21,7 +21,7 @@ it('should describe only the current Apps in Toss music purchase', () => {
   expect(screen.queryByRole('link', {name: '환불 및 청약철회 정책'})).toBeNull()
   expect(screen.getByText('환불 및 청약철회 정책').getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
-    '/apps-in-toss/privacy',
+    '/app-in-toss/privacy',
   )
   expect(screen.queryByText(/실물 응원 굿즈/u)).toBeNull()
   expect(screen.queryByText(/주간·월간/u)).toBeNull()

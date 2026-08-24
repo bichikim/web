@@ -1,0 +1,6 @@
+{
+  "early": 13,
+  "middle": 65,
+  "late": 69,
+  "reason": "The transition is intentionally subtle. Frame 13 captures initial corner spreading; frames 65 and 69 are the least-overshot approach to the supplied wide endpoint."
+}

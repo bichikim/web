@@ -1,3 +1,5 @@
+import 'server-only'
+
 export interface NeonAuthEnvironment {
   readonly NEON_AUTH_BASE_URL?: string
   readonly NEON_AUTH_COOKIE_SECRET?: string
