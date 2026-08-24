@@ -2,11 +2,20 @@ import {createMiddleware} from '@solidjs/start/middleware'
 
 import {handleAdminAuthRequest} from './admin-auth.ts'
 import {corsMiddleware} from './cors.ts'
+import {handleLegacyRedirectRequest} from './legacy-redirect.ts'
 import {handleUserAuthRequest} from './user-auth.ts'
 
 export default createMiddleware([
   corsMiddleware,
   async (event, next) => {
+    if (!import.meta.env.POMO_IS_APPS_IN_TOSS) {
+      const legacyRedirect = handleLegacyRedirectRequest(event.req)
+
+      if (legacyRedirect !== null) {
+        return legacyRedirect
+      }
+    }
+
     const userAuthResponse = await handleUserAuthRequest({
       request: event.req,
       responseHeaders: event.res.headers,
