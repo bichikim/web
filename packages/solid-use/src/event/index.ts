@@ -1,7 +1,14 @@
 /* eslint-disable n/no-unsupported-features/node-builtins */
-import {MaybeAccessor} from 'src/types'
-import {resolveAccessor} from 'src/resolve-accessor'
 import {createEffect, onCleanup} from 'solid-js'
+
+import {resolveAccessor} from 'src/resolve-accessor'
+import type {MaybeAccessor} from 'src/types'
+
+export type UseEventOptions = boolean | AddEventListenerOptions
+
+type UseEventListener<EventType extends Event> = {
+  bivarianceHack(event: EventType): void
+}['bivarianceHack']
 
 export interface Emitter {
   addEventListener(type: string, listener: EventListener, options?: AddEventListenerOptions): void
@@ -9,50 +16,71 @@ export interface Emitter {
   removeEventListener(type: string, listener: EventListener, options?: EventListenerOptions): void
 }
 
+type EventTargetAccessor<Target> = MaybeAccessor<Target | null | undefined>
+
 export interface OnEvent {
-  <K extends keyof WindowEventMap>(
-    window: MaybeAccessor<Window | null>,
-    type: K,
-    listener: (event: WindowEventMap[K]) => void,
-    options?: AddEventListenerOptions,
+  <EventName extends keyof WindowEventMap>(
+    target: EventTargetAccessor<Window>,
+    type: EventName,
+    listener: UseEventListener<WindowEventMap[EventName]>,
+    options?: UseEventOptions,
   ): void
-  <K extends keyof HTMLElementEventMap>(
-    element: HTMLElement,
-    type: K,
-    listener: (event: HTMLElementEventMap[K]) => void,
-    options?: AddEventListenerOptions,
+  <EventName extends keyof DocumentEventMap>(
+    target: EventTargetAccessor<Document>,
+    type: EventName,
+    listener: UseEventListener<DocumentEventMap[EventName]>,
+    options?: UseEventOptions,
   ): void
-  <K extends keyof HTMLElementEventMap>(
-    element: MaybeAccessor<HTMLElement | null>,
-    type: K,
-    listener: (event: HTMLElementEventMap[K]) => void,
-    options?: AddEventListenerOptions,
+  <Target extends HTMLElement, EventName extends keyof HTMLElementEventMap>(
+    target: EventTargetAccessor<Target>,
+    type: EventName,
+    listener: UseEventListener<HTMLElementEventMap[EventName]>,
+    options?: UseEventOptions,
+  ): void
+  <Target extends Window | Document | HTMLElement>(
+    target: EventTargetAccessor<Target>,
+    type: string,
+    listener: UseEventListener<CustomEvent<unknown>>,
+    options?: UseEventOptions,
   ): void
   (
-    window: MaybeAccessor<HTMLElement | Window | null>,
+    target: EventTargetAccessor<EventTarget>,
     type: string,
-    listener: (event: CustomEvent) => void,
-    options?: AddEventListenerOptions,
+    listener: UseEventListener<Event>,
+    options?: UseEventOptions,
   ): void
 }
 
 export const useEvent: OnEvent = (
-  element: MaybeAccessor<Emitter | null>,
+  target: EventTargetAccessor<Emitter | EventTarget>,
   type: string,
-  listener: (event: any) => void,
-  options: AddEventListenerOptions = {},
+  listener: UseEventListener<never>,
+  options: UseEventOptions = {},
 ) => {
-  const elementAccessor = resolveAccessor(element)
+  const targetAccessor = resolveAccessor(target)
+  const eventListener = listener as EventListener
 
   createEffect(() => {
-    const element = elementAccessor()
+    const currentTarget = targetAccessor()
 
-    element?.addEventListener(type, listener, options)
+    if (currentTarget === null || currentTarget === undefined) {
+      return
+    }
+
+    if (currentTarget instanceof EventTarget) {
+      currentTarget.addEventListener(type, eventListener, options)
+
+      onCleanup(() => {
+        currentTarget.removeEventListener(type, eventListener, options)
+      })
+      return
+    }
+
+    const emitterOptions = typeof options === 'boolean' ? {capture: options} : options
+    currentTarget.addEventListener(type, eventListener, emitterOptions)
 
     onCleanup(() => {
-      element?.removeEventListener(type, listener, options)
+      currentTarget.removeEventListener(type, eventListener, emitterOptions)
     })
-
-    return element
   })
 }

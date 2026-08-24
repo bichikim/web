@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm run build:vercel",
   "crons": [
     {
       "path": "/api/cron/today-in-history",
@@ -8,6 +9,10 @@
     {
       "path": "/api/cron/today-in-history/recover",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/auth-maintenance",
+      "schedule": "17 18 * * *"
     }
   ],
   "git": {

@@ -3,6 +3,7 @@ import 'server-only'
 import {and, desc, eq, gt, isNull, sql} from 'drizzle-orm'
 
 import {
+  getDatabase,
   pomoAccountLinkAttemptLimits,
   pomoAccountLinkChallenges,
   pomoAppSessions,
@@ -181,32 +182,19 @@ export const getAppSessionUserId = async (
 ): Promise<string | null> => {
   const tokenHash = hashOpaqueToken(token)
 
-  return withTransactionalDatabase((database) =>
-    database.transaction(async (transaction) => {
-      const [session] = await transaction
-        .select({id: pomoAppSessions.id, userId: pomoAppSessions.userId})
-        .from(pomoAppSessions)
-        .where(
-          and(
-            eq(pomoAppSessions.tokenHash, tokenHash),
-            isNull(pomoAppSessions.revokedAt),
-            gt(pomoAppSessions.expiresAt, now),
-          ),
-        )
-        .limit(1)
+  const [session] = await getDatabase()
+    .select({userId: pomoAppSessions.userId})
+    .from(pomoAppSessions)
+    .where(
+      and(
+        eq(pomoAppSessions.tokenHash, tokenHash),
+        isNull(pomoAppSessions.revokedAt),
+        gt(pomoAppSessions.expiresAt, now),
+      ),
+    )
+    .limit(1)
 
-      if (session === undefined) {
-        return null
-      }
-
-      await transaction
-        .update(pomoAppSessions)
-        .set({lastUsedAt: now})
-        .where(eq(pomoAppSessions.id, session.id))
-
-      return session.userId
-    }),
-  )
+  return session?.userId ?? null
 }
 
 export const revokeAppSession = async (token: string, now: Date = new Date()): Promise<void> => {

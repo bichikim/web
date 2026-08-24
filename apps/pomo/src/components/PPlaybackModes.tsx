@@ -8,12 +8,12 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 const CLASSES = {
   playerMode: [
     'pomo-player__mode text-muted-foreground [&:hover]:text-foreground',
-    '[&:hover]:bg-[rgb(255_250_241_/_7%)] [&.is-active]:text-white',
+    '[&:hover]:bg-secondary-soft [&.is-active]:text-white',
     '[&.is-active]:bg-primary [&.is-active]:shadow-[0_4px_12px_rgb(125_49_29_/_28%)]',
     '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
     '[&:focus-visible]:[outline-offset:2px]',
   ].join(' '),
-  playerModes: 'pomo-player__modes [border:1px_solid_rgb(255_250_241_/_8%)] bg-[rgb(4_4_3_/_22%)]',
+  playerModes: 'pomo-player__modes border border-solid border-border bg-surface-overlay',
 } as const
 
 const REPEAT_MODES = [

@@ -1,5 +1,6 @@
 // oxlint-disable no-await-in-loop -- Feed orchestration owns one model Worker and its persisted lifecycle.
 import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 
 import type {GenerateCompressedDialogueAudioResult} from '../focus-room-dialogue/generate-dialogue-audio'
 import {
@@ -495,18 +496,15 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       })
     }, FEED_POLLING_INTERVAL_MS)
 
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener(FEED_CONNECTIONS_CHANGED_EVENT, handleConnectionChange)
-    window.addEventListener(feedGenerationRuntime.settingsChangedEvent, handleConnectionChange)
+    useEvent(document, 'visibilitychange', handleVisibilityChange)
+    useEvent(window, FEED_CONNECTIONS_CHANGED_EVENT, handleConnectionChange)
+    useEvent(window, feedGenerationRuntime.settingsChangedEvent, handleConnectionChange)
     initialize().catch((error: unknown) => {
       console.error('Failed to initialize focus room feeds.', error)
       setFeedState({message: '피드 기능을 시작하지 못했어요.', status: 'error'})
     })
     onCleanup(() => {
       window.clearInterval(interval)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener(FEED_CONNECTIONS_CHANGED_EVENT, handleConnectionChange)
-      window.removeEventListener(feedGenerationRuntime.settingsChangedEvent, handleConnectionChange)
     })
   })
 

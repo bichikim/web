@@ -1,4 +1,5 @@
 import {batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 
 import {
   createInitialPlaybackState,
@@ -481,30 +482,21 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
       })
     }
 
-    audioElement?.addEventListener('play', handlePlay)
-    audioElement?.addEventListener('pause', handlePause)
-    audioElement?.addEventListener('ended', handleEnded)
-    audioElement?.addEventListener('error', handleAudioError)
-    audioElement?.addEventListener('loadedmetadata', restorePendingPlayback)
-    audioElement?.addEventListener('seeking', handleSeeking)
-    audioElement?.addEventListener('seeked', playbackPersistence.persistCurrentPlayback)
-    audioElement?.addEventListener('timeupdate', playbackPersistence.persistPlaybackProgress)
-    window.addEventListener('pagehide', playbackPersistence.persistCurrentPlayback)
+    useEvent(audioElement ?? null, 'play', handlePlay)
+    useEvent(audioElement ?? null, 'pause', handlePause)
+    useEvent(audioElement ?? null, 'ended', handleEnded)
+    useEvent(audioElement ?? null, 'error', handleAudioError)
+    useEvent(audioElement ?? null, 'loadedmetadata', restorePendingPlayback)
+    useEvent(audioElement ?? null, 'seeking', handleSeeking)
+    useEvent(audioElement ?? null, 'seeked', playbackPersistence.persistCurrentPlayback)
+    useEvent(audioElement ?? null, 'timeupdate', playbackPersistence.persistPlaybackProgress)
+    useEvent(window, 'pagehide', playbackPersistence.persistCurrentPlayback)
   })
 
   onCleanup(() => {
     playbackPersistence.persistCurrentPlayback()
     destroyed = true
     playlistRequest.abort()
-    audioElement?.removeEventListener('play', handlePlay)
-    audioElement?.removeEventListener('pause', handlePause)
-    audioElement?.removeEventListener('ended', handleEnded)
-    audioElement?.removeEventListener('error', handleAudioError)
-    audioElement?.removeEventListener('loadedmetadata', restorePendingPlayback)
-    audioElement?.removeEventListener('seeking', handleSeeking)
-    audioElement?.removeEventListener('seeked', playbackPersistence.persistCurrentPlayback)
-    audioElement?.removeEventListener('timeupdate', playbackPersistence.persistPlaybackProgress)
-    window.removeEventListener('pagehide', playbackPersistence.persistCurrentPlayback)
     audioElement?.pause()
   })
 
