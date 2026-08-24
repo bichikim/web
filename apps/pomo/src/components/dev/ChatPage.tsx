@@ -1,9 +1,8 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
-import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
+import {ChatWorkspace} from './chat/Workspace'
 
-const ChatRoom = clientOnly(() => import('src/components/ChatRoom'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-7 text-#f8edf1 xs:px-7 xs:py-10',
 )
@@ -25,7 +24,7 @@ function ChatPage() {
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
           ← 실험실 목록
         </A>
-        <ChatRoom
+        <ChatWorkspace
           fallback={
             <section aria-live="polite" class={FALLBACK_CLASSES}>
               브라우저 채팅 환경을 확인하고 있어요…

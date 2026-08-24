@@ -1,7 +1,3 @@
-import {clientOnly} from '@solidjs/start'
+import {PFeedSettingsPanel} from './feed-settings/Panel'
 
-const PFeedSettingsContent = clientOnly(() => import('./PFeedSettingsContent'), {
-  lazy: true,
-})
-
-export const PFeedSettings = () => <PFeedSettingsContent />
+export const PFeedSettings = () => <PFeedSettingsPanel />

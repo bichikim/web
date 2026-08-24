@@ -1,47 +1,20 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal, type JSX, Show} from 'solid-js'
+import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
-import {PRecoveryBoundary} from 'src/components/PRecoveryBoundary'
-import {useApplicationRecovery} from 'src/features/application-recovery'
-
-interface TestRecoveryProps {
-  readonly children?: JSX.Element
-  readonly onReload: () => void
-  readonly reportError: (error: unknown) => string
-}
-
-const TestRecovery = (props: TestRecoveryProps) => {
-  const recovery = useApplicationRecovery({
-    onReload: () => props.onReload(),
-    reportError: (error) => props.reportError(error),
-  })
-
-  return (
-    <PRecoveryBoundary
-      canRetry={recovery.canRetry}
-      onError={recovery.onError}
-      onReady={recovery.onReady}
-      onReload={recovery.onReload}
-      onRetry={recovery.onRetry}
-    >
-      {props.children}
-    </PRecoveryBoundary>
-  )
-}
+import {SometimesBroken} from './support/SometimesBroken'
+import {TestRecovery} from './support/TestRecovery'
+import {ThrowError} from './support/ThrowError'
 
 it('should hide internal details and expose an error ID with recovery actions', () => {
   const reload = vi.fn()
   const reportError = vi.fn(() => 'POMO-SAFE-ID')
   const internalError = new Error('Bearer private-token internal stack')
-  const Broken = () => {
-    throw internalError
-  }
 
   render(() => (
     <TestRecovery onReload={reload} reportError={reportError}>
-      <Broken />
+      <ThrowError error={internalError} />
     </TestRecovery>
   ))
 
@@ -55,13 +28,11 @@ it('should hide internal details and expose an error ID with recovery actions', 
 
 it('should stop offering reset after the recovered subtree fails again', () => {
   const reportError = vi.fn(() => 'POMO-LOOP-ID')
-  const Broken = () => {
-    throw new Error('repeat failure')
-  }
+  const repeatError = new Error('repeat failure')
 
   render(() => (
     <TestRecovery onReload={vi.fn()} reportError={reportError}>
-      <Broken />
+      <ThrowError error={repeatError} />
     </TestRecovery>
   ))
 
@@ -76,26 +47,22 @@ it('should stop offering reset after the recovered subtree fails again', () => {
 it('should restore one retry after the recovered subtree mounts successfully', () => {
   const [failure, setFailure] = createSignal<'initial' | 'later' | null>('initial')
   let initialFailureHandled = false
-  const SometimesBroken = () => {
-    if (failure() === 'initial' && !initialFailureHandled) {
-      initialFailureHandled = true
-      throw new Error('initial failure')
+  const shouldFailInitially = () => {
+    if (failure() !== 'initial' || initialFailureHandled) {
+      return false
     }
 
-    const LaterFailure = () => {
-      throw new Error('later failure')
-    }
-
-    return (
-      <Show fallback={<LaterFailure />} when={failure() !== 'later'}>
-        <button onClick={() => setFailure('later')}>나중에 실패</button>
-      </Show>
-    )
+    initialFailureHandled = true
+    return true
   }
 
   render(() => (
     <TestRecovery onReload={vi.fn()} reportError={() => 'POMO-RECOVERED'}>
-      <SometimesBroken />
+      <SometimesBroken
+        failure={failure}
+        onLaterFailure={() => setFailure('later')}
+        shouldFailInitially={shouldFailInitially}
+      />
     </TestRecovery>
   ))
 
