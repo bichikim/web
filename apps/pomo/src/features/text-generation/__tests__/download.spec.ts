@@ -1,7 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import type {ModelStorage} from '../../model-storage'
-import {successResult} from '../../model-storage/result'
+import {successResult} from '../../result'
 import {isTextModelDownloaded} from '../download'
 
 const createStorage = (): ModelStorage => ({

@@ -2,7 +2,7 @@ import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './analysis'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
-import {textMoodFailure, type TextMoodResult, textMoodSuccess} from './result'
+import {failureResult, type Result, successResult} from '../result'
 
 export interface AnalyzeTextMoodOptions {
   readonly context?: string
@@ -36,14 +36,14 @@ export interface CreateTextMoodAnalyzerOptions {
 export interface TextMoodAnalyzer {
   readonly analyze: (
     options: AnalyzeTextMoodOptions,
-  ) => Promise<TextMoodResult<TextMoodAnalyzerResult, TextMoodError>>
+  ) => Promise<Result<TextMoodAnalyzerResult, TextMoodError>>
   readonly dispose: () => void
-  readonly prepare: () => Promise<TextMoodResult<TextMoodAnalyzerReady, TextMoodError>>
+  readonly prepare: () => Promise<Result<TextMoodAnalyzerReady, TextMoodError>>
 }
 
 interface PendingRequest<Value> {
   readonly requestId: number
-  readonly resolve: (result: TextMoodResult<Value, TextMoodError>) => void
+  readonly resolve: (result: Result<Value, TextMoodError>) => void
 }
 
 const createRequestId = () => {
@@ -93,21 +93,21 @@ export const createTextMoodAnalyzer = (
 
   const failPending = (detail: string) => {
     workerFailure ??= detail
-    pendingAnalyze?.resolve(textMoodFailure(createWorkerError('analyze', detail)))
-    pendingPrepare?.resolve(textMoodFailure(createWorkerError('prepare', detail)))
+    pendingAnalyze?.resolve(failureResult(createWorkerError('analyze', detail)))
+    pendingPrepare?.resolve(failureResult(createWorkerError('prepare', detail)))
     pendingAnalyze = null
     pendingPrepare = null
   }
 
   const handleError = (response: Extract<TextMoodWorkerResponse, {readonly type: 'error'}>) => {
     if (pendingAnalyze?.requestId === response.requestId) {
-      pendingAnalyze.resolve(textMoodFailure(response.error))
+      pendingAnalyze.resolve(failureResult(response.error))
       pendingAnalyze = null
       return
     }
 
     if (pendingPrepare?.requestId === response.requestId) {
-      pendingPrepare.resolve(textMoodFailure(response.error))
+      pendingPrepare.resolve(failureResult(response.error))
       pendingPrepare = null
     }
   }
@@ -119,7 +119,7 @@ export const createTextMoodAnalyzer = (
       case 'complete':
         if (pendingAnalyze?.requestId === response.requestId) {
           pendingAnalyze.resolve(
-            textMoodSuccess({
+            successResult({
               analysis: response.analysis,
               elapsedMilliseconds: response.elapsedMilliseconds,
               status: 'complete',
@@ -131,7 +131,7 @@ export const createTextMoodAnalyzer = (
       case 'insufficient':
         if (pendingAnalyze?.requestId === response.requestId) {
           pendingAnalyze.resolve(
-            textMoodSuccess({
+            successResult({
               elapsedMilliseconds: response.elapsedMilliseconds,
               status: 'insufficient',
               sufficiency: response.sufficiency,
@@ -148,7 +148,7 @@ export const createTextMoodAnalyzer = (
         return
       case 'ready':
         if (pendingPrepare?.requestId === response.requestId) {
-          pendingPrepare.resolve(textMoodSuccess({repositoryId: TEXT_MOOD_MODEL.repositoryId}))
+          pendingPrepare.resolve(successResult({repositoryId: TEXT_MOOD_MODEL.repositoryId}))
           pendingPrepare = null
         }
         return
@@ -169,16 +169,16 @@ export const createTextMoodAnalyzer = (
 
   const prepare: TextMoodAnalyzer['prepare'] = () => {
     if (disposed) {
-      return Promise.resolve(textMoodFailure(createCancelledError('prepare')))
+      return Promise.resolve(failureResult(createCancelledError('prepare')))
     }
 
     if (workerFailure !== null) {
-      return Promise.resolve(textMoodFailure(createWorkerError('prepare', workerFailure)))
+      return Promise.resolve(failureResult(createWorkerError('prepare', workerFailure)))
     }
 
     if (pendingPrepare !== null) {
       return Promise.resolve(
-        textMoodFailure({
+        failureResult({
           code: 'model-failed',
           detail: '모델을 이미 준비하고 있어요.',
           phase: 'prepare',
@@ -196,16 +196,16 @@ export const createTextMoodAnalyzer = (
 
   const analyze: TextMoodAnalyzer['analyze'] = (requestOptions) => {
     if (disposed) {
-      return Promise.resolve(textMoodFailure(createCancelledError('analyze')))
+      return Promise.resolve(failureResult(createCancelledError('analyze')))
     }
 
     if (workerFailure !== null) {
-      return Promise.resolve(textMoodFailure(createWorkerError('analyze', workerFailure)))
+      return Promise.resolve(failureResult(createWorkerError('analyze', workerFailure)))
     }
 
     if (pendingAnalyze !== null) {
       return Promise.resolve(
-        textMoodFailure({
+        failureResult({
           code: 'classification-failed',
           detail: '다른 문장을 분석하고 있어요.',
           phase: 'analyze',
@@ -227,8 +227,8 @@ export const createTextMoodAnalyzer = (
     }
 
     disposed = true
-    pendingAnalyze?.resolve(textMoodFailure(createCancelledError('analyze')))
-    pendingPrepare?.resolve(textMoodFailure(createCancelledError('prepare')))
+    pendingAnalyze?.resolve(failureResult(createCancelledError('analyze')))
+    pendingPrepare?.resolve(failureResult(createCancelledError('prepare')))
     pendingAnalyze = null
     pendingPrepare = null
     terminateWorker()

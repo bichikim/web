@@ -11,7 +11,7 @@ import type {
   SupertonicWorkerOutput,
 } from './messages'
 import type {SupertonicModelId} from './model'
-import {failureResult, type Result, successResult} from './result'
+import {failureResult, type Result, successResult} from '../result'
 
 export interface InitializeSupertonicOptions {
   readonly modelId: SupertonicModelId

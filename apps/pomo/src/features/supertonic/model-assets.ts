@@ -8,7 +8,7 @@ import {
 } from './engine'
 import type {InvalidModelDataError} from './errors'
 import type {SupertonicVoiceId} from './model'
-import {failureResult, type Result, successResult} from './result'
+import {failureResult, type Result, successResult} from '../result'
 
 interface ModelAsset {
   readonly url: string
