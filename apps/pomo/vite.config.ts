@@ -17,6 +17,24 @@ const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
+const publicStaticRoutes = [
+  '/',
+  SERVICE_POLICY_PATHS.appsInToss.privacy,
+  SERVICE_POLICY_PATHS.appsInToss.terms,
+  SERVICE_POLICY_PATHS.legacy.privacy,
+  SERVICE_POLICY_PATHS.refund,
+  SERVICE_POLICY_PATHS.legacy.terms,
+  '/third-party-notices',
+  SERVICE_POLICY_PATHS.web.privacy,
+  SERVICE_POLICY_PATHS.web.terms,
+]
+const appsInTossStaticRoutes = [
+  ...publicStaticRoutes,
+  '/account',
+  '/dialogue',
+  '/focus-room',
+  '/focus-room-dialogue',
+]
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
 
@@ -109,28 +127,12 @@ export default defineConfig({
     'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
     'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
   },
-  nitro: isAppsInToss
-    ? {
-        prerender: {
-          routes: [
-            '/',
-            '/account',
-            SERVICE_POLICY_PATHS.appsInToss.privacy,
-            SERVICE_POLICY_PATHS.appsInToss.terms,
-            '/dialogue',
-            '/focus-room',
-            '/focus-room-dialogue',
-            SERVICE_POLICY_PATHS.legacy.privacy,
-            SERVICE_POLICY_PATHS.refund,
-            SERVICE_POLICY_PATHS.legacy.terms,
-            '/third-party-notices',
-            SERVICE_POLICY_PATHS.web.privacy,
-            SERVICE_POLICY_PATHS.web.terms,
-          ],
-        },
-        preset: 'static',
-      }
-    : {},
+  nitro: {
+    prerender: {
+      routes: isAppsInToss ? appsInTossStaticRoutes : publicStaticRoutes,
+    },
+    ...(isAppsInToss ? {preset: 'static'} : {}),
+  },
   optimizeDeps: {
     include: ['onnxruntime-web/all', 'zod'],
   },
