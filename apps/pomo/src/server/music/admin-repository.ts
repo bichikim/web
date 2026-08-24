@@ -1,4 +1,4 @@
-import {and, asc, desc, eq, max} from 'drizzle-orm'
+import {and, asc, desc, eq, isNotNull, max} from 'drizzle-orm'
 
 import {
   commerceOffers,
@@ -9,6 +9,7 @@ import {
   musicAlbumTracks,
   musicAlbumTranslations,
   musicTrackAssets,
+  musicTrackDeletionJobs,
   musicTracks,
   withTransactionalDatabase,
 } from '../database'
@@ -449,34 +450,7 @@ export const findActiveTrackAsset = async (trackId: string) => {
   return asset ?? null
 }
 
-export const findRemovableTrack = async (trackId: string) => {
-  const database = getDatabase()
-  const [albumTrack, assets] = await Promise.all([
-    database
-      .select({trackId: musicAlbumTracks.trackId})
-      .from(musicAlbumTracks)
-      .where(eq(musicAlbumTracks.trackId, trackId))
-      .limit(1),
-    database
-      .select({objectKey: musicTrackAssets.objectKey, status: musicTrackAssets.status})
-      .from(musicTrackAssets)
-      .where(eq(musicTrackAssets.trackId, trackId)),
-  ])
-
-  if (albumTrack === undefined) {
-    return null
-  }
-
-  return {
-    objectKeys: assets
-      .toSorted(
-        (left, right) => Number(left.status === 'active') - Number(right.status === 'active'),
-      )
-      .map((asset) => asset.objectKey),
-  }
-}
-
-export const deleteTrackRecords = async (trackId: string): Promise<boolean> =>
+export const prepareTrackDeletion = async (trackId: string) =>
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
       const [track] = await transaction
@@ -485,6 +459,14 @@ export const deleteTrackRecords = async (trackId: string): Promise<boolean> =>
         .where(eq(musicTracks.id, trackId))
         .for('update')
         .limit(1)
+      const [existingJob] = await transaction
+        .select({
+          objectKeys: musicTrackDeletionJobs.objectKeys,
+          storageDeletedAt: musicTrackDeletionJobs.storageDeletedAt,
+        })
+        .from(musicTrackDeletionJobs)
+        .where(eq(musicTrackDeletionJobs.trackId, trackId))
+        .limit(1)
       const [albumTrack] = await transaction
         .select({trackId: musicAlbumTracks.trackId})
         .from(musicAlbumTracks)
@@ -492,6 +474,56 @@ export const deleteTrackRecords = async (trackId: string): Promise<boolean> =>
         .limit(1)
 
       if (track === undefined || albumTrack === undefined) {
+        return null
+      }
+
+      if (existingJob !== undefined) {
+        return {
+          objectKeys: existingJob.objectKeys,
+          storageDeleted: existingJob.storageDeletedAt !== null,
+        }
+      }
+
+      const assets = await transaction
+        .select({objectKey: musicTrackAssets.objectKey, status: musicTrackAssets.status})
+        .from(musicTrackAssets)
+        .where(eq(musicTrackAssets.trackId, trackId))
+      const objectKeys = assets
+        .toSorted(
+          (left, right) => Number(left.status === 'active') - Number(right.status === 'active'),
+        )
+        .map((asset) => asset.objectKey)
+      await transaction.insert(musicTrackDeletionJobs).values({objectKeys, trackId})
+      return {objectKeys, storageDeleted: false}
+    }),
+  )
+
+export const markTrackDeletionStorageDeleted = async (trackId: string): Promise<boolean> => {
+  const database = getDatabase()
+  const [job] = await database
+    .update(musicTrackDeletionJobs)
+    .set({storageDeletedAt: new Date(), updatedAt: new Date()})
+    .where(eq(musicTrackDeletionJobs.trackId, trackId))
+    .returning({trackId: musicTrackDeletionJobs.trackId})
+  return job !== undefined
+}
+
+export const finalizeTrackDeletion = async (trackId: string): Promise<boolean> =>
+  withTransactionalDatabase((database) =>
+    database.transaction(async (transaction) => {
+      const [job] = await transaction
+        .select({trackId: musicTrackDeletionJobs.trackId})
+        .from(musicTrackDeletionJobs)
+        .where(
+          and(
+            eq(musicTrackDeletionJobs.trackId, trackId),
+            isNotNull(musicTrackDeletionJobs.storageDeletedAt),
+          ),
+        )
+        .for('update')
+        .limit(1)
+
+      if (job === undefined) {
         return false
       }
 

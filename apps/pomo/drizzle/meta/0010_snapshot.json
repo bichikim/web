@@ -1,5 +1,5 @@
 {
-  "id": "7f341784-64f9-4484-95fa-dc3dc0ce4861",
+  "id": "193450ff-0330-4a3a-b643-9a8dadfcafa8",
   "prevId": "2cef76a6-09dc-4383-bfa0-24ce96c4a24d",
   "version": "7",
   "dialect": "postgresql",
@@ -1892,6 +1892,61 @@
           "value": "\"music_track_assets\".\"status\" <> 'failed' or \"music_track_assets\".\"failure_code\" is not null"
         }
       },
+      "isRLSEnabled": false
+    },
+    "public.music_track_deletion_jobs": {
+      "name": "music_track_deletion_jobs",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "object_keys": {
+          "name": "object_keys",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_deleted_at": {
+          "name": "storage_deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "music_track_deletion_jobs_track_id_music_tracks_id_fk": {
+          "name": "music_track_deletion_jobs_track_id_music_tracks_id_fk",
+          "tableFrom": "music_track_deletion_jobs",
+          "tableTo": "music_tracks",
+          "columnsFrom": ["track_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.music_tracks": {

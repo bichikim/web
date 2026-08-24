@@ -4,6 +4,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -170,3 +171,13 @@ export const musicTrackAssets = pgTable(
     index('music_track_assets_status_created_at_index').on(table.status, table.createdAt),
   ],
 )
+
+export const musicTrackDeletionJobs = pgTable('music_track_deletion_jobs', {
+  createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+  objectKeys: jsonb().$type<readonly string[]>().notNull(),
+  storageDeletedAt: timestamp({withTimezone: true}),
+  trackId: uuid()
+    .primaryKey()
+    .references(() => musicTracks.id, {onDelete: 'cascade'}),
+  updatedAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+})

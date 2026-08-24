@@ -3,7 +3,11 @@ import {z} from 'zod'
 
 import {authorizeAdminRequest} from 'src/server/admin-auth/http'
 import {noStoreJson} from 'src/server/http/response'
-import {deleteTrackRecords, findRemovableTrack} from 'src/server/music/admin-repository'
+import {
+  finalizeTrackDeletion,
+  markTrackDeletionStorageDeleted,
+  prepareTrackDeletion,
+} from 'src/server/music/admin-repository'
 import {deleteTrackObject} from 'src/server/music/track-upload'
 
 const HTTP_BAD_REQUEST = 400
@@ -28,7 +32,17 @@ export const DELETE = async (event: APIEvent): Promise<Response> => {
     )
   }
 
-  const track = await findRemovableTrack(parsedTrackId.data)
+  let track: Awaited<ReturnType<typeof prepareTrackDeletion>>
+
+  try {
+    track = await prepareTrackDeletion(parsedTrackId.data)
+  } catch (error) {
+    console.error('Failed to prepare music track deletion', error)
+    return noStoreJson(
+      {error: 'track_delete_failed'},
+      {cookies: authorization.cookies, status: HTTP_INTERNAL_SERVER_ERROR},
+    )
+  }
 
   if (track === null) {
     return noStoreJson(
@@ -38,7 +52,13 @@ export const DELETE = async (event: APIEvent): Promise<Response> => {
   }
 
   try {
-    await Promise.all(track.objectKeys.map((objectKey) => deleteTrackObject(objectKey)))
+    if (!track.storageDeleted) {
+      await Promise.all(track.objectKeys.map((objectKey) => deleteTrackObject(objectKey)))
+
+      if (!(await markTrackDeletionStorageDeleted(parsedTrackId.data))) {
+        throw new Error('Failed to record deleted music track objects')
+      }
+    }
   } catch (error) {
     console.error('Failed to delete music track objects', error)
     return noStoreJson(
@@ -48,7 +68,7 @@ export const DELETE = async (event: APIEvent): Promise<Response> => {
   }
 
   try {
-    const deleted = await deleteTrackRecords(parsedTrackId.data)
+    const deleted = await finalizeTrackDeletion(parsedTrackId.data)
 
     return deleted
       ? noStoreJson({status: 'deleted'}, {cookies: authorization.cookies})

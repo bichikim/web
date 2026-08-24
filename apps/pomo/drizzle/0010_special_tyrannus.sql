@@ -163,6 +163,14 @@ CREATE TABLE "music_track_assets" (
 	CONSTRAINT "music_track_assets_failure_code_check" CHECK ("music_track_assets"."status" <> 'failed' or "music_track_assets"."failure_code" is not null)
 );
 --> statement-breakpoint
+CREATE TABLE "music_track_deletion_jobs" (
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"object_keys" jsonb NOT NULL,
+	"storage_deleted_at" timestamp with time zone,
+	"track_id" uuid PRIMARY KEY NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "music_tracks" (
 	"artist" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -186,6 +194,7 @@ ALTER TABLE "music_album_tracks" ADD CONSTRAINT "music_album_tracks_album_id_mus
 ALTER TABLE "music_album_tracks" ADD CONSTRAINT "music_album_tracks_track_id_music_tracks_id_fk" FOREIGN KEY ("track_id") REFERENCES "public"."music_tracks"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "music_album_translations" ADD CONSTRAINT "music_album_translations_album_id_music_albums_id_fk" FOREIGN KEY ("album_id") REFERENCES "public"."music_albums"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "music_track_assets" ADD CONSTRAINT "music_track_assets_track_id_music_tracks_id_fk" FOREIGN KEY ("track_id") REFERENCES "public"."music_tracks"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "music_track_deletion_jobs" ADD CONSTRAINT "music_track_deletion_jobs_track_id_music_tracks_id_fk" FOREIGN KEY ("track_id") REFERENCES "public"."music_tracks"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "commerce_entitlement_grants_order_item_index" ON "commerce_entitlement_grants" USING btree ("order_item_id");--> statement-breakpoint
 CREATE INDEX "commerce_entitlement_grants_access_index" ON "commerce_entitlement_grants" USING btree ("user_id","product_id","starts_at","ends_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "commerce_offers_provider_external_product_index" ON "commerce_offers" USING btree ("provider","external_product_id");--> statement-breakpoint
