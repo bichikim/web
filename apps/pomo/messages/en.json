@@ -126,6 +126,7 @@
   "user_anonymous_description": "Sign in to use the same Pomo account across environments.",
   "user_error": "We couldn't check your sign-in status. Try again from the account page.",
   "user_manage_account": "Manage account",
+  "user_link_web": "Add email for web sign-in",
   "user_sign_in": "Sign in / Sign up",
   "user_service_information": "Service information",
   "account_title": "Pomo account",

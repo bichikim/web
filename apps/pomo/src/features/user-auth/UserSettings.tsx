@@ -118,7 +118,11 @@ export const UserSettings = () => {
           href={localizeHref('/account')}
         >
           <span aria-hidden="true" class="i-tabler-user-circle size-4.5" />
-          {state().kind === 'authenticated' ? m.user_manage_account() : m.user_sign_in()}
+          <Switch>
+            <Match when={authenticatedUser()?.provider === 'toss'}>{m.user_link_web()}</Match>
+            <Match when={state().kind === 'authenticated'}>{m.user_manage_account()}</Match>
+            <Match when>{m.user_sign_in()}</Match>
+          </Switch>
         </a>
 
         <section

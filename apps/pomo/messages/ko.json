@@ -126,6 +126,7 @@
   "user_anonymous_description": "로그인하면 여러 환경에서 같은 Pomo 계정을 사용할 수 있어요.",
   "user_error": "로그인 상태를 확인하지 못했습니다. 계정 화면에서 다시 시도해 주세요.",
   "user_manage_account": "계정 관리",
+  "user_link_web": "이메일 추가해서 웹에서도 로그인하기",
   "user_sign_in": "로그인 / 가입",
   "user_service_information": "서비스 정보",
   "account_title": "Pomo 계정",

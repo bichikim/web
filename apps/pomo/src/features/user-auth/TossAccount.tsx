@@ -1,4 +1,5 @@
-import {createSignal, type JSX, onMount, Show} from 'solid-js'
+import {useNavigate} from '@solidjs/router'
+import {createSignal, type JSX, onCleanup, onMount, Show} from 'solid-js'
 
 import {
   type AccountLinkEmailResult,
@@ -17,6 +18,7 @@ import {
   ACCOUNT_SUCCESS_CLASSES,
 } from './styles'
 import * as m from '../../paraglide/messages.js'
+import {localizeHref} from '../../paraglide/runtime.js'
 
 interface AccountLinkFeedback {
   readonly errorMessage: string | null
@@ -49,7 +51,25 @@ const getAccountLinkFeedback = (result: AccountLinkEmailResult): AccountLinkFeed
   }
 }
 
+const useLoginNavigation = () => {
+  const navigate = useNavigate()
+  let isActive = true
+
+  onCleanup(() => {
+    isActive = false
+  })
+
+  return async () => {
+    await createTossLoginSession()
+
+    if (isActive) {
+      navigate(localizeHref('/'), {replace: true})
+    }
+  }
+}
+
 export const TossAccount = () => {
+  const login = useLoginNavigation()
   const [token, setToken] = createSignal<string | null>(null)
   const [email, setEmail] = createSignal('')
   const [isLoading, setIsLoading] = createSignal(true)
@@ -82,8 +102,7 @@ export const TossAccount = () => {
     setIsSubmitting(true)
 
     try {
-      setToken(await createTossLoginSession())
-      setSuccessMessage(m.account_toss_login_success())
+      await login()
     } catch {
       setErrorMessage(m.account_toss_login_failed())
     } finally {

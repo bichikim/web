@@ -67,6 +67,9 @@ it('should show the Toss login method for an app session', async () => {
 
   await waitFor(() => expect(screen.queryByText('토스')).not.toBeNull())
   expect(screen.queryByText('로그인됨')).not.toBeNull()
+  expect(
+    screen.getByRole('link', {name: '이메일 추가해서 웹에서도 로그인하기'}).getAttribute('href'),
+  ).toBe('/ko/account/')
   expect(readAccountSession).not.toHaveBeenCalled()
 })
 
