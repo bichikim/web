@@ -1,4 +1,3 @@
-import path from 'node:path'
 import type {Plugin} from 'vite'
 import {
   defineConfig,
@@ -16,6 +15,17 @@ const virtualUnoCssPlugin = {
   name: 'vitest-virtual-uno-css',
   resolveId(source) {
     return source === 'virtual:uno.css' ? virtualUnoCssId : null
+  },
+} satisfies Plugin
+
+const virtualServerOnlyId = '\0vitest:server-only'
+const virtualServerOnlyPlugin = {
+  load(id) {
+    return id === virtualServerOnlyId ? 'export {}' : null
+  },
+  name: 'vitest-virtual-server-only',
+  resolveId(source) {
+    return source === 'server-only' ? virtualServerOnlyId : null
   },
 } satisfies Plugin
 
@@ -47,17 +57,13 @@ export const createVitestConfig = (projects: readonly TestProjectConfiguration[]
     plugins: [
       // Unit tests need a resolvable CSS module, while UnoCSS transformation rewrites class snapshots and trigger fixtures.
       virtualUnoCssPlugin,
+      // Vitest does not load SolidStart, which normally stubs this marker for server modules.
+      virtualServerOnlyPlugin,
       // HMR is inactive in tests; disabling its transform prevents synthetic refresh branches from lowering source coverage.
       solid({hot: false}) as any,
     ],
     // 모듈 resolve 옵션
     resolve: {
-      alias: {
-        'server-only': path.resolve(
-          import.meta.dirname,
-          'apps/pomo/node_modules/server-only/empty.js',
-        ),
-      },
       // Solid.js 테스트용 export condition (development + browser)
       conditions: ['development', 'browser'],
       tsconfigPaths: true,
