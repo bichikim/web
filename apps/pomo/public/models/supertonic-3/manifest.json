@@ -7,6 +7,15 @@
         "Yuna": {
           "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/yuna.json"
         },
+        "Hana": {
+          "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/hana.json"
+        },
+        "Sora": {
+          "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/sora.json"
+        },
+        "Mina": {
+          "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/mina.json"
+        },
         "F1": {
           "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/sarah.json"
         },

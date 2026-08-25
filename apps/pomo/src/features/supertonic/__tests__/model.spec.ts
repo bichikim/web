@@ -11,7 +11,7 @@ import {
 
 const FULL_MODEL_SIZE = 398_075_273
 const INT8_MODEL_SIZE = 144_508_203
-const VOICE_COUNT = 11
+const VOICE_COUNT = 14
 
 describe('Supertonic model manifest', () => {
   it('should expose full and INT8 profiles with independent execution policies', () => {
@@ -55,6 +55,21 @@ describe('Supertonic model manifest', () => {
       recommended: true,
     })
     expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'F1')).toMatchObject({
+      recommended: false,
+    })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'Hana')).toMatchObject({
+      gender: 'female',
+      label: 'Hana',
+      recommended: false,
+    })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'Sora')).toMatchObject({
+      gender: 'female',
+      label: 'Sora',
+      recommended: false,
+    })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'Mina')).toMatchObject({
+      gender: 'female',
+      label: 'Mina',
       recommended: false,
     })
     expect(() => Reflect.apply(getSupertonicModel, null, ['unknown'])).toThrow(

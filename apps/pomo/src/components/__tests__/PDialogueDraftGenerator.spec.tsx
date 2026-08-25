@@ -81,9 +81,8 @@ it('should request a script with the selected topic and length after download co
   fireEvent.click(screen.getByRole('button', {name: '대사 만들기'}))
 
   expect(writer.setRequest).toHaveBeenCalledWith(
-    expect.stringContaining('주제: 집중을 시작하는 응원'),
+    '사용자 요청: 집중을 시작하는 응원\n생성 분량: 180자',
   )
-  expect(writer.setRequest).toHaveBeenCalledWith(expect.stringContaining('180자에 최대한 가깝게'))
   expect(writer.generateWithPreparation).not.toHaveBeenCalled()
   expect(await screen.findByRole('dialog', {name: '약 3.7GB 모델을 받을까요?'})).toBeDefined()
   fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
