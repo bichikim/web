@@ -93,10 +93,6 @@ export const listAdminMusic = async () => {
       })
       .from(musicAlbumTracks)
       .innerJoin(musicTracks, eq(musicAlbumTracks.trackId, musicTracks.id))
-      .innerJoin(
-        musicTrackAssets,
-        and(eq(musicTrackAssets.trackId, musicTracks.id), eq(musicTrackAssets.status, 'active')),
-      )
       .orderBy(asc(musicAlbumTracks.albumId), asc(musicAlbumTracks.position)),
     database
       .select({
@@ -186,13 +182,25 @@ export const updateAlbumStatus = async (
       }
 
       const albumTracks = await transaction
-        .selectDistinct({trackId: musicAlbumTracks.trackId})
+        .select({activeAssetTrackId: musicTrackAssets.trackId, trackId: musicAlbumTracks.trackId})
         .from(musicAlbumTracks)
-        .innerJoin(musicTrackAssets, eq(musicAlbumTracks.trackId, musicTrackAssets.trackId))
-        .where(and(eq(musicAlbumTracks.albumId, albumId), eq(musicTrackAssets.status, 'active')))
+        .leftJoin(
+          musicTrackAssets,
+          and(
+            eq(musicAlbumTracks.trackId, musicTrackAssets.trackId),
+            eq(musicTrackAssets.status, 'active'),
+          ),
+        )
+        .where(eq(musicAlbumTracks.albumId, albumId))
+      const trackIds = new Set(albumTracks.map((track) => track.trackId))
+      const activeAssetTrackIds = new Set(
+        albumTracks.flatMap((track) =>
+          track.activeAssetTrackId === null ? [] : [track.activeAssetTrackId],
+        ),
+      )
       const release = getAlbumReleaseReadiness({
-        activeAssetTrackCount: albumTracks.length,
-        trackCount: albumTracks.length,
+        activeAssetTrackCount: activeAssetTrackIds.size,
+        trackCount: trackIds.size,
       })
 
       if (!release.ready) {
@@ -374,6 +382,16 @@ export const reserveTrackAsset = async (trackId: string) =>
         return null
       }
 
+      const [deletionJob] = await transaction
+        .select({trackId: musicTrackDeletionJobs.trackId})
+        .from(musicTrackDeletionJobs)
+        .where(eq(musicTrackDeletionJobs.trackId, trackId))
+        .limit(1)
+
+      if (deletionJob !== undefined) {
+        return null
+      }
+
       const assetId = crypto.randomUUID()
       const objectKey = createTrackAssetKey({assetId, trackId})
       await transaction.insert(musicTrackAssets).values({id: assetId, objectKey, trackId})
@@ -384,6 +402,27 @@ export const reserveTrackAsset = async (trackId: string) =>
 export const activateTrackAsset = async (input: ActivateTrackAssetInput): Promise<boolean> =>
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
+      const [assetReference] = await transaction
+        .select({trackId: musicTrackAssets.trackId})
+        .from(musicTrackAssets)
+        .where(eq(musicTrackAssets.id, input.assetId))
+        .limit(1)
+
+      if (assetReference === undefined) {
+        return false
+      }
+
+      const [track] = await transaction
+        .select({id: musicTracks.id})
+        .from(musicTracks)
+        .where(eq(musicTracks.id, assetReference.trackId))
+        .for('update')
+        .limit(1)
+
+      if (track === undefined) {
+        return false
+      }
+
       const [asset] = await transaction
         .select({status: musicTrackAssets.status, trackId: musicTrackAssets.trackId})
         .from(musicTrackAssets)
@@ -392,6 +431,16 @@ export const activateTrackAsset = async (input: ActivateTrackAssetInput): Promis
         .limit(1)
 
       if (asset === undefined || asset.status !== 'pending') {
+        return false
+      }
+
+      const [deletionJob] = await transaction
+        .select({trackId: musicTrackDeletionJobs.trackId})
+        .from(musicTrackDeletionJobs)
+        .where(eq(musicTrackDeletionJobs.trackId, asset.trackId))
+        .limit(1)
+
+      if (deletionJob !== undefined) {
         return false
       }
 
@@ -478,6 +527,11 @@ export const prepareTrackDeletion = async (trackId: string) =>
       if (track === undefined || albumTrack === undefined) {
         return null
       }
+
+      await transaction
+        .update(musicTrackAssets)
+        .set({retiredAt: new Date(), status: 'retired'})
+        .where(and(eq(musicTrackAssets.trackId, trackId), eq(musicTrackAssets.status, 'active')))
 
       if (existingJob !== undefined) {
         return {
