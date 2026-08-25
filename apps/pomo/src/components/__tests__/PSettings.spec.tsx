@@ -24,7 +24,7 @@ vi.mock('../PCreditsSettings', () => ({PCreditsSettings: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
 vi.mock('../PFeedSettings', () => ({PFeedSettings: vi.fn()}))
 vi.mock('../PWeatherSettings', () => ({PWeatherSettings: vi.fn()}))
-vi.mock('../../features/user-auth/UserSettings', () => ({UserSettings: vi.fn()}))
+vi.mock('../UserSettings', () => ({UserSettings: vi.fn()}))
 
 interface TabsRootProps {
   readonly children?: JSX.Element

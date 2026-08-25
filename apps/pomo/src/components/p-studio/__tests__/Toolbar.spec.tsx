@@ -18,6 +18,7 @@ vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 vi.mock('../../../features/focus-room-time', () => ({getNextTimeMode: vi.fn()}))
+vi.mock('../../PModelDownloadStatus', () => ({PModelDownloadStatus: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
 
 const callbacks = {

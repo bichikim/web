@@ -2,8 +2,8 @@
 
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {AdminLogin} from 'src/components/AdminLogin'
 import {requestAdminMagicLink} from '../magic-link'
-import {AdminLogin} from '../AdminLogin'
 
 vi.mock('../magic-link', () => ({requestAdminMagicLink: vi.fn()}))
 vi.mock('@solidjs/meta', () => ({Title: () => null}))

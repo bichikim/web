@@ -2,7 +2,7 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {Show} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/PModal'
 import {
@@ -11,11 +11,20 @@ import {
   type PFeedController,
   usePFeedContext,
 } from 'src/features/focus-room-feed'
+import {
+  type ModelDownloadController,
+  type ModelDownloadResult,
+  useModelDownload,
+} from 'src/features/model-download'
 import {isSupertonicModelDownloaded} from 'src/features/supertonic'
 import {PFeedStatus} from '../PFeedStatus'
 
 vi.mock('src/features/focus-room-feed', () => ({
   usePFeedContext: vi.fn(),
+}))
+
+vi.mock('src/features/model-download', () => ({
+  useModelDownload: vi.fn(),
 }))
 
 vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
@@ -94,6 +103,19 @@ const createFeeds = (
   syncNow: vi.fn(async () => undefined),
   unlistenedDialogues: () => dialogues,
   ...overrides,
+})
+
+const createModelDownload = (): ModelDownloadController => ({
+  cancel: vi.fn(),
+  dismissError: vi.fn(),
+  dispose: vi.fn(),
+  startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
+  startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
+  state: () => ({status: 'idle'}),
+})
+
+beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownload())
 })
 
 afterEach(() => {
@@ -178,7 +200,9 @@ it('should hide the ready notice while queued dialogues are playing', () => {
 it('should require download consent before retrying a feed without a cached model', async () => {
   renderModal()
   const feeds = createFeeds([], false, [RECOVERY_JOB])
+  const modelDownload = createModelDownload()
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue(modelDownload)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
   render(() => <PFeedStatus />)
 
@@ -189,7 +213,8 @@ it('should require download consent before retrying a feed without a cached mode
   expect(feeds.retryRecovery).not.toHaveBeenCalled()
 
   fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
-  expect(feeds.retryRecovery).toHaveBeenCalledTimes(1)
+  await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledTimes(1))
+  expect(modelDownload.startVoiceModel).toHaveBeenCalledWith('full')
 })
 
 it('should retry immediately when every feed model is already cached', async () => {
@@ -286,4 +311,32 @@ it('should keep a single model check in flight and let users cancel download con
 
   expect(screen.queryByRole('dialog', {name: /모델을 받을까요/})).toBeNull()
   expect(feeds.retryRecovery).not.toHaveBeenCalled()
+})
+
+it('should continue a confirmed feed model download after leaving the page', async () => {
+  renderModal()
+  let resolveDownload: (result: {readonly status: 'complete'}) => void = () => undefined
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  const modelDownload = createModelDownload()
+  vi.mocked(modelDownload.startVoiceModel).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        resolveDownload = resolve
+      }),
+  )
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+  const result = render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+  await screen.findByRole('dialog', {name: /모델을 받을까요/})
+  fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
+  await vi.waitFor(() => expect(modelDownload.startVoiceModel).toHaveBeenCalledWith('full'))
+  result.unmount()
+  resolveDownload({status: 'complete'})
+
+  await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledTimes(1))
+  expect(modelDownload.cancel).not.toHaveBeenCalled()
+  expect(modelDownload.dispose).not.toHaveBeenCalled()
 })

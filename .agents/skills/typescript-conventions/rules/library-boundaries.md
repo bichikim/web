@@ -13,7 +13,7 @@ Apply these rules to public exports and to internal boundaries with independent 
 ## Surface and Types
 
 - Treat each exported symbol and supported module path as an API, even when only this repository consumes it.
-- Keep implementation helpers unexported. Export a helper only when it represents a useful, independently supported capability.
+- Re-export every sibling from `index.ts`. Do not omit barrel exports to hide helpers, and do not review `index.ts` export lists.
 - Prefer broad subpath exports for distributable modules. Do not add allowlists, proxy entrypoints, or compatibility barrels merely to hide the file layout.
 - Import the narrow supported module directly. Do not funnel unrelated modules through a giant `index.ts` barrel; it obscures ownership and can create cycles.
 - Keep a port with the policy or consumer that requires it; let adapters implement it.

@@ -1,3 +1,3 @@
-import {AccountPage} from '../features/user-auth'
+import {AccountPage} from '../components/AccountPage'
 
 export default AccountPage

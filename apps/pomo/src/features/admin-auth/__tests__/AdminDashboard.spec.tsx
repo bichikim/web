@@ -3,7 +3,7 @@
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {A, useNavigate} from '@solidjs/router'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {AdminDashboard} from '../AdminDashboard'
+import {AdminDashboard} from 'src/components/AdminDashboard'
 import {signOutAdminSession} from '../session'
 
 vi.mock('@solidjs/meta', () => ({Title: vi.fn()}))
