@@ -1,1 +1,1 @@
-export {default} from '../../../.storybook/preview.ts'
+export {default} from '../../../.storybook/preview'

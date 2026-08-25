@@ -26,7 +26,7 @@ import {
 import {usePSay} from '../features/pomo-webmcp'
 import {useScreenSaver} from '../features/screen-saver'
 import {useWeather} from '../features/weather'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
 import {type PPomodoroPresentation} from './PPomodoro'

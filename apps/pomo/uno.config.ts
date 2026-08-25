@@ -73,7 +73,7 @@ const config = mergeConfigs([
   defineConfig<PresetWind3Theme>({
     content: {
       pipeline: {
-        exclude: ['**/src/paraglide/**'],
+        exclude: ['**/.i18n/paraglide/**'],
       },
     },
     extendTheme: (theme) => {

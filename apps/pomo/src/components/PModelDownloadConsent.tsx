@@ -1,5 +1,5 @@
-import {PButton} from '../design-system/PButton'
-import {PModal} from '../design-system/PModal'
+import {PButton} from './PButton'
+import {PModal} from './PModal'
 
 export interface PModelDownloadConsentProps {
   readonly actionLabel: string

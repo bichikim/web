@@ -1,7 +1,7 @@
 import {type Component, Show} from 'solid-js'
 
-import {type Locale, locales} from '../../paraglide/runtime.js'
-import NotFoundPage from '../../routes/[...404].tsx'
+import {type Locale, locales} from '@paraglide/runtime'
+import NotFoundPage from '../../routes/[...404]'
 
 interface LocalizedRouteProps {
   readonly params: {

@@ -3,8 +3,8 @@ import {Title} from '@solidjs/meta'
 import {ACCOUNT_CARD_CLASSES, ACCOUNT_PAGE_CLASSES} from './styles'
 import {TossAccount} from './TossAccount'
 import {WebAccount} from './WebAccount'
-import * as m from '../../paraglide/messages.js'
-import {localizeHref} from '../../paraglide/runtime.js'
+import * as m from '@paraglide/message'
+import {localizeHref} from '@paraglide/runtime'
 
 export const AccountPage = () => (
   <main class={ACCOUNT_PAGE_CLASSES}>

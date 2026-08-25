@@ -1,7 +1,7 @@
 import {createSignal, onCleanup} from 'solid-js'
 
 import type {TrackPreviewSourceResult} from './track-preview-access'
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 interface PStaticTrackPreviewRequest {
   readonly id: string

@@ -1,6 +1,6 @@
 import {cx} from 'class-variance-authority'
-import * as m from '../../paraglide/messages.js'
-import {PScribbleCircleControl} from '../PScribbleCircleControl'
+import * as m from '@paraglide/message'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {PlayerIcon} from './Icon'
 import {CLASSES, MusicPlayerViewProps} from './shared'
 

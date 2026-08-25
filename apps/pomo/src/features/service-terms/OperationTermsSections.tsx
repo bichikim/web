@@ -1,5 +1,5 @@
 import {Show} from 'solid-js'
-import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
+import {SERVICE_POLICY_PATHS} from './policy-paths'
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
 import {
   CONTENT_LINK_CLASSES,

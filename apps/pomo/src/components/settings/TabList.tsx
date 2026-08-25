@@ -1,6 +1,6 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createEffect, createSignal, type JSX, onCleanup, Show} from 'solid-js'
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 const SETTINGS_TAB_LIST_CLASSES =
   'pomo-settings__tabs flex h-full w-full min-w-0 flex-1 overflow-x-auto overscroll-x-contain ' +

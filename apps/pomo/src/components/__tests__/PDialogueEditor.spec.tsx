@@ -9,7 +9,7 @@ import {
   usePDialogueEditor,
 } from '../../features/focus-room-dialogue'
 import {isSupertonicModelDownloaded} from '../../features/supertonic'
-import PDialogueEditor from '../PDialogueEditor'
+import PDialogueEditor from '../dialogue-page/Editor'
 
 vi.mock('@solidjs/router', () => ({
   A: (props: {readonly children?: JSX.Element; readonly href: string}) => (
@@ -35,7 +35,7 @@ vi.mock('../../features/supertonic', async () => {
   return {...actual, isSupertonicModelDownloaded: vi.fn()}
 })
 
-vi.mock('../PDialogueDraftGenerator', () => ({default: () => null}))
+vi.mock('../dialogue-page/DraftGenerator', () => ({default: () => null}))
 vi.mock('../PModelDownloadConsent', () => ({PModelDownloadConsent: () => null}))
 
 const createEditor = (): PDialogueEditorController => ({

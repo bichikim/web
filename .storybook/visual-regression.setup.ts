@@ -1,7 +1,7 @@
 import {afterEach, expect} from 'vitest'
 import {page} from 'vitest/browser'
 
-const focusRoomButtonStoryPath = '/apps/pomo/src/design-system/FocusRoomButton.story.tsx'
+const focusRoomButtonStoryPath = '/apps/pomo/src/components/PButton.story.tsx'
 
 afterEach(async ({task}) => {
   const isPrimaryFocusRoomButtonStory =

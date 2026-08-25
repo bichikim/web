@@ -1,14 +1,14 @@
 import {Title} from '@solidjs/meta'
 import {createSignal, type JSX, Show} from 'solid-js'
 
-import {requestAdminMagicLink} from './magic-link.ts'
+import {requestAdminMagicLink} from './magic-link'
 import {
   ERROR_MESSAGE_CLASSES,
   FIELD_CLASSES,
   PAGE_CLASSES,
   PRIMARY_BUTTON_CLASSES,
   SUCCESS_MESSAGE_CLASSES,
-} from './styles.ts'
+} from './styles'
 
 export const AdminLogin = () => {
   const [email, setEmail] = createSignal('')

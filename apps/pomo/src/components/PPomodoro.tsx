@@ -1,12 +1,12 @@
 import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
 
-import {getPomoIconClass} from '../design-system/icon-style'
-import {PButton} from '../design-system/PButton'
-import {type PCharacterEmotionType} from '../design-system/PCharacterEmotion'
-import {PIconButton} from '../design-system/PIconButton'
-import {PModal} from '../design-system/PModal'
-import {PSwitch} from '../design-system/PSwitch'
+import {getPomoIconClass} from './icon-style'
+import {PButton} from './PButton'
+import {type PCharacterEmotionType} from './PCharacterEmotion'
+import {PIconButton} from './PIconButton'
+import {PModal} from './PModal'
+import {PSwitch} from './PSwitch'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {
   formatPomodoroTime,
@@ -15,7 +15,7 @@ import {
   type PomodoroTimerState,
   usePomodoroTimer,
 } from '../features/pomodoro-timer'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import breakStatusIcon from './assets/pomodoro-status-icons/break.webp'
 import focusStatusIcon from './assets/pomodoro-status-icons/focus.webp'
 import scribbleBreakStatusIcon from './assets/pomodoro-status-icons/scribble/break.webp'

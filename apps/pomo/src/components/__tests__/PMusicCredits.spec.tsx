@@ -3,7 +3,7 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, it} from 'vitest'
 
-import {type PMusicCredit, PMusicCredits} from '../PMusicCredits'
+import {type PMusicCredit, PMusicCredits} from '../credits-settings/MusicCredits'
 
 const MUSIC_CREDITS = Array.from({length: 5}, (_, index) => ({
   artistName: `Artist ${index + 1}`,

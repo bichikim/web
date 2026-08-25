@@ -1,11 +1,11 @@
 import {createSignal, Show} from 'solid-js'
 
-import {PButton} from '../design-system/PButton'
+import {PButton} from './PButton'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type FeedDialogueJob, usePFeedContext} from '../features/focus-room-feed'
 import {formatModelDownloadSize} from '../features/model-storage'
 import {getSupertonicModel, isSupertonicModelDownloaded} from '../features/supertonic'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {FeedStatusSurface} from './feed-status/Surface'
 import {CLASSES} from './feed-status/shared'
 import {PModelDownloadConsent} from './PModelDownloadConsent'

@@ -4,7 +4,7 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import PMusicPlayerContent from '../PMusicPlayerContent'
+import PMusicPlayerContent from '../music-player/Content'
 
 vi.mock('media-chrome', () => ({}))
 

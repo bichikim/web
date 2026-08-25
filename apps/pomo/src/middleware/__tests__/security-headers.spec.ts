@@ -4,8 +4,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('solid-js/web', () => ({getRequestEvent: vi.fn()}))
 
-import {STATIC_SECURITY_HEADERS, WORKER_SECURITY_HEADERS} from '../../config/security-headers.ts'
-import {securityHeadersMiddleware} from '../security-headers.ts'
+import {STATIC_SECURITY_HEADERS, WORKER_SECURITY_HEADERS} from '../security-header-policy'
+import {securityHeadersMiddleware} from '../security-headers'
 
 const applySecurityHeaders = async (
   request: Request,

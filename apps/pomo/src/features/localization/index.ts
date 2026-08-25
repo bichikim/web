@@ -8,8 +8,8 @@ import {
 import type {PSceneMotionInput, PSceneMotionMode} from '../focus-room-animation'
 import type {SceneTimeMode} from '../focus-room-time'
 import {WEATHER_CITY_SLUGS, type WeatherCitySlug, type WeatherCondition} from '../weather'
-import * as m from '../../paraglide/messages.js'
-import type {Locale} from '../../paraglide/runtime.js'
+import * as m from '@paraglide/message'
+import type {Locale} from '@paraglide/runtime'
 
 type LocalizationOptions = {readonly locale?: Locale}
 

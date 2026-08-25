@@ -1,8 +1,8 @@
 import {cva, type VariantProps} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
-import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
-import * as m from '../../paraglide/messages.js'
+import {SERVICE_POLICY_PATHS} from './policy-paths'
+import * as m from '@paraglide/message'
 import {PolicyLink} from './PolicyLink'
 
 const policyLinksClasses = cva('flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5', {

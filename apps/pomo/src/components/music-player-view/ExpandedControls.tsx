@@ -1,8 +1,8 @@
 import {cx} from 'class-variance-authority'
-import * as m from '../../paraglide/messages.js'
-import {PPlaybackModes} from '../PPlaybackModes'
-import {PScribbleCircleControl} from '../PScribbleCircleControl'
-import {PTrackList} from '../PTrackList'
+import * as m from '@paraglide/message'
+import {PPlaybackModes} from './PlaybackModes'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
+import {PTrackList} from './TrackList'
 import {PlayerIcon} from './Icon'
 import {CLASSES, MusicPlayerViewProps} from './shared'
 
