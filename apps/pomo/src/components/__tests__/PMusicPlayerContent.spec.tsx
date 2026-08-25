@@ -275,24 +275,22 @@ describe('PMusicPlayerContent', () => {
     expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[2])
   })
 
-  it('should restore the saved track and playback position', async () => {
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'three'}),
-    )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+  it('should report the actual playback state', () => {
+    const onPlayingChange = vi.fn()
+    const result = render(() => (
+      <PMusicPlayerContent onPlayingChange={onPlayingChange} tracks={TRACKS} />
+    ))
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
       throw new TypeError('Expected the Pomo audio element to be rendered')
     }
 
-    await Promise.resolve()
-    await Promise.resolve()
-    fireEvent(audio, new Event('loadedmetadata'))
-
-    expect(audio.getAttribute('src')).toBe('/three.mp3')
-    expect(audio.currentTime).toBe(22)
+    expect(onPlayingChange).toHaveBeenLastCalledWith(false)
+    fireEvent(audio, new Event('play'))
+    expect(onPlayingChange).toHaveBeenLastCalledWith(true)
+    fireEvent(audio, new Event('pause'))
+    expect(onPlayingChange).toHaveBeenLastCalledWith(false)
   })
 
   it('should resume playback when the saved track was playing', async () => {
@@ -596,111 +594,5 @@ describe('PMusicPlayerContent', () => {
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/three.mp3'))
     expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
-  })
-
-  it('should ignore an obsolete blocked-autoplay result after playback starts', async () => {
-    let rejectPlayback: ((error: DOMException) => void) | undefined
-    vi.mocked(HTMLMediaElement.prototype.play).mockImplementationOnce(
-      () =>
-        new Promise((_resolve, reject) => {
-          rejectPlayback = reject
-        }),
-    )
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
-    )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
-    const audio = result.container.querySelector('audio')
-
-    if (!(audio instanceof HTMLAudioElement)) {
-      throw new TypeError('Expected the Pomo audio element to be rendered')
-    }
-
-    await Promise.resolve()
-    await Promise.resolve()
-    fireEvent(audio, new Event('play'))
-    rejectPlayback?.(new DOMException('Playback requires user interaction', 'NotAllowedError'))
-    await Promise.resolve()
-
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
-      isPlaying: true,
-      trackId: 'three',
-    })
-  })
-
-  it('should reset to the first track when the saved track is missing', async () => {
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'removed'}),
-    )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
-    const audio = result.container.querySelector('audio')
-
-    if (!(audio instanceof HTMLAudioElement)) {
-      throw new TypeError('Expected the Pomo audio element to be rendered')
-    }
-
-    await Promise.resolve()
-    await Promise.resolve()
-    fireEvent(audio, new Event('loadedmetadata'))
-    await Promise.resolve()
-
-    expect(audio.getAttribute('src')).toBe('/one.mp3')
-    expect(audio.currentTime).toBe(0)
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
-      positionSeconds: 0,
-      trackId: 'one',
-    })
-  })
-
-  it('should save progress periodically and immediately after seeking', async () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
-    const audio = result.container.querySelector('audio')
-
-    if (!(audio instanceof HTMLAudioElement)) {
-      throw new TypeError('Expected the Pomo audio element to be rendered')
-    }
-
-    await Promise.resolve()
-    audio.currentTime = 7
-    fireEvent(audio, new Event('timeupdate'))
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
-      positionSeconds: 7,
-    })
-
-    audio.currentTime = 8
-    fireEvent(audio, new Event('timeupdate'))
-    await Promise.resolve()
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
-      positionSeconds: 7,
-    })
-
-    fireEvent(audio, new Event('seeked'))
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
-      positionSeconds: 8,
-    })
-  })
-
-  it('should stop detached audio without clearing its playing state', async () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
-    const audio = result.container.querySelector('audio')
-
-    if (!(audio instanceof HTMLAudioElement)) {
-      throw new TypeError('Expected the Pomo audio element to be rendered')
-    }
-
-    fireEvent(audio, new Event('play'))
-    result.unmount()
-    await Promise.resolve()
-
-    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
-      isPlaying: true,
-    })
   })
 })

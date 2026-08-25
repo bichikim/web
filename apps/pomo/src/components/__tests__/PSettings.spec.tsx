@@ -6,6 +6,7 @@ import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/PModal'
+import {PSelect} from 'src/components/PSelect'
 import {PSwitch, type PSwitchProps} from 'src/components/PSwitch'
 import {PSettings} from '../PSettings'
 
@@ -69,6 +70,17 @@ it('should expose the guide and credits as the final settings tabs', () => {
     '크레딧',
   ])
   expect(screen.queryByRole('tab', {name: '날씨'})).toBeNull()
+})
+
+it('should expose the five-second screen saver delay during development', () => {
+  render(() => <PSettings />)
+
+  const screenSaverSelect = vi
+    .mocked(PSelect)
+    .mock.calls.map(([props]) => props)
+    .find((props) => props.label === '스크린 세이버')
+
+  expect(screenSaverSelect?.options).toContainEqual({label: '5초 후', value: '5s'})
 })
 
 it('should map the scribble style switch to the scene style value', () => {

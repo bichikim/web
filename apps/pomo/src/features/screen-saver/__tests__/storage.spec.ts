@@ -32,10 +32,10 @@ describe('screen-saver storage', () => {
   })
 
   it('should persist the preference in browser storage outside the host app', async () => {
-    await writeScreenSaverDelay('20m')
+    await writeScreenSaverDelay('5s')
 
-    expect(await readScreenSaverDelay()).toBe('20m')
-    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"20m"')
+    expect(await readScreenSaverDelay()).toBe('5s')
+    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"5s"')
     expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 

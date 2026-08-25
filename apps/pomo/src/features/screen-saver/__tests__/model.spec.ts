@@ -8,6 +8,7 @@ describe('getScreenSaverDelayMilliseconds', () => {
   })
 
   it('should convert every enabled preference to milliseconds', () => {
+    expect(getScreenSaverDelayMilliseconds('5s')).toBe(5_000)
     expect(getScreenSaverDelayMilliseconds('1m')).toBe(60_000)
     expect(getScreenSaverDelayMilliseconds('10m')).toBe(600_000)
     expect(getScreenSaverDelayMilliseconds('20m')).toBe(1_200_000)

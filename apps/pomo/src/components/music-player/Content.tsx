@@ -23,6 +23,7 @@ import {MusicPlayerView} from '../MusicPlayerView'
 interface PMusicPlayerContentProps {
   readonly expanded?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void
+  readonly onPlayingChange?: (isPlaying: boolean) => void
   readonly onTrackChange?: (track: PTrack | null) => void
   readonly sceneStyle?: PSceneStyle
   readonly tracks?: readonly PTrack[]
@@ -76,6 +77,11 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   createEffect(() => {
     const track = currentTrack() ?? null
     untrack(() => props.onTrackChange)?.(track)
+  })
+
+  createEffect(() => {
+    const currentIsPlaying = isPlaying()
+    untrack(() => props.onPlayingChange)?.(currentIsPlaying)
   })
 
   const initializePlayback = (

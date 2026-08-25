@@ -77,6 +77,9 @@ const LANGUAGE_OPTIONS = [
 const getScreenSaverDelayOptions = () =>
   [
     {label: m.settings_delay_off(), value: 'off'},
+    ...(import.meta.env.DEV
+      ? ([{label: m.settings_delay_five_seconds(), value: '5s'}] as const)
+      : []),
     {label: m.settings_delay_one_minute(), value: '1m'},
     {label: m.settings_delay_ten_minutes(), value: '10m'},
     {label: m.settings_delay_twenty_minutes(), value: '20m'},
