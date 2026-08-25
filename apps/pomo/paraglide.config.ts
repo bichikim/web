@@ -3,15 +3,12 @@ import type {CompilerOptions} from '@inlang/paraglide-js'
 export const PARAGLIDE_PROJECT = './.i18n/project.inlang'
 export const PARAGLIDE_OUTDIR = './.i18n/paraglide'
 
-export const PARAGLIDE_ROUTE_STRATEGIES = [
+const PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES = [
   {exclude: true, match: '/api/:path(.*)?'},
   {exclude: true, match: '/workers/:path(.*)?'},
 ] satisfies NonNullable<CompilerOptions['routeStrategies']>
 
-export const PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES = [
-  ...PARAGLIDE_ROUTE_STRATEGIES,
-  {match: '/', strategy: ['localStorage', 'cookie', 'baseLocale']},
-] satisfies NonNullable<CompilerOptions['routeStrategies']>
+export const PARAGLIDE_LOCALIZED_ROUTES = ['/', '/account'] as const
 
 export const PARAGLIDE_URL_PATTERNS = [
   {
@@ -32,11 +29,27 @@ export const PARAGLIDE_OUTPUT_STRUCTURE = 'message-modules' satisfies NonNullabl
 >
 
 export const PARAGLIDE_WEB_STRATEGY = [
-  'url',
   'cookie',
   'preferredLanguage',
   'baseLocale',
 ] satisfies NonNullable<CompilerOptions['strategy']>
+
+const PARAGLIDE_LOCALIZED_ROUTE_STRATEGY = ['url', ...PARAGLIDE_WEB_STRATEGY] satisfies NonNullable<
+  CompilerOptions['strategy']
+>
+
+export const PARAGLIDE_ROUTE_STRATEGIES = [
+  ...PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES,
+  ...PARAGLIDE_LOCALIZED_ROUTES.map((match) => ({
+    match,
+    strategy: PARAGLIDE_LOCALIZED_ROUTE_STRATEGY,
+  })),
+] satisfies NonNullable<CompilerOptions['routeStrategies']>
+
+export const PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES = [
+  ...PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES,
+  {match: '/', strategy: ['localStorage', 'cookie', 'baseLocale']},
+] satisfies NonNullable<CompilerOptions['routeStrategies']>
 
 export const PARAGLIDE_APPS_IN_TOSS_STRATEGY = [
   'url',

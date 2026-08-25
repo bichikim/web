@@ -8,6 +8,7 @@ import {type ConfigEnv, defineConfig, type Plugin, type UserConfig} from 'vite'
 import {
   PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES,
   PARAGLIDE_APPS_IN_TOSS_STRATEGY,
+  PARAGLIDE_LOCALIZED_ROUTES,
   PARAGLIDE_OUTDIR,
   PARAGLIDE_OUTPUT_STRUCTURE,
   PARAGLIDE_PROJECT,
@@ -23,10 +24,7 @@ import {
   STATIC_SECURITY_HEADERS,
   WORKER_SECURITY_HEADERS,
 } from './src/middleware/security-header-policy'
-import {
-  createLocalizedStaticRoutes,
-  LOCALIZED_STATIC_ROUTES,
-} from './src/features/localization/static-routes'
+import {createLocalizedStaticRoutes} from './src/features/localization/static-routes'
 import {createDevFeedPlugin} from './src/features/dev-feed/index'
 
 const isAppsInTossBuild = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
@@ -71,7 +69,7 @@ const appsInTossBaseStaticRoutes = [
 ]
 const localizedStaticRoutes = createLocalizedStaticRoutes({
   locales: projectSettings.locales,
-  routes: LOCALIZED_STATIC_ROUTES,
+  routes: PARAGLIDE_LOCALIZED_ROUTES,
 })
 const appsInTossStaticRoutes = [
   ...new Set([...appsInTossBaseStaticRoutes, ...localizedStaticRoutes]),
