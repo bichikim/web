@@ -88,6 +88,7 @@ describe('admin music asset route', () => {
     })
     expect(uploadMocks.createTrackPreviewObject).toHaveBeenCalledWith(OBJECT_KEY, 1234)
     expect(artworkMocks.storeTrackArtwork).not.toHaveBeenCalled()
+    expect(deletionMocks.deleteTrackAssetStorage).not.toHaveBeenCalled()
   })
 
   it('should persist an embedded cover while completing an MP3 upload', async () => {

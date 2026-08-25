@@ -75,6 +75,23 @@ describe('createPendingTrack', () => {
 })
 
 describe('completeTrackRegistration', () => {
+  it('should treat a concurrently completed asset as an idempotent success', async () => {
+    select.mockReturnValueOnce(createLockedQuery([{status: 'active', trackId: TRACK_ID}]))
+
+    await expect(
+      completeTrackRegistration({
+        artworkUrl: null,
+        assetId: ASSET_ID,
+        durationMs: 1234,
+        etag: 'etag',
+        sizeBytes: 1234n,
+      }),
+    ).resolves.toBe(true)
+    expect(update).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+    expect(deleteRecord).not.toHaveBeenCalled()
+  })
+
   it('should activate the MP3 and attach its track to the album in one transaction', async () => {
     select
       .mockReturnValueOnce(createLockedQuery([{status: 'pending', trackId: TRACK_ID}]))

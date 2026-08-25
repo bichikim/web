@@ -119,7 +119,15 @@ export const completeTrackRegistration = async (
         .for('update')
         .limit(1)
 
-      if (asset === undefined || asset.status !== 'pending') {
+      if (asset === undefined) {
+        return false
+      }
+
+      if (asset.status === 'active') {
+        return true
+      }
+
+      if (asset.status !== 'pending') {
         return false
       }
 
