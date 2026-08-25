@@ -1,0 +1,246 @@
+# 2D 동일 장면 변형 제작 절차
+
+이 문서는 동일한 방과 캐릭터 장면에서 행동이나 시선만 바꾸는 이미지 제작 절차를 정리한다. Pomo의 낮 이미지 작업에서 검증한 방식이며, 다음 작업에서도 이 순서를 기본값으로 사용한다.
+
+## 핵심 원칙
+
+장면 전체를 변형마다 새로 생성하지 않는다. 먼저 한 장을 마스터로 확정하고, 변경할 영역만 AI로 편집한다. AI 편집 뒤에도 얼굴 크기나 머리 각도처럼 픽셀 단위 일관성이 필요한 부분은 기준 이미지를 사용해 기계적으로 정규화한다.
+
+```text
+마스터 장면 확정
+  ↓
+행동 영역만 AI 편집
+  ↓
+시선 상태 하나를 기준 얼굴로 확정
+  ↓
+머리 크기·각도·위치를 기계적으로 정규화
+  ↓
+전환 검수와 수정 제외 자산의 해시 확인
+```
+
+AI 편집은 자연스러운 손, 팔, 책과 노트북처럼 형태가 크게 달라지는 영역에 사용한다. 기계적 합성은 머리 위치, 얼굴 크기와 시선처럼 여러 이미지에서 완전히 같아야 하는 영역에 사용한다.
+
+## 1. 수정 범위를 먼저 고정한다
+
+작업을 시작하기 전에 다음 세 범위를 구분한다.
+
+- 변경 영역: 행동에 따라 달라지는 손, 팔, 책, 노트북과 노트
+- 고정 영역: 카메라, 크롭, 배경, 창밖 풍경, 책장, 조명, 스탠드와 고정 소품
+- 조건부 고정 영역: 얼굴, 머리카락과 목. AI 편집으로 초안을 만들되 최종 결과는 기준 머리로 정규화한다.
+
+사용자가 수정하지 말라고 지정한 시간대나 상태는 대상 목록에서 제외한다. 제외 자산은 작업 전에 SHA-256 해시를 기록하고 작업 뒤에 같은 값인지 확인한다.
+
+## 2. 작업 중에는 기존 자산을 임시 보존한다
+
+현재 자산을 덮어쓰기 전에 Git에서 무시하는 로컬 임시 폴더에 원본을 복사한다.
+
+```text
+.temp/pomo-focus-room/<작업명>/pre-v<번호>/
+```
+
+선택한 결과와 생성 중간 산출물도 같은 임시 작업 폴더에 저장한다. 실패한 결과는 현재 자산에 반영하지 않고 `rejected-*` 폴더로 격리한다. 최종 결과를 확정한 뒤 편집 원본은 `asset-library/focus-room-source/`에 보관하고, 페이지가 import하는 압축 결과만 `src/features/focus-room-animation/assets/`에 생성한다. 실패본은 커밋하지 않으며 이전 버전은 Git 기록에서 복구한다.
+
+## 3. 마스터 장면을 하나만 선택한다
+
+배경과 캐릭터 배치가 가장 안정적인 이미지를 시간대별 마스터로 정한다. 현재 낮 세트의 마스터는 다음과 같다.
+
+- 행동 및 집중 시선 기준: `focus-room-day-writing-concept.png`
+- 사용자 보기 기준: `focus-room-day-writing-user-gaze-concept.png`
+
+행동마다 다른 이미지를 마스터로 사용하지 않는다. 서로 다른 생성본을 각각 편집하면 창밖 건물, 책장, 스탠드 모양, 색과 카메라가 조금씩 달라진다.
+
+## 4. 행동은 AI로 국소 편집한다
+
+마스터 이미지를 유일한 편집 대상으로 사용한다. 기존 책 읽기나 타이핑 이미지는 자세 참고용으로만 제공한다.
+
+프롬프트에는 다음 불변 조건을 매번 명시한다.
+
+- 마스터 이미지의 카메라, 크롭과 캐릭터 비율을 유지한다.
+- 창문, 창밖 풍경, 커튼, 책장, 책, 식물과 스탠드를 유지한다.
+- 책상, 노트북 외형, 컵, 헤드폰, 필기구와 조명을 유지한다.
+- 캐릭터의 머리 위치, 크기, 머리카락 외곽, 목과 몸통 위치를 유지한다.
+- 손, 팔과 행동 도구처럼 요청한 영역만 변경한다.
+- 참고 이미지의 배경, 얼굴과 카메라는 복사하지 않는다.
+
+실제 프롬프트 구조는 다음 형태를 사용한다.
+
+```text
+Image 1은 유일한 편집 대상이며 절대적인 장면 마스터다.
+Image 2는 행동 자세 참고용이다.
+Image 1에서 팔, 손, 행동 도구만 <행동> 상태로 변경한다.
+배경, 카메라, 조명, 고정 소품, 머리 크기와 위치는 변경하지 않는다.
+```
+
+한 번의 편집에서 행동과 시선, 시간대와 배경까지 함께 바꾸지 않는다. 변경 변수가 많아질수록 고정 영역이 흔들린다.
+
+## 5. 사용자 보기 기준 얼굴을 하나만 만든다
+
+행동 이미지가 확정된 뒤 한 행동에서 사용자 보기 상태를 만든다. 현재는 글쓰기 사용자 보기 이미지를 기준으로 사용한다.
+
+다른 사용자 보기 이미지를 생성할 때는 기준 이미지에서 다음 항목만 참고하도록 지시한다.
+
+- 양쪽 눈동자 방향
+- 턱 높이와 얼굴 회전각
+- 얼굴 크기
+- 미소 강도
+
+다른 행동의 손, 팔, 소품과 배경은 복사하지 않는다. 이 단계의 AI 결과는 자연스러운 얼굴과 목 경계를 얻기 위한 초안이다. 생성 결과끼리 머리 크기와 각도가 조금씩 다르면 다음 단계에서 정규화한다.
+
+## 6. 머리는 기계적으로 정규화한다
+
+AI는 프롬프트로 고정해도 머리 크기, 위치와 회전각을 미세하게 바꾼다. 전환 화면에서는 이 차이가 크게 보이므로 최종 머리는 기준 이미지의 픽셀을 재사용한다.
+
+현재 구현은 [`normalize-focus-room-day-heads.mjs`](../../scripts/normalize-focus-room-day-heads.mjs)를 사용한다.
+
+1. 기준 이미지와 대상 이미지에서 어두운 머리카락 픽셀을 찾는다.
+2. 각 행에서 두 머리카락 외곽의 합집합을 구한다.
+3. 합집합을 마스크로 사용해 기존 머리의 잔상이 남지 않게 한다.
+4. 목 중앙에만 짧은 전환 영역을 추가한다.
+5. 마스크 가장자리를 약하게 흐려 머리카락과 목 경계를 자연스럽게 연결한다.
+6. 책, 손, 가디건과 노트북은 마스크 밖에 두어 행동을 보존한다.
+
+고정된 타원이나 사각형 마스크를 머리 아래까지 넓게 사용하지 않는다. 이 방식은 책, 가디건과 가슴 영역을 덮어 행동 이미지가 훼손된다. 실제 머리카락 외곽을 측정한 마스크가 더 안전하다.
+
+현재 낮 세트의 정규화 규칙은 다음과 같다.
+
+- 책 읽기 집중 → 글쓰기 집중 머리 사용
+- 책 읽기 사용자 보기 → 글쓰기 사용자 보기 머리 사용
+- 타이핑 사용자 보기 → 글쓰기 사용자 보기 머리 사용
+- 글쓰기 집중, 타이핑 집중과 밤 전체 → 수정하지 않음
+
+정규화 결과와 마스크는 `.temp/pomo-focus-room/mechanical-day-head-lock-v6/`에서 검수한다. 통과한 결과를 `asset-library/focus-room-source/concept-art/`의 편집 원본에 반영한 뒤 압축 스크립트로 `src/features/focus-room-animation/assets/`를 갱신한다.
+
+## 7. 실패했던 접근
+
+다음 방식은 기본 전략으로 사용하지 않는다.
+
+### 변형마다 장면 전체를 새로 생성
+
+배경의 책, 창밖 풍경, 스탠드, 조명과 색이 조금씩 달라진다. 이미지 전환 때 배경이 움직이는 것처럼 보인다.
+
+### 얼굴만 작게 잘라 붙이기
+
+얼굴 크기는 맞출 수 있지만 턱, 목과 머리카락 끝에서 절단선이 생긴다. 머리 전체와 목 전환부를 함께 다뤄야 한다.
+
+### 넓은 고정 도형 마스크
+
+머리 아래의 책, 가디건과 가슴까지 기준 이미지로 덮는다. 실제 두 이미지의 머리카락 외곽 합집합으로 마스크를 만들어야 한다.
+
+### AI에게 모든 사용자 보기 이미지를 독립적으로 생성하도록 요청
+
+배경이 고정되더라도 머리 크기, 턱 높이, 눈동자와 회전각이 조금씩 달라진다. 한 장을 기준 얼굴로 정하고 최종 픽셀을 재사용해야 한다.
+
+## 8. 검수 절차
+
+파일을 현재 자산에 반영하기 전에 원본 해상도로 다음 항목을 확인한다.
+
+- 머리 바깥쪽에 이전 머리의 잔상이나 이중 윤곽이 없는가?
+- 턱, 목, 카라와 머리카락 끝에 절단선이나 밝은 테두리가 없는가?
+- 책, 손, 팔, 노트북과 행동 자세가 유지되는가?
+- 배경, 고정 소품과 색이 상태 전환 중 움직이지 않는가?
+- 사용자 보기 이미지의 머리 크기, 위치, 각도와 눈동자가 같은가?
+
+그다음 실제 페이지에서 모든 관련 드롭다운 조합을 전환한다. 각 이미지의 로드 완료 여부, 원본 크기와 콘솔 오류를 확인하고 눈으로 전환 상태를 검수한다.
+
+마지막으로 다음 명령을 실행한다.
+
+```bash
+pnpm format
+pnpm lint
+```
+
+수정 제외 자산의 SHA-256 해시도 작업 전 값과 비교한다. 브라우저에서 보기에 같다는 이유만으로 수정되지 않았다고 판단하지 않는다.
+
+## 관련 자산과 스크립트
+
+- 편집 원본 이미지 12장: `asset-library/focus-room-source/concept-art/focus-room-*.png`
+- 원본 무결성 체크섬: `asset-library/focus-room-source/concept-art/focus-room-originals.sha256`
+- 런타임 압축 이미지 12장: `src/features/focus-room-animation/assets/concept-art/*.webp`
+- 눈 깜박임 원본: `asset-library/focus-room-source/animation/eyes-*.png`
+- 런타임 눈 깜박임 레이어: `src/features/focus-room-animation/assets/animation/eyes/<scene-state>/*.webp`
+- 로컬 중간 산출물: `.temp/pomo-focus-room/`
+- 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
+- 눈 레이어 추출 스크립트: `scripts/create-focus-room-blink-assets.mjs`
+
+새 행동을 추가할 때도 새 장면 전체를 생성하지 않는다. 기존 시간대 마스터에서 행동 영역만 편집하고, 기존 기준 머리를 마지막에 정규화하는 순서를 유지한다.
+
+## 9. 눈 깜박임 레이어를 추가한다
+
+눈 깜박임은 장면 전체를 새 이미지로 교체하지 않는다. 집중 시선과 사용자 보기 상태마다 기준 장면 한 장을 정하고, AI에는 눈꺼풀만 `half`와 `closed` 상태로 바꾸도록 요청한다. 생성본에서 눈 주위의 작은 영역만 추출한 뒤 가장자리를 흐린 투명 PNG로 만든다.
+
+런타임에서는 기존 12장을 PixiJS의 `body` Sprite texture로 사용하고, 같은 캔버스에 현재 시선 상태의 눈 패치를 올린다. 장면 전환은 현재·다음 body Sprite만 유지한 채 다음 Sprite의 alpha를 올리고, 완료 뒤 이전 texture를 해제한다. 눈은 `open → half → closed → half → open` 순서로 texture를 교체하며 장면 전환 중에는 숨긴다. 배경·몸·얼굴 크기를 다시 생성하거나 원본 파일에 합성하지 않으므로 기존 자산의 픽셀은 바뀌지 않는다.
+
+눈 레이어 마스크는 눈만 감싸는 타원으로 만들지 않는다. 눈꺼풀과 함께 표정이 변하는 눈썹 전체를 포함하고, 눈썹 위에 겹쳐진 작은 머리카락 조각도 같은 경계 안에 둔다. 반대로 얼굴 외곽의 큰 앞머리는 제외해야 깜박일 때 머리 전체가 흔들리지 않는다. 마스크 가장자리가 눈썹을 자르지 않도록 원본 추출 영역에 위쪽 여백을 먼저 확보하고, 아래 경계는 속눈썹 바로 아래까지만 두어 볼과 코 주변이 움직이지 않게 한다. 두 눈 사이의 이마가 이어지지 않도록 좌우 마스크는 분리한다.
+
+눈 레이어를 다시 만들 때는 AI 생성본을 런타임 자산 폴더에 보관하지 않는다. 로컬 폴더에서 다음 이름으로 준비하고, 추출 후 런타임 WebP를 다시 생성한다.
+
+```text
+focused-half.png
+focused-closed.png
+user-half.png
+user-closed.png
+night-focused-half.png
+night-focused-closed.png
+night-user-half.png
+night-user-closed.png
+```
+
+```bash
+POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-room-blink-assets.mjs
+node scripts/compress-focus-room-scenes.mjs
+```
+
+## 10. 장면 전체에 깊이 변형을 적용한다
+
+깊이 효과는 눈 레이어와 배경을 따로 변형하지 않는다. 장면과 눈을 같은 PixiJS stage에 합성하고, stage 전체에 깊이 필터를 한 번만 적용한다. 장면마다 `DA3MONO-LARGE`로 만든 깊이맵을 연결하며 전환 중에는 장면 alpha와 깊이맵 혼합 비율을 함께 변경한다.
+
+깊이맵은 필터 내부 렌더 타깃의 `vTextureCoord`가 아니라 원본 장면의 정규화 좌표인 `aPosition`으로 샘플링한다. PixiJS 필터 렌더 타깃에는 여유 영역이 생길 수 있어서 `vTextureCoord`를 사용하면 깊이 경계가 좌우로 밀린다.
+
+### 깊이맵을 다시 생성한다
+
+입력은 눈과 배경까지 합성한 1672×941 무손실 PNG이며 `focus-room-<장면>-concept.png`로 이름 짓는다. 하찮은 스타일은 `<장면>` 끝에 `-scribble`을 붙인다. 다음 명령은 저장소 루트에서 실행한다.
+
+최초 한 번 DA3 실행 환경을 준비한다. 모델 체크포인트 revision은 생성 스크립트가 고정하며, 아래 커밋은 현재 검증한 DA3 코드 revision이다.
+
+```bash
+git clone https://github.com/ByteDance-Seed/depth-anything-3.git .temp/depth-anything-3
+git -C .temp/depth-anything-3 checkout 3d835ec1a5802d64a8b8b15f817a1ab54809bfe4
+UV_CACHE_DIR=.temp/uv-cache uv venv .temp/da3-venv --python 3.12
+UV_CACHE_DIR=.temp/uv-cache uv pip install --python .temp/da3-venv/bin/python \
+  torch torchvision numpy==1.26.4 pillow opencv-python-headless einops \
+  huggingface-hub safetensors omegaconf addict evo trimesh imageio plyfile e3nn \
+  'moviepy<2' pycolmap
+```
+
+전체 입력을 생성한 뒤 런타임용 무손실 WebP로 변환한다.
+
+```bash
+HF_HOME=.temp/da3-cache MPLCONFIGDIR=.temp/matplotlib-cache KMP_DUPLICATE_LIB_OK=TRUE \
+  .temp/da3-venv/bin/python apps/pomo/scripts/create-focus-room-depth-maps.py \
+  --da3-source .temp/depth-anything-3 \
+  --input-dir apps/pomo/asset-library/focus-room-source/concept-art \
+  --output-dir apps/pomo/asset-library/focus-room-source/depth
+cd apps/pomo && node scripts/compress-focus-room-scenes.mjs --depth-only
+```
+
+일부 장면만 갱신할 때는 `--only focus-room-<장면>-concept`를 장면마다 반복한다. 이 방식은 선택하지 않은 입력과 깊이맵의 해시가 모두 일치하는 완전한 기존 manifest가 있어야 실행된다.
+
+생성 설정과 원본 SHA-256은 `asset-library/focus-room-source/depth/manifest.json`에 기록한다. 결과가 입력과 같은 크기의 8-bit grayscale PNG인지 확인한다. 원본 PNG는 이 경로에 보존하고 런타임은 픽셀 값이 동일한 무손실 WebP만 로드한다.
+
+## 11. 런타임 장면을 고품질로 압축한다
+
+원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 장면과 베이스에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 알파 스프라이트는 alpha quality 100의 quality 95 WebP와 무손실 WebP 중 작은 결과를 사용하며, 깊이맵과 마스크는 무손실로 유지한다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 같은 설정을 적용한다.
+
+원본 PNG는 WebP 생성 입력이자 보관 자산이다. 이름을 바꾸거나 덮어쓰지 않으며, 변경 전후에 다음 명령으로 체크섬을 검증한다.
+
+```bash
+cd apps/pomo/asset-library/focus-room-source/concept-art
+shasum -a 256 -c focus-room-originals.sha256
+```
+
+```bash
+cd apps/pomo
+node scripts/compress-focus-room-scenes.mjs
+```
+
+PixiJS 로딩 표시는 장면 WebP의 네트워크·디코딩뿐 아니라 depth texture와 눈 texture 로드, stage 합성과 전환까지 포함한다. `Application.render()` 뒤 두 번의 animation frame을 지난 후에만 완료 처리해 합성 프레임이 실제 화면에 나오기 전에 로더가 사라지지 않게 한다.

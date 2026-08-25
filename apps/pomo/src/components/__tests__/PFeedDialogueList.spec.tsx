@@ -4,7 +4,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
 import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
-import {PFeedDialogueList} from '../PFeedDialogueList'
+import {PFeedDialogueList} from '../feed-settings/DialogueList'
 
 const FEED_DIALOGUE: FeedDialogueListItem = {
   dialogue: {

@@ -1,7 +1,9 @@
 import {compile} from '@inlang/paraglide-js'
 
 import {
+  PARAGLIDE_OUTDIR,
   PARAGLIDE_OUTPUT_STRUCTURE,
+  PARAGLIDE_PROJECT,
   PARAGLIDE_ROUTE_STRATEGIES,
   PARAGLIDE_TRAILING_SLASH,
   PARAGLIDE_URL_PATTERNS,
@@ -10,9 +12,9 @@ import {
 
 await compile({
   emitTsDeclarations: true,
-  outdir: './src/paraglide',
+  outdir: PARAGLIDE_OUTDIR,
   outputStructure: PARAGLIDE_OUTPUT_STRUCTURE,
-  project: './project.inlang',
+  project: PARAGLIDE_PROJECT,
   routeStrategies: PARAGLIDE_ROUTE_STRATEGIES,
   strategy: PARAGLIDE_WEB_STRATEGY,
   trailingSlash: PARAGLIDE_TRAILING_SLASH,

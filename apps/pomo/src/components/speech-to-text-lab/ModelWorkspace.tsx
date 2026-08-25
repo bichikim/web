@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import {type JSX, Match, Show, Switch, untrack} from 'solid-js'
 import {type SpeechModelDefinition, useSpeechToText} from '../../features/speech-to-text/index'
 import {MicrophoneIcon} from './MicrophoneIcon'
-import {SPEECH_BUTTON_CLASSES, SPEECH_TEXTAREA_CLASSES} from '../speech-to-text-lab.style'
+import {SPEECH_BUTTON_CLASSES, SPEECH_TEXTAREA_CLASSES} from './style'
 
 interface SpeechModelWorkspaceProps {
   readonly model: SpeechModelDefinition

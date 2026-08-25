@@ -3,7 +3,7 @@ import 'server-only'
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
 import {withNoStore} from '../http/response'
-import {getNeonAuthProxyConfig} from './environment.ts'
+import {getNeonAuthProxyConfig} from './environment'
 
 interface AuthProxyEvent {
   readonly params: {

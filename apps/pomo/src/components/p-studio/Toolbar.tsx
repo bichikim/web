@@ -1,8 +1,8 @@
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
-import {getPomoIconClass} from '../../design-system/icon-style'
-import {PIconButton} from '../../design-system/PIconButton'
-import {PSelect} from '../../design-system/PSelect'
+import {getPomoIconClass} from '../icon-style'
+import {PIconButton} from '../PIconButton'
+import {PSelect} from '../PSelect'
 import {
   type PSceneMotionInput,
   type PSceneMotionMode,
@@ -18,8 +18,8 @@ import {
 import {getNextTimeMode, type SceneTimeMode} from '../../features/focus-room-time/index'
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
 import {type WeatherCitySlug, type WeatherState} from '../../features/weather/index'
-import * as m from '../../paraglide/messages.js'
-import {PScribbleCircleControl} from '../PScribbleCircleControl'
+import * as m from '@paraglide/message'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES, SceneTime} from './shared'
 import {PWeatherStatus} from '../PWeatherStatus'

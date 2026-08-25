@@ -1,6 +1,6 @@
 import {Show} from 'solid-js'
 
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 interface PlaylistFooterProps {
   readonly canClear: boolean

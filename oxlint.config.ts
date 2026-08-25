@@ -27,6 +27,24 @@ export default defineConfig({
     },
   ],
   overrides: [
+    // Pomo asset-library is an authoring archive; runtime code must import compressed assets from src.
+    {
+      files: ['apps/pomo/**/*.{ts,tsx,js,mjs,jsx}'],
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            patterns: [
+              {
+                group: ['**/asset-library', '**/asset-library/**'],
+                message:
+                  'Archived assets cannot be bundled. Import compressed assets from src instead.',
+              },
+            ],
+          },
+        ],
+      },
+    },
     // eslint-plugin-solid configs/typescript (JSX/TSX only)
     {
       files: ['**/*.{tsx,jsx}'],

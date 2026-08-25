@@ -1,7 +1,7 @@
 import {H3, HTTPError, mockEvent} from 'h3'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {corsMiddleware} from '../cors.ts'
+import {corsMiddleware} from '../cors'
 
 const VERCEL_HOST_VARIABLES = [
   'VERCEL_URL',

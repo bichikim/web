@@ -17,8 +17,8 @@ import {
   ACCOUNT_SECONDARY_BUTTON_CLASSES,
   ACCOUNT_SUCCESS_CLASSES,
 } from './styles'
-import * as m from '../../paraglide/messages.js'
-import {localizeHref} from '../../paraglide/runtime.js'
+import * as m from '@paraglide/message'
+import {localizeHref} from '@paraglide/runtime'
 
 interface AccountLinkFeedback {
   readonly errorMessage: string | null

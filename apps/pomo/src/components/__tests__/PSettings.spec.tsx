@@ -5,15 +5,15 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/design-system/PModal'
-import {PSwitch, type PSwitchProps} from 'src/design-system/PSwitch'
+import {PModal, type PModalProps} from 'src/components/PModal'
+import {PSwitch, type PSwitchProps} from 'src/components/PSwitch'
 import {PSettings} from '../PSettings'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
-vi.mock('src/design-system/PModal', () => ({PModal: vi.fn()}))
-vi.mock('src/design-system/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
-vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
-vi.mock('src/design-system/PSwitch', () => ({PSwitch: vi.fn()}))
+vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
+vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/PSwitch', () => ({PSwitch: vi.fn()}))
 vi.mock('../PCreditsSettings', () => ({PCreditsSettings: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
 vi.mock('../PFeedSettings', () => ({PFeedSettings: vi.fn()}))

@@ -1,6 +1,6 @@
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
+import {locales} from '@paraglide/runtime'
 
-import projectSettings from '../../project.inlang/settings.json' with {type: 'json'}
 import {getNeonAuthProxyConfig} from '../server/auth/environment'
 
 const ACCOUNT_PATH = '/account'
@@ -8,7 +8,7 @@ const ACCOUNT_PATH_WITH_TRAILING_SLASH = `${ACCOUNT_PATH}/`
 const ACCOUNT_PATHS: ReadonlySet<string> = new Set([
   ACCOUNT_PATH,
   ACCOUNT_PATH_WITH_TRAILING_SLASH,
-  ...projectSettings.locales.flatMap((locale) => [
+  ...locales.flatMap((locale) => [
     `/${locale}${ACCOUNT_PATH}`,
     `/${locale}${ACCOUNT_PATH_WITH_TRAILING_SLASH}`,
   ]),

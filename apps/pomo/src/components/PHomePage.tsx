@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {cx} from 'class-variance-authority'
 import {lazy, Suspense} from 'solid-js'
 
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 const PStudio = lazy(async () => {
   const studioModule = await import('./PStudio')

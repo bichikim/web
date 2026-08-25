@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {PSelect, type PSelectOption} from '../../design-system/PSelect'
+import {PSelect, type PSelectOption} from '../PSelect'
 import {TEXT_MODELS, type TextModelId} from '../../features/text-generation/index'
 
 const MODEL_OPTIONS: ReadonlyArray<PSelectOption<TextModelId>> = TEXT_MODELS.map((model) => ({

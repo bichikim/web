@@ -2,7 +2,7 @@ import type {APIEvent} from '@solidjs/start/server'
 
 import {readBoundedRequest} from 'src/server/http/body'
 import {noStoreText} from 'src/server/http/response'
-import {handlePomoAuthProxy} from '../../../server/auth/proxy.ts'
+import {handlePomoAuthProxy} from '../../../server/auth/proxy'
 
 const MAXIMUM_BODY_SIZE = 16_384
 const readAuthParams = (params: Readonly<Record<string, string>>): {readonly path: string} => ({

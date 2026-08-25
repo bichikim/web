@@ -4,7 +4,7 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {Show} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/design-system/PModal'
+import {PModal, type PModalProps} from 'src/components/PModal'
 import {
   type FeedDialogueJob,
   type FeedDialogueListItem,
@@ -18,7 +18,7 @@ vi.mock('src/features/focus-room-feed', () => ({
   usePFeedContext: vi.fn(),
 }))
 
-vi.mock('src/design-system/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
 
 vi.mock('src/features/supertonic', async () => {
   const actual: typeof import('src/features/supertonic') =

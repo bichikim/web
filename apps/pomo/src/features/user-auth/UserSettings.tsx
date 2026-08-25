@@ -4,8 +4,8 @@ import {createMemo, createSignal, Match, onMount, Show, Switch} from 'solid-js'
 import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
 import {readAccountSession} from './web-session'
 import {PServicePolicyLinks} from '../service-terms'
-import * as m from '../../paraglide/messages.js'
-import {localizeHref} from '../../paraglide/runtime.js'
+import * as m from '@paraglide/message'
+import {localizeHref} from '@paraglide/runtime'
 
 type UserSettingsState =
   | {readonly kind: 'anonymous'}

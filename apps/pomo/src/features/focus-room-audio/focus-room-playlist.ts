@@ -1,6 +1,6 @@
 import {apiFetch, audioFetch, httpFetch} from '../http-client'
-import * as m from '../../paraglide/messages.js'
-import type {Locale} from '../../paraglide/runtime.js'
+import * as m from '@paraglide/message'
+import type {Locale} from '@paraglide/runtime'
 
 export interface PTrack {
   readonly artist: string

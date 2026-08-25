@@ -1,6 +1,6 @@
 import {For} from 'solid-js'
 import {type LicenseEntry} from 'src/features/licenses'
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>}) => (
   <ul class="m-0 grid list-none gap-3 p-0">

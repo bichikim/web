@@ -1,6 +1,6 @@
 import type {IncomingMessage, ServerResponse} from 'node:http'
 
-import {DEV_FEED_QUOTES} from './quotes.ts'
+import {DEV_FEED_QUOTES} from './quotes'
 
 const FEED_INTERVAL_MINUTES = 5
 const FEED_HISTORY_SIZE = 12
