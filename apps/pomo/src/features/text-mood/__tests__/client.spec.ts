@@ -34,15 +34,21 @@ class FakeWorker {
     this.#listeners.set(type, listeners)
   }
 
-  emitError(message: string) {
+  emitError(message: string, error?: unknown) {
     for (const listener of this.#listeners.get('error') ?? []) {
-      listener({message} as ErrorEvent)
+      listener({error, message} as ErrorEvent)
     }
   }
 
   emitMessage(message: TextMoodWorkerResponse) {
     for (const listener of this.#listeners.get('message') ?? []) {
       listener({data: message} as MessageEvent<TextMoodWorkerResponse>)
+    }
+  }
+
+  emitMessageError() {
+    for (const listener of this.#listeners.get('messageerror') ?? []) {
+      listener({} as MessageEvent)
     }
   }
 }
@@ -84,6 +90,21 @@ describe('createTextMoodAnalyzer', () => {
     })
     expect(onProgress).toHaveBeenCalledWith(52)
     analyzer.dispose()
+  })
+
+  it('should reject concurrent preparation and ignore unrelated ready events', async () => {
+    const analyzer = createTextMoodAnalyzer()
+    const worker = getWorker()
+    const preparation = analyzer.prepare()
+
+    await expect(analyzer.prepare()).resolves.toMatchObject({
+      error: {code: 'model-failed'},
+      ok: false,
+    })
+    worker.emitMessage({requestId: 99, type: 'ready'})
+    worker.emitMessage({progress: 10, type: 'loading'})
+    worker.emitMessage({requestId: 1, type: 'ready'})
+    await expect(preparation).resolves.toMatchObject({ok: true})
   })
 
   it('should match analysis responses and reject concurrent analysis', async () => {
@@ -148,6 +169,41 @@ describe('createTextMoodAnalyzer', () => {
     analyzer.dispose()
   })
 
+  it('should route domain errors to their matching request only', async () => {
+    const analyzer = createTextMoodAnalyzer()
+    const worker = getWorker()
+    const preparation = analyzer.prepare()
+    const analysis = analyzer.analyze({text: '문장'})
+    const analyzeError = {
+      code: 'classification-failed' as const,
+      detail: '분석 실패',
+      phase: 'analyze' as const,
+      retryable: true as const,
+    }
+    worker.emitMessage({error: analyzeError, requestId: 99, type: 'error'})
+    worker.emitMessage({error: analyzeError, requestId: 2, type: 'error'})
+    await expect(analysis).resolves.toEqual({error: analyzeError, ok: false})
+
+    const prepareError = {
+      code: 'model-failed' as const,
+      detail: '준비 실패',
+      phase: 'prepare' as const,
+      retryable: true as const,
+    }
+    worker.emitMessage({error: prepareError, requestId: 1, type: 'error'})
+    await expect(preparation).resolves.toEqual({error: prepareError, ok: false})
+  })
+
+  it('should ignore unrelated insufficient results', async () => {
+    const analyzer = createTextMoodAnalyzer()
+    const worker = getWorker()
+    const analysis = analyzer.analyze({text: '문장'})
+    const sufficiency = {insufficient: true, probability: 0.98, threshold: 0.94}
+    worker.emitMessage({elapsedMilliseconds: 1, requestId: 99, sufficiency, type: 'insufficient'})
+    worker.emitMessage({analysis: ANALYSIS, elapsedMilliseconds: 2, requestId: 1, type: 'complete'})
+    await expect(analysis).resolves.toMatchObject({ok: true})
+  })
+
   it('should resolve pending requests after worker failure and disposal', async () => {
     const analyzer = createTextMoodAnalyzer()
     const worker = getWorker()
@@ -164,11 +220,52 @@ describe('createTextMoodAnalyzer', () => {
       ok: false,
     })
 
+    await expect(analyzer.prepare()).resolves.toMatchObject({
+      error: {code: 'worker-failed'},
+      ok: false,
+    })
+    await expect(analyzer.analyze({text: '다시'})).resolves.toMatchObject({
+      error: {code: 'worker-failed'},
+      ok: false,
+    })
+    worker.emitError('두 번째 오류')
+
+    analyzer.dispose()
     analyzer.dispose()
     await expect(analyzer.prepare()).resolves.toMatchObject({
       error: {code: 'cancelled'},
       ok: false,
     })
     expect(worker.terminate).toHaveBeenCalled()
+  })
+
+  it('should report detailed execution and deserialization failures', async () => {
+    const first = createTextMoodAnalyzer()
+    const firstWorker = getWorker()
+    const firstPreparation = first.prepare()
+    const cause = new Error('crashed')
+    firstWorker.emitError('', cause)
+    await expect(firstPreparation).resolves.toMatchObject({
+      error: {detail: '분위기 분석 Worker 실행 오류'},
+      ok: false,
+    })
+
+    const second = createTextMoodAnalyzer()
+    const secondWorker = getWorker()
+    const secondPreparation = second.prepare()
+    secondWorker.emitMessageError()
+    await expect(secondPreparation).resolves.toMatchObject({
+      error: {detail: '분위기 분석 Worker 응답을 읽지 못했습니다.'},
+      ok: false,
+    })
+    await expect(second.analyze({text: '폐기 후'})).resolves.toMatchObject({
+      error: {code: 'worker-failed'},
+      ok: false,
+    })
+    second.dispose()
+    await expect(second.analyze({text: '폐기 후'})).resolves.toMatchObject({
+      error: {code: 'cancelled'},
+      ok: false,
+    })
   })
 })

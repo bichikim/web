@@ -80,6 +80,4 @@ export const getSpeechErrorMessage = (error: SpeechCaptureError | SpeechRecognit
     case 'worker-failed':
       return '음성 인식 실행 환경이 중단됐어요. 다시 시도해 주세요.'
   }
-
-  error satisfies never
 }

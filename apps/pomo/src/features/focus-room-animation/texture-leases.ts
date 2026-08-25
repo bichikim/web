@@ -28,9 +28,7 @@ const beginUnload = (entry: TextureEntry) => {
   entry.unload = Assets.unload(entry.source)
     .catch(reportError)
     .finally(() => {
-      if (entries.get(entry.source) === entry) {
-        entries.delete(entry.source)
-      }
+      entries.delete(entry.source)
     })
 }
 
@@ -50,11 +48,7 @@ const createEntry = (source: string): TextureEntry => {
     },
     (error: unknown) => {
       entry.status = 'failed'
-
-      if (entries.get(source) === entry) {
-        entries.delete(source)
-      }
-
+      entries.delete(source)
       throw error
     },
   )
@@ -118,13 +112,7 @@ export async function acquireTextureGroup(
     throw failure.reason
   }
 
-  return results.map((result) => {
-    if (result.status !== 'fulfilled') {
-      throw new Error('Texture group settled without a texture')
-    }
-
-    return result.value
-  })
+  return results.map((result) => (result as PromiseFulfilledResult<TextureLease>).value)
 }
 
 export function releaseTextureGroup(leases: readonly TextureLease[]) {

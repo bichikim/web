@@ -39,10 +39,7 @@ const DEFAULT_DEPENDENCIES: StartRegenerationDependencies = {
   submit: submitHistoryResponse,
 }
 
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error
-    ? error.message.slice(0, MAX_ERROR_LENGTH)
-    : 'Unknown OpenAI submission error'
+const getErrorMessage = (error: Error): string => error.message.slice(0, MAX_ERROR_LENGTH)
 
 /** Reopens one daily run and submits selected moments for replacement. */
 export const startHistoryRegeneration = async (

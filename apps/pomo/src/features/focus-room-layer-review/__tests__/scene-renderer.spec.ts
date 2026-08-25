@@ -3,6 +3,7 @@
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const rendererHarness = vi.hoisted(() => {
+  type Reject = (reason?: unknown) => void
   type Resolve = () => void
 
   interface TestContainer {
@@ -43,19 +44,34 @@ const rendererHarness = vi.hoisted(() => {
 
   return {
     applicationResolver: null as null | Resolve,
-    applications: [] as Array<{canvas: HTMLCanvasElement; stage: TestContainer}>,
+    applications: [] as Array<{
+      canvas: HTMLCanvasElement
+      destroy: ReturnType<typeof vi.fn>
+      render: ReturnType<typeof vi.fn>
+      stage: TestContainer
+    }>,
     createContainer,
     deferApplication: false,
-    eyes: [] as Array<{setMode: (mode: string) => void}>,
+    eyeInitializationError: null as Error | null,
+    eyes: [] as Array<{
+      onRender: () => void
+      setMode: (mode: string) => void
+      setSceneReady: (ready: boolean) => void
+    }>,
+    rejecters: new Map<string, Reject>(),
     resolvers: new Map<string, Resolve>(),
+    sceneInitializationErrors: new Map<string, Error>(),
     scenes: [] as Array<{
       container: TestContainer
       definitionId: string
       destroyed: boolean
+      onRender: () => void
       update: ReturnType<typeof vi.fn>
     }>,
   }
 })
+
+const mouthHarness = vi.hoisted(() => ({onUpdate: null as null | (() => void)}))
 
 vi.mock('pixi.js', () => ({
   Application: class ApplicationMock {
@@ -82,12 +98,18 @@ vi.mock('../../focus-room-animation/eye-animation-controller', () => ({
   PEyeController: class PEyeControllerMock {
     readonly container = rendererHarness.createContainer()
     readonly destroy = vi.fn(() => this.container.destroy())
-    readonly initialize = vi.fn(async () => undefined)
+    readonly initialize = vi.fn(() =>
+      rendererHarness.eyeInitializationError === null
+        ? Promise.resolve()
+        : Promise.reject(rendererHarness.eyeInitializationError),
+    )
     readonly setMode = vi.fn()
     readonly setSceneReady = vi.fn()
     readonly update = vi.fn()
+    readonly onRender: () => void
 
-    constructor() {
+    constructor(onRender: () => void) {
+      this.onRender = onRender
       rendererHarness.eyes.push(this)
     }
   },
@@ -99,8 +121,9 @@ vi.mock('../../focus-room-animation/layer-scene', () => ({
     readonly definitionId: string
     destroyed = false
 
-    constructor(definition: {readonly id: string}) {
+    constructor(definition: {readonly id: string}, options: {readonly onRender: () => void}) {
       this.definitionId = definition.id
+      this.onRender = options.onRender
       rendererHarness.scenes.push(this)
     }
 
@@ -109,14 +132,23 @@ vi.mock('../../focus-room-animation/layer-scene', () => ({
       this.container.destroy()
     })
     readonly getAttachment = vi.fn(() => null)
-    readonly initialize = vi.fn(
-      () =>
-        new Promise<void>((resolve) => {
-          rendererHarness.resolvers.set(this.definitionId, resolve)
-        }),
-    )
+    readonly initialize = vi.fn(() => {
+      const error = rendererHarness.sceneInitializationErrors.get(this.definitionId)
+
+      return error === undefined
+        ? new Promise<void>((resolve, reject) => {
+            rendererHarness.rejecters.set(this.definitionId, reject)
+            rendererHarness.resolvers.set(this.definitionId, resolve)
+          })
+        : Promise.reject(error)
+    })
     readonly update = vi.fn()
+    readonly onRender: () => void
   },
+}))
+
+vi.mock('../../focus-room-animation/mouth-transition-controller', () => ({
+  createPMouthTransitionController: vi.fn(),
 }))
 
 vi.mock('../../focus-room-animation/scene-catalog', () => ({
@@ -164,6 +196,7 @@ vi.mock('../../focus-room-animation/scene-layer-state', () => ({
 }))
 
 import {createFocusRoomLayerState} from '../../focus-room-animation/scene-layer-state'
+import {createPMouthTransitionController} from '../../focus-room-animation/mouth-transition-controller'
 import {PLayerReviewRenderer, type PLayerReviewState} from '../scene-renderer'
 
 const state: PLayerReviewState = {
@@ -194,9 +227,32 @@ beforeEach(() => {
   rendererHarness.applicationResolver = null
   rendererHarness.applications.length = 0
   rendererHarness.deferApplication = false
+  rendererHarness.eyeInitializationError = null
   rendererHarness.eyes.length = 0
+  rendererHarness.rejecters.clear()
   rendererHarness.resolvers.clear()
+  rendererHarness.sceneInitializationErrors.clear()
   rendererHarness.scenes.length = 0
+  mouthHarness.onUpdate = null
+  vi.mocked(createPMouthTransitionController).mockImplementation((onUpdate) => {
+    let current: {from: string; progress: number; to: string} | null = null
+    mouthHarness.onUpdate = onUpdate
+
+    return {
+      cancel: () => {
+        current = null
+        onUpdate()
+      },
+      get current() {
+        return current
+      },
+      destroy: () => undefined,
+      start: (from: string, to: string) => {
+        current = {from, progress: 0, to}
+        onUpdate()
+      },
+    } as unknown as ReturnType<typeof createPMouthTransitionController>
+  })
 })
 
 it('should initialize only the latest preview selected before Pixi is ready', async () => {
@@ -254,6 +310,10 @@ it('should forward a fixed eye frame to the eye controller', async () => {
   renderer.update({...state, eyeMode: 'closed'})
 
   expect(rendererHarness.eyes[0]?.setMode).toHaveBeenLastCalledWith('closed')
+  const application = rendererHarness.applications[0]
+  const renders = application?.render.mock.calls.length ?? 0
+  rendererHarness.eyes[0]?.onRender()
+  expect(application?.render).toHaveBeenCalledTimes(renders + 1)
   renderer.destroy()
 })
 
@@ -327,4 +387,197 @@ it('should overlay the selected mouth at half opacity above the rest mouth for c
     visible: true,
   })
   renderer.destroy()
+})
+
+it('should discard an application that is destroyed while Pixi initializes', async () => {
+  rendererHarness.deferApplication = true
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+  const initialization = renderer.initialize(state)
+
+  await vi.waitFor(() => expect(rendererHarness.applicationResolver).not.toBeNull())
+  renderer.destroy()
+  rendererHarness.applicationResolver?.()
+  await initialization
+
+  expect(rendererHarness.applications[0]?.destroy).toHaveBeenCalledWith(true)
+})
+
+it('should destroy the scene when eye initialization fails', async () => {
+  const error = new Error('eyes failed')
+  rendererHarness.eyeInitializationError = error
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+  const initialization = renderer.initialize(state)
+
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+
+  await expect(initialization).rejects.toBe(error)
+  expect(rendererHarness.scenes[0]?.destroyed).toBe(true)
+})
+
+it('should reject an initial scene error', async () => {
+  const initialError = new Error('initial failed')
+  rendererHarness.sceneInitializationErrors.set('initial', initialError)
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+
+  await expect(renderer.initialize(state)).rejects.toBe(initialError)
+  expect(rendererHarness.scenes[0]?.destroyed).toBe(true)
+})
+
+it('should ignore replacement requests after destruction and before a state exists', async () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+
+  await renderer.replaceDefinition(createDefinition('replacement'))
+  renderer.destroy()
+  await renderer.replaceDefinition(createDefinition('after-destroy'))
+  renderer.destroy()
+
+  expect(rendererHarness.scenes).toHaveLength(0)
+})
+
+it('should ignore a mouth-transition update before renderer state exists', () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+
+  mouthHarness.onUpdate?.()
+  renderer.destroy()
+})
+
+it('should use the incoming viseme before initialization creates prior state', () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+
+  renderer.update(state)
+
+  expect(createFocusRoomLayerState).toHaveBeenLastCalledWith('rest', false, undefined)
+  renderer.destroy()
+})
+
+it('should de-duplicate incoming and current replacement definitions', async () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  const replacement = renderer.replaceDefinition(createDefinition('replacement'))
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('replacement')).toBe(true))
+  await renderer.replaceDefinition(createDefinition('replacement'))
+  rendererHarness.resolvers.get('replacement')?.()
+  await replacement
+  await renderer.replaceDefinition(createDefinition('replacement'))
+
+  expect(
+    rendererHarness.scenes.filter((scene) => scene.definitionId === 'replacement'),
+  ).toHaveLength(1)
+  renderer.destroy()
+})
+
+it('should reset readiness when a current replacement fails', async () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  const error = new Error('replacement failed')
+  rendererHarness.sceneInitializationErrors.set('replacement', error)
+
+  await expect(renderer.replaceDefinition(createDefinition('replacement'))).rejects.toBe(error)
+  expect(rendererHarness.eyes[0]?.setSceneReady).toHaveBeenLastCalledWith(true)
+  renderer.destroy()
+})
+
+it('should discard a stale ready replacement and render only while active', async () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  const firstReplacement = renderer.replaceDefinition(createDefinition('replacement-one'))
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('replacement-one')).toBe(true))
+  const secondReplacement = renderer.replaceDefinition(createDefinition('replacement-two'))
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('replacement-two')).toBe(true))
+  rendererHarness.resolvers.get('replacement-one')?.()
+  await firstReplacement
+  rendererHarness.resolvers.get('replacement-two')?.()
+  await secondReplacement
+
+  const scene = rendererHarness.scenes.find(
+    (candidate) => candidate.definitionId === 'replacement-two',
+  )
+  const application = rendererHarness.applications[0]
+  const renders = vi.mocked(application?.render).mock.calls.length
+  scene?.onRender()
+  expect(application?.render).toHaveBeenCalledTimes(renders + 1)
+
+  renderer.destroy()
+  scene?.onRender()
+  expect(application?.render).toHaveBeenCalledTimes(renders + 1)
+})
+
+it('should ignore an obsolete initial scene rejection after a replacement begins', async () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.rejecters.has('initial')).toBe(true))
+
+  const replacement = renderer.replaceDefinition(createDefinition('replacement'))
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('replacement')).toBe(true))
+  rendererHarness.rejecters.get('initial')?.(new Error('obsolete initial'))
+  await initialization
+  rendererHarness.resolvers.get('replacement')?.()
+  await replacement
+
+  expect(rendererHarness.scenes.find((scene) => scene.definitionId === 'initial')?.destroyed).toBe(
+    true,
+  )
+  renderer.destroy()
+})
+
+it('should stop initial-scene setup after destruction and ignore an obsolete replacement error', async () => {
+  const renderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('initial'),
+  })
+  const initialization = renderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('initial')).toBe(true))
+  renderer.destroy()
+  rendererHarness.resolvers.get('initial')?.()
+  await initialization
+
+  const activeRenderer = new PLayerReviewRenderer(document.createElement('div'), {
+    definition: createDefinition('active'),
+  })
+  const activeInitialization = activeRenderer.initialize(state)
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('active')).toBe(true))
+  rendererHarness.resolvers.get('active')?.()
+  await activeInitialization
+
+  const obsoleteReplacement = activeRenderer.replaceDefinition(createDefinition('obsolete'))
+  await vi.waitFor(() => expect(rendererHarness.rejecters.has('obsolete')).toBe(true))
+  const latestReplacement = activeRenderer.replaceDefinition(createDefinition('latest'))
+  await vi.waitFor(() => expect(rendererHarness.resolvers.has('latest')).toBe(true))
+  rendererHarness.rejecters.get('obsolete')?.(new Error('obsolete replacement'))
+  await obsoleteReplacement
+  rendererHarness.resolvers.get('latest')?.()
+  await latestReplacement
+  activeRenderer.destroy()
 })

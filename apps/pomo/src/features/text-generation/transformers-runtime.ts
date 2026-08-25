@@ -56,17 +56,11 @@ const loadModel = (
     case 'gemma-4':
       return Gemma4ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
     case 'qwen-3.5': {
-      if (!import.meta.env.DEV) {
-        throw new Error('Qwen 텍스트 모델은 개발 빌드에서만 사용할 수 있어요.')
-      }
-
       return import('./qwen-model').then(({loadQwenModel}) =>
         loadQwenModel({model: modelDefinition, onProgress: reportProgress}),
       )
     }
   }
-
-  modelDefinition.architecture satisfies never
 }
 
 export const createTransformersRuntime = (
@@ -166,11 +160,7 @@ export const createTransformersRuntime = (
   const getTokenizer = (): TextTokenVocabulary => getProcessorTokenizer()
 
   const createPrompt = (messages: Array<TextGenerationMessage>) => {
-    if (processor === null) {
-      throw new Error('텍스트 모델 프로세서가 준비되지 않았어요.')
-    }
-
-    const prompt = processor.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
+    const prompt = processor!.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
 
     if (typeof prompt !== 'string') {
       throw new Error('텍스트 모델 프롬프트를 문자열로 만들지 못했어요.')

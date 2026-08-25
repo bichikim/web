@@ -35,6 +35,10 @@ describe('Supertonic parsers', () => {
   })
 
   it('should reject the obsolete record indexer format', () => {
+    expect(parseSupertonicConfig({})).toMatchObject({
+      error: {asset: 'config', code: 'invalid-model-data'},
+      ok: false,
+    })
     expect(parseSupertonicIndexer({65: 1})).toEqual({
       error: {asset: 'indexer', code: 'invalid-model-data', phase: 'validate', retryable: false},
       ok: false,
@@ -149,6 +153,8 @@ describe('SupertonicEngine', () => {
   })
 
   it('should reject non-float model outputs', async () => {
+    const sparseIndexer: number[] = []
+    sparseIndexer.length = 128
     const sessions: SupertonicSessions = {
       durationPredictor: createSession(
         vi.fn(async () => ({
@@ -161,7 +167,7 @@ describe('SupertonicEngine', () => {
     }
     const engine = new SupertonicEngine(
       getResultValue(parseSupertonicConfig(createConfig())),
-      getResultValue(parseSupertonicIndexer([])),
+      sparseIndexer,
       sessions,
       runtime,
     )
@@ -173,7 +179,7 @@ describe('SupertonicEngine', () => {
     )
 
     await expect(
-      engine.generate({language: 'ko', onProgress: vi.fn(), speed: 1, text: '안녕', voice}),
+      engine.generate({language: 'ko', onProgress: vi.fn(), speed: 1, text: '안녕!', voice}),
     ).rejects.toThrow('Supertonic 모델이 예상하지 못한 결과를 반환했어요')
   })
 })

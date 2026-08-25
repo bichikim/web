@@ -63,7 +63,7 @@ export const replaceUnrefinedSentences = (text: string): string =>
         return segment.text
       }
 
-      const leadingWhitespace = segment.text.match(/^\s*/u)?.[0] ?? ''
+      const [leadingWhitespace] = segment.text.match(/^\s*/u)!
       return `${leadingWhitespace}${REFINEMENT_FALLBACK}`
     })
     .join('')

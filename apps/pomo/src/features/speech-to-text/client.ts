@@ -8,7 +8,7 @@ import type {
 } from './recognizer'
 import {reportClientError} from '../client-error-reporter'
 import {failureResult, type Result, successResult} from '../result'
-import {createWorkerRpcTransport, isWorkerRpcFailure, type WorkerRpcFailure} from '../worker-rpc'
+import {createWorkerRpcTransport, type WorkerRpcFailure} from '../worker-rpc'
 
 const createCancelledError = (phase: SpeechRecognitionPhase): SpeechRecognitionError => ({
   code: 'cancelled',
@@ -31,8 +31,6 @@ const getRequestId = (response: SpeechWorkerResponse) => {
     case 'ready':
       return response.requestId
   }
-
-  response satisfies never
 }
 
 const getFailureResult = <Value>(
@@ -54,16 +52,13 @@ const reportSpeechWorkerFailure = (failure: WorkerRpcFailure) => {
   }
 }
 
-const getUnknownFailureResult = <Value>(
+const getRequestFailureResult = <Value>(
   error: unknown,
   phase: SpeechRecognitionPhase,
 ): Result<Value, SpeechRecognitionError> => {
-  if (isWorkerRpcFailure(error)) {
-    reportSpeechWorkerFailure(error)
-    return getFailureResult(error, phase)
-  }
-
-  return failureResult(createWorkerError(phase, 'Worker 요청을 완료하지 못했습니다.'))
+  const failure = error as WorkerRpcFailure
+  reportSpeechWorkerFailure(failure)
+  return getFailureResult(failure, phase)
 }
 
 /** Creates an isolated speech recognizer and owns its Worker until disposal. */
@@ -81,24 +76,13 @@ export const createSpeechRecognizer = (
   const transport = createWorkerRpcTransport<SpeechWorkerRequest, SpeechWorkerResponse>({
     getRequestId,
     onEvent: (response) => {
-      if (disposed) {
-        return
-      }
-
       switch (response.type) {
         case 'backend-changed':
           options.onBackendChange(response.backend)
           return
         case 'loading':
           options.onProgress(response.progress)
-          return
-        case 'complete':
-        case 'error':
-        case 'ready':
-          return
       }
-
-      response satisfies never
     },
     onFailure: reportSpeechWorkerFailure,
     worker,
@@ -115,13 +99,10 @@ export const createSpeechRecognizer = (
         activeBackend = {backend: response.backend}
         options.onBackendChange(response.backend)
         return successResult(activeBackend)
-      case 'backend-changed':
       case 'complete':
-      case 'loading':
+      default:
         return getUnexpectedResponse('prepare')
     }
-
-    response satisfies never
   }
 
   const executePrepare = async (): Promise<
@@ -138,7 +119,7 @@ export const createSpeechRecognizer = (
       })
       return resolvePrepareResponse(response)
     } catch (error) {
-      return getUnknownFailureResult(error, 'prepare')
+      return getRequestFailureResult(error, 'prepare')
     } finally {
       preparePromise = null
     }
@@ -214,15 +195,12 @@ export const createSpeechRecognizer = (
           return successResult({backend: response.backend, text: response.text})
         case 'error':
           return failureResult(response.error)
-        case 'backend-changed':
-        case 'loading':
         case 'ready':
+        default:
           return getUnexpectedResponse('transcribe')
       }
-
-      response satisfies never
     } catch (error) {
-      return getUnknownFailureResult(error, 'transcribe')
+      return getRequestFailureResult(error, 'transcribe')
     } finally {
       transcriptionPending = false
     }

@@ -120,7 +120,7 @@ const getAudioStart = (bytes: Uint8Array): number => {
   }
 
   const bodyBytes = readSynchsafeInteger(bytes, 6)
-  const footerBytes = ((bytes[5] ?? 0) & ID3_FOOTER_FLAG) === 0 ? 0 : ID3_FOOTER_BYTES
+  const footerBytes = (bytes[5] & ID3_FOOTER_FLAG) === 0 ? 0 : ID3_FOOTER_BYTES
   const totalBytes = ID3_HEADER_BYTES + bodyBytes + footerBytes
 
   if (totalBytes > MAXIMUM_ID3_BYTES || totalBytes > bytes.byteLength) {
@@ -130,13 +130,8 @@ const getAudioStart = (bytes: Uint8Array): number => {
   return totalBytes
 }
 
-const getSampleRate = (version: number, sampleRateIndex: number): number | null => {
-  const baseRate = MPEG_1_SAMPLE_RATES[sampleRateIndex]
-
-  if (baseRate === undefined) {
-    return null
-  }
-
+const getSampleRate = (version: number, sampleRateIndex: number): number => {
+  const baseRate = MPEG_1_SAMPLE_RATES[sampleRateIndex]!
   if (version === MPEG_VERSION_1) {
     return baseRate
   }
@@ -145,7 +140,7 @@ const getSampleRate = (version: number, sampleRateIndex: number): number | null 
     return baseRate / 2
   }
 
-  return version === MPEG_VERSION_2_5 ? baseRate / 4 : null
+  return baseRate / 4
 }
 
 const parseFrame = (bytes: Uint8Array, offset: number): Mp3Frame | null => {
@@ -175,12 +170,8 @@ const parseFrame = (bytes: Uint8Array, offset: number): Mp3Frame | null => {
 
   const bitrateTable =
     version === MPEG_VERSION_1 ? MPEG_1_LAYER_3_BITRATES : MPEG_2_LAYER_3_BITRATES
-  const bitrate = bitrateTable[bitrateIndex]
+  const bitrate = bitrateTable[bitrateIndex]!
   const sampleRate = getSampleRate(version, sampleRateIndex)
-
-  if (bitrate === undefined || sampleRate === null) {
-    return null
-  }
 
   const isMpeg1 = version === MPEG_VERSION_1
   const frameFactor = isMpeg1 ? MPEG_1_FRAME_FACTOR : MPEG_2_FRAME_FACTOR
@@ -241,11 +232,7 @@ export const extractMp3Preview = (bytes: Uint8Array, maximumDurationMs: number):
   }
 
   const preview = bytes.slice(firstFrame, previewEnd)
-  const firstPreviewFrame = parseFrame(preview, 0)
-
-  if (firstPreviewFrame === null) {
-    throw new TypeError('invalid_mp3_frames')
-  }
+  const firstPreviewFrame = parseFrame(preview, 0)!
 
   rewriteXingHeader(preview, firstPreviewFrame.byteLength, frameCount)
   rewriteVbriHeader(preview, firstPreviewFrame.byteLength, frameCount)

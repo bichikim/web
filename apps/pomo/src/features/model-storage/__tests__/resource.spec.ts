@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import {loadModelResource} from '../resource'
+import * as httpClient from '../../http-client'
 import {failureResult, successResult} from '../../result'
 import type {ModelStorage} from '../storage'
 
@@ -64,5 +65,17 @@ describe('loadModelResource', () => {
     await resource.cacheWrite
 
     expect(storage.set).not.toHaveBeenCalled()
+  })
+
+  it('should use the shared HTTP client by default', async () => {
+    const storage = createStorage()
+    const fetcher = vi.spyOn(httpClient, 'httpFetch').mockResolvedValue(new Response('model'))
+
+    await loadModelResource({storage, url: 'https://models.example/model'})
+
+    expect(fetcher).toHaveBeenCalledWith('https://models.example/model', {
+      cache: 'no-store',
+      signal: undefined,
+    })
   })
 })

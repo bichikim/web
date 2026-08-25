@@ -60,6 +60,13 @@ describe('auto-start-storage', () => {
     expect(await readAutoStartPreference()).toBe(false)
   })
 
+  it('should ignore browser values that do not match current or legacy schemas', async () => {
+    localStorage.setItem('pomo:timer-auto-start:v2', JSON.stringify({isEnabled: 'yes', savedAt: 1}))
+    localStorage.setItem('pomo:timer-auto-start:v1', JSON.stringify('yes'))
+
+    expect(await readAutoStartPreference()).toBe(false)
+  })
+
   it('should mirror the latest preference to native storage', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockResolvedValue(JSON.stringify({isEnabled: true, savedAt: 20}))
@@ -91,6 +98,15 @@ describe('auto-start-storage', () => {
     await writeAutoStartPreference(true)
 
     expect(await readAutoStartPreference()).toBe(true)
+  })
+
+  it('should use the disabled default when native storage is empty or fails', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockResolvedValue(null)
+    expect(await readAutoStartPreference()).toBe(false)
+
+    storageMocks.getItem.mockRejectedValue(new Error('native storage unavailable'))
+    expect(await readAutoStartPreference()).toBe(false)
   })
 
   it('should select a newer browser value when the native copy is stale', async () => {

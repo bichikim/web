@@ -18,6 +18,19 @@ it('should show a concrete status without progress when no value is provided', (
   expect(screen.queryByRole('progressbar')).toBeNull()
 })
 
+it('should hide progress when its value is explicitly null', () => {
+  render(() => (
+    <PGenerationStatus
+      kind="voice"
+      message="준비 전"
+      progress={null}
+      progressLabel="음성 모델 준비 진행률"
+    />
+  ))
+
+  expect(screen.queryByRole('progressbar')).toBeNull()
+})
+
 it('should expose zero percent progress with the requested semantic label', () => {
   render(() => (
     <PGenerationStatus

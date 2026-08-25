@@ -169,13 +169,10 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
 
   const stopPlayback = () => {
     playbackRequestId += 1
-    const audio = audioElement()
-
-    if (audio !== undefined) {
-      audio.pause()
-      audio.removeAttribute('src')
-      audio.load()
-    }
+    const audio = audioElement()!
+    audio.pause()
+    audio.removeAttribute('src')
+    audio.load()
 
     if (playbackUrl !== null) {
       URL.revokeObjectURL(playbackUrl)
@@ -208,12 +205,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
         return
       }
 
-      const player = audioElement()
-
-      if (player === undefined) {
-        setMessage('음성 재생기를 준비하지 못했어요.')
-        return
-      }
+      const player = audioElement()!
 
       playbackUrl = URL.createObjectURL(audio)
       player.src = playbackUrl
@@ -349,9 +341,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                           dialogues={savedDialogues()}
                           disabled={savedDialogues().length === 0}
                           onChange={(dialogueIds) => {
-                            handleEventBinding(event.id, dialogueIds).catch((error: unknown) => {
-                              console.error('Unexpected event binding failure.', error)
-                            })
+                            handleEventBinding(event.id, dialogueIds)
                           }}
                           selectedDialogueIds={selectedDialogueIds()}
                         />
@@ -361,9 +351,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                         <DialoguePlaybackModeSelect
                           eventLabel={event.label}
                           onChange={(nextMode) => {
-                            handlePlaybackMode(event.id, nextMode).catch((error: unknown) => {
-                              console.error('Unexpected playback mode update failure.', error)
-                            })
+                            handlePlaybackMode(event.id, nextMode)
                           }}
                           value={playbackMode()}
                         />

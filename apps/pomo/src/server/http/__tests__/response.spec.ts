@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {noStoreEmpty, noStoreJson, withNoStore} from '../response'
+import {noStoreEmpty, noStoreJson, noStoreText, withNoStore} from '../response'
 
 describe('no-store Web responses', () => {
   it('should create a JSON response with security headers', async () => {
@@ -37,5 +37,13 @@ describe('no-store Web responses', () => {
 
     expect(response.status).toBe(204)
     expect(response.headers.get('Cache-Control')).toBe('no-store')
+  })
+
+  it('should create a default successful text response', async () => {
+    const response = noStoreText('ok', {headers: {'X-Custom': 'yes'}})
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('X-Custom')).toBe('yes')
+    await expect(response.text()).resolves.toBe('ok')
   })
 })

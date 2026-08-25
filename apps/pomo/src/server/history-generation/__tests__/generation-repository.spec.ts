@@ -1,4 +1,4 @@
-import {expect, it, vi} from 'vitest'
+import {beforeEach, expect, it, vi} from 'vitest'
 import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'
 
@@ -6,14 +6,34 @@ import type {HistoryGenerationOutput} from 'src/features/history-generation'
 import {
   associateGenerationResponse,
   failHistoryResponse,
+  findGenerationRun,
   type GenerationRun,
+  listRecoverableGenerationRuns,
   markGenerationFailed,
   markGenerationSubmitted,
   prepareGenerationRerun,
   prepareGenerationRun,
   publishHistoryResponse,
+  rejectHistoryResponse,
 } from '../generation-repository'
-import type {Database, TransactionalDatabase} from '../../database'
+import {
+  type Database,
+  historicalGenerationRuns,
+  historicalMoments,
+  processedOpenAiWebhookEvents,
+  type TransactionalDatabase,
+} from '../../database'
+
+const databaseMocks = vi.hoisted(() => ({
+  getDatabase: vi.fn(),
+  withTransactionalDatabase: vi.fn(),
+}))
+
+vi.mock('../../database', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../database')>()),
+  getDatabase: databaseMocks.getDatabase,
+  withTransactionalDatabase: databaseMocks.withTransactionalDatabase,
+}))
 
 const RUN_ID = 'run-1'
 const RESPONSE_ID = 'resp-1'
@@ -192,6 +212,74 @@ const GENERATION = {
   ],
 } satisfies HistoryGenerationOutput
 
+const TARGET_DATE = {day: 16, isoDate: '2026-08-16', month: 8} as const
+const CREATE_OPTIONS = {
+  promptVersion: 'history-prompt-v1',
+  sourcePolicyVersion: 'history-sources-v1',
+  targetDate: TARGET_DATE,
+} as const
+
+const createResponseTransaction = (
+  run: HistoricalGenerationRunRow | undefined,
+  options: {readonly claimed?: boolean; readonly storeMoment?: boolean} = {},
+) => {
+  const claimed = options.claimed ?? true
+  const storeMoment = options.storeMoment ?? true
+  const momentValues = vi.fn()
+  const sourceValues = vi.fn(async () => undefined)
+  const insert = vi.fn((table: unknown) => {
+    if (table === processedOpenAiWebhookEvents) {
+      return {
+        values: vi.fn(() => ({
+          onConflictDoNothing: vi.fn(() => ({
+            returning: vi.fn(async () => (claimed ? [{eventId: 'evt-1'}] : [])),
+          })),
+        })),
+      }
+    }
+
+    if (table === historicalMoments) {
+      return {
+        values: vi.fn((values: unknown) => {
+          momentValues(values)
+          return {
+            onConflictDoUpdate: vi.fn(() => ({
+              returning: vi.fn(async () => (storeMoment ? [{id: 'moment-1'}] : [])),
+            })),
+          }
+        }),
+      }
+    }
+
+    return {values: sourceValues}
+  })
+  const update = vi.fn(() => ({
+    set: vi.fn(() => ({where: vi.fn(async () => undefined)})),
+  }))
+  const transaction = {
+    delete: vi.fn(() => ({where: vi.fn(async () => undefined)})),
+    insert,
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({where: vi.fn(() => createSelectChain(run))})),
+    })),
+    update,
+  }
+
+  return {insert, momentValues, sourceValues, transaction, update}
+}
+
+const asTransactionalDatabase = (transaction: object) =>
+  ({
+    transaction: vi.fn(async (callback: (value: object) => Promise<boolean>) =>
+      callback(transaction),
+    ),
+  }) as unknown as TransactionalDatabase
+
+beforeEach(() => {
+  databaseMocks.getDatabase.mockReset()
+  databaseMocks.withTransactionalDatabase.mockReset()
+})
+
 it('should not reclaim an ambiguous preparing run', async () => {
   const existing = createRun('preparing', null)
   const {database, update} = createGenerationDatabase(existing, existing)
@@ -356,4 +444,355 @@ it('should ignore terminal failures when the generation run is already completed
   ).resolves.toBe(false)
 
   expect(transaction.update).not.toHaveBeenCalled()
+})
+
+it('should reject generation preparation when the enabled channel is missing', async () => {
+  const database = {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [])}))})),
+    })),
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).rejects.toThrow(
+    'Enabled feed channel not found: today-in-history',
+  )
+})
+
+it('should return a newly inserted generation run', async () => {
+  const inserted = createRun('preparing', null)
+  const database = {
+    insert: vi.fn(() => ({
+      values: vi.fn(() => ({
+        onConflictDoNothing: vi.fn(() => ({returning: vi.fn(async () => [inserted])})),
+      })),
+    })),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({limit: vi.fn(async () => [{id: 'channel-1'}])})),
+      })),
+    })),
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).resolves.toEqual({
+    created: true,
+    run: expect.objectContaining({id: RUN_ID, status: 'preparing'}),
+  })
+})
+
+it('should report a generation run lost after its uniqueness conflict', async () => {
+  const select = vi
+    .fn()
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({limit: vi.fn(async () => [{id: 'channel-1'}])})),
+      })),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [])}))})),
+    })
+  const database = {
+    insert: vi.fn(() => ({
+      values: vi.fn(() => ({
+        onConflictDoNothing: vi.fn(() => ({returning: vi.fn(async () => [])})),
+      })),
+    })),
+    select,
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).rejects.toThrow(
+    'Generation run disappeared after a uniqueness conflict',
+  )
+})
+
+it('should retain the failed run when its retry loses a database race', async () => {
+  const existing = createRun('failed', null)
+  const {database} = createGenerationDatabase(existing, existing)
+  const returning = vi.fn(async () => [])
+  const racedDatabase = {
+    ...database,
+    update: vi.fn(() => ({set: vi.fn(() => ({where: vi.fn(() => ({returning}))}))})),
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, racedDatabase)).resolves.toEqual({
+    created: false,
+    run: expect.objectContaining({status: 'failed'}),
+  })
+})
+
+it('should reject a rerun when any required title is not published', async () => {
+  const existing = createRun('completed')
+  const {database} = createRerunDatabase(existing, existing, ['사건 A'])
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A', '누락 사건']}, database),
+  ).rejects.toThrow('Every regeneration title must match an existing published moment')
+})
+
+it.each(['completed', 'failed', 'rejected'] as const)(
+  'should reopen a %s run for regeneration',
+  async (status) => {
+    const existing = createRun(status)
+    const updated = {...existing, status: 'preparing' as const}
+    const {database} = createRerunDatabase(existing, updated, ['사건 A'])
+
+    await expect(
+      prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A']}, database),
+    ).resolves.toMatchObject({id: RUN_ID, status: 'preparing'})
+  },
+)
+
+it('should reject a rerun when no run exists or its update loses a race', async () => {
+  const requiredTitles = ['사건 A']
+  const missing = createRerunDatabase(
+    createRun('completed'),
+    createRun('completed'),
+    requiredTitles,
+  )
+  const missingSelect = vi
+    .fn()
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [{id: 'channel-1'}])}))})),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(async () => [{title: '사건 A'}])})),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [])}))})),
+    })
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles}, {
+      ...missing.database,
+      select: missingSelect,
+    } as unknown as Database),
+  ).rejects.toThrow('Inactive generation run not found')
+
+  const existing = createRun('completed')
+  const raced = createRerunDatabase(existing, existing, requiredTitles)
+  raced.where.mockReturnValueOnce({returning: vi.fn(async () => [])})
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles}, raced.database),
+  ).rejects.toThrow('Inactive generation run not found')
+})
+
+it('should reject an unknown rerun status defensively', async () => {
+  const existing = {
+    ...createRun('completed'),
+    status: 'unknown',
+  } as unknown as HistoricalGenerationRunRow
+  const {database} = createRerunDatabase(existing, existing, ['사건 A'])
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A']}, database),
+  ).rejects.toThrow('Unhandled generation status: unknown')
+})
+
+it('should accept the first response persistence acknowledgement', async () => {
+  const database = {
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({
+        where: vi.fn(() => ({returning: vi.fn(async () => [{responseId: RESPONSE_ID}])})),
+      })),
+    })),
+  } as unknown as Database
+
+  await expect(markGenerationSubmitted(RUN_ID, RESPONSE_ID, database)).resolves.toBeUndefined()
+})
+
+it('should find present and absent generation runs through the default database', async () => {
+  const select = vi
+    .fn()
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({limit: vi.fn(async () => [createRun('submitted')])})),
+      })),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [])}))})),
+    })
+  databaseMocks.getDatabase.mockReturnValue({select} as unknown as Database)
+
+  await expect(findGenerationRun(RESPONSE_ID)).resolves.toMatchObject({id: RUN_ID})
+  await expect(findGenerationRun('missing')).resolves.toBeUndefined()
+})
+
+it('should fall back to finding a response when association loses a race', async () => {
+  const select = vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => ({limit: vi.fn(async () => [createRun('submitted')])})),
+    })),
+  }))
+  const database = {
+    select,
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({where: vi.fn(() => ({returning: vi.fn(async () => [])}))})),
+    })),
+  } as unknown as Database
+
+  await expect(
+    associateGenerationResponse(RESPONSE_ID, RUN_ID, 'submission-key', database),
+  ).resolves.toMatchObject({openAiResponseId: RESPONSE_ID})
+})
+
+it('should ignore a duplicate publish event and reject a missing run', async () => {
+  const duplicate = createResponseTransaction(createRun('submitted'), {claimed: false})
+  await expect(
+    publishHistoryResponse(
+      {
+        eventId: 'evt-1',
+        generation: GENERATION,
+        model: 'gpt-5',
+        replaceDate: false,
+        responseId: RESPONSE_ID,
+        searchSourceUrls: SOURCE_URLS,
+      },
+      asTransactionalDatabase(duplicate.transaction),
+    ),
+  ).resolves.toBe(false)
+
+  const missing = createResponseTransaction(undefined)
+  await expect(
+    publishHistoryResponse(
+      {
+        eventId: 'evt-2',
+        generation: GENERATION,
+        model: 'gpt-5',
+        replaceDate: false,
+        responseId: RESPONSE_ID,
+        searchSourceUrls: SOURCE_URLS,
+      },
+      asTransactionalDatabase(missing.transaction),
+    ),
+  ).rejects.toThrow('Generation run not found for response')
+})
+
+it('should publish generated moments and replace same-date history', async () => {
+  const response = createResponseTransaction(createRun('submitted'))
+  const database = asTransactionalDatabase(response.transaction)
+
+  await expect(
+    publishHistoryResponse(
+      {
+        eventId: 'evt-1',
+        generation: GENERATION,
+        model: 'gpt-5',
+        replaceDate: true,
+        responseId: RESPONSE_ID,
+        searchSourceUrls: SOURCE_URLS,
+      },
+      database,
+    ),
+  ).resolves.toBe(true)
+  expect(response.momentValues).toHaveBeenCalledTimes(3)
+  expect(response.sourceValues).toHaveBeenCalledTimes(3)
+  expect(response.update).toHaveBeenCalledTimes(2)
+})
+
+it('should publish through the default transaction wrapper without replacing the date', async () => {
+  const response = createResponseTransaction(createRun('submitted'))
+  const database = asTransactionalDatabase(response.transaction)
+  databaseMocks.withTransactionalDatabase.mockImplementationOnce((callback) => callback(database))
+
+  await expect(
+    publishHistoryResponse({
+      eventId: 'evt-1',
+      generation: GENERATION,
+      model: 'gpt-5',
+      replaceDate: false,
+      responseId: RESPONSE_ID,
+      searchSourceUrls: SOURCE_URLS,
+    }),
+  ).resolves.toBe(true)
+})
+
+it('should reject replacement without moments and failed moment persistence', async () => {
+  const empty = createResponseTransaction(createRun('submitted'))
+  await expect(
+    publishHistoryResponse(
+      {
+        eventId: 'evt-empty',
+        generation: {moments: []},
+        model: 'gpt-5',
+        replaceDate: true,
+        responseId: RESPONSE_ID,
+        searchSourceUrls: [],
+      },
+      asTransactionalDatabase(empty.transaction),
+    ),
+  ).rejects.toThrow('A generation must contain at least one historical moment')
+
+  const failed = createResponseTransaction(createRun('submitted'), {storeMoment: false})
+  await expect(
+    publishHistoryResponse(
+      {
+        eventId: 'evt-failed',
+        generation: {moments: [GENERATION.moments[0]]},
+        model: 'gpt-5',
+        replaceDate: false,
+        responseId: RESPONSE_ID,
+        searchSourceUrls: SOURCE_URLS,
+      },
+      asTransactionalDatabase(failed.transaction),
+    ),
+  ).rejects.toThrow('Failed to persist a generated historical moment')
+})
+
+it('should handle duplicate, missing, successful, and default terminal events', async () => {
+  const duplicate = createResponseTransaction(createRun('submitted'), {claimed: false})
+  await expect(
+    failHistoryResponse(
+      'evt-duplicate',
+      RESPONSE_ID,
+      'failed',
+      asTransactionalDatabase(duplicate.transaction),
+    ),
+  ).resolves.toBe(false)
+
+  const missing = createResponseTransaction(undefined)
+  await expect(
+    failHistoryResponse(
+      'evt-missing',
+      RESPONSE_ID,
+      'failed',
+      asTransactionalDatabase(missing.transaction),
+    ),
+  ).rejects.toThrow('Generation run not found for response')
+
+  const failed = createResponseTransaction(createRun('submitted'))
+  await expect(
+    failHistoryResponse(
+      'evt-failed',
+      RESPONSE_ID,
+      'failed',
+      asTransactionalDatabase(failed.transaction),
+    ),
+  ).resolves.toBe(true)
+
+  const rejected = createResponseTransaction(createRun('submitted'))
+  const rejectedDatabase = asTransactionalDatabase(rejected.transaction)
+  databaseMocks.withTransactionalDatabase.mockImplementationOnce((callback) =>
+    callback(rejectedDatabase),
+  )
+  await expect(rejectHistoryResponse('evt-rejected', RESPONSE_ID, 'rejected')).resolves.toBe(true)
+})
+
+it('should list only recoverable runs with response IDs through the default database', async () => {
+  const database = {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({
+          limit: vi.fn(async () => [
+            {responseId: null},
+            {responseId: 'resp-1'},
+            {responseId: 'resp-2'},
+          ]),
+        })),
+      })),
+    })),
+  } as unknown as Database
+  databaseMocks.getDatabase.mockReturnValue(database)
+
+  await expect(
+    listRecoverableGenerationRuns(new Date('2026-08-16T00:00:00.000Z')),
+  ).resolves.toEqual([{responseId: 'resp-1'}, {responseId: 'resp-2'}])
 })

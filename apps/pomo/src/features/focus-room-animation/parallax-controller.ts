@@ -242,10 +242,6 @@ export class ParallaxController {
   }
 
   #startDragInput() {
-    if (this.#dragListening || this.#destroyed) {
-      return
-    }
-
     this.#dragListening = true
     this.#host.addEventListener('pointerdown', this.#handleDragStart)
     this.#host.addEventListener('pointermove', this.#handleDragMove)
@@ -296,10 +292,6 @@ export class ParallaxController {
   }
 
   #startSensorActivation() {
-    if (this.#sensorActivationListening || this.#destroyed) {
-      return
-    }
-
     this.#sensorActivationListening = true
     window.addEventListener('pointerdown', this.#handleSensorActivation, {passive: true})
     window.addEventListener('pointerup', this.#handleSensorActivation, {passive: true})
@@ -333,10 +325,6 @@ export class ParallaxController {
   }
 
   #startDeviceOrientation() {
-    if (this.#deviceOrientationListening || this.#destroyed || this.#inputMode !== 'gyroscope') {
-      return
-    }
-
     this.#stopSensorActivation()
     this.#deviceOrientationListening = true
     window.addEventListener('deviceorientation', this.#handleDeviceOrientation, {passive: true})

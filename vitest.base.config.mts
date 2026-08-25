@@ -41,6 +41,19 @@ export const unitTestProject = {
       '.agents/skills/*/scripts/**/*.spec.ts',
     ],
     name: 'unit',
+    server: {
+      deps: {
+        inline: [
+          '@corvu/utils',
+          '@kobalte/core',
+          '@kobalte/utils',
+          '@solid-primitives/props',
+          '@solid-primitives/resize-observer',
+          'solid-presence',
+          'solid-prevent-scroll',
+        ],
+      },
+    },
     // 각 테스트 파일 실행 전 로드할 셋업 파일
     setupFiles: ['./vitest.setup.ts'],
   },

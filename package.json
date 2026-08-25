@@ -26,6 +26,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "test": "vitest run --reporter=dot",
+    "test:coverage:pomo": "vitest run --config vitest.pomo-coverage.config.mts --reporter=dot",
     "test:coverage:sw": "vitest run packages/sw/src --coverage --coverage.include='packages/sw/src/*.ts' --coverage.include='packages/sw/src/runtime/*.ts' --coverage.thresholds.100=true",
     "postinstall": "turbo prepare-build",
     "test:storybook": "vitest run --project='storybook*'",

@@ -40,7 +40,6 @@ interface CreateRecordingSegmentOptions {
   readonly stream: MediaStream
 }
 
-const ignoreAudioResult = (_result: Result<Float32Array, SpeechCaptureError>) => undefined
 const getBusyResult = (): Promise<Result<Float32Array, SpeechCaptureError>> =>
   Promise.resolve(failureResult({code: 'capture-busy', retryable: true}))
 
@@ -48,8 +47,7 @@ const createRecordingSegment = (options: CreateRecordingSegmentOptions): Recordi
   const recorder = new MediaRecorder(options.stream)
   const chunks: Array<Blob> = []
   let cancelled = false
-  let stopped = false
-  let resolveStop: (result: Result<Float32Array, SpeechCaptureError>) => void = ignoreAudioResult
+  let resolveStop!: (result: Result<Float32Array, SpeechCaptureError>) => void
   const stopResult = new Promise<Result<Float32Array, SpeechCaptureError>>((resolve) => {
     resolveStop = resolve
   })
@@ -62,11 +60,6 @@ const createRecordingSegment = (options: CreateRecordingSegmentOptions): Recordi
   recorder.start()
 
   const finish = (onStopped: () => void) => {
-    if (stopped) {
-      return
-    }
-
-    stopped = true
     recorder.addEventListener(
       'stop',
       () => {
@@ -224,9 +217,7 @@ export const createBrowserSpeechRecorder = (
       })
     } catch (error) {
       stream?.getTracks().forEach((track) => track.stop())
-      if (activeSession === session) {
-        activeSession = null
-      }
+      activeSession = null
       return failureResult(createCaptureError(error))
     }
   }

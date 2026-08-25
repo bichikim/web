@@ -28,7 +28,7 @@ export const PGenerationStatus = (props: PGenerationStatusProps) => (
         aria-label={props.progressLabel}
         aria-valuemax="100"
         aria-valuemin="0"
-        aria-valuenow={props.progress ?? 0}
+        aria-valuenow={props.progress!}
         class="sr-only"
         role="progressbar"
       />

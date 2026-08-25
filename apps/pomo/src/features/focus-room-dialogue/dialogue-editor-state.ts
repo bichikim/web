@@ -38,6 +38,4 @@ export const isDialogueEditorBusy = (state: DialogueEditorState) => {
     case 'ready':
       return false
   }
-
-  state satisfies never
 }

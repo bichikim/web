@@ -34,4 +34,25 @@ describe('texture size validation', () => {
       'Invalid layer texture dimensions for layer.webp: 30x20',
     )
   })
+
+  it('should allow scene-sized textures and identify invalid mask textures', () => {
+    expect(() =>
+      validateTextureSizes(
+        createDefinition(),
+        [{source: 'scene.webp', texture: {height: 100, width: 100}}],
+        1,
+      ),
+    ).not.toThrow()
+
+    expect(() =>
+      validateTextureSizes(
+        createDefinition(),
+        [
+          {source: 'layer.webp', texture: {height: 100, width: 100}},
+          {source: 'mask.webp', texture: {height: 20, width: 30}},
+        ],
+        1,
+      ),
+    ).toThrow('Invalid mask texture dimensions for mask.webp: 30x20')
+  })
 })

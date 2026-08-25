@@ -74,7 +74,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
     Array.from({length: events.activeSegmentCount()}, (_, position) => position)
   const progressLabel = () => {
     const segmentCount = events.activeSegmentCount()
-    const activePosition = events.activeSegmentPosition() ?? 0
+    const activePosition = events.activeSegmentPosition()!
 
     return m.dialogue_progress({current: activePosition + 1, total: segmentCount})
   }

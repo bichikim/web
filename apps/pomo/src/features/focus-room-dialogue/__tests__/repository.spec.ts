@@ -73,11 +73,11 @@ it('should finish metadata deletion when obsolete audio cleanup fails', async ()
     createdAt: '2026-08-13T00:00:00.000Z',
     durationMs: 1000,
     id: 'dialogue-id',
-    modelId: 'full',
+    modelId: 'full' as const,
     segments: [{durationMs: 1000, index: 0, startMs: 0, text: '삭제할 대사'}],
     text: '삭제할 대사',
     updatedAt: '2026-08-13T00:00:00.000Z',
-    version: 1,
+    version: 1 as const,
     voiceId: 'Yuna',
   })
   storageMocks.delete.mockResolvedValue({error: storageError, ok: false})
@@ -148,11 +148,11 @@ it('should preserve remaining event dialogues when deleting one dialogue', async
     createdAt: '2026-08-13T00:00:00.000Z',
     durationMs: 1000,
     id: 'first',
-    modelId: 'full',
+    modelId: 'full' as const,
     segments: [{durationMs: 1000, index: 0, startMs: 0, text: '첫 대사'}],
     text: '첫 대사',
     updatedAt: '2026-08-13T00:00:00.000Z',
-    version: 1,
+    version: 1 as const,
     voiceId: 'Yuna',
   })
   databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
@@ -349,4 +349,159 @@ it('should persist and remove bindings for every supported dialogue event', asyn
 
   await repository.setEventBinding('break-end', null)
   expect(databaseMocks.eventBindings.delete).toHaveBeenCalledWith('break-end')
+})
+
+it('should validate binding targets and remove empty or unchanged bindings on deletion', async () => {
+  const repository = createPDialogueRepository()
+  databaseMocks.dialogues.get.mockResolvedValueOnce(undefined)
+  await expect(repository.setEventBinding('focus-start', ['missing'])).rejects.toThrow(
+    '연결할 대화를 찾을 수 없어요.',
+  )
+
+  databaseMocks.dialogues.get.mockResolvedValue(undefined)
+  databaseMocks.eventBindings.get.mockImplementation(async (event: string) => {
+    if (event === 'focus-start') {
+      return {dialogueIds: ['other'], event, playbackMode: 'random-all', version: 3}
+    }
+    if (event === 'break-start') {
+      return {dialogueIds: ['deleted'], event, playbackMode: 'random-all', version: 3}
+    }
+    return undefined
+  })
+  await repository.deleteDialogue('deleted')
+
+  expect(databaseMocks.eventBindings.delete).toHaveBeenCalledWith('break-start')
+  expect(databaseMocks.eventBindings.put).not.toHaveBeenCalled()
+  expect(storageMocks.delete).not.toHaveBeenCalled()
+})
+
+it('should list and retrieve parsed dialogue metadata', async () => {
+  const stored = {
+    audioKey: 'audio',
+    createdAt: '2026-08-13T00:00:00.000Z',
+    durationMs: 1000,
+    id: 'dialogue',
+    language: 'ko' as const,
+    modelId: 'full',
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text: '대사'}],
+    text: '대사',
+    updatedAt: '2026-08-13T00:00:00.000Z',
+    version: 1,
+    voiceId: 'Yuna',
+  }
+  databaseMocks.dialogues.get.mockResolvedValueOnce(undefined).mockResolvedValueOnce(stored)
+  databaseMocks.dialogues.orderBy.mockReturnValue({
+    reverse: () => ({toArray: async () => [stored]}),
+  })
+  const repository = createPDialogueRepository()
+
+  await expect(repository.getDialogue('missing')).resolves.toBeNull()
+  await expect(repository.getDialogue('dialogue')).resolves.toMatchObject({id: 'dialogue'})
+  await expect(repository.listDialogues()).resolves.toHaveLength(1)
+})
+
+it('should report audio storage read failures and return null for cache misses', async () => {
+  const storageError = {cause: new Error('cache failed'), operation: 'get' as const}
+  const repository = createPDialogueRepository()
+  storageMocks.get
+    .mockResolvedValueOnce({error: storageError, ok: false})
+    .mockResolvedValueOnce({ok: true, value: null})
+  await expect(repository.getAudio('failed')).rejects.toThrow('대화 음성을 불러오지 못했어요.')
+
+  storageMocks.get.mockResolvedValue({ok: true, value: null})
+  await expect(repository.getAudio('missing')).resolves.toBeNull()
+})
+
+it('should preserve WAV audio when migration writes or cleanup fail', async () => {
+  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
+  const storageError = {cause: new Error('cache failed'), operation: 'set' as const}
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.wav') ? new Response(wavAudio) : null,
+  }))
+  storageMocks.set.mockResolvedValueOnce({error: storageError, ok: false})
+  const first = createPDialogueRepository()
+  await expect(first.getAudio('write-failed')).resolves.toEqual(wavAudio)
+  expect(reportStorageError).toHaveBeenCalledWith(storageError)
+
+  const deletionError = {cause: new Error('delete failed'), operation: 'delete' as const}
+  storageMocks.set.mockResolvedValue({ok: true, value: undefined})
+  storageMocks.delete.mockResolvedValueOnce({error: deletionError, ok: false})
+  const second = createPDialogueRepository()
+  await second.getAudio('delete-failed')
+  expect(reportStorageError).toHaveBeenCalledWith(deletionError)
+})
+
+it('should assign the Opus media type when compressed audio has no declared type', async () => {
+  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
+  legacyAudioMocks.compress.mockResolvedValue(new Blob(['compressed']))
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.wav') ? new Response(wavAudio) : null,
+  }))
+  const repository = createPDialogueRepository()
+
+  await repository.getAudio('untyped-compressed')
+
+  const response = storageMocks.set.mock.calls[0]?.[1] as Response
+  expect(response.headers.get('Content-Type')).toBe('audio/ogg; codecs=opus')
+})
+
+it('should validate audio writes and audio-key replacement rules', async () => {
+  const previous = {
+    audioKey: 'old-audio',
+    createdAt: '2026-08-13T00:00:00.000Z',
+    durationMs: 1000,
+    id: 'dialogue',
+    language: 'ko' as const,
+    modelId: 'full' as const,
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text: '대사'}],
+    text: '대사',
+    updatedAt: '2026-08-13T00:00:00.000Z',
+    version: 1 as const,
+    voiceId: 'Yuna' as const,
+  }
+  const next = {...previous, audioKey: 'new-audio'}
+  databaseMocks.dialogues.get.mockResolvedValue(previous)
+  const repository = createPDialogueRepository()
+
+  await expect(repository.saveDialogue({dialogue: next})).rejects.toThrow(
+    '새 대화 음성이 필요해요.',
+  )
+  storageMocks.set.mockResolvedValueOnce({
+    error: {cause: new Error('write failed'), operation: 'set'},
+    ok: false,
+  })
+  await expect(
+    repository.saveDialogue({audio: new Blob(['audio']), dialogue: next}),
+  ).rejects.toThrow('대화 음성을 저장하지 못했어요.')
+
+  storageMocks.set.mockResolvedValue({ok: true, value: undefined})
+  await repository.saveDialogue({audio: new Blob(['audio']), dialogue: next})
+  expect(storageMocks.delete).toHaveBeenCalledWith('/__pomo/dialogue-audio/old-audio.opus')
+  databaseMocks.dialogues.get.mockResolvedValue(next)
+  await repository.saveDialogue({dialogue: next})
+})
+
+it('should preserve existing audio when metadata persistence fails without replacement', async () => {
+  const dialogue = {
+    audioKey: 'existing-audio',
+    createdAt: '2026-08-13T00:00:00.000Z',
+    durationMs: 1000,
+    id: 'dialogue',
+    language: 'ko' as const,
+    modelId: 'full' as const,
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text: '대사'}],
+    text: '대사',
+    updatedAt: '2026-08-13T00:00:00.000Z',
+    version: 1 as const,
+    voiceId: 'Yuna' as const,
+  }
+  databaseMocks.dialogues.get.mockResolvedValue(dialogue)
+  databaseMocks.dialogues.put.mockRejectedValueOnce(new Error('database unavailable'))
+  const repository = createPDialogueRepository()
+
+  await expect(repository.saveDialogue({dialogue})).rejects.toThrow('database unavailable')
+
+  expect(storageMocks.delete).not.toHaveBeenCalled()
 })

@@ -230,20 +230,16 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       return
     }
 
-    loadDialogue(initialDialogueId)
-      .then(() => {
-        if (isDisposed) {
-          return
-        }
+    loadDialogue(initialDialogueId).then(() => {
+      if (isDisposed) {
+        return
+      }
 
-        if (draft !== null && draft !== text()) {
-          setText(draft)
-          clearGeneratedAudio()
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Unexpected dialogue loading failure.', error)
-      })
+      if (draft !== null && draft !== text()) {
+        setText(draft)
+        clearGeneratedAudio()
+      }
+    })
   })
 
   onCleanup(() => {
@@ -352,10 +348,6 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     const sourceText = text().trim()
     const selectedVoiceId = voiceId()
 
-    if (sourceText.length === 0) {
-      return
-    }
-
     if (client === null || preparedModelId !== selectedModelId) {
       const isPrepared = await prepareModel(selectedModelId)
 
@@ -364,11 +356,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       }
     }
 
-    const currentClient = client
-
-    if (currentClient === null || preparedModelId !== selectedModelId) {
-      return
-    }
+    const currentClient = client!
 
     const generatedAudio = await requestDialogueAudio({
       client: currentClient,

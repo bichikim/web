@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import type {ModelStorage} from '../../model-storage'
+import * as modelStorage from '../../model-storage'
 import {successResult} from '../../result'
 import {isTextModelDownloaded} from '../download'
 
@@ -40,5 +41,12 @@ describe('isTextModelDownloaded', () => {
     await expect(
       isTextModelDownloaded({modelId: 'gemma-4-e2b', storage: unreadableStorage}),
     ).resolves.toBe(false)
+  })
+
+  it('should create browser model storage by default', async () => {
+    const storage = createStorage()
+    vi.spyOn(modelStorage, 'createModelStorage').mockReturnValue(storage)
+
+    await expect(isTextModelDownloaded({modelId: 'gemma-4-e2b'})).resolves.toBe(true)
   })
 })

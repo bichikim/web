@@ -29,6 +29,10 @@ if (typeof document !== 'undefined') {
   document.cookie = 'PARAGLIDE_LOCALE=ko; path=/'
 }
 
+if (typeof window !== 'undefined') {
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined)
+}
+
 // render()로 남은 컴포넌트·DOM이 다음 테스트로 새지 않게 한다.
 afterEach(() => {
   cleanup()

@@ -13,9 +13,30 @@ const createJsonResponse = (value: unknown) => ({
   status: 200,
 })
 
-describe('loadPTracks', () => {
-  afterEach(() => vi.unstubAllGlobals())
+const createErrorResponse = (status: number) => ({
+  json: () => Promise.resolve(null),
+  ok: false,
+  status,
+})
 
+const createPublishedAlbum = (overrides: Readonly<Record<string, unknown>> = {}) => ({
+  coverFallback: 'lp',
+  coverImageUrl: null,
+  description: '공개 앨범',
+  id: 'published-album',
+  sale: {state: 'preparing'},
+  title: '공개 음악',
+  trackCount: 0,
+  tracks: [],
+  ...overrides,
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
+})
+
+describe('loadPTracks', () => {
   it('should resolve playlist IDs against the track catalog in playlist order', () => {
     const fetchMock = vi
       .fn()
@@ -73,11 +94,109 @@ describe('loadPTracks', () => {
 
     return expect(loadPTracks()).rejects.toThrow('Focus-room playlist has an invalid format')
   })
+
+  it('should return an empty selection for an empty playlist', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({trackIds: [], version: 1})),
+    )
+
+    return expect(loadPTracks()).resolves.toEqual([])
+  })
+
+  it('should use override URLs, the supplied signal, and production cache policy', async () => {
+    const signal = new AbortController().signal
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({trackIds: [], version: 1}))
+    vi.stubEnv('DEV', false)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      loadPTracks({
+        playlistUrl: 'https://pomo.test/playlist.json',
+        signal,
+        tracksUrl: 'https://pomo.test/tracks.json',
+      }),
+    ).resolves.toEqual([])
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://pomo.test/tracks.json',
+      expect.objectContaining({cache: 'default', signal}),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'https://pomo.test/playlist.json',
+      expect.objectContaining({cache: 'default', signal}),
+    )
+  })
+
+  it.each([
+    {
+      responses: [createErrorResponse(400), createJsonResponse({trackIds: [], version: 1})],
+      status: 400,
+      type: 'tracks',
+    },
+    {
+      responses: [createJsonResponse({tracks: [], version: 1}), createErrorResponse(404)],
+      status: 404,
+      type: 'playlist',
+    },
+  ])('should reject a failed $type request', async ({responses, status, type}) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(responses[0]).mockResolvedValueOnce(responses[1]),
+    )
+
+    await expect(loadPTracks()).rejects.toThrow(`Focus-room ${type} request failed: ${status}`)
+  })
+
+  it.each([
+    {collection: null, label: 'null track collection'},
+    {collection: {tracks: [null], version: 1}, label: 'null track'},
+  ])('should reject a $label', ({collection}) => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse(collection))
+        .mockResolvedValueOnce(createJsonResponse({trackIds: [], version: 1})),
+    )
+
+    return expect(loadPTracks()).rejects.toThrow('Focus-room tracks have an invalid format')
+  })
+
+  it('should reject a null playlist', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+        .mockResolvedValueOnce(createJsonResponse(null)),
+    )
+
+    return expect(loadPTracks()).rejects.toThrow('Focus-room playlist has an invalid format')
+  })
+
+  it('should propagate a catalog JSON read failure', () => {
+    const jsonError = new Error('invalid JSON')
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({json: () => Promise.reject(jsonError), ok: true, status: 200})
+        .mockResolvedValueOnce(createJsonResponse({trackIds: [], version: 1})),
+    )
+
+    return expect(loadPTracks()).rejects.toBe(jsonError)
+  })
 })
 
 describe('loadPAlbums', () => {
-  afterEach(() => vi.unstubAllGlobals())
-
   it('should resolve album track IDs and preserve albums without tracks', () => {
     const albums = [
       {
@@ -314,5 +433,165 @@ describe('loadPAlbums', () => {
     )
 
     return expect(loadPAlbums()).rejects.toThrow('Focus-room albums have an invalid format')
+  })
+
+  it('should map a configured published CD album and its connected sale status', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          albums: [
+            createPublishedAlbum({
+              coverFallback: 'cd',
+              sale: {externalProductId: 'product-id', state: 'configured'},
+            }),
+          ],
+          version: 1,
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(loadPAlbums()).resolves.toEqual([
+      expect.objectContaining({
+        coverImageUrl: undefined,
+        icon: 'i-tabler-disc',
+        sale: {
+          priceLabel: '[가격 확인]',
+          state: 'configured',
+          statusLabel: '상품 연결됨',
+        },
+      }),
+    ])
+  })
+
+  it('should localize every bundled album identifier in catalog order', async () => {
+    const ids = ['cafe-focus', 'tension-focus', 'happy-detour', 'quiet-pages'] as const
+    const albums = ids.map((id) => ({
+      description: `original-${id}`,
+      icon: 'i-tabler-music',
+      id,
+      title: `original-${id}`,
+      trackIds: [],
+    }))
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({albums, version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1})),
+    )
+
+    const result = await loadPAlbums()
+
+    expect(result.map((album) => album.id)).toEqual(ids)
+    result.forEach((album) => {
+      expect(album.title).not.toBe(`original-${album.id}`)
+      expect(album.description).not.toBe(`original-${album.id}`)
+    })
+  })
+
+  it.each([
+    {
+      responses: [createErrorResponse(400), createJsonResponse({albums: [], version: 1})],
+      status: 400,
+      type: 'tracks',
+    },
+    {
+      responses: [createJsonResponse({tracks: [], version: 1}), createErrorResponse(401)],
+      status: 401,
+      type: 'albums',
+    },
+  ])('should reject a failed album $type request', async ({responses, status, type}) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(responses[0]).mockResolvedValueOnce(responses[1]),
+    )
+
+    await expect(loadPAlbums()).rejects.toThrow(`Focus-room ${type} request failed: ${status}`)
+  })
+
+  it.each([
+    {
+      collection: null,
+      expected: 'Focus-room tracks have an invalid format',
+      label: 'null track collection',
+    },
+    {
+      collection: {tracks: [], version: 1},
+      expected: 'Focus-room albums have an invalid format',
+      label: 'null album collection',
+      secondCollection: null,
+    },
+    {
+      collection: {tracks: [], version: 1},
+      expected: 'Focus-room albums have an invalid format',
+      label: 'null album',
+      secondCollection: {albums: [null], version: 1},
+    },
+  ])(
+    'should reject a $label',
+    ({collection, expected, secondCollection = {albums: [], version: 1}}) => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValueOnce(createJsonResponse(collection))
+          .mockResolvedValueOnce(createJsonResponse(secondCollection)),
+      )
+
+      return expect(loadPAlbums()).rejects.toThrow(expected)
+    },
+  )
+
+  it('should preserve bundled albums when the published request is not successful', async () => {
+    const publishedJson = vi.fn()
+    const album = {
+      description: '기본 앨범',
+      icon: 'i-tabler-music',
+      id: 'bundled',
+      title: '기본 음악',
+      trackIds: [],
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({albums: [album], version: 1}))
+        .mockResolvedValueOnce({json: publishedJson, ok: false, status: 404}),
+    )
+
+    await expect(loadPAlbums()).resolves.toEqual([{...album, tracks: []}])
+    expect(publishedJson).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {collection: null, label: 'null collection'},
+    {collection: {albums: [null], version: 1}, label: 'null album'},
+    {
+      collection: {albums: [createPublishedAlbum({sale: null})], version: 1},
+      label: 'null sale',
+    },
+    {
+      collection: {
+        albums: [createPublishedAlbum({trackCount: 1, tracks: [null]})],
+        version: 1,
+      },
+      label: 'null track listing',
+    },
+  ])('should ignore a published $label', async ({collection}) => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+        .mockResolvedValueOnce(createJsonResponse(collection)),
+    )
+
+    await expect(loadPAlbums()).resolves.toEqual([])
   })
 })

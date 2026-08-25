@@ -77,6 +77,7 @@ const createFeeds = (
   dialogues: ReadonlyArray<FeedDialogueListItem> = [READY_DIALOGUE],
   isListening = false,
   recoveryJobs: ReadonlyArray<FeedDialogueJob> = [],
+  overrides: Partial<PFeedController> = {},
 ): PFeedController => ({
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => dialogues,
@@ -92,6 +93,7 @@ const createFeeds = (
   state: () => ({message: '대기 중', status: 'idle'}),
   syncNow: vi.fn(async () => undefined),
   unlistenedDialogues: () => dialogues,
+  ...overrides,
 })
 
 afterEach(() => {
@@ -99,13 +101,17 @@ afterEach(() => {
 })
 
 const renderModal = () => {
-  vi.mocked(PModal).mockImplementation((props: PModalProps) => (
-    <Show when={props.isOpen}>
-      <div aria-label={props.title} role="dialog">
-        {props.children}
-      </div>
-    </Show>
-  ))
+  vi.mocked(PModal).mockImplementation((props: PModalProps) => {
+    const title = props.title
+
+    return (
+      <Show when={props.isOpen}>
+        <div aria-label={title} role="dialog">
+          {props.children}
+        </div>
+      </Show>
+    )
+  })
 }
 
 it('should show a ready feed notice', () => {
@@ -197,4 +203,87 @@ it('should retry immediately when every feed model is already cached', async () 
 
   await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledTimes(1))
   expect(screen.queryByRole('dialog', {name: /모델을 받을까요/})).toBeNull()
+})
+
+it('should render active sync and error states and let users retry a failed feed check', () => {
+  const syncingFeeds = createFeeds([], false, [], {
+    state: () => ({message: '새 소식을 확인하고 있어요.', progress: 50, status: 'syncing'}),
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(syncingFeeds)
+  const syncingResult = render(() => <PFeedStatus />)
+
+  expect(screen.getByRole('status')).toHaveAttribute('data-state', 'syncing')
+  expect(screen.getByText('새 소식을 확인하고 있어요.')).toBeInTheDocument()
+  syncingResult.unmount()
+
+  const errorFeeds = createFeeds([], false, [], {
+    state: () => ({message: '피드를 확인하지 못했어요.', status: 'error'}),
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(errorFeeds)
+  const errorResult = render(() => <PFeedStatus />)
+
+  expect(screen.getByRole('status')).toHaveAttribute('data-state', 'error')
+  fireEvent.click(errorResult.container.querySelector('button')!)
+  expect(errorFeeds.syncNow).toHaveBeenCalledOnce()
+})
+
+it('should dismiss or delete recovery jobs and report failed user actions', async () => {
+  const listenFailure = new Error('listen failed')
+  const listeningFeeds = createFeeds([READY_DIALOGUE], false, [], {
+    listenAll: vi.fn().mockRejectedValue(listenFailure),
+  })
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  vi.mocked(usePFeedContext).mockReturnValue(listeningFeeds)
+  const listeningResult = render(() => <PFeedStatus />)
+
+  fireEvent.click(listeningResult.container.querySelector('button')!)
+  await Promise.resolve()
+  expect(consoleError).toHaveBeenCalledWith('Failed to play queued feed dialogues.', listenFailure)
+  listeningResult.unmount()
+
+  const retryFailure = new Error('retry failed')
+  const deleteFailure = new Error('delete failed')
+  const recoveryFeeds = createFeeds([], false, [RECOVERY_JOB], {
+    deleteRecovery: vi.fn().mockRejectedValue(deleteFailure),
+    retryRecovery: vi.fn().mockRejectedValue(retryFailure),
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(recoveryFeeds)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+  const recoveryResult = render(() => <PFeedStatus />)
+  const recoveryButtons = recoveryResult.container.querySelectorAll('button')
+
+  fireEvent.click(recoveryButtons[0]!)
+  fireEvent.click(recoveryButtons[1]!)
+  fireEvent.click(recoveryButtons[2]!)
+  await vi.waitFor(() => expect(recoveryFeeds.retryRecovery).toHaveBeenCalledOnce())
+
+  expect(recoveryFeeds.dismissRecovery).toHaveBeenCalledOnce()
+  expect(recoveryFeeds.deleteRecovery).toHaveBeenCalledOnce()
+  expect(consoleError).toHaveBeenCalledWith('Failed to retry feed dialogues.', retryFailure)
+  expect(consoleError).toHaveBeenCalledWith('Failed to delete feed dialogue jobs.', deleteFailure)
+})
+
+it('should keep a single model check in flight and let users cancel download consent', async () => {
+  renderModal()
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  let resolveDownloadCheck: ((downloaded: boolean) => void) | undefined
+  vi.mocked(isSupertonicModelDownloaded).mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveDownloadCheck = resolve
+    }),
+  )
+  const recoveryResult = render(() => <PFeedStatus />)
+  const retryButton = recoveryResult.container.querySelector('button')!
+
+  fireEvent.click(retryButton)
+  expect(retryButton).toBeDisabled()
+  expect(isSupertonicModelDownloaded).toHaveBeenCalledOnce()
+
+  resolveDownloadCheck?.(false)
+  const dialog = await screen.findByRole('dialog', {name: /모델을 받을까요/})
+  fireEvent.click(dialog.querySelector('button')!)
+
+  expect(screen.queryByRole('dialog', {name: /모델을 받을까요/})).toBeNull()
+  expect(feeds.retryRecovery).not.toHaveBeenCalled()
 })

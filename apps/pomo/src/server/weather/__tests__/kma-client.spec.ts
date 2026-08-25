@@ -168,3 +168,148 @@ it.each([undefined, '9'])('should reject an unsupported precipitation value: %s'
     }),
   ).rejects.toThrow('KMA observation contained an unsupported PTY value')
 })
+
+it.each([
+  ['1', 'rain'],
+  ['5', 'rain'],
+  ['2', 'mixed'],
+  ['6', 'mixed'],
+  ['3', 'snow'],
+  ['7', 'snow'],
+] as const)('should normalize precipitation code %s', async (value, precipitation) => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(createKmaResponse([createItem('PTY', value)]))
+
+  await expect(
+    fetchKmaObservation({
+      baseTime: {date: '20260822', time: '0900'},
+      environment: {KMA_SERVICE_KEY: 'key'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+    }),
+  ).resolves.toMatchObject({precipitation})
+})
+
+it('should normalize invalid and numeric observation measurements', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(
+      createKmaResponse([
+        {...createItem('PTY', '0'), obsrValue: 0},
+        createItem('T1H', ''),
+        createItem('REH', 'not-a-number'),
+        createItem('RN1', '900'),
+        createItem('WSD', '-900'),
+      ]),
+    )
+
+  await expect(
+    fetchKmaObservation({
+      baseTime: {date: '20260822', time: '0900'},
+      environment: {KMA_SERVICE_KEY: 'key'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+    }),
+  ).resolves.toMatchObject({
+    humidityPercent: null,
+    precipitation: 'none',
+    precipitationMillimeters: null,
+    temperatureCelsius: null,
+    windSpeedMetersPerSecond: null,
+  })
+})
+
+it.each([
+  [1, 'clear'],
+  [4, 'overcast'],
+] as const)('should normalize numeric sky code %s', async (value, sky) => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(
+      createKmaResponse([{...createSkyItem('1500', String(value)), fcstValue: value}]),
+    )
+
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      environment: {KMA_SERVICE_KEY: 'key'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('2026-08-22T06:00:00.000Z'),
+    }),
+  ).resolves.toBe(sky)
+})
+
+it.each([
+  {...createSkyItem('1500', '1'), fcstDate: undefined},
+  {...createSkyItem('1500', '1'), fcstTime: undefined},
+])('should ignore SKY entries without a complete forecast timestamp', async (item) => {
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(createKmaResponse([item]))
+
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      environment: {KMA_SERVICE_KEY: 'key'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('2026-08-22T06:00:00.000Z'),
+    }),
+  ).rejects.toThrow('KMA forecast response contained no SKY value')
+})
+
+it('should reject HTTP failures, missing bodies, and empty item arrays', async () => {
+  const baseOptions = {
+    baseTime: {date: '20260822', time: '0900'} as const,
+    environment: {KMA_SERVICE_KEY: 'key'},
+    location: {gridX: 60, gridY: 127},
+  }
+
+  await expect(
+    fetchKmaObservation({
+      ...baseOptions,
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 503})),
+    }),
+  ).rejects.toThrow('KMA request failed with HTTP 503')
+
+  await expect(
+    fetchKmaObservation({
+      ...baseOptions,
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(
+        Response.json({
+          response: {header: {resultCode: 0, resultMsg: 'NORMAL_SERVICE'}},
+        }),
+      ),
+    }),
+  ).rejects.toThrow('KMA response contained no body')
+
+  await expect(
+    fetchKmaObservation({
+      ...baseOptions,
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(createKmaResponse([])),
+    }),
+  ).rejects.toThrow('KMA response input did not match')
+})
+
+it('should use the global fetcher when one is not supplied', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(createKmaResponse([createItem('PTY', '0')]))
+    .mockResolvedValueOnce(createKmaResponse([createSkyItem('1500', '1')]))
+  vi.stubGlobal('fetch', fetcher)
+
+  await fetchKmaObservation({
+    baseTime: {date: '20260822', time: '0900'},
+    environment: {KMA_SERVICE_KEY: 'key'},
+    location: {gridX: 60, gridY: 127},
+  })
+  await fetchKmaSky({
+    baseTime: {date: '20260822', time: '1430'},
+    environment: {KMA_SERVICE_KEY: 'key'},
+    location: {gridX: 60, gridY: 127},
+    targetTime: new Date('2026-08-22T06:00:00.000Z'),
+  })
+
+  expect(fetcher).toHaveBeenCalledTimes(2)
+  vi.unstubAllGlobals()
+})
