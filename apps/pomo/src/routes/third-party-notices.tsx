@@ -3,8 +3,8 @@ import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
 import {licenseData} from 'src/features/licenses'
-import {NoticeGroupSection} from '../features/third-party-notices/GroupSection'
-import {LINK_CLASSES} from '../features/third-party-notices/shared'
+import {NoticeGroupSection} from '../components/third-party-notices/GroupSection'
+import {LINK_CLASSES} from '../components/third-party-notices/shared'
 
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1',

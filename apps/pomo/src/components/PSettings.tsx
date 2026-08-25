@@ -20,7 +20,7 @@ import {
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
-import {UserSettings} from '../features/user-auth/UserSettings'
+import {UserSettings} from './UserSettings'
 import type {WeatherCitySlug} from '../features/weather'
 import * as m from '@paraglide/message'
 import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
