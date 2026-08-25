@@ -1,6 +1,6 @@
 import {type JSX} from 'solid-js'
 import {PButton} from '../PButton'
-import {PServicePolicyLinks} from '../../features/service-terms/index'
+import {PServicePolicyLinks} from '../PServicePolicyLinks'
 import * as m from '@paraglide/message'
 import smilingFaceSource from '../assets/pomodoro-status-icons/break.webp'
 import {CLASSES} from './shared'

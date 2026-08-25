@@ -1,2 +1,1 @@
-export {PServiceTerms, type PServiceTermsProps, type ServiceTermsPlatform} from './PServiceTerms'
-export {PServicePolicyLinks, type PServicePolicyLinksProps} from './PServicePolicyLinks'
+export {SERVICE_POLICY_PATHS} from './policy-paths'

@@ -5,8 +5,8 @@ export {DEFAULT_FEED_VOICE_ID, feedConnectionSchema, normalizeFeedUrl} from './s
 export type {FeedConnection, FeedVoiceId, NormalizeFeedUrlResult} from './schema'
 export {useFeedConnections} from './use-feed-connections'
 export type {FeedConnectionController} from './use-feed-connections'
-export {PFeedProvider, usePFeedContext, useOptionalPFeeds} from './PFeedContext'
-export type {PFeedProviderProps} from './PFeedContext'
+export {PFeedContext, usePFeedContext, useOptionalPFeeds} from './feed-context'
+export {usePFeeds} from './use-focus-room-feeds'
 export type {
   FeedDialogueJob,
   FeedDialogueJobStatus,

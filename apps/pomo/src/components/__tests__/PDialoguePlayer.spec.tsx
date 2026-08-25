@@ -8,10 +8,10 @@ import {
   type DialogueSegmentMood,
   type PEventContextValue,
   usePEvents,
-} from 'src/features/focus-room-dialogue/PEventContext'
+} from 'src/features/focus-room-dialogue'
 import {PDialoguePlayer} from '../PDialoguePlayer'
 
-vi.mock('src/features/focus-room-dialogue/PEventContext', () => ({
+vi.mock('src/features/focus-room-dialogue', () => ({
   usePEvents: vi.fn(),
 }))
 

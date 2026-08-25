@@ -2,11 +2,11 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
-import {PServicePolicyLinks} from 'src/features/service-terms'
-import {PolicyArticle} from '../features/refund-policy/PolicyArticle'
-import {PolicyIntro} from '../features/refund-policy/PolicyIntro'
-import {PolicyNavigation} from '../features/refund-policy/PolicyNavigation'
-import {CONTENT_LINK_CLASSES} from '../features/refund-policy/shared'
+import {PServicePolicyLinks} from 'src/components/PServicePolicyLinks'
+import {PolicyArticle} from '../components/refund-policy/PolicyArticle'
+import {PolicyIntro} from '../components/refund-policy/PolicyIntro'
+import {PolicyNavigation} from '../components/refund-policy/PolicyNavigation'
+import {CONTENT_LINK_CLASSES} from '../components/refund-policy/shared'
 
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1',
