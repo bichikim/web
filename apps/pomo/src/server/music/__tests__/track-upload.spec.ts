@@ -68,6 +68,31 @@ describe('inspectTrackUpload', () => {
     })
   })
 
+  it('should extract a supported embedded front cover during upload inspection', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1])
+    const result = await inspectTrackUpload(OBJECT_KEY, {
+      environment,
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(
+        new Response('mp3', {
+          headers: {'Content-Length': '1234', ETag: 'etag-value'},
+        }),
+      ),
+      parseAudio: vi.fn().mockResolvedValue({
+        common: {
+          picture: [
+            {data: new Uint8Array([1]), format: 'image/jpeg'},
+            {data: png, format: 'image/png', type: 'Cover (front)'},
+          ],
+        },
+        format: {codec: 'MPEG 1 Layer 3', container: 'MPEG', duration: 12.345},
+      }),
+      signRequest: async (request) => request,
+    })
+
+    expect(result.artwork?.contentType).toBe('image/png')
+    expect(new Uint8Array(result.artwork?.body ?? new ArrayBuffer(0))).toEqual(png)
+  })
+
   it('should reject a file that is not MPEG layer 3', () =>
     expect(
       inspectTrackUpload(OBJECT_KEY, {

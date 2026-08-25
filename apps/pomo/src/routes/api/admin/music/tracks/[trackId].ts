@@ -8,7 +8,7 @@ import {
   markTrackDeletionStorageDeleted,
   prepareTrackDeletion,
 } from 'src/server/music/admin-repository'
-import {deleteTrackObject} from 'src/server/music/track-upload'
+import {deleteTrackAssetStorage} from 'src/server/music/track-storage-deletion'
 
 const HTTP_BAD_REQUEST = 400
 const HTTP_NOT_FOUND = 404
@@ -53,7 +53,7 @@ export const DELETE = async (event: APIEvent): Promise<Response> => {
 
   try {
     if (!track.storageDeleted) {
-      await Promise.all(track.objectKeys.map((objectKey) => deleteTrackObject(objectKey)))
+      await Promise.all(track.objectKeys.map((objectKey) => deleteTrackAssetStorage(objectKey)))
 
       if (!(await markTrackDeletionStorageDeleted(parsedTrackId.data))) {
         throw new Error('Failed to record deleted music track objects')

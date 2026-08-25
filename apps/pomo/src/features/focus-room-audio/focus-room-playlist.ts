@@ -3,6 +3,7 @@ import * as m from '@paraglide/message'
 import type {Locale} from '@paraglide/runtime'
 
 export interface PTrack {
+  readonly artworkUrl?: string
   readonly artist: string
   readonly durationSeconds: number
   readonly id: string
@@ -11,6 +12,7 @@ export interface PTrack {
 }
 
 export interface PTrackListing {
+  readonly artworkUrl?: string
   readonly artist: string
   readonly id: string
   readonly title: string
@@ -100,6 +102,7 @@ const isPTrack = (value: unknown): value is PTrack => {
   const track = value as Record<string, unknown>
 
   return (
+    (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
     isString(track.artist) &&
     typeof track.durationSeconds === 'number' &&
     Number.isFinite(track.durationSeconds) &&
@@ -116,7 +119,12 @@ const isPTrackListing = (value: unknown): value is PTrackListing => {
   }
 
   const track = value as Record<string, unknown>
-  return isString(track.artist) && isString(track.id) && isString(track.title)
+  return (
+    (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
+    isString(track.artist) &&
+    isString(track.id) &&
+    isString(track.title)
+  )
 }
 
 const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
@@ -129,6 +137,7 @@ const isPAlbum = (value: unknown): value is PAlbum => {
   const album = value as Record<string, unknown>
 
   return (
+    (album.coverImageUrl === undefined || isString(album.coverImageUrl)) &&
     isString(album.description) &&
     isString(album.icon) &&
     isString(album.id) &&
@@ -258,6 +267,14 @@ const resolveTrackIds = (
     return track
   })
 }
+
+const resolveAlbumTracks = (album: PAlbum, tracks: readonly PTrack[]): readonly PTrack[] =>
+  resolveTrackIds(album.trackIds, tracks, 'Focus-room albums reference unknown tracks').map(
+    (track) =>
+      track.artworkUrl !== undefined || album.coverImageUrl === undefined
+        ? track
+        : {...track, artworkUrl: album.coverImageUrl},
+  )
 
 const createRequestInit = (signal?: AbortSignal): RequestInit => ({
   cache: import.meta.env.DEV ? 'no-store' : 'default',
@@ -402,11 +419,7 @@ export const loadPAlbums = async (
 
   const bundledAlbums = albumCollection.albums.map((album) => ({
     ...localizeBundledAlbum(album, options.locale),
-    tracks: resolveTrackIds(
-      album.trackIds,
-      trackCollection.tracks,
-      'Focus-room albums reference unknown tracks',
-    ),
+    tracks: resolveAlbumTracks(album, trackCollection.tracks),
   }))
   const publishedAlbums = await loadPublishedAlbums(
     options.publishedAlbumsUrl,

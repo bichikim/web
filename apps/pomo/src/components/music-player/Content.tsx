@@ -14,6 +14,7 @@ import {
   resolveTrackEnd,
   resolveTrackRemoval,
   usePAudioVisualizer,
+  usePlayerMediaSession,
   usePPlaybackPersistence,
 } from '../../features/focus-room-audio'
 import type {PSceneStyle} from '../../features/focus-room-animation'
@@ -476,6 +477,15 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
       }
     }
   }
+
+  usePlayerMediaSession({
+    currentTrack,
+    isPlaying,
+    onNextTrack: selectNextTrack,
+    onPause: () => audioElement?.pause(),
+    onPlay: playAudio,
+    onPreviousTrack: selectPreviousTrack,
+  })
 
   onMount(() => {
     const restoreRevision = playbackRevision
