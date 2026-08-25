@@ -5,6 +5,7 @@
       "id": "brunch-terrace",
       "title": "Brunch Terrace",
       "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/brunch-terrace.jpg",
       "durationSeconds": 197.4535,
       "source": "https://storage.pomofi.io/tracks/brunch-terrace.mp3"
     },
@@ -17,6 +18,7 @@
     },
     {
       "id": "polaroid-park",
+      "artworkUrl": "/audio/artwork/polaroid-park.jpg",
       "title": "Polaroid Park",
       "artist": "rainymonday",
       "durationSeconds": 110.8935,
@@ -31,6 +33,7 @@
     },
     {
       "id": "bike-path-bounce",
+      "artworkUrl": "/audio/artwork/bike-path-bounce.jpg",
       "title": "Bike Path Bounce",
       "artist": "rainymonday",
       "durationSeconds": 192.6135,
@@ -38,6 +41,7 @@
     },
     {
       "id": "blue-sky-balcony",
+      "artworkUrl": "/audio/artwork/blue-sky-balcony.jpg",
       "title": "Blue Sky Balcony",
       "artist": "rainymonday",
       "durationSeconds": 167.5335,
@@ -45,6 +49,7 @@
     },
     {
       "id": "sunday-morning-coffee",
+      "artworkUrl": "/audio/artwork/sunday-morning-coffee.jpg",
       "title": "Sunday Morning Coffee",
       "artist": "rainymonday",
       "durationSeconds": 116.9335,
@@ -52,6 +57,7 @@
     },
     {
       "id": "sunday-bookstore-glow",
+      "artworkUrl": "/audio/artwork/sunday-bookstore-glow.jpg",
       "title": "Sunday Bookstore Glow",
       "artist": "rainymonday",
       "durationSeconds": 137.8535,
@@ -59,6 +65,7 @@
     },
     {
       "id": "polaroid-parkside",
+      "artworkUrl": "/audio/artwork/polaroid-parkside.jpg",
       "title": "Polaroid Parkside",
       "artist": "rainymonday",
       "durationSeconds": 163.2535,
@@ -66,6 +73,7 @@
     },
     {
       "id": "peach-soda",
+      "artworkUrl": "/audio/artwork/peach-soda.jpg",
       "title": "Peach Soda",
       "artist": "rainymonday",
       "durationSeconds": 156.6935,
@@ -73,6 +81,7 @@
     },
     {
       "id": "sunlit-sidewalk-loop",
+      "artworkUrl": "/audio/artwork/sunlit-sidewalk-loop.jpg",
       "title": "Sunlit Sidewalk Loop",
       "artist": "rainymonday",
       "durationSeconds": 140.4135,
@@ -80,6 +89,7 @@
     },
     {
       "id": "sidewalk-swing",
+      "artworkUrl": "/audio/artwork/sidewalk-swing.jpg",
       "title": "Sidewalk Swing",
       "artist": "rainymonday",
       "durationSeconds": 108.8535,
@@ -87,6 +97,7 @@
     },
     {
       "id": "lunchline-grooves",
+      "artworkUrl": "/audio/artwork/lunchline-grooves.jpg",
       "title": "Lunchline Grooves",
       "artist": "rainymonday",
       "durationSeconds": 137.2535,
@@ -94,6 +105,7 @@
     },
     {
       "id": "clavinet-crosswalk",
+      "artworkUrl": "/audio/artwork/clavinet-crosswalk.jpg",
       "title": "Clavinet Crosswalk",
       "artist": "rainymonday",
       "durationSeconds": 154.7335,
@@ -101,6 +113,7 @@
     },
     {
       "id": "deskside-sun-fade",
+      "artworkUrl": "/audio/artwork/deskside-sun-fade.jpg",
       "title": "Deskside Sun Fade",
       "artist": "rainymonday",
       "durationSeconds": 142.7335,
@@ -108,6 +121,7 @@
     },
     {
       "id": "sunlit-desk-notes",
+      "artworkUrl": "/audio/artwork/sunlit-desk-notes.jpg",
       "title": "Sunlit Desk Notes",
       "artist": "rainymonday",
       "durationSeconds": 142.8935,
@@ -115,6 +129,7 @@
     },
     {
       "id": "sunrise-pastry-run",
+      "artworkUrl": "/audio/artwork/sunrise-pastry-run.jpg",
       "title": "Sunrise Pastry Run",
       "artist": "rainymonday",
       "durationSeconds": 110.9735,
@@ -122,6 +137,7 @@
     },
     {
       "id": "bakery-window-bounce",
+      "artworkUrl": "/audio/artwork/bakery-window-bounce.jpg",
       "title": "Bakery Window Bounce",
       "artist": "rainymonday",
       "durationSeconds": 82.8935,
@@ -129,6 +145,7 @@
     },
     {
       "id": "citrus-park-loop",
+      "artworkUrl": "/audio/artwork/citrus-park-loop.jpg",
       "title": "Citrus Park Loop",
       "artist": "rainymonday",
       "durationSeconds": 93.4935,
@@ -136,6 +153,7 @@
     },
     {
       "id": "dappled-groove",
+      "artworkUrl": "/audio/artwork/dappled-groove.jpg",
       "title": "Dappled Groove",
       "artist": "rainymonday",
       "durationSeconds": 139.2935,
@@ -143,6 +161,7 @@
     },
     {
       "id": "picnic-under-trees",
+      "artworkUrl": "/audio/artwork/picnic-under-trees.jpg",
       "title": "Picnic Under Trees",
       "artist": "rainymonday",
       "durationSeconds": 140.5735,
@@ -150,6 +169,7 @@
     },
     {
       "id": "breeze-between-pages",
+      "artworkUrl": "/audio/artwork/breeze-between-pages.jpg",
       "title": "Breeze Between Pages",
       "artist": "rainymonday",
       "durationSeconds": 147.1735,
@@ -157,6 +177,7 @@
     },
     {
       "id": "rooftop-orange-juice",
+      "artworkUrl": "/audio/artwork/rooftop-orange-juice.jpg",
       "title": "Rooftop Orange Juice",
       "artist": "rainymonday",
       "durationSeconds": 125.1735,
@@ -164,6 +185,7 @@
     },
     {
       "id": "sunlit-brass-bounce",
+      "artworkUrl": "/audio/artwork/sunlit-brass-bounce.jpg",
       "title": "Sunlit Brass Bounce",
       "artist": "rainymonday",
       "durationSeconds": 159.4135,

@@ -2,15 +2,12 @@ import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {PlayerIcon} from './Icon'
-import {CLASSES, MusicPlayerViewProps} from './shared'
+import {CLASSES, type MusicPlayerViewProps} from './shared'
 
 export const SummaryPlayButton = (
-  props: Pick<MusicPlayerViewProps, 'currentTrack' | 'expanded' | 'sceneStyle'>,
+  props: Pick<MusicPlayerViewProps, 'currentTrack' | 'sceneStyle'>,
 ) => (
-  <div
-    aria-hidden={props.expanded ? 'true' : undefined}
-    class={cx(CLASSES.playerPlaySummaryFrame, props.expanded && 'is-hidden')}
-  >
+  <div class={CLASSES.playerPlaySummaryFrame}>
     <PScribbleCircleControl
       class="pomo-player__play-scribble-frame"
       enabled={props.sceneStyle === 'scribble'}
@@ -18,9 +15,8 @@ export const SummaryPlayButton = (
       <media-play-button
         aria-label={m.player_toggle_playback()}
         class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
-        disabled={props.expanded || !props.currentTrack}
+        disabled={!props.currentTrack}
         notooltip
-        tabindex={props.expanded ? -1 : 0}
         title={m.player_toggle_playback()}
       >
         <PlayerIcon

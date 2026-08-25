@@ -10,6 +10,7 @@ import {
   findPendingTrackAsset,
   reserveTrackAsset,
 } from 'src/server/music/admin-repository'
+import {storeTrackArtwork} from 'src/server/music/cover-upload'
 import {
   createTrackPreviewObject,
   createTrackUpload,
@@ -100,7 +101,17 @@ export const PUT = async (event: APIEvent): Promise<Response> => {
   try {
     const inspection = await inspectTrackUpload(asset.objectKey)
     await createTrackPreviewObject(asset.objectKey, inspection.durationMs)
-    const activated = await activateTrackAsset({assetId: asset.id, ...inspection})
+    const artworkUrl =
+      inspection.artwork === undefined
+        ? null
+        : (await storeTrackArtwork(asset.id, inspection.artwork)).artworkUrl
+    const activated = await activateTrackAsset({
+      artworkUrl,
+      assetId: asset.id,
+      durationMs: inspection.durationMs,
+      etag: inspection.etag,
+      sizeBytes: inspection.sizeBytes,
+    })
 
     return activated
       ? noStoreJson({assetId: asset.id, status: 'active'}, {cookies: authorization.cookies})

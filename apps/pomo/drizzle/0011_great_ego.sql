@@ -1,0 +1,2 @@
+ALTER TABLE "music_track_assets" ADD COLUMN "artwork_url" text;--> statement-breakpoint
+ALTER TABLE "music_track_assets" ADD CONSTRAINT "music_track_assets_artwork_url_check" CHECK ("music_track_assets"."artwork_url" is null or "music_track_assets"."artwork_url" like 'https://%');

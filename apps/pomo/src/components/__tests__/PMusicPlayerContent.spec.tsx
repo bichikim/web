@@ -72,9 +72,55 @@ describe('PMusicPlayerContent', () => {
 
   afterEach(() => {
     cleanup()
+    Reflect.deleteProperty(navigator, 'mediaSession')
     Reflect.deleteProperty(window, 'ReactNativeWebView')
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  it('should expose track artwork and transport controls to the device media session', () => {
+    const metadataInitializations: MediaMetadataInit[] = []
+    const setActionHandler = vi.fn()
+    const mediaSession = {metadata: null, playbackState: 'none', setActionHandler}
+    const track = {...TRACKS[0], artworkUrl: '/audio/artwork/one.jpg'}
+
+    vi.stubGlobal(
+      'MediaMetadata',
+      class {
+        constructor(initialization: MediaMetadataInit = {}) {
+          metadataInitializations.push(initialization)
+        }
+      },
+    )
+    Object.defineProperty(navigator, 'mediaSession', {configurable: true, value: mediaSession})
+
+    const result = render(() => <PMusicPlayerContent tracks={[track]} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the Pomo audio element to be rendered')
+    }
+
+    expect(metadataInitializations).toEqual([
+      {
+        artist: 'Artist',
+        artwork: [{src: '/audio/artwork/one.jpg'}],
+        title: 'One',
+      },
+    ])
+    expect(mediaSession.playbackState).toBe('paused')
+    expect(setActionHandler).toHaveBeenCalledWith('play', expect.any(Function))
+    expect(setActionHandler).toHaveBeenCalledWith('pause', expect.any(Function))
+    expect(setActionHandler).toHaveBeenCalledWith('nexttrack', expect.any(Function))
+    expect(setActionHandler).toHaveBeenCalledWith('previoustrack', expect.any(Function))
+
+    fireEvent(audio, new Event('play'))
+    expect(mediaSession.playbackState).toBe('playing')
+
+    result.unmount()
+    expect(mediaSession.metadata).toBeNull()
+    expect(mediaSession.playbackState).toBe('none')
+    expect(setActionHandler).toHaveBeenCalledWith('play', null)
   })
 
   it('should start a new shuffled cycle when repeat all is enabled', async () => {
@@ -180,21 +226,19 @@ describe('PMusicPlayerContent', () => {
     expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
   })
 
-  it('should hide the summary play button and its tooltip when expanded', () => {
+  it('should render only the expanded play button when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
     expect(result.container.querySelector('media-time-display')).toBeNull()
     const playButtons = result.container.querySelectorAll('media-play-button')
-    expect(playButtons).toHaveLength(2)
-    expect(Reflect.get(playButtons[0] ?? {}, 'disabled')).toBe(true)
+    expect(playButtons).toHaveLength(1)
     expect(playButtons[0]?.hasAttribute('notooltip')).toBe(true)
-    expect(playButtons[1]?.hasAttribute('notooltip')).toBe(true)
-    expect(playButtons[1]?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
+    expect(playButtons[0]?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
   })
 
-  it('should collapse the summary play button frame when expanded', () => {
+  it('should remove the summary play button without a collapse animation when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const summaryPlayFrame = result.container.querySelector('.pomo-player__play-summary-frame')
 
@@ -202,18 +246,16 @@ describe('PMusicPlayerContent', () => {
       throw new TypeError('Expected the Pomo summary play button frame to be rendered')
     }
 
-    expect(summaryPlayFrame.classList.contains('is-hidden')).toBe(false)
     expect(summaryPlayFrame.classList.contains('w-11')).toBe(true)
-    expect(summaryPlayFrame.classList.contains('[&.is-hidden]:w-0')).toBe(true)
     expect(
       summaryPlayFrame.classList.contains(
         '[transition:width_260ms_ease,_margin-right_260ms_ease,_opacity_180ms_ease]',
       ),
-    ).toBe(true)
-    expect(summaryPlayFrame.classList.contains('motion-reduce:transition-none')).toBe(true)
+    ).toBe(false)
+
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
-    expect(summaryPlayFrame.classList.contains('is-hidden')).toBe(true)
-    expect(summaryPlayFrame.getAttribute('aria-hidden')).toBe('true')
+
+    expect(result.container.querySelector('.pomo-player__play-summary-frame')).toBeNull()
   })
 
   it('should report the current track when selection changes', async () => {

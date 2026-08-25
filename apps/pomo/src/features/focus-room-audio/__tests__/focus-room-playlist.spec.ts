@@ -81,6 +81,7 @@ describe('loadPAlbums', () => {
   it('should resolve album track IDs and preserve albums without tracks', () => {
     const albums = [
       {
+        coverImageUrl: '/audio/artwork/first.jpg',
         description: '첫 앨범',
         icon: 'i-tabler-sun',
         id: 'first',
@@ -95,9 +96,10 @@ describe('loadPAlbums', () => {
         trackIds: [],
       },
     ] as const
+    const tracks = [{...TRACKS[0], artworkUrl: '/audio/artwork/one.jpg'}, TRACKS[1]] as const
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({tracks, version: 1}))
       .mockResolvedValueOnce(createJsonResponse({albums, version: 1}))
     vi.stubGlobal('fetch', fetchMock)
 
@@ -114,7 +116,10 @@ describe('loadPAlbums', () => {
       expect.objectContaining({cache: 'no-store', signal: undefined}),
     )
     return expect(result).resolves.toEqual([
-      {...albums[0], tracks: [TRACKS[1], TRACKS[0]]},
+      {
+        ...albums[0],
+        tracks: [{...tracks[1], artworkUrl: '/audio/artwork/first.jpg'}, tracks[0]],
+      },
       {...albums[1], tracks: []},
     ])
   })
@@ -136,7 +141,12 @@ describe('loadPAlbums', () => {
               title: '유료 앨범',
               trackCount: 2,
               tracks: [
-                {artist: '첫 가수', id: 'paid-one', title: '첫 유료곡'},
+                {
+                  artist: '첫 가수',
+                  artworkUrl: 'https://storage.pomofi.io/track-artwork/paid-one/cover',
+                  id: 'paid-one',
+                  title: '첫 유료곡',
+                },
                 {artist: '둘째 가수', id: 'paid-two', title: '둘째 유료곡'},
               ],
             },
@@ -157,7 +167,12 @@ describe('loadPAlbums', () => {
         trackCount: 2,
         trackIds: [],
         trackListings: [
-          {artist: '첫 가수', id: 'paid-one', title: '첫 유료곡'},
+          {
+            artist: '첫 가수',
+            artworkUrl: 'https://storage.pomofi.io/track-artwork/paid-one/cover',
+            id: 'paid-one',
+            title: '첫 유료곡',
+          },
           {artist: '둘째 가수', id: 'paid-two', title: '둘째 유료곡'},
         ],
         tracks: [],
