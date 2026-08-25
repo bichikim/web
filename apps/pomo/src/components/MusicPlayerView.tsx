@@ -75,7 +75,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
           <audio
             crossorigin="anonymous"
             preload="metadata"
-            ref={props.onAudioElement}
+            ref={(element) => props.onAudioElement(element)}
             slot="media"
             src={props.currentTrack?.source}
           />

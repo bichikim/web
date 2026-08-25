@@ -58,3 +58,15 @@ it('should generate one expiry-based account link challenge delete', async () =>
   expect(query.sql).toContain('(select count(*) from candidates) > $4 as "hasMore"')
   expect(query.params).toEqual([cutoff.toISOString(), 501, 500, 500])
 })
+
+it('should reject a deletion query without a batch result row', async () => {
+  const execute = vi.fn().mockResolvedValue({rows: []})
+  const repository = createAuthMaintenanceRepository({execute} as unknown as Database)
+
+  await expect(
+    repository.deleteAccountLinkChallengeBatch({
+      batchSize: 500,
+      cutoff: new Date('2026-08-24T17:17:00.000Z'),
+    }),
+  ).rejects.toThrow('Auth maintenance deletion did not return a batch result')
+})

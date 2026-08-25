@@ -168,7 +168,7 @@ export const validateHistoryOutput = (
         section.sourceUrls.map((value) => {
           const {hostname} = new URL(value)
 
-          return getAllowedDomain(hostname, options.policy.allowedDomains) ?? hostname
+          return getAllowedDomain(hostname, options.policy.allowedDomains)!
         }),
       )
 

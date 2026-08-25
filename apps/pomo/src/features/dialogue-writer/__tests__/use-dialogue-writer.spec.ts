@@ -85,6 +85,21 @@ describe('useDialogueWriter', () => {
     root.dispose()
   })
 
+  it('should use optional defaults and release without WebGPU', () => {
+    vi.stubGlobal('navigator', {})
+    let disposeRoot: () => void = () => undefined
+    const controller = createRoot((dispose) => {
+      disposeRoot = dispose
+      return useDialogueWriter({modelId: 'qwen-2b'})
+    })
+
+    expect(controller.request()).toBe('')
+    expect(controller.state()).toEqual({status: 'unsupported'})
+    controller.release()
+    expect(controller.state()).toEqual({status: 'unsupported'})
+    disposeRoot()
+  })
+
   it('should prepare, stream, complete, copy, and dispose one client session', async () => {
     const onComplete = vi.fn()
     const writeText = vi.fn(async () => undefined)
@@ -166,6 +181,26 @@ describe('useDialogueWriter', () => {
     runtime.emit({type: 'ready'})
     expect(runtime.client.generate).toHaveBeenCalledWith('삶의 행복')
 
+    root.dispose()
+  })
+
+  it('should skip unavailable preparation and generate immediately from a ready model', () => {
+    const unsupportedRuntime = createRuntime(false)
+    const unsupportedRoot = createDialogueRoot(unsupportedRuntime)
+
+    unsupportedRoot.controller.generateWithPreparation()
+    expect(unsupportedRuntime.createClient).not.toHaveBeenCalled()
+    unsupportedRoot.dispose()
+
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+
+    root.controller.generateWithPreparation()
+
+    expect(runtime.client.prepare).toHaveBeenCalledOnce()
+    expect(runtime.client.generate).toHaveBeenCalledWith('삶의 행복')
     root.dispose()
   })
 

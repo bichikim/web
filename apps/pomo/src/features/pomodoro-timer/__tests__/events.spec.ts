@@ -62,4 +62,12 @@ describe('getPomodoroTimerEvents', () => {
       getPomodoroTimerEvents(createState('focus', 'running'), createState('longBreak', 'running')),
     ).toEqual(['focus-end', 'long-break-start'])
   })
+
+  it('should preserve an unexpected phase at exhaustive runtime fallbacks', () => {
+    const invalidIdle = createState('unexpected' as PomodoroTimerState['phase'], 'idle')
+    const invalidRunning = createState('unexpected' as PomodoroTimerState['phase'], 'running')
+
+    expect(getPomodoroTimerEvents(invalidRunning, invalidIdle)).toEqual(['unexpected'])
+    expect(getPomodoroTimerEvents(invalidIdle, invalidRunning)).toEqual(['unexpected'])
+  })
 })

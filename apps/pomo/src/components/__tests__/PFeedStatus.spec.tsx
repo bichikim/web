@@ -217,6 +217,31 @@ it('should require download consent before retrying a feed without a cached mode
   expect(modelDownload.startVoiceModel).toHaveBeenCalledWith('full')
 })
 
+it('should stop downloading remaining models when a confirmed download is cancelled', async () => {
+  renderModal()
+  const secondRecoveryJob: FeedDialogueJob = {
+    ...RECOVERY_JOB,
+    feedItemId: 'item-2',
+    id: 'job-2',
+    modelId: 'int8',
+  }
+  const feeds = createFeeds([], false, [RECOVERY_JOB, secondRecoveryJob])
+  const modelDownload = createModelDownload()
+  vi.mocked(modelDownload.startVoiceModel).mockResolvedValue({status: 'cancelled'})
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+  render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+  await screen.findByRole('dialog', {name: /모델을 받을까요/})
+  fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
+
+  await vi.waitFor(() => expect(modelDownload.startVoiceModel).toHaveBeenCalledOnce())
+  expect(modelDownload.startVoiceModel).toHaveBeenCalledWith('full')
+  expect(feeds.retryRecovery).not.toHaveBeenCalled()
+})
+
 it('should retry immediately when every feed model is already cached', async () => {
   renderModal()
   const feeds = createFeeds([], false, [RECOVERY_JOB])

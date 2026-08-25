@@ -5,7 +5,7 @@ import {expect, it, vi} from 'vitest'
 
 const adminMocks = vi.hoisted(() => ({AdminMusic: vi.fn()}))
 
-vi.mock('../../../features/admin-music', () => adminMocks)
+vi.mock('../../../components/AdminMusic', () => adminMocks)
 
 import AdminMusicPage from '../music'
 

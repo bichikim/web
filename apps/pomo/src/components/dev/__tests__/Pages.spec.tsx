@@ -23,7 +23,7 @@ vi.mock('@solidjs/router', () => ({
 vi.mock('src/components/CharacterStudio', () => ({CharacterStudio: () => <p>character studio</p>}))
 vi.mock('src/components/PLayerReview', () => ({PLayerReview: () => <p>layer review</p>}))
 vi.mock('src/components/VoiceGenerator', () => ({VoiceGenerator: () => <p>voice generator</p>}))
-vi.mock('src/features/service-terms', () => ({
+vi.mock('src/components/PServiceTerms', () => ({
   PServiceTerms: (props: {backHref: string; backLabel: string; platform: string}) => (
     <p>{`${props.backLabel}:${props.backHref}:${props.platform}`}</p>
   ),

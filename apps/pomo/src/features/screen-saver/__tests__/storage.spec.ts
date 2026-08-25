@@ -98,4 +98,18 @@ describe('screen-saver storage', () => {
     expect(await readScreenSaverDelay()).toBe('20m')
     expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"20m"')
   })
+
+  it('should use the default when native storage has no valid preference', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockResolvedValue('"invalid"')
+
+    expect(await readScreenSaverDelay()).toBe('10m')
+  })
+
+  it('should use the default when native storage cannot be read', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockRejectedValue(new Error('native storage unavailable'))
+
+    expect(await readScreenSaverDelay()).toBe('10m')
+  })
 })

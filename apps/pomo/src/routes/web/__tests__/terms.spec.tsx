@@ -5,7 +5,7 @@ import {expect, it, vi} from 'vitest'
 
 const termsMocks = vi.hoisted(() => ({PServiceTerms: vi.fn()}))
 
-vi.mock('src/features/service-terms', () => termsMocks)
+vi.mock('src/components/PServiceTerms', () => termsMocks)
 
 import WebTermsPage from '../terms'
 

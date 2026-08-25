@@ -33,6 +33,29 @@ describe('Toss unlink callback route', () => {
     expect(repositoryMocks.revokeTossAppSessions).not.toHaveBeenCalled()
   })
 
+  it('should reject a callback without authorization', async () => {
+    const request = new Request('https://www.pomofi.io/api/app-auth/unlink', {
+      body: JSON.stringify({referrer: 'UNLINK', userKey: 'user-key'}),
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(401)
+    expect(repositoryMocks.revokeTossAppSessions).not.toHaveBeenCalled()
+  })
+
+  it('should reject an unauthorized GET callback', async () => {
+    const response = await invokeApiRoute(
+      GET,
+      new Request('https://www.pomofi.io/api/app-auth/unlink?userKey=user-key&referrer=UNLINK'),
+    )
+
+    expect(response.status).toBe(401)
+    expect(await response.text()).toBe('Unauthorized')
+  })
+
   it('should revoke active sessions for a POST callback', async () => {
     const response = await invokeApiRoute(POST, createPostRequest())
 
@@ -49,5 +72,31 @@ describe('Toss unlink callback route', () => {
 
     expect(response.status).toBe(204)
     expect(repositoryMocks.revokeTossAppSessions).toHaveBeenCalledWith('user-key')
+  })
+
+  it('should reject invalid GET callback parameters', async () => {
+    const request = new Request(
+      'https://www.pomofi.io/api/app-auth/unlink?referrer=WITHDRAWAL_TOSS',
+      {headers: {Authorization: CALLBACK_AUTHORIZATION}},
+    )
+
+    const response = await invokeApiRoute(GET, request)
+
+    expect(response.status).toBe(400)
+    expect(await response.text()).toBe('Invalid unlink request')
+  })
+
+  it('should reject an oversized POST callback body', async () => {
+    const request = new Request('https://www.pomofi.io/api/app-auth/unlink', {
+      body: 'x'.repeat(4097),
+      headers: {Authorization: CALLBACK_AUTHORIZATION, 'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(413)
+    expect(await response.text()).toBe('Invalid unlink request')
+    expect(repositoryMocks.revokeTossAppSessions).not.toHaveBeenCalled()
   })
 })

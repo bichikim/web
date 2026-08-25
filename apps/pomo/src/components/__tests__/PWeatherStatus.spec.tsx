@@ -66,3 +66,21 @@ it('should not render a status when weather is disabled', () => {
 
   expect(screen.queryByRole('status')).toBeNull()
 })
+
+it('should show loading and error states for the selected city', () => {
+  const {unmount} = render(() => <PWeatherStatus state={{citySlug: 'busan', status: 'loading'}} />)
+  expect(screen.getByRole('status').textContent).toContain('부산')
+  expect(screen.getByRole('status').querySelector('.i-tabler-loader-2')).not.toBeNull()
+  unmount()
+  render(() => <PWeatherStatus state={{citySlug: 'jeju', status: 'error'}} />)
+  expect(screen.getByRole('status').textContent).toContain('제주')
+  expect(screen.getByRole('status').querySelector('.i-tabler-cloud-off')).not.toBeNull()
+})
+
+it('should omit temperature when the feed has no measured temperature', () => {
+  render(() => (
+    <PWeatherStatus state={{feed: createFeed({temperatureCelsius: null}), status: 'ready'}} />
+  ))
+  expect(screen.getByRole('status').textContent).toContain('서울 · 맑음')
+  expect(screen.getByRole('status').textContent).not.toContain('°')
+})

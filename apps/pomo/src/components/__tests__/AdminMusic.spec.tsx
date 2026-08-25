@@ -28,7 +28,7 @@ const coverImageMocks = vi.hoisted(() => ({prepareAlbumCover: vi.fn()}))
 vi.mock('@solidjs/meta', () => ({Title: vi.fn()}))
 vi.mock('@solidjs/router', () => ({A: vi.fn()}))
 vi.mock('@solidjs/start', () => startMocks)
-vi.mock('../cover-image', () => coverImageMocks)
+vi.mock('src/features/admin-music/cover-image', () => coverImageMocks)
 
 import {AdminMusic} from '../AdminMusic'
 import {createEmptyAlbumTranslations} from '../../features/admin-music'

@@ -81,14 +81,8 @@ export const createWorkerRpcTransport = <Request, Response>(
   const pendingRequests = new Map<number, PendingRequest<Response>>()
   let failure: WorkerRpcError | null = null
   let nextRequestId = 1
-  let terminated = false
 
   const terminate = () => {
-    if (terminated) {
-      return
-    }
-
-    terminated = true
     options.worker.terminate()
   }
 

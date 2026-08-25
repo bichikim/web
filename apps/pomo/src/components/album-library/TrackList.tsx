@@ -74,11 +74,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
   let listElement: HTMLOListElement | undefined
 
   const updateOverflow = () => {
-    const list = listElement
-
-    if (list === undefined) {
-      return
-    }
+    const list = listElement!
 
     setHasMoreBelow(list.scrollTop + list.clientHeight < list.scrollHeight - 1)
   }

@@ -16,6 +16,7 @@ import {
 } from '../../features/focus-room-entry'
 import {usePScenePreferences} from '../../features/focus-room-scene-preferences'
 import {getLocalizedSceneLabel} from '../../features/localization'
+import {type ModelDownloadRuntime, PModelDownloadProvider} from '../../features/model-download'
 import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather} from '../../features/weather'
@@ -63,6 +64,22 @@ interface StudioOptions {
   readonly isReady?: boolean
   readonly styleReady?: boolean
 }
+
+const modelDownloadRuntime: ModelDownloadRuntime = {
+  createTextClient: () => {
+    throw new Error('텍스트 모델 client를 만들면 안 됩니다.')
+  },
+  createVoiceClient: () => {
+    throw new Error('음성 모델 client를 만들면 안 됩니다.')
+  },
+}
+
+const renderStudio = () =>
+  render(() => (
+    <PModelDownloadProvider runtime={modelDownloadRuntime}>
+      <PStudio />
+    </PModelDownloadProvider>
+  ))
 
 const configureStudio = (options: StudioOptions = {}) => {
   const [hasEntered, setHasEntered] = createSignal(false)
@@ -218,7 +235,7 @@ describe('PStudio', () => {
   it('should enter the focus room and pass toolbar changes to the scene', () => {
     configureStudio({gyroscope: true, isScreenSaverActive: true})
 
-    render(() => <PStudio />)
+    renderStudio()
 
     expect(screen.getByText('장면 대기')).toBeInTheDocument()
     expect(screen.getByRole('img', {name: 'day-reading-focused'})).toBeInTheDocument()
@@ -262,7 +279,7 @@ describe('PStudio', () => {
   it('should restore a stored entry session without creating the scene before preferences are ready', () => {
     configureStudio({entrySession: true, isReady: false, styleReady: false})
 
-    render(() => <PStudio />)
+    renderStudio()
 
     expect(readFocusRoomEntrySession).toHaveBeenCalledOnce()
     expect(screen.getByText('이벤트')).toBeInTheDocument()

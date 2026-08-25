@@ -89,6 +89,8 @@ interface DialogueDraftModelController {
   readonly startDownload: () => Promise<void>
 }
 
+type AssertNever<Value extends never> = Value
+
 const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) => {
   const calculatedProgress = createMemo(() => {
     const currentState = props.writer.state()
@@ -114,7 +116,7 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
         return null
     }
 
-    currentState satisfies never
+    type ExhaustiveState = AssertNever<typeof currentState>
   })
   const [progress, setProgress] = createSignal<number | null>(null)
 
@@ -194,7 +196,7 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
         return {message: props.writer.statusMessage(), progress: null}
     }
 
-    currentState satisfies never
+    type ExhaustiveState = AssertNever<typeof currentState>
   })
 
   return status
@@ -212,14 +214,6 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
     isDisposed = true
   })
   const isModelDownloading = () => modelDownload.state().status === 'loading'
-  const isDraftModelDownloading = () => {
-    const downloadState = modelDownload.state()
-    return (
-      downloadState.status === 'loading' &&
-      downloadState.target.kind === 'text' &&
-      downloadState.target.modelId === GEMMA_MODEL_ID
-    )
-  }
   const isBusy = () => writer.isBusy() || isCheckingModel() || isModelDownloading()
   const generationStatus = useDialogueGenerationStatus({
     downloadError,
@@ -259,11 +253,6 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
 
     if (writer.isModelReady()) {
       writer.generateWithPreparation()
-      return
-    }
-
-    if (isDraftModelDownloading()) {
-      await downloadAndGenerate()
       return
     }
 

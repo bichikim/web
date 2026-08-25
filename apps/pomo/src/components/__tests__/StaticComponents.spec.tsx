@@ -10,6 +10,8 @@ import {PDialogueSettings} from '../PDialogueSettings'
 import {PPanel} from '../PPanel'
 import {TextMoodInsufficientResult} from '../text-mood-lab/InsufficientResult'
 import {VoiceHeader} from '../voice-generator/Header'
+import {ModelPicker} from '../voice-generator/ModelPicker'
+import {TextMoodEvaluation} from '../text-mood-lab/Evaluation'
 
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
@@ -66,5 +68,33 @@ it('should link to the text mood lab', () => {
 
   expect(screen.getByRole('link', {name: /글 분위기 분석/}).getAttribute('href')).toBe(
     '/dev/text-mood',
+  )
+})
+
+it('should render text mood evaluation metrics', () => {
+  render(() => <TextMoodEvaluation />)
+
+  expect(screen.getByRole('heading', {name: '현재 파일럿 성능'})).toBeDefined()
+  expect(screen.getByText('Macro F1')).toBeDefined()
+  expect(screen.getByText(/mean pooling/)).toBeDefined()
+})
+
+it('should select and disable voice models', () => {
+  const onModelChange = vi.fn()
+  const result = render(() => (
+    <ModelPicker disabled={false} onModelChange={onModelChange} selectedModelId="full" />
+  ))
+  const buttons = screen.getAllByRole('button')
+
+  expect(buttons.length).toBeGreaterThan(1)
+  expect(buttons[0]).toHaveAttribute('aria-pressed', 'true')
+  expect(buttons[1]).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.click(buttons[1]!)
+  expect(onModelChange).toHaveBeenCalledOnce()
+
+  result.unmount()
+  render(() => <ModelPicker disabled onModelChange={onModelChange} selectedModelId="full" />)
+  expect(screen.getAllByRole('button').every((button) => button.hasAttribute('disabled'))).toBe(
+    true,
   )
 })

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
 import {PFeedDialogueList} from '../feed-settings/DialogueList'
@@ -55,6 +55,10 @@ const createController = (dialogues: ReadonlyArray<FeedDialogueListItem> = [FEED
   }
   return {controller, onDeleteDialogue}
 }
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 it('should require confirmation before deleting a feed dialogue', async () => {
   const {controller, onDeleteDialogue} = createController()
@@ -118,4 +122,72 @@ it('should apply compact spacing to feed dialogue rows', () => {
 
   expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+})
+
+it('should report a saved dialogue playback failure and show its future cleanup time', async () => {
+  vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-14T00:00:00.000Z'))
+  const dialogue = {
+    ...FEED_DIALOGUE,
+    metadata: {...FEED_DIALOGUE.metadata, expiresAt: '2026-08-14T02:00:00.000Z'},
+  }
+  const {controller} = createController([dialogue])
+  const playbackError = new Error('playback failed')
+  vi.mocked(controller.listen).mockRejectedValueOnce(playbackError)
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+  render(() => <PFeedDialogueList controller={controller} />)
+  fireEvent.click(screen.getByRole('button', {name: '듣기'}))
+
+  expect(screen.getByText(/2시간 후 정리/u)).toBeDefined()
+  await waitFor(() => {
+    expect(consoleError).toHaveBeenCalledWith('Failed to play saved feed dialogue.', playbackError)
+  })
+  expect(controller.listen).toHaveBeenCalledWith('dialogue-1')
+})
+
+it('should preserve deletion confirmation and show an error when deletion fails', async () => {
+  const {controller, onDeleteDialogue} = createController()
+  const deletionError = new Error('deletion failed')
+  onDeleteDialogue.mockRejectedValueOnce(deletionError)
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+  render(() => <PFeedDialogueList controller={controller} />)
+  fireEvent.click(screen.getByRole('button', {name: '새 피드 소식 피드 대화 삭제'}))
+  fireEvent.click(screen.getByRole('button', {name: '새 피드 소식 피드 대화 삭제 확인'}))
+
+  expect(await screen.findByRole('status')).toHaveTextContent('피드 대화를 삭제하지 못했어요.')
+  expect(screen.getByRole('button', {name: '새 피드 소식 피드 대화 삭제 확인'})).toBeDefined()
+  expect(consoleError).toHaveBeenCalledWith('Failed to delete saved feed dialogue.', deletionError)
+})
+
+it('should show an empty dialogue state, refresh feeds, and list unreadable items', () => {
+  const issue = {
+    contentLength: 0,
+    discoveredAt: '2026-08-14T00:00:00.000Z',
+    feedConnectionId: 'feed-1',
+    feedItemId: 'issue-1',
+    id: 'feed-1\u0000issue-1',
+    itemTitle: '읽지 못한 소식',
+    message: '본문을 가져오지 못했어요.',
+    publishedAt: '2026-08-14T00:00:00.000Z',
+    sourceTitle: '테스트 피드',
+    sourceUrl: 'https://example.com/issue',
+    status: 'failed',
+    updatedAt: '2026-08-14T00:00:00.000Z',
+    version: 1,
+  } as const
+  const {controller: baseController} = createController([])
+  const controller: PFeedController = {...baseController, issues: () => [issue]}
+
+  render(() => <PFeedDialogueList controller={controller} />)
+
+  expect(screen.getByText(/아직 완성된 피드 대화가 없어요/u)).toBeDefined()
+  expect(screen.getByText('읽지 못한 소식')).toBeDefined()
+  expect(screen.getByText('본문을 가져오지 못했어요.')).toBeDefined()
+  expect(screen.getByRole('link', {name: '원문 보기'})).toHaveAttribute(
+    'href',
+    'https://example.com/issue',
+  )
+  fireEvent.click(screen.getByRole('button', {name: '지금 확인'}))
+  expect(controller.syncNow).toHaveBeenCalledOnce()
 })

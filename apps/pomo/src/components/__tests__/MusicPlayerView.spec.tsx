@@ -1,12 +1,72 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, render} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import type {PSceneStyle} from '../../features/focus-room-animation'
+import type {PTrack} from '../../features/focus-room-audio'
+import * as m from '@paraglide/message'
+import type {PAlbumLibraryProps} from '../PAlbumLibrary'
 import {MusicPlayerView} from '../MusicPlayerView'
 
 vi.mock('media-chrome', () => ({}))
+
+const albumLibraryMocks = vi.hoisted(() => ({
+  addedTracks: [
+    {
+      artist: 'Album Artist',
+      durationSeconds: 1,
+      id: 'album-track',
+      source: '/album-track.mp3',
+      title: 'Album Track',
+    },
+  ] as const,
+  stopPreview: vi.fn(),
+}))
+
+vi.mock('../PAlbumLibrary', () => ({
+  PAlbumLibrary: (props: PAlbumLibraryProps) => (
+    <>
+      <button
+        aria-label="앨범 추가"
+        data-player-utility="album"
+        onClick={() => props.onAddTracks(albumLibraryMocks.addedTracks)}
+        title="앨범 추가"
+        type="button"
+      >
+        <span
+          aria-hidden="true"
+          class={props.sceneStyle === 'scribble' ? 'i-pomo-scribble:album' : 'i-tabler-album'}
+        />
+      </button>
+      <button
+        data-testid="album-clear"
+        onClick={() => props.onClearTracks?.()}
+        title="재생목록 모두 비우기"
+        type="button"
+      >
+        재생목록 모두 비우기
+      </button>
+      <button
+        data-testid="album-preview-start"
+        onClick={() => props.onPreviewStart?.(albumLibraryMocks.stopPreview)}
+        title="미리듣기 시작"
+        type="button"
+      >
+        미리듣기 시작
+      </button>
+      <button
+        data-testid="album-preview-end"
+        onClick={() => props.onPreviewEnd?.()}
+        title="미리듣기 종료"
+        type="button"
+      >
+        미리듣기 종료
+      </button>
+      <span data-testid="album-track-count">{props.tracks.length}</span>
+    </>
+  ),
+}))
 
 const TRACKS = [
   {
@@ -21,7 +81,21 @@ const TRACKS = [
 ] as const
 
 interface RenderMusicPlayerViewOptions {
+  readonly currentTrack?: PTrack | null
   readonly expanded?: boolean
+  readonly isPlaying?: boolean
+  readonly levels?: readonly number[]
+  readonly onAlbumAdd?: (tracks: readonly PTrack[]) => void
+  readonly onAlbumClear?: () => void
+  readonly onAudioElement?: (element: HTMLAudioElement) => void
+  readonly onExpandedChange?: () => void
+  readonly onNextTrack?: () => void
+  readonly onPreviewEnd?: () => void
+  readonly onPreviewStart?: (stopPreview: () => void) => void
+  readonly onPreviousTrack?: () => void
+  readonly onRepeatModeChange?: (mode: 'repeat-all' | 'repeat-one') => void
+  readonly onShuffleChange?: () => void
+  readonly onTrackSelect?: (index: number) => void
   readonly sceneStyle?: PSceneStyle
 }
 
@@ -29,17 +103,21 @@ const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) =>
   render(() => (
     <MusicPlayerView
       currentIndex={0}
-      currentTrack={TRACKS[0]}
+      currentTrack={options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])}
       expanded={options.expanded ?? true}
-      isPlaying={false}
-      levels={[]}
-      onAudioElement={vi.fn()}
-      onExpandedChange={vi.fn()}
-      onNextTrack={vi.fn()}
-      onPreviousTrack={vi.fn()}
-      onRepeatModeChange={vi.fn()}
-      onShuffleChange={vi.fn()}
-      onTrackSelect={vi.fn()}
+      isPlaying={options.isPlaying ?? false}
+      levels={options.levels ?? []}
+      onAudioElement={options.onAudioElement ?? vi.fn()}
+      onAlbumAdd={options.onAlbumAdd}
+      onAlbumClear={options.onAlbumClear}
+      onExpandedChange={options.onExpandedChange ?? vi.fn()}
+      onNextTrack={options.onNextTrack ?? vi.fn()}
+      onPreviewEnd={options.onPreviewEnd}
+      onPreviewStart={options.onPreviewStart}
+      onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
+      onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
+      onShuffleChange={options.onShuffleChange ?? vi.fn()}
+      onTrackSelect={options.onTrackSelect ?? vi.fn()}
       repeatMode="repeat-all"
       sceneStyle={options.sceneStyle ?? 'original'}
       shuffleEnabled={true}
@@ -74,6 +152,115 @@ describe('MusicPlayerView', () => {
     expect(artwork).toBeInstanceOf(HTMLImageElement)
     expect(artwork?.getAttribute('src')).toBe('/audio/artwork/one.jpg')
     expect(artwork?.getAttribute('alt')).toBe('')
+  })
+
+  it('should hide failed artwork requests', () => {
+    const result = renderMusicPlayerView()
+    const artwork = result.container.querySelector('.pomo-player__artwork')
+
+    if (!(artwork instanceof HTMLImageElement)) {
+      throw new TypeError('Expected the current track artwork to be rendered')
+    }
+
+    fireEvent.error(artwork)
+
+    expect(artwork.hidden).toBe(true)
+  })
+
+  it('should forward album and expanded player control events', () => {
+    const onAlbumAdd = vi.fn()
+    const onAlbumClear = vi.fn()
+    const onAudioElement = vi.fn()
+    const onExpandedChange = vi.fn()
+    const onNextTrack = vi.fn()
+    const onPreviewEnd = vi.fn()
+    const onPreviewStart = vi.fn()
+    const onPreviousTrack = vi.fn()
+    const onRepeatModeChange = vi.fn()
+    const onShuffleChange = vi.fn()
+    const onTrackSelect = vi.fn()
+    const result = renderMusicPlayerView({
+      onAlbumAdd,
+      onAlbumClear,
+      onAudioElement,
+      onExpandedChange,
+      onNextTrack,
+      onPreviewEnd,
+      onPreviewStart,
+      onPreviousTrack,
+      onRepeatModeChange,
+      onShuffleChange,
+      onTrackSelect,
+    })
+    const expandButton = result.container.querySelector('[data-player-utility="expand"]')
+    const modeButtons = result.container.querySelectorAll('.pomo-player__modes button')
+    const transportButtons = result.container.querySelectorAll('.pomo-player__transport button')
+    const trackButtons = result.container.querySelectorAll('button.pomo-player__track')
+
+    if (
+      !(expandButton instanceof HTMLButtonElement) ||
+      modeButtons.length !== 3 ||
+      transportButtons.length !== 2 ||
+      trackButtons.length !== 2
+    ) {
+      throw new TypeError('Expected the Pomo player controls to be rendered')
+    }
+
+    fireEvent.click(result.getByRole('button', {name: '앨범 추가'}))
+    fireEvent.click(result.getByTestId('album-clear'))
+    fireEvent.click(result.getByTestId('album-preview-start'))
+    fireEvent.click(result.getByTestId('album-preview-end'))
+    fireEvent.click(expandButton)
+    fireEvent.click(modeButtons[0]!)
+    fireEvent.click(modeButtons[1]!)
+    fireEvent.click(modeButtons[2]!)
+    fireEvent.click(transportButtons[0]!)
+    fireEvent.click(transportButtons[1]!)
+    fireEvent.click(trackButtons[1]!)
+
+    expect(onAlbumAdd).toHaveBeenCalledWith(albumLibraryMocks.addedTracks)
+    expect(onAudioElement).toHaveBeenCalledWith(result.container.querySelector('audio'))
+    expect(result.getByTestId('album-track-count')).toHaveTextContent('2')
+    expect(onAlbumClear).toHaveBeenCalledOnce()
+    expect(onPreviewStart).toHaveBeenCalledWith(albumLibraryMocks.stopPreview)
+    expect(onPreviewEnd).toHaveBeenCalledOnce()
+    expect(onExpandedChange).toHaveBeenCalledOnce()
+    expect(onRepeatModeChange).toHaveBeenNthCalledWith(1, 'repeat-all')
+    expect(onRepeatModeChange).toHaveBeenNthCalledWith(2, 'repeat-one')
+    expect(onShuffleChange).toHaveBeenCalledOnce()
+    expect(onPreviousTrack).toHaveBeenCalledOnce()
+    expect(onNextTrack).toHaveBeenCalledOnce()
+    expect(onTrackSelect).toHaveBeenCalledWith(1)
+
+    cleanup()
+
+    const withoutAlbumAdd = renderMusicPlayerView()
+
+    expect(() =>
+      fireEvent.click(withoutAlbumAdd.getByRole('button', {name: '앨범 추가'})),
+    ).not.toThrow()
+  })
+
+  it('should show audio levels and fallback labels for an absent current track', () => {
+    const idleResult = renderMusicPlayerView({currentTrack: null, levels: [25, 75]})
+    const idleLevels = idleResult.container.querySelectorAll('.pomo-level')
+    const summaryLabels = idleResult.container.querySelectorAll(
+      '.pomo-player__title .pomo-overflow-marquee',
+    )
+
+    expect(idleLevels).toHaveLength(2)
+    expect(idleLevels[0]?.getAttribute('style')).toContain('height: 25%')
+    expect(idleLevels[0]?.getAttribute('style')).toContain('opacity: 0.34')
+    expect(summaryLabels[0]?.textContent).toContain(m.player_fallback_title())
+    expect(summaryLabels[1]?.textContent).toContain(m.player_fallback_artist())
+
+    cleanup()
+
+    const playingResult = renderMusicPlayerView({isPlaying: true, levels: [50]})
+    const playingLevel = playingResult.container.querySelector('.pomo-level')
+
+    expect(playingLevel?.getAttribute('style')).toContain('height: 50%')
+    expect(playingLevel?.getAttribute('style')).toContain('opacity: 0.76')
   })
 
   it('should keep the collapsed player layers visually present but inactive', () => {

@@ -17,7 +17,7 @@ const findBreakIndex = (
   const preferredEnd = Math.min(preferredLength, characters.length)
 
   for (let index = preferredEnd; index >= minimumLength; index -= 1) {
-    if (BREAK_CHARACTER.test(characters[index - 1] ?? '')) {
+    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
       return index
     }
   }
@@ -25,7 +25,7 @@ const findBreakIndex = (
   const maximumEnd = Math.min(maximumLength, characters.length)
 
   for (let index = preferredEnd + 1; index <= maximumEnd; index += 1) {
-    if (BREAK_CHARACTER.test(characters[index - 1] ?? '')) {
+    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
       return index
     }
   }
@@ -51,11 +51,7 @@ const splitOversizedText = (
     remaining = remaining.slice(breakIndex)
   }
 
-  const finalChunk = remaining.join('').trim()
-
-  if (finalChunk.length > 0) {
-    chunks.push(finalChunk)
-  }
+  chunks.push(remaining.join('').trim())
 
   return chunks
 }
@@ -76,19 +72,16 @@ const packSentences = (
   let currentChunk = ''
 
   const flushCurrentChunk = () => {
-    if (currentChunk.length > 0) {
-      chunks.push(currentChunk)
-      currentChunk = ''
-    }
+    chunks.push(currentChunk)
+    currentChunk = ''
   }
 
   for (const sentence of sentences.flatMap((item) => splitOversizedText(item, policy))) {
     const candidate = currentChunk.length === 0 ? sentence : `${currentChunk} ${sentence}`
     const candidateLength = getCharacterLength(candidate)
     const shouldSplit = candidateLength > policy.recommendedLength
-    const exceedsMaximum = candidateLength > policy.maximumLength
 
-    if (currentChunk.length > 0 && (shouldSplit || exceedsMaximum)) {
+    if (currentChunk.length > 0 && shouldSplit) {
       flushCurrentChunk()
       currentChunk = sentence
     } else {

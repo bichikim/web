@@ -13,15 +13,19 @@ vi.mock('@apps-in-toss/web-framework', () => ({
 }))
 
 import {
+  clearStoredAppSession,
   createTossLoginSession,
+  readStoredAppSession,
   requestAccountLinkEmail,
   revokeTossLoginSession,
+  storeAppSession,
   validateAppSession,
 } from '../app-session'
 
 describe('app session lifecycle', () => {
   beforeEach(() => {
     vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    storageMocks.getItem.mockReset()
     storageMocks.removeItem.mockReset().mockResolvedValue(undefined)
     storageMocks.setItem.mockReset().mockResolvedValue(undefined)
     tossAuthMocks.login.mockReset()
@@ -40,6 +44,23 @@ describe('app session lifecycle', () => {
     await expect(validateAppSession('token')).resolves.toBe(false)
   })
 
+  it('should read, write, and clear the native session token', async () => {
+    storageMocks.getItem.mockResolvedValue('stored-token')
+
+    await expect(readStoredAppSession()).resolves.toBe('stored-token')
+    await expect(storeAppSession('next-token')).resolves.toBeUndefined()
+    await expect(clearStoredAppSession()).resolves.toBeUndefined()
+    expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:app-session:v1')
+    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'next-token')
+    expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:app-session:v1')
+  })
+
+  it('should accept a valid server session', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
+
+    await expect(validateAppSession('token')).resolves.toBe(true)
+  })
+
   it('should preserve the stored session when validation is unavailable', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 503})))
 
@@ -49,6 +70,13 @@ describe('app session lifecycle', () => {
 
   it('should clear an already invalid server session during logout', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 401})))
+
+    await expect(revokeTossLoginSession('token')).resolves.toBeUndefined()
+    expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:app-session:v1')
+  })
+
+  it('should revoke a valid server session before clearing storage', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
 
     await expect(revokeTossLoginSession('token')).resolves.toBeUndefined()
     expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:app-session:v1')
@@ -172,6 +200,14 @@ describe('app session lifecycle', () => {
     expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 
+  it('should rethrow unexpected Toss exchange failures', async () => {
+    const error = new Error('network failed')
+    tossAuthMocks.login.mockResolvedValue({authorizationCode: 'authorization', referrer: 'DEFAULT'})
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockRejectedValue(error))
+
+    await expect(createTossLoginSession()).rejects.toBe(error)
+  })
+
   it('should serialize an account-link email while preserving the status result', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -218,4 +254,23 @@ describe('app session lifecycle', () => {
       status: 'rate-limited',
     })
   })
+
+  it.each(['invalid', '1.5', '0'])(
+    'should reject the invalid retry delay %s',
+    async (retryAfter) => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(null, {headers: {'Retry-After': retryAfter}, status: 429}),
+          ),
+      )
+
+      await expect(requestAccountLinkEmail('token', 'user@example.com')).resolves.toEqual({
+        retryAfterSeconds: null,
+        status: 'rate-limited',
+      })
+    },
+  )
 })

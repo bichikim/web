@@ -72,10 +72,56 @@ describe('PScreenSaver', () => {
     expect(trackRegion.textContent).toContain('음악 일시 정지')
     expect(playbackIcon?.classList).toContain('i-tabler-player-pause')
 
-    fireEvent.pointerDown(dialog)
-    expect(onDismiss).toHaveBeenCalledOnce()
+    setIsActive(false)
     expect(close).toHaveBeenCalledOnce()
     expect((dialog as HTMLDialogElement).open).toBe(false)
+
+    setIsActive(true)
+    expect(showModal).toHaveBeenCalledTimes(2)
+
+    const cancelEvent = new Event('cancel', {bubbles: true, cancelable: true})
+    fireEvent(dialog, cancelEvent)
+    expect(cancelEvent.defaultPrevented).toBe(true)
+    expect(onDismiss).toHaveBeenCalledOnce()
+    expect(close).toHaveBeenCalledTimes(2)
+
+    fireEvent.pointerDown(dialog)
+    expect(onDismiss).toHaveBeenCalledTimes(2)
+    expect(close).toHaveBeenCalledTimes(2)
+    expect((dialog as HTMLDialogElement).open).toBe(false)
+  })
+
+  it('should not reopen an active dialog that remains open', () => {
+    const [isActive, setIsActive] = createSignal(false)
+    render(() => <PScreenSaver isActive={isActive()} />)
+    const dialog = screen.getByRole('dialog', {hidden: true})
+
+    setIsActive(true)
+    expect(showModal).toHaveBeenCalledOnce()
+    expect((dialog as HTMLDialogElement).open).toBe(true)
+
+    close.mockImplementationOnce(function keepDialogOpen(this: HTMLDialogElement) {
+      return this.open
+    })
+    setIsActive(false)
+    expect(close).toHaveBeenCalledOnce()
+    expect((dialog as HTMLDialogElement).open).toBe(true)
+
+    setIsActive(true)
+    expect(showModal).toHaveBeenCalledOnce()
+  })
+
+  it('should default a track to paused and tolerate dismissal while closed', () => {
+    render(() => <PScreenSaver track={{artist: 'rainymonday', title: 'Sunday Morning Coffee'}} />)
+    const dialog = screen.getByRole('dialog', {hidden: true})
+    const trackRegion = screen.getByRole('region', {hidden: true, name: '현재 음악'})
+    const playbackIcon = trackRegion.querySelector('.pomo-screen-saver__playback-icon')
+
+    expect(trackRegion.textContent).toContain('음악 일시 정지')
+    expect(playbackIcon?.classList).toContain('i-tabler-player-pause')
+
+    fireEvent.keyDown(dialog)
+    expect(close).not.toHaveBeenCalled()
   })
 
   it('should remain meaningful without presentation props', () => {

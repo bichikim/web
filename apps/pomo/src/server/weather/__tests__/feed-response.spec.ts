@@ -1,4 +1,4 @@
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {WeatherFeed} from 'src/features/weather'
 import {createWeatherFeedResponse} from '../feed-response'
@@ -27,6 +27,10 @@ const feed = {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.ingestWeatherCity.mockResolvedValue({status: 'completed'})
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 it('should reject a city outside the configured public feed contract', async () => {
@@ -185,4 +189,58 @@ it('should preserve outdated weather when a refresh failure is recorded', async 
     ...staleFeed,
     expiresAt: retryAfter.toISOString(),
   })
+})
+
+it('should preserve outdated weather briefly when refreshing throws', async () => {
+  const now = new Date('2026-08-22T00:50:00.000Z')
+  const staleFeed = {...feed, stale: true}
+  const error = new Error('database unavailable')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  mocks.getWeatherFeedState.mockResolvedValue({feed: staleFeed, status: 'outdated'})
+  mocks.ingestWeatherCity.mockRejectedValue(error)
+
+  const response = await createWeatherFeedResponse('seoul', now)
+
+  expect(response.status).toBe(200)
+  expect(response.headers.get('Cache-Control')).toBe('public, max-age=60, s-maxage=60')
+  await expect(response.json()).resolves.toEqual({
+    ...staleFeed,
+    expiresAt: '2026-08-22T00:51:00.000Z',
+  })
+  expect(mocks.getWeatherFeedState).toHaveBeenCalledTimes(1)
+  expect(consoleError).toHaveBeenCalledWith(
+    'Failed to refresh weather for seoul; serving outdated data.',
+    error,
+  )
+})
+
+it('should return unavailable when initial weather collection throws', async () => {
+  const now = new Date('2026-08-22T00:50:00.000Z')
+  const error = new Error('database unavailable')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  mocks.getWeatherFeedState.mockResolvedValue({status: 'missing'})
+  mocks.ingestWeatherCity.mockRejectedValue(error)
+
+  const response = await createWeatherFeedResponse('seoul', now)
+
+  expect(response.status).toBe(503)
+  expect(response.headers.get('Cache-Control')).toBe('no-store')
+  expect(response.headers.has('Retry-After')).toBe(false)
+  await expect(response.json()).resolves.toEqual({code: 'weather_unavailable'})
+  expect(consoleError).toHaveBeenCalledWith('Failed to collect initial weather for seoul.', error)
+})
+
+it('should preserve an unexpected ingestion status through the exhaustive fallback', async () => {
+  const now = new Date('2026-08-22T00:50:00.000Z')
+  const retryAfter = Object.assign(new Date('2026-08-22T00:50:05.000Z'), {
+    status: 'unexpected',
+  })
+  mocks.getWeatherFeedState.mockResolvedValue({status: 'missing'})
+  mocks.ingestWeatherCity.mockResolvedValue(retryAfter as never)
+
+  const response = await createWeatherFeedResponse('seoul', now)
+
+  expect(response.status).toBe(503)
+  expect(response.headers.get('Retry-After')).toBe('5')
+  await expect(response.json()).resolves.toEqual({code: 'weather_unavailable'})
 })

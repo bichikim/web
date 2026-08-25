@@ -1,4 +1,20 @@
-import {describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+
+const databaseMocks = vi.hoisted(() => ({getDatabase: vi.fn()}))
+const deletionMocks = vi.hoisted(() => ({
+  finalizeTrackDeletion: vi.fn(),
+  markTrackDeletionStorageDeleted: vi.fn(),
+  prepareTrackDeletion: vi.fn(),
+}))
+const storageMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
+
+vi.mock('../../database', async () => {
+  const actual = await vi.importActual<typeof import('../../database')>('../../database')
+
+  return {...actual, getDatabase: databaseMocks.getDatabase}
+})
+vi.mock('../track-deletion-repository', () => deletionMocks)
+vi.mock('../track-storage-deletion', () => storageMocks)
 
 import {
   runTrackDeletionMaintenance,
@@ -21,7 +37,62 @@ const createCandidate = (trackId: string, storageDeleted = true): TrackDeletionC
   trackId,
 })
 
+beforeEach(() => {
+  databaseMocks.getDatabase.mockReset()
+  deletionMocks.finalizeTrackDeletion.mockReset().mockResolvedValue(true)
+  deletionMocks.markTrackDeletionStorageDeleted.mockReset().mockResolvedValue(true)
+  deletionMocks.prepareTrackDeletion.mockReset().mockResolvedValue({})
+  storageMocks.deleteTrackAssetStorage.mockReset().mockResolvedValue(undefined)
+})
+
 describe('runTrackDeletionMaintenance', () => {
+  it('should use the default database repository to prepare and finish deletions', async () => {
+    const now = new Date('2026-08-25T09:00:00.000Z')
+    const staleLimit = vi.fn().mockResolvedValue([{trackId: 'stale-track'}])
+    const staleOrderBy = vi.fn(() => ({limit: staleLimit}))
+    const staleWhere = vi.fn(() => ({orderBy: staleOrderBy}))
+    const pendingLimit = vi.fn().mockResolvedValue([
+      {
+        objectKeys: ['tracks/track-1/asset/source.mp3', 'tracks/track-1/asset/preview.mp3'],
+        storageDeletedAt: null,
+        trackId: 'track-1',
+      },
+      {
+        objectKeys: ['tracks/track-2/asset/source.mp3'],
+        storageDeletedAt: new Date('2026-08-25T08:00:00.000Z'),
+        trackId: 'track-2',
+      },
+    ])
+    const pendingOrderBy = vi.fn(() => ({limit: pendingLimit}))
+    const select = vi
+      .fn()
+      .mockReturnValueOnce({from: vi.fn(() => ({where: staleWhere}))})
+      .mockReturnValueOnce({from: vi.fn(() => ({orderBy: pendingOrderBy}))})
+    databaseMocks.getDatabase.mockReturnValue({select})
+
+    await expect(runTrackDeletionMaintenance({now})).resolves.toEqual({
+      complete: true,
+      finalized: 2,
+    })
+    expect(databaseMocks.getDatabase).toHaveBeenCalledTimes(2)
+    expect(staleLimit).toHaveBeenCalledExactlyOnceWith(26)
+    expect(deletionMocks.prepareTrackDeletion).toHaveBeenCalledExactlyOnceWith('stale-track', {
+      staleBefore: new Date('2026-08-24T09:00:00.000Z'),
+    })
+    expect(pendingLimit).toHaveBeenCalledExactlyOnceWith(26)
+    expect(storageMocks.deleteTrackAssetStorage).toHaveBeenNthCalledWith(
+      1,
+      'tracks/track-1/asset/source.mp3',
+    )
+    expect(storageMocks.deleteTrackAssetStorage).toHaveBeenNthCalledWith(
+      2,
+      'tracks/track-1/asset/preview.mp3',
+    )
+    expect(deletionMocks.markTrackDeletionStorageDeleted).toHaveBeenCalledExactlyOnceWith('track-1')
+    expect(deletionMocks.finalizeTrackDeletion).toHaveBeenNthCalledWith(1, 'track-1')
+    expect(deletionMocks.finalizeTrackDeletion).toHaveBeenNthCalledWith(2, 'track-2')
+  })
+
   it('should finalize every eligible deletion and report complete', async () => {
     const repository = createRepository()
     vi.mocked(repository.listPending).mockResolvedValue([

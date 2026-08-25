@@ -5,6 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/PModal'
 import type {PSwitchProps} from 'src/components/PSwitch'
+import type {PomodoroTimerController, PomodoroTimerState} from 'src/features/pomodoro-timer'
 import breakStatusIcon from '../assets/pomodoro-status-icons/break.webp'
 import focusStatusIcon from '../assets/pomodoro-status-icons/focus.webp'
 import scribbleBreakStatusIcon from '../assets/pomodoro-status-icons/scribble/break.webp'
@@ -23,17 +24,22 @@ vi.mock('src/components/PModal', () => ({
   PModal: vi.fn(),
 }))
 vi.mock('src/components/PSwitch', () => ({
-  PSwitch: (props: PSwitchProps) => (
-    <label>
-      {props.label}
-      <input
-        checked={props.checked}
-        onChange={(event) => props.onChange(event.currentTarget.checked)}
-        role="switch"
-        type="checkbox"
-      />
-    </label>
-  ),
+  PSwitch: (props: PSwitchProps) => {
+    const initialChecked = props.checked
+
+    return (
+      <label class={props.class} data-initial-checked={initialChecked ? 'true' : 'false'}>
+        {props.label}
+        <span aria-hidden="true">{props.description}</span>
+        <input
+          checked={props.checked}
+          onChange={(event) => props.onChange(event.currentTarget.checked)}
+          role="switch"
+          type="checkbox"
+        />
+      </label>
+    )
+  },
 }))
 
 describe('PPomodoro', () => {
@@ -44,14 +50,27 @@ describe('PPomodoro', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-13T00:00:00.000Z'))
     vi.mocked(PModal).mockImplementation((props: PModalProps) => {
+      const initialFocusBeforeContent = props.getInitialFocus?.()
+
       return (
-        <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
+        <div
+          aria-label={props.title}
+          data-initial-focus={initialFocusBeforeContent === null ? 'none' : 'available'}
+          hidden={!props.isOpen}
+          role="dialog"
+        >
           <p>{props.description}</p>
           {props.children}
           <button onClick={() => props.getInitialFocus?.()?.focus()} type="button">
             최초 포커스 적용
           </button>
-          <button onClick={() => props.onOpenChange(false)} type="button">
+          <button
+            onClick={() => {
+              props.onOpenChange(false)
+              props.onCloseAutoFocus?.()
+            }}
+            type="button"
+          >
             닫기
           </button>
         </div>
@@ -176,6 +195,7 @@ describe('PPomodoro', () => {
 
     const dialog = screen.getByRole('dialog', {name: '포모도로'})
     expect(dialog.hidden).toBe(false)
+    expect(dialog.dataset.initialFocus).toBe('none')
     expect(screen.getByRole('switch', {name: '집중·휴식 자동 재생'})).toHaveProperty(
       'checked',
       false,
@@ -252,6 +272,7 @@ describe('PPomodoro', () => {
 
     fireEvent.click(screen.getByRole('button', {name: '닫기'}))
     expect(dialog.hidden).toBe(true)
+    expect(document.activeElement).toBe(timeTrigger)
   })
 
   it('should continuously play focus and break phases when automatic playback is enabled', async () => {
@@ -396,5 +417,45 @@ describe('PPomodoro', () => {
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
     expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'])
+  })
+
+  it('should preserve an unsupported runtime timer status for exhaustive diagnostics', async () => {
+    const invalidState = {
+      completedFocusSessions: 0,
+      phase: 'focus',
+      remainingSeconds: 1_500,
+      status: 'unsupported',
+    } as unknown as PomodoroTimerState
+    const noOperation = vi.fn()
+    vi.resetModules()
+    vi.doMock('src/features/pomodoro-timer', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('src/features/pomodoro-timer')>()
+      const controller = {
+        config: () => actual.POMODORO_TIMER_CONFIG,
+        isAutoStartEnabled: () => false,
+        onAutoStartChange: noOperation,
+        onConfigChange: noOperation,
+        onNextPhase: noOperation,
+        onPause: noOperation,
+        onReset: noOperation,
+        onStart: noOperation,
+        onStop: noOperation,
+        progress: () => 0,
+        remainingSeconds: () => 1_500,
+        state: () => invalidState,
+      } satisfies PomodoroTimerController
+
+      return {...actual, usePomodoroTimer: () => controller}
+    })
+
+    try {
+      const {PPomodoro: RuntimePomodoro} = await import('../PPomodoro')
+      const result = render(() => <RuntimePomodoro />)
+
+      expect(result.container.querySelector('[data-phase="focus"]')).toBeDefined()
+      result.unmount()
+    } finally {
+      vi.doUnmock('src/features/pomodoro-timer')
+    }
   })
 })

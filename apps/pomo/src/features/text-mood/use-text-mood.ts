@@ -109,8 +109,6 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
       case 'ready':
         return '모델이 준비됐어요. 문장을 입력해 분석해 보세요.'
     }
-
-    currentState satisfies never
   })
 
   const prepare = async () => {

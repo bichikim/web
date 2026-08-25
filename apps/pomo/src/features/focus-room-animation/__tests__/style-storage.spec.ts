@@ -86,6 +86,31 @@ it('should restore an Apps in Toss preference after browser storage is cleared',
   expect(localStorage.getItem('pomo:focus-room-scene-style:v1')).toBe('"original"')
 })
 
+it('should use the runtime default when native storage is empty or unavailable', async () => {
+  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.getItem.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('unavailable'))
+
+  await expect(readPSceneStyle()).resolves.toBe('original')
+  await expect(readPSceneStyle()).resolves.toBe('original')
+})
+
+it('should recover a browser choice when a native read fails', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  let rejectRead: (error: Error) => void = () => undefined
+  storageMocks.getItem.mockReturnValue(
+    new Promise((_resolve, reject) => {
+      rejectRead = reject
+    }),
+  )
+
+  const pendingRead = readPSceneStyle()
+  localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+  rejectRead(new Error('unavailable'))
+
+  await expect(pendingRead).resolves.toBe('scribble')
+})
+
 it('should preserve the latest choice while a native preference is loading', async () => {
   vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
@@ -103,6 +128,25 @@ it('should preserve the latest choice while a native preference is loading', asy
 
   expect(await pendingRead).toBe('scribble')
   expect(localStorage.getItem('pomo:focus-room-scene-style:v1')).toBe('"scribble"')
+})
+
+it('should use the default when a newer choice is no longer readable', async () => {
+  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  let completeRead: (value: string) => void = () => undefined
+  storageMocks.getItem.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  storageMocks.setItem.mockResolvedValue()
+
+  const pendingRead = readPSceneStyle()
+  await writePSceneStyle('scribble')
+  localStorage.clear()
+  completeRead('"original"')
+
+  await expect(pendingRead).resolves.toBe('original')
 })
 
 it('should preserve native write order during rapid preference changes', async () => {

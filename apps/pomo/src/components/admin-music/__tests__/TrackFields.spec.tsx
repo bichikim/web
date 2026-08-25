@@ -35,6 +35,17 @@ afterEach(() => {
 })
 
 describe('TrackFields', () => {
+  it('should update manually entered title and artist values', () => {
+    renderFields()
+    fireEvent.click(screen.getByLabelText('MP3 정보로 제목·아티스트 채우기'))
+
+    fireEvent.input(getInput('곡명'), {target: {value: '새 제목'}})
+    fireEvent.input(getInput('아티스트'), {target: {value: '새 아티스트'}})
+
+    expect(getInput('곡명').value).toBe('새 제목')
+    expect(getInput('아티스트').value).toBe('새 아티스트')
+  })
+
   it('should fill the title and artist from selected MP3 metadata by default', async () => {
     metadataMocks.readTrackMetadata.mockResolvedValue({artist: '태그 아티스트', title: '태그 제목'})
     renderFields()

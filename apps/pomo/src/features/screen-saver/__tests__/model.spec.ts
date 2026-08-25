@@ -14,4 +14,8 @@ describe('getScreenSaverDelayMilliseconds', () => {
     expect(getScreenSaverDelayMilliseconds('20m')).toBe(1_200_000)
     expect(getScreenSaverDelayMilliseconds('1h')).toBe(3_600_000)
   })
+
+  it('should preserve runtime exhaustiveness for an unknown preference', () => {
+    expect(getScreenSaverDelayMilliseconds('future' as never)).toBe('future')
+  })
 })

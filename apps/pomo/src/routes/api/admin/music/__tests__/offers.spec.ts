@@ -21,6 +21,13 @@ const createRequest = (): Request =>
     method: 'POST',
   })
 
+const createRequestWithBody = (body: string): Request =>
+  new Request('https://www.pomofi.io/api/admin/music/offers', {
+    body,
+    headers: {'Content-Type': 'application/json'},
+    method: 'POST',
+  })
+
 describe('admin music offer route', () => {
   beforeEach(() => {
     authMocks.authorizeAdminRequest.mockReset().mockResolvedValue({authorized: true, cookies: []})
@@ -68,5 +75,58 @@ describe('admin music offer route', () => {
     const response = await invokeApiRoute(POST, createRequest())
 
     expect(response.status).toBe(409)
+  })
+
+  it('should return the authorization response for a non-administrator', async () => {
+    const authorizationResponse = new Response(null, {status: 401})
+    authMocks.authorizeAdminRequest.mockResolvedValue({
+      authorized: false,
+      response: authorizationResponse,
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(401)
+    expect(repositoryMocks.connectAlbumOffer).not.toHaveBeenCalled()
+  })
+
+  it('should reject invalid and oversized request bodies', async () => {
+    const invalidResponse = await invokeApiRoute(
+      POST,
+      createRequestWithBody(JSON.stringify({provider: 'unknown'})),
+    )
+    const oversizedResponse = await invokeApiRoute(POST, createRequestWithBody('x'.repeat(8193)))
+
+    expect(invalidResponse.status).toBe(400)
+    await expect(invalidResponse.json()).resolves.toEqual({error: 'invalid_request'})
+    expect(oversizedResponse.status).toBe(413)
+    await expect(oversizedResponse.json()).resolves.toEqual({error: 'invalid_request'})
+    expect(repositoryMocks.connectAlbumOffer).not.toHaveBeenCalled()
+  })
+
+  it('should report a missing album', async () => {
+    repositoryMocks.connectAlbumOffer.mockResolvedValue({
+      code: 'album_not_found',
+      success: false,
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(404)
+  })
+
+  it('should hide repository failures behind a stable server error', async () => {
+    const error = new Error('database unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    repositoryMocks.connectAlbumOffer.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(500)
+    await expect(response.json()).resolves.toEqual({error: 'offer_connection_failed'})
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to connect a commerce offer to an album',
+      error,
+    )
   })
 })

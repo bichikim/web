@@ -122,9 +122,7 @@ export const RandomEventSettings = () => {
     pendingInterval = null
 
     if (nextInterval !== null) {
-      saveSettings({...untrack(settings), ...nextInterval}).catch((error: unknown) => {
-        console.error('Unexpected random event interval flush failure.', error)
-      })
+      saveSettings({...untrack(settings), ...nextInterval})
     }
   })
 
@@ -145,9 +143,7 @@ export const RandomEventSettings = () => {
     pendingInterval = nextInterval
     const timeoutId = window.setTimeout(() => {
       pendingInterval = null
-      saveSettings({...untrack(settings), ...nextInterval}).catch((error: unknown) => {
-        console.error('Unexpected random event interval update failure.', error)
-      })
+      saveSettings({...untrack(settings), ...nextInterval})
     }, SAVE_DEBOUNCE_MILLISECONDS)
 
     onCleanup(() => window.clearTimeout(timeoutId))

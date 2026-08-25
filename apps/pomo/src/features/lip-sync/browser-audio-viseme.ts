@@ -47,7 +47,7 @@ const VISEME_BY_PROFILE_NAME = {
 
 const decodeProfile = () => {
   const binary = atob(PROFILE_BASE64)
-  const bytes = Uint8Array.from(binary, (character) => character.codePointAt(0) ?? 0)
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0))
   return bytes.buffer
 }
 

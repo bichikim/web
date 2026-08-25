@@ -4,6 +4,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
   DEFAULT_RANDOM_EVENT_SETTINGS,
+  parseRandomEventSettings,
   readRandomEventSettings,
   writeRandomEventSettings,
 } from '../random-event-settings'
@@ -30,6 +31,13 @@ it('should use ten-to-twenty minute defaults', async () => {
   expect(await readRandomEventSettings()).toEqual(DEFAULT_RANDOM_EVENT_SETTINGS)
 })
 
+it('should parse valid settings and reject invalid shapes', () => {
+  const settings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+
+  expect(parseRandomEventSettings(settings)).toEqual(settings)
+  expect(parseRandomEventSettings({...settings, minimumMinutes: 9})).toBeNull()
+})
+
 it('should persist and restore browser settings', async () => {
   const settings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
 
@@ -46,6 +54,31 @@ it('should restore native settings when the browser copy is unavailable', async 
 
   expect(await readRandomEventSettings()).toEqual(settings)
   expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(settings)
+})
+
+it('should use defaults when native settings are empty or unreadable', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.getItem.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('unavailable'))
+
+  await expect(readRandomEventSettings()).resolves.toEqual(DEFAULT_RANDOM_EVENT_SETTINGS)
+  await expect(readRandomEventSettings()).resolves.toEqual(DEFAULT_RANDOM_EVENT_SETTINGS)
+})
+
+it('should recover the newest browser copy when a native read fails', async () => {
+  const settings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  let rejectRead: (error: Error) => void = () => undefined
+  storageMocks.getItem.mockReturnValue(
+    new Promise((_resolve, reject) => {
+      rejectRead = reject
+    }),
+  )
+
+  const pendingRead = readRandomEventSettings()
+  localStorage.setItem('pomo:random-event-settings:v1', JSON.stringify(settings))
+  rejectRead(new Error('native read unavailable'))
+
+  await expect(pendingRead).resolves.toEqual(settings)
 })
 
 it('should reject an invalid interval before saving', async () => {

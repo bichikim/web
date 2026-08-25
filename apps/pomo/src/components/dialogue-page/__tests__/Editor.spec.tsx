@@ -12,6 +12,12 @@ import {
   usePDialogueEditor,
   usePEvents,
 } from '../../../features/focus-room-dialogue'
+import {
+  type ModelDownloadController,
+  type ModelDownloadResult,
+  type ModelDownloadState,
+  useModelDownload,
+} from '../../../features/model-download'
 import {formatModelDownloadSize} from '../../../features/model-storage'
 import {getSupertonicModel, isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {getPrimaryMood} from '../../../features/text-mood'
@@ -27,23 +33,19 @@ vi.mock('../../../features/focus-room-dialogue', () => ({
   usePDialogueEditor: vi.fn(),
   usePEvents: vi.fn(),
 }))
+vi.mock('../../../features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('../../../features/model-storage', () => ({formatModelDownloadSize: vi.fn()}))
-vi.mock('../../../features/supertonic', () => ({
-  getSupertonicModel: vi.fn(),
-  isSupertonicModelDownloaded: vi.fn(),
-  SUPERTONIC_LANGUAGE_OPTIONS: [
-    {label: '한국어', value: 'ko'},
-    {label: '영어', value: 'en'},
-  ],
-  SUPERTONIC_MODELS: [
-    {id: 'full', label: 'Full'},
-    {id: 'int8', label: 'INT8'},
-  ],
-  SUPERTONIC_VOICES: [
-    {id: 'Yuna', label: 'Yuna'},
-    {id: 'F1', label: 'Sarah'},
-  ],
-}))
+vi.mock('../../../features/supertonic', async () => {
+  const actual: typeof import('../../../features/supertonic') = await vi.importActual(
+    '../../../features/supertonic',
+  )
+
+  return {
+    ...actual,
+    getSupertonicModel: vi.fn(),
+    isSupertonicModelDownloaded: vi.fn(),
+  }
+})
 vi.mock('../../../features/text-mood', () => ({getPrimaryMood: vi.fn()}))
 vi.mock('../DraftGenerator', () => ({default: vi.fn()}))
 vi.mock('../../PFaceIcon', () => ({PFaceIcon: vi.fn()}))
@@ -86,6 +88,15 @@ interface EditorHarness {
 
 const navigate = vi.fn()
 const refreshDialogues = vi.fn().mockResolvedValue(undefined)
+
+const createModelDownload = (): ModelDownloadController => ({
+  cancel: vi.fn(),
+  dismissError: vi.fn(),
+  dispose: vi.fn(),
+  startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
+  startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
+  state: () => ({status: 'idle'}),
+})
 
 const createEditorHarness = (): EditorHarness => {
   const [audioUrl, setAudioUrl] = createSignal<string | null>(null)
@@ -173,6 +184,7 @@ beforeEach(() => {
   vi.mocked(useNavigate).mockReturnValue(navigate)
   vi.mocked(usePEvents).mockReturnValue({refreshDialogues} as never)
   vi.mocked(usePSceneStyle).mockReturnValue({sceneStyle: () => 'scribble'} as never)
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownload())
   vi.mocked(formatModelDownloadSize).mockReturnValue('123 MB')
   vi.mocked(getSupertonicModel).mockReturnValue({size: 123} as never)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
@@ -224,7 +236,7 @@ describe('PDialogueEditor fields', () => {
     renderEditor(harness)
 
     expect(screen.getByRole('heading', {name: '새 대화 만들기'})).toBeInTheDocument()
-    expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/ko/')
     expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
     expect(screen.getByText('13 / 3000')).toBeInTheDocument()
     expect(screen.getByTestId('download-consent')).toHaveAttribute('data-download-size', '123 MB')
@@ -305,6 +317,8 @@ describe('PDialogueEditor audio generation', () => {
 
   it('should generate with a downloaded model and request consent otherwise', async () => {
     const harness = createEditorHarness()
+    const modelDownload = createModelDownload()
+    vi.mocked(useModelDownload).mockReturnValue(modelDownload)
     vi.mocked(isSupertonicModelDownloaded)
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false)
@@ -320,17 +334,11 @@ describe('PDialogueEditor audio generation', () => {
     fireEvent.click(screen.getByRole('button', {name: '다운로드 취소'}))
     expect(screen.queryByRole('button', {name: '다운로드 취소'})).not.toBeInTheDocument()
 
-    vi.mocked(harness.controller.generate).mockRejectedValueOnce(new Error('generate failed'))
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     fireEvent.click(getGenerateButton())
     await waitFor(() => expect(screen.getByRole('button', {name: '다운로드 확인'})).toBeVisible())
     fireEvent.click(screen.getByRole('button', {name: '다운로드 확인'}))
-    await waitFor(() =>
-      expect(consoleError).toHaveBeenCalledWith(
-        'Failed to generate confirmed dialogue audio.',
-        expect.any(Error),
-      ),
-    )
+    await waitFor(() => expect(harness.controller.generate).toHaveBeenCalledTimes(2))
+    expect(modelDownload.startVoiceModel).toHaveBeenCalledWith('full')
   })
 
   it('should stop after disposal during the model availability check', async () => {
@@ -350,6 +358,91 @@ describe('PDialogueEditor audio generation', () => {
     await Promise.resolve()
 
     expect(harness.controller.generate).not.toHaveBeenCalled()
+  })
+
+  it('should show matching audio download progress while ignoring unrelated targets', () => {
+    const [downloadState, setDownloadState] = createSignal<ModelDownloadState>({
+      label: '다른 음성 모델',
+      percentage: 42,
+      status: 'loading',
+      target: {kind: 'voice', modelId: 'int8'},
+    })
+    const modelDownload = createModelDownload()
+    vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
+    const harness = createEditorHarness()
+    renderEditor(harness)
+
+    expect(screen.getByTestId('generation-status')).toHaveTextContent('준비됨')
+    expect(screen.getByTestId('generation-status')).toHaveAttribute('data-progress', 'none')
+
+    setDownloadState({
+      label: '텍스트 모델',
+      percentage: 42,
+      status: 'loading',
+      target: {kind: 'text', modelId: 'gemma-4-e2b'},
+    })
+    expect(screen.getByTestId('generation-status')).toHaveTextContent('준비됨')
+
+    setDownloadState({
+      label: '선택한 음성 모델',
+      percentage: 42,
+      status: 'loading',
+      target: {kind: 'voice', modelId: 'full'},
+    })
+    expect(screen.getByTestId('generation-status')).toHaveTextContent(
+      '음성 모델 파일을 백그라운드에서 내려받고 있어요.',
+    )
+    expect(screen.getByTestId('generation-status')).toHaveAttribute('data-progress', '42')
+  })
+
+  it('should report audio download errors and ignore a download completing after disposal', async () => {
+    const modelDownload = createModelDownload()
+    vi.mocked(modelDownload.startVoiceModel).mockResolvedValue({
+      message: '음성 모델을 내려받지 못했어요.',
+      status: 'error',
+    })
+    vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+    vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+    const errorHarness = createEditorHarness()
+    const errorView = renderEditor(errorHarness)
+
+    fireEvent.click(getGenerateButton())
+    await waitFor(() => expect(screen.getByRole('button', {name: '다운로드 확인'})).toBeVisible())
+    fireEvent.click(screen.getByRole('button', {name: '다운로드 확인'}))
+    await waitFor(() =>
+      expect(screen.getByTestId('generation-status')).toHaveTextContent(
+        '음성 모델을 내려받지 못했어요.',
+      ),
+    )
+    errorView.unmount()
+
+    vi.mocked(modelDownload.startVoiceModel).mockResolvedValueOnce({status: 'cancelled'})
+    const cancelledHarness = createEditorHarness()
+    const cancelledView = renderEditor(cancelledHarness)
+    fireEvent.click(getGenerateButton())
+    await waitFor(() => expect(screen.getByRole('button', {name: '다운로드 확인'})).toBeVisible())
+    fireEvent.click(screen.getByRole('button', {name: '다운로드 확인'}))
+    await waitFor(() => expect(screen.getByTestId('generation-status')).toHaveTextContent('준비됨'))
+    cancelledView.unmount()
+
+    let resolveDownload: ((result: ModelDownloadResult) => void) | undefined
+    vi.mocked(modelDownload.startVoiceModel).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveDownload = resolve
+        }),
+    )
+    const disposedHarness = createEditorHarness()
+    const disposedView = renderEditor(disposedHarness)
+
+    fireEvent.click(getGenerateButton())
+    await waitFor(() => expect(screen.getByRole('button', {name: '다운로드 확인'})).toBeVisible())
+    fireEvent.click(screen.getByRole('button', {name: '다운로드 확인'}))
+    disposedView.unmount()
+    resolveDownload?.({status: 'complete'})
+    await Promise.resolve()
+
+    expect(disposedHarness.controller.generate).not.toHaveBeenCalled()
   })
 })
 

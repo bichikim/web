@@ -27,6 +27,7 @@ vi.mock('src/features/supertonic', async () => {
 })
 
 import {usePFeedContext} from 'src/features/focus-room-feed'
+import {type ModelDownloadRuntime, PModelDownloadProvider} from 'src/features/model-download'
 import {isSupertonicModelDownloaded} from 'src/features/supertonic'
 import {PFeedStatus} from '../PFeedStatus'
 
@@ -43,8 +44,20 @@ it('should ignore a duplicated retry request while model availability is still c
     recoveryJobs: () => [{modelId: 'full'}],
     retryRecovery: vi.fn(async () => undefined),
   } as never)
+  const runtime: ModelDownloadRuntime = {
+    createTextClient: () => {
+      throw new Error('텍스트 모델 client를 만들면 안 됩니다.')
+    },
+    createVoiceClient: () => {
+      throw new Error('음성 모델 client를 만들면 안 됩니다.')
+    },
+  }
 
-  render(() => <PFeedStatus />)
+  render(() => (
+    <PModelDownloadProvider runtime={runtime}>
+      <PFeedStatus />
+    </PModelDownloadProvider>
+  ))
   const retry = mocks.onPresses[0]!
   const button = document.createElement('button')
 

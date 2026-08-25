@@ -38,6 +38,7 @@ describe('useScreenSaver', () => {
   })
 
   afterEach(() => {
+    Reflect.deleteProperty(document, 'visibilityState')
     vi.useRealTimers()
   })
 
@@ -154,5 +155,97 @@ describe('useScreenSaver', () => {
     await Promise.resolve()
 
     expect(controller?.delay()).toBe('off')
+  })
+
+  it('should throttle repeated activity while inactive without delaying the next activation', async () => {
+    let controller: ScreenSaverController | undefined
+
+    render(() => (
+      <ScreenSaverHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+    await Promise.resolve()
+
+    controller?.onDismiss()
+    controller?.onDismiss()
+    vi.advanceTimersByTime(60_000)
+
+    expect(controller?.isActive()).toBe(true)
+  })
+
+  it('should keep the session preference when storage reads and writes reject', async () => {
+    preferenceMocks.read.mockRejectedValue(new Error('read failed'))
+    preferenceMocks.write.mockRejectedValue(new Error('write failed'))
+    let controller: ScreenSaverController | undefined
+
+    render(() => (
+      <ScreenSaverHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+    await Promise.resolve()
+
+    controller?.onDelayChange('1h')
+    await Promise.resolve()
+
+    expect(controller?.delay()).toBe('1h')
+    expect(preferenceMocks.write).toHaveBeenCalledWith('1h')
+  })
+
+  it('should not overwrite a newer session preference with a delayed stored value', async () => {
+    let completeRead: (delay: '1m') => void = () => undefined
+    preferenceMocks.read.mockReturnValue(
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+    )
+    let controller: ScreenSaverController | undefined
+
+    render(() => (
+      <ScreenSaverHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+    controller?.onDelayChange('1h')
+    completeRead('1m')
+    await Promise.resolve()
+
+    expect(controller?.delay()).toBe('1h')
+  })
+
+  it('should pause while hidden and restart the delay whenever the document becomes visible', async () => {
+    Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'hidden'})
+    let controller: ScreenSaverController | undefined
+
+    render(() => (
+      <ScreenSaverHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+    await Promise.resolve()
+    vi.advanceTimersByTime(60_000)
+    expect(controller?.isActive()).toBe(false)
+
+    Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'visible'})
+    document.dispatchEvent(new Event('visibilitychange'))
+    vi.advanceTimersByTime(60_000)
+    expect(controller?.isActive()).toBe(true)
+
+    Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'hidden'})
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(controller?.isActive()).toBe(false)
   })
 })

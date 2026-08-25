@@ -70,6 +70,8 @@ export interface DialogueWriterController {
   readonly statusMessage: Accessor<string>
 }
 
+type AssertNever<Value extends never> = Value
+
 const DEFAULT_RUNTIME: DialogueWriterRuntime = {createClient: createDialogueClient, supportsWebGpu}
 
 const isDialogueBusy = (state: DialogueWriterState) => {
@@ -85,7 +87,7 @@ const isDialogueBusy = (state: DialogueWriterState) => {
       return false
   }
 
-  state satisfies never
+  type ExhaustiveState = AssertNever<typeof state>
 }
 
 const isDialogueModelReady = (state: DialogueWriterState) => {
@@ -102,7 +104,7 @@ const isDialogueModelReady = (state: DialogueWriterState) => {
       return false
   }
 
-  state satisfies never
+  type ExhaustiveState = AssertNever<typeof state>
 }
 
 export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriterController => {
@@ -156,7 +158,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
         return '이 브라우저에서는 WebGPU를 사용할 수 없어요. 최신 Chrome 또는 Edge에서 열어 주세요.'
     }
 
-    currentState satisfies never
+    type ExhaustiveState = AssertNever<typeof currentState>
   })
 
   const handleResponse = (response: DialogueWorkerResponse) => {
@@ -198,7 +200,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
         return
     }
 
-    response satisfies never
+    type ExhaustiveResponse = AssertNever<typeof response>
   }
 
   const clientOwner = createLazyClient(() =>

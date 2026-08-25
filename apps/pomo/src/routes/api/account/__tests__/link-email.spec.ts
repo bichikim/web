@@ -59,6 +59,34 @@ describe('account link email route', () => {
     expect(emailMocks.sendAccountLinkEmail).not.toHaveBeenCalled()
   })
 
+  it('should require an authenticated app session', async () => {
+    authMocks.authenticateAppRequest.mockResolvedValue(null)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({error: 'unauthorized'})
+    expect(repositoryMocks.createAccountLinkChallenge).not.toHaveBeenCalled()
+  })
+
+  it('should reject invalid and oversized email requests', async () => {
+    const createRequestWithBody = (body: string) =>
+      new Request('https://www.pomofi.io/api/account/link-email', {
+        body,
+        headers: {'Content-Type': 'application/json'},
+        method: 'POST',
+      })
+    const invalidResponse = await invokeApiRoute(
+      POST,
+      createRequestWithBody(JSON.stringify({email: 'invalid'})),
+    )
+    const oversizedResponse = await invokeApiRoute(POST, createRequestWithBody('x'.repeat(4097)))
+
+    expect(invalidResponse.status).toBe(400)
+    expect(oversizedResponse.status).toBe(413)
+    expect(repositoryMocks.createAccountLinkChallenge).not.toHaveBeenCalled()
+  })
+
   it('should bind a new challenge to the requested email', async () => {
     const response = await invokeApiRoute(POST, createRequest())
 

@@ -32,7 +32,7 @@ export const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
       placeholder={props.dialogues.length === 0 ? '대화 없음' : '대화 선택'}
       selectionLabel={(selectedOptions) => {
         return selectedOptions.length === 1
-          ? (selectedOptions[0]?.label ?? '대화 선택')
+          ? selectedOptions[0]!.label
           : `${selectedOptions.length}개 대화 연결됨`
       }}
       value={props.selectedDialogueIds}

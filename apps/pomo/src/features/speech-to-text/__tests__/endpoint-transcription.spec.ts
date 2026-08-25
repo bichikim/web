@@ -80,4 +80,124 @@ describe('createEndpointTranscription', () => {
       ok: false,
     })
   })
+
+  it('should ignore another speech boundary while a segment capture is pending', async () => {
+    const segment = createDeferred<ReturnType<typeof successResult<Float32Array>>>()
+    let onSpeechEnd: () => void = () => undefined
+    const recording: SpeechRecording = {
+      cancel: vi.fn(),
+      onSpeechEnd: (handler) => {
+        onSpeechEnd = handler
+        return vi.fn()
+      },
+      stop: vi.fn(async () => successResult(Float32Array.of(2))),
+      takeSegment: vi.fn(() => segment.promise),
+    }
+    const transcribeAudio = vi.fn(async () => undefined)
+    const endpoint = createEndpointTranscription({
+      isDisposed: () => false,
+      onCaptureFailure: vi.fn(),
+      onUnexpectedError: vi.fn(),
+      transcribeAudio,
+    })
+
+    endpoint.start(recording)
+    onSpeechEnd()
+    onSpeechEnd()
+
+    expect(recording.takeSegment).toHaveBeenCalledOnce()
+    segment.resolve(successResult(Float32Array.of(1)))
+    await vi.waitFor(() => expect(transcribeAudio).toHaveBeenCalledOnce())
+  })
+
+  it('should cancel stop when disposed while waiting for a segment', async () => {
+    const segment = createDeferred<ReturnType<typeof successResult<Float32Array>>>()
+    let onSpeechEnd: () => void = () => undefined
+    const unsubscribe = vi.fn()
+    const recording: SpeechRecording = {
+      cancel: vi.fn(),
+      onSpeechEnd: (handler) => {
+        onSpeechEnd = handler
+        return unsubscribe
+      },
+      stop: vi.fn(async () => successResult(Float32Array.of(2))),
+      takeSegment: vi.fn(() => segment.promise),
+    }
+    const endpoint = createEndpointTranscription({
+      isDisposed: () => false,
+      onCaptureFailure: vi.fn(),
+      onUnexpectedError: vi.fn(),
+      transcribeAudio: vi.fn(async () => undefined),
+    })
+
+    endpoint.start(recording)
+    onSpeechEnd()
+    const stop = endpoint.stop(recording)
+    endpoint.dispose()
+    segment.resolve(successResult(Float32Array.of(1)))
+
+    await expect(stop).resolves.toEqual({
+      error: {code: 'capture-cancelled', retryable: true},
+      ok: false,
+    })
+    expect(unsubscribe).toHaveBeenCalledOnce()
+    expect(recording.stop).not.toHaveBeenCalled()
+  })
+
+  it('should report a segment exception and return a final capture failure', async () => {
+    const segmentError = new Error('segment failed')
+    const finalFailure = failureResult({code: 'capture-failed' as const, retryable: true})
+    let onSpeechEnd: () => void = () => undefined
+    const recording: SpeechRecording = {
+      cancel: vi.fn(),
+      onSpeechEnd: (handler) => {
+        onSpeechEnd = handler
+        return vi.fn()
+      },
+      stop: vi.fn(async () => finalFailure),
+      takeSegment: vi.fn(async () => {
+        throw segmentError
+      }),
+    }
+    const onUnexpectedError = vi.fn()
+    const transcribeAudio = vi.fn(async () => undefined)
+    const endpoint = createEndpointTranscription({
+      isDisposed: () => false,
+      onCaptureFailure: vi.fn(),
+      onUnexpectedError,
+      transcribeAudio,
+    })
+
+    endpoint.start(recording)
+    onSpeechEnd()
+
+    await expect(endpoint.stop(recording)).resolves.toEqual(finalFailure)
+    expect(onUnexpectedError).toHaveBeenCalledWith(segmentError)
+    expect(transcribeAudio).not.toHaveBeenCalled()
+  })
+
+  it('should report a transcription exception and still return captured audio', async () => {
+    const audio = Float32Array.of(1)
+    const transcriptionError = new Error('transcription failed')
+    const recording: SpeechRecording = {
+      cancel: vi.fn(),
+      onSpeechEnd: vi.fn(() => vi.fn()),
+      stop: vi.fn(async () => successResult(audio)),
+      takeSegment: vi.fn(async () => successResult(Float32Array.of(2))),
+    }
+    const onUnexpectedError = vi.fn()
+    const endpoint = createEndpointTranscription({
+      isDisposed: () => false,
+      onCaptureFailure: vi.fn(),
+      onUnexpectedError,
+      transcribeAudio: vi.fn(async () => {
+        throw transcriptionError
+      }),
+    })
+
+    endpoint.start(recording)
+
+    await expect(endpoint.stop(recording)).resolves.toEqual({ok: true, value: audio})
+    expect(onUnexpectedError).toHaveBeenCalledWith(transcriptionError)
+  })
 })

@@ -1,12 +1,20 @@
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   type ClientErrorContext,
   type ClientErrorEvent,
+  createClientErrorId,
   createClientErrorReporter,
   normalizeClientError,
   normalizeClientErrorUrl,
+  reportClientError,
 } from 'src/features/client-error-reporter'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+})
 
 const CONTEXT = {
   environment: 'test',
@@ -96,6 +104,47 @@ describe('normalizeClientError', () => {
       name: 'Error',
     })
   })
+
+  it('should truncate long safe fields and omit a stack without frames', () => {
+    const code = 'c'.repeat(81)
+    const message = 'm'.repeat(501)
+    const phase = 'p'.repeat(81)
+
+    expect(
+      normalizeClientError({
+        code,
+        message,
+        name: ' ',
+        phase,
+        stack: 'Error: hidden\nnot a stack frame',
+      }),
+    ).toEqual({
+      code: `${code.slice(0, 80)}…`,
+      message: `${message.slice(0, 500)}…`,
+      name: 'Error',
+      phase: `${phase.slice(0, 80)}…`,
+    })
+  })
+
+  it('should tolerate inaccessible properties and normalize null rejections', () => {
+    const inaccessible = new Proxy(
+      {},
+      {
+        get: () => {
+          throw new Error('property access failed')
+        },
+      },
+    )
+
+    expect(normalizeClientError(inaccessible)).toEqual({
+      message: 'No error message',
+      name: 'Error',
+    })
+    expect(normalizeClientError(null)).toEqual({
+      message: '[Non-Error value omitted] (null)',
+      name: 'NonErrorRejection',
+    })
+  })
 })
 
 describe('normalizeClientErrorUrl', () => {
@@ -108,6 +157,26 @@ describe('normalizeClientErrorUrl', () => {
     expect(normalizeClientErrorUrl('https://feed.example/users/private-feed?q=secret')).toBe(
       'https://feed.example/other',
     )
+    expect(normalizeClientErrorUrl('https://www.pomofi.io/assets/application.js')).toBe(
+      'https://www.pomofi.io/assets/*',
+    )
+    expect(normalizeClientErrorUrl('https://www.pomofi.io/_build/server.js')).toBe(
+      'https://www.pomofi.io/_build/*',
+    )
+    expect(normalizeClientErrorUrl('not a URL')).toBe('[REDACTED]')
+  })
+})
+
+describe('createClientErrorId', () => {
+  it('should create a fallback identifier when browser crypto is unavailable', () => {
+    vi.stubGlobal('crypto', {
+      getRandomValues: () => {
+        throw new Error('crypto unavailable')
+      },
+    })
+    vi.spyOn(Date, 'now').mockReturnValue(1_000)
+
+    expect(createClientErrorId()).toMatch(/^POMO-RS[0-9A-Z]+$/u)
   })
 })
 
@@ -262,5 +331,53 @@ describe('createClientErrorReporter', () => {
     ).not.toThrow()
     await Promise.resolve()
     await Promise.resolve()
+  })
+})
+
+describe('reportClientError', () => {
+  it('should use browser build context and log local development diagnostics only', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.stubEnv('DEV', true)
+    vi.stubEnv('MODE', undefined)
+    vi.stubEnv('POMO_ENVIRONMENT', undefined)
+    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+    vi.stubEnv('POMO_RELEASE', undefined)
+
+    expect(
+      reportClientError(new Error('development failure'), {
+        feature: 'application',
+        source: 'direct',
+      }),
+    ).toMatch(/^POMO-/u)
+    expect(consoleError).toHaveBeenCalledWith(
+      '[Pomofi client error]',
+      expect.objectContaining({
+        environment: 'unknown',
+        platform: 'apps-in-toss',
+        release: 'local',
+        route: {
+          origin: window.location.origin,
+          template: '/',
+        },
+      }),
+    )
+
+    consoleError.mockClear()
+    vi.stubEnv('MODE', 'test')
+    reportClientError(new Error('test failure'), {feature: 'application', source: 'direct'})
+    expect(consoleError).not.toHaveBeenCalled()
+
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('MODE', 'development')
+    reportClientError(new Error('production failure'), {
+      feature: 'application',
+      source: 'direct',
+    })
+    expect(consoleError).not.toHaveBeenCalled()
+
+    vi.stubEnv('DEV', true)
+    vi.stubGlobal('window', undefined)
+    reportClientError(new Error('server failure'), {feature: 'application', source: 'direct'})
+    expect(consoleError).not.toHaveBeenCalled()
   })
 })

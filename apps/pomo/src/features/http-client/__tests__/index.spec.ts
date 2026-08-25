@@ -34,6 +34,28 @@ it('should not retry a payload request without an idempotency contract', async (
   expect(fetchMock).toHaveBeenCalledOnce()
 })
 
+it('should preserve a URL payload request body', async () => {
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await httpFetch(new URL('https://pomo.example/resource'), {body: 'payload', method: 'POST'})
+
+  expect(fetchMock).toHaveBeenCalledOnce()
+  expect(fetchMock).toHaveBeenCalledWith(
+    'https://pomo.example/resource',
+    expect.objectContaining({body: 'payload', method: 'POST'}),
+  )
+})
+
+it('should infer an idempotent method from a Request input', async () => {
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await httpFetch(new Request('https://pomo.example/resource', {method: 'HEAD'}))
+
+  expect(fetchMock).toHaveBeenCalledOnce()
+})
+
 it('should preserve the native abort error contract', async () => {
   const abortError = new DOMException('The operation was aborted.', 'AbortError')
   vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockRejectedValue(abortError))

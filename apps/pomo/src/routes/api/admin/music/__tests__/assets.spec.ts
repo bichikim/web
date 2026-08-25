@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({
@@ -31,6 +31,12 @@ const OBJECT_KEY = `tracks/${TRACK_ID}/${ASSET_ID}/source.mp3`
 const createRequest = (method: 'POST' | 'PUT', body: Readonly<Record<string, string>>): Request =>
   new Request('https://www.pomofi.io/api/admin/music/assets', {
     body: JSON.stringify(body),
+    headers: {'Content-Type': 'application/json'},
+    method,
+  })
+const createMalformedRequest = (method: 'POST' | 'PUT'): Request =>
+  new Request('https://www.pomofi.io/api/admin/music/assets', {
+    body: '{',
     headers: {'Content-Type': 'application/json'},
     method,
   })
@@ -67,12 +73,75 @@ describe('admin music asset route', () => {
       )
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it.each([
+    ['POST', POST, {trackId: TRACK_ID}],
+    ['PUT', PUT, {assetId: ASSET_ID}],
+  ] as const)('should return the authorization rejection for %s', async (method, handler, body) => {
+    const authorizationResponse = Response.json({error: 'unauthorized'}, {status: 401})
+    authMocks.authorizeAdminRequest.mockResolvedValue({
+      authorized: false,
+      response: authorizationResponse,
+    })
+
+    const response = await invokeApiRoute(handler, createRequest(method, body))
+
+    expect(response).toBe(authorizationResponse)
+    expect(repositoryMocks.reserveTrackAsset).not.toHaveBeenCalled()
+    expect(repositoryMocks.findPendingTrackAsset).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['POST', POST, {trackId: 'not-a-uuid'}],
+    ['PUT', PUT, {assetId: 'not-a-uuid'}],
+  ] as const)('should reject an invalid %s request body', async (method, handler, body) => {
+    const response = await invokeApiRoute(handler, createRequest(method, body))
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({error: 'invalid_request'})
+  })
+
+  it.each([
+    ['POST', POST],
+    ['PUT', PUT],
+  ] as const)('should preserve a malformed JSON status for %s', async (method, handler) => {
+    const response = await invokeApiRoute(handler, createMalformedRequest(method))
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({error: 'invalid_request'})
+  })
+
   it('should reserve a server-owned object key for an administrator', async () => {
     const response = await invokeApiRoute(POST, createRequest('POST', {trackId: TRACK_ID}))
 
     expect(response.status).toBe(200)
     expect(repositoryMocks.reserveTrackAsset).toHaveBeenCalledWith(TRACK_ID)
     expect(uploadMocks.createTrackUpload).toHaveBeenCalledWith(OBJECT_KEY)
+  })
+
+  it('should return not found when the track cannot reserve an asset', async () => {
+    repositoryMocks.reserveTrackAsset.mockResolvedValue(null)
+
+    const response = await invokeApiRoute(POST, createRequest('POST', {trackId: TRACK_ID}))
+
+    expect(response.status).toBe(404)
+    await expect(response.json()).resolves.toEqual({error: 'track_not_found'})
+    expect(uploadMocks.createTrackUpload).not.toHaveBeenCalled()
+  })
+
+  it('should return unavailable when track asset reservation throws', async () => {
+    const error = new Error('database unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    repositoryMocks.reserveTrackAsset.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest('POST', {trackId: TRACK_ID}))
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'track_upload_unavailable'})
+    expect(consoleError).toHaveBeenCalledWith('Failed to reserve a music track asset', error)
   })
 
   it('should inspect and activate a completed MP3 upload', async () => {
@@ -89,6 +158,16 @@ describe('admin music asset route', () => {
     expect(uploadMocks.createTrackPreviewObject).toHaveBeenCalledWith(OBJECT_KEY, 1234)
     expect(artworkMocks.storeTrackArtwork).not.toHaveBeenCalled()
     expect(deletionMocks.deleteTrackAssetStorage).not.toHaveBeenCalled()
+  })
+
+  it('should return not found when a pending asset no longer exists', async () => {
+    repositoryMocks.findPendingTrackAsset.mockResolvedValue(null)
+
+    const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
+
+    expect(response.status).toBe(404)
+    await expect(response.json()).resolves.toEqual({error: 'asset_not_found'})
+    expect(uploadMocks.inspectTrackUpload).not.toHaveBeenCalled()
   })
 
   it('should persist an embedded cover while completing an MP3 upload', async () => {
