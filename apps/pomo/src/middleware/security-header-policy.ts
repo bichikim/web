@@ -44,6 +44,7 @@ export const createContentSecurityPolicy = (nonce?: string): string => {
     "form-action 'self'",
     `script-src ${scriptSources.join(' ')} 'wasm-unsafe-eval'`,
     `style-src ${styleSources.join(' ')}`,
+    "style-src-attr 'unsafe-inline'",
     "font-src 'self' data:",
     "img-src 'self' data: blob:",
     "media-src 'self' blob: https://storage.pomofi.io",
