@@ -3,7 +3,22 @@ import {describe, expect, it} from 'vitest'
 import modelAssetsManifest from '../../../../public/models/supertonic-3/manifest.json'
 import {getVoiceStyleUrl, parseInitializationAssets, parseModelAssets} from '../model-assets'
 
-const VOICE_IDS = ['F1', 'F2', 'F3', 'F4', 'F5', 'M1', 'M2', 'M3', 'M4', 'M5', 'Yuna'] as const
+const VOICE_IDS = [
+  'F1',
+  'F2',
+  'F3',
+  'F4',
+  'F5',
+  'M1',
+  'M2',
+  'M3',
+  'M4',
+  'M5',
+  'Hana',
+  'Mina',
+  'Sora',
+  'Yuna',
+] as const
 
 const createModelAssets = () => ({
   models: {
@@ -38,6 +53,9 @@ describe('model assets', () => {
 
     if (result.ok) {
       expect(getVoiceStyleUrl(result.value, 'F2')).toBe('https://assets.example/F2.json')
+      expect(getVoiceStyleUrl(result.value, 'Hana')).toBe('https://assets.example/Hana.json')
+      expect(getVoiceStyleUrl(result.value, 'Mina')).toBe('https://assets.example/Mina.json')
+      expect(getVoiceStyleUrl(result.value, 'Sora')).toBe('https://assets.example/Sora.json')
       expect(result.value.models.supertonic3.revision).toBe('3cadd1e')
     }
   })
