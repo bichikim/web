@@ -9,7 +9,6 @@ import {
   supportsPSceneGyroscope,
   usePSceneStyle,
 } from '../features/focus-room-animation'
-import type {PTrack} from '../features/focus-room-audio'
 import {usePEvents} from '../features/focus-room-dialogue'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
@@ -24,27 +23,19 @@ import {
   type ScenePeriod,
 } from '../features/focus-room-time'
 import {usePSay} from '../features/pomo-webmcp'
-import {useScreenSaver} from '../features/screen-saver'
 import {useWeather} from '../features/weather'
-import * as m from '@paraglide/message'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
-import {type PPomodoroPresentation} from './PPomodoro'
 import {PSceneFallback} from './p-studio/SceneFallback'
 import {PScreenSaver} from './PScreenSaver'
 import {CLASSES, SceneTime} from './p-studio/shared'
 import {PStudioScene} from './p-studio/Scene'
 import {PStudioEvents} from './p-studio/Events'
 import {SceneToolbar} from './p-studio/Toolbar'
+import {useStudioScreenSaver} from './p-studio/use-screen-saver'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
-const getInitialPomodoroPresentation = () =>
-  ({
-    phaseLabel: m.pomodoro_focus(),
-    statusLabel: m.pomodoro_focus_ready(),
-    timeLabel: '25:00',
-  }) satisfies PPomodoroPresentation
 
 interface SceneAsset {
   readonly depthSource: string
@@ -69,7 +60,6 @@ const getSceneAsset = (
   }
 }
 
-// oxlint-disable-next-line eslint/max-lines-per-function -- Focus-room orchestration coordinates scene, player, and overlay state.
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -80,14 +70,9 @@ export const PStudio = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
-  const [isMusicPlaying, setIsMusicPlaying] = createSignal(false)
   const hasEntered = events.hasEnteredFocusRoom
   const [isEntryVisible, setIsEntryVisible] = createSignal(false)
-  const [currentTrack, setCurrentTrack] = createSignal<PTrack | null>(null)
-  const [pomodoroPresentation, setPomodoroPresentation] = createSignal<PPomodoroPresentation>(
-    getInitialPomodoroPresentation(),
-  )
-  const screenSaver = useScreenSaver()
+  const screenSaver = useStudioScreenSaver()
   const weather = useWeather()
   const scenePreferences = usePScenePreferences()
   const sceneStyleController = usePSceneStyle()
@@ -175,10 +160,10 @@ export const PStudio = () => {
         <Show when={hasEntered()}>
           <PStudioEvents
             isPlayerExpanded={isPlayerExpanded()}
-            onMusicPlayingChange={setIsMusicPlaying}
+            onMusicPlayingChange={screenSaver.onMusicPlayingChange}
             onPlayerExpandedChange={setIsPlayerExpanded}
-            onPomodoroPresentationChange={setPomodoroPresentation}
-            onTrackChange={setCurrentTrack}
+            onPomodoroPresentationChange={screenSaver.onPomodoroPresentationChange}
+            onTrackChange={screenSaver.onTrackChange}
             pomoSay={pomoSay}
             sceneStyle={sceneStyleController.sceneStyle()}
           />
@@ -219,13 +204,10 @@ export const PStudio = () => {
       </Show>
       <PScreenSaver
         isActive={hasEntered() && screenSaver.isActive()}
-        isMusicPlaying={isMusicPlaying()}
+        isMusicPlaying={screenSaver.isMusicPlaying()}
         onDismiss={screenSaver.onDismiss}
-        timer={{
-          status: pomodoroPresentation().statusLabel,
-          time: pomodoroPresentation().timeLabel,
-        }}
-        track={currentTrack()}
+        timer={screenSaver.timer()}
+        track={screenSaver.currentTrack()}
       />
     </section>
   )
