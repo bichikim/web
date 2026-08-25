@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {CLASSES, MusicPlayerViewProps} from './shared'
 
 const MEDIA_FOCUS_CLASSES =

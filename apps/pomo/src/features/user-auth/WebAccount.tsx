@@ -1,6 +1,6 @@
 import {createSignal, type JSX, onMount, Show} from 'solid-js'
 
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 import {requestUserMagicLink} from './magic-link'
 import {

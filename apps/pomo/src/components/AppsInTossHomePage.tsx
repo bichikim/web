@@ -2,7 +2,7 @@ import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 
 import {getInitialAppsInTossLocale} from '../features/apps-in-toss-locale/bootstrap'
 import {reportClientError} from '../features/client-error-reporter'
-import {getTextDirection, setLocale} from '../paraglide/runtime.js'
+import {getTextDirection, setLocale} from '@paraglide/runtime'
 import {PHomePage} from './PHomePage'
 import {AppsInTossLoadingPage} from './AppsInTossLoadingPage'
 

@@ -4,7 +4,7 @@ import {render, screen} from '@solidjs/testing-library'
 import {expect, it} from 'vitest'
 
 import type {TextMoodAnalysis} from 'src/features/text-mood'
-import {TextMoodAnalysisResult} from '../TextMoodAnalysisResult'
+import {TextMoodAnalysisResult} from '../text-mood-lab/AnalysisResult'
 
 const ANALYSIS: TextMoodAnalysis = {
   margin: 0.08,

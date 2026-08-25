@@ -1,5 +1,8 @@
 import type {CompilerOptions} from '@inlang/paraglide-js'
 
+export const PARAGLIDE_PROJECT = './.i18n/project.inlang'
+export const PARAGLIDE_OUTDIR = './.i18n/paraglide'
+
 const PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES = [
   {exclude: true, match: '/api/:path(.*)?'},
   {exclude: true, match: '/workers/:path(.*)?'},

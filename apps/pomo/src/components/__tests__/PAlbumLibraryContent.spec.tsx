@@ -13,7 +13,7 @@ vi.mock('../../features/focus-room-audio', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../features/focus-room-audio')>()),
   ...audioMocks,
 }))
-vi.mock('../../design-system/PModal', () => ({
+vi.mock('../PModal', () => ({
   PModal: (props: {
     readonly children: JSX.Element
     readonly footer?: JSX.Element
@@ -29,7 +29,7 @@ vi.mock('../../design-system/PModal', () => ({
   },
 }))
 
-import PAlbumLibraryContent from '../PAlbumLibraryContent'
+import PAlbumLibraryContent from '../album-library/Content'
 
 afterEach(() => {
   cleanup()

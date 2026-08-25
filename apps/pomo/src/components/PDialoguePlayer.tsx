@@ -1,16 +1,16 @@
 import {cx} from 'class-variance-authority'
 import {createMemo, For, Show} from 'solid-js'
 
-import {PButton} from '../design-system/PButton'
-import {PTag} from '../design-system/PTag'
+import {PButton} from './PButton'
+import {PTag} from './PTag'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type DialogueSegmentMood, usePEvents} from '../features/focus-room-dialogue/PEventContext'
 import {getPrimaryMood} from '../features/text-mood'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {BlockedDialogueBubble} from './dialogue-player/BlockedBubble'
 import {CLASSES, getDialogueBubbleShapeClasses} from './dialogue-player/shared'
 import {PFaceIcon} from './PFaceIcon'
-import {PScribblePanel} from './PScribblePanel'
+import {PScribblePanel} from './scribble/Panel'
 
 const SKIP_BUTTON_CLASS = cx(
   CLASSES.dialogueBubbleSkip,

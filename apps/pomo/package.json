@@ -4,11 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "assets:compress-focus-room": "node scripts/compress-focus-room-scenes.mjs",
-    "assets:compress-focus-room-depth": "node scripts/compress-focus-room-scenes.mjs --depth-only",
-    "assets:create-mouths": "node scripts/create-focus-room-mouth-assets.mjs",
-    "blender:export": "blender --background blender/character-studio.blend --python blender/export_glb.py",
-    "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
     "build:apps-in-toss-ssg": "cross-env POMO_BUILD_TARGET=apps-in-toss vite build",
     "build:apps-in-toss-package": "pnpm run prepare:apps-in-toss-package && ait build",

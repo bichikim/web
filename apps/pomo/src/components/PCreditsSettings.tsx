@@ -3,9 +3,9 @@ import {A} from '@solidjs/router'
 
 import {modelLicenseGroup, openSourceLicenseGroup} from 'src/features/licenses'
 
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {CreditList} from './credits-settings/List'
-import {type PMusicCredit, PMusicCredits} from './PMusicCredits'
+import {type PMusicCredit, PMusicCredits} from './credits-settings/MusicCredits'
 
 const getMusicCredits = () =>
   [

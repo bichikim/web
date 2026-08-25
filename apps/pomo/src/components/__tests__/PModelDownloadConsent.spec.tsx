@@ -3,10 +3,10 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/design-system/PModal'
+import {PModal, type PModalProps} from 'src/components/PModal'
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
 
-vi.mock('src/design-system/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
 
 it('should explain download size and possible network charges before confirmation', () => {
   vi.mocked(PModal).mockImplementation((props: PModalProps) =>

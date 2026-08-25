@@ -1,11 +1,11 @@
 import {createMiddleware} from '@solidjs/start/middleware'
 
-import {paraglideMiddleware} from '../paraglide/server.js'
-import {handleAdminAuthRequest} from './admin-auth.ts'
-import {corsMiddleware} from './cors.ts'
-import {handleLegacyRedirectRequest} from './legacy-redirect.ts'
-import {securityHeadersMiddleware} from './security-headers.ts'
-import {handleUserAuthRequest} from './user-auth.ts'
+import {paraglideMiddleware} from '@paraglide/server'
+import {handleAdminAuthRequest} from './admin-auth'
+import {corsMiddleware} from './cors'
+import {handleLegacyRedirectRequest} from './legacy-redirect'
+import {securityHeadersMiddleware} from './security-headers'
+import {handleUserAuthRequest} from './user-auth'
 
 export default createMiddleware([
   securityHeadersMiddleware,

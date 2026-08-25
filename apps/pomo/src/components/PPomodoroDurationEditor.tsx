@@ -1,8 +1,8 @@
 import {createMemo, createSignal, Show, untrack} from 'solid-js'
 
-import {PButton} from '../design-system/PButton'
+import {PButton} from './PButton'
 import type {PomodoroTimerConfig} from '../features/pomodoro-timer'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {DurationField} from './pomodoro-duration-editor/Field'
 import {CLASSES} from './pomodoro-duration-editor/shared'
 

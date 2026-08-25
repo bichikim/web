@@ -4,7 +4,7 @@ import {Match, Show, Switch} from 'solid-js'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {getLocalizedWeatherCityLabel, getLocalizedWeatherLabel} from '../features/localization'
 import {getWeatherPresentation, type WeatherState} from '../features/weather'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {WeatherStatusSurface} from './weather-status/Surface'
 
 export interface PWeatherStatusProps {

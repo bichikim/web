@@ -1,6 +1,6 @@
 import {Show} from 'solid-js'
 
-import {PButton} from '../../design-system/PButton'
+import {PButton} from '../PButton'
 import {
   type PAlbumSale,
   type PResolvedAlbum,
@@ -8,8 +8,8 @@ import {
   type PTrackListing,
   type PTrackPreviewRequest,
 } from '../../features/focus-room-audio/index'
-import {PAlbumTrackList} from '../PAlbumTrackList'
-import * as m from '../../paraglide/messages.js'
+import {PAlbumTrackList} from './TrackList'
+import * as m from '@paraglide/message'
 import {AlbumSummary} from './Summary'
 
 const ALBUM_CARD_CLASSES = [
