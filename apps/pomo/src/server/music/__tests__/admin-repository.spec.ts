@@ -210,7 +210,13 @@ describe('track deletion lifecycle', () => {
       .mockReturnValueOnce(createLimitedQuery([{trackId: 'track-1'}]))
 
     await expect(
-      activateTrackAsset({assetId: 'asset-1', durationMs: 1_000, etag: 'etag', sizeBytes: 1n}),
+      activateTrackAsset({
+        artworkUrl: null,
+        assetId: 'asset-1',
+        durationMs: 1_000,
+        etag: 'etag',
+        sizeBytes: 1n,
+      }),
     ).resolves.toBe(false)
     expect(update).not.toHaveBeenCalled()
   })
