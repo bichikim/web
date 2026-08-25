@@ -21,6 +21,9 @@ export const getCanonicalPathname = (pathname: string) => {
   return locale === undefined ? canonicalPathname : localizeHref(canonicalPathname, {locale})
 }
 
+export const getPomoHomeHref = (locale: Locale) =>
+  import.meta.env.POMO_IS_APPS_IN_TOSS ? '/' : localizeHref('/', {locale})
+
 export const isPomoHomePath = (pathname: string) =>
   normalizePathname(pathname) === '/' &&
   (import.meta.env.POMO_IS_APPS_IN_TOSS || getPathLocale(pathname) !== undefined)

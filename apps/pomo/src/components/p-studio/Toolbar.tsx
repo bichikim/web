@@ -19,6 +19,8 @@ import {getNextTimeMode, type SceneTimeMode} from '../../features/focus-room-tim
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
 import {type WeatherCitySlug, type WeatherState} from '../../features/weather/index'
 import * as m from '@paraglide/message'
+import {PLoadingStatus} from '../PLoadingStatus'
+import {PModelDownloadStatus} from '../PModelDownloadStatus'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES, SceneTime} from './shared'
@@ -62,13 +64,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
   }
 
   return (
-    <div
-      class={cx(
-        'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
-        'flex flex-col items-end gap-2',
-        'xs:right-7 lg:top-6',
-      )}
-    >
+    <div class={CLASSES.sceneToolbar}>
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
           <PIconButton
@@ -144,14 +140,14 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         />
       </div>
       <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
+      <PModelDownloadStatus />
       <Show when={props.isSceneTransitioning}>
         <span
           aria-live="polite"
-          class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}
+          class="border border-solid border-border rounded-control backdrop-blur-surface"
           role="status"
         >
-          <span aria-hidden="true" class={CLASSES.loadingSpinner} />
-          {m.scene_transitioning()}
+          <PLoadingStatus message={m.scene_transitioning()} />
         </span>
       </Show>
     </div>

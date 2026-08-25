@@ -17,6 +17,7 @@ import {
   MAXIMUM_DIALOGUE_SCRIPT_LENGTH,
   MINIMUM_DIALOGUE_SCRIPT_LENGTH,
 } from '../../features/focus-room-dialogue'
+import {type ModelDownloadState, useModelDownload} from '../../features/model-download'
 import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
 import {PGenerationStatus} from '../PGenerationStatus'
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
@@ -58,6 +59,8 @@ export interface PDialogueDraftGeneratorProps {
 }
 
 interface UseDialogueGenerationStatusProps {
+  readonly downloadError: Accessor<string | null>
+  readonly downloadState: Accessor<ModelDownloadState>
   readonly isCheckingModel: Accessor<boolean>
   readonly length: Accessor<number>
   readonly writer: DialogueWriterController
@@ -66,6 +69,24 @@ interface UseDialogueGenerationStatusProps {
 interface DialogueGenerationStatus {
   readonly message: string
   readonly progress: number | null
+}
+
+interface UseDialogueDraftModelProps {
+  readonly disabled: Accessor<boolean>
+  readonly length: Accessor<number>
+  readonly onBusyChange: (busy: boolean) => void
+  readonly topic: Accessor<string>
+  readonly writer: DialogueWriterController
+}
+
+interface DialogueDraftModelController {
+  readonly canGenerate: Accessor<boolean>
+  readonly cancelDownloadConsent: () => void
+  readonly downloadConsentOpen: Accessor<boolean>
+  readonly generate: () => Promise<void>
+  readonly generationStatus: Accessor<DialogueGenerationStatus>
+  readonly isBusy: Accessor<boolean>
+  readonly startDownload: () => Promise<void>
 }
 
 const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) => {
@@ -116,6 +137,26 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
       return {message: '저장된 대사 모델을 확인하고 있어요.', progress: null}
     }
 
+    const downloadError = props.downloadError()
+
+    if (downloadError !== null) {
+      return {message: downloadError, progress: null}
+    }
+
+    const downloadState = props.downloadState()
+
+    if (
+      downloadState.status === 'loading' &&
+      downloadState.target.kind === 'text' &&
+      downloadState.target.modelId === GEMMA_MODEL_ID
+    ) {
+      return {
+        message:
+          '대사 모델 파일을 백그라운드에서 내려받고 있어요. 메인으로 이동해도 백그라운드에서 계속 받아요.',
+        progress: downloadState.percentage,
+      }
+    }
+
     const currentState = props.writer.state()
     const currentProgress = progress()
 
@@ -159,36 +200,70 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
   return status
 }
 
-export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
-  const [topic, setTopic] = createSignal(DEFAULT_TOPIC)
-  const [length, setLength] = createSignal(DEFAULT_DIALOGUE_SCRIPT_LENGTH)
-  const [isExpanded, setIsExpanded] = createSignal(false)
+const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraftModelController => {
+  const length = untrack(() => props.length)
+  const writer = untrack(() => props.writer)
   const [downloadConsentOpen, setDownloadConsentOpen] = createSignal(false)
   const [isCheckingModel, setIsCheckingModel] = createSignal(false)
-  const writer = useDialogueWriter({
-    modelId: GEMMA_MODEL.id,
-    onComplete: (text) => props.onGenerated(text),
-  })
+  const [downloadError, setDownloadError] = createSignal<string | null>(null)
+  const modelDownload = useModelDownload()
   let isDisposed = false
   onCleanup(() => {
     isDisposed = true
   })
-  const generationStatus = useDialogueGenerationStatus({isCheckingModel, length, writer})
+  const isModelDownloading = () => modelDownload.state().status === 'loading'
+  const isDraftModelDownloading = () => {
+    const downloadState = modelDownload.state()
+    return (
+      downloadState.status === 'loading' &&
+      downloadState.target.kind === 'text' &&
+      downloadState.target.modelId === GEMMA_MODEL_ID
+    )
+  }
+  const isBusy = () => writer.isBusy() || isCheckingModel() || isModelDownloading()
+  const generationStatus = useDialogueGenerationStatus({
+    downloadError,
+    downloadState: modelDownload.state,
+    isCheckingModel,
+    length,
+    writer,
+  })
   createEffect(() => {
-    const busy = writer.isBusy() || isCheckingModel()
-    untrack(() => props.onBusyChange?.(busy))
+    const busy = isBusy()
+    untrack(() => props.onBusyChange(busy))
   })
   const canGenerate = () =>
-    !props.disabled &&
-    !writer.isBusy() &&
-    !isCheckingModel() &&
-    topic().trim().length > 0 &&
+    !props.disabled() &&
+    !isBusy() &&
+    props.topic().trim().length > 0 &&
     writer.state().status !== 'unsupported'
-  const handleGenerate = async () => {
-    writer.setRequest(createDialogueScriptRequest({length: length(), topic: topic()}))
+  const downloadAndGenerate = async () => {
+    const result = await modelDownload.startTextModel(GEMMA_MODEL_ID)
+
+    if (isDisposed) {
+      return
+    }
+
+    if (result.status === 'complete') {
+      writer.generateWithPreparation()
+      return
+    }
+
+    if (result.status === 'error') {
+      setDownloadError(result.message)
+    }
+  }
+  const generate = async () => {
+    setDownloadError(null)
+    writer.setRequest(createDialogueScriptRequest({length: length(), topic: props.topic()}))
 
     if (writer.isModelReady()) {
       writer.generateWithPreparation()
+      return
+    }
+
+    if (isDraftModelDownloading()) {
+      await downloadAndGenerate()
       return
     }
 
@@ -208,10 +283,37 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
 
     setDownloadConsentOpen(true)
   }
-  const handleConfirmDownload = () => {
+  const startDownload = async () => {
     setDownloadConsentOpen(false)
-    writer.generateWithPreparation()
+    await downloadAndGenerate()
   }
+
+  return {
+    cancelDownloadConsent: () => setDownloadConsentOpen(false),
+    canGenerate,
+    downloadConsentOpen,
+    generate,
+    generationStatus,
+    isBusy,
+    startDownload,
+  }
+}
+
+export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
+  const [topic, setTopic] = createSignal(DEFAULT_TOPIC)
+  const [length, setLength] = createSignal(DEFAULT_DIALOGUE_SCRIPT_LENGTH)
+  const [isExpanded, setIsExpanded] = createSignal(false)
+  const writer = useDialogueWriter({
+    modelId: GEMMA_MODEL.id,
+    onComplete: (text) => props.onGenerated(text),
+  })
+  const draftModel = useDialogueDraftModel({
+    disabled: () => props.disabled ?? false,
+    length,
+    onBusyChange: (busy) => props.onBusyChange?.(busy),
+    topic,
+    writer,
+  })
 
   return (
     <section aria-labelledby="dialogue-draft-title" class="rounded-xl bg-white/4">
@@ -248,7 +350,7 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
           <label class={FIELD_CLASSES}>
             <span>어떤 말을 만들까요?</span>
             <input
-              disabled={props.disabled || writer.isBusy() || isCheckingModel()}
+              disabled={props.disabled || draftModel.isBusy()}
               maxlength="200"
               onInput={(event) => setTopic(event.currentTarget.value)}
               placeholder="예: 오늘 힘이 나는 말 한마디"
@@ -266,7 +368,7 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
               aria-label="생성 분량"
               aria-valuetext={`${length()}자`}
               class="w-full accent-highlight"
-              disabled={props.disabled || writer.isBusy() || isCheckingModel()}
+              disabled={props.disabled || draftModel.isBusy()}
               max={MAXIMUM_DIALOGUE_SCRIPT_LENGTH}
               min={MINIMUM_DIALOGUE_SCRIPT_LENGTH}
               onInput={(event) => setLength(event.currentTarget.valueAsNumber)}
@@ -282,15 +384,15 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
 
           <PGenerationStatus
             kind="draft"
-            message={generationStatus().message}
-            progress={generationStatus().progress}
+            message={draftModel.generationStatus().message}
+            progress={draftModel.generationStatus().progress}
             progressLabel="대사 생성 진행률"
           />
           <div class={ACTION_CLASSES}>
             <button
               class={BUTTON_CLASSES}
-              disabled={!canGenerate()}
-              onClick={handleGenerate}
+              disabled={!draftModel.canGenerate()}
+              onClick={draftModel.generate}
               type="button"
             >
               대사 만들기
@@ -301,9 +403,9 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
       <PModelDownloadConsent
         actionLabel="대사 만들기"
         downloadSize={GEMMA_MODEL.downloadSize}
-        isOpen={downloadConsentOpen()}
-        onCancel={() => setDownloadConsentOpen(false)}
-        onConfirm={handleConfirmDownload}
+        isOpen={draftModel.downloadConsentOpen()}
+        onCancel={draftModel.cancelDownloadConsent}
+        onConfirm={draftModel.startDownload}
       />
     </section>
   )

@@ -9,9 +9,11 @@ import {Suspense} from 'solid-js'
 import {PDocumentMetadata} from './components/PDocumentMetadata'
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {PRecoveryBoundary} from './components/PRecoveryBoundary'
+import {PModelDownloadOverlay} from './components/PModelDownloadOverlay'
 import {useApplicationRecovery} from './features/application-recovery'
 import {useAppsInTossDevtools} from './features/apps-in-toss-devtools'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
+import {PModelDownloadProvider} from './features/model-download'
 
 export default function App() {
   useAppsInTossDevtools()
@@ -23,17 +25,20 @@ export default function App() {
       root={(props) => (
         <MetaProvider>
           <PDocumentMetadata />
-          <PRecoveryBoundary
-            canRetry={applicationRecovery.canRetry}
-            onError={applicationRecovery.onError}
-            onReady={applicationRecovery.onReady}
-            onReload={applicationRecovery.onReload}
-            onRetry={applicationRecovery.onRetry}
-          >
-            <Suspense>
-              <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
-            </Suspense>
-          </PRecoveryBoundary>
+          <PModelDownloadProvider>
+            <PRecoveryBoundary
+              canRetry={applicationRecovery.canRetry}
+              onError={applicationRecovery.onError}
+              onReady={applicationRecovery.onReady}
+              onReload={applicationRecovery.onReload}
+              onRetry={applicationRecovery.onRetry}
+            >
+              <Suspense>
+                <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
+              </Suspense>
+            </PRecoveryBoundary>
+            <PModelDownloadOverlay />
+          </PModelDownloadProvider>
         </MetaProvider>
       )}
     >

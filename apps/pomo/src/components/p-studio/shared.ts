@@ -24,17 +24,6 @@ export const CLASSES = {
     'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem]',
     '[filter:drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]',
   ].join(' '),
-  loading: [
-    'pomo-loading flex h-control-sm box-border items-center gap-2',
-    'rounded-control bg-surface py-0 px-3',
-    'text-foreground text-xs font-[650] leading-4 shadow-panel',
-  ].join(' '),
-  loadingSpinner: [
-    'pomo-loading__spinner w-4 h-4 box-border flex-none',
-    'animate-spin [border:2px_solid_rgb(255_255_255_/_28%)]',
-    'border-t-highlight rounded-control',
-    'motion-reduce:animate-[none]',
-  ].join(' '),
   mediaDock: [
     'pomo-media-dock [--pomo-player-compact-width:7.75rem] absolute min-h-0',
     'top-[calc(5.25rem_+_var(--pomo-safe-area-inset-top))]',
@@ -67,6 +56,10 @@ export const CLASSES = {
   sceneControl: [
     'pomo-scene-control max-lg:[&.pomo-icon-button]:hidden',
     'max-lg:[&.pomo-icon-select]:hidden',
+  ].join(' '),
+  sceneToolbar: [
+    'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
+    'flex flex-col items-end gap-2 xs:right-7 lg:top-6',
   ].join(' '),
   ui: 'pomo-ui pointer-events-none absolute inset-0',
 } as const

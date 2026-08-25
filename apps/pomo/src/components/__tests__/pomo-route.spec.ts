@@ -2,11 +2,19 @@ import {expect, it} from 'vitest'
 
 import {
   getCanonicalPathname,
+  getPomoHomeHref,
   isPomoHomePath,
   isSearchIndexablePath,
   normalizePathname,
   usesPomoLayout,
 } from '../pomo-route'
+
+it.each([
+  ['ko', '/ko/'],
+  ['en', '/en/'],
+] as const)('should resolve the %s Pomofi home route to %s', (locale, expected) => {
+  expect(getPomoHomeHref(locale)).toBe(expected)
+})
 
 it.each([
   ['/', '/'],
