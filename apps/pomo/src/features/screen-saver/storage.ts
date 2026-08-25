@@ -12,7 +12,9 @@ import type {ScreenSaverDelay} from './model'
 
 const SCREEN_SAVER_STORAGE_KEY = 'pomo:screen-saver-delay:v1'
 const DEFAULT_SCREEN_SAVER_DELAY: ScreenSaverDelay = '10m'
-const screenSaverDelaySchema = z.enum(['off', '1m', '10m', '20m', '1h'])
+const screenSaverDelaySchema = import.meta.env.DEV
+  ? z.enum(['off', '5s', '1m', '10m', '20m', '1h'])
+  : z.enum(['off', '1m', '10m', '20m', '1h'])
 let preferenceWriteRevision = 0
 const nativeWriter = createSerialNativeStorageWriter()
 

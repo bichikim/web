@@ -233,6 +233,24 @@ describe('PMusicPlayerContent', () => {
     expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[2])
   })
 
+  it('should report the actual playback state', () => {
+    const onPlayingChange = vi.fn()
+    const result = render(() => (
+      <PMusicPlayerContent onPlayingChange={onPlayingChange} tracks={TRACKS} />
+    ))
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the Pomo audio element to be rendered')
+    }
+
+    expect(onPlayingChange).toHaveBeenLastCalledWith(false)
+    fireEvent(audio, new Event('play'))
+    expect(onPlayingChange).toHaveBeenLastCalledWith(true)
+    fireEvent(audio, new Event('pause'))
+    expect(onPlayingChange).toHaveBeenLastCalledWith(false)
+  })
+
   it('should restore the saved track and playback position', async () => {
     localStorage.setItem(
       'pomo:focus-room-playback:v1',

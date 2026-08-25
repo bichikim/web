@@ -69,6 +69,7 @@ const getSceneAsset = (
   }
 }
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- Focus-room orchestration coordinates scene, player, and overlay state.
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -79,6 +80,7 @@ export const PStudio = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
+  const [isMusicPlaying, setIsMusicPlaying] = createSignal(false)
   const hasEntered = events.hasEnteredFocusRoom
   const [isEntryVisible, setIsEntryVisible] = createSignal(false)
   const [currentTrack, setCurrentTrack] = createSignal<PTrack | null>(null)
@@ -173,6 +175,7 @@ export const PStudio = () => {
         <Show when={hasEntered()}>
           <PStudioEvents
             isPlayerExpanded={isPlayerExpanded()}
+            onMusicPlayingChange={setIsMusicPlaying}
             onPlayerExpandedChange={setIsPlayerExpanded}
             onPomodoroPresentationChange={setPomodoroPresentation}
             onTrackChange={setCurrentTrack}
@@ -216,6 +219,7 @@ export const PStudio = () => {
       </Show>
       <PScreenSaver
         isActive={hasEntered() && screenSaver.isActive()}
+        isMusicPlaying={isMusicPlaying()}
         onDismiss={screenSaver.onDismiss}
         timer={{
           status: pomodoroPresentation().statusLabel,

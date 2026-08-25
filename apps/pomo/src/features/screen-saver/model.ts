@@ -1,11 +1,12 @@
 import type {Accessor} from 'solid-js'
 
+const FIVE_SECONDS_MILLISECONDS = 5_000
 const MINUTE_MILLISECONDS = 60_000
 const TEN_MINUTES_MILLISECONDS = 600_000
 const TWENTY_MINUTES_MILLISECONDS = 1_200_000
 const HOUR_MILLISECONDS = 3_600_000
 
-export type ScreenSaverDelay = 'off' | '1m' | '10m' | '20m' | '1h'
+export type ScreenSaverDelay = 'off' | '5s' | '1m' | '10m' | '20m' | '1h'
 
 export interface ScreenSaverController {
   readonly delay: Accessor<ScreenSaverDelay>
@@ -19,6 +20,8 @@ export const getScreenSaverDelayMilliseconds = (delay: ScreenSaverDelay): number
   switch (delay) {
     case 'off':
       return null
+    case '5s':
+      return FIVE_SECONDS_MILLISECONDS
     case '1m':
       return MINUTE_MILLISECONDS
     case '10m':

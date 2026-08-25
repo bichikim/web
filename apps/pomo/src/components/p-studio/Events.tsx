@@ -14,6 +14,7 @@ import {CLASSES} from './shared'
 
 interface PStudioEventsProps {
   readonly isPlayerExpanded: boolean
+  readonly onMusicPlayingChange: (isPlaying: boolean) => void
   readonly onPlayerExpandedChange: (isExpanded: boolean) => void
   readonly onPomodoroPresentationChange: (presentation: PPomodoroPresentation) => void
   readonly onTrackChange: (track: PTrack | null) => void
@@ -51,6 +52,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       >
         <PMusicPlayer
           expanded={props.isPlayerExpanded}
+          onPlayingChange={props.onMusicPlayingChange}
           onExpandedChange={props.onPlayerExpandedChange}
           onTrackChange={props.onTrackChange}
           sceneStyle={props.sceneStyle}

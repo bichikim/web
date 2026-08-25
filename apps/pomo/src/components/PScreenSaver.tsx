@@ -14,14 +14,14 @@ const CLASSES = {
     '[&::backdrop]:bg-[#000]',
   ].join(' '),
   screenSaverContent: [
-    'pomo-screen-saver__content grid w-[min(calc(100%_-_4rem),_22rem)] justify-items-center gap-5',
-    'animate-screen-saver-content-drift text-center',
+    'pomo-screen-saver__content grid w-[min(calc(100%_-_4rem),_22rem)] justify-items-stretch gap-7',
+    'animate-screen-saver-content-drift text-left',
     'motion-reduce:[animation-duration:64s]',
     'motion-reduce:[animation-timing-function:steps(4,_jump-none)]',
   ].join(' '),
   screenSaverHint: [
-    'pomo-screen-saver__hint text-[rgb(255_255_255_/_46%)] text-xs leading-4.5 m-[0.5rem_0_0]',
-    'font-semibold',
+    'pomo-screen-saver__hint text-[rgb(255_255_255_/_46%)] text-xs leading-4.5 m-[0.25rem_0_0]',
+    'font-normal',
   ].join(' '),
   screenSaverSafeArea: [
     'pomo-screen-saver__safe-area absolute',
@@ -32,22 +32,24 @@ const CLASSES = {
     'grid place-items-center pointer-events-none',
   ].join(' '),
   screenSaverTimer: [
-    'pomo-screen-saver__timer grid justify-items-center gap-1',
-    '[&_>_span]:text-[rgb(255_255_255_/_46%)] [&_>_span]:text-xs [&_>_span]:font-semibold',
-    '[&_>_span]:leading-4.5 [&_>_strong]:text-[rgb(255_255_255_/_52%)]',
+    'pomo-screen-saver__timer grid justify-items-start gap-1.5',
+    '[&_>_span]:text-[rgb(255_255_255_/_46%)] [&_>_span]:text-sm [&_>_span]:font-semibold',
+    '[&_>_span]:leading-5 [&_>_strong]:text-[rgb(255_255_255_/_52%)]',
     '[&_>_strong]:text-[clamp(3rem,_16vw,_5rem)] [&_>_strong]:tabular-nums',
-    '[&_>_strong]:font-[650] [&_>_strong]:tracking-[-0.04em] [&_>_strong]:leading-[1]',
+    '[&_>_strong]:font-bold [&_>_strong]:tracking-[-0.04em] [&_>_strong]:leading-[1]',
   ].join(' '),
   screenSaverTrack: [
     'pomo-screen-saver__track grid w-full max-w-full gap-1 [&_>_p]:min-w-0 [&_>_p]:m-0',
-    '[&_>_p]:text-[rgb(255_255_255_/_48%)] [&_>_p]:text-sm [&_>_p]:font-[650] [&_>_p]:leading-5',
+    '[&_>_p]:relative',
+    '[&_>_p]:text-[rgb(255_255_255_/_48%)] [&_>_p]:text-base [&_>_p]:font-semibold [&_>_p]:leading-6',
     '[&_>_span]:min-w-0 [&_>_span]:text-[rgb(255_255_255_/_46%)]',
-    '[&_>_span]:text-xs [&_>_span]:leading-4.5',
+    '[&_>_span]:text-[0.8125rem] [&_>_span]:font-normal [&_>_span]:leading-5',
   ].join(' '),
 } as const
 
 export interface PScreenSaverProps {
   readonly isActive?: boolean
+  readonly isMusicPlaying?: boolean
   readonly onDismiss?: () => void
   readonly timer?: PScreenSaverTimer
   readonly track?: PScreenSaverTrack | null
@@ -107,8 +109,8 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
           <Show when={props.timer}>
             {(timer) => (
               <section aria-label={m.screen_saver_pomodoro()} class={CLASSES.screenSaverTimer}>
-                <span>{timer().status}</span>
                 <strong>{timer().time}</strong>
+                <span>{timer().status}</span>
               </section>
             )}
           </Show>
@@ -116,10 +118,23 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
             {(track) => (
               <section aria-label={m.screen_saver_music()} class={CLASSES.screenSaverTrack}>
                 <p>
+                  <span
+                    aria-hidden="true"
+                    class="pomo-screen-saver__playback-icon absolute top-1/2 right-full mr-2 size-4 -translate-y-1/2"
+                    classList={{
+                      'i-tabler-player-pause': !(props.isMusicPlaying ?? false),
+                      'i-tabler-player-play': props.isMusicPlaying ?? false,
+                    }}
+                  />
                   <POverflowMarquee focusable={false} text={track().title} />
                 </p>
                 <span>
                   <POverflowMarquee focusable={false} text={track().artist} />
+                </span>
+                <span class="sr-only">
+                  {props.isMusicPlaying
+                    ? m.screen_saver_music_playing()
+                    : m.screen_saver_music_paused()}
                 </span>
               </section>
             )}
