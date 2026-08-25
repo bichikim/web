@@ -3,8 +3,6 @@ interface StaticLocalizationOptions {
   readonly routes: ReadonlyArray<string>
 }
 
-export const LOCALIZED_STATIC_ROUTES = ['/', '/account'] as const
-
 const localizeStaticRoute = (route: string, locale: string) =>
   route === '/' ? `/${locale}/` : `/${locale}${route}/`
 
