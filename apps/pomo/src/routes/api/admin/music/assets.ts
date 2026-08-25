@@ -10,6 +10,8 @@ import {
   findPendingTrackAsset,
   reserveTrackAsset,
 } from 'src/server/music/track-registration-repository'
+import {storeTrackArtwork} from 'src/server/music/cover-upload'
+import {deleteTrackAssetStorage} from 'src/server/music/track-storage-deletion'
 import {
   createTrackPreviewObject,
   createTrackUpload,
@@ -100,10 +102,21 @@ export const PUT = async (event: APIEvent): Promise<Response> => {
   try {
     const inspection = await inspectTrackUpload(asset.objectKey)
     await createTrackPreviewObject(asset.objectKey, inspection.durationMs)
+    const artworkUrl =
+      inspection.artwork === undefined
+        ? null
+        : (await storeTrackArtwork(asset.id, inspection.artwork)).artworkUrl
     const activated = await completeTrackRegistration({
+      artworkUrl,
       assetId: asset.id,
-      ...inspection,
+      durationMs: inspection.durationMs,
+      etag: inspection.etag,
+      sizeBytes: inspection.sizeBytes,
     })
+
+    if (!activated) {
+      await deleteTrackAssetStorage(asset.objectKey)
+    }
 
     return activated
       ? noStoreJson({assetId: asset.id, status: 'active'}, {cookies: authorization.cookies})

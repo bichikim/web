@@ -63,13 +63,7 @@ export const CLASSES = {
     'motion-reduce:transition-none',
   ].join(' '),
   playerPlaySummary: 'pomo-player__play--summary',
-  playerPlaySummaryFrame: [
-    'pomo-player__play-summary-frame h-11 w-11 shrink-0 overflow-visible',
-    '[transition:width_260ms_ease,_margin-right_260ms_ease,_opacity_180ms_ease]',
-    '[&.is-hidden]:w-0 [&.is-hidden]:[margin-right:-0.75rem]',
-    '[&.is-hidden]:overflow-hidden [&.is-hidden]:opacity-0 [&.is-hidden]:pointer-events-none',
-    'motion-reduce:transition-none',
-  ].join(' '),
+  playerPlaySummaryFrame: 'pomo-player__play-summary-frame h-11 w-11 shrink-0 overflow-visible',
   playerProgress: [
     'pomo-player__progress flex min-w-0',
     '[--media-control-background:transparent] [--media-control-hover-background:transparent]',

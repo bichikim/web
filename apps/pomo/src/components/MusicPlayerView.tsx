@@ -31,6 +31,21 @@ const getShellClasses = (sceneStyle?: PSceneStyle) =>
 const getBaseClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? 'rounded-none border-transparent' : 'rounded-panel border-border'
 
+const TrackArtwork = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
+  <Show keyed when={props.currentTrack?.artworkUrl}>
+    {(artworkUrl) => (
+      <img
+        alt=""
+        class="pomo-player__artwork size-11 shrink-0 rounded-control object-cover"
+        onError={({currentTarget}) => {
+          currentTarget.hidden = true
+        }}
+        src={artworkUrl}
+      />
+    )}
+  </Show>
+)
+
 export const MusicPlayerView = (props: MusicPlayerViewProps) => {
   const handleAlbumAdd = (tracks: readonly PTrack[]) => props.onAlbumAdd?.(tracks)
 
@@ -116,11 +131,12 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
           />
 
           <div class={CLASSES.playerSummary}>
-            <SummaryPlayButton
-              currentTrack={props.currentTrack}
-              expanded={props.expanded}
-              sceneStyle={props.sceneStyle}
-            />
+            <Show when={!props.expanded}>
+              <SummaryPlayButton currentTrack={props.currentTrack} sceneStyle={props.sceneStyle} />
+            </Show>
+            <Show when={props.expanded}>
+              <TrackArtwork currentTrack={props.currentTrack} />
+            </Show>
 
             <div
               class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}

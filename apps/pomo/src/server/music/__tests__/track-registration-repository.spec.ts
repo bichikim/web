@@ -97,6 +97,7 @@ describe('completeTrackRegistration', () => {
 
     await expect(
       completeTrackRegistration({
+        artworkUrl: 'https://storage.pomofi.io/track-artwork/asset/cover',
         assetId: ASSET_ID,
         durationMs: 1234,
         etag: 'etag',
@@ -115,6 +116,7 @@ describe('completeTrackRegistration', () => {
 
     await expect(
       completeTrackRegistration({
+        artworkUrl: null,
         assetId: ASSET_ID,
         durationMs: 1234,
         etag: 'etag',
@@ -132,6 +134,28 @@ describe('reserveTrackAsset', () => {
       .mockReturnValueOnce(createLimitedQuery([]))
 
     await expect(reserveTrackAsset(TRACK_ID)).resolves.toBeNull()
+    expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('should reject a new reservation after deletion has claimed the track', async () => {
+    select
+      .mockReturnValueOnce(createLockedQuery([{id: TRACK_ID}]))
+      .mockReturnValueOnce(createLimitedQuery([{trackId: TRACK_ID}]))
+      .mockReturnValueOnce(createLimitedQuery([{trackId: TRACK_ID}]))
+
+    await expect(reserveTrackAsset(TRACK_ID)).resolves.toBeNull()
+    expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('should reuse the pending asset instead of creating an orphaned duplicate', async () => {
+    const objectKey = `tracks/${TRACK_ID}/${ASSET_ID}/source.mp3`
+    select
+      .mockReturnValueOnce(createLockedQuery([{id: TRACK_ID}]))
+      .mockReturnValueOnce(createLimitedQuery([{trackId: TRACK_ID}]))
+      .mockReturnValueOnce(createLimitedQuery([]))
+      .mockReturnValueOnce(createLimitedQuery([{assetId: ASSET_ID, objectKey}]))
+
+    await expect(reserveTrackAsset(TRACK_ID)).resolves.toEqual({assetId: ASSET_ID, objectKey})
     expect(insert).not.toHaveBeenCalled()
   })
 })

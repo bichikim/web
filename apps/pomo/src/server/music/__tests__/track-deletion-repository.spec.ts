@@ -13,7 +13,10 @@ vi.mock('../../database', async () => {
 const TRACK_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf781'
 const select = vi.fn()
 const insert = vi.fn()
-const transaction = {insert, select}
+const updateWhere = vi.fn().mockResolvedValue(undefined)
+const updateSet = vi.fn(() => ({where: updateWhere}))
+const update = vi.fn(() => ({set: updateSet}))
+const transaction = {insert, select, update}
 const database = {
   transaction: vi.fn(async (operation: (value: typeof transaction) => Promise<unknown>) =>
     operation(transaction),
@@ -42,6 +45,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   select.mockReset()
   insert.mockReset()
+  update.mockClear()
+  updateSet.mockClear()
+  updateWhere.mockClear()
   databaseMocks.withTransactionalDatabase.mockImplementation(async (operation) =>
     operation(database),
   )
@@ -78,5 +84,21 @@ describe('prepareTrackDeletion', () => {
       storageDeleted: false,
     })
     expect(values).toHaveBeenCalledWith({objectKeys: [], trackId: TRACK_ID})
+  })
+
+  it('should retire active playback before continuing an existing deletion job', async () => {
+    select
+      .mockReturnValueOnce(createLockedQuery([{id: TRACK_ID}]))
+      .mockReturnValueOnce(
+        createLimitedQuery([
+          {objectKeys: [`tracks/${TRACK_ID}/${TRACK_ID}/source.mp3`], storageDeletedAt: null},
+        ]),
+      )
+
+    await expect(prepareTrackDeletion(TRACK_ID)).resolves.toEqual({
+      objectKeys: [`tracks/${TRACK_ID}/${TRACK_ID}/source.mp3`],
+      storageDeleted: false,
+    })
+    expect(updateSet).toHaveBeenCalledWith({retiredAt: expect.any(Date), status: 'retired'})
   })
 })

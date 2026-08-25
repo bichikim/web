@@ -9,7 +9,14 @@ import {MusicPlayerView} from '../MusicPlayerView'
 vi.mock('media-chrome', () => ({}))
 
 const TRACKS = [
-  {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},
+  {
+    artist: 'Artist',
+    artworkUrl: '/audio/artwork/one.jpg',
+    durationSeconds: 1,
+    id: 'one',
+    source: '/one.mp3',
+    title: 'One',
+  },
   {artist: 'Artist', durationSeconds: 1, id: 'two', source: '/two.mp3', title: 'Two'},
 ] as const
 
@@ -53,6 +60,21 @@ const getProgressRanges = (container: HTMLElement) => {
 
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
+
+  it('should render the current track artwork only in the expanded player', () => {
+    const collapsedResult = renderMusicPlayerView({expanded: false})
+
+    expect(collapsedResult.container.querySelector('.pomo-player__artwork')).toBeNull()
+
+    cleanup()
+
+    const expandedResult = renderMusicPlayerView()
+    const artwork = expandedResult.container.querySelector('.pomo-player__artwork')
+
+    expect(artwork).toBeInstanceOf(HTMLImageElement)
+    expect(artwork?.getAttribute('src')).toBe('/audio/artwork/one.jpg')
+    expect(artwork?.getAttribute('alt')).toBe('')
+  })
 
   it('should keep the collapsed player layers visually present but inactive', () => {
     const result = renderMusicPlayerView({expanded: false})
@@ -248,7 +270,7 @@ describe('MusicPlayerView', () => {
     expect(scribbleResult.container.querySelector('.i-tabler-album')).toBeNull()
     expect(
       scribbleResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
-    ).toHaveLength(2)
+    ).toHaveLength(1)
   })
 
   it('should use native titles for every player button', () => {
@@ -281,19 +303,25 @@ describe('MusicPlayerView', () => {
   })
 
   it('should keep the summary play button stationary on hover', () => {
-    const result = renderMusicPlayerView()
-    const summaryPlayButton = result.container.querySelector('.pomo-player__play--summary')
-    const expandedPlayButton = result.container.querySelector('.pomo-player__play--large')
+    const collapsedResult = renderMusicPlayerView({expanded: false})
+    const summaryPlayButton = collapsedResult.container.querySelector('.pomo-player__play--summary')
 
-    if (
-      !(summaryPlayButton instanceof HTMLElement) ||
-      !(expandedPlayButton instanceof HTMLElement)
-    ) {
-      throw new TypeError('Expected the Pomo play buttons to be rendered')
+    if (!(summaryPlayButton instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo summary play button to be rendered')
     }
 
     expect(summaryPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(false)
     expect(summaryPlayButton.classList.contains('[transition:filter_160ms_ease]')).toBe(true)
+
+    cleanup()
+
+    const expandedResult = renderMusicPlayerView()
+    const expandedPlayButton = expandedResult.container.querySelector('.pomo-player__play--large')
+
+    if (!(expandedPlayButton instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo expanded play button to be rendered')
+    }
+
     expect(expandedPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(true)
     expect(
       expandedPlayButton.classList.contains('[transition:transform_160ms_ease,_filter_160ms_ease]'),

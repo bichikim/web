@@ -1,6 +1,6 @@
 {
-  "id": "9010d820-eb5f-4054-8214-f0bc95fc5cae",
-  "prevId": "193450ff-0330-4a3a-b643-9a8dadfcafa8",
+  "id": "c6cf3c2e-dc4e-4f95-985d-8f5e39de42d1",
+  "prevId": "9010d820-eb5f-4054-8214-f0bc95fc5cae",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1946,6 +1946,73 @@
         "music_track_deletion_jobs_track_id_music_tracks_id_fk": {
           "name": "music_track_deletion_jobs_track_id_music_tracks_id_fk",
           "tableFrom": "music_track_deletion_jobs",
+          "tableTo": "music_tracks",
+          "columnsFrom": ["track_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.music_track_registrations": {
+      "name": "music_track_registrations",
+      "schema": "",
+      "columns": {
+        "album_id": {
+          "name": "album_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "music_track_registrations_created_at_index": {
+          "name": "music_track_registrations_created_at_index",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "music_track_registrations_album_id_music_albums_id_fk": {
+          "name": "music_track_registrations_album_id_music_albums_id_fk",
+          "tableFrom": "music_track_registrations",
+          "tableTo": "music_albums",
+          "columnsFrom": ["album_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "music_track_registrations_track_id_music_tracks_id_fk": {
+          "name": "music_track_registrations_track_id_music_tracks_id_fk",
+          "tableFrom": "music_track_registrations",
           "tableTo": "music_tracks",
           "columnsFrom": ["track_id"],
           "columnsTo": ["id"],

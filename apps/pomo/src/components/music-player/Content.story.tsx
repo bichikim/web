@@ -36,6 +36,7 @@ export const Expanded: Story = {
     tracks: [
       {
         artist: 'Pomo Sounds',
+        artworkUrl: '/audio/artwork/breeze-between-pages.jpg',
         durationSeconds: 180,
         id: 'warm-window',
         source: '',
@@ -43,6 +44,7 @@ export const Expanded: Story = {
       },
       {
         artist: 'Pomo Sounds',
+        artworkUrl: '/audio/artwork/sunlit-desk-notes.jpg',
         durationSeconds: 180,
         id: 'quiet-pages',
         source: '',
@@ -50,6 +52,7 @@ export const Expanded: Story = {
       },
       {
         artist: 'Pomo Sounds',
+        artworkUrl: '/audio/artwork/sunday-bookstore-glow.jpg',
         durationSeconds: 180,
         id: 'night-lamp',
         source: '',

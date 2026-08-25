@@ -19,6 +19,7 @@ export interface CreatePendingTrackInput {
 }
 
 export interface CompleteTrackRegistrationInput {
+  readonly artworkUrl: string | null
   readonly assetId: string
   readonly durationMs: number
   readonly etag: string
@@ -77,6 +78,26 @@ export const reserveTrackAsset = async (trackId: string) =>
 
       if (registration === undefined) {
         return null
+      }
+
+      const [deletionJob] = await transaction
+        .select({trackId: musicTrackDeletionJobs.trackId})
+        .from(musicTrackDeletionJobs)
+        .where(eq(musicTrackDeletionJobs.trackId, trackId))
+        .limit(1)
+
+      if (deletionJob !== undefined) {
+        return null
+      }
+
+      const [pendingAsset] = await transaction
+        .select({assetId: musicTrackAssets.id, objectKey: musicTrackAssets.objectKey})
+        .from(musicTrackAssets)
+        .where(and(eq(musicTrackAssets.trackId, trackId), eq(musicTrackAssets.status, 'pending')))
+        .limit(1)
+
+      if (pendingAsset !== undefined) {
+        return pendingAsset
       }
 
       const assetId = crypto.randomUUID()
@@ -161,6 +182,7 @@ export const completeTrackRegistration = async (
         .update(musicTrackAssets)
         .set({
           activatedAt: now,
+          artworkUrl: input.artworkUrl,
           contentType: 'audio/mpeg',
           durationMs: input.durationMs,
           etag: input.etag,

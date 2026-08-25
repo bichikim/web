@@ -8,7 +8,7 @@ import {
   markTrackDeletionStorageDeleted,
   prepareTrackDeletion,
 } from './track-deletion-repository'
-import {deleteTrackObject} from './track-upload'
+import {deleteTrackAssetStorage} from './track-storage-deletion'
 
 const FINALIZE_BATCH_SIZE = 25
 const BATCH_LOOKAHEAD = 1
@@ -52,7 +52,7 @@ export interface RunTrackDeletionMaintenanceOptions {
 
 const createRepository = (): TrackDeletionMaintenanceRepository => ({
   deleteStorage: async (objectKeys) => {
-    await Promise.all(objectKeys.map((objectKey) => deleteTrackObject(objectKey)))
+    await Promise.all(objectKeys.map((objectKey) => deleteTrackAssetStorage(objectKey)))
   },
   finalize: finalizeTrackDeletion,
   listPending: async (limit) => {

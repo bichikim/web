@@ -57,6 +57,12 @@ export const prepareTrackDeletion = async (
         .from(musicTrackDeletionJobs)
         .where(eq(musicTrackDeletionJobs.trackId, trackId))
         .limit(1)
+
+      await transaction
+        .update(musicTrackAssets)
+        .set({retiredAt: new Date(), status: 'retired'})
+        .where(and(eq(musicTrackAssets.trackId, trackId), eq(musicTrackAssets.status, 'active')))
+
       if (existingJob !== undefined) {
         return {
           objectKeys: existingJob.objectKeys,
