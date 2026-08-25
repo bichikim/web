@@ -31,6 +31,7 @@ import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
 import {type PPomodoroPresentation} from './PPomodoro'
 import {PSceneFallback} from './p-studio/SceneFallback'
+import {SceneModelDownloadFallback} from './p-studio/ModelDownloadFallback'
 import {PScreenSaver} from './PScreenSaver'
 import {CLASSES, SceneTime} from './p-studio/shared'
 import {PStudioScene} from './p-studio/Scene'
@@ -214,6 +215,7 @@ export const PStudio = () => {
           onExitComplete={() => setIsEntryVisible(false)}
         />
       </Show>
+      <SceneModelDownloadFallback isVisible={!hasEntered() || !scenePreferences.isReady()} />
       <PScreenSaver
         isActive={hasEntered() && screenSaver.isActive()}
         onDismiss={screenSaver.onDismiss}

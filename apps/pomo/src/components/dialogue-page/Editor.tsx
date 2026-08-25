@@ -9,6 +9,7 @@ import {
   usePEvents,
 } from '../../features/focus-room-dialogue'
 import {formatModelDownloadSize} from '../../features/model-storage'
+import {useModelDownload} from '../../features/model-download'
 import {
   getSupertonicModel,
   isSupertonicModelDownloaded,
@@ -21,6 +22,8 @@ import PDialogueDraftGenerator from './DraftGenerator'
 import {PFaceIcon} from '../PFaceIcon'
 import {PGenerationStatus} from '../PGenerationStatus'
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
+import {getPomoHomeHref} from '../pomo-route'
+import {getLocale} from '@paraglide/runtime'
 
 const CLASSES = {
   dialogueEditor: [
@@ -150,7 +153,9 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
   const editor = usePDialogueEditor(editorProps)
   const [draftGenerationBusy, setDraftGenerationBusy] = createSignal(false)
   const [audioDownloadConsentOpen, setAudioDownloadConsentOpen] = createSignal(false)
+  const [audioDownloadError, setAudioDownloadError] = createSignal<string | null>(null)
   const [isCheckingAudioModel, setIsCheckingAudioModel] = createSignal(false)
+  const modelDownload = useModelDownload()
   let isDisposed = false
   onCleanup(() => {
     isDisposed = true
@@ -165,8 +170,41 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
       status === 'saving'
     )
   }
-  const isBusy = () => isAudioBusy() || draftGenerationBusy() || isCheckingAudioModel()
-  const audioProgress = () => (editor.state().status === 'preparing' ? editor.progress() : null)
+  const isModelDownloading = () => modelDownload.state().status === 'loading'
+  const isBusy = () =>
+    isAudioBusy() || draftGenerationBusy() || isCheckingAudioModel() || isModelDownloading()
+  const audioProgress = () => {
+    const downloadState = modelDownload.state()
+
+    if (
+      downloadState.status === 'loading' &&
+      downloadState.target.kind === 'voice' &&
+      downloadState.target.modelId === editor.modelId()
+    ) {
+      return downloadState.percentage
+    }
+
+    return editor.state().status === 'preparing' ? editor.progress() : null
+  }
+  const audioMessage = () => {
+    const downloadError = audioDownloadError()
+
+    if (downloadError !== null) {
+      return downloadError
+    }
+
+    const downloadState = modelDownload.state()
+
+    if (
+      downloadState.status === 'loading' &&
+      downloadState.target.kind === 'voice' &&
+      downloadState.target.modelId === editor.modelId()
+    ) {
+      return '음성 모델 파일을 백그라운드에서 내려받고 있어요.'
+    }
+
+    return editor.state().message
+  }
   const handleSave = async () => {
     const dialogueId = await editor.save()
 
@@ -207,6 +245,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
     }
 
     const selectedModelId = editor.modelId()
+    setAudioDownloadError(null)
     setIsCheckingAudioModel(true)
     const isDownloaded = await isSupertonicModelDownloaded({modelId: selectedModelId})
 
@@ -223,18 +262,30 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
 
     setAudioDownloadConsentOpen(true)
   }
-  const handleConfirmAudioDownload = () => {
+  const handleConfirmAudioDownload = async () => {
+    const selectedModelId = editor.modelId()
     setAudioDownloadConsentOpen(false)
-    editor.generate().catch((error: unknown) => {
-      console.error('Failed to generate confirmed dialogue audio.', error)
-    })
+    const result = await modelDownload.startVoiceModel(selectedModelId)
+
+    if (isDisposed) {
+      return
+    }
+
+    if (result.status === 'complete') {
+      await editor.generate()
+      return
+    }
+
+    if (result.status === 'error') {
+      setAudioDownloadError(result.message)
+    }
   }
 
   return (
     <main class={CLASSES.dialogueEditor}>
       <header class={CLASSES.dialogueEditorHeader}>
         <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
-        <A class={CLASSES.dialogueEditorBack} href="/">
+        <A class={CLASSES.dialogueEditorBack} href={getPomoHomeHref(getLocale())}>
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
           Pomofi로
         </A>
@@ -325,7 +376,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
 
           <PGenerationStatus
             kind="voice"
-            message={editor.state().message}
+            message={audioMessage()}
             progress={audioProgress()}
             progressLabel="음성 모델 준비 진행률"
           />
