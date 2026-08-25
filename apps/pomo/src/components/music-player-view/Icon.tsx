@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {getPomoIconClass} from '../../design-system/icon-style'
+import {getPomoIconClass} from '../icon-style'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 
 interface PlayerIconProps {

@@ -6,12 +6,12 @@ import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {Suspense} from 'solid-js'
 
+import {PDocumentMetadata} from './components/PDocumentMetadata'
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {PRecoveryBoundary} from './components/PRecoveryBoundary'
 import {useApplicationRecovery} from './features/application-recovery'
 import {useAppsInTossDevtools} from './features/apps-in-toss-devtools'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
-import {PDocumentMetadata} from './app/Metadata'
 
 export default function App() {
   useAppsInTossDevtools()

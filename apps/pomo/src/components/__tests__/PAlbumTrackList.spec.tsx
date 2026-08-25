@@ -4,7 +4,7 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {PAlbumTrackList} from '../PAlbumTrackList'
+import {PAlbumTrackList} from '../album-library/TrackList'
 
 afterEach(cleanup)
 

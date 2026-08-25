@@ -25,6 +25,7 @@ export interface PublishedAlbumSalePreparing {
 export type PublishedAlbumSale = PublishedAlbumSaleConfigured | PublishedAlbumSalePreparing
 
 export interface PublishedAlbumTrack {
+  readonly artworkUrl?: string
   readonly artist: string
   readonly id: string
   readonly title: string
@@ -142,6 +143,7 @@ export const listPublishedAlbums = async (
       .select({
         albumId: musicAlbumTracks.albumId,
         artist: musicTracks.artist,
+        artworkUrl: musicTrackAssets.artworkUrl,
         id: musicTracks.id,
         title: musicTracks.title,
       })
@@ -184,7 +186,12 @@ export const listPublishedAlbums = async (
 
   for (const track of albumTracks) {
     const tracks = tracksByAlbum.get(track.albumId) ?? []
-    tracks.push({artist: track.artist, id: track.id, title: track.title})
+    tracks.push({
+      artist: track.artist,
+      artworkUrl: track.artworkUrl ?? undefined,
+      id: track.id,
+      title: track.title,
+    })
     tracksByAlbum.set(track.albumId, tracks)
   }
 

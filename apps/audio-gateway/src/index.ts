@@ -6,9 +6,11 @@ const CACHE_PATH_PREFIX = '/_pomo_paid_audio_cache/'
 const EDGE_CACHE_SECONDS = 31_536_000
 const BROWSER_CACHE_SECONDS = 3600
 const HTTP_NO_CONTENT = 204
+const HTTP_PARTIAL_CONTENT = 206
 const HTTP_UNAUTHORIZED = 401
 const HTTP_NOT_FOUND = 404
 const HTTP_METHOD_NOT_ALLOWED = 405
+const HTTP_RANGE_NOT_SATISFIABLE = 416
 const HTTP_INTERNAL_SERVER_ERROR = 500
 
 interface PlaybackSecrets {
@@ -84,7 +86,10 @@ const createClientResponse = (
   cacheStatus: 'HIT' | 'MISS',
 ): Response => {
   const headers = new Headers(response.headers)
-  headers.set('Cache-Control', `private, max-age=${BROWSER_CACHE_SECONDS}`)
+  headers.set(
+    'Cache-Control',
+    response.ok ? `private, max-age=${BROWSER_CACHE_SECONDS}` : 'no-store',
+  )
   headers.set('X-Pomo-Cache', cacheStatus)
   applyCorsHeaders(headers, allowedOrigin)
   return new Response(response.body, {
@@ -94,21 +99,84 @@ const createClientResponse = (
   })
 }
 
-const createObjectResponse = (
-  object: R2ObjectBody,
-  assetId: string,
-  contentLength: number,
-): Response => {
+const createObjectHeaders = (object: R2Object, assetId: string): Headers => {
   const headers = new Headers()
   object.writeHttpMetadata(headers)
   headers.set('Accept-Ranges', 'bytes')
   headers.set('Cache-Control', `public, s-maxage=${EDGE_CACHE_SECONDS}, immutable`)
   headers.set('Cache-Tag', `paid-audio-${assetId}`)
-  headers.set('Content-Length', contentLength.toString())
   headers.set('Content-Type', 'audio/mpeg')
   headers.set('ETag', object.httpEtag)
   headers.set('X-Content-Type-Options', 'nosniff')
+  return headers
+}
+
+const createObjectResponse = (object: R2ObjectBody, assetId: string): Response => {
+  const headers = createObjectHeaders(object, assetId)
+  headers.set('Content-Length', object.size.toString())
   return new Response(object.body, {headers})
+}
+
+const createRangeNotSatisfiableResponse = async (
+  object: R2ObjectBody,
+  assetId: string,
+): Promise<Response> => {
+  await object.body.cancel().catch(() => undefined)
+  const headers = createObjectHeaders(object, assetId)
+  headers.set('Content-Range', `bytes */${object.size}`)
+  return new Response(null, {headers, status: HTTP_RANGE_NOT_SATISFIABLE})
+}
+
+const createRangedObjectResponse = async (
+  object: R2ObjectBody,
+  assetId: string,
+): Promise<Response> => {
+  const {range} = object
+
+  if (range === undefined) {
+    return createRangeNotSatisfiableResponse(object, assetId)
+  }
+
+  const normalizedRange: {length?: number; offset?: number; suffix?: number} = {...range}
+  const requestedLength =
+    normalizedRange.suffix === undefined
+      ? (normalizedRange.length ?? object.size - (normalizedRange.offset ?? 0))
+      : Math.min(normalizedRange.suffix, object.size)
+  const offset =
+    normalizedRange.suffix === undefined
+      ? (normalizedRange.offset ?? 0)
+      : object.size - requestedLength
+  const contentLength = Math.min(requestedLength, object.size - offset)
+
+  if (
+    object.size === 0 ||
+    !Number.isSafeInteger(offset) ||
+    !Number.isSafeInteger(contentLength) ||
+    offset < 0 ||
+    offset >= object.size ||
+    contentLength <= 0
+  ) {
+    return createRangeNotSatisfiableResponse(object, assetId)
+  }
+
+  const headers = createObjectHeaders(object, assetId)
+  headers.set('Content-Length', contentLength.toString())
+  headers.set('Content-Range', `bytes ${offset}-${offset + contentLength - 1}/${object.size}`)
+  return new Response(object.body, {headers, status: HTTP_PARTIAL_CONTENT})
+}
+
+const cacheFullObject = async (
+  environment: AudioGatewayEnv,
+  claims: PlaybackTokenClaims,
+  cacheRequest: Request,
+): Promise<void> => {
+  const object = await environment.PAID_AUDIO.get(claims.objectKey)
+
+  if (object === null) {
+    return
+  }
+
+  await caches.default.put(cacheRequest, createObjectResponse(object, claims.assetId))
 }
 
 const handleOptions = (request: Request, environment: AudioGatewayEnv): Response => {
@@ -188,13 +256,27 @@ const handleGet = async ({
     return createClientResponse(cachedResponse, allowedOrigin, 'HIT')
   }
 
-  const object = await environment.PAID_AUDIO.get(claims.objectKey)
+  const range = request.headers.get('Range')
+  const object =
+    range === null
+      ? await environment.PAID_AUDIO.get(claims.objectKey)
+      : await environment.PAID_AUDIO.get(claims.objectKey, {range: request.headers})
 
   if (object === null) {
     return createErrorResponse(HTTP_NOT_FOUND, 'audio_not_found')
   }
 
-  const objectResponse = createObjectResponse(object, claims.assetId, object.size)
+  if (range !== null) {
+    const objectResponse = await createRangedObjectResponse(object, claims.assetId)
+
+    if (objectResponse.ok) {
+      context.waitUntil(cacheFullObject(environment, claims, cacheRequests.full))
+    }
+
+    return createClientResponse(objectResponse, allowedOrigin, 'MISS')
+  }
+
+  const objectResponse = createObjectResponse(object, claims.assetId)
   const cacheResponse = objectResponse.clone()
   context.waitUntil(caches.default.put(cacheRequests.full, cacheResponse))
   return createClientResponse(objectResponse, allowedOrigin, 'MISS')

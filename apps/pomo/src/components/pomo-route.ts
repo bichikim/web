@@ -1,5 +1,5 @@
-import {SEARCH_CONFIG} from '../config/search'
-import {deLocalizeHref, type Locale, locales, localizeHref} from '../paraglide/runtime.js'
+import {SEARCH_CONFIG} from '../features/search-discovery/canonical'
+import {deLocalizeHref, type Locale, locales, localizeHref} from '@paraglide/runtime'
 
 const POMO_LAYOUT_PATHS: ReadonlySet<string> = new Set(['/', '/dialogue'])
 const SEARCH_INDEXABLE_PATHS: ReadonlySet<string> = new Set(SEARCH_CONFIG.indexablePaths)

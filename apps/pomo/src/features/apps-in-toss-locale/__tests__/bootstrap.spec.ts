@@ -2,7 +2,7 @@
 
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {localStorageKey} from '../../../paraglide/runtime.js'
+import {localStorageKey} from '@paraglide/runtime'
 import {getInitialAppsInTossLocale} from '../bootstrap'
 
 const deviceMocks = vi.hoisted(() => ({

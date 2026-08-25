@@ -45,6 +45,7 @@ export interface CreateTrackInput {
 }
 
 export interface ActivateTrackAssetInput {
+  readonly artworkUrl: string | null
   readonly assetId: string
   readonly durationMs: number
   readonly etag: string
@@ -454,6 +455,7 @@ export const activateTrackAsset = async (input: ActivateTrackAssetInput): Promis
         .update(musicTrackAssets)
         .set({
           activatedAt: now,
+          artworkUrl: input.artworkUrl,
           contentType: 'audio/mpeg',
           durationMs: input.durationMs,
           etag: input.etag,

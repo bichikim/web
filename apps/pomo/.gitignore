@@ -1,4 +1,5 @@
 # Build output
+.i18n/paraglide
 .granite
 .output
 .vinxi

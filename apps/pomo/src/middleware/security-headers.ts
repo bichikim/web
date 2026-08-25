@@ -3,7 +3,7 @@ import {randomBytes} from 'node:crypto'
 import type {Middleware} from 'h3'
 import {getRequestEvent} from 'solid-js/web'
 
-import {BASE_SECURITY_HEADERS, createContentSecurityPolicy} from '../config/security-headers'
+import {BASE_SECURITY_HEADERS, createContentSecurityPolicy} from './security-header-policy'
 
 const NONCE_BYTES = 16
 

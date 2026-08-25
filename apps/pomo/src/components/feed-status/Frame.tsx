@@ -1,4 +1,4 @@
-import {PScribblePanel} from '../PScribblePanel'
+import {PScribblePanel} from '../scribble/Panel'
 import {FeedStatusFrameProps} from './shared'
 
 export const FeedStatusFrame = (props: FeedStatusFrameProps) => (

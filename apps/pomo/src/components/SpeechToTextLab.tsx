@@ -6,7 +6,7 @@ import {
   RECOMMENDED_SPEECH_MODEL_ID,
   SPEECH_MODELS,
 } from '../features/speech-to-text'
-import {SPEECH_PANEL_CLASSES} from './speech-to-text-lab.style'
+import {SPEECH_PANEL_CLASSES} from './speech-to-text-lab/style'
 import {SpeechModelWorkspace} from './speech-to-text-lab/ModelWorkspace'
 
 export const SpeechToTextLab = () => {

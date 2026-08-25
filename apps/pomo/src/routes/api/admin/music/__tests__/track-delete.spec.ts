@@ -6,11 +6,11 @@ const repositoryMocks = vi.hoisted(() => ({
   markTrackDeletionStorageDeleted: vi.fn(),
   prepareTrackDeletion: vi.fn(),
 }))
-const uploadMocks = vi.hoisted(() => ({deleteTrackObject: vi.fn()}))
+const deletionMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
 vi.mock('src/server/music/admin-repository', () => repositoryMocks)
-vi.mock('src/server/music/track-upload', () => uploadMocks)
+vi.mock('src/server/music/track-storage-deletion', () => deletionMocks)
 
 import {DELETE} from '../tracks/[trackId]'
 import {invokeApiRoute} from '../../../__tests__/invoke'
@@ -28,7 +28,7 @@ describe('admin music track delete route', () => {
     repositoryMocks.prepareTrackDeletion
       .mockReset()
       .mockResolvedValue({objectKeys: OBJECT_KEYS, storageDeleted: false})
-    uploadMocks.deleteTrackObject.mockReset().mockResolvedValue(undefined)
+    deletionMocks.deleteTrackAssetStorage.mockReset().mockResolvedValue(undefined)
   })
 
   afterEach(() => vi.restoreAllMocks())
@@ -37,14 +37,14 @@ describe('admin music track delete route', () => {
     const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
 
     expect(response.status).toBe(200)
-    expect(uploadMocks.deleteTrackObject).toHaveBeenNthCalledWith(1, OBJECT_KEYS[0])
-    expect(uploadMocks.deleteTrackObject).toHaveBeenNthCalledWith(2, OBJECT_KEYS[1])
+    expect(deletionMocks.deleteTrackAssetStorage).toHaveBeenNthCalledWith(1, OBJECT_KEYS[0])
+    expect(deletionMocks.deleteTrackAssetStorage).toHaveBeenNthCalledWith(2, OBJECT_KEYS[1])
     expect(repositoryMocks.markTrackDeletionStorageDeleted).toHaveBeenCalledWith(TRACK_ID)
     expect(repositoryMocks.finalizeTrackDeletion).toHaveBeenCalledWith(TRACK_ID)
   })
 
   it('should preserve database records when R2 deletion fails', async () => {
-    uploadMocks.deleteTrackObject.mockRejectedValue(new Error('R2 unavailable'))
+    deletionMocks.deleteTrackAssetStorage.mockRejectedValue(new Error('R2 unavailable'))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
@@ -63,7 +63,7 @@ describe('admin music track delete route', () => {
     const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
 
     expect(response.status).toBe(200)
-    expect(uploadMocks.deleteTrackObject).not.toHaveBeenCalled()
+    expect(deletionMocks.deleteTrackAssetStorage).not.toHaveBeenCalled()
     expect(repositoryMocks.markTrackDeletionStorageDeleted).not.toHaveBeenCalled()
     expect(repositoryMocks.finalizeTrackDeletion).toHaveBeenCalledWith(TRACK_ID)
   })
@@ -75,7 +75,7 @@ describe('admin music track delete route', () => {
     const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
 
     expect(response.status).toBe(500)
-    expect(uploadMocks.deleteTrackObject).not.toHaveBeenCalled()
+    expect(deletionMocks.deleteTrackAssetStorage).not.toHaveBeenCalled()
   })
 
   it('should reject track deletion without an administrator session', async () => {

@@ -4,8 +4,8 @@ import {
   type Locale,
   localStorageKey,
   toLocale,
-} from '../../paraglide/runtime.js'
-import {resolveAppsInTossLocale} from './index.ts'
+} from '@paraglide/runtime'
+import {resolveAppsInTossLocale} from './index'
 
 const readStoredLocale = () => {
   try {

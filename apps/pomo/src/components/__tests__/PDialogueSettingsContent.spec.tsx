@@ -5,10 +5,10 @@ import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For, type JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {PSelect} from 'src/design-system/PSelect'
+import {PSelect} from 'src/components/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
-import PDialogueSettingsContent from '../PDialogueSettingsContent'
+import PDialogueSettingsContent from '../dialogue-settings/Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('@kobalte/core/dropdown-menu', () => {
@@ -33,7 +33,7 @@ vi.mock('@solidjs/router', () => ({
     </a>
   ),
 }))
-vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/focus-room-dialogue', async () => {
   const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
     'src/features/focus-room-dialogue',

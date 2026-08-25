@@ -4,8 +4,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('solid-js/web', () => ({getRequestEvent: vi.fn()}))
 
-import {STATIC_SECURITY_HEADERS, WORKER_SECURITY_HEADERS} from '../../config/security-headers.ts'
-import {securityHeadersMiddleware} from '../security-headers.ts'
+import {STATIC_SECURITY_HEADERS, WORKER_SECURITY_HEADERS} from '../security-header-policy'
+import {securityHeadersMiddleware} from '../security-headers'
 
 const applySecurityHeaders = async (
   request: Request,
@@ -90,6 +90,7 @@ describe('securityHeadersMiddleware', () => {
       "form-action 'self'",
       `script-src 'self' 'nonce-${firstNonce}' 'wasm-unsafe-eval'`,
       `style-src 'self' 'nonce-${firstNonce}'`,
+      "style-src-attr 'unsafe-inline'",
       "font-src 'self' data:",
       "img-src 'self' data: blob:",
       "media-src 'self' blob: https://storage.pomofi.io",
@@ -97,7 +98,7 @@ describe('securityHeadersMiddleware', () => {
       "connect-src 'self' https://www.pomofi.io https://storage.pomofi.io https://huggingface.co https://us.aws.cdn.hf.co https://cdn.jsdelivr.net https://pub-0e34511083544f8aaad14d0590013528.r2.dev",
       "manifest-src 'self'",
     ])
-    expect(firstPolicy).not.toContain("'unsafe-inline'")
+    expect(firstPolicy).not.toContain("style-src 'unsafe-inline'")
     expect(firstPolicy).not.toContain("'unsafe-eval'")
     expect(firstPolicy).not.toContain('*')
     expect(firstPolicy).not.toContain('report-uri')
@@ -111,8 +112,9 @@ describe('securityHeadersMiddleware', () => {
     expect(STATIC_SECURITY_HEADERS['Referrer-Policy']).toBe('no-referrer')
     expect(policy).toContain("script-src 'self' 'wasm-unsafe-eval'")
     expect(policy).toContain("style-src 'self'")
+    expect(policy).toContain("style-src-attr 'unsafe-inline'")
     expect(policy).not.toContain("'nonce-")
-    expect(policy).not.toContain("'unsafe-inline'")
+    expect(policy).not.toContain("style-src 'unsafe-inline'")
   })
 
   it('should constrain fetches and nested workers in worker execution contexts', () => {

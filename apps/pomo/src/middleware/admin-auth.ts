@@ -1,6 +1,6 @@
-import {getAdminSession} from '../server/admin-auth/session.ts'
+import {getAdminSession} from '../server/admin-auth/session'
 
-export {classifyAdminAccess, hasAdminRole} from '../server/admin-auth/access.ts'
+export {classifyAdminAccess, hasAdminRole} from '../server/admin-auth/access'
 
 const ADMIN_PATH = '/admin'
 const ADMIN_LOGIN_PATH = '/admin/login'

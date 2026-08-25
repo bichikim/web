@@ -1,8 +1,8 @@
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
-import {getPomoIconClass} from '../../design-system/icon-style'
+import {getPomoIconClass} from '../icon-style'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {CLASSES} from './shared'
 
 interface PomodoroSessionProgressProps {

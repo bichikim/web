@@ -3,8 +3,8 @@
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/design-system/PModal'
-import type {PSwitchProps} from 'src/design-system/PSwitch'
+import {PModal, type PModalProps} from 'src/components/PModal'
+import type {PSwitchProps} from 'src/components/PSwitch'
 import breakStatusIcon from '../assets/pomodoro-status-icons/break.webp'
 import focusStatusIcon from '../assets/pomodoro-status-icons/focus.webp'
 import scribbleBreakStatusIcon from '../assets/pomodoro-status-icons/scribble/break.webp'
@@ -19,10 +19,10 @@ const bridgeStorageMocks = vi.hoisted(() => ({
 vi.mock('@apps-in-toss/web-framework', () => ({
   Storage: bridgeStorageMocks,
 }))
-vi.mock('src/design-system/PModal', () => ({
+vi.mock('src/components/PModal', () => ({
   PModal: vi.fn(),
 }))
-vi.mock('src/design-system/PSwitch', () => ({
+vi.mock('src/components/PSwitch', () => ({
   PSwitch: (props: PSwitchProps) => (
     <label>
       {props.label}
