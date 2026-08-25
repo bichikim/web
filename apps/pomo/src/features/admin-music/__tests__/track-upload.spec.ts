@@ -35,7 +35,7 @@ describe('uploadTrackAudio', () => {
       .mockResolvedValueOnce(Response.json({assetId: ASSET_ID, status: 'active'}))
     vi.stubGlobal('fetch', fetcher)
 
-    await uploadTrackAudio(TRACK_ID, file)
+    await uploadTrackAudio({file, trackId: TRACK_ID})
 
     expect(fetcher).toHaveBeenNthCalledWith(
       2,

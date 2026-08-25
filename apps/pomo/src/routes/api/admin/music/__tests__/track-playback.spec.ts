@@ -5,7 +5,7 @@ const repositoryMocks = vi.hoisted(() => ({findActiveTrackAsset: vi.fn()}))
 const playbackMocks = vi.hoisted(() => ({createAdminPlaybackAccess: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/track-registration-repository', () => repositoryMocks)
 vi.mock('src/server/music/admin-playback-access', () => playbackMocks)
 
 import {GET} from '../tracks/[trackId]/playback'

@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({
-  activateTrackAsset: vi.fn(),
+  completeTrackRegistration: vi.fn(),
   failTrackAsset: vi.fn(),
   findPendingTrackAsset: vi.fn(),
   reserveTrackAsset: vi.fn(),
@@ -15,7 +15,7 @@ const uploadMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/track-registration-repository', () => repositoryMocks)
 vi.mock('src/server/music/track-upload', () => uploadMocks)
 
 import {POST, PUT} from '../assets'
@@ -34,7 +34,7 @@ const createRequest = (method: 'POST' | 'PUT', body: Readonly<Record<string, str
 describe('admin music asset route', () => {
   beforeEach(() => {
     authMocks.authorizeAdminRequest.mockReset().mockResolvedValue({authorized: true, cookies: []})
-    repositoryMocks.activateTrackAsset.mockReset().mockResolvedValue(true)
+    repositoryMocks.completeTrackRegistration.mockReset().mockResolvedValue(true)
     repositoryMocks.failTrackAsset.mockReset().mockResolvedValue(undefined)
     repositoryMocks.findPendingTrackAsset
       .mockReset()
@@ -71,7 +71,7 @@ describe('admin music asset route', () => {
     const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
 
     expect(response.status).toBe(200)
-    expect(repositoryMocks.activateTrackAsset).toHaveBeenCalledWith({
+    expect(repositoryMocks.completeTrackRegistration).toHaveBeenCalledWith({
       assetId: ASSET_ID,
       durationMs: 1234,
       etag: 'etag',

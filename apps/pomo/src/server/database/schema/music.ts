@@ -96,6 +96,20 @@ export const musicAlbumTracks = pgTable(
   ],
 )
 
+export const musicTrackRegistrations = pgTable(
+  'music_track_registrations',
+  {
+    albumId: uuid()
+      .notNull()
+      .references(() => musicAlbums.id, {onDelete: 'cascade'}),
+    createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+    trackId: uuid()
+      .primaryKey()
+      .references(() => musicTracks.id, {onDelete: 'cascade'}),
+  },
+  (table) => [index('music_track_registrations_created_at_index').on(table.createdAt)],
+)
+
 export const musicTrackAssets = pgTable(
   'music_track_assets',
   {

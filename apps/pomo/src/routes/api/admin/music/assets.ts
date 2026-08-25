@@ -5,11 +5,11 @@ import {authorizeAdminRequest} from 'src/server/admin-auth/http'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {
-  activateTrackAsset,
+  completeTrackRegistration,
   failTrackAsset,
   findPendingTrackAsset,
   reserveTrackAsset,
-} from 'src/server/music/admin-repository'
+} from 'src/server/music/track-registration-repository'
 import {
   createTrackPreviewObject,
   createTrackUpload,
@@ -100,7 +100,10 @@ export const PUT = async (event: APIEvent): Promise<Response> => {
   try {
     const inspection = await inspectTrackUpload(asset.objectKey)
     await createTrackPreviewObject(asset.objectKey, inspection.durationMs)
-    const activated = await activateTrackAsset({assetId: asset.id, ...inspection})
+    const activated = await completeTrackRegistration({
+      assetId: asset.id,
+      ...inspection,
+    })
 
     return activated
       ? noStoreJson({assetId: asset.id, status: 'active'}, {cookies: authorization.cookies})

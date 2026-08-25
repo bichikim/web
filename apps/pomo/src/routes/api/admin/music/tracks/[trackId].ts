@@ -7,7 +7,7 @@ import {
   finalizeTrackDeletion,
   markTrackDeletionStorageDeleted,
   prepareTrackDeletion,
-} from 'src/server/music/admin-repository'
+} from 'src/server/music/track-deletion-repository'
 import {deleteTrackObject} from 'src/server/music/track-upload'
 
 const HTTP_BAD_REQUEST = 400
