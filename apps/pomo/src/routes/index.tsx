@@ -3,8 +3,9 @@ import {clientOnly} from '@solidjs/start'
 import {onMount, Show} from 'solid-js'
 
 import {AppsInTossLoadingPage} from '../components/AppsInTossLoadingPage'
+import {getPomoHomeHref} from '../components/pomo-route'
 import * as m from '@paraglide/message'
-import {getLocale, localizeUrl} from '@paraglide/runtime'
+import {getLocale} from '@paraglide/runtime'
 
 const AppsInTossHomePage = clientOnly(
   async () => {
@@ -16,8 +17,7 @@ const AppsInTossHomePage = clientOnly(
 
 const LocaleRedirectPage = () => {
   onMount(() => {
-    const redirectUrl = localizeUrl(new URL(window.location.href), {locale: getLocale()})
-    window.location.replace(redirectUrl)
+    window.location.replace(getPomoHomeHref(getLocale()))
   })
 
   return (
