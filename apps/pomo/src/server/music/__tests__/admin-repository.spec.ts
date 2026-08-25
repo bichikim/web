@@ -1,12 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {
-  activateTrackAsset,
-  listAdminMusic,
-  prepareTrackDeletion,
-  reserveTrackAsset,
-  updateAlbumStatus,
-} from '../admin-repository'
+import {listAdminMusic, updateAlbumStatus} from '../admin-repository'
 
 const databaseMocks = vi.hoisted(() => ({getDatabase: vi.fn(), withTransactionalDatabase: vi.fn()}))
 
@@ -25,9 +19,7 @@ const readSelect = vi.fn()
 const updateWhere = vi.fn().mockResolvedValue(undefined)
 const updateSet = vi.fn(() => ({where: updateWhere}))
 const update = vi.fn(() => ({set: updateSet}))
-const insertValues = vi.fn().mockResolvedValue(undefined)
-const insert = vi.fn(() => ({values: insertValues}))
-const transaction = {insert, select, update}
+const transaction = {select, update}
 const database = {
   transaction: vi.fn(async (operation: (value: typeof transaction) => Promise<unknown>) =>
     operation(transaction),
@@ -51,18 +43,6 @@ const createTracksQuery = (
   from: vi.fn(() => ({
     leftJoin: vi.fn(() => ({where: vi.fn().mockResolvedValue(tracks)})),
   })),
-})
-
-const createLockedQuery = (result: ReadonlyArray<unknown>) => ({
-  from: vi.fn(() => ({
-    where: vi.fn(() => ({
-      for: vi.fn(() => ({limit: vi.fn().mockResolvedValue(result)})),
-    })),
-  })),
-})
-
-const createLimitedQuery = (result: ReadonlyArray<unknown>) => ({
-  from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn().mockResolvedValue(result)}))})),
 })
 
 const createOrderedQuery = (result: ReadonlyArray<unknown>) => ({
@@ -89,6 +69,7 @@ beforeEach(() => {
   databaseMocks.withTransactionalDatabase.mockImplementation(async (operation) =>
     operation(database),
   )
+  select.mockReturnValueOnce(createAlbumQuery())
 })
 
 describe('listAdminMusic', () => {
@@ -128,7 +109,7 @@ describe('listAdminMusic', () => {
 
 describe('updateAlbumStatus', () => {
   it('should block publishing when any album track lacks an active asset', async () => {
-    select.mockReturnValueOnce(createAlbumQuery()).mockReturnValueOnce(
+    select.mockReturnValueOnce(
       createTracksQuery([
         {activeAssetTrackId: 'track-1', trackId: 'track-1'},
         {activeAssetTrackId: null, trackId: 'track-2'},
@@ -144,7 +125,7 @@ describe('updateAlbumStatus', () => {
   })
 
   it('should publish when every album track has an active asset', async () => {
-    select.mockReturnValueOnce(createAlbumQuery()).mockReturnValueOnce(
+    select.mockReturnValueOnce(
       createTracksQuery([
         {activeAssetTrackId: 'track-1', trackId: 'track-1'},
         {activeAssetTrackId: 'track-2', trackId: 'track-2'},
@@ -159,7 +140,7 @@ describe('updateAlbumStatus', () => {
   })
 
   it('should count duplicate active assets as one covered track', async () => {
-    select.mockReturnValueOnce(createAlbumQuery()).mockReturnValueOnce(
+    select.mockReturnValueOnce(
       createTracksQuery([
         {activeAssetTrackId: 'track-1', trackId: 'track-1'},
         {activeAssetTrackId: 'track-1', trackId: 'track-1'},
@@ -172,52 +153,5 @@ describe('updateAlbumStatus', () => {
       success: true,
     })
     expect(update).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('track deletion lifecycle', () => {
-  it('should retire an active asset before continuing an existing deletion job', async () => {
-    select
-      .mockReturnValueOnce(createLockedQuery([{id: 'track-1'}]))
-      .mockReturnValueOnce(
-        createLimitedQuery([
-          {objectKeys: ['tracks/track-1/asset-1/source.mp3'], storageDeletedAt: null},
-        ]),
-      )
-      .mockReturnValueOnce(createLimitedQuery([{trackId: 'track-1'}]))
-
-    await expect(prepareTrackDeletion('track-1')).resolves.toEqual({
-      objectKeys: ['tracks/track-1/asset-1/source.mp3'],
-      storageDeleted: false,
-    })
-    expect(updateSet).toHaveBeenCalledWith({retiredAt: expect.any(Date), status: 'retired'})
-  })
-
-  it('should reject a new asset reservation while deletion is pending', async () => {
-    select
-      .mockReturnValueOnce(createLockedQuery([{id: 'track-1'}]))
-      .mockReturnValueOnce(createLimitedQuery([{trackId: 'track-1'}]))
-
-    await expect(reserveTrackAsset('track-1')).resolves.toBeNull()
-    expect(insert).not.toHaveBeenCalled()
-  })
-
-  it('should reject activating a pending asset while deletion is pending', async () => {
-    select
-      .mockReturnValueOnce(createLimitedQuery([{trackId: 'track-1'}]))
-      .mockReturnValueOnce(createLockedQuery([{id: 'track-1'}]))
-      .mockReturnValueOnce(createLockedQuery([{status: 'pending', trackId: 'track-1'}]))
-      .mockReturnValueOnce(createLimitedQuery([{trackId: 'track-1'}]))
-
-    await expect(
-      activateTrackAsset({
-        artworkUrl: null,
-        assetId: 'asset-1',
-        durationMs: 1_000,
-        etag: 'etag',
-        sizeBytes: 1n,
-      }),
-    ).resolves.toBe(false)
-    expect(update).not.toHaveBeenCalled()
   })
 })

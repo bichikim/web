@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({
-  activateTrackAsset: vi.fn(),
+  completeTrackRegistration: vi.fn(),
   failTrackAsset: vi.fn(),
   findPendingTrackAsset: vi.fn(),
   reserveTrackAsset: vi.fn(),
@@ -14,10 +14,12 @@ const uploadMocks = vi.hoisted(() => ({
   isTrackValidationError: vi.fn(),
 }))
 const artworkMocks = vi.hoisted(() => ({storeTrackArtwork: vi.fn()}))
+const deletionMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/track-registration-repository', () => repositoryMocks)
 vi.mock('src/server/music/cover-upload', () => artworkMocks)
+vi.mock('src/server/music/track-storage-deletion', () => deletionMocks)
 vi.mock('src/server/music/track-upload', () => uploadMocks)
 
 import {POST, PUT} from '../assets'
@@ -36,7 +38,7 @@ const createRequest = (method: 'POST' | 'PUT', body: Readonly<Record<string, str
 describe('admin music asset route', () => {
   beforeEach(() => {
     authMocks.authorizeAdminRequest.mockReset().mockResolvedValue({authorized: true, cookies: []})
-    repositoryMocks.activateTrackAsset.mockReset().mockResolvedValue(true)
+    repositoryMocks.completeTrackRegistration.mockReset().mockResolvedValue(true)
     repositoryMocks.failTrackAsset.mockReset().mockResolvedValue(undefined)
     repositoryMocks.findPendingTrackAsset
       .mockReset()
@@ -57,6 +59,7 @@ describe('admin music asset route', () => {
     artworkMocks.storeTrackArtwork.mockReset().mockResolvedValue({
       artworkUrl: 'https://storage.pomofi.io/track-artwork/asset/cover',
     })
+    deletionMocks.deleteTrackAssetStorage.mockReset().mockResolvedValue(undefined)
     uploadMocks.isTrackValidationError
       .mockReset()
       .mockImplementation(
@@ -76,7 +79,7 @@ describe('admin music asset route', () => {
     const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
 
     expect(response.status).toBe(200)
-    expect(repositoryMocks.activateTrackAsset).toHaveBeenCalledWith({
+    expect(repositoryMocks.completeTrackRegistration).toHaveBeenCalledWith({
       artworkUrl: null,
       assetId: ASSET_ID,
       durationMs: 1234,
@@ -85,6 +88,7 @@ describe('admin music asset route', () => {
     })
     expect(uploadMocks.createTrackPreviewObject).toHaveBeenCalledWith(OBJECT_KEY, 1234)
     expect(artworkMocks.storeTrackArtwork).not.toHaveBeenCalled()
+    expect(deletionMocks.deleteTrackAssetStorage).not.toHaveBeenCalled()
   })
 
   it('should persist an embedded cover while completing an MP3 upload', async () => {
@@ -100,11 +104,20 @@ describe('admin music asset route', () => {
 
     expect(response.status).toBe(200)
     expect(artworkMocks.storeTrackArtwork).toHaveBeenCalledExactlyOnceWith(ASSET_ID, artwork)
-    expect(repositoryMocks.activateTrackAsset).toHaveBeenCalledWith(
+    expect(repositoryMocks.completeTrackRegistration).toHaveBeenCalledWith(
       expect.objectContaining({
         artworkUrl: 'https://storage.pomofi.io/track-artwork/asset/cover',
       }),
     )
+  })
+
+  it('should remove derived storage when deletion wins the registration race', async () => {
+    repositoryMocks.completeTrackRegistration.mockResolvedValue(false)
+
+    const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
+
+    expect(response.status).toBe(409)
+    expect(deletionMocks.deleteTrackAssetStorage).toHaveBeenCalledExactlyOnceWith(OBJECT_KEY)
   })
 
   it('should mark an invalid uploaded file as failed', async () => {

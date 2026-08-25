@@ -10,7 +10,9 @@ const createRepository = (): TrackDeletionMaintenanceRepository => ({
   deleteStorage: vi.fn().mockResolvedValue(undefined),
   finalize: vi.fn().mockResolvedValue(true),
   listPending: vi.fn().mockResolvedValue([]),
+  listStale: vi.fn().mockResolvedValue([]),
   markStorageDeleted: vi.fn().mockResolvedValue(true),
+  prepareStale: vi.fn().mockResolvedValue(true),
 })
 
 const createCandidate = (trackId: string, storageDeleted = true): TrackDeletionCandidate => ({
@@ -27,7 +29,7 @@ describe('runTrackDeletionMaintenance', () => {
       createCandidate('track-2'),
     ])
 
-    await expect(runTrackDeletionMaintenance(repository)).resolves.toEqual({
+    await expect(runTrackDeletionMaintenance({repository})).resolves.toEqual({
       complete: true,
       finalized: 2,
     })
@@ -43,7 +45,7 @@ describe('runTrackDeletionMaintenance', () => {
     const candidate = createCandidate('track-1', false)
     vi.mocked(repository.listPending).mockResolvedValue([candidate])
 
-    await expect(runTrackDeletionMaintenance(repository)).resolves.toEqual({
+    await expect(runTrackDeletionMaintenance({repository})).resolves.toEqual({
       complete: true,
       finalized: 1,
     })
@@ -57,7 +59,7 @@ describe('runTrackDeletionMaintenance', () => {
     const candidates = Array.from({length: 26}, (_, index) => createCandidate(`track-${index}`))
     vi.mocked(repository.listPending).mockResolvedValue(candidates)
 
-    await expect(runTrackDeletionMaintenance(repository)).resolves.toEqual({
+    await expect(runTrackDeletionMaintenance({repository})).resolves.toEqual({
       complete: false,
       finalized: 25,
     })
@@ -70,7 +72,7 @@ describe('runTrackDeletionMaintenance', () => {
     vi.mocked(repository.listPending).mockResolvedValue([createCandidate('track-1')])
     vi.mocked(repository.finalize).mockResolvedValue(false)
 
-    await expect(runTrackDeletionMaintenance(repository)).resolves.toEqual({
+    await expect(runTrackDeletionMaintenance({repository})).resolves.toEqual({
       complete: true,
       finalized: 0,
     })
@@ -82,7 +84,7 @@ describe('runTrackDeletionMaintenance', () => {
       Array.from({length: 27}, (_, index) => createCandidate(`track-${index}`)),
     )
 
-    await expect(runTrackDeletionMaintenance(repository)).rejects.toThrow(
+    await expect(runTrackDeletionMaintenance({repository})).rejects.toThrow(
       'Track deletion maintenance repository exceeded the requested limit',
     )
     expect(repository.finalize).not.toHaveBeenCalled()
@@ -100,9 +102,56 @@ describe('runTrackDeletionMaintenance', () => {
         : Promise.resolve(true),
     )
 
-    await expect(runTrackDeletionMaintenance(repository)).rejects.toThrow(
+    await expect(runTrackDeletionMaintenance({repository})).rejects.toThrow(
       'One or more music track deletions failed',
     )
     expect(repository.finalize).toHaveBeenCalledTimes(2)
+  })
+
+  it('should prepare stale registrations before processing deletion jobs', async () => {
+    const repository = createRepository()
+    const now = new Date('2026-08-25T09:00:00.000Z')
+    vi.mocked(repository.listStale).mockResolvedValue([{trackId: 'track-1'}])
+
+    await expect(runTrackDeletionMaintenance({now, repository})).resolves.toEqual({
+      complete: true,
+      finalized: 0,
+    })
+    expect(repository.listStale).toHaveBeenCalledExactlyOnceWith(
+      new Date('2026-08-24T09:00:00.000Z'),
+      26,
+    )
+    expect(repository.prepareStale).toHaveBeenCalledExactlyOnceWith(
+      'track-1',
+      new Date('2026-08-24T09:00:00.000Z'),
+    )
+  })
+
+  it('should reject an oversized stale registration response', async () => {
+    const repository = createRepository()
+    vi.mocked(repository.listStale).mockResolvedValue(
+      Array.from({length: 27}, (_, index) => ({trackId: `track-${index}`})),
+    )
+
+    await expect(runTrackDeletionMaintenance({repository})).rejects.toThrow(
+      'Track registration maintenance repository exceeded the requested limit',
+    )
+    expect(repository.listPending).not.toHaveBeenCalled()
+  })
+
+  it('should continue preparing stale registrations before reporting failures', async () => {
+    const repository = createRepository()
+    vi.mocked(repository.listStale).mockResolvedValue([{trackId: 'track-1'}, {trackId: 'track-2'}])
+    vi.mocked(repository.prepareStale).mockImplementation((trackId) =>
+      trackId === 'track-1'
+        ? Promise.reject(new Error('database unavailable'))
+        : Promise.resolve(true),
+    )
+
+    await expect(runTrackDeletionMaintenance({repository})).rejects.toThrow(
+      'One or more music track deletions failed',
+    )
+    expect(repository.prepareStale).toHaveBeenCalledTimes(2)
+    expect(repository.listPending).toHaveBeenCalledOnce()
   })
 })

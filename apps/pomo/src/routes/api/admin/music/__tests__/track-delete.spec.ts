@@ -9,7 +9,7 @@ const repositoryMocks = vi.hoisted(() => ({
 const deletionMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/track-deletion-repository', () => repositoryMocks)
 vi.mock('src/server/music/track-storage-deletion', () => deletionMocks)
 
 import {DELETE} from '../tracks/[trackId]'

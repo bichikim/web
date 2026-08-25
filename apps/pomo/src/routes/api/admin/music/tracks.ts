@@ -4,7 +4,7 @@ import {z} from 'zod'
 import {authorizeAdminRequest} from 'src/server/admin-auth/http'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {createTrack} from 'src/server/music/admin-repository'
+import {createPendingTrack} from 'src/server/music/track-registration-repository'
 
 const MAXIMUM_BODY_SIZE = 8192
 const MAXIMUM_TEXT_LENGTH = 120
@@ -39,7 +39,7 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   }
 
   try {
-    const track = await createTrack(parsedBody.data)
+    const track = await createPendingTrack(parsedBody.data)
 
     return track === null
       ? noStoreJson(
