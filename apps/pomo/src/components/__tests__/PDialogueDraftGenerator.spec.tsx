@@ -4,14 +4,14 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/design-system/PModal'
+import {PModal, type PModalProps} from 'src/components/PModal'
 import {
   type DialogueWriterController,
   type DialogueWriterState,
   useDialogueWriter,
 } from '../../features/dialogue-writer'
 import {isTextModelDownloaded} from '../../features/text-generation'
-import PDialogueDraftGenerator from '../PDialogueDraftGenerator'
+import PDialogueDraftGenerator from '../dialogue-page/DraftGenerator'
 
 vi.mock('../../features/dialogue-writer', () => ({
   useDialogueWriter: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('../../features/text-generation', async () => {
   return {...actual, isTextModelDownloaded: vi.fn()}
 })
 
-vi.mock('src/design-system/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
 
 const createWriter = (): DialogueWriterController => ({
   canCopy: () => false,

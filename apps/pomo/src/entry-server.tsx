@@ -1,7 +1,7 @@
 // @refresh reload
 import {createHandler, StartServer} from '@solidjs/start/server'
 
-import {getLocale, getTextDirection} from './paraglide/runtime.js'
+import {getLocale, getTextDirection} from '@paraglide/runtime'
 
 const viewport =
   process.env.POMO_BUILD_TARGET === 'apps-in-toss'

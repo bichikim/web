@@ -1,4 +1,4 @@
-import {SERVICE_POLICY_PATHS} from '../config/service-policy'
+import {SERVICE_POLICY_PATHS} from '../features/service-terms/policy-paths'
 
 const HTTP_PERMANENT_REDIRECT = 308
 const LEGACY_DIALOGUE_PATH = '/focus-room-dialogue'

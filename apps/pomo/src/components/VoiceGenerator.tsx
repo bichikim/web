@@ -11,7 +11,7 @@ import {AudioChunks} from './voice-generator/AudioChunks'
 import {AudioResults} from './voice-generator/AudioResults'
 import {ModelPicker} from './voice-generator/ModelPicker'
 import {VoiceActions} from './voice-generator/Actions'
-import {type ImportedVoice} from './VoiceDropZone'
+import {type ImportedVoice} from './voice-generator/DropZone'
 import {VoiceFields} from './voice-generator/Fields'
 import {VoiceHeader} from './voice-generator/Header'
 const MAXIMUM_FILE_SIZE = 2_000_000

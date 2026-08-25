@@ -1,7 +1,7 @@
 import {createEffect, onMount, Show} from 'solid-js'
 
 import {POverflowMarquee} from './POverflowMarquee'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 const CLASSES = {
   screenSaver: [

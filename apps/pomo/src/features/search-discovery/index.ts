@@ -1,4 +1,4 @@
-import {SEARCH_CONFIG} from '../../config/search'
+import {SEARCH_CONFIG} from './canonical'
 import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../../server/http/headers'
 
 const CDN_CACHE_SECONDS = 86_400

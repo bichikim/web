@@ -1,4 +1,4 @@
-import {baseLocale, type Locale, toLocale} from '../../paraglide/runtime.js'
+import {baseLocale, type Locale, toLocale} from '@paraglide/runtime'
 
 interface ResolveAppsInTossLocaleOptions {
   readonly browserLocale?: Locale

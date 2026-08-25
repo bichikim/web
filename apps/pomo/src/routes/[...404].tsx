@@ -2,8 +2,8 @@ import {useLocation} from '@solidjs/router'
 import {lazy, Show} from 'solid-js'
 import {NotFoundContent} from '../components/not-found/Content'
 
-const DevPageDispatcher = import.meta.env.DEV
-  ? lazy(() => import('src/dev/DevPageDispatcher'))
+const PageDispatcher = import.meta.env.DEV
+  ? lazy(() => import('src/components/dev/PageDispatcher'))
   : undefined
 
 export default function NotFoundPage() {
@@ -12,8 +12,8 @@ export default function NotFoundPage() {
   const Dispatcher = () =>
     import.meta.env.DEV &&
     (pathname() === '/dev' || pathname().startsWith('/dev/')) &&
-    DevPageDispatcher !== undefined
-      ? DevPageDispatcher
+    PageDispatcher !== undefined
+      ? PageDispatcher
       : undefined
 
   return (

@@ -3,7 +3,7 @@ import {beforeEach, expect, it, vi} from 'vitest'
 const authMocks = vi.hoisted(() => ({handleAuthProxyRequest: vi.fn()}))
 
 vi.mock('@neondatabase/auth/server', () => authMocks)
-vi.mock('../environment.ts', () => ({
+vi.mock('../environment', () => ({
   getNeonAuthProxyConfig: () => ({
     baseUrl: 'https://example.neonauth.aws.neon.tech/neondb/auth',
     cookieSecret: 'a-secure-cookie-secret-with-32-characters',
@@ -11,7 +11,7 @@ vi.mock('../environment.ts', () => ({
   }),
 }))
 
-import {handlePomoAuthProxy, isAuthProxyRequestAllowed} from '../proxy.ts'
+import {handlePomoAuthProxy, isAuthProxyRequestAllowed} from '../proxy'
 
 beforeEach(() => {
   authMocks.handleAuthProxyRequest.mockReset()

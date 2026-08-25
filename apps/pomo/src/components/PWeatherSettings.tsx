@@ -1,8 +1,8 @@
-import {PSelect} from '../design-system/PSelect'
-import {PSwitch} from '../design-system/PSwitch'
+import {PSelect} from './PSelect'
+import {PSwitch} from './PSwitch'
 import {getLocalizedWeatherCityOptions} from '../features/localization'
 import type {WeatherCitySlug} from '../features/weather'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 export interface PWeatherSettingsProps {
   readonly citySlug?: WeatherCitySlug

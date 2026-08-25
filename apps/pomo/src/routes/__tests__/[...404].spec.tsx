@@ -23,7 +23,7 @@ vi.mock('@solidjs/start', () => ({
   ),
 }))
 
-vi.mock('src/dev/DevPageDispatcher', () => ({
+vi.mock('src/components/dev/PageDispatcher', () => ({
   default: (props: {pathname: string}) => (
     <output data-testid="dev-dispatcher">{props.pathname}</output>
   ),

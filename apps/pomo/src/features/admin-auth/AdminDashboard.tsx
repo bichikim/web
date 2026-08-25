@@ -3,7 +3,7 @@ import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createSignal, type JSX} from 'solid-js'
 
-import {signOutAdminSession} from './session.ts'
+import {signOutAdminSession} from './session'
 
 const BUTTON_CLASSES = cx(
   'h-10 rounded-3 border border-white/15 bg-white/5 px-4 text-sm font-700 text-white',

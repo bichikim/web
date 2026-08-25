@@ -13,9 +13,11 @@ const uploadMocks = vi.hoisted(() => ({
   inspectTrackUpload: vi.fn(),
   isTrackValidationError: vi.fn(),
 }))
+const artworkMocks = vi.hoisted(() => ({storeTrackArtwork: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
 vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/cover-upload', () => artworkMocks)
 vi.mock('src/server/music/track-upload', () => uploadMocks)
 
 import {POST, PUT} from '../assets'
@@ -52,6 +54,9 @@ describe('admin music asset route', () => {
       sizeBytes: 1234n,
     })
     uploadMocks.createTrackPreviewObject.mockReset().mockResolvedValue(undefined)
+    artworkMocks.storeTrackArtwork.mockReset().mockResolvedValue({
+      artworkUrl: 'https://storage.pomofi.io/track-artwork/asset/cover',
+    })
     uploadMocks.isTrackValidationError
       .mockReset()
       .mockImplementation(
@@ -72,12 +77,34 @@ describe('admin music asset route', () => {
 
     expect(response.status).toBe(200)
     expect(repositoryMocks.activateTrackAsset).toHaveBeenCalledWith({
+      artworkUrl: null,
       assetId: ASSET_ID,
       durationMs: 1234,
       etag: 'etag',
       sizeBytes: 1234n,
     })
     expect(uploadMocks.createTrackPreviewObject).toHaveBeenCalledWith(OBJECT_KEY, 1234)
+    expect(artworkMocks.storeTrackArtwork).not.toHaveBeenCalled()
+  })
+
+  it('should persist an embedded cover while completing an MP3 upload', async () => {
+    const artwork = {body: new ArrayBuffer(1), contentType: 'image/jpeg'} as const
+    uploadMocks.inspectTrackUpload.mockResolvedValue({
+      artwork,
+      durationMs: 1234,
+      etag: 'etag',
+      sizeBytes: 1234n,
+    })
+
+    const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
+
+    expect(response.status).toBe(200)
+    expect(artworkMocks.storeTrackArtwork).toHaveBeenCalledExactlyOnceWith(ASSET_ID, artwork)
+    expect(repositoryMocks.activateTrackAsset).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artworkUrl: 'https://storage.pomofi.io/track-artwork/asset/cover',
+      }),
+    )
   })
 
   it('should mark an invalid uploaded file as failed', async () => {

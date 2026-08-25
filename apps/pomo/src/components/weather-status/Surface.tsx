@@ -1,7 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {type JSX} from 'solid-js'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
-import {PScribblePanel} from '../PScribblePanel'
+import {PScribblePanel} from '../scribble/Panel'
 
 const STATUS_CLASS = [
   'pomo-weather-status inline-flex min-h-8 w-full items-center gap-2',

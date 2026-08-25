@@ -3,7 +3,7 @@
 import {render} from '@solidjs/testing-library'
 import {expect, it} from 'vitest'
 
-import {PScribbleCircleControl} from '../PScribbleCircleControl'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
 
 it('should omit the scribble circle when disabled', () => {
   const result = render(() => (

@@ -1,6 +1,6 @@
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {requestAdminMagicLink} from '../magic-link.ts'
+import {requestAdminMagicLink} from '../magic-link'
 
 afterEach(() => {
   vi.unstubAllGlobals()

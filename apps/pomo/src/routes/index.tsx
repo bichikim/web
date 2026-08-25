@@ -2,13 +2,13 @@ import {Title} from '@solidjs/meta'
 import {clientOnly} from '@solidjs/start'
 import {onMount, Show} from 'solid-js'
 
-import {AppsInTossLoadingPage} from '../components/AppsInTossLoadingPage.tsx'
-import * as m from '../paraglide/messages.js'
-import {getLocale, localizeUrl} from '../paraglide/runtime.js'
+import {AppsInTossLoadingPage} from '../components/AppsInTossLoadingPage'
+import * as m from '@paraglide/message'
+import {getLocale, localizeUrl} from '@paraglide/runtime'
 
 const AppsInTossHomePage = clientOnly(
   async () => {
-    const homeModule = await import('../components/AppsInTossHomePage.tsx')
+    const homeModule = await import('../components/AppsInTossHomePage')
     return {default: homeModule.AppsInTossHomePage}
   },
   {lazy: true},

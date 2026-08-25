@@ -2,9 +2,9 @@ import {cx} from 'class-variance-authority'
 import {createMemo, For, type JSX, Show} from 'solid-js'
 
 import {useTextMood} from '../features/text-mood'
-import {TextMoodAnalysisResult} from './TextMoodAnalysisResult'
-import {TextMoodEvaluation} from './TextMoodEvaluation'
-import {TextMoodInsufficientResult} from './TextMoodInsufficientResult'
+import {TextMoodAnalysisResult} from './text-mood-lab/AnalysisResult'
+import {TextMoodEvaluation} from './text-mood-lab/Evaluation'
+import {TextMoodInsufficientResult} from './text-mood-lab/InsufficientResult'
 
 const SAMPLE_TEXTS = [
   '창문을 여니 시원한 바람이 불어왔다. 오늘은 좋은 일이 생길 것 같다.',

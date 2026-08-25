@@ -7,7 +7,7 @@ import {
   DEFAULT_RANDOM_EVENT_SETTINGS,
   type RandomEventSettings as RandomEventSettingsValue,
 } from 'src/features/focus-room-dialogue'
-import {RandomEventSettings} from '../RandomEventSettings'
+import {RandomEventSettings} from '../dialogue-settings/RandomEventSettings'
 
 const settingsMocks = vi.hoisted(() => ({
   read: vi.fn<() => Promise<RandomEventSettingsValue>>(),

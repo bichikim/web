@@ -23,7 +23,7 @@ export const createStorybookTestConfig = (options: CreateStorybookTestConfigOpti
           provider: playwright({}),
         },
         name: options.name,
-        setupFiles: options.setupFiles,
+        setupFiles: options.setupFiles === undefined ? undefined : [...options.setupFiles],
       },
     }),
   )

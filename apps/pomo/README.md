@@ -27,6 +27,6 @@ POMO_APPS_IN_TOSS_APP_NAME=<appName> \
 pnpm --filter @apps/pomo build:apps-in-toss-package
 ```
 
-기술 및 제품 결정은 [`plan/development.md`](./plan/development.md)에서 확인한다.
-외부 코드·모델·데이터·에셋의 라이선스와 배포 조건은
-[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md)에서 관리한다.
+기술 및 제품 결정은 [`docs/plan/development.md`](./docs/plan/development.md)에서 확인한다.
+외부 코드·모델의 라이선스와 배포 조건은 [`src/data/licenses.json`](./src/data/licenses.json)에서
+관리하고 `/third-party-notices`에 표시한다.

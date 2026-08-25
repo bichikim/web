@@ -2,7 +2,7 @@
 
 import {describe, expect, it} from 'vitest'
 
-import {deLocalizeHref, localizeHref} from '../../../paraglide/runtime.js'
+import {deLocalizeHref, localizeHref} from '@paraglide/runtime'
 
 import {
   getLocalizedActivityOptions,
