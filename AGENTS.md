@@ -14,6 +14,7 @@
 
 ## Scripts
 
+- Before adding a script entry to any `package.json`, obtain explicit user approval.
 - Treat code under `scripts` as standalone; it must not import or use code from `src`.
 - If reusing `src` from a script appears necessary, obtain explicit user approval before adding the dependency.
 

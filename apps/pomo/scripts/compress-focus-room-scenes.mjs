@@ -3,10 +3,7 @@ import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/prom
 import path from 'node:path'
 
 const commandArguments = process.argv.slice(2)
-const supportedArguments = new Set(['--depth-only'])
-const unsupportedArguments = commandArguments.filter(
-  (argument) => !supportedArguments.has(argument),
-)
+const unsupportedArguments = commandArguments.filter((argument) => argument !== '--depth-only')
 
 if (unsupportedArguments.length > 0) {
   throw new Error(`Unsupported argument(s): ${unsupportedArguments.join(', ')}`)
@@ -68,6 +65,7 @@ const runtimeLayerNames = new Map([
   ['layer-sky-mask-writing-focused-v1.png', 'sky-mask.webp'],
   ['layer-writing-hand.png', 'writing-hand.webp'],
 ])
+
 const replacePngExtension = (name) => name.replace(pngPattern, '.webp')
 
 const getIndexedRuntimePath = (name, pattern, directory) => {
@@ -358,30 +356,29 @@ const readWebpPaths = async (directory) => {
   return nestedPaths.flat()
 }
 
-const assertNoStaleWebps = async ({directories, expectedPaths}) => {
+const removeStaleWebps = async ({directories, expectedPaths}) => {
   const stalePaths = (
     await Promise.all(directories.map((directory) => readWebpPaths(directory)))
   ).flat()
   const unexpectedPaths = stalePaths.filter((filePath) => !expectedPaths.has(filePath))
 
-  if (unexpectedPaths.length > 0) {
-    throw new Error(
-      `Unexpected runtime WebPs must be reviewed and removed explicitly:\n${unexpectedPaths.join('\n')}`,
-    )
-  }
+  // Runtime WebPs are generated mirrors; pruning makes removed PNG sources fail at build instead of using stale output.
+  await Promise.all(unexpectedPaths.map((filePath) => rm(filePath)))
+
+  return unexpectedPaths.length
 }
 
-const assertNoStaleLayerDirectories = async (expectedDirectories) => {
+const removeStaleLayerDirectories = async (expectedDirectories) => {
   const staleDirectories = (await readdir(runtimeLayerDirectory, {withFileTypes: true}))
     .filter((entry) => entry.isDirectory())
     .map((entry) => path.join(runtimeLayerDirectory, entry.name))
     .filter((directory) => !expectedDirectories.has(directory))
 
-  if (staleDirectories.length > 0) {
-    throw new Error(
-      `Unexpected runtime layer directories must be reviewed and removed explicitly:\n${staleDirectories.join('\n')}`,
-    )
-  }
+  await Promise.all(
+    staleDirectories.map((directory) => rm(directory, {force: true, recursive: true})),
+  )
+
+  return staleDirectories.length
 }
 
 const writeLayerLayouts = (scenes) =>
@@ -424,12 +421,14 @@ const compressDepthAssets = async () => {
   const depthPlan = await createDepthCompressionPlan()
 
   await runCompressionJobs(depthPlan.jobs)
-  await assertNoStaleWebps({
+  const prunedAssetCount = await removeStaleWebps({
     directories: [runtimeDepthDirectory],
     expectedPaths: new Set(depthPlan.outputPaths),
   })
 
-  console.log(`Compressed ${depthPlan.names.length} depth maps.`)
+  console.log(
+    `Compressed ${depthPlan.names.length} depth maps and pruned ${prunedAssetCount} stale depth assets.`,
+  )
 }
 
 const compressAssets = async () => {
@@ -545,7 +544,7 @@ const compressAssets = async () => {
       path.join(runtimeStatusIconDirectory, getRuntimeStatusIconName(statusIconName)),
     ),
   ])
-  await assertNoStaleWebps({
+  const prunedAssetCount = await removeStaleWebps({
     directories: [
       runtimeConceptArtDirectory,
       ...layerJobsByScene.map((scene) => scene.runtimeSceneDirectory),
@@ -555,7 +554,7 @@ const compressAssets = async () => {
     ],
     expectedPaths: expectedRuntimePaths,
   })
-  await assertNoStaleLayerDirectories(
+  const prunedDirectoryCount = await removeStaleLayerDirectories(
     new Set(layerJobsByScene.map((scene) => scene.runtimeSceneDirectory)),
   )
 
@@ -564,7 +563,8 @@ const compressAssets = async () => {
       `Compressed ${sceneNames.length} scenes and ${layerBaseCount} layer bases`,
       `at WebP quality ${SCENE_QUALITY}. Compressed ${layerAssetCount} layers,`,
       `${animationNames.length} animations, ${depthPlan.names.length} depth maps,`,
-      `${statusIconNames.length} status icons.`,
+      `${statusIconNames.length} status icons, and pruned ${prunedAssetCount} stale assets`,
+      `from ${prunedDirectoryCount} stale layer directories.`,
     ].join(' '),
   )
 }
