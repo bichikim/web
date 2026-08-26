@@ -11,7 +11,7 @@ afterEach(() => {
 })
 
 describe('createPSceneMouthController', () => {
-  it('crossfades both mouth sprites before settling on the anticipated viseme', () => {
+  it('keeps both mouth sprites visible before settling on the anticipated viseme', () => {
     const frames: Array<FrameRequestCallback> = []
     vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
@@ -31,8 +31,8 @@ describe('createPSceneMouthController', () => {
     frames.shift()?.(1_050)
 
     const halfwayState = update.mock.lastCall?.[0]
-    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]?.opacity).toBe(0.5)
-    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]?.opacity).toBe(0.5)
+    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]?.opacity).toBe(Math.SQRT1_2)
+    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]?.opacity).toBe(Math.SQRT1_2)
 
     frames.shift()?.(1_100)
 
