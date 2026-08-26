@@ -20,7 +20,7 @@ import {
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
-import {UserSettings} from '../features/user-auth/UserSettings'
+import {UserSettings} from './UserSettings'
 import type {WeatherCitySlug} from '../features/weather'
 import * as m from '@paraglide/message'
 import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
@@ -77,6 +77,9 @@ const LANGUAGE_OPTIONS = [
 const getScreenSaverDelayOptions = () =>
   [
     {label: m.settings_delay_off(), value: 'off'},
+    ...(import.meta.env.DEV
+      ? ([{label: m.settings_delay_five_seconds(), value: '5s'}] as const)
+      : []),
     {label: m.settings_delay_one_minute(), value: '1m'},
     {label: m.settings_delay_ten_minutes(), value: '10m'},
     {label: m.settings_delay_twenty_minutes(), value: '20m'},

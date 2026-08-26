@@ -181,6 +181,16 @@ describe('createWorkerRpcTransport', () => {
     expect(disposedWorker.terminate).toHaveBeenCalledTimes(1)
   })
 
+  it('should terminate only once when disposal follows a fatal failure', () => {
+    const worker = new FakeWorker()
+    const transport = createTransport(worker)
+
+    worker.emitError('fatal')
+    transport.dispose()
+
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
   it('should reject pending work when response handling throws', async () => {
     const worker = new FakeWorker()
     const transport = createWorkerRpcTransport<
@@ -226,13 +236,42 @@ describe('createWorkerRpcTransport', () => {
     await expect(nextRequest).resolves.toEqual({requestId: 2, type: 'result', value: 'done'})
     expect(worker.terminate).not.toHaveBeenCalled()
   })
+
+  it('should use fallback details for message and send failures without messages', async () => {
+    const worker = new FakeWorker()
+    worker.postMessage.mockImplementationOnce(() => {
+      const error = new Error()
+      Object.defineProperty(error, 'message', {value: 1})
+      throw error
+    })
+    const transport = createTransport(worker)
+
+    await expect(
+      transport.request({createRequest: (requestId) => ({requestId, value: 'invalid'})}),
+    ).rejects.toMatchObject({code: 'send-error', detail: 'Worker 요청 전송 오류'})
+
+    const workerRequest = transport.request({
+      createRequest: (requestId) => ({requestId, value: 'pending'}),
+    })
+    worker.emitError('')
+    await expect(workerRequest).rejects.toMatchObject({
+      code: 'worker-error',
+      detail: 'Worker 실행 오류',
+    })
+  })
 })
 
 describe('isWorkerRpcFailure', () => {
   it('should accept only complete transport failure values', () => {
     expect(isWorkerRpcFailure({code: 'disposed', detail: 'closed'})).toBe(true)
+    expect(isWorkerRpcFailure({code: 'message-error', detail: 'message'})).toBe(true)
+    expect(isWorkerRpcFailure({code: 'send-error', detail: 'send'})).toBe(true)
+    expect(isWorkerRpcFailure({code: 'worker-error', detail: 'worker'})).toBe(true)
     expect(isWorkerRpcFailure({code: 'unknown', detail: 'closed'})).toBe(false)
     expect(isWorkerRpcFailure({code: 'disposed'})).toBe(false)
+    expect(isWorkerRpcFailure({code: 'disposed', detail: 1})).toBe(false)
+    expect(isWorkerRpcFailure({detail: 'closed'})).toBe(false)
+    expect(isWorkerRpcFailure('disposed')).toBe(false)
     expect(isWorkerRpcFailure(null)).toBe(false)
   })
 })

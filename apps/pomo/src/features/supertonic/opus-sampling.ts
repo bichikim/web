@@ -30,8 +30,8 @@ export const getOpusEncodingInput = (
     const sourcePosition = index * sourceScale
     const lowerIndex = Math.min(Math.floor(sourcePosition), samples.length - 1)
     const upperIndex = Math.min(lowerIndex + 1, samples.length - 1)
-    const lowerSample = samples[lowerIndex] ?? 0
-    const upperSample = samples[upperIndex] ?? lowerSample
+    const lowerSample = samples[lowerIndex]!
+    const upperSample = samples[upperIndex]!
     output[index] = lowerSample + (upperSample - lowerSample) * (sourcePosition - lowerIndex)
   }
 

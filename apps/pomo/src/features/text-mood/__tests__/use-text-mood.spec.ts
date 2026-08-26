@@ -12,6 +12,10 @@ import {
 } from '../index'
 import {failureResult, successResult} from '../../result'
 
+const clientMocks = vi.hoisted(() => ({createAnalyzer: vi.fn()}))
+
+vi.mock('../client', () => ({createTextMoodAnalyzer: clientMocks.createAnalyzer}))
+
 const ANALYSIS: TextMoodAnalysis = {
   margin: 0.5,
   modifiers: [],
@@ -22,6 +26,14 @@ const ANALYSIS: TextMoodAnalysis = {
   ],
   secondary: null,
   uncertain: false,
+}
+
+const createDeferred = <Value>() => {
+  let resolve: (value: Value) => void = () => undefined
+  const promise = new Promise<Value>((resolvePromise) => {
+    resolve = resolvePromise
+  })
+  return {promise, resolve}
 }
 
 interface TextMoodTestRoot {
@@ -70,6 +82,24 @@ afterEach(() => {
 })
 
 describe('useTextMood', () => {
+  it('should use empty text and the default analyzer when props are omitted', () => {
+    const runtime = createRuntime()
+    clientMocks.createAnalyzer.mockReturnValue(runtime.analyzer)
+    let disposeRoot: () => void = () => undefined
+    const controller = createRoot((dispose) => {
+      disposeRoot = dispose
+      return useTextMood()
+    })
+
+    expect(controller.text()).toBe('')
+    expect(controller.canAnalyze()).toBe(false)
+    expect(controller.state()).toEqual({status: 'idle'})
+    expect(clientMocks.createAnalyzer).toHaveBeenCalledOnce()
+
+    disposeRoot()
+    expect(runtime.analyzer.dispose).toHaveBeenCalledOnce()
+  })
+
   it('should prepare the model and expose progress', async () => {
     const runtime = createRuntime()
     const root = createTextMoodRoot(runtime)
@@ -80,6 +110,25 @@ describe('useTextMood', () => {
     await preparation
     expect(root.controller.state()).toEqual({status: 'ready'})
     expect(root.controller.statusMessage()).toContain('모델이 준비됐어요')
+    root.dispose()
+  })
+
+  it('should ignore another prepare request while the model is loading', async () => {
+    const runtime = createRuntime()
+    const preparation = createDeferred<Awaited<ReturnType<TextMoodAnalyzer['prepare']>>>()
+    vi.mocked(runtime.analyzer.prepare).mockReturnValueOnce(preparation.promise)
+    const root = createTextMoodRoot(runtime)
+
+    const firstPreparation = root.controller.prepare()
+    await root.controller.prepare()
+
+    expect(runtime.analyzer.prepare).toHaveBeenCalledOnce()
+    expect(root.controller.isBusy()).toBe(true)
+    preparation.resolve(
+      successResult({repositoryId: 'Xenova/paraphrase-multilingual-MiniLM-L12-v2'}),
+    )
+    await firstPreparation
+    expect(root.controller.state()).toEqual({status: 'ready'})
     root.dispose()
   })
 
@@ -141,6 +190,28 @@ describe('useTextMood', () => {
     expect(root.controller.state()).toEqual({status: 'idle'})
     await root.controller.analyze()
     expect(runtime.analyzer.analyze).toHaveBeenCalledWith({text: '무서워'})
+    root.dispose()
+  })
+
+  it('should expose an analysis failure and reset it when text changes', async () => {
+    const runtime = createRuntime()
+    vi.mocked(runtime.analyzer.analyze).mockResolvedValueOnce(
+      failureResult({
+        code: 'classification-failed',
+        detail: '분석 실패',
+        phase: 'analyze',
+        retryable: true,
+      }),
+    )
+    const root = createTextMoodRoot(runtime)
+
+    await root.controller.analyze()
+
+    expect(root.controller.state()).toEqual({message: '분석 실패', status: 'error'})
+    expect(root.controller.statusMessage()).toBe('분석 실패')
+
+    root.controller.setText('다시 분석할 문장')
+    expect(root.controller.state()).toEqual({status: 'idle'})
     root.dispose()
   })
 

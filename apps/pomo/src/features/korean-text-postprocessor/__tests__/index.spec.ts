@@ -27,6 +27,7 @@ describe('createKoreanTextSegments', () => {
       {kind: 'refining', text: ' 작은 성공一次次 쌓으면 자신감이 생겨요.'},
       {kind: 'text', text: ' 내일도 이어가요.'},
     ])
+    expect(createKoreanTextSegments('')).toEqual([])
   })
 })
 

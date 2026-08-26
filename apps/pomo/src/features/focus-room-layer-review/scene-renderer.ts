@@ -133,14 +133,11 @@ export class PLayerReviewRenderer {
     this.#currentDefinitionId = definition.id
     this.#application.stage.addChild(scene.container)
     this.#placeEyes(scene)
-    const latestState = this.#state
-
-    if (latestState !== null) {
-      this.#eyes.setMode(latestState.eyeMode)
-      this.#eyes.update(latestState)
-      this.#syncEyes(latestState)
-      scene.update(this.#toSceneState(latestState))
-    }
+    const latestState = this.#state!
+    this.#eyes.setMode(latestState.eyeMode)
+    this.#eyes.update(latestState)
+    this.#syncEyes(latestState)
+    scene.update(this.#toSceneState(latestState))
 
     this.#eyes.setSceneReady(true)
     this.#application.render()
@@ -195,11 +192,7 @@ export class PLayerReviewRenderer {
   }
 
   async #replaceReadyDefinition(definition: PixiLayerSceneDefinition) {
-    const state = this.#state
-
-    if (state === null) {
-      return
-    }
+    const state = this.#state!
 
     const version = this.#replacementVersion + 1
     this.#replacementVersion = version

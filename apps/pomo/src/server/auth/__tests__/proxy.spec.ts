@@ -65,3 +65,19 @@ it('should prevent caching for rejected proxy paths', async () => {
   expect(response.headers.get('Cache-Control')).toBe('no-store')
   expect(authMocks.handleAuthProxyRequest).not.toHaveBeenCalled()
 })
+
+it('should return a controlled response when the auth proxy throws', async () => {
+  const error = new Error('Neon Auth unavailable')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  authMocks.handleAuthProxyRequest.mockRejectedValue(error)
+
+  const response = await handlePomoAuthProxy({
+    params: {path: 'get-session'},
+    request: new Request('https://pomo.example/api/auth/get-session'),
+  })
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'Authentication is not configured'})
+  expect(response.headers.get('Cache-Control')).toBe('no-store')
+  expect(consoleError).toHaveBeenCalledWith('Pomo auth proxy is unavailable', error)
+})

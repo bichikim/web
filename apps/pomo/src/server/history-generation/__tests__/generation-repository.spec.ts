@@ -2,195 +2,27 @@ import {expect, it, vi} from 'vitest'
 import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'
 
-import type {HistoryGenerationOutput} from 'src/features/history-generation'
+import type {Database} from '../../database'
 import {
   associateGenerationResponse,
+  CREATE_OPTIONS,
+  createGenerationDatabase,
+  createRerunDatabase,
+  createRun,
+  createTransaction,
+  createTransactionalDatabase,
   failHistoryResponse,
-  type GenerationRun,
+  GENERATION,
+  type HistoricalGenerationRunRow,
   markGenerationFailed,
   markGenerationSubmitted,
   prepareGenerationRerun,
   prepareGenerationRun,
   publishHistoryResponse,
-} from '../generation-repository'
-import type {Database, TransactionalDatabase} from '../../database'
-
-const RUN_ID = 'run-1'
-const RESPONSE_ID = 'resp-1'
-const SOURCE_URLS = ['https://example.com/article-a', 'https://example.com/article-b']
-
-interface HistoricalGenerationRunRow {
-  readonly attemptCount: number
-  readonly channelId: string
-  readonly completedAt: Date | null
-  readonly createdAt: Date
-  readonly errorMessage: string | null
-  readonly id: string
-  readonly openAiResponseId: string | null
-  readonly openAiSubmissionKey: string
-  readonly promptVersion: string
-  readonly sourcePolicyVersion: string
-  readonly sourceUrls: ReadonlyArray<string>
-  readonly status: GenerationRun['status']
-  readonly targetDate: string
-  readonly updatedAt: Date
-}
-
-const createRun = (
-  status: GenerationRun['status'],
-  openAiResponseId: string | null = RESPONSE_ID,
-  updatedAt = new Date('2026-08-15T00:00:00.000Z'),
-): HistoricalGenerationRunRow => ({
-  attemptCount: 1,
-  channelId: 'channel-1',
-  completedAt: null,
-  createdAt: new Date('2026-08-15T00:00:00.000Z'),
-  errorMessage: null,
-  id: RUN_ID,
-  openAiResponseId,
-  openAiSubmissionKey: '019d0000-0000-7000-8000-000000000003',
-  promptVersion: 'history-prompt-v1',
-  sourcePolicyVersion: 'history-sources-v1',
-  sourceUrls: [],
-  status,
-  targetDate: '2026-08-16',
-  updatedAt,
-})
-
-const createSelectChain = (run: HistoricalGenerationRunRow | undefined) => ({
-  for: vi.fn(() => ({
-    limit: vi.fn(() => (run === undefined ? [] : [run])),
-  })),
-  limit: vi.fn(() => (run === undefined ? [] : [run])),
-})
-
-const createTransaction = (run: HistoricalGenerationRunRow | undefined) => {
-  const update = vi.fn(() => ({where: vi.fn(async () => undefined)}))
-  const insert = vi.fn(() => ({
-    values: vi.fn(() => ({
-      onConflictDoNothing: vi.fn(() => ({
-        returning: vi.fn(() => [{eventId: 'evt-1'}]),
-      })),
-    })),
-  }))
-
-  return {
-    insert,
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => createSelectChain(run)),
-      })),
-    })),
-    update,
-  }
-}
-
-const createTransactionalDatabase = (transaction: ReturnType<typeof createTransaction>) =>
-  ({
-    transaction: vi.fn(async (callback: (tx: typeof transaction) => Promise<boolean>) =>
-      callback(transaction),
-    ),
-  }) as unknown as TransactionalDatabase
-
-const createGenerationDatabase = (
-  existing: HistoricalGenerationRunRow,
-  reclaimed: HistoricalGenerationRunRow,
-) => {
-  const select = vi
-    .fn()
-    .mockReturnValueOnce({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(async () => [{id: 'channel-1'}]),
-        })),
-      })),
-    })
-    .mockReturnValueOnce({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(async () => [existing]),
-        })),
-      })),
-    })
-  const insert = vi.fn(() => ({
-    values: vi.fn(() => ({
-      onConflictDoNothing: vi.fn(() => ({
-        returning: vi.fn(async () => []),
-      })),
-    })),
-  }))
-  const set = vi.fn((_values: Record<string, unknown>) => ({
-    where: vi.fn(() => ({
-      returning: vi.fn(async () => [reclaimed]),
-    })),
-  }))
-  const update = vi.fn(() => ({set}))
-
-  return {
-    database: {insert, select, update} as unknown as Database,
-    set,
-    update,
-  }
-}
-
-const createRerunDatabase = (
-  existing: HistoricalGenerationRunRow,
-  updated: HistoricalGenerationRunRow,
-  selectedTitles: ReadonlyArray<string>,
-) => {
-  const select = vi
-    .fn()
-    .mockReturnValueOnce({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({limit: vi.fn(async () => [{id: 'channel-1'}])})),
-      })),
-    })
-    .mockReturnValueOnce({
-      from: vi.fn(() => ({
-        where: vi.fn(async () => selectedTitles.map((title) => ({title}))),
-      })),
-    })
-    .mockReturnValueOnce({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({limit: vi.fn(async () => [existing])})),
-      })),
-    })
-  const where = vi.fn((_condition: SQL) => ({returning: vi.fn(async () => [updated])}))
-  const set = vi.fn((_values: Record<string, unknown>) => ({where}))
-
-  return {
-    database: {select, update: vi.fn(() => ({set}))} as unknown as Database,
-    set,
-    where,
-  }
-}
-
-const createGenerationMoment = (eventYear: number) =>
-  ({
-    eventDay: 16,
-    eventMonth: 8,
-    eventYear,
-    historicalEra: 'ce',
-    sections: {
-      context: {sourceUrls: [...SOURCE_URLS], text: '역사적 배경을 설명하는 문장입니다.'},
-      event: {sourceUrls: [...SOURCE_URLS], text: '실제로 일어난 사건을 설명하는 문장입니다.'},
-      significance: {sourceUrls: [...SOURCE_URLS], text: '역사적 의미를 설명하는 문장입니다.'},
-    },
-    sources: [
-      {publisher: 'Example A', title: 'Example A', url: SOURCE_URLS[0]},
-      {publisher: 'Example B', title: 'Example B', url: SOURCE_URLS[1]},
-    ],
-    summary: '요약',
-    title: `${eventYear}년, 역사적 사건`,
-  }) satisfies HistoryGenerationOutput['moments'][number]
-
-const GENERATION = {
-  moments: [
-    createGenerationMoment(1858),
-    createGenerationMoment(1945),
-    createGenerationMoment(1969),
-  ],
-} satisfies HistoryGenerationOutput
+  RESPONSE_ID,
+  RUN_ID,
+  SOURCE_URLS,
+} from './generation-repository.test-support'
 
 it('should not reclaim an ambiguous preparing run', async () => {
   const existing = createRun('preparing', null)
@@ -356,4 +188,145 @@ it('should ignore terminal failures when the generation run is already completed
   ).resolves.toBe(false)
 
   expect(transaction.update).not.toHaveBeenCalled()
+})
+
+it('should reject generation preparation when the enabled channel is missing', async () => {
+  const database = {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [])}))})),
+    })),
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).rejects.toThrow(
+    'Enabled feed channel not found: today-in-history',
+  )
+})
+
+it('should return a newly inserted generation run', async () => {
+  const inserted = createRun('preparing', null)
+  const database = {
+    insert: vi.fn(() => ({
+      values: vi.fn(() => ({
+        onConflictDoNothing: vi.fn(() => ({returning: vi.fn(async () => [inserted])})),
+      })),
+    })),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({limit: vi.fn(async () => [{id: 'channel-1'}])})),
+      })),
+    })),
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).resolves.toEqual({
+    created: true,
+    run: expect.objectContaining({id: RUN_ID, status: 'preparing'}),
+  })
+})
+
+it('should report a generation run lost after its uniqueness conflict', async () => {
+  const select = vi
+    .fn()
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({limit: vi.fn(async () => [{id: 'channel-1'}])})),
+      })),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [])}))})),
+    })
+  const database = {
+    insert: vi.fn(() => ({
+      values: vi.fn(() => ({
+        onConflictDoNothing: vi.fn(() => ({returning: vi.fn(async () => [])})),
+      })),
+    })),
+    select,
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).rejects.toThrow(
+    'Generation run disappeared after a uniqueness conflict',
+  )
+})
+
+it('should retain the failed run when its retry loses a database race', async () => {
+  const existing = createRun('failed', null)
+  const {database} = createGenerationDatabase(existing, existing)
+  const returning = vi.fn(async () => [])
+  const racedDatabase = {
+    ...database,
+    update: vi.fn(() => ({set: vi.fn(() => ({where: vi.fn(() => ({returning}))}))})),
+  } as unknown as Database
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, racedDatabase)).resolves.toEqual({
+    created: false,
+    run: expect.objectContaining({status: 'failed'}),
+  })
+})
+
+it('should reject a rerun when any required title is not published', async () => {
+  const existing = createRun('completed')
+  const {database} = createRerunDatabase(existing, existing, ['사건 A'])
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A', '누락 사건']}, database),
+  ).rejects.toThrow('Every regeneration title must match an existing published moment')
+})
+
+it.each(['completed', 'failed', 'rejected'] as const)(
+  'should reopen a %s run for regeneration',
+  async (status) => {
+    const existing = createRun(status)
+    const updated = {...existing, status: 'preparing' as const}
+    const {database} = createRerunDatabase(existing, updated, ['사건 A'])
+
+    await expect(
+      prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A']}, database),
+    ).resolves.toMatchObject({id: RUN_ID, status: 'preparing'})
+  },
+)
+
+it('should reject a rerun when no run exists or its update loses a race', async () => {
+  const requiredTitles = ['사건 A']
+  const missing = createRerunDatabase(
+    createRun('completed'),
+    createRun('completed'),
+    requiredTitles,
+  )
+  const missingSelect = vi
+    .fn()
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [{id: 'channel-1'}])}))})),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(async () => [{title: '사건 A'}])})),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({where: vi.fn(() => ({limit: vi.fn(async () => [])}))})),
+    })
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles}, {
+      ...missing.database,
+      select: missingSelect,
+    } as unknown as Database),
+  ).rejects.toThrow('Inactive generation run not found')
+
+  const existing = createRun('completed')
+  const raced = createRerunDatabase(existing, existing, requiredTitles)
+  raced.where.mockReturnValueOnce({returning: vi.fn(async () => [])})
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles}, raced.database),
+  ).rejects.toThrow('Inactive generation run not found')
+})
+
+it('should reject an unknown rerun status defensively', async () => {
+  const existing = {
+    ...createRun('completed'),
+    status: 'unknown',
+  } as unknown as HistoricalGenerationRunRow
+  const {database} = createRerunDatabase(existing, existing, ['사건 A'])
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A']}, database),
+  ).rejects.toThrow('Unhandled generation status: unknown')
 })

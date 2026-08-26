@@ -234,6 +234,40 @@ describe('usePSay', () => {
     cleanup()
   })
 
+  it('should reject speech when voice preparation enters an error state', async () => {
+    const modelContext = createModelContext()
+    const voice = createVoice()
+    vi.mocked(voice.state).mockReturnValue({
+      message: '음성 준비 실패',
+      modelReady: false,
+      status: 'error',
+    })
+    vi.mocked(useLazyChatVoice).mockReturnValue(voice)
+    const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
+    await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
+
+    await expect(modelContext.getTool().execute({text: '준비할 소식'})).rejects.toThrow(
+      '음성 준비 실패',
+    )
+    expect(voice.arm).not.toHaveBeenCalled()
+    expect(result.speechText()).toBeNull()
+    cleanup()
+  })
+
+  it('should report WebMCP registration failures', async () => {
+    const error = new Error('registration unavailable')
+    const registerTool = vi.fn().mockRejectedValue(error)
+    Reflect.set(document, 'modelContext', {registerTool})
+    vi.mocked(useLazyChatVoice).mockReturnValue(createVoice())
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const {cleanup} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
+
+    await vi.waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith('Failed to register the Pomo WebMCP tool.', error),
+    )
+    cleanup()
+  })
+
   it('should keep the tool call pending until audio playback ends', async () => {
     let completePlayback: () => void = () => undefined
     const playback = new Promise<void>((resolve) => {

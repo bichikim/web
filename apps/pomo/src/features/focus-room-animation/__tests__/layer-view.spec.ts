@@ -2,7 +2,7 @@ import {Container, Sprite, Texture} from 'pixi.js'
 import {describe, expect, it} from 'vitest'
 
 import type {PixiSceneLayerDefinition} from '../layer-scene-definition'
-import {createLayerView} from '../layer-view'
+import {attachLayerView, createLayerView} from '../layer-view'
 
 const createDefinition = (repeat?: 'horizontal') =>
   ({
@@ -25,5 +25,27 @@ describe('layer view', () => {
     expect(view.children[1]).toBeInstanceOf(Sprite)
     expect(view.children[0].position.x).toBe(0)
     expect(view.children[1].position.x).toBe(Texture.WHITE.width)
+  })
+
+  it('should attach the view and its repeated mask to the scene', () => {
+    const sceneContainer = new Container()
+    const layerContainer = new Container()
+    const definition = {
+      ...createDefinition('horizontal'),
+      maskSource: 'mask.png',
+    }
+    const view = createLayerView(definition, Texture.WHITE)
+
+    attachLayerView({
+      definition,
+      layerContainer,
+      maskTextures: new Map([['mask.png', Texture.WHITE]]),
+      sceneContainer,
+      view,
+    })
+
+    expect(layerContainer.children).toContain(view)
+    expect(layerContainer.mask).toBeInstanceOf(Sprite)
+    expect(sceneContainer.children).toContain(layerContainer)
   })
 })

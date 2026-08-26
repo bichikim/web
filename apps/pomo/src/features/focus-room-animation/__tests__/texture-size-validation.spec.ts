@@ -12,15 +12,6 @@ const createDefinition = (position?: {readonly x: number; readonly y: number}) =
     width: 100,
   }) satisfies PixiLayerSceneDefinition
 
-const createRepeatingDefinition = () =>
-  ({
-    background: '#000000',
-    height: 100,
-    id: 'scene',
-    layers: [{id: 'layer', repeat: 'horizontal', source: 'layer.webp'}],
-    width: 100,
-  }) satisfies PixiLayerSceneDefinition
-
 describe('texture size validation', () => {
   it('should allow a cropped texture when its stored position keeps it inside the scene', () => {
     const textures = [{source: 'layer.webp', texture: {height: 20, width: 30}}]
@@ -44,23 +35,24 @@ describe('texture size validation', () => {
     )
   })
 
-  it('should allow a wider texture for a horizontal repeating layer', () => {
-    const textures = [{source: 'layer.webp', texture: {height: 100, width: 300}}]
+  it('should allow scene-sized textures and identify invalid mask textures', () => {
+    expect(() =>
+      validateTextureSizes(
+        createDefinition(),
+        [{source: 'scene.webp', texture: {height: 100, width: 100}}],
+        1,
+      ),
+    ).not.toThrow()
 
-    expect(() => validateTextureSizes(createRepeatingDefinition(), textures, 1)).not.toThrow()
-  })
-
-  it('should allow a shorter horizontal repeating texture', () => {
-    const textures = [{source: 'layer.webp', texture: {height: 90, width: 300}}]
-
-    expect(() => validateTextureSizes(createRepeatingDefinition(), textures, 1)).not.toThrow()
-  })
-
-  it('should reject a horizontal repeating texture taller than the scene', () => {
-    const textures = [{source: 'layer.webp', texture: {height: 110, width: 300}}]
-
-    expect(() => validateTextureSizes(createRepeatingDefinition(), textures, 1)).toThrow(
-      'Invalid layer texture dimensions for layer.webp: 300x110',
-    )
+    expect(() =>
+      validateTextureSizes(
+        createDefinition(),
+        [
+          {source: 'layer.webp', texture: {height: 100, width: 100}},
+          {source: 'mask.webp', texture: {height: 20, width: 30}},
+        ],
+        1,
+      ),
+    ).toThrow('Invalid mask texture dimensions for mask.webp: 30x20')
   })
 })

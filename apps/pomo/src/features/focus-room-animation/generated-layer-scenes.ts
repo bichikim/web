@@ -1,7 +1,9 @@
 import type {PSceneId} from './scene-catalog'
-import {DAY_SKY_LAYERS} from './day-sky-layer'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
+import {BREATHING_MOTION} from './breathing-motion'
+import {DAY_SKY_LAYERS} from './day-sky-layer'
 import {createEyeMotion} from './eye-motion'
+import {getHairTipsPixelPush} from './hair-motion'
 import {
   createMouthLayers,
   createMouthTransitionLayers,
@@ -34,8 +36,6 @@ import dayReadingUserMouthOpen from './assets/layers/day-reading-user/layer-mout
 import dayReadingUserMouthOpenRoundEarly from './assets/layers/day-reading-user/layer-mouth-open-round-early.webp'
 import dayReadingUserMouthOpenRoundLate from './assets/layers/day-reading-user/layer-mouth-open-round-late.webp'
 import dayReadingUserMouthOpenRoundMiddle from './assets/layers/day-reading-user/layer-mouth-open-round-middle.webp'
-import dayReadingUserMouthOpenWideEarly from './assets/layers/day-reading-user/layer-mouth-open-wide-early.webp'
-import dayReadingUserMouthOpenWideLate from './assets/layers/day-reading-user/layer-mouth-open-wide-late.webp'
 import dayReadingUserMouthHalfOpen from './assets/layers/day-reading-user/layer-mouth-half-open.webp'
 import dayReadingUserMouthRest from './assets/layers/day-reading-user/layer-mouth-rest.webp'
 import dayReadingUserMouthRelease from './assets/layers/day-reading-user/layer-mouth-release.webp'
@@ -154,8 +154,6 @@ const DAY_USER_MOUTH_TRANSITION_SOURCES = {
   'open-round-early': dayReadingUserMouthOpenRoundEarly,
   'open-round-late': dayReadingUserMouthOpenRoundLate,
   'open-round-middle': dayReadingUserMouthOpenRoundMiddle,
-  'open-wide-early': dayReadingUserMouthOpenWideEarly,
-  'open-wide-late': dayReadingUserMouthOpenWideLate,
   release: dayReadingUserMouthRelease,
   'small-open': dayReadingUserMouthSmallOpen,
 } satisfies PMouthTransitionSources
@@ -188,13 +186,13 @@ const createSeparatedScene = (
   id: PSceneId,
   assets: SeparatedSceneAssets,
   pivots: SeparatedScenePivots,
-  eyeLayer?: SeparatedSceneEyeLayer,
+  eyeLayer: SeparatedSceneEyeLayer,
 ): PixiLayerSceneDefinition => ({
   background: '#17130f',
   height: 941,
   id: `${id}-layers`,
   layers: [
-    {id: 'background', source: assets.base},
+    {id: 'background', motion: BREATHING_MOTION, source: assets.base},
     ...(id.startsWith('day-') ? DAY_SKY_LAYERS : []),
     ...(assets.starLayers ?? []).map(({position, source}, index) => ({
       id: `sky-star-${index + 1}`,
@@ -248,6 +246,7 @@ const createSeparatedScene = (
         center: pivots.head,
         degrees: 0.5,
         kind: 'pivot-rotation',
+        pixelPush: getHairTipsPixelPush(id),
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: assets.head,
@@ -263,17 +262,13 @@ const createSeparatedScene = (
               },
             },
     },
-    ...(eyeLayer === undefined
-      ? []
-      : [
-          {
-            channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
-            id: 'eye-irises',
-            motion: eyeLayer.motion,
-            parentAttachmentId: 'eyes',
-            source: eyeLayer.source,
-          },
-        ]),
+    {
+      channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
+      id: 'eye-irises',
+      motion: eyeLayer.motion,
+      parentAttachmentId: 'eyes',
+      source: eyeLayer.source,
+    },
     ...(assets.mouth === undefined || pivots.mouth === undefined
       ? []
       : createMouthLayers({

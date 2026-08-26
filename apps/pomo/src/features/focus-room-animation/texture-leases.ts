@@ -28,9 +28,7 @@ const beginUnload = (entry: TextureEntry) => {
   entry.unload = Assets.unload(entry.source)
     .catch(reportError)
     .finally(() => {
-      if (entries.get(entry.source) === entry) {
-        entries.delete(entry.source)
-      }
+      entries.delete(entry.source)
     })
 }
 
@@ -50,11 +48,7 @@ const createEntry = (source: string): TextureEntry => {
     },
     (error: unknown) => {
       entry.status = 'failed'
-
-      if (entries.get(source) === entry) {
-        entries.delete(source)
-      }
-
+      entries.delete(source)
       throw error
     },
   )
@@ -107,24 +101,15 @@ export async function acquireTextureGroup(
 ): Promise<readonly TextureLease[]> {
   const results = await Promise.allSettled(sources.map(async (source) => acquireTexture(source)))
   const failure = results.find((result) => result.status === 'rejected')
+  const leases = results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []))
 
   if (failure !== undefined) {
-    for (const result of results) {
-      if (result.status === 'fulfilled') {
-        result.value.release()
-      }
-    }
+    releaseTextureGroup(leases)
 
     throw failure.reason
   }
 
-  return results.map((result) => {
-    if (result.status !== 'fulfilled') {
-      throw new Error('Texture group settled without a texture')
-    }
-
-    return result.value
-  })
+  return leases
 }
 
 export function releaseTextureGroup(leases: readonly TextureLease[]) {

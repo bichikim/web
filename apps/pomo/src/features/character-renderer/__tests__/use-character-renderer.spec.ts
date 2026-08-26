@@ -1,5 +1,5 @@
 import {createRoot} from 'solid-js'
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   type CharacterRendererController,
@@ -32,7 +32,33 @@ const createRendererRoot = (runtime: CharacterRendererRuntime): CharacterRendere
   return {controller, dispose: disposeRoot}
 }
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 describe('useCharacterRenderer', () => {
+  it('should use the browser object URL runtime when no runtime is provided', () => {
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:browser')
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+    let disposeRoot: () => void = () => undefined
+    const controller = createRoot((dispose) => {
+      disposeRoot = dispose
+      return useCharacterRenderer({
+        defaultModelName: '기본 캐릭터',
+        defaultModelUrl: '/character.glb',
+      })
+    })
+    const file = new File(['model'], 'browser.glb', {type: 'model/gltf-binary'})
+
+    controller.loadFile(file)
+
+    expect(createObjectUrl).toHaveBeenCalledWith(file)
+    expect(controller.modelUrl()).toBe('blob:browser')
+
+    disposeRoot()
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:browser')
+  })
+
   it('should expose the default model in the loading state', () => {
     const renderer = createRendererRoot(createRuntime())
 

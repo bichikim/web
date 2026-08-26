@@ -42,6 +42,33 @@ describe('playback-storage', () => {
     expect(await readPPlayback()).toBeNull()
   })
 
+  it('should ignore playback data that does not satisfy the stored schema', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({positionSeconds: -1, savedAt: 10, trackId: ''}),
+    )
+
+    expect(await readPPlayback()).toBeNull()
+  })
+
+  it('should return null after browser playback storage is removed', async () => {
+    await writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
+    localStorage.removeItem('pomo:focus-room-playback:v1')
+
+    expect(await readPPlayback()).toBeNull()
+  })
+
+  it('should tolerate browser storage write failures', async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage is unavailable', 'SecurityError')
+    })
+
+    await expect(
+      writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'}),
+    ).resolves.toBeUndefined()
+    expect(await readPPlayback()).toBeNull()
+  })
+
   it('should treat playback saved before autoplay support as paused', async () => {
     localStorage.setItem(
       'pomo:focus-room-playback:v1',
@@ -78,6 +105,91 @@ describe('playback-storage', () => {
       positionSeconds: 9,
       savedAt: 20,
       trackId: 'latest-track',
+    })
+  })
+
+  it('should restore native playback when browser storage is empty', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockResolvedValue(
+      JSON.stringify({
+        isPlaying: true,
+        positionSeconds: 8,
+        savedAt: 15,
+        trackId: 'native-track',
+      }),
+    )
+
+    expect(await readPPlayback()).toEqual({
+      isPlaying: true,
+      positionSeconds: 8,
+      trackId: 'native-track',
+    })
+  })
+
+  it('should keep browser playback when native storage is empty', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({
+        isPlaying: true,
+        positionSeconds: 4,
+        savedAt: 10,
+        trackId: 'web-track',
+      }),
+    )
+    storageMocks.getItem.mockResolvedValue(null)
+
+    expect(await readPPlayback()).toEqual({
+      isPlaying: true,
+      positionSeconds: 4,
+      trackId: 'web-track',
+    })
+  })
+
+  it('should prefer browser playback when timestamps are equal', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({
+        isPlaying: true,
+        positionSeconds: 4,
+        savedAt: 10,
+        trackId: 'web-track',
+      }),
+    )
+    storageMocks.getItem.mockResolvedValue(
+      JSON.stringify({
+        isPlaying: false,
+        positionSeconds: 8,
+        savedAt: 10,
+        trackId: 'native-track',
+      }),
+    )
+
+    expect(await readPPlayback()).toEqual({
+      isPlaying: true,
+      positionSeconds: 4,
+      trackId: 'web-track',
+    })
+  })
+
+  it('should fall back to browser playback when native storage cannot be read', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({
+        isPlaying: true,
+        positionSeconds: 4,
+        savedAt: 10,
+        trackId: 'web-track',
+      }),
+    )
+    storageMocks.getItem.mockRejectedValue(new Error('Native storage is unavailable'))
+
+    expect(await readPPlayback()).toEqual({
+      isPlaying: true,
+      positionSeconds: 4,
+      trackId: 'web-track',
     })
   })
 

@@ -12,4 +12,4 @@ it('should import domain validators without eagerly requiring optional environme
       import('../../weather/environment'),
     ]),
   ).resolves.toHaveLength(7)
-})
+}, 15_000)

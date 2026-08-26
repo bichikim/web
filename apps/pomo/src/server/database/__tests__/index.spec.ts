@@ -1,57 +1,83 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, expect, it, vi} from 'vitest'
 
-import {withTransactionalDatabase} from '..'
-
-const databaseMocks = vi.hoisted(() => ({
+const mocks = vi.hoisted(() => ({
+  drizzleHttp: vi.fn(),
   drizzleServerless: vi.fn(),
-  getDatabaseUrl: vi.fn(),
+  getDatabaseUrl: vi.fn(() => 'postgres://database'),
 }))
 
-vi.mock('drizzle-orm/neon-serverless', () => ({drizzle: databaseMocks.drizzleServerless}))
-vi.mock('../environment', () => ({getDatabaseUrl: databaseMocks.getDatabaseUrl}))
+vi.mock('server-only', () => ({}))
+vi.mock('drizzle-orm/neon-http', () => ({drizzle: mocks.drizzleHttp}))
+vi.mock('drizzle-orm/neon-serverless', () => ({drizzle: mocks.drizzleServerless}))
+vi.mock('../environment', () => ({getDatabaseUrl: mocks.getDatabaseUrl}))
 
-describe('withTransactionalDatabase', () => {
-  const end = vi.fn()
+import {getDatabase, withTransactionalDatabase} from '../index'
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+it('should lazily create and reuse the Neon HTTP database', () => {
+  const database = {kind: 'http'}
+  mocks.drizzleHttp.mockReturnValue(database)
+
+  expect(getDatabase()).toBe(database)
+  expect(getDatabase()).toBe(database)
+  expect(mocks.drizzleHttp).toHaveBeenCalledOnce()
+  expect(mocks.drizzleHttp).toHaveBeenCalledWith(
+    'postgres://database',
+    expect.objectContaining({casing: 'snake_case', schema: expect.any(Object)}),
+  )
+})
+
+it('should run a transaction-scoped operation and close its client', async () => {
+  const end = vi.fn(async () => undefined)
   const database = {$client: {end}}
+  const operation = vi.fn(async () => 'result')
+  mocks.drizzleServerless.mockReturnValue(database)
 
-  beforeEach(() => {
-    end.mockReset().mockResolvedValue(undefined)
-    databaseMocks.drizzleServerless.mockReset().mockReturnValue(database)
-    databaseMocks.getDatabaseUrl.mockReset().mockReturnValue('postgresql://example.test/pomo')
+  await expect(withTransactionalDatabase(operation)).resolves.toBe('result')
+  expect(operation).toHaveBeenCalledWith(database)
+  expect(mocks.drizzleServerless).toHaveBeenCalledWith(
+    'postgres://database',
+    expect.objectContaining({casing: 'snake_case', schema: expect.any(Object)}),
+  )
+  expect(end).toHaveBeenCalledOnce()
+})
+
+it('should close after operation failure and preserve the operation error', async () => {
+  const end = vi.fn(async () => undefined)
+  mocks.drizzleServerless.mockReturnValue({$client: {end}})
+
+  await expect(
+    withTransactionalDatabase(async () => {
+      throw new Error('operation failed')
+    }),
+  ).rejects.toThrow('operation failed')
+  expect(end).toHaveBeenCalledOnce()
+})
+
+it('should report close failure without masking an operation error', async () => {
+  const operationError = new Error('operation failed')
+  const closeError = new Error('close failed')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  mocks.drizzleServerless.mockReturnValue({
+    $client: {end: vi.fn(async () => Promise.reject(closeError))},
   })
 
-  afterEach(() => {
-    vi.clearAllMocks()
-    vi.restoreAllMocks()
+  await expect(withTransactionalDatabase(async () => Promise.reject(operationError))).rejects.toBe(
+    operationError,
+  )
+  expect(consoleError).toHaveBeenCalledWith(
+    'Failed to close the transactional database after an operation error.',
+    closeError,
+  )
+})
+
+it('should surface close failure after a successful operation', async () => {
+  mocks.drizzleServerless.mockReturnValue({
+    $client: {end: vi.fn(async () => Promise.reject(new Error('close failed')))},
   })
 
-  it('should close its WebSocket pool after the operation succeeds', async () => {
-    const operation = vi.fn().mockResolvedValue('published')
-
-    await expect(withTransactionalDatabase(operation)).resolves.toBe('published')
-    expect(operation).toHaveBeenCalledWith(database)
-    expect(end).toHaveBeenCalledOnce()
-  })
-
-  it('should close its WebSocket pool after the operation fails', async () => {
-    const error = new Error('transaction failed')
-
-    await expect(withTransactionalDatabase(vi.fn().mockRejectedValue(error))).rejects.toBe(error)
-    expect(end).toHaveBeenCalledOnce()
-  })
-
-  it('should preserve the operation error when closing its WebSocket pool also fails', async () => {
-    const closeError = new Error('close failed')
-    const operationError = new Error('transaction failed')
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    end.mockRejectedValue(closeError)
-
-    await expect(withTransactionalDatabase(vi.fn().mockRejectedValue(operationError))).rejects.toBe(
-      operationError,
-    )
-    expect(consoleError).toHaveBeenCalledWith(
-      'Failed to close the transactional database after an operation error.',
-      closeError,
-    )
-  })
+  await expect(withTransactionalDatabase(async () => 'result')).rejects.toThrow('close failed')
 })

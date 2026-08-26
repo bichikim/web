@@ -7,6 +7,7 @@ import {
   ownsWeatherCollectionLease,
   recordWeatherCollectionFailure,
   resetWeatherCollectionFailure,
+  saveWeather,
   setWeatherCollectionLease,
   type WeatherTransaction,
 } from '../repository'
@@ -134,6 +135,38 @@ it('should reset the failure count and release the lease after collection', asyn
       set: expect.objectContaining({leaseExpiresAt: null, leaseKey: null, leaseToken: null}),
     }),
   )
+})
+
+it('should upsert a complete weather row', async () => {
+  const {onConflictDoUpdate, transaction, values} = createTransaction()
+  const input = {
+    collectedAt: new Date('2026-08-22T05:50:00.000Z'),
+    humidityPercent: 50,
+    location: 'seoul' as const,
+    precipitation: 'none' as const,
+    precipitationMillimeters: 0,
+    sky: 'clear' as const,
+    temperatureCelsius: 24,
+    weatherAt: new Date('2026-08-22T05:00:00.000Z'),
+    windSpeedMetersPerSecond: 2,
+  }
+
+  await saveWeather(input, transaction)
+
+  expect(values).toHaveBeenCalledWith(input)
+  expect(onConflictDoUpdate).toHaveBeenCalledOnce()
+})
+
+it('should report missing weather when no row has been collected', async () => {
+  const limit = vi.fn().mockResolvedValue([])
+  const orderBy = vi.fn(() => ({limit}))
+  const where = vi.fn(() => ({orderBy}))
+  const from = vi.fn(() => ({where}))
+  const database = {select: vi.fn(() => ({from}))} as unknown as Database
+
+  await expect(
+    getWeatherFeedState('seoul', new Date('2026-08-22T05:50:00.000Z'), database),
+  ).resolves.toEqual({status: 'missing'})
 })
 
 it.each([

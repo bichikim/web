@@ -4,7 +4,7 @@ import {createMemo, For, Show} from 'solid-js'
 import {PButton} from './PButton'
 import {PTag} from './PTag'
 import type {PSceneStyle} from '../features/focus-room-animation'
-import {type DialogueSegmentMood, usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import {type DialogueSegmentMood, usePEvents} from '../features/focus-room-dialogue'
 import {getPrimaryMood} from '../features/text-mood'
 import * as m from '@paraglide/message'
 import {BlockedDialogueBubble} from './dialogue-player/BlockedBubble'
@@ -70,19 +70,17 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
     events.onStopDialoguePlayback()
   }
   const handleSkip = () => events.skipDialoguePlayback()
-  const segmentPositions = () =>
-    Array.from({length: events.activeSegmentCount()}, (_, position) => position)
-  const progressLabel = () => {
+  const segmentProgress = createMemo(() => {
     const segmentCount = events.activeSegmentCount()
-    const activePosition = events.activeSegmentPosition() ?? 0
 
-    return m.dialogue_progress({current: activePosition + 1, total: segmentCount})
-  }
-  const isSegmentComplete = (position: number) => {
+    if (isExternalSpeech() || segmentCount <= 1) {
+      return null
+    }
+
     const activePosition = events.activeSegmentPosition()
 
-    return activePosition !== null && position <= activePosition
-  }
+    return activePosition === null ? null : {activePosition, segmentCount}
+  })
 
   return (
     <>
@@ -109,28 +107,32 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                     mood={moodPresentation().definition.id}
                     sceneStyle={props.sceneStyle}
                   />
-                  <Show
-                    when={
-                      !isExternalSpeech() &&
-                      events.activeSegmentCount() > 1 &&
-                      events.activeSegmentPosition() !== null
-                    }
-                  >
-                    <span
-                      aria-label={progressLabel()}
-                      class={CLASSES.dialogueBubbleProgress}
-                      role="img"
-                    >
-                      <For each={segmentPositions()}>
-                        {(position) => (
-                          <span
-                            aria-hidden="true"
-                            class={CLASSES.dialogueBubbleProgressDot}
-                            data-complete={isSegmentComplete(position) ? '' : undefined}
-                          />
-                        )}
-                      </For>
-                    </span>
+                  <Show when={segmentProgress()}>
+                    {(progress) => (
+                      <span
+                        aria-label={m.dialogue_progress({
+                          current: progress().activePosition + 1,
+                          total: progress().segmentCount,
+                        })}
+                        class={CLASSES.dialogueBubbleProgress}
+                        role="img"
+                      >
+                        <For
+                          each={Array.from(
+                            {length: progress().segmentCount},
+                            (_, position) => position,
+                          )}
+                        >
+                          {(position) => (
+                            <span
+                              aria-hidden="true"
+                              class={CLASSES.dialogueBubbleProgressDot}
+                              data-complete={position <= progress().activePosition ? '' : undefined}
+                            />
+                          )}
+                        </For>
+                      </span>
+                    )}
                   </Show>
                 </div>
                 <div class={CLASSES.dialogueBubbleActions}>

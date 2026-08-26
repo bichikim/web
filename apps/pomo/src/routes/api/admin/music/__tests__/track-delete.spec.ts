@@ -9,7 +9,7 @@ const repositoryMocks = vi.hoisted(() => ({
 const deletionMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/track-deletion-repository', () => repositoryMocks)
 vi.mock('src/server/music/track-storage-deletion', () => deletionMocks)
 
 import {DELETE} from '../tracks/[trackId]'
@@ -88,5 +88,54 @@ describe('admin music track delete route', () => {
 
     expect(response.status).toBe(403)
     expect(repositoryMocks.prepareTrackDeletion).not.toHaveBeenCalled()
+  })
+
+  it('should reject an invalid track identifier', async () => {
+    const response = await invokeApiRoute(DELETE, createRequest(), {trackId: 'not-a-uuid'})
+
+    expect(response.status).toBe(400)
+    expect(repositoryMocks.prepareTrackDeletion).not.toHaveBeenCalled()
+  })
+
+  it('should report a track missing during deletion preparation', async () => {
+    repositoryMocks.prepareTrackDeletion.mockResolvedValue(null)
+
+    const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(404)
+    expect(deletionMocks.deleteTrackAssetStorage).not.toHaveBeenCalled()
+  })
+
+  it('should fail safely when deleted object state cannot be recorded', async () => {
+    repositoryMocks.markTrackDeletionStorageDeleted.mockResolvedValue(false)
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to delete music track objects',
+      expect.objectContaining({message: 'Failed to record deleted music track objects'}),
+    )
+    expect(repositoryMocks.finalizeTrackDeletion).not.toHaveBeenCalled()
+  })
+
+  it('should report a track removed before record finalization', async () => {
+    repositoryMocks.finalizeTrackDeletion.mockResolvedValue(false)
+
+    const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(404)
+  })
+
+  it('should return a controlled error when record finalization fails', async () => {
+    const error = new Error('database unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    repositoryMocks.finalizeTrackDeletion.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(DELETE, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(500)
+    expect(consoleError).toHaveBeenCalledWith('Failed to delete music track records', error)
   })
 })

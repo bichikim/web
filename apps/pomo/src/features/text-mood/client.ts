@@ -178,10 +178,7 @@ export const createTextMoodAnalyzer = (
           pendingPrepare.resolve(successResult({repositoryId: TEXT_MOOD_MODEL.repositoryId}))
           pendingPrepare = null
         }
-        return
     }
-
-    response satisfies never
   })
   observeTextMoodWorker({
     onFailure: (detail) => {

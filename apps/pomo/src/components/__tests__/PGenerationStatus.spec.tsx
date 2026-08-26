@@ -18,6 +18,19 @@ it('should show a concrete status without progress when no value is provided', (
   expect(screen.queryByRole('progressbar')).toBeNull()
 })
 
+it('should hide progress when its value is explicitly null', () => {
+  render(() => (
+    <PGenerationStatus
+      kind="voice"
+      message="준비 전"
+      progress={null}
+      progressLabel="음성 모델 준비 진행률"
+    />
+  ))
+
+  expect(screen.queryByRole('progressbar')).toBeNull()
+})
+
 it('should expose zero percent progress with the requested semantic label', () => {
   render(() => (
     <PGenerationStatus
@@ -29,6 +42,25 @@ it('should expose zero percent progress with the requested semantic label', () =
   ))
 
   expect(screen.getByRole('status').textContent).toContain('0%')
+  expect(
+    screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
+  ).toBe('0')
+})
+
+it('should keep the semantic progress value valid when a volatile accessor becomes unavailable', () => {
+  let progressReads = 0
+  const props = {
+    kind: 'draft' as const,
+    message: '대사 초안을 작성하고 있어요.',
+    get progress() {
+      progressReads += 1
+      return progressReads < 3 ? 20 : undefined
+    },
+    progressLabel: '대사 생성 진행률',
+  }
+
+  render(() => PGenerationStatus(props))
+
   expect(
     screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
   ).toBe('0')

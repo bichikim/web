@@ -333,10 +333,6 @@ export class ParallaxController {
   }
 
   #startDeviceOrientation() {
-    if (this.#deviceOrientationListening || this.#destroyed || this.#inputMode !== 'gyroscope') {
-      return
-    }
-
     this.#stopSensorActivation()
     this.#deviceOrientationListening = true
     window.addEventListener('deviceorientation', this.#handleDeviceOrientation, {passive: true})

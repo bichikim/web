@@ -49,7 +49,7 @@ export const createTrackWithAudio = async (
   })
 
   try {
-    await uploadTrackAudio(trackId, input.audio)
+    await uploadTrackAudio({file: input.audio, trackId})
     return {success: true}
   } catch (error) {
     const cleanupSucceeded = await deleteTrack(trackId)

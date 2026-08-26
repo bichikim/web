@@ -77,8 +77,6 @@ const getModelProgress = (state: SpeechModelState) => {
     case 'ready':
       return MAXIMUM_PROGRESS
   }
-
-  state satisfies never
 }
 
 const createRecordingTimer = (setElapsedTime: Setter<number>) => {

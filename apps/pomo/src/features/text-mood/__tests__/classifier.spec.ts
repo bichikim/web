@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 import classifierArtifact from '../classifier-artifact.json'
 import {classifyTextMood, classifyTextSufficiency} from '../classifier'
@@ -55,5 +55,19 @@ describe('classifyTextMood', () => {
       temperature: 0.05,
       uncertainMargin: 0.075,
     })
+  })
+
+  it('should reject an artifact module that violates the classifier contract', async () => {
+    vi.resetModules()
+    vi.doMock('../classifier-artifact.json', () => ({
+      default: {...classifierArtifact, insufficiencyHead: undefined},
+    }))
+
+    await expect(import('../classifier')).rejects.toThrow(
+      'Text mood classifier artifact does not match the embedding model contract.',
+    )
+
+    vi.doUnmock('../classifier-artifact.json')
+    vi.resetModules()
   })
 })

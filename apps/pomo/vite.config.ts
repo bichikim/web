@@ -180,6 +180,10 @@ const createConfig = ({command}: ConfigEnv): UserConfig => ({
     },
     ...(isAppsInTossBuild && command === 'build' ? {preset: 'static'} : {}),
   },
+  optimizeDeps: {
+    // Gemma Worker가 처음 로드될 때 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
+    include: ['@huggingface/transformers'],
+  },
   plugins: [
     paraglideVitePlugin({
       emitTsDeclarations: true,

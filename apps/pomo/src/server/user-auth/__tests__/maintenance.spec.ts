@@ -155,4 +155,31 @@ describe('runAuthMaintenance', () => {
       'database unavailable',
     )
   })
+
+  it.each([
+    {deleted: -1, hasMore: false},
+    {deleted: 501, hasMore: false},
+    {deleted: 499, hasMore: true},
+  ])('should reject an invalid repository batch %#', async (batchResult) => {
+    const repository = createRepository()
+    vi.mocked(repository.deleteAppSessionBatch).mockResolvedValue(batchResult)
+
+    await expect(runAuthMaintenance({now: () => NOW, repository})).rejects.toThrow(
+      'Auth maintenance repository returned an invalid batch count',
+    )
+  })
+
+  it('should report incomplete when challenge cleanup reaches its batch limit', async () => {
+    const repository = createRepository()
+    vi.mocked(repository.deleteAccountLinkChallengeBatch).mockResolvedValue({
+      deleted: 500,
+      hasMore: true,
+    })
+
+    const result = await runAuthMaintenance({now: () => NOW, repository})
+
+    expect(result.appSessions.complete).toBe(true)
+    expect(result.accountLinkChallenges).toEqual({complete: false, deleted: 10_000})
+    expect(result.complete).toBe(false)
+  })
 })

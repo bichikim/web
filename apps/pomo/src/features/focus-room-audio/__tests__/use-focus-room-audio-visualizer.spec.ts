@@ -3,6 +3,80 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {type PAudioVisualizer, usePAudioVisualizer} from '../use-focus-room-audio-visualizer'
 
+interface AudioHarnessOptions {
+  readonly close?: () => Promise<void>
+  readonly resume?: () => Promise<void>
+  readonly spectrumValue?: number
+  readonly state?: AudioContextState
+}
+
+const flushMicrotasks = async () => {
+  await Promise.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+}
+
+const installAudioHarness = (options: AudioHarnessOptions = {}) => {
+  const analyser = {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    fftSize: 0,
+    frequencyBinCount: 24,
+    getByteFrequencyData: vi.fn((spectrum: Uint8Array) =>
+      spectrum.fill(options.spectrumValue ?? 0),
+    ),
+    smoothingTimeConstant: 0,
+  }
+  const source = {connect: vi.fn(), disconnect: vi.fn()}
+  let contextState = options.state ?? 'running'
+  const close = vi.fn(options.close ?? (() => Promise.resolve()))
+  const resume = vi.fn(async () => {
+    await (options.resume?.() ?? Promise.resolve())
+    contextState = 'running'
+  })
+  const context = {
+    close,
+    createAnalyser: vi.fn(() => analyser),
+    createMediaElementSource: vi.fn(() => source),
+    destination: {},
+    resume,
+    get state() {
+      return contextState
+    },
+  }
+  const callbacks = new Map<number, FrameRequestCallback>()
+  let nextFrame = 1
+  const cancelAnimationFrame = vi.fn((frame: number) => {
+    callbacks.delete(frame)
+  })
+  const requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
+    const frame = nextFrame
+    nextFrame += 1
+    callbacks.set(frame, callback)
+    return frame
+  })
+  const AudioContextMock = vi.fn(function AudioContextMock() {
+    return context
+  })
+  vi.stubGlobal('AudioContext', AudioContextMock)
+  vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrame)
+  vi.stubGlobal('requestAnimationFrame', requestAnimationFrame)
+
+  return {
+    analyser,
+    AudioContextMock,
+    cancelAnimationFrame,
+    close,
+    context,
+    requestAnimationFrame,
+    resume,
+    source,
+  }
+}
+
+const createVisualizer = () =>
+  createRoot((dispose) => ({dispose, visualizer: usePAudioVisualizer()}))
+
 describe('usePAudioVisualizer', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -28,7 +102,11 @@ describe('usePAudioVisualizer', () => {
       state: 'running',
     }
     const cancelFrame = vi.fn()
-    const requestFrame = vi.fn(() => 1)
+    let scheduledFrame: FrameRequestCallback | undefined
+    const requestFrame = vi.fn((callback: FrameRequestCallback) => {
+      scheduledFrame = callback
+      return 1
+    })
     const AudioContextMock = vi.fn(function AudioContextMock() {
       return context
     })
@@ -53,9 +131,98 @@ describe('usePAudioVisualizer', () => {
     expect(visualizer?.levels()[0]).toBe(18)
     expect(cancelFrame).toHaveBeenCalledWith(1)
 
+    scheduledFrame?.(0)
+    expect(requestFrame).toHaveBeenCalledOnce()
+
     dispose()
     expect(source.disconnect).toHaveBeenCalledOnce()
     expect(analyser.disconnect).toHaveBeenCalledOnce()
     expect(context.close).toHaveBeenCalledOnce()
+  })
+
+  it('should resume a suspended context, reuse its graph, and cancel active frames on cleanup', async () => {
+    const harness = installAudioHarness({
+      close: () => Promise.reject(new Error('close failed')),
+      spectrumValue: 0,
+      state: 'suspended',
+    })
+    const {dispose, visualizer} = createVisualizer()
+
+    visualizer.start(document.createElement('audio'))
+    await flushMicrotasks()
+
+    expect(harness.resume).toHaveBeenCalledOnce()
+    expect(visualizer.levels()).toEqual(Array.from({length: 24}, () => 12))
+
+    visualizer.start(document.createElement('audio'))
+    await flushMicrotasks()
+
+    expect(harness.AudioContextMock).toHaveBeenCalledOnce()
+    expect(harness.context.createAnalyser).toHaveBeenCalledOnce()
+    expect(harness.context.createMediaElementSource).toHaveBeenCalledOnce()
+    expect(harness.cancelAnimationFrame).toHaveBeenCalledWith(1)
+    expect(harness.requestAnimationFrame).toHaveBeenCalledTimes(2)
+
+    dispose()
+    expect(harness.cancelAnimationFrame).toHaveBeenCalledWith(2)
+    expect(harness.source.disconnect).toHaveBeenCalledOnce()
+    expect(harness.analyser.disconnect).toHaveBeenCalledOnce()
+    expect(harness.close).toHaveBeenCalledOnce()
+    await flushMicrotasks()
+  })
+
+  it('should not begin sampling when stopped before suspended initialization completes', async () => {
+    let resolveResume: () => void = () => undefined
+    const resumePromise = new Promise<void>((resolve) => {
+      resolveResume = resolve
+    })
+    const harness = installAudioHarness({
+      resume: () => resumePromise,
+      state: 'suspended',
+    })
+    const {dispose, visualizer} = createVisualizer()
+
+    visualizer.start(document.createElement('audio'))
+    visualizer.stop()
+    resolveResume()
+    await flushMicrotasks()
+
+    expect(harness.requestAnimationFrame).not.toHaveBeenCalled()
+    expect(visualizer.levels()[0]).toBe(18)
+    dispose()
+  })
+
+  it('should ignore initialization completion after disposal', async () => {
+    let resolveResume: () => void = () => undefined
+    const resumePromise = new Promise<void>((resolve) => {
+      resolveResume = resolve
+    })
+    const harness = installAudioHarness({
+      resume: () => resumePromise,
+      state: 'suspended',
+    })
+    const {dispose, visualizer} = createVisualizer()
+
+    visualizer.start(document.createElement('audio'))
+    dispose()
+    resolveResume()
+    await flushMicrotasks()
+
+    expect(harness.requestAnimationFrame).not.toHaveBeenCalled()
+  })
+
+  it('should preserve disposed state when initialization rejects after cleanup', async () => {
+    const harness = installAudioHarness({
+      resume: () => Promise.reject(new Error('resume failed')),
+      state: 'suspended',
+    })
+    const {dispose, visualizer} = createVisualizer()
+
+    visualizer.start(document.createElement('audio'))
+    dispose()
+    await flushMicrotasks()
+
+    expect(harness.requestAnimationFrame).not.toHaveBeenCalled()
+    expect(visualizer.levels()[0]).toBe(18)
   })
 })

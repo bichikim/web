@@ -34,6 +34,16 @@ describe('focusRoomDialogueSchema', () => {
     expect(dialogue.language).toBe('na')
   })
 
+  it('should preserve the selected Hana voice', () => {
+    const dialogue = focusRoomDialogueSchema.parse({
+      ...baseDialogue,
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: '반가워!'}],
+      voiceId: 'Hana',
+    })
+
+    expect(dialogue.voiceId).toBe('Hana')
+  })
+
   it('should keep legacy segments valid when mood is absent', () => {
     const dialogue = focusRoomDialogueSchema.parse({
       ...baseDialogue,

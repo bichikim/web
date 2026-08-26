@@ -143,6 +143,15 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let restReturnTimer: number | null = null
   let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
   const requestQueue: Array<PlaybackQueueRequest> = []
+  const reportPlaybackFailure = console.error.bind(
+    console,
+    'Unexpected focus room dialogue playback failure.',
+  )
+  const reportQueueFailure = console.error.bind(console, 'Unexpected dialogue queue failure.')
+  const reportSettlementFailure = console.error.bind(
+    console,
+    'Unexpected dialogue request settlement failure.',
+  )
 
   const updateScheduledDialogueCount = () => {
     const activeCount =
@@ -268,13 +277,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     clearPlayback(completion === 'ended' ? 'hold' : 'immediate')
   }
 
-  const start = async () => {
-    const currentAudio = audio
-
-    if (currentAudio === null || isDisposed) {
-      return
-    }
-
+  const start = async (currentAudio: HTMLAudioElement) => {
     try {
       const suspension = audioContextSuspension
 
@@ -406,7 +409,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       },
       {once: true},
     )
-    await start()
+    await start(currentAudio)
     return completion
   }
 
@@ -438,10 +441,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         case 'failed':
         case 'stopped':
           return completion
-        default: {
-          const exhaustiveCompletion: never = completion
-          return exhaustiveCompletion
-        }
       }
     }
 
@@ -479,26 +478,13 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
     try {
       while (requestQueue.length > 0) {
-        if (isDisposed) {
-          return
-        }
-
-        const request = requestQueue.shift()
-
-        if (request === undefined) {
-          return
-        }
+        const request = requestQueue.shift()!
 
         await processQueueRequest(request)
       }
     } finally {
       isDraining = false
-
-      if (!isDisposed && requestQueue.length > 0) {
-        drainQueue().catch((error: unknown) => {
-          console.error('Unexpected dialogue queue failure.', error)
-        })
-      } else if (!isDisposed && activeViseme() !== 'rest') {
+      if (!isDisposed && activeViseme() !== 'rest') {
         resetViseme('delayed')
       }
     }
@@ -517,9 +503,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         settled: false,
       })
       updateScheduledDialogueCount()
-      drainQueue().catch((error: unknown) => {
-        console.error('Unexpected dialogue queue failure.', error)
-      })
+      drainQueue().catch(reportQueueFailure)
     })
 
   const finishQueue = (notifyStop: boolean) => {
@@ -531,9 +515,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     updateScheduledDialogueCount()
     finishPlayback(completion)
     requests.forEach((request) => {
-      settleQueueRequest(request, notifyStop).catch((error: unknown) => {
-        console.error('Unexpected dialogue request settlement failure.', error)
-      })
+      settleQueueRequest(request, notifyStop).catch(reportSettlementFailure)
     })
   }
 
@@ -587,9 +569,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         return
       }
 
-      start().catch((error: unknown) => {
-        console.error('Unexpected focus room dialogue playback failure.', error)
-      })
+      start(audio!).catch(reportPlaybackFailure)
     },
     scheduledDialogueCount,
     skip,

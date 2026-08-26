@@ -1,10 +1,16 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {expect, it} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import {PIconButton} from '../PIconButton'
+
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+  vi.restoreAllMocks()
+})
 
 it('should expose the medium icon button class contract', () => {
   const result = render(() => (
@@ -71,4 +77,32 @@ it('should reveal the updated feedback without retaining hidden-state classes', 
   expect(feedbackLabel?.classList.contains('opacity-100')).toBe(true)
   expect(feedbackLabel?.classList.contains('max-w-0')).toBe(false)
   expect(feedbackLabel?.classList.contains('opacity-0')).toBe(false)
+})
+
+it('should restart feedback timing and hide the latest message after the duration', () => {
+  vi.useFakeTimers()
+  const [feedback, setFeedback] = createSignal('낮')
+  const result = render(() => (
+    <PIconButton
+      accessibleLabel="시간대"
+      feedback={feedback()}
+      icon="i-tabler-sun"
+      onPress={() => undefined}
+    />
+  ))
+  const button = result.getByRole('button', {name: '시간대'})
+
+  setFeedback('밤')
+  expect(vi.getTimerCount()).toBe(1)
+
+  setFeedback('새벽')
+  expect(vi.getTimerCount()).toBe(1)
+  expect(button).toHaveAttribute('data-feedback-visible', '')
+  expect(button).toHaveTextContent('새벽')
+
+  vi.advanceTimersByTime(1_399)
+  expect(button).toHaveAttribute('data-feedback-visible', '')
+
+  vi.advanceTimersByTime(1)
+  expect(button).not.toHaveAttribute('data-feedback-visible')
 })

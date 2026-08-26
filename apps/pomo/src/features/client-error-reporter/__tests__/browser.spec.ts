@@ -15,6 +15,13 @@ const CONTEXT = {
   route: {origin: 'https://www.pomofi.io', template: '/'},
 } satisfies ClientErrorContext
 
+const HANDLER_STATE = Symbol.for('pomofi.client-error-handlers.v1')
+
+interface HandlerStateHarness {
+  readonly registrations: Array<unknown>
+  readonly removeListeners: () => void
+}
+
 const cleanups: Array<() => void> = []
 
 afterEach(() => {
@@ -40,7 +47,58 @@ const dispatchRejection = (reason: unknown) => {
   window.dispatchEvent(event)
 }
 
+const getHandlerState = () =>
+  (globalThis as typeof globalThis & {[HANDLER_STATE]?: HandlerStateHarness})[HANDLER_STATE]
+
+const restoreReportErrorDescriptor = (descriptor: PropertyDescriptor | undefined) => {
+  if (descriptor === undefined) {
+    Reflect.deleteProperty(globalThis, 'reportError')
+  } else {
+    Object.defineProperty(globalThis, 'reportError', descriptor)
+  }
+}
+
 describe('installClientErrorHandlers', () => {
+  it('should install the default reporter when reportError was absent', () => {
+    const previousDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'reportError')
+    Reflect.deleteProperty(globalThis, 'reportError')
+
+    try {
+      const cleanup = installClientErrorHandlers()
+
+      expect(() => {
+        window.dispatchEvent(new ErrorEvent('error', {message: 'missing error object'}))
+        globalThis.reportError(new Error('reported by default'))
+      }).not.toThrow()
+
+      cleanup()
+      expect(Object.getOwnPropertyDescriptor(globalThis, 'reportError')).toBeUndefined()
+    } finally {
+      restoreReportErrorDescriptor(previousDescriptor)
+    }
+  })
+
+  it('should restore a previous non-function reportError value', () => {
+    const previousDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'reportError')
+    Object.defineProperty(globalThis, 'reportError', {
+      configurable: true,
+      value: 'host diagnostic setting',
+      writable: true,
+    })
+
+    try {
+      const {reporter} = createReporter()
+      const cleanup = installClientErrorHandlers({reporter})
+
+      globalThis.reportError(new Error('application failure'))
+      cleanup()
+
+      expect(Reflect.get(globalThis, 'reportError')).toBe('host diagnostic setting')
+    } finally {
+      restoreReportErrorDescriptor(previousDescriptor)
+    }
+  })
+
   it('should connect error, rejection, and reportError with object deduplication', () => {
     const previousReportError = vi.fn()
     Object.defineProperty(globalThis, 'reportError', {
@@ -161,5 +219,44 @@ describe('installClientErrorHandlers', () => {
       window.dispatchEvent(new ErrorEvent('error', {error: new Error('render failed')})),
     ).not.toThrow()
     expect(previousReportError).toHaveBeenCalledTimes(1)
+  })
+
+  it('should tolerate cleanup after the shared host state is removed', () => {
+    const previousDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'reportError')
+    const {reporter} = createReporter()
+    const cleanup = installClientErrorHandlers({reporter})
+    const state = getHandlerState()
+
+    if (state === undefined) {
+      throw new Error('Expected installed client error handler state.')
+    }
+
+    Reflect.deleteProperty(globalThis, HANDLER_STATE)
+
+    try {
+      expect(cleanup).not.toThrow()
+    } finally {
+      state.removeListeners()
+      restoreReportErrorDescriptor(previousDescriptor)
+      Reflect.deleteProperty(globalThis, HANDLER_STATE)
+    }
+  })
+
+  it('should tolerate cleanup after its registration is removed externally', () => {
+    const first = createReporter()
+    const second = createReporter()
+    const cleanupFirst = installClientErrorHandlers({reporter: first.reporter})
+    const cleanupSecond = installClientErrorHandlers({reporter: second.reporter})
+    const state = getHandlerState()
+
+    if (state === undefined) {
+      throw new Error('Expected installed client error handler state.')
+    }
+
+    state.registrations.splice(0, 1)
+
+    expect(cleanupFirst).not.toThrow()
+    cleanupSecond()
+    expect(getHandlerState()).toBeUndefined()
   })
 })

@@ -106,16 +106,44 @@ it('should not overwrite newer choices when restoration finishes late', async ()
     />
   ))
 
+  controller?.onActivityChange('writing')
+  controller?.onGazeChange('focused')
   controller?.onTimeModeChange('night')
   completeRead(storedPreferences)
 
   await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
   expect(controller?.timeMode()).toBe('night')
-  expect(controller?.activity()).toBe('typing')
-  expect(controller?.gaze()).toBe('user')
+  expect(controller?.activity()).toBe('writing')
+  expect(controller?.gaze()).toBe('focused')
   expect(storageMocks.write).toHaveBeenLastCalledWith({
-    activity: 'typing',
-    gaze: 'user',
+    activity: 'writing',
+    gaze: 'focused',
     timeMode: 'night',
   })
+})
+
+it('should ignore a pending restoration after cleanup', async () => {
+  let completeRead: (preferences: typeof storedPreferences) => void = () => undefined
+  storageMocks.read.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  let controller: PScenePreferencesController | undefined
+  const result = render(() => (
+    <ScenePreferencesHarness
+      onController={(nextController) => {
+        controller = nextController
+      }}
+    />
+  ))
+
+  result.unmount()
+  completeRead(storedPreferences)
+  await Promise.resolve()
+  await Promise.resolve()
+
+  expect(controller?.isReady()).toBe(false)
+  expect(controller?.activity()).not.toBe(storedPreferences.activity)
+  expect(storageMocks.write).not.toHaveBeenCalled()
 })

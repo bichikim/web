@@ -2,7 +2,7 @@
 
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {uploadTrackAudio, validateTrackAudio} from '../track-upload'
+import {MAXIMUM_TRACK_BYTES, uploadTrackAudio, validateTrackAudio} from '../track-upload'
 
 const TRACK_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf781'
 const ASSET_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
@@ -16,6 +16,24 @@ describe('validateTrackAudio', () => {
     expect(() => validateTrackAudio(new File(['wav'], 'track.wav', {type: 'audio/wav'}))).toThrow(
       'MP3 파일만',
     )
+  })
+
+  it.each([
+    new File([], 'empty.mp3', {type: 'audio/mpeg'}),
+    new File(['mp3'], 'large.mp3', {type: 'audio/mpeg'}),
+  ])('should reject an empty or oversized MP3', (file) => {
+    if (file.name === 'large.mp3') {
+      Object.defineProperty(file, 'size', {value: MAXIMUM_TRACK_BYTES + 1})
+    }
+
+    expect(() => validateTrackAudio(file)).toThrow('MP3 파일은 250MB 이하여야 합니다.')
+  })
+
+  it.each([
+    new File(['mp3'], 'track.bin', {type: 'audio/mpeg'}),
+    new File(['mp3'], 'TRACK.MP3', {type: 'application/octet-stream'}),
+  ])('should accept MP3 identity from either MIME type or extension', (file) => {
+    expect(() => validateTrackAudio(file)).not.toThrow()
   })
 })
 
@@ -35,7 +53,7 @@ describe('uploadTrackAudio', () => {
       .mockResolvedValueOnce(Response.json({assetId: ASSET_ID, status: 'active'}))
     vi.stubGlobal('fetch', fetcher)
 
-    await uploadTrackAudio(TRACK_ID, file)
+    await uploadTrackAudio({file, trackId: TRACK_ID})
 
     expect(fetcher).toHaveBeenNthCalledWith(
       2,
@@ -47,5 +65,48 @@ describe('uploadTrackAudio', () => {
       '/api/admin/music/assets',
       expect.objectContaining({body: JSON.stringify({assetId: ASSET_ID}), method: 'PUT'}),
     )
+  })
+
+  it.each([
+    {
+      message: 'MP3 업로드를 준비하지 못했습니다.',
+      responses: [new Response(null, {status: 503})],
+    },
+    {
+      message: 'MP3를 R2에 업로드하지 못했습니다.',
+      responses: [
+        Response.json({
+          assetId: ASSET_ID,
+          expiresAt: '2026-08-22T15:00:00.000Z',
+          uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+        }),
+        new Response(null, {status: 503}),
+      ],
+    },
+    {
+      message: 'MP3 형식 또는 재생 시간을 검증하지 못했습니다.',
+      responses: [
+        Response.json({
+          assetId: ASSET_ID,
+          expiresAt: '2026-08-22T15:00:00.000Z',
+          uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+        }),
+        new Response(null, {status: 200}),
+        new Response(null, {status: 503}),
+      ],
+    },
+  ])('should report a failed upload stage: $message', async ({message, responses}) => {
+    const fetcher = vi.fn<typeof fetch>()
+    for (const response of responses) {
+      fetcher.mockResolvedValueOnce(response)
+    }
+    vi.stubGlobal('fetch', fetcher)
+
+    await expect(
+      uploadTrackAudio({
+        file: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+        trackId: TRACK_ID,
+      }),
+    ).rejects.toThrow(message)
   })
 })

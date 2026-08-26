@@ -1,6 +1,6 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {mockEvent} from 'h3'
-import {describe, expect, it} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {readBoundedRequest, readJsonBody} from '../body'
 
@@ -14,6 +14,10 @@ const createJsonRequest = (body: string, headers: HeadersInit = {}): Request =>
     headers: {'Content-Type': 'application/json', ...headers},
     method: 'POST',
   })
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('readJsonBody', () => {
   it('should read a valid JSON request through the H3 event', async () => {
@@ -87,5 +91,28 @@ describe('readBoundedRequest', () => {
     expect(result.request.headers.get('Content-Length')).toBeNull()
     expect(result.request.headers.get('X-Request-Context')).toBe('test')
     await expect(result.request.json()).resolves.toEqual({ok: true})
+  })
+
+  it('should reconstruct a request without a body and strip transfer metadata', async () => {
+    const request = new Request('https://www.pomofi.io/api/test', {
+      headers: {'Transfer-Encoding': 'chunked'},
+      method: 'POST',
+    })
+    const result = await readBoundedRequest(createApiEvent(request), 128)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.request.body).toBeNull()
+      expect(result.request.headers.get('Transfer-Encoding')).toBeNull()
+    }
+  })
+
+  it('should preserve bounded request size errors', async () => {
+    const oversized = createJsonRequest('{"value":"large"}', {'Content-Length': '17'})
+
+    await expect(readBoundedRequest(createApiEvent(oversized), 4)).resolves.toEqual({
+      status: 413,
+      success: false,
+    })
   })
 })

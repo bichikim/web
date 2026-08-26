@@ -16,6 +16,13 @@ const createRequest = (): Request =>
     method: 'POST',
   })
 
+const createRequestWithBody = (body: string): Request =>
+  new Request('https://www.pomofi.io/api/account/complete-link', {
+    body,
+    headers: {'Content-Type': 'application/json'},
+    method: 'POST',
+  })
+
 describe('complete account link route', () => {
   beforeEach(() => {
     sessionMocks.getNeonSession.mockReset().mockResolvedValue({
@@ -37,5 +44,54 @@ describe('complete account link route', () => {
       'neon-user-id',
       'User@Example.com',
     )
+  })
+
+  it('should reject invalid and oversized challenge requests', async () => {
+    const invalidResponse = await invokeApiRoute(
+      POST,
+      createRequestWithBody(JSON.stringify({token: 'short'})),
+    )
+    const oversizedResponse = await invokeApiRoute(POST, createRequestWithBody('x'.repeat(4097)))
+
+    expect(invalidResponse.status).toBe(400)
+    await expect(invalidResponse.json()).resolves.toEqual({error: 'invalid_challenge'})
+    expect(oversizedResponse.status).toBe(413)
+    await expect(oversizedResponse.json()).resolves.toEqual({error: 'invalid_challenge'})
+    expect(sessionMocks.getNeonSession).not.toHaveBeenCalled()
+  })
+
+  it('should require an authenticated session', async () => {
+    sessionMocks.getNeonSession.mockResolvedValue({
+      cookies: ['session=; Max-Age=0'],
+      identity: null,
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({error: 'unauthorized'})
+    expect(response.headers.getSetCookie()).toEqual(['session=; Max-Age=0'])
+    expect(repositoryMocks.completeAccountLink).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['identity-conflict', 409, 'identity_conflict'],
+    ['invalid-challenge', 410, 'invalid_challenge'],
+  ] as const)('should map %s results to an HTTP error', async (status, expectedStatus, error) => {
+    repositoryMocks.completeAccountLink.mockResolvedValue({status})
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(expectedStatus)
+    await expect(response.json()).resolves.toEqual({error})
+  })
+
+  it('should preserve runtime exhaustiveness for unknown repository results', async () => {
+    const unknownResult = {status: 'future-status'}
+    repositoryMocks.completeAccountLink.mockResolvedValue(unknownResult)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    await expect(response.json()).resolves.toEqual(unknownResult)
   })
 })

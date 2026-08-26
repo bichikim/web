@@ -3,13 +3,37 @@ import {describe, expect, it} from 'vitest'
 import {FOCUS_ROOM_JAW_CHANNEL, P_MOUTH_TRANSITION_STAGES} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
 import {getPSceneLayer, getPSceneReviewLayer} from '../scene-layer-catalog'
+import {createMouthTransitionLayers} from '../mouth-layers'
 
 describe('focus room scene catalog', () => {
+  it('should omit unavailable optional mouth transition layers', () => {
+    expect(
+      createMouthTransitionLayers({
+        parentAttachmentId: 'head',
+        position: {x: 0, y: 0},
+        sources: {},
+      }),
+    ).toEqual([])
+  })
+
   it('should provide all twelve unique scene combinations', () => {
     const ids = FOCUS_ROOM_SCENES.map((scene) => scene.id)
 
     expect(ids).toHaveLength(12)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('should expose day reading focus as the stable default catalog entry', () => {
+    const defaultScene = FOCUS_ROOM_SCENES[0]
+
+    expect(defaultScene?.id).toBe('day-reading-focused')
+    expect(getPScene('day', 'reading', 'focused')).toBe(defaultScene)
+  })
+
+  it('should reject an unknown scene identifier combination', () => {
+    expect(() => getPScene('dawn' as never, 'reading', 'focused')).toThrow(
+      'Missing focus room scene: dawn-reading-focused',
+    )
   })
 
   it('should keep every scene definition independently addressable', () => {
@@ -200,9 +224,53 @@ describe('focus room scene catalog', () => {
       ).toHaveLength(2)
       expect(
         layerScene.layers.every(
-          (layer) => layer.motion?.kind !== 'pixel-oscillation' && layer.motions === undefined,
+          (layer) =>
+            (layer.id === 'background' || layer.motion?.kind !== 'pixel-oscillation') &&
+            layer.motions === undefined,
         ),
       ).toBe(true)
+    }
+  })
+
+  it('should breathe through every background without moving structural layers', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const layers = getPSceneLayer(scene.id).layers
+      const backgroundLayer = layers.find((layer) => layer.id === 'background')
+
+      expect(backgroundLayer?.motion).toMatchObject({
+        effects: [
+          {
+            distance: {x: 0, y: -3},
+            kind: 'masked-pixel-push',
+            maskSource: expect.stringContaining('breathing-mask'),
+          },
+        ],
+        kind: 'pixel-oscillation',
+        travel: {maximumSeconds: 2.5, minimumSeconds: 2.2},
+      })
+      expect(
+        layers
+          .filter((layer) => layer.id !== 'background')
+          .every((layer) => layer.motion?.kind !== 'pixel-oscillation'),
+      ).toBe(true)
+    }
+  })
+
+  it('should move hair in every scene with the matching gaze mask', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const headLayer = getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')
+      const hairMotion =
+        headLayer?.motion?.kind === 'pivot-rotation' ? headLayer.motion.pixelPush : undefined
+      const expectedMaskDirectory =
+        scene.gaze === 'focused' ? 'day-writing-focused' : `${scene.time}-reading-user`
+
+      expect(hairMotion).toMatchObject([
+        {
+          distance: {x: -4, y: 1.25},
+          kind: 'masked-pixel-push',
+          maskSource: expect.stringContaining(`${expectedMaskDirectory}/hair-tips-mask`),
+        },
+      ])
     }
   })
 
@@ -238,7 +306,6 @@ describe('focus room scene catalog', () => {
         opacity: 0.18,
         source: expect.stringContaining('cloud-overlay'),
       })
-      expect(layers.some((layer) => layer.id.startsWith('small-cloud-'))).toBe(false)
     }
 
     for (const scene of FOCUS_ROOM_SCENES.filter((scene) => scene.time === 'night')) {

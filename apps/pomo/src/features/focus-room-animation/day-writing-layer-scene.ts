@@ -1,12 +1,13 @@
 import referenceImage from './assets/concept-art/day-writing.webp'
 import eyeImage from './assets/layers/day-reading-focused/eyes.webp'
 import baseImage from './assets/layers/day-writing-focused/base.webp'
-import hairTipsMaskImage from './assets/layers/day-writing-focused/hair-tips-mask.webp'
 import headImage from './assets/layers/day-writing-focused/head.webp'
 import restingHandImage from './assets/layers/day-writing-focused/resting-hand.webp'
 import writingHandImage from './assets/layers/day-writing-focused/writing-hand.webp'
+import {BREATHING_MOTION} from './breathing-motion'
 import {DAY_SKY_LAYERS} from './day-sky-layer'
 import {createEyeMotion} from './eye-motion'
+import {HAIR_TIPS_PIXEL_PUSH} from './hair-motion'
 import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
@@ -19,6 +20,7 @@ export const DAY_WRITING_LAYER_SCENE = {
   layers: [
     {
       id: 'background',
+      motion: BREATHING_MOTION,
       source: baseImage,
     },
     ...DAY_SKY_LAYERS,
@@ -30,13 +32,7 @@ export const DAY_WRITING_LAYER_SCENE = {
         center: {x: 1120, y: 445},
         degrees: 0.55,
         kind: 'pivot-rotation',
-        pixelPush: [
-          {
-            distance: {x: -4, y: 1.25},
-            kind: 'masked-pixel-push',
-            maskSource: hairTipsMaskImage,
-          },
-        ],
+        pixelPush: HAIR_TIPS_PIXEL_PUSH,
         travel: {maximumSeconds: 2.3, minimumSeconds: 1.5},
       },
       source: headImage,

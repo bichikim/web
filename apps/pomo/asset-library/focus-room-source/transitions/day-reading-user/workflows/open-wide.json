@@ -1,7 +1,7 @@
 {
   "92": {
     "inputs": {
-      "filename_prefix": "video/pomo_day_mouth_open_to_wide_v5_bounded",
+      "filename_prefix": "video/pomo_day_mouth_ipa_a_to_e_v8_short",
       "format": "auto",
       "codec": "auto",
       "video": ["105:91", 0]
@@ -143,7 +143,7 @@
   },
   "105:104": {
     "inputs": {
-      "prompt": "Create one restrained geometric mouth transition between the exact supplied first and last images. This is a subtle image interpolation, not a facial performance. Keep the mouth naturally small and proportional to the face in every frame. At the largest intermediate frame, the outer-lip width is at most 1.2 times the starting width, the outer-lip height is at most 1.15 times the starting height, and the dark inner-mouth opening is at most 1.2 times the starting opening. Start from the exact supplied open mouth. Gently widen both mouth corners while slightly raising the lower jaw, moving directly toward the exact supplied final shape. Use one continuous transition with no extra intermediate pose or size peak. Briefly hold the initial shape, change gradually through the middle, then briefly hold the final shape. Preserve the character's small mouth and delicate facial proportions. Only the lips, lower jaw, and chin move subtly. Keep the head, eyes, nose, hair, body, hands, book, camera, lighting, colors, illustration style, and background completely unchanged. No speech, pronunciation, acting, surprise, smile, singing, teeth emphasis, tongue, dramatic opening, lip stretching, overshoot, reversal, repetition, pulsing, chewing, blinking, head movement, or camera movement.",
+      "prompt": "Single continuous locked-camera transition using the exact provided first and last frames. Preserve the same woman, identity, hairstyle, hair clip, eyes, nose, skin tone, clothing, book, hands, lighting, background, framing, and color palette. Only her mouth, lips, immediate surrounding facial skin, lower jaw, and chin may change. Begin exactly with the supplied first mouth shape. Silently mouth one short, subtle transition from /a/ to /e/. Do not sustain or emphasize either sound. Move continuously and minimally with no additional mouth pose, then finish exactly with the supplied last mouth shape. Keep the mouth center registered at the same position throughout the transition. At every frame, the outer-lip width, outer-lip height, and dark inner-mouth opening must remain within the geometric range of the two supplied endpoint images. Do not enlarge the mouth beyond either supplied endpoint. Hold the eye direction and head position perfectly still. No audio, smile, grin, surprise, exaggerated mouth opening, extra teeth, tongue, lip duplication, overshoot, reversal, repetition, pulsing, blinking, eye movement, head movement, camera movement, color shift, lighting shift, hand movement, book movement, or background movement.",
       "width": ["120", 0],
       "height": ["120", 1],
       "length": ["105:107", 1],
@@ -169,7 +169,7 @@
   },
   "105:111": {
     "inputs": {
-      "value": 1.5
+      "value": 0.75
     },
     "class_type": "PrimitiveFloat",
     "_meta": {

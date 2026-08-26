@@ -34,6 +34,18 @@ it('should use the default when browser storage is missing or invalid', async ()
   await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
+it.each([
+  null,
+  {},
+  {citySlug: 'seoul'},
+  {citySlug: 'seoul', enabled: 'yes'},
+  {citySlug: 'unknown', enabled: true},
+])('should reject an invalid browser preference shape', async (value) => {
+  localStorage.setItem('pomo:weather-preference:v1', JSON.stringify(value))
+
+  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+})
+
 it('should persist and restore a browser preference', async () => {
   await writeWeatherPreference(disabledPreference)
 
@@ -49,6 +61,14 @@ it('should restore a native preference and rebuild the browser copy', async () =
   expect(localStorage.getItem('pomo:weather-preference:v1')).toBe(
     JSON.stringify(disabledPreference),
   )
+})
+
+it('should use defaults when native storage is empty or invalid', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.getItem.mockResolvedValueOnce(null).mockResolvedValueOnce('{}')
+
+  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
 it('should mirror a preference to native storage', async () => {
@@ -70,6 +90,9 @@ it('should retain the browser preference when native storage fails', async () =>
 
   await expect(writeWeatherPreference(disabledPreference)).resolves.toBeUndefined()
   await expect(readWeatherPreference()).resolves.toEqual(disabledPreference)
+
+  localStorage.clear()
+  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
 it('should not let a pending native read replace a newer browser preference', async () => {

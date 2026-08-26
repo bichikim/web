@@ -5,12 +5,13 @@ import {authorizeAdminRequest} from 'src/server/admin-auth/http'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {
-  activateTrackAsset,
+  completeTrackRegistration,
   failTrackAsset,
   findPendingTrackAsset,
   reserveTrackAsset,
-} from 'src/server/music/admin-repository'
+} from 'src/server/music/track-registration-repository'
 import {storeTrackArtwork} from 'src/server/music/cover-upload'
+import {deleteTrackAssetStorage} from 'src/server/music/track-storage-deletion'
 import {
   createTrackPreviewObject,
   createTrackUpload,
@@ -105,13 +106,17 @@ export const PUT = async (event: APIEvent): Promise<Response> => {
       inspection.artwork === undefined
         ? null
         : (await storeTrackArtwork(asset.id, inspection.artwork)).artworkUrl
-    const activated = await activateTrackAsset({
+    const activated = await completeTrackRegistration({
       artworkUrl,
       assetId: asset.id,
       durationMs: inspection.durationMs,
       etag: inspection.etag,
       sizeBytes: inspection.sizeBytes,
     })
+
+    if (!activated) {
+      await deleteTrackAssetStorage(asset.objectKey)
+    }
 
     return activated
       ? noStoreJson({assetId: asset.id, status: 'active'}, {cookies: authorization.cookies})

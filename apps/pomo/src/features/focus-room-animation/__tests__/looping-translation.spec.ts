@@ -1,34 +1,42 @@
-import {Container, Sprite, Texture} from 'pixi.js'
-import {describe, expect, it} from 'vitest'
+import {expect, it, vi} from 'vitest'
+
+import type {Container, Sprite} from 'pixi.js'
 
 import type {PixiSceneLoopingTranslation} from '../layer-scene-definition'
 import {applyLoopingTranslation} from '../looping-translation'
 
-const motion = {
-  fade: {edgeFraction: 0.25, minimumOpacity: 0.1},
-  from: {x: 0, y: 0},
+const createMotion = (fade?: PixiSceneLoopingTranslation['fade']): PixiSceneLoopingTranslation => ({
+  fade,
+  from: {x: -10, y: 5},
   kind: 'looping-translation',
-  to: {x: -300, y: 0},
-  travel: {maximumSeconds: 10, minimumSeconds: 10},
-} satisfies PixiSceneLoopingTranslation
+  to: {x: 30, y: -15},
+  travel: {maximumSeconds: 2, minimumSeconds: 1},
+})
 
-describe('looping translation', () => {
-  it('should move a regular sprite container', () => {
-    const container = new Container()
-    const sprite = new Sprite(Texture.EMPTY)
+it('should interpolate position without fading by default', () => {
+  const container = {position: {set: vi.fn()}} as unknown as Container
+  const sprite = {alpha: 0} as Sprite
 
-    applyLoopingTranslation(container, sprite, motion, 0.5)
+  applyLoopingTranslation(container, sprite, createMotion(), 0.25)
 
-    expect(container.position.x).toBe(-150)
-    expect(sprite.alpha).toBe(1)
-  })
+  expect(container.position.set).toHaveBeenCalledWith(0, 0)
+  expect(sprite.alpha).toBe(1)
+})
 
-  it('should fade near the loop boundary before reappearing', () => {
-    const container = new Container()
-    const sprite = new Sprite(Texture.EMPTY)
+it.each([
+  [0, 0.2],
+  [0.5, 1],
+  [1, 0.2],
+] as const)('should ease edge fading at progress %s', (progress, expectedAlpha) => {
+  const container = {position: {set: vi.fn()}} as unknown as Container
+  const sprite = {alpha: 0} as Sprite
 
-    applyLoopingTranslation(container, sprite, motion, 0)
+  applyLoopingTranslation(
+    container,
+    sprite,
+    createMotion({edgeFraction: 0.25, minimumOpacity: 0.2}),
+    progress,
+  )
 
-    expect(sprite.alpha).toBe(0.1)
-  })
+  expect(sprite.alpha).toBeCloseTo(expectedAlpha)
 })

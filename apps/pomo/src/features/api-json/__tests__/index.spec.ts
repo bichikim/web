@@ -64,6 +64,14 @@ it('should distinguish a non-successful HTTP response', async () => {
   expect(error).toMatchObject({kind: 'http', response})
 })
 
+it('should preserve runtime exhaustiveness for an unknown error kind', () => {
+  const response = new Response()
+  const error = new ApiJsonError({kind: 'future' as never, response})
+
+  expect(error.message).toBe('future')
+  expect(error.kind).toBe('future')
+})
+
 it('should distinguish an invalid JSON response', () => {
   vi.stubGlobal(
     'fetch',

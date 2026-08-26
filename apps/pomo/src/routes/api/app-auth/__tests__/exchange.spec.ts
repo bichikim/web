@@ -44,4 +44,34 @@ describe('Toss login exchange route', () => {
       userId: 'pomo-user-id',
     })
   })
+
+  it('should reject invalid and oversized exchange requests', async () => {
+    const createRequestWithBody = (body: string) =>
+      new Request('https://www.pomofi.io/api/app-auth/exchange', {
+        body,
+        headers: {'Content-Type': 'application/json'},
+        method: 'POST',
+      })
+    const invalidResponse = await invokeApiRoute(
+      POST,
+      createRequestWithBody(JSON.stringify({authorizationCode: '', referrer: 'SANDBOX'})),
+    )
+    const oversizedResponse = await invokeApiRoute(POST, createRequestWithBody('x'.repeat(8193)))
+
+    expect(invalidResponse.status).toBe(400)
+    expect(oversizedResponse.status).toBe(413)
+    expect(tossAuthMocks.exchangeTossAuthorization).not.toHaveBeenCalled()
+  })
+
+  it('should return a stable gateway error when the Toss exchange fails', async () => {
+    const error = new Error('Toss unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    tossAuthMocks.exchangeTossAuthorization.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(502)
+    await expect(response.json()).resolves.toEqual({error: 'login_failed'})
+    expect(consoleError).toHaveBeenCalledWith('Toss login exchange failed', error)
+  })
 })

@@ -91,3 +91,27 @@ it('should not overwrite a newer choice when stored style restoration finishes l
   await Promise.resolve()
   expect(controller?.sceneStyle()).toBe('original')
 })
+
+it('should ignore stored style restoration after cleanup', async () => {
+  let completeRead: (sceneStyle: PSceneStyle) => void = () => undefined
+  storageMocks.read.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  let controller: PSceneStyleController | undefined
+  const result = render(() => (
+    <SceneStyleHarness
+      onController={(nextController) => {
+        controller = nextController
+      }}
+    />
+  ))
+
+  result.unmount()
+  completeRead('scribble')
+  await Promise.resolve()
+
+  expect(controller?.sceneStyle()).toBe('original')
+  expect(controller?.isReady()).toBe(false)
+})

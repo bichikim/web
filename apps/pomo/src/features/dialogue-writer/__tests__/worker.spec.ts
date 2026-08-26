@@ -214,4 +214,51 @@ describe('dialogue writer worker', () => {
       remotePathTemplate: '{model}/resolve/{revision}/',
     })
   })
+
+  it('should reuse the runtime and suppressed foreign token ids', async () => {
+    const worker = await loadWorker()
+    const request = {modelId: 'qwen-0.8b', request: '행복을 말해줘', type: 'generate'} as const
+
+    worker.dispatch(request)
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({type: 'complete'}),
+      ),
+    )
+    worker.dispatch(request)
+    await vi.waitFor(() => {
+      expect(
+        worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
+      ).toHaveLength(2)
+    })
+
+    expect(transformers.qwenModelFromPretrained).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    [new Error('generation failed'), 'generation failed'],
+    [new Error(''), '대화문 모델을 실행하지 못했어요.'],
+    ['unknown failure', '대화문 모델을 실행하지 못했어요.'],
+  ])('should report generation failures without requiring a restart', async (error, message) => {
+    transformers.generate.mockRejectedValue(error)
+    const worker = await loadWorker()
+
+    worker.dispatch({modelId: 'qwen-0.8b', request: '행복을 말해줘', type: 'generate'})
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenLastCalledWith({
+        message,
+        restartRequired: false,
+        type: 'error',
+      })
+    })
+  })
+
+  it('should reject an unsupported worker request', async () => {
+    const worker = await loadWorker()
+
+    expect(() => {
+      worker.dispatch({type: 'unsupported'} as unknown as DialogueWorkerRequest)
+    }).toThrow("Cannot read properties of undefined (reading 'catch')")
+  })
 })

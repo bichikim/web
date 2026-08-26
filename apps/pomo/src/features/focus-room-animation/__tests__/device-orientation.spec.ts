@@ -14,6 +14,11 @@ describe('getOrientationAxes', () => {
     expect(getOrientationAxes(null, 10, 0)).toBeNull()
     expect(getOrientationAxes(20, null, 0)).toBeNull()
   })
+
+  it('should use portrait axes for a non-cardinal screen angle', () => {
+    expect(getOrientationAxes(20, 10, 45)).toEqual({x: 10, y: 20})
+    expect(getOrientationAxes(20, 10, -315)).toEqual({x: 10, y: 20})
+  })
 })
 
 describe('getOrientationOffset', () => {

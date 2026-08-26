@@ -15,14 +15,7 @@ export const validateTextureSizes = (
 ) => {
   for (const [index, lease] of textures.entries()) {
     const {height, width} = lease.texture
-    const layer = definition.layers[index]
-    const position = layer?.position
-    const isValidHorizontalRepeat =
-      index < layerSourceCount &&
-      layer?.repeat === 'horizontal' &&
-      width >= definition.width &&
-      height > 0 &&
-      height <= definition.height
+    const position = definition.layers[index]?.position
     const isValidPositionedLayer =
       position !== undefined &&
       width > 0 &&
@@ -32,11 +25,7 @@ export const validateTextureSizes = (
       position.x + width <= definition.width &&
       position.y + height <= definition.height
 
-    if (
-      !isValidHorizontalRepeat &&
-      !isValidPositionedLayer &&
-      (width !== definition.width || height !== definition.height)
-    ) {
+    if (!isValidPositionedLayer && (width !== definition.width || height !== definition.height)) {
       const sourceKind = index < layerSourceCount ? 'layer' : 'mask'
       throw new Error(
         `Invalid ${sourceKind} texture dimensions for ${lease.source}: ${width}x${height}`,

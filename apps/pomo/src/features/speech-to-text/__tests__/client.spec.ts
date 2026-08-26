@@ -88,6 +88,26 @@ describe('createSpeechRecognizer', () => {
     await expect(secondPreparation).resolves.toEqual({ok: true, value: {backend: 'wasm'}})
     expect(onProgress).toHaveBeenCalledWith(45)
     expect(onBackendChange).toHaveBeenCalledWith('wasm')
+    await expect(recognizer.prepare()).resolves.toEqual({ok: true, value: {backend: 'wasm'}})
+    expect(worker.postMessage).toHaveBeenCalledTimes(1)
+  })
+
+  it('should reject an unexpected completion while preparing', async () => {
+    const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-tiny',
+      onBackendChange: vi.fn(),
+      onProgress: vi.fn(),
+      preferredBackend: 'wasm',
+    })
+    const worker = getWorker()
+    const preparation = recognizer.prepare()
+
+    worker.emitMessage({backend: 'wasm', requestId: 1, text: 'unexpected', type: 'complete'})
+
+    await expect(preparation).resolves.toMatchObject({
+      error: {code: 'worker-failed', phase: 'prepare'},
+      ok: false,
+    })
   })
 
   it('should match transcription responses by request id and reject concurrent work', async () => {
@@ -177,6 +197,50 @@ describe('createSpeechRecognizer', () => {
     })
   })
 
+  it('should reject an unexpected ready response while transcribing', async () => {
+    const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-tiny',
+      onBackendChange: vi.fn(),
+      onProgress: vi.fn(),
+      preferredBackend: 'wasm',
+    })
+    const worker = getWorker()
+    const transcription = recognizer.transcribe({
+      audio: Float32Array.of(0.1),
+      language: 'korean',
+    })
+
+    worker.emitMessage({backend: 'wasm', requestId: 1, type: 'ready'})
+
+    await expect(transcription).resolves.toMatchObject({
+      error: {code: 'worker-failed', phase: 'transcribe'},
+      ok: false,
+    })
+  })
+
+  it('should normalize a Worker send failure', async () => {
+    const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-tiny',
+      onBackendChange: vi.fn(),
+      onProgress: vi.fn(),
+      preferredBackend: 'wasm',
+    })
+    const worker = getWorker()
+    worker.postMessage.mockImplementationOnce(() => {
+      throw new Error('post failed')
+    })
+
+    await expect(recognizer.prepare()).resolves.toEqual({
+      error: {
+        code: 'worker-failed',
+        detail: 'post failed',
+        phase: 'prepare',
+        retryable: true,
+      },
+      ok: false,
+    })
+  })
+
   it('should resolve pending work on worker failure', async () => {
     const recognizer = createSpeechRecognizer({
       modelId: 'moonshine-tiny-ko',
@@ -212,6 +276,7 @@ describe('createSpeechRecognizer', () => {
     })
 
     const brokenRetry = recognizer.prepare()
+    recognizer.dispose()
     recognizer.dispose()
     await expect(brokenRetry).resolves.toMatchObject({
       error: {code: 'worker-failed'},

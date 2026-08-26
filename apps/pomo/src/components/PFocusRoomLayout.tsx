@@ -1,8 +1,8 @@
 import {useLocation} from '@solidjs/router'
 import {type JSX, Show} from 'solid-js'
 
-import {PEventProvider} from '../features/focus-room-dialogue/PEventContext'
-import {PFeedProvider} from '../features/focus-room-feed'
+import {PEventProvider} from './PEventProvider'
+import {PFeedProvider} from './PFeedProvider'
 import {isPomoHomePath, usesPomoLayout} from './pomo-route'
 
 export interface PFocusRoomLayoutProps {

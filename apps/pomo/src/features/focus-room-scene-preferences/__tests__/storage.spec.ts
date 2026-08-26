@@ -27,6 +27,7 @@ beforeEach(() => {
 
 afterEach(() => {
   Reflect.deleteProperty(window, 'ReactNativeWebView')
+  vi.unstubAllGlobals()
 })
 
 it('should use defaults when browser storage is empty or invalid', async () => {
@@ -74,6 +75,38 @@ it('should restore native preferences and rebuild the browser copy', async () =>
   )
 })
 
+it('should use defaults when native preferences are empty or unavailable', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.getItem.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('unavailable'))
+
+  await expect(readPScenePreferences()).resolves.toEqual({
+    activity: 'reading',
+    gaze: 'focused',
+    timeMode: 'day',
+  })
+  await expect(readPScenePreferences()).resolves.toEqual({
+    activity: 'reading',
+    gaze: 'focused',
+    timeMode: 'day',
+  })
+})
+
+it('should recover browser preferences when a native read fails', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  let rejectRead: (error: Error) => void = () => undefined
+  storageMocks.getItem.mockReturnValue(
+    new Promise((_resolve, reject) => {
+      rejectRead = reject
+    }),
+  )
+
+  const pendingRead = readPScenePreferences()
+  localStorage.setItem('pomo:focus-room-scene-preferences:v1', JSON.stringify(preferences))
+  rejectRead(new Error('unavailable'))
+
+  await expect(pendingRead).resolves.toEqual(preferences)
+})
+
 it('should repair the native copy from authoritative browser preferences', async () => {
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
   localStorage.setItem('pomo:focus-room-scene-preferences:v1', JSON.stringify(preferences))
@@ -103,6 +136,28 @@ it('should preserve a newer choice while native preferences are loading', async 
   completeRead(JSON.stringify({...preferences, timeMode: 'auto'}))
 
   await expect(pendingRead).resolves.toEqual(preferences)
+})
+
+it('should use defaults when a newer choice is no longer readable', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  let completeRead: (value: string) => void = () => undefined
+  storageMocks.getItem.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  storageMocks.setItem.mockResolvedValue()
+
+  const pendingRead = readPScenePreferences()
+  await writePScenePreferences(preferences)
+  localStorage.clear()
+  completeRead(JSON.stringify(preferences))
+
+  await expect(pendingRead).resolves.toEqual({
+    activity: 'reading',
+    gaze: 'focused',
+    timeMode: 'day',
+  })
 })
 
 it('should preserve native write order during rapid preference changes', async () => {

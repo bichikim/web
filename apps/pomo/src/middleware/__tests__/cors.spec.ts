@@ -76,6 +76,36 @@ describe('corsMiddleware', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(`https://${host}`)
   })
 
+  it.each([
+    ['preview.vercel.app/path', 'https://preview.vercel.app'],
+    ['preview.vercel.app?token=secret', 'https://preview.vercel.app'],
+    ['preview.vercel.app#fragment', 'https://preview.vercel.app'],
+    ['user@preview.vercel.app', 'https://preview.vercel.app'],
+    ['user:password@preview.vercel.app', 'https://preview.vercel.app'],
+    ['[', 'https://untrusted.example'],
+  ])('should reject malformed Vercel host configuration %s', async (host, origin) => {
+    useProductionEnvironment()
+    vi.stubEnv('VERCEL_URL', host)
+
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/test', {headers: {Origin: origin}}),
+    )
+
+    expect(response.headers.has('Access-Control-Allow-Origin')).toBe(false)
+  })
+
+  it('should allow a configured development origin only in development', async () => {
+    useProductionEnvironment()
+    vi.stubEnv('DEV', true)
+    const origin = 'http://localhost:3000'
+
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/test', {headers: {Origin: origin}}),
+    )
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+  })
+
   it('should answer an allowed preflight request', async () => {
     useProductionEnvironment()
     const origin = 'https://pomo-app.apps.tossmini.com'
@@ -112,6 +142,26 @@ describe('corsMiddleware', () => {
       'Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
     )
     expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should continue an API preflight without an Origin header', async () => {
+    useProductionEnvironment()
+    const next = vi.fn(() => new Response(null, {status: 200}))
+
+    const response = await corsMiddleware(
+      createMiddlewareEvent(
+        new Request('https://api.pomofi.example/api/test', {
+          headers: {'Access-Control-Request-Method': 'POST'},
+          method: 'OPTIONS',
+        }),
+      ),
+      next,
+    )
+
+    expect(response).toBeInstanceOf(Response)
+    expect(next).toHaveBeenCalledOnce()
+    expect((response as Response).headers.has('Access-Control-Allow-Origin')).toBe(false)
+    expect((response as Response).headers.get('Vary')).toBe('Origin')
   })
 
   it('should omit CORS permission for an untrusted origin', async () => {
@@ -210,5 +260,17 @@ describe('corsMiddleware', () => {
       'first=1; Path=/; HttpOnly',
       'second=2; Path=/; HttpOnly',
     ])
+  })
+
+  it('should merge, trim, and deduplicate an existing Vary header', async () => {
+    useProductionEnvironment()
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/test'),
+      new Response(null, {
+        headers: {Vary: 'Accept-Encoding, Origin, , Accept-Encoding'},
+      }),
+    )
+
+    expect(response.headers.get('Vary')).toBe('Accept-Encoding, Origin')
   })
 })

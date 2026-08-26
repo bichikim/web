@@ -17,6 +17,13 @@ const createRequest = (): Request =>
     method: 'POST',
   })
 
+const createRequestWithBody = (body: string): Request =>
+  new Request('https://www.pomofi.io/api/admin/music/status', {
+    body,
+    headers: {'Content-Type': 'application/json'},
+    method: 'POST',
+  })
+
 describe('admin music album status route', () => {
   beforeEach(() => {
     authMocks.authorizeAdminRequest.mockReset().mockResolvedValue({authorized: true, cookies: []})
@@ -58,5 +65,42 @@ describe('admin music album status route', () => {
       blockers: ['tracks_missing_active_asset'],
       code: 'release_blocked',
     })
+  })
+
+  it('should reject invalid and oversized request bodies', async () => {
+    const invalidResponse = await invokeApiRoute(
+      POST,
+      createRequestWithBody(JSON.stringify({action: 'preview', albumId: ALBUM_ID})),
+    )
+    const oversizedResponse = await invokeApiRoute(POST, createRequestWithBody('x'.repeat(4097)))
+
+    expect(invalidResponse.status).toBe(400)
+    await expect(invalidResponse.json()).resolves.toEqual({error: 'invalid_request'})
+    expect(oversizedResponse.status).toBe(413)
+    await expect(oversizedResponse.json()).resolves.toEqual({error: 'invalid_request'})
+    expect(repositoryMocks.updateAlbumStatus).not.toHaveBeenCalled()
+  })
+
+  it('should report an album missing during the transition', async () => {
+    repositoryMocks.updateAlbumStatus.mockResolvedValue({
+      code: 'album_not_found',
+      success: false,
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(404)
+  })
+
+  it('should hide repository failures behind a stable server error', async () => {
+    const error = new Error('database unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    repositoryMocks.updateAlbumStatus.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(500)
+    await expect(response.json()).resolves.toEqual({error: 'album_status_update_failed'})
+    expect(consoleError).toHaveBeenCalledWith('Failed to update a music album status', error)
   })
 })

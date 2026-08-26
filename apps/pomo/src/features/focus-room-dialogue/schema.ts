@@ -1,7 +1,12 @@
 import {z} from 'zod'
 
 import {P_VISEMES} from '../lip-sync'
-import {SUPERTONIC_LANGUAGES, type SupertonicLanguage} from '../supertonic/language'
+import {
+  SUPERTONIC_LANGUAGES,
+  SUPERTONIC_VOICES,
+  type SupertonicLanguage,
+  type SupertonicVoiceId,
+} from '../supertonic'
 import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
 
 export const DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE = 'ko' satisfies SupertonicLanguage
@@ -59,6 +64,9 @@ const dialogueSegmentSchema = z.object({
   text: z.string().min(1),
   visemes: z.array(visemeCueSchema).readonly().optional(),
 })
+const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
+  SUPERTONIC_VOICES.some((voice) => voice.id === value),
+)
 
 export const focusRoomDialogueSchema = z.object({
   audioKey: z.string().min(1),
@@ -71,7 +79,7 @@ export const focusRoomDialogueSchema = z.object({
   text: z.string().min(1),
   updatedAt: z.iso.datetime(),
   version: z.literal(1),
-  voiceId: z.enum(['Yuna', 'F1', 'F2', 'F3', 'F4', 'F5', 'M1', 'M2', 'M3', 'M4', 'M5']),
+  voiceId: supertonicVoiceIdSchema,
 })
 
 const legacyDialogueEventBindingSchema = z.object({

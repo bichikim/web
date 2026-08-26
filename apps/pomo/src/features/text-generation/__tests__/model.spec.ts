@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {getTextModelImplementation, TEXT_MODELS} from '../model'
+import {getTextModel, getTextModelImplementation, TEXT_MODELS, type TextModelId} from '../model'
 
 describe('text model definitions', () => {
   it('should expose Qwen and Gemma WebGPU models', () => {
@@ -42,5 +42,12 @@ describe('text model definitions', () => {
       quantization: 'q2f16',
       repositoryId: 'onnx-community/gemma-4-E2B-it-qat-mobile-ONNX',
     })
+    expect(getTextModel('gemma-4-e2b')).toMatchObject({id: 'gemma-4-e2b'})
+  })
+
+  it('should reject a text model unavailable in the current build', () => {
+    expect(() => getTextModelImplementation('unavailable-model' as TextModelId)).toThrow(
+      '현재 빌드에서 사용할 수 없는 텍스트 모델이에요: unavailable-model',
+    )
   })
 })

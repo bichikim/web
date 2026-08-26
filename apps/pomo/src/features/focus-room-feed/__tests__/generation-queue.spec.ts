@@ -46,3 +46,35 @@ it('should route generation failures through the existing recovery path', async 
 
   expect(handleFailure).toHaveBeenCalledWith(JOB, error)
 })
+
+it('should ignore a missing or no-longer-queued scheduled job', async () => {
+  const generate = vi.fn()
+  const options = {
+    generate,
+    handleFailure: vi.fn(),
+    listJobs: vi.fn(async () => [{...JOB, status: 'ready'} as unknown as FeedDialogueJob]),
+    scheduledJob: {allowModelDownload: false, id: JOB.id},
+  }
+
+  await processScheduledFeedJob(options)
+  options.listJobs.mockResolvedValueOnce([])
+  await processScheduledFeedJob(options)
+
+  expect(generate).not.toHaveBeenCalled()
+})
+
+it('should avoid duplicate jobs, skip empty runs, and report run failures', async () => {
+  const queue: Array<ScheduledFeedJob> = [{allowModelDownload: true, id: JOB.id}]
+  const failure = new Error('queue failed')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const run = vi.fn(async () => Promise.reject(failure))
+
+  scheduleFeedJobs(queue, [], run)
+  scheduleFeedJobs(queue, [JOB.id], run)
+  await vi.waitFor(() =>
+    expect(consoleError).toHaveBeenCalledWith('Unexpected feed generation queue failure.', failure),
+  )
+
+  expect(queue).toEqual([{allowModelDownload: true, id: JOB.id}])
+  expect(run).toHaveBeenCalledOnce()
+})

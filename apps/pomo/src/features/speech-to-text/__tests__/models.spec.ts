@@ -15,5 +15,9 @@ describe('speech recognition models', () => {
       family: 'moonshine',
       repositoryId: 'onnx-community/moonshine-tiny-ko-ONNX',
     })
+    expect(getSpeechModel('whisper-base').family).toBe('whisper')
+    expect(() => getSpeechModel('missing' as never)).toThrow(
+      '지원하지 않는 음성 인식 모델입니다: missing',
+    )
   })
 })

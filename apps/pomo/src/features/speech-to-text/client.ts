@@ -31,8 +31,6 @@ const getRequestId = (response: SpeechWorkerResponse) => {
     case 'ready':
       return response.requestId
   }
-
-  response satisfies never
 }
 
 const getFailureResult = <Value>(
@@ -81,31 +79,20 @@ export const createSpeechRecognizer = (
   const transport = createWorkerRpcTransport<SpeechWorkerRequest, SpeechWorkerResponse>({
     getRequestId,
     onEvent: (response) => {
-      if (disposed) {
-        return
-      }
-
       switch (response.type) {
         case 'backend-changed':
           options.onBackendChange(response.backend)
           return
         case 'loading':
           options.onProgress(response.progress)
-          return
-        case 'complete':
-        case 'error':
-        case 'ready':
-          return
       }
-
-      response satisfies never
     },
     onFailure: reportSpeechWorkerFailure,
     worker,
   })
 
   const resolvePrepareResponse = (
-    response: SpeechWorkerResponse,
+    response: Extract<SpeechWorkerResponse, {readonly requestId: number}>,
   ): Result<SpeechRecognizerReady, SpeechRecognitionError> => {
     switch (response.type) {
       case 'error':
@@ -115,13 +102,9 @@ export const createSpeechRecognizer = (
         activeBackend = {backend: response.backend}
         options.onBackendChange(response.backend)
         return successResult(activeBackend)
-      case 'backend-changed':
       case 'complete':
-      case 'loading':
         return getUnexpectedResponse('prepare')
     }
-
-    response satisfies never
   }
 
   const executePrepare = async (): Promise<
@@ -214,13 +197,9 @@ export const createSpeechRecognizer = (
           return successResult({backend: response.backend, text: response.text})
         case 'error':
           return failureResult(response.error)
-        case 'backend-changed':
-        case 'loading':
         case 'ready':
           return getUnexpectedResponse('transcribe')
       }
-
-      response satisfies never
     } catch (error) {
       return getUnknownFailureResult(error, 'transcribe')
     } finally {

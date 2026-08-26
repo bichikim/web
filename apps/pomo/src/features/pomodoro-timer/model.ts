@@ -164,12 +164,9 @@ export const synchronizePomodoroTimer = (
 
   while (currentState.status === 'running' && currentState.endsAt <= now) {
     currentState = skipWholeCycles(currentState, now, config)
-
-    if (currentState.endsAt <= now) {
-      const nextStartTime = currentState.endsAt
-      const nextState = advancePomodoroTimer(currentState, config)
-      currentState = createRunningState(nextState, nextStartTime)
-    }
+    const nextStartTime = currentState.endsAt
+    const nextState = advancePomodoroTimer(currentState, config)
+    currentState = createRunningState(nextState, nextStartTime)
   }
 
   return currentState
