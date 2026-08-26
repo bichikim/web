@@ -2,7 +2,7 @@ import {Container, Sprite, Ticker} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {positionLayerContainer, validateTextureSizes} from '../layer-layout'
-import {applyLayerMask} from '../layer-mask'
+import {createLayerMaskFilter} from '../layer-mask'
 import {applyLoopingTranslation} from '../looping-translation'
 import {getLayerMotions, getMotionEffects} from '../motion-definition'
 import {resetMotionPresentation} from '../motion-reset'
@@ -36,7 +36,7 @@ vi.mock('../layer-layout', () => ({
   validateTextureSizes: vi.fn(),
 }))
 
-vi.mock('../layer-mask', () => ({applyLayerMask: vi.fn()}))
+vi.mock('../layer-mask', () => ({createLayerMaskFilter: vi.fn()}))
 vi.mock('../looping-translation', () => ({applyLoopingTranslation: vi.fn()}))
 vi.mock('../motion-definition', () => ({
   getLayerMotions: vi.fn(),
@@ -179,6 +179,7 @@ beforeEach(() => {
   )
   vi.mocked(getMotionEffects).mockReturnValue([])
   vi.mocked(createPushFilters).mockReturnValue([])
+  vi.mocked(createLayerMaskFilter).mockReturnValue(null)
   vi.mocked(getMotionTarget).mockImplementation((_motion, direction) => ({
     x: direction,
     y: direction * 2,
@@ -219,6 +220,7 @@ describe('PixiLayerScene initialization', () => {
     const motion = translation({channel: 'motion'})
     const stateFilter = {destroy: vi.fn(), setProgress: vi.fn()}
     const motionFilter = {destroy: vi.fn(), setProgress: vi.fn()}
+    const layerMaskFilter = {destroy: vi.fn()}
     vi.mocked(getMotionEffects).mockReturnValue([
       {
         distance: {x: 1, y: 1},
@@ -228,6 +230,9 @@ describe('PixiLayerScene initialization', () => {
     ])
     vi.mocked(createPushFilter).mockReturnValue(stateFilter as never)
     vi.mocked(createPushFilters).mockReturnValue([motionFilter] as never)
+    vi.mocked(createLayerMaskFilter).mockImplementation((definition) =>
+      definition.maskSource === undefined ? null : (layerMaskFilter as never),
+    )
     const definition = createDefinition({
       layers: [
         {
@@ -276,7 +281,8 @@ describe('PixiLayerScene initialization', () => {
     ])
     expect(validateTextureSizes).toHaveBeenCalledOnce()
     expect(positionLayerContainer).toHaveBeenCalledTimes(2)
-    expect(applyLayerMask).toHaveBeenCalledTimes(2)
+    expect(createLayerMaskFilter).toHaveBeenCalledTimes(2)
+    expect(sprites[0].filters).toEqual([layerMaskFilter, stateFilter, motionFilter])
     expect(createPushFilter).toHaveBeenCalledOnce()
     expect(scene.getAttachment('head')).toBe(containers[1])
     expect(scene.getAttachment('missing')).toBeNull()
@@ -292,6 +298,7 @@ describe('PixiLayerScene initialization', () => {
     scene.destroy()
     scene.destroy()
     expect(stateFilter.destroy).toHaveBeenCalledOnce()
+    expect(layerMaskFilter.destroy).toHaveBeenCalledOnce()
     expect(motionFilter.destroy).toHaveBeenCalledOnce()
     expect(tickers[0].destroy).toHaveBeenCalledOnce()
     expect(containers[0].destroy).toHaveBeenCalledWith({children: true})

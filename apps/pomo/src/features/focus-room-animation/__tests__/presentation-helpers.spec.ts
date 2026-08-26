@@ -1,19 +1,15 @@
 import {expect, it, vi} from 'vitest'
 
-const pixiMocks = vi.hoisted(() => ({
-  Sprite: class {
-    constructor(readonly texture: unknown) {}
-  },
-}))
+const layerMaskMocks = vi.hoisted(() => ({LayerMaskFilter: vi.fn()}))
 
 const motionMocks = vi.hoisted(() => ({applyLoopingTranslation: vi.fn()}))
 
-vi.mock('pixi.js', () => ({Sprite: pixiMocks.Sprite}))
+vi.mock('../layer-mask-filter', () => layerMaskMocks)
 vi.mock('../looping-translation', () => motionMocks)
 
 import type {Container, Sprite, Texture} from 'pixi.js'
 
-import {applyLayerMask} from '../layer-mask'
+import {createLayerMaskFilter} from '../layer-mask'
 import type {PixiSceneLayerDefinition, PixiSceneMotion} from '../layer-scene-definition'
 import {resetMotionPresentation} from '../motion-reset'
 import {applyOpacityPulse} from '../opacity-pulse'
@@ -26,37 +22,26 @@ const createContainer = () => ({
   setMask: vi.fn(),
 })
 
-it('should skip, apply, and validate red-channel layer masks', () => {
-  const scene = createContainer()
-  const layer = createContainer()
-  const texture = {id: 'mask'} as unknown as Texture
+it('should skip, create, and validate red-channel layer mask filters', () => {
+  const layerTexture = {height: 100, width: 200} as Texture
+  const texture = {height: 100, id: 'mask', width: 200} as unknown as Texture
   const definition = {maskSource: 'mask.webp'} as PixiSceneLayerDefinition
 
-  applyLayerMask(
-    scene as unknown as Container,
-    layer as unknown as Container,
-    {} as PixiSceneLayerDefinition,
-    new Map(),
+  expect(createLayerMaskFilter({} as PixiSceneLayerDefinition, new Map(), layerTexture)).toBeNull()
+  expect(() => createLayerMaskFilter(definition, new Map(), layerTexture)).toThrow(
+    'Missing layer mask texture: mask.webp',
   )
-  expect(scene.addChild).not.toHaveBeenCalled()
   expect(() =>
-    applyLayerMask(
-      scene as unknown as Container,
-      layer as unknown as Container,
+    createLayerMaskFilter(
       definition,
-      new Map(),
+      new Map([['mask.webp', {...texture, width: 201} as Texture]]),
+      layerTexture,
     ),
-  ).toThrow('Missing layer mask texture: mask.webp')
+  ).toThrow('Layer mask dimensions must match the layer: mask.webp')
 
-  applyLayerMask(
-    scene as unknown as Container,
-    layer as unknown as Container,
-    definition,
-    new Map([['mask.webp', texture]]),
-  )
-  const mask = scene.addChild.mock.calls[0][0]
-  expect(mask).toBeInstanceOf(pixiMocks.Sprite)
-  expect(layer.setMask).toHaveBeenCalledWith({channel: 'red', mask})
+  const filter = createLayerMaskFilter(definition, new Map([['mask.webp', texture]]), layerTexture)
+  expect(layerMaskMocks.LayerMaskFilter).toHaveBeenCalledWith({maskTexture: texture})
+  expect(filter).toBe(layerMaskMocks.LayerMaskFilter.mock.instances[0])
 })
 
 it('should reset every motion presentation kind', () => {

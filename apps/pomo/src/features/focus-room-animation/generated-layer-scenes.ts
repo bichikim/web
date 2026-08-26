@@ -1,6 +1,8 @@
 import type {PSceneId} from './scene-catalog'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
+import {BREATHING_MOTION} from './breathing-motion'
 import {createEyeMotion} from './eye-motion'
+import {getHairTipsPixelPush} from './hair-motion'
 import {
   createMouthLayers,
   createMouthTransitionLayers,
@@ -191,7 +193,7 @@ const createSeparatedScene = (
   height: 941,
   id: `${id}-layers`,
   layers: [
-    {id: 'background', source: assets.base},
+    {id: 'background', motion: BREATHING_MOTION, source: assets.base},
     ...(assets.starLayers ?? []).map(({position, source}, index) => ({
       id: `sky-star-${index + 1}`,
       motion: {
@@ -244,6 +246,7 @@ const createSeparatedScene = (
         center: pivots.head,
         degrees: 0.5,
         kind: 'pivot-rotation',
+        pixelPush: getHairTipsPixelPush(id),
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: assets.head,

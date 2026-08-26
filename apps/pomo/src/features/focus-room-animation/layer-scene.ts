@@ -1,7 +1,7 @@
-import {Container, Sprite, type Texture, Ticker} from 'pixi.js'
+import {Container, type Filter, Sprite, type Texture, Ticker} from 'pixi.js'
 
 import {positionLayerContainer, validateTextureSizes} from './layer-layout'
-import {applyLayerMask} from './layer-mask'
+import {createLayerMaskFilter} from './layer-mask'
 import {applyLoopingTranslation} from './looping-translation'
 import {getLayerMotions, getMotionEffects} from './motion-definition'
 import {resetMotionPresentation} from './motion-reset'
@@ -46,6 +46,7 @@ interface MotionState {
 interface LayerInstance {
   readonly container: Container
   readonly definition: PixiSceneLayerDefinition
+  readonly layerMaskFilter: Filter | null
   readonly motions: readonly MotionInstance[]
   readonly sprite: Sprite
   readonly statePixelPushFilter: PushFilter | null
@@ -162,17 +163,23 @@ export class PixiLayerScene {
                 maskTextures,
                 textures[index].texture,
               )
+        const layerMaskFilter = createLayerMaskFilter(
+          definition,
+          maskTextures,
+          textures[index].texture,
+        )
         sprite.filters = [
+          ...(layerMaskFilter === null ? [] : [layerMaskFilter]),
           ...(statePixelPushFilter === null ? [] : [statePixelPushFilter]),
           ...motionInstances.flatMap((motion) => motion.pixelPushFilters),
         ]
         container.addChild(sprite)
 
-        applyLayerMask(this.container, container, definition, maskTextures)
         this.container.addChild(container)
         layers.push({
           container,
           definition,
+          layerMaskFilter,
           motions: motionInstances,
           sprite,
           statePixelPushFilter,
@@ -256,6 +263,7 @@ export class PixiLayerScene {
     this.#ticker.destroy()
 
     for (const layer of this.#layers) {
+      layer.layerMaskFilter?.destroy()
       layer.statePixelPushFilter?.destroy()
 
       for (const motion of layer.motions) {

@@ -4,7 +4,9 @@ import headImage from './assets/layers/day-reading-focused/head.webp'
 import leftHandImage from './assets/layers/day-reading-focused/left-hand.webp'
 import rightHandImage from './assets/layers/day-reading-focused/right-hand.webp'
 import referenceImage from './assets/concept-art/day-reading.webp'
+import {BREATHING_MOTION} from './breathing-motion'
 import {createEyeMotion} from './eye-motion'
+import {HAIR_TIPS_PIXEL_PUSH} from './hair-motion'
 import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
@@ -13,7 +15,7 @@ export const DAY_READING_FOCUSED_LAYER_SCENE = {
   height: 941,
   id: 'day-reading-focused-layers',
   layers: [
-    {id: 'background', source: baseImage},
+    {id: 'background', motion: BREATHING_MOTION, source: baseImage},
     {
       attachmentId: 'eyes',
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.head,
@@ -22,6 +24,7 @@ export const DAY_READING_FOCUSED_LAYER_SCENE = {
         center: {x: 1060, y: 425},
         degrees: 0.5,
         kind: 'pivot-rotation',
+        pixelPush: HAIR_TIPS_PIXEL_PUSH,
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: headImage,

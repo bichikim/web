@@ -39,7 +39,7 @@ export class PSceneRenderer {
   readonly #mouth
   readonly #parallax: ParallaxController
   readonly #sceneLayer = new Container()
-  readonly #sceneTransitions = createSceneTransitions(this.#application, this.#sceneLayer)
+  readonly #sceneTransitions = createSceneTransitions()
   readonly #steam: PSceneSteamController
   #applicationReady = false
   #currentDepthSource: string | null = null
@@ -241,7 +241,7 @@ export class PSceneRenderer {
         window.cancelAnimationFrame(this.#transitionFrame)
       }
 
-      this.#sceneTransitions.setProgress(1, this.#incomingScene)
+      this.#sceneTransitions.setProgress(1)
       this.#depthFilter?.setDepthMix(1)
       this.#finishTransition(requestedSource, requestedDepthSource, incomingScene)
       return
@@ -276,6 +276,7 @@ export class PSceneRenderer {
       this.#applicationReady = false
     }
 
+    this.#sceneTransitions.destroy()
     releaseTextureGroup(this.#currentTextures)
     this.#currentTextures = []
   }
@@ -367,7 +368,7 @@ export class PSceneRenderer {
 
   #animateTransition(source: string, depthSource: string, scene: Container, version: number) {
     if (this.#parallax.prefersReducedMotion) {
-      this.#sceneTransitions.setProgress(1, this.#incomingScene)
+      this.#sceneTransitions.setProgress(1)
       this.#depthFilter?.setDepthMix(1)
       this.#application.render()
       this.#finishTransition(source, depthSource, scene)
@@ -381,7 +382,7 @@ export class PSceneRenderer {
       }
 
       const progress = Math.min(1, (timestamp - startedAt) / SCENE_TRANSITION_DURATION)
-      this.#sceneTransitions.setProgress(progress, this.#incomingScene)
+      this.#sceneTransitions.setProgress(progress)
       this.#depthFilter?.setDepthMix(progress)
       this.#application.render()
 

@@ -33,6 +33,7 @@ vi.mock('pixi.js', () => ({
 
 import type {Texture} from 'pixi.js'
 
+import {LayerMaskFilter} from '../layer-mask-filter'
 import type {PixiScenePushEffect} from '../layer-scene-definition'
 import {MaskedPixelPushFilter} from '../masked-pixel-push-filter'
 import {PixelPushFilter} from '../pixel-push-filter'
@@ -60,6 +61,7 @@ const getUniforms = (filter: {resources: Record<string, unknown>}, key: string) 
 it('should create and update both pixel-push filter variants', () => {
   const layerTexture = createTexture(100, 80)
   const maskTexture = createTexture(100, 80)
+  const layerMaskFilter = new LayerMaskFilter({maskTexture})
   const pixelFilter = createPushFilter(pixelEffect, new Map(), layerTexture)
   const maskedFilter = createPushFilter(
     maskedEffect,
@@ -67,6 +69,7 @@ it('should create and update both pixel-push filter variants', () => {
     layerTexture,
   )
 
+  expect(layerMaskFilter).toBeInstanceOf(LayerMaskFilter)
   expect(pixelFilter).toBeInstanceOf(PixelPushFilter)
   expect(maskedFilter).toBeInstanceOf(MaskedPixelPushFilter)
   pixelFilter.setProgress(0.25)
@@ -74,6 +77,7 @@ it('should create and update both pixel-push filter variants', () => {
   expect(getUniforms(pixelFilter, 'pixelPushUniforms').uProgress).toBe(0.25)
   expect(getUniforms(maskedFilter, 'maskedPixelPushUniforms').uProgress).toBe(0.75)
   expect(maskedFilter.resources.uMaskTexture).toBe(maskTexture.source)
+  expect(layerMaskFilter.resources.uMaskTexture).toBe(maskTexture.source)
 })
 
 it('should reject missing, mismatched, and unsupported masks or effects', () => {

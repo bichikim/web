@@ -32,11 +32,13 @@ let temporaryFileSequence = 0
 const sourceDirectory = path.join(assetLibraryDirectory, 'focus-room-source')
 const sourceConceptArtDirectory = path.join(sourceDirectory, 'concept-art')
 const sourceLayerDirectory = path.join(sourceDirectory, 'layers')
+const sourceBreathingMaskPath = path.join(sourceLayerDirectory, 'breathing-mask.png')
 const sourceAnimationDirectory = path.join(sourceDirectory, 'animation')
 const sourceDepthDirectory = path.join(sourceDirectory, 'depth')
 const sourceStatusIconDirectory = path.join(sourceDirectory, 'status-icons')
 const runtimeConceptArtDirectory = path.join(runtimeDirectory, 'concept-art')
 const runtimeLayerDirectory = path.join(runtimeDirectory, 'layers')
+const runtimeBreathingMaskPath = path.join(runtimeLayerDirectory, 'breathing-mask.webp')
 const runtimeAnimationDirectory = path.join(runtimeDirectory, 'animation')
 const runtimeDepthDirectory = path.join(runtimeDirectory, 'depth')
 const runtimeStatusIconDirectory = path.resolve(
@@ -437,6 +439,13 @@ const compressAssets = async () => {
     sourceStatusIconDirectory,
     runtimeStatusIconPattern,
   )
+  const breathingMaskJob = () =>
+    writeAtomicWebp({
+      options: {lossless: true},
+      outputPath: runtimeBreathingMaskPath,
+      sourcePath: sourceBreathingMaskPath,
+      validate: assertExactRenderedPixels,
+    })
 
   const sceneJobs = sceneNames.map(
     (sceneName) => () =>
@@ -517,6 +526,7 @@ const compressAssets = async () => {
   const layerBaseCount = layerJobsByScene.filter((scene) => scene.hasBase).length
 
   await runCompressionJobs([
+    breathingMaskJob,
     ...sceneJobs,
     ...layerJobsByScene.flatMap((scene) => scene.jobs),
     ...animationJobs,
@@ -527,6 +537,7 @@ const compressAssets = async () => {
   await writeLayerLayouts(layerJobsByScene)
 
   const expectedRuntimePaths = new Set([
+    runtimeBreathingMaskPath,
     ...sceneNames.map((sceneName) =>
       path.join(runtimeConceptArtDirectory, getRuntimeConceptArtName(sceneName)),
     ),
