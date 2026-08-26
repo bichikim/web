@@ -2,7 +2,7 @@ import {Container, Sprite, Ticker} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {positionLayerContainer, validateTextureSizes} from '../layer-layout'
-import {applyLayerMask} from '../layer-mask'
+import {createLayerMaskFilter} from '../layer-mask'
 import {applyLoopingTranslation} from '../looping-translation'
 import {getLayerMotions, getMotionEffects} from '../motion-definition'
 import {resetMotionPresentation} from '../motion-reset'
@@ -36,7 +36,7 @@ vi.mock('../layer-layout', () => ({
   validateTextureSizes: vi.fn(),
 }))
 
-vi.mock('../layer-mask', () => ({applyLayerMask: vi.fn()}))
+vi.mock('../layer-mask', () => ({createLayerMaskFilter: vi.fn()}))
 vi.mock('../looping-translation', () => ({applyLoopingTranslation: vi.fn()}))
 vi.mock('../motion-definition', () => ({
   getLayerMotions: vi.fn(),
@@ -179,6 +179,7 @@ beforeEach(() => {
   )
   vi.mocked(getMotionEffects).mockReturnValue([])
   vi.mocked(createPushFilters).mockReturnValue([])
+  vi.mocked(createLayerMaskFilter).mockReturnValue(null)
   vi.mocked(getMotionTarget).mockImplementation((_motion, direction) => ({
     x: direction,
     y: direction * 2,

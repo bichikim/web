@@ -230,9 +230,55 @@ describe('focus room scene catalog', () => {
       ).toHaveLength(2)
       expect(
         layerScene.layers.every(
-          (layer) => layer.motion?.kind !== 'pixel-oscillation' && layer.motions === undefined,
+          (layer) =>
+            (layer.id === 'background' || layer.motion?.kind !== 'pixel-oscillation') &&
+            layer.motions === undefined,
         ),
       ).toBe(true)
+    }
+  })
+
+  it('should breathe through every background without moving structural layers', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const layers = getPSceneLayer(scene.id).layers
+      const backgroundLayer = layers.find((layer) => layer.id === 'background')
+
+      expect(backgroundLayer?.motion).toMatchObject({
+        effects: [
+          {
+            distance: {x: 0, y: -3},
+            kind: 'masked-pixel-push',
+            maskSource: expect.stringContaining('breathing-mask'),
+          },
+        ],
+        kind: 'pixel-oscillation',
+        travel: {maximumSeconds: 2.5, minimumSeconds: 2.2},
+      })
+      expect(
+        layers
+          .filter((layer) => layer.id !== 'background')
+          .every((layer) => layer.motion?.kind !== 'pixel-oscillation'),
+      ).toBe(true)
+    }
+  })
+
+  it('should move hair in every daytime focused scene only', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const headLayer = getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')
+      const hairMotion =
+        headLayer?.motion?.kind === 'pivot-rotation' ? headLayer.motion.pixelPush : undefined
+
+      if (scene.time === 'day' && scene.gaze === 'focused') {
+        expect(hairMotion).toMatchObject([
+          {
+            distance: {x: -4, y: 1.25},
+            kind: 'masked-pixel-push',
+            maskSource: expect.stringContaining('hair-tips-mask'),
+          },
+        ])
+      } else {
+        expect(hairMotion).toBeUndefined()
+      }
     }
   })
 

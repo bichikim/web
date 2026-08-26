@@ -104,6 +104,7 @@ interface MockSteam {
 interface MockTransitions {
   cancelDepthTransition?: ReturnType<typeof vi.fn>
   capture: ReturnType<typeof vi.fn>
+  destroy: ReturnType<typeof vi.fn>
   restore: ReturnType<typeof vi.fn>
   setProgress: ReturnType<typeof vi.fn>
   start: ReturnType<typeof vi.fn>
@@ -231,6 +232,7 @@ const createSteam = (): MockSteam => {
 const createTransitions = (): MockTransitions => {
   const transitions: MockTransitions = {
     capture: vi.fn(),
+    destroy: vi.fn(),
     restore: vi.fn(),
     setProgress: vi.fn(),
     start: vi.fn(),
@@ -398,7 +400,7 @@ describe('PSceneRenderer transitions', () => {
 
     const firstFrame = [...frameCallbacks.values()][0]
     firstFrame?.(400)
-    expect(transitionInstances[0].setProgress).toHaveBeenCalledWith(0.5, expect.anything())
+    expect(transitionInstances[0].setProgress).toHaveBeenCalledWith(0.5)
     expect(depthFilters[0].setDepthMix).toHaveBeenCalledWith(0.5)
 
     const finalFrame = [...frameCallbacks.values()].at(-1)
@@ -421,7 +423,7 @@ describe('PSceneRenderer transitions', () => {
     renderer.update(createState({depthSource: '/next-depth.webp', source: '/next.webp'}))
     await flushPromises()
 
-    expect(transitionInstances[0].setProgress).toHaveBeenCalledWith(1, expect.anything())
+    expect(transitionInstances[0].setProgress).toHaveBeenCalledWith(1)
     expect(depthFilters[0].setDepthMix).toHaveBeenCalledWith(1)
     expect(window.requestAnimationFrame).not.toHaveBeenCalled()
     expect(depthFilters[0].finishDepthTransition).toHaveBeenCalled()

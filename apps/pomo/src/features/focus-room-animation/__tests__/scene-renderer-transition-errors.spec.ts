@@ -104,6 +104,7 @@ interface MockSteam {
 interface MockTransitions {
   cancelDepthTransition?: ReturnType<typeof vi.fn>
   capture: ReturnType<typeof vi.fn>
+  destroy: ReturnType<typeof vi.fn>
   restore: ReturnType<typeof vi.fn>
   setProgress: ReturnType<typeof vi.fn>
   start: ReturnType<typeof vi.fn>
@@ -231,6 +232,7 @@ const createSteam = (): MockSteam => {
 const createTransitions = (): MockTransitions => {
   const transitions: MockTransitions = {
     capture: vi.fn(),
+    destroy: vi.fn(),
     restore: vi.fn(),
     setProgress: vi.fn(),
     start: vi.fn(),
