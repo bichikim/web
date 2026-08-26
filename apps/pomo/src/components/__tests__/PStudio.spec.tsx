@@ -20,6 +20,7 @@ import {type ModelDownloadRuntime, PModelDownloadProvider} from '../../features/
 import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather} from '../../features/weather'
+import {useDesktopMode} from '../../features/desktop-mode'
 import {PEntry} from '../p-studio/Entry'
 import {PSceneFallback} from '../p-studio/SceneFallback'
 import {PStudioScene} from '../p-studio/Scene'
@@ -48,6 +49,7 @@ vi.mock('../../features/focus-room-time', () => ({
 }))
 vi.mock('../../features/pomo-webmcp', () => ({usePSay: vi.fn()}))
 vi.mock('../../features/weather', () => ({useWeather: vi.fn()}))
+vi.mock('../../features/desktop-mode', () => ({useDesktopMode: vi.fn()}))
 vi.mock('../p-studio/Entry', () => ({PEntry: vi.fn()}))
 vi.mock('../p-studio/SceneFallback', () => ({PSceneFallback: vi.fn()}))
 vi.mock('../p-studio/Scene', () => ({PStudioScene: vi.fn()}))
@@ -58,6 +60,7 @@ vi.mock('../PScreenSaver', () => ({PScreenSaver: vi.fn()}))
 vi.mock('../use-dialogue-scene-gaze', () => ({useDialogueSceneGaze: vi.fn()}))
 
 interface StudioOptions {
+  readonly desktopMode?: 'desktop' | 'normal' | 'widget'
   readonly entrySession?: boolean
   readonly gyroscope?: boolean
   readonly isScreenSaverActive?: boolean
@@ -123,6 +126,12 @@ const configureStudio = (options: StudioOptions = {}) => {
     onEnabledChange: setWeatherEnabled,
     state: () => 'idle',
   } as unknown as ReturnType<typeof useWeather>)
+  vi.mocked(useDesktopMode).mockReturnValue({
+    error: () => null,
+    isChanging: () => false,
+    mode: () => options.desktopMode ?? 'normal',
+    onModeChange: vi.fn(),
+  })
   vi.mocked(useStudioScreenSaver).mockReturnValue({
     currentTrack: () => null,
     delay: () => 300,
@@ -285,5 +294,15 @@ describe('PStudio', () => {
     expect(screen.getByText('이벤트')).toBeInTheDocument()
     expect(screen.queryByText('입장')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
+  })
+
+  it('should keep only the scene visible while the window is the desktop background', () => {
+    configureStudio({desktopMode: 'desktop', entrySession: true})
+
+    renderStudio()
+
+    expect(screen.getByRole('img')).toBeInTheDocument()
+    expect(screen.queryByText('이벤트')).not.toBeInTheDocument()
+    expect(SceneToolbar).not.toHaveBeenCalled()
   })
 })

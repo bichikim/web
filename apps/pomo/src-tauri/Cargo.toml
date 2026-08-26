@@ -1,0 +1,19 @@
+[package]
+name = "pomofi-desktop"
+version = "0.1.0"
+description = "Pomofi desktop application"
+edition = "2024"
+
+[lib]
+name = "pomofi_desktop_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
+tauri-plugin-desktop-surface = { path = "../../../packages/desktop-surface" }
+
+[target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
+tauri-plugin-global-shortcut = "2"

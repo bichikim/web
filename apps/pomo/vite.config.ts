@@ -28,7 +28,10 @@ import {createLocalizedStaticRoutes} from './src/features/localization/static-ro
 import {createDevFeedPlugin} from './src/features/dev-feed/index'
 
 const isAppsInTossBuild = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const isDesktopBuild = process.env.POMO_BUILD_TARGET === 'desktop'
+const isStaticBuild = isAppsInTossBuild || isDesktopBuild
 const isAppsInTossRuntime = isAppsInTossBuild || process.env.POMO_RUNTIME_TARGET === 'apps-in-toss'
+const isDesktopRuntime = isDesktopBuild || process.env.POMO_RUNTIME_TARGET === 'desktop'
 const usesAppsInTossDevtools =
   isAppsInTossRuntime && process.env.POMO_APPS_IN_TOSS_DEVTOOLS === 'true'
 const appsInTossApiOrigin = new URL(
@@ -74,8 +77,9 @@ const localizedStaticRoutes = createLocalizedStaticRoutes({
 const appsInTossStaticRoutes = [
   ...new Set([...appsInTossBaseStaticRoutes, ...localizedStaticRoutes]),
 ]
+const desktopStaticRoutes = [...sharedStaticRoutes, ...localizedStaticRoutes, '/desktop/controls']
 const prerenderSecurityRules = Object.fromEntries(
-  (isAppsInTossBuild ? [...sharedStaticRoutes, ...localizedStaticRoutes] : sharedStaticRoutes).map(
+  (isStaticBuild ? [...sharedStaticRoutes, ...localizedStaticRoutes] : sharedStaticRoutes).map(
     (route) => [route, {headers: STATIC_SECURITY_HEADERS}],
   ),
 )
@@ -139,7 +143,7 @@ const restartOnScribbleIconChange = {
 
 const useStaticNitroEntry = {
   configEnvironment(name, config) {
-    if (isAppsInTossBuild && name === 'nitro') {
+    if (isStaticBuild && name === 'nitro') {
       config.build ??= {}
       config.build.rolldownOptions ??= {}
       // Nitro 3 beta still builds its server environment after static prerendering.
@@ -165,20 +169,27 @@ const createConfig = ({command}: ConfigEnv): UserConfig => ({
     'import.meta.env.POMO_ENVIRONMENT': JSON.stringify(deploymentEnvironment),
     'import.meta.env.POMO_HAS_APPS_IN_TOSS_DEVTOOLS': JSON.stringify(usesAppsInTossDevtools),
     'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInTossRuntime),
+    'import.meta.env.POMO_IS_DESKTOP': JSON.stringify(isDesktopRuntime),
     'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
     'import.meta.env.POMO_RELEASE': JSON.stringify(release),
   },
   nitro: {
     prerender: {
       routes:
-        isAppsInTossBuild && command === 'build' ? appsInTossStaticRoutes : sharedStaticRoutes,
+        command === 'build'
+          ? isAppsInTossBuild
+            ? appsInTossStaticRoutes
+            : isDesktopBuild
+              ? desktopStaticRoutes
+              : sharedStaticRoutes
+          : sharedStaticRoutes,
     },
     routeRules: {
       '/**': {headers: BASE_SECURITY_HEADERS},
       '/workers/**': {headers: WORKER_SECURITY_HEADERS},
       ...prerenderSecurityRules,
     },
-    ...(isAppsInTossBuild && command === 'build' ? {preset: 'static'} : {}),
+    ...(isStaticBuild && command === 'build' ? {preset: 'static'} : {}),
   },
   optimizeDeps: {
     // Gemma Worker가 처음 로드될 때 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
@@ -204,11 +215,12 @@ const createConfig = ({command}: ConfigEnv): UserConfig => ({
     solidStart({
       devOverlay: false,
       middleware: './src/middleware/index.ts',
+      ssr: !isDesktopBuild,
     }),
     createDevFeedPlugin(),
     restartOnScribbleIconChange,
     nitro(),
-    ...(isAppsInTossBuild && command === 'build' ? [useStaticNitroEntry] : []),
+    ...(isStaticBuild && command === 'build' ? [useStaticNitroEntry] : []),
   ],
   resolve: {
     ...(usesAppsInTossDevtools ? {alias: {[appsInTossFrameworkId]: appsInTossMockId}} : {}),

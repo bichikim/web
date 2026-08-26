@@ -1,12 +1,15 @@
 import type {Middleware} from 'h3'
 
 const STATIC_ALLOWED_ORIGINS = new Set([
+  'http://tauri.localhost',
   'https://pomofi.io',
   'https://www.pomofi.io',
   'https://pomo-app.apps.tossmini.com',
   'https://pomo-app.private-apps.tossmini.com',
   'https://pomo-app.private-web.tossmini.com',
   'https://pomo-app.web.tossmini.com',
+  'https://tauri.localhost',
+  'tauri://localhost',
 ])
 const DEVELOPMENT_ORIGINS = new Set([
   'http://localhost:3000',

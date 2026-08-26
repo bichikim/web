@@ -16,6 +16,16 @@ vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
 vi.mock('../../PIconButton', () => ({PIconButton: vi.fn()}))
 vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
+vi.mock('../../PDesktopModeControl', () => ({
+  PDesktopModeControl: (props: {
+    readonly mode: string
+    readonly onModeChange: (mode: 'widget') => Promise<void>
+  }) => {
+    Object.values(props)
+    void props.onModeChange('widget')
+    return null
+  },
+}))
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 vi.mock('../../../features/focus-room-time', () => ({getNextTimeMode: vi.fn()}))
 vi.mock('../../PModelDownloadStatus', () => ({PModelDownloadStatus: () => null}))
@@ -105,10 +115,15 @@ describe('SceneToolbar', () => {
   })
 
   it('should render selected time and the transition status for scribble scenes', () => {
+    const onDesktopModeChange = vi.fn().mockResolvedValue(undefined)
     render(() => (
       <SceneToolbar
         {...baseProps}
+        desktopMode="widget"
+        desktopModeError="native failed"
         isSceneTransitioning
+        isDesktopModeChanging
+        onDesktopModeChange={onDesktopModeChange}
         sceneStyle="scribble"
         time="night"
         timeMode="night"
@@ -118,6 +133,7 @@ describe('SceneToolbar', () => {
     expect(screen.getByRole('status')).toBeInTheDocument()
     expect(screen.getByRole('button')).toHaveAccessibleName(expect.stringContaining('밤'))
     expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
+    expect(onDesktopModeChange).toHaveBeenCalledWith('widget')
   })
 
   it('should fall back to the first time option for an unexpected mode', () => {

@@ -38,6 +38,7 @@ export const unitTestProject = {
     exclude: ['packages/sw/src/__tests__/build-output.spec.ts'],
     include: [
       'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+      'packages/*/guest-js/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
       '.agents/skills/*/scripts/**/*.spec.ts',
     ],
