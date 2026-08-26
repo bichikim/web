@@ -2,10 +2,8 @@ import {createRequire} from 'node:module'
 import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 
-import {assertProtectedAssets} from './focus-room/asset-protection.mjs'
-
 const commandArguments = process.argv.slice(2)
-const supportedArguments = new Set(['--depth-only', '--verify-protected-assets'])
+const supportedArguments = new Set(['--depth-only'])
 const unsupportedArguments = commandArguments.filter(
   (argument) => !supportedArguments.has(argument),
 )
@@ -15,11 +13,6 @@ if (unsupportedArguments.length > 0) {
 }
 
 const depthOnly = commandArguments.includes('--depth-only')
-const verifyProtectedAssets = commandArguments.includes('--verify-protected-assets')
-
-if (depthOnly && verifyProtectedAssets) {
-  throw new Error('--depth-only and --verify-protected-assets cannot be combined')
-}
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
 const sharp = require('sharp')
 
@@ -440,8 +433,6 @@ const compressDepthAssets = async () => {
 }
 
 const compressAssets = async () => {
-  await assertProtectedAssets({runtimeLayerDirectory, sourceLayerDirectory})
-
   const sceneNames = await readMatchingNames(sourceConceptArtDirectory, scenePattern)
   const layerSceneNames = (await readdir(sourceLayerDirectory, {withFileTypes: true}))
     .filter((entry) => entry.isDirectory())
@@ -579,11 +570,7 @@ const compressAssets = async () => {
 }
 
 try {
-  if (verifyProtectedAssets) {
-    await assertProtectedAssets({runtimeLayerDirectory, sourceLayerDirectory})
-  } else {
-    await (depthOnly ? compressDepthAssets() : compressAssets())
-  }
+  await (depthOnly ? compressDepthAssets() : compressAssets())
 } finally {
   await rm(temporaryDirectory, {force: true, recursive: true})
 }
