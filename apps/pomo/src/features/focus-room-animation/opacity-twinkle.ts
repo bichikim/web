@@ -1,4 +1,4 @@
-import type {Sprite} from 'pixi.js'
+import type {Container} from 'pixi.js'
 
 import type {PixiSceneOpacityTwinkle, PixiSceneTravelRange} from './layer-scene-definition'
 
@@ -16,7 +16,7 @@ interface AdvanceSpriteOpacityTwinkleOptions {
   readonly deltaSeconds: number
   readonly motion: PixiSceneOpacityTwinkle
   readonly random: () => number
-  readonly sprite: Sprite
+  readonly sprite: Container
   readonly state: OpacityTwinkleState | undefined
 }
 
@@ -124,7 +124,7 @@ export const advanceOpacityTwinkle = (
   return state.currentOpacity
 }
 
-export const applyOpacityTwinkle = (sprite: Sprite, state: OpacityTwinkleState) => {
+export const applyOpacityTwinkle = (sprite: Container, state: OpacityTwinkleState) => {
   sprite.alpha = state.currentOpacity
 }
 

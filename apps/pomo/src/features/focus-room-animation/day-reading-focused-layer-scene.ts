@@ -5,6 +5,7 @@ import leftHandImage from './assets/layers/day-reading-focused/left-hand.webp'
 import rightHandImage from './assets/layers/day-reading-focused/right-hand.webp'
 import referenceImage from './assets/concept-art/day-reading.webp'
 import {BREATHING_MOTION} from './breathing-motion'
+import {DAY_SKY_LAYERS} from './day-sky-layer'
 import {createEyeMotion} from './eye-motion'
 import {HAIR_TIPS_PIXEL_PUSH} from './hair-motion'
 import type {PixiLayerSceneDefinition} from './layer-scene'
@@ -16,6 +17,7 @@ export const DAY_READING_FOCUSED_LAYER_SCENE = {
   id: 'day-reading-focused-layers',
   layers: [
     {id: 'background', motion: BREATHING_MOTION, source: baseImage},
+    ...DAY_SKY_LAYERS,
     {
       attachmentId: 'eyes',
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.head,

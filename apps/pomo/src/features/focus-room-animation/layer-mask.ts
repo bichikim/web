@@ -1,4 +1,4 @@
-import type {Texture} from 'pixi.js'
+import {type Container, Sprite, type Texture} from 'pixi.js'
 
 import {LayerMaskFilter} from './layer-mask-filter'
 import type {PixiSceneLayerDefinition} from './layer-scene-definition'
@@ -8,7 +8,7 @@ export const createLayerMaskFilter = (
   maskTextures: ReadonlyMap<string, Texture>,
   layerTexture: Texture,
 ) => {
-  if (definition.maskSource === undefined) {
+  if (definition.maskSource === undefined || definition.repeat === 'horizontal') {
     return null
   }
 
@@ -23,4 +23,31 @@ export const createLayerMaskFilter = (
   }
 
   return new LayerMaskFilter({maskTexture})
+}
+
+export const applyRepeatedLayerMask = (
+  sceneContainer: Container,
+  layerContainer: Container,
+  definition: PixiSceneLayerDefinition,
+  maskTextures: ReadonlyMap<string, Texture>,
+) => {
+  if (definition.maskSource === undefined || definition.repeat !== 'horizontal') {
+    return
+  }
+
+  const maskTexture = maskTextures.get(definition.maskSource)
+
+  if (maskTexture === undefined) {
+    throw new Error(`Missing layer mask texture: ${definition.maskSource}`)
+  }
+
+  const maskSprite = new Sprite(maskTexture)
+  sceneContainer.addChild(maskSprite)
+  layerContainer.setMask({channel: 'red', mask: maskSprite})
+}
+
+export const detachLayerMasks = (layers: readonly {readonly container: Container}[]) => {
+  for (const layer of layers) {
+    layer.container.mask = null
+  }
 }

@@ -1,9 +1,9 @@
-import type {Sprite} from 'pixi.js'
+import type {Container} from 'pixi.js'
 
 import type {PixiSceneOpacityPulse} from './layer-scene-definition'
 
 export const applyOpacityPulse = (
-  sprite: Sprite,
+  sprite: Container,
   motion: PixiSceneOpacityPulse,
   progress: number,
 ) => {

@@ -64,9 +64,21 @@ export const validateTextureSizes = (options: ValidateTextureSizesOptions) => {
   for (const [index, lease] of options.textures.slice(0, options.layerSourceCount).entries()) {
     const {height, width} = lease.texture
     const layer = options.definition.layers[index]
+    const isValidHorizontalRepeat =
+      layer?.repeat === 'horizontal' &&
+      width >= options.definition.width &&
+      height > 0 &&
+      height <= options.definition.height
+
+    if (layer?.repeat !== undefined && layer.position !== undefined) {
+      throw new Error(`Repeated layer cannot define a position: ${layer.id}`)
+    }
 
     if (layer?.position === undefined) {
-      if (width !== options.definition.width || height !== options.definition.height) {
+      if (
+        !isValidHorizontalRepeat &&
+        (width !== options.definition.width || height !== options.definition.height)
+      ) {
         throw new Error(`Invalid layer texture dimensions for ${lease.source}: ${width}x${height}`)
       }
     } else if (!isLayerWithinScene(options.definition, layer.position, width, height)) {

@@ -1,4 +1,4 @@
-import type {Container, Sprite} from 'pixi.js'
+import type {Container} from 'pixi.js'
 
 import type {PixiSceneLoopingTranslation} from './layer-scene-definition'
 
@@ -6,7 +6,7 @@ const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 
 export const applyLoopingTranslation = (
   container: Container,
-  sprite: Sprite,
+  sprite: Container,
   motion: PixiSceneLoopingTranslation,
   progress: number,
 ) => {

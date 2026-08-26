@@ -1,4 +1,4 @@
-import type {Container, Sprite} from 'pixi.js'
+import type {Container} from 'pixi.js'
 
 import {applyLoopingTranslation} from './looping-translation'
 import type {PixiSceneMotion, PixiScenePoint} from './layer-scene-definition'
@@ -10,7 +10,7 @@ interface ResetMotionPresentationOptions {
   readonly currentTarget: PixiScenePoint
   readonly motion: PixiSceneMotion
   readonly phase: number
-  readonly sprite: Sprite
+  readonly sprite: Container
 }
 
 export const resetMotionPresentation = (options: ResetMotionPresentationOptions) => {

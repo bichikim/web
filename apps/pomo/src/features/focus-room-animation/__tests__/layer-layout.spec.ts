@@ -167,4 +167,58 @@ describe('validateTextureSizes', () => {
       }),
     ).not.toThrow()
   })
+
+  it.each([
+    {height: 100, width: 300},
+    {height: 90, width: 300},
+  ])('should allow a horizontal repeat with dimensions $width x $height', ({height, width}) => {
+    const definition = {
+      ...createDefinition(),
+      layers: [{id: 'layer', repeat: 'horizontal' as const, source: 'layer.webp'}],
+    }
+
+    expect(() =>
+      validateTextureSizes({
+        definition,
+        layerSourceCount: 1,
+        textures: [createLease(width, height)],
+      }),
+    ).not.toThrow()
+  })
+
+  it.each([
+    {height: 100, width: 99},
+    {height: 0, width: 300},
+    {height: 101, width: 300},
+  ])('should reject an invalid horizontal repeat at $width x $height', ({height, width}) => {
+    const definition = {
+      ...createDefinition(),
+      layers: [{id: 'layer', repeat: 'horizontal' as const, source: 'layer.webp'}],
+    }
+
+    expect(() =>
+      validateTextureSizes({
+        definition,
+        layerSourceCount: 1,
+        textures: [createLease(width, height)],
+      }),
+    ).toThrow(`Invalid layer texture dimensions for layer.webp: ${width}x${height}`)
+  })
+
+  it('should reject a positioned horizontal repeat', () => {
+    const definition = {
+      ...createDefinition(),
+      layers: [
+        {id: 'layer', position: {x: 0, y: 0}, repeat: 'horizontal' as const, source: 'layer.webp'},
+      ],
+    }
+
+    expect(() =>
+      validateTextureSizes({
+        definition,
+        layerSourceCount: 1,
+        textures: [createLease(300, 100)],
+      }),
+    ).toThrow('Repeated layer cannot define a position: layer')
+  })
 })
