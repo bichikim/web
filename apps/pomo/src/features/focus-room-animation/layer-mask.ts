@@ -22,3 +22,7 @@ export const applyLayerMask = (
   sceneContainer.addChild(maskSprite)
   layerContainer.setMask({channel: 'red', mask: maskSprite})
 }
+
+export const clearLayerMask = (layerContainer: Container) => {
+  layerContainer.mask = null
+}

@@ -1,9 +1,9 @@
-import type {Sprite} from 'pixi.js'
+import type {Container} from 'pixi.js'
 
 import type {PixiSceneVisibilityCycle} from './layer-scene-definition'
 
 export const applyVisibilityCycle = (
-  sprite: Sprite,
+  sprite: Container,
   motion: PixiSceneVisibilityCycle,
   progress: number,
 ) => {

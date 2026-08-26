@@ -1,7 +1,8 @@
-import {Container, Sprite, type Texture, Ticker} from 'pixi.js'
+import {Container, type Texture, Ticker} from 'pixi.js'
 
-import {positionLayerContainer, validateTextureSizes} from './layer-layout'
-import {applyLayerMask} from './layer-mask'
+import {positionLayerContainer} from './layer-layout'
+import {applyLayerMask, clearLayerMask} from './layer-mask'
+import {createLayerView} from './layer-view'
 import {applyLoopingTranslation} from './looping-translation'
 import {getLayerMotions, getMotionEffects} from './motion-definition'
 import {resetMotionPresentation} from './motion-reset'
@@ -16,6 +17,7 @@ import {
 } from './opacity-twinkle'
 import {createPushFilter, createPushFilters, type PushFilter} from './push-filter-factory'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
+import {validateTextureSizes} from './texture-size-validation'
 import {applyVisibilityCycle} from './visibility-cycle'
 import type {
   CreateStaticLayerSceneOptions,
@@ -47,7 +49,7 @@ interface LayerInstance {
   readonly container: Container
   readonly definition: PixiSceneLayerDefinition
   readonly motions: readonly MotionInstance[]
-  readonly sprite: Sprite
+  readonly sprite: Container
   readonly statePixelPushFilter: PushFilter | null
 }
 
@@ -126,17 +128,13 @@ export class PixiLayerScene {
     const layers: LayerInstance[] = []
 
     try {
-      validateTextureSizes({
-        definition: this.#definition,
-        layerSourceCount: layerSources.length,
-        textures,
-      })
+      validateTextureSizes(this.#definition, textures, layerSources.length)
       const maskTextures = new Map<string, Texture>(
         textures.slice(layerSources.length).map((lease) => [lease.source, lease.texture]),
       )
 
       for (const [index, definition] of this.#definition.layers.entries()) {
-        const sprite = new Sprite(textures[index].texture)
+        const sprite = createLayerView(definition, textures[index].texture)
         const motions = getLayerMotions(definition)
         const pivotMotion = motions.find((motion) => motion.kind === 'pivot-rotation')
         const container = new Container()
@@ -247,6 +245,10 @@ export class PixiLayerScene {
     return this.#layers.find((layer) => layer.definition.attachmentId === name)?.container ?? null
   }
 
+  detachMasks() {
+    this.#layers.forEach((layer) => clearLayerMask(layer.container))
+  }
+
   destroy() {
     if (this.#destroyed) {
       return
@@ -254,6 +256,7 @@ export class PixiLayerScene {
 
     this.#destroyed = true
     this.#ticker.destroy()
+    this.detachMasks()
 
     for (const layer of this.#layers) {
       layer.statePixelPushFilter?.destroy()
@@ -521,6 +524,10 @@ export class PixiLayerScene {
 
       if (layer.motion !== undefined && layer.motions !== undefined) {
         throw new Error(`Layer cannot define both motion and motions: ${layer.id}`)
+      }
+
+      if (layer.repeat !== undefined && layer.position !== undefined) {
+        throw new Error(`Repeated layer cannot define a position: ${layer.id}`)
       }
 
       if (layer.parentAttachmentId !== undefined && !attachments.has(layer.parentAttachmentId)) {

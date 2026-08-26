@@ -1,4 +1,5 @@
 import type {PSceneId} from './scene-catalog'
+import {DAY_SKY_LAYERS} from './day-sky-layer'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
 import {createEyeMotion} from './eye-motion'
 import {
@@ -50,12 +51,10 @@ import dayTypingFocusedRightHand from './assets/layers/day-typing-focused/right-
 import dayTypingFocusedReference from './assets/concept-art/day-typing.webp'
 import dayFocusedEyeIrises from './assets/layers/day-reading-focused/eyes.webp'
 import dayTypingUserBase from './assets/layers/day-typing-user/base.webp'
-import dayTypingUserHead from './assets/layers/day-typing-user/head.webp'
 import dayTypingUserLeftHand from './assets/layers/day-typing-user/left-hand.webp'
 import dayTypingUserRightHand from './assets/layers/day-typing-user/right-hand.webp'
 import dayTypingUserReference from './assets/concept-art/day-typing-user-gaze.webp'
 import dayWritingUserBase from './assets/layers/day-writing-user/base.webp'
-import dayWritingUserHead from './assets/layers/day-writing-user/head.webp'
 import dayWritingUserLeftHand from './assets/layers/day-writing-user/left-hand.webp'
 import dayWritingUserRightHand from './assets/layers/day-writing-user/right-hand.webp'
 import dayWritingUserReference from './assets/concept-art/day-writing-user-gaze.webp'
@@ -196,6 +195,7 @@ const createSeparatedScene = (
   id: `${id}-layers`,
   layers: [
     {id: 'background', source: assets.base},
+    ...(id.startsWith('day-') ? DAY_SKY_LAYERS : []),
     ...(assets.starLayers ?? []).map(({position, source}, index) => ({
       id: `sky-star-${index + 1}`,
       motion: {
@@ -395,7 +395,7 @@ export const GENERATED_LAYER_SCENES = {
     'day-typing-user',
     {
       base: dayTypingUserBase,
-      head: dayTypingUserHead,
+      head: dayReadingUserHead,
       headJawMask: dayReadingJawMask,
       leftHand: dayTypingUserLeftHand,
       mouth: DAY_USER_MOUTH_SOURCES,
@@ -415,7 +415,7 @@ export const GENERATED_LAYER_SCENES = {
     'day-writing-user',
     {
       base: dayWritingUserBase,
-      head: dayWritingUserHead,
+      head: dayReadingUserHead,
       headJawMask: dayReadingJawMask,
       leftHand: dayWritingUserLeftHand,
       mouth: DAY_USER_MOUTH_SOURCES,

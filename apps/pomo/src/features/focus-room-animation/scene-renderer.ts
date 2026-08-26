@@ -1,10 +1,16 @@
-import {Application, Container, Sprite, type Texture} from 'pixi.js'
+import {Application, Container, Sprite} from 'pixi.js'
 
 import {DepthParallaxFilter} from './depth-parallax-filter'
 import {PEyeController} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'
 import {createSceneTransitions, SCENE_HEIGHT, SCENE_WIDTH} from './scene-composite-transition'
 import {getPScenePanPosition} from './scene-motion'
+import {
+  destroySceneTree,
+  isSceneSnapshotSafe,
+  type PreparedScene,
+  type StartPreparedTransitionOptions,
+} from './scene-preparation'
 import {SceneLoadingState} from './scene-loading-state'
 import type {PSceneRendererOptions, PSceneState} from './scene-state'
 import {createPSceneMouthController} from './scene-mouth-controller'
@@ -15,21 +21,12 @@ import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './tex
 export type {PSceneMotionInput} from './scene-motion'
 export type {PSceneState} from './scene-state'
 
-interface PreparedScene {
-  readonly depthTexture: Texture
-  readonly layerScene: PixiLayerScene | null
-  readonly scene: Container
-  readonly textures: readonly TextureLease[]
-}
-
 const SCENE_TRANSITION_DURATION = 600
 const DEPTH_PARALLAX_MAXIMUM_X = 9
 const DEPTH_PARALLAX_MAXIMUM_Y = 6
 const STEAM_PARALLAX_DEPTH = 0.55
 
-const reportError = (error: unknown) => {
-  globalThis.reportError(error)
-}
+const reportError = (error: unknown) => globalThis.reportError(error)
 
 export class PSceneRenderer {
   readonly #application = new Application()
@@ -46,6 +43,7 @@ export class PSceneRenderer {
   #currentLayerScene: PixiLayerScene | null = null
   #currentLayerSceneId: string | null = null
   #currentScene: Container | null = null
+  #currentSceneSnapshotSafe = true
   #currentSource: string | null = null
   #currentTextures: readonly TextureLease[] = []
   #destroyed = false
@@ -53,6 +51,7 @@ export class PSceneRenderer {
   #incomingLayerScene: PixiLayerScene | null = null
   #incomingLayerSceneId: string | null = null
   #incomingScene: Container | null = null
+  #incomingSceneSnapshotSafe = true
   #incomingTextures: readonly TextureLease[] = []
   #initialized = false
   #motionPositionX = 0
@@ -305,6 +304,7 @@ export class PSceneRenderer {
     this.#currentLayerScene = prepared.layerScene
     this.#currentLayerSceneId = layerDefinition?.id ?? null
     this.#currentScene = prepared.scene
+    this.#currentSceneSnapshotSafe = prepared.snapshotSafe
     this.#currentSource = source
     this.#currentTextures = prepared.textures
   }
@@ -340,15 +340,13 @@ export class PSceneRenderer {
         return
       }
 
-      this.#sceneTransitions.capture(this.#currentScene)
-      this.#incomingLayerScene = prepared.layerScene
-      this.#incomingLayerSceneId = layerDefinition?.id ?? null
-      this.#incomingScene = prepared.scene
-      this.#incomingTextures = prepared.textures
-      this.#depthFilter?.setDepthTransition(prepared.depthTexture)
-      this.#addScene(prepared.scene, prepared.layerScene)
-      this.#sceneTransitions.start(prepared.scene)
-      this.#animateTransition(source, depthSource, prepared.scene, version)
+      this.#startPreparedTransition({
+        depthSource,
+        layerSceneId: layerDefinition?.id ?? null,
+        prepared,
+        source,
+        version,
+      })
     } catch (error: unknown) {
       if (this.#destroyed || version !== this.#transitionVersion) {
         return
@@ -365,6 +363,23 @@ export class PSceneRenderer {
 
       throw error
     }
+  }
+
+  #startPreparedTransition(options: StartPreparedTransitionOptions) {
+    const {prepared} = options
+    const useCompositeTransition = this.#currentSceneSnapshotSafe && prepared.snapshotSafe
+
+    this.#sceneTransitions.capture(useCompositeTransition ? this.#currentScene : null)
+
+    this.#incomingLayerScene = prepared.layerScene
+    this.#incomingLayerSceneId = options.layerSceneId
+    this.#incomingScene = prepared.scene
+    this.#incomingSceneSnapshotSafe = prepared.snapshotSafe
+    this.#incomingTextures = prepared.textures
+    this.#depthFilter?.setDepthTransition(prepared.depthTexture)
+    this.#addScene(prepared.scene, prepared.layerScene)
+    this.#sceneTransitions.start(prepared.scene)
+    this.#animateTransition(options.source, options.depthSource, prepared.scene, options.version)
   }
 
   #animateTransition(source: string, depthSource: string, scene: Container, version: number) {
@@ -399,16 +414,20 @@ export class PSceneRenderer {
   }
 
   #finishTransition(source: string, depthSource: string, scene: Container) {
+    const previousLayerScene = this.#currentLayerScene
+    const previousScene = this.#currentScene
     const previousTextures = this.#currentTextures
     this.#sceneTransitions.restore()
-    this.#destroyCurrentScene()
+    previousScene?.removeFromParent()
     this.#currentScene = scene
+    this.#currentSceneSnapshotSafe = this.#incomingSceneSnapshotSafe
     this.#currentLayerScene = this.#incomingLayerScene
     this.#currentLayerSceneId = this.#incomingLayerSceneId
     this.#currentSource = source
     this.#currentDepthSource = depthSource
     this.#currentTextures = this.#incomingTextures
     this.#incomingScene = null
+    this.#incomingSceneSnapshotSafe = true
     this.#incomingLayerScene = null
     this.#incomingLayerSceneId = null
     this.#incomingTextures = []
@@ -418,6 +437,7 @@ export class PSceneRenderer {
     this.#transitionFrame = null
     this.#eyes.setSceneReady(true)
     this.#depthFilter?.finishDepthTransition()
+    destroySceneTree(previousScene, previousLayerScene)
     releaseTextureGroup(previousTextures)
     this.#application.render()
     this.#loading.finishAfterPaint()
@@ -433,6 +453,7 @@ export class PSceneRenderer {
     this.#sceneTransitions.restore()
     this.#destroyIncomingScene()
     this.#incomingScene = null
+    this.#incomingSceneSnapshotSafe = true
     this.#depthFilter?.cancelDepthTransition()
     releaseTextureGroup(this.#incomingTextures)
     this.#incomingTextures = []
@@ -488,6 +509,7 @@ export class PSceneRenderer {
         depthTexture: textures[definition === null ? 1 : 0].texture,
         layerScene,
         scene: layerScene?.container ?? new Sprite(textures[0].texture),
+        snapshotSafe: isSceneSnapshotSafe(definition),
         textures,
       }
     } catch (error: unknown) {
@@ -518,29 +540,25 @@ export class PSceneRenderer {
   }
 
   #destroyCurrentScene() {
+    this.#currentLayerScene?.detachMasks()
     this.#currentScene?.removeFromParent()
 
-    if (this.#currentLayerScene === null) {
-      this.#currentScene?.destroy()
-    } else {
-      this.#currentLayerScene.destroy()
-    }
+    destroySceneTree(this.#currentScene, this.#currentLayerScene)
 
     this.#currentScene = null
+    this.#currentSceneSnapshotSafe = true
     this.#currentLayerScene = null
     this.#currentLayerSceneId = null
   }
 
   #destroyIncomingScene() {
+    this.#incomingLayerScene?.detachMasks()
     this.#incomingScene?.removeFromParent()
 
-    if (this.#incomingLayerScene === null) {
-      this.#incomingScene?.destroy()
-    } else {
-      this.#incomingLayerScene.destroy()
-    }
+    destroySceneTree(this.#incomingScene, this.#incomingLayerScene)
 
     this.#incomingScene = null
+    this.#incomingSceneSnapshotSafe = true
     this.#incomingLayerScene = null
     this.#incomingLayerSceneId = null
   }
