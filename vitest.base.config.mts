@@ -35,11 +35,14 @@ export const unitTestProject = {
     // 테스트 런타임 환경 (DOM API 제공)
     environment: 'jsdom',
     // 테스트로 포함할 파일 glob 패턴
+    exclude: ['packages/sw/src/__tests__/build-output.spec.ts'],
     include: [
       'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
       '.agents/skills/*/scripts/**/*.spec.ts',
     ],
+    // Leave capacity for nested Vite and esbuild work during the unit suite.
+    maxWorkers: '50%',
     name: 'unit',
     server: {
       deps: {
@@ -56,6 +59,17 @@ export const unitTestProject = {
     },
     // 각 테스트 파일 실행 전 로드할 셋업 파일
     setupFiles: ['./vitest.setup.ts'],
+  },
+} satisfies TestProjectInlineConfiguration
+
+export const buildIntegrationTestProject = {
+  test: {
+    environment: 'node',
+    fileParallelism: false,
+    include: ['packages/sw/src/__tests__/build-output.spec.ts'],
+    maxWorkers: 1,
+    name: 'integration-build',
+    testTimeout: 20_000,
   },
 } satisfies TestProjectInlineConfiguration
 

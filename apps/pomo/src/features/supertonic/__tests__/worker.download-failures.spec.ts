@@ -229,22 +229,24 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('initialization', () => {
-  it('should reject an unsupported model id', async () => {
-    modelMocks.getModel.mockImplementation(() => {
-      throw new Error('invalid model')
-    })
+describe('initialization download failures', () => {
+  it.each([
+    {expectedRetryable: false, status: 400},
+    {expectedRetryable: false, status: 401},
+  ])('should report manifest HTTP $status without retry', async ({expectedRetryable, status}) => {
+    httpMocks.fetch.mockResolvedValue(jsonResponse({}, status))
     const worker = await loadWorker()
 
-    await worker.dispatch({modelId: 'full', type: 'initialize'})
+    await initialize(worker)
 
-    expect(worker.scope.postMessage).toHaveBeenCalledWith(
+    expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
       {
         error: {
-          code: 'invalid-model',
-          modelId: 'full',
-          phase: 'initialize',
-          retryable: false,
+          code: 'download-failed',
+          fileName: '모델 자산 설정',
+          phase: 'download',
+          retryable: expectedRetryable,
+          status,
         },
         requestId: null,
         type: 'error',
@@ -253,190 +255,178 @@ describe('initialization', () => {
     )
   })
 
-  it('should initialize WebGPU and stream model bytes with bounded progress', async () => {
-    const cacheError = {cause: new Error('cache full'), operation: 'write'} as const
-    const stream = new ReadableStream<Uint8Array>({
-      start(controller) {
-        controller.enqueue(Uint8Array.of(1, 2))
-        controller.enqueue(Uint8Array.of(3, 4))
-        controller.close()
-      },
-    })
+  it.each([
+    {error: new DOMException('cancelled', 'AbortError'), expectedCode: 'cancelled'},
+    {error: new Error('offline'), expectedCode: 'download-failed'},
+  ])(
+    'should classify manifest fetch exceptions as $expectedCode',
+    async ({error, expectedCode}) => {
+      httpMocks.fetch.mockRejectedValue(error)
+      const worker = await loadWorker()
+
+      await initialize(worker)
+
+      expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({code: expectedCode}),
+          requestId: null,
+          type: 'error',
+        }),
+        [],
+      )
+    },
+  )
+
+  it('should return a retryable 408 config response', async () => {
     storageMocks.load.mockImplementation(async (options: {url: string}) =>
-      options.url.endsWith('.onnx')
-        ? {
-            cacheWrite: Promise.resolve(failure(cacheError)),
-            response: new Response(stream),
-            source: 'network' as const,
-          }
-        : modelResource(jsonResponse()),
-    )
-    sessionMocks.load.mockImplementation(
-      async (options: {
-        loadBuffer: (
-          bufferOptions: LoadBufferOptions,
-        ) => Promise<Result<ArrayBuffer, SupertonicError>>
-      }) => {
-        const buffer = await options.loadBuffer({
-          expectedSize: 3,
-          fileName: '음성 모델',
-          loadedBefore: 5,
-          signal: new AbortController().signal,
-          totalBytes: 20,
-          url: 'https://models.test/model.onnx',
-        })
-        expect(buffer).toEqual(success(Uint8Array.of(1, 2, 3, 4).buffer))
-        return success(sessions)
-      },
+      modelResource(options.url.endsWith('tts.json') ? jsonResponse({}, 408) : jsonResponse()),
     )
     const worker = await loadWorker()
 
     await initialize(worker)
 
-    expect(runtimeMocks.load).toHaveBeenCalledWith('webgpu')
-    expect(worker.scope.postMessage).toHaveBeenCalledWith(
-      {
-        progress: {fileName: '음성 모델', loadedBytes: 7, totalBytes: 20},
-        type: 'progress',
-      },
-      [],
-    )
-    expect(worker.scope.postMessage).toHaveBeenCalledWith(
-      {
-        progress: {fileName: '음성 모델', loadedBytes: 8, totalBytes: 20},
-        type: 'progress',
-      },
-      [],
-    )
-    expect(storageMocks.report).toHaveBeenCalledWith(cacheError)
     expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
-      {backend: 'webgpu', type: 'ready'},
+      expect.objectContaining({
+        error: expect.objectContaining({code: 'download-failed', retryable: true, status: 408}),
+      }),
       [],
     )
   })
 
-  it('should load a bodyless model response and keep a successful cache write silent', async () => {
-    const buffer = Uint8Array.of(9, 8).buffer
-    const response = {
-      arrayBuffer: vi.fn().mockResolvedValue(buffer),
-      body: null,
-      ok: true,
-    } as unknown as Response
+  it('should return a retryable 429 indexer response after config succeeds', async () => {
     storageMocks.load.mockImplementation(async (options: {url: string}) =>
-      options.url.endsWith('.onnx') ? modelResource(response) : modelResource(jsonResponse()),
+      modelResource(
+        options.url.endsWith('unicode_indexer.json') ? jsonResponse({}, 429) : jsonResponse(),
+      ),
     )
-    sessionMocks.load.mockImplementation(
-      async (options: {
-        loadBuffer: (
-          bufferOptions: LoadBufferOptions,
-        ) => Promise<Result<ArrayBuffer, SupertonicError>>
-      }) => {
-        const result = await options.loadBuffer({
-          expectedSize: 2,
-          fileName: '보코더',
-          loadedBefore: 0,
-          signal: new AbortController().signal,
-          totalBytes: 2,
-          url: 'https://models.test/vocoder.onnx',
-        })
-        expect(result).toEqual(success(buffer))
-        return success(sessions)
-      },
-    )
-    const worker = await loadWorker(false)
-
-    await initialize(worker)
-
-    expect(runtimeMocks.load).toHaveBeenCalledWith('wasm')
-    expect(storageMocks.report).not.toHaveBeenCalled()
-  })
-
-  it('should fall back from a WebGPU session failure to WASM', async () => {
-    sessionMocks.load
-      .mockResolvedValueOnce(failure(backendError('webgpu')))
-      .mockResolvedValueOnce(success(sessions))
-    runtimeMocks.load.mockResolvedValueOnce({backend: 'webgpu'}).mockResolvedValueOnce(runtime)
     const worker = await loadWorker()
 
     await initialize(worker)
 
-    expect(runtimeMocks.load).toHaveBeenNthCalledWith(1, 'webgpu')
-    expect(runtimeMocks.load).toHaveBeenNthCalledWith(2, 'wasm')
-    expect(worker.scope.postMessage).toHaveBeenCalledWith(
-      {message: 'WebGPU를 사용할 수 없어 WASM으로 다시 준비하고 있어요.', type: 'status'},
+    expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({code: 'download-failed', retryable: true, status: 429}),
+      }),
       [],
     )
-    expect(worker.scope.postMessage).toHaveBeenLastCalledWith({backend: 'wasm', type: 'ready'}, [])
   })
 
-  it('should return a non-backend session failure without fallback', async () => {
-    sessionMocks.load.mockResolvedValue(failure(validationError))
+  it('should classify aborted config loading as cancellation', async () => {
+    storageMocks.load.mockImplementation(async (options: {url: string}) => {
+      if (options.url.endsWith('tts.json')) {
+        throw new DOMException('cancelled', 'AbortError')
+      }
+
+      return modelResource(jsonResponse())
+    })
     const worker = await loadWorker()
 
     await initialize(worker)
 
-    expect(runtimeMocks.load).toHaveBeenCalledOnce()
+    expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({error: {code: 'cancelled', phase: 'download', retryable: false}}),
+      [],
+    )
+  })
+
+  it('should report a generic indexer loading exception', async () => {
+    storageMocks.load.mockImplementation(async (options: {url: string}) => {
+      if (options.url.endsWith('unicode_indexer.json')) {
+        throw new Error('offline')
+      }
+
+      return modelResource(jsonResponse())
+    })
+    const worker = await loadWorker()
+
+    await initialize(worker)
+
+    expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({code: 'download-failed', retryable: true, status: null}),
+      }),
+      [],
+    )
+  })
+
+  it('should return initialization asset validation failures', async () => {
+    assetMocks.parse.mockReturnValue(failure(validationError))
+    const worker = await loadWorker()
+
+    await initialize(worker)
+
     expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
       {error: validationError, requestId: null, type: 'error'},
       [],
     )
   })
 
-  it('should not fall back when a WASM backend session fails', async () => {
-    modelMocks.getModel.mockReturnValue(wasmModel)
-    sessionMocks.load.mockResolvedValue(failure(backendError('wasm')))
-    const worker = await loadWorker()
-
-    await initialize(worker, 'int8')
-
-    expect(runtimeMocks.load).toHaveBeenCalledWith('wasm')
-    expect(runtimeMocks.load).toHaveBeenCalledOnce()
-  })
-
-  it('should release sessions when disposal aborts initialization', async () => {
-    let finishSessions: (result: Result<SupertonicSessions, SupertonicError>) => void = () =>
-      undefined
-    sessionMocks.load.mockReturnValue(
-      new Promise((resolve) => {
-        finishSessions = resolve
-      }),
+  it('should return retryable server errors from model buffer loading', async () => {
+    storageMocks.load.mockImplementation(async (options: {url: string}) =>
+      modelResource(
+        options.url.endsWith('.onnx') ? new Response(null, {status: 500}) : jsonResponse(),
+      ),
+    )
+    sessionMocks.load.mockImplementation(
+      async (options: {
+        loadBuffer: (
+          bufferOptions: LoadBufferOptions,
+        ) => Promise<Result<ArrayBuffer, SupertonicError>>
+      }) =>
+        options.loadBuffer({
+          expectedSize: 1,
+          fileName: '모델 파일',
+          loadedBefore: 0,
+          signal: new AbortController().signal,
+          totalBytes: 1,
+          url: 'https://models.test/model.onnx',
+        }),
     )
     const worker = await loadWorker()
-    const initializing = initialize(worker)
-    await vi.waitFor(() => expect(sessionMocks.load).toHaveBeenCalledOnce())
 
-    await worker.dispatch({type: 'dispose'})
-    finishSessions(success(sessions))
-    await initializing
+    await initialize(worker)
 
-    expect(sessionMocks.release).toHaveBeenCalledWith(sessions)
-    expect(worker.scope.postMessage).toHaveBeenCalledWith(
-      {
-        error: {code: 'cancelled', phase: 'initialize', retryable: false},
-        requestId: null,
-        type: 'error',
-      },
+    expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({retryable: true, status: 500}),
+      }),
       [],
     )
   })
 
-  it('should keep the latest initialization controller active', async () => {
-    let finishFirst: (result: Result<SupertonicSessions, SupertonicError>) => void = () => undefined
-    sessionMocks.load
-      .mockReturnValueOnce(
-        new Promise((resolve) => {
-          finishFirst = resolve
+  it.each([
+    {error: new DOMException('cancelled', 'AbortError'), expectedCode: 'cancelled'},
+    {error: new Error('offline'), expectedCode: 'download-failed'},
+  ])('should classify model buffer exceptions as $expectedCode', async ({error, expectedCode}) => {
+    storageMocks.load.mockImplementation(async (options: {url: string}) => {
+      if (options.url.endsWith('.onnx')) {
+        throw error
+      }
+
+      return modelResource(jsonResponse())
+    })
+    sessionMocks.load.mockImplementation(
+      async (options: {
+        loadBuffer: (
+          bufferOptions: LoadBufferOptions,
+        ) => Promise<Result<ArrayBuffer, SupertonicError>>
+      }) =>
+        options.loadBuffer({
+          expectedSize: 1,
+          fileName: '모델 파일',
+          loadedBefore: 0,
+          signal: new AbortController().signal,
+          totalBytes: 1,
+          url: 'https://models.test/model.onnx',
         }),
-      )
-      .mockResolvedValueOnce(success(sessions))
+    )
     const worker = await loadWorker()
-    const first = initialize(worker)
-    await vi.waitFor(() => expect(sessionMocks.load).toHaveBeenCalledOnce())
 
     await initialize(worker)
-    finishFirst(success(sessions))
-    await first
 
-    expect(worker.scope.postMessage).toHaveBeenCalledTimes(2)
+    expect(worker.scope.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({error: expect.objectContaining({code: expectedCode})}),
+      [],
+    )
   })
 })
