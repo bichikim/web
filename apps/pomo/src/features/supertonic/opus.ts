@@ -46,7 +46,9 @@ const getOggCrc = (data: Uint8Array) => {
   let checksum = 0
 
   for (const byte of data) {
-    checksum = ((checksum << 8) ^ (CRC_TABLE[((checksum >>> 24) ^ byte) & 0xff] ?? 0)) >>> 0
+    const tableIndex = ((checksum >>> 24) ^ byte) & 0xff
+    const tableValue = CRC_TABLE[tableIndex] as number
+    checksum = ((checksum << 8) ^ tableValue) >>> 0
   }
 
   return checksum
@@ -64,14 +66,18 @@ const getLacingValues = (packetLength: number) => {
 }
 
 const createOggPage = (options: OggPageOptions) => {
-  const lacingValues = options.packets.map((packet) => getLacingValues(packet.length))
-  const segmentCount = lacingValues.reduce((total, values) => total + values.length, 0)
-
-  if (segmentCount > OGG_MAXIMUM_SEGMENTS) {
-    throw new RangeError('An Ogg page cannot contain more than 255 segments.')
-  }
-
-  const payloadLength = options.packets.reduce((total, packet) => total + packet.length, 0)
+  const packetParts = options.packets.map((packet) => ({
+    lacingValues: getLacingValues(packet.length),
+    packet,
+  }))
+  const segmentCount = packetParts.reduce(
+    (total, packetPart) => total + packetPart.lacingValues.length,
+    0,
+  )
+  const payloadLength = packetParts.reduce(
+    (total, packetPart) => total + packetPart.packet.length,
+    0,
+  )
   const page = new Uint8Array(27 + segmentCount + payloadLength)
   const view = new DataView(page.buffer)
   let headerType = options.firstPage === true ? 0x02 : 0
@@ -93,17 +99,10 @@ const createOggPage = (options: OggPageOptions) => {
   let segmentOffset = 27
   let payloadOffset = 27 + segmentCount
 
-  for (let packetIndex = 0; packetIndex < options.packets.length; packetIndex += 1) {
-    const packet = options.packets[packetIndex]
-    const packetLacing = lacingValues[packetIndex]
-
-    if (packet === undefined || packetLacing === undefined) {
-      throw new Error('Expected matching Ogg packet and lacing data.')
-    }
-
-    page.set(packetLacing, segmentOffset)
+  for (const {lacingValues, packet} of packetParts) {
+    page.set(lacingValues, segmentOffset)
     page.set(packet, payloadOffset)
-    segmentOffset += packetLacing.length
+    segmentOffset += lacingValues.length
     payloadOffset += packet.length
   }
 
@@ -159,16 +158,10 @@ const createAudioPages = (packets: ReadonlyArray<OggPacket>, streamSerial: numbe
     currentSegmentCount += packetSegmentCount
   }
 
-  if (currentGroup.length > 0) {
-    packetGroups.push(currentGroup)
-  }
+  packetGroups.push(currentGroup)
 
   return packetGroups.map((group, index) => {
-    const lastPacket = group.at(-1)
-
-    if (lastPacket === undefined) {
-      throw new Error('Expected an Opus packet in every Ogg audio page.')
-    }
+    const lastPacket = group.at(-1) as OggPacket
 
     return createOggPage({
       endOfStream: index === packetGroups.length - 1,

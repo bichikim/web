@@ -111,4 +111,21 @@ describe('handleUserAuthRequest', () => {
     expect(response?.headers.get('Location')).toBeNull()
     expect(response?.headers.getSetCookie()).toEqual(['session=; Max-Age=0'])
   })
+
+  it('should return a controlled response when the session exchange throws', async () => {
+    const error = new Error('Neon Auth unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    authMocks.handleAuthProxyRequest.mockRejectedValue(error)
+    const url = new URL('https://pomo.example/account?neon_auth_session_verifier=verifier')
+
+    const response = await handleUserAuthRequest({
+      request: new Request(url),
+      responseHeaders: new Headers(),
+      url,
+    })
+
+    expect(response?.status).toBe(503)
+    expect(await response?.text()).toBe('Authentication is unavailable')
+    expect(consoleError).toHaveBeenCalledWith('Pomo user authentication callback failed', error)
+  })
 })

@@ -51,4 +51,27 @@ describe('preview access', () => {
       }),
     ).resolves.toBeNull()
   })
+
+  it.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])(
+    'should reject invalid preview token duration %s',
+    async (tokenSeconds) => {
+      await expect(
+        createPreviewAccess({
+          asset: ASSET,
+          environment: ENVIRONMENT,
+          tokenSeconds,
+          trackId: TRACK_ID,
+        }),
+      ).rejects.toThrow('Preview token duration must be a positive integer')
+    },
+  )
+
+  it.each([{}, {POMO_PLAYBACK_TOKEN_SECRET: '   '}])(
+    'should require a non-empty playback token secret',
+    async (environment) => {
+      await expect(
+        createPreviewAccess({asset: ASSET, environment, trackId: TRACK_ID}),
+      ).rejects.toThrow('POMO_PLAYBACK_TOKEN_SECRET is not set')
+    },
+  )
 })

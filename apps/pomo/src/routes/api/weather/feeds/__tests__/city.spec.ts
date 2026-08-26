@@ -4,7 +4,7 @@ const feedResponseMocks = vi.hoisted(() => ({createWeatherFeedResponse: vi.fn()}
 
 vi.mock('src/server/weather/feed-response', () => feedResponseMocks)
 
-import {GET} from '../[city]'
+import {GET, HEAD} from '../[city]'
 import {invokeApiRoute} from '../../../__tests__/invoke'
 
 beforeEach(() => {
@@ -21,4 +21,15 @@ it('should remove the public JSON suffix before collecting a city feed', async (
 
   expect(response.status).toBe(200)
   expect(feedResponseMocks.createWeatherFeedResponse).toHaveBeenCalledExactlyOnceWith('seoul')
+})
+
+it('should preserve an extensionless city for HEAD requests', async () => {
+  const response = await invokeApiRoute(
+    HEAD,
+    new Request('https://www.pomofi.io/api/weather/feeds/busan', {method: 'HEAD'}),
+    {city: 'busan'},
+  )
+
+  expect(response.status).toBe(200)
+  expect(feedResponseMocks.createWeatherFeedResponse).toHaveBeenCalledExactlyOnceWith('busan')
 })

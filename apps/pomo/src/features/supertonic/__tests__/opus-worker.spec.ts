@@ -78,3 +78,17 @@ it('should serialize encoder failures', async () => {
     expect(worker.postMessage).toHaveBeenCalledWith({detail: 'encode failed', type: 'error'})
   })
 })
+
+it('should serialize an unknown encoder failure', async () => {
+  encoderMocks.encode.mockRejectedValue(null)
+  const worker = await loadWorker()
+
+  worker.dispatch({sampleRate: 24_000, samples: Float32Array.of(0.1)})
+
+  await vi.waitFor(() => {
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      detail: 'Opus 인코딩 중 알 수 없는 오류가 발생했어요.',
+      type: 'error',
+    })
+  })
+})

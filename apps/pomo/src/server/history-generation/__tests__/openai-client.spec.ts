@@ -47,6 +47,23 @@ it('should disable SDK retries and include the submission correlation key', asyn
   )
 })
 
+it('should include required titles in request metadata', async () => {
+  mockConfiguration()
+  const create = vi.fn().mockResolvedValue({id: 'resp-1'})
+  const client = {responses: {create}} as unknown as OpenAI
+
+  await submitHistoryResponse({...OPTIONS, requiredTitles: ['첫 사건', '둘째 사건']}, client)
+
+  expect(create).toHaveBeenCalledWith(
+    expect.objectContaining({
+      metadata: expect.objectContaining({
+        required_titles: JSON.stringify(['첫 사건', '둘째 사건']),
+      }),
+    }),
+    {maxRetries: 0},
+  )
+})
+
 it('should classify a client error response as a confirmed rejection', async () => {
   mockConfiguration()
   const error = new OpenAI.BadRequestError(
@@ -84,6 +101,27 @@ it('should classify a transport error as having unknown acceptance', async () =>
   }
   expect(result).toMatchObject({acceptance: 'unknown', name: HistorySubmissionError.name})
   expect(result.cause).toBe(error)
+})
+
+it.each([
+  new OpenAI.APIError(408, {message: 'timeout'}, undefined, new Headers()),
+  new OpenAI.APIError(500, {message: 'server error'}, undefined, new Headers()),
+  new OpenAI.APIError(undefined, {message: 'unknown'}, undefined, new Headers()),
+])('should keep acceptance unknown for an inconclusive API failure', async (error) => {
+  mockConfiguration()
+  const client = {
+    responses: {create: vi.fn().mockRejectedValue(error)},
+  } as unknown as OpenAI
+
+  await expect(submitHistoryResponse(OPTIONS, client)).rejects.toMatchObject({
+    acceptance: 'unknown',
+  })
+})
+
+it('should use a stable message for a non-Error submission failure', () => {
+  expect(new HistorySubmissionError('unknown', null).message).toBe(
+    'Unknown OpenAI submission error',
+  )
 })
 
 it('should classify a preflight configuration error as a confirmed rejection', async () => {

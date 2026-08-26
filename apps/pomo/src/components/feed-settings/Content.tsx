@@ -94,16 +94,7 @@ export default function PFeedSettingsContent() {
           when={!feeds.isLoading()}
           fallback={<p class={CLASSES.feedSettingsStatus}>피드를 불러오는 중</p>}
         >
-          <Show
-            when={feeds.connections().length > 0}
-            fallback={
-              <Show when={availableRecommendations().length === 0}>
-                <p class={CLASSES.feedSettingsEmpty}>
-                  아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.
-                </p>
-              </Show>
-            }
-          >
+          <Show when={feeds.connections().length > 0}>
             <ul aria-labelledby="pomo-feed-list-title" class={CLASSES.feedSettingsList}>
               <For each={feeds.connections()}>
                 {(connection) => (

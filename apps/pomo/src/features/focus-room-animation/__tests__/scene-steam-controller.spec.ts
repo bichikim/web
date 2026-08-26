@@ -119,3 +119,18 @@ it('should release textures when steam setup fails', async () => {
     await vi.mocked(acquireTextureGroup).mock.results[0].value,
   )
 })
+
+it('should forward reduced-motion changes only after the steam system exists', async () => {
+  const {controller} = createController()
+  controller.setReducedMotion(true)
+  await controller.ensure('original')
+  const system = vi.mocked(SteamParticleSystem).mock.results[0].value
+
+  controller.setReducedMotion(true)
+  await controller.ensure('original')
+
+  expect(system.setReducedMotion).toHaveBeenCalledExactlyOnceWith(true)
+  expect(acquireTextureGroup).toHaveBeenCalledOnce()
+  controller.destroy()
+  controller.destroy()
+})

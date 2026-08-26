@@ -1,7 +1,12 @@
+import type {Sprite} from 'pixi.js'
 import {describe, expect, it} from 'vitest'
 
 import type {PixiSceneOpacityTwinkle} from '../layer-scene-definition'
-import {advanceOpacityTwinkle, createOpacityTwinkleState} from '../opacity-twinkle'
+import {
+  advanceOpacityTwinkle,
+  advanceSpriteOpacityTwinkle,
+  createOpacityTwinkleState,
+} from '../opacity-twinkle'
 
 const motion = {
   fall: {maximumSeconds: 0.6, minimumSeconds: 0.25},
@@ -80,5 +85,47 @@ describe('opacity twinkle', () => {
     expect(dimState.targetOpacity).toBeCloseTo(0.075)
     expect(mediumState.targetOpacity).toBeCloseTo(0.45)
     expect(brightState.targetOpacity).toBeCloseTo(0.9)
+  })
+
+  it('should preserve opacity during a hold and apply it through the sprite adapter', () => {
+    const random = createRandom([0.5, 0.5])
+    const state = createOpacityTwinkleState(motion, random)
+    const sprite = {alpha: -1} as unknown as Sprite
+
+    advanceSpriteOpacityTwinkle({deltaSeconds: 1, motion, random, sprite, state})
+
+    expect(state.elapsedSeconds).toBe(1)
+    expect(sprite.alpha).toBe(state.currentOpacity)
+    expect(() =>
+      advanceSpriteOpacityTwinkle({
+        deltaSeconds: 1,
+        motion,
+        random,
+        sprite,
+        state: undefined,
+      }),
+    ).toThrow('Missing opacity twinkle state')
+  })
+
+  it('should fall to a dim non-flash target and return to a randomized travel hold', () => {
+    const state = createOpacityTwinkleState(motion, createRandom([1, 0]))
+    const random = createRandom([0, 0, 0, 0.5])
+
+    advanceOpacityTwinkle(state, motion, 1.5, random)
+
+    expect(state).toMatchObject({
+      durationSeconds: motion.fall.minimumSeconds,
+      flashActive: false,
+      fromOpacity: 0.4,
+      phase: 'transitioning',
+      targetOpacity: 0,
+    })
+
+    expect(advanceOpacityTwinkle(state, motion, motion.fall.minimumSeconds, random)).toBe(0)
+    expect(state).toMatchObject({
+      durationSeconds: 3.75,
+      elapsedSeconds: 0,
+      phase: 'holding',
+    })
   })
 })

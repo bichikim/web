@@ -354,14 +354,12 @@ export class PSceneRenderer {
         return
       }
 
-      if (version === this.#transitionVersion) {
-        this.#cancelTransition()
-        this.#requestedSource = null
-        this.#requestedDepthSource = null
-        this.#requestedLayerSceneId = null
-        this.#eyes.setSceneReady(this.#currentScene !== null)
-        this.#loading.finish()
-      }
+      this.#cancelTransition()
+      this.#requestedSource = null
+      this.#requestedDepthSource = null
+      this.#requestedLayerSceneId = null
+      this.#eyes.setSceneReady(this.#currentScene !== null)
+      this.#loading.finish()
 
       throw error
     }

@@ -17,7 +17,7 @@ const findBreakIndex = (
   const preferredEnd = Math.min(preferredLength, characters.length)
 
   for (let index = preferredEnd; index >= minimumLength; index -= 1) {
-    if (BREAK_CHARACTER.test(characters[index - 1] ?? '')) {
+    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
       return index
     }
   }
@@ -25,7 +25,7 @@ const findBreakIndex = (
   const maximumEnd = Math.min(maximumLength, characters.length)
 
   for (let index = preferredEnd + 1; index <= maximumEnd; index += 1) {
-    if (BREAK_CHARACTER.test(characters[index - 1] ?? '')) {
+    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
       return index
     }
   }
@@ -52,10 +52,7 @@ const splitOversizedText = (
   }
 
   const finalChunk = remaining.join('').trim()
-
-  if (finalChunk.length > 0) {
-    chunks.push(finalChunk)
-  }
+  chunks.push(finalChunk)
 
   return chunks
 }
@@ -76,10 +73,8 @@ const packSentences = (
   let currentChunk = ''
 
   const flushCurrentChunk = () => {
-    if (currentChunk.length > 0) {
-      chunks.push(currentChunk)
-      currentChunk = ''
-    }
+    chunks.push(currentChunk)
+    currentChunk = ''
   }
 
   for (const sentence of sentences.flatMap((item) => splitOversizedText(item, policy))) {

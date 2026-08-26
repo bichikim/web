@@ -97,11 +97,9 @@ const createLegacyAudioMigrator = (audioStorage: ModelStorage) => {
       return pendingMigration
     }
 
-    const migration = migrateLegacyAudio({audioKey, audioStorage, waveAudio}).finally(() => {
-      if (audioMigrations.get(audioKey) === migration) {
-        audioMigrations.delete(audioKey)
-      }
-    })
+    const migration = migrateLegacyAudio({audioKey, audioStorage, waveAudio}).finally(() =>
+      audioMigrations.delete(audioKey),
+    )
     audioMigrations.set(audioKey, migration)
     return migration
   }

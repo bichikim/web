@@ -41,6 +41,13 @@ it('should return a validated account session and preserve an invalid session bo
   await expect(readAccountSession()).resolves.toBeNull()
 })
 
+it('should preserve transport failures while reading the account session', async () => {
+  const error = new TypeError('network unavailable')
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(error))
+
+  await expect(readAccountSession()).rejects.toBe(error)
+})
+
 it('should serialize an account-link completion and preserve a successful status', async () => {
   const fetchMock = vi
     .fn<typeof fetch>()

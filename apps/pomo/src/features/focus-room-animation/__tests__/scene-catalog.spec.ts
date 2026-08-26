@@ -3,13 +3,37 @@ import {describe, expect, it} from 'vitest'
 import {FOCUS_ROOM_JAW_CHANNEL, P_MOUTH_TRANSITION_STAGES} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
 import {getPSceneLayer, getPSceneReviewLayer} from '../scene-layer-catalog'
+import {createMouthTransitionLayers} from '../mouth-layers'
 
 describe('focus room scene catalog', () => {
+  it('should omit unavailable optional mouth transition layers', () => {
+    expect(
+      createMouthTransitionLayers({
+        parentAttachmentId: 'head',
+        position: {x: 0, y: 0},
+        sources: {},
+      }),
+    ).toEqual([])
+  })
+
   it('should provide all twelve unique scene combinations', () => {
     const ids = FOCUS_ROOM_SCENES.map((scene) => scene.id)
 
     expect(ids).toHaveLength(12)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('should expose day reading focus as the stable default catalog entry', () => {
+    const defaultScene = FOCUS_ROOM_SCENES[0]
+
+    expect(defaultScene?.id).toBe('day-reading-focused')
+    expect(getPScene('day', 'reading', 'focused')).toBe(defaultScene)
+  })
+
+  it('should reject an unknown scene identifier combination', () => {
+    expect(() => getPScene('dawn' as never, 'reading', 'focused')).toThrow(
+      'Missing focus room scene: dawn-reading-focused',
+    )
   })
 
   it('should keep every scene definition independently addressable', () => {

@@ -133,6 +133,21 @@ it('should skip collection when the locked weather row is already current', asyn
   expect(mocks.fetchKmaObservation).not.toHaveBeenCalled()
 })
 
+it('should use the current time when none is supplied', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-08-22T05:50:00.000Z'))
+  mocks.hasCurrentWeather.mockResolvedValue(true)
+
+  await expect(ingestWeatherCity('seoul')).resolves.toEqual({status: 'current'})
+  expect(mocks.hasCurrentWeather).toHaveBeenCalledWith(
+    'seoul',
+    new Date('2026-08-22T05:00:00.000Z'),
+    new Date('2026-08-22T05:45:00.000Z'),
+    transaction,
+  )
+  vi.useRealTimers()
+})
+
 it('should return quickly while another instance owns a live lease', async () => {
   mocks.getWeatherCollectionState.mockResolvedValue({
     leaseExpiresAt: new Date('2026-08-22T05:50:15.000Z'),
@@ -178,6 +193,18 @@ it('should record a provider failure in a new short transaction', async () => {
   expect(mocks.ownsWeatherCollectionLease).toHaveBeenCalledOnce()
   expect(mocks.recordWeatherCollectionFailure).toHaveBeenCalledWith('seoul', now, transaction)
   expect(mocks.saveWeather).not.toHaveBeenCalled()
+})
+
+it('should defer a provider failure after another instance replaces the lease', async () => {
+  const now = new Date('2026-08-22T05:50:00.000Z')
+  mocks.fetchKmaSky.mockRejectedValue(new Error('provider unavailable'))
+  mocks.ownsWeatherCollectionLease.mockResolvedValue(false)
+
+  await expect(ingestWeatherCity('seoul', now)).resolves.toEqual({
+    retryAfter: new Date('2026-08-22T05:50:02.000Z'),
+    status: 'collecting',
+  })
+  expect(mocks.recordWeatherCollectionFailure).not.toHaveBeenCalled()
 })
 
 it('should roll back only the weather save and persist its failure count', async () => {

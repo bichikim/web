@@ -104,6 +104,15 @@ it('should split long audio across valid Ogg pages', async () => {
   expect(pages[3]).toMatchObject({headerType: 0x04, sequence: 3})
 })
 
+it('should reject an oversized encoded packet and release the encoder', async () => {
+  encoderMocks.encodeFloat.mockReturnValueOnce(new Uint8Array(65_025))
+
+  await expect(encodeOpusBlob(Float32Array.of(0.25), 24_000)).rejects.toThrow(
+    'An Opus packet is too large for one Ogg page.',
+  )
+  expect(encoderMocks.free).toHaveBeenCalledOnce()
+})
+
 it('should reject empty audio and unsupported sample rates', async () => {
   await expect(encodeOpusBlob(new Float32Array(), 24_000)).rejects.toThrow(
     'Cannot encode empty audio.',

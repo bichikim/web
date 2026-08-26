@@ -52,3 +52,20 @@ it('should ignore a delayed recovery retry after the provider is disposed', asyn
 
   expect(controller.retryRecovery).not.toHaveBeenCalled()
 })
+
+it('should delegate recovery retries while the provider is active', async () => {
+  const controller = createController()
+  vi.mocked(usePFeeds).mockReturnValue(controller)
+  let captured: PFeedController | undefined
+  const CaptureContext = () => {
+    captured = usePFeedContext()
+    return null
+  }
+  render(() => (
+    <PFeedProvider>
+      <CaptureContext />
+    </PFeedProvider>
+  ))
+  await captured?.retryRecovery()
+  expect(controller.retryRecovery).toHaveBeenCalledOnce()
+})

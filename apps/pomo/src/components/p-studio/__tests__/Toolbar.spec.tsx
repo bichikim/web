@@ -1,25 +1,27 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
-import {expect, it, vi} from 'vitest'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {
-  type ModelDownloadController,
-  type ModelDownloadRuntime,
-  PModelDownloadProvider,
-  useModelDownload,
-} from '../../../features/model-download'
+import {getPomoIconClass} from '../../icon-style'
+import {PIconButton} from '../../PIconButton'
+import {PSelect} from '../../PSelect'
+import {PWeatherStatus} from '../../PWeatherStatus'
+import {PScribbleCircleControl} from '../../scribble/CircleControl'
+import {getNextTimeMode} from '../../../features/focus-room-time'
+import {SceneSettingsPanel} from '../SettingsPanel'
 import {SceneToolbar} from '../Toolbar'
 
-vi.mock('../../PSelect', () => ({PSelect: () => null}))
-vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: () => null}))
+vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
+vi.mock('../../PIconButton', () => ({PIconButton: vi.fn()}))
+vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
+vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
+vi.mock('../../../features/focus-room-time', () => ({getNextTimeMode: vi.fn()}))
+vi.mock('../../PModelDownloadStatus', () => ({PModelDownloadStatus: () => null}))
+vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
 
-const createToolbarProps = () => ({
-  activity: 'reading' as const,
-  gaze: 'focused' as const,
-  isSceneTransitioning: false,
-  motionInput: 'drag' as const,
-  motionMode: 'depth' as const,
+const callbacks = {
   onActivityChange: vi.fn(),
   onGazeChange: vi.fn(),
   onMotionInputChange: vi.fn(),
@@ -29,47 +31,103 @@ const createToolbarProps = () => ({
   onTimeModeChange: vi.fn(),
   onWeatherCityChange: vi.fn(),
   onWeatherEnabledChange: vi.fn(),
-  sceneStyle: 'original' as const,
-  screenSaverDelay: 'off' as const,
-  time: 'day' as const,
-  timeMode: 'auto' as const,
-  weatherCitySlug: 'seoul' as const,
-  weatherEnabled: true,
-  weatherState: {citySlug: 'seoul' as const, status: 'loading' as const},
-})
-
-const renderToolbar = () => {
-  let download: ModelDownloadController | undefined
-  const dispose = vi.fn()
-  const runtime: ModelDownloadRuntime = {
-    createTextClient: vi.fn(() => ({dispose, prepare: vi.fn()})),
-    createVoiceClient: vi.fn(() => {
-      throw new Error('음성 client를 만들면 안 됩니다.')
-    }),
-  }
-  const CaptureToolbar = () => {
-    download = useModelDownload()
-    return <SceneToolbar {...createToolbarProps()} />
-  }
-  render(() => (
-    <PModelDownloadProvider runtime={runtime}>
-      <CaptureToolbar />
-    </PModelDownloadProvider>
-  ))
-
-  if (download === undefined) {
-    throw new Error('모델 다운로드 controller가 준비되지 않았습니다.')
-  }
-
-  return {dispose, download}
 }
 
-it('should place download progress immediately after weather in the active scene toolbar', () => {
-  const {download} = renderToolbar()
-  download.startTextModel('gemma-4-e2b')
+const baseProps = {
+  activity: 'reading',
+  canUseGyroscope: true,
+  gaze: 'focused',
+  isSceneTransitioning: false,
+  motionInput: 'drag',
+  motionMode: 'pan',
+  sceneStyle: 'original',
+  screenSaverDelay: '5s',
+  time: 'day',
+  timeMode: 'auto',
+  weatherCitySlug: 'seoul',
+  weatherEnabled: true,
+  weatherState: {status: 'disabled'},
+  ...callbacks,
+} as const
 
-  const statuses = screen.getAllByRole('status')
-  expect(statuses).toHaveLength(2)
-  expect(statuses[0]?.textContent).toContain('서울')
-  expect(statuses[1]?.textContent).toContain('Gemma 4 E2B 모델 받는 중')
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(getPomoIconClass).mockImplementation((icon) => `icon:${icon}`)
+  vi.mocked(getNextTimeMode).mockReturnValue('day')
+  vi.mocked(PScribbleCircleControl).mockImplementation((props) => {
+    Object.values(props)
+    return <div>{props.children}</div>
+  })
+  vi.mocked(PIconButton).mockImplementation((props) => {
+    Object.values(props)
+    return (
+      <button onClick={(event) => props.onPress(event.currentTarget)} type="button">
+        {props.accessibleLabel}
+      </button>
+    )
+  })
+  vi.mocked(PSelect).mockImplementation((props) => {
+    Object.values(props)
+    props.getIconClass?.('i-tabler-test')
+    return null
+  })
+  vi.mocked(SceneSettingsPanel).mockImplementation((props) => {
+    Object.values(props)
+    return <div>{props.fallback}</div>
+  })
+  vi.mocked(PWeatherStatus).mockImplementation((props) => {
+    Object.values(props)
+    return null
+  })
+})
+
+describe('SceneToolbar', () => {
+  it('should expose automatic time and forward all toolbar properties', () => {
+    render(() => <SceneToolbar {...baseProps} />)
+
+    const timeButton = screen.getByRole('button')
+    expect(timeButton).toHaveAccessibleName(expect.stringContaining('낮'))
+    fireEvent.click(timeButton)
+    expect(getNextTimeMode).toHaveBeenCalledWith('auto')
+    expect(callbacks.onTimeModeChange).toHaveBeenCalledWith('day')
+    expect(PSelect).toHaveBeenCalled()
+    expect(SceneSettingsPanel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activity: 'reading',
+        motionInput: 'drag',
+        sceneStyle: 'original',
+        weatherCitySlug: 'seoul',
+      }),
+    )
+    expect(PWeatherStatus).toHaveBeenCalledWith(
+      expect.objectContaining({sceneStyle: 'original', state: {status: 'disabled'}}),
+    )
+  })
+
+  it('should render selected time and the transition status for scribble scenes', () => {
+    render(() => (
+      <SceneToolbar
+        {...baseProps}
+        isSceneTransitioning
+        sceneStyle="scribble"
+        time="night"
+        timeMode="night"
+      />
+    ))
+
+    expect(screen.getByRole('status')).toBeInTheDocument()
+    expect(screen.getByRole('button')).toHaveAccessibleName(expect.stringContaining('밤'))
+    expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
+  })
+
+  it('should fall back to the first time option for an unexpected mode', () => {
+    render(() => (
+      <SceneToolbar
+        {...baseProps}
+        timeMode={'unexpected' as unknown as typeof baseProps.timeMode}
+      />
+    ))
+
+    expect(screen.getByRole('button')).toBeInTheDocument()
+  })
 })

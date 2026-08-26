@@ -6,6 +6,7 @@ import {type AlbumDraftData, createEmptyAlbumTranslations} from '../album-draft'
 import {
   type AlbumDraftStorage,
   deleteAlbumDraft,
+  deleteAlbumDraftCover,
   deleteExpiredAlbumDraftCovers,
   readAlbumDraftCover,
   readAlbumDraftData,
@@ -80,6 +81,17 @@ describe('album draft data storage', () => {
 
     expect(readAlbumDraftData(storage)).toBeNull()
     expect(warn).toHaveBeenCalledOnce()
+  })
+
+  it('should report metadata write failures', () => {
+    const storage = createStorage()
+    const error = new Error('session unavailable')
+    vi.mocked(storage.writeData).mockImplementationOnce(() => {
+      throw error
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    expect(writeAlbumDraftData(createDraft(), storage)).toEqual({error, success: false})
   })
 })
 
@@ -165,5 +177,41 @@ describe('album draft cover storage', () => {
 
     expect(result).toEqual({error, success: false})
     expect(warn).toHaveBeenCalledOnce()
+  })
+
+  it('should report cover read and deletion failures', async () => {
+    const storage = createStorage()
+    const readError = new Error('read failed')
+    const deleteError = new Error('delete failed')
+    vi.mocked(storage.readCover).mockRejectedValueOnce(readError)
+    vi.mocked(storage.deleteCover).mockRejectedValueOnce(deleteError)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await expect(readAlbumDraftCover('cover', storage)).resolves.toBeNull()
+    await expect(deleteAlbumDraftCover('cover', storage)).resolves.toEqual({
+      error: deleteError,
+      success: false,
+    })
+  })
+
+  it('should preserve the most relevant failure while deleting a draft', async () => {
+    const storage = createStorage()
+    const dataError = new Error('data delete failed')
+    vi.mocked(storage.deleteData).mockImplementationOnce(() => {
+      throw dataError
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await expect(deleteAlbumDraft(null, storage)).resolves.toEqual({
+      error: dataError,
+      success: false,
+    })
+
+    const coverError = new Error('cover delete failed')
+    vi.mocked(storage.deleteCover).mockRejectedValueOnce(coverError)
+    await expect(deleteAlbumDraft('cover', storage)).resolves.toEqual({
+      error: coverError,
+      success: false,
+    })
   })
 })

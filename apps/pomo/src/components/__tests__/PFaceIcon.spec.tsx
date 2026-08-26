@@ -22,3 +22,12 @@ it('should render the face icon set matching the scene style', () => {
 
   expect(image.getAttribute('src')).toBe(scribbleJoyFace)
 })
+
+it('should hide a decorative face icon from accessibility APIs', () => {
+  const {container} = render(() => <PFaceIcon alt="" class="face" mood="calm" />)
+
+  expect(container.querySelector('img')).toMatchObject({
+    ariaHidden: 'true',
+    className: 'face',
+  })
+})

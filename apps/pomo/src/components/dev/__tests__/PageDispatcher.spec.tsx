@@ -52,7 +52,7 @@ it('should preserve a development page URL with a trailing slash', async () => {
 })
 
 it('should render the 404 fallback for an unknown development path', () => {
-  render(() => (
+  const result = render(() => (
     <PageDispatcher
       fallback={<output data-testid="not-found">404</output>}
       pathname="/dev/unknown"
@@ -60,6 +60,12 @@ it('should render the 404 fallback for an unknown development path', () => {
   ))
 
   expect(screen.getByTestId('not-found').textContent).toBe('404')
+
+  result.unmount()
+  render(() => (
+    <PageDispatcher fallback={<output data-testid="root-fallback">root</output>} pathname="///" />
+  ))
+  expect(screen.getByTestId('root-fallback').textContent).toBe('root')
 })
 
 it('should own the development terms metadata', async () => {

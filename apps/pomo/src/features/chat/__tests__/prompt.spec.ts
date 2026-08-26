@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {
   createChatMessages,
+  createSummaryMessages,
   limitChatAnswer,
   MAXIMUM_CHAT_ANSWER_CHARACTERS,
   takeChatAnswerPrefix,
@@ -47,5 +48,41 @@ describe('chat answer length policy', () => {
 
   it('should count Unicode code points when limiting a streamed token', () => {
     expect(takeChatAnswerPrefix('가😀나', 2)).toBe('가😀')
+    expect(takeChatAnswerPrefix('가😀나', -1)).toBe('')
+  })
+
+  it('should keep answers that already satisfy the hard limit', () => {
+    const answer = '가'.repeat(MAXIMUM_CHAT_ANSWER_CHARACTERS)
+
+    expect(limitChatAnswer(answer)).toBe(answer)
+  })
+
+  it('should trim trailing whitespace before the truncation mark', () => {
+    const answer = `${'가'.repeat(MAXIMUM_CHAT_ANSWER_CHARACTERS - 2)}  나머지`
+
+    expect(limitChatAnswer(answer)).toBe(`${'가'.repeat(MAXIMUM_CHAT_ANSWER_CHARACTERS - 2)}…`)
+  })
+})
+
+describe('createSummaryMessages', () => {
+  const messages = [
+    {content: '안녕', id: 'user-1', role: 'user' as const},
+    {content: '반가워요', id: 'assistant-1', role: 'assistant' as const},
+  ]
+
+  it('should label both sides of a transcript without a previous summary', () => {
+    const summaryMessages = createSummaryMessages({messages, previousSummary: ''})
+
+    expect(summaryMessages[0]?.role).toBe('system')
+    expect(summaryMessages[1]).toEqual({
+      content: '새로 압축할 대화:\n사용자: 안녕\n어시스턴트: 반가워요',
+      role: 'user',
+    })
+  })
+
+  it('should prepend the previous summary when continuing compression', () => {
+    const summaryMessages = createSummaryMessages({messages: [], previousSummary: '기존 내용'})
+
+    expect(summaryMessages[1]?.content).toBe('기존 메모:\n기존 내용\n\n새로 압축할 대화:\n')
   })
 })

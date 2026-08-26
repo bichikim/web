@@ -6,6 +6,7 @@ import {For} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PSelect} from 'src/components/PSelect'
+import {PFeedContext, type PFeedController} from 'src/features/focus-room-feed'
 import PFeedSettingsContent from '../feed-settings/Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
@@ -127,6 +128,35 @@ it('should use the public server origin for Apps in Toss recommendations', () =>
   fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
 
   expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
+})
+
+it('should omit development recommendations in production', () => {
+  vi.stubEnv('DEV', false)
+
+  renderSettings()
+
+  expect(screen.getByText('오늘의 역사')).toBeDefined()
+  expect(screen.queryByText('Pomofi 5분 RSS')).toBeNull()
+  expect(screen.queryByText('Pomofi 5분 Atom')).toBeNull()
+})
+
+it('should render saved dialogues when a feed runtime is available', () => {
+  const runtime = {
+    dialogues: () => [],
+    issues: () => [],
+    syncNow: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PFeedController
+
+  render(() => (
+    <PFeedContext.Provider value={runtime}>
+      <PFeedSettingsContent />
+    </PFeedContext.Provider>
+  ))
+
+  expect(screen.getByRole('heading', {name: '피드 대화'})).toBeDefined()
+  expect(
+    screen.getByText('아직 완성된 피드 대화가 없어요. 새 항목을 확인하면 자동으로 만들어요.'),
+  ).toBeDefined()
 })
 
 it('should apply compact spacing to feed settings groups', () => {

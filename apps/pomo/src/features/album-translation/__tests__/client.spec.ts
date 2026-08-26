@@ -63,6 +63,13 @@ describe('createAlbumTranslationClient', () => {
       restartRequired: true,
       type: 'error',
     })
+
+    FakeWorker.current?.emitError('')
+    expect(onResponse).toHaveBeenLastCalledWith({
+      message: 'Gemma 4 번역 Worker 실행 오류',
+      restartRequired: true,
+      type: 'error',
+    })
   })
 
   it('should terminate the worker on disposal', () => {

@@ -51,6 +51,20 @@ describe('authenticated track preview route', () => {
     expect(repositoryMocks.findPublishedTrackPreviewAsset).not.toHaveBeenCalled()
   })
 
+  it.each([
+    ['invalid', ASSET.assetId],
+    [TRACK_ID, 'invalid'],
+  ])('should reject invalid preview identifiers', async (trackId, assetId) => {
+    const request = new Request(
+      `https://www.pomofi.io/api/music/tracks/${trackId}/preview?asset=${assetId}&token=preview-token`,
+    )
+
+    const response = await invokeApiRoute(GET, request, {trackId})
+
+    expect(response.status).toBe(400)
+    expect(previewMocks.verifyPreviewAccess).not.toHaveBeenCalled()
+  })
+
   it('should reject a token that is not valid for the active preview asset', async () => {
     previewMocks.verifyPreviewAccess.mockResolvedValue(null)
 
@@ -59,6 +73,15 @@ describe('authenticated track preview route', () => {
     expect(response.status).toBe(401)
     expect(repositoryMocks.findPublishedTrackPreviewAsset).not.toHaveBeenCalled()
     expect(storageMocks.ensureTrackPreviewObject).not.toHaveBeenCalled()
+  })
+
+  it('should reject a token for a different asset', async () => {
+    previewMocks.verifyPreviewAccess.mockResolvedValue({...ASSET, assetId: TRACK_ID})
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(401)
+    expect(repositoryMocks.findPublishedTrackPreviewAsset).not.toHaveBeenCalled()
   })
 
   it('should stream only the server-created preview object for a published track', async () => {
@@ -85,6 +108,31 @@ describe('authenticated track preview route', () => {
     expect(response.headers.get('Content-Range')).toBe('bytes 0-2/7')
     expect(await response.text()).toBe('pre')
   })
+
+  it.each([
+    ['bytes=-3', 'bytes 4-6/7', 'iew'],
+    ['bytes=2-', 'bytes 2-6/7', 'eview'],
+    ['bytes=2-99', 'bytes 2-6/7', 'eview'],
+  ])('should serve the valid %s byte range', async (range, contentRange, body) => {
+    const request = new Request(createRequest(), {headers: {Range: range}})
+
+    const response = await invokeApiRoute(GET, request, {trackId: TRACK_ID})
+
+    expect(response.status).toBe(206)
+    expect(response.headers.get('Content-Range')).toBe(contentRange)
+    expect(await response.text()).toBe(body)
+  })
+
+  it.each(['malformed', 'bytes=-0', 'bytes=-', 'bytes=5-2', 'bytes=999999999999999999999-'])(
+    'should reject the invalid %s byte range',
+    async (range) => {
+      const request = new Request(createRequest(), {headers: {Range: range}})
+
+      const response = await invokeApiRoute(GET, request, {trackId: TRACK_ID})
+
+      expect(response.status).toBe(416)
+    },
+  )
 
   it('should reject an unsatisfiable byte range without reading the body', async () => {
     const request = new Request(createRequest(), {headers: {Range: 'bytes=7-'}})
@@ -119,5 +167,42 @@ describe('authenticated track preview route', () => {
 
     expect(response.status).toBe(404)
     expect(storageMocks.ensureTrackPreviewObject).not.toHaveBeenCalled()
+  })
+
+  it('should reject an asset whose storage object changed without changing its id', async () => {
+    repositoryMocks.findPublishedTrackPreviewAsset.mockResolvedValue({
+      ...ASSET,
+      objectKey: 'tracks/replaced/source.mp3',
+    })
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(404)
+    expect(storageMocks.ensureTrackPreviewObject).not.toHaveBeenCalled()
+  })
+
+  it('should omit ETag when storage has no entity tag', async () => {
+    storageMocks.ensureTrackPreviewObject.mockResolvedValue({
+      body: new Response('preview').body,
+      contentLength: 7,
+      etag: null,
+    })
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(200)
+    expect(response.headers.has('ETag')).toBe(false)
+  })
+
+  it('should hide preview creation failures behind a stable service error', async () => {
+    const error = new Error('preview storage unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    storageMocks.ensureTrackPreviewObject.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'preview_unavailable'})
+    expect(consoleError).toHaveBeenCalledWith('Failed to create authenticated music preview', error)
   })
 })

@@ -74,6 +74,12 @@ describe('getSupertonicErrorMessage', () => {
       }),
     ).toBe('모델 다운로드에 실패했어요.')
   })
+
+  it('should reject an unknown error code at the exhaustive boundary', () => {
+    expect(() =>
+      getSupertonicErrorMessage({code: 'future-error'} as unknown as SupertonicError),
+    ).toThrow('처리하지 않은 Supertonic 오류: {"code":"future-error"}')
+  })
 })
 
 describe('getErrorDetail', () => {

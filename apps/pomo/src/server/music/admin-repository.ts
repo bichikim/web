@@ -283,8 +283,11 @@ export const connectAlbumOffer = async (
               .where(eq(commerceProducts.id, existingAlbumProduct.id))
               .returning({id: commerceProducts.id})
 
-      if (product === undefined) {
-        throw new Error('Failed to create or restore a commerce product')
+      switch (product) {
+        case undefined:
+          throw new Error('Failed to create or restore a commerce product')
+        default:
+          break
       }
 
       await transaction

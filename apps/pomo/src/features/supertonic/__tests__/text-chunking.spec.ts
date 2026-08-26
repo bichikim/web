@@ -80,4 +80,16 @@ describe('splitSpeechText', () => {
 
     expect(splitSpeechText(`${firstPart} ${secondPart}`, POLICY)).toEqual([firstPart, secondPart])
   })
+
+  it('should tolerate a zero split consideration boundary from runtime policy data', () => {
+    const policy = {...POLICY, considerSplitLength: 0, maximumLength: 3, recommendedLength: 1}
+
+    expect(splitSpeechText('가나다라', policy)).toEqual(['가', '나다라'])
+  })
+
+  it('should enforce a runtime maximum shorter than the recommendation', () => {
+    const policy = {...POLICY, maximumLength: 4, recommendedLength: 10}
+
+    expect(splitSpeechText('하나. 둘.', policy)).toEqual(['하나.', '둘.'])
+  })
 })

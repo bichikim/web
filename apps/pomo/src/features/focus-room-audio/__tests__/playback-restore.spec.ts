@@ -8,11 +8,37 @@ const TRACKS = [
 ] as const
 
 describe('resolvePlaybackRestore', () => {
+  it('should return an empty restore when no tracks are available', () => {
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 4,
+        storedPlayback: {isPlaying: true, positionSeconds: 8, trackId: 'removed'},
+        tracks: [],
+      }),
+    ).toEqual({currentIndex: 0, playback: null, shouldPersist: false})
+  })
+
   it('should preserve the fallback selection without stored playback', () => {
     expect(
       resolvePlaybackRestore({fallbackIndex: 1, storedPlayback: null, tracks: TRACKS}),
     ).toEqual({currentIndex: 1, playback: null, shouldPersist: false})
   })
+
+  it.each([
+    {expectedIndex: 1, fallbackIndex: -1},
+    {expectedIndex: 1, fallbackIndex: 3},
+  ])(
+    'should wrap fallback index $fallbackIndex to $expectedIndex',
+    ({expectedIndex, fallbackIndex}) => {
+      expect(resolvePlaybackRestore({fallbackIndex, storedPlayback: null, tracks: TRACKS})).toEqual(
+        {
+          currentIndex: expectedIndex,
+          playback: null,
+          shouldPersist: false,
+        },
+      )
+    },
+  )
 
   it('should restore a track that remains in the playlist', () => {
     const storedPlayback = {isPlaying: true, positionSeconds: 8, trackId: 'two'}

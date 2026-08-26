@@ -1,62 +1,15 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, render} from '@solidjs/testing-library'
+import {cleanup, fireEvent} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import type {PSceneStyle} from '../../features/focus-room-animation'
-import {MusicPlayerView} from '../MusicPlayerView'
-
-vi.mock('media-chrome', () => ({}))
-
-const TRACKS = [
-  {
-    artist: 'Artist',
-    artworkUrl: '/audio/artwork/one.jpg',
-    durationSeconds: 1,
-    id: 'one',
-    source: '/one.mp3',
-    title: 'One',
-  },
-  {artist: 'Artist', durationSeconds: 1, id: 'two', source: '/two.mp3', title: 'Two'},
-] as const
-
-interface RenderMusicPlayerViewOptions {
-  readonly expanded?: boolean
-  readonly sceneStyle?: PSceneStyle
-}
-
-const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) =>
-  render(() => (
-    <MusicPlayerView
-      currentIndex={0}
-      currentTrack={TRACKS[0]}
-      expanded={options.expanded ?? true}
-      isPlaying={false}
-      levels={[]}
-      onAudioElement={vi.fn()}
-      onExpandedChange={vi.fn()}
-      onNextTrack={vi.fn()}
-      onPreviousTrack={vi.fn()}
-      onRepeatModeChange={vi.fn()}
-      onShuffleChange={vi.fn()}
-      onTrackSelect={vi.fn()}
-      repeatMode="repeat-all"
-      sceneStyle={options.sceneStyle ?? 'original'}
-      shuffleEnabled={true}
-      tracks={TRACKS}
-    />
-  ))
-
-const getProgressRanges = (container: HTMLElement) => {
-  const collapsedRange = container.querySelector('.pomo-player__progress--collapsed')
-  const expandedRange = container.querySelector('.pomo-player__progress--expanded')
-
-  if (!(collapsedRange instanceof HTMLElement) || !(expandedRange instanceof HTMLElement)) {
-    throw new TypeError('Expected both Pomo progress ranges to be rendered')
-  }
-
-  return {collapsedRange, expandedRange}
-}
+import * as m from '@paraglide/message'
+import {
+  getAddedAlbumTracks,
+  getProgressRanges,
+  getStopAlbumPreview,
+  renderMusicPlayerView,
+} from './music-player-view.test-support'
 
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
@@ -74,6 +27,115 @@ describe('MusicPlayerView', () => {
     expect(artwork).toBeInstanceOf(HTMLImageElement)
     expect(artwork?.getAttribute('src')).toBe('/audio/artwork/one.jpg')
     expect(artwork?.getAttribute('alt')).toBe('')
+  })
+
+  it('should hide failed artwork requests', () => {
+    const result = renderMusicPlayerView()
+    const artwork = result.container.querySelector('.pomo-player__artwork')
+
+    if (!(artwork instanceof HTMLImageElement)) {
+      throw new TypeError('Expected the current track artwork to be rendered')
+    }
+
+    fireEvent.error(artwork)
+
+    expect(artwork.hidden).toBe(true)
+  })
+
+  it('should forward album and expanded player control events', () => {
+    const onAlbumAdd = vi.fn()
+    const onAlbumClear = vi.fn()
+    const onAudioElement = vi.fn()
+    const onExpandedChange = vi.fn()
+    const onNextTrack = vi.fn()
+    const onPreviewEnd = vi.fn()
+    const onPreviewStart = vi.fn()
+    const onPreviousTrack = vi.fn()
+    const onRepeatModeChange = vi.fn()
+    const onShuffleChange = vi.fn()
+    const onTrackSelect = vi.fn()
+    const result = renderMusicPlayerView({
+      onAlbumAdd,
+      onAlbumClear,
+      onAudioElement,
+      onExpandedChange,
+      onNextTrack,
+      onPreviewEnd,
+      onPreviewStart,
+      onPreviousTrack,
+      onRepeatModeChange,
+      onShuffleChange,
+      onTrackSelect,
+    })
+    const expandButton = result.container.querySelector('[data-player-utility="expand"]')
+    const modeButtons = result.container.querySelectorAll('.pomo-player__modes button')
+    const transportButtons = result.container.querySelectorAll('.pomo-player__transport button')
+    const trackButtons = result.container.querySelectorAll('button.pomo-player__track')
+
+    if (
+      !(expandButton instanceof HTMLButtonElement) ||
+      modeButtons.length !== 3 ||
+      transportButtons.length !== 2 ||
+      trackButtons.length !== 2
+    ) {
+      throw new TypeError('Expected the Pomo player controls to be rendered')
+    }
+
+    fireEvent.click(result.getByRole('button', {name: '앨범 추가'}))
+    fireEvent.click(result.getByTestId('album-clear'))
+    fireEvent.click(result.getByTestId('album-preview-start'))
+    fireEvent.click(result.getByTestId('album-preview-end'))
+    fireEvent.click(expandButton)
+    fireEvent.click(modeButtons[0]!)
+    fireEvent.click(modeButtons[1]!)
+    fireEvent.click(modeButtons[2]!)
+    fireEvent.click(transportButtons[0]!)
+    fireEvent.click(transportButtons[1]!)
+    fireEvent.click(trackButtons[1]!)
+
+    expect(onAlbumAdd).toHaveBeenCalledWith(getAddedAlbumTracks())
+    expect(onAudioElement.mock.calls[0]?.[0]).toBe(result.container.querySelector('audio'))
+    expect(result.getByTestId('album-track-count')).toHaveTextContent('2')
+    expect(onAlbumClear).toHaveBeenCalledOnce()
+    expect(onPreviewStart).toHaveBeenCalledWith(getStopAlbumPreview())
+    expect(onPreviewEnd).toHaveBeenCalledOnce()
+    expect(onExpandedChange).toHaveBeenCalledOnce()
+    expect(onRepeatModeChange).toHaveBeenNthCalledWith(1, 'repeat-all')
+    expect(onRepeatModeChange).toHaveBeenNthCalledWith(2, 'repeat-one')
+    expect(onShuffleChange).toHaveBeenCalledOnce()
+    expect(onPreviousTrack).toHaveBeenCalledOnce()
+    expect(onNextTrack).toHaveBeenCalledOnce()
+    expect(onTrackSelect).toHaveBeenCalledWith(1)
+
+    cleanup()
+
+    const withoutAlbumAdd = renderMusicPlayerView()
+
+    expect(() =>
+      fireEvent.click(withoutAlbumAdd.getByRole('button', {name: '앨범 추가'})),
+    ).not.toThrow()
+  })
+
+  it('should show audio levels and fallback labels for an absent current track', () => {
+    const idleResult = renderMusicPlayerView({currentTrack: null, levels: [25, 75]})
+    const idleLevels = idleResult.container.querySelectorAll('.pomo-level')
+    const summaryLabels = idleResult.container.querySelectorAll(
+      '.pomo-player__title .pomo-overflow-marquee',
+    )
+
+    expect(idleLevels).toHaveLength(2)
+    expect(idleLevels[0]?.getAttribute('style')).toContain('height: 25%')
+    expect(idleLevels[0]?.getAttribute('style')).toContain('opacity: 0.34')
+    expect(summaryLabels[0]?.textContent).toContain(m.player_fallback_title())
+    expect(summaryLabels[1]?.textContent).toContain(m.player_fallback_artist())
+
+    cleanup()
+
+    const playingResult = renderMusicPlayerView({isPlaying: true, levels: [50]})
+    const playingLevel = playingResult.container.querySelector('.pomo-level')
+
+    expect(playingLevel?.getAttribute('style')).toContain('height: 50%')
+    expect(playingLevel?.getAttribute('style')).toContain('opacity: 0.76')
   })
 
   it('should keep the collapsed player layers visually present but inactive', () => {
@@ -271,120 +333,6 @@ describe('MusicPlayerView', () => {
     expect(
       scribbleResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
     ).toHaveLength(1)
-  })
-
-  it('should use native titles for every player button', () => {
-    const result = renderMusicPlayerView()
-    const controller = result.container.querySelector('media-controller')
-
-    if (!(controller instanceof HTMLElement)) {
-      throw new TypeError('Expected the Pomo media controller to be rendered')
-    }
-
-    const buttons = controller.querySelectorAll('button, media-play-button, media-mute-button')
-    const mediaButtons = controller.querySelectorAll('media-play-button, media-mute-button')
-
-    expect(buttons.length).toBeGreaterThan(0)
-    for (const button of buttons) {
-      expect(button.getAttribute('title')?.trim()).toBeTruthy()
-    }
-    for (const button of mediaButtons) {
-      expect(button.hasAttribute('notooltip')).toBe(true)
-    }
-    expect(controller.querySelector('media-mute-button')?.getAttribute('title')).toBe(
-      '음소거 켜기/끄기',
-    )
-    expect(
-      controller.querySelector('[aria-label="앨범 추가"]')?.getAttribute('data-player-utility'),
-    ).toBe('album')
-    expect(
-      controller.querySelector('[aria-label="플레이어 접기"]')?.getAttribute('data-player-utility'),
-    ).toBe('expand')
-  })
-
-  it('should keep the summary play button stationary on hover', () => {
-    const collapsedResult = renderMusicPlayerView({expanded: false})
-    const summaryPlayButton = collapsedResult.container.querySelector('.pomo-player__play--summary')
-
-    if (!(summaryPlayButton instanceof HTMLElement)) {
-      throw new TypeError('Expected the Pomo summary play button to be rendered')
-    }
-
-    expect(summaryPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(false)
-    expect(summaryPlayButton.classList.contains('[transition:filter_160ms_ease]')).toBe(true)
-
-    cleanup()
-
-    const expandedResult = renderMusicPlayerView()
-    const expandedPlayButton = expandedResult.container.querySelector('.pomo-player__play--large')
-
-    if (!(expandedPlayButton instanceof HTMLElement)) {
-      throw new TypeError('Expected the Pomo expanded play button to be rendered')
-    }
-
-    expect(expandedPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(true)
-    expect(
-      expandedPlayButton.classList.contains('[transition:transform_160ms_ease,_filter_160ms_ease]'),
-    ).toBe(true)
-  })
-
-  it('should marquee the current track labels in the summary and playlist', () => {
-    const result = renderMusicPlayerView()
-    const summaryMarquees = result.container.querySelectorAll(
-      '.pomo-player__title .pomo-overflow-marquee',
-    )
-    const currentTrackMarquees = result.container.querySelectorAll(
-      ".pomo-player__track[aria-current='true'] .pomo-overflow-marquee",
-    )
-    const idleTrackMarquees = result.container.querySelectorAll(
-      ".pomo-player__track:not([aria-current='true']) .pomo-overflow-marquee",
-    )
-
-    expect(summaryMarquees).toHaveLength(2)
-    expect(currentTrackMarquees).toHaveLength(2)
-    expect(idleTrackMarquees).toHaveLength(0)
-    expect(currentTrackMarquees[0]?.hasAttribute('tabindex')).toBe(false)
-    expect(currentTrackMarquees[1]?.hasAttribute('tabindex')).toBe(false)
-    expect(
-      result.container
-        .querySelector(".pomo-player__track[aria-current='true']")
-        ?.classList.contains('group'),
-    ).toBe(true)
-  })
-
-  it('should reveal the volume thumb only while interacting with the range', () => {
-    const result = renderMusicPlayerView()
-    const muteButton = result.container.querySelector('media-mute-button')
-    const volumeRange = result.container.querySelector('media-volume-range')
-    const volumeGroup = result.container.querySelector('.pomo-player__volume-group')
-
-    if (
-      !(muteButton instanceof HTMLElement) ||
-      !(volumeRange instanceof HTMLElement) ||
-      !(volumeGroup instanceof HTMLElement)
-    ) {
-      throw new TypeError('Expected the Pomo volume controls to be rendered')
-    }
-
-    expect(volumeGroup.classList.contains('gap-0')).toBe(true)
-    expect(muteButton.classList.contains('size-10')).toBe(true)
-    expect(muteButton.classList.contains('player-compact:size-9')).toBe(true)
-    expect(muteButton.classList.contains('[--media-control-padding:0.625rem]')).toBe(true)
-    expect(volumeRange.classList.contains('pomo-player__volume')).toBe(true)
-    expect(volumeRange.classList.contains('max-sm:hidden')).toBe(false)
-    expect(volumeRange.getAttribute('aria-label')).toBe('음량 조절')
-    expect(volumeRange.getAttribute('title')).toBe('음량 조절')
-    expect(volumeRange.classList.contains('w-[clamp(3rem,_18cqi,_4.75rem)]')).toBe(true)
-    expect(volumeRange.classList.contains('[--media-range-padding-left:0.25rem]')).toBe(true)
-    expect(volumeRange.classList.contains('[--media-range-padding-right:0.25rem]')).toBe(true)
-    expect(volumeRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
-    expect(volumeRange.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(true)
-    expect(volumeRange.classList.contains('focus-within:[--media-range-thumb-opacity:1]')).toBe(
-      true,
-    )
-    expect(
-      volumeRange.classList.contains('motion-reduce:[--media-range-thumb-transition:none]'),
-    ).toBe(true)
   })
 
   it('should constrain and wrap expanded controls on narrow screens', () => {

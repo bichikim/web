@@ -1,11 +1,35 @@
-import {Container, RenderTexture, Sprite} from 'pixi.js'
+import {type Application, Container, RenderTexture, Sprite} from 'pixi.js'
 import {describe, expect, it, vi} from 'vitest'
 
-import {SceneCompositeTransitions} from '../scene-composite-transition'
+import {
+  createSceneTransitions,
+  SCENE_HEIGHT,
+  SCENE_WIDTH,
+  SceneCompositeTransitions,
+} from '../scene-composite-transition'
 
 const createSnapshot = () => new Sprite(RenderTexture.create({height: 1, width: 1}))
 
 describe('SceneCompositeTransitions', () => {
+  it('should create snapshots through the application renderer', () => {
+    const texture = RenderTexture.create({height: 1, width: 1})
+    const generateTexture = vi.fn(() => texture)
+    const scene = new Container()
+    const transitions = createSceneTransitions(
+      {renderer: {generateTexture}} as unknown as Application,
+      new Container(),
+    )
+
+    transitions.capture(scene)
+
+    expect(generateTexture).toHaveBeenCalledWith({
+      frame: expect.objectContaining({height: SCENE_HEIGHT, width: SCENE_WIDTH}),
+      resolution: 1,
+      target: scene,
+    })
+    transitions.restore()
+  })
+
   it('should fade complete snapshots and restore the live scenes', () => {
     const sceneLayer = new Container()
     const outgoingScene = new Container({visible: true})

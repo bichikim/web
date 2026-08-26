@@ -35,6 +35,25 @@ describe('createPVisemeTrack', () => {
       {endMs: 300, startMs: 0, viseme: 'rest'},
     ])
   })
+
+  it('should map Latin shapes and a bilabial Hangul final', () => {
+    const cues = createPVisemeTrack({durationMs: 1_000, text: 'AeiouBmx암'})
+
+    expect(cues.map((cue) => cue.viseme)).toEqual([
+      'open',
+      'wide',
+      'round',
+      'closed',
+      'narrow',
+      'open',
+    ])
+  })
+
+  it('should merge mouth cues that are too short to display', () => {
+    const cues = createPVisemeTrack({durationMs: 100, text: 'aeo'})
+
+    expect(cues).toEqual([{endMs: 100, startMs: 0, viseme: 'open'}])
+  })
 })
 
 describe('getPVisemeAtTime', () => {

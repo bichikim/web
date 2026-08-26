@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 import {selectEventDialogues} from '../event-playback'
 
@@ -37,5 +37,27 @@ describe('selectEventDialogues', () => {
     expect(
       selectEventDialogues({dialogueIds: [], playbackMode: 'random-one', random: () => 0}),
     ).toEqual([])
+  })
+
+  it('should use the platform random source when none is provided', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+
+    expect(selectEventDialogues({dialogueIds: DIALOGUE_IDS, playbackMode: 'random-all'})).toEqual([
+      'second',
+      'third',
+      'first',
+    ])
+    expect(selectEventDialogues({dialogueIds: DIALOGUE_IDS, playbackMode: 'random-one'})).toEqual([
+      'first',
+    ])
+  })
+
+  it('should preserve an unexpected playback mode at the exhaustive fallback', () => {
+    expect(
+      selectEventDialogues({
+        dialogueIds: DIALOGUE_IDS,
+        playbackMode: 'unexpected' as never,
+      }),
+    ).toBe('unexpected')
   })
 })

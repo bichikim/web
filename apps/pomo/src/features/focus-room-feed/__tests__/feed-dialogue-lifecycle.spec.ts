@@ -125,6 +125,20 @@ it('should discard unfinished jobs from removed feed connections', async () => {
   expect(deleteJobs).toHaveBeenCalledWith(jobIds, '2026-08-14T01:00:00.000Z')
 })
 
+it('should skip deletion when every unfinished job still has a connection', async () => {
+  const deleteJobs = vi.fn(async () => undefined)
+
+  await expect(
+    discardFeedJobs({
+      connectionIds: new Set(['feed-1']),
+      feedRepository: {deleteJobs, listJobs: vi.fn(async () => [createJob('retained', 'feed-1')])},
+      updatedAt: '2026-08-14T01:00:00.000Z',
+    }),
+  ).resolves.toEqual([])
+
+  expect(deleteJobs).not.toHaveBeenCalled()
+})
+
 it('should load only actionable feed issues in newest-first order', async () => {
   const result = await loadFeedIssues({
     connectionIds: ['feed-1'],

@@ -5,25 +5,54 @@
  */
 import '@testing-library/jest-dom/vitest'
 import {cleanup} from '@solidjs/testing-library'
-import {afterEach, vi} from 'vitest'
+import {afterEach, beforeEach, vi} from 'vitest'
 
 const RGBA_CHANNEL_COUNT = 4
-const canvasContext = {
-  drawImage: vi.fn(),
-  fillRect: vi.fn(),
-  getImageData: vi.fn(() => ({data: new Uint8ClampedArray(RGBA_CHANNEL_COUNT)})),
+
+const installBrowserMocks = () => {
+  const canvasContext = {
+    drawImage: vi.fn(),
+    fillRect: vi.fn(),
+    getImageData: vi.fn(() => ({data: new Uint8ClampedArray(RGBA_CHANNEL_COUNT)})),
+  }
+
+  if (typeof HTMLCanvasElement !== 'undefined') {
+    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+      configurable: true,
+      value: vi.fn((contextId: string) =>
+        contextId === '2d' ? (canvasContext as unknown as CanvasRenderingContext2D) : null,
+      ),
+      writable: true,
+    })
+  }
+
+  if (typeof HTMLMediaElement !== 'undefined') {
+    Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+      configurable: true,
+      value: vi.fn(() => undefined),
+      writable: true,
+    })
+    Object.defineProperty(HTMLMediaElement.prototype, 'load', {
+      configurable: true,
+      value: vi.fn(() => undefined),
+      writable: true,
+    })
+  }
+
+  if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'scrollTo', {
+      configurable: true,
+      value: vi.fn(() => undefined),
+      writable: true,
+    })
+  }
 }
 
-if (typeof HTMLCanvasElement !== 'undefined') {
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((contextId) =>
-    contextId === '2d' ? (canvasContext as unknown as CanvasRenderingContext2D) : null,
-  )
-}
+installBrowserMocks()
 
-if (typeof HTMLMediaElement !== 'undefined') {
-  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
-  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
-}
+beforeEach(() => {
+  installBrowserMocks()
+})
 
 if (typeof document !== 'undefined') {
   document.cookie = 'PARAGLIDE_LOCALE=ko; path=/'

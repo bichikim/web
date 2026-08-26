@@ -26,6 +26,17 @@ vi.mock('src/features/focus-room-dialogue', async () => {
   }
 })
 
+function createDeferred<T>() {
+  let reject: (reason?: unknown) => void = () => undefined
+  let resolve: (value: T) => void = () => undefined
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+
+  return {promise, reject, resolve}
+}
+
 beforeEach(() => {
   settingsMocks.read.mockResolvedValue(DEFAULT_RANDOM_EVENT_SETTINGS)
   settingsMocks.write.mockResolvedValue(undefined)
@@ -113,4 +124,62 @@ it('should report an automatic save failure', async () => {
 
   expect(screen.getByRole('status').textContent).toBe('랜덤 이벤트 설정을 저장하지 못했어요.')
   expect(consoleError).toHaveBeenCalledOnce()
+})
+
+it('should report a loading failure after enabling interval inputs', async () => {
+  const failure = new Error('Storage unavailable')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  settingsMocks.read.mockRejectedValue(failure)
+
+  render(() => <RandomEventSettings />)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 불러오지 못했어요.')
+  expect(screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})).toBeEnabled()
+  expect(consoleError).toHaveBeenCalledWith('Failed to load random event settings.', failure)
+})
+
+it('should ignore a late settings load after disposal', async () => {
+  const deferred = createDeferred<RandomEventSettingsValue>()
+  settingsMocks.read.mockReturnValue(deferred.promise)
+  const result = render(() => <RandomEventSettings />)
+
+  result.unmount()
+  deferred.resolve({...DEFAULT_RANDOM_EVENT_SETTINGS, minimumMinutes: 12})
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(settingsMocks.write).not.toHaveBeenCalled()
+})
+
+it('should ignore a late settings load failure after disposal', async () => {
+  const deferred = createDeferred<RandomEventSettingsValue>()
+  const failure = new Error('Storage unavailable')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  settingsMocks.read.mockReturnValue(deferred.promise)
+  const result = render(() => <RandomEventSettings />)
+
+  result.unmount()
+  deferred.reject(failure)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(consoleError).toHaveBeenCalledWith('Failed to load random event settings.', failure)
+})
+
+it('should avoid showing a save error after disposal during an in-flight save', async () => {
+  const deferred = createDeferred<void>()
+  const failure = new Error('Storage unavailable')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  settingsMocks.write.mockReturnValue(deferred.promise)
+  const result = render(() => <RandomEventSettings />)
+  await vi.advanceTimersByTimeAsync(0)
+
+  fireEvent.input(screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'}), {
+    target: {value: '12'},
+  })
+  await vi.advanceTimersByTimeAsync(500)
+  result.unmount()
+  deferred.reject(failure)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(consoleError).toHaveBeenCalledWith('Failed to save random event settings.', failure)
 })

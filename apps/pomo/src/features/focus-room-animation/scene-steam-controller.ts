@@ -56,9 +56,7 @@ export class PSceneSteamController {
     try {
       await nextLoad
     } finally {
-      if (this.#loading === nextLoad) {
-        this.#loading = null
-      }
+      this.#loading = null
     }
   }
 

@@ -46,6 +46,19 @@ const createOutput = (): HistoryGenerationOutput => ({
   })),
 })
 
+const validate = (
+  output: HistoryGenerationOutput,
+  overrides: Partial<Parameters<typeof validateHistoryOutput>[0]> = {},
+) =>
+  validateHistoryOutput({
+    outputText: JSON.stringify(output),
+    policy: POLICY,
+    searchSourceUrls: SOURCE_URLS,
+    targetDay: 15,
+    targetMonth: 8,
+    ...overrides,
+  })
+
 it('should accept grounded moments for the requested calendar date', () => {
   const output = createOutput()
 
@@ -165,4 +178,106 @@ it('should reject a selected regeneration that changes a required title', () => 
       targetMonth: 8,
     }),
   ).toThrow('Generated moments do not match the required titles')
+})
+
+it('should accept normalized required titles and reject a different title count', () => {
+  const output = createOutput()
+  const requiredTitles = output.moments.map((moment) => `  ${moment.title.toUpperCase()}  `)
+
+  expect(() => validate(output, {requiredTitles})).not.toThrow()
+  expect(() => validate(output, {requiredTitles: requiredTitles.slice(1)})).toThrow(
+    'Generated moments do not match the required titles',
+  )
+})
+
+it('should reject duplicate moments after title normalization', () => {
+  const output = createOutput()
+  output.moments[1]!.eventYear = output.moments[0]!.eventYear
+  output.moments[1]!.title = `  ${output.moments[0]!.title.toUpperCase()}  `
+
+  expect(() => validate(output)).toThrow('The generated output contains a duplicate moment')
+})
+
+it('should reject an ambiguous article identity from search', () => {
+  const output = createOutput()
+  const generatedUrl = 'https://archive.example/history/generated-180983782'
+  output.moments[0]!.sources[0]!.url = generatedUrl
+  const searchSourceUrls = [
+    'https://archive.example/history/first-180983782',
+    'https://archive.example/history/second-180983782',
+    ...SOURCE_URLS,
+  ]
+
+  expect(() => validate(output, {searchSourceUrls})).toThrow(
+    'A generated source was not returned by OpenAI web search',
+  )
+})
+
+it('should accept searched source URLs at the domain root', () => {
+  const output = createOutput()
+  const rootSources = ['https://archive.example/', 'https://museum.example/']
+  output.moments[0]!.sources = [
+    {publisher: '기록보관소', title: '기록 A', url: rootSources[0]!},
+    {publisher: '박물관', title: '기록 B', url: rootSources[1]!},
+  ]
+  for (const section of Object.values(output.moments[0]!.sections)) {
+    section.sourceUrls = [...rootSources]
+  }
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, ...rootSources]})).not.toThrow()
+})
+
+it('should require two publishers for every moment', () => {
+  const output = createOutput()
+  const secondArchiveUrl = 'https://archive.example/c'
+  output.moments[0]!.sources[1] = {
+    publisher: '기록보관소',
+    title: '기록 C',
+    url: secondArchiveUrl,
+  }
+  for (const section of Object.values(output.moments[0]!.sections)) {
+    section.sourceUrls = [SOURCE_URLS[0], secondArchiveUrl]
+  }
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, secondArchiveUrl]})).toThrow(
+    'A generated moment must cite at least two publishers',
+  )
+})
+
+it('should reject a searched source from a disallowed domain', () => {
+  const output = createOutput()
+  const disallowedUrl = 'https://untrusted.example/c'
+  output.moments[0]!.sources[0]!.url = disallowedUrl
+  for (const section of Object.values(output.moments[0]!.sections)) {
+    section.sourceUrls[0] = disallowedUrl
+  }
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, disallowedUrl]})).toThrow(
+    'A generated source uses a disallowed domain: untrusted.example',
+  )
+})
+
+it('should require every section URL in the moment source list', () => {
+  const output = createOutput()
+  const extraUrl = 'https://museum.example/extra'
+  output.moments[0]!.sections.context.sourceUrls[1] = extraUrl
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, extraUrl]})).toThrow(
+    'A section cites a URL missing from the moment source list',
+  )
+})
+
+it('should require two publishers in every section', () => {
+  const output = createOutput()
+  const secondArchiveUrl = 'https://archive.example/c'
+  output.moments[0]!.sources.push({
+    publisher: '기록보관소',
+    title: '기록 C',
+    url: secondArchiveUrl,
+  })
+  output.moments[0]!.sections.context.sourceUrls = [SOURCE_URLS[0], secondArchiveUrl]
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, secondArchiveUrl]})).toThrow(
+    'Each generated section must cite at least two publishers',
+  )
 })

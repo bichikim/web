@@ -42,3 +42,12 @@ it('should replace only the platform terms on the Apps in Toss page', () => {
   expect(screen.queryByText(/지원 브라우저에서 제공됩니다/u)).toBeNull()
   expect(screen.queryByText(/웹 서비스에서는 현재 유료 상품을 판매하지 않습니다/u)).toBeNull()
 })
+
+it('should default policy navigation to the web platform', () => {
+  render(() => <PServiceTerms />)
+
+  expect(screen.getByRole('link', {name: '개인정보처리방침'})).toHaveAttribute(
+    'href',
+    '/web/privacy',
+  )
+})

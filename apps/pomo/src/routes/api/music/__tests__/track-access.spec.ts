@@ -107,4 +107,38 @@ describe('track access route', () => {
     expect(repositoryMocks.findPublishedTrackPreviewAsset).not.toHaveBeenCalled()
     expect(playbackMocks.createPlaybackAccess).not.toHaveBeenCalled()
   })
+
+  it('should reject an invalid track identifier before authentication', async () => {
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: 'invalid'})
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({error: 'invalid_track_id'})
+    expect(neonMocks.getNeonSession).not.toHaveBeenCalled()
+  })
+
+  it('should report a missing published preview asset', async () => {
+    neonMocks.getNeonSession.mockResolvedValue({
+      cookies: [],
+      identity: {id: 'neon-user-id'},
+    })
+    repositoryMocks.findPublishedTrackPreviewAsset.mockResolvedValue(null)
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(404)
+    await expect(response.json()).resolves.toEqual({error: 'track_not_found'})
+    expect(previewMocks.createPreviewAccess).not.toHaveBeenCalled()
+  })
+
+  it('should hide access resolution failures behind a stable service error', async () => {
+    const error = new Error('identity provider unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    neonMocks.getNeonSession.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'track_access_unavailable'})
+    expect(consoleError).toHaveBeenCalledWith('Failed to resolve music track access', error)
+  })
 })

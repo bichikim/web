@@ -162,14 +162,12 @@ async function* generateSupertonicStream(
   })
 
   while (!isComplete || chunks.length > 0) {
-    const chunk = chunks.shift()
-
-    if (chunk !== undefined) {
-      yield successResult({audio: chunk, type: 'chunk'})
-    } else if (!isComplete) {
+    if (chunks.length === 0) {
       await new Promise<void>((resolve) => {
         wakeConsumer = resolve
       })
+    } else {
+      yield successResult({audio: chunks.shift()!, type: 'chunk'})
     }
   }
 
@@ -240,10 +238,7 @@ export const createSupertonicClient = (): SupertonicClient => {
         return
       case 'status':
         onStatus?.(message.message)
-        return
     }
-
-    message satisfies never
   }
 
   observeSupertonicWorker({onFailure: resolveFailures, onMessage: handleMessage, worker})

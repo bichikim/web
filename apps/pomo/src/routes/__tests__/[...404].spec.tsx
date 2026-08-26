@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
+import {cleanup, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
-import {expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import NotFoundPage from 'src/routes/[...404]'
 
@@ -24,10 +24,18 @@ vi.mock('@solidjs/start', () => ({
 }))
 
 vi.mock('src/components/dev/PageDispatcher', () => ({
-  default: (props: {pathname: string}) => (
-    <output data-testid="dev-dispatcher">{props.pathname}</output>
+  default: (props: {fallback: JSX.Element; pathname: string}) => (
+    <>
+      <span hidden>{props.fallback}</span>
+      <output data-testid="dev-dispatcher">{props.pathname}</output>
+    </>
   ),
 }))
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+})
 
 it('should return a 404 page with a route back to Pomofi', () => {
   routerMocks.pathname = '/missing'
@@ -50,4 +58,23 @@ it('should not dispatch a non-development URL with the same prefix', () => {
   render(() => <NotFoundPage />)
 
   expect(screen.getByTestId('http-status').textContent).toBe('404')
+})
+
+it('should normalize a slash-only path to the root fallback', () => {
+  routerMocks.pathname = '////'
+  render(() => <NotFoundPage />)
+
+  expect(screen.getByTestId('http-status').textContent).toBe('404')
+})
+
+it('should keep development URLs on the 404 page in production', async () => {
+  vi.stubEnv('DEV', false)
+  vi.resetModules()
+  routerMocks.pathname = '/dev/chat'
+  const {default: ProductionNotFoundPage} = await import('../[...404]')
+
+  render(() => <ProductionNotFoundPage />)
+
+  expect(screen.getByTestId('http-status').textContent).toBe('404')
+  expect(screen.queryByTestId('dev-dispatcher')).not.toBeInTheDocument()
 })

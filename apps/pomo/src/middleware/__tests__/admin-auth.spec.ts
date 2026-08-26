@@ -1,15 +1,8 @@
 import {beforeEach, expect, it, vi} from 'vitest'
 
-const authMocks = vi.hoisted(() => ({handleAuthProxyRequest: vi.fn()}))
+const sessionMocks = vi.hoisted(() => ({getAdminSession: vi.fn()}))
 
-vi.mock('@neondatabase/auth/server', () => authMocks)
-vi.mock('../../server/auth/environment', () => ({
-  getNeonAuthProxyConfig: () => ({
-    baseUrl: 'https://example.neonauth.aws.neon.tech/neondb/auth',
-    cookieSecret: 'a-secure-cookie-secret-with-32-characters',
-    sameSite: 'lax',
-  }),
-}))
+vi.mock('../../server/admin-auth/session', () => sessionMocks)
 
 import {
   classifyAdminAccess,
@@ -20,7 +13,7 @@ import {
 } from '../admin-auth'
 
 beforeEach(() => {
-  authMocks.handleAuthProxyRequest.mockReset()
+  sessionMocks.getAdminSession.mockReset()
 })
 
 it.each([
@@ -76,13 +69,22 @@ it('should not redirect a regular admin URL', () => {
   expect(getCleanAuthCallbackUrl(new URL('https://pomo.example/admin'))).toBeNull()
 })
 
+it('should ignore an unprotected request without changing response headers', async () => {
+  const responseHeaders = new Headers({'X-Existing': 'value'})
+  const url = new URL('https://pomo.example/account')
+
+  await expect(
+    handleAdminAuthRequest({request: new Request(url), responseHeaders, url}),
+  ).resolves.toBeNull()
+  expect(sessionMocks.getAdminSession).not.toHaveBeenCalled()
+  expect([...responseHeaders]).toEqual([['x-existing', 'value']])
+})
+
 it('should allow an admin without caching the protected response', async () => {
-  authMocks.handleAuthProxyRequest.mockResolvedValue(
-    Response.json(
-      {session: {id: 'session-id'}, user: {role: 'admin'}},
-      {headers: {'Set-Cookie': 'session-data=signed; Path=/; HttpOnly'}},
-    ),
-  )
+  sessionMocks.getAdminSession.mockResolvedValue({
+    access: 'admin',
+    cookies: ['session-data=signed; Path=/; HttpOnly'],
+  })
   const responseHeaders = new Headers()
   const url = new URL('https://pomo.example/admin')
 
@@ -94,8 +96,30 @@ it('should allow an admin without caching the protected response', async () => {
   expect(responseHeaders.getSetCookie()).toEqual(['session-data=signed; Path=/; HttpOnly'])
 })
 
+it('should clean an admin callback URL while preserving session cookies', async () => {
+  sessionMocks.getAdminSession.mockResolvedValue({
+    access: 'admin',
+    cookies: ['session-data=signed; Path=/; HttpOnly'],
+  })
+  const responseHeaders = new Headers({'X-Existing': 'value'})
+  const url = new URL('https://pomo.example/admin?view=albums&neon_auth_session_verifier=secret')
+
+  const response = await handleAdminAuthRequest({
+    request: new Request(url),
+    responseHeaders,
+    url,
+  })
+
+  expect(response?.status).toBe(302)
+  expect(response?.headers.get('Location')).toBe('https://pomo.example/admin?view=albums')
+  expect(response?.headers.getSetCookie()).toEqual(['session-data=signed; Path=/; HttpOnly'])
+  expect(response?.headers.get('Cache-Control')).toBe('no-store')
+  expect(response?.headers.get('Referrer-Policy')).toBe('no-referrer')
+  expect(response?.headers.get('X-Existing')).toBe('value')
+})
+
 it('should redirect an anonymous visitor to the login page', async () => {
-  authMocks.handleAuthProxyRequest.mockResolvedValue(Response.json(null))
+  sessionMocks.getAdminSession.mockResolvedValue({access: 'anonymous', cookies: []})
   const url = new URL('https://pomo.example/admin/albums')
 
   const response = await handleAdminAuthRequest({
@@ -109,13 +133,11 @@ it('should redirect an anonymous visitor to the login page', async () => {
   expect(response?.headers.get('Cache-Control')).toBe('no-store')
 })
 
-it('should keep the session verifier available when the upstream exchange fails', async () => {
-  authMocks.handleAuthProxyRequest.mockResolvedValue(
-    new Response('Unavailable', {
-      headers: {'Set-Cookie': 'challenge=expired; Path=/; Max-Age=0'},
-      status: 502,
-    }),
-  )
+it('should keep the session verifier available when session validation is invalid', async () => {
+  sessionMocks.getAdminSession.mockResolvedValue({
+    access: 'invalid',
+    cookies: ['challenge=expired; Path=/; Max-Age=0'],
+  })
   const url = new URL('https://pomo.example/admin?view=albums&neon_auth_session_verifier=secret')
 
   const response = await handleAdminAuthRequest({
@@ -130,9 +152,7 @@ it('should keep the session verifier available when the upstream exchange fails'
 })
 
 it('should forbid a signed-in user without the admin role', async () => {
-  authMocks.handleAuthProxyRequest.mockResolvedValue(
-    Response.json({session: {id: 'session-id'}, user: {role: 'user'}}),
-  )
+  sessionMocks.getAdminSession.mockResolvedValue({access: 'forbidden', cookies: []})
   const url = new URL('https://pomo.example/admin')
 
   const response = await handleAdminAuthRequest({
@@ -143,4 +163,53 @@ it('should forbid a signed-in user without the admin role', async () => {
 
   expect(response?.status).toBe(403)
   expect(await response?.text()).toBe('Forbidden')
+})
+
+it('should clean a forbidden user callback URL instead of returning a forbidden body', async () => {
+  sessionMocks.getAdminSession.mockResolvedValue({
+    access: 'forbidden',
+    cookies: ['session-data=signed; Path=/; HttpOnly'],
+  })
+  const url = new URL('https://pomo.example/admin?view=albums&neon_auth_session_verifier=secret')
+
+  const response = await handleAdminAuthRequest({
+    request: new Request(url),
+    responseHeaders: new Headers(),
+    url,
+  })
+
+  expect(response?.status).toBe(302)
+  expect(response?.headers.get('Location')).toBe('https://pomo.example/admin?view=albums')
+  expect(response?.headers.getSetCookie()).toEqual(['session-data=signed; Path=/; HttpOnly'])
+  expect(await response?.text()).toBe('')
+})
+
+it('should return unavailable when session retrieval throws', async () => {
+  const error = new Error('auth provider unavailable')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  sessionMocks.getAdminSession.mockRejectedValue(error)
+  const responseHeaders = new Headers()
+  const url = new URL('https://pomo.example/admin')
+
+  const response = await handleAdminAuthRequest({
+    request: new Request(url),
+    responseHeaders,
+    url,
+  })
+
+  expect(response?.status).toBe(503)
+  expect(await response?.text()).toBe('Authentication is unavailable')
+  expect(response?.headers.getSetCookie()).toEqual([])
+  expect(responseHeaders.get('Cache-Control')).toBe('no-store')
+  expect(responseHeaders.get('Referrer-Policy')).toBe('no-referrer')
+  expect(consoleError).toHaveBeenCalledWith('Pomo admin authentication is unavailable', error)
+})
+
+it('should preserve an unexpected access result through the exhaustive fallback', async () => {
+  sessionMocks.getAdminSession.mockResolvedValue({access: 'unexpected', cookies: []} as never)
+  const url = new URL('https://pomo.example/admin')
+
+  await expect(
+    handleAdminAuthRequest({request: new Request(url), responseHeaders: new Headers(), url}),
+  ).resolves.toBe('unexpected')
 })

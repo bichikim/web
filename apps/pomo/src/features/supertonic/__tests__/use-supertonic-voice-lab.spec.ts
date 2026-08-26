@@ -11,6 +11,25 @@ import {
 import type {SupertonicAudioPlayer} from '../audio-player'
 import {failureResult, successResult} from '../../result'
 
+const defaultRuntimeMocks = vi.hoisted(() => ({
+  createAudioPlayer: vi.fn(),
+  createClient: vi.fn(),
+  createWaveBlob: vi.fn(),
+}))
+
+vi.mock('../audio-player', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../audio-player')>()
+  return {...actual, createSupertonicAudioPlayer: defaultRuntimeMocks.createAudioPlayer}
+})
+vi.mock('../client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../client')>()
+  return {...actual, createSupertonicClient: defaultRuntimeMocks.createClient}
+})
+vi.mock('../wav', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../wav')>()
+  return {...actual, createWaveBlob: defaultRuntimeMocks.createWaveBlob}
+})
+
 const SAMPLE_RATE = 24_000
 const GENERATION_TIME = 1_200
 
@@ -348,5 +367,127 @@ describe('useSupertonicVoiceLab', () => {
     expect(consoleError).toHaveBeenCalledWith('Unexpected Supertonic failure', expect.any(Error))
     voiceLab.dispose()
     consoleError.mockRestore()
+  })
+
+  it('should use the default runtime and ignore repeated default selections', async () => {
+    const client = createClient()
+    const audioPlayer = createTestAudioPlayer()
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:default')
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+    defaultRuntimeMocks.createClient.mockReturnValue(client)
+    defaultRuntimeMocks.createAudioPlayer.mockReturnValue(audioPlayer)
+    defaultRuntimeMocks.createWaveBlob.mockReturnValue(new Blob(['wave'], {type: 'audio/wav'}))
+    let disposeRoot: () => void = () => undefined
+    const controller = createRoot((dispose) => {
+      disposeRoot = dispose
+      return useSupertonicVoiceLab()
+    })
+
+    expect(controller.text()).toBe('')
+    controller.selectModel('full')
+    controller.selectVoice('Yuna')
+    controller.setText('기본 runtime 생성')
+    await controller.prepare()
+    await controller.generate()
+
+    expect(controller.text()).toBe('기본 runtime 생성')
+    expect(defaultRuntimeMocks.createClient).toHaveBeenCalledOnce()
+    expect(defaultRuntimeMocks.createAudioPlayer).toHaveBeenCalledOnce()
+    expect(defaultRuntimeMocks.createWaveBlob).toHaveBeenCalledTimes(2)
+    expect(createObjectUrl).toHaveBeenCalledTimes(2)
+    disposeRoot()
+    expect(revokeObjectUrl).toHaveBeenCalledTimes(2)
+    vi.restoreAllMocks()
+  })
+
+  it('should ignore a stale initialization rejection after switching models', async () => {
+    const preparation = createDeferred()
+    const client = createClient()
+    vi.mocked(client.initialize).mockImplementationOnce(async () => {
+      await preparation.promise
+      throw new Error('stale prepare failure')
+    })
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const voiceLab = createVoiceLabRoot(createRuntime([client]))
+
+    const pendingPreparation = voiceLab.controller.prepare()
+    voiceLab.controller.selectModel('int8')
+    preparation.resolve()
+    await pendingPreparation
+
+    expect(consoleError).not.toHaveBeenCalled()
+    expect(voiceLab.controller.state()).toEqual({
+      message: 'INT8 모델을 준비해 비교할 수 있어요.',
+      status: 'unprepared',
+    })
+    voiceLab.dispose()
+    consoleError.mockRestore()
+  })
+
+  it('should stop stale generation after switching models', async () => {
+    const generation = createDeferred()
+    const client = createClient()
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* staleGeneration() {
+      await generation.promise
+      yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
+    })
+    const runtime = createRuntime([client])
+    const voiceLab = createVoiceLabRoot(runtime)
+    await voiceLab.controller.prepare()
+
+    const pendingGeneration = voiceLab.controller.generate()
+    voiceLab.controller.selectModel('int8')
+    generation.resolve()
+    await pendingGeneration
+
+    const audioPlayer = runtime.createAudioPlayer.mock.results[0]?.value as SupertonicAudioPlayer
+    expect(audioPlayer.dispose).toHaveBeenCalledTimes(2)
+    expect(voiceLab.controller.chunks()).toEqual([])
+    expect(voiceLab.controller.state().status).toBe('unprepared')
+    voiceLab.dispose()
+  })
+
+  it('should ignore a stale generation rejection after switching models', async () => {
+    const generation = createDeferred()
+    const client = createClient()
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* staleRejection() {
+      await generation.promise
+      throw new Error('stale generation failure')
+    })
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const voiceLab = createVoiceLabRoot(createRuntime([client]))
+    await voiceLab.controller.prepare()
+
+    const pendingGeneration = voiceLab.controller.generate()
+    voiceLab.controller.selectModel('int8')
+    generation.resolve()
+    await pendingGeneration
+
+    expect(consoleError).not.toHaveBeenCalled()
+    expect(voiceLab.controller.state().status).toBe('unprepared')
+    voiceLab.dispose()
+    consoleError.mockRestore()
+  })
+
+  it('should replace duplicate chunk URLs and retain other chunk positions', async () => {
+    const client = createClient()
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* duplicateChunks() {
+      yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
+      yield successResult({
+        audio: {...createAudioChunk(), index: 1, total: 2},
+        type: 'chunk' as const,
+      })
+      yield successResult({audio: {...createAudioChunk(), total: 2}, type: 'chunk' as const})
+      yield successResult({audio: createAudio(), type: 'complete' as const})
+    })
+    const runtime = createRuntime([client])
+    const voiceLab = createVoiceLabRoot(runtime)
+
+    await voiceLab.controller.prepare()
+    await voiceLab.controller.generate()
+
+    expect(runtime.revokeAudioUrl).toHaveBeenCalledWith('blob:voice-1')
+    expect(voiceLab.controller.chunks().map((chunk) => chunk.index)).toEqual([1, 0])
+    voiceLab.dispose()
   })
 })

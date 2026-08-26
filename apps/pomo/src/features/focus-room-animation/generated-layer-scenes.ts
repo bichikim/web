@@ -185,7 +185,7 @@ const createSeparatedScene = (
   id: PSceneId,
   assets: SeparatedSceneAssets,
   pivots: SeparatedScenePivots,
-  eyeLayer?: SeparatedSceneEyeLayer,
+  eyeLayer: SeparatedSceneEyeLayer,
 ): PixiLayerSceneDefinition => ({
   background: '#17130f',
   height: 941,
@@ -259,17 +259,13 @@ const createSeparatedScene = (
               },
             },
     },
-    ...(eyeLayer === undefined
-      ? []
-      : [
-          {
-            channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
-            id: 'eye-irises',
-            motion: eyeLayer.motion,
-            parentAttachmentId: 'eyes',
-            source: eyeLayer.source,
-          },
-        ]),
+    {
+      channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
+      id: 'eye-irises',
+      motion: eyeLayer.motion,
+      parentAttachmentId: 'eyes',
+      source: eyeLayer.source,
+    },
     ...(assets.mouth === undefined || pivots.mouth === undefined
       ? []
       : createMouthLayers({

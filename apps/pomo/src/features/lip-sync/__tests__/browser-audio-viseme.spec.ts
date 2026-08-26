@@ -89,6 +89,26 @@ describe('resolvePBrowserAudioVisemeFrame', () => {
     ).toEqual({intensity: 0.5, viseme: 'open'})
   })
 
+  it('should use a narrow mouth when audio has no profile and text is resting', () => {
+    expect(
+      resolvePBrowserAudioVisemeFrame({
+        fallbackViseme: 'rest',
+        intensity: 0.5,
+        weights: {},
+      }),
+    ).toEqual({intensity: 0.5, viseme: 'narrow'})
+  })
+
+  it('should treat a missing text-guided profile weight as zero', () => {
+    expect(
+      resolvePBrowserAudioVisemeFrame({
+        fallbackViseme: 'open',
+        intensity: 0.8,
+        weights: {I: 0.6},
+      }),
+    ).toEqual({intensity: 0.8, viseme: 'open'})
+  })
+
   it('should retain the text-guided mouth when the audio winner is uncertain', () => {
     expect(
       resolvePBrowserAudioVisemeFrame({
@@ -132,6 +152,48 @@ describe('resolvePBrowserAudioVisemeFrame', () => {
 })
 
 describe('createPBrowserAudioVisemeAnalyzer', () => {
+  it('should stay inactive when AudioWorklet is unavailable', async () => {
+    const source = {connect: vi.fn(), disconnect: vi.fn()} as unknown as AudioNode
+    const context = {destination: {}} as unknown as AudioContext
+    const analyzer = createPBrowserAudioVisemeAnalyzer(context)
+
+    analyzer.dispose()
+    await analyzer.connect(source)
+
+    expect(source.connect).not.toHaveBeenCalled()
+    expect(analyzer.getFrame('rest')).toBeNull()
+  })
+
+  it('should stay inactive when the lip-sync node cannot initialize', async () => {
+    const {context, source} = createAudioHarness()
+    wlipsyncMocks.createNode.mockRejectedValue(new Error('worklet failed'))
+    const analyzer = createPBrowserAudioVisemeAnalyzer(context)
+
+    await analyzer.connect(source)
+
+    expect(source.connect).not.toHaveBeenCalled()
+    expect(analyzer.getFrame('rest')).toBeNull()
+  })
+
+  it('should release a lip-sync node that resolves after disposal', async () => {
+    const {context, node, source} = createAudioHarness()
+    let resolveNode: ((value: typeof node) => void) | undefined
+    wlipsyncMocks.createNode.mockReturnValue(
+      new Promise((resolve) => {
+        resolveNode = resolve
+      }),
+    )
+    const analyzer = createPBrowserAudioVisemeAnalyzer(context)
+    const connection = analyzer.connect(source)
+
+    analyzer.dispose()
+    resolveNode?.(node)
+    await connection
+
+    expect(node.disconnect).toHaveBeenCalledOnce()
+    expect(source.connect).not.toHaveBeenCalled()
+  })
+
   it('should connect, read, and release an analyzed source', async () => {
     const {context, destination, node, source} = createAudioHarness()
     wlipsyncMocks.createNode.mockResolvedValue(node)

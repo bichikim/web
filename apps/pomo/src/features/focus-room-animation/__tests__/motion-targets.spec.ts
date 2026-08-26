@@ -58,4 +58,26 @@ describe('motion targets', () => {
     expect(getMotionTarget(opacityMotion, -1)).toEqual({x: 0, y: 0})
     expect(getNextMotionTarget(opacityMotion, {x: 0, y: 0}, 1, () => 0.5)).toEqual({x: 0, y: 0})
   })
+
+  it('should resolve direct, reverse, and empty translation targets', () => {
+    const loopingMotion = {
+      from: {x: -2, y: -1},
+      kind: 'looping-translation',
+      to: {x: 2, y: 1},
+      travel: {maximumSeconds: 1, minimumSeconds: 1},
+    } satisfies PixiSceneLoopingTranslation
+    const distanceMotion = {
+      distance: {x: 4, y: 5},
+      kind: 'translation',
+      travel: {maximumSeconds: 1, minimumSeconds: 1},
+    } satisfies PixiSceneMotion
+    const emptyMotion = {...motion, targets: []}
+
+    expect(getMotionTarget(loopingMotion, -1)).toEqual(loopingMotion.from)
+    expect(getMotionTarget(loopingMotion, 1)).toEqual(loopingMotion.to)
+    expect(getMotionTarget(distanceMotion, -1)).toEqual({x: 0, y: 0})
+    expect(getMotionTarget(distanceMotion, 1)).toEqual(distanceMotion.distance)
+    expect(getMotionTarget(emptyMotion, 1)).toEqual({x: 0, y: 0})
+    expect(getNextMotionTarget(emptyMotion, {x: 0, y: 0}, 1, () => 0.5)).toBeUndefined()
+  })
 })

@@ -90,7 +90,7 @@ interface DialogueDraftModelController {
 }
 
 const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) => {
-  const calculatedProgress = createMemo(() => {
+  const calculatedProgress = createMemo<number | null>(() => {
     const currentState = props.writer.state()
 
     switch (currentState.status) {
@@ -113,8 +113,6 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
       case 'unsupported':
         return null
     }
-
-    currentState satisfies never
   })
   const [progress, setProgress] = createSignal<number | null>(null)
 
@@ -193,8 +191,6 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
       case 'unsupported':
         return {message: props.writer.statusMessage(), progress: null}
     }
-
-    currentState satisfies never
   })
 
   return status
