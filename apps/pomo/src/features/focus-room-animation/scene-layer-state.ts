@@ -17,6 +17,7 @@ export interface PVisemeTransition {
 }
 
 const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
+const getEqualPowerOpacity = (linearOpacity: number) => Math.sqrt(clampUnit(linearOpacity))
 const VISEME_JAW_PROGRESS = {
   closed: 0,
   narrow: 0.12,
@@ -50,10 +51,10 @@ const getVisemeOpacity = (
   }
 
   if (viseme === transition.from) {
-    return 1 - progress
+    return getEqualPowerOpacity(1 - progress)
   }
 
-  return viseme === transition.to ? progress : 0
+  return viseme === transition.to ? getEqualPowerOpacity(progress) : 0
 }
 
 const getMouthTransitionPath = (transition: PVisemeTransition) =>
@@ -70,7 +71,7 @@ const getPathProgress = (
 ) => (transition.from === path.from ? progress : 1 - progress)
 
 const getPathFrameOpacity = (frameIndex: number, progress: number, frameCount: number) =>
-  clampUnit(1 - Math.abs(progress * (frameCount - 1) - frameIndex))
+  getEqualPowerOpacity(1 - Math.abs(progress * (frameCount - 1) - frameIndex))
 
 const getMouthTransitionOpacity = (
   stage: PMouthTransitionStage,

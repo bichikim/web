@@ -1,0 +1,24 @@
+{
+  "asset_count": 24,
+  "unchanged_asset_count": 22,
+  "corrected_asset_count": 2,
+  "common_alpha_unchanged": true,
+  "corrections": [
+    {
+      "name": "narrow-round-late",
+      "requested_offset": [0, -1],
+      "before_centroid": [93.867, 86.3043],
+      "after_centroid": [93.867, 85.3043],
+      "measured_offset": [0.0, -1.0],
+      "alpha_unchanged": true
+    },
+    {
+      "name": "open-wide-early",
+      "requested_offset": [0, 1],
+      "before_centroid": [95.4654, 83.8063],
+      "after_centroid": [95.4654, 84.8063],
+      "measured_offset": [0.0, 1.0],
+      "alpha_unchanged": true
+    }
+  ]
+}
