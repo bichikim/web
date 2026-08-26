@@ -45,27 +45,19 @@ describe('createFocusRoomLayerState', () => {
     expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]?.pixelPushProgress).toBeCloseTo(0.78)
   })
 
-  it('should crossfade directly from open to wide without bridge frames', () => {
+  it('should pass open-to-wide transitions through the configured bridge frames', () => {
     const state = createFocusRoomLayerState('wide', false, {
       from: 'open',
-      progress: 0.5,
+      progress: 1 / 3,
       to: 'wide',
     })
 
-    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]).toEqual({
-      opacity: Math.SQRT1_2,
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['open-wide-early']]).toEqual({
+      opacity: 1,
       visible: true,
     })
-    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.wide]).toEqual({
-      opacity: Math.SQRT1_2,
-      visible: true,
-    })
-    for (const stage of P_MOUTH_TRANSITION_STAGES) {
-      expect(state.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage]]).toEqual({
-        opacity: 0,
-        visible: false,
-      })
-    }
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]?.opacity).toBe(0)
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.wide]?.opacity).toBe(0)
   })
 
   it('should interpolate jaw movement without altering the mouth transition timing', () => {
@@ -187,5 +179,32 @@ describe('createFocusRoomLayerState', () => {
     expect(before.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]?.opacity).toBe(0)
     expect(after.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]?.opacity).toBe(0)
     expect(after.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]?.opacity).toBe(1)
+  })
+
+  it('should use only the base mouth at each generated transition endpoint', () => {
+    const first = createFocusRoomLayerState('wide', false, {
+      from: 'closed',
+      progress: 0,
+      to: 'wide',
+    })
+    const last = createFocusRoomLayerState('wide', false, {
+      from: 'closed',
+      progress: 1,
+      to: 'wide',
+    })
+
+    expect(first.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.closed]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
+    expect(last.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.wide]).toEqual({
+      opacity: 1,
+      visible: true,
+    })
+
+    for (const channel of Object.values(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS)) {
+      expect(first.channels?.[channel]?.visible).toBe(false)
+      expect(last.channels?.[channel]?.visible).toBe(false)
+    }
   })
 })

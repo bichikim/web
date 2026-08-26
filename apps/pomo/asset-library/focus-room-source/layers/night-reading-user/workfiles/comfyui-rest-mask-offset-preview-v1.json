@@ -1,0 +1,97 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-rest.png"
+    }
+  },
+  "2": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {
+      "height": 180,
+      "width": 260,
+      "x": 930,
+      "y": 270
+    }
+  },
+  "3": {
+    "class_type": "ImageCropV2",
+    "inputs": {
+      "crop_region": ["2", 0],
+      "image": ["1", 0]
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "123layer-mouth-rest.png"
+    }
+  },
+  "5": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["4", 1]
+    }
+  },
+  "6": {
+    "class_type": "CropMask",
+    "inputs": {
+      "height": 163,
+      "mask": ["5", 0],
+      "width": 256,
+      "x": 4,
+      "y": 0
+    }
+  },
+  "7": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "height": 180,
+      "value": 0,
+      "width": 260
+    }
+  },
+  "8": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["7", 0],
+      "operation": "add",
+      "source": ["6", 0],
+      "x": 0,
+      "y": 17
+    }
+  },
+  "9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["8", 0]
+    }
+  },
+  "10": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "alpha": ["9", 0],
+      "image": ["3", 0]
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-night-mouth-mask-offset-preview-v1/rest-left4-down17",
+      "images": ["10", 0]
+    }
+  },
+  "12": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": ["8", 0]
+    }
+  },
+  "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-night-mouth-mask-offset-preview-v1/mask-visible-left4-down17",
+      "images": ["12", 0]
+    }
+  }
+}

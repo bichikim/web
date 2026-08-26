@@ -47,7 +47,7 @@ export const MouthFramePicker = (props: {
     <label class="mt-3 block border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
       <span class="block text-sm font-700 text-#fffaf1">개별 입 이미지</span>
       <span class="mt-1 block text-xs leading-5 text-#a99fac">
-        기본 입과 모든 중간 프레임을 낮 사용자 얼굴 위에 한 장씩 고정해서 검사합니다.
+        기본 입과 모든 중간 프레임을 현재 시간대의 사용자 얼굴 위에 한 장씩 고정해서 검사합니다.
       </span>
       <select
         class="mt-2 h-10 w-full rounded-3 border border-white/12 bg-#211a24 px-3 text-sm text-#fffaf1"

@@ -2,14 +2,24 @@ import {createRequire} from 'node:module'
 import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 
+import {assertProtectedAssets} from './focus-room/asset-protection.mjs'
+
 const commandArguments = process.argv.slice(2)
-const unsupportedArguments = commandArguments.filter((argument) => argument !== '--depth-only')
+const supportedArguments = new Set(['--depth-only', '--verify-protected-assets'])
+const unsupportedArguments = commandArguments.filter(
+  (argument) => !supportedArguments.has(argument),
+)
 
 if (unsupportedArguments.length > 0) {
   throw new Error(`Unsupported argument(s): ${unsupportedArguments.join(', ')}`)
 }
 
 const depthOnly = commandArguments.includes('--depth-only')
+const verifyProtectedAssets = commandArguments.includes('--verify-protected-assets')
+
+if (depthOnly && verifyProtectedAssets) {
+  throw new Error('--depth-only and --verify-protected-assets cannot be combined')
+}
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
 const sharp = require('sharp')
 
@@ -60,11 +70,11 @@ const runtimeLayerNames = new Map([
   ['layer-hand-right.png', 'right-hand.webp'],
   ['layer-head-eye-base.png', 'head.webp'],
   ['layer-head-hair-tips-mask-v4.png', 'hair-tips-mask.webp'],
+  ['layer-mask-jaw-displacement.png', 'layer-mask-jaw-displacement.webp'],
   ['layer-resting-hand.png', 'resting-hand.webp'],
   ['layer-sky-mask-writing-focused-v1.png', 'sky-mask.webp'],
   ['layer-writing-hand.png', 'writing-hand.webp'],
 ])
-
 const replacePngExtension = (name) => name.replace(pngPattern, '.webp')
 
 const getIndexedRuntimePath = (name, pattern, directory) => {
@@ -75,6 +85,10 @@ const getIndexedRuntimePath = (name, pattern, directory) => {
 }
 
 const getRuntimeLayerPath = (name) => {
+  if (/^layer-mouth-.+\.png$/u.test(name)) {
+    return replacePngExtension(name)
+  }
+
   const indexedPath =
     getIndexedRuntimePath(
       name,
@@ -351,29 +365,30 @@ const readWebpPaths = async (directory) => {
   return nestedPaths.flat()
 }
 
-const removeStaleWebps = async ({directories, expectedPaths}) => {
+const assertNoStaleWebps = async ({directories, expectedPaths}) => {
   const stalePaths = (
     await Promise.all(directories.map((directory) => readWebpPaths(directory)))
   ).flat()
   const unexpectedPaths = stalePaths.filter((filePath) => !expectedPaths.has(filePath))
 
-  // Runtime WebPs are generated mirrors; pruning makes removed PNG sources fail at build instead of using stale output.
-  await Promise.all(unexpectedPaths.map((filePath) => rm(filePath)))
-
-  return unexpectedPaths.length
+  if (unexpectedPaths.length > 0) {
+    throw new Error(
+      `Unexpected runtime WebPs must be reviewed and removed explicitly:\n${unexpectedPaths.join('\n')}`,
+    )
+  }
 }
 
-const removeStaleLayerDirectories = async (expectedDirectories) => {
+const assertNoStaleLayerDirectories = async (expectedDirectories) => {
   const staleDirectories = (await readdir(runtimeLayerDirectory, {withFileTypes: true}))
     .filter((entry) => entry.isDirectory())
     .map((entry) => path.join(runtimeLayerDirectory, entry.name))
     .filter((directory) => !expectedDirectories.has(directory))
 
-  await Promise.all(
-    staleDirectories.map((directory) => rm(directory, {force: true, recursive: true})),
-  )
-
-  return staleDirectories.length
+  if (staleDirectories.length > 0) {
+    throw new Error(
+      `Unexpected runtime layer directories must be reviewed and removed explicitly:\n${staleDirectories.join('\n')}`,
+    )
+  }
 }
 
 const writeLayerLayouts = (scenes) =>
@@ -416,17 +431,17 @@ const compressDepthAssets = async () => {
   const depthPlan = await createDepthCompressionPlan()
 
   await runCompressionJobs(depthPlan.jobs)
-  const prunedAssetCount = await removeStaleWebps({
+  await assertNoStaleWebps({
     directories: [runtimeDepthDirectory],
     expectedPaths: new Set(depthPlan.outputPaths),
   })
 
-  console.log(
-    `Compressed ${depthPlan.names.length} depth maps and pruned ${prunedAssetCount} stale depth assets.`,
-  )
+  console.log(`Compressed ${depthPlan.names.length} depth maps.`)
 }
 
 const compressAssets = async () => {
+  await assertProtectedAssets({runtimeLayerDirectory, sourceLayerDirectory})
+
   const sceneNames = await readMatchingNames(sourceConceptArtDirectory, scenePattern)
   const layerSceneNames = (await readdir(sourceLayerDirectory, {withFileTypes: true}))
     .filter((entry) => entry.isDirectory())
@@ -539,7 +554,7 @@ const compressAssets = async () => {
       path.join(runtimeStatusIconDirectory, getRuntimeStatusIconName(statusIconName)),
     ),
   ])
-  const prunedAssetCount = await removeStaleWebps({
+  await assertNoStaleWebps({
     directories: [
       runtimeConceptArtDirectory,
       ...layerJobsByScene.map((scene) => scene.runtimeSceneDirectory),
@@ -549,7 +564,7 @@ const compressAssets = async () => {
     ],
     expectedPaths: expectedRuntimePaths,
   })
-  const prunedDirectoryCount = await removeStaleLayerDirectories(
+  await assertNoStaleLayerDirectories(
     new Set(layerJobsByScene.map((scene) => scene.runtimeSceneDirectory)),
   )
 
@@ -558,14 +573,17 @@ const compressAssets = async () => {
       `Compressed ${sceneNames.length} scenes and ${layerBaseCount} layer bases`,
       `at WebP quality ${SCENE_QUALITY}. Compressed ${layerAssetCount} layers,`,
       `${animationNames.length} animations, ${depthPlan.names.length} depth maps,`,
-      `${statusIconNames.length} status icons, and pruned ${prunedAssetCount} stale assets`,
-      `from ${prunedDirectoryCount} stale layer directories.`,
+      `${statusIconNames.length} status icons.`,
     ].join(' '),
   )
 }
 
 try {
-  await (depthOnly ? compressDepthAssets() : compressAssets())
+  if (verifyProtectedAssets) {
+    await assertProtectedAssets({runtimeLayerDirectory, sourceLayerDirectory})
+  } else {
+    await (depthOnly ? compressDepthAssets() : compressAssets())
+  }
 } finally {
   await rm(temporaryDirectory, {force: true, recursive: true})
 }

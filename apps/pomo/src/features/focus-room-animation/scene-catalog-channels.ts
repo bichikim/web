@@ -27,6 +27,8 @@ export const P_MOUTH_TRANSITION_STAGES = [
   'open-round-early',
   'open-round-middle',
   'open-round-late',
+  'open-wide-early',
+  'open-wide-late',
   'narrow-wide-early',
   'narrow-wide-middle',
   'narrow-wide-late',
@@ -52,6 +54,8 @@ export const FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS = {
   'open-round-early': 'mouth-transition-open-round-early',
   'open-round-late': 'mouth-transition-open-round-late',
   'open-round-middle': 'mouth-transition-open-round-middle',
+  'open-wide-early': 'mouth-transition-open-wide-early',
+  'open-wide-late': 'mouth-transition-open-wide-late',
   release: 'mouth-transition-release',
   'small-open': 'mouth-transition-small-open',
 } satisfies Readonly<Record<PMouthTransitionStage, string>>
@@ -82,6 +86,11 @@ export const P_MOUTH_TRANSITION_PATHS = [
     from: 'open',
     stages: ['open-round-early', 'open-round-middle', 'open-round-late'],
     to: 'round',
+  },
+  {
+    from: 'open',
+    stages: ['open-wide-early', 'open-wide-late'],
+    to: 'wide',
   },
   {
     from: 'narrow',
