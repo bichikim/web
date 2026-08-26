@@ -262,13 +262,13 @@ describe('focus room scene catalog', () => {
     }
   })
 
-  it('should move hair in every daytime focused scene only', () => {
+  it('should move hair in every focused scene only', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
       const headLayer = getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')
       const hairMotion =
         headLayer?.motion?.kind === 'pivot-rotation' ? headLayer.motion.pixelPush : undefined
 
-      if (scene.time === 'day' && scene.gaze === 'focused') {
+      if (scene.gaze === 'focused') {
         expect(hairMotion).toMatchObject([
           {
             distance: {x: -4, y: 1.25},

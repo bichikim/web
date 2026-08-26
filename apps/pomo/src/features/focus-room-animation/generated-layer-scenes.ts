@@ -246,7 +246,7 @@ const createSeparatedScene = (
         center: pivots.head,
         degrees: 0.5,
         kind: 'pivot-rotation',
-        pixelPush: id === 'day-typing-focused' ? HAIR_TIPS_PIXEL_PUSH : undefined,
+        pixelPush: id.endsWith('-focused') ? HAIR_TIPS_PIXEL_PUSH : undefined,
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: assets.head,
