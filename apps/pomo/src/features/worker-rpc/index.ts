@@ -30,16 +30,19 @@ export interface WorkerRpcRequestOptions<Request> {
   readonly transfer?: Array<Transferable>
 }
 
+type WorkerRpcEvent<Response> = Exclude<Response, {readonly requestId: number}>
+type WorkerRpcReply<Response> = Extract<Response, {readonly requestId: number}>
+
 export interface WorkerRpcTransport<Request, Response> {
   readonly dispose: () => void
   readonly getFailure: () => WorkerRpcFailure | null
-  readonly request: (options: WorkerRpcRequestOptions<Request>) => Promise<Response>
+  readonly request: (options: WorkerRpcRequestOptions<Request>) => Promise<WorkerRpcReply<Response>>
 }
 
 export interface CreateWorkerRpcTransportOptions<Response> {
   readonly getRequestId: (response: Response) => number | null
   readonly onFailure?: (failure: WorkerRpcFailure) => void
-  readonly onEvent: (response: Response) => void
+  readonly onEvent: (response: WorkerRpcEvent<Response>) => void
   readonly worker: Worker
 }
 
@@ -78,10 +81,9 @@ const getErrorDetail = (error: unknown, fallback: string) => {
 export const createWorkerRpcTransport = <Request, Response>(
   options: CreateWorkerRpcTransportOptions<Response>,
 ): WorkerRpcTransport<Request, Response> => {
-  const pendingRequests = new Map<number, PendingRequest<Response>>()
+  const pendingRequests = new Map<number, PendingRequest<WorkerRpcReply<Response>>>()
   let failure: WorkerRpcError | null = null
   let nextRequestId = 1
-
   const terminate = () => {
     options.worker.terminate()
   }
@@ -115,7 +117,7 @@ export const createWorkerRpcTransport = <Request, Response>(
     const requestId = options.getRequestId(response)
 
     if (requestId === null) {
-      options.onEvent(response)
+      options.onEvent(response as WorkerRpcEvent<Response>)
       return
     }
 
@@ -126,7 +128,7 @@ export const createWorkerRpcTransport = <Request, Response>(
     }
 
     pendingRequests.delete(requestId)
-    pendingRequest.resolve(response)
+    pendingRequest.resolve(response as WorkerRpcReply<Response>)
   }
 
   options.worker.addEventListener('message', (event: MessageEvent<Response>) => {

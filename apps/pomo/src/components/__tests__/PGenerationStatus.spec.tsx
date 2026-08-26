@@ -46,3 +46,22 @@ it('should expose zero percent progress with the requested semantic label', () =
     screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
   ).toBe('0')
 })
+
+it('should keep the semantic progress value valid when a volatile accessor becomes unavailable', () => {
+  let progressReads = 0
+  const props = {
+    kind: 'draft' as const,
+    message: '대사 초안을 작성하고 있어요.',
+    get progress() {
+      progressReads += 1
+      return progressReads < 3 ? 20 : undefined
+    },
+    progressLabel: '대사 생성 진행률',
+  }
+
+  render(() => PGenerationStatus(props))
+
+  expect(
+    screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
+  ).toBe('0')
+})

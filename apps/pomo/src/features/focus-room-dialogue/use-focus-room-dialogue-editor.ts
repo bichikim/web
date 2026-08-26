@@ -230,16 +230,20 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       return
     }
 
-    loadDialogue(initialDialogueId).then(() => {
-      if (isDisposed) {
-        return
-      }
+    loadDialogue(initialDialogueId)
+      .then(() => {
+        if (isDisposed) {
+          return
+        }
 
-      if (draft !== null && draft !== text()) {
-        setText(draft)
-        clearGeneratedAudio()
-      }
-    })
+        if (draft !== null && draft !== text()) {
+          setText(draft)
+          clearGeneratedAudio()
+        }
+      })
+      .catch((error: unknown) => {
+        console.error('Unexpected dialogue loading failure.', error)
+      })
   })
 
   onCleanup(() => {
@@ -264,7 +268,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       preparedModelId = null
       console.error('Failed to create focus room dialogue model client.', error)
       setEditorState({message: '음성 모델을 시작하지 못했어요.', status: 'error'})
-      return false
+      return null
     }
 
     client = nextClient
@@ -291,25 +295,25 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       })
 
       if (client !== nextClient || isDisposed) {
-        return false
+        return null
       }
 
       if (!result.ok) {
         setEditorState({message: getSupertonicErrorMessage(result.error), status: 'error'})
-        return false
+        return null
       }
     } catch (error: unknown) {
       if (client !== nextClient || isDisposed) {
-        return false
+        return null
       }
 
       console.error('Failed to prepare focus room dialogue model.', error)
       setEditorState({message: '음성 모델을 준비하지 못했어요.', status: 'error'})
-      return false
+      return null
     }
 
     preparedModelId = selectedModelId
-    return true
+    return nextClient
   }
 
   const requestDialogueAudio = async (request: DialogueAudioRequest) => {
@@ -347,16 +351,14 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     const selectedLanguage = language()
     const sourceText = text().trim()
     const selectedVoiceId = voiceId()
+    const currentClient =
+      client === null || preparedModelId !== selectedModelId
+        ? await prepareModel(selectedModelId)
+        : client
 
-    if (client === null || preparedModelId !== selectedModelId) {
-      const isPrepared = await prepareModel(selectedModelId)
-
-      if (!isPrepared) {
-        return
-      }
+    if (currentClient === null) {
+      return
     }
-
-    const currentClient = client!
 
     const generatedAudio = await requestDialogueAudio({
       client: currentClient,

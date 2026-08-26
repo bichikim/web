@@ -1,5 +1,7 @@
 import {createVitestConfig, unitTestProject} from './vitest.base.config.mts'
 
+const reportsDirectory = `coverage/pomo/${process.pid}`
+
 const config = createVitestConfig([
   {
     extends: true,
@@ -24,8 +26,8 @@ export default {
         'apps/pomo/src/**/*.story.tsx',
       ],
       include: ['apps/pomo/src/**/*.{ts,tsx}'],
-      reportsDirectory: 'coverage/pomo',
       reporter: ['text', 'json-summary'],
+      reportsDirectory,
       thresholds: {
         100: true,
         perFile: true,

@@ -128,6 +128,9 @@ describe('DialogueConnectionMenu', () => {
     expect(getMetadata).toHaveBeenNthCalledWith(1, DIALOGUES[0])
     expect(getMetadata).toHaveBeenNthCalledWith(2, DIALOGUES[1])
     expect(props.selectionLabel?.([props.options[0]!])).toBe('첫 번째 대화')
+    expect(props.selectionLabel?.([undefined as unknown as PSelectOption<string>])).toBe(
+      '대화 선택',
+    )
     expect(props.selectionLabel?.(props.options)).toBe('2개 대화 연결됨')
 
     props.onChange(['dialogue-two'])

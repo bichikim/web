@@ -36,6 +36,10 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Run tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm test
+
       - name: Run Oxlint
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm lint

@@ -2,7 +2,7 @@
 
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {type JSX} from 'solid-js'
+import {createSignal, type JSX} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
@@ -13,6 +13,11 @@ import {
 import {type PFeedController, usePFeedContext} from '../../../features/focus-room-feed'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
+vi.mock('solid-js', async () => {
+  const actual: typeof import('solid-js') = await vi.importActual('solid-js')
+
+  return {...actual, createSignal: vi.fn(actual.createSignal)}
+})
 vi.mock('@solidjs/router', () => ({
   A: (props: {readonly children: JSX.Element; readonly class?: string; readonly href: string}) => (
     <a class={props.class} href={props.href}>
@@ -233,6 +238,24 @@ describe('PDialogueSettingsContent', () => {
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
     expect(missingAudioEvents.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
     expect(onRequestClose).toHaveBeenCalledOnce()
+  })
+
+  it('should report when stored audio resolves before a player can be captured', async () => {
+    const actual: typeof import('solid-js') = await vi.importActual('solid-js')
+    vi.mocked(createSignal).mockImplementation(((initialValue?: unknown) =>
+      initialValue === undefined
+        ? [() => undefined, vi.fn()]
+        : actual.createSignal(initialValue)) as typeof createSignal)
+    const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
+    vi.mocked(usePEvents).mockReturnValue(events)
+    render(() => <PDialogueSettingsContent />)
+
+    fireEvent.click(screen.getByRole('button', {name: '듣기'}))
+
+    await vi.waitFor(() =>
+      expect(screen.getAllByText('음성 재생기를 준비하지 못했어요.')).toHaveLength(2),
+    )
+    vi.mocked(createSignal).mockImplementation(actual.createSignal)
   })
 
   it('should start and stop playable audio and report playback failures', async () => {

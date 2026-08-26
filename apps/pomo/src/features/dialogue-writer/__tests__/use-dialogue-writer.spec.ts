@@ -115,6 +115,8 @@ describe('useDialogueWriter', () => {
     expect(root.controller.state()).toMatchObject({percentage: 0, status: 'loading'})
     expect(runtime.client.prepare).toHaveBeenCalledTimes(1)
     expect(runtime.createClient).toHaveBeenCalledWith(expect.objectContaining({modelId: 'qwen-2b'}))
+    runtime.emit({type: 'future-response'} as never)
+    expect(root.controller.state()).toMatchObject({percentage: 0, status: 'loading'})
 
     runtime.emit({
       files: [],

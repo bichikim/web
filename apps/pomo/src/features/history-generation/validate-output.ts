@@ -105,6 +105,16 @@ const getMomentSourceUrls = (moment: HistoricalMomentDraft): ReadonlyArray<strin
   ...moment.sections.significance.sourceUrls,
 ]
 
+const requireAllowedDomain = (hostname: string, allowedDomains: ReadonlyArray<string>) => {
+  const allowedDomain = getAllowedDomain(hostname, allowedDomains)
+
+  if (allowedDomain === undefined) {
+    throw new TypeError(`A generated source uses a disallowed domain: ${hostname}`)
+  }
+
+  return allowedDomain
+}
+
 /** Parses AI output and verifies that every cited URL came from the required web search. */
 export const validateHistoryOutput = (
   options: ValidateHistoryOutputOptions,
@@ -142,7 +152,7 @@ export const validateHistoryOutput = (
       moment.sources.map((source) => {
         const {hostname} = new URL(source.url)
 
-        return getAllowedDomain(hostname, options.policy.allowedDomains) ?? hostname
+        return requireAllowedDomain(hostname, options.policy.allowedDomains)
       }),
     )
 
@@ -154,9 +164,7 @@ export const validateHistoryOutput = (
       const normalizedUrl = normalizeUrl(value)
       const {hostname} = new URL(normalizedUrl)
 
-      if (getAllowedDomain(hostname, options.policy.allowedDomains) === undefined) {
-        throw new TypeError(`A generated source uses a disallowed domain: ${hostname}`)
-      }
+      requireAllowedDomain(hostname, options.policy.allowedDomains)
 
       if (!momentSources.has(normalizedUrl)) {
         throw new TypeError('A section cites a URL missing from the moment source list')
@@ -168,7 +176,7 @@ export const validateHistoryOutput = (
         section.sourceUrls.map((value) => {
           const {hostname} = new URL(value)
 
-          return getAllowedDomain(hostname, options.policy.allowedDomains)!
+          return requireAllowedDomain(hostname, options.policy.allowedDomains)
         }),
       )
 

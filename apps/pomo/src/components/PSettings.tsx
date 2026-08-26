@@ -91,7 +91,6 @@ export const PSettings = (props: PSettingsProps) => {
   const [activeTab, setActiveTab] = createSignal('general')
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
   const wakeLock = useScreenWakeLock()
-  const isWakeLockEnabled = createMemo(wakeLock.isEnabled)
   const wakeLockDescription = createMemo(() => {
     const errorMessage = wakeLock.errorMessage()
 
@@ -110,6 +109,9 @@ export const PSettings = (props: PSettingsProps) => {
       case 'unsupported':
         return m.settings_wake_lock_unsupported()
     }
+
+    const exhaustiveAvailability: never = availability
+    return exhaustiveAvailability
   })
   const isWakeLockDisabled = () => wakeLock.availability() !== 'supported'
   const handleOpen = (source: HTMLButtonElement) => {
@@ -201,7 +203,7 @@ export const PSettings = (props: PSettingsProps) => {
                 onEnabledChange={props.onWeatherEnabledChange}
               />
               <PSwitch
-                checked={isWakeLockEnabled()}
+                checked={wakeLock.isEnabled()}
                 class={CLASSES.settingsWakeLock}
                 description={wakeLockDescription()}
                 disabled={isWakeLockDisabled()}

@@ -51,7 +51,8 @@ const splitOversizedText = (
     remaining = remaining.slice(breakIndex)
   }
 
-  chunks.push(remaining.join('').trim())
+  const finalChunk = remaining.join('').trim()
+  chunks.push(finalChunk)
 
   return chunks
 }
@@ -80,8 +81,9 @@ const packSentences = (
     const candidate = currentChunk.length === 0 ? sentence : `${currentChunk} ${sentence}`
     const candidateLength = getCharacterLength(candidate)
     const shouldSplit = candidateLength > policy.recommendedLength
+    const exceedsMaximum = candidateLength > policy.maximumLength
 
-    if (currentChunk.length > 0 && shouldSplit) {
+    if (currentChunk.length > 0 && (shouldSplit || exceedsMaximum)) {
       flushCurrentChunk()
       currentChunk = sentence
     } else {

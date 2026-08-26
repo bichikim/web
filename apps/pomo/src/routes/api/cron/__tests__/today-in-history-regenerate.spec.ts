@@ -82,3 +82,32 @@ it('should return an internal error when regeneration submission fails', async (
   expect(response.status).toBe(500)
   await expect(response.text()).resolves.toBe('Regeneration submission failed')
 })
+
+it('should reject a target date when the validated schema contract is violated', async () => {
+  const actualZod = await vi.importActual<typeof import('zod')>('zod')
+  vi.doMock('zod', () => ({
+    ...actualZod,
+    z: {
+      ...actualZod.z,
+      strictObject: vi.fn(() => ({
+        superRefine: vi.fn(() => ({
+          parse: vi.fn(() => ({targetDate: 'invalid', titles: ['First', 'Second', 'Third']})),
+        })),
+      })),
+    },
+  }))
+  vi.resetModules()
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+  try {
+    const {POST: postWithBrokenSchema} = await import('../today-in-history/regenerate')
+    const response = await invokeApiRoute(postWithBrokenSchema, createRequest('{}'))
+
+    expect(response.status).toBe(500)
+    await expect(response.text()).resolves.toBe('Regeneration submission failed')
+    expect(generationMocks.startHistoryRegeneration).not.toHaveBeenCalled()
+  } finally {
+    vi.doUnmock('zod')
+    vi.resetModules()
+  }
+})

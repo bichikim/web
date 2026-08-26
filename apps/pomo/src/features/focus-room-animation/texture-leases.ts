@@ -101,18 +101,15 @@ export async function acquireTextureGroup(
 ): Promise<readonly TextureLease[]> {
   const results = await Promise.allSettled(sources.map(async (source) => acquireTexture(source)))
   const failure = results.find((result) => result.status === 'rejected')
+  const leases = results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []))
 
   if (failure !== undefined) {
-    for (const result of results) {
-      if (result.status === 'fulfilled') {
-        result.value.release()
-      }
-    }
+    releaseTextureGroup(leases)
 
     throw failure.reason
   }
 
-  return results.map((result) => (result as PromiseFulfilledResult<TextureLease>).value)
+  return leases
 }
 
 export function releaseTextureGroup(leases: readonly TextureLease[]) {

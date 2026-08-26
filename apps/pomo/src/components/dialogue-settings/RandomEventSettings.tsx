@@ -96,7 +96,7 @@ export const RandomEventSettings = () => {
     })
   })
 
-  const saveSettings = async (nextSettings: RandomEventSettingsValue) => {
+  const saveSettings = async (nextSettings: RandomEventSettingsValue): Promise<void> => {
     try {
       await writeRandomEventSettings(nextSettings)
       window.dispatchEvent(

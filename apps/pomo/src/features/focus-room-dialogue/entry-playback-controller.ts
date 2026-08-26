@@ -143,6 +143,15 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let restReturnTimer: number | null = null
   let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
   const requestQueue: Array<PlaybackQueueRequest> = []
+  const reportPlaybackFailure = console.error.bind(
+    console,
+    'Unexpected focus room dialogue playback failure.',
+  )
+  const reportQueueFailure = console.error.bind(console, 'Unexpected dialogue queue failure.')
+  const reportSettlementFailure = console.error.bind(
+    console,
+    'Unexpected dialogue request settlement failure.',
+  )
 
   const updateScheduledDialogueCount = () => {
     const activeCount =
@@ -268,9 +277,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     clearPlayback(completion === 'ended' ? 'hold' : 'immediate')
   }
 
-  const start = async () => {
-    const currentAudio = audio!
-
+  const start = async (currentAudio: HTMLAudioElement) => {
     try {
       const suspension = audioContextSuspension
 
@@ -402,7 +409,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       },
       {once: true},
     )
-    await start()
+    await start(currentAudio)
     return completion
   }
 
@@ -477,7 +484,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       }
     } finally {
       isDraining = false
-
       if (!isDisposed && activeViseme() !== 'rest') {
         resetViseme('delayed')
       }
@@ -497,7 +503,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         settled: false,
       })
       updateScheduledDialogueCount()
-      drainQueue()
+      drainQueue().catch(reportQueueFailure)
     })
 
   const finishQueue = (notifyStop: boolean) => {
@@ -509,7 +515,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     updateScheduledDialogueCount()
     finishPlayback(completion)
     requests.forEach((request) => {
-      settleQueueRequest(request, notifyStop)
+      settleQueueRequest(request, notifyStop).catch(reportSettlementFailure)
     })
   }
 
@@ -563,7 +569,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         return
       }
 
-      start()
+      start(audio!).catch(reportPlaybackFailure)
     },
     scheduledDialogueCount,
     skip,

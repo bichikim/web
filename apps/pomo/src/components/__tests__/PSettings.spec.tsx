@@ -288,4 +288,16 @@ it('should describe every wake-lock availability state and pending request', () 
   expect(
     screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
   ).toHaveAttribute('data-description', '권한을 확인할 수 없어요.')
+
+  vi.mocked(useScreenWakeLock).mockReturnValue({
+    availability: () => 'future-runtime' as never,
+    errorMessage: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  render(() => <PSettings />)
+  expect(
+    screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
+  ).toHaveAttribute('data-description', 'future-runtime')
 })

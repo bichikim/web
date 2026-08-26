@@ -31,7 +31,8 @@
     "prepare-build": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "start": "node dist/cli.js build -r 'test/assets' -a '**/*' ./node_modules/sw.js",
-    "test": "vitest run"
+    "test": "pnpm --dir ../.. exec vitest run --project=unit packages/sw/src --reporter=dot",
+    "test:integration:build": "pnpm --dir ../.. run test:integration:build"
   },
   "dependencies": {
     "commander": "^14.0.3",

@@ -257,6 +257,8 @@ describe('ParallaxController', () => {
   })
 
   it('should keep start, input mode, and destroy operations idempotent', () => {
+    Object.assign(TestDeviceOrientationEvent, {requestPermission: vi.fn()})
+    vi.stubGlobal('DeviceOrientationEvent', TestDeviceOrientationEvent)
     const host = createPointerHost()
     const controller = new ParallaxController(host, vi.fn())
 
@@ -269,6 +271,9 @@ describe('ParallaxController', () => {
     controller.destroy()
     controller.destroy()
     controller.start()
+    controller.setInputMode('gyroscope')
+    controller.setInputMode('drag')
+    Reflect.deleteProperty(TestDeviceOrientationEvent, 'requestPermission')
   })
 
   it('should ignore invalid drag events and zero-sized hosts', () => {

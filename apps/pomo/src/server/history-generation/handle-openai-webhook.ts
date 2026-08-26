@@ -31,7 +31,7 @@ interface ResponseWebhookEvent {
     | 'response.incomplete'
 }
 
-const isContractError = (error: unknown): error is SyntaxError | TypeError | ZodError =>
+const isContractError = (error: unknown): error is TypeError | SyntaxError | ZodError =>
   error instanceof TypeError || error instanceof SyntaxError || error instanceof ZodError
 
 const getTargetMonthDay = (targetDate: string): {day: number; month: number} => {

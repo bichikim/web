@@ -1,18 +1,12 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createRoot, createSignal, onMount} from 'solid-js'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const audioMocks = vi.hoisted(() => ({loadTrackPreviewSource: vi.fn()}))
 
 vi.mock('../../features/focus-room-audio', () => audioMocks)
-vi.mock('solid-js', async () => {
-  const actual: typeof import('solid-js') = await vi.importActual('solid-js')
-
-  return {...actual, onMount: vi.fn(actual.onMount)}
-})
-
 import {PAlbumTrackList} from '../album-library/TrackList'
 
 class TestResizeObserver {
@@ -293,24 +287,4 @@ it('should update overflow from window resize when ResizeObserver is unavailable
 
   view.unmount()
   expect(removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
-})
-
-it('should return from mount when its list ref is unavailable', () => {
-  vi.mocked(onMount).mockImplementationOnce((callback) => callback())
-
-  createRoot((dispose) => {
-    PAlbumTrackList({
-      albumTitle: 'Album',
-      onAddTrack: vi.fn(),
-      onPreview: vi.fn(),
-      pendingTrackId: null,
-      playableTracks: [],
-      playingTrackId: null,
-      trackIds: new Set(),
-      tracks: [],
-    })
-    dispose()
-  })
-
-  expect(onMount).toHaveBeenCalledOnce()
 })

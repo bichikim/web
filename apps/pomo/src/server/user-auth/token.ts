@@ -14,5 +14,6 @@ export const readBearerToken = (request: Request): string | null => {
     return null
   }
 
-  return authorization.slice('Bearer '.length)
+  const token = authorization.slice('Bearer '.length)
+  return token.length > 0 ? token : null
 }

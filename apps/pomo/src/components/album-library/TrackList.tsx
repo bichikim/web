@@ -71,20 +71,16 @@ interface PAlbumTrackListProps {
 
 export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
   const [hasMoreBelow, setHasMoreBelow] = createSignal(false)
-  let listElement: HTMLOListElement | undefined
+  let listElement!: HTMLOListElement
 
   const updateOverflow = () => {
-    const list = listElement!
+    const list = listElement
 
     setHasMoreBelow(list.scrollTop + list.clientHeight < list.scrollHeight - 1)
   }
 
   onMount(() => {
     const list = listElement
-
-    if (list === undefined) {
-      return
-    }
 
     updateOverflow()
 

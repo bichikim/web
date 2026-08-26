@@ -36,7 +36,8 @@ const DEFAULT_DEPENDENCIES: StartGenerationDependencies = {
   submit: submitHistoryResponse,
 }
 
-const getErrorMessage = (error: Error): string => error.message.slice(0, MAX_ERROR_LENGTH)
+const getErrorMessage = (error: HistorySubmissionError): string =>
+  error.message.slice(0, MAX_ERROR_LENGTH)
 
 /** Creates the next daily run and returns after OpenAI accepts the background response. */
 export const startHistoryGeneration = async (

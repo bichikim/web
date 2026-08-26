@@ -162,14 +162,12 @@ async function* generateSupertonicStream(
   })
 
   while (!isComplete || chunks.length > 0) {
-    const chunk = chunks.shift()
-
-    if (chunk === undefined) {
+    if (chunks.length === 0) {
       await new Promise<void>((resolve) => {
         wakeConsumer = resolve
       })
     } else {
-      yield successResult({audio: chunk, type: 'chunk'})
+      yield successResult({audio: chunks.shift()!, type: 'chunk'})
     }
   }
 

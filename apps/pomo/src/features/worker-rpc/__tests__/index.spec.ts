@@ -181,6 +181,16 @@ describe('createWorkerRpcTransport', () => {
     expect(disposedWorker.terminate).toHaveBeenCalledTimes(1)
   })
 
+  it('should terminate only once when disposal follows a fatal failure', () => {
+    const worker = new FakeWorker()
+    const transport = createTransport(worker)
+
+    worker.emitError('fatal')
+    transport.dispose()
+
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
   it('should reject pending work when response handling throws', async () => {
     const worker = new FakeWorker()
     const transport = createWorkerRpcTransport<

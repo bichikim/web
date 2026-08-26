@@ -29,4 +29,12 @@ describe('opaque tokens', () => {
       ),
     ).toBe('app-token')
   })
+
+  it('should reject an empty bearer credential from a request adapter', () => {
+    const request = {
+      headers: {get: () => 'Bearer '},
+    } as unknown as Request
+
+    expect(readBearerToken(request)).toBeNull()
+  })
 })

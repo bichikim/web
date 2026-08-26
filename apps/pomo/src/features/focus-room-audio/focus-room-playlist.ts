@@ -305,7 +305,7 @@ const loadPublishedAlbums = async (
         ? await apiFetch(localizedAlbumsUrl, createRequestInit(signal))
         : await httpFetch(localizedAlbumsUrl, createRequestInit(signal))
 
-    const collection: unknown = response.ok ? await response.json() : null
+    const collection: unknown = response.ok ? await response.json() : undefined
 
     if (!isPublishedAlbumCollection(collection)) {
       return []

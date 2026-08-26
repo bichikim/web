@@ -362,6 +362,32 @@ it('should generate immediately when the writer model is ready', async () => {
   expect(isTextModelDownloaded).not.toHaveBeenCalled()
 })
 
+it('should join the active draft model download before generating', async () => {
+  const writer = createWriter()
+  const modelDownload = {
+    ...createModelDownload(),
+    state: () =>
+      ({
+        label: 'Gemma 4 E2B',
+        percentage: 42,
+        status: 'loading',
+        target: {kind: 'text', modelId: 'gemma-4-e2b'},
+      }) satisfies ModelDownloadState,
+  }
+  vi.mocked(useDialogueWriter).mockReturnValue(writer)
+  vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+  render(() => <PDialogueDraftGenerator onGenerated={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: /초안 만들기/}))
+  const generateButton = screen.getByRole('button', {name: '대사 만들기'})
+  generateButton.removeAttribute('disabled')
+
+  fireEvent.click(generateButton)
+
+  await waitFor(() => expect(writer.generateWithPreparation).toHaveBeenCalledOnce())
+  expect(modelDownload.startTextModel).toHaveBeenCalledWith('gemma-4-e2b')
+  expect(isTextModelDownloaded).not.toHaveBeenCalled()
+})
+
 it('should explain writer errors and unsupported models', () => {
   const errorWriter = createWriter()
   vi.mocked(useDialogueWriter).mockReturnValue({

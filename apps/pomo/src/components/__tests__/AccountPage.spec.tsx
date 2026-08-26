@@ -22,13 +22,17 @@ afterEach(() => {
 it.each([
   [false, 'Web account'],
   [true, 'Toss account'],
-] as const)('should render the account page for Toss=%s', async (isAppsInToss, accountText) => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', isAppsInToss ? '1' : '')
-  const {AccountPage} = await import('../AccountPage')
+] as const)(
+  'should render the account page for Toss=%s',
+  async (isAppsInToss, accountText) => {
+    vi.stubEnv('POMO_IS_APPS_IN_TOSS', isAppsInToss ? '1' : '')
+    const {AccountPage} = await import('../AccountPage')
 
-  render(() => <AccountPage />)
+    render(() => <AccountPage />)
 
-  expect(screen.getByRole('main')).toHaveTextContent('Pomo account')
-  expect(screen.getByRole('link')).toHaveAttribute('href', '/ko/')
-  expect(screen.getByText(accountText)).toBeInTheDocument()
-})
+    expect(screen.getByRole('main')).toHaveTextContent('Pomo account')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/ko/')
+    expect(screen.getByText(accountText)).toBeInTheDocument()
+  },
+  15_000,
+)

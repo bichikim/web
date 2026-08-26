@@ -1,4 +1,4 @@
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   cacheOptions: null as null | Record<string, (...args: never[]) => unknown>,
@@ -72,6 +72,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.cacheOptions = null
   mocks.streamerOptions = null
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 it('should prepare Gemma once, report byte progress, and configure versioned caching', async () => {
@@ -186,4 +190,14 @@ it('should reset failed preparation and load Qwen on retry', async () => {
   mocks.processorFromPretrained.mockResolvedValue(processor)
   await expect(runtime.prepare('qwen-0.8b')).resolves.toBeUndefined()
   expect(mocks.loadQwenModel).toHaveBeenCalledTimes(2)
+})
+
+it('should reject Qwen outside development builds', async () => {
+  vi.stubEnv('DEV', false)
+  mocks.processorFromPretrained.mockResolvedValue(createProcessor())
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+
+  await expect(runtime.prepare('qwen-0.8b')).rejects.toThrow(
+    'Qwen 텍스트 모델은 개발 빌드에서만 사용할 수 있어요.',
+  )
 })

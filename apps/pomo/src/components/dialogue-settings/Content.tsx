@@ -169,10 +169,13 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
 
   const stopPlayback = () => {
     playbackRequestId += 1
-    const audio = audioElement()!
-    audio.pause()
-    audio.removeAttribute('src')
-    audio.load()
+    const audio = audioElement()
+
+    if (audio !== undefined) {
+      audio.pause()
+      audio.removeAttribute('src')
+      audio.load()
+    }
 
     if (playbackUrl !== null) {
       URL.revokeObjectURL(playbackUrl)
@@ -205,7 +208,12 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
         return
       }
 
-      const player = audioElement()!
+      const player = audioElement()
+
+      if (player === undefined) {
+        setMessage('음성 재생기를 준비하지 못했어요.')
+        return
+      }
 
       playbackUrl = URL.createObjectURL(audio)
       player.src = playbackUrl
@@ -236,10 +244,9 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
   const handleEventBinding = async (
     eventId: DialogueEventId,
     dialogueIds: ReadonlyArray<string>,
-  ) => {
-    stopPlayback()
-
+  ): Promise<void> => {
     try {
+      stopPlayback()
       await events.setEventDialogues(eventId, dialogueIds)
       setMessage(null)
     } catch (error: unknown) {
@@ -251,10 +258,9 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
   const handlePlaybackMode = async (
     eventId: DialogueEventId,
     playbackMode: DialogueEventPlaybackMode,
-  ) => {
-    stopPlayback()
-
+  ): Promise<void> => {
     try {
+      stopPlayback()
       await events.setEventPlaybackMode(eventId, playbackMode)
       setMessage(null)
     } catch (error: unknown) {

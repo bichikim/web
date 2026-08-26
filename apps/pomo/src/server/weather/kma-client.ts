@@ -69,7 +69,7 @@ type KmaItem = z.infer<typeof kmaItemSchema>
 type KmaValue = KmaItem['fcstValue'] | KmaItem['obsrValue']
 
 const parseKmaNumber = (value: KmaValue): number | null => {
-  if (value === undefined || value === '' || value === '-') {
+  if (value === undefined || value === null || value === '' || value === '-') {
     return null
   }
 

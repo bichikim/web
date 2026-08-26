@@ -20,6 +20,10 @@ export const getNextKoreanDate = (now: Date): HistoryTargetDate => {
   const month = Number(parts.month)
   const day = Number(parts.day)
 
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    throw new TypeError('Failed to calculate the next Korean calendar date')
+  }
+
   return {
     day,
     isoDate: [

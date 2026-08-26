@@ -46,14 +46,6 @@ export type ConnectAlbumOfferResult =
   | {readonly code: 'album_not_found' | 'external_product_conflict'; readonly success: false}
   | {readonly success: true}
 
-const requireCommerceProduct = <Product>(product: Product | undefined): Product => {
-  if (product === undefined) {
-    throw new Error('Failed to create or restore a commerce product')
-  }
-
-  return product
-}
-
 export const listAdminMusic = async () => {
   const database = getDatabase()
   const [albums, translations, tracks, assets, offers] = await Promise.all([
@@ -291,18 +283,23 @@ export const connectAlbumOffer = async (
               .where(eq(commerceProducts.id, existingAlbumProduct.id))
               .returning({id: commerceProducts.id})
 
-      const connectedProduct = requireCommerceProduct(product)
+      switch (product) {
+        case undefined:
+          throw new Error('Failed to create or restore a commerce product')
+        default:
+          break
+      }
 
       await transaction
         .insert(commerceProductAlbums)
-        .values({albumId: input.albumId, productId: connectedProduct.id})
+        .values({albumId: input.albumId, productId: product.id})
         .onConflictDoNothing()
       await transaction
         .insert(commerceOffers)
         .values({
           billingType: 'one_time',
           externalProductId: input.externalProductId,
-          productId: connectedProduct.id,
+          productId: product.id,
           provider: input.provider,
           status: 'active',
         })

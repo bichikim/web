@@ -32,8 +32,13 @@ const requestSchema = z
 
 const parseTargetDate = (isoDate: string): HistoryTargetDate => {
   const [, monthText, dayText] = isoDate.split('-')
-  const month = Number(monthText!)
-  const day = Number(dayText!)
+
+  if (monthText === undefined || dayText === undefined) {
+    throw new TypeError('Invalid target date')
+  }
+
+  const month = Number(monthText)
+  const day = Number(dayText)
 
   return {day, isoDate, month}
 }

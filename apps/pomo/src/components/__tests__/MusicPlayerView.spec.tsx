@@ -94,7 +94,7 @@ describe('MusicPlayerView', () => {
     fireEvent.click(trackButtons[1]!)
 
     expect(onAlbumAdd).toHaveBeenCalledWith(getAddedAlbumTracks())
-    expect(onAudioElement).toHaveBeenCalledWith(result.container.querySelector('audio'))
+    expect(onAudioElement.mock.calls[0]?.[0]).toBe(result.container.querySelector('audio'))
     expect(result.getByTestId('album-track-count')).toHaveTextContent('2')
     expect(onAlbumClear).toHaveBeenCalledOnce()
     expect(onPreviewStart).toHaveBeenCalledWith(getStopAlbumPreview())

@@ -143,6 +143,36 @@ afterEach(() => {
 })
 
 describe('usePDialogueEditor', () => {
+  it('should ignore a direct generation request with empty text', async () => {
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+
+    await editor.controller.generate()
+
+    expect(client.initialize).not.toHaveBeenCalled()
+    expect(client.generateStream).not.toHaveBeenCalled()
+    editor.dispose()
+  })
+
+  it('should report an unexpected initial dialogue loading rejection', async () => {
+    const error = new Error('load failed')
+    sessionStorage.setItem('pomo:focus-room-dialogue:draft:failed-dialogue', 'changed draft')
+    repositoryMocks.getDialogue.mockResolvedValueOnce(createStoredDialogue('failed-dialogue'))
+    repositoryMocks.getAudio.mockResolvedValueOnce(new Blob(['audio']))
+    vi.mocked(URL.revokeObjectURL).mockImplementationOnce(() => {
+      throw error
+    })
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const editor = createEditorRoot('failed-dialogue')
+
+    await vi.waitFor(() =>
+      expect(errorSpy).toHaveBeenCalledWith('Unexpected dialogue loading failure.', error),
+    )
+
+    editor.dispose()
+  })
+
   it('should expose capped model progress and an initialization failure message', async () => {
     const client = createClient([])
     let progressDuringPreparation = 0

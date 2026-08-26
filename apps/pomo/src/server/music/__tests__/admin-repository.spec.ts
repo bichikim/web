@@ -379,6 +379,15 @@ describe('connectAlbumOffer', () => {
     )
   })
 
+  it('should reject when product restoration returns no row', async () => {
+    queueOfferLookups([{id: 'album-1'}], [{id: 'product-1'}], [])
+    transactionUpdate.mockReturnValueOnce(createProductUpdate([]))
+
+    await expect(connectAlbumOffer(offerInput)).rejects.toThrow(
+      'Failed to create or restore a commerce product',
+    )
+  })
+
   it('should propagate a transaction failure', async () => {
     transactionalDatabase.transaction.mockRejectedValueOnce(new Error('offer failed'))
     await expect(connectAlbumOffer(offerInput)).rejects.toThrow('offer failed')

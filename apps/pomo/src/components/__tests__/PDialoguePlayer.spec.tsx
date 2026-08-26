@@ -113,23 +113,18 @@ it('should show the neutral face when an active segment has no mood analysis', (
   expect(screen.getByRole('img', {name: '중립 감정'})).toBeDefined()
 })
 
-it('should keep progress labeling valid while the active position changes', () => {
-  const activeSegmentPosition = vi
-    .fn<() => number | null>()
-    .mockReturnValueOnce(0)
-    .mockReturnValueOnce(null)
-    .mockReturnValue(0)
+it('should hide segment progress until an active position is available', () => {
   vi.mocked(usePEvents).mockReturnValue(
     createEvents({
       activeSegmentCount: () => 2,
-      activeSegmentPosition,
+      activeSegmentPosition: () => null,
       activeText: () => '위치가 바뀌는 대사',
     }),
   )
 
   render(() => <PDialoguePlayer />)
 
-  expect(screen.getByRole('img', {name: '총 2개 중 1번째 대사 읽는 중'})).toBeDefined()
+  expect(screen.queryByRole('img', {name: /번째 대사 읽는 중/})).toBeNull()
 })
 
 it('should replace the dialogue border only in scribble style', () => {
