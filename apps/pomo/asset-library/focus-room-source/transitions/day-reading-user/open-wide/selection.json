@@ -1,12 +1,13 @@
 {
-  "early": "generated-full/open.png",
-  "middle": "generated-full-v5-selection-v3/02-frame-009.png",
-  "late": "generated-full-v5-selection-v3/03-frame-011.png",
+  "early": "generated-full-h3-v7-v2/01-a-frame-012.png",
+  "middle": "generated-full-h3-v7-v2/02-transition-frame-018.png",
+  "late": "generated-full-h3-v7-v2/03-e-frame-022.png",
+  "runtimeApplied": false,
   "crop": {
     "left": 930,
     "top": 285,
     "width": 260,
     "height": 180
   },
-  "reason": "Use the actual open endpoint followed by GPT-restored H3 frames 009 and 011 so the mouth opens and widens monotonically without the smaller generated frame 001."
+  "reason": "Retain the three approved GPT-restored H3 v7 frames as source material only. Runtime now transitions directly from open to wide."
 }

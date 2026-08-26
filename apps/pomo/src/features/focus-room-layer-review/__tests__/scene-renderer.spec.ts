@@ -184,8 +184,6 @@ vi.mock('../../focus-room-animation/scene-catalog-channels', () => ({
     'open-round-early': 'mouth-transition-open-round-early',
     'open-round-late': 'mouth-transition-open-round-late',
     'open-round-middle': 'mouth-transition-open-round-middle',
-    'open-wide-early': 'mouth-transition-open-wide-early',
-    'open-wide-late': 'mouth-transition-open-wide-late',
     release: 'mouth-transition-release',
     'small-open': 'mouth-transition-small-open',
   },

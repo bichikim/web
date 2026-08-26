@@ -1,0 +1,34 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "v9-open-wide-early.png"}
+  },
+  "2": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["1", 0], "filename_prefix": "pomo-v9/open-wide-early"}
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "v9-narrow-round-late.png"}
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["3", 0], "filename_prefix": "pomo-v9/narrow-round-late"}
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "v9-mask-open-wide-early.png"}
+  },
+  "6": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["5", 0], "filename_prefix": "pomo-v9/mask-open-wide-early"}
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "v9-mask-narrow-round-late.png"}
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["7", 0], "filename_prefix": "pomo-v9/mask-narrow-round-late"}
+  }
+}

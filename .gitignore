@@ -6,6 +6,8 @@
 node_modules
 
 # Caches
+__pycache__/
+*.py[cod]
 .eslintcache
 .parcel-cache
 /storybook-static

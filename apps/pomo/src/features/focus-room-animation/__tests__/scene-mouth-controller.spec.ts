@@ -31,8 +31,8 @@ describe('createPSceneMouthController', () => {
     frames.shift()?.(1_050)
 
     const halfwayState = update.mock.lastCall?.[0]
-    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]?.opacity).toBe(0.5)
-    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]?.opacity).toBe(0.5)
+    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]?.opacity).toBe(Math.SQRT1_2)
+    expect(halfwayState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]?.opacity).toBe(Math.SQRT1_2)
 
     frames.shift()?.(1_100)
 

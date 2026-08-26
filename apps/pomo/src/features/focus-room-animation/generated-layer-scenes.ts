@@ -33,8 +33,6 @@ import dayReadingUserMouthOpen from './assets/layers/day-reading-user/layer-mout
 import dayReadingUserMouthOpenRoundEarly from './assets/layers/day-reading-user/layer-mouth-open-round-early.webp'
 import dayReadingUserMouthOpenRoundLate from './assets/layers/day-reading-user/layer-mouth-open-round-late.webp'
 import dayReadingUserMouthOpenRoundMiddle from './assets/layers/day-reading-user/layer-mouth-open-round-middle.webp'
-import dayReadingUserMouthOpenWideEarly from './assets/layers/day-reading-user/layer-mouth-open-wide-early.webp'
-import dayReadingUserMouthOpenWideLate from './assets/layers/day-reading-user/layer-mouth-open-wide-late.webp'
 import dayReadingUserMouthHalfOpen from './assets/layers/day-reading-user/layer-mouth-half-open.webp'
 import dayReadingUserMouthRest from './assets/layers/day-reading-user/layer-mouth-rest.webp'
 import dayReadingUserMouthRelease from './assets/layers/day-reading-user/layer-mouth-release.webp'
@@ -155,8 +153,6 @@ const DAY_USER_MOUTH_TRANSITION_SOURCES = {
   'open-round-early': dayReadingUserMouthOpenRoundEarly,
   'open-round-late': dayReadingUserMouthOpenRoundLate,
   'open-round-middle': dayReadingUserMouthOpenRoundMiddle,
-  'open-wide-early': dayReadingUserMouthOpenWideEarly,
-  'open-wide-late': dayReadingUserMouthOpenWideLate,
   release: dayReadingUserMouthRelease,
   'small-open': dayReadingUserMouthSmallOpen,
 } satisfies PMouthTransitionSources
