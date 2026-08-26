@@ -262,23 +262,21 @@ describe('focus room scene catalog', () => {
     }
   })
 
-  it('should move hair in every focused scene only', () => {
+  it('should move hair in every scene with the matching gaze mask', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
       const headLayer = getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')
       const hairMotion =
         headLayer?.motion?.kind === 'pivot-rotation' ? headLayer.motion.pixelPush : undefined
+      const expectedMaskDirectory =
+        scene.gaze === 'focused' ? 'day-writing-focused' : `${scene.time}-reading-user`
 
-      if (scene.gaze === 'focused') {
-        expect(hairMotion).toMatchObject([
-          {
-            distance: {x: -4, y: 1.25},
-            kind: 'masked-pixel-push',
-            maskSource: expect.stringContaining('hair-tips-mask'),
-          },
-        ])
-      } else {
-        expect(hairMotion).toBeUndefined()
-      }
+      expect(hairMotion).toMatchObject([
+        {
+          distance: {x: -4, y: 1.25},
+          kind: 'masked-pixel-push',
+          maskSource: expect.stringContaining(`${expectedMaskDirectory}/hair-tips-mask`),
+        },
+      ])
     }
   })
 

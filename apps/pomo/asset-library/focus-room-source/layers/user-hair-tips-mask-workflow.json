@@ -1,0 +1,314 @@
+{
+  "1": {"class_type": "LoadImage", "inputs": {"image": "layer-head (1).png"}},
+  "2": {"class_type": "ImageToMask", "inputs": {"image": ["1", 0], "channel": "green"}},
+  "3": {"class_type": "InvertMask", "inputs": {"mask": ["2", 0]}},
+  "4": {"class_type": "ThresholdMask", "inputs": {"mask": ["3", 0], "value": 0.45}},
+  "5": {"class_type": "InvertMask", "inputs": {"mask": ["1", 1]}},
+  "6": {
+    "class_type": "MaskComposite",
+    "inputs": {"destination": ["4", 0], "source": ["5", 0], "x": 0, "y": 0, "operation": "multiply"}
+  },
+  "7": {
+    "class_type": "GrowMask",
+    "inputs": {"mask": ["6", 0], "expand": 3, "tapered_corners": true}
+  },
+  "8": {
+    "class_type": "GrowMask",
+    "inputs": {"mask": ["7", 0], "expand": -3, "tapered_corners": true}
+  },
+  "20": {"class_type": "SolidMask", "inputs": {"value": 0.0, "width": 1672, "height": 941}},
+  "60": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 100, "height": 100}},
+  "61": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["60", 0], "left": 22, "top": 22, "right": 22, "bottom": 22}
+  },
+  "62": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["20", 0],
+      "source": ["61", 0],
+      "x": 900,
+      "y": 225,
+      "operation": "add"
+    }
+  },
+  "63": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 180, "height": 100}},
+  "64": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["63", 0], "left": 24, "top": 24, "right": 24, "bottom": 24}
+  },
+  "65": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["62", 0],
+      "source": ["64", 0],
+      "x": 850,
+      "y": 350,
+      "operation": "add"
+    }
+  },
+  "66": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 120, "height": 100}},
+  "67": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["66", 0], "left": 22, "top": 22, "right": 22, "bottom": 22}
+  },
+  "68": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["65", 0],
+      "source": ["67", 0],
+      "x": 1090,
+      "y": 315,
+      "operation": "add"
+    }
+  },
+  "41": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["8", 0],
+      "source": ["68", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "51": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["41", 0],
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "47": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["51", 0], "left": 6, "top": 6, "right": 6, "bottom": 6}
+  },
+  "48": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 100, "height": 70}},
+  "49": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["48", 0], "left": 6, "top": 6, "right": 6, "bottom": 6}
+  },
+  "50": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["47", 0],
+      "source": ["49", 0],
+      "x": 910,
+      "y": 280,
+      "operation": "subtract"
+    }
+  },
+  "82": {"class_type": "LoadImage", "inputs": {"image": "layer-head-hair-tips-mask-v4.png"}},
+  "83": {"class_type": "ImageToMask", "inputs": {"image": ["82", 0], "channel": "red"}},
+  "84": {
+    "class_type": "GrowMask",
+    "inputs": {"mask": ["83", 0], "expand": 12, "tapered_corners": true}
+  },
+  "85": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["50", 0],
+      "source": ["84", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "86": {
+    "class_type": "MaskComposite",
+    "inputs": {"destination": ["85", 0], "source": ["85", 0], "x": 0, "y": 0, "operation": "add"}
+  },
+  "87": {
+    "class_type": "MaskComposite",
+    "inputs": {"destination": ["86", 0], "source": ["86", 0], "x": 0, "y": 0, "operation": "add"}
+  },
+  "88": {
+    "class_type": "MaskComposite",
+    "inputs": {"destination": ["87", 0], "source": ["87", 0], "x": 0, "y": 0, "operation": "add"}
+  },
+  "42": {"class_type": "MaskToImage", "inputs": {"mask": ["88", 0]}},
+  "43": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["42", 0], "filename_prefix": "pomo-user-hair-mask-v4/day-hair-tips-mask"}
+  },
+  "44": {
+    "class_type": "EmptyImage",
+    "inputs": {"width": 1672, "height": 941, "batch_size": 1, "color": 16711935}
+  },
+  "45": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["44", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["88", 0]
+    }
+  },
+  "46": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["45", 0], "filename_prefix": "pomo-user-hair-mask-v4/day-preview"}
+  },
+
+  "101": {"class_type": "LoadImage", "inputs": {"image": "layer-head (2).png"}},
+  "102": {"class_type": "ImageToMask", "inputs": {"image": ["101", 0], "channel": "green"}},
+  "103": {"class_type": "InvertMask", "inputs": {"mask": ["102", 0]}},
+  "104": {"class_type": "ThresholdMask", "inputs": {"mask": ["103", 0], "value": 0.45}},
+  "105": {"class_type": "InvertMask", "inputs": {"mask": ["101", 1]}},
+  "106": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["104", 0],
+      "source": ["105", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "107": {
+    "class_type": "GrowMask",
+    "inputs": {"mask": ["106", 0], "expand": 3, "tapered_corners": true}
+  },
+  "108": {
+    "class_type": "GrowMask",
+    "inputs": {"mask": ["107", 0], "expand": -3, "tapered_corners": true}
+  },
+  "120": {"class_type": "SolidMask", "inputs": {"value": 0.0, "width": 1672, "height": 941}},
+  "160": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 100, "height": 105}},
+  "161": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["160", 0], "left": 22, "top": 22, "right": 22, "bottom": 22}
+  },
+  "162": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["120", 0],
+      "source": ["161", 0],
+      "x": 900,
+      "y": 225,
+      "operation": "add"
+    }
+  },
+  "163": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 175, "height": 105}},
+  "164": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["163", 0], "left": 24, "top": 24, "right": 24, "bottom": 24}
+  },
+  "165": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["162", 0],
+      "source": ["164", 0],
+      "x": 850,
+      "y": 350,
+      "operation": "add"
+    }
+  },
+  "166": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 120, "height": 105}},
+  "167": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["166", 0], "left": 22, "top": 22, "right": 22, "bottom": 22}
+  },
+  "168": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["165", 0],
+      "source": ["167", 0],
+      "x": 1090,
+      "y": 305,
+      "operation": "add"
+    }
+  },
+  "143": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["108", 0],
+      "source": ["168", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "153": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["143", 0],
+      "source": ["102", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "149": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["153", 0], "left": 6, "top": 6, "right": 6, "bottom": 6}
+  },
+  "150": {"class_type": "SolidMask", "inputs": {"value": 1.0, "width": 100, "height": 70}},
+  "151": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["150", 0], "left": 6, "top": 6, "right": 6, "bottom": 6}
+  },
+  "152": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["149", 0],
+      "source": ["151", 0],
+      "x": 905,
+      "y": 280,
+      "operation": "subtract"
+    }
+  },
+  "185": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["152", 0],
+      "source": ["84", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "186": {
+    "class_type": "MaskComposite",
+    "inputs": {"destination": ["185", 0], "source": ["185", 0], "x": 0, "y": 0, "operation": "add"}
+  },
+  "187": {
+    "class_type": "MaskComposite",
+    "inputs": {"destination": ["186", 0], "source": ["186", 0], "x": 0, "y": 0, "operation": "add"}
+  },
+  "188": {
+    "class_type": "MaskComposite",
+    "inputs": {"destination": ["187", 0], "source": ["187", 0], "x": 0, "y": 0, "operation": "add"}
+  },
+  "144": {"class_type": "MaskToImage", "inputs": {"mask": ["188", 0]}},
+  "145": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["144", 0],
+      "filename_prefix": "pomo-user-hair-mask-v4/night-hair-tips-mask"
+    }
+  },
+  "146": {
+    "class_type": "EmptyImage",
+    "inputs": {"width": 1672, "height": 941, "batch_size": 1, "color": 16711935}
+  },
+  "147": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["101", 0],
+      "source": ["146", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["188", 0]
+    }
+  },
+  "148": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["147", 0], "filename_prefix": "pomo-user-hair-mask-v4/night-preview"}
+  }
+}

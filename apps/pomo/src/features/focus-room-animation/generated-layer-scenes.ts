@@ -2,7 +2,7 @@ import type {PSceneId} from './scene-catalog'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
 import {BREATHING_MOTION} from './breathing-motion'
 import {createEyeMotion} from './eye-motion'
-import {HAIR_TIPS_PIXEL_PUSH} from './hair-motion'
+import {getHairTipsPixelPush} from './hair-motion'
 import {
   createMouthLayers,
   createMouthTransitionLayers,
@@ -246,7 +246,7 @@ const createSeparatedScene = (
         center: pivots.head,
         degrees: 0.5,
         kind: 'pivot-rotation',
-        pixelPush: id.endsWith('-focused') ? HAIR_TIPS_PIXEL_PUSH : undefined,
+        pixelPush: getHairTipsPixelPush(id),
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: assets.head,
