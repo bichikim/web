@@ -38,7 +38,10 @@ jobs:
 
       - name: Run tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: pnpm test
+        run: |
+          pnpm run test:vitest
+          pnpm run test:coverage:pomo
+          pnpm run test:integration:build
 
       - name: Run Oxlint
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
