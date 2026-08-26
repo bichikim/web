@@ -467,7 +467,11 @@ describe('focus room scene catalog', () => {
     expect(new Set(eyeMotions).size).toBe(eyeMotions.length)
   })
 
-  it('should use the original night head smile for the rest viseme', () => {
+  it('should provide every base mouth independently from the mouthless head', () => {
+    const nightOnlyTransitionIds = new Set([
+      'mouth-transition-open-wide-early',
+      'mouth-transition-open-wide-late',
+    ])
     const dayUserScenes = FOCUS_ROOM_SCENES.filter(
       (scene) => scene.gaze === 'user' && scene.time === 'day',
     )
@@ -487,7 +491,9 @@ describe('focus room scene catalog', () => {
 
         return (
           mouthLayers.length - transitionLayers.length === 6 &&
-          transitionLayers.length === P_MOUTH_TRANSITION_STAGES.length
+          transitionLayers.length ===
+            P_MOUTH_TRANSITION_STAGES.length - nightOnlyTransitionIds.size &&
+          transitionLayers.every((layer) => !nightOnlyTransitionIds.has(layer.id))
         )
       }),
     ).toBe(true)
@@ -497,8 +503,18 @@ describe('focus room scene catalog', () => {
         const mouthLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
           layer.id.startsWith('mouth-'),
         )
+        const transitionLayers = mouthLayers.filter((layer) =>
+          layer.id.startsWith('mouth-transition-'),
+        )
 
-        return mouthLayers.length === 5 && mouthLayers.every((layer) => layer.id !== 'mouth-rest')
+        return (
+          mouthLayers.length - transitionLayers.length === 6 &&
+          transitionLayers.length === P_MOUTH_TRANSITION_STAGES.length &&
+          [...nightOnlyTransitionIds].every((id) =>
+            transitionLayers.some((layer) => layer.id === id),
+          ) &&
+          mouthLayers.some((layer) => layer.id === 'mouth-rest')
+        )
       }),
     ).toBe(true)
   })
@@ -511,7 +527,7 @@ describe('focus room scene catalog', () => {
 
       expect(mouthLayers.every((layer) => layer.statePixelPush === undefined)).toBe(true)
 
-      if ((scene.time === 'day' && scene.gaze === 'user') || scene.id === 'night-reading-user') {
+      if (scene.gaze === 'user') {
         expect(head?.statePixelPush).toMatchObject({
           channel: FOCUS_ROOM_JAW_CHANNEL,
           effect: {

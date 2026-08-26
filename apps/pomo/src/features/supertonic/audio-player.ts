@@ -9,6 +9,7 @@ import {
   type PVisemeCue,
 } from '../lip-sync'
 import {createPBrowserAudioVisemeAnalyzer} from '../lip-sync/browser-audio-viseme'
+import {createPSilentMouthReturn} from '../lip-sync/silent-mouth-return'
 import type {SupertonicAudio} from './messages'
 
 export interface SupertonicAudioPlayer {
@@ -30,7 +31,6 @@ interface ScheduledVisemeTrack {
 }
 
 const MILLISECONDS_PER_SECOND = 1000
-const REST_RETURN_DELAY_MS = 300
 
 /** Creates a click-activated Web Audio queue that plays generated chunks in order. */
 export const createSupertonicAudioPlayer = (
@@ -46,7 +46,6 @@ export const createSupertonicAudioPlayer = (
   let disposed = false
   let finished = false
   let playbackEndReported = false
-  let restReturnTimer: number | null = null
   let nextStartTime = context.currentTime
 
   const setViseme = (viseme: PViseme) => {
@@ -58,20 +57,7 @@ export const createSupertonicAudioPlayer = (
     options.onVisemeChange?.(viseme)
   }
 
-  const cancelRestReturn = () => {
-    if (restReturnTimer !== null) {
-      window.clearTimeout(restReturnTimer)
-      restReturnTimer = null
-    }
-  }
-
-  const scheduleRestReturn = () => {
-    cancelRestReturn()
-    restReturnTimer = window.setTimeout(() => {
-      restReturnTimer = null
-      setViseme('rest')
-    }, REST_RETURN_DELAY_MS)
-  }
+  const silentMouthReturn = createPSilentMouthReturn(() => setViseme('closed'))
 
   const updateViseme = () => {
     const {currentTime} = context
@@ -80,7 +66,9 @@ export const createSupertonicAudioPlayer = (
     )
     const trackTimeMs =
       track === undefined ? 0 : (currentTime - track.startTime) * MILLISECONDS_PER_SECOND
-    if (track !== undefined) {
+    if (track === undefined) {
+      silentMouthReturn.schedule()
+    } else {
       const textViseme = getPCoarticulatedVisemeAtTime(track.cues, trackTimeMs)
       const audioFrame = audioVisemeAnalyzer.getFrame(textViseme)
       const nextViseme = visemeDriver.update({
@@ -89,7 +77,10 @@ export const createSupertonicAudioPlayer = (
         viseme: audioFrame?.viseme ?? textViseme,
       })
 
-      if (nextViseme !== 'rest') {
+      if (nextViseme === 'rest') {
+        silentMouthReturn.schedule()
+      } else {
+        silentMouthReturn.cancel()
         setViseme(nextViseme)
       }
     }
@@ -118,13 +109,13 @@ export const createSupertonicAudioPlayer = (
 
     if (finished && sources.size === 0 && !playbackEndReported) {
       playbackEndReported = true
-      scheduleRestReturn()
+      silentMouthReturn.schedule()
       options.onPlaybackEnd?.()
     }
   }
 
   const enqueue = (audio: SupertonicAudio, silenceDuration: number, text = '') => {
-    cancelRestReturn()
+    silentMouthReturn.cancel()
     const buffer = context.createBuffer(1, audio.samples.length, audio.sampleRate)
     buffer.copyToChannel(new Float32Array(audio.samples), 0)
     const source = context.createBufferSource()
@@ -167,14 +158,14 @@ export const createSupertonicAudioPlayer = (
     sources.clear()
     visemeTracks.length = 0
     visemeDriver.reset()
-    cancelRestReturn()
+    silentMouthReturn.cancel()
 
     if (animationFrame !== null) {
       window.cancelAnimationFrame(animationFrame)
       animationFrame = null
     }
 
-    setViseme('rest')
+    setViseme('closed')
     audioVisemeAnalyzer.dispose()
 
     if (context.state !== 'closed') {

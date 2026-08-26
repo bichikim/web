@@ -416,6 +416,6 @@ describe('createEntryPlaybackController', () => {
     latestAudio().dispatchEvent(new Event('ended'))
     await playback
     vi.runAllTimers()
-    expect(controller.activeViseme()).toBe('rest')
+    expect(controller.activeViseme()).toBe('closed')
   })
 })

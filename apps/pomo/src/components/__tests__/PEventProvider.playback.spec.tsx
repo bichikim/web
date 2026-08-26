@@ -217,7 +217,7 @@ it('should suspend audio processing between queued dialogues before resuming', a
   result.unmount()
 })
 
-it('should hold a speaking mouth between dialogues and rest 300ms after the final audio', async () => {
+it('should close after 100ms gaps between dialogues and after the final audio', async () => {
   const dialogues = [createDialogue('first'), createDialogue('second')]
   const repository = createRepository(dialogues, [
     {
@@ -246,19 +246,22 @@ it('should hold a speaking mouth between dialogues and rest 300ms after the fina
   vi.useFakeTimers()
 
   audioElements[0]?.dispatchEvent(new Event('ended'))
-  await vi.advanceTimersByTimeAsync(300)
-  expect(events.activeViseme()).not.toBe('rest')
+  await vi.advanceTimersByTimeAsync(99)
+  expect(events.activeViseme()).not.toBe('closed')
+  await vi.advanceTimersByTimeAsync(1)
+  expect(events.activeViseme()).toBe('closed')
   expect(playAudio).toHaveBeenCalledTimes(1)
 
   resolveSecondAudio?.(audioBlob)
   await vi.advanceTimersByTimeAsync(0)
   expect(playAudio).toHaveBeenCalledTimes(2)
+  expect(events.activeViseme()).not.toBe('closed')
 
   audioElements[1]?.dispatchEvent(new Event('ended'))
-  await vi.advanceTimersByTimeAsync(299)
-  expect(events.activeViseme()).not.toBe('rest')
+  await vi.advanceTimersByTimeAsync(99)
+  expect(events.activeViseme()).not.toBe('closed')
   await vi.advanceTimersByTimeAsync(1)
-  expect(events.activeViseme()).toBe('rest')
+  expect(events.activeViseme()).toBe('closed')
   result.unmount()
 })
 

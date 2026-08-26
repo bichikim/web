@@ -228,7 +228,7 @@ describe('createEntryPlaybackController', () => {
     await playback
     await flush()
     vi.runAllTimers()
-    expect(controller.activeViseme()).toBe('rest')
+    expect(controller.activeViseme()).toBe('closed')
   })
 
   it('should wait for context suspension before the next sequence item', async () => {

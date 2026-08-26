@@ -62,6 +62,7 @@ const runtimeLayerNames = new Map([
   ['layer-hand-right.png', 'right-hand.webp'],
   ['layer-head-eye-base.png', 'head.webp'],
   ['layer-head-hair-tips-mask-v4.png', 'hair-tips-mask.webp'],
+  ['layer-mask-jaw-displacement.png', 'layer-mask-jaw-displacement.webp'],
   ['layer-resting-hand.png', 'resting-hand.webp'],
   ['layer-sky-mask-writing-focused-v1.png', 'sky-mask.webp'],
   ['layer-writing-hand.png', 'writing-hand.webp'],
@@ -77,6 +78,10 @@ const getIndexedRuntimePath = (name, pattern, directory) => {
 }
 
 const getRuntimeLayerPath = (name) => {
+  if (/^layer-mouth-.+\.png$/u.test(name)) {
+    return replacePngExtension(name)
+  }
+
   const indexedPath =
     getIndexedRuntimePath(
       name,

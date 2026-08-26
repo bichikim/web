@@ -13,6 +13,10 @@ import {
 import {NIGHT_READING_FAINT_STAR_LAYERS} from './night-reading-faint-star-layers'
 import {type PositionedLayerSource, positionNightReadingLayer} from './night-reading-layer-position'
 import {NIGHT_READING_STAR_LAYERS} from './night-reading-star-layers'
+import {
+  NIGHT_USER_MOUTH_SOURCES,
+  NIGHT_USER_MOUTH_TRANSITION_SOURCES,
+} from './night-user-mouth-sources'
 import {FOCUS_ROOM_JAW_CHANNEL, FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
 import dayReadingUserBase from './assets/layers/day-reading-user/base.webp'
@@ -76,11 +80,6 @@ import nightReadingUserEyeIrises from './assets/layers/night-reading-user/eyes.w
 import nightReadingUserHead from './assets/layers/night-reading-user/head.webp'
 import nightReadingUserLeftHand from './assets/layers/night-reading-user/left-hand.webp'
 import nightReadingJawMask from './assets/layers/night-reading-user/layer-mask-jaw-displacement.webp'
-import nightReadingUserMouthClosed from './assets/layers/night-reading-user/layer-mouth-closed.webp'
-import nightReadingUserMouthNarrow from './assets/layers/night-reading-user/layer-mouth-narrow.webp'
-import nightReadingUserMouthOpen from './assets/layers/night-reading-user/layer-mouth-open.webp'
-import nightReadingUserMouthRound from './assets/layers/night-reading-user/layer-mouth-round.webp'
-import nightReadingUserMouthWide from './assets/layers/night-reading-user/layer-mouth-wide.webp'
 import nightReadingUserRightHand from './assets/layers/night-reading-user/right-hand.webp'
 import nightReadingUserReference from './assets/concept-art/night-reading-user-gaze.webp'
 import nightTypingFocusedBase from './assets/layers/night-typing-focused/base.webp'
@@ -157,13 +156,6 @@ const DAY_USER_MOUTH_TRANSITION_SOURCES = {
   release: dayReadingUserMouthRelease,
   'small-open': dayReadingUserMouthSmallOpen,
 } satisfies PMouthTransitionSources
-const NIGHT_USER_MOUTH_SOURCES = {
-  closed: nightReadingUserMouthClosed,
-  narrow: nightReadingUserMouthNarrow,
-  open: nightReadingUserMouthOpen,
-  round: nightReadingUserMouthRound,
-  wide: nightReadingUserMouthWide,
-} satisfies PVisemeSources
 const NIGHT_BUILDING_LAYERS = [
   positionNightReadingLayer('building-lights-01', buildingLights01),
   positionNightReadingLayer('building-lights-02', buildingLights02),
@@ -484,6 +476,7 @@ export const GENERATED_LAYER_SCENES = {
       headJawMask: nightReadingJawMask,
       leftHand: nightReadingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
+      mouthTransition: NIGHT_USER_MOUTH_TRANSITION_SOURCES,
       reference: nightReadingUserReference,
       rightHand: nightReadingUserRightHand,
     },
@@ -514,8 +507,10 @@ export const GENERATED_LAYER_SCENES = {
       base: nightTypingUserBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
       head: nightReadingUserHead,
+      headJawMask: nightReadingJawMask,
       leftHand: nightTypingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
+      mouthTransition: NIGHT_USER_MOUTH_TRANSITION_SOURCES,
       reference: nightTypingUserReference,
       rightHand: nightTypingUserRightHand,
     },
@@ -546,8 +541,10 @@ export const GENERATED_LAYER_SCENES = {
       base: nightWritingUserBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
       head: nightReadingUserHead,
+      headJawMask: nightReadingJawMask,
       leftHand: nightWritingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
+      mouthTransition: NIGHT_USER_MOUTH_TRANSITION_SOURCES,
       reference: nightWritingUserReference,
       rightHand: nightWritingUserRightHand,
     },

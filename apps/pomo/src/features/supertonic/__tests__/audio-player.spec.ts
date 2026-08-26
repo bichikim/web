@@ -114,7 +114,7 @@ afterEach(() => {
 })
 
 describe('createSupertonicAudioPlayer', () => {
-  it('should hold the speaking mouth until playback ends and return to rest after 300ms', () => {
+  it('should return the speaking mouth to closed after 100ms of silence', () => {
     vi.useFakeTimers()
     const runtime = installAudioRuntime()
     const onPlaybackEnd = vi.fn()
@@ -149,10 +149,10 @@ describe('createSupertonicAudioPlayer', () => {
     expect(onPlaybackEnd).toHaveBeenCalledOnce()
     expect(runtime.sources[0]?.disconnect).toHaveBeenCalledOnce()
     expect(onVisemeChange).toHaveBeenLastCalledWith('open')
-    vi.advanceTimersByTime(299)
+    vi.advanceTimersByTime(99)
     expect(onVisemeChange).toHaveBeenLastCalledWith('open')
     vi.advanceTimersByTime(1)
-    expect(onVisemeChange).toHaveBeenLastCalledWith('rest')
+    expect(onVisemeChange).toHaveBeenLastCalledWith('closed')
   })
 
   it('should stop the viseme clock when disposed', () => {
@@ -169,7 +169,7 @@ describe('createSupertonicAudioPlayer', () => {
     player.dispose()
 
     expect(window.cancelAnimationFrame).toHaveBeenCalled()
-    expect(onVisemeChange).toHaveBeenLastCalledWith('rest')
+    expect(onVisemeChange).toHaveBeenLastCalledWith('closed')
   })
 
   it('should ignore delayed source endings after disposal', () => {
