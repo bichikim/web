@@ -25,6 +25,8 @@ import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES, SceneTime} from './shared'
 import {PWeatherStatus} from '../PWeatherStatus'
+import {PDesktopModeControl} from '../PDesktopModeControl'
+import type {DesktopMode} from '../../features/desktop-mode/index'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -49,6 +51,10 @@ interface SceneToolbarProps {
   readonly weatherCitySlug: WeatherCitySlug
   readonly weatherEnabled: boolean
   readonly weatherState: WeatherState
+  readonly desktopMode?: DesktopMode
+  readonly desktopModeError?: string | null
+  readonly isDesktopModeChanging?: boolean
+  readonly onDesktopModeChange?: (mode: DesktopMode) => Promise<void>
 }
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
@@ -140,6 +146,12 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         />
       </div>
       <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
+      <PDesktopModeControl
+        error={props.desktopModeError}
+        isChanging={props.isDesktopModeChanging}
+        mode={props.desktopMode ?? 'normal'}
+        onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
+      />
       <PModelDownloadStatus />
       <Show when={props.isSceneTransitioning}>
         <span

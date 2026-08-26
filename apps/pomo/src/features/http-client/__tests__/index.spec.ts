@@ -84,3 +84,32 @@ it('should use the public API origin for the Apps in Toss build', async () => {
 
   expect(fetchMock).toHaveBeenCalledWith('https://pomo.example/api/account', expect.any(Object))
 })
+
+it('should resolve API, audio, and other relative assets from the public origin on desktop', async () => {
+  vi.stubEnv('POMO_IS_DESKTOP', '1')
+  vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://pomo.example')
+  vi.resetModules()
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', fetchMock)
+  const desktopClient = await import('..')
+
+  await desktopClient.apiFetch('account')
+  await desktopClient.audioFetch('playlist.json')
+  await desktopClient.httpFetch('/models/manifest.json')
+
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    1,
+    'https://pomo.example/api/account',
+    expect.any(Object),
+  )
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    2,
+    'https://pomo.example/audio/playlist.json',
+    expect.any(Object),
+  )
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    3,
+    'https://pomo.example/models/manifest.json',
+    expect.any(Object),
+  )
+})

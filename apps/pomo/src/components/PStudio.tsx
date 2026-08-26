@@ -24,6 +24,7 @@ import {
 } from '../features/focus-room-time'
 import {usePSay} from '../features/pomo-webmcp'
 import {useWeather} from '../features/weather'
+import {useDesktopMode} from '../features/desktop-mode'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
 import {PSceneFallback} from './p-studio/SceneFallback'
@@ -75,6 +76,7 @@ export const PStudio = () => {
   const [isEntryVisible, setIsEntryVisible] = createSignal(false)
   const screenSaver = useStudioScreenSaver()
   const weather = useWeather()
+  const desktopMode = useDesktopMode({isSurfaceOwner: true})
   const scenePreferences = usePScenePreferences()
   const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
@@ -157,8 +159,8 @@ export const PStudio = () => {
         </Show>
       </figure>
 
-      <div class={CLASSES.ui} hidden={!hasEntered()}>
-        <Show when={hasEntered()}>
+      <div class={CLASSES.ui} hidden={!hasEntered() || desktopMode.mode() === 'desktop'}>
+        <Show when={hasEntered() && desktopMode.mode() !== 'desktop'}>
           <PStudioEvents
             isPlayerExpanded={isPlayerExpanded()}
             onMusicPlayingChange={screenSaver.onMusicPlayingChange}
@@ -192,6 +194,10 @@ export const PStudio = () => {
               weatherCitySlug={weather.citySlug()}
               weatherEnabled={weather.enabled()}
               weatherState={weather.state()}
+              desktopMode={desktopMode.mode()}
+              desktopModeError={desktopMode.error()}
+              isDesktopModeChanging={desktopMode.isChanging()}
+              onDesktopModeChange={desktopMode.onModeChange}
             />
           </Show>
         </Show>

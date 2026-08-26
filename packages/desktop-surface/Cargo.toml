@@ -1,0 +1,44 @@
+[package]
+name = "tauri-plugin-desktop-surface"
+version = "0.1.0"
+edition = "2024"
+links = "tauri-plugin-desktop-surface"
+description = "Tauri desktop background and transparent control surfaces"
+license = "MIT"
+
+[package.metadata.platforms.support]
+macos = { level = "full", notes = "Background placement uses public AppKit and Core Graphics APIs. Transparent WebViews require Tauri's macOS private API feature." }
+windows = { level = "none", notes = "A Windows adapter is planned after the macOS implementation is validated." }
+linux = { level = "none" }
+android = { level = "none" }
+ios = { level = "none" }
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+tauri = { version = "2", features = ["macos-private-api"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6.2"
+objc2 = "0.6.4"
+objc2-app-kit = { version = "0.3.2", features = [
+  "NSApplication",
+  "NSRunningApplication",
+  "NSScreen",
+  "NSView",
+  "NSWindow",
+  "NSWorkspace",
+] }
+objc2-core-graphics = { version = "0.3.2", features = ["CGWindowLevel"] }
+objc2-foundation = { version = "0.3.2", features = [
+  "block2",
+  "NSNotification",
+  "NSOperation",
+  "NSString",
+] }
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

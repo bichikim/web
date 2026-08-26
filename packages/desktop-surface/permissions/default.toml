@@ -1,0 +1,13 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = "Allows an application to manage its desktop background and control surfaces."
+permissions = [
+  "allow-close-control-surface",
+  "allow-get-background-interaction",
+  "allow-open-control-surface",
+  "allow-restore-surface",
+  "allow-set-background-interaction",
+  "allow-set-background-surface",
+  "allow-set-widget-surface",
+]

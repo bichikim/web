@@ -1,0 +1,93 @@
+:root {
+  color: #f7f4eb;
+  font-family: ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  display: grid;
+  place-items: center;
+}
+
+.background-page {
+  background:
+    radial-gradient(circle at 20% 10%, rgb(255 192 120 / 55%), transparent 34%),
+    linear-gradient(145deg, #47324d, #172946 58%, #102d2d);
+}
+
+.background-card,
+.control-card {
+  padding: 28px;
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: 28px;
+  background: rgb(19 24 37 / 82%);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 30%);
+  backdrop-filter: blur(18px);
+}
+
+.background-card {
+  width: min(540px, calc(100vw - 48px));
+}
+
+.control-page {
+  background: transparent;
+}
+
+.control-card {
+  width: calc(100vw - 20px);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #ffcf91;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+p {
+  color: #cbd3e2;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 22px 0 16px;
+}
+
+button {
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 999px;
+  color: #18202e;
+  font: inherit;
+  font-weight: 800;
+  background: #ffcf91;
+  cursor: pointer;
+}
+
+.actions button:not(:first-child) {
+  color: #f7f4eb;
+  background: rgb(255 255 255 / 14%);
+}
+
+output {
+  color: #aebbd0;
+  font-size: 13px;
+}
