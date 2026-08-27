@@ -1,6 +1,6 @@
 ---
 name: skill-diet
-description: Reduce an existing Codex skill to its minimum useful form, extract on-demand context into linked sibling files, or decide that the skill should be deleted. Use when the user asks to diet, slim, trim, simplify, minimize, reevaluate, or remove bloat from a skill while preserving its trigger behavior, tone, safety constraints, and practical usefulness.
+description: Reduce a Codex skill to its minimum useful form or delete it when redundant while preserving triggers, tone, safety constraints, and usefulness; extract conditional context when needed.
 ---
 
 # Skill Diet

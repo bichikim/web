@@ -39,17 +39,19 @@ interface HandleGetOptions {
   readonly request: Request
 }
 
-const createErrorResponse = (status: number, code: string): Response =>
-  Response.json(
-    {error: code},
-    {
-      headers: {
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff',
-      },
-      status,
-    },
-  )
+const createErrorResponse = (
+  status: number,
+  code: string,
+  allowedOrigin: string | null,
+): Response => {
+  const headers = new Headers({
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+  })
+  applyCorsHeaders(headers, allowedOrigin)
+
+  return Response.json({error: code}, {headers, status})
+}
 
 const getAllowedOrigin = (request: Request, environment: AudioGatewayEnv): string | null => {
   const origin = request.headers.get('Origin')
@@ -249,11 +251,9 @@ const cacheFullObject = async (
   await caches.default.put(cacheRequest, createObjectResponse(object, claims.assetId))
 }
 
-const handleOptions = (request: Request, environment: AudioGatewayEnv): Response => {
-  const allowedOrigin = getAllowedOrigin(request, environment)
-
+const handleOptions = (request: Request, allowedOrigin: string | null): Response => {
   if (request.headers.get('Origin') !== null && allowedOrigin === null) {
-    return createErrorResponse(HTTP_UNAUTHORIZED, 'origin_not_allowed')
+    return createErrorResponse(HTTP_UNAUTHORIZED, 'origin_not_allowed', allowedOrigin)
   }
 
   const headers = new Headers({
@@ -300,7 +300,7 @@ const handleHead = async (
   )
 
   if (object === null) {
-    return createErrorResponse(HTTP_NOT_FOUND, 'audio_not_found')
+    return createErrorResponse(HTTP_NOT_FOUND, 'audio_not_found', allowedOrigin)
   }
 
   const headers = new Headers()
@@ -336,7 +336,7 @@ const handleGet = async ({
       : await environment.PAID_AUDIO.get(storageObjectKey, {range: request.headers})
 
   if (object === null) {
-    return createErrorResponse(HTTP_NOT_FOUND, 'audio_not_found')
+    return createErrorResponse(HTTP_NOT_FOUND, 'audio_not_found', allowedOrigin)
   }
 
   if (range !== null) {
@@ -359,33 +359,33 @@ const handleRequest = async (
   request: Request,
   environment: AudioGatewayEnv,
   context: ExecutionContext,
+  allowedOrigin: string | null,
 ): Promise<Response> => {
   if (request.method === 'OPTIONS') {
-    return handleOptions(request, environment)
+    return handleOptions(request, allowedOrigin)
   }
 
   if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return createErrorResponse(HTTP_METHOD_NOT_ALLOWED, 'method_not_allowed')
+    return createErrorResponse(HTTP_METHOD_NOT_ALLOWED, 'method_not_allowed', allowedOrigin)
   }
 
   const url = new URL(request.url)
   const assetId = AUDIO_PATH_REGEXP.exec(url.pathname)?.groups?.assetId
 
   if (assetId === undefined) {
-    return createErrorResponse(HTTP_NOT_FOUND, 'route_not_found')
+    return createErrorResponse(HTTP_NOT_FOUND, 'route_not_found', allowedOrigin)
   }
 
   const requestOrigin = request.headers.get('Origin')
-  const allowedOrigin = getAllowedOrigin(request, environment)
 
   if (requestOrigin !== null && allowedOrigin === null) {
-    return createErrorResponse(HTTP_UNAUTHORIZED, 'origin_not_allowed')
+    return createErrorResponse(HTTP_UNAUTHORIZED, 'origin_not_allowed', allowedOrigin)
   }
 
   const claims = await authenticateRequest(url, environment)
 
   if (claims === null || claims.assetId !== assetId) {
-    return createErrorResponse(HTTP_UNAUTHORIZED, 'invalid_playback_token')
+    return createErrorResponse(HTTP_UNAUTHORIZED, 'invalid_playback_token', allowedOrigin)
   }
 
   return request.method === 'HEAD'
@@ -395,8 +395,11 @@ const handleRequest = async (
 
 export default {
   async fetch(request, environment, context): Promise<Response> {
+    let allowedOrigin: string | null = null
+
     try {
-      return await handleRequest(request, environment, context)
+      allowedOrigin = getAllowedOrigin(request, environment)
+      return await handleRequest(request, environment, context, allowedOrigin)
     } catch (error) {
       console.error(
         JSON.stringify({
@@ -404,7 +407,7 @@ export default {
           message: 'paid_audio_gateway_failed',
         }),
       )
-      return createErrorResponse(HTTP_INTERNAL_SERVER_ERROR, 'gateway_failed')
+      return createErrorResponse(HTTP_INTERNAL_SERVER_ERROR, 'gateway_failed', allowedOrigin)
     }
   },
 } satisfies ExportedHandler<AudioGatewayEnv>

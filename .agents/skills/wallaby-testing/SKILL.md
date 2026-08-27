@@ -1,6 +1,6 @@
 ---
 name: wallaby-testing
-description: Check test status and debug failing tests using Wallaby.js real-time test results, preferring Wallaby MCP and falling back to Wallaby CLI before Vitest. Use after making code changes to verify tests pass, when checking if tests are failing, debugging test errors, analyzing assertions, inspecting runtime values, checking coverage, updating snapshots, or when user mentions Wallaby, tests, coverage, or test status.
+description: Check or debug tests with Wallaby.js, preferring Wallaby MCP then CLI before Vitest; use for failures, assertions, runtime values, coverage, snapshots, or test status.
 metadata:
   author: wallaby.js
   version: '1.0'

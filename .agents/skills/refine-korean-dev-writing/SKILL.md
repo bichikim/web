@@ -1,6 +1,6 @@
 ---
 name: refine-korean-dev-writing
-description: Write and refine Korean text in developer contexts — code comments, AIDEV-NOTE anchors, commit messages, PR descriptions, review replies, design docs, memory notes — so it reads as natural, grammatical Korean a native engineer would write, not as awkward literal translation, broken word order, or forced metaphor. Use whenever producing Korean prose for engineering work, and especially self-review Korean output before finalizing.
+description: Write or refine Korean engineering prose so it is natural and grammatical rather than literal or awkward; use for comments, commits, PRs, reviews, docs, and notes.
 ---
 
 # Refine Korean Dev Writing

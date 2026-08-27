@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Analyze project vulnerabilities with pnpm audit and resolve them automatically when a fix version is available; report unfixable deep dependency issues.
+description: Audit project vulnerabilities with pnpm audit, apply available fixes, and report unfixable deep dependencies.
 disable-model-invocation: true
 ---
 

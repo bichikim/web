@@ -473,9 +473,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       }
     } finally {
       isDraining = false
-      if (!isDisposed && requestQueue.length > 0) {
-        drainQueue().catch(reportQueueFailure)
-      } else if (!isDisposed && activeViseme() !== 'closed') {
+      if (!isDisposed && activeViseme() !== 'closed') {
         resetViseme('delayed')
       }
     }

@@ -1,11 +1,6 @@
 ---
 name: cleanup-branches
-description: >
-  Plan and (only after user confirmation) delete remote and matching local git
-  branches whose PR is already merged or closed (not merged) and that have no
-  remaining commits or file changes. Use when the user asks to clean up, prune,
-  or delete merged/closed branches (브랜치 정리, cleanup branches, delete merged
-  branches).
+description: Plan and, only after confirmation, delete remote and matching local branches whose PR is merged or closed and whose commits and file changes are fully accounted for; use for branch cleanup.
 ---
 
 # Cleanup branches
