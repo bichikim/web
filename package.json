@@ -10,7 +10,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build:storybook": "storybook build",
+    "storybook:build": "storybook build",
     "storybook:build:coong": "storybook build --config-dir apps/coong/.storybook --output-dir dist/storybook/coong",
     "storybook:build:pomo": "storybook build --config-dir apps/pomo/.storybook --output-dir dist/storybook/pomo",
     "typecheck": "turbo typecheck",
