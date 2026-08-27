@@ -153,6 +153,46 @@ it('should roll back a published mode when controller cleanup fails', async () =
   expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenNthCalledWith(2, 'desktop')
 })
 
+it('should aggregate transition and rollback failures', async () => {
+  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
+  const view = renderHook(() => useDesktopMode())
+  const transitionError = new Error('native close failed')
+  const rollbackError = new Error('native rollback failed')
+  vi.mocked(finishDesktopModeTransition).mockRejectedValueOnce(transitionError)
+  vi.mocked(applyDesktopMode).mockResolvedValueOnce().mockRejectedValueOnce(rollbackError)
+
+  let reportedError: unknown
+  try {
+    await view.result.onModeChange('normal')
+  } catch (error: unknown) {
+    reportedError = error
+  }
+
+  expect(reportedError).toBeInstanceOf(AggregateError)
+  expect((reportedError as AggregateError).errors).toEqual([transitionError, rollbackError])
+  expect(view.result.error()).toBe('Desktop mode transition and rollback failed')
+  expect(view.result.isChanging()).toBe(false)
+})
+
+it('should avoid republishing when rollback starts from the previous mode', async () => {
+  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
+  localStorage.setItem('pomo:desktop-clean-exit:v1', 'true')
+  const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+
+  await vi.waitFor(() => expect(view.result.mode()).toBe('desktop'))
+  vi.mocked(applyDesktopMode).mockClear()
+  vi.mocked(finishDesktopModeTransition).mockClear()
+  TestBroadcastChannel.instances[0]?.postMessage.mockClear()
+  vi.mocked(finishDesktopModeTransition).mockRejectedValueOnce(new Error('native close failed'))
+
+  await expect(view.result.onModeChange('normal')).rejects.toThrow('native close failed')
+
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(1, 'normal')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'desktop')
+  expect(view.result.mode()).toBe('desktop')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).not.toHaveBeenCalled()
+})
+
 it('should release the controller before a surface owner publishes a non-desktop mode', async () => {
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
   await view.result.onModeChange('desktop')
@@ -184,6 +224,25 @@ it('should expose native event-listener registration failures', async () => {
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
 
   await vi.waitFor(() => expect(view.result.error()).toBe('event listener failed'))
+})
+
+it('should ignore native event-listener rejection after cleanup', async () => {
+  let failListener: ((reason?: unknown) => void) | undefined
+  vi.mocked(listen).mockImplementationOnce(
+    () =>
+      new Promise((_, reject) => {
+        failListener = reject
+      }),
+  )
+  const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+
+  await vi.waitFor(() => expect(listen).toHaveBeenCalledOnce())
+  view.cleanup()
+  failListener?.(new Error('disposed listener failed'))
+  await Promise.resolve()
+  await Promise.resolve()
+
+  expect(view.result.error()).toBeNull()
 })
 
 it('should remain inert in the web runtime', async () => {

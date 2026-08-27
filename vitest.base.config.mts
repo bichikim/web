@@ -37,6 +37,7 @@ export const unitTestProject = {
     // 테스트로 포함할 파일 glob 패턴
     exclude: ['packages/sw/src/__tests__/build-output.spec.ts'],
     include: [
+      'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/guest-js/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
