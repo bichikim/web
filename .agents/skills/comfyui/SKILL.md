@@ -1,6 +1,6 @@
 ---
 name: comfyui
-description: Run project ComfyUI workflows, local-model routing, output retrieval, and frame extraction.
+description: Run project ComfyUI workflows, route local models, retrieve outputs, and extract frames.
 ---
 
 # ComfyUI

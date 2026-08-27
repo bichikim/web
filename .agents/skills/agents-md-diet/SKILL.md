@@ -1,6 +1,6 @@
 ---
 name: agents-md-diet
-description: Reduce, deduplicate, reorganize, or delete AGENTS.md instructions while preserving their effective behavior across directory scopes. Use when slimming repository agent guidance, removing repeated rules, splitting conditional procedures, or auditing inherited AGENTS.md files.
+description: Slim or reorganize AGENTS.md instructions while preserving behavior across directory scopes; use for deduplication, conditional extraction, or inherited-file audits.
 ---
 
 # AGENTS.md Diet

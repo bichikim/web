@@ -1,9 +1,6 @@
 ---
 name: deep-interview
-description: |
-  Interview the user with Socratic questions to turn an ambiguous request into actionable requirements.
-  Use when the user asks for a deep-interview, requirement clarification, or help organizing their thoughts, or when the goal, scope, constraints, or definition of done are unclear.
-  Do not use when the request is already concrete, or for low-value work like typo fixes, small config tweaks, or test top-ups.
+description: Interview the user with Socratic questions when a request needs actionable requirements or its goal, scope, constraints, or done criteria are unclear; skip concrete or low-value fixes.
 argument-hint: '<rough request>'
 ---
 
