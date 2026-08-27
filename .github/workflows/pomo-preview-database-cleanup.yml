@@ -12,6 +12,10 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  NODE_VERSION: 24
+  PNPM_VERSION: 11.8.0
+
 jobs:
   cleanup:
     name: Delete Preview database branch
@@ -38,3 +42,52 @@ jobs:
           NEON_BRANCH_NAME: preview/${{ github.event.pull_request.head.ref }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
         run: node apps/pomo/scripts/database/delete-preview-branch.mjs
+
+  cleanup-audio:
+    name: Delete Preview audio objects
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.pull_request.base.ref == 'dev' ||
+      github.event.pull_request.base.ref == 'main-pomo')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate R2 cleanup credentials
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY }}
+        run: |
+          test -n "${CLOUDFLARE_R2_ACCOUNT_ID}" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
+          test -n "${R2_ACCESS_KEY_ID}" || { echo "::error::POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID is not configured"; exit 1; }
+          test -n "${R2_SECRET_ACCESS_KEY}" || { echo "::error::POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY is not configured"; exit 1; }
+
+      - name: Delete PR Preview audio
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          POMO_PAID_AUDIO_R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID }}
+          POMO_PAID_AUDIO_R2_BUCKET: pomofi-paid-audio-preview
+          POMO_PAID_AUDIO_R2_PREFIX: previews/pr-${{ github.event.pull_request.number }}/
+          POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY }}
+        run: node apps/pomo/scripts/storage/delete-preview-audio.mjs

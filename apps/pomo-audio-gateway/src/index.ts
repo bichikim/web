@@ -17,7 +17,14 @@ interface PlaybackSecrets {
   readonly PLAYBACK_TOKEN_SECRET: string
 }
 
-type AudioGatewayEnv = Env & PlaybackSecrets
+interface AudioGatewayVariables {
+  readonly ALLOWED_ORIGINS: string
+  readonly ALLOWED_ORIGIN_SUFFIXES: string
+  readonly R2_OBJECT_PREFIX: string
+}
+
+interface AudioGatewayEnv
+  extends Omit<Env, keyof AudioGatewayVariables>, AudioGatewayVariables, PlaybackSecrets {}
 
 interface CacheRequests {
   readonly full: Request
@@ -52,7 +59,47 @@ const getAllowedOrigin = (request: Request, environment: AudioGatewayEnv): strin
   }
 
   const allowedOrigins = environment.ALLOWED_ORIGINS.split(',').map((value) => value.trim())
-  return allowedOrigins.includes(origin) ? origin : null
+
+  if (allowedOrigins.includes(origin)) {
+    return origin
+  }
+
+  const allowedSuffixes = environment.ALLOWED_ORIGIN_SUFFIXES.split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0)
+
+  try {
+    const originUrl = new URL(origin)
+    const allowedBySuffix = allowedSuffixes.some(
+      (suffix) =>
+        suffix.startsWith('.') &&
+        originUrl.protocol === 'https:' &&
+        originUrl.port.length === 0 &&
+        originUrl.hostname.length > suffix.length &&
+        originUrl.hostname.endsWith(suffix),
+    )
+    return allowedBySuffix ? origin : null
+  } catch {
+    return null
+  }
+}
+
+const STORAGE_PREFIX_SEGMENT_PATTERN = /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u
+
+const createStorageObjectKey = (objectKey: string, environment: AudioGatewayEnv): string => {
+  const normalizedPrefix = environment.R2_OBJECT_PREFIX.trim().replace(/^\/+|\/+$/gu, '')
+
+  if (normalizedPrefix.length === 0) {
+    return objectKey
+  }
+
+  if (
+    normalizedPrefix.split('/').some((segment) => !STORAGE_PREFIX_SEGMENT_PATTERN.test(segment))
+  ) {
+    throw new TypeError('R2_OBJECT_PREFIX is invalid')
+  }
+
+  return `${normalizedPrefix}/${objectKey}`
 }
 
 const applyCorsHeaders = (headers: Headers, allowedOrigin: string | null): void => {
@@ -68,9 +115,13 @@ const applyCorsHeaders = (headers: Headers, allowedOrigin: string | null): void 
 export const createAudioCacheRequests = (
   request: Request,
   claims: PlaybackTokenClaims,
+  objectKeyPrefix = '',
 ): CacheRequests => {
   const cacheUrl = new URL(request.url)
-  cacheUrl.pathname = `${CACHE_PATH_PREFIX}${claims.objectKey}`
+  const normalizedPrefix = objectKeyPrefix.trim().replace(/^\/+|\/+$/gu, '')
+  const cacheObjectKey =
+    normalizedPrefix.length === 0 ? claims.objectKey : `${normalizedPrefix}/${claims.objectKey}`
+  cacheUrl.pathname = `${CACHE_PATH_PREFIX}${cacheObjectKey}`
   cacheUrl.search = ''
   const full = new Request(cacheUrl, {method: 'GET'})
   const range = request.headers.get('Range')
@@ -170,7 +221,9 @@ const cacheFullObject = async (
   claims: PlaybackTokenClaims,
   cacheRequest: Request,
 ): Promise<void> => {
-  const object = await environment.PAID_AUDIO.get(claims.objectKey)
+  const object = await environment.PAID_AUDIO.get(
+    createStorageObjectKey(claims.objectKey, environment),
+  )
 
   if (object === null) {
     return
@@ -217,7 +270,7 @@ const handleHead = async (
   claims: PlaybackTokenClaims,
   allowedOrigin: string | null,
 ): Promise<Response> => {
-  const cacheRequests = createAudioCacheRequests(request, claims)
+  const cacheRequests = createAudioCacheRequests(request, claims, environment.R2_OBJECT_PREFIX)
   const cachedResponse = await caches.default.match(cacheRequests.full)
 
   if (cachedResponse !== undefined) {
@@ -225,7 +278,9 @@ const handleHead = async (
     return new Response(null, {headers: response.headers, status: response.status})
   }
 
-  const object = await environment.PAID_AUDIO.head(claims.objectKey)
+  const object = await environment.PAID_AUDIO.head(
+    createStorageObjectKey(claims.objectKey, environment),
+  )
 
   if (object === null) {
     return createErrorResponse(HTTP_NOT_FOUND, 'audio_not_found')
@@ -249,7 +304,7 @@ const handleGet = async ({
   environment,
   request,
 }: HandleGetOptions): Promise<Response> => {
-  const cacheRequests = createAudioCacheRequests(request, claims)
+  const cacheRequests = createAudioCacheRequests(request, claims, environment.R2_OBJECT_PREFIX)
   const cachedResponse = await caches.default.match(cacheRequests.lookup)
 
   if (cachedResponse !== undefined) {
@@ -257,10 +312,11 @@ const handleGet = async ({
   }
 
   const range = request.headers.get('Range')
+  const storageObjectKey = createStorageObjectKey(claims.objectKey, environment)
   const object =
     range === null
-      ? await environment.PAID_AUDIO.get(claims.objectKey)
-      : await environment.PAID_AUDIO.get(claims.objectKey, {range: request.headers})
+      ? await environment.PAID_AUDIO.get(storageObjectKey)
+      : await environment.PAID_AUDIO.get(storageObjectKey, {range: request.headers})
 
   if (object === null) {
     return createErrorResponse(HTTP_NOT_FOUND, 'audio_not_found')

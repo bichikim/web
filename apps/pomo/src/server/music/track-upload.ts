@@ -19,6 +19,7 @@ interface PaidAudioEnvironment {
   readonly CLOUDFLARE_R2_ACCOUNT_ID?: string
   readonly POMO_PAID_AUDIO_R2_ACCESS_KEY_ID?: string
   readonly POMO_PAID_AUDIO_R2_BUCKET?: string
+  readonly POMO_PAID_AUDIO_R2_PREFIX?: string
   readonly POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY?: string
   readonly POMO_PUBLIC_ASSETS_R2_ACCESS_KEY_ID?: string
   readonly POMO_PUBLIC_ASSETS_R2_SECRET_ACCESS_KEY?: string
@@ -183,13 +184,33 @@ const requireEnvironmentValue = (
   return normalizedValue
 }
 
+const STORAGE_PREFIX_SEGMENT_PATTERN = /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u
+
+const createStorageObjectKey = (objectKey: string, environment: PaidAudioEnvironment): string => {
+  const configuredPrefix = environment.POMO_PAID_AUDIO_R2_PREFIX?.trim() ?? ''
+  const normalizedPrefix = configuredPrefix.replace(/^\/+|\/+$/gu, '')
+
+  if (normalizedPrefix.length === 0) {
+    return objectKey
+  }
+
+  if (
+    normalizedPrefix.split('/').some((segment) => !STORAGE_PREFIX_SEGMENT_PATTERN.test(segment))
+  ) {
+    throw new TypeError('POMO_PAID_AUDIO_R2_PREFIX is invalid')
+  }
+
+  return `${normalizedPrefix}/${objectKey}`
+}
+
 const createObjectUrl = (objectKey: string, environment: PaidAudioEnvironment): URL => {
   const accountId = requireEnvironmentValue(
     'CLOUDFLARE_R2_ACCOUNT_ID',
     environment.CLOUDFLARE_R2_ACCOUNT_ID,
   )
   const bucket = environment.POMO_PAID_AUDIO_R2_BUCKET?.trim() || DEFAULT_BUCKET
-  return new URL(`/${bucket}/${objectKey}`, `https://${accountId}.r2.cloudflarestorage.com`)
+  const storageObjectKey = createStorageObjectKey(objectKey, environment)
+  return new URL(`/${bucket}/${storageObjectKey}`, `https://${accountId}.r2.cloudflarestorage.com`)
 }
 
 const createSigner = (environment: PaidAudioEnvironment) => {

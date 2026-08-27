@@ -11,9 +11,14 @@ const CLAIMS = {
     'tracks/11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222/source.mp3',
   scope: 'full',
 } as const
-const SECRET = 'audio-gateway-secret-with-at-least-32-bytes'
+const SECRET = 'pomo-audio-gateway-secret-with-at-least-32-bytes'
 const ALLOWED_ORIGINS: Env['ALLOWED_ORIGINS'] =
   'https://pomofi.io,https://www.pomofi.io,https://pomo-app.apps.tossmini.com,https://pomo-app.private-apps.tossmini.com,https://pomo-app.private-web.tossmini.com,https://pomo-app.web.tossmini.com,http://localhost:3000,http://localhost:3100,http://localhost:3200,http://localhost:3300,http://localhost:3400'
+const BASE_ENVIRONMENT = {
+  ALLOWED_ORIGIN_SUFFIXES: '',
+  ALLOWED_ORIGINS,
+  R2_OBJECT_PREFIX: '',
+}
 
 beforeEach(() => {
   vi.stubGlobal('caches', {
@@ -54,6 +59,17 @@ describe('audio cache requests', () => {
     expect(result.lookup.headers.get('Range')).toBe('bytes=100-')
     expect(result.lookup.url).toBe(result.full.url)
   })
+
+  it('should isolate the cache key under the configured R2 prefix', () => {
+    const request = new Request(
+      `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=secret-token`,
+    )
+    const result = createAudioCacheRequests(request, CLAIMS, ' /previews/pr-123/ ')
+
+    expect(result.full.url).toBe(
+      `https://audio.pomofi.io/_pomo_paid_audio_cache/previews/pr-123/${CLAIMS.objectKey}`,
+    )
+  })
 })
 
 describe('audio gateway authentication', () => {
@@ -72,7 +88,7 @@ describe('audio gateway authentication', () => {
       writeHttpMetadata: vi.fn(),
     } as unknown as R2Object
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {head: vi.fn().mockResolvedValue(object)} as unknown as R2Bucket,
       PLAYBACK_TOKEN_SECRET: ` ${SECRET} `,
     }
@@ -84,6 +100,65 @@ describe('audio gateway authentication', () => {
       'https://pomo-app.private-apps.tossmini.com',
     )
     expect(environment.PAID_AUDIO.head).toHaveBeenCalledWith(CLAIMS.objectKey)
+  })
+
+  it('should allow an HTTPS Vercel Preview origin by suffix', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime('2026-08-22T01:00:00.000Z')
+    const token = await createPlaybackToken({...CLAIMS, secret: SECRET})
+    const request = new Request(
+      `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=${token}`,
+      {headers: {Origin: 'https://pomo-git-feature-team.vercel.app'}, method: 'HEAD'},
+    )
+    const object = {
+      httpEtag: '"audio-etag"',
+      size: 1024,
+      writeHttpMetadata: vi.fn(),
+    } as unknown as R2Object
+    const environment = {
+      ...BASE_ENVIRONMENT,
+      ALLOWED_ORIGIN_SUFFIXES: '.vercel.app',
+      ALLOWED_ORIGINS: '',
+      PAID_AUDIO: {head: vi.fn().mockResolvedValue(object)} as unknown as R2Bucket,
+      PLAYBACK_TOKEN_SECRET: SECRET,
+    }
+
+    const response = await audioGateway.fetch(
+      request as unknown as Parameters<typeof audioGateway.fetch>[0],
+      environment,
+      {} as ExecutionContext,
+    )
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
+      'https://pomo-git-feature-team.vercel.app',
+    )
+  })
+
+  it.each([
+    'http://pomo-git-feature-team.vercel.app',
+    'https://vercel.app',
+    'https://pomo.vercel.app.evil.example',
+    'not-an-origin',
+  ])('should reject a non-matching Preview origin %s', async (origin) => {
+    const request = new Request('https://audio.pomofi.io/', {
+      headers: {Origin: origin},
+      method: 'OPTIONS',
+    })
+    const environment = {
+      ...BASE_ENVIRONMENT,
+      ALLOWED_ORIGIN_SUFFIXES: '.vercel.app',
+      ALLOWED_ORIGINS: '',
+      PAID_AUDIO: {} as R2Bucket,
+      PLAYBACK_TOKEN_SECRET: SECRET,
+    }
+
+    const response = await audioGateway.fetch(
+      request as unknown as Parameters<typeof audioGateway.fetch>[0],
+      environment,
+      {} as ExecutionContext,
+    )
+
+    expect(response.status).toBe(401)
   })
 })
 
@@ -134,7 +209,7 @@ describe('audio gateway range requests', () => {
     const get = vi.fn().mockResolvedValueOnce(object).mockResolvedValueOnce(fullObject)
     const waitUntil = vi.fn()
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {get} as unknown as R2Bucket,
       PLAYBACK_TOKEN_SECRET: SECRET,
     }
@@ -206,5 +281,78 @@ describe('audio gateway range requests', () => {
       rangeHeader: 'bytes=10-',
       status: 416,
     })
+  })
+
+  it('should read and cache an object under the configured Preview prefix', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime('2026-08-22T01:00:00.000Z')
+    const token = await createPlaybackToken({...CLAIMS, secret: SECRET})
+    const request = new Request(
+      `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=${token}`,
+    )
+    const body = new Response(new Uint8Array([1, 2, 3])).body
+
+    if (body === null) {
+      throw new TypeError('Audio response body is unavailable')
+    }
+
+    const object = {
+      body,
+      httpEtag: '"audio-etag"',
+      size: 3,
+      writeHttpMetadata: vi.fn(),
+    } as unknown as R2ObjectBody
+    const get = vi.fn().mockResolvedValue(object)
+    const environment = {
+      ...BASE_ENVIRONMENT,
+      PAID_AUDIO: {get} as unknown as R2Bucket,
+      PLAYBACK_TOKEN_SECRET: SECRET,
+      R2_OBJECT_PREFIX: ' /previews/pr-123/ ',
+    }
+
+    const response = await audioGateway.fetch(
+      request as unknown as Parameters<typeof audioGateway.fetch>[0],
+      environment,
+      {waitUntil: vi.fn()} as unknown as ExecutionContext,
+    )
+
+    expect(response.status).toBe(200)
+    expect(get).toHaveBeenCalledWith(`previews/pr-123/${CLAIMS.objectKey}`)
+    const [cacheRequest, cacheResponse] = vi.mocked(caches.default.put).mock.calls[0] ?? []
+
+    expect(cacheRequest).toBeInstanceOf(Request)
+    expect(cacheResponse).toBeInstanceOf(Response)
+
+    if (!(cacheRequest instanceof Request) || !(cacheResponse instanceof Response)) {
+      throw new TypeError('Expected a cache request and response')
+    }
+
+    expect(cacheRequest.url).toContain(`previews/pr-123/${CLAIMS.objectKey}`)
+    expect(cacheResponse.status).toBe(200)
+  })
+
+  it('should reject an unsafe R2 prefix as a gateway configuration failure', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime('2026-08-22T01:00:00.000Z')
+    const token = await createPlaybackToken({...CLAIMS, secret: SECRET})
+    const request = new Request(
+      `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=${token}`,
+      {method: 'HEAD'},
+    )
+    const environment = {
+      ...BASE_ENVIRONMENT,
+      PAID_AUDIO: {head: vi.fn()} as unknown as R2Bucket,
+      PLAYBACK_TOKEN_SECRET: SECRET,
+      R2_OBJECT_PREFIX: 'previews/../production',
+    }
+
+    const response = await audioGateway.fetch(
+      request as unknown as Parameters<typeof audioGateway.fetch>[0],
+      environment,
+      {} as ExecutionContext,
+    )
+
+    expect(response.status).toBe(500)
+    expect(environment.PAID_AUDIO.head).not.toHaveBeenCalled()
   })
 })
