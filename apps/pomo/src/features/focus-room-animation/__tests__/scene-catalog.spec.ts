@@ -3,9 +3,25 @@ import {describe, expect, it} from 'vitest'
 import {FOCUS_ROOM_JAW_CHANNEL, P_MOUTH_TRANSITION_STAGES} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
 import {getPSceneLayer, getPSceneReviewLayer} from '../scene-layer-catalog'
-import {createMouthTransitionLayers} from '../mouth-layers'
+import {createMouthLayers, createMouthTransitionLayers} from '../mouth-layers'
 
 describe('focus room scene catalog', () => {
+  it('should omit viseme layers whose optional source is unavailable', () => {
+    const layers = createMouthLayers({
+      parentAttachmentId: 'head',
+      position: {x: 0, y: 0},
+      sources: {closed: 'mouth-closed.webp'},
+    })
+
+    expect(layers).toEqual([
+      expect.objectContaining({
+        channel: 'mouth-closed',
+        id: 'mouth-closed',
+        source: 'mouth-closed.webp',
+      }),
+    ])
+  })
+
   it('should omit unavailable optional mouth transition layers', () => {
     expect(
       createMouthTransitionLayers({

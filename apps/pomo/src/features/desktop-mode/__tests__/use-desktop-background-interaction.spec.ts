@@ -68,6 +68,24 @@ it('should preserve a newer user change when the initial native query resolves l
   expect(view.result.interaction()).toBe('passThrough')
 })
 
+it('should ignore a late initial query failure after a newer user change', async () => {
+  let rejectQuery: ((error: unknown) => void) | undefined
+  vi.mocked(getDesktopBackgroundInteraction).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectQuery = reject
+      }),
+  )
+  const view = renderHook(() => useDesktopBackgroundInteraction())
+
+  await view.result.onInteractionChange('passThrough')
+  rejectQuery?.(new Error('stale native failure'))
+  await Promise.resolve()
+
+  expect(view.result.interaction()).toBe('passThrough')
+  expect(view.result.error()).toBeNull()
+})
+
 it('should expose a structured native interaction query failure', async () => {
   vi.mocked(getDesktopBackgroundInteraction).mockRejectedValueOnce({
     code: 'invalid-surface-state',
