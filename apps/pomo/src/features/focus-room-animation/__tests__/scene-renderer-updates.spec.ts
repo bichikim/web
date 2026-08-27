@@ -400,8 +400,8 @@ describe('PSceneRenderer updates and motion', () => {
     vi.clearAllMocks()
 
     parallaxRender?.(0.5, -0.5)
-    expect(depthFilters[0].setPointerOffset).toHaveBeenCalledWith(4.5, -3)
-    expect(steamInstances[0].setParallaxOffset.mock.calls[0]?.[0]).toBeCloseTo(-2.475)
+    expect(depthFilters[0].setPointerOffset).toHaveBeenCalledWith(2.5, -3)
+    expect(steamInstances[0].setParallaxOffset.mock.calls[0]?.[0]).toBeCloseTo(-1.375)
     expect(steamInstances[0].setParallaxOffset.mock.calls[0]?.[1]).toBeCloseTo(1.65)
     expect(applications[0].canvas.style.objectPosition).toBe('60% center')
 
