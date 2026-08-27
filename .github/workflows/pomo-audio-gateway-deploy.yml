@@ -138,6 +138,13 @@ jobs:
           jq -n --arg secret "${PLAYBACK_TOKEN_SECRET}" \
             '{PLAYBACK_TOKEN_SECRET: $secret}' > "${secret_file}"
           chmod 600 "${secret_file}"
+          if ! pnpm --dir apps/pomo-audio-gateway exec wrangler \
+            deployments status \
+            --env preview > /dev/null 2>&1; then
+            pnpm --dir apps/pomo-audio-gateway exec wrangler deploy \
+              --env preview \
+              --secrets-file "${secret_file}"
+          fi
           object_prefix="previews/pr-${PR_NUMBER}"
           upload_output="$(NO_COLOR=1 pnpm --dir apps/pomo-audio-gateway exec wrangler \
             versions upload \
