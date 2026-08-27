@@ -1,6 +1,6 @@
 ---
 name: update-pr
-description: Update an existing GitHub pull request for the current branch—commit and push latest changes, then refresh the PR title and body from the full diff against main.
+description: Update the current branch's GitHub pull request by committing and pushing changes, then refreshing its title and body from the full diff against main.
 disable-model-invocation: true
 ---
 

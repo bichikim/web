@@ -1,0 +1,4 @@
+interface:
+  display_name: '서브에이전트 라우팅'
+  short_description: '작업 분리 여부와 서브에이전트 모델을 결정'
+  default_prompt: 'Use $route-subagents to decide which independent work should be delegated and to which model.'
