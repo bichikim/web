@@ -5,8 +5,11 @@
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "preview_urls": true,
   "vars": {
     "ALLOWED_ORIGINS": "https://pomofi.io,https://www.pomofi.io,https://pomo-app.apps.tossmini.com,https://pomo-app.private-apps.tossmini.com,https://pomo-app.private-web.tossmini.com,https://pomo-app.web.tossmini.com,http://localhost:3000,http://localhost:3100,http://localhost:3200,http://localhost:3300,http://localhost:3400",
+    "ALLOWED_ORIGIN_SUFFIXES": "",
+    "R2_OBJECT_PREFIX": "",
   },
   "r2_buckets": [
     {
@@ -24,6 +27,36 @@
     "traces": {
       "enabled": true,
       "head_sampling_rate": 0.01,
+    },
+  },
+  "env": {
+    "dev": {
+      "name": "pomofi-audio-gateway-dev",
+      "vars": {
+        "ALLOWED_ORIGINS": "http://localhost:3000,http://localhost:3100,http://localhost:3200,http://localhost:3300,http://localhost:3400",
+        "ALLOWED_ORIGIN_SUFFIXES": ".vercel.app",
+        "R2_OBJECT_PREFIX": "",
+      },
+      "r2_buckets": [
+        {
+          "binding": "PAID_AUDIO",
+          "bucket_name": "pomofi-paid-audio-dev",
+        },
+      ],
+    },
+    "preview": {
+      "name": "pomofi-audio-gateway-preview",
+      "vars": {
+        "ALLOWED_ORIGINS": "",
+        "ALLOWED_ORIGIN_SUFFIXES": ".vercel.app",
+        "R2_OBJECT_PREFIX": "previews/local",
+      },
+      "r2_buckets": [
+        {
+          "binding": "PAID_AUDIO",
+          "bucket_name": "pomofi-paid-audio-preview",
+        },
+      ],
     },
   },
 }

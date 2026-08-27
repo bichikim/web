@@ -274,6 +274,29 @@ describe('R2 environment', () => {
     })
   })
 
+  it('should isolate a Preview deployment under its configured R2 prefix', async () => {
+    const result = await createTrackUpload(OBJECT_KEY, {
+      environment: {
+        CLOUDFLARE_R2_ACCOUNT_ID: 'account-id',
+        POMO_PAID_AUDIO_R2_PREFIX: ' /previews/pr-123/ ',
+      },
+      signRequest: async (request) => request,
+    })
+
+    expect(result.uploadUrl).toContain(`/pomofi-paid-audio/previews/pr-123/${OBJECT_KEY}`)
+  })
+
+  it('should reject an unsafe R2 prefix', () =>
+    expect(
+      createTrackUpload(OBJECT_KEY, {
+        environment: {
+          CLOUDFLARE_R2_ACCOUNT_ID: 'account-id',
+          POMO_PAID_AUDIO_R2_PREFIX: 'previews/../production',
+        },
+        signRequest: async (request) => request,
+      }),
+    ).rejects.toThrow('POMO_PAID_AUDIO_R2_PREFIX is invalid'))
+
   it('should fall back to public asset credentials', async () => {
     await createTrackPlayback(OBJECT_KEY, {
       environment: {
