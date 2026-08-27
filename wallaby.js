@@ -11,7 +11,14 @@ export default () => ({
     configFile: './vitest.wallaby.config.mts',
   },
   tests: {
-    // 브라우저 기반 Storybook 회귀 검사는 Vitest CLI와 UI에서 실행한다.
-    override: (testPatterns) => [...testPatterns, '!**/*.story.*', '!**/*.stories.*'],
+    // 자동 감지 밖의 공용 테스트 위치를 포함하고 Storybook 회귀 검사는 CLI와 UI에 맡긴다.
+    override: (testPatterns) => [
+      ...testPatterns,
+      'apps/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
+      'apps/*/scripts/**/*.spec.?(c|m)[jt]s?(x)',
+      'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
+      '!**/*.story.*',
+      '!**/*.stories.*',
+    ],
   },
 })
