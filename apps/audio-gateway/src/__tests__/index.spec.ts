@@ -25,6 +25,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
@@ -88,6 +89,29 @@ describe('audio gateway authentication', () => {
 })
 
 describe('audio gateway request handling', () => {
+  it('should convert an invalid origin configuration into a controlled gateway error', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const request = new Request('https://audio.pomofi.io/anything', {
+      headers: {Origin: 'https://pomofi.io'},
+    })
+    const environment = {
+      PAID_AUDIO: {} as R2Bucket,
+      PLAYBACK_TOKEN_SECRET: SECRET,
+    } as unknown as Parameters<typeof audioGateway.fetch>[1]
+
+    const response = await audioGateway.fetch(
+      request as unknown as Parameters<typeof audioGateway.fetch>[0],
+      environment,
+      {} as ExecutionContext,
+    )
+
+    expect(response.status).toBe(500)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(await response.json()).toEqual({error: 'gateway_failed'})
+    expect(consoleError).toHaveBeenCalledOnce()
+  })
+
   it('should answer an allowed CORS preflight without authenticating', async () => {
     const request = new Request('https://audio.pomofi.io/anything', {
       headers: {
@@ -131,11 +155,13 @@ describe('audio gateway request handling', () => {
     )
 
     expect(response.status).toBe(401)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
     expect(await response.json()).toEqual({error: 'origin_not_allowed'})
   })
 
-  it('should reject unsupported methods before route authentication', async () => {
+  it('should expose unsupported-method errors to an allowed origin', async () => {
     const request = new Request(`https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3`, {
+      headers: {Origin: 'https://pomofi.io'},
       method: 'POST',
     })
     const environment = {
@@ -151,7 +177,33 @@ describe('audio gateway request handling', () => {
     )
 
     expect(response.status).toBe(405)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://pomofi.io')
+    expect(response.headers.get('Vary')).toContain('Origin')
     expect(await response.json()).toEqual({error: 'method_not_allowed'})
+  })
+
+  it('should expose authentication errors without reading cache or R2', async () => {
+    const request = new Request(
+      `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=invalid`,
+      {headers: {Origin: 'https://pomofi.io'}},
+    )
+    const get = vi.fn()
+    const environment = {
+      ALLOWED_ORIGINS,
+      PAID_AUDIO: {get} as unknown as R2Bucket,
+      PLAYBACK_TOKEN_SECRET: SECRET,
+    }
+
+    const response = await audioGateway.fetch(
+      request as unknown as Parameters<typeof audioGateway.fetch>[0],
+      environment,
+      {} as ExecutionContext,
+    )
+
+    expect(response.status).toBe(401)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://pomofi.io')
+    expect(caches.default.match).not.toHaveBeenCalled()
+    expect(get).not.toHaveBeenCalled()
   })
 
   it('should return a cached full response without reading R2', async () => {
@@ -190,6 +242,7 @@ describe('audio gateway request handling', () => {
     const token = await createPlaybackToken({...CLAIMS, secret: SECRET})
     const request = new Request(
       `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=${token}`,
+      {headers: {Origin: 'https://pomofi.io'}},
     )
     const environment = {
       ALLOWED_ORIGINS,
@@ -204,7 +257,39 @@ describe('audio gateway request handling', () => {
     )
 
     expect(response.status).toBe(404)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://pomofi.io')
+    expect(response.headers.get('Vary')).toContain('Origin')
     expect(await response.json()).toEqual({error: 'audio_not_found'})
+  })
+
+  it('should expose unexpected gateway failures to an allowed origin', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime('2026-08-22T01:00:00.000Z')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const token = await createPlaybackToken({...CLAIMS, secret: SECRET})
+    const request = new Request(
+      `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=${token}`,
+      {headers: {Origin: 'https://pomofi.io'}},
+    )
+    const environment = {
+      ALLOWED_ORIGINS,
+      PAID_AUDIO: {
+        get: vi.fn().mockRejectedValue(new Error('R2 unavailable')),
+      } as unknown as R2Bucket,
+      PLAYBACK_TOKEN_SECRET: SECRET,
+    }
+
+    const response = await audioGateway.fetch(
+      request as unknown as Parameters<typeof audioGateway.fetch>[0],
+      environment,
+      {} as ExecutionContext,
+    )
+
+    expect(response.status).toBe(500)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://pomofi.io')
+    expect(response.headers.get('Vary')).toContain('Origin')
+    expect(await response.json()).toEqual({error: 'gateway_failed'})
+    expect(consoleError).toHaveBeenCalledOnce()
   })
 })
 
