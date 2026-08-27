@@ -75,7 +75,7 @@ jobs:
 
       - name: Validate R2 cleanup credentials
         env:
-          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY }}
         run: |
@@ -85,7 +85,7 @@ jobs:
 
       - name: Delete PR Preview audio
         env:
-          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           POMO_PAID_AUDIO_R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID }}
           POMO_PAID_AUDIO_R2_BUCKET: pomofi-paid-audio-preview
           POMO_PAID_AUDIO_R2_PREFIX: previews/pr-${{ github.event.pull_request.number }}/

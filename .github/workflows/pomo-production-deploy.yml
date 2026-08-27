@@ -75,7 +75,7 @@ jobs:
       - name: Validate Cloudflare credentials
         if: steps.changes.outputs.deploy == 'true'
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           test -n "${CLOUDFLARE_ACCOUNT_ID}" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
@@ -96,7 +96,7 @@ jobs:
         id: previous
         if: steps.changes.outputs.deploy == 'true'
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-production-status.log
         run: |
@@ -115,7 +115,7 @@ jobs:
       - name: Deploy production audio gateway
         if: steps.changes.outputs.deploy == 'true'
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-production.log
         run: pnpm --dir apps/pomo-audio-gateway exec wrangler deploy --env=
@@ -277,7 +277,7 @@ jobs:
 
       - name: Restore previous production Gateway version
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PREVIOUS_GATEWAY_VERSION: ${{ needs.audio-gateway.outputs.previous_version }}
           WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-production-rollback.log

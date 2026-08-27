@@ -86,8 +86,25 @@ const getAllowedOrigin = (request: Request, environment: AudioGatewayEnv): strin
 
 const STORAGE_PREFIX_SEGMENT_PATTERN = /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u
 
+const normalizeObjectKeyPrefix = (value: string): string => {
+  const trimmedValue = value.trim()
+  let startIndex = 0
+
+  while (trimmedValue[startIndex] === '/') {
+    startIndex += 1
+  }
+
+  let endIndex = trimmedValue.length
+
+  while (endIndex > startIndex && trimmedValue[endIndex - 1] === '/') {
+    endIndex -= 1
+  }
+
+  return trimmedValue.slice(startIndex, endIndex)
+}
+
 const createStorageObjectKey = (objectKey: string, environment: AudioGatewayEnv): string => {
-  const normalizedPrefix = environment.R2_OBJECT_PREFIX.trim().replace(/^\/+|\/+$/gu, '')
+  const normalizedPrefix = normalizeObjectKeyPrefix(environment.R2_OBJECT_PREFIX)
 
   if (normalizedPrefix.length === 0) {
     return objectKey
@@ -118,7 +135,7 @@ export const createAudioCacheRequests = (
   objectKeyPrefix = '',
 ): CacheRequests => {
   const cacheUrl = new URL(request.url)
-  const normalizedPrefix = objectKeyPrefix.trim().replace(/^\/+|\/+$/gu, '')
+  const normalizedPrefix = normalizeObjectKeyPrefix(objectKeyPrefix)
   const cacheObjectKey =
     normalizedPrefix.length === 0 ? claims.objectKey : `${normalizedPrefix}/${claims.objectKey}`
   cacheUrl.pathname = `${CACHE_PATH_PREFIX}${cacheObjectKey}`
