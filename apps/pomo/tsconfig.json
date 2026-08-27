@@ -29,6 +29,8 @@
   },
   "include": [
     ".i18n/paraglide/**/*.d.ts",
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
     "e2e/**/*.ts",
     "playwright.config.ts",
     "src/**/*.ts",
