@@ -93,4 +93,38 @@ describe('playback token', () => {
       }),
     ).resolves.toBeNull()
   })
+
+  it('should reject malformed and oversized token structures before verification', async () => {
+    const options = {
+      now: new Date('2026-08-22T01:00:00.000Z'),
+      scope: 'full' as const,
+      secret: SECRET,
+    }
+
+    await expect(verifyPlaybackToken('missing-separator', options)).resolves.toBeNull()
+    await expect(verifyPlaybackToken('invalid.payload.extra', options)).resolves.toBeNull()
+    await expect(verifyPlaybackToken('='.repeat(4097), options)).resolves.toBeNull()
+  })
+
+  it('should reject invalid expiration and undersized secrets', async () => {
+    await expect(
+      createPlaybackToken({
+        assetId: ASSET_ID,
+        expiresAt: new Date(Number.NaN),
+        objectKey: OBJECT_KEY,
+        scope: 'full',
+        secret: SECRET,
+      }),
+    ).rejects.toThrow('Playback token expiration is invalid')
+
+    await expect(
+      createPlaybackToken({
+        assetId: ASSET_ID,
+        expiresAt: new Date('2026-08-22T01:15:00.000Z'),
+        objectKey: OBJECT_KEY,
+        scope: 'full',
+        secret: 'short',
+      }),
+    ).rejects.toThrow('Playback token secret must contain at least 32 bytes')
+  })
 })

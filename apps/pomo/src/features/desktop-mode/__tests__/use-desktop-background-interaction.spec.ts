@@ -96,3 +96,38 @@ it('should expose a structured native interaction query failure', async () => {
 
   await vi.waitFor(() => expect(view.result.error()).toBe('background is not active'))
 })
+
+it('should ignore an initial query failure after a newer interaction change', async () => {
+  let failQuery: ((reason?: unknown) => void) | undefined
+  vi.mocked(getDesktopBackgroundInteraction).mockImplementationOnce(
+    () =>
+      new Promise((_, reject) => {
+        failQuery = reject
+      }),
+  )
+  const view = renderHook(() => useDesktopBackgroundInteraction())
+
+  await view.result.onInteractionChange('passThrough')
+  failQuery?.(new Error('stale query failed'))
+  await Promise.resolve()
+
+  expect(view.result.interaction()).toBe('passThrough')
+  expect(view.result.error()).toBeNull()
+})
+
+it('should ignore an initial query failure after cleanup', async () => {
+  let failQuery: ((reason?: unknown) => void) | undefined
+  vi.mocked(getDesktopBackgroundInteraction).mockImplementationOnce(
+    () =>
+      new Promise((_, reject) => {
+        failQuery = reject
+      }),
+  )
+  const view = renderHook(() => useDesktopBackgroundInteraction())
+
+  view.cleanup()
+  failQuery?.(new Error('disposed query failed'))
+  await Promise.resolve()
+
+  expect(view.result.error()).toBeNull()
+})
