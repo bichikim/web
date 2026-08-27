@@ -6,14 +6,20 @@ import {getPSceneLayer, getPSceneReviewLayer} from '../scene-layer-catalog'
 import {createMouthLayers, createMouthTransitionLayers} from '../mouth-layers'
 
 describe('focus room scene catalog', () => {
-  it('should omit unavailable optional mouth layers', () => {
-    expect(
-      createMouthLayers({
-        parentAttachmentId: 'head',
-        position: {x: 0, y: 0},
-        sources: {},
+  it('should omit viseme layers whose optional source is unavailable', () => {
+    const layers = createMouthLayers({
+      parentAttachmentId: 'head',
+      position: {x: 0, y: 0},
+      sources: {closed: 'mouth-closed.webp'},
+    })
+
+    expect(layers).toEqual([
+      expect.objectContaining({
+        channel: 'mouth-closed',
+        id: 'mouth-closed',
+        source: 'mouth-closed.webp',
       }),
-    ).toEqual([])
+    ])
   })
 
   it('should omit unavailable optional mouth transition layers', () => {

@@ -61,4 +61,19 @@ describe('layer mask', () => {
       ),
     ).toThrow('Missing layer mask texture: sky-mask.webp')
   })
+
+  it('should not attach a mask sprite when the layer is not horizontally repeated', () => {
+    const sceneContainer = new Container()
+    const layerContainer = new Container()
+
+    applyRepeatedLayerMask(
+      sceneContainer,
+      layerContainer,
+      {id: 'character', maskSource: 'character-mask.webp', source: 'character.webp'},
+      new Map([['character-mask.webp', Texture.EMPTY]]),
+    )
+
+    expect(sceneContainer.children).toEqual([])
+    expect(layerContainer.mask).toBeUndefined()
+  })
 })

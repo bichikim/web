@@ -1,6 +1,6 @@
 ---
 name: critical-review
-description: Review code for correctness, maintainability, security, lifecycle, and performance issues only after verifying each finding's cause and concrete impact.
+description: Review code for correctness, maintainability, security, lifecycle, and performance; verify every finding's cause and concrete impact first.
 disable-model-invocation: true
 ---
 

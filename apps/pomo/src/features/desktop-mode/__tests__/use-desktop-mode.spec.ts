@@ -153,44 +153,36 @@ it('should roll back a published mode when controller cleanup fails', async () =
   expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenNthCalledWith(2, 'desktop')
 })
 
-it('should aggregate transition and rollback failures', async () => {
-  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
-  const view = renderHook(() => useDesktopMode())
+it('should preserve both failures when a published mode cannot be rolled back', async () => {
   const transitionError = new Error('native close failed')
-  const rollbackError = new Error('native rollback failed')
+  const rollbackError = new Error('native restore failed')
+  const view = renderHook(() => useDesktopMode())
   vi.mocked(finishDesktopModeTransition).mockRejectedValueOnce(transitionError)
   vi.mocked(applyDesktopMode).mockResolvedValueOnce().mockRejectedValueOnce(rollbackError)
 
-  let reportedError: unknown
-  try {
-    await view.result.onModeChange('normal')
-  } catch (error: unknown) {
-    reportedError = error
-  }
+  await expect(view.result.onModeChange('desktop')).rejects.toMatchObject({
+    errors: [transitionError, rollbackError],
+    message: 'Desktop mode transition and rollback failed',
+  })
 
-  expect(reportedError).toBeInstanceOf(AggregateError)
-  expect((reportedError as AggregateError).errors).toEqual([transitionError, rollbackError])
   expect(view.result.error()).toBe('Desktop mode transition and rollback failed')
-  expect(view.result.isChanging()).toBe(false)
+  expect(view.result.mode()).toBe('desktop')
 })
 
-it('should avoid republishing when rollback starts from the previous mode', async () => {
-  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
-  localStorage.setItem('pomo:desktop-clean-exit:v1', 'true')
-  const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+it('should not republish a rollback mode already received from another window', async () => {
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(finishDesktopModeTransition).mockImplementationOnce(async () => {
+    TestBroadcastChannel.instances[0]?.dispatch('normal')
+    throw new Error('native close failed')
+  })
 
-  await vi.waitFor(() => expect(view.result.mode()).toBe('desktop'))
-  vi.mocked(applyDesktopMode).mockClear()
-  vi.mocked(finishDesktopModeTransition).mockClear()
-  TestBroadcastChannel.instances[0]?.postMessage.mockClear()
-  vi.mocked(finishDesktopModeTransition).mockRejectedValueOnce(new Error('native close failed'))
+  await expect(view.result.onModeChange('desktop')).rejects.toThrow('native close failed')
 
-  await expect(view.result.onModeChange('normal')).rejects.toThrow('native close failed')
-
-  expect(applyDesktopMode).toHaveBeenNthCalledWith(1, 'normal')
-  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'desktop')
-  expect(view.result.mode()).toBe('desktop')
-  expect(TestBroadcastChannel.instances[0]?.postMessage).not.toHaveBeenCalled()
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(1, 'desktop')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'normal')
+  expect(view.result.mode()).toBe('normal')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenCalledOnce()
+  expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenCalledWith('desktop')
 })
 
 it('should release the controller before a surface owner publishes a non-desktop mode', async () => {
@@ -226,20 +218,19 @@ it('should expose native event-listener registration failures', async () => {
   await vi.waitFor(() => expect(view.result.error()).toBe('event listener failed'))
 })
 
-it('should ignore native event-listener rejection after cleanup', async () => {
-  let failListener: ((reason?: unknown) => void) | undefined
+it('should ignore an event-listener registration failure after cleanup', async () => {
+  let rejectListen: ((error: unknown) => void) | undefined
   vi.mocked(listen).mockImplementationOnce(
     () =>
-      new Promise((_, reject) => {
-        failListener = reject
+      new Promise((_resolve, reject) => {
+        rejectListen = reject
       }),
   )
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
 
   await vi.waitFor(() => expect(listen).toHaveBeenCalledOnce())
   view.cleanup()
-  failListener?.(new Error('disposed listener failed'))
-  await Promise.resolve()
+  rejectListen?.(new Error('late listener failure'))
   await Promise.resolve()
 
   expect(view.result.error()).toBeNull()

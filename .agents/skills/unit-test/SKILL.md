@@ -1,6 +1,6 @@
 ---
 name: unit-test
-description: Applies project unit test conventions with Vitest and @solidjs/testing-library. Use when writing or editing .spec.ts files, including DOM tests, module mocking, assertions, async/error handling, and time-based tests.
+description: Apply Vitest and @solidjs/testing-library conventions when editing .spec.ts tests, including DOM, mocking, assertions, async/error, and time-based cases.
 ---
 
 # Unit Test

@@ -473,10 +473,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       }
     } finally {
       isDraining = false
-      /* v8 ignore if -- @preserve Queue state cannot change between the final loop check and this synchronous branch. */
-      if (!isDisposed && requestQueue.length > 0) {
-        drainQueue().catch(reportQueueFailure)
-      } else if (!isDisposed && activeViseme() !== 'closed') {
+      if (!isDisposed && activeViseme() !== 'closed') {
         resetViseme('delayed')
       }
     }

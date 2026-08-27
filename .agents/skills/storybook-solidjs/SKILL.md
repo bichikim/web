@@ -1,6 +1,6 @@
 ---
 name: storybook-solidjs
-description: Generates Solid.js Storybook story files (*.story.tsx). Use when creating or editing Storybook stories for Solid.js components
+description: Generate or edit Solid.js Storybook story files (*.story.tsx).
 ---
 
 # Storybook skill for Solid.js
