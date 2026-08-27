@@ -187,9 +187,11 @@ jobs:
           POMO_PLAYBACK_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+          deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
             --target=preview \
             --yes \
+            --no-wait \
+            --json \
             --meta "githubDeployment=1" \
             --meta "githubCommitOrg=${GITHUB_REPOSITORY_OWNER}" \
             --meta "githubCommitRepo=${GITHUB_REPOSITORY_NAME}" \
@@ -202,6 +204,31 @@ jobs:
             --env "POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY=${POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY}" \
             --env "POMO_AUDIO_GATEWAY_ORIGIN=${GATEWAY_URL}" \
             --env "POMO_PLAYBACK_TOKEN_SECRET=${POMO_PLAYBACK_TOKEN_SECRET}")"
+          original_deployment_id="$(jq -er '.id' <<< "${deployment_json}")"
+          deployment_url="$(jq -er '.url' <<< "${deployment_json}")"
+          for _ in $(seq 1 15); do
+            deployments_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} api \
+              "/v6/deployments?projectId=${VERCEL_PROJECT_ID}&limit=20" \
+              --raw)"
+            replacement_url="$(jq -r --arg id "${original_deployment_id}" '
+              [.deployments[] |
+                select(.meta.originalDeploymentId == $id) |
+                .url][0] // empty
+            ' <<< "${deployments_json}")"
+            if [ -n "${replacement_url}" ]; then
+              deployment_url="${replacement_url}"
+              break
+            fi
+            sleep 2
+          done
+          case "${deployment_url}" in
+            http://*|https://*) ;;
+            *) deployment_url="https://${deployment_url}" ;;
+          esac
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} inspect \
+            "${deployment_url}" \
+            --wait \
+            --timeout 15m
           echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
 
       - name: Verify Preview CORS
@@ -336,9 +363,11 @@ jobs:
           POMO_PLAYBACK_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+          deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
             --target=preview \
             --yes \
+            --no-wait \
+            --json \
             --meta "githubDeployment=1" \
             --meta "githubCommitOrg=${GITHUB_REPOSITORY_OWNER}" \
             --meta "githubCommitRepo=${GITHUB_REPOSITORY_NAME}" \
@@ -351,4 +380,29 @@ jobs:
             --env "POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY=${POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY}" \
             --env "POMO_AUDIO_GATEWAY_ORIGIN=${GATEWAY_URL}" \
             --env "POMO_PLAYBACK_TOKEN_SECRET=${POMO_PLAYBACK_TOKEN_SECRET}")"
+          original_deployment_id="$(jq -er '.id' <<< "${deployment_json}")"
+          deployment_url="$(jq -er '.url' <<< "${deployment_json}")"
+          for _ in $(seq 1 15); do
+            deployments_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} api \
+              "/v6/deployments?projectId=${VERCEL_PROJECT_ID}&limit=20" \
+              --raw)"
+            replacement_url="$(jq -r --arg id "${original_deployment_id}" '
+              [.deployments[] |
+                select(.meta.originalDeploymentId == $id) |
+                .url][0] // empty
+            ' <<< "${deployments_json}")"
+            if [ -n "${replacement_url}" ]; then
+              deployment_url="${replacement_url}"
+              break
+            fi
+            sleep 2
+          done
+          case "${deployment_url}" in
+            http://*|https://*) ;;
+            *) deployment_url="https://${deployment_url}" ;;
+          esac
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} inspect \
+            "${deployment_url}" \
+            --wait \
+            --timeout 15m
           echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
