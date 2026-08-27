@@ -186,9 +186,25 @@ const requireEnvironmentValue = (
 
 const STORAGE_PREFIX_SEGMENT_PATTERN = /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u
 
+const normalizeStoragePrefix = (value: string): string => {
+  const trimmedValue = value.trim()
+  let startIndex = 0
+
+  while (trimmedValue[startIndex] === '/') {
+    startIndex += 1
+  }
+
+  let endIndex = trimmedValue.length
+
+  while (endIndex > startIndex && trimmedValue[endIndex - 1] === '/') {
+    endIndex -= 1
+  }
+
+  return trimmedValue.slice(startIndex, endIndex)
+}
+
 const createStorageObjectKey = (objectKey: string, environment: PaidAudioEnvironment): string => {
-  const configuredPrefix = environment.POMO_PAID_AUDIO_R2_PREFIX?.trim() ?? ''
-  const normalizedPrefix = configuredPrefix.replace(/^\/+|\/+$/gu, '')
+  const normalizedPrefix = normalizeStoragePrefix(environment.POMO_PAID_AUDIO_R2_PREFIX ?? '')
 
   if (normalizedPrefix.length === 0) {
     return objectKey
