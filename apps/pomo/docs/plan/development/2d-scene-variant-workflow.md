@@ -225,11 +225,11 @@ cd apps/pomo && node scripts/compress-focus-room-scenes.mjs --depth-only
 
 일부 장면만 갱신할 때는 `--only focus-room-<장면>-concept`를 장면마다 반복한다. 이 방식은 선택하지 않은 입력과 깊이맵의 해시가 모두 일치하는 완전한 기존 manifest가 있어야 실행된다.
 
-생성 설정과 원본 SHA-256은 `asset-library/focus-room-source/depth/manifest.json`에 기록한다. 결과가 입력과 같은 크기의 8-bit grayscale PNG인지 확인한다. 원본 PNG는 이 경로에 보존하고 런타임은 픽셀 값이 동일한 무손실 WebP만 로드한다.
+생성 설정과 원본 SHA-256은 `asset-library/focus-room-source/depth/manifest.json`에 기록한다. 결과가 입력과 같은 크기의 8-bit grayscale PNG인지 확인한다. 원본 PNG는 이 경로에 그대로 보존한다. 런타임은 오브젝트 경계에서 패럴랙스 샘플 좌표가 역전되지 않도록 σ=6으로 부드럽게 만든 무손실 WebP를 로드한다.
 
 ## 11. 런타임 장면을 고품질로 압축한다
 
-원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 장면과 베이스에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 알파 스프라이트는 alpha quality 100의 quality 95 WebP와 무손실 WebP 중 작은 결과를 사용하며, 깊이맵과 마스크는 무손실로 유지한다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 같은 설정을 적용한다.
+원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 장면과 베이스에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 알파 스프라이트는 alpha quality 100의 quality 95 WebP와 무손실 WebP 중 작은 결과를 사용하며, 마스크와 부드럽게 만든 런타임 깊이맵은 무손실로 유지한다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 같은 설정을 적용한다.
 
 원본 PNG는 WebP 생성 입력이자 보관 자산이다. 이름을 바꾸거나 덮어쓰지 않으며, 변경 전후에 다음 명령으로 체크섬을 검증한다.
 

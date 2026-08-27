@@ -18,7 +18,7 @@
 
 원본은 `asset-library/focus-room-source`에 둔다. 장면 생성 절차는 [2D 장면 워크플로](../docs/plan/development/2d-scene-variant-workflow.md)를 따른다.
 
-- `compress-focus-room-scenes.mjs` — PNG를 WebP로 압축해 런타임 자산에 복사한다. `--depth-only`는 깊이맵만 처리한다.
+- `compress-focus-room-scenes.mjs` — PNG를 WebP로 압축해 런타임 자산에 복사한다. 깊이맵은 원본을 보존하면서 패럴랙스 경계를 부드럽게 만든 무손실 WebP로 생성하며, `--depth-only`는 깊이맵만 처리한다.
 - `create-focus-room-mouth-assets.mjs` — 입 없는 얼굴과 입 마스크를 만든다.
 - `create-focus-room-blink-assets.mjs` — 깜빡임 레이어를 추출한다. `POMO_BLINK_SOURCE_DIRECTORY`가 필요하다.
 - `create-focus-room-eye-motion-assets.mjs` — 홍채와 눈 베이스 레이어를 만든다.
