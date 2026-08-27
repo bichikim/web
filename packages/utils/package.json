@@ -73,6 +73,7 @@
   },
   "devDependencies": {
     "@types/js-cookie": "catalog:",
+    "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
     "js-cookie": "catalog:",
     "micro-memoize": "^4.2.0",

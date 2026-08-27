@@ -4,7 +4,6 @@
     "target": "ESNext",
     "module": "ESNext",
     "outDir": "dist",
-    "baseUrl": ".",
     "noEmit": false,
     "moduleResolution": "bundler",
     "declaration": true,
@@ -13,7 +12,7 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "paths": {
-      "src/*": ["src/*"]
+      "src/*": ["./src/*"]
     },
     "lib": ["esnext", "esnext.asynciterable", "scripthost"],
     "plugins": [{"transform": "@zerollup/ts-transform-paths"}]
