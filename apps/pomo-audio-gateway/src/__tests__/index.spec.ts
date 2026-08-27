@@ -196,7 +196,7 @@ describe('audio gateway request handling', () => {
       method: 'OPTIONS',
     })
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {} as R2Bucket,
       PLAYBACK_TOKEN_SECRET: SECRET,
     }
@@ -218,7 +218,7 @@ describe('audio gateway request handling', () => {
       method: 'OPTIONS',
     })
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {} as R2Bucket,
       PLAYBACK_TOKEN_SECRET: SECRET,
     }
@@ -240,7 +240,7 @@ describe('audio gateway request handling', () => {
       method: 'POST',
     })
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {} as R2Bucket,
       PLAYBACK_TOKEN_SECRET: SECRET,
     }
@@ -264,7 +264,7 @@ describe('audio gateway request handling', () => {
     )
     const get = vi.fn()
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {get} as unknown as R2Bucket,
       PLAYBACK_TOKEN_SECRET: SECRET,
     }
@@ -295,7 +295,7 @@ describe('audio gateway request handling', () => {
     )
     const get = vi.fn()
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {get} as unknown as R2Bucket,
       PLAYBACK_TOKEN_SECRET: SECRET,
     }
@@ -320,7 +320,7 @@ describe('audio gateway request handling', () => {
       {headers: {Origin: 'https://pomofi.io'}},
     )
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {get: vi.fn().mockResolvedValue(null)} as unknown as R2Bucket,
       PLAYBACK_TOKEN_SECRET: SECRET,
     }
@@ -347,7 +347,7 @@ describe('audio gateway request handling', () => {
       {headers: {Origin: 'https://pomofi.io'}},
     )
     const environment = {
-      ALLOWED_ORIGINS,
+      ...BASE_ENVIRONMENT,
       PAID_AUDIO: {
         get: vi.fn().mockRejectedValue(new Error('R2 unavailable')),
       } as unknown as R2Bucket,
