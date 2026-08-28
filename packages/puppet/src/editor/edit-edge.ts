@@ -1,6 +1,7 @@
 import {
   doSegmentsCross,
   getEdgeKey,
+  getMeshEdgeRecords,
   getMeshTriangles,
   getMeshVertex,
   getSignedArea,
@@ -189,30 +190,29 @@ const findCrossingEdge = (
     return undefined
   }
 
-  for (const triangle of getMeshTriangles(mesh)) {
-    for (const edge of getTriangleEdges(triangle)) {
-      const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
-      const sharesTarget =
-        edge.firstIndex === firstVertexIndex ||
-        edge.firstIndex === secondVertexIndex ||
-        edge.secondIndex === firstVertexIndex ||
-        edge.secondIndex === secondVertexIndex
+  for (const record of getMeshEdgeRecords(mesh)) {
+    const {edge} = record
+    const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
+    const sharesTarget =
+      edge.firstIndex === firstVertexIndex ||
+      edge.firstIndex === secondVertexIndex ||
+      edge.secondIndex === firstVertexIndex ||
+      edge.secondIndex === secondVertexIndex
 
-      if (!visited.has(key) && !sharesTarget) {
-        const edgeStart = getMeshVertex(mesh, edge.firstIndex)
-        const edgeEnd = getMeshVertex(mesh, edge.secondIndex)
+    if (!visited.has(key) && !sharesTarget) {
+      const edgeStart = getMeshVertex(mesh, edge.firstIndex)
+      const edgeEnd = getMeshVertex(mesh, edge.secondIndex)
 
-        if (
-          edgeStart !== undefined &&
-          edgeEnd !== undefined &&
-          doSegmentsCross(first, second, edgeStart, edgeEnd)
-        ) {
-          return edge
-        }
+      if (
+        edgeStart !== undefined &&
+        edgeEnd !== undefined &&
+        doSegmentsCross(first, second, edgeStart, edgeEnd)
+      ) {
+        return edge
       }
-
-      visited.add(key)
     }
+
+    visited.add(key)
   }
 
   return undefined

@@ -1,5 +1,6 @@
 import {
   getEdgeKey,
+  getMeshEdgeRecords,
   getMeshTriangles,
   getMeshVertex,
   getSignedArea,
@@ -147,23 +148,22 @@ const appendVertex = (part: PuppetPart, point: VertexPoint, uv: MeshPoint) => ({
 const findPointEdge = (mesh: PuppetMesh, point: VertexPoint): MeshEdge | undefined => {
   const visitedEdges = new Set<string>()
 
-  for (const triangle of getMeshTriangles(mesh)) {
-    for (const edge of getTriangleEdges(triangle)) {
-      const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
-      const first = getMeshVertex(mesh, edge.firstIndex)
-      const second = getMeshVertex(mesh, edge.secondIndex)
+  for (const record of getMeshEdgeRecords(mesh)) {
+    const {edge} = record
+    const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
+    const first = getMeshVertex(mesh, edge.firstIndex)
+    const second = getMeshVertex(mesh, edge.secondIndex)
 
-      if (
-        !visitedEdges.has(key) &&
-        first !== undefined &&
-        second !== undefined &&
-        isPointOnSegment(point, first, second)
-      ) {
-        return edge
-      }
-
-      visitedEdges.add(key)
+    if (
+      !visitedEdges.has(key) &&
+      first !== undefined &&
+      second !== undefined &&
+      isPointOnSegment(point, first, second)
+    ) {
+      return edge
     }
+
+    visitedEdges.add(key)
   }
 
   return undefined

@@ -1,6 +1,6 @@
 import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
 
-import {getEdgeKey, getMeshTriangles, getMeshVertex, getTriangleEdges} from '../mesh'
+import {getEdgeKey, getMeshEdgeRecords, getMeshTriangles, getMeshVertex} from '../mesh'
 import type {PuppetDocument, PuppetMesh, PuppetPart} from '../player/document'
 import {
   addPartVertex,
@@ -107,26 +107,25 @@ const snapPointToEdge = (
   let closestPoint = point
   let closestDistanceSquared = maximumDistance ** 2
 
-  for (const triangle of getMeshTriangles(mesh)) {
-    for (const edge of getTriangleEdges(triangle)) {
-      const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
-      const first = getMeshVertex(mesh, edge.firstIndex)
-      const second = getMeshVertex(mesh, edge.secondIndex)
+  for (const record of getMeshEdgeRecords(mesh)) {
+    const {edge} = record
+    const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
+    const first = getMeshVertex(mesh, edge.firstIndex)
+    const second = getMeshVertex(mesh, edge.secondIndex)
 
-      if (!visitedEdges.has(key) && first !== undefined && second !== undefined) {
-        const projectedPoint = projectPointToSegment(point, first, second)
-        const horizontalDistance = point.x - projectedPoint.x
-        const verticalDistance = point.y - projectedPoint.y
-        const distanceSquared = horizontalDistance ** 2 + verticalDistance ** 2
+    if (!visitedEdges.has(key) && first !== undefined && second !== undefined) {
+      const projectedPoint = projectPointToSegment(point, first, second)
+      const horizontalDistance = point.x - projectedPoint.x
+      const verticalDistance = point.y - projectedPoint.y
+      const distanceSquared = horizontalDistance ** 2 + verticalDistance ** 2
 
-        if (distanceSquared <= closestDistanceSquared) {
-          closestPoint = projectedPoint
-          closestDistanceSquared = distanceSquared
-        }
+      if (distanceSquared <= closestDistanceSquared) {
+        closestPoint = projectedPoint
+        closestDistanceSquared = distanceSquared
       }
-
-      visitedEdges.add(key)
     }
+
+    visitedEdges.add(key)
   }
 
   return closestPoint

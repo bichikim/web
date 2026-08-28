@@ -12,6 +12,12 @@ export interface MeshEdge {
   readonly secondIndex: number
 }
 
+export interface MeshEdgeRecord {
+  readonly edge: MeshEdge
+  readonly triangle: MeshTriangleIndices
+  readonly triangleIndex: number
+}
+
 const COORDINATES_PER_VERTEX = 2
 const INDICES_PER_TRIANGLE = 3
 const GEOMETRY_EPSILON = 0.000_001
@@ -49,6 +55,17 @@ export const getTriangleEdges = (triangle: MeshTriangleIndices): ReadonlyArray<M
   {firstIndex: triangle[1], secondIndex: triangle[2]},
   {firstIndex: triangle[2], secondIndex: triangle[0]},
 ]
+
+export const getTriangleEdgeRecords = (
+  triangles: ReadonlyArray<MeshTriangleIndices>,
+): ReadonlyArray<MeshEdgeRecord> =>
+  triangles.flatMap((triangle, triangleIndex) =>
+    getTriangleEdges(triangle).map((edge) => ({edge, triangle, triangleIndex})),
+  )
+
+export const getMeshEdgeRecords = (
+  mesh: Pick<PuppetMesh, 'indices'>,
+): ReadonlyArray<MeshEdgeRecord> => getTriangleEdgeRecords(getMeshTriangles(mesh))
 
 export const getSignedArea = (first: MeshPoint, second: MeshPoint, third: MeshPoint) =>
   (second.x - first.x) * (third.y - first.y) - (second.y - first.y) * (third.x - first.x)

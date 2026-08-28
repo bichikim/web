@@ -3,10 +3,10 @@ import {getBoundaryEdges} from './boundary'
 import {
   doSegmentsCross,
   getEdgeKey,
+  getMeshEdgeRecords,
   getMeshTriangles,
   getMeshVertex,
   getSignedArea,
-  getTriangleEdges,
   hasSamePoint,
   isDegenerateArea,
   type MeshEdge,
@@ -46,12 +46,11 @@ const collectEdges = (mesh: PuppetMesh) => {
   const edgeCount = new Map<string, number>()
   const edges = new Map<string, IndexedEdge>()
 
-  for (const triangle of getMeshTriangles(mesh)) {
-    for (const edge of getTriangleEdges(triangle)) {
-      const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
-      edgeCount.set(key, (edgeCount.get(key) ?? 0) + 1)
-      edges.set(key, {...edge, key})
-    }
+  for (const record of getMeshEdgeRecords(mesh)) {
+    const {edge} = record
+    const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
+    edgeCount.set(key, (edgeCount.get(key) ?? 0) + 1)
+    edges.set(key, {...edge, key})
   }
 
   return {edgeCount, edges: [...edges.values()]}

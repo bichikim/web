@@ -1,5 +1,5 @@
 import type {PuppetMesh} from '../player/document'
-import {getEdgeKey, getMeshTriangles, getTriangleEdges, type MeshEdge} from './geometry'
+import {getEdgeKey, getMeshEdgeRecords, type MeshEdge} from './geometry'
 
 export interface BoundaryEdge extends MeshEdge {
   readonly oppositeIndex: number
@@ -10,16 +10,15 @@ export const getBoundaryEdges = (
 ): ReadonlyArray<BoundaryEdge> => {
   const edges = new Map<string, ReadonlyArray<BoundaryEdge>>()
 
-  for (const triangle of getMeshTriangles(mesh)) {
-    for (const edge of getTriangleEdges(triangle)) {
-      const oppositeIndex = triangle.find(
-        (index) => index !== edge.firstIndex && index !== edge.secondIndex,
-      )
-      const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
+  for (const record of getMeshEdgeRecords(mesh)) {
+    const oppositeIndex = record.triangle.find(
+      (index) => index !== record.edge.firstIndex && index !== record.edge.secondIndex,
+    )
+    const key = getEdgeKey(record.edge.firstIndex, record.edge.secondIndex)
 
-      if (oppositeIndex !== undefined) {
-        edges.set(key, [...(edges.get(key) ?? []), {...edge, oppositeIndex}])
-      }
+    if (oppositeIndex !== undefined) {
+      const edge = {...record.edge, oppositeIndex}
+      edges.set(key, [...(edges.get(key) ?? []), edge])
     }
   }
 

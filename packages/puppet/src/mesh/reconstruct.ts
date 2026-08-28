@@ -6,7 +6,7 @@ import {
   getMeshTriangles,
   getMeshVertex,
   getSignedArea,
-  getTriangleEdges,
+  getTriangleEdgeRecords,
   type MeshPoint,
   type MeshTriangleIndices,
 } from './geometry'
@@ -80,18 +80,17 @@ const orientTriangle = (
 const getEdgeRecords = (triangles: ReadonlyArray<MeshTriangleIndices>) => {
   const records = new Map<string, EdgeRecord>()
 
-  for (const [index, triangle] of triangles.entries()) {
-    for (const edge of getTriangleEdges(triangle)) {
-      const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
-      const existing = records.get(key)
-      const triangleRecord = {index, triangle}
+  for (const record of getTriangleEdgeRecords(triangles)) {
+    const {edge} = record
+    const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
+    const existing = records.get(key)
+    const triangleRecord = {index: record.triangleIndex, triangle: record.triangle}
 
-      records.set(key, {
-        firstIndex: edge.firstIndex,
-        secondIndex: edge.secondIndex,
-        triangles: [...(existing?.triangles ?? []), triangleRecord],
-      })
-    }
+    records.set(key, {
+      firstIndex: edge.firstIndex,
+      secondIndex: edge.secondIndex,
+      triangles: [...(existing?.triangles ?? []), triangleRecord],
+    })
   }
 
   return records
