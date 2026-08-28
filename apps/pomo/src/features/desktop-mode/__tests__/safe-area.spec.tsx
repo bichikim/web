@@ -9,17 +9,26 @@ import {getDesktopSafeAreaTop, useDesktopSafeAreaTop} from '../safe-area'
 
 const windowMocks = vi.hoisted(() => ({
   currentMonitor: vi.fn(),
+  getCurrentWindow: vi.fn(),
   onResized: vi.fn(),
   onScaleChanged: vi.fn(),
 }))
 
 vi.mock('@tauri-apps/api/window', () => ({
   currentMonitor: windowMocks.currentMonitor,
-  getCurrentWindow: () => ({
-    onResized: windowMocks.onResized,
-    onScaleChanged: windowMocks.onScaleChanged,
-  }),
+  getCurrentWindow: windowMocks.getCurrentWindow,
 }))
+
+function createDeferred<Value>() {
+  let reject!: (reason?: unknown) => void
+  let resolve!: (value: Value | PromiseLike<Value>) => void
+  const promise = new Promise<Value>((resolvePromise, rejectPromise) => {
+    reject = rejectPromise
+    resolve = resolvePromise
+  })
+
+  return {promise, reject, resolve}
+}
 
 const createMonitor = (top: number, workAreaTop: number, scaleFactor = 2): Monitor =>
   ({
@@ -37,6 +46,10 @@ describe('desktop safe area', () => {
   beforeEach(() => {
     vi.stubEnv('POMO_IS_DESKTOP', '1')
     windowMocks.currentMonitor.mockReset().mockResolvedValue(createMonitor(0, 48))
+    windowMocks.getCurrentWindow.mockReset().mockReturnValue({
+      onResized: windowMocks.onResized,
+      onScaleChanged: windowMocks.onScaleChanged,
+    })
     windowMocks.onResized.mockReset().mockResolvedValue(vi.fn())
     windowMocks.onScaleChanged.mockReset().mockResolvedValue(vi.fn())
   })
@@ -54,6 +67,7 @@ describe('desktop safe area', () => {
     expect(getDesktopSafeAreaTop('normal', monitor)).toBe(0)
     expect(getDesktopSafeAreaTop('widget', monitor)).toBe(0)
     expect(getDesktopSafeAreaTop('desktop', null)).toBe(0)
+    expect(getDesktopSafeAreaTop('desktop', createMonitor(100, 80))).toBe(0)
   })
 
   it('should apply the monitor inset only while the desktop background is active', async () => {
@@ -111,6 +125,126 @@ describe('desktop safe area', () => {
 
     expect(removeResizeListener).toHaveBeenCalledOnce()
     expect(removeScaleListener).toHaveBeenCalledOnce()
+  })
+
+  it('should ignore stale and disposed monitor measurements', async () => {
+    const firstMeasurement = createDeferred<Monitor | null>()
+    const disposedMeasurement = createDeferred<Monitor | null>()
+    windowMocks.currentMonitor
+      .mockReset()
+      .mockReturnValueOnce(firstMeasurement.promise)
+      .mockResolvedValueOnce(createMonitor(0, 60))
+      .mockReturnValueOnce(disposedMeasurement.promise)
+    const [mode] = createSignal<'desktop'>('desktop')
+    let inset = () => -1
+    const view = render(() => {
+      inset = useDesktopSafeAreaTop(mode)
+      return null
+    })
+
+    await vi.waitFor(() => expect(windowMocks.onResized).toHaveBeenCalledOnce())
+    const resizeListener = windowMocks.onResized.mock.calls[0]?.[0] as () => void
+    resizeListener()
+    await vi.waitFor(() => expect(inset()).toBe(30))
+
+    firstMeasurement.resolve(createMonitor(0, 48))
+    await firstMeasurement.promise
+    expect(inset()).toBe(30)
+
+    resizeListener()
+    await vi.waitFor(() => expect(windowMocks.currentMonitor).toHaveBeenCalledTimes(3))
+    view.unmount()
+    disposedMeasurement.reject(new Error('disposed monitor'))
+    await Promise.resolve()
+    expect(inset()).toBe(30)
+  })
+
+  it('should reset the inset when monitor measurement fails', async () => {
+    const error = new Error('monitor unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    windowMocks.currentMonitor.mockRejectedValue(error)
+    const [mode] = createSignal<'desktop'>('desktop')
+    let inset = () => -1
+    const view = render(() => {
+      inset = useDesktopSafeAreaTop(mode)
+      return null
+    })
+
+    await vi.waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith('Failed to measure the desktop safe area.', error),
+    )
+    expect(inset()).toBe(0)
+    view.unmount()
+  })
+
+  it('should release listeners initialized after disposal', async () => {
+    const resizeListener = createDeferred<() => void>()
+    const scaleListener = createDeferred<() => void>()
+    const removeResizeListener = vi.fn()
+    const removeScaleListener = vi.fn()
+    windowMocks.onResized.mockReturnValue(resizeListener.promise)
+    windowMocks.onScaleChanged.mockReturnValue(scaleListener.promise)
+    const [mode] = createSignal<'desktop'>('desktop')
+    const view = render(() => {
+      useDesktopSafeAreaTop(mode)
+      return null
+    })
+
+    await vi.waitFor(() => expect(windowMocks.getCurrentWindow).toHaveBeenCalledOnce())
+    view.unmount()
+    resizeListener.resolve(removeResizeListener)
+    scaleListener.resolve(removeScaleListener)
+
+    await vi.waitFor(() => expect(removeResizeListener).toHaveBeenCalledOnce())
+    expect(removeScaleListener).toHaveBeenCalledOnce()
+  })
+
+  it('should ignore native window initialization after disposal', async () => {
+    const [mode] = createSignal<'desktop'>('desktop')
+    const view = render(() => {
+      useDesktopSafeAreaTop(mode)
+      return null
+    })
+
+    view.unmount()
+    await Promise.resolve()
+
+    expect(windowMocks.getCurrentWindow).not.toHaveBeenCalled()
+  })
+
+  it('should report native window initialization failures only while mounted', async () => {
+    const mountedError = new Error('window unavailable')
+    const disposedError = new Error('listener unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    windowMocks.getCurrentWindow.mockImplementationOnce(() => {
+      throw mountedError
+    })
+    const [mode] = createSignal<'desktop'>('desktop')
+    const mountedView = render(() => {
+      useDesktopSafeAreaTop(mode)
+      return null
+    })
+
+    await vi.waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        'Failed to initialize the desktop safe area.',
+        mountedError,
+      ),
+    )
+    mountedView.unmount()
+
+    const listener = createDeferred<() => void>()
+    windowMocks.onResized.mockReturnValueOnce(listener.promise)
+    const disposedView = render(() => {
+      useDesktopSafeAreaTop(mode)
+      return null
+    })
+    await vi.waitFor(() => expect(windowMocks.onResized).toHaveBeenCalledTimes(1))
+    disposedView.unmount()
+    listener.reject(disposedError)
+    await Promise.resolve()
+
+    expect(consoleError).toHaveBeenCalledTimes(1)
   })
 
   it('should not load native window state in a web build', async () => {
