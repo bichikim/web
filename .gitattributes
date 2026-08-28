@@ -1,1 +1,2 @@
 * text=auto eol=lf
+packages/vite-plugin-key-similarity/assets/multilingual-e5-small/onnx/*.onnx filter=lfs diff=lfs merge=lfs -text
