@@ -120,15 +120,23 @@ it('should replace an added recommendation with a stored feed item', () => {
   )
 })
 
-it('should use the public server origin for Apps in Toss recommendations', () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
-  vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
-  renderSettings()
+it.each(['POMO_IS_APPS_IN_TOSS', 'POMO_IS_DESKTOP'] as const)(
+  'should use the public server origin for %s recommendations',
+  (runtime) => {
+    vi.stubEnv(runtime, '1')
+    vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    renderSettings()
+    const developmentAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
 
-  fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
+    fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
+    fireEvent.click(screen.getByRole('button', {name: 'Pomofi 5분 RSS 추천 피드 추가'}))
 
-  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
-})
+    expect(
+      screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml'),
+    ).toBeDefined()
+    expect(screen.getByText(developmentAddress)).toBeDefined()
+  },
+)
 
 it('should omit development recommendations in production', () => {
   vi.stubEnv('DEV', false)

@@ -43,16 +43,23 @@ const RECOMMENDED_DEV_FEEDS = [
 export default function PFeedSettingsContent() {
   const feeds = useFeedConnections()
   const runtime = useOptionalPFeeds()
-  const publicOrigin = import.meta.env.POMO_IS_APPS_IN_TOSS
+  const usesRemotePublicOrigin =
+    import.meta.env.POMO_IS_APPS_IN_TOSS || import.meta.env.POMO_IS_DESKTOP
+  const publicOrigin = usesRemotePublicOrigin
     ? import.meta.env.POMO_PUBLIC_ORIGIN
     : window.location.origin
-  const recommendations = import.meta.env.DEV
-    ? [...RECOMMENDED_PUBLIC_FEEDS, ...RECOMMENDED_DEV_FEEDS]
-    : RECOMMENDED_PUBLIC_FEEDS
-  const recommendedFeeds: ReadonlyArray<RecommendedFeed> = recommendations.map((feed) => ({
-    ...feed,
-    url: new URL(feed.path, publicOrigin).href,
-  }))
+  const recommendedFeeds: ReadonlyArray<RecommendedFeed> = [
+    ...RECOMMENDED_PUBLIC_FEEDS.map((feed) => ({
+      ...feed,
+      url: new URL(feed.path, publicOrigin).href,
+    })),
+    ...(import.meta.env.DEV
+      ? RECOMMENDED_DEV_FEEDS.map((feed) => ({
+          ...feed,
+          url: new URL(feed.path, window.location.origin).href,
+        }))
+      : []),
+  ]
   const availableRecommendations = createMemo(() => {
     const storedUrls = new Set(feeds.connections().map((connection) => connection.url))
     return recommendedFeeds.filter((feed) => !storedUrls.has(feed.url))

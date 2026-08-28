@@ -59,7 +59,8 @@ export const CLASSES = {
   ].join(' '),
   sceneToolbar: [
     'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
-    'flex flex-col items-end gap-2 xs:right-7 lg:top-6',
+    'flex flex-col items-end gap-2 xs:right-7',
+    'lg:top-[calc(1.5rem+var(--pomo-safe-area-inset-top))]',
   ].join(' '),
   ui: 'pomo-ui pointer-events-none absolute inset-0',
 } as const

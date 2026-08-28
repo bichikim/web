@@ -1,6 +1,7 @@
 import type {Middleware} from 'h3'
 
 const STATIC_ALLOWED_ORIGINS = new Set([
+  'http://127.0.0.1:1420',
   'http://tauri.localhost',
   'https://pomofi.io',
   'https://www.pomofi.io',

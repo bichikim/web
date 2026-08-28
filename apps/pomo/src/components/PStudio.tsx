@@ -1,4 +1,4 @@
-import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
 
 import {
   getPScene,
@@ -24,7 +24,12 @@ import {
 } from '../features/focus-room-time'
 import {usePSay} from '../features/pomo-webmcp'
 import {useWeather} from '../features/weather'
-import {useDesktopMode} from '../features/desktop-mode'
+import {
+  isDesktopBackgroundMode,
+  useDesktopMode,
+  useDesktopSafeAreaTop,
+  useDesktopSceneSettingsListener,
+} from '../features/desktop-mode'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
 import {PSceneFallback} from './p-studio/SceneFallback'
@@ -62,6 +67,31 @@ const getSceneAsset = (
   }
 }
 
+const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
+  const [isVisible, setIsVisible] = createSignal(false)
+  const restore = () => {
+    if (events.hasEnteredFocusRoom() || readFocusRoomEntrySession()) {
+      events.enterFocusRoom()
+    } else {
+      setIsVisible(true)
+    }
+  }
+  const enter = () => {
+    writeFocusRoomEntrySession()
+    if (!events.hasEnteredFocusRoom()) {
+      events.enterFocusRoom()
+    }
+  }
+
+  return {enter, hide: () => setIsVisible(false), isVisible, restore}
+}
+
+const createLoadingHandler =
+  (setLoading: Setter<boolean>, setRendered: Setter<boolean>) => (isLoading: boolean) => {
+    setLoading(isLoading)
+    setRendered((hasRendered) => hasRendered || !isLoading)
+  }
+
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -73,10 +103,11 @@ export const PStudio = () => {
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
   const hasEntered = events.hasEnteredFocusRoom
-  const [isEntryVisible, setIsEntryVisible] = createSignal(false)
+  const entry = useStudioEntry(events)
   const screenSaver = useStudioScreenSaver()
   const weather = useWeather()
   const desktopMode = useDesktopMode({isSurfaceOwner: true})
+  const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
   const scenePreferences = usePScenePreferences()
   const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
@@ -86,6 +117,17 @@ export const PStudio = () => {
     pomoSay.isPlaying,
   )
   const {sceneStyle} = sceneStyleController
+  useDesktopSceneSettingsListener({
+    onActivityChange: scenePreferences.onActivityChange,
+    onGazeChange: scenePreferences.onGazeChange,
+    onMotionInputChange: setMotionInput,
+    onMotionModeChange: setMotionMode,
+    onSceneStyleChange: sceneStyleController.onSceneStyleChange,
+    onScreenSaverDelayChange: screenSaver.onDelayChange,
+    onTimeModeChange: scenePreferences.onTimeModeChange,
+    onWeatherCityChange: weather.onCityChange,
+    onWeatherEnabledChange: weather.onEnabledChange,
+  })
   const selectedScene = createMemo(() =>
     getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), sceneStyle()),
   )
@@ -97,30 +139,13 @@ export const PStudio = () => {
       pomoSay.activeViseme(),
     ),
   )
-  const handleLoadingChange = (isLoading: boolean) => {
-    setIsSceneLoading(isLoading)
-    setHasSceneRendered((hasRendered) => hasRendered || !isLoading)
-  }
-  const handleEnter = () => {
-    writeFocusRoomEntrySession()
-
-    if (hasEntered()) {
-      return
-    }
-
-    events.enterFocusRoom()
-  }
-
+  const handleLoadingChange = createLoadingHandler(setIsSceneLoading, setHasSceneRendered)
   onMount(() => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
     const updateAutomaticPeriod = () => setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
     const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
 
-    if (hasEntered() || readFocusRoomEntrySession()) {
-      events.enterFocusRoom()
-    } else {
-      setIsEntryVisible(true)
-    }
+    entry.restore()
 
     setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {
@@ -132,7 +157,11 @@ export const PStudio = () => {
   })
 
   return (
-    <section aria-label="Pomo" class="pomo-studio relative h-dvh w-full overflow-hidden">
+    <section
+      aria-label="Pomo"
+      class="pomo-studio relative h-dvh w-full overflow-hidden"
+      style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
+    >
       <figure
         aria-label={selectedScene().label}
         class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
@@ -202,16 +231,14 @@ export const PStudio = () => {
           </Show>
         </Show>
       </div>
-      <Show when={isEntryVisible()}>
-        <PEntry
-          isExiting={hasEntered()}
-          onEnter={handleEnter}
-          onExitComplete={() => setIsEntryVisible(false)}
-        />
+      <Show when={entry.isVisible()}>
+        <PEntry isExiting={hasEntered()} onEnter={entry.enter} onExitComplete={entry.hide} />
       </Show>
       <SceneModelDownloadFallback isVisible={!hasEntered() || !scenePreferences.isReady()} />
       <PScreenSaver
-        isActive={hasEntered() && screenSaver.isActive()}
+        isActive={
+          hasEntered() && !isDesktopBackgroundMode(desktopMode.mode()) && screenSaver.isActive()
+        }
         isMusicPlaying={screenSaver.isMusicPlaying()}
         onDismiss={screenSaver.onDismiss}
         timer={screenSaver.timer()}

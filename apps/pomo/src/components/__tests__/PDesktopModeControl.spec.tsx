@@ -27,6 +27,7 @@ it('should expose all modes, pending state, and transition errors', () => {
   ))
 
   expect(screen.getByRole('button', {name: '바탕화면'})).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', {name: '인터랙티브 바탕화면'})).toBeDisabled()
   expect(screen.getByRole('alert')).toHaveTextContent('native failed')
   expect(screen.getAllByRole('button').every((button) => button.hasAttribute('disabled'))).toBe(
     true,
