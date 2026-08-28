@@ -13,7 +13,6 @@ env:
   GCP_SERVICE_NAME: coong
   PROJECT_CLIENT_PATH: apps/coong-client
   ARTIFACT_CLIENT_NAME: dist-client
-  TARGET_DEPLOY_BRANCH: release/coong
 jobs:
   build-client:
     name: Build Client
@@ -68,7 +67,7 @@ jobs:
     needs: build-client
     runs-on: ubuntu-latest
     # only master
-    if: github.ref == 'refs/heads/${{ env.TARGET_DEPLOY_BRANCH }}'
+    if: github.ref == 'refs/heads/release/coong'
     env:
       DESTINATION: coong-static-production
     steps:

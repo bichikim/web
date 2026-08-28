@@ -1,0 +1,13 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "headers": ["content-type"],
+        "methods": ["PUT", "HEAD"],
+        "origins": ["*"]
+      },
+      "exposeHeaders": ["etag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

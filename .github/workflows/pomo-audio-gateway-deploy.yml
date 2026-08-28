@@ -1,0 +1,408 @@
+name: Deploy Pomo Audio Gateway
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main-pomo
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - '.github/workflows/pomo-audio-gateway-deploy.yml'
+      - 'apps/pomo/**'
+      - 'apps/pomo-audio-gateway/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+  push:
+    branches:
+      - dev
+    paths:
+      - '.github/workflows/pomo-audio-gateway-deploy.yml'
+      - 'apps/pomo/**'
+      - 'apps/pomo-audio-gateway/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24
+  PNPM_VERSION: 11.8.0
+  VERCEL_CLI_VERSION: 59.5.0
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: prj_1GOayEsbALkhBglgOzza5COVs1tC
+
+jobs:
+  preview:
+    name: Deploy PR Preview
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomo-audio-gateway-preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    environment:
+      name: Preview – pomo-audio-gateway
+      url: ${{ steps.pomo.outputs.url }}
+    steps:
+      - name: Validate deployment credentials
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          NON_PRODUCTION_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "${CLOUDFLARE_ACCOUNT_ID}" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
+          test -n "${CLOUDFLARE_API_TOKEN}" || { echo "::error::CLOUDFLARE_API_TOKEN is not configured"; exit 1; }
+          test -n "${NON_PRODUCTION_TOKEN_SECRET}" || { echo "::error::POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET is not configured"; exit 1; }
+          test -n "${R2_ACCESS_KEY_ID}" || { echo "::error::POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID is not configured"; exit 1; }
+          test -n "${R2_SECRET_ACCESS_KEY}" || { echo "::error::POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY is not configured"; exit 1; }
+          test -n "${VERCEL_TOKEN}" || { echo "::error::VERCEL_TOKEN is not configured"; exit 1; }
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify audio gateway
+        run: |
+          pnpm --dir apps/pomo-audio-gateway lint
+          pnpm --dir apps/pomo-audio-gateway typecheck
+          pnpm exec vitest run \
+            apps/pomo-audio-gateway/src/__tests__/index.spec.ts \
+            apps/pomo/src/server/music/__tests__/track-upload-operations.spec.ts \
+            apps/pomo/src/server/music/__tests__/delete-preview-audio.spec.ts \
+            --project=unit \
+            --reporter=dot
+          pnpm --dir apps/pomo-audio-gateway build
+
+      - name: Prepare Preview R2 bucket
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-preview-r2.log
+        run: |
+          if ! pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket info \
+            pomofi-paid-audio-preview; then
+            pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket create \
+              pomofi-paid-audio-preview || \
+              pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket info \
+                pomofi-paid-audio-preview
+          fi
+          pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket cors set \
+            pomofi-paid-audio-preview \
+            --file cors.preview.json \
+            --force
+          pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket lifecycle set \
+            pomofi-paid-audio-preview \
+            --file lifecycle.preview.json \
+            --force
+
+      - name: Upload PR Gateway version
+        id: gateway
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PLAYBACK_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-preview.log
+        run: |
+          secret_file="${RUNNER_TEMP}/pomo-audio-gateway-preview-secrets.json"
+          jq -n --arg secret "${PLAYBACK_TOKEN_SECRET}" \
+            '{PLAYBACK_TOKEN_SECRET: $secret}' > "${secret_file}"
+          chmod 600 "${secret_file}"
+          if ! pnpm --dir apps/pomo-audio-gateway exec wrangler \
+            deployments status \
+            --env preview > /dev/null 2>&1; then
+            pnpm --dir apps/pomo-audio-gateway exec wrangler deploy \
+              --env preview \
+              --secrets-file "${secret_file}"
+          fi
+          object_prefix="previews/pr-${PR_NUMBER}"
+          upload_output="$(NO_COLOR=1 pnpm --dir apps/pomo-audio-gateway exec wrangler \
+            versions upload \
+            --env preview \
+            --preview-alias "pr-${PR_NUMBER}" \
+            --message "PR #${PR_NUMBER} ${GITHUB_SHA}" \
+            --var "ALLOWED_ORIGINS:" \
+            --var "ALLOWED_ORIGIN_SUFFIXES:.vercel.app" \
+            --var "R2_OBJECT_PREFIX:${object_prefix}" \
+            --secrets-file "${secret_file}")"
+          printf '%s\n' "${upload_output}"
+          gateway_url="$(printf '%s\n' "${upload_output}" | \
+            grep -Eo "https://pr-${PR_NUMBER}-[^[:space:]]+\\.workers\\.dev" | tail -1)"
+          test -n "${gateway_url}"
+          echo "prefix=${object_prefix}" >> "${GITHUB_OUTPUT}"
+          echo "url=${gateway_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Pull Vercel Preview settings
+        env:
+          GITHUB_COMMIT_REF: ${{ github.event.pull_request.head.ref }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull
+          --yes
+          --environment=preview
+          --git-branch="${GITHUB_COMMIT_REF}"
+
+      - name: Deploy Pomo with PR audio storage
+        id: pomo
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          GATEWAY_URL: ${{ steps.gateway.outputs.url }}
+          GITHUB_COMMIT_REF: ${{ github.event.pull_request.head.ref }}
+          GITHUB_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          OBJECT_PREFIX: ${{ steps.gateway.outputs.prefix }}
+          POMO_PAID_AUDIO_R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_ACCESS_KEY_ID }}
+          POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY }}
+          POMO_PLAYBACK_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+            --target=preview \
+            --yes \
+            --no-wait \
+            --json \
+            --meta "githubDeployment=1" \
+            --meta "githubCommitOrg=${GITHUB_REPOSITORY_OWNER}" \
+            --meta "githubCommitRepo=${GITHUB_REPOSITORY_NAME}" \
+            --meta "githubCommitRef=${GITHUB_COMMIT_REF}" \
+            --meta "githubCommitSha=${GITHUB_COMMIT_SHA}" \
+            --env "CLOUDFLARE_R2_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}" \
+            --env "POMO_PAID_AUDIO_R2_BUCKET=pomofi-paid-audio-preview" \
+            --env "POMO_PAID_AUDIO_R2_PREFIX=${OBJECT_PREFIX}" \
+            --env "POMO_PAID_AUDIO_R2_ACCESS_KEY_ID=${POMO_PAID_AUDIO_R2_ACCESS_KEY_ID}" \
+            --env "POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY=${POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY}" \
+            --env "POMO_AUDIO_GATEWAY_ORIGIN=${GATEWAY_URL}" \
+            --env "POMO_PLAYBACK_TOKEN_SECRET=${POMO_PLAYBACK_TOKEN_SECRET}")"
+          original_deployment_id="$(jq -er '.id' <<< "${deployment_json}")"
+          deployment_url="$(jq -er '.url' <<< "${deployment_json}")"
+          for _ in $(seq 1 15); do
+            deployments_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} api \
+              "/v6/deployments?projectId=${VERCEL_PROJECT_ID}&limit=20" \
+              --raw)"
+            replacement_url="$(jq -r --arg id "${original_deployment_id}" '
+              [.deployments[] |
+                select(.meta.originalDeploymentId == $id) |
+                .url][0] // empty
+            ' <<< "${deployments_json}")"
+            if [ -n "${replacement_url}" ]; then
+              deployment_url="${replacement_url}"
+              break
+            fi
+            sleep 2
+          done
+          case "${deployment_url}" in
+            http://*|https://*) ;;
+            *) deployment_url="https://${deployment_url}" ;;
+          esac
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} inspect \
+            "${deployment_url}" \
+            --wait \
+            --timeout 15m
+          echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify Preview CORS
+        env:
+          GATEWAY_URL: ${{ steps.gateway.outputs.url }}
+          POMO_URL: ${{ steps.pomo.outputs.url }}
+        run: |
+          status="$(curl --silent --show-error \
+            --output /dev/null \
+            --write-out '%{http_code}' \
+            --request OPTIONS \
+            --header "Origin: ${POMO_URL}" \
+            "${GATEWAY_URL}/")"
+          test "${status}" = "204"
+
+  dev:
+    name: Deploy dev
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomo-audio-gateway-dev
+      cancel-in-progress: true
+    environment:
+      name: Development – pomo-audio-gateway
+      url: ${{ steps.pomo.outputs.url }}
+    steps:
+      - name: Validate deployment credentials
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          NON_PRODUCTION_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_DEV_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_DEV_R2_SECRET_ACCESS_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "${CLOUDFLARE_ACCOUNT_ID}" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
+          test -n "${CLOUDFLARE_API_TOKEN}" || { echo "::error::CLOUDFLARE_API_TOKEN is not configured"; exit 1; }
+          test -n "${NON_PRODUCTION_TOKEN_SECRET}" || { echo "::error::POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET is not configured"; exit 1; }
+          test -n "${R2_ACCESS_KEY_ID}" || { echo "::error::POMO_PAID_AUDIO_DEV_R2_ACCESS_KEY_ID is not configured"; exit 1; }
+          test -n "${R2_SECRET_ACCESS_KEY}" || { echo "::error::POMO_PAID_AUDIO_DEV_R2_SECRET_ACCESS_KEY is not configured"; exit 1; }
+          test -n "${VERCEL_TOKEN}" || { echo "::error::VERCEL_TOKEN is not configured"; exit 1; }
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify audio gateway
+        run: |
+          pnpm --dir apps/pomo-audio-gateway lint
+          pnpm --dir apps/pomo-audio-gateway typecheck
+          pnpm exec vitest run \
+            apps/pomo-audio-gateway/src/__tests__/index.spec.ts \
+            --project=unit \
+            --reporter=dot
+          pnpm --dir apps/pomo-audio-gateway build
+
+      - name: Prepare dev R2 bucket
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-dev-r2.log
+        run: |
+          if ! pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket info \
+            pomofi-paid-audio-dev; then
+            pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket create \
+              pomofi-paid-audio-dev || \
+              pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket info \
+                pomofi-paid-audio-dev
+          fi
+          pnpm --dir apps/pomo-audio-gateway exec wrangler r2 bucket cors set \
+            pomofi-paid-audio-dev \
+            --file cors.preview.json \
+            --force
+
+      - name: Deploy dev Gateway
+        id: gateway
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PLAYBACK_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
+          WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-dev.log
+        run: |
+          secret_file="${RUNNER_TEMP}/pomo-audio-gateway-dev-secrets.json"
+          jq -n --arg secret "${PLAYBACK_TOKEN_SECRET}" \
+            '{PLAYBACK_TOKEN_SECRET: $secret}' > "${secret_file}"
+          chmod 600 "${secret_file}"
+          deploy_output="$(NO_COLOR=1 pnpm --dir apps/pomo-audio-gateway exec wrangler deploy \
+            --env dev \
+            --secrets-file "${secret_file}")"
+          printf '%s\n' "${deploy_output}"
+          gateway_url="$(printf '%s\n' "${deploy_output}" | \
+            grep -Eo 'https://[^[:space:]]+\.workers\.dev' | tail -1)"
+          test -n "${gateway_url}"
+          echo "url=${gateway_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Pull Vercel Preview settings
+        env:
+          GITHUB_COMMIT_REF: ${{ github.ref_name }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull
+          --yes
+          --environment=preview
+          --git-branch="${GITHUB_COMMIT_REF}"
+
+      - name: Deploy Pomo with dev audio storage
+        id: pomo
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          GATEWAY_URL: ${{ steps.gateway.outputs.url }}
+          GITHUB_COMMIT_REF: ${{ github.ref_name }}
+          GITHUB_COMMIT_SHA: ${{ github.sha }}
+          GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          POMO_PAID_AUDIO_R2_ACCESS_KEY_ID: ${{ secrets.POMO_PAID_AUDIO_DEV_R2_ACCESS_KEY_ID }}
+          POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_DEV_R2_SECRET_ACCESS_KEY }}
+          POMO_PLAYBACK_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+            --target=preview \
+            --yes \
+            --no-wait \
+            --json \
+            --meta "githubDeployment=1" \
+            --meta "githubCommitOrg=${GITHUB_REPOSITORY_OWNER}" \
+            --meta "githubCommitRepo=${GITHUB_REPOSITORY_NAME}" \
+            --meta "githubCommitRef=${GITHUB_COMMIT_REF}" \
+            --meta "githubCommitSha=${GITHUB_COMMIT_SHA}" \
+            --env "CLOUDFLARE_R2_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}" \
+            --env "POMO_PAID_AUDIO_R2_BUCKET=pomofi-paid-audio-dev" \
+            --env "POMO_PAID_AUDIO_R2_PREFIX=" \
+            --env "POMO_PAID_AUDIO_R2_ACCESS_KEY_ID=${POMO_PAID_AUDIO_R2_ACCESS_KEY_ID}" \
+            --env "POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY=${POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY}" \
+            --env "POMO_AUDIO_GATEWAY_ORIGIN=${GATEWAY_URL}" \
+            --env "POMO_PLAYBACK_TOKEN_SECRET=${POMO_PLAYBACK_TOKEN_SECRET}")"
+          original_deployment_id="$(jq -er '.id' <<< "${deployment_json}")"
+          deployment_url="$(jq -er '.url' <<< "${deployment_json}")"
+          for _ in $(seq 1 15); do
+            deployments_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} api \
+              "/v6/deployments?projectId=${VERCEL_PROJECT_ID}&limit=20" \
+              --raw)"
+            replacement_url="$(jq -r --arg id "${original_deployment_id}" '
+              [.deployments[] |
+                select(.meta.originalDeploymentId == $id) |
+                .url][0] // empty
+            ' <<< "${deployments_json}")"
+            if [ -n "${replacement_url}" ]; then
+              deployment_url="${replacement_url}"
+              break
+            fi
+            sleep 2
+          done
+          case "${deployment_url}" in
+            http://*|https://*) ;;
+            *) deployment_url="https://${deployment_url}" ;;
+          esac
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} inspect \
+            "${deployment_url}" \
+            --wait \
+            --timeout 15m
+          echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"

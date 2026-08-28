@@ -181,6 +181,7 @@ const createConfig = ({command}: ConfigEnv): UserConfig => ({
   },
   nitro: {
     prerender: {
+      failOnError: isStaticBuild,
       routes:
         command === 'build'
           ? isAppsInTossBuild

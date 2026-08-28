@@ -19,17 +19,6 @@
     "cropped": false,
     "runtimeApplied": true
   },
-  "lowerFaceCrop": {
-    "x": 930,
-    "y": 285,
-    "width": 260,
-    "height": 180,
-    "edgeFeatherPixels": 10,
-    "format": "PNG with alpha",
-    "directory": "lower-face-crops",
-    "runtimeDirectory": "src/features/focus-room-animation/assets/layers/day-reading-user",
-    "runtimeScenes": ["day-reading-user", "day-typing-user", "day-writing-user"]
-  },
   "stages": [
     {
       "name": "closed",
@@ -52,6 +41,8 @@
       "source": "exact-input-endpoint"
     }
   ],
-  "usage": "lower-face-crops/ is connected to the daytime user-facing runtime mouth layers. generated-full/ and frames/ remain editable source material.",
-  "note": "frames/ contains the H3 video extractions. generated-full/ contains original-resolution full-scene candidates: closed/open are exact source composites, while release/small-open/half-open are ChatGPT-generated edits. lower-face-crops/ contains the deterministic 260x180 ComfyUI crops with a 10px feathered alpha edge; refine these PNG masks when preparing the final mouth-only cutouts."
+  "runtimeDirectory": "src/features/focus-room-animation/assets/layers/day-reading-user",
+  "runtimeScenes": ["day-reading-user", "day-typing-user", "day-writing-user"],
+  "usage": "generated-full/ retains the approved editable full-scene sources. Runtime mouth layers are stored in runtimeDirectory.",
+  "note": "closed/open are exact source composites, while release/small-open/half-open are ChatGPT-generated edits. Extracted H3 frames, review copies, and intermediate lower-face crops were removed after approval."
 }

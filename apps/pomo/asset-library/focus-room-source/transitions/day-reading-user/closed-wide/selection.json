@@ -1,6 +1,0 @@
-{
-  "early": 41,
-  "middle": 61,
-  "late": 69,
-  "reason": "Frame 41 supplies the first lip-release pose; frames 61 and 69 are the most stable approach to the supplied wide endpoint. Overshooting large-open poses were rejected."
-}
