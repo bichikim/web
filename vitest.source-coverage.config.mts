@@ -25,6 +25,8 @@ export default {
         'apps/coong/src/kata/resource/index.tsx',
         'apps/coong/src/use/focus-controller/KeyCap.tsx',
         'apps/coong/src/use/focus-controller/SolidWindow.tsx',
+        // V8 does not attribute code executed in the plugin's worker thread.
+        'packages/vite-plugin-key-similarity/src/worker.ts',
       ],
       include: [
         'apps/*/src/**/*.{js,jsx,mjs,mts,ts,tsx}',
