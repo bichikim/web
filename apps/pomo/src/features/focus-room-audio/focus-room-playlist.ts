@@ -84,6 +84,11 @@ export interface LoadPTracksOptions {
   readonly tracksUrl?: string
 }
 
+export interface PTrackQueueSource {
+  readonly defaultTracks: readonly PTrack[]
+  readonly tracks: readonly PTrack[]
+}
+
 export interface LoadPAlbumsOptions {
   readonly albumsUrl?: string
   readonly locale?: Locale
@@ -426,8 +431,10 @@ export const loadPAlbums = async (
   return [...bundledAlbums, ...publishedAlbums]
 }
 
-/** Loads and validates the bundled focus-room playlist. */
-export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<readonly PTrack[]> => {
+/** Loads and validates the complete track catalog and bundled default playlist. */
+export const loadPTrackQueueSource = async (
+  options: LoadPTracksOptions = {},
+): Promise<PTrackQueueSource> => {
   const [tracksResponse, playlistResponse] = await Promise.all([
     fetchAudioJson('tracks.json', options.tracksUrl, options.signal),
     fetchAudioJson('playlist.json', options.playlistUrl, options.signal),
@@ -454,9 +461,16 @@ export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<rea
     throw new TypeError('Focus-room playlist has an invalid format')
   }
 
-  return resolveTrackIds(
-    playlist.trackIds,
-    collection.tracks,
-    'Focus-room playlist references unknown tracks',
-  )
+  return {
+    defaultTracks: resolveTrackIds(
+      playlist.trackIds,
+      collection.tracks,
+      'Focus-room playlist references unknown tracks',
+    ),
+    tracks: collection.tracks,
+  }
 }
+
+/** Loads and validates the bundled focus-room playlist. */
+export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<readonly PTrack[]> =>
+  (await loadPTrackQueueSource(options)).defaultTracks
