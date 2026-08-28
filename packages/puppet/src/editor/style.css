@@ -1,0 +1,540 @@
+.puppet-editor {
+  display: grid;
+  grid-template:
+    'toolbar toolbar toolbar' 64px
+    'layers viewport inspector' minmax(0, 1fr)
+    'timeline timeline timeline' 132px /
+    236px minmax(460px, 1fr) 260px;
+  width: 100%;
+  min-width: 960px;
+  height: 100%;
+  min-height: 640px;
+  overflow: hidden;
+  color: #edf4f0;
+  background: #0b0f0e;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+.puppet-editor,
+.puppet-editor * {
+  box-sizing: border-box;
+}
+
+.puppet-editor button,
+.puppet-editor input {
+  font: inherit;
+}
+
+.puppet-editor button {
+  color: inherit;
+}
+
+.puppet-editor .toolbar {
+  grid-area: toolbar;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #27302d;
+  background: #111614;
+}
+
+.puppet-editor .brand,
+.puppet-editor .toolbar-actions,
+.puppet-editor .renderer-status {
+  display: flex;
+  align-items: center;
+}
+
+.puppet-editor .brand {
+  gap: 11px;
+}
+
+.puppet-editor .brand-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid #64e5c4;
+  border-radius: 10px;
+  color: #08110f;
+  background: #64e5c4;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.puppet-editor .brand div {
+  display: grid;
+  gap: 2px;
+}
+
+.puppet-editor .brand strong {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.puppet-editor .brand span:last-child {
+  color: #7f8d88;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.puppet-editor .toolbar-actions {
+  gap: 10px;
+}
+
+.puppet-editor .toolbar-button {
+  padding: 7px 10px;
+  border: 1px solid #35413d;
+  border-radius: 7px;
+  color: #b9c5c0;
+  background: #171e1b;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.puppet-editor .toolbar-button.primary {
+  border-color: #64e5c4;
+  color: #07110f;
+  background: #64e5c4;
+  font-weight: 700;
+}
+
+.puppet-editor .toolbar-button input {
+  position: fixed;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.puppet-editor .renderer-status {
+  gap: 8px;
+  margin-left: 4px;
+  color: #a7b3af;
+  font-size: 12px;
+}
+
+.puppet-editor .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #e5b55a;
+  box-shadow: 0 0 0 4px rgb(229 181 90 / 10%);
+}
+
+.puppet-editor .renderer-status[data-status='ready'] .status-dot {
+  background: #64e5c4;
+  box-shadow: 0 0 0 4px rgb(100 229 196 / 10%);
+}
+
+.puppet-editor .renderer-status[data-status='error'] .status-dot {
+  background: #ff7a76;
+  box-shadow: 0 0 0 4px rgb(255 122 118 / 10%);
+}
+
+.puppet-editor .panel {
+  min-height: 0;
+  padding: 16px 14px;
+  background: #101513;
+}
+
+.puppet-editor .layers-panel {
+  grid-area: layers;
+  border-right: 1px solid #27302d;
+}
+
+.puppet-editor .inspector-panel {
+  grid-area: inspector;
+  border-left: 1px solid #27302d;
+}
+
+.puppet-editor .panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  margin-bottom: 12px;
+}
+
+.puppet-editor .panel-heading h2 {
+  margin: 0;
+  color: #a7b3af;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.puppet-editor .panel-heading > span {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid #313b37;
+  border-radius: 6px;
+  color: #84918c;
+  font-size: 10px;
+}
+
+.puppet-editor .layer-item {
+  display: flex;
+  width: 100%;
+  gap: 11px;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid #313b37;
+  border-radius: 8px;
+  background: #121916;
+  color: #a7b3af;
+  cursor: pointer;
+  text-align: left;
+}
+
+.puppet-editor .layer-list {
+  display: grid;
+  gap: 8px;
+}
+
+.puppet-editor .layer-item[aria-pressed='true'] {
+  border-color: #3d5f56;
+  background: #17211e;
+  color: #f3f7f5;
+}
+
+.puppet-editor .layer-item:hover {
+  border-color: #4c615a;
+}
+
+.puppet-editor .layer-item:focus-visible {
+  outline: 2px solid #61e3c1;
+  outline-offset: 2px;
+}
+
+.puppet-editor .layer-thumbnail {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 1px solid #4c615a;
+  border-radius: 6px;
+  background:
+    linear-gradient(45deg, #1b2421 25%, transparent 25%),
+    linear-gradient(-45deg, #1b2421 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1b2421 75%),
+    linear-gradient(-45deg, transparent 75%, #1b2421 75%), #28332f;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+  background-size: 16px 16px;
+  overflow: hidden;
+  place-items: center;
+}
+
+.puppet-editor .layer-thumbnail img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.puppet-editor .layer-item > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.puppet-editor .layer-item strong {
+  font-size: 12px;
+}
+
+.puppet-editor .layer-item small,
+.puppet-editor .panel-note,
+.puppet-editor .notice {
+  color: #788681;
+  font-size: 10px;
+}
+
+.puppet-editor .panel-note,
+.puppet-editor .notice {
+  margin: 16px 8px;
+  line-height: 1.6;
+}
+
+.puppet-editor .viewport-panel {
+  grid-area: viewport;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: 68px minmax(0, 1fr);
+  background: #0d1210;
+}
+
+.puppet-editor .viewport-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #27302d;
+}
+
+.puppet-editor .viewport-heading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.puppet-editor .viewport-heading span,
+.puppet-editor .timeline-label span {
+  color: #74817d;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.puppet-editor .viewport-heading h1 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.puppet-editor .viewport-heading .zoom-label {
+  padding: 5px 8px;
+  border: 1px solid #303a36;
+  border-radius: 6px;
+  color: #9aa7a2;
+  letter-spacing: normal;
+}
+
+.puppet-editor .viewport {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background-color: #111715;
+  background-image: radial-gradient(#34413d 0.75px, transparent 0.75px);
+  background-size: 18px 18px;
+}
+
+.puppet-editor .mesh-editor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.puppet-editor .mesh-editor svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.puppet-editor .mesh-editor svg.add-tool {
+  cursor: crosshair;
+}
+
+.puppet-editor .mesh-editor polygon {
+  fill: rgb(100 229 196 / 4%);
+  stroke: rgb(100 229 196 / 58%);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.puppet-editor .mesh-editor circle {
+  fill: #101513;
+  stroke: #64e5c4;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+}
+
+.puppet-editor .mesh-editor circle:active {
+  cursor: grabbing;
+}
+
+.puppet-editor .mesh-editor circle.selected {
+  fill: #ffbd59;
+  stroke: #fff1d6;
+}
+
+.puppet-editor .mesh-tools {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid #35413d;
+  border-radius: 9px;
+  background: rgb(11 15 14 / 88%);
+  pointer-events: auto;
+}
+
+.puppet-editor .mesh-tools button {
+  padding: 6px 9px;
+  border: 1px solid #35413d;
+  border-radius: 6px;
+  color: #9eaaa5;
+  background: #171e1b;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.puppet-editor .mesh-tools button[aria-pressed='true'] {
+  border-color: #64e5c4;
+  color: #07110f;
+  background: #64e5c4;
+}
+
+.puppet-editor .mesh-tools button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.puppet-editor .player-canvas,
+.puppet-editor .canvas-host,
+.puppet-editor .canvas-host canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.puppet-editor .canvas-host canvas {
+  display: block;
+}
+
+.puppet-editor .viewport-message {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  margin: 0;
+  color: #7f8d88;
+  font-size: 12px;
+  transform: translate(-50%, -50%);
+}
+
+.puppet-editor .error-message {
+  color: #ff9b96;
+}
+
+.puppet-editor .property-list {
+  display: grid;
+  margin: 0;
+}
+
+.puppet-editor .property-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 2px;
+  border-bottom: 1px solid #222b28;
+  font-size: 11px;
+}
+
+.puppet-editor .property-list dt {
+  color: #75827e;
+}
+
+.puppet-editor .property-list dd {
+  margin: 0;
+  color: #d0d9d5;
+}
+
+.puppet-editor .timeline {
+  grid-area: timeline;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 110px;
+  align-items: center;
+  padding: 18px 22px;
+  border-top: 1px solid #27302d;
+  background: #111614;
+}
+
+.puppet-editor .timeline-label {
+  display: grid;
+  gap: 6px;
+}
+
+.puppet-editor .timeline-label strong {
+  font-size: 12px;
+}
+
+.puppet-editor .timeline-track {
+  position: relative;
+  height: 46px;
+}
+
+.puppet-editor .timeline-line {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: #34403c;
+}
+
+.puppet-editor .keyframe {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #121715;
+  background: #64e5c4;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.puppet-editor .keyframe-start {
+  left: 0;
+}
+
+.puppet-editor .keyframe-center {
+  left: 50%;
+}
+
+.puppet-editor .keyframe-end {
+  left: 100%;
+}
+
+.puppet-editor .playhead {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 62%;
+  width: 1px;
+  background: #ffbd59;
+}
+
+.puppet-editor .playhead::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffbd59;
+  content: '';
+  transform: translateX(-50%);
+}
+
+.puppet-editor .timeline-time {
+  justify-self: end;
+  color: #7f8d88;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 10px;
+}
+
+@media (max-width: 1080px) {
+  .puppet-editor {
+    grid-template-columns: 210px minmax(460px, 1fr) 230px;
+  }
+}
