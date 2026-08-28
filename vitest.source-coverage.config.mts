@@ -25,6 +25,7 @@ export default {
         'apps/coong/src/kata/resource/index.tsx',
         'apps/coong/src/use/focus-controller/KeyCap.tsx',
         'apps/coong/src/use/focus-controller/SolidWindow.tsx',
+        'packages/puppet/src/main.tsx',
       ],
       include: [
         'apps/*/src/**/*.{js,jsx,mjs,mts,ts,tsx}',
