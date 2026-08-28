@@ -52,7 +52,7 @@ describe('useSelectMenu', () => {
     const list = document.createElement('div')
     list.showPopover = vi.fn()
     list.hidePopover = vi.fn()
-    list.matches = vi.fn(() => false)
+    vi.spyOn(list, 'matches').mockReturnValue(false)
 
     vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
       bottom: 40,
@@ -101,7 +101,7 @@ describe('useSelectMenu', () => {
     const list = document.createElement('div')
     list.showPopover = vi.fn()
     list.hidePopover = vi.fn()
-    list.matches = vi.fn(() => false)
+    vi.spyOn(list, 'matches').mockReturnValue(false)
 
     vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
       bottom: 40,
@@ -151,14 +151,14 @@ describe('useSelectMenu', () => {
     const list = document.createElement('div')
     list.showPopover = vi.fn()
     list.hidePopover = vi.fn()
-    list.matches = vi.fn(() => true)
+    const matches = vi.spyOn(list, 'matches').mockReturnValue(true)
 
     menu?.registerPanel(list)
     menu?.onPanelToggle()
 
     expect(menu?.isOpen()).toBe(true)
 
-    list.matches = vi.fn(() => false)
+    matches.mockReturnValue(false)
     menu?.onPanelToggle()
 
     expect(menu?.isOpen()).toBe(false)
@@ -178,7 +178,9 @@ describe('useSelectMenu', () => {
     list.hidePopover = vi.fn(() => {
       isPopoverOpen = false
     })
-    list.matches = vi.fn((selector) => selector === ':popover-open' && isPopoverOpen)
+    vi.spyOn(list, 'matches').mockImplementation(
+      (selector) => selector === ':popover-open' && isPopoverOpen,
+    )
 
     vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
       bottom: 40,
@@ -222,7 +224,7 @@ describe('useSelectMenu', () => {
     const list = document.createElement('div')
     list.showPopover = vi.fn()
     list.hidePopover = vi.fn()
-    list.matches = vi.fn(() => false)
+    vi.spyOn(list, 'matches').mockReturnValue(false)
 
     vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
       bottom: 40,
@@ -263,7 +265,7 @@ describe('useSelectMenu', () => {
 
     list.showPopover = vi.fn()
     list.hidePopover = vi.fn()
-    list.matches = vi.fn(() => false)
+    vi.spyOn(list, 'matches').mockReturnValue(false)
     vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
       bottom: 40,
       height: 32,
@@ -294,7 +296,7 @@ describe('useSelectMenu', () => {
     const list = document.createElement('div')
     list.showPopover = vi.fn()
     list.hidePopover = vi.fn()
-    list.matches = vi.fn(() => true)
+    vi.spyOn(list, 'matches').mockReturnValue(true)
 
     menu?.registerPanel(list)
     menu?.registerItem({disabled: () => false, element: first})

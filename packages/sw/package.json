@@ -42,6 +42,7 @@
     "@babel/preset-env": "^7.29.3",
     "@rollup/plugin-babel": "^6.1.0",
     "@types/serviceworker": "^0.0.111",
+    "@typescript/typescript6": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
     "vite": "catalog:",
     "vite-plugin-dts": "catalog:",

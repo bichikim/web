@@ -2,9 +2,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "target": "es2015",
-    "baseUrl": ".",
     "paths": {
-      "src/*": ["src/*"]
+      "src/*": ["./src/*"]
     }
   },
   "extends": ["../../tsconfig.json"],
