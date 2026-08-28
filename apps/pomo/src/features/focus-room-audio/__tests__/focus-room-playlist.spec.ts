@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {loadPAlbums, loadPTracks} from '../focus-room-playlist'
+import {loadPAlbums, loadPTrackQueueSource, loadPTracks} from '../focus-room-playlist'
 
 const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},
@@ -57,6 +57,21 @@ describe('loadPTracks', () => {
       expect.objectContaining({cache: 'no-store', signal: undefined}),
     )
     return expect(result).resolves.toEqual([TRACKS[1], TRACKS[0]])
+  })
+
+  it('should expose the complete catalog when the default playlist is a subset', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({trackIds: ['two'], version: 1})),
+    )
+
+    return expect(loadPTrackQueueSource()).resolves.toEqual({
+      defaultTracks: [TRACKS[1]],
+      tracks: TRACKS,
+    })
   })
 
   it('should reject playlist IDs missing from the track catalog', () => {

@@ -5,10 +5,11 @@ import {
   appendUniqueTracks,
   createInitialPlaybackState,
   createShuffleQueue,
-  loadPTracks,
+  loadPTrackQueueSource,
   type PPlaybackState,
   type PTrack,
   readPPlayback,
+  readPPlaylist,
   type RepeatMode,
   resolvePlaybackRestore,
   resolveTrackEnd,
@@ -16,30 +17,20 @@ import {
   usePAudioVisualizer,
   usePlayerMediaSession,
   usePPlaybackPersistence,
+  writePPlaylist,
 } from '../../features/focus-room-audio'
-import type {PSceneStyle} from '../../features/focus-room-animation'
 import {MusicPlayerView} from '../MusicPlayerView'
+import {
+  isAbortError,
+  type PMusicPlayerContentProps,
+  type SelectRandomTrackOptions,
+  type SelectTrackOptions,
+} from './model'
+import {restorePPlayerState} from './restoration'
 
-interface PMusicPlayerContentProps {
-  readonly expanded?: boolean
-  readonly onExpandedChange?: (expanded: boolean) => void
-  readonly onPlayingChange?: (isPlaying: boolean) => void
-  readonly onTrackChange?: (track: PTrack | null) => void
-  readonly sceneStyle?: PSceneStyle
-  readonly tracks?: readonly PTrack[]
+const persistTrackQueue = (tracks: readonly PTrack[]) => {
+  writePPlaylist(tracks.map((track) => track.id)).catch(() => undefined)
 }
-
-interface SelectTrackOptions {
-  readonly index: number
-  readonly shouldResume?: boolean
-}
-
-interface SelectRandomTrackOptions {
-  readonly shouldResume?: boolean
-}
-
-const isAbortError = (error: unknown) =>
-  error instanceof DOMException && error.name === 'AbortError'
 
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Media Chrome's control tree is one semantic unit.
 export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
@@ -317,6 +308,7 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
 
     queueRevision += 1
     setLoadedTracks(nextTracks)
+    persistTrackQueue(nextTracks)
     shuffleQueue = createShuffleQueue({
       currentIndex: currentIndex(),
       trackCount: nextTracks.length,
@@ -366,6 +358,7 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
       setLoadedTracks(nextTracks)
       setCurrentIndex(resolution.nextCurrentIndex)
     })
+    persistTrackQueue(nextTracks)
     shuffleQueue = createShuffleQueue({
       currentIndex: resolution.nextCurrentIndex,
       trackCount: nextTracks.length,
@@ -406,6 +399,7 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
       setCurrentIndex(0)
       setIsPlaying(false)
     })
+    persistTrackQueue([])
     shuffleQueue = []
     shuffleHistory = []
     visualizer.stop()
@@ -499,9 +493,11 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
     const storedPlaybackRequest = readPPlayback()
 
     if (props.tracks === undefined) {
-      loadPTracks({signal: playlistRequest.signal})
+      const storedPlaylistRequest = readPPlaylist()
+
+      loadPTrackQueueSource({signal: playlistRequest.signal})
         // oxlint-disable-next-line solid/reactivity -- Completion must apply the user's latest shuffle choice.
-        .then((nextTracks) => {
+        .then((source) => {
           if (destroyed) {
             return
           }
@@ -509,7 +505,9 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
           initialPlaylistResolved = true
           const availableTracks = wasClearedBeforeInitialLoad
             ? []
-            : nextTracks.filter((track) => !removedTrackIdsBeforeInitialLoad.has(track.id))
+            : source.defaultTracks.filter(
+                (track) => !removedTrackIdsBeforeInitialLoad.has(track.id),
+              )
 
           if (queueRevision === restoreQueueRevision) {
             initializePlayback(availableTracks, null)
@@ -522,23 +520,24 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
               setLoadedTracks(mergedTracks)
               setCurrentIndex(activeIndex < 0 ? 0 : activeIndex)
             })
+            persistTrackQueue(mergedTracks)
             shuffleQueue = createShuffleQueue({
               currentIndex: activeIndex < 0 ? 0 : activeIndex,
               trackCount: mergedTracks.length,
             })
             shuffleHistory = []
           }
-          // oxlint-disable-next-line solid/reactivity -- Late storage must respect the latest playback revision.
-          storedPlaybackRequest.then((storedPlayback) => {
-            if (
+          restorePPlayerState({
+            canRestore: () =>
               !destroyed &&
               playbackRevision === restoreRevision &&
-              queueRevision === restoreQueueRevision &&
-              storedPlayback !== null
-            ) {
-              initializePlayback(availableTracks, storedPlayback)
-            }
-          })
+              queueRevision === restoreQueueRevision,
+            defaultTracks: availableTracks,
+            onRestore: initializePlayback,
+            playbackRequest: storedPlaybackRequest,
+            playlistRequest: storedPlaylistRequest,
+            tracks: source.tracks,
+          }).catch(handleAudioError)
         })
         .catch((error: unknown) => {
           handleAudioError(error)
