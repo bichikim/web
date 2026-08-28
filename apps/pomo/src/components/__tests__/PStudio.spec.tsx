@@ -20,7 +20,12 @@ import {type ModelDownloadRuntime, PModelDownloadProvider} from '../../features/
 import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather} from '../../features/weather'
-import {useDesktopMode} from '../../features/desktop-mode'
+import {
+  isDesktopBackgroundMode,
+  useDesktopMode,
+  useDesktopSafeAreaTop,
+  useDesktopSceneSettingsListener,
+} from '../../features/desktop-mode'
 import {PEntry} from '../p-studio/Entry'
 import {PSceneFallback} from '../p-studio/SceneFallback'
 import {PStudioScene} from '../p-studio/Scene'
@@ -49,7 +54,14 @@ vi.mock('../../features/focus-room-time', () => ({
 }))
 vi.mock('../../features/pomo-webmcp', () => ({usePSay: vi.fn()}))
 vi.mock('../../features/weather', () => ({useWeather: vi.fn()}))
-vi.mock('../../features/desktop-mode', () => ({useDesktopMode: vi.fn()}))
+vi.mock('../../features/desktop-mode', () => ({
+  isDesktopBackgroundMode: vi.fn(
+    (mode: string) => mode === 'desktop' || mode === 'interactiveDesktop',
+  ),
+  useDesktopMode: vi.fn(),
+  useDesktopSafeAreaTop: vi.fn(),
+  useDesktopSceneSettingsListener: vi.fn(),
+}))
 vi.mock('../p-studio/Entry', () => ({PEntry: vi.fn()}))
 vi.mock('../p-studio/SceneFallback', () => ({PSceneFallback: vi.fn()}))
 vi.mock('../p-studio/Scene', () => ({PStudioScene: vi.fn()}))
@@ -60,7 +72,7 @@ vi.mock('../PScreenSaver', () => ({PScreenSaver: vi.fn()}))
 vi.mock('../use-dialogue-scene-gaze', () => ({useDialogueSceneGaze: vi.fn()}))
 
 interface StudioOptions {
-  readonly desktopMode?: 'desktop' | 'normal' | 'widget'
+  readonly desktopMode?: 'desktop' | 'interactiveDesktop' | 'normal' | 'widget'
   readonly entrySession?: boolean
   readonly gyroscope?: boolean
   readonly isScreenSaverActive?: boolean
@@ -87,6 +99,7 @@ const renderStudio = () =>
 const configureStudio = (options: StudioOptions = {}) => {
   const [hasEntered, setHasEntered] = createSignal(false)
   const [activity, setActivity] = createSignal<'reading' | 'writing'>('reading')
+  const [desktopMode, setDesktopMode] = createSignal(options.desktopMode ?? 'normal')
   const [gaze, setGaze] = createSignal<'focused' | 'user'>('focused')
   const [timeMode, setTimeMode] = createSignal<'day' | 'auto'>('day')
   const [sceneStyle, setSceneStyle] = createSignal<'original' | 'scribble'>('original')
@@ -129,9 +142,10 @@ const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(useDesktopMode).mockReturnValue({
     error: () => null,
     isChanging: () => false,
-    mode: () => options.desktopMode ?? 'normal',
+    mode: desktopMode,
     onModeChange: vi.fn(),
   })
+  vi.mocked(useDesktopSafeAreaTop).mockReturnValue(() => 0)
   vi.mocked(useStudioScreenSaver).mockReturnValue({
     currentTrack: () => null,
     delay: () => 300,
@@ -158,6 +172,8 @@ const configureStudio = (options: StudioOptions = {}) => {
   )
   vi.mocked(readFocusRoomEntrySession).mockReturnValue(options.entrySession ?? false)
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(options.gyroscope ?? false)
+
+  return {setDesktopMode}
 }
 
 beforeEach(() => {
@@ -304,5 +320,44 @@ describe('PStudio', () => {
     expect(screen.getByRole('img')).toBeInTheDocument()
     expect(screen.queryByText('이벤트')).not.toBeInTheDocument()
     expect(SceneToolbar).not.toHaveBeenCalled()
+  })
+
+  it('should keep the studio controls on the interactive desktop background', () => {
+    configureStudio({desktopMode: 'interactiveDesktop', entrySession: true})
+
+    renderStudio()
+
+    expect(screen.getByText('이벤트')).toBeInTheDocument()
+    expect(SceneToolbar).toHaveBeenCalled()
+    expect(useDesktopSceneSettingsListener).toHaveBeenCalledOnce()
+  })
+
+  it('should expose the desktop safe area to controls without padding the scene', () => {
+    configureStudio({desktopMode: 'interactiveDesktop', entrySession: true})
+    vi.mocked(useDesktopSafeAreaTop).mockReturnValue(() => 24)
+
+    renderStudio()
+
+    const studio = screen.getByLabelText('Pomo')
+    expect(studio.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe('24px')
+    expect(screen.getByRole('img')).not.toHaveStyle({paddingTop: '24px'})
+  })
+
+  it('should suspend the screen saver only while the window is the desktop background', () => {
+    const {setDesktopMode} = configureStudio({entrySession: true, isScreenSaverActive: true})
+
+    renderStudio()
+
+    expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'true')
+
+    setDesktopMode('desktop')
+    expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'false')
+
+    setDesktopMode('interactiveDesktop')
+    expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'false')
+
+    setDesktopMode('normal')
+    expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'true')
+    expect(isDesktopBackgroundMode).toHaveBeenCalledWith('interactiveDesktop')
   })
 })

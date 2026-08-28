@@ -27,11 +27,11 @@
     "security": {
       "capabilities": ["desktop"],
       "csp": {
-        "connect-src": "'self' ipc: http://ipc.localhost https://www.pomofi.io https://pomofi.io blob:",
+        "connect-src": "'self' ipc: http://ipc.localhost https://www.pomofi.io https://pomofi.io https://storage.pomofi.io https://audio.pomofi.io blob:",
         "default-src": "'self'",
         "font-src": "'self' data:",
         "img-src": "'self' asset: http://asset.localhost blob: data: https:",
-        "media-src": "'self' blob: data: https://www.pomofi.io https://pomofi.io",
+        "media-src": "'self' blob: data: https://www.pomofi.io https://pomofi.io https://storage.pomofi.io https://audio.pomofi.io",
         "script-src": "'self' 'wasm-unsafe-eval'",
         "style-src": "'self' 'unsafe-inline'",
         "worker-src": "'self' blob:"

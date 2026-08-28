@@ -4,7 +4,11 @@ import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {listen} from '@tauri-apps/api/event'
-import {applyDesktopMode, finishDesktopModeTransition} from '../runtime'
+import {
+  applyDesktopMode,
+  finishDesktopModeTransition,
+  prepareDesktopModeTransition,
+} from '../runtime'
 import {useDesktopMode} from '../use-desktop-mode'
 
 const tauriMocks = vi.hoisted(() => ({listener: vi.fn(), unlisten: vi.fn()}))
@@ -18,6 +22,7 @@ vi.mock('@tauri-apps/api/event', () => ({
 vi.mock('../runtime', () => ({
   applyDesktopMode: vi.fn(),
   finishDesktopModeTransition: vi.fn(),
+  prepareDesktopModeTransition: vi.fn(),
 }))
 
 class TestBroadcastChannel {
@@ -48,6 +53,7 @@ beforeEach(() => {
   tauriMocks.unlisten.mockReset()
   vi.mocked(applyDesktopMode).mockReset().mockResolvedValue()
   vi.mocked(finishDesktopModeTransition).mockReset().mockResolvedValue()
+  vi.mocked(prepareDesktopModeTransition).mockReset().mockResolvedValue()
   vi.mocked(listen).mockClear()
   vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
   vi.stubEnv('POMO_IS_DESKTOP', '1')
@@ -120,6 +126,7 @@ it('should publish successful transitions and suppress duplicate concurrent requ
   expect(view.result.mode()).toBe('widget')
   expect(localStorage.getItem('pomo:desktop-mode:v1')).toBe('widget')
   expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenCalledWith('widget')
+  expect(prepareDesktopModeTransition).toHaveBeenCalledWith('widget')
   expect(finishDesktopModeTransition).toHaveBeenCalledWith('widget')
   await view.result.onModeChange('widget')
   expect(applyDesktopMode).toHaveBeenCalledOnce()
@@ -185,30 +192,32 @@ it('should not republish a rollback mode already received from another window', 
   expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenCalledWith('desktop')
 })
 
-it('should release the controller before a surface owner publishes a non-desktop mode', async () => {
+it('should close content before a surface owner publishes and close settings afterward', async () => {
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
   await view.result.onModeChange('desktop')
   vi.mocked(applyDesktopMode).mockClear()
   vi.mocked(finishDesktopModeTransition).mockClear()
+  vi.mocked(prepareDesktopModeTransition).mockClear()
 
-  let finishController: (() => void) | undefined
-  vi.mocked(finishDesktopModeTransition).mockImplementationOnce(
+  let finishContent: (() => void) | undefined
+  vi.mocked(prepareDesktopModeTransition).mockImplementationOnce(
     () =>
       new Promise<void>((resolve) => {
-        finishController = resolve
+        finishContent = resolve
       }),
   )
 
   const transition = view.result.onModeChange('normal')
-  await vi.waitFor(() => expect(finishDesktopModeTransition).toHaveBeenCalledWith('normal'))
+  await vi.waitFor(() => expect(prepareDesktopModeTransition).toHaveBeenCalledWith('normal'))
   expect(view.result.mode()).toBe('desktop')
   expect(localStorage.getItem('pomo:desktop-mode:v1')).toBe('desktop')
 
-  finishController?.()
+  finishContent?.()
   await transition
 
   expect(view.result.mode()).toBe('normal')
   expect(localStorage.getItem('pomo:desktop-mode:v1')).toBe('normal')
+  expect(finishDesktopModeTransition).toHaveBeenCalledWith('normal')
 })
 
 it('should expose native event-listener registration failures', async () => {

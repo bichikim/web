@@ -56,6 +56,21 @@ describe('corsMiddleware', () => {
     expect(response.headers.get('Vary')).toBe('Origin')
   })
 
+  it.each(['/api/feeds/today-in-history/rss.xml', '/api/weather/feeds/seoul.json'])(
+    'should allow the desktop development origin on %s',
+    async (path) => {
+      useProductionEnvironment()
+      const origin = 'http://127.0.0.1:1420'
+      const response = await applyResponseMiddleware(
+        new Request(`https://www.pomofi.io${path}`, {headers: {Origin: origin}}),
+      )
+
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+      expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true')
+      expect(response.headers.get('Vary')).toBe('Origin')
+    },
+  )
+
   it('should allow the request self origin', async () => {
     useProductionEnvironment()
     const origin = 'https://preview.example'
