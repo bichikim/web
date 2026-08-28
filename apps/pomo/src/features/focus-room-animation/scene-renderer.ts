@@ -455,6 +455,7 @@ export class PSceneRenderer {
         this.#mouth.getLayerState(
           this.#state?.viseme ?? 'rest',
           this.#parallax.prefersReducedMotion,
+          layerScene,
         ),
       )
     } catch (error: unknown) {

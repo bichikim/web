@@ -445,7 +445,7 @@ describe('PSceneRenderer initialization', () => {
 
     expect(acquireTextureGroup).toHaveBeenCalledWith(['/depth.webp'])
     expect(layerScenes[0].initialize).toHaveBeenCalledWith({animationEnabled: true})
-    expect(mouths[0].getLayerState).toHaveBeenCalledWith('open', false)
+    expect(mouths[0].getLayerState).toHaveBeenCalledWith('open', false, layerScenes[0])
     expect(attachment.addChild).toHaveBeenCalledWith(eyesInstances[0].container)
     expect(parallaxInstances[0].setInputMode).toHaveBeenCalledWith('gyroscope')
     expect(steamInstances[0].ensure).toHaveBeenLastCalledWith('scribble')
@@ -578,6 +578,6 @@ describe('PSceneRenderer initialization', () => {
       createState({layerScene: layerDefinition(), viseme: undefined as never}),
     )
 
-    expect(mouths[0].getLayerState).toHaveBeenCalledWith('rest', false)
+    expect(mouths[0].getLayerState).toHaveBeenCalledWith('rest', false, layerScenes[0])
   })
 })

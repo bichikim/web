@@ -51,6 +51,7 @@ export const createStaticLayerScene = (
 /** Renders an ordered layer definition and owns its Pixi textures and animation ticker. */
 export class PixiLayerScene {
   readonly container = new Container()
+  readonly #channels: ReadonlySet<string>
   readonly #definition: PixiLayerSceneDefinition
   readonly #onRender: () => void
   readonly #random: () => number
@@ -62,6 +63,9 @@ export class PixiLayerScene {
   #textures: readonly TextureLease[] = []
 
   constructor(definition: PixiLayerSceneDefinition, options: PixiLayerSceneOptions) {
+    this.#channels = new Set(
+      definition.layers.flatMap((layer) => (layer.channel === undefined ? [] : [layer.channel])),
+    )
     this.#definition = definition
     this.#onRender = options.onRender
     this.#random = options.random ?? Math.random
@@ -231,6 +235,10 @@ export class PixiLayerScene {
 
   getAttachment(name: string) {
     return this.#layers.find((layer) => layer.definition.attachmentId === name)?.container ?? null
+  }
+
+  hasChannel(channel: string) {
+    return this.#channels.has(channel)
   }
 
   destroy() {
