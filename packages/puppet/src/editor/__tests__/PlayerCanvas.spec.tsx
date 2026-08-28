@@ -67,4 +67,35 @@ describe('PlayerCanvas', () => {
     expect(mocks.createPlayer).toHaveBeenCalledTimes(1)
     expect(view.container.querySelector('canvas')).toBe(canvas)
   })
+
+  test('should discard a pending player when the next document is invalid', async () => {
+    const initialDocument = createDemoDocument()
+    const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
+    const onStatusChange = vi.fn()
+    const pendingCreatedPlayer: Player = {...player, destroy: vi.fn()}
+    let resolvePlayer: ((player: Player) => void) | undefined
+    const pendingPlayer = new Promise<Player>((resolve) => {
+      resolvePlayer = resolve
+    })
+
+    mocks.createPlayer.mockReturnValueOnce(pendingPlayer)
+
+    render(() => <PlayerCanvas document={document()} onStatusChange={onStatusChange} />)
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+
+    setDocument({
+      ...initialDocument,
+      parts: initialDocument.parts.map((part, index) =>
+        index === 0 ? {...part, mesh: {...part.mesh, vertices: []}} : part,
+      ),
+    })
+    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('error'))
+
+    resolvePlayer?.(pendingCreatedPlayer)
+    await pendingPlayer
+    await Promise.resolve()
+
+    expect(pendingCreatedPlayer.destroy).toHaveBeenCalledOnce()
+    expect(onStatusChange).toHaveBeenLastCalledWith('error')
+  })
 })

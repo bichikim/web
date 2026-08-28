@@ -70,4 +70,18 @@ describe('validateMesh', () => {
       expect(result.issues).toContain('intersecting-edges')
     }
   })
+
+  it('should report a triangle contained inside another triangle', () => {
+    const result = validateMesh({
+      indices: [0, 1, 2, 3, 4, 5],
+      uvs: [0, 0, 1, 0, 0, 1, 0.2, 0.2, 0.3, 0.2, 0.2, 0.3],
+      vertices: [0, 0, 10, 0, 0, 10, 2, 2, 3, 2, 2, 3],
+    })
+
+    expect(result.valid).toBe(false)
+
+    if (!result.valid) {
+      expect(result.issues).toContain('intersecting-triangles')
+    }
+  })
 })

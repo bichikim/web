@@ -1,4 +1,4 @@
-import {createEffect, createSignal, Show, untrack} from 'solid-js'
+import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
 import {createDemoDocument, parseDocument, type PuppetDocument, serializeDocument} from '../player'
 import {importPng, type ImportPngErrorCode} from './import-png'
@@ -82,21 +82,42 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   )
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [notice, setNotice] = createSignal<string | null>(null)
+  let importGeneration = 0
+
+  onCleanup(() => {
+    importGeneration += 1
+  })
 
   createEffect(() => {
     props.onDocumentChange?.(sourceDocument())
   })
 
   const handleImport = (file: File | undefined) => {
+    if (file === undefined) {
+      return
+    }
+
+    importGeneration += 1
+    const activeGeneration = importGeneration
     importDocument({
       file,
-      onFailure: setNotice,
-      onSuccess(document, fileName) {
-        setSourceDocument(document)
-        setActivePartId(document.parts[0]?.id ?? null)
-        setNotice(`${fileName}을 불러왔습니다.`)
+      onFailure(message) {
+        if (activeGeneration === importGeneration) {
+          setNotice(message)
+        }
       },
-    }).catch(() => setNotice('파일을 읽지 못했습니다.'))
+      onSuccess(document, fileName) {
+        if (activeGeneration === importGeneration) {
+          setSourceDocument(document)
+          setActivePartId(document.parts[0]?.id ?? null)
+          setNotice(`${fileName}을 불러왔습니다.`)
+        }
+      },
+    }).catch(() => {
+      if (activeGeneration === importGeneration) {
+        setNotice('파일을 읽지 못했습니다.')
+      }
+    })
   }
 
   const handlePngImport = (file: File | undefined) => {
@@ -104,8 +125,14 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       return
     }
 
+    importGeneration += 1
+    const activeGeneration = importGeneration
     importPng(file)
       .then((result) => {
+        if (activeGeneration !== importGeneration) {
+          return
+        }
+
         if (!result.ok) {
           setNotice(getPngErrorMessage(result.error.code))
           return
@@ -115,7 +142,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         setActivePartId(result.document.parts[0]?.id ?? null)
         setNotice(`${file.name}에서 알파 기반 메시를 생성했습니다.`)
       })
-      .catch(() => setNotice('PNG를 불러오는 중 예상하지 못한 오류가 발생했습니다.'))
+      .catch(() => {
+        if (activeGeneration === importGeneration) {
+          setNotice('PNG를 불러오는 중 예상하지 못한 오류가 발생했습니다.')
+        }
+      })
   }
 
   return (

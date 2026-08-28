@@ -8,13 +8,15 @@ import {createPlayer} from '../create-player'
 const mocks = vi.hoisted(() => ({
   Application: vi.fn(),
   Container: vi.fn(),
+  MeshSimple: vi.fn(),
+  TextureFrom: vi.fn(),
 }))
 
 vi.mock('pixi.js', () => ({
   Application: mocks.Application,
   Container: mocks.Container,
-  MeshSimple: vi.fn(),
-  Texture: {from: vi.fn()},
+  MeshSimple: mocks.MeshSimple,
+  Texture: {from: mocks.TextureFrom},
 }))
 
 const puppetDocument: PuppetDocument = {
@@ -27,6 +29,7 @@ const puppetDocument: PuppetDocument = {
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('createPlayer', () => {
@@ -92,5 +95,108 @@ describe('createPlayer', () => {
     player.destroy()
     player.destroy()
     expect(application.destroy).toHaveBeenCalledOnce()
+  })
+
+  test('should hold the final keyframe value until the motion loops', async () => {
+    let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
+    const application = {
+      destroy: vi.fn(),
+      init: vi.fn().mockResolvedValue(undefined),
+      render: vi.fn(),
+      screen: {height: 100, width: 200},
+      stage: {addChild: vi.fn()},
+      start: vi.fn(),
+      stop: vi.fn(),
+      ticker: {
+        add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
+          tick = handler
+        }),
+      },
+    }
+    const root = {
+      addChild: vi.fn(),
+      position: {set: vi.fn()},
+      scale: {set: vi.fn()},
+    }
+    const runtimeMesh = {
+      geometry: {
+        indices: new Uint32Array(),
+        positions: new Float32Array(),
+        uvs: new Float32Array(),
+      },
+      vertices: new Float32Array(),
+    }
+    const texture = {destroy: vi.fn()}
+    const motionDocument: PuppetDocument = {
+      ...puppetDocument,
+      motions: [
+        {
+          duration: 10,
+          id: 'hold-final-frame',
+          tracks: [
+            {
+              axis: 'x',
+              keyframes: [
+                {time: 0, value: 0},
+                {time: 5, value: 50},
+              ],
+              partId: 'part',
+              vertexIndex: 0,
+            },
+          ],
+        },
+      ],
+      parts: [
+        {
+          id: 'part',
+          mesh: {
+            boundaryLoops: [[0, 1, 2]],
+            indices: [0, 1, 2],
+            uvs: [0, 0, 1, 0, 0, 1],
+            vertices: [0, 0, 100, 0, 0, 100],
+          },
+          texture: {height: 100, src: 'part.png', width: 100},
+        },
+      ],
+    }
+
+    vi.stubGlobal(
+      'Image',
+      class {
+        decoding = ''
+        src = ''
+        decode = vi.fn().mockResolvedValue(undefined)
+      },
+    )
+    mocks.Application.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, application)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.Container.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, root)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.MeshSimple.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, runtimeMesh)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.TextureFrom.mockReturnValue(texture)
+
+    await createPlayer({canvas: document.createElement('canvas'), document: motionDocument})
+    tick?.({deltaMS: 6_000})
+    const createdMesh = mocks.MeshSimple.mock.results[0]?.value as
+      | {readonly vertices: Float32Array}
+      | undefined
+
+    expect(createdMesh?.vertices[0]).toBe(50)
   })
 })

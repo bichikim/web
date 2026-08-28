@@ -31,13 +31,17 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       return
     }
 
+    const currentPlayer = untrack(player)
+
     if (!parsedDocument.ok) {
+      generation += 1
+      currentPlayer?.destroy()
+      setPlayer(null)
+      hostElement.replaceChildren()
       setErrorMessage('편집 데이터를 플레이어 문서로 변환하지 못했습니다.')
       onStatusChange?.('error')
       return
     }
-
-    const currentPlayer = untrack(player)
 
     if (currentPlayer?.updateDocument(parsedDocument.document) === true) {
       setErrorMessage(null)

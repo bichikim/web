@@ -316,6 +316,9 @@ importers:
       oxlint-plugin-eslint:
         specifier: ^1.77.0
         version: 1.77.0
+      playwright:
+        specifier: 1.59.1
+        version: 1.59.1
       react:
         specifier: 19.2.5
         version: 19.2.5
@@ -1148,6 +1151,31 @@ importers:
       vite-plugin-solid:
         specifier: 'catalog:'
         version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.14)(vite@8.1.5(@types/node@25.6.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+
+  packages/vite-plugin-key-similarity:
+    dependencies:
+      '@huggingface/transformers':
+        specifier: 4.2.0
+        version: 4.2.0
+      '@typescript/typescript6':
+        specifier: 'catalog:'
+        version: 6.0.2
+      tinyglobby:
+        specifier: ^0.2.17
+        version: 0.2.17
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.2
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.13.3
+      '@winter-love/vite-lib-config':
+        specifier: workspace:*
+        version: link:../vite-lib-config
+      vite:
+        specifier: 'catalog:'
+        version: 8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
 
   packages/vite-plugin-monorepo-alias:
     dependencies:

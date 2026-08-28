@@ -17,6 +17,7 @@ export type MeshIssueCode =
   | 'duplicate-triangle'
   | 'duplicate-vertex'
   | 'intersecting-edges'
+  | 'intersecting-triangles'
   | 'invalid-boundary'
   | 'invalid-coordinate-count'
   | 'invalid-index'
@@ -101,6 +102,56 @@ const hasIntersectingEdges = (mesh: PuppetMesh, edges: ReadonlyArray<IndexedEdge
           secondStart !== undefined &&
           secondEnd !== undefined &&
           doSegmentsCross(firstStart, firstEnd, secondStart, secondEnd)
+        ) {
+          return true
+        }
+      }
+    }
+  }
+
+  return false
+}
+
+const isVertexStrictlyInsideTriangle = (
+  mesh: PuppetMesh,
+  triangle: readonly [number, number, number],
+  vertexIndex: number,
+) => {
+  const point = getMeshVertex(mesh, vertexIndex)
+  const first = getMeshVertex(mesh, triangle[0])
+  const second = getMeshVertex(mesh, triangle[1])
+  const third = getMeshVertex(mesh, triangle[2])
+
+  if (point === undefined || first === undefined || second === undefined || third === undefined) {
+    return false
+  }
+
+  const areas = [
+    getSignedArea(first, second, point),
+    getSignedArea(second, third, point),
+    getSignedArea(third, first, point),
+  ]
+
+  return (
+    !areas.some(isDegenerateArea) &&
+    (areas.every((area) => area > 0) || areas.every((area) => area < 0))
+  )
+}
+
+const hasIntersectingTriangles = (mesh: PuppetMesh) => {
+  const triangles = getMeshTriangles(mesh)
+
+  for (let firstIndex = 0; firstIndex < triangles.length; firstIndex += 1) {
+    const first = triangles[firstIndex]
+
+    if (first !== undefined) {
+      for (let secondIndex = firstIndex + 1; secondIndex < triangles.length; secondIndex += 1) {
+        const second = triangles[secondIndex]
+
+        if (
+          second !== undefined &&
+          (first.some((vertexIndex) => isVertexStrictlyInsideTriangle(mesh, second, vertexIndex)) ||
+            second.some((vertexIndex) => isVertexStrictlyInsideTriangle(mesh, first, vertexIndex)))
         ) {
           return true
         }
@@ -228,6 +279,10 @@ export const validateMesh = (mesh: PuppetMesh): ValidateMeshResult => {
 
     if (hasIntersectingEdges(mesh, edges)) {
       issues.add('intersecting-edges')
+    }
+
+    if (hasIntersectingTriangles(mesh)) {
+      issues.add('intersecting-triangles')
     }
   }
 

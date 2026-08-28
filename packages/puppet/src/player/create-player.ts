@@ -41,6 +41,10 @@ const loadTexture = async (source: string) => {
 const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number) => {
   const nextIndex = keyframes.findIndex((keyframe) => keyframe.time >= time)
 
+  if (nextIndex === -1) {
+    return keyframes.at(-1)?.value ?? 0
+  }
+
   if (nextIndex <= 0) {
     return keyframes[0]?.value ?? 0
   }
