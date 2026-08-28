@@ -1,27 +1,19 @@
 import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
 
-import {getEdgeKey, getMeshEdgeRecords, getMeshTriangles, getMeshVertex} from '../mesh'
-import type {PuppetDocument, PuppetMesh, PuppetPart} from '../player/document'
+import type {PuppetDocument, PuppetPart} from '../player/document'
+import {addPartVertex, deletePartVertex, movePartVertex, type VertexPoint} from './edit-document'
 import {
-  addPartVertex,
-  deletePartVertex,
-  type EditDocumentErrorCode,
-  movePartVertex,
-  type VertexPoint,
-} from './edit-document'
+  getIndexedVertices,
+  getMeshViewTriangles,
+  type IndexedVertex,
+  type MeshTriangle,
+  snapPointToEdge,
+} from './internal/mesh-view'
+import {getEditErrorMessage} from './internal/notices'
+import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
-import {getEditorViewBox} from './internal/viewport'
 
-export interface IndexedVertex extends VertexPoint {
-  readonly index: number
-}
-
-export interface MeshTriangle {
-  readonly first: VertexPoint
-  readonly index: number
-  readonly second: VertexPoint
-  readonly third: VertexPoint
-}
+export type {IndexedVertex, MeshTriangle} from './internal/mesh-view'
 
 export type MeshEditTool = 'add' | 'select'
 
@@ -58,128 +50,20 @@ interface MeshEditorState {
 }
 
 const COORDINATES_PER_VERTEX = 2
-const INDICES_PER_TRIANGLE = 3
 const VERTEX_RADIUS_DIVISOR = 150
 const MINIMUM_VERTEX_RADIUS = 3
 const EDGE_SNAP_RADIUS_MULTIPLIER = 2
-
-const getVertex = (mesh: PuppetMesh, vertexIndex: number): VertexPoint | undefined => {
-  const x = mesh.vertices[vertexIndex * COORDINATES_PER_VERTEX]
-  const y = mesh.vertices[vertexIndex * COORDINATES_PER_VERTEX + 1]
-
-  return x === undefined || y === undefined ? undefined : {x, y}
-}
-
-const projectPointToSegment = (
-  point: VertexPoint,
-  first: VertexPoint,
-  second: VertexPoint,
-): VertexPoint => {
-  const horizontalDistance = second.x - first.x
-  const verticalDistance = second.y - first.y
-  const lengthSquared = horizontalDistance ** 2 + verticalDistance ** 2
-
-  if (lengthSquared === 0) {
-    return first
-  }
-
-  const progress = Math.max(
-    0,
-    Math.min(
-      1,
-      ((point.x - first.x) * horizontalDistance + (point.y - first.y) * verticalDistance) /
-        lengthSquared,
-    ),
-  )
-
-  return {
-    x: first.x + horizontalDistance * progress,
-    y: first.y + verticalDistance * progress,
-  }
-}
-
-const snapPointToEdge = (
-  mesh: PuppetMesh,
-  point: VertexPoint,
-  maximumDistance: number,
-): VertexPoint => {
-  const visitedEdges = new Set<string>()
-  let closestPoint = point
-  let closestDistanceSquared = maximumDistance ** 2
-
-  for (const record of getMeshEdgeRecords(mesh)) {
-    const {edge} = record
-    const key = getEdgeKey(edge.firstIndex, edge.secondIndex)
-    const first = getMeshVertex(mesh, edge.firstIndex)
-    const second = getMeshVertex(mesh, edge.secondIndex)
-
-    if (!visitedEdges.has(key) && first !== undefined && second !== undefined) {
-      const projectedPoint = projectPointToSegment(point, first, second)
-      const horizontalDistance = point.x - projectedPoint.x
-      const verticalDistance = point.y - projectedPoint.y
-      const distanceSquared = horizontalDistance ** 2 + verticalDistance ** 2
-
-      if (distanceSquared <= closestDistanceSquared) {
-        closestPoint = projectedPoint
-        closestDistanceSquared = distanceSquared
-      }
-    }
-
-    visitedEdges.add(key)
-  }
-
-  return closestPoint
-}
-
-const getEditErrorMessage = (code: EditDocumentErrorCode) => {
-  switch (code) {
-    case 'duplicate-vertex':
-      return '같은 위치에 이미 정점이 있습니다.'
-    case 'edge-blocked':
-      return '현재 메시 구조에서는 두 정점을 연결할 수 없습니다.'
-    case 'edge-exists':
-      return '두 정점은 이미 간선으로 연결돼 있습니다.'
-    case 'invalid-edge':
-      return '선택한 간선을 편집할 수 없습니다.'
-    case 'invalid-mesh':
-      return '작업 결과가 올바른 메시를 만들지 못해 변경하지 않았습니다.'
-    case 'invalid-position':
-      return '정점 위치가 올바르지 않습니다.'
-    case 'invalid-vertex':
-      return '선택한 정점을 편집할 수 없습니다.'
-    case 'inverted-triangle':
-      return '삼각형이 뒤집히거나 사라지는 위치로는 이동할 수 없습니다.'
-    case 'minimum-vertex-count':
-      return '메시는 최소 4개의 정점이 필요합니다.'
-    case 'missing-part':
-      return '편집할 이미지 파트를 찾지 못했습니다.'
-    case 'outside-mesh':
-      return '그려진 메시 영역 안에서만 정점을 추가할 수 있습니다.'
-    case 'would-remove-mesh':
-      return '마지막 삼각형을 제거하는 정점은 삭제할 수 없습니다.'
-    default: {
-      const exhaustiveCode: never = code
-      return exhaustiveCode
-    }
-  }
-}
 
 const getPointerPoint = (
   event: PointerEvent | MouseEvent,
   svgElement: SVGSVGElement,
   document: PuppetDocument,
-): VertexPoint => {
-  const bounds = svgElement.getBoundingClientRect()
-  const viewBox = getEditorViewBox(document)
-  const scale = Math.min(bounds.width / viewBox.width, bounds.height / viewBox.height)
-  const horizontalOffset = (bounds.width - viewBox.width * scale) / 2
-  const verticalOffset = (bounds.height - viewBox.height * scale) / 2
-
-  return {
-    x: (event.clientX - bounds.left - horizontalOffset) / scale + viewBox.x,
-    y: (event.clientY - bounds.top - verticalOffset) / scale + viewBox.y,
-  }
-}
+): VertexPoint =>
+  getEditorPoint({
+    bounds: svgElement.getBoundingClientRect(),
+    clientPoint: {x: event.clientX, y: event.clientY},
+    viewBox: getEditorViewBox(document),
+  })
 
 const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   const [tool, setTool] = createSignal<MeshEditTool>('select')
@@ -207,14 +91,11 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
       return []
     }
 
-    const vertexCount = activePart.mesh.vertices.length / COORDINATES_PER_VERTEX
-
-    return Array.from({length: vertexCount}, (_, index) => ({
-      index,
-      ...(activeVertex === index && activeDraft !== null
-        ? activeDraft
-        : (getVertex(activePart.mesh, index) ?? {x: 0, y: 0})),
-    }))
+    return getIndexedVertices({
+      draftPoint: activeDraft,
+      mesh: activePart.mesh,
+      selectedVertex: activeVertex,
+    })
   })
   const triangles = createMemo<ReadonlyArray<MeshTriangle>>(() => {
     const activePart = part()
@@ -224,22 +105,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
       return []
     }
 
-    const result: MeshTriangle[] = []
-
-    for (let index = 0; index < activePart.mesh.indices.length; index += INDICES_PER_TRIANGLE) {
-      const firstIndex = activePart.mesh.indices[index]
-      const secondIndex = activePart.mesh.indices[index + 1]
-      const thirdIndex = activePart.mesh.indices[index + 2]
-      const first = firstIndex === undefined ? undefined : activeVertices[firstIndex]
-      const second = secondIndex === undefined ? undefined : activeVertices[secondIndex]
-      const third = thirdIndex === undefined ? undefined : activeVertices[thirdIndex]
-
-      if (first !== undefined && second !== undefined && third !== undefined) {
-        result.push({first, index: index / INDICES_PER_TRIANGLE, second, third})
-      }
-    }
-
-    return result
+    return getMeshViewTriangles({mesh: activePart.mesh, vertices: activeVertices})
   })
 
   createEffect(() => {
@@ -288,11 +154,11 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       event.currentTarget as SVGSVGElement,
       props.document,
     )
-    const point = snapPointToEdge(
-      activePart.mesh,
-      pointerPoint,
-      state.vertexRadius() * EDGE_SNAP_RADIUS_MULTIPLIER,
-    )
+    const point = snapPointToEdge({
+      maximumDistance: state.vertexRadius() * EDGE_SNAP_RADIUS_MULTIPLIER,
+      mesh: activePart.mesh,
+      point: pointerPoint,
+    })
     const result = addPartVertex({...point, document: props.document, partId: activePart.id})
 
     if (!result.ok) {

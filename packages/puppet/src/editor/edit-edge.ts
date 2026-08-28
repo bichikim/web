@@ -13,6 +13,7 @@ import {
 } from '../mesh'
 import type {PuppetDocument, PuppetMesh, PuppetPart} from '../player/document'
 import {type EditDocumentResult, type EditPartEdgeOptions, movePartVertex} from './edit-document'
+import {replaceTriangleVertex} from './internal/triangles'
 
 interface TriangleRecord {
   readonly index: number
@@ -344,11 +345,8 @@ export const collapsePartEdge = (options: EditPartEdgeOptions): EditDocumentResu
   }
 
   const remappedTriangles = getMeshTriangles(movedPart.mesh)
-    .map(
-      (triangle) =>
-        triangle.map((index) =>
-          index === options.secondVertexIndex ? options.firstVertexIndex : index,
-        ) as unknown as MeshTriangleIndices,
+    .map((triangle) =>
+      replaceTriangleVertex(triangle, options.secondVertexIndex, options.firstVertexIndex),
     )
     .filter((triangle) => new Set(triangle).size === INDICES_PER_TRIANGLE)
   const uniqueTriangles = new Map<string, MeshTriangleIndices>()
