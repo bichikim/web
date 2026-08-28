@@ -216,6 +216,22 @@ describe('createStaticLayerScene', () => {
 })
 
 describe('PixiLayerScene initialization', () => {
+  it('should report only channels declared by the scene definition', () => {
+    const layerScene = new PixiLayerScene(
+      createDefinition({
+        layers: [
+          {channel: 'mouth-open', id: 'mouth', source: '/mouth.webp'},
+          {id: 'background', source: '/background.webp'},
+        ],
+      }),
+      {onRender: vi.fn()},
+    )
+
+    expect(layerScene.hasChannel('mouth-open')).toBe(true)
+    expect(layerScene.hasChannel('mouth-transition-small-open')).toBe(false)
+    layerScene.destroy()
+  })
+
   it('should initialize layers, masks, filters, attachments, and channel state', async () => {
     const motion = translation({channel: 'motion'})
     const stateFilter = {destroy: vi.fn(), setProgress: vi.fn()}

@@ -2,6 +2,7 @@ import type {PViseme} from '../lip-sync'
 import type {PixiLayerSceneState} from './layer-scene-definition'
 import type {PixiLayerScene} from './layer-scene'
 import {createPMouthTransitionController} from './mouth-transition-controller'
+import {FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS} from './scene-catalog-channels'
 import {createFocusRoomLayerState} from './scene-layer-state'
 
 export interface PSceneMouthController {
@@ -9,12 +10,13 @@ export interface PSceneMouthController {
   readonly getLayerState: (
     activeViseme: PViseme,
     prefersReducedMotion: boolean,
+    layerScene: LayerSceneTarget,
   ) => PixiLayerSceneState
   readonly setReducedMotion: (activeViseme: PViseme, prefersReducedMotion: boolean) => void
   readonly update: (from: PViseme, to: PViseme, prefersReducedMotion: boolean) => void
 }
 
-type LayerSceneTarget = Pick<PixiLayerScene, 'update'>
+type LayerSceneTarget = Pick<PixiLayerScene, 'hasChannel' | 'update'>
 type GetLayerScenes = () => readonly [LayerSceneTarget | null, LayerSceneTarget | null]
 
 /** Coordinates co-articulated mouth state across current and incoming layer scenes. */
@@ -24,14 +26,16 @@ export const createPSceneMouthController = (
   let activeViseme: PViseme = 'rest'
   let prefersReducedMotion = false
 
-  const getLayerState = (viseme: PViseme, reducedMotion: boolean) =>
-    createFocusRoomLayerState(viseme, reducedMotion, transitions.current ?? undefined)
+  const getLayerState = (viseme: PViseme, reducedMotion: boolean, layerScene: LayerSceneTarget) =>
+    createFocusRoomLayerState(viseme, reducedMotion, transitions.current ?? undefined, (stage) =>
+      layerScene.hasChannel(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage]),
+    )
 
   const apply = () => {
-    const layerState = getLayerState(activeViseme, prefersReducedMotion)
-
     for (const layerScene of getLayerScenes()) {
-      layerScene?.update(layerState)
+      if (layerScene !== null) {
+        layerScene.update(getLayerState(activeViseme, prefersReducedMotion, layerScene))
+      }
     }
   }
 
