@@ -130,6 +130,13 @@ describe('playlist-storage', () => {
     expect(await readPPlaylist()).toEqual(['web'])
   })
 
+  it('should return no playlist when both storage reads are unavailable', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockRejectedValue(new Error('Native storage is unavailable'))
+
+    expect(await readPPlaylist()).toBeNull()
+  })
+
   it('should not overwrite a playlist changed while native storage is being read', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     let completeRead: ((value: string | null) => void) | undefined
@@ -148,6 +155,26 @@ describe('playlist-storage', () => {
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
       trackIds: ['latest'],
     })
+  })
+
+  it('should ignore an older native read after a browser write failure', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new DOMException('Storage is unavailable', 'SecurityError')
+    })
+    const playlistRequest = readPPlaylist()
+
+    await writePPlaylist(['latest'])
+    completeRead?.(JSON.stringify({savedAt: 10, trackIds: ['stale'], version: 1}))
+
+    expect(await playlistRequest).toBeNull()
   })
 
   it('should persist the playlist to native storage in Apps in Toss', async () => {

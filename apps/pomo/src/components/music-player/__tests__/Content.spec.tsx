@@ -364,6 +364,22 @@ describe('PMusicPlayerContent control paths', () => {
     expect(emptyAudio.pause).toHaveBeenCalled()
   })
 
+  it('should ignore playlist storage write failures', async () => {
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
+      () =>
+        new Promise(() => {
+          // Intentionally pending to isolate the queue edit.
+        }),
+    )
+    featureMocks.writePPlaylist.mockRejectedValueOnce(new Error('Storage is unavailable'))
+    render(() => <PMusicPlayerContent />)
+
+    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
+    await Promise.resolve()
+
+    expect(featureMocks.writePPlaylist).toHaveBeenCalledWith([ADDED_TRACK.id])
+  })
+
   it('should clear before initial loading and merge a concurrently added active track', async () => {
     let resolveClearedTracks: ((tracks: readonly PTrack[]) => void) | undefined
     featureMocks.loadPTrackQueueSource.mockImplementationOnce(
