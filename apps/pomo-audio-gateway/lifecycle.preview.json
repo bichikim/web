@@ -1,0 +1,12 @@
+{
+  "rules": [
+    {
+      "id": "abort-incomplete-pr-preview-uploads",
+      "enabled": true,
+      "conditions": {"prefix": "previews/"},
+      "abortMultipartUploadsTransition": {
+        "condition": {"type": "Age", "maxAge": 86400}
+      }
+    }
+  ]
+}

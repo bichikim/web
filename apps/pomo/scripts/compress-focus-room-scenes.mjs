@@ -2,6 +2,8 @@ import {createRequire} from 'node:module'
 import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 
+import {writeParallaxDepthWebp} from './focus-room/depth-parallax-assets.mjs'
+
 const commandArguments = process.argv.slice(2)
 const unsupportedArguments = commandArguments.filter((argument) => argument !== '--depth-only')
 
@@ -407,11 +409,12 @@ const createDepthCompressionPlan = async () => {
   return {
     jobs: names.map(
       (name) => () =>
-        writeAtomicWebp({
-          options: {lossless: true},
+        writeParallaxDepthWebp({
           outputPath: path.join(runtimeDepthDirectory, getRuntimeDepthName(name)),
           sourcePath: path.join(sourceDepthDirectory, name),
-          validate: assertExactRenderedPixels,
+          temporaryPath: createTemporaryPath(
+            path.join(runtimeDepthDirectory, getRuntimeDepthName(name)),
+          ),
         }),
     ),
     names,
@@ -429,7 +432,7 @@ const compressDepthAssets = async () => {
   })
 
   console.log(
-    `Compressed ${depthPlan.names.length} depth maps and pruned ${prunedAssetCount} stale depth assets.`,
+    `Prepared ${depthPlan.names.length} parallax depth maps and pruned ${prunedAssetCount} stale depth assets.`,
   )
 }
 

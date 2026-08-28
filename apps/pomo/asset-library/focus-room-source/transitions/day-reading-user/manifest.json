@@ -22,5 +22,5 @@
     "narrow-round"
   ],
   "runtimeScenes": ["day-reading-user", "day-typing-user", "day-writing-user"],
-  "usage": "generated-full contains ChatGPT full-scene edits; lower-face-crops contains unblurred rectangular PNGs for user mask refinement; runtime WebP assets are lossless conversions."
+  "usage": "generated-full contains the retained full-scene edits; runtime WebP assets are lossless conversions. Extracted frames, review copies, and intermediate lower-face crops were removed after approval."
 }

@@ -86,16 +86,18 @@ impl TryFrom<ControlSurfaceOptions> for ValidatedControlSurface {
 
     fn try_from(options: ControlSurfaceOptions) -> Result<Self> {
         let label = validate_label(options.label)?;
-        let path = options.path.trim().trim_start_matches('/');
+        let path = options.path.trim();
 
         if path.is_empty()
             || path.contains("://")
+            || path.contains('\\')
             || PathBuf::from(path)
                 .components()
                 .any(|component| matches!(component, std::path::Component::ParentDir))
         {
             return Err(Error::InvalidPath);
         }
+        let path = PathBuf::from(format!("/{}", path.trim_start_matches('/')));
 
         let width = options.width.unwrap_or(DEFAULT_CONTROL_WIDTH);
         let height = options.height.unwrap_or(DEFAULT_CONTROL_HEIGHT);
@@ -113,7 +115,7 @@ impl TryFrom<ControlSurfaceOptions> for ValidatedControlSurface {
         Ok(Self {
             height,
             label,
-            path: PathBuf::from(path),
+            path,
             position,
             width,
         })
@@ -164,18 +166,33 @@ mod tests {
 
         assert_eq!(surface.width, 420.0);
         assert_eq!(surface.height, 240.0);
-        assert_eq!(surface.path, std::path::PathBuf::from("desktop/controls"));
+        assert_eq!(surface.path, std::path::PathBuf::from("/desktop/controls"));
         assert_eq!(surface.position, None);
     }
 
     #[test]
     fn should_reject_external_and_parent_paths() {
-        for path in ["https://example.com", "desktop/../admin", ""] {
+        for path in [
+            "https://example.com",
+            "desktop/../admin",
+            r"desktop\admin",
+            "",
+        ] {
             let mut value = options();
             value.path = path.to_owned();
 
             assert!(ValidatedControlSurface::try_from(value).is_err());
         }
+    }
+
+    #[test]
+    fn should_resolve_control_surfaces_from_the_app_root() {
+        let mut value = options();
+        value.path = "desktop/controls".to_owned();
+
+        let surface = ValidatedControlSurface::try_from(value).expect("valid options");
+
+        assert_eq!(surface.path, std::path::PathBuf::from("/desktop/controls"));
     }
 
     #[test]

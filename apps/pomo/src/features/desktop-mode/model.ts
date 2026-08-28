@@ -1,11 +1,13 @@
 export const DESKTOP_MODE_STORAGE_KEY = 'pomo:desktop-mode:v1'
 export const DESKTOP_CLEAN_EXIT_STORAGE_KEY = 'pomo:desktop-clean-exit:v1'
 
-export type DesktopMode = 'desktop' | 'normal' | 'widget'
-export type DesktopBackgroundInteraction = 'interactive' | 'passThrough'
+export type DesktopMode = 'desktop' | 'interactiveDesktop' | 'normal' | 'widget'
 
 export const isDesktopMode = (value: unknown): value is DesktopMode =>
-  value === 'normal' || value === 'widget' || value === 'desktop'
+  value === 'normal' || value === 'widget' || value === 'desktop' || value === 'interactiveDesktop'
+
+export const isDesktopBackgroundMode = (mode: DesktopMode): boolean =>
+  mode === 'desktop' || mode === 'interactiveDesktop'
 
 export const readDesktopMode = (): DesktopMode => {
   try {

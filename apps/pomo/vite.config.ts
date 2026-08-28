@@ -77,7 +77,13 @@ const localizedStaticRoutes = createLocalizedStaticRoutes({
 const appsInTossStaticRoutes = [
   ...new Set([...appsInTossBaseStaticRoutes, ...localizedStaticRoutes]),
 ]
-const desktopStaticRoutes = [...sharedStaticRoutes, ...localizedStaticRoutes, '/desktop/controls']
+const desktopStaticRoutes = [
+  ...sharedStaticRoutes,
+  ...localizedStaticRoutes,
+  '/desktop/player',
+  '/desktop/pomodoro',
+  '/desktop/settings',
+]
 const prerenderSecurityRules = Object.fromEntries(
   (isStaticBuild ? [...sharedStaticRoutes, ...localizedStaticRoutes] : sharedStaticRoutes).map(
     (route) => [route, {headers: STATIC_SECURITY_HEADERS}],
@@ -175,6 +181,7 @@ const createConfig = ({command}: ConfigEnv): UserConfig => ({
   },
   nitro: {
     prerender: {
+      failOnError: isStaticBuild,
       routes:
         command === 'build'
           ? isAppsInTossBuild

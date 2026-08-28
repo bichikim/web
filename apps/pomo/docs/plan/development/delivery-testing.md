@@ -38,7 +38,7 @@ Vercel에서는 System Environment Variables 자동 노출을 활성화하고 `V
 `VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL`이 나타내는 HTTPS Origin도 허용한다. Vite
 개발 서버에서는 현재 요청의 self Origin을 추가로 허용한다.
 
-Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹과 로컬 개발 출처와 함께 위 네 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다.
+Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹, 로컬 개발, 데스크톱 출처와 함께 위 네 앱인토스 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다. 정책 원본은 [`r2/cors.json`](../../../r2/cors.json)이며 `pnpm exec wrangler r2 bucket cors set pomofi-audio --file apps/pomo/r2/cors.json`으로 적용한다.
 
 앱인토스 `.ait` 번들은 압축 해제 기준 100MB 이하로 유지한다. Supertonic 3 INT8 모델은 번들 용량 계산에서 제외되도록 원격 자산으로 분리한다.
 
@@ -49,11 +49,15 @@ Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도�
 3. 앱인토스 번들을 업로드하고 실제 토스 WebView에서 서버 연결을 확인한다.
 4. 문제가 발생하면 SSR 서버와 앱인토스 빌드를 호환되는 리비전으로 되돌린다.
 
-브라우저 SSR은 Vercel Git 연동을 사용해 모든 PR에 Preview Deployment를 자동 생성한다. GitHub Actions는 미리보기 배포를 별도로 실행하지 않는다.
+브라우저 SSR의 Vercel Git 자동 배포는 끈다. Pomo 또는 공유 패키지가 변경된 PR과 `dev` push는
+`.github/workflows/pomo-audio-gateway-deploy.yml`에서 Preview Deployment를 하나만 생성한다. PR은
+`pr-{번호}` Gateway 별칭과 `previews/pr-{번호}` R2 경로를 사용하고, 닫히면 해당 R2 경로를
+삭제한다. `dev`는 별도 Gateway와 R2 버킷을 사용한다.
 
 Vercel–Neon 연동은 Preview Deployment마다 Neon 기본 브랜치에서 분기한 DB와 연결 문자열을
 제공한다. Preview 빌드는 해당 연결 문자열로 Drizzle migration을 먼저 적용하고, 성공한 경우에만
-앱을 빌드한다. 각 Preview는 해당 리비전의 스키마를 독립적으로 검증한다.
+앱을 빌드한다. Actions의 Vercel CLI 배포에는 PR 또는 `dev`의 Git ref와 commit SHA를 전달해
+branch-specific Neon 환경을 선택한다. 각 Preview는 해당 리비전의 스키마를 독립적으로 검증한다.
 같은 저장소에서 `dev`를 대상으로 연 PR이 병합 여부와 관계없이 닫히면 GitHub Actions가
 해당 Preview DB 브랜치를 삭제한다. Git 브랜치가 삭제된 경우는 Neon 연동의 자동 정리가 처리한다.
 GitHub Actions에는 가능하면 프로젝트 범위로 제한한 `NEON_API_KEY` secret과
@@ -64,8 +68,9 @@ GitHub Actions에는 가능하면 프로젝트 범위로 제한한 `NEON_API_KEY
 `DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로
 배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로
 승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복
-배포를 막기 위해 `main-pomo`의 Vercel Git 자동 배포는 끄고, 다른 브랜치의 Preview 자동 배포는
-유지한다. GitHub에는 `VERCEL_TOKEN` secret을 설정한다.
+배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는
+`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면
+workflow가 배포 직전에 기록한 Gateway version으로 되돌린다.
 
 자동 운영 배포에는 기존 앱과 호환되는 expand migration만 넣는다. `DROP`, `RENAME`,
 `ALTER COLUMN`, `SET NOT NULL`이나 기존 데이터를 변경하는 `UPDATE`, `DELETE`, `TRUNCATE`가

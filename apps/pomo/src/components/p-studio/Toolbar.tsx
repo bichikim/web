@@ -55,6 +55,7 @@ interface SceneToolbarProps {
   readonly desktopModeError?: string | null
   readonly isDesktopModeChanging?: boolean
   readonly onDesktopModeChange?: (mode: DesktopMode) => Promise<void>
+  readonly layout?: 'studio' | 'surface'
 }
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
@@ -70,7 +71,11 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
   }
 
   return (
-    <div class={CLASSES.sceneToolbar}>
+    <div
+      class={cx(
+        props.layout === 'surface' ? 'flex w-full flex-col items-end gap-2' : CLASSES.sceneToolbar,
+      )}
+    >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
           <PIconButton
