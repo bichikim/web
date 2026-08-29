@@ -1,6 +1,6 @@
 # `@winter-love/vite-plugin-key-similarity`
 
-[English](README.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+[English](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.md) · [한국어](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ko.md) · [日本語](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ja.md) · [简体中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-CN.md) · [繁體中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-TW.md)
 
 A Vite plugin that finds semantically similar keys by comparing static strings from source code with a local embedding model. It works with any imported function that accepts string keys, including translation messages, analytics events, and permission names.
 

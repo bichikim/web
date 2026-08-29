@@ -1,6 +1,6 @@
 # `@winter-love/vite-plugin-key-similarity`
 
-[English](README.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+[English](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.md) · [한국어](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ko.md) · [日本語](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ja.md) · [简体中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-CN.md) · [繁體中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-TW.md)
 
 ソースコード内の静的文字列をローカル埋め込みモデルで比較し、意味が似ているキーを検出する Vite プラグインです。翻訳文、分析イベント、権限名など、文字列キーを受け取る任意のインポート関数に適用できます。
 

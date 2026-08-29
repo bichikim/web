@@ -1,6 +1,6 @@
 # `@winter-love/vite-plugin-key-similarity`
 
-[English](README.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+[English](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.md) · [한국어](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ko.md) · [日本語](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ja.md) · [简体中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-CN.md) · [繁體中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-TW.md)
 
 这是一个 Vite 插件，它使用本地嵌入模型比较源代码中的静态字符串，以找出语义相似的 key。翻译文案、分析事件、权限名称等任何以字符串作为 key 的导入函数都可以使用此插件。
 
