@@ -296,8 +296,12 @@ export const AdminMusic = () => {
             selectedAlbumId={model.selectedAlbumId()}
             trackCount={model.getTrackCount}
           />
-          <Show when={model.selectedAlbum()}>
-            {(album) => <AlbumWorkspace album={album()} model={model} />}
+          <Show keyed when={model.selectedAlbumId()}>
+            {(selectedAlbumId) => (
+              <Show when={model.catalog().albums.find((album) => album.id === selectedAlbumId)}>
+                {(album) => <AlbumWorkspace album={album()} model={model} />}
+              </Show>
+            )}
           </Show>
         </section>
       </Show>

@@ -60,9 +60,6 @@ export const useAdminMusic = () => {
     setMessage,
   })
   const trackManagement = useTrackManagement({refreshCatalog, setMessage})
-  const selectedAlbum = createMemo(
-    () => catalog().albums.find((album) => album.id === selectedAlbumId()) ?? null,
-  )
   const albumStats = createMemo(() => {
     const {albums} = catalog()
 
@@ -146,7 +143,6 @@ export const useAdminMusic = () => {
     isLoading,
     isSavingOffer,
     message,
-    selectedAlbum,
     selectedAlbumId,
     setIsAlbumEditorOpen,
     setSelectedAlbumId,

@@ -223,6 +223,52 @@ describe('AdminMusic', () => {
     ).toBeTruthy()
   })
 
+  it('should discard a status review when selecting another album', async () => {
+    const catalog = {
+      ...catalogWithAlbum,
+      albums: [
+        {
+          ...catalogWithAlbum.albums[0],
+          id: 'draft-album',
+          translations: [
+            {
+              albumId: 'draft-album',
+              description: '초안 설명',
+              locale: 'ko',
+              title: '초안 앨범',
+            },
+          ],
+        },
+        {
+          ...catalogWithAlbum.albums[0],
+          id: 'published-album',
+          status: 'published',
+          translations: [
+            {
+              albumId: 'published-album',
+              description: '공개 설명',
+              locale: 'ko',
+              title: '공개 앨범',
+            },
+          ],
+        },
+      ],
+    } as const
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalog))
+    vi.stubGlobal('fetch', fetcher)
+    render(() => <AdminMusic />)
+
+    fireEvent.click(await screen.findByRole('button', {name: '공개 설정'}))
+    expect(screen.getByRole('heading', {name: '이 앨범을 공개할까요?'})).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', {name: /공개 앨범/u}))
+
+    expect(screen.getByRole('tab', {name: '수록곡 0'}).getAttribute('aria-selected')).toBe('true')
+    expect(screen.queryByLabelText('앨범 상태 변경 확인')).toBeNull()
+    expect(screen.queryByRole('button', {name: '보관하기'})).toBeNull()
+    expect(fetcher).toHaveBeenCalledOnce()
+  })
+
   it('should warn about the public catalog and R2 before deleting a published track', async () => {
     const publishedCatalog = {
       ...catalogWithAlbum,
