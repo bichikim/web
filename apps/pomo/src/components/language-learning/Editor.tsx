@@ -35,6 +35,7 @@ import {PModelDownloadConsent} from '../PModelDownloadConsent'
 import {getPomoHomeHref} from '../pomo-route'
 import {revokeLanguageLearningAudioUrls} from './candidate'
 import {
+  getLanguageLearningGenerationStatus,
   isLanguageLearningEditorBusy,
   type LanguageLearningEditorPhase,
   type LanguageLearningEditorWorkflow,
@@ -82,7 +83,16 @@ export default function LanguageLearningEditor() {
   }
 
   const writer = useDialogueWriter({modelId: TEXT_MODEL_ID, outputLanguage: language})
-  const isBusy = () => isLanguageLearningEditorBusy(phase(), regeneratingCandidateId())
+  const isBusy = () =>
+    isLanguageLearningEditorBusy(phase(), regeneratingCandidateId()) ||
+    modelDownload.state().status === 'loading'
+  const generationStatus = createMemo(() =>
+    getLanguageLearningGenerationStatus({
+      downloadState: modelDownload.state(),
+      message: message(),
+      phase: phase(),
+    }),
+  )
   const savedWords = createMemo(() =>
     getUnmemorizedLanguageLearningWordValues({language: language(), words: learningWords()}),
   )
@@ -544,10 +554,10 @@ export default function LanguageLearningEditor() {
           />
 
           <PGenerationStatus
-            kind={phase() === 'voice' ? 'voice' : 'draft'}
-            message={message()}
-            progress={null}
-            progressLabel={message()}
+            kind={generationStatus().kind}
+            message={generationStatus().message}
+            progress={generationStatus().progress}
+            progressLabel={generationStatus().progressLabel}
           />
           <LanguageLearningGenerateButton disabled={isBusy()} onPress={handleGenerate} />
         </section>
