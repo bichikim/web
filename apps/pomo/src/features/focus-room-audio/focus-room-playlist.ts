@@ -40,6 +40,23 @@ export interface PResolvedAlbum extends PAlbum {
   readonly tracks: readonly PTrack[]
 }
 
+export interface PAlbumLibrary {
+  readonly bundledAlbums: readonly PResolvedAlbum[]
+  readonly publishedCatalog: PPublishedAlbumCatalog
+}
+
+export interface PPublishedAlbumCatalogFailed {
+  readonly error: Error
+  readonly status: 'failed'
+}
+
+export interface PPublishedAlbumCatalogReady {
+  readonly albums: readonly PResolvedAlbum[]
+  readonly status: 'ready'
+}
+
+export type PPublishedAlbumCatalog = PPublishedAlbumCatalogFailed | PPublishedAlbumCatalogReady
+
 interface PAlbumCollection {
   readonly albums: readonly PAlbum[]
   readonly version: number
@@ -89,13 +106,21 @@ export interface PTrackQueueSource {
   readonly tracks: readonly PTrack[]
 }
 
-export interface LoadPAlbumsOptions {
+export interface LoadBundledPAlbumsOptions {
   readonly albumsUrl?: string
   readonly locale?: Locale
-  readonly publishedAlbumsUrl?: string
   readonly signal?: AbortSignal
   readonly tracksUrl?: string
 }
+
+export interface LoadPublishedPAlbumsOptions {
+  readonly locale?: Locale
+  readonly publishedAlbumsUrl?: string
+  readonly signal?: AbortSignal
+}
+
+export interface LoadPAlbumsOptions
+  extends LoadBundledPAlbumsOptions, LoadPublishedPAlbumsOptions {}
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 
@@ -294,49 +319,68 @@ const getCoverIcon = (fallback: PublishedAlbum['coverFallback']): string => {
   return fallback === 'music' ? 'i-tabler-music' : 'i-tabler-vinyl'
 }
 
-const loadPublishedAlbums = async (
-  overrideUrl: string | undefined,
-  locale: Locale | undefined,
-  signal?: AbortSignal,
-): Promise<ReadonlyArray<PResolvedAlbum>> => {
+/** Loads and validates the public focus-room album catalog without discarding failure state. */
+export const loadPublishedPAlbums = async (
+  options: LoadPublishedPAlbumsOptions = {},
+): Promise<PPublishedAlbumCatalog> => {
   try {
-    const albumsUrl = overrideUrl ?? 'music/albums'
+    const albumsUrl = options.publishedAlbumsUrl ?? 'music/albums'
     const localizedAlbumsUrl =
-      locale === undefined
+      options.locale === undefined
         ? albumsUrl
-        : `${albumsUrl}${albumsUrl.includes('?') ? '&' : '?'}locale=${encodeURIComponent(locale)}`
+        : `${albumsUrl}${albumsUrl.includes('?') ? '&' : '?'}locale=${encodeURIComponent(options.locale)}`
     const response =
-      overrideUrl === undefined
-        ? await apiFetch(localizedAlbumsUrl, createRequestInit(signal))
-        : await httpFetch(localizedAlbumsUrl, createRequestInit(signal))
+      options.publishedAlbumsUrl === undefined
+        ? await apiFetch(localizedAlbumsUrl, createRequestInit(options.signal))
+        : await httpFetch(localizedAlbumsUrl, createRequestInit(options.signal))
 
-    const collection: unknown = response.ok ? await response.json() : undefined
-
-    if (!isPublishedAlbumCollection(collection)) {
-      return []
+    if (!response.ok) {
+      throw new Error(`Published focus-room albums request failed: ${response.status}`)
     }
 
-    return collection.albums.map((album) => ({
-      coverImageUrl: album.coverImageUrl ?? undefined,
-      description: album.description,
-      icon: getCoverIcon(album.coverFallback),
-      id: album.id,
-      sale:
-        album.sale.state === 'preparing'
-          ? {state: 'preparing', statusLabel: m.album_sale_preparing({}, {locale})}
-          : {
-              priceLabel: m.album_sale_price_pending({}, {locale}),
-              state: 'configured',
-              statusLabel: m.album_sale_connected({}, {locale}),
-            },
-      title: album.title,
-      trackCount: album.trackCount,
-      trackIds: [],
-      trackListings: album.tracks,
-      tracks: [],
-    }))
-  } catch {
-    return []
+    const collection: unknown = await response.json()
+
+    if (!isPublishedAlbumCollection(collection)) {
+      throw new TypeError('Published focus-room albums have an invalid format')
+    }
+
+    return {
+      albums: collection.albums.map((album) => ({
+        coverImageUrl: album.coverImageUrl ?? undefined,
+        description: album.description,
+        icon: getCoverIcon(album.coverFallback),
+        id: album.id,
+        sale:
+          album.sale.state === 'preparing'
+            ? {
+                state: 'preparing',
+                statusLabel: m.album_sale_preparing({}, {locale: options.locale}),
+              }
+            : {
+                priceLabel: m.album_sale_price_pending({}, {locale: options.locale}),
+                state: 'configured',
+                statusLabel: m.album_sale_connected({}, {locale: options.locale}),
+              },
+        title: album.title,
+        trackCount: album.trackCount,
+        trackIds: [],
+        trackListings: album.tracks,
+        tracks: [],
+      })),
+      status: 'ready',
+    }
+  } catch (error: unknown) {
+    if (options.signal?.aborted === true) {
+      throw error
+    }
+
+    return {
+      error:
+        error instanceof Error
+          ? error
+          : new Error('Published focus-room albums request failed', {cause: error}),
+      status: 'failed',
+    }
   }
 }
 
@@ -389,8 +433,8 @@ const fetchAudioJson = (
     : httpFetch(overrideUrl, createRequestInit(signal))
 
 /** Loads and validates the bundled focus-room albums and their tracks. */
-export const loadPAlbums = async (
-  options: LoadPAlbumsOptions = {},
+export const loadBundledPAlbums = async (
+  options: LoadBundledPAlbumsOptions = {},
 ): Promise<readonly PResolvedAlbum[]> => {
   const [tracksResponse, albumsResponse] = await Promise.all([
     fetchAudioJson('tracks.json', options.tracksUrl, options.signal),
@@ -422,13 +466,15 @@ export const loadPAlbums = async (
     ...localizeBundledAlbum(album, options.locale),
     tracks: resolveAlbumTracks(album, trackCollection.tracks),
   }))
-  const publishedAlbums = await loadPublishedAlbums(
-    options.publishedAlbumsUrl,
-    options.locale,
-    options.signal,
-  )
+  return bundledAlbums
+}
 
-  return [...bundledAlbums, ...publishedAlbums]
+/** Loads the bundled and public focus-room album catalogs with independent public status. */
+export const loadPAlbums = async (options: LoadPAlbumsOptions = {}): Promise<PAlbumLibrary> => {
+  const bundledAlbums = await loadBundledPAlbums(options)
+  const publishedCatalog = await loadPublishedPAlbums(options)
+
+  return {bundledAlbums, publishedCatalog}
 }
 
 /** Loads and validates the complete track catalog and bundled default playlist. */

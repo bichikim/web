@@ -1,23 +1,27 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createResource, createSignal, type JSX} from 'solid-js'
+import {createSignal, type JSX} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import type {PResolvedAlbum, PTrack, PTrackPreviewRequest} from '../../../features/focus-room-audio'
+import type {
+  PPublishedAlbumCatalog,
+  PResolvedAlbum,
+  PTrack,
+  PTrackPreviewRequest,
+} from '../../../features/focus-room-audio'
 
-const audioMocks = vi.hoisted(() => ({loadPAlbums: vi.fn(), useTrackPreview: vi.fn()}))
+const audioMocks = vi.hoisted(() => ({
+  loadBundledPAlbums: vi.fn(),
+  loadPublishedPAlbums: vi.fn(),
+  useTrackPreview: vi.fn(),
+}))
 const componentMocks = vi.hoisted(() => ({
   albumCard: vi.fn(),
   button: vi.fn(),
 }))
 const reporterMocks = vi.hoisted(() => ({reportClientError: vi.fn()}))
 
-vi.mock('solid-js', async () => {
-  const actual = await vi.importActual<typeof import('solid-js')>('solid-js')
-
-  return {...actual, createResource: vi.fn(actual.createResource)}
-})
 vi.mock('../../../features/focus-room-audio', () => audioMocks)
 vi.mock('../../../features/client-error-reporter', () => reporterMocks)
 vi.mock('../../PButton', () => ({PButton: componentMocks.button}))
@@ -27,6 +31,7 @@ import PAlbumLibraryContent from '../Content'
 
 interface ButtonProps {
   readonly children: JSX.Element
+  readonly disabled?: boolean
   readonly onPress: () => unknown
 }
 
@@ -82,6 +87,11 @@ let previewSetAudio: (element: HTMLAudioElement) => void
 let previewToggle: (request: PTrackPreviewRequest) => Promise<void>
 
 beforeEach(() => {
+  audioMocks.loadBundledPAlbums.mockReset().mockResolvedValue([])
+  audioMocks.loadPublishedPAlbums.mockReset().mockResolvedValue({
+    albums: [],
+    status: 'ready',
+  })
   previewError = vi.fn(() => null)
   previewHandleEnded = vi.fn()
   previewHandleError = vi.fn()
@@ -100,7 +110,9 @@ beforeEach(() => {
     }
   })
   componentMocks.button.mockImplementation((props: ButtonProps) => (
-    <button onClick={() => void props.onPress()}>{props.children}</button>
+    <button disabled={props.disabled} onClick={() => void props.onPress()}>
+      {props.children}
+    </button>
   ))
   componentMocks.albumCard.mockImplementation((props: AlbumCardProps) => (
     <article data-testid={`album-${props.album.id}`}>
@@ -128,7 +140,7 @@ describe('PAlbumLibraryContent', () => {
       createAlbum('included', [TRACK_ONE]),
       createAlbum('partial', [TRACK_ONE, TRACK_TWO]),
     ]
-    audioMocks.loadPAlbums.mockResolvedValue(albums)
+    audioMocks.loadBundledPAlbums.mockResolvedValue(albums)
     previewError = vi.fn(() => '미리듣기 오류')
     const [tracks, setTracks] = createSignal<readonly PTrack[]>([TRACK_ONE])
     const onAddTracks = vi.fn((nextTracks: readonly PTrack[]) => setTracks(nextTracks))
@@ -186,9 +198,8 @@ describe('PAlbumLibraryContent', () => {
   })
 
   it('should support optional preview callbacks', async () => {
-    audioMocks.loadPAlbums.mockResolvedValue([])
     const firstView = render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
-    await waitFor(() => expect(audioMocks.loadPAlbums).toHaveBeenCalled())
+    await waitFor(() => expect(audioMocks.loadBundledPAlbums).toHaveBeenCalled())
 
     previewOptions.onEnd()
     previewOptions.onStart(vi.fn())
@@ -199,8 +210,10 @@ describe('PAlbumLibraryContent', () => {
 
   it('should report a loading failure and refetch when retry is pressed', async () => {
     const loadError = new Error('album load failed')
-    audioMocks.loadPAlbums
+    const retryError = new Error('album retry failed')
+    audioMocks.loadBundledPAlbums
       .mockRejectedValueOnce(loadError)
+      .mockRejectedValueOnce(retryError)
       .mockResolvedValueOnce([createAlbum('recovered', [TRACK_ONE])])
 
     render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
@@ -213,22 +226,103 @@ describe('PAlbumLibraryContent', () => {
     const retryProps = componentMocks.button.mock.lastCall?.[0] as ButtonProps
     await retryProps.onPress()
 
-    expect(audioMocks.loadPAlbums).toHaveBeenCalledTimes(2)
+    expect(reporterMocks.reportClientError).toHaveBeenCalledWith(retryError, {
+      feature: 'album-library',
+      source: 'error-boundary',
+    })
+    const recoveredRetryProps = componentMocks.button.mock.lastCall?.[0] as ButtonProps
+    await recoveredRetryProps.onPress()
+
+    expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledTimes(3)
+    expect(await screen.findByTestId('album-recovered')).toBeTruthy()
   })
 
-  it('should tolerate a resource that becomes empty between the guard and list read', async () => {
-    const album = createAlbum('transient', [TRACK_ONE])
-    let reads = 0
-    const resource = () => {
-      reads += 1
-      return reads === 1 ? [album] : null
-    }
-    vi.mocked(createResource).mockReturnValueOnce([resource, {refetch: vi.fn()}] as never)
-    previewSetAudio = undefined as unknown as (element: HTMLAudioElement) => void
+  it('should preserve bundled albums and retry only the failed published catalog', async () => {
+    const catalogError = new Error('published catalog failed')
+    const bundledAlbum = createAlbum('bundled', [TRACK_ONE])
+    const publishedAlbum = createAlbum('published', [])
+    audioMocks.loadBundledPAlbums.mockResolvedValue([bundledAlbum])
+    audioMocks.loadPublishedPAlbums
+      .mockResolvedValueOnce({error: catalogError, status: 'failed'})
+      .mockResolvedValueOnce({albums: [publishedAlbum], status: 'ready'})
 
     render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
-    await waitFor(() => expect(reads).toBeGreaterThanOrEqual(2))
-    expect(screen.queryByTestId('album-transient')).toBeNull()
+    expect(await screen.findByTestId('album-bundled')).toBeTruthy()
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      '공개 앨범을 불러오지 못했어요. 기본 앨범은 계속 사용할 수 있어요.',
+    )
+    expect(reporterMocks.reportClientError).toHaveBeenCalledWith(catalogError, {
+      feature: 'album-library',
+      source: 'direct',
+    })
+
+    screen.getByRole('button', {name: '다시 시도'}).click()
+
+    expect(await screen.findByTestId('album-published')).toBeTruthy()
+    expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledOnce()
+    expect(audioMocks.loadPublishedPAlbums).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('should ignore a duplicate catalog retry while recovery is pending', async () => {
+    const catalogError = new Error('published catalog failed')
+    const catalogRequest = Promise.withResolvers<PPublishedAlbumCatalog>()
+    audioMocks.loadPublishedPAlbums
+      .mockResolvedValueOnce({error: catalogError, status: 'failed'})
+      .mockReturnValueOnce(catalogRequest.promise)
+
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
+
+    await screen.findByRole('alert')
+    const retryProps = componentMocks.button.mock.lastCall?.[0] as ButtonProps
+    const firstRetry = retryProps.onPress() as Promise<void>
+    await retryProps.onPress()
+    catalogRequest.resolve({albums: [], status: 'ready'})
+    await firstRetry
+
+    expect(audioMocks.loadPublishedPAlbums).toHaveBeenCalledTimes(2)
+  })
+
+  it('should recover through the full boundary when a catalog retry rejects unexpectedly', async () => {
+    const catalogError = new Error('published catalog failed')
+    const retryError = new Error('published catalog retry crashed')
+    const bundledAlbum = createAlbum('bundled', [TRACK_ONE])
+    const publishedAlbum = createAlbum('published', [])
+    audioMocks.loadBundledPAlbums.mockResolvedValue([bundledAlbum])
+    audioMocks.loadPublishedPAlbums
+      .mockResolvedValueOnce({error: catalogError, status: 'failed'})
+      .mockRejectedValueOnce(retryError)
+      .mockResolvedValueOnce({albums: [publishedAlbum], status: 'ready'})
+
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
+
+    await screen.findByRole('alert')
+    screen.getByRole('button', {name: '다시 시도'}).click()
+    await screen.findByText('앨범을 불러오지 못했어요')
+    expect(reporterMocks.reportClientError).toHaveBeenCalledWith(retryError, {
+      feature: 'album-library',
+      source: 'error-boundary',
+    })
+    const retryProps = componentMocks.button.mock.lastCall?.[0] as ButtonProps
+    await retryProps.onPress()
+
+    expect(await screen.findByTestId('album-published')).toBeTruthy()
+    expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledTimes(2)
+    expect(audioMocks.loadPublishedPAlbums).toHaveBeenCalledTimes(3)
+  })
+
+  it('should render bundled albums while the published catalog remains pending', async () => {
+    const bundledAlbum = createAlbum('bundled', [TRACK_ONE])
+    const catalogRequest = Promise.withResolvers<PPublishedAlbumCatalog>()
+    audioMocks.loadBundledPAlbums.mockResolvedValue([bundledAlbum])
+    audioMocks.loadPublishedPAlbums.mockReturnValue(catalogRequest.promise)
+
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
+
+    expect(await screen.findByTestId('album-bundled')).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    catalogRequest.resolve({albums: [], status: 'ready'})
   })
 })

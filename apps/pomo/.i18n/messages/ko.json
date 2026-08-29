@@ -329,6 +329,7 @@
   "album_title": "앨범",
   "album_description": "곡 하나씩 또는 앨범 전체를 플레이어에 담아보세요.",
   "album_load_failed": "앨범을 불러오지 못했어요",
+  "album_catalog_load_failed": "공개 앨범을 불러오지 못했어요. 기본 앨범은 계속 사용할 수 있어요.",
   "album_loading": "앨범 불러오는 중",
   "album_empty": "등록된 앨범이 없어요",
   "album_retry": "다시 시도",

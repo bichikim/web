@@ -31,6 +31,14 @@ const createPublishedAlbum = (overrides: Readonly<Record<string, unknown>> = {})
   ...overrides,
 })
 
+const createReadyAlbumLibrary = (
+  bundledAlbums: readonly unknown[],
+  publishedAlbums: readonly unknown[] = [],
+) => ({
+  bundledAlbums,
+  publishedCatalog: {albums: publishedAlbums, status: 'ready'},
+})
+
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
@@ -235,6 +243,7 @@ describe('loadPAlbums', () => {
       .fn()
       .mockResolvedValueOnce(createJsonResponse({tracks, version: 1}))
       .mockResolvedValueOnce(createJsonResponse({albums, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
     vi.stubGlobal('fetch', fetchMock)
 
     const result = loadPAlbums()
@@ -249,16 +258,18 @@ describe('loadPAlbums', () => {
       '/audio/albums.json',
       expect.objectContaining({cache: 'no-store', signal: undefined}),
     )
-    return expect(result).resolves.toEqual([
-      {
-        ...albums[0],
-        tracks: [{...tracks[1], artworkUrl: '/audio/artwork/first.jpg'}, tracks[0]],
-      },
-      {...albums[1], tracks: []},
-    ])
+    return expect(result).resolves.toEqual(
+      createReadyAlbumLibrary([
+        {
+          ...albums[0],
+          tracks: [{...tracks[1], artworkUrl: '/audio/artwork/first.jpg'}, tracks[0]],
+        },
+        {...albums[1], tracks: []},
+      ]),
+    )
   })
 
-  it('should merge a published album without a product as sale preparation', async () => {
+  it('should return a published album without a product as sale preparation', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
@@ -290,28 +301,33 @@ describe('loadPAlbums', () => {
       )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(loadPAlbums()).resolves.toEqual([
-      {
-        coverImageUrl: 'https://storage.pomofi.io/first.webp',
-        description: '곧 판매할 앨범',
-        icon: 'i-tabler-vinyl',
-        id: 'paid-album-id',
-        sale: {state: 'preparing', statusLabel: '판매 준비중'},
-        title: '유료 앨범',
-        trackCount: 2,
-        trackIds: [],
-        trackListings: [
+    await expect(loadPAlbums()).resolves.toEqual(
+      createReadyAlbumLibrary(
+        [],
+        [
           {
-            artist: '첫 가수',
-            artworkUrl: 'https://storage.pomofi.io/track-artwork/paid-one/cover',
-            id: 'paid-one',
-            title: '첫 유료곡',
+            coverImageUrl: 'https://storage.pomofi.io/first.webp',
+            description: '곧 판매할 앨범',
+            icon: 'i-tabler-vinyl',
+            id: 'paid-album-id',
+            sale: {state: 'preparing', statusLabel: '판매 준비중'},
+            title: '유료 앨범',
+            trackCount: 2,
+            trackIds: [],
+            trackListings: [
+              {
+                artist: '첫 가수',
+                artworkUrl: 'https://storage.pomofi.io/track-artwork/paid-one/cover',
+                id: 'paid-one',
+                title: '첫 유료곡',
+              },
+              {artist: '둘째 가수', id: 'paid-two', title: '둘째 유료곡'},
+            ],
+            tracks: [],
           },
-          {artist: '둘째 가수', id: 'paid-two', title: '둘째 유료곡'},
         ],
-        tracks: [],
-      },
-    ])
+      ),
+    )
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
       '/api/music/albums',
@@ -350,19 +366,25 @@ describe('loadPAlbums', () => {
       )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(loadPAlbums({locale: 'en'})).resolves.toEqual([
-      {
-        ...bundledAlbum,
-        description: 'Start focusing with bright, clear rhythms.',
-        title: 'Morning Café',
-        tracks: [],
-      },
-      expect.objectContaining({
-        description: 'Published description',
-        sale: {state: 'preparing', statusLabel: 'Preparing for sale'},
-        title: 'Published album',
-      }),
-    ])
+    await expect(loadPAlbums({locale: 'en'})).resolves.toEqual(
+      createReadyAlbumLibrary(
+        [
+          {
+            ...bundledAlbum,
+            description: 'Start focusing with bright, clear rhythms.',
+            title: 'Morning Café',
+            tracks: [],
+          },
+        ],
+        [
+          expect.objectContaining({
+            description: 'Published description',
+            sale: {state: 'preparing', statusLabel: 'Preparing for sale'},
+            title: 'Published album',
+          }),
+        ],
+      ),
+    )
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
       '/api/music/albums?locale=en',
@@ -371,6 +393,7 @@ describe('loadPAlbums', () => {
   })
 
   it('should preserve bundled albums when the published catalog is unavailable', async () => {
+    const catalogError = new Error('catalog unavailable')
     const album = {
       description: '기본 앨범',
       icon: 'i-tabler-music',
@@ -384,10 +407,13 @@ describe('loadPAlbums', () => {
         .fn()
         .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
         .mockResolvedValueOnce(createJsonResponse({albums: [album], version: 1}))
-        .mockRejectedValueOnce(new Error('catalog unavailable')),
+        .mockRejectedValue(catalogError),
     )
 
-    await expect(loadPAlbums()).resolves.toEqual([{...album, tracks: []}])
+    await expect(loadPAlbums()).resolves.toEqual({
+      bundledAlbums: [{...album, tracks: []}],
+      publishedCatalog: {error: catalogError, status: 'failed'},
+    })
   })
 
   it('should preserve an override URL query when requesting a localized catalog', async () => {
@@ -468,17 +494,22 @@ describe('loadPAlbums', () => {
       )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(loadPAlbums()).resolves.toEqual([
-      expect.objectContaining({
-        coverImageUrl: undefined,
-        icon: 'i-tabler-disc',
-        sale: {
-          priceLabel: '[가격 확인]',
-          state: 'configured',
-          statusLabel: '상품 연결됨',
-        },
-      }),
-    ])
+    await expect(loadPAlbums()).resolves.toEqual(
+      createReadyAlbumLibrary(
+        [],
+        [
+          expect.objectContaining({
+            coverImageUrl: undefined,
+            icon: 'i-tabler-disc',
+            sale: {
+              priceLabel: '[가격 확인]',
+              state: 'configured',
+              statusLabel: '상품 연결됨',
+            },
+          }),
+        ],
+      ),
+    )
   })
 
   it('should localize every bundled album identifier in catalog order', async () => {
@@ -501,8 +532,8 @@ describe('loadPAlbums', () => {
 
     const result = await loadPAlbums()
 
-    expect(result.map((album) => album.id)).toEqual(ids)
-    result.forEach((album) => {
+    expect(result.bundledAlbums.map((album) => album.id)).toEqual(ids)
+    result.bundledAlbums.forEach((album) => {
       expect(album.title).not.toBe(`original-${album.id}`)
       expect(album.description).not.toBe(`original-${album.id}`)
     })
@@ -579,7 +610,15 @@ describe('loadPAlbums', () => {
         .mockResolvedValueOnce({json: publishedJson, ok: false, status: 404}),
     )
 
-    await expect(loadPAlbums()).resolves.toEqual([{...album, tracks: []}])
+    await expect(loadPAlbums()).resolves.toEqual({
+      bundledAlbums: [{...album, tracks: []}],
+      publishedCatalog: {
+        error: expect.objectContaining({
+          message: 'Published focus-room albums request failed: 404',
+        }),
+        status: 'failed',
+      },
+    })
     expect(publishedJson).not.toHaveBeenCalled()
   })
 
@@ -597,7 +636,7 @@ describe('loadPAlbums', () => {
       },
       label: 'null track listing',
     },
-  ])('should ignore a published $label', async ({collection}) => {
+  ])('should expose a published $label as a catalog failure', async ({collection}) => {
     vi.stubGlobal(
       'fetch',
       vi
@@ -607,6 +646,14 @@ describe('loadPAlbums', () => {
         .mockResolvedValueOnce(createJsonResponse(collection)),
     )
 
-    await expect(loadPAlbums()).resolves.toEqual([])
+    await expect(loadPAlbums()).resolves.toEqual({
+      bundledAlbums: [],
+      publishedCatalog: {
+        error: expect.objectContaining({
+          message: 'Published focus-room albums have an invalid format',
+        }),
+        status: 'failed',
+      },
+    })
   })
 })

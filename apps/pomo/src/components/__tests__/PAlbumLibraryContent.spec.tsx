@@ -6,7 +6,10 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import type {PTrack} from '../../features/focus-room-audio'
 
-const audioMocks = vi.hoisted(() => ({loadPAlbums: vi.fn()}))
+const audioMocks = vi.hoisted(() => ({
+  loadBundledPAlbums: vi.fn(),
+  loadPublishedPAlbums: vi.fn(),
+}))
 const modalMocks = vi.hoisted(() => ({render: vi.fn()}))
 
 vi.mock('../../features/focus-room-audio', async (importOriginal) => ({
@@ -34,7 +37,8 @@ import {PAlbumLibraryPanel} from '../album-library/Panel'
 
 afterEach(() => {
   cleanup()
-  audioMocks.loadPAlbums.mockReset()
+  audioMocks.loadBundledPAlbums.mockReset()
+  audioMocks.loadPublishedPAlbums.mockReset()
   modalMocks.render.mockClear()
   vi.restoreAllMocks()
 })
@@ -44,7 +48,8 @@ describe('PAlbumLibraryContent', () => {
     const pendingAlbums = new Promise<never>(() => {
       // Keep the request pending so the loading presentation can be asserted.
     })
-    audioMocks.loadPAlbums.mockReturnValue(pendingAlbums)
+    audioMocks.loadBundledPAlbums.mockReturnValue(pendingAlbums)
+    audioMocks.loadPublishedPAlbums.mockResolvedValue({albums: [], status: 'ready'})
 
     render(() => (
       <Suspense fallback={<p>장면 준비 중</p>}>
@@ -65,28 +70,32 @@ describe('PAlbumLibraryContent', () => {
   })
 
   it('should show an unconfigured published album as sale preparation', async () => {
-    audioMocks.loadPAlbums.mockResolvedValue([
-      {
-        coverImageUrl: 'https://storage.pomofi.io/album.webp',
-        description: '판매 준비 설명',
-        icon: 'i-tabler-vinyl',
-        id: 'paid-album-id',
-        sale: {state: 'preparing', statusLabel: '판매 준비중'},
-        title: '공개 앨범',
-        trackCount: 9,
-        trackIds: [],
-        trackListings: [
-          {artist: '첫 가수', id: 'paid-one', title: '첫 공개곡'},
-          {artist: '둘째 가수', id: 'paid-two', title: '둘째 공개곡'},
-          ...Array.from({length: 7}, (_, index) => ({
-            artist: `${index + 3}번째 가수`,
-            id: `paid-${index + 3}`,
-            title: `${index + 3}번째 공개곡`,
-          })),
-        ],
-        tracks: [],
-      },
-    ])
+    audioMocks.loadBundledPAlbums.mockResolvedValue([])
+    audioMocks.loadPublishedPAlbums.mockResolvedValue({
+      albums: [
+        {
+          coverImageUrl: 'https://storage.pomofi.io/album.webp',
+          description: '판매 준비 설명',
+          icon: 'i-tabler-vinyl',
+          id: 'paid-album-id',
+          sale: {state: 'preparing', statusLabel: '판매 준비중'},
+          title: '공개 앨범',
+          trackCount: 9,
+          trackIds: [],
+          trackListings: [
+            {artist: '첫 가수', id: 'paid-one', title: '첫 공개곡'},
+            {artist: '둘째 가수', id: 'paid-two', title: '둘째 공개곡'},
+            ...Array.from({length: 7}, (_, index) => ({
+              artist: `${index + 3}번째 가수`,
+              id: `paid-${index + 3}`,
+              title: `${index + 3}번째 공개곡`,
+            })),
+          ],
+          tracks: [],
+        },
+      ],
+      status: 'ready',
+    })
 
     render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
@@ -117,7 +126,8 @@ describe('PAlbumLibraryContent', () => {
   })
 
   it('should clear and restore the current player tracks from the modal footer', async () => {
-    audioMocks.loadPAlbums.mockResolvedValue([])
+    audioMocks.loadBundledPAlbums.mockResolvedValue([])
+    audioMocks.loadPublishedPAlbums.mockResolvedValue({albums: [], status: 'ready'})
     const initialTracks = [
       {
         artist: '가수',
