@@ -2,7 +2,7 @@ import {createRequire} from 'node:module'
 import {mkdir, rename, rm} from 'node:fs/promises'
 import path from 'node:path'
 
-const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
+const require = createRequire(import.meta.url)
 const sharp = require('sharp')
 
 const DEPTH_PARALLAX_BLUR_SIGMA = 6

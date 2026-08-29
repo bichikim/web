@@ -12,7 +12,7 @@ if (unsupportedArguments.length > 0) {
 }
 
 const depthOnly = commandArguments.includes('--depth-only')
-const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
+const require = createRequire(import.meta.url)
 const sharp = require('sharp')
 
 const SCENE_QUALITY = 95

@@ -86,7 +86,8 @@
     "dotenv": "catalog:",
     "drizzle-kit": "^0.31.10",
     "jiti": "catalog:",
-    "rollup": "catalog:"
+    "rollup": "catalog:",
+    "sharp": "^0.35.0"
   },
   "engines": {
     "node": ">=24"
