@@ -5,6 +5,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {
   DESKTOP_CLEAN_EXIT_STORAGE_KEY,
   DESKTOP_MODE_STORAGE_KEY,
+  isDesktopBackgroundMode,
   isDesktopMode,
   readCleanExit,
   readDesktopMode,
@@ -17,7 +18,10 @@ beforeEach(() => localStorage.clear())
 afterEach(() => vi.restoreAllMocks())
 
 it('should validate every supported desktop mode', () => {
-  expect(['normal', 'widget', 'desktop'].every(isDesktopMode)).toBe(true)
+  expect(['normal', 'widget', 'desktop', 'interactiveDesktop'].every(isDesktopMode)).toBe(true)
+  expect(isDesktopBackgroundMode('desktop')).toBe(true)
+  expect(isDesktopBackgroundMode('interactiveDesktop')).toBe(true)
+  expect(isDesktopBackgroundMode('normal')).toBe(false)
   expect(isDesktopMode('floating')).toBe(false)
   expect(isDesktopMode(null)).toBe(false)
 })

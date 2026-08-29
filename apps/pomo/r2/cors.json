@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "headers": ["Content-Type", "Range"],
+        "methods": ["GET", "HEAD", "PUT"],
+        "origins": [
+          "http://localhost:3000",
+          "http://localhost:3100",
+          "http://localhost:3200",
+          "http://localhost:3300",
+          "http://localhost:3400",
+          "http://127.0.0.1:1420",
+          "http://tauri.localhost",
+          "https://pomofi.io",
+          "https://www.pomofi.io",
+          "https://pomo-app.apps.tossmini.com",
+          "https://pomo-app.private-apps.tossmini.com",
+          "https://pomo-app.private-web.tossmini.com",
+          "https://pomo-app.web.tossmini.com",
+          "https://tauri.localhost",
+          "tauri://localhost"
+        ]
+      },
+      "exposeHeaders": ["Accept-Ranges", "Content-Length", "Content-Range", "Content-Type", "ETag"],
+      "maxAgeSeconds": 86400
+    }
+  ]
+}

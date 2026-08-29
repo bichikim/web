@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "rootDir": "node_modules/@tonejs/midi/src",
+    "strict": false,
     "outDir": "es-tone",
     "declaration": true,
     "skipLibCheck": true,

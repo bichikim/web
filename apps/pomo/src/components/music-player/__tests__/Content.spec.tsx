@@ -17,18 +17,21 @@ const featureMocks = vi.hoisted(() => ({
   applyPendingPosition: vi.fn(),
   createInitialPlaybackState: vi.fn(),
   createShuffleQueue: vi.fn(),
-  loadPTracks: vi.fn(),
+  loadPTrackQueueSource: vi.fn(),
   mediaSessionOptions: vi.fn(),
   persistCurrentPlayback: vi.fn(),
   persistPlaybackProgress: vi.fn(),
   readPPlayback: vi.fn(),
+  readPPlaylist: vi.fn(),
   resolvePlaybackRestore: vi.fn(),
+  resolvePPlaylist: vi.fn(),
   resolveTrackEnd: vi.fn(),
   resolveTrackRemoval: vi.fn(),
   setPendingPosition: vi.fn(),
   visualizerStart: vi.fn(),
   visualizerStop: vi.fn(),
   writePlayback: vi.fn(),
+  writePPlaylist: vi.fn(),
 }))
 const viewMocks = vi.hoisted(() => ({capture: vi.fn()}))
 
@@ -41,9 +44,11 @@ vi.mock('../../../features/focus-room-audio', () => ({
   appendUniqueTracks: featureMocks.appendUniqueTracks,
   createInitialPlaybackState: featureMocks.createInitialPlaybackState,
   createShuffleQueue: featureMocks.createShuffleQueue,
-  loadPTracks: featureMocks.loadPTracks,
+  loadPTrackQueueSource: featureMocks.loadPTrackQueueSource,
   readPPlayback: featureMocks.readPPlayback,
+  readPPlaylist: featureMocks.readPPlaylist,
   resolvePlaybackRestore: featureMocks.resolvePlaybackRestore,
+  resolvePPlaylist: featureMocks.resolvePPlaylist,
   resolveTrackEnd: featureMocks.resolveTrackEnd,
   resolveTrackRemoval: featureMocks.resolveTrackRemoval,
   usePAudioVisualizer: () => ({
@@ -59,6 +64,7 @@ vi.mock('../../../features/focus-room-audio', () => ({
     setPendingPosition: featureMocks.setPendingPosition,
     writePlayback: featureMocks.writePlayback,
   }),
+  writePPlaylist: featureMocks.writePPlaylist,
 }))
 vi.mock('../../MusicPlayerView', () => ({
   MusicPlayerView: (props: MusicPlayerViewProps) => {
@@ -137,8 +143,16 @@ beforeEach(() => {
   )
   featureMocks.resolveTrackEnd.mockReturnValue('play-shuffled')
   featureMocks.resolveTrackRemoval.mockReturnValue({currentTrackChanged: true, nextCurrentIndex: 0})
-  featureMocks.loadPTracks.mockResolvedValue(TRACKS)
+  featureMocks.loadPTrackQueueSource.mockResolvedValue({
+    defaultTracks: TRACKS,
+    tracks: [...TRACKS, ADDED_TRACK],
+  })
+  featureMocks.readPPlaylist.mockResolvedValue(null)
   featureMocks.readPPlayback.mockResolvedValue(null)
+  featureMocks.resolvePPlaylist.mockImplementation(
+    ({defaultTracks}: {readonly defaultTracks: readonly PTrack[]}) => defaultTracks,
+  )
+  featureMocks.writePPlaylist.mockResolvedValue(undefined)
   featureMocks.applyPendingPosition.mockReturnValue(null)
 })
 
@@ -307,10 +321,10 @@ describe('PMusicPlayerContent control paths', () => {
 
   it('should reject invalid queue edits and handle unchanged and empty removals', async () => {
     let resolveTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTracks.mockImplementationOnce(
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveTracks = resolve
+          resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
     const result = render(() => <PMusicPlayerContent />)
@@ -336,7 +350,7 @@ describe('PMusicPlayerContent control paths', () => {
     await Promise.resolve()
     expect(audio.pause).toHaveBeenCalled()
 
-    featureMocks.loadPTracks.mockImplementationOnce(
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
       () =>
         new Promise(() => {
           // Intentionally pending to keep the playlist unresolved.
@@ -350,12 +364,28 @@ describe('PMusicPlayerContent control paths', () => {
     expect(emptyAudio.pause).toHaveBeenCalled()
   })
 
+  it('should ignore playlist storage write failures', async () => {
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
+      () =>
+        new Promise(() => {
+          // Intentionally pending to isolate the queue edit.
+        }),
+    )
+    featureMocks.writePPlaylist.mockRejectedValueOnce(new Error('Storage is unavailable'))
+    render(() => <PMusicPlayerContent />)
+
+    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
+    await Promise.resolve()
+
+    expect(featureMocks.writePPlaylist).toHaveBeenCalledWith([ADDED_TRACK.id])
+  })
+
   it('should clear before initial loading and merge a concurrently added active track', async () => {
     let resolveClearedTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTracks.mockImplementationOnce(
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveClearedTracks = resolve
+          resolveClearedTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
     const cleared = render(() => <PMusicPlayerContent />)
@@ -368,10 +398,10 @@ describe('PMusicPlayerContent control paths', () => {
     cleared.unmount()
 
     let resolveMergedTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTracks.mockImplementationOnce(
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveMergedTracks = resolve
+          resolveMergedTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
     render(() => <PMusicPlayerContent />)
@@ -387,10 +417,10 @@ describe('PMusicPlayerContent control paths', () => {
 
   it('should ignore a playlist completed after cleanup and handle playlist rejection', async () => {
     let resolveTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTracks.mockImplementationOnce(
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveTracks = resolve
+          resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
     const result = render(() => <PMusicPlayerContent />)
@@ -399,7 +429,7 @@ describe('PMusicPlayerContent control paths', () => {
     await Promise.resolve()
     await Promise.resolve()
 
-    featureMocks.loadPTracks.mockRejectedValueOnce(new Error('playlist failed'))
+    featureMocks.loadPTrackQueueSource.mockRejectedValueOnce(new Error('playlist failed'))
     render(() => <PMusicPlayerContent />)
     await Promise.resolve()
     await Promise.resolve()
@@ -417,6 +447,29 @@ describe('PMusicPlayerContent control paths', () => {
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
+    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledWith(
+      expect.objectContaining({storedPlayback}),
+    )
+  })
+
+  it('should restore stored playback without waiting for playlist storage', async () => {
+    const storedPlayback = {
+      isPlaying: false,
+      positionSeconds: 7,
+      trackId: 'two',
+    } satisfies PPlaybackState
+    featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
+    featureMocks.readPPlaylist.mockReturnValue(
+      new Promise(() => {
+        // Intentionally pending to reproduce an unresponsive native playlist read.
+      }),
+    )
+
+    render(() => <PMusicPlayerContent />)
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+
     expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledWith(
       expect.objectContaining({storedPlayback}),
     )

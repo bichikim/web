@@ -9,12 +9,14 @@ import {getPSceneLayer} from '../../features/focus-room-animation/scene-layer-ca
 import type {PSceneId} from '../../features/focus-room-animation/scene-catalog'
 import type {PSceneStyle} from '../../features/focus-room-animation/scene-style'
 import {reportClientError} from '../../features/client-error-reporter'
+import {applyWeatherSceneLayer, type WeatherSceneCondition} from '../../features/weather'
 
 export interface PSceneCanvasProps extends Omit<PSceneState, 'layerScene'> {
   readonly onLoadingChange?: (isLoading: boolean) => void
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly sceneId: PSceneId
   readonly sceneStyle?: PSceneStyle
+  readonly weatherCondition?: WeatherSceneCondition
 }
 
 export default function PSceneCanvas(props: PSceneCanvasProps) {
@@ -25,7 +27,12 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
     activity: props.activity,
     depthSource: props.depthSource,
     gaze: props.gaze,
-    layerScene: getPSceneLayer(props.sceneId, props.sceneStyle),
+    layerScene: applyWeatherSceneLayer(
+      getPSceneLayer(props.sceneId, props.sceneStyle),
+      props.sceneId,
+      props.sceneStyle ?? 'original',
+      props.weatherCondition ?? 'clear',
+    ),
     motionInput: props.motionInput,
     motionMode: props.motionMode,
     sceneStyle: props.sceneStyle,
@@ -69,6 +76,7 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
           props.source,
           props.time,
           props.viseme,
+          props.weatherCondition,
         ] as const,
       () => {
         renderer?.update(getSceneState())

@@ -1,6 +1,9 @@
 import {type Accessor, ErrorBoundary, type JSX, Show} from 'solid-js'
 
-import {PButton} from './PButton'
+import {getLocale} from '@paraglide/runtime'
+
+import {PButton, pButtonClasses} from './PButton'
+import {getPomoHomeHref} from './pomo-route'
 import * as m from '@paraglide/message'
 import {RecoveryAttempt} from './recovery-boundary/Attempt'
 
@@ -27,17 +30,24 @@ export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
               <p class="mt-3 text-sm opacity-70">
                 {m.recovery_error_id()} <code>{errorId}</code>
               </p>
-              <Show
-                fallback={<p class="mt-4 text-sm text-muted-foreground">{m.recovery_stopped()}</p>}
-                when={props.canRetry()}
-              >
-                <PButton class="mt-5" onPress={() => props.onRetry(reset)}>
-                  {m.recovery_retry()}
-                </PButton>
+              <Show when={!props.canRetry()}>
+                <p class="mt-4 text-sm text-muted-foreground">{m.recovery_stopped()}</p>
               </Show>
-              <PButton class="mt-3" onPress={props.onReload} tone="secondary">
-                {m.recovery_reload()}
-              </PButton>
+              <div class="mt-5 flex flex-wrap justify-center gap-3">
+                <Show when={props.canRetry()}>
+                  <PButton onPress={() => props.onRetry(reset)}>{m.recovery_retry()}</PButton>
+                </Show>
+                <PButton onPress={props.onReload} tone="secondary">
+                  {m.recovery_reload()}
+                </PButton>
+                <a
+                  class={pButtonClasses({tone: 'secondary'})}
+                  href={getPomoHomeHref(getLocale())}
+                  target="_self"
+                >
+                  {m.recovery_home()}
+                </a>
+              </div>
             </section>
           </main>
         )

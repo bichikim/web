@@ -11,9 +11,17 @@ interface CreateTrackWithAudioInput {
   readonly title: string
 }
 
-export type CreateTrackWithAudioResult =
-  | {readonly success: true}
-  | {readonly cleanupSucceeded: boolean; readonly error: unknown; readonly success: false}
+interface CreateTrackWithAudioSuccess {
+  readonly success: true
+}
+
+interface CreateTrackWithAudioFailure {
+  readonly cleanupStatus: 'failed' | 'preserved' | 'succeeded'
+  readonly error: unknown
+  readonly success: false
+}
+
+export type CreateTrackWithAudioResult = CreateTrackWithAudioFailure | CreateTrackWithAudioSuccess
 
 const createTrack = async (body: Readonly<Record<string, unknown>>): Promise<string> => {
   const response = await fetch('/api/admin/music/tracks', {
@@ -49,13 +57,22 @@ export const createTrackWithAudio = async (
   })
 
   try {
-    await uploadTrackAudio({file: input.audio, trackId})
+    const uploadResult = await uploadTrackAudio({file: input.audio, trackId})
+
+    if (uploadResult.status === 'unconfirmed') {
+      return {cleanupStatus: 'preserved', error: uploadResult.error, success: false}
+    }
+
     return {success: true}
   } catch (error) {
     const cleanupSucceeded = await deleteTrack(trackId)
       .then(() => true)
       .catch(() => false)
-    return {cleanupSucceeded, error, success: false}
+    return {
+      cleanupStatus: cleanupSucceeded ? 'succeeded' : 'failed',
+      error,
+      success: false,
+    }
   }
 }
 

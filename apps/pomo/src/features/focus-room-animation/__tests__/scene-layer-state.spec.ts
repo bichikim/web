@@ -4,8 +4,11 @@ import {
   FOCUS_ROOM_JAW_CHANNEL,
   FOCUS_ROOM_MOUTH_CHANNELS,
   FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS,
+  P_MOUTH_TRANSITION_PATHS,
   P_MOUTH_TRANSITION_STAGES,
 } from '../scene-catalog-channels'
+import {FOCUS_ROOM_SCENES} from '../scene-catalog'
+import {getPSceneLayer} from '../scene-layer-catalog'
 import {createFocusRoomLayerState} from '../scene-layer-state'
 
 describe('createFocusRoomLayerState', () => {
@@ -43,6 +46,26 @@ describe('createFocusRoomLayerState', () => {
       visible: false,
     })
     expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]?.pixelPushProgress).toBeCloseTo(0.78)
+  })
+
+  it('should crossfade base mouths when any configured bridge frame is unavailable', () => {
+    const state = createFocusRoomLayerState(
+      'open',
+      false,
+      {
+        from: 'closed',
+        progress: 0.5,
+        to: 'open',
+      },
+      (stage) => stage !== 'small-open',
+    )
+
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.closed]?.opacity).toBe(Math.SQRT1_2)
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]?.opacity).toBe(Math.SQRT1_2)
+
+    for (const channel of Object.values(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS)) {
+      expect(state.channels?.[channel]?.visible).toBe(false)
+    }
   })
 
   it('should pass open-to-wide transitions through the configured bridge frames', () => {
@@ -205,6 +228,43 @@ describe('createFocusRoomLayerState', () => {
     for (const channel of Object.values(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS)) {
       expect(first.channels?.[channel]?.visible).toBe(false)
       expect(last.channels?.[channel]?.visible).toBe(false)
+    }
+  })
+
+  it('should keep a defined mouth layer visible throughout every user scene transition', () => {
+    const sceneStyles = ['original', 'scribble'] as const
+    const userScenes = FOCUS_ROOM_SCENES.filter((scene) => scene.gaze === 'user')
+
+    for (const sceneStyle of sceneStyles) {
+      for (const scene of userScenes) {
+        const definition = getPSceneLayer(scene.id, sceneStyle)
+        const mouthChannels = new Set(
+          definition.layers.flatMap((layer) =>
+            layer.channel?.startsWith('mouth-') === true ? [layer.channel] : [],
+          ),
+        )
+        const supportsStage = (stage: (typeof P_MOUTH_TRANSITION_STAGES)[number]) =>
+          mouthChannels.has(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage])
+
+        for (const path of P_MOUTH_TRANSITION_PATHS) {
+          for (let step = 0; step <= 20; step += 1) {
+            const state = createFocusRoomLayerState(
+              path.to,
+              false,
+              {from: path.from, progress: step / 20, to: path.to},
+              supportsStage,
+            )
+            const visibleMouthLayers = definition.layers.filter(
+              (layer) =>
+                layer.channel !== undefined &&
+                mouthChannels.has(layer.channel) &&
+                state.channels?.[layer.channel]?.visible === true,
+            )
+
+            expect(visibleMouthLayers.length).toBeGreaterThan(0)
+          }
+        }
+      }
     }
   })
 })

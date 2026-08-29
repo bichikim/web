@@ -41,9 +41,26 @@ fn install_tray(app: &tauri::App) -> tauri::Result<()> {
     let normal = MenuItem::with_id(app, "normal", "일반 창", true, None::<&str>)?;
     let widget = MenuItem::with_id(app, "widget", "미니 위젯", true, None::<&str>)?;
     let desktop = MenuItem::with_id(app, "desktop", "바탕화면", true, None::<&str>)?;
+    let interactive_desktop = MenuItem::with_id(
+        app,
+        "interactive-desktop",
+        "인터랙티브 바탕화면",
+        true,
+        None::<&str>,
+    )?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", "Pomofi 종료", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&normal, &widget, &desktop, &separator, &quit])?;
+    let menu = Menu::with_items(
+        app,
+        &[
+            &normal,
+            &widget,
+            &desktop,
+            &interactive_desktop,
+            &separator,
+            &quit,
+        ],
+    )?;
 
     let mut tray = TrayIconBuilder::with_id("pomofi-mode")
         .menu(&menu)
@@ -56,6 +73,7 @@ fn install_tray(app: &tauri::App) -> tauri::Result<()> {
             }
             "widget" => emit_mode(app, "widget"),
             "desktop" => emit_mode(app, "desktop"),
+            "interactive-desktop" => emit_mode(app, "interactiveDesktop"),
             "quit" => app.exit(0),
             _ => {}
         });

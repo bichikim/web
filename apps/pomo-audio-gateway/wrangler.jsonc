@@ -7,7 +7,7 @@
   "workers_dev": true,
   "preview_urls": true,
   "vars": {
-    "ALLOWED_ORIGINS": "https://pomofi.io,https://www.pomofi.io,https://pomo-app.apps.tossmini.com,https://pomo-app.private-apps.tossmini.com,https://pomo-app.private-web.tossmini.com,https://pomo-app.web.tossmini.com,http://localhost:3000,http://localhost:3100,http://localhost:3200,http://localhost:3300,http://localhost:3400",
+    "ALLOWED_ORIGINS": "https://pomofi.io,https://www.pomofi.io,https://pomo-app.apps.tossmini.com,https://pomo-app.private-apps.tossmini.com,https://pomo-app.private-web.tossmini.com,https://pomo-app.web.tossmini.com,http://localhost:3000,http://localhost:3100,http://localhost:3200,http://localhost:3300,http://localhost:3400,http://127.0.0.1:1420,http://tauri.localhost,https://tauri.localhost,tauri://localhost",
     "ALLOWED_ORIGIN_SUFFIXES": "",
     "R2_OBJECT_PREFIX": "",
   },

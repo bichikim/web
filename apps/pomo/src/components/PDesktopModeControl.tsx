@@ -21,6 +21,11 @@ const getModeOptions = (): ReadonlyArray<ModeOption> => [
   {icon: 'i-tabler-app-window', label: m.desktop_mode_normal(), value: 'normal'},
   {icon: 'i-tabler-picture-in-picture', label: m.desktop_mode_widget(), value: 'widget'},
   {icon: 'i-tabler-wallpaper', label: m.desktop_mode_desktop(), value: 'desktop'},
+  {
+    icon: 'i-tabler-hand-click',
+    label: m.desktop_mode_interactive_desktop(),
+    value: 'interactiveDesktop',
+  },
 ]
 
 export const PDesktopModeControl = (props: PDesktopModeControlProps) => {

@@ -20,6 +20,7 @@ vi.mock('../CharacterPage', () => ({default: createPage('character')}))
 vi.mock('../ChatPage', () => ({default: createPage('chat')}))
 vi.mock('../DialoguePage', () => ({default: createPage('dialogue')}))
 vi.mock('../LayerReviewPage', () => ({default: createPage('layer-review')}))
+vi.mock('../RecoveryPage', () => ({default: createPage('recovery')}))
 vi.mock('../SpeechToTextPage', () => ({default: createPage('speech-to-text')}))
 vi.mock('../TermsPage', () => ({default: createPage('terms')}))
 vi.mock('../TextMoodPage', () => ({default: createPage('text-mood')}))
@@ -35,6 +36,7 @@ it.each([
   ['/dev/chat', 'chat'],
   ['/dev/dialogue', 'dialogue'],
   ['/dev/focus-room-layer-review', 'layer-review'],
+  ['/dev/recovery', 'recovery'],
   ['/dev/speech-to-text', 'speech-to-text'],
   ['/dev/terms', 'terms'],
   ['/dev/text-mood', 'text-mood'],

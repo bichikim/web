@@ -165,6 +165,144 @@ describe('album draft restoration', () => {
     cleanup()
   })
 
+  it('should preserve field edits made while draft restoration is pending', async () => {
+    let resolveCleanup: (result: {success: true}) => void = () => undefined
+    const cleanupLoad = new Promise<{success: true}>((resolve) => {
+      resolveCleanup = resolve
+    })
+    const editedTranslations: AlbumDraftTranslations = {
+      ...createEmptyAlbumTranslations(),
+      ko: {description: '', title: '새 제목'},
+    }
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverFallback: 'cd', coverImageUrl: 'https://saved.example/old.webp'}),
+    )
+    storageMocks.deleteExpiredAlbumDraftCovers.mockReturnValue(cleanupLoad)
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitFor(() => expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledOnce())
+    result.handleTranslationsChange(editedTranslations)
+    result.handleCoverImageUrlInput({
+      currentTarget: {value: 'https://new.example/current.webp'},
+    } as unknown as InputEvent & {currentTarget: HTMLInputElement})
+    result.handleCoverFallbackChange({
+      currentTarget: {value: 'music'},
+    } as unknown as Event & {currentTarget: HTMLSelectElement})
+    resolveCleanup({success: true})
+    await waitForRestoration(result)
+
+    expect(result.albumTranslations()).toBe(editedTranslations)
+    expect(result.coverImageUrl()).toBe('https://new.example/current.webp')
+    expect(result.coverFallback()).toBe('music')
+    await waitFor(() => {
+      expect(storageMocks.writeAlbumDraftData).toHaveBeenLastCalledWith({
+        coverDraftId: null,
+        coverFallback: 'music',
+        coverImageUrl: 'https://new.example/current.webp',
+        hasCoverFile: false,
+        translations: editedTranslations,
+      })
+    })
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toEqual({
+      coverFallback: 'music',
+      coverImageUrl: 'https://new.example/current.webp',
+      translations: [{description: '', locale: 'ko', title: '새 제목'}],
+    })
+    cleanup()
+  })
+
+  it('should defer partial field persistence until draft restoration finishes', async () => {
+    let resolveCleanup: (result: {success: true}) => void = () => undefined
+    const cleanupLoad = new Promise<{success: true}>((resolve) => {
+      resolveCleanup = resolve
+    })
+    const storedDraft = createDraft({
+      coverFallback: 'cd',
+      coverImageUrl: 'https://saved.example/old.webp',
+    })
+    storageMocks.readAlbumDraftData.mockReturnValue(storedDraft)
+    storageMocks.deleteExpiredAlbumDraftCovers.mockReturnValue(cleanupLoad)
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitFor(() => expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledOnce())
+    result.handleCoverImageUrlInput({
+      currentTarget: {value: 'https://new.example/current.webp'},
+    } as unknown as InputEvent & {currentTarget: HTMLInputElement})
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    expect(storageMocks.writeAlbumDraftData).not.toHaveBeenCalled()
+    resolveCleanup({success: true})
+    await waitForRestoration(result)
+    await waitFor(() =>
+      expect(storageMocks.writeAlbumDraftData).toHaveBeenLastCalledWith({
+        ...storedDraft,
+        coverImageUrl: 'https://new.example/current.webp',
+      }),
+    )
+    cleanup()
+  })
+
+  it('should persist deferred field edits when no stored draft exists', async () => {
+    let resolveCleanup: (result: {success: true}) => void = () => undefined
+    const cleanupLoad = new Promise<{success: true}>((resolve) => {
+      resolveCleanup = resolve
+    })
+    storageMocks.deleteExpiredAlbumDraftCovers.mockReturnValue(cleanupLoad)
+    const {cleanup, result} = renderAlbumDraft()
+
+    await waitFor(() => expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledOnce())
+    result.handleCoverImageUrlInput({
+      currentTarget: {value: 'https://new.example/current.webp'},
+    } as unknown as InputEvent & {currentTarget: HTMLInputElement})
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    expect(storageMocks.writeAlbumDraftData).not.toHaveBeenCalled()
+
+    resolveCleanup({success: true})
+    await waitForRestoration(result)
+    await waitFor(() =>
+      expect(storageMocks.writeAlbumDraftData).toHaveBeenLastCalledWith(
+        expect.objectContaining({coverImageUrl: 'https://new.example/current.webp'}),
+      ),
+    )
+    cleanup()
+  })
+
+  it('should preserve a prepared cover selected while draft restoration is pending', async () => {
+    let resolveCleanup: (result: {success: true}) => void = () => undefined
+    const cleanupLoad = new Promise<{success: true}>((resolve) => {
+      resolveCleanup = resolve
+    })
+    const storedCover = new File(['stored'], 'stored.webp', {type: 'image/webp'})
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
+    )
+    storageMocks.deleteExpiredAlbumDraftCovers.mockReturnValue(cleanupLoad)
+    storageMocks.readAlbumDraftCover.mockResolvedValue(storedCover)
+    const {cleanup, result} = renderAlbumDraft()
+
+    await waitFor(() => expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledOnce())
+    const coverChange = result.handleCoverChange(createCoverEvent(VALID_COVER).event)
+    await waitFor(() => expect(coverMocks.prepareAlbumCover).toHaveBeenCalledOnce())
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    expect(storageMocks.writeAlbumDraftCover).not.toHaveBeenCalled()
+    expect(storageMocks.writeAlbumDraftData).not.toHaveBeenCalled()
+    resolveCleanup({success: true})
+    await coverChange
+    await waitForRestoration(result)
+
+    expect(URL.createObjectURL).toHaveBeenCalledOnce()
+    expect(URL.createObjectURL).toHaveBeenCalledWith(PREPARED_COVER)
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(coverMocks.uploadAlbumCover).toHaveBeenCalledWith(PREPARED_COVER, COVER_DRAFT_ID)
+    cleanup()
+  })
+
   it('should normalize a cover flag that has no cover identifier', async () => {
     const draft = createDraft({hasCoverFile: true})
     storageMocks.readAlbumDraftData.mockReturnValue(draft)
@@ -337,6 +475,49 @@ describe('draft field persistence', () => {
 })
 
 describe('cover preparation', () => {
+  it('should ignore a deferred clear superseded by a new cover selection', async () => {
+    let resolveCleanup: (result: {success: true}) => void = () => undefined
+    const cleanupLoad = new Promise<{success: true}>((resolve) => {
+      resolveCleanup = resolve
+    })
+    storageMocks.deleteExpiredAlbumDraftCovers.mockReturnValue(cleanupLoad)
+    const {cleanup, result} = renderAlbumDraft()
+    await waitFor(() => expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledOnce())
+
+    const pendingClear = result.handleCoverChange(createCoverEvent(null).event)
+    const pendingSelection = result.handleCoverChange(createCoverEvent(VALID_COVER).event)
+    await waitFor(() => expect(coverMocks.prepareAlbumCover).toHaveBeenCalledOnce())
+    resolveCleanup({success: true})
+    await Promise.all([pendingClear, pendingSelection])
+
+    expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledOnce()
+    expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledWith(
+      expect.objectContaining({coverDraftId: COVER_DRAFT_ID, hasCoverFile: true}),
+    )
+    cleanup()
+  })
+
+  it('should ignore a prepared cover waiting for restoration after disposal', async () => {
+    let resolveCleanup: (result: {success: true}) => void = () => undefined
+    const cleanupLoad = new Promise<{success: true}>((resolve) => {
+      resolveCleanup = resolve
+    })
+    storageMocks.deleteExpiredAlbumDraftCovers.mockReturnValue(cleanupLoad)
+    const {cleanup, result} = renderAlbumDraft()
+    await waitFor(() => expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledOnce())
+
+    const pendingSelection = result.handleCoverChange(createCoverEvent(VALID_COVER).event)
+    await waitFor(() => expect(coverMocks.prepareAlbumCover).toHaveBeenCalledOnce())
+    cleanup()
+    await pendingSelection
+
+    expect(storageMocks.writeAlbumDraftCover).not.toHaveBeenCalled()
+    expect(storageMocks.writeAlbumDraftData).not.toHaveBeenCalled()
+    resolveCleanup({success: true})
+    await cleanupLoad
+    await flushPromises()
+  })
+
   it('should clear an empty cover selection and delete its previous stored cover', async () => {
     storageMocks.readAlbumDraftData.mockReturnValue(
       createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
@@ -473,6 +654,32 @@ describe('cover preparation', () => {
 })
 
 describe('album creation', () => {
+  it('should finish pending field persistence before deleting a created album draft', async () => {
+    const operations: string[] = []
+    storageMocks.writeAlbumDraftData.mockImplementation(() => {
+      operations.push('write')
+      return {success: true}
+    })
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+    setMessage.mockImplementation((message) => {
+      if (message === '앨범 초안을 만들었습니다.') {
+        operations.push('created')
+      }
+    })
+    await waitForRestoration(result)
+
+    result.handleCoverImageUrlInput({
+      currentTarget: {value: 'https://example.com/current.webp'},
+    } as unknown as InputEvent & {currentTarget: HTMLInputElement})
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledOnce())
+    await waitFor(() => expect(setMessage).toHaveBeenLastCalledWith('앨범 초안을 만들었습니다.'))
+
+    expect(fetch).toHaveBeenCalledOnce()
+    expect(operations).toEqual(['write', 'created'])
+    cleanup()
+  })
+
   it('should create an album, clear its draft, refresh, and notify its callback', async () => {
     const onAlbumCreated = vi.fn()
     const {cleanup, refreshCatalog, result, setMessage} = renderAlbumDraft({onAlbumCreated})

@@ -12,7 +12,7 @@ import {uploadAlbumCover, validateAlbumCover} from './cover-upload'
 const getAlbumDraftStorage = () => import('./album-draft-storage')
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
 
-interface AlbumDraftOptions {
+interface UseAlbumDraftProps {
   readonly onAlbumCreated?: (albumId: string) => void
   readonly refreshCatalog: () => Promise<void>
   readonly setMessage: Setter<string | null>
@@ -51,7 +51,7 @@ const createAlbum = async (draft: AlbumDraftData, coverFile: File | null): Promi
 }
 
 const refreshAfterAlbumCreation = async (
-  options: AlbumDraftOptions,
+  options: UseAlbumDraftProps,
   albumId: string,
   didClearDraft: boolean,
 ): Promise<void> => {
@@ -78,21 +78,20 @@ const clearCoverPreview = (
   }
 }
 
-const persistDraftData = (
-  getDraftData: () => AlbumDraftData,
+const persistDraftData = async (
+  draft: AlbumDraftData,
   setMessage: Setter<string | null>,
-): void => {
-  const draft = getDraftData()
-  getAlbumDraftStorage()
-    .then(({writeAlbumDraftData}) => {
-      if (!writeAlbumDraftData(draft).success) {
-        setMessage('브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.')
-      }
-    })
-    .catch((error: unknown) => {
-      console.warn('Failed to load the album draft storage.', error)
-      setMessage('브라우저 초안 저장 기능을 불러오지 못했습니다. 이 탭을 닫지 마세요.')
-    })
+): Promise<void> => {
+  try {
+    const {writeAlbumDraftData} = await getAlbumDraftStorage()
+
+    if (!writeAlbumDraftData(draft).success) {
+      setMessage('브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.')
+    }
+  } catch (error) {
+    console.warn('Failed to load the album draft storage.', error)
+    setMessage('브라우저 초안 저장 기능을 불러오지 못했습니다. 이 탭을 닫지 마세요.')
+  }
 }
 
 interface RestoredAlbumDraft {
@@ -188,11 +187,13 @@ const persistPreparedCover = async ({
   return '커버를 중앙 정사각형으로 자르고 1200×1200 WebP로 준비했습니다.'
 }
 
+type DraftField = 'cover' | 'coverFallback' | 'coverImageUrl' | 'translations'
+
 interface DraftFieldHandlerOptions {
-  readonly getDraftData: () => AlbumDraftData
+  readonly markEdited: (field: DraftField) => void
+  readonly persistDraft: () => void
   readonly setCoverFallback: Setter<AlbumDraftData['coverFallback']>
   readonly setCoverImageUrl: Setter<string>
-  readonly setMessage: Setter<string | null>
   readonly setTranslations: Setter<AlbumDraftTranslations>
 }
 
@@ -201,21 +202,188 @@ const createDraftFieldHandlers = (options: DraftFieldHandlerOptions) => ({
     const fallback = coverFallbackSchema.safeParse(event.currentTarget.value)
 
     if (fallback.success) {
+      options.markEdited('coverFallback')
       options.setCoverFallback(fallback.data)
-      persistDraftData(options.getDraftData, options.setMessage)
+      options.persistDraft()
     }
   },
   handleCoverImageUrlInput: (event: InputEvent & {currentTarget: HTMLInputElement}): void => {
+    options.markEdited('coverImageUrl')
     options.setCoverImageUrl(event.currentTarget.value)
-    persistDraftData(options.getDraftData, options.setMessage)
+    options.persistDraft()
   },
   handleTranslationsChange: (translations: AlbumDraftTranslations): void => {
+    options.markEdited('translations')
     options.setTranslations(translations)
-    persistDraftData(options.getDraftData, options.setMessage)
+    options.persistDraft()
   },
 })
 
-export const useAlbumDraft = (options: AlbumDraftOptions) => {
+interface CreateAlbumSubmitHandlerOptions extends UseAlbumDraftProps {
+  readonly clearPreparedCover: () => void
+  readonly getCoverDraftId: () => string | null
+  readonly getCoverFile: () => File | null
+  readonly getDraftData: () => AlbumDraftData
+  readonly setCoverDraftId: Setter<string | null>
+  readonly setCoverFallback: Setter<AlbumDraftData['coverFallback']>
+  readonly setCoverImageUrl: Setter<string>
+  readonly setIsSavingAlbum: Setter<boolean>
+  readonly setTranslations: Setter<AlbumDraftTranslations>
+}
+
+const createAlbumSubmitHandler = (
+  options: CreateAlbumSubmitHandlerOptions,
+): JSX.EventHandler<HTMLFormElement, SubmitEvent> =>
+  async function handleAlbumSubmit(event) {
+    event.preventDefault()
+    const albumForm = event.currentTarget
+    options.setIsSavingAlbum(true)
+    options.setMessage(null)
+
+    try {
+      const albumId = await createAlbum(options.getDraftData(), options.getCoverFile())
+      const savedCoverDraftId = options.getCoverDraftId()
+      albumForm.reset()
+      options.clearPreparedCover()
+      options.setCoverDraftId(null)
+      options.setTranslations(createEmptyAlbumTranslations())
+      options.setCoverImageUrl('')
+      options.setCoverFallback('lp')
+      const {deleteAlbumDraft} = await getAlbumDraftStorage()
+      const deletionResult = await deleteAlbumDraft(savedCoverDraftId)
+      await refreshAfterAlbumCreation(options, albumId, deletionResult.success)
+    } catch (error) {
+      options.setMessage(error instanceof Error ? error.message : '앨범을 저장하지 못했습니다.')
+    } finally {
+      options.setIsSavingAlbum(false)
+    }
+  }
+
+interface CreateDraftDataGetterOptions {
+  readonly getCoverDraftId: () => string | null
+  readonly getCoverFallback: () => AlbumDraftData['coverFallback']
+  readonly getCoverFile: () => File | null
+  readonly getCoverImageUrl: () => string
+  readonly getTranslations: () => AlbumDraftTranslations
+}
+
+const createDraftDataGetter = (options: CreateDraftDataGetterOptions) => (): AlbumDraftData => ({
+  coverDraftId: options.getCoverDraftId(),
+  coverFallback: options.getCoverFallback(),
+  coverImageUrl: options.getCoverImageUrl(),
+  hasCoverFile: options.getCoverFile() !== null,
+  translations: options.getTranslations(),
+})
+
+const createDraftPersistence = (
+  getDraftData: () => AlbumDraftData,
+  setMessage: Setter<string | null>,
+): (() => void) => {
+  let persistence = Promise.resolve()
+  return () => {
+    const draft = getDraftData()
+    persistence = persistence.then(() => persistDraftData(draft, setMessage))
+  }
+}
+
+const createConditionalDraftPersistence =
+  (canPersist: () => boolean, persistDraft: () => void): (() => void) =>
+  () => {
+    if (canPersist()) {
+      persistDraft()
+    }
+  }
+
+interface DraftRestorationBarrier {
+  readonly finish: () => void
+  readonly wait: () => Promise<void>
+}
+
+const createDraftRestorationBarrier = (): DraftRestorationBarrier => {
+  let finish!: () => void
+  const completion = new Promise<void>((resolve) => {
+    finish = resolve
+  })
+  return {finish, wait: () => completion}
+}
+
+interface ApplyRestoredDraftOptions {
+  readonly editedFields: ReadonlySet<DraftField>
+  readonly setCoverDraftId: Setter<string | null>
+  readonly setCoverFallback: Setter<AlbumDraftData['coverFallback']>
+  readonly setCoverImageUrl: Setter<string>
+  readonly setCoverPreviewUrl: Setter<string | null>
+  readonly setPreparedCoverFile: Setter<File | null>
+  readonly setTranslations: Setter<AlbumDraftTranslations>
+}
+
+const applyRestoredDraft = (
+  restoredDraft: RestoredAlbumDraft | null,
+  options: ApplyRestoredDraftOptions,
+): void => {
+  if (restoredDraft === null) {
+    return
+  }
+
+  const {coverFile, draft} = restoredDraft
+  if (!options.editedFields.has('translations')) {
+    options.setTranslations(draft.translations)
+  }
+  if (!options.editedFields.has('coverImageUrl')) {
+    options.setCoverImageUrl(draft.coverImageUrl)
+  }
+  if (!options.editedFields.has('coverFallback')) {
+    options.setCoverFallback(draft.coverFallback)
+  }
+
+  if (!options.editedFields.has('cover')) {
+    options.setCoverDraftId(draft.coverDraftId)
+    if (coverFile !== null) {
+      options.setPreparedCoverFile(coverFile)
+      options.setCoverPreviewUrl(URL.createObjectURL(coverFile))
+    }
+  }
+}
+
+interface RegisterDraftRestorationOptions {
+  readonly applyDraft: (restoredDraft: RestoredAlbumDraft | null) => void
+  readonly getIsDisposed: () => boolean
+  readonly onFinished: () => void
+  readonly setIsRestoringDraft: Setter<boolean>
+  readonly setMessage: Setter<string | null>
+}
+
+const registerDraftRestoration = (options: RegisterDraftRestorationOptions): void => {
+  onMount(async () => {
+    try {
+      const restoredDraft = await restoreAlbumDraft()
+
+      if (options.getIsDisposed()) {
+        return
+      }
+
+      options.applyDraft(restoredDraft)
+      if (restoredDraft !== null) {
+        options.setMessage('작성 중이던 앨범 초안을 복원했습니다.')
+      }
+    } catch (error) {
+      if (options.getIsDisposed()) {
+        return
+      }
+      console.warn('Failed to restore the admin album draft.', error)
+      options.setMessage(
+        '브라우저 초안을 복원하지 못했습니다. 새로 입력한 내용은 이 탭에 유지됩니다.',
+      )
+    } finally {
+      options.onFinished()
+      if (!options.getIsDisposed()) {
+        options.setIsRestoringDraft(false)
+      }
+    }
+  })
+}
+
+export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const [isSavingAlbum, setIsSavingAlbum] = createSignal(false)
   const [isProcessingCover, setIsProcessingCover] = createSignal(false)
   const [isRestoringDraft, setIsRestoringDraft] = createSignal(true)
@@ -228,20 +396,29 @@ export const useAlbumDraft = (options: AlbumDraftOptions) => {
   const [coverFallback, setCoverFallback] = createSignal<AlbumDraftData['coverFallback']>('lp')
   const [coverDraftId, setCoverDraftId] = createSignal<string | null>(null)
   let coverPreparationId = 0
+  const editedFields = new Set<DraftField>()
   let isDisposed = false
+  const restorationBarrier = createDraftRestorationBarrier()
 
-  const getDraftData = (): AlbumDraftData => ({
-    coverDraftId: coverDraftId(),
-    coverFallback: coverFallback(),
-    coverImageUrl: coverImageUrl(),
-    hasCoverFile: preparedCoverFile() !== null,
-    translations: albumTranslations(),
+  const getDraftData = createDraftDataGetter({
+    getCoverDraftId: coverDraftId,
+    getCoverFallback: coverFallback,
+    getCoverFile: preparedCoverFile,
+    getCoverImageUrl: coverImageUrl,
+    getTranslations: albumTranslations,
   })
+  const persistDraft = createDraftPersistence(getDraftData, props.setMessage)
+  const persistEditedDraft = createConditionalDraftPersistence(
+    () => !isRestoringDraft(),
+    persistDraft,
+  )
   const draftFieldHandlers = createDraftFieldHandlers({
-    getDraftData,
+    markEdited: (field) => {
+      editedFields.add(field)
+    },
+    persistDraft: persistEditedDraft,
     setCoverFallback,
     setCoverImageUrl,
-    setMessage: options.setMessage,
     setTranslations: setAlbumTranslations,
   })
   const clearPreparedCover = (): void => {
@@ -253,81 +430,64 @@ export const useAlbumDraft = (options: AlbumDraftOptions) => {
 
   onCleanup(() => {
     isDisposed = true
+    restorationBarrier.finish()
     clearPreparedCover()
   })
 
-  onMount(async () => {
-    try {
-      const restoredDraft = await restoreAlbumDraft()
+  registerDraftRestoration({
+    applyDraft: (restoredDraft) => {
+      applyRestoredDraft(restoredDraft, {
+        editedFields,
+        setCoverDraftId,
+        setCoverFallback,
+        setCoverImageUrl,
+        setCoverPreviewUrl,
+        setPreparedCoverFile,
+        setTranslations: setAlbumTranslations,
+      })
 
-      if (isDisposed || restoredDraft === null) {
-        return
+      if (editedFields.size > 0 && !editedFields.has('cover')) {
+        persistDraft()
       }
-
-      const {coverFile, draft} = restoredDraft
-      setAlbumTranslations(draft.translations)
-      setCoverImageUrl(draft.coverImageUrl)
-      setCoverFallback(draft.coverFallback)
-      setCoverDraftId(draft.coverDraftId)
-
-      if (coverFile !== null) {
-        setPreparedCoverFile(coverFile)
-        setCoverPreviewUrl(URL.createObjectURL(coverFile))
-      }
-
-      options.setMessage('작성 중이던 앨범 초안을 복원했습니다.')
-    } catch (error) {
-      if (isDisposed) {
-        return
-      }
-
-      console.warn('Failed to restore the admin album draft.', error)
-      options.setMessage(
-        '브라우저 초안을 복원하지 못했습니다. 새로 입력한 내용은 이 탭에 유지됩니다.',
-      )
-    } finally {
-      if (!isDisposed) {
-        setIsRestoringDraft(false)
-      }
-    }
+    },
+    getIsDisposed: () => isDisposed,
+    onFinished: restorationBarrier.finish,
+    setIsRestoringDraft,
+    setMessage: props.setMessage,
   })
 
-  const handleAlbumSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
-    event.preventDefault()
-    const albumForm = event.currentTarget
-    setIsSavingAlbum(true)
-    options.setMessage(null)
-
-    try {
-      const albumId = await createAlbum(getDraftData(), preparedCoverFile())
-      const savedCoverDraftId = coverDraftId()
-      albumForm.reset()
-      clearPreparedCover()
-      setCoverDraftId(null)
-      setAlbumTranslations(createEmptyAlbumTranslations())
-      setCoverImageUrl('')
-      setCoverFallback('lp')
-      const {deleteAlbumDraft} = await getAlbumDraftStorage()
-      const deletionResult = await deleteAlbumDraft(savedCoverDraftId)
-      await refreshAfterAlbumCreation(options, albumId, deletionResult.success)
-    } catch (error) {
-      options.setMessage(error instanceof Error ? error.message : '앨범을 저장하지 못했습니다.')
-    } finally {
-      setIsSavingAlbum(false)
-    }
-  }
+  const handleAlbumSubmit = createAlbumSubmitHandler({
+    ...props,
+    clearPreparedCover,
+    getCoverDraftId: coverDraftId,
+    getCoverFile: preparedCoverFile,
+    getDraftData,
+    setCoverDraftId,
+    setCoverFallback,
+    setCoverImageUrl,
+    setIsSavingAlbum,
+    setTranslations: setAlbumTranslations,
+  })
 
   const handleCoverChange: JSX.EventHandler<HTMLInputElement, Event> = async (event) => {
     const file = event.currentTarget.files?.item(0) ?? null
     const input = event.currentTarget
     coverPreparationId += 1
-    options.setMessage(null)
+    props.setMessage(null)
 
     if (file === null) {
       const previousCoverDraftId = coverDraftId()
+      editedFields.add('cover')
       clearPreparedCover()
       setCoverDraftId(null)
-      options.setMessage(await removePreparedCoverDraft(previousCoverDraftId, getDraftData()))
+      const clearingId = coverPreparationId
+      await restorationBarrier.wait()
+
+      if (isDisposed || clearingId !== coverPreparationId) {
+        return
+      }
+
+      props.setMessage(await removePreparedCoverDraft(previousCoverDraftId, getDraftData()))
       return
     }
 
@@ -346,10 +506,17 @@ export const useAlbumDraft = (options: AlbumDraftOptions) => {
       clearCoverPreview(coverPreviewUrl(), setCoverPreviewUrl)
       const previousCoverDraftId = coverDraftId()
       const nextCoverDraftId = crypto.randomUUID()
+      editedFields.add('cover')
       setPreparedCoverFile(preparedFile)
       setCoverDraftId(nextCoverDraftId)
       setCoverPreviewUrl(URL.createObjectURL(preparedFile))
-      options.setMessage(
+      await restorationBarrier.wait()
+
+      if (isDisposed || preparationId !== coverPreparationId) {
+        return
+      }
+
+      props.setMessage(
         await persistPreparedCover({
           draft: getDraftData(),
           file: preparedFile,
@@ -359,7 +526,7 @@ export const useAlbumDraft = (options: AlbumDraftOptions) => {
       )
     } catch (error) {
       input.value = ''
-      options.setMessage(
+      props.setMessage(
         error instanceof Error ? error.message : '커버 이미지를 선택하지 못했습니다.',
       )
     } finally {

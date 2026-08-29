@@ -1,10 +1,21 @@
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
+import type {PixiLayerSceneState} from '../layer-scene-definition'
 import {
   FOCUS_ROOM_MOUTH_CHANNELS,
   FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS,
 } from '../scene-catalog-channels'
 import {createPSceneMouthController} from '../scene-mouth-controller'
+
+const createLayerScene = (
+  update: (state: PixiLayerSceneState) => void,
+  supportedChannels: ReadonlySet<string> = new Set(
+    Object.values(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS),
+  ),
+) => ({
+  hasChannel: (channel: string) => supportedChannels.has(channel),
+  update,
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -20,7 +31,7 @@ describe('createPSceneMouthController', () => {
     })
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
     const update = vi.fn()
-    const controller = createPSceneMouthController(() => [{update}, null])
+    const controller = createPSceneMouthController(() => [createLayerScene(update), null])
 
     controller.update('rest', 'round', false)
 
@@ -52,7 +63,7 @@ describe('createPSceneMouthController', () => {
     })
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
     const update = vi.fn()
-    const controller = createPSceneMouthController(() => [{update}, null])
+    const controller = createPSceneMouthController(() => [createLayerScene(update), null])
 
     controller.update('narrow', 'wide', false)
     frames.shift()?.(1_050)
@@ -93,8 +104,8 @@ describe('createPSceneMouthController', () => {
     const firstUpdate = vi.fn()
     const secondUpdate = vi.fn()
     const controller = createPSceneMouthController(() => [
-      {update: firstUpdate},
-      {update: secondUpdate},
+      createLayerScene(firstUpdate),
+      createLayerScene(secondUpdate),
     ])
 
     controller.update('round', 'round', false)
@@ -114,7 +125,7 @@ describe('createPSceneMouthController', () => {
       .spyOn(window, 'cancelAnimationFrame')
       .mockImplementation(() => undefined)
     const update = vi.fn()
-    const controller = createPSceneMouthController(() => [{update}, null])
+    const controller = createPSceneMouthController(() => [createLayerScene(update), null])
 
     controller.update('rest', 'wide', false)
     controller.setReducedMotion('wide', true)
@@ -130,6 +141,34 @@ describe('createPSceneMouthController', () => {
     expect(cancelAnimationFrame).toHaveBeenCalledOnce()
     expect(animatedState.animationEnabled).toBe(true)
     expect(animatedState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]?.opacity).toBe(1)
+    controller.destroy()
+  })
+
+  it('should calculate bridge support independently for current and incoming scenes', () => {
+    const frames: Array<FrameRequestCallback> = []
+    vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback)
+      return frames.length
+    })
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+    const currentUpdate = vi.fn()
+    const incomingUpdate = vi.fn()
+    const controller = createPSceneMouthController(() => [
+      createLayerScene(currentUpdate),
+      createLayerScene(incomingUpdate, new Set()),
+    ])
+
+    controller.update('closed', 'open', false)
+    frames.shift()?.(1_050)
+
+    const currentState = currentUpdate.mock.lastCall?.[0]
+    const incomingState = incomingUpdate.mock.lastCall?.[0]
+    expect(
+      currentState.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['small-open']]?.opacity,
+    ).toBe(1)
+    expect(incomingState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.closed]?.opacity).toBe(Math.SQRT1_2)
+    expect(incomingState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]?.opacity).toBe(Math.SQRT1_2)
     controller.destroy()
   })
 })

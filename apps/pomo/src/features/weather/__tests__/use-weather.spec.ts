@@ -5,7 +5,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const clientMocks = vi.hoisted(() => ({fetchWeatherFeed: vi.fn()}))
 const preferenceMocks = vi.hoisted(() => ({
-  defaultPreference: {citySlug: 'seoul', enabled: true},
+  defaultPreference: {citySlug: 'seoul', enabled: true, sceneMode: 'auto' as const},
   readWeatherPreference: vi.fn(),
   writeWeatherPreference: vi.fn(),
 }))
@@ -63,13 +63,20 @@ beforeEach(() => {
   localStorage.clear()
   vi.useFakeTimers()
   vi.setSystemTime(NOW)
+  clientMocks.fetchWeatherFeed.mockReset()
+  preferenceMocks.readWeatherPreference.mockReset()
+  preferenceMocks.writeWeatherPreference.mockReset()
   Object.defineProperty(preferenceMocks.defaultPreference, 'enabled', {
     configurable: true,
     enumerable: true,
     value: true,
     writable: true,
   })
-  preferenceMocks.readWeatherPreference.mockResolvedValue({citySlug: 'seoul', enabled: true})
+  preferenceMocks.readWeatherPreference.mockResolvedValue({
+    citySlug: 'seoul',
+    enabled: true,
+    sceneMode: 'auto',
+  })
   preferenceMocks.writeWeatherPreference.mockResolvedValue(undefined)
 })
 
@@ -137,15 +144,78 @@ it('should poll at the server delay while another instance collects', async () =
   root.dispose()
 })
 
-it('should keep the weather disabled when the stored preference is disabled', async () => {
-  preferenceMocks.readWeatherPreference.mockResolvedValueOnce({citySlug: 'seoul', enabled: false})
+it('should hide weather status but keep loading weather for an automatic scene', async () => {
+  const overcastFeed = {
+    ...feed,
+    current: {...feed.current, condition: 'overcast' as const},
+  }
+  preferenceMocks.readWeatherPreference.mockResolvedValueOnce({
+    citySlug: 'seoul',
+    enabled: false,
+    sceneMode: 'auto',
+  })
+  clientMocks.fetchWeatherFeed.mockResolvedValueOnce({feed: overcastFeed, status: 'available'})
   const root = createWeatherRoot()
 
   await flushPromises()
 
   expect(root.controller.enabled()).toBe(false)
   expect(root.controller.state()).toEqual({status: 'disabled'})
+  expect(root.controller.sceneCondition()).toBe('overcast')
+  expect(clientMocks.fetchWeatherFeed).toHaveBeenCalledWith('seoul')
+  root.dispose()
+})
+
+it('should refresh a newly selected city while automatic weather stays hidden', async () => {
+  preferenceMocks.readWeatherPreference.mockResolvedValueOnce({
+    citySlug: 'seoul',
+    enabled: false,
+    sceneMode: 'auto',
+  })
+  clientMocks.fetchWeatherFeed.mockResolvedValueOnce(availableFeed).mockResolvedValueOnce({
+    feed: {...feed, city: {label: '부산', slug: 'busan'}},
+    status: 'available',
+  })
+  const root = createWeatherRoot()
+  await flushPromises()
+
+  root.controller.onCityChange('busan')
+  await flushPromises()
+
+  expect(root.controller.citySlug()).toBe('busan')
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  expect(clientMocks.fetchWeatherFeed).toHaveBeenLastCalledWith('busan')
+  expect(preferenceMocks.writeWeatherPreference).toHaveBeenLastCalledWith({
+    citySlug: 'busan',
+    enabled: false,
+    sceneMode: 'auto',
+  })
+  root.dispose()
+})
+
+it('should start and stop a hidden feed when the scene changes between manual and automatic', async () => {
+  preferenceMocks.readWeatherPreference.mockResolvedValueOnce({
+    citySlug: 'seoul',
+    enabled: false,
+    sceneMode: 'cloudy',
+  })
+  clientMocks.fetchWeatherFeed.mockResolvedValue(availableFeed)
+  const root = createWeatherRoot()
+
+  await flushPromises()
   expect(clientMocks.fetchWeatherFeed).not.toHaveBeenCalled()
+  expect(root.controller.sceneCondition()).toBe('cloudy')
+
+  root.controller.onSceneModeChange('auto')
+  await flushPromises()
+  expect(clientMocks.fetchWeatherFeed).toHaveBeenCalledOnce()
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  expect(root.controller.sceneCondition()).toBe('clear')
+
+  root.controller.onSceneModeChange('snow')
+  expect(root.controller.sceneCondition()).toBe('snow')
+  await vi.advanceTimersByTimeAsync(301_000)
+  expect(clientMocks.fetchWeatherFeed).toHaveBeenCalledOnce()
   root.dispose()
 })
 
@@ -165,6 +235,7 @@ it('should persist a city change, show loading, and ignore an older response', a
   expect(preferenceMocks.writeWeatherPreference).toHaveBeenCalledWith({
     citySlug: 'busan',
     enabled: true,
+    sceneMode: 'auto',
   })
   expect(clientMocks.fetchWeatherFeed).toHaveBeenLastCalledWith('busan')
 
@@ -172,6 +243,27 @@ it('should persist a city change, show loading, and ignore an older response', a
   await flushPromises()
 
   expect(root.controller.state()).toEqual({feed: busanFeed, status: 'ready'})
+  root.dispose()
+})
+
+it('should persist a scene mode without refetching and resolve its scene condition', async () => {
+  clientMocks.fetchWeatherFeed.mockResolvedValue(availableFeed)
+  const root = createWeatherRoot()
+  await flushPromises()
+
+  expect(root.controller.sceneMode()).toBe('auto')
+  expect(root.controller.sceneCondition()).toBe('clear')
+
+  root.controller.onSceneModeChange('snow')
+
+  expect(root.controller.sceneMode()).toBe('snow')
+  expect(root.controller.sceneCondition()).toBe('snow')
+  expect(preferenceMocks.writeWeatherPreference).toHaveBeenLastCalledWith({
+    citySlug: 'seoul',
+    enabled: true,
+    sceneMode: 'snow',
+  })
+  expect(clientMocks.fetchWeatherFeed).toHaveBeenCalledOnce()
   root.dispose()
 })
 
@@ -242,7 +334,11 @@ it('should retry when reading the stored preference fails', async () => {
 })
 
 it('should ignore persisted preferences and responses after the controller is disposed', async () => {
-  const storedPreference = Promise.withResolvers<{citySlug: 'busan'; enabled: boolean}>()
+  const storedPreference = Promise.withResolvers<{
+    citySlug: 'busan'
+    enabled: boolean
+    sceneMode: 'auto'
+  }>()
   const weatherRequest = Promise.withResolvers<typeof availableFeed>()
   preferenceMocks.readWeatherPreference.mockReturnValueOnce(storedPreference.promise)
   clientMocks.fetchWeatherFeed.mockReturnValueOnce(weatherRequest.promise)
@@ -251,7 +347,7 @@ it('should ignore persisted preferences and responses after the controller is di
   root.controller.onCityChange('seoul')
   await flushPromises()
   root.dispose()
-  storedPreference.resolve({citySlug: 'busan', enabled: true})
+  storedPreference.resolve({citySlug: 'busan', enabled: true, sceneMode: 'auto'})
   weatherRequest.resolve(availableFeed)
   await flushPromises()
 
@@ -267,7 +363,7 @@ it('should ignore unexpected weather-result variants and failed preference write
   const root = createWeatherRoot()
   await flushPromises()
 
-  root.controller.onEnabledChange(true)
+  root.controller.onCityChange('seoul')
   await flushPromises()
 
   expect(root.controller.enabled()).toBe(true)
@@ -291,7 +387,7 @@ it('should run a scheduled refresh callback', async () => {
   root.dispose()
 })
 
-it('should swallow refresh errors from preference updates and stored-preference loading', async () => {
+it('should swallow refresh setup errors after a city change', async () => {
   clientMocks.fetchWeatherFeed.mockResolvedValueOnce(availableFeed)
   const root = createWeatherRoot()
   await flushPromises()
@@ -299,13 +395,34 @@ it('should swallow refresh errors from preference updates and stored-preference 
   const clearTimer = vi.spyOn(window, 'clearTimeout').mockImplementation(() => {
     throw new Error('timer unavailable')
   })
-  root.controller.onEnabledChange(true)
+  root.controller.onCityChange('busan')
   await flushPromises()
   clearTimer.mockRestore()
-  root.dispose()
 
-  const invalidPreference = {citySlug: 'seoul', enabled: true}
-  Object.defineProperty(invalidPreference, 'enabled', {
+  expect(root.controller.citySlug()).toBe('busan')
+  root.dispose()
+})
+
+it('should swallow refresh setup errors after the feed is disabled', async () => {
+  clientMocks.fetchWeatherFeed.mockResolvedValueOnce(availableFeed)
+  const root = createWeatherRoot()
+  await flushPromises()
+
+  root.controller.onSceneModeChange('snow')
+  const clearTimer = vi.spyOn(window, 'clearTimeout').mockImplementation(() => {
+    throw new Error('timer unavailable')
+  })
+  root.controller.onEnabledChange(false)
+  await flushPromises()
+  clearTimer.mockRestore()
+
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  root.dispose()
+})
+
+it('should swallow refresh setup errors after stored preferences load', async () => {
+  const invalidPreference = {citySlug: 'seoul', enabled: false, sceneMode: 'auto' as const}
+  Object.defineProperty(invalidPreference, 'sceneMode', {
     get: () => {
       throw new Error('invalid preference')
     },
@@ -314,7 +431,7 @@ it('should swallow refresh errors from preference updates and stored-preference 
   const storedRoot = createWeatherRoot()
   await flushPromises()
 
-  expect(storedRoot.controller.state()).toEqual({citySlug: 'seoul', status: 'loading'})
+  expect(storedRoot.controller.state()).toEqual({status: 'disabled'})
   storedRoot.dispose()
 })
 
@@ -327,7 +444,11 @@ it('should suppress retries that fail after disposal', async () => {
   rejectedRequest.reject(new Error('network unavailable'))
   await flushPromises()
 
-  const storedPreference = Promise.withResolvers<{citySlug: 'seoul'; enabled: boolean}>()
+  const storedPreference = Promise.withResolvers<{
+    citySlug: 'seoul'
+    enabled: boolean
+    sceneMode: 'auto'
+  }>()
   preferenceMocks.readWeatherPreference.mockReturnValueOnce(storedPreference.promise)
   const preferenceRoot = createWeatherRoot()
   preferenceRoot.dispose()

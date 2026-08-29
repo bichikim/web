@@ -7,7 +7,7 @@ import {noStoreJson} from 'src/server/http/response'
 import {
   completeTrackRegistration,
   failTrackAsset,
-  findPendingTrackAsset,
+  findTrackAsset,
   reserveTrackAsset,
 } from 'src/server/music/track-registration-repository'
 import {storeTrackArtwork} from 'src/server/music/cover-upload'
@@ -90,12 +90,23 @@ export const PUT = async (event: APIEvent): Promise<Response> => {
     )
   }
 
-  const asset = await findPendingTrackAsset(parsedBody.data.assetId)
+  const asset = await findTrackAsset(parsedBody.data.assetId)
 
   if (asset === null) {
     return noStoreJson(
       {error: 'asset_not_found'},
       {cookies: authorization.cookies, status: HTTP_NOT_FOUND},
+    )
+  }
+
+  if (asset.status === 'active') {
+    return noStoreJson({assetId: asset.id, status: 'active'}, {cookies: authorization.cookies})
+  }
+
+  if (asset.status !== 'pending') {
+    return noStoreJson(
+      {error: 'asset_state_conflict'},
+      {cookies: authorization.cookies, status: HTTP_CONFLICT},
     )
   }
 

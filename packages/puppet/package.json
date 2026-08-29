@@ -1,0 +1,47 @@
+{
+  "name": "@winter-love/puppet",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/editor-element.js"
+  ],
+  "exports": {
+    "./player": {
+      "types": "./dist/types/player/index.d.ts",
+      "import": "./dist/player.js"
+    },
+    "./editor": {
+      "types": "./dist/types/editor/index.d.ts",
+      "import": "./dist/editor.js"
+    },
+    "./editor-element": {
+      "types": "./dist/types/editor-element/index.d.ts",
+      "import": "./dist/editor-element.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build --mode player && vite build --mode editor && vite build --mode editor-element && tsc -p tsconfig.build.json",
+    "dev": "vite",
+    "lint": "oxlint src visual vite.config.ts vitest.browser.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pixi.js": "^8.19.0"
+  },
+  "devDependencies": {
+    "solid-js": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "catalog:"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -11,6 +11,7 @@ import {
   getLocalizedTimeOptions,
   getLocalizedWeatherCityOptions,
   getLocalizedWeatherLabel,
+  getLocalizedWeatherSceneModeOptions,
 } from '../index'
 
 describe('scene localization', () => {
@@ -57,6 +58,17 @@ describe('scene localization', () => {
       {label: 'Daejeon', value: 'daejeon'},
       {label: 'Ulsan', value: 'ulsan'},
       {label: 'Jeju', value: 'jeju'},
+    ])
+  })
+
+  it('should localize every weather scene mode without changing its value', () => {
+    expect(getLocalizedWeatherSceneModeOptions({locale: 'en'})).toEqual([
+      {label: 'Automatic', value: 'auto'},
+      {label: 'Clear', value: 'clear'},
+      {label: 'Rain', value: 'rain'},
+      {label: 'Snow', value: 'snow'},
+      {label: 'Mostly cloudy', value: 'cloudy'},
+      {label: 'Overcast', value: 'overcast'},
     ])
   })
 })

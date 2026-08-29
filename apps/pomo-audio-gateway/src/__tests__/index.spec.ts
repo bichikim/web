@@ -13,7 +13,7 @@ const CLAIMS = {
 } as const
 const SECRET = 'pomo-audio-gateway-secret-with-at-least-32-bytes'
 const ALLOWED_ORIGINS: Env['ALLOWED_ORIGINS'] =
-  'https://pomofi.io,https://www.pomofi.io,https://pomo-app.apps.tossmini.com,https://pomo-app.private-apps.tossmini.com,https://pomo-app.private-web.tossmini.com,https://pomo-app.web.tossmini.com,http://localhost:3000,http://localhost:3100,http://localhost:3200,http://localhost:3300,http://localhost:3400'
+  'https://pomofi.io,https://www.pomofi.io,https://pomo-app.apps.tossmini.com,https://pomo-app.private-apps.tossmini.com,https://pomo-app.private-web.tossmini.com,https://pomo-app.web.tossmini.com,http://localhost:3000,http://localhost:3100,http://localhost:3200,http://localhost:3300,http://localhost:3400,http://127.0.0.1:1420,http://tauri.localhost,https://tauri.localhost,tauri://localhost'
 const BASE_ENVIRONMENT = {
   ALLOWED_ORIGIN_SUFFIXES: '',
   ALLOWED_ORIGINS,
@@ -74,34 +74,36 @@ describe('audio cache requests', () => {
 })
 
 describe('audio gateway authentication', () => {
-  it('should normalize the shared secret and allow an Apps in Toss review origin', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime('2026-08-22T01:00:00.000Z')
-    const token = await createPlaybackToken({...CLAIMS, secret: SECRET})
-    const request = new Request(
-      `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=${token}`,
-      {headers: {Origin: 'https://pomo-app.private-apps.tossmini.com'}, method: 'HEAD'},
-    )
-    const workerRequest = request as unknown as Parameters<typeof audioGateway.fetch>[0]
-    const object = {
-      httpEtag: '"audio-etag"',
-      size: 1024,
-      writeHttpMetadata: vi.fn(),
-    } as unknown as R2Object
-    const environment = {
-      ...BASE_ENVIRONMENT,
-      PAID_AUDIO: {head: vi.fn().mockResolvedValue(object)} as unknown as R2Bucket,
-      PLAYBACK_TOKEN_SECRET: ` ${SECRET} `,
-    }
+  it.each(['https://pomo-app.private-apps.tossmini.com', 'tauri://localhost'])(
+    'should normalize the shared secret and allow the configured origin %s',
+    async (origin) => {
+      vi.useFakeTimers()
+      vi.setSystemTime('2026-08-22T01:00:00.000Z')
+      const token = await createPlaybackToken({...CLAIMS, secret: SECRET})
+      const request = new Request(
+        `https://audio.pomofi.io/tracks/${CLAIMS.assetId}/source.mp3?token=${token}`,
+        {headers: {Origin: origin}, method: 'HEAD'},
+      )
+      const workerRequest = request as unknown as Parameters<typeof audioGateway.fetch>[0]
+      const object = {
+        httpEtag: '"audio-etag"',
+        size: 1024,
+        writeHttpMetadata: vi.fn(),
+      } as unknown as R2Object
+      const environment = {
+        ...BASE_ENVIRONMENT,
+        ALLOWED_ORIGINS,
+        PAID_AUDIO: {head: vi.fn().mockResolvedValue(object)} as unknown as R2Bucket,
+        PLAYBACK_TOKEN_SECRET: ` ${SECRET} `,
+      }
 
-    const response = await audioGateway.fetch(workerRequest, environment, {} as ExecutionContext)
+      const response = await audioGateway.fetch(workerRequest, environment, {} as ExecutionContext)
 
-    expect(response.status).toBe(200)
-    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
-      'https://pomo-app.private-apps.tossmini.com',
-    )
-    expect(environment.PAID_AUDIO.head).toHaveBeenCalledWith(CLAIMS.objectKey)
-  })
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+      expect(environment.PAID_AUDIO.head).toHaveBeenCalledWith(CLAIMS.objectKey)
+    },
+  )
 
   it('should allow an HTTPS Vercel Preview origin by suffix', async () => {
     vi.useFakeTimers()

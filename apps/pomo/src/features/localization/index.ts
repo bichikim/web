@@ -7,7 +7,13 @@ import {
 } from '../focus-room-scene-preferences'
 import type {PSceneMotionInput, PSceneMotionMode} from '../focus-room-animation'
 import type {SceneTimeMode} from '../focus-room-time'
-import {WEATHER_CITY_SLUGS, type WeatherCitySlug, type WeatherCondition} from '../weather'
+import {
+  WEATHER_CITY_SLUGS,
+  WEATHER_SCENE_MODES,
+  type WeatherCitySlug,
+  type WeatherCondition,
+  type WeatherSceneMode,
+} from '../weather'
 import * as m from '@paraglide/message'
 import type {Locale} from '@paraglide/runtime'
 
@@ -166,4 +172,26 @@ export const getLocalizedWeatherCityOptions = (options: LocalizationOptions = {}
   WEATHER_CITY_SLUGS.map((citySlug) => ({
     label: getLocalizedWeatherCityLabel(citySlug, options),
     value: citySlug,
+  }))
+
+const getLocalizedWeatherSceneModeLabel = (
+  mode: WeatherSceneMode,
+  options: LocalizationOptions,
+) => {
+  switch (mode) {
+    case 'auto':
+      return m.weather_scene_auto({}, options)
+    case 'clear':
+    case 'cloudy':
+    case 'overcast':
+    case 'rain':
+    case 'snow':
+      return getLocalizedWeatherLabel(mode, options)
+  }
+}
+
+export const getLocalizedWeatherSceneModeOptions = (options: LocalizationOptions = {}) =>
+  WEATHER_SCENE_MODES.map((mode) => ({
+    label: getLocalizedWeatherSceneModeLabel(mode, options),
+    value: mode,
   }))

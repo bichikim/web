@@ -30,6 +30,8 @@ const UUID_REGEXP = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}
 // oxlint-disable-next-line eslint/no-magic-numbers -- Preview response limit is two MiB.
 const MAXIMUM_PREVIEW_BYTES = 2 * 1024 * 1024
 const getApiOrigin = (): string => import.meta.env.POMO_PUBLIC_ORIGIN
+const usesRemotePublicOrigin = (): boolean =>
+  import.meta.env.POMO_IS_APPS_IN_TOSS || import.meta.env.POMO_IS_DESKTOP
 
 const isTrackAccess = (value: unknown, trackId: string): value is TrackAccess => {
   if (typeof value !== 'object' || value === null) {
@@ -112,7 +114,7 @@ export const loadTrackPreviewSource = async (
   trackId: string,
 ): Promise<TrackPreviewSourceResult> => {
   const accessPath = `/api/music/tracks/${encodeURIComponent(trackId)}/access`
-  const endpoint = import.meta.env.POMO_IS_APPS_IN_TOSS
+  const endpoint = usesRemotePublicOrigin()
     ? new URL(accessPath, getApiOrigin()).toString()
     : accessPath
   const response = await fetch(endpoint, {
@@ -136,7 +138,7 @@ export const loadTrackPreviewSource = async (
   }
 
   const source =
-    access.mode === 'preview' && import.meta.env.POMO_IS_APPS_IN_TOSS
+    access.mode === 'preview' && usesRemotePublicOrigin()
       ? new URL(access.url, getApiOrigin()).toString()
       : access.url
 

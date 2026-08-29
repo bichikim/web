@@ -1,7 +1,8 @@
 export const CLASSES = {
   pomodoro: [
     'pomo-pomodoro absolute top-[calc(1rem_+_var(--pomo-safe-area-inset-top))]',
-    'left-[calc(1rem_+_var(--pomo-safe-area-inset-left))] lg:top-[1.5rem]',
+    'left-[calc(1rem_+_var(--pomo-safe-area-inset-left))]',
+    'lg:top-[calc(1.5rem_+_var(--pomo-safe-area-inset-top))]',
     'lg:left-[1.75rem] pointer-events-auto',
   ].join(' '),
   pomodoroActionIcon: 'pomo-pomodoro__action-icon w-3 h-3',

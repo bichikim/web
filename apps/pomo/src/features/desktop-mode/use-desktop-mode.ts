@@ -8,7 +8,11 @@ import {
   writeCleanExit,
   writeDesktopMode,
 } from './model'
-import {applyDesktopMode, finishDesktopModeTransition} from './runtime'
+import {
+  applyDesktopMode,
+  finishDesktopModeTransition,
+  prepareDesktopModeTransition,
+} from './runtime'
 import {getDesktopErrorMessage} from './error'
 
 const MODE_CHANNEL = 'pomo:desktop-mode'
@@ -55,13 +59,9 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
       await applyDesktopMode(nextMode)
       transitionApplied = true
 
-      if (surfaceOwner && nextMode !== 'desktop') {
-        await finishDesktopModeTransition(nextMode)
-        publishMode(nextMode)
-      } else {
-        publishMode(nextMode)
-        await finishDesktopModeTransition(nextMode)
-      }
+      await prepareDesktopModeTransition(nextMode)
+      publishMode(nextMode)
+      await finishDesktopModeTransition(nextMode)
     } catch (transitionError: unknown) {
       let reportedError = transitionError
 

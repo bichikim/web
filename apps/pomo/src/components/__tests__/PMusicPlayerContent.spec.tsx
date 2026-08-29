@@ -57,6 +57,24 @@ const ADDED_TRACK = {
   title: 'Added',
 } as const
 
+const stubPlaylistFetch = (loadCount: number) => {
+  const fetchMock = vi.fn()
+
+  for (let index = 0; index < loadCount; index += 1) {
+    fetchMock
+      .mockResolvedValueOnce({
+        json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
+        ok: true,
+      })
+      .mockResolvedValueOnce({
+        json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+        ok: true,
+      })
+  }
+
+  vi.stubGlobal('fetch', fetchMock)
+}
+
 describe('PMusicPlayerContent', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -500,6 +518,66 @@ describe('PMusicPlayerContent', () => {
     await Promise.resolve()
 
     expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+  })
+
+  it('should restore album additions after the player remounts', async () => {
+    stubPlaylistFetch(2)
+    const first = render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
+      trackIds: ['one', 'two', 'three', 'added'],
+      version: 1,
+    })
+    first.unmount()
+
+    render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy())
+  })
+
+  it('should preserve removed tracks after the player remounts', async () => {
+    stubPlaylistFetch(2)
+    const first = render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    fireEvent.keyDown(screen.getByTitle('Two · Artist · 밀어서 삭제'), {key: 'Delete'})
+    expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
+      trackIds: ['one', 'three'],
+      version: 1,
+    })
+    first.unmount()
+
+    render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(screen.getByTitle('Three · Artist · 밀어서 삭제')).toBeTruthy())
+    await waitFor(() => expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull())
+  })
+
+  it('should preserve an empty playlist after the player remounts', async () => {
+    stubPlaylistFetch(2)
+    const first = render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', {name: '재생목록 모두 비우기'}))
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
+      trackIds: [],
+      version: 1,
+    })
+    first.unmount()
+
+    render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4))
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(screen.getByText('집중 음악을 준비 중이에요')).toBeTruthy()
+    expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
   })
 
   it('should preserve a removal made before the initial playlist finishes loading', async () => {
