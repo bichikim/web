@@ -1,4 +1,4 @@
-import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
+import {createSignal, onMount} from 'solid-js'
 
 import {
   type PSceneMotionInput,
@@ -7,15 +7,12 @@ import {
   usePSceneStyle,
 } from '../../features/focus-room-animation'
 import {usePScenePreferences} from '../../features/focus-room-scene-preferences'
-import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
 import {useScreenSaver} from '../../features/screen-saver'
 import {useDesktopMode, useDesktopSceneSettingsPublisher} from '../../features/desktop-mode'
 import {useWeather} from '../../features/weather'
 import {SceneToolbar} from '../p-studio/Toolbar'
 import {DesktopSurfaceFrame} from './Frame'
 import * as m from '@paraglide/message'
-
-const AUTOMATIC_PERIOD_REFRESH = 60_000
 
 export const DesktopSettings = () => {
   const desktopMode = useDesktopMode()
@@ -24,23 +21,17 @@ export const DesktopSettings = () => {
   const screenSaver = useScreenSaver()
   const weather = useWeather()
   const publisher = useDesktopSceneSettingsPublisher()
-  const [automaticPeriod, setAutomaticPeriod] = createSignal(getAutomaticScenePeriod(new Date()))
   const [motionInput, setMotionInput] = createSignal<PSceneMotionInput>('drag')
   const [motionMode, setMotionMode] = createSignal<PSceneMotionMode>('depth')
   const [canUseGyroscope, setCanUseGyroscope] = createSignal(false)
-  const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
 
   onMount(() => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
-    const updateAutomaticPeriod = () => setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
-    const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
 
     setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {
       setMotionInput('gyroscope')
     }
-    updateAutomaticPeriod()
-    onCleanup(() => window.clearInterval(timer))
   })
 
   return (
@@ -98,12 +89,16 @@ export const DesktopSettings = () => {
           weather.onEnabledChange(value)
           publisher.publish({name: 'weatherEnabled', value})
         }}
+        onWeatherSceneModeChange={(value) => {
+          weather.onSceneModeChange(value)
+          publisher.publish({name: 'weatherSceneMode', value})
+        }}
         sceneStyle={sceneStyle.sceneStyle()}
         screenSaverDelay={screenSaver.delay()}
-        time={time()}
         timeMode={scenePreferences.timeMode()}
         weatherCitySlug={weather.citySlug()}
         weatherEnabled={weather.enabled()}
+        weatherSceneMode={weather.sceneMode()}
         weatherState={weather.state()}
       />
     </DesktopSurfaceFrame>

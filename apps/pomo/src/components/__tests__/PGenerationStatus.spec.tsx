@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
-import {expect, it} from 'vitest'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {expect, it, vi} from 'vitest'
 
 import {PGenerationStatus} from '../PGenerationStatus'
 
@@ -16,6 +16,25 @@ it('should show a concrete status without progress when no value is provided', (
 
   expect(screen.getByRole('status').textContent).toBe('대사를 입력한 뒤 음성 만들기를 눌러 주세요.')
   expect(screen.queryByRole('progressbar')).toBeNull()
+  expect(screen.queryByRole('button', {name: '취소'})).toBeNull()
+})
+
+it('should expose and invoke an optional cancellation action', () => {
+  const onCancel = vi.fn()
+  render(() => (
+    <PGenerationStatus
+      kind="voice"
+      message="음성 모델 파일을 내려받고 있어요."
+      onCancel={onCancel}
+      progress={42}
+      progressLabel="음성 모델 준비 진행률"
+    />
+  ))
+
+  const cancelButton = screen.getByRole('button', {name: '취소'})
+  fireEvent.click(cancelButton)
+
+  expect(onCancel).toHaveBeenCalledOnce()
 })
 
 it('should hide progress when its value is explicitly null', () => {

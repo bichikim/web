@@ -8,10 +8,16 @@ import {
   type WeatherPreference,
   writeWeatherPreference,
 } from './preference'
+import {
+  resolveWeatherSceneCondition,
+  type WeatherSceneCondition,
+  type WeatherSceneMode,
+} from './scene-mode'
 
 const MINIMUM_REFRESH_DELAY_MILLISECONDS = 1_000
 const REFRESH_SAFETY_DELAY_MILLISECONDS = 1_000
 const WEATHER_RETRY_MILLISECONDS = 60_000
+const DISABLED_WEATHER_STATE = {status: 'disabled'} as const
 
 export type WeatherState =
   | {readonly status: 'disabled'}
@@ -24,6 +30,9 @@ export interface WeatherController {
   readonly enabled: Accessor<boolean>
   readonly onCityChange: (citySlug: WeatherCitySlug) => void
   readonly onEnabledChange: (enabled: boolean) => void
+  readonly onSceneModeChange: (mode: WeatherSceneMode) => void
+  readonly sceneCondition: Accessor<WeatherSceneCondition>
+  readonly sceneMode: Accessor<WeatherSceneMode>
   readonly state: Accessor<WeatherState>
 }
 
@@ -39,10 +48,14 @@ const getRefreshDelay = (expiresAt: string): number =>
     Date.parse(expiresAt) - Date.now() + REFRESH_SAFETY_DELAY_MILLISECONDS,
   )
 
-/** Owns the persisted city preference and periodically refreshes its weather feed. */
+const isWeatherFeedRequired = (preference: WeatherPreference): boolean =>
+  preference.enabled || preference.sceneMode === 'auto'
+
+/** Owns weather preferences, presentation state, and the feed required by automatic scenes. */
 export const useWeather = (): WeatherController => {
   const [preference, setPreference] = createSignal<WeatherPreference>(DEFAULT_WEATHER_PREFERENCE)
-  const [state, setState] = createSignal<WeatherState>({
+  const [statusEnabled, setStatusEnabled] = createSignal(true)
+  const [feedState, setFeedState] = createSignal<WeatherState>({
     citySlug: DEFAULT_WEATHER_PREFERENCE.citySlug,
     status: 'loading',
   })
@@ -69,14 +82,14 @@ export const useWeather = (): WeatherController => {
     requestRevision += 1
     const revision = requestRevision
 
-    if (!currentPreference.enabled) {
-      setState({status: 'disabled'})
+    if (!isWeatherFeedRequired(currentPreference)) {
+      setFeedState(DISABLED_WEATHER_STATE)
       return
     }
 
-    const previousState = state()
+    const previousState = feedState()
     if (!isReadyForCity(previousState, currentPreference.citySlug)) {
-      setState({citySlug: currentPreference.citySlug, status: 'loading'})
+      setFeedState({citySlug: currentPreference.citySlug, status: 'loading'})
     }
 
     try {
@@ -87,22 +100,22 @@ export const useWeather = (): WeatherController => {
 
       switch (result.status) {
         case 'available':
-          setState({feed: result.feed, status: 'ready'})
+          setFeedState({feed: result.feed, status: 'ready'})
           scheduleRefresh(getRefreshDelay(result.feed.expiresAt))
           return
         case 'collecting':
           if (isReadyForCity(previousState, currentPreference.citySlug)) {
             const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
-            setState({feed: {...previousState.feed, stale}, status: 'ready'})
+            setFeedState({feed: {...previousState.feed, stale}, status: 'ready'})
           }
           scheduleRefresh(result.retryAfterMilliseconds ?? WEATHER_RETRY_MILLISECONDS)
           return
         case 'unavailable':
           if (isReadyForCity(previousState, currentPreference.citySlug)) {
             const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
-            setState({feed: {...previousState.feed, stale}, status: 'ready'})
+            setFeedState({feed: {...previousState.feed, stale}, status: 'ready'})
           } else {
-            setState({citySlug: currentPreference.citySlug, status: 'error'})
+            setFeedState({citySlug: currentPreference.citySlug, status: 'error'})
           }
           scheduleRefresh(result.retryAfterMilliseconds ?? WEATHER_RETRY_MILLISECONDS)
           return
@@ -115,21 +128,35 @@ export const useWeather = (): WeatherController => {
       if (!disposed && revision === requestRevision) {
         if (isReadyForCity(previousState, currentPreference.citySlug)) {
           const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
-          setState({feed: {...previousState.feed, stale}, status: 'ready'})
+          setFeedState({feed: {...previousState.feed, stale}, status: 'ready'})
         } else {
-          setState({citySlug: currentPreference.citySlug, status: 'error'})
+          setFeedState({citySlug: currentPreference.citySlug, status: 'error'})
         }
         scheduleRefresh(WEATHER_RETRY_MILLISECONDS)
       }
     }
   }
 
-  const updatePreference = (nextPreference: WeatherPreference) => {
+  const persistPreference = (nextPreference: WeatherPreference) => {
+    setStatusEnabled(nextPreference.enabled)
     setPreference(nextPreference)
     writeWeatherPreference(nextPreference).catch(() => {
       // Storage adapters recover internally; this guards unexpected host failures.
     })
+  }
+
+  const updateFeedPreference = (nextPreference: WeatherPreference) => {
+    persistPreference(nextPreference)
     refresh(nextPreference).catch(() => undefined)
+  }
+
+  const updateFeedRequirement = (nextPreference: WeatherPreference) => {
+    const currentPreference = preference()
+    persistPreference(nextPreference)
+
+    if (isWeatherFeedRequired(currentPreference) !== isWeatherFeedRequired(nextPreference)) {
+      refresh(nextPreference).catch(() => undefined)
+    }
   }
 
   onMount(() => {
@@ -138,6 +165,7 @@ export const useWeather = (): WeatherController => {
     readWeatherPreference()
       .then((storedPreference) => {
         if (!disposed && requestRevision === initialRevision) {
+          setStatusEnabled(storedPreference.enabled)
           setPreference(storedPreference)
           refresh(storedPreference).catch(() => undefined)
         }
@@ -157,8 +185,17 @@ export const useWeather = (): WeatherController => {
   return {
     citySlug: () => preference().citySlug,
     enabled: () => preference().enabled,
-    onCityChange: (citySlug) => updatePreference({...preference(), citySlug}),
-    onEnabledChange: (enabled) => updatePreference({...preference(), enabled}),
-    state,
+    onCityChange: (citySlug) => updateFeedPreference({...preference(), citySlug}),
+    onEnabledChange: (enabled) => updateFeedRequirement({...preference(), enabled}),
+    onSceneModeChange: (sceneMode) => updateFeedRequirement({...preference(), sceneMode}),
+    sceneCondition: () => {
+      const currentState = feedState()
+      const observedCondition =
+        currentState.status === 'ready' ? currentState.feed.current.condition : 'unknown'
+
+      return resolveWeatherSceneCondition(preference().sceneMode, observedCondition)
+    },
+    sceneMode: () => preference().sceneMode,
+    state: () => (statusEnabled() ? feedState() : DISABLED_WEATHER_STATE),
   }
 }

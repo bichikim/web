@@ -110,6 +110,7 @@ const BASE_CATALOG: AdminCatalog = {
     {id: 'asset-two', status: 'active', trackId: 'two'},
     {id: 'asset-one', status: 'active', trackId: 'one'},
     {id: 'asset-hidden', status: 'pending', trackId: 'hidden'},
+    {id: 'asset-pending', status: 'pending', trackId: 'pending'},
     {id: 'asset-other', status: 'active', trackId: 'other'},
   ],
   offers: [
@@ -141,6 +142,10 @@ const BASE_CATALOG: AdminCatalog = {
       status: 'active',
     },
   ],
+  pendingTracks: [
+    {albumId: 'album', artist: 'Pending Artist', id: 'pending', title: 'Pending track'},
+    {albumId: 'other', artist: 'Other Pending', id: 'other-pending', title: 'Other pending'},
+  ],
   tracks: [
     {albumId: 'album', artist: 'Artist two', id: 'two', position: 2, title: 'Track two'},
     {albumId: 'album', artist: 'Artist one', id: 'one', position: 1, title: 'Track one'},
@@ -152,6 +157,7 @@ const BASE_CATALOG: AdminCatalog = {
 interface ModelHarness {
   readonly model: AdminMusicModel
   readonly setCatalog: (catalog: AdminCatalog) => void
+  readonly setConfirmingAssetId: (id: string | null) => void
   readonly setRemovingTrackId: (id: string | null) => void
   readonly setSavingOffer: (saving: boolean) => void
   readonly setSavingTrack: (saving: boolean) => void
@@ -160,14 +166,17 @@ interface ModelHarness {
 
 const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG): ModelHarness => {
   const [catalog, setCatalog] = createSignal(initialCatalog)
+  const [confirmingAssetId, setConfirmingAssetId] = createSignal<string | null>(null)
   const [removingTrackId, setRemovingTrackId] = createSignal<string | null>(null)
   const [savingOffer, setSavingOffer] = createSignal(false)
   const [savingTrack, setSavingTrack] = createSignal(false)
   const [updatingAlbumId, setUpdatingAlbumId] = createSignal<string | null>(null)
   const model = {
     catalog,
+    confirmingAssetId,
     handleAlbumStatusChange: vi.fn().mockResolvedValue(undefined),
     handleOfferSubmit: vi.fn(),
+    handleTrackConfirmation: vi.fn().mockResolvedValue(undefined),
     handleTrackRemove: vi.fn().mockResolvedValue(undefined),
     handleTrackSubmit: vi.fn(),
     isSavingOffer: savingOffer,
@@ -184,6 +193,7 @@ const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG): ModelH
   return {
     model,
     setCatalog,
+    setConfirmingAssetId,
     setRemovingTrackId,
     setSavingOffer,
     setSavingTrack,
@@ -243,8 +253,50 @@ describe('AlbumWorkspace', () => {
     expect(screen.getByText('삭제 중…')).toBeInTheDocument()
   })
 
+  it('should expose a pending registration for confirmation or explicit removal', async () => {
+    const harness = createModelHarness()
+    render(() => <AlbumWorkspace album={createAlbum()} model={harness.model} />)
+
+    expect(screen.getByRole('heading', {name: '등록 확인 필요 1'})).toBeInTheDocument()
+    expect(screen.getByText('등록 결과 확인 필요')).toBeInTheDocument()
+    expect(screen.queryByText('Other pending')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', {name: 'Pending track 등록 확인 재시도'}))
+    await waitFor(() =>
+      expect(harness.model.handleTrackConfirmation).toHaveBeenCalledWith('asset-pending'),
+    )
+
+    harness.setConfirmingAssetId('asset-pending')
+    expect(screen.getByRole('button', {name: 'Pending track 등록 확인 재시도'})).toBeDisabled()
+    expect(screen.getByText('확인 중…')).toBeInTheDocument()
+
+    harness.setConfirmingAssetId(null)
+    fireEvent.click(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'}))
+    expect(harness.model.handleTrackRemove).not.toHaveBeenCalled()
+    vi.mocked(window.confirm).mockReturnValueOnce(true)
+    fireEvent.click(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'}))
+    await waitFor(() => expect(harness.model.handleTrackRemove).toHaveBeenCalledWith('pending'))
+    expect(window.confirm).toHaveBeenLastCalledWith(expect.stringContaining('대기 등록을 삭제'))
+  })
+
+  it('should describe a failed pending asset without offering a futile confirmation', () => {
+    const harness = createModelHarness({
+      ...BASE_CATALOG,
+      assets: BASE_CATALOG.assets.map((asset) =>
+        asset.id === 'asset-pending' ? {...asset, status: 'failed'} : asset,
+      ),
+    })
+    render(() => <AlbumWorkspace album={createAlbum()} model={harness.model} />)
+
+    expect(screen.getByText('MP3 검증 실패')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', {name: 'Pending track 등록 확인 재시도'}),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'})).toBeInTheDocument()
+  })
+
   it('should show the empty track state and open the first-track form', () => {
-    const harness = createModelHarness({...BASE_CATALOG, assets: []})
+    const harness = createModelHarness({...BASE_CATALOG, assets: [], pendingTracks: []})
     render(() => <AlbumWorkspace album={createAlbum()} model={harness.model} />)
 
     expect(screen.getByText('아직 수록곡이 없습니다.')).toBeInTheDocument()

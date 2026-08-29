@@ -172,12 +172,19 @@ describe('createEntryPlaybackController', () => {
         }),
     )
     const loadingController = createEntryPlaybackController()
-    const loading = loadingController.prepare(repository, DIALOGUE.id)
+    const onDialogueUnavailable = vi.fn()
+    const loading = loadingController.playSequence(repository, {
+      dialogueIds: [DIALOGUE.id],
+      onDialogueStart: vi.fn(),
+      onDialogueUnavailable,
+      onSequenceStop: vi.fn(),
+    })
     loadingController.cancel()
     resolveDialogue?.(DIALOGUE)
     await loading
     await flush()
     expect(loadingController.isPlaying()).toBe(false)
+    expect(onDialogueUnavailable).not.toHaveBeenCalled()
 
     let resolvePlay: (() => void) | undefined
     TestAudio.playImplementation = () =>

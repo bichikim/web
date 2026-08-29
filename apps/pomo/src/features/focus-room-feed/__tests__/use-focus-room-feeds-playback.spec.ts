@@ -53,6 +53,7 @@ const repositoryMocks = vi.hoisted(() => {
     listJobs: vi.fn().mockResolvedValue([]),
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
+    recoverMissingDialogue: vi.fn().mockResolvedValue(true),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
     updateJob: vi.fn().mockResolvedValue(undefined),
@@ -112,6 +113,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.recoverMissingDialogue.mockResolvedValue(true)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.updateJob.mockResolvedValue(undefined)
@@ -335,10 +337,13 @@ it('should load dialogue, issue, and recovery state during initialization', asyn
   view.cleanup()
 })
 
-it('should mark an unlistened dialogue before playing it', async () => {
+it('should mark an unlistened dialogue when individual playback starts', async () => {
   const available = [createDialogue('new', null), createDialogue('old', '2026-08-14T01:00:00Z')]
   lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
   const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
+    await options.onDialogueStart?.(options.dialogueIds[0] as string)
+  })
   const view = renderHook(() => usePFeeds({events}))
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
@@ -347,8 +352,9 @@ it('should mark an unlistened dialogue before playing it', async () => {
 
   expect(repositoryMocks.feedRepository.markListened).toHaveBeenCalledOnce()
   expect(view.result.dialogues()[0]?.metadata.listenedAt).not.toBeNull()
-  expect(events.playDialogue).toHaveBeenNthCalledWith(1, 'new')
-  expect(events.playDialogue).toHaveBeenNthCalledWith(2, 'old')
+  expect(
+    vi.mocked(events.playDialogueSequence).mock.calls.map(([options]) => options.dialogueIds),
+  ).toEqual([['new'], ['old']])
   view.cleanup()
 })
 
@@ -377,6 +383,114 @@ it('should play all unlistened dialogues once and mark sequence callbacks', asyn
   expect(repositoryMocks.feedRepository.markListened).toHaveBeenCalledTimes(2)
   expect(view.result.isListening()).toBe(false)
   view.cleanup()
+})
+
+it('should regenerate unavailable feed audio instead of repeating the ready notice', async () => {
+  const available = [createDialogue('missing', null)]
+  const storedItem = createItem({
+    feedItemId: 'item-missing',
+    id: 'feed-1\0item-missing',
+    status: 'ready',
+  })
+  lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
+  repositoryMocks.feedRepository.listItems.mockResolvedValue([storedItem])
+  const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
+    await options.onDialogueUnavailable?.('missing')
+  })
+  const view = renderHook(() => usePFeeds({events}))
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
+
+  await view.result.listenAll()
+
+  const recovery = repositoryMocks.feedRepository.recoverMissingDialogue.mock.calls[0]?.[0]
+  expect(recovery).toMatchObject({
+    dialogueId: 'missing',
+    item: {
+      feedConnectionId: 'feed-1',
+      feedItemId: 'item-missing',
+      status: 'queued',
+    },
+    job: {
+      feedConnectionId: 'feed-1',
+      feedItemId: 'item-missing',
+      modelId: 'full',
+      script: '안녕하세요',
+      status: 'queued',
+      voiceId: 'Yuna',
+    },
+  })
+  expect(view.result.unlistenedDialogues()).toEqual([])
+  expect(repositoryMocks.feedRepository.markListened).not.toHaveBeenCalled()
+  expect(queueMocks.scheduleFeedJobs).toHaveBeenCalledWith(
+    expect.any(Array),
+    [recovery?.job.id],
+    expect.any(Function),
+    false,
+  )
+  expect(events.deleteDialogue).toHaveBeenCalledWith('missing')
+  view.cleanup()
+})
+
+it('should discard stale local feed state when another request owns audio recovery', async () => {
+  const available = [createDialogue('missing', null)]
+  lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
+  repositoryMocks.feedRepository.recoverMissingDialogue.mockResolvedValue(false)
+  const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
+    await options.onDialogueUnavailable?.('missing')
+  })
+  const view = renderHook(() => usePFeeds({events}))
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
+
+  await view.result.listenAll()
+
+  expect(view.result.unlistenedDialogues()).toEqual([])
+  expect(queueMocks.scheduleFeedJobs).not.toHaveBeenCalled()
+  expect(events.deleteDialogue).toHaveBeenCalledWith('missing')
+  view.cleanup()
+})
+
+it('should ignore an unavailable callback for a dialogue outside the current feed list', async () => {
+  const available = [createDialogue('available', null)]
+  lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
+  const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
+    await options.onDialogueUnavailable?.('unknown')
+  })
+  const view = renderHook(() => usePFeeds({events}))
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
+
+  await view.result.listenAll()
+
+  expect(repositoryMocks.feedRepository.recoverMissingDialogue).not.toHaveBeenCalled()
+  expect(view.result.unlistenedDialogues()).toEqual(available)
+  expect(events.deleteDialogue).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
+it('should leave recovered persistence for the next mount when disposed during recovery', async () => {
+  const available = [createDialogue('missing', null)]
+  const recovery = Promise.withResolvers<boolean>()
+  lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
+  repositoryMocks.feedRepository.recoverMissingDialogue.mockReturnValue(recovery.promise)
+  const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
+    await options.onDialogueUnavailable?.('missing')
+  })
+  const view = renderHook(() => usePFeeds({events}))
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
+
+  const listening = view.result.listenAll()
+  await vi.waitFor(() =>
+    expect(repositoryMocks.feedRepository.recoverMissingDialogue).toHaveBeenCalledOnce(),
+  )
+  view.cleanup()
+  recovery.resolve(true)
+  await listening
+
+  expect(queueMocks.scheduleFeedJobs).not.toHaveBeenCalled()
+  expect(events.deleteDialogue).not.toHaveBeenCalled()
 })
 
 it('should skip listening to an empty feed batch', async () => {

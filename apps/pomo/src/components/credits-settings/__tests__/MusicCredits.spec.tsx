@@ -15,7 +15,9 @@ it('should show four credits before expanding and collapse the list again', () =
   render(() => <PMusicCredits entries={MUSIC_CREDITS} />)
 
   expect(screen.getByText('Contributor 1 · 음악 제작')).toBeTruthy()
-  expect(screen.getByRole('heading', {name: 'Artist 4'})).toBeTruthy()
+  const fourthCredit = screen.getByRole('heading', {name: 'Artist 4'}).closest('li')
+  expect(fourthCredit?.className).toContain('rounded-panel')
+  expect(fourthCredit?.className).toContain('border')
   expect(screen.queryByRole('heading', {name: 'Artist 5'})).toBeNull()
 
   const expandButton = screen.getByRole('button', {name: '모두 보기 (+1)'})

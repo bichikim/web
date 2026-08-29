@@ -21,6 +21,10 @@ export type {
   UsePFeedsProps,
 } from './feed-controller'
 export {findFeedNotificationDialogue} from './feed-controller'
+export {createFeedPlaybackController} from './feed-playback'
+export type {CreateFeedPlaybackControllerOptions, FeedPlaybackController} from './feed-playback'
+export {recoverMissingFeedDialogue} from './missing-dialogue-recovery'
+export type {RecoverMissingFeedDialogueOptions} from './missing-dialogue-recovery'
 export {
   createFeedFetcher,
   FEED_POLLING_INTERVAL_MS,

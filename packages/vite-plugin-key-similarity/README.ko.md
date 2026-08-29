@@ -1,6 +1,6 @@
 # `@winter-love/vite-plugin-key-similarity`
 
-[English](README.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+[English](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.md) · [한국어](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ko.md) · [日本語](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.ja.md) · [简体中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-CN.md) · [繁體中文](https://github.com/bichikim/web/blob/dev/packages/vite-plugin-key-similarity/README.zh-TW.md)
 
 소스 코드의 정적 문자열을 로컬 임베딩 모델로 비교해 의미가 비슷한 key를 찾는 Vite 플러그인이다. 번역 문장, 이벤트 이름, 권한 이름처럼 문자열을 key로 사용하는 함수에 적용할 수 있다.
 

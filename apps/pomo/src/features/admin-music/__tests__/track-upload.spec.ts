@@ -2,7 +2,12 @@
 
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {MAXIMUM_TRACK_BYTES, uploadTrackAudio, validateTrackAudio} from '../track-upload'
+import {
+  confirmTrackAudioRegistration,
+  MAXIMUM_TRACK_BYTES,
+  uploadTrackAudio,
+  validateTrackAudio,
+} from '../track-upload'
 
 const TRACK_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf781'
 const ASSET_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
@@ -53,7 +58,7 @@ describe('uploadTrackAudio', () => {
       .mockResolvedValueOnce(Response.json({assetId: ASSET_ID, status: 'active'}))
     vi.stubGlobal('fetch', fetcher)
 
-    await uploadTrackAudio({file, trackId: TRACK_ID})
+    await expect(uploadTrackAudio({file, trackId: TRACK_ID})).resolves.toEqual({status: 'active'})
 
     expect(fetcher).toHaveBeenNthCalledWith(
       2,
@@ -83,18 +88,6 @@ describe('uploadTrackAudio', () => {
         new Response(null, {status: 503}),
       ],
     },
-    {
-      message: 'MP3 형식 또는 재생 시간을 검증하지 못했습니다.',
-      responses: [
-        Response.json({
-          assetId: ASSET_ID,
-          expiresAt: '2026-08-22T15:00:00.000Z',
-          uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
-        }),
-        new Response(null, {status: 200}),
-        new Response(null, {status: 503}),
-      ],
-    },
   ])('should report a failed upload stage: $message', async ({message, responses}) => {
     const fetcher = vi.fn<typeof fetch>()
     for (const response of responses) {
@@ -108,5 +101,107 @@ describe('uploadTrackAudio', () => {
         trackId: TRACK_ID,
       }),
     ).rejects.toThrow(message)
+  })
+
+  it('should reject a definitive completion failure without retrying', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({
+          assetId: ASSET_ID,
+          expiresAt: '2026-08-22T15:00:00.000Z',
+          uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, {status: 200}))
+      .mockResolvedValueOnce(new Response(null, {status: 400}))
+    vi.stubGlobal('fetch', fetcher)
+
+    await expect(
+      uploadTrackAudio({
+        file: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+        trackId: TRACK_ID,
+      }),
+    ).rejects.toThrow('MP3 형식 또는 재생 시간을 검증하지 못했습니다.')
+    expect(fetcher).toHaveBeenCalledTimes(3)
+  })
+
+  it.each([
+    ['a lost response', new TypeError('network unavailable')],
+    ['a server error', new Response(null, {status: 503})],
+  ])('should confirm the same asset after %s', async (_name, firstCompletion) => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({
+          assetId: ASSET_ID,
+          expiresAt: '2026-08-22T15:00:00.000Z',
+          uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, {status: 200}))
+
+    if (firstCompletion instanceof Response) {
+      fetcher.mockResolvedValueOnce(firstCompletion)
+    } else {
+      fetcher.mockRejectedValueOnce(firstCompletion)
+    }
+
+    fetcher.mockResolvedValueOnce(Response.json({assetId: ASSET_ID, status: 'active'}))
+    vi.stubGlobal('fetch', fetcher)
+
+    await expect(
+      uploadTrackAudio({
+        file: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+        trackId: TRACK_ID,
+      }),
+    ).resolves.toEqual({status: 'active'})
+    expect(fetcher).toHaveBeenNthCalledWith(
+      4,
+      '/api/admin/music/assets',
+      expect.objectContaining({body: JSON.stringify({assetId: ASSET_ID}), method: 'PUT'}),
+    )
+  })
+
+  it('should preserve an unconfirmed upload after bounded completion checks', async () => {
+    const finalError = new TypeError('network still unavailable')
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({
+          assetId: ASSET_ID,
+          expiresAt: '2026-08-22T15:00:00.000Z',
+          uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, {status: 200}))
+      .mockResolvedValueOnce(new Response(null, {status: 503}))
+      .mockRejectedValueOnce(finalError)
+    vi.stubGlobal('fetch', fetcher)
+
+    const result = await uploadTrackAudio({
+      file: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+      trackId: TRACK_ID,
+    })
+
+    expect(result).toMatchObject({status: 'unconfirmed'})
+    expect(result.status === 'unconfirmed' ? result.error.cause : undefined).toBe(finalError)
+    expect(fetcher).toHaveBeenCalledTimes(4)
+  })
+})
+
+describe('confirmTrackAudioRegistration', () => {
+  it('should retry completion for an existing asset without reserving or uploading', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({assetId: ASSET_ID, status: 'active'}))
+    vi.stubGlobal('fetch', fetcher)
+
+    await expect(confirmTrackAudioRegistration(ASSET_ID)).resolves.toEqual({status: 'active'})
+    expect(fetcher).toHaveBeenCalledOnce()
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/admin/music/assets',
+      expect.objectContaining({body: JSON.stringify({assetId: ASSET_ID}), method: 'PUT'}),
+    )
   })
 })

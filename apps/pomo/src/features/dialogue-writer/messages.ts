@@ -6,9 +6,11 @@ import type {
   TextGenerationTokenResponse,
 } from '../text-generation/messages'
 import type {TextModelId} from '../text-generation/model'
+import type {DialogueOutputLanguage} from './prompt'
 
 export interface GenerateDialogueRequest {
   readonly modelId: TextModelId
+  readonly outputLanguage?: DialogueOutputLanguage
   readonly request: string
   readonly type: 'generate'
 }

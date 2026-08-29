@@ -6,7 +6,7 @@ import {type JSX, Show} from 'solid-js'
 const BUTTON_TRANSITION =
   'transition-[background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,transform_160ms_ease]'
 
-const buttonClasses = cva(
+export const pButtonClasses = cva(
   `group inline-flex box-border cursor-pointer items-center justify-center gap-2 border border-solid ` +
     `border-transparent rounded-control font-[inherit] font-750 leading-4 ` +
     `outline-none ${BUTTON_TRANSITION} ` +
@@ -41,7 +41,7 @@ const buttonClasses = cva(
   },
 )
 
-export interface PButtonProps extends VariantProps<typeof buttonClasses> {
+export interface PButtonProps extends VariantProps<typeof pButtonClasses> {
   readonly accessibleLabel?: string
   readonly children: JSX.Element
   readonly class?: string
@@ -57,7 +57,7 @@ export interface PButtonProps extends VariantProps<typeof buttonClasses> {
 export const PButton = (props: PButtonProps) => (
   <button
     aria-label={props.accessibleLabel}
-    class={buttonClasses({class: props.class, size: props.size, tone: props.tone})}
+    class={pButtonClasses({class: props.class, size: props.size, tone: props.tone})}
     disabled={props.disabled}
     onClick={(event) => props.onPress(event.currentTarget)}
     title={props.accessibleLabel}

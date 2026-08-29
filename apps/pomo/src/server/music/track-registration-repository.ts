@@ -232,12 +232,16 @@ export const failTrackAsset = async (assetId: string, failureCode: string): Prom
     .where(and(eq(musicTrackAssets.id, assetId), eq(musicTrackAssets.status, 'pending')))
 }
 
-export const findPendingTrackAsset = async (assetId: string) => {
+export const findTrackAsset = async (assetId: string) => {
   const database = getDatabase()
   const [asset] = await database
-    .select({id: musicTrackAssets.id, objectKey: musicTrackAssets.objectKey})
+    .select({
+      id: musicTrackAssets.id,
+      objectKey: musicTrackAssets.objectKey,
+      status: musicTrackAssets.status,
+    })
     .from(musicTrackAssets)
-    .where(and(eq(musicTrackAssets.id, assetId), eq(musicTrackAssets.status, 'pending')))
+    .where(eq(musicTrackAssets.id, assetId))
     .limit(1)
 
   return asset ?? null

@@ -4,7 +4,7 @@ import {type TextGenerationRuntime, type TextModelId, trimRepetitiveTail} from '
 import {normalizeKoreanSpeechStyle} from './answer'
 import {createForeignTokenIds} from './foreign-tokens'
 import type {DialogueWorkerRequest, DialogueWorkerResponse} from './messages'
-import {createDirectAnswerMessages} from './prompt'
+import {createDirectAnswerMessages, type DialogueOutputLanguage} from './prompt'
 
 const MAXIMUM_NEW_TOKENS = 1024
 const workerScope = self as DedicatedWorkerGlobalScope
@@ -20,7 +20,7 @@ const getTextRuntime = () => {
   )
   return textRuntimePromise
 }
-let suppressedTokenIds: Array<number> | null = null
+let suppressedTokenIds: Array<number> | undefined
 
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error && error.message.length > 0) {
@@ -36,30 +36,38 @@ const prepareModel = async (modelId: TextModelId) => {
   sendResponse({type: 'ready'})
 }
 
-const generateDirectAnswer = async (modelId: TextModelId, request: string) => {
+const generateDirectAnswer = async (
+  modelId: TextModelId,
+  outputLanguage: DialogueOutputLanguage,
+  request: string,
+) => {
   const textRuntime = await getTextRuntime()
   await textRuntime.prepare(modelId)
   sendResponse({type: 'started'})
-  suppressedTokenIds ??= createForeignTokenIds(textRuntime.getTokenizer())
+  if (outputLanguage === 'ko') {
+    suppressedTokenIds ??= createForeignTokenIds(textRuntime.getTokenizer())
+  }
   const output = await textRuntime.generate({
     maximumTokens: MAXIMUM_NEW_TOKENS,
-    messages: createDirectAnswerMessages({request}),
+    messages: createDirectAnswerMessages({outputLanguage, request}),
     noRepeatNgramSize: 4,
     onToken: (text) => sendResponse({text, type: 'token'}),
     repetitionPenalty: 1.15,
-    suppressedTokenIds,
+    suppressedTokenIds: outputLanguage === 'ko' ? suppressedTokenIds : undefined,
     temperature: 0.7,
     topK: 40,
     topP: 0.9,
   })
-  const answer = normalizeKoreanSpeechStyle(trimRepetitiveTail(output))
+  const trimmedOutput = trimRepetitiveTail(output)
+  const answer =
+    outputLanguage === 'ko' ? normalizeKoreanSpeechStyle(trimmedOutput) : trimmedOutput.trim()
   sendResponse({text: answer, type: 'complete'})
 }
 
 const handleRequest = (request: DialogueWorkerRequest): Promise<void> => {
   switch (request.type) {
     case 'generate':
-      return generateDirectAnswer(request.modelId, request.request)
+      return generateDirectAnswer(request.modelId, request.outputLanguage ?? 'ko', request.request)
     case 'prepare':
       return prepareModel(request.modelId)
   }

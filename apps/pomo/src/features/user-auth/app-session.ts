@@ -21,10 +21,20 @@ interface RateLimitedAccountLinkEmail {
   readonly status: 'rate-limited'
 }
 
+interface ClearedTossLoginStorage {
+  readonly storageStatus: 'cleared'
+}
+
+interface PendingTossLoginCleanup {
+  readonly storageStatus: 'cleanup-pending'
+}
+
 export type AccountLinkEmailResult =
   | SentAccountLinkEmail
   | RejectedAccountLinkEmail
   | RateLimitedAccountLinkEmail
+
+export type RevokeTossLoginSessionResult = ClearedTossLoginStorage | PendingTossLoginCleanup
 
 const getAuthorizationHeaders = (token: string): HeadersInit => ({
   Authorization: `Bearer ${token}`,
@@ -111,9 +121,18 @@ export const createTossLoginSession = async (): Promise<string> => {
   return body.token
 }
 
-export const revokeTossLoginSession = async (token: string): Promise<void> => {
+export const revokeTossLoginSession = async (
+  token: string,
+): Promise<RevokeTossLoginSessionResult> => {
   await revokeServerSession(token)
-  await clearStoredAppSession()
+
+  try {
+    await clearStoredAppSession()
+    return {storageStatus: 'cleared'}
+  } catch (storageError: unknown) {
+    console.error('Failed to clear revoked Toss session from storage', storageError)
+    return {storageStatus: 'cleanup-pending'}
+  }
 }
 
 export const requestAccountLinkEmail = async (

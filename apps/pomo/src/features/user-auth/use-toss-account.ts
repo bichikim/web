@@ -124,12 +124,19 @@ export const useTossAccount = (): TossAccountController => {
       return
     }
 
+    setErrorMessage(null)
+    setSuccessMessage(null)
     setIsSubmitting(true)
 
     try {
-      await revokeTossLoginSession(currentToken)
+      const result = await revokeTossLoginSession(currentToken)
       setToken(null)
-      setSuccessMessage(m.account_toss_logout_success())
+
+      if (result.storageStatus === 'cleared') {
+        setSuccessMessage(m.account_toss_logout_success())
+      } else {
+        setErrorMessage(m.account_toss_logout_cleanup_pending())
+      }
     } catch {
       setErrorMessage(m.account_toss_logout_failed())
     } finally {

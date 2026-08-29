@@ -134,13 +134,22 @@ afterEach(() => {
 describe('createEntryPlaybackController', () => {
   it('should resolve missing dialogue and audio without starting playback', async () => {
     const controller = createEntryPlaybackController()
+    const onDialogueUnavailable = vi.fn()
+    const createOptions = (dialogueId: string) => ({
+      dialogueIds: [dialogueId],
+      onDialogueStart: vi.fn(),
+      onDialogueUnavailable,
+      onSequenceStop: vi.fn(),
+    })
 
     await expect(
-      controller.prepare(createRepository(null), 'missing-dialogue'),
+      controller.playSequence(createRepository(null), createOptions('missing-dialogue')),
     ).resolves.toBeUndefined()
     await expect(
-      controller.prepare(createRepository(DIALOGUE, null), 'missing-audio'),
+      controller.playSequence(createRepository(DIALOGUE, null), createOptions('missing-audio')),
     ).resolves.toBeUndefined()
+    expect(onDialogueUnavailable).toHaveBeenNthCalledWith(1, 'missing-dialogue')
+    expect(onDialogueUnavailable).toHaveBeenNthCalledWith(2, 'missing-audio')
     expect(controller.isPlaying()).toBe(false)
     expect(controller.scheduledDialogueCount()).toBe(0)
   })

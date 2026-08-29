@@ -15,7 +15,6 @@ import {
   type FeedDialogueJob,
   type FeedDialogueMetadata,
   type FeedItemRecord,
-  getFeedItemRecordId,
 } from './feed-dialogue-schema'
 import {createFeedDialogueRepository, type FeedDialogueRepository} from './feed-dialogue-repository'
 import {repairStoredDevFeedDialogues} from './feed-dialogue-repair'
@@ -38,6 +37,7 @@ import {
   loadFeedDialogueList,
   loadFeedIssues,
 } from './feed-dialogue-lifecycle'
+import {createFeedPlaybackController} from './feed-playback'
 import {
   createFeedFetcher,
   FEED_POLLING_INTERVAL_MS,
@@ -53,7 +53,6 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     dialogues().filter((item) => item.metadata.listenedAt === null),
   )
   const latestReady = createMemo(() => findFeedNotificationDialogue(unlistenedDialogues()))
-  const [isListening, setIsListening] = createSignal(false)
   const [issues, setIssues] = createSignal<ReadonlyArray<FeedItemRecord>>([])
   const [recoveryJobs, setRecoveryJobs] = createSignal<ReadonlyArray<FeedDialogueJob>>([])
   const [state, setState] = createSignal<PFeedState>({
@@ -116,31 +115,6 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       setIssues(nextIssues)
     }
   }
-  const markDialoguesListened = async (dialogueIds: ReadonlyArray<string>) => {
-    const pendingIds = new Set(dialogueIds)
-    const pendingItems = dialogues().filter(
-      (item) => pendingIds.has(item.metadata.dialogueId) && item.metadata.listenedAt === null,
-    )
-
-    if (pendingItems.length === 0) {
-      return
-    }
-
-    const listenedAt = new Date().toISOString()
-    const repository = getRepositories().feedRepository
-    const storedIds = new Set(pendingItems.map((item) => item.metadata.dialogueId))
-    await Promise.all(
-      pendingItems.map((item) => repository.markListened(item.metadata.dialogueId, listenedAt)),
-    )
-    setDialogues((items) =>
-      items.map((item) =>
-        storedIds.has(item.metadata.dialogueId)
-          ? {...item, metadata: {...item.metadata, listenedAt}}
-          : item,
-      ),
-    )
-  }
-  const markListened = (dialogueId: string) => markDialoguesListened([dialogueId])
   const repairMalformedDevDialogues = async () => {
     const repositories = getRepositories()
     const connections = createFeedConnectionRepository(window.localStorage).list()
@@ -422,6 +396,16 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   const scheduleJobs = (jobIds: ReadonlyArray<string>, allowModelDownload = false) => {
     scheduleFeedJobs(scheduledJobs, jobIds, runScheduledJobs, allowModelDownload)
   }
+  const playback = createFeedPlaybackController({
+    createId: () => crypto.randomUUID(),
+    dialogues,
+    events: props.events,
+    isDisposed: () => isDisposed,
+    now: () => new Date(),
+    repository: () => getRepositories().feedRepository,
+    scheduleJobs,
+    setDialogues,
+  })
   const syncNow = async () => {
     if (isDisposed || !beginFeedSync(syncGate)) {
       return
@@ -539,41 +523,11 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       recoveryJobs().forEach((job) => dismissedRecoveryIds.add(job.id))
       setRecoveryJobs([])
     },
-    isListening,
+    isListening: playback.isListening,
     issues,
     latestReady,
-    async listen(dialogueId) {
-      await markListened(dialogueId)
-      await props.events.playDialogue(dialogueId)
-    },
-    async listenAll() {
-      if (isListening()) {
-        return
-      }
-
-      const dialogueIds = unlistenedDialogues()
-        .map((item) => item.dialogue.id)
-        .toReversed()
-
-      if (dialogueIds.length === 0) {
-        return
-      }
-
-      setIsListening(true)
-
-      try {
-        await props.events.playDialogueSequence({
-          dialogueIds,
-          onDialogueStart: markListened,
-          // A user stop dismisses the whole feed batch; cancellations and playback failures do not.
-          onSequenceStop: markDialoguesListened,
-        })
-      } finally {
-        if (!isDisposed) {
-          setIsListening(false)
-        }
-      }
-    },
+    listen: playback.listen,
+    listenAll: playback.listenAll,
     async onDeleteDialogue(dialogueId) {
       const repository = getRepositories().feedRepository
 
