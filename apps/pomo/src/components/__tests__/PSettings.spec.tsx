@@ -9,6 +9,7 @@ import {PModal, type PModalProps} from 'src/components/PModal'
 import {PRadioSwitch} from 'src/components/PRadioSwitch'
 import {PSelect} from 'src/components/PSelect'
 import {PSwitch, type PSwitchProps} from 'src/components/PSwitch'
+import {useFullscreen} from 'src/features/fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {PDialogueSettings} from '../PDialogueSettings'
 import {PWeatherSettings} from '../PWeatherSettings'
@@ -19,6 +20,7 @@ vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
 vi.mock('src/components/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
 vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/components/PSwitch', () => ({PSwitch: vi.fn()}))
+vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 vi.mock('../PCreditsSettings', () => ({PCreditsSettings: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
@@ -106,6 +108,13 @@ beforeEach(() => {
   vi.mocked(useScreenWakeLock).mockReturnValue({
     availability: () => 'supported',
     errorMessage: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  vi.mocked(useFullscreen).mockReturnValue({
+    availability: () => 'supported',
+    error: () => null,
     isEnabled: () => false,
     isRequestPending: () => false,
     onEnabledChange: vi.fn(),
@@ -243,6 +252,7 @@ it('should forward every scene, weather, and modal action', () => {
   fireEvent.click(screen.getByRole('button', {name: '장면 조작 방식'}))
   fireEvent.click(screen.getByRole('button', {name: '하찮은 스타일'}))
   fireEvent.click(screen.getByRole('button', {name: '스크린 세이버'}))
+  fireEvent.click(screen.getByRole('button', {name: '전체 화면'}))
   fireEvent.click(screen.getByRole('button', {name: '화면 자동 꺼짐 방지'}))
   fireEvent.click(screen.getByRole('button', {name: '날씨 변경'}))
   fireEvent.click(screen.getByRole('button', {name: '대화 닫기'}))
@@ -254,6 +264,9 @@ it('should forward every scene, weather, and modal action', () => {
   expect(onMotionInputChange).toHaveBeenCalledOnce()
   expect(onSceneStyleChange).toHaveBeenCalledWith('scribble')
   expect(onScreenSaverDelayChange).toHaveBeenCalledWith('10m')
+  expect(vi.mocked(useFullscreen).mock.results.at(-1)?.value.onEnabledChange).toHaveBeenCalledWith(
+    true,
+  )
   expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
   expect(onWeatherCityChange).toHaveBeenCalledWith('seoul')
   expect(onWeatherSceneModeChange).toHaveBeenCalledWith('rain')
@@ -323,4 +336,62 @@ it('should describe every wake-lock availability state and pending request', () 
   expect(
     screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
   ).toHaveAttribute('data-description', 'future-runtime')
+})
+
+it('should describe every full-screen availability, pending, and failure state', () => {
+  const states = [
+    {availability: () => 'checking' as const, error: () => null, isRequestPending: () => false},
+    {availability: () => 'supported' as const, error: () => null, isRequestPending: () => false},
+    {availability: () => 'supported' as const, error: () => null, isRequestPending: () => true},
+    {availability: () => 'unsupported' as const, error: () => null, isRequestPending: () => false},
+    {
+      availability: () => 'supported' as const,
+      error: () => 'enter-failed' as const,
+      isRequestPending: () => false,
+    },
+    {
+      availability: () => 'supported' as const,
+      error: () => 'exit-failed' as const,
+      isRequestPending: () => false,
+    },
+  ]
+
+  for (const state of states) {
+    vi.mocked(useFullscreen).mockReturnValue({
+      ...state,
+      isEnabled: () => false,
+      onEnabledChange: vi.fn(),
+    })
+    render(() => <PSettings />)
+    expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+      'data-description',
+      expect.any(String),
+    )
+  }
+
+  vi.mocked(useFullscreen).mockReturnValue({
+    availability: () => 'future-runtime' as never,
+    error: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  render(() => <PSettings />)
+  expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+    'data-description',
+    'future-runtime',
+  )
+
+  vi.mocked(useFullscreen).mockReturnValue({
+    availability: () => 'supported',
+    error: () => 'future-error' as never,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  render(() => <PSettings />)
+  expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+    'data-description',
+    'future-error',
+  )
 })

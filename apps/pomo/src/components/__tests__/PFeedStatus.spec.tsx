@@ -396,17 +396,18 @@ it('should ignore model consent confirmation while a download is already active'
   expect(feeds.retryRecovery).not.toHaveBeenCalled()
 })
 
-it('should render active sync and error states and let users retry a failed feed check', () => {
-  const syncingFeeds = createFeeds([], false, [], {
-    state: () => ({message: '새 소식을 확인하고 있어요.', progress: 50, status: 'syncing'}),
-  })
-  vi.mocked(usePFeedContext).mockReturnValue(syncingFeeds)
-  const syncingResult = render(() => <PFeedStatus />)
+it('should hide feed syncing activity', () => {
+  const message = '새 소식을 확인하고 있어요.'
+  vi.mocked(usePFeedContext).mockReturnValue(
+    createFeeds([], false, [], {state: () => ({message, progress: 50, status: 'syncing'})}),
+  )
+  render(() => <PFeedStatus />)
 
-  expect(screen.getByRole('status')).toHaveAttribute('data-state', 'syncing')
-  expect(screen.getByText('새 소식을 확인하고 있어요.')).toBeInTheDocument()
-  syncingResult.unmount()
+  expect(screen.queryByRole('status')).toBeNull()
+  expect(screen.queryByText(message)).toBeNull()
+})
 
+it('should render an error and let users retry a failed feed check', () => {
   const errorFeeds = createFeeds([], false, [], {
     state: () => ({message: '피드를 확인하지 못했어요.', status: 'error'}),
   })

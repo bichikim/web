@@ -1,12 +1,6 @@
 import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
-import {
-  createPlayer,
-  parseDocument,
-  type Player,
-  type PuppetDocument,
-  serializeDocument,
-} from '../player'
+import {createPlayer, type Player, preparePuppetDocument, type PuppetDocument} from '../player'
 import {EDITOR_VIEWPORT_PADDING} from './internal/viewport'
 
 export type PlayerCanvasStatus = 'error' | 'loading' | 'ready'
@@ -24,61 +18,71 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
   createEffect(() => {
     const hostElement = host()
-    const parsedDocument = parseDocument(serializeDocument(props.document))
     const onStatusChange = untrack(() => props.onStatusChange)
 
     if (hostElement === undefined) {
       return
     }
 
-    const currentPlayer = untrack(player)
-
-    if (!parsedDocument.ok) {
-      generation += 1
-      currentPlayer?.destroy()
-      setPlayer(null)
-      hostElement.replaceChildren()
-      setErrorMessage('편집 데이터를 플레이어 문서로 변환하지 못했습니다.')
-      onStatusChange?.('error')
-      return
-    }
-
-    if (currentPlayer?.updateDocument(parsedDocument.document) === true) {
-      setErrorMessage(null)
-      onStatusChange?.('ready')
-      return
-    }
-
     generation += 1
     const activeGeneration = generation
-    const canvasElement = window.document.createElement('canvas')
-
-    currentPlayer?.destroy()
-    setPlayer(null)
-    setErrorMessage(null)
+    const abortController = new AbortController()
+    onCleanup(() => abortController.abort())
     onStatusChange?.('loading')
-    hostElement.replaceChildren(canvasElement)
 
-    createPlayer({
-      canvas: canvasElement,
-      document: parsedDocument.document,
-      resizeTo: hostElement,
-      viewportPadding: EDITOR_VIEWPORT_PADDING,
-    })
-      .then((createdPlayer) => {
+    preparePuppetDocument({document: props.document, signal: abortController.signal})
+      .then((preparedDocument) => {
         if (activeGeneration !== generation) {
-          createdPlayer.destroy()
           return
         }
 
-        setPlayer(createdPlayer)
-        onStatusChange?.('ready')
+        const currentPlayer = untrack(player)
+
+        if (!preparedDocument.ok) {
+          currentPlayer?.destroy()
+          setPlayer(null)
+          hostElement.replaceChildren()
+          setErrorMessage('편집 데이터를 플레이어 문서로 변환하지 못했습니다.')
+          onStatusChange?.('error')
+          return
+        }
+
+        if (currentPlayer?.updateDocument(preparedDocument.document) === true) {
+          setErrorMessage(null)
+          onStatusChange?.('ready')
+          return
+        }
+
+        const canvasElement = window.document.createElement('canvas')
+
+        currentPlayer?.destroy()
+        setPlayer(null)
+        setErrorMessage(null)
+        hostElement.replaceChildren(canvasElement)
+
+        return createPlayer({
+          canvas: canvasElement,
+          document: preparedDocument.document,
+          resizeTo: hostElement,
+          viewportPadding: EDITOR_VIEWPORT_PADDING,
+        }).then((createdPlayer) => {
+          if (activeGeneration !== generation) {
+            createdPlayer.destroy()
+            return
+          }
+
+          setPlayer(createdPlayer)
+          onStatusChange?.('ready')
+        })
       })
       .catch((error: unknown) => {
-        if (activeGeneration !== generation) {
+        if (activeGeneration !== generation || abortController.signal.aborted) {
           return
         }
 
+        untrack(player)?.destroy()
+        setPlayer(null)
+        hostElement.replaceChildren()
         setErrorMessage(error instanceof Error ? error.message : '플레이어를 시작하지 못했습니다.')
         onStatusChange?.('error')
       })

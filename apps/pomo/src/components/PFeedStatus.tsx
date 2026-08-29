@@ -60,7 +60,7 @@ const getRecoveryModelDownload = (
 const getActiveGenerationState = (state: PFeedState) =>
   state.status === 'generating' || state.status === 'preparing' ? state : null
 
-const getActiveFeedState = (state: PFeedState) => (state.status === 'idle' ? null : state)
+const getErrorState = (state: PFeedState) => (state.status === 'error' ? state : null)
 
 const createFeedStatusActions = (
   feeds: ReturnType<typeof usePFeedContext>,
@@ -176,7 +176,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
   }
   const isRetryInProgress = () => actions.isRetrying() || activeRecoveryDownload() !== null
   const activeGenerationState = () => getActiveGenerationState(feeds.state())
-  const activeFeedState = () => getActiveFeedState(feeds.state())
+  const errorState = () => getErrorState(feeds.state())
 
   createEffect(() => {
     if (actions.downloadSize() !== null && actions.isRetryDisabled()) {
@@ -271,33 +271,22 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
               </FeedStatusSurface>
             )}
           </Match>
-          <Match when={activeFeedState()}>
+          <Match when={errorState()}>
             {(feedState) => (
-              <FeedStatusSurface sceneStyle={props.sceneStyle} state={feedState().status}>
-                <span
-                  aria-hidden="true"
-                  class={
-                    feedState().status === 'error'
-                      ? 'i-tabler-alert-circle size-5'
-                      : CLASSES.feedStatusSpinner
-                  }
-                />
+              <FeedStatusSurface sceneStyle={props.sceneStyle} state="error">
+                <span aria-hidden="true" class="i-tabler-alert-circle size-5" />
                 <span class={CLASSES.feedStatusCopy}>
-                  <strong>
-                    {feedState().status === 'error' ? m.feed_needs_attention() : m.feed_reading()}
-                  </strong>
+                  <strong>{m.feed_needs_attention()}</strong>
                   <small>{feedState().message}</small>
                 </span>
-                <Show when={feedState().status === 'error'}>
-                  <PButton
-                    class={CLASSES.feedStatusAction}
-                    onPress={feeds.syncNow}
-                    size="small"
-                    tone="secondary"
-                  >
-                    {m.feed_check_again()}
-                  </PButton>
-                </Show>
+                <PButton
+                  class={CLASSES.feedStatusAction}
+                  onPress={feeds.syncNow}
+                  size="small"
+                  tone="secondary"
+                >
+                  {m.feed_check_again()}
+                </PButton>
               </FeedStatusSurface>
             )}
           </Match>

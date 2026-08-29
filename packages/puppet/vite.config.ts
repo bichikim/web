@@ -21,6 +21,7 @@ export default defineConfig(({command, mode}) => {
   }
 
   return {
+    base: './',
     build: {
       emptyOutDir: mode === 'player',
       lib: {
