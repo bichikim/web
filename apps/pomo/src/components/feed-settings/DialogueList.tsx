@@ -4,25 +4,19 @@ import type {PFeedController} from '../../features/focus-room-feed'
 
 const CLASSES = {
   feedSettingsDialogueActions: [
-    'pomo-feed-settings__dialogue-actions flex flex-none gap-[0.4rem] [&_a]:inline-flex',
-    '[&_a]:min-h-8 [&_a]:box-border [&_a]:cursor-pointer [&_a]:items-center',
-    '[&_a]:border [&_a]:border-solid [&_a]:border-border [&_a]:rounded-control',
-    '[&_a]:bg-transparent [&_a]:py-0 [&_a]:px-3',
-    '[&_a]:text-foreground [&_a]:[font:inherit] [&_a]:text-[0.68rem] [&_a]:font-bold',
-    '[&_a]:no-underline [&_button]:inline-flex [&_button]:min-h-8 [&_button]:box-border',
+    'pomo-feed-settings__dialogue-actions flex flex-none gap-[0.4rem]',
+    '[&_button]:inline-flex [&_button]:min-h-8 [&_button]:box-border',
     '[&_button]:cursor-pointer [&_button]:items-center',
     '[&_button]:border [&_button]:border-solid [&_button]:border-border',
     '[&_button]:rounded-control [&_button]:bg-transparent [&_button]:py-0',
     '[&_button]:px-3 [&_button]:text-foreground',
     '[&_button]:[font:inherit] [&_button]:text-[0.68rem] [&_button]:font-bold',
-    '[&_button]:no-underline [&_a:hover]:border-highlight',
-    '[&_button:hover]:border-highlight',
+    '[&_button]:no-underline [&_button:hover]:border-highlight',
     '[&_[data-pomo-feed-delete-confirm]]:border-[rgb(232_174_114_/_58%)]',
     '[&_[data-pomo-feed-delete-confirm]]:text-[#ffd9bd]',
     '[&_[data-pomo-feed-delete-confirm]:hover]:border-[#ffd9bd]',
     '[&_[data-pomo-feed-delete-confirm]:hover]:bg-[rgb(232_174_114_/_12%)]',
-    'max-sm:w-full max-sm:flex-wrap max-sm:[&_a]:w-auto',
-    'max-sm:[&_a]:[flex:1_1_5rem] max-sm:[&_a]:justify-center',
+    'max-sm:w-full max-sm:flex-wrap',
     'max-sm:[&_button]:w-auto max-sm:[&_button]:[flex:1_1_5rem]',
     'max-sm:[&_button]:justify-center',
   ].join(' '),
@@ -192,9 +186,6 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                   </small>
                 </span>
                 <span class={CLASSES.feedSettingsDialogueActions}>
-                  <a href={item.metadata.sourceUrl} rel="noreferrer" target="_blank">
-                    원문
-                  </a>
                   <button onClick={() => handleListen(item.dialogue.id)} type="button">
                     {item.metadata.listenedAt === null ? '듣기' : '다시 듣기'}
                   </button>
