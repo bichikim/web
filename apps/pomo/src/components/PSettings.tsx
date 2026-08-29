@@ -30,20 +30,18 @@ import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
 import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from './pomo-scene-options'
 import {PScribbleCircleControl} from './scribble/CircleControl'
+import {PSettingsSectionHeading} from './settings/SectionHeading'
 import {PSettingsTabList} from './settings/TabList'
 import {PWeatherSettings} from './PWeatherSettings'
 
 const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
-  settingsScene: [
-    'pomo-settings__scene grid gap-4 pb-5',
-    'border-b border-solid border-border',
-  ].join(' '),
+  settingsGrid: 'grid gap-4 min-[60rem]:grid-cols-2',
   settingsScreenSaver: [
-    'pomo-settings__screen-saver grid gap-2 pt-4',
-    'border-t border-solid border-border [&_>_div]:w-full [&_p]:m-0',
+    'pomo-settings__screen-saver grid gap-2 [&_>_div]:w-full [&_p]:m-0',
     '[&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
   ].join(' '),
+  settingsSection: 'grid gap-4 border-t border-solid border-border pt-5',
   settingsWakeLock: 'pomo-settings__wake-lock min-h-12',
 } as const
 
@@ -88,10 +86,93 @@ const getScreenSaverDelayOptions = () =>
     {label: m.settings_delay_one_hour(), value: '1h'},
   ] satisfies readonly PSelectOption<ScreenSaverDelay>[]
 
-export const PSettings = (props: PSettingsProps) => {
-  const [isOpen, setIsOpen] = createSignal(false)
-  const [activeTab, setActiveTab] = createSignal('general')
-  const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
+const PGeneralSceneSettings = (props: PSettingsProps) => (
+  <section aria-labelledby="pomo-settings-scene-title" class={CLASSES.settingsSection}>
+    <PSettingsSectionHeading
+      divider="none"
+      title={m.settings_section_scene()}
+      titleId="pomo-settings-scene-title"
+    />
+    <div class={`pomo-settings__scene ${CLASSES.settingsGrid}`}>
+      <PRadioSwitch
+        label={m.settings_time()}
+        onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}
+        options={getLocalizedTimeOptions()}
+        sceneStyle={props.sceneStyle}
+        value={props.timeMode ?? 'day'}
+      />
+      <div class="lg:hidden">
+        <PRadioSwitch
+          label={m.settings_activity()}
+          onChange={(activity) => props.onActivityChange?.(activity)}
+          options={getLocalizedActivityOptions()}
+          sceneStyle={props.sceneStyle}
+          value={props.activity ?? 'reading'}
+        />
+      </div>
+      <PRadioSwitch
+        label={m.settings_view()}
+        onChange={(gaze) => props.onGazeChange?.(gaze)}
+        options={getLocalizedGazeOptions()}
+        sceneStyle={props.sceneStyle}
+        value={props.gaze ?? 'focused'}
+      />
+    </div>
+  </section>
+)
+
+const PGeneralStyleSettings = (props: PSettingsProps) => (
+  <section aria-labelledby="pomo-settings-style-title" class={CLASSES.settingsSection}>
+    <PSettingsSectionHeading
+      divider="none"
+      title={m.settings_section_style()}
+      titleId="pomo-settings-style-title"
+    />
+    <div class={CLASSES.settingsGrid}>
+      <PSwitch
+        checked={(props.sceneStyle ?? 'original') === 'scribble'}
+        description={m.settings_scribble_description()}
+        label={m.settings_scribble_style()}
+        onChange={(isChecked) => props.onSceneStyleChange?.(isChecked ? 'scribble' : 'original')}
+      />
+      <PRadioSwitch
+        label={m.settings_scene_motion()}
+        onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}
+        options={getLocalizedMotionOptions(P_SCENE_MOTION_OPTIONS)}
+        value={props.motionMode ?? 'depth'}
+      />
+      <Show when={props.canUseGyroscope}>
+        <PRadioSwitch
+          class="col-span-full"
+          label={m.settings_scene_control()}
+          onChange={(motionInput) => props.onMotionInputChange?.(motionInput)}
+          options={getLocalizedMotionInputOptions(P_SCENE_MOTION_INPUT_OPTIONS)}
+          value={props.motionInput ?? 'drag'}
+        />
+      </Show>
+    </div>
+  </section>
+)
+
+const PGeneralWeatherSettings = (props: PSettingsProps) => (
+  <section aria-labelledby="pomo-settings-weather-title" class={CLASSES.settingsSection}>
+    <PSettingsSectionHeading
+      divider="none"
+      title={m.settings_section_weather()}
+      titleId="pomo-settings-weather-title"
+    />
+    <PWeatherSettings
+      citySlug={props.weatherCitySlug}
+      enabled={props.weatherEnabled}
+      onCityChange={props.onWeatherCityChange}
+      onEnabledChange={props.onWeatherEnabledChange}
+      onSceneModeChange={props.onWeatherSceneModeChange}
+      sceneMode={props.weatherSceneMode}
+    />
+  </section>
+)
+
+const PGeneralDisplaySettings = (props: PSettingsProps) => {
   const wakeLock = useScreenWakeLock()
   const wakeLockDescription = createMemo(() => {
     const errorMessage = wakeLock.errorMessage()
@@ -116,6 +197,56 @@ export const PSettings = (props: PSettingsProps) => {
     return exhaustiveAvailability
   })
   const isWakeLockDisabled = () => wakeLock.availability() !== 'supported'
+
+  return (
+    <section aria-labelledby="pomo-settings-display-title" class={CLASSES.settingsSection}>
+      <PSettingsSectionHeading
+        divider="none"
+        title={m.settings_section_display()}
+        titleId="pomo-settings-display-title"
+      />
+      <div class={CLASSES.settingsGrid}>
+        <PSwitch
+          checked={wakeLock.isEnabled()}
+          class={CLASSES.settingsWakeLock}
+          description={wakeLockDescription()}
+          disabled={isWakeLockDisabled()}
+          label={m.settings_wake_lock()}
+          onChange={wakeLock.onEnabledChange}
+        />
+        <div class={CLASSES.settingsScreenSaver}>
+          <PSelect
+            label={m.settings_screen_saver()}
+            onChange={(delay) => props.onScreenSaverDelayChange?.(delay)}
+            options={getScreenSaverDelayOptions()}
+            value={props.screenSaverDelay ?? '10m'}
+          />
+          <p>{m.settings_screen_saver_description()}</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const PGeneralSettings = (props: PSettingsProps) => (
+  <div class={CLASSES.settingsContent}>
+    <PSelect
+      label={m.settings_language()}
+      onChange={setLocale}
+      options={LANGUAGE_OPTIONS}
+      value={getLocale()}
+    />
+    <PGeneralSceneSettings {...props} />
+    <PGeneralStyleSettings {...props} />
+    <PGeneralWeatherSettings {...props} />
+    <PGeneralDisplaySettings {...props} />
+  </div>
+)
+
+export const PSettings = (props: PSettingsProps) => {
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [activeTab, setActiveTab] = createSignal('general')
+  const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
     setIsOpen(true)
@@ -144,88 +275,7 @@ export const PSettings = (props: PSettingsProps) => {
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">
-            <div class={CLASSES.settingsContent}>
-              <PSelect
-                label={m.settings_language()}
-                onChange={setLocale}
-                options={LANGUAGE_OPTIONS}
-                value={getLocale()}
-              />
-              <div class={CLASSES.settingsScene}>
-                <PRadioSwitch
-                  label={m.settings_time()}
-                  onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}
-                  options={getLocalizedTimeOptions()}
-                  sceneStyle={props.sceneStyle}
-                  value={props.timeMode ?? 'day'}
-                />
-                <div class="lg:hidden">
-                  <PRadioSwitch
-                    label={m.settings_activity()}
-                    onChange={(activity) => props.onActivityChange?.(activity)}
-                    options={getLocalizedActivityOptions()}
-                    sceneStyle={props.sceneStyle}
-                    value={props.activity ?? 'reading'}
-                  />
-                </div>
-                <PRadioSwitch
-                  label={m.settings_view()}
-                  onChange={(gaze) => props.onGazeChange?.(gaze)}
-                  options={getLocalizedGazeOptions()}
-                  sceneStyle={props.sceneStyle}
-                  value={props.gaze ?? 'focused'}
-                />
-              </div>
-              <div class="grid gap-4 border-b border-solid border-border pb-5">
-                <PSwitch
-                  checked={(props.sceneStyle ?? 'original') === 'scribble'}
-                  description={m.settings_scribble_description()}
-                  label={m.settings_scribble_style()}
-                  onChange={(isChecked) =>
-                    props.onSceneStyleChange?.(isChecked ? 'scribble' : 'original')
-                  }
-                />
-                <PRadioSwitch
-                  label={m.settings_scene_motion()}
-                  onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}
-                  options={getLocalizedMotionOptions(P_SCENE_MOTION_OPTIONS)}
-                  value={props.motionMode ?? 'depth'}
-                />
-                <Show when={props.canUseGyroscope}>
-                  <PRadioSwitch
-                    label={m.settings_scene_control()}
-                    onChange={(motionInput) => props.onMotionInputChange?.(motionInput)}
-                    options={getLocalizedMotionInputOptions(P_SCENE_MOTION_INPUT_OPTIONS)}
-                    value={props.motionInput ?? 'drag'}
-                  />
-                </Show>
-              </div>
-              <PWeatherSettings
-                citySlug={props.weatherCitySlug}
-                enabled={props.weatherEnabled}
-                onCityChange={props.onWeatherCityChange}
-                onEnabledChange={props.onWeatherEnabledChange}
-                onSceneModeChange={props.onWeatherSceneModeChange}
-                sceneMode={props.weatherSceneMode}
-              />
-              <PSwitch
-                checked={wakeLock.isEnabled()}
-                class={CLASSES.settingsWakeLock}
-                description={wakeLockDescription()}
-                disabled={isWakeLockDisabled()}
-                label={m.settings_wake_lock()}
-                onChange={wakeLock.onEnabledChange}
-              />
-              <div class={CLASSES.settingsScreenSaver}>
-                <PSelect
-                  label={m.settings_screen_saver()}
-                  onChange={(delay) => props.onScreenSaverDelayChange?.(delay)}
-                  options={getScreenSaverDelayOptions()}
-                  value={props.screenSaverDelay ?? '10m'}
-                />
-                <p>{m.settings_screen_saver_description()}</p>
-              </div>
-            </div>
+            <PGeneralSettings {...props} />
           </Tabs.Content>
           <PGuideSettings />
           <PCreditsSettings />

@@ -17,9 +17,10 @@ export interface PWeatherSettingsProps {
 }
 
 export const PWeatherSettings = (props: PWeatherSettingsProps) => (
-  <div class="grid gap-4 border-b border-solid border-border pb-5">
+  <div class="grid gap-4 min-[60rem]:grid-cols-2">
     <PSwitch
       checked={props.enabled ?? true}
+      class="col-span-full"
       description={m.weather_show_description()}
       label={m.weather_show()}
       onChange={(enabled) => props.onEnabledChange?.(enabled)}
@@ -36,6 +37,8 @@ export const PWeatherSettings = (props: PWeatherSettingsProps) => (
       options={getLocalizedWeatherCityOptions()}
       value={props.citySlug ?? 'seoul'}
     />
-    <p class="m-0 text-xs leading-5 text-muted-foreground">{m.weather_support_notice()}</p>
+    <p class="col-span-full m-0 text-xs leading-5 text-muted-foreground">
+      {m.weather_support_notice()}
+    </p>
   </div>
 )
