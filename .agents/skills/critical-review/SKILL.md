@@ -6,51 +6,28 @@ disable-model-invocation: true
 
 # Critical Review
 
-Review the explicit target against enterprise-grade correctness, security, lifecycle, maintainability, accessibility, and performance expectations. If the target is unclear, ask for an anchor. Trace only relevant callers, callees, types, tests, and configuration; read matching project skills before reporting findings.
+Review the explicit target for correctness, security, lifecycle, maintainability, accessibility, and performance. If unclear, ask for an anchor. Inspect only its relevant callers, callees, types, tests, and configuration, and read matching project skills first.
 
-## Rules
+## Review rules
 
 - Report risks and actionable alternatives, not praise.
-- Review consumer contracts, misuse risk, responsibility boundaries, coupling, error paths, races, and cleanup.
+- Check consumer contracts, misuse risk, boundaries, coupling, errors, races, and cleanup.
 - Prefer deleting branches, helpers, modes, or layers over rearranging avoidable complexity.
-- Flag modified or new code files over 600 lines unless they are non-code assets.
+- Flag changed code files over 600 lines; exclude non-code assets.
+
+Severity: **P0** active widespread security incident, irreversible data loss, or outage; **P1** exploitable security flaw, data corruption, or core-path failure; **P2** reproducible scoped defect or concrete operational/maintainability impact; **P3** non-blocking structural improvement without current behavior impact; **P4** optional cleanup, consistency, or wording.
+
+- `README.md`: keep directory-wide context there; explain an item in its own file when possible, otherwise in `[filename].md`.
+- Config `.ts` files directly under `apps/pomo`, `apps/coong`, or `packages/*` roots, including `vite.config.ts`, must not import their `src/**`. Report reverse imports; ask before implementing an unavoidable exception.
 
 ## Verification gate
 
-Treat warnings, large files, unusual code, and analyzer output as leads, not findings. For every candidate:
+Warnings, size, unusual code, and analyzer output are leads. A finding requires a falsifiable cause, a check capable of disproving it, the observed result, and concrete runtime or user impact.
 
-1. State a falsifiable cause.
-2. Choose and run a check that can disprove it.
-3. Record the observed result.
-4. Connect that result to concrete runtime or user impact.
+Trace browser/server/Worker, build/runtime, and eager/on-demand boundaries. Performance claims require measurement of the affected client artifact or request; server warnings, raw size, and `import()` alone are insufficient.
 
-Trace browser, server, Worker, build-time, eager, and on-demand boundaries instead of inferring across them. For performance claims, measure the affected client artifact or runtime request; server warnings, raw size, and `import()` alone prove nothing.
-
-Only verified candidates become severity-tagged findings. Put material unproven candidates under **Verification gaps** without severity or a fix claim. Give each finding a concrete fix and include a focused diff or snippet when useful.
+Tag only verified findings. Put material unproven leads under **Verification gaps** without severity or fix claims. Every finding needs a concrete fix; add a focused diff or snippet only when useful.
 
 ## Output
 
-### Summary
-
-State scope, overall risk, and whether P0/P1 findings exist.
-
-### Findings
-
-Number findings in severity order:
-
-#### {N}. [{severity}] {short title}
-
-- **Risk:** concrete impact
-- **Cause:** verified mechanism
-- **Verification:** reproduction, command, trace, or measurement
-- **Result:** observed proof
-- **Fix:** change, rationale, and tradeoffs
-- **Example:** focused diff or snippet when useful
-
-### Verification gaps (optional)
-
-Number material leads and state the missing evidence. Do not call them defects.
-
-### Out of scope (optional)
-
-List only material unrelated issues noticed in passing.
+Start with scope, overall risk, and whether P0/P1 exists. Number findings by severity and give each: title, risk, cause, verification, observed result, fix with rationale/tradeoffs, and optional example. Then list numbered **Verification gaps** with missing evidence and material **Out of scope** items; omit empty optional sections.
