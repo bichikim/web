@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import {createModelStorageManager} from '../management'
+import {MODEL_PARTIAL_DIRECTORY_NAME} from '../storage'
 
 const createCache = (urls: ReadonlyArray<string> = []) => ({
   delete: vi.fn(async () => true),
@@ -44,7 +45,7 @@ describe('createModelStorageManager', () => {
         partialStorageAvailable: true,
       },
     })
-    expect(root.getDirectoryHandle).toHaveBeenCalledWith('pomo-model-downloads')
+    expect(root.getDirectoryHandle).toHaveBeenCalledWith(MODEL_PARTIAL_DIRECTORY_NAME)
   })
 
   it('should treat an absent partial directory as empty', async () => {
@@ -90,7 +91,7 @@ describe('createModelStorageManager', () => {
 
     expect(cache.delete).toHaveBeenCalledWith('https://models.test/model.onnx')
     expect(deleteCache).toHaveBeenCalledWith('transformers-cache')
-    expect(removeEntry).toHaveBeenCalledWith('pomo-model-downloads', {recursive: true})
+    expect(removeEntry).toHaveBeenCalledWith(MODEL_PARTIAL_DIRECTORY_NAME, {recursive: true})
   })
 
   it('should normalize unavailable storage and operation failures', async () => {

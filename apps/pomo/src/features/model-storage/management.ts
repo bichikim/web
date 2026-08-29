@@ -1,7 +1,5 @@
 import {failureResult, type Result, successResult} from '../result'
-import {MODEL_CACHE_NAME} from './storage'
-
-const PARTIAL_DIRECTORY_NAME = 'pomo-model-downloads'
+import {MODEL_CACHE_NAME, MODEL_PARTIAL_DIRECTORY_NAME} from './storage'
 
 export type ModelStorageManagementOperation =
   | 'clear-cache'
@@ -77,7 +75,7 @@ const getDefaultStorageRoot = (): (() => Promise<ManagedStorageRoot>) | null => 
 const countPartialFiles = async (getStorageRoot: () => Promise<ManagedStorageRoot>) => {
   try {
     const root = await getStorageRoot()
-    const directory = await root.getDirectoryHandle(PARTIAL_DIRECTORY_NAME)
+    const directory = await root.getDirectoryHandle(MODEL_PARTIAL_DIRECTORY_NAME)
     let count = 0
 
     for await (const entry of directory.values()) {
@@ -131,7 +129,7 @@ export const createModelStorageManager = (
 
       try {
         const root = await getStorageRoot()
-        await root.removeEntry(PARTIAL_DIRECTORY_NAME, {recursive: true})
+        await root.removeEntry(MODEL_PARTIAL_DIRECTORY_NAME, {recursive: true})
         return successResult(true)
       } catch (cause: unknown) {
         return isNotFoundError(cause)

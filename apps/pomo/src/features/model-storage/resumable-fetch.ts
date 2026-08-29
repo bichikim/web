@@ -1,6 +1,5 @@
 import {httpFetch} from '../http-client'
-
-const PARTIAL_DIRECTORY_NAME = 'pomo-model-downloads'
+import {MODEL_PARTIAL_DIRECTORY_NAME} from './storage'
 const BYTES_PER_KIBIBYTE = 1024
 const BYTES_PER_MEBIBYTE = BYTES_PER_KIBIBYTE * BYTES_PER_KIBIBYTE
 const PARTIAL_CHUNK_MEBIBYTES = 8
@@ -60,7 +59,7 @@ const createFileNames = async (url: string): Promise<PartialFileNames> => {
 
 const getPartialDirectory = async () => {
   const root = await navigator.storage.getDirectory()
-  return root.getDirectoryHandle(PARTIAL_DIRECTORY_NAME, {create: true})
+  return root.getDirectoryHandle(MODEL_PARTIAL_DIRECTORY_NAME, {create: true})
 }
 
 const removeFile = async (directory: FileSystemDirectoryHandle, fileName: string) => {

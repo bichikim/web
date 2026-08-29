@@ -7,6 +7,7 @@ export {
 export {
   createModelStorage,
   MODEL_CACHE_NAME,
+  MODEL_PARTIAL_DIRECTORY_NAME,
   reportModelStorageError,
   type ModelStorage,
   type ModelStorageError,

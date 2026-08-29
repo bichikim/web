@@ -108,6 +108,7 @@ const CacheSection = (props: CacheSectionProps) => (
 interface PartialSectionProps {
   readonly busy: boolean
   readonly count: number
+  readonly loading: boolean
   readonly onClear: (source: HTMLButtonElement) => void
   readonly storageAvailable: boolean
 }
@@ -123,9 +124,11 @@ const PartialSection = (props: PartialSectionProps) => (
           이어받기 다운로드 조각
         </h2>
         <p class="mb-0 mt-2 text-sm leading-6 text-#aaa0b1">
-          {props.storageAvailable
-            ? `${props.count}개 파일이 남아 있어요.`
-            : '이 브라우저에서는 OPFS 저장소를 사용할 수 없어요.'}
+          <Show fallback="조회 중…" when={!props.loading}>
+            {props.storageAvailable
+              ? `${props.count}개 파일이 남아 있어요.`
+              : '이 브라우저에서는 OPFS 저장소를 사용할 수 없어요.'}
+          </Show>
         </p>
       </div>
       <PButton
@@ -337,6 +340,7 @@ function StoragePage(props: StoragePageProps) {
         <PartialSection
           busy={isBusy()}
           count={snapshot()?.partialFileCount ?? 0}
+          loading={snapshot() === null && busyAction() === 'inspect'}
           onClear={(source) =>
             requestDeletion(source, {
               kind: 'partials',
