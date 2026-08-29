@@ -1,11 +1,23 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {expect, it, vi} from 'vitest'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PAlbumLibrary, type PAlbumLibraryProps} from '../PAlbumLibrary'
 
 const focus = vi.fn()
+const panelMocks = vi.hoisted(() => ({render: vi.fn()}))
+
+interface PanelProps {
+  readonly isOpen: boolean
+  readonly onAddTracks: PAlbumLibraryProps['onAddTracks']
+  readonly onClearTracks: PAlbumLibraryProps['onClearTracks']
+  readonly onCloseAutoFocus: () => void
+  readonly onOpenChange: (isOpen: boolean) => void
+  readonly onPreviewEnd: PAlbumLibraryProps['onPreviewEnd']
+  readonly onPreviewStart: PAlbumLibraryProps['onPreviewStart']
+  readonly tracks: PAlbumLibraryProps['tracks']
+}
 
 vi.mock('../icon-style', () => ({
   getPomoIconClass: (icon: string, sceneStyle: unknown) => `${icon}:${String(sceneStyle)}`,
@@ -33,17 +45,10 @@ vi.mock('../PPlayerUtilityButton', () => ({
     )
   },
 }))
-vi.mock('../album-library/Panel', () => ({
-  PAlbumLibraryPanel: (props: {
-    readonly isOpen: boolean
-    readonly onAddTracks: PAlbumLibraryProps['onAddTracks']
-    readonly onClearTracks: PAlbumLibraryProps['onClearTracks']
-    readonly onCloseAutoFocus: () => void
-    readonly onOpenChange: (isOpen: boolean) => void
-    readonly onPreviewEnd: PAlbumLibraryProps['onPreviewEnd']
-    readonly onPreviewStart: PAlbumLibraryProps['onPreviewStart']
-    readonly tracks: PAlbumLibraryProps['tracks']
-  }) => {
+vi.mock('../album-library/Panel', () => ({PAlbumLibraryPanel: panelMocks.render}))
+
+beforeEach(() => {
+  panelMocks.render.mockImplementation((props: PanelProps) => {
     Object.values(props)
     props.onAddTracks(props.tracks)
     props.onClearTracks?.()
@@ -60,8 +65,13 @@ vi.mock('../album-library/Panel', () => ({
         </button>
       </div>
     )
-  },
-}))
+  })
+})
+
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+})
 
 it('should open the album panel, forward callbacks, restore focus, and close', () => {
   const onAddTracks = vi.fn()

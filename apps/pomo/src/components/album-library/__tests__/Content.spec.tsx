@@ -10,8 +10,6 @@ const audioMocks = vi.hoisted(() => ({loadPAlbums: vi.fn(), useTrackPreview: vi.
 const componentMocks = vi.hoisted(() => ({
   albumCard: vi.fn(),
   button: vi.fn(),
-  footer: vi.fn(),
-  modal: vi.fn(),
 }))
 const reporterMocks = vi.hoisted(() => ({reportClientError: vi.fn()}))
 
@@ -22,36 +20,14 @@ vi.mock('solid-js', async () => {
 })
 vi.mock('../../../features/focus-room-audio', () => audioMocks)
 vi.mock('../../../features/client-error-reporter', () => reporterMocks)
-vi.mock('../../PModal', () => ({PModal: componentMocks.modal}))
 vi.mock('../../PButton', () => ({PButton: componentMocks.button}))
 vi.mock('../Card', () => ({AlbumCard: componentMocks.albumCard}))
-vi.mock('../Footer', () => ({PlaylistFooter: componentMocks.footer}))
 
 import PAlbumLibraryContent from '../Content'
-
-interface ModalProps {
-  readonly children: JSX.Element
-  readonly description: string
-  readonly footer: JSX.Element
-  readonly isOpen: boolean
-  readonly onCloseAutoFocus: () => void
-  readonly onOpenChange: (isOpen: boolean) => void
-  readonly placement: string
-  readonly size: string
-  readonly title: string
-}
 
 interface ButtonProps {
   readonly children: JSX.Element
   readonly onPress: () => unknown
-}
-
-interface FooterProps {
-  readonly canClear: boolean
-  readonly clearedTrackCount: number
-  readonly onClear: () => void
-  readonly onRestore: () => void
-  readonly trackCount: number
 }
 
 interface AlbumCardProps {
@@ -123,32 +99,8 @@ beforeEach(() => {
       togglePreview: previewToggle,
     }
   })
-  componentMocks.modal.mockImplementation((props: ModalProps) => (
-    <section
-      data-description={props.description}
-      data-is-open={String(props.isOpen)}
-      data-placement={props.placement}
-      data-size={props.size}
-      data-title={props.title}
-    >
-      <button onClick={props.onCloseAutoFocus}>close autofocus</button>
-      <button onClick={() => props.onOpenChange(false)}>change open</button>
-      {props.children}
-      {props.footer}
-    </section>
-  ))
   componentMocks.button.mockImplementation((props: ButtonProps) => (
     <button onClick={() => void props.onPress()}>{props.children}</button>
-  ))
-  componentMocks.footer.mockImplementation((props: FooterProps) => (
-    <footer
-      data-can-clear={String(props.canClear)}
-      data-cleared-count={props.clearedTrackCount}
-      data-track-count={props.trackCount}
-    >
-      <button onClick={props.onClear}>clear</button>
-      <button onClick={props.onRestore}>restore</button>
-    </footer>
   ))
   componentMocks.albumCard.mockImplementation((props: AlbumCardProps) => (
     <article data-testid={`album-${props.album.id}`}>
@@ -180,17 +132,12 @@ describe('PAlbumLibraryContent', () => {
     previewError = vi.fn(() => '미리듣기 오류')
     const [tracks, setTracks] = createSignal<readonly PTrack[]>([TRACK_ONE])
     const onAddTracks = vi.fn((nextTracks: readonly PTrack[]) => setTracks(nextTracks))
-    const onClearTracks = vi.fn(() => setTracks([]))
     const onPreviewEnd = vi.fn()
     const onPreviewStart = vi.fn()
 
     render(() => (
       <PAlbumLibraryContent
-        isOpen
         onAddTracks={onAddTracks}
-        onClearTracks={onClearTracks}
-        onCloseAutoFocus={vi.fn()}
-        onOpenChange={vi.fn()}
         onPreviewEnd={onPreviewEnd}
         onPreviewStart={onPreviewStart}
         tracks={tracks()}
@@ -206,8 +153,6 @@ describe('PAlbumLibraryContent', () => {
     expect(cards[2]?.pendingTrackId).toBe('pending-track')
     expect(cards[2]?.playingTrackId).toBe('playing-track')
     expect(cards[2]?.trackIds.has('track-one')).toBe(true)
-    screen.getByRole('button', {name: 'change open'}).click()
-
     const audioElement = document.querySelector('audio')
 
     expect(audioElement).toBeInstanceOf(HTMLAudioElement)
@@ -220,12 +165,6 @@ describe('PAlbumLibraryContent', () => {
     previewOptions.onStart(stopPreview)
     expect(onPreviewEnd).toHaveBeenCalledOnce()
     expect(onPreviewStart).toHaveBeenCalledWith(stopPreview)
-
-    screen.getByRole('button', {name: 'clear'}).click()
-    expect(onClearTracks).toHaveBeenCalledOnce()
-    screen.getByRole('button', {name: 'restore'}).click()
-    expect(onAddTracks).toHaveBeenCalledWith([TRACK_ONE])
-    screen.getByRole('button', {name: 'restore'}).click()
 
     screen.getByRole('button', {name: 'add album included'}).click()
     screen.getByRole('button', {name: 'add track partial'}).click()
@@ -246,38 +185,16 @@ describe('PAlbumLibraryContent', () => {
     })
   })
 
-  it('should ignore unavailable clear and restore actions and optional preview callbacks', async () => {
+  it('should support optional preview callbacks', async () => {
     audioMocks.loadPAlbums.mockResolvedValue([])
-    const onClearTracks = vi.fn()
-    const firstView = render(() => (
-      <PAlbumLibraryContent
-        isOpen
-        onAddTracks={vi.fn()}
-        onClearTracks={onClearTracks}
-        onCloseAutoFocus={vi.fn()}
-        onOpenChange={vi.fn()}
-        tracks={[]}
-      />
-    ))
+    const firstView = render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
     await waitFor(() => expect(audioMocks.loadPAlbums).toHaveBeenCalled())
 
-    screen.getByRole('button', {name: 'clear'}).click()
-    screen.getByRole('button', {name: 'restore'}).click()
     previewOptions.onEnd()
     previewOptions.onStart(vi.fn())
-    expect(onClearTracks).not.toHaveBeenCalled()
     firstView.unmount()
 
-    render(() => (
-      <PAlbumLibraryContent
-        isOpen
-        onAddTracks={vi.fn()}
-        onCloseAutoFocus={vi.fn()}
-        onOpenChange={vi.fn()}
-        tracks={[TRACK_ONE]}
-      />
-    ))
-    screen.getByRole('button', {name: 'clear'}).click()
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[TRACK_ONE]} />)
   })
 
   it('should report a loading failure and refetch when retry is pressed', async () => {
@@ -286,15 +203,7 @@ describe('PAlbumLibraryContent', () => {
       .mockRejectedValueOnce(loadError)
       .mockResolvedValueOnce([createAlbum('recovered', [TRACK_ONE])])
 
-    render(() => (
-      <PAlbumLibraryContent
-        isOpen
-        onAddTracks={vi.fn()}
-        onCloseAutoFocus={vi.fn()}
-        onOpenChange={vi.fn()}
-        tracks={[]}
-      />
-    ))
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
     await screen.findByRole('button', {name: '다시 시도'})
     expect(reporterMocks.reportClientError).toHaveBeenCalledWith(loadError, {
@@ -317,15 +226,7 @@ describe('PAlbumLibraryContent', () => {
     vi.mocked(createResource).mockReturnValueOnce([resource, {refetch: vi.fn()}] as never)
     previewSetAudio = undefined as unknown as (element: HTMLAudioElement) => void
 
-    render(() => (
-      <PAlbumLibraryContent
-        isOpen
-        onAddTracks={vi.fn()}
-        onCloseAutoFocus={vi.fn()}
-        onOpenChange={vi.fn()}
-        tracks={[]}
-      />
-    ))
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
     await waitFor(() => expect(reads).toBeGreaterThanOrEqual(2))
     expect(screen.queryByTestId('album-transient')).toBeNull()

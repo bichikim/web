@@ -1,11 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {clientOnly} from '@solidjs/start'
-import {lazy} from 'solid-js'
 
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
-vi.mock('solid-js', () => ({lazy: vi.fn()}))
-vi.mock('../album-library/Content', () => ({default: vi.fn()}))
 vi.mock('../character-studio/Canvas', () => ({default: vi.fn()}))
 vi.mock('../dialogue-settings/Content', () => ({default: vi.fn()}))
 vi.mock('../dialogue-page/Editor', () => ({default: vi.fn()}))
@@ -42,16 +39,6 @@ beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
   vi.mocked(clientOnly).mockReturnValue(vi.fn() as unknown as ReturnType<typeof clientOnly>)
-  vi.mocked(lazy).mockReturnValue(vi.fn() as unknown as ReturnType<typeof lazy>)
-})
-
-it('should register and load the album library lazily', async () => {
-  await import('../album-library/Panel')
-
-  expect(lazy).toHaveBeenCalledWith(expect.any(Function))
-  const loader = vi.mocked(lazy).mock.calls[0]?.[0]
-  const loadedModule = await loader?.()
-  expect(loadedModule?.default).toEqual(expect.any(Function))
 })
 
 describe.each(wrapperCases)('%s client-only wrapper', (_name, loadWrapper) => {

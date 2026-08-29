@@ -1,5 +1,6 @@
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
+import {createMemo} from 'solid-js'
 import {
   RANDOM_DIALOGUE_EVENT,
   usePEvents,
@@ -24,6 +25,14 @@ interface PStudioEventsProps {
 
 export const PStudioEvents = (props: PStudioEventsProps) => {
   const events = usePEvents()
+  const isDialoguePresented = createMemo((wasPresented) => {
+    const hasVisibleContent =
+      events.activeText() !== null ||
+      props.pomoSay.speechText() !== null ||
+      events.isDialoguePlaybackBlocked()
+
+    return hasVisibleContent || (wasPresented && events.scheduledDialogueCount() > 0)
+  }, false)
   const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) =>
     events.playDialogueEvents(eventIds, props.pomoSay.stop).catch((error: unknown) => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
@@ -40,14 +49,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       />
       <div
         class={CLASSES.mediaDock}
-        data-dialogue-active={
-          events.activeText() === null &&
-          props.pomoSay.speechText() === null &&
-          !events.isDialoguePlaybackBlocked() &&
-          events.scheduledDialogueCount() === 0
-            ? undefined
-            : ''
-        }
+        data-dialogue-active={isDialoguePresented() ? '' : undefined}
         data-player-expanded={props.isPlayerExpanded ? '' : undefined}
       >
         <PMusicPlayer
