@@ -105,6 +105,7 @@ const configureStudio = (options: StudioOptions = {}) => {
   const [sceneStyle, setSceneStyle] = createSignal<'original' | 'scribble'>('original')
   const [weatherEnabled, setWeatherEnabled] = createSignal(false)
   const [weatherCity, setWeatherCity] = createSignal<string | null>(null)
+  const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>('auto')
 
   vi.mocked(usePEvents).mockReturnValue({
     activeViseme: () => 'rest',
@@ -137,6 +138,9 @@ const configureStudio = (options: StudioOptions = {}) => {
     enabled: weatherEnabled,
     onCityChange: setWeatherCity,
     onEnabledChange: setWeatherEnabled,
+    onSceneModeChange: setWeatherSceneMode,
+    sceneCondition: () => (weatherSceneMode() === 'rain' ? 'rain' : 'clear'),
+    sceneMode: weatherSceneMode,
     state: () => 'idle',
   } as unknown as ReturnType<typeof useWeather>)
   vi.mocked(useDesktopMode).mockReturnValue({
@@ -199,7 +203,12 @@ beforeEach(() => {
     Object.values(props)
 
     return (
-      <div data-motion-input={props.motionInput} data-time={props.time} data-viseme={props.viseme}>
+      <div
+        data-motion-input={props.motionInput}
+        data-time={props.time}
+        data-viseme={props.viseme}
+        data-weather={props.weatherCondition}
+      >
         <button onClick={() => props.onLoadingChange?.(false)} type="button">
           장면 로드 완료
         </button>
@@ -241,6 +250,9 @@ beforeEach(() => {
         </button>
         <button onClick={() => props.onWeatherCityChange('seoul')} type="button">
           서울
+        </button>
+        <button onClick={() => props.onWeatherSceneModeChange('rain')} type="button">
+          비 장면
         </button>
       </div>
     )
@@ -287,10 +299,12 @@ describe('PStudio', () => {
     fireEvent.click(screen.getByRole('button', {name: '자동 시간'}))
     fireEvent.click(screen.getByRole('button', {name: '날씨 켜기'}))
     fireEvent.click(screen.getByRole('button', {name: '서울'}))
+    fireEvent.click(screen.getByRole('button', {name: '비 장면'}))
     fireEvent.click(screen.getByRole('button', {name: '장면 다시 로드'}))
 
     expect(screen.getByRole('img', {name: 'night-writing-user'})).toBeInTheDocument()
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute('data-time', 'night')
+    expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute('data-weather', 'rain')
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute(
       'data-motion-input',
       'drag',

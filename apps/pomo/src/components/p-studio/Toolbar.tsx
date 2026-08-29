@@ -1,7 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {getPomoIconClass} from '../icon-style'
-import {PIconButton} from '../PIconButton'
 import {PSelect} from '../PSelect'
 import {
   type PSceneMotionInput,
@@ -9,21 +8,20 @@ import {
   type PSceneStyle,
 } from '../../features/focus-room-animation/index'
 import {type PActivity, type PGaze} from '../../features/focus-room-scene-preferences/index'
-import {
-  getLocalizedActivityOptions,
-  getLocalizedGazeOptions,
-  getLocalizedTimeLabel,
-  getLocalizedTimeOptions,
-} from '../../features/localization/index'
-import {getNextTimeMode, type SceneTimeMode} from '../../features/focus-room-time/index'
+import {getLocalizedActivityOptions} from '../../features/localization/index'
+import type {SceneTimeMode} from '../../features/focus-room-time/index'
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
-import {type WeatherCitySlug, type WeatherState} from '../../features/weather/index'
+import {
+  type WeatherCitySlug,
+  type WeatherSceneMode,
+  type WeatherState,
+} from '../../features/weather/index'
 import * as m from '@paraglide/message'
 import {PLoadingStatus} from '../PLoadingStatus'
 import {PModelDownloadStatus} from '../PModelDownloadStatus'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
-import {CLASSES, SceneTime} from './shared'
+import {CLASSES} from './shared'
 import {PWeatherStatus} from '../PWeatherStatus'
 import {PDesktopModeControl} from '../PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
@@ -42,14 +40,15 @@ interface SceneToolbarProps {
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
   readonly onWeatherCityChange: (citySlug: WeatherCitySlug) => void
   readonly onWeatherEnabledChange: (enabled: boolean) => void
+  readonly onWeatherSceneModeChange: (mode: WeatherSceneMode) => void
   readonly screenSaverDelay: ScreenSaverDelay
   readonly sceneStyle: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
-  readonly time: SceneTime
   readonly timeMode: SceneTimeMode
   readonly weatherCitySlug: WeatherCitySlug
   readonly weatherEnabled: boolean
+  readonly weatherSceneMode: WeatherSceneMode
   readonly weatherState: WeatherState
   readonly desktopMode?: DesktopMode
   readonly desktopModeError?: string | null
@@ -59,17 +58,6 @@ interface SceneToolbarProps {
 }
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
-  const timeModeOption = () =>
-    getLocalizedTimeOptions().find((option) => option.value === props.timeMode) ??
-    getLocalizedTimeOptions()[0]
-  const timeAccessibleLabel = () => {
-    const option = timeModeOption()
-
-    return option.value === 'auto'
-      ? m.scene_time_automatic({time: getLocalizedTimeLabel(props.time)})
-      : m.scene_time_selected({time: option.label})
-  }
-
   return (
     <div
       class={cx(
@@ -77,15 +65,6 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
-        <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
-          <PIconButton
-            accessibleLabel={timeAccessibleLabel()}
-            class={CLASSES.sceneControl}
-            feedback={timeModeOption().label}
-            icon={getPomoIconClass(timeModeOption().icon, props.sceneStyle)}
-            onPress={() => props.onTimeModeChange(getNextTimeMode(props.timeMode))}
-          />
-        </PScribbleCircleControl>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
           <PSelect
             appearance="icon"
@@ -96,18 +75,6 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             onChange={props.onActivityChange}
             options={getLocalizedActivityOptions()}
             value={props.activity}
-          />
-        </PScribbleCircleControl>
-        <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
-          <PSelect
-            appearance="icon"
-            class={CLASSES.sceneControl}
-            getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
-            hideLabel
-            label={m.settings_view()}
-            onChange={props.onGazeChange}
-            options={getLocalizedGazeOptions()}
-            value={props.gaze}
           />
         </PScribbleCircleControl>
         <SceneSettingsPanel
@@ -123,6 +90,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           onTimeModeChange={props.onTimeModeChange}
           onWeatherCityChange={props.onWeatherCityChange}
           onWeatherEnabledChange={props.onWeatherEnabledChange}
+          onWeatherSceneModeChange={props.onWeatherSceneModeChange}
           screenSaverDelay={props.screenSaverDelay}
           sceneStyle={props.sceneStyle}
           motionInput={props.motionInput}
@@ -130,6 +98,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           timeMode={props.timeMode}
           weatherCitySlug={props.weatherCitySlug}
           weatherEnabled={props.weatherEnabled}
+          weatherSceneMode={props.weatherSceneMode}
           fallback={
             <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
               <span

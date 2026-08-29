@@ -119,6 +119,8 @@
   "weather_show": "Show weather on the focus screen",
   "weather_show_description": "Show weather from the Korea Meteorological Administration for the selected city with an icon and text.",
   "weather_city": "City",
+  "weather_scene": "Weather",
+  "weather_scene_auto": "Automatic",
   "weather_support_notice": "Data: Korea Meteorological Administration",
   "weather_loading": "Checking weather for {city}",
   "weather_error": "Couldn't check weather for {city}",

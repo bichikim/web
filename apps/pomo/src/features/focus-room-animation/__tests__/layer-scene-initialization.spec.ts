@@ -15,6 +15,7 @@ import {
   createOpacityTwinkleState,
 } from '../opacity-twinkle'
 import {createPushFilter, createPushFilters} from '../push-filter-factory'
+import {createSceneEffects} from '../scene-effect'
 import {acquireTextureGroup, releaseTextureGroup} from '../texture-leases'
 import {applyVisibilityCycle} from '../visibility-cycle'
 import {
@@ -58,6 +59,7 @@ vi.mock('../push-filter-factory', () => ({
   createPushFilter: vi.fn(),
   createPushFilters: vi.fn(),
 }))
+vi.mock('../scene-effect', () => ({createSceneEffects: vi.fn()}))
 vi.mock('../texture-leases', () => ({
   acquireTextureGroup: vi.fn(),
   releaseTextureGroup: vi.fn(),
@@ -180,6 +182,14 @@ beforeEach(() => {
   vi.mocked(getMotionEffects).mockReturnValue([])
   vi.mocked(createPushFilters).mockReturnValue([])
   vi.mocked(createLayerMaskFilter).mockReturnValue(null)
+  vi.mocked(createSceneEffects).mockReturnValue({
+    advance: vi.fn(),
+    attachBefore: vi.fn(),
+    attachTrailing: vi.fn(),
+    destroy: vi.fn(),
+    hasMotion: false,
+    setAnimationEnabled: vi.fn(),
+  })
   vi.mocked(getMotionTarget).mockImplementation((_motion, direction) => ({
     x: direction,
     y: direction * 2,
@@ -216,6 +226,17 @@ describe('createStaticLayerScene', () => {
 })
 
 describe('PixiLayerScene initialization', () => {
+  it('should stop animation before effects and layers are initialized', () => {
+    const onRender = vi.fn()
+    const scene = new PixiLayerScene(createDefinition(), {onRender})
+
+    scene.setAnimationEnabled(true)
+
+    expect(tickers[0].stop).toHaveBeenCalledOnce()
+    expect(onRender).toHaveBeenCalledOnce()
+    scene.destroy()
+  })
+
   it('should report only channels declared by the scene definition', () => {
     const layerScene = new PixiLayerScene(
       createDefinition({
@@ -403,6 +424,104 @@ describe('PixiLayerScene initialization', () => {
 
     expect(tickers[0].start).not.toHaveBeenCalled()
     expect(tickers[0].stop).toHaveBeenCalled()
+  })
+
+  it('should place, animate, disable, and destroy a scene effect', async () => {
+    const scene = new PixiLayerScene(
+      createDefinition({
+        effects: [
+          {
+            beforeLayerId: 'head',
+            id: 'rain',
+            kind: 'falling-streaks',
+            maskSource: '/window-mask.png',
+          },
+        ],
+        layers: [
+          {id: 'base', maskSource: '/window-mask.png', source: '/base.webp'},
+          {id: 'head', source: '/head.webp'},
+        ],
+      }),
+      {onRender: vi.fn(), random: () => 0.5},
+    )
+    const effectContainer = createContainer()
+    const effect = {
+      advance: vi.fn(),
+      attachBefore: vi.fn((layerId: string) => {
+        if (layerId === 'head') {
+          containers[0].children.push(effectContainer)
+          effectContainer.parent = containers[0]
+        }
+      }),
+      attachTrailing: vi.fn(),
+      destroy: vi.fn(),
+      hasMotion: true,
+      setAnimationEnabled: vi.fn(),
+    }
+    vi.mocked(createSceneEffects).mockReturnValue(effect)
+
+    await scene.initialize(enabledState)
+
+    expect(createSceneEffects).toHaveBeenCalledWith({
+      definitions: [
+        {
+          beforeLayerId: 'head',
+          id: 'rain',
+          kind: 'falling-streaks',
+          maskSource: '/window-mask.png',
+        },
+      ],
+      height: 100,
+      maskTextures: expect.any(Map),
+      random: expect.any(Function),
+      sceneContainer: containers[0],
+      width: 200,
+    })
+    expect(acquireTextureGroup).toHaveBeenCalledWith([
+      '/base.webp',
+      '/head.webp',
+      '/window-mask.png',
+    ])
+    expect(containers[0].children).toEqual([containers[2], effectContainer, containers[3]])
+    expect(effect.setAnimationEnabled).toHaveBeenCalledWith(true)
+    expect(tickers[0].start).toHaveBeenCalledOnce()
+
+    tickers[0].callback?.({deltaMS: 500})
+    expect(effect.advance).toHaveBeenCalledWith(0.5)
+
+    scene.setAnimationEnabled(false)
+    expect(effect.setAnimationEnabled).toHaveBeenLastCalledWith(false)
+
+    scene.destroy()
+    expect(effect.destroy).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    [
+      'Duplicate scene effect id: rain',
+      [
+        {id: 'rain', kind: 'falling-streaks', maskSource: '/mask.png'},
+        {id: 'rain', kind: 'falling-streaks', maskSource: '/mask.png'},
+      ],
+    ],
+    [
+      'Missing scene effect layer: missing',
+      [
+        {
+          beforeLayerId: 'missing',
+          id: 'rain',
+          kind: 'falling-streaks',
+          maskSource: '/mask.png',
+        },
+      ],
+    ],
+  ])('should reject malformed scene effects: %s', async (message, effects) => {
+    const scene = new PixiLayerScene(
+      createDefinition({effects: effects as PixiLayerSceneDefinition['effects']}),
+      {onRender: vi.fn()},
+    )
+
+    await expect(scene.initialize(enabledState)).rejects.toThrow(message)
   })
 
   it('should reject invalid and repeated initialization', async () => {

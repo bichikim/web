@@ -1,7 +1,10 @@
 import {PSelect} from './PSelect'
 import {PSwitch} from './PSwitch'
-import {getLocalizedWeatherCityOptions} from '../features/localization'
-import type {WeatherCitySlug} from '../features/weather'
+import {
+  getLocalizedWeatherCityOptions,
+  getLocalizedWeatherSceneModeOptions,
+} from '../features/localization'
+import type {WeatherCitySlug, WeatherSceneMode} from '../features/weather'
 import * as m from '@paraglide/message'
 
 export interface PWeatherSettingsProps {
@@ -9,6 +12,8 @@ export interface PWeatherSettingsProps {
   readonly enabled?: boolean
   readonly onCityChange?: (citySlug: WeatherCitySlug) => void
   readonly onEnabledChange?: (enabled: boolean) => void
+  readonly onSceneModeChange?: (mode: WeatherSceneMode) => void
+  readonly sceneMode?: WeatherSceneMode
 }
 
 export const PWeatherSettings = (props: PWeatherSettingsProps) => (
@@ -20,7 +25,12 @@ export const PWeatherSettings = (props: PWeatherSettingsProps) => (
       onChange={(enabled) => props.onEnabledChange?.(enabled)}
     />
     <PSelect
-      disabled={(props.enabled ?? true) === false}
+      label={m.weather_scene()}
+      onChange={(mode) => props.onSceneModeChange?.(mode)}
+      options={getLocalizedWeatherSceneModeOptions()}
+      value={props.sceneMode ?? 'auto'}
+    />
+    <PSelect
       label={m.weather_city()}
       onChange={(citySlug) => props.onCityChange?.(citySlug)}
       options={getLocalizedWeatherCityOptions()}

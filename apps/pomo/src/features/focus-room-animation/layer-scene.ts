@@ -7,7 +7,6 @@ import {attachLayerView, createLayerView} from './layer-view'
 import {applyLoopingTranslation} from './looping-translation'
 import {getLayerMotions, getMotionEffects} from './motion-definition'
 import {resetMotionPresentation} from './motion-reset'
-import {validateSceneMotions} from './motion-validation'
 import {getMotionTarget, getNextMotionTarget} from './motion-targets'
 import {applyOpacityPulse} from './opacity-pulse'
 import {
@@ -16,6 +15,9 @@ import {
   createOpacityTwinkleState,
 } from './opacity-twinkle'
 import {createPushFilter, createPushFilters} from './push-filter-factory'
+import {createSceneEffects, type SceneEffectsInstance} from './scene-effect'
+import {validateLayerSceneDefinition} from './scene-definition-validation'
+import {getSceneMaskSources} from './scene-mask-sources'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 import {applyVisibilityCycle} from './visibility-cycle'
 import type {
@@ -60,6 +62,7 @@ export class PixiLayerScene {
   #destroyed = false
   #initialized = false
   #layers: readonly LayerInstance[] = []
+  #effects: SceneEffectsInstance | null = null
   #textures: readonly TextureLease[] = []
 
   constructor(definition: PixiLayerSceneDefinition, options: PixiLayerSceneOptions) {
@@ -80,14 +83,14 @@ export class PixiLayerScene {
     this.#initialized = true
 
     try {
-      this.#validateDefinition()
+      validateLayerSceneDefinition(this.#definition)
     } catch (error: unknown) {
       this.destroy()
       throw error
     }
 
     const layerSources = this.#definition.layers.map((layer) => layer.source)
-    const maskSources = this.#getMaskSources()
+    const maskSources = getSceneMaskSources(this.#definition)
     let textures: readonly TextureLease[]
 
     try {
@@ -102,18 +105,34 @@ export class PixiLayerScene {
       return
     }
 
+    this.#initializeScene(textures, layerSources.length, state)
+  }
+
+  #initializeScene(
+    textures: readonly TextureLease[],
+    layerSourceCount: number,
+    state: PixiLayerSceneState,
+  ) {
     this.#textures = textures
     const layers: LayerInstance[] = []
-
     try {
       validateTextureSizes({
         definition: this.#definition,
-        layerSourceCount: layerSources.length,
+        layerSourceCount,
         textures,
       })
       const maskTextures = new Map<string, Texture>(
-        textures.slice(layerSources.length).map((lease) => [lease.source, lease.texture]),
+        textures.slice(layerSourceCount).map((lease) => [lease.source, lease.texture]),
       )
+
+      this.#effects = createSceneEffects({
+        definitions: this.#definition.effects ?? [],
+        height: this.#definition.height,
+        maskTextures,
+        random: this.#random,
+        sceneContainer: this.container,
+        width: this.#definition.width,
+      })
 
       for (const [index, definition] of this.#definition.layers.entries()) {
         const sprite = createLayerView(definition, textures[index].texture)
@@ -152,6 +171,7 @@ export class PixiLayerScene {
           ...(statePixelPushFilter === null ? [] : [statePixelPushFilter]),
           ...motionInstances.flatMap((motion) => motion.pixelPushFilters),
         ]
+        this.#effects.attachBefore(definition.id)
         attachLayerView({
           definition,
           layerContainer: container,
@@ -169,6 +189,8 @@ export class PixiLayerScene {
         })
       }
 
+      this.#effects.attachTrailing()
+
       this.#attachChildLayers(layers)
 
       this.#initializeLayers(layers, state)
@@ -181,6 +203,8 @@ export class PixiLayerScene {
 
   update(state: PixiLayerSceneState) {
     this.#animationEnabled = state.animationEnabled
+
+    this.#effects?.setAnimationEnabled(this.#animationEnabled)
 
     for (const layer of this.#layers) {
       const {channel} = layer.definition
@@ -212,6 +236,7 @@ export class PixiLayerScene {
     }
 
     this.#animationEnabled = animationEnabled
+    this.#effects?.setAnimationEnabled(animationEnabled)
     this.#syncTicker()
     this.#onRender()
   }
@@ -261,14 +286,19 @@ export class PixiLayerScene {
       }
     }
 
+    this.#effects?.destroy()
+
     this.container.destroy({children: true})
     releaseTextureGroup(this.#textures)
     this.#textures = []
     this.#layers = []
+    this.#effects = null
   }
 
   readonly #advance = (ticker: Ticker) => {
     const deltaSeconds = ticker.deltaMS / MILLISECONDS_PER_SECOND
+
+    this.#effects?.advance(deltaSeconds)
 
     for (const layer of this.#layers) {
       for (const motion of layer.motions) {
@@ -423,24 +453,6 @@ export class PixiLayerScene {
     this.update(state)
   }
 
-  #getMaskSources() {
-    return [
-      ...new Set(
-        this.#definition.layers.flatMap((layer) => [
-          ...(layer.maskSource === undefined ? [] : [layer.maskSource]),
-          ...(layer.statePixelPush?.effect.kind === 'masked-pixel-push'
-            ? [layer.statePixelPush.effect.maskSource]
-            : []),
-          ...getLayerMotions(layer).flatMap((motion) =>
-            getMotionEffects(motion).flatMap((effect) =>
-              effect.kind === 'masked-pixel-push' ? [effect.maskSource] : [],
-            ),
-          ),
-        ]),
-      ),
-    ]
-  }
-
   #attachChildLayers(layers: readonly LayerInstance[]) {
     const attachments = new Map(
       layers.flatMap((layer) =>
@@ -488,54 +500,11 @@ export class PixiLayerScene {
     }
   }
 
-  #validateDefinition() {
-    if (this.#definition.width <= 0 || this.#definition.height <= 0) {
-      throw new Error(`Invalid scene dimensions: ${this.#definition.id}`)
-    }
-
-    const attachments = new Set<string>()
-    const layerIds = new Set<string>()
-
-    for (const layer of this.#definition.layers) {
-      if (layerIds.has(layer.id)) {
-        throw new Error(`Duplicate layer id: ${layer.id}`)
-      }
-
-      layerIds.add(layer.id)
-
-      if (layer.attachmentId !== undefined) {
-        if (layer.attachmentId.length === 0) {
-          throw new Error(`Empty layer attachment id: ${layer.id}`)
-        }
-
-        if (attachments.has(layer.attachmentId)) {
-          throw new Error(`Duplicate layer attachment: ${layer.attachmentId}`)
-        }
-
-        attachments.add(layer.attachmentId)
-      }
-
-      if (layer.motion !== undefined && layer.motions !== undefined) {
-        throw new Error(`Layer cannot define both motion and motions: ${layer.id}`)
-      }
-
-      if (layer.parentAttachmentId !== undefined && !attachments.has(layer.parentAttachmentId)) {
-        throw new Error(`Missing parent layer attachment: ${layer.parentAttachmentId}`)
-      }
-
-      const motions = getLayerMotions(layer)
-      const pivotCount = motions.filter((motion) => motion.kind === 'pivot-rotation').length
-
-      if (pivotCount > 1) {
-        throw new Error(`Layer cannot define multiple pivot rotations: ${layer.id}`)
-      }
-
-      validateSceneMotions(layer.id, motions, this.#definition)
-    }
-  }
-
   #hasMotion() {
-    return this.#layers.some((layer) => layer.motions.some((motion) => motion.enabled))
+    return (
+      (this.#effects?.hasMotion ?? false) ||
+      this.#layers.some((layer) => layer.motions.some((motion) => motion.enabled))
+    )
   }
 
   #randomDuration(range: PixiSceneTravelRange) {

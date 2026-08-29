@@ -1,19 +1,16 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {getPomoIconClass} from '../../icon-style'
-import {PIconButton} from '../../PIconButton'
 import {PSelect} from '../../PSelect'
 import {PWeatherStatus} from '../../PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
-import {getNextTimeMode} from '../../../features/focus-room-time'
 import {SceneSettingsPanel} from '../SettingsPanel'
 import {SceneToolbar} from '../Toolbar'
 
 vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
-vi.mock('../../PIconButton', () => ({PIconButton: vi.fn()}))
 vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
 vi.mock('../../PDesktopModeControl', () => ({
@@ -27,7 +24,6 @@ vi.mock('../../PDesktopModeControl', () => ({
   },
 }))
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
-vi.mock('../../../features/focus-room-time', () => ({getNextTimeMode: vi.fn()}))
 vi.mock('../../PModelDownloadStatus', () => ({PModelDownloadStatus: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
 
@@ -41,6 +37,7 @@ const callbacks = {
   onTimeModeChange: vi.fn(),
   onWeatherCityChange: vi.fn(),
   onWeatherEnabledChange: vi.fn(),
+  onWeatherSceneModeChange: vi.fn(),
 }
 
 const baseProps = {
@@ -52,10 +49,10 @@ const baseProps = {
   motionMode: 'pan',
   sceneStyle: 'original',
   screenSaverDelay: '5s',
-  time: 'day',
   timeMode: 'auto',
   weatherCitySlug: 'seoul',
   weatherEnabled: true,
+  weatherSceneMode: 'auto',
   weatherState: {status: 'disabled'},
   ...callbacks,
 } as const
@@ -63,18 +60,9 @@ const baseProps = {
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(getPomoIconClass).mockImplementation((icon) => `icon:${icon}`)
-  vi.mocked(getNextTimeMode).mockReturnValue('day')
   vi.mocked(PScribbleCircleControl).mockImplementation((props) => {
     Object.values(props)
     return <div>{props.children}</div>
-  })
-  vi.mocked(PIconButton).mockImplementation((props) => {
-    Object.values(props)
-    return (
-      <button onClick={(event) => props.onPress(event.currentTarget)} type="button">
-        {props.accessibleLabel}
-      </button>
-    )
   })
   vi.mocked(PSelect).mockImplementation((props) => {
     Object.values(props)
@@ -92,21 +80,20 @@ beforeEach(() => {
 })
 
 describe('SceneToolbar', () => {
-  it('should expose automatic time and forward all toolbar properties', () => {
+  it('should keep only activity as a direct scene selector and forward all settings properties', () => {
     render(() => <SceneToolbar {...baseProps} />)
 
-    const timeButton = screen.getByRole('button')
-    expect(timeButton).toHaveAccessibleName(expect.stringContaining('낮'))
-    fireEvent.click(timeButton)
-    expect(getNextTimeMode).toHaveBeenCalledWith('auto')
-    expect(callbacks.onTimeModeChange).toHaveBeenCalledWith('day')
-    expect(PSelect).toHaveBeenCalled()
+    expect(PSelect).toHaveBeenCalledWith(expect.objectContaining({label: '행동', value: 'reading'}))
+    expect(vi.mocked(PSelect).mock.calls.every(([props]) => props.label === '행동')).toBe(true)
     expect(SceneSettingsPanel).toHaveBeenCalledWith(
       expect.objectContaining({
         activity: 'reading',
+        gaze: 'focused',
         motionInput: 'drag',
         sceneStyle: 'original',
+        timeMode: 'auto',
         weatherCitySlug: 'seoul',
+        weatherSceneMode: 'auto',
       }),
     )
     expect(PWeatherStatus).toHaveBeenCalledWith(
@@ -114,7 +101,7 @@ describe('SceneToolbar', () => {
     )
   })
 
-  it('should render selected time and the transition status for scribble scenes', () => {
+  it('should render the transition status for scribble scenes', () => {
     const onDesktopModeChange = vi.fn().mockResolvedValue(undefined)
     render(() => (
       <SceneToolbar
@@ -125,26 +112,13 @@ describe('SceneToolbar', () => {
         isDesktopModeChanging
         onDesktopModeChange={onDesktopModeChange}
         sceneStyle="scribble"
-        time="night"
         timeMode="night"
       />
     ))
 
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(screen.getByRole('button')).toHaveAccessibleName(expect.stringContaining('밤'))
     expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
     expect(onDesktopModeChange).toHaveBeenCalledWith('widget')
-  })
-
-  it('should fall back to the first time option for an unexpected mode', () => {
-    render(() => (
-      <SceneToolbar
-        {...baseProps}
-        timeMode={'unexpected' as unknown as typeof baseProps.timeMode}
-      />
-    ))
-
-    expect(screen.getByRole('button')).toBeInTheDocument()
   })
 
   it('should use flow layout inside a transparent desktop surface', () => {

@@ -36,6 +36,7 @@ const validSettings = [
   {name: 'timeMode', value: 'night'},
   {name: 'weatherCity', value: 'jeju'},
   {name: 'weatherEnabled', value: true},
+  {name: 'weatherSceneMode', value: 'overcast'},
 ] as const
 
 beforeEach(() => {
@@ -60,6 +61,7 @@ it('should validate and apply every scene setting received from another WebView'
     onTimeModeChange: vi.fn(),
     onWeatherCityChange: vi.fn(),
     onWeatherEnabledChange: vi.fn(),
+    onWeatherSceneModeChange: vi.fn(),
   }
   const view = renderHook(() => useDesktopSceneSettingsListener(handlers))
   const channel = TestBroadcastChannel.instances[0]
@@ -77,6 +79,7 @@ it('should validate and apply every scene setting received from another WebView'
   expect(handlers.onTimeModeChange).toHaveBeenCalledWith('night')
   expect(handlers.onWeatherCityChange).toHaveBeenCalledWith('jeju')
   expect(handlers.onWeatherEnabledChange).toHaveBeenCalledWith(true)
+  expect(handlers.onWeatherSceneModeChange).toHaveBeenCalledWith('overcast')
 
   view.cleanup()
   expect(channel?.close).toHaveBeenCalledOnce()

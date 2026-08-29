@@ -29,12 +29,13 @@ const createToolbarProps = () => ({
   onTimeModeChange: vi.fn(),
   onWeatherCityChange: vi.fn(),
   onWeatherEnabledChange: vi.fn(),
+  onWeatherSceneModeChange: vi.fn(),
   sceneStyle: 'original' as const,
   screenSaverDelay: 'off' as const,
-  time: 'day' as const,
   timeMode: 'auto' as const,
   weatherCitySlug: 'seoul' as const,
   weatherEnabled: true,
+  weatherSceneMode: 'auto' as const,
   weatherState: {citySlug: 'seoul' as const, status: 'loading' as const},
 })
 

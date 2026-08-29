@@ -119,6 +119,8 @@
   "weather_show": "집중 화면에 날씨 표시",
   "weather_show_description": "선택한 도시의 기상청 날씨를 집중 화면에 아이콘과 글자로 보여줘요.",
   "weather_city": "도시",
+  "weather_scene": "날씨",
+  "weather_scene_auto": "자동",
   "weather_support_notice": "데이터 제공: 기상청",
   "weather_loading": "{city} 날씨 확인 중",
   "weather_error": "{city} 날씨를 확인하지 못했어요",

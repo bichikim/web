@@ -21,7 +21,7 @@ import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {UserSettings} from './UserSettings'
-import type {WeatherCitySlug} from '../features/weather'
+import type {WeatherCitySlug, WeatherSceneMode} from '../features/weather'
 import * as m from '@paraglide/message'
 import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
 import {PCreditsSettings} from './PCreditsSettings'
@@ -37,7 +37,7 @@ const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
   settingsScene: [
     'pomo-settings__scene grid gap-4 pb-5',
-    'border-b border-solid border-border lg:hidden',
+    'border-b border-solid border-border',
   ].join(' '),
   settingsScreenSaver: [
     'pomo-settings__screen-saver grid gap-2 pt-4',
@@ -60,6 +60,7 @@ export interface PSettingsProps {
   readonly onTimeModeChange?: (timeMode: SceneTimeMode) => void
   readonly onWeatherCityChange?: (citySlug: WeatherCitySlug) => void
   readonly onWeatherEnabledChange?: (enabled: boolean) => void
+  readonly onWeatherSceneModeChange?: (mode: WeatherSceneMode) => void
   readonly screenSaverDelay?: ScreenSaverDelay
   readonly sceneStyle?: PSceneStyle
   readonly motionInput?: PSceneMotionInput
@@ -67,6 +68,7 @@ export interface PSettingsProps {
   readonly timeMode?: SceneTimeMode
   readonly weatherCitySlug?: WeatherCitySlug
   readonly weatherEnabled?: boolean
+  readonly weatherSceneMode?: WeatherSceneMode
 }
 
 const LANGUAGE_OPTIONS = [
@@ -157,13 +159,15 @@ export const PSettings = (props: PSettingsProps) => {
                   sceneStyle={props.sceneStyle}
                   value={props.timeMode ?? 'day'}
                 />
-                <PRadioSwitch
-                  label={m.settings_activity()}
-                  onChange={(activity) => props.onActivityChange?.(activity)}
-                  options={getLocalizedActivityOptions()}
-                  sceneStyle={props.sceneStyle}
-                  value={props.activity ?? 'reading'}
-                />
+                <div class="lg:hidden">
+                  <PRadioSwitch
+                    label={m.settings_activity()}
+                    onChange={(activity) => props.onActivityChange?.(activity)}
+                    options={getLocalizedActivityOptions()}
+                    sceneStyle={props.sceneStyle}
+                    value={props.activity ?? 'reading'}
+                  />
+                </div>
                 <PRadioSwitch
                   label={m.settings_view()}
                   onChange={(gaze) => props.onGazeChange?.(gaze)}
@@ -201,6 +205,8 @@ export const PSettings = (props: PSettingsProps) => {
                 enabled={props.weatherEnabled}
                 onCityChange={props.onWeatherCityChange}
                 onEnabledChange={props.onWeatherEnabledChange}
+                onSceneModeChange={props.onWeatherSceneModeChange}
+                sceneMode={props.weatherSceneMode}
               />
               <PSwitch
                 checked={wakeLock.isEnabled()}
