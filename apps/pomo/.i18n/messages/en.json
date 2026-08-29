@@ -329,6 +329,7 @@
   "album_title": "Albums",
   "album_description": "Add individual tracks or a whole album to the player.",
   "album_load_failed": "Couldn't load albums",
+  "album_catalog_load_failed": "Couldn't load public albums. You can keep using the included albums.",
   "album_loading": "Loading albums",
   "album_empty": "No albums are available yet",
   "album_retry": "Try again",
