@@ -15,7 +15,7 @@ const storageMocks = vi.hoisted(() => ({
 
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
-const disabledPreference = {citySlug: 'seoul', enabled: false} as const
+const disabledPreference = {citySlug: 'seoul', enabled: false, sceneMode: 'cloudy'} as const
 
 beforeEach(() => {
   localStorage.clear()
@@ -40,8 +40,18 @@ it.each([
   {citySlug: 'seoul'},
   {citySlug: 'seoul', enabled: 'yes'},
   {citySlug: 'unknown', enabled: true},
+  {citySlug: 'seoul', enabled: true, sceneMode: 'unknown'},
 ])('should reject an invalid browser preference shape', async (value) => {
   localStorage.setItem('pomo:weather-preference:v1', JSON.stringify(value))
+
+  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+})
+
+it('should migrate a stored preference without a scene mode to automatic', async () => {
+  localStorage.setItem(
+    'pomo:weather-preference:v1',
+    JSON.stringify({citySlug: 'seoul', enabled: true}),
+  )
 
   await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })

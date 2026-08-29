@@ -92,6 +92,31 @@ const createLoadingHandler =
     setRendered((hasRendered) => hasRendered || !isLoading)
   }
 
+interface StudioDesktopSceneSettingsOptions {
+  readonly scenePreferences: ReturnType<typeof usePScenePreferences>
+  readonly sceneStyleController: ReturnType<typeof usePSceneStyle>
+  readonly screenSaver: ReturnType<typeof useStudioScreenSaver>
+  readonly setMotionInput: Setter<PSceneMotionInput>
+  readonly setMotionMode: Setter<PSceneMotionMode>
+  readonly weather: ReturnType<typeof useWeather>
+}
+
+const useStudioDesktopSceneSettings = (options: StudioDesktopSceneSettingsOptions) => {
+  const {scenePreferences, sceneStyleController, screenSaver, weather} = options
+  useDesktopSceneSettingsListener({
+    onActivityChange: scenePreferences.onActivityChange,
+    onGazeChange: scenePreferences.onGazeChange,
+    onMotionInputChange: options.setMotionInput,
+    onMotionModeChange: options.setMotionMode,
+    onSceneStyleChange: sceneStyleController.onSceneStyleChange,
+    onScreenSaverDelayChange: screenSaver.onDelayChange,
+    onTimeModeChange: scenePreferences.onTimeModeChange,
+    onWeatherCityChange: weather.onCityChange,
+    onWeatherEnabledChange: weather.onEnabledChange,
+    onWeatherSceneModeChange: weather.onSceneModeChange,
+  })
+}
+
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -117,16 +142,13 @@ export const PStudio = () => {
     pomoSay.isPlaying,
   )
   const {sceneStyle} = sceneStyleController
-  useDesktopSceneSettingsListener({
-    onActivityChange: scenePreferences.onActivityChange,
-    onGazeChange: scenePreferences.onGazeChange,
-    onMotionInputChange: setMotionInput,
-    onMotionModeChange: setMotionMode,
-    onSceneStyleChange: sceneStyleController.onSceneStyleChange,
-    onScreenSaverDelayChange: screenSaver.onDelayChange,
-    onTimeModeChange: scenePreferences.onTimeModeChange,
-    onWeatherCityChange: weather.onCityChange,
-    onWeatherEnabledChange: weather.onEnabledChange,
+  useStudioDesktopSceneSettings({
+    scenePreferences,
+    sceneStyleController,
+    screenSaver,
+    setMotionInput,
+    setMotionMode,
+    weather,
   })
   const selectedScene = createMemo(() =>
     getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), sceneStyle()),
@@ -144,9 +166,7 @@ export const PStudio = () => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
     const updateAutomaticPeriod = () => setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
     const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
-
     entry.restore()
-
     setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {
       setMotionInput('gyroscope')
@@ -184,6 +204,7 @@ export const PStudio = () => {
             sceneStyle={sceneStyleController.sceneStyle()}
             time={time()}
             viseme={activeViseme()}
+            weatherCondition={weather.sceneCondition()}
           />
         </Show>
       </figure>
@@ -214,14 +235,15 @@ export const PStudio = () => {
               onTimeModeChange={scenePreferences.onTimeModeChange}
               onWeatherCityChange={weather.onCityChange}
               onWeatherEnabledChange={weather.onEnabledChange}
+              onWeatherSceneModeChange={weather.onSceneModeChange}
               screenSaverDelay={screenSaver.delay()}
               sceneStyle={sceneStyleController.sceneStyle()}
               motionInput={motionInput()}
               motionMode={motionMode()}
-              time={time()}
               timeMode={scenePreferences.timeMode()}
               weatherCitySlug={weather.citySlug()}
               weatherEnabled={weather.enabled()}
+              weatherSceneMode={weather.sceneMode()}
               weatherState={weather.state()}
               desktopMode={desktopMode.mode()}
               desktopModeError={desktopMode.error()}

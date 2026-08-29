@@ -4,7 +4,6 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {getAutomaticScenePeriod, resolveScenePeriod} from '../../../features/focus-room-time'
 import {supportsPSceneGyroscope, usePSceneStyle} from '../../../features/focus-room-animation'
 import {usePScenePreferences} from '../../../features/focus-room-scene-preferences'
 import {useScreenSaver} from '../../../features/screen-saver'
@@ -30,10 +29,6 @@ vi.mock('../../../features/focus-room-animation', () => ({
 vi.mock('../../../features/focus-room-scene-preferences', () => ({
   usePScenePreferences: vi.fn(),
 }))
-vi.mock('../../../features/focus-room-time', () => ({
-  getAutomaticScenePeriod: vi.fn(),
-  resolveScenePeriod: vi.fn(),
-}))
 vi.mock('../../../features/screen-saver', () => ({useScreenSaver: vi.fn()}))
 vi.mock('../../../features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
@@ -56,7 +51,7 @@ vi.mock('../../p-studio/Toolbar', () => ({
     Object.values(props)
     return (
       <div>
-        <span data-layout={props.layout}>{props.time}</span>
+        <span data-layout={props.layout}>설정</span>
         <button onClick={() => props.onActivityChange('writing')} type="button">
           활동
         </button>
@@ -83,6 +78,9 @@ vi.mock('../../p-studio/Toolbar', () => ({
         </button>
         <button onClick={() => props.onWeatherEnabledChange(true)} type="button">
           날씨
+        </button>
+        <button onClick={() => props.onWeatherSceneModeChange('rain')} type="button">
+          날씨 장면
         </button>
         <button onClick={() => props.onDesktopModeChange('interactiveDesktop')} type="button">
           모드
@@ -135,14 +133,13 @@ beforeEach(() => {
     enabled: () => false,
     onCityChange: vi.fn(),
     onEnabledChange: vi.fn(),
+    onSceneModeChange: vi.fn(),
+    sceneCondition: () => 'clear',
+    sceneMode: () => 'auto',
     state: () => ({status: 'disabled'}),
   })
   vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(true)
-  vi.mocked(getAutomaticScenePeriod).mockReturnValue('night')
-  vi.mocked(resolveScenePeriod).mockImplementation((timeMode, automatic) =>
-    timeMode === 'auto' ? automatic : timeMode,
-  )
 })
 
 afterEach(() => {
@@ -201,7 +198,7 @@ it('should publish every setting change from the separate scene toolbar', () => 
   render(() => <DesktopSettings />)
 
   expect(SceneToolbar).toHaveBeenCalledOnce()
-  expect(screen.getByText('day')).toHaveAttribute('data-layout', 'surface')
+  expect(screen.getByText('설정')).toHaveAttribute('data-layout', 'surface')
   for (const name of [
     '활동',
     '시선',
@@ -212,6 +209,7 @@ it('should publish every setting change from the separate scene toolbar', () => 
     '시간',
     '도시',
     '날씨',
+    '날씨 장면',
     '모드',
   ]) {
     fireEvent.click(screen.getByRole('button', {name}))
@@ -227,11 +225,9 @@ it('should publish every setting change from the separate scene toolbar', () => 
     {name: 'timeMode', value: 'auto'},
     {name: 'weatherCity', value: 'jeju'},
     {name: 'weatherEnabled', value: true},
+    {name: 'weatherSceneMode', value: 'rain'},
   ])
   expect(onModeChange).toHaveBeenCalledWith('interactiveDesktop')
-
-  vi.advanceTimersByTime(60_000)
-  expect(getAutomaticScenePeriod).toHaveBeenCalled()
 })
 
 it('should retain drag input when the desktop has no gyroscope', () => {

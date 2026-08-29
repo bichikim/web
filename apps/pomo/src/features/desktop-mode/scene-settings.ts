@@ -4,7 +4,7 @@ import type {PSceneMotionInput, PSceneMotionMode, PSceneStyle} from '../focus-ro
 import type {PActivity, PGaze} from '../focus-room-scene-preferences'
 import type {SceneTimeMode} from '../focus-room-time'
 import type {ScreenSaverDelay} from '../screen-saver'
-import type {WeatherCitySlug} from '../weather'
+import {WEATHER_SCENE_MODES, type WeatherCitySlug, type WeatherSceneMode} from '../weather'
 
 const SCENE_SETTINGS_CHANNEL = 'pomo:desktop-scene-settings'
 
@@ -18,6 +18,7 @@ type DesktopSceneSetting =
   | {readonly name: 'timeMode'; readonly value: SceneTimeMode}
   | {readonly name: 'weatherCity'; readonly value: WeatherCitySlug}
   | {readonly name: 'weatherEnabled'; readonly value: boolean}
+  | {readonly name: 'weatherSceneMode'; readonly value: WeatherSceneMode}
 
 export interface DesktopSceneSettingsHandlers {
   readonly onActivityChange?: (value: PActivity) => void
@@ -29,11 +30,17 @@ export interface DesktopSceneSettingsHandlers {
   readonly onTimeModeChange?: (value: SceneTimeMode) => void
   readonly onWeatherCityChange?: (value: WeatherCitySlug) => void
   readonly onWeatherEnabledChange?: (value: boolean) => void
+  readonly onWeatherSceneModeChange?: (value: WeatherSceneMode) => void
 }
 
 export interface DesktopSceneSettingsPublisher {
   readonly publish: (setting: DesktopSceneSetting) => void
 }
+
+type DesktopWeatherSceneSetting = Extract<
+  DesktopSceneSetting,
+  {readonly name: 'weatherCity' | 'weatherEnabled' | 'weatherSceneMode'}
+>
 
 const isOneOf = <TValue extends string>(
   value: unknown,
@@ -74,8 +81,26 @@ const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSetting => 
       ])
     case 'weatherEnabled':
       return typeof setting.value === 'boolean'
+    case 'weatherSceneMode':
+      return isOneOf(setting.value, WEATHER_SCENE_MODES)
     default:
       return false
+  }
+}
+
+const applyDesktopWeatherSceneSetting = (
+  handlers: DesktopSceneSettingsHandlers,
+  setting: DesktopWeatherSceneSetting,
+) => {
+  switch (setting.name) {
+    case 'weatherCity':
+      handlers.onWeatherCityChange?.(setting.value)
+      return
+    case 'weatherEnabled':
+      handlers.onWeatherEnabledChange?.(setting.value)
+      return
+    case 'weatherSceneMode':
+      handlers.onWeatherSceneModeChange?.(setting.value)
   }
 }
 
@@ -106,10 +131,9 @@ const applyDesktopSceneSetting = (
       handlers.onTimeModeChange?.(setting.value)
       return
     case 'weatherCity':
-      handlers.onWeatherCityChange?.(setting.value)
-      return
     case 'weatherEnabled':
-      handlers.onWeatherEnabledChange?.(setting.value)
+    case 'weatherSceneMode':
+      applyDesktopWeatherSceneSetting(handlers, setting)
   }
 }
 

@@ -6,6 +6,7 @@ import {
   writeWebStorageJson,
 } from 'src/features/runtime-storage'
 import {parseWeatherCitySlug, type WeatherCitySlug} from './contract'
+import {isWeatherSceneMode, type WeatherSceneMode} from './scene-mode'
 
 const WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v1'
 let preferenceWriteRevision = 0
@@ -14,11 +15,13 @@ const nativeWriter = createSerialNativeStorageWriter()
 export interface WeatherPreference {
   readonly citySlug: WeatherCitySlug
   readonly enabled: boolean
+  readonly sceneMode: WeatherSceneMode
 }
 
 export const DEFAULT_WEATHER_PREFERENCE = {
   citySlug: 'seoul',
   enabled: true,
+  sceneMode: 'auto',
 } satisfies WeatherPreference
 
 const parseWeatherPreference = (value: unknown): WeatherPreference | null => {
@@ -31,7 +34,12 @@ const parseWeatherPreference = (value: unknown): WeatherPreference | null => {
       return null
     }
 
-    return {citySlug: parseWeatherCitySlug(value.citySlug), enabled: value.enabled}
+    const sceneMode = 'sceneMode' in value ? value.sceneMode : DEFAULT_WEATHER_PREFERENCE.sceneMode
+    if (!isWeatherSceneMode(sceneMode)) {
+      return null
+    }
+
+    return {citySlug: parseWeatherCitySlug(value.citySlug), enabled: value.enabled, sceneMode}
   } catch {
     return null
   }

@@ -118,6 +118,7 @@ beforeEach(() => {
       onClick={() => {
         props.onEnabledChange?.(!props.enabled)
         props.onCityChange?.('seoul')
+        props.onSceneModeChange?.('rain')
       }}
       type="button"
     >
@@ -212,6 +213,7 @@ it('should forward every scene, weather, and modal action', () => {
   const onTimeModeChange = vi.fn()
   const onWeatherCityChange = vi.fn()
   const onWeatherEnabledChange = vi.fn()
+  const onWeatherSceneModeChange = vi.fn()
   render(() => (
     <PSettings
       canUseGyroscope
@@ -224,6 +226,7 @@ it('should forward every scene, weather, and modal action', () => {
       onTimeModeChange={onTimeModeChange}
       onWeatherCityChange={onWeatherCityChange}
       onWeatherEnabledChange={onWeatherEnabledChange}
+      onWeatherSceneModeChange={onWeatherSceneModeChange}
     />
   ))
 
@@ -248,12 +251,27 @@ it('should forward every scene, weather, and modal action', () => {
   expect(onScreenSaverDelayChange).toHaveBeenCalledWith('10m')
   expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
   expect(onWeatherCityChange).toHaveBeenCalledWith('seoul')
+  expect(onWeatherSceneModeChange).toHaveBeenCalledWith('rain')
   const wakeLockSwitch = vi
     .mocked(PSwitch)
     .mock.calls.map(([props]) => props)
     .find((props) => props.label === '화면 자동 꺼짐 방지')
   expect(Object.getOwnPropertyDescriptor(wakeLockSwitch ?? {}, 'checked')?.get?.()).toBe(false)
   expect(vi.mocked(PModal).mock.calls.at(-1)?.[0].isOpen).toBe(false)
+})
+
+it('should keep time and view in general settings while limiting activity to compact layouts', () => {
+  render(() => <PSettings />)
+  fireEvent.click(screen.getByRole('button', {name: '설정 열기'}))
+
+  const timeControl = screen.getByRole('button', {name: '시간'})
+  const activityControl = screen.getByRole('button', {name: '행동'})
+  const viewControl = screen.getByRole('button', {name: '보기'})
+  const sceneGroup = timeControl.closest('.pomo-settings__scene')
+
+  expect(sceneGroup).not.toHaveClass('lg:hidden')
+  expect(viewControl.closest('.pomo-settings__scene')).toBe(sceneGroup)
+  expect(activityControl.parentElement).toHaveClass('lg:hidden')
 })
 
 it('should describe every wake-lock availability state and pending request', () => {

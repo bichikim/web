@@ -145,8 +145,29 @@ export interface PixiSceneLayerDefinition {
   readonly visible?: boolean
 }
 
+export interface PixiSceneFallingStreaksEffectDefinition {
+  readonly beforeLayerId?: string
+  readonly id: string
+  readonly kind: 'falling-streaks'
+  readonly maskSource: string
+  readonly opacity?: number
+}
+
+export interface PixiSceneFallingFlakesEffectDefinition {
+  readonly beforeLayerId?: string
+  readonly id: string
+  readonly kind: 'falling-flakes'
+  readonly maskSource: string
+  readonly opacity?: number
+}
+
+export type PixiSceneEffectDefinition =
+  | PixiSceneFallingFlakesEffectDefinition
+  | PixiSceneFallingStreaksEffectDefinition
+
 export interface PixiLayerSceneDefinition {
   readonly background: string
+  readonly effects?: readonly PixiSceneEffectDefinition[]
   readonly height: number
   readonly id: string
   readonly layers: readonly PixiSceneLayerDefinition[]
