@@ -22,7 +22,7 @@ const SafeAreaHarness = () => {
 
 describe('useAppsInTossSafeArea', () => {
   beforeEach(() => {
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
     safeAreaMocks.get.mockReset().mockReturnValue({bottom: 34, left: 0, right: 0, top: 47})
     safeAreaMocks.subscribe.mockReset().mockReturnValue(vi.fn())
   })
@@ -97,7 +97,7 @@ describe('useAppsInTossSafeArea', () => {
   })
 
   it('should not load native safe-area values in a regular web build', async () => {
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
 
     render(SafeAreaHarness)
     await Promise.resolve()

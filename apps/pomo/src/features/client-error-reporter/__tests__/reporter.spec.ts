@@ -339,9 +339,9 @@ describe('reportClientError', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     vi.stubEnv('DEV', true)
     vi.stubEnv('MODE', undefined)
-    vi.stubEnv('POMO_ENVIRONMENT', undefined)
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
-    vi.stubEnv('POMO_RELEASE', undefined)
+    vi.stubEnv('VITE_POMO_ENVIRONMENT', undefined)
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+    vi.stubEnv('VITE_POMO_RELEASE', undefined)
 
     expect(
       reportClientError(new Error('development failure'), {

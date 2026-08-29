@@ -1,11 +1,38 @@
 import {mockEvent} from 'h3'
 import {getRequestEvent} from 'solid-js/web'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('solid-js/web', () => ({getRequestEvent: vi.fn()}))
 
-import {STATIC_SECURITY_HEADERS, WORKER_SECURITY_HEADERS} from '../security-header-policy'
-import {securityHeadersMiddleware} from '../security-headers'
+vi.stubEnv(
+  'POMO_CONNECT_SOURCES',
+  "'self' https://www.pomofi.io https://storage.pomofi.io https://huggingface.co https://us.aws.cdn.hf.co https://cdn.jsdelivr.net https://pub-0e34511083544f8aaad14d0590013528.r2.dev",
+)
+vi.stubEnv('POMO_CONTENT_TYPE_OPTIONS', 'nosniff')
+vi.stubEnv(
+  'POMO_PERMISSIONS_POLICY',
+  [
+    'accelerometer=(self)',
+    'autoplay=(self)',
+    'camera=()',
+    'display-capture=()',
+    'encrypted-media=()',
+    'fullscreen=(self)',
+    'geolocation=()',
+    'gyroscope=(self)',
+    'magnetometer=()',
+    'microphone=(self)',
+    'midi=()',
+    'payment=()',
+    'picture-in-picture=()',
+    'screen-wake-lock=(self)',
+    'usb=()',
+  ].join(', '),
+)
+vi.stubEnv('POMO_REFERRER_POLICY', 'no-referrer')
+
+const {STATIC_SECURITY_HEADERS, WORKER_SECURITY_HEADERS} = await import('../security-header-policy')
+const {securityHeadersMiddleware} = await import('../security-headers')
 
 const applySecurityHeaders = async (
   request: Request,
@@ -157,4 +184,8 @@ describe('securityHeadersMiddleware', () => {
       securityHeadersMiddleware(mockEvent(new Request('https://www.pomofi.io/')), vi.fn()),
     ).rejects.toThrow('SolidStart request context is unavailable')
   })
+})
+
+afterAll(() => {
+  vi.unstubAllEnvs()
 })

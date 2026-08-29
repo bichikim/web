@@ -56,7 +56,7 @@ beforeEach(() => {
   vi.mocked(prepareDesktopModeTransition).mockReset().mockResolvedValue()
   vi.mocked(listen).mockClear()
   vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
-  vi.stubEnv('POMO_IS_DESKTOP', '1')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
 })
 
 afterEach(() => {
@@ -246,7 +246,7 @@ it('should ignore an event-listener registration failure after cleanup', async (
 })
 
 it('should remain inert in the web runtime', async () => {
-  vi.stubEnv('POMO_IS_DESKTOP', '')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
 
   await view.result.onModeChange('desktop')

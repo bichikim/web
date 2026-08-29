@@ -22,17 +22,17 @@ export const getCanonicalPathname = (pathname: string) => {
 }
 
 export const getPomoHomeHref = (locale: Locale) =>
-  import.meta.env.POMO_IS_APPS_IN_TOSS ? '/' : localizeHref('/', {locale})
+  import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? '/' : localizeHref('/', {locale})
 
 export const isPomoHomePath = (pathname: string) =>
   normalizePathname(pathname) === '/' &&
-  (import.meta.env.POMO_IS_APPS_IN_TOSS || getPathLocale(pathname) !== undefined)
+  (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' || getPathLocale(pathname) !== undefined)
 
 export const isSearchIndexablePath = (pathname: string) => {
   const canonicalPathname = normalizePathname(pathname)
 
   return (
-    !import.meta.env.POMO_IS_APPS_IN_TOSS &&
+    !(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') &&
     !(canonicalPathname === '/' && getPathLocale(pathname) === undefined) &&
     SEARCH_INDEXABLE_PATHS.has(canonicalPathname)
   )
@@ -45,7 +45,7 @@ export const usesPomoLayout = (pathname: string) => {
     POMO_LAYOUT_PATHS.has(canonicalPathname) &&
     !(
       canonicalPathname === '/' &&
-      !import.meta.env.POMO_IS_APPS_IN_TOSS &&
+      !(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') &&
       getPathLocale(pathname) === undefined
     )
   )

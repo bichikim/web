@@ -2,13 +2,14 @@
 import {createHandler, StartServer} from '@solidjs/start/server'
 
 import {getLocale, getTextDirection} from '@paraglide/runtime'
+import {PRETENDARD_FONT_ASSETS} from 'src/data/font-assets'
 
-const viewport =
-  process.env.POMO_BUILD_TARGET === 'apps-in-toss'
-    ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
-    : 'width=device-width, initial-scale=1, viewport-fit=cover'
+const isAppsInToss = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
+const viewport = isAppsInToss
+  ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+  : 'width=device-width, initial-scale=1, viewport-fit=cover'
 
-const documentColorScheme = process.env.POMO_BUILD_TARGET === 'apps-in-toss' ? 'light' : 'dark'
+const documentColorScheme = isAppsInToss ? 'light' : 'dark'
 const documentThemeColor = documentColorScheme === 'light' ? '#f7f8fa' : '#17130f'
 const documentForeground = documentColorScheme === 'light' ? '#191f28' : '#fff9f1'
 
@@ -70,6 +71,7 @@ export default createHandler(
             <meta charset="utf-8" />
             <meta name="viewport" content={viewport} />
             <meta name="theme-color" content={documentThemeColor} />
+            <link rel="stylesheet" href={PRETENDARD_FONT_ASSETS.stylesheetPath} type="text/css" />
             <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
             <style nonce={event.locals.securityNonce}>{CRITICAL_LAYOUT_CSS}</style>
             {props.assets}

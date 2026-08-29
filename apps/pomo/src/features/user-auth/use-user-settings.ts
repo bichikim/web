@@ -11,7 +11,7 @@ export type UserSettingsState =
   | {readonly kind: 'loading'}
 
 const readUserSettingsState = async (): Promise<UserSettingsState> => {
-  if (!import.meta.env.POMO_IS_APPS_IN_TOSS) {
+  if (!(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true')) {
     const session = await readAccountSession()
 
     return session === null

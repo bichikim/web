@@ -5,6 +5,18 @@ import scribbleIcons from './icon-sets/scribble.json'
 import albumData from './public/audio/albums.json'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const sansFontFamily = [
+  "'Pretendard Variable'",
+  'Pretendard',
+  'system-ui',
+  '-apple-system',
+  'BlinkMacSystemFont',
+  "'Segoe UI'",
+  "'Apple SD Gothic Neo'",
+  "'Noto Sans KR'",
+  "'Malgun Gothic'",
+  'sans-serif',
+].join(', ')
 
 const colors = isAppsInToss
   ? {
@@ -295,7 +307,7 @@ body {
       },
       colors,
       fontFamily: {
-        sans: "Inter, Pretendard, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        sans: sansFontFamily,
       },
     },
     variants: [

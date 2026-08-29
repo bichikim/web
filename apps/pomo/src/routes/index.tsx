@@ -32,7 +32,10 @@ const LocaleRedirectPage = () => {
 
 export default function RootPage() {
   return (
-    <Show fallback={<LocaleRedirectPage />} when={import.meta.env.POMO_IS_APPS_IN_TOSS}>
+    <Show
+      fallback={<LocaleRedirectPage />}
+      when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
+    >
       <AppsInTossHomePage fallback={<AppsInTossLoadingPage />} />
     </Show>
   )

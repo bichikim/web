@@ -6,7 +6,7 @@ afterEach(() => {
 })
 
 it('should classify root routes for the Apps in Toss build', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   vi.resetModules()
   const {getPomoHomeHref, isPomoHomePath, isSearchIndexablePath, usesPomoLayout} =
     await import('../pomo-route')

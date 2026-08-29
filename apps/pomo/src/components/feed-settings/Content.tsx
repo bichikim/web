@@ -44,9 +44,10 @@ export default function PFeedSettingsContent() {
   const feeds = useFeedConnections()
   const runtime = useOptionalPFeeds()
   const usesRemotePublicOrigin =
-    import.meta.env.POMO_IS_APPS_IN_TOSS || import.meta.env.POMO_IS_DESKTOP
+    import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
+    import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
   const publicOrigin = usesRemotePublicOrigin
-    ? import.meta.env.POMO_PUBLIC_ORIGIN
+    ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN
     : window.location.origin
   const recommendedFeeds: ReadonlyArray<RecommendedFeed> = [
     ...RECOMMENDED_PUBLIC_FEEDS.map((feed) => ({

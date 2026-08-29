@@ -25,7 +25,7 @@ it.each([
 ] as const)(
   'should render the account page for Toss=%s',
   async (isAppsInToss, accountText) => {
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', isAppsInToss ? '1' : '')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', isAppsInToss ? 'true' : '')
     const {AccountPage} = await import('../AccountPage')
 
     render(() => <AccountPage />)

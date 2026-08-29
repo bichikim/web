@@ -60,7 +60,7 @@ const createEvent = () => {
 }
 
 const importMiddleware = async (isAppsInToss: boolean) => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', isAppsInToss ? '1' : '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', isAppsInToss ? 'true' : '')
   await import('../index')
 
   const middleware = vi.mocked(createMiddleware).mock.calls.at(-1)?.[0]

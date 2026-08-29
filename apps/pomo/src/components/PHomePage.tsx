@@ -12,7 +12,7 @@ const PStudio = lazy(async () => {
 const MAIN_CLASSES = cx(
   'pomo-home',
   'relative h-dvh w-full overflow-hidden bg-background text-foreground',
-  !import.meta.env.POMO_IS_APPS_IN_TOSS &&
+  !(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') &&
     'bg-[radial-gradient(circle_at_50%_0%,#3c3329_0%,#211b16_38%,#120f0d_76%)]',
 )
 

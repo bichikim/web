@@ -1,13 +1,9 @@
 import {describe, expect, it} from 'vitest'
 
 import {paraglideMiddleware} from '@paraglide/server'
-import {
-  PARAGLIDE_LOCALIZED_ROUTES,
-  PARAGLIDE_ROUTE_STRATEGIES,
-  PARAGLIDE_WEB_STRATEGY,
-} from '../paraglide.config'
+import {PARAGLIDE_CONFIG} from '../paraglide.config'
 
-const localizedRouteStrategies = PARAGLIDE_ROUTE_STRATEGIES.filter(
+const localizedRouteStrategies = PARAGLIDE_CONFIG.web.routeStrategies.filter(
   (routeStrategy) => 'strategy' in routeStrategy,
 )
 
@@ -55,15 +51,15 @@ describe('web localization routing', () => {
   })
 
   it('should keep routes without localized aliases on the canonical URL', () => {
-    expect(PARAGLIDE_WEB_STRATEGY).toEqual(['cookie', 'preferredLanguage', 'baseLocale'])
-    expect(PARAGLIDE_LOCALIZED_ROUTES).not.toContain('/dialogue')
+    expect(PARAGLIDE_CONFIG.web.strategy).toEqual(['cookie', 'preferredLanguage', 'baseLocale'])
+    expect(PARAGLIDE_CONFIG.localizedRoutes).not.toContain('/dialogue')
   })
 
   it('should enable the URL strategy only for routes with localized aliases', () => {
     expect(localizedRouteStrategies).toEqual(
-      PARAGLIDE_LOCALIZED_ROUTES.map((match) => ({
+      PARAGLIDE_CONFIG.localizedRoutes.map((match) => ({
         match,
-        strategy: ['url', ...PARAGLIDE_WEB_STRATEGY],
+        strategy: ['url', ...PARAGLIDE_CONFIG.web.strategy],
       })),
     )
   })

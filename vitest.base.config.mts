@@ -8,6 +8,17 @@ import {
 import solid from 'vite-plugin-solid'
 
 const virtualUnoCssId = '\0vitest:virtual-uno.css'
+const pomoPublicTestEnvironment = {
+  VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: '/app-in-toss/privacy',
+  VITE_POMO_APPS_IN_TOSS_TERMS_PATH: '/app-in-toss/terms',
+  VITE_POMO_LEGACY_PRIVACY_PATH: '/privacy',
+  VITE_POMO_LEGACY_TERMS_PATH: '/terms',
+  VITE_POMO_PRETENDARD_BASE_PATH: '/fonts/pretendard/1.3.9',
+  VITE_POMO_PRETENDARD_STYLESHEET_PATH: '/fonts/pretendard/1.3.9/variable-subset.css',
+  VITE_POMO_REFUND_PATH: '/refund-policy',
+  VITE_POMO_WEB_PRIVACY_PATH: '/web/privacy',
+  VITE_POMO_WEB_TERMS_PATH: '/web/terms',
+} as const
 const virtualUnoCssPlugin = {
   load(id) {
     return id === virtualUnoCssId ? '' : null
@@ -44,6 +55,7 @@ export const unitTestProject = {
       'apps/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/scripts/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+      'apps/*/vite/**/*.spec.?(c|m)[jt]s?(x)',
       '.agents/skills/*/scripts/**/*.spec.ts',
     ],
     // Leave capacity for nested Vite and esbuild work during the unit suite.
@@ -85,6 +97,12 @@ export const createVitestConfig = (projects: readonly TestProjectConfiguration[]
       // 트랜스파일 타깃 ECMAScript 버전
       target: 'esnext',
     },
+    define: Object.fromEntries(
+      Object.entries(pomoPublicTestEnvironment).map(([name, value]) => [
+        `import.meta.env.${name}`,
+        JSON.stringify(value),
+      ]),
+    ),
     // Vite/Vitest 플러그인 목록
     plugins: [
       // Unit tests need a resolvable CSS module, while UnoCSS transformation rewrites class snapshots and trigger fixtures.

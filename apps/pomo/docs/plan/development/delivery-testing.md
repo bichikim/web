@@ -38,7 +38,7 @@ Vercel에서는 System Environment Variables 자동 노출을 활성화하고 `V
 `VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL`이 나타내는 HTTPS Origin도 허용한다. Vite
 개발 서버에서는 현재 요청의 self Origin을 추가로 허용한다.
 
-Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹, 로컬 개발, 데스크톱 출처와 함께 위 네 앱인토스 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다. 정책 원본은 [`r2/cors.json`](../../../r2/cors.json)이며 `pnpm exec wrangler r2 bucket cors set pomofi-audio --file apps/pomo/r2/cors.json`으로 적용한다.
+Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹, 로컬 개발, 데스크톱 출처와 함께 위 네 앱인토스 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다. 정책 원본은 [`r2/cors.json`](./r2/cors.json)이며 `pnpm exec wrangler r2 bucket cors set pomofi-audio --file apps/pomo/docs/plan/development/r2/cors.json`으로 적용한다.
 
 앱인토스 `.ait` 번들은 압축 해제 기준 100MB 이하로 유지한다. Supertonic 3 INT8 모델은 번들 용량 계산에서 제외되도록 원격 자산으로 분리한다.
 

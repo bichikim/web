@@ -41,7 +41,7 @@ const validSettings = [
 
 beforeEach(() => {
   TestBroadcastChannel.instances = []
-  vi.stubEnv('POMO_IS_DESKTOP', '1')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
   vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
 })
 
@@ -109,7 +109,7 @@ it('should publish settings only in the desktop runtime and release its channel'
   desktop.cleanup()
   expect(channel?.close).toHaveBeenCalledOnce()
 
-  vi.stubEnv('POMO_IS_DESKTOP', '')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
   const webListener = renderHook(() => useDesktopSceneSettingsListener({}))
   const webPublisher = renderHook(() => useDesktopSceneSettingsPublisher())
   webPublisher.result.publish({name: 'gaze', value: 'focused'})

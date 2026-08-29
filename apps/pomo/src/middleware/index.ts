@@ -12,7 +12,7 @@ export default createMiddleware([
   corsMiddleware,
   (event, next) => paraglideMiddleware(event.req, () => next()),
   async (event, next) => {
-    if (!import.meta.env.POMO_IS_APPS_IN_TOSS) {
+    if (!(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true')) {
       const legacyRedirect = handleLegacyRedirectRequest(event.req)
 
       if (legacyRedirect !== null) {

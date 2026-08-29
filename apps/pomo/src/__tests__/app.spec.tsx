@@ -6,7 +6,6 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PRecoveryBoundaryProps} from '../components/PRecoveryBoundary'
 import {useApplicationRecovery} from '../features/application-recovery'
-import {useAppsInTossDevtools} from '../features/apps-in-toss-devtools'
 import {useAppsInTossSafeArea} from '../features/apps-in-toss-safe-area'
 
 const componentMocks = vi.hoisted(() => ({
@@ -34,7 +33,6 @@ vi.mock('../components/PRecoveryBoundary', () => ({
   PRecoveryBoundary: componentMocks.recoveryBoundary,
 }))
 vi.mock('../features/application-recovery', () => ({useApplicationRecovery: vi.fn()}))
-vi.mock('../features/apps-in-toss-devtools', () => ({useAppsInTossDevtools: vi.fn()}))
 vi.mock('../features/apps-in-toss-safe-area', () => ({useAppsInTossSafeArea: vi.fn()}))
 vi.mock('../features/model-download', () => ({
   PModelDownloadProvider: componentMocks.modelDownloadProvider,
@@ -105,7 +103,6 @@ describe('App', () => {
   it('should compose application services, route content, recovery, and download UI', () => {
     render(() => <App />)
 
-    expect(useAppsInTossDevtools).toHaveBeenCalledOnce()
     expect(useAppsInTossSafeArea).toHaveBeenCalledOnce()
     expect(useApplicationRecovery).toHaveBeenCalledOnce()
     expect(componentMocks.router).toHaveBeenCalledOnce()

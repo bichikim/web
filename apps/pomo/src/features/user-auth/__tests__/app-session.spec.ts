@@ -24,7 +24,7 @@ import {
 
 describe('app session lifecycle', () => {
   beforeEach(() => {
-    vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
     storageMocks.getItem.mockReset()
     storageMocks.removeItem.mockReset().mockResolvedValue(undefined)
     storageMocks.setItem.mockReset().mockResolvedValue(undefined)

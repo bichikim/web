@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 it.each([false, true])('should render the lazy home studio for Toss=%s', async (isAppsInToss) => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', isAppsInToss ? '1' : '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', isAppsInToss ? 'true' : '')
   const {PHomePage} = await import('../PHomePage')
 
   render(() => <PHomePage />)

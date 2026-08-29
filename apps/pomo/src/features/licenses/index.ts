@@ -1,4 +1,4 @@
-import licenses from 'src/data/licenses.json'
+import licenses from 'src/data/licenses'
 
 export interface LicenseLink {
   readonly label: string

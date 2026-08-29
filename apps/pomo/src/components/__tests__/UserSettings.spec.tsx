@@ -26,7 +26,7 @@ vi.mock('../../features/user-auth/web-session', () => ({readAccountSession: vi.f
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
 })
 
@@ -74,7 +74,7 @@ it('should provide the login entry for an anonymous user', async () => {
 })
 
 it('should show the Toss login method for an app session', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   vi.mocked(readStoredAppSession).mockResolvedValue('app-session')
   vi.mocked(validateAppSession).mockResolvedValue(true)
 

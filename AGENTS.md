@@ -6,6 +6,7 @@
 - **Intent analysis (mandatory)**: Before interpreting, use grammatical cues—particles, adverbs, comparisons—presuppositions, and dialogue context to reconstruct all contrasted or additive sides and the user's baseline: actual state, experience or memory, or prior dialogue. Preserve named entities and categories. If a reading leaves a cue unexplained, substitutes a related concept, or makes the user seem irrational, seek the coherent ordinary pragmatic reading before correcting them.
   - “Starting with N, does X also move to Y?” presupposes that X was previously outside Y or handled differently in the user's experience; verify the actual state without replacing X. In the SolidStart example, retain server routes and their prior separate location—not API routes already in `src/routes`.
 - **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation.
+- **Existing code references**: When discussing existing code, always include its file path.
 - **Documentation**: When asked to add or write docs, keep it brief and concise—avoid verbosity and repeating the same points—without omitting essential meaning.
 
 ## Code quality

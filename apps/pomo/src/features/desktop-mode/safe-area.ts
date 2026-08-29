@@ -18,7 +18,7 @@ export const getDesktopSafeAreaTop = (mode: DesktopMode, monitor: Monitor | null
 export const useDesktopSafeAreaTop = (mode: Accessor<DesktopMode>): Accessor<number> => {
   const [inset, setInset] = createSignal(0)
 
-  if (!import.meta.env.POMO_IS_DESKTOP) {
+  if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
     return inset
   }
 

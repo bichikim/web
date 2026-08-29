@@ -1,15 +1,15 @@
 export const SERVICE_POLICY_PATHS = {
   appsInToss: {
-    privacy: '/app-in-toss/privacy',
-    terms: '/app-in-toss/terms',
+    privacy: import.meta.env.VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH,
+    terms: import.meta.env.VITE_POMO_APPS_IN_TOSS_TERMS_PATH,
   },
   legacy: {
-    privacy: '/privacy',
-    terms: '/terms',
+    privacy: import.meta.env.VITE_POMO_LEGACY_PRIVACY_PATH,
+    terms: import.meta.env.VITE_POMO_LEGACY_TERMS_PATH,
   },
-  refund: '/refund-policy',
+  refund: import.meta.env.VITE_POMO_REFUND_PATH,
   web: {
-    privacy: '/web/privacy',
-    terms: '/web/terms',
+    privacy: import.meta.env.VITE_POMO_WEB_PRIVACY_PATH,
+    terms: import.meta.env.VITE_POMO_WEB_TERMS_PATH,
   },
 } as const

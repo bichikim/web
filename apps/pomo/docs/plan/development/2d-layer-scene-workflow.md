@@ -244,7 +244,7 @@ const scene = {
 마지막으로 다음 명령을 실행한다.
 
 ```bash
-cd apps/pomo && node scripts/compress-focus-room-scenes.mjs
+cd apps/pomo && node scripts/agent-tasks/focus-room/compress-scenes.mjs
 pnpm format
 pnpm --filter @apps/pomo lint
 pnpm --filter @apps/pomo typecheck
@@ -257,7 +257,7 @@ pnpm --filter @apps/pomo typecheck
 - 레이어 데이터 형식과 렌더러: `src/features/focus-room-animation/layer-scene.ts`
 - 특수 머리카락 움직임 예시: `src/features/focus-room-animation/day-writing-layer-scene.ts`
 - 눈동자 이동 예시: `src/features/focus-room-animation/day-reading-focused-layer-scene.ts`
-- 눈 자산 생성 스크립트: `scripts/create-focus-room-eye-motion-assets.mjs`
+- 눈 자산 생성 스크립트: `scripts/agent-tasks/focus-room/create-eye-motion-assets.mjs`
 - 리뷰 화면: `/dev/focus-room-layer-review`
 - 실제 화면: `/`
 

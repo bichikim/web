@@ -27,7 +27,7 @@ const applySafeAreaInsets = (insets: SafeAreaInsetsValue): void => {
 
 /** Synchronizes Apps in Toss native safe-area values with the document CSS variables. */
 export const useAppsInTossSafeArea = (): void => {
-  if (!import.meta.env.POMO_IS_APPS_IN_TOSS) {
+  if (!(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true')) {
     return
   }
 

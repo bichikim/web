@@ -120,11 +120,11 @@ it('should replace an added recommendation with a stored feed item', () => {
   )
 })
 
-it.each(['POMO_IS_APPS_IN_TOSS', 'POMO_IS_DESKTOP'] as const)(
+it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'] as const)(
   'should use the public server origin for %s recommendations',
   (runtime) => {
-    vi.stubEnv(runtime, '1')
-    vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    vi.stubEnv(runtime, 'true')
+    vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
     renderSettings()
     const developmentAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
 
