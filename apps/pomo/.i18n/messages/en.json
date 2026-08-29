@@ -295,6 +295,8 @@
   "feed_incomplete_count": "{count} incomplete feed dialogues",
   "feed_retry_question": "Create them again from the beginning?",
   "feed_checking": "Checking…",
+  "feed_retrying": "Recreating feed dialogues…",
+  "feed_downloading_model": "Downloading the {label} model · {percentage}%",
   "feed_retry": "Try again",
   "feed_later": "Later",
   "feed_delete": "Delete",

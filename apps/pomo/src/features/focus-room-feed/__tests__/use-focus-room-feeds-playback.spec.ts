@@ -504,6 +504,19 @@ it('should skip listening to an empty feed batch', async () => {
   view.cleanup()
 })
 
+it('should ignore a recovery retry when no jobs remain', async () => {
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
+  const initialState = view.result.state()
+
+  await view.result.retryRecovery()
+
+  expect(repositoryMocks.feedRepository.retryJobs).not.toHaveBeenCalled()
+  expect(queueMocks.scheduleFeedJobs).not.toHaveBeenCalled()
+  expect(view.result.state()).toEqual(initialState)
+  view.cleanup()
+})
+
 it('should delete, dismiss, and retry recovery jobs', async () => {
   const jobs = [createJob({id: 'failed', status: 'failed'})]
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
@@ -536,6 +549,23 @@ it('should delete, dismiss, and retry recovery jobs', async () => {
   retryView.result.dismissRecovery()
   expect(retryView.result.recoveryJobs()).toEqual([])
   retryView.cleanup()
+})
+
+it('should expose preparation while recovered jobs wait for the generation queue', async () => {
+  const jobs = [createJob({id: 'failed', status: 'failed'})]
+  repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
+  queueMocks.scheduleFeedJobs.mockImplementationOnce(() => undefined)
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  await vi.waitFor(() => expect(view.result.recoveryJobs()).toEqual(jobs))
+
+  await view.result.retryRecovery()
+
+  expect(view.result.state()).toEqual({
+    message: '피드 대화를 다시 만들 준비 중…',
+    progress: 0,
+    status: 'preparing',
+  })
+  view.cleanup()
 })
 
 it('should reload dialogues after metadata removal succeeds or fails', async () => {

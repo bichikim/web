@@ -21,6 +21,11 @@ export const CLASSES = {
     '[&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_strong]:text-[0.78rem]',
     '[&_small]:text-muted-foreground [&_small]:text-[0.68rem]',
   ].join(' '),
+  feedStatusSpinner: [
+    'pomo-feed-status__spinner w-4 h-4 box-border flex-none',
+    'animate-spin [border:2px_solid_rgb(255_255_255_/_24%)]',
+    'border-t-highlight rounded-full motion-reduce:animate-[none]',
+  ].join(' '),
 } as const
 
 export interface FeedStatusFrameProps {

@@ -295,6 +295,8 @@
   "feed_incomplete_count": "미완성 피드 대화 {count}개",
   "feed_retry_question": "처음부터 다시 만들까요?",
   "feed_checking": "확인 중…",
+  "feed_retrying": "피드 대화를 다시 만드는 중…",
+  "feed_downloading_model": "{label} 모델 받는 중 · {percentage}%",
   "feed_retry": "다시 시도",
   "feed_later": "나중에",
   "feed_delete": "삭제",
