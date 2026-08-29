@@ -162,6 +162,7 @@
   "account_toss_login_failed": "토스 로그인을 완료하지 못했습니다.",
   "account_toss_logout_success": "로그아웃했습니다.",
   "account_toss_logout_failed": "로그아웃하지 못했습니다.",
+  "account_toss_logout_cleanup_pending": "로그아웃했지만 기기 저장 정보를 정리하지 못했습니다. 다음에 로그인 상태를 확인할 때 정리를 다시 시도합니다.",
   "account_toss_link_server_failed": "계정 연결 서버에 접속하지 못했습니다.",
   "account_toss_checking": "계정 확인 중…",
   "account_toss_intro": "토스 로그인 한 번으로 Pomo 계정이 바로 생성됩니다. 이메일은 필요하지 않습니다.",

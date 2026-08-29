@@ -112,7 +112,7 @@ it('should show login progress and explain a failed Toss login', async () => {
 })
 
 it('should sign out the active Toss session and show confirmation', async () => {
-  sessionMocks.revokeTossLoginSession.mockResolvedValueOnce(undefined)
+  sessionMocks.revokeTossLoginSession.mockResolvedValueOnce({storageStatus: 'cleared'})
 
   render(() => <TossAccount />)
 
@@ -126,38 +126,57 @@ it('should sign out the active Toss session and show confirmation', async () => 
   expect(screen.getByRole('button', {name: '토스로 시작하기'})).toBeEnabled()
 })
 
-it('should ignore stale active-account handlers after sign-out', async () => {
-  let submitHandler: unknown = null
-  const listenerSpy = vi
-    .spyOn(HTMLFormElement.prototype, 'addEventListener')
-    .mockImplementation((type, listener) => {
-      if (type === 'submit' && typeof listener === 'function') {
-        submitHandler = listener
-      }
-    })
-  sessionMocks.revokeTossLoginSession.mockResolvedValueOnce(undefined)
+it.each(['cleared', 'cleanup-pending'] as const)(
+  'should ignore stale active-account handlers after sign-out with %s storage',
+  async (storageStatus) => {
+    let submitHandler: unknown = null
+    const listenerSpy = vi
+      .spyOn(HTMLFormElement.prototype, 'addEventListener')
+      .mockImplementation((type, listener) => {
+        if (type === 'submit' && typeof listener === 'function') {
+          submitHandler = listener
+        }
+      })
+    sessionMocks.revokeTossLoginSession.mockResolvedValueOnce({storageStatus})
+
+    render(() => <TossAccount />)
+
+    const logoutButton = await screen.findByRole('button', {name: '로그아웃'})
+    await screen.findByRole('button', {name: '웹 로그인 연결하기'})
+    listenerSpy.mockRestore()
+
+    fireEvent.click(logoutButton)
+    await screen.findByRole('button', {name: '토스로 시작하기'})
+
+    const logoutHandler = Reflect.get(logoutButton, '$$click')
+    expect(logoutHandler).toEqual(expect.any(Function))
+    expect(submitHandler).toEqual(expect.any(Function))
+
+    if (typeof logoutHandler === 'function') {
+      logoutHandler(new MouseEvent('click'))
+    }
+    if (typeof submitHandler === 'function') {
+      submitHandler(new Event('submit', {cancelable: true}))
+    }
+
+    expect(sessionMocks.revokeTossLoginSession).toHaveBeenCalledOnce()
+    expect(sessionMocks.requestAccountLinkEmail).not.toHaveBeenCalled()
+  },
+)
+
+it('should sign out locally when revoked session storage cleanup is pending', async () => {
+  sessionMocks.revokeTossLoginSession.mockResolvedValueOnce({storageStatus: 'cleanup-pending'})
 
   render(() => <TossAccount />)
 
-  const logoutButton = await screen.findByRole('button', {name: '로그아웃'})
-  await screen.findByRole('button', {name: '웹 로그인 연결하기'})
-  listenerSpy.mockRestore()
+  fireEvent.click(await screen.findByRole('button', {name: '로그아웃'}))
 
-  fireEvent.click(logoutButton)
   await screen.findByRole('button', {name: '토스로 시작하기'})
-
-  const logoutHandler = Reflect.get(logoutButton, '$$click')
-  expect(logoutHandler).toEqual(expect.any(Function))
-  expect(submitHandler).toEqual(expect.any(Function))
-
-  if (typeof logoutHandler === 'function') {
-    logoutHandler(new MouseEvent('click'))
-  }
-  if (typeof submitHandler === 'function') {
-    submitHandler(new Event('submit', {cancelable: true}))
-  }
-
-  expect(sessionMocks.revokeTossLoginSession).toHaveBeenCalledOnce()
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    '로그아웃했지만 기기 저장 정보를 정리하지 못했습니다.',
+  )
+  expect(screen.queryByText('토스 계정으로 사용 중')).toBeNull()
+  expect(screen.queryByLabelText('연결할 이메일')).toBeNull()
   expect(sessionMocks.requestAccountLinkEmail).not.toHaveBeenCalled()
 })
 
