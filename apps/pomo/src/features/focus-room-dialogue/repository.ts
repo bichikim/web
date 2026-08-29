@@ -5,6 +5,7 @@ import {
 } from '../model-storage/storage'
 import {compressLegacyWave} from './compress-legacy-wave'
 import {createPDatabase} from './database'
+import {deleteDialogueRecord} from './dialogue-record'
 import {
   CURRENT_DIALOGUE_EVENT_BINDING_VERSION,
   DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
@@ -155,34 +156,9 @@ export const createPDialogueRepository = (): PDialogueRepository => {
       const dialogue = await database.dialogues.get(dialogueId)
       const parsedDialogue = dialogue === undefined ? null : focusRoomDialogueSchema.parse(dialogue)
 
-      await database.transaction('rw', database.dialogues, database.eventBindings, async () => {
-        await database.dialogues.delete(dialogueId)
-        const bindings = await Promise.all(
-          FOCUS_ROOM_DIALOGUE_EVENTS.map((event) => database.eventBindings.get(event)),
-        )
-
-        await Promise.all(
-          bindings.map(async (storedBinding) => {
-            if (storedBinding === undefined) {
-              return
-            }
-
-            const binding = dialogueEventBindingSchema.parse(storedBinding)
-            const remainingIds = binding.dialogueIds.filter((id) => id !== dialogueId)
-
-            if (remainingIds.length === binding.dialogueIds.length) {
-              return
-            }
-
-            if (remainingIds.length === 0) {
-              await database.eventBindings.delete(binding.event)
-              return
-            }
-
-            await database.eventBindings.put({...binding, dialogueIds: remainingIds})
-          }),
-        )
-      })
+      await database.transaction('rw', database.dialogues, database.eventBindings, () =>
+        deleteDialogueRecord(database, dialogueId),
+      )
 
       if (parsedDialogue !== null) {
         // IndexedDB 삭제가 이미 확정된 뒤이므로 캐시 정리 실패가 UI 삭제를 되돌린 것처럼 보이면 안 된다.

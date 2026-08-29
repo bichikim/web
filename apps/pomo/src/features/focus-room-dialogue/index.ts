@@ -5,6 +5,7 @@ export type {PEventContextValue} from './event-context'
 export {usePEventController} from './use-p-event-controller'
 export type {UsePEventControllerProps} from './use-p-event-controller'
 export type {PlayPDialogueSequenceOptions} from './entry-playback-controller'
+export {deleteDialogueRecord} from './dialogue-record'
 export {
   dialogueEventBindingSchema,
   dialogueEventIdSchema,

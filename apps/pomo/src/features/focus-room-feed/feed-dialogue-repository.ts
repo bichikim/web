@@ -1,4 +1,5 @@
 import {createPDatabase, type PDatabase} from '../focus-room-dialogue/database'
+import {deleteDialogueRecord} from '../focus-room-dialogue/dialogue-record'
 import {
   type FeedDialogueJob,
   feedDialogueJobSchema,
@@ -15,6 +16,12 @@ export interface CompleteFeedDialogueOptions {
   readonly metadata: FeedDialogueMetadata
 }
 
+export interface RecoverMissingDialogueOptions {
+  readonly dialogueId: string
+  readonly item: FeedItemRecord
+  readonly job: FeedDialogueJob
+}
+
 export interface FeedDialogueRepository {
   readonly complete: (options: CompleteFeedDialogueOptions) => Promise<void>
   readonly deleteJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
@@ -26,6 +33,7 @@ export interface FeedDialogueRepository {
   readonly listMetadata: () => Promise<ReadonlyArray<FeedDialogueMetadata>>
   readonly markListened: (dialogueId: string, listenedAt: string) => Promise<void>
   readonly queue: (job: FeedDialogueJob, item: FeedItemRecord) => Promise<void>
+  readonly recoverMissingDialogue: (options: RecoverMissingDialogueOptions) => Promise<boolean>
   readonly removeMetadata: (dialogueId: string) => Promise<void>
   readonly removeItem: (feedConnectionId: string, feedItemId: string) => Promise<void>
   readonly retryJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
@@ -80,7 +88,7 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
       const metadata = feedDialogueMetadataSchema.parse(options.metadata)
       const item = feedItemRecordSchema.parse(options.item)
 
-      await database.transaction(
+      return database.transaction(
         'rw',
         database.feedDialogueJobs,
         database.feedDialogueMetadata,
@@ -149,6 +157,44 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
         await database.feedDialogueJobs.put(nextJob)
         await database.feedItems.put(nextItem)
       })
+    },
+    async recoverMissingDialogue(options) {
+      const nextJob = feedDialogueJobSchema.parse(options.job)
+      const nextItem = feedItemRecordSchema.parse(options.item)
+
+      return database.transaction(
+        'rw',
+        database.dialogues,
+        database.eventBindings,
+        database.feedDialogueJobs,
+        database.feedDialogueMetadata,
+        database.feedItems,
+        async () => {
+          const storedMetadata = await database.feedDialogueMetadata.get(options.dialogueId)
+
+          if (storedMetadata === undefined) {
+            return false
+          }
+
+          const metadata = feedDialogueMetadataSchema.parse(storedMetadata)
+
+          if (
+            metadata.feedConnectionId !== nextJob.feedConnectionId ||
+            metadata.feedItemId !== nextJob.feedItemId ||
+            nextItem.feedConnectionId !== nextJob.feedConnectionId ||
+            nextItem.feedItemId !== nextJob.feedItemId ||
+            nextItem.id !== getFeedItemRecordId(nextJob.feedConnectionId, nextJob.feedItemId)
+          ) {
+            throw new Error('복구할 피드 대화와 생성 작업이 일치하지 않아요.')
+          }
+
+          await deleteDialogueRecord(database, options.dialogueId)
+          await database.feedDialogueMetadata.delete(options.dialogueId)
+          await database.feedDialogueJobs.put(nextJob)
+          await database.feedItems.put(nextItem)
+          return true
+        },
+      )
     },
     async removeItem(feedConnectionId, feedItemId) {
       await database.feedItems.delete(getFeedItemRecordId(feedConnectionId, feedItemId))
