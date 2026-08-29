@@ -2,6 +2,7 @@
 
 import {Tabs} from '@kobalte/core/tabs'
 import {render, screen, waitFor} from '@solidjs/testing-library'
+import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {readStoredAppSession, validateAppSession} from '../../features/user-auth/app-session'
@@ -9,6 +10,13 @@ import {readAccountSession} from '../../features/user-auth/web-session'
 import {UserSettings} from '../UserSettings'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
+vi.mock('@solidjs/router', () => ({
+  A: (props: {readonly children?: JSX.Element; readonly class?: string; readonly href: string}) => (
+    <a class={props.class} href={props.href}>
+      {props.children}
+    </a>
+  ),
+}))
 vi.mock('../../features/user-auth/app-session', () => ({
   clearStoredAppSession: vi.fn(),
   readStoredAppSession: vi.fn(),
@@ -37,7 +45,10 @@ it('should show the signed-in email and account management entry', async () => {
   expect(screen.getByRole('status').textContent).toContain('계정 확인 중…')
   await waitFor(() => expect(screen.queryByText('pomo@example.com')).not.toBeNull())
   expect(screen.queryByText('이메일 링크')).not.toBeNull()
-  expect(screen.getByRole('link', {name: '계정 관리'}).getAttribute('href')).toBe('/ko/account/')
+  const accountLink = screen.getByRole('link', {name: '계정 관리'})
+  expect(accountLink.getAttribute('href')).toBe('/ko/account/')
+  expect(accountLink.className).toContain('rounded-control')
+  expect(accountLink.className).toContain('border-highlight')
 })
 
 it('should provide the login entry for an anonymous user', async () => {
@@ -46,6 +57,7 @@ it('should provide the login entry for an anonymous user', async () => {
   render(() => <UserSettings />)
 
   await waitFor(() => expect(screen.queryByText('로그인하지 않았어요.')).not.toBeNull())
+  expect(screen.getByText('로그인하지 않았어요.').closest('div.rounded-panel')).not.toBeNull()
   expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe(
     '/ko/account/',
   )
@@ -56,6 +68,9 @@ it('should provide the login entry for an anonymous user', async () => {
     '/web/privacy',
   )
   expect(screen.queryByRole('link', {name: '환불 및 청약철회 정책'})).toBeNull()
+  expect(screen.getByRole('heading', {name: '서비스 정보'}).parentElement?.className).toContain(
+    'border-t',
+  )
 })
 
 it('should show the Toss login method for an app session', async () => {

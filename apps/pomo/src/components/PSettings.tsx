@@ -130,7 +130,7 @@ export const PSettings = (props: PSettingsProps) => {
           onPress={handleOpen}
         />
       </PScribbleCircleControl>
-      <Tabs value={activeTab()} onChange={setActiveTab}>
+      <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>
         <PModal
           isOpen={isOpen()}
           navigation={<PSettingsTabList />}

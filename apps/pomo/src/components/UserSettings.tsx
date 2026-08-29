@@ -3,6 +3,8 @@ import {Match, Show, Switch} from 'solid-js'
 
 import {useUserSettings} from '../features/user-auth/use-user-settings'
 import {PServicePolicyLinks} from './PServicePolicyLinks'
+import {PSettingsActionLink} from './settings/ActionLink'
+import {PSettingsSectionHeading} from './settings/SectionHeading'
 import * as m from '@paraglide/message'
 import {localizeHref} from '@paraglide/runtime'
 
@@ -11,8 +13,8 @@ export const UserSettings = () => {
 
   return (
     <Tabs.Content value="user">
-      <section class="grid gap-6">
-        <div class="rounded-4 border border-solid border-border bg-secondary-soft p-5">
+      <section class="grid gap-4.5 settings-compact:gap-4">
+        <div class="rounded-panel border border-solid border-[rgb(255_255_255_/_6%)] bg-[rgb(255_255_255_/_3%)] p-4">
           <Switch>
             <Match when={settings.state().kind === 'loading'}>
               <p class="m-0 text-sm text-muted-foreground" role="status">
@@ -61,16 +63,11 @@ export const UserSettings = () => {
           </Switch>
         </div>
 
-        <a
-          class={
-            'inline-flex min-h-control-md w-fit items-center justify-center gap-2 rounded-control ' +
-            'bg-primary-strong px-5 py-3 text-sm font-750 text-white no-underline ' +
-            'transition hover:bg-primary-strong-hover focus-visible:shadow-focus ' +
-            'motion-reduce:transition-none'
-          }
+        <PSettingsActionLink
+          class="min-h-control-md w-fit"
           href={localizeHref('/account')}
+          icon="i-tabler-user-circle"
         >
-          <span aria-hidden="true" class="i-tabler-user-circle size-4.5" />
           <Switch>
             <Match when={settings.authenticatedUser()?.provider === 'toss'}>
               {m.user_link_web()}
@@ -80,15 +77,13 @@ export const UserSettings = () => {
             </Match>
             <Match when>{m.user_sign_in()}</Match>
           </Switch>
-        </a>
+        </PSettingsActionLink>
 
-        <section
-          aria-labelledby="pomo-service-information-title"
-          class="grid gap-3 border-t border-solid border-border pt-5"
-        >
-          <h3 class="m-0 text-sm font-750 text-foreground" id="pomo-service-information-title">
-            {m.user_service_information()}
-          </h3>
+        <section aria-labelledby="pomo-service-information-title" class="grid gap-3">
+          <PSettingsSectionHeading
+            title={m.user_service_information()}
+            titleId="pomo-service-information-title"
+          />
           <PServicePolicyLinks />
         </section>
       </section>

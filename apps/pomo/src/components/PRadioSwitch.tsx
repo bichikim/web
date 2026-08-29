@@ -6,6 +6,7 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 import {getPomoIconClass} from './icon-style'
 
 export interface PRadioSwitchOption<TValue extends string> {
+  readonly disabled?: boolean
   readonly icon?: string
   readonly label: string
   readonly value: TValue
@@ -13,6 +14,7 @@ export interface PRadioSwitchOption<TValue extends string> {
 
 export interface PRadioSwitchProps<TValue extends string> {
   readonly class?: string
+  readonly disabled?: boolean
   readonly label: string
   readonly onChange: (value: TValue) => void
   readonly options: readonly PRadioSwitchOption<TValue>[]
@@ -41,7 +43,7 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
   const handleChange = (nextValue: string) => {
     const selectedOption = props.options.find((option) => option.value === nextValue)
 
-    if (selectedOption !== undefined) {
+    if (selectedOption !== undefined && selectedOption.disabled !== true) {
       props.onChange(selectedOption.value)
     }
   }
@@ -82,8 +84,15 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
       <div class="flex gap-1 rounded-3.5 border border-solid border-border bg-[rgb(4_4_3_/_28%)] p-1">
         <For each={props.options}>
           {(option) => (
-            <RadioGroup.Item class="group min-w-0 flex-1" value={option.value}>
-              <RadioGroup.ItemInput aria-label={option.label} />
+            <RadioGroup.Item
+              class="group min-w-0 flex-1"
+              disabled={props.disabled || option.disabled}
+              value={option.value}
+            >
+              <RadioGroup.ItemInput
+                aria-label={option.label}
+                disabled={props.disabled || option.disabled}
+              />
               <RadioGroup.ItemControl
                 class={
                   'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 ' +
@@ -91,6 +100,8 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                   'transition-[background-color_140ms_ease,color_140ms_ease] ' +
                   'hover:bg-secondary-soft hover:text-foreground ' +
                   'ui-checked:bg-primary-soft ui-checked:text-foreground ' +
+                  'ui-disabled:cursor-not-allowed ui-disabled:opacity-35 ' +
+                  'ui-disabled:hover:bg-transparent ui-disabled:hover:text-muted-foreground ' +
                   'group-focus-within:shadow-focus ' +
                   'max-xs:gap-1 max-xs:text-[0.6875rem] motion-reduce:transition-none'
                 }

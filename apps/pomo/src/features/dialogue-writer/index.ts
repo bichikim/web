@@ -7,3 +7,4 @@ export type {
   UseDialogueWriterProps,
 } from './use-dialogue-writer'
 export {useDialogueWriter} from './use-dialogue-writer'
+export type {DialogueOutputLanguage} from './prompt'
