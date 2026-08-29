@@ -504,6 +504,19 @@ it('should skip listening to an empty feed batch', async () => {
   view.cleanup()
 })
 
+it('should ignore a recovery retry when no jobs remain', async () => {
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
+  const initialState = view.result.state()
+
+  await view.result.retryRecovery()
+
+  expect(repositoryMocks.feedRepository.retryJobs).not.toHaveBeenCalled()
+  expect(queueMocks.scheduleFeedJobs).not.toHaveBeenCalled()
+  expect(view.result.state()).toEqual(initialState)
+  view.cleanup()
+})
+
 it('should delete, dismiss, and retry recovery jobs', async () => {
   const jobs = [createJob({id: 'failed', status: 'failed'})]
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)

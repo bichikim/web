@@ -284,6 +284,35 @@ it('should show an already active recovery model download as feed generation', (
   expect(screen.queryByRole('button', {name: '다시 시도'})).toBeNull()
 })
 
+it('should keep recovery visible while an unrelated voice model downloads', () => {
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  const modelDownload = createModelDownload()
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue({
+    ...modelDownload,
+    state: () => ({
+      label: 'Supertonic INT8 음성',
+      percentage: 25,
+      status: 'loading',
+      target: {kind: 'voice', modelId: 'int8'},
+    }),
+  })
+
+  render(() => <PFeedStatus />)
+
+  expect(screen.getByRole('status')).toHaveAttribute('data-state', 'recovery')
+  expect(screen.getByRole('button', {name: '다시 시도'})).toBeDisabled()
+  expect(screen.queryByText(/Supertonic INT8 음성 모델 받는 중/)).toBeNull()
+})
+
+it('should render no feed notice while the feed state is idle', () => {
+  vi.mocked(usePFeedContext).mockReturnValue(createFeeds([]))
+
+  render(() => <PFeedStatus />)
+
+  expect(screen.queryByRole('status')).toBeNull()
+})
+
 it('should stop downloading remaining models when a confirmed download is cancelled', async () => {
   renderModal()
   const secondRecoveryJob: FeedDialogueJob = {
@@ -320,6 +349,51 @@ it('should retry immediately when every feed model is already cached', async () 
 
   await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledTimes(1))
   expect(screen.queryByRole('dialog', {name: /모델을 받을까요/})).toBeNull()
+})
+
+it('should restore retry actions when checking a feed model fails', async () => {
+  const checkFailure = new Error('model check failed')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(isSupertonicModelDownloaded).mockRejectedValue(checkFailure)
+  render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+
+  await vi.waitFor(() =>
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to check feed dialogue models.',
+      checkFailure,
+    ),
+  )
+  expect(screen.getByRole('button', {name: '다시 시도'})).not.toBeDisabled()
+  expect(feeds.retryRecovery).not.toHaveBeenCalled()
+})
+
+it('should ignore model consent confirmation while a download is already active', async () => {
+  renderModal()
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  const modelDownload = createModelDownload()
+  const downloadState = vi.fn<ModelDownloadController['state']>(() => ({status: 'idle'}))
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+  render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+  const confirmButton = await screen.findByRole('button', {name: '받고 시작'})
+  downloadState.mockReturnValue({
+    label: 'Supertonic Full 음성',
+    percentage: 10,
+    status: 'loading',
+    target: {kind: 'voice', modelId: 'full'},
+  })
+
+  fireEvent.click(confirmButton)
+
+  expect(modelDownload.startVoiceModel).not.toHaveBeenCalled()
+  expect(feeds.retryRecovery).not.toHaveBeenCalled()
 })
 
 it('should render active sync and error states and let users retry a failed feed check', () => {
