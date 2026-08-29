@@ -7,6 +7,7 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 import {getPomoIconClass} from './icon-style'
 import {PIconButton} from './PIconButton'
 import {PModal} from './PModal'
+import {LANGUAGE_LEARNING_ICON} from './learning/icon'
 import {PLearningTabList} from './learning/TabList'
 import {LanguageLearningLibrary} from './language-learning/Library'
 import {LanguageLearningWords} from './language-learning/Words'
@@ -32,7 +33,7 @@ export const PLearning = (props: PLearningProps) => {
         <PIconButton
           accessibleLabel={m.learning_open()}
           feedback={m.learning_feedback()}
-          icon={getPomoIconClass('i-tabler-book-2', props.sceneStyle)}
+          icon={getPomoIconClass(LANGUAGE_LEARNING_ICON, props.sceneStyle)}
           onPress={handleOpen}
         />
       </PScribbleCircleControl>

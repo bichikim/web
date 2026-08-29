@@ -131,6 +131,7 @@ describe('SceneToolbar', () => {
     ))
 
     expect(screen.getByRole('status')).toBeInTheDocument()
+    expect(getPomoIconClass).toHaveBeenCalledWith('i-tabler-brain', 'scribble')
     expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
     expect(onDesktopModeChange).toHaveBeenCalledWith('widget')
   })

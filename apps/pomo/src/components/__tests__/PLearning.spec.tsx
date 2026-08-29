@@ -101,6 +101,7 @@ it('should open a Korean learning modal', () => {
   fireEvent.click(trigger)
 
   expect(screen.getByRole('dialog', {name: 'Pomofi 언어 학습'}).hasAttribute('hidden')).toBe(false)
+  expect(PIconButton).toHaveBeenCalledWith(expect.objectContaining({icon: 'i-tabler-brain'}))
   expect(Tabs).toHaveBeenCalledWith(expect.objectContaining({class: 'contents'}))
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '학습 문장',
@@ -118,6 +119,13 @@ it('should open a Korean learning modal', () => {
   fireEvent.click(screen.getByRole('button', {name: 'language learning library'}))
   fireEvent.click(screen.getByRole('button', {hidden: true, name: 'Close modal'}))
   fireEvent.click(screen.getByRole('button', {name: 'Change tab'}))
+})
+
+it('should use the scribble brain icon in scribble scenes', () => {
+  render(() => <PLearning sceneStyle="scribble" />)
+
+  expect(PIconButton).toHaveBeenCalledWith(expect.objectContaining({icon: 'i-pomo-scribble:brain'}))
+  expect(PScribbleCircleControl).toHaveBeenCalledWith(expect.objectContaining({enabled: true}))
 })
 
 it('should open an English learning modal', () => {

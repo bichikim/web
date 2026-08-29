@@ -26,6 +26,7 @@ import {PWeatherStatus} from '../PWeatherStatus'
 import {PDesktopModeControl} from '../PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
 import {LearningPanel} from './LearningPanel'
+import {LANGUAGE_LEARNING_ICON} from '../learning/icon'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -90,7 +91,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
               >
                 <span
                   class={cx(
-                    getPomoIconClass('i-tabler-book-2', props.sceneStyle),
+                    getPomoIconClass(LANGUAGE_LEARNING_ICON, props.sceneStyle),
                     'size-5 text-highlight',
                   )}
                 />

@@ -24,6 +24,9 @@
     "book": {
       "body": "<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2.2\" d=\"M3.8 5.8c2.8-.8 5.6-.3 8.1 1.5 2.6-1.9 5.5-2.3 8.2-1.4l-.4 12.5c-2.5-.7-5.2-.2-7.8 1.5-2.4-1.7-5-2.2-7.7-1.4L3.8 5.8Zm8.1 1.5v12.6\"/>"
     },
+    "brain": {
+      "body": "<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2.2\"><path d=\"M15.5 13a3.5 3.5 0 0 0-3.5 3.5v1a3.5 3.5 0 0 0 7 0v-1.8M8.5 13A3.5 3.5 0 0 1 12 16.5v1a3.5 3.5 0 0 1-7 0v-1.8\"/><path d=\"M17.5 16a3.5 3.5 0 0 0 0-7H17M19 9.3V6.5a3.5 3.5 0 0 0-7 0M6.5 16a3.5 3.5 0 0 1 0-7H7M5 9.3V6.5a3.5 3.5 0 0 1 7 0v10\"/></g>"
+    },
     "check": {
       "body": "<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2.8\" d=\"m4.6 12.4 4.5 4.4 10.4-10\"/>"
     },

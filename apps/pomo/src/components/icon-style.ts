@@ -5,6 +5,7 @@ const SCRIBBLE_ICON_CLASSES: Readonly<Record<string, string>> = {
   'i-tabler-armchair-2': 'i-pomo-scribble:armchair',
   'i-tabler-arrows-shuffle': 'i-pomo-scribble:shuffle',
   'i-tabler-book-2': 'i-pomo-scribble:book',
+  'i-tabler-brain': 'i-pomo-scribble:brain',
   'i-tabler-check': 'i-pomo-scribble:check',
   'i-tabler-chevron-down': 'i-pomo-scribble:chevron-down',
   'i-tabler-chevron-up': 'i-pomo-scribble:chevron-up',
