@@ -20,7 +20,7 @@ import {
 } from '../features/localization'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
-import {useScreenWakeLock} from '../features/screen-wake-lock'
+import {type ScreenWakeLockController, useScreenWakeLock} from '../features/screen-wake-lock'
 import {UserSettings} from './UserSettings'
 import type {WeatherCitySlug, WeatherSceneMode} from '../features/weather'
 import * as m from '@paraglide/message'
@@ -173,9 +173,12 @@ const PGeneralWeatherSettings = (props: PSettingsProps) => (
   </section>
 )
 
-const PGeneralDisplaySettings = (props: PSettingsProps) => {
+interface PGeneralDisplaySettingsProps extends PSettingsProps {
+  readonly wakeLock: ScreenWakeLockController
+}
+
+const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
   const fullscreen = useFullscreen()
-  const wakeLock = useScreenWakeLock()
   const fullscreenDescription = createMemo(() => {
     const error = fullscreen.error()
     if (error !== null) {
@@ -206,18 +209,18 @@ const PGeneralDisplaySettings = (props: PSettingsProps) => {
     return exhaustiveAvailability
   })
   const wakeLockDescription = createMemo(() => {
-    const errorMessage = wakeLock.errorMessage()
+    const errorMessage = props.wakeLock.errorMessage()
 
     if (errorMessage !== null) {
       return errorMessage
     }
 
-    const availability = wakeLock.availability()
+    const availability = props.wakeLock.availability()
     switch (availability) {
       case 'checking':
         return m.settings_wake_lock_checking()
       case 'supported':
-        return wakeLock.isRequestPending()
+        return props.wakeLock.isRequestPending()
           ? m.settings_wake_lock_requesting()
           : m.settings_wake_lock_supported()
       case 'unsupported':
@@ -229,7 +232,7 @@ const PGeneralDisplaySettings = (props: PSettingsProps) => {
   })
   const isFullscreenDisabled = () =>
     fullscreen.availability() !== 'supported' || fullscreen.isRequestPending()
-  const isWakeLockDisabled = () => wakeLock.availability() !== 'supported'
+  const isWakeLockDisabled = () => props.wakeLock.availability() !== 'supported'
 
   return (
     <section aria-labelledby="pomo-settings-display-title" class={CLASSES.settingsSection}>
@@ -248,12 +251,12 @@ const PGeneralDisplaySettings = (props: PSettingsProps) => {
           onChange={fullscreen.onEnabledChange}
         />
         <PSwitch
-          checked={wakeLock.isEnabled()}
+          checked={props.wakeLock.isEnabled()}
           class={CLASSES.settingsToggle}
           description={wakeLockDescription()}
           disabled={isWakeLockDisabled()}
           label={m.settings_wake_lock()}
-          onChange={wakeLock.onEnabledChange}
+          onChange={props.wakeLock.onEnabledChange}
         />
         <div class={CLASSES.settingsScreenSaver}>
           <PSelect
@@ -269,7 +272,11 @@ const PGeneralDisplaySettings = (props: PSettingsProps) => {
   )
 }
 
-const PGeneralSettings = (props: PSettingsProps) => (
+interface PGeneralSettingsProps extends PSettingsProps {
+  readonly wakeLock: ScreenWakeLockController
+}
+
+const PGeneralSettings = (props: PGeneralSettingsProps) => (
   <div class={CLASSES.settingsContent}>
     <PSelect
       label={m.settings_language()}
@@ -288,6 +295,7 @@ export const PSettings = (props: PSettingsProps) => {
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('general')
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
+  const wakeLock = useScreenWakeLock()
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
     setIsOpen(true)
@@ -316,7 +324,7 @@ export const PSettings = (props: PSettingsProps) => {
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">
-            <PGeneralSettings {...props} />
+            <PGeneralSettings {...props} wakeLock={wakeLock} />
           </Tabs.Content>
           <PGuideSettings />
           <PCreditsSettings />
