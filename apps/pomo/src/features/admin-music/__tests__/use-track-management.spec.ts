@@ -9,7 +9,10 @@ const creationMocks = vi.hoisted(() => ({
   createTrackWithAudio: vi.fn(),
   removeTrack: vi.fn(),
 }))
-const uploadMocks = vi.hoisted(() => ({validateTrackAudio: vi.fn()}))
+const uploadMocks = vi.hoisted(() => ({
+  confirmTrackAudioRegistration: vi.fn(),
+  validateTrackAudio: vi.fn(),
+}))
 
 vi.mock('../track-creation', () => creationMocks)
 vi.mock('../track-upload', () => uploadMocks)
@@ -64,6 +67,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   creationMocks.createTrackWithAudio.mockResolvedValue({success: true})
   creationMocks.removeTrack.mockResolvedValue(undefined)
+  uploadMocks.confirmTrackAudioRegistration.mockResolvedValue({status: 'active'})
 })
 
 afterEach(() => {
@@ -75,6 +79,7 @@ describe('useTrackManagement', () => {
   it('should expose editable track fields with idle initial state', () => {
     const {cleanup, result} = renderTrackManagement()
 
+    expect(result.confirmingAssetId()).toBeNull()
     expect(result.isSavingTrack()).toBe(false)
     expect(result.removingTrackId()).toBeNull()
     expect(result.trackArtist()).toBe('')
@@ -198,6 +203,71 @@ describe('useTrackManagement', () => {
 
     expect(setMessage).toHaveBeenLastCalledWith('곡을 저장하지 못했습니다.')
     expect(result.isSavingTrack()).toBe(false)
+    cleanup()
+  })
+
+  it('should confirm a pending asset, refresh the catalog, and report activation', async () => {
+    let finishConfirmation: ((result: {status: 'active'}) => void) | undefined
+    uploadMocks.confirmTrackAudioRegistration.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishConfirmation = resolve
+        }),
+    )
+    const {cleanup, refreshCatalog, result, setMessage} = renderTrackManagement()
+
+    const confirmation = result.handleTrackConfirmation('asset-one')
+
+    expect(result.confirmingAssetId()).toBe('asset-one')
+    expect(setMessage).toHaveBeenCalledWith(null)
+    finishConfirmation?.({status: 'active'})
+    await confirmation
+
+    expect(uploadMocks.confirmTrackAudioRegistration).toHaveBeenCalledWith('asset-one')
+    expect(refreshCatalog).toHaveBeenCalledOnce()
+    expect(setMessage).toHaveBeenLastCalledWith('MP3 등록을 확인하고 수록곡을 활성화했습니다.')
+    expect(result.confirmingAssetId()).toBeNull()
+    cleanup()
+  })
+
+  it('should preserve and explain an ambiguously confirmed asset', async () => {
+    uploadMocks.confirmTrackAudioRegistration.mockResolvedValueOnce({
+      error: new Error('network unavailable'),
+      status: 'unconfirmed',
+    })
+    const {cleanup, refreshCatalog, result, setMessage} = renderTrackManagement()
+
+    await result.handleTrackConfirmation('asset-one')
+
+    expect(refreshCatalog).toHaveBeenCalledOnce()
+    expect(setMessage).toHaveBeenLastCalledWith(
+      '등록 결과를 아직 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    )
+    expect(result.confirmingAssetId()).toBeNull()
+    cleanup()
+  })
+
+  it('should refresh and report a definitive confirmation failure', async () => {
+    uploadMocks.confirmTrackAudioRegistration.mockRejectedValueOnce(new Error('검증 실패'))
+    const {cleanup, refreshCatalog, result, setMessage} = renderTrackManagement()
+
+    await result.handleTrackConfirmation('asset-one')
+
+    expect(refreshCatalog).toHaveBeenCalledOnce()
+    expect(setMessage).toHaveBeenLastCalledWith('검증 실패')
+    expect(result.confirmingAssetId()).toBeNull()
+    cleanup()
+  })
+
+  it('should tolerate refresh failure after a non-error confirmation failure', async () => {
+    uploadMocks.confirmTrackAudioRegistration.mockRejectedValueOnce('network unavailable')
+    const refreshCatalog = vi.fn().mockRejectedValue(new Error('refresh failed'))
+    const {cleanup, result, setMessage} = renderTrackManagement(refreshCatalog)
+
+    await result.handleTrackConfirmation('asset-one')
+
+    expect(setMessage).toHaveBeenLastCalledWith('MP3 등록을 확인하지 못했습니다.')
+    expect(result.confirmingAssetId()).toBeNull()
     cleanup()
   })
 
