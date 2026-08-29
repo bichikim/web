@@ -21,8 +21,108 @@ env:
   VERCEL_PROJECT_ID: prj_1GOayEsbALkhBglgOzza5COVs1tC
 
 jobs:
+  audio-gateway:
+    name: Deploy audio gateway first
+    if: github.ref == 'refs/heads/main-pomo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      deployed: ${{ steps.changes.outputs.deploy }}
+      previous_version: ${{ steps.previous.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect audio gateway changes
+        id: changes
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] || \
+            [ -z "${BEFORE_SHA}" ] || \
+            [ "${BEFORE_SHA}" = "0000000000000000000000000000000000000000" ]; then
+            echo "deploy=true" >> "${GITHUB_OUTPUT}"
+          elif git diff --quiet "${BEFORE_SHA}" "${GITHUB_SHA}" -- \
+            apps/pomo-audio-gateway \
+            packages/playback-token \
+            package.json \
+            pnpm-lock.yaml; then
+            echo "deploy=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "deploy=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Set up pnpm
+        if: steps.changes.outputs.deploy == 'true'
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.deploy == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        if: steps.changes.outputs.deploy == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Cloudflare credentials
+        if: steps.changes.outputs.deploy == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          test -n "${CLOUDFLARE_ACCOUNT_ID}" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
+          test -n "${CLOUDFLARE_API_TOKEN}" || { echo "::error::CLOUDFLARE_API_TOKEN is not configured"; exit 1; }
+
+      - name: Verify audio gateway
+        if: steps.changes.outputs.deploy == 'true'
+        run: |
+          pnpm --dir apps/pomo-audio-gateway lint
+          pnpm --dir apps/pomo-audio-gateway typecheck
+          pnpm exec vitest run \
+            apps/pomo-audio-gateway/src/__tests__/index.spec.ts \
+            --project=unit \
+            --reporter=dot
+          pnpm --dir apps/pomo-audio-gateway build
+
+      - name: Capture current production Gateway version
+        id: previous
+        if: steps.changes.outputs.deploy == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-production-status.log
+        run: |
+          deployment_json="$(pnpm --dir apps/pomo-audio-gateway exec wrangler \
+            deployments status \
+            --env= \
+            --json)"
+          version="$(jq -er '
+            [.versions[] | select(.percentage == 100)] |
+            if length == 1 then .[0].version_id
+            else error("production Gateway must have one 100% version")
+            end
+          ' <<< "${deployment_json}")"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Deploy production audio gateway
+        if: steps.changes.outputs.deploy == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-production.log
+        run: pnpm --dir apps/pomo-audio-gateway exec wrangler deploy --env=
+
   deploy:
     name: Migrate and deploy
+    needs: audio-gateway
     if: github.ref == 'refs/heads/main-pomo'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -58,7 +158,6 @@ jobs:
           pnpm dlx vercel@${VERCEL_CLI_VERSION} pull
           --yes
           --environment=production
-          --token="${VERCEL_TOKEN}"
 
       - name: Migrate production database
         env:
@@ -66,7 +165,6 @@ jobs:
         run: |
           pnpm dlx vercel@${VERCEL_CLI_VERSION} env run \
             --environment=production \
-            --token="${VERCEL_TOKEN}" \
             -- sh -eu -c '
               if [ -z "${DATABASE_URL_UNPOOLED:-}" ]; then
                 echo "DATABASE_URL_UNPOOLED is required for production migrations." >&2
@@ -82,7 +180,6 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} \
-            --token="${VERCEL_TOKEN}" \
             inspect "https://pomo-bichis-projects.vercel.app" \
             --json)"
           deployment_url="$(jq -er '.url | select(type == "string" and length > 0)' \
@@ -96,8 +193,7 @@ jobs:
         run: |
           deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
             --prod \
-            --skip-domain \
-            --token="${VERCEL_TOKEN}")"
+            --skip-domain)"
           echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
 
       - name: Validate staged build outputs
@@ -106,7 +202,6 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} \
-            --token="${VERCEL_TOKEN}" \
             inspect "${DEPLOYMENT_URL}" \
             --json)"
           jq -e '
@@ -135,7 +230,7 @@ jobs:
           DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: >-
-          pnpm dlx vercel@${VERCEL_CLI_VERSION} --token="${VERCEL_TOKEN}"
+          pnpm dlx vercel@${VERCEL_CLI_VERSION}
           promote "${DEPLOYMENT_URL}"
           --yes
 
@@ -145,6 +240,51 @@ jobs:
           PREVIOUS_DEPLOYMENT_URL: ${{ steps.previous.outputs.url }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: >-
-          pnpm dlx vercel@${VERCEL_CLI_VERSION} --token="${VERCEL_TOKEN}"
+          pnpm dlx vercel@${VERCEL_CLI_VERSION}
           alias set "${PREVIOUS_DEPLOYMENT_URL}"
           pomo-bichis-projects.vercel.app
+
+  rollback-audio-gateway:
+    name: Roll back audio gateway after Pomo failure
+    needs:
+      - audio-gateway
+      - deploy
+    if: >-
+      always() &&
+      needs.audio-gateway.result == 'success' &&
+      needs.audio-gateway.outputs.deployed == 'true' &&
+      needs.deploy.result != 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore previous production Gateway version
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PREVIOUS_GATEWAY_VERSION: ${{ needs.audio-gateway.outputs.previous_version }}
+          WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-production-rollback.log
+        run: |
+          test -n "${PREVIOUS_GATEWAY_VERSION}" || { echo "::error::Previous Gateway version is unavailable"; exit 1; }
+          pnpm --dir apps/pomo-audio-gateway exec wrangler rollback \
+            "${PREVIOUS_GATEWAY_VERSION}" \
+            --env= \
+            --message "Restore Gateway after failed Pomo deployment ${GITHUB_SHA}" \
+            --yes

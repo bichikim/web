@@ -1,6 +1,6 @@
 ---
 name: solidstart
-description: Apply this repository's SolidStart conventions for routes, SSR and browser execution boundaries, client-only components, and server functions. Use when editing SolidStart routes or components, accessing browser-only APIs such as navigator, window, WebGPU, Worker, storage, canvas, or DOM globals, or creating Solid Router queries and actions.
+description: Apply repository SolidStart conventions for routes, SSR/browser boundaries, client-only APIs, server functions, and Solid Router queries or actions.
 ---
 
 # SolidStart

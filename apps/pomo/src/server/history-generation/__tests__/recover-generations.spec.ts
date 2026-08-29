@@ -62,3 +62,58 @@ it('should continue recovery and generation retry when one response retrieval fa
     retrievalError,
   )
 })
+
+it.each([
+  ['cancelled', 'response.cancelled'],
+  ['completed', 'response.completed'],
+  ['failed', 'response.failed'],
+  ['incomplete', 'response.incomplete'],
+] as const)('should replay terminal %s responses', async (status, eventType) => {
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([{responseId: `resp-${status}`}])
+  mocks.retrieveHistoryResponse.mockResolvedValue({status})
+
+  await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 1, failed: 0, terminal: 1})
+
+  expect(mocks.handleOpenAiResponseEvent).toHaveBeenCalledWith({
+    data: {id: `resp-${status}`},
+    id: `recovery:resp-${status}`,
+    type: eventType,
+  })
+})
+
+it.each(['in_progress', 'queued', undefined] as const)(
+  'should leave %s responses pending',
+  async (status) => {
+    mocks.listRecoverableGenerationRuns.mockResolvedValue([{responseId: 'resp-pending'}])
+    mocks.retrieveHistoryResponse.mockResolvedValue({status})
+
+    await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 1, failed: 0, terminal: 0})
+
+    expect(mocks.handleOpenAiResponseEvent).not.toHaveBeenCalled()
+  },
+)
+
+it('should isolate webhook and unknown status failures', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {responseId: 'resp-webhook'},
+    {responseId: 'resp-unknown'},
+  ])
+  mocks.retrieveHistoryResponse
+    .mockResolvedValueOnce({status: 'completed'})
+    .mockResolvedValueOnce({status: 'future-status'})
+  mocks.handleOpenAiResponseEvent.mockRejectedValueOnce(new Error('webhook failed'))
+
+  await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 2, failed: 2, terminal: 0})
+
+  expect(console.error).toHaveBeenCalledTimes(2)
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})
+
+it('should still retry generation when there are no stale runs', async () => {
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([])
+
+  await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 0, failed: 0, terminal: 0})
+
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})

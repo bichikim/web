@@ -1,6 +1,6 @@
 import {cx} from 'class-variance-authority'
-import * as m from '../../paraglide/messages.js'
-import {CLASSES} from './shared'
+import * as m from '@paraglide/message'
+import {PLoadingStatus} from '../PLoadingStatus'
 
 export const PSceneFallback = () => (
   <div
@@ -8,9 +8,8 @@ export const PSceneFallback = () => (
     class="pomo-scene-fallback pointer-events-none absolute inset-0 grid place-items-center text-foreground"
     role="status"
   >
-    <span class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}>
-      <span aria-hidden="true" class={CLASSES.loadingSpinner} />
-      {m.scene_preparing()}
+    <span class={cx('border border-solid border-border rounded-control backdrop-blur-surface')}>
+      <PLoadingStatus message={m.scene_preparing()} />
     </span>
   </div>
 )

@@ -1,7 +1,7 @@
 import {type Accessor, ErrorBoundary, type JSX, Show} from 'solid-js'
 
-import {PButton} from '../design-system/PButton'
-import * as m from '../paraglide/messages.js'
+import {PButton} from './PButton'
+import * as m from '@paraglide/message'
 import {RecoveryAttempt} from './recovery-boundary/Attempt'
 
 export interface PRecoveryBoundaryProps {

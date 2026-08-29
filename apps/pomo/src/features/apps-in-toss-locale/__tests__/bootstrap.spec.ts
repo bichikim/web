@@ -1,58 +1,65 @@
 /** @vitest-environment jsdom */
 
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 
-import {localStorageKey} from '../../../paraglide/runtime.js'
-import {getLocaleRedirect} from '../bootstrap'
-
-const deviceMocks = vi.hoisted(() => ({
-  Device: {locale: 'ko-KR'} as {locale: string} | undefined,
-  getLocale: vi.fn<() => Promise<string>>(),
+const runtimeMocks = vi.hoisted(() => ({
+  extractLocaleFromCookie: vi.fn<() => 'en' | 'ja' | 'ko' | 'zh-Hans' | undefined>(),
+  extractLocaleFromNavigator: vi.fn<() => 'en' | 'ja' | 'ko' | 'zh-Hans' | undefined>(),
 }))
 
-vi.mock('@apps-in-toss/web-framework', () => deviceMocks)
-
-beforeEach(() => {
-  deviceMocks.Device = {locale: 'ko-KR'}
-  deviceMocks.getLocale.mockResolvedValue('ko-KR')
-  localStorage.clear()
-  document.cookie = `${localStorageKey}=; Max-Age=0; Path=/`
-})
+vi.mock('@paraglide/runtime', () => ({
+  baseLocale: 'ko',
+  extractLocaleFromCookie: runtimeMocks.extractLocaleFromCookie,
+  extractLocaleFromNavigator: runtimeMocks.extractLocaleFromNavigator,
+  localStorageKey: 'pomo-locale',
+  toLocale: (value: unknown) =>
+    typeof value === 'string' && ['en', 'ja', 'ko', 'zh-Hans'].includes(value) ? value : undefined,
+}))
 
 afterEach(() => {
-  vi.clearAllMocks()
+  vi.restoreAllMocks()
+  vi.resetModules()
+  vi.doUnmock('@apps-in-toss/web-framework')
+  window.localStorage.clear()
 })
 
-it('should read the Apps in Toss SDK locale before returning the SSG redirect', async () => {
-  if (deviceMocks.Device === undefined) {
-    throw new Error('Expected the native Device mock')
-  }
+it('should prefer a persisted locale over the device locale', async () => {
+  window.localStorage.setItem('pomo-locale', 'zh-Hans')
+  runtimeMocks.extractLocaleFromCookie.mockReturnValue('ko')
+  runtimeMocks.extractLocaleFromNavigator.mockReturnValue('en')
+  vi.doMock('@apps-in-toss/web-framework', () => ({
+    Device: {locale: 'ja'},
+    getLocale: vi.fn(),
+  }))
 
-  deviceMocks.Device.locale = 'en-US'
+  const {getInitialAppsInTossLocale} = await import('../bootstrap')
 
-  await expect(getLocaleRedirect(new URL('https://pomo.test/'))).resolves.toMatchObject({
-    pathname: '/en/',
-  })
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('zh-Hans')
 })
 
-it('should read the async Apps in Toss DevTools locale fallback', async () => {
-  deviceMocks.Device = undefined
-  deviceMocks.getLocale.mockResolvedValue('en-US')
+it('should fall back to the framework locale API when Device has no locale', async () => {
+  runtimeMocks.extractLocaleFromCookie.mockReturnValue(undefined)
+  runtimeMocks.extractLocaleFromNavigator.mockReturnValue('ja')
+  const getLocale = vi.fn().mockResolvedValue('en')
+  vi.doMock('@apps-in-toss/web-framework', () => ({Device: undefined, getLocale}))
 
-  await expect(getLocaleRedirect(new URL('https://pomo.test/'))).resolves.toMatchObject({
-    pathname: '/en/',
-  })
+  const {getInitialAppsInTossLocale} = await import('../bootstrap')
+
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('en')
+  expect(getLocale).toHaveBeenCalledOnce()
 })
 
-it('should keep the persisted Pomo locale ahead of the Apps in Toss locale', async () => {
-  if (deviceMocks.Device === undefined) {
-    throw new Error('Expected the native Device mock')
-  }
-
-  deviceMocks.Device.locale = 'en-US'
-  localStorage.setItem(localStorageKey, 'ko')
-
-  await expect(getLocaleRedirect(new URL('https://pomo.test/en/'))).resolves.toMatchObject({
-    pathname: '/ko/',
+it('should use browser evidence when storage and the device framework are unavailable', async () => {
+  vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    throw new Error('storage unavailable')
   })
+  runtimeMocks.extractLocaleFromCookie.mockReturnValue(undefined)
+  runtimeMocks.extractLocaleFromNavigator.mockReturnValue('ja')
+  vi.doMock('@apps-in-toss/web-framework', () => {
+    throw new Error('framework unavailable')
+  })
+
+  const {getInitialAppsInTossLocale} = await import('../bootstrap')
+
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('ja')
 })

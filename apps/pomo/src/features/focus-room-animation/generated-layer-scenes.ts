@@ -1,6 +1,9 @@
 import type {PSceneId} from './scene-catalog'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
+import {BREATHING_MOTION} from './breathing-motion'
+import {DAY_SKY_LAYERS} from './day-sky-layer'
 import {createEyeMotion} from './eye-motion'
+import {getHairTipsPixelPush} from './hair-motion'
 import {
   createMouthLayers,
   createMouthTransitionLayers,
@@ -10,6 +13,10 @@ import {
 import {NIGHT_READING_FAINT_STAR_LAYERS} from './night-reading-faint-star-layers'
 import {type PositionedLayerSource, positionNightReadingLayer} from './night-reading-layer-position'
 import {NIGHT_READING_STAR_LAYERS} from './night-reading-star-layers'
+import {
+  NIGHT_USER_MOUTH_SOURCES,
+  NIGHT_USER_MOUTH_TRANSITION_SOURCES,
+} from './night-user-mouth-sources'
 import {FOCUS_ROOM_JAW_CHANNEL, FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
 import dayReadingUserBase from './assets/layers/day-reading-user/base.webp'
@@ -33,8 +40,6 @@ import dayReadingUserMouthOpen from './assets/layers/day-reading-user/layer-mout
 import dayReadingUserMouthOpenRoundEarly from './assets/layers/day-reading-user/layer-mouth-open-round-early.webp'
 import dayReadingUserMouthOpenRoundLate from './assets/layers/day-reading-user/layer-mouth-open-round-late.webp'
 import dayReadingUserMouthOpenRoundMiddle from './assets/layers/day-reading-user/layer-mouth-open-round-middle.webp'
-import dayReadingUserMouthOpenWideEarly from './assets/layers/day-reading-user/layer-mouth-open-wide-early.webp'
-import dayReadingUserMouthOpenWideLate from './assets/layers/day-reading-user/layer-mouth-open-wide-late.webp'
 import dayReadingUserMouthHalfOpen from './assets/layers/day-reading-user/layer-mouth-half-open.webp'
 import dayReadingUserMouthRest from './assets/layers/day-reading-user/layer-mouth-rest.webp'
 import dayReadingUserMouthRelease from './assets/layers/day-reading-user/layer-mouth-release.webp'
@@ -50,12 +55,10 @@ import dayTypingFocusedRightHand from './assets/layers/day-typing-focused/right-
 import dayTypingFocusedReference from './assets/concept-art/day-typing.webp'
 import dayFocusedEyeIrises from './assets/layers/day-reading-focused/eyes.webp'
 import dayTypingUserBase from './assets/layers/day-typing-user/base.webp'
-import dayTypingUserHead from './assets/layers/day-typing-user/head.webp'
 import dayTypingUserLeftHand from './assets/layers/day-typing-user/left-hand.webp'
 import dayTypingUserRightHand from './assets/layers/day-typing-user/right-hand.webp'
 import dayTypingUserReference from './assets/concept-art/day-typing-user-gaze.webp'
 import dayWritingUserBase from './assets/layers/day-writing-user/base.webp'
-import dayWritingUserHead from './assets/layers/day-writing-user/head.webp'
 import dayWritingUserLeftHand from './assets/layers/day-writing-user/left-hand.webp'
 import dayWritingUserRightHand from './assets/layers/day-writing-user/right-hand.webp'
 import dayWritingUserReference from './assets/concept-art/day-writing-user-gaze.webp'
@@ -77,11 +80,6 @@ import nightReadingUserEyeIrises from './assets/layers/night-reading-user/eyes.w
 import nightReadingUserHead from './assets/layers/night-reading-user/head.webp'
 import nightReadingUserLeftHand from './assets/layers/night-reading-user/left-hand.webp'
 import nightReadingJawMask from './assets/layers/night-reading-user/layer-mask-jaw-displacement.webp'
-import nightReadingUserMouthClosed from './assets/layers/night-reading-user/layer-mouth-closed.webp'
-import nightReadingUserMouthNarrow from './assets/layers/night-reading-user/layer-mouth-narrow.webp'
-import nightReadingUserMouthOpen from './assets/layers/night-reading-user/layer-mouth-open.webp'
-import nightReadingUserMouthRound from './assets/layers/night-reading-user/layer-mouth-round.webp'
-import nightReadingUserMouthWide from './assets/layers/night-reading-user/layer-mouth-wide.webp'
 import nightReadingUserRightHand from './assets/layers/night-reading-user/right-hand.webp'
 import nightReadingUserReference from './assets/concept-art/night-reading-user-gaze.webp'
 import nightTypingFocusedBase from './assets/layers/night-typing-focused/base.webp'
@@ -155,18 +153,9 @@ const DAY_USER_MOUTH_TRANSITION_SOURCES = {
   'open-round-early': dayReadingUserMouthOpenRoundEarly,
   'open-round-late': dayReadingUserMouthOpenRoundLate,
   'open-round-middle': dayReadingUserMouthOpenRoundMiddle,
-  'open-wide-early': dayReadingUserMouthOpenWideEarly,
-  'open-wide-late': dayReadingUserMouthOpenWideLate,
   release: dayReadingUserMouthRelease,
   'small-open': dayReadingUserMouthSmallOpen,
 } satisfies PMouthTransitionSources
-const NIGHT_USER_MOUTH_SOURCES = {
-  closed: nightReadingUserMouthClosed,
-  narrow: nightReadingUserMouthNarrow,
-  open: nightReadingUserMouthOpen,
-  round: nightReadingUserMouthRound,
-  wide: nightReadingUserMouthWide,
-} satisfies PVisemeSources
 const NIGHT_BUILDING_LAYERS = [
   positionNightReadingLayer('building-lights-01', buildingLights01),
   positionNightReadingLayer('building-lights-02', buildingLights02),
@@ -189,13 +178,14 @@ const createSeparatedScene = (
   id: PSceneId,
   assets: SeparatedSceneAssets,
   pivots: SeparatedScenePivots,
-  eyeLayer?: SeparatedSceneEyeLayer,
+  eyeLayer: SeparatedSceneEyeLayer,
 ): PixiLayerSceneDefinition => ({
   background: '#17130f',
   height: 941,
   id: `${id}-layers`,
   layers: [
-    {id: 'background', source: assets.base},
+    {id: 'background', motion: BREATHING_MOTION, source: assets.base},
+    ...(id.startsWith('day-') ? DAY_SKY_LAYERS : []),
     ...(assets.starLayers ?? []).map(({position, source}, index) => ({
       id: `sky-star-${index + 1}`,
       motion: {
@@ -248,6 +238,7 @@ const createSeparatedScene = (
         center: pivots.head,
         degrees: 0.5,
         kind: 'pivot-rotation',
+        pixelPush: getHairTipsPixelPush(id),
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: assets.head,
@@ -263,17 +254,13 @@ const createSeparatedScene = (
               },
             },
     },
-    ...(eyeLayer === undefined
-      ? []
-      : [
-          {
-            channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
-            id: 'eye-irises',
-            motion: eyeLayer.motion,
-            parentAttachmentId: 'eyes',
-            source: eyeLayer.source,
-          },
-        ]),
+    {
+      channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
+      id: 'eye-irises',
+      motion: eyeLayer.motion,
+      parentAttachmentId: 'eyes',
+      source: eyeLayer.source,
+    },
     ...(assets.mouth === undefined || pivots.mouth === undefined
       ? []
       : createMouthLayers({
@@ -395,7 +382,7 @@ export const GENERATED_LAYER_SCENES = {
     'day-typing-user',
     {
       base: dayTypingUserBase,
-      head: dayTypingUserHead,
+      head: dayReadingUserHead,
       headJawMask: dayReadingJawMask,
       leftHand: dayTypingUserLeftHand,
       mouth: DAY_USER_MOUTH_SOURCES,
@@ -415,7 +402,7 @@ export const GENERATED_LAYER_SCENES = {
     'day-writing-user',
     {
       base: dayWritingUserBase,
-      head: dayWritingUserHead,
+      head: dayReadingUserHead,
       headJawMask: dayReadingJawMask,
       leftHand: dayWritingUserLeftHand,
       mouth: DAY_USER_MOUTH_SOURCES,
@@ -489,6 +476,7 @@ export const GENERATED_LAYER_SCENES = {
       headJawMask: nightReadingJawMask,
       leftHand: nightReadingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
+      mouthTransition: NIGHT_USER_MOUTH_TRANSITION_SOURCES,
       reference: nightReadingUserReference,
       rightHand: nightReadingUserRightHand,
     },
@@ -519,8 +507,10 @@ export const GENERATED_LAYER_SCENES = {
       base: nightTypingUserBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
       head: nightReadingUserHead,
+      headJawMask: nightReadingJawMask,
       leftHand: nightTypingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
+      mouthTransition: NIGHT_USER_MOUTH_TRANSITION_SOURCES,
       reference: nightTypingUserReference,
       rightHand: nightTypingUserRightHand,
     },
@@ -551,8 +541,10 @@ export const GENERATED_LAYER_SCENES = {
       base: nightWritingUserBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
       head: nightReadingUserHead,
+      headJawMask: nightReadingJawMask,
       leftHand: nightWritingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
+      mouthTransition: NIGHT_USER_MOUTH_TRANSITION_SOURCES,
       reference: nightWritingUserReference,
       rightHand: nightWritingUserRightHand,
     },

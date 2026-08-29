@@ -129,7 +129,7 @@ const appendHangulSyllable = (visemes: Array<WeightedViseme>, codePoint: number)
     appendWeightedViseme(visemes, 'closed', ONSET_CLOSURE_WEIGHT)
   }
 
-  appendWeightedViseme(visemes, VOWEL_VISEMES[vowelIndex] ?? 'narrow', 1)
+  appendWeightedViseme(visemes, VOWEL_VISEMES[vowelIndex]!, 1)
 
   if (BILABIAL_FINALS.has(finalIndex)) {
     appendWeightedViseme(visemes, 'closed', FINAL_CLOSURE_WEIGHT)

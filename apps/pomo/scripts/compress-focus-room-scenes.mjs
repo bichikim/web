@@ -2,6 +2,8 @@ import {createRequire} from 'node:module'
 import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 
+import {writeParallaxDepthWebp} from './focus-room/depth-parallax-assets.mjs'
+
 const commandArguments = process.argv.slice(2)
 const unsupportedArguments = commandArguments.filter((argument) => argument !== '--depth-only')
 
@@ -32,11 +34,13 @@ let temporaryFileSequence = 0
 const sourceDirectory = path.join(assetLibraryDirectory, 'focus-room-source')
 const sourceConceptArtDirectory = path.join(sourceDirectory, 'concept-art')
 const sourceLayerDirectory = path.join(sourceDirectory, 'layers')
+const sourceBreathingMaskPath = path.join(sourceLayerDirectory, 'breathing-mask.png')
 const sourceAnimationDirectory = path.join(sourceDirectory, 'animation')
 const sourceDepthDirectory = path.join(sourceDirectory, 'depth')
 const sourceStatusIconDirectory = path.join(sourceDirectory, 'status-icons')
 const runtimeConceptArtDirectory = path.join(runtimeDirectory, 'concept-art')
 const runtimeLayerDirectory = path.join(runtimeDirectory, 'layers')
+const runtimeBreathingMaskPath = path.join(runtimeLayerDirectory, 'breathing-mask.webp')
 const runtimeAnimationDirectory = path.join(runtimeDirectory, 'animation')
 const runtimeDepthDirectory = path.join(runtimeDirectory, 'depth')
 const runtimeStatusIconDirectory = path.resolve(
@@ -60,6 +64,7 @@ const runtimeLayerNames = new Map([
   ['layer-hand-right.png', 'right-hand.webp'],
   ['layer-head-eye-base.png', 'head.webp'],
   ['layer-head-hair-tips-mask-v4.png', 'hair-tips-mask.webp'],
+  ['layer-mask-jaw-displacement.png', 'layer-mask-jaw-displacement.webp'],
   ['layer-resting-hand.png', 'resting-hand.webp'],
   ['layer-sky-mask-writing-focused-v1.png', 'sky-mask.webp'],
   ['layer-writing-hand.png', 'writing-hand.webp'],
@@ -75,6 +80,10 @@ const getIndexedRuntimePath = (name, pattern, directory) => {
 }
 
 const getRuntimeLayerPath = (name) => {
+  if (/^layer-mouth-.+\.png$/u.test(name)) {
+    return replacePngExtension(name)
+  }
+
   const indexedPath =
     getIndexedRuntimePath(
       name,
@@ -400,11 +409,12 @@ const createDepthCompressionPlan = async () => {
   return {
     jobs: names.map(
       (name) => () =>
-        writeAtomicWebp({
-          options: {lossless: true},
+        writeParallaxDepthWebp({
           outputPath: path.join(runtimeDepthDirectory, getRuntimeDepthName(name)),
           sourcePath: path.join(sourceDepthDirectory, name),
-          validate: assertExactRenderedPixels,
+          temporaryPath: createTemporaryPath(
+            path.join(runtimeDepthDirectory, getRuntimeDepthName(name)),
+          ),
         }),
     ),
     names,
@@ -422,7 +432,7 @@ const compressDepthAssets = async () => {
   })
 
   console.log(
-    `Compressed ${depthPlan.names.length} depth maps and pruned ${prunedAssetCount} stale depth assets.`,
+    `Prepared ${depthPlan.names.length} parallax depth maps and pruned ${prunedAssetCount} stale depth assets.`,
   )
 }
 
@@ -437,6 +447,13 @@ const compressAssets = async () => {
     sourceStatusIconDirectory,
     runtimeStatusIconPattern,
   )
+  const breathingMaskJob = () =>
+    writeAtomicWebp({
+      options: {lossless: true},
+      outputPath: runtimeBreathingMaskPath,
+      sourcePath: sourceBreathingMaskPath,
+      validate: assertExactRenderedPixels,
+    })
 
   const sceneJobs = sceneNames.map(
     (sceneName) => () =>
@@ -517,6 +534,7 @@ const compressAssets = async () => {
   const layerBaseCount = layerJobsByScene.filter((scene) => scene.hasBase).length
 
   await runCompressionJobs([
+    breathingMaskJob,
     ...sceneJobs,
     ...layerJobsByScene.flatMap((scene) => scene.jobs),
     ...animationJobs,
@@ -527,6 +545,7 @@ const compressAssets = async () => {
   await writeLayerLayouts(layerJobsByScene)
 
   const expectedRuntimePaths = new Set([
+    runtimeBreathingMaskPath,
     ...sceneNames.map((sceneName) =>
       path.join(runtimeConceptArtDirectory, getRuntimeConceptArtName(sceneName)),
     ),

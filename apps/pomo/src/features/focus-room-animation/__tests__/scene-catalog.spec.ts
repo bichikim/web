@@ -3,13 +3,53 @@ import {describe, expect, it} from 'vitest'
 import {FOCUS_ROOM_JAW_CHANNEL, P_MOUTH_TRANSITION_STAGES} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
 import {getPSceneLayer, getPSceneReviewLayer} from '../scene-layer-catalog'
+import {createMouthLayers, createMouthTransitionLayers} from '../mouth-layers'
 
 describe('focus room scene catalog', () => {
+  it('should omit viseme layers whose optional source is unavailable', () => {
+    const layers = createMouthLayers({
+      parentAttachmentId: 'head',
+      position: {x: 0, y: 0},
+      sources: {closed: 'mouth-closed.webp'},
+    })
+
+    expect(layers).toEqual([
+      expect.objectContaining({
+        channel: 'mouth-closed',
+        id: 'mouth-closed',
+        source: 'mouth-closed.webp',
+      }),
+    ])
+  })
+
+  it('should omit unavailable optional mouth transition layers', () => {
+    expect(
+      createMouthTransitionLayers({
+        parentAttachmentId: 'head',
+        position: {x: 0, y: 0},
+        sources: {},
+      }),
+    ).toEqual([])
+  })
+
   it('should provide all twelve unique scene combinations', () => {
     const ids = FOCUS_ROOM_SCENES.map((scene) => scene.id)
 
     expect(ids).toHaveLength(12)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('should expose day reading focus as the stable default catalog entry', () => {
+    const defaultScene = FOCUS_ROOM_SCENES[0]
+
+    expect(defaultScene?.id).toBe('day-reading-focused')
+    expect(getPScene('day', 'reading', 'focused')).toBe(defaultScene)
+  })
+
+  it('should reject an unknown scene identifier combination', () => {
+    expect(() => getPScene('dawn' as never, 'reading', 'focused')).toThrow(
+      'Missing focus room scene: dawn-reading-focused',
+    )
   })
 
   it('should keep every scene definition independently addressable', () => {
@@ -191,13 +231,7 @@ describe('focus room scene catalog', () => {
       const layerScene = getPSceneReviewLayer(scene.id)
       const structuralLayers = layerScene.layers.filter((layer) => !layer.id.startsWith('mouth-'))
       const expectedStructuralLayerCount =
-        scene.id === 'night-reading-focused'
-          ? 36
-          : scene.time === 'night'
-            ? 13
-            : scene.id === 'day-writing-focused'
-              ? 7
-              : 6
+        scene.id === 'night-reading-focused' ? 36 : scene.time === 'night' ? 13 : 8
 
       expect(structuralLayers).toHaveLength(expectedStructuralLayerCount)
       expect(layerScene.layers.map((layer) => layer.id)).toContain('head')
@@ -206,25 +240,95 @@ describe('focus room scene catalog', () => {
       ).toHaveLength(2)
       expect(
         layerScene.layers.every(
-          (layer) => layer.motion?.kind !== 'pixel-oscillation' && layer.motions === undefined,
+          (layer) =>
+            (layer.id === 'background' || layer.motion?.kind !== 'pixel-oscillation') &&
+            layer.motions === undefined,
         ),
       ).toBe(true)
     }
   })
 
-  it('should animate day-writing clouds behind a fixed sky mask', () => {
-    const cloudLayer = getPSceneLayer(getPScene('day', 'writing', 'focused').id).layers.find(
-      (layer) => layer.id === 'day-clouds',
-    )
+  it('should breathe through every background without moving structural layers', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const layers = getPSceneLayer(scene.id).layers
+      const backgroundLayer = layers.find((layer) => layer.id === 'background')
 
-    expect(cloudLayer).toMatchObject({
-      maskSource: expect.stringContaining('sky-mask'),
-      motion: {
-        kind: 'looping-translation',
-        travel: {maximumSeconds: 32, minimumSeconds: 32},
-      },
-      opacity: 0.38,
-    })
+      expect(backgroundLayer?.motion).toMatchObject({
+        effects: [
+          {
+            distance: {x: 0, y: -3},
+            kind: 'masked-pixel-push',
+            maskSource: expect.stringContaining('breathing-mask'),
+          },
+        ],
+        kind: 'pixel-oscillation',
+        travel: {maximumSeconds: 2.5, minimumSeconds: 2.2},
+      })
+      expect(
+        layers
+          .filter((layer) => layer.id !== 'background')
+          .every((layer) => layer.motion?.kind !== 'pixel-oscillation'),
+      ).toBe(true)
+    }
+  })
+
+  it('should move hair in every scene with the matching gaze mask', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const headLayer = getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')
+      const hairMotion =
+        headLayer?.motion?.kind === 'pivot-rotation' ? headLayer.motion.pixelPush : undefined
+      const expectedMaskDirectory =
+        scene.gaze === 'focused' ? 'day-writing-focused' : `${scene.time}-reading-user`
+
+      expect(hairMotion).toMatchObject([
+        {
+          distance: {x: -4, y: 1.25},
+          kind: 'masked-pixel-push',
+          maskSource: expect.stringContaining(`${expectedMaskDirectory}/hair-tips-mask`),
+        },
+      ])
+    }
+  })
+
+  it('should scroll the shared panorama behind every original day window mask', () => {
+    for (const scene of FOCUS_ROOM_SCENES.filter((scene) => scene.time === 'day')) {
+      const layers = getPSceneLayer(scene.id).layers
+      const skyLayers = layers.filter((layer) => layer.id.startsWith('day-sky-'))
+
+      expect(skyLayers.map((layer) => layer.id)).toEqual([
+        'day-sky-panorama',
+        'day-sky-cloud-overlay',
+      ])
+      expect(
+        skyLayers.every(
+          (layer) =>
+            layer.maskSource?.includes('sky-mask-feathered') === true &&
+            layer.motion?.kind === 'looping-translation' &&
+            layer.motion.from.x === -4248 &&
+            layer.motion.from.y === 0 &&
+            layer.motion.to.x === 0 &&
+            layer.motion.to.y === 0 &&
+            layer.repeat === 'horizontal',
+        ),
+      ).toBe(true)
+      expect(skyLayers[0]?.motion?.travel).toEqual({
+        maximumSeconds: 1980,
+        minimumSeconds: 1620,
+      })
+      expect(skyLayers[1]).toMatchObject({
+        motion: {
+          travel: {maximumSeconds: 1380, minimumSeconds: 1020},
+        },
+        opacity: 0.18,
+        source: expect.stringContaining('cloud-overlay'),
+      })
+    }
+
+    for (const scene of FOCUS_ROOM_SCENES.filter((scene) => scene.time === 'night')) {
+      expect(getPSceneLayer(scene.id).layers.some((layer) => layer.id.startsWith('day-sky-'))).toBe(
+        false,
+      )
+    }
   })
 
   it('should pulse all user-provided building layers at independent random intervals', () => {
@@ -379,7 +483,11 @@ describe('focus room scene catalog', () => {
     expect(new Set(eyeMotions).size).toBe(eyeMotions.length)
   })
 
-  it('should use the original night head smile for the rest viseme', () => {
+  it('should provide every base mouth independently from the mouthless head', () => {
+    const nightOnlyTransitionIds = new Set([
+      'mouth-transition-open-wide-early',
+      'mouth-transition-open-wide-late',
+    ])
     const dayUserScenes = FOCUS_ROOM_SCENES.filter(
       (scene) => scene.gaze === 'user' && scene.time === 'day',
     )
@@ -399,7 +507,9 @@ describe('focus room scene catalog', () => {
 
         return (
           mouthLayers.length - transitionLayers.length === 6 &&
-          transitionLayers.length === P_MOUTH_TRANSITION_STAGES.length
+          transitionLayers.length ===
+            P_MOUTH_TRANSITION_STAGES.length - nightOnlyTransitionIds.size &&
+          transitionLayers.every((layer) => !nightOnlyTransitionIds.has(layer.id))
         )
       }),
     ).toBe(true)
@@ -409,8 +519,18 @@ describe('focus room scene catalog', () => {
         const mouthLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
           layer.id.startsWith('mouth-'),
         )
+        const transitionLayers = mouthLayers.filter((layer) =>
+          layer.id.startsWith('mouth-transition-'),
+        )
 
-        return mouthLayers.length === 5 && mouthLayers.every((layer) => layer.id !== 'mouth-rest')
+        return (
+          mouthLayers.length - transitionLayers.length === 6 &&
+          transitionLayers.length === P_MOUTH_TRANSITION_STAGES.length &&
+          [...nightOnlyTransitionIds].every((id) =>
+            transitionLayers.some((layer) => layer.id === id),
+          ) &&
+          mouthLayers.some((layer) => layer.id === 'mouth-rest')
+        )
       }),
     ).toBe(true)
   })
@@ -423,7 +543,7 @@ describe('focus room scene catalog', () => {
 
       expect(mouthLayers.every((layer) => layer.statePixelPush === undefined)).toBe(true)
 
-      if ((scene.time === 'day' && scene.gaze === 'user') || scene.id === 'night-reading-user') {
+      if (scene.gaze === 'user') {
         expect(head?.statePixelPush).toMatchObject({
           channel: FOCUS_ROOM_JAW_CHANNEL,
           effect: {
@@ -458,6 +578,16 @@ describe('focus room scene catalog', () => {
 
     expect(nightUserHeadSources).toHaveLength(3)
     expect(new Set(nightUserHeadSources).size).toBe(1)
+  })
+
+  it('should share the mouthless reading head across every day user-facing scene', () => {
+    const dayUserHeadSources = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'user' && scene.time === 'day',
+    ).map((scene) => getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')?.source)
+
+    expect(dayUserHeadSources).toHaveLength(3)
+    expect(new Set(dayUserHeadSources).size).toBe(1)
+    expect(dayUserHeadSources[0]).toContain('day-reading-user')
   })
 
   it('should share the reading head across every night focused scene', () => {

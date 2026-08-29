@@ -1,11 +1,16 @@
 import {createSignal, Show} from 'solid-js'
 
-import {PButton} from '../design-system/PButton'
+import {PButton} from './PButton'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type FeedDialogueJob, usePFeedContext} from '../features/focus-room-feed'
 import {formatModelDownloadSize} from '../features/model-storage'
-import {getSupertonicModel, isSupertonicModelDownloaded} from '../features/supertonic'
-import * as m from '../paraglide/messages.js'
+import {type ModelDownloadResult, useModelDownload} from '../features/model-download'
+import {
+  getSupertonicModel,
+  isSupertonicModelDownloaded,
+  type SupertonicModelId,
+} from '../features/supertonic'
+import * as m from '@paraglide/message'
 import {FeedStatusSurface} from './feed-status/Surface'
 import {CLASSES} from './feed-status/shared'
 import {PModelDownloadConsent} from './PModelDownloadConsent'
@@ -14,7 +19,14 @@ interface PFeedStatusProps {
   readonly sceneStyle?: PSceneStyle
 }
 
-const getMissingModelDownloadSize = async (jobs: ReadonlyArray<FeedDialogueJob>) => {
+interface MissingModelDownloads {
+  readonly modelIds: ReadonlyArray<SupertonicModelId>
+  readonly size: number
+}
+
+const getMissingModelDownloads = async (
+  jobs: ReadonlyArray<FeedDialogueJob>,
+): Promise<MissingModelDownloads> => {
   const modelIds = [...new Set(jobs.map((job) => job.modelId))]
   const modelStates = await Promise.all(
     modelIds.map(async (modelId) => ({
@@ -22,14 +34,19 @@ const getMissingModelDownloadSize = async (jobs: ReadonlyArray<FeedDialogueJob>)
       modelId,
     })),
   )
-  return modelStates
-    .filter((state) => !state.downloaded)
-    .reduce((total, state) => total + getSupertonicModel(state.modelId).size, 0)
+  const missingStates = modelStates.filter((state) => !state.downloaded)
+  return {
+    modelIds: missingStates.map((state) => state.modelId),
+    size: missingStates.reduce((total, state) => total + getSupertonicModel(state.modelId).size, 0),
+  }
 }
 
-export const PFeedStatus = (props: PFeedStatusProps) => {
-  const feeds = usePFeedContext()
+const createFeedStatusActions = (
+  feeds: ReturnType<typeof usePFeedContext>,
+  modelDownload: ReturnType<typeof useModelDownload>,
+) => {
   const [downloadSize, setDownloadSize] = createSignal<string | null>(null)
+  const [pendingModelIds, setPendingModelIds] = createSignal<ReadonlyArray<SupertonicModelId>>([])
   const [isCheckingModel, setIsCheckingModel] = createSignal(false)
   const handleListenAll = () => {
     feeds.listenAll().catch((error: unknown) => {
@@ -47,25 +64,54 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
     }
 
     setIsCheckingModel(true)
-    const missingSize = await getMissingModelDownloadSize(feeds.recoveryJobs())
+    const missingDownloads = await getMissingModelDownloads(feeds.recoveryJobs())
     setIsCheckingModel(false)
 
-    if (missingSize > 0) {
-      setDownloadSize(formatModelDownloadSize(missingSize))
+    if (missingDownloads.size > 0) {
+      setPendingModelIds(missingDownloads.modelIds)
+      setDownloadSize(formatModelDownloadSize(missingDownloads.size))
       return
     }
 
     retryRecovery()
   }
-  const handleConfirmRetry = () => {
+  const handleConfirmRetry = async () => {
+    const modelIds = pendingModelIds()
     setDownloadSize(null)
-    retryRecovery()
+    const result = await modelIds.reduce<Promise<ModelDownloadResult>>(
+      async (previousDownload, modelId) => {
+        const previousResult = await previousDownload
+        return previousResult.status === 'complete'
+          ? modelDownload.startVoiceModel(modelId)
+          : previousResult
+      },
+      Promise.resolve({status: 'complete'}),
+    )
+
+    if (result.status === 'complete') {
+      retryRecovery()
+    }
   }
   const handleDelete = () => {
     feeds.deleteRecovery().catch((error: unknown) => {
       console.error('Failed to delete feed dialogue jobs.', error)
     })
   }
+
+  return {
+    downloadSize,
+    handleConfirmRetry,
+    handleDelete,
+    handleListenAll,
+    handleRetry,
+    isCheckingModel,
+    setDownloadSize,
+  }
+}
+
+export const PFeedStatus = (props: PFeedStatusProps) => {
+  const feeds = usePFeedContext()
+  const actions = createFeedStatusActions(feeds, useModelDownload())
 
   return (
     <>
@@ -123,7 +169,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                   </span>
                   <PButton
                     class={CLASSES.feedStatusAction}
-                    onPress={handleListenAll}
+                    onPress={actions.handleListenAll}
                     size="small"
                     tone="secondary"
                   >
@@ -143,12 +189,12 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
             <span class={CLASSES.feedStatusActions}>
               <PButton
                 class={CLASSES.feedStatusAction}
-                disabled={isCheckingModel()}
-                onPress={handleRetry}
+                disabled={actions.isCheckingModel()}
+                onPress={actions.handleRetry}
                 size="small"
                 tone="secondary"
               >
-                {isCheckingModel() ? m.feed_checking() : m.feed_retry()}
+                {actions.isCheckingModel() ? m.feed_checking() : m.feed_retry()}
               </PButton>
               <PButton
                 class={CLASSES.feedStatusAction}
@@ -160,7 +206,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
               </PButton>
               <PButton
                 class={CLASSES.feedStatusAction}
-                onPress={handleDelete}
+                onPress={actions.handleDelete}
                 size="small"
                 tone="danger"
               >
@@ -172,10 +218,10 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
       </Show>
       <PModelDownloadConsent
         actionLabel={m.feed_create_voice()}
-        downloadSize={downloadSize() ?? ''}
-        isOpen={downloadSize() !== null}
-        onCancel={() => setDownloadSize(null)}
-        onConfirm={handleConfirmRetry}
+        downloadSize={actions.downloadSize() ?? ''}
+        isOpen={actions.downloadSize() !== null}
+        onCancel={() => actions.setDownloadSize(null)}
+        onConfirm={actions.handleConfirmRetry}
       />
     </>
   )

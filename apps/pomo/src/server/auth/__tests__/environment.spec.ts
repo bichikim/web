@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {getNeonAuthProxyConfig} from '../environment.ts'
+import {getNeonAuthProxyConfig} from '../environment'
 
 describe('getNeonAuthProxyConfig', () => {
   it('should parse a valid Neon Auth environment', () => {

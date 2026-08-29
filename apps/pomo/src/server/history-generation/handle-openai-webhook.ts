@@ -31,7 +31,7 @@ interface ResponseWebhookEvent {
     | 'response.incomplete'
 }
 
-const isContractError = (error: unknown): boolean =>
+const isContractError = (error: unknown): error is TypeError | SyntaxError | ZodError =>
   error instanceof TypeError || error instanceof SyntaxError || error instanceof ZodError
 
 const getTargetMonthDay = (targetDate: string): {day: number; month: number} => {
@@ -126,7 +126,6 @@ export const handleOpenAiResponseEvent = async (event: ResponseWebhookEvent): Pr
       throw error
     }
 
-    const message = error instanceof Error ? error.message : 'Invalid OpenAI response'
-    await rejectHistoryResponse(event.id, responseId, message.slice(0, MAX_ERROR_LENGTH))
+    await rejectHistoryResponse(event.id, responseId, error.message.slice(0, MAX_ERROR_LENGTH))
   }
 }

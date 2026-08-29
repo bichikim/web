@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {beforeEach, describe, expect, it} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '..'
 
@@ -18,5 +18,17 @@ describe('focus room entry session', () => {
 
     expect(readFocusRoomEntrySession()).toBe(true)
     expect(sessionStorage.getItem('pomo:focus-room-entry:v1')).toBe('true')
+  })
+
+  it('should remain available when browser session storage fails', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementationOnce(() => {
+      throw new Error('storage unavailable')
+    })
+    expect(readFocusRoomEntrySession()).toBe(false)
+
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new Error('storage unavailable')
+    })
+    expect(() => writeFocusRoomEntrySession()).not.toThrow()
   })
 })

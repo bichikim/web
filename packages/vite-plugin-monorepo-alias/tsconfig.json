@@ -4,10 +4,9 @@
   "compilerOptions": {
     "declaration": true,
     "outDir": "lib",
-    "baseUrl": ".",
     "paths": {
-      "src/*": ["src/*"],
-      "#test/*": ["src/test/*"]
+      "src/*": ["./src/*"],
+      "#test/*": ["./src/test/*"]
     }
   },
   "ts-node": {

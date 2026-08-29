@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get-background-interaction"
+description = "Enables the get_background_interaction command without any pre-configured scope."
+commands.allow = ["get_background_interaction"]
+
+[[permission]]
+identifier = "deny-get-background-interaction"
+description = "Denies the get_background_interaction command without any pre-configured scope."
+commands.deny = ["get_background_interaction"]

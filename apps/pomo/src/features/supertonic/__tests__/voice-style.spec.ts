@@ -19,6 +19,10 @@ describe('parseSupertonicVoiceStyle', () => {
   })
 
   it('should reject nonnumeric values and tensor dimensions that do not match the data', () => {
+    expect(parseSupertonicVoiceStyle(null)).toMatchObject({
+      error: {asset: 'voice', code: 'invalid-model-data'},
+      ok: false,
+    })
     expect(
       parseSupertonicVoiceStyle({
         style_dp: {data: [0.1], dims: [1, 2]},
@@ -29,6 +33,12 @@ describe('parseSupertonicVoiceStyle', () => {
       parseSupertonicVoiceStyle({
         style_dp: {data: [Number.NaN], dims: [1]},
         style_ttl: {data: [0.3], dims: [1]},
+      }),
+    ).toMatchObject({error: {asset: 'voice', code: 'invalid-model-data'}, ok: false})
+    expect(
+      parseSupertonicVoiceStyle({
+        style_dp: {data: [0.1], dims: [1]},
+        style_ttl: {data: [0.3], dims: [2]},
       }),
     ).toMatchObject({error: {asset: 'voice', code: 'invalid-model-data'}, ok: false})
   })

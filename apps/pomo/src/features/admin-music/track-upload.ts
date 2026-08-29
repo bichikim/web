@@ -9,6 +9,11 @@ const uploadSchema = z.object({
   uploadUrl: z.string().url(),
 })
 
+interface UploadTrackAudioOptions {
+  readonly file: File
+  readonly trackId: string
+}
+
 export const validateTrackAudio = (file: File): void => {
   const hasMp3Type = file.type === 'audio/mpeg' || file.type === 'audio/mp3'
   const hasMp3Extension = file.name.toLowerCase().endsWith('.mp3')
@@ -30,11 +35,11 @@ const requireSuccess = async (response: Response, message: string): Promise<Resp
   return response
 }
 
-export const uploadTrackAudio = async (trackId: string, file: File): Promise<void> => {
-  validateTrackAudio(file)
+export const uploadTrackAudio = async (options: UploadTrackAudioOptions): Promise<void> => {
+  validateTrackAudio(options.file)
   const reservationResponse = await requireSuccess(
     await fetch('/api/admin/music/assets', {
-      body: JSON.stringify({trackId}),
+      body: JSON.stringify({trackId: options.trackId}),
       headers: {'Content-Type': 'application/json'},
       method: 'POST',
     }),
@@ -43,7 +48,7 @@ export const uploadTrackAudio = async (trackId: string, file: File): Promise<voi
   const reservation = uploadSchema.parse(await reservationResponse.json())
   await requireSuccess(
     await fetch(reservation.uploadUrl, {
-      body: file,
+      body: options.file,
       headers: {'Content-Type': 'audio/mpeg'},
       method: 'PUT',
     }),

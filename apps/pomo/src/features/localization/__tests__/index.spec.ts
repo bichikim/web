@@ -2,13 +2,14 @@
 
 import {describe, expect, it} from 'vitest'
 
-import {deLocalizeHref, localizeHref} from '../../../paraglide/runtime.js'
+import {deLocalizeHref, localizeHref} from '@paraglide/runtime'
 
 import {
   getLocalizedActivityOptions,
   getLocalizedGazeOptions,
   getLocalizedSceneLabel,
   getLocalizedTimeOptions,
+  getLocalizedWeatherCityOptions,
   getLocalizedWeatherLabel,
 } from '../index'
 
@@ -44,6 +45,19 @@ describe('scene localization', () => {
         }),
       ),
     ).toEqual(['Clear', 'Mostly cloudy', 'Rain or snow', 'Overcast', 'Rain', 'Snow', 'Checking'])
+  })
+
+  it('should localize every supported weather city without changing its slug', () => {
+    expect(getLocalizedWeatherCityOptions({locale: 'en'})).toEqual([
+      {label: 'Seoul', value: 'seoul'},
+      {label: 'Busan', value: 'busan'},
+      {label: 'Daegu', value: 'daegu'},
+      {label: 'Incheon', value: 'incheon'},
+      {label: 'Gwangju', value: 'gwangju'},
+      {label: 'Daejeon', value: 'daejeon'},
+      {label: 'Ulsan', value: 'ulsan'},
+      {label: 'Jeju', value: 'jeju'},
+    ])
   })
 })
 

@@ -23,7 +23,7 @@ interface PreparedScene {
 }
 
 const SCENE_TRANSITION_DURATION = 600
-const DEPTH_PARALLAX_MAXIMUM_X = 9
+const DEPTH_PARALLAX_MAXIMUM_X = 5
 const DEPTH_PARALLAX_MAXIMUM_Y = 6
 const STEAM_PARALLAX_DEPTH = 0.55
 
@@ -39,7 +39,7 @@ export class PSceneRenderer {
   readonly #mouth
   readonly #parallax: ParallaxController
   readonly #sceneLayer = new Container()
-  readonly #sceneTransitions = createSceneTransitions(this.#application, this.#sceneLayer)
+  readonly #sceneTransitions = createSceneTransitions()
   readonly #steam: PSceneSteamController
   #applicationReady = false
   #currentDepthSource: string | null = null
@@ -241,7 +241,7 @@ export class PSceneRenderer {
         window.cancelAnimationFrame(this.#transitionFrame)
       }
 
-      this.#sceneTransitions.setProgress(1, this.#incomingScene)
+      this.#sceneTransitions.setProgress(1)
       this.#depthFilter?.setDepthMix(1)
       this.#finishTransition(requestedSource, requestedDepthSource, incomingScene)
       return
@@ -276,6 +276,7 @@ export class PSceneRenderer {
       this.#applicationReady = false
     }
 
+    this.#sceneTransitions.destroy()
     releaseTextureGroup(this.#currentTextures)
     this.#currentTextures = []
   }
@@ -354,14 +355,12 @@ export class PSceneRenderer {
         return
       }
 
-      if (version === this.#transitionVersion) {
-        this.#cancelTransition()
-        this.#requestedSource = null
-        this.#requestedDepthSource = null
-        this.#requestedLayerSceneId = null
-        this.#eyes.setSceneReady(this.#currentScene !== null)
-        this.#loading.finish()
-      }
+      this.#cancelTransition()
+      this.#requestedSource = null
+      this.#requestedDepthSource = null
+      this.#requestedLayerSceneId = null
+      this.#eyes.setSceneReady(this.#currentScene !== null)
+      this.#loading.finish()
 
       throw error
     }
@@ -369,7 +368,7 @@ export class PSceneRenderer {
 
   #animateTransition(source: string, depthSource: string, scene: Container, version: number) {
     if (this.#parallax.prefersReducedMotion) {
-      this.#sceneTransitions.setProgress(1, this.#incomingScene)
+      this.#sceneTransitions.setProgress(1)
       this.#depthFilter?.setDepthMix(1)
       this.#application.render()
       this.#finishTransition(source, depthSource, scene)
@@ -383,7 +382,7 @@ export class PSceneRenderer {
       }
 
       const progress = Math.min(1, (timestamp - startedAt) / SCENE_TRANSITION_DURATION)
-      this.#sceneTransitions.setProgress(progress, this.#incomingScene)
+      this.#sceneTransitions.setProgress(progress)
       this.#depthFilter?.setDepthMix(progress)
       this.#application.render()
 
@@ -456,6 +455,7 @@ export class PSceneRenderer {
         this.#mouth.getLayerState(
           this.#state?.viseme ?? 'rest',
           this.#parallax.prefersReducedMotion,
+          layerScene,
         ),
       )
     } catch (error: unknown) {

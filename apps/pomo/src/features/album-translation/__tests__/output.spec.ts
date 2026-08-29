@@ -22,4 +22,8 @@ describe('parseAlbumTranslation', () => {
       'Gemma 4 번역 결과를 읽지 못했습니다.',
     )
   })
+
+  it.each(['plain text', '{'])('should reject non-JSON model output %j', (output) => {
+    expect(() => parseAlbumTranslation(output)).toThrow('Gemma 4 번역 결과가 JSON 형식이 아닙니다.')
+  })
 })

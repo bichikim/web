@@ -190,11 +190,7 @@ const assertRequestedInput = (
 }
 
 const parseObservation = (items: ReadonlyArray<KmaItem>): WeatherObservationInput => {
-  const [firstItem] = items
-
-  if (firstItem === undefined) {
-    throw new Error('KMA observation response contained no items')
-  }
+  const firstItem = items[0]!
 
   const sourceIssuedAt = parseKmaDateTime(firstItem.baseDate, firstItem.baseTime)
   const value = (category: string) => findItem(items, category)?.obsrValue
@@ -217,8 +213,8 @@ const parseNearestSky = (items: ReadonlyArray<KmaItem>, targetTime: Date): Weath
         item.category === 'SKY' && item.fcstDate !== undefined && item.fcstTime !== undefined,
     )
     .sort((left, right) => {
-      const leftTime = parseKmaDateTime(left.fcstDate ?? '', left.fcstTime ?? '').getTime()
-      const rightTime = parseKmaDateTime(right.fcstDate ?? '', right.fcstTime ?? '').getTime()
+      const leftTime = parseKmaDateTime(left.fcstDate!, left.fcstTime!).getTime()
+      const rightTime = parseKmaDateTime(right.fcstDate!, right.fcstTime!).getTime()
       return Math.abs(leftTime - targetTime.getTime()) - Math.abs(rightTime - targetTime.getTime())
     })
   const [nearestSky] = skyItems

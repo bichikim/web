@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import {formatModelDownloadSize, type ModelStorage} from '../../model-storage'
+import * as modelStorage from '../../model-storage'
 import {isSupertonicModelDownloaded} from '../download'
 import {getSupertonicModel} from '../model'
 import {successResult} from '../../result'
@@ -35,6 +36,13 @@ describe('isSupertonicModelDownloaded', () => {
     await expect(
       isSupertonicModelDownloaded({modelId: 'int8', storage: unreadableStorage}),
     ).resolves.toBe(false)
+  })
+
+  it('should create browser model storage by default', async () => {
+    const storage = createStorage()
+    vi.spyOn(modelStorage, 'createModelStorage').mockReturnValue(storage)
+
+    await expect(isSupertonicModelDownloaded({modelId: 'int8'})).resolves.toBe(true)
   })
 })
 

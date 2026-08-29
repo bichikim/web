@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Desktop Surface Runtime</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="main.js" defer></script>
+  </head>
+  <body class="background-page">
+    <main class="background-card">
+      <p class="eyebrow">Pomo runtime harness</p>
+      <h1>Desktop background surface</h1>
+      <p>
+        This window becomes a click-through desktop layer. Enable background input from the
+        transparent controller, then click the counter below.
+      </p>
+      <div class="actions">
+        <button id="background-click" type="button">Background clicks: 0</button>
+        <button id="enter" type="button">Enter desktop mode</button>
+        <button id="widget" type="button">Enter widget mode</button>
+        <button id="restore" type="button">Restore window</button>
+      </div>
+      <output id="status">Ready</output>
+    </main>
+  </body>
+</html>

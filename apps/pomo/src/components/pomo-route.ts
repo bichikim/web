@@ -1,5 +1,5 @@
-import {SEARCH_CONFIG} from '../config/search'
-import {deLocalizeHref, type Locale, locales, localizeHref} from '../paraglide/runtime.js'
+import {SEARCH_CONFIG} from '../features/search-discovery/canonical'
+import {deLocalizeHref, type Locale, locales, localizeHref} from '@paraglide/runtime'
 
 const POMO_LAYOUT_PATHS: ReadonlySet<string> = new Set(['/', '/dialogue'])
 const SEARCH_INDEXABLE_PATHS: ReadonlySet<string> = new Set(SEARCH_CONFIG.indexablePaths)
@@ -21,8 +21,12 @@ export const getCanonicalPathname = (pathname: string) => {
   return locale === undefined ? canonicalPathname : localizeHref(canonicalPathname, {locale})
 }
 
+export const getPomoHomeHref = (locale: Locale) =>
+  import.meta.env.POMO_IS_APPS_IN_TOSS ? '/' : localizeHref('/', {locale})
+
 export const isPomoHomePath = (pathname: string) =>
-  getPathLocale(pathname) !== undefined && normalizePathname(pathname) === '/'
+  normalizePathname(pathname) === '/' &&
+  (import.meta.env.POMO_IS_APPS_IN_TOSS || getPathLocale(pathname) !== undefined)
 
 export const isSearchIndexablePath = (pathname: string) => {
   const canonicalPathname = normalizePathname(pathname)
@@ -39,6 +43,10 @@ export const usesPomoLayout = (pathname: string) => {
 
   return (
     POMO_LAYOUT_PATHS.has(canonicalPathname) &&
-    !(canonicalPathname === '/' && getPathLocale(pathname) === undefined)
+    !(
+      canonicalPathname === '/' &&
+      !import.meta.env.POMO_IS_APPS_IN_TOSS &&
+      getPathLocale(pathname) === undefined
+    )
   )
 }

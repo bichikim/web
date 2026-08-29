@@ -1,7 +1,7 @@
 import {Show} from 'solid-js'
 
 import {type PResolvedAlbum, type PTrack} from '../../features/focus-room-audio/index'
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 const SECONDS_PER_MINUTE = 60
 

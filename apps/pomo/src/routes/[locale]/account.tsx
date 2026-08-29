@@ -1,4 +1,4 @@
-import {createLocalizedRoute} from '../../features/localization/create-localized-route.tsx'
-import Page from '../account.tsx'
+import {createLocalizedRoute} from '../create-localized-route'
+import Page from '../account'
 
 export default createLocalizedRoute(Page)

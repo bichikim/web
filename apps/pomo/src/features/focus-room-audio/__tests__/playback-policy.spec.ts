@@ -40,6 +40,26 @@ describe('resolveTrackRemoval', () => {
 })
 
 describe('resolveTrackEnd', () => {
+  it.each([
+    {expected: 'stop', repeatMode: 'none', trackCount: 0},
+    {expected: 'stop', repeatMode: 'none', trackCount: 1},
+    {expected: 'restart-current', repeatMode: 'repeat-all', trackCount: 0},
+    {expected: 'restart-current', repeatMode: 'repeat-all', trackCount: 1},
+  ] as const)(
+    'should resolve $repeatMode with $trackCount available tracks as $expected',
+    ({expected, repeatMode, trackCount}) => {
+      expect(
+        resolveTrackEnd({
+          currentIndex: 0,
+          repeatMode,
+          shuffleEnabled: true,
+          shuffleRemaining: 2,
+          trackCount,
+        }),
+      ).toBe(expected)
+    },
+  )
+
   it('should restart the current track only in one-track repeat mode', () => {
     expect(
       resolveTrackEnd({

@@ -1,8 +1,8 @@
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
-import {getPomoIconClass} from '../../design-system/icon-style'
-import {PIconButton} from '../../design-system/PIconButton'
-import {PSelect} from '../../design-system/PSelect'
+import {getPomoIconClass} from '../icon-style'
+import {PIconButton} from '../PIconButton'
+import {PSelect} from '../PSelect'
 import {
   type PSceneMotionInput,
   type PSceneMotionMode,
@@ -18,11 +18,15 @@ import {
 import {getNextTimeMode, type SceneTimeMode} from '../../features/focus-room-time/index'
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
 import {type WeatherCitySlug, type WeatherState} from '../../features/weather/index'
-import * as m from '../../paraglide/messages.js'
-import {PScribbleCircleControl} from '../PScribbleCircleControl'
+import * as m from '@paraglide/message'
+import {PLoadingStatus} from '../PLoadingStatus'
+import {PModelDownloadStatus} from '../PModelDownloadStatus'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES, SceneTime} from './shared'
 import {PWeatherStatus} from '../PWeatherStatus'
+import {PDesktopModeControl} from '../PDesktopModeControl'
+import type {DesktopMode} from '../../features/desktop-mode/index'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -47,6 +51,11 @@ interface SceneToolbarProps {
   readonly weatherCitySlug: WeatherCitySlug
   readonly weatherEnabled: boolean
   readonly weatherState: WeatherState
+  readonly desktopMode?: DesktopMode
+  readonly desktopModeError?: string | null
+  readonly isDesktopModeChanging?: boolean
+  readonly onDesktopModeChange?: (mode: DesktopMode) => Promise<void>
+  readonly layout?: 'studio' | 'surface'
 }
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
@@ -64,9 +73,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
   return (
     <div
       class={cx(
-        'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
-        'flex flex-col items-end gap-2',
-        'xs:right-7 lg:top-6',
+        props.layout === 'surface' ? 'flex w-full flex-col items-end gap-2' : CLASSES.sceneToolbar,
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
@@ -144,14 +151,20 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         />
       </div>
       <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
+      <PDesktopModeControl
+        error={props.desktopModeError}
+        isChanging={props.isDesktopModeChanging}
+        mode={props.desktopMode ?? 'normal'}
+        onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
+      />
+      <PModelDownloadStatus />
       <Show when={props.isSceneTransitioning}>
         <span
           aria-live="polite"
-          class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}
+          class="border border-solid border-border rounded-control backdrop-blur-surface"
           role="status"
         >
-          <span aria-hidden="true" class={CLASSES.loadingSpinner} />
-          {m.scene_transitioning()}
+          <PLoadingStatus message={m.scene_transitioning()} />
         </span>
       </Show>
     </div>

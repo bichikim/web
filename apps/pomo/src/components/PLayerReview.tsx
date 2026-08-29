@@ -65,7 +65,7 @@ export const PLayerReview = () => {
     setMouthFrame(nextMouthFrame)
 
     if (nextMouthFrame !== null) {
-      setSelectedId(`day-${selectedScene().activity}-user`)
+      setSelectedId(`${selectedScene().time}-${selectedScene().activity}-user`)
       setSceneStyle('original')
       setHeadVisible(true)
       setMouthVisible(true)

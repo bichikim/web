@@ -34,6 +34,43 @@ describe('createTransformersModelCache', () => {
     expect(onError).toHaveBeenCalledWith(error)
   })
 
+  it('should return cache misses and deletion failures while reporting read errors', async () => {
+    const storage = createStorage()
+    const readError = {cause: new Error('read failed'), operation: 'read' as const}
+    const deleteError = {cause: new Error('delete failed'), operation: 'delete' as const}
+    const onError = vi.fn()
+    storage.get = vi
+      .fn()
+      .mockResolvedValueOnce(successResult(null))
+      .mockResolvedValueOnce(failureResult(readError))
+    storage.delete = vi.fn(async () => failureResult(deleteError))
+    const cache = createTransformersModelCache({onError, storage})
+
+    await expect(cache.match('missing')).resolves.toBeUndefined()
+    await expect(cache.match('failed')).resolves.toBeUndefined()
+    await expect(cache.delete('failed')).resolves.toBe(false)
+    expect(onError).toHaveBeenNthCalledWith(1, readError)
+    expect(onError).toHaveBeenNthCalledWith(2, deleteError)
+  })
+
+  it('should tolerate omitted error handlers for write and cleanup failures', async () => {
+    const storage = createStorage()
+    storage.set = vi
+      .fn()
+      .mockResolvedValueOnce(failureResult({cause: 'write', operation: 'write'}))
+      .mockResolvedValueOnce(successResult(undefined))
+    storage.delete = vi.fn(async () =>
+      failureResult({cause: 'cleanup', operation: 'delete' as const}),
+    )
+    const cache = createTransformersModelCache({
+      getStorageKey: (request) => `${request}?version=1`,
+      storage,
+    })
+
+    await expect(cache.put('first', new Response())).resolves.toBeUndefined()
+    await expect(cache.put('second', new Response())).resolves.toBeUndefined()
+  })
+
   it('should remove a partial download after the complete response is stored', async () => {
     const storage = createStorage()
     const onStored = vi.fn(async () => undefined)

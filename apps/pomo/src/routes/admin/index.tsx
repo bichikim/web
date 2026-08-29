@@ -1,3 +1,3 @@
-import {AdminDashboard} from '../../features/admin-auth'
+import {AdminDashboard} from '../../components/AdminDashboard'
 
 export default AdminDashboard

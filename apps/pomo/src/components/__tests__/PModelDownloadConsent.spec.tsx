@@ -3,10 +3,10 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/design-system/PModal'
+import {PModal, type PModalProps} from 'src/components/PModal'
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
 
-vi.mock('src/design-system/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
 
 it('should explain download size and possible network charges before confirmation', () => {
   vi.mocked(PModal).mockImplementation((props: PModalProps) =>
@@ -36,9 +36,13 @@ it('should explain download size and possible network charges before confirmatio
   expect(dialog.querySelectorAll('button')).toHaveLength(2)
   expect(dialog.querySelector('.i-tabler-download')).toBeNull()
   expect(vi.mocked(PModal).mock.lastCall?.[0].closeButtonVisibility).toBe('hidden')
+  vi.mocked(PModal).mock.lastCall?.[0].onOpenChange?.(true)
+  expect(onCancel).not.toHaveBeenCalled()
+  vi.mocked(PModal).mock.lastCall?.[0].onOpenChange?.(false)
+  expect(onCancel).toHaveBeenCalledOnce()
 
   fireEvent.click(screen.getByRole('button', {name: '취소'}))
-  expect(onCancel).toHaveBeenCalledTimes(1)
+  expect(onCancel).toHaveBeenCalledTimes(2)
   expect(onConfirm).not.toHaveBeenCalled()
 
   fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))

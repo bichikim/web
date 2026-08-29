@@ -19,6 +19,7 @@ interface PaidAudioEnvironment {
   readonly CLOUDFLARE_R2_ACCOUNT_ID?: string
   readonly POMO_PAID_AUDIO_R2_ACCESS_KEY_ID?: string
   readonly POMO_PAID_AUDIO_R2_BUCKET?: string
+  readonly POMO_PAID_AUDIO_R2_PREFIX?: string
   readonly POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY?: string
   readonly POMO_PUBLIC_ASSETS_R2_ACCESS_KEY_ID?: string
   readonly POMO_PUBLIC_ASSETS_R2_SECRET_ACCESS_KEY?: string
@@ -30,6 +31,13 @@ interface TrackUploadOptions {
 }
 
 interface ParsedAudio {
+  readonly common?: {
+    readonly picture?: ReadonlyArray<{
+      readonly data: Uint8Array
+      readonly format: string
+      readonly type?: string
+    }>
+  }
   readonly format: {
     readonly codec?: string
     readonly container?: string
@@ -66,9 +74,15 @@ export interface TrackPlayback {
 }
 
 export interface TrackInspection {
+  readonly artwork?: TrackArtwork
   readonly durationMs: number
   readonly etag: string
   readonly sizeBytes: bigint
+}
+
+export interface TrackArtwork {
+  readonly body: ArrayBuffer
+  readonly contentType: 'image/jpeg' | 'image/png' | 'image/webp'
 }
 
 export interface TrackPreviewObject {
@@ -83,6 +97,76 @@ const TRACK_VALIDATION_FAILURE_CODES = new Set([
   'invalid_mp3_id3',
   'invalid_track_metadata',
 ])
+
+// Embedded artwork shares the same prepared-image limit as album covers.
+// oxlint-disable-next-line eslint/no-magic-numbers -- Prepared artwork limit is four MiB.
+const MAXIMUM_ARTWORK_BYTES = 4 * 1024 * 1024
+// oxlint-disable-next-line eslint/no-magic-numbers -- File signatures are fixed binary bytes.
+const JPEG_SIGNATURE = [0xff, 0xd8, 0xff] as const
+// oxlint-disable-next-line eslint/no-magic-numbers -- File signatures are fixed binary bytes.
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const
+// oxlint-disable-next-line eslint/no-magic-numbers -- File signatures are fixed binary bytes.
+const RIFF_SIGNATURE = [0x52, 0x49, 0x46, 0x46] as const
+// oxlint-disable-next-line eslint/no-magic-numbers -- File signatures are fixed binary bytes.
+const WEBP_SIGNATURE = [0x57, 0x45, 0x42, 0x50] as const
+const WEBP_SIGNATURE_OFFSET = 8
+
+const hasBytes = (data: Uint8Array, expected: readonly number[], offset = 0): boolean =>
+  expected.every((value, index) => data[offset + index] === value)
+
+const getArtworkContentType = (
+  format: string,
+  data: Uint8Array,
+): TrackArtwork['contentType'] | undefined => {
+  const normalizedFormat = format.toLowerCase()
+
+  if (
+    (normalizedFormat === 'image/jpeg' || normalizedFormat === 'image/jpg') &&
+    hasBytes(data, JPEG_SIGNATURE)
+  ) {
+    return 'image/jpeg'
+  }
+
+  if (normalizedFormat === 'image/png' && hasBytes(data, PNG_SIGNATURE)) {
+    return 'image/png'
+  }
+
+  if (
+    normalizedFormat === 'image/webp' &&
+    hasBytes(data, RIFF_SIGNATURE) &&
+    hasBytes(data, WEBP_SIGNATURE, WEBP_SIGNATURE_OFFSET)
+  ) {
+    return 'image/webp'
+  }
+
+  return undefined
+}
+
+const extractTrackArtwork = (metadata: ParsedAudio): TrackArtwork | undefined => {
+  const pictures = metadata.common?.picture ?? []
+  const orderedPictures = pictures.toSorted(
+    (left, right) =>
+      Number(right.type?.toLowerCase().includes('front') === true) -
+      Number(left.type?.toLowerCase().includes('front') === true),
+  )
+
+  for (const picture of orderedPictures) {
+    const contentType = getArtworkContentType(picture.format, picture.data)
+
+    if (
+      contentType !== undefined &&
+      picture.data.byteLength > 0 &&
+      picture.data.byteLength <= MAXIMUM_ARTWORK_BYTES
+    ) {
+      return {
+        body: Uint8Array.from(picture.data).buffer,
+        contentType,
+      }
+    }
+  }
+
+  return undefined
+}
 
 export const isTrackValidationError = (error: unknown): error is TypeError =>
   error instanceof TypeError && TRACK_VALIDATION_FAILURE_CODES.has(error.message)
@@ -100,13 +184,49 @@ const requireEnvironmentValue = (
   return normalizedValue
 }
 
+const STORAGE_PREFIX_SEGMENT_PATTERN = /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u
+
+const normalizeStoragePrefix = (value: string): string => {
+  const trimmedValue = value.trim()
+  let startIndex = 0
+
+  while (trimmedValue[startIndex] === '/') {
+    startIndex += 1
+  }
+
+  let endIndex = trimmedValue.length
+
+  while (endIndex > startIndex && trimmedValue[endIndex - 1] === '/') {
+    endIndex -= 1
+  }
+
+  return trimmedValue.slice(startIndex, endIndex)
+}
+
+const createStorageObjectKey = (objectKey: string, environment: PaidAudioEnvironment): string => {
+  const normalizedPrefix = normalizeStoragePrefix(environment.POMO_PAID_AUDIO_R2_PREFIX ?? '')
+
+  if (normalizedPrefix.length === 0) {
+    return objectKey
+  }
+
+  if (
+    normalizedPrefix.split('/').some((segment) => !STORAGE_PREFIX_SEGMENT_PATTERN.test(segment))
+  ) {
+    throw new TypeError('POMO_PAID_AUDIO_R2_PREFIX is invalid')
+  }
+
+  return `${normalizedPrefix}/${objectKey}`
+}
+
 const createObjectUrl = (objectKey: string, environment: PaidAudioEnvironment): URL => {
   const accountId = requireEnvironmentValue(
     'CLOUDFLARE_R2_ACCOUNT_ID',
     environment.CLOUDFLARE_R2_ACCOUNT_ID,
   )
   const bucket = environment.POMO_PAID_AUDIO_R2_BUCKET?.trim() || DEFAULT_BUCKET
-  return new URL(`/${bucket}/${objectKey}`, `https://${accountId}.r2.cloudflarestorage.com`)
+  const storageObjectKey = createStorageObjectKey(objectKey, environment)
+  return new URL(`/${bucket}/${storageObjectKey}`, `https://${accountId}.r2.cloudflarestorage.com`)
 }
 
 const createSigner = (environment: PaidAudioEnvironment) => {
@@ -325,8 +445,7 @@ export const inspectTrackUpload = async (
   }
 
   const parseAudio =
-    options.parseAudio ??
-    ((stream, fileInfo) => parseWebStream(stream, fileInfo, {duration: true, skipCovers: true}))
+    options.parseAudio ?? ((stream, fileInfo) => parseWebStream(stream, fileInfo, {duration: true}))
   const metadata = await parseAudio(response.body, {mimeType: 'audio/mpeg', size})
   const {duration} = metadata.format
   const {codec} = metadata.format
@@ -342,7 +461,10 @@ export const inspectTrackUpload = async (
     throw new TypeError('invalid_mp3')
   }
 
+  const artwork = extractTrackArtwork(metadata)
+
   return {
+    ...(artwork === undefined ? {} : {artwork}),
     durationMs: Math.round(duration * MILLISECONDS_PER_SECOND),
     etag,
     sizeBytes: BigInt(size),

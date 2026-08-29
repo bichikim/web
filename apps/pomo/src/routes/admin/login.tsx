@@ -1,3 +1,3 @@
-import {AdminLogin} from '../../features/admin-auth'
+import {AdminLogin} from '../../components/AdminLogin'
 
 export default AdminLogin

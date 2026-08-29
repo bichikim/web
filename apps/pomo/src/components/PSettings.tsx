@@ -1,12 +1,12 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, createSignal, Show} from 'solid-js'
 
-import {getPomoIconClass} from '../design-system/icon-style'
-import {PIconButton} from '../design-system/PIconButton'
-import {PModal} from '../design-system/PModal'
-import {PRadioSwitch} from '../design-system/PRadioSwitch'
-import {PSelect, type PSelectOption} from '../design-system/PSelect'
-import {PSwitch} from '../design-system/PSwitch'
+import {getPomoIconClass} from './icon-style'
+import {PIconButton} from './PIconButton'
+import {PModal} from './PModal'
+import {PRadioSwitch} from './PRadioSwitch'
+import {PSelect, type PSelectOption} from './PSelect'
+import {PSwitch} from './PSwitch'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {PActivity, PGaze} from '../features/focus-room-scene-preferences'
@@ -20,16 +20,16 @@ import {
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
-import {UserSettings} from '../features/user-auth/UserSettings'
+import {UserSettings} from './UserSettings'
 import type {WeatherCitySlug} from '../features/weather'
-import * as m from '../paraglide/messages.js'
-import {getLocale, type Locale, setLocale} from '../paraglide/runtime.js'
+import * as m from '@paraglide/message'
+import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
 import {PCreditsSettings} from './PCreditsSettings'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
 import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from './pomo-scene-options'
-import {PScribbleCircleControl} from './PScribbleCircleControl'
+import {PScribbleCircleControl} from './scribble/CircleControl'
 import {PSettingsTabList} from './settings/TabList'
 import {PWeatherSettings} from './PWeatherSettings'
 
@@ -77,6 +77,9 @@ const LANGUAGE_OPTIONS = [
 const getScreenSaverDelayOptions = () =>
   [
     {label: m.settings_delay_off(), value: 'off'},
+    ...(import.meta.env.DEV
+      ? ([{label: m.settings_delay_five_seconds(), value: '5s'}] as const)
+      : []),
     {label: m.settings_delay_one_minute(), value: '1m'},
     {label: m.settings_delay_ten_minutes(), value: '10m'},
     {label: m.settings_delay_twenty_minutes(), value: '20m'},
@@ -193,6 +196,12 @@ export const PSettings = (props: PSettingsProps) => {
                   />
                 </Show>
               </div>
+              <PWeatherSettings
+                citySlug={props.weatherCitySlug}
+                enabled={props.weatherEnabled}
+                onCityChange={props.onWeatherCityChange}
+                onEnabledChange={props.onWeatherEnabledChange}
+              />
               <PSwitch
                 checked={wakeLock.isEnabled()}
                 class={CLASSES.settingsWakeLock}
@@ -213,12 +222,6 @@ export const PSettings = (props: PSettingsProps) => {
             </div>
           </Tabs.Content>
           <PGuideSettings />
-          <PWeatherSettings
-            citySlug={props.weatherCitySlug}
-            enabled={props.weatherEnabled}
-            onCityChange={props.onWeatherCityChange}
-            onEnabledChange={props.onWeatherEnabledChange}
-          />
           <PCreditsSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />

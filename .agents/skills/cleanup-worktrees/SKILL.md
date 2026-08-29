@@ -1,9 +1,6 @@
 ---
 name: cleanup-worktrees
-description: >-
-  Remove safe git worktrees that have no uncommitted changes and no commits
-  missing from a pull request. Use when the user asks to clean up, prune, or
-  remove worktrees (워크트리 정리, worktree cleanup).
+description: Remove git worktrees only when they have no uncommitted changes and no commits missing from a pull request; use for worktree cleanup.
 ---
 
 # Cleanup worktrees

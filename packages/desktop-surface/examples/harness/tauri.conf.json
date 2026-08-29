@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Desktop Surface Harness",
+  "version": "0.0.0",
+  "identifier": "com.pomo.desktop-surface-harness",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "acceptFirstMouse": true,
+        "label": "background",
+        "title": "Desktop Surface Runtime",
+        "width": 800,
+        "height": 500,
+        "center": true
+      }
+    ],
+    "security": {
+      "capabilities": ["runtime"]
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": ["../../../../apps/pomo/asset-library/brand/pomo-red-hairpin-brand-mark.png"]
+  }
+}

@@ -138,6 +138,7 @@ export interface PixiSceneLayerDefinition {
   readonly opacity?: number
   readonly parentAttachmentId?: string
   readonly position?: PixiScenePoint
+  readonly repeat?: 'horizontal'
   readonly rotationDegrees?: number
   readonly source: string
   readonly statePixelPush?: PixiSceneStatePixelPush

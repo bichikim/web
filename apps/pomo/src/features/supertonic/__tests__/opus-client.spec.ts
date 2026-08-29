@@ -59,6 +59,22 @@ it('should transfer owned PCM samples and resolve the encoded audio', async () =
   expect(workerMocks.terminate).toHaveBeenCalledOnce()
 })
 
+it('should copy a partial PCM view before transferring it', async () => {
+  const backingSamples = Float32Array.of(9, 0.1, 0.2, 9)
+  const samples = backingSamples.subarray(1, 3)
+  const result = createOpusBlob({sampleRate: 24_000, samples})
+  const [request, transfer] = workerMocks.postMessage.mock.calls[0] ?? []
+
+  expect(request?.samples).toEqual(Float32Array.of(0.1, 0.2))
+  expect(request?.samples.buffer).not.toBe(samples.buffer)
+  expect(transfer).toEqual([request?.samples.buffer])
+
+  const audio = new Blob(['opus'])
+  dispatch('message', new MessageEvent('message', {data: {audio, type: 'complete'}}))
+
+  await expect(result).resolves.toEqual(audio)
+})
+
 it('should reject an encoder error and terminate the Worker once', async () => {
   const result = createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)})
 
@@ -83,6 +99,71 @@ it('should terminate the Worker when encoding is aborted', async () => {
   expect(workerMocks.terminate).toHaveBeenCalledOnce()
 })
 
+it('should reject before creating a Worker when already aborted with a non-error reason', async () => {
+  const abortController = new AbortController()
+  abortController.abort('cancelled')
+
+  await expect(
+    createOpusBlob({
+      sampleRate: 24_000,
+      samples: Float32Array.of(0.1),
+      signal: abortController.signal,
+    }),
+  ).rejects.toMatchObject({name: 'AbortError'})
+  expect(workerMocks.postMessage).not.toHaveBeenCalled()
+})
+
+it('should ignore an abort callback after its signal option is removed', async () => {
+  const abortController = new AbortController()
+  let signalReads = 0
+  const options = {
+    sampleRate: 24_000,
+    samples: Float32Array.of(0.1),
+    get signal() {
+      signalReads += 1
+      return signalReads <= 2 ? abortController.signal : undefined
+    },
+  }
+  const result = createOpusBlob(options)
+
+  abortController.abort()
+  const audio = new Blob(['opus'])
+  dispatch('message', new MessageEvent('message', {data: {audio, type: 'complete'}}))
+
+  await expect(result).resolves.toEqual(audio)
+})
+
+it('should ignore an unknown Worker response and accept a later completion', async () => {
+  const result = createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)})
+
+  dispatch(
+    'message',
+    new MessageEvent('message', {
+      data: {type: 'unknown'} as unknown as OpusWorkerResponse,
+    }),
+  )
+  const audio = new Blob(['opus'])
+  dispatch('message', new MessageEvent('message', {data: {audio, type: 'complete'}}))
+
+  await expect(result).resolves.toEqual(audio)
+})
+
+it('should use the Worker failure fallback for an error event without a message', async () => {
+  const result = createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)})
+
+  dispatch('error', new ErrorEvent('error'))
+
+  await expect(result).rejects.toThrow('Opus 인코딩 Worker를 실행하지 못했어요.')
+})
+
+it('should reject a Worker response that cannot be decoded', async () => {
+  const result = createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)})
+
+  dispatch('messageerror', new MessageEvent('messageerror'))
+
+  await expect(result).rejects.toThrow('Opus 인코딩 Worker 응답을 읽지 못했어요.')
+})
+
 it('should terminate the Worker when transferring samples fails', async () => {
   workerMocks.postMessage.mockImplementationOnce(() => {
     throw new DOMException('detached buffer', 'DataCloneError')
@@ -92,4 +173,26 @@ it('should terminate the Worker when transferring samples fails', async () => {
     'detached buffer',
   )
   expect(workerMocks.terminate).toHaveBeenCalledOnce()
+})
+
+it('should preserve an Error thrown while transferring samples', async () => {
+  const transferError = new Error('transfer failed')
+  workerMocks.postMessage.mockImplementationOnce(() => {
+    throw transferError
+  })
+
+  await expect(createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)})).rejects.toBe(
+    transferError,
+  )
+})
+
+it('should use the Worker failure fallback for a non-error transfer failure', async () => {
+  const transferFailure = new (class TransferFailure {})()
+  workerMocks.postMessage.mockImplementationOnce(() => {
+    throw transferFailure
+  })
+
+  await expect(
+    createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)}),
+  ).rejects.toMatchObject({cause: transferFailure})
 })

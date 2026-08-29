@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
-import {SERVICE_POLICY_PATHS} from 'src/config/service-policy'
+import {SERVICE_POLICY_PATHS} from 'src/features/service-terms/policy-paths'
 import {TextMoodCard} from './home/TextMoodCard'
 import {CARD_CLASSES} from './home/shared'
 

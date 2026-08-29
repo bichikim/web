@@ -1,8 +1,9 @@
 import {apiFetch, audioFetch, httpFetch} from '../http-client'
-import * as m from '../../paraglide/messages.js'
-import type {Locale} from '../../paraglide/runtime.js'
+import * as m from '@paraglide/message'
+import type {Locale} from '@paraglide/runtime'
 
 export interface PTrack {
+  readonly artworkUrl?: string
   readonly artist: string
   readonly durationSeconds: number
   readonly id: string
@@ -11,6 +12,7 @@ export interface PTrack {
 }
 
 export interface PTrackListing {
+  readonly artworkUrl?: string
   readonly artist: string
   readonly id: string
   readonly title: string
@@ -82,6 +84,11 @@ export interface LoadPTracksOptions {
   readonly tracksUrl?: string
 }
 
+export interface PTrackQueueSource {
+  readonly defaultTracks: readonly PTrack[]
+  readonly tracks: readonly PTrack[]
+}
+
 export interface LoadPAlbumsOptions {
   readonly albumsUrl?: string
   readonly locale?: Locale
@@ -100,6 +107,7 @@ const isPTrack = (value: unknown): value is PTrack => {
   const track = value as Record<string, unknown>
 
   return (
+    (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
     isString(track.artist) &&
     typeof track.durationSeconds === 'number' &&
     Number.isFinite(track.durationSeconds) &&
@@ -116,7 +124,12 @@ const isPTrackListing = (value: unknown): value is PTrackListing => {
   }
 
   const track = value as Record<string, unknown>
-  return isString(track.artist) && isString(track.id) && isString(track.title)
+  return (
+    (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
+    isString(track.artist) &&
+    isString(track.id) &&
+    isString(track.title)
+  )
 }
 
 const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
@@ -129,6 +142,7 @@ const isPAlbum = (value: unknown): value is PAlbum => {
   const album = value as Record<string, unknown>
 
   return (
+    (album.coverImageUrl === undefined || isString(album.coverImageUrl)) &&
     isString(album.description) &&
     isString(album.icon) &&
     isString(album.id) &&
@@ -259,6 +273,14 @@ const resolveTrackIds = (
   })
 }
 
+const resolveAlbumTracks = (album: PAlbum, tracks: readonly PTrack[]): readonly PTrack[] =>
+  resolveTrackIds(album.trackIds, tracks, 'Focus-room albums reference unknown tracks').map(
+    (track) =>
+      track.artworkUrl !== undefined || album.coverImageUrl === undefined
+        ? track
+        : {...track, artworkUrl: album.coverImageUrl},
+  )
+
 const createRequestInit = (signal?: AbortSignal): RequestInit => ({
   cache: import.meta.env.DEV ? 'no-store' : 'default',
   signal,
@@ -288,11 +310,7 @@ const loadPublishedAlbums = async (
         ? await apiFetch(localizedAlbumsUrl, createRequestInit(signal))
         : await httpFetch(localizedAlbumsUrl, createRequestInit(signal))
 
-    if (!response.ok) {
-      return []
-    }
-
-    const collection: unknown = await response.json()
+    const collection: unknown = response.ok ? await response.json() : undefined
 
     if (!isPublishedAlbumCollection(collection)) {
       return []
@@ -402,11 +420,7 @@ export const loadPAlbums = async (
 
   const bundledAlbums = albumCollection.albums.map((album) => ({
     ...localizeBundledAlbum(album, options.locale),
-    tracks: resolveTrackIds(
-      album.trackIds,
-      trackCollection.tracks,
-      'Focus-room albums reference unknown tracks',
-    ),
+    tracks: resolveAlbumTracks(album, trackCollection.tracks),
   }))
   const publishedAlbums = await loadPublishedAlbums(
     options.publishedAlbumsUrl,
@@ -417,8 +431,10 @@ export const loadPAlbums = async (
   return [...bundledAlbums, ...publishedAlbums]
 }
 
-/** Loads and validates the bundled focus-room playlist. */
-export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<readonly PTrack[]> => {
+/** Loads and validates the complete track catalog and bundled default playlist. */
+export const loadPTrackQueueSource = async (
+  options: LoadPTracksOptions = {},
+): Promise<PTrackQueueSource> => {
   const [tracksResponse, playlistResponse] = await Promise.all([
     fetchAudioJson('tracks.json', options.tracksUrl, options.signal),
     fetchAudioJson('playlist.json', options.playlistUrl, options.signal),
@@ -445,9 +461,16 @@ export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<rea
     throw new TypeError('Focus-room playlist has an invalid format')
   }
 
-  return resolveTrackIds(
-    playlist.trackIds,
-    collection.tracks,
-    'Focus-room playlist references unknown tracks',
-  )
+  return {
+    defaultTracks: resolveTrackIds(
+      playlist.trackIds,
+      collection.tracks,
+      'Focus-room playlist references unknown tracks',
+    ),
+    tracks: collection.tracks,
+  }
 }
+
+/** Loads and validates the bundled focus-room playlist. */
+export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<readonly PTrack[]> =>
+  (await loadPTrackQueueSource(options)).defaultTracks

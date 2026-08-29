@@ -28,7 +28,45 @@ describe('POverflowMarquee', () => {
 
   afterEach(() => {
     cleanup()
+    vi.doUnmock('solid-js')
+    vi.resetModules()
     vi.unstubAllGlobals()
+  })
+
+  it('should tolerate missing measured elements during lifecycle setup', async () => {
+    vi.resetModules()
+    vi.doMock('solid-js', async () => {
+      const solid = await vi.importActual<typeof import('solid-js')>('solid-js')
+      let signalIndex = 0
+
+      return {
+        ...solid,
+        createSignal: ((initialValue?: unknown) => {
+          signalIndex += 1
+
+          if (signalIndex === 1 || signalIndex === 3) {
+            return [() => undefined, vi.fn()]
+          }
+
+          return solid.createSignal(initialValue)
+        }) as typeof solid.createSignal,
+      }
+    })
+    const {POverflowMarquee: MarqueeWithoutRefs} = await import('../POverflowMarquee')
+
+    const result = render(() => <MarqueeWithoutRefs text="Track title" />)
+
+    expect(result.container.querySelector('.pomo-overflow-marquee')).not.toBeNull()
+    expect(resizeObservers).toHaveLength(0)
+  })
+
+  it('should measure once without observing in browsers that lack ResizeObserver', () => {
+    vi.stubGlobal('ResizeObserver', undefined)
+
+    const result = render(() => <POverflowMarquee text="Track title" />)
+
+    expect(result.container.querySelector('.pomo-overflow-marquee')).not.toBeNull()
+    expect(resizeObservers).toHaveLength(0)
   })
 
   it('should animate only when the text exceeds its viewport', () => {

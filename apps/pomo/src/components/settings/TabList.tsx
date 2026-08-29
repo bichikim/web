@@ -1,6 +1,6 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createEffect, createSignal, type JSX, onCleanup, Show} from 'solid-js'
-import * as m from '../../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 const SETTINGS_TAB_LIST_CLASSES =
   'pomo-settings__tabs flex h-full w-full min-w-0 flex-1 overflow-x-auto overscroll-x-contain ' +
@@ -84,10 +84,6 @@ export const PSettingsTabList = () => {
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="events">
           <span aria-hidden="true" class="i-tabler-bolt size-4" />
           <span>{m.settings_tab_events()}</span>
-        </Tabs.Trigger>
-        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="weather">
-          <span aria-hidden="true" class="i-pomo-scribble-clouds size-4" />
-          <span>{m.settings_tab_weather()}</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="feeds">
           <span aria-hidden="true" class="i-tabler-rss size-4" />

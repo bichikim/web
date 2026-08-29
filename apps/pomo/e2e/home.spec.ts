@@ -10,14 +10,12 @@ test('hydrates the home route in its configured runtime', async ({page}, testInf
 
   expect(response?.ok()).toBe(true)
   if (isAppsInToss) {
+    await expect(page).toHaveURL(/\/(?:en|ko)\/?$/u)
     await page.waitForFunction(() => '__ait' in window)
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-top'),
-        ),
-      )
-      .toBe('54px')
+    await expect(page.locator('html')).toHaveAttribute(
+      'style',
+      /--pomo-safe-area-inset-top:\s*0px/u,
+    )
   } else {
     expect(await page.evaluate(() => '__ait' in window)).toBe(false)
   }
@@ -28,4 +26,28 @@ test('hydrates the home route in its configured runtime', async ({page}, testInf
     'content',
     isAppsInToss ? PRIVATE_ROBOTS : INDEXABLE_ROBOTS,
   )
+})
+
+test('initializes the Apps in Toss locale without leaving the launch path', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'apps-in-toss')
+
+  const documentRequestUrls: Array<string> = []
+  page.on('request', (request) => {
+    if (request.resourceType() === 'document' && request.frame() === page.mainFrame()) {
+      documentRequestUrls.push(request.url())
+    }
+  })
+  await page.addInitScript(() => {
+    window.localStorage.setItem('PARAGLIDE_LOCALE', 'en')
+  })
+
+  const response = await page.goto('/')
+
+  expect(response?.ok()).toBe(true)
+  await expect(page).toHaveURL(/\/$/u)
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await expect(page.getByRole('button', {name: 'Start with Pomo'})).toBeVisible()
+  expect(documentRequestUrls).toEqual([response?.url()])
 })

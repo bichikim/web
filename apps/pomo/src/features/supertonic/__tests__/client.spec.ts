@@ -32,8 +32,14 @@ class FakeWorker {
     }
   }
 
-  emitError() {
+  emitError(event: Partial<ErrorEvent> = {}) {
     for (const listener of this.#listeners.get('error') ?? []) {
+      listener(event as MessageEvent<SupertonicWorkerOutput>)
+    }
+  }
+
+  emitMessageError() {
+    for (const listener of this.#listeners.get('messageerror') ?? []) {
       listener({} as MessageEvent<SupertonicWorkerOutput>)
     }
   }
@@ -161,6 +167,33 @@ describe('createSupertonicClient', () => {
     await explicitGeneration
   })
 
+  it('should use the short speed for text without spoken characters and ignore non-stream chunks', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const generation = client.generate({text: '** **', voice: {id: 'F1', kind: 'preset'}})
+
+    worker.emitMessage({
+      generationTime: 100,
+      index: 0,
+      requestId: 1,
+      sampleRate: SAMPLE_RATE,
+      samples: Float32Array.of(0.1),
+      total: 1,
+      type: 'chunk',
+    })
+    expect(worker.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({speed: 0.8, type: 'generate'}),
+    )
+    worker.emitMessage({
+      generationTime: GENERATION_TIME,
+      requestId: 1,
+      sampleRate: SAMPLE_RATE,
+      samples: Float32Array.of(0.1),
+      type: 'result',
+    })
+    await generation
+  })
+
   it('should prefer an explicitly selected language over the document language', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
@@ -252,6 +285,23 @@ describe('createSupertonicClient', () => {
     expect(await stream.next()).toEqual({done: true, value: undefined})
   })
 
+  it('should yield a generation failure as the final stream event', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const stream = client.generateStream({text: '실패', voice: {id: 'F1', kind: 'preset'}})
+    const event = stream.next()
+    const error = {
+      code: 'cancelled' as const,
+      phase: 'generate' as const,
+      retryable: false as const,
+    }
+
+    worker.emitMessage({error, requestId: 1, type: 'error'})
+
+    await expect(event).resolves.toEqual({done: false, value: {error, ok: false}})
+    await expect(stream.next()).resolves.toEqual({done: true, value: undefined})
+  })
+
   it('should route structured initialization and generation failures to pending operations', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
@@ -310,6 +360,18 @@ describe('createSupertonicClient', () => {
       },
       ok: false,
     })
+    expect(
+      await client.initialize({modelId: 'int8', onProgress: vi.fn(), onStatus: vi.fn()}),
+    ).toEqual({
+      error: {
+        code: 'worker-failed',
+        detail: 'Worker 실행 오류',
+        phase: 'initialize',
+        retryable: true,
+      },
+      ok: false,
+    })
+    worker.emitError()
     expect(worker.postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type: 'generate'}))
 
     client.dispose()
@@ -377,5 +439,50 @@ describe('createSupertonicClient', () => {
       },
       ok: false,
     })
+  })
+
+  it('should report detailed Worker and message deserialization failures once', async () => {
+    const first = createSupertonicClient()
+    const firstWorker = getWorker()
+    const initialization = first.initialize({
+      modelId: 'full',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+    const cause = new Error('worker crashed')
+    firstWorker.emitError({error: cause, message: '구체적인 Worker 오류'})
+    await expect(initialization).resolves.toMatchObject({
+      error: {detail: '구체적인 Worker 오류'},
+      ok: false,
+    })
+
+    const second = createSupertonicClient()
+    const secondWorker = getWorker()
+    const secondInitialization = second.initialize({
+      modelId: 'full',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+    secondWorker.emitMessageError()
+    await expect(secondInitialization).resolves.toMatchObject({
+      error: {detail: 'Worker 응답을 읽지 못했습니다.'},
+      ok: false,
+    })
+  })
+
+  it('should make disposal acknowledgement and cancellation idempotent', () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+
+    client.cancelGeneration()
+    worker.emitMessage({type: 'disposed'})
+    worker.emitMessage({type: 'disposed'})
+    worker.emitError()
+    client.cancelGeneration()
+    client.dispose()
+    client.cancelGeneration()
+
+    expect(worker.terminate).toHaveBeenCalledOnce()
+    expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'cancel-generation'})
   })
 })

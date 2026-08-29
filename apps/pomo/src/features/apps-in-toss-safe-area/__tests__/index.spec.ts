@@ -33,12 +33,12 @@ describe('useAppsInTossSafeArea', () => {
     document.documentElement.removeAttribute('style')
   })
 
-  it('should apply initial native insets and update them when the WebView changes', async () => {
+  it('should exclude the utility header while synchronizing the other native insets', async () => {
     render(SafeAreaHarness)
 
     await vi.waitFor(() => expect(safeAreaMocks.subscribe).toHaveBeenCalledOnce())
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe(
-      '47px',
+      '0px',
     )
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-bottom')).toBe(
       '34px',
@@ -50,7 +50,7 @@ describe('useAppsInTossSafeArea', () => {
     onEvent({bottom: 21, left: 8, right: 9, top: 10})
 
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe(
-      '10px',
+      '0px',
     )
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-right')).toBe(
       '9px',

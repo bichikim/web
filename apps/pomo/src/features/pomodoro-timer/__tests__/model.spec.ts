@@ -51,6 +51,10 @@ describe('getPomodoroPhaseDuration', () => {
     expect(getPomodoroPhaseDuration('shortBreak', CONFIG)).toBe(4)
     expect(getPomodoroPhaseDuration('longBreak', CONFIG)).toBe(6)
   })
+
+  it('should preserve runtime exhaustiveness for an unknown phase', () => {
+    expect(getPomodoroPhaseDuration('future' as never, CONFIG)).toBe('future')
+  })
 })
 
 describe('startPomodoroTimer', () => {

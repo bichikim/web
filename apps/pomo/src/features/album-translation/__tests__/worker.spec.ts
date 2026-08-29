@@ -111,4 +111,73 @@ describe('album translation worker', () => {
       expect.objectContaining({device: 'webgpu'}),
     )
   })
+
+  it('should reuse the loaded runtime and report model download progress', async () => {
+    transformers.gemmaModelFromPretrained.mockImplementation(
+      async (
+        _repositoryId: string,
+        options: {
+          readonly progress_callback: (progress: {
+            readonly files: Readonly<
+              Record<string, {readonly loaded: number; readonly total: number}>
+            >
+            readonly loaded: number
+            readonly status: 'progress_total'
+            readonly total: number
+          }) => void
+        },
+      ) => {
+        options.progress_callback({
+          files: {'model.onnx': {loaded: 25, total: 100}},
+          loaded: 25,
+          status: 'progress_total',
+          total: 100,
+        })
+        return {generate: transformers.generate}
+      },
+    )
+    const worker = await loadWorker()
+    const request = {description: '쉬어가는 시간', title: '밤', type: 'translate'} as const
+
+    worker.dispatch(request)
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({type: 'complete'}),
+      ),
+    )
+    worker.dispatch(request)
+    await vi.waitFor(() => {
+      expect(
+        worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
+      ).toHaveLength(2)
+    })
+
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      files: [{fileName: 'model.onnx', loadedBytes: 25, percentage: 25, totalBytes: 100}],
+      loadedBytes: 25,
+      percentage: 25,
+      totalBytes: 100,
+      type: 'loading',
+    })
+    expect(transformers.gemmaModelFromPretrained).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    [new Error('generation failed'), 'generation failed'],
+    [new Error(''), 'Gemma 4 번역을 실행하지 못했습니다.'],
+    ['unknown failure', 'Gemma 4 번역을 실행하지 못했습니다.'],
+  ])('should report translation failures without requiring a restart', async (error, message) => {
+    transformers.generate.mockRejectedValue(error)
+    const worker = await loadWorker()
+
+    worker.dispatch({description: '쉬어가는 시간', title: '밤', type: 'translate'})
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenLastCalledWith({
+        message,
+        restartRequired: false,
+        type: 'error',
+      })
+    })
+  })
 })

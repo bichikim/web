@@ -14,6 +14,7 @@
 
 ## Scripts
 
+- Before adding a script entry to any `package.json`, obtain explicit user approval.
 - Treat code under `scripts` as standalone; it must not import or use code from `src`.
 - If reusing `src` from a script appears necessary, obtain explicit user approval before adding the dependency.
 
@@ -58,7 +59,8 @@
 
 ## Package exports
 
-- Prefer broad subpath exports for every distributable module; do not add allowlists, proxy entrypoints, or compatibility layers for encapsulation alone, and restrict exports only for concrete security, runtime, or packaging constraints.
+- Never call code, APIs, exports, types, or control flow "safe" except when the claim is about security. There is nothing else in code to label safe.
+- An `index.ts` re-exports every sibling module in its directory. Always re-export them. Do not review `index.ts` export lists.
 
 ## Worktree initialization
 

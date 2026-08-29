@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-restore-surface"
+description = "Enables the restore_surface command without any pre-configured scope."
+commands.allow = ["restore_surface"]
+
+[[permission]]
+identifier = "deny-restore-surface"
+description = "Denies the restore_surface command without any pre-configured scope."
+commands.deny = ["restore_surface"]

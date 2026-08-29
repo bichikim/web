@@ -1,7 +1,9 @@
-import {Container, Sprite, type Texture, Ticker} from 'pixi.js'
+import {Container, type Texture, Ticker} from 'pixi.js'
 
 import {positionLayerContainer, validateTextureSizes} from './layer-layout'
-import {applyLayerMask} from './layer-mask'
+import {createLayerMaskFilter, detachLayerMasks} from './layer-mask'
+import type {LayerInstance, MotionInstance, MotionState} from './layer-runtime-state'
+import {attachLayerView, createLayerView} from './layer-view'
 import {applyLoopingTranslation} from './looping-translation'
 import {getLayerMotions, getMotionEffects} from './motion-definition'
 import {resetMotionPresentation} from './motion-reset'
@@ -12,9 +14,8 @@ import {
   advanceSpriteOpacityTwinkle,
   applyOpacityTwinkle,
   createOpacityTwinkleState,
-  type OpacityTwinkleState,
 } from './opacity-twinkle'
-import {createPushFilter, createPushFilters, type PushFilter} from './push-filter-factory'
+import {createPushFilter, createPushFilters} from './push-filter-factory'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 import {applyVisibilityCycle} from './visibility-cycle'
 import type {
@@ -23,7 +24,6 @@ import type {
   PixiLayerSceneState,
   PixiSceneLayerDefinition,
   PixiSceneMotion,
-  PixiScenePoint,
   PixiSceneTravelRange,
 } from './layer-scene-definition'
 
@@ -32,30 +32,6 @@ export type * from './layer-scene-definition'
 export interface PixiLayerSceneOptions {
   readonly onRender: () => void
   readonly random?: () => number
-}
-
-interface MotionState {
-  currentTarget: PixiScenePoint
-  direction: 1 | -1
-  elapsedSeconds: number
-  nextTarget: PixiScenePoint
-  travelSeconds: number
-  twinkleState?: OpacityTwinkleState
-}
-
-interface LayerInstance {
-  readonly container: Container
-  readonly definition: PixiSceneLayerDefinition
-  readonly motions: readonly MotionInstance[]
-  readonly sprite: Sprite
-  readonly statePixelPushFilter: PushFilter | null
-}
-
-interface MotionInstance {
-  readonly definition: PixiSceneMotion
-  enabled: boolean
-  readonly pixelPushFilters: readonly PushFilter[]
-  readonly state: MotionState
 }
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -75,6 +51,7 @@ export const createStaticLayerScene = (
 /** Renders an ordered layer definition and owns its Pixi textures and animation ticker. */
 export class PixiLayerScene {
   readonly container = new Container()
+  readonly #channels: ReadonlySet<string>
   readonly #definition: PixiLayerSceneDefinition
   readonly #onRender: () => void
   readonly #random: () => number
@@ -86,6 +63,9 @@ export class PixiLayerScene {
   #textures: readonly TextureLease[] = []
 
   constructor(definition: PixiLayerSceneDefinition, options: PixiLayerSceneOptions) {
+    this.#channels = new Set(
+      definition.layers.flatMap((layer) => (layer.channel === undefined ? [] : [layer.channel])),
+    )
     this.#definition = definition
     this.#onRender = options.onRender
     this.#random = options.random ?? Math.random
@@ -136,7 +116,7 @@ export class PixiLayerScene {
       )
 
       for (const [index, definition] of this.#definition.layers.entries()) {
-        const sprite = new Sprite(textures[index].texture)
+        const sprite = createLayerView(definition, textures[index].texture)
         const motions = getLayerMotions(definition)
         const pivotMotion = motions.find((motion) => motion.kind === 'pivot-rotation')
         const container = new Container()
@@ -162,17 +142,27 @@ export class PixiLayerScene {
                 maskTextures,
                 textures[index].texture,
               )
+        const layerMaskFilter = createLayerMaskFilter(
+          definition,
+          maskTextures,
+          textures[index].texture,
+        )
         sprite.filters = [
+          ...(layerMaskFilter === null ? [] : [layerMaskFilter]),
           ...(statePixelPushFilter === null ? [] : [statePixelPushFilter]),
           ...motionInstances.flatMap((motion) => motion.pixelPushFilters),
         ]
-        container.addChild(sprite)
-
-        applyLayerMask(this.container, container, definition, maskTextures)
-        this.container.addChild(container)
+        attachLayerView({
+          definition,
+          layerContainer: container,
+          maskTextures,
+          sceneContainer: this.container,
+          view: sprite,
+        })
         layers.push({
           container,
           definition,
+          layerMaskFilter,
           motions: motionInstances,
           sprite,
           statePixelPushFilter,
@@ -247,6 +237,10 @@ export class PixiLayerScene {
     return this.#layers.find((layer) => layer.definition.attachmentId === name)?.container ?? null
   }
 
+  hasChannel(channel: string) {
+    return this.#channels.has(channel)
+  }
+
   destroy() {
     if (this.#destroyed) {
       return
@@ -254,8 +248,10 @@ export class PixiLayerScene {
 
     this.#destroyed = true
     this.#ticker.destroy()
+    detachLayerMasks(this.#layers)
 
     for (const layer of this.#layers) {
+      layer.layerMaskFilter?.destroy()
       layer.statePixelPushFilter?.destroy()
 
       for (const motion of layer.motions) {

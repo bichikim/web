@@ -1,0 +1,64 @@
+{
+  "name": "@winter-love/vite-plugin-key-similarity",
+  "version": "0.1.0",
+  "description": "Offline pairwise similarity diagnostics for static string keys in Vite",
+  "bin": {
+    "key-similarity": "bin/index.js"
+  },
+  "files": [
+    "assets/**/*",
+    "bin/*",
+    "dist/*",
+    "examples/clean/index.html",
+    "examples/clean/src/*",
+    "examples/clean/vite.config.ts",
+    "examples/duplicate/index.html",
+    "examples/duplicate/src/*",
+    "examples/duplicate/vite.config.ts",
+    "examples/sentence-clean/index.html",
+    "examples/sentence-clean/src/*",
+    "examples/sentence-clean/vite.config.ts",
+    "examples/sentence-duplicate/index.html",
+    "examples/sentence-duplicate/src/*",
+    "examples/sentence-duplicate/vite.config.ts",
+    "README.md",
+    "README.ja.md",
+    "README.ko.md",
+    "README.zh-CN.md",
+    "README.zh-TW.md"
+  ],
+  "type": "module",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": "./*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "example:clean": "pnpm run build && vite build --config examples/clean/vite.config.ts",
+    "example:duplicate": "pnpm run build && vite build --config examples/duplicate/vite.config.ts",
+    "example:sentence-clean": "pnpm run build && vite build --config examples/sentence-clean/vite.config.ts",
+    "example:sentence-duplicate": "pnpm run build && vite build --config examples/sentence-duplicate/vite.config.ts",
+    "prepare-build": "pnpm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.2.0",
+    "@typescript/typescript6": "catalog:",
+    "tinyglobby": "^0.2.17",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "catalog:"
+  }
+}

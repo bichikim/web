@@ -1,0 +1,88 @@
+/** @vitest-environment jsdom */
+
+import {cleanup, render, screen} from '@solidjs/testing-library'
+import type {JSX} from 'solid-js'
+import {afterEach, expect, it, vi} from 'vitest'
+
+import CharacterPage from '../CharacterPage'
+import ChatPage from '../ChatPage'
+import DialoguePage from '../DialoguePage'
+import HomePage from '../HomePage'
+import LayerReviewPage from '../LayerReviewPage'
+import SpeechToTextPage from '../SpeechToTextPage'
+import TermsPage from '../TermsPage'
+import TextMoodPage from '../TextMoodPage'
+import VoicePage from '../VoicePage'
+
+vi.mock('@solidjs/meta', () => ({
+  Title: (props: {children?: JSX.Element}) => <>{props.children}</>,
+}))
+vi.mock('@solidjs/router', () => ({
+  A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
+}))
+vi.mock('src/components/CharacterStudio', () => ({CharacterStudio: () => <p>character studio</p>}))
+vi.mock('src/components/PLayerReview', () => ({PLayerReview: () => <p>layer review</p>}))
+vi.mock('src/components/VoiceGenerator', () => ({VoiceGenerator: () => <p>voice generator</p>}))
+vi.mock('src/components/PServiceTerms', () => ({
+  PServiceTerms: (props: {backHref: string; backLabel: string; platform: string}) => (
+    <p>{`${props.backLabel}:${props.backHref}:${props.platform}`}</p>
+  ),
+}))
+vi.mock('../chat/Workspace', () => ({
+  ChatWorkspace: (props: {fallback?: JSX.Element}) => (
+    <>
+      <p>chat workspace</p>
+      {props.fallback}
+    </>
+  ),
+}))
+vi.mock('../dialogue/Workspace', () => ({
+  DialogueWorkspace: (props: {fallback?: JSX.Element}) => (
+    <>
+      <p>dialogue workspace</p>
+      {props.fallback}
+    </>
+  ),
+}))
+vi.mock('../home/TextMoodCard', () => ({TextMoodCard: () => <p>text mood card</p>}))
+vi.mock('../speech-to-text/Workspace', () => ({
+  SpeechToTextWorkspace: (props: {fallback?: JSX.Element}) => (
+    <>
+      <p>speech workspace</p>
+      {props.fallback}
+    </>
+  ),
+}))
+vi.mock('../text-mood/Workspace', () => ({
+  TextMoodWorkspace: (props: {fallback?: JSX.Element}) => (
+    <>
+      <p>mood workspace</p>
+      {props.fallback}
+    </>
+  ),
+}))
+
+afterEach(() => {
+  cleanup()
+})
+
+it.each([
+  [HomePage, '캐릭터를 만들고,'],
+  [VoicePage, 'voice generator'],
+  [ChatPage, 'chat workspace'],
+  [DialoguePage, 'dialogue workspace'],
+  [SpeechToTextPage, 'speech workspace'],
+  [TextMoodPage, 'mood workspace'],
+  [CharacterPage, 'character studio'],
+  [LayerReviewPage, 'layer review'],
+] as const)('should render a development page', (Page, expectedText) => {
+  render(() => <Page />)
+
+  expect(screen.getAllByText(expectedText, {exact: false}).length).toBeGreaterThan(0)
+})
+
+it('should configure development service terms navigation', () => {
+  render(() => <TermsPage />)
+
+  expect(screen.getByText('실험실 목록:/dev:web')).toBeDefined()
+})

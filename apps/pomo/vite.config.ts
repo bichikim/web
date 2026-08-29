@@ -1,42 +1,37 @@
 import {fileURLToPath} from 'node:url'
-
 import {solidStart} from '@solidjs/start/config'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {nitro} from 'nitro/vite'
 import UnoCSS from 'unocss/vite'
+import {type ConfigEnv, defineConfig, type Plugin, type UserConfig} from 'vite'
 import {
-  type ConfigEnv,
-  defaultServerConditions,
-  defineConfig,
-  type Plugin,
-  type PluginOption,
-  type UserConfig,
-} from 'vite'
-
-import {
+  PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES,
   PARAGLIDE_APPS_IN_TOSS_STRATEGY,
+  PARAGLIDE_LOCALIZED_ROUTES,
+  PARAGLIDE_OUTDIR,
   PARAGLIDE_OUTPUT_STRUCTURE,
+  PARAGLIDE_PROJECT,
   PARAGLIDE_ROUTE_STRATEGIES,
   PARAGLIDE_TRAILING_SLASH,
   PARAGLIDE_URL_PATTERNS,
   PARAGLIDE_WEB_STRATEGY,
-} from './paraglide.config.ts'
-import projectSettings from './project.inlang/settings.json' with {type: 'json'}
-import {SERVICE_POLICY_PATHS} from './src/config/service-policy.ts'
+} from './paraglide.config'
+import projectSettings from './.i18n/project.inlang/settings.json' with {type: 'json'}
+import {SERVICE_POLICY_PATHS} from './src/features/service-terms/policy-paths'
 import {
   BASE_SECURITY_HEADERS,
   STATIC_SECURITY_HEADERS,
   WORKER_SECURITY_HEADERS,
-} from './src/config/security-headers.ts'
-import {
-  createLocalizedStaticRoutes,
-  LOCALIZED_STATIC_ROUTES,
-} from './src/config/static-localization.ts'
-import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
+} from './src/middleware/security-header-policy'
+import {createLocalizedStaticRoutes} from './src/features/localization/static-routes'
+import {createDevFeedPlugin} from './src/features/dev-feed/index'
 
 const isAppsInTossBuild = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const isDesktopBuild = process.env.POMO_BUILD_TARGET === 'desktop'
+const isStaticBuild = isAppsInTossBuild || isDesktopBuild
 const isAppsInTossRuntime = isAppsInTossBuild || process.env.POMO_RUNTIME_TARGET === 'apps-in-toss'
+const isDesktopRuntime = isDesktopBuild || process.env.POMO_RUNTIME_TARGET === 'desktop'
 const usesAppsInTossDevtools =
   isAppsInTossRuntime && process.env.POMO_APPS_IN_TOSS_DEVTOOLS === 'true'
 const appsInTossApiOrigin = new URL(
@@ -77,19 +72,30 @@ const appsInTossBaseStaticRoutes = [
 ]
 const localizedStaticRoutes = createLocalizedStaticRoutes({
   locales: projectSettings.locales,
-  routes: LOCALIZED_STATIC_ROUTES,
+  routes: PARAGLIDE_LOCALIZED_ROUTES,
 })
 const appsInTossStaticRoutes = [
   ...new Set([...appsInTossBaseStaticRoutes, ...localizedStaticRoutes]),
 ]
+const desktopStaticRoutes = [
+  ...sharedStaticRoutes,
+  ...localizedStaticRoutes,
+  '/desktop/player',
+  '/desktop/pomodoro',
+  '/desktop/settings',
+]
 const prerenderSecurityRules = Object.fromEntries(
-  (isAppsInTossBuild ? [...sharedStaticRoutes, ...localizedStaticRoutes] : sharedStaticRoutes).map(
+  (isStaticBuild ? [...sharedStaticRoutes, ...localizedStaticRoutes] : sharedStaticRoutes).map(
     (route) => [route, {headers: STATIC_SECURITY_HEADERS}],
   ),
 )
 
 type UnoCssPlugins = ReturnType<typeof UnoCSS>
 
+// Vite 8 + SolidStart SSR이 virtual:uno.css를 /__uno.css?inline 파일 ID로 취급해 거부한다.
+// UnoCSS 권장 설정이 아니라 그 버그의 로컬 패치다.
+// https://github.com/unocss/unocss/issues/5271
+// https://github.com/solidjs/solid-start/issues/2292
 const scopeUnoCssToClient = (plugins: UnoCssPlugins): UnoCssPlugins =>
   plugins.map((plugin) => ({
     ...plugin,
@@ -102,6 +108,7 @@ const scopeUnoCssToClient = (plugins: UnoCssPlugins): UnoCssPlugins =>
     },
   }))
 
+// 같은 로컬 패치. 빌드에서 virtual:uno.css import를 빈 모듈로 바꾼다.
 const resolveBuildUnoCss = {
   apply: 'build' as const,
   enforce: 'pre' as const,
@@ -114,18 +121,6 @@ const resolveBuildUnoCss = {
   resolveId(id: string) {
     if (id === 'virtual:uno.css') {
       return buildUnoCssEntryId
-    }
-  },
-}
-
-const excludeArchivedAssets = {
-  enforce: 'pre' as const,
-  name: 'exclude-archived-assets',
-  resolveId(source: string, importer: string | undefined) {
-    if (assetLibraryPattern.test(source)) {
-      throw new Error(
-        `Archived assets cannot be bundled: ${source} (imported by ${importer ?? 'unknown'})`,
-      )
     }
   },
 }
@@ -154,7 +149,7 @@ const restartOnScribbleIconChange = {
 
 const useStaticNitroEntry = {
   configEnvironment(name, config) {
-    if (isAppsInTossBuild && name === 'nitro') {
+    if (isStaticBuild && name === 'nitro') {
       config.build ??= {}
       config.build.rolldownOptions ??= {}
       // Nitro 3 beta still builds its server environment after static prerendering.
@@ -174,57 +169,66 @@ const useStaticNitroEntry = {
   },
 } satisfies Plugin
 
-const createPlugins = (command: ConfigEnv['command']): PluginOption[] => [
-  paraglideVitePlugin({
-    emitTsDeclarations: true,
-    outdir: './src/paraglide',
-    outputStructure: PARAGLIDE_OUTPUT_STRUCTURE,
-    project: './project.inlang',
-    routeStrategies: PARAGLIDE_ROUTE_STRATEGIES,
-    strategy: isAppsInTossBuild ? PARAGLIDE_APPS_IN_TOSS_STRATEGY : PARAGLIDE_WEB_STRATEGY,
-    trailingSlash: PARAGLIDE_TRAILING_SLASH,
-    urlPatterns: PARAGLIDE_URL_PATTERNS,
-  }),
-  createUnoCssInlineResolver(),
-  resolveBuildUnoCss,
-  ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
-  solidStart({
-    devOverlay: false,
-    middleware: './src/middleware/index.ts',
-    serialization: {mode: 'json'},
-  }),
-  createDevFeedPlugin(),
-  excludeArchivedAssets,
-  restartOnScribbleIconChange,
-  nitro(),
-  ...(isAppsInTossBuild && command === 'build' ? [useStaticNitroEntry] : []),
-]
-
 const createConfig = ({command}: ConfigEnv): UserConfig => ({
   cacheDir: usesAppsInTossDevtools ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
   define: {
     'import.meta.env.POMO_ENVIRONMENT': JSON.stringify(deploymentEnvironment),
     'import.meta.env.POMO_HAS_APPS_IN_TOSS_DEVTOOLS': JSON.stringify(usesAppsInTossDevtools),
     'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInTossRuntime),
+    'import.meta.env.POMO_IS_DESKTOP': JSON.stringify(isDesktopRuntime),
     'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
     'import.meta.env.POMO_RELEASE': JSON.stringify(release),
   },
   nitro: {
     prerender: {
+      failOnError: isStaticBuild,
       routes:
-        isAppsInTossBuild && command === 'build' ? appsInTossStaticRoutes : sharedStaticRoutes,
+        command === 'build'
+          ? isAppsInTossBuild
+            ? appsInTossStaticRoutes
+            : isDesktopBuild
+              ? desktopStaticRoutes
+              : sharedStaticRoutes
+          : sharedStaticRoutes,
     },
     routeRules: {
       '/**': {headers: BASE_SECURITY_HEADERS},
       '/workers/**': {headers: WORKER_SECURITY_HEADERS},
       ...prerenderSecurityRules,
     },
-    ...(isAppsInTossBuild && command === 'build' ? {preset: 'static'} : {}),
+    ...(isStaticBuild && command === 'build' ? {preset: 'static'} : {}),
   },
   optimizeDeps: {
-    include: ['onnxruntime-web/all', 'zod'],
+    // Gemma Worker가 처음 로드될 때 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
+    include: ['@huggingface/transformers'],
   },
-  plugins: createPlugins(command),
+  plugins: [
+    paraglideVitePlugin({
+      emitTsDeclarations: true,
+      outdir: PARAGLIDE_OUTDIR,
+      outputStructure: PARAGLIDE_OUTPUT_STRUCTURE,
+      project: PARAGLIDE_PROJECT,
+      routeStrategies: isAppsInTossRuntime
+        ? PARAGLIDE_APPS_IN_TOSS_ROUTE_STRATEGIES
+        : PARAGLIDE_ROUTE_STRATEGIES,
+      strategy: isAppsInTossRuntime ? PARAGLIDE_APPS_IN_TOSS_STRATEGY : PARAGLIDE_WEB_STRATEGY,
+      trailingSlash: PARAGLIDE_TRAILING_SLASH,
+      urlPatterns: PARAGLIDE_URL_PATTERNS,
+    }),
+    // UnoCSS 로컬 패치. unocss#5271, solid-start#2292
+    createUnoCssInlineResolver(),
+    resolveBuildUnoCss,
+    ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
+    solidStart({
+      devOverlay: false,
+      middleware: './src/middleware/index.ts',
+      ssr: !isDesktopBuild,
+    }),
+    createDevFeedPlugin(),
+    restartOnScribbleIconChange,
+    nitro(),
+    ...(isStaticBuild && command === 'build' ? [useStaticNitroEntry] : []),
+  ],
   resolve: {
     ...(usesAppsInTossDevtools ? {alias: {[appsInTossFrameworkId]: appsInTossMockId}} : {}),
     tsconfigPaths: true,
@@ -232,12 +236,6 @@ const createConfig = ({command}: ConfigEnv): UserConfig => ({
   server: {
     watch: {
       ignored: [assetLibraryPattern],
-    },
-  },
-  ssr: {
-    noExternal: ['server-only'],
-    resolve: {
-      conditions: ['react-server', ...defaultServerConditions],
     },
   },
   worker: {

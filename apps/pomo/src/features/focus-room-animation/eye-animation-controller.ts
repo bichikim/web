@@ -288,10 +288,10 @@ export class PEyeController {
       return null
     }
 
-    const latestState = this.#state
-    const latestSourceKey = latestState === null ? null : getSourceKey(getEyeSources(latestState))
+    const latestState = this.#state!
+    const latestSourceKey = getSourceKey(getEyeSources(latestState))
 
-    if (latestState !== null && sourceKey === latestSourceKey) {
+    if (sourceKey === latestSourceKey) {
       return {leases, sourceKey, sources, state: latestState}
     }
 
@@ -301,19 +301,13 @@ export class PEyeController {
 
   async #replaceTextures(sources: readonly string[], sourceKey: string, revision: number) {
     const leases = await acquireTextureGroup(sources)
-    const latestState = this.#state
-    const latestSourceKey = latestState === null ? null : getSourceKey(getEyeSources(latestState))
 
-    if (
-      this.#destroyed ||
-      revision !== this.#textureRevision ||
-      latestState === null ||
-      sourceKey !== latestSourceKey
-    ) {
+    if (this.#destroyed || revision !== this.#textureRevision) {
       releaseTextureGroup(leases)
       return
     }
 
+    const latestState = this.#state!
     const previousLeases = this.#textureLeases
     this.#setTextures({leases, sourceKey, sources, state: latestState})
     this.#renderState = latestState

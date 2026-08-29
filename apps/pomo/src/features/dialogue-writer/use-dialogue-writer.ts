@@ -84,8 +84,6 @@ const isDialogueBusy = (state: DialogueWriterState) => {
     case 'unsupported':
       return false
   }
-
-  state satisfies never
 }
 
 const isDialogueModelReady = (state: DialogueWriterState) => {
@@ -101,8 +99,6 @@ const isDialogueModelReady = (state: DialogueWriterState) => {
     case 'unsupported':
       return false
   }
-
-  state satisfies never
 }
 
 export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriterController => {
@@ -155,8 +151,6 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
       case 'unsupported':
         return '이 브라우저에서는 WebGPU를 사용할 수 없어요. 최신 Chrome 또는 Edge에서 열어 주세요.'
     }
-
-    currentState satisfies never
   })
 
   const handleResponse = (response: DialogueWorkerResponse) => {

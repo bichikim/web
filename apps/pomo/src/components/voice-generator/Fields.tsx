@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import {For, type JSX, Show} from 'solid-js'
 import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../../features/supertonic/index'
 import {VOICE_TEST_SCRIPTS} from '../voice-test-scripts'
-import {type ImportedVoice, VoiceDropZone} from '../VoiceDropZone'
+import {type ImportedVoice, VoiceDropZone} from './DropZone'
 
 const MAXIMUM_TEXT_LENGTH = 3000
 

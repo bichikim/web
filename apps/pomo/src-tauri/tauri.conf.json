@@ -1,0 +1,52 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Pomofi",
+  "version": "0.1.0",
+  "identifier": "io.pomofi.desktop",
+  "build": {
+    "beforeBuildCommand": "pnpm run build:desktop:web",
+    "beforeDevCommand": "pnpm run dev:desktop:web",
+    "devUrl": "http://127.0.0.1:1420/ko/",
+    "frontendDist": "../.output/public"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "acceptFirstMouse": true,
+        "center": true,
+        "height": 800,
+        "label": "background",
+        "minHeight": 520,
+        "minWidth": 420,
+        "title": "Pomofi",
+        "url": "/ko/",
+        "width": 1280
+      }
+    ],
+    "security": {
+      "capabilities": ["desktop"],
+      "csp": {
+        "connect-src": "'self' ipc: http://ipc.localhost https://www.pomofi.io https://pomofi.io https://storage.pomofi.io https://audio.pomofi.io blob:",
+        "default-src": "'self'",
+        "font-src": "'self' data:",
+        "img-src": "'self' asset: http://asset.localhost blob: data: https:",
+        "media-src": "'self' blob: data: https://www.pomofi.io https://pomofi.io https://storage.pomofi.io https://audio.pomofi.io",
+        "script-src": "'self' 'wasm-unsafe-eval'",
+        "style-src": "'self' 'unsafe-inline'",
+        "worker-src": "'self' blob:"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "category": "Productivity",
+    "copyright": "Copyright © Pomofi",
+    "icon": ["icons/icon.icns"],
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    },
+    "shortDescription": "Pomo와 함께 집중하는 데스크톱 포모도로",
+    "targets": ["app"]
+  }
+}

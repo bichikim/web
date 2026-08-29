@@ -1,7 +1,7 @@
 import {cx} from 'class-variance-authority'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
-import * as m from '../../paraglide/messages.js'
-import {PScribblePanel} from '../PScribblePanel'
+import * as m from '@paraglide/message'
+import {PScribblePanel} from '../scribble/Panel'
 import {CLASSES, getDialogueBubbleShapeClasses} from './shared'
 
 interface BlockedDialogueBubbleProps {

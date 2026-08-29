@@ -96,10 +96,25 @@ export const musicAlbumTracks = pgTable(
   ],
 )
 
+export const musicTrackRegistrations = pgTable(
+  'music_track_registrations',
+  {
+    albumId: uuid()
+      .notNull()
+      .references(() => musicAlbums.id, {onDelete: 'cascade'}),
+    createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+    trackId: uuid()
+      .primaryKey()
+      .references(() => musicTracks.id, {onDelete: 'cascade'}),
+  },
+  (table) => [index('music_track_registrations_created_at_index').on(table.createdAt)],
+)
+
 export const musicTrackAssets = pgTable(
   'music_track_assets',
   {
     activatedAt: timestamp({withTimezone: true}),
+    artworkUrl: text(),
     contentType: varchar({length: 64}),
     createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),
     deletedAt: timestamp({withTimezone: true}),
@@ -119,6 +134,10 @@ export const musicTrackAssets = pgTable(
     validatedAt: timestamp({withTimezone: true}),
   },
   (table) => [
+    check(
+      'music_track_assets_artwork_url_check',
+      sql`${table.artworkUrl} is null or ${table.artworkUrl} like 'https://%'`,
+    ),
     check('music_track_assets_storage_role_check', sql`${table.storageRole} = 'paid-private'`),
     check(
       'music_track_assets_object_key_check',

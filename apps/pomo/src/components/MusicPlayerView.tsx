@@ -3,14 +3,14 @@ import 'media-chrome'
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 
-import {getPomoIconClass} from '../design-system/icon-style'
+import {getPomoIconClass} from './icon-style'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 import {PAlbumLibrary} from './PAlbumLibrary'
 import {POverflowMarquee} from './POverflowMarquee'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
-import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from './PScribbleFrame'
+import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from './scribble/Frame'
 import {ExpandedPlayerControls} from './music-player-view/ExpandedControls'
 import {ExpandedPlayerProgress} from './music-player-view/ExpandedProgress'
 import {SummaryPlayButton} from './music-player-view/SummaryPlayButton'
@@ -30,6 +30,21 @@ const getShellClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? cx('rounded-none', SCRIBBLE_MASK_CLASSES) : 'rounded-panel'
 const getBaseClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? 'rounded-none border-transparent' : 'rounded-panel border-border'
+
+const TrackArtwork = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
+  <Show keyed when={props.currentTrack?.artworkUrl}>
+    {(artworkUrl) => (
+      <img
+        alt=""
+        class="pomo-player__artwork size-11 shrink-0 rounded-control object-cover"
+        onError={({currentTarget}) => {
+          currentTarget.hidden = true
+        }}
+        src={artworkUrl}
+      />
+    )}
+  </Show>
+)
 
 export const MusicPlayerView = (props: MusicPlayerViewProps) => {
   const handleAlbumAdd = (tracks: readonly PTrack[]) => props.onAlbumAdd?.(tracks)
@@ -60,7 +75,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
           <audio
             crossorigin="anonymous"
             preload="metadata"
-            ref={props.onAudioElement}
+            ref={(element) => props.onAudioElement(element)}
             slot="media"
             src={props.currentTrack?.source}
           />
@@ -116,11 +131,12 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
           />
 
           <div class={CLASSES.playerSummary}>
-            <SummaryPlayButton
-              currentTrack={props.currentTrack}
-              expanded={props.expanded}
-              sceneStyle={props.sceneStyle}
-            />
+            <Show when={!props.expanded}>
+              <SummaryPlayButton currentTrack={props.currentTrack} sceneStyle={props.sceneStyle} />
+            </Show>
+            <Show when={props.expanded}>
+              <TrackArtwork currentTrack={props.currentTrack} />
+            </Show>
 
             <div
               class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}

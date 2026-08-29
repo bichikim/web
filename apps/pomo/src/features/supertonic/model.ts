@@ -48,6 +48,24 @@ export const SUPERTONIC_VOICES = [
   },
   {
     gender: 'female',
+    id: 'Hana',
+    label: 'Hana',
+    recommended: false,
+  },
+  {
+    gender: 'female',
+    id: 'Sora',
+    label: 'Sora',
+    recommended: false,
+  },
+  {
+    gender: 'female',
+    id: 'Mina',
+    label: 'Mina',
+    recommended: false,
+  },
+  {
+    gender: 'female',
     id: 'F1',
     label: 'Sarah',
     recommended: false,

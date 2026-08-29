@@ -122,4 +122,49 @@ describe('admin music album route', () => {
     expect(response.status).toBe(400)
     expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
   })
+
+  it('should reject duplicate locales', async () => {
+    const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
+      body: JSON.stringify({
+        coverFallback: 'lp',
+        coverImageUrl: null,
+        translations: [
+          {description: '설명', locale: 'ko', title: '제목'},
+          {description: '다른 설명', locale: 'ko', title: '다른 제목'},
+        ],
+      }),
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(400)
+    expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
+  })
+
+  it('should reject a request body larger than the configured limit', async () => {
+    const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
+      body: 'x'.repeat(65_537),
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(413)
+    expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
+  })
+
+  it('should hide repository failures behind a stable server error', async () => {
+    const error = new Error('database unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    repositoryMocks.createAlbum.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(500)
+    await expect(response.json()).resolves.toEqual({error: 'album_create_failed'})
+    expect(consoleError).toHaveBeenCalledWith('Failed to create a music album', error)
+  })
 })

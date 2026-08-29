@@ -1,5 +1,5 @@
 import {clientOnly} from '@solidjs/start'
 
-export const PFeedSettingsPanel = clientOnly(() => import('../PFeedSettingsContent'), {
+export const PFeedSettingsPanel = clientOnly(() => import('./Content'), {
   lazy: true,
 })

@@ -20,8 +20,6 @@
     }
   ],
   "git": {
-    "deploymentEnabled": {
-      "main-pomo": false
-    }
+    "deploymentEnabled": false
   }
 }

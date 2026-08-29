@@ -1,10 +1,11 @@
 import {
   extractLocaleFromCookie,
   extractLocaleFromNavigator,
+  type Locale,
   localStorageKey,
   toLocale,
-} from '../../paraglide/runtime.js'
-import {resolveLocaleRedirect} from './index.ts'
+} from '@paraglide/runtime'
+import {resolveAppsInTossLocale} from './index'
 
 const readStoredLocale = () => {
   try {
@@ -24,15 +25,14 @@ const readDeviceLocale = async (): Promise<unknown> => {
   }
 }
 
-/** Reads the native locale and returns the SSG URL required before hydration. */
-export const getLocaleRedirect = async (currentUrl: URL): Promise<URL | undefined> => {
+/** Resolves the initial locale before the client-rendered Apps in Toss home mounts. */
+export const getInitialAppsInTossLocale = async (): Promise<Locale> => {
   const browserLocale = extractLocaleFromNavigator()
   const persistedLocale = readStoredLocale() ?? extractLocaleFromCookie()
   const deviceLocale = await readDeviceLocale()
 
-  return resolveLocaleRedirect({
+  return resolveAppsInTossLocale({
     browserLocale,
-    currentUrl,
     deviceLocale,
     persistedLocale,
   })

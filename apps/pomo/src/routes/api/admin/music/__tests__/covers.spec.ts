@@ -59,6 +59,39 @@ describe('admin music cover upload route', () => {
     expect(uploadMocks.storeAlbumCover).not.toHaveBeenCalled()
   })
 
+  it('should reject a request without a content type', async () => {
+    const request = new Request('https://www.pomofi.io/api/admin/music/covers', {
+      body: 'webp',
+      headers: {'X-Pomo-Cover-Id': '019d1990-1dc9-7255-a7b5-f9459dfaf782'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(415)
+  })
+
+  it('should reject an invalid cover identifier', async () => {
+    const request = new Request('https://www.pomofi.io/api/admin/music/covers', {
+      body: 'webp',
+      headers: {'Content-Type': 'IMAGE/WEBP', 'X-Pomo-Cover-Id': 'invalid'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({error: 'invalid_cover_id'})
+  })
+
+  it('should reject an empty cover', async () => {
+    const response = await invokeApiRoute(POST, createRequest(new Uint8Array()))
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({error: 'invalid_cover'})
+    expect(uploadMocks.storeAlbumCover).not.toHaveBeenCalled()
+  })
+
   it('should reject a prepared cover larger than four MiB before R2 storage', async () => {
     // oxlint-disable-next-line eslint/no-magic-numbers -- One byte over the four MiB boundary.
     const oversizedCover = new Uint8Array(4 * 1024 * 1024 + 1)
@@ -66,5 +99,17 @@ describe('admin music cover upload route', () => {
 
     expect(response.status).toBe(413)
     expect(uploadMocks.storeAlbumCover).not.toHaveBeenCalled()
+  })
+
+  it('should return a controlled error when cover storage fails', async () => {
+    const error = new Error('R2 unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    uploadMocks.storeAlbumCover.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest('webp'))
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'cover_upload_unavailable'})
+    expect(consoleError).toHaveBeenCalledWith('Failed to create an album cover upload', error)
   })
 })

@@ -1,6 +1,6 @@
 ---
 name: typescript-conventions
-description: Applies project TypeScript conventions, functional error contracts, and library-grade module boundaries. Use when writing or editing .ts/.tsx files, designing exported APIs or cross-layer contracts, creating reusable modules, handling errors across adapters or workers, or refactoring dependencies between features, packages, services, and adapters.
+description: Apply project TypeScript conventions, functional error contracts, and library boundaries when editing .ts/.tsx files, APIs, cross-layer contracts, errors, or dependencies.
 ---
 
 # Typescript
@@ -27,26 +27,8 @@ Open and apply the reference files for the relevant section before working. For 
 16. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
 17. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
 18. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
-19. Outside a feature, use one feature entrypoint per file when its cohesive API can be re-exported safely; keep subpaths for internal implementation, runtime boundaries, side effects, or cycle avoidance.
+19. Outside a feature, use one feature entrypoint per file when its cohesive API can be re-exported; keep subpaths for runtime boundaries, side effects, or cycle avoidance. Do not omit `index.ts` re-exports to hide internals.
 
-## Functional Error Design
+Read [references/error-contracts.md](references/error-contracts.md) when designing, changing, or normalizing error contracts.
 
-1. Use a discriminated `Result<T, E>` only for expected failures that callers can meaningfully recover from, branch on, retry, or propagate; use `Promise<Result<T, E>>` for asynchronous APIs.
-2. Reserve `throw` and rejected promises for programming defects or failures outside the declared contract. Catch third-party exceptions once at the nearest adapter boundary and normalize `unknown` into a domain error.
-3. When callers need distinct handling, define domain errors as discriminated unions with stable machine-readable codes and exhaustive `never` checks. Keep user-facing messages out of domain and transport errors.
-4. Send plain serializable error DTOs across Worker, network, or storage boundaries. Preserve the original cause only for local diagnostics and telemetry.
-5. Represent cancellation separately from failure, and encode retryability only when callers can act on it. Retry transient failures; do not retry validation or contract failures.
-6. Preserve existing public error behavior during structural refactors. Do not introduce `Result`, error unions, or boundary contract changes solely for consistency; redesign the API only when the task or caller needs require it.
-
-## `src/features` Layout
-
-Apply this layout only under `src/features`. Keep a feature in `index.ts` when one file is enough.
-
-```text
-src/features/<feature>/
-├─ index.ts
-├─ a.ts      # when needed
-└─ b.ts      # when needed
-```
-
-When splitting files, make `index.ts` use or export each sibling module; re-exporting is not required.
+Read [references/feature-layout.md](references/feature-layout.md) when creating or splitting modules under `src/features`.

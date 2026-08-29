@@ -15,9 +15,9 @@ const WEATHER_RETRY_MILLISECONDS = 60_000
 
 export type WeatherState =
   | {readonly status: 'disabled'}
-  | {readonly cityLabel: string; readonly status: 'loading'}
+  | {readonly citySlug: WeatherCitySlug; readonly status: 'loading'}
   | {readonly feed: WeatherFeed; readonly status: 'ready'}
-  | {readonly cityLabel: string; readonly status: 'error'}
+  | {readonly citySlug: WeatherCitySlug; readonly status: 'error'}
 
 export interface WeatherController {
   readonly citySlug: Accessor<WeatherCitySlug>
@@ -26,8 +26,6 @@ export interface WeatherController {
   readonly onEnabledChange: (enabled: boolean) => void
   readonly state: Accessor<WeatherState>
 }
-
-const WEATHER_CITY_LABELS: Record<WeatherCitySlug, string> = {seoul: '서울'}
 
 const isReadyForCity = (
   state: WeatherState,
@@ -45,7 +43,7 @@ const getRefreshDelay = (expiresAt: string): number =>
 export const useWeather = (): WeatherController => {
   const [preference, setPreference] = createSignal<WeatherPreference>(DEFAULT_WEATHER_PREFERENCE)
   const [state, setState] = createSignal<WeatherState>({
-    cityLabel: WEATHER_CITY_LABELS[DEFAULT_WEATHER_PREFERENCE.citySlug],
+    citySlug: DEFAULT_WEATHER_PREFERENCE.citySlug,
     status: 'loading',
   })
   let requestRevision = 0
@@ -78,7 +76,7 @@ export const useWeather = (): WeatherController => {
 
     const previousState = state()
     if (!isReadyForCity(previousState, currentPreference.citySlug)) {
-      setState({cityLabel: WEATHER_CITY_LABELS[currentPreference.citySlug], status: 'loading'})
+      setState({citySlug: currentPreference.citySlug, status: 'loading'})
     }
 
     try {
@@ -104,7 +102,7 @@ export const useWeather = (): WeatherController => {
             const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
             setState({feed: {...previousState.feed, stale}, status: 'ready'})
           } else {
-            setState({cityLabel: WEATHER_CITY_LABELS[currentPreference.citySlug], status: 'error'})
+            setState({citySlug: currentPreference.citySlug, status: 'error'})
           }
           scheduleRefresh(result.retryAfterMilliseconds ?? WEATHER_RETRY_MILLISECONDS)
           return
@@ -119,7 +117,7 @@ export const useWeather = (): WeatherController => {
           const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
           setState({feed: {...previousState.feed, stale}, status: 'ready'})
         } else {
-          setState({cityLabel: WEATHER_CITY_LABELS[currentPreference.citySlug], status: 'error'})
+          setState({citySlug: currentPreference.citySlug, status: 'error'})
         }
         scheduleRefresh(WEATHER_RETRY_MILLISECONDS)
       }

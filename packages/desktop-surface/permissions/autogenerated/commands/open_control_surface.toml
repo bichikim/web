@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-open-control-surface"
+description = "Enables the open_control_surface command without any pre-configured scope."
+commands.allow = ["open_control_surface"]
+
+[[permission]]
+identifier = "deny-open-control-surface"
+description = "Denies the open_control_surface command without any pre-configured scope."
+commands.deny = ["open_control_surface"]

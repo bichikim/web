@@ -2,7 +2,7 @@ import {Tabs} from '@kobalte/core/tabs'
 import {For} from 'solid-js'
 
 import {POMODORO_TIMER_CONFIG} from '../features/pomodoro-timer'
-import * as m from '../paraglide/messages.js'
+import * as m from '@paraglide/message'
 
 const SECONDS_PER_MINUTE = 60
 const minutes = (seconds: number) => seconds / SECONDS_PER_MINUTE

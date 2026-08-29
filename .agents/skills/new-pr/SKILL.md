@@ -1,6 +1,6 @@
 ---
 name: new-pr
-description: Create a GitHub pull request from the current branch—commit uncommitted changes, push, and open a PR against main with an auto-generated title and Summary/Testing body sections.
+description: Create a GitHub pull request from the current branch by committing changes, pushing, and opening against main with generated Summary and Testing sections.
 disable-model-invocation: true
 ---
 

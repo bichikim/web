@@ -16,12 +16,13 @@ interface SafeAreaInsetsValue {
 
 const applySafeAreaInsets = (insets: SafeAreaInsetsValue): void => {
   const {style} = document.documentElement
-  const {bottom, left, right, top} = insets
+  const {bottom, left, right} = insets
 
   style.setProperty(safeAreaProperties.bottom, `${bottom}px`)
   style.setProperty(safeAreaProperties.left, `${left}px`)
   style.setProperty(safeAreaProperties.right, `${right}px`)
-  style.setProperty(safeAreaProperties.top, `${top}px`)
+  // The Toss utility header already owns the top safe area.
+  style.setProperty(safeAreaProperties.top, '0px')
 }
 
 /** Synchronizes Apps in Toss native safe-area values with the document CSS variables. */

@@ -65,8 +65,6 @@ const loadModel = (
       )
     }
   }
-
-  modelDefinition.architecture satisfies never
 }
 
 export const createTransformersRuntime = (
@@ -165,12 +163,11 @@ export const createTransformersRuntime = (
 
   const getTokenizer = (): TextTokenVocabulary => getProcessorTokenizer()
 
-  const createPrompt = (messages: Array<TextGenerationMessage>) => {
-    if (processor === null) {
-      throw new Error('텍스트 모델 프로세서가 준비되지 않았어요.')
-    }
-
-    const prompt = processor.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
+  const createPrompt = (
+    activeProcessor: Awaited<ReturnType<typeof AutoProcessor.from_pretrained>>,
+    messages: Array<TextGenerationMessage>,
+  ) => {
+    const prompt = activeProcessor.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
 
     if (typeof prompt !== 'string') {
       throw new Error('텍스트 모델 프롬프트를 문자열로 만들지 못했어요.')
@@ -184,7 +181,7 @@ export const createTransformersRuntime = (
       throw new Error('텍스트 모델 프로세서가 준비되지 않았어요.')
     }
 
-    const inputs = await processor(createPrompt(messages))
+    const inputs = await processor(createPrompt(processor, messages))
     return inputs.input_ids.dims.at(-1) ?? 0
   }
 
@@ -194,7 +191,7 @@ export const createTransformersRuntime = (
     }
 
     const tokenizer = getProcessorTokenizer()
-    const inputs = await processor(createPrompt(generationOptions.messages))
+    const inputs = await processor(createPrompt(processor, generationOptions.messages))
     let output = ''
 
     await model.generate({

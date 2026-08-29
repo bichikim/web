@@ -34,6 +34,12 @@ it('should return a validated available feed', async () => {
   await expect(fetchWeatherFeed('seoul')).resolves.toEqual({feed, status: 'available'})
 })
 
+it('should reject a feed for a different city than requested', () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(feed)))
+
+  return expect(fetchWeatherFeed('busan')).rejects.toMatchObject({kind: 'schema'})
+})
+
 it('should expose the server collection retry delay', async () => {
   vi.stubGlobal(
     'fetch',
@@ -64,6 +70,27 @@ it('should distinguish a provider failure from an active collection', async () =
     retryAfterMilliseconds: 30_000,
     status: 'unavailable',
   })
+})
+
+it.each([undefined, '0', '1.5'])('should ignore the invalid retry delay %s', async (retryAfter) => {
+  const headers = retryAfter === undefined ? undefined : {'Retry-After': retryAfter}
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(Response.json({code: 'weather_unavailable'}, {headers, status: 503})),
+  )
+
+  await expect(fetchWeatherFeed('seoul')).resolves.toEqual({
+    retryAfterMilliseconds: null,
+    status: 'unavailable',
+  })
+})
+
+it('should reject an unsuccessful weather response', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 404})))
+
+  await expect(fetchWeatherFeed('seoul')).rejects.toThrow(
+    'Weather feed request failed with status 404',
+  )
 })
 
 it('should distinguish an invalid JSON weather response', () => {

@@ -69,10 +69,12 @@ const SCENE_CONFIGS = {
     eyeBaseSource: 'head-eye-base-with-rest-smile-source-v1.png',
     maskOutput: 'mask-mouth-lower-face-v1.png',
     mouthlessPreview: 'preview-mouthless-base-v1.png',
-    mouthlessSource: 'generated-head-mouthless-v1.png',
+    mouthlessSource: 'generated-head-mouthless-v2.png',
     originalHeadSource: 'head-with-rest-smile-source-v1.png',
     patch: {height: 180, left: 930, top: 270, width: 260},
     previewOutput: 'preview-mouth-heads-v1.png',
+    sharedMaskOffset: {x: -4, y: 17},
+    sharedMaskSource: 'shared-alpha-reference-v1.png',
     version: 'v1',
   },
 }
@@ -180,6 +182,37 @@ const createNoseExclusionMask = () =>
       />
     </svg>
   `)
+
+const createSharedMouthMask = async (sourcePath, offset = {x: 0, y: 0}) => {
+  const shiftedSource = await sharp(sourcePath)
+    .extract({
+      height: patch.height - Math.abs(offset.y),
+      left: Math.max(0, -offset.x),
+      top: Math.max(0, -offset.y),
+      width: patch.width - Math.abs(offset.x),
+    })
+    .extend({
+      background: '#00000000',
+      bottom: Math.max(0, -offset.y),
+      left: Math.max(0, offset.x),
+      right: Math.max(0, -offset.x),
+      top: Math.max(0, offset.y),
+    })
+    .png()
+    .toBuffer()
+
+  return sharp({
+    create: {
+      background: '#ffffffff',
+      channels: RGBA_CHANNEL_COUNT,
+      height: patch.height,
+      width: patch.width,
+    },
+  })
+    .composite([{blend: 'dest-in', input: shiftedSource}])
+    .png()
+    .toBuffer()
+}
 
 const assertSourceSize = async (sourcePath) => {
   const metadata = await sharp(sourcePath).metadata()
@@ -352,10 +385,20 @@ const createAssets = async () => {
       ])
       .png()
       .toBuffer()
-  const [mouthMask, openMouthMask] = await Promise.all([
+  const generatedMasks = await Promise.all([
     createMouthMask(MOUTH_SKIN_PATH),
     createMouthMask(OPEN_MOUTH_SKIN_PATH),
   ])
+  const sharedMouthMask =
+    sceneConfig.sharedMaskSource === undefined
+      ? undefined
+      : await createSharedMouthMask(
+          path.join(workfileDirectory, sceneConfig.sharedMaskSource),
+          sceneConfig.sharedMaskOffset,
+        )
+  const [mouthMask, openMouthMask] = sharedMouthMask
+    ? [sharedMouthMask, sharedMouthMask]
+    : generatedMasks
   const mouthRemovalMask = await sharp(
     createPathMask(
       sceneConfig.mouthRemovalPath ?? MOUTH_REMOVAL_PATH,
