@@ -171,6 +171,14 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
     )
   }
   const isModelDownloading = () => modelDownload.state().status === 'loading'
+  const isAudioModelDownloading = () => {
+    const downloadState = modelDownload.state()
+    return (
+      downloadState.status === 'loading' &&
+      downloadState.target.kind === 'voice' &&
+      downloadState.target.modelId === editor.modelId()
+    )
+  }
   const isBusy = () =>
     isAudioBusy() || draftGenerationBusy() || isCheckingAudioModel() || isModelDownloading()
   const audioProgress = () => {
@@ -377,6 +385,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           <PGenerationStatus
             kind="voice"
             message={audioMessage()}
+            onCancel={isAudioModelDownloading() ? modelDownload.cancel : undefined}
             progress={audioProgress()}
             progressLabel="음성 모델 준비 진행률"
           />

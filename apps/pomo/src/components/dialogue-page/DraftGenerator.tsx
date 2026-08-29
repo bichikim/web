@@ -80,6 +80,8 @@ interface UseDialogueDraftModelProps {
 }
 
 interface DialogueDraftModelController {
+  readonly canCancelDownload: Accessor<boolean>
+  readonly cancelDownload: () => void
   readonly canGenerate: Accessor<boolean>
   readonly cancelDownloadConsent: () => void
   readonly downloadConsentOpen: Accessor<boolean>
@@ -285,6 +287,8 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
   }
 
   return {
+    canCancelDownload: isDraftModelDownloading,
+    cancelDownload: modelDownload.cancel,
     cancelDownloadConsent: () => setDownloadConsentOpen(false),
     canGenerate,
     downloadConsentOpen,
@@ -381,6 +385,7 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
           <PGenerationStatus
             kind="draft"
             message={draftModel.generationStatus().message}
+            onCancel={draftModel.canCancelDownload() ? draftModel.cancelDownload : undefined}
             progress={draftModel.generationStatus().progress}
             progressLabel="대사 생성 진행률"
           />
