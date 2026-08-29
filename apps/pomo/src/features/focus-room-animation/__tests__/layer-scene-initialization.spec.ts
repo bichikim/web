@@ -226,6 +226,17 @@ describe('createStaticLayerScene', () => {
 })
 
 describe('PixiLayerScene initialization', () => {
+  it('should stop animation before effects and layers are initialized', () => {
+    const onRender = vi.fn()
+    const scene = new PixiLayerScene(createDefinition(), {onRender})
+
+    scene.setAnimationEnabled(true)
+
+    expect(tickers[0].stop).toHaveBeenCalledOnce()
+    expect(onRender).toHaveBeenCalledOnce()
+    scene.destroy()
+  })
+
   it('should report only channels declared by the scene definition', () => {
     const layerScene = new PixiLayerScene(
       createDefinition({

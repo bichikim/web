@@ -159,6 +159,28 @@ describe('PSceneCanvas', () => {
     expect(renderers[0].destroy).toHaveBeenCalledOnce()
   })
 
+  it('should default the scene style and weather condition', () => {
+    const defaultedProps: PSceneCanvasProps = {
+      activity: 'reading',
+      depthSource: '/day-depth.webp',
+      gaze: 'user',
+      motionInput: 'drag',
+      motionMode: 'depth',
+      sceneId: 'day-reading-user',
+      source: '/day.webp',
+      time: 'day',
+      viseme: 'rest',
+    }
+    render(() => <PSceneCanvas {...defaultedProps} />)
+
+    expect(applyWeatherSceneLayer).toHaveBeenCalledWith(
+      expect.anything(),
+      'day-reading-user',
+      'original',
+      'clear',
+    )
+  })
+
   it('should report initialization failures and settle loading when a callback exists', async () => {
     const error = new Error('initialize failed')
     const onLoadingChange = vi.fn()

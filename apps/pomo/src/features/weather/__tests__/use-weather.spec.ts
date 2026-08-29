@@ -363,7 +363,7 @@ it('should ignore unexpected weather-result variants and failed preference write
   const root = createWeatherRoot()
   await flushPromises()
 
-  root.controller.onEnabledChange(true)
+  root.controller.onCityChange('seoul')
   await flushPromises()
 
   expect(root.controller.enabled()).toBe(true)
@@ -387,7 +387,7 @@ it('should run a scheduled refresh callback', async () => {
   root.dispose()
 })
 
-it('should swallow refresh errors from preference updates and stored-preference loading', async () => {
+it('should swallow refresh setup errors after a city change', async () => {
   clientMocks.fetchWeatherFeed.mockResolvedValueOnce(availableFeed)
   const root = createWeatherRoot()
   await flushPromises()
@@ -395,13 +395,34 @@ it('should swallow refresh errors from preference updates and stored-preference 
   const clearTimer = vi.spyOn(window, 'clearTimeout').mockImplementation(() => {
     throw new Error('timer unavailable')
   })
-  root.controller.onEnabledChange(true)
+  root.controller.onCityChange('busan')
   await flushPromises()
   clearTimer.mockRestore()
-  root.dispose()
 
-  const invalidPreference = {citySlug: 'seoul', enabled: true, sceneMode: 'auto' as const}
-  Object.defineProperty(invalidPreference, 'enabled', {
+  expect(root.controller.citySlug()).toBe('busan')
+  root.dispose()
+})
+
+it('should swallow refresh setup errors after the feed is disabled', async () => {
+  clientMocks.fetchWeatherFeed.mockResolvedValueOnce(availableFeed)
+  const root = createWeatherRoot()
+  await flushPromises()
+
+  root.controller.onSceneModeChange('snow')
+  const clearTimer = vi.spyOn(window, 'clearTimeout').mockImplementation(() => {
+    throw new Error('timer unavailable')
+  })
+  root.controller.onEnabledChange(false)
+  await flushPromises()
+  clearTimer.mockRestore()
+
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  root.dispose()
+})
+
+it('should swallow refresh setup errors after stored preferences load', async () => {
+  const invalidPreference = {citySlug: 'seoul', enabled: false, sceneMode: 'auto' as const}
+  Object.defineProperty(invalidPreference, 'sceneMode', {
     get: () => {
       throw new Error('invalid preference')
     },
@@ -410,7 +431,7 @@ it('should swallow refresh errors from preference updates and stored-preference 
   const storedRoot = createWeatherRoot()
   await flushPromises()
 
-  expect(storedRoot.controller.state()).toEqual({citySlug: 'seoul', status: 'error'})
+  expect(storedRoot.controller.state()).toEqual({status: 'disabled'})
   storedRoot.dispose()
 })
 

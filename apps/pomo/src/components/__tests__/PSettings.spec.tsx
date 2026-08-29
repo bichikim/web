@@ -86,12 +86,14 @@ beforeEach(() => {
   vi.mocked(PSwitch).mockImplementation((props) => {
     const checked =
       Object.getOwnPropertyDescriptor(props, 'checked')?.get?.call(props) ?? props.checked
+    const className = props.class
     const disabled = props.disabled
     const description = props.description
     return (
       <button
         aria-disabled={disabled}
         aria-pressed={checked}
+        class={className}
         data-description={description}
         onClick={() => props.onChange(!checked)}
         type="button"
@@ -115,6 +117,7 @@ beforeEach(() => {
   vi.mocked(PWeatherSettings).mockImplementation((props) => (
     <button
       data-city={props.citySlug}
+      data-scene-mode={props.sceneMode}
       onClick={() => {
         props.onEnabledChange?.(!props.enabled)
         props.onCityChange?.('seoul')

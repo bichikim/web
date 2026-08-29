@@ -123,4 +123,18 @@ describe('applyWeatherSceneLayer', () => {
       'left-hand',
     ])
   })
+
+  it('should prepend a clear view when the scene has no background layer', () => {
+    const scene: PixiLayerSceneDefinition = {
+      ...createScene(),
+      layers: [
+        {id: 'head', source: '/head.webp'},
+        {id: 'left-hand', source: '/left-hand.webp'},
+      ],
+    }
+
+    const result = applyWeatherSceneLayer(scene, 'day-reading-focused', 'original', 'clear')
+
+    expect(result.layers.map((layer) => layer.id)).toEqual(['weather-clear', 'head', 'left-hand'])
+  })
 })

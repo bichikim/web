@@ -167,4 +167,36 @@ describe('createSceneEffect', () => {
       expect(effect.destroy).toHaveBeenCalledOnce()
     }
   })
+
+  it('should destroy completed effects when a later effect cannot be created', () => {
+    const destroy = vi.fn()
+    vi.mocked(FallingStreaksEffect)
+      .mockImplementationOnce(
+        class MockFallingStreaksEffect {
+          readonly advance = vi.fn()
+          readonly container = {}
+          readonly destroy = destroy
+          readonly setAnimationEnabled = vi.fn()
+        } as never,
+      )
+      .mockImplementationOnce(
+        class FailingFallingStreaksEffect {
+          constructor() {
+            throw new Error('effect unavailable')
+          }
+        } as never,
+      )
+
+    expect(() =>
+      createSceneEffects({
+        definitions: [definition, {...definition, id: 'second'}],
+        height: 100,
+        maskTextures: new Map([['/window-mask.png', {height: 100, width: 200} as never]]),
+        random: vi.fn(),
+        sceneContainer: {addChild: vi.fn()} as never,
+        width: 200,
+      }),
+    ).toThrow('effect unavailable')
+    expect(destroy).toHaveBeenCalledOnce()
+  })
 })
