@@ -27,6 +27,7 @@ export interface FeedDialogueListItem {
 }
 
 export interface PFeedController {
+  readonly cancelProcessing: () => Promise<void>
   readonly dialogues: Accessor<ReadonlyArray<FeedDialogueListItem>>
   readonly dismissRecovery: () => void
   readonly deleteRecovery: () => Promise<void>
