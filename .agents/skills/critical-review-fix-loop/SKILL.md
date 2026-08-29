@@ -6,13 +6,12 @@ disable-model-invocation: true
 
 # Critical Review Fix Loop
 
-1. Anchor on the user's target; otherwise use the current task's changed files or diff. Ask once if neither is safe.
-2. Read and follow `$critical-review`; grade every finding P0–P4.
-3. Record a full review, fix every P0–P2 within the authorized scope while preserving unrelated changes, and run focused verification.
-4. Repeat a fresh full `$critical-review` over the relevance cone until no P0–P2 findings remain and all required tests, lint, and formatting pass.
-5. If a finding survives a fix, diagnose its root cause before patching again. Never omit or downgrade a finding to finish.
-6. Treat P3/P4 as non-blocking; retain each finding's evidence and recommended fix.
+1. Use the user's target, otherwise the current task's diff; ask once if neither is reliable.
+2. Read `$critical-review`, record a full P0–P4 review, fix every authorized P0–P2 while preserving unrelated changes, and verify each fix.
+3. Re-run a fresh full review over the relevance cone until no P0–P2 remains and relevant unit tests, `typecheck`, lint, and formatting pass. Lint or build cannot replace tests or `typecheck`.
+4. Diagnose the root cause before retrying a surviving finding; never omit or downgrade one to finish.
+5. Keep P3/P4 evidence and fixes. After correctness closure, group structural P3s into an unimplemented refactor proposal requiring user authorization.
 
-If a required fix needs product direction, new authority, destructive action, or external change, stop as blocked and report what is needed.
+Mark absent applicable test or `typecheck` scripts as not applicable with a reason. Stop as blocked when a required check cannot run or a fix needs product direction, new authority, destructive action, or external change.
 
-Report the pass count, fixed P0–P2 findings, verification results, and final status: `no P0/P1/P2 findings` or `blocked`. Format remaining P3/P4 findings as a numbered list; write `none` when there are none.
+Report pass count, fixed P0–P2s, exact test and `typecheck` commands/results, other checks, and final status (`no P0/P1/P2 findings` or `blocked`). Number remaining P3/P4s or write `none`.
