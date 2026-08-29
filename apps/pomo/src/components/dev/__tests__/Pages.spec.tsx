@@ -10,6 +10,7 @@ import DialoguePage from '../DialoguePage'
 import HomePage from '../HomePage'
 import LayerReviewPage from '../LayerReviewPage'
 import SpeechToTextPage from '../SpeechToTextPage'
+import StoragePage from '../StoragePage'
 import TermsPage from '../TermsPage'
 import TextMoodPage from '../TextMoodPage'
 import VoicePage from '../VoicePage'
@@ -72,6 +73,7 @@ it.each([
   [ChatPage, 'chat workspace'],
   [DialoguePage, 'dialogue workspace'],
   [SpeechToTextPage, 'speech workspace'],
+  [StoragePage, '모델 저장소 관리'],
   [TextMoodPage, 'mood workspace'],
   [CharacterPage, 'character studio'],
   [LayerReviewPage, 'layer review'],
@@ -85,4 +87,12 @@ it('should configure development service terms navigation', () => {
   render(() => <TermsPage />)
 
   expect(screen.getByText('실험실 목록:/dev:web')).toBeDefined()
+})
+
+it('should link the development home to model storage management', () => {
+  render(() => <HomePage />)
+
+  expect(screen.getByRole('link', {name: /모델 저장소 관리/u}).getAttribute('href')).toBe(
+    '/dev/storage',
+  )
 })

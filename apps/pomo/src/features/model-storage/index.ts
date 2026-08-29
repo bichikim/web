@@ -13,3 +13,10 @@ export {
 } from './storage'
 export {createTransformersModelCache, type TransformersModelCache} from './transformers'
 export {formatModelDownloadSize} from './size'
+export {
+  createModelStorageManager,
+  type ModelStorageManagementError,
+  type ModelStorageManagementOperation,
+  type ModelStorageManager,
+  type ModelStorageSnapshot,
+} from './management'
