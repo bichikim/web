@@ -1,6 +1,7 @@
 import type {DialogueWorkerRequest, DialogueWorkerResponse} from './messages'
 import type {TextModelId} from '../text-generation/model'
 import {createWorkerTransport} from '../text-generation/worker-transport'
+import type {DialogueOutputLanguage} from './prompt'
 
 export interface CreateDialogueClientOptions {
   readonly modelId: TextModelId
@@ -9,7 +10,7 @@ export interface CreateDialogueClientOptions {
 
 export interface DialogueClient {
   readonly dispose: () => void
-  readonly generate: (request: string) => void
+  readonly generate: (request: string, outputLanguage?: DialogueOutputLanguage) => void
   readonly prepare: () => void
 }
 
@@ -32,7 +33,13 @@ export const createDialogueClient = (options: CreateDialogueClientOptions): Dial
 
   return {
     dispose: transport.dispose,
-    generate: (request) => transport.send({modelId: options.modelId, request, type: 'generate'}),
+    generate: (request, outputLanguage) =>
+      transport.send({
+        modelId: options.modelId,
+        outputLanguage,
+        request,
+        type: 'generate',
+      }),
     prepare: () => transport.send({modelId: options.modelId, type: 'prepare'}),
   }
 }

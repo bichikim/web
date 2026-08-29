@@ -6,6 +6,7 @@ import {supportsWebGpu} from '../text-generation/environment'
 import {createLazyClient} from '../text-generation/lazy-client'
 import type {TextModelId} from '../text-generation/model'
 import type {TextGenerationProgress} from '../text-generation/progress'
+import type {DialogueOutputLanguage} from './prompt'
 
 const INITIAL_STATUS_MESSAGE = '모델은 처음 한 번만 내려받고 보관해요.'
 const MAXIMUM_PROGRESS = 100
@@ -43,6 +44,7 @@ export interface UseDialogueWriterProps {
   readonly initialRequest?: string
   readonly modelId: TextModelId
   readonly onComplete?: (output: string) => void
+  readonly outputLanguage?: Accessor<DialogueOutputLanguage>
   readonly runtime?: DialogueWriterRuntime
 }
 
@@ -104,6 +106,7 @@ const isDialogueModelReady = (state: DialogueWriterState) => {
 export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriterController => {
   const initialRequest = untrack(() => props.initialRequest ?? '')
   const modelId = untrack(() => props.modelId)
+  const outputLanguage = untrack(() => props.outputLanguage)
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
   const [request, setRequest] = createSignal(initialRequest)
   const [output, setOutput] = createSignal('')
@@ -216,7 +219,14 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     shouldGenerateAfterPreparation = false
     setState({status: 'generating'})
     setOutput('')
-    clientOwner.get().generate(request().trim())
+    const client = clientOwner.get()
+    const trimmedRequest = request().trim()
+
+    if (outputLanguage === undefined) {
+      client.generate(trimmedRequest)
+    } else {
+      client.generate(trimmedRequest, outputLanguage())
+    }
   }
 
   const generateWithPreparation = () => {

@@ -27,7 +27,11 @@ it('should credit the creator and disclose current software and model licenses',
   expect(screen.queryByText(/Pomofi를 만든 사람과 음악/u)).toBeNull()
   const creatorDetails = screen.getByText('Bichi Kim').closest('dl')
   expect(creatorDetails).not.toBeNull()
-  expect(creatorDetails?.className).not.toContain('border')
+  expect(creatorDetails?.className).toContain('rounded-panel')
+  expect(creatorDetails?.className).toContain('border')
+  expect(screen.getByRole('heading', {name: '만든 사람'}).parentElement?.className).toContain(
+    'pt-0',
+  )
   expect(screen.getByRole('heading', {name: '음악'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'Rainy Monday'})).toBeTruthy()
   expect(screen.getByText('Bichi Kim · 음악 제작')).toBeTruthy()
@@ -49,7 +53,9 @@ it('should credit the creator and disclose current software and model licenses',
     .getByRole('heading', {name: 'PixiJS · UnoCSS · class-variance-authority'})
     .closest('li')
   expect(openSourceCredit).not.toBeNull()
-  expect(openSourceCredit?.className).not.toContain('border')
+  expect(openSourceCredit?.className).toContain('rounded-panel')
+  expect(openSourceCredit?.className).toContain('border')
+  expect(openSourceCredit?.querySelector('[data-pomo-tag]')).not.toBeNull()
   expect(screen.getByRole('heading', {name: 'media-chrome'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'wLipSync'})).toBeTruthy()
   expect(screen.getByRole('link', {name: 'wLipSync 라이선스 원문 새 창에서 열기'})).toBeTruthy()

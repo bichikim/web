@@ -31,12 +31,19 @@ vi.mock('@kobalte/core/radio-group', () => {
     )
   }
   const Label = (props: {readonly children: JSX.Element}) => <span>{props.children}</span>
-  const Item = (props: {readonly children: JSX.Element; readonly value: string}) => (
-    <div data-radio-value={props.value}>{props.children}</div>
+  const Item = (props: {
+    readonly children: JSX.Element
+    readonly disabled?: boolean
+    readonly value: string
+  }) => (
+    <div data-disabled={props.disabled ? '' : undefined} data-radio-value={props.value}>
+      {props.children}
+    </div>
   )
-  const ItemInput = (props: {readonly 'aria-label': string}) => (
+  const ItemInput = (props: {readonly 'aria-label': string; readonly disabled?: boolean}) => (
     <input
       aria-label={props['aria-label']}
+      disabled={props.disabled}
       onClick={(event) => {
         const value =
           event.currentTarget.closest<HTMLElement>('[data-radio-value]')?.dataset.radioValue
@@ -97,6 +104,27 @@ describe('PRadioSwitch', () => {
 
     radioGroupMock.onChange?.('unsupported')
     expect(onChange).toHaveBeenCalledOnce()
+  })
+
+  it('should disable every option when interaction is unavailable', () => {
+    render(() => (
+      <PRadioSwitch disabled label="시간" onChange={vi.fn()} options={OPTIONS} value="day" />
+    ))
+
+    expect(screen.getAllByRole('radio')).toHaveLength(3)
+    for (const input of screen.getAllByRole('radio')) {
+      expect(input).toBeDisabled()
+    }
+  })
+
+  it('should disable and ignore an unavailable individual option', () => {
+    const onChange = vi.fn()
+    const options = [OPTIONS[0], {...OPTIONS[1], disabled: true}, OPTIONS[2]]
+    render(() => <PRadioSwitch label="시간" onChange={onChange} options={options} value="day" />)
+
+    expect(screen.getByRole('radio', {name: '밤'})).toBeDisabled()
+    radioGroupMock.onChange?.('night')
+    expect(onChange).not.toHaveBeenCalled()
   })
 
   it('should move focus and selection for every supported arrow navigation key', () => {

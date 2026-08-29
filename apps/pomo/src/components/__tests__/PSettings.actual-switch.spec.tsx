@@ -20,7 +20,7 @@ vi.mock('src/components/PCreditsSettings', () => ({PCreditsSettings: () => null}
 vi.mock('src/components/PFeedSettings', () => ({PFeedSettings: () => null}))
 vi.mock('src/components/PGuideSettings', () => ({PGuideSettings: () => null}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
-vi.mock('src/features/user-auth/UserSettings', () => ({UserSettings: () => null}))
+vi.mock('src/components/UserSettings', () => ({UserSettings: () => null}))
 
 beforeEach(() => {
   vi.mocked(Tabs).mockImplementation((props) => <>{props.children}</>)

@@ -25,6 +25,7 @@ import {CLASSES} from './shared'
 import {PWeatherStatus} from '../PWeatherStatus'
 import {PDesktopModeControl} from '../PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
+import {LearningPanel} from './LearningPanel'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -77,6 +78,27 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             value={props.activity}
           />
         </PScribbleCircleControl>
+        <LearningPanel
+          fallback={
+            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+              <span
+                aria-hidden="true"
+                class={cx(
+                  'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
+                  'border border-solid border-border bg-surface text-foreground shadow-panel',
+                )}
+              >
+                <span
+                  class={cx(
+                    getPomoIconClass('i-tabler-book-2', props.sceneStyle),
+                    'size-5 text-highlight',
+                  )}
+                />
+              </span>
+            </PScribbleCircleControl>
+          }
+          sceneStyle={props.sceneStyle}
+        />
         <SceneSettingsPanel
           activity={props.activity}
           canUseGyroscope={props.canUseGyroscope}

@@ -233,7 +233,7 @@ describe('PDialogueSettingsContent', () => {
     await vi.waitFor(() =>
       expect(
         screen.getAllByText('저장된 음성을 찾을 수 없어요. 대화를 다시 편집해 주세요.'),
-      ).toHaveLength(2),
+      ).toHaveLength(1),
     )
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
     expect(missingAudioEvents.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
@@ -253,7 +253,7 @@ describe('PDialogueSettingsContent', () => {
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
 
     await vi.waitFor(() =>
-      expect(screen.getAllByText('음성 재생기를 준비하지 못했어요.')).toHaveLength(2),
+      expect(screen.getAllByText('음성 재생기를 준비하지 못했어요.')).toHaveLength(1),
     )
     vi.mocked(createSignal).mockImplementation(actual.createSignal)
   })
@@ -287,7 +287,7 @@ describe('PDialogueSettingsContent', () => {
     render(() => <PDialogueSettingsContent />)
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
-    await vi.waitFor(() => expect(screen.getAllByText('음성을 재생하지 못했어요.')).toHaveLength(2))
+    await vi.waitFor(() => expect(screen.getAllByText('음성을 재생하지 못했어요.')).toHaveLength(1))
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
     await vi.waitFor(() =>
       expect(error).toHaveBeenCalledWith(
@@ -361,7 +361,7 @@ describe('PDialogueSettingsContent', () => {
     await vi.waitFor(() => expect(events.setEventPlaybackMode).toHaveBeenCalledOnce())
     fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
     fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
-    await vi.waitFor(() => expect(screen.getAllByText('대화를 삭제하지 못했어요.')).toHaveLength(2))
+    await vi.waitFor(() => expect(screen.getAllByText('대화를 삭제하지 못했어요.')).toHaveLength(1))
   })
 
   it('should render an empty dialogue library after loading finishes', () => {

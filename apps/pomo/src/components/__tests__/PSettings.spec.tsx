@@ -28,6 +28,7 @@ vi.mock('../UserSettings', () => ({UserSettings: vi.fn()}))
 
 interface TabsRootProps {
   readonly children?: JSX.Element
+  readonly class?: string
   readonly value?: string
 }
 
@@ -138,6 +139,7 @@ it('should expose the guide and credits as the final settings tabs', () => {
   fireEvent.click(screen.getByRole('button', {name: '포커스 복원'}))
 
   expect(screen.getByRole('dialog', {name: 'Pomofi 설정'}).hasAttribute('hidden')).toBe(false)
+  expect(tabsRootProps?.class).toBe('contents')
   expect(tabsRootProps?.value).toBe('general')
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '일반',

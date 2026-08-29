@@ -8,6 +8,7 @@ import {beforeEach, expect, it, vi} from 'vitest'
 import {PSelect} from 'src/components/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
+import {writeLanguageLearningSentences} from 'src/features/language-learning'
 import PDialogueSettingsContent from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
@@ -142,7 +143,8 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   const listenButton = within(library).getByRole('button', {name: '듣기'})
   const createLink = screen.getByRole('link', {name: '새 대화'})
 
-  expect(row?.className).toContain('max-md:items-stretch')
+  expect(row?.className).toContain('flex-col')
+  expect(row?.className).toContain('items-stretch')
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
   expect(createLink.getAttribute('href')).toBe('/dialogue')
@@ -157,6 +159,49 @@ it('should keep saved dialogue content full-width with bounded text and actions'
       .getByRole('button', {name: '삭제 확인'})
       .hasAttribute('data-pomo-dialogue-delete-confirm'),
   ).toBe(true)
+})
+
+it('should hide learning dialogues only from the saved dialogue library', () => {
+  const manualDialogue = {
+    ...DIALOGUE,
+    audioKey: 'audio-manual',
+    id: 'manual-dialogue',
+    text: '직접 만든 대화',
+  } satisfies PDialogue
+  writeLanguageLearningSentences([
+    {
+      createdAt: '2026-08-29T00:00:00.000Z',
+      dialogueId: DIALOGUE.id,
+      language: 'ko',
+      tags: ['학습'],
+      text: DIALOGUE.text,
+      version: 1,
+    },
+  ])
+  vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => [DIALOGUE, manualDialogue]}))
+
+  render(() => <PDialogueSettingsContent />)
+
+  const library = screen.getByRole('list', {name: '저장된 대화'})
+  expect(within(library).queryByText(DIALOGUE.text)).toBeNull()
+  expect(within(library).getByText(manualDialogue.text)).toBeDefined()
+  expect(PSelect).toHaveBeenCalledWith(
+    expect.objectContaining({
+      accessibleLabel: '입장 대화 연결',
+      options: [
+        {
+          description: 'Yuna · 0:01 · 1개 말풍선',
+          label: DIALOGUE.text,
+          value: DIALOGUE.id,
+        },
+        {
+          description: 'Yuna · 0:01 · 1개 말풍선',
+          label: manualDialogue.text,
+          value: manualDialogue.id,
+        },
+      ],
+    }),
+  )
 })
 
 it('should apply compact spacing to dialogue settings groups', () => {

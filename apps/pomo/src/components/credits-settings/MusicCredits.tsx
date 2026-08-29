@@ -12,6 +12,10 @@ export interface PMusicCreditsProps {
 
 const PREVIEW_CREDIT_COUNT = 4
 const MUSIC_CREDIT_LIST_ID = 'pomo-music-credit-list'
+const MUSIC_CREDIT_ITEM_CLASS = [
+  'flex min-w-0 items-center gap-3 rounded-panel border border-solid',
+  'border-[rgb(255_255_255_/_6%)] bg-[rgb(255_255_255_/_3%)] px-4 py-3',
+].join(' ')
 
 export const PMusicCredits = (props: PMusicCreditsProps) => {
   const [isExpanded, setIsExpanded] = createSignal(false)
@@ -25,7 +29,7 @@ export const PMusicCredits = (props: PMusicCreditsProps) => {
       <ul class="m-0 grid list-none gap-3 p-0" id={MUSIC_CREDIT_LIST_ID}>
         <For each={visibleCredits()}>
           {(credit) => (
-            <li class="flex min-w-0 items-center gap-3 rounded-4 bg-secondary-soft px-4 py-3">
+            <li class={MUSIC_CREDIT_ITEM_CLASS}>
               <span aria-hidden="true" class="i-tabler-music size-4 shrink-0 text-highlight" />
               <div class="min-w-0">
                 <h4 class="m-0 truncate text-sm font-750 text-foreground">{credit.artistName}</h4>
