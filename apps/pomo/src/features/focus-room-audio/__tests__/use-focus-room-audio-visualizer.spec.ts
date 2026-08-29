@@ -28,6 +28,11 @@ const installAudioHarness = (options: AudioHarnessOptions = {}) => {
     smoothingTimeConstant: 0,
   }
   const source = {connect: vi.fn(), disconnect: vi.fn()}
+  const outputGain = {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: {setTargetAtTime: vi.fn(), value: 1},
+  }
   let contextState = options.state ?? 'running'
   const close = vi.fn(options.close ?? (() => Promise.resolve()))
   const resume = vi.fn(async () => {
@@ -37,7 +42,9 @@ const installAudioHarness = (options: AudioHarnessOptions = {}) => {
   const context = {
     close,
     createAnalyser: vi.fn(() => analyser),
+    createGain: vi.fn(() => outputGain),
     createMediaElementSource: vi.fn(() => source),
+    currentTime: 2,
     destination: {},
     resume,
     get state() {
@@ -68,6 +75,7 @@ const installAudioHarness = (options: AudioHarnessOptions = {}) => {
     cancelAnimationFrame,
     close,
     context,
+    outputGain,
     requestAnimationFrame,
     resume,
     source,
@@ -93,10 +101,17 @@ describe('usePAudioVisualizer', () => {
       smoothingTimeConstant: 0,
     }
     const source = {connect: vi.fn(), disconnect: vi.fn()}
+    const outputGain = {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      gain: {setTargetAtTime: vi.fn(), value: 1},
+    }
     const context = {
       close: vi.fn().mockResolvedValue(undefined),
       createAnalyser: vi.fn(() => analyser),
+      createGain: vi.fn(() => outputGain),
       createMediaElementSource: vi.fn(() => source),
+      currentTime: 0,
       destination: {},
       resume: vi.fn().mockResolvedValue(undefined),
       state: 'running',
@@ -137,6 +152,7 @@ describe('usePAudioVisualizer', () => {
     dispose()
     expect(source.disconnect).toHaveBeenCalledOnce()
     expect(analyser.disconnect).toHaveBeenCalledOnce()
+    expect(outputGain.disconnect).toHaveBeenCalledOnce()
     expect(context.close).toHaveBeenCalledOnce()
   })
 
@@ -159,6 +175,7 @@ describe('usePAudioVisualizer', () => {
 
     expect(harness.AudioContextMock).toHaveBeenCalledOnce()
     expect(harness.context.createAnalyser).toHaveBeenCalledOnce()
+    expect(harness.context.createGain).toHaveBeenCalledOnce()
     expect(harness.context.createMediaElementSource).toHaveBeenCalledOnce()
     expect(harness.cancelAnimationFrame).toHaveBeenCalledWith(1)
     expect(harness.requestAnimationFrame).toHaveBeenCalledTimes(2)
@@ -167,8 +184,28 @@ describe('usePAudioVisualizer', () => {
     expect(harness.cancelAnimationFrame).toHaveBeenCalledWith(2)
     expect(harness.source.disconnect).toHaveBeenCalledOnce()
     expect(harness.analyser.disconnect).toHaveBeenCalledOnce()
+    expect(harness.outputGain.disconnect).toHaveBeenCalledOnce()
     expect(harness.close).toHaveBeenCalledOnce()
     await flushMicrotasks()
+  })
+
+  it('should apply the latest output gain without changing the media element volume', async () => {
+    const harness = installAudioHarness()
+    const {dispose, visualizer} = createVisualizer()
+    const audio = document.createElement('audio')
+
+    visualizer.setOutputGain(0.35)
+    visualizer.start(audio)
+    await flushMicrotasks()
+
+    expect(harness.outputGain.gain.value).toBe(0.35)
+    expect(audio.volume).toBe(1)
+
+    visualizer.setOutputGain(0.8)
+
+    expect(harness.outputGain.gain.setTargetAtTime).toHaveBeenCalledWith(0.8, 2, 0.03)
+    expect(audio.volume).toBe(1)
+    dispose()
   })
 
   it('should not begin sampling when stopped before suspended initialization completes', async () => {

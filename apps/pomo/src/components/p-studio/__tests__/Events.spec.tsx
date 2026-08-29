@@ -36,12 +36,17 @@ vi.mock('../../PFeedStatus', () => ({
 vi.mock('../../PMusicPlayer', () => ({
   PMusicPlayer: (props: {
     readonly expanded: boolean
+    readonly isDialogueActive: boolean
     readonly onExpandedChange: (expanded: boolean) => void
     readonly onPlayingChange: (playing: boolean) => void
     readonly onTrackChange: (track: PTrack | null) => void
     readonly sceneStyle: string
   }) => (
-    <div data-expanded={props.expanded} data-music-scene={props.sceneStyle}>
+    <div
+      data-music-dialogue-active={props.isDialogueActive}
+      data-expanded={props.expanded}
+      data-music-scene={props.sceneStyle}
+    >
       <button onClick={() => props.onPlayingChange(true)} type="button">
         음악 재생
       </button>
@@ -88,6 +93,7 @@ const createEvents = (
   overrides: {
     readonly activeText?: string | null
     readonly blocked?: boolean
+    readonly isPlaying?: boolean
     readonly scheduledCount?: number
     readonly playDialogueEvents?: ReturnType<typeof vi.fn>
   } = {},
@@ -95,6 +101,7 @@ const createEvents = (
   ({
     activeText: () => overrides.activeText ?? null,
     isDialoguePlaybackBlocked: () => overrides.blocked ?? false,
+    isDialoguePlaying: () => overrides.isPlaying ?? false,
     playDialogueEvents: overrides.playDialogueEvents ?? vi.fn(async () => undefined),
     scheduledDialogueCount: () => overrides.scheduledCount ?? 0,
   }) as unknown as ReturnType<typeof usePEvents>
@@ -172,6 +179,10 @@ describe('PStudioEvents', () => {
       'data-music-scene',
       'original',
     )
+    expect(container.querySelector('[data-music-scene]')).toHaveAttribute(
+      'data-music-dialogue-active',
+      'false',
+    )
     expect(container.querySelector('[data-feed-scene]')).toHaveAttribute(
       'data-feed-scene',
       'original',
@@ -195,6 +206,24 @@ describe('PStudioEvents', () => {
     expect(onPlayerExpandedChange).toHaveBeenCalledWith(true)
     expect(onTrackChange).toHaveBeenCalledWith(null)
     expect(pomoSay.stop).toHaveBeenCalledOnce()
+  })
+
+  it('should lower music for either event dialogue or external speech playback', () => {
+    const dialogueResult = renderEvents({events: createEvents({isPlaying: true})})
+
+    expect(dialogueResult.container.querySelector('[data-music-scene]')).toHaveAttribute(
+      'data-music-dialogue-active',
+      'true',
+    )
+    dialogueResult.unmount()
+
+    const pomoSay = {...createPomoSay(), isPlaying: () => true}
+    const speechResult = renderEvents({pomoSay})
+
+    expect(speechResult.container.querySelector('[data-music-scene]')).toHaveAttribute(
+      'data-music-dialogue-active',
+      'true',
+    )
   })
 
   it('should mark every active dialogue state and report failed random playback', async () => {

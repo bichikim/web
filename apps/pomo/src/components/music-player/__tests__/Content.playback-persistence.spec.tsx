@@ -31,6 +31,13 @@ const getAudioElement = (container: HTMLElement): HTMLAudioElement => {
   return audio
 }
 
+const markAudioMetadataReady = (audio: HTMLAudioElement) => {
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+}
+
 describe('PMusicPlayerContent playback persistence', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -59,6 +66,7 @@ describe('PMusicPlayerContent playback persistence', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const audio = getAudioElement(result.container)
 
+    markAudioMetadataReady(audio)
     await Promise.resolve()
     await Promise.resolve()
     fireEvent(audio, new Event('loadedmetadata'))

@@ -57,6 +57,13 @@ const ADDED_TRACK = {
   title: 'Added',
 } as const
 
+const markAudioMetadataReady = (audio: HTMLAudioElement) => {
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+}
+
 const stubPlaylistFetch = (loadCount: number) => {
   const fetchMock = vi.fn()
 
@@ -148,6 +155,8 @@ describe('PMusicPlayerContent', () => {
     if (!(audio instanceof HTMLAudioElement)) {
       throw new TypeError('Expected the Pomo audio element to be rendered')
     }
+
+    markAudioMetadataReady(audio)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
     expect(screen.getByRole('button', {name: '전체 반복'}).getAttribute('aria-pressed')).toBe(
@@ -323,6 +332,7 @@ describe('PMusicPlayerContent', () => {
       throw new TypeError('Expected the Pomo audio element to be rendered')
     }
 
+    markAudioMetadataReady(audio)
     await Promise.resolve()
     await Promise.resolve()
     fireEvent(audio, new Event('loadedmetadata'))
@@ -345,6 +355,7 @@ describe('PMusicPlayerContent', () => {
       throw new TypeError('Expected the Pomo audio element to be rendered')
     }
 
+    markAudioMetadataReady(audio)
     await Promise.resolve()
     await Promise.resolve()
     fireEvent(audio, new Event('loadedmetadata'))
