@@ -4,7 +4,7 @@ const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({
   completeTrackRegistration: vi.fn(),
   failTrackAsset: vi.fn(),
-  findPendingTrackAsset: vi.fn(),
+  findTrackAsset: vi.fn(),
   reserveTrackAsset: vi.fn(),
 }))
 const uploadMocks = vi.hoisted(() => ({
@@ -46,9 +46,9 @@ describe('admin music asset route', () => {
     authMocks.authorizeAdminRequest.mockReset().mockResolvedValue({authorized: true, cookies: []})
     repositoryMocks.completeTrackRegistration.mockReset().mockResolvedValue(true)
     repositoryMocks.failTrackAsset.mockReset().mockResolvedValue(undefined)
-    repositoryMocks.findPendingTrackAsset
+    repositoryMocks.findTrackAsset
       .mockReset()
-      .mockResolvedValue({id: ASSET_ID, objectKey: OBJECT_KEY})
+      .mockResolvedValue({id: ASSET_ID, objectKey: OBJECT_KEY, status: 'pending'})
     repositoryMocks.reserveTrackAsset
       .mockReset()
       .mockResolvedValue({assetId: ASSET_ID, objectKey: OBJECT_KEY})
@@ -91,7 +91,7 @@ describe('admin music asset route', () => {
 
     expect(response).toBe(authorizationResponse)
     expect(repositoryMocks.reserveTrackAsset).not.toHaveBeenCalled()
-    expect(repositoryMocks.findPendingTrackAsset).not.toHaveBeenCalled()
+    expect(repositoryMocks.findTrackAsset).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -160,13 +160,42 @@ describe('admin music asset route', () => {
     expect(deletionMocks.deleteTrackAssetStorage).not.toHaveBeenCalled()
   })
 
-  it('should return not found when a pending asset no longer exists', async () => {
-    repositoryMocks.findPendingTrackAsset.mockResolvedValue(null)
+  it('should treat a repeated completion for an active asset as an idempotent success', async () => {
+    repositoryMocks.findTrackAsset
+      .mockResolvedValueOnce({id: ASSET_ID, objectKey: OBJECT_KEY, status: 'pending'})
+      .mockResolvedValueOnce({id: ASSET_ID, objectKey: OBJECT_KEY, status: 'active'})
+
+    const firstResponse = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
+    const repeatedResponse = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
+
+    expect(firstResponse.status).toBe(200)
+    expect(repeatedResponse.status).toBe(200)
+    await expect(repeatedResponse.json()).resolves.toEqual({assetId: ASSET_ID, status: 'active'})
+    expect(uploadMocks.inspectTrackUpload).toHaveBeenCalledOnce()
+    expect(repositoryMocks.completeTrackRegistration).toHaveBeenCalledOnce()
+  })
+
+  it('should return not found when an asset no longer exists', async () => {
+    repositoryMocks.findTrackAsset.mockResolvedValue(null)
 
     const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
 
     expect(response.status).toBe(404)
     await expect(response.json()).resolves.toEqual({error: 'asset_not_found'})
+    expect(uploadMocks.inspectTrackUpload).not.toHaveBeenCalled()
+  })
+
+  it('should reject completion for an asset in a conflicting state', async () => {
+    repositoryMocks.findTrackAsset.mockResolvedValue({
+      id: ASSET_ID,
+      objectKey: OBJECT_KEY,
+      status: 'failed',
+    })
+
+    const response = await invokeApiRoute(PUT, createRequest('PUT', {assetId: ASSET_ID}))
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({error: 'asset_state_conflict'})
     expect(uploadMocks.inspectTrackUpload).not.toHaveBeenCalled()
   })
 

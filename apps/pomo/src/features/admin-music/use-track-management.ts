@@ -40,11 +40,26 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
         const detail =
           result.error instanceof Error ? result.error.message : '곡을 저장하지 못했습니다.'
         await props.refreshCatalog().catch(() => undefined)
-        props.setMessage(
-          result.cleanupSucceeded
-            ? `${detail} 생성된 곡 정보는 정리했습니다.`
-            : `${detail} 생성된 곡 정보를 정리하지 못했습니다. 다시 삭제해 주세요.`,
-        )
+
+        switch (result.cleanupStatus) {
+          case 'failed':
+            props.setMessage(`${detail} 생성된 곡 정보를 정리하지 못했습니다. 다시 삭제해 주세요.`)
+            break
+          case 'preserved':
+            props.setMessage(
+              `${detail} 등록 결과가 확정되지 않아 곡은 삭제하지 않았습니다. 목록에서 상태를 확인해 주세요.`,
+            )
+            break
+          case 'succeeded':
+            props.setMessage(`${detail} 생성된 곡 정보는 정리했습니다.`)
+            break
+          // The result union cannot reach this exhaustive guard.
+          /* v8 ignore next 4 */
+          default: {
+            const exhaustiveCleanupStatus: never = result.cleanupStatus
+            return exhaustiveCleanupStatus
+          }
+        }
         return
       }
 
