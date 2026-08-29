@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
-import {createSignal, type JSX} from 'solid-js'
+import {createSignal, type JSX, Suspense} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import type {PTrack} from '../../features/focus-room-audio'
@@ -30,6 +30,7 @@ vi.mock('../PModal', () => ({
 }))
 
 import PAlbumLibraryContent from '../album-library/Content'
+import {PAlbumLibraryPanel} from '../album-library/Panel'
 
 afterEach(() => {
   cleanup()
@@ -39,6 +40,30 @@ afterEach(() => {
 })
 
 describe('PAlbumLibraryContent', () => {
+  it('should render the album modal and local loading status before album content resolves', () => {
+    const pendingAlbums = new Promise<never>(() => {
+      // Keep the request pending so the loading presentation can be asserted.
+    })
+    audioMocks.loadPAlbums.mockReturnValue(pendingAlbums)
+
+    render(() => (
+      <Suspense fallback={<p>장면 준비 중</p>}>
+        <PAlbumLibraryPanel
+          isOpen
+          onAddTracks={vi.fn()}
+          onCloseAutoFocus={vi.fn()}
+          onOpenChange={vi.fn()}
+          tracks={[]}
+        />
+      </Suspense>
+    ))
+
+    expect(modalMocks.render).toHaveBeenCalled()
+    expect(modalMocks.render.mock.lastCall?.[0].size).toBe('full')
+    expect(screen.getByRole('status')).toHaveTextContent('앨범 불러오는 중')
+    expect(screen.queryByText('장면 준비 중')).toBeNull()
+  })
+
   it('should show an unconfigured published album as sale preparation', async () => {
     audioMocks.loadPAlbums.mockResolvedValue([
       {
@@ -63,15 +88,7 @@ describe('PAlbumLibraryContent', () => {
       },
     ])
 
-    render(() => (
-      <PAlbumLibraryContent
-        isOpen
-        onAddTracks={vi.fn()}
-        onCloseAutoFocus={vi.fn()}
-        onOpenChange={vi.fn()}
-        tracks={[]}
-      />
-    ))
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
     expect(await screen.findByText('공개 앨범')).toBeTruthy()
     expect(screen.queryByText('[미정]')).toBeNull()
@@ -84,8 +101,6 @@ describe('PAlbumLibraryContent', () => {
     expect(screen.queryByRole('button', {name: /더 많은 곡/u})).toBeNull()
     expect(screen.queryByRole('button', {name: '앨범 모두 추가'})).toBeNull()
     expect(screen.queryByRole('button', {name: /플레이어에 추가/u})).toBeNull()
-    expect(modalMocks.render.mock.lastCall?.[0].size).toBe('full')
-
     const albumCard = screen.getByText('공개 앨범').closest('article')
 
     expect(albumCard?.parentElement?.classList.contains('2xl:grid-cols-2')).toBe(true)
@@ -115,7 +130,7 @@ describe('PAlbumLibraryContent', () => {
     const [tracks, setTracks] = createSignal<readonly PTrack[]>(initialTracks)
 
     render(() => (
-      <PAlbumLibraryContent
+      <PAlbumLibraryPanel
         isOpen
         onAddTracks={(tracksToAdd) => setTracks(tracksToAdd)}
         onClearTracks={() => setTracks([])}
@@ -129,7 +144,9 @@ describe('PAlbumLibraryContent', () => {
     expect(screen.getByText('1곡')).toBeTruthy()
     screen.getByRole('button', {name: '재생목록 모두 비우기'}).click()
 
-    expect(screen.getByRole('status').textContent).toContain('재생목록을 비웠어요')
+    const clearedStatus = screen.getByText('재생목록을 비웠어요').closest('[role="status"]')
+
+    expect(clearedStatus).toHaveTextContent('재생목록을 비웠어요')
     screen.getByRole('button', {name: '되돌리기'}).click()
 
     expect(tracks()).toEqual(initialTracks)

@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import type {PTrack} from '../../../features/focus-room-audio'
 import type {PSayController} from '../../../features/pomo-webmcp'
 import {
@@ -231,5 +232,33 @@ describe('PStudioEvents', () => {
       'Unexpected pomodoro dialogue playback failure.',
       failure,
     )
+  })
+
+  it('should compact only after scheduled dialogue becomes visible', () => {
+    const [activeText, setActiveText] = createSignal<string | null>(null)
+    const [scheduledCount, setScheduledCount] = createSignal(1)
+    const events = {
+      ...createEvents(),
+      activeText,
+      scheduledDialogueCount: scheduledCount,
+    } as ReturnType<typeof createEvents>
+    const {container} = renderEvents({events})
+
+    expect(container.querySelector('[data-dialogue-active]')).toBeNull()
+
+    setActiveText('대사가 보입니다')
+    expect(container.querySelector('[data-dialogue-active]')).toHaveAttribute(
+      'data-dialogue-active',
+      '',
+    )
+
+    setActiveText(null)
+    expect(container.querySelector('[data-dialogue-active]')).toHaveAttribute(
+      'data-dialogue-active',
+      '',
+    )
+
+    setScheduledCount(0)
+    expect(container.querySelector('[data-dialogue-active]')).toBeNull()
   })
 })

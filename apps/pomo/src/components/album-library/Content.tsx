@@ -1,15 +1,6 @@
-import {
-  createMemo,
-  createResource,
-  createSignal,
-  ErrorBoundary,
-  For,
-  Show,
-  Suspense,
-} from 'solid-js'
+import {createMemo, createResource, ErrorBoundary, For, Show, Suspense} from 'solid-js'
 
 import {PButton} from '../PButton'
-import {PModal} from '../PModal'
 import {reportClientError} from '../../features/client-error-reporter'
 import {
   loadPAlbums,
@@ -18,16 +9,12 @@ import {
   useTrackPreview,
 } from '../../features/focus-room-audio'
 import {AlbumCard} from './Card'
-import {PlaylistFooter} from './Footer'
+import {LoadingStatus} from './LoadingStatus'
 import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
 
 export interface PAlbumLibraryContentProps {
-  readonly isOpen: boolean
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
-  readonly onClearTracks?: () => void
-  readonly onCloseAutoFocus: () => void
-  readonly onOpenChange: (isOpen: boolean) => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly tracks: readonly PTrack[]
@@ -35,59 +22,18 @@ export interface PAlbumLibraryContentProps {
 
 export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
   const [albums, {refetch}] = createResource(() => loadPAlbums({locale: getLocale()}))
-  const [clearedTracks, setClearedTracks] = createSignal<readonly PTrack[]>([])
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>
     album.tracks.length > 0 && album.tracks.every((track) => trackIds().has(track.id))
-  const addTracks = (tracks: readonly PTrack[]) => {
-    setClearedTracks([])
-    props.onAddTracks(tracks)
-  }
-  const handleAlbumAdd = (album: PResolvedAlbum) => addTracks(album.tracks)
-  const handleTrackAdd = (track: PTrack) => addTracks([track])
-  const handleClearTracks = () => {
-    const currentTracks = props.tracks
-
-    if (currentTracks.length === 0 || props.onClearTracks === undefined) {
-      return
-    }
-
-    setClearedTracks(currentTracks)
-    props.onClearTracks()
-  }
-  const handleRestoreTracks = () => {
-    const tracksToRestore = clearedTracks()
-
-    if (tracksToRestore.length === 0) {
-      return
-    }
-
-    addTracks(tracksToRestore)
-  }
+  const handleAlbumAdd = (album: PResolvedAlbum) => props.onAddTracks(album.tracks)
+  const handleTrackAdd = (track: PTrack) => props.onAddTracks([track])
   const preview = useTrackPreview({
     onEnd: () => props.onPreviewEnd?.(),
     onStart: (stopPreview) => props.onPreviewStart?.(stopPreview),
   })
 
   return (
-    <PModal
-      description={m.album_description()}
-      footer={
-        <PlaylistFooter
-          canClear={props.onClearTracks !== undefined}
-          clearedTrackCount={clearedTracks().length}
-          onClear={handleClearTracks}
-          onRestore={handleRestoreTracks}
-          trackCount={props.tracks.length}
-        />
-      }
-      isOpen={props.isOpen}
-      onCloseAutoFocus={props.onCloseAutoFocus}
-      onOpenChange={props.onOpenChange}
-      placement="top"
-      size="full"
-      title={m.album_title()}
-    >
+    <>
       <audio
         class="hidden"
         onEnded={preview.handleEnded}
@@ -138,13 +84,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           )
         }}
       >
-        <Suspense
-          fallback={
-            <div class="grid min-h-32 place-items-center text-sm text-muted-foreground">
-              {m.album_loading()}
-            </div>
-          }
-        >
+        <Suspense fallback={<LoadingStatus />}>
           <Show
             fallback={
               <div
@@ -186,6 +126,6 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           </Show>
         </Suspense>
       </ErrorBoundary>
-    </PModal>
+    </>
   )
 }
