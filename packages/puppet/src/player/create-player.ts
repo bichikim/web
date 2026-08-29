@@ -1,18 +1,22 @@
 import {Application, Container, MeshSimple, Texture} from 'pixi.js'
 
 import type {PuppetDocument, PuppetKeyframe, PuppetMotion, PuppetTrack} from './document'
+import {
+  assertPreparedPuppetDocument,
+  type PreparedPuppetDocument,
+} from './internal/prepared-document'
 
 export interface Player {
   destroy(): void
   pause(): void
   play(): void
   seek(time: number): void
-  updateDocument(document: PuppetDocument): boolean
+  updateDocument(document: PreparedPuppetDocument): boolean
 }
 
 export interface CreatePlayerOptions {
   readonly canvas: HTMLCanvasElement
-  readonly document: PuppetDocument
+  readonly document: PreparedPuppetDocument
   readonly motionId?: string
   readonly resizeTo?: HTMLElement
   readonly viewportPadding?: number
@@ -71,6 +75,8 @@ const getMotion = (document: PuppetDocument, motionId: string | undefined) =>
     : document.motions.find((motion) => motion.id === motionId)
 
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
+  assertPreparedPuppetDocument(options.document)
+
   const application = new Application()
   const resizeTarget = options.resizeTo ?? options.canvas.parentElement
 
@@ -198,7 +204,9 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
 
   applyMotion(motion, elapsedTime)
 
-  const updateDocument = (nextDocument: PuppetDocument) => {
+  const updateDocument = (nextDocument: PreparedPuppetDocument) => {
+    assertPreparedPuppetDocument(nextDocument)
+
     const canReuseResources =
       nextDocument.parts.length === document.parts.length &&
       nextDocument.parts.every((part, index) => {

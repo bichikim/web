@@ -13,6 +13,7 @@ import {
 } from './document'
 import {normalizeMesh} from '../mesh/normalize'
 import {validateMesh} from '../mesh/validate'
+import {markPreparedPuppetDocument, type PreparedPuppetDocument} from './internal/prepared-document'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
 
@@ -21,7 +22,7 @@ export interface ParseDocumentError {
 }
 
 export interface ParseDocumentSuccess {
-  readonly document: PuppetDocument
+  readonly document: PreparedPuppetDocument
   readonly ok: true
 }
 
@@ -185,6 +186,20 @@ const isDocument = (value: unknown): value is PuppetDocument => {
   )
 }
 
+export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
+  if (!isDocument(value)) {
+    return {error: {code: 'invalid-document'}, ok: false}
+  }
+
+  return {
+    document: markPreparedPuppetDocument({
+      ...value,
+      parts: value.parts.map((part) => ({...part, mesh: normalizeMesh(part.mesh)})),
+    }),
+    ok: true,
+  }
+}
+
 export const parseDocument = (source: string): ParseDocumentResult => {
   let value: unknown
 
@@ -194,15 +209,5 @@ export const parseDocument = (source: string): ParseDocumentResult => {
     return {error: {code: 'invalid-json'}, ok: false}
   }
 
-  if (!isDocument(value)) {
-    return {error: {code: 'invalid-document'}, ok: false}
-  }
-
-  return {
-    document: {
-      ...value,
-      parts: value.parts.map((part) => ({...part, mesh: normalizeMesh(part.mesh)})),
-    },
-    ok: true,
-  }
+  return parseDocumentValue(value)
 }

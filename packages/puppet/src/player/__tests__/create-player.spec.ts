@@ -4,6 +4,9 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import {PUPPET_DOCUMENT_FORMAT, PUPPET_DOCUMENT_VERSION, type PuppetDocument} from '../document'
 import {createPlayer} from '../create-player'
+import {parseDocument} from '../parse-document'
+import type {PreparedPuppetDocument} from '../prepare-puppet-document'
+import {serializeDocument} from '../serialize-document'
 
 const mocks = vi.hoisted(() => ({
   Application: vi.fn(),
@@ -27,12 +30,30 @@ const puppetDocument: PuppetDocument = {
   viewport: {height: 100, width: 200},
 }
 
+const prepareDocument = (document: PuppetDocument) => {
+  const result = parseDocument(serializeDocument(document))
+
+  if (!result.ok) {
+    throw new Error('Expected the test document to be valid')
+  }
+
+  return result.document
+}
+
 afterEach(() => {
   vi.clearAllMocks()
   vi.unstubAllGlobals()
 })
 
 describe('createPlayer', () => {
+  test('should reject a document that has not crossed the validation boundary', () => {
+    const unpreparedDocument = puppetDocument as PreparedPuppetDocument
+
+    return expect(
+      createPlayer({canvas: document.createElement('canvas'), document: unpreparedDocument}),
+    ).rejects.toThrow('Puppet document must be prepared before it is passed to the player')
+  })
+
   test('should control a player without textured parts', async () => {
     const application = {
       destroy: vi.fn(),
@@ -65,9 +86,25 @@ describe('createPlayer', () => {
       } as unknown as () => unknown,
     )
 
+    const preparedDocument = prepareDocument(puppetDocument)
+    const replacementDocument = prepareDocument({
+      ...puppetDocument,
+      parts: [
+        {
+          id: 'new-part',
+          mesh: {
+            boundaryLoops: [[0, 1, 2]],
+            indices: [0, 1, 2],
+            uvs: [0, 0, 1, 0, 0, 1],
+            vertices: [0, 0, 1, 0, 0, 1],
+          },
+          texture: {height: 1, src: 'new.png', width: 1},
+        },
+      ],
+    })
     const player = await createPlayer({
       canvas: document.createElement('canvas'),
-      document: puppetDocument,
+      document: preparedDocument,
     })
 
     player.pause()
@@ -78,19 +115,11 @@ describe('createPlayer', () => {
     expect(application.stop).toHaveBeenCalledOnce()
     expect(application.start).toHaveBeenCalledOnce()
     expect(application.render).toHaveBeenCalledOnce()
-    expect(player.updateDocument(puppetDocument)).toBe(true)
-    expect(
-      player.updateDocument({
-        ...puppetDocument,
-        parts: [
-          {
-            id: 'new-part',
-            mesh: {boundaryLoops: [], indices: [], uvs: [], vertices: []},
-            texture: {height: 1, src: 'new.png', width: 1},
-          },
-        ],
-      }),
-    ).toBe(false)
+    expect(player.updateDocument(preparedDocument)).toBe(true)
+    expect(player.updateDocument(replacementDocument)).toBe(false)
+    expect(() => player.updateDocument(puppetDocument as PreparedPuppetDocument)).toThrow(
+      'Puppet document must be prepared before it is passed to the player',
+    )
 
     player.destroy()
     player.destroy()
@@ -191,7 +220,10 @@ describe('createPlayer', () => {
     )
     mocks.TextureFrom.mockReturnValue(texture)
 
-    await createPlayer({canvas: document.createElement('canvas'), document: motionDocument})
+    await createPlayer({
+      canvas: document.createElement('canvas'),
+      document: prepareDocument(motionDocument),
+    })
     tick?.({deltaMS: 6_000})
     const createdMesh = mocks.MeshSimple.mock.results[0]?.value as
       | {readonly vertices: Float32Array}

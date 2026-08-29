@@ -26,7 +26,8 @@ export default {
         'apps/coong/src/use/focus-controller/KeyCap.tsx',
         'apps/coong/src/use/focus-controller/SolidWindow.tsx',
         'packages/puppet/src/main.tsx',
-        // V8 does not attribute code executed in the plugin's worker thread.
+        // V8 does not attribute code executed in worker threads.
+        'packages/puppet/src/player/internal/prepare-puppet-document-worker.ts',
         'packages/vite-plugin-key-similarity/src/worker.ts',
       ],
       include: [
