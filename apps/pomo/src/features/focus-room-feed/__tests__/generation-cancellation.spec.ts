@@ -63,8 +63,8 @@ it('should skip recovery updates after disposal without an active client', async
   await cancelFeedProcessing({
     abortController: new AbortController(),
     client: null,
-    dismissedRecoveryIds: new Set(),
     isDisposed: () => true,
+    isRecoveryDismissed: () => false,
     onRecovery,
     repository: {interruptUnfinishedJobs: vi.fn(async () => [])},
     scheduledJobs: [],
