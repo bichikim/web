@@ -1,9 +1,14 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
+const reservationMocks = vi.hoisted(() => ({
+  completeAlbumCoverReservation: vi.fn(),
+  createAlbumCoverReservation: vi.fn(),
+}))
 const uploadMocks = vi.hoisted(() => ({storeAlbumCover: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
+vi.mock('src/server/music/album-cover-reservation', () => reservationMocks)
 vi.mock('src/server/music/cover-upload', () => uploadMocks)
 
 import {POST} from '../covers'
@@ -26,8 +31,14 @@ describe('admin music cover upload route', () => {
       cookies: [],
     })
     uploadMocks.storeAlbumCover.mockReset().mockResolvedValue({
-      coverImageUrl: 'https://storage.pomofi.io/album-covers/id/cover.webp',
+      coverImageUrl:
+        'https://storage.pomofi.io/album-covers/019d1990-1dc9-7255-a7b5-f9459dfaf783/cover.webp',
     })
+    reservationMocks.createAlbumCoverReservation.mockReset().mockResolvedValue({
+      id: '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+      objectKey: 'album-covers/019d1990-1dc9-7255-a7b5-f9459dfaf783/cover.webp',
+    })
+    reservationMocks.completeAlbumCoverReservation.mockReset().mockResolvedValue(true)
   })
 
   it('should reject a cover upload before signing when the session is not admin', async () => {
@@ -48,8 +59,20 @@ describe('admin music cover upload route', () => {
     expect(response.status).toBe(200)
     expect(uploadMocks.storeAlbumCover).toHaveBeenCalledWith(
       {body: expect.any(ArrayBuffer), contentType: 'image/webp'},
-      {id: '019d1990-1dc9-7255-a7b5-f9459dfaf782'},
+      {id: '019d1990-1dc9-7255-a7b5-f9459dfaf783'},
     )
+    expect(reservationMocks.createAlbumCoverReservation).toHaveBeenCalledExactlyOnceWith(
+      '019d1990-1dc9-7255-a7b5-f9459dfaf782',
+    )
+    expect(reservationMocks.completeAlbumCoverReservation).toHaveBeenCalledExactlyOnceWith(
+      '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+      'https://storage.pomofi.io/album-covers/019d1990-1dc9-7255-a7b5-f9459dfaf783/cover.webp',
+    )
+    await expect(response.json()).resolves.toEqual({
+      coverImageUrl:
+        'https://storage.pomofi.io/album-covers/019d1990-1dc9-7255-a7b5-f9459dfaf783/cover.webp',
+      coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+    })
   })
 
   it('should reject unsupported images', async () => {
@@ -111,5 +134,18 @@ describe('admin music cover upload route', () => {
     expect(response.status).toBe(503)
     await expect(response.json()).resolves.toEqual({error: 'cover_upload_unavailable'})
     expect(consoleError).toHaveBeenCalledWith('Failed to create an album cover upload', error)
+  })
+
+  it('should retain an uploaded cover for maintenance when reservation completion fails', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    reservationMocks.completeAlbumCoverReservation.mockResolvedValue(false)
+
+    const response = await invokeApiRoute(POST, createRequest('webp'))
+
+    expect(response.status).toBe(503)
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to create an album cover upload',
+      expect.objectContaining({message: 'Failed to complete an album cover reservation'}),
+    )
   })
 })

@@ -2,6 +2,7 @@ import {getTableConfig} from 'drizzle-orm/pg-core'
 import {expect, it} from 'vitest'
 
 import {
+  musicAlbumCoverReservations,
   musicAlbums,
   musicAlbumTracks,
   musicAlbumTranslations,
@@ -13,6 +14,7 @@ import {
 
 it.each([
   [musicAlbums, 3],
+  [musicAlbumCoverReservations, 4],
   [musicAlbumTranslations, 2],
   [musicTracks, 0],
   [musicAlbumTracks, 3],

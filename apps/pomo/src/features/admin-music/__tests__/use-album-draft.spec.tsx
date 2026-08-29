@@ -94,7 +94,10 @@ beforeEach(() => {
   storageMocks.writeAlbumDraftCover.mockResolvedValue({success: true})
   storageMocks.writeAlbumDraftData.mockReturnValue({success: true})
   coverMocks.prepareAlbumCover.mockResolvedValue(PREPARED_COVER)
-  coverMocks.uploadAlbumCover.mockResolvedValue('https://cdn.example.com/cover.webp')
+  coverMocks.uploadAlbumCover.mockResolvedValue({
+    coverImageUrl: 'https://cdn.example.com/cover.webp',
+    coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+  })
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:album-cover')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
   vi.spyOn(crypto, 'randomUUID').mockReturnValue(COVER_DRAFT_ID)
@@ -205,8 +208,10 @@ describe('album draft restoration', () => {
     })
     await result.handleAlbumSubmit(createSubmitEvent().event)
     expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toEqual({
+      coverDraftId: null,
       coverFallback: 'music',
       coverImageUrl: 'https://new.example/current.webp',
+      coverReservationId: null,
       translations: [{description: '', locale: 'ko', title: '새 제목'}],
     })
     cleanup()
@@ -705,8 +710,10 @@ describe('album creation', () => {
     expect(reset).toHaveBeenCalledOnce()
     expect(fetch).toHaveBeenCalledWith('/api/admin/music/albums', {
       body: JSON.stringify({
+        coverDraftId: null,
         coverFallback: 'music',
         coverImageUrl: 'https://example.com/configured.jpg',
+        coverReservationId: null,
         translations: [
           {description: '한국어 설명', locale: 'ko', title: '한국어 제목'},
           {description: '', locale: 'en', title: 'English title'},
@@ -733,6 +740,11 @@ describe('album creation', () => {
     await result.handleAlbumSubmit(createSubmitEvent().event)
 
     expect(coverMocks.uploadAlbumCover).toHaveBeenCalledWith(PREPARED_COVER, COVER_DRAFT_ID)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      coverDraftId: COVER_DRAFT_ID,
+      coverImageUrl: 'https://cdn.example.com/cover.webp',
+      coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+    })
     expect(setMessage).toHaveBeenLastCalledWith(
       '앨범은 만들었지만 브라우저의 작성 초안을 지우지 못했습니다.',
     )
@@ -784,7 +796,11 @@ describe('album creation', () => {
     await result.handleAlbumSubmit(createSubmitEvent().event)
 
     const request = vi.mocked(fetch).mock.calls[0]?.[1]
-    expect(JSON.parse(String(request?.body))).toMatchObject({coverImageUrl: null})
+    expect(JSON.parse(String(request?.body))).toMatchObject({
+      coverDraftId: null,
+      coverImageUrl: null,
+      coverReservationId: null,
+    })
     cleanup()
   })
 })
