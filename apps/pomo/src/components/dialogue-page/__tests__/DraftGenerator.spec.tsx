@@ -197,6 +197,30 @@ it('should explain that a model download continues after returning home', () => 
   ).toBeDefined()
 })
 
+it('should cancel the active draft model download and re-enable the controls', async () => {
+  const [downloadState, setDownloadState] = createSignal<ModelDownloadState>({
+    label: 'Gemma 4 E2B',
+    percentage: 42,
+    status: 'loading',
+    target: {kind: 'text', modelId: 'gemma-4-e2b'},
+  })
+  const modelDownload = createModelDownload()
+  vi.mocked(modelDownload.cancel).mockImplementation(() => setDownloadState({status: 'idle'}))
+  vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
+  vi.mocked(useDialogueWriter).mockReturnValue(createWriter())
+  render(() => <PDialogueDraftGenerator onGenerated={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: /초안 만들기/}))
+
+  expect(screen.getByRole('textbox', {name: '어떤 말을 만들까요?'})).toBeDisabled()
+  fireEvent.click(screen.getByRole('button', {name: '취소'}))
+
+  expect(modelDownload.cancel).toHaveBeenCalledOnce()
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', {name: '어떤 말을 만들까요?'})).toBeEnabled(),
+  )
+  expect(screen.getByRole('button', {name: '대사 만들기'})).toBeEnabled()
+})
+
 it('should not generate after the global download is cancelled', async () => {
   const modelDownload = createModelDownload()
   vi.mocked(modelDownload.startTextModel).mockResolvedValue({status: 'cancelled'})
@@ -225,6 +249,7 @@ it('should expose the supported 50 to 300 character range', () => {
   expect(screen.getByRole('status').textContent).toContain(
     '주제와 분량을 정한 뒤 대사 만들기를 눌러 주세요.',
   )
+  expect(screen.queryByRole('button', {name: '취소'})).toBeNull()
 })
 
 it('should describe model startup after the download reaches 100 percent', () => {
@@ -442,6 +467,7 @@ it('should keep unrelated model downloads out of the draft download status', () 
   expect(screen.getByRole('status').textContent).toContain(
     '주제와 분량을 정한 뒤 대사 만들기를 눌러 주세요.',
   )
+  expect(screen.queryByRole('button', {name: '취소'})).toBeNull()
 })
 
 it('should describe a partial writer model download', () => {

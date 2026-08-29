@@ -60,6 +60,7 @@ interface DraftGeneratorProps {
 
 interface GenerationStatusProps {
   readonly message: string
+  readonly onCancel?: () => void
   readonly progress?: number | null
 }
 
@@ -205,6 +206,13 @@ beforeEach(() => {
   vi.mocked(PGenerationStatus).mockImplementation((props: GenerationStatusProps) => (
     <output data-progress={props.progress ?? 'none'} data-testid="generation-status">
       {props.message}
+      <Show when={props.onCancel}>
+        {(onCancel) => (
+          <button onClick={onCancel()} type="button">
+            취소
+          </button>
+        )}
+      </Show>
     </output>
   ))
   vi.mocked(PModelDownloadConsent).mockImplementation((props: DownloadConsentProps) => (
@@ -374,6 +382,7 @@ describe('PDialogueEditor audio generation', () => {
 
     expect(screen.getByTestId('generation-status')).toHaveTextContent('준비됨')
     expect(screen.getByTestId('generation-status')).toHaveAttribute('data-progress', 'none')
+    expect(screen.queryByRole('button', {name: '취소'})).toBeNull()
 
     setDownloadState({
       label: '텍스트 모델',
@@ -382,6 +391,7 @@ describe('PDialogueEditor audio generation', () => {
       target: {kind: 'text', modelId: 'gemma-4-e2b'},
     })
     expect(screen.getByTestId('generation-status')).toHaveTextContent('준비됨')
+    expect(screen.queryByRole('button', {name: '취소'})).toBeNull()
 
     setDownloadState({
       label: '선택한 음성 모델',
@@ -393,6 +403,27 @@ describe('PDialogueEditor audio generation', () => {
       '음성 모델 파일을 백그라운드에서 내려받고 있어요.',
     )
     expect(screen.getByTestId('generation-status')).toHaveAttribute('data-progress', '42')
+  })
+
+  it('should cancel the selected audio model download and re-enable the controls', async () => {
+    const [downloadState, setDownloadState] = createSignal<ModelDownloadState>({
+      label: '선택한 음성 모델',
+      percentage: 42,
+      status: 'loading',
+      target: {kind: 'voice', modelId: 'full'},
+    })
+    const modelDownload = createModelDownload()
+    vi.mocked(modelDownload.cancel).mockImplementation(() => setDownloadState({status: 'idle'}))
+    vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
+    const harness = createEditorHarness()
+    renderEditor(harness)
+
+    expect(getVoiceSelect()).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', {name: '취소'}))
+
+    expect(modelDownload.cancel).toHaveBeenCalledOnce()
+    await waitFor(() => expect(getVoiceSelect()).toBeEnabled())
+    expect(getGenerateButton()).toBeEnabled()
   })
 
   it('should report audio download errors and ignore a download completing after disposal', async () => {
