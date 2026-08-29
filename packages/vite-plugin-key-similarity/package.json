@@ -1,7 +1,16 @@
 {
   "name": "@winter-love/vite-plugin-key-similarity",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Offline pairwise similarity diagnostics for static string keys in Vite",
+  "homepage": "https://github.com/bichikim/web/tree/dev/packages/vite-plugin-key-similarity",
+  "bugs": {
+    "url": "https://github.com/bichikim/web/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/vite-plugin-key-similarity"
+  },
   "bin": {
     "key-similarity": "bin/index.js"
   },
