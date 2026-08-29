@@ -7,8 +7,8 @@ const config = createVitestConfig([
     ...unitTestProject,
     test: {
       ...unitTestProject.test,
-      // Source-wide V8 collection needs headroom after every test file has finished.
-      maxWorkers: 1,
+      // Pomo source has a separate per-file 100% coverage run in the same CI job.
+      exclude: [...(unitTestProject.test.exclude ?? []), 'apps/pomo/src/**/*.spec.?(c|m)[jt]s?(x)'],
     },
   },
 ])
@@ -29,6 +29,8 @@ export default {
         '**/*.story.{js,jsx,mjs,mts,ts,tsx}',
         '**/*Demo.tsx',
         '**/*Sample.tsx',
+        // Covered by vitest.pomo-coverage.config.mts at a stricter 100% per-file threshold.
+        'apps/pomo/src/**',
         // Standalone kata and story-only demos are not shipped application behavior.
         'apps/coong/src/index.tsx',
         'apps/coong/src/kata/resource/index.tsx',

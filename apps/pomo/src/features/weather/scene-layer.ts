@@ -33,20 +33,6 @@ import precipitationEffectMask from './assets/scene/precipitation-effect-mask.pn
 import windowMask from './assets/scene/day-reading-focused-mask.png'
 import type {WeatherSceneCondition} from './scene-mode'
 
-type WeatherSceneId =
-  | 'day-reading-focused'
-  | 'day-reading-user'
-  | 'day-typing-focused'
-  | 'day-typing-user'
-  | 'day-writing-focused'
-  | 'day-writing-user'
-  | 'night-reading-focused'
-  | 'night-reading-user'
-  | 'night-typing-focused'
-  | 'night-typing-user'
-  | 'night-writing-focused'
-  | 'night-writing-user'
-
 interface WeatherMasks {
   readonly precipitation: string
   readonly window: string
@@ -83,7 +69,7 @@ const WEATHER_SOURCES = {
   'night-typing-user': NIGHT_WEATHER_SOURCES,
   'night-writing-focused': NIGHT_WEATHER_SOURCES,
   'night-writing-user': NIGHT_WEATHER_SOURCES,
-} satisfies Readonly<Record<WeatherSceneId, Readonly<Record<WeatherSceneCondition, string>>>>
+} satisfies Readonly<Record<PSceneId, Readonly<Record<WeatherSceneCondition, string>>>>
 
 const WEATHER_MASKS = {
   'day-reading-focused': {precipitation: precipitationEffectMask, window: windowMask},
@@ -128,27 +114,7 @@ const WEATHER_MASKS = {
     precipitation: nightWritingUserPrecipitation,
     window: nightWritingUserWindow,
   },
-} satisfies Readonly<Record<WeatherSceneId, WeatherMasks>>
-
-const isWeatherScene = (sceneId: PSceneId): sceneId is WeatherSceneId => {
-  switch (sceneId) {
-    case 'day-reading-focused':
-    case 'day-reading-user':
-    case 'day-typing-focused':
-    case 'day-typing-user':
-    case 'day-writing-focused':
-    case 'day-writing-user':
-    case 'night-reading-focused':
-    case 'night-reading-user':
-    case 'night-typing-focused':
-    case 'night-typing-user':
-    case 'night-writing-focused':
-    case 'night-writing-user':
-      return true
-    default:
-      return false
-  }
-}
+} satisfies Readonly<Record<PSceneId, WeatherMasks>>
 
 const getWeatherInsertionIndex = (
   scene: PixiLayerSceneDefinition,
@@ -166,7 +132,7 @@ const getWeatherInsertionIndex = (
 }
 
 const getWeatherEffect = (
-  sceneId: WeatherSceneId,
+  sceneId: PSceneId,
   condition: WeatherSceneCondition,
   beforeLayerId: string | undefined,
   maskSource: string,
@@ -208,7 +174,7 @@ export const applyWeatherSceneLayer = (
   sceneStyle: PSceneStyle,
   condition: WeatherSceneCondition,
 ): PixiLayerSceneDefinition => {
-  if (!isWeatherScene(sceneId) || sceneStyle !== 'original') {
+  if (sceneStyle !== 'original') {
     return scene
   }
 
