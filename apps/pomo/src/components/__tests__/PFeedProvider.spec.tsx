@@ -12,6 +12,7 @@ vi.mock('../../features/focus-room-dialogue', () => ({usePEvents: vi.fn(() => ({
 vi.mock('../../features/focus-room-feed/use-focus-room-feeds', () => ({usePFeeds: vi.fn()}))
 
 const createController = (): PFeedController => ({
+  cancelProcessing: vi.fn(async () => undefined),
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => [],
   dismissRecovery: vi.fn(),

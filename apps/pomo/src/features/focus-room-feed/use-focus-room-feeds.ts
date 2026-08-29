@@ -7,15 +7,9 @@ import {
   createPDialogueRepository,
   type PDialogueRepository,
 } from '../focus-room-dialogue/repository'
-import type {PDialogue} from '../focus-room-dialogue/schema'
 import type {SupertonicClient} from '../supertonic/client'
 import type {SupertonicModelId} from '../supertonic/model'
-import {
-  FEED_DIALOGUE_EXPIRATION_MS,
-  type FeedDialogueJob,
-  type FeedDialogueMetadata,
-  type FeedItemRecord,
-} from './feed-dialogue-schema'
+import {type FeedDialogueJob, type FeedItemRecord} from './feed-dialogue-schema'
 import {createFeedDialogueRepository, type FeedDialogueRepository} from './feed-dialogue-repository'
 import {repairStoredDevFeedDialogues} from './feed-dialogue-repair'
 import {feedGenerationRuntime} from './generation-runtime'
@@ -44,6 +38,8 @@ import {
   getFeedGenerationProgress,
 } from './feed-runtime'
 import {processScheduledFeedJob, type ScheduledFeedJob, scheduleFeedJobs} from './generation-queue'
+import {cancelFeedProcessing} from './generation-cancellation'
+import {createFeedDialogueCompletion} from './generation-completion'
 import {FEED_CONNECTIONS_CHANGED_EVENT} from './use-feed-connections'
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns a single disposable feed synchronization and model lifecycle.
@@ -63,12 +59,14 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   let feedRepository: FeedDialogueRepository | null = null
   let client: SupertonicClient | null = null
   let isDisposed = false
-  const opusAbortController = new AbortController()
+  let opusAbortController = new AbortController()
   let isGenerating = false
+  let processingRevision = 0
   const syncGate = createFeedSyncGate()
   let preparedModelId: SupertonicModelId | null = null
   const scheduledJobs: Array<ScheduledFeedJob> = []
   const dismissedRecoveryIds = new Set<string>()
+  const isCurrentProcessing = (revision: number) => processingRevision === revision && !isDisposed
   const setFeedState = (nextState: PFeedState) => {
     if (!isDisposed) {
       setState(nextState)
@@ -228,63 +226,60 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   const completeJob = async (
     job: FeedDialogueJob,
     generated: Extract<GenerateCompressedDialogueAudioResult, {readonly ok: true}>,
+    revision: number,
   ) => {
     const repositories = getRepositories()
     const storedItem = await findItem(job)
+
+    if (!isCurrentProcessing(revision)) {
+      return
+    }
 
     if (storedItem === null) {
       throw new Error('생성할 피드 항목 기록을 찾지 못했어요.')
     }
 
-    const now = new Date()
-    const nowIso = now.toISOString()
-    const dialogueId = crypto.randomUUID()
-    const dialogue = {
-      audioKey: crypto.randomUUID(),
-      createdAt: nowIso,
-      durationMs: generated.value.durationMs,
-      id: dialogueId,
-      language: 'ko',
-      modelId: job.modelId,
-      segments: generated.value.segments,
-      text: job.script,
-      updatedAt: nowIso,
-      version: 1,
-      voiceId: job.voiceId,
-    } satisfies PDialogue
-    const metadata = {
-      createdAt: nowIso,
-      dialogueId,
-      expiresAt: new Date(now.getTime() + FEED_DIALOGUE_EXPIRATION_MS).toISOString(),
-      feedConnectionId: job.feedConnectionId,
-      feedItemId: job.feedItemId,
-      itemTitle: job.itemTitle,
-      listenedAt: null,
-      publishedAt: job.publishedAt,
-      sourceTitle: job.sourceTitle,
-      sourceUrl: job.sourceUrl,
-      version: 1,
-    } satisfies FeedDialogueMetadata
-    const readyItem = {
-      ...storedItem,
-      message: null,
-      status: 'ready',
-      updatedAt: nowIso,
-    } satisfies FeedItemRecord
+    const completion = createFeedDialogueCompletion({
+      createId: () => crypto.randomUUID(),
+      generated,
+      job,
+      now: new Date(),
+      storedItem,
+    })
 
-    await repositories.dialogueRepository.saveDialogue({audio: generated.value.audio, dialogue})
+    await repositories.dialogueRepository.saveDialogue({
+      audio: completion.audio,
+      dialogue: completion.dialogue,
+    })
+
+    if (!isCurrentProcessing(revision)) {
+      await repositories.dialogueRepository.deleteDialogue(completion.dialogue.id)
+      return
+    }
 
     try {
-      await repositories.feedRepository.complete({item: readyItem, jobId: job.id, metadata})
+      await repositories.feedRepository.complete({
+        item: completion.readyItem,
+        jobId: job.id,
+        metadata: completion.metadata,
+      })
     } catch (error: unknown) {
-      await repositories.dialogueRepository.deleteDialogue(dialogueId)
+      await repositories.dialogueRepository.deleteDialogue(completion.dialogue.id)
       throw error
     }
 
     await Promise.all([reloadDialogues(), reloadIssues(), props.events.refreshDialogues()])
   }
-  const generateJob = async (job: FeedDialogueJob, allowModelDownload: boolean) => {
+  const generateJob = async (
+    job: FeedDialogueJob,
+    allowModelDownload: boolean,
+    revision: number,
+  ) => {
     if (await discardUnsubscribedJob(job)) {
+      return
+    }
+
+    if (!isCurrentProcessing(revision)) {
       return
     }
 
@@ -297,6 +292,11 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       repository: getRepositories().feedRepository,
       resolveGenerationSettings: resolveCurrentGenerationSettings,
     })
+
+    if (!isCurrentProcessing(revision)) {
+      return
+    }
+
     switch (preparation.status) {
       case 'connection-missing':
         await discardUnsubscribedJob(job)
@@ -328,7 +328,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       language: 'ko',
       modelId: currentJob.modelId,
       onChunk: (completed, total) => {
-        if (client === currentClient && !isDisposed) {
+        if (client === currentClient && isCurrentProcessing(revision)) {
           setFeedState({
             message: `${currentJob.itemTitle} · ${completed}/${total} 구간 생성 중`,
             progress: getFeedGenerationProgress(completed, total),
@@ -341,7 +341,11 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       voiceId: currentJob.voiceId,
     })
 
-    if (isDisposed || client !== currentClient || (await discardUnsubscribedJob(currentJob))) {
+    if (
+      !isCurrentProcessing(revision) ||
+      client !== currentClient ||
+      (await discardUnsubscribedJob(currentJob))
+    ) {
       return
     }
 
@@ -350,12 +354,12 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       return
     }
 
-    await completeJob(currentJob, generated)
+    await completeJob(currentJob, generated, revision)
   }
-  const handleJobFailure = async (job: FeedDialogueJob, error: unknown) => {
+  const handleJobFailure = async (job: FeedDialogueJob, error: unknown, revision: number) => {
     console.error('Failed to process feed dialogue job.', error)
 
-    if (isDisposed || (await discardUnsubscribedJob(job))) {
+    if (!isCurrentProcessing(revision) || (await discardUnsubscribedJob(job))) {
       return
     }
 
@@ -377,9 +381,10 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         const scheduledJob = scheduledJobs.shift()
 
         if (scheduledJob !== undefined) {
+          const revision = processingRevision
           await processScheduledFeedJob({
-            generate: generateJob,
-            handleFailure: handleJobFailure,
+            generate: (job, allowModelDownload) => generateJob(job, allowModelDownload, revision),
+            handleFailure: (job, error) => handleJobFailure(job, error, revision),
             listJobs: () => getRepositories().feedRepository.listJobs(),
             scheduledJob,
           })
@@ -510,6 +515,27 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   })
 
   return {
+    async cancelProcessing() {
+      processingRevision += 1
+      const activeAbortController = opusAbortController
+      opusAbortController = new AbortController()
+      const activeClient = client
+      client = null
+      preparedModelId = null
+      await cancelFeedProcessing({
+        abortController: activeAbortController,
+        client: activeClient,
+        dismissedRecoveryIds,
+        isDisposed: () => isDisposed,
+        onRecovery: (jobs) => {
+          setRecoveryJobs(jobs)
+          setFeedState({message: '다음 피드 확인을 기다리고 있어요.', status: 'idle'})
+        },
+        repository: getRepositories().feedRepository,
+        scheduledJobs,
+        updatedAt: new Date().toISOString(),
+      })
+    },
     async deleteRecovery() {
       const jobs = recoveryJobs()
       await getRepositories().feedRepository.deleteJobs(
