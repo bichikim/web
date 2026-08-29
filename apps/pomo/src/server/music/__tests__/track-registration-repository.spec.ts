@@ -5,7 +5,7 @@ import {
   createPendingTrack,
   failTrackAsset,
   findActiveTrackAsset,
-  findPendingTrackAsset,
+  findTrackAsset,
   reserveTrackAsset,
 } from '../track-registration-repository'
 
@@ -356,7 +356,7 @@ describe('track asset reads and failures', () => {
   })
 
   it.each([
-    ['a pending asset', findPendingTrackAsset, {id: ASSET_ID, objectKey: 'pending.mp3'}],
+    ['an asset by id', findTrackAsset, {id: ASSET_ID, objectKey: 'pending.mp3', status: 'pending'}],
     ['an active asset', findActiveTrackAsset, {assetId: ASSET_ID, objectKey: 'active.mp3'}],
   ] as const)('should find %s', async (_name, findAsset, asset) => {
     readSelect.mockReturnValueOnce(createLimitedQuery([asset]))
@@ -365,7 +365,7 @@ describe('track asset reads and failures', () => {
   })
 
   it.each([
-    ['a pending asset', findPendingTrackAsset],
+    ['an asset by id', findTrackAsset],
     ['an active asset', findActiveTrackAsset],
   ] as const)('should return null when %s is missing', async (_name, findAsset) => {
     readSelect.mockReturnValueOnce(createLimitedQuery([]))
@@ -388,7 +388,7 @@ describe('track asset reads and failures', () => {
       })),
     })
 
-    await expect(findPendingTrackAsset(ASSET_ID)).rejects.toThrow('read failed')
+    await expect(findTrackAsset(ASSET_ID)).rejects.toThrow('read failed')
   })
 })
 

@@ -65,7 +65,7 @@ it('should remove the track record when its MP3 upload cannot start', async () =
     title: '곡명',
   })
 
-  expect(result).toMatchObject({cleanupSucceeded: true, success: false})
+  expect(result).toMatchObject({cleanupStatus: 'succeeded', success: false})
   expect(fetcher).toHaveBeenNthCalledWith(3, `/api/admin/music/tracks/${TRACK_ID}`, {
     method: 'DELETE',
   })
@@ -86,5 +86,98 @@ it('should expose a cleanup failure after an MP3 upload failure', async () => {
     title: '곡명',
   })
 
-  expect(result).toMatchObject({cleanupSucceeded: false, success: false})
+  expect(result).toMatchObject({cleanupStatus: 'failed', success: false})
+})
+
+it('should confirm a committed registration after its first response is lost', async () => {
+  const assetId = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({id: TRACK_ID}))
+    .mockResolvedValueOnce(
+      Response.json({
+        assetId,
+        expiresAt: '2026-08-22T15:00:00.000Z',
+        uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+      }),
+    )
+    .mockResolvedValueOnce(new Response(null, {status: 200}))
+    .mockRejectedValueOnce(new TypeError('response lost'))
+    .mockResolvedValueOnce(Response.json({assetId, status: 'active'}))
+  vi.stubGlobal('fetch', fetcher)
+
+  await expect(
+    createTrackWithAudio({
+      albumId: ALBUM_ID,
+      artist: '아티스트',
+      audio: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+      title: '곡명',
+    }),
+  ).resolves.toEqual({success: true})
+  expect(fetcher).toHaveBeenCalledTimes(5)
+  expect(fetcher).not.toHaveBeenCalledWith(`/api/admin/music/tracks/${TRACK_ID}`, {
+    method: 'DELETE',
+  })
+})
+
+it('should preserve a track when its registration remains unconfirmed', async () => {
+  const assetId = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({id: TRACK_ID}))
+    .mockResolvedValueOnce(
+      Response.json({
+        assetId,
+        expiresAt: '2026-08-22T15:00:00.000Z',
+        uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+      }),
+    )
+    .mockResolvedValueOnce(new Response(null, {status: 200}))
+    .mockRejectedValueOnce(new TypeError('response lost'))
+    .mockResolvedValueOnce(new Response(null, {status: 503}))
+  vi.stubGlobal('fetch', fetcher)
+
+  const result = await createTrackWithAudio({
+    albumId: ALBUM_ID,
+    artist: '아티스트',
+    audio: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+    title: '곡명',
+  })
+
+  expect(result).toMatchObject({cleanupStatus: 'preserved', success: false})
+  expect(fetcher).toHaveBeenCalledTimes(5)
+  expect(fetcher).not.toHaveBeenCalledWith(`/api/admin/music/tracks/${TRACK_ID}`, {
+    method: 'DELETE',
+  })
+})
+
+it('should preserve a track when authorization expires after a lost completion response', async () => {
+  const assetId = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({id: TRACK_ID}))
+    .mockResolvedValueOnce(
+      Response.json({
+        assetId,
+        expiresAt: '2026-08-22T15:00:00.000Z',
+        uploadUrl: 'https://account.r2.cloudflarestorage.com/bucket/key?signature=value',
+      }),
+    )
+    .mockResolvedValueOnce(new Response(null, {status: 200}))
+    .mockRejectedValueOnce(new TypeError('response lost'))
+    .mockResolvedValueOnce(new Response(null, {status: 401}))
+  vi.stubGlobal('fetch', fetcher)
+
+  const result = await createTrackWithAudio({
+    albumId: ALBUM_ID,
+    artist: '아티스트',
+    audio: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+    title: '곡명',
+  })
+
+  expect(result).toMatchObject({cleanupStatus: 'preserved', success: false})
+  expect(fetcher).toHaveBeenCalledTimes(5)
+  expect(fetcher).not.toHaveBeenCalledWith(`/api/admin/music/tracks/${TRACK_ID}`, {
+    method: 'DELETE',
+  })
 })

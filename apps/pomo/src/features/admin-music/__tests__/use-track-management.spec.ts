@@ -121,7 +121,7 @@ describe('useTrackManagement', () => {
 
   it('should report a failed upload whose created track was cleaned up', async () => {
     creationMocks.createTrackWithAudio.mockResolvedValueOnce({
-      cleanupSucceeded: true,
+      cleanupStatus: 'succeeded',
       error: new Error('업로드 실패'),
       success: false,
     })
@@ -146,7 +146,7 @@ describe('useTrackManagement', () => {
 
   it('should report a generic failed upload whose created track remains', async () => {
     creationMocks.createTrackWithAudio.mockResolvedValueOnce({
-      cleanupSucceeded: false,
+      cleanupStatus: 'failed',
       error: 'upload failed',
       success: false,
     })
@@ -158,6 +158,23 @@ describe('useTrackManagement', () => {
       '곡을 저장하지 못했습니다. 생성된 곡 정보를 정리하지 못했습니다. 다시 삭제해 주세요.',
     )
     expect(result.isSavingTrack()).toBe(false)
+    cleanup()
+  })
+
+  it('should explain that an unconfirmed registration was preserved', async () => {
+    creationMocks.createTrackWithAudio.mockResolvedValueOnce({
+      cleanupStatus: 'preserved',
+      error: new Error('MP3 등록 상태를 확인하지 못했습니다.'),
+      success: false,
+    })
+    const {cleanup, refreshCatalog, result, setMessage} = renderTrackManagement()
+
+    await result.handleTrackSubmit(createSubmitEvent().event)
+
+    expect(refreshCatalog).toHaveBeenCalledOnce()
+    expect(setMessage).toHaveBeenLastCalledWith(
+      'MP3 등록 상태를 확인하지 못했습니다. 등록 결과가 확정되지 않아 곡은 삭제하지 않았습니다. 목록에서 상태를 확인해 주세요.',
+    )
     cleanup()
   })
 
