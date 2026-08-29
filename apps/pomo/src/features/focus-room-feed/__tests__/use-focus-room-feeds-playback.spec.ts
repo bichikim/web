@@ -451,6 +451,48 @@ it('should discard stale local feed state when another request owns audio recove
   view.cleanup()
 })
 
+it('should ignore an unavailable callback for a dialogue outside the current feed list', async () => {
+  const available = [createDialogue('available', null)]
+  lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
+  const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
+    await options.onDialogueUnavailable?.('unknown')
+  })
+  const view = renderHook(() => usePFeeds({events}))
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
+
+  await view.result.listenAll()
+
+  expect(repositoryMocks.feedRepository.recoverMissingDialogue).not.toHaveBeenCalled()
+  expect(view.result.unlistenedDialogues()).toEqual(available)
+  expect(events.deleteDialogue).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
+it('should leave recovered persistence for the next mount when disposed during recovery', async () => {
+  const available = [createDialogue('missing', null)]
+  const recovery = Promise.withResolvers<boolean>()
+  lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
+  repositoryMocks.feedRepository.recoverMissingDialogue.mockReturnValue(recovery.promise)
+  const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
+    await options.onDialogueUnavailable?.('missing')
+  })
+  const view = renderHook(() => usePFeeds({events}))
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
+
+  const listening = view.result.listenAll()
+  await vi.waitFor(() =>
+    expect(repositoryMocks.feedRepository.recoverMissingDialogue).toHaveBeenCalledOnce(),
+  )
+  view.cleanup()
+  recovery.resolve(true)
+  await listening
+
+  expect(queueMocks.scheduleFeedJobs).not.toHaveBeenCalled()
+  expect(events.deleteDialogue).not.toHaveBeenCalled()
+})
+
 it('should skip listening to an empty feed batch', async () => {
   const events = createEventContext()
   const view = renderHook(() => usePFeeds({events}))
