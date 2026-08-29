@@ -81,7 +81,7 @@ const flush = async () => {
   await Promise.resolve()
 }
 
-const createDeferred = <T,>() => {
+function createDeferred<T>() {
   let resolve = (_value: T) => undefined
   const promise = new Promise<T>((nextResolve) => {
     resolve = (value) => {
@@ -92,9 +92,7 @@ const createDeferred = <T,>() => {
   return {promise, resolve}
 }
 
-const getLatestProps = <T,>(mock: {
-  readonly mock: {readonly calls: ReadonlyArray<readonly [T]>}
-}) => {
+function getLatestProps<T>(mock: {readonly mock: {readonly calls: ReadonlyArray<readonly [T]>}}) {
   const props = mock.mock.calls.at(-1)?.[0]
 
   if (props === undefined) {
