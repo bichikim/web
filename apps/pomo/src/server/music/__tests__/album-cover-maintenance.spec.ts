@@ -34,11 +34,14 @@ beforeEach(() => {
 
 describe('runAlbumCoverMaintenance', () => {
   it('should delete and finalize an expired cover with the default repository', async () => {
-    await expect(runAlbumCoverMaintenance({now: NOW})).resolves.toEqual({
+    await expect(runAlbumCoverMaintenance()).resolves.toEqual({
       complete: true,
       finalized: 1,
     })
-    expect(reservationMocks.listAlbumCoverCleanupCandidates).toHaveBeenCalledWith(NOW, 26)
+    expect(reservationMocks.listAlbumCoverCleanupCandidates).toHaveBeenCalledWith(
+      expect.any(Date),
+      26,
+    )
     expect(storageMocks.deleteAlbumCover).toHaveBeenCalledWith('album-covers/cover-1/cover.webp')
     expect(reservationMocks.finalizeAlbumCoverDeletion).toHaveBeenCalledWith('cover-1')
   })

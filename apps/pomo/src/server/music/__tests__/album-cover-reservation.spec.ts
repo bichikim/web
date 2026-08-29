@@ -48,7 +48,7 @@ describe('createAlbumCoverReservation', () => {
       insert: vi.fn(() => ({values: vi.fn(() => ({returning}))})),
     })
 
-    await expect(createAlbumCoverReservation(DRAFT_ID, {now: NOW})).rejects.toThrow(
+    await expect(createAlbumCoverReservation(DRAFT_ID)).rejects.toThrow(
       'Failed to create an album cover reservation',
     )
   })
