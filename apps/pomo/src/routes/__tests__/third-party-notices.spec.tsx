@@ -2,7 +2,9 @@
 
 import {A} from '@solidjs/router'
 import {render, screen} from '@solidjs/testing-library'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import licenseData from '../../../public/licenses.json' with {type: 'json'}
 
 import ThirdPartyNoticesPage from '../third-party-notices'
 
@@ -10,13 +12,21 @@ vi.mock('@solidjs/router', () => ({A: vi.fn()}))
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify(licenseData))),
+  )
   vi.mocked(A).mockImplementation((props) => <a href={props.href}>{props.children}</a>)
 })
 
-it('should show license groups, distribution conditions, and original sources', () => {
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+it('should show license groups, distribution conditions, and original sources', async () => {
   render(() => <ThirdPartyNoticesPage />)
 
-  expect(screen.getByRole('heading', {name: '제3자 라이선스 및 배포 고지'})).toBeTruthy()
+  expect(await screen.findByRole('heading', {name: '제3자 라이선스 및 배포 고지'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: '핵심 소프트웨어'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: '공개 가중치 및 AI 모델'})).toBeTruthy()
   expect(screen.queryByRole('heading', {name: '실험·준비 기능 및 외부 에셋'})).toBeNull()
@@ -60,4 +70,12 @@ it('should show license groups, distribution conditions, and original sources', 
   expect(screen.queryByText('Whisper Tiny · Base')).toBeNull()
   expect(screen.queryByText('Moonshine Tiny KO')).toBeNull()
   expect(screen.getByText(/원문 라이선스가 우선합니다/u)).toBeTruthy()
+})
+
+it('should report a license fetch failure', async () => {
+  vi.mocked(fetch).mockRejectedValue(new Error('offline'))
+
+  render(() => <ThirdPartyNoticesPage />)
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('라이선스 정보를 불러오지 못했습니다.')
 })
