@@ -297,6 +297,7 @@
   "common_ai_voice": "AI voice",
   "recovery_description": "Try again shortly, or reload the app if the problem continues.",
   "recovery_error_id": "Error ID:",
+  "recovery_home": "Go home",
   "recovery_stopped": "Automatic recovery stopped after another error. Please reload the app.",
   "recovery_retry": "Try again",
   "recovery_reload": "Reload",

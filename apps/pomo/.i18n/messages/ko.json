@@ -297,6 +297,7 @@
   "common_ai_voice": "AI 음성",
   "recovery_description": "잠시 후 다시 시도하거나, 계속 문제가 생기면 앱을 새로고침해 주세요.",
   "recovery_error_id": "오류 ID:",
+  "recovery_home": "홈으로 이동",
   "recovery_stopped": "다시 오류가 발생해 자동 복구를 중단했어요. 새로고침해 주세요.",
   "recovery_retry": "다시 시도",
   "recovery_reload": "새로고침",
