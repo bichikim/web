@@ -2,7 +2,16 @@ import {createVitestConfig, unitTestProject} from './vitest.base.config.mts'
 
 const reportsDirectory = `coverage/source/${process.pid}`
 
-const config = createVitestConfig([unitTestProject])
+const config = createVitestConfig([
+  {
+    ...unitTestProject,
+    test: {
+      ...unitTestProject.test,
+      // Source-wide V8 collection needs headroom after every test file has finished.
+      maxWorkers: 1,
+    },
+  },
+])
 
 export default {
   ...config,
