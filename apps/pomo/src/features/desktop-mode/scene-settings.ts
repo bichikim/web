@@ -140,7 +140,7 @@ const applyDesktopSceneSetting = (
 /** Applies validated scene-setting changes sent by another desktop WebView. */
 export const useDesktopSceneSettingsListener = (handlers: DesktopSceneSettingsHandlers): void => {
   onMount(() => {
-    if (!import.meta.env.POMO_IS_DESKTOP) {
+    if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
       return
     }
 
@@ -159,7 +159,7 @@ export const useDesktopSceneSettingsPublisher = (): DesktopSceneSettingsPublishe
   let channel: BroadcastChannel | null = null
 
   onMount(() => {
-    if (!import.meta.env.POMO_IS_DESKTOP) {
+    if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
       return
     }
 

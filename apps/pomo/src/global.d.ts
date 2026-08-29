@@ -4,12 +4,24 @@
 import type {JSX} from 'solid-js'
 
 interface ImportMetaEnv {
-  readonly POMO_ENVIRONMENT: string
-  readonly POMO_HAS_APPS_IN_TOSS_DEVTOOLS: boolean
-  readonly POMO_IS_APPS_IN_TOSS: boolean
-  readonly POMO_IS_DESKTOP: boolean
-  readonly POMO_PUBLIC_ORIGIN: string
-  readonly POMO_RELEASE: string
+  readonly POMO_CONNECT_SOURCES: string
+  readonly POMO_CONTENT_TYPE_OPTIONS: string
+  readonly POMO_PERMISSIONS_POLICY: string
+  readonly POMO_REFERRER_POLICY: string
+  readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
+  readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string
+  readonly VITE_POMO_ENVIRONMENT: string
+  readonly VITE_POMO_IS_APPS_IN_TOSS: string
+  readonly VITE_POMO_IS_DESKTOP: string
+  readonly VITE_POMO_LEGACY_PRIVACY_PATH: string
+  readonly VITE_POMO_LEGACY_TERMS_PATH: string
+  readonly VITE_POMO_PRETENDARD_BASE_PATH: string
+  readonly VITE_POMO_PRETENDARD_STYLESHEET_PATH: string
+  readonly VITE_POMO_PUBLIC_ORIGIN: string
+  readonly VITE_POMO_REFUND_PATH: string
+  readonly VITE_POMO_RELEASE: string
+  readonly VITE_POMO_WEB_PRIVACY_PATH: string
+  readonly VITE_POMO_WEB_TERMS_PATH: string
 }
 
 declare namespace App {

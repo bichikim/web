@@ -1,0 +1,245 @@
+import {PRETENDARD_FONT_ASSETS} from './font-assets'
+
+const pretendardLicensePath = `${PRETENDARD_FONT_ASSETS.basePath}/LICENSE.txt`
+
+const licenses = {
+  groups: [
+    {
+      description: 'Pomofi의 현재 사용자 경험과 온디바이스 실행 환경을 구성하는 소프트웨어입니다.',
+      entries: [
+        {
+          condition: '저작권 및 MIT 라이선스 고지를 배포물에 보존합니다.',
+          license: 'MIT',
+          links: [
+            {
+              label: 'SolidJS 라이선스 원문',
+              url: 'https://github.com/solidjs/solid/blob/main/LICENSE',
+            },
+            {
+              label: 'SolidStart 라이선스 원문',
+              url: 'https://github.com/solidjs/solid-start/blob/main/LICENSE',
+            },
+          ],
+          name: 'SolidJS · SolidStart',
+          use: '사용자 인터페이스와 서버 렌더링',
+        },
+        {
+          condition: '저작권 및 MIT 라이선스 고지를 배포물에 보존합니다.',
+          license: 'MIT',
+          links: [
+            {
+              label: 'Kobalte 라이선스 원문',
+              url: 'https://github.com/kobaltedev/kobalte/blob/main/LICENSE.md',
+            },
+          ],
+          name: 'Kobalte',
+          use: '접근 가능한 탭과 대화상자',
+        },
+        {
+          condition: '저작권, Apache 2.0 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'Apache-2.0',
+          links: [
+            {
+              label: 'Apps in Toss Web Framework 라이선스 원문',
+              url: 'https://cdn.jsdelivr.net/npm/@apps-in-toss/web-framework@3.0.4/LICENSE',
+            },
+          ],
+          name: 'Apps in Toss Web Framework',
+          use: '토스 앱 로그인, 저장소, 안전 영역과 화면 켜짐 유지',
+        },
+        {
+          condition: '각 프로젝트의 저작권, 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'Apache-2.0 · MIT',
+          links: [
+            {
+              label: 'Transformers.js 라이선스 원문',
+              url: 'https://github.com/huggingface/transformers.js/blob/main/LICENSE',
+            },
+            {
+              label: 'ONNX Runtime 라이선스 원문',
+              url: 'https://github.com/microsoft/onnxruntime/blob/main/LICENSE',
+            },
+          ],
+          name: 'Transformers.js · ONNX Runtime Web',
+          use: '브라우저 안에서 모델 다운로드 및 추론',
+        },
+        {
+          condition: '각 프로젝트의 저작권, 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'MIT · Apache-2.0',
+          links: [
+            {
+              label: 'PixiJS 라이선스 원문',
+              url: 'https://github.com/pixijs/pixijs/blob/dev/LICENSE',
+            },
+            {
+              label: 'UnoCSS 라이선스 원문',
+              url: 'https://github.com/unocss/unocss/blob/main/LICENSE',
+            },
+            {
+              label: 'class-variance-authority 라이선스 원문',
+              url: 'https://github.com/joe-bell/cva/blob/main/LICENSE',
+            },
+          ],
+          name: 'PixiJS · UnoCSS · class-variance-authority',
+          use: '집중 화면 렌더링, 스타일 시스템과 UI 변형 클래스',
+        },
+        {
+          condition: '저작권 및 MIT 라이선스 고지를 배포물에 보존합니다.',
+          license: 'MIT',
+          links: [
+            {
+              label: 'media-chrome 라이선스 원문',
+              url: 'https://github.com/muxinc/media-chrome/blob/main/LICENSE',
+            },
+          ],
+          name: 'media-chrome',
+          use: '음악 플레이어 컨트롤',
+        },
+        {
+          condition: 'hecomi와 Noeri Huisman의 저작권 및 MIT 라이선스 고지를 배포물에 보존합니다.',
+          license: 'MIT',
+          links: [
+            {
+              label: 'wLipSync 라이선스 원문',
+              url: 'https://github.com/mrxz/wLipSync/blob/main/LICENSE',
+            },
+          ],
+          name: 'wLipSync',
+          use: '기기 안에서 재생 음성의 입모양 분석',
+        },
+        {
+          condition: '저작권, Apache 2.0 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'Apache-2.0',
+          links: [
+            {
+              label: 'Dexie 라이선스 원문',
+              url: 'https://github.com/dexie/Dexie.js/blob/master/LICENSE',
+            },
+          ],
+          name: 'Dexie',
+          use: '로컬 대화 저장',
+        },
+        {
+          condition: '각 프로젝트의 저작권, 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'Apache-2.0 · MIT',
+          links: [
+            {
+              label: 'Neon Auth 라이선스 원문',
+              url: 'https://github.com/neondatabase/neon-js/blob/main/LICENSE',
+            },
+            {
+              label: 'Neon Serverless 라이선스 원문',
+              url: 'https://github.com/neondatabase/serverless/blob/main/LICENSE',
+            },
+          ],
+          name: 'Neon Database',
+          use: '로그인과 PostgreSQL 연결',
+        },
+        {
+          condition: '저작권, Apache 2.0 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'Apache-2.0',
+          links: [
+            {
+              label: 'Drizzle ORM 라이선스 원문',
+              url: 'https://github.com/drizzle-team/drizzle-orm/blob/main/LICENSE',
+            },
+          ],
+          name: 'Drizzle ORM',
+          use: '서버 데이터베이스 스키마와 쿼리',
+        },
+        {
+          condition: '저작권, Apache 2.0 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'Apache-2.0',
+          links: [
+            {
+              label: 'Vercel Functions 라이선스 원문',
+              url: 'https://github.com/vercel/vercel/blob/main/LICENSE',
+            },
+          ],
+          name: 'Vercel Functions',
+          use: '서버 응답 캐시 무효화',
+        },
+        {
+          condition: '저작권, Apache 2.0 라이선스 및 NOTICE를 배포물에 보존합니다.',
+          license: 'Apache-2.0',
+          links: [
+            {
+              label: 'OpenAI Node.js SDK 라이선스 원문',
+              url: 'https://github.com/openai/openai-node/blob/main/LICENSE',
+            },
+          ],
+          name: 'OpenAI Node.js SDK',
+          use: '서버의 오늘의 역사 콘텐츠 생성',
+        },
+        {
+          condition: '저작권 및 MIT 라이선스 고지를 배포물에 보존합니다.',
+          license: 'MIT',
+          links: [
+            {
+              label: 'Zod 라이선스 원문',
+              url: 'https://github.com/colinhacks/zod/blob/main/LICENSE',
+            },
+          ],
+          name: 'Zod',
+          use: '입력과 저장 데이터 검증',
+        },
+        {
+          condition: '저작권과 SIL Open Font License 1.1 전문을 글꼴 파일과 함께 배포합니다.',
+          license: 'SIL Open Font License 1.1',
+          links: [
+            {
+              label: '배포된 Pretendard 라이선스 원문',
+              url: pretendardLicensePath,
+            },
+            {
+              label: 'Pretendard 공식 저장소',
+              url: 'https://github.com/orioncactus/pretendard',
+            },
+          ],
+          name: 'Pretendard',
+          use: '한국어와 라틴 문자 사용자 인터페이스 글꼴',
+        },
+      ],
+      id: 'core-software',
+      summaryTitle: '오픈소스 소프트웨어',
+      title: '핵심 소프트웨어',
+    },
+    {
+      description: 'Pomofi에서 내려받는 공개 가중치 및 AI 모델입니다.',
+      entries: [
+        {
+          condition:
+            'OpenRAIL-M의 이용 제한을 적용하고 라이선스 사본과 관련 고지를 제공합니다. INT8 배포본에는 변경 사실을 표시합니다.',
+          license: 'OpenRAIL-M',
+          links: [
+            {
+              label: 'Supertonic 3 라이선스 원문',
+              url: 'https://huggingface.co/Supertone/supertonic-3/blob/3cadd1e/LICENSE',
+            },
+          ],
+          name: 'Supertonic 3 Full · INT8',
+          summaryName: 'Supertonic 3',
+          use: '기기 안에서 대화와 피드의 음성 합성',
+        },
+        {
+          condition: '모델 저장소의 LICENSE, NOTICE 및 저작권 고지를 배포물에 보존합니다.',
+          license: 'Apache-2.0',
+          links: [
+            {
+              label: 'Gemma 4 라이선스 원문',
+              url: 'https://ai.google.dev/gemma/apache_2',
+            },
+          ],
+          name: 'Gemma 4 E2B ONNX',
+          use: '브라우저 안에서 대화 초안 생성',
+        },
+      ],
+      id: 'models',
+      summaryTitle: '공개 가중치 및 AI 모델',
+      title: '공개 가중치 및 AI 모델',
+    },
+  ],
+  lastReviewed: '2026년 8월 29일',
+}
+
+export default licenses

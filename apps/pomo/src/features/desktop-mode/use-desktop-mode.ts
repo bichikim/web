@@ -47,7 +47,7 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
   }
 
   const onModeChange = async (nextMode: DesktopMode) => {
-    if (!import.meta.env.POMO_IS_DESKTOP || isChanging() || nextMode === mode()) {
+    if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true') || isChanging() || nextMode === mode()) {
       return
     }
 
@@ -93,7 +93,7 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
   }
 
   onMount(() => {
-    if (!import.meta.env.POMO_IS_DESKTOP) {
+    if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
       return
     }
 

@@ -61,7 +61,7 @@ const executeRegisteredHandler = () => {
 
 describe('entry-server', () => {
   beforeEach(() => {
-    Reflect.deleteProperty(process.env, 'POMO_BUILD_TARGET')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
     vi.mocked(getLocale).mockReturnValue('ko')
     vi.mocked(getTextDirection).mockReturnValue('rtl')
     solidWebMocks.template.mockImplementation((html) => {
@@ -118,7 +118,7 @@ describe('entry-server', () => {
   })
 
   it('should render the locked light document for the Apps in Toss target', async () => {
-    vi.stubEnv('POMO_BUILD_TARGET', 'apps-in-toss')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
 
     await import('../entry-server')
     executeRegisteredHandler()

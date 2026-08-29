@@ -33,7 +33,8 @@ const privacyPolicyPath = (platform: 'apps-in-toss' | 'web') =>
 
 export const PServicePolicyLinks = (props: PServicePolicyLinksProps) => {
   const platform = () =>
-    props.platform ?? (import.meta.env.POMO_IS_APPS_IN_TOSS ? 'apps-in-toss' : 'web')
+    props.platform ??
+    (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'apps-in-toss' : 'web')
 
   return (
     <nav aria-label={m.policy_navigation()} class={policyLinksClasses({tone: props.tone})}>

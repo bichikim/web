@@ -1,36 +1,10 @@
 export const BASE_SECURITY_HEADERS = {
-  'Permissions-Policy': [
-    'accelerometer=(self)',
-    'autoplay=(self)',
-    'camera=()',
-    'display-capture=()',
-    'encrypted-media=()',
-    'fullscreen=(self)',
-    'geolocation=()',
-    'gyroscope=(self)',
-    'magnetometer=()',
-    'microphone=(self)',
-    'midi=()',
-    'payment=()',
-    'picture-in-picture=()',
-    'screen-wake-lock=(self)',
-    'usb=()',
-  ].join(', '),
-  'Referrer-Policy': 'no-referrer',
-  'X-Content-Type-Options': 'nosniff',
+  'Permissions-Policy': import.meta.env.POMO_PERMISSIONS_POLICY,
+  'Referrer-Policy': import.meta.env.POMO_REFERRER_POLICY,
+  'X-Content-Type-Options': import.meta.env.POMO_CONTENT_TYPE_OPTIONS,
 } as const
 
-const CONNECT_SOURCES = [
-  "'self'",
-  'https://www.pomofi.io',
-  'https://storage.pomofi.io',
-  'https://huggingface.co',
-  'https://us.aws.cdn.hf.co',
-  'https://cdn.jsdelivr.net',
-  'https://pub-0e34511083544f8aaad14d0590013528.r2.dev',
-] as const
-
-const createConnectDirective = (): string => `connect-src ${CONNECT_SOURCES.join(' ')}`
+const createConnectDirective = (): string => `connect-src ${import.meta.env.POMO_CONNECT_SOURCES}`
 
 export const createContentSecurityPolicy = (nonce?: string): string => {
   const scriptSources = ["'self'", ...(nonce === undefined ? [] : [`'nonce-${nonce}'`])]

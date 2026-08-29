@@ -251,9 +251,9 @@ const getCurrentRoute = (): ClientErrorRoute => {
 }
 
 const getClientErrorContext = (): ClientErrorContext => ({
-  environment: import.meta.env.POMO_ENVIRONMENT ?? import.meta.env.MODE ?? 'unknown',
-  platform: import.meta.env.POMO_IS_APPS_IN_TOSS ? 'apps-in-toss' : 'web',
-  release: import.meta.env.POMO_RELEASE ?? 'local',
+  environment: import.meta.env.VITE_POMO_ENVIRONMENT ?? import.meta.env.MODE ?? 'unknown',
+  platform: import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'apps-in-toss' : 'web',
+  release: import.meta.env.VITE_POMO_RELEASE ?? 'local',
   route: getCurrentRoute(),
 })
 

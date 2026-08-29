@@ -163,7 +163,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     setErrorMessage(null)
     setIsEnabled(nextEnabled)
 
-    if (import.meta.env.POMO_IS_APPS_IN_TOSS) {
+    if (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') {
       setAppsInTossWakeLock(nextEnabled)
       return
     }
@@ -177,7 +177,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
   }
 
   onMount(() => {
-    if (import.meta.env.POMO_IS_APPS_IN_TOSS) {
+    if (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') {
       setAvailability('supported')
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible' && isEnabled()) {

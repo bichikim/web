@@ -41,7 +41,7 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_BRANCH_NAME: preview/${{ github.event.pull_request.head.ref }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
-        run: node apps/pomo/scripts/database/delete-preview-branch.mjs
+        run: node apps/pomo/scripts/build/database/delete-preview-branch.mjs
 
   cleanup-audio:
     name: Delete Preview audio objects
@@ -90,4 +90,4 @@ jobs:
           POMO_PAID_AUDIO_R2_BUCKET: pomofi-paid-audio-preview
           POMO_PAID_AUDIO_R2_PREFIX: previews/pr-${{ github.event.pull_request.number }}/
           POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY: ${{ secrets.POMO_PAID_AUDIO_PREVIEW_R2_SECRET_ACCESS_KEY }}
-        run: node apps/pomo/scripts/storage/delete-preview-audio.mjs
+        run: node apps/pomo/scripts/build/storage/delete-preview-audio.mjs

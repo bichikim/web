@@ -73,8 +73,8 @@ it('should use the same-origin API base URL for the web build', async () => {
 })
 
 it('should use the public API origin for the Apps in Toss build', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
-  vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://pomo.example')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://pomo.example')
   vi.resetModules()
   const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
   vi.stubGlobal('fetch', fetchMock)
@@ -86,8 +86,8 @@ it('should use the public API origin for the Apps in Toss build', async () => {
 })
 
 it('should resolve API, audio, and other relative assets from the public origin on desktop', async () => {
-  vi.stubEnv('POMO_IS_DESKTOP', '1')
-  vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://pomo.example')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://pomo.example')
   vi.resetModules()
   const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
   vi.stubGlobal('fetch', fetchMock)

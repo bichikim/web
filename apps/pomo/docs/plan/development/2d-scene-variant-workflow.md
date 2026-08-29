@@ -90,7 +90,7 @@ Image 1에서 팔, 손, 행동 도구만 <행동> 상태로 변경한다.
 
 AI는 프롬프트로 고정해도 머리 크기, 위치와 회전각을 미세하게 바꾼다. 전환 화면에서는 이 차이가 크게 보이므로 최종 머리는 기준 이미지의 픽셀을 재사용한다.
 
-현재 구현은 [`normalize-focus-room-day-heads.mjs`](../../scripts/normalize-focus-room-day-heads.mjs)를 사용한다.
+현재 구현은 [`normalize-day-heads.mjs`](../../../scripts/agent-tasks/focus-room/normalize-day-heads.mjs)를 사용한다.
 
 1. 기준 이미지와 대상 이미지에서 어두운 머리카락 픽셀을 찾는다.
 2. 각 행에서 두 머리카락 외곽의 합집합을 구한다.
@@ -159,8 +159,8 @@ pnpm lint
 - 눈 깜박임 원본: `asset-library/focus-room-source/animation/eyes-*.png`
 - 런타임 눈 깜박임 레이어: `src/features/focus-room-animation/assets/animation/eyes/<scene-state>/*.webp`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
-- 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
-- 눈 레이어 추출 스크립트: `scripts/create-focus-room-blink-assets.mjs`
+- 머리 정규화 스크립트: `scripts/agent-tasks/focus-room/normalize-day-heads.mjs`
+- 눈 레이어 추출 스크립트: `scripts/agent-tasks/focus-room/create-blink-assets.mjs`
 
 새 행동을 추가할 때도 새 장면 전체를 생성하지 않는다. 기존 시간대 마스터에서 행동 영역만 편집하고, 기존 기준 머리를 마지막에 정규화하는 순서를 유지한다.
 
@@ -186,8 +186,8 @@ night-user-closed.png
 ```
 
 ```bash
-POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-room-blink-assets.mjs
-node scripts/compress-focus-room-scenes.mjs
+POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/agent-tasks/focus-room/create-blink-assets.mjs
+node scripts/agent-tasks/focus-room/compress-scenes.mjs
 ```
 
 ## 10. 장면 전체에 깊이 변형을 적용한다
@@ -216,11 +216,11 @@ UV_CACHE_DIR=.temp/uv-cache uv pip install --python .temp/da3-venv/bin/python \
 
 ```bash
 HF_HOME=.temp/da3-cache MPLCONFIGDIR=.temp/matplotlib-cache KMP_DUPLICATE_LIB_OK=TRUE \
-  .temp/da3-venv/bin/python apps/pomo/scripts/create-focus-room-depth-maps.py \
+  .temp/da3-venv/bin/python apps/pomo/scripts/agent-tasks/focus-room/create-depth-maps.py \
   --da3-source .temp/depth-anything-3 \
   --input-dir apps/pomo/asset-library/focus-room-source/concept-art \
   --output-dir apps/pomo/asset-library/focus-room-source/depth
-cd apps/pomo && node scripts/compress-focus-room-scenes.mjs --depth-only
+cd apps/pomo && node scripts/agent-tasks/focus-room/compress-scenes.mjs --depth-only
 ```
 
 일부 장면만 갱신할 때는 `--only focus-room-<장면>-concept`를 장면마다 반복한다. 이 방식은 선택하지 않은 입력과 깊이맵의 해시가 모두 일치하는 완전한 기존 manifest가 있어야 실행된다.
@@ -240,7 +240,7 @@ shasum -a 256 -c focus-room-originals.sha256
 
 ```bash
 cd apps/pomo
-node scripts/compress-focus-room-scenes.mjs
+node scripts/agent-tasks/focus-room/compress-scenes.mjs
 ```
 
 PixiJS 로딩 표시는 장면 WebP의 네트워크·디코딩뿐 아니라 depth texture와 눈 texture 로드, stage 합성과 전환까지 포함한다. `Application.render()` 뒤 두 번의 animation frame을 지난 후에만 완료 처리해 합성 프레임이 실제 화면에 나오기 전에 로더가 사라지지 않게 한다.

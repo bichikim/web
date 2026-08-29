@@ -21,7 +21,7 @@ import {useUserSettings} from '../use-user-settings'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
 })
 
 afterEach(() => {
@@ -60,7 +60,7 @@ it('should expose account loading failures', async () => {
 })
 
 it('should expose anonymous Toss state without a stored session', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   mocks.readStoredAppSession.mockResolvedValue(null)
   const {result} = renderHook(useUserSettings)
 
@@ -69,7 +69,7 @@ it('should expose anonymous Toss state without a stored session', async () => {
 })
 
 it('should expose a valid Toss session without an email', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   mocks.readStoredAppSession.mockResolvedValue('token')
   mocks.validateAppSession.mockResolvedValue(true)
   const {result} = renderHook(useUserSettings)
@@ -81,7 +81,7 @@ it('should expose a valid Toss session without an email', async () => {
 })
 
 it('should clear an invalid Toss session and become anonymous', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   mocks.readStoredAppSession.mockResolvedValue('expired')
   mocks.validateAppSession.mockResolvedValue(false)
   mocks.clearStoredAppSession.mockResolvedValue(undefined)

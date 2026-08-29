@@ -40,7 +40,7 @@ afterEach(() => {
 })
 
 it('should redirect the web root to its localized Pomo home', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   const {default: RootPage} = await import('../index')
 
   render(() => <RootPage />)
@@ -50,7 +50,7 @@ it('should redirect the web root to its localized Pomo home', async () => {
 })
 
 it('should render and lazy-load the Apps in Toss home', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   const {default: RootPage} = await import('../index')
 
   render(() => <RootPage />)

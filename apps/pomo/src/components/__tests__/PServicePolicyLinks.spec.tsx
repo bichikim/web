@@ -10,7 +10,7 @@ afterEach(() => {
 })
 
 it('should link to the web policies by default', () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   render(() => <PServicePolicyLinks />)
 
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
@@ -23,7 +23,7 @@ it('should link to the web policies by default', () => {
 })
 
 it('should link to the Apps in Toss policies in the app build', () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   render(() => <PServicePolicyLinks />)
 
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(

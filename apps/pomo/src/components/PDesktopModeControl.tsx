@@ -36,7 +36,7 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
   }
 
   return (
-    <Show when={import.meta.env.POMO_IS_DESKTOP}>
+    <Show when={import.meta.env.VITE_POMO_IS_DESKTOP === 'true'}>
       <div
         aria-label={m.desktop_mode_label()}
         class="flex rounded-control border border-solid border-border bg-surface p-1 shadow-panel"

@@ -8,14 +8,14 @@ import {PDesktopModeControl} from '../PDesktopModeControl'
 afterEach(() => vi.unstubAllEnvs())
 
 it('should hide desktop controls in web builds', () => {
-  vi.stubEnv('POMO_IS_DESKTOP', '')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
   render(() => <PDesktopModeControl mode="normal" onModeChange={vi.fn()} />)
 
   expect(screen.queryByRole('group')).not.toBeInTheDocument()
 })
 
 it('should expose all modes, pending state, and transition errors', () => {
-  vi.stubEnv('POMO_IS_DESKTOP', '1')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
   const onModeChange = vi.fn().mockResolvedValue(undefined)
   const view = render(() => (
     <PDesktopModeControl
