@@ -1,3 +1,4 @@
+// oxlint-disable eslint/max-lines -- One component owns the media element, queue, persistence, previews, and output lifecycle.
 import {batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
@@ -19,6 +20,7 @@ import {
   usePPlaybackPersistence,
   writePPlaylist,
 } from '../../features/focus-room-audio'
+import {usePlayerVolumeDucking} from '../../features/focus-room-dialogue'
 import {MusicPlayerView} from '../MusicPlayerView'
 import {
   isAbortError,
@@ -45,6 +47,10 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   const [repeatMode, setRepeatMode] = createSignal<RepeatMode>('repeat-all')
   const [shuffleEnabled, setShuffleEnabled] = createSignal(true)
   const visualizer = usePAudioVisualizer()
+  usePlayerVolumeDucking({
+    isDialogueActive: () => props.isDialogueActive ?? false,
+    onGainChange: visualizer.setOutputGain,
+  })
   const currentTrack = createMemo(() => tracks()[currentIndex()])
   const playlistRequest = new AbortController()
   let audioElement: HTMLAudioElement | undefined
@@ -133,6 +139,11 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
 
   const restorePendingPlayback = () => {
     if (destroyed) {
+      return
+    }
+
+    if (audioElement !== undefined && audioElement.readyState < HTMLMediaElement.HAVE_METADATA) {
+      audioElement.load()
       return
     }
 

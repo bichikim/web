@@ -22,6 +22,7 @@ import {DialogueEventSettingRow} from './EventSettingRow'
 import {DialogueLibrary} from './Library'
 import {DialoguePlaybackModeSelect} from './PlaybackModeSelect'
 import {RandomEventSettings} from './RandomEventSettings'
+import {DialogueVolumeDuckingSettings} from './VolumeDuckingSettings'
 import {PSettingsActionLink} from '../settings/ActionLink'
 import {PSettingsEmptyState} from '../settings/EmptyState'
 import {PSettingsSectionHeading} from '../settings/SectionHeading'
@@ -231,6 +232,8 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
 
       <Tabs.Content value="dialogue-library">
         <section class={CLASSES.dialogueSettings}>
+          <DialogueVolumeDuckingSettings />
+
           <AutomaticDialogueSettings />
 
           <PSettingsSectionHeading

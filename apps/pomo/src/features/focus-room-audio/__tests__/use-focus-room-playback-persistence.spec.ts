@@ -35,8 +35,11 @@ const createHarness = () => {
   }
 }
 
-const createAudio = (currentTime: number, duration: number) =>
-  ({currentTime, duration}) as HTMLAudioElement
+const createAudio = (
+  currentTime: number,
+  duration: number,
+  readyState: number = HTMLMediaElement.HAVE_METADATA,
+) => ({currentTime, duration, readyState}) as HTMLAudioElement
 
 beforeEach(() => {
   storageMocks.write.mockReset().mockResolvedValue(undefined)
@@ -115,6 +118,25 @@ it('should defer restoration until the track and writable media element are read
     }) as HTMLAudioElement,
   )
   expect(harness.persistence.applyPendingPosition()).toBeNull()
+})
+
+it('should keep the pending position until media metadata is available', () => {
+  const harness = createHarness()
+  const loadingAudio = createAudio(0, Number.NaN, HTMLMediaElement.HAVE_NOTHING)
+  harness.setTrack(TRACK)
+  harness.setAudio(loadingAudio)
+  harness.persistence.setPendingPosition({isPlaying: true, positionSeconds: 3, trackId: TRACK.id})
+
+  expect(harness.persistence.applyPendingPosition()).toBeNull()
+
+  const readyAudio = createAudio(0, 10)
+  harness.setAudio(readyAudio)
+  expect(harness.persistence.applyPendingPosition()).toEqual({
+    isPlaying: true,
+    positionSeconds: 3,
+    trackId: TRACK.id,
+  })
+  expect(readyAudio.currentTime).toBe(3)
 })
 
 it('should throttle progress persistence and ignore storage rejection', async () => {

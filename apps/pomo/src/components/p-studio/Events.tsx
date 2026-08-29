@@ -54,6 +54,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       >
         <PMusicPlayer
           expanded={props.isPlayerExpanded}
+          isDialogueActive={events.isDialoguePlaying() || props.pomoSay.isPlaying()}
           onPlayingChange={props.onMusicPlayingChange}
           onExpandedChange={props.onPlayerExpandedChange}
           onTrackChange={props.onTrackChange}
