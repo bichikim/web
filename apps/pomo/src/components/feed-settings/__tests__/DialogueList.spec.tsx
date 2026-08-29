@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
@@ -58,6 +58,14 @@ const createController = (dialogues: ReadonlyArray<FeedDialogueListItem> = [FEED
 
 afterEach(() => {
   vi.restoreAllMocks()
+})
+
+it('should omit source links from saved feed dialogue items', () => {
+  const {controller} = createController()
+  render(() => <PFeedDialogueList controller={controller} />)
+
+  const dialogueList = screen.getByRole('list', {name: '피드 대화'})
+  expect(within(dialogueList).queryByRole('link')).toBeNull()
 })
 
 it('should require confirmation before deleting a feed dialogue', async () => {
