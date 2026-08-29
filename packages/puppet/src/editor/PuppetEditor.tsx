@@ -1,6 +1,11 @@
 import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
-import {createDemoDocument, parseDocument, type PuppetDocument, serializeDocument} from '../player'
+import {
+  createDemoDocument,
+  preparePuppetDocument,
+  type PuppetDocument,
+  serializeDocument,
+} from '../player'
 import {importPng, type ImportPngErrorCode} from './import-png'
 import {EditorInspector} from './internal/EditorInspector'
 import {EditorLayerPanel} from './internal/EditorLayerPanel'
@@ -19,6 +24,7 @@ interface ImportDocumentOptions {
   readonly file?: File
   readonly onFailure: (message: string) => void
   readonly onSuccess: (document: PuppetDocument, fileName: string) => void
+  readonly signal: AbortSignal
 }
 
 const downloadDocument = (document: PuppetDocument) => {
@@ -39,7 +45,10 @@ const importDocument = async (options: ImportDocumentOptions) => {
     return
   }
 
-  const result = parseDocument(await options.file.text())
+  const result = await preparePuppetDocument({
+    signal: options.signal,
+    source: await options.file.text(),
+  })
 
   if (!result.ok) {
     options.onFailure('Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.')
@@ -83,9 +92,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [notice, setNotice] = createSignal<string | null>(null)
   let importGeneration = 0
+  let importAbortController: AbortController | undefined
 
   onCleanup(() => {
     importGeneration += 1
+    importAbortController?.abort()
   })
 
   createEffect(() => {
@@ -98,7 +109,10 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     }
 
     importGeneration += 1
+    importAbortController?.abort()
     const activeGeneration = importGeneration
+    const abortController = new AbortController()
+    importAbortController = abortController
     importDocument({
       file,
       onFailure(message) {
@@ -113,6 +127,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
           setNotice(`${fileName}을 불러왔습니다.`)
         }
       },
+      signal: abortController.signal,
     }).catch(() => {
       if (activeGeneration === importGeneration) {
         setNotice('파일을 읽지 못했습니다.')
@@ -126,6 +141,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     }
 
     importGeneration += 1
+    importAbortController?.abort()
     const activeGeneration = importGeneration
     importPng(file)
       .then((result) => {
@@ -177,7 +193,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
           <div class="viewport">
             <PlayerCanvas document={sourceDocument()} onStatusChange={setPlayerStatus} />
             <Show when={playerStatus() === 'loading'}>
-              <p class="viewport-message">JSON을 검증한 뒤 플레이어에 적용하고 있습니다.</p>
+              <p class="viewport-message">문서를 검증한 뒤 플레이어에 적용하고 있습니다.</p>
             </Show>
             <MeshEditor
               activePartId={activePartId() ?? undefined}
