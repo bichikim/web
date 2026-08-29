@@ -1,4 +1,4 @@
-import {createSignal, Show} from 'solid-js'
+import {createMemo, createSignal, Show} from 'solid-js'
 
 import {PButton} from './PButton'
 import type {PSceneStyle} from '../features/focus-room-animation'
@@ -112,6 +112,10 @@ const createFeedStatusActions = (
 export const PFeedStatus = (props: PFeedStatusProps) => {
   const feeds = usePFeedContext()
   const actions = createFeedStatusActions(feeds, useModelDownload())
+  const errorState = createMemo(() => {
+    const state = feeds.state()
+    return state.status === 'error' ? state : null
+  })
 
   return (
     <>
@@ -122,25 +126,14 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
             <Show
               when={feeds.latestReady()}
               fallback={
-                <Show when={feeds.state().status !== 'idle'}>
-                  <FeedStatusSurface sceneStyle={props.sceneStyle} state={feeds.state().status}>
-                    <span
-                      aria-hidden="true"
-                      class={
-                        feeds.state().status === 'error'
-                          ? 'i-tabler-alert-circle size-5'
-                          : CLASSES.feedStatusSpinner
-                      }
-                    />
-                    <span class={CLASSES.feedStatusCopy}>
-                      <strong>
-                        {feeds.state().status === 'error'
-                          ? m.feed_needs_attention()
-                          : m.feed_reading()}
-                      </strong>
-                      <small>{feeds.state().message}</small>
-                    </span>
-                    <Show when={feeds.state().status === 'error'}>
+                <Show when={errorState()}>
+                  {(state) => (
+                    <FeedStatusSurface sceneStyle={props.sceneStyle} state="error">
+                      <span aria-hidden="true" class="i-tabler-alert-circle size-5" />
+                      <span class={CLASSES.feedStatusCopy}>
+                        <strong>{m.feed_needs_attention()}</strong>
+                        <small>{state().message}</small>
+                      </span>
                       <PButton
                         class={CLASSES.feedStatusAction}
                         onPress={feeds.syncNow}
@@ -149,8 +142,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                       >
                         {m.feed_check_again()}
                       </PButton>
-                    </Show>
-                  </FeedStatusSurface>
+                    </FeedStatusSurface>
+                  )}
                 </Show>
               }
             >
