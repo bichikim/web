@@ -6,6 +6,7 @@ export type {
   AdminAsset,
   AdminCatalog,
   AdminOffer,
+  AdminPendingTrack,
   AdminTrack,
   AlbumStatusAction,
 } from './catalog'

@@ -7,32 +7,20 @@ import {
   type AdminAsset,
   type AdminMusicModel,
   type AdminOffer,
+  type AdminPendingTrack,
   type AdminTrack,
   getAlbumTranslation,
 } from '../../features/admin-music'
 import {AlbumReleaseCard} from './AlbumReleaseCard'
+import {BUTTON_CLASSES, DANGER_BUTTON_CLASSES, SECONDARY_BUTTON_CLASSES} from './button-classes'
+import {PendingTrackList} from './PendingTrackList'
 import TrackFields from './TrackFields'
 
 const AdminTrackPreview = clientOnly(() => import('./AdminTrackPreview'), {lazy: true})
 
-const BUTTON_CLASSES = cx(
-  'h-11 rounded-3 border border-#e8bc88/55 bg-#e8bc88 px-5 text-sm font-750 text-#21170f',
-  'transition hover:bg-#f2cca1 focus-visible:outline-2 focus-visible:outline-offset-3',
-  'focus-visible:outline-#e8bc88 disabled:cursor-wait disabled:opacity-55',
-)
 const FIELD_CLASSES = cx(
   'h-11 w-full rounded-3 border border-white/15 bg-white/5 px-3 text-sm text-white outline-none',
   'placeholder:text-white/30 focus:border-#e8bc88/70',
-)
-const SECONDARY_BUTTON_CLASSES = cx(
-  'h-10 rounded-3 border border-white/15 bg-white/5 px-4 text-sm font-700 text-white',
-  'transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-3',
-  'focus-visible:outline-#e8bc88',
-)
-const DANGER_BUTTON_CLASSES = cx(
-  'min-h-9 rounded-3 border border-#e78f8f/35 bg-transparent px-3 text-xs font-700',
-  'text-#f0aaaa transition hover:bg-#e78f8f/10 focus-visible:outline-2',
-  'focus-visible:outline-offset-2 focus-visible:outline-#f0aaaa disabled:cursor-wait disabled:opacity-45',
 )
 const TAB_CLASSES = cx(
   'min-h-11 whitespace-nowrap border-b-2 px-1 text-sm font-750 transition',
@@ -123,6 +111,7 @@ const OfferForm = (props: AlbumTaskFormProps) => (
 interface TrackPanelProps extends AlbumTaskFormProps {
   readonly albumStatus: AdminAlbum['status']
   readonly assets: ReadonlyArray<AdminAsset>
+  readonly pendingTracks: ReadonlyArray<AdminPendingTrack>
   readonly tracks: ReadonlyArray<AdminTrack>
 }
 
@@ -149,14 +138,13 @@ const TrackPanel = (props: TrackPanelProps) => {
       await props.model.handleTrackRemove(track.id)
     }
   }
-
   return (
     <section aria-labelledby="tracks-tab" class="p-5 sm:p-6" id="tracks-panel" role="tabpanel">
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 class="m-0 text-lg font-800">수록곡 {playableTracks().length}</h3>
           <p class="mb-0 mt-1 text-sm leading-6 text-white/50">
-            MP3 하나가 수록곡 하나입니다. MP3가 활성화된 곡만 여기에 표시됩니다.
+            활성화된 곡만 수록곡 수에 포함됩니다. 확인이 필요한 등록은 별도로 표시됩니다.
           </p>
         </div>
         <button
@@ -195,43 +183,53 @@ const TrackPanel = (props: TrackPanelProps) => {
             </button>
           </div>
         }
-        when={playableTracks().length > 0}
+        when={playableTracks().length > 0 || props.pendingTracks.length > 0}
       >
-        <ol class="mb-0 mt-6 list-none divide-y divide-white/8 p-0">
-          <For each={playableTracks()}>
-            {(track, index) => (
-              <li class="grid gap-x-4 gap-y-3 py-4 sm:grid-cols-[2rem_minmax(0,1fr)_auto]">
-                <span class="pt-2 text-center text-xs font-700 tabular-nums text-white/35">
-                  {String(index() + 1).padStart(2, '0')}
-                </span>
-                <span class="min-w-0 pt-1">
-                  <span class="block truncate text-sm font-750 text-white/90">{track.title}</span>
-                  <span class="mt-1 block truncate text-xs text-white/45">{track.artist}</span>
-                </span>
-                <button
-                  aria-label={`${track.title} 수록곡 삭제`}
-                  class={`${DANGER_BUTTON_CLASSES} justify-self-end`}
-                  disabled={props.model.removingTrackId() === track.id}
-                  onClick={async (event) => handleTrackRemove(event, track)}
-                  type="button"
-                >
-                  {props.model.removingTrackId() === track.id ? '삭제 중…' : '삭제'}
-                </button>
-                <div class="min-w-0 sm:col-start-2 sm:col-end-4">
-                  <AdminTrackPreview
-                    active={playingTrackId() === track.id}
-                    fallback={
-                      <div class="h-10 animate-pulse rounded-3 bg-white/5" aria-hidden="true" />
-                    }
-                    onPlay={() => setPlayingTrackId(track.id)}
-                    title={track.title}
-                    trackId={track.id}
-                  />
-                </div>
-              </li>
-            )}
-          </For>
-        </ol>
+        <PendingTrackList
+          assets={props.assets}
+          confirmingAssetId={props.model.confirmingAssetId()}
+          onConfirm={props.model.handleTrackConfirmation}
+          onRemove={props.model.handleTrackRemove}
+          pendingTracks={props.pendingTracks}
+          removingTrackId={props.model.removingTrackId()}
+        />
+        <Show when={playableTracks().length > 0}>
+          <ol class="mb-0 mt-6 list-none divide-y divide-white/8 p-0">
+            <For each={playableTracks()}>
+              {(track, index) => (
+                <li class="grid gap-x-4 gap-y-3 py-4 sm:grid-cols-[2rem_minmax(0,1fr)_auto]">
+                  <span class="pt-2 text-center text-xs font-700 tabular-nums text-white/35">
+                    {String(index() + 1).padStart(2, '0')}
+                  </span>
+                  <span class="min-w-0 pt-1">
+                    <span class="block truncate text-sm font-750 text-white/90">{track.title}</span>
+                    <span class="mt-1 block truncate text-xs text-white/45">{track.artist}</span>
+                  </span>
+                  <button
+                    aria-label={`${track.title} 수록곡 삭제`}
+                    class={`${DANGER_BUTTON_CLASSES} justify-self-end`}
+                    disabled={props.model.removingTrackId() === track.id}
+                    onClick={async (event) => handleTrackRemove(event, track)}
+                    type="button"
+                  >
+                    {props.model.removingTrackId() === track.id ? '삭제 중…' : '삭제'}
+                  </button>
+                  <div class="min-w-0 sm:col-start-2 sm:col-end-4">
+                    <AdminTrackPreview
+                      active={playingTrackId() === track.id}
+                      fallback={
+                        <div class="h-10 animate-pulse rounded-3 bg-white/5" aria-hidden="true" />
+                      }
+                      onPlay={() => setPlayingTrackId(track.id)}
+                      title={track.title}
+                      trackId={track.id}
+                    />
+                  </div>
+                </li>
+              )}
+            </For>
+          </ol>
+        </Show>
       </Show>
     </section>
   )
@@ -454,7 +452,9 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
   const [isStatusReviewOpen, setIsStatusReviewOpen] = createSignal(false)
   const albumTracks = () =>
     props.model.catalog().tracks.filter((track) => track.albumId === props.album.id)
-  const trackIds = () => new Set(albumTracks().map((track) => track.id))
+  const pendingTracks = () =>
+    props.model.catalog().pendingTracks.filter((track) => track.albumId === props.album.id)
+  const trackIds = () => new Set([...albumTracks(), ...pendingTracks()].map((track) => track.id))
   const albumAssets = () =>
     props.model.catalog().assets.filter((asset) => trackIds().has(asset.trackId))
   const albumOffers = () =>
@@ -557,6 +557,7 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
               albumTitle={albumTitle()}
               assets={albumAssets()}
               model={props.model}
+              pendingTracks={pendingTracks()}
               tracks={albumTracks()}
             />
           </Match>

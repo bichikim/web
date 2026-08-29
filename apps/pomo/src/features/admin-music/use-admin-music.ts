@@ -31,6 +31,7 @@ export const useAdminMusic = () => {
     albums: [],
     assets: [],
     offers: [],
+    pendingTracks: [],
     tracks: [],
   })
   const [isLoading, setIsLoading] = createSignal(true)

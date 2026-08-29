@@ -90,7 +90,9 @@ const createUnconfirmedUploadResult = (cause: unknown): UnconfirmedTrackAudioUpl
   status: 'unconfirmed',
 })
 
-const completeTrackUpload = async (assetId: string): Promise<TrackAudioUploadResult> => {
+export const confirmTrackAudioRegistration = async (
+  assetId: string,
+): Promise<TrackAudioUploadResult> => {
   let hasAmbiguousAttempt = false
   let lastError: unknown
 
@@ -145,5 +147,5 @@ export const uploadTrackAudio = async (
     }),
     'MP3를 R2에 업로드하지 못했습니다.',
   )
-  return completeTrackUpload(reservation.assetId)
+  return confirmTrackAudioRegistration(reservation.assetId)
 }
