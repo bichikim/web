@@ -14,7 +14,6 @@ const componentMocks = vi.hoisted(() => ({
   focusRoomLayout: vi.fn(),
   metadata: vi.fn(),
   metaProvider: vi.fn(),
-  modelDownloadOverlay: vi.fn(),
   modelDownloadProvider: vi.fn(),
   recoveryBoundary: vi.fn(),
   router: vi.fn(),
@@ -26,9 +25,6 @@ vi.mock('@solidjs/start/router', () => ({FileRoutes: componentMocks.fileRoutes})
 vi.mock('../components/PDocumentMetadata', () => ({PDocumentMetadata: componentMocks.metadata}))
 vi.mock('../components/PFocusRoomLayout', () => ({
   PFocusRoomLayout: componentMocks.focusRoomLayout,
-}))
-vi.mock('../components/PModelDownloadOverlay', () => ({
-  PModelDownloadOverlay: componentMocks.modelDownloadOverlay,
 }))
 vi.mock('../components/PRecoveryBoundary', () => ({
   PRecoveryBoundary: componentMocks.recoveryBoundary,
@@ -93,7 +89,6 @@ describe('App', () => {
     ))
     componentMocks.fileRoutes.mockImplementation(() => <div>file routes</div>)
     componentMocks.metadata.mockImplementation(() => <div>document metadata</div>)
-    componentMocks.modelDownloadOverlay.mockImplementation(() => <div>download overlay</div>)
   })
 
   afterEach(() => {
@@ -102,7 +97,7 @@ describe('App', () => {
     vi.clearAllMocks()
   })
 
-  it('should compose application services, route content, recovery, and download UI', () => {
+  it('should compose application services, route content, and model download state', () => {
     render(() => <App />)
 
     expect(useAppsInTossDevtools).toHaveBeenCalledOnce()
@@ -113,7 +108,6 @@ describe('App', () => {
     expect(componentMocks.modelDownloadProvider).toHaveBeenCalledOnce()
     expect(screen.getByText('document metadata')).toBeTruthy()
     expect(screen.getByText('file routes')).toBeTruthy()
-    expect(screen.getByText('download overlay')).toBeTruthy()
     expect(screen.getByTestId('focus-room-layout')).toBeTruthy()
     expect(screen.getByTestId('recovery-boundary')).toBeTruthy()
     expect(recoveryProps).toMatchObject({canRetry, onError, onReady, onReload, onRetry})

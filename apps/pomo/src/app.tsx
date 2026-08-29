@@ -9,7 +9,6 @@ import {Suspense} from 'solid-js'
 import {PDocumentMetadata} from './components/PDocumentMetadata'
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {PRecoveryBoundary} from './components/PRecoveryBoundary'
-import {PModelDownloadOverlay} from './components/PModelDownloadOverlay'
 import {useApplicationRecovery} from './features/application-recovery'
 import {useAppsInTossDevtools} from './features/apps-in-toss-devtools'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
@@ -37,7 +36,6 @@ export default function App() {
                 <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
               </Suspense>
             </PRecoveryBoundary>
-            <PModelDownloadOverlay />
           </PModelDownloadProvider>
         </MetaProvider>
       )}
