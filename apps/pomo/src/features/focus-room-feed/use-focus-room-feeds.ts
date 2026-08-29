@@ -542,9 +542,19 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     recoveryJobs,
     async retryRecovery() {
       const jobs = recoveryJobs()
+
+      if (jobs.length === 0) {
+        return
+      }
+
       const jobIds = jobs.map((job) => job.id)
       await getRepositories().feedRepository.retryJobs(jobIds, new Date().toISOString())
       setRecoveryJobs([])
+      setFeedState({
+        message: '피드 대화를 다시 만들 준비 중…',
+        progress: 0,
+        status: 'preparing',
+      })
       scheduleJobs(jobIds, true)
     },
     state,

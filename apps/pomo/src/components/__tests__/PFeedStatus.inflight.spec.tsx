@@ -43,6 +43,7 @@ it('should ignore a duplicated retry request while model availability is still c
     latestReady: () => null,
     recoveryJobs: () => [{modelId: 'full'}],
     retryRecovery: vi.fn(async () => undefined),
+    state: () => ({message: '대기 중', status: 'idle'}),
   } as never)
   const runtime: ModelDownloadRuntime = {
     createTextClient: () => {

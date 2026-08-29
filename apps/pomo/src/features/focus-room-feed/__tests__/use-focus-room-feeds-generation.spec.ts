@@ -514,3 +514,68 @@ it('should complete a generated feed dialogue and roll it back on metadata failu
   )
   rollbackView.cleanup()
 })
+
+it('should keep generation active while moving to the next queued feed dialogue', async () => {
+  const firstJob = createJob({id: 'job-1', itemTitle: '첫 번째 피드', script: '첫 번째 소식'})
+  const secondJob = createJob({
+    feedItemId: 'item-2',
+    id: 'job-2',
+    itemTitle: '두 번째 피드',
+    script: '두 번째 소식',
+  })
+  const firstItem = createItem({itemTitle: firstJob.itemTitle})
+  const secondItem = createItem({
+    feedItemId: secondJob.feedItemId,
+    id: 'feed-1\u0000item-2',
+    itemTitle: secondJob.itemTitle,
+  })
+  const voiceClient = createVoiceClient()
+  let finishSecondGeneration: () => void = () => undefined
+  vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockResolvedValue(voiceClient)
+  vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio')
+    .mockResolvedValueOnce({
+      ok: true,
+      value: {
+        audio: new Blob(['first audio']),
+        durationMs: 1000,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: firstJob.script}],
+      },
+    })
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishSecondGeneration = () => resolve({message: '테스트 종료', ok: false})
+        }),
+    )
+  vi.spyOn(crypto, 'randomUUID')
+    .mockReturnValueOnce('00000000-0000-4000-8000-000000000011')
+    .mockReturnValueOnce('00000000-0000-4000-8000-000000000012')
+  repositoryMocks.listConnections.mockReturnValue([createConnection()])
+  repositoryMocks.feedRepository.listJobs.mockResolvedValue([firstJob, secondJob])
+  repositoryMocks.feedRepository.listItems.mockResolvedValue([firstItem, secondItem])
+  syncMocks.synchronizeFeeds.mockResolvedValue({
+    failures: [],
+    queuedJobIds: [firstJob.id, secondJob.id],
+    successfulConnections: 1,
+  })
+  preparationMocks.prepareFeedGeneration.mockImplementation(async (options) => {
+    await options.prepareModel(options.job.modelId)
+    return {job: options.job, status: 'ready'}
+  })
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+
+  await vi.waitFor(() =>
+    expect(feedGenerationRuntime.generateDialogueAudio).toHaveBeenCalledTimes(2),
+  )
+
+  expect(repositoryMocks.feedRepository.complete).toHaveBeenCalledOnce()
+  expect(view.result.state()).toEqual({
+    message: '두 번째 피드 음성을 만들고 있어요.',
+    progress: null,
+    status: 'generating',
+  })
+
+  finishSecondGeneration()
+  await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
+  view.cleanup()
+})
