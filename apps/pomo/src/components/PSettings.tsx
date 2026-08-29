@@ -10,6 +10,7 @@ import {PSwitch} from './PSwitch'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {PActivity, PGaze} from '../features/focus-room-scene-preferences'
+import {useFullscreen} from '../features/fullscreen'
 import {
   getLocalizedActivityOptions,
   getLocalizedGazeOptions,
@@ -42,7 +43,7 @@ const CLASSES = {
     '[&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
   ].join(' '),
   settingsSection: 'grid gap-4 border-t border-solid border-border pt-5',
-  settingsWakeLock: 'pomo-settings__wake-lock min-h-12',
+  settingsToggle: 'min-h-12',
 } as const
 
 export interface PSettingsProps {
@@ -173,7 +174,37 @@ const PGeneralWeatherSettings = (props: PSettingsProps) => (
 )
 
 const PGeneralDisplaySettings = (props: PSettingsProps) => {
+  const fullscreen = useFullscreen()
   const wakeLock = useScreenWakeLock()
+  const fullscreenDescription = createMemo(() => {
+    const error = fullscreen.error()
+    if (error !== null) {
+      switch (error) {
+        case 'enter-failed':
+          return m.settings_fullscreen_enter_failed()
+        case 'exit-failed':
+          return m.settings_fullscreen_exit_failed()
+      }
+
+      const exhaustiveError: never = error
+      return exhaustiveError
+    }
+
+    const availability = fullscreen.availability()
+    switch (availability) {
+      case 'checking':
+        return m.settings_fullscreen_checking()
+      case 'supported':
+        return fullscreen.isRequestPending()
+          ? m.settings_fullscreen_requesting()
+          : m.settings_fullscreen_supported()
+      case 'unsupported':
+        return m.settings_fullscreen_unsupported()
+    }
+
+    const exhaustiveAvailability: never = availability
+    return exhaustiveAvailability
+  })
   const wakeLockDescription = createMemo(() => {
     const errorMessage = wakeLock.errorMessage()
 
@@ -196,6 +227,8 @@ const PGeneralDisplaySettings = (props: PSettingsProps) => {
     const exhaustiveAvailability: never = availability
     return exhaustiveAvailability
   })
+  const isFullscreenDisabled = () =>
+    fullscreen.availability() !== 'supported' || fullscreen.isRequestPending()
   const isWakeLockDisabled = () => wakeLock.availability() !== 'supported'
 
   return (
@@ -207,8 +240,16 @@ const PGeneralDisplaySettings = (props: PSettingsProps) => {
       />
       <div class={CLASSES.settingsGrid}>
         <PSwitch
+          checked={fullscreen.isEnabled()}
+          class={CLASSES.settingsToggle}
+          description={fullscreenDescription()}
+          disabled={isFullscreenDisabled()}
+          label={m.settings_fullscreen()}
+          onChange={fullscreen.onEnabledChange}
+        />
+        <PSwitch
           checked={wakeLock.isEnabled()}
-          class={CLASSES.settingsWakeLock}
+          class={CLASSES.settingsToggle}
           description={wakeLockDescription()}
           disabled={isWakeLockDisabled()}
           label={m.settings_wake_lock()}
