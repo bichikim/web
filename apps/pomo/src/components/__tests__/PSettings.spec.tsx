@@ -11,6 +11,7 @@ import {PSelect} from 'src/components/PSelect'
 import {PSwitch, type PSwitchProps} from 'src/components/PSwitch'
 import {useFullscreen} from 'src/features/fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
+import {LEGACY_WEATHER_LOCATIONS} from 'src/features/weather'
 import {PDialogueSettings} from '../PDialogueSettings'
 import {PWeatherSettings} from '../PWeatherSettings'
 import {PSettings} from '../PSettings'
@@ -126,11 +127,11 @@ beforeEach(() => {
   ))
   vi.mocked(PWeatherSettings).mockImplementation((props) => (
     <button
-      data-city={props.citySlug}
+      data-location={props.location?.id}
       data-scene-mode={props.sceneMode}
       onClick={() => {
         props.onEnabledChange?.(!props.enabled)
-        props.onCityChange?.('seoul')
+        props.onLocationChange?.(LEGACY_WEATHER_LOCATIONS.seoul)
         props.onSceneModeChange?.('rain')
       }}
       type="button"
@@ -225,7 +226,7 @@ it('should forward every scene, weather, and modal action', () => {
   const onSceneStyleChange = vi.fn()
   const onScreenSaverDelayChange = vi.fn()
   const onTimeModeChange = vi.fn()
-  const onWeatherCityChange = vi.fn()
+  const onWeatherLocationChange = vi.fn()
   const onWeatherEnabledChange = vi.fn()
   const onWeatherSceneModeChange = vi.fn()
   render(() => (
@@ -238,7 +239,7 @@ it('should forward every scene, weather, and modal action', () => {
       onSceneStyleChange={onSceneStyleChange}
       onScreenSaverDelayChange={onScreenSaverDelayChange}
       onTimeModeChange={onTimeModeChange}
-      onWeatherCityChange={onWeatherCityChange}
+      onWeatherLocationChange={onWeatherLocationChange}
       onWeatherEnabledChange={onWeatherEnabledChange}
       onWeatherSceneModeChange={onWeatherSceneModeChange}
     />
@@ -268,7 +269,7 @@ it('should forward every scene, weather, and modal action', () => {
     true,
   )
   expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
-  expect(onWeatherCityChange).toHaveBeenCalledWith('seoul')
+  expect(onWeatherLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.seoul)
   expect(onWeatherSceneModeChange).toHaveBeenCalledWith('rain')
   const wakeLockSwitch = vi
     .mocked(PSwitch)

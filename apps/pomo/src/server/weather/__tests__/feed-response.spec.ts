@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import type {WeatherFeed} from 'src/features/weather'
+import type {LegacyWeatherFeed} from 'src/features/weather'
 import {createWeatherFeedResponse} from '../feed-response'
 
 const mocks = vi.hoisted(() => ({getWeatherFeedState: vi.fn(), ingestWeatherCity: vi.fn()}))
@@ -22,7 +22,7 @@ const feed = {
   source: {name: '기상청', url: 'https://www.data.go.kr/data/15084084/openapi.do'},
   stale: false,
   updatedAt: '2026-08-22T00:00:00.000Z',
-} satisfies WeatherFeed
+} satisfies LegacyWeatherFeed
 
 beforeEach(() => {
   vi.clearAllMocks()

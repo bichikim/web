@@ -3,11 +3,10 @@
 import {render, screen} from '@solidjs/testing-library'
 import {expect, it} from 'vitest'
 
-import type {WeatherFeed} from 'src/features/weather'
+import {LEGACY_WEATHER_LOCATIONS, type WeatherFeed} from 'src/features/weather'
 import {PWeatherStatus} from '../PWeatherStatus'
 
 const createFeed = (overrides: Partial<WeatherFeed['current']> = {}): WeatherFeed => ({
-  city: {label: '서울', slug: 'seoul'},
   current: {
     condition: 'clear',
     humidityPercent: 40,
@@ -16,9 +15,10 @@ const createFeed = (overrides: Partial<WeatherFeed['current']> = {}): WeatherFee
     ...overrides,
   },
   expiresAt: '2026-08-22T02:00:00.000Z',
+  location: LEGACY_WEATHER_LOCATIONS.seoul,
   observedAt: '2026-08-22T00:00:00.000Z',
-  schemaVersion: 1,
-  source: {name: '기상청', url: 'https://www.data.go.kr/data/15084084/openapi.do'},
+  schemaVersion: 2,
+  source: {name: 'OpenWeather', url: 'https://openweathermap.org/'},
   stale: false,
   updatedAt: '2026-08-22T00:00:00.000Z',
 })
@@ -68,11 +68,15 @@ it('should not render a status when weather is disabled', () => {
 })
 
 it('should show loading and error states for the selected city', () => {
-  const {unmount} = render(() => <PWeatherStatus state={{citySlug: 'busan', status: 'loading'}} />)
+  const {unmount} = render(() => (
+    <PWeatherStatus state={{location: LEGACY_WEATHER_LOCATIONS.busan, status: 'loading'}} />
+  ))
   expect(screen.getByRole('status').textContent).toContain('부산')
   expect(screen.getByRole('status').querySelector('.i-tabler-loader-2')).not.toBeNull()
   unmount()
-  render(() => <PWeatherStatus state={{citySlug: 'jeju', status: 'error'}} />)
+  render(() => (
+    <PWeatherStatus state={{location: LEGACY_WEATHER_LOCATIONS.jeju, status: 'error'}} />
+  ))
   expect(screen.getByRole('status').textContent).toContain('제주')
   expect(screen.getByRole('status').querySelector('.i-tabler-cloud-off')).not.toBeNull()
 })

@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import {Match, Show, Switch} from 'solid-js'
 
 import type {PSceneStyle} from '../features/focus-room-animation'
-import {getLocalizedWeatherCityLabel, getLocalizedWeatherLabel} from '../features/localization'
+import {getLocalizedWeatherLabel, getLocalizedWeatherLocationLabel} from '../features/localization'
 import {getWeatherPresentation, type WeatherState} from '../features/weather'
 import * as m from '@paraglide/message'
 import {WeatherStatusSurface} from './weather-status/Surface'
@@ -21,7 +21,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
             aria-hidden="true"
             class="i-tabler-loader-2 size-4 animate-spin motion-reduce:animate-none"
           />
-          {m.weather_loading({city: getLocalizedWeatherCityLabel(state().citySlug)})}
+          {m.weather_loading({city: getLocalizedWeatherLocationLabel(state().location)})}
         </WeatherStatusSurface>
       )}
     </Match>
@@ -29,7 +29,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
       {(state) => (
         <WeatherStatusSurface sceneStyle={props.sceneStyle}>
           <span aria-hidden="true" class="i-tabler-cloud-off size-4 text-muted-foreground" />
-          {m.weather_error({city: getLocalizedWeatherCityLabel(state().citySlug)})}
+          {m.weather_error({city: getLocalizedWeatherLocationLabel(state().location)})}
         </WeatherStatusSurface>
       )}
     </Match>
@@ -45,7 +45,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
           <WeatherStatusSurface sceneStyle={props.sceneStyle}>
             <span aria-hidden="true" class={cx(presentation().icon, 'size-4 text-highlight')} />
             <span>
-              {getLocalizedWeatherCityLabel(state().feed.city.slug)} ·{' '}
+              {getLocalizedWeatherLocationLabel(state().feed.location)} ·{' '}
               {getLocalizedWeatherLabel(state().feed.current.condition)}
               <Show when={temperatureLabel()}>{(label) => label()}</Show>
               <Show when={state().feed.stale}> · {m.weather_stale()}</Show>

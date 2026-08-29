@@ -17,6 +17,10 @@
     {
       "path": "/api/cron/music-track-deletions",
       "schedule": "37 18 * * *"
+    },
+    {
+      "path": "/api/cron/weather-cache",
+      "schedule": "57 18 * * *"
     }
   ],
   "git": {

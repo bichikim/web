@@ -20,7 +20,14 @@ import {
   historicalGenerationStatusEnum,
   processedOpenAiWebhookEvents,
 } from '../historical-generation-runs'
-import {weather, weatherCollectionState, weatherPrecipitationEnum, weatherSkyEnum} from '../weather'
+import {
+  weather,
+  weatherCollectionState,
+  weatherLocations,
+  weatherPrecipitationEnum,
+  weatherProviderUsage,
+  weatherSkyEnum,
+} from '../weather'
 
 it('should expose the complete user and identity schema configuration', () => {
   const identityConfig = getTableConfig(pomoIdentities)
@@ -101,7 +108,16 @@ it('should expose historical generation run constraints and indexes', () => {
 it('should expose weather table constraints, enums, and indexes', () => {
   expect(weatherPrecipitationEnum.enumValues).toEqual(['none', 'rain', 'mixed', 'snow'])
   expect(weatherSkyEnum.enumValues).toEqual(['clear', 'cloudy', 'overcast'])
+  expect(getTableConfig(weatherLocations)).toMatchObject({
+    checks: [expect.any(Object), expect.any(Object)],
+    indexes: [expect.any(Object)],
+  })
   expect(getTableConfig(weather).indexes).toEqual([expect.any(Object)])
+  expect(getTableConfig(weatherProviderUsage).checks).toEqual([
+    expect.any(Object),
+    expect.any(Object),
+    expect.any(Object),
+  ])
   expect(getTableConfig(weatherCollectionState).checks).toEqual([
     expect.any(Object),
     expect.any(Object),

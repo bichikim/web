@@ -11,6 +11,7 @@ import {
   getLocalizedTimeOptions,
   getLocalizedWeatherCityOptions,
   getLocalizedWeatherLabel,
+  getLocalizedWeatherLocationLabel,
   getLocalizedWeatherSceneModeOptions,
 } from '../index'
 
@@ -59,6 +60,17 @@ describe('scene localization', () => {
       {label: 'Ulsan', value: 'ulsan'},
       {label: 'Jeju', value: 'jeju'},
     ])
+  })
+
+  it('should preserve provider labels for searched world locations', () => {
+    expect(
+      getLocalizedWeatherLocationLabel({
+        country: 'Japan',
+        id: 'openweather:35.6900,139.6900',
+        name: 'Tokyo',
+        region: 'Tokyo',
+      }),
+    ).toBe('Tokyo')
   })
 
   it('should localize every weather scene mode without changing its value', () => {

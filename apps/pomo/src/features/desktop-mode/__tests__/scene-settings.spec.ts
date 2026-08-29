@@ -4,6 +4,7 @@ import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {useDesktopSceneSettingsListener, useDesktopSceneSettingsPublisher} from '../scene-settings'
+import {LEGACY_WEATHER_LOCATIONS} from '../../weather'
 
 class TestBroadcastChannel {
   static instances: TestBroadcastChannel[] = []
@@ -36,6 +37,7 @@ const validSettings = [
   {name: 'timeMode', value: 'night'},
   {name: 'weatherCity', value: 'jeju'},
   {name: 'weatherEnabled', value: true},
+  {name: 'weatherLocation', value: LEGACY_WEATHER_LOCATIONS.seoul},
   {name: 'weatherSceneMode', value: 'overcast'},
 ] as const
 
@@ -59,8 +61,8 @@ it('should validate and apply every scene setting received from another WebView'
     onSceneStyleChange: vi.fn(),
     onScreenSaverDelayChange: vi.fn(),
     onTimeModeChange: vi.fn(),
-    onWeatherCityChange: vi.fn(),
     onWeatherEnabledChange: vi.fn(),
+    onWeatherLocationChange: vi.fn(),
     onWeatherSceneModeChange: vi.fn(),
   }
   const view = renderHook(() => useDesktopSceneSettingsListener(handlers))
@@ -77,7 +79,8 @@ it('should validate and apply every scene setting received from another WebView'
   expect(handlers.onSceneStyleChange).toHaveBeenCalledWith('scribble')
   expect(handlers.onScreenSaverDelayChange).toHaveBeenCalledWith('1h')
   expect(handlers.onTimeModeChange).toHaveBeenCalledWith('night')
-  expect(handlers.onWeatherCityChange).toHaveBeenCalledWith('jeju')
+  expect(handlers.onWeatherLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.jeju)
+  expect(handlers.onWeatherLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.seoul)
   expect(handlers.onWeatherEnabledChange).toHaveBeenCalledWith(true)
   expect(handlers.onWeatherSceneModeChange).toHaveBeenCalledWith('overcast')
 

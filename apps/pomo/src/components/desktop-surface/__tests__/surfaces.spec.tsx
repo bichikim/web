@@ -12,7 +12,7 @@ import {
   useDesktopSceneSettingsListener,
   useDesktopSceneSettingsPublisher,
 } from '../../../features/desktop-mode'
-import {useWeather} from '../../../features/weather'
+import {useWeather, type WeatherLocation} from '../../../features/weather'
 import {PMusicPlayer} from '../../PMusicPlayer'
 import {PPomodoro} from '../../PPomodoro'
 import {SceneToolbar} from '../../p-studio/Toolbar'
@@ -73,7 +73,7 @@ vi.mock('../../p-studio/Toolbar', () => ({
         <button onClick={() => props.onTimeModeChange('auto')} type="button">
           시간
         </button>
-        <button onClick={() => props.onWeatherCityChange('jeju')} type="button">
+        <button onClick={() => props.onWeatherLocationChange(jejuLocation)} type="button">
           도시
         </button>
         <button onClick={() => props.onWeatherEnabledChange(true)} type="button">
@@ -89,6 +89,22 @@ vi.mock('../../p-studio/Toolbar', () => ({
     )
   }),
 }))
+
+const seoulLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:seoul',
+  legacyCitySlug: 'seoul',
+  name: '서울',
+  region: '서울특별시',
+} as const satisfies WeatherLocation
+
+const jejuLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:jeju',
+  legacyCitySlug: 'jeju',
+  name: '제주',
+  region: '제주특별자치도',
+} as const satisfies WeatherLocation
 
 const publish = vi.fn()
 const onModeChange = vi.fn().mockResolvedValue(undefined)
@@ -129,10 +145,10 @@ beforeEach(() => {
     onDismiss: vi.fn(),
   })
   vi.mocked(useWeather).mockReturnValue({
-    citySlug: () => 'seoul',
     enabled: () => false,
-    onCityChange: vi.fn(),
+    location: () => seoulLocation,
     onEnabledChange: vi.fn(),
+    onLocationChange: vi.fn(),
     onSceneModeChange: vi.fn(),
     sceneCondition: () => 'clear',
     sceneMode: () => 'auto',
@@ -223,7 +239,7 @@ it('should publish every setting change from the separate scene toolbar', () => 
     {name: 'sceneStyle', value: 'scribble'},
     {name: 'screenSaverDelay', value: '1h'},
     {name: 'timeMode', value: 'auto'},
-    {name: 'weatherCity', value: 'jeju'},
+    {name: 'weatherLocation', value: jejuLocation},
     {name: 'weatherEnabled', value: true},
     {name: 'weatherSceneMode', value: 'rain'},
   ])
