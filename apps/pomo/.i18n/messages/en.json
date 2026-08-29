@@ -164,6 +164,7 @@
   "account_toss_login_failed": "We couldn't complete Toss sign-in.",
   "account_toss_logout_success": "You signed out.",
   "account_toss_logout_failed": "We couldn't sign you out.",
+  "account_toss_logout_cleanup_pending": "You signed out, but we couldn't clear the saved sign-in information. We'll try again the next time we check your sign-in status.",
   "account_toss_link_server_failed": "We couldn't connect to the account-linking server.",
   "account_toss_checking": "Checking account…",
   "account_toss_intro": "One Toss sign-in creates your Pomo account right away. No email is required.",

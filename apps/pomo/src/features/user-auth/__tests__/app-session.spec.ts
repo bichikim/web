@@ -71,15 +71,33 @@ describe('app session lifecycle', () => {
   it('should clear an already invalid server session during logout', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 401})))
 
-    await expect(revokeTossLoginSession('token')).resolves.toBeUndefined()
+    await expect(revokeTossLoginSession('token')).resolves.toEqual({storageStatus: 'cleared'})
     expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:app-session:v1')
   })
 
   it('should revoke a valid server session before clearing storage', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
 
-    await expect(revokeTossLoginSession('token')).resolves.toBeUndefined()
+    await expect(revokeTossLoginSession('token')).resolves.toEqual({storageStatus: 'cleared'})
     expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:app-session:v1')
+  })
+
+  it('should report pending storage cleanup after revoking the server session', async () => {
+    const storageError = new Error('native storage unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null))
+    storageMocks.removeItem.mockRejectedValueOnce(storageError)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(revokeTossLoginSession('token')).resolves.toEqual({
+      storageStatus: 'cleanup-pending',
+    })
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:app-session:v1')
+    expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+      'Failed to clear revoked Toss session from storage',
+      storageError,
+    )
   })
 
   it('should preserve the stored session when revocation is unavailable', async () => {
