@@ -48,6 +48,7 @@ const readAudioEnvelope = async (audioBlob: Blob) => {
 export interface PlayPDialogueSequenceOptions {
   readonly dialogueIds: ReadonlyArray<string>
   readonly onDialogueStart: (dialogueId: string) => Promise<void> | void
+  readonly onDialogueUnavailable?: (dialogueId: string) => Promise<void> | void
   readonly onSequenceStop: (dialogueIds: ReadonlyArray<string>) => Promise<void> | void
 }
 
@@ -76,9 +77,18 @@ export interface EntryPlaybackController {
 
 type PlaybackCompletion = 'cancelled' | 'ended' | 'failed' | 'missing' | 'stopped'
 
+interface PlaySequenceItemOptions {
+  readonly dialogueId: string
+  readonly generation: number
+  readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
+  readonly onDialogueUnavailable: PlayPDialogueSequenceOptions['onDialogueUnavailable']
+  readonly repository: PDialogueRepository
+}
+
 interface PlaybackQueueRequest {
   readonly dialogueIds: ReadonlyArray<string>
   readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
+  readonly onDialogueUnavailable: PlayPDialogueSequenceOptions['onDialogueUnavailable']
   readonly onSequenceStop: PlayPDialogueSequenceOptions['onSequenceStop']
   readonly reject: (error: unknown) => void
   readonly repository: PDialogueRepository
@@ -348,25 +358,31 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   }
 
   const playSequenceItem = async (
-    repository: PDialogueRepository,
-    dialogueId: string,
-    generation: number,
-    onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart'],
+    options: PlaySequenceItemOptions,
   ): Promise<PlaybackCompletion> => {
-    const currentAudio = await loadDialogue(repository, dialogueId, generation)
+    const currentAudio = await loadDialogue(
+      options.repository,
+      options.dialogueId,
+      options.generation,
+    )
 
     if (currentAudio === null) {
-      return generation === playbackGeneration ? 'missing' : 'cancelled'
+      if (isDisposed || options.generation !== playbackGeneration) {
+        return 'cancelled'
+      }
+
+      await options.onDialogueUnavailable?.(options.dialogueId)
+      return 'missing'
     }
 
     try {
-      await onDialogueStart(dialogueId)
+      await options.onDialogueStart(options.dialogueId)
     } catch (error: unknown) {
       clearPlayback()
       throw error
     }
 
-    if (isDisposed || generation !== playbackGeneration) {
+    if (isDisposed || options.generation !== playbackGeneration) {
       clearPlayback()
       return 'cancelled'
     }
@@ -413,12 +429,13 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
       request.nextDialoguePosition = position
       updateScheduledDialogueCount()
-      const completion = await playSequenceItem(
-        request.repository,
+      const completion = await playSequenceItem({
         dialogueId,
         generation,
-        request.onDialogueStart,
-      )
+        onDialogueStart: request.onDialogueStart,
+        onDialogueUnavailable: request.onDialogueUnavailable,
+        repository: request.repository,
+      })
 
       switch (completion) {
         case 'ended':
@@ -485,6 +502,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         dialogueIds: [...options.dialogueIds],
         nextDialoguePosition: 0,
         onDialogueStart: options.onDialogueStart,
+        onDialogueUnavailable: options.onDialogueUnavailable,
         onSequenceStop: options.onSequenceStop,
         reject,
         repository,

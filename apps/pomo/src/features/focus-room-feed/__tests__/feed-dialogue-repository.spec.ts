@@ -35,6 +35,14 @@ const feedDialogueJobs = {
   put: vi.fn(),
   toArray: vi.fn(),
 }
+const dialogues = {
+  delete: vi.fn(),
+}
+const eventBindings = {
+  delete: vi.fn(),
+  get: vi.fn(),
+  put: vi.fn(),
+}
 const feedDialogueMetadata = {
   delete: vi.fn(),
   get: vi.fn(),
@@ -51,12 +59,14 @@ const feedItems = {
 }
 const database = {
   close: vi.fn(),
+  dialogues,
+  eventBindings,
   feedDialogueJobs,
   feedDialogueMetadata,
   feedItems,
   transaction: vi.fn(async (...arguments_: ReadonlyArray<unknown>) => {
-    const callback = arguments_.at(-1) as () => Promise<void>
-    await callback()
+    const callback = arguments_.at(-1) as () => Promise<unknown>
+    return callback()
   }),
 } as unknown as PDatabase
 
@@ -146,6 +156,90 @@ describe('feed dialogue repository writes', () => {
     expect(feedDialogueJobs.put).toHaveBeenNthCalledWith(2, generatingJob)
     expect(feedItems.put).toHaveBeenCalledTimes(2)
     expect(database.transaction).toHaveBeenCalledTimes(2)
+  })
+
+  it('should replace a dialogue without audio with a queued recovery job transactionally', async () => {
+    const repository = createFeedDialogueRepository()
+    const item = createItem()
+    const job = createJob()
+    feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+    eventBindings.get.mockImplementation((event: string) =>
+      event === 'focus-start'
+        ? {
+            dialogueIds: ['dialogue-1', 'other'],
+            event,
+            playbackMode: 'sequential-all',
+            version: 3,
+          }
+        : undefined,
+    )
+
+    await expect(
+      repository.recoverMissingDialogue({dialogueId: 'dialogue-1', item, job}),
+    ).resolves.toBe(true)
+
+    expect(dialogues.delete).toHaveBeenCalledWith('dialogue-1')
+    expect(eventBindings.put).toHaveBeenCalledWith({
+      dialogueIds: ['other'],
+      event: 'focus-start',
+      playbackMode: 'sequential-all',
+      version: 3,
+    })
+    expect(feedDialogueMetadata.delete).toHaveBeenCalledWith('dialogue-1')
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(job)
+    expect(feedItems.put).toHaveBeenCalledWith(item)
+    expect(database.transaction).toHaveBeenCalledOnce()
+  })
+
+  it('should skip recovery when another request already removed the dialogue metadata', async () => {
+    const repository = createFeedDialogueRepository()
+    feedDialogueMetadata.get.mockResolvedValue(undefined)
+
+    await expect(
+      repository.recoverMissingDialogue({
+        dialogueId: 'dialogue-1',
+        item: createItem(),
+        job: createJob(),
+      }),
+    ).resolves.toBe(false)
+
+    expect(dialogues.delete).not.toHaveBeenCalled()
+    expect(feedDialogueJobs.put).not.toHaveBeenCalled()
+    expect(feedItems.put).not.toHaveBeenCalled()
+  })
+
+  it('should reject recovery when the replacement job targets different feed metadata', async () => {
+    const repository = createFeedDialogueRepository()
+    feedDialogueMetadata.get.mockResolvedValue(createMetadata({feedItemId: 'other-item'}))
+
+    await expect(
+      repository.recoverMissingDialogue({
+        dialogueId: 'dialogue-1',
+        item: createItem(),
+        job: createJob(),
+      }),
+    ).rejects.toThrow('복구할 피드 대화와 생성 작업이 일치하지 않아요.')
+
+    expect(dialogues.delete).not.toHaveBeenCalled()
+    expect(feedDialogueMetadata.delete).not.toHaveBeenCalled()
+    expect(feedDialogueJobs.put).not.toHaveBeenCalled()
+  })
+
+  it('should reject recovery when the replacement item targets a different feed item', async () => {
+    const repository = createFeedDialogueRepository()
+    feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+
+    await expect(
+      repository.recoverMissingDialogue({
+        dialogueId: 'dialogue-1',
+        item: createItem({feedItemId: 'other-item', id: 'feed-1\0other-item'}),
+        job: createJob(),
+      }),
+    ).rejects.toThrow('복구할 피드 대화와 생성 작업이 일치하지 않아요.')
+
+    expect(dialogues.delete).not.toHaveBeenCalled()
+    expect(feedDialogueMetadata.delete).not.toHaveBeenCalled()
+    expect(feedDialogueJobs.put).not.toHaveBeenCalled()
   })
 
   it('should update only the job when an item is omitted', async () => {
