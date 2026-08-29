@@ -4,6 +4,8 @@ import {cx} from 'class-variance-authority'
 import {createSignal, For, onMount, Show, untrack} from 'solid-js'
 
 import {PButton} from 'src/components/PButton'
+import {PModal} from 'src/components/PModal'
+import {useModelDownload} from 'src/features/model-download'
 import {
   createModelStorageManager,
   type ModelStorageManager,
@@ -33,8 +35,8 @@ interface CacheSectionProps {
   readonly busy: boolean
   readonly entries: ReadonlyArray<string>
   readonly loading: boolean
-  readonly onClear: () => void
-  readonly onDelete: (key: string) => void
+  readonly onClear: (source: HTMLButtonElement) => void
+  readonly onDelete: (key: string, source: HTMLButtonElement) => void
 }
 
 const CacheSection = (props: CacheSectionProps) => (
@@ -89,7 +91,7 @@ const CacheSection = (props: CacheSectionProps) => (
               <PButton
                 accessibleLabel={`${getEntryLabel(key)} 삭제`}
                 disabled={props.busy}
-                onPress={() => props.onDelete(key)}
+                onPress={(source) => props.onDelete(key, source)}
                 size="small"
                 tone="danger"
               >
@@ -106,7 +108,7 @@ const CacheSection = (props: CacheSectionProps) => (
 interface PartialSectionProps {
   readonly busy: boolean
   readonly count: number
-  readonly onClear: () => void
+  readonly onClear: (source: HTMLButtonElement) => void
   readonly storageAvailable: boolean
 }
 
@@ -170,16 +172,56 @@ const VerificationLinks = () => (
   </section>
 )
 
+interface DeletionModalProps {
+  readonly disabled: boolean
+  readonly onCancel: () => void
+  readonly onCloseAutoFocus: () => void
+  readonly onConfirm: () => void
+  readonly request: DeletionRequest | null
+}
+
+const DeletionModal = (props: DeletionModalProps) => (
+  <PModal
+    closeButtonVisibility="hidden"
+    isOpen={props.request !== null}
+    onCloseAutoFocus={props.onCloseAutoFocus}
+    onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        props.onCancel()
+      }
+    }}
+    title="모델 데이터 삭제"
+  >
+    <p class="m-0 text-sm leading-6 text-foreground">{props.request?.label}</p>
+    <div class="mt-5 flex justify-end gap-2">
+      <PButton onPress={props.onCancel} size="small" tone="secondary">
+        취소
+      </PButton>
+      <PButton disabled={props.disabled} onPress={props.onConfirm} size="small" tone="danger">
+        삭제 확정
+      </PButton>
+    </div>
+  </PModal>
+)
+
 export interface StoragePageProps {
   readonly manager?: ModelStorageManager
 }
 
 function StoragePage(props: StoragePageProps) {
   const manager = untrack(() => props.manager ?? createModelStorageManager())
+  const modelDownload = useModelDownload()
+  let deletionTrigger: HTMLButtonElement | null = null
   const [snapshot, setSnapshot] = createSignal<ModelStorageSnapshot | null>(null)
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [busyAction, setBusyAction] = createSignal<string | null>('inspect')
   const [deletionRequest, setDeletionRequest] = createSignal<DeletionRequest | null>(null)
+  const isModelDownloading = () => modelDownload.state().status === 'loading'
+  const isBusy = () => busyAction() !== null || isModelDownloading()
+  const requestDeletion = (source: HTMLButtonElement, request: DeletionRequest) => {
+    deletionTrigger = source
+    setDeletionRequest(request)
+  }
 
   const handleUnexpectedError = () => {
     setErrorMessage('저장소 작업 중 예상하지 못한 오류가 발생했어요.')
@@ -210,6 +252,13 @@ function StoragePage(props: StoragePageProps) {
     if (request === null) {
       return
     }
+
+    if (isModelDownloading()) {
+      setDeletionRequest(null)
+      setErrorMessage('모델 다운로드가 끝나거나 취소된 뒤 저장소를 삭제해 주세요.')
+      return
+    }
+
     setDeletionRequest(null)
 
     switch (request.kind) {
@@ -257,41 +306,28 @@ function StoragePage(props: StoragePageProps) {
             </p>
           )}
         </Show>
-        <Show when={deletionRequest()}>
-          {(request) => (
-            <section
-              aria-label="삭제 확인"
-              class="rounded-4 border border-#ef8a74/35 bg-#ef8a74/10 p-4"
-            >
-              <p class="m-0 text-sm text-#ffc4b8">{request().label}</p>
-              <div class="mt-4 flex gap-2">
-                <PButton onPress={() => setDeletionRequest(null)} size="small" tone="secondary">
-                  취소
-                </PButton>
-                <PButton
-                  onPress={() => handleConfirmDeletion().catch(handleUnexpectedError)}
-                  size="small"
-                  tone="danger"
-                >
-                  삭제 확정
-                </PButton>
-              </div>
-            </section>
-          )}
+        <Show when={isModelDownloading()}>
+          <p
+            class="m-0 rounded-4 border border-#f0c99a/30 bg-#f0c99a/8 px-4 py-3 text-sm text-#f4d7b5"
+            role="status"
+          >
+            모델 다운로드 중에는 저장소를 삭제할 수 없어요. 다운로드가 끝나거나 취소된 뒤 다시
+            시도해 주세요.
+          </p>
         </Show>
 
         <CacheSection
-          busy={busyAction() !== null}
+          busy={isBusy()}
           entries={snapshot()?.cacheEntries ?? []}
           loading={busyAction() === 'inspect'}
-          onClear={() =>
-            setDeletionRequest({
+          onClear={(source) =>
+            requestDeletion(source, {
               kind: 'cache',
               label: '완료된 모델 파일을 모두 삭제할까요? 다시 사용하면 전부 다운로드됩니다.',
             })
           }
-          onDelete={(key) =>
-            setDeletionRequest({
+          onDelete={(key, source) =>
+            requestDeletion(source, {
               key,
               kind: 'entry',
               label: `${getEntryLabel(key)} 파일을 삭제할까요?`,
@@ -299,10 +335,10 @@ function StoragePage(props: StoragePageProps) {
           }
         />
         <PartialSection
-          busy={busyAction() !== null}
+          busy={isBusy()}
           count={snapshot()?.partialFileCount ?? 0}
-          onClear={() =>
-            setDeletionRequest({
+          onClear={(source) =>
+            requestDeletion(source, {
               kind: 'partials',
               label: '중단된 모델 다운로드 조각을 모두 삭제할까요?',
             })
@@ -311,6 +347,17 @@ function StoragePage(props: StoragePageProps) {
         />
         <VerificationLinks />
       </section>
+
+      <DeletionModal
+        disabled={isModelDownloading()}
+        onCancel={() => setDeletionRequest(null)}
+        onCloseAutoFocus={() => {
+          deletionTrigger?.focus()
+          deletionTrigger = null
+        }}
+        onConfirm={() => handleConfirmDeletion().catch(handleUnexpectedError)}
+        request={deletionRequest()}
+      />
     </main>
   )
 }

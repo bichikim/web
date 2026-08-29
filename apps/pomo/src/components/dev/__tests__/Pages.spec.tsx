@@ -2,8 +2,9 @@
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {useModelDownload} from 'src/features/model-download'
 import CharacterPage from '../CharacterPage'
 import ChatPage from '../ChatPage'
 import DialoguePage from '../DialoguePage'
@@ -20,6 +21,9 @@ vi.mock('@solidjs/meta', () => ({
 }))
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
+}))
+vi.mock('src/features/model-download', () => ({
+  useModelDownload: vi.fn(),
 }))
 vi.mock('src/components/CharacterStudio', () => ({CharacterStudio: () => <p>character studio</p>}))
 vi.mock('src/components/PLayerReview', () => ({PLayerReview: () => <p>layer review</p>}))
@@ -62,6 +66,12 @@ vi.mock('../text-mood/Workspace', () => ({
     </>
   ),
 }))
+
+beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue({
+    state: () => ({status: 'idle'}),
+  } as ReturnType<typeof useModelDownload>)
+})
 
 afterEach(() => {
   cleanup()
