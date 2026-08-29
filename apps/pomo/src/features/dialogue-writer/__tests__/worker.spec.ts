@@ -235,6 +235,27 @@ describe('dialogue writer worker', () => {
     expect(transformers.qwenModelFromPretrained).toHaveBeenCalledOnce()
   })
 
+  it('should generate a trimmed non-Korean answer without suppressed tokens', async () => {
+    const worker = await loadWorker()
+
+    worker.dispatch({
+      modelId: 'qwen-0.8b',
+      outputLanguage: 'en',
+      request: 'Give me an answer',
+      type: 'generate',
+    })
+
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenLastCalledWith({
+        text: '행복은 가까이에 있어요.',
+        type: 'complete',
+      }),
+    )
+    expect(transformers.generate).toHaveBeenCalledWith(
+      expect.objectContaining({suppress_tokens: undefined}),
+    )
+  })
+
   it.each([
     [new Error('generation failed'), 'generation failed'],
     [new Error(''), '대화문 모델을 실행하지 못했어요.'],

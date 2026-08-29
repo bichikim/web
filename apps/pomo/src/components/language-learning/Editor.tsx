@@ -113,10 +113,6 @@ export default function LanguageLearningEditor() {
   }
 
   const generateVoices = async () => {
-    if (workflow.isDisposed) {
-      return
-    }
-
     setPhase('voice')
     const client = createSupertonicClient()
     const generatedCandidates: Array<LanguageLearningCandidate> = []
@@ -143,10 +139,6 @@ export default function LanguageLearningEditor() {
       const generatedSentences = sentences()
 
       for (const [index, sentence] of generatedSentences.entries()) {
-        if (workflow.isDisposed) {
-          return
-        }
-
         setMessage(
           m.learning_editor_voice_progress({current: index + 1, total: generatedSentences.length}),
         )
@@ -183,13 +175,11 @@ export default function LanguageLearningEditor() {
         })
       }
 
-      if (!workflow.isDisposed) {
-        clearCandidates()
-        setCandidates(generatedCandidates)
-        retainedCandidates = true
-        setMessage(m.learning_editor_review())
-        setPhase('review')
-      }
+      clearCandidates()
+      setCandidates(generatedCandidates)
+      retainedCandidates = true
+      setMessage(m.learning_editor_review())
+      setPhase('review')
     } catch (error: unknown) {
       console.error('Failed to generate language learning audio.', error)
       fail(m.learning_editor_voice_failed())
@@ -316,10 +306,6 @@ export default function LanguageLearningEditor() {
   }
 
   const regenerateCandidateVoice = async (candidateId: string) => {
-    if (workflow.isDisposed) {
-      return
-    }
-
     const candidate = candidates().find((item) => item.id === candidateId)
 
     if (candidate === undefined) {
@@ -367,12 +353,6 @@ export default function LanguageLearningEditor() {
         return
       }
 
-      const currentCandidate = candidates().find((item) => item.id === candidateId)
-
-      if (currentCandidate === undefined) {
-        return
-      }
-
       const nextAudioUrl = URL.createObjectURL(generated.value.audio)
       setCandidates((current) =>
         current.map((item) =>
@@ -389,7 +369,7 @@ export default function LanguageLearningEditor() {
             : item,
         ),
       )
-      URL.revokeObjectURL(currentCandidate.audioUrl)
+      URL.revokeObjectURL(candidate.audioUrl)
       setMessage(m.learning_editor_voice_regenerated())
     } catch (error: unknown) {
       console.error('Failed to regenerate language learning audio.', error)
@@ -437,7 +417,11 @@ export default function LanguageLearningEditor() {
         ? await modelDownload.startTextModel(TEXT_MODEL_ID)
         : await modelDownload.startVoiceModel(modelId())
 
-    if (result.status !== 'complete' || workflow.isDisposed) {
+    if (workflow.isDisposed) {
+      return
+    }
+
+    if (result.status !== 'complete') {
       if (result.status === 'error') {
         if (target.kind === 'voice-candidate') {
           setMessage(result.message)

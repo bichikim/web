@@ -12,6 +12,7 @@ import {
 import {SceneToolbar} from '../Toolbar'
 
 vi.mock('../../PSelect', () => ({PSelect: () => null}))
+vi.mock('../LearningPanel', () => ({LearningPanel: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: () => null}))
 
 const createToolbarProps = () => ({

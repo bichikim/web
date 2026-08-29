@@ -9,13 +9,14 @@ import {PModal, type PModalProps} from 'src/components/PModal'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PIconButton} from '../PIconButton'
 import {PLearning} from '../PLearning'
+import {LanguageLearningLibrary} from '../language-learning/Library'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
 vi.mock('../PModal', () => ({PModal: vi.fn()}))
 vi.mock('../PIconButton', () => ({PIconButton: vi.fn()}))
 vi.mock('../language-learning/Library', () => ({
-  LanguageLearningLibrary: () => <div>language learning library</div>,
+  LanguageLearningLibrary: vi.fn(),
 }))
 vi.mock('../language-learning/Words', () => ({
   LanguageLearningWords: () => <div>language learning words</div>,
@@ -25,6 +26,7 @@ vi.mock('../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 interface TabsRootProps {
   readonly children?: JSX.Element
   readonly class?: string
+  readonly onChange?: (value: string) => void
   readonly value?: string
 }
 
@@ -50,7 +52,19 @@ beforeEach(() => {
       </button>
     ),
   })
-  vi.mocked(Tabs).mockImplementation((props: TabsRootProps) => <>{props.children}</>)
+  vi.mocked(Tabs).mockImplementation((props: TabsRootProps) => (
+    <div data-value={props.value}>
+      {props.children}
+      <button onClick={() => props.onChange?.('words')} type="button">
+        Change tab
+      </button>
+    </div>
+  ))
+  vi.mocked(LanguageLearningLibrary).mockImplementation((props) => (
+    <button onClick={props.onRequestClose} type="button">
+      language learning library
+    </button>
+  ))
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
     <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
       {props.navigation}
@@ -58,14 +72,22 @@ beforeEach(() => {
       <button onClick={props.onCloseAutoFocus} type="button">
         Restore focus
       </button>
+      <button onClick={() => props.onOpenChange(false)} type="button">
+        Close modal
+      </button>
     </div>
   ))
   vi.mocked(PIconButton).mockImplementation((props) => (
     <button onClick={(event) => props.onPress(event.currentTarget)} type="button">
       {props.accessibleLabel}
+      <span aria-hidden="true">
+        {props.feedback} {props.icon}
+      </span>
     </button>
   ))
-  vi.mocked(PScribbleCircleControl).mockImplementation((props) => <>{props.children}</>)
+  vi.mocked(PScribbleCircleControl).mockImplementation((props) => (
+    <div data-enabled={String(props.enabled)}>{props.children}</div>
+  ))
 })
 
 afterEach(() => {
@@ -93,6 +115,9 @@ it('should open a Korean learning modal', () => {
 
   fireEvent.click(screen.getByRole('button', {name: 'Restore focus'}))
   expect(document.activeElement).toBe(trigger)
+  fireEvent.click(screen.getByRole('button', {name: 'language learning library'}))
+  fireEvent.click(screen.getByRole('button', {hidden: true, name: 'Close modal'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Change tab'}))
 })
 
 it('should open an English learning modal', () => {

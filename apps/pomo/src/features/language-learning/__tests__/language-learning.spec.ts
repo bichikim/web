@@ -57,6 +57,7 @@ describe('language learning tags', () => {
 describe('language learning sentences', () => {
   it('should normalize wrappers and enforce one language-specific sentence', () => {
     expect(normalizeLanguageLearningSentence('  1. “I am home.”  ')).toBe('I am home.')
+    expect(normalizeLanguageLearningSentence('  I am outside.  ')).toBe('I am outside.')
     expect(isValidLanguageLearningSentence('I am home.', 'en')).toBe(true)
     expect(isValidLanguageLearningSentence('One. Two.', 'en')).toBe(false)
     expect(isValidLanguageLearningSentence(`${'word '.repeat(31).trim()}.`, 'en')).toBe(false)
@@ -137,6 +138,12 @@ describe('language learning random word selection', () => {
     expect(maximum).toHaveLength(10)
     expect(new Set(maximum).size).toBe(10)
     expect(maximum.every((value) => values.includes(value))).toBe(true)
+  })
+
+  it('should use the platform random source by default', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+
+    expect(selectRandomLanguageLearningWords({values})).toHaveLength(3)
   })
 
   it('should cap direct words at two and route saved words through random selection', () => {

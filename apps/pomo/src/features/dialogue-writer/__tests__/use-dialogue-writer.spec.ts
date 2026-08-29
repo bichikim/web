@@ -49,6 +49,7 @@ const createRuntime = (supported: boolean): TestRuntime => {
 const createDialogueRoot = (
   runtime: DialogueWriterRuntime,
   onComplete?: (output: string) => void,
+  outputLanguage?: () => 'en',
 ): DialogueTestRoot => {
   let disposeRoot: () => void = () => undefined
   const controller = createRoot((dispose) => {
@@ -57,6 +58,7 @@ const createDialogueRoot = (
       initialRequest: '  삶의 행복  ',
       modelId: 'qwen-2b',
       onComplete,
+      outputLanguage,
       runtime,
     })
   })
@@ -183,6 +185,18 @@ describe('useDialogueWriter', () => {
     runtime.emit({type: 'ready'})
     expect(runtime.client.generate).toHaveBeenCalledWith('삶의 행복')
 
+    root.dispose()
+  })
+
+  it('should pass an explicit output language to generation', () => {
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime, undefined, () => 'en')
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+
+    expect(runtime.client.generate).toHaveBeenCalledWith('삶의 행복', 'en')
     root.dispose()
   })
 

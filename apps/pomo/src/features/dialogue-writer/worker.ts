@@ -20,7 +20,7 @@ const getTextRuntime = () => {
   )
   return textRuntimePromise
 }
-let suppressedTokenIds: Array<number> | null = null
+let suppressedTokenIds: Array<number> | undefined
 
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error && error.message.length > 0) {
@@ -53,7 +53,7 @@ const generateDirectAnswer = async (
     noRepeatNgramSize: 4,
     onToken: (text) => sendResponse({text, type: 'token'}),
     repetitionPenalty: 1.15,
-    suppressedTokenIds: outputLanguage === 'ko' ? (suppressedTokenIds ?? undefined) : undefined,
+    suppressedTokenIds: outputLanguage === 'ko' ? suppressedTokenIds : undefined,
     temperature: 0.7,
     topK: 40,
     topP: 0.9,

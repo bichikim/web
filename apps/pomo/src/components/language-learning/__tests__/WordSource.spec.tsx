@@ -7,14 +7,16 @@ import {expect, it, vi} from 'vitest'
 vi.mock('../../PRadioSwitch', () => ({
   PRadioSwitch: (props: {
     readonly disabled?: boolean
+    readonly label: string
     readonly onChange: (value: 'direct' | 'saved') => void
     readonly options: ReadonlyArray<{
       readonly disabled?: boolean
       readonly label: string
       readonly value: 'direct' | 'saved'
     }>
+    readonly value: 'direct' | 'saved'
   }) => (
-    <div>
+    <div data-label={props.label} data-value={props.value}>
       {
         props.options.map((option) => (
           <button
@@ -52,8 +54,11 @@ const renderControl = (source: 'direct' | 'saved', disabled = false, savedWordCo
 it('should show the two-word direct input and switch sources', () => {
   const onSourceChange = renderControl('direct')
 
-  expect(screen.getByRole('textbox', {name: '프롬프트 단어'})).toBeEnabled()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+  expect(input).toBeEnabled()
   expect(screen.getByText(/최대 2개/u)).toBeInTheDocument()
+  fireEvent.input(input, {target: {value: 'home'}})
+  fireEvent.keyDown(input, {key: 'Enter'})
   fireEvent.click(screen.getByRole('button', {name: '학습 단어에서 가져오기'}))
   expect(onSourceChange).toHaveBeenCalledWith('saved')
 })
