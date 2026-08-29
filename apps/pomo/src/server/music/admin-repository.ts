@@ -9,6 +9,7 @@ import {
   musicAlbumTracks,
   musicAlbumTranslations,
   musicTrackAssets,
+  musicTrackRegistrations,
   musicTracks,
   withTransactionalDatabase,
 } from '../database'
@@ -48,7 +49,7 @@ export type ConnectAlbumOfferResult =
 
 export const listAdminMusic = async () => {
   const database = getDatabase()
-  const [albums, translations, tracks, assets, offers] = await Promise.all([
+  const [albums, translations, tracks, pendingTracks, assets, offers] = await Promise.all([
     database
       .select({
         coverFallback: musicAlbums.coverFallback,
@@ -78,6 +79,16 @@ export const listAdminMusic = async () => {
       .from(musicAlbumTracks)
       .innerJoin(musicTracks, eq(musicAlbumTracks.trackId, musicTracks.id))
       .orderBy(asc(musicAlbumTracks.albumId), asc(musicAlbumTracks.position)),
+    database
+      .select({
+        albumId: musicTrackRegistrations.albumId,
+        artist: musicTracks.artist,
+        id: musicTracks.id,
+        title: musicTracks.title,
+      })
+      .from(musicTrackRegistrations)
+      .innerJoin(musicTracks, eq(musicTrackRegistrations.trackId, musicTracks.id))
+      .orderBy(asc(musicTrackRegistrations.albumId), asc(musicTrackRegistrations.createdAt)),
     database
       .select({
         id: musicTrackAssets.id,
@@ -128,6 +139,7 @@ export const listAdminMusic = async () => {
     }),
     assets,
     offers,
+    pendingTracks,
     tracks,
   }
 }

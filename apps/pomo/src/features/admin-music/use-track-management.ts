@@ -1,7 +1,7 @@
 import {createSignal, type JSX} from 'solid-js'
 
 import {createTrackWithAudio, removeTrack} from './track-creation'
-import {validateTrackAudio} from './track-upload'
+import {confirmTrackAudioRegistration, validateTrackAudio} from './track-upload'
 
 interface UseTrackManagementProps {
   readonly refreshCatalog: () => Promise<void>
@@ -10,6 +10,7 @@ interface UseTrackManagementProps {
 
 export const useTrackManagement = (props: UseTrackManagementProps) => {
   const [isSavingTrack, setIsSavingTrack] = createSignal(false)
+  const [confirmingAssetId, setConfirmingAssetId] = createSignal<string | null>(null)
   const [removingTrackId, setRemovingTrackId] = createSignal<string | null>(null)
   const [trackArtist, setTrackArtist] = createSignal('')
   const [trackResetVersion, setTrackResetVersion] = createSignal(0)
@@ -92,7 +93,29 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
     }
   }
 
+  const handleTrackConfirmation = async (assetId: string): Promise<void> => {
+    setConfirmingAssetId(assetId)
+    props.setMessage(null)
+
+    try {
+      const result = await confirmTrackAudioRegistration(assetId)
+      await props.refreshCatalog()
+      props.setMessage(
+        result.status === 'active'
+          ? 'MP3 등록을 확인하고 수록곡을 활성화했습니다.'
+          : '등록 결과를 아직 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      )
+    } catch (error) {
+      await props.refreshCatalog().catch(() => undefined)
+      props.setMessage(error instanceof Error ? error.message : 'MP3 등록을 확인하지 못했습니다.')
+    } finally {
+      setConfirmingAssetId(null)
+    }
+  }
+
   return {
+    confirmingAssetId,
+    handleTrackConfirmation,
     handleTrackRemove,
     handleTrackSubmit,
     isSavingTrack,

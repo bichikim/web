@@ -54,6 +54,7 @@ const catalogWithAlbum = {
   ],
   assets: [],
   offers: [],
+  pendingTracks: [],
   tracks: [],
 } as const
 
@@ -88,7 +89,9 @@ describe('AdminMusic', () => {
       'fetch',
       vi
         .fn<typeof fetch>()
-        .mockResolvedValue(Response.json({albums: [], assets: [], offers: [], tracks: []})),
+        .mockResolvedValue(
+          Response.json({albums: [], assets: [], offers: [], pendingTracks: [], tracks: []}),
+        ),
     )
     render(() => <AdminMusic />)
 
@@ -117,7 +120,7 @@ describe('AdminMusic', () => {
         return Response.json({id: 'album-id'}, {status: 201})
       }
 
-      return Response.json({albums: [], assets: [], offers: [], tracks: []})
+      return Response.json({albums: [], assets: [], offers: [], pendingTracks: [], tracks: []})
     })
     vi.stubGlobal('fetch', fetcher)
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
@@ -166,7 +169,7 @@ describe('AdminMusic', () => {
           return Response.json({message: 'failed'}, {status: 500})
         }
 
-        return Response.json({albums: [], assets: [], offers: [], tracks: []})
+        return Response.json({albums: [], assets: [], offers: [], pendingTracks: [], tracks: []})
       }),
     )
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
@@ -287,6 +290,7 @@ describe('AdminMusic', () => {
         {id: 'foreign-asset', status: 'active', trackId: 'foreign-track'},
       ],
       offers: [],
+      pendingTracks: [],
       tracks: [
         {albumId: 'album-id', artist: 'Pomo', id: 'track-id', position: 0, title: '첫 곡'},
         {
@@ -330,7 +334,9 @@ describe('AdminMusic', () => {
       'fetch',
       vi
         .fn<typeof fetch>()
-        .mockResolvedValue(Response.json({albums: [], assets: [], offers: [], tracks: []})),
+        .mockResolvedValue(
+          Response.json({albums: [], assets: [], offers: [], pendingTracks: [], tracks: []}),
+        ),
     )
     render(() => <AdminMusic />)
     const coverInput = await screen.findByLabelText(/^이미지 파일/u)
@@ -353,7 +359,9 @@ describe('AdminMusic', () => {
       'fetch',
       vi
         .fn<typeof fetch>()
-        .mockResolvedValue(Response.json({albums: [], assets: [], offers: [], tracks: []})),
+        .mockResolvedValue(
+          Response.json({albums: [], assets: [], offers: [], pendingTracks: [], tracks: []}),
+        ),
     )
     render(() => <AdminMusic />)
     const coverInput = await screen.findByLabelText(/^이미지 파일/u)
@@ -385,7 +393,7 @@ describe('AdminMusic', () => {
         return creation
       }
 
-      return Response.json({albums: [], assets: [], offers: [], tracks: []})
+      return Response.json({albums: [], assets: [], offers: [], pendingTracks: [], tracks: []})
     })
     vi.stubGlobal('fetch', fetcher)
     render(() => <AdminMusic />)

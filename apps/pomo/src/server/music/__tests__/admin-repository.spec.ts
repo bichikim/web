@@ -46,6 +46,7 @@ const queueAdminList = (
   albums: ReadonlyArray<unknown>,
   translations: ReadonlyArray<unknown>,
   tracks: ReadonlyArray<unknown>,
+  pendingTracks: ReadonlyArray<unknown>,
   assets: ReadonlyArray<unknown>,
   offers: ReadonlyArray<unknown>,
 ) => {
@@ -53,6 +54,7 @@ const queueAdminList = (
     .mockReturnValueOnce(createOrderedQuery(albums))
     .mockReturnValueOnce(createOrderedQuery(translations))
     .mockReturnValueOnce(createJoinedOrderedQuery(tracks, 1))
+    .mockReturnValueOnce(createJoinedOrderedQuery(pendingTracks, 1))
     .mockReturnValueOnce(createOrderedQuery(assets))
     .mockReturnValueOnce(createJoinedOrderedQuery(offers, 2))
 }
@@ -159,8 +161,11 @@ describe('listAdminMusic', () => {
       {id: 'asset-1', status: 'active', trackId: 'track-1'},
       {id: 'asset-2', status: 'pending', trackId: 'track-2'},
     ]
+    const pendingTracks = [
+      {albumId: 'album-1', artist: 'Pending Artist', id: 'track-3', title: 'Pending'},
+    ]
     const offers = [{albumId: 'album-1', externalProductId: 'product-1'}]
-    queueAdminList(albums, translations, tracks, assets, offers)
+    queueAdminList(albums, translations, tracks, pendingTracks, assets, offers)
 
     await expect(listAdminMusic()).resolves.toEqual({
       albums: [
@@ -177,16 +182,18 @@ describe('listAdminMusic', () => {
       ],
       assets,
       offers,
+      pendingTracks,
       tracks,
     })
   })
 
   it('should return empty collections for an empty database', async () => {
-    queueAdminList([], [], [], [], [])
+    queueAdminList([], [], [], [], [], [])
     await expect(listAdminMusic()).resolves.toEqual({
       albums: [],
       assets: [],
       offers: [],
+      pendingTracks: [],
       tracks: [],
     })
   })
@@ -197,6 +204,7 @@ describe('listAdminMusic', () => {
         from: vi.fn(() => ({orderBy: vi.fn().mockRejectedValue(new Error('list failed'))})),
       })
       .mockReturnValueOnce(createOrderedQuery([]))
+      .mockReturnValueOnce(createJoinedOrderedQuery([], 1))
       .mockReturnValueOnce(createJoinedOrderedQuery([], 1))
       .mockReturnValueOnce(createOrderedQuery([]))
       .mockReturnValueOnce(createJoinedOrderedQuery([], 2))

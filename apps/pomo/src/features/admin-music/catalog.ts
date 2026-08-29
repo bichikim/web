@@ -25,6 +25,12 @@ const trackSchema = z.object({
   position: z.number(),
   title: z.string(),
 })
+const pendingTrackSchema = z.object({
+  albumId: z.string(),
+  artist: z.string(),
+  id: z.string(),
+  title: z.string(),
+})
 const assetSchema = z.object({
   id: z.string(),
   status: z.enum(['pending', 'uploaded', 'ready', 'active', 'failed', 'retired', 'deleted']),
@@ -44,6 +50,7 @@ export const catalogSchema = z.object({
   albums: z.array(albumSchema),
   assets: z.array(assetSchema),
   offers: z.array(offerSchema),
+  pendingTracks: z.array(pendingTrackSchema),
   tracks: z.array(trackSchema),
 })
 
@@ -51,6 +58,7 @@ export type AdminAlbum = z.infer<typeof albumSchema>
 export type AdminAsset = z.infer<typeof assetSchema>
 export type AdminCatalog = z.infer<typeof catalogSchema>
 export type AdminOffer = z.infer<typeof offerSchema>
+export type AdminPendingTrack = z.infer<typeof pendingTrackSchema>
 export type AdminTrack = z.infer<typeof trackSchema>
 export type AlbumStatusAction = 'archive' | 'publish'
 

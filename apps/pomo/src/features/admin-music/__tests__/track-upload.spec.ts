@@ -2,7 +2,12 @@
 
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {MAXIMUM_TRACK_BYTES, uploadTrackAudio, validateTrackAudio} from '../track-upload'
+import {
+  confirmTrackAudioRegistration,
+  MAXIMUM_TRACK_BYTES,
+  uploadTrackAudio,
+  validateTrackAudio,
+} from '../track-upload'
 
 const TRACK_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf781'
 const ASSET_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
@@ -182,5 +187,21 @@ describe('uploadTrackAudio', () => {
     expect(result).toMatchObject({status: 'unconfirmed'})
     expect(result.status === 'unconfirmed' ? result.error.cause : undefined).toBe(finalError)
     expect(fetcher).toHaveBeenCalledTimes(4)
+  })
+})
+
+describe('confirmTrackAudioRegistration', () => {
+  it('should retry completion for an existing asset without reserving or uploading', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({assetId: ASSET_ID, status: 'active'}))
+    vi.stubGlobal('fetch', fetcher)
+
+    await expect(confirmTrackAudioRegistration(ASSET_ID)).resolves.toEqual({status: 'active'})
+    expect(fetcher).toHaveBeenCalledOnce()
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/admin/music/assets',
+      expect.objectContaining({body: JSON.stringify({assetId: ASSET_ID}), method: 'PUT'}),
+    )
   })
 })
