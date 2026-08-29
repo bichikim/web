@@ -96,6 +96,24 @@ describe('Vite integration', () => {
     ).rejects.toThrow('Similar key groups')
   })
 
+  it('should build when a local callback shadows an imported key function', async () => {
+    const root = await createFixture()
+    await writeFile(
+      path.join(root, 'src/main.ts'),
+      [
+        `import {t} from './i18n'`,
+        `const translated = t('결제에 실패했습니다.')`,
+        `const callUnrelatedCallback = (t: (value: string) => string) =>`,
+        `  t('결제에 실패했습니다.')`,
+        `document.body.textContent = translated + callUnrelatedCallback((value) => value)`,
+      ].join('\n'),
+    )
+
+    await expect(
+      build({configFile: false, logLevel: 'silent', plugins: [createPlugin(root)], root}),
+    ).resolves.toBeDefined()
+  })
+
   it('should report an annotated call once with its effective comparison texts', async () => {
     const root = await createFixture()
     await writeFile(

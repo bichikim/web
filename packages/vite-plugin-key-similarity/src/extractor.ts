@@ -38,6 +38,12 @@ interface KeyAnnotations {
   readonly ignoreLiteral: boolean
 }
 
+interface LexicalScope {
+  readonly declarations: Set<string>
+  readonly kind: 'block' | 'variable'
+  readonly parent: LexicalScope | undefined
+}
+
 const DEFAULT_THRESHOLDS: ExtractionThresholds = {
   semanticThreshold: DEFAULT_SEMANTIC_THRESHOLD,
 }
@@ -54,6 +60,131 @@ const scriptKinds: Readonly<Record<string, ts.ScriptKind>> = {
 const getScriptKind = (filePath: string): ts.ScriptKind => {
   const extension = filePath.slice(filePath.lastIndexOf('.'))
   return scriptKinds[extension] ?? ts.ScriptKind.Unknown
+}
+
+const addBindingName = (declarations: Set<string>, name: ts.BindingName): void => {
+  if (ts.isIdentifier(name)) {
+    declarations.add(name.text)
+    return
+  }
+  for (const element of name.elements) {
+    if (!ts.isOmittedExpression(element)) {
+      addBindingName(declarations, element.name)
+    }
+  }
+}
+
+const createsBlockScope = (node: ts.Node): boolean =>
+  ts.isBlock(node) ||
+  ts.isCaseBlock(node) ||
+  ts.isCatchClause(node) ||
+  ts.isClassLike(node) ||
+  ts.isForStatement(node) ||
+  ts.isForInStatement(node) ||
+  ts.isForOfStatement(node)
+
+const getVariableScope = (scope: LexicalScope): LexicalScope => {
+  let current = scope
+  while (current.kind === 'block') {
+    current = current.parent!
+  }
+  return current
+}
+
+const isBlockScoped = (flags: ts.NodeFlags): boolean => {
+  // oxlint-disable-next-line no-bitwise -- TypeScript exposes declaration kinds as a bitmask.
+  return (flags & ts.NodeFlags.BlockScoped) !== ts.NodeFlags.None
+}
+
+const addOuterDeclaration = (node: ts.Node, scope: LexicalScope): void => {
+  if ((ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) && node.name !== undefined) {
+    scope.declarations.add(node.name.text)
+    return
+  }
+  if (ts.isEnumDeclaration(node) || ts.isImportEqualsDeclaration(node)) {
+    scope.declarations.add(node.name.text)
+    return
+  }
+  if (ts.isModuleDeclaration(node) && ts.isIdentifier(node.name)) {
+    scope.declarations.add(node.name.text)
+  }
+}
+
+const createLexicalScope = (
+  node: ts.Node,
+  parent: LexicalScope,
+  root: LexicalScope,
+  sourceFile: ts.SourceFile,
+): LexicalScope => {
+  if (node === sourceFile) {
+    return root
+  }
+  const createsVariableScope =
+    ts.isFunctionLike(node) || ts.isClassStaticBlockDeclaration(node) || ts.isModuleBlock(node)
+  if (!createsVariableScope && !createsBlockScope(node)) {
+    return parent
+  }
+  return {
+    declarations: new Set(),
+    kind: createsVariableScope ? 'variable' : 'block',
+    parent,
+  }
+}
+
+const addScopedDeclaration = (node: ts.Node, scope: LexicalScope): void => {
+  if ((ts.isFunctionExpression(node) || ts.isClassExpression(node)) && node.name !== undefined) {
+    scope.declarations.add(node.name.text)
+    return
+  }
+  if (ts.isParameter(node)) {
+    addBindingName(scope.declarations, node.name)
+    return
+  }
+  if (!ts.isVariableDeclaration(node)) {
+    return
+  }
+  if (ts.isCatchClause(node.parent)) {
+    addBindingName(scope.declarations, node.name)
+    return
+  }
+  if (ts.isVariableDeclarationList(node.parent)) {
+    const targetScope = isBlockScoped(node.parent.flags) ? scope : getVariableScope(scope)
+    addBindingName(targetScope.declarations, node.name)
+  }
+}
+
+const collectLexicalScopes = (
+  sourceFile: ts.SourceFile,
+): ReadonlyMap<ts.CallExpression, LexicalScope> => {
+  const rootScope: LexicalScope = {
+    declarations: new Set(),
+    kind: 'variable',
+    parent: undefined,
+  }
+  const scopes = new Map<ts.CallExpression, LexicalScope>()
+
+  const collect = (node: ts.Node, parentScope: LexicalScope): void => {
+    addOuterDeclaration(node, parentScope)
+    const scope = createLexicalScope(node, parentScope, rootScope, sourceFile)
+    if (ts.isCallExpression(node)) {
+      scopes.set(node, scope)
+    }
+    addScopedDeclaration(node, scope)
+    ts.forEachChild(node, (child) => collect(child, scope))
+  }
+  collect(sourceFile, rootScope)
+  return scopes
+}
+
+const isShadowed = (scope: LexicalScope, name: string): boolean => {
+  let current: LexicalScope | undefined = scope
+  while (current !== undefined) {
+    if (current.declarations.has(name)) {
+      return true
+    }
+    current = current.parent
+  }
+  return false
 }
 
 const getPlaceholderName = (node: ts.Expression): string | undefined => {
@@ -209,13 +340,15 @@ export const extractKeys = (
       bindings.set(element.name.text, {imported, source: node.moduleSpecifier.text})
     }
   })
+  const scopes = collectLexicalScopes(sourceFile)
 
   const entries: KeyEntry[] = []
   const dynamicCalls: ExtractionResult['dynamicCalls'][number][] = []
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
       const binding = bindings.get(node.expression.text)
-      if (binding) {
+      const scope = scopes.get(node)!
+      if (binding && !isShadowed(scope, node.expression.text)) {
         const position = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
         const callArguments: ReadonlyArray<KeyCallArgument> = node.arguments.map((argument) => {
           const literal = getLiteral(argument)
