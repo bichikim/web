@@ -18,6 +18,11 @@ import {
 export const musicAlbumStatusEnum = pgEnum('music_album_status', ['draft', 'published', 'archived'])
 export const musicAlbumLocaleEnum = pgEnum('music_album_locale', ['ko', 'en', 'ja', 'zh-Hans'])
 export const musicCoverFallbackEnum = pgEnum('music_cover_fallback', ['lp', 'cd', 'music'])
+export const musicAlbumCoverReservationStatusEnum = pgEnum('music_album_cover_reservation_status', [
+  'uploading',
+  'pending',
+  'deleting',
+])
 export const musicTrackAssetStatusEnum = pgEnum('music_track_asset_status', [
   'pending',
   'uploaded',
@@ -67,6 +72,41 @@ export const musicAlbumTranslations = pgTable(
   (table) => [
     primaryKey({columns: [table.albumId, table.locale]}),
     index('music_album_translations_locale_album_id_index').on(table.locale, table.albumId),
+  ],
+)
+
+export const musicAlbumCoverReservations = pgTable(
+  'music_album_cover_reservations',
+  {
+    coverImageUrl: text(),
+    createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+    draftId: uuid().notNull(),
+    expiresAt: timestamp({withTimezone: true}).notNull(),
+    id: uuid().primaryKey(),
+    objectKey: text().notNull(),
+    status: musicAlbumCoverReservationStatusEnum().notNull().default('uploading'),
+    updatedAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+  },
+  (table) => [
+    check(
+      'music_album_cover_reservations_object_key_check',
+      sql`${table.objectKey}
+        = 'album-covers/' || ${table.id}::text || '/cover.webp'`,
+    ),
+    check(
+      'music_album_cover_reservations_url_check',
+      sql`(${table.status} = 'uploading' and ${table.coverImageUrl} is null)
+        or ${table.status} = 'deleting'
+        or (${table.status} = 'pending'
+          and ${table.coverImageUrl} is not null
+          and ${table.coverImageUrl} like 'https://%')`,
+    ),
+    uniqueIndex('music_album_cover_reservations_object_key_index').on(table.objectKey),
+    index('music_album_cover_reservations_cleanup_index').on(
+      table.status,
+      table.expiresAt,
+      table.createdAt,
+    ),
   ],
 )
 

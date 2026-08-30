@@ -4,6 +4,10 @@ import {z} from 'zod'
 import {authorizeAdminRequest} from 'src/server/admin-auth/http'
 import {readBoundedRequest} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
+import {
+  completeAlbumCoverReservation,
+  createAlbumCoverReservation,
+} from 'src/server/music/album-cover-reservation'
 import {storeAlbumCover} from 'src/server/music/cover-upload'
 
 // Stay below the hosting platform's request limit after client-side WebP conversion.
@@ -49,8 +53,19 @@ export const POST = async (event: APIEvent): Promise<Response> => {
       return noStoreJson({error: 'invalid_cover'}, {cookies: authorization.cookies, status: 400})
     }
 
+    const reservation = await createAlbumCoverReservation(coverId.data)
+    const storedCover = await storeAlbumCover(
+      {body, contentType: 'image/webp'},
+      {id: reservation.id},
+    )
+    const completed = await completeAlbumCoverReservation(reservation.id, storedCover.coverImageUrl)
+
+    if (!completed) {
+      throw new Error('Failed to complete an album cover reservation')
+    }
+
     return noStoreJson(
-      await storeAlbumCover({body, contentType: 'image/webp'}, {id: coverId.data}),
+      {coverImageUrl: storedCover.coverImageUrl, coverReservationId: reservation.id},
       {cookies: authorization.cookies},
     )
   } catch (error) {
