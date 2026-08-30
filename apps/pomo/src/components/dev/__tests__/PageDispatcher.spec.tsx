@@ -22,6 +22,7 @@ vi.mock('../DialoguePage', () => ({default: createPage('dialogue')}))
 vi.mock('../LayerReviewPage', () => ({default: createPage('layer-review')}))
 vi.mock('../RecoveryPage', () => ({default: createPage('recovery')}))
 vi.mock('../SpeechToTextPage', () => ({default: createPage('speech-to-text')}))
+vi.mock('../StoragePage', () => ({default: createPage('storage')}))
 vi.mock('../TermsPage', () => ({default: createPage('terms')}))
 vi.mock('../TextMoodPage', () => ({default: createPage('text-mood')}))
 vi.mock('../VoicePage', () => ({default: createPage('voice')}))
@@ -38,6 +39,7 @@ it.each([
   ['/dev/focus-room-layer-review', 'layer-review'],
   ['/dev/recovery', 'recovery'],
   ['/dev/speech-to-text', 'speech-to-text'],
+  ['/dev/storage', 'storage'],
   ['/dev/terms', 'terms'],
   ['/dev/text-mood', 'text-mood'],
   ['/dev/voice', 'voice'],

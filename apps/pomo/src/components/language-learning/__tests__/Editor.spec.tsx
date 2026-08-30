@@ -17,7 +17,7 @@ import {
   selectLanguageLearningPromptWords,
   useLanguageLearningWords,
 } from '../../../features/language-learning'
-import {useModelDownload} from '../../../features/model-download'
+import {type ModelDownloadState, useModelDownload} from '../../../features/model-download'
 import type {ModelDownloadController} from '../../../features/model-download/controller'
 import {
   createSupertonicClient,
@@ -114,13 +114,18 @@ let disposeVoiceClient: Mock<() => void>
 let navigate: Mock<(to: string) => void>
 let startTextModel: Mock<ModelDownloadController['startTextModel']>
 let startVoiceModel: Mock<ModelDownloadController['startVoiceModel']>
+let setModelDownloadState: (value: ModelDownloadState) => ModelDownloadState
 
 beforeEach(() => {
   vi.clearAllMocks()
   const [writerOutput, updateWriterOutput] = createSignal('A useful sentence.')
   const [writerState, updateWriterState] = createSignal<DialogueWriterState>({status: 'idle'})
+  const [modelDownloadState, updateModelDownloadState] = createSignal<ModelDownloadState>({
+    status: 'idle',
+  })
   setWriterOutput = updateWriterOutput
   setWriterState = updateWriterState
+  setModelDownloadState = updateModelDownloadState
   disposeRepository = vi.fn()
   disposeVoiceClient = vi.fn()
   navigate = vi.fn<(to: string) => void>()
@@ -176,7 +181,7 @@ beforeEach(() => {
     dispose: vi.fn(),
     startTextModel,
     startVoiceModel,
-    state: () => ({status: 'idle'}),
+    state: modelDownloadState,
   })
   vi.mocked(createSupertonicClient).mockReturnValue({
     cancelGeneration: vi.fn(),
@@ -368,6 +373,23 @@ it('should download a missing text model and handle failed or cancelled download
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
   await flush()
   expect(startTextModel).toHaveBeenCalledOnce()
+
+  setModelDownloadState({
+    label: 'Gemma 4 E2B',
+    percentage: 37,
+    status: 'loading',
+    target: {kind: 'text', modelId: 'gemma-4-e2b'},
+  })
+  expect(screen.getByRole('button', {name: 'generate'})).toBeDisabled()
+  expect(
+    getLatestProps<ComponentProps<typeof PGenerationStatus>>(vi.mocked(PGenerationStatus)),
+  ).toMatchObject({
+    kind: 'draft',
+    message: 'Gemma 4 E2B 모델 받는 중 · 37%',
+    progress: 37,
+    progressLabel: '모델 다운로드 진행률',
+  })
+  setModelDownloadState({status: 'idle'})
 
   cleanup()
   setWriterState({status: 'idle'})

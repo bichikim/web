@@ -2,6 +2,7 @@ import {failureResult, type Result, successResult} from '../result'
 
 // Transformers.js의 기존 캐시를 그대로 공유해 이미 받은 대용량 Qwen 파일의 재다운로드를 피한다.
 export const MODEL_CACHE_NAME = 'transformers-cache'
+export const MODEL_PARTIAL_DIRECTORY_NAME = 'pomo-model-downloads'
 
 export type ModelStorageOperation = 'delete' | 'open' | 'read' | 'write'
 

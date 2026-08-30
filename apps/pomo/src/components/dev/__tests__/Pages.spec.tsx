@@ -2,14 +2,16 @@
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {useModelDownload} from 'src/features/model-download'
 import CharacterPage from '../CharacterPage'
 import ChatPage from '../ChatPage'
 import DialoguePage from '../DialoguePage'
 import HomePage from '../HomePage'
 import LayerReviewPage from '../LayerReviewPage'
 import SpeechToTextPage from '../SpeechToTextPage'
+import StoragePage from '../StoragePage'
 import TermsPage from '../TermsPage'
 import TextMoodPage from '../TextMoodPage'
 import VoicePage from '../VoicePage'
@@ -19,6 +21,9 @@ vi.mock('@solidjs/meta', () => ({
 }))
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
+}))
+vi.mock('src/features/model-download', () => ({
+  useModelDownload: vi.fn(),
 }))
 vi.mock('src/components/CharacterStudio', () => ({CharacterStudio: () => <p>character studio</p>}))
 vi.mock('src/components/PLayerReview', () => ({PLayerReview: () => <p>layer review</p>}))
@@ -62,6 +67,12 @@ vi.mock('../text-mood/Workspace', () => ({
   ),
 }))
 
+beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue({
+    state: () => ({status: 'idle'}),
+  } as ReturnType<typeof useModelDownload>)
+})
+
 afterEach(() => {
   cleanup()
 })
@@ -72,6 +83,7 @@ it.each([
   [ChatPage, 'chat workspace'],
   [DialoguePage, 'dialogue workspace'],
   [SpeechToTextPage, 'speech workspace'],
+  [StoragePage, '모델 저장소 관리'],
   [TextMoodPage, 'mood workspace'],
   [CharacterPage, 'character studio'],
   [LayerReviewPage, 'layer review'],
@@ -85,4 +97,12 @@ it('should configure development service terms navigation', () => {
   render(() => <TermsPage />)
 
   expect(screen.getByText('실험실 목록:/dev:web')).toBeDefined()
+})
+
+it('should link the development home to model storage management', () => {
+  render(() => <HomePage />)
+
+  expect(screen.getByRole('link', {name: /모델 저장소 관리/u}).getAttribute('href')).toBe(
+    '/dev/storage',
+  )
 })
