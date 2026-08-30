@@ -1,10 +1,10 @@
-import {createVitestConfig} from './vitest.base.config.mts'
+import {createVitestConfig, stressTestFiles} from './vitest.base.config.mts'
 
 export default createVitestConfig([
   {
     test: {
       environment: 'node',
-      include: ['packages/puppet/src/editor/__tests__/deletion-stress.spec.ts'],
+      include: [...stressTestFiles],
       maxWorkers: 1,
       name: 'stress',
     },
