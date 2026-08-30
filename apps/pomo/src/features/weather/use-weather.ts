@@ -141,7 +141,7 @@ export const useWeather = (): WeatherController => {
     setStatusEnabled(nextPreference.enabled)
     setPreference(nextPreference)
     writeWeatherPreference(nextPreference).catch(() => {
-      // Storage adapters recover internally; this guards unexpected host failures.
+      // Keep the in-memory preference active when persistence is unavailable.
     })
   }
 
