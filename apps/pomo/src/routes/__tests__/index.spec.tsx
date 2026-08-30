@@ -4,10 +4,6 @@ import {cleanup, render, screen} from '@solidjs/testing-library'
 import {type Component, type JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-const mocks = vi.hoisted(() => ({
-  getLocale: vi.fn(() => 'ko'),
-  getPomoHomeHref: vi.fn(() => '/ko'),
-}))
 let clientLoader: (() => Promise<{default: Component}>) | undefined
 
 vi.mock('@solidjs/meta', () => ({
@@ -25,11 +21,7 @@ vi.mock('../../components/AppsInTossHomePage', () => ({
 vi.mock('../../components/AppsInTossLoadingPage', () => ({
   AppsInTossLoadingPage: () => <p>Apps in Toss loading</p>,
 }))
-vi.mock('../../components/pomo-route', () => ({getPomoHomeHref: mocks.getPomoHomeHref}))
-vi.mock('@paraglide/runtime', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@paraglide/runtime')>()),
-  getLocale: mocks.getLocale,
-}))
+vi.mock('../../components/PHomePage', () => ({PHomePage: () => <p>web home</p>}))
 
 afterEach(() => {
   cleanup()
@@ -39,14 +31,13 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-it('should redirect the web root to its localized Pomo home', async () => {
+it('should render the web home at the root without redirecting', async () => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   const {default: RootPage} = await import('../index')
 
   render(() => <RootPage />)
 
-  expect(screen.getByRole('status')).toBeInTheDocument()
-  expect(mocks.getPomoHomeHref).toHaveBeenCalledWith('ko')
+  expect(screen.getByText('web home')).toBeInTheDocument()
 })
 
 it('should render and lazy-load the Apps in Toss home', async () => {

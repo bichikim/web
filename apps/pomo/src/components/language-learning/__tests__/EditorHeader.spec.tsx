@@ -14,9 +14,9 @@ vi.mock('@solidjs/router', () => ({
 
 import {LanguageLearningEditorHeader} from '../EditorHeader'
 
-it('should show the editor title and localized Pomo return link', () => {
+it('should show the editor title and Pomo root return link', () => {
   render(() => <LanguageLearningEditorHeader />)
 
   expect(screen.getByRole('heading', {name: '언어 학습 문장 만들기'})).toBeInTheDocument()
-  expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/ko/')
+  expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
 })

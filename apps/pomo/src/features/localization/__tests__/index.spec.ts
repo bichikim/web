@@ -2,8 +2,6 @@
 
 import {describe, expect, it} from 'vitest'
 
-import {deLocalizeHref, localizeHref} from '@paraglide/runtime'
-
 import {
   getLocalizedActivityOptions,
   getLocalizedGazeOptions,
@@ -82,14 +80,5 @@ describe('scene localization', () => {
       {label: 'Mostly cloudy', value: 'cloudy'},
       {label: 'Overcast', value: 'overcast'},
     ])
-  })
-})
-
-describe('localized routes', () => {
-  it('should prefix both the base and additional locales', () => {
-    expect(localizeHref('/', {locale: 'ko'})).toBe('/ko/')
-    expect(localizeHref('/', {locale: 'en'})).toBe('/en/')
-    expect(localizeHref('/account', {locale: 'ko'})).toBe('/ko/account/')
-    expect(deLocalizeHref('/en/account/')).toBe('/account/')
   })
 })

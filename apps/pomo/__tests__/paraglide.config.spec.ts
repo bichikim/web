@@ -3,10 +3,6 @@ import {describe, expect, it} from 'vitest'
 import {paraglideMiddleware} from '@paraglide/server'
 import {PARAGLIDE_CONFIG} from '../paraglide.config'
 
-const localizedRouteStrategies = PARAGLIDE_CONFIG.web.routeStrategies.filter(
-  (routeStrategy) => 'strategy' in routeStrategy,
-)
-
 describe('web localization routing', () => {
   it.each([
     {localeHeaders: new Headers({Cookie: 'PARAGLIDE_LOCALE=en'}), localeSource: 'cookie'},
@@ -15,7 +11,7 @@ describe('web localization routing', () => {
       localeSource: 'preferred language',
     },
   ])(
-    'should preserve the English locale from $localeSource without redirecting dialogue URLs',
+    'should render canonical URLs in the English locale from $localeSource without redirecting',
     async ({localeHeaders}) => {
       const requestHeaders = new Headers(localeHeaders)
       requestHeaders.set('Sec-Fetch-Dest', 'document')
@@ -36,7 +32,7 @@ describe('web localization routing', () => {
     },
   )
 
-  it('should redirect localized routes to the English URL', async () => {
+  it('should render the root in the resolved language without redirecting', async () => {
     const request = new Request('https://pomofi.test/', {
       headers: {
         Cookie: 'PARAGLIDE_LOCALE=en',
@@ -46,21 +42,43 @@ describe('web localization routing', () => {
 
     const response = await paraglideMiddleware(request, () => new Response())
 
-    expect(response.status).toBe(307)
-    expect(response.headers.get('Location')).toBe('https://pomofi.test/en/')
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Location')).toBeNull()
   })
 
-  it('should keep routes without localized aliases on the canonical URL', () => {
-    expect(PARAGLIDE_CONFIG.web.strategy).toEqual(['cookie', 'preferredLanguage', 'baseLocale'])
-    expect(PARAGLIDE_CONFIG.localizedRoutes).not.toContain('/dialogue')
-  })
+  it('should ignore locale-looking URL segments when resolving the language', async () => {
+    const request = new Request('https://pomofi.test/en/', {
+      headers: {
+        Cookie: 'PARAGLIDE_LOCALE=ko',
+        'Sec-Fetch-Dest': 'document',
+      },
+    })
 
-  it('should enable the URL strategy only for routes with localized aliases', () => {
-    expect(localizedRouteStrategies).toEqual(
-      PARAGLIDE_CONFIG.localizedRoutes.map((match) => ({
-        match,
-        strategy: ['url', ...PARAGLIDE_CONFIG.web.strategy],
-      })),
+    const response = await paraglideMiddleware(request, ({locale, request: localizedRequest}) =>
+      Response.json({locale, url: localizedRequest.url}),
     )
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Location')).toBeNull()
+    await expect(response.json()).resolves.toEqual({
+      locale: 'ko',
+      url: 'https://pomofi.test/en/',
+    })
+  })
+
+  it('should resolve web languages without a URL strategy', () => {
+    expect(PARAGLIDE_CONFIG.web.strategy).toEqual(['cookie', 'preferredLanguage', 'baseLocale'])
+    expect(PARAGLIDE_CONFIG.web.routeStrategies).toEqual([
+      {exclude: true, match: '/api/:path(.*)?'},
+      {exclude: true, match: '/workers/:path(.*)?'},
+    ])
+  })
+
+  it('should resolve Apps in Toss languages from storage without a URL strategy', () => {
+    expect(PARAGLIDE_CONFIG.appsInToss.strategy).toEqual(['localStorage', 'cookie', 'baseLocale'])
+    expect(PARAGLIDE_CONFIG.appsInToss.routeStrategies).toEqual(
+      PARAGLIDE_CONFIG.web.routeStrategies,
+    )
+    expect(PARAGLIDE_CONFIG.common).not.toHaveProperty('urlPatterns')
   })
 })

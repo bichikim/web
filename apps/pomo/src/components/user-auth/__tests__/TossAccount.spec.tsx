@@ -36,7 +36,7 @@ it('should return to Pomo without showing account linking after Toss login', asy
   const loginButton = await screen.findByRole('button', {name: '토스로 시작하기'})
   fireEvent.click(loginButton)
 
-  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/ko/', {replace: true}))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/', {replace: true}))
   expect(screen.queryByLabelText('연결할 이메일')).toBeNull()
 })
 

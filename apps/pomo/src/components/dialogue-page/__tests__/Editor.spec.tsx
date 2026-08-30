@@ -244,7 +244,7 @@ describe('PDialogueEditor fields', () => {
     renderEditor(harness)
 
     expect(screen.getByRole('heading', {name: '새 대화 만들기'})).toBeInTheDocument()
-    expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/ko/')
+    expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
     expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
     expect(screen.getByText('13 / 3000')).toBeInTheDocument()
     expect(screen.getByTestId('download-consent')).toHaveAttribute('data-download-size', '123 MB')

@@ -28,7 +28,22 @@ describe('handleUserAuthRequest', () => {
     ).resolves.toBeNull()
   })
 
-  it.each(['/account', '/account/', '/ko/account/'])(
+  it('should ignore retired locale-prefixed account routes', async () => {
+    const headers = new Headers()
+    const url = new URL('https://pomo.example/ko/account/?neon_auth_session_verifier=verifier')
+
+    await expect(
+      handleUserAuthRequest({
+        request: new Request(url),
+        responseHeaders: headers,
+        url,
+      }),
+    ).resolves.toBeNull()
+    expect(headers.get('Cache-Control')).toBeNull()
+    expect(authMocks.handleAuthProxyRequest).not.toHaveBeenCalled()
+  })
+
+  it.each(['/account', '/account/'])(
     'should protect account response %s from caching and referrer leaks',
     async (pathname) => {
       const headers = new Headers()
@@ -46,10 +61,7 @@ describe('handleUserAuthRequest', () => {
     },
   )
 
-  it.each([
-    ['/account/', 'https://pomo.example/account/?link_token=challenge'],
-    ['/ko/account/', 'https://pomo.example/ko/account/?link_token=challenge'],
-  ])('should exchange a verifier on the account route %s', async (pathname, location) => {
+  it('should exchange a verifier on the account route', async () => {
     authMocks.handleAuthProxyRequest.mockResolvedValue(
       Response.json(
         {session: {id: 'session'}, user: {id: 'user'}},
@@ -57,7 +69,7 @@ describe('handleUserAuthRequest', () => {
       ),
     )
     const url = new URL(
-      `${pathname}?link_token=challenge&neon_auth_session_verifier=verifier`,
+      '/account/?link_token=challenge&neon_auth_session_verifier=verifier',
       'https://pomo.example',
     )
     const response = await handleUserAuthRequest({
@@ -68,7 +80,9 @@ describe('handleUserAuthRequest', () => {
 
     expect(response?.status).toBe(302)
     expect(response?.headers.get('Cache-Control')).toBe('no-store')
-    expect(response?.headers.get('Location')).toBe(location)
+    expect(response?.headers.get('Location')).toBe(
+      'https://pomo.example/account/?link_token=challenge',
+    )
   })
 
   it('should exchange the verifier and remove only that callback parameter', async () => {

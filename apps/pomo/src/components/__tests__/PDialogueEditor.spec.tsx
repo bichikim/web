@@ -98,11 +98,11 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('should link directly to the localized Pomofi home', () => {
+it('should link directly to the Pomofi root', () => {
   vi.mocked(usePDialogueEditor).mockReturnValue(createEditor())
   render(() => <PDialogueEditor dialogueId={null} />)
 
-  expect(screen.getByRole('link', {name: 'Pomofi로'}).getAttribute('href')).toBe('/ko/')
+  expect(screen.getByRole('link', {name: 'Pomofi로'}).getAttribute('href')).toBe('/')
 })
 
 it('should not start audio generation after disposal during the stored-model check', async () => {

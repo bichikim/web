@@ -75,7 +75,7 @@ const LanguageLearningRoute = () => {
       >
         start download
       </button>
-      <button onClick={() => navigate('/ko/')} type="button">
+      <button onClick={() => navigate('/')} type="button">
         go home
       </button>
     </main>
