@@ -317,7 +317,7 @@ it('should generate, review, regenerate, toggle, and save a sentence', async () 
   fireEvent.click(screen.getByRole('button', {name: 'save'}))
 
   await waitFor(() => expect(saveLanguageLearningCandidates).toHaveBeenCalledOnce())
-  expect(navigate).toHaveBeenCalledOnce()
+  expect(navigate).toHaveBeenCalledExactlyOnceWith('/')
   expect(disposeRepository).toHaveBeenCalledOnce()
 })
 

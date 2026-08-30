@@ -2,6 +2,7 @@ import {defineConfig, devices} from '@playwright/test'
 
 const webBaseUrl = 'http://127.0.0.1:44173'
 const appsInTossBaseUrl = 'http://127.0.0.1:44174'
+const DEFAULT_LOCALE_STORAGE = [{name: 'PARAGLIDE_LOCALE', value: 'ko'}]
 
 export default defineConfig({
   expect: {
@@ -35,6 +36,13 @@ export default defineConfig({
       reducedMotion: 'reduce',
     },
     screenshot: 'only-on-failure',
+    storageState: {
+      cookies: [],
+      origins: [webBaseUrl, appsInTossBaseUrl].map((origin) => ({
+        localStorage: DEFAULT_LOCALE_STORAGE,
+        origin,
+      })),
+    },
     trace: 'on-first-retry',
     video: 'retain-on-failure',
   },

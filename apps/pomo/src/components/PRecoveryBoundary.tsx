@@ -1,9 +1,6 @@
 import {type Accessor, ErrorBoundary, type JSX, Show} from 'solid-js'
 
-import {getLocale} from '@paraglide/runtime'
-
 import {PButton, pButtonClasses} from './PButton'
-import {getPomoHomeHref} from './pomo-route'
 import * as m from '@paraglide/message'
 import {RecoveryAttempt} from './recovery-boundary/Attempt'
 
@@ -40,11 +37,7 @@ export const PRecoveryBoundary = (props: PRecoveryBoundaryProps) => {
                 <PButton onPress={props.onReload} tone="secondary">
                   {m.recovery_reload()}
                 </PButton>
-                <a
-                  class={pButtonClasses({tone: 'secondary'})}
-                  href={getPomoHomeHref(getLocale())}
-                  target="_self"
-                >
+                <a class={pButtonClasses({tone: 'secondary'})} href="/" target="_self">
                   {m.recovery_home()}
                 </a>
               </div>

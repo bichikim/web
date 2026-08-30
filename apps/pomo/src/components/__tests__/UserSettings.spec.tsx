@@ -46,7 +46,7 @@ it('should show the signed-in email and account management entry', async () => {
   await waitFor(() => expect(screen.queryByText('pomo@example.com')).not.toBeNull())
   expect(screen.queryByText('이메일 링크')).not.toBeNull()
   const accountLink = screen.getByRole('link', {name: '계정 관리'})
-  expect(accountLink.getAttribute('href')).toBe('/ko/account/')
+  expect(accountLink.getAttribute('href')).toBe('/account')
   expect(accountLink.className).toContain('rounded-control')
   expect(accountLink.className).toContain('border-highlight')
 })
@@ -58,9 +58,7 @@ it('should provide the login entry for an anonymous user', async () => {
 
   await waitFor(() => expect(screen.queryByText('로그인하지 않았어요.')).not.toBeNull())
   expect(screen.getByText('로그인하지 않았어요.').closest('div.rounded-panel')).not.toBeNull()
-  expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe(
-    '/ko/account/',
-  )
+  expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe('/account')
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
     '/web/terms',
   )
@@ -84,7 +82,7 @@ it('should show the Toss login method for an app session', async () => {
   expect(screen.queryByText('로그인됨')).not.toBeNull()
   expect(
     screen.getByRole('link', {name: '이메일 추가해서 웹에서도 로그인하기'}).getAttribute('href'),
-  ).toBe('/ko/account/')
+  ).toBe('/account')
   expect(readAccountSession).not.toHaveBeenCalled()
 })
 

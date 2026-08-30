@@ -22,8 +22,6 @@ import PDialogueDraftGenerator from './DraftGenerator'
 import {PFaceIcon} from '../PFaceIcon'
 import {PGenerationStatus} from '../PGenerationStatus'
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
-import {getPomoHomeHref} from '../pomo-route'
-import {getLocale} from '@paraglide/runtime'
 
 const CLASSES = {
   dialogueEditor: [
@@ -293,7 +291,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
     <main class={CLASSES.dialogueEditor}>
       <header class={CLASSES.dialogueEditorHeader}>
         <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
-        <A class={CLASSES.dialogueEditorBack} href={getPomoHomeHref(getLocale())}>
+        <A class={CLASSES.dialogueEditorBack} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
           Pomofi로
         </A>

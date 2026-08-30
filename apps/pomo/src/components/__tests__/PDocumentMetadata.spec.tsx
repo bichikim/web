@@ -30,6 +30,10 @@ vi.mock('@paraglide/message', () => ({
   app_default_description: () => '기본 설명',
   app_home_description: () => '홈 설명',
 }))
+vi.mock('@paraglide/runtime', () => ({
+  getLocale: () => 'en',
+  getTextDirection: () => 'ltr',
+}))
 vi.mock('../pomo-route', () => ({
   getCanonicalPathname: (pathname: string) => pathname.replace(/\/+$/u, '') || '/',
   isSearchIndexablePath: (pathname: string) => pathname === '/',
@@ -37,12 +41,21 @@ vi.mock('../pomo-route', () => ({
 }))
 
 beforeEach(() => {
+  document.documentElement.dir = 'rtl'
+  document.documentElement.lang = 'ko'
   metadata.links.length = 0
   metadata.metas.length = 0
   metadata.titles.length = 0
 })
 
 afterEach(cleanup)
+
+it('should synchronize the document language with the hydrated locale', () => {
+  render(() => <PDocumentMetadata />)
+
+  expect(document.documentElement.lang).toBe('en')
+  expect(document.documentElement.dir).toBe('ltr')
+})
 
 it.each([
   ['/', 'Pomofi', '홈 설명', 'index, follow'],

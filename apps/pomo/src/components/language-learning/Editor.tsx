@@ -2,7 +2,6 @@ import {useNavigate} from '@solidjs/router'
 import {createEffect, createMemo, createSignal, onCleanup, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
-import {getLocale} from '@paraglide/runtime'
 import {useDialogueWriter} from '../../features/dialogue-writer'
 import {
   createPDialogueRepository,
@@ -32,7 +31,6 @@ import {
 import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
 import {PGenerationStatus} from '../PGenerationStatus'
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
-import {getPomoHomeHref} from '../pomo-route'
 import {revokeLanguageLearningAudioUrls} from './candidate'
 import {
   getLanguageLearningGenerationStatus,
@@ -479,7 +477,7 @@ export default function LanguageLearningEditor() {
         tags: tags(),
       })
       if (!workflow.isDisposed) {
-        navigate(getPomoHomeHref(getLocale()))
+        navigate('/')
       }
     } catch (error: unknown) {
       console.error('Failed to save language learning sentences.', error)

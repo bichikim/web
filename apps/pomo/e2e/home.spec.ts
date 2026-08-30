@@ -9,8 +9,9 @@ test('hydrates the home route in its configured runtime', async ({page}, testInf
   const response = await page.goto('/')
 
   expect(response?.ok()).toBe(true)
+  expect(await page.evaluate(() => localStorage.getItem('PARAGLIDE_LOCALE'))).toBe('ko')
+  await expect(page).toHaveURL(/\/$/u)
   if (isAppsInToss) {
-    await expect(page).toHaveURL(/\/(?:en|ko)\/?$/u)
     await page.waitForFunction(() => '__ait' in window)
     await expect(page.locator('html')).toHaveAttribute(
       'style',

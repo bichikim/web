@@ -6,7 +6,6 @@ import {PServicePolicyLinks} from './PServicePolicyLinks'
 import {PSettingsActionLink} from './settings/ActionLink'
 import {PSettingsSectionHeading} from './settings/SectionHeading'
 import * as m from '@paraglide/message'
-import {localizeHref} from '@paraglide/runtime'
 
 export const UserSettings = () => {
   const settings = useUserSettings()
@@ -65,7 +64,7 @@ export const UserSettings = () => {
 
         <PSettingsActionLink
           class="min-h-control-md w-fit"
-          href={localizeHref('/account')}
+          href="/account"
           icon="i-tabler-user-circle"
         >
           <Switch>

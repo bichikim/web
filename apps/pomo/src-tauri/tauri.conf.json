@@ -6,7 +6,7 @@
   "build": {
     "beforeBuildCommand": "pnpm run build:desktop:web",
     "beforeDevCommand": "pnpm run dev:desktop:web",
-    "devUrl": "http://127.0.0.1:1420/ko/",
+    "devUrl": "http://127.0.0.1:1420/",
     "frontendDist": "../.output/public"
   },
   "app": {
@@ -20,7 +20,7 @@
         "minHeight": 520,
         "minWidth": 420,
         "title": "Pomofi",
-        "url": "/ko/",
+        "url": "/",
         "width": 1280
       }
     ],

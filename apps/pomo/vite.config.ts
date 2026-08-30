@@ -5,10 +5,8 @@ import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {nitro} from 'nitro/vite'
 import {type ConfigEnv, defineConfig, type UserConfig} from 'vite'
 import {PARAGLIDE_CONFIG} from './paraglide.config'
-import projectSettings from './.i18n/project.inlang/settings.json' with {type: 'json'}
 import {createDevFeedPlugin} from './scripts/vite/dev-feed/plugin'
 import {createScribbleIconRestartPlugin} from './scripts/vite/scribble-icon/plugin'
-import {createLocalizedStaticRoutes} from './scripts/vite/static-routes'
 import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
 import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
 
@@ -116,16 +114,10 @@ const APPS_IN_TOSS_BASE_STATIC_ROUTES = [
   '/focus-room',
   '/focus-room-dialogue',
 ]
-const LOCALIZED_STATIC_ROUTES = createLocalizedStaticRoutes({
-  locales: projectSettings.locales,
-  routes: PARAGLIDE_CONFIG.localizedRoutes,
-})
-const APPS_IN_TOSS_STATIC_ROUTES = [
-  ...new Set([...APPS_IN_TOSS_BASE_STATIC_ROUTES, ...LOCALIZED_STATIC_ROUTES]),
-]
+const APPS_IN_TOSS_STATIC_ROUTES = APPS_IN_TOSS_BASE_STATIC_ROUTES
 const DESKTOP_STATIC_ROUTES = [
   ...SHARED_STATIC_ROUTES,
-  ...LOCALIZED_STATIC_ROUTES,
+  '/account',
   '/desktop/player',
   '/desktop/pomodoro',
   '/desktop/settings',
@@ -186,10 +178,10 @@ const WORKER_SECURITY_HEADERS = {
   'Content-Security-Policy-Report-Only': createWorkerContentSecurityPolicy(),
 } as const
 const PRERENDER_SECURITY_RULES = Object.fromEntries(
-  (IS_STATIC_BUILD
-    ? [...SHARED_STATIC_ROUTES, ...LOCALIZED_STATIC_ROUTES]
-    : SHARED_STATIC_ROUTES
-  ).map((route) => [route, {headers: STATIC_SECURITY_HEADERS}]),
+  (IS_STATIC_BUILD ? [...SHARED_STATIC_ROUTES, '/account'] : SHARED_STATIC_ROUTES).map((route) => [
+    route,
+    {headers: STATIC_SECURITY_HEADERS},
+  ]),
 )
 
 const createConfig = ({command}: ConfigEnv): UserConfig => ({

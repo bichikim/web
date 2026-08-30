@@ -2,7 +2,6 @@ import {useNavigate} from '@solidjs/router'
 import {createSignal, onCleanup, onMount} from 'solid-js'
 
 import * as m from '@paraglide/message'
-import {localizeHref} from '@paraglide/runtime'
 
 import {
   type AccountLinkEmailResult,
@@ -57,7 +56,7 @@ const useLoginNavigation = () => {
     await createTossLoginSession()
 
     if (isActive) {
-      navigate(localizeHref('/'), {replace: true})
+      navigate('/', {replace: true})
     }
   }
 }

@@ -2,7 +2,6 @@ import {expect, it} from 'vitest'
 
 import {
   getCanonicalPathname,
-  getPomoHomeHref,
   isPomoHomePath,
   isSearchIndexablePath,
   normalizePathname,
@@ -10,31 +9,24 @@ import {
 } from '../pomo-route'
 
 it.each([
-  ['ko', '/ko/'],
-  ['en', '/en/'],
-] as const)('should resolve the %s Pomofi home route to %s', (locale, expected) => {
-  expect(getPomoHomeHref(locale)).toBe(expected)
-})
-
-it.each([
   ['/', '/'],
   ['///', '/'],
   ['/dev/terms', '/dev/terms'],
   ['/dev/terms/', '/dev/terms'],
-  ['/en', '/'],
-  ['/ko/', '/'],
-  ['/en/dialogue/', '/dialogue'],
+  ['/en', '/en'],
+  ['/ko/', '/ko'],
+  ['/en/dialogue/', '/en/dialogue'],
 ])('should normalize %s to %s', (pathname, expected) => {
   expect(normalizePathname(pathname)).toBe(expected)
 })
 
 it.each([
-  ['/', false],
+  ['/', true],
   ['/dialogue', true],
   ['/dialogue/', true],
-  ['/en', true],
-  ['/ko/', true],
-  ['/en/dialogue', true],
+  ['/en', false],
+  ['/ko/', false],
+  ['/en/dialogue', false],
   ['/dev', false],
   ['/dev/dialogue', false],
 ])('should classify %s as a Pomo layout route when expected', (pathname, expected) => {
@@ -42,12 +34,12 @@ it.each([
 })
 
 it.each([
-  ['/', false],
-  ['///', false],
+  ['/', true],
+  ['///', true],
   ['/dialogue', false],
   ['/dialogue/', false],
-  ['/en', true],
-  ['/ko/', true],
+  ['/en', false],
+  ['/ko/', false],
   ['/en/dialogue', false],
 ])(
   'should enable entry playback for %s only when it is the Pomo home route',
@@ -57,9 +49,9 @@ it.each([
 )
 
 it.each([
-  ['/', false],
-  ['/ko/', true],
-  ['/en/', true],
+  ['/', true],
+  ['/ko/', false],
+  ['/en/', false],
   ['/refund-policy', true],
   ['/refund-policy/', true],
   ['/third-party-notices', true],
@@ -75,8 +67,8 @@ it.each([
 it.each([
   ['/', '/'],
   ['/refund-policy/', '/refund-policy'],
-  ['/ko/', '/ko/'],
-  ['/en/account', '/en/account/'],
+  ['/ko/', '/ko'],
+  ['/en/account', '/en/account'],
 ])('should resolve the canonical pathname for %s', (pathname, expected) => {
   expect(getCanonicalPathname(pathname)).toBe(expected)
 })

@@ -6,10 +6,6 @@ import {afterEach, expect, it, vi} from 'vitest'
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {readonly children: unknown}) => <>{props.children}</>,
 }))
-vi.mock('@paraglide/runtime', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@paraglide/runtime')>()),
-  localizeHref: (href: string) => `/ko${href}`,
-}))
 vi.mock('../user-auth/TossAccount', () => ({TossAccount: () => <p>Toss account</p>}))
 vi.mock('../user-auth/WebAccount', () => ({WebAccount: () => <p>Web account</p>}))
 
@@ -31,7 +27,7 @@ it.each([
     render(() => <AccountPage />)
 
     expect(screen.getByRole('main')).toHaveTextContent('Pomo account')
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/ko/')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/')
     expect(screen.getByText(accountText)).toBeInTheDocument()
   },
   15_000,
