@@ -32,12 +32,12 @@
 
 ## Evidence
 
-- Do not make factual or technical claims without showing the decisive evidence to the user.
-- Verify changeable external information from a current authoritative internet source in the same turn before claiming it; learned knowledge, prior conversation, and the repository's local state are not substitutes for current external evidence.
-- Before using any term, status, label, or qualifier to reach a conclusion, establish its exact meaning in context from authoritative evidence. Do not skip that meaning or infer consequences from familiarity or connotation; verify the consequence relevant to the user's question separately.
-- Prefer evidence from the actual project and runtime over assumptions based on learned patterns.
-- When evidence is unavailable, run the smallest safe experiment that can answer the question.
-- If no evidence exists and no viable experiment is possible, do not infer or speculate. Tell the user that the answer cannot be verified and why.
+- Do not infer, speculate, or fill gaps. Treat learned knowledge, memory, prior conversation, common patterns, names, and probabilities as false or unverified until current evidence establishes them.
+- Use only directly observed evidence from the actual project's files, configuration, and data; its actual runtime; current official documentation; relevant existing tests executed against the actual code path; or new tests created and executed against that path as sources of truth.
+- Verify every factual or technical conclusion with the source capable of proving it. Source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised.
+- Verify changeable external information from a current authoritative source in the same turn. Before relying on a term, status, label, or qualifier, establish its exact contextual meaning and separately verify the consequence relevant to the question.
+- When direct evidence is missing, run the smallest relevant test or runtime experiment that can establish the fact. Distinguish product evidence from setup, runner, sandbox, and environment failures.
+- Show the user the decisive evidence. If the permitted sources cannot verify a claim and no viable experiment can establish it, state that it cannot be determined; do not provide a likely answer.
 
 ## Architecture authority
 
