@@ -14,4 +14,4 @@ disable-model-invocation: true
 
 Mark absent applicable test or `typecheck` scripts as not applicable with a reason. Stop as blocked when a required check cannot run or a fix needs product direction, new authority, destructive action, or external change.
 
-Report pass count, fixed P0–P2s, exact test and `typecheck` commands/results, other checks, and final status (`no P0/P1/P2 findings` or `blocked`). Number remaining P3/P4s or write `none`.
+Report pass count, fixed P0–P2s, exact test and `typecheck` commands/results, other checks, and final status (`no P0/P1/P2 findings` or `blocked`). Give each remaining P3/P4 one unique number in a single consecutive list across severities so the user can authorize by number; write `none` when empty.
