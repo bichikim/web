@@ -26,8 +26,14 @@ const feed = {
 } satisfies WeatherFeed
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
+
+const resolveWeatherResultAfterRetry = async (request: ReturnType<typeof fetchWeatherFeed>) => {
+  await vi.advanceTimersToNextTimerAsync()
+  return request
+}
 
 it('should return a validated available feed', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(feed)))
@@ -47,6 +53,7 @@ it('should reject a feed for a different city than requested', () => {
 })
 
 it('should expose the server collection retry delay', async () => {
+  vi.useFakeTimers()
   vi.stubGlobal(
     'fetch',
     vi
@@ -56,13 +63,13 @@ it('should expose the server collection retry delay', async () => {
       ),
   )
 
-  await expect(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)).resolves.toEqual({
-    retryAfterMilliseconds: 2_000,
-    status: 'collecting',
-  })
+  await expect(
+    resolveWeatherResultAfterRetry(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)),
+  ).resolves.toEqual({retryAfterMilliseconds: 2_000, status: 'collecting'})
 })
 
 it('should distinguish a provider failure from an active collection', async () => {
+  vi.useFakeTimers()
   vi.stubGlobal(
     'fetch',
     vi
@@ -72,23 +79,22 @@ it('should distinguish a provider failure from an active collection', async () =
       ),
   )
 
-  await expect(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)).resolves.toEqual({
-    retryAfterMilliseconds: 30_000,
-    status: 'unavailable',
-  })
+  await expect(
+    resolveWeatherResultAfterRetry(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)),
+  ).resolves.toEqual({retryAfterMilliseconds: 30_000, status: 'unavailable'})
 })
 
 it.each([undefined, '0', '1.5'])('should ignore the invalid retry delay %s', async (retryAfter) => {
+  vi.useFakeTimers()
   const headers = retryAfter === undefined ? undefined : {'Retry-After': retryAfter}
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue(Response.json({code: 'weather_unavailable'}, {headers, status: 503})),
   )
 
-  await expect(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)).resolves.toEqual({
-    retryAfterMilliseconds: null,
-    status: 'unavailable',
-  })
+  await expect(
+    resolveWeatherResultAfterRetry(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)),
+  ).resolves.toEqual({retryAfterMilliseconds: null, status: 'unavailable'})
 })
 
 it('should reject an unsuccessful weather response', async () => {

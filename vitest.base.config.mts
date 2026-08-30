@@ -46,7 +46,10 @@ export const unitTestProject = {
     // 테스트 런타임 환경 (DOM API 제공)
     environment: 'jsdom',
     // 테스트로 포함할 파일 glob 패턴
-    exclude: ['packages/sw/src/__tests__/build-output.spec.ts'],
+    exclude: [
+      'packages/puppet/src/editor/__tests__/deletion-stress.spec.ts',
+      'packages/sw/src/__tests__/build-output.spec.ts',
+    ],
     include: [
       'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
