@@ -60,6 +60,20 @@ it('should restore native settings when the browser copy is unavailable', async 
   ).toEqual(settings)
 })
 
+it('should replace a stale browser cache with authoritative native settings', async () => {
+  const staleSettings = {enabled: true, playerVolumePercent: 70, version: 2} as const
+  const nativeSettings = {enabled: false, playerVolumePercent: 20, version: 2} as const
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  localStorage.setItem('pomo:dialogue-volume-ducking-settings:v2', JSON.stringify(staleSettings))
+  storageMocks.getItem.mockResolvedValue(JSON.stringify(nativeSettings))
+
+  await expect(readDialogueVolumeDuckingSettings()).resolves.toEqual(nativeSettings)
+  expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:dialogue-volume-ducking-settings:v2')
+  expect(
+    JSON.parse(localStorage.getItem('pomo:dialogue-volume-ducking-settings:v2') ?? ''),
+  ).toEqual(nativeSettings)
+})
+
 it('should reinterpret a legacy reduction percentage as the dialogue player volume', async () => {
   localStorage.setItem(
     'pomo:dialogue-volume-ducking-settings:v1',
@@ -99,7 +113,7 @@ it('should reject when browser storage cannot persist settings', async () => {
   ).rejects.toThrow('Failed to persist dialogue volume ducking settings.')
 })
 
-it('should default when native settings are missing or unreadable', async () => {
+it('should default when browser settings are invalid or native settings are missing', async () => {
   localStorage.setItem(
     'pomo:dialogue-volume-ducking-settings:v1',
     JSON.stringify({enabled: true, reductionPercent: 101, version: 1}),
@@ -115,10 +129,16 @@ it('should default when native settings are missing or unreadable', async () => 
   await expect(readDialogueVolumeDuckingSettings()).resolves.toEqual(
     DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
   )
+})
 
-  storageMocks.getItem.mockRejectedValueOnce(new Error('native unavailable'))
-  await expect(readDialogueVolumeDuckingSettings()).resolves.toEqual(
-    DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+it('should reject a native read failure instead of restoring a stale browser cache', async () => {
+  const staleSettings = {enabled: true, playerVolumePercent: 70, version: 2} as const
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  localStorage.setItem('pomo:dialogue-volume-ducking-settings:v2', JSON.stringify(staleSettings))
+  storageMocks.getItem.mockRejectedValue(new Error('native unavailable'))
+
+  await expect(readDialogueVolumeDuckingSettings()).rejects.toThrow(
+    'Failed to read dialogue volume ducking settings.',
   )
 })
 
@@ -144,24 +164,26 @@ it('should not let a native read overwrite a newer browser setting', async () =>
   ).toEqual(latestSettings)
 })
 
-it('should persist through either available native runtime storage', async () => {
+it('should persist through native storage when the browser cache is unavailable', async () => {
   const settings = {enabled: true, playerVolumePercent: 30, version: 2} as const
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-
-  storageMocks.setItem.mockResolvedValueOnce(undefined)
-  await expect(writeDialogueVolumeDuckingSettings(settings)).resolves.toBeUndefined()
-
-  storageMocks.setItem.mockRejectedValueOnce(new Error('native unavailable'))
-  await expect(writeDialogueVolumeDuckingSettings(settings)).resolves.toBeUndefined()
-
   vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
     throw new Error('browser unavailable')
   })
-  storageMocks.setItem.mockResolvedValueOnce(undefined)
-  await expect(writeDialogueVolumeDuckingSettings(settings)).resolves.toBeUndefined()
+  storageMocks.setItem.mockResolvedValue(undefined)
 
-  storageMocks.setItem.mockRejectedValueOnce(new Error('native unavailable'))
+  await expect(writeDialogueVolumeDuckingSettings(settings)).resolves.toBeUndefined()
+})
+
+it('should reject a native runtime save when native storage is unavailable', async () => {
+  const settings = {enabled: true, playerVolumePercent: 30, version: 2} as const
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.setItem.mockRejectedValue(new Error('native unavailable'))
+
   await expect(writeDialogueVolumeDuckingSettings(settings)).rejects.toThrow(
     'Failed to persist dialogue volume ducking settings.',
   )
+  expect(
+    JSON.parse(localStorage.getItem('pomo:dialogue-volume-ducking-settings:v2') ?? ''),
+  ).toEqual(settings)
 })

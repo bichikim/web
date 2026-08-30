@@ -106,18 +106,13 @@ const readNativeSettings = async (): Promise<DialogueVolumeDuckingSettings | nul
   return legacySettings === null ? null : migrateLegacySettings(legacySettings)
 }
 
-/** Reads the dialogue volume setting from storage whose lifetime matches the current runtime. */
+/** Reads the dialogue volume setting from the authoritative storage for the current runtime. */
 export const readDialogueVolumeDuckingSettings =
   async (): Promise<DialogueVolumeDuckingSettings> => {
     const initialWriteRevision = preferenceWriteRevision
-    const webSettings = readWebSettings()
-
-    if (webSettings !== null) {
-      return webSettings
-    }
 
     if (!hasNativeStorageBridge()) {
-      return DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
+      return readWebSettings() ?? DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
     }
 
     try {
@@ -132,8 +127,8 @@ export const readDialogueVolumeDuckingSettings =
       }
 
       return nativeSettings
-    } catch {
-      return readWebSettings() ?? DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
+    } catch (error: unknown) {
+      throw new Error('Failed to read dialogue volume ducking settings.', {cause: error})
     }
   }
 
@@ -157,7 +152,7 @@ export const writeDialogueVolumeDuckingSettings = async (
 
   const nativeWriteError = await nativeWriter.write(STORAGE_KEY, snapshot)
 
-  if (webWriteError !== null && nativeWriteError !== null) {
+  if (nativeWriteError !== null) {
     throw new Error('Failed to persist dialogue volume ducking settings.', {
       cause: nativeWriteError,
     })
