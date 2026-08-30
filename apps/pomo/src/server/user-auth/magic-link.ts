@@ -1,8 +1,6 @@
-import 'server-only'
-
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
-import {getNeonAuthProxyConfig} from '../auth/environment'
+import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 
 interface SendAccountLinkEmailInput {
   readonly challengeToken: string
@@ -20,7 +18,7 @@ export const sendAccountLinkEmail = async (input: SendAccountLinkEmailInput): Pr
   errorCallbackUrl.searchParams.set('link_error', 'email')
 
   const response = await handleAuthProxyRequest({
-    ...getNeonAuthProxyConfig(),
+    ...readNeonAuthProxyConfig(),
     path: 'sign-in/magic-link',
     request: new Request(endpoint, {
       body: JSON.stringify({

@@ -214,7 +214,8 @@ const SCENE_LAYER_DATASETS = {
 
 const runtimeScenes = new Map<string, PixiLayerSceneDefinition>()
 
-const getSceneLayer = (
+/** Resolves the complete layer definition for the development review canvas. */
+export const getPSceneReviewLayer = (
   sceneId: PSceneId,
   sceneStyle: PSceneStyle = 'original',
 ): PixiLayerSceneDefinition => SCENE_LAYER_DATASETS[sceneStyle][sceneId]
@@ -231,7 +232,7 @@ export const getPSceneLayer = (
     return cachedScene
   }
 
-  const reviewScene = getSceneLayer(sceneId, sceneStyle)
+  const reviewScene = getPSceneReviewLayer(sceneId, sceneStyle)
   const runtimeScene = {
     ...reviewScene,
     layers: reviewScene.layers.filter((layer) => layer.id !== 'reference'),
@@ -240,9 +241,3 @@ export const getPSceneLayer = (
 
   return runtimeScene
 }
-
-/** Resolves the complete layer definition for the development review canvas. */
-export const getPSceneReviewLayer = (
-  sceneId: PSceneId,
-  sceneStyle: PSceneStyle = 'original',
-): PixiLayerSceneDefinition => getSceneLayer(sceneId, sceneStyle)

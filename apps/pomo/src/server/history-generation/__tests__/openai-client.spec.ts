@@ -2,26 +2,29 @@ import {afterEach, expect, it, vi} from 'vitest'
 import OpenAI from 'openai'
 
 import {HISTORY_SOURCE_POLICY} from 'src/features/history-generation'
-import {getOpenAiConfiguration} from '../../ai/environment'
 import {HistorySubmissionError, submitHistoryResponse} from '../openai-client'
 
-vi.mock('../../ai/environment', () => ({
-  getOpenAiConfiguration: vi.fn(),
-  getOpenAiWebhookSecret: vi.fn(),
+const environmentMocks = vi.hoisted(() => ({
+  env: {
+    OPENAI_API_KEY: 'test-key',
+    OPENAI_MODEL: 'gpt-5.5',
+    OPENAI_REASONING_EFFORT: 'medium' as const,
+    OPENAI_SERVICE_TIER: 'default' as const,
+    OPENAI_WEBHOOK_SECRET: 'webhook-secret',
+  },
+}))
+
+vi.mock('src/env', () => ({
+  env: environmentMocks.env,
 }))
 
 afterEach(() => {
   vi.clearAllMocks()
+  environmentMocks.env.OPENAI_API_KEY = 'test-key'
+  environmentMocks.env.OPENAI_MODEL = 'gpt-5.5'
+  environmentMocks.env.OPENAI_REASONING_EFFORT = 'medium'
+  environmentMocks.env.OPENAI_SERVICE_TIER = 'default'
 })
-
-const mockConfiguration = () => {
-  vi.mocked(getOpenAiConfiguration).mockReturnValue({
-    apiKey: 'test-key',
-    model: 'gpt-5.5',
-    reasoningEffort: 'medium',
-    serviceTier: 'default',
-  })
-}
 
 const OPTIONS = {
   generationRunId: 'run-1',
@@ -32,7 +35,6 @@ const OPTIONS = {
 }
 
 it('should disable SDK retries and include the submission correlation key', async () => {
-  mockConfiguration()
   const create = vi.fn().mockResolvedValue({id: 'resp-1'})
   const client = {responses: {create}} as unknown as OpenAI
 
@@ -48,7 +50,6 @@ it('should disable SDK retries and include the submission correlation key', asyn
 })
 
 it('should include required titles in request metadata', async () => {
-  mockConfiguration()
   const create = vi.fn().mockResolvedValue({id: 'resp-1'})
   const client = {responses: {create}} as unknown as OpenAI
 
@@ -65,7 +66,6 @@ it('should include required titles in request metadata', async () => {
 })
 
 it('should classify a client error response as a confirmed rejection', async () => {
-  mockConfiguration()
   const error = new OpenAI.BadRequestError(
     400,
     {message: 'Invalid request'},
@@ -87,7 +87,6 @@ it('should classify a client error response as a confirmed rejection', async () 
 })
 
 it('should classify a transport error as having unknown acceptance', async () => {
-  mockConfiguration()
   const error = new OpenAI.APIConnectionError({cause: new Error('Response lost')})
   const client = {
     responses: {create: vi.fn().mockRejectedValue(error)},
@@ -108,7 +107,6 @@ it.each([
   new OpenAI.APIError(500, {message: 'server error'}, undefined, new Headers()),
   new OpenAI.APIError(undefined, {message: 'unknown'}, undefined, new Headers()),
 ])('should keep acceptance unknown for an inconclusive API failure', async (error) => {
-  mockConfiguration()
   const client = {
     responses: {create: vi.fn().mockRejectedValue(error)},
   } as unknown as OpenAI
@@ -126,13 +124,22 @@ it('should use a stable message for a non-Error submission failure', () => {
 
 it('should classify a preflight configuration error as a confirmed rejection', async () => {
   const error = new Error('OPENAI_API_KEY is required')
-  vi.mocked(getOpenAiConfiguration).mockImplementationOnce(() => {
-    throw error
+  Object.defineProperty(environmentMocks.env, 'OPENAI_API_KEY', {
+    configurable: true,
+    get() {
+      throw error
+    },
   })
   const create = vi.fn()
   const client = {responses: {create}} as unknown as OpenAI
 
   const result = await submitHistoryResponse(OPTIONS, client).catch((caught: unknown) => caught)
+
+  Object.defineProperty(environmentMocks.env, 'OPENAI_API_KEY', {
+    configurable: true,
+    value: 'test-key',
+    writable: true,
+  })
 
   expect(result).toBeInstanceOf(HistorySubmissionError)
   if (!(result instanceof HistorySubmissionError)) {

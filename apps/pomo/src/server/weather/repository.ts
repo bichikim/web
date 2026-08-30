@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {and, desc, eq, gte, sql} from 'drizzle-orm'
 
 import {

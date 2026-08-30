@@ -1,6 +1,6 @@
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
-import {getNeonAuthProxyConfig} from '../auth/environment'
+import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 import {type AdminAccess, classifyAdminAccess} from './access'
 
 export interface AdminSessionResult {
@@ -22,7 +22,7 @@ const createSessionRequest = (request: Request): Request => {
 
 export const getAdminSession = async (request: Request): Promise<AdminSessionResult> => {
   const response = await handleAuthProxyRequest({
-    ...getNeonAuthProxyConfig(),
+    ...readNeonAuthProxyConfig(),
     path: 'get-session',
     request: createSessionRequest(request),
   })

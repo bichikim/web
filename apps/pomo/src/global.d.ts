@@ -4,12 +4,27 @@
 import type {JSX} from 'solid-js'
 
 interface ImportMetaEnv {
+  readonly CRON_SECRET?: string
+  readonly DATABASE_URL?: string
+  readonly KMA_SERVICE_KEY?: string
+  readonly NEON_AUTH_BASE_URL?: string
+  readonly NEON_AUTH_COOKIE_SECRET?: string
+  readonly NODE_ENV?: string
+  readonly OPENAI_API_KEY?: string
+  readonly OPENAI_MODEL?: string
+  readonly OPENAI_REASONING_EFFORT?: string
+  readonly OPENAI_SERVICE_TIER?: string
+  readonly OPENAI_WEBHOOK_SECRET?: string
   readonly POMO_ALLOW_LOCAL_ASSET_ORIGIN: string
   readonly POMO_CONNECT_SOURCES: string
   readonly POMO_CONTENT_TYPE_OPTIONS: string
   readonly POMO_LICENSE_ASSET_ORIGIN: string
   readonly POMO_PERMISSIONS_POLICY: string
   readonly POMO_REFERRER_POLICY: string
+  readonly POMO_TOSS_CALLBACK_AUTHORIZATION?: string
+  readonly POMO_TOSS_MTLS_CERT?: string
+  readonly POMO_TOSS_MTLS_KEY?: string
+  readonly VERCEL_ENV?: string
   readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
   readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string
   readonly VITE_POMO_ENVIRONMENT: string

@@ -1,10 +1,13 @@
-import 'server-only'
-
 import {request as httpsRequest} from 'node:https'
 
 import {z} from 'zod'
 
-import {getTossMtlsCredentials, type TossMtlsCredentials} from './environment'
+import {env} from 'src/env'
+
+export interface TossMtlsCredentials {
+  readonly certificate: string
+  readonly privateKey: string
+}
 
 const TOSS_API_ORIGIN = 'https://apps-in-toss-api.toss.im'
 const TOKEN_PATH = '/api-partner/v1/apps-in-toss/user/oauth2/generate-token'
@@ -127,7 +130,10 @@ const requireSuccessfulResponse = (response: TossResponse): unknown => {
 
 export const exchangeTossAuthorization = async (
   input: TossLoginInput,
-  requester: TossRequester = createMtlsRequester(getTossMtlsCredentials()),
+  requester: TossRequester = createMtlsRequester({
+    certificate: env.POMO_TOSS_MTLS_CERT,
+    privateKey: env.POMO_TOSS_MTLS_KEY,
+  }),
 ): Promise<TossLoginIdentity> => {
   const tokenResponse = await requester({
     body: {
