@@ -21,6 +21,8 @@ export type {
   UsePFeedsProps,
 } from './feed-controller'
 export {findFeedNotificationDialogue} from './feed-controller'
+export {createFeedStateController} from './feed-state'
+export type {CreateFeedStateControllerOptions, FeedStateController} from './feed-state'
 export {createFeedPlaybackController} from './feed-playback'
 export type {CreateFeedPlaybackControllerOptions, FeedPlaybackController} from './feed-playback'
 export {cancelFeedProcessing} from './generation-cancellation'
@@ -30,6 +32,15 @@ export type {
   CreateFeedDialogueCompletionOptions,
   FeedDialogueCompletion,
 } from './generation-completion'
+export {createFeedGenerationController} from './generation-controller'
+export type {
+  CreateFeedGenerationControllerOptions,
+  FeedGenerationDialogueRepository,
+  FeedGenerationController,
+  FeedGenerationRepository,
+  FeedGenerationRuntime,
+  ScheduleFeedGenerationOptions,
+} from './generation-controller'
 export {recoverMissingFeedDialogue} from './missing-dialogue-recovery'
 export type {RecoverMissingFeedDialogueOptions} from './missing-dialogue-recovery'
 export {
@@ -39,3 +50,7 @@ export {
   getFeedGenerationProgress,
 } from './feed-runtime'
 export type {FindRemovableExpiredDialoguesOptions} from './feed-runtime'
+export {createFeedSyncController} from './sync-controller'
+export type {CreateFeedSyncControllerOptions, FeedSyncController} from './sync-controller'
+export {useFeedRefreshEvents} from './use-feed-refresh-events'
+export type {UseFeedRefreshEventsProps} from './use-feed-refresh-events'

@@ -319,6 +319,9 @@ it('should reject repository actions before the hook is mounted', async () => {
   await expect(controller.deleteRecovery()).rejects.toThrow(
     '피드 대화 저장소가 아직 준비되지 않았어요.',
   )
+  await expect(controller.cancelProcessing()).rejects.toThrow(
+    '피드 대화 저장소가 아직 준비되지 않았어요.',
+  )
   Object.defineProperty(repositoryMocks, 'dialogueRepository', {
     value: dialogueRepository,
     writable: true,
