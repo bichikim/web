@@ -70,13 +70,19 @@ export type {UseRandomEventProps} from './use-random-event'
 export {resolveDialoguePlayerGain, usePlayerVolumeDucking} from './use-player-volume-ducking'
 export type {UsePlayerVolumeDuckingOptions} from './use-player-volume-ducking'
 export {
+  createDialogueVolumeDuckingSettingsRepository,
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
   DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT,
   parseDialogueVolumeDuckingSettings,
   readDialogueVolumeDuckingSettings,
   writeDialogueVolumeDuckingSettings,
 } from './volume-ducking-settings'
-export type {DialogueVolumeDuckingSettings} from './volume-ducking-settings'
+export type {
+  CreateDialogueVolumeDuckingSettingsRepositoryOptions,
+  DialogueVolumeDuckingSettings,
+  DialogueVolumeDuckingSettingsRepository,
+  DialogueVolumeDuckingSettingsStorage,
+} from './volume-ducking-settings'
 export type {
   AutomaticDialogueSettings,
   AutomaticDialogueSettingsRepository,
