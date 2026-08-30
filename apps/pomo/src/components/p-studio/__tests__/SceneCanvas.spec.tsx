@@ -72,12 +72,10 @@ beforeEach(() => {
     layers: [],
     width: 100,
   }))
-  vi.mocked(applyWeatherSceneLayer).mockImplementation(
-    (scene, _sceneId, _sceneStyle, condition) => ({
-      ...scene,
-      id: `${scene.id}-${condition}`,
-    }),
-  )
+  vi.mocked(applyWeatherSceneLayer).mockImplementation(({condition, scene}) => ({
+    ...scene,
+    id: `${scene.id}-${condition}`,
+  }))
   vi.mocked(PSceneRenderer).mockImplementation(function MockSceneRenderer() {
     return createRenderer() as never
   })
@@ -174,10 +172,13 @@ describe('PSceneCanvas', () => {
     render(() => <PSceneCanvas {...defaultedProps} />)
 
     expect(applyWeatherSceneLayer).toHaveBeenCalledWith(
-      expect.anything(),
-      'day-reading-user',
-      'original',
-      'clear',
+      expect.objectContaining({
+        activity: 'reading',
+        condition: 'clear',
+        scene: expect.anything(),
+        sceneStyle: 'original',
+        time: 'day',
+      }),
     )
   })
 
