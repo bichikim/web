@@ -2,7 +2,6 @@
 import {createHandler, StartServer} from '@solidjs/start/server'
 
 import {getLocale, getTextDirection} from '@paraglide/runtime'
-import {PRETENDARD_FONT_ASSETS} from 'src/data/font-assets'
 
 const isAppsInToss = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
 const viewport = isAppsInToss
@@ -71,7 +70,11 @@ export default createHandler(
             <meta charset="utf-8" />
             <meta name="viewport" content={viewport} />
             <meta name="theme-color" content={documentThemeColor} />
-            <link rel="stylesheet" href={PRETENDARD_FONT_ASSETS.stylesheetPath} type="text/css" />
+            <link
+              rel="stylesheet"
+              href={import.meta.env.VITE_POMO_PRETENDARD_STYLESHEET_PATH}
+              type="text/css"
+            />
             <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
             <style nonce={event.locals.securityNonce}>{CRITICAL_LAYOUT_CSS}</style>
             {props.assets}
