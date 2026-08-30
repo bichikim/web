@@ -1,43 +1,60 @@
-/** @vitest-environment jsdom */
+import {beforeEach, expect, it, vi} from 'vitest'
 
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-
-import {
-  DEFAULT_WEATHER_PREFERENCE,
-  readWeatherPreference,
-  writeWeatherPreference,
-} from '../preference'
 import {LEGACY_WEATHER_LOCATIONS} from '../locations'
+import {
+  createWeatherPreferenceRepository,
+  DEFAULT_WEATHER_PREFERENCE,
+  type WeatherPreferenceRepository,
+  type WeatherPreferenceStorage,
+} from '../preference'
 
-const storageMocks = vi.hoisted(() => ({
-  getItem: vi.fn<(key: string) => Promise<string | null>>(),
-  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
-}))
-
-vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
-
+const STORAGE_KEY = 'pomo:weather-preference:v2'
+const LEGACY_STORAGE_KEY = 'pomo:weather-preference:v1'
 const disabledPreference = {
   enabled: false,
   location: LEGACY_WEATHER_LOCATIONS.seoul,
   sceneMode: 'cloudy',
 } as const
 
-beforeEach(() => {
-  localStorage.clear()
-  storageMocks.getItem.mockReset()
-  storageMocks.setItem.mockReset()
-})
+const createStorageHarness = () => {
+  const nativeValues = new Map<string, unknown>()
+  const webValues = new Map<string, unknown>()
+  const storage = {
+    isNative: vi.fn(() => false),
+    readNative: vi.fn<(key: string) => Promise<unknown | null>>(async (key) => {
+      return nativeValues.get(key) ?? null
+    }),
+    readWeb: vi.fn<(key: string) => unknown | null>((key) => webValues.get(key) ?? null),
+    writeNative: vi.fn(async (key: string, value: unknown) => {
+      nativeValues.set(key, value)
+    }),
+    writeWeb: vi.fn((key: string, value: unknown) => {
+      webValues.set(key, value)
+    }),
+  } satisfies WeatherPreferenceStorage
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  return {
+    nativeValues,
+    repository: createWeatherPreferenceRepository({storage}),
+    storage,
+    webValues,
+  }
+}
+
+let nativeValues: Map<string, unknown>
+let repository: WeatherPreferenceRepository
+let storage: ReturnType<typeof createStorageHarness>['storage']
+let webValues: Map<string, unknown>
+
+beforeEach(() => {
+  ;({nativeValues, repository, storage, webValues} = createStorageHarness())
 })
 
 it('should use the default when browser storage is missing or invalid', async () => {
-  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 
-  localStorage.setItem('pomo:weather-preference:v1', '{invalid')
-  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  webValues.set(LEGACY_STORAGE_KEY, '{invalid')
+  await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
 it.each([
@@ -48,9 +65,9 @@ it.each([
   {citySlug: 'unknown', enabled: true},
   {citySlug: 'seoul', enabled: true, sceneMode: 'unknown'},
 ])('should reject an invalid browser preference shape', async (value) => {
-  localStorage.setItem('pomo:weather-preference:v1', JSON.stringify(value))
+  webValues.set(LEGACY_STORAGE_KEY, value)
 
-  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
 it.each([
@@ -61,56 +78,53 @@ it.each([
   {enabled: true, location: LEGACY_WEATHER_LOCATIONS.seoul, sceneMode: 'unknown'},
   {enabled: true, location: {id: 'invalid'}},
 ])('should reject an invalid current browser preference shape', async (value) => {
-  localStorage.setItem('pomo:weather-preference:v2', JSON.stringify(value))
+  webValues.set(STORAGE_KEY, value)
 
-  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
 it('should migrate a stored preference without a scene mode to automatic', async () => {
-  localStorage.setItem(
-    'pomo:weather-preference:v1',
-    JSON.stringify({citySlug: 'seoul', enabled: true}),
-  )
+  webValues.set(LEGACY_STORAGE_KEY, {citySlug: 'seoul', enabled: true})
 
-  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  expect(webValues.get(STORAGE_KEY)).toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
 it('should persist and restore a browser preference', async () => {
-  await writeWeatherPreference(disabledPreference)
+  await repository.write(disabledPreference)
 
-  await expect(readWeatherPreference()).resolves.toEqual(disabledPreference)
-  expect(storageMocks.setItem).not.toHaveBeenCalled()
+  await expect(repository.read()).resolves.toEqual(disabledPreference)
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+  expect(storage.writeNative).not.toHaveBeenCalled()
 })
 
 it('should restore a native preference and rebuild the browser copy', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  storageMocks.getItem.mockResolvedValue(JSON.stringify(disabledPreference))
+  storage.isNative.mockReturnValue(true)
+  nativeValues.set(STORAGE_KEY, disabledPreference)
 
-  await expect(readWeatherPreference()).resolves.toEqual(disabledPreference)
-  expect(localStorage.getItem('pomo:weather-preference:v2')).toBe(
-    JSON.stringify(disabledPreference),
-  )
+  await expect(repository.read()).resolves.toEqual(disabledPreference)
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
 it('should replace a stale browser copy with the native preference', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  localStorage.setItem('pomo:weather-preference:v2', JSON.stringify(DEFAULT_WEATHER_PREFERENCE))
-  storageMocks.getItem.mockResolvedValue(JSON.stringify(disabledPreference))
+  storage.isNative.mockReturnValue(true)
+  webValues.set(STORAGE_KEY, DEFAULT_WEATHER_PREFERENCE)
+  nativeValues.set(STORAGE_KEY, disabledPreference)
 
-  await expect(readWeatherPreference()).resolves.toEqual(disabledPreference)
-  expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:weather-preference:v2')
-  expect(localStorage.getItem('pomo:weather-preference:v2')).toBe(
-    JSON.stringify(disabledPreference),
-  )
+  await expect(repository.read()).resolves.toEqual(disabledPreference)
+  expect(storage.readNative).toHaveBeenCalledWith(STORAGE_KEY)
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
 it('should migrate a native legacy city preference', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  storageMocks.getItem
-    .mockResolvedValueOnce(null)
-    .mockResolvedValueOnce(JSON.stringify({citySlug: 'jeju', enabled: false, sceneMode: 'snow'}))
+  storage.isNative.mockReturnValue(true)
+  nativeValues.set(LEGACY_STORAGE_KEY, {
+    citySlug: 'jeju',
+    enabled: false,
+    sceneMode: 'snow',
+  })
 
-  await expect(readWeatherPreference()).resolves.toEqual({
+  await expect(repository.read()).resolves.toEqual({
     enabled: false,
     location: LEGACY_WEATHER_LOCATIONS.jeju,
     sceneMode: 'snow',
@@ -118,114 +132,98 @@ it('should migrate a native legacy city preference', async () => {
 })
 
 it('should use defaults when native storage is empty or invalid', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  localStorage.setItem('pomo:weather-preference:v2', JSON.stringify(disabledPreference))
-  storageMocks.getItem.mockResolvedValueOnce(null).mockResolvedValueOnce('{}')
+  storage.isNative.mockReturnValue(true)
+  webValues.set(STORAGE_KEY, disabledPreference)
+  nativeValues.set(LEGACY_STORAGE_KEY, {})
 
-  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
-  expect(localStorage.getItem('pomo:weather-preference:v2')).toBe(
-    JSON.stringify(DEFAULT_WEATHER_PREFERENCE),
-  )
-  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+  expect(webValues.get(STORAGE_KEY)).toEqual(DEFAULT_WEATHER_PREFERENCE)
+  await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
 it('should mirror a preference to native storage', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  storageMocks.setItem.mockResolvedValue()
+  storage.isNative.mockReturnValue(true)
 
-  await writeWeatherPreference(disabledPreference)
+  await repository.write(disabledPreference)
 
-  expect(storageMocks.setItem).toHaveBeenCalledWith(
-    'pomo:weather-preference:v2',
-    JSON.stringify(disabledPreference),
-  )
+  expect(storage.writeNative).toHaveBeenCalledWith(STORAGE_KEY, disabledPreference)
+  expect(nativeValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
 it('should persist through native storage when browser storage fails', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  localStorage.setItem('pomo:weather-preference:v2', JSON.stringify(DEFAULT_WEATHER_PREFERENCE))
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
-    throw new DOMException('Browser storage unavailable', 'QuotaExceededError')
+  storage.isNative.mockReturnValue(true)
+  webValues.set(STORAGE_KEY, DEFAULT_WEATHER_PREFERENCE)
+  storage.writeWeb.mockImplementationOnce(() => {
+    throw new Error('Browser storage unavailable')
   })
-  storageMocks.setItem.mockResolvedValue()
-  storageMocks.getItem.mockResolvedValue(JSON.stringify(disabledPreference))
 
-  await expect(writeWeatherPreference(disabledPreference)).resolves.toBeUndefined()
-  expect(storageMocks.setItem).toHaveBeenCalledWith(
-    'pomo:weather-preference:v2',
-    JSON.stringify(disabledPreference),
-  )
-  await expect(readWeatherPreference()).resolves.toEqual(disabledPreference)
-  expect(localStorage.getItem('pomo:weather-preference:v2')).toBe(
-    JSON.stringify(disabledPreference),
-  )
+  await expect(repository.write(disabledPreference)).resolves.toBeUndefined()
+  expect(nativeValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+  await expect(repository.read()).resolves.toEqual(disabledPreference)
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
 it('should reject a native save when native storage fails', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  storageMocks.setItem.mockRejectedValue(new Error('Native storage unavailable'))
+  storage.isNative.mockReturnValue(true)
+  storage.writeNative.mockRejectedValue(new Error('Native storage unavailable'))
 
-  await expect(writeWeatherPreference(disabledPreference)).rejects.toThrow(
+  await expect(repository.write(disabledPreference)).rejects.toThrow(
     'Failed to persist weather preference.',
   )
 })
 
 it('should reject a native save when both storage writes fail', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
-    throw new DOMException('Browser storage unavailable', 'QuotaExceededError')
+  storage.isNative.mockReturnValue(true)
+  storage.writeWeb.mockImplementation(() => {
+    throw new Error('Browser storage unavailable')
   })
-  storageMocks.setItem.mockRejectedValue(new Error('Native storage unavailable'))
+  storage.writeNative.mockRejectedValue(new Error('Native storage unavailable'))
 
-  await expect(writeWeatherPreference(disabledPreference)).rejects.toThrow(
+  await expect(repository.write(disabledPreference)).rejects.toThrow(
     'Failed to persist weather preference.',
   )
 })
 
 it('should reject a browser save when browser storage fails', async () => {
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
-    throw new DOMException('Browser storage unavailable', 'QuotaExceededError')
+  storage.writeWeb.mockImplementation(() => {
+    throw new Error('Browser storage unavailable')
   })
 
-  await expect(writeWeatherPreference(disabledPreference)).rejects.toThrow(
+  await expect(repository.write(disabledPreference)).rejects.toThrow(
     'Failed to persist weather preference.',
   )
 })
 
 it('should reject a native read failure instead of using the browser copy', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  localStorage.setItem('pomo:weather-preference:v2', JSON.stringify(disabledPreference))
-  storageMocks.getItem.mockRejectedValue(new Error('native read unavailable'))
+  storage.isNative.mockReturnValue(true)
+  webValues.set(STORAGE_KEY, disabledPreference)
+  storage.readNative.mockRejectedValue(new Error('Native storage unavailable'))
 
-  await expect(readWeatherPreference()).rejects.toThrow('Failed to read weather preference.')
+  await expect(repository.read()).rejects.toThrow('Failed to read weather preference.')
 })
 
-it('should not let a pending native read replace a newer browser preference', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  let completeRead: (value: string) => void = () => undefined
-  storageMocks.getItem.mockReturnValueOnce(
-    new Promise((resolve) => {
+it('should not let a pending native read replace a newer preference', async () => {
+  storage.isNative.mockReturnValue(true)
+  let completeRead: (value: unknown) => void = () => undefined
+  storage.readNative.mockReturnValueOnce(
+    new Promise<unknown>((resolve) => {
       completeRead = resolve
     }),
   )
-  storageMocks.getItem.mockResolvedValue(JSON.stringify(disabledPreference))
-  storageMocks.setItem.mockResolvedValue()
 
-  const pendingRead = readWeatherPreference()
-  await writeWeatherPreference(disabledPreference)
-  completeRead(JSON.stringify(DEFAULT_WEATHER_PREFERENCE))
+  const pendingRead = repository.read()
+  await repository.write(disabledPreference)
+  completeRead(DEFAULT_WEATHER_PREFERENCE)
 
   await expect(pendingRead).resolves.toEqual(disabledPreference)
-  expect(JSON.parse(localStorage.getItem('pomo:weather-preference:v2') ?? '')).toEqual(
-    disabledPreference,
-  )
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
 it('should preserve native write order during rapid preference changes', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  const nativeWrites: string[] = []
+  storage.isNative.mockReturnValue(true)
+  const nativeWrites: unknown[] = []
   let completeFirstWrite: () => void = () => undefined
-  storageMocks.setItem.mockImplementation(async (_key, value) => {
+  storage.writeNative.mockImplementation(async (_key, value) => {
     nativeWrites.push(value)
 
     if (nativeWrites.length === 1) {
@@ -235,40 +233,36 @@ it('should preserve native write order during rapid preference changes', async (
     }
   })
 
-  const firstWrite = writeWeatherPreference(disabledPreference)
-  const secondWrite = writeWeatherPreference(DEFAULT_WEATHER_PREFERENCE)
+  const firstWrite = repository.write(disabledPreference)
+  const secondWrite = repository.write(DEFAULT_WEATHER_PREFERENCE)
   await vi.waitFor(() => expect(nativeWrites.length).toBeGreaterThan(0))
 
-  expect(nativeWrites).toEqual([JSON.stringify(disabledPreference)])
+  expect(nativeWrites).toEqual([disabledPreference])
   completeFirstWrite()
   await Promise.all([firstWrite, secondWrite])
-  expect(nativeWrites).toEqual([
-    JSON.stringify(disabledPreference),
-    JSON.stringify(DEFAULT_WEATHER_PREFERENCE),
-  ])
+  expect(nativeWrites).toEqual([disabledPreference, DEFAULT_WEATHER_PREFERENCE])
 })
 
 it('should wait for an active native write before reading the preference', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  let nativePreference = JSON.stringify(DEFAULT_WEATHER_PREFERENCE)
+  storage.isNative.mockReturnValue(true)
+  nativeValues.set(STORAGE_KEY, DEFAULT_WEATHER_PREFERENCE)
   let completeWrite: () => void = () => undefined
-  storageMocks.getItem.mockImplementation(async () => nativePreference)
-  storageMocks.setItem.mockImplementation(
-    (_key, value) =>
+  storage.writeNative.mockImplementation(
+    (key, value) =>
       new Promise((resolve) => {
         completeWrite = () => {
-          nativePreference = value
+          nativeValues.set(key, value)
           resolve()
         }
       }),
   )
 
-  const pendingWrite = writeWeatherPreference(disabledPreference)
-  await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledOnce())
-  const pendingRead = readWeatherPreference()
+  const pendingWrite = repository.write(disabledPreference)
+  await vi.waitFor(() => expect(storage.writeNative).toHaveBeenCalledOnce())
+  const pendingRead = repository.read()
   completeWrite()
 
   await expect(pendingWrite).resolves.toBeUndefined()
   await expect(pendingRead).resolves.toEqual(disabledPreference)
-  expect(storageMocks.getItem).toHaveBeenCalledOnce()
+  expect(storage.readNative).toHaveBeenCalledOnce()
 })
