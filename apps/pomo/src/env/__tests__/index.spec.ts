@@ -32,3 +32,12 @@ it('should export a parsed env aligned with envSchema', async () => {
   expect(Object.keys(env).sort()).toEqual(Object.keys(envSchema).sort())
   expect(env.OPENAI_API_KEY).toBe('sk-test-secret')
 })
+
+it('should defer validation until a key is read', async () => {
+  vi.unstubAllEnvs()
+
+  const {env, envSchema} = await import('../index')
+
+  expect(Object.keys(env).sort()).toEqual(Object.keys(envSchema).sort())
+  expect(() => env.CRON_SECRET).toThrow('CRON_SECRET is not set')
+})
