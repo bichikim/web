@@ -143,7 +143,7 @@ it('should reject a native read failure instead of restoring a stale browser cac
   )
 })
 
-it('should not let a native read overwrite a newer browser setting', async () => {
+it('should not let a pending native read replace a newer setting', async () => {
   const nativeSettings = {enabled: false, playerVolumePercent: 70, version: 2} as const
   const latestSettings = {enabled: true, playerVolumePercent: 20, version: 2} as const
   let resolveNativeRead: (value: unknown | null) => void = () => undefined
@@ -159,8 +159,33 @@ it('should not let a native read overwrite a newer browser setting', async () =>
   await repository.write(latestSettings)
   resolveNativeRead(nativeSettings)
 
-  await expect(readRequest).resolves.toEqual(nativeSettings)
+  await expect(readRequest).resolves.toEqual(latestSettings)
   expect(webValues.get(STORAGE_KEY)).toEqual(latestSettings)
+})
+
+it('should wait for an active native write before reading settings', async () => {
+  storage.isNative.mockReturnValue(true)
+  nativeValues.set(STORAGE_KEY, DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
+  const latestSettings = {enabled: true, playerVolumePercent: 20, version: 2} as const
+  let completeWrite: () => void = () => undefined
+  storage.writeNative.mockImplementation(
+    (key, value) =>
+      new Promise((resolve) => {
+        completeWrite = () => {
+          nativeValues.set(key, value)
+          resolve()
+        }
+      }),
+  )
+
+  const pendingWrite = repository.write(latestSettings)
+  await vi.waitFor(() => expect(storage.writeNative).toHaveBeenCalledOnce())
+  const pendingRead = repository.read()
+  completeWrite()
+
+  await expect(pendingWrite).resolves.toBeUndefined()
+  await expect(pendingRead).resolves.toEqual(latestSettings)
+  expect(storage.readNative).toHaveBeenCalledOnce()
 })
 
 it('should persist through native storage when the browser cache is unavailable', async () => {

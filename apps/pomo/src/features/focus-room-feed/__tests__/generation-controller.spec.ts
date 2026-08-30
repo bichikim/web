@@ -155,6 +155,28 @@ it('should generate and persist a queued feed job through the controller boundar
   expect(fixture.feedRepository.complete).toHaveBeenCalledOnce()
 })
 
+it('should mark a job interrupted when cancel races preparation status update', async () => {
+  const fixture = createFixture()
+  let finishUpdateJob: () => void = () => undefined
+  fixture.feedRepository.updateJob.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finishUpdateJob = () => resolve(undefined)
+      }),
+  )
+  fixture.controller.schedule({jobIds: ['job-1']})
+  await vi.waitFor(() => expect(fixture.feedRepository.updateJob).toHaveBeenCalledOnce())
+
+  await fixture.controller.cancel()
+  finishUpdateJob()
+
+  await vi.waitFor(() =>
+    expect(fixture.feedRepository.updateJob).toHaveBeenLastCalledWith(
+      expect.objectContaining({id: 'job-1', status: 'interrupted'}),
+    ),
+  )
+})
+
 it('should cancel active generation and expose interrupted jobs for recovery', async () => {
   const fixture = createFixture()
   const interruptedJob = {...createJob(), status: 'interrupted' as const}

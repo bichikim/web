@@ -241,6 +241,11 @@ const generateJob = async (
   })
 
   if (!isCurrentProcessing(context, revision)) {
+    await context.options.feedRepository.updateJob({
+      ...job,
+      status: 'interrupted',
+      updatedAt: context.options.now().toISOString(),
+    })
     return
   }
 
