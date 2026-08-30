@@ -237,6 +237,47 @@ it('should ignore a voice client created after disposal', async () => {
   finishClientCreation()
 
   await vi.waitFor(() => expect(fixture.voiceClient.dispose).toHaveBeenCalledOnce())
+  expect(fixture.voiceClient.initialize).not.toHaveBeenCalled()
   expect(fixture.setState).not.toHaveBeenCalled()
+  expect(fixture.runtime.generateDialogueAudio).not.toHaveBeenCalled()
+})
+
+it('should ignore a voice client created after cancellation', async () => {
+  const fixture = createFixture()
+  let finishClientCreation: () => void = () => undefined
+  fixture.runtime.createVoiceClient.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finishClientCreation = () => resolve(fixture.voiceClient)
+      }),
+  )
+  fixture.controller.schedule({jobIds: ['job-1']})
+  await vi.waitFor(() => expect(fixture.runtime.createVoiceClient).toHaveBeenCalledOnce())
+
+  await fixture.controller.cancel()
+  finishClientCreation()
+
+  await vi.waitFor(() => expect(fixture.voiceClient.dispose).toHaveBeenCalledOnce())
+  expect(fixture.voiceClient.initialize).not.toHaveBeenCalled()
+  expect(fixture.runtime.generateDialogueAudio).not.toHaveBeenCalled()
+})
+
+it('should skip voice client creation when cancellation finishes during the download check', async () => {
+  const fixture = createFixture()
+  const downloadCheck = Promise.withResolvers<boolean>()
+  fixture.runtime.isModelDownloaded.mockReturnValue(downloadCheck.promise)
+  fixture.controller.schedule({jobIds: ['job-1']})
+  await vi.waitFor(() => expect(fixture.runtime.isModelDownloaded).toHaveBeenCalledOnce())
+
+  await fixture.controller.cancel()
+  downloadCheck.resolve(true)
+
+  await vi.waitFor(() =>
+    expect(fixture.setState).toHaveBeenLastCalledWith({
+      message: '다음 피드 확인을 기다리고 있어요.',
+      status: 'idle',
+    }),
+  )
+  expect(fixture.runtime.createVoiceClient).not.toHaveBeenCalled()
   expect(fixture.runtime.generateDialogueAudio).not.toHaveBeenCalled()
 })

@@ -75,12 +75,6 @@ interface FeedGenerationContext {
 const isCurrentProcessing = (context: FeedGenerationContext, revision: number) =>
   context.processingRevision === revision && !context.isDisposed
 
-const setGenerationState = (context: FeedGenerationContext, state: PFeedState) => {
-  if (!context.isDisposed) {
-    context.options.setState(state)
-  }
-}
-
 const findFeedItem = async (context: FeedGenerationContext, job: FeedDialogueJob) => {
   const items = await context.options.feedRepository.listItems(job.feedConnectionId)
   return items.find((item) => item.feedItemId === job.feedItemId) ?? null
@@ -100,16 +94,30 @@ const discardUnsubscribedJob = async (context: FeedGenerationContext, job: FeedD
   return true
 }
 
-const prepareModel = async (context: FeedGenerationContext, modelId: SupertonicModelId) => {
+const prepareModel = async (
+  context: FeedGenerationContext,
+  modelId: SupertonicModelId,
+  revision: number,
+) => {
+  if (!isCurrentProcessing(context, revision)) {
+    return false
+  }
+
   if (context.client !== null && context.preparedModelId === modelId) {
     return true
   }
 
   context.client?.dispose()
   const nextClient = await context.options.runtime.createVoiceClient()
+
+  if (!isCurrentProcessing(context, revision)) {
+    nextClient.dispose()
+    return false
+  }
+
   context.client = nextClient
   context.preparedModelId = null
-  setGenerationState(context, {
+  context.options.setState({
     message: '피드 음성 모델을 확인하고 있어요.',
     progress: 0,
     status: 'preparing',
@@ -117,8 +125,8 @@ const prepareModel = async (context: FeedGenerationContext, modelId: SupertonicM
   const result = await nextClient.initialize({
     modelId,
     onProgress: (progress) => {
-      if (context.client === nextClient && !context.isDisposed) {
-        setGenerationState(context, {
+      if (context.client === nextClient && isCurrentProcessing(context, revision)) {
+        context.options.setState({
           message: `${progress.fileName} 준비 중…`,
           progress: getFeedGenerationProgress(progress.loadedBytes, progress.totalBytes),
           status: 'preparing',
@@ -126,9 +134,9 @@ const prepareModel = async (context: FeedGenerationContext, modelId: SupertonicM
       }
     },
     onStatus: (message) => {
-      if (context.client === nextClient && !context.isDisposed) {
+      if (context.client === nextClient && isCurrentProcessing(context, revision)) {
         const currentState = context.options.getState()
-        setGenerationState(context, {
+        context.options.setState({
           message,
           progress: currentState.status === 'preparing' ? currentState.progress : null,
           status: 'preparing',
@@ -137,7 +145,7 @@ const prepareModel = async (context: FeedGenerationContext, modelId: SupertonicM
     },
   })
 
-  if (!result.ok || context.client !== nextClient || context.isDisposed) {
+  if (!result.ok || context.client !== nextClient || !isCurrentProcessing(context, revision)) {
     nextClient.dispose()
 
     if (context.client === nextClient) {
@@ -227,7 +235,7 @@ const generateJob = async (
     isModelDownloaded: context.options.runtime.isModelDownloaded,
     job,
     now: () => context.options.now().toISOString(),
-    prepareModel: (modelId) => prepareModel(context, modelId),
+    prepareModel: (modelId) => prepareModel(context, modelId, revision),
     repository: context.options.feedRepository,
     resolveGenerationSettings: context.options.resolveGenerationSettings,
   })
@@ -258,7 +266,7 @@ const generateJob = async (
     return
   }
 
-  setGenerationState(context, {
+  context.options.setState({
     message: `${currentJob.itemTitle} 음성을 만들고 있어요.`,
     progress: null,
     status: 'generating',
@@ -269,7 +277,7 @@ const generateJob = async (
     modelId: currentJob.modelId,
     onChunk: (completed, total) => {
       if (context.client === currentClient && isCurrentProcessing(context, revision)) {
-        setGenerationState(context, {
+        context.options.setState({
           message: `${currentJob.itemTitle} · ${completed}/${total} 구간 생성 중`,
           progress: getFeedGenerationProgress(completed, total),
           status: 'generating',
@@ -342,7 +350,7 @@ const runScheduledJobs = async (context: FeedGenerationContext) => {
     context.isGenerating = false
 
     if (!context.isDisposed) {
-      setGenerationState(context, {
+      context.options.setState({
         message: '다음 피드 확인을 기다리고 있어요.',
         status: 'idle',
       })
