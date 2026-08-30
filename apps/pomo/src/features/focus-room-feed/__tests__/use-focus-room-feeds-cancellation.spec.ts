@@ -9,6 +9,7 @@ import {
 import {renderHook} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
+import type {SupertonicClient} from '../../supertonic'
 import {feedGenerationRuntime} from '../generation-runtime'
 import {usePFeeds} from '../use-focus-room-feeds'
 
@@ -122,6 +123,80 @@ it('should ignore model preparation that finishes after cancellation', async () 
   finishPreparation()
 
   await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
+  expect(generate).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
+it('should dispose a voice client that arrives after cancellation without restoring state', async () => {
+  const job = createJob()
+  const voiceClient = createVoiceClient()
+  const clientCreation = Promise.withResolvers<SupertonicClient>()
+  repositoryMocks.listConnections.mockReturnValue([createConnection()])
+  repositoryMocks.feedRepository.listJobs.mockResolvedValue([job])
+  repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue([
+    {...job, status: 'interrupted'},
+  ])
+  syncMocks.synchronizeFeeds.mockResolvedValue({
+    failures: [],
+    queuedJobIds: [job.id],
+    successfulConnections: 1,
+  })
+  vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockReturnValue(clientCreation.promise)
+  const generate = vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio')
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+
+  await vi.waitFor(() => expect(feedGenerationRuntime.createVoiceClient).toHaveBeenCalledOnce())
+  await view.result.cancelProcessing()
+  expect(view.result.state().status).toBe('idle')
+
+  clientCreation.resolve(voiceClient)
+
+  await vi.waitFor(() => expect(voiceClient.dispose).toHaveBeenCalledOnce())
+  expect(voiceClient.initialize).not.toHaveBeenCalled()
+  expect(view.result.state().status).toBe('idle')
+  expect(generate).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
+it('should ignore late initialization updates after cancellation', async () => {
+  const job = createJob()
+  const voiceClient = createVoiceClient()
+  const initialization =
+    Promise.withResolvers<Awaited<ReturnType<SupertonicClient['initialize']>>>()
+  let reportProgress: Parameters<SupertonicClient['initialize']>[0]['onProgress'] = () => undefined
+  let reportStatus: Parameters<SupertonicClient['initialize']>[0]['onStatus'] = () => undefined
+  vi.mocked(voiceClient.initialize).mockImplementation((options) => {
+    reportProgress = options.onProgress
+    reportStatus = options.onStatus
+    return initialization.promise
+  })
+  repositoryMocks.listConnections.mockReturnValue([createConnection()])
+  repositoryMocks.feedRepository.listJobs.mockResolvedValue([job])
+  repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue([
+    {...job, status: 'interrupted'},
+  ])
+  syncMocks.synchronizeFeeds.mockResolvedValue({
+    failures: [],
+    queuedJobIds: [job.id],
+    successfulConnections: 1,
+  })
+  vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockResolvedValue(voiceClient)
+  const generate = vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio')
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+
+  await vi.waitFor(() => expect(voiceClient.initialize).toHaveBeenCalledOnce())
+  await view.result.cancelProcessing()
+
+  expect(voiceClient.dispose).toHaveBeenCalledOnce()
+  expect(view.result.state().status).toBe('idle')
+  reportProgress({fileName: '늦은 모델', loadedBytes: 1, totalBytes: 2})
+  reportStatus('늦은 초기화 상태')
+  expect(view.result.state().status).toBe('idle')
+
+  initialization.resolve({ok: true, value: undefined})
+
+  await vi.waitFor(() => expect(preparationMocks.prepareFeedGeneration).toHaveResolved())
+  expect(view.result.state().status).toBe('idle')
   expect(generate).not.toHaveBeenCalled()
   view.cleanup()
 })
