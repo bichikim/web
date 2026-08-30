@@ -5,7 +5,7 @@ import 'server-only'
 import {z} from 'zod'
 
 import type {WeatherPrecipitation, WeatherSky} from 'src/features/weather'
-import {getOpenWeatherApiKey, type WeatherEnvironment} from './environment'
+import {env} from 'src/env'
 
 const OPENWEATHER_ORIGIN = 'https://api.openweathermap.org'
 const SEARCH_RESULT_LIMIT = 5
@@ -101,7 +101,6 @@ const requestOpenWeather = async (options: OpenWeatherRequestOptions): Promise<u
 }
 
 export interface SearchOpenWeatherLocationsOptions {
-  readonly environment?: WeatherEnvironment
   readonly fetcher?: typeof fetch
   readonly query: string
 }
@@ -115,7 +114,7 @@ export const searchOpenWeatherLocations = async (
 ): Promise<ReadonlyArray<OpenWeatherSearchLocation>> => {
   const url = new URL('/geo/1.0/direct', OPENWEATHER_ORIGIN)
   url.search = new URLSearchParams({
-    appid: getOpenWeatherApiKey(options.environment),
+    appid: env.OPENWEATHER_API_KEY,
     limit: SEARCH_RESULT_LIMIT.toString(),
     q: options.query,
   }).toString()
@@ -166,7 +165,6 @@ export const normalizeOpenWeatherCondition = (code: number): NormalizedCondition
 }
 
 export interface FetchOpenWeatherCurrentOptions {
-  readonly environment?: WeatherEnvironment
   readonly fetcher?: typeof fetch
   readonly latitude: number
   readonly longitude: number
@@ -178,7 +176,7 @@ export const fetchOpenWeatherCurrent = async (
 ): Promise<OpenWeatherCurrentWeather> => {
   const url = new URL('/data/2.5/weather', OPENWEATHER_ORIGIN)
   url.search = new URLSearchParams({
-    appid: getOpenWeatherApiKey(options.environment),
+    appid: env.OPENWEATHER_API_KEY,
     lat: options.latitude.toString(),
     lon: options.longitude.toString(),
     units: 'metric',

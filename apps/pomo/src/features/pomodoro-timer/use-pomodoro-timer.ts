@@ -13,7 +13,6 @@ import {
   POMODORO_TIMER_CONFIG,
   type PomodoroTimerConfig,
   type PomodoroTimerState,
-  resetPomodoroTimer,
   startPomodoroTimer,
   stopPomodoroTimer,
   synchronizePomodoroTimer,
@@ -247,7 +246,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     writeAutoStartPreference(isEnabled)
   }
   const onNextPhase = () => applyState(advancePomodoroTimer(state(), config()))
-  const onReset = () => applyState(resetPomodoroTimer(config()))
+  const onReset = () => applyState(createPomodoroTimerState(config()))
   const onStop = () => applyState(stopPomodoroTimer(state(), config()))
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))
   const progress = createMemo(() => getPomodoroProgress(state(), now(), config()))

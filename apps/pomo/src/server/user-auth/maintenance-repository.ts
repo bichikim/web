@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {and, isNull, lte, or, sql} from 'drizzle-orm'
 
 import {type Database, getDatabase, pomoAccountLinkChallenges, pomoAppSessions} from '../database'

@@ -1,8 +1,14 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const maintenanceMocks = vi.hoisted(() => ({runAlbumCoverMaintenance: vi.fn()}))
+const environmentMocks = vi.hoisted(() => ({
+  env: {CRON_SECRET: 'cron-secret-1234'},
+}))
 
 vi.mock('src/server/music/album-cover-maintenance', () => maintenanceMocks)
+vi.mock('src/env', () => ({
+  env: environmentMocks.env,
+}))
 
 import {GET} from '../music-album-covers'
 import {invokeApiRoute} from '../../__tests__/invoke'
@@ -14,7 +20,7 @@ const createRequest = (authorization?: string): Request =>
   })
 
 beforeEach(() => {
-  vi.stubEnv('CRON_SECRET', CRON_SECRET)
+  environmentMocks.env.CRON_SECRET = CRON_SECRET
   maintenanceMocks.runAlbumCoverMaintenance.mockReset().mockResolvedValue({
     complete: true,
     finalized: 2,
@@ -22,12 +28,11 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  vi.unstubAllEnvs()
   vi.restoreAllMocks()
 })
 
 it('should reject a request when cron authorization is unavailable', async () => {
-  vi.stubEnv('CRON_SECRET', '')
+  environmentMocks.env.CRON_SECRET = ''
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
   const response = await invokeApiRoute(GET, createRequest())

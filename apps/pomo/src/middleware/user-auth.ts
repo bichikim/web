@@ -1,6 +1,6 @@
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
-import {getNeonAuthProxyConfig} from '../server/auth/environment'
+import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 
 const ACCOUNT_PATH = '/account'
 const ACCOUNT_PATH_WITH_TRAILING_SLASH = `${ACCOUNT_PATH}/`
@@ -45,7 +45,7 @@ export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Res
 
   try {
     const sessionResponse = await handleAuthProxyRequest({
-      ...getNeonAuthProxyConfig(),
+      ...readNeonAuthProxyConfig(),
       path: 'get-session',
       request: createSessionRequest(input.request),
     })

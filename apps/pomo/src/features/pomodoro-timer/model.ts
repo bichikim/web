@@ -78,10 +78,6 @@ export const createPomodoroTimerState = (
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
 ): PomodoroTimerState => createIdleState('focus', 0, config)
 
-export const resetPomodoroTimer = (
-  config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
-): PomodoroTimerState => createPomodoroTimerState(config)
-
 export const getPomodoroRemainingSeconds = (state: PomodoroTimerState, now: number) => {
   if (state.status !== 'running') {
     return state.remainingSeconds

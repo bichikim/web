@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {and, asc, eq, gt, lte, or} from 'drizzle-orm'
 
 import {getDatabase, musicAlbumCoverReservations, withTransactionalDatabase} from '../database'

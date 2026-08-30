@@ -1,9 +1,7 @@
-import 'server-only'
-
 import {z} from 'zod'
 
 import type {WeatherPrecipitation, WeatherSky} from 'src/features/weather'
-import {getKmaServiceKey, type WeatherEnvironment} from './environment'
+import {env} from 'src/env'
 import {type KmaBaseTime, parseKmaDateTime} from './kma-time'
 
 const KMA_API_ORIGIN = 'https://apis.data.go.kr'
@@ -234,7 +232,6 @@ const parseNearestSky = (items: ReadonlyArray<KmaItem>, targetTime: Date): Weath
 
 export interface FetchKmaObservationOptions {
   readonly baseTime: KmaBaseTime
-  readonly environment?: WeatherEnvironment
   readonly fetcher?: typeof fetch
   readonly location: KmaLocation
 }
@@ -244,7 +241,7 @@ export const fetchKmaObservation = async (
   options: FetchKmaObservationOptions,
 ): Promise<WeatherObservationInput> => {
   const fetcher = options.fetcher ?? fetch
-  const serviceKey = getKmaServiceKey(options.environment)
+  const serviceKey = env.KMA_SERVICE_KEY
   const items = await fetchKmaItems(
     createKmaUrl('getUltraSrtNcst', options.baseTime, options.location, serviceKey),
     fetcher,
@@ -261,7 +258,7 @@ export interface FetchKmaSkyOptions extends FetchKmaObservationOptions {
 /** Fetches only the ultra-short forecast value needed to supplement the current sky state. */
 export const fetchKmaSky = async (options: FetchKmaSkyOptions): Promise<WeatherSky> => {
   const fetcher = options.fetcher ?? fetch
-  const serviceKey = getKmaServiceKey(options.environment)
+  const serviceKey = env.KMA_SERVICE_KEY
   const items = await fetchKmaItems(
     createKmaUrl('getUltraSrtFcst', options.baseTime, options.location, serviceKey),
     fetcher,

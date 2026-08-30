@@ -1,5 +1,9 @@
 import {expect, it, vi} from 'vitest'
 
+vi.mock('src/env', () => ({
+  env: {},
+}))
+
 import {
   getWeatherFeedState,
   hasCurrentWeather,

@@ -2,6 +2,10 @@ import {beforeEach, expect, it, vi} from 'vitest'
 import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'
 
+vi.mock('src/env', () => ({
+  env: {},
+}))
+
 import {
   OPENWEATHER_MONTHLY_CURRENT_LIMIT,
   OPENWEATHER_MONTHLY_REQUEST_LIMIT,

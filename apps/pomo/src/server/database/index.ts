@@ -1,8 +1,6 @@
-import 'server-only'
-
 import {drizzle as drizzleHttp} from 'drizzle-orm/neon-http'
 import {drizzle as drizzleServerless} from 'drizzle-orm/neon-serverless'
-import {getDatabaseUrl} from './environment'
+import {env} from 'src/env'
 import * as schema from './schema'
 
 export * from './schema'
@@ -26,7 +24,7 @@ let database: Database | undefined
 
 /** Returns the lazily initialized Neon HTTP database client. */
 export const getDatabase = (): Database => {
-  database ??= createDatabase(getDatabaseUrl())
+  database ??= createDatabase(env.DATABASE_URL)
 
   return database
 }
@@ -36,7 +34,7 @@ export const withTransactionalDatabase = async <Result>(
   operation: (database: TransactionalDatabase) => Promise<Result>,
 ): Promise<Result> => {
   // AI_NOTE - Keep ordinary feed reads on Neon HTTP; the pooled driver is only needed because neon-http cannot run interactive transactions.
-  const transactionalDatabase = createTransactionalDatabase(getDatabaseUrl())
+  const transactionalDatabase = createTransactionalDatabase(env.DATABASE_URL)
   let result: Result
 
   try {

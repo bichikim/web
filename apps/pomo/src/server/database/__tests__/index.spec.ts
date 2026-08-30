@@ -3,13 +3,13 @@ import {beforeEach, expect, it, vi} from 'vitest'
 const mocks = vi.hoisted(() => ({
   drizzleHttp: vi.fn(),
   drizzleServerless: vi.fn(),
-  getDatabaseUrl: vi.fn(() => 'postgres://database'),
 }))
 
-vi.mock('server-only', () => ({}))
 vi.mock('drizzle-orm/neon-http', () => ({drizzle: mocks.drizzleHttp}))
 vi.mock('drizzle-orm/neon-serverless', () => ({drizzle: mocks.drizzleServerless}))
-vi.mock('../environment', () => ({getDatabaseUrl: mocks.getDatabaseUrl}))
+vi.mock('src/env', () => ({
+  env: {DATABASE_URL: 'postgres://database'},
+}))
 
 import {getDatabase, withTransactionalDatabase} from '../index'
 

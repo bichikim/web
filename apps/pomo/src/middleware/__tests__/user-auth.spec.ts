@@ -3,8 +3,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 const authMocks = vi.hoisted(() => ({handleAuthProxyRequest: vi.fn()}))
 
 vi.mock('@neondatabase/auth/server', () => authMocks)
-vi.mock('../../server/auth/environment.ts', () => ({
-  getNeonAuthProxyConfig: () => ({
+vi.mock('src/server/auth/neon-config', () => ({
+  readNeonAuthProxyConfig: () => ({
     baseUrl: 'https://example.neonauth.aws.neon.tech/neondb/auth',
     cookieSecret: 'a-secure-cookie-secret-that-is-long-enough',
     sameSite: 'lax',

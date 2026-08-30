@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {asc, lte} from 'drizzle-orm'
 
 import {getDatabase, musicTrackDeletionJobs, musicTrackRegistrations} from '../database'

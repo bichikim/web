@@ -1,13 +1,19 @@
 import {describe, expect, it, vi} from 'vitest'
 
+const environmentMocks = vi.hoisted(() => ({
+  env: {OPENWEATHER_API_KEY: 'secret-key'},
+}))
+
+vi.mock('src/env', () => ({
+  env: environmentMocks.env,
+}))
+
 import {
   fetchOpenWeatherCurrent,
   normalizeOpenWeatherCondition,
   OpenWeatherError,
   searchOpenWeatherLocations,
 } from '../openweather-client'
-
-const ENVIRONMENT = {OPENWEATHER_API_KEY: 'secret-key'} as const
 
 const createCurrentResponse = (code = 802) => ({
   dt: 1_725_000_000,
@@ -36,7 +42,6 @@ describe('searchOpenWeatherLocations', () => {
     )
 
     const result = await searchOpenWeatherLocations({
-      environment: ENVIRONMENT,
       fetcher,
       query: 'lond',
     })
@@ -65,9 +70,7 @@ describe('searchOpenWeatherLocations', () => {
         Response.json([{country: 'KR', lat: 37.5665, lon: 126.978, name: 'Seoul'}]),
       )
 
-    await expect(
-      searchOpenWeatherLocations({environment: ENVIRONMENT, fetcher, query: 'Seoul'}),
-    ).resolves.toEqual([
+    await expect(searchOpenWeatherLocations({fetcher, query: 'Seoul'})).resolves.toEqual([
       expect.objectContaining({providerLocationId: '37.5665,126.9780', region: ''}),
     ])
   })
@@ -76,9 +79,7 @@ describe('searchOpenWeatherLocations', () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json([]))
     vi.stubGlobal('fetch', fetcher)
 
-    await expect(
-      searchOpenWeatherLocations({environment: ENVIRONMENT, query: 'none'}),
-    ).resolves.toEqual([])
+    await expect(searchOpenWeatherLocations({query: 'none'})).resolves.toEqual([])
     expect(fetcher).toHaveBeenCalledOnce()
     expect(new OpenWeatherError({kind: 'http'}).message).toContain('unknown')
     vi.unstubAllGlobals()
@@ -92,14 +93,12 @@ describe('searchOpenWeatherLocations', () => {
 
     await expect(
       searchOpenWeatherLocations({
-        environment: ENVIRONMENT,
         fetcher: unavailableFetcher,
         query: 'seoul',
       }),
     ).rejects.toThrow('OpenWeather request failed with HTTP 403')
     await expect(
       searchOpenWeatherLocations({
-        environment: ENVIRONMENT,
         fetcher: invalidFetcher,
         query: 'seoul',
       }),
@@ -130,7 +129,6 @@ describe('fetchOpenWeatherCurrent', () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json(createCurrentResponse()))
 
     const result = await fetchOpenWeatherCurrent({
-      environment: ENVIRONMENT,
       fetcher,
       latitude: 35.69,
       longitude: 139.69,
@@ -161,7 +159,6 @@ describe('fetchOpenWeatherCurrent', () => {
 
     await expect(
       fetchOpenWeatherCurrent({
-        environment: ENVIRONMENT,
         fetcher,
         latitude: 37.5665,
         longitude: 126.978,
@@ -179,7 +176,6 @@ describe('fetchOpenWeatherCurrent', () => {
 
     return expect(
       fetchOpenWeatherCurrent({
-        environment: ENVIRONMENT,
         fetcher,
         latitude: 35.69,
         longitude: 139.69,
@@ -192,7 +188,6 @@ describe('fetchOpenWeatherCurrent', () => {
 
     return expect(
       fetchOpenWeatherCurrent({
-        environment: ENVIRONMENT,
         fetcher,
         latitude: 35.69,
         longitude: 139.69,

@@ -1,6 +1,14 @@
-import {expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
+
+vi.mock('src/env', () => ({
+  env: {KMA_SERVICE_KEY: 'decoded service key'},
+}))
 
 import {fetchKmaObservation, fetchKmaSky} from '../kma-client'
+
+afterEach(() => {
+  vi.clearAllMocks()
+})
 
 const createKmaResponse = (items: ReadonlyArray<Record<string, unknown>>): Response =>
   Response.json({
@@ -45,7 +53,6 @@ it('should collect and normalize current observation values', async () => {
 
   const observation = await fetchKmaObservation({
     baseTime: {date: '20260822', time: '0900'},
-    environment: {KMA_SERVICE_KEY: 'decoded service key'},
     fetcher,
     location: {gridX: 60, gridY: 127},
   })
@@ -72,7 +79,6 @@ it('should normalize the nearest ultra-short sky value for the current display',
   await expect(
     fetchKmaSky({
       baseTime: {date: '20260822', time: '1430'},
-      environment: {KMA_SERVICE_KEY: 'decoded service key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
       targetTime: new Date('2026-08-22T05:50:00.000Z'),
@@ -96,7 +102,6 @@ it.each([
   await expect(
     fetchKmaSky({
       baseTime: {date: '20260822', time: '1430'},
-      environment: {KMA_SERVICE_KEY: 'decoded service key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
       targetTime: new Date('2026-08-22T05:50:00.000Z'),
@@ -116,7 +121,6 @@ it('should reject a KMA application error even when HTTP succeeds', async () => 
   await expect(
     fetchKmaObservation({
       baseTime: {date: '20260822', time: '0900'},
-      environment: {KMA_SERVICE_KEY: 'key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
     }),
@@ -137,7 +141,6 @@ it.each([
     await expect(
       fetchKmaObservation({
         baseTime,
-        environment: {KMA_SERVICE_KEY: 'decoded service key'},
         fetcher,
         location: {gridX: 60, gridY: 127},
       }),
@@ -162,7 +165,6 @@ it.each([undefined, '9'])('should reject an unsupported precipitation value: %s'
   await expect(
     fetchKmaObservation({
       baseTime: {date: '20260822', time: '0900'},
-      environment: {KMA_SERVICE_KEY: 'decoded service key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
     }),
@@ -184,7 +186,6 @@ it.each([
   await expect(
     fetchKmaObservation({
       baseTime: {date: '20260822', time: '0900'},
-      environment: {KMA_SERVICE_KEY: 'key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
     }),
@@ -207,7 +208,6 @@ it('should normalize invalid and numeric observation measurements', async () => 
   await expect(
     fetchKmaObservation({
       baseTime: {date: '20260822', time: '0900'},
-      environment: {KMA_SERVICE_KEY: 'key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
     }),
@@ -233,7 +233,6 @@ it.each([
   await expect(
     fetchKmaSky({
       baseTime: {date: '20260822', time: '1430'},
-      environment: {KMA_SERVICE_KEY: 'key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
       targetTime: new Date('2026-08-22T06:00:00.000Z'),
@@ -250,7 +249,6 @@ it.each([
   await expect(
     fetchKmaSky({
       baseTime: {date: '20260822', time: '1430'},
-      environment: {KMA_SERVICE_KEY: 'key'},
       fetcher,
       location: {gridX: 60, gridY: 127},
       targetTime: new Date('2026-08-22T06:00:00.000Z'),
@@ -261,7 +259,6 @@ it.each([
 it('should reject HTTP failures, missing bodies, and empty item arrays', async () => {
   const baseOptions = {
     baseTime: {date: '20260822', time: '0900'} as const,
-    environment: {KMA_SERVICE_KEY: 'key'},
     location: {gridX: 60, gridY: 127},
   }
 
@@ -300,12 +297,10 @@ it('should use the global fetcher when one is not supplied', async () => {
 
   await fetchKmaObservation({
     baseTime: {date: '20260822', time: '0900'},
-    environment: {KMA_SERVICE_KEY: 'key'},
     location: {gridX: 60, gridY: 127},
   })
   await fetchKmaSky({
     baseTime: {date: '20260822', time: '1430'},
-    environment: {KMA_SERVICE_KEY: 'key'},
     location: {gridX: 60, gridY: 127},
     targetTime: new Date('2026-08-22T06:00:00.000Z'),
   })

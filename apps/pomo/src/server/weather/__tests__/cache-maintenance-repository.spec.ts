@@ -2,6 +2,10 @@ import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'
 import {expect, it, vi} from 'vitest'
 
+vi.mock('src/env', () => ({
+  env: {},
+}))
+
 import type {Database} from '../../database'
 import {createWeatherCacheMaintenanceRepository} from '../cache-maintenance-repository'
 

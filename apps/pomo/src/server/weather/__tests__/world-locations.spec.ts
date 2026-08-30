@@ -3,6 +3,9 @@ import {beforeEach, expect, it, vi} from 'vitest'
 const apiMocks = vi.hoisted(() => ({searchOpenWeatherLocations: vi.fn()}))
 const quotaMocks = vi.hoisted(() => ({reserveOpenWeatherRequest: vi.fn()}))
 
+vi.mock('src/env', () => ({
+  env: {},
+}))
 vi.mock('../openweather-client', () => ({
   searchOpenWeatherLocations: apiMocks.searchOpenWeatherLocations,
 }))

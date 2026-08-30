@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {createAuthMaintenanceRepository} from './maintenance-repository'
 
 const MILLISECONDS_PER_SECOND = 1000
