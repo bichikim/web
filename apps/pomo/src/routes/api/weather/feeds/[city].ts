@@ -9,8 +9,18 @@ import {createWorldWeatherFeedResponse} from 'src/server/weather/world-feed-resp
 
 const JSON_SUFFIX = '.json'
 
-const readCity = (value: string): string =>
-  value.endsWith(JSON_SUFFIX) ? value.slice(0, -JSON_SUFFIX.length) : value
+const decodeCity = (value: string): string => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+const readCity = (value: string): string => {
+  const city = value.endsWith(JSON_SUFFIX) ? value.slice(0, -JSON_SUFFIX.length) : value
+  return decodeCity(city)
+}
 
 const resolveLocationId = (value: string): WeatherLocationId | string => {
   if (value.startsWith('openweather:')) {
