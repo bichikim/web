@@ -22,8 +22,6 @@ import {feedGenerationRuntime} from './generation-runtime'
 import {prepareFeedGeneration} from './generation-preparation'
 import {resolveCurrentGenerationSettings} from './generation-settings-runtime'
 import {createFeedConnectionRepository} from './repository'
-import {beginFeedSync, createFeedSyncGate, finishFeedSync} from './sync-gate'
-import {synchronizeFeeds} from './feed-sync'
 import {
   type FeedDialogueListItem,
   findFeedNotificationDialogue,
@@ -38,13 +36,10 @@ import {
   loadFeedIssues,
 } from './feed-dialogue-lifecycle'
 import {createFeedPlaybackController} from './feed-playback'
-import {
-  createFeedFetcher,
-  FEED_POLLING_INTERVAL_MS,
-  getFeedGenerationProgress,
-} from './feed-runtime'
+import {FEED_POLLING_INTERVAL_MS, getFeedGenerationProgress} from './feed-runtime'
 import {processScheduledFeedJob, type ScheduledFeedJob, scheduleFeedJobs} from './generation-queue'
 import {FEED_CONNECTIONS_CHANGED_EVENT} from './use-feed-connections'
+import {createFeedSyncController} from './use-focus-room-feeds/sync-controller'
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns a single disposable feed synchronization and model lifecycle.
 export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
@@ -65,7 +60,6 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   let isDisposed = false
   const opusAbortController = new AbortController()
   let isGenerating = false
-  const syncGate = createFeedSyncGate()
   let preparedModelId: SupertonicModelId | null = null
   const scheduledJobs: Array<ScheduledFeedJob> = []
   const dismissedRecoveryIds = new Set<string>()
@@ -406,57 +400,15 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     scheduleJobs,
     setDialogues,
   })
-  const syncNow = async () => {
-    if (isDisposed || !beginFeedSync(syncGate)) {
-      return
-    }
-
-    const now = new Date()
-
-    try {
-      const connectionRepository = createFeedConnectionRepository(window.localStorage)
-      const connections = connectionRepository.list()
-      await discardJobsForMissingConnections(
-        new Set(connections.map((connection) => connection.id)),
-        now.toISOString(),
-      )
-      await cleanupExpiredDialogues(now)
-      await reloadIssues()
-
-      if (connections.length === 0) {
-        setFeedState({message: '설정에서 구독 피드를 추가해 주세요.', status: 'idle'})
-        return
-      }
-
-      setFeedState({message: '새 피드를 확인하고 있어요…', progress: null, status: 'syncing'})
-      const summary = await synchronizeFeeds({
-        connections,
-        createId: () => crypto.randomUUID(),
-        fetcher: createFeedFetcher(),
-        now,
-        repository: getRepositories().feedRepository,
-        resolveGenerationSettings: resolveCurrentGenerationSettings,
-      })
-
-      if (summary.failures.length > 0) {
-        setFeedState({
-          message: `${summary.failures.length}개 피드를 가져오지 못했어요. 주소나 CORS 설정을 확인해 주세요.`,
-          status: 'error',
-        })
-      } else if (summary.queuedJobIds.length === 0) {
-        setFeedState({message: '새 피드가 없어요.', status: 'idle'})
-      }
-
-      scheduleJobs(summary.queuedJobIds)
-    } catch (error: unknown) {
-      console.error('Failed to synchronize focus room feeds.', error)
-      setFeedState({message: '피드를 확인하지 못했어요.', status: 'error'})
-    } finally {
-      if (finishFeedSync(syncGate) && !isDisposed) {
-        await syncNow()
-      }
-    }
-  }
+  const {syncNow} = createFeedSyncController({
+    cleanupExpiredDialogues,
+    discardJobsForMissingConnections,
+    getFeedRepository: () => getRepositories().feedRepository,
+    isDisposed: () => isDisposed,
+    reloadIssues,
+    scheduleJobs,
+    setState: setFeedState,
+  })
 
   onMount(() => {
     dialogueRepository = createPDialogueRepository()
