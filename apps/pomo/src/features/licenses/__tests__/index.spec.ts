@@ -67,6 +67,18 @@ it('should fetch the manifest from the trusted public origin during SSR', async 
   expect(fetch).toHaveBeenCalledWith('https://www.pomofi.io/licenses.json')
 })
 
+it('should fetch the manifest from an allowed local origin during SSR', async () => {
+  vi.stubEnv('POMO_ALLOW_LOCAL_ASSET_ORIGIN', 'true')
+  vi.mocked(getRequestEvent).mockReturnValue({
+    request: new Request('http://127.0.0.1:3000/third-party-notices'),
+  } as ReturnType<typeof getRequestEvent>)
+  vi.mocked(fetch).mockResolvedValue(new Response(licenseDataJson))
+
+  await loadLicenseData()
+
+  expect(fetch).toHaveBeenCalledWith('http://127.0.0.1:3000/licenses.json')
+})
+
 it('should ignore an untrusted SSR request origin', async () => {
   vi.mocked(getRequestEvent).mockReturnValue({
     request: new Request('https://example.invalid/third-party-notices'),
