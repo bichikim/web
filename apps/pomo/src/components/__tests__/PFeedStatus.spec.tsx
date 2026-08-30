@@ -90,6 +90,7 @@ const createFeeds = (
   recoveryJobs: ReadonlyArray<FeedDialogueJob> = [],
   overrides: Partial<PFeedController> = {},
 ): PFeedController => ({
+  cancelProcessing: vi.fn(async () => undefined),
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => dialogues,
   dismissRecovery: vi.fn(),
@@ -282,6 +283,105 @@ it('should show an already active recovery model download as feed generation', (
   expect(screen.getByRole('status')).toHaveAttribute('data-state', 'generating')
   expect(screen.getByText('Supertonic Full 음성 모델 받는 중 · 73%')).toBeInTheDocument()
   expect(screen.queryByRole('button', {name: '다시 시도'})).toBeNull()
+})
+
+it('should cancel a recovery model download and feed processing together', async () => {
+  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  const modelDownload = createModelDownload()
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue({
+    ...modelDownload,
+    state: () => ({
+      label: 'Supertonic Full 음성',
+      percentage: 73,
+      status: 'loading',
+      target: {kind: 'voice', modelId: 'full'},
+    }),
+  })
+  render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '중지'}))
+
+  expect(modelDownload.cancel).toHaveBeenCalledOnce()
+  await vi.waitFor(() => expect(feeds.cancelProcessing).toHaveBeenCalledOnce())
+})
+
+it('should keep recovery actions hidden until cancellation persistence finishes', async () => {
+  const [downloadState, setDownloadState] = createSignal<ModelDownloadState>({
+    label: 'Supertonic Full 음성',
+    percentage: 73,
+    status: 'loading',
+    target: {kind: 'voice', modelId: 'full'},
+  })
+  let finishCancellation: () => void = () => undefined
+  const feeds = createFeeds([], false, [RECOVERY_JOB], {
+    cancelProcessing: vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishCancellation = resolve
+        }),
+    ),
+  })
+  const modelDownload = createModelDownload()
+  vi.mocked(modelDownload.cancel).mockImplementation(() => setDownloadState({status: 'idle'}))
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
+  render(() => <PFeedStatus />)
+
+  fireEvent.click(screen.getByRole('button', {name: '중지'}))
+
+  expect(screen.getByText('피드 처리를 중지하는 중…')).toBeInTheDocument()
+  expect(screen.getByRole('button', {name: '중지'})).toBeDisabled()
+  expect(screen.queryByRole('button', {name: '다시 시도'})).toBeNull()
+  finishCancellation()
+
+  await screen.findByRole('button', {name: '다시 시도'})
+})
+
+it('should stop active feed generation without cancelling an unrelated model download', async () => {
+  const feeds = createFeeds([], false, [], {
+    state: () => ({message: '새 소식 · 1/3 구간 생성 중', progress: 33, status: 'generating'}),
+  })
+  const modelDownload = createModelDownload()
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue({
+    ...modelDownload,
+    state: () => ({
+      label: '관련 없는 모델',
+      percentage: 10,
+      status: 'loading',
+      target: {kind: 'voice', modelId: 'int8'},
+    }),
+  })
+  render(() => <PFeedStatus />)
+
+  expect(screen.getByText('새 소식 · 1/3 구간 생성 중')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: '중지'}))
+
+  await vi.waitFor(() => expect(feeds.cancelProcessing).toHaveBeenCalledOnce())
+  expect(modelDownload.cancel).not.toHaveBeenCalled()
+})
+
+it('should report a feed cancellation failure and restore the stop action', async () => {
+  const cancellationFailure = new Error('cancel failed')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const feeds = createFeeds([], false, [], {
+    cancelProcessing: vi.fn().mockRejectedValue(cancellationFailure),
+    state: () => ({message: '새 소식 음성 생성 중', progress: null, status: 'generating'}),
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  render(() => <PFeedStatus />)
+
+  const stopButton = screen.getByRole('button', {name: '중지'})
+  fireEvent.click(stopButton)
+
+  await vi.waitFor(() =>
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to cancel feed processing.',
+      cancellationFailure,
+    ),
+  )
+  expect(stopButton).not.toBeDisabled()
 })
 
 it('should keep recovery visible while an unrelated voice model downloads', () => {

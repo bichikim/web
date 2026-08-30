@@ -20,14 +20,15 @@ interface UseAlbumDraftProps {
 
 const createAlbum = async (draft: AlbumDraftData, coverFile: File | null): Promise<string> => {
   const configuredCoverImageUrl = draft.coverImageUrl.trim()
-  const uploadedCoverImageUrl =
-    coverFile === null
-      ? configuredCoverImageUrl
-      : await uploadAlbumCover(coverFile, draft.coverDraftId)
+  const uploadedCover =
+    coverFile === null ? null : await uploadAlbumCover(coverFile, draft.coverDraftId)
+  const coverImageUrl = uploadedCover?.coverImageUrl ?? configuredCoverImageUrl
   const response = await fetch('/api/admin/music/albums', {
     body: JSON.stringify({
+      coverDraftId: uploadedCover === null ? null : draft.coverDraftId,
       coverFallback: draft.coverFallback,
-      coverImageUrl: uploadedCoverImageUrl === '' ? null : uploadedCoverImageUrl,
+      coverImageUrl: coverImageUrl === '' ? null : coverImageUrl,
+      coverReservationId: uploadedCover?.coverReservationId ?? null,
       translations: ALBUM_LOCALES.map((locale) => ({
         description: draft.translations[locale].description.trim(),
         locale,

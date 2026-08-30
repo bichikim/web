@@ -23,6 +23,13 @@ export type {
 export {findFeedNotificationDialogue} from './feed-controller'
 export {createFeedPlaybackController} from './feed-playback'
 export type {CreateFeedPlaybackControllerOptions, FeedPlaybackController} from './feed-playback'
+export {cancelFeedProcessing} from './generation-cancellation'
+export type {CancelFeedProcessingOptions} from './generation-cancellation'
+export {createFeedDialogueCompletion} from './generation-completion'
+export type {
+  CreateFeedDialogueCompletionOptions,
+  FeedDialogueCompletion,
+} from './generation-completion'
 export {recoverMissingFeedDialogue} from './missing-dialogue-recovery'
 export type {RecoverMissingFeedDialogueOptions} from './missing-dialogue-recovery'
 export {

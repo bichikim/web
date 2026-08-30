@@ -102,6 +102,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
 })
 
 const createFeeds = (): PFeedController => ({
+  cancelProcessing: vi.fn(async () => undefined),
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => [],
   dismissRecovery: vi.fn(),

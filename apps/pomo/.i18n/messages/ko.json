@@ -297,6 +297,8 @@
   "feed_checking": "확인 중…",
   "feed_retrying": "피드 대화를 다시 만드는 중…",
   "feed_downloading_model": "{label} 모델 받는 중 · {percentage}%",
+  "feed_stop": "중지",
+  "feed_stopping": "피드 처리를 중지하는 중…",
   "feed_retry": "다시 시도",
   "feed_later": "나중에",
   "feed_delete": "삭제",

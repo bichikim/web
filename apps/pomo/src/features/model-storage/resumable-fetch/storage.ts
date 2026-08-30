@@ -1,4 +1,5 @@
-const PARTIAL_DIRECTORY_NAME = 'pomo-model-downloads'
+import {MODEL_PARTIAL_DIRECTORY_NAME} from '../storage'
+
 const HEXADECIMAL_RADIX = 16
 
 export interface PartialDownloadMetadata {
@@ -38,7 +39,7 @@ const createFileNames = async (url: string): Promise<PartialFileNames> => {
 
 const getPartialDirectory = async () => {
   const root = await navigator.storage.getDirectory()
-  return root.getDirectoryHandle(PARTIAL_DIRECTORY_NAME, {create: true})
+  return root.getDirectoryHandle(MODEL_PARTIAL_DIRECTORY_NAME, {create: true})
 }
 
 const removeFile = async (directory: FileSystemDirectoryHandle, fileName: string) => {
