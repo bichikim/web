@@ -13,6 +13,7 @@ const WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v2'
 const LEGACY_WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v1'
 let preferenceWriteRevision = 0
 const nativeWriter = createSerialNativeStorageWriter()
+let pendingNativeWrite: Promise<unknown | null> | null = null
 
 export interface WeatherPreference {
   readonly enabled: boolean
@@ -85,23 +86,33 @@ const readWebPreference = (): WeatherPreference | null => {
 }
 
 const writeWebPreference = (preference: WeatherPreference) => {
-  writeWebStorageJson(WEATHER_PREFERENCE_STORAGE_KEY, preference)
+  return writeWebStorageJson(WEATHER_PREFERENCE_STORAGE_KEY, preference)
+}
+
+const awaitNativeWrites = async (): Promise<void> => {
+  const pendingWrite = pendingNativeWrite
+
+  if (pendingWrite === null) {
+    return
+  }
+
+  await pendingWrite
+
+  if (pendingNativeWrite !== null && pendingNativeWrite !== pendingWrite) {
+    await awaitNativeWrites()
+  }
 }
 
 /** Reads the weather preference from the active browser or app runtime. */
 export const readWeatherPreference = async (): Promise<WeatherPreference> => {
   const initialWriteRevision = preferenceWriteRevision
-  const webPreference = readWebPreference()
-
-  if (webPreference !== null) {
-    return webPreference
-  }
 
   if (!hasNativeStorageBridge()) {
-    return DEFAULT_WEATHER_PREFERENCE
+    return readWebPreference() ?? DEFAULT_WEATHER_PREFERENCE
   }
 
   try {
+    await awaitNativeWrites()
     const nativePreference = await readNativeStorageJson(
       WEATHER_PREFERENCE_STORAGE_KEY,
       parseWeatherPreference,
@@ -114,27 +125,44 @@ export const readWeatherPreference = async (): Promise<WeatherPreference> => {
         parseLegacyWeatherPreference,
       ))
 
+    if (preferenceWriteRevision !== initialWriteRevision) {
+      return readWeatherPreference()
+    }
+
     if (restoredPreference === null) {
+      writeWebPreference(DEFAULT_WEATHER_PREFERENCE)
       return DEFAULT_WEATHER_PREFERENCE
     }
 
-    if (preferenceWriteRevision === initialWriteRevision) {
-      writeWebPreference(restoredPreference)
-    }
+    writeWebPreference(restoredPreference)
     return restoredPreference
-  } catch {
-    return DEFAULT_WEATHER_PREFERENCE
+  } catch (error: unknown) {
+    throw new Error('Failed to read weather preference.', {cause: error})
   }
 }
 
 /** Persists the weather preference for the current runtime. */
 export const writeWeatherPreference = async (preference: WeatherPreference): Promise<void> => {
   preferenceWriteRevision += 1
-  writeWebPreference(preference)
+  const webWriteError = writeWebPreference(preference)
 
   if (!hasNativeStorageBridge()) {
+    if (webWriteError !== null) {
+      throw new Error('Failed to persist weather preference.', {cause: webWriteError})
+    }
+
     return
   }
 
-  await nativeWriter.write(WEATHER_PREFERENCE_STORAGE_KEY, preference)
+  const nativeWrite = nativeWriter.write(WEATHER_PREFERENCE_STORAGE_KEY, preference)
+  pendingNativeWrite = nativeWrite
+  const nativeWriteError = await nativeWrite
+
+  if (pendingNativeWrite === nativeWrite) {
+    pendingNativeWrite = null
+  }
+
+  if (nativeWriteError !== null) {
+    throw new Error('Failed to persist weather preference.', {cause: nativeWriteError})
+  }
 }
