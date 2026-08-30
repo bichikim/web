@@ -9,11 +9,20 @@ import {
   PModelDownloadProvider,
   useModelDownload,
 } from '../../../features/model-download'
+import type {WeatherLocation} from '../../../features/weather'
 import {SceneToolbar} from '../Toolbar'
 
 vi.mock('../../PSelect', () => ({PSelect: () => null}))
 vi.mock('../LearningPanel', () => ({LearningPanel: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: () => null}))
+
+const seoulLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:seoul',
+  legacyCitySlug: 'seoul',
+  name: '서울',
+  region: '서울특별시',
+} as const satisfies WeatherLocation
 
 const createToolbarProps = () => ({
   activity: 'reading' as const,
@@ -28,16 +37,16 @@ const createToolbarProps = () => ({
   onSceneStyleChange: vi.fn(),
   onScreenSaverDelayChange: vi.fn(),
   onTimeModeChange: vi.fn(),
-  onWeatherCityChange: vi.fn(),
   onWeatherEnabledChange: vi.fn(),
+  onWeatherLocationChange: vi.fn(),
   onWeatherSceneModeChange: vi.fn(),
   sceneStyle: 'original' as const,
   screenSaverDelay: 'off' as const,
   timeMode: 'auto' as const,
-  weatherCitySlug: 'seoul' as const,
   weatherEnabled: true,
+  weatherLocation: seoulLocation,
   weatherSceneMode: 'auto' as const,
-  weatherState: {citySlug: 'seoul' as const, status: 'loading' as const},
+  weatherState: {location: seoulLocation, status: 'loading' as const},
 })
 
 const renderToolbar = () => {

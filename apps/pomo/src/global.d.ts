@@ -15,6 +15,7 @@ interface ImportMetaEnv {
   readonly OPENAI_REASONING_EFFORT?: string
   readonly OPENAI_SERVICE_TIER?: string
   readonly OPENAI_WEBHOOK_SECRET?: string
+  readonly OPENWEATHER_API_KEY?: string
   readonly POMO_ALLOW_LOCAL_ASSET_ORIGIN: string
   readonly POMO_CONNECT_SOURCES: string
   readonly POMO_CONTENT_TYPE_OPTIONS: string

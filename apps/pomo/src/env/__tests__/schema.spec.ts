@@ -129,6 +129,18 @@ describe('POMO_TOSS_CALLBACK_AUTHORIZATION', () => {
   )
 })
 
+describe('OPENWEATHER_API_KEY', () => {
+  it('should return a trimmed API key', () => {
+    expect(envSchema.OPENWEATHER_API_KEY.parse(' openweather-key ')).toBe('openweather-key')
+  })
+
+  it.each(['', '  '])('should reject a missing API key', (apiKey) => {
+    expect(() => envSchema.OPENWEATHER_API_KEY.parse(apiKey)).toThrow(
+      'OPENWEATHER_API_KEY is not set',
+    )
+  })
+})
+
 describe('KMA_SERVICE_KEY', () => {
   it('should return a trimmed service key', () => {
     expect(envSchema.KMA_SERVICE_KEY.parse(' decoded-service-key ')).toBe('decoded-service-key')

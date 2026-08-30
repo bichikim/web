@@ -1,7 +1,7 @@
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {fetchWeatherFeed} from './client'
-import type {WeatherCitySlug, WeatherFeed} from './contract'
+import type {WeatherFeed, WeatherLocation} from './contract'
 import {
   DEFAULT_WEATHER_PREFERENCE,
   readWeatherPreference,
@@ -21,26 +21,26 @@ const DISABLED_WEATHER_STATE = {status: 'disabled'} as const
 
 export type WeatherState =
   | {readonly status: 'disabled'}
-  | {readonly citySlug: WeatherCitySlug; readonly status: 'loading'}
+  | {readonly location: WeatherLocation; readonly status: 'loading'}
   | {readonly feed: WeatherFeed; readonly status: 'ready'}
-  | {readonly citySlug: WeatherCitySlug; readonly status: 'error'}
+  | {readonly location: WeatherLocation; readonly status: 'error'}
 
 export interface WeatherController {
-  readonly citySlug: Accessor<WeatherCitySlug>
   readonly enabled: Accessor<boolean>
-  readonly onCityChange: (citySlug: WeatherCitySlug) => void
   readonly onEnabledChange: (enabled: boolean) => void
+  readonly location: Accessor<WeatherLocation>
+  readonly onLocationChange: (location: WeatherLocation) => void
   readonly onSceneModeChange: (mode: WeatherSceneMode) => void
   readonly sceneCondition: Accessor<WeatherSceneCondition>
   readonly sceneMode: Accessor<WeatherSceneMode>
   readonly state: Accessor<WeatherState>
 }
 
-const isReadyForCity = (
+const isReadyForLocation = (
   state: WeatherState,
-  citySlug: WeatherCitySlug,
+  locationId: WeatherLocation['id'],
 ): state is Extract<WeatherState, {readonly status: 'ready'}> =>
-  state.status === 'ready' && state.feed.city.slug === citySlug
+  state.status === 'ready' && state.feed.location.id === locationId
 
 const getRefreshDelay = (expiresAt: string): number =>
   Math.max(
@@ -56,7 +56,7 @@ export const useWeather = (): WeatherController => {
   const [preference, setPreference] = createSignal<WeatherPreference>(DEFAULT_WEATHER_PREFERENCE)
   const [statusEnabled, setStatusEnabled] = createSignal(true)
   const [feedState, setFeedState] = createSignal<WeatherState>({
-    citySlug: DEFAULT_WEATHER_PREFERENCE.citySlug,
+    location: DEFAULT_WEATHER_PREFERENCE.location,
     status: 'loading',
   })
   let requestRevision = 0
@@ -88,12 +88,12 @@ export const useWeather = (): WeatherController => {
     }
 
     const previousState = feedState()
-    if (!isReadyForCity(previousState, currentPreference.citySlug)) {
-      setFeedState({citySlug: currentPreference.citySlug, status: 'loading'})
+    if (!isReadyForLocation(previousState, currentPreference.location.id)) {
+      setFeedState({location: currentPreference.location, status: 'loading'})
     }
 
     try {
-      const result = await fetchWeatherFeed(currentPreference.citySlug)
+      const result = await fetchWeatherFeed(currentPreference.location.id)
       if (disposed || revision !== requestRevision) {
         return
       }
@@ -104,18 +104,18 @@ export const useWeather = (): WeatherController => {
           scheduleRefresh(getRefreshDelay(result.feed.expiresAt))
           return
         case 'collecting':
-          if (isReadyForCity(previousState, currentPreference.citySlug)) {
+          if (isReadyForLocation(previousState, currentPreference.location.id)) {
             const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
             setFeedState({feed: {...previousState.feed, stale}, status: 'ready'})
           }
           scheduleRefresh(result.retryAfterMilliseconds ?? WEATHER_RETRY_MILLISECONDS)
           return
         case 'unavailable':
-          if (isReadyForCity(previousState, currentPreference.citySlug)) {
+          if (isReadyForLocation(previousState, currentPreference.location.id)) {
             const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
             setFeedState({feed: {...previousState.feed, stale}, status: 'ready'})
           } else {
-            setFeedState({citySlug: currentPreference.citySlug, status: 'error'})
+            setFeedState({location: currentPreference.location, status: 'error'})
           }
           scheduleRefresh(result.retryAfterMilliseconds ?? WEATHER_RETRY_MILLISECONDS)
           return
@@ -126,11 +126,11 @@ export const useWeather = (): WeatherController => {
       }
     } catch {
       if (!disposed && revision === requestRevision) {
-        if (isReadyForCity(previousState, currentPreference.citySlug)) {
+        if (isReadyForLocation(previousState, currentPreference.location.id)) {
           const stale = Date.parse(previousState.feed.expiresAt) <= Date.now()
           setFeedState({feed: {...previousState.feed, stale}, status: 'ready'})
         } else {
-          setFeedState({citySlug: currentPreference.citySlug, status: 'error'})
+          setFeedState({location: currentPreference.location, status: 'error'})
         }
         scheduleRefresh(WEATHER_RETRY_MILLISECONDS)
       }
@@ -183,10 +183,10 @@ export const useWeather = (): WeatherController => {
   })
 
   return {
-    citySlug: () => preference().citySlug,
     enabled: () => preference().enabled,
-    onCityChange: (citySlug) => updateFeedPreference({...preference(), citySlug}),
+    location: () => preference().location,
     onEnabledChange: (enabled) => updateFeedRequirement({...preference(), enabled}),
+    onLocationChange: (location) => updateFeedPreference({...preference(), location}),
     onSceneModeChange: (sceneMode) => updateFeedRequirement({...preference(), sceneMode}),
     sceneCondition: () => {
       const currentState = feedState()

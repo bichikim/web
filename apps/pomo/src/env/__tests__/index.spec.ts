@@ -8,6 +8,7 @@ const completeEnv = {
   NEON_AUTH_COOKIE_SECRET: 'a-secure-cookie-secret-with-32-characters',
   OPENAI_API_KEY: 'sk-test-secret',
   OPENAI_WEBHOOK_SECRET: 'whsec_test',
+  OPENWEATHER_API_KEY: 'openweather-key',
   POMO_TOSS_CALLBACK_AUTHORIZATION: 'Basic dXNlcjpwYXNz',
   POMO_TOSS_MTLS_CERT: '-----BEGIN CERTIFICATE-----\nCERT BODY\n-----END CERTIFICATE-----',
   POMO_TOSS_MTLS_KEY: '-----BEGIN PRIVATE KEY-----\nKEY BODY\n-----END PRIVATE KEY-----',

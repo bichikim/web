@@ -1,9 +1,9 @@
 import {and, desc, eq, gte, sql} from 'drizzle-orm'
 
 import {
+  type LegacyWeatherFeed,
   resolveWeatherCondition,
   type WeatherCitySlug,
-  type WeatherFeed,
   type WeatherPrecipitation,
   type WeatherSky,
 } from 'src/features/weather'
@@ -33,7 +33,7 @@ const SECOND_RETRY_DELAY_SECONDS = 60
 const LATER_RETRY_DELAY_SECONDS = 300
 
 interface CurrentWeatherFeedState {
-  readonly feed: WeatherFeed
+  readonly feed: LegacyWeatherFeed
   readonly status: 'current'
 }
 
@@ -42,7 +42,7 @@ interface MissingWeatherFeedState {
 }
 
 interface OutdatedWeatherFeedState {
-  readonly feed: WeatherFeed
+  readonly feed: LegacyWeatherFeed
   readonly status: 'outdated'
 }
 
@@ -54,7 +54,7 @@ export type WeatherFeedState =
 export interface WeatherInput {
   readonly collectedAt: Date
   readonly humidityPercent: number | null
-  readonly location: WeatherCitySlug
+  readonly location: string
   readonly precipitation: WeatherPrecipitation
   readonly precipitationMillimeters: number | null
   readonly sky: WeatherSky | null
@@ -71,7 +71,7 @@ export interface WeatherCollectionLease {
 
 /** Serializes weather collection for one location across server instances. */
 export const lockWeatherCollection = async (
-  location: WeatherCitySlug,
+  location: string,
   database: WeatherTransaction,
 ): Promise<void> => {
   await database.execute(
@@ -80,7 +80,7 @@ export const lockWeatherCollection = async (
 }
 
 export const hasCurrentWeather = async (
-  location: WeatherCitySlug,
+  location: string,
   weatherAt: Date,
   collectedAfter: Date,
   database: WeatherTransaction,
@@ -101,7 +101,7 @@ export const hasCurrentWeather = async (
 }
 
 export const getWeatherCollectionState = async (
-  location: WeatherCitySlug,
+  location: string,
   database: WeatherTransaction,
 ): Promise<WeatherCollectionRecord | undefined> => {
   const [state] = await database
@@ -114,7 +114,7 @@ export const getWeatherCollectionState = async (
 }
 
 export const setWeatherCollectionLease = async (
-  location: WeatherCitySlug,
+  location: string,
   lease: WeatherCollectionLease,
   attemptedAt: Date,
   database: WeatherTransaction,
@@ -140,7 +140,7 @@ export const setWeatherCollectionLease = async (
 }
 
 export const ownsWeatherCollectionLease = async (
-  location: WeatherCitySlug,
+  location: string,
   lease: WeatherCollectionLease,
   database: WeatherTransaction,
 ): Promise<boolean> => {
@@ -162,7 +162,7 @@ const getRetryDelaySeconds = (previousFailures: number): number => {
 }
 
 export const recordWeatherCollectionFailure = async (
-  location: WeatherCitySlug,
+  location: string,
   failedAt: Date,
   database: WeatherTransaction,
 ): Promise<Date> => {
@@ -201,7 +201,7 @@ export const recordWeatherCollectionFailure = async (
 }
 
 export const resetWeatherCollectionFailure = async (
-  location: WeatherCitySlug,
+  location: string,
   attemptedAt: Date,
   database: WeatherTransaction,
 ): Promise<void> => {
@@ -243,7 +243,7 @@ export const saveWeather = async (
     })
 }
 
-const getLatestWeather = async (location: WeatherCitySlug, database: Database) => {
+export const getLatestWeather = async (location: string, database: Database) => {
   const [record] = await database
     .select()
     .from(weather)
@@ -254,7 +254,7 @@ const getLatestWeather = async (location: WeatherCitySlug, database: Database) =
   return record
 }
 
-const createCurrentWeather = (record: WeatherRecord): WeatherFeed['current'] => ({
+export const createCurrentWeather = (record: WeatherRecord): LegacyWeatherFeed['current'] => ({
   condition: resolveWeatherCondition({precipitation: record.precipitation, sky: record.sky}),
   humidityPercent: record.humidityPercent,
   precipitationMillimeters: record.precipitationMillimeters,
@@ -268,7 +268,7 @@ interface CreateWeatherFeedOptions {
   readonly stale: boolean
 }
 
-const createWeatherFeed = (options: CreateWeatherFeedOptions): WeatherFeed => {
+const createWeatherFeed = (options: CreateWeatherFeedOptions): LegacyWeatherFeed => {
   const expiresAt = new Date(
     options.now.getTime() +
       getSecondsUntilNextKmaAvailability(options.now) * MILLISECONDS_PER_SECOND,

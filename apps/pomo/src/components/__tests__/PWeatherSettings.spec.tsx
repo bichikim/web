@@ -3,9 +3,10 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import type {WeatherSceneMode} from '../../features/weather'
+import {LEGACY_WEATHER_LOCATIONS, type WeatherSceneMode} from '../../features/weather'
 import {PSelect} from '../PSelect'
 import {PSwitch} from '../PSwitch'
+import {PWeatherLocationSearch} from '../PWeatherLocationSearch'
 import {PWeatherSettings} from '../PWeatherSettings'
 
 vi.mock('../PSelect', () => ({
@@ -15,9 +16,9 @@ vi.mock('../PSelect', () => ({
       <button
         onClick={() => {
           if (props.multiple) {
-            props.onChange(['busan'])
+            props.onChange(['rain'])
           } else {
-            props.onChange('busan')
+            props.onChange('rain')
           }
         }}
         type="button"
@@ -26,6 +27,13 @@ vi.mock('../PSelect', () => ({
       </button>
     )
   }),
+}))
+vi.mock('../PWeatherLocationSearch', () => ({
+  PWeatherLocationSearch: vi.fn((props: Parameters<typeof PWeatherLocationSearch>[0]) => (
+    <button onClick={() => props.onChange?.(LEGACY_WEATHER_LOCATIONS.busan)} type="button">
+      {props.location?.id ?? LEGACY_WEATHER_LOCATIONS.seoul.id}
+    </button>
+  )),
 }))
 vi.mock('../PSwitch', () => ({
   PSwitch: vi.fn((props: Parameters<typeof PSwitch>[0]) => {
@@ -46,27 +54,30 @@ it('should use enabled Seoul weather defaults without requiring handlers', () =>
   render(() => <PWeatherSettings />)
 
   fireEvent.click(screen.getByRole('button', {name: 'true'}))
-  fireEvent.click(screen.getByRole('button', {name: 'seoul:undefined'}))
-  expect(PSelect).toHaveBeenCalledWith(expect.objectContaining({value: 'seoul'}))
+  fireEvent.click(screen.getByRole('button', {name: LEGACY_WEATHER_LOCATIONS.seoul.id}))
+  expect(PSelect).toHaveBeenCalledWith(expect.objectContaining({value: 'auto'}))
   expect(PSwitch).toHaveBeenCalledWith(expect.objectContaining({checked: true}))
+  expect(PWeatherLocationSearch).toHaveBeenCalledWith(
+    expect.objectContaining({location: undefined}),
+  )
 })
 
 it('should keep city selection enabled and forward explicit setting changes', () => {
-  const onCityChange = vi.fn()
+  const onLocationChange = vi.fn()
   const onEnabledChange = vi.fn()
   render(() => (
     <PWeatherSettings
-      citySlug="incheon"
       enabled={false}
-      onCityChange={onCityChange}
+      location={LEGACY_WEATHER_LOCATIONS.incheon}
       onEnabledChange={onEnabledChange}
+      onLocationChange={onLocationChange}
     />
   ))
 
   fireEvent.click(screen.getByRole('button', {name: 'false'}))
-  fireEvent.click(screen.getByRole('button', {name: 'incheon:undefined'}))
+  fireEvent.click(screen.getByRole('button', {name: LEGACY_WEATHER_LOCATIONS.incheon.id}))
   expect(onEnabledChange).toHaveBeenCalledWith(true)
-  expect(onCityChange).toHaveBeenCalledWith('busan')
+  expect(onLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.busan)
 })
 
 it('should expose automatic and manual weather scene choices', () => {

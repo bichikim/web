@@ -42,6 +42,7 @@ export const envSchema = {
   ),
   OPENAI_SERVICE_TIER: allowedStringSchema('OPENAI_SERVICE_TIER', OPENAI_SERVICE_TIERS, 'default'),
   OPENAI_WEBHOOK_SECRET: requiredStringSchema('OPENAI_WEBHOOK_SECRET'),
+  OPENWEATHER_API_KEY: requiredStringSchema('OPENWEATHER_API_KEY'),
   POMO_TOSS_CALLBACK_AUTHORIZATION: optionalStringSchema.superRefine((authorization, context) => {
     if (authorization === undefined) {
       return

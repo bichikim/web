@@ -12,6 +12,7 @@ import {
   WEATHER_SCENE_MODES,
   type WeatherCitySlug,
   type WeatherCondition,
+  type WeatherLocation,
   type WeatherSceneMode,
 } from '../weather'
 import * as m from '@paraglide/message'
@@ -173,6 +174,14 @@ export const getLocalizedWeatherCityOptions = (options: LocalizationOptions = {}
     label: getLocalizedWeatherCityLabel(citySlug, options),
     value: citySlug,
   }))
+
+export const getLocalizedWeatherLocationLabel = (
+  location: WeatherLocation,
+  options: LocalizationOptions = {},
+): string =>
+  location.legacyCitySlug === undefined
+    ? location.name
+    : getLocalizedWeatherCityLabel(location.legacyCitySlug, options)
 
 const getLocalizedWeatherSceneModeLabel = (
   mode: WeatherSceneMode,
