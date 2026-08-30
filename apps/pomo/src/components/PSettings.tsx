@@ -22,7 +22,7 @@ import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {type ScreenWakeLockController, useScreenWakeLock} from '../features/screen-wake-lock'
 import {UserSettings} from './UserSettings'
-import type {WeatherCitySlug, WeatherSceneMode} from '../features/weather'
+import type {WeatherLocation, WeatherSceneMode} from '../features/weather'
 import * as m from '@paraglide/message'
 import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
 import {PCreditsSettings} from './PCreditsSettings'
@@ -57,16 +57,16 @@ export interface PSettingsProps {
   readonly onScreenSaverDelayChange?: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange?: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange?: (timeMode: SceneTimeMode) => void
-  readonly onWeatherCityChange?: (citySlug: WeatherCitySlug) => void
   readonly onWeatherEnabledChange?: (enabled: boolean) => void
+  readonly onWeatherLocationChange?: (location: WeatherLocation) => void
   readonly onWeatherSceneModeChange?: (mode: WeatherSceneMode) => void
   readonly screenSaverDelay?: ScreenSaverDelay
   readonly sceneStyle?: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode?: PSceneMotionMode
   readonly timeMode?: SceneTimeMode
-  readonly weatherCitySlug?: WeatherCitySlug
   readonly weatherEnabled?: boolean
+  readonly weatherLocation?: WeatherLocation
   readonly weatherSceneMode?: WeatherSceneMode
 }
 
@@ -163,10 +163,10 @@ const PGeneralWeatherSettings = (props: PSettingsProps) => (
       titleId="pomo-settings-weather-title"
     />
     <PWeatherSettings
-      citySlug={props.weatherCitySlug}
       enabled={props.weatherEnabled}
-      onCityChange={props.onWeatherCityChange}
       onEnabledChange={props.onWeatherEnabledChange}
+      location={props.weatherLocation}
+      onLocationChange={props.onWeatherLocationChange}
       onSceneModeChange={props.onWeatherSceneModeChange}
       sceneMode={props.weatherSceneMode}
     />

@@ -111,8 +111,8 @@ const useStudioDesktopSceneSettings = (options: StudioDesktopSceneSettingsOption
     onSceneStyleChange: sceneStyleController.onSceneStyleChange,
     onScreenSaverDelayChange: screenSaver.onDelayChange,
     onTimeModeChange: scenePreferences.onTimeModeChange,
-    onWeatherCityChange: weather.onCityChange,
     onWeatherEnabledChange: weather.onEnabledChange,
+    onWeatherLocationChange: weather.onLocationChange,
     onWeatherSceneModeChange: weather.onSceneModeChange,
   })
 }
@@ -233,16 +233,16 @@ export const PStudio = () => {
               onScreenSaverDelayChange={screenSaver.onDelayChange}
               onSceneStyleChange={sceneStyleController.onSceneStyleChange}
               onTimeModeChange={scenePreferences.onTimeModeChange}
-              onWeatherCityChange={weather.onCityChange}
               onWeatherEnabledChange={weather.onEnabledChange}
+              onWeatherLocationChange={weather.onLocationChange}
               onWeatherSceneModeChange={weather.onSceneModeChange}
               screenSaverDelay={screenSaver.delay()}
               sceneStyle={sceneStyleController.sceneStyle()}
               motionInput={motionInput()}
               motionMode={motionMode()}
               timeMode={scenePreferences.timeMode()}
-              weatherCitySlug={weather.citySlug()}
               weatherEnabled={weather.enabled()}
+              weatherLocation={weather.location()}
               weatherSceneMode={weather.sceneMode()}
               weatherState={weather.state()}
               desktopMode={desktopMode.mode()}

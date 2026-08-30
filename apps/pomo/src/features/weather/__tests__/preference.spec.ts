@@ -7,6 +7,7 @@ import {
   readWeatherPreference,
   writeWeatherPreference,
 } from '../preference'
+import {LEGACY_WEATHER_LOCATIONS} from '../locations'
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -15,7 +16,11 @@ const storageMocks = vi.hoisted(() => ({
 
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
-const disabledPreference = {citySlug: 'seoul', enabled: false, sceneMode: 'cloudy'} as const
+const disabledPreference = {
+  enabled: false,
+  location: LEGACY_WEATHER_LOCATIONS.seoul,
+  sceneMode: 'cloudy',
+} as const
 
 beforeEach(() => {
   localStorage.clear()
@@ -47,6 +52,19 @@ it.each([
   await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
+it.each([
+  null,
+  {},
+  {enabled: true},
+  {enabled: 'yes', location: LEGACY_WEATHER_LOCATIONS.seoul},
+  {enabled: true, location: LEGACY_WEATHER_LOCATIONS.seoul, sceneMode: 'unknown'},
+  {enabled: true, location: {id: 'invalid'}},
+])('should reject an invalid current browser preference shape', async (value) => {
+  localStorage.setItem('pomo:weather-preference:v2', JSON.stringify(value))
+
+  await expect(readWeatherPreference()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
+})
+
 it('should migrate a stored preference without a scene mode to automatic', async () => {
   localStorage.setItem(
     'pomo:weather-preference:v1',
@@ -68,9 +86,22 @@ it('should restore a native preference and rebuild the browser copy', async () =
   storageMocks.getItem.mockResolvedValue(JSON.stringify(disabledPreference))
 
   await expect(readWeatherPreference()).resolves.toEqual(disabledPreference)
-  expect(localStorage.getItem('pomo:weather-preference:v1')).toBe(
+  expect(localStorage.getItem('pomo:weather-preference:v2')).toBe(
     JSON.stringify(disabledPreference),
   )
+})
+
+it('should migrate a native legacy city preference', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.getItem
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce(JSON.stringify({citySlug: 'jeju', enabled: false, sceneMode: 'snow'}))
+
+  await expect(readWeatherPreference()).resolves.toEqual({
+    enabled: false,
+    location: LEGACY_WEATHER_LOCATIONS.jeju,
+    sceneMode: 'snow',
+  })
 })
 
 it('should use defaults when native storage is empty or invalid', async () => {
@@ -88,7 +119,7 @@ it('should mirror a preference to native storage', async () => {
   await writeWeatherPreference(disabledPreference)
 
   expect(storageMocks.setItem).toHaveBeenCalledWith(
-    'pomo:weather-preference:v1',
+    'pomo:weather-preference:v2',
     JSON.stringify(disabledPreference),
   )
 })
@@ -120,7 +151,7 @@ it('should not let a pending native read replace a newer browser preference', as
   completeRead(JSON.stringify(DEFAULT_WEATHER_PREFERENCE))
 
   await expect(pendingRead).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
-  expect(JSON.parse(localStorage.getItem('pomo:weather-preference:v1') ?? '')).toEqual(
+  expect(JSON.parse(localStorage.getItem('pomo:weather-preference:v2') ?? '')).toEqual(
     disabledPreference,
   )
 })

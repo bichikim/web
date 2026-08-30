@@ -12,7 +12,7 @@ import {getLocalizedActivityOptions} from '../../features/localization/index'
 import type {SceneTimeMode} from '../../features/focus-room-time/index'
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
 import {
-  type WeatherCitySlug,
+  type WeatherLocation,
   type WeatherSceneMode,
   type WeatherState,
 } from '../../features/weather/index'
@@ -40,16 +40,16 @@ interface SceneToolbarProps {
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
-  readonly onWeatherCityChange: (citySlug: WeatherCitySlug) => void
   readonly onWeatherEnabledChange: (enabled: boolean) => void
+  readonly onWeatherLocationChange: (location: WeatherLocation) => void
   readonly onWeatherSceneModeChange: (mode: WeatherSceneMode) => void
   readonly screenSaverDelay: ScreenSaverDelay
   readonly sceneStyle: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
   readonly timeMode: SceneTimeMode
-  readonly weatherCitySlug: WeatherCitySlug
   readonly weatherEnabled: boolean
+  readonly weatherLocation: WeatherLocation
   readonly weatherSceneMode: WeatherSceneMode
   readonly weatherState: WeatherState
   readonly desktopMode?: DesktopMode
@@ -111,16 +111,16 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           onScreenSaverDelayChange={props.onScreenSaverDelayChange}
           onSceneStyleChange={props.onSceneStyleChange}
           onTimeModeChange={props.onTimeModeChange}
-          onWeatherCityChange={props.onWeatherCityChange}
           onWeatherEnabledChange={props.onWeatherEnabledChange}
+          onWeatherLocationChange={props.onWeatherLocationChange}
           onWeatherSceneModeChange={props.onWeatherSceneModeChange}
           screenSaverDelay={props.screenSaverDelay}
           sceneStyle={props.sceneStyle}
           motionInput={props.motionInput}
           motionMode={props.motionMode}
           timeMode={props.timeMode}
-          weatherCitySlug={props.weatherCitySlug}
           weatherEnabled={props.weatherEnabled}
+          weatherLocation={props.weatherLocation}
           weatherSceneMode={props.weatherSceneMode}
           fallback={
             <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>

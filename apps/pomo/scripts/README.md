@@ -16,6 +16,10 @@
 - `build/database/check-production-migrations.mjs` (`db:check-production-migrations`) — 프로덕션 SQL의 파괴적 구문을 거절한다.
 - `build/database/delete-preview-branch.mjs` — Neon Preview 브랜치를 삭제한다. 프리뷰 정리 워크플로가 호출한다.
 
+## 날씨
+
+- `node --env-file=.env scripts/weather/compare-korean-providers.mjs` — 출시 전에 한국 8개 도시의 OpenWeather 결과를 기상청 초단기실황·예보와 비교한다. 온도 3°C, 습도 20%p, 관측 시각 90분 이내와 날씨 상태 일치를 모두 확인한다.
+
 ## 포커스룸 자산
 
 원본은 `asset-library/focus-room-source`에 둔다. 장면 생성 절차는 [2D 장면 워크플로](../docs/plan/development/2d-scene-variant-workflow.md)를 따른다.

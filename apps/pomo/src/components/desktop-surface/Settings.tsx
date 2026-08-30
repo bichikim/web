@@ -81,13 +81,13 @@ export const DesktopSettings = () => {
           scenePreferences.onTimeModeChange(value)
           publisher.publish({name: 'timeMode', value})
         }}
-        onWeatherCityChange={(value) => {
-          weather.onCityChange(value)
-          publisher.publish({name: 'weatherCity', value})
-        }}
         onWeatherEnabledChange={(value) => {
           weather.onEnabledChange(value)
           publisher.publish({name: 'weatherEnabled', value})
+        }}
+        onWeatherLocationChange={(value) => {
+          weather.onLocationChange(value)
+          publisher.publish({name: 'weatherLocation', value})
         }}
         onWeatherSceneModeChange={(value) => {
           weather.onSceneModeChange(value)
@@ -96,8 +96,8 @@ export const DesktopSettings = () => {
         sceneStyle={sceneStyle.sceneStyle()}
         screenSaverDelay={screenSaver.delay()}
         timeMode={scenePreferences.timeMode()}
-        weatherCitySlug={weather.citySlug()}
         weatherEnabled={weather.enabled()}
+        weatherLocation={weather.location()}
         weatherSceneMode={weather.sceneMode()}
         weatherState={weather.state()}
       />

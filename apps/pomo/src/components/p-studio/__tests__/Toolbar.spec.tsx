@@ -10,6 +10,7 @@ import {PScribbleCircleControl} from '../../scribble/CircleControl'
 import {LearningPanel} from '../LearningPanel'
 import {SceneSettingsPanel} from '../SettingsPanel'
 import {SceneToolbar} from '../Toolbar'
+import type {WeatherLocation} from '../../../features/weather'
 
 vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
 vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
@@ -37,10 +38,18 @@ const callbacks = {
   onSceneStyleChange: vi.fn(),
   onScreenSaverDelayChange: vi.fn(),
   onTimeModeChange: vi.fn(),
-  onWeatherCityChange: vi.fn(),
   onWeatherEnabledChange: vi.fn(),
+  onWeatherLocationChange: vi.fn(),
   onWeatherSceneModeChange: vi.fn(),
 }
+
+const seoulLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:seoul',
+  legacyCitySlug: 'seoul',
+  name: '서울',
+  region: '서울특별시',
+} as const satisfies WeatherLocation
 
 const baseProps = {
   activity: 'reading',
@@ -52,8 +61,8 @@ const baseProps = {
   sceneStyle: 'original',
   screenSaverDelay: '5s',
   timeMode: 'auto',
-  weatherCitySlug: 'seoul',
   weatherEnabled: true,
+  weatherLocation: seoulLocation,
   weatherSceneMode: 'auto',
   weatherState: {status: 'disabled'},
   ...callbacks,
@@ -98,7 +107,7 @@ describe('SceneToolbar', () => {
         motionInput: 'drag',
         sceneStyle: 'original',
         timeMode: 'auto',
-        weatherCitySlug: 'seoul',
+        weatherLocation: seoulLocation,
         weatherSceneMode: 'auto',
       }),
     )

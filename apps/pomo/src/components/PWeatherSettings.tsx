@@ -1,17 +1,15 @@
 import {PSelect} from './PSelect'
 import {PSwitch} from './PSwitch'
-import {
-  getLocalizedWeatherCityOptions,
-  getLocalizedWeatherSceneModeOptions,
-} from '../features/localization'
-import type {WeatherCitySlug, WeatherSceneMode} from '../features/weather'
+import {getLocalizedWeatherSceneModeOptions} from '../features/localization'
+import type {WeatherLocation, WeatherSceneMode} from '../features/weather'
 import * as m from '@paraglide/message'
+import {PWeatherLocationSearch} from './PWeatherLocationSearch'
 
 export interface PWeatherSettingsProps {
-  readonly citySlug?: WeatherCitySlug
   readonly enabled?: boolean
-  readonly onCityChange?: (citySlug: WeatherCitySlug) => void
   readonly onEnabledChange?: (enabled: boolean) => void
+  readonly location?: WeatherLocation
+  readonly onLocationChange?: (location: WeatherLocation) => void
   readonly onSceneModeChange?: (mode: WeatherSceneMode) => void
   readonly sceneMode?: WeatherSceneMode
 }
@@ -31,14 +29,6 @@ export const PWeatherSettings = (props: PWeatherSettingsProps) => (
       options={getLocalizedWeatherSceneModeOptions()}
       value={props.sceneMode ?? 'auto'}
     />
-    <PSelect
-      label={m.weather_city()}
-      onChange={(citySlug) => props.onCityChange?.(citySlug)}
-      options={getLocalizedWeatherCityOptions()}
-      value={props.citySlug ?? 'seoul'}
-    />
-    <p class="col-span-full m-0 text-xs leading-5 text-muted-foreground">
-      {m.weather_support_notice()}
-    </p>
+    <PWeatherLocationSearch location={props.location} onChange={props.onLocationChange} />
   </div>
 )

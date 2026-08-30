@@ -2,7 +2,7 @@ import {z} from 'zod'
 
 import {parseJsonResponse} from '../api-json'
 import {apiFetch} from '../http-client'
-import {type WeatherCitySlug, type WeatherFeed, weatherFeedSchema} from './contract'
+import {type WeatherFeed, weatherFeedSchema, type WeatherLocationId} from './contract'
 
 const MILLISECONDS_PER_SECOND = 1_000
 const HTTP_SERVICE_UNAVAILABLE = 503
@@ -42,9 +42,9 @@ const parseRetryAfterMilliseconds = (value: string | null): number | null => {
 
 /** Fetches and validates the public weather feed boundary. */
 export const fetchWeatherFeed = async (
-  citySlug: WeatherCitySlug,
+  locationId: WeatherLocationId,
 ): Promise<WeatherFeedRequestResult> => {
-  const response = await apiFetch(`weather/feeds/${citySlug}.json`, {
+  const response = await apiFetch(`weather/feeds/${encodeURIComponent(locationId)}.json`, {
     headers: {accept: 'application/json'},
   })
 
@@ -61,10 +61,13 @@ export const fetchWeatherFeed = async (
     throw new Error(`Weather feed request failed with status ${response.status}`)
   }
 
-  const requestedCityFeedSchema = weatherFeedSchema.refine((feed) => feed.city.slug === citySlug, {
-    message: 'Weather feed city does not match the requested city',
-    path: ['city', 'slug'],
-  })
+  const requestedLocationFeedSchema = weatherFeedSchema.refine(
+    (feed) => feed.location.id === locationId,
+    {
+      message: 'Weather feed location does not match the requested location',
+      path: ['location', 'id'],
+    },
+  )
 
-  return {feed: await parseJsonResponse(response, requestedCityFeedSchema), status: 'available'}
+  return {feed: await parseJsonResponse(response, requestedLocationFeedSchema), status: 'available'}
 }

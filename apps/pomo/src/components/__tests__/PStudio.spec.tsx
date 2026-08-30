@@ -19,7 +19,7 @@ import {getLocalizedSceneLabel} from '../../features/localization'
 import {type ModelDownloadRuntime, PModelDownloadProvider} from '../../features/model-download'
 import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
-import {useWeather} from '../../features/weather'
+import {useWeather, type WeatherLocation} from '../../features/weather'
 import {
   isDesktopBackgroundMode,
   useDesktopMode,
@@ -89,6 +89,14 @@ const modelDownloadRuntime: ModelDownloadRuntime = {
   },
 }
 
+const seoulLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:seoul',
+  legacyCitySlug: 'seoul',
+  name: '서울',
+  region: '서울특별시',
+} as const satisfies WeatherLocation
+
 const renderStudio = () =>
   render(() => (
     <PModelDownloadProvider runtime={modelDownloadRuntime}>
@@ -104,7 +112,7 @@ const configureStudio = (options: StudioOptions = {}) => {
   const [timeMode, setTimeMode] = createSignal<'day' | 'auto'>('day')
   const [sceneStyle, setSceneStyle] = createSignal<'original' | 'scribble'>('original')
   const [weatherEnabled, setWeatherEnabled] = createSignal(false)
-  const [weatherCity, setWeatherCity] = createSignal<string | null>(null)
+  const [weatherLocation, setWeatherLocation] = createSignal<WeatherLocation>(seoulLocation)
   const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>('auto')
 
   vi.mocked(usePEvents).mockReturnValue({
@@ -134,10 +142,10 @@ const configureStudio = (options: StudioOptions = {}) => {
     sceneStyle,
   } as ReturnType<typeof usePSceneStyle>)
   vi.mocked(useWeather).mockReturnValue({
-    citySlug: weatherCity,
     enabled: weatherEnabled,
-    onCityChange: setWeatherCity,
+    location: weatherLocation,
     onEnabledChange: setWeatherEnabled,
+    onLocationChange: setWeatherLocation,
     onSceneModeChange: setWeatherSceneMode,
     sceneCondition: () => (weatherSceneMode() === 'rain' ? 'rain' : 'clear'),
     sceneMode: weatherSceneMode,
@@ -248,7 +256,7 @@ beforeEach(() => {
         <button onClick={() => props.onWeatherEnabledChange(true)} type="button">
           날씨 켜기
         </button>
-        <button onClick={() => props.onWeatherCityChange('seoul')} type="button">
+        <button onClick={() => props.onWeatherLocationChange(seoulLocation)} type="button">
           서울
         </button>
         <button onClick={() => props.onWeatherSceneModeChange('rain')} type="button">

@@ -21,6 +21,10 @@
     {
       "path": "/api/cron/music-album-covers",
       "schedule": "7 * * * *"
+    },
+    {
+      "path": "/api/cron/weather-cache",
+      "schedule": "57 18 * * *"
     }
   ],
   "git": {
