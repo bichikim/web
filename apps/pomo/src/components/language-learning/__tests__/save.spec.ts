@@ -4,7 +4,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PDialogueRepository} from '../../../features/focus-room-dialogue'
 import {readLanguageLearningSentences} from '../../../features/language-learning'
-import type {LanguageLearningCandidate} from '../Review'
+import type {LanguageLearningCandidate} from '../candidate'
 import {saveLanguageLearningCandidates} from '../save'
 
 const createCandidate = (id: string): LanguageLearningCandidate => ({
