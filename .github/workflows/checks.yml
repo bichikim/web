@@ -69,4 +69,5 @@ jobs:
         run: |
           SOURCE_COVERAGE_SCOPE=apps pnpm exec vitest run --config vitest.source-coverage.config.mts --reporter=dot
           SOURCE_COVERAGE_SCOPE=workspace pnpm exec vitest run --config vitest.source-coverage.config.mts --reporter=dot
+          pnpm run test:stress
           pnpm run test:integration:build

@@ -29,6 +29,7 @@
     "test:coverage:sw": "vitest run packages/sw/src --coverage --coverage.include='packages/sw/src/*.ts' --coverage.include='packages/sw/src/runtime/*.ts' --coverage.thresholds.100=true",
     "test:integration:build": "vitest run --config vitest.build-integration.config.mts --reporter=dot",
     "postinstall": "turbo prepare-build",
+    "test:stress": "vitest run --config vitest.stress.config.mts --reporter=dot",
     "test:storybook": "vitest run --project='storybook*'",
     "test:storybook:ui": "vitest --ui --watch --project='storybook*'",
     "test:storybook:watch": "vitest --project='storybook*'",
