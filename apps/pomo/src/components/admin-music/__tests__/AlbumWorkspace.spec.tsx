@@ -4,9 +4,8 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {AlbumWorkspace} from 'src/components/admin-music/AlbumWorkspace'
-import type {AdminMusicModel} from '..'
-import type {AdminAlbum, AdminCatalog} from '../catalog'
+import type {AdminAlbum, AdminCatalog, AdminMusicModel} from 'src/features/admin-music'
+import {AlbumWorkspace} from '../AlbumWorkspace'
 
 vi.mock('solid-js/web', async (importOriginal) => {
   const solidWeb = await importOriginal<typeof import('solid-js/web')>()
@@ -50,7 +49,7 @@ vi.mock('@solidjs/start', () => ({
       )
     },
 }))
-vi.mock('src/components/admin-music/AlbumReleaseCard', () => ({
+vi.mock('../AlbumReleaseCard', () => ({
   AlbumReleaseCard: (props: {
     readonly activeOfferCount: number
     readonly album: AdminAlbum
@@ -65,7 +64,7 @@ vi.mock('src/components/admin-music/AlbumReleaseCard', () => ({
     )
   },
 }))
-vi.mock('src/components/admin-music/TrackFields', () => ({
+vi.mock('../TrackFields', () => ({
   default: (props: {
     readonly artist: string
     readonly onArtistChange: (value: string) => void

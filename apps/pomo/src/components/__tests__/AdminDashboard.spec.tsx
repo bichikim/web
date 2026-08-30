@@ -3,12 +3,12 @@
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {A, useNavigate} from '@solidjs/router'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {AdminDashboard} from 'src/components/AdminDashboard'
-import {signOutAdminSession} from '../session'
+import {signOutAdminSession} from 'src/features/admin-auth/session'
+import {AdminDashboard} from '../AdminDashboard'
 
 vi.mock('@solidjs/meta', () => ({Title: vi.fn()}))
 vi.mock('@solidjs/router', () => ({A: vi.fn(), useNavigate: vi.fn()}))
-vi.mock('../session', () => ({signOutAdminSession: vi.fn()}))
+vi.mock('src/features/admin-auth/session', () => ({signOutAdminSession: vi.fn()}))
 
 const navigate = vi.fn()
 
