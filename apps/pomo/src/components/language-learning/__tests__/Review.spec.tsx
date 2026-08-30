@@ -3,7 +3,8 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-import {type LanguageLearningCandidate, LanguageLearningReview} from '../Review'
+import type {LanguageLearningCandidate} from '../candidate'
+import {LanguageLearningReview} from '../Review'
 
 const CANDIDATE = {
   audio: new Blob(['audio']),
