@@ -4,8 +4,10 @@
 import type {JSX} from 'solid-js'
 
 interface ImportMetaEnv {
+  readonly POMO_ALLOW_LOCAL_ASSET_ORIGIN: string
   readonly POMO_CONNECT_SOURCES: string
   readonly POMO_CONTENT_TYPE_OPTIONS: string
+  readonly POMO_LICENSE_ASSET_ORIGIN: string
   readonly POMO_PERMISSIONS_POLICY: string
   readonly POMO_REFERRER_POLICY: string
   readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string

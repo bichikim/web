@@ -12,6 +12,7 @@ Review the explicit target for correctness, security, lifecycle, maintainability
 
 - Report risks and actionable alternatives, not praise.
 - Check consumer contracts, misuse risk, boundaries, coupling, errors, races, and cleanup.
+- Treat tests as first-class consumers of the design. Production behavior, including failure paths, must be deterministically exercisable through explicit inputs and replaceable boundaries; report code that requires invasive mocking or hidden global, time, random, network, or process state as P3 even when no current behavior defect is proven.
 - Prefer deleting branches, helpers, modes, or layers over rearranging avoidable complexity.
 - Flag changed code files over 600 lines; exclude non-code assets.
 

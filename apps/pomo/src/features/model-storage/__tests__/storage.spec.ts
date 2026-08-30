@@ -1,6 +1,11 @@
 import {describe, expect, it, vi} from 'vitest'
 
-import {createModelStorage, MODEL_CACHE_NAME, reportModelStorageError} from '../storage'
+import {
+  createModelStorage,
+  MODEL_CACHE_NAME,
+  MODEL_PARTIAL_DIRECTORY_NAME,
+  reportModelStorageError,
+} from '../storage'
 
 const createCache = () => ({
   delete: vi.fn(async () => true),
@@ -9,6 +14,10 @@ const createCache = () => ({
 })
 
 describe('createModelStorage', () => {
+  it('should expose the shared partial download namespace', () => {
+    expect(MODEL_PARTIAL_DIRECTORY_NAME).toBe('pomo-model-downloads')
+  })
+
   it('should use the shared legacy cache namespace', async () => {
     const cache = createCache()
     const cacheStorage = {open: vi.fn(async () => cache)}

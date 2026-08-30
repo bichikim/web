@@ -38,6 +38,7 @@ const FEED_DIALOGUE: FeedDialogueListItem = {
 const createController = (dialogues: ReadonlyArray<FeedDialogueListItem> = [FEED_DIALOGUE]) => {
   const onDeleteDialogue = vi.fn(async () => undefined)
   const controller: PFeedController = {
+    cancelProcessing: vi.fn(async () => undefined),
     deleteRecovery: vi.fn(async () => undefined),
     dialogues: () => dialogues,
     dismissRecovery: vi.fn(),

@@ -1,7 +1,7 @@
 import {icons} from '@iconify-json/tabler'
 import {describe, expect, it} from 'vitest'
 
-import scribbleIcons from '../../../../icon-sets/scribble.json'
+import scribbleIcons from '../../../../scripts/unocss/scribble.json'
 import type {WeatherCondition} from '../contract'
 import {getWeatherPresentation} from '../presentation'
 

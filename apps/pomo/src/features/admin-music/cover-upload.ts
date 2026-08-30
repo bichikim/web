@@ -8,7 +8,13 @@ export const MAXIMUM_PREPARED_COVER_BYTES = 4 * 1024 * 1024
 const ALLOWED_COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const uploadSchema = z.object({
   coverImageUrl: z.string().url(),
+  coverReservationId: z.string().uuid(),
 })
+
+export interface UploadedAlbumCover {
+  readonly coverImageUrl: string
+  readonly coverReservationId: string
+}
 
 export const validateAlbumCover = (file: File): void => {
   if (!ALLOWED_COVER_TYPES.has(file.type)) {
@@ -23,7 +29,7 @@ export const validateAlbumCover = (file: File): void => {
 export const uploadAlbumCover = async (
   file: File,
   coverDraftId: string | null,
-): Promise<string> => {
+): Promise<UploadedAlbumCover> => {
   if (file.type !== 'image/webp' || file.size <= 0 || file.size > MAXIMUM_PREPARED_COVER_BYTES) {
     throw new TypeError('준비된 커버 이미지는 4MB 이하 WebP여야 합니다.')
   }
@@ -42,5 +48,5 @@ export const uploadAlbumCover = async (
     throw new Error('커버 이미지를 R2에 업로드하지 못했습니다.')
   }
 
-  return uploadSchema.parse(await uploadResponse.json()).coverImageUrl
+  return uploadSchema.parse(await uploadResponse.json())
 }

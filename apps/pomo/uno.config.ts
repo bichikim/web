@@ -1,7 +1,7 @@
 import baseConfig from '@winter-love/unocss-config'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 
-import scribbleIcons from './icon-sets/scribble.json'
+import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'

@@ -2,7 +2,7 @@
 
 import {render} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
-import {expect, it, vi} from 'vitest'
+import {beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   onPresses: [] as Array<(source: HTMLButtonElement) => void>,
@@ -54,6 +54,7 @@ const RECOVERY_JOB = {
 } satisfies FeedDialogueJob
 
 const createFeeds = (): PFeedController => ({
+  cancelProcessing: vi.fn(async () => undefined),
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => [],
   dismissRecovery: vi.fn(),
@@ -68,6 +69,11 @@ const createFeeds = (): PFeedController => ({
   state: () => ({message: '대기 중', status: 'idle'}),
   syncNow: vi.fn(async () => undefined),
   unlistenedDialogues: () => [],
+})
+
+beforeEach(() => {
+  mocks.onPresses.length = 0
+  vi.clearAllMocks()
 })
 
 it('should ignore a duplicated retry request while model availability is still checking', () => {
@@ -100,4 +106,39 @@ it('should ignore a duplicated retry request while model availability is still c
 
   expect(isSupertonicModelDownloaded).toHaveBeenCalledOnce()
   resolveCheck?.(true)
+})
+
+it('should preserve a disabled stop handler while cancellation is pending', async () => {
+  let finishCancellation: () => void = () => undefined
+  const feeds: PFeedController = {
+    ...createFeeds(),
+    cancelProcessing: vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishCancellation = resolve
+        }),
+    ),
+    recoveryJobs: () => [],
+    state: () => ({message: '피드 음성 생성 중', progress: null, status: 'generating'}),
+  }
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  const runtime: ModelDownloadRuntime = {
+    createTextClient: () => {
+      throw new Error('텍스트 모델 client를 만들면 안 됩니다.')
+    },
+    createVoiceClient: () => {
+      throw new Error('음성 모델 client를 만들면 안 됩니다.')
+    },
+  }
+  render(() => (
+    <PModelDownloadProvider runtime={runtime}>
+      <PFeedStatus />
+    </PModelDownloadProvider>
+  ))
+
+  mocks.onPresses[0]?.(document.createElement('button'))
+
+  await vi.waitFor(() => expect(mocks.onPresses.length).toBeGreaterThanOrEqual(2))
+  expect(feeds.cancelProcessing).toHaveBeenCalledOnce()
+  finishCancellation()
 })

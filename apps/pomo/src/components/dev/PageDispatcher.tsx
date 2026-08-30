@@ -9,6 +9,7 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
   '/dev/focus-room-layer-review': lazy(() => import('./LayerReviewPage')),
   '/dev/recovery': lazy(() => import('./RecoveryPage')),
   '/dev/speech-to-text': lazy(() => import('./SpeechToTextPage')),
+  '/dev/storage': lazy(() => import('./StoragePage')),
   '/dev/terms': lazy(() => import('./TermsPage')),
   '/dev/text-mood': lazy(() => import('./TextMoodPage')),
   '/dev/voice': lazy(() => import('./VoicePage')),

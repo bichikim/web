@@ -19,6 +19,10 @@
       "schedule": "37 18 * * *"
     },
     {
+      "path": "/api/cron/music-album-covers",
+      "schedule": "7 * * * *"
+    },
+    {
       "path": "/api/cron/weather-cache",
       "schedule": "57 18 * * *"
     }

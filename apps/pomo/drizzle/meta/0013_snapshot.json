@@ -1,5 +1,5 @@
 {
-  "id": "4216736e-7302-431b-bc26-0e295229f5b9",
+  "id": "518de19b-ee1a-42bd-b40d-d1207eb6d442",
   "prevId": "c6cf3c2e-dc4e-4f95-985d-8f5e39de42d1",
   "version": "7",
   "dialect": "postgresql",
@@ -1415,6 +1415,123 @@
       },
       "isRLSEnabled": false
     },
+    "public.music_album_cover_reservations": {
+      "name": "music_album_cover_reservations",
+      "schema": "",
+      "columns": {
+        "cover_image_url": {
+          "name": "cover_image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "draft_id": {
+          "name": "draft_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "music_album_cover_reservation_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'uploading'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "music_album_cover_reservations_object_key_index": {
+          "name": "music_album_cover_reservations_object_key_index",
+          "columns": [
+            {
+              "expression": "object_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "music_album_cover_reservations_cleanup_index": {
+          "name": "music_album_cover_reservations_cleanup_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "music_album_cover_reservations_object_key_check": {
+          "name": "music_album_cover_reservations_object_key_check",
+          "value": "\"music_album_cover_reservations\".\"object_key\"\n        = 'album-covers/' || \"music_album_cover_reservations\".\"id\"::text || '/cover.webp'"
+        },
+        "music_album_cover_reservations_url_check": {
+          "name": "music_album_cover_reservations_url_check",
+          "value": "(\"music_album_cover_reservations\".\"status\" = 'uploading' and \"music_album_cover_reservations\".\"cover_image_url\" is null)\n        or \"music_album_cover_reservations\".\"status\" = 'deleting'\n        or (\"music_album_cover_reservations\".\"status\" = 'pending'\n          and \"music_album_cover_reservations\".\"cover_image_url\" is not null\n          and \"music_album_cover_reservations\".\"cover_image_url\" like 'https://%')"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.music_album_tracks": {
       "name": "music_album_tracks",
       "schema": "",
@@ -2661,166 +2778,6 @@
         }
       },
       "isRLSEnabled": false
-    },
-    "public.weather_locations": {
-      "name": "weather_locations",
-      "schema": "",
-      "columns": {
-        "country": {
-          "name": "country",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "id": {
-          "name": "id",
-          "type": "varchar(64)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "latitude": {
-          "name": "latitude",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "longitude": {
-          "name": "longitude",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider_location_id": {
-          "name": "provider_location_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "region": {
-          "name": "region",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "weather_locations_provider_id_index": {
-          "name": "weather_locations_provider_id_index",
-          "columns": [
-            {
-              "expression": "provider_location_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "weather_locations_latitude_range": {
-          "name": "weather_locations_latitude_range",
-          "value": "\"weather_locations\".\"latitude\" between -90 and 90"
-        },
-        "weather_locations_longitude_range": {
-          "name": "weather_locations_longitude_range",
-          "value": "\"weather_locations\".\"longitude\" between -180 and 180"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.weather_provider_usage": {
-      "name": "weather_provider_usage",
-      "schema": "",
-      "columns": {
-        "billing_month": {
-          "name": "billing_month",
-          "type": "varchar(7)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "current_requests": {
-          "name": "current_requests",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "rate_requests": {
-          "name": "rate_requests",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "rate_window_minute": {
-          "name": "rate_window_minute",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "search_requests": {
-          "name": "search_requests",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "weather_provider_usage_month_format": {
-          "name": "weather_provider_usage_month_format",
-          "value": "\"weather_provider_usage\".\"billing_month\" ~ '^[0-9]{4}-[0-9]{2}$'"
-        },
-        "weather_provider_usage_requests_nonnegative": {
-          "name": "weather_provider_usage_requests_nonnegative",
-          "value": "\"weather_provider_usage\".\"current_requests\" >= 0 and \"weather_provider_usage\".\"rate_requests\" >= 0 and \"weather_provider_usage\".\"search_requests\" >= 0"
-        },
-        "weather_provider_usage_rate_window_format": {
-          "name": "weather_provider_usage_rate_window_format",
-          "value": "\"weather_provider_usage\".\"rate_window_minute\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$'"
-        }
-      },
-      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -2863,6 +2820,11 @@
       "name": "historical_moment_status",
       "schema": "public",
       "values": ["draft", "published", "archived"]
+    },
+    "public.music_album_cover_reservation_status": {
+      "name": "music_album_cover_reservation_status",
+      "schema": "public",
+      "values": ["uploading", "pending", "deleting"]
     },
     "public.music_album_locale": {
       "name": "music_album_locale",

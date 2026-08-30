@@ -1,4 +1,4 @@
-import {createEffect, createSignal, Match, Show, Switch} from 'solid-js'
+import {createEffect, createSignal, type JSX, Match, Show, Switch} from 'solid-js'
 
 import {PButton} from './PButton'
 import type {PSceneStyle} from '../features/focus-room-animation'
@@ -29,6 +29,39 @@ interface MissingModelDownloads {
   readonly size: number
 }
 
+interface FeedGenerationStatusProps {
+  readonly cancelDisabled: boolean
+  readonly message: JSX.Element
+  readonly onCancel: () => void
+  readonly sceneStyle?: PSceneStyle
+  readonly state: 'generating' | 'preparing'
+}
+
+interface ActiveFeedState {
+  readonly message: string
+  readonly progress: number | null
+  readonly status: 'generating' | 'preparing'
+}
+
+const FeedGenerationStatus = (props: FeedGenerationStatusProps) => (
+  <FeedStatusSurface sceneStyle={props.sceneStyle} state={props.state}>
+    <span aria-hidden="true" class={CLASSES.feedStatusSpinner} />
+    <span class={CLASSES.feedStatusCopy}>
+      <strong>{m.feed_reading()}</strong>
+      <small>{props.message}</small>
+    </span>
+    <PButton
+      class={CLASSES.feedStatusAction}
+      disabled={props.cancelDisabled}
+      onPress={props.onCancel}
+      size="small"
+      tone="secondary"
+    >
+      {m.feed_stop()}
+    </PButton>
+  </FeedStatusSurface>
+)
+
 const getMissingModelDownloads = async (
   jobs: ReadonlyArray<FeedDialogueJob>,
 ): Promise<MissingModelDownloads> => {
@@ -57,8 +90,13 @@ const getRecoveryModelDownload = (
   return jobs.some((job) => job.modelId === downloadState.target.modelId) ? downloadState : null
 }
 
-const getActiveGenerationState = (state: PFeedState) =>
-  state.status === 'generating' || state.status === 'preparing' ? state : null
+const getActiveGenerationState = (state: PFeedState): ActiveFeedState | null => {
+  if (state.status !== 'generating' && state.status !== 'preparing') {
+    return null
+  }
+
+  return {message: state.message, progress: state.progress, status: state.status}
+}
 
 const getErrorState = (state: PFeedState) => (state.status === 'error' ? state : null)
 
@@ -69,6 +107,7 @@ const createFeedStatusActions = (
   const [downloadSize, setDownloadSize] = createSignal<string | null>(null)
   const [pendingModelIds, setPendingModelIds] = createSignal<ReadonlyArray<SupertonicModelId>>([])
   const [isCheckingModel, setIsCheckingModel] = createSignal(false)
+  const [isCancelling, setIsCancelling] = createSignal(false)
   const [isRetrying, setIsRetrying] = createSignal(false)
   const isRetryDisabled = () =>
     isCheckingModel() ||
@@ -148,13 +187,30 @@ const createFeedStatusActions = (
       console.error('Failed to delete feed dialogue jobs.', error)
     })
   }
+  const handleCancel = async () => {
+    setIsCancelling(true)
+    const downloadState = modelDownload.state()
+    if (getRecoveryModelDownload(downloadState, feeds.recoveryJobs()) !== null) {
+      modelDownload.cancel()
+    }
+
+    try {
+      await feeds.cancelProcessing()
+    } catch (error: unknown) {
+      console.error('Failed to cancel feed processing.', error)
+    } finally {
+      setIsCancelling(false)
+    }
+  }
 
   return {
     downloadSize,
+    handleCancel,
     handleConfirmRetry,
     handleDelete,
     handleListenAll,
     handleRetry,
+    isCancelling,
     isCheckingModel,
     isRetryDisabled,
     isRetrying,
@@ -188,24 +244,33 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
     <>
       <Show when={!feeds.isListening()}>
         <Switch>
+          <Match when={actions.isCancelling()}>
+            <FeedGenerationStatus
+              cancelDisabled
+              message={m.feed_stopping()}
+              onCancel={actions.handleCancel}
+              sceneStyle={props.sceneStyle}
+              state="generating"
+            />
+          </Match>
           <Match when={isRetryInProgress()}>
-            <FeedStatusSurface sceneStyle={props.sceneStyle} state="generating">
-              <span aria-hidden="true" class={CLASSES.feedStatusSpinner} />
-              <span class={CLASSES.feedStatusCopy}>
-                <strong>{m.feed_reading()}</strong>
-                <small>{retryStatusMessage()}</small>
-              </span>
-            </FeedStatusSurface>
+            <FeedGenerationStatus
+              cancelDisabled={actions.isCancelling()}
+              message={retryStatusMessage()}
+              onCancel={actions.handleCancel}
+              sceneStyle={props.sceneStyle}
+              state="generating"
+            />
           </Match>
           <Match when={activeGenerationState()}>
             {(feedState) => (
-              <FeedStatusSurface sceneStyle={props.sceneStyle} state={feedState().status}>
-                <span aria-hidden="true" class={CLASSES.feedStatusSpinner} />
-                <span class={CLASSES.feedStatusCopy}>
-                  <strong>{m.feed_reading()}</strong>
-                  <small>{feedState().message}</small>
-                </span>
-              </FeedStatusSurface>
+              <FeedGenerationStatus
+                cancelDisabled={actions.isCancelling()}
+                message={feedState().message}
+                onCancel={actions.handleCancel}
+                sceneStyle={props.sceneStyle}
+                state={feedState().status}
+              />
             )}
           </Match>
           <Match when={feeds.recoveryJobs().length > 0}>

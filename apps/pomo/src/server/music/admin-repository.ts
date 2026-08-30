@@ -1,10 +1,11 @@
-import {and, asc, desc, eq} from 'drizzle-orm'
+import {and, asc, desc, eq, gt} from 'drizzle-orm'
 
 import {
   commerceOffers,
   commerceProductAlbums,
   commerceProducts,
   getDatabase,
+  musicAlbumCoverReservations,
   musicAlbums,
   musicAlbumTracks,
   musicAlbumTranslations,
@@ -29,13 +30,33 @@ export type UpdateAlbumStatusResult =
 
 export interface CreateAlbumInput {
   readonly coverFallback: 'lp' | 'cd' | 'music'
+  readonly coverDraftId: string | null
   readonly coverImageUrl: string | null
+  readonly coverReservationId: string | null
   readonly translations: ReadonlyArray<{
     readonly description: string
     readonly locale: 'en' | 'ja' | 'ko' | 'zh-Hans'
     readonly title: string
   }>
 }
+
+export type CreateAlbumResult =
+  | {readonly code: 'cover_reservation_invalid'; readonly success: false}
+  | {
+      readonly album: {
+        readonly coverFallback: 'lp' | 'cd' | 'music'
+        readonly coverImageUrl: string | null
+        readonly id: string
+        readonly status: 'archived' | 'draft' | 'published'
+        readonly translations: ReadonlyArray<{
+          readonly albumId: string
+          readonly description: string
+          readonly locale: 'en' | 'ja' | 'ko' | 'zh-Hans'
+          readonly title: string
+        }>
+      }
+      readonly success: true
+    }
 
 export interface ConnectAlbumOfferInput {
   readonly albumId: string
@@ -212,9 +233,39 @@ export const updateAlbumStatus = async (
     }),
   )
 
-export const createAlbum = async (input: CreateAlbumInput) =>
+export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumResult> =>
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
+      if ((input.coverReservationId === null) !== (input.coverDraftId === null)) {
+        return {code: 'cover_reservation_invalid', success: false}
+      }
+
+      if (input.coverReservationId !== null) {
+        const [reservation] = await transaction
+          .select({
+            coverImageUrl: musicAlbumCoverReservations.coverImageUrl,
+            draftId: musicAlbumCoverReservations.draftId,
+          })
+          .from(musicAlbumCoverReservations)
+          .where(
+            and(
+              eq(musicAlbumCoverReservations.id, input.coverReservationId),
+              eq(musicAlbumCoverReservations.status, 'pending'),
+              gt(musicAlbumCoverReservations.expiresAt, new Date()),
+            ),
+          )
+          .for('update')
+          .limit(1)
+
+        if (
+          reservation === undefined ||
+          reservation.draftId !== input.coverDraftId ||
+          reservation.coverImageUrl !== input.coverImageUrl
+        ) {
+          return {code: 'cover_reservation_invalid', success: false}
+        }
+      }
+
       const [album] = await transaction
         .insert(musicAlbums)
         .values({coverFallback: input.coverFallback, coverImageUrl: input.coverImageUrl})
@@ -239,7 +290,13 @@ export const createAlbum = async (input: CreateAlbumInput) =>
           title: musicAlbumTranslations.title,
         })
 
-      return {...album, translations}
+      if (input.coverReservationId !== null) {
+        await transaction
+          .delete(musicAlbumCoverReservations)
+          .where(eq(musicAlbumCoverReservations.id, input.coverReservationId))
+      }
+
+      return {album: {...album, translations}, success: true}
     }),
   )
 
