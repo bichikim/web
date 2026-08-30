@@ -16,6 +16,14 @@ import {createPSilentMouthReturn} from '../lip-sync/silent-mouth-return'
 import type {PDialogueRepository} from './repository'
 import type {DialogueSegmentMood, PDialogue} from './schema'
 import {getDialoguePositionAtTime, getDialogueVisemeAtTime} from './timeline'
+import {
+  createDialoguePlaybackQueue,
+  type PlaybackCompletion,
+  type PlaybackQueueRequest,
+  type PlayPDialogueSequenceOptions,
+} from './entry-playback-controller/queue'
+
+export type {PlayPDialogueSequenceOptions} from './entry-playback-controller/queue'
 
 const MILLISECONDS_PER_SECOND = 1000
 
@@ -45,13 +53,6 @@ const readAudioEnvelope = async (audioBlob: Blob) => {
   }
 }
 
-export interface PlayPDialogueSequenceOptions {
-  readonly dialogueIds: ReadonlyArray<string>
-  readonly onDialogueStart: (dialogueId: string) => Promise<void> | void
-  readonly onDialogueUnavailable?: (dialogueId: string) => Promise<void> | void
-  readonly onSequenceStop: (dialogueIds: ReadonlyArray<string>) => Promise<void> | void
-}
-
 export interface EntryPlaybackController {
   readonly activeDialogueId: () => string | null
   readonly activeSegmentCount: Accessor<number>
@@ -75,53 +76,12 @@ export interface EntryPlaybackController {
   readonly stop: () => void
 }
 
-type PlaybackCompletion = 'cancelled' | 'ended' | 'failed' | 'missing' | 'stopped'
-
 interface PlaySequenceItemOptions {
   readonly dialogueId: string
   readonly generation: number
   readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
   readonly onDialogueUnavailable: PlayPDialogueSequenceOptions['onDialogueUnavailable']
   readonly repository: PDialogueRepository
-}
-
-interface PlaybackQueueRequest {
-  readonly dialogueIds: ReadonlyArray<string>
-  readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
-  readonly onDialogueUnavailable: PlayPDialogueSequenceOptions['onDialogueUnavailable']
-  readonly onSequenceStop: PlayPDialogueSequenceOptions['onSequenceStop']
-  readonly reject: (error: unknown) => void
-  readonly repository: PDialogueRepository
-  readonly resolve: () => void
-  nextDialoguePosition: number
-  settled: boolean
-}
-
-const settleQueueRequest = async (request: PlaybackQueueRequest, notifyStop: boolean) => {
-  if (request.settled) {
-    return
-  }
-
-  request.settled = true
-
-  try {
-    if (notifyStop) {
-      await request.onSequenceStop(request.dialogueIds)
-    }
-
-    request.resolve()
-  } catch (error: unknown) {
-    request.reject(error)
-  }
-}
-
-const failQueueRequest = (request: PlaybackQueueRequest, error: unknown) => {
-  if (request.settled) {
-    return
-  }
-
-  request.settled = true
-  request.reject(error)
 }
 
 /** Owns one audio element and serializes event and feed dialogue requests. */
@@ -134,7 +94,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const [activeViseme, setActiveViseme] = createSignal<PViseme>('rest')
   const [isBlocked, setIsBlocked] = createSignal(false)
   const [isPlaying, setIsPlaying] = createSignal(false)
-  const [scheduledDialogueCount, setScheduledDialogueCount] = createSignal(0)
   const visemeDriver = createPVisemeDriver()
   const silentMouthReturn = createPSilentMouthReturn(() => setActiveViseme('closed'))
   let animationFrame: number | null = null
@@ -146,36 +105,14 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let audioUrl: string | null = null
   let audioVisemeAnalyzer: PBrowserAudioVisemeAnalyzer | null = null
   let dialogue: PDialogue | null = null
-  let activeRequest: PlaybackQueueRequest | null = null
-  let isDraining = false
   let isAwaitingSceneInteraction = false
   let isDisposed = false
   let playbackGeneration = 0
   let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
-  const requestQueue: Array<PlaybackQueueRequest> = []
   const reportPlaybackFailure = console.error.bind(
     console,
     'Unexpected focus room dialogue playback failure.',
   )
-  const reportQueueFailure = console.error.bind(console, 'Unexpected dialogue queue failure.')
-  const reportSettlementFailure = console.error.bind(
-    console,
-    'Unexpected dialogue request settlement failure.',
-  )
-
-  const updateScheduledDialogueCount = () => {
-    const activeCount =
-      activeRequest === null
-        ? 0
-        : activeRequest.dialogueIds.length - activeRequest.nextDialoguePosition
-    const queuedCount = requestQueue.reduce(
-      (count, request) => count + request.dialogueIds.length,
-      0,
-    )
-
-    setScheduledDialogueCount(activeCount + queuedCount)
-  }
-
   const cancelFrame = () => {
     if (animationFrame !== null) {
       window.cancelAnimationFrame(animationFrame)
@@ -421,6 +358,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const playRequest = async (
     request: PlaybackQueueRequest,
     generation: number,
+    onProgress: () => void,
   ): Promise<PlaybackCompletion> => {
     for (const [position, dialogueId] of request.dialogueIds.entries()) {
       if (isDisposed || generation !== playbackGeneration) {
@@ -428,7 +366,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       }
 
       request.nextDialoguePosition = position
-      updateScheduledDialogueCount()
+      onProgress()
       const completion = await playSequenceItem({
         dialogueId,
         generation,
@@ -441,7 +379,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         case 'ended':
         case 'missing':
           request.nextDialoguePosition = position + 1
-          updateScheduledDialogueCount()
+          onProgress()
           break
         case 'cancelled':
         case 'failed':
@@ -453,80 +391,22 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     return 'ended'
   }
 
-  const processQueueRequest = async (request: PlaybackQueueRequest) => {
-    activeRequest = request
-    updateScheduledDialogueCount()
-    const generation = playbackGeneration
-
-    try {
-      const completion = await playRequest(request, generation)
-
-      if (completion === 'ended' || completion === 'failed') {
-        await settleQueueRequest(request, false)
-      }
-    } catch (error: unknown) {
-      clearPlayback()
-      failQueueRequest(request, error)
-    }
-
-    if (activeRequest === request) {
-      activeRequest = null
-      updateScheduledDialogueCount()
-    }
-  }
-
-  const drainQueue = async () => {
-    if (isDraining || isDisposed) {
-      return
-    }
-
-    isDraining = true
-
-    try {
-      while (requestQueue.length > 0) {
-        const request = requestQueue.shift()!
-
-        await processQueueRequest(request)
-      }
-    } finally {
-      isDraining = false
+  const queue = createDialoguePlaybackQueue({
+    finishPlayback,
+    getGeneration: () => playbackGeneration,
+    incrementGeneration: () => {
+      playbackGeneration += 1
+    },
+    isDisposed: () => isDisposed,
+    onQueueIdle: () => {
       if (!isDisposed && activeViseme() !== 'closed') {
         resetViseme('delayed')
       }
-    }
-  }
-
-  const enqueue = (repository: PDialogueRepository, options: PlayPDialogueSequenceOptions) =>
-    new Promise<void>((resolve, reject) => {
-      requestQueue.push({
-        dialogueIds: [...options.dialogueIds],
-        nextDialoguePosition: 0,
-        onDialogueStart: options.onDialogueStart,
-        onDialogueUnavailable: options.onDialogueUnavailable,
-        onSequenceStop: options.onSequenceStop,
-        reject,
-        repository,
-        resolve,
-        settled: false,
-      })
-      updateScheduledDialogueCount()
-      drainQueue().catch(reportQueueFailure)
-    })
-
-  const finishQueue = (notifyStop: boolean) => {
-    playbackGeneration += 1
-    const completion = notifyStop ? 'stopped' : 'cancelled'
-    const requests = activeRequest === null ? [...requestQueue] : [activeRequest, ...requestQueue]
-    requestQueue.length = 0
-    activeRequest = null
-    updateScheduledDialogueCount()
-    finishPlayback(completion)
-    requests.forEach((request) => {
-      settleQueueRequest(request, notifyStop).catch(reportSettlementFailure)
-    })
-  }
-
-  const cancel = () => finishQueue(false)
+    },
+    onRequestFailure: clearPlayback,
+    playRequest,
+  })
+  const cancel = () => queue.finish(false)
   const skip = () => {
     if (audio === null || isDisposed) {
       return
@@ -534,7 +414,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
     finishPlayback('ended')
   }
-  const stop = () => finishQueue(true)
+  const stop = () => queue.finish(true)
 
   return {
     activeDialogueId: () => dialogue?.id ?? null,
@@ -559,14 +439,11 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     },
     isBlocked,
     isDialogueScheduled: (dialogueId) =>
-      dialogue?.id === dialogueId ||
-      activeRequest?.dialogueIds.slice(activeRequest.nextDialoguePosition).includes(dialogueId) ===
-        true ||
-      requestQueue.some((request) => request.dialogueIds.includes(dialogueId)),
+      dialogue?.id === dialogueId || queue.isScheduled(dialogueId),
     isPlaying,
-    playSequence: enqueue,
+    playSequence: queue.enqueue,
     prepare: (repository, dialogueId) =>
-      enqueue(repository, {
+      queue.enqueue(repository, {
         dialogueIds: [dialogueId],
         onDialogueStart: () => undefined,
         onSequenceStop: () => undefined,
@@ -578,7 +455,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
       start(audio!).catch(reportPlaybackFailure)
     },
-    scheduledDialogueCount,
+    scheduledDialogueCount: queue.scheduledDialogueCount,
     skip,
     stop,
   }
