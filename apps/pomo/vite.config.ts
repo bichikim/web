@@ -2,14 +2,19 @@ import {fileURLToPath} from 'node:url'
 import aitDevtools from '@apps-in-toss/devtools/unplugin'
 import {solidStart} from '@solidjs/start/config'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
-import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {nitro} from 'nitro/vite'
-import UnoCSS from 'unocss/vite'
-import {type ConfigEnv, defineConfig, type Plugin, type UserConfig} from 'vite'
+import {type ConfigEnv, defineConfig, type UserConfig} from 'vite'
 import {PARAGLIDE_CONFIG} from './paraglide.config'
 import projectSettings from './.i18n/project.inlang/settings.json' with {type: 'json'}
-import {createDevFeedPlugin} from './vite/dev-feed/plugin'
-import {createLocalizedStaticRoutes} from './vite/static-routes'
+import {createDevFeedPlugin} from './scripts/vite/dev-feed/plugin'
+import {createScribbleIconRestartPlugin} from './scripts/vite/scribble-icon/plugin'
+import {createLocalizedStaticRoutes} from './scripts/vite/static-routes'
+import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
+import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
+
+interface ImportMetaEnvValues {
+  readonly [name: string]: string
+}
 
 const SERVICE_POLICY_PATHS = {
   appsInToss: {
@@ -27,7 +32,7 @@ const SERVICE_POLICY_PATHS = {
   },
 } as const
 
-const permissionsPolicy = [
+const PERMISSIONS_POLICY = [
   'accelerometer=(self)',
   'autoplay=(self)',
   'camera=()',
@@ -44,9 +49,9 @@ const permissionsPolicy = [
   'screen-wake-lock=(self)',
   'usb=()',
 ].join(', ')
-const referrerPolicy = 'no-referrer'
-const contentTypeOptions = 'nosniff'
-const connectSources = [
+const REFERRER_POLICY = 'no-referrer'
+const CONTENT_TYPE_OPTIONS = 'nosniff'
+const CONNECT_SOURCES = [
   "'self'",
   'https://www.pomofi.io',
   'https://storage.pomofi.io',
@@ -55,10 +60,83 @@ const connectSources = [
   'https://cdn.jsdelivr.net',
   'https://pub-0e34511083544f8aaad14d0590013528.r2.dev',
 ] as const
-const connectSourceList = connectSources.join(' ')
-const createConnectDirective = (): string => `connect-src ${connectSourceList}`
-const createContentSecurityPolicy = (): string =>
-  [
+const CONNECT_SOURCE_LIST = CONNECT_SOURCES.join(' ')
+const SHORT_COMMIT_HASH_LENGTH = 12
+const ASSET_LIBRARY_PATTERN = /[/\\]asset-library[/\\]/u
+const SECONDS_PER_MINUTE = 60
+const MINUTES_PER_HOUR = 60
+const HOURS_PER_DAY = 24
+const DAYS_PER_YEAR = 365
+const PRETENDARD_VERSION = '1.3.9'
+
+const IS_APPS_IN_TOSS_BUILD = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const IS_DESKTOP_BUILD = process.env.POMO_BUILD_TARGET === 'desktop'
+const IS_STATIC_BUILD = IS_APPS_IN_TOSS_BUILD || IS_DESKTOP_BUILD
+const IS_APPS_IN_TOSS_RUNTIME =
+  IS_APPS_IN_TOSS_BUILD || process.env.POMO_RUNTIME_TARGET === 'apps-in-toss'
+const IS_DESKTOP_RUNTIME = IS_DESKTOP_BUILD || process.env.POMO_RUNTIME_TARGET === 'desktop'
+const USES_APPS_IN_TOSS_DEVTOOLS =
+  IS_APPS_IN_TOSS_RUNTIME && process.env.POMO_APPS_IN_TOSS_DEVTOOLS === 'true'
+const APPS_IN_TOSS_API_ORIGIN = new URL(
+  process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
+).origin
+const LICENSE_ASSET_ORIGIN = process.env.VERCEL_URL
+  ? new URL(`https://${process.env.VERCEL_URL}`).origin
+  : APPS_IN_TOSS_API_ORIGIN
+const DEPLOYMENT_ENVIRONMENT =
+  process.env.POMO_ENVIRONMENT?.trim() ||
+  process.env.VERCEL_ENV?.trim() ||
+  (process.env.NODE_ENV === 'production' ? 'production' : 'development')
+const RELEASE =
+  process.env.POMO_RELEASE?.trim() ||
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, SHORT_COMMIT_HASH_LENGTH) ||
+  'local'
+const FONT_CACHE_MAX_AGE = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * DAYS_PER_YEAR
+const PRETENDARD_BASE_PATH = `/fonts/pretendard/${PRETENDARD_VERSION}`
+const PRETENDARD_PUBLIC_DIRECTORY = `./public${PRETENDARD_BASE_PATH}`
+const PRETENDARD_STYLESHEET_PATH = `${PRETENDARD_BASE_PATH}/variable-subset.css`
+const SCRIBBLE_ICON_SET_PATH = fileURLToPath(
+  new URL('./scripts/unocss/scribble.json', import.meta.url),
+)
+const SHARED_STATIC_ROUTES = [
+  '/',
+  SERVICE_POLICY_PATHS.appsInToss.privacy,
+  SERVICE_POLICY_PATHS.appsInToss.terms,
+  SERVICE_POLICY_PATHS.refund,
+  '/third-party-notices',
+  SERVICE_POLICY_PATHS.web.privacy,
+  SERVICE_POLICY_PATHS.web.terms,
+]
+const APPS_IN_TOSS_BASE_STATIC_ROUTES = [
+  ...SHARED_STATIC_ROUTES,
+  SERVICE_POLICY_PATHS.legacy.privacy,
+  SERVICE_POLICY_PATHS.legacy.terms,
+  '/account',
+  '/dialogue',
+  '/focus-room',
+  '/focus-room-dialogue',
+]
+const LOCALIZED_STATIC_ROUTES = createLocalizedStaticRoutes({
+  locales: projectSettings.locales,
+  routes: PARAGLIDE_CONFIG.localizedRoutes,
+})
+const APPS_IN_TOSS_STATIC_ROUTES = [
+  ...new Set([...APPS_IN_TOSS_BASE_STATIC_ROUTES, ...LOCALIZED_STATIC_ROUTES]),
+]
+const DESKTOP_STATIC_ROUTES = [
+  ...SHARED_STATIC_ROUTES,
+  ...LOCALIZED_STATIC_ROUTES,
+  '/desktop/player',
+  '/desktop/pomodoro',
+  '/desktop/settings',
+]
+
+function createConnectDirective(): string {
+  return `connect-src ${CONNECT_SOURCE_LIST}`
+}
+
+function createContentSecurityPolicy(): string {
+  return [
     "default-src 'self'",
     "base-uri 'none'",
     "object-src 'none'",
@@ -74,17 +152,30 @@ const createContentSecurityPolicy = (): string =>
     createConnectDirective(),
     "manifest-src 'self'",
   ].join('; ')
-const createWorkerContentSecurityPolicy = (): string =>
-  [
+}
+
+function createWorkerContentSecurityPolicy(): string {
+  return [
     "default-src 'self'",
     "script-src 'self' 'wasm-unsafe-eval'",
     "worker-src 'self' blob:",
     createConnectDirective(),
   ].join('; ')
+}
+
+function createImportMetaEnvDefinitions(values: ImportMetaEnvValues) {
+  return Object.fromEntries(
+    Object.entries(values).map(([name, value]) => [
+      `import.meta.env.${name}`,
+      JSON.stringify(value),
+    ]),
+  )
+}
+
 const BASE_SECURITY_HEADERS = {
-  'Permissions-Policy': permissionsPolicy,
-  'Referrer-Policy': referrerPolicy,
-  'X-Content-Type-Options': contentTypeOptions,
+  'Permissions-Policy': PERMISSIONS_POLICY,
+  'Referrer-Policy': REFERRER_POLICY,
+  'X-Content-Type-Options': CONTENT_TYPE_OPTIONS,
 } as const
 const STATIC_SECURITY_HEADERS = {
   ...BASE_SECURITY_HEADERS,
@@ -94,251 +185,98 @@ const WORKER_SECURITY_HEADERS = {
   ...BASE_SECURITY_HEADERS,
   'Content-Security-Policy-Report-Only': createWorkerContentSecurityPolicy(),
 } as const
-
-const isAppsInTossBuild = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
-const isDesktopBuild = process.env.POMO_BUILD_TARGET === 'desktop'
-const isStaticBuild = isAppsInTossBuild || isDesktopBuild
-const isAppsInTossRuntime = isAppsInTossBuild || process.env.POMO_RUNTIME_TARGET === 'apps-in-toss'
-const isDesktopRuntime = isDesktopBuild || process.env.POMO_RUNTIME_TARGET === 'desktop'
-const usesAppsInTossDevtools =
-  isAppsInTossRuntime && process.env.POMO_APPS_IN_TOSS_DEVTOOLS === 'true'
-const appsInTossApiOrigin = new URL(
-  process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
-).origin
-const deploymentEnvironment =
-  process.env.POMO_ENVIRONMENT?.trim() ||
-  process.env.VERCEL_ENV?.trim() ||
-  (process.env.NODE_ENV === 'production' ? 'production' : 'development')
-const shortCommitHashLength = 12
-const release =
-  process.env.POMO_RELEASE?.trim() ||
-  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, shortCommitHashLength) ||
-  'local'
-const assetLibraryPattern = /[/\\]asset-library[/\\]/u
-const buildUnoCssEntryId = '\0pomo-build-uno.css'
-const secondsPerMinute = 60
-const minutesPerHour = 60
-const hoursPerDay = 24
-const daysPerYear = 365
-const fontCacheMaxAge = secondsPerMinute * minutesPerHour * hoursPerDay * daysPerYear
-const pretendardVersion = '1.3.9'
-const pretendardBasePath = `/fonts/pretendard/${pretendardVersion}`
-const pretendardPublicDirectory = `./public${pretendardBasePath}`
-const pretendardStylesheetPath = `${pretendardBasePath}/variable-subset.css`
-const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
-const staticNitroEntryId = '\0pomo-static-nitro-entry'
-const sharedStaticRoutes = [
-  '/',
-  SERVICE_POLICY_PATHS.appsInToss.privacy,
-  SERVICE_POLICY_PATHS.appsInToss.terms,
-  SERVICE_POLICY_PATHS.refund,
-  '/third-party-notices',
-  SERVICE_POLICY_PATHS.web.privacy,
-  SERVICE_POLICY_PATHS.web.terms,
-]
-const appsInTossBaseStaticRoutes = [
-  ...sharedStaticRoutes,
-  SERVICE_POLICY_PATHS.legacy.privacy,
-  SERVICE_POLICY_PATHS.legacy.terms,
-  '/account',
-  '/dialogue',
-  '/focus-room',
-  '/focus-room-dialogue',
-]
-const localizedStaticRoutes = createLocalizedStaticRoutes({
-  locales: projectSettings.locales,
-  routes: PARAGLIDE_CONFIG.localizedRoutes,
-})
-const appsInTossStaticRoutes = [
-  ...new Set([...appsInTossBaseStaticRoutes, ...localizedStaticRoutes]),
-]
-const desktopStaticRoutes = [
-  ...sharedStaticRoutes,
-  ...localizedStaticRoutes,
-  '/desktop/player',
-  '/desktop/pomodoro',
-  '/desktop/settings',
-]
-const prerenderSecurityRules = Object.fromEntries(
-  (isStaticBuild ? [...sharedStaticRoutes, ...localizedStaticRoutes] : sharedStaticRoutes).map(
-    (route) => [route, {headers: STATIC_SECURITY_HEADERS}],
-  ),
+const PRERENDER_SECURITY_RULES = Object.fromEntries(
+  (IS_STATIC_BUILD
+    ? [...SHARED_STATIC_ROUTES, ...LOCALIZED_STATIC_ROUTES]
+    : SHARED_STATIC_ROUTES
+  ).map((route) => [route, {headers: STATIC_SECURITY_HEADERS}]),
 )
 
-type UnoCssPlugins = ReturnType<typeof UnoCSS>
-
-// Vite 8 + SolidStart SSR이 virtual:uno.css를 /__uno.css?inline 파일 ID로 취급해 거부한다.
-// UnoCSS 권장 설정이 아니라 그 버그의 로컬 패치다.
-// https://github.com/unocss/unocss/issues/5271
-// https://github.com/solidjs/solid-start/issues/2292
-const scopeUnoCssToClient = (plugins: UnoCssPlugins): UnoCssPlugins =>
-  plugins.map((plugin) => ({
-    ...plugin,
-    applyToEnvironment(environment) {
-      if (environment.config.command === 'build' && environment.config.consumer !== 'client') {
-        return false
-      }
-
-      return plugin.applyToEnvironment?.call(this, environment) ?? true
-    },
-  }))
-
-// 같은 로컬 패치. 빌드에서 virtual:uno.css import를 빈 모듈로 바꾼다.
-const resolveBuildUnoCss = {
-  apply: 'build' as const,
-  enforce: 'pre' as const,
-  load(id: string) {
-    if (id === buildUnoCssEntryId) {
-      return ''
-    }
-  },
-  name: 'resolve-build-uno-css',
-  resolveId(id: string) {
-    if (id === 'virtual:uno.css') {
-      return buildUnoCssEntryId
-    }
-  },
-}
-
-const restartOnScribbleIconChange = {
-  configureServer(server) {
-    const restartServer = (changedPath: string) => {
-      if (changedPath !== scribbleIconSetPath) {
-        return
-      }
-
-      server.config.logger.info('scribble.json changed, restarting server...')
-      server.restart().catch((error: unknown) => {
-        const restartError = error instanceof Error ? error : new Error(String(error))
-        server.config.logger.error('Failed to reload the scribble icon set.', {
-          error: restartError,
-        })
-      })
-    }
-
-    server.watcher.add(scribbleIconSetPath)
-    server.watcher.on('change', restartServer)
-  },
-  name: 'restart-on-scribble-icon-change',
-} satisfies Plugin
-
-const useStaticNitroEntry = {
-  configEnvironment(name, config) {
-    if (isStaticBuild && name === 'nitro') {
-      config.build ??= {}
-      config.build.rolldownOptions ??= {}
-      // Nitro 3 beta still builds its server environment after static prerendering.
-      config.build.rolldownOptions.input = staticNitroEntryId
-    }
-  },
-  load(id: string) {
-    if (id === staticNitroEntryId) {
-      return 'export default {}'
-    }
-  },
-  name: 'static-nitro-entry',
-  resolveId(id: string) {
-    if (id === staticNitroEntryId) {
-      return id
-    }
-  },
-} satisfies Plugin
-
 const createConfig = ({command}: ConfigEnv): UserConfig => ({
-  cacheDir: usesAppsInTossDevtools ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
-  define: {
-    'import.meta.env.POMO_CONNECT_SOURCES': JSON.stringify(connectSourceList),
-    'import.meta.env.POMO_CONTENT_TYPE_OPTIONS': JSON.stringify(contentTypeOptions),
-    'import.meta.env.POMO_PERMISSIONS_POLICY': JSON.stringify(permissionsPolicy),
-    'import.meta.env.POMO_REFERRER_POLICY': JSON.stringify(referrerPolicy),
-    'import.meta.env.VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH': JSON.stringify(
-      SERVICE_POLICY_PATHS.appsInToss.privacy,
-    ),
-    'import.meta.env.VITE_POMO_APPS_IN_TOSS_TERMS_PATH': JSON.stringify(
-      SERVICE_POLICY_PATHS.appsInToss.terms,
-    ),
-    'import.meta.env.VITE_POMO_ENVIRONMENT': JSON.stringify(deploymentEnvironment),
-    'import.meta.env.VITE_POMO_IS_APPS_IN_TOSS': JSON.stringify(String(isAppsInTossRuntime)),
-    'import.meta.env.VITE_POMO_IS_DESKTOP': JSON.stringify(String(isDesktopRuntime)),
-    'import.meta.env.VITE_POMO_LEGACY_PRIVACY_PATH': JSON.stringify(
-      SERVICE_POLICY_PATHS.legacy.privacy,
-    ),
-    'import.meta.env.VITE_POMO_LEGACY_TERMS_PATH': JSON.stringify(
-      SERVICE_POLICY_PATHS.legacy.terms,
-    ),
-    'import.meta.env.VITE_POMO_PRETENDARD_BASE_PATH': JSON.stringify(pretendardBasePath),
-    'import.meta.env.VITE_POMO_PRETENDARD_STYLESHEET_PATH':
-      JSON.stringify(pretendardStylesheetPath),
-    'import.meta.env.VITE_POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
-    'import.meta.env.VITE_POMO_REFUND_PATH': JSON.stringify(SERVICE_POLICY_PATHS.refund),
-    'import.meta.env.VITE_POMO_RELEASE': JSON.stringify(release),
-    'import.meta.env.VITE_POMO_WEB_PRIVACY_PATH': JSON.stringify(SERVICE_POLICY_PATHS.web.privacy),
-    'import.meta.env.VITE_POMO_WEB_TERMS_PATH': JSON.stringify(SERVICE_POLICY_PATHS.web.terms),
-  },
+  cacheDir: USES_APPS_IN_TOSS_DEVTOOLS ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
+  define: createImportMetaEnvDefinitions({
+    POMO_ALLOW_LOCAL_ASSET_ORIGIN: String(command === 'serve' || IS_STATIC_BUILD),
+    POMO_CONNECT_SOURCES: CONNECT_SOURCE_LIST,
+    POMO_CONTENT_TYPE_OPTIONS: CONTENT_TYPE_OPTIONS,
+    POMO_LICENSE_ASSET_ORIGIN: LICENSE_ASSET_ORIGIN,
+    POMO_PERMISSIONS_POLICY: PERMISSIONS_POLICY,
+    POMO_REFERRER_POLICY: REFERRER_POLICY,
+    VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: SERVICE_POLICY_PATHS.appsInToss.privacy,
+    VITE_POMO_APPS_IN_TOSS_TERMS_PATH: SERVICE_POLICY_PATHS.appsInToss.terms,
+    VITE_POMO_ENVIRONMENT: DEPLOYMENT_ENVIRONMENT,
+    VITE_POMO_IS_APPS_IN_TOSS: String(IS_APPS_IN_TOSS_RUNTIME),
+    VITE_POMO_IS_DESKTOP: String(IS_DESKTOP_RUNTIME),
+    VITE_POMO_LEGACY_PRIVACY_PATH: SERVICE_POLICY_PATHS.legacy.privacy,
+    VITE_POMO_LEGACY_TERMS_PATH: SERVICE_POLICY_PATHS.legacy.terms,
+    VITE_POMO_PRETENDARD_BASE_PATH: PRETENDARD_BASE_PATH,
+    VITE_POMO_PRETENDARD_STYLESHEET_PATH: PRETENDARD_STYLESHEET_PATH,
+    VITE_POMO_PUBLIC_ORIGIN: APPS_IN_TOSS_API_ORIGIN,
+    VITE_POMO_REFUND_PATH: SERVICE_POLICY_PATHS.refund,
+    VITE_POMO_RELEASE: RELEASE,
+    VITE_POMO_WEB_PRIVACY_PATH: SERVICE_POLICY_PATHS.web.privacy,
+    VITE_POMO_WEB_TERMS_PATH: SERVICE_POLICY_PATHS.web.terms,
+  }),
   nitro: {
     prerender: {
-      failOnError: isStaticBuild,
+      failOnError: IS_STATIC_BUILD,
       routes:
         command === 'build'
-          ? isAppsInTossBuild
-            ? appsInTossStaticRoutes
-            : isDesktopBuild
-              ? desktopStaticRoutes
-              : sharedStaticRoutes
-          : sharedStaticRoutes,
+          ? IS_APPS_IN_TOSS_BUILD
+            ? APPS_IN_TOSS_STATIC_ROUTES
+            : IS_DESKTOP_BUILD
+              ? DESKTOP_STATIC_ROUTES
+              : SHARED_STATIC_ROUTES
+          : SHARED_STATIC_ROUTES,
     },
     publicAssets: [
       {
-        baseURL: pretendardBasePath,
-        dir: pretendardPublicDirectory,
-        maxAge: fontCacheMaxAge,
+        baseURL: PRETENDARD_BASE_PATH,
+        dir: PRETENDARD_PUBLIC_DIRECTORY,
+        maxAge: FONT_CACHE_MAX_AGE,
       },
     ],
     routeRules: {
       '/**': {headers: BASE_SECURITY_HEADERS},
       '/workers/**': {headers: WORKER_SECURITY_HEADERS},
-      ...prerenderSecurityRules,
+      ...PRERENDER_SECURITY_RULES,
     },
-    ...(isStaticBuild && command === 'build' ? {preset: 'static'} : {}),
+    ...(IS_STATIC_BUILD && command === 'build' ? {preset: 'static'} : {}),
   },
   optimizeDeps: {
     // Gemma Worker가 처음 로드될 때 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
     include: ['@huggingface/transformers'],
   },
   plugins: [
-    ...(usesAppsInTossDevtools
+    ...(USES_APPS_IN_TOSS_DEVTOOLS
       ? [aitDevtools.vite({entryPattern: /\/entry-client\.tsx$/u, sdkVersion: '3'})]
       : []),
     paraglideVitePlugin({
       emitTsDeclarations: true,
       ...PARAGLIDE_CONFIG.common,
-      routeStrategies: isAppsInTossRuntime
+      routeStrategies: IS_APPS_IN_TOSS_RUNTIME
         ? PARAGLIDE_CONFIG.appsInToss.routeStrategies
         : PARAGLIDE_CONFIG.web.routeStrategies,
-      strategy: isAppsInTossRuntime
+      strategy: IS_APPS_IN_TOSS_RUNTIME
         ? PARAGLIDE_CONFIG.appsInToss.strategy
         : PARAGLIDE_CONFIG.web.strategy,
     }),
-    // UnoCSS 로컬 패치. unocss#5271, solid-start#2292
-    createUnoCssInlineResolver(),
-    resolveBuildUnoCss,
-    ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
+    ...createUnoCssPlugins(),
     solidStart({
       devOverlay: false,
       middleware: './src/middleware/index.ts',
-      ssr: !isDesktopBuild,
+      ssr: !IS_DESKTOP_BUILD,
     }),
     createDevFeedPlugin(),
-    restartOnScribbleIconChange,
+    createScribbleIconRestartPlugin({iconSetPath: SCRIBBLE_ICON_SET_PATH}),
     nitro(),
-    ...(isStaticBuild && command === 'build' ? [useStaticNitroEntry] : []),
+    ...(IS_STATIC_BUILD && command === 'build' ? [staticNitroEntryPlugin] : []),
   ],
   resolve: {
     tsconfigPaths: true,
   },
   server: {
     watch: {
-      ignored: [assetLibraryPattern],
+      ignored: [ASSET_LIBRARY_PATTERN],
     },
   },
   worker: {

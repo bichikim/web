@@ -1,8 +1,8 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {For} from 'solid-js'
+import {createResource, ErrorBoundary, For, Show, Suspense} from 'solid-js'
 
-import {licenseData} from 'src/features/licenses'
+import {type LicenseData, loadLicenseData} from 'src/features/licenses'
 import {NoticeGroupSection} from '../components/third-party-notices/GroupSection'
 import {LINK_CLASSES} from '../components/third-party-notices/shared'
 
@@ -19,7 +19,7 @@ const PANEL_CLASSES = cx(
   'shadow-[0_28px_100px_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8 lg:p-10',
 )
 
-export default function ThirdPartyNoticesPage() {
+const ThirdPartyNoticesDocument = (props: {readonly licenseData: LicenseData}) => {
   return (
     <main class={MAIN_CLASSES}>
       <div class={BACKGROUND_CLASSES} />
@@ -40,11 +40,13 @@ export default function ThirdPartyNoticesPage() {
             Pomofi가 배포하거나 기능 실행 중 내려받는 외부 소프트웨어와 공개 가중치 모델의 사용
             범위와 배포 조건을 안내합니다.
           </p>
-          <p class="mb-0 mt-3 text-xs text-#a99cab">마지막 확인일 {licenseData.lastReviewed}</p>
+          <p class="mb-0 mt-3 text-xs text-#a99cab">
+            마지막 확인일 {props.licenseData.lastReviewed}
+          </p>
         </header>
 
         <nav aria-label="제3자 라이선스 문서 목차" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-          <For each={licenseData.groups}>
+          <For each={props.licenseData.groups}>
             {(group) => (
               <a class={LINK_CLASSES} href={`#${group.id}`}>
                 {group.title}
@@ -55,7 +57,9 @@ export default function ThirdPartyNoticesPage() {
 
         <article class={PANEL_CLASSES}>
           <div class="grid gap-10">
-            <For each={licenseData.groups}>{(group) => <NoticeGroupSection group={group} />}</For>
+            <For each={props.licenseData.groups}>
+              {(group) => <NoticeGroupSection group={group} />}
+            </For>
 
             <aside class="rounded-5 border border-#f2a7b8/20 bg-#f2a7b8/7 p-5" role="note">
               <h2 class="m-0 text-base font-750 text-#ffd4de">원문 라이선스 우선</h2>
@@ -75,5 +79,19 @@ export default function ThirdPartyNoticesPage() {
         </footer>
       </div>
     </main>
+  )
+}
+
+export default function ThirdPartyNoticesPage() {
+  const [licenseData] = createResource(loadLicenseData)
+
+  return (
+    <ErrorBoundary fallback={<p role="alert">라이선스 정보를 불러오지 못했습니다.</p>}>
+      <Suspense fallback={<p role="status">라이선스 정보를 불러오는 중…</p>}>
+        <Show keyed when={licenseData()}>
+          {(data) => <ThirdPartyNoticesDocument licenseData={data} />}
+        </Show>
+      </Suspense>
+    </ErrorBoundary>
   )
 }

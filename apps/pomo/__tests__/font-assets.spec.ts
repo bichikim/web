@@ -3,13 +3,12 @@ import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {describe, expect, it} from 'vitest'
-import {PRETENDARD_FONT_ASSETS} from 'src/data/font-assets'
 
 const appDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDirectory = resolve(appDirectory, 'public')
 const resolvePublicAsset = (assetPath: string) => resolve(publicDirectory, `.${assetPath}`)
-const fontDirectory = resolvePublicAsset(PRETENDARD_FONT_ASSETS.basePath)
-const fontStylePath = resolvePublicAsset(PRETENDARD_FONT_ASSETS.stylesheetPath)
+const fontDirectory = resolvePublicAsset(import.meta.env.VITE_POMO_PRETENDARD_BASE_PATH)
+const fontStylePath = resolvePublicAsset(import.meta.env.VITE_POMO_PRETENDARD_STYLESHEET_PATH)
 
 describe('Pretendard font assets', () => {
   it('should use local dynamic subsets with fallback swapping', () => {
