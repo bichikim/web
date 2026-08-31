@@ -1,12 +1,13 @@
+import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 import type {LicenseEntry} from 'src/features/licenses'
 import * as m from '@paraglide/message'
 import {PTag} from '../PTag'
 
-const CREDIT_ITEM_CLASS = [
+const CREDIT_ITEM_CLASS = cx(
   'rounded-panel border border-solid border-[rgb(255_255_255_/_6%)]',
   'bg-[rgb(255_255_255_/_3%)] px-4 py-3',
-].join(' ')
+)
 
 export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>}) => (
   <ul class="m-0 grid list-none gap-3 p-0">

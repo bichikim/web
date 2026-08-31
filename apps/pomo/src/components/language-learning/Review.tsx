@@ -1,16 +1,17 @@
+import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import type {LanguageLearningCandidate} from './candidate'
 
-const REGENERATE_CLASS = [
+const REGENERATE_CLASS = cx(
   'min-h-10 cursor-pointer border border-solid border-border rounded-full bg-surface',
   'px-4 text-sm font-700 text-foreground disabled:cursor-not-allowed disabled:opacity-40',
-].join(' ')
-const SAVE_CLASS = [
+)
+const SAVE_CLASS = cx(
   'min-h-11 cursor-pointer border-0 rounded-full bg-highlight px-5 font-750 text-[#241a12]',
   'disabled:cursor-not-allowed disabled:opacity-40',
-].join(' ')
+)
 
 export interface LanguageLearningReviewProps {
   readonly busy: boolean

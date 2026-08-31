@@ -1,9 +1,10 @@
+import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import type {PFeedController} from '../../features/focus-room-feed'
 
 const CLASSES = {
-  feedSettingsDialogueActions: [
+  feedSettingsDialogueActions: cx(
     'pomo-feed-settings__dialogue-actions flex flex-none gap-[0.4rem]',
     '[&_button]:inline-flex [&_button]:min-h-8 [&_button]:box-border',
     '[&_button]:cursor-pointer [&_button]:items-center',
@@ -19,32 +20,32 @@ const CLASSES = {
     'max-sm:w-full max-sm:flex-wrap',
     'max-sm:[&_button]:w-auto max-sm:[&_button]:[flex:1_1_5rem]',
     'max-sm:[&_button]:justify-center',
-  ].join(' '),
-  feedSettingsDialogueCopy: [
+  ),
+  feedSettingsDialogueCopy: cx(
     'pomo-feed-settings__dialogue-copy grid min-w-0 flex-1 gap-[0.2rem]',
     '[&_strong]:overflow-hidden [&_strong]:text-foreground [&_strong]:text-xs',
     '[&_strong]:text-ellipsis [&_strong]:whitespace-nowrap',
     '[&_small]:text-muted-foreground [&_small]:text-[0.625rem] [&_small]:leading-[1.45]',
-  ].join(' '),
-  feedSettingsDialogueList: [
+  ),
+  feedSettingsDialogueList: cx(
     'pomo-feed-settings__dialogue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
     '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
     '[&_>_li]:px-4 [&_>_li]:py-3',
     'max-sm:[&_>_li]:items-stretch max-sm:[&_>_li]:flex-col',
-  ].join(' '),
-  feedSettingsEmpty: [
+  ),
+  feedSettingsEmpty: cx(
     'pomo-feed-settings__empty m-0 rounded-panel bg-[rgb(255_255_255_/_3%)]',
     'p-5 text-muted-foreground text-xs leading-[1.5] text-center settings-compact:p-4',
     'border border-dashed border-border',
-  ].join(' '),
-  feedSettingsIssueHeading: [
+  ),
+  feedSettingsIssueHeading: cx(
     'pomo-feed-settings__issue-heading flex items-center gap-[0.45rem] [&_h4]:m-0',
     '[&_h4]:text-foreground [&_h4]:text-[0.8rem] [&_span]:text-muted-foreground',
     '[&_span]:text-[0.6875rem]',
-  ].join(' '),
-  feedSettingsIssueList: [
+  ),
+  feedSettingsIssueList: cx(
     'pomo-feed-settings__issue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
@@ -62,18 +63,18 @@ const CLASSES = {
     '[&_>_li]:border-[rgb(232_174_114_/_22%)] max-sm:[&_>_li]:items-stretch',
     'max-sm:[&_>_li]:flex-col max-sm:[&_a]:w-full',
     'max-sm:[&_a]:justify-center',
-  ].join(' '),
-  feedSettingsListenedState: [
+  ),
+  feedSettingsListenedState: cx(
     'pomo-feed-settings__listened-state text-highlight font-bold',
     '[&[data-listened]]:text-muted-foreground',
-  ].join(' '),
-  feedSettingsListHeading: [
+  ),
+  feedSettingsListHeading: cx(
     'pomo-feed-settings__list-heading [&_h4]:m-0 [&_h4]:text-foreground',
     '[&_h4]:text-[0.9375rem] [&_h4]:font-[750] flex items-center gap-[0.45rem]',
     'border-t border-solid border-border pt-4',
     '[&_>_span]:text-muted-foreground [&_>_span]:text-[0.6875rem]',
-  ].join(' '),
-  feedSettingsLoadMore: [
+  ),
+  feedSettingsLoadMore: cx(
     'pomo-feed-settings__load-more min-h-9 cursor-pointer justify-self-center',
     'border border-solid border-border rounded-control bg-transparent',
     'py-0 px-4 text-muted-foreground [font:inherit]',
@@ -81,13 +82,13 @@ const CLASSES = {
     '[&:hover]:text-foreground [&:focus-visible]:outline-2 ' +
       '[&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
     '[&:focus-visible]:[outline-offset:2px]',
-  ].join(' '),
-  feedSettingsMessage: [
+  ),
+  feedSettingsMessage: cx(
     'pomo-feed-settings__message m-0 rounded-panel',
     'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
-  ].join(' '),
-  feedSettingsRefresh: [
+  ),
+  feedSettingsRefresh: cx(
     'pomo-feed-settings__refresh inline-flex min-h-8 cursor-pointer items-center gap-[0.3rem]',
     'ml-auto border border-solid border-border rounded-control',
     'bg-transparent py-0 px-3 text-muted-foreground [font:inherit]',
@@ -95,7 +96,7 @@ const CLASSES = {
     '[&:hover]:text-foreground [&:focus-visible]:outline-2 ' +
       '[&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
     '[&:focus-visible]:[outline-offset:2px]',
-  ].join(' '),
+  ),
 } as const
 
 const MINUTES_PER_HOUR = 60

@@ -1,4 +1,4 @@
-import {cva, type VariantProps} from 'class-variance-authority'
+import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
 const TITLE_MAX_LENGTH = 80
@@ -23,7 +23,7 @@ const textClasses = cva(
 )
 
 const CLASSES = {
-  actions: [
+  actions: cx(
     'flex flex-none flex-wrap gap-[0.4rem] [&_button]:inline-flex [&_button]:min-h-9',
     '[&_button]:box-border [&_button]:cursor-pointer [&_button]:items-center',
     '[&_button]:justify-center [&_button]:gap-[0.35rem] [&_button]:border',
@@ -46,16 +46,16 @@ const CLASSES = {
     '[&_[data-pomo-dialogue-delete-confirm]]:text-[#f2a398]',
     "dialogue-library-compact:[&_>_:is(button,_a)_>_[aria-hidden='true']]:hidden",
     'motion-reduce:[&_button]:transition-[none] motion-reduce:[&_a]:transition-[none]',
-  ].join(' '),
-  item: [
+  ),
+  item: cx(
     'grid gap-3 rounded-panel border border-solid border-[rgb(255_255_255_/_6%)]',
     'bg-[rgb(255_255_255_/_3%)] px-4 py-3',
-  ].join(' '),
-  layout: [
+  ),
+  layout: cx(
     'pomo-dialogue-settings__selected-dialogue--library flex flex-col items-stretch gap-3',
     '[container:pomo-dialogue-library-item_/_inline-size]',
     'settings-compact:gap-2',
-  ].join(' '),
+  ),
   metadata: 'mt-1 block text-[0.625rem] text-muted-foreground',
   summary: 'min-w-0 flex-1',
 } as const

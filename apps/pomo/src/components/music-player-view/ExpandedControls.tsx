@@ -6,10 +6,10 @@ import {PTrackList} from './TrackList'
 import {PlayerIcon} from './Icon'
 import {CLASSES, MusicPlayerViewProps} from './shared'
 
-const SKIP_BUTTON_CLASSES = [
+const SKIP_BUTTON_CLASSES = cx(
   'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
   'disabled:opacity-35 player-compact:size-9',
-].join(' ')
+)
 
 type ExpandedPlayerControlsProps = Pick<
   MusicPlayerViewProps,

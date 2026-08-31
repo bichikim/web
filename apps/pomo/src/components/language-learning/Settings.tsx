@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
 import * as m from '@paraglide/message'
@@ -12,11 +13,11 @@ import {
 // oxlint-disable-next-line eslint/no-magic-numbers -- Product count options are the persisted user choices.
 const COUNTS = [1, 2, 3, 4, 5] as const
 const LANGUAGES = ['ko', 'en', 'ja'] as const
-const FIELD_CLASS = [
+const FIELD_CLASS = cx(
   'grid gap-2 text-sm font-700 [&_select]:min-h-12 [&_select]:rounded-xl',
   '[&_select]:border [&_select]:border-solid [&_select]:border-border',
   '[&_select]:bg-[#17130f] [&_select]:px-4 [&_select]:text-foreground',
-].join(' ')
+)
 
 export type LanguageLearningCount = (typeof COUNTS)[number]
 

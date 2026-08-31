@@ -3,13 +3,13 @@ import {type JSX, Show} from 'solid-js'
 
 import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from './Frame'
 
-const SCRIBBLE_PANEL_MASK_CLASSES = [
+const SCRIBBLE_PANEL_MASK_CLASSES = cx(
   '[mask-image:var(--pomo-scribble-panel-mask)]',
   '[-webkit-mask-image:var(--pomo-scribble-panel-mask)]',
   '[mask-mode:alpha] [mask-position:center] [mask-repeat:no-repeat] [mask-size:100%_100%]',
   '[-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat]',
   '[-webkit-mask-size:100%_100%]',
-].join(' ')
+)
 
 interface PScribblePanelProps {
   readonly children: JSX.Element

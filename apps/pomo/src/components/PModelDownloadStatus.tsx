@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Match, Switch} from 'solid-js'
 
 import {
@@ -7,16 +8,16 @@ import {
 } from '../features/model-download'
 import {PLoadingStatus} from './PLoadingStatus'
 
-const ERROR_CLASSES = [
+const ERROR_CLASSES = cx(
   'pointer-events-auto flex min-h-control-sm items-center gap-2',
   'border border-solid border-border rounded-control bg-surface px-3',
   'text-foreground text-xs font-650 shadow-panel backdrop-blur-surface',
-].join(' ')
-const DISMISS_CLASSES = [
+)
+const DISMISS_CLASSES = cx(
   'ml-1 min-h-7 cursor-pointer border-0 rounded-control bg-secondary-soft px-2.5',
   'text-foreground text-xs font-750 outline-none',
   'hover:bg-[rgb(114_123_96_/_30%)] focus-visible:shadow-focus',
-].join(' ')
+)
 
 export const PModelDownloadStatus = () => {
   const download = useModelDownload()
