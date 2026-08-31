@@ -1,12 +1,34 @@
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import path from 'node:path'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {build, createLogger, createServer} from 'vite'
 import {type EmbeddingProvider, keySimilarity} from '../index'
+import {TestWorker} from './worker-mock'
+
+const embeddingMocks = vi.hoisted(() => ({createLocalE5Provider: vi.fn()}))
+const workerMocks = vi.hoisted(() => ({Worker: vi.fn()}))
+
+vi.mock('../embedding', async () => {
+  const actual = await vi.importActual<typeof import('../embedding')>('../embedding')
+  return {...actual, createLocalE5Provider: embeddingMocks.createLocalE5Provider}
+})
+vi.mock('node:worker_threads', () => ({
+  default: {Worker: workerMocks.Worker},
+  Worker: workerMocks.Worker,
+}))
 
 const temporaryPaths: string[] = []
 
+beforeEach(() => {
+  workerMocks.Worker.mockImplementation(function workerConstructor(
+    ...arguments_: ConstructorParameters<typeof TestWorker>
+  ) {
+    return new TestWorker(...arguments_)
+  })
+})
+
 afterEach(async () => {
+  vi.clearAllMocks()
   await Promise.all(
     temporaryPaths.splice(0).map((filePath) => rm(filePath, {force: true, recursive: true})),
   )
@@ -47,14 +69,16 @@ document.body.textContent = t('로그인에 실패했어요.') + secondary + ter
   return root
 }
 
-const createPlugin = (root: string, buildMode: 'error' | 'warn' = 'error') =>
-  keySimilarity({
-    __embeddingProvider: provider,
+const createPlugin = (root: string, buildMode: 'error' | 'warn' = 'error') => {
+  embeddingMocks.createLocalE5Provider.mockResolvedValue(provider)
+
+  return keySimilarity({
     buildMode,
     cacheDir: path.join(root, '.cache'),
     keyDetector: ({imported, source}) => (imported === 't' && source === './i18n' ? 0 : undefined),
     semanticThreshold: 0.8,
   })
+}
 
 describe('Vite integration', () => {
   it('should report both locations in an actual middleware-mode dev server', async () => {
@@ -163,10 +187,10 @@ describe('Vite integration', () => {
     const root = await createFixture()
     const keyDetector = () => 0
     const options = {
-      __embeddingProvider: provider,
       cacheDir: path.join(root, '.cache'),
       keyDetector,
     }
+    embeddingMocks.createLocalE5Provider.mockResolvedValue(provider)
 
     await expect(
       build({
@@ -237,13 +261,13 @@ document.body.textContent = t('alpha') + secondary + tertiary`,
     }
     const logger = createLogger('silent')
     const warning = vi.spyOn(logger, 'warn')
+    embeddingMocks.createLocalE5Provider.mockResolvedValue(chainProvider)
 
     await build({
       configFile: false,
       customLogger: logger,
       plugins: [
         keySimilarity({
-          __embeddingProvider: chainProvider,
           buildMode: 'warn',
           cacheDir: path.join(root, '.chain-cache'),
           keyDetector: ({imported, source}) =>

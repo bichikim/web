@@ -4,6 +4,13 @@ import path from 'node:path'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {runCliWithOptions} from '../cli'
 
+const embeddingMocks = vi.hoisted(() => ({createLocalE5Provider: vi.fn()}))
+
+vi.mock('../embedding', async () => {
+  const actual = await vi.importActual<typeof import('../embedding')>('../embedding')
+  return {...actual, createLocalE5Provider: embeddingMocks.createLocalE5Provider}
+})
+
 const temporaryPaths: string[] = []
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -30,11 +37,11 @@ describe('runCli', () => {
       `import {t} from '@/i18n'; t('로그인하지 못했습니다.'); t('로그인에 실패했습니다.')`,
     )
     const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    embeddingMocks.createLocalE5Provider.mockResolvedValue(provider)
 
     const exitCode = await runCliWithOptions(
       {command: 'check', configPath: '', json: true},
       {
-        __embeddingProvider: provider,
         keyDetector: ({imported, source}) =>
           imported === 't' && source === '@/i18n' ? 0 : undefined,
       },
@@ -53,12 +60,12 @@ describe('runCli', () => {
     await writeFile(path.join(root, 'src/main.ts'), `import {t} from '@/i18n'; t('로그인')`)
     const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     const embed = vi.fn(provider.embed)
+    embeddingMocks.createLocalE5Provider.mockResolvedValue({...provider, embed})
 
     expect(
       await runCliWithOptions(
         {command: 'benchmark', configPath: '', json: true},
         {
-          __embeddingProvider: {...provider, embed},
           keyDetector: ({imported, source}) =>
             imported === 't' && source === '@/i18n' ? 0 : undefined,
           scanInclude: ['src/**/*.ts'],

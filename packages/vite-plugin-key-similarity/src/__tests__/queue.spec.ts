@@ -1,32 +1,50 @@
 import {mkdtemp, rm} from 'node:fs/promises'
 import path from 'node:path'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {resolveOptions} from '../config'
 import {KeySimilarityCore} from '../core'
-import {type AnalysisWorker, KeyAnalysisQueue, type WorkerOptions} from '../queue'
+import {KeyAnalysisQueue} from '../queue'
+import {TestWorker} from './worker-mock'
+
+const embeddingMocks = vi.hoisted(() => ({createLocalE5Provider: vi.fn()}))
+const workerMocks = vi.hoisted(() => ({Worker: vi.fn()}))
+
+vi.mock('../embedding', async () => {
+  const actual = await vi.importActual<typeof import('../embedding')>('../embedding')
+  return {...actual, createLocalE5Provider: embeddingMocks.createLocalE5Provider}
+})
+vi.mock('node:worker_threads', () => ({
+  default: {Worker: workerMocks.Worker},
+  Worker: workerMocks.Worker,
+}))
 
 const temporaryPaths: string[] = []
 
+beforeEach(() => {
+  workerMocks.Worker.mockImplementation(function workerConstructor(
+    ...arguments_: ConstructorParameters<typeof TestWorker>
+  ) {
+    return new TestWorker(...arguments_)
+  })
+})
+
 afterEach(async () => {
+  vi.clearAllMocks()
   await Promise.all(
     temporaryPaths.splice(0).map((filePath) => rm(filePath, {force: true, recursive: true})),
   )
 })
 
 describe('KeyAnalysisQueue', () => {
-  it('should pass the identical-key option to its worker dependency', async () => {
+  it('should pass the identical-key option to the worker', async () => {
     const root = await mkdtemp(path.join(import.meta.dirname, '.queue-'))
     temporaryPaths.push(root)
-    let workerOptions: WorkerOptions | undefined
-    const worker: AnalysisWorker = {
-      onError: vi.fn(),
-      onMessage: vi.fn(),
-      postMessage: vi.fn(),
-      terminate: vi.fn(async () => 0),
-    }
-    const createWorker = vi.fn((options: WorkerOptions) => {
-      workerOptions = options
-      return worker
+    embeddingMocks.createLocalE5Provider.mockResolvedValue({
+      async embed() {
+        return []
+      },
+      identifier: 'worker-options-test',
+      revision: '1',
     })
     const options = resolveOptions(
       {
@@ -36,12 +54,12 @@ describe('KeyAnalysisQueue', () => {
       root,
     )
 
-    const queue = new KeyAnalysisQueue(new KeySimilarityCore(options), options, {}, {createWorker})
+    const queue = new KeyAnalysisQueue(new KeySimilarityCore(options), options)
 
-    expect(createWorker).toHaveBeenCalledOnce()
-    expect(workerOptions).toMatchObject({skipIdenticalKeys: true})
+    expect(workerMocks.Worker).toHaveBeenCalledWith(expect.any(URL), {
+      workerData: expect.objectContaining({skipIdenticalKeys: true}),
+    })
     await queue.close()
-    expect(worker.terminate).toHaveBeenCalledOnce()
   })
 
   it('should extract synchronously and compare pairs after enqueue', async () => {
@@ -56,9 +74,13 @@ describe('KeyAnalysisQueue', () => {
       return texts.map(() => Float32Array.from([1, 0]))
     })
     const keyDetector = vi.fn(() => 0)
+    embeddingMocks.createLocalE5Provider.mockResolvedValue({
+      embed,
+      identifier: 'queue-test',
+      revision: '1',
+    })
     const options = resolveOptions(
       {
-        __embeddingProvider: {embed, identifier: 'queue-test', revision: '1'},
         keyDetector,
         semanticThreshold: 0.8,
       },

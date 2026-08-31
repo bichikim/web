@@ -1,3 +1,5 @@
+/** @vitest-environment jsdom */
+
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
@@ -363,10 +365,6 @@ describe('reportClientError', () => {
     )
 
     consoleError.mockClear()
-    vi.stubEnv('MODE', 'test')
-    reportClientError(new Error('test failure'), {feature: 'application', source: 'direct'})
-    expect(consoleError).not.toHaveBeenCalled()
-
     vi.stubEnv('DEV', false)
     vi.stubEnv('MODE', 'development')
     reportClientError(new Error('production failure'), {

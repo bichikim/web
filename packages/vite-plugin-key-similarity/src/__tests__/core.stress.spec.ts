@@ -6,6 +6,13 @@ import {resolveOptions} from '../config'
 import {KeySimilarityCore} from '../core'
 import type {EmbeddingProvider} from '../types'
 
+const embeddingMocks = vi.hoisted(() => ({createLocalE5Provider: vi.fn()}))
+
+vi.mock('../embedding', async () => {
+  const actual = await vi.importActual<typeof import('../embedding')>('../embedding')
+  return {...actual, createLocalE5Provider: embeddingMocks.createLocalE5Provider}
+})
+
 const FILE_COUNT = 64
 const KEYS_PER_FILE = 32
 const KEY_COUNT = FILE_COUNT * KEYS_PER_FILE
@@ -48,6 +55,7 @@ it(
       identifier: 'deterministic-stress-test',
       revision: '1',
     }
+    embeddingMocks.createLocalE5Provider.mockResolvedValue(provider)
 
     try {
       await mkdir(sourceDir)
@@ -62,7 +70,6 @@ it(
       const core = new KeySimilarityCore(
         resolveOptions(
           {
-            __embeddingProvider: provider,
             cacheDir: '.cache',
             keyDetector: ({imported, source}) =>
               imported === 't' && source === '@/i18n' ? 0 : undefined,
