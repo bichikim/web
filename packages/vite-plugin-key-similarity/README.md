@@ -186,7 +186,7 @@ keySimilarity({
 })
 ```
 
-Pass a function to select a threshold by key length or format. The resolver runs separately for the literal and every annotated representation.
+For most projects, prefer a function that varies the threshold by key length over a single fixed value. The function can also account for the key format. The resolver runs separately for the literal and every annotated representation.
 
 ```ts
 keySimilarity({
