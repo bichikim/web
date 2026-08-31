@@ -62,6 +62,39 @@ const colors = isAppsInToss
       'surface-strong': 'rgb(10 10 10 / 68%)',
     }
 
+const INITIAL_SCENE_FALLBACK_SAFELIST = [
+  '[border:2px_solid_rgb(255_255_255_/_28%)]',
+  'absolute',
+  'animate-spin',
+  'backdrop-blur-surface',
+  'bg-surface',
+  'border',
+  'border-border',
+  'border-solid',
+  'border-t-highlight',
+  'box-border',
+  'flex',
+  'flex-none',
+  'font-650',
+  'gap-2',
+  'grid',
+  'h-4',
+  'inset-0',
+  'items-center',
+  'leading-4',
+  'min-h-control-sm',
+  'motion-reduce:animate-[none]',
+  'place-items-center',
+  'pointer-events-none',
+  'px-3',
+  'py-0',
+  'rounded-control',
+  'shadow-panel',
+  'text-foreground',
+  'text-xs',
+  'w-4',
+] as const
+
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
     const prefix = `${name}:`
@@ -184,7 +217,8 @@ body {
 `,
       },
     ],
-    safelist: albumData.albums.map((album) => album.icon),
+    // The SSR fallback must be styled before lazy client modules extend the generated CSS.
+    safelist: [...INITIAL_SCENE_FALLBACK_SAFELIST, ...albumData.albums.map((album) => album.icon)],
     theme: {
       animation: {
         counts: {

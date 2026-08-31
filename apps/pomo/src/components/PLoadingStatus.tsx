@@ -3,7 +3,7 @@ import {Show} from 'solid-js'
 const LOADING_CLASSES = [
   'pomo-loading flex min-h-control-sm box-border items-center gap-2',
   'rounded-control bg-surface py-0 px-3',
-  'text-foreground text-xs font-[650] leading-4 shadow-panel',
+  'text-foreground text-xs font-650 leading-4 shadow-panel',
 ].join(' ')
 
 const SPINNER_CLASSES = [
