@@ -9,9 +9,15 @@ import {createDevFeedPlugin} from './scripts/vite/dev-feed/plugin'
 import {createScribbleIconRestartPlugin} from './scripts/vite/scribble-icon/plugin'
 import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
 import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
+import {createInlineContentHashes} from './vite/prerender-security-headers'
 
 interface ImportMetaEnvValues {
   readonly [name: string]: string
+}
+
+interface ContentSecurityPolicyOptions {
+  readonly scriptHashes?: ReadonlyArray<string>
+  readonly styleHashes?: ReadonlyArray<string>
 }
 
 const SERVICE_POLICY_PATHS = {
@@ -127,15 +133,23 @@ function createConnectDirective(): string {
   return `connect-src ${CONNECT_SOURCE_LIST}`
 }
 
-function createContentSecurityPolicy(): string {
+const createElementSources = (hashes: ReadonlyArray<string>): ReadonlyArray<string> => [
+  "'self'",
+  ...hashes.map((hash) => `'${hash}'`),
+]
+
+function createContentSecurityPolicy(options: ContentSecurityPolicyOptions = {}): string {
+  const scriptSources = createElementSources(options.scriptHashes ?? [])
+  const styleSources = createElementSources(options.styleHashes ?? [])
+
   return [
     "default-src 'self'",
     "base-uri 'none'",
     "object-src 'none'",
     "frame-ancestors 'none'",
     "form-action 'self'",
-    "script-src 'self' 'wasm-unsafe-eval'",
-    "style-src 'self'",
+    `script-src ${scriptSources.join(' ')} 'wasm-unsafe-eval'`,
+    `style-src ${styleSources.join(' ')}`,
     "style-src-attr 'unsafe-inline'",
     "font-src 'self' data:",
     "img-src 'self' data: blob:",
@@ -209,6 +223,24 @@ const createConfig = ({command}: ConfigEnv): UserConfig => ({
     VITE_POMO_WEB_TERMS_PATH: SERVICE_POLICY_PATHS.web.terms,
   }),
   nitro: {
+    hooks: {
+      'prerender:generate'(route, nitroInstance) {
+        if (route.contents === undefined || !route.contentType?.includes('html')) {
+          return
+        }
+
+        const hashes = createInlineContentHashes(route.contents)
+        const routeRules = nitroInstance.options.routeRules[route.route] ?? {}
+        nitroInstance.options.routeRules[route.route] = {
+          ...routeRules,
+          headers: {
+            ...routeRules.headers,
+            ...BASE_SECURITY_HEADERS,
+            'Content-Security-Policy-Report-Only': createContentSecurityPolicy(hashes),
+          },
+        }
+      },
+    },
     prerender: {
       failOnError: IS_STATIC_BUILD,
       routes:
