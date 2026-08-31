@@ -116,6 +116,8 @@ export interface KeySimilarityOptions {
   readonly scanInclude?: ReadonlyArray<string>
   readonly semanticThreshold?: SimilarityThreshold
   readonly serveMode?: ServeDiagnosticMode
+  /** Skips pairs whose original key values are identical. */
+  readonly skipIdenticalKeys?: boolean
   readonly wasmPath?: string
 }
 
@@ -132,5 +134,6 @@ export interface ResolvedKeySimilarityOptions {
   readonly scanInclude: ReadonlyArray<string>
   readonly semanticThreshold: SimilarityThreshold
   readonly serveMode: ServeDiagnosticMode
+  readonly skipIdenticalKeys: boolean
   readonly wasmPath: string | undefined
 }

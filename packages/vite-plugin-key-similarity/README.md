@@ -236,6 +236,7 @@ When introducing the plugin to a project with existing duplicates, use `buildMod
 | ------------------- | ---------------------------------------- | ------------------------------------------------------------ |
 | `keyDetector`       | Required                                 | Selects imported calls and the argument containing each key. |
 | `semanticThreshold` | `0.9`                                    | A fixed number or a `(key) => number` threshold resolver     |
+| `skipIdenticalKeys` | `false`                                  | Skip pairs whose original key values are identical           |
 | `serveMode`         | `warn`                                   | Development server diagnostic mode                           |
 | `buildMode`         | `error`                                  | Production build diagnostic mode                             |
 | `exclude`           | Tests, generated files, and node_modules | Glob patterns excluded from Vite and CLI checks              |

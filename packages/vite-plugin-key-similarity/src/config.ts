@@ -32,6 +32,7 @@ const optionsSchema = z.object({
   modelRevision: z.string().min(1).optional(),
   scanInclude: z.array(z.string().min(1)).min(1).default(['src/**/*.{ts,tsx,js,jsx,mts,mjs}']),
   serveMode: z.enum(SERVE_DIAGNOSTIC_MODES).default('warn'),
+  skipIdenticalKeys: z.boolean().default(false),
   wasmPath: z.string().min(1).optional(),
 })
 

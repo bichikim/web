@@ -236,6 +236,7 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | ------------------- | ------------------------------------ | -------------------------------------------------------- |
 | `keyDetector`       | 필수                                 | 검사할 import 호출과 key 인수를 선택한다.                |
 | `semanticThreshold` | `0.9`                                | 고정 숫자 또는 `(key) => number` 형태의 임계값 resolver  |
+| `skipIdenticalKeys` | `false`                              | 원래 key 값이 완전히 같은 pair를 건너뛴다.               |
 | `serveMode`         | `warn`                               | 개발 서버 진단 방식                                      |
 | `buildMode`         | `error`                              | 빌드 진단 방식                                           |
 | `exclude`           | 테스트, generated, node_modules 제외 | Vite와 CLI에서 제외할 glob 목록                          |

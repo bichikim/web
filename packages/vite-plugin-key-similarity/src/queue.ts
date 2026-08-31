@@ -34,6 +34,7 @@ export interface WorkerOptions {
   readonly modelRevision: string
   readonly root: string
   readonly serveMode: ResolvedKeySimilarityOptions['serveMode']
+  readonly skipIdenticalKeys: boolean
   readonly wasmPath: string | undefined
 }
 
@@ -45,6 +46,7 @@ const toWorkerOptions = (options: ResolvedKeySimilarityOptions): WorkerOptions =
   modelRevision: options.modelRevision,
   root: options.root,
   serveMode: options.serveMode,
+  skipIdenticalKeys: options.skipIdenticalKeys,
   wasmPath: options.wasmPath,
 })
 
