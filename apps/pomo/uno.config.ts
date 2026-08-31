@@ -62,38 +62,18 @@ const colors = isAppsInToss
       'surface-strong': 'rgb(10 10 10 / 68%)',
     }
 
-const INITIAL_SCENE_FALLBACK_SAFELIST = [
-  '[border:2px_solid_rgb(255_255_255_/_28%)]',
-  'absolute',
-  'animate-spin',
-  'backdrop-blur-surface',
-  'bg-surface',
-  'border',
-  'border-border',
-  'border-solid',
-  'border-t-highlight',
-  'box-border',
-  'flex',
-  'flex-none',
-  'font-650',
-  'gap-2',
-  'grid',
-  'h-4',
-  'inset-0',
-  'items-center',
-  'leading-4',
-  'min-h-control-sm',
-  'motion-reduce:animate-[none]',
-  'place-items-center',
-  'pointer-events-none',
-  'px-3',
-  'py-0',
-  'rounded-control',
-  'shadow-panel',
-  'text-foreground',
-  'text-xs',
-  'w-4',
-] as const
+const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
+  'pomo-loading':
+    'flex min-h-control-sm box-border items-center gap-2 rounded-control bg-surface py-0 px-3 ' +
+    'text-foreground text-xs font-650 leading-4 shadow-panel',
+  'pomo-loading__spinner':
+    'w-4 h-4 box-border flex-none animate-spin [border:2px_solid_rgb(255_255_255_/_28%)] ' +
+    'border-t-highlight rounded-control motion-reduce:animate-[none]',
+  'pomo-scene-fallback':
+    'pointer-events-none absolute inset-0 grid place-items-center text-foreground',
+  'pomo-scene-fallback__panel':
+    'border border-solid border-border rounded-control backdrop-blur-surface',
+} as const
 
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
@@ -218,7 +198,11 @@ body {
       },
     ],
     // The SSR fallback must be styled before lazy client modules extend the generated CSS.
-    safelist: [...INITIAL_SCENE_FALLBACK_SAFELIST, ...albumData.albums.map((album) => album.icon)],
+    safelist: [
+      ...Object.keys(INITIAL_SCENE_FALLBACK_SHORTCUTS),
+      ...albumData.albums.map((album) => album.icon),
+    ],
+    shortcuts: INITIAL_SCENE_FALLBACK_SHORTCUTS,
     theme: {
       animation: {
         counts: {
