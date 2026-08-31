@@ -5,6 +5,8 @@ import {expect, it, vi} from 'vitest'
 import type {Database} from '../../database'
 import {createAuthMaintenanceRepository} from '../maintenance-repository'
 
+vi.mock('src/env', () => ({env: {}}))
+
 const compile = (statement: SQL) => new PgDialect({casing: 'snake_case'}).sqlToQuery(statement)
 
 it('should generate a bounded concurrent-safe app session delete', async () => {

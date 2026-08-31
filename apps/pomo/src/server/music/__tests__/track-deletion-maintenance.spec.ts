@@ -8,6 +8,7 @@ const deletionMocks = vi.hoisted(() => ({
 }))
 const storageMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
+vi.mock('src/env', () => ({env: {}}))
 vi.mock('../../database', async () => {
   const actual = await vi.importActual<typeof import('../../database')>('../../database')
 

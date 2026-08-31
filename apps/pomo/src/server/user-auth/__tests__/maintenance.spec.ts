@@ -2,6 +2,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {type AuthMaintenanceRepository, runAuthMaintenance} from '../maintenance'
 
+vi.mock('src/env', () => ({env: {}}))
+
 const NOW = new Date('2026-08-24T18:17:00.000Z')
 const EXPIRED_SESSION_CUTOFF = new Date('2026-08-23T18:17:00.000Z')
 const REVOKED_SESSION_CUTOFF = new Date('2026-08-17T18:17:00.000Z')

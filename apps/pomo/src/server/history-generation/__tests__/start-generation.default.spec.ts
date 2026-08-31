@@ -7,6 +7,7 @@ const generationMocks = vi.hoisted(() => ({
   submit: vi.fn(),
 }))
 
+vi.mock('src/env', () => ({env: {}}))
 vi.mock('../generation-repository', () => ({
   markGenerationFailed: generationMocks.markFailed,
   markGenerationSubmitted: generationMocks.markSubmitted,

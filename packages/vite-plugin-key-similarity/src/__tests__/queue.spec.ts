@@ -4,6 +4,19 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {resolveOptions} from '../config'
 import {KeySimilarityCore} from '../core'
 import {KeyAnalysisQueue} from '../queue'
+import {TestWorker} from './worker-mock'
+
+const embeddingMocks = vi.hoisted(() => ({createLocalE5Provider: vi.fn()}))
+const workerMocks = vi.hoisted(() => ({Worker: vi.fn()}))
+
+vi.mock('../embedding', async () => {
+  const actual = await vi.importActual<typeof import('../embedding')>('../embedding')
+  return {...actual, createLocalE5Provider: embeddingMocks.createLocalE5Provider}
+})
+vi.mock('node:worker_threads', () => ({
+  default: {Worker: workerMocks.Worker},
+  Worker: workerMocks.Worker,
+}))
 
 const temporaryPaths: string[] = []
 
@@ -26,9 +39,18 @@ describe('KeyAnalysisQueue', () => {
       return texts.map(() => Float32Array.from([1, 0]))
     })
     const keyDetector = vi.fn(() => 0)
+    embeddingMocks.createLocalE5Provider.mockResolvedValue({
+      embed,
+      identifier: 'queue-test',
+      revision: '1',
+    })
+    workerMocks.Worker.mockImplementation(function workerConstructor(
+      ...arguments_: ConstructorParameters<typeof TestWorker>
+    ) {
+      return new TestWorker(...arguments_)
+    })
     const options = resolveOptions(
       {
-        __embeddingProvider: {embed, identifier: 'queue-test', revision: '1'},
         keyDetector,
         semanticThreshold: 0.8,
       },

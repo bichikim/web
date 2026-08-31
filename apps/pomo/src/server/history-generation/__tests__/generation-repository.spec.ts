@@ -24,6 +24,8 @@ import {
   SOURCE_URLS,
 } from './generation-repository.test-support'
 
+vi.mock('src/env', () => ({env: {}}))
+
 it('should not reclaim an ambiguous preparing run', async () => {
   const existing = createRun('preparing', null)
   const {database, update} = createGenerationDatabase(existing, existing)

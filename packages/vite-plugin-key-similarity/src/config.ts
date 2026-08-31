@@ -61,7 +61,6 @@ export const resolveOptions = (
 
   return {
     ...parsed,
-    __embeddingProvider: options.__embeddingProvider,
     cacheDir: path.resolve(root, parsed.cacheDir),
     keyDetector: options.keyDetector,
     modelIdentifier: parsed.modelIdentifier ?? customModelPath ?? BUNDLED_MODEL_IDENTIFIER,
