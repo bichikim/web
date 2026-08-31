@@ -42,6 +42,7 @@ const virtualServerOnlyPlugin = {
 
 export const stressTestFiles = [
   'packages/puppet/src/editor/__tests__/deletion-stress.spec.ts',
+  'packages/vite-plugin-key-similarity/src/__tests__/core.stress.spec.ts',
 ] as const
 
 export const unitTestProject = {
