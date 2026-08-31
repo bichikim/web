@@ -26,6 +26,17 @@ export interface AnalysisQueueCallbacks {
   readonly onResult?: (result: AnalysisResult) => void
 }
 
+export interface AnalysisWorker {
+  onError(listener: (error: Error) => void): void
+  onMessage(listener: (message: AnalysisFailure | AnalysisResult) => void): void
+  postMessage(job: AnalysisJob): void
+  terminate(): Promise<number>
+}
+
+export interface AnalysisQueueDependencies {
+  readonly createWorker?: (options: WorkerOptions) => AnalysisWorker
+}
+
 export interface WorkerOptions {
   readonly buildMode: ResolvedKeySimilarityOptions['buildMode']
   readonly cacheDir: string
@@ -52,6 +63,22 @@ const toWorkerOptions = (options: ResolvedKeySimilarityOptions): WorkerOptions =
 
 const WORKER_MODULE_PATH = './worker.mjs'
 
+const createAnalysisWorker = (options: WorkerOptions): AnalysisWorker => {
+  const worker = new Worker(new URL(WORKER_MODULE_PATH, import.meta.url), {workerData: options})
+  return {
+    onError(listener) {
+      worker.on('error', listener)
+    },
+    onMessage(listener) {
+      worker.on('message', listener)
+    },
+    postMessage(job) {
+      worker.postMessage(job)
+    },
+    terminate: () => worker.terminate(),
+  }
+}
+
 export class KeyAnalysisQueue {
   private readonly callbacks: AnalysisQueueCallbacks
   private closePromise: Promise<void> | undefined
@@ -65,27 +92,26 @@ export class KeyAnalysisQueue {
   private processing = Promise.resolve()
   private readonly revisions = new Map<string, number>()
   private readonly sources = new Map<string, string>()
-  private readonly worker: Worker | undefined
+  private readonly worker: AnalysisWorker | undefined
 
   constructor(
     core: KeySimilarityCore,
     options: ResolvedKeySimilarityOptions,
     callbacks: AnalysisQueueCallbacks = {},
+    dependencies: AnalysisQueueDependencies = {},
   ) {
     this.callbacks = callbacks
     this.core = core
     if (options.__embeddingProvider === undefined) {
-      this.worker = new Worker(new URL(WORKER_MODULE_PATH, import.meta.url), {
-        workerData: toWorkerOptions(options),
-      })
-      this.worker.on('message', (message: AnalysisFailure | AnalysisResult) => {
+      this.worker = (dependencies.createWorker ?? createAnalysisWorker)(toWorkerOptions(options))
+      this.worker.onMessage((message) => {
         if ('error' in message) {
           this.finishFailure(message.identifier, new Error(message.error))
         } else {
           this.finishResult(message)
         }
       })
-      this.worker.on('error', (error) => this.failAll(error))
+      this.worker.onError((error) => this.failAll(error))
     }
   }
 

@@ -3,7 +3,7 @@ import path from 'node:path'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {resolveOptions} from '../config'
 import {KeySimilarityCore} from '../core'
-import {KeyAnalysisQueue} from '../queue'
+import {type AnalysisWorker, KeyAnalysisQueue, type WorkerOptions} from '../queue'
 
 const temporaryPaths: string[] = []
 
@@ -14,6 +14,36 @@ afterEach(async () => {
 })
 
 describe('KeyAnalysisQueue', () => {
+  it('should pass the identical-key option to its worker dependency', async () => {
+    const root = await mkdtemp(path.join(import.meta.dirname, '.queue-'))
+    temporaryPaths.push(root)
+    let workerOptions: WorkerOptions | undefined
+    const worker: AnalysisWorker = {
+      onError: vi.fn(),
+      onMessage: vi.fn(),
+      postMessage: vi.fn(),
+      terminate: vi.fn(async () => 0),
+    }
+    const createWorker = vi.fn((options: WorkerOptions) => {
+      workerOptions = options
+      return worker
+    })
+    const options = resolveOptions(
+      {
+        keyDetector: () => 0,
+        skipIdenticalKeys: true,
+      },
+      root,
+    )
+
+    const queue = new KeyAnalysisQueue(new KeySimilarityCore(options), options, {}, {createWorker})
+
+    expect(createWorker).toHaveBeenCalledOnce()
+    expect(workerOptions).toMatchObject({skipIdenticalKeys: true})
+    await queue.close()
+    expect(worker.terminate).toHaveBeenCalledOnce()
+  })
+
   it('should extract synchronously and compare pairs after enqueue', async () => {
     const root = await mkdtemp(path.join(import.meta.dirname, '.queue-'))
     temporaryPaths.push(root)
