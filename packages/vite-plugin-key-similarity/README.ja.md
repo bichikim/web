@@ -236,6 +236,7 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | ------------------- | -------------------------------------- | --------------------------------------------------------- |
 | `keyDetector`       | 必須                                   | 検査する import 呼び出しとキー引数を選択します。          |
 | `semanticThreshold` | `0.9`                                  | 固定値または `(key) => number` 形式のしきい値 resolver    |
+| `skipIdenticalKeys` | `false`                                | 元の key 値が完全に同じ pair をスキップします。           |
 | `serveMode`         | `warn`                                 | 開発サーバーの診断モード                                  |
 | `buildMode`         | `error`                                | 本番ビルドの診断モード                                    |
 | `exclude`           | テスト、generated、node_modules を除外 | Vite と CLI で除外する glob パターン                      |

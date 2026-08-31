@@ -238,7 +238,11 @@ export class KeySimilarityCore {
       const comparisonEntries = [
         ...rightEntries,
         ...(includeLeftPairs ? leftEntries.slice(leftIndex + 1) : []),
-      ].filter((right) => right.group === left.group)
+      ].filter(
+        (right) =>
+          right.group === left.group &&
+          (!this.options.skipIdenticalKeys || right.originalText !== left.originalText),
+      )
       const matches = comparisonEntries
         .map((right) => getBestDiagnostic(left, right, vectorsByText))
         .filter((diagnostic): diagnostic is SimilarityDiagnostic => diagnostic !== undefined)

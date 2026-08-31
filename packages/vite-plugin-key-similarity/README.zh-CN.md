@@ -236,6 +236,7 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | ------------------- | ------------------------------------ | ------------------------------------------- |
 | `keyDetector`       | 必填                                 | 选择要检查的 import 调用及包含 key 的参数。 |
 | `semanticThreshold` | `0.9`                                | 固定数字或 `(key) => number` 阈值 resolver  |
+| `skipIdenticalKeys` | `false`                              | 跳过原始 key 值完全相同的 pair。            |
 | `serveMode`         | `warn`                               | 开发服务器诊断模式                          |
 | `buildMode`         | `error`                              | 生产构建诊断模式                            |
 | `exclude`           | 排除测试、generated 和 node_modules  | Vite 与 CLI 检查中排除的 glob 模式          |

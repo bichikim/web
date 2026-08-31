@@ -1,6 +1,6 @@
 import {mkdtemp, rm} from 'node:fs/promises'
 import path from 'node:path'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {resolveOptions} from '../config'
 import {KeySimilarityCore} from '../core'
 import {KeyAnalysisQueue} from '../queue'
@@ -20,13 +20,48 @@ vi.mock('node:worker_threads', () => ({
 
 const temporaryPaths: string[] = []
 
+beforeEach(() => {
+  workerMocks.Worker.mockImplementation(function workerConstructor(
+    ...arguments_: ConstructorParameters<typeof TestWorker>
+  ) {
+    return new TestWorker(...arguments_)
+  })
+})
+
 afterEach(async () => {
+  vi.clearAllMocks()
   await Promise.all(
     temporaryPaths.splice(0).map((filePath) => rm(filePath, {force: true, recursive: true})),
   )
 })
 
 describe('KeyAnalysisQueue', () => {
+  it('should pass the identical-key option to the worker', async () => {
+    const root = await mkdtemp(path.join(import.meta.dirname, '.queue-'))
+    temporaryPaths.push(root)
+    embeddingMocks.createLocalE5Provider.mockResolvedValue({
+      async embed() {
+        return []
+      },
+      identifier: 'worker-options-test',
+      revision: '1',
+    })
+    const options = resolveOptions(
+      {
+        keyDetector: () => 0,
+        skipIdenticalKeys: true,
+      },
+      root,
+    )
+
+    const queue = new KeyAnalysisQueue(new KeySimilarityCore(options), options)
+
+    expect(workerMocks.Worker).toHaveBeenCalledWith(expect.any(URL), {
+      workerData: expect.objectContaining({skipIdenticalKeys: true}),
+    })
+    await queue.close()
+  })
+
   it('should extract synchronously and compare pairs after enqueue', async () => {
     const root = await mkdtemp(path.join(import.meta.dirname, '.queue-'))
     temporaryPaths.push(root)
@@ -43,11 +78,6 @@ describe('KeyAnalysisQueue', () => {
       embed,
       identifier: 'queue-test',
       revision: '1',
-    })
-    workerMocks.Worker.mockImplementation(function workerConstructor(
-      ...arguments_: ConstructorParameters<typeof TestWorker>
-    ) {
-      return new TestWorker(...arguments_)
     })
     const options = resolveOptions(
       {

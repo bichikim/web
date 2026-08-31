@@ -15,9 +15,22 @@ describe('resolveOptions', () => {
     expect(options.modelIdentifier).toBe('Xenova/multilingual-e5-small')
     expect(options.modelRevision).toBe('761b726')
     expect(options.modelPath).toMatch(/vite-plugin-key-similarity\/assets\/multilingual-e5-small$/)
+    expect(options.skipIdenticalKeys).toBe(false)
     await expect(
       access(path.join(options.modelPath, 'onnx/model_quantized.onnx')),
     ).resolves.toBeUndefined()
+  })
+
+  it('should preserve the identical-key skip option', () => {
+    const options = resolveOptions(
+      {
+        keyDetector: () => undefined,
+        skipIdenticalKeys: true,
+      },
+      '/project',
+    )
+
+    expect(options.skipIdenticalKeys).toBe(true)
   })
 
   it('should resolve a custom model override from the project root', () => {

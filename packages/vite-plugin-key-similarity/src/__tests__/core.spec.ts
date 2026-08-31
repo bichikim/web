@@ -53,7 +53,11 @@ const createFixture = async (fileOrder: 'forward' | 'reverse' = 'forward') => {
   return root
 }
 
-const createCore = (root: string, provider: EmbeddingProvider) => {
+const createCore = (
+  root: string,
+  provider: EmbeddingProvider,
+  skipIdenticalKeys: boolean = false,
+) => {
   embeddingMocks.createLocalE5Provider.mockResolvedValue(provider)
 
   return new KeySimilarityCore(
@@ -63,6 +67,7 @@ const createCore = (root: string, provider: EmbeddingProvider) => {
           imported === 't' && source === '@/i18n' ? 0 : undefined,
         scanInclude: ['src/**/*.ts'],
         semanticThreshold: 0.8,
+        skipIdenticalKeys,
       },
       root,
     ),
@@ -129,6 +134,29 @@ describe('KeySimilarityCore', () => {
     expect(report.diagnostics).toHaveLength(1)
     expect(report.diagnostics[0]?.left.filePath).toBe(filePath)
     expect(report.diagnostics[0]?.right.filePath).toBe(filePath)
+  })
+
+  it('should skip identical key values when configured', async () => {
+    const root = await createFixture()
+    const identical = `import {t} from '@/i18n'; t('account.login.failed')`
+    await writeFile(path.join(root, 'src/a.ts'), identical)
+    await writeFile(path.join(root, 'src/b.ts'), identical)
+
+    const report = await createCore(root, createProvider(), true).initialize()
+
+    expect(report.diagnostics).toEqual([])
+    expect(report.uniqueKeys).toBe(1)
+  })
+
+  it('should report identical key values by default', async () => {
+    const root = await createFixture()
+    const identical = `import {t} from '@/i18n'; t('account.login.failed')`
+    await writeFile(path.join(root, 'src/a.ts'), identical)
+    await writeFile(path.join(root, 'src/b.ts'), identical)
+
+    const report = await createCore(root, createProvider()).initialize()
+
+    expect(report.diagnostics).toHaveLength(1)
   })
 
   it('should retain every threshold-passing pair in a group', async () => {
