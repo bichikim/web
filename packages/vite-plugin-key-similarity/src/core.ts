@@ -255,8 +255,7 @@ export class KeySimilarityCore {
     }
     await this.validatePaths()
     const modelStartedAt = now()
-    const baseProvider =
-      this.options.__embeddingProvider ?? (await createLocalE5Provider(this.options))
+    const baseProvider = await createLocalE5Provider(this.options)
     this.provider = new CachedEmbeddingProvider(baseProvider, this.options.cacheDir)
     return now() - modelStartedAt
   }

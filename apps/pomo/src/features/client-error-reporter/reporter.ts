@@ -349,7 +349,7 @@ export const createClientErrorReporter = (
 }
 
 const sendLocalDiagnostic = (event: ClientErrorEvent) => {
-  if (typeof window !== 'undefined' && import.meta.env.DEV && import.meta.env.MODE !== 'test') {
+  if (typeof window !== 'undefined' && import.meta.env.DEV) {
     console.error('[Pomofi client error]', event)
   }
 }

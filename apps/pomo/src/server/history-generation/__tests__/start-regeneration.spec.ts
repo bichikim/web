@@ -3,6 +3,8 @@ import {expect, it, vi} from 'vitest'
 import {HistorySubmissionError} from '../openai-client'
 import {startHistoryRegeneration} from '../start-regeneration'
 
+vi.mock('src/env', () => ({env: {}}))
+
 const RUN = {
   id: 'run-1',
   openAiResponseId: null,

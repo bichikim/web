@@ -23,6 +23,7 @@ const databaseMocks = vi.hoisted(() => ({
   withTransactionalDatabase: vi.fn(),
 }))
 
+vi.mock('src/env', () => ({env: {}}))
 vi.mock('../../database', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../database')>()),
   getDatabase: databaseMocks.getDatabase,

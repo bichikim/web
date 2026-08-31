@@ -38,13 +38,6 @@ describe('resolveOptions', () => {
     expect(() =>
       resolveOptions(
         {
-          __embeddingProvider: {
-            async embed() {
-              return []
-            },
-            identifier: 'config-test',
-            revision: '1',
-          },
           keyDetector: undefined as never,
         },
         '/project',
@@ -56,13 +49,6 @@ describe('resolveOptions', () => {
     const semanticThreshold = (key: string) => (key.length < 5 ? 0.95 : 0.9)
     const options = resolveOptions(
       {
-        __embeddingProvider: {
-          async embed() {
-            return []
-          },
-          identifier: 'config-test',
-          revision: '1',
-        },
         keyDetector: () => undefined,
         semanticThreshold,
       },
@@ -76,13 +62,6 @@ describe('resolveOptions', () => {
     expect(() =>
       resolveOptions(
         {
-          __embeddingProvider: {
-            async embed() {
-              return []
-            },
-            identifier: 'config-test',
-            revision: '1',
-          },
           keyDetector: () => undefined,
           semanticThreshold: 2,
         },

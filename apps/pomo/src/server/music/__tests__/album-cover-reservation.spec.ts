@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const databaseMocks = vi.hoisted(() => ({getDatabase: vi.fn(), withTransactionalDatabase: vi.fn()}))
 
+vi.mock('src/env', () => ({env: {}}))
 vi.mock('../../database', async () => {
   const actual = await vi.importActual<typeof import('../../database')>('../../database')
   return {...actual, ...databaseMocks}
