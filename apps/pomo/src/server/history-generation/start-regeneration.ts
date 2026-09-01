@@ -5,11 +5,16 @@ import {
 } from 'src/features/history-generation'
 import {
   markGenerationFailed,
+  markGenerationSubmissionUnknown,
   markGenerationSubmitted,
   prepareGenerationRerun,
 } from './generation-repository'
 import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
-import {persistGenerationSubmission} from './submission-persistence'
+import {
+  persistGenerationSubmission,
+  persistUnknownGenerationSubmission,
+} from './submission-persistence'
+import {getSubmissionRecoveryDeadline} from './submission-recovery-policy'
 
 const MAX_ERROR_LENGTH = 2000
 
@@ -27,7 +32,9 @@ export interface StartRegenerationResult {
 
 interface StartRegenerationDependencies {
   readonly markFailed: typeof markGenerationFailed
+  readonly markUnknown: typeof markGenerationSubmissionUnknown
   readonly markSubmitted: typeof markGenerationSubmitted
+  readonly now: () => Date
   readonly prepare: typeof prepareGenerationRerun
   readonly submit: typeof submitHistoryResponse
 }
@@ -35,6 +42,8 @@ interface StartRegenerationDependencies {
 const DEFAULT_DEPENDENCIES: StartRegenerationDependencies = {
   markFailed: markGenerationFailed,
   markSubmitted: markGenerationSubmitted,
+  markUnknown: markGenerationSubmissionUnknown,
+  now: () => new Date(),
   prepare: prepareGenerationRerun,
   submit: submitHistoryResponse,
 }
@@ -66,14 +75,31 @@ export const startHistoryRegeneration = async (
       targetDate: options.targetDate,
     })
   } catch (error) {
-    if (error instanceof HistorySubmissionError && error.acceptance === 'rejected') {
-      await dependencies.markFailed(run.id, getErrorMessage(error))
+    if (error instanceof HistorySubmissionError) {
+      const errorMessage = getErrorMessage(error)
+
+      if (error.acceptance === 'rejected') {
+        await dependencies.markFailed(run.id, run.openAiSubmissionKey, errorMessage)
+      } else {
+        await persistUnknownGenerationSubmission({
+          errorMessage,
+          markUnknown: dependencies.markUnknown,
+          runId: run.id,
+          submissionExpiresAt: getSubmissionRecoveryDeadline(dependencies.now()),
+          submissionKey: run.openAiSubmissionKey,
+        })
+      }
     }
 
     throw error
   }
 
-  await persistGenerationSubmission(run.id, submitted.responseId, dependencies.markSubmitted)
+  await persistGenerationSubmission(
+    run.id,
+    run.openAiSubmissionKey,
+    submitted.responseId,
+    dependencies.markSubmitted,
+  )
 
   return {
     responseId: submitted.responseId,
