@@ -42,10 +42,12 @@ const virtualServerOnlyPlugin = {
 
 export const stressTestFiles = [
   'packages/puppet/src/editor/__tests__/deletion-stress.spec.ts',
+  'packages/vite-plugin-key-similarity/src/__tests__/core.stress.spec.ts',
 ] as const
 
 export const unitTestProject = {
   extends: true,
+  plugins: [virtualUnoCssPlugin],
   test: {
     // 테스트 런타임 환경 (DOM API 제공)
     environment: 'jsdom',
@@ -60,6 +62,7 @@ export const unitTestProject = {
       'apps/*/scripts/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/vite/**/*.spec.?(c|m)[jt]s?(x)',
+      'scripts/**/*.spec.?(c|m)[jt]s?(x)',
       '.agents/skills/*/scripts/**/*.spec.ts',
     ],
     // Leave capacity for nested Vite and esbuild work during the unit suite.
@@ -109,8 +112,6 @@ export const createVitestConfig = (projects: readonly TestProjectConfiguration[]
     ),
     // Vite/Vitest 플러그인 목록
     plugins: [
-      // Unit tests need a resolvable CSS module, while UnoCSS transformation rewrites class snapshots and trigger fixtures.
-      virtualUnoCssPlugin,
       // Vitest does not load SolidStart, which normally stubs this marker for server modules.
       virtualServerOnlyPlugin,
       // HMR is inactive in tests; disabling its transform prevents synthetic refresh branches from lowering source coverage.

@@ -22,10 +22,28 @@ export interface RecoverMissingDialogueOptions {
   readonly job: FeedDialogueJob
 }
 
+export interface FailedFeedDialogueJob extends FeedDialogueJob {
+  readonly status: 'failed'
+}
+
+export interface FailedFeedItemRecord extends FeedItemRecord {
+  readonly status: 'failed'
+}
+
+export interface FailFeedDialogueJobOptions {
+  readonly item?: FailedFeedItemRecord
+  readonly job: FailedFeedDialogueJob
+}
+
+export interface GeneratingFeedDialogueJob extends FeedDialogueJob {
+  readonly status: 'generating'
+}
+
 export interface FeedDialogueRepository {
   readonly complete: (options: CompleteFeedDialogueOptions) => Promise<void>
   readonly deleteJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
   readonly dispose: () => void
+  readonly failJob: (options: FailFeedDialogueJobOptions) => Promise<boolean>
   readonly interruptUnfinishedJobs: (updatedAt: string) => Promise<ReadonlyArray<FeedDialogueJob>>
   readonly listExpiredMetadata: (expiresAt: string) => Promise<ReadonlyArray<FeedDialogueMetadata>>
   readonly listItems: (feedConnectionId: string) => Promise<ReadonlyArray<FeedItemRecord>>
@@ -38,6 +56,7 @@ export interface FeedDialogueRepository {
   readonly removeItem: (feedConnectionId: string, feedItemId: string) => Promise<void>
   readonly retryJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
   readonly saveItems: (items: ReadonlyArray<FeedItemRecord>) => Promise<void>
+  readonly startJob: (job: GeneratingFeedDialogueJob) => Promise<boolean>
   readonly updateJob: (job: FeedDialogueJob, item?: FeedItemRecord) => Promise<void>
 }
 
@@ -79,6 +98,58 @@ const updateRecoverableJobs = async (
   })
 }
 
+const failGeneratingJob = async (database: PDatabase, options: FailFeedDialogueJobOptions) => {
+  const nextJob = feedDialogueJobSchema.parse(options.job)
+  const nextItem = options.item === undefined ? undefined : feedItemRecordSchema.parse(options.item)
+
+  return database.transaction('rw', database.feedDialogueJobs, database.feedItems, async () => {
+    const storedValue = await database.feedDialogueJobs.get(nextJob.id)
+
+    if (storedValue === undefined) {
+      return false
+    }
+
+    const storedJob = feedDialogueJobSchema.parse(storedValue)
+
+    if (storedJob.status !== 'generating') {
+      return false
+    }
+
+    await database.feedDialogueJobs.put(nextJob)
+
+    if (nextItem !== undefined) {
+      await database.feedItems.put(nextItem)
+    }
+
+    return true
+  })
+}
+
+const startQueuedJob = async (database: PDatabase, job: GeneratingFeedDialogueJob) => {
+  const nextJob = feedDialogueJobSchema.parse(job)
+
+  if (nextJob.status !== 'generating') {
+    throw new Error('시작할 피드 생성 작업 상태가 올바르지 않아요.')
+  }
+
+  return database.transaction('rw', database.feedDialogueJobs, async () => {
+    const storedValue = await database.feedDialogueJobs.get(nextJob.id)
+
+    if (storedValue === undefined) {
+      return false
+    }
+
+    const storedJob = feedDialogueJobSchema.parse(storedValue)
+
+    if (storedJob.status !== 'queued') {
+      return false
+    }
+
+    await database.feedDialogueJobs.put(nextJob)
+    return true
+  })
+}
+
 /** Persists feed discovery and generation state beside compatible dialogue records. */
 export const createFeedDialogueRepository = (): FeedDialogueRepository => {
   const database = createPDatabase()
@@ -105,6 +176,7 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
     dispose() {
       database.close()
     },
+    failJob: (options) => failGeneratingJob(database, options),
     async interruptUnfinishedJobs(updatedAt) {
       const values = await database.feedDialogueJobs.toArray()
       const jobs = parseJobs(values)
@@ -206,6 +278,7 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
     async saveItems(items) {
       await database.feedItems.bulkPut(items.map((item) => feedItemRecordSchema.parse(item)))
     },
+    startJob: (job) => startQueuedJob(database, job),
     async updateJob(job, item) {
       const nextJob = feedDialogueJobSchema.parse(job)
 

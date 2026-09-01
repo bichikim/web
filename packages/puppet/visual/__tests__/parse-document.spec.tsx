@@ -21,7 +21,13 @@ const serializeMesh = (mesh: PuppetMesh) => {
     throw new Error('Expected the demo document to contain a part')
   }
 
-  return serializeDocument({...document, parts: [{...part, mesh}]})
+  return serializeDocument({
+    ...document,
+    motions: [],
+    parameters: undefined,
+    parts: [{...part, mesh}],
+    scene: undefined,
+  })
 }
 
 test('should parse a 50 by 50 regular grid within the browser import budget', () => {

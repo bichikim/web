@@ -1,9 +1,10 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, waitFor, within} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type Player} from '../../player'
+import {createDemoDocument, type Player, type PuppetDocument} from '../../player'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const player: Player = {
   destroy: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
+  resize: vi.fn(),
   seek: vi.fn(),
   updateDocument: vi.fn(() => true),
 }
@@ -38,10 +40,115 @@ describe('PuppetEditor', () => {
 
     const view = render(() => <PuppetEditor />)
 
-    expect(view.getByRole('heading', {name: '저장 데이터 플레이어 미리보기'})).toBeVisible()
-    expect(view.getByText('Static mesh')).toBeVisible()
+    expect(view.getByRole('region', {name: 'Parameter 정점 형태 편집'})).toBeVisible()
+    expect(
+      view.queryByText('문서를 검증한 뒤 플레이어에 적용하고 있습니다.'),
+    ).not.toBeInTheDocument()
+    expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
+    expect(view.getAllByRole('button', {name: /Angle X .* 키폼/})).toHaveLength(3)
+    expect(view.getByRole('region', {name: 'Parameter와 키폼 편집'})).toContainElement(
+      view.getByRole('region', {name: 'Parameters'}),
+    )
+    expect(view.getByRole('heading', {name: 'Inspector'})).toBeVisible()
+    expect(view.container.querySelector('.inspector-panel.parameter-panel')).toBeNull()
     expect(view.getByRole('button', {name: 'JSON 내보내기'})).toBeVisible()
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+
+    fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
+    expect(view.getByText('idle-deform')).toBeVisible()
+    expect(view.getByRole('region', {name: '저장 데이터 플레이어 미리보기'})).toBeVisible()
+    const playerOptions = mocks.createPlayer.mock.calls[0]?.[0]
+
+    playerOptions?.onFrame?.({duration: 2, motionId: 'idle-deform', time: 1})
+    await waitFor(() =>
+      expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cy')).toBe('176'),
+    )
+
+    fireEvent.click(view.getByRole('button', {name: '재생'}))
+    expect(player.play).toHaveBeenCalledOnce()
+    fireEvent.click(view.getByRole('button', {name: '정지'}))
+    expect(player.pause).toHaveBeenCalledTimes(2)
+
+    fireEvent.input(view.getByRole('slider', {name: '재생 위치'}), {target: {value: '1'}})
+    expect(player.seek).toHaveBeenCalledWith(1)
+  })
+
+  test('should toggle the left, right, and bottom editor panels from the toolbar', async () => {
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor />)
+    const editor = view.container.querySelector('.puppet-editor')
+
+    fireEvent.click(view.getByRole('button', {name: '왼쪽 패널 닫기'}))
+    fireEvent.click(view.getByRole('button', {name: '오른쪽 패널 닫기'}))
+    fireEvent.click(view.getByRole('button', {name: '아래 프레임 닫기'}))
+    expect(editor).toHaveClass('left-panel-closed', 'right-panel-closed', 'bottom-panel-closed')
+
+    fireEvent.click(view.getByRole('button', {name: '왼쪽 패널 열기'}))
+    fireEvent.click(view.getByRole('button', {name: '오른쪽 패널 열기'}))
+    fireEvent.click(view.getByRole('button', {name: '아래 프레임 열기'}))
+    expect(editor).not.toHaveClass('left-panel-closed', 'right-panel-closed', 'bottom-panel-closed')
+  })
+
+  test('should notify only document changes through the latest external callback', async () => {
+    const firstCallback = vi.fn()
+    const secondCallback = vi.fn()
+    const [listener, setListener] = createSignal({callback: firstCallback})
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={listener().callback} />)
+
+    await waitFor(() => expect(firstCallback).toHaveBeenCalledOnce())
+    setListener({callback: secondCallback})
+    await Promise.resolve()
+
+    expect(secondCallback).not.toHaveBeenCalled()
+
+    fireEvent.dblClick(view.getByRole('button', {name: 'Angle X'}))
+    fireEvent.input(view.getByRole('textbox', {name: 'Parameter 이름'}), {
+      target: {value: 'Angle Y'},
+    })
+    fireEvent.keyDown(view.getByRole('textbox', {name: 'Parameter 이름'}), {key: 'Enter'})
+
+    await waitFor(() =>
+      expect(secondCallback).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          parameters: [expect.objectContaining({name: 'Angle Y'})],
+        }),
+      ),
+    )
+  })
+
+  test('should move a dragged keyform in the editor document', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const track = view.getByLabelText('Angle X 키폼 트랙')
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+      bottom: 76,
+      height: 76,
+      left: 100,
+      right: 700,
+      toJSON: () => ({}),
+      top: 0,
+      width: 600,
+      x: 100,
+      y: 0,
+    })
+    const marker = view.getByRole('button', {name: 'Angle X 0 키폼'})
+
+    marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
+    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
+    window.dispatchEvent(new MouseEvent('pointerup'))
+
+    await waitFor(() => {
+      const document: PuppetDocument | undefined = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.parameters?.[0]?.keyforms.map((keyform) => keyform.value)).toEqual([
+        -30, 15, 30,
+      ])
+    })
+    expect(view.getByRole('button', {name: 'Angle X 15 키폼'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 
   test('should retain the latest PNG when an earlier import finishes later', async () => {
@@ -85,5 +192,79 @@ describe('PuppetEditor', () => {
     await firstImport
     await Promise.resolve()
     expect(onDocumentChange).toHaveBeenLastCalledWith(secondDocument)
+  })
+
+  test('should retain paused playback when the player is recreated', async () => {
+    const replacementPlayer: Player = {...player, pause: vi.fn()}
+    const replacementDocument = createDemoDocument()
+    mocks.createPlayer.mockResolvedValueOnce(player).mockResolvedValueOnce(replacementPlayer)
+    mocks.importPng.mockResolvedValue({document: replacementDocument, ok: true})
+    player.updateDocument = vi.fn(() => false)
+    const view = render(() => <PuppetEditor />)
+
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    fireEvent.change(view.getByLabelText('PNG 불러오기'), {
+      target: {files: [new File(['replacement'], 'replacement.png', {type: 'image/png'})]},
+    })
+
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
+    expect(replacementPlayer.pause).toHaveBeenCalledOnce()
+  })
+
+  test('should connect a selected group to the active parameter', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+    expect(view.getByText('대상 1 · 선택 2개 파트')).toBeVisible()
+    expect(view.container.querySelector('.mesh-editor [data-part-id="mesh-preview"]')).toBeNull()
+    expect(
+      view.container.querySelector('.mesh-editor [data-part-id="shape-circle"]'),
+    ).not.toBeNull()
+    expect(
+      view.container.querySelector('.mesh-editor [data-part-id="shape-diamond"]'),
+    ).not.toBeNull()
+    expect(view.container.querySelectorAll('.mesh-editor circle')).toHaveLength(18)
+
+    fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결'}))
+
+    await waitFor(() => {
+      const document = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.parameters?.[0]?.targetPartIds).toEqual([
+        'mesh-preview',
+        'shape-circle',
+        'shape-diamond',
+      ])
+    })
+    const modelingPanel = view.getByRole('region', {name: 'Parameter와 키폼 편집'})
+    expect(within(modelingPanel).getAllByText('Angle X')).toHaveLength(1)
+    expect(view.getByRole('button', {name: '선택 레이어 연결'})).toBeDisabled()
+
+    fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결 해제'}))
+    await waitFor(() => {
+      const document = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.parameters?.[0]?.targetPartIds).toEqual(['mesh-preview'])
+    })
+  })
+
+  test('should delete a parameter only after swiping beyond the threshold and releasing', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    const parameter = view.getByRole('button', {name: 'Angle X'})
+    parameter.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
+    expect(view.getByText('놓아 삭제')).toBeVisible()
+    expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
+    window.dispatchEvent(new MouseEvent('pointerup'))
+
+    await waitFor(() => {
+      const document = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.parameters).toEqual([])
+    })
+    expect(view.queryByRole('button', {name: 'Angle X'})).not.toBeInTheDocument()
+    expect(view.getByText('Parameter를 추가하세요.')).toBeVisible()
   })
 })

@@ -1,5 +1,5 @@
 import {createHash, randomUUID} from 'node:crypto'
-import {and, eq, inArray, isNull, lt} from 'drizzle-orm'
+import {and, eq, inArray, isNull} from 'drizzle-orm'
 
 import {
   type HistoryGenerationOutput,
@@ -19,7 +19,6 @@ import {
 } from '../database'
 
 const CHANNEL_SLUG = 'today-in-history'
-const MAX_RECOVERY_RUNS = 10
 const MAX_GENERATION_ATTEMPTS = 2
 
 export interface GenerationRun {
@@ -28,16 +27,14 @@ export interface GenerationRun {
   readonly openAiSubmissionKey: string
   readonly sourcePolicyVersion: string
   readonly status: 'preparing' | 'submitted' | 'completed' | 'failed' | 'rejected'
+  readonly submissionExpiresAt: Date | null
+  readonly submissionState: 'expired' | 'unknown' | null
   readonly targetDate: string
 }
 
 export interface PreparedGenerationRun {
   readonly created: boolean
   readonly run: GenerationRun
-}
-
-export interface RecoverableGenerationRun {
-  readonly responseId: string
 }
 
 interface CreateRunOptions {
@@ -64,6 +61,13 @@ interface FinishResponseOptions {
   readonly message: string
   readonly responseId: string
   readonly status: 'failed' | 'rejected'
+}
+
+export interface MarkGenerationSubmissionUnknownOptions {
+  readonly errorMessage: string
+  readonly runId: string
+  readonly submissionExpiresAt: Date
+  readonly submissionKey: string
 }
 
 const createStableKey = (moment: HistoryGenerationOutput['moments'][number]): string => {
@@ -93,6 +97,8 @@ const mapRun = (run: typeof historicalGenerationRuns.$inferSelect): GenerationRu
   openAiSubmissionKey: run.openAiSubmissionKey,
   sourcePolicyVersion: run.sourcePolicyVersion,
   status: run.status,
+  submissionExpiresAt: run.submissionExpiresAt,
+  submissionState: run.submissionState,
   targetDate: run.targetDate,
 })
 
@@ -103,6 +109,7 @@ const canPrepareRerun = (run: typeof historicalGenerationRuns.$inferSelect): boo
     case 'rejected':
       return true
     case 'preparing':
+      return run.submissionState === 'expired'
     case 'submitted':
       return false
     default: {
@@ -225,6 +232,8 @@ export const prepareGenerationRerun = async (
       promptVersion: options.promptVersion,
       sourcePolicyVersion: options.sourcePolicyVersion,
       status: 'preparing',
+      submissionExpiresAt: null,
+      submissionState: null,
       updatedAt: new Date(),
     })
     .where(
@@ -246,6 +255,7 @@ export const prepareGenerationRerun = async (
 /** Associates an OpenAI background response with a prepared generation run. */
 export const markGenerationSubmitted = async (
   runId: string,
+  submissionKey: string,
   responseId: string,
   database: Database = getDatabase(),
 ): Promise<void> => {
@@ -255,12 +265,15 @@ export const markGenerationSubmitted = async (
       errorMessage: null,
       openAiResponseId: responseId,
       status: 'submitted',
+      submissionExpiresAt: null,
+      submissionState: null,
       updatedAt: new Date(),
     })
     .where(
       and(
         eq(historicalGenerationRuns.id, runId),
         eq(historicalGenerationRuns.status, 'preparing'),
+        eq(historicalGenerationRuns.openAiSubmissionKey, submissionKey),
         isNull(historicalGenerationRuns.openAiResponseId),
       ),
     )
@@ -284,6 +297,7 @@ export const markGenerationSubmitted = async (
 /** Records a generation failure without exposing it through the public feed. */
 export const markGenerationFailed = async (
   runId: string,
+  submissionKey: string,
   errorMessage: string,
   database: Database = getDatabase(),
 ): Promise<void> => {
@@ -294,6 +308,30 @@ export const markGenerationFailed = async (
       and(
         eq(historicalGenerationRuns.id, runId),
         eq(historicalGenerationRuns.status, 'preparing'),
+        eq(historicalGenerationRuns.openAiSubmissionKey, submissionKey),
+        isNull(historicalGenerationRuns.openAiResponseId),
+      ),
+    )
+}
+
+/** Records an ambiguous OpenAI submission until its recovery deadline. */
+export const markGenerationSubmissionUnknown = async (
+  options: MarkGenerationSubmissionUnknownOptions,
+  database: Database = getDatabase(),
+): Promise<void> => {
+  await database
+    .update(historicalGenerationRuns)
+    .set({
+      errorMessage: options.errorMessage,
+      submissionExpiresAt: options.submissionExpiresAt,
+      submissionState: 'unknown',
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(historicalGenerationRuns.id, options.runId),
+        eq(historicalGenerationRuns.status, 'preparing'),
+        eq(historicalGenerationRuns.openAiSubmissionKey, options.submissionKey),
         isNull(historicalGenerationRuns.openAiResponseId),
       ),
     )
@@ -326,6 +364,8 @@ export const associateGenerationResponse = async (
       errorMessage: null,
       openAiResponseId: responseId,
       status: 'submitted',
+      submissionExpiresAt: null,
+      submissionState: null,
       updatedAt: new Date(),
     })
     .where(
@@ -540,22 +580,3 @@ export const rejectHistoryResponse = (
   database?: TransactionalDatabase,
 ): Promise<boolean> =>
   finishHistoryResponse({eventId, message, responseId, status: 'rejected'}, database)
-
-/** Lists submitted responses whose webhook may have been missed. */
-export const listRecoverableGenerationRuns = async (
-  updatedBefore: Date,
-  database: Database = getDatabase(),
-): Promise<ReadonlyArray<RecoverableGenerationRun>> => {
-  const runs = await database
-    .select({responseId: historicalGenerationRuns.openAiResponseId})
-    .from(historicalGenerationRuns)
-    .where(
-      and(
-        eq(historicalGenerationRuns.status, 'submitted'),
-        lt(historicalGenerationRuns.updatedAt, updatedBefore),
-      ),
-    )
-    .limit(MAX_RECOVERY_RUNS)
-
-  return runs.flatMap((run) => (run.responseId === null ? [] : [{responseId: run.responseId}]))
-}

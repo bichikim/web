@@ -18,6 +18,7 @@ interface ImportMetaEnv {
   readonly OPENWEATHER_API_KEY?: string
   readonly POMO_ALLOW_LOCAL_ASSET_ORIGIN: string
   readonly POMO_CONNECT_SOURCES: string
+  readonly POMO_CONTENT_SECURITY_POLICY_TEMPLATE: string
   readonly POMO_CONTENT_TYPE_OPTIONS: string
   readonly POMO_LICENSE_ASSET_ORIGIN: string
   readonly POMO_PERMISSIONS_POLICY: string
@@ -25,6 +26,7 @@ interface ImportMetaEnv {
   readonly POMO_TOSS_CALLBACK_AUTHORIZATION?: string
   readonly POMO_TOSS_MTLS_CERT?: string
   readonly POMO_TOSS_MTLS_KEY?: string
+  readonly POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE: string
   readonly VERCEL_ENV?: string
   readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
   readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string

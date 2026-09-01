@@ -24,6 +24,10 @@ const albumSchema = z.object({
   coverFallback: z.enum(['lp', 'cd', 'music']),
   coverImageUrl: z.string().url().startsWith('https://').nullable(),
   coverReservationId: z.string().uuid().nullable().default(null),
+  id: z
+    .string()
+    .uuid()
+    .default(() => crypto.randomUUID()),
   translations: z
     .array(translationSchema)
     .min(1)

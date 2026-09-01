@@ -1,5 +1,5 @@
+import {Slider} from '@kobalte/core/slider'
 import {cx} from 'class-variance-authority'
-import {type JSX} from 'solid-js'
 import {type PEyeMode, type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PReviewMouthFrame} from '../../features/focus-room-layer-review/scene-renderer'
 import {type PViseme} from '../../features/lip-sync/index'
@@ -8,6 +8,12 @@ import {LayerToggle} from './LayerToggle'
 import {MouthFramePicker} from './MouthFramePicker'
 import {PANEL_CLASSES} from './shared'
 import {VisemePicker} from './VisemePicker'
+
+const PERCENT_SCALE = 100
+const SLIDER_THUMB_CLASSES = [
+  'block size-5 -translate-y-[0.4375rem] rounded-full border-2 border-#241b12',
+  'bg-#e8c795 outline-none focus-visible:shadow-focus',
+].join(' ')
 
 interface ReviewControlsProps {
   readonly animationEnabled: boolean
@@ -28,7 +34,7 @@ interface ReviewControlsProps {
   readonly onMouthChange: (visible: boolean) => void
   readonly onMouthFrameChange: (mouthFrame: PReviewMouthFrame | null) => void
   readonly onMouthPositionComparisonChange: (enabled: boolean) => void
-  readonly onReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent>
+  readonly onReferenceChange: (value: number) => void
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onShowAll: () => void
   readonly referenceOpacity: number
@@ -85,25 +91,13 @@ export const ReviewControls = (props: ReviewControlsProps) => (
       />
     </div>
 
-    <label
-      class={cx(
-        'mt-3 flex cursor-pointer items-center justify-between gap-4 border-t border-white/8 pt-3',
-        'sm:mt-4 sm:pt-4',
-      )}
-    >
-      <span>
-        <span class="block text-sm font-700 text-#fffaf1">미세 애니메이션</span>
-        <span class="mt-1 block text-xs leading-5 text-#a99fac">
-          머리 · 머리카락 · 손 랜덤 왕복
-        </span>
-      </span>
-      <input
-        checked={props.animationEnabled}
-        class="size-5 shrink-0 accent-#e8c795"
-        onChange={(event) => props.onAnimationChange(event.currentTarget.checked)}
-        type="checkbox"
-      />
-    </label>
+    <LayerToggle
+      checked={props.animationEnabled}
+      class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4"
+      description="머리 · 머리카락 · 손 랜덤 왕복"
+      label="미세 애니메이션"
+      onChange={props.onAnimationChange}
+    />
 
     <div class="mt-3 divide-y divide-white/8 border-t border-white/8 pt-1 sm:mt-4 sm:pt-2">
       <LayerToggle
@@ -160,28 +154,28 @@ export const ReviewControls = (props: ReviewControlsProps) => (
       </button>
     </div>
 
-    <div class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
+    <Slider
+      class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4"
+      getValueLabel={({values}) => `${Math.round((values[0] ?? 0) * PERCENT_SCALE)}%`}
+      maxValue={1}
+      minValue={0}
+      onChange={(values) => props.onReferenceChange(values[0] ?? 0)}
+      step={0.05}
+      value={[props.referenceOpacity]}
+    >
       <div class="flex items-center justify-between gap-4">
-        <label class="text-sm font-700 text-#fffaf1" for="reference-opacity">
-          원본 오버레이
-        </label>
-        <output class="text-xs tabular-nums text-#e8c795" for="reference-opacity">
-          {props.referencePercentage}%
-        </output>
+        <Slider.Label class="text-sm font-700 text-#fffaf1">원본 오버레이</Slider.Label>
+        <output class="text-xs tabular-nums text-#e8c795">{props.referencePercentage}%</output>
       </div>
-      <input
-        class="mt-3 w-full accent-#e8c795"
-        id="reference-opacity"
-        max="1"
-        min="0"
-        onInput={(event) => props.onReferenceChange(event)}
-        step="0.05"
-        type="range"
-        value={props.referenceOpacity}
-      />
+      <Slider.Track class="relative mt-3 h-1.5 w-full rounded-full bg-white/15">
+        <Slider.Fill class="absolute h-full rounded-full bg-#e8c795" />
+        <Slider.Thumb class={SLIDER_THUMB_CLASSES}>
+          <Slider.Input aria-hidden="true" />
+        </Slider.Thumb>
+      </Slider.Track>
       <p class="mb-0 mt-2 text-xs leading-5 text-#a99fac">
         값을 올리면 원본 장면이 위에 겹쳐져 가장자리 차이를 확인할 수 있습니다.
       </p>
-    </div>
+    </Slider>
   </aside>
 )

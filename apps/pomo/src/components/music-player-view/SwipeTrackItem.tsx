@@ -8,13 +8,13 @@ const DELETE_COMMIT_DISTANCE = 64
 const DRAG_INTENT_DISTANCE = 8
 const MAX_SWIPE_DISTANCE = 80
 
-const TRACK_CLASSES = [
+const TRACK_CLASSES = cx(
   'pomo-player__track text-muted-foreground',
   "[&[aria-current='true']]:text-foreground",
   "[&[aria-current='true']]:shadow-track-active",
   '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid',
   '[&:focus-visible]:outline-primary [&:focus-visible]:[outline-offset:2px]',
-].join(' ')
+)
 
 const releasePointer = (element: HTMLButtonElement, pointerId: number) => {
   if (element.hasPointerCapture?.(pointerId)) {

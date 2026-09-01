@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {A} from '@solidjs/router'
 import {createSignal, For, onCleanup, Show} from 'solid-js'
 
@@ -7,15 +8,15 @@ import {DialoguePlaybackButton} from './PlaybackButton'
 
 const CLASSES = {
   audio: 'pomo-dialogue-settings__audio hidden',
-  list: [
+  list: cx(
     'pomo-dialogue-settings__list pomo-dialogue-settings__list--library',
     'm-0 grid list-none gap-3 p-0 settings-compact:gap-2',
-  ].join(' '),
-  message: [
+  ),
+  message: cx(
     'pomo-dialogue-settings__message m-0 rounded-panel',
     'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
-  ].join(' '),
+  ),
 } as const
 
 export interface DialogueLibraryEntry {

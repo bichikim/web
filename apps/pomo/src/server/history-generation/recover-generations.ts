@@ -1,13 +1,16 @@
-import {listRecoverableGenerationRuns, type RecoverableGenerationRun} from './generation-repository'
+import {
+  expireGenerationSubmission,
+  listRecoverableGenerationRuns,
+  type RecoverableGenerationRun,
+  type RecoveryCutoffs,
+} from './generation-recovery-repository'
 import {handleOpenAiResponseEvent} from './handle-openai-webhook'
 import {retrieveHistoryResponse} from './response-result'
 import {startHistoryGeneration} from './start-generation'
-
-const MINUTES_PER_RECOVERY_DELAY = 30
-const SECONDS_PER_MINUTE = 60
-const MILLISECONDS_PER_SECOND = 1000
-const RECOVERY_DELAY_MILLISECONDS =
-  MINUTES_PER_RECOVERY_DELAY * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+import {
+  SUBMITTED_RESPONSE_RECOVERY_DELAY_MILLISECONDS,
+  UNKNOWN_SUBMISSION_EXPIRATION_MILLISECONDS,
+} from './submission-recovery-policy'
 
 export interface RecoveryResult {
   readonly checked: number
@@ -17,7 +20,19 @@ export interface RecoveryResult {
 
 type RecoveryRunResult = 'failed' | 'pending' | 'terminal'
 
-const recoverGenerationRun = async (run: RecoverableGenerationRun): Promise<RecoveryRunResult> => {
+const recoverGenerationRun = async (
+  run: RecoverableGenerationRun,
+  cutoffs: RecoveryCutoffs,
+): Promise<RecoveryRunResult> => {
+  if (run.kind === 'submission_unknown') {
+    try {
+      return (await expireGenerationSubmission(run.runId, cutoffs)) ? 'terminal' : 'pending'
+    } catch (error) {
+      console.error('Failed to expire ambiguous OpenAI submission', {runId: run.runId}, error)
+      return 'failed'
+    }
+  }
+
   try {
     const response = await retrieveHistoryResponse(run.responseId)
     let eventType:
@@ -69,14 +84,20 @@ const recoverGenerationRun = async (run: RecoverableGenerationRun): Promise<Reco
 }
 
 /** Replays terminal responses when their OpenAI webhook was not received. */
-export const recoverHistoryGenerations = async (): Promise<RecoveryResult> => {
-  const updatedBefore = new Date(Date.now() - RECOVERY_DELAY_MILLISECONDS)
-  const runs = await listRecoverableGenerationRuns(updatedBefore)
-  const results = await Promise.all(runs.map(recoverGenerationRun))
+export const recoverHistoryGenerations = async (now = new Date()): Promise<RecoveryResult> => {
+  const preparingBefore = new Date(now.getTime() - UNKNOWN_SUBMISSION_EXPIRATION_MILLISECONDS)
+  const submittedBefore = new Date(now.getTime() - SUBMITTED_RESPONSE_RECOVERY_DELAY_MILLISECONDS)
+  const cutoffs = {
+    preparingBefore,
+    submissionExpiredBefore: now,
+    submittedBefore,
+  } satisfies RecoveryCutoffs
+  const runs = await listRecoverableGenerationRuns(cutoffs)
+  const results = await Promise.all(runs.map((run) => recoverGenerationRun(run, cutoffs)))
   const failed = results.filter((result) => result === 'failed').length
   const terminal = results.filter((result) => result === 'terminal').length
 
-  // Retry one failed submission or terminal response after polling stale work.
+  // Continue daily generation after polling stale work; ambiguous expirations stay terminal.
   await startHistoryGeneration()
 
   return {checked: runs.length, failed, terminal}

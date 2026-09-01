@@ -1,5 +1,6 @@
-import {createMemo, createSignal, onMount} from 'solid-js'
+import {createMemo, onMount} from 'solid-js'
 
+import {createAuthenticationMachine} from '../auth/machine'
 import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
 import {readAccountSession} from './web-session'
 
@@ -40,7 +41,27 @@ export interface UserSettingsController {
 }
 
 export const useUserSettings = (): UserSettingsController => {
-  const [state, setState] = createSignal<UserSettingsState>({kind: 'loading'})
+  const authentication = createAuthenticationMachine()
+  const state = createMemo<UserSettingsState>(() => {
+    const currentState = authentication.state()
+
+    switch (currentState.kind) {
+      case 'checking':
+        return {kind: 'loading'}
+      case 'anonymous':
+        return currentState
+      case 'authenticated':
+        return currentState.provider === 'email'
+          ? currentState
+          : {kind: 'authenticated', provider: 'toss'}
+      case 'unavailable':
+        return {kind: 'error'}
+      default: {
+        const unhandledState: never = currentState
+        return unhandledState
+      }
+    }
+  })
   const authenticatedUser = createMemo(() => {
     const currentState = state()
 
@@ -54,8 +75,33 @@ export const useUserSettings = (): UserSettingsController => {
 
   onMount(() => {
     readUserSettingsState()
-      .then(setState)
-      .catch(() => setState({kind: 'error'}))
+      .then((resolvedState) => {
+        switch (resolvedState.kind) {
+          case 'anonymous':
+            authentication.send({type: 'resolve-anonymous'})
+            return
+          case 'authenticated':
+            authentication.send({
+              session:
+                resolvedState.provider === 'email'
+                  ? resolvedState
+                  : {kind: 'authenticated', provider: 'toss'},
+              type: 'resolve-authenticated',
+            })
+            return
+          case 'error':
+            authentication.send({type: 'resolve-unavailable'})
+            return
+          case 'loading':
+            authentication.send({type: 'check'})
+            return
+          default: {
+            const unhandledState: never = resolvedState
+            return unhandledState
+          }
+        }
+      })
+      .catch(() => authentication.send({type: 'resolve-unavailable'}))
   })
 
   return {

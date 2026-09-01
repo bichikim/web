@@ -1,4 +1,4 @@
-import {cva} from 'class-variance-authority'
+import {cva, cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
@@ -17,14 +17,14 @@ import {PSettingsSectionHeading} from '../settings/SectionHeading'
 import {LanguageLearningLanguageSelect} from './LanguageSelect'
 import {LanguageLearningTagInput} from './TagInput'
 
-const WORD_CLASS = [
+const WORD_CLASS = cx(
   'inline-flex min-h-9 max-w-full items-stretch overflow-hidden rounded-control border border-solid',
   'border-border bg-[rgb(255_255_255_/_3%)]',
-].join(' ')
-const WORD_ACTION_BUTTON_CLASS = [
+)
+const WORD_ACTION_BUTTON_CLASS = cx(
   'inline-flex size-9 flex-none cursor-pointer items-center justify-center border-0',
   'border-solid border-border bg-transparent',
-].join(' ')
+)
 const memorizedButtonClasses = cva(`${WORD_ACTION_BUTTON_CLASS} border-r`, {
   defaultVariants: {memorized: false},
   variants: {

@@ -1,29 +1,61 @@
 /** @vitest-environment jsdom */
 
+import {useAction, useSubmission} from '@solidjs/router'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {requestUserMagicLink} from '../../../features/user-auth/magic-link'
-import {
-  completeAccountLink,
-  readAccountSession,
-  signOutWebSession,
-} from '../../../features/user-auth/web-session'
-import {WebAccount} from '../WebAccount'
+import {completeAccountLink, readAccountSession} from '../../../features/user-auth/web-session'
 
-vi.mock('../../../features/user-auth/magic-link', () => ({requestUserMagicLink: vi.fn()}))
+vi.mock('@solidjs/router', () => ({action: vi.fn(), useAction: vi.fn(), useSubmission: vi.fn()}))
 vi.mock('../../../features/user-auth/web-session', () => ({
   completeAccountLink: vi.fn(),
   readAccountSession: vi.fn(),
   signOutWebSession: vi.fn(),
 }))
 
+import {WebAccount} from '../WebAccount'
+
+type MagicLinkResult = {readonly status: 'rejected' | 'sent' | 'unavailable'}
+type SignOutResult = {readonly status: 'rejected' | 'signed-out' | 'unavailable'}
+
+const [magicLinkPending, setMagicLinkPending] = createSignal(false)
+const [magicLinkResult, setMagicLinkResult] = createSignal<MagicLinkResult | undefined>()
+const [signOutPending, setSignOutPending] = createSignal(false)
+const [signOutResult, setSignOutResult] = createSignal<SignOutResult | undefined>()
+const magicLinkSubmission = {
+  get pending() {
+    return magicLinkPending()
+  },
+  get result() {
+    return magicLinkResult()
+  },
+}
+const signOutSubmission = {
+  get pending() {
+    return signOutPending()
+  },
+  get result() {
+    return signOutResult()
+  },
+}
+const requestMagicLink = vi.fn()
+const signOut = vi.fn()
+
 beforeEach(() => {
   vi.clearAllMocks()
   window.history.replaceState(null, '', '/account')
-  vi.mocked(requestUserMagicLink).mockResolvedValue(true)
+  setMagicLinkPending(false)
+  setMagicLinkResult(undefined)
+  setSignOutPending(false)
+  setSignOutResult(undefined)
+  requestMagicLink.mockReset()
+  signOut.mockReset()
+  vi.mocked(useAction).mockReturnValueOnce(requestMagicLink).mockReturnValueOnce(signOut)
+  vi.mocked(useSubmission)
+    .mockReturnValueOnce(magicLinkSubmission as ReturnType<typeof useSubmission>)
+    .mockReturnValueOnce(signOutSubmission as ReturnType<typeof useSubmission>)
   vi.mocked(readAccountSession).mockResolvedValue(null)
-  vi.mocked(signOutWebSession).mockResolvedValue(true)
 })
 
 it('should explain an email account-link callback failure and consume the query', async () => {
@@ -97,86 +129,77 @@ it('should explain an expired account-link token and consume it', async () => {
   expect(new URL(window.location.href).searchParams.has('link_token')).toBe(false)
 })
 
-it('should show the signed-out email entry form after loading no session', async () => {
+it('should render email authentication as an action form', async () => {
   render(() => <WebAccount />)
 
-  expect(await screen.findByRole('button', {name: '로그인 링크 받기'})).toBeEnabled()
-  expect(screen.getByLabelText('이메일')).toHaveValue('')
+  const button = await screen.findByRole('button', {name: '로그인 링크 받기'})
+  const email = screen.getByLabelText('이메일')
+
+  expect(button.closest('form')).toHaveAttribute('method', 'post')
+  expect(button.closest('form')).toHaveAttribute('action', '/api/auth/sign-in/magic-link')
+  expect(email).toHaveAttribute('name', 'email')
+
+  fireEvent.input(email, {target: {value: 'user@example.com'}})
+  fireEvent.submit(button.closest('form')!)
+
+  expect(requestMagicLink).toHaveBeenCalledOnce()
+  expect((requestMagicLink.mock.calls[0]?.[0] as FormData).get('email')).toBe('user@example.com')
 })
 
-it('should show submission progress and confirmation for a sent magic link', async () => {
-  const magicLink = Promise.withResolvers<boolean>()
-  vi.mocked(requestUserMagicLink).mockReturnValueOnce(magicLink.promise)
-
+it('should derive magic-link progress and feedback from its action submission', async () => {
   render(() => <WebAccount />)
+  await screen.findByRole('button', {name: '로그인 링크 받기'})
 
-  const emailField = await screen.findByLabelText('이메일')
-  fireEvent.input(emailField, {target: {value: 'user@example.com'}})
-  fireEvent.submit(screen.getByRole('button', {name: '로그인 링크 받기'}).closest('form')!)
+  setMagicLinkPending(true)
   expect(screen.getByRole('button', {name: '이메일 전송 중…'})).toBeDisabled()
 
-  magicLink.resolve(true)
+  setMagicLinkPending(false)
+  setMagicLinkResult({status: 'sent'})
+  expect(screen.getByRole('status')).toHaveTextContent('로그인 링크를 이메일로 보냈습니다.')
 
-  await waitFor(() => {
-    expect(screen.getByRole('status')).toHaveTextContent('로그인 링크를 이메일로 보냈습니다.')
-  })
-  expect(requestUserMagicLink).toHaveBeenCalledWith({
-    email: 'user@example.com',
-    origin: window.location.origin,
-  })
+  setMagicLinkResult({status: 'rejected'})
+  expect(screen.getByRole('alert')).toHaveTextContent('로그인 이메일을 보내지 못했습니다.')
+
+  setMagicLinkResult({status: 'unavailable'})
+  expect(screen.getByRole('alert')).toHaveTextContent('로그인 서버에 연결하지 못했습니다.')
 })
 
-it('should explain rejected and failed magic-link requests', async () => {
-  vi.mocked(requestUserMagicLink)
-    .mockResolvedValueOnce(false)
-    .mockRejectedValueOnce(new Error('server unavailable'))
-
-  render(() => <WebAccount />)
-
-  const emailField = await screen.findByLabelText('이메일')
-  fireEvent.input(emailField, {target: {value: 'user@example.com'}})
-  const form = screen.getByRole('button', {name: '로그인 링크 받기'}).closest('form')!
-
-  fireEvent.submit(form)
-  await waitFor(() => {
-    expect(screen.getByRole('alert')).toHaveTextContent('로그인 이메일을 보내지 못했습니다.')
-  })
-
-  fireEvent.submit(form)
-  await waitFor(() => {
-    expect(screen.getByRole('alert')).toHaveTextContent('로그인 서버에 연결하지 못했습니다.')
-  })
-})
-
-it('should show the active account and confirm a successful sign-out', async () => {
-  const signOut = Promise.withResolvers<boolean>()
+it('should render an authenticated email session with a pending-aware sign-out action', async () => {
   vi.mocked(readAccountSession).mockResolvedValueOnce({email: 'user@example.com'})
-  vi.mocked(signOutWebSession).mockReturnValueOnce(signOut.promise)
 
   render(() => <WebAccount />)
 
   expect(await screen.findByText('user@example.com')).toBeVisible()
-  fireEvent.click(screen.getByRole('button', {name: '로그아웃'}))
+  const form = screen.getByRole('button', {name: '로그아웃'}).closest('form')
+
+  expect(form).toHaveAttribute('method', 'post')
+  expect(form).toHaveAttribute('action', '/api/auth/sign-out')
+
+  setSignOutPending(true)
   expect(screen.getByRole('button', {name: '로그아웃'})).toBeDisabled()
 
-  signOut.resolve(true)
+  setSignOutPending(false)
+  fireEvent.submit(form!)
+  expect(signOut).toHaveBeenCalledOnce()
+})
 
-  await waitFor(() => {
-    expect(screen.getByRole('status')).toHaveTextContent('로그아웃했습니다.')
-  })
+it('should consume a successful client sign-out action and show the anonymous state', async () => {
+  vi.mocked(readAccountSession).mockResolvedValueOnce({email: 'user@example.com'})
+  render(() => <WebAccount />)
+  await screen.findByText('user@example.com')
+  setSignOutResult({status: 'signed-out'})
+
+  expect(await screen.findByRole('status')).toHaveTextContent('로그아웃했습니다.')
   expect(screen.getByRole('button', {name: '로그인 링크 받기'})).toBeEnabled()
 })
 
-it('should keep the account open when sign-out cannot be confirmed', async () => {
+it('should preserve an authenticated session after a rejected client sign-out action', async () => {
   vi.mocked(readAccountSession).mockResolvedValueOnce({email: 'user@example.com'})
-  vi.mocked(signOutWebSession).mockResolvedValueOnce(false)
 
   render(() => <WebAccount />)
+  await screen.findByText('user@example.com')
+  setSignOutResult({status: 'rejected'})
 
-  fireEvent.click(await screen.findByRole('button', {name: '로그아웃'}))
-
-  await waitFor(() => {
-    expect(screen.getByRole('alert')).toHaveTextContent('로그아웃하지 못했습니다.')
-  })
+  expect(await screen.findByRole('alert')).toHaveTextContent('로그아웃하지 못했습니다.')
   expect(screen.getByText('user@example.com')).toBeVisible()
 })

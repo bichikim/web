@@ -20,7 +20,7 @@ const JOB: FeedDialogueJob = {
   version: 1,
   voiceId: 'M1',
 }
-const createRepository = () => ({updateJob: vi.fn(async () => undefined)})
+const createRepository = () => ({startJob: vi.fn(async () => true)})
 
 it('should return the latest voice after preparing a stable model', async () => {
   const repository = createRepository()
@@ -39,12 +39,30 @@ it('should return the latest voice after preparing a stable model', async () => 
     resolveGenerationSettings,
   })
 
-  expect(repository.updateJob).toHaveBeenCalledWith({
+  expect(repository.startJob).toHaveBeenCalledWith({
     ...JOB,
     status: 'generating',
     updatedAt: '2026-08-14T00:01:00.000Z',
   })
   expect(result).toEqual({job: {...JOB, voiceId: 'Yuna'}, status: 'ready'})
+})
+
+it('should stop when the queued job was already interrupted', async () => {
+  const repository = {startJob: vi.fn(async () => false)}
+  const resolveGenerationSettings = vi.fn()
+
+  const result = await prepareFeedGeneration({
+    allowModelDownload: false,
+    isModelDownloaded: vi.fn(async () => true),
+    job: JOB,
+    now: () => '2026-08-14T00:01:00.000Z',
+    prepareModel: vi.fn(async () => true),
+    repository,
+    resolveGenerationSettings,
+  })
+
+  expect(result).toEqual({status: 'job-not-queued'})
+  expect(resolveGenerationSettings).not.toHaveBeenCalled()
 })
 
 it('should prepare a newly selected model before returning its latest voice', async () => {

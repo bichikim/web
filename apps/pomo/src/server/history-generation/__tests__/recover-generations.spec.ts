@@ -1,13 +1,15 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
+  expireGenerationSubmission: vi.fn(),
   handleOpenAiResponseEvent: vi.fn(),
   listRecoverableGenerationRuns: vi.fn(),
   retrieveHistoryResponse: vi.fn(),
   startHistoryGeneration: vi.fn(),
 }))
 
-vi.mock('../generation-repository', () => ({
+vi.mock('../generation-recovery-repository', () => ({
+  expireGenerationSubmission: mocks.expireGenerationSubmission,
   listRecoverableGenerationRuns: mocks.listRecoverableGenerationRuns,
 }))
 vi.mock('../handle-openai-webhook', () => ({
@@ -18,9 +20,12 @@ vi.mock('../start-generation', () => ({startHistoryGeneration: mocks.startHistor
 
 import {recoverHistoryGenerations} from '../recover-generations'
 
+const NOW = new Date('2026-08-25T00:30:00.000Z')
+
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.handleOpenAiResponseEvent.mockResolvedValue(undefined)
+  mocks.expireGenerationSubmission.mockResolvedValue(true)
   mocks.startHistoryGeneration.mockResolvedValue({
     responseId: null,
     runId: 'retry-run',
@@ -37,14 +42,14 @@ it('should continue recovery and generation retry when one response retrieval fa
   const retrievalError = new Error('Response not found')
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
   mocks.listRecoverableGenerationRuns.mockResolvedValue([
-    {responseId: 'resp-unreadable'},
-    {responseId: 'resp-completed'},
+    {kind: 'response', responseId: 'resp-unreadable'},
+    {kind: 'response', responseId: 'resp-completed'},
   ])
   mocks.retrieveHistoryResponse
     .mockRejectedValueOnce(retrievalError)
     .mockResolvedValueOnce({status: 'completed'})
 
-  await expect(recoverHistoryGenerations()).resolves.toEqual({
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
     checked: 2,
     failed: 1,
     terminal: 1,
@@ -69,10 +74,16 @@ it.each([
   ['failed', 'response.failed'],
   ['incomplete', 'response.incomplete'],
 ] as const)('should replay terminal %s responses', async (status, eventType) => {
-  mocks.listRecoverableGenerationRuns.mockResolvedValue([{responseId: `resp-${status}`}])
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'response', responseId: `resp-${status}`},
+  ])
   mocks.retrieveHistoryResponse.mockResolvedValue({status})
 
-  await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 1, failed: 0, terminal: 1})
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 1,
+    failed: 0,
+    terminal: 1,
+  })
 
   expect(mocks.handleOpenAiResponseEvent).toHaveBeenCalledWith({
     data: {id: `resp-${status}`},
@@ -84,10 +95,16 @@ it.each([
 it.each(['in_progress', 'queued', undefined] as const)(
   'should leave %s responses pending',
   async (status) => {
-    mocks.listRecoverableGenerationRuns.mockResolvedValue([{responseId: 'resp-pending'}])
+    mocks.listRecoverableGenerationRuns.mockResolvedValue([
+      {kind: 'response', responseId: 'resp-pending'},
+    ])
     mocks.retrieveHistoryResponse.mockResolvedValue({status})
 
-    await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 1, failed: 0, terminal: 0})
+    await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+      checked: 1,
+      failed: 0,
+      terminal: 0,
+    })
 
     expect(mocks.handleOpenAiResponseEvent).not.toHaveBeenCalled()
   },
@@ -96,15 +113,19 @@ it.each(['in_progress', 'queued', undefined] as const)(
 it('should isolate webhook and unknown status failures', async () => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
   mocks.listRecoverableGenerationRuns.mockResolvedValue([
-    {responseId: 'resp-webhook'},
-    {responseId: 'resp-unknown'},
+    {kind: 'response', responseId: 'resp-webhook'},
+    {kind: 'response', responseId: 'resp-unknown'},
   ])
   mocks.retrieveHistoryResponse
     .mockResolvedValueOnce({status: 'completed'})
     .mockResolvedValueOnce({status: 'future-status'})
   mocks.handleOpenAiResponseEvent.mockRejectedValueOnce(new Error('webhook failed'))
 
-  await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 2, failed: 2, terminal: 0})
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 2,
+    failed: 2,
+    terminal: 0,
+  })
 
   expect(console.error).toHaveBeenCalledTimes(2)
   expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
@@ -113,7 +134,53 @@ it('should isolate webhook and unknown status failures', async () => {
 it('should still retry generation when there are no stale runs', async () => {
   mocks.listRecoverableGenerationRuns.mockResolvedValue([])
 
-  await expect(recoverHistoryGenerations()).resolves.toEqual({checked: 0, failed: 0, terminal: 0})
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 0,
+    failed: 0,
+    terminal: 0,
+  })
 
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})
+
+it('should expire an ambiguous submission before retrying generation', async () => {
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'submission_unknown', runId: 'run-unknown'},
+  ])
+
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 1,
+    failed: 0,
+    terminal: 1,
+  })
+
+  expect(mocks.expireGenerationSubmission).toHaveBeenCalledWith('run-unknown', {
+    preparingBefore: new Date('2026-08-25T00:00:00.000Z'),
+    submissionExpiredBefore: NOW,
+    submittedBefore: new Date('2026-08-25T00:00:00.000Z'),
+  })
+  expect(mocks.retrieveHistoryResponse).not.toHaveBeenCalled()
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})
+
+it('should isolate an ambiguous submission expiration failure', async () => {
+  const expirationError = new Error('Database unavailable')
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'submission_unknown', runId: 'run-unknown'},
+  ])
+  mocks.expireGenerationSubmission.mockRejectedValue(expirationError)
+
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 1,
+    failed: 1,
+    terminal: 0,
+  })
+
+  expect(console.error).toHaveBeenCalledWith(
+    'Failed to expire ambiguous OpenAI submission',
+    {runId: 'run-unknown'},
+    expirationError,
+  )
   expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
 })

@@ -1,0 +1,139 @@
+.puppet-editor.puppet-story-surface {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  padding: 24px;
+  border: 1px solid #27302d;
+  border-radius: 12px;
+}
+
+.puppet-story-narrow {
+  max-width: 760px;
+}
+
+.puppet-design-language {
+  min-height: 100vh;
+  padding: 40px;
+  color: #edf4f0;
+  background: #0b0f0e;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+.puppet-design-language header {
+  max-width: 720px;
+  margin-bottom: 36px;
+}
+
+.puppet-design-language header span {
+  color: #64e5c4;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.puppet-design-language h1 {
+  margin: 10px 0 8px;
+  font-size: 32px;
+  letter-spacing: -0.03em;
+}
+
+.puppet-design-language header p,
+.puppet-design-language article p {
+  margin: 0;
+  color: #a7b3af;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.puppet-design-section + .puppet-design-section {
+  margin-top: 32px;
+}
+
+.puppet-design-section h2 {
+  margin: 0 0 14px;
+  color: #b9c5c0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.puppet-swatch-grid,
+.puppet-principle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.puppet-swatch,
+.puppet-principle-grid article {
+  overflow: hidden;
+  border: 1px solid #27302d;
+  border-radius: 10px;
+  background: #101513;
+}
+
+.puppet-swatch-color {
+  height: 72px;
+  background: var(--puppet-swatch-color);
+}
+
+.puppet-swatch-body,
+.puppet-principle-grid article {
+  padding: 14px;
+}
+
+.puppet-swatch strong,
+.puppet-principle-grid strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.puppet-swatch code {
+  color: #7f8d88;
+  font-size: 11px;
+}
+
+.puppet-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid #27302d;
+  border-radius: 10px;
+  background: #101513;
+}
+
+.puppet-control-row .panel-resizer {
+  width: 80px;
+  height: 6px;
+}
+
+.puppet-editor-story {
+  width: 100%;
+  height: min(860px, calc(100vh - 32px));
+  min-height: 640px;
+  overflow: auto;
+}
+
+.puppet-context-menu-demo {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border: 1px dashed #3d5f56;
+  border-radius: 9px;
+  color: #b9c5c0;
+  background: #0d1210;
+  font-size: 13px;
+}

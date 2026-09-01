@@ -1,41 +1,35 @@
-import type {PixiLayerSceneDefinition, PSceneId, PSceneStyle} from '../focus-room-animation'
+import type {PActivity, PixiLayerSceneDefinition, PSceneStyle, PTime} from '../focus-room-animation'
 import clearImage from './assets/scene/day-clear.jpg'
 import cloudyImage from './assets/scene/day-cloudy.jpg'
 import rainImage from './assets/scene/day-rain.jpg'
-import readingUserPrecipitationMask from './assets/scene/day-reading-user-precipitation-effect-mask.png'
-import readingUserWindowMask from './assets/scene/day-reading-user-mask.png'
+import dayTypingPrecipitationMask from './assets/scene/day-typing-precipitation-effect-mask.png'
+import dayTypingWindowMask from './assets/scene/day-typing-mask.png'
+import readingPrecipitationMask from './assets/scene/reading-precipitation-effect-mask.png'
+import readingWindowMask from './assets/scene/reading-mask.png'
 import snowImage from './assets/scene/day-snow.jpg'
-import typingPrecipitationMask from './assets/scene/day-typing-focused-precipitation-effect-mask.png'
-import typingWindowMask from './assets/scene/day-typing-focused-mask.png'
-import typingUserPrecipitationMask from './assets/scene/day-typing-user-precipitation-effect-mask.png'
-import typingUserWindowMask from './assets/scene/day-typing-user-mask.png'
-import writingPrecipitationMask from './assets/scene/day-writing-focused-precipitation-effect-mask.png'
-import writingWindowMask from './assets/scene/day-writing-focused-mask.png'
-import writingUserPrecipitationMask from './assets/scene/day-writing-user-precipitation-effect-mask.png'
-import writingUserWindowMask from './assets/scene/day-writing-user-mask.png'
+import writingPrecipitationMask from './assets/scene/writing-precipitation-effect-mask.png'
+import writingWindowMask from './assets/scene/writing-mask.png'
 import nightClearImage from './assets/scene/night-clear.jpg'
 import nightCloudyImage from './assets/scene/night-cloudy.jpg'
 import nightOvercastImage from './assets/scene/night-overcast.jpg'
 import nightRainImage from './assets/scene/night-rain.jpg'
-import nightReadingPrecipitation from './assets/scene/night-reading-user-precipitation-effect-mask.png'
-import nightReadingWindow from './assets/scene/night-reading-user-mask.png'
 import nightSnowImage from './assets/scene/night-snow.jpg'
-import nightTypingPrecipitation from './assets/scene/night-typing-focused-precipitation-effect-mask.png'
-import nightTypingWindow from './assets/scene/night-typing-focused-mask.png'
-import nightTypingUserPrecipitation from './assets/scene/night-typing-user-precipitation-effect-mask.png'
-import nightTypingUserWindow from './assets/scene/night-typing-user-mask.png'
-import nightWritingPrecipitation from './assets/scene/night-writing-focused-precipitation-effect-mask.png'
-import nightWritingWindow from './assets/scene/night-writing-focused-mask.png'
-import nightWritingUserPrecipitation from './assets/scene/night-writing-user-precipitation-effect-mask.png'
-import nightWritingUserWindow from './assets/scene/night-writing-user-mask.png'
+import nightTypingPrecipitationMask from './assets/scene/night-typing-precipitation-effect-mask.png'
+import nightTypingWindowMask from './assets/scene/night-typing-mask.png'
 import overcastImage from './assets/scene/day-overcast.jpg'
-import precipitationEffectMask from './assets/scene/precipitation-effect-mask.png'
-import windowMask from './assets/scene/day-reading-focused-mask.png'
 import type {WeatherSceneCondition} from './scene-mode'
 
 interface WeatherMasks {
   readonly precipitation: string
   readonly window: string
+}
+
+export interface ApplyWeatherSceneLayerOptions {
+  readonly activity: PActivity
+  readonly condition: WeatherSceneCondition
+  readonly scene: PixiLayerSceneDefinition
+  readonly sceneStyle: PSceneStyle
+  readonly time: PTime
 }
 
 const NIGHT_PRECIPITATION_OPACITY = 0.4
@@ -57,64 +51,34 @@ const NIGHT_WEATHER_SOURCES = {
 } satisfies Readonly<Record<WeatherSceneCondition, string>>
 
 const WEATHER_SOURCES = {
-  'day-reading-focused': DAY_WEATHER_SOURCES,
-  'day-reading-user': DAY_WEATHER_SOURCES,
-  'day-typing-focused': DAY_WEATHER_SOURCES,
-  'day-typing-user': DAY_WEATHER_SOURCES,
-  'day-writing-focused': DAY_WEATHER_SOURCES,
-  'day-writing-user': DAY_WEATHER_SOURCES,
-  'night-reading-focused': NIGHT_WEATHER_SOURCES,
-  'night-reading-user': NIGHT_WEATHER_SOURCES,
-  'night-typing-focused': NIGHT_WEATHER_SOURCES,
-  'night-typing-user': NIGHT_WEATHER_SOURCES,
-  'night-writing-focused': NIGHT_WEATHER_SOURCES,
-  'night-writing-user': NIGHT_WEATHER_SOURCES,
-} satisfies Readonly<Record<PSceneId, Readonly<Record<WeatherSceneCondition, string>>>>
+  day: DAY_WEATHER_SOURCES,
+  night: NIGHT_WEATHER_SOURCES,
+} satisfies Readonly<Record<PTime, Readonly<Record<WeatherSceneCondition, string>>>>
 
 const WEATHER_MASKS = {
-  'day-reading-focused': {precipitation: precipitationEffectMask, window: windowMask},
-  'day-reading-user': {
-    precipitation: readingUserPrecipitationMask,
-    window: readingUserWindowMask,
+  day: {
+    reading: {precipitation: readingPrecipitationMask, window: readingWindowMask},
+    typing: {
+      precipitation: dayTypingPrecipitationMask,
+      window: dayTypingWindowMask,
+    },
+    writing: {
+      precipitation: writingPrecipitationMask,
+      window: writingWindowMask,
+    },
   },
-  'day-typing-focused': {
-    precipitation: typingPrecipitationMask,
-    window: typingWindowMask,
+  night: {
+    reading: {precipitation: readingPrecipitationMask, window: readingWindowMask},
+    typing: {
+      precipitation: nightTypingPrecipitationMask,
+      window: nightTypingWindowMask,
+    },
+    writing: {
+      precipitation: writingPrecipitationMask,
+      window: writingWindowMask,
+    },
   },
-  'day-typing-user': {
-    precipitation: typingUserPrecipitationMask,
-    window: typingUserWindowMask,
-  },
-  'day-writing-focused': {
-    precipitation: writingPrecipitationMask,
-    window: writingWindowMask,
-  },
-  'day-writing-user': {
-    precipitation: writingUserPrecipitationMask,
-    window: writingUserWindowMask,
-  },
-  'night-reading-focused': {precipitation: precipitationEffectMask, window: windowMask},
-  'night-reading-user': {
-    precipitation: nightReadingPrecipitation,
-    window: nightReadingWindow,
-  },
-  'night-typing-focused': {
-    precipitation: nightTypingPrecipitation,
-    window: nightTypingWindow,
-  },
-  'night-typing-user': {
-    precipitation: nightTypingUserPrecipitation,
-    window: nightTypingUserWindow,
-  },
-  'night-writing-focused': {
-    precipitation: nightWritingPrecipitation,
-    window: nightWritingWindow,
-  },
-  'night-writing-user': {
-    precipitation: nightWritingUserPrecipitation,
-    window: nightWritingUserWindow,
-  },
-} satisfies Readonly<Record<PSceneId, WeatherMasks>>
+} satisfies Readonly<Record<PTime, Readonly<Record<PActivity, WeatherMasks>>>>
 
 const getWeatherInsertionIndex = (
   scene: PixiLayerSceneDefinition,
@@ -132,12 +96,12 @@ const getWeatherInsertionIndex = (
 }
 
 const getWeatherEffect = (
-  sceneId: PSceneId,
+  time: PTime,
   condition: WeatherSceneCondition,
   beforeLayerId: string | undefined,
   maskSource: string,
 ) => {
-  const opacity = sceneId.startsWith('night-') ? NIGHT_PRECIPITATION_OPACITY : 1
+  const opacity = time === 'night' ? NIGHT_PRECIPITATION_OPACITY : 1
 
   switch (condition) {
     case 'clear':
@@ -169,40 +133,37 @@ const getWeatherEffect = (
 
 /** Overlays the aligned full-room weather frame through the supported window mask. */
 export const applyWeatherSceneLayer = (
-  scene: PixiLayerSceneDefinition,
-  sceneId: PSceneId,
-  sceneStyle: PSceneStyle,
-  condition: WeatherSceneCondition,
+  options: ApplyWeatherSceneLayerOptions,
 ): PixiLayerSceneDefinition => {
-  if (sceneStyle !== 'original') {
-    return scene
+  if (options.sceneStyle !== 'original') {
+    return options.scene
   }
 
-  const headIndex = scene.layers.findIndex((layer) => layer.id === 'head')
-  const insertionIndex = getWeatherInsertionIndex(scene, condition)
-  const masks = WEATHER_MASKS[sceneId]
+  const headIndex = options.scene.layers.findIndex((layer) => layer.id === 'head')
+  const insertionIndex = getWeatherInsertionIndex(options.scene, options.condition)
+  const masks = WEATHER_MASKS[options.time][options.activity]
   const weatherLayer = {
-    id: `weather-${condition}`,
+    id: `weather-${options.condition}`,
     maskSource: masks.window,
-    source: WEATHER_SOURCES[sceneId][condition],
+    source: WEATHER_SOURCES[options.time][options.condition],
   }
 
   return {
-    ...scene,
+    ...options.scene,
     effects: [
-      ...(scene.effects ?? []),
+      ...(options.scene.effects ?? []),
       ...getWeatherEffect(
-        sceneId,
-        condition,
+        options.time,
+        options.condition,
         headIndex === -1 ? undefined : 'head',
         masks.precipitation,
       ),
     ],
-    id: `${scene.id}-weather-${condition}`,
+    id: `${options.scene.id}-weather-${options.condition}`,
     layers: [
-      ...scene.layers.slice(0, insertionIndex),
+      ...options.scene.layers.slice(0, insertionIndex),
       weatherLayer,
-      ...scene.layers.slice(insertionIndex),
+      ...options.scene.layers.slice(insertionIndex),
     ],
   }
 }

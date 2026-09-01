@@ -1,10 +1,9 @@
-name: Deploy Pomo Production
+name: Release Pomo
 
 on:
-  push:
-    branches:
-      - main-pomo
   workflow_dispatch:
+
+run-name: Release Pomo from ${{ github.ref_name }} at ${{ github.sha }}
 
 concurrency:
   group: pomo-production
@@ -23,13 +22,19 @@ env:
 jobs:
   audio-gateway:
     name: Deploy audio gateway first
-    if: github.ref == 'refs/heads/main-pomo'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
       deployed: ${{ steps.changes.outputs.deploy }}
       previous_version: ${{ steps.previous.outputs.version }}
     steps:
+      - name: Validate release source
+        run: |
+          test "${GITHUB_REF}" = "refs/heads/main" || {
+            echo "::error::Select the main branch when running this workflow."
+            exit 1
+          }
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -123,7 +128,7 @@ jobs:
   deploy:
     name: Migrate and deploy
     needs: audio-gateway
-    if: github.ref == 'refs/heads/main-pomo'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:

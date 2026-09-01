@@ -97,12 +97,6 @@ export interface EmbeddingProvider {
 }
 
 export interface KeySimilarityOptions {
-  /**
-   * Internal test hook for deterministic embeddings.
-   * Supplying it bypasses the Worker and runs comparison inline.
-   * @internal
-   */
-  readonly __embeddingProvider?: EmbeddingProvider
   readonly buildMode?: DiagnosticMode
   readonly cacheDir?: string
   readonly exclude?: ReadonlyArray<string>
@@ -116,11 +110,12 @@ export interface KeySimilarityOptions {
   readonly scanInclude?: ReadonlyArray<string>
   readonly semanticThreshold?: SimilarityThreshold
   readonly serveMode?: ServeDiagnosticMode
+  /** Skips pairs whose original key values are identical. */
+  readonly skipIdenticalKeys?: boolean
   readonly wasmPath?: string
 }
 
 export interface ResolvedKeySimilarityOptions {
-  readonly __embeddingProvider: EmbeddingProvider | undefined
   readonly buildMode: DiagnosticMode
   readonly cacheDir: string
   readonly exclude: ReadonlyArray<string>
@@ -132,5 +127,6 @@ export interface ResolvedKeySimilarityOptions {
   readonly scanInclude: ReadonlyArray<string>
   readonly semanticThreshold: SimilarityThreshold
   readonly serveMode: ServeDiagnosticMode
+  readonly skipIdenticalKeys: boolean
   readonly wasmPath: string | undefined
 }

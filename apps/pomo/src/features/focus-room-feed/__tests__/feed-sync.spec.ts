@@ -44,6 +44,7 @@ const createRepository = () => {
     complete: vi.fn(),
     deleteJobs: vi.fn(),
     dispose: vi.fn(),
+    failJob: vi.fn(async () => true),
     interruptUnfinishedJobs: vi.fn(async () => []),
     listExpiredMetadata: vi.fn(async () => []),
     listItems: vi.fn(async (connectionId) =>
@@ -63,6 +64,7 @@ const createRepository = () => {
     saveItems: vi.fn(async (nextItems) => {
       items.push(...nextItems)
     }),
+    startJob: vi.fn(),
     updateJob: vi.fn(),
   }
   return {items, jobs, repository}

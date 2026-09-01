@@ -3,6 +3,7 @@ import {createSignal, onCleanup, onMount} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
+import {createAuthenticationMachine} from '../auth/machine'
 import {
   type AccountLinkEmailResult,
   clearStoredAppSession,
@@ -75,10 +76,10 @@ export interface TossAccountController {
 }
 
 export const useTossAccount = (): TossAccountController => {
+  const authentication = createAuthenticationMachine()
   const login = useLoginNavigation()
   const [token, setToken] = createSignal<string | null>(null)
   const [email, setEmail] = createSignal('')
-  const [isLoading, setIsLoading] = createSignal(true)
   const [isSubmitting, setIsSubmitting] = createSignal(false)
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [successMessage, setSuccessMessage] = createSignal<string | null>(null)
@@ -87,18 +88,27 @@ export const useTossAccount = (): TossAccountController => {
     const restoreSession = async () => {
       const storedToken = await readStoredAppSession()
 
-      if (storedToken !== null && (await validateAppSession(storedToken))) {
-        setToken(storedToken)
-      } else if (storedToken !== null) {
-        await clearStoredAppSession()
+      if (storedToken === null) {
+        authentication.send({type: 'resolve-anonymous'})
+        return
       }
 
-      setIsLoading(false)
+      if (await validateAppSession(storedToken)) {
+        setToken(storedToken)
+        authentication.send({
+          session: {kind: 'authenticated', provider: 'toss'},
+          type: 'resolve-authenticated',
+        })
+        return
+      }
+
+      await clearStoredAppSession()
+      authentication.send({type: 'resolve-anonymous'})
     }
 
     restoreSession().catch(() => {
       setErrorMessage(m.account_toss_session_failed())
-      setIsLoading(false)
+      authentication.send({type: 'resolve-unavailable'})
     })
   })
 
@@ -130,6 +140,7 @@ export const useTossAccount = (): TossAccountController => {
     try {
       const result = await revokeTossLoginSession(currentToken)
       setToken(null)
+      authentication.send({type: 'sign-out'})
 
       if (result.storageStatus === 'cleared') {
         setSuccessMessage(m.account_toss_logout_success())
@@ -169,7 +180,7 @@ export const useTossAccount = (): TossAccountController => {
   return {
     email,
     errorMessage,
-    isLoading,
+    isLoading: () => authentication.state().kind === 'checking',
     isSubmitting,
     onEmailChange: setEmail,
     onEmailLink,

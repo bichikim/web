@@ -3,6 +3,7 @@ import {
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
   type PuppetMesh,
+  type PuppetParameter,
 } from './document'
 
 const TEXTURE_WIDTH = 640
@@ -18,6 +19,7 @@ const CENTER_VERTEX_INDEX = 4
 const FULL_ROTATION = Math.PI * 2
 const CIRCLE_TEXTURE_SIZE = 144
 const DIAMOND_TEXTURE_SIZE = 156
+const PREVIEW_DEFORM_OFFSET = 64
 const MESH_INDICES = [
   0,
   1,
@@ -100,9 +102,75 @@ const createRadialMesh = (options: RadialMeshOptions): PuppetMesh => {
   }
 }
 
+const createPreviewVertices = (centerX: number) => [
+  0,
+  0,
+  TEXTURE_WIDTH,
+  0,
+  TEXTURE_WIDTH,
+  TEXTURE_HEIGHT,
+  0,
+  TEXTURE_HEIGHT,
+  centerX,
+  CENTER_Y,
+]
+
+const createDemoParameters = (): ReadonlyArray<PuppetParameter> => [
+  {
+    defaultValue: 0,
+    id: 'angle-x',
+    keyforms: [
+      {
+        parts: [
+          {
+            partId: 'mesh-preview',
+            vertices: createPreviewVertices(CENTER_X - PREVIEW_DEFORM_OFFSET),
+          },
+        ],
+        value: -30,
+      },
+      {
+        parts: [{partId: 'mesh-preview', vertices: createPreviewVertices(CENTER_X)}],
+        value: 0,
+      },
+      {
+        parts: [
+          {
+            partId: 'mesh-preview',
+            vertices: createPreviewVertices(CENTER_X + PREVIEW_DEFORM_OFFSET),
+          },
+        ],
+        value: 30,
+      },
+    ],
+    maximum: 30,
+    minimum: -30,
+    name: 'Angle X',
+    targetPartIds: ['mesh-preview'],
+  },
+]
+
 export const createDemoDocument = (): PuppetDocument => ({
   format: PUPPET_DOCUMENT_FORMAT,
-  motions: [],
+  motions: [
+    {
+      duration: 2,
+      id: 'idle-deform',
+      tracks: [
+        {
+          axis: 'y',
+          keyframes: [
+            {time: 0, value: CENTER_Y},
+            {time: 1, value: CENTER_Y - PREVIEW_DEFORM_OFFSET},
+            {time: 2, value: CENTER_Y},
+          ],
+          partId: 'mesh-preview',
+          vertexIndex: CENTER_VERTEX_INDEX,
+        },
+      ],
+    },
+  ],
+  parameters: createDemoParameters(),
   parts: [
     {
       id: 'mesh-preview',
@@ -165,6 +233,40 @@ export const createDemoDocument = (): PuppetDocument => ({
       },
     },
   ],
+  scene: {
+    roots: [
+      {
+        id: 'mesh-preview',
+        kind: 'part',
+        locked: false,
+        name: 'mesh-preview',
+        visible: true,
+      },
+      {
+        children: [
+          {
+            id: 'shape-circle',
+            kind: 'part',
+            locked: false,
+            name: 'shape-circle',
+            visible: true,
+          },
+          {
+            id: 'shape-diamond',
+            kind: 'part',
+            locked: false,
+            name: 'shape-diamond',
+            visible: true,
+          },
+        ],
+        id: 'shapes',
+        kind: 'group',
+        locked: false,
+        name: 'Shapes',
+        visible: true,
+      },
+    ],
+  },
   version: PUPPET_DOCUMENT_VERSION,
   viewport: {height: TEXTURE_HEIGHT, width: TEXTURE_WIDTH},
 })

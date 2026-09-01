@@ -47,6 +47,7 @@ const repositoryMocks = vi.hoisted(() => {
     complete: vi.fn().mockResolvedValue(undefined),
     deleteJobs: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
+    failJob: vi.fn().mockResolvedValue(true),
     interruptUnfinishedJobs: vi.fn().mockResolvedValue([]),
     listExpiredMetadata: vi.fn().mockResolvedValue([]),
     listItems: vi.fn().mockResolvedValue([]),
@@ -106,6 +107,7 @@ beforeEach(() => {
   repositoryMocks.dialogueRepository.saveDialogue.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.complete.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.deleteJobs.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.failJob.mockResolvedValue(true)
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listExpiredMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.listItems.mockResolvedValue([])
@@ -375,7 +377,7 @@ it('should dispose a client whose model initialization fails', async () => {
 
   await vi.waitFor(() => expect(client.dispose).toHaveBeenCalled())
 
-  expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalled()
+  expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled()
   view.cleanup()
 })
 
@@ -421,13 +423,13 @@ it('should fail generation when the stored feed item is missing', async () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const view = renderHook(() => usePFeeds({events: createEventContext()}))
 
-  await vi.waitFor(() => expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalled())
+  await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
   expect(error).toHaveBeenCalledWith('Failed to process feed dialogue job.', expect.any(Error))
-  expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalledWith(
-    expect.objectContaining({errorMessage: '피드 대화를 저장하지 못했어요.'}),
-    undefined,
-  )
+  expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalledWith({
+    item: undefined,
+    job: expect.objectContaining({errorMessage: '피드 대화를 저장하지 못했어요.'}),
+  })
   view.cleanup()
 })
 

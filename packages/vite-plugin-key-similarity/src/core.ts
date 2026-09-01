@@ -238,7 +238,11 @@ export class KeySimilarityCore {
       const comparisonEntries = [
         ...rightEntries,
         ...(includeLeftPairs ? leftEntries.slice(leftIndex + 1) : []),
-      ].filter((right) => right.group === left.group)
+      ].filter(
+        (right) =>
+          right.group === left.group &&
+          (!this.options.skipIdenticalKeys || right.originalText !== left.originalText),
+      )
       const matches = comparisonEntries
         .map((right) => getBestDiagnostic(left, right, vectorsByText))
         .filter((diagnostic): diagnostic is SimilarityDiagnostic => diagnostic !== undefined)
@@ -255,8 +259,7 @@ export class KeySimilarityCore {
     }
     await this.validatePaths()
     const modelStartedAt = now()
-    const baseProvider =
-      this.options.__embeddingProvider ?? (await createLocalE5Provider(this.options))
+    const baseProvider = await createLocalE5Provider(this.options)
     this.provider = new CachedEmbeddingProvider(baseProvider, this.options.cacheDir)
     return now() - modelStartedAt
   }

@@ -34,6 +34,7 @@ export interface WorkerOptions {
   readonly modelRevision: string
   readonly root: string
   readonly serveMode: ResolvedKeySimilarityOptions['serveMode']
+  readonly skipIdenticalKeys: boolean
   readonly wasmPath: string | undefined
 }
 
@@ -45,6 +46,7 @@ const toWorkerOptions = (options: ResolvedKeySimilarityOptions): WorkerOptions =
   modelRevision: options.modelRevision,
   root: options.root,
   serveMode: options.serveMode,
+  skipIdenticalKeys: options.skipIdenticalKeys,
   wasmPath: options.wasmPath,
 })
 
@@ -57,13 +59,11 @@ export class KeyAnalysisQueue {
   private readonly diagnosticsByPair = new Map<string, SimilarityDiagnostic>()
   private failure: Error | undefined
   private identifier = 0
-  private initialization: Promise<unknown> | undefined
   private readonly idleResolvers = new Set<() => void>()
   private pendingCount = 0
-  private processing = Promise.resolve()
   private readonly revisions = new Map<string, number>()
   private readonly sources = new Map<string, string>()
-  private readonly worker: Worker | undefined
+  private readonly worker: Worker
 
   constructor(
     core: KeySimilarityCore,
@@ -72,19 +72,17 @@ export class KeyAnalysisQueue {
   ) {
     this.callbacks = callbacks
     this.core = core
-    if (options.__embeddingProvider === undefined) {
-      this.worker = new Worker(new URL(WORKER_MODULE_PATH, import.meta.url), {
-        workerData: toWorkerOptions(options),
-      })
-      this.worker.on('message', (message: AnalysisFailure | AnalysisResult) => {
-        if ('error' in message) {
-          this.finishFailure(message.identifier, new Error(message.error))
-        } else {
-          this.finishResult(message)
-        }
-      })
-      this.worker.on('error', (error) => this.failAll(error))
-    }
+    this.worker = new Worker(new URL(WORKER_MODULE_PATH, import.meta.url), {
+      workerData: toWorkerOptions(options),
+    })
+    this.worker.on('message', (message: AnalysisFailure | AnalysisResult) => {
+      if ('error' in message) {
+        this.finishFailure(message.identifier, new Error(message.error))
+      } else {
+        this.finishResult(message)
+      }
+    })
+    this.worker.on('error', (error) => this.failAll(error))
   }
 
   get diagnostics(): ReadonlyArray<SimilarityDiagnostic> {
@@ -112,11 +110,7 @@ export class KeyAnalysisQueue {
     }
     this.identifier += 1
     this.pendingCount += 1
-    if (this.worker) {
-      this.worker.postMessage(job)
-    } else {
-      this.enqueueInline(job)
-    }
+    this.worker.postMessage(job)
   }
 
   remove(filePath: string): void {
@@ -132,11 +126,7 @@ export class KeyAnalysisQueue {
     }
     this.identifier += 1
     this.pendingCount += 1
-    if (this.worker) {
-      this.worker.postMessage(job)
-    } else {
-      this.enqueueInline(job)
-    }
+    this.worker.postMessage(job)
   }
 
   async drain(): Promise<void> {
@@ -159,29 +149,8 @@ export class KeyAnalysisQueue {
     try {
       await this.drain()
     } finally {
-      await this.worker?.terminate()
+      await this.worker.terminate()
     }
-  }
-
-  private enqueueInline(job: AnalysisJob): void {
-    this.processing = this.processing.then(async () => {
-      try {
-        this.initialization ??= this.core.initializeForVite()
-        await this.initialization
-        const diagnostics = await this.core.updateExtraction(job.filePath, job.extraction)
-        this.finishResult({
-          diagnostics,
-          filePath: job.filePath,
-          identifier: job.identifier,
-          revision: job.revision,
-        })
-      } catch (error: unknown) {
-        this.finishFailure(
-          job.identifier,
-          error instanceof Error ? error : new Error(String(error)),
-        )
-      }
-    })
   }
 
   private finishResult(result: AnalysisResult): void {

@@ -7,7 +7,7 @@ import {describe, expect, it, vi} from 'vitest'
 import {MouthFramePicker} from '../MouthFramePicker'
 
 describe('MouthFramePicker', () => {
-  it('should list visemes and every transition stage with its review position', () => {
+  it('should list visemes and every transition stage with its review position', async () => {
     render(() => (
       <MouthFramePicker
         mouthFrame={null}
@@ -17,23 +17,20 @@ describe('MouthFramePicker', () => {
       />
     ))
 
-    expect(screen.getByRole('combobox', {name: /^개별 입 이미지/})).toHaveValue('')
-    expect(screen.getByRole('option', {name: '기본 미소 · 무음'})).toHaveValue('rest')
-    expect(screen.getByRole('option', {name: 'closed → open · 중간 1'})).toHaveValue('release')
-    expect(screen.getByRole('option', {name: 'closed → open · 중간 2'})).toHaveValue('small-open')
-    expect(screen.getByRole('option', {name: 'closed → open · 중간 3'})).toHaveValue('half-open')
-    expect(screen.getByRole('option', {name: 'open → round · 중간 1'})).toHaveValue(
-      'open-round-early',
-    )
-    expect(screen.getByRole('option', {name: 'open → round · 중간 2'})).toHaveValue(
-      'open-round-middle',
-    )
-    expect(screen.getByRole('option', {name: 'open → round · 중간 3'})).toHaveValue(
-      'open-round-late',
-    )
+    const trigger = screen.getByRole('button', {name: /^개별 입 이미지/})
+
+    expect(trigger).toHaveTextContent('전환 애니메이션으로 확인')
+    fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+    expect(await screen.findByRole('option', {name: '기본 미소 · 무음'})).toBeInTheDocument()
+    expect(screen.getByRole('option', {name: 'closed → open · 중간 1'})).toBeInTheDocument()
+    expect(screen.getByRole('option', {name: 'closed → open · 중간 2'})).toBeInTheDocument()
+    expect(screen.getByRole('option', {name: 'closed → open · 중간 3'})).toBeInTheDocument()
+    expect(screen.getByRole('option', {name: 'open → round · 중간 1'})).toBeInTheDocument()
+    expect(screen.getByRole('option', {name: 'open → round · 중간 2'})).toBeInTheDocument()
+    expect(screen.getByRole('option', {name: 'open → round · 중간 3'})).toBeInTheDocument()
   })
 
-  it('should select a frame, clear it, and update position comparison', () => {
+  it('should select a frame, clear it, and update position comparison', async () => {
     const onChange = vi.fn()
     const onPositionComparisonChange = vi.fn()
     const [mouthFrame, setMouthFrame] = createSignal<PReviewMouthFrame | null>(null)
@@ -54,16 +51,18 @@ describe('MouthFramePicker', () => {
       />
     ))
 
-    const select = screen.getByRole('combobox', {name: /^개별 입 이미지/})
+    const trigger = screen.getByRole('button', {name: /^개별 입 이미지/})
     const toggle = screen.getByRole('checkbox', {name: /^입 위치 비교/})
 
-    fireEvent.change(select, {target: {value: 'open-round-middle'}})
+    fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+    fireEvent.click(await screen.findByRole('option', {name: 'open → round · 중간 2'}))
     expect(onChange).toHaveBeenCalledWith('open-round-middle')
-    expect(select).toHaveValue('open-round-middle')
+    expect(trigger).toHaveTextContent('open → round · 중간 2')
 
-    fireEvent.change(select, {target: {value: ''}})
+    fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+    fireEvent.click(await screen.findByRole('option', {name: '전환 애니메이션으로 확인'}))
     expect(onChange).toHaveBeenLastCalledWith(null)
-    expect(select).toHaveValue('')
+    expect(trigger).toHaveTextContent('전환 애니메이션으로 확인')
 
     fireEvent.click(toggle)
     expect(onPositionComparisonChange).toHaveBeenCalledWith(true)

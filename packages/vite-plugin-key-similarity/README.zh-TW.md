@@ -186,7 +186,7 @@ keySimilarity({
 })
 ```
 
-如果需要依 key 長度或格式使用不同閾值，可以傳入函式。程式碼字面值和每個註解表示都會分別呼叫該 resolver。
+對於大多數專案，建議使用依 key 長度調整閾值的函式，而不是單一的固定值。也可以將 key 格式作為條件。程式碼字面值和每個註解表示都會分別呼叫該 resolver。
 
 ```ts
 keySimilarity({
@@ -236,6 +236,7 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | ------------------- | ------------------------------------ | ------------------------------------------- |
 | `keyDetector`       | 必填                                 | 選擇要檢查的 import 呼叫與包含 key 的引數。 |
 | `semanticThreshold` | `0.9`                                | 固定數字或 `(key) => number` 閾值 resolver  |
+| `skipIdenticalKeys` | `false`                              | 略過原始 key 值完全相同的 pair。            |
 | `serveMode`         | `warn`                               | 開發伺服器診斷模式                          |
 | `buildMode`         | `error`                              | 正式環境建置診斷模式                        |
 | `exclude`           | 排除測試、generated 與 node_modules  | Vite 與 CLI 檢查中排除的 glob 模式          |

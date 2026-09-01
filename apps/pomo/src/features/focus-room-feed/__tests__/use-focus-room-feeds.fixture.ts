@@ -37,6 +37,7 @@ const repositoryMocks = vi.hoisted(() => {
     complete: vi.fn().mockResolvedValue(undefined),
     deleteJobs: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
+    failJob: vi.fn().mockResolvedValue(true),
     interruptUnfinishedJobs: vi.fn().mockResolvedValue([]),
     listExpiredMetadata: vi.fn().mockResolvedValue([]),
     listItems: vi.fn().mockResolvedValue([]),
@@ -100,6 +101,7 @@ beforeEach(() => {
   repositoryMocks.dialogueRepository.saveDialogue.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.complete.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.deleteJobs.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.failJob.mockResolvedValue(true)
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listExpiredMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.listItems.mockResolvedValue([])

@@ -40,19 +40,4 @@ const readRuntimeEnv = (): ServerEnv =>
     VERCEL_ENV: process.env.VERCEL_ENV ?? import.meta.env.VERCEL_ENV,
   })
 
-let parsedEnv: ServerEnv | undefined
-
-const getServerEnv = (): ServerEnv => {
-  parsedEnv ??= readRuntimeEnv()
-
-  return parsedEnv
-}
-
-export const env: ServerEnv = {} as ServerEnv
-
-for (const key of Object.keys(envSchema) as Array<keyof ServerEnv>) {
-  Object.defineProperty(env, key, {
-    enumerable: true,
-    get: () => getServerEnv()[key],
-  })
-}
+export const env: ServerEnv = readRuntimeEnv()

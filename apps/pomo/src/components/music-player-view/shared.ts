@@ -1,13 +1,14 @@
+import {cx} from 'class-variance-authority'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/focus-room-playlist'
 import type {RepeatMode} from '../../features/focus-room-audio/playback-policy'
 
 export const CLASSES = {
-  level: [
+  level: cx(
     'pomo-level bg-primary shadow-[0_0_0.7rem_rgb(216_104_69_/_42%)]',
     'origin-[center_bottom] motion-reduce:transition-[none]',
-  ].join(' '),
-  player: [
+  ),
+  player: cx(
     'pomo-player [--pomo-player-summary-space:4.75rem]',
     '[container-name:pomo-player] [container-type:inline-size]',
     '[--media-background-color:transparent] [--media-control-background:transparent]',
@@ -23,22 +24,22 @@ export const CLASSES = {
     '[&_media-mute-button]:text-muted-foreground',
     '[&_media-mute-button:hover]:text-foreground',
     '[&_media-mute-button:hover]:bg-secondary-soft',
-  ].join(' '),
+  ),
   playerBase: 'pomo-player__base bg-surface',
-  playerExpanded: [
+  playerExpanded: cx(
     'pomo-player__expanded isolate flex min-h-0 min-w-0 w-full flex-1 flex-col box-border',
     'bg-[linear-gradient(_180deg,_rgb(0_0_0_/_2%)_0%,_rgb(0_0_0_/_10%)_34%,_rgb(0_0_0_/_18%)_100%_)]',
     'shadow-[inset_0_-1px_0_rgb(255_250_241_/_4%)]',
-  ].join(' '),
-  playerExpandedFrame: [
+  ),
+  playerExpandedFrame: cx(
     'pomo-player__expanded-frame grid min-h-0 min-w-0 flex-1 grid-rows-[0fr]',
     'overflow-hidden',
     '[transition:grid-template-rows_280ms_cubic-bezier(0.22,_1,_0.36,_1)]',
     '[&.is-expanded]:h-[calc(100cqh_-_var(--pomo-player-summary-space))]',
     '[&.is-expanded]:flex-none [&.is-expanded]:grid-rows-[1fr]',
     'motion-reduce:transition-none',
-  ].join(' '),
-  playerExpandedInner: [
+  ),
+  playerExpandedInner: cx(
     'pomo-player__expanded-inner flex min-h-0 min-w-0 w-full flex-col',
     'overflow-x-clip overflow-y-auto overscroll-contain',
     '[scrollbar-color:rgb(255_250_241_/_18%)_transparent] [scrollbar-width:thin]',
@@ -46,32 +47,32 @@ export const CLASSES = {
     '[transition:opacity_160ms_ease]',
     '[&.is-expanded]:opacity-100 [&.is-expanded]:pointer-events-auto',
     'motion-reduce:transition-none',
-  ].join(' '),
-  playerMute: [
+  ),
+  playerMute: cx(
     'pomo-player__mute size-10 shrink-0 [--media-control-padding:0.625rem]',
     'player-compact:size-9 player-compact:[--media-control-padding:0.5rem]',
-  ].join(' '),
-  playerPlay: [
+  ),
+  playerPlay: cx(
     'pomo-player__play w-11 h-11 text-white bg-primary',
     'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
     '[transition:filter_160ms_ease] [&:hover]:brightness-[1.08]',
     'motion-reduce:transition-none',
-  ].join(' '),
-  playerPlayLarge: [
+  ),
+  playerPlayLarge: cx(
     'pomo-player__play--large w-13 h-13',
     '[transition:transform_160ms_ease,_filter_160ms_ease] [&:hover]:translate-y-[-1px]',
     'motion-reduce:transition-none',
-  ].join(' '),
+  ),
   playerPlaySummary: 'pomo-player__play--summary',
   playerPlaySummaryFrame: 'pomo-player__play-summary-frame h-11 w-11 shrink-0 overflow-visible',
-  playerProgress: [
+  playerProgress: cx(
     'pomo-player__progress flex min-w-0',
     '[--media-control-background:transparent] [--media-control-hover-background:transparent]',
     '[--media-range-thumb-opacity:0]',
     '[--media-range-thumb-transition:opacity_140ms_ease]',
     'motion-reduce:[--media-range-thumb-transition:none]',
-  ].join(' '),
-  playerProgressCollapsed: [
+  ),
+  playerProgressCollapsed: cx(
     'pomo-player__progress--collapsed pointer-events-none cursor-default absolute inset-0 h-full w-full',
     '[--media-cursor:default]',
     '[--media-control-height:100%] [--media-range-padding:0px]',
@@ -81,8 +82,8 @@ export const CLASSES = {
     '[--media-range-track-background:transparent]',
     '[transition:opacity_160ms_ease] [&.is-hidden]:opacity-0',
     'motion-reduce:transition-none',
-  ].join(' '),
-  playerProgressExpanded: [
+  ),
+  playerProgressExpanded: cx(
     'pomo-player__progress--expanded -mx-2 h-0 w-[calc(100%+1rem)] flex-none',
     'overflow-visible opacity-0 transition-[height,opacity]',
     '[&.is-expanded]:h-0.5 [&.is-expanded]:opacity-100',
@@ -92,31 +93,31 @@ export const CLASSES = {
     '[--media-time-range-buffered-color:var(--pomo-color-muted-foreground)]',
     '[--media-range-track-background:var(--pomo-color-range-track)]',
     'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
-  ].join(' '),
-  playerShell: [
+  ),
+  playerShell: cx(
     'pomo-player-shell',
     'shadow-[0_22px_70px_rgb(5_4_3_/_46%),_inset_0_1px_0_rgb(255_255_255_/_10%)]',
-  ].join(' '),
+  ),
   playerSummary:
     'pomo-player__summary relative flex min-h-16 flex-none items-center gap-3 px-2 py-2',
   playerTitle: 'pomo-player__title block text-foreground',
   playerTrackArtist: 'pomo-player__track-artist text-muted-foreground text-[0.6875rem] leading-4',
-  playerTrackTitle: [
+  playerTrackTitle: cx(
     'pomo-player__track-title text-foreground text-[0.9375rem] font-[750] leading-5',
     'tracking-[-0.01em]',
-  ].join(' '),
-  playerVisualizer: [
+  ),
+  playerVisualizer: cx(
     'pomo-player__visualizer top-[-8px] bottom-[-8px] left-[-8px] right-[-8px]',
     '[filter:blur(8px)_saturate(1.25)_contrast(1.12)]',
-  ].join(' '),
-  playerVolume: [
+  ),
+  playerVolume: cx(
     'pomo-player__volume min-w-0 w-[clamp(3rem,_18cqi,_4.75rem)]',
     '[--media-range-padding-left:0.25rem] [--media-range-padding-right:0.25rem]',
     '[--media-range-thumb-opacity:0]',
     '[--media-range-thumb-transition:opacity_140ms_ease]',
     'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
     'motion-reduce:[--media-range-thumb-transition:none]',
-  ].join(' '),
+  ),
 } as const
 
 export interface MusicPlayerViewProps {

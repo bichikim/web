@@ -6,6 +6,13 @@ import {resolveOptions} from '../config'
 import {KeySimilarityCore} from '../core'
 import type {EmbeddingProvider} from '../types'
 
+const embeddingMocks = vi.hoisted(() => ({createLocalE5Provider: vi.fn()}))
+
+vi.mock('../embedding', async () => {
+  const actual = await vi.importActual<typeof import('../embedding')>('../embedding')
+  return {...actual, createLocalE5Provider: embeddingMocks.createLocalE5Provider}
+})
+
 const temporaryPaths: string[] = []
 
 afterEach(async () => {
@@ -46,19 +53,26 @@ const createFixture = async (fileOrder: 'forward' | 'reverse' = 'forward') => {
   return root
 }
 
-const createCore = (root: string, provider: EmbeddingProvider) =>
-  new KeySimilarityCore(
+const createCore = (
+  root: string,
+  provider: EmbeddingProvider,
+  skipIdenticalKeys: boolean = false,
+) => {
+  embeddingMocks.createLocalE5Provider.mockResolvedValue(provider)
+
+  return new KeySimilarityCore(
     resolveOptions(
       {
-        __embeddingProvider: provider,
         keyDetector: ({imported, source}) =>
           imported === 't' && source === '@/i18n' ? 0 : undefined,
         scanInclude: ['src/**/*.ts'],
         semanticThreshold: 0.8,
+        skipIdenticalKeys,
       },
       root,
     ),
   )
+}
 
 describe('KeySimilarityCore', () => {
   it('should produce deterministic pairs independent of file creation order', async () => {
@@ -122,6 +136,29 @@ describe('KeySimilarityCore', () => {
     expect(report.diagnostics[0]?.right.filePath).toBe(filePath)
   })
 
+  it('should skip identical key values when configured', async () => {
+    const root = await createFixture()
+    const identical = `import {t} from '@/i18n'; t('account.login.failed')`
+    await writeFile(path.join(root, 'src/a.ts'), identical)
+    await writeFile(path.join(root, 'src/b.ts'), identical)
+
+    const report = await createCore(root, createProvider(), true).initialize()
+
+    expect(report.diagnostics).toEqual([])
+    expect(report.uniqueKeys).toBe(1)
+  })
+
+  it('should report identical key values by default', async () => {
+    const root = await createFixture()
+    const identical = `import {t} from '@/i18n'; t('account.login.failed')`
+    await writeFile(path.join(root, 'src/a.ts'), identical)
+    await writeFile(path.join(root, 'src/b.ts'), identical)
+
+    const report = await createCore(root, createProvider()).initialize()
+
+    expect(report.diagnostics).toHaveLength(1)
+  })
+
   it('should retain every threshold-passing pair in a group', async () => {
     const root = await createFixture()
     const filePath = path.join(root, 'src/a.ts')
@@ -141,10 +178,10 @@ describe('KeySimilarityCore', () => {
     const identical = `import {t} from '@/i18n'; t('같은 키')`
     await writeFile(path.join(root, 'src/a.ts'), identical)
     await writeFile(path.join(root, 'src/b.ts'), identical)
+    embeddingMocks.createLocalE5Provider.mockResolvedValue(createProvider())
     const core = new KeySimilarityCore(
       resolveOptions(
         {
-          __embeddingProvider: createProvider(),
           keyDetector: ({filePath, imported, source}) =>
             imported === 't' && source === '@/i18n'
               ? {argumentIndex: 0, group: path.basename(filePath)}
@@ -174,11 +211,12 @@ describe('KeySimilarityCore', () => {
       identifier: 'threshold-test',
       revision: '1',
     }
-    const createThresholdCore = (savedThreshold: number) =>
-      new KeySimilarityCore(
+    const createThresholdCore = (savedThreshold: number) => {
+      embeddingMocks.createLocalE5Provider.mockResolvedValue(provider)
+
+      return new KeySimilarityCore(
         resolveOptions(
           {
-            __embeddingProvider: provider,
             cacheDir: `.cache-${savedThreshold}`,
             keyDetector: ({imported, source}) =>
               imported === 't' && source === '@/i18n' ? 0 : undefined,
@@ -188,6 +226,7 @@ describe('KeySimilarityCore', () => {
           root,
         ),
       )
+    }
 
     const strict = await createThresholdCore(0.7).initialize()
     const permissive = await createThresholdCore(0.6).initialize()

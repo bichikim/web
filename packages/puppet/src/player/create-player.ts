@@ -1,23 +1,33 @@
 import {Application, Container, MeshSimple, Texture} from 'pixi.js'
 
-import type {PuppetDocument, PuppetKeyframe, PuppetMotion, PuppetTrack} from './document'
+import type {PuppetDocument, PuppetMotion} from './document'
 import {
   assertPreparedPuppetDocument,
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
+import {applyMotionVertices} from './internal/motion'
+import {getScenePartStates} from './scene'
 
 export interface Player {
   destroy(): void
   pause(): void
   play(): void
+  resize(): void
   seek(time: number): void
   updateDocument(document: PreparedPuppetDocument): boolean
+}
+
+export interface PlayerFrame {
+  readonly duration: number
+  readonly motionId: string | null
+  readonly time: number
 }
 
 export interface CreatePlayerOptions {
   readonly canvas: HTMLCanvasElement
   readonly document: PreparedPuppetDocument
   readonly motionId?: string
+  readonly onFrame?: (frame: PlayerFrame) => void
   readonly resizeTo?: HTMLElement
   readonly viewportPadding?: number
 }
@@ -28,10 +38,42 @@ interface RuntimePart {
   vertices: Float32Array
 }
 
-const COORDINATES_PER_VERTEX = 2
-const Y_COORDINATE_OFFSET = 1
+const applyDocumentScene = (
+  document: PuppetDocument,
+  partById: ReadonlyMap<string, RuntimePart>,
+  root: Container,
+) => {
+  for (const state of getScenePartStates(document)) {
+    const runtimePart = partById.get(state.partId)
+
+    if (runtimePart !== undefined) {
+      runtimePart.mesh.visible = state.visible
+      root.addChild(runtimePart.mesh)
+    }
+  }
+}
+
 const MILLISECONDS_PER_SECOND = 1000
 const VIEWPORT_PADDING = 1
+const APPLICATION_DESTROY_OPTIONS = {
+  children: true,
+  context: false,
+  texture: true,
+  textureSource: true,
+}
+
+const createPlayerFrame = (motion: PuppetMotion | undefined, time: number): PlayerFrame => ({
+  duration: motion?.duration ?? 0,
+  motionId: motion?.id ?? null,
+  time,
+})
+
+const getSeekTime = (motion: PuppetMotion | undefined, time: number) => {
+  const clampedTime = Math.max(0, time)
+  return motion === undefined || clampedTime <= motion.duration
+    ? clampedTime
+    : clampedTime % motion.duration
+}
 
 const loadTexture = async (source: string) => {
   const image = new Image()
@@ -41,33 +83,6 @@ const loadTexture = async (source: string) => {
 
   return Texture.from(image)
 }
-
-const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number) => {
-  const nextIndex = keyframes.findIndex((keyframe) => keyframe.time >= time)
-
-  if (nextIndex === -1) {
-    return keyframes.at(-1)?.value ?? 0
-  }
-
-  if (nextIndex <= 0) {
-    return keyframes[0]?.value ?? 0
-  }
-
-  const previousKeyframe = keyframes[nextIndex - 1]
-  const nextKeyframe = keyframes[nextIndex]
-
-  if (previousKeyframe === undefined || nextKeyframe === undefined) {
-    return keyframes.at(-1)?.value ?? 0
-  }
-
-  const duration = nextKeyframe.time - previousKeyframe.time
-  const progress = duration === 0 ? 0 : (time - previousKeyframe.time) / duration
-
-  return previousKeyframe.value + (nextKeyframe.value - previousKeyframe.value) * progress
-}
-
-const getCoordinateIndex = (track: PuppetTrack) =>
-  track.vertexIndex * COORDINATES_PER_VERTEX + (track.axis === 'y' ? Y_COORDINATE_OFFSET : 0)
 
 const getMotion = (document: PuppetDocument, motionId: string | undefined) =>
   motionId === undefined
@@ -104,10 +119,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     }
 
     destroyed = true
-    application.destroy(
-      {removeView: false},
-      {children: true, context: false, texture: true, textureSource: true},
-    )
+    application.destroy({removeView: false}, APPLICATION_DESTROY_OPTIONS)
   }
 
   try {
@@ -145,10 +157,10 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         vertices,
       })
 
-      root.addChild(mesh)
       partById.set(part.id, {mesh, restVertices, vertices})
     }
 
+    applyDocumentScene(document, partById, root)
     application.stage.addChild(root)
   } catch (error) {
     destroy()
@@ -177,14 +189,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       runtimePart.vertices.set(runtimePart.restVertices)
     }
 
-    if (activeMotion !== undefined) {
-      for (const track of activeMotion.tracks) {
-        const runtimePart = partById.get(track.partId)
-
-        if (runtimePart !== undefined) {
-          runtimePart.vertices[getCoordinateIndex(track)] = sampleKeyframes(track.keyframes, time)
-        }
-      }
+    for (const [partId, runtimePart] of partById) {
+      applyMotionVertices({motion: activeMotion, partId, time, vertices: runtimePart.vertices})
     }
 
     for (const runtimePart of partById.values()) {
@@ -192,6 +198,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     }
 
     layoutRoot()
+    options.onFrame?.(createPlayerFrame(activeMotion, time))
   }
 
   application.ticker.add((ticker) => {
@@ -203,6 +210,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   })
 
   applyMotion(motion, elapsedTime)
+  application.render()
 
   const updateDocument = (nextDocument: PreparedPuppetDocument) => {
     assertPreparedPuppetDocument(nextDocument)
@@ -233,7 +241,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       }
     }
 
-    elapsedTime = 0
+    applyDocumentScene(document, partById, root)
+    elapsedTime = getSeekTime(motion, elapsedTime)
     applyMotion(motion, elapsedTime)
     application.render()
 
@@ -248,8 +257,13 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     play() {
       application.start()
     },
+    resize() {
+      application.resize()
+      layoutRoot()
+      application.render()
+    },
     seek(time: number) {
-      elapsedTime = motion === undefined ? 0 : Math.max(0, time) % motion.duration
+      elapsedTime = getSeekTime(motion, time)
       applyMotion(motion, elapsedTime)
       application.render()
     },

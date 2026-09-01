@@ -1,3 +1,4 @@
+import 'pixi.js/unsafe-eval'
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
 import {DepthParallaxFilter} from './depth-parallax-filter'

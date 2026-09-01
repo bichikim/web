@@ -209,3 +209,21 @@ it('should reject a native runtime save when native storage is unavailable', asy
   )
   expect(webValues.get(STORAGE_KEY)).toEqual(settings)
 })
+
+it('should continue native writes after an earlier write fails', async () => {
+  const failedSettings = {enabled: false, playerVolumePercent: 70, version: 2} as const
+  const latestSettings = {enabled: true, playerVolumePercent: 20, version: 2} as const
+  storage.isNative.mockReturnValue(true)
+  storage.writeNative
+    .mockRejectedValueOnce(new Error('native unavailable'))
+    .mockImplementationOnce(async (key, value) => {
+      nativeValues.set(key, value)
+    })
+
+  await expect(repository.write(failedSettings)).rejects.toThrow(
+    'Failed to persist dialogue volume ducking settings.',
+  )
+  await expect(repository.write(latestSettings)).resolves.toBeUndefined()
+
+  expect(nativeValues.get(STORAGE_KEY)).toEqual(latestSettings)
+})
