@@ -36,6 +36,9 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
   const [isChanging, setIsChanging] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
   let channel: BroadcastChannel | null = null
+  let latestReceivedMode: DesktopMode | null = null
+  let pendingMode: DesktopMode | null = null
+  let receivedModeRevision = 0
   let removeModeListener: (() => void) | null = null
   let isDisposed = false
   const surfaceOwner = props.isSurfaceOwner ?? false
@@ -46,6 +49,38 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
     channel?.postMessage(nextMode)
   }
 
+  const restoreMode = async (previousMode: DesktopMode, previousRevision: number) => {
+    const rollbackRevision = receivedModeRevision
+    let rollbackMode = previousMode
+    if (rollbackRevision !== previousRevision && latestReceivedMode !== null) {
+      rollbackMode = latestReceivedMode
+    }
+
+    await applyDesktopMode(rollbackMode)
+    await prepareDesktopModeTransition(rollbackMode)
+    await finishDesktopModeTransition(rollbackMode)
+    if (receivedModeRevision !== rollbackRevision) {
+      await restoreMode(previousMode, rollbackRevision)
+      return
+    }
+
+    if (mode() !== rollbackMode) {
+      publishMode(rollbackMode)
+    }
+  }
+
+  const restoreNewerMode = async (
+    previousMode: DesktopMode,
+    previousRevision: number,
+  ): Promise<boolean> => {
+    if (receivedModeRevision === previousRevision) {
+      return false
+    }
+
+    await restoreMode(previousMode, previousRevision)
+    return true
+  }
+
   const onModeChange = async (nextMode: DesktopMode) => {
     if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true') || isChanging() || nextMode === mode()) {
       return
@@ -54,29 +89,31 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
     setIsChanging(true)
     setError(null)
     const previousMode = mode()
-    let transitionApplied = false
+    const previousRevision = receivedModeRevision
     try {
       await applyDesktopMode(nextMode)
-      transitionApplied = true
+      if (await restoreNewerMode(previousMode, previousRevision)) {
+        return
+      }
 
       await prepareDesktopModeTransition(nextMode)
+      if (await restoreNewerMode(previousMode, previousRevision)) {
+        return
+      }
+
       publishMode(nextMode)
       await finishDesktopModeTransition(nextMode)
+      await restoreNewerMode(previousMode, previousRevision)
     } catch (transitionError: unknown) {
       let reportedError = transitionError
 
-      if (transitionApplied) {
-        try {
-          await applyDesktopMode(previousMode)
-          if (mode() !== previousMode) {
-            publishMode(previousMode)
-          }
-        } catch (rollbackError: unknown) {
-          reportedError = new AggregateError(
-            [transitionError, rollbackError],
-            'Desktop mode transition and rollback failed',
-          )
-        }
+      try {
+        await restoreMode(previousMode, previousRevision)
+      } catch (rollbackError: unknown) {
+        reportedError = new AggregateError(
+          [transitionError, rollbackError],
+          'Desktop mode transition and rollback failed',
+        )
       }
 
       setError(getDesktopErrorMessage(reportedError))
@@ -87,9 +124,20 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
   }
 
   const requestMode = async (nextMode: DesktopMode) => {
+    if (isChanging()) {
+      pendingMode = nextMode
+      return
+    }
+
     try {
       await onModeChange(nextMode)
     } catch {}
+
+    const nextPendingMode = pendingMode
+    pendingMode = null
+    if (nextPendingMode !== null && nextPendingMode !== mode()) {
+      await requestMode(nextPendingMode)
+    }
   }
 
   onMount(() => {
@@ -100,6 +148,9 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
     channel = new BroadcastChannel(MODE_CHANNEL)
     channel.addEventListener('message', (event) => {
       if (isDesktopMode(event.data)) {
+        latestReceivedMode = event.data
+        receivedModeRevision += 1
+        setError(null)
         setMode(event.data)
       }
     })

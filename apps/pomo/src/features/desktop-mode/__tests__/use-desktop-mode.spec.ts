@@ -92,6 +92,26 @@ it('should restore a persisted mode after a clean exit and react to native reque
   expect(view.result.mode()).toBe('widget')
 })
 
+it('should process the latest native request received during a transition', async () => {
+  let finishTransition: (() => void) | undefined
+  const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+  await vi.waitFor(() => expect(listen).toHaveBeenCalledOnce())
+  vi.mocked(applyDesktopMode).mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finishTransition = resolve
+      }),
+  )
+
+  tauriMocks.listener({payload: 'desktop'})
+  await vi.waitFor(() => expect(applyDesktopMode).toHaveBeenCalledWith('desktop'))
+  tauriMocks.listener({payload: 'widget'})
+  finishTransition?.()
+
+  await vi.waitFor(() => expect(view.result.mode()).toBe('widget'))
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'widget')
+})
+
 it('should converge a secondary control window through storage and broadcast messages', () => {
   localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
   const view = renderHook(() => useDesktopMode())
@@ -103,6 +123,18 @@ it('should converge a secondary control window through storage and broadcast mes
   channel?.dispatch('invalid')
   expect(view.result.mode()).toBe('widget')
   expect(listen).not.toHaveBeenCalled()
+})
+
+it('should clear a stale local error when another window publishes a mode', async () => {
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(applyDesktopMode).mockRejectedValueOnce(new Error('native failed'))
+
+  await expect(view.result.onModeChange('desktop')).rejects.toThrow('native failed')
+  expect(view.result.error()).toBe('native failed')
+
+  TestBroadcastChannel.instances[0]?.dispatch('widget')
+  expect(view.result.mode()).toBe('widget')
+  expect(view.result.error()).toBeNull()
 })
 
 it('should publish successful transitions and suppress duplicate concurrent requests', async () => {
@@ -132,17 +164,164 @@ it('should publish successful transitions and suppress duplicate concurrent requ
   expect(applyDesktopMode).toHaveBeenCalledOnce()
 })
 
-it('should expose native transition failures without changing the mode', async () => {
+it('should preserve a newer mode received while a successful transition is pending', async () => {
+  let finishTransition: (() => void) | undefined
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(applyDesktopMode).mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finishTransition = resolve
+      }),
+  )
+
+  const transition = view.result.onModeChange('desktop')
+  TestBroadcastChannel.instances[0]?.dispatch('widget')
+  finishTransition?.()
+  await transition
+
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'widget')
+  expect(prepareDesktopModeTransition).toHaveBeenCalledOnce()
+  expect(prepareDesktopModeTransition).toHaveBeenCalledWith('widget')
+  expect(finishDesktopModeTransition).toHaveBeenCalledOnce()
+  expect(finishDesktopModeTransition).toHaveBeenCalledWith('widget')
+  expect(view.result.mode()).toBe('widget')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).not.toHaveBeenCalled()
+})
+
+it('should preserve a newer mode received while surfaces are being prepared', async () => {
+  let finishPreparation: (() => void) | undefined
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(prepareDesktopModeTransition).mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finishPreparation = resolve
+      }),
+  )
+
+  const transition = view.result.onModeChange('desktop')
+  await vi.waitFor(() => expect(prepareDesktopModeTransition).toHaveBeenCalledWith('desktop'))
+  TestBroadcastChannel.instances[0]?.dispatch('widget')
+  finishPreparation?.()
+  await transition
+
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(1, 'desktop')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'widget')
+  expect(prepareDesktopModeTransition).toHaveBeenNthCalledWith(2, 'widget')
+  expect(finishDesktopModeTransition).toHaveBeenCalledOnce()
+  expect(finishDesktopModeTransition).toHaveBeenCalledWith('widget')
+  expect(view.result.mode()).toBe('widget')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).not.toHaveBeenCalled()
+})
+
+it('should converge to a newer mode received after publishing a transition', async () => {
+  let finishTransition: (() => void) | undefined
+  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(finishDesktopModeTransition).mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finishTransition = resolve
+      }),
+  )
+
+  const transition = view.result.onModeChange('normal')
+  await vi.waitFor(() => expect(finishDesktopModeTransition).toHaveBeenCalledWith('normal'))
+  TestBroadcastChannel.instances[0]?.dispatch('widget')
+  finishTransition?.()
+  await transition
+
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(1, 'normal')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'widget')
+  expect(prepareDesktopModeTransition).toHaveBeenNthCalledWith(1, 'normal')
+  expect(prepareDesktopModeTransition).toHaveBeenNthCalledWith(2, 'widget')
+  expect(finishDesktopModeTransition).toHaveBeenNthCalledWith(2, 'widget')
+  expect(view.result.mode()).toBe('widget')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenCalledOnce()
+  expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenCalledWith('normal')
+})
+
+it('should restore the previous native mode when applying the next mode fails', async () => {
+  localStorage.setItem('pomo:desktop-mode:v1', 'interactiveDesktop')
   const view = renderHook(() => useDesktopMode())
   vi.mocked(applyDesktopMode).mockRejectedValueOnce(new Error('native failed'))
 
   await expect(view.result.onModeChange('desktop')).rejects.toThrow('native failed')
   expect(view.result.error()).toBe('native failed')
-  expect(view.result.mode()).toBe('normal')
+  expect(view.result.mode()).toBe('interactiveDesktop')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(1, 'desktop')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'interactiveDesktop')
 
   vi.mocked(applyDesktopMode).mockRejectedValueOnce('unknown failure')
   await expect(view.result.onModeChange('widget')).rejects.toBe('unknown failure')
   expect(view.result.error()).toBe('unknown failure')
+})
+
+it('should preserve a newer mode received while a failed transition is pending', async () => {
+  let rejectTransition: ((error: unknown) => void) | undefined
+  localStorage.setItem('pomo:desktop-mode:v1', 'interactiveDesktop')
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(applyDesktopMode).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectTransition = reject
+      }),
+  )
+
+  const transition = view.result.onModeChange('desktop')
+  TestBroadcastChannel.instances[0]?.dispatch('widget')
+  rejectTransition?.(new Error('native failed'))
+
+  await expect(transition).rejects.toThrow('native failed')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'widget')
+  expect(prepareDesktopModeTransition).toHaveBeenCalledWith('widget')
+  expect(finishDesktopModeTransition).toHaveBeenCalledWith('widget')
+  expect(view.result.mode()).toBe('widget')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).not.toHaveBeenCalled()
+})
+
+it('should converge again when a newer mode arrives during rollback', async () => {
+  let finishRollback: (() => void) | undefined
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(applyDesktopMode)
+    .mockRejectedValueOnce(new Error('native failed'))
+    .mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishRollback = resolve
+        }),
+    )
+
+  const transition = view.result.onModeChange('desktop')
+  await vi.waitFor(() => expect(applyDesktopMode).toHaveBeenCalledTimes(2))
+  TestBroadcastChannel.instances[0]?.dispatch('widget')
+  finishRollback?.()
+
+  await expect(transition).rejects.toThrow('native failed')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'normal')
+  expect(applyDesktopMode).toHaveBeenNthCalledWith(3, 'widget')
+  expect(prepareDesktopModeTransition).toHaveBeenNthCalledWith(1, 'normal')
+  expect(prepareDesktopModeTransition).toHaveBeenNthCalledWith(2, 'widget')
+  expect(finishDesktopModeTransition).toHaveBeenNthCalledWith(1, 'normal')
+  expect(finishDesktopModeTransition).toHaveBeenNthCalledWith(2, 'widget')
+  expect(view.result.mode()).toBe('widget')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).not.toHaveBeenCalled()
+})
+
+it('should preserve apply and rollback failures together', async () => {
+  const transitionError = new Error('native transition failed')
+  const rollbackError = new Error('native rollback failed')
+  const view = renderHook(() => useDesktopMode())
+  vi.mocked(applyDesktopMode)
+    .mockRejectedValueOnce(transitionError)
+    .mockRejectedValueOnce(rollbackError)
+
+  await expect(view.result.onModeChange('desktop')).rejects.toMatchObject({
+    errors: [transitionError, rollbackError],
+    message: 'Desktop mode transition and rollback failed',
+  })
+
+  expect(view.result.error()).toBe('Desktop mode transition and rollback failed')
+  expect(view.result.mode()).toBe('normal')
 })
 
 it('should roll back a published mode when controller cleanup fails', async () => {
