@@ -49,10 +49,11 @@ Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도�
 3. 앱인토스 번들을 업로드하고 실제 토스 WebView에서 서버 연결을 확인한다.
 4. 문제가 발생하면 SSR 서버와 앱인토스 빌드를 호환되는 리비전으로 되돌린다.
 
-브라우저 SSR의 Vercel Git 자동 배포는 끈다. Pomo 또는 공유 패키지가 변경된 PR과 `dev` push는
-`.github/workflows/pomo-audio-gateway-deploy.yml`에서 Preview Deployment를 하나만 생성한다. PR은
-`pr-{번호}` Gateway 별칭과 `previews/pr-{번호}` R2 경로를 사용하고, 닫히면 해당 R2 경로를
-삭제한다. `dev`는 별도 Gateway와 R2 버킷을 사용한다.
+브라우저 SSR의 Vercel Git 자동 배포는 끈다. Pomo 또는 공유 패키지가 변경된 PR은
+`.github/workflows/pomo-audio-gateway-deploy.yml`에서 Preview Deployment를 하나만 생성한다. `dev`
+배포는 같은 워크플로를 `dev` 브랜치에서 수동으로 실행하며 별도 Gateway와 R2 버킷을
+사용한다. PR은 `pr-{번호}` Gateway 별칭과 `previews/pr-{번호}` R2 경로를 사용하고, 닫히면 해당
+R2 경로를 삭제한다.
 
 Vercel–Neon 연동은 Preview Deployment마다 Neon 기본 브랜치에서 분기한 DB와 연결 문자열을
 제공한다. Preview 빌드는 해당 연결 문자열로 Drizzle migration을 먼저 적용하고, 성공한 경우에만
