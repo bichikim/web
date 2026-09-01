@@ -1,6 +1,7 @@
 import {type JSX} from 'solid-js'
 
-import {PEventContext, usePEventController} from '../features/focus-room-dialogue'
+import {PEventContext} from '../features/focus-room-dialogue/event-context'
+import {usePEventController} from '../features/focus-room-dialogue/use-p-event-controller'
 
 export interface PEventProviderProps {
   readonly children: JSX.Element

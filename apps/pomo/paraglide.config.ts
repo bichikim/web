@@ -7,8 +7,8 @@ const PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES = [
   {exclude: true, match: '/api/:path(.*)?'},
   {exclude: true, match: '/workers/:path(.*)?'},
 ] satisfies NonNullable<CompilerOptions['routeStrategies']>
-
-const PARAGLIDE_OUTPUT_STRUCTURE = 'message-modules' satisfies NonNullable<
+// `import * as m` must not fetch one Vite module per message on the first home load.
+const PARAGLIDE_OUTPUT_STRUCTURE = 'locale-modules' satisfies NonNullable<
   CompilerOptions['outputStructure']
 >
 
