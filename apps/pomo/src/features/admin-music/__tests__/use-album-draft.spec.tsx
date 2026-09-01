@@ -44,6 +44,7 @@ const createTranslations = (): AlbumDraftTranslations => ({
 })
 
 const createDraft = (overrides: Partial<AlbumDraftData> = {}): AlbumDraftData => ({
+  albumId: COVER_DRAFT_ID,
   coverDraftId: null,
   coverFallback: 'lp',
   coverImageUrl: '',
@@ -106,7 +107,7 @@ beforeEach(() => {
     vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({id: 'album-1'}), {
         headers: {'Content-Type': 'application/json'},
-        status: 200,
+        status: 201,
       }),
     ),
   )
@@ -199,6 +200,7 @@ describe('album draft restoration', () => {
     expect(result.coverFallback()).toBe('music')
     await waitFor(() => {
       expect(storageMocks.writeAlbumDraftData).toHaveBeenLastCalledWith({
+        albumId: COVER_DRAFT_ID,
         coverDraftId: null,
         coverFallback: 'music',
         coverImageUrl: 'https://new.example/current.webp',
@@ -212,6 +214,7 @@ describe('album draft restoration', () => {
       coverFallback: 'music',
       coverImageUrl: 'https://new.example/current.webp',
       coverReservationId: null,
+      id: COVER_DRAFT_ID,
       translations: [{description: '', locale: 'ko', title: '새 제목'}],
     })
     cleanup()
@@ -677,11 +680,11 @@ describe('album creation', () => {
       currentTarget: {value: 'https://example.com/current.webp'},
     } as unknown as InputEvent & {currentTarget: HTMLInputElement})
     await result.handleAlbumSubmit(createSubmitEvent().event)
-    await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledOnce())
+    await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(setMessage).toHaveBeenLastCalledWith('앨범 초안을 만들었습니다.'))
 
     expect(fetch).toHaveBeenCalledOnce()
-    expect(operations).toEqual(['write', 'created'])
+    expect(operations).toEqual(['write', 'write', 'created'])
     cleanup()
   })
 
@@ -714,6 +717,7 @@ describe('album creation', () => {
         coverFallback: 'music',
         coverImageUrl: 'https://example.com/configured.jpg',
         coverReservationId: null,
+        id: COVER_DRAFT_ID,
         translations: [
           {description: '한국어 설명', locale: 'ko', title: '한국어 제목'},
           {description: '', locale: 'en', title: 'English title'},
@@ -751,13 +755,49 @@ describe('album creation', () => {
     cleanup()
   })
 
-  it('should report catalog refresh failures without invoking an absent callback', async () => {
+  it('should refresh and notify after draft cleanup rejects', async () => {
+    storageMocks.deleteAlbumDraft.mockRejectedValue(new Error('chunk unavailable'))
+    const onAlbumCreated = vi.fn()
+    const {cleanup, refreshCatalog, result, setMessage} = renderAlbumDraft({onAlbumCreated})
+    await waitForRestoration(result)
+    const {event, reset} = createSubmitEvent()
+
+    await result.handleAlbumSubmit(event)
+
+    expect(fetch).toHaveBeenCalledOnce()
+    expect(reset).toHaveBeenCalledOnce()
+    expect(refreshCatalog).toHaveBeenCalledOnce()
+    expect(onAlbumCreated).toHaveBeenCalledWith('album-1')
+    expect(setMessage).toHaveBeenLastCalledWith(
+      '앨범은 만들었지만 브라우저의 작성 초안을 지우지 못했습니다.',
+    )
+    expect(result.isSavingAlbum()).toBe(false)
+    cleanup()
+  })
+
+  it('should preserve both cleanup and catalog refresh failures', async () => {
+    storageMocks.deleteAlbumDraft.mockRejectedValue(new Error('storage unavailable'))
     const refreshCatalog = vi.fn().mockRejectedValue(new Error('network unavailable'))
     const {cleanup, result, setMessage} = renderAlbumDraft({refreshCatalog})
     await waitForRestoration(result)
 
     await result.handleAlbumSubmit(createSubmitEvent().event)
 
+    expect(setMessage).toHaveBeenLastCalledWith(
+      '앨범은 만들었지만 목록을 새로고침하지 못했고 브라우저의 작성 초안도 지우지 못했습니다.',
+    )
+    cleanup()
+  })
+
+  it('should notify album creation when catalog refresh fails', async () => {
+    const refreshCatalog = vi.fn().mockRejectedValue(new Error('network unavailable'))
+    const onAlbumCreated = vi.fn()
+    const {cleanup, result, setMessage} = renderAlbumDraft({onAlbumCreated, refreshCatalog})
+    await waitForRestoration(result)
+
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+
+    expect(onAlbumCreated).toHaveBeenCalledWith('album-1')
     expect(setMessage).toHaveBeenLastCalledWith('앨범은 만들었지만 목록을 새로고침하지 못했습니다.')
     cleanup()
   })
@@ -786,6 +826,28 @@ describe('album creation', () => {
     await result.handleAlbumSubmit(createSubmitEvent().event)
 
     expect(setMessage).toHaveBeenLastCalledWith('앨범을 저장하지 못했습니다.')
+    cleanup()
+  })
+
+  it('should reuse the album ID after a lost creation response', async () => {
+    vi.mocked(fetch)
+      .mockRejectedValueOnce(new Error('response lost'))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({id: COVER_DRAFT_ID}), {
+          headers: {'Content-Type': 'application/json'},
+          status: 201,
+        }),
+      )
+    const {cleanup, result} = renderAlbumDraft()
+    await waitForRestoration(result)
+
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+
+    const requestIds = vi
+      .mocked(fetch)
+      .mock.calls.map((call) => JSON.parse(String(call[1]?.body)).id as unknown)
+    expect(requestIds).toEqual([COVER_DRAFT_ID, COVER_DRAFT_ID])
     cleanup()
   })
 

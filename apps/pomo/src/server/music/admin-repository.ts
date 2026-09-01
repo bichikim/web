@@ -33,6 +33,7 @@ export interface CreateAlbumInput {
   readonly coverDraftId: string | null
   readonly coverImageUrl: string | null
   readonly coverReservationId: string | null
+  readonly id: string
   readonly translations: ReadonlyArray<{
     readonly description: string
     readonly locale: 'en' | 'ja' | 'ko' | 'zh-Hans'
@@ -236,11 +237,68 @@ export const updateAlbumStatus = async (
 export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumResult> =>
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
+      const readCreatedAlbum = async () => {
+        const [album] = await transaction
+          .select({
+            coverFallback: musicAlbums.coverFallback,
+            coverImageUrl: musicAlbums.coverImageUrl,
+            id: musicAlbums.id,
+            status: musicAlbums.status,
+          })
+          .from(musicAlbums)
+          .where(eq(musicAlbums.id, input.id))
+          .limit(1)
+
+        if (album === undefined) {
+          return null
+        }
+
+        const translations = await transaction
+          .select({
+            albumId: musicAlbumTranslations.albumId,
+            description: musicAlbumTranslations.description,
+            locale: musicAlbumTranslations.locale,
+            title: musicAlbumTranslations.title,
+          })
+          .from(musicAlbumTranslations)
+          .where(eq(musicAlbumTranslations.albumId, input.id))
+
+        return {...album, translations}
+      }
+      const prepareUnusedCoverDeletion = async (): Promise<void> => {
+        if (
+          input.coverReservationId === null ||
+          input.coverDraftId === null ||
+          input.coverImageUrl === null
+        ) {
+          return
+        }
+
+        await transaction
+          .update(musicAlbumCoverReservations)
+          .set({status: 'deleting', updatedAt: new Date()})
+          .where(
+            and(
+              eq(musicAlbumCoverReservations.id, input.coverReservationId),
+              eq(musicAlbumCoverReservations.draftId, input.coverDraftId),
+              eq(musicAlbumCoverReservations.coverImageUrl, input.coverImageUrl),
+              eq(musicAlbumCoverReservations.status, 'pending'),
+            ),
+          )
+      }
+
       if ((input.coverReservationId === null) !== (input.coverDraftId === null)) {
         return {code: 'cover_reservation_invalid', success: false}
       }
 
       if (input.coverReservationId !== null) {
+        const existingAlbum = await readCreatedAlbum()
+
+        if (existingAlbum !== null) {
+          await prepareUnusedCoverDeletion()
+          return {album: existingAlbum, success: true}
+        }
+
         const [reservation] = await transaction
           .select({
             coverImageUrl: musicAlbumCoverReservations.coverImageUrl,
@@ -262,13 +320,25 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
           reservation.draftId !== input.coverDraftId ||
           reservation.coverImageUrl !== input.coverImageUrl
         ) {
+          const concurrentlyCreatedAlbum = await readCreatedAlbum()
+
+          if (concurrentlyCreatedAlbum !== null) {
+            await prepareUnusedCoverDeletion()
+            return {album: concurrentlyCreatedAlbum, success: true}
+          }
+
           return {code: 'cover_reservation_invalid', success: false}
         }
       }
 
       const [album] = await transaction
         .insert(musicAlbums)
-        .values({coverFallback: input.coverFallback, coverImageUrl: input.coverImageUrl})
+        .values({
+          coverFallback: input.coverFallback,
+          coverImageUrl: input.coverImageUrl,
+          id: input.id,
+        })
+        .onConflictDoNothing({target: musicAlbums.id})
         .returning({
           coverFallback: musicAlbums.coverFallback,
           coverImageUrl: musicAlbums.coverImageUrl,
@@ -277,7 +347,14 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
         })
 
       if (album === undefined) {
-        throw new Error('Failed to create a music album')
+        const concurrentlyCreatedAlbum = await readCreatedAlbum()
+
+        if (concurrentlyCreatedAlbum === null) {
+          throw new Error('Failed to create a music album')
+        }
+
+        await prepareUnusedCoverDeletion()
+        return {album: concurrentlyCreatedAlbum, success: true}
       }
 
       const translations = await transaction

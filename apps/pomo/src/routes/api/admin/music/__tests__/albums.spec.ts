@@ -11,6 +11,8 @@ vi.mock('src/server/music/cover-upload', () => storageMocks)
 import {POST} from '../albums'
 import {invokeApiRoute} from '../../../__tests__/invoke'
 
+const ALBUM_ID = '00000000-0000-4000-8000-000000000002'
+
 const createRequest = (): Request =>
   new Request('https://www.pomofi.io/api/admin/music/albums', {
     body: JSON.stringify({
@@ -18,6 +20,7 @@ const createRequest = (): Request =>
       coverFallback: 'lp',
       coverImageUrl: null,
       coverReservationId: null,
+      id: ALBUM_ID,
       translations: [
         {description: '첫 유료 앨범', locale: 'ko', title: '테스트 앨범'},
         {description: 'The first paid album', locale: 'en', title: 'Test Album'},
@@ -69,6 +72,7 @@ describe('admin music album route', () => {
       coverFallback: 'lp',
       coverImageUrl: null,
       coverReservationId: null,
+      id: ALBUM_ID,
       translations: [
         {description: '첫 유료 앨범', locale: 'ko', title: '테스트 앨범'},
         {description: 'The first paid album', locale: 'en', title: 'Test Album'},
@@ -85,6 +89,7 @@ describe('admin music album route', () => {
         coverFallback: 'lp',
         coverImageUrl: null,
         coverReservationId: null,
+        id: ALBUM_ID,
         translations: [{description: '설명', locale: 'ko', title: '제목'}],
       }),
       headers: {'Content-Type': 'application/json'},
@@ -99,6 +104,7 @@ describe('admin music album route', () => {
       coverFallback: 'lp',
       coverImageUrl: null,
       coverReservationId: null,
+      id: ALBUM_ID,
       translations: [{description: '설명', locale: 'ko', title: '제목'}],
     })
   })
@@ -122,6 +128,7 @@ describe('admin music album route', () => {
       coverFallback: 'lp',
       coverImageUrl: 'https://external.example/cover.webp',
       coverReservationId: null,
+      id: expect.any(String),
       translations: [{description: '설명', locale: 'ko', title: '제목'}],
     })
   })
@@ -134,6 +141,26 @@ describe('admin music album route', () => {
         coverImageUrl: null,
         coverReservationId: null,
         translations: [{description: 'English only', locale: 'en', title: 'Album'}],
+      }),
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(400)
+    expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
+  })
+
+  it('should reject an invalid album creation ID', async () => {
+    const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
+      body: JSON.stringify({
+        coverDraftId: null,
+        coverFallback: 'lp',
+        coverImageUrl: null,
+        coverReservationId: null,
+        id: 'not-a-uuid',
+        translations: [{description: '설명', locale: 'ko', title: '제목'}],
       }),
       headers: {'Content-Type': 'application/json'},
       method: 'POST',

@@ -70,6 +70,16 @@ const createLockedAlbumQuery = (result: ReadonlyArray<unknown>) => ({
   })),
 })
 
+const createAlbumQuery = (result: ReadonlyArray<unknown>) => ({
+  from: vi.fn(() => ({
+    where: vi.fn(() => ({limit: vi.fn().mockResolvedValue(result)})),
+  })),
+})
+
+const createAlbumTranslationsQuery = (result: ReadonlyArray<unknown>) => ({
+  from: vi.fn(() => ({where: vi.fn().mockResolvedValue(result)})),
+})
+
 const createTracksQuery = (result: ReadonlyArray<unknown>) => ({
   from: vi.fn(() => ({
     leftJoin: vi.fn(() => ({where: vi.fn().mockResolvedValue(result)})),
@@ -92,9 +102,15 @@ const createStatusUpdate = () => ({
   set: vi.fn(() => ({where: vi.fn().mockResolvedValue(undefined)})),
 })
 
-const createReturningInsert = (result: ReadonlyArray<unknown>) => ({
-  values: vi.fn(() => ({returning: vi.fn().mockResolvedValue(result)})),
-})
+const createReturningInsert = (result: ReadonlyArray<unknown>) => {
+  const returning = vi.fn().mockResolvedValue(result)
+  return {
+    values: vi.fn(() => ({
+      onConflictDoNothing: vi.fn(() => ({returning})),
+      returning,
+    })),
+  }
+}
 
 const createProductInsert = (result: ReadonlyArray<unknown>) => ({
   values: vi.fn(() => ({
@@ -300,11 +316,13 @@ describe('updateAlbumStatus', () => {
 })
 
 describe('createAlbum', () => {
+  const albumId = '00000000-0000-4000-8000-000000000002'
   const input = {
     coverDraftId: null,
     coverFallback: 'music' as const,
     coverImageUrl: null,
     coverReservationId: null,
+    id: albumId,
     translations: [{description: 'Description', locale: 'ko' as const, title: 'Title'}],
   }
 
@@ -340,6 +358,7 @@ describe('createAlbum', () => {
         coverFallback: 'cd',
         coverImageUrl: 'cover.webp',
         coverReservationId: null,
+        id: albumId,
         translations: [],
       }),
     ).resolves.toMatchObject({album: {id: 'album-1', translations: []}, success: true})
@@ -347,7 +366,29 @@ describe('createAlbum', () => {
 
   it('should reject when the album insert returns no row', async () => {
     transactionInsert.mockReturnValueOnce(createReturningInsert([]))
+    transactionSelect.mockReturnValueOnce(createAlbumQuery([]))
     await expect(createAlbum(input)).rejects.toThrow('Failed to create a music album')
+  })
+
+  it('should return an existing album when the same creation ID is retried', async () => {
+    transactionInsert.mockReturnValueOnce(createReturningInsert([]))
+    transactionSelect
+      .mockReturnValueOnce(
+        createAlbumQuery([
+          {coverFallback: 'music', coverImageUrl: null, id: albumId, status: 'draft'},
+        ]),
+      )
+      .mockReturnValueOnce(
+        createAlbumTranslationsQuery([
+          {albumId, description: 'Description', locale: 'ko', title: 'Title'},
+        ]),
+      )
+
+    await expect(createAlbum(input)).resolves.toMatchObject({
+      album: {id: albumId, translations: [{albumId, locale: 'ko'}]},
+      success: true,
+    })
+    expect(transactionInsert).toHaveBeenCalledOnce()
   })
 
   it('should propagate a transaction failure', async () => {
@@ -355,12 +396,81 @@ describe('createAlbum', () => {
     await expect(createAlbum(input)).rejects.toThrow('create failed')
   })
 
+  it('should return an existing covered album without reclaiming its reservation', async () => {
+    const updateWhere = vi.fn().mockResolvedValue(undefined)
+    const updateSet = vi.fn(() => ({where: updateWhere}))
+    transactionUpdate.mockReturnValueOnce({set: updateSet})
+    transactionSelect
+      .mockReturnValueOnce(
+        createAlbumQuery([
+          {
+            coverFallback: 'music',
+            coverImageUrl: 'https://cdn.example/cover.webp',
+            id: albumId,
+            status: 'draft',
+          },
+        ]),
+      )
+      .mockReturnValueOnce(
+        createAlbumTranslationsQuery([
+          {albumId, description: 'Description', locale: 'ko', title: 'Title'},
+        ]),
+      )
+
+    await expect(
+      createAlbum({
+        ...input,
+        coverDraftId: 'draft-id',
+        coverImageUrl: 'https://cdn.example/cover.webp',
+        coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+      }),
+    ).resolves.toMatchObject({album: {id: albumId}, success: true})
+    expect(transactionInsert).not.toHaveBeenCalled()
+    expect(transactionDelete).not.toHaveBeenCalled()
+    expect(updateSet).toHaveBeenCalledWith({status: 'deleting', updatedAt: expect.any(Date)})
+    expect(updateWhere).toHaveBeenCalledOnce()
+  })
+
+  it('should return a covered album completed while its reservation lookup was waiting', async () => {
+    const updateWhere = vi.fn().mockResolvedValue(undefined)
+    transactionUpdate.mockReturnValueOnce({
+      set: vi.fn(() => ({where: updateWhere})),
+    })
+    transactionSelect
+      .mockReturnValueOnce(createAlbumQuery([]))
+      .mockReturnValueOnce(createLockedAlbumQuery([]))
+      .mockReturnValueOnce(
+        createAlbumQuery([
+          {
+            coverFallback: 'music',
+            coverImageUrl: 'https://cdn.example/cover.webp',
+            id: albumId,
+            status: 'draft',
+          },
+        ]),
+      )
+      .mockReturnValueOnce(createAlbumTranslationsQuery([]))
+
+    await expect(
+      createAlbum({
+        ...input,
+        coverDraftId: 'draft-id',
+        coverImageUrl: 'https://cdn.example/cover.webp',
+        coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+      }),
+    ).resolves.toMatchObject({album: {id: albumId}, success: true})
+    expect(transactionInsert).not.toHaveBeenCalled()
+    expect(updateWhere).toHaveBeenCalledOnce()
+  })
+
   it('should claim a matching pending cover reservation atomically', async () => {
-    transactionSelect.mockReturnValueOnce(
-      createLockedAlbumQuery([
-        {coverImageUrl: 'https://cdn.example/cover.webp', draftId: 'draft-id'},
-      ]),
-    )
+    transactionSelect
+      .mockReturnValueOnce(createAlbumQuery([]))
+      .mockReturnValueOnce(
+        createLockedAlbumQuery([
+          {coverImageUrl: 'https://cdn.example/cover.webp', draftId: 'draft-id'},
+        ]),
+      )
     transactionInsert
       .mockReturnValueOnce(
         createReturningInsert([
@@ -388,7 +498,10 @@ describe('createAlbum', () => {
   })
 
   it('should reject a missing or mismatched cover reservation before album insertion', async () => {
-    transactionSelect.mockReturnValueOnce(createLockedAlbumQuery([]))
+    transactionSelect
+      .mockReturnValueOnce(createAlbumQuery([]))
+      .mockReturnValueOnce(createLockedAlbumQuery([]))
+      .mockReturnValueOnce(createAlbumQuery([]))
 
     await expect(
       createAlbum({
@@ -400,11 +513,14 @@ describe('createAlbum', () => {
     ).resolves.toEqual({code: 'cover_reservation_invalid', success: false})
     expect(transactionInsert).not.toHaveBeenCalled()
 
-    transactionSelect.mockReturnValueOnce(
-      createLockedAlbumQuery([
-        {coverImageUrl: 'https://cdn.example/other.webp', draftId: 'draft-id'},
-      ]),
-    )
+    transactionSelect
+      .mockReturnValueOnce(createAlbumQuery([]))
+      .mockReturnValueOnce(
+        createLockedAlbumQuery([
+          {coverImageUrl: 'https://cdn.example/other.webp', draftId: 'draft-id'},
+        ]),
+      )
+      .mockReturnValueOnce(createAlbumQuery([]))
     await expect(
       createAlbum({
         ...input,
@@ -415,11 +531,14 @@ describe('createAlbum', () => {
     ).resolves.toEqual({code: 'cover_reservation_invalid', success: false})
     expect(transactionInsert).not.toHaveBeenCalled()
 
-    transactionSelect.mockReturnValueOnce(
-      createLockedAlbumQuery([
-        {coverImageUrl: 'https://cdn.example/cover.webp', draftId: 'other-draft'},
-      ]),
-    )
+    transactionSelect
+      .mockReturnValueOnce(createAlbumQuery([]))
+      .mockReturnValueOnce(
+        createLockedAlbumQuery([
+          {coverImageUrl: 'https://cdn.example/cover.webp', draftId: 'other-draft'},
+        ]),
+      )
+      .mockReturnValueOnce(createAlbumQuery([]))
     await expect(
       createAlbum({
         ...input,
