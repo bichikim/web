@@ -37,6 +37,7 @@ export const useLanguageLearningEditorState = () => {
   const [phase, setPhase] = createSignal<LanguageLearningEditorPhase>('idle')
   const [message, setMessage] = createSignal<string>(m.learning_editor_idle())
   const [pendingDownload, setPendingDownload] = createSignal<LanguageLearningPendingDownload>(null)
+  const [downloadContinuationActive, setDownloadContinuationActive] = createSignal(false)
   const [regeneratingCandidateId, setRegeneratingCandidateId] = createSignal<string | null>(null)
   const learningWords = useLanguageLearningWords()
   const workflow: LanguageLearningEditorWorkflow = {
@@ -47,6 +48,7 @@ export const useLanguageLearningEditorState = () => {
   const writer = useDialogueWriter({modelId: TEXT_MODEL_ID, outputLanguage: language})
   const isBusy = () =>
     isLanguageLearningEditorBusy(phase(), regeneratingCandidateId()) ||
+    downloadContinuationActive() ||
     modelDownload.state().status === 'loading'
   const generationStatus = createMemo(() =>
     getLanguageLearningGenerationStatus({
@@ -101,6 +103,7 @@ export const useLanguageLearningEditorState = () => {
     candidates,
     clearCandidates,
     count,
+    downloadContinuationActive,
     fail,
     generationStatus,
     handleLanguageChange,
@@ -117,6 +120,7 @@ export const useLanguageLearningEditorState = () => {
     sentences,
     setCandidates,
     setCount,
+    setDownloadContinuationActive,
     setMessage,
     setModelId,
     setPendingDownload,
