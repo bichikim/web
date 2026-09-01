@@ -12,7 +12,12 @@ export type {
 } from './catalog'
 export {useAlbumDraft} from './use-album-draft'
 export {createAlbumSubmitHandler} from './album-creation'
-export type {AlbumCreationCallbacks, CreateAlbumSubmitHandlerOptions} from './album-creation'
+export type {
+  AlbumCreationCallbacks,
+  AlbumCreationServices,
+  CreateAlbumSubmitHandlerOptions,
+} from './album-creation'
+export {albumCreationServices} from './album-creation-adapter'
 export {useTrackManagement} from './use-track-management'
 export {useTrackFields} from './use-track-fields'
 export type {TrackFieldsController, UseTrackFieldsProps} from './use-track-fields'

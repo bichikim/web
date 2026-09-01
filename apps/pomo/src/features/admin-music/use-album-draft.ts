@@ -2,6 +2,7 @@ import {createSignal, type JSX, onCleanup, onMount, type Setter} from 'solid-js'
 import {z} from 'zod'
 
 import {type AlbumCreationCallbacks, createAlbumSubmitHandler} from './album-creation'
+import {albumCreationServices} from './album-creation-adapter'
 import {
   type AlbumDraftData,
   type AlbumDraftTranslations,
@@ -202,7 +203,7 @@ const createDraftPersistence = (
   }
 }
 
-const createConditionalDraftPersistence =
+const createGuardedPersistence =
   (canPersist: () => boolean, persistDraft: () => void): (() => void) =>
   () => {
     if (canPersist()) {
@@ -336,6 +337,12 @@ const registerDraftRestoration = (options: RegisterDraftRestorationOptions): voi
   })
 }
 
+const persistRestoredEdits = (editedFields: ReadonlySet<DraftField>, persist: () => void): void => {
+  if (editedFields.size > 0 && !editedFields.has('cover')) {
+    persist()
+  }
+}
+
 export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const albumCreationId = useAlbumCreationId()
   const [isSavingAlbum, setIsSavingAlbum] = createSignal(false)
@@ -360,7 +367,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getTranslations: albumTranslations,
   })
   const draftPersistence = createDraftPersistence(getDraftData, props.setMessage)
-  const persistEditedDraft = createConditionalDraftPersistence(
+  const persistEditedDraft = createGuardedPersistence(
     () => !isRestoringDraft(),
     draftPersistence.persist,
   )
@@ -393,9 +400,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
         setTranslations: setAlbumTranslations,
       })
 
-      if (editedFields.size > 0 && !editedFields.has('cover')) {
-        draftPersistence.persist()
-      }
+      persistRestoredEdits(editedFields, draftPersistence.persist)
     },
     getIsDisposed: () => lifecycle.disposed,
     onFinished: restorationBarrier.finish,
@@ -409,6 +414,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverFile: preparedCoverFile,
     getDraftData,
     persistDraft: draftPersistence.persist,
+    services: albumCreationServices,
     setAlbumId: albumCreationId.set,
     setCoverDraftId,
     setCoverFallback,
@@ -479,7 +485,6 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
       }
     }
   }
-
   return {
     ...draftFieldHandlers,
     albumTranslations,

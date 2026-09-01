@@ -1,15 +1,15 @@
 import {type JSX, type Setter} from 'solid-js'
-import {z} from 'zod'
 
 import {
-  ALBUM_LOCALES,
   type AlbumDraftData,
   type AlbumDraftTranslations,
   createEmptyAlbumTranslations,
 } from './album-draft'
-import {uploadAlbumCover} from './cover-upload'
 
-const getAlbumDraftStorage = () => import('./album-draft-storage')
+export interface AlbumCreationServices {
+  readonly clearDraft: (coverDraftId: string | null) => Promise<boolean>
+  readonly createAlbum: (draft: AlbumDraftData, coverFile: File | null) => Promise<string>
+}
 
 export interface AlbumCreationCallbacks {
   readonly onAlbumCreated?: (albumId: string) => void
@@ -23,6 +23,7 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly getCoverFile: () => File | null
   readonly getDraftData: () => AlbumDraftData
   readonly persistDraft: () => void
+  readonly services: AlbumCreationServices
   readonly setAlbumId: Setter<string | null>
   readonly setCoverDraftId: Setter<string | null>
   readonly setCoverFallback: Setter<AlbumDraftData['coverFallback']>
@@ -30,40 +31,6 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly setIsSavingAlbum: Setter<boolean>
   readonly setTranslations: Setter<AlbumDraftTranslations>
   readonly waitForDraftPersistence: () => Promise<void>
-}
-
-const createAlbum = async (draft: AlbumDraftData, coverFile: File | null): Promise<string> => {
-  const configuredCoverImageUrl = draft.coverImageUrl.trim()
-  const uploadedCover =
-    coverFile === null ? null : await uploadAlbumCover(coverFile, draft.coverDraftId)
-  const coverImageUrl = uploadedCover?.coverImageUrl ?? configuredCoverImageUrl
-  const response = await fetch('/api/admin/music/albums', {
-    body: JSON.stringify({
-      coverDraftId: uploadedCover === null ? null : draft.coverDraftId,
-      coverFallback: draft.coverFallback,
-      coverImageUrl: coverImageUrl === '' ? null : coverImageUrl,
-      coverReservationId: uploadedCover?.coverReservationId ?? null,
-      id: draft.albumId,
-      translations: ALBUM_LOCALES.map((locale) => ({
-        description: draft.translations[locale].description.trim(),
-        locale,
-        title: draft.translations[locale].title.trim(),
-      })).filter(
-        (translation) =>
-          translation.locale === 'ko' ||
-          translation.title.length > 0 ||
-          translation.description.length > 0,
-      ),
-    }),
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-  })
-
-  if (!response.ok) {
-    throw new Error('저장하지 못했습니다. 입력값과 로그인 상태를 확인해 주세요.')
-  }
-
-  return z.object({id: z.string()}).parse(await response.json()).id
 }
 
 const refreshAfterAlbumCreation = async (
@@ -97,16 +64,6 @@ const refreshAfterAlbumCreation = async (
   )
 }
 
-const clearCreatedAlbumDraft = async (coverDraftId: string | null): Promise<boolean> => {
-  try {
-    const {deleteAlbumDraft} = await getAlbumDraftStorage()
-    return (await deleteAlbumDraft(coverDraftId)).success
-  } catch (error) {
-    console.warn('Failed to clear the created album draft.', error)
-    return false
-  }
-}
-
 export const createAlbumSubmitHandler = (
   options: CreateAlbumSubmitHandlerOptions,
 ): JSX.EventHandler<HTMLFormElement, SubmitEvent> =>
@@ -121,7 +78,7 @@ export const createAlbumSubmitHandler = (
     try {
       options.persistDraft()
       await options.waitForDraftPersistence()
-      albumId = await createAlbum(options.getDraftData(), options.getCoverFile())
+      albumId = await options.services.createAlbum(options.getDraftData(), options.getCoverFile())
     } catch (error) {
       options.setMessage(error instanceof Error ? error.message : '앨범을 저장하지 못했습니다.')
       options.setIsSavingAlbum(false)
@@ -137,7 +94,7 @@ export const createAlbumSubmitHandler = (
       options.setTranslations(createEmptyAlbumTranslations())
       options.setCoverImageUrl('')
       options.setCoverFallback('lp')
-      const didClearDraft = await clearCreatedAlbumDraft(coverDraftId)
+      const didClearDraft = await options.services.clearDraft(coverDraftId)
       await refreshAfterAlbumCreation(options, albumId, didClearDraft)
     } finally {
       options.setIsSavingAlbum(false)
