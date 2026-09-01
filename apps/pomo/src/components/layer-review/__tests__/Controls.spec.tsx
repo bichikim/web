@@ -112,15 +112,19 @@ describe('ReviewControls', () => {
       'aria-pressed',
       'true',
     )
-    expect(screen.getByRole('checkbox', {name: /미세 애니메이션/})).toBeChecked()
-    expect(screen.getByText('50%')).toHaveAttribute('for', 'reference-opacity')
-    expect(screen.getByRole('slider', {name: '원본 오버레이'})).toHaveValue('0.5')
+    expect(screen.getByRole('button', {name: '미세 애니메이션'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByText('50%')).toBeInTheDocument()
+    expect(screen.getByRole('slider', {name: '원본 오버레이'})).toHaveAttribute(
+      'aria-valuenow',
+      '0.5',
+    )
 
     fireEvent.click(screen.getByRole('button', {name: '레이어 패널 축소'}))
     fireEvent.click(screen.getByRole('button', {name: '하찮은 스타일'}))
-    fireEvent.change(screen.getByRole('checkbox', {name: /미세 애니메이션/}), {
-      target: {checked: false},
-    })
+    fireEvent.click(screen.getByRole('button', {name: '미세 애니메이션'}))
     fireEvent.click(screen.getByRole('button', {name: '머리 레이어'}))
     fireEvent.click(screen.getByRole('button', {name: '눈 레이어'}))
     fireEvent.click(screen.getByRole('button', {name: '입 레이어'}))
@@ -131,8 +135,8 @@ describe('ReviewControls', () => {
     fireEvent.click(screen.getByRole('button', {name: '입 위치 비교'}))
     fireEvent.click(screen.getByRole('button', {name: '모두 표시'}))
     fireEvent.click(screen.getByRole('button', {name: '모두 숨김'}))
-    fireEvent.input(screen.getByRole('slider', {name: '원본 오버레이'}), {
-      target: {value: '0.75'},
+    fireEvent.keyDown(screen.getByRole('slider', {name: '원본 오버레이'}), {
+      key: 'ArrowRight',
     })
 
     expect(props.onCollapse).toHaveBeenCalledOnce()

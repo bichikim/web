@@ -81,4 +81,17 @@ describe('PButton', () => {
 
     expect(result.getByRole('button', {name: '저장'}).getAttribute('type')).toBe('submit')
   })
+
+  it('should allow native form submission without an onPress callback', () => {
+    const onSubmit = vi.fn((event: SubmitEvent) => event.preventDefault())
+    const result = render(() => (
+      <form onSubmit={onSubmit}>
+        <PButton type="submit">로그인</PButton>
+      </form>
+    ))
+
+    fireEvent.click(result.getByRole('button', {name: '로그인'}))
+
+    expect(onSubmit).toHaveBeenCalledOnce()
+  })
 })

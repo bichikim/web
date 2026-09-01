@@ -1,6 +1,6 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, type JSX, Show} from 'solid-js'
+import {createMemo, createSignal, Show} from 'solid-js'
 
 import {
   FOCUS_ROOM_SCENES,
@@ -42,9 +42,6 @@ export const PLayerReview = () => {
 
     return scene
   })
-  const handleReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
-    setReferenceOpacity(event.currentTarget.valueAsNumber)
-  }
   const handleSelect = (id: PSceneId) => {
     setSelectedId(id)
     setHeadVisible(true)
@@ -158,7 +155,7 @@ export const PLayerReview = () => {
           onMouthChange={setMouthVisible}
           onMouthFrameChange={handleMouthFrameChange}
           onMouthPositionComparisonChange={setMouthPositionComparison}
-          onReferenceChange={handleReferenceChange}
+          onReferenceChange={setReferenceOpacity}
           onSceneStyleChange={setSceneStyle}
           onShowAll={() => setAllLayersVisible(true)}
           onVisemeChange={(nextViseme) => {
