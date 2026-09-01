@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, waitFor, within} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
@@ -8,6 +8,7 @@ import {createDemoDocument, type Player} from '../../player'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
+  autoMeshPart: vi.fn(),
   createPlayer: vi.fn(),
   importPng: vi.fn(),
 }))
@@ -28,6 +29,11 @@ vi.mock('../../player', async (importOriginal) => ({
 vi.mock('../import-png', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../import-png')>()),
   importPng: mocks.importPng,
+}))
+
+vi.mock('../auto-mesh-part', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../auto-mesh-part')>()),
+  autoMeshPart: mocks.autoMeshPart,
 }))
 
 afterEach(() => {
@@ -87,6 +93,33 @@ describe('PuppetEditor', () => {
     fireEvent.click(view.getByRole('button', {name: '오른쪽 패널 열기'}))
     fireEvent.click(view.getByRole('button', {name: '아래 프레임 열기'}))
     expect(editor).not.toHaveClass('left-panel-closed', 'right-panel-closed', 'bottom-panel-closed')
+  })
+
+  test('should configure automatic mesh generation before replacing the active part', async () => {
+    const document = createDemoDocument()
+    const generatedDocument = {...document, motions: []}
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    mocks.autoMeshPart.mockResolvedValue({document: generatedDocument, ok: true})
+    const view = render(() => (
+      <PuppetEditor initialDocument={document} onDocumentChange={onDocumentChange} />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: '자동 메시'}))
+    expect(screen.getByRole('dialog', {name: '자동 메시 생성'})).toBeVisible()
+    fireEvent.input(screen.getByLabelText(/정점 간격/), {target: {value: '32'}})
+    fireEvent.input(screen.getByLabelText(/투명 판정값/), {target: {value: '20'}})
+    fireEvent.click(screen.getByRole('button', {name: '자동 메시 생성'}))
+
+    await waitFor(() =>
+      expect(mocks.autoMeshPart).toHaveBeenCalledWith({
+        document,
+        partId: 'mesh-preview',
+        settings: {alphaThreshold: 20, cellSize: 32},
+      }),
+    )
+    await waitFor(() => expect(onDocumentChange).toHaveBeenLastCalledWith(generatedDocument))
+    expect(screen.queryByRole('dialog', {name: '자동 메시 생성'})).not.toBeInTheDocument()
   })
 
   test('should notify only document changes through the latest external callback', async () => {
