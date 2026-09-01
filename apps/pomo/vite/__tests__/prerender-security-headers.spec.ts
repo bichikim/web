@@ -20,6 +20,7 @@ describe('createInlineContentHashes', () => {
       '<script nonce="build-nonce" src="/entry.js"></script>',
       `<script data-src="deferred" nonce="build-nonce">${secondScript}</script>`,
       `<script>${unmarkedScript}</script>`,
+      '<script data-value="nonce=not-an-attribute">window.attributeValue = true</script>',
     ].join('')
 
     expect(createInlineContentHashes(html)).toEqual({
@@ -34,6 +35,21 @@ describe('createInlineContentHashes', () => {
     expect(createInlineContentHashes(html)).toEqual({
       scriptHashes: [],
       styleHashes: [],
+    })
+  })
+
+  it('should read HTML tag boundaries without treating quoted characters as markup', () => {
+    const script = 'window.boundary = true'
+    const style = 'body::before { content: ">"; }'
+    const html = [
+      `<SCRIPT data-value=">" NONCE="build-nonce">${script}</SCRIPT >`,
+      `<style data-value='>' nonce="build-nonce">${style}</style\n>`,
+      `<!-- <script nonce="build-nonce">window.commented = true</script> -->`,
+    ].join('')
+
+    expect(createInlineContentHashes(html)).toEqual({
+      scriptHashes: [createHashSource(script)],
+      styleHashes: [createHashSource(style)],
     })
   })
 })
