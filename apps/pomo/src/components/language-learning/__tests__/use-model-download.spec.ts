@@ -62,6 +62,16 @@ const createDownloadTestContext = (): DownloadTestContext => {
   }
 }
 
+it('should ignore confirmation without a pending download', async () => {
+  const context = createDownloadTestContext()
+
+  await context.controller.handleDownloadConfirm()
+
+  expect(context.beginTextGeneration).not.toHaveBeenCalled()
+  expect(context.generateVoices).not.toHaveBeenCalled()
+  expect(context.generateCandidateVoice).not.toHaveBeenCalled()
+})
+
 it('should continue text generation once when the shared download is requested again', async () => {
   const context = createDownloadTestContext()
   const target = {kind: 'text'} as const
