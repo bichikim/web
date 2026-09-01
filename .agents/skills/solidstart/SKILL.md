@@ -31,8 +31,13 @@ const BrowserCanvas = clientOnly(() => import('./BrowserCanvas'), {lazy: true})
 
 ## Placement
 
-Place Query and Action wrappers under `src/features`. Follow the `typescript-conventions` skill for feature module layout.
-Place their server functions under `src/server/functions`, with `'use server'` as the first statement of each module. Never define an inline server function inside a Query or Action wrapper.
+Query and Action are client wrappers. They accept a function; they are not server functions themselves.
+
+- An ordinary function passed to a Query or Action runs on the client.
+- A separate `'use server'` function passed to a Query or Action is invoked remotely by the client wrapper.
+- Do not convert an existing client function into a server function merely because it is wrapped in a Query or Action.
+
+Place Query and Action wrappers under `src/features`. Follow the `typescript-conventions` skill for feature module layout. Only when a wrapper receives a server function, place that function under `src/server/functions`, with `'use server'` as the first statement of its module. Never define an inline server function inside a Query or Action wrapper.
 
 ```ts
 'use server'

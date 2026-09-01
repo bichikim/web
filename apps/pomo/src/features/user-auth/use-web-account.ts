@@ -1,14 +1,11 @@
-import {createSignal, onMount} from 'solid-js'
+import {useSubmission} from '@solidjs/router'
+import {createEffect, createMemo, createSignal, onMount} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
-import {requestUserMagicLink} from './magic-link'
-import {
-  type AccountSession,
-  completeAccountLink,
-  readAccountSession,
-  signOutWebSession,
-} from './web-session'
+import {requestAccountMagicLinkAction, signOutAccountSessionAction} from '../auth/actions'
+import {createAuthenticationMachine} from '../auth/machine'
+import {type AccountSession, completeAccountLink, readAccountSession} from './web-session'
 
 export interface WebAccountController {
   readonly email: () => string
@@ -16,19 +13,47 @@ export interface WebAccountController {
   readonly isLoading: () => boolean
   readonly isSubmitting: () => boolean
   readonly onEmailChange: (email: string) => void
-  readonly onSignOut: () => Promise<void>
-  readonly onSubmit: (origin: string) => Promise<void>
   readonly session: () => AccountSession | null
   readonly successMessage: () => string | null
 }
 
 export const useWebAccount = (): WebAccountController => {
+  const authentication = createAuthenticationMachine()
+  const magicLinkSubmission = useSubmission(requestAccountMagicLinkAction)
+  const signOutSubmission = useSubmission(signOutAccountSessionAction)
   const [email, setEmail] = createSignal('')
-  const [session, setSession] = createSignal<AccountSession | null>(null)
-  const [isLoading, setIsLoading] = createSignal(true)
-  const [isSubmitting, setIsSubmitting] = createSignal(false)
-  const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
-  const [successMessage, setSuccessMessage] = createSignal<string | null>(null)
+  const [localErrorMessage, setLocalErrorMessage] = createSignal<string | null>(null)
+  const [localSuccessMessage, setLocalSuccessMessage] = createSignal<string | null>(null)
+  const session = createMemo<AccountSession | null>(() => {
+    const state = authentication.state()
+
+    return state.kind === 'authenticated' && state.provider === 'email'
+      ? {email: state.email}
+      : null
+  })
+  const errorMessage = createMemo(() => {
+    const {result} = magicLinkSubmission
+    const signOutStatus = signOutSubmission.result?.status
+
+    if (result?.status === 'rejected') {
+      return m.web_account_magic_link_failed()
+    }
+
+    if (result?.status === 'unavailable') {
+      return m.web_account_server_failed()
+    }
+
+    if (signOutStatus === 'rejected' || signOutStatus === 'unavailable') {
+      return m.web_account_sign_out_failed()
+    }
+
+    return localErrorMessage()
+  })
+  const successMessage = createMemo(() =>
+    magicLinkSubmission.result?.status === 'sent'
+      ? m.web_account_magic_link_sent()
+      : localSuccessMessage(),
+  )
 
   onMount(() => {
     let accountCallbackErrorMessage: string | null = null
@@ -49,83 +74,61 @@ export const useWebAccount = (): WebAccountController => {
         window.history.replaceState(null, '', url)
 
         if (linkResult === 'linked') {
-          setSuccessMessage(m.web_account_linked())
+          setLocalSuccessMessage(m.web_account_linked())
         } else {
           accountCallbackErrorMessage = m.web_account_link_expired()
-          setErrorMessage(accountCallbackErrorMessage)
+          setLocalErrorMessage(accountCallbackErrorMessage)
         }
       } else if (linkError === 'email') {
         url.searchParams.delete('link_error')
-        window.history.replaceState(null, '', url)
         accountCallbackErrorMessage = m.web_account_link_invalid()
-        setErrorMessage(accountCallbackErrorMessage)
+        setLocalErrorMessage(accountCallbackErrorMessage)
       }
 
-      setSession(await readAccountSession())
-      setIsLoading(false)
+      window.history.replaceState(null, '', url)
+      const resolvedSession = await readAccountSession()
+
+      authentication.send(
+        resolvedSession === null
+          ? {type: 'resolve-anonymous'}
+          : {
+              session: {
+                email: resolvedSession.email,
+                kind: 'authenticated',
+                provider: 'email',
+              },
+              type: 'resolve-authenticated',
+            },
+      )
     }
 
     loadAccount().catch(() => {
-      setSuccessMessage(null)
+      setLocalSuccessMessage(null)
 
       if (accountCallbackErrorMessage === null) {
-        setErrorMessage(m.web_account_load_failed())
+        setLocalErrorMessage(m.web_account_load_failed())
       }
 
-      setIsLoading(false)
+      authentication.send({type: 'resolve-unavailable'})
     })
   })
 
-  const onSubmit = async (origin: string) => {
-    setErrorMessage(null)
-    setSuccessMessage(null)
-    setIsSubmitting(true)
-
-    try {
-      const wasSent = await requestUserMagicLink({
-        email: email(),
-        origin,
-      })
-
-      if (wasSent) {
-        setSuccessMessage(m.web_account_magic_link_sent())
-      } else {
-        setErrorMessage(m.web_account_magic_link_failed())
-      }
-    } catch {
-      setErrorMessage(m.web_account_server_failed())
-    } finally {
-      setIsSubmitting(false)
+  createEffect(() => {
+    if (signOutSubmission.result?.status !== 'signed-out') {
+      return
     }
-  }
 
-  const onSignOut = async () => {
-    setIsSubmitting(true)
-
-    try {
-      const wasSignedOut = await signOutWebSession()
-
-      if (!wasSignedOut) {
-        throw new Error('Web sign-out failed')
-      }
-
-      setSession(null)
-      setSuccessMessage(m.web_account_signed_out())
-    } catch {
-      setErrorMessage(m.web_account_sign_out_failed())
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+    authentication.send({type: 'sign-out'})
+    setLocalErrorMessage(null)
+    setLocalSuccessMessage(m.web_account_signed_out())
+  })
 
   return {
     email,
     errorMessage,
-    isLoading,
-    isSubmitting,
+    isLoading: () => authentication.state().kind === 'checking',
+    isSubmitting: () => magicLinkSubmission.pending === true || signOutSubmission.pending === true,
     onEmailChange: setEmail,
-    onSignOut,
-    onSubmit,
     session,
     successMessage,
   }
