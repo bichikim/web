@@ -1,4 +1,5 @@
 import {Show} from 'solid-js'
+import {PProgress} from './PProgress'
 
 const STATUS_CLASSES = [
   'pomo-generation-status flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
@@ -30,14 +31,7 @@ export const PGenerationStatus = (props: PGenerationStatusProps) => (
     <span class="min-w-0 flex-1">{props.message}</span>
     <Show when={props.progress !== null && props.progress !== undefined}>
       <strong>{props.progress}%</strong>
-      <span
-        aria-label={props.progressLabel}
-        aria-valuemax="100"
-        aria-valuemin="0"
-        aria-valuenow={props.progress ?? 0}
-        class="sr-only"
-        role="progressbar"
-      />
+      <PProgress label={props.progressLabel} value={props.progress ?? 0} />
     </Show>
     <Show when={props.onCancel}>
       {(onCancel) => (

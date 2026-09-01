@@ -49,7 +49,7 @@ export interface PButtonProps extends VariantProps<typeof pButtonClasses> {
   readonly icon?: string
   readonly leadingImage?: string
   readonly leadingImageClass?: string
-  readonly onPress: (source: HTMLButtonElement) => void
+  readonly onPress?: (source: HTMLButtonElement) => void
   readonly trailingIcon?: string
   readonly type?: 'button' | 'reset' | 'submit'
 }
@@ -59,7 +59,7 @@ export const PButton = (props: PButtonProps) => (
     aria-label={props.accessibleLabel}
     class={pButtonClasses({class: props.class, size: props.size, tone: props.tone})}
     disabled={props.disabled}
-    onClick={(event) => props.onPress(event.currentTarget)}
+    onClick={(event) => props.onPress?.(event.currentTarget)}
     title={props.accessibleLabel}
     type={props.type ?? 'button'}
   >

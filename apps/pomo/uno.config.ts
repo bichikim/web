@@ -1,4 +1,5 @@
 import baseConfig from '@winter-love/unocss-config'
+import {fileURLToPath} from 'node:url'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 
 import scribbleIcons from './scripts/unocss/scribble.json'
@@ -84,6 +85,7 @@ const config = mergeConfigs([
   baseConfig,
   defineConfig<PresetWind3Theme>({
     content: {
+      filesystem: [fileURLToPath(new URL('./src/**/*.{ts,tsx}', import.meta.url))],
       pipeline: {
         exclude: ['**/.i18n/paraglide/**'],
       },

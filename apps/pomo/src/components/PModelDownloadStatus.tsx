@@ -5,19 +5,16 @@ import {
   type LoadingModelDownloadState,
   useModelDownload,
 } from '../features/model-download'
+import {PButton} from './PButton'
+import {PFormMessage} from './PFormMessage'
 import {PLoadingStatus} from './PLoadingStatus'
+import {PProgress} from './PProgress'
 
 const ERROR_CLASSES = [
   'pointer-events-auto flex min-h-control-sm items-center gap-2',
   'border border-solid border-border rounded-control bg-surface px-3',
   'text-foreground text-xs font-650 shadow-panel backdrop-blur-surface',
 ].join(' ')
-const DISMISS_CLASSES = [
-  'ml-1 min-h-7 cursor-pointer border-0 rounded-control bg-secondary-soft px-2.5',
-  'text-foreground text-xs font-750 outline-none',
-  'hover:bg-[rgb(114_123_96_/_30%)] focus-visible:shadow-focus',
-].join(' ')
-
 export const PModelDownloadStatus = () => {
   const download = useModelDownload()
   const loadingState = (): LoadingModelDownloadState | null => {
@@ -40,26 +37,19 @@ export const PModelDownloadStatus = () => {
                 onCancel={download.cancel}
               />
             </div>
-            <span
-              aria-label="모델 다운로드 진행률"
-              aria-valuemax="100"
-              aria-valuemin="0"
-              aria-valuenow={state().percentage}
-              class="sr-only"
-              role="progressbar"
-            />
+            <PProgress label="모델 다운로드 진행률" value={state().percentage} />
           </div>
         )}
       </Match>
       <Match when={errorState()}>
         {(state) => (
-          <div aria-live="assertive" class={ERROR_CLASSES} role="alert">
+          <PFormMessage class={ERROR_CLASSES} tone="error">
             <span aria-hidden="true" class="i-tabler-alert-circle size-4 flex-none text-danger" />
             <span>{state().message}</span>
-            <button class={DISMISS_CLASSES} onClick={download.dismissError} type="button">
+            <PButton onPress={download.dismissError} size="small" tone="secondary">
               닫기
-            </button>
-          </div>
+            </PButton>
+          </PFormMessage>
         )}
       </Match>
     </Switch>

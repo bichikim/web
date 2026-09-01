@@ -47,6 +47,7 @@ export const stressTestFiles = [
 
 export const unitTestProject = {
   extends: true,
+  plugins: [virtualUnoCssPlugin],
   test: {
     // 테스트 런타임 환경 (DOM API 제공)
     environment: 'jsdom',
@@ -110,8 +111,6 @@ export const createVitestConfig = (projects: readonly TestProjectConfiguration[]
     ),
     // Vite/Vitest 플러그인 목록
     plugins: [
-      // Unit tests need a resolvable CSS module, while UnoCSS transformation rewrites class snapshots and trigger fixtures.
-      virtualUnoCssPlugin,
       // Vitest does not load SolidStart, which normally stubs this marker for server modules.
       virtualServerOnlyPlugin,
       // HMR is inactive in tests; disabling its transform prevents synthetic refresh branches from lowering source coverage.

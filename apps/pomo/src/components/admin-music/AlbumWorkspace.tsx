@@ -1,6 +1,7 @@
 import {clientOnly} from '@solidjs/start'
+import {Tabs} from '@kobalte/core/tabs'
 import {cx} from 'class-variance-authority'
-import {createSignal, For, type JSX, Match, Show, Switch} from 'solid-js'
+import {createSignal, For, Show} from 'solid-js'
 
 import {
   type AdminAlbum,
@@ -139,7 +140,7 @@ const TrackPanel = (props: TrackPanelProps) => {
     }
   }
   return (
-    <section aria-labelledby="tracks-tab" class="p-5 sm:p-6" id="tracks-panel" role="tabpanel">
+    <div class="p-5 sm:p-6">
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 class="m-0 text-lg font-800">수록곡 {playableTracks().length}</h3>
@@ -231,7 +232,7 @@ const TrackPanel = (props: TrackPanelProps) => {
           </ol>
         </Show>
       </Show>
-    </section>
+    </div>
   )
 }
 
@@ -245,7 +246,7 @@ const AlbumDetailsPanel = (props: AlbumDetailsPanelProps) => {
     props.album.translations.filter((translation) => translation.locale !== 'ko')
 
   return (
-    <section aria-labelledby="details-tab" class="p-5 sm:p-6" id="details-panel" role="tabpanel">
+    <div class="p-5 sm:p-6">
       <h3 class="m-0 text-lg font-800">기본 정보</h3>
       <p class="mb-0 mt-1 text-sm leading-6 text-white/50">
         사용자에게 표시되는 앨범 제목과 설명입니다.
@@ -287,7 +288,7 @@ const AlbumDetailsPanel = (props: AlbumDetailsPanelProps) => {
           </Show>
         </div>
       </details>
-    </section>
+    </div>
   )
 }
 
@@ -315,7 +316,7 @@ const SalesPanel = (props: SalesPanelProps) => {
   }
 
   return (
-    <section aria-labelledby="sales-tab" class="p-5 sm:p-6" id="sales-panel" role="tabpanel">
+    <div class="p-5 sm:p-6">
       <h3 class="m-0 text-lg font-800">판매 및 공개</h3>
       <p class="mb-0 mt-1 text-sm leading-6 text-white/50">
         앨범 공개와 상품 연결은 서로 독립적으로 관리합니다.
@@ -438,7 +439,7 @@ const SalesPanel = (props: SalesPanelProps) => {
           </details>
         </Show>
       </div>
-    </section>
+    </div>
   )
 }
 
@@ -480,33 +481,15 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
     setActiveTab('sales')
     setIsStatusReviewOpen(true)
   }
-  const handleTabKeyDown: JSX.EventHandler<HTMLButtonElement, KeyboardEvent> = (event) => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-      return
-    }
-
-    event.preventDefault()
-    const currentIndex = WORKSPACE_TABS.findIndex((tab) => tab.id === activeTab())
-    const lastIndex = WORKSPACE_TABS.length - 1
-    const nextIndex =
-      event.key === 'Home'
-        ? 0
-        : event.key === 'End'
-          ? lastIndex
-          : event.key === 'ArrowRight'
-            ? (currentIndex + 1) % WORKSPACE_TABS.length
-            : (currentIndex + lastIndex) % WORKSPACE_TABS.length
-    const nextTab = WORKSPACE_TABS[nextIndex] ?? WORKSPACE_TABS[0]
-
-    setActiveTab(nextTab.id)
-    setIsStatusReviewOpen(false)
-    event.currentTarget.parentElement
-      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-      [nextIndex]?.focus()
-  }
-
   return (
-    <div class="grid gap-4">
+    <Tabs
+      class="grid gap-4"
+      onChange={(value) => {
+        setActiveTab(value as WorkspaceTab)
+        setIsStatusReviewOpen(false)
+      }}
+      value={activeTab()}
+    >
       <AlbumReleaseCard
         activeOfferCount={activeOfferCount()}
         album={props.album}
@@ -514,68 +497,55 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
         trackCount={activeTrackCount()}
       />
       <div class="overflow-hidden rounded-5 border border-white/10 bg-white/3">
-        <div
+        <Tabs.List
           aria-label="앨범 관리 영역"
           class="flex gap-6 overflow-x-auto border-b border-white/10 px-5"
-          role="tablist"
         >
           <For each={WORKSPACE_TABS}>
             {(tab) => (
-              <button
-                aria-controls={`${tab.id}-panel`}
-                aria-selected={activeTab() === tab.id}
+              <Tabs.Trigger
                 class={cx(
                   TAB_CLASSES,
                   activeTab() === tab.id
                     ? 'border-#e8bc88 text-white'
                     : 'border-transparent text-white/45 hover:text-white/75',
                 )}
-                id={`${tab.id}-tab`}
-                onClick={() => {
-                  setActiveTab(tab.id)
-                  setIsStatusReviewOpen(false)
-                }}
-                onKeyDown={handleTabKeyDown}
-                role="tab"
-                tabindex={activeTab() === tab.id ? 0 : -1}
-                type="button"
+                value={tab.id}
               >
                 {tab.label}
                 <Show when={tab.id === 'tracks'}> {activeTrackCount()}</Show>
-              </button>
+              </Tabs.Trigger>
             )}
           </For>
-        </div>
-        <Switch>
-          <Match when={activeTab() === 'details'}>
-            <AlbumDetailsPanel album={props.album} />
-          </Match>
-          <Match when={activeTab() === 'tracks'}>
-            <TrackPanel
-              albumId={props.album.id}
-              albumStatus={props.album.status}
-              albumTitle={albumTitle()}
-              assets={albumAssets()}
-              model={props.model}
-              pendingTracks={pendingTracks()}
-              tracks={albumTracks()}
-            />
-          </Match>
-          <Match when={activeTab() === 'sales'}>
-            <SalesPanel
-              album={props.album}
-              albumId={props.album.id}
-              albumTitle={albumTitle()}
-              isStatusReviewOpen={isStatusReviewOpen()}
-              model={props.model}
-              offers={albumOffers()}
-              onStatusReviewClose={() => setIsStatusReviewOpen(false)}
-              onStatusReviewOpen={() => setIsStatusReviewOpen(true)}
-              trackCount={activeTrackCount()}
-            />
-          </Match>
-        </Switch>
+        </Tabs.List>
+        <Tabs.Content value="details">
+          <AlbumDetailsPanel album={props.album} />
+        </Tabs.Content>
+        <Tabs.Content value="tracks">
+          <TrackPanel
+            albumId={props.album.id}
+            albumStatus={props.album.status}
+            albumTitle={albumTitle()}
+            assets={albumAssets()}
+            model={props.model}
+            pendingTracks={pendingTracks()}
+            tracks={albumTracks()}
+          />
+        </Tabs.Content>
+        <Tabs.Content value="sales">
+          <SalesPanel
+            album={props.album}
+            albumId={props.album.id}
+            albumTitle={albumTitle()}
+            isStatusReviewOpen={isStatusReviewOpen()}
+            model={props.model}
+            offers={albumOffers()}
+            onStatusReviewClose={() => setIsStatusReviewOpen(false)}
+            onStatusReviewOpen={() => setIsStatusReviewOpen(true)}
+            trackCount={activeTrackCount()}
+          />
+        </Tabs.Content>
       </div>
-    </div>
+    </Tabs>
   )
 }

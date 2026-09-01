@@ -3,13 +3,9 @@ import {type JSX, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 
 import {useWebAccount} from '../../features/user-auth/use-web-account'
-import {
-  ACCOUNT_ERROR_CLASSES,
-  ACCOUNT_FIELD_CLASSES,
-  ACCOUNT_PRIMARY_BUTTON_CLASSES,
-  ACCOUNT_SECONDARY_BUTTON_CLASSES,
-  ACCOUNT_SUCCESS_CLASSES,
-} from './styles'
+import {PButton} from '../PButton'
+import {PFormMessage} from '../PFormMessage'
+import {PTextField} from '../PTextField'
 
 export const WebAccount = () => {
   const account = useWebAccount()
@@ -30,25 +26,19 @@ export const WebAccount = () => {
           fallback={
             <form action="/api/auth/sign-in/magic-link" class="grid gap-5" onSubmit={handleSubmit}>
               <p class="m-0 text-sm leading-6 text-white/60">{m.web_account_intro()}</p>
-              <label class="grid gap-2 text-sm font-650">
-                {m.web_account_email()}
-                <input
-                  autocomplete="email"
-                  class={ACCOUNT_FIELD_CLASSES}
-                  inputmode="email"
-                  onInput={(event) => account.onEmailChange(event.currentTarget.value)}
-                  required
-                  type="email"
-                  value={account.email()}
-                />
-              </label>
-              <button
-                class={ACCOUNT_PRIMARY_BUTTON_CLASSES}
+              <PTextField
+                autoComplete="email"
                 disabled={account.isSubmitting()}
-                type="submit"
-              >
+                inputMode="email"
+                label={m.web_account_email()}
+                onChange={account.onEmailChange}
+                required
+                type="email"
+                value={account.email()}
+              />
+              <PButton class="w-full" disabled={account.isSubmitting()} type="submit">
                 {account.isSubmitting() ? m.web_account_sending() : m.web_account_send()}
-              </button>
+              </PButton>
             </form>
           }
         >
@@ -58,30 +48,30 @@ export const WebAccount = () => {
                 <p class="m-0 text-xs text-white/45">{m.web_account_signed_in_email()}</p>
                 <p class="mb-0 mt-1 break-all text-sm font-700">{session().email}</p>
               </div>
-              <button
-                class={ACCOUNT_SECONDARY_BUTTON_CLASSES}
+              <PButton
+                class="w-full"
                 disabled={account.isSubmitting()}
-                onClick={() => account.onSignOut()}
-                type="button"
+                onPress={() => account.onSignOut()}
+                tone="secondary"
               >
                 {m.web_account_sign_out()}
-              </button>
+              </PButton>
             </div>
           )}
         </Show>
         <Show when={account.successMessage()}>
           {(message) => (
-            <p class={`${ACCOUNT_SUCCESS_CLASSES} mt-5`} role="status">
+            <PFormMessage class="mt-5" tone="success">
               {message()}
-            </p>
+            </PFormMessage>
           )}
         </Show>
       </Show>
       <Show when={account.errorMessage()}>
         {(message) => (
-          <p class={`${ACCOUNT_ERROR_CLASSES} mt-5`} role="alert">
+          <PFormMessage class="mt-5" tone="error">
             {message()}
-          </p>
+          </PFormMessage>
         )}
       </Show>
     </>
