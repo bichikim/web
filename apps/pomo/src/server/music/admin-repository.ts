@@ -42,7 +42,10 @@ export interface CreateAlbumInput {
 }
 
 export type CreateAlbumResult =
-  | {readonly code: 'cover_reservation_invalid'; readonly success: false}
+  | {
+      readonly code: 'album_creation_payload_mismatch' | 'cover_reservation_invalid'
+      readonly success: false
+    }
   | {
       readonly album: {
         readonly coverFallback: 'lp' | 'cd' | 'music'
@@ -234,10 +237,50 @@ export const updateAlbumStatus = async (
     }),
   )
 
+type CreatedAlbum = {
+  readonly coverFallback: 'lp' | 'cd' | 'music'
+  readonly coverImageUrl: string | null
+  readonly id: string
+  readonly status: 'archived' | 'draft' | 'published'
+  readonly translations: ReadonlyArray<{
+    readonly albumId: string
+    readonly description: string
+    readonly locale: 'en' | 'ja' | 'ko' | 'zh-Hans'
+    readonly title: string
+  }>
+}
+
+const sortTranslationsByLocale = <T extends {readonly locale: string}>(
+  translations: ReadonlyArray<T>,
+): T[] => [...translations].sort((left, right) => left.locale.localeCompare(right.locale))
+
+const matchesCreationInput = (existing: CreatedAlbum, candidate: CreateAlbumInput): boolean => {
+  if (
+    existing.coverFallback !== candidate.coverFallback ||
+    existing.coverImageUrl !== candidate.coverImageUrl ||
+    existing.translations.length !== candidate.translations.length
+  ) {
+    return false
+  }
+
+  const existingTranslations = sortTranslationsByLocale(existing.translations)
+  const candidateTranslations = sortTranslationsByLocale(candidate.translations)
+
+  return existingTranslations.every((existingTranslation, index) => {
+    const candidateTranslation = candidateTranslations[index]
+
+    return (
+      existingTranslation.locale === candidateTranslation.locale &&
+      existingTranslation.title === candidateTranslation.title &&
+      existingTranslation.description === candidateTranslation.description
+    )
+  })
+}
+
 export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumResult> =>
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
-      const readCreatedAlbum = async () => {
+      const readCreatedAlbum = async (): Promise<CreatedAlbum | null> => {
         const [album] = await transaction
           .select({
             coverFallback: musicAlbums.coverFallback,
@@ -264,6 +307,16 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
           .where(eq(musicAlbumTranslations.albumId, input.id))
 
         return {...album, translations}
+      }
+      const returnMatchingCreatedAlbum = async (
+        existingAlbum: CreatedAlbum,
+      ): Promise<CreateAlbumResult> => {
+        if (!matchesCreationInput(existingAlbum, input)) {
+          return {code: 'album_creation_payload_mismatch', success: false}
+        }
+
+        await prepareUnusedCoverDeletion()
+        return {album: existingAlbum, success: true}
       }
       const prepareUnusedCoverDeletion = async (): Promise<void> => {
         if (
@@ -295,8 +348,7 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
         const existingAlbum = await readCreatedAlbum()
 
         if (existingAlbum !== null) {
-          await prepareUnusedCoverDeletion()
-          return {album: existingAlbum, success: true}
+          return returnMatchingCreatedAlbum(existingAlbum)
         }
 
         const [reservation] = await transaction
@@ -323,8 +375,7 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
           const concurrentlyCreatedAlbum = await readCreatedAlbum()
 
           if (concurrentlyCreatedAlbum !== null) {
-            await prepareUnusedCoverDeletion()
-            return {album: concurrentlyCreatedAlbum, success: true}
+            return returnMatchingCreatedAlbum(concurrentlyCreatedAlbum)
           }
 
           return {code: 'cover_reservation_invalid', success: false}
@@ -353,8 +404,7 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
           throw new Error('Failed to create a music album')
         }
 
-        await prepareUnusedCoverDeletion()
-        return {album: concurrentlyCreatedAlbum, success: true}
+        return returnMatchingCreatedAlbum(concurrentlyCreatedAlbum)
       }
 
       const translations = await transaction

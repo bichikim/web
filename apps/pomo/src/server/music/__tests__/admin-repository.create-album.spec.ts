@@ -135,6 +135,29 @@ describe('createAlbum', () => {
     expect(transactionInsert).toHaveBeenCalledOnce()
   })
 
+  it('should reject when the same creation ID is retried with different metadata', async () => {
+    transactionInsert.mockReturnValueOnce(createReturningInsert([]))
+    transactionSelect
+      .mockReturnValueOnce(
+        createAlbumQuery([
+          {coverFallback: 'music', coverImageUrl: null, id: albumId, status: 'draft'},
+        ]),
+      )
+      .mockReturnValueOnce(
+        createAlbumTranslationsQuery([
+          {albumId, description: 'Description', locale: 'ko', title: 'Old Title'},
+        ]),
+      )
+
+    await expect(
+      createAlbum({
+        ...input,
+        translations: [{description: 'Description', locale: 'ko', title: 'New Title'}],
+      }),
+    ).resolves.toEqual({code: 'album_creation_payload_mismatch', success: false})
+    expect(transactionInsert).toHaveBeenCalledOnce()
+  })
+
   it('should propagate a transaction failure', async () => {
     transactionalDatabase.transaction.mockRejectedValueOnce(new Error('create failed'))
     await expect(createAlbum(input)).rejects.toThrow('create failed')
@@ -191,7 +214,11 @@ describe('createAlbum', () => {
           },
         ]),
       )
-      .mockReturnValueOnce(createAlbumTranslationsQuery([]))
+      .mockReturnValueOnce(
+        createAlbumTranslationsQuery([
+          {albumId, description: 'Description', locale: 'ko', title: 'Title'},
+        ]),
+      )
 
     await expect(
       createAlbum({

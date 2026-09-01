@@ -238,6 +238,18 @@ describe('admin music album route', () => {
     await expect(response.json()).resolves.toEqual({error: 'cover_reservation_invalid'})
   })
 
+  it('should reject a retried creation ID when its payload no longer matches', async () => {
+    repositoryMocks.createAlbum.mockResolvedValue({
+      code: 'album_creation_payload_mismatch',
+      success: false,
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({error: 'album_creation_payload_mismatch'})
+  })
+
   it('should reject a managed cover URL without a reservation before writing', async () => {
     storageMocks.isManagedAlbumCoverUrl.mockReturnValue(true)
     const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
