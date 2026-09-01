@@ -1,11 +1,36 @@
 import * as m from '@paraglide/message'
-import {type LanguageLearningEditorState, TEXT_MODEL_ID} from './use-editor-state'
+import type {ModelDownloadController} from '../../features/model-download/controller'
+import type {SupertonicModelId} from '../../features/supertonic'
+import type {LanguageLearningEditorPhase, LanguageLearningPendingDownload} from './editor-state'
+import {TEXT_MODEL_ID} from './use-editor-state'
+
+interface LanguageLearningDownloadController {
+  readonly startTextModel: ModelDownloadController['startTextModel']
+  readonly startVoiceModel: ModelDownloadController['startVoiceModel']
+}
+
+interface LanguageLearningWorkflowStatus {
+  readonly isDisposed: boolean
+}
+
+export interface LanguageLearningDownloadState {
+  readonly fail: (message: string) => void
+  readonly modelDownload: LanguageLearningDownloadController
+  readonly modelId: () => SupertonicModelId
+  readonly pendingDownload: () => LanguageLearningPendingDownload
+  readonly setDownloadContinuationActive: (active: boolean) => void
+  readonly setMessage: (message: string) => void
+  readonly setPendingDownload: (download: LanguageLearningPendingDownload) => void
+  readonly setPhase: (phase: LanguageLearningEditorPhase) => void
+  readonly setRegeneratingCandidateId: (candidateId: string | null) => void
+  readonly workflow: LanguageLearningWorkflowStatus
+}
 
 export interface UseModelDownloadProps {
   readonly beginTextGeneration: () => void
   readonly generateCandidateVoice: (candidateId: string) => Promise<void>
   readonly generateVoices: () => Promise<void>
-  readonly state: LanguageLearningEditorState
+  readonly state: LanguageLearningDownloadState
 }
 
 export const useModelDownload = (props: UseModelDownloadProps) => {

@@ -3,8 +3,7 @@ import {expect, it, type Mock, vi} from 'vitest'
 
 import type {ModelDownloadResult} from '../../../features/model-download'
 import type {LanguageLearningPendingDownload} from '../editor-state'
-import type {LanguageLearningEditorState} from '../use-editor-state'
-import {useModelDownload} from '../use-model-download'
+import {type LanguageLearningDownloadState, useModelDownload} from '../use-model-download'
 
 function createDeferred<T>() {
   let resolve = (_value: T) => undefined
@@ -33,7 +32,6 @@ const createDownloadTestContext = (): DownloadTestContext => {
   const generateCandidateVoice = vi.fn().mockResolvedValue(undefined)
   const generateVoices = vi.fn().mockResolvedValue(undefined)
   const state = {
-    downloadContinuationActive: () => false,
     fail: vi.fn(),
     modelDownload: {
       startTextModel: vi.fn(() => result.promise),
@@ -47,7 +45,7 @@ const createDownloadTestContext = (): DownloadTestContext => {
     setPhase: vi.fn(),
     setRegeneratingCandidateId: vi.fn(),
     workflow: {isDisposed: false},
-  } as unknown as LanguageLearningEditorState
+  } satisfies LanguageLearningDownloadState
 
   return {
     beginTextGeneration,

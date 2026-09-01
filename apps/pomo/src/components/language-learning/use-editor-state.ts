@@ -103,7 +103,6 @@ export const useLanguageLearningEditorState = () => {
     candidates,
     clearCandidates,
     count,
-    downloadContinuationActive,
     fail,
     generationStatus,
     handleLanguageChange,
