@@ -1,6 +1,11 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
 
-import type {PuppetDocument, PuppetPart, PuppetTexture} from '../player'
+import {
+  getScenePartStates,
+  type PuppetDocument,
+  type PuppetPart,
+  type PuppetTexture,
+} from '../player'
 import {
   autoMeshPart,
   type AutoMeshPartErrorCode,
@@ -22,6 +27,7 @@ export interface UseAutoMeshProps {
 }
 
 export interface UseAutoMeshResult {
+  readonly errorMessage: Accessor<string | null>
   readonly generate: (settings: AutoMeshSettings) => Promise<boolean>
   readonly isOpen: Accessor<boolean>
   readonly onOpenChange: (open: boolean) => void
@@ -69,29 +75,43 @@ const getAutoMeshErrorMessage = (code: AutoMeshGenerationErrorCode) => {
 }
 
 export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
+  const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isOpen, setIsOpen] = createSignal(false)
   let generation = 0
+  const reportError = (message: string) => {
+    setErrorMessage(message)
+    props.onNotice?.(message)
+  }
   const target = createMemo(() => {
     const partId = props.activePartId()
-    return partId === null
-      ? undefined
-      : props.document().parts.find((candidate) => candidate.id === partId)
+
+    if (partId === null) {
+      return undefined
+    }
+
+    const document = props.document()
+    const partState = getScenePartStates(document).find((state) => state.partId === partId)
+
+    return partState?.visible === true && !partState.locked
+      ? document.parts.find((candidate) => candidate.id === partId)
+      : undefined
   })
   const generate = async (settings: AutoMeshSettings) => {
     generation += 1
     const activeGeneration = generation
+    setErrorMessage(null)
     const document = props.document()
     const part = target()
 
     if (part === undefined) {
-      props.onNotice?.('자동 메시를 적용할 파트를 먼저 선택하세요.')
+      reportError('자동 메시를 적용할 파트를 먼저 선택하세요.')
       return false
     }
 
     const validation = validateAutoMeshPart({document, partId: part.id, settings})
 
     if (!validation.ok) {
-      props.onNotice?.(getAutoMeshErrorMessage(validation.error.code))
+      reportError(getAutoMeshErrorMessage(validation.error.code))
       return false
     }
 
@@ -102,12 +122,12 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
     }
 
     if (props.document() !== document || props.activePartId() !== part.id) {
-      props.onNotice?.('편집 대상이 변경되어 자동 메시 결과를 적용하지 않았습니다.')
+      reportError('편집 대상이 변경되어 자동 메시 결과를 적용하지 않았습니다.')
       return false
     }
 
     if (!pixelResult.ok) {
-      props.onNotice?.(
+      reportError(
         pixelResult.error.code === 'unexpected'
           ? '자동 메시 생성 중 예상하지 못한 오류가 발생했습니다.'
           : getAutoMeshErrorMessage(pixelResult.error.code),
@@ -123,7 +143,7 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
     })
 
     if (!result.ok) {
-      props.onNotice?.(getAutoMeshErrorMessage(result.error.code))
+      reportError(getAutoMeshErrorMessage(result.error.code))
       return false
     }
 
@@ -134,6 +154,8 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
   }
 
   const onOpenChange = (open: boolean) => {
+    setErrorMessage(null)
+
     if (!open) {
       generation += 1
     }
@@ -141,5 +163,5 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
     setIsOpen(open)
   }
 
-  return {generate, isOpen, onOpenChange, target}
+  return {errorMessage, generate, isOpen, onOpenChange, target}
 }

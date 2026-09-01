@@ -67,8 +67,10 @@ const isTexture = (value: unknown): value is PuppetTexture =>
   typeof value.src === 'string' &&
   value.src.length > 0 &&
   isFiniteNumber(value.width) &&
+  Number.isInteger(value.width) &&
   value.width > 0 &&
   isFiniteNumber(value.height) &&
+  Number.isInteger(value.height) &&
   value.height > 0
 
 const isMesh = (value: unknown): value is PuppetMesh => {

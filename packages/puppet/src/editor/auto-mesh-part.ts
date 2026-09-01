@@ -42,6 +42,7 @@ export interface ValidateAutoMeshPartSuccess {
 export type ValidateAutoMeshPartResult = AutoMeshPartFailure | ValidateAutoMeshPartSuccess
 
 const MAXIMUM_AUTO_MESH_DIVISIONS_PER_AXIS = 256
+const MAXIMUM_ALPHA_THRESHOLD = 255
 
 export const getMinimumAutoMeshCellSize = (width: number, height: number) =>
   Math.max(1, Math.ceil(Math.max(width, height) / MAXIMUM_AUTO_MESH_DIVISIONS_PER_AXIS))
@@ -105,6 +106,14 @@ export const validateAutoMeshPart = (
 
   if (part.texture.width * part.texture.height > MAXIMUM_TEXTURE_PIXELS) {
     return {error: {code: 'too-large'}, ok: false}
+  }
+
+  if (
+    !Number.isInteger(options.settings.alphaThreshold) ||
+    options.settings.alphaThreshold < 0 ||
+    options.settings.alphaThreshold > MAXIMUM_ALPHA_THRESHOLD
+  ) {
+    return {error: {code: 'invalid-alpha-threshold'}, ok: false}
   }
 
   const minimumCellSize = getMinimumAutoMeshCellSize(part.texture.width, part.texture.height)

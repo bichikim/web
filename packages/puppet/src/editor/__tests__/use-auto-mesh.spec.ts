@@ -179,6 +179,31 @@ describe('useAutoMesh', () => {
       await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
       expect(onDocumentChange).not.toHaveBeenCalled()
       expect(onNotice).toHaveBeenCalledWith('선택한 파트의 텍스처를 해석하지 못했습니다.')
+      expect(autoMesh.errorMessage()).toBe('선택한 파트의 텍스처를 해석하지 못했습니다.')
+      dispose()
+    })
+  })
+
+  test('should reject invalid settings before reading texture pixels', async () => {
+    const document = createDemoDocument()
+    const onDocumentChange = vi.fn()
+    const onNotice = vi.fn()
+
+    await createRoot(async (dispose) => {
+      const [activePartId] = createSignal<string | null>('mesh-preview')
+      const [sourceDocument] = createSignal<PuppetDocument>(document)
+      const autoMesh = useAutoMesh({
+        activePartId,
+        document: sourceDocument,
+        onDocumentChange,
+        onNotice,
+      })
+
+      await expect(autoMesh.generate({alphaThreshold: 256, cellSize: 32})).resolves.toBe(false)
+      expect(mocks.readTexturePixels).not.toHaveBeenCalled()
+      expect(mocks.autoMeshPart).not.toHaveBeenCalled()
+      expect(onDocumentChange).not.toHaveBeenCalled()
+      expect(onNotice).toHaveBeenCalledWith('자동 메시 생성 설정이 올바르지 않습니다.')
       dispose()
     })
   })

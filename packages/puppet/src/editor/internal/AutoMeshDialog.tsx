@@ -1,5 +1,5 @@
 import {Dialog} from '@kobalte/core/dialog'
-import {createEffect, createSignal, For} from 'solid-js'
+import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {type AutoMeshSettings, getMinimumAutoMeshCellSize} from '../auto-mesh-part'
 
@@ -36,6 +36,7 @@ const DEFAULT_GRID_DIVISIONS = 12
 const DEFAULT_ALPHA_THRESHOLD = 16
 
 export interface AutoMeshDialogProps {
+  readonly errorMessage?: string
   readonly isOpen?: boolean
   readonly onGenerate?: (settings: AutoMeshSettings) => boolean | Promise<boolean>
   readonly onOpenChange?: (open: boolean) => void
@@ -201,6 +202,14 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
               메시 구조가 바뀌므로 이 파트에 저장된 Parameter 변형과 모션 정점 키프레임은
               초기화됩니다.
             </p>
+
+            <Show when={props.errorMessage}>
+              {(message) => (
+                <p class="auto-mesh-error" role="alert">
+                  {message()}
+                </p>
+              )}
+            </Show>
 
             <AutoMeshDialogFooter
               canGenerate={props.onGenerate !== undefined}

@@ -288,6 +288,7 @@ interface EditorAutoMeshDialogProps {
 const EditorAutoMeshDialog = (props: EditorAutoMeshDialogProps) => (
   <Show when={props.autoMesh.isOpen()}>
     <AutoMeshDialog
+      errorMessage={props.autoMesh.errorMessage() ?? undefined}
       isOpen
       onGenerate={props.autoMesh.generate}
       onOpenChange={props.autoMesh.onOpenChange}

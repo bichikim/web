@@ -1667,6 +1667,17 @@
   line-height: 1.6;
 }
 
+.auto-mesh-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #8f4747;
+  border-radius: 7px;
+  color: #ffd1d1;
+  background: #2a1616;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
 .auto-mesh-dialog-content footer {
   justify-content: flex-end;
 }

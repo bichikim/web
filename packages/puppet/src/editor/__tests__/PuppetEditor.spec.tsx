@@ -130,6 +130,25 @@ describe('PuppetEditor', () => {
     expect(screen.queryByRole('dialog', {name: '자동 메시 생성'})).not.toBeInTheDocument()
   })
 
+  test.each([
+    {locked: true, state: 'locked', visible: true},
+    {locked: false, state: 'hidden', visible: false},
+  ])('should disable automatic mesh generation for a $state part', ({locked, visible}) => {
+    const document = createDemoDocument()
+    const restrictedDocument = {
+      ...document,
+      scene: {
+        roots: document.scene!.roots.map((node) =>
+          node.id === 'mesh-preview' ? {...node, locked, visible} : node,
+        ),
+      },
+    }
+
+    render(() => <PuppetEditor initialDocument={restrictedDocument} />)
+
+    expect(screen.getByRole('button', {name: '자동 메시'})).toBeDisabled()
+  })
+
   test('should notify only document changes through the latest external callback', async () => {
     const firstCallback = vi.fn()
     const secondCallback = vi.fn()

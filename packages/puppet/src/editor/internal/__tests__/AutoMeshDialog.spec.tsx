@@ -49,6 +49,16 @@ describe('AutoMeshDialog', () => {
     expect(screen.getByRole('dialog', {name: '자동 메시 생성'})).toBeVisible()
   })
 
+  test('should expose the generation error inside the dialog', () => {
+    render(() => (
+      <AutoMeshDialog errorMessage="불투명한 픽셀이 없어 메시를 만들 수 없습니다." isOpen />
+    ))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      '불투명한 픽셀이 없어 메시를 만들 수 없습니다.',
+    )
+  })
+
   test('should keep dismissal available while generation is in progress', async () => {
     let resolveGeneration: ((generated: boolean) => void) | undefined
     const onGenerate = vi.fn(
