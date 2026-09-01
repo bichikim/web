@@ -76,6 +76,7 @@ export const unitTestProject = {
           '@kobalte/utils',
           '@solid-primitives/props',
           '@solid-primitives/resize-observer',
+          '@solidjs/router',
           'solid-presence',
           'solid-prevent-scroll',
         ],
