@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {cx} from 'class-variance-authority'
 import {lazy, Suspense} from 'solid-js'
 
-import * as m from '@paraglide/message'
+import {PSceneFallback} from './p-studio/SceneFallback'
 
 const PStudio = lazy(async () => {
   const studioModule = await import('./PStudio')
@@ -20,7 +20,7 @@ export const PHomePage = () => (
   <main class={MAIN_CLASSES}>
     <Title>Pomofi</Title>
     <div class="pomo-home-stage relative h-full w-full">
-      <Suspense fallback={<div class="pomo-scene-fallback">{m.app_loading()}</div>}>
+      <Suspense fallback={<PSceneFallback />}>
         <PStudio />
       </Suspense>
     </div>

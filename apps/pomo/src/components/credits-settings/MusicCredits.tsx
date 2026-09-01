@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {createSignal, For, Show} from 'solid-js'
 
 export interface PMusicCredit {
@@ -12,10 +13,10 @@ export interface PMusicCreditsProps {
 
 const PREVIEW_CREDIT_COUNT = 4
 const MUSIC_CREDIT_LIST_ID = 'pomo-music-credit-list'
-const MUSIC_CREDIT_ITEM_CLASS = [
+const MUSIC_CREDIT_ITEM_CLASS = cx(
   'flex min-w-0 items-center gap-3 rounded-panel border border-solid',
   'border-[rgb(255_255_255_/_6%)] bg-[rgb(255_255_255_/_3%)] px-4 py-3',
-].join(' ')
+)
 
 export const PMusicCredits = (props: PMusicCreditsProps) => {
   const [isExpanded, setIsExpanded] = createSignal(false)

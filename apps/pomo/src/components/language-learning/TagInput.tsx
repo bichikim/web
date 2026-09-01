@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {TextField} from '@kobalte/core/text-field'
 import {createSignal, For} from 'solid-js'
 
@@ -7,21 +8,21 @@ import {
   parseLanguageLearningTags,
 } from '../../features/language-learning'
 
-const CONTROL_CLASS = [
+const CONTROL_CLASS = cx(
   'flex min-h-control-md cursor-text flex-wrap items-center gap-2 rounded-control border border-solid',
   'border-border bg-surface px-2 py-2 backdrop-blur-surface',
   'transition-[border-color_160ms_ease,background-color_160ms_ease]',
   'hover:border-border-hover focus-within:border-highlight motion-reduce:transition-none',
-].join(' ')
-const TAG_CLASS = [
+)
+const TAG_CLASS = cx(
   'min-h-8 cursor-pointer rounded-3 border border-solid border-border bg-secondary-soft px-3',
   'text-sm font-650 text-foreground hover:border-border-hover hover:bg-surface-interactive',
   'disabled:cursor-not-allowed disabled:opacity-40',
-].join(' ')
-const INPUT_CLASS = [
+)
+const INPUT_CLASS = cx(
   'min-h-8 min-w-32 flex-1 border-0 bg-transparent px-2 text-sm font-650 text-foreground',
   'outline-none placeholder:font-500 placeholder:text-muted-foreground',
-].join(' ')
+)
 
 export interface LanguageLearningTagInputProps {
   readonly description?: string

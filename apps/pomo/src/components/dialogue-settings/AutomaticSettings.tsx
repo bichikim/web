@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 
 import {PSelect, type PSelectOption} from '../PSelect'
@@ -14,7 +15,7 @@ import {
 } from '../../features/supertonic/model'
 
 const CLASSES = {
-  dialogueSettingsAutomatic: [
+  dialogueSettingsAutomatic: cx(
     'pomo-dialogue-settings__automatic grid gap-3.5 [border:1px_solid_rgb(214_181_133_/_24%)]',
     'settings-compact:gap-3',
     'rounded-panel bg-[rgb(214_181_133_/_4%)] p-4',
@@ -22,19 +23,19 @@ const CLASSES = {
     '[&_h4]:font-[750] [&_>_div:first-child_>_p]:mt-[0.2rem]',
     '[&_>_div:first-child_>_p]:text-muted-foreground',
     '[&_>_div:first-child_>_p]:text-[0.65rem] [&_>_div:first-child_>_p]:leading-[1.5]',
-  ].join(' '),
-  dialogueSettingsAutomaticControls: [
+  ),
+  dialogueSettingsAutomaticControls: cx(
     'pomo-dialogue-settings__automatic-controls grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-3',
     'settings-compact:gap-2 automatic-dialogue-compact:grid-cols-[1fr]',
-  ].join(' '),
-  dialogueSettingsAutomaticLoading: [
+  ),
+  dialogueSettingsAutomaticLoading: cx(
     'pomo-dialogue-settings__automatic-loading text-muted-foreground text-[0.6875rem]',
     'leading-[1.5]',
-  ].join(' '),
-  dialogueSettingsAutomaticMessage: [
+  ),
+  dialogueSettingsAutomaticMessage: cx(
     'pomo-dialogue-settings__automatic-message text-muted-foreground text-[0.6875rem]',
     'leading-[1.5]',
-  ].join(' '),
+  ),
 } as const
 
 const MODEL_OPTIONS: ReadonlyArray<PSelectOption<SupertonicModelId>> = SUPERTONIC_MODELS.map(

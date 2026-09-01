@@ -1,30 +1,31 @@
+import {cx} from 'class-variance-authority'
 import {type ScenePeriod} from '../../features/focus-room-time/index'
 
 export const CLASSES = {
-  entry: [
+  entry: cx(
     'pomo-entry absolute inset-0 flex items-end',
     'text-[#fff9f1]',
     '[&[data-exiting]]:animate-entry-reveal-room',
     '[&[data-exiting]]:pointer-events-none',
     'motion-reduce:[&[data-exiting]]:[animation-duration:1ms]',
-  ].join(' '),
-  entryAction: [
+  ),
+  entryAction: cx(
     'pomo-entry__action [button&]:min-w-[min(17rem,_100%)] [button&]:min-h-14',
     '[button&]:[padding-inline:1.5rem] [button&]:text-[0.9375rem]',
-  ].join(' '),
-  entryContent: [
+  ),
+  entryContent: cx(
     'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
     'box-border flex-col items-start gap-4',
     '[margin-block-end:calc(9rem_+_var(--pomo-safe-area-inset-bottom))]',
     '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
     'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
-  ].join(' '),
-  entryLeadingImage: [
+  ),
+  entryLeadingImage: cx(
     'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem]',
     '[filter:drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]',
-  ].join(' '),
-  mediaDock: [
+  ),
+  mediaDock: cx(
     'pomo-media-dock [--pomo-player-compact-width:7.75rem] absolute min-h-0',
     'top-[calc(5.25rem_+_var(--pomo-safe-area-inset-top))]',
     'right-safe-right-mobile bottom-safe-bottom-mobile left-safe-left-mobile flex',
@@ -48,20 +49,20 @@ export const CLASSES = {
     'lg:top-[calc(5.75rem_+_var(--pomo-safe-area-inset-top))]',
     'lg:right-safe-right lg:bottom-safe-bottom lg:left-safe-left',
     'motion-reduce:[&_.pomo-player-stage]:transition-[none]',
-  ].join(' '),
-  mediaMessages: [
+  ),
+  mediaMessages: cx(
     'pomo-media-messages flex w-[min(36rem,_100%)] min-h-0 max-h-full [flex:0_1_auto] flex-col',
     'gap-3 overflow-hidden pointer-events-none [&_>_*]:pointer-events-auto',
-  ].join(' '),
-  sceneControl: [
+  ),
+  sceneControl: cx(
     'pomo-scene-control max-lg:[&.pomo-icon-button]:hidden',
     'max-lg:[&.pomo-icon-select]:hidden',
-  ].join(' '),
-  sceneToolbar: [
+  ),
+  sceneToolbar: cx(
     'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
     'flex flex-col items-end gap-2 xs:right-7',
     'lg:top-[calc(1.5rem+var(--pomo-safe-area-inset-top))]',
-  ].join(' '),
+  ),
   ui: 'pomo-ui pointer-events-none absolute inset-0',
 } as const
 

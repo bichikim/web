@@ -3,11 +3,11 @@ import {type JSX} from 'solid-js'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import {PScribblePanel} from '../scribble/Panel'
 
-const STATUS_CLASS = [
+const STATUS_CLASS = cx(
   'pomo-weather-status inline-flex min-h-8 w-full items-center gap-2',
   'bg-surface px-3 py-1 text-xs font-650 leading-5 text-foreground shadow-panel',
   'backdrop-blur-surface',
-].join(' ')
+)
 
 interface WeatherStatusSurfaceProps {
   readonly children: JSX.Element

@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, createSignal, Show} from 'solid-js'
 
@@ -38,10 +39,10 @@ import {PWeatherSettings} from './PWeatherSettings'
 const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
   settingsGrid: 'grid gap-4 min-[60rem]:grid-cols-2',
-  settingsScreenSaver: [
+  settingsScreenSaver: cx(
     'pomo-settings__screen-saver grid gap-2 [&_>_div]:w-full [&_p]:m-0',
     '[&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
-  ].join(' '),
+  ),
   settingsSection: 'grid gap-4 border-t border-solid border-border pt-5',
   settingsToggle: 'min-h-12',
 } as const
