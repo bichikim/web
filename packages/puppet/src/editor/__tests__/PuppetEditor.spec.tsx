@@ -4,7 +4,7 @@ import {fireEvent, render, waitFor, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type Player} from '../../player'
+import {createDemoDocument, type Player, type PuppetDocument} from '../../player'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -114,6 +114,40 @@ describe('PuppetEditor', () => {
           parameters: [expect.objectContaining({name: 'Angle Y'})],
         }),
       ),
+    )
+  })
+
+  test('should move a dragged keyform in the editor document', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const track = view.getByLabelText('Angle X 키폼 트랙')
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+      bottom: 76,
+      height: 76,
+      left: 100,
+      right: 700,
+      toJSON: () => ({}),
+      top: 0,
+      width: 600,
+      x: 100,
+      y: 0,
+    })
+    const marker = view.getByRole('button', {name: 'Angle X 0 키폼'})
+
+    marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
+    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
+    window.dispatchEvent(new MouseEvent('pointerup'))
+
+    await waitFor(() => {
+      const document: PuppetDocument | undefined = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.parameters?.[0]?.keyforms.map((keyform) => keyform.value)).toEqual([
+        -30, 15, 30,
+      ])
+    })
+    expect(view.getByRole('button', {name: 'Angle X 15 키폼'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
     )
   })
 

@@ -22,6 +22,10 @@ interface ParameterValueTarget extends ParameterTarget {
   readonly value: number
 }
 
+export interface MoveParameterKeyformOptions extends ParameterValueTarget {
+  readonly nextValue: number
+}
+
 interface PartParameterValueTarget extends ParameterValueTarget {
   readonly partId: string
 }
@@ -242,6 +246,42 @@ export const deleteParameterKeyform = (options: ParameterValueTarget) =>
     ...parameter,
     keyforms: parameter.keyforms.filter((keyform) => keyform.value !== options.value),
   }))
+
+export const moveParameterKeyform = (options: MoveParameterKeyformOptions) => {
+  const parameter = getDocumentParameters(options.document).find(
+    (candidate) => candidate.id === options.parameterId,
+  )
+  const keyform = parameter?.keyforms.find((candidate) => candidate.value === options.value)
+
+  if (
+    parameter === undefined ||
+    keyform === undefined ||
+    !Number.isFinite(options.nextValue) ||
+    options.nextValue < parameter.minimum ||
+    options.nextValue > parameter.maximum ||
+    parameter.keyforms.some(
+      (candidate) => candidate.value !== options.value && candidate.value === options.nextValue,
+    )
+  ) {
+    return undefined
+  }
+
+  if (options.nextValue === options.value) {
+    return options.document
+  }
+
+  return replaceParameter(options.document, options.parameterId, (candidate) => ({
+    ...candidate,
+    keyforms: sortBy(
+      candidate.keyforms.map((candidateKeyform) =>
+        candidateKeyform.value === options.value
+          ? {...candidateKeyform, value: options.nextValue}
+          : candidateKeyform,
+      ),
+      ['value'],
+    ),
+  }))
+}
 
 const replacePartKeyform = (
   parts: ReadonlyArray<PuppetParameterPartKeyform>,

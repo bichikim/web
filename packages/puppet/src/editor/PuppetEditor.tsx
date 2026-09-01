@@ -206,6 +206,10 @@ const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => (
     value={props.editor.parameterValue()}
     onKeyformAdd={props.editor.addKeyform}
     onKeyformDelete={props.editor.deleteKeyform}
+    onKeyformMove={(parameterId, value, nextValue) => {
+      props.editor.selectParameter(parameterId)
+      props.editor.moveKeyform(value, nextValue)
+    }}
     onKeyformSelect={(parameterId, value) => {
       props.editor.selectParameter(parameterId)
       props.editor.selectKeyform(value)

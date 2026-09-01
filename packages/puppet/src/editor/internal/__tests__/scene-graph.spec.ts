@@ -7,6 +7,7 @@ import {
   getSceneSelectionPartIds,
   moveSceneNode,
   moveSceneNodeBy,
+  moveSceneNodeRelative,
   moveSceneNodeToParent,
   renameSceneGroup,
   setSceneNodeState,
@@ -74,6 +75,69 @@ describe('scene graph', () => {
     const nested = createSceneGroup(document, ['shapes'])!
 
     expect(moveSceneNode({document: nested, nodeId: 'group', parentId: 'shapes'})).toBeUndefined()
+  })
+
+  test('should place nodes before, inside, after, and at the root end', () => {
+    const document = createDemoDocument()
+    const nested = moveSceneNodeRelative({
+      document,
+      nodeId: 'mesh-preview',
+      position: 'inside',
+      targetNodeId: 'shapes',
+    })!
+    const reordered = moveSceneNodeRelative({
+      document: nested,
+      nodeId: 'shape-diamond',
+      position: 'before',
+      targetNodeId: 'shape-circle',
+    })!
+    const promoted = moveSceneNodeRelative({
+      document: reordered,
+      nodeId: 'mesh-preview',
+      position: 'after',
+      targetNodeId: 'shapes',
+    })!
+    const rootEnd = moveSceneNodeRelative({
+      document: promoted,
+      nodeId: 'shapes',
+      position: 'inside',
+      targetNodeId: null,
+    })!
+
+    expect(getDocumentScene(reordered).roots[0]).toMatchObject({
+      children: [{id: 'shape-diamond'}, {id: 'shape-circle'}, {id: 'mesh-preview'}],
+    })
+    expect(getRootIds(promoted)).toEqual(['shapes', 'mesh-preview'])
+    expect(getRootIds(rootEnd)).toEqual(['mesh-preview', 'shapes'])
+  })
+
+  test('should reject invalid relative drop targets', () => {
+    const document = createDemoDocument()
+
+    expect(
+      moveSceneNodeRelative({
+        document,
+        nodeId: 'mesh-preview',
+        position: 'inside',
+        targetNodeId: 'shape-circle',
+      }),
+    ).toBeUndefined()
+    expect(
+      moveSceneNodeRelative({
+        document,
+        nodeId: 'mesh-preview',
+        position: 'before',
+        targetNodeId: null,
+      }),
+    ).toBeUndefined()
+    expect(
+      moveSceneNodeRelative({
+        document,
+        nodeId: 'shapes',
+        position: 'inside',
+        targetNodeId: 'shapes',
+      }),
+    ).toBeUndefined()
   })
 
   test('should reject hierarchy edits inherited from a locked group', () => {

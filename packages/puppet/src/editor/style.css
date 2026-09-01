@@ -622,6 +622,7 @@
 }
 
 .puppet-editor .layer-row {
+  position: relative;
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) auto;
   gap: 4px;
@@ -629,6 +630,34 @@
   padding-left: calc(var(--layer-depth) * 14px);
   border: 1px solid transparent;
   border-radius: 7px;
+}
+
+.puppet-editor .layer-row.drop-before::before,
+.puppet-editor .layer-row.drop-after::after {
+  position: absolute;
+  right: 4px;
+  left: calc(var(--layer-depth) * 14px + 4px);
+  height: 2px;
+  border-radius: 999px;
+  background: #e5b55a;
+  content: '';
+}
+
+.puppet-editor .layer-row.drop-before::before {
+  top: -3px;
+}
+
+.puppet-editor .layer-row.drop-after::after {
+  bottom: -3px;
+}
+
+.puppet-editor .layer-row.drop-inside {
+  border-color: #e5b55a;
+  background: #2b2618;
+}
+
+.puppet-editor .layer-tree.root-drop-active {
+  box-shadow: inset 0 -2px 0 #e5b55a;
 }
 
 .puppet-editor .layer-tree-item[aria-selected='true'] > .layer-tree-node > .layer-row {
@@ -1104,6 +1133,16 @@
   background: #64e5c4;
   transform: translate(-50%, -50%) rotate(45deg);
   cursor: pointer;
+}
+
+.puppet-editor .keyform-marker.draggable {
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.puppet-editor .keyform-marker.dragging {
+  border-color: #fff0cf;
+  background: #ffbd59;
 }
 
 .puppet-editor .keyform-marker > span {
