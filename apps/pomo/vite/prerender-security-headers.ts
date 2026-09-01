@@ -85,14 +85,6 @@ const createTokenConsumer =
         finishActiveElement(state, readElementName(html, startIndex, endIndex))
         break
       }
-      case 'CDATA_SECTION':
-      case 'COMMENT':
-      case 'DOCTYPE_NAME':
-      case 'PROCESSING_INSTRUCTION_DATA':
-      case 'PROCESSING_INSTRUCTION_TARGET':
-      case 'START_TAG_SELF_CLOSING': {
-        break
-      }
     }
   }
 
