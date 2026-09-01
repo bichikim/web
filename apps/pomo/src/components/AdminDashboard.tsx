@@ -1,9 +1,11 @@
 import {Title} from '@solidjs/meta'
-import {A, useNavigate} from '@solidjs/router'
+import {A, useAction} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {type JSX} from 'solid-js'
+import {type JSX, Show} from 'solid-js'
 
+import {signOutAdminSessionAction} from '../features/auth/actions'
 import {useAdminDashboard} from '../features/admin-auth'
+import {PFormMessage} from './PFormMessage'
 
 const BUTTON_CLASSES = cx(
   'h-10 rounded-3 border border-white/15 bg-white/5 px-4 text-sm font-700 text-white',
@@ -17,15 +19,12 @@ const MUSIC_CARD_CLASSES = cx(
 )
 
 export const AdminDashboard = () => {
-  const navigate = useNavigate()
   const dashboard = useAdminDashboard()
+  const signOut = useAction(signOutAdminSessionAction)
 
-  const handleSignOut: JSX.EventHandler<HTMLButtonElement, MouseEvent> = async () => {
-    const wasSignedOut = await dashboard.onSignOut()
-
-    if (wasSignedOut) {
-      navigate('/admin/login', {replace: true})
-    }
+  const handleSignOut: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
+    event.preventDefault()
+    await signOut(new FormData(event.currentTarget))
   }
 
   return (
@@ -36,15 +35,20 @@ export const AdminDashboard = () => {
           <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">Pomo admin</p>
           <h1 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em">콘텐츠 관리</h1>
         </div>
-        <button
-          class={BUTTON_CLASSES}
-          disabled={dashboard.isSigningOut()}
-          onClick={handleSignOut}
-          type="button"
-        >
-          {dashboard.isSigningOut() ? '로그아웃 중…' : '로그아웃'}
-        </button>
+        <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>
+          <button class={BUTTON_CLASSES} disabled={dashboard.isSigningOut()} type="submit">
+            {dashboard.isSigningOut() ? '로그아웃 중…' : '로그아웃'}
+          </button>
+        </form>
       </header>
+
+      <Show when={dashboard.errorMessage()}>
+        {(message) => (
+          <PFormMessage class="mx-auto mt-5 w-full max-w-6xl" tone="error">
+            {message()}
+          </PFormMessage>
+        )}
+      </Show>
 
       <section class="mx-auto mt-12 grid w-full max-w-6xl gap-5 sm:grid-cols-2">
         <A class={MUSIC_CARD_CLASSES} href="/admin/music">

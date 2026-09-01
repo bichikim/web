@@ -1,7 +1,9 @@
 import {Title} from '@solidjs/meta'
+import {useAction} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
+import {requestAdminMagicLinkAction} from '../features/auth/actions'
 import {useAdminLogin} from '../features/admin-auth'
 import {PButton} from './PButton'
 import {PFormMessage} from './PFormMessage'
@@ -14,10 +16,11 @@ const PAGE_CLASSES = cx(
 
 export const AdminLogin = () => {
   const login = useAdminLogin()
+  const requestMagicLink = useAction(requestAdminMagicLinkAction)
 
   const handleSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
     event.preventDefault()
-    await login.onSubmit(new URL(event.currentTarget.action).origin)
+    await requestMagicLink(new FormData(event.currentTarget))
   }
 
   return (
@@ -32,7 +35,12 @@ export const AdminLogin = () => {
           </p>
         </header>
 
-        <form action="/api/auth/sign-in/magic-link" class="grid gap-5" onSubmit={handleSubmit}>
+        <form
+          action="/api/auth/sign-in/magic-link"
+          class="grid gap-5"
+          method="post"
+          onSubmit={handleSubmit}
+        >
           <PTextField
             autoComplete="email"
             inputMode="email"

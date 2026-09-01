@@ -1,7 +1,12 @@
+import {useAction} from '@solidjs/router'
 import {type JSX, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
+import {
+  requestAccountMagicLinkAction,
+  signOutAccountSessionAction,
+} from '../../features/auth/actions'
 import {useWebAccount} from '../../features/user-auth/use-web-account'
 import {PButton} from '../PButton'
 import {PFormMessage} from '../PFormMessage'
@@ -9,10 +14,17 @@ import {PTextField} from '../PTextField'
 
 export const WebAccount = () => {
   const account = useWebAccount()
+  const requestMagicLink = useAction(requestAccountMagicLinkAction)
+  const signOut = useAction(signOutAccountSessionAction)
 
-  const handleSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
+  const handleMagicLinkSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
     event.preventDefault()
-    await account.onSubmit(new URL(event.currentTarget.action).origin)
+    await requestMagicLink(new FormData(event.currentTarget))
+  }
+
+  const handleSignOut: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
+    event.preventDefault()
+    await signOut(new FormData(event.currentTarget))
   }
 
   return (
@@ -24,13 +36,19 @@ export const WebAccount = () => {
         <Show
           when={account.session()}
           fallback={
-            <form action="/api/auth/sign-in/magic-link" class="grid gap-5" onSubmit={handleSubmit}>
+            <form
+              action="/api/auth/sign-in/magic-link"
+              class="grid gap-5"
+              method="post"
+              onSubmit={handleMagicLinkSubmit}
+            >
               <p class="m-0 text-sm leading-6 text-white/60">{m.web_account_intro()}</p>
               <PTextField
                 autoComplete="email"
                 disabled={account.isSubmitting()}
                 inputMode="email"
                 label={m.web_account_email()}
+                name="email"
                 onChange={account.onEmailChange}
                 required
                 type="email"
@@ -48,14 +66,16 @@ export const WebAccount = () => {
                 <p class="m-0 text-xs text-white/45">{m.web_account_signed_in_email()}</p>
                 <p class="mb-0 mt-1 break-all text-sm font-700">{session().email}</p>
               </div>
-              <PButton
-                class="w-full"
-                disabled={account.isSubmitting()}
-                onPress={() => account.onSignOut()}
-                tone="secondary"
-              >
-                {m.web_account_sign_out()}
-              </PButton>
+              <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>
+                <PButton
+                  class="w-full"
+                  disabled={account.isSubmitting()}
+                  tone="secondary"
+                  type="submit"
+                >
+                  {m.web_account_sign_out()}
+                </PButton>
+              </form>
             </div>
           )}
         </Show>
