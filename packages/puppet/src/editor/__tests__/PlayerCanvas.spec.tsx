@@ -15,6 +15,7 @@ const player: Player = {
   destroy: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
+  resize: vi.fn(),
   seek: vi.fn(),
   updateDocument: mocks.updateDocument,
 }
@@ -27,7 +28,9 @@ vi.mock('../../player', async (importOriginal) => ({
 }))
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.clearAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('PlayerCanvas', () => {
@@ -40,6 +43,7 @@ describe('PlayerCanvas', () => {
     expect(mocks.createPlayer).toHaveBeenCalledWith(
       expect.objectContaining({viewportPadding: 0.25}),
     )
+    expect(mocks.createPlayer.mock.calls[0]?.[0].document).toBe(initialDocument)
     const canvas = view.container.querySelector('canvas')
     const firstPart = initialDocument.parts[0]
 
@@ -68,34 +72,97 @@ describe('PlayerCanvas', () => {
     expect(view.container.querySelector('canvas')).toBe(canvas)
   })
 
-  test('should discard a pending player when the next document is invalid', async () => {
+  test('should expose player controls and forward rendered frames', async () => {
+    const onFrame = vi.fn()
+    const onPlayerChange = vi.fn()
+    const controlledPlayer: Player = {...player, destroy: vi.fn()}
+    mocks.createPlayer.mockResolvedValueOnce(controlledPlayer)
+    const view = render(() => (
+      <PlayerCanvas
+        document={createDemoDocument()}
+        onFrame={onFrame}
+        onPlayerChange={onPlayerChange}
+      />
+    ))
+
+    await waitFor(() => expect(onPlayerChange).toHaveBeenLastCalledWith(controlledPlayer))
+    const playerOptions = mocks.createPlayer.mock.calls[0]?.[0]
+    const frame = {duration: 2, motionId: 'idle-deform', time: 0.5}
+
+    playerOptions?.onFrame?.(frame)
+    expect(onFrame).toHaveBeenCalledWith(frame)
+
+    view.unmount()
+    expect(controlledPlayer.destroy).toHaveBeenCalledOnce()
+    expect(onPlayerChange).toHaveBeenLastCalledWith(null)
+  })
+
+  test('should debounce container resize renders without recreating the player', async () => {
+    let resizeCallback: ResizeObserverCallback | undefined
+    const resizePlayer: Player = {...player, resize: vi.fn()}
+
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resizeCallback = callback
+        }
+
+        disconnect = vi.fn()
+        observe = vi.fn()
+        unobserve = vi.fn()
+      },
+    )
+    mocks.createPlayer.mockResolvedValueOnce(resizePlayer)
+    const view = render(() => <PlayerCanvas document={createDemoDocument()} />)
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    vi.useFakeTimers()
+
+    resizeCallback?.([], {} as ResizeObserver)
+    vi.advanceTimersByTime(75)
+    resizeCallback?.([], {} as ResizeObserver)
+    vi.advanceTimersByTime(99)
+    expect(resizePlayer.resize).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(1)
+    expect(resizePlayer.resize).toHaveBeenCalledOnce()
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
+
+    resizeCallback?.([], {} as ResizeObserver)
+    view.unmount()
+    vi.advanceTimersByTime(100)
+    expect(resizePlayer.resize).toHaveBeenCalledOnce()
+  })
+
+  test('should discard a pending player when a newer editor document is applied', async () => {
     const initialDocument = createDemoDocument()
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
     const onStatusChange = vi.fn()
     const pendingCreatedPlayer: Player = {...player, destroy: vi.fn()}
+    const currentPlayer: Player = {...player, destroy: vi.fn()}
     let resolvePlayer: ((player: Player) => void) | undefined
     const pendingPlayer = new Promise<Player>((resolve) => {
       resolvePlayer = resolve
     })
 
-    mocks.createPlayer.mockReturnValueOnce(pendingPlayer)
+    mocks.createPlayer.mockReturnValueOnce(pendingPlayer).mockResolvedValueOnce(currentPlayer)
 
     render(() => <PlayerCanvas document={document()} onStatusChange={onStatusChange} />)
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
 
     setDocument({
       ...initialDocument,
-      parts: initialDocument.parts.map((part, index) =>
-        index === 0 ? {...part, mesh: {...part.mesh, vertices: []}} : part,
-      ),
+      viewport: {...initialDocument.viewport},
     })
-    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('error'))
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
 
     resolvePlayer?.(pendingCreatedPlayer)
     await pendingPlayer
     await Promise.resolve()
 
     expect(pendingCreatedPlayer.destroy).toHaveBeenCalledOnce()
-    expect(onStatusChange).toHaveBeenLastCalledWith('error')
+    expect(currentPlayer.destroy).not.toHaveBeenCalled()
+    expect(onStatusChange).toHaveBeenLastCalledWith('ready')
   })
 })

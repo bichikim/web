@@ -110,6 +110,17 @@ export const importPng = async (file: File): Promise<ImportPngResult> => {
           texture: {height: image.naturalHeight, src: source, width: image.naturalWidth},
         },
       ],
+      scene: {
+        roots: [
+          {
+            id: createPartId(file.name),
+            kind: 'part',
+            locked: false,
+            name: file.name.replace(PNG_FILE_PATTERN, ''),
+            visible: true,
+          },
+        ],
+      },
       version: PUPPET_DOCUMENT_VERSION,
       viewport: {height: image.naturalHeight, width: image.naturalWidth},
     },

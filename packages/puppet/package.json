@@ -30,6 +30,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@kobalte/core": "^0.13.13",
+    "es-toolkit": "catalog:",
     "pixi.js": "^8.19.0"
   },
   "devDependencies": {
