@@ -17,6 +17,7 @@ export default () => ({
       'apps/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/scripts/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
+      'scripts/**/*.spec.?(c|m)[jt]s?(x)',
       '!**/*.story.*',
       '!**/*.stories.*',
     ],

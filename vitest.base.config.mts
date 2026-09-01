@@ -62,6 +62,7 @@ export const unitTestProject = {
       'apps/*/scripts/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/vite/**/*.spec.?(c|m)[jt]s?(x)',
+      'scripts/**/*.spec.?(c|m)[jt]s?(x)',
       '.agents/skills/*/scripts/**/*.spec.ts',
     ],
     // Leave capacity for nested Vite and esbuild work during the unit suite.

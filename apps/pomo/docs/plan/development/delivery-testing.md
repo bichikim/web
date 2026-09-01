@@ -63,8 +63,9 @@ branch-specific Neon 환경을 선택한다. 각 Preview는 해당 리비전의 
 GitHub Actions에는 가능하면 프로젝트 범위로 제한한 `NEON_API_KEY` secret과
 `NEON_PROJECT_ID` repository variable을 설정한다.
 
-`main-pomo`의 운영 배포는 `.github/workflows/pomo-production-deploy.yml`에서 직렬 실행한다. 먼저
-운영 환경 설정으로 빌드한다. Vercel Production 환경의 Neon 직접 연결 URL인
+`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로
+실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel
+Production 환경의 Neon 직접 연결 URL인
 `DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로
 배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로
 승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복
