@@ -72,6 +72,7 @@ const createFixture = () => {
   const feedRepository = {
     complete: vi.fn<FeedGenerationRepository['complete']>(async () => undefined),
     deleteJobs: vi.fn<FeedGenerationRepository['deleteJobs']>(async () => undefined),
+    failJob: vi.fn<FeedGenerationRepository['failJob']>(async () => true),
     interruptUnfinishedJobs: vi.fn<FeedGenerationRepository['interruptUnfinishedJobs']>(
       async () => [],
     ),
@@ -179,6 +180,53 @@ it('should cancel active generation and expose interrupted jobs for recovery', a
   expect(fixture.onRecovery).toHaveBeenCalledWith([interruptedJob])
   finishGeneration()
   await vi.waitFor(() => expect(fixture.feedRepository.complete).not.toHaveBeenCalled())
+})
+
+it('should preserve cancellation when feed lookup delays failure persistence', async () => {
+  const fixture = createFixture()
+  const itemLookup = Promise.withResolvers<ReadonlyArray<FeedItemRecord>>()
+  const interruptedJob = {...createJob(), status: 'interrupted' as const}
+  fixture.feedRepository.interruptUnfinishedJobs.mockResolvedValue([interruptedJob])
+  fixture.feedRepository.listItems.mockReturnValue(itemLookup.promise)
+  fixture.runtime.isModelDownloaded.mockResolvedValue(false)
+  fixture.controller.schedule({jobIds: ['job-1']})
+  await vi.waitFor(() => expect(fixture.feedRepository.listItems).toHaveBeenCalledOnce())
+
+  await fixture.controller.cancel()
+  itemLookup.resolve([createItem()])
+
+  await vi.waitFor(() =>
+    expect(fixture.setState).toHaveBeenLastCalledWith({
+      message: '다음 피드 확인을 기다리고 있어요.',
+      status: 'idle',
+    }),
+  )
+  expect(fixture.feedRepository.failJob).not.toHaveBeenCalled()
+  expect(fixture.onFailed).not.toHaveBeenCalled()
+  expect(fixture.onRecovery).toHaveBeenCalledWith([interruptedJob])
+})
+
+it('should ignore a failure rejected after its job is interrupted', async () => {
+  const fixture = createFixture()
+  const failurePersistence = Promise.withResolvers<boolean>()
+  const interruptedJob = {...createJob(), status: 'interrupted' as const}
+  fixture.feedRepository.failJob.mockReturnValue(failurePersistence.promise)
+  fixture.feedRepository.interruptUnfinishedJobs.mockResolvedValue([interruptedJob])
+  fixture.runtime.isModelDownloaded.mockResolvedValue(false)
+  fixture.controller.schedule({jobIds: ['job-1']})
+  await vi.waitFor(() => expect(fixture.feedRepository.failJob).toHaveBeenCalledOnce())
+
+  await fixture.controller.cancel()
+  failurePersistence.resolve(false)
+
+  await vi.waitFor(() =>
+    expect(fixture.setState).toHaveBeenLastCalledWith({
+      message: '다음 피드 확인을 기다리고 있어요.',
+      status: 'idle',
+    }),
+  )
+  expect(fixture.onFailed).not.toHaveBeenCalled()
+  expect(fixture.onRecovery).toHaveBeenCalledWith([interruptedJob])
 })
 
 it('should remove queued jobs without interrupting the active job', async () => {

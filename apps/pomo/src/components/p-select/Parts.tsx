@@ -50,6 +50,7 @@ interface PSelectPartsProps<TValue extends string> {
   readonly appearance: PSelectAppearance
   readonly clearDisabled?: boolean
   readonly clearLabel?: string
+  readonly description?: string
   readonly getIconClass?: (icon: string) => string
   readonly hideLabel?: boolean
   readonly label: string
@@ -68,6 +69,13 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
       >
         {props.label}
       </Select.Label>
+    </Show>
+    <Show when={props.description}>
+      {(description) => (
+        <Select.Description class="text-xs leading-5 text-muted-foreground">
+          {description()}
+        </Select.Description>
+      )}
     </Show>
     <Select.Trigger
       aria-label={props.accessibleLabel}

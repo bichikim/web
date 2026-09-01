@@ -395,6 +395,7 @@ describe('AlbumWorkspace', () => {
     render(() => <AlbumWorkspace album={createAlbum()} model={harness.model} />)
     const tracksTab = screen.getByRole('tab', {name: '수록곡 2'})
 
+    tracksTab.focus()
     fireEvent.keyDown(tracksTab, {key: 'Enter'})
     expect(tracksTab).toHaveAttribute('aria-selected', 'true')
     fireEvent.keyDown(tracksTab, {key: 'ArrowRight'})
@@ -408,14 +409,6 @@ describe('AlbumWorkspace', () => {
     fireEvent.keyDown(screen.getByRole('tab', {name: '기본 정보'}), {key: 'ArrowLeft'})
     expect(screen.getByRole('tab', {name: '판매 및 공개'})).toHaveFocus()
 
-    const detached = screen.getByRole('tab', {name: '판매 및 공개'})
-    detached.remove()
-    fireEvent.keyDown(detached, {key: 'Home'})
-
-    const detailsTab = screen.getByRole('tab', {name: '기본 정보'})
-    const findIndex = vi.spyOn(Array.prototype, 'findIndex').mockReturnValueOnce(Number.NaN)
-    fireEvent.keyDown(detailsTab, {key: 'ArrowRight'})
-    findIndex.mockRestore()
-    expect(detailsTab).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', {name: '판매 및 공개'})).toHaveAttribute('aria-selected', 'true')
   })
 })

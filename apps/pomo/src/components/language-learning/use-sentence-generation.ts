@@ -80,36 +80,53 @@ export const useSentenceGeneration = (props: UseSentenceGenerationProps) => {
     queueSentence([])
   }
   const handleGenerate = async () => {
-    const nextTags = selectLanguageLearningPromptWords({
-      directInput: props.state.tagInput(),
-      directWords: props.state.tags(),
-      savedWords: props.state.savedWords(),
-      source: props.state.wordSource(),
-    })
-    props.state.setTags(nextTags)
-    props.state.setTagInput('')
-
-    if (nextTags.length === 0) {
-      props.state.fail(
-        props.state.wordSource() === 'direct'
-          ? m.learning_editor_no_tags()
-          : m.learning_editor_saved_words_insufficient({
-              minimum: MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
-            }),
-      )
+    if (props.state.textModelCheckActive()) {
       return
     }
 
-    const isDownloaded = await isTextModelDownloaded({modelId: TEXT_MODEL_ID})
+    props.state.setTextModelCheckActive(true)
 
-    if (props.state.workflow.isDisposed) {
-      return
-    }
+    try {
+      const nextTags = selectLanguageLearningPromptWords({
+        directInput: props.state.tagInput(),
+        directWords: props.state.tags(),
+        savedWords: props.state.savedWords(),
+        source: props.state.wordSource(),
+      })
+      props.state.setTags(nextTags)
+      props.state.setTagInput('')
 
-    if (isDownloaded) {
-      beginTextGeneration()
-    } else {
-      props.state.setPendingDownload({kind: 'text'})
+      if (nextTags.length === 0) {
+        props.state.fail(
+          props.state.wordSource() === 'direct'
+            ? m.learning_editor_no_tags()
+            : m.learning_editor_saved_words_insufficient({
+                minimum: MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
+              }),
+        )
+        return
+      }
+
+      const isDownloaded = await isTextModelDownloaded({modelId: TEXT_MODEL_ID})
+
+      if (props.state.workflow.isDisposed) {
+        return
+      }
+
+      if (isDownloaded) {
+        beginTextGeneration()
+      } else {
+        props.state.setPendingDownload({kind: 'text'})
+      }
+    } catch (error: unknown) {
+      console.error('Failed to check the language learning text model.', error)
+      if (!props.state.workflow.isDisposed) {
+        props.state.fail(m.learning_editor_generation_failed())
+      }
+    } finally {
+      if (!props.state.workflow.isDisposed) {
+        props.state.setTextModelCheckActive(false)
+      }
     }
   }
 

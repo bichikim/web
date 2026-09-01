@@ -20,6 +20,7 @@ it.each([false, true])('should render the lazy home studio for Toss=%s', async (
 
   render(() => <PHomePage />)
 
+  expect(screen.getByRole('status')).toHaveTextContent('장면 준비 중')
   expect(await screen.findByText('studio ready')).toBeInTheDocument()
   const main = screen.getByRole('main')
   expect(main.classList.contains('pomo-home')).toBe(true)

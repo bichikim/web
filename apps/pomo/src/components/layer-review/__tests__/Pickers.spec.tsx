@@ -7,23 +7,25 @@ import {EyeModePicker} from '../EyeModePicker'
 import {ScenePicker} from '../ScenePicker'
 import {VisemePicker} from '../VisemePicker'
 
-it('should list eye modes and emit the selected mode', () => {
+it('should list eye modes and emit the selected mode', async () => {
   const onChange = vi.fn()
   render(() => <EyeModePicker eyeMode="auto" onChange={onChange} />)
-  const select = screen.getByRole('combobox', {name: /눈 깜박임 단계/})
+  const trigger = screen.getByRole('button', {name: /눈 깜박임 단계/})
 
-  expect(screen.getAllByRole('option')).toHaveLength(4)
-  fireEvent.change(select, {target: {value: 'closed'}})
+  fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+  expect(await screen.findAllByRole('option')).toHaveLength(4)
+  fireEvent.click(await screen.findByRole('option', {name: '완전히 감은 눈'}))
   expect(onChange).toHaveBeenCalledWith('closed')
 })
 
-it('should list visemes and emit the selected mouth shape', () => {
+it('should list visemes and emit the selected mouth shape', async () => {
   const onChange = vi.fn()
   render(() => <VisemePicker onChange={onChange} viseme="rest" />)
-  const select = screen.getByRole('combobox', {name: /입 모양/})
+  const trigger = screen.getByRole('button', {name: /입 모양/})
 
-  expect(screen.getAllByRole('option').length).toBeGreaterThan(1)
-  fireEvent.change(select, {target: {value: 'open'}})
+  fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+  expect((await screen.findAllByRole('option')).length).toBeGreaterThan(1)
+  fireEvent.click(await screen.findByRole('option', {name: '열린 입 · ㅏ/ㅓ'}))
   expect(onChange).toHaveBeenCalledWith('open')
 })
 

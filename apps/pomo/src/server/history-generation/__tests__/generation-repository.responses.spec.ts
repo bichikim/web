@@ -1,4 +1,6 @@
 import {beforeEach, expect, it, vi} from 'vitest'
+import type {SQL} from 'drizzle-orm'
+import {PgDialect} from 'drizzle-orm/pg-core'
 import type {Database} from '../../database'
 
 import {
@@ -9,7 +11,6 @@ import {
   failHistoryResponse,
   findGenerationRun,
   GENERATION,
-  listRecoverableGenerationRuns,
   markGenerationSubmitted,
   publishHistoryResponse,
   rejectHistoryResponse,
@@ -36,15 +37,22 @@ beforeEach(() => {
 })
 
 it('should accept the first response persistence acknowledgement', async () => {
+  const returning = vi.fn(async () => [{responseId: RESPONSE_ID}])
+  const where = vi.fn((_condition: SQL) => ({returning}))
   const database = {
     update: vi.fn(() => ({
-      set: vi.fn(() => ({
-        where: vi.fn(() => ({returning: vi.fn(async () => [{responseId: RESPONSE_ID}])})),
-      })),
+      set: vi.fn(() => ({where})),
     })),
   } as unknown as Database
 
-  await expect(markGenerationSubmitted(RUN_ID, RESPONSE_ID, database)).resolves.toBeUndefined()
+  await expect(
+    markGenerationSubmitted(RUN_ID, 'submission-key', RESPONSE_ID, database),
+  ).resolves.toBeUndefined()
+
+  const condition = where.mock.calls[0]?.[0]
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+  expect(query.sql).toContain('"open_ai_submission_key" = $3')
+  expect(query.params).toEqual([RUN_ID, 'preparing', 'submission-key'])
 })
 
 it('should find present and absent generation runs through the default database', async () => {
@@ -222,25 +230,4 @@ it('should handle duplicate, missing, successful, and default terminal events', 
     callback(rejectedDatabase),
   )
   await expect(rejectHistoryResponse('evt-rejected', RESPONSE_ID, 'rejected')).resolves.toBe(true)
-})
-
-it('should list only recoverable runs with response IDs through the default database', async () => {
-  const database = {
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(async () => [
-            {responseId: null},
-            {responseId: 'resp-1'},
-            {responseId: 'resp-2'},
-          ]),
-        })),
-      })),
-    })),
-  } as unknown as Database
-  databaseMocks.getDatabase.mockReturnValue(database)
-
-  await expect(
-    listRecoverableGenerationRuns(new Date('2026-08-16T00:00:00.000Z')),
-  ).resolves.toEqual([{responseId: 'resp-1'}, {responseId: 'resp-2'}])
 })

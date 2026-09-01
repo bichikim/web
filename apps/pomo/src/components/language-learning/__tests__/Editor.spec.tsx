@@ -112,6 +112,7 @@ const candidate = () => ({
 let setWriterOutput: (value: string) => string
 let setWriterState: (value: DialogueWriterState) => DialogueWriterState
 let disposeRepository: Mock<() => void>
+let generateWithPreparation: Mock<() => void>
 let navigate: Mock<(to: string) => void>
 let startTextModel: Mock<ModelDownloadController['startTextModel']>
 let startVoiceModel: Mock<ModelDownloadController['startVoiceModel']>
@@ -128,6 +129,7 @@ beforeEach(() => {
   setWriterState = updateWriterState
   setModelDownloadState = updateModelDownloadState
   disposeRepository = vi.fn()
+  generateWithPreparation = vi.fn()
   navigate = vi.fn<(to: string) => void>()
   startTextModel = vi.fn<ModelDownloadController['startTextModel']>().mockResolvedValue({
     status: 'complete',
@@ -143,7 +145,7 @@ beforeEach(() => {
     canPrepare: () => true,
     copyOutput: vi.fn(),
     generate: vi.fn(),
-    generateWithPreparation: vi.fn(),
+    generateWithPreparation,
     isBusy: () => false,
     isModelReady: () => true,
     output: writerOutput,
@@ -397,6 +399,41 @@ it('should download a missing text model and handle failed or cancelled download
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
   await flush()
   expect(startTextModel).toHaveBeenCalled()
+})
+
+it('should start one text workflow while the installed-model check is pending', async () => {
+  const modelCheck = createDeferred<boolean>()
+  vi.mocked(isTextModelDownloaded).mockReturnValue(modelCheck.promise)
+  render(() => <LanguageLearningEditor />)
+  const generateButton = screen.getByRole('button', {name: 'generate'})
+
+  fireEvent.click(generateButton)
+  expect(generateButton).toBeDisabled()
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningSettings>>(
+      vi.mocked(LanguageLearningSettings),
+    ).disabled,
+  ).toBe(true)
+  getLatestProps<ComponentProps<typeof LanguageLearningGenerateButton>>(
+    vi.mocked(LanguageLearningGenerateButton),
+  ).onPress()
+  modelCheck.resolve(true)
+  await flush()
+
+  expect(isTextModelDownloaded).toHaveBeenCalledOnce()
+  expect(generateWithPreparation).toHaveBeenCalledOnce()
+})
+
+it('should report a text model check failure and unlock the editor', async () => {
+  vi.mocked(isTextModelDownloaded).mockRejectedValue(new Error('model storage failed'))
+  render(() => <LanguageLearningEditor />)
+
+  fireEvent.click(screen.getByRole('button', {name: 'generate'}))
+  await flush()
+
+  expect(screen.getByText('학습 문장을 만들지 못했어요.')).toBeDefined()
+  expect(screen.getByRole('button', {name: 'generate'})).not.toBeDisabled()
+  expect(generateWithPreparation).not.toHaveBeenCalled()
 })
 
 it('should cancel or complete a missing all-sentence voice model download', async () => {

@@ -49,13 +49,13 @@ it('should prepare a model, report generation progress, and persist a failed job
   })
   const view = renderHook(() => usePFeeds({events: createEventContext()}))
 
-  await vi.waitFor(() => expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalled())
+  await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
   expect(generate).toHaveBeenCalledOnce()
-  expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalledWith(
-    expect.objectContaining({errorMessage: '생성 실패', status: 'failed'}),
-    expect.objectContaining({message: '생성 실패', status: 'failed'}),
-  )
+  expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalledWith({
+    item: expect.objectContaining({message: '생성 실패', status: 'failed'}),
+    job: expect.objectContaining({errorMessage: '생성 실패', status: 'failed'}),
+  })
   expect(initializeOptions).toHaveLength(1)
   expect(view.result.state().status).toBe('idle')
   initializeOptions[0]?.onStatus('다시 준비 중')
@@ -90,12 +90,12 @@ it.each([
   preparationMocks.prepareFeedGeneration.mockResolvedValueOnce({job, status})
   const view = renderHook(() => usePFeeds({events: createEventContext()}))
 
-  await vi.waitFor(() => expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalled())
+  await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
-  expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalledWith(
-    expect.objectContaining({errorMessage: message}),
-    undefined,
-  )
+  expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalledWith({
+    item: undefined,
+    job: expect.objectContaining({errorMessage: message}),
+  })
   view.cleanup()
 })
 
@@ -134,12 +134,12 @@ it('should fail a ready job when preparation did not provide a client', async ()
   preparationMocks.prepareFeedGeneration.mockResolvedValueOnce({job, status: 'ready'})
   const view = renderHook(() => usePFeeds({events: createEventContext()}))
 
-  await vi.waitFor(() => expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalled())
+  await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
-  expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalledWith(
-    expect.objectContaining({errorMessage: '피드 음성 모델을 준비하지 못했어요.'}),
-    expect.any(Object),
-  )
+  expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalledWith({
+    item: expect.any(Object),
+    job: expect.objectContaining({errorMessage: '피드 음성 모델을 준비하지 못했어요.'}),
+  })
   view.cleanup()
 })
 

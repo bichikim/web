@@ -7,7 +7,11 @@ import {
   type FeedItemRecord,
   getFeedItemRecordId,
 } from '../feed-dialogue-schema'
-import {createFeedDialogueRepository} from '../feed-dialogue-repository'
+import {
+  createFeedDialogueRepository,
+  type FailedFeedDialogueJob,
+  type FailedFeedItemRecord,
+} from '../feed-dialogue-repository'
 
 const databaseModuleMocks = vi.hoisted(() => ({
   createPDatabase: vi.fn(),
@@ -31,6 +35,7 @@ const feedDialogueJobs = {
   bulkGet: vi.fn(),
   bulkPut: vi.fn(),
   delete: vi.fn(),
+  get: vi.fn(),
   orderBy: jobOrderBy,
   put: vi.fn(),
   toArray: vi.fn(),
@@ -156,6 +161,47 @@ describe('feed dialogue repository writes', () => {
     expect(feedDialogueJobs.put).toHaveBeenNthCalledWith(2, generatingJob)
     expect(feedItems.put).toHaveBeenCalledTimes(2)
     expect(database.transaction).toHaveBeenCalledTimes(2)
+  })
+
+  it('should fail only a job that is still generating', async () => {
+    const repository = createFeedDialogueRepository()
+    const failedJob: FailedFeedDialogueJob = {
+      ...createJob(),
+      errorMessage: '실패',
+      status: 'failed',
+      updatedAt: UPDATED_AT,
+    }
+    const failedItem: FailedFeedItemRecord = {
+      ...createItem(),
+      message: '실패',
+      status: 'failed',
+      updatedAt: UPDATED_AT,
+    }
+    feedDialogueJobs.get.mockResolvedValue(createJob({status: 'generating'}))
+
+    await expect(repository.failJob({item: failedItem, job: failedJob})).resolves.toBe(true)
+
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(failedJob)
+    expect(feedItems.put).toHaveBeenCalledWith(failedItem)
+  })
+
+  it('should preserve an interrupted or missing job instead of failing it', async () => {
+    const repository = createFeedDialogueRepository()
+    const failedJob: FailedFeedDialogueJob = {
+      ...createJob(),
+      errorMessage: '실패',
+      status: 'failed',
+      updatedAt: UPDATED_AT,
+    }
+    feedDialogueJobs.get
+      .mockResolvedValueOnce(createJob({status: 'interrupted'}))
+      .mockResolvedValueOnce(undefined)
+
+    await expect(repository.failJob({job: failedJob})).resolves.toBe(false)
+    await expect(repository.failJob({job: failedJob})).resolves.toBe(false)
+
+    expect(feedDialogueJobs.put).not.toHaveBeenCalled()
+    expect(feedItems.put).not.toHaveBeenCalled()
   })
 
   it('should replace a dialogue without audio with a queued recovery job transactionally', async () => {

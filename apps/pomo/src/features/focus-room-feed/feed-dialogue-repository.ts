@@ -22,10 +22,24 @@ export interface RecoverMissingDialogueOptions {
   readonly job: FeedDialogueJob
 }
 
+export interface FailedFeedDialogueJob extends FeedDialogueJob {
+  readonly status: 'failed'
+}
+
+export interface FailedFeedItemRecord extends FeedItemRecord {
+  readonly status: 'failed'
+}
+
+export interface FailFeedDialogueJobOptions {
+  readonly item?: FailedFeedItemRecord
+  readonly job: FailedFeedDialogueJob
+}
+
 export interface FeedDialogueRepository {
   readonly complete: (options: CompleteFeedDialogueOptions) => Promise<void>
   readonly deleteJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
   readonly dispose: () => void
+  readonly failJob: (options: FailFeedDialogueJobOptions) => Promise<boolean>
   readonly interruptUnfinishedJobs: (updatedAt: string) => Promise<ReadonlyArray<FeedDialogueJob>>
   readonly listExpiredMetadata: (expiresAt: string) => Promise<ReadonlyArray<FeedDialogueMetadata>>
   readonly listItems: (feedConnectionId: string) => Promise<ReadonlyArray<FeedItemRecord>>
@@ -79,6 +93,33 @@ const updateRecoverableJobs = async (
   })
 }
 
+const failGeneratingJob = async (database: PDatabase, options: FailFeedDialogueJobOptions) => {
+  const nextJob = feedDialogueJobSchema.parse(options.job)
+  const nextItem = options.item === undefined ? undefined : feedItemRecordSchema.parse(options.item)
+
+  return database.transaction('rw', database.feedDialogueJobs, database.feedItems, async () => {
+    const storedValue = await database.feedDialogueJobs.get(nextJob.id)
+
+    if (storedValue === undefined) {
+      return false
+    }
+
+    const storedJob = feedDialogueJobSchema.parse(storedValue)
+
+    if (storedJob.status !== 'generating') {
+      return false
+    }
+
+    await database.feedDialogueJobs.put(nextJob)
+
+    if (nextItem !== undefined) {
+      await database.feedItems.put(nextItem)
+    }
+
+    return true
+  })
+}
+
 /** Persists feed discovery and generation state beside compatible dialogue records. */
 export const createFeedDialogueRepository = (): FeedDialogueRepository => {
   const database = createPDatabase()
@@ -105,6 +146,7 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
     dispose() {
       database.close()
     },
+    failJob: (options) => failGeneratingJob(database, options),
     async interruptUnfinishedJobs(updatedAt) {
       const values = await database.feedDialogueJobs.toArray()
       const jobs = parseJobs(values)

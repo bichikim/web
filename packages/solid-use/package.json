@@ -4,7 +4,8 @@
   "description": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bichikim/web.git"
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/solid-use"
   },
   "files": [
     "dist/*"

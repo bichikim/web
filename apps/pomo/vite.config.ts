@@ -3,15 +3,23 @@ import aitDevtools from '@apps-in-toss/devtools/unplugin'
 import {solidStart} from '@solidjs/start/config'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {nitro} from 'nitro/vite'
-import {type ConfigEnv, defineConfig, type UserConfig} from 'vite'
+import {type ConfigEnv, defineConfig, loadEnv, type UserConfig} from 'vite'
+import {compileStringTemplate} from '@winter-love/utils'
 import {PARAGLIDE_CONFIG} from './paraglide.config'
 import {createDevFeedPlugin} from './scripts/vite/dev-feed/plugin'
 import {createScribbleIconRestartPlugin} from './scripts/vite/scribble-icon/plugin'
 import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
 import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
+import {resolveContentSecurityPolicyTemplates} from './vite/content-security-policy-template'
+import {createInlineContentHashes} from './vite/prerender-security-headers'
 
 interface ImportMetaEnvValues {
   readonly [name: string]: string
+}
+
+interface ContentSecurityPolicyOptions {
+  readonly scriptHashes?: ReadonlyArray<string>
+  readonly styleHashes?: ReadonlyArray<string>
 }
 
 const SERVICE_POLICY_PATHS = {
@@ -123,36 +131,24 @@ const DESKTOP_STATIC_ROUTES = [
   '/desktop/settings',
 ]
 
-function createConnectDirective(): string {
-  return `connect-src ${CONNECT_SOURCE_LIST}`
-}
+const createElementSources = (hashes: ReadonlyArray<string>): ReadonlyArray<string> => [
+  "'self'",
+  ...hashes.map((hash) => `'${hash}'`),
+]
 
-function createContentSecurityPolicy(): string {
-  return [
-    "default-src 'self'",
-    "base-uri 'none'",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "form-action 'self'",
-    "script-src 'self' 'wasm-unsafe-eval'",
-    "style-src 'self'",
-    "style-src-attr 'unsafe-inline'",
-    "font-src 'self' data:",
-    "img-src 'self' data: blob:",
-    "media-src 'self' blob: https://storage.pomofi.io",
-    "worker-src 'self' blob:",
-    createConnectDirective(),
-    "manifest-src 'self'",
-  ].join('; ')
-}
+const createContentSecurityPolicyRenderer = (template: string) => {
+  const renderTemplate = compileStringTemplate(template)
 
-function createWorkerContentSecurityPolicy(): string {
-  return [
-    "default-src 'self'",
-    "script-src 'self' 'wasm-unsafe-eval'",
-    "worker-src 'self' blob:",
-    createConnectDirective(),
-  ].join('; ')
+  return (options: ContentSecurityPolicyOptions = {}): string => {
+    const scriptSources = createElementSources(options.scriptHashes ?? [])
+    const styleSources = createElementSources(options.styleHashes ?? [])
+
+    return renderTemplate({
+      CONNECT_SOURCES: CONNECT_SOURCE_LIST,
+      SCRIPT_SOURCES: scriptSources.join(' '),
+      STYLE_SOURCES: styleSources.join(' '),
+    })
+  }
 }
 
 function createImportMetaEnvDefinitions(values: ImportMetaEnvValues) {
@@ -169,114 +165,145 @@ const BASE_SECURITY_HEADERS = {
   'Referrer-Policy': REFERRER_POLICY,
   'X-Content-Type-Options': CONTENT_TYPE_OPTIONS,
 } as const
-const STATIC_SECURITY_HEADERS = {
-  ...BASE_SECURITY_HEADERS,
-  'Content-Security-Policy-Report-Only': createContentSecurityPolicy(),
-} as const
-const WORKER_SECURITY_HEADERS = {
-  ...BASE_SECURITY_HEADERS,
-  'Content-Security-Policy-Report-Only': createWorkerContentSecurityPolicy(),
-} as const
-const PRERENDER_SECURITY_RULES = Object.fromEntries(
-  (IS_STATIC_BUILD ? [...SHARED_STATIC_ROUTES, '/account'] : SHARED_STATIC_ROUTES).map((route) => [
-    route,
-    {headers: STATIC_SECURITY_HEADERS},
-  ]),
-)
+const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
+  const environment = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), 'POMO_')
+  const templates = resolveContentSecurityPolicyTemplates({
+    POMO_CONTENT_SECURITY_POLICY_TEMPLATE: environment.POMO_CONTENT_SECURITY_POLICY_TEMPLATE,
+    POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE:
+      environment.POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE,
+  })
+  const createContentSecurityPolicy = createContentSecurityPolicyRenderer(templates.page)
+  const renderWorkerContentSecurityPolicy = compileStringTemplate(templates.worker)
+  const staticSecurityHeaders = {
+    ...BASE_SECURITY_HEADERS,
+    'Content-Security-Policy-Report-Only': createContentSecurityPolicy(),
+  } as const
+  const workerSecurityHeaders = {
+    ...BASE_SECURITY_HEADERS,
+    'Content-Security-Policy-Report-Only': renderWorkerContentSecurityPolicy({
+      CONNECT_SOURCES: CONNECT_SOURCE_LIST,
+    }),
+  } as const
+  const prerenderSecurityRules = Object.fromEntries(
+    (IS_STATIC_BUILD ? [...SHARED_STATIC_ROUTES, '/account'] : SHARED_STATIC_ROUTES).map(
+      (route) => [route, {headers: staticSecurityHeaders}],
+    ),
+  )
 
-const createConfig = ({command}: ConfigEnv): UserConfig => ({
-  cacheDir: USES_APPS_IN_TOSS_DEVTOOLS ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
-  define: createImportMetaEnvDefinitions({
-    POMO_ALLOW_LOCAL_ASSET_ORIGIN: String(command === 'serve' || IS_STATIC_BUILD),
-    POMO_CONNECT_SOURCES: CONNECT_SOURCE_LIST,
-    POMO_CONTENT_TYPE_OPTIONS: CONTENT_TYPE_OPTIONS,
-    POMO_LICENSE_ASSET_ORIGIN: LICENSE_ASSET_ORIGIN,
-    POMO_PERMISSIONS_POLICY: PERMISSIONS_POLICY,
-    POMO_REFERRER_POLICY: REFERRER_POLICY,
-    VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: SERVICE_POLICY_PATHS.appsInToss.privacy,
-    VITE_POMO_APPS_IN_TOSS_TERMS_PATH: SERVICE_POLICY_PATHS.appsInToss.terms,
-    VITE_POMO_ENVIRONMENT: DEPLOYMENT_ENVIRONMENT,
-    VITE_POMO_IS_APPS_IN_TOSS: String(IS_APPS_IN_TOSS_RUNTIME),
-    VITE_POMO_IS_DESKTOP: String(IS_DESKTOP_RUNTIME),
-    VITE_POMO_LEGACY_PRIVACY_PATH: SERVICE_POLICY_PATHS.legacy.privacy,
-    VITE_POMO_LEGACY_TERMS_PATH: SERVICE_POLICY_PATHS.legacy.terms,
-    VITE_POMO_PRETENDARD_BASE_PATH: PRETENDARD_BASE_PATH,
-    VITE_POMO_PRETENDARD_STYLESHEET_PATH: PRETENDARD_STYLESHEET_PATH,
-    VITE_POMO_PUBLIC_ORIGIN: APPS_IN_TOSS_API_ORIGIN,
-    VITE_POMO_REFUND_PATH: SERVICE_POLICY_PATHS.refund,
-    VITE_POMO_RELEASE: RELEASE,
-    VITE_POMO_WEB_PRIVACY_PATH: SERVICE_POLICY_PATHS.web.privacy,
-    VITE_POMO_WEB_TERMS_PATH: SERVICE_POLICY_PATHS.web.terms,
-  }),
-  nitro: {
-    prerender: {
-      failOnError: IS_STATIC_BUILD,
-      routes:
-        command === 'build'
-          ? IS_APPS_IN_TOSS_BUILD
-            ? APPS_IN_TOSS_STATIC_ROUTES
-            : IS_DESKTOP_BUILD
-              ? DESKTOP_STATIC_ROUTES
-              : SHARED_STATIC_ROUTES
-          : SHARED_STATIC_ROUTES,
-    },
-    publicAssets: [
-      {
-        baseURL: PRETENDARD_BASE_PATH,
-        dir: PRETENDARD_PUBLIC_DIRECTORY,
-        maxAge: FONT_CACHE_MAX_AGE,
+  return {
+    cacheDir: USES_APPS_IN_TOSS_DEVTOOLS ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
+    define: createImportMetaEnvDefinitions({
+      POMO_ALLOW_LOCAL_ASSET_ORIGIN: String(command === 'serve' || IS_STATIC_BUILD),
+      POMO_CONNECT_SOURCES: CONNECT_SOURCE_LIST,
+      POMO_CONTENT_SECURITY_POLICY_TEMPLATE: templates.page,
+      POMO_CONTENT_TYPE_OPTIONS: CONTENT_TYPE_OPTIONS,
+      POMO_LICENSE_ASSET_ORIGIN: LICENSE_ASSET_ORIGIN,
+      POMO_PERMISSIONS_POLICY: PERMISSIONS_POLICY,
+      POMO_REFERRER_POLICY: REFERRER_POLICY,
+      POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE: templates.worker,
+      VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: SERVICE_POLICY_PATHS.appsInToss.privacy,
+      VITE_POMO_APPS_IN_TOSS_TERMS_PATH: SERVICE_POLICY_PATHS.appsInToss.terms,
+      VITE_POMO_ENVIRONMENT: DEPLOYMENT_ENVIRONMENT,
+      VITE_POMO_IS_APPS_IN_TOSS: String(IS_APPS_IN_TOSS_RUNTIME),
+      VITE_POMO_IS_DESKTOP: String(IS_DESKTOP_RUNTIME),
+      VITE_POMO_LEGACY_PRIVACY_PATH: SERVICE_POLICY_PATHS.legacy.privacy,
+      VITE_POMO_LEGACY_TERMS_PATH: SERVICE_POLICY_PATHS.legacy.terms,
+      VITE_POMO_PRETENDARD_BASE_PATH: PRETENDARD_BASE_PATH,
+      VITE_POMO_PRETENDARD_STYLESHEET_PATH: PRETENDARD_STYLESHEET_PATH,
+      VITE_POMO_PUBLIC_ORIGIN: APPS_IN_TOSS_API_ORIGIN,
+      VITE_POMO_REFUND_PATH: SERVICE_POLICY_PATHS.refund,
+      VITE_POMO_RELEASE: RELEASE,
+      VITE_POMO_WEB_PRIVACY_PATH: SERVICE_POLICY_PATHS.web.privacy,
+      VITE_POMO_WEB_TERMS_PATH: SERVICE_POLICY_PATHS.web.terms,
+    }),
+    nitro: {
+      hooks: {
+        'prerender:generate'(route, nitroInstance) {
+          if (route.contents === undefined || !route.contentType?.includes('html')) {
+            return
+          }
+
+          const hashes = createInlineContentHashes(route.contents)
+          const routeRules = nitroInstance.options.routeRules[route.route] ?? {}
+          nitroInstance.options.routeRules[route.route] = {
+            ...routeRules,
+            headers: {
+              ...routeRules.headers,
+              ...BASE_SECURITY_HEADERS,
+              'Content-Security-Policy-Report-Only': createContentSecurityPolicy(hashes),
+            },
+          }
+        },
       },
+      prerender: {
+        failOnError: IS_STATIC_BUILD,
+        routes:
+          command === 'build'
+            ? IS_APPS_IN_TOSS_BUILD
+              ? APPS_IN_TOSS_STATIC_ROUTES
+              : IS_DESKTOP_BUILD
+                ? DESKTOP_STATIC_ROUTES
+                : SHARED_STATIC_ROUTES
+            : SHARED_STATIC_ROUTES,
+      },
+      publicAssets: [
+        {
+          baseURL: PRETENDARD_BASE_PATH,
+          dir: PRETENDARD_PUBLIC_DIRECTORY,
+          maxAge: FONT_CACHE_MAX_AGE,
+        },
+      ],
+      routeRules: {
+        '/**': {headers: BASE_SECURITY_HEADERS},
+        '/workers/**': {headers: workerSecurityHeaders},
+        ...prerenderSecurityRules,
+      },
+      ...(IS_STATIC_BUILD && command === 'build' ? {preset: 'static'} : {}),
+    },
+    optimizeDeps: {
+      // Gemma Worker가 처음 로드될 때 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
+      include: ['@huggingface/transformers'],
+    },
+    plugins: [
+      ...(USES_APPS_IN_TOSS_DEVTOOLS
+        ? [aitDevtools.vite({entryPattern: /\/entry-client\.tsx$/u, sdkVersion: '3'})]
+        : []),
+      paraglideVitePlugin({
+        emitTsDeclarations: true,
+        ...PARAGLIDE_CONFIG.common,
+        routeStrategies: IS_APPS_IN_TOSS_RUNTIME
+          ? PARAGLIDE_CONFIG.appsInToss.routeStrategies
+          : PARAGLIDE_CONFIG.web.routeStrategies,
+        strategy: IS_APPS_IN_TOSS_RUNTIME
+          ? PARAGLIDE_CONFIG.appsInToss.strategy
+          : PARAGLIDE_CONFIG.web.strategy,
+      }),
+      ...createUnoCssPlugins(),
+      solidStart({
+        devOverlay: false,
+        middleware: './src/middleware/index.ts',
+        ssr: !IS_DESKTOP_BUILD,
+      }),
+      createDevFeedPlugin(),
+      createScribbleIconRestartPlugin({iconSetPath: SCRIBBLE_ICON_SET_PATH}),
+      nitro(),
+      ...(IS_STATIC_BUILD && command === 'build' ? [staticNitroEntryPlugin] : []),
     ],
-    routeRules: {
-      '/**': {headers: BASE_SECURITY_HEADERS},
-      '/workers/**': {headers: WORKER_SECURITY_HEADERS},
-      ...PRERENDER_SECURITY_RULES,
+    resolve: {
+      tsconfigPaths: true,
     },
-    ...(IS_STATIC_BUILD && command === 'build' ? {preset: 'static'} : {}),
-  },
-  optimizeDeps: {
-    // Gemma Worker가 처음 로드될 때 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
-    include: ['@huggingface/transformers'],
-  },
-  plugins: [
-    ...(USES_APPS_IN_TOSS_DEVTOOLS
-      ? [aitDevtools.vite({entryPattern: /\/entry-client\.tsx$/u, sdkVersion: '3'})]
-      : []),
-    paraglideVitePlugin({
-      emitTsDeclarations: true,
-      ...PARAGLIDE_CONFIG.common,
-      routeStrategies: IS_APPS_IN_TOSS_RUNTIME
-        ? PARAGLIDE_CONFIG.appsInToss.routeStrategies
-        : PARAGLIDE_CONFIG.web.routeStrategies,
-      strategy: IS_APPS_IN_TOSS_RUNTIME
-        ? PARAGLIDE_CONFIG.appsInToss.strategy
-        : PARAGLIDE_CONFIG.web.strategy,
-    }),
-    ...createUnoCssPlugins(),
-    solidStart({
-      devOverlay: false,
-      middleware: './src/middleware/index.ts',
-      ssr: !IS_DESKTOP_BUILD,
-    }),
-    createDevFeedPlugin(),
-    createScribbleIconRestartPlugin({iconSetPath: SCRIBBLE_ICON_SET_PATH}),
-    nitro(),
-    ...(IS_STATIC_BUILD && command === 'build' ? [staticNitroEntryPlugin] : []),
-  ],
-  resolve: {
-    tsconfigPaths: true,
-  },
-  server: {
-    watch: {
-      ignored: [ASSET_LIBRARY_PATTERN],
+    server: {
+      watch: {
+        ignored: [ASSET_LIBRARY_PATTERN],
+      },
     },
-  },
-  worker: {
-    format: 'es',
-    rolldownOptions: {
-      output: {entryFileNames: 'workers/[name]-[hash].js'},
+    worker: {
+      format: 'es',
+      rolldownOptions: {
+        output: {entryFileNames: 'workers/[name]-[hash].js'},
+      },
     },
-  },
-})
+  }
+}
 
 export default defineConfig(createConfig)

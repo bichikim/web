@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
 import {PButton} from '../PButton'
@@ -12,10 +13,10 @@ import {PAlbumTrackList} from './TrackList'
 import * as m from '@paraglide/message'
 import {AlbumSummary} from './Summary'
 
-const ALBUM_CARD_CLASSES = [
+const ALBUM_CARD_CLASSES = cx(
   'overflow-hidden rounded-panel-inner border border-solid border-border',
   'bg-surface-interactive',
-] as const
+)
 
 interface AlbumSaleStatusProps {
   readonly sale: PAlbumSale
@@ -47,7 +48,7 @@ export const AlbumCard = (props: AlbumCardProps) => {
     props.album.trackListings ?? props.album.tracks
 
   return (
-    <article class={ALBUM_CARD_CLASSES.join(' ')}>
+    <article class={ALBUM_CARD_CLASSES}>
       <AlbumSummary album={props.album} index={props.index} />
       <Show when={listedTracks().length > 0}>
         <PAlbumTrackList

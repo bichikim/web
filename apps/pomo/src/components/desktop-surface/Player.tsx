@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {usePSceneStyle} from '../../features/focus-room-animation'
 import {useDesktopMode, useDesktopSceneSettingsListener} from '../../features/desktop-mode'
 import {PMusicPlayer} from '../PMusicPlayer'
@@ -12,10 +13,10 @@ export const DesktopPlayer = () => {
   return (
     <DesktopSurfaceFrame
       accessibleLabel={m.desktop_player_label()}
-      class={[
+      class={cx(
         'flex items-end [&_.pomo-player-stage]:relative',
         '[&_.pomo-player-stage]:inset-auto [&_.pomo-player-stage]:w-full',
-      ].join(' ')}
+      )}
       isVisible={desktopMode.mode() === 'desktop'}
       title={m.desktop_player_title()}
     >

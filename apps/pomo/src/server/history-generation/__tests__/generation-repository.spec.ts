@@ -15,6 +15,7 @@ import {
   GENERATION,
   type HistoricalGenerationRunRow,
   markGenerationFailed,
+  markGenerationSubmissionUnknown,
   markGenerationSubmitted,
   prepareGenerationRerun,
   prepareGenerationRun,
@@ -26,8 +27,8 @@ import {
 
 vi.mock('src/env', () => ({env: {}}))
 
-it('should not reclaim an ambiguous preparing run', async () => {
-  const existing = createRun('preparing', null)
+it('should not reclaim an ambiguous submission before recovery', async () => {
+  const existing = createRun('preparing', null, undefined, 'unknown')
   const {database, update} = createGenerationDatabase(existing, existing)
 
   await expect(
@@ -39,7 +40,21 @@ it('should not reclaim an ambiguous preparing run', async () => {
       },
       database,
     ),
-  ).resolves.toEqual({created: false, run: expect.objectContaining({status: 'preparing'})})
+  ).resolves.toEqual({
+    created: false,
+    run: expect.objectContaining({status: 'preparing', submissionState: 'unknown'}),
+  })
+  expect(update).not.toHaveBeenCalled()
+})
+
+it('should not automatically retry an expired ambiguous submission', async () => {
+  const existing = createRun('preparing', null, undefined, 'expired')
+  const {database, update} = createGenerationDatabase(existing, existing)
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).resolves.toEqual({
+    created: false,
+    run: expect.objectContaining({status: 'preparing', submissionState: 'expired'}),
+  })
   expect(update).not.toHaveBeenCalled()
 })
 
@@ -67,7 +82,7 @@ it('should retry a confirmed failed submission', async () => {
 
 it('should not reopen an ambiguous preparing run for regeneration', async () => {
   const requiredTitles = ['사건 A', '사건 B', '사건 C']
-  const existing = createRun('preparing', null)
+  const existing = createRun('preparing', null, undefined, 'unknown')
   const {database} = createRerunDatabase(existing, existing, requiredTitles)
 
   await expect(
@@ -89,13 +104,44 @@ it('should not overwrite a submission that committed before its database acknowl
     update: vi.fn(() => ({set: vi.fn(() => ({where}))})),
   } as unknown as Database
 
-  await markGenerationFailed(RUN_ID, 'Database acknowledgement failed', database)
+  await markGenerationFailed(RUN_ID, 'submission-key', 'Database acknowledgement failed', database)
 
   const condition = where.mock.calls[0]?.[0]
   const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
   expect(query.sql).toContain('"status" = $2')
+  expect(query.sql).toContain('"open_ai_submission_key" = $3')
   expect(query.sql).toContain('"open_ai_response_id" is null')
-  expect(query.params).toEqual([RUN_ID, 'preparing'])
+  expect(query.params).toEqual([RUN_ID, 'preparing', 'submission-key'])
+})
+
+it('should record an ambiguous submission with its recovery deadline', async () => {
+  const where = vi.fn(async (_condition: SQL) => undefined)
+  const set = vi.fn((_values: Record<string, unknown>) => ({where}))
+  const database = {update: vi.fn(() => ({set}))} as unknown as Database
+  const expiresAt = new Date('2026-08-15T00:30:00.000Z')
+
+  await markGenerationSubmissionUnknown(
+    {
+      errorMessage: 'Response lost',
+      runId: RUN_ID,
+      submissionExpiresAt: expiresAt,
+      submissionKey: 'submission-key',
+    },
+    database,
+  )
+
+  expect(set).toHaveBeenCalledWith(
+    expect.objectContaining({
+      errorMessage: 'Response lost',
+      submissionExpiresAt: expiresAt,
+      submissionState: 'unknown',
+    }),
+  )
+  const condition = where.mock.calls[0]?.[0]
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+  expect(query.params).toEqual([RUN_ID, 'preparing', 'submission-key'])
+  expect(query.sql).toContain('"open_ai_submission_key" = $3')
+  expect(query.sql).toContain('"open_ai_response_id" is null')
 })
 
 it('should accept a repeated persistence acknowledgement for the same response', async () => {
@@ -111,15 +157,17 @@ it('should accept a repeated persistence acknowledgement for the same response',
     })),
   } as unknown as Database
 
-  await expect(markGenerationSubmitted(RUN_ID, RESPONSE_ID, database)).resolves.toBeUndefined()
+  await expect(
+    markGenerationSubmitted(RUN_ID, 'submission-key', RESPONSE_ID, database),
+  ).resolves.toBeUndefined()
 })
 
-it('should reject persistence when a different response owns the run', async () => {
+it('should reject a late response after a different submission reopens the run', async () => {
   const returning = vi.fn(async () => [])
   const database = {
     select: vi.fn(() => ({
       from: vi.fn(() => ({
-        where: vi.fn(() => ({limit: vi.fn(async () => [{responseId: 'resp-other'}])})),
+        where: vi.fn(() => ({limit: vi.fn(async () => [{responseId: null}])})),
       })),
     })),
     update: vi.fn(() => ({
@@ -127,9 +175,9 @@ it('should reject persistence when a different response owns the run', async () 
     })),
   } as unknown as Database
 
-  await expect(markGenerationSubmitted(RUN_ID, RESPONSE_ID, database)).rejects.toThrow(
-    'Generation run did not accept response',
-  )
+  await expect(
+    markGenerationSubmitted(RUN_ID, 'stale-submission-key', RESPONSE_ID, database),
+  ).rejects.toThrow('Generation run did not accept response')
 })
 
 it('should associate a webhook response with an ambiguous preparing run', async () => {
@@ -148,7 +196,12 @@ it('should associate a webhook response with an ambiguous preparing run', async 
     associateGenerationResponse(RESPONSE_ID, RUN_ID, associated.openAiSubmissionKey, database),
   ).resolves.toMatchObject({id: RUN_ID, openAiResponseId: RESPONSE_ID, status: 'submitted'})
   expect(set).toHaveBeenCalledWith(
-    expect.objectContaining({openAiResponseId: RESPONSE_ID, status: 'submitted'}),
+    expect.objectContaining({
+      openAiResponseId: RESPONSE_ID,
+      status: 'submitted',
+      submissionExpiresAt: null,
+      submissionState: null,
+    }),
   )
 
   const condition = where.mock.calls[0]?.[0]
@@ -286,6 +339,17 @@ it.each(['completed', 'failed', 'rejected'] as const)(
     ).resolves.toMatchObject({id: RUN_ID, status: 'preparing'})
   },
 )
+
+it('should reopen an expired ambiguous submission for explicit regeneration', async () => {
+  const existing = createRun('preparing', null, undefined, 'expired')
+  const updated = {...existing, submissionState: null}
+  const {database, set} = createRerunDatabase(existing, updated, ['사건 A'])
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A']}, database),
+  ).resolves.toMatchObject({id: RUN_ID, status: 'preparing', submissionState: null})
+  expect(set).toHaveBeenCalledWith(expect.objectContaining({submissionState: null}))
+})
 
 it('should reject a rerun when no run exists or its update loses a race', async () => {
   const requiredTitles = ['사건 A']

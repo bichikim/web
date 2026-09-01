@@ -7,28 +7,3 @@ export const ACCOUNT_PAGE_CLASSES = cx(
 
 export const ACCOUNT_CARD_CLASSES =
   'w-full max-w-105 rounded-5 border border-white/12 bg-black/18 p-6 shadow-xl backdrop-blur-sm'
-
-export const ACCOUNT_FIELD_CLASSES = cx(
-  'h-12 w-full rounded-3 border border-white/15 bg-black/20 px-4 text-base text-white',
-  'outline-none transition placeholder:text-white/35 focus:border-#e8bc88 focus:ring-2',
-  'focus:ring-#e8bc88/25',
-)
-
-export const ACCOUNT_PRIMARY_BUTTON_CLASSES = cx(
-  'h-12 w-full rounded-3 border-0 bg-#e8bc88 text-sm font-800 text-#22170e',
-  'transition hover:bg-#f4cea0 focus-visible:outline-2 focus-visible:outline-offset-3',
-  'focus-visible:outline-#f4cea0 disabled:cursor-wait disabled:opacity-55',
-)
-
-export const ACCOUNT_SECONDARY_BUTTON_CLASSES = cx(
-  'h-11 w-full rounded-3 border border-white/15 bg-white/5 px-3 text-sm font-650 text-white/75',
-  'transition hover:bg-white/10 hover:text-white focus-visible:outline-2',
-  'focus-visible:outline-offset-2 focus-visible:outline-#e8bc88 disabled:cursor-wait',
-  'disabled:opacity-55',
-)
-
-export const ACCOUNT_ERROR_CLASSES =
-  'm-0 rounded-3 bg-#b84747/18 px-4 py-3 text-sm leading-6 text-#ffc6c6'
-
-export const ACCOUNT_SUCCESS_CLASSES =
-  'm-0 rounded-3 bg-#4d9b73/18 px-4 py-3 text-sm leading-6 text-#bff5d5'

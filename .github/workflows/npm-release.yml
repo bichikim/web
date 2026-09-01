@@ -1,0 +1,106 @@
+name: Release packages
+
+on:
+  workflow_dispatch:
+
+run-name: Release packages from ${{ github.ref_name }} at ${{ github.sha }}
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 24
+  PNPM_VERSION: 11.8.0
+
+jobs:
+  validate:
+    name: Validate release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Validate release source
+        run: |
+          test "${GITHUB_REPOSITORY}" = "bichikim/web" || {
+            echo "::error::Packages can be released only from bichikim/web."
+            exit 1
+          }
+          test "${GITHUB_REF}" = "refs/heads/main" || {
+            echo "::error::Select the main branch when running this workflow."
+            exit 1
+          }
+
+      - name: Checkout repository and release tags
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate release plan
+        run: node scripts/npm-release/run.mjs check
+
+      - name: Verify workspace
+        run: |
+          pnpm typecheck
+          pnpm lint
+          pnpm format:check
+          pnpm test:vitest
+
+      - name: Verify package archives
+        run: node scripts/npm-release/run.mjs pack
+
+  publish:
+    name: Publish and record releases
+    needs: validate
+    if: >-
+      github.repository == 'bichikim/web' &&
+      github.ref == 'refs/heads/main' &&
+      vars.NPM_RELEASE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout repository and release tags
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js and npm registry
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure release author
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Publish packages and record releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/npm-release/run.mjs publish

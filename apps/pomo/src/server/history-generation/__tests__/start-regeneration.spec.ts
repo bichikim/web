@@ -11,6 +11,8 @@ const RUN = {
   openAiSubmissionKey: '019d0000-0000-7000-8000-000000000002',
   sourcePolicyVersion: 'history-sources-v1',
   status: 'preparing' as const,
+  submissionExpiresAt: null,
+  submissionState: null,
   targetDate: '2026-08-16',
 }
 
@@ -32,6 +34,8 @@ it('should submit selected moments against the reopened daily run', async () => 
     startHistoryRegeneration(OPTIONS, {
       markFailed: vi.fn(),
       markSubmitted,
+      markUnknown: vi.fn(),
+      now: () => new Date('2026-08-13T15:30:00.000Z'),
       prepare,
       submit,
     }),
@@ -50,7 +54,7 @@ it('should submit selected moments against the reopened daily run', async () => 
       submissionKey: RUN.openAiSubmissionKey,
     }),
   )
-  expect(markSubmitted).toHaveBeenCalledWith('run-1', 'resp-radio')
+  expect(markSubmitted).toHaveBeenCalledWith('run-1', RUN.openAiSubmissionKey, 'resp-radio')
 })
 
 it('should mark a reopened run as failed after a confirmed rejection', async () => {
@@ -61,26 +65,37 @@ it('should mark a reopened run as failed after a confirmed rejection', async () 
     startHistoryRegeneration(OPTIONS, {
       markFailed,
       markSubmitted: vi.fn(),
+      markUnknown: vi.fn(),
+      now: () => new Date('2026-08-13T15:30:00.000Z'),
       prepare: vi.fn().mockResolvedValue(RUN),
       submit: vi.fn().mockRejectedValue(error),
     }),
   ).rejects.toBe(error)
-  expect(markFailed).toHaveBeenCalledWith('run-1', 'Invalid request')
+  expect(markFailed).toHaveBeenCalledWith('run-1', RUN.openAiSubmissionKey, 'Invalid request')
 })
 
-it('should preserve an ambiguous reopened submission for webhook recovery', async () => {
+it('should record an ambiguous reopened submission with a recovery deadline', async () => {
   const error = new HistorySubmissionError('unknown', new Error('Response lost'))
   const markFailed = vi.fn()
+  const markUnknown = vi.fn().mockResolvedValue(undefined)
 
   await expect(
     startHistoryRegeneration(OPTIONS, {
       markFailed,
       markSubmitted: vi.fn(),
+      markUnknown,
+      now: () => new Date('2026-08-13T15:30:00.000Z'),
       prepare: vi.fn().mockResolvedValue(RUN),
       submit: vi.fn().mockRejectedValue(error),
     }),
   ).rejects.toBe(error)
   expect(markFailed).not.toHaveBeenCalled()
+  expect(markUnknown).toHaveBeenCalledWith({
+    errorMessage: 'Response lost',
+    runId: 'run-1',
+    submissionExpiresAt: new Date('2026-08-13T16:00:00.000Z'),
+    submissionKey: RUN.openAiSubmissionKey,
+  })
 })
 
 it('should retry reopened response ID persistence without submitting again', async () => {
@@ -93,6 +108,8 @@ it('should retry reopened response ID persistence without submitting again', asy
     startHistoryRegeneration(OPTIONS, {
       markFailed,
       markSubmitted,
+      markUnknown: vi.fn(),
+      now: () => new Date('2026-08-13T15:30:00.000Z'),
       prepare: vi.fn().mockResolvedValue(RUN),
       submit,
     }),

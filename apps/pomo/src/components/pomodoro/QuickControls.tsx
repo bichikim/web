@@ -22,32 +22,32 @@ interface PomodoroQuickControlsProps {
   readonly timeLabel: string
 }
 
-const QUICK_CONTROLS_INTERACTION_CLASSES = [
+const QUICK_CONTROLS_INTERACTION_CLASSES = cx(
   '[&:has([data-glass-part]:hover)]:border-border-hover',
   '[&:has([data-glass-part]:focus-visible)]:border-highlight',
   '[&:has([data-glass-part][data-expanded])]:border-highlight',
   '[&:has([data-glass-trigger]:hover)]:bg-surface-interactive',
   '[&:has([data-glass-trigger]:focus-visible)]:bg-surface-interactive',
   '[&:has([data-glass-trigger][data-expanded])]:bg-surface-interactive',
-].join(' ')
+)
 
-const INTERACTIVE_GLASS_PART_CLASSES = [
+const INTERACTIVE_GLASS_PART_CLASSES = cx(
   '[&:not([data-glass-trigger]):hover]:bg-surface-overlay',
   '[&:not([data-glass-trigger]):focus-visible]:bg-surface-overlay',
   '[&:not([data-glass-trigger])[data-expanded]]:bg-surface-overlay',
-].join(' ')
+)
 
 const STRONG_FOCUS_RING_CLASSES =
   'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2 ' +
   'focus-visible:outline-highlight'
 
-const SCRIBBLE_MASK_CLASSES = [
+const SCRIBBLE_MASK_CLASSES = cx(
   '[mask-image:var(--pomo-pomodoro-scribble-mask)]',
   '[-webkit-mask-image:var(--pomo-pomodoro-scribble-mask)]',
   '[mask-mode:alpha] [mask-position:center] [mask-repeat:no-repeat] [mask-size:100%_100%]',
   '[-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat]',
   '[-webkit-mask-size:100%_100%]',
-].join(' ')
+)
 
 const getQuickFrameClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble'

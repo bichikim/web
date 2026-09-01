@@ -38,7 +38,7 @@ Vercel에서는 System Environment Variables 자동 노출을 활성화하고 `V
 `VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL`이 나타내는 HTTPS Origin도 허용한다. Vite
 개발 서버에서는 현재 요청의 self Origin을 추가로 허용한다.
 
-Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹, 로컬 개발, 데스크톱 출처와 함께 위 네 앱인토스 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다. 정책 원본은 [`r2/cors.json`](./r2/cors.json)이며 `pnpm exec wrangler r2 bucket cors set pomofi-audio --file apps/pomo/docs/plan/development/r2/cors.json`으로 적용한다.
+Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 프리뷰 주소를 포함한 모든 Origin의 `GET`, `HEAD`, `PUT`을 허용한다. CORS는 브라우저의 Origin 제약만 완화하며, `PUT` 권한은 서버가 발급하는 짧은 수명의 서명 URL로 통제한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다. 정책 원본은 [`r2/cors.json`](./r2/cors.json)이며 `pnpm exec wrangler r2 bucket cors set pomofi-audio --file apps/pomo/docs/plan/development/r2/cors.json`으로 적용한다.
 
 앱인토스 `.ait` 번들은 압축 해제 기준 100MB 이하로 유지한다. Supertonic 3 INT8 모델은 번들 용량 계산에서 제외되도록 원격 자산으로 분리한다.
 
@@ -63,8 +63,9 @@ branch-specific Neon 환경을 선택한다. 각 Preview는 해당 리비전의 
 GitHub Actions에는 가능하면 프로젝트 범위로 제한한 `NEON_API_KEY` secret과
 `NEON_PROJECT_ID` repository variable을 설정한다.
 
-`main-pomo`의 운영 배포는 `.github/workflows/pomo-production-deploy.yml`에서 직렬 실행한다. 먼저
-운영 환경 설정으로 빌드한다. Vercel Production 환경의 Neon 직접 연결 URL인
+`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로
+실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel
+Production 환경의 Neon 직접 연결 URL인
 `DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로
 배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로
 승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복
