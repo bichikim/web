@@ -27,7 +27,13 @@ export interface FeedGenerationDialogueRepository extends Pick<
 
 export interface FeedGenerationRepository extends Pick<
   FeedDialogueRepository,
-  'complete' | 'deleteJobs' | 'interruptUnfinishedJobs' | 'listItems' | 'listJobs' | 'updateJob'
+  | 'complete'
+  | 'deleteJobs'
+  | 'failJob'
+  | 'interruptUnfinishedJobs'
+  | 'listItems'
+  | 'listJobs'
+  | 'updateJob'
 > {}
 
 export interface CreateFeedGenerationControllerOptions {
@@ -159,13 +165,29 @@ const prepareModel = async (
   return true
 }
 
-const failJob = async (context: FeedGenerationContext, job: FeedDialogueJob, message: string) => {
+const failJob = async (
+  context: FeedGenerationContext,
+  job: FeedDialogueJob,
+  message: string,
+  revision: number,
+) => {
   const updatedAt = context.options.now().toISOString()
   const storedItem = await findFeedItem(context, job)
+
+  if (!isCurrentProcessing(context, revision)) {
+    return
+  }
+
   const failedJob = {...job, errorMessage: message, status: 'failed' as const, updatedAt}
   const failedItem =
     storedItem === null ? undefined : {...storedItem, message, status: 'failed' as const, updatedAt}
-  await context.options.feedRepository.updateJob(failedJob, failedItem)
+
+  const didFail = await context.options.feedRepository.failJob({item: failedItem, job: failedJob})
+
+  if (!didFail) {
+    return
+  }
+
   await context.options.onFailed()
 }
 
@@ -249,10 +271,15 @@ const generateJob = async (
       await discardUnsubscribedJob(context, job)
       return
     case 'model-download-required':
-      await failJob(context, preparation.job, '음성 모델 다운로드에 동의한 뒤 다시 시도해 주세요.')
+      await failJob(
+        context,
+        preparation.job,
+        '음성 모델 다운로드에 동의한 뒤 다시 시도해 주세요.',
+        revision,
+      )
       return
     case 'model-preparation-failed':
-      await failJob(context, preparation.job, '피드 음성 모델을 준비하지 못했어요.')
+      await failJob(context, preparation.job, '피드 음성 모델을 준비하지 못했어요.', revision)
       return
     case 'ready':
       break
@@ -262,7 +289,7 @@ const generateJob = async (
   const currentClient = context.client
 
   if (currentClient === null) {
-    await failJob(context, currentJob, '피드 음성 모델을 준비하지 못했어요.')
+    await failJob(context, currentJob, '피드 음성 모델을 준비하지 못했어요.', revision)
     return
   }
 
@@ -298,7 +325,7 @@ const generateJob = async (
   }
 
   if (!generated.ok) {
-    await failJob(context, currentJob, generated.message)
+    await failJob(context, currentJob, generated.message, revision)
     return
   }
 
@@ -317,7 +344,7 @@ const handleJobFailure = async (
     return
   }
 
-  await failJob(context, job, '피드 대화를 저장하지 못했어요.')
+  await failJob(context, job, '피드 대화를 저장하지 못했어요.', revision)
 }
 
 const runScheduledJobs = async (context: FeedGenerationContext) => {
