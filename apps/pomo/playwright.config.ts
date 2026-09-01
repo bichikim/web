@@ -14,6 +14,7 @@ export default defineConfig({
   projects: [
     {
       name: 'web',
+      testIgnore: 'remote-server-functions.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
         baseURL: webBaseUrl,
