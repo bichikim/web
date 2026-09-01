@@ -1,6 +1,6 @@
 import {Button} from '@kobalte/core/button'
 import {clamp} from 'es-toolkit/math'
-import {createUniqueId, For, onCleanup, Show} from 'solid-js'
+import {createSignal, createUniqueId, For, onCleanup, Show} from 'solid-js'
 
 import type {PuppetParameter} from '../../player/document'
 import {EditorParameterItem} from './EditorParameterItem'
@@ -34,37 +34,43 @@ const getPointerValue = (
   return Number(clamp(steppedValue, parameter.minimum, parameter.maximum).toFixed(VALUE_PRECISION))
 }
 
+const getKeyboardValue = (parameter: PuppetParameter, value: number, key: string) => {
+  const step = (parameter.maximum - parameter.minimum) / VALUE_STEPS
+  let nextValue: number
+
+  switch (key) {
+    case 'ArrowLeft':
+    case 'ArrowDown':
+      nextValue = value - step
+      break
+    case 'ArrowRight':
+    case 'ArrowUp':
+      nextValue = value + step
+      break
+    case 'End':
+      nextValue = parameter.maximum
+      break
+    case 'Home':
+      nextValue = parameter.minimum
+      break
+    default:
+      return undefined
+  }
+
+  return Number(clamp(nextValue, parameter.minimum, parameter.maximum).toFixed(VALUE_PRECISION))
+}
+
 const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
   let removePointerListeners: (() => void) | undefined
   const handleKeyDown = (event: KeyboardEvent) => {
-    const step = (props.parameter.maximum - props.parameter.minimum) / VALUE_STEPS
-    let value: number | undefined
+    const value = getKeyboardValue(props.parameter, props.value, event.key)
 
-    switch (event.key) {
-      case 'ArrowLeft':
-      case 'ArrowDown':
-        value = props.value - step
-        break
-      case 'ArrowRight':
-      case 'ArrowUp':
-        value = props.value + step
-        break
-      case 'End':
-        value = props.parameter.maximum
-        break
-      case 'Home':
-        value = props.parameter.minimum
-        break
-      default:
-        return
+    if (value === undefined) {
+      return
     }
 
     event.preventDefault()
-    props.onValueChange?.(
-      Number(
-        clamp(value, props.parameter.minimum, props.parameter.maximum).toFixed(VALUE_PRECISION),
-      ),
-    )
+    props.onValueChange?.(value)
   }
   const handlePointerDown = (event: PointerEvent & {readonly currentTarget: HTMLButtonElement}) => {
     if (event.button !== 0 || props.onValueChange === undefined) {
@@ -124,9 +130,120 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
   )
 }
 
+interface KeyformMarkerProps {
+  readonly active: boolean
+  readonly onMove?: (value: number, nextValue: number) => void
+  readonly onSelect?: () => void
+  readonly parameter: PuppetParameter
+  readonly value: number
+}
+
+const KeyformMarker = (props: KeyformMarkerProps) => {
+  const [dragValue, setDragValue] = createSignal<number | null>(null)
+  let removePointerListeners: (() => void) | undefined
+  const displayValue = () => dragValue() ?? props.value
+  const finishPointerDrag = (commit: boolean) => {
+    const nextValue = dragValue()
+    removePointerListeners?.()
+    setDragValue(null)
+
+    if (commit && nextValue !== null && nextValue !== props.value) {
+      props.onMove?.(props.value, nextValue)
+    }
+  }
+  const handlePointerDown = (event: PointerEvent & {readonly currentTarget: HTMLButtonElement}) => {
+    if (event.button !== 0 || props.onMove === undefined) {
+      return
+    }
+
+    const bounds = event.currentTarget.parentElement?.getBoundingClientRect()
+    if (bounds === undefined) {
+      return
+    }
+
+    const {pointerId} = event
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) {
+        return
+      }
+
+      const nextValue = getPointerValue(props.parameter, bounds, moveEvent.clientX)
+
+      moveEvent.preventDefault()
+      if (nextValue !== undefined) {
+        setDragValue(nextValue)
+      }
+    }
+    const handlePointerUp = (upEvent: PointerEvent) => {
+      if (upEvent.pointerId === pointerId) {
+        finishPointerDrag(true)
+      }
+    }
+    const handlePointerCancel = (cancelEvent: PointerEvent) => {
+      if (cancelEvent.pointerId === pointerId) {
+        finishPointerDrag(false)
+      }
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    props.onSelect?.()
+    removePointerListeners?.()
+    // The stored callback only removes native drag listeners during completion or cleanup.
+    // eslint-disable-next-line solid/reactivity
+    removePointerListeners = () => {
+      window.removeEventListener('pointercancel', handlePointerCancel)
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+      removePointerListeners = undefined
+    }
+    window.addEventListener('pointercancel', handlePointerCancel)
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (props.onMove === undefined) {
+      return
+    }
+
+    const nextValue = getKeyboardValue(props.parameter, props.value, event.key)
+    if (nextValue === undefined || nextValue === props.value) {
+      return
+    }
+
+    event.preventDefault()
+    props.onSelect?.()
+    props.onMove(props.value, nextValue)
+  }
+
+  onCleanup(() => removePointerListeners?.())
+
+  return (
+    <button
+      aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
+      aria-label={`${props.parameter.name} ${displayValue()} 키폼`}
+      aria-pressed={props.active}
+      class="keyform-marker"
+      classList={{draggable: props.onMove !== undefined, dragging: dragValue() !== null}}
+      style={{left: `${getProgress(props.parameter, displayValue())}%`}}
+      type="button"
+      onClick={(event) => {
+        if (event.detail === 0 || props.onMove === undefined) {
+          props.onSelect?.()
+        }
+      }}
+      onKeyDown={handleKeyDown}
+      onPointerDown={handlePointerDown}
+    >
+      <span>{displayValue()}</span>
+    </button>
+  )
+}
+
 interface KeyformTrackRowProps {
   readonly active: boolean
   readonly activeKeyformValue?: number | null
+  readonly onKeyformMove?: (parameterId: string, value: number, nextValue: number) => void
   readonly onKeyformSelect?: (parameterId: string, value: number) => void
   readonly onParameterDelete?: (parameterId: string) => void
   readonly onParameterNameChange?: (parameterId: string, name: string) => void
@@ -166,16 +283,17 @@ const KeyformTrackRow = (props: KeyformTrackRowProps) => (
       </Show>
       <For each={props.parameter.keyforms}>
         {(keyform) => (
-          <button
-            aria-label={`${props.parameter.name} ${keyform.value} 키폼`}
-            aria-pressed={props.active && props.activeKeyformValue === keyform.value}
-            class="keyform-marker"
-            style={{left: `${getProgress(props.parameter, keyform.value)}%`}}
-            type="button"
-            onClick={() => props.onKeyformSelect?.(props.parameter.id, keyform.value)}
-          >
-            <span>{keyform.value}</span>
-          </button>
+          <KeyformMarker
+            active={props.active && props.activeKeyformValue === keyform.value}
+            parameter={props.parameter}
+            value={keyform.value}
+            onMove={
+              props.onKeyformMove === undefined
+                ? undefined
+                : (value, nextValue) => props.onKeyformMove?.(props.parameter.id, value, nextValue)
+            }
+            onSelect={() => props.onKeyformSelect?.(props.parameter.id, keyform.value)}
+          />
         )}
       </For>
     </div>
@@ -187,6 +305,7 @@ export interface EditorKeyformPanelProps {
   readonly activeParameterId?: string
   readonly onKeyformAdd?: () => void
   readonly onKeyformDelete?: () => void
+  readonly onKeyformMove?: (parameterId: string, value: number, nextValue: number) => void
   readonly onKeyformSelect?: (parameterId: string, value: number) => void
   readonly onParameterAdd?: () => void
   readonly onParameterDelete?: (parameterId: string) => void
@@ -279,6 +398,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                 activeKeyformValue={props.activeKeyformValue}
                 parameter={parameter}
                 value={props.value}
+                onKeyformMove={props.onKeyformMove}
                 onKeyformSelect={props.onKeyformSelect}
                 onParameterDelete={props.onParameterDelete}
                 onParameterNameChange={props.onParameterNameChange}

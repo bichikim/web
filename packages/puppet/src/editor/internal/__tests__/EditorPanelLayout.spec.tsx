@@ -1,9 +1,11 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {expect, test} from 'vitest'
+import {beforeEach, expect, test} from 'vitest'
 
 import {EditorPanelLayout} from '../EditorPanelLayout'
+
+beforeEach(() => localStorage.clear())
 
 test('should resize panels with separators and clamp keyboard resizing at the minimum size', () => {
   const view = render(() => (
@@ -95,4 +97,109 @@ test('should clear the active resizer effect when pointer dragging is cancelled'
   expect(bottomResizer).toHaveClass('dragging')
   window.dispatchEvent(new MouseEvent('pointercancel'))
   expect(bottomResizer).not.toHaveClass('dragging')
+})
+
+test('should restore resized and closed panels after remounting', () => {
+  const renderLayout = () =>
+    render(() => (
+      <EditorPanelLayout
+        toolbar={(visibility) => (
+          <header>
+            <button type="button" onClick={visibility.onLeftToggle}>
+              왼쪽 전환
+            </button>
+            <button type="button" onClick={visibility.onRightToggle}>
+              오른쪽 전환
+            </button>
+            <button type="button" onClick={visibility.onBottomToggle}>
+              아래 전환
+            </button>
+          </header>
+        )}
+      />
+    ))
+  const firstView = renderLayout()
+
+  fireEvent.keyDown(firstView.getByRole('separator', {name: '왼쪽 패널 너비 조절'}), {
+    key: 'ArrowLeft',
+  })
+  fireEvent.keyDown(firstView.getByRole('separator', {name: '오른쪽 패널 너비 조절'}), {
+    key: 'ArrowRight',
+  })
+  fireEvent.keyDown(firstView.getByRole('separator', {name: '아래 프레임 높이 조절'}), {
+    key: 'ArrowUp',
+  })
+  fireEvent.click(firstView.getByRole('button', {name: '왼쪽 전환'}))
+  fireEvent.click(firstView.getByRole('button', {name: '오른쪽 전환'}))
+  fireEvent.click(firstView.getByRole('button', {name: '아래 전환'}))
+  firstView.unmount()
+
+  const restoredView = renderLayout()
+  const editor = restoredView.container.querySelector('.puppet-editor')
+
+  expect(editor).toHaveClass('left-panel-closed', 'right-panel-closed', 'bottom-panel-closed')
+  expect(restoredView.getByRole('separator', {name: '왼쪽 패널 너비 조절'})).toHaveAttribute(
+    'aria-valuenow',
+    '284',
+  )
+  expect(restoredView.getByRole('separator', {name: '오른쪽 패널 너비 조절'})).toHaveAttribute(
+    'aria-valuenow',
+    '244',
+  )
+  expect(restoredView.getByRole('separator', {name: '아래 프레임 높이 조절'})).toHaveAttribute(
+    'aria-valuenow',
+    '276',
+  )
+})
+
+test('should clamp valid persisted sizes and replace malformed preferences with defaults', () => {
+  const initialView = render(() => <EditorPanelLayout />)
+  const storageKey = localStorage.key(0)
+
+  if (storageKey === null) {
+    throw new Error('Panel preference was not saved.')
+  }
+
+  initialView.unmount()
+  localStorage.setItem(
+    storageKey,
+    JSON.stringify({
+      bottom: {open: false, size: 900},
+      left: {open: true, size: 100},
+      right: {open: false, size: 300},
+    }),
+  )
+
+  const clampedView = render(() => <EditorPanelLayout />)
+
+  expect(clampedView.getByRole('separator', {name: '왼쪽 패널 너비 조절'})).toHaveAttribute(
+    'aria-valuenow',
+    '220',
+  )
+  expect(clampedView.getByRole('separator', {name: '오른쪽 패널 너비 조절'})).toHaveAttribute(
+    'aria-valuenow',
+    '300',
+  )
+  expect(clampedView.getByRole('separator', {name: '아래 프레임 높이 조절'})).toHaveAttribute(
+    'aria-valuenow',
+    '420',
+  )
+  expect(clampedView.container.querySelector('.puppet-editor')).toHaveClass(
+    'right-panel-closed',
+    'bottom-panel-closed',
+  )
+  clampedView.unmount()
+  localStorage.setItem(storageKey, '{malformed')
+
+  const fallbackView = render(() => <EditorPanelLayout />)
+
+  expect(fallbackView.getByRole('separator', {name: '왼쪽 패널 너비 조절'})).toHaveAttribute(
+    'aria-valuenow',
+    '300',
+  )
+  expect(fallbackView.container.querySelector('.puppet-editor')).not.toHaveClass(
+    'left-panel-closed',
+    'right-panel-closed',
+    'bottom-panel-closed',
+  )
 })

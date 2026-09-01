@@ -10,6 +10,7 @@ import {
   disconnectParameterParts,
   getParameterTargetPartIds,
   insertParameterKeyform,
+  moveParameterKeyform,
   renameParameter,
   sampleParameterVertices,
   setParameterKeyformVertex,
@@ -124,6 +125,41 @@ describe('parameter keyform editing', () => {
         parameterId: 'angle-x',
         value: 31,
       }),
+    ).toBeUndefined()
+  })
+
+  test('should move a keyform without changing its deformation data', () => {
+    const document = createDemoDocument()
+    const originalKeyform = document.parameters?.[0]?.keyforms[1]
+    const moved = moveParameterKeyform({
+      document,
+      nextValue: 15,
+      parameterId: 'angle-x',
+      value: 0,
+    })
+
+    expect(moved?.parameters?.[0]?.keyforms.map((keyform) => keyform.value)).toEqual([-30, 15, 30])
+    expect(moved?.parameters?.[0]?.keyforms[1]?.parts).toBe(originalKeyform?.parts)
+    expect(document.parameters?.[0]?.keyforms[1]?.value).toBe(0)
+    expect(moveParameterKeyform({document, nextValue: 0, parameterId: 'angle-x', value: 0})).toBe(
+      document,
+    )
+  })
+
+  test('should reject a keyform move onto an occupied or invalid value', () => {
+    const document = createDemoDocument()
+
+    expect(
+      moveParameterKeyform({document, nextValue: 30, parameterId: 'angle-x', value: 0}),
+    ).toBeUndefined()
+    expect(
+      moveParameterKeyform({document, nextValue: 31, parameterId: 'angle-x', value: 0}),
+    ).toBeUndefined()
+    expect(
+      moveParameterKeyform({document, nextValue: Number.NaN, parameterId: 'angle-x', value: 0}),
+    ).toBeUndefined()
+    expect(
+      moveParameterKeyform({document, nextValue: 15, parameterId: 'angle-x', value: 15}),
     ).toBeUndefined()
   })
 

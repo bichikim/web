@@ -15,14 +15,15 @@ import {
   getSceneNode,
   getSceneNodePartIds,
   isSceneNodeLocked,
-  moveSceneNode,
   moveSceneNodeBy,
+  moveSceneNodeRelative,
   moveSceneNodeToParent,
   renameSceneGroup,
   type SceneSelection,
-  setSceneNodeState,
   ungroupSceneNode,
 } from './scene-graph'
+import {EditorLayerStateActions} from './EditorLayerStateActions'
+import {getLayerDropPosition, type LayerDropTarget} from './layer-drop'
 import {getDocumentParameters, getParameterTargetPartIds} from './parameter-keyforms'
 
 export interface EditorLayerPanelProps {
@@ -38,40 +39,18 @@ interface SceneNodeItemProps {
   readonly depth: number
   readonly document: PuppetDocument
   readonly draggedNodeId: string | null
+  readonly dropTarget: LayerDropTarget | null
   readonly expandedGroupIds: ReadonlySet<string>
   readonly inheritedLocked: boolean
   readonly inheritedVisible: boolean
   readonly node: PuppetSceneNode
   readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly onDragOver: (target: LayerDropTarget) => void
   readonly onDragStart: (nodeId: string) => void
-  readonly onDrop: (node: PuppetSceneNode) => void
+  readonly onDrop: (target: LayerDropTarget) => void
   readonly onSelect: (event: MouseEvent, node: PuppetSceneNode) => void
   readonly onToggleExpanded: (groupId: string) => void
   readonly selectedNodeIds: ReadonlySet<string>
-}
-
-const findSceneParentId = (document: PuppetDocument, nodeId: string): string | null => {
-  const findParent = (
-    nodes: ReadonlyArray<PuppetSceneNode>,
-    parentId: string | null,
-  ): string | null | undefined => {
-    for (const node of nodes) {
-      if (node.id === nodeId) {
-        return parentId
-      }
-
-      if (node.kind === 'group') {
-        const childParentId = findParent(node.children, node.id)
-        if (childParentId !== undefined) {
-          return childParentId
-        }
-      }
-    }
-
-    return undefined
-  }
-
-  return findParent(getDocumentScene(document).roots, null) ?? null
 }
 
 const getGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
@@ -217,6 +196,8 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
   const locked = () => props.inheritedLocked || props.node.locked
   const visible = () => props.inheritedVisible && props.node.visible
   const parameterLinks = createMemo(() => getNodeParameterLinks(props.document, props.node.id))
+  const dropPosition = () =>
+    props.dropTarget?.nodeId === props.node.id ? props.dropTarget.position : null
 
   return (
     <li
@@ -228,12 +209,13 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
       draggable={!locked()}
       role="treeitem"
       onDragEnd={() => props.onDragStart('')}
-      onDragOver={(event) => event.preventDefault()}
-      onDragStart={() => props.onDragStart(props.node.id)}
-      onDrop={(event) => {
-        event.preventDefault()
+      onDragStart={(event) => {
         event.stopPropagation()
-        props.onDrop(props.node)
+        event.dataTransfer?.setData('text/plain', props.node.id)
+        if (event.dataTransfer !== null && event.dataTransfer !== undefined) {
+          event.dataTransfer.effectAllowed = 'move'
+        }
+        props.onDragStart(props.node.id)
       }}
     >
       <Collapsible
@@ -245,7 +227,50 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
           }
         }}
       >
-        <div class="layer-row" style={{'--layer-depth': props.depth - 1}}>
+        <div
+          class="layer-row"
+          classList={{
+            'drop-after': dropPosition() === 'after',
+            'drop-before': dropPosition() === 'before',
+            'drop-inside': dropPosition() === 'inside',
+          }}
+          style={{'--layer-depth': props.depth - 1}}
+          onDragOver={(event) => {
+            if (props.draggedNodeId === null) {
+              return
+            }
+
+            event.preventDefault()
+            event.stopPropagation()
+            if (event.dataTransfer !== null && event.dataTransfer !== undefined) {
+              event.dataTransfer.dropEffect = 'move'
+            }
+            props.onDragOver({
+              nodeId: props.node.id,
+              position: getLayerDropPosition(
+                props.node,
+                event.currentTarget.getBoundingClientRect(),
+                event.clientY,
+              ),
+            })
+          }}
+          onDrop={(event) => {
+            if (props.draggedNodeId === null) {
+              return
+            }
+
+            event.preventDefault()
+            event.stopPropagation()
+            props.onDrop({
+              nodeId: props.node.id,
+              position: getLayerDropPosition(
+                props.node,
+                event.currentTarget.getBoundingClientRect(),
+                event.clientY,
+              ),
+            })
+          }}
+        >
           <Show
             when={props.node.kind === 'group'}
             fallback={<span class="layer-tree-spacer" aria-hidden="true" />}
@@ -268,41 +293,14 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
             onSelect={props.onSelect}
           />
 
-          <div class="layer-state-actions">
-            <ToggleButton
-              aria-label={`${props.node.name} ${props.node.visible ? '숨기기' : '표시하기'}`}
-              pressed={visible()}
-              onClick={() => {
-                const document = setSceneNodeState({
-                  document: props.document,
-                  nodeId: props.node.id,
-                  visible: !props.node.visible,
-                })
-                if (document !== undefined) {
-                  props.onDocumentChange?.(document)
-                }
-              }}
-            >
-              {props.node.visible ? '●' : '○'}
-            </ToggleButton>
-            <ToggleButton
-              aria-label={`${props.node.name} ${props.node.locked ? '잠금 해제' : '잠그기'}`}
-              disabled={props.inheritedLocked}
-              pressed={locked()}
-              onClick={() => {
-                const document = setSceneNodeState({
-                  document: props.document,
-                  locked: !props.node.locked,
-                  nodeId: props.node.id,
-                })
-                if (document !== undefined) {
-                  props.onDocumentChange?.(document)
-                }
-              }}
-            >
-              {props.node.locked ? '◆' : '◇'}
-            </ToggleButton>
-          </div>
+          <EditorLayerStateActions
+            document={props.document}
+            inheritedLocked={props.inheritedLocked}
+            locked={locked()}
+            node={props.node}
+            visible={visible()}
+            onDocumentChange={props.onDocumentChange}
+          />
         </div>
 
         <Show when={props.node.kind === 'group'}>
@@ -314,11 +312,13 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
                     depth={props.depth + 1}
                     document={props.document}
                     draggedNodeId={props.draggedNodeId}
+                    dropTarget={props.dropTarget}
                     expandedGroupIds={props.expandedGroupIds}
                     inheritedLocked={locked()}
                     inheritedVisible={visible()}
                     node={node}
                     onDocumentChange={props.onDocumentChange}
+                    onDragOver={props.onDragOver}
                     onDragStart={props.onDragStart}
                     onDrop={props.onDrop}
                     onSelect={props.onSelect}
@@ -415,6 +415,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   const initialGroupIds = untrack(() => getGroupIds(getDocumentScene(props.document).roots))
   const [expandedGroupIds, setExpandedGroupIds] = createSignal<ReadonlySet<string>>(initialGroupIds)
   const [draggedNodeId, setDraggedNodeId] = createSignal<string | null>(null)
+  const [dropTarget, setDropTarget] = createSignal<LayerDropTarget | null>(null)
   const selection = createMemo<SceneSelection>(
     () =>
       props.selection ?? {
@@ -464,24 +465,26 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
     }
   }
 
-  const handleDrop = (target: PuppetSceneNode) => {
+  const handleDrop = (target: LayerDropTarget) => {
     const nodeId = draggedNodeId()
 
     if (nodeId === null || nodeId.length === 0) {
       return
     }
 
-    handleDocumentChange(
-      target.kind === 'group'
-        ? moveSceneNode({document: props.document, nodeId, parentId: target.id})
-        : moveSceneNode({
-            beforeNodeId: target.id,
-            document: props.document,
-            nodeId,
-            parentId: findSceneParentId(props.document, target.id),
-          }),
-    )
+    const document = moveSceneNodeRelative({
+      document: props.document,
+      nodeId,
+      position: target.position,
+      targetNodeId: target.nodeId,
+    })
+
+    handleDocumentChange(document)
+    if (document !== undefined && target.nodeId !== null && target.position === 'inside') {
+      setExpandedGroupIds(new Set([...expandedGroupIds(), target.nodeId]))
+    }
     setDraggedNodeId(null)
+    setDropTarget(null)
   }
 
   return (
@@ -503,19 +506,47 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
         when={props.document.parts.length > 0}
         fallback={<p class="panel-note">PNG를 불러오세요.</p>}
       >
-        <ul class="layer-tree" role="tree" aria-label="모델 레이어">
+        <ul
+          class="layer-tree"
+          classList={{'root-drop-active': dropTarget()?.nodeId === null}}
+          role="tree"
+          aria-label="모델 레이어"
+          onDragOver={(event) => {
+            if (draggedNodeId() === null) {
+              return
+            }
+
+            event.preventDefault()
+            if (event.target === event.currentTarget) {
+              setDropTarget({nodeId: null, position: 'inside'})
+            }
+          }}
+          onDrop={(event) => {
+            if (draggedNodeId() !== null && event.target === event.currentTarget) {
+              event.preventDefault()
+              handleDrop({nodeId: null, position: 'inside'})
+            }
+          }}
+        >
           <For each={getDocumentScene(props.document).roots}>
             {(node) => (
               <SceneNodeItem
                 depth={1}
                 document={props.document}
                 draggedNodeId={draggedNodeId()}
+                dropTarget={dropTarget()}
                 expandedGroupIds={expandedGroupIds()}
                 inheritedLocked={false}
                 inheritedVisible={true}
                 node={node}
                 onDocumentChange={props.onDocumentChange}
-                onDragStart={(nodeId) => setDraggedNodeId(nodeId.length === 0 ? null : nodeId)}
+                onDragOver={setDropTarget}
+                onDragStart={(nodeId) => {
+                  setDraggedNodeId(nodeId.length === 0 ? null : nodeId)
+                  if (nodeId.length === 0) {
+                    setDropTarget(null)
+                  }
+                }}
                 onDrop={handleDrop}
                 onSelect={handleSelect}
                 onToggleExpanded={(groupId) => {

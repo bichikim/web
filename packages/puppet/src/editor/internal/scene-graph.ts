@@ -18,6 +18,15 @@ interface MoveSceneNodeOptions {
   readonly parentId: string | null
 }
 
+export type SceneNodeDropPosition = 'after' | 'before' | 'inside'
+
+export interface MoveSceneNodeRelativeOptions {
+  readonly document: PuppetDocument
+  readonly nodeId: string
+  readonly position: SceneNodeDropPosition
+  readonly targetNodeId: string | null
+}
+
 interface SetSceneNodeStateOptions {
   readonly document: PuppetDocument
   readonly locked?: boolean
@@ -367,6 +376,46 @@ export const moveSceneNode = (options: MoveSceneNodeOptions): PuppetDocument | u
   })
 
   return nextScene === undefined ? undefined : withScene(options.document, nextScene)
+}
+
+export const moveSceneNodeRelative = (
+  options: MoveSceneNodeRelativeOptions,
+): PuppetDocument | undefined => {
+  if (options.targetNodeId === null) {
+    return options.position === 'inside' ? moveSceneNode({...options, parentId: null}) : undefined
+  }
+
+  if (options.nodeId === options.targetNodeId) {
+    return undefined
+  }
+
+  const scene = getDocumentScene(options.document)
+  const target = findNode(scene.roots, options.targetNodeId)
+  const parentId = findParentId(scene.roots, options.targetNodeId)
+
+  if (target === undefined || parentId === undefined) {
+    return undefined
+  }
+
+  switch (options.position) {
+    case 'inside':
+      return target.kind === 'group' ? moveSceneNode({...options, parentId: target.id}) : undefined
+    case 'before':
+      return moveSceneNode({...options, beforeNodeId: target.id, parentId})
+    case 'after': {
+      const parent = parentId === null ? undefined : findNode(scene.roots, parentId)
+      const siblings =
+        parentId === null ? scene.roots : parent?.kind === 'group' ? parent.children : []
+      const targetIndex = siblings.findIndex((node) => node.id === target.id)
+      const beforeNodeId = siblings[targetIndex + 1]?.id
+
+      return targetIndex < 0 ? undefined : moveSceneNode({...options, beforeNodeId, parentId})
+    }
+    default: {
+      const exhaustivePosition: never = options.position
+      return exhaustivePosition
+    }
+  }
 }
 
 export const moveSceneNodeBy = (

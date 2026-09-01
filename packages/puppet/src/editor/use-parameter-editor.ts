@@ -12,6 +12,7 @@ import {
   getDocumentParameters,
   getParameterTargetPartIds,
   insertParameterKeyform,
+  moveParameterKeyform,
   renameParameter,
 } from './internal/parameter-keyforms'
 
@@ -33,6 +34,7 @@ export interface ParameterEditorResult {
   readonly deleteKeyform: () => void
   readonly deleteParameter: (parameterId: string) => void
   readonly disconnectSelection: () => void
+  readonly moveKeyform: (value: number, nextValue: number) => void
   readonly parameterValue: Accessor<number>
   readonly previewDocument: Accessor<PuppetDocument>
   readonly renameParameter: (name: string) => void
@@ -96,6 +98,11 @@ interface ParameterSelectionSetters {
   readonly parameterValue: Setter<number>
 }
 
+interface KeyformMoveSetters {
+  readonly activeKeyformValue: Setter<number | null>
+  readonly parameterValue: Setter<number>
+}
+
 const createParameterRemovalHandler =
   (
     options: UseParameterEditorOptions,
@@ -126,6 +133,59 @@ const createParameterRemovalHandler =
       setters.activeKeyformValue(getDefaultKeyformValue(nextParameter))
     }
     options.onNotice(`${parameter.name}를 삭제했습니다.`)
+  }
+
+const createKeyformMoveHandler =
+  (
+    options: UseParameterEditorOptions,
+    activeParameter: Accessor<PuppetParameter | undefined>,
+    setters: KeyformMoveSetters,
+  ) =>
+  (value: number, nextValue: number) => {
+    const parameter = activeParameter()
+
+    if (parameter === undefined || value === nextValue) {
+      return
+    }
+
+    if (parameter.keyforms.some((keyform) => keyform.value === nextValue)) {
+      options.onNotice(`${nextValue.toFixed(2)} 값에는 이미 키폼이 있습니다.`)
+      return
+    }
+
+    const document = moveParameterKeyform({
+      document: options.document(),
+      nextValue,
+      parameterId: parameter.id,
+      value,
+    })
+
+    if (document !== undefined) {
+      options.onDocumentChange(document)
+      setters.parameterValue(nextValue)
+      setters.activeKeyformValue(nextValue)
+      options.onNotice(
+        `${value.toFixed(2)} 값의 키폼을 ${nextValue.toFixed(2)} 값으로 이동했습니다.`,
+      )
+    }
+  }
+
+const createParameterValueHandler = (
+  activeParameter: Accessor<PuppetParameter | undefined>,
+  setters: KeyformMoveSetters,
+) =>
+  function updateParameterValue(value: number) {
+    const parameter = activeParameter()
+
+    if (parameter === undefined || !Number.isFinite(value)) {
+      return
+    }
+
+    const nextValue = clamp(value, parameter.minimum, parameter.maximum)
+    setters.parameterValue(nextValue)
+    setters.activeKeyformValue(
+      parameter.keyforms.some((keyform) => keyform.value === nextValue) ? nextValue : null,
+    )
   }
 
 export const useParameterEditor = (options: UseParameterEditorOptions): ParameterEditorResult => {
@@ -164,6 +224,14 @@ export const useParameterEditor = (options: UseParameterEditorOptions): Paramete
     activeParameterId: setActiveParameterId,
     parameterValue: setParameterValue,
   })
+  const moveKeyform = createKeyformMoveHandler(options, activeParameter, {
+    activeKeyformValue: setActiveKeyformValue,
+    parameterValue: setParameterValue,
+  })
+  const updateParameterValue = createParameterValueHandler(activeParameter, {
+    activeKeyformValue: setActiveKeyformValue,
+    parameterValue: setParameterValue,
+  })
   const reset = (document: PuppetDocument) => {
     const parameter = document.parameters?.[0]
     setActiveParameterId(parameter?.id ?? null)
@@ -180,19 +248,6 @@ export const useParameterEditor = (options: UseParameterEditorOptions): Paramete
       setParameterValue(parameter.defaultValue)
       setActiveKeyformValue(getDefaultKeyformValue(parameter))
     }
-  }
-  const updateParameterValue = (value: number) => {
-    const parameter = activeParameter()
-
-    if (parameter === undefined || !Number.isFinite(value)) {
-      return
-    }
-
-    const nextValue = clamp(value, parameter.minimum, parameter.maximum)
-    setParameterValue(nextValue)
-    setActiveKeyformValue(
-      parameter.keyforms.some((keyform) => keyform.value === nextValue) ? nextValue : null,
-    )
   }
   const createParameter = () => {
     const partIds = options.selectedPartIds()
@@ -270,7 +325,6 @@ export const useParameterEditor = (options: UseParameterEditorOptions): Paramete
       options.onNotice(`${value.toFixed(2)} 값의 키폼을 삭제했습니다.`)
     }
   }
-
   return {
     activeKeyformValue,
     activeParameter,
@@ -282,6 +336,7 @@ export const useParameterEditor = (options: UseParameterEditorOptions): Paramete
     deleteKeyform: removeKeyform,
     deleteParameter: removeParameter,
     disconnectSelection,
+    moveKeyform,
     parameterValue,
     previewDocument,
     renameParameter: updateParameterName,

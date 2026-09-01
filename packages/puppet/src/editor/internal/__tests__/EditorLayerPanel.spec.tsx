@@ -80,4 +80,103 @@ describe('EditorLayerPanel', () => {
       visible: false,
     })
   })
+
+  test('should move a part into and back out of a group with row drop positions', () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+    const view = render(() => (
+      <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+    ))
+    const groupItem = view
+      .getByRole('button', {name: 'Shapes 레이어 선택'})
+      .closest('[role="treeitem"]')
+    const groupRow = groupItem?.querySelector<HTMLElement>('.layer-row')
+
+    expect(groupRow).not.toBeNull()
+    vi.spyOn(groupRow!, 'getBoundingClientRect').mockReturnValue({
+      bottom: 140,
+      height: 40,
+      left: 0,
+      right: 260,
+      toJSON: () => ({}),
+      top: 100,
+      width: 260,
+      x: 0,
+      y: 100,
+    })
+
+    fireEvent.dragStart(
+      view.getByRole('button', {name: 'mesh-preview 레이어 선택'}).closest('[role="treeitem"]')!,
+    )
+    groupRow!.dispatchEvent(
+      new MouseEvent('dragover', {bubbles: true, cancelable: true, clientY: 120}),
+    )
+    expect(groupRow).toHaveClass('drop-inside')
+    groupRow!.dispatchEvent(new MouseEvent('drop', {bubbles: true, cancelable: true, clientY: 120}))
+
+    expect(document().scene?.roots).toHaveLength(1)
+    expect(document().scene?.roots[0]).toMatchObject({
+      children: [{id: 'shape-circle'}, {id: 'shape-diamond'}, {id: 'mesh-preview'}],
+      id: 'shapes',
+    })
+
+    const currentGroupRow = view
+      .getByRole('button', {name: 'Shapes 레이어 선택'})
+      .closest('[role="treeitem"]')
+      ?.querySelector<HTMLElement>('.layer-row')
+    const nestedPart = view
+      .getByRole('button', {name: 'mesh-preview 레이어 선택'})
+      .closest('[role="treeitem"]')
+
+    expect(currentGroupRow).not.toBeNull()
+    vi.spyOn(currentGroupRow!, 'getBoundingClientRect').mockReturnValue({
+      bottom: 140,
+      height: 40,
+      left: 0,
+      right: 260,
+      toJSON: () => ({}),
+      top: 100,
+      width: 260,
+      x: 0,
+      y: 100,
+    })
+    fireEvent.dragStart(nestedPart!)
+    currentGroupRow!.dispatchEvent(
+      new MouseEvent('dragover', {bubbles: true, cancelable: true, clientY: 139}),
+    )
+    expect(currentGroupRow).toHaveClass('drop-after')
+    currentGroupRow!.dispatchEvent(
+      new MouseEvent('drop', {bubbles: true, cancelable: true, clientY: 139}),
+    )
+
+    expect(document().scene?.roots.map((node) => node.id)).toEqual(['shapes', 'mesh-preview'])
+  })
+
+  test('should ignore external drags without leaving drop feedback active', () => {
+    const view = render(() => <EditorLayerPanel document={createDemoDocument()} />)
+    const groupRow = view
+      .getByRole('button', {name: 'Shapes 레이어 선택'})
+      .closest('[role="treeitem"]')
+      ?.querySelector<HTMLElement>('.layer-row')
+
+    expect(groupRow).not.toBeNull()
+    vi.spyOn(groupRow!, 'getBoundingClientRect').mockReturnValue({
+      bottom: 140,
+      height: 40,
+      left: 0,
+      right: 260,
+      toJSON: () => ({}),
+      top: 100,
+      width: 260,
+      x: 0,
+      y: 100,
+    })
+    const dragOver = new MouseEvent('dragover', {
+      bubbles: true,
+      cancelable: true,
+      clientY: 120,
+    })
+
+    expect(groupRow!.dispatchEvent(dragOver)).toBe(true)
+    expect(groupRow).not.toHaveClass('drop-inside')
+  })
 })
