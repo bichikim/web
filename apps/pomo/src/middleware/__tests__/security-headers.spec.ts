@@ -8,6 +8,25 @@ vi.stubEnv(
   'POMO_CONNECT_SOURCES',
   "'self' https://www.pomofi.io https://storage.pomofi.io https://huggingface.co https://us.aws.cdn.hf.co https://cdn.jsdelivr.net https://pub-0e34511083544f8aaad14d0590013528.r2.dev",
 )
+vi.stubEnv(
+  'POMO_CONTENT_SECURITY_POLICY_TEMPLATE',
+  [
+    "default-src 'self'",
+    "base-uri 'none'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "script-src {{SCRIPT_SOURCES}} 'wasm-unsafe-eval'",
+    'style-src {{STYLE_SOURCES}}',
+    "style-src-attr 'unsafe-inline'",
+    "font-src 'self' data:",
+    "img-src 'self' data: blob:",
+    "media-src 'self' blob: https://storage.pomofi.io",
+    "worker-src 'self' blob:",
+    'connect-src {{CONNECT_SOURCES}}',
+    "manifest-src 'self'",
+  ].join('; '),
+)
 vi.stubEnv('POMO_CONTENT_TYPE_OPTIONS', 'nosniff')
 vi.stubEnv(
   'POMO_PERMISSIONS_POLICY',
@@ -30,6 +49,15 @@ vi.stubEnv(
   ].join(', '),
 )
 vi.stubEnv('POMO_REFERRER_POLICY', 'no-referrer')
+vi.stubEnv(
+  'POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE',
+  [
+    "default-src 'self'",
+    "script-src 'self' 'wasm-unsafe-eval'",
+    "worker-src 'self' blob:",
+    'connect-src {{CONNECT_SOURCES}}',
+  ].join('; '),
+)
 
 const {STATIC_SECURITY_HEADERS, WORKER_SECURITY_HEADERS} = await import('../security-header-policy')
 const {securityHeadersMiddleware} = await import('../security-headers')
