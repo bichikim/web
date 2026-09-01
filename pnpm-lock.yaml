@@ -727,6 +727,9 @@ importers:
       sharp:
         specifier: ^0.35.0
         version: 0.35.2
+      tag-soup:
+        specifier: 3.2.0
+        version: 3.2.0
 
   apps/pomo-audio-gateway:
     dependencies:
@@ -8653,6 +8656,9 @@ packages:
   flush-promises@1.0.2:
     resolution: {integrity: sha512-G0sYfLQERwKz4+4iOZYQEZVpOt9zQrlItIxQAAYAWpfby3gbHrx0osCHz5RLl/XoXevXk0xoN4hDFky/VV9TrA==}
 
+  flyweight-dom@2.3.0:
+    resolution: {integrity: sha512-eu9HxHmJqX1HN+ZHwykjTtRxbLFF1ZoBGSL/jsGqv0Zh8MIG8NbxAGWHrToUVyhTxuf7S5o8tdRuh75ZLQBXzQ==}
+
   follow-redirects@1.16.0:
     resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
     engines: {node: '>=4.0'}
@@ -10938,6 +10944,9 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
+  speedy-entities@3.1.0:
+    resolution: {integrity: sha512-bomV1a/5A7GBZZdp8ZG8lRoystS04DsLs0DuyMcD2JDJ0W3MB10negEVebb+Z4rVvgHEInRUnIgYzie3mprArA==}
+
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
 
@@ -11131,6 +11140,9 @@ packages:
 
   systemjs@6.15.1:
     resolution: {integrity: sha512-Nk8c4lXvMB98MtbmjX7JwJRgJOL8fluecYCfCeYBznwmpOs8Bf15hLM6z4z71EDAhQVrQrI+wt1aLWSXZq+hXA==}
+
+  tag-soup@3.2.0:
+    resolution: {integrity: sha512-LOty/3Pvwl0zV6q3NP3P2VE0Rs7EPyva7oIrSyJMzxcwZclVH3ro1VgqF06vPHa0UirLrN/AzdwZrrfKBpUS9g==}
 
   tagged-tag@1.0.0:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
@@ -19900,6 +19912,8 @@ snapshots:
 
   flush-promises@1.0.2: {}
 
+  flyweight-dom@2.3.0: {}
+
   follow-redirects@1.16.0: {}
 
   foreground-child@3.3.1:
@@ -22492,6 +22506,8 @@ snapshots:
 
   spdx-license-ids@3.0.23: {}
 
+  speedy-entities@3.1.0: {}
+
   sprintf-js@1.0.3:
     optional: true
 
@@ -22696,6 +22712,11 @@ snapshots:
   system-architecture@0.1.0: {}
 
   systemjs@6.15.1: {}
+
+  tag-soup@3.2.0:
+    dependencies:
+      flyweight-dom: 2.3.0
+      speedy-entities: 3.1.0
 
   tagged-tag@1.0.0: {}
 

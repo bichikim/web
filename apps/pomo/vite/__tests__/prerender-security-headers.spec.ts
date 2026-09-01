@@ -11,6 +11,7 @@ describe('createInlineContentHashes', () => {
   it('should hash nonce-marked inline elements without hashing external or unmarked scripts', () => {
     const firstScript = 'window.first = true'
     const secondScript = 'window.second = true'
+    const emptyNonceValueScript = 'window.emptyNonceValue = true'
     const unmarkedScript = 'window.unmarked = true'
     const style = 'body { color: white; }'
     const html = [
@@ -19,12 +20,18 @@ describe('createInlineContentHashes', () => {
       `<script nonce="build-nonce">${firstScript}</script>`,
       '<script nonce="build-nonce" src="/entry.js"></script>',
       `<script data-src="deferred" nonce="build-nonce">${secondScript}</script>`,
+      `<script nonce="">${emptyNonceValueScript}</script>`,
       `<script>${unmarkedScript}</script>`,
+      '<script nonce>window.booleanNonce = true</script>',
       '<script data-value="nonce=not-an-attribute">window.attributeValue = true</script>',
     ].join('')
 
     expect(createInlineContentHashes(html)).toEqual({
-      scriptHashes: [createHashSource(firstScript), createHashSource(secondScript)],
+      scriptHashes: [
+        createHashSource(firstScript),
+        createHashSource(secondScript),
+        createHashSource(emptyNonceValueScript),
+      ],
       styleHashes: [createHashSource(style)],
     })
   })
@@ -39,7 +46,7 @@ describe('createInlineContentHashes', () => {
   })
 
   it('should read HTML tag boundaries without treating quoted characters as markup', () => {
-    const script = 'window.boundary = true'
+    const script = 'window.boundary = "</not-script>"'
     const style = 'body::before { content: ">"; }'
     const html = [
       `<SCRIPT data-value=">" NONCE="build-nonce">${script}</SCRIPT >`,

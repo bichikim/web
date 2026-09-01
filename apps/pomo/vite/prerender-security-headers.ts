@@ -1,196 +1,129 @@
 import {createHash} from 'node:crypto'
 
+import {HTMLTokenizer, type TokenCallback} from 'tag-soup'
+
 type InlineElementName = 'script' | 'style'
-
-interface HtmlAttribute {
-  readonly hasValue: boolean
-  readonly name: string
-  readonly nextIndex: number
-}
-
-const HTML_COMMENT_START = '<!--'
-const HTML_COMMENT_END = '-->'
-
-const isHtmlWhitespace = (character: string): boolean =>
-  character === ' ' ||
-  character === '\t' ||
-  character === '\n' ||
-  character === '\f' ||
-  character === '\r'
-
-const findTagEnd = (html: string, startIndex: number): number => {
-  let quote: '"' | "'" | undefined
-
-  for (let index = startIndex; index < html.length; index += 1) {
-    const character = html[index]
-
-    if (quote === undefined) {
-      if (character === '"' || character === "'") {
-        quote = character
-      } else if (character === '>') {
-        return index
-      }
-    } else if (character === quote) {
-      quote = undefined
-    }
-  }
-
-  return -1
-}
-
-const skipHtmlWhitespace = (value: string, startIndex: number): number => {
-  let index = startIndex
-  while (isHtmlWhitespace(value[index] ?? '')) {
-    index += 1
-  }
-  return index
-}
-
-const readAttribute = (attributes: string, startIndex: number): HtmlAttribute | undefined => {
-  let index = skipHtmlWhitespace(attributes, startIndex)
-  if (index >= attributes.length || attributes[index] === '/') {
-    return undefined
-  }
-
-  const nameStart = index
-  while (
-    index < attributes.length &&
-    !isHtmlWhitespace(attributes[index]) &&
-    attributes[index] !== '=' &&
-    attributes[index] !== '/'
-  ) {
-    index += 1
-  }
-
-  const name = attributes.slice(nameStart, index).toLowerCase()
-  index = skipHtmlWhitespace(attributes, index)
-  if (attributes[index] !== '=') {
-    return {hasValue: false, name, nextIndex: index}
-  }
-
-  index = skipHtmlWhitespace(attributes, index + 1)
-  const quote = attributes[index]
-  if (quote === '"' || quote === "'") {
-    index += 1
-    while (index < attributes.length && attributes[index] !== quote) {
-      index += 1
-    }
-    index += 1
-  } else {
-    while (index < attributes.length && !isHtmlWhitespace(attributes[index])) {
-      index += 1
-    }
-  }
-
-  return {hasValue: true, name, nextIndex: index}
-}
-
-const hasNonceAttribute = (attributes: string): boolean => {
-  let index = 0
-  while (index < attributes.length) {
-    const attribute = readAttribute(attributes, index)
-    if (attribute === undefined) {
-      return false
-    }
-    if (attribute.hasValue && attribute.name === 'nonce') {
-      return true
-    }
-    index = attribute.nextIndex
-  }
-
-  return false
-}
-
-const findClosingTag = (
-  lowercaseHtml: string,
-  elementName: InlineElementName,
-  startIndex: number,
-): {readonly start: number; readonly end: number} | undefined => {
-  const prefix = `</${elementName}`
-  let index = lowercaseHtml.indexOf(prefix, startIndex)
-
-  while (index >= 0) {
-    let end = index + prefix.length
-    const hasNameBoundary = isHtmlWhitespace(lowercaseHtml[end] ?? '') || lowercaseHtml[end] === '>'
-    if (hasNameBoundary) {
-      end = skipHtmlWhitespace(lowercaseHtml, end)
-      if (lowercaseHtml[end] === '>') {
-        return {end, start: index}
-      }
-    }
-    index = lowercaseHtml.indexOf(prefix, end)
-  }
-
-  return undefined
-}
-
-const readNonceMarkedContents = (
-  html: string,
-  elementName: InlineElementName,
-): ReadonlyArray<string> => {
-  const lowercaseHtml = html.toLowerCase()
-  const prefix = `<${elementName}`
-  const contents: Array<string> = []
-  let index = 0
-
-  while (index < html.length) {
-    const tagStart = lowercaseHtml.indexOf('<', index)
-    if (tagStart < 0) {
-      break
-    } else if (lowercaseHtml.startsWith(HTML_COMMENT_START, tagStart)) {
-      const commentEnd = lowercaseHtml.indexOf(
-        HTML_COMMENT_END,
-        tagStart + HTML_COMMENT_START.length,
-      )
-      index = commentEnd < 0 ? html.length : commentEnd + HTML_COMMENT_END.length
-    } else if (lowercaseHtml.startsWith(prefix, tagStart)) {
-      const attributesStart = tagStart + prefix.length
-      const hasNameBoundary =
-        isHtmlWhitespace(lowercaseHtml[attributesStart] ?? '') ||
-        lowercaseHtml[attributesStart] === '>'
-      if (hasNameBoundary) {
-        const openingTagEnd = findTagEnd(html, attributesStart)
-        if (openingTagEnd < 0) {
-          break
-        }
-
-        const contentStart = openingTagEnd + 1
-        const closingTag = findClosingTag(lowercaseHtml, elementName, contentStart)
-        if (closingTag === undefined) {
-          break
-        }
-
-        const content = html.slice(contentStart, closingTag.start)
-        const attributes = html.slice(attributesStart, openingTagEnd)
-        if (content.length > 0 && hasNonceAttribute(attributes)) {
-          contents.push(content)
-        }
-
-        index = closingTag.end + 1
-      } else {
-        index = attributesStart
-      }
-    } else {
-      index = tagStart + 1
-    }
-  }
-
-  return contents
-}
 
 export interface InlineContentHashes {
   readonly scriptHashes: ReadonlyArray<string>
   readonly styleHashes: ReadonlyArray<string>
 }
 
+interface TokenState {
+  activeContent: string
+  activeName: InlineElementName | undefined
+  attributeEndIndex: number | undefined
+  attributeName: string | undefined
+  hasNonceValue: boolean
+  openingName: InlineElementName | undefined
+  readonly scriptContents: Array<string>
+  readonly styleContents: Array<string>
+}
+
+const readElementName = (
+  html: string,
+  startIndex: number,
+  endIndex: number,
+): InlineElementName | undefined => {
+  const name = html.slice(startIndex, endIndex).toLowerCase()
+  return name === 'script' || name === 'style' ? name : undefined
+}
+
+const finishActiveElement = (state: TokenState, name: InlineElementName | undefined): void => {
+  if (state.activeName === undefined || state.activeName !== name) {
+    return
+  }
+
+  if (state.activeContent.length > 0) {
+    const contents = state.activeName === 'script' ? state.scriptContents : state.styleContents
+    contents.push(state.activeContent)
+  }
+  state.activeName = undefined
+  state.activeContent = ''
+}
+
+const createTokenConsumer =
+  (html: string, state: TokenState): TokenCallback =>
+  (token, startIndex, endIndex) => {
+    switch (token) {
+      case 'START_TAG_NAME': {
+        state.openingName = readElementName(html, startIndex, endIndex)
+        state.attributeEndIndex = undefined
+        state.attributeName = undefined
+        state.hasNonceValue = false
+        return
+      }
+      case 'ATTRIBUTE_NAME': {
+        state.attributeName = html.slice(startIndex, endIndex).toLowerCase()
+        state.attributeEndIndex = endIndex
+        return
+      }
+      case 'ATTRIBUTE_VALUE': {
+        if (
+          state.attributeName === 'nonce' &&
+          state.attributeEndIndex !== undefined &&
+          html.slice(state.attributeEndIndex, startIndex).includes('=')
+        ) {
+          state.hasNonceValue = true
+        }
+        return
+      }
+      case 'START_TAG_CLOSING': {
+        if (state.openingName !== undefined && state.hasNonceValue) {
+          state.activeName = state.openingName
+          state.activeContent = ''
+        }
+        return
+      }
+      case 'TEXT': {
+        if (state.activeName !== undefined) {
+          state.activeContent += html.slice(startIndex, endIndex)
+        }
+        break
+      }
+      case 'END_TAG_NAME': {
+        finishActiveElement(state, readElementName(html, startIndex, endIndex))
+        break
+      }
+      case 'CDATA_SECTION':
+      case 'COMMENT':
+      case 'DOCTYPE_NAME':
+      case 'PROCESSING_INSTRUCTION_DATA':
+      case 'PROCESSING_INSTRUCTION_TARGET':
+      case 'START_TAG_SELF_CLOSING': {
+        break
+      }
+    }
+  }
+
+const readNonceMarkedContents = (html: string): TokenState => {
+  const state: TokenState = {
+    activeContent: '',
+    activeName: undefined,
+    attributeEndIndex: undefined,
+    attributeName: undefined,
+    hasNonceValue: false,
+    openingName: undefined,
+    scriptContents: [],
+    styleContents: [],
+  }
+
+  HTMLTokenizer.tokenizeDocument(html, createTokenConsumer(html, state))
+
+  return state
+}
+
 const createContentHash = (content: string): string =>
   `sha256-${createHash('sha256').update(content).digest('base64')}`
 
-const createHashes = (html: string, elementName: InlineElementName): ReadonlyArray<string> => [
-  ...new Set(readNonceMarkedContents(html, elementName).map(createContentHash)),
+const createHashes = (contents: ReadonlyArray<string>): ReadonlyArray<string> => [
+  ...new Set(contents.map(createContentHash)),
 ]
 
-export const createInlineContentHashes = (html: string): InlineContentHashes => ({
-  scriptHashes: createHashes(html, 'script'),
-  styleHashes: createHashes(html, 'style'),
-})
+export const createInlineContentHashes = (html: string): InlineContentHashes => {
+  const contents = readNonceMarkedContents(html)
+  return {
+    scriptHashes: createHashes(contents.scriptContents),
+    styleHashes: createHashes(contents.styleContents),
+  }
+}
