@@ -1,4 +1,4 @@
-import {For, Show} from 'solid-js'
+import {Index, Show} from 'solid-js'
 
 import type {MeshEditorProps} from './mesh-editor-contract'
 import {getEditorViewBox} from './internal/viewport'
@@ -17,7 +17,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
 
   return (
     <div class="mesh-editor">
-      <Show when={editor.part()}>
+      <Show when={editor.partViews().length > 0}>
         <svg
           aria-label="메시 정점 편집 영역"
           classList={{'add-tool': editor.tool() === 'add'}}
@@ -28,20 +28,32 @@ export const MeshEditor = (props: MeshEditorProps) => {
           onPointerMove={editor.handlePointerMove}
           onPointerUp={editor.handlePointerEnd}
         >
-          <For each={editor.triangles()}>
-            {(triangle) => <polygon points={getTrianglePoints(triangle)} />}
-          </For>
-          <For each={editor.vertices()}>
-            {(vertex) => (
-              <circle
-                classList={{selected: editor.selectedVertex() === vertex.index}}
-                cx={vertex.x}
-                cy={vertex.y}
-                r={editor.vertexRadius()}
-                onPointerDown={(event) => editor.handlePointerDown(event, vertex)}
-              />
+          <Index each={editor.partViews()}>
+            {(partView) => (
+              <g data-part-id={partView().partId}>
+                <Index each={partView().triangles}>
+                  {(triangle) => <polygon points={getTrianglePoints(triangle())} />}
+                </Index>
+                <Index each={partView().vertices}>
+                  {(vertex) => (
+                    <circle
+                      classList={{
+                        selected:
+                          editor.part()?.id === partView().partId &&
+                          editor.selectedVertex() === vertex().index,
+                      }}
+                      cx={vertex().x}
+                      cy={vertex().y}
+                      r={editor.vertexRadius()}
+                      onPointerDown={(event) =>
+                        editor.handlePointerDown(event, partView().partId, vertex())
+                      }
+                    />
+                  )}
+                </Index>
+              </g>
             )}
-          </For>
+          </Index>
         </svg>
       </Show>
       <div class="mesh-tools" aria-label="메시 편집 도구">
@@ -52,11 +64,16 @@ export const MeshEditor = (props: MeshEditorProps) => {
         >
           선택·이동
         </button>
-        <button aria-pressed={editor.tool() === 'add'} type="button" onClick={editor.selectAddTool}>
+        <button
+          aria-pressed={editor.tool() === 'add'}
+          disabled={!editor.canEditTopology()}
+          type="button"
+          onClick={editor.selectAddTool}
+        >
           정점 추가
         </button>
         <button
-          disabled={editor.selectedVertex() === null}
+          disabled={!editor.canEditTopology() || editor.selectedVertex() === null}
           type="button"
           onClick={editor.handleDeleteVertex}
         >

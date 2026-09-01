@@ -43,7 +43,12 @@ let disposeView: (() => void) | undefined
 
 const createPreviewDocument = () => {
   const document = createDemoDocument()
-  return {...document, parts: document.parts.slice(0, 1)}
+  return {
+    ...document,
+    motions: [],
+    parts: document.parts.slice(0, 1),
+    scene: undefined,
+  }
 }
 
 const waitForFrame = () =>
