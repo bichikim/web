@@ -3,7 +3,12 @@ import {createEffect, createMemo, createSignal, onMount} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
-import {requestAccountMagicLinkAction, signOutAccountSessionAction} from '../auth/actions'
+import {
+  type MagicLinkActionResult,
+  requestAccountMagicLinkAction,
+  signOutAccountSessionAction,
+  type SignOutActionResult,
+} from '../auth/actions'
 import {createAuthenticationMachine} from '../auth/machine'
 import {type AccountSession, completeAccountLink, readAccountSession} from './web-session'
 
@@ -24,6 +29,10 @@ export const useWebAccount = (): WebAccountController => {
   const [email, setEmail] = createSignal('')
   const [localErrorMessage, setLocalErrorMessage] = createSignal<string | null>(null)
   const [localSuccessMessage, setLocalSuccessMessage] = createSignal<string | null>(null)
+  const [magicLinkStatus, setMagicLinkStatus] = createSignal<
+    MagicLinkActionResult['status'] | null
+  >(null)
+  const [signOutStatus, setSignOutStatus] = createSignal<SignOutActionResult['status'] | null>(null)
   const session = createMemo<AccountSession | null>(() => {
     const state = authentication.state()
 
@@ -32,27 +41,25 @@ export const useWebAccount = (): WebAccountController => {
       : null
   })
   const errorMessage = createMemo(() => {
-    const {result} = magicLinkSubmission
-    const signOutStatus = signOutSubmission.result?.status
+    const magicLinkResultStatus = magicLinkStatus()
+    const signOutResultStatus = signOutStatus()
 
-    if (result?.status === 'rejected') {
+    if (magicLinkResultStatus === 'rejected') {
       return m.web_account_magic_link_failed()
     }
 
-    if (result?.status === 'unavailable') {
+    if (magicLinkResultStatus === 'unavailable') {
       return m.web_account_server_failed()
     }
 
-    if (signOutStatus === 'rejected' || signOutStatus === 'unavailable') {
+    if (signOutResultStatus === 'rejected' || signOutResultStatus === 'unavailable') {
       return m.web_account_sign_out_failed()
     }
 
     return localErrorMessage()
   })
   const successMessage = createMemo(() =>
-    magicLinkSubmission.result?.status === 'sent'
-      ? m.web_account_magic_link_sent()
-      : localSuccessMessage(),
+    magicLinkStatus() === 'sent' ? m.web_account_magic_link_sent() : localSuccessMessage(),
   )
 
   onMount(() => {
@@ -114,7 +121,37 @@ export const useWebAccount = (): WebAccountController => {
   })
 
   createEffect(() => {
-    if (signOutSubmission.result?.status !== 'signed-out') {
+    if (magicLinkSubmission.pending === true) {
+      setMagicLinkStatus(null)
+      return
+    }
+
+    const {result} = magicLinkSubmission
+
+    if (result === undefined) {
+      return
+    }
+
+    setMagicLinkStatus(result.status)
+    magicLinkSubmission.clear()
+  })
+
+  createEffect(() => {
+    if (signOutSubmission.pending === true) {
+      setSignOutStatus(null)
+      return
+    }
+
+    const {result} = signOutSubmission
+
+    if (result === undefined) {
+      return
+    }
+
+    setSignOutStatus(result.status)
+    signOutSubmission.clear()
+
+    if (result.status !== 'signed-out') {
       return
     }
 
