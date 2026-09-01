@@ -12,6 +12,8 @@ import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
 import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
 import {resolveContentSecurityPolicyTemplates} from './vite/content-security-policy-template'
 import {createInlineContentHashes} from './vite/prerender-security-headers'
+import {resolvePublicOrigin} from './vite/public-origin'
+import {createRemoteServerFunctionsPlugin} from './vite/remote-server-functions'
 
 interface ImportMetaEnvValues {
   readonly [name: string]: string
@@ -20,6 +22,13 @@ interface ImportMetaEnvValues {
 interface ContentSecurityPolicyOptions {
   readonly scriptHashes?: ReadonlyArray<string>
   readonly styleHashes?: ReadonlyArray<string>
+}
+
+interface BuildEnvironment {
+  readonly connectSourceList: string
+  readonly environment: ImportMetaEnvValues
+  readonly licenseAssetOrigin: string
+  readonly publicOrigin: string
 }
 
 const SERVICE_POLICY_PATHS = {
@@ -57,16 +66,6 @@ const PERMISSIONS_POLICY = [
 ].join(', ')
 const REFERRER_POLICY = 'no-referrer'
 const CONTENT_TYPE_OPTIONS = 'nosniff'
-const CONNECT_SOURCES = [
-  "'self'",
-  'https://www.pomofi.io',
-  'https://storage.pomofi.io',
-  'https://huggingface.co',
-  'https://us.aws.cdn.hf.co',
-  'https://cdn.jsdelivr.net',
-  'https://pub-0e34511083544f8aaad14d0590013528.r2.dev',
-] as const
-const CONNECT_SOURCE_LIST = CONNECT_SOURCES.join(' ')
 const SHORT_COMMIT_HASH_LENGTH = 12
 const ASSET_LIBRARY_PATTERN = /[/\\]asset-library[/\\]/u
 const SECONDS_PER_MINUTE = 60
@@ -83,12 +82,6 @@ const IS_APPS_IN_TOSS_RUNTIME =
 const IS_DESKTOP_RUNTIME = IS_DESKTOP_BUILD || process.env.POMO_RUNTIME_TARGET === 'desktop'
 const USES_APPS_IN_TOSS_DEVTOOLS =
   IS_APPS_IN_TOSS_RUNTIME && process.env.POMO_APPS_IN_TOSS_DEVTOOLS === 'true'
-const APPS_IN_TOSS_API_ORIGIN = new URL(
-  process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
-).origin
-const LICENSE_ASSET_ORIGIN = process.env.VERCEL_URL
-  ? new URL(`https://${process.env.VERCEL_URL}`).origin
-  : APPS_IN_TOSS_API_ORIGIN
 const DEPLOYMENT_ENVIRONMENT =
   process.env.POMO_ENVIRONMENT?.trim() ||
   process.env.VERCEL_ENV?.trim() ||
@@ -136,7 +129,7 @@ const createElementSources = (hashes: ReadonlyArray<string>): ReadonlyArray<stri
   ...hashes.map((hash) => `'${hash}'`),
 ]
 
-const createContentSecurityPolicyRenderer = (template: string) => {
+const createContentSecurityPolicyRenderer = (template: string, connectSourceList: string) => {
   const renderTemplate = compileStringTemplate(template)
 
   return (options: ContentSecurityPolicyOptions = {}): string => {
@@ -144,7 +137,7 @@ const createContentSecurityPolicyRenderer = (template: string) => {
     const styleSources = createElementSources(options.styleHashes ?? [])
 
     return renderTemplate({
-      CONNECT_SOURCES: CONNECT_SOURCE_LIST,
+      CONNECT_SOURCES: connectSourceList,
       SCRIPT_SOURCES: scriptSources.join(' '),
       STYLE_SOURCES: styleSources.join(' '),
     })
@@ -165,14 +158,37 @@ const BASE_SECURITY_HEADERS = {
   'Referrer-Policy': REFERRER_POLICY,
   'X-Content-Type-Options': CONTENT_TYPE_OPTIONS,
 } as const
-const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
+
+const loadBuildEnvironment = (mode: string): BuildEnvironment => {
   const environment = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), 'POMO_')
+  const publicOrigin = resolvePublicOrigin(environment)
+  const connectSourceList = [
+    "'self'",
+    publicOrigin,
+    'https://storage.pomofi.io',
+    'https://huggingface.co',
+    'https://us.aws.cdn.hf.co',
+    'https://cdn.jsdelivr.net',
+    'https://pub-0e34511083544f8aaad14d0590013528.r2.dev',
+  ].join(' ')
+  const vercelUrl = process.env.VERCEL_URL
+  const licenseAssetOrigin = vercelUrl ? new URL(`https://${vercelUrl}`).origin : publicOrigin
+
+  return {connectSourceList, environment, licenseAssetOrigin, publicOrigin}
+}
+
+const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
+  const {connectSourceList, environment, licenseAssetOrigin, publicOrigin} =
+    loadBuildEnvironment(mode)
   const templates = resolveContentSecurityPolicyTemplates({
     POMO_CONTENT_SECURITY_POLICY_TEMPLATE: environment.POMO_CONTENT_SECURITY_POLICY_TEMPLATE,
     POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE:
       environment.POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE,
   })
-  const createContentSecurityPolicy = createContentSecurityPolicyRenderer(templates.page)
+  const createContentSecurityPolicy = createContentSecurityPolicyRenderer(
+    templates.page,
+    connectSourceList,
+  )
   const renderWorkerContentSecurityPolicy = compileStringTemplate(templates.worker)
   const staticSecurityHeaders = {
     ...BASE_SECURITY_HEADERS,
@@ -181,7 +197,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
   const workerSecurityHeaders = {
     ...BASE_SECURITY_HEADERS,
     'Content-Security-Policy-Report-Only': renderWorkerContentSecurityPolicy({
-      CONNECT_SOURCES: CONNECT_SOURCE_LIST,
+      CONNECT_SOURCES: connectSourceList,
     }),
   } as const
   const prerenderSecurityRules = Object.fromEntries(
@@ -194,10 +210,10 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
     cacheDir: USES_APPS_IN_TOSS_DEVTOOLS ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
     define: createImportMetaEnvDefinitions({
       POMO_ALLOW_LOCAL_ASSET_ORIGIN: String(command === 'serve' || IS_STATIC_BUILD),
-      POMO_CONNECT_SOURCES: CONNECT_SOURCE_LIST,
+      POMO_CONNECT_SOURCES: connectSourceList,
       POMO_CONTENT_SECURITY_POLICY_TEMPLATE: templates.page,
       POMO_CONTENT_TYPE_OPTIONS: CONTENT_TYPE_OPTIONS,
-      POMO_LICENSE_ASSET_ORIGIN: LICENSE_ASSET_ORIGIN,
+      POMO_LICENSE_ASSET_ORIGIN: licenseAssetOrigin,
       POMO_PERMISSIONS_POLICY: PERMISSIONS_POLICY,
       POMO_REFERRER_POLICY: REFERRER_POLICY,
       POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE: templates.worker,
@@ -210,7 +226,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       VITE_POMO_LEGACY_TERMS_PATH: SERVICE_POLICY_PATHS.legacy.terms,
       VITE_POMO_PRETENDARD_BASE_PATH: PRETENDARD_BASE_PATH,
       VITE_POMO_PRETENDARD_STYLESHEET_PATH: PRETENDARD_STYLESHEET_PATH,
-      VITE_POMO_PUBLIC_ORIGIN: APPS_IN_TOSS_API_ORIGIN,
+      VITE_POMO_PUBLIC_ORIGIN: publicOrigin,
       VITE_POMO_REFUND_PATH: SERVICE_POLICY_PATHS.refund,
       VITE_POMO_RELEASE: RELEASE,
       VITE_POMO_WEB_PRIVACY_PATH: SERVICE_POLICY_PATHS.web.privacy,
@@ -279,6 +295,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
           : PARAGLIDE_CONFIG.web.strategy,
       }),
       ...createUnoCssPlugins(),
+      ...(IS_STATIC_BUILD ? [createRemoteServerFunctionsPlugin({publicOrigin})] : []),
       solidStart({
         devOverlay: false,
         middleware: './src/middleware/index.ts',
