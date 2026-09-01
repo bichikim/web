@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   autoMeshPart: vi.fn(),
   createPlayer: vi.fn(),
   importPng: vi.fn(),
+  readTexturePixels: vi.fn(),
 }))
 const player: Player = {
   destroy: vi.fn(),
@@ -34,6 +35,10 @@ vi.mock('../import-png', async (importOriginal) => ({
 vi.mock('../auto-mesh-part', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../auto-mesh-part')>()),
   autoMeshPart: mocks.autoMeshPart,
+}))
+
+vi.mock('../internal/read-texture-pixels', () => ({
+  readTexturePixels: mocks.readTexturePixels,
 }))
 
 afterEach(() => {
@@ -98,9 +103,11 @@ describe('PuppetEditor', () => {
   test('should configure automatic mesh generation before replacing the active part', async () => {
     const document = createDemoDocument()
     const generatedDocument = {...document, motions: []}
+    const pixels = {data: new Uint8ClampedArray(4), height: 1, width: 1}
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    mocks.autoMeshPart.mockResolvedValue({document: generatedDocument, ok: true})
+    mocks.readTexturePixels.mockResolvedValue({ok: true, pixels})
+    mocks.autoMeshPart.mockReturnValue({document: generatedDocument, ok: true})
     const view = render(() => (
       <PuppetEditor initialDocument={document} onDocumentChange={onDocumentChange} />
     ))
@@ -115,6 +122,7 @@ describe('PuppetEditor', () => {
       expect(mocks.autoMeshPart).toHaveBeenCalledWith({
         document,
         partId: 'mesh-preview',
+        pixels,
         settings: {alphaThreshold: 20, cellSize: 32},
       }),
     )

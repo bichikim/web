@@ -1,12 +1,17 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
 
-import type {PuppetDocument, PuppetPart} from '../player'
+import type {PuppetDocument, PuppetPart, PuppetTexture} from '../player'
 import {
   autoMeshPart,
   type AutoMeshPartErrorCode,
-  type AutoMeshPartResult,
   type AutoMeshSettings,
+  validateAutoMeshPart,
 } from './auto-mesh-part'
+import {
+  readTexturePixels,
+  type ReadTexturePixelsErrorCode,
+  type ReadTexturePixelsResult,
+} from './internal/read-texture-pixels'
 
 export interface UseAutoMeshProps {
   readonly activePartId: Accessor<string | null>
@@ -23,7 +28,24 @@ export interface UseAutoMeshResult {
   readonly target: Accessor<PuppetPart | undefined>
 }
 
-const getAutoMeshErrorMessage = (code: AutoMeshPartErrorCode) => {
+type AutoMeshGenerationErrorCode = AutoMeshPartErrorCode | ReadTexturePixelsErrorCode
+
+interface UnexpectedPixelReadFailure {
+  readonly error: {readonly code: 'unexpected'}
+  readonly ok: false
+}
+
+type AutoMeshPixelReadResult = ReadTexturePixelsResult | UnexpectedPixelReadFailure
+
+const readAutoMeshPixels = async (texture: PuppetTexture): Promise<AutoMeshPixelReadResult> => {
+  try {
+    return await readTexturePixels({texture})
+  } catch {
+    return {error: {code: 'unexpected'}, ok: false}
+  }
+}
+
+const getAutoMeshErrorMessage = (code: AutoMeshGenerationErrorCode) => {
   switch (code) {
     case 'decode-failed':
       return '선택한 파트의 텍스처를 해석하지 못했습니다.'
@@ -66,23 +88,14 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
       return false
     }
 
-    let result: AutoMeshPartResult
+    const validation = validateAutoMeshPart({document, partId: part.id, settings})
 
-    try {
-      result = await autoMeshPart({document, partId: part.id, settings})
-    } catch {
-      if (activeGeneration !== generation) {
-        return false
-      }
-
-      if (props.document() !== document || props.activePartId() !== part.id) {
-        props.onNotice?.('편집 대상이 변경되어 자동 메시 결과를 적용하지 않았습니다.')
-      } else {
-        props.onNotice?.('자동 메시 생성 중 예상하지 못한 오류가 발생했습니다.')
-      }
-
+    if (!validation.ok) {
+      props.onNotice?.(getAutoMeshErrorMessage(validation.error.code))
       return false
     }
+
+    const pixelResult = await readAutoMeshPixels(validation.part.texture)
 
     if (activeGeneration !== generation) {
       return false
@@ -92,6 +105,22 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
       props.onNotice?.('편집 대상이 변경되어 자동 메시 결과를 적용하지 않았습니다.')
       return false
     }
+
+    if (!pixelResult.ok) {
+      props.onNotice?.(
+        pixelResult.error.code === 'unexpected'
+          ? '자동 메시 생성 중 예상하지 못한 오류가 발생했습니다.'
+          : getAutoMeshErrorMessage(pixelResult.error.code),
+      )
+      return false
+    }
+
+    const result = autoMeshPart({
+      document,
+      partId: part.id,
+      pixels: pixelResult.pixels,
+      settings,
+    })
 
     if (!result.ok) {
       props.onNotice?.(getAutoMeshErrorMessage(result.error.code))

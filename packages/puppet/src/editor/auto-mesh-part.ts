@@ -1,4 +1,4 @@
-import {generateMesh, type GenerateMeshErrorCode} from '../mesh'
+import {generateMesh, type GenerateMeshErrorCode, type PixelData} from '../mesh'
 import type {PuppetDocument, PuppetParameterKeyform, PuppetPart} from '../player/document'
 import {MAXIMUM_TEXTURE_PIXELS} from './internal/texture-limits'
 
@@ -7,12 +7,7 @@ export interface AutoMeshSettings {
   readonly cellSize: number
 }
 
-export type AutoMeshPartErrorCode =
-  | GenerateMeshErrorCode
-  | 'decode-failed'
-  | 'part-not-found'
-  | 'render-failed'
-  | 'too-large'
+export type AutoMeshPartErrorCode = GenerateMeshErrorCode | 'part-not-found' | 'too-large'
 
 export interface AutoMeshPartFailure {
   readonly error: {readonly code: AutoMeshPartErrorCode}
@@ -29,27 +24,27 @@ export type AutoMeshPartResult = AutoMeshPartFailure | AutoMeshPartSuccess
 export interface AutoMeshPartOptions {
   readonly document: PuppetDocument
   readonly partId: string
+  readonly pixels: PixelData
   readonly settings: AutoMeshSettings
 }
+
+export interface ValidateAutoMeshPartOptions {
+  readonly document: PuppetDocument
+  readonly partId: string
+  readonly settings: AutoMeshSettings
+}
+
+export interface ValidateAutoMeshPartSuccess {
+  readonly ok: true
+  readonly part: PuppetPart
+}
+
+export type ValidateAutoMeshPartResult = AutoMeshPartFailure | ValidateAutoMeshPartSuccess
 
 const MAXIMUM_AUTO_MESH_DIVISIONS_PER_AXIS = 256
 
 export const getMinimumAutoMeshCellSize = (width: number, height: number) =>
   Math.max(1, Math.ceil(Math.max(width, height) / MAXIMUM_AUTO_MESH_DIVISIONS_PER_AXIS))
-
-const decodeTexture = async (part: PuppetPart) => {
-  const image = new Image()
-  image.crossOrigin = 'anonymous'
-  image.decoding = 'async'
-  image.src = part.texture.src
-
-  try {
-    await image.decode()
-    return image
-  } catch {
-    return undefined
-  }
-}
 
 interface ResetParameterKeyformOptions {
   readonly keyform: PuppetParameterKeyform
@@ -99,7 +94,9 @@ const resetPartDeformations = (
   })),
 })
 
-export const autoMeshPart = async (options: AutoMeshPartOptions): Promise<AutoMeshPartResult> => {
+export const validateAutoMeshPart = (
+  options: ValidateAutoMeshPartOptions,
+): ValidateAutoMeshPartResult => {
   const part = options.document.parts.find((candidate) => candidate.id === options.partId)
 
   if (part === undefined) {
@@ -116,34 +113,27 @@ export const autoMeshPart = async (options: AutoMeshPartOptions): Promise<AutoMe
     return {error: {code: 'invalid-cell-size'}, ok: false}
   }
 
-  const image = await decodeTexture(part)
+  return {ok: true, part}
+}
 
-  if (image === undefined) {
-    return {error: {code: 'decode-failed'}, ok: false}
+export const autoMeshPart = (options: AutoMeshPartOptions): AutoMeshPartResult => {
+  const validation = validateAutoMeshPart(options)
+
+  if (!validation.ok) {
+    return validation
   }
 
-  const canvas = window.document.createElement('canvas')
-  canvas.width = part.texture.width
-  canvas.height = part.texture.height
-  const context = canvas.getContext('2d', {willReadFrequently: true})
-
-  if (context === null) {
-    return {error: {code: 'render-failed'}, ok: false}
-  }
-
-  let pixels: ImageData
-
-  try {
-    context.drawImage(image, 0, 0, part.texture.width, part.texture.height)
-    pixels = context.getImageData(0, 0, part.texture.width, part.texture.height)
-  } catch {
-    return {error: {code: 'render-failed'}, ok: false}
+  if (
+    options.pixels.width !== validation.part.texture.width ||
+    options.pixels.height !== validation.part.texture.height
+  ) {
+    return {error: {code: 'invalid-pixel-data'}, ok: false}
   }
 
   const generatedMesh = generateMesh({
     alphaThreshold: options.settings.alphaThreshold,
     cellSize: options.settings.cellSize,
-    pixels,
+    pixels: options.pixels,
   })
 
   if (!generatedMesh.ok) {
@@ -152,7 +142,7 @@ export const autoMeshPart = async (options: AutoMeshPartOptions): Promise<AutoMe
 
   const resetDocument = resetPartDeformations(
     options.document,
-    part.id,
+    validation.part.id,
     generatedMesh.mesh.vertices,
   )
 
@@ -160,7 +150,7 @@ export const autoMeshPart = async (options: AutoMeshPartOptions): Promise<AutoMe
     document: {
       ...resetDocument,
       parts: resetDocument.parts.map((candidate) =>
-        candidate.id === part.id ? {...candidate, mesh: generatedMesh.mesh} : candidate,
+        candidate.id === validation.part.id ? {...candidate, mesh: generatedMesh.mesh} : candidate,
       ),
     },
     ok: true,

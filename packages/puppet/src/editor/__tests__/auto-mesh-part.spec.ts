@@ -1,21 +1,7 @@
-/** @vitest-environment jsdom */
-
-import {afterEach, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 import {createDemoDocument, parseDocument, serializeDocument} from '../../player'
 import {autoMeshPart, getMinimumAutoMeshCellSize} from '../auto-mesh-part'
-
-const createCanvas = (data: Uint8ClampedArray) => {
-  const context = {
-    drawImage: vi.fn(),
-    getImageData: vi.fn(() => ({data, height: 2, width: 2})),
-  }
-
-  return {
-    canvas: {getContext: vi.fn(() => context), height: 0, width: 0},
-    context,
-  }
-}
 
 const createTwoPixelDocument = () => {
   const document = createDemoDocument()
@@ -28,36 +14,26 @@ const createTwoPixelDocument = () => {
   }
 }
 
-class DecodedImage {
-  decoding = 'auto'
-  src = ''
+const createPixels = (opaque = true) => {
+  const data = new Uint8ClampedArray(2 * 2 * 4)
 
-  decode() {
-    return Promise.resolve()
+  if (opaque) {
+    for (let index = 3; index < data.length; index += 4) {
+      data[index] = 255
+    }
   }
+
+  return {data, height: 2, width: 2}
 }
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-})
-
 describe('autoMeshPart', () => {
-  test('should replace the selected mesh and reset only its stored deformations', async () => {
+  test('should replace the selected mesh and reset only its stored deformations', () => {
     const document = createTwoPixelDocument()
-    const pixels = new Uint8ClampedArray(2 * 2 * 4)
 
-    for (let index = 3; index < pixels.length; index += 4) {
-      pixels[index] = 255
-    }
-
-    const {canvas, context} = createCanvas(pixels)
-    vi.stubGlobal('Image', DecodedImage)
-    vi.spyOn(window.document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
-
-    const result = await autoMeshPart({
+    const result = autoMeshPart({
       document,
       partId: 'mesh-preview',
+      pixels: createPixels(),
       settings: {alphaThreshold: 16, cellSize: 1},
     })
 
@@ -84,99 +60,62 @@ describe('autoMeshPart', () => {
         ok: true,
       })
     }
-
-    expect(context.drawImage).toHaveBeenCalledOnce()
   })
 
-  test('should report missing parts, texture decode failures, and unavailable canvas rendering', async () => {
+  test('should report a missing part', () => {
     const document = createTwoPixelDocument()
 
-    await expect(
+    expect(
       autoMeshPart({
         document,
         partId: 'missing',
+        pixels: createPixels(),
         settings: {alphaThreshold: 16, cellSize: 4},
       }),
-    ).resolves.toEqual({error: {code: 'part-not-found'}, ok: false})
-
-    vi.stubGlobal(
-      'Image',
-      class extends DecodedImage {
-        override decode() {
-          return Promise.reject(new Error('decode failed'))
-        }
-      },
-    )
-    await expect(
-      autoMeshPart({
-        document,
-        partId: 'mesh-preview',
-        settings: {alphaThreshold: 16, cellSize: 4},
-      }),
-    ).resolves.toEqual({error: {code: 'decode-failed'}, ok: false})
-
-    vi.stubGlobal('Image', DecodedImage)
-    vi.spyOn(window.document, 'createElement').mockReturnValue({
-      getContext: () => null,
-      height: 0,
-      width: 0,
-    } as unknown as HTMLElement)
-    await expect(
-      autoMeshPart({
-        document,
-        partId: 'mesh-preview',
-        settings: {alphaThreshold: 16, cellSize: 4},
-      }),
-    ).resolves.toEqual({error: {code: 'render-failed'}, ok: false})
+    ).toEqual({error: {code: 'part-not-found'}, ok: false})
   })
 
-  test('should return the mesh generator failure for a transparent texture', async () => {
+  test('should return the mesh generator failure for transparent pixels', () => {
     const document = createTwoPixelDocument()
-    const {canvas} = createCanvas(new Uint8ClampedArray(2 * 2 * 4))
-    vi.stubGlobal('Image', DecodedImage)
-    vi.spyOn(window.document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
 
-    await expect(
+    expect(
       autoMeshPart({
         document,
         partId: 'mesh-preview',
+        pixels: createPixels(false),
         settings: {alphaThreshold: 16, cellSize: 1},
       }),
-    ).resolves.toEqual({error: {code: 'no-opaque-pixels'}, ok: false})
+    ).toEqual({error: {code: 'no-opaque-pixels'}, ok: false})
   })
 
-  test('should report a texture that the canvas cannot read', async () => {
+  test('should reject pixels that do not match the selected texture dimensions', () => {
     const document = createTwoPixelDocument()
-    const {canvas, context} = createCanvas(new Uint8ClampedArray(2 * 2 * 4))
-    context.getImageData.mockImplementation(() => {
-      throw new DOMException('The canvas is tainted.')
-    })
-    vi.stubGlobal('Image', DecodedImage)
-    vi.spyOn(window.document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
 
-    await expect(
+    expect(
       autoMeshPart({
         document,
         partId: 'mesh-preview',
+        pixels: {data: new Uint8ClampedArray(4), height: 1, width: 1},
         settings: {alphaThreshold: 16, cellSize: 1},
       }),
-    ).resolves.toEqual({error: {code: 'render-failed'}, ok: false})
+    ).toEqual({error: {code: 'invalid-pixel-data'}, ok: false})
   })
 
-  test('should reject a density that can exceed the automatic mesh cell budget', async () => {
+  test('should reject a density that can exceed the automatic mesh cell budget', () => {
     const document = createDemoDocument()
 
     expect(getMinimumAutoMeshCellSize(640, 480)).toBe(3)
-    await expect(
+    expect(
       autoMeshPart({
         document,
         partId: 'mesh-preview',
+        pixels: createPixels(),
         settings: {alphaThreshold: 16, cellSize: 1},
       }),
-    ).resolves.toEqual({error: {code: 'invalid-cell-size'}, ok: false})
+    ).toEqual({error: {code: 'invalid-cell-size'}, ok: false})
   })
 
-  test('should reject texture dimensions that exceed the supported pixel budget', async () => {
+  test('should reject texture dimensions that exceed the supported pixel budget', () => {
     const document = createDemoDocument()
     const oversizedDocument = {
       ...document,
@@ -185,12 +124,13 @@ describe('autoMeshPart', () => {
       ),
     }
 
-    await expect(
+    expect(
       autoMeshPart({
         document: oversizedDocument,
         partId: 'mesh-preview',
+        pixels: createPixels(),
         settings: {alphaThreshold: 16, cellSize: 32},
       }),
-    ).resolves.toEqual({error: {code: 'too-large'}, ok: false})
+    ).toEqual({error: {code: 'too-large'}, ok: false})
   })
 })
