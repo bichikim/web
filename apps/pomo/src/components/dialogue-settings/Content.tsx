@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
@@ -29,7 +30,7 @@ import {PSettingsSectionHeading} from '../settings/SectionHeading'
 
 const CLASSES = {
   dialogueSettings: 'pomo-dialogue-settings grid gap-4.5 settings-compact:gap-4',
-  dialogueSettingsEventHeading: [
+  dialogueSettingsEventHeading: cx(
     'pomo-dialogue-settings__event-heading grid min-w-0 grid-cols-[auto_minmax(0,_1fr)]',
     'items-center gap-[0.7rem] settings-compact:gap-2 [&_>_div:nth-child(2)]:min-w-0',
     '[&_>_div:nth-child(2)_>_div]:min-w-0 [&_>_div:nth-child(2)_>_div]:flex',
@@ -42,12 +43,12 @@ const CLASSES = {
     '[&_>_div:nth-child(2)_>_div_>_span]:text-[0.5625rem]',
     '[&_>_div:nth-child(2)_>_div_>_span]:font-bold [&_p]:m-[0.2rem_0_0]',
     '[&_p]:text-muted-foreground [&_p]:text-[0.65rem] [&_p]:leading-[1.4]',
-  ].join(' '),
-  dialogueSettingsEventSymbol: [
+  ),
+  dialogueSettingsEventSymbol: cx(
     'pomo-dialogue-settings__event-symbol grid w-9 h-9 place-items-center rounded-full',
     'bg-secondary-soft text-highlight',
-  ].join(' '),
-  dialogueSettingsList: [
+  ),
+  dialogueSettingsList: cx(
     'pomo-dialogue-settings__list grid gap-3 m-0 p-0 list-none [&_>_li]:grid [&_>_li]:gap-3',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
@@ -55,19 +56,19 @@ const CLASSES = {
     '[&_>_li]:p-4 [&_>_li[data-connected]]:border-[rgb(214_181_133_/_32%)]',
     '[&_>_li[data-connected]]:bg-[rgb(214_181_133_/_5%)]',
     '[&_>_li[data-disabled]]:bg-[rgb(255_255_255_/_1.5%)]',
-  ].join(' '),
-  dialogueSettingsLoading: [
+  ),
+  dialogueSettingsLoading: cx(
     'pomo-dialogue-settings__loading m-0 rounded-panel',
     'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center flex items-center justify-center gap-2',
     '[&_>_span]:animate-dialogue-settings-spin',
     'motion-reduce:[&_>_span]:animate-[none]',
-  ].join(' '),
-  dialogueSettingsMessage: [
+  ),
+  dialogueSettingsMessage: cx(
     'pomo-dialogue-settings__message m-0 rounded-panel',
     'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
-  ].join(' '),
+  ),
 } as const
 
 const MILLISECONDS_PER_SECOND = 1000

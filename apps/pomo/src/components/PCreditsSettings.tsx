@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Tabs} from '@kobalte/core/tabs'
 import {A} from '@solidjs/router'
 import {createMemo, createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
@@ -18,15 +19,15 @@ const getMusicCredits = () =>
     },
   ] satisfies ReadonlyArray<PMusicCredit>
 
-const CREATOR_DETAILS_CLASS = [
+const CREATOR_DETAILS_CLASS = cx(
   'm-0 grid gap-2 rounded-panel border border-solid border-[rgb(255_255_255_/_6%)]',
   'bg-[rgb(255_255_255_/_3%)] px-4 py-3 text-sm',
-].join(' ')
+)
 
-const NOTICE_CLASS = [
+const NOTICE_CLASS = cx(
   'rounded-panel border border-solid border-border bg-[rgb(255_255_255_/_3%)] p-4',
   'text-xs leading-5 text-muted-foreground',
-].join(' ')
+)
 
 const LicenseCredits = (props: {readonly licenseData: LicenseData}) => {
   const openSourceLicenseGroup = createMemo(() =>

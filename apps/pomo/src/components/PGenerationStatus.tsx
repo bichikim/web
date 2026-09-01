@@ -1,16 +1,17 @@
+import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {PProgress} from './PProgress'
 
-const STATUS_CLASSES = [
+const STATUS_CLASSES = cx(
   'pomo-generation-status flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
   'bg-[rgb(214_181_133_/_9%)] p-3 text-[#d8caba] text-[0.8rem] leading-[1.4]',
   '[&_strong]:text-[#e6c998]',
-].join(' ')
-const CANCEL_CLASSES = [
+)
+const CANCEL_CLASSES = cx(
   'min-h-8 cursor-pointer border-0 rounded-full bg-[rgb(214_181_133_/_16%)] px-3',
   'text-[#fffaf1] text-xs font-[750] outline-none hover:bg-[rgb(214_181_133_/_24%)]',
   'focus-visible:[outline:2px_solid_#d6b585] focus-visible:[outline-offset:2px]',
-].join(' ')
+)
 
 const STATUS_ICONS = {
   draft: 'i-tabler-pencil',

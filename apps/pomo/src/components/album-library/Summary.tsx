@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
 import {type PResolvedAlbum, type PTrack} from '../../features/focus-room-audio/index'
@@ -41,10 +42,10 @@ export const AlbumSummary = (props: AlbumSummaryProps) => (
       fallback={
         <div
           aria-hidden="true"
-          class={[
+          class={cx(
             'grid size-16 flex-none place-items-center rounded-4 text-white shadow-panel',
             ALBUM_ART_CLASSES[props.index % ALBUM_ART_CLASSES.length],
-          ].join(' ')}
+          )}
         >
           <span class={`${props.album.icon} size-6.5 opacity-90`} />
         </div>

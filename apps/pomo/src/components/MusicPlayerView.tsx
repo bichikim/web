@@ -18,13 +18,13 @@ import {CLASSES, type MusicPlayerViewProps} from './music-player-view/shared'
 
 const ACTIVE_VISUALIZER_OPACITY = 0.76
 const IDLE_VISUALIZER_OPACITY = 0.34
-const SCRIBBLE_MASK_CLASSES = [
+const SCRIBBLE_MASK_CLASSES = cx(
   '[mask-image:var(--pomo-player-scribble-mask)]',
   '[-webkit-mask-image:var(--pomo-player-scribble-mask)]',
   '[mask-mode:alpha] [mask-position:center] [mask-repeat:no-repeat] [mask-size:100%_100%]',
   '[-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat]',
   '[-webkit-mask-size:100%_100%]',
-].join(' ')
+)
 
 const getShellClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? cx('rounded-none', SCRIBBLE_MASK_CLASSES) : 'rounded-panel'

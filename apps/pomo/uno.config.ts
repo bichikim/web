@@ -1,5 +1,4 @@
 import baseConfig from '@winter-love/unocss-config'
-import {fileURLToPath} from 'node:url'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 
 import scribbleIcons from './scripts/unocss/scribble.json'
@@ -63,6 +62,19 @@ const colors = isAppsInToss
       'surface-strong': 'rgb(10 10 10 / 68%)',
     }
 
+const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
+  'pomo-loading':
+    'flex min-h-control-sm box-border items-center gap-2 rounded-control bg-surface py-0 px-3 ' +
+    'text-foreground text-xs font-650 leading-4 shadow-panel',
+  'pomo-loading__spinner':
+    'w-4 h-4 box-border flex-none animate-spin [border:2px_solid_rgb(255_255_255_/_28%)] ' +
+    'border-t-highlight rounded-control motion-reduce:animate-[none]',
+  'pomo-scene-fallback':
+    'pointer-events-none absolute inset-0 grid place-items-center text-foreground',
+  'pomo-scene-fallback__panel':
+    'border border-solid border-border rounded-control backdrop-blur-surface',
+} as const
+
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
     const prefix = `${name}:`
@@ -85,7 +97,6 @@ const config = mergeConfigs([
   baseConfig,
   defineConfig<PresetWind3Theme>({
     content: {
-      filesystem: [fileURLToPath(new URL('./src/**/*.{ts,tsx}', import.meta.url))],
       pipeline: {
         exclude: ['**/.i18n/paraglide/**'],
       },
@@ -186,7 +197,12 @@ body {
 `,
       },
     ],
-    safelist: albumData.albums.map((album) => album.icon),
+    // The SSR fallback must be styled before lazy client modules extend the generated CSS.
+    safelist: [
+      ...Object.keys(INITIAL_SCENE_FALLBACK_SHORTCUTS),
+      ...albumData.albums.map((album) => album.icon),
+    ],
+    shortcuts: INITIAL_SCENE_FALLBACK_SHORTCUTS,
     theme: {
       animation: {
         counts: {

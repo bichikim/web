@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Match, Switch} from 'solid-js'
 
 import {
@@ -10,11 +11,11 @@ import {PFormMessage} from './PFormMessage'
 import {PLoadingStatus} from './PLoadingStatus'
 import {PProgress} from './PProgress'
 
-const ERROR_CLASSES = [
+const ERROR_CLASSES = cx(
   'pointer-events-auto flex min-h-control-sm items-center gap-2',
   'border border-solid border-border rounded-control bg-surface px-3',
   'text-foreground text-xs font-650 shadow-panel backdrop-blur-surface',
-].join(' ')
+)
 export const PModelDownloadStatus = () => {
   const download = useModelDownload()
   const loadingState = (): LoadingModelDownloadState | null => {
