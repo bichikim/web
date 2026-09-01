@@ -291,6 +291,10 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       paraglideVitePlugin({
         emitTsDeclarations: true,
         ...PARAGLIDE_CONFIG.common,
+        outputStructure:
+          command === 'serve'
+            ? PARAGLIDE_CONFIG.development.outputStructure
+            : PARAGLIDE_CONFIG.common.outputStructure,
         routeStrategies: IS_APPS_IN_TOSS_RUNTIME
           ? PARAGLIDE_CONFIG.appsInToss.routeStrategies
           : PARAGLIDE_CONFIG.web.routeStrategies,

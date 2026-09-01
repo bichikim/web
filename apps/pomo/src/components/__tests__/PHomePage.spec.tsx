@@ -20,7 +20,7 @@ it.each([false, true])('should render the home studio for Toss=%s', async (isApp
 
   render(() => <PHomePage />)
 
-  expect(await screen.findByText('studio ready')).toBeInTheDocument()
+  expect(screen.getByText('studio ready')).toBeInTheDocument()
   expect(screen.queryByRole('status')).toBeNull()
   const main = screen.getByRole('main')
   expect(main.classList.contains('pomo-home')).toBe(true)
