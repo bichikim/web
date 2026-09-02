@@ -82,7 +82,7 @@ const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number)
 
 export const isParameterTrack = (
   track: PuppetParameterTrack | PuppetVertexTrack,
-): track is PuppetParameterTrack => 'parameterId' in track
+): track is PuppetParameterTrack => track.kind === 'parameter'
 
 const getCoordinateIndex = (track: PuppetVertexTrack) =>
   track.vertexIndex * COORDINATES_PER_VERTEX + (track.axis === 'y' ? Y_COORDINATE_OFFSET : 0)

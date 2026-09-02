@@ -6,7 +6,7 @@ export const removeMotionTracks = (document: PuppetDocument, partId: string, ver
     ...motion,
     tracks: motion.tracks.filter(
       (track) =>
-        'parameterId' in track || track.partId !== partId || track.vertexIndex !== vertexIndex,
+        track.kind === 'parameter' || track.partId !== partId || track.vertexIndex !== vertexIndex,
     ),
   }))
 
@@ -18,7 +18,7 @@ export const updateMotionIndices = (
   removeMotionTracks(document, partId, vertexIndex).map((motion) => ({
     ...motion,
     tracks: motion.tracks.map((track) =>
-      !('parameterId' in track) && track.partId === partId && track.vertexIndex > vertexIndex
+      track.kind === 'vertex' && track.partId === partId && track.vertexIndex > vertexIndex
         ? {...track, vertexIndex: track.vertexIndex - 1}
         : track,
     ),
@@ -42,19 +42,19 @@ export const collapseMotionIndices = (options: CollapseMotionIndicesOptions) => 
     tracks: motion.tracks
       .filter(
         (track) =>
-          'parameterId' in track ||
+          track.kind === 'parameter' ||
           track.partId !== partId ||
           track.vertexIndex !== promotedVertexIndex ||
           !motion.tracks.some(
             (candidate) =>
-              !('parameterId' in candidate) &&
+              candidate.kind === 'vertex' &&
               candidate.partId === partId &&
               candidate.vertexIndex === deletedVertexIndex &&
               candidate.axis === track.axis,
           ),
       )
       .map((track) => {
-        if ('parameterId' in track || track.partId !== partId) {
+        if (track.kind === 'parameter' || track.partId !== partId) {
           return track
         }
 

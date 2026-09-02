@@ -240,7 +240,7 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
     motions: options.document.motions.map((motion) => ({
       ...motion,
       tracks: motion.tracks.filter(
-        (track) => !('parameterId' in track) || !removedParameterIds.has(track.parameterId),
+        (track) => track.kind !== 'parameter' || !removedParameterIds.has(track.parameterId),
       ),
     })),
     parameterBindings: remainingBindings,

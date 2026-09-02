@@ -37,6 +37,43 @@ describe('parseDocument', () => {
     expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
   })
 
+  it('should normalize legacy untagged tracks to explicit kinds', () => {
+    const document = createDemoDocument()
+    const untaggedDocument = {
+      ...document,
+      motions: document.motions.map((motion) => ({
+        ...motion,
+        tracks: motion.tracks.map(({kind: _kind, ...track}) => track),
+      })),
+    }
+
+    expect(parseDocument(JSON.stringify(untaggedDocument))).toMatchObject({
+      document: {
+        motions: [{tracks: [{kind: 'parameter'}]}],
+      },
+      ok: true,
+    })
+  })
+
+  it('should reject a track whose declared kind contradicts its target', () => {
+    const document = createDemoDocument()
+    const parameterTrack = document.motions[0]!.tracks[0]!
+    const invalidDocument = {
+      ...document,
+      motions: [
+        {
+          ...document.motions[0]!,
+          tracks: [{...parameterTrack, kind: 'vertex'}],
+        },
+      ],
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
   it('should reject fractional texture pixel dimensions', () => {
     const document = createDemoDocument()
     const fractionalDocument = {

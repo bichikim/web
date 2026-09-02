@@ -115,7 +115,9 @@ describe('PuppetEditor', () => {
     await waitFor(() => {
       const document: PuppetDocument | undefined = onDocumentChange.mock.calls.at(-1)?.[0]
       expect(document?.motions[0]?.tracks).toEqual(
-        expect.arrayContaining([{keyframes: [{time: 0, value: 15}], parameterId: 'angle-x'}]),
+        expect.arrayContaining([
+          {keyframes: [{time: 0, value: 15}], kind: 'parameter', parameterId: 'angle-x'},
+        ]),
       )
     })
   })

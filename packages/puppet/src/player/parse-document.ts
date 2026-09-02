@@ -303,10 +303,10 @@ const hasValidKeyframes = (value: Record<string, unknown>, duration: number) =>
   value.keyframes.every(isKeyframe) &&
   hasOrderedKeyframes(value.keyframes, duration)
 
-const isParameterTrack = (value: Record<string, unknown>) =>
+const hasParameterTrackTarget = (value: Record<string, unknown>) =>
   typeof value.parameterId === 'string' && value.parameterId.length > 0
 
-const isVertexTrack = (value: Record<string, unknown>) =>
+const hasVertexTrackTarget = (value: Record<string, unknown>) =>
   typeof value.partId === 'string' &&
   value.partId.length > 0 &&
   isFiniteNumber(value.vertexIndex) &&
@@ -314,10 +314,50 @@ const isVertexTrack = (value: Record<string, unknown>) =>
   value.vertexIndex >= 0 &&
   isTrackAxis(value.axis)
 
-const isTrack = (value: unknown, duration: number): value is PuppetTrack =>
-  isRecord(value) &&
-  hasValidKeyframes(value, duration) &&
-  isParameterTrack(value) !== isVertexTrack(value)
+const isTrack = (value: unknown, duration: number): value is PuppetTrack => {
+  if (!isRecord(value) || !hasValidKeyframes(value, duration)) {
+    return false
+  }
+
+  switch (value.kind) {
+    case 'parameter':
+      return hasParameterTrackTarget(value) && !hasVertexTrackTarget(value)
+    case 'vertex':
+      return hasVertexTrackTarget(value) && !hasParameterTrackTarget(value)
+    default:
+      return false
+  }
+}
+
+const normalizeLegacyTrack = (value: unknown): unknown => {
+  if (!isRecord(value) || value.kind !== undefined) {
+    return value
+  }
+
+  const hasParameterTarget = hasParameterTrackTarget(value)
+  const hasVertexTarget = hasVertexTrackTarget(value)
+
+  if (hasParameterTarget === hasVertexTarget) {
+    return value
+  }
+
+  return {...value, kind: hasParameterTarget ? 'parameter' : 'vertex'}
+}
+
+const normalizeLegacyTrackKinds = (value: unknown): unknown => {
+  if (!isRecord(value) || !Array.isArray(value.motions)) {
+    return value
+  }
+
+  return {
+    ...value,
+    motions: value.motions.map((motion) =>
+      isRecord(motion) && Array.isArray(motion.tracks)
+        ? {...motion, tracks: motion.tracks.map(normalizeLegacyTrack)}
+        : motion,
+    ),
+  }
+}
 
 const isMotion = (value: unknown): value is PuppetMotion => {
   if (
@@ -349,13 +389,13 @@ const hasValidTrackTargets = (
 
   return motions.every((motion) => {
     const parameterTrackIds = motion.tracks.flatMap((track) =>
-      'parameterId' in track ? [track.parameterId] : [],
+      track.kind === 'parameter' ? [track.parameterId] : [],
     )
 
     return (
       new Set(parameterTrackIds).size === parameterTrackIds.length &&
       motion.tracks.every((track) => {
-        if ('parameterId' in track) {
+        if (track.kind === 'parameter') {
           const parameter = parameterById.get(track.parameterId)
           return (
             parameter !== undefined &&
@@ -513,7 +553,10 @@ const migrateLegacyDocument = (value: unknown): PuppetDocument | undefined => {
 }
 
 export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
-  const document = isDocument(value) ? value : migrateLegacyDocument(value)
+  const normalizedValue = normalizeLegacyTrackKinds(value)
+  const document = isDocument(normalizedValue)
+    ? normalizedValue
+    : migrateLegacyDocument(normalizedValue)
 
   if (document === undefined) {
     return {error: {code: 'invalid-document'}, ok: false}

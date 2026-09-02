@@ -240,7 +240,7 @@ describe('MeshEditor', () => {
 
     expect(onVertexEditStart).toHaveBeenCalledOnce()
     expect(document().parts[0]?.mesh.vertices).toBe(initialDocument.parts[0]?.mesh.vertices)
-    const vertexTracks = document().motions[0]?.tracks.filter((track) => !('parameterId' in track))
+    const vertexTracks = document().motions[0]?.tracks.filter((track) => track.kind === 'vertex')
     expect(vertexTracks?.[0]?.keyframes[0]).toEqual({time: 0.5, value: 320})
     expect(vertexTracks?.[1]?.keyframes).toEqual([{time: 0.5, value: 200}])
   })

@@ -35,12 +35,14 @@ describe('insertVertexKeyframe', () => {
       {
         axis: 'x',
         keyframes: [{time: 0.5, value: 320}],
+        kind: 'vertex',
         partId: 'mesh-preview',
         vertexIndex: 4,
       },
       {
         axis: 'y',
         keyframes: [{time: 0.5, value: 240}],
+        kind: 'vertex',
         partId: 'mesh-preview',
         vertexIndex: 4,
       },
@@ -146,7 +148,7 @@ describe('parameter keyframes', () => {
     })!
 
     expect(inserted.motions[0]?.tracks).toEqual([
-      {keyframes: [{time: 1, value: 30}], parameterId: 'angle-x'},
+      {keyframes: [{time: 1, value: 30}], kind: 'parameter', parameterId: 'angle-x'},
     ])
 
     const eased = setParameterKeyframeEasing({

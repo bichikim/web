@@ -6,6 +6,7 @@ import type {
   PuppetEasing,
   PuppetKeyframe,
   PuppetMotion,
+  PuppetParameterTrack,
   PuppetTrackAxis,
   PuppetVertexTrack,
 } from '../../player/document'
@@ -84,7 +85,7 @@ const upsertTrack = (
 ): PuppetMotion => {
   const trackIndex = motion.tracks.findIndex(
     (track) =>
-      !('parameterId' in track) &&
+      track.kind === 'vertex' &&
       track.axis === axis &&
       track.partId === target.partId &&
       track.vertexIndex === target.vertexIndex,
@@ -96,6 +97,7 @@ const upsertTrack = (
       target.time,
       value,
     ),
+    kind: 'vertex',
     partId: target.partId,
     vertexIndex: target.vertexIndex,
   }
@@ -142,14 +144,18 @@ export const setParameterKeyframe = (
   return replaceMotion(options.document, options.motionId, (motion) => {
     const time = clamp(options.time, 0, motion.duration)
     const trackIndex = motion.tracks.findIndex(
-      (track) => 'parameterId' in track && track.parameterId === options.parameterId,
+      (track) => track.kind === 'parameter' && track.parameterId === options.parameterId,
     )
     const keyframes = upsertKeyframe(
       trackIndex < 0 ? [] : (motion.tracks[trackIndex]?.keyframes ?? []),
       time,
       clamp(options.value, parameter.minimum, parameter.maximum),
     )
-    const track = {keyframes, parameterId: options.parameterId}
+    const track: PuppetParameterTrack = {
+      keyframes,
+      kind: 'parameter',
+      parameterId: options.parameterId,
+    }
 
     return {
       ...motion,
@@ -167,7 +173,7 @@ export const deleteParameterKeyframe = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.flatMap((track) => {
-      if (!('parameterId' in track) || track.parameterId !== options.parameterId) {
+      if (track.kind !== 'parameter' || track.parameterId !== options.parameterId) {
         return [track]
       }
 
@@ -184,7 +190,7 @@ export const setParameterKeyframeEasing = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.map((track) =>
-      'parameterId' in track && track.parameterId === options.parameterId
+      track.kind === 'parameter' && track.parameterId === options.parameterId
         ? {
             ...track,
             keyframes: track.keyframes.map((keyframe) =>
@@ -243,7 +249,7 @@ export const deleteVertexKeyframe = (
     ...motion,
     tracks: motion.tracks.flatMap((track) => {
       if (
-        'parameterId' in track ||
+        track.kind === 'parameter' ||
         track.partId !== options.partId ||
         track.vertexIndex !== options.vertexIndex
       ) {
@@ -264,7 +270,7 @@ export const setVertexKeyframeEasing = (
     ...motion,
     tracks: motion.tracks.map((track) => {
       if (
-        'parameterId' in track ||
+        track.kind === 'parameter' ||
         track.partId !== options.partId ||
         track.vertexIndex !== options.vertexIndex
       ) {

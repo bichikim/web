@@ -21,6 +21,7 @@ const createAnimatedDocument = (): PuppetDocument => ({
             {time: 0, value: 320},
             {time: 1, value: 360},
           ],
+          kind: 'vertex',
           partId: PART_ID,
           vertexIndex: CENTER_VERTEX_INDEX,
         },

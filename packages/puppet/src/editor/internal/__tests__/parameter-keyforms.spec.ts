@@ -160,7 +160,10 @@ describe('parameter keyform editing', () => {
       ...document,
       motions: document.motions.map((motion) => ({
         ...motion,
-        tracks: [...motion.tracks, {keyframes: [{time: 0, value: 0}], parameterId: 'angle-x'}],
+        tracks: [
+          ...motion.tracks,
+          {keyframes: [{time: 0, value: 0}], kind: 'parameter' as const, parameterId: 'angle-x'},
+        ],
       })),
       parameterBindings: [...(document.parameterBindings ?? []), sharedBinding],
     }
@@ -169,7 +172,7 @@ describe('parameter keyform editing', () => {
     expect(deleted?.parameterBindings).toEqual([sharedBinding])
     expect(deleted?.parameters?.map((parameter) => parameter.id)).toEqual(['angle-x'])
     expect(deleted?.motions[0]?.tracks).toEqual([
-      {keyframes: [{time: 0, value: 0}], parameterId: 'angle-x'},
+      {keyframes: [{time: 0, value: 0}], kind: 'parameter', parameterId: 'angle-x'},
     ])
   })
 

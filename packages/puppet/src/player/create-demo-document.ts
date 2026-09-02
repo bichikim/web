@@ -171,6 +171,7 @@ export const createDemoDocument = (): PuppetDocument => ({
             {time: 1, value: -DEMO_PARAMETER_MAXIMUM},
             {time: 2, value: 0},
           ],
+          kind: 'parameter',
           parameterId: 'angle-y',
         },
       ],

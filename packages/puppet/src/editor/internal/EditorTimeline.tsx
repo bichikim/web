@@ -60,7 +60,7 @@ const getParameterTracks = (
 ): ReadonlyArray<ParameterTimelineTrack> =>
   (document.parameters ?? []).map((parameter) => {
     const track = motion?.tracks.find(
-      (candidate) => 'parameterId' in candidate && candidate.parameterId === parameter.id,
+      (candidate) => candidate.kind === 'parameter' && candidate.parameterId === parameter.id,
     )
 
     return {

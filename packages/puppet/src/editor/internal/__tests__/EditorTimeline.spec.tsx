@@ -56,6 +56,7 @@ describe('EditorTimeline', () => {
     expect(document().motions[0]?.tracks).toHaveLength(2)
     expect(document().motions[0]?.tracks[1]).toEqual({
       keyframes: [{time: 0.5, value: 15}],
+      kind: 'parameter',
       parameterId: 'angle-x',
     })
     expect(view.getAllByLabelText('Angle X 트랙')).toHaveLength(1)

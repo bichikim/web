@@ -14,6 +14,7 @@ const motion: PuppetMotion = {
         {time: 1, value: 30},
         {time: 2, value: 10},
       ],
+      kind: 'vertex',
       partId: 'animated',
       vertexIndex: 1,
     },
@@ -88,6 +89,7 @@ describe('sampleMotionParameterValues', () => {
             {time: 0, value: -30},
             {time: 2, value: 30},
           ],
+          kind: 'parameter',
           parameterId: 'angle-x',
         },
         {
@@ -95,6 +97,7 @@ describe('sampleMotionParameterValues', () => {
             {time: 0, value: 10},
             {time: 2, value: -10},
           ],
+          kind: 'parameter',
           parameterId: 'angle-y',
         },
       ],
