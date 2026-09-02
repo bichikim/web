@@ -35,7 +35,7 @@ const AUDIO = new File(['audio'], 'track.mp3', {type: 'audio/mpeg'})
 
 beforeEach(() => {
   vi.resetAllMocks()
-  albumMocks.createAlbum.mockResolvedValue('album-one')
+  albumMocks.createAlbum.mockResolvedValue({albumId: 'album-one', success: true})
   commandMocks.changeAlbumStatus.mockResolvedValue(undefined)
   commandMocks.connectAlbumOffer.mockResolvedValue(undefined)
   creationMocks.createTrackWithAudio.mockResolvedValue({success: true})
@@ -152,6 +152,17 @@ describe('form actions', () => {
       status: 'rejected',
     })
     expect(albumMocks.createAlbum).toHaveBeenCalledWith(expect.any(Object), null)
+  })
+
+  it('should preserve an album payload conflict across the action boundary', async () => {
+    albumMocks.createAlbum.mockResolvedValueOnce({
+      code: 'album_creation_payload_mismatch',
+      success: false,
+    })
+
+    await expect(createAdminAlbumAction(new FormData())).resolves.toEqual({
+      status: 'conflicted',
+    })
   })
 
   it('should convert offer form values and normalize adapter rejection', async () => {

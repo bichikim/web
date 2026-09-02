@@ -1,11 +1,10 @@
-import {and, asc, desc, eq, gt} from 'drizzle-orm'
+import {and, asc, desc, eq} from 'drizzle-orm'
 
 import {
   commerceOffers,
   commerceProductAlbums,
   commerceProducts,
   getDatabase,
-  musicAlbumCoverReservations,
   musicAlbums,
   musicAlbumTracks,
   musicAlbumTranslations,
@@ -27,37 +26,6 @@ export type UpdateAlbumStatusResult =
       readonly success: false
     }
   | {readonly status: 'archived' | 'published'; readonly success: true}
-
-export interface CreateAlbumInput {
-  readonly coverFallback: 'lp' | 'cd' | 'music'
-  readonly coverDraftId: string | null
-  readonly coverImageUrl: string | null
-  readonly coverReservationId: string | null
-  readonly id: string
-  readonly translations: ReadonlyArray<{
-    readonly description: string
-    readonly locale: 'en' | 'ja' | 'ko' | 'zh-Hans'
-    readonly title: string
-  }>
-}
-
-export type CreateAlbumResult =
-  | {readonly code: 'cover_reservation_invalid'; readonly success: false}
-  | {
-      readonly album: {
-        readonly coverFallback: 'lp' | 'cd' | 'music'
-        readonly coverImageUrl: string | null
-        readonly id: string
-        readonly status: 'archived' | 'draft' | 'published'
-        readonly translations: ReadonlyArray<{
-          readonly albumId: string
-          readonly description: string
-          readonly locale: 'en' | 'ja' | 'ko' | 'zh-Hans'
-          readonly title: string
-        }>
-      }
-      readonly success: true
-    }
 
 export interface ConnectAlbumOfferInput {
   readonly albumId: string
@@ -231,149 +199,6 @@ export const updateAlbumStatus = async (
         .set({publishedAt: album.publishedAt ?? now, status: 'published', updatedAt: now})
         .where(and(eq(musicAlbums.id, albumId), eq(musicAlbums.status, album.status)))
       return {status: 'published', success: true}
-    }),
-  )
-
-export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumResult> =>
-  withTransactionalDatabase((database) =>
-    database.transaction(async (transaction) => {
-      const readCreatedAlbum = async () => {
-        const [album] = await transaction
-          .select({
-            coverFallback: musicAlbums.coverFallback,
-            coverImageUrl: musicAlbums.coverImageUrl,
-            id: musicAlbums.id,
-            status: musicAlbums.status,
-          })
-          .from(musicAlbums)
-          .where(eq(musicAlbums.id, input.id))
-          .limit(1)
-
-        if (album === undefined) {
-          return null
-        }
-
-        const translations = await transaction
-          .select({
-            albumId: musicAlbumTranslations.albumId,
-            description: musicAlbumTranslations.description,
-            locale: musicAlbumTranslations.locale,
-            title: musicAlbumTranslations.title,
-          })
-          .from(musicAlbumTranslations)
-          .where(eq(musicAlbumTranslations.albumId, input.id))
-
-        return {...album, translations}
-      }
-      const prepareUnusedCoverDeletion = async (): Promise<void> => {
-        if (
-          input.coverReservationId === null ||
-          input.coverDraftId === null ||
-          input.coverImageUrl === null
-        ) {
-          return
-        }
-
-        await transaction
-          .update(musicAlbumCoverReservations)
-          .set({status: 'deleting', updatedAt: new Date()})
-          .where(
-            and(
-              eq(musicAlbumCoverReservations.id, input.coverReservationId),
-              eq(musicAlbumCoverReservations.draftId, input.coverDraftId),
-              eq(musicAlbumCoverReservations.coverImageUrl, input.coverImageUrl),
-              eq(musicAlbumCoverReservations.status, 'pending'),
-            ),
-          )
-      }
-
-      if ((input.coverReservationId === null) !== (input.coverDraftId === null)) {
-        return {code: 'cover_reservation_invalid', success: false}
-      }
-
-      if (input.coverReservationId !== null) {
-        const existingAlbum = await readCreatedAlbum()
-
-        if (existingAlbum !== null) {
-          await prepareUnusedCoverDeletion()
-          return {album: existingAlbum, success: true}
-        }
-
-        const [reservation] = await transaction
-          .select({
-            coverImageUrl: musicAlbumCoverReservations.coverImageUrl,
-            draftId: musicAlbumCoverReservations.draftId,
-          })
-          .from(musicAlbumCoverReservations)
-          .where(
-            and(
-              eq(musicAlbumCoverReservations.id, input.coverReservationId),
-              eq(musicAlbumCoverReservations.status, 'pending'),
-              gt(musicAlbumCoverReservations.expiresAt, new Date()),
-            ),
-          )
-          .for('update')
-          .limit(1)
-
-        if (
-          reservation === undefined ||
-          reservation.draftId !== input.coverDraftId ||
-          reservation.coverImageUrl !== input.coverImageUrl
-        ) {
-          const concurrentlyCreatedAlbum = await readCreatedAlbum()
-
-          if (concurrentlyCreatedAlbum !== null) {
-            await prepareUnusedCoverDeletion()
-            return {album: concurrentlyCreatedAlbum, success: true}
-          }
-
-          return {code: 'cover_reservation_invalid', success: false}
-        }
-      }
-
-      const [album] = await transaction
-        .insert(musicAlbums)
-        .values({
-          coverFallback: input.coverFallback,
-          coverImageUrl: input.coverImageUrl,
-          id: input.id,
-        })
-        .onConflictDoNothing({target: musicAlbums.id})
-        .returning({
-          coverFallback: musicAlbums.coverFallback,
-          coverImageUrl: musicAlbums.coverImageUrl,
-          id: musicAlbums.id,
-          status: musicAlbums.status,
-        })
-
-      if (album === undefined) {
-        const concurrentlyCreatedAlbum = await readCreatedAlbum()
-
-        if (concurrentlyCreatedAlbum === null) {
-          throw new Error('Failed to create a music album')
-        }
-
-        await prepareUnusedCoverDeletion()
-        return {album: concurrentlyCreatedAlbum, success: true}
-      }
-
-      const translations = await transaction
-        .insert(musicAlbumTranslations)
-        .values(input.translations.map((translation) => ({...translation, albumId: album.id})))
-        .returning({
-          albumId: musicAlbumTranslations.albumId,
-          description: musicAlbumTranslations.description,
-          locale: musicAlbumTranslations.locale,
-          title: musicAlbumTranslations.title,
-        })
-
-      if (input.coverReservationId !== null) {
-        await transaction
-          .delete(musicAlbumCoverReservations)
-          .where(eq(musicAlbumCoverReservations.id, input.coverReservationId))
-      }
-
-      return {album: {...album, translations}, success: true}
     }),
   )
 

@@ -26,12 +26,16 @@ interface AlbumCreated {
   readonly status: 'created'
 }
 
+interface AlbumCreationConflicted {
+  readonly status: 'conflicted'
+}
+
 interface AlbumRejected {
   readonly detail: string
   readonly status: 'rejected'
 }
 
-export type CreateAlbumActionResult = AlbumCreated | AlbumRejected
+export type CreateAlbumActionResult = AlbumCreated | AlbumCreationConflicted | AlbumRejected
 
 interface TrackCreated {
   readonly status: 'created'
@@ -87,8 +91,9 @@ const runCreateAlbum = async (values: FormValues): Promise<CreateAlbumActionResu
   const coverFile = coverValue instanceof File && coverValue.size > 0 ? coverValue : null
 
   try {
-    const albumId = await albumCreationServices.createAlbum(createAlbumDraft(values), coverFile)
-    return {albumId, status: 'created'}
+    const result = await albumCreationServices.createAlbum(createAlbumDraft(values), coverFile)
+
+    return result.success ? {albumId: result.albumId, status: 'created'} : {status: 'conflicted'}
   } catch (error: unknown) {
     return {detail: getErrorDetail(error, '앨범을 저장하지 못했습니다.'), status: 'rejected'}
   }

@@ -19,6 +19,7 @@ import {validateAlbumCover} from './cover-upload'
 
 const getAlbumDraftStorage = () => import('./album-draft-storage')
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
+const COVER_SELECTION_ERROR = '커버 이미지를 선택하지 못했습니다.'
 
 type UseAlbumDraftProps = AlbumCreationCallbacks
 
@@ -233,6 +234,7 @@ const createDraftRestorationBarrier = (): DraftRestorationBarrier => {
 
 interface AlbumCreationId {
   readonly get: () => string
+  readonly renew: () => void
   readonly set: Setter<string | null>
 }
 
@@ -250,6 +252,7 @@ const useAlbumCreationId = (): AlbumCreationId => {
       setAlbumId(nextAlbumId)
       return nextAlbumId
     },
+    renew: () => setAlbumId(crypto.randomUUID()),
     set: setAlbumId,
   }
 }
@@ -354,7 +357,7 @@ const createAlbumThroughAction = async (
   clearSubmission: () => void,
   draft: AlbumDraftData,
   coverFile: File | null,
-): Promise<string> => {
+): ReturnType<AlbumCreationServices['createAlbum']> => {
   const values = new FormData()
   values.set('albumId', draft.albumId ?? '')
   values.set('coverDraftId', draft.coverDraftId ?? '')
@@ -374,7 +377,9 @@ const createAlbumThroughAction = async (
     throw new Error(result.detail)
   }
 
-  return result.albumId
+  return result.status === 'created'
+    ? {albumId: result.albumId, success: true}
+    : {code: 'album_creation_payload_mismatch', success: false}
 }
 
 const createActionAlbumCreationServices = (
@@ -468,6 +473,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverFile: preparedCoverFile,
     getDraftData,
     persistDraft: draftPersistence.persist,
+    renewAlbumId: albumCreationId.renew,
     services: createActionAlbumCreationServices(albumAction),
     setAlbumId: albumCreationId.set,
     setCoverDraftId,
@@ -530,9 +536,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
       )
     } catch (error) {
       input.value = ''
-      props.setMessage(
-        error instanceof Error ? error.message : '커버 이미지를 선택하지 못했습니다.',
-      )
+      props.setMessage(error instanceof Error ? error.message : COVER_SELECTION_ERROR)
     } finally {
       if (preparationId === coverPreparationId) {
         setIsProcessingCover(false)

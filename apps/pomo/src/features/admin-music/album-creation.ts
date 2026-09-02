@@ -8,8 +8,23 @@ import {
 
 export interface AlbumCreationServices {
   readonly clearDraft: (coverDraftId: string | null) => Promise<boolean>
-  readonly createAlbum: (draft: AlbumDraftData, coverFile: File | null) => Promise<string>
+  readonly createAlbum: (
+    draft: AlbumDraftData,
+    coverFile: File | null,
+  ) => Promise<AlbumCreationResult>
 }
+
+interface AlbumCreationPayloadMismatch {
+  readonly code: 'album_creation_payload_mismatch'
+  readonly success: false
+}
+
+interface AlbumCreationSuccess {
+  readonly albumId: string
+  readonly success: true
+}
+
+export type AlbumCreationResult = AlbumCreationPayloadMismatch | AlbumCreationSuccess
 
 export interface AlbumCreationCallbacks {
   readonly onAlbumCreated?: (albumId: string) => void
@@ -23,6 +38,7 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly getCoverFile: () => File | null
   readonly getDraftData: () => AlbumDraftData
   readonly persistDraft: () => void
+  readonly renewAlbumId: () => void
   readonly services: AlbumCreationServices
   readonly setAlbumId: Setter<string | null>
   readonly setCoverDraftId: Setter<string | null>
@@ -64,6 +80,25 @@ const refreshAfterAlbumCreation = async (
   )
 }
 
+const recoverFromPayloadMismatch = async (
+  options: CreateAlbumSubmitHandlerOptions,
+): Promise<void> => {
+  options.renewAlbumId()
+  options.persistDraft()
+  await options.waitForDraftPersistence()
+
+  try {
+    await options.refreshCatalog()
+    options.setMessage(
+      '이전 요청에서 앨범이 이미 만들어졌습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했습니다. 목록에서 기존 앨범을 확인한 뒤 필요하면 다시 저장해 주세요.',
+    )
+  } catch {
+    options.setMessage(
+      '이전 요청에서 앨범이 이미 만들어졌지만 목록을 새로고침하지 못했습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했으니 페이지를 새로고침한 뒤 확인해 주세요.',
+    )
+  }
+}
+
 export const createAlbumSubmitHandler = (
   options: CreateAlbumSubmitHandlerOptions,
 ): JSX.EventHandler<HTMLFormElement, SubmitEvent> =>
@@ -78,7 +113,19 @@ export const createAlbumSubmitHandler = (
     try {
       options.persistDraft()
       await options.waitForDraftPersistence()
-      albumId = await options.services.createAlbum(options.getDraftData(), options.getCoverFile())
+      const result = await options.services.createAlbum(
+        options.getDraftData(),
+        options.getCoverFile(),
+      )
+
+      if (!result.success) {
+        await recoverFromPayloadMismatch(options)
+        options.setIsSavingAlbum(false)
+        return
+      }
+
+      const {albumId: createdAlbumId} = result
+      albumId = createdAlbumId
     } catch (error) {
       options.setMessage(error instanceof Error ? error.message : '앨범을 저장하지 못했습니다.')
       options.setIsSavingAlbum(false)

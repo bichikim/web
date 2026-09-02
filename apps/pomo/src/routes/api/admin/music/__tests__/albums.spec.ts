@@ -5,7 +5,7 @@ const repositoryMocks = vi.hoisted(() => ({createAlbum: vi.fn()}))
 const storageMocks = vi.hoisted(() => ({isManagedAlbumCoverUrl: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/album-creation-repository', () => repositoryMocks)
 vi.mock('src/server/music/cover-upload', () => storageMocks)
 
 import {POST} from '../albums'
@@ -236,6 +236,18 @@ describe('admin music album route', () => {
 
     expect(response.status).toBe(400)
     await expect(response.json()).resolves.toEqual({error: 'cover_reservation_invalid'})
+  })
+
+  it('should reject a retried creation ID when its payload no longer matches', async () => {
+    repositoryMocks.createAlbum.mockResolvedValue({
+      code: 'album_creation_payload_mismatch',
+      success: false,
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({error: 'album_creation_payload_mismatch'})
   })
 
   it('should reject a managed cover URL without a reservation before writing', async () => {

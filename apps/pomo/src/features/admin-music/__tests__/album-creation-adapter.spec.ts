@@ -52,7 +52,10 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('albumCreationServices', () => {
   it('should normalize configured album fields without uploading a cover', async () => {
-    await expect(albumCreationServices.createAlbum(createDraft(), null)).resolves.toBe(ALBUM_ID)
+    await expect(albumCreationServices.createAlbum(createDraft(), null)).resolves.toEqual({
+      albumId: ALBUM_ID,
+      success: true,
+    })
 
     expect(coverMocks.uploadAlbumCover).not.toHaveBeenCalled()
     expect(fetch).toHaveBeenCalledWith('/api/admin/music/albums', {
@@ -99,6 +102,17 @@ describe('albumCreationServices', () => {
     await expect(albumCreationServices.createAlbum(createDraft(), null)).rejects.toThrow(
       '저장하지 못했습니다. 입력값과 로그인 상태를 확인해 주세요.',
     )
+  })
+
+  it('should return a recoverable result for a creation payload conflict', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({error: 'album_creation_payload_mismatch'}, {status: 409}),
+    )
+
+    await expect(albumCreationServices.createAlbum(createDraft(), null)).resolves.toEqual({
+      code: 'album_creation_payload_mismatch',
+      success: false,
+    })
   })
 
   it('should clear the stored draft and convert storage failures to false', async () => {

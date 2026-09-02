@@ -1,0 +1,1 @@
+ALTER TABLE "music_albums" ADD COLUMN "cover_draft_id" uuid;

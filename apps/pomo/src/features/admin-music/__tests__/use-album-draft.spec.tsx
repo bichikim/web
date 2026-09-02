@@ -41,6 +41,7 @@ vi.mock('../cover-upload', () => ({
 const VALID_COVER = new File(['source'], 'source.png', {type: 'image/png'})
 const PREPARED_COVER = new File(['prepared'], 'cover.webp', {type: 'image/webp'})
 const COVER_DRAFT_ID = '00000000-0000-4000-8000-000000000001'
+const RENEWED_ALBUM_ID = '00000000-0000-4000-8000-000000000002'
 
 const createTranslations = (): AlbumDraftTranslations => ({
   en: {description: '', title: ''},
@@ -533,6 +534,35 @@ describe('album creation', () => {
       .mocked(fetch)
       .mock.calls.map((call) => JSON.parse(String(call[1]?.body)).id as unknown)
     expect(requestIds).toEqual([COVER_DRAFT_ID, COVER_DRAFT_ID])
+    cleanup()
+  })
+
+  it('should renew the album ID after a creation payload conflict', async () => {
+    vi.mocked(crypto.randomUUID)
+      .mockReturnValueOnce(COVER_DRAFT_ID)
+      .mockReturnValue(RENEWED_ALBUM_ID)
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        Response.json({error: 'album_creation_payload_mismatch'}, {status: 409}),
+      )
+      .mockResolvedValueOnce(
+        Response.json({id: RENEWED_ALBUM_ID}, {headers: {'Content-Type': 'application/json'}}),
+      )
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+    await waitForRestoration(result)
+
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    await waitFor(() =>
+      expect(setMessage).toHaveBeenLastCalledWith(
+        '이전 요청에서 앨범이 이미 만들어졌습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했습니다. 목록에서 기존 앨범을 확인한 뒤 필요하면 다시 저장해 주세요.',
+      ),
+    )
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+
+    const requestIds = vi
+      .mocked(fetch)
+      .mock.calls.map((call) => JSON.parse(String(call[1]?.body)).id as unknown)
+    expect(requestIds).toEqual([COVER_DRAFT_ID, RENEWED_ALBUM_ID])
     cleanup()
   })
 })

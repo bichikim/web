@@ -137,6 +137,21 @@ test.describe('client action workflows', () => {
     expect(actionUrls).toEqual([])
   })
 
+  test('should preserve an album creation conflict in the browser action result', async ({
+    page,
+  }) => {
+    await page.route(`${FIXTURE_ORIGIN}/api/admin/music/albums`, (route) =>
+      route.fulfill(jsonResponse({error: 'album_creation_payload_mismatch'}, 409)),
+    )
+    await openHydratedFixture(page)
+
+    await page.getByRole('button', {name: 'Create album'}).click()
+
+    await expect(page.getByTestId('admin-result')).toHaveText(
+      JSON.stringify({status: 'conflicted'}),
+    )
+  })
+
   test('should preserve an ambiguous track and track concurrent removals independently', async ({
     page,
   }) => {

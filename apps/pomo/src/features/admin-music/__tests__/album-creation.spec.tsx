@@ -35,7 +35,7 @@ const createSubmitEvent = () => {
 const createOptions = () => {
   const services: AlbumCreationServices = {
     clearDraft: vi.fn().mockResolvedValue(true),
-    createAlbum: vi.fn().mockResolvedValue(ALBUM_ID),
+    createAlbum: vi.fn().mockResolvedValue({albumId: ALBUM_ID, success: true}),
   }
   const options: CreateAlbumSubmitHandlerOptions = {
     clearPreparedCover: vi.fn(),
@@ -45,6 +45,7 @@ const createOptions = () => {
     onAlbumCreated: vi.fn(),
     persistDraft: vi.fn(),
     refreshCatalog: vi.fn().mockResolvedValue(undefined),
+    renewAlbumId: vi.fn(),
     services,
     setAlbumId: vi.fn(),
     setCoverDraftId: vi.fn(),
@@ -70,7 +71,7 @@ describe('createAlbumSubmitHandler', () => {
     })
     vi.mocked(services.createAlbum).mockImplementation(async () => {
       operations.push('create')
-      return ALBUM_ID
+      return {albumId: ALBUM_ID, success: true}
     })
     const {event, preventDefault, reset} = createSubmitEvent()
 
@@ -111,6 +112,42 @@ describe('createAlbumSubmitHandler', () => {
 
     expect(options.setMessage).toHaveBeenLastCalledWith('앨범을 저장하지 못했습니다.')
   })
+
+  it.each([
+    {
+      message:
+        '이전 요청에서 앨범이 이미 만들어졌습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했습니다. 목록에서 기존 앨범을 확인한 뒤 필요하면 다시 저장해 주세요.',
+      refreshCatalog: true,
+    },
+    {
+      message:
+        '이전 요청에서 앨범이 이미 만들어졌지만 목록을 새로고침하지 못했습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했으니 페이지를 새로고침한 뒤 확인해 주세요.',
+      refreshCatalog: false,
+    },
+  ])(
+    'should retain the draft with a new creation ID when conflict refresh=$refreshCatalog',
+    async ({message, refreshCatalog}) => {
+      const {options, services} = createOptions()
+      vi.mocked(services.createAlbum).mockResolvedValue({
+        code: 'album_creation_payload_mismatch',
+        success: false,
+      })
+      if (!refreshCatalog) {
+        vi.mocked(options.refreshCatalog).mockRejectedValue(new Error('network unavailable'))
+      }
+      const {event, reset} = createSubmitEvent()
+
+      await createAlbumSubmitHandler(options)(event)
+
+      expect(reset).not.toHaveBeenCalled()
+      expect(options.renewAlbumId).toHaveBeenCalledOnce()
+      expect(options.persistDraft).toHaveBeenCalledTimes(2)
+      expect(options.waitForDraftPersistence).toHaveBeenCalledTimes(2)
+      expect(options.refreshCatalog).toHaveBeenCalledOnce()
+      expect(options.setMessage).toHaveBeenLastCalledWith(message)
+      expect(options.setIsSavingAlbum).toHaveBeenLastCalledWith(false)
+    },
+  )
 
   it.each([
     {
