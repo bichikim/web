@@ -50,6 +50,7 @@
     "@unocss/reset": "catalog:",
     "@vercel/functions": "^3.9.3",
     "@winter-love/desktop-surface": "workspace:*",
+    "@winter-love/solid-components": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "aws4fetch": "1.0.20",

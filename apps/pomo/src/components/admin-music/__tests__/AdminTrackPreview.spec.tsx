@@ -59,7 +59,7 @@ describe('AdminTrackPreview', () => {
   it('should use fallback labels and clear an earlier error when audio becomes playable', async () => {
     const result = render(() => <AdminTrackPreview trackId={TRACK_ID} />)
 
-    fireEvent.click(screen.getByRole('button', {name: '수록곡 미리듣기'}))
+    fireEvent.click(screen.getByRole('button', {name: '수록곡 미리 듣기'}))
     await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
     const audio = result.container.querySelector('audio')
 
@@ -67,15 +67,9 @@ describe('AdminTrackPreview', () => {
       throw new Error('관리자 미리듣기 오디오를 찾지 못했습니다.')
     }
 
-    expect(result.container.querySelector('media-play-button')?.getAttribute('aria-label')).toBe(
-      '수록곡 재생 또는 일시정지',
-    )
-    expect(result.container.querySelector('media-time-range')?.getAttribute('aria-label')).toBe(
-      '수록곡 재생 위치',
-    )
-    expect(result.container.querySelector('media-mute-button')?.getAttribute('aria-label')).toBe(
-      '수록곡 음소거',
-    )
+    expect(screen.getByRole('button', {name: '수록곡 재생'})).toBeDefined()
+    expect(screen.getByRole('slider', {name: '수록곡 재생 위치'})).toBeDefined()
+    expect(screen.getByRole('button', {name: '수록곡 음소거'})).toBeDefined()
 
     fireEvent(audio, new Event('canplay'))
     fireEvent(audio, new Event('play'))
@@ -95,7 +89,7 @@ describe('AdminTrackPreview', () => {
     }
     render(() => <AdminTrackPreview title="첫 곡" trackId={TRACK_ID} />)
 
-    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리듣기'}))
+    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
     await waitFor(() => expect(startPlayback).toHaveBeenCalledOnce())
 
     expect(screen.queryByRole('status')).toBeNull()
@@ -105,22 +99,22 @@ describe('AdminTrackPreview', () => {
     const result = render(() => <AdminTrackPreview title="첫 곡" trackId={TRACK_ID} />)
 
     expect(result.container.querySelector('audio')).toBeNull()
-    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리듣기'}))
+    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
 
     await waitFor(() => expect(result.container.querySelector('audio')?.src).toBe(PLAYBACK_URL))
     expect(fetch).toHaveBeenCalledWith(`/api/admin/music/tracks/${TRACK_ID}/playback`)
     expect(HTMLMediaElement.prototype.load).toHaveBeenCalled()
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled()
-    expect(result.container.querySelector('media-time-range')).toBeTruthy()
+    expect(screen.getByRole('slider', {name: '첫 곡 재생 위치'})).toBeDefined()
   })
 
   it('should identify the active player and pause it when another track starts', async () => {
-    const onPlay = vi.fn()
-    const [active, setActive] = createSignal(true)
+    const [active, setActive] = createSignal(false)
+    const onPlay = vi.fn(() => setActive(true))
     const result = render(() => (
       <AdminTrackPreview active={active()} onPlay={onPlay} title="첫 곡" trackId={TRACK_ID} />
     ))
-    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리듣기'}))
+    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
     await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
     const audio = result.container.querySelector('audio')
 
@@ -130,6 +124,7 @@ describe('AdminTrackPreview', () => {
 
     fireEvent(audio, new Event('play'))
     expect(onPlay).toHaveBeenCalledOnce()
+    expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled()
 
     setActive(false)
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled()
@@ -139,7 +134,7 @@ describe('AdminTrackPreview', () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, {status: 503}))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     render(() => <AdminTrackPreview title="첫 곡" trackId={TRACK_ID} />)
-    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리듣기'}))
+    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
 
     await waitFor(() =>
       expect(screen.getByRole('status').textContent).toContain('미리듣기를 불러오지 못했습니다.'),
@@ -152,16 +147,27 @@ describe('AdminTrackPreview', () => {
     )
     const result = render(() => <AdminTrackPreview title="첫 곡" trackId={TRACK_ID} />)
 
-    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리듣기'}))
+    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
 
     await waitFor(() => expect(result.container.querySelector('audio')?.src).toBe(PLAYBACK_URL))
     expect(screen.queryByRole('status')).toBeNull()
-    expect(result.container.querySelector('media-play-button')).toBeTruthy()
+    expect(screen.getByRole('button', {name: '첫 곡 재생'})).toBeDefined()
   })
 
   it('should discard a failed playback URL and allow another attempt', async () => {
-    const result = render(() => <AdminTrackPreview title="첫 곡" trackId={TRACK_ID} />)
-    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리듣기'}))
+    vi.mocked(fetch).mockImplementation(async () =>
+      Response.json({expiresAt: '2026-08-23T00:15:00.000Z', url: PLAYBACK_URL}),
+    )
+    const [active, setActive] = createSignal(false)
+    const result = render(() => (
+      <AdminTrackPreview
+        active={active()}
+        onPlay={() => setActive(true)}
+        title="첫 곡"
+        trackId={TRACK_ID}
+      />
+    ))
+    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
     await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
     const audio = result.container.querySelector('audio')
 
@@ -169,10 +175,18 @@ describe('AdminTrackPreview', () => {
       throw new Error('관리자 미리듣기 오디오를 찾지 못했습니다.')
     }
 
+    fireEvent.play(audio)
+    setActive(false)
     fireEvent.error(audio)
 
     expect(result.container.querySelector('audio')).toBeNull()
-    expect(screen.getByRole('button', {name: '첫 곡 미리듣기'})).toBeTruthy()
+    expect(screen.getByRole('button', {name: '첫 곡 미리 듣기'})).toBeTruthy()
     expect(screen.getByRole('status').textContent).toContain('다시 시도해 주세요.')
+
+    vi.mocked(HTMLMediaElement.prototype.pause).mockClear()
+    fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
+    await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
+
+    expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled()
   })
 })

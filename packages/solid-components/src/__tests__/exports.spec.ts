@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'vitest'
+import {AudioPlayer} from '../audio-player'
 import {Checkbox} from '../checkbox'
 import {BAR_PERCENT, PERCENT_VAR, POSITION_VAR, SIZE_VAR} from '../css-var'
 import {Dialog} from '../dialog'
@@ -10,6 +11,7 @@ import {getId} from '../utils'
 
 describe('component entrypoints', () => {
   it('should expose each composed component family', () => {
+    expect(AudioPlayer).toMatchObject({Media: expect.any(Function), Root: expect.any(Function)})
     expect(Checkbox).toMatchObject({Body: expect.any(Function), Provider: expect.any(Function)})
     expect(Dialog).toMatchObject({Overlay: expect.any(Function), Provider: expect.any(Function)})
     expect(DragButton).toMatchObject({Body: expect.any(Function), Provider: expect.any(Function)})
