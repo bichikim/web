@@ -95,6 +95,7 @@ export const createDialogueVolumeDuckingSettingsRepository = (
 ): DialogueVolumeDuckingSettingsRepository => {
   const {storage} = options
   let preferenceWriteRevision = 0
+  let nativeWriteQueue = Promise.resolve()
 
   const writeWebSettings = (settings: DialogueVolumeDuckingSettings) => {
     try {
@@ -134,6 +135,12 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     return legacySettings === null ? null : migrateLegacySettings(legacySettings)
   }
 
+  const enqueueNativeWrite = (settings: DialogueVolumeDuckingSettings) => {
+    const nativeWrite = nativeWriteQueue.then(() => storage.writeNative(STORAGE_KEY, settings))
+    nativeWriteQueue = nativeWrite.catch(() => undefined)
+    return nativeWrite
+  }
+
   const read = async (): Promise<DialogueVolumeDuckingSettings> => {
     const initialWriteRevision = preferenceWriteRevision
 
@@ -142,16 +149,19 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     }
 
     try {
+      await nativeWriteQueue
       const nativeSettings = await readNativeSettings()
 
+      if (preferenceWriteRevision !== initialWriteRevision) {
+        return read()
+      }
+
       if (nativeSettings === null) {
+        writeWebSettings(DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
         return DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
       }
 
-      if (preferenceWriteRevision === initialWriteRevision) {
-        writeWebSettings(nativeSettings)
-      }
-
+      writeWebSettings(nativeSettings)
       return nativeSettings
     } catch (error: unknown) {
       throw new Error('Failed to read dialogue volume ducking settings.', {cause: error})
@@ -174,7 +184,7 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     }
 
     try {
-      await storage.writeNative(STORAGE_KEY, snapshot)
+      await enqueueNativeWrite(snapshot)
     } catch (error: unknown) {
       throw new Error('Failed to persist dialogue volume ducking settings.', {
         cause: error,

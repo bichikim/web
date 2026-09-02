@@ -11,6 +11,7 @@ import {
   createFeedDialogueRepository,
   type FailedFeedDialogueJob,
   type FailedFeedItemRecord,
+  type GeneratingFeedDialogueJob,
 } from '../feed-dialogue-repository'
 
 const databaseModuleMocks = vi.hoisted(() => ({
@@ -148,19 +149,16 @@ describe('feed dialogue repository writes', () => {
     expect(database.transaction).toHaveBeenCalledOnce()
   })
 
-  it('should queue and update a job together with its item when provided', async () => {
+  it('should queue a job together with its item transactionally', async () => {
     const repository = createFeedDialogueRepository()
     const item = createItem()
     const queuedJob = createJob()
-    const generatingJob = createJob({status: 'generating', updatedAt: UPDATED_AT})
 
     await repository.queue(queuedJob, item)
-    await repository.updateJob(generatingJob, createItem({status: 'ready'}))
 
-    expect(feedDialogueJobs.put).toHaveBeenNthCalledWith(1, queuedJob)
-    expect(feedDialogueJobs.put).toHaveBeenNthCalledWith(2, generatingJob)
-    expect(feedItems.put).toHaveBeenCalledTimes(2)
-    expect(database.transaction).toHaveBeenCalledTimes(2)
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(queuedJob)
+    expect(feedItems.put).toHaveBeenCalledWith(item)
+    expect(database.transaction).toHaveBeenCalledOnce()
   })
 
   it('should fail only a job that is still generating', async () => {
@@ -202,6 +200,26 @@ describe('feed dialogue repository writes', () => {
 
     expect(feedDialogueJobs.put).not.toHaveBeenCalled()
     expect(feedItems.put).not.toHaveBeenCalled()
+  })
+
+  it('should start only a job that is still queued', async () => {
+    const repository = createFeedDialogueRepository()
+    const generatingJob: GeneratingFeedDialogueJob = {
+      ...createJob(),
+      status: 'generating',
+      updatedAt: UPDATED_AT,
+    }
+    feedDialogueJobs.get
+      .mockResolvedValueOnce(createJob())
+      .mockResolvedValueOnce(createJob({status: 'interrupted'}))
+      .mockResolvedValueOnce(undefined)
+
+    await expect(repository.startJob(generatingJob)).resolves.toBe(true)
+    await expect(repository.startJob(generatingJob)).resolves.toBe(false)
+    await expect(repository.startJob(generatingJob)).resolves.toBe(false)
+
+    expect(feedDialogueJobs.put).toHaveBeenCalledOnce()
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(generatingJob)
   })
 
   it('should replace a dialogue without audio with a queued recovery job transactionally', async () => {
@@ -286,17 +304,6 @@ describe('feed dialogue repository writes', () => {
     expect(dialogues.delete).not.toHaveBeenCalled()
     expect(feedDialogueMetadata.delete).not.toHaveBeenCalled()
     expect(feedDialogueJobs.put).not.toHaveBeenCalled()
-  })
-
-  it('should update only the job when an item is omitted', async () => {
-    const repository = createFeedDialogueRepository()
-    const job = createJob({status: 'failed'})
-
-    await repository.updateJob(job)
-
-    expect(feedDialogueJobs.put).toHaveBeenCalledWith(job)
-    expect(feedItems.put).not.toHaveBeenCalled()
-    expect(database.transaction).not.toHaveBeenCalled()
   })
 
   it('should save and remove records and close the database', async () => {

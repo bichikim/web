@@ -78,7 +78,7 @@ const createFixture = () => {
     ),
     listItems: vi.fn<FeedGenerationRepository['listItems']>(async () => [createItem()]),
     listJobs: vi.fn<FeedGenerationRepository['listJobs']>(async () => [createJob()]),
-    updateJob: vi.fn<FeedGenerationRepository['updateJob']>(async () => undefined),
+    startJob: vi.fn<FeedGenerationRepository['startJob']>(async () => true),
   } satisfies FeedGenerationRepository
   const voiceClient = createVoiceClient()
   const runtime = {
@@ -154,6 +154,22 @@ it('should generate and persist a queued feed job through the controller boundar
   })
   expect(fixture.dialogueRepository.saveDialogue).toHaveBeenCalledOnce()
   expect(fixture.feedRepository.complete).toHaveBeenCalledOnce()
+})
+
+it('should preserve an interrupted job when cancel races generation start', async () => {
+  const fixture = createFixture()
+  const generationStart = Promise.withResolvers<boolean>()
+  const interruptedJob = {...createJob(), status: 'interrupted' as const}
+  fixture.feedRepository.startJob.mockReturnValue(generationStart.promise)
+  fixture.feedRepository.interruptUnfinishedJobs.mockResolvedValue([interruptedJob])
+  fixture.controller.schedule({jobIds: ['job-1']})
+  await vi.waitFor(() => expect(fixture.feedRepository.startJob).toHaveBeenCalledOnce())
+
+  await fixture.controller.cancel()
+  generationStart.resolve(false)
+
+  await vi.waitFor(() => expect(fixture.onRecovery).toHaveBeenCalledWith([interruptedJob]))
+  expect(fixture.runtime.isModelDownloaded).not.toHaveBeenCalled()
 })
 
 it('should cancel active generation and expose interrupted jobs for recovery', async () => {

@@ -15,7 +15,7 @@ const uploadMocks = vi.hoisted(() => ({
 const playbackMocks = vi.hoisted(() => ({requestAdminTrackPlaybackAccess: vi.fn()}))
 
 vi.mock('@solidjs/router', () => ({action: vi.fn((clientAction) => clientAction)}))
-vi.mock('../album-creation', () => albumMocks)
+vi.mock('../album-creation-adapter', () => ({albumCreationServices: albumMocks}))
 vi.mock('../commands', () => commandMocks)
 vi.mock('../track-creation', () => creationMocks)
 vi.mock('../track-upload', () => uploadMocks)
@@ -54,6 +54,7 @@ afterEach(() => {
 describe('form actions', () => {
   it('should convert album form values and preserve the cover upload workflow input', async () => {
     const values = new FormData()
+    values.set('albumId', '00000000-0000-4000-8000-000000000001')
     values.set('coverDraftId', 'cover-draft')
     values.set('coverFallback', 'music')
     values.set('coverImageUrl', ' https://images.example/cover.webp ')
@@ -67,6 +68,7 @@ describe('form actions', () => {
     })
     expect(albumMocks.createAlbum).toHaveBeenCalledWith(
       expect.objectContaining({
+        albumId: '00000000-0000-4000-8000-000000000001',
         coverDraftId: 'cover-draft',
         coverFallback: 'music',
         coverImageUrl: 'https://images.example/cover.webp',

@@ -2,79 +2,60 @@ import {createSignal} from 'solid-js'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {fn} from 'storybook/test'
 
-import type {PuppetParameter} from '../../player/document'
+import type {PuppetParameterValues} from '../../deformation'
+import {createDemoDocument} from '../../player'
 import '../story.css'
 import {EditorKeyformPanel} from './EditorKeyformPanel'
 
-const PARAMETERS: ReadonlyArray<PuppetParameter> = [
-  {
-    defaultValue: 0,
-    id: 'angle-x',
-    keyforms: [
-      {parts: [], value: -30},
-      {parts: [], value: 0},
-      {parts: [], value: 30},
-    ],
-    maximum: 30,
-    minimum: -30,
-    name: 'Angle X',
-    targetPartIds: ['face', 'hair-front'],
-  },
-  {
-    defaultValue: 0,
-    id: 'eye-open',
-    keyforms: [
-      {parts: [], value: 0},
-      {parts: [], value: 1},
-    ],
-    maximum: 1,
-    minimum: 0,
-    name: 'Eye Open',
-    targetPartIds: ['eye-left', 'eye-right'],
-  },
-]
+const DOCUMENT = createDemoDocument()
+const BINDINGS = DOCUMENT.parameterBindings ?? []
+const PARAMETERS = DOCUMENT.parameters ?? []
 
 const InteractivePanel = () => {
-  const [activeParameterId, setActiveParameterId] = createSignal('angle-x')
-  const [activeKeyformValue, setActiveKeyformValue] = createSignal<number | null>(0)
-  const [value, setValue] = createSignal(0)
+  const [activeBindingId, setActiveBindingId] = createSignal(BINDINGS[0]?.id)
+  const [activeKeyformValues, setActiveKeyformValues] = createSignal<PuppetParameterValues | null>([
+    0, 0,
+  ])
+  const [values, setValues] = createSignal<PuppetParameterValues>([0, 0])
 
   return (
     <EditorKeyformPanel
-      activeKeyformValue={activeKeyformValue()}
-      activeParameterId={activeParameterId()}
+      activeBindingId={activeBindingId()}
+      activeKeyformValues={activeKeyformValues()}
+      bindings={BINDINGS}
       parameters={PARAMETERS}
-      selectedPartIds={['face']}
-      targetPartIds={['face', 'hair-front']}
-      value={value()}
+      selectedPartIds={['mesh-preview']}
+      targetPartIds={['mesh-preview']}
+      values={values()}
+      onBindingDelete={fn()}
+      onBindingSelect={(bindingId) => {
+        setActiveBindingId(bindingId)
+        setActiveKeyformValues(null)
+      }}
       onKeyformAdd={fn()}
       onKeyformDelete={fn()}
-      onKeyformSelect={(parameterId, keyformValue) => {
-        setActiveParameterId(parameterId)
-        setActiveKeyformValue(keyformValue)
-        setValue(keyformValue)
+      onKeyformSelect={(bindingId, keyformValues) => {
+        setActiveBindingId(bindingId)
+        setActiveKeyformValues(keyformValues)
+        setValues(keyformValues)
       }}
       onParameterAdd={fn()}
-      onParameterDelete={fn()}
       onParameterNameChange={fn()}
-      onParameterSelect={(parameterId) => {
-        setActiveParameterId(parameterId)
-        setActiveKeyformValue(null)
-        const parameter = PARAMETERS.find((entry) => entry.id === parameterId)
-        setValue(parameter?.defaultValue ?? 0)
-      }}
       onSelectionConnect={fn()}
       onSelectionDisconnect={fn()}
-      onValueChange={setValue}
+      onTwoDimensionalParameterAdd={fn()}
+      onValueChange={setValues}
     />
   )
 }
 
 const meta = {
   args: {
+    bindings: BINDINGS,
     parameters: PARAMETERS,
   },
   argTypes: {
+    bindings: {control: false, table: {category: 'Props'}},
     parameters: {control: false, table: {category: 'Props'}},
   },
   component: EditorKeyformPanel,
@@ -92,9 +73,10 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Interactive: Story = {
+  args: {},
   render: () => <InteractivePanel />,
 }
 
 export const Empty: Story = {
-  args: {parameters: []},
+  args: {bindings: [], parameters: []},
 }

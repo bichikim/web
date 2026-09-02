@@ -46,6 +46,7 @@ const COVER_RETENTION_DAYS = 30
 const COVER_RETENTION_MILLISECONDS = COVER_RETENTION_DAYS * MILLISECONDS_PER_DAY
 const translationSchema = z.object({description: z.string(), title: z.string()})
 const albumDraftSchema = z.object({
+  albumId: z.string().uuid().optional(),
   coverDraftId: z.string().min(1).nullable().optional().default(null),
   coverFallback: z.enum(['lp', 'cd', 'music']),
   coverImageUrl: z.string(),

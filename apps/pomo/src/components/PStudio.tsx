@@ -9,7 +9,7 @@ import {
   supportsPSceneGyroscope,
   usePSceneStyle,
 } from '../features/focus-room-animation'
-import {usePEvents} from '../features/focus-room-dialogue'
+import {usePEvents} from '../features/focus-room-dialogue/event-context'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
   type PActivity,

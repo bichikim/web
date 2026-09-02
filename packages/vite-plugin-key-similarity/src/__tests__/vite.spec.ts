@@ -138,6 +138,24 @@ describe('Vite integration', () => {
     ).resolves.toBeDefined()
   })
 
+  it('should fail a build for a similar key in a computed method name', async () => {
+    const root = await createFixture()
+    await writeFile(
+      path.join(root, 'src/main.ts'),
+      [
+        `import {t} from './i18n'`,
+        `class Example {`,
+        `  [t('결제에 실패했습니다.')](t: string) { return t }`,
+        `}`,
+        `document.body.textContent = t('결제에 실패했습니다.') + String(Example)`,
+      ].join('\n'),
+    )
+
+    await expect(
+      build({configFile: false, logLevel: 'silent', plugins: [createPlugin(root)], root}),
+    ).rejects.toThrow('Similar key groups')
+  })
+
   it('should report an annotated call once with its effective comparison texts', async () => {
     const root = await createFixture()
     await writeFile(

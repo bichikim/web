@@ -55,6 +55,7 @@ import {
 } from '../album-draft-storage'
 
 const DRAFT = {
+  albumId: '00000000-0000-4000-8000-000000000002',
   coverDraftId: null,
   coverFallback: 'lp' as const,
   coverImageUrl: '',

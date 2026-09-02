@@ -1,7 +1,7 @@
 import {action} from '@solidjs/router'
 
 import {ALBUM_LOCALES, type AlbumDraftData} from './album-draft'
-import {createAlbum} from './album-creation'
+import {albumCreationServices} from './album-creation-adapter'
 import type {AlbumStatusAction} from './catalog'
 import {changeAlbumStatus, connectAlbumOffer} from './commands'
 import {createTrackWithAudio, removeTrack} from './track-creation'
@@ -66,6 +66,7 @@ const getErrorDetail = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback
 
 const createAlbumDraft = (values: FormValues): AlbumDraftData => ({
+  albumId: getString(values, 'albumId') || undefined,
   coverDraftId: getString(values, 'coverDraftId') || null,
   coverFallback: getString(values, 'coverFallback') as AlbumDraftData['coverFallback'],
   coverImageUrl: getString(values, 'coverImageUrl'),
@@ -86,7 +87,7 @@ const runCreateAlbum = async (values: FormValues): Promise<CreateAlbumActionResu
   const coverFile = coverValue instanceof File && coverValue.size > 0 ? coverValue : null
 
   try {
-    const albumId = await createAlbum(createAlbumDraft(values), coverFile)
+    const albumId = await albumCreationServices.createAlbum(createAlbumDraft(values), coverFile)
     return {albumId, status: 'created'}
   } catch (error: unknown) {
     return {detail: getErrorDetail(error, '앨범을 저장하지 못했습니다.'), status: 'rejected'}

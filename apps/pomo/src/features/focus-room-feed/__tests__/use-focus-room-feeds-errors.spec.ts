@@ -56,7 +56,7 @@ const repositoryMocks = vi.hoisted(() => {
     markListened: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
-    updateJob: vi.fn().mockResolvedValue(undefined),
+    startJob: vi.fn().mockResolvedValue(true),
   }
 
   return {
@@ -116,7 +116,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
-  repositoryMocks.feedRepository.updateJob.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
   repositoryMocks.listConnections.mockReturnValue([])
   lifecycleMocks.deleteExpiredFeedDialogues.mockResolvedValue(0)
   lifecycleMocks.discardFeedJobs.mockResolvedValue([])
@@ -466,7 +466,6 @@ it('should stop deferred generation cleanly after disposal', async () => {
   await generation.promise
 
   expect(client.cancelGeneration).toHaveBeenCalled()
-  expect(repositoryMocks.feedRepository.updateJob).not.toHaveBeenCalled()
 })
 
 it('should ignore a missing scheduled queue entry', async () => {

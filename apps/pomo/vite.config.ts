@@ -98,6 +98,27 @@ const PRETENDARD_STYLESHEET_PATH = `${PRETENDARD_BASE_PATH}/variable-subset.css`
 const SCRIBBLE_ICON_SET_PATH = fileURLToPath(
   new URL('./scripts/unocss/scribble.json', import.meta.url),
 )
+// 첫 홈 로드나 늦은 dynamic import에서 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
+const OPTIMIZE_DEPS_INCLUDE = [
+  '@apps-in-toss/web-framework',
+  '@huggingface/transformers',
+  '@inlang/paraglide-js/urlpattern-polyfill',
+  '@tauri-apps/api/event',
+  '@tauri-apps/api/window',
+  'class-variance-authority',
+  'dexie',
+  'ofetch',
+  'pixi.js',
+  'wlipsync',
+  'zod',
+] as const
+const DEV_CLIENT_WARMUP_FILES = [
+  './src/components/PHomePage.tsx',
+  './src/components/PStudio.tsx',
+  './src/components/p-studio/SceneCanvas.tsx',
+  './src/entry-client.tsx',
+  './src/routes/index.tsx',
+] as const
 const SHARED_STATIC_ROUTES = [
   '/',
   SERVICE_POLICY_PATHS.appsInToss.privacy,
@@ -278,8 +299,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       ...(IS_STATIC_BUILD && command === 'build' ? {preset: 'static'} : {}),
     },
     optimizeDeps: {
-      // Gemma Worker가 처음 로드될 때 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
-      include: ['@huggingface/transformers'],
+      include: [...OPTIMIZE_DEPS_INCLUDE],
     },
     plugins: [
       ...(USES_APPS_IN_TOSS_DEVTOOLS
@@ -288,6 +308,10 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       paraglideVitePlugin({
         emitTsDeclarations: true,
         ...PARAGLIDE_CONFIG.common,
+        outputStructure:
+          command === 'serve'
+            ? PARAGLIDE_CONFIG.development.outputStructure
+            : PARAGLIDE_CONFIG.common.outputStructure,
         routeStrategies: IS_APPS_IN_TOSS_RUNTIME
           ? PARAGLIDE_CONFIG.appsInToss.routeStrategies
           : PARAGLIDE_CONFIG.web.routeStrategies,
@@ -311,6 +335,9 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       tsconfigPaths: true,
     },
     server: {
+      warmup: {
+        clientFiles: [...DEV_CLIENT_WARMUP_FILES],
+      },
       watch: {
         ignored: [ASSET_LIBRARY_PATTERN, E2E_FIXTURES_PATTERN],
       },

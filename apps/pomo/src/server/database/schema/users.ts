@@ -40,6 +40,7 @@ export const pomoIdentities = pgTable(
 export const pomoAppSessions = pgTable(
   'pomo_app_sessions',
   {
+    activatedAt: timestamp({withTimezone: true}).defaultNow(),
     createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),
     expiresAt: timestamp({withTimezone: true}).notNull(),
     id: uuid().primaryKey().defaultRandom(),

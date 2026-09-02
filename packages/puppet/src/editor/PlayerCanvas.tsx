@@ -1,6 +1,7 @@
 import {debounce} from 'es-toolkit/function'
 import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
+import type {PuppetParameterValueMap} from '../deformation'
 import {createPlayer, type Player, type PlayerFrame, type PuppetDocument} from '../player'
 import {markPreparedPuppetDocument} from '../player/internal/prepared-document'
 import {EDITOR_VIEWPORT_PADDING} from './internal/viewport'
@@ -15,6 +16,7 @@ export interface PlayerCanvasProps {
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
+  readonly parameterValues?: PuppetParameterValueMap
 }
 
 export const PlayerCanvas = (props: PlayerCanvasProps) => {
@@ -41,6 +43,11 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       resizeObserver.disconnect()
       resizePlayer.cancel()
     })
+  })
+
+  createEffect(() => {
+    const currentParameterValues = props.parameterValues
+    player()?.setParameterValues(currentParameterValues ?? {})
   })
 
   createEffect(() => {
@@ -85,6 +92,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       canvas: canvasElement,
       document: preparedDocument,
       onFrame: notifyFrame,
+      parameterValues: untrack(() => props.parameterValues),
       resizeTo: hostElement,
       viewportPadding: EDITOR_VIEWPORT_PADDING,
     })

@@ -31,20 +31,30 @@ const [signOutPending, setSignOutPending] = createSignal(false)
 const [signOutResult, setSignOutResult] = createSignal<SignOutResult | undefined>()
 const completeLinkSubmission = {pending: false, result: undefined}
 const magicLinkSubmission = {
+  clear: vi.fn(),
+  error: undefined,
+  input: [],
   get pending() {
     return magicLinkPending()
   },
   get result() {
     return magicLinkResult()
   },
+  retry: vi.fn(),
+  url: 'https://action/request-account-magic-link',
 }
 const signOutSubmission = {
+  clear: vi.fn(),
+  error: undefined,
+  input: [],
   get pending() {
     return signOutPending()
   },
   get result() {
     return signOutResult()
   },
+  retry: vi.fn(),
+  url: 'https://action/sign-out-account-session',
 }
 const requestMagicLink = vi.fn()
 const signOut = vi.fn()

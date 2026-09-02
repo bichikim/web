@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
+import {batch, createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
 import {
   createDemoDocument,
@@ -8,17 +8,20 @@ import {
   type PuppetDocument,
   serializeDocument,
 } from '../player'
+import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
 import {importPng, type ImportPngErrorCode} from './import-png'
+import {AutoMeshDialog} from './internal/AutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
 import {EditorKeyformPanel} from './internal/EditorKeyformPanel'
 import {EditorLayerPanel} from './internal/EditorLayerPanel'
-import {getDocumentParameters} from './internal/parameter-keyforms'
+import {getDocumentParameterBindings, getDocumentParameters} from './internal/parameter-keyforms'
 import {getSceneNode, getSceneSelectionPartIds, type SceneSelection} from './internal/scene-graph'
 import {EditorPanelLayout} from './internal/EditorPanelLayout'
 import {EditorTimeline} from './internal/EditorTimeline'
 import {EditorToolbar} from './internal/EditorToolbar'
 import {MeshEditor} from './MeshEditor'
 import {type ParameterEditorResult, useParameterEditor} from './use-parameter-editor'
+import {useAutoMesh, type UseAutoMeshResult} from './use-auto-mesh'
 import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
 import editorStyle from './style.css?inline'
 
@@ -138,8 +141,8 @@ const createSceneSelection = (partId: string | null): SceneSelection => ({
 })
 
 interface EditorViewportProps {
-  readonly activeKeyformValue?: number | null
-  readonly activeParameterId?: string
+  readonly activeBindingId?: string
+  readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activePartId?: string
   readonly activeVertexIndex?: number | null
   readonly currentTime?: number
@@ -152,8 +155,8 @@ interface EditorViewportProps {
   readonly onTimeChange?: (time: number) => void
   readonly onVertexEditStart?: () => void
   readonly onVertexSelect?: (vertexIndex: number | null) => void
-  readonly parameterValue?: number
-  readonly previewDocument?: PuppetDocument
+  readonly parameterValues?: PuppetParameterValues
+  readonly parameterValueMap?: PuppetParameterValueMap
   readonly selectedPartIds?: ReadonlyArray<string>
 }
 
@@ -166,14 +169,15 @@ const EditorViewport = (props: EditorViewportProps) => (
   >
     <div class="viewport">
       <PlayerCanvas
-        document={props.previewDocument ?? props.document}
+        document={props.document}
         onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
         onPlayerChange={props.onPlayerChange}
         onStatusChange={props.onStatusChange}
+        parameterValues={props.parameterValueMap}
       />
       <MeshEditor
-        activeKeyformValue={props.activeKeyformValue}
-        activeParameterId={props.activeParameterId}
+        activeBindingId={props.activeBindingId}
+        activeKeyformValues={props.activeKeyformValues}
         activePartId={props.activePartId}
         document={props.document}
         editMode={props.editMode}
@@ -182,7 +186,8 @@ const EditorViewport = (props: EditorViewportProps) => (
         onVertexEditStart={props.onVertexEditStart}
         onVertexSelect={props.onVertexSelect}
         previewTime={props.currentTime}
-        parameterValue={props.parameterValue}
+        parameterValues={props.parameterValues}
+        parameterValueMap={props.parameterValueMap}
         selectedPartIds={props.selectedPartIds}
         selectedVertexIndex={props.activeVertexIndex}
       />
@@ -198,32 +203,35 @@ interface EditorModelingKeyformPanelProps {
 
 const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => (
   <EditorKeyformPanel
-    activeKeyformValue={props.editor.activeKeyformValue()}
-    activeParameterId={props.editor.activeParameterId() ?? undefined}
+    activeBindingId={props.editor.activeBindingId() ?? undefined}
+    activeKeyformValues={props.editor.activeKeyformValues()}
+    bindings={getDocumentParameterBindings(props.document)}
     parameters={getDocumentParameters(props.document)}
+    parameterValueMap={props.editor.parameterValueMap()}
     selectedPartIds={props.selectedPartIds}
     targetPartIds={props.editor.activeTargetPartIds()}
-    value={props.editor.parameterValue()}
+    values={props.editor.parameterValues()}
     onKeyformAdd={props.editor.addKeyform}
     onKeyformDelete={props.editor.deleteKeyform}
-    onKeyformMove={(parameterId, value, nextValue) => {
-      props.editor.selectParameter(parameterId)
-      props.editor.moveKeyform(value, nextValue)
+    onKeyformMove={(bindingId, values, nextValues) => {
+      props.editor.selectBinding(bindingId)
+      props.editor.moveKeyform(values, nextValues)
     }}
-    onKeyformSelect={(parameterId, value) => {
-      props.editor.selectParameter(parameterId)
-      props.editor.selectKeyform(value)
+    onKeyformSelect={(bindingId, values) => {
+      props.editor.selectBinding(bindingId)
+      props.editor.selectKeyform(values)
     }}
+    onBindingDelete={props.editor.deleteParameter}
+    onBindingSelect={props.editor.selectBinding}
     onParameterAdd={props.editor.addParameter}
-    onParameterDelete={props.editor.deleteParameter}
-    onParameterNameChange={(parameterId, name) => {
-      props.editor.selectParameter(parameterId)
-      props.editor.renameParameter(name)
+    onParameterNameChange={(bindingId, parameterId, name) => {
+      props.editor.selectBinding(bindingId)
+      props.editor.renameParameter(parameterId, name)
     }}
-    onParameterSelect={props.editor.selectParameter}
     onSelectionConnect={props.editor.connectSelection}
     onSelectionDisconnect={props.editor.disconnectSelection}
-    onValueChange={props.editor.setParameterValue}
+    onTwoDimensionalParameterAdd={props.editor.addTwoDimensionalParameter}
+    onValueChange={props.editor.setParameterValues}
   />
 )
 
@@ -241,6 +249,64 @@ const EditorModelingPanel = (props: EditorModelingPanelProps) => (
       selectedPartIds={props.selectedPartIds}
     />
   </section>
+)
+
+interface EditorWorkspacePanelProps {
+  readonly activePartId: string | null
+  readonly activeVertexIndex: number | null
+  readonly currentTime: number
+  readonly document: PuppetDocument
+  readonly editor: ParameterEditorResult
+  readonly isPlaying: boolean
+  readonly onDocumentChange: (document: PuppetDocument) => void
+  readonly onPlaybackToggle?: () => void
+  readonly onSeek?: (time: number) => void
+  readonly onTargetSelect: (partId: string, vertexIndex: number) => void
+  readonly selectedPartIds: ReadonlyArray<string>
+  readonly workspace: 'animation' | 'modeling'
+}
+
+const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
+  <Show
+    when={props.workspace === 'modeling'}
+    fallback={
+      <EditorTimeline
+        activePartId={props.activePartId ?? undefined}
+        activeVertexIndex={props.activeVertexIndex}
+        currentTime={props.currentTime}
+        document={props.document}
+        isPlaying={props.isPlaying}
+        onDocumentChange={props.onDocumentChange}
+        onPlaybackToggle={props.onPlaybackToggle}
+        onSeek={props.onSeek}
+        onTargetSelect={props.onTargetSelect}
+      />
+    }
+  >
+    <EditorModelingPanel
+      document={props.document}
+      editor={props.editor}
+      selectedPartIds={props.selectedPartIds}
+    />
+  </Show>
+)
+
+interface EditorAutoMeshDialogProps {
+  readonly autoMesh: UseAutoMeshResult
+}
+
+const EditorAutoMeshDialog = (props: EditorAutoMeshDialogProps) => (
+  <Show when={props.autoMesh.isOpen()}>
+    <AutoMeshDialog
+      errorMessage={props.autoMesh.errorMessage() ?? undefined}
+      isOpen
+      onGenerate={props.autoMesh.generate}
+      onOpenChange={props.autoMesh.onOpenChange}
+      partName={props.autoMesh.target()?.id}
+      textureHeight={props.autoMesh.target()?.texture.height}
+      textureWidth={props.autoMesh.target()?.texture.width}
+    />
+  </Show>
 )
 
 interface UseEditorImportsOptions {
@@ -344,14 +410,28 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   })
   const resetEditorDocument = (document: PuppetDocument) => {
     const partId = document.parts[0]?.id ?? null
-    setSourceDocument(document)
-    setActivePartId(partId)
-    setLayerSelection(createSceneSelection(partId))
-    setActiveVertexIndex(null)
-    parameterEditor.reset(document)
+    batch(() => {
+      setSourceDocument(document)
+      setActivePartId(partId)
+      setLayerSelection(createSceneSelection(partId))
+      setActiveVertexIndex(null)
+      parameterEditor.reset(document)
+    })
   }
   const editorImports = useEditorImports({
     onDocumentChange: resetEditorDocument,
+    onNotice: setNotice,
+  })
+  const pausePlayback = () =>
+    pauseEditorPlayback({pause: () => setIsPlaying(false), player: player(), playing: isPlaying()})
+  const autoMesh = useAutoMesh({
+    activePartId,
+    document: sourceDocument,
+    onBeforeApply: pausePlayback,
+    onDocumentChange(document) {
+      setSourceDocument(document)
+      setActiveVertexIndex(null)
+    },
     onNotice: setNotice,
   })
 
@@ -372,9 +452,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     }
   }
 
-  const pausePlayback = () =>
-    pauseEditorPlayback({pause: () => setIsPlaying(false), player: player(), playing: isPlaying()})
-
   const handleTimelineDocumentChange = (document: PuppetDocument) => {
     pausePlayback()
     setSourceDocument(document)
@@ -385,32 +462,24 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       <style>{editorStyle}</style>
       <EditorPanelLayout
         bottom={
-          <Show
-            when={workspace() === 'modeling'}
-            fallback={
-              <EditorTimeline
-                activePartId={activePartId() ?? undefined}
-                activeVertexIndex={activeVertexIndex()}
-                currentTime={currentTime()}
-                document={sourceDocument()}
-                isPlaying={isPlaying()}
-                onDocumentChange={handleTimelineDocumentChange}
-                onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
-                onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
-                onTargetSelect={(partId, vertexIndex) => {
-                  setActivePartId(partId)
-                  setLayerSelection({activeNodeId: partId, nodeIds: [partId]})
-                  setActiveVertexIndex(vertexIndex)
-                }}
-              />
-            }
-          >
-            <EditorModelingPanel
-              document={sourceDocument()}
-              editor={parameterEditor}
-              selectedPartIds={selectedPartIds()}
-            />
-          </Show>
+          <EditorWorkspacePanel
+            activePartId={activePartId()}
+            activeVertexIndex={activeVertexIndex()}
+            currentTime={currentTime()}
+            document={sourceDocument()}
+            editor={parameterEditor}
+            isPlaying={isPlaying()}
+            onDocumentChange={handleTimelineDocumentChange}
+            onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
+            onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
+            onTargetSelect={(partId, vertexIndex) => {
+              setActivePartId(partId)
+              setLayerSelection({activeNodeId: partId, nodeIds: [partId]})
+              setActiveVertexIndex(vertexIndex)
+            }}
+            selectedPartIds={selectedPartIds()}
+            workspace={workspace()}
+          />
         }
         inspector={
           <EditorInspector
@@ -434,9 +503,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         toolbar={(visibility) => (
           <EditorToolbar
             activeWorkspace={workspace()}
+            canAutoMesh={workspace() === 'modeling' && autoMesh.target() !== undefined}
             panelVisibility={visibility}
             playerStatus={playerStatus()}
             onExport={() => downloadDocument(sourceDocument())}
+            onAutoMesh={() => autoMesh.onOpenChange(true)}
             onJsonImport={editorImports.handleImport}
             onPngImport={editorImports.handlePngImport}
             onWorkspaceChange={(nextWorkspace) => {
@@ -447,8 +518,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         )}
         viewport={
           <EditorViewport
-            activeKeyformValue={parameterEditor.activeKeyformValue()}
-            activeParameterId={parameterEditor.activeParameterId() ?? undefined}
+            activeBindingId={parameterEditor.activeBindingId() ?? undefined}
+            activeKeyformValues={parameterEditor.activeKeyformValues()}
             activePartId={activePartId() ?? undefined}
             activeVertexIndex={activeVertexIndex()}
             currentTime={currentTime()}
@@ -461,14 +532,13 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onTimeChange={setCurrentTime}
             onVertexEditStart={pausePlayback}
             onVertexSelect={setActiveVertexIndex}
-            parameterValue={parameterEditor.parameterValue()}
-            previewDocument={
-              workspace() === 'modeling' ? parameterEditor.previewDocument() : sourceDocument()
-            }
+            parameterValues={parameterEditor.parameterValues()}
+            parameterValueMap={parameterEditor.parameterValueMap()}
             selectedPartIds={selectedPartIds()}
           />
         }
       />
+      <EditorAutoMeshDialog autoMesh={autoMesh} />
     </>
   )
 }

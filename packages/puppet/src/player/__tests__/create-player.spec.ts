@@ -180,6 +180,18 @@ describe('createPlayer', () => {
           ],
         },
       ],
+      parameterBindings: [
+        {
+          id: 'shift-binding',
+          keyforms: [
+            {parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 100]}], values: [0]},
+            {parts: [{partId: 'part', vertices: [0, 0, 125, 0, 0, 100]}], values: [1]},
+          ],
+          parameterIds: ['shift'],
+          targetPartIds: ['part'],
+        },
+      ],
+      parameters: [{defaultValue: 0, id: 'shift', maximum: 1, minimum: 0, name: 'Shift'}],
       parts: [
         {
           id: 'part',
@@ -236,11 +248,16 @@ describe('createPlayer', () => {
       | undefined
 
     expect(createdMesh?.vertices[0]).toBe(50)
+    expect(createdMesh?.vertices[2]).toBe(100)
     expect(onFrame).toHaveBeenLastCalledWith({
       duration: 10,
       motionId: 'hold-final-frame',
       time: 6,
     })
+
+    player.setParameterValues({shift: 1})
+    expect(createdMesh?.vertices[0]).toBe(50)
+    expect(createdMesh?.vertices[2]).toBe(125)
 
     player.seek(2)
     const editedDocument = prepareDocument({

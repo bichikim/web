@@ -19,12 +19,17 @@ import {AdminDashboard} from '../AdminDashboard'
 const [pending, setPending] = createSignal(false)
 const [result, setResult] = createSignal<{readonly status: string} | undefined>()
 const submission = {
+  clear: vi.fn(),
+  error: undefined,
+  input: [],
   get pending() {
     return pending()
   },
   get result() {
     return result()
   },
+  retry: vi.fn(),
+  url: 'https://action/sign-out-admin-session',
 }
 const navigate = vi.fn()
 const signOut = vi.fn()

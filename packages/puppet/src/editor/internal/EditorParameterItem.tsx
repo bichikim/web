@@ -1,7 +1,7 @@
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
 import {clamp} from 'es-toolkit/math'
-import {createSignal, createUniqueId, onCleanup, onMount, Show} from 'solid-js'
+import {createSignal, createUniqueId, type JSX, onCleanup, onMount, Show} from 'solid-js'
 
 const DELETE_THRESHOLD = 64
 const DOUBLE_CLICK_INTERVAL = 400
@@ -62,16 +62,14 @@ const ParameterNameEditor = (props: ParameterNameEditorProps) => {
 }
 
 export interface EditorParameterItemProps {
-  readonly maximum: number
-  readonly minimum: number
+  readonly children?: JSX.Element
   readonly name: string
   readonly onDelete?: () => void
   readonly onNameChange?: (name: string) => void
   readonly onNameEdit?: () => void
   readonly onSelect?: () => void
   readonly pressed?: boolean
-  readonly keyformCount?: number
-  readonly value: number
+  readonly secondaryName?: string
 }
 
 export const EditorParameterItem = (props: EditorParameterItemProps) => {
@@ -213,9 +211,7 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
             onPointerDown={handlePointerDown}
           >
             <strong>{props.name}</strong>
-            <small>
-              {props.minimum} · {props.value} · {props.maximum} · {props.keyformCount ?? 0} keyforms
-            </small>
+            <Show when={props.secondaryName}>{(name) => <strong>{name()}</strong>}</Show>
             <span class="parameter-swipe-hint" aria-hidden="true">
               ←
             </span>
@@ -230,6 +226,9 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
             setEditing(false)
           }}
         />
+      </Show>
+      <Show when={!editing() && props.children !== undefined}>
+        <div class="parameter-item-details">{props.children}</div>
       </Show>
       <span id={descriptionId} class="visually-hidden">
         왼쪽으로 밀어 놓으면 삭제합니다. 키보드에서는 Delete 키를 두 번 누릅니다.

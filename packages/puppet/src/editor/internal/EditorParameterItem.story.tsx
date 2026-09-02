@@ -6,27 +6,19 @@ import {EditorParameterItem} from './EditorParameterItem'
 
 const meta = {
   args: {
-    keyformCount: 3,
-    maximum: 30,
-    minimum: -30,
     name: 'Angle X',
     onDelete: fn(),
     onNameChange: fn(),
     onNameEdit: fn(),
     onSelect: fn(),
-    value: 0,
   },
   argTypes: {
-    keyformCount: {control: {min: 0, type: 'number'}, table: {category: 'Props'}},
-    maximum: {control: 'number', table: {category: 'Props'}},
-    minimum: {control: 'number', table: {category: 'Props'}},
     name: {control: 'text', table: {category: 'Props'}},
     onDelete: {table: {category: 'Events'}, type: {name: 'function', required: false}},
     onNameChange: {table: {category: 'Events'}, type: {name: 'function', required: false}},
     onNameEdit: {table: {category: 'Events'}, type: {name: 'function', required: false}},
     onSelect: {table: {category: 'Events'}, type: {name: 'function', required: false}},
     pressed: {control: 'boolean', table: {category: 'Props'}},
-    value: {control: 'number', table: {category: 'Props'}},
   },
   component: EditorParameterItem,
   decorators: [

@@ -54,6 +54,7 @@ const createStorage = () => {
 }
 
 const createDraft = (): AlbumDraftData => ({
+  albumId: '00000000-0000-4000-8000-000000000002',
   coverDraftId: 'draft-cover-id',
   coverFallback: 'cd',
   coverImageUrl: 'https://storage.pomofi.io/cover.webp',
