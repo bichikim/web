@@ -14,14 +14,14 @@ afterEach(() => {
   vi.resetModules()
 })
 
-it.each([false, true])('should render the lazy home studio for Toss=%s', async (isAppsInToss) => {
+it.each([false, true])('should render the home studio for Toss=%s', async (isAppsInToss) => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', isAppsInToss ? 'true' : '')
   const {PHomePage} = await import('../PHomePage')
 
   render(() => <PHomePage />)
 
-  expect(screen.getByRole('status')).toHaveTextContent('장면 준비 중')
-  expect(await screen.findByText('studio ready')).toBeInTheDocument()
+  expect(screen.getByText('studio ready')).toBeInTheDocument()
+  expect(screen.queryByRole('status')).toBeNull()
   const main = screen.getByRole('main')
   expect(main.classList.contains('pomo-home')).toBe(true)
   expect(main.className.includes('radial-gradient')).toBe(!isAppsInToss)
