@@ -1,8 +1,13 @@
-import {expect, test, type Page, type Request, type Route} from '@playwright/test'
+import {expect, type Page, type Request, type Route, test} from '@playwright/test'
 
 const FIXTURE_ORIGIN = 'http://127.0.0.1:44175'
 const TRACK_ID = '11111111-1111-4111-8111-111111111111'
 const ASSET_ID = '22222222-2222-4222-8222-222222222222'
+
+const wait = (delayMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delayMs)
+  })
 
 const observeActionUrls = (page: Page): Array<string> => {
   const actionUrls: Array<string> = []
@@ -40,7 +45,7 @@ test.describe('client action workflows', () => {
       requests.push({body: request.postData(), method: request.method(), pathname: url.pathname})
 
       if (url.pathname === '/api/admin/music/albums') {
-        await new Promise((resolve) => setTimeout(resolve, 75))
+        await wait(75)
         await route.fulfill(jsonResponse({id: 'album-one'}))
         return
       }
@@ -212,7 +217,7 @@ test.describe('client action workflows', () => {
       requests.push(request)
 
       if (url.pathname === '/api/app-auth/exchange') {
-        await new Promise((resolve) => setTimeout(resolve, 75))
+        await wait(75)
         await route.fulfill(jsonResponse({token: 'app-token'}))
         return
       }
@@ -285,7 +290,7 @@ test.describe('client action workflows', () => {
 
       if (url.pathname === '/api/music/tracks/track-one/access') {
         accessRequest = request
-        await new Promise((resolve) => setTimeout(resolve, 75))
+        await wait(75)
         await route.fulfill(
           jsonResponse({
             expiresAt: '2026-09-03T12:00:00.000Z',
@@ -326,7 +331,7 @@ test.describe('client action workflows', () => {
       requestCounts.set(requestKey, (requestCounts.get(requestKey) ?? 0) + 1)
 
       if (url.pathname === '/api/admin/music' && request.method() === 'GET') {
-        await new Promise((resolve) => setTimeout(resolve, 75))
+        await wait(75)
         await route.fulfill(
           jsonResponse({
             albums: albumCreated
@@ -362,12 +367,12 @@ test.describe('client action workflows', () => {
         return
       }
       if (url.pathname === '/api/music/albums') {
-        await new Promise((resolve) => setTimeout(resolve, 75))
+        await wait(75)
         await route.fulfill(jsonResponse({albums: [], version: 1}))
         return
       }
       if (url.pathname === '/api/account') {
-        await new Promise((resolve) => setTimeout(resolve, 75))
+        await wait(75)
         await route.fulfill(jsonResponse({email: 'query@example.com'}))
         return
       }

@@ -1,5 +1,5 @@
 import {createAsync, useAction, useLocation, useSubmission, useSubmissions} from '@solidjs/router'
-import {createSignal, onMount, Show} from 'solid-js'
+import {createSignal, For, onMount, Show} from 'solid-js'
 
 import {
   changeAdminAlbumStatusAction,
@@ -112,14 +112,16 @@ const AdminActions = () => {
       >
         Request admin playback
       </button>
-      {['track-one', 'track-two'].map((trackId) => (
-        <button
-          type="button"
-          onClick={async () => setResult(stringify(await removeTrack(trackId)))}
-        >
-          Remove {trackId}
-        </button>
-      ))}
+      <For each={['track-one', 'track-two']}>
+        {(trackId) => (
+          <button
+            type="button"
+            onClick={async () => setResult(stringify(await removeTrack(trackId)))}
+          >
+            Remove {trackId}
+          </button>
+        )}
+      </For>
       <output data-testid="admin-result">{result()}</output>
       <output data-testid="album-pending">{String(albumSubmission.pending)}</output>
       <output data-testid="track-pending">{String(trackSubmission.pending)}</output>
