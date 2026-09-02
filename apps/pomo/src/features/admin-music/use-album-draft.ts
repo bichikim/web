@@ -2,7 +2,11 @@ import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, onMount, type Setter} from 'solid-js'
 import {z} from 'zod'
 
-import {type AlbumCreationCallbacks, createAlbumSubmitHandler} from './album-creation'
+import {
+  type AlbumCreationCallbacks,
+  type AlbumCreationServices,
+  createAlbumSubmitHandler,
+} from './album-creation'
 import {albumCreationServices} from './album-creation-adapter'
 import {
   ALBUM_LOCALES,
@@ -10,7 +14,7 @@ import {
   type AlbumDraftTranslations,
   createEmptyAlbumTranslations,
 } from './album-draft'
-import {createAdminAlbumAction} from './actions'
+import {createAdminAlbumAction, type CreateAlbumActionResult} from './actions'
 import {validateAlbumCover} from './cover-upload'
 
 const getAlbumDraftStorage = () => import('./album-draft-storage')
@@ -345,6 +349,47 @@ const useCreateAlbumAction = () => ({
   submit: useAction(createAdminAlbumAction),
 })
 
+const createAlbumThroughAction = async (
+  submit: (values: FormData) => Promise<CreateAlbumActionResult>,
+  clearSubmission: () => void,
+  draft: AlbumDraftData,
+  coverFile: File | null,
+): Promise<string> => {
+  const values = new FormData()
+  values.set('albumId', draft.albumId ?? '')
+  values.set('coverDraftId', draft.coverDraftId ?? '')
+  values.set('coverFallback', draft.coverFallback)
+  values.set('coverImageUrl', draft.coverImageUrl)
+  for (const locale of ALBUM_LOCALES) {
+    values.set(`description.${locale}`, draft.translations[locale].description)
+    values.set(`title.${locale}`, draft.translations[locale].title)
+  }
+  if (coverFile !== null) {
+    values.set('coverFile', coverFile)
+  }
+
+  const result = await submit(values)
+  clearSubmission()
+  if (result.status === 'rejected') {
+    throw new Error(result.detail)
+  }
+
+  return result.albumId
+}
+
+const createActionAlbumCreationServices = (
+  albumAction: ReturnType<typeof useCreateAlbumAction>,
+): AlbumCreationServices => ({
+  clearDraft: albumCreationServices.clearDraft,
+  createAlbum: (draft, coverFile) =>
+    createAlbumThroughAction(
+      albumAction.submit,
+      () => albumAction.submission.clear(),
+      draft,
+      coverFile,
+    ),
+})
+
 const persistRestoredEdits = (editedFields: ReadonlySet<DraftField>, persist: () => void): void => {
   if (editedFields.size > 0 && !editedFields.has('cover')) {
     persist()
@@ -423,30 +468,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverFile: preparedCoverFile,
     getDraftData,
     persistDraft: draftPersistence.persist,
-    services: {
-      clearDraft: albumCreationServices.clearDraft,
-      createAlbum: async (draft, coverFile) => {
-        const values = new FormData()
-        values.set('albumId', draft.albumId ?? '')
-        values.set('coverDraftId', draft.coverDraftId ?? '')
-        values.set('coverFallback', draft.coverFallback)
-        values.set('coverImageUrl', draft.coverImageUrl)
-        for (const locale of ALBUM_LOCALES) {
-          values.set(`description.${locale}`, draft.translations[locale].description)
-          values.set(`title.${locale}`, draft.translations[locale].title)
-        }
-        if (coverFile !== null) {
-          values.set('coverFile', coverFile)
-        }
-
-        const result = await albumAction.submit(values)
-        if (result.status === 'rejected') {
-          throw new Error(result.detail)
-        }
-
-        return result.albumId
-      },
-    },
+    services: createActionAlbumCreationServices(albumAction),
     setAlbumId: albumCreationId.set,
     setCoverDraftId,
     setCoverFallback,
@@ -527,7 +549,6 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     handleCoverChange,
     isProcessingCover,
     isRestoringDraft,
-    isSavingAlbum: () =>
-      isSavingAlbumWorkflow() || albumAction.submission.pending === true,
+    isSavingAlbum: () => isSavingAlbumWorkflow() || albumAction.submission.pending === true,
   }
 }

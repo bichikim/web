@@ -103,6 +103,9 @@ export const useAdminMusic = () => {
   ): Promise<void> => {
     setMessage(null)
     const result = await changeAlbumStatus(albumId, action)
+    albumStatusSubmissions
+      .filter((submission) => !submission.pending && submission.input[0] === albumId)
+      .forEach((submission) => submission.clear())
     if (result.status === 'succeeded') {
       await refreshCatalog()
       setMessage(action === 'publish' ? '앨범을 공개했습니다.' : '앨범을 보관했습니다.')
@@ -118,6 +121,7 @@ export const useAdminMusic = () => {
     const form = new FormData(offerForm)
     setMessage(null)
     const result = await connectOffer(form)
+    offerSubmission.clear()
     if (result.status === 'succeeded') {
       offerForm.reset()
       await refreshCatalog()

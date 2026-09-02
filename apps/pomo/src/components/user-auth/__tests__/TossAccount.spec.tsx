@@ -40,9 +40,15 @@ const logoutSubmission = {
   },
 }
 const emailSubmission = {
+  clear: vi.fn(),
+  error: undefined,
+  input: [],
   get pending() {
     return emailPending()
   },
+  result: undefined,
+  retry: vi.fn(),
+  url: 'https://action/request-toss-account-link-email',
 }
 
 const wrapAction =

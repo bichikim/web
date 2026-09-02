@@ -2,6 +2,7 @@ import {action} from '@solidjs/router'
 
 import {
   createTossLoginSession,
+  readStoredAppSession,
   requestAccountLinkEmail,
   revokeTossLoginSession,
 } from './app-session'
@@ -15,7 +16,7 @@ export type CompleteAccountLinkActionResult =
   | {readonly status: 'unavailable'}
 
 export type TossLoginActionResult =
-  | {readonly status: 'authenticated'; readonly token: string}
+  | {readonly status: 'authenticated'}
   | {readonly status: 'unavailable'}
 
 export type TossLogoutActionResult =
@@ -40,14 +41,20 @@ const runCompleteAccountLink = async (token: string): Promise<CompleteAccountLin
 
 const runTossLogin = async (): Promise<TossLoginActionResult> => {
   try {
-    return {status: 'authenticated', token: await createTossLoginSession()}
+    await createTossLoginSession()
+    return {status: 'authenticated'}
   } catch {
     return {status: 'unavailable'}
   }
 }
 
-const runTossLogout = async (token: string): Promise<TossLogoutActionResult> => {
+const runTossLogout = async (): Promise<TossLogoutActionResult> => {
   try {
+    const token = await readStoredAppSession()
+    if (token === null) {
+      return {status: 'signed-out'}
+    }
+
     const result = await revokeTossLoginSession(token)
     return {
       status: result.storageStatus === 'cleared' ? 'signed-out' : 'cleanup-pending',
@@ -58,7 +65,6 @@ const runTossLogout = async (token: string): Promise<TossLogoutActionResult> => 
 }
 
 const runRequestAccountLinkEmail = async (
-  token: string,
   values: FormValues,
 ): Promise<AccountLinkEmailActionResult> => {
   const email = values.get('email')?.toString().trim() ?? ''
@@ -68,6 +74,11 @@ const runRequestAccountLinkEmail = async (
   }
 
   try {
+    const token = await readStoredAppSession()
+    if (token === null) {
+      return {status: 'unavailable'}
+    }
+
     return await requestAccountLinkEmail(token, email)
   } catch {
     return {status: 'unavailable'}

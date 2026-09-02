@@ -35,6 +35,7 @@ export const useAdminTrackPreview = (
   const startPlayback = async (): Promise<void> => {
     setErrorMessage(null)
     const result = await requestPlayback(props.trackId)
+    submission.clear()
     if (result.status === 'granted') {
       setPlaybackUrl(result.url)
       return

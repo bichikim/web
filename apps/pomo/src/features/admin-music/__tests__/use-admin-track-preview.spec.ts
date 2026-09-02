@@ -2,15 +2,18 @@
 
 import {afterEach, expect, it, vi} from 'vitest'
 
+const submissionMocks = vi.hoisted(() => ({clear: vi.fn()}))
+
 vi.mock('@solidjs/router', () => ({
   action: vi.fn((clientAction) => clientAction),
   useAction: vi.fn((clientAction) => clientAction),
-  useSubmission: vi.fn(() => ({pending: false})),
+  useSubmission: vi.fn(() => ({clear: submissionMocks.clear, pending: false})),
 }))
 
 import {useAdminTrackPreview} from '../use-admin-track-preview'
 
 afterEach(() => {
+  vi.clearAllMocks()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -30,6 +33,7 @@ it('should load a private playback URL and clear playback errors when ready', as
   expect(fetcher).toHaveBeenCalledWith('/api/admin/music/tracks/track%2Fid/playback')
   expect(controller.loading()).toBe(false)
   expect(controller.playbackUrl()).toBe('https://example.com/private-track.mp3')
+  expect(submissionMocks.clear).toHaveBeenCalledOnce()
   controller.onPlaybackError()
   expect(controller.playbackUrl()).toBeNull()
   expect(controller.errorMessage()).toContain('다시 시도해 주세요')

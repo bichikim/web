@@ -25,6 +25,7 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
     props.setMessage(null)
     const form = new FormData(trackForm)
     const result = await createTrack(form)
+    createTrackSubmission.clear()
 
     if (result.status === 'failed') {
       await props.refreshCatalog().catch(() => undefined)
@@ -69,6 +70,9 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
   const handleTrackRemove = async (trackId: string): Promise<void> => {
     props.setMessage(null)
     const result = await removeTrack(trackId)
+    removeTrackSubmissions
+      .filter((submission) => !submission.pending && submission.input[0] === trackId)
+      .forEach((submission) => submission.clear())
     if (result.status === 'succeeded') {
       await props.refreshCatalog()
       props.setMessage('수록곡과 MP3 파일을 삭제했습니다.')
@@ -81,6 +85,9 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
   const handleTrackConfirmation = async (assetId: string): Promise<void> => {
     props.setMessage(null)
     const result = await confirmTrack(assetId)
+    confirmTrackSubmissions
+      .filter((submission) => !submission.pending && submission.input[0] === assetId)
+      .forEach((submission) => submission.clear())
     if (result.status !== 'rejected') {
       await props.refreshCatalog()
       props.setMessage(

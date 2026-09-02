@@ -24,6 +24,18 @@ export interface WebAccountController {
   readonly successMessage: () => string | null
 }
 
+const getAccountSessionResolution = (resolvedSession: AccountSession | null) =>
+  resolvedSession === null
+    ? ({type: 'resolve-anonymous'} as const)
+    : ({
+        session: {
+          email: resolvedSession.email,
+          kind: 'authenticated',
+          provider: 'email',
+        },
+        type: 'resolve-authenticated',
+      } as const)
+
 export const useWebAccount = (): WebAccountController => {
   const authentication = createAuthenticationMachine()
   const completeLink = useAction(completeAccountLinkAction)
@@ -83,6 +95,7 @@ export const useWebAccount = (): WebAccountController => {
 
       if (linkToken !== null) {
         const linkResult = await completeLink(linkToken)
+        completeLinkSubmission.clear()
         url.searchParams.delete('link_token')
 
         if (linkError === 'email') {
@@ -133,18 +146,7 @@ export const useWebAccount = (): WebAccountController => {
         return
       }
 
-      authentication.send(
-        resolvedSession === null
-          ? {type: 'resolve-anonymous'}
-          : {
-              session: {
-                email: resolvedSession.email,
-                kind: 'authenticated',
-                provider: 'email',
-              },
-              type: 'resolve-authenticated',
-            },
-      )
+      authentication.send(getAccountSessionResolution(resolvedSession))
     } catch {
       setLocalSuccessMessage(null)
 

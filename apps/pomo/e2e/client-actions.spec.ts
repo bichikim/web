@@ -232,7 +232,7 @@ test.describe('client action workflows', () => {
     await page.getByRole('button', {name: 'Login with Toss'}).click()
     await expect(page.getByTestId('login-pending')).toHaveText('true')
     await expect(page.getByTestId('auth-result')).toHaveText(
-      JSON.stringify({status: 'authenticated', token: 'app-token'}),
+      JSON.stringify({status: 'authenticated'}),
     )
     expect(await page.evaluate(() => localStorage.getItem('pomo:app-session:v1'))).toBe('app-token')
 
@@ -259,7 +259,11 @@ test.describe('client action workflows', () => {
       (request) =>
         request.method() === 'DELETE' && new URL(request.url()).pathname.endsWith('/session'),
     )
-    expect(exchange?.method()).toBe('POST')
+    const activation = requests.find(
+      (request) =>
+        request.method() === 'PATCH' && new URL(request.url()).pathname.endsWith('/session'),
+    )
+    expect(exchange?.method()).toBe('PUT')
     expect(exchange?.postDataJSON()).toEqual({
       authorizationCode: 'e2e-authorization',
       referrer: 'SANDBOX',
@@ -267,6 +271,7 @@ test.describe('client action workflows', () => {
     expect(email?.headers().authorization).toBe('Bearer app-token')
     expect(email?.postDataJSON()).toEqual({email: 'user@example.com'})
     expect(completion?.postDataJSON()).toEqual({token: 'link-token'})
+    expect(activation?.headers().authorization).toBe('Bearer app-token')
     expect(logout?.headers().authorization).toBe('Bearer app-token')
     expect(actionUrls).toEqual([])
   })

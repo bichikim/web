@@ -10,7 +10,7 @@ vi.mock('@solidjs/router', async () => {
     ...actual,
     action: vi.fn((clientAction) => clientAction),
     useAction: vi.fn((clientAction) => clientAction),
-    useSubmission: vi.fn(() => ({pending: false})),
+    useSubmission: vi.fn(() => ({clear: vi.fn(), pending: false})),
   }
 })
 

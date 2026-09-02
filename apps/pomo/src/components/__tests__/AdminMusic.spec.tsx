@@ -36,6 +36,7 @@ vi.mock('@solidjs/router', async () => {
     (...input: ReadonlyArray<unknown>): Promise<unknown>
   }
   interface TestSubmission {
+    readonly clear: () => void
     readonly input: ReadonlyArray<unknown>
     pending: boolean
   }
@@ -67,7 +68,12 @@ vi.mock('@solidjs/router', async () => {
     revalidate: vi.fn(async () => undefined),
     useAction: vi.fn((clientAction: ClientAction) => async (...input: ReadonlyArray<unknown>) => {
       const state = getState(clientAction)
-      const submission = {input, pending: true}
+      const submission: TestSubmission = {
+        clear: () =>
+          state.setSubmissions((current) => current.filter((entry) => entry !== submission)),
+        input,
+        pending: true,
+      }
       state.setSubmissions((current) => [...current, submission])
       state.setPending(true)
       try {
@@ -79,6 +85,10 @@ vi.mock('@solidjs/router', async () => {
       }
     }),
     useSubmission: vi.fn((clientAction: ClientAction) => ({
+      clear: () => {
+        const state = getState(clientAction)
+        state.setSubmissions((current) => current.filter((submission) => submission.pending))
+      },
       get pending() {
         return getState(clientAction).pending()
       },

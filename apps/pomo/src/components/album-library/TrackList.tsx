@@ -152,15 +152,24 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                         ? {
                             id: track.id,
                             loadSource: async () => {
-                              const result = await requestTrackAccess(track.id)
+                              try {
+                                const result = await requestTrackAccess(track.id)
 
-                              switch (result.status) {
-                                case 'authentication-required':
-                                  return {ok: false, reason: 'authentication-required'}
-                                case 'granted':
-                                  return resolveTrackPreviewAccess(result.access, track.id)
-                                case 'unavailable':
-                                  throw new Error('Track access request is unavailable')
+                                switch (result.status) {
+                                  case 'authentication-required':
+                                    return {ok: false, reason: 'authentication-required'}
+                                  case 'granted':
+                                    return resolveTrackPreviewAccess(result.access, track.id)
+                                  case 'unavailable':
+                                    throw new Error('Track access request is unavailable')
+                                }
+                              } finally {
+                                accessSubmissions
+                                  .findLast(
+                                    (submission) =>
+                                      !submission.pending && submission.input[0] === track.id,
+                                  )
+                                  ?.clear()
                               }
                             },
                           }

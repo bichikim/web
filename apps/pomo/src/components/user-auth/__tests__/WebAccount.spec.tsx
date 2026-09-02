@@ -29,7 +29,15 @@ const [magicLinkPending, setMagicLinkPending] = createSignal(false)
 const [magicLinkResult, setMagicLinkResult] = createSignal<MagicLinkResult | undefined>()
 const [signOutPending, setSignOutPending] = createSignal(false)
 const [signOutResult, setSignOutResult] = createSignal<SignOutResult | undefined>()
-const completeLinkSubmission = {pending: false, result: undefined}
+const completeLinkSubmission = {
+  clear: vi.fn(),
+  error: undefined,
+  input: [],
+  pending: false,
+  result: undefined,
+  retry: vi.fn(),
+  url: 'https://action/complete-user-account-link',
+}
 const magicLinkSubmission = {
   clear: vi.fn(),
   error: undefined,

@@ -5,6 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const routerMocks = vi.hoisted(() => {
   interface TestSubmission {
+    readonly clear: () => void
     readonly input: ReadonlyArray<unknown>
     pending: boolean
   }
@@ -23,7 +24,7 @@ vi.mock('@solidjs/router', () => ({
   action: vi.fn((clientAction) => clientAction),
   useAction: vi.fn((clientAction: (...input: ReadonlyArray<unknown>) => Promise<unknown>) => {
     return async (...input: ReadonlyArray<unknown>) => {
-      const submission = {input, pending: true}
+      const submission = {clear: vi.fn(), input, pending: true}
       routerMocks.getSubmissions(clientAction).push(submission)
       try {
         return await clientAction(...input)
@@ -33,6 +34,7 @@ vi.mock('@solidjs/router', () => ({
     }
   }),
   useSubmission: vi.fn((clientAction: Function) => ({
+    clear: vi.fn(),
     get pending() {
       return routerMocks.getSubmissions(clientAction).some((submission) => submission.pending)
     },

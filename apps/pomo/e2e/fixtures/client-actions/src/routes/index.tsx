@@ -134,7 +134,6 @@ const AuthenticationActions = () => {
   const logout = useAction(revokeTossLoginSessionAction)
   const requestEmail = useAction(requestAccountLinkEmailAction)
   const completeLink = useAction(completeAccountLinkAction)
-  const [token, setToken] = createSignal('')
   const [result, setResult] = createSignal('idle')
 
   return (
@@ -144,9 +143,6 @@ const AuthenticationActions = () => {
         type="button"
         onClick={async () => {
           const nextResult = await login()
-          if (nextResult.status === 'authenticated') {
-            setToken(nextResult.token)
-          }
           setResult(stringify(nextResult))
         }}
       >
@@ -157,7 +153,7 @@ const AuthenticationActions = () => {
         method="post"
         onSubmit={async (event) => {
           event.preventDefault()
-          setResult(stringify(await requestEmail(token(), new FormData(event.currentTarget))))
+          setResult(stringify(await requestEmail(new FormData(event.currentTarget))))
         }}
       >
         <input name="email" required type="email" value="user@example.com" />
@@ -169,7 +165,7 @@ const AuthenticationActions = () => {
       >
         Complete account link
       </button>
-      <button type="button" onClick={async () => setResult(stringify(await logout(token())))}>
+      <button type="button" onClick={async () => setResult(stringify(await logout()))}>
         Logout Toss session
       </button>
       <output data-testid="auth-result">{result()}</output>

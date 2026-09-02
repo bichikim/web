@@ -134,7 +134,7 @@ export const useTossAccount = (): TossAccountController => {
 
     setErrorMessage(null)
     setSuccessMessage(null)
-    const result = await logout(currentToken)
+    const result = await logout()
     if (result.status !== 'unavailable') {
       setToken(null)
       authentication.send({type: 'sign-out'})
@@ -159,7 +159,8 @@ export const useTossAccount = (): TossAccountController => {
 
     setErrorMessage(null)
     setSuccessMessage(null)
-    const result = await requestEmailLink(currentToken, values)
+    const result = await requestEmailLink(values)
+    emailLinkSubmission.clear()
     const feedback = getAccountLinkFeedback(result)
     setErrorMessage(feedback.errorMessage)
     setSuccessMessage(feedback.successMessage)
