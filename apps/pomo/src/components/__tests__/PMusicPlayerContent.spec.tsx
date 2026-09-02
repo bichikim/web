@@ -253,21 +253,30 @@ describe('PMusicPlayerContent', () => {
     expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
   })
 
-  it('should render only the expanded play button when expanded', () => {
+  it('should render expanded and compact play controls when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
     expect(result.container.querySelector('media-time-display')).toBeNull()
-    const playButtons = result.container.querySelectorAll('media-play-button')
-    expect(playButtons).toHaveLength(1)
-    expect(playButtons[0]?.hasAttribute('notooltip')).toBe(true)
-    expect(playButtons[0]?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
+    const expandedPlayButton = result.container.querySelector(
+      '.pomo-player__transport-play-frame media-play-button',
+    )
+    const compactPlayButton = result.container.querySelector(
+      '.pomo-player__compact-summary-play media-play-button',
+    )
+
+    for (const playButton of [expandedPlayButton, compactPlayButton]) {
+      expect(playButton).toBeInstanceOf(HTMLElement)
+      expect(playButton?.hasAttribute('notooltip')).toBe(true)
+      expect(playButton?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
+    }
   })
 
-  it('should remove the summary play button without a collapse animation when expanded', () => {
+  it('should replace the summary play button without a collapse animation when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
-    const summaryPlayFrame = result.container.querySelector('.pomo-player__play-summary-frame')
+    const summary = result.container.querySelector('.pomo-player__summary')
+    const summaryPlayFrame = summary?.querySelector(':scope > .pomo-player__play-summary-frame')
 
     if (!(summaryPlayFrame instanceof HTMLElement)) {
       throw new TypeError('Expected the Pomo summary play button frame to be rendered')
@@ -282,7 +291,10 @@ describe('PMusicPlayerContent', () => {
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
-    expect(result.container.querySelector('.pomo-player__play-summary-frame')).toBeNull()
+    expect(summary?.querySelector(':scope > .pomo-player__play-summary-frame')).toBeNull()
+    expect(
+      summary?.querySelector('.pomo-player__compact-summary-play .pomo-player__play-summary-frame'),
+    ).toBeInstanceOf(HTMLElement)
   })
 
   it('should report the current track when selection changes', async () => {

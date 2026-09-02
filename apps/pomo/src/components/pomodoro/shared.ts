@@ -7,7 +7,7 @@ export const CLASSES = {
     'lg:top-[calc(1.5rem_+_var(--pomo-safe-area-inset-top))]',
     'lg:left-[1.75rem] pointer-events-auto',
   ),
-  pomodoroActionIcon: 'pomo-pomodoro__action-icon w-3 h-3',
+  pomodoroActionIcon: 'pomo-pomodoro__action-icon w-4 h-4',
   pomodoroActionIndicator: cx(
     'pomo-pomodoro__action-indicator absolute right-[-0.3125rem] bottom-[0] grid w-5 h-5',
     '[border:1px_solid_rgb(255_250_241_/_72%)] rounded-full bg-foreground',
@@ -61,7 +61,7 @@ export const CLASSES = {
     'motion-reduce:transition-[none]',
   ),
   pomodoroTriggerTime: cx(
-    'pomo-pomodoro__trigger-time text-foreground text-sm tabular-nums font-extrabold',
-    'tracking-[0.025em] leading-4',
+    'pomo-pomodoro__trigger-time text-lg text-foreground tabular-nums font-extrabold',
+    'tracking-[0.025em] leading-6',
   ),
 } as const

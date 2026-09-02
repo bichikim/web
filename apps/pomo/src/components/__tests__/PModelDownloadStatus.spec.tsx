@@ -47,9 +47,11 @@ it('should render live download progress and cancel it', () => {
 
 it('should render and dismiss model download errors', () => {
   setState({message: '다운로드 실패', status: 'error'})
-  render(() => <PModelDownloadStatus />)
+  const {container} = render(() => <PModelDownloadStatus />)
 
+  expect(screen.getByRole('alert')).toHaveClass('text-sm')
   expect(screen.getByRole('alert')).toHaveTextContent('다운로드 실패')
+  expect(container.querySelector('.i-tabler-alert-circle')).toHaveClass('size-4.5')
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
   expect(dismissError).toHaveBeenCalledOnce()
 })

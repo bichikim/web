@@ -189,8 +189,8 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         class={cx(
           TRACK_CLASSES,
           'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
-          'rounded-3 gap-3 player-compact:gap-2 px-3 py-2.5 text-left text-xs',
-          'player-compact:px-2 player-compact:py-2',
+          'rounded-3 gap-3 player-compact:gap-2 px-3 py-2 text-left text-sm leading-5',
+          'player-compact:px-2 player-compact:py-1.5',
           gesture.dragging()
             ? 'transition-none'
             : 'transition-[transform,background-color,color] duration-180 ease-out',

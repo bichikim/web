@@ -17,7 +17,9 @@ it('should run the optional cancel action', () => {
   const onCancel = vi.fn()
   render(() => <PLoadingStatus message="다운로드 준비 중" onCancel={onCancel} />)
 
-  fireEvent.click(screen.getByRole('button', {name: '취소'}))
+  const cancelButton = screen.getByRole('button', {name: '취소'})
+  expect(cancelButton).toHaveClass('text-sm')
+  fireEvent.click(cancelButton)
 
   expect(onCancel).toHaveBeenCalledOnce()
 })

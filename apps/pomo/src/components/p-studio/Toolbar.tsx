@@ -92,7 +92,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
                 <span
                   class={cx(
                     getPomoIconClass(LANGUAGE_LEARNING_ICON, props.sceneStyle),
-                    'size-5 text-highlight',
+                    'size-6 text-highlight',
                   )}
                 />
               </span>
@@ -134,7 +134,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
                 <span
                   class={cx(
                     getPomoIconClass('i-tabler-settings', props.sceneStyle),
-                    'size-5 text-highlight',
+                    'size-6 text-highlight',
                   )}
                 />
               </span>

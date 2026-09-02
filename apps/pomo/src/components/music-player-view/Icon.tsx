@@ -5,7 +5,7 @@ import type {PSceneStyle} from '../../features/focus-room-animation/index'
 interface PlayerIconProps {
   readonly icon: string
   readonly sceneStyle?: PSceneStyle
-  readonly size: 'size-4' | 'size-5'
+  readonly size: 'size-4' | 'size-5' | 'size-6'
   readonly slot?: string
 }
 

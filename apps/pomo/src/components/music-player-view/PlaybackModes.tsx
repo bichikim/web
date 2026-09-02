@@ -31,7 +31,13 @@ export interface PPlaybackModesProps {
 }
 
 export const PPlaybackModes = (props: PPlaybackModesProps) => (
-  <div class={cx(CLASSES.playerModes, 'flex w-fit items-center gap-0.5 rounded-full p-1')}>
+  <div
+    class={cx(
+      CLASSES.playerModes,
+      'flex w-fit items-center gap-0.5 rounded-full p-1',
+      'player-narrow:gap-0 player-narrow:p-0.5',
+    )}
+  >
     <div class="contents" role="group" aria-label={m.player_repeat_mode()}>
       <For each={REPEAT_MODES}>
         {(mode) => (
@@ -49,13 +55,13 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
           >
             <span
               aria-hidden="true"
-              class={cx(getPomoIconClass(mode.icon, props.sceneStyle), 'size-4')}
+              class={cx(getPomoIconClass(mode.icon, props.sceneStyle), 'size-6')}
             />
           </button>
         )}
       </For>
     </div>
-    <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-border" />
+    <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-border player-narrow:mx-0" />
     <button
       aria-label={m.player_shuffle()}
       aria-pressed={props.shuffleEnabled}
@@ -70,7 +76,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
     >
       <span
         aria-hidden="true"
-        class={cx(getPomoIconClass('i-tabler-arrows-shuffle', props.sceneStyle), 'size-4')}
+        class={cx(getPomoIconClass('i-tabler-arrows-shuffle', props.sceneStyle), 'size-6')}
       />
     </button>
   </div>

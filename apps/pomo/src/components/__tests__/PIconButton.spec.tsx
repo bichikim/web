@@ -27,7 +27,8 @@ it('should expose the medium icon button class contract', () => {
   expect(button.classList.contains('pomo-icon-button')).toBe(true)
   expect(button.classList.contains('h-control-md')).toBe(true)
   expect(button.classList.contains('min-w-control-md')).toBe(true)
-  expect(button.classList.contains('[padding-inline:0.6875rem]')).toBe(true)
+  expect(button.classList.contains('[padding-inline:0.5625rem]')).toBe(true)
+  expect(button.querySelector('[data-pomo-icon-button-icon]')).toHaveClass('size-6')
 })
 
 it('should expose the small icon button class contract', () => {
@@ -47,6 +48,7 @@ it('should expose the small icon button class contract', () => {
   expect(button.classList.contains('h-control-sm')).toBe(true)
   expect(button.classList.contains('min-w-control-sm')).toBe(true)
   expect(button.classList.contains('[padding-inline:0.4375rem]')).toBe(true)
+  expect(button.querySelector('[data-pomo-icon-button-icon]')).toHaveClass('size-4')
 })
 
 it('should reveal the updated feedback without retaining hidden-state classes', () => {

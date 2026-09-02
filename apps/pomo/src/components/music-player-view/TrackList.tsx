@@ -25,7 +25,7 @@ export const PTrackList = (props: PTrackListProps) => (
       class={cx(
         CLASSES.playerPlaylist,
         'mb-0 mt-3 grid min-h-0 min-w-0 flex-1 player-compact:mt-2',
-        'grid-cols-[minmax(0,1fr)] max-h-38 list-none overflow-auto',
+        'grid-cols-[minmax(0,1fr)] max-h-38 player-compact:max-h-none list-none overflow-auto',
         'gap-1 p-1',
       )}
     >

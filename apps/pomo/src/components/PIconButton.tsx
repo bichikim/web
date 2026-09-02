@@ -63,7 +63,7 @@ export const PIconButton = (props: PIconButtonProps) => {
           'motion-reduce:transition-none',
         (props.size ?? 'medium') === 'small'
           ? 'h-control-sm min-w-control-sm [padding-inline:0.4375rem]'
-          : 'h-control-md min-w-control-md [padding-inline:0.6875rem]',
+          : 'h-control-md min-w-control-md [padding-inline:0.5625rem]',
         props.class,
       )}
       data-feedback-visible={feedbackVisible() ? '' : undefined}
@@ -77,7 +77,7 @@ export const PIconButton = (props: PIconButtonProps) => {
         class={cx(
           props.icon,
           'pomo-icon-button__icon flex-none text-highlight',
-          (props.size ?? 'medium') === 'small' ? 'size-4' : 'size-5',
+          (props.size ?? 'medium') === 'small' ? 'size-4' : 'size-6',
         )}
         data-pomo-icon-button-icon=""
       />

@@ -75,7 +75,7 @@ it('should render labels, single and multiple values, icons, and clearing contro
   expect(screen.getByText('숨김')).toHaveClass('sr-only')
   expect(screen.getAllByText('하나')).toHaveLength(2)
   expect(screen.getByText('2개 선택됨')).toBeInTheDocument()
-  expect(result.container.querySelector('.resolved-icon')).not.toBeNull()
+  expect(result.container.querySelector('.resolved-icon')).toHaveClass('size-6')
   fireEvent.click(screen.getByRole('button', {name: '모두 지우기'}))
   expect(onClear).toHaveBeenCalledOnce()
 })

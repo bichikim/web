@@ -41,7 +41,7 @@ export const CLASSES = {
   dialogueBubbleSkip: 'pomo-dialogue-bubble__skip flex-none whitespace-nowrap',
   dialogueBubbleSpeakerGroup: cx(
     'pomo-dialogue-bubble__speaker-group inline-flex min-w-0 items-center',
-    'gap-2',
+    'gap-3.5',
   ),
   dialogueBubbleStop: 'pomo-dialogue-bubble__stop flex-none whitespace-nowrap',
 } as const

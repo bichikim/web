@@ -19,7 +19,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
         <WeatherStatusSurface sceneStyle={props.sceneStyle}>
           <span
             aria-hidden="true"
-            class="i-tabler-loader-2 size-4 animate-spin motion-reduce:animate-none"
+            class="i-tabler-loader-2 size-4.5 animate-spin motion-reduce:animate-none"
           />
           {m.weather_loading({city: getLocalizedWeatherLocationLabel(state().location)})}
         </WeatherStatusSurface>
@@ -28,7 +28,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
     <Match when={props.state.status === 'error' ? props.state : undefined}>
       {(state) => (
         <WeatherStatusSurface sceneStyle={props.sceneStyle}>
-          <span aria-hidden="true" class="i-tabler-cloud-off size-4 text-muted-foreground" />
+          <span aria-hidden="true" class="i-tabler-cloud-off size-4.5 text-muted-foreground" />
           {m.weather_error({city: getLocalizedWeatherLocationLabel(state().location)})}
         </WeatherStatusSurface>
       )}
@@ -43,7 +43,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
 
         return (
           <WeatherStatusSurface sceneStyle={props.sceneStyle}>
-            <span aria-hidden="true" class={cx(presentation().icon, 'size-4 text-highlight')} />
+            <span aria-hidden="true" class={cx(presentation().icon, 'size-4.5 text-highlight')} />
             <span>
               {getLocalizedWeatherLocationLabel(state().feed.location)} ·{' '}
               {getLocalizedWeatherLabel(state().feed.current.condition)}

@@ -99,7 +99,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
         {(selectedIcon) => (
           <span
             aria-hidden="true"
-            class={cx('size-5', props.getIconClass?.(selectedIcon()) ?? selectedIcon())}
+            class={cx('size-6', props.getIconClass?.(selectedIcon()) ?? selectedIcon())}
           />
         )}
       </Show>
