@@ -29,8 +29,10 @@ vi.mock('@solidjs/start', () => ({
     (loader: () => Promise<unknown>) =>
     (props: {
       readonly active: boolean
+      readonly autoplay: boolean
       readonly fallback: unknown
       readonly onPlay: () => void
+      readonly onRequest: () => void
       readonly title: string
       readonly trackId: string
     }) => {
@@ -40,8 +42,10 @@ vi.mock('@solidjs/start', () => ({
         <button
           aria-label={`${props.title} 미리듣기`}
           data-active={String(props.active)}
+          data-autoplay={String(props.autoplay)}
           data-track-id={props.trackId}
-          onClick={props.onPlay}
+          onClick={props.onRequest}
+          onDblClick={props.onPlay}
           type="button"
         >
           미리듣기
@@ -225,7 +229,15 @@ describe('AlbumWorkspace', () => {
       'Track two 미리듣기',
     ])
     fireEvent.click(previews[0]!)
+    expect(previews[0]).toHaveAttribute('data-active', 'false')
+    expect(previews[0]).toHaveAttribute('data-autoplay', 'true')
+    fireEvent.doubleClick(previews[0]!)
     expect(previews[0]).toHaveAttribute('data-active', 'true')
+    fireEvent.click(previews[1]!)
+    expect(previews[0]).toHaveAttribute('data-active', 'true')
+    expect(previews[0]).toHaveAttribute('data-autoplay', 'false')
+    expect(previews[1]).toHaveAttribute('data-active', 'false')
+    expect(previews[1]).toHaveAttribute('data-autoplay', 'true')
 
     fireEvent.click(screen.getByRole('button', {name: '+ 곡 추가'}))
     expect(screen.getByText('새 곡 추가')).toBeInTheDocument()
