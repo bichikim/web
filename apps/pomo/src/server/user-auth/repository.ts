@@ -59,6 +59,8 @@ interface ClockAndToken {
   readonly now: () => Date
 }
 
+type AppSessionActivation = 'active' | 'pending'
+
 type UserAuthTransaction = Parameters<Parameters<TransactionalDatabase['transaction']>[0]>[0]
 
 const DEFAULT_CLOCK_AND_TOKEN: ClockAndToken = {
@@ -154,20 +156,22 @@ const findOrCreateUser = async (
   return user.id
 }
 
-export const createPendingTossAppSession = async (
+const createTossAppSessionRecord = async (
   providerSubject: string,
-  dependencies: ClockAndToken = DEFAULT_CLOCK_AND_TOKEN,
+  activation: AppSessionActivation,
+  dependencies: ClockAndToken,
 ): Promise<AppSession> => {
   const token = dependencies.createToken()
   const now = dependencies.now()
-  const expiresAt = new Date(now.getTime() + PENDING_SESSION_LIFETIME)
+  const lifetime = activation === 'active' ? APP_SESSION_LIFETIME : PENDING_SESSION_LIFETIME
+  const expiresAt = new Date(now.getTime() + lifetime)
 
   return withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
       const userId = await findOrCreateUser(transaction, 'toss', providerSubject)
 
       await transaction.insert(pomoAppSessions).values({
-        activatedAt: null,
+        activatedAt: activation === 'active' ? now : null,
         expiresAt,
         tokenHash: hashOpaqueToken(token),
         userId,
@@ -177,6 +181,16 @@ export const createPendingTossAppSession = async (
     }),
   )
 }
+
+export const createTossAppSession = async (
+  providerSubject: string,
+  dependencies: ClockAndToken = DEFAULT_CLOCK_AND_TOKEN,
+): Promise<AppSession> => createTossAppSessionRecord(providerSubject, 'active', dependencies)
+
+export const createPendingTossAppSession = async (
+  providerSubject: string,
+  dependencies: ClockAndToken = DEFAULT_CLOCK_AND_TOKEN,
+): Promise<AppSession> => createTossAppSessionRecord(providerSubject, 'pending', dependencies)
 
 export const getAppSessionUserId = async (
   token: string,

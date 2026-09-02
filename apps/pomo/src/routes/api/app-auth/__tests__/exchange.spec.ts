@@ -3,6 +3,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 const tossAuthMocks = vi.hoisted(() => ({exchangeTossAuthorization: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({
   createPendingTossAppSession: vi.fn(),
+  createTossAppSession: vi.fn(),
 }))
 
 vi.mock('src/server/toss-auth/client', () => tossAuthMocks)
@@ -29,6 +30,11 @@ describe('Toss login exchange route', () => {
       token: 'pomo-session',
       userId: 'pomo-user-id',
     })
+    repositoryMocks.createTossAppSession.mockReset().mockResolvedValue({
+      expiresAt: new Date('2026-10-21T00:00:00.000Z'),
+      token: 'legacy-session',
+      userId: 'pomo-user-id',
+    })
   })
 
   it('should create a pending Pomo session for a storage-confirmed exchange', async () => {
@@ -40,6 +46,7 @@ describe('Toss login exchange route', () => {
       referrer: 'SANDBOX',
     })
     expect(repositoryMocks.createPendingTossAppSession).toHaveBeenCalledWith('toss-user')
+    expect(repositoryMocks.createTossAppSession).not.toHaveBeenCalled()
     await expect(response.json()).resolves.toEqual({
       expiresAt: '2026-09-21T00:00:00.000Z',
       token: 'pomo-session',
@@ -47,11 +54,17 @@ describe('Toss login exchange route', () => {
     })
   })
 
-  it('should create a pending session for legacy clients', async () => {
+  it('should create an active session for legacy clients', async () => {
     const response = await invokeApiRoute(POST, createRequest('POST'))
 
     expect(response.status).toBe(200)
-    expect(repositoryMocks.createPendingTossAppSession).toHaveBeenCalledWith('toss-user')
+    expect(repositoryMocks.createTossAppSession).toHaveBeenCalledWith('toss-user')
+    expect(repositoryMocks.createPendingTossAppSession).not.toHaveBeenCalled()
+    await expect(response.json()).resolves.toEqual({
+      expiresAt: '2026-10-21T00:00:00.000Z',
+      token: 'legacy-session',
+      userId: 'pomo-user-id',
+    })
   })
 
   it('should reject invalid and oversized exchange requests', async () => {

@@ -6,6 +6,7 @@ import {
   completeAccountLink,
   createAccountLinkChallenge,
   createPendingTossAppSession,
+  createTossAppSession,
   findOrCreateNeonUser,
   getAppSessionUserId,
   invalidateAccountLinkChallenge,
@@ -192,6 +193,27 @@ describe('app sessions', () => {
       userId: 'user-1',
     })
     expect(result.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + TEN_MINUTES_IN_MILLISECONDS)
+  })
+
+  it('should create an active session for a legacy Toss exchange', async () => {
+    queueTransactionReads([{userId: 'user-1'}])
+
+    await expect(
+      createTossAppSession('toss-subject', {
+        createToken: () => 'legacy-token',
+        now: () => NOW,
+      }),
+    ).resolves.toEqual({
+      expiresAt: new Date(NOW.getTime() + THIRTY_DAYS_IN_MILLISECONDS),
+      token: 'legacy-token',
+      userId: 'user-1',
+    })
+    expect(values).toHaveBeenCalledWith({
+      activatedAt: NOW,
+      expiresAt: new Date(NOW.getTime() + THIRTY_DAYS_IN_MILLISECONDS),
+      tokenHash: hashOpaqueToken('legacy-token'),
+      userId: 'user-1',
+    })
   })
 
   it('should create a Pomo user and Toss identity before creating the session', async () => {
