@@ -536,8 +536,9 @@ describe('PDialogueEditor saving and timeline', () => {
     renderEditor(harness)
 
     expect(screen.getByText('AI 생성 음성 · 1:05')).toBeInTheDocument()
-    expect(screen.getByText('0:00')).toBeInTheDocument()
-    expect(screen.getByText('1:05')).toBeInTheDocument()
+    expect(screen.getAllByText('0:00')).not.toHaveLength(0)
+    expect(screen.getAllByText('1:05')).not.toHaveLength(0)
+    expect(screen.getByRole('button', {name: '전체 미리 듣기 재생'})).toBeInTheDocument()
     expect(screen.getByTestId('face-icon')).toHaveAttribute('data-mood', 'cheerful')
     expect(screen.getByTestId('face-icon')).toHaveAttribute('data-scene-style', 'scribble')
     expect(screen.getByRole('button', {name: '2번 말풍선 음성 다시 만들기'})).toHaveTextContent(
@@ -545,6 +546,12 @@ describe('PDialogueEditor saving and timeline', () => {
     )
     expect(screen.getByRole('button', {name: '1번 말풍선 음성 다시 만들기'})).toHaveTextContent(
       '다시 만들기',
+    )
+    expect(screen.getByText('둘째 문장').parentElement).toHaveClass(
+      'pomo-dialogue-editor__segment-content',
+    )
+    expect(screen.getByTestId('face-icon').parentElement?.parentElement).toHaveClass(
+      'pomo-dialogue-editor__segment-meta',
     )
 
     fireEvent.click(screen.getByRole('button', {name: '1번 말풍선 음성 다시 만들기'}))

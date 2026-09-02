@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
 import * as m from '@paraglide/message'
+import {PAudioPreview} from '../PAudioPreview'
 import type {LanguageLearningCandidate} from './candidate'
 
 const REGENERATE_CLASS = cx(
@@ -51,12 +52,10 @@ export const LanguageLearningReview = (props: LanguageLearningReviewProps) => {
                 <span>{candidate.text}</span>
               </label>
               <div class="flex flex-wrap items-center gap-3">
-                <audio
+                <PAudioPreview
                   class="min-w-0 flex-1"
-                  controls
-                  controlslist="nodownload noplaybackrate"
-                  preload="metadata"
                   src={candidate.audioUrl}
+                  title={candidate.text}
                 />
                 <button
                   class={REGENERATE_CLASS}

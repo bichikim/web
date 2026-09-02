@@ -628,6 +628,9 @@ importers:
       '@winter-love/desktop-surface':
         specifier: workspace:*
         version: link:../../packages/desktop-surface
+      '@winter-love/solid-components':
+        specifier: workspace:*
+        version: link:../../packages/solid-components
       '@winter-love/solid-use':
         specifier: workspace:*
         version: link:../../packages/solid-use
