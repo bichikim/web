@@ -10,7 +10,7 @@ export interface PrepareFeedGenerationOptions {
   readonly job: FeedDialogueJob
   readonly now: () => string
   readonly prepareModel: (modelId: SupertonicModelId) => Promise<boolean>
-  readonly repository: Pick<FeedDialogueRepository, 'updateJob'>
+  readonly repository: Pick<FeedDialogueRepository, 'startJob'>
   readonly resolveGenerationSettings: (
     connectionId: string,
   ) => Promise<FeedGenerationSettings | null>
@@ -18,6 +18,10 @@ export interface PrepareFeedGenerationOptions {
 
 interface MissingConnectionPreparation {
   readonly status: 'connection-missing'
+}
+
+interface JobNotQueuedPreparation {
+  readonly status: 'job-not-queued'
 }
 
 interface ModelDownloadRequiredPreparation {
@@ -36,6 +40,7 @@ interface ReadyFeedGeneration {
 }
 
 export type PrepareFeedGenerationResult =
+  | JobNotQueuedPreparation
   | MissingConnectionPreparation
   | ModelDownloadRequiredPreparation
   | ModelPreparationFailedPreparation
@@ -45,11 +50,16 @@ export type PrepareFeedGenerationResult =
 export const prepareFeedGeneration = async (
   options: PrepareFeedGenerationOptions,
 ): Promise<PrepareFeedGenerationResult> => {
-  await options.repository.updateJob({
+  const didStart = await options.repository.startJob({
     ...options.job,
     status: 'generating',
     updatedAt: options.now(),
   })
+
+  if (!didStart) {
+    return {status: 'job-not-queued'}
+  }
+
   let settings = await options.resolveGenerationSettings(options.job.feedConnectionId)
 
   while (settings !== null) {

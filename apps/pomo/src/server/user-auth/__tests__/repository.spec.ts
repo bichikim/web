@@ -5,10 +5,11 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   completeAccountLink,
   createAccountLinkChallenge,
-  createTossAppSession,
+  createPendingTossAppSession,
   findOrCreateNeonUser,
   getAppSessionUserId,
   invalidateAccountLinkChallenge,
+  resolveAppSessionUserId,
   revokeAppSession,
   revokeTossAppSessions,
 } from '../repository'
@@ -50,6 +51,7 @@ const onConflictDoUpdate = vi.fn()
 const values = vi.fn()
 const insert = vi.fn()
 const writeWhere = vi.fn()
+const activationReturning = vi.fn()
 const set = vi.fn()
 const update = vi.fn()
 const deleteWhere = vi.fn()
@@ -68,6 +70,7 @@ const transactionalDatabase = {
 
 const NOW = new Date('2026-08-24T00:00:00.000Z')
 const THIRTY_DAYS_IN_MILLISECONDS = 30 * 24 * 60 * 60 * 1000
+const TEN_MINUTES_IN_MILLISECONDS = 10 * 60 * 1000
 const THIRTY_MINUTES_IN_MILLISECONDS = 30 * 60 * 1000
 
 const readSqlQuery = (sqlValue: SQL) => new PgDialect({casing: 'snake_case'}).sqlToQuery(sqlValue)
@@ -94,7 +97,7 @@ beforeEach(() => {
   readWhere.mockReturnValue({limit: readLimit})
   readFrom.mockReturnValue({where: readWhere})
   readSelect.mockReturnValue({from: readFrom})
-  dependencyMocks.getDatabase.mockReturnValue({select: readSelect})
+  dependencyMocks.getDatabase.mockReturnValue({select: readSelect, update})
 
   orderBy.mockReturnValue({limit})
   where.mockReturnValue({limit, orderBy})
@@ -102,6 +105,7 @@ beforeEach(() => {
   select.mockReturnValue({from})
   values.mockReturnValue({onConflictDoUpdate, returning})
   insert.mockReturnValue({values})
+  writeWhere.mockReturnValue({returning: activationReturning})
   set.mockReturnValue({where: writeWhere})
   update.mockReturnValue({set})
   delete_.mockReturnValue({where: deleteWhere})
@@ -138,6 +142,7 @@ describe('app sessions', () => {
     expect(query.sql).toBe(
       [
         '("pomo_app_sessions"."token_hash" = $1',
+        'and "pomo_app_sessions"."activated_at" is not null',
         'and "pomo_app_sessions"."revoked_at" is null',
         'and "pomo_app_sessions"."expires_at" > $2)',
       ].join(' '),
@@ -171,20 +176,22 @@ describe('app sessions', () => {
     ])
   })
 
-  it('should create a session for an existing Toss identity using default dependencies', async () => {
+  it('should create a pending session for an existing Toss identity using default dependencies', async () => {
     queueTransactionReads([{userId: 'user-1'}])
 
-    const result = await createTossAppSession('toss-subject')
+    const result = await createPendingTossAppSession('toss-subject')
 
     expect(result.userId).toBe('user-1')
     expect(result.token).toHaveLength(43)
     expect(result.expiresAt.getTime()).toBeGreaterThan(Date.now())
     expect(execute).toHaveBeenCalledOnce()
     expect(values).toHaveBeenCalledWith({
+      activatedAt: null,
       expiresAt: result.expiresAt,
       tokenHash: hashOpaqueToken(result.token),
       userId: 'user-1',
     })
+    expect(result.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + TEN_MINUTES_IN_MILLISECONDS)
   })
 
   it('should create a Pomo user and Toss identity before creating the session', async () => {
@@ -192,12 +199,12 @@ describe('app sessions', () => {
     returning.mockResolvedValue([{id: 'user-2'}])
 
     await expect(
-      createTossAppSession('new-toss-subject', {
+      createPendingTossAppSession('new-toss-subject', {
         createToken: () => 'session-token',
         now: () => NOW,
       }),
     ).resolves.toEqual({
-      expiresAt: new Date(NOW.getTime() + THIRTY_DAYS_IN_MILLISECONDS),
+      expiresAt: new Date(NOW.getTime() + TEN_MINUTES_IN_MILLISECONDS),
       token: 'session-token',
       userId: 'user-2',
     })
@@ -208,12 +215,51 @@ describe('app sessions', () => {
     })
   })
 
+  it('should resolve and activate one pending session for thirty days', async () => {
+    readLimit.mockResolvedValue([])
+    activationReturning.mockResolvedValue([{userId: 'user-id'}])
+
+    await expect(resolveAppSessionUserId('pending-token', NOW)).resolves.toBe('user-id')
+
+    expect(set).toHaveBeenCalledWith({
+      activatedAt: NOW,
+      expiresAt: new Date(NOW.getTime() + THIRTY_DAYS_IN_MILLISECONDS),
+    })
+    expect(activationReturning).toHaveBeenCalledWith({userId: expect.anything()})
+    expect(readSelect).toHaveBeenCalledOnce()
+  })
+
+  it('should resolve an already active session without an activation write', async () => {
+    readLimit.mockResolvedValue([{userId: 'user-id'}])
+
+    await expect(resolveAppSessionUserId('active-token', NOW)).resolves.toBe('user-id')
+
+    expect(readSelect).toHaveBeenCalledOnce()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('should resolve a session activated by a concurrent request', async () => {
+    activationReturning.mockResolvedValue([])
+    readLimit.mockResolvedValueOnce([]).mockResolvedValueOnce([{userId: 'user-id'}])
+
+    await expect(resolveAppSessionUserId('pending-token', NOW)).resolves.toBe('user-id')
+
+    expect(readSelect).toHaveBeenCalledTimes(2)
+  })
+
+  it('should reject a token when it is neither active nor pending', async () => {
+    activationReturning.mockResolvedValue([])
+    readLimit.mockResolvedValue([])
+
+    await expect(resolveAppSessionUserId('invalid-token', NOW)).resolves.toBeNull()
+  })
+
   it('should fail session creation when a new user row is not returned', async () => {
     queueTransactionReads([])
     returning.mockResolvedValue([])
 
     await expect(
-      createTossAppSession('new-toss-subject', {
+      createPendingTossAppSession('new-toss-subject', {
         createToken: () => 'session-token',
         now: () => NOW,
       }),

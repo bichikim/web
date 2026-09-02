@@ -27,6 +27,7 @@ describe('runAuthMaintenance', () => {
     expect(repository.deleteAppSessionBatch).toHaveBeenCalledExactlyOnceWith({
       batchSize: 500,
       expiresAtCutoff: EXPIRED_SESSION_CUTOFF,
+      pendingExpiresAtCutoff: NOW,
       revokedAtCutoff: REVOKED_SESSION_CUTOFF,
     })
     expect(repository.deleteAccountLinkChallengeBatch).toHaveBeenCalledExactlyOnceWith({
@@ -37,19 +38,35 @@ describe('runAuthMaintenance', () => {
 
   it('should delete records at or before each cutoff while preserving newer active data', async () => {
     const sessions = [
-      {expiresAt: new Date(EXPIRED_SESSION_CUTOFF.getTime() - 1), revokedAt: null},
-      {expiresAt: EXPIRED_SESSION_CUTOFF, revokedAt: null},
-      {expiresAt: new Date(EXPIRED_SESSION_CUTOFF.getTime() + 1), revokedAt: null},
-      {expiresAt: new Date('2026-09-01T00:00:00.000Z'), revokedAt: REVOKED_SESSION_CUTOFF},
       {
+        activatedAt: NOW,
+        expiresAt: new Date(EXPIRED_SESSION_CUTOFF.getTime() - 1),
+        revokedAt: null,
+      },
+      {activatedAt: NOW, expiresAt: EXPIRED_SESSION_CUTOFF, revokedAt: null},
+      {
+        activatedAt: NOW,
+        expiresAt: new Date(EXPIRED_SESSION_CUTOFF.getTime() + 1),
+        revokedAt: null,
+      },
+      {
+        activatedAt: NOW,
+        expiresAt: new Date('2026-09-01T00:00:00.000Z'),
+        revokedAt: REVOKED_SESSION_CUTOFF,
+      },
+      {
+        activatedAt: NOW,
         expiresAt: new Date('2026-09-01T00:00:00.000Z'),
         revokedAt: new Date(REVOKED_SESSION_CUTOFF.getTime() + 1),
       },
       {
+        activatedAt: NOW,
         expiresAt: new Date(EXPIRED_SESSION_CUTOFF.getTime() - 1),
         revokedAt: new Date(REVOKED_SESSION_CUTOFF.getTime() + 1),
       },
-      {expiresAt: new Date('2026-09-01T00:00:00.000Z'), revokedAt: null},
+      {activatedAt: NOW, expiresAt: new Date('2026-09-01T00:00:00.000Z'), revokedAt: null},
+      {activatedAt: null, expiresAt: NOW, revokedAt: null},
+      {activatedAt: null, expiresAt: new Date(NOW.getTime() + 1), revokedAt: null},
     ]
     const challenges = [
       {consumedAt: null, expiresAt: new Date(CHALLENGE_CUTOFF.getTime() - 1)},
@@ -70,7 +87,12 @@ describe('runAuthMaintenance', () => {
       async deleteAppSessionBatch(options) {
         const deletable = sessions.filter(
           (session) =>
-            (session.revokedAt === null && session.expiresAt <= options.expiresAtCutoff) ||
+            (session.revokedAt === null &&
+              session.activatedAt !== null &&
+              session.expiresAt <= options.expiresAtCutoff) ||
+            (session.revokedAt === null &&
+              session.activatedAt === null &&
+              session.expiresAt <= options.pendingExpiresAtCutoff) ||
             (session.revokedAt !== null && session.revokedAt <= options.revokedAtCutoff),
         )
         sessions.splice(
@@ -78,7 +100,12 @@ describe('runAuthMaintenance', () => {
           sessions.length,
           ...sessions.filter(
             (session) =>
-              (session.revokedAt === null && session.expiresAt > options.expiresAtCutoff) ||
+              (session.revokedAt === null &&
+                session.activatedAt !== null &&
+                session.expiresAt > options.expiresAtCutoff) ||
+              (session.revokedAt === null &&
+                session.activatedAt === null &&
+                session.expiresAt > options.pendingExpiresAtCutoff) ||
               (session.revokedAt !== null && session.revokedAt > options.revokedAtCutoff),
           ),
         )
@@ -90,10 +117,10 @@ describe('runAuthMaintenance', () => {
 
     expect(result).toEqual({
       accountLinkChallenges: {complete: true, deleted: 2},
-      appSessions: {complete: true, deleted: 3},
+      appSessions: {complete: true, deleted: 4},
       complete: true,
     })
-    expect(sessions).toHaveLength(4)
+    expect(sessions).toHaveLength(5)
     expect(challenges).toHaveLength(2)
   })
 

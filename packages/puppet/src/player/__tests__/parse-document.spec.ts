@@ -4,11 +4,72 @@ import {createDemoDocument} from '../create-demo-document'
 import {parseDocument} from '../parse-document'
 import {serializeDocument} from '../serialize-document'
 
+const createLegacyDocument = () => {
+  const document = createDemoDocument()
+  const [parameter] = document.parameters ?? []
+  const [binding] = document.parameterBindings ?? []
+
+  if (parameter === undefined || binding === undefined) {
+    throw new Error('Expected demo parameters')
+  }
+
+  return {
+    ...document,
+    parameterBindings: undefined,
+    parameters: [
+      {
+        ...parameter,
+        keyforms: binding.keyforms
+          .filter((keyform) => keyform.values[1] === 0)
+          .map((keyform) => ({parts: keyform.parts, value: keyform.values[0]})),
+        targetPartIds: binding.targetPartIds,
+      },
+    ],
+    version: 1,
+  }
+}
+
 describe('parseDocument', () => {
   it('should parse a serialized valid document', () => {
     const document = createDemoDocument()
 
     expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
+  })
+
+  it('should reject fractional texture pixel dimensions', () => {
+    const document = createDemoDocument()
+    const fractionalDocument = {
+      ...document,
+      parts: document.parts.map((part, index) =>
+        index === 0 ? {...part, texture: {...part.texture, width: part.texture.width + 0.5}} : part,
+      ),
+    }
+
+    expect(parseDocument(JSON.stringify(fractionalDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
+  it('should parse sparse two-dimensional keyforms', () => {
+    const document = createDemoDocument()
+    const binding = document.parameterBindings?.[0]
+    const sparseDocument = {
+      ...document,
+      parameterBindings: [
+        {
+          ...binding!,
+          keyforms: binding!.keyforms.filter(
+            (keyform) => keyform.values[0] !== 0 || keyform.values[1] !== 0,
+          ),
+        },
+      ],
+    }
+
+    expect(parseDocument(JSON.stringify(sparseDocument))).toEqual({
+      document: sparseDocument,
+      ok: true,
+    })
   })
 
   it('should preserve supported easing and reject unknown easing', () => {
@@ -58,19 +119,19 @@ describe('parseDocument', () => {
 
   it('should validate parameter keyform targets and coordinate counts', () => {
     const document = createDemoDocument()
-    const parameter = document.parameters?.[0]
+    const binding = document.parameterBindings?.[0]
 
-    expect(parameter).toBeDefined()
+    expect(binding).toBeDefined()
 
     const invalidDocument = {
       ...document,
-      parameters: [
+      parameterBindings: [
         {
-          ...parameter!,
+          ...binding!,
           keyforms: [
             {
               parts: [{partId: 'mesh-preview', vertices: [0, 0]}],
-              value: 0,
+              values: [0, 0],
             },
           ],
         },
@@ -85,14 +146,14 @@ describe('parseDocument', () => {
 
   it('should validate explicit parameter target membership', () => {
     const document = createDemoDocument()
-    const parameter = document.parameters?.[0]
+    const binding = document.parameterBindings?.[0]
 
-    expect(parameter).toBeDefined()
+    expect(binding).toBeDefined()
     expect(
       parseDocument(
         JSON.stringify({
           ...document,
-          parameters: [{...parameter, targetPartIds: ['missing-part']}],
+          parameterBindings: [{...binding, targetPartIds: ['missing-part']}],
         }),
       ),
     ).toMatchObject({ok: false})
@@ -100,29 +161,36 @@ describe('parseDocument', () => {
       parseDocument(
         JSON.stringify({
           ...document,
-          parameters: [{...parameter, targetPartIds: ['mesh-preview', 'shape-circle']}],
+          parameterBindings: [{...binding, targetPartIds: ['mesh-preview', 'shape-circle']}],
         }),
       ),
     ).toMatchObject({ok: false})
   })
 
   it('should continue accepting documents created before parameters were added', () => {
-    const legacyDocument = {...createDemoDocument(), parameters: undefined, scene: undefined}
+    const legacyDocument = {...createLegacyDocument(), parameters: undefined, scene: undefined}
 
     expect(parseDocument(JSON.stringify(legacyDocument))).toMatchObject({ok: true})
-    expect(JSON.parse(serializeDocument(legacyDocument))).toHaveProperty('scene.roots')
   })
 
-  it('should continue accepting parameters that infer targets from keyforms', () => {
-    const document = createDemoDocument()
-    const parameter = document.parameters?.[0]
+  it('should migrate one-dimensional version one parameters into version two bindings', () => {
+    const legacyDocument = createLegacyDocument()
+    const legacyParameter = {...legacyDocument.parameters[0]!, targetPartIds: undefined}
+    const result = parseDocument(JSON.stringify({...legacyDocument, parameters: [legacyParameter]}))
 
-    expect(parameter).toBeDefined()
-    const legacyParameter = {...parameter!, targetPartIds: undefined}
-
-    expect(
-      parseDocument(JSON.stringify({...document, parameters: [legacyParameter]})),
-    ).toMatchObject({ok: true})
+    expect(result).toMatchObject({
+      document: {
+        parameterBindings: [
+          {
+            id: 'angle-x',
+            keyforms: [{values: [-30]}, {values: [0]}, {values: [30]}],
+            parameterIds: ['angle-x'],
+          },
+        ],
+        version: 2,
+      },
+      ok: true,
+    })
   })
 
   test('should validate scene targets, uniqueness and complete part coverage', () => {

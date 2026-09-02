@@ -82,13 +82,34 @@ const revokeServerSession = async (token: string): Promise<void> => {
   }
 }
 
-const revokeCreatedSession = (token: string): void => {
-  revokeServerSession(token).catch((revocationError: unknown) => {
-    console.error('Failed to revoke Toss session after storage failure', revocationError)
+const activateStoredSession = async (token: string): Promise<boolean> => {
+  const response = await apiFetch('app-auth/session', {
+    headers: getAuthorizationHeaders(token),
+    method: 'PATCH',
   })
+
+  if (response.ok) {
+    return true
+  }
+
+  if (response.status === HTTP_UNAUTHORIZED) {
+    return false
+  }
+
+  throw new Error('App session activation failed')
 }
 
 export const createTossLoginSession = async (): Promise<string> => {
+  const storedToken = await readStoredAppSession()
+
+  if (storedToken !== null) {
+    if (await activateStoredSession(storedToken)) {
+      return storedToken
+    }
+
+    await clearStoredAppSession()
+  }
+
   const {TossAuth} = await import('@apps-in-toss/web-framework')
   const authorization = await TossAuth.login()
   let body: z.infer<typeof tossLoginSessionSchema>
@@ -96,7 +117,7 @@ export const createTossLoginSession = async (): Promise<string> => {
   try {
     body = await apiJson('app-auth/exchange', {
       body: authorization,
-      method: 'POST',
+      method: 'PUT',
       responseSchema: tossLoginSessionSchema,
     })
   } catch (error: unknown) {
@@ -111,11 +132,11 @@ export const createTossLoginSession = async (): Promise<string> => {
     throw error
   }
 
-  try {
-    await storeAppSession(body.token)
-  } catch (storageError: unknown) {
-    revokeCreatedSession(body.token)
-    throw storageError
+  await storeAppSession(body.token)
+
+  if (!(await activateStoredSession(body.token))) {
+    await clearStoredAppSession()
+    throw new Error('App session activation failed')
   }
 
   return body.token

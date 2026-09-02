@@ -80,5 +80,7 @@ describe('web localization routing', () => {
       PARAGLIDE_CONFIG.web.routeStrategies,
     )
     expect(PARAGLIDE_CONFIG.common).not.toHaveProperty('urlPatterns')
+    expect(PARAGLIDE_CONFIG.common.outputStructure).toBe('message-modules')
+    expect(PARAGLIDE_CONFIG.development.outputStructure).toBe('locale-modules')
   })
 })

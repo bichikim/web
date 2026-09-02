@@ -163,6 +163,17 @@ const collectLexicalScopes = (
   }
   const scopes = new Map<ts.CallExpression, LexicalScope>()
 
+  const collectParameter = (
+    node: ts.ParameterDeclaration,
+    functionScope: LexicalScope,
+    definitionScope: LexicalScope,
+  ): void => {
+    addScopedDeclaration(node, functionScope)
+    ts.forEachChild(node, (child) =>
+      collect(child, ts.isDecorator(child) ? definitionScope : functionScope),
+    )
+  }
+
   const collect = (node: ts.Node, parentScope: LexicalScope): void => {
     addOuterDeclaration(node, parentScope)
     const scope = createLexicalScope(node, parentScope, rootScope, sourceFile)
@@ -170,6 +181,18 @@ const collectLexicalScopes = (
       scopes.set(node, scope)
     }
     addScopedDeclaration(node, scope)
+    if (ts.isFunctionLike(node)) {
+      ts.forEachChild(node, (child) => {
+        if (ts.isDecorator(child) || child === node.name) {
+          collect(child, parentScope)
+        } else if (ts.isParameter(child)) {
+          collectParameter(child, scope, parentScope)
+        } else {
+          collect(child, scope)
+        }
+      })
+      return
+    }
     ts.forEachChild(node, (child) => collect(child, scope))
   }
   collect(sourceFile, rootScope)

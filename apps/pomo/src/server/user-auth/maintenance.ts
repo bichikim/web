@@ -20,6 +20,7 @@ interface DeleteBatchOptions {
 interface DeleteAppSessionBatchOptions {
   readonly batchSize: number
   readonly expiresAtCutoff: Date
+  readonly pendingExpiresAtCutoff: Date
   readonly revokedAtCutoff: Date
 }
 
@@ -99,6 +100,7 @@ export const runAuthMaintenance = async (
     resolvedDependencies.repository.deleteAppSessionBatch({
       batchSize: DELETE_BATCH_SIZE,
       expiresAtCutoff,
+      pendingExpiresAtCutoff: now,
       revokedAtCutoff,
     }),
   )

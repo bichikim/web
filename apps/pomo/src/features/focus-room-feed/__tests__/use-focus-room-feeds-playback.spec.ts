@@ -57,7 +57,7 @@ const repositoryMocks = vi.hoisted(() => {
     recoverMissingDialogue: vi.fn().mockResolvedValue(true),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
-    updateJob: vi.fn().mockResolvedValue(undefined),
+    startJob: vi.fn().mockResolvedValue(true),
   }
 
   return {
@@ -118,7 +118,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.recoverMissingDialogue.mockResolvedValue(true)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
-  repositoryMocks.feedRepository.updateJob.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
   repositoryMocks.listConnections.mockReturnValue([])
   lifecycleMocks.deleteExpiredFeedDialogues.mockResolvedValue(0)
   lifecycleMocks.discardFeedJobs.mockResolvedValue([])

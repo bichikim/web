@@ -7,10 +7,11 @@ const PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES = [
   {exclude: true, match: '/api/:path(.*)?'},
   {exclude: true, match: '/workers/:path(.*)?'},
 ] satisfies NonNullable<CompilerOptions['routeStrategies']>
-
-const PARAGLIDE_OUTPUT_STRUCTURE = 'message-modules' satisfies NonNullable<
-  CompilerOptions['outputStructure']
->
+type ParaglideOutputStructure = NonNullable<CompilerOptions['outputStructure']>
+// Vite serve fetches one module per message when `import * as m` uses message-modules.
+const PARAGLIDE_OUTPUT_STRUCTURE_DEVELOPMENT = 'locale-modules' satisfies ParaglideOutputStructure
+// Production tree-shakes unused messages per entry with message-modules.
+const PARAGLIDE_OUTPUT_STRUCTURE_PRODUCTION = 'message-modules' satisfies ParaglideOutputStructure
 
 const PARAGLIDE_WEB_STRATEGY = ['cookie', 'preferredLanguage', 'baseLocale'] satisfies NonNullable<
   CompilerOptions['strategy']
@@ -29,8 +30,11 @@ export const PARAGLIDE_CONFIG = {
   },
   common: {
     outdir: PARAGLIDE_OUTDIR,
-    outputStructure: PARAGLIDE_OUTPUT_STRUCTURE,
+    outputStructure: PARAGLIDE_OUTPUT_STRUCTURE_PRODUCTION,
     project: PARAGLIDE_PROJECT,
+  },
+  development: {
+    outputStructure: PARAGLIDE_OUTPUT_STRUCTURE_DEVELOPMENT,
   },
   web: {
     routeStrategies: PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES,

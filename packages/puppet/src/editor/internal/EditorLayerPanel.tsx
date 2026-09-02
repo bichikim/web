@@ -24,7 +24,11 @@ import {
 } from './scene-graph'
 import {EditorLayerStateActions} from './EditorLayerStateActions'
 import {getLayerDropPosition, type LayerDropTarget} from './layer-drop'
-import {getDocumentParameters, getParameterTargetPartIds} from './parameter-keyforms'
+import {
+  getBindingParameters,
+  getDocumentParameterBindings,
+  getParameterTargetPartIds,
+} from './parameter-keyforms'
 
 export interface EditorLayerPanelProps {
   readonly activePartId?: string
@@ -71,15 +75,18 @@ const getGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
 const getNodeParameterLinks = (document: PuppetDocument, nodeId: string) => {
   const partIds = getSceneNodePartIds(document, nodeId)
 
-  return getDocumentParameters(document).flatMap((parameter) => {
-    const targetPartIds = new Set(getParameterTargetPartIds(parameter))
+  return getDocumentParameterBindings(document).flatMap((binding) => {
+    const targetPartIds = new Set(getParameterTargetPartIds(binding))
     const linkedPartCount = partIds.filter((partId) => targetPartIds.has(partId)).length
 
     if (linkedPartCount === 0) {
       return []
     }
 
-    return [linkedPartCount === partIds.length ? parameter.name : `${parameter.name} 일부`]
+    const name = getBindingParameters(document, binding)
+      .map((parameter) => parameter.name)
+      .join(' / ')
+    return [linkedPartCount === partIds.length ? name : `${name} 일부`]
   })
 }
 

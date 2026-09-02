@@ -1,8 +1,9 @@
+import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
 import type {PuppetDocument} from '../player/document'
 
 export interface MeshEditorProps {
-  readonly activeKeyformValue?: number | null
-  readonly activeParameterId?: string
+  readonly activeBindingId?: string
+  readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activePartId?: string
   readonly document: PuppetDocument
   readonly editMode?: 'motion' | 'parameter'
@@ -11,7 +12,8 @@ export interface MeshEditorProps {
   readonly onVertexEditStart?: () => void
   readonly onVertexSelect?: (vertexIndex: number | null) => void
   readonly previewTime?: number
-  readonly parameterValue?: number
+  readonly parameterValues?: PuppetParameterValues
+  readonly parameterValueMap?: PuppetParameterValueMap
   readonly selectedPartIds?: ReadonlyArray<string>
   readonly selectedVertexIndex?: number | null
 }

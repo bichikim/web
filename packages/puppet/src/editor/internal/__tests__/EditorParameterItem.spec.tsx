@@ -9,11 +9,7 @@ const renderItem = (onDelete = vi.fn(), onNameChange = vi.fn()) => {
   const onSelect = vi.fn()
   const view = render(() => (
     <EditorParameterItem
-      keyformCount={3}
-      maximum={30}
-      minimum={-30}
       name="Angle X"
-      value={0}
       onDelete={onDelete}
       onNameChange={onNameChange}
       onSelect={onSelect}
@@ -32,7 +28,7 @@ const renderItem = (onDelete = vi.fn(), onNameChange = vi.fn()) => {
 test('should edit its single visible name after a double click', () => {
   const {item, onNameChange, view} = renderItem()
 
-  expect(view.getByText('-30 · 0 · 30 · 3 keyforms')).toBeVisible()
+  expect(view.queryByText(/keyforms/)).not.toBeInTheDocument()
   fireEvent.click(item, {timeStamp: 100})
   fireEvent.click(item, {timeStamp: 200})
   const nameInput = view.getByRole('textbox', {name: 'Parameter 이름'})

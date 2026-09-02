@@ -4,6 +4,7 @@ import {
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
 } from '../player/document'
+import {MAXIMUM_TEXTURE_PIXELS} from './internal/texture-limits'
 
 export type ImportPngErrorCode =
   | GenerateMeshErrorCode
@@ -25,7 +26,6 @@ export interface ImportPngSuccess {
 
 export type ImportPngResult = ImportPngFailure | ImportPngSuccess
 
-const MAXIMUM_IMAGE_PIXELS = 16_777_216
 const PNG_FILE_PATTERN = /\.png$/iu
 
 const readFileSource = (file: File): Promise<string | undefined> =>
@@ -77,7 +77,7 @@ export const importPng = async (file: File): Promise<ImportPngResult> => {
     return {error: {code: 'decode-failed'}, ok: false}
   }
 
-  if (image.naturalWidth * image.naturalHeight > MAXIMUM_IMAGE_PIXELS) {
+  if (image.naturalWidth * image.naturalHeight > MAXIMUM_TEXTURE_PIXELS) {
     return {error: {code: 'too-large'}, ok: false}
   }
 
