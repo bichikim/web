@@ -45,8 +45,8 @@ describe('autoMeshPart', () => {
       expect(result.document.parts[0]?.mesh.vertices.slice(-2)).toEqual([2, 2])
       expect(result.document.motions[0]?.tracks).toEqual([])
       expect(
-        result.document.parameters?.flatMap((parameter) =>
-          parameter.keyforms.flatMap((keyform) => keyform.parts),
+        result.document.parameterBindings?.flatMap((binding) =>
+          binding.keyforms.flatMap((keyform) => keyform.parts),
         ),
       ).toContainEqual(
         expect.objectContaining({

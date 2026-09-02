@@ -24,6 +24,7 @@ const serializeMesh = (mesh: PuppetMesh) => {
   return serializeDocument({
     ...document,
     motions: [],
+    parameterBindings: undefined,
     parameters: undefined,
     parts: [{...part, mesh}],
     scene: undefined,

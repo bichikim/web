@@ -1000,7 +1000,7 @@
 .puppet-editor .keyform-toolbar {
   display: grid;
   min-height: 58px;
-  grid-template-columns: 210px minmax(0, 1fr) 110px;
+  grid-template-columns: 210px minmax(0, 1fr);
   gap: 14px;
   align-items: center;
   padding: 9px 16px;
@@ -1044,27 +1044,6 @@
   cursor: not-allowed;
 }
 
-.puppet-editor .keyform-current-value {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  justify-content: flex-end;
-  color: #b5c2bd;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 10px;
-  text-align: right;
-}
-
-.puppet-editor .keyform-current-value input {
-  width: 72px;
-  padding: 5px 7px;
-  border: 1px solid #3b4743;
-  border-radius: 6px;
-  color: #e5eeea;
-  background: #171e1b;
-  font: inherit;
-}
-
 .puppet-editor .keyform-track-wrap {
   display: grid;
   min-width: 0;
@@ -1074,6 +1053,7 @@
 }
 
 .puppet-editor .keyform-track-label {
+  position: relative;
   min-width: 0;
   border-right: 1px solid #27302d;
   border-bottom: 1px solid #222b28;
@@ -1087,7 +1067,59 @@
 }
 
 .puppet-editor .keyform-track-label .parameter-item {
+  padding-bottom: 38px;
   border-width: 0;
+}
+
+.puppet-editor .keyform-track-label.parameter-grid-label .parameter-swipe-row,
+.puppet-editor .keyform-track-label.parameter-grid-label .parameter-item {
+  min-height: 124px;
+}
+
+.puppet-editor .keyform-track-label.parameter-grid-label .parameter-item {
+  padding-bottom: 66px;
+}
+
+.puppet-editor .parameter-item-details {
+  position: absolute;
+  right: 30px;
+  bottom: 9px;
+  left: 10px;
+  color: #a7b3af;
+  transform: translateX(calc(var(--parameter-swipe-offset) * -1));
+  transition: transform 160ms ease-out;
+}
+
+.puppet-editor .parameter-swipe-row.dragging .parameter-item-details {
+  transition: none;
+}
+
+.puppet-editor .keyform-row-values {
+  display: grid;
+  gap: 5px;
+}
+
+.puppet-editor .keyform-row-value {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 7px;
+  align-items: center;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.puppet-editor .keyform-row-value input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #3b4743;
+  border-radius: 5px;
+  color: #e5eeea;
+  background: #171e1b;
+  font: inherit;
 }
 
 .puppet-editor .keyform-track {
@@ -1097,6 +1129,8 @@
   border-bottom: 1px solid #222b28;
   background-image: linear-gradient(to right, #27322e 1px, transparent 1px);
   background-size: 12.5% 100%;
+  cursor: crosshair;
+  touch-action: none;
 }
 
 .puppet-editor .keyform-track::before {
@@ -1107,6 +1141,60 @@
   height: 1px;
   background: #3a4642;
   content: '';
+}
+
+.puppet-editor .parameter-grid-track {
+  min-height: 124px;
+}
+
+.puppet-editor .parameter-grid-track::before {
+  top: 50%;
+}
+
+.puppet-editor .parameter-grid {
+  position: absolute;
+  inset: 16px 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.puppet-editor .parameter-grid-keyform {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid #b8f5e5;
+  border-radius: 2px;
+  background: #64e5c4;
+  transform: translate(-50%, 50%) rotate(45deg);
+  cursor: pointer;
+}
+
+.puppet-editor .parameter-grid-keyform.selected {
+  border-color: #fff0cf;
+  background: #ffbd59;
+  box-shadow: 0 0 0 3px rgb(255 189 89 / 18%);
+}
+
+.puppet-editor .parameter-grid-current-x,
+.puppet-editor .parameter-grid-current-y {
+  position: absolute;
+  background: #ffbd59;
+  pointer-events: none;
+}
+
+.puppet-editor .parameter-grid-current-x {
+  top: -16px;
+  bottom: -16px;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.puppet-editor .parameter-grid-current-y {
+  right: 0;
+  left: 0;
+  height: 1px;
+  transform: translateY(50%);
 }
 
 .puppet-editor .keyform-value-indicator {

@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@kobalte/core": "^0.13.13",
+    "delaunator": "^5.1.0",
     "es-toolkit": "catalog:",
     "pixi.js": "^8.19.0"
   },

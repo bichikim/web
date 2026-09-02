@@ -4,7 +4,7 @@ import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-libra
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type Player, type PuppetDocument} from '../../player'
+import {createDemoDocument, type Player, type PuppetDocument, serializeDocument} from '../../player'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -19,6 +19,7 @@ const player: Player = {
   play: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
+  setParameterValues: vi.fn(),
   updateDocument: vi.fn(() => true),
 }
 
@@ -56,7 +57,7 @@ describe('PuppetEditor', () => {
       view.queryByText('문서를 검증한 뒤 플레이어에 적용하고 있습니다.'),
     ).not.toBeInTheDocument()
     expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
-    expect(view.getAllByRole('button', {name: /Angle X .* 키폼/})).toHaveLength(3)
+    expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(9)
     expect(view.getByRole('region', {name: 'Parameter와 키폼 편집'})).toContainElement(
       view.getByRole('region', {name: 'Parameters'}),
     )
@@ -149,6 +150,135 @@ describe('PuppetEditor', () => {
     expect(screen.getByRole('button', {name: '자동 메시'})).toBeDisabled()
   })
 
+  test('should reopen a serialized two-dimensional document', async () => {
+    const document = createDemoDocument()
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.change(view.getByLabelText('JSON 가져오기'), {
+      target: {
+        files: [
+          new File([serializeDocument(document)], 'two-dimensional.json', {
+            type: 'application/json',
+          }),
+        ],
+      },
+    })
+
+    await waitFor(() => {
+      const reopenedDocument = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(reopenedDocument).toMatchObject({version: 2})
+      expect(reopenedDocument?.parameterBindings?.[0]?.keyforms).toHaveLength(9)
+    })
+    expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(9)
+  })
+
+  test('should create a new two-dimensional parameter binding', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.click(view.getByRole('button', {name: '2차원 Parameter 추가'}))
+
+    await waitFor(() => {
+      const document = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.parameters).toHaveLength(4)
+      expect(document?.parameterBindings).toHaveLength(2)
+      expect(document?.parameterBindings?.[1]?.keyforms).toHaveLength(9)
+    })
+  })
+
+  test('should add and delete a sparse two-dimensional keyform at the current values', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 값'}), {
+      target: {value: '15'},
+    })
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Angle Y 값'}), {
+      target: {value: '15'},
+    })
+    fireEvent.click(view.getByRole('button', {name: '+ 현재 값에 키폼'}))
+
+    await waitFor(() => {
+      expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(10)
+      expect(
+        onDocumentChange.mock.calls.at(-1)?.[0]?.parameterBindings?.[0]?.keyforms,
+      ).toHaveLength(10)
+    })
+
+    fireEvent.click(view.getByRole('button', {name: '선택 키폼 삭제'}))
+
+    await waitFor(() => {
+      expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(9)
+      expect(
+        onDocumentChange.mock.calls.at(-1)?.[0]?.parameterBindings?.[0]?.keyforms,
+      ).toHaveLength(9)
+    })
+  })
+
+  test('should preserve and send values from multiple parameter bindings together', async () => {
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor />)
+
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 값'}), {
+      target: {value: '15'},
+    })
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {
+      target: {value: '10'},
+    })
+    fireEvent.click(view.getByRole('button', {name: 'Angle X'}))
+
+    expect(view.getByRole('spinbutton', {name: 'Angle X 값'})).toHaveValue(15)
+    await waitFor(() =>
+      expect(player.setParameterValues).toHaveBeenLastCalledWith({
+        'angle-x': 15,
+        'angle-y': 0,
+        'parameter-3': 10,
+      }),
+    )
+  })
+
+  test('should activate an inactive parameter track at the clicked values', async () => {
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor />)
+
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    await waitFor(() =>
+      expect(view.getByRole('button', {name: 'Parameter 3'})).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      ),
+    )
+
+    const grid = view.container.querySelector('.parameter-grid') as HTMLDivElement
+    vi.spyOn(grid, 'getBoundingClientRect').mockReturnValue({
+      bottom: 232,
+      height: 132,
+      left: 100,
+      right: 232,
+      toJSON: () => ({}),
+      top: 100,
+      width: 132,
+      x: 100,
+      y: 100,
+    })
+    fireEvent(
+      grid,
+      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 232, clientY: 100}),
+    )
+
+    await waitFor(() => {
+      expect(view.getByRole('button', {name: 'Angle X'})).toHaveAttribute('aria-pressed', 'true')
+      expect(view.getByRole('spinbutton', {name: 'Angle X 값'})).toHaveValue(30)
+      expect(view.getByRole('spinbutton', {name: 'Angle Y 값'})).toHaveValue(30)
+    })
+  })
+
   test('should notify only document changes through the latest external callback', async () => {
     const firstCallback = vi.fn()
     const secondCallback = vi.fn()
@@ -171,7 +301,7 @@ describe('PuppetEditor', () => {
     await waitFor(() =>
       expect(secondCallback).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          parameters: [expect.objectContaining({name: 'Angle Y'})],
+          parameters: expect.arrayContaining([expect.objectContaining({name: 'Angle Y'})]),
         }),
       ),
     )
@@ -181,7 +311,8 @@ describe('PuppetEditor', () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
-    const track = view.getByLabelText('Angle X 키폼 트랙')
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    const track = view.getByLabelText('Parameter 3 키폼 트랙')
     vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
       bottom: 76,
       height: 76,
@@ -193,7 +324,7 @@ describe('PuppetEditor', () => {
       x: 100,
       y: 0,
     })
-    const marker = view.getByRole('button', {name: 'Angle X 0 키폼'})
+    const marker = view.getByRole('button', {name: 'Parameter 3 0 키폼'})
 
     marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
     window.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
@@ -201,11 +332,11 @@ describe('PuppetEditor', () => {
 
     await waitFor(() => {
       const document: PuppetDocument | undefined = onDocumentChange.mock.calls.at(-1)?.[0]
-      expect(document?.parameters?.[0]?.keyforms.map((keyform) => keyform.value)).toEqual([
-        -30, 15, 30,
+      expect(document?.parameterBindings?.[1]?.keyforms.map((keyform) => keyform.values)).toEqual([
+        [15],
       ])
     })
-    expect(view.getByRole('button', {name: 'Angle X 15 키폼'})).toHaveAttribute(
+    expect(view.getByRole('button', {name: 'Parameter 3 15 키폼'})).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -291,20 +422,20 @@ describe('PuppetEditor', () => {
 
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]
-      expect(document?.parameters?.[0]?.targetPartIds).toEqual([
+      expect(document?.parameterBindings?.[0]?.targetPartIds).toEqual([
         'mesh-preview',
         'shape-circle',
         'shape-diamond',
       ])
     })
     const modelingPanel = view.getByRole('region', {name: 'Parameter와 키폼 편집'})
-    expect(within(modelingPanel).getAllByText('Angle X')).toHaveLength(1)
+    expect(within(modelingPanel).getAllByText('Angle X').length).toBeGreaterThan(0)
     expect(view.getByRole('button', {name: '선택 레이어 연결'})).toBeDisabled()
 
     fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결 해제'}))
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]
-      expect(document?.parameters?.[0]?.targetPartIds).toEqual(['mesh-preview'])
+      expect(document?.parameterBindings?.[0]?.targetPartIds).toEqual(['mesh-preview'])
     })
   })
 
@@ -326,5 +457,21 @@ describe('PuppetEditor', () => {
     })
     expect(view.queryByRole('button', {name: 'Angle X'})).not.toBeInTheDocument()
     expect(view.getByText('Parameter를 추가하세요.')).toBeVisible()
+  })
+
+  test('should preserve the active parameter when deleting another parameter', async () => {
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor />)
+
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    const inactiveParameter = view.getByRole('button', {name: 'Parameter 3'})
+
+    expect(view.getByRole('button', {name: 'Parameter 4'})).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.keyDown(inactiveParameter, {key: 'Delete'})
+    fireEvent.keyDown(inactiveParameter, {key: 'Delete'})
+
+    expect(view.queryByRole('button', {name: 'Parameter 3'})).not.toBeInTheDocument()
+    expect(view.getByRole('button', {name: 'Parameter 4'})).toHaveAttribute('aria-pressed', 'true')
   })
 })

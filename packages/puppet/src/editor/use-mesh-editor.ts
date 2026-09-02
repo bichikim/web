@@ -1,5 +1,10 @@
 import {type Accessor, createEffect, createMemo, createSignal, type Setter, untrack} from 'solid-js'
 
+import {
+  composeParameterVertices,
+  type PuppetParameterValueMap,
+  type PuppetParameterValues,
+} from '../deformation'
 import type {PuppetDocument, PuppetPart} from '../player/document'
 import {sampleMotionVertices} from '../player/internal/motion'
 import {getScenePartStates} from '../player/scene'
@@ -13,11 +18,7 @@ import {
 } from './internal/mesh-view'
 import {setVertexKeyframe} from './internal/motion-keyframes'
 import {getEditErrorMessage} from './internal/notices'
-import {
-  getDocumentParameters,
-  sampleParameterVertices,
-  setParameterKeyformVertex,
-} from './internal/parameter-keyforms'
+import {getParameterBinding, setParameterKeyformVertex} from './internal/parameter-keyforms'
 import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
 
@@ -54,6 +55,7 @@ interface MeshEditorState {
   readonly draftPoint: Accessor<VertexPoint | null>
   readonly dragStartPoint: Accessor<VertexPoint | null>
   readonly draggingTime: Accessor<number | null>
+  readonly draggingValues: Accessor<PuppetParameterValues | null>
   readonly draggingVertex: Accessor<number | null>
   readonly part: Accessor<PuppetPart | undefined>
   readonly partViews: Accessor<ReadonlyArray<MeshPartView>>
@@ -61,6 +63,7 @@ interface MeshEditorState {
   readonly setDraftPoint: Setter<VertexPoint | null>
   readonly setDragStartPoint: Setter<VertexPoint | null>
   readonly setDraggingTime: Setter<number | null>
+  readonly setDraggingValues: Setter<PuppetParameterValues | null>
   readonly setDraggingVertex: Setter<number | null>
   readonly setFocusedPartId: Setter<string | null>
   readonly setSelectedVertex: Setter<number | null>
@@ -80,7 +83,9 @@ interface CommitVertexMoveOptions extends VertexPoint {
   readonly editMode: 'motion' | 'parameter'
   readonly document: PuppetDocument
   readonly keyframeTime: number | null
-  readonly parameterId?: string
+  readonly bindingId?: string
+  readonly parameterValueMap?: PuppetParameterValueMap
+  readonly parameterValues: PuppetParameterValues | null
   readonly part: PuppetPart
   readonly vertexIndex: number
 }
@@ -100,9 +105,9 @@ type CommitVertexMoveResult = CommitVertexMoveFailure | CommitVertexMoveSuccess
 
 const canEditSelectedKeyform = (props: MeshEditorProps) =>
   props.editMode !== 'parameter' ||
-  (props.activeParameterId !== undefined &&
-    props.activeKeyformValue !== null &&
-    props.activeKeyformValue !== undefined)
+  (props.activeBindingId !== undefined &&
+    props.activeKeyformValues !== null &&
+    props.activeKeyformValues !== undefined)
 
 const getVertexMoveNotice = (
   editMode: MeshEditorProps['editMode'],
@@ -110,7 +115,7 @@ const getVertexMoveNotice = (
   vertexIndex: number,
 ) => {
   if (editMode === 'parameter') {
-    return `${keyframeTime?.toFixed(2)} 값의 Parameter 키폼을 변경했습니다.`
+    return '선택한 Parameter 키폼을 변경했습니다.'
   }
 
   return keyframeTime === null
@@ -120,18 +125,33 @@ const getVertexMoveNotice = (
 
 const commitVertexMove = (options: CommitVertexMoveOptions): CommitVertexMoveResult => {
   if (options.editMode === 'parameter') {
-    if (options.parameterId === undefined || options.keyframeTime === null) {
+    if (options.bindingId === undefined || options.parameterValues === null) {
       return {message: '편집할 Parameter 키폼을 먼저 선택하세요.', ok: false}
     }
 
+    const activePart = options.part
+    const otherBindings = (options.document.parameterBindings ?? []).filter(
+      (binding) => binding.id !== options.bindingId,
+    )
+    const otherVertices = composeParameterVertices({
+      document: {...options.document, parameterBindings: otherBindings},
+      parameterValues: options.parameterValueMap,
+      partId: activePart.id,
+      restVertices: activePart.mesh.vertices,
+    })
+    const coordinateIndex = options.vertexIndex * COORDINATES_PER_VERTEX
+    const restX = activePart.mesh.vertices[coordinateIndex] ?? options.x
+    const restY = activePart.mesh.vertices[coordinateIndex + 1] ?? options.y
+    const otherX = otherVertices[coordinateIndex] ?? restX
+    const otherY = otherVertices[coordinateIndex + 1] ?? restY
     const document = setParameterKeyformVertex({
+      bindingId: options.bindingId,
       document: options.document,
-      parameterId: options.parameterId,
       partId: options.part.id,
-      value: options.keyframeTime,
+      values: options.parameterValues,
       vertexIndex: options.vertexIndex,
-      x: options.x,
-      y: options.y,
+      x: options.x - otherX + restX,
+      y: options.y - otherY + restY,
     })
 
     return document === undefined
@@ -199,21 +219,32 @@ const getPointerPoint = (
   })
 
 const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart) => {
-  const parameter = getDocumentParameters(props.document).find(
-    (candidate) => candidate.id === props.activeParameterId,
-  )
+  const activeBinding =
+    props.activeBindingId === undefined
+      ? undefined
+      : getParameterBinding(props.document, props.activeBindingId)
+  const activeParameterValues =
+    activeBinding === undefined || props.parameterValues === undefined
+      ? {}
+      : Object.fromEntries(
+          activeBinding.parameterIds.flatMap((parameterId, index) => {
+            const value = props.parameterValues?.[index]
+            return value === undefined ? [] : [[parameterId, value] as const]
+          }),
+        )
+  const parameterVertices = composeParameterVertices({
+    document: props.document,
+    parameterValues: {...props.parameterValueMap, ...activeParameterValues},
+    partId: part.id,
+    restVertices: part.mesh.vertices,
+  })
 
   return props.editMode === 'parameter'
-    ? sampleParameterVertices({
-        parameter,
-        partId: part.id,
-        restVertices: part.mesh.vertices,
-        value: props.parameterValue ?? parameter?.defaultValue ?? 0,
-      })
+    ? parameterVertices
     : sampleMotionVertices({
         motion: props.document.motions[0],
         partId: part.id,
-        restVertices: part.mesh.vertices,
+        restVertices: parameterVertices,
         time: props.previewTime ?? 0,
       })
 }
@@ -223,6 +254,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   const [selectedVertex, setSelectedVertex] = createSignal<number | null>(null)
   const [draggingVertex, setDraggingVertex] = createSignal<number | null>(null)
   const [draggingTime, setDraggingTime] = createSignal<number | null>(null)
+  const [draggingValues, setDraggingValues] = createSignal<PuppetParameterValues | null>(null)
   const [draftPoint, setDraftPoint] = createSignal<VertexPoint | null>(null)
   const [dragStartPoint, setDragStartPoint] = createSignal<VertexPoint | null>(null)
   const [focusedPartId, setFocusedPartId] = createSignal<string | null>(null)
@@ -300,6 +332,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
       activeDocument = document
       setDraggingVertex(null)
       setDraggingTime(null)
+      setDraggingValues(null)
       setDraftPoint(null)
       setDragStartPoint(null)
     }
@@ -329,6 +362,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   return {
     draftPoint,
     draggingTime,
+    draggingValues,
     draggingVertex,
     dragStartPoint,
     part,
@@ -336,6 +370,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
     selectedVertex,
     setDraftPoint,
     setDraggingTime,
+    setDraggingValues,
     setDraggingVertex,
     setDragStartPoint,
     setFocusedPartId,
@@ -351,8 +386,19 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
 const resetPointerState = (state: MeshEditorState) => {
   state.setDraggingVertex(null)
   state.setDraggingTime(null)
+  state.setDraggingValues(null)
   state.setDraftPoint(null)
   state.setDragStartPoint(null)
+}
+
+const updatePointerDraft = (
+  state: MeshEditorState,
+  document: PuppetDocument,
+  event: PointerEvent,
+) => {
+  if (state.draggingVertex() !== null) {
+    state.setDraftPoint(getPointerPoint(event, event.currentTarget as SVGSVGElement, document))
+  }
 }
 
 export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
@@ -414,10 +460,9 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       props.onDocumentChange !== undefined &&
       canEditSelectedKeyform(props)
     ) {
-      state.setDraggingTime(
-        props.editMode === 'parameter'
-          ? (props.activeKeyformValue ?? null)
-          : (props.previewTime ?? null),
+      state.setDraggingTime(props.editMode === 'parameter' ? null : (props.previewTime ?? null))
+      state.setDraggingValues(
+        props.editMode === 'parameter' ? (props.activeKeyformValues ?? null) : null,
       )
       state.setDraggingVertex(vertex.index)
       props.onVertexEditStart?.()
@@ -425,12 +470,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
   }
 
   const handlePointerMove = (event: PointerEvent) => {
-    const vertexIndex = state.draggingVertex()
-    const svgElement = event.currentTarget as SVGSVGElement
-
-    if (vertexIndex !== null) {
-      state.setDraftPoint(getPointerPoint(event, svgElement, props.document))
-    }
+    updatePointerDraft(state, props.document, event)
   }
 
   const handlePointerEnd = () => {
@@ -438,6 +478,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     const point = state.draftPoint()
     const startPoint = state.dragStartPoint()
     const keyframeTime = state.draggingTime()
+    const parameterValues = state.draggingValues()
     const vertexIndex = state.draggingVertex()
     const {onDocumentChange} = props
 
@@ -460,10 +501,12 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
 
     const result = commitVertexMove({
       ...point,
+      bindingId: props.activeBindingId,
       document: props.document,
       editMode: props.editMode ?? 'motion',
       keyframeTime,
-      parameterId: props.activeParameterId,
+      parameterValueMap: props.parameterValueMap,
+      parameterValues,
       part: activePart,
       vertexIndex,
     })

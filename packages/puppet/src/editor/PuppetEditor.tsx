@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
+import {batch, createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
 import {
   createDemoDocument,
@@ -8,12 +8,13 @@ import {
   type PuppetDocument,
   serializeDocument,
 } from '../player'
+import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
 import {importPng, type ImportPngErrorCode} from './import-png'
 import {AutoMeshDialog} from './internal/AutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
 import {EditorKeyformPanel} from './internal/EditorKeyformPanel'
 import {EditorLayerPanel} from './internal/EditorLayerPanel'
-import {getDocumentParameters} from './internal/parameter-keyforms'
+import {getDocumentParameterBindings, getDocumentParameters} from './internal/parameter-keyforms'
 import {getSceneNode, getSceneSelectionPartIds, type SceneSelection} from './internal/scene-graph'
 import {EditorPanelLayout} from './internal/EditorPanelLayout'
 import {EditorTimeline} from './internal/EditorTimeline'
@@ -140,8 +141,8 @@ const createSceneSelection = (partId: string | null): SceneSelection => ({
 })
 
 interface EditorViewportProps {
-  readonly activeKeyformValue?: number | null
-  readonly activeParameterId?: string
+  readonly activeBindingId?: string
+  readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activePartId?: string
   readonly activeVertexIndex?: number | null
   readonly currentTime?: number
@@ -154,8 +155,8 @@ interface EditorViewportProps {
   readonly onTimeChange?: (time: number) => void
   readonly onVertexEditStart?: () => void
   readonly onVertexSelect?: (vertexIndex: number | null) => void
-  readonly parameterValue?: number
-  readonly previewDocument?: PuppetDocument
+  readonly parameterValues?: PuppetParameterValues
+  readonly parameterValueMap?: PuppetParameterValueMap
   readonly selectedPartIds?: ReadonlyArray<string>
 }
 
@@ -168,14 +169,15 @@ const EditorViewport = (props: EditorViewportProps) => (
   >
     <div class="viewport">
       <PlayerCanvas
-        document={props.previewDocument ?? props.document}
+        document={props.document}
         onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
         onPlayerChange={props.onPlayerChange}
         onStatusChange={props.onStatusChange}
+        parameterValues={props.parameterValueMap}
       />
       <MeshEditor
-        activeKeyformValue={props.activeKeyformValue}
-        activeParameterId={props.activeParameterId}
+        activeBindingId={props.activeBindingId}
+        activeKeyformValues={props.activeKeyformValues}
         activePartId={props.activePartId}
         document={props.document}
         editMode={props.editMode}
@@ -184,7 +186,8 @@ const EditorViewport = (props: EditorViewportProps) => (
         onVertexEditStart={props.onVertexEditStart}
         onVertexSelect={props.onVertexSelect}
         previewTime={props.currentTime}
-        parameterValue={props.parameterValue}
+        parameterValues={props.parameterValues}
+        parameterValueMap={props.parameterValueMap}
         selectedPartIds={props.selectedPartIds}
         selectedVertexIndex={props.activeVertexIndex}
       />
@@ -200,32 +203,35 @@ interface EditorModelingKeyformPanelProps {
 
 const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => (
   <EditorKeyformPanel
-    activeKeyformValue={props.editor.activeKeyformValue()}
-    activeParameterId={props.editor.activeParameterId() ?? undefined}
+    activeBindingId={props.editor.activeBindingId() ?? undefined}
+    activeKeyformValues={props.editor.activeKeyformValues()}
+    bindings={getDocumentParameterBindings(props.document)}
     parameters={getDocumentParameters(props.document)}
+    parameterValueMap={props.editor.parameterValueMap()}
     selectedPartIds={props.selectedPartIds}
     targetPartIds={props.editor.activeTargetPartIds()}
-    value={props.editor.parameterValue()}
+    values={props.editor.parameterValues()}
     onKeyformAdd={props.editor.addKeyform}
     onKeyformDelete={props.editor.deleteKeyform}
-    onKeyformMove={(parameterId, value, nextValue) => {
-      props.editor.selectParameter(parameterId)
-      props.editor.moveKeyform(value, nextValue)
+    onKeyformMove={(bindingId, values, nextValues) => {
+      props.editor.selectBinding(bindingId)
+      props.editor.moveKeyform(values, nextValues)
     }}
-    onKeyformSelect={(parameterId, value) => {
-      props.editor.selectParameter(parameterId)
-      props.editor.selectKeyform(value)
+    onKeyformSelect={(bindingId, values) => {
+      props.editor.selectBinding(bindingId)
+      props.editor.selectKeyform(values)
     }}
+    onBindingDelete={props.editor.deleteParameter}
+    onBindingSelect={props.editor.selectBinding}
     onParameterAdd={props.editor.addParameter}
-    onParameterDelete={props.editor.deleteParameter}
-    onParameterNameChange={(parameterId, name) => {
-      props.editor.selectParameter(parameterId)
-      props.editor.renameParameter(name)
+    onParameterNameChange={(bindingId, parameterId, name) => {
+      props.editor.selectBinding(bindingId)
+      props.editor.renameParameter(parameterId, name)
     }}
-    onParameterSelect={props.editor.selectParameter}
     onSelectionConnect={props.editor.connectSelection}
     onSelectionDisconnect={props.editor.disconnectSelection}
-    onValueChange={props.editor.setParameterValue}
+    onTwoDimensionalParameterAdd={props.editor.addTwoDimensionalParameter}
+    onValueChange={props.editor.setParameterValues}
   />
 )
 
@@ -404,11 +410,13 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   })
   const resetEditorDocument = (document: PuppetDocument) => {
     const partId = document.parts[0]?.id ?? null
-    setSourceDocument(document)
-    setActivePartId(partId)
-    setLayerSelection(createSceneSelection(partId))
-    setActiveVertexIndex(null)
-    parameterEditor.reset(document)
+    batch(() => {
+      setSourceDocument(document)
+      setActivePartId(partId)
+      setLayerSelection(createSceneSelection(partId))
+      setActiveVertexIndex(null)
+      parameterEditor.reset(document)
+    })
   }
   const editorImports = useEditorImports({
     onDocumentChange: resetEditorDocument,
@@ -510,8 +518,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         )}
         viewport={
           <EditorViewport
-            activeKeyformValue={parameterEditor.activeKeyformValue()}
-            activeParameterId={parameterEditor.activeParameterId() ?? undefined}
+            activeBindingId={parameterEditor.activeBindingId() ?? undefined}
+            activeKeyformValues={parameterEditor.activeKeyformValues()}
             activePartId={activePartId() ?? undefined}
             activeVertexIndex={activeVertexIndex()}
             currentTime={currentTime()}
@@ -524,10 +532,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onTimeChange={setCurrentTime}
             onVertexEditStart={pausePlayback}
             onVertexSelect={setActiveVertexIndex}
-            parameterValue={parameterEditor.parameterValue()}
-            previewDocument={
-              workspace() === 'modeling' ? parameterEditor.previewDocument() : sourceDocument()
-            }
+            parameterValues={parameterEditor.parameterValues()}
+            parameterValueMap={parameterEditor.parameterValueMap()}
             selectedPartIds={selectedPartIds()}
           />
         }

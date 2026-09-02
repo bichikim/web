@@ -1,36 +1,50 @@
-import {difference, sortBy, union, uniq} from 'es-toolkit/array'
+import {difference, union, uniq} from 'es-toolkit/array'
 
+import {
+  composeParameterVertices,
+  isTwoDimensionalParameterBinding,
+  parameterValuesEqual,
+  type PuppetParameterValueMap,
+  type PuppetParameterValues,
+  sampleParameterVertices,
+} from '../../deformation'
 import type {
   PuppetDocument,
   PuppetParameter,
+  PuppetParameterBinding,
+  PuppetParameterBinding1D,
+  PuppetParameterBinding2D,
   PuppetParameterKeyform,
   PuppetParameterPartKeyform,
 } from '../../player/document'
 import {movePartVertex} from '../edit-document'
+import {createParameterBindingId, createParameterIds} from './parameter-id'
 
 const COORDINATES_PER_VERTEX = 2
 const DEFAULT_PARAMETER_MINIMUM = -30
 const DEFAULT_PARAMETER_MAXIMUM = 30
 const DEFAULT_PARAMETER_VALUE = 0
+const TWO_DIMENSIONAL_VALUES = [
+  DEFAULT_PARAMETER_MINIMUM,
+  DEFAULT_PARAMETER_VALUE,
+  DEFAULT_PARAMETER_MAXIMUM,
+] as const
 
-interface ParameterTarget {
+interface ParameterBindingTarget {
+  readonly bindingId: string
   readonly document: PuppetDocument
-  readonly parameterId: string
 }
 
-interface ParameterValueTarget extends ParameterTarget {
-  readonly value: number
+interface ParameterValuesTarget extends ParameterBindingTarget {
+  readonly values: PuppetParameterValues
 }
 
-export interface MoveParameterKeyformOptions extends ParameterValueTarget {
-  readonly nextValue: number
+export interface MoveParameterKeyformOptions extends ParameterValuesTarget {
+  readonly nextValues: PuppetParameterValues
 }
 
-interface PartParameterValueTarget extends ParameterValueTarget {
+export interface SetParameterKeyformVertexOptions extends ParameterValuesTarget {
   readonly partId: string
-}
-
-export interface SetParameterKeyformVertexOptions extends PartParameterValueTarget {
   readonly vertexIndex: number
   readonly x: number
   readonly y: number
@@ -41,14 +55,45 @@ export interface AddParameterOptions {
   readonly partIds: ReadonlyArray<string>
 }
 
+export interface AddParameterResult {
+  readonly binding: PuppetParameterBinding
+  readonly document: PuppetDocument
+}
+
 export const getDocumentParameters = (document: PuppetDocument) => document.parameters ?? []
 
-export const getParameterTargetPartIds = (parameter: PuppetParameter) => {
-  if (parameter.targetPartIds !== undefined) {
-    return parameter.targetPartIds
+export const getDocumentParameterBindings = (document: PuppetDocument) =>
+  document.parameterBindings ?? []
+
+export const getParameterBinding = (document: PuppetDocument, bindingId: string) =>
+  getDocumentParameterBindings(document).find((binding) => binding.id === bindingId)
+
+export const getBindingParameters = (document: PuppetDocument, binding: PuppetParameterBinding) => {
+  const parameterById = new Map(
+    getDocumentParameters(document).map((parameter) => [parameter.id, parameter]),
+  )
+  return binding.parameterIds.flatMap((parameterId) => {
+    const parameter = parameterById.get(parameterId)
+    return parameter === undefined ? [] : [parameter]
+  })
+}
+
+export const getParameterTargetPartIds = (binding: PuppetParameterBinding) => {
+  if (binding.targetPartIds !== undefined) {
+    return binding.targetPartIds
   }
 
-  return uniq(parameter.keyforms.flatMap((keyform) => keyform.parts.map((part) => part.partId)))
+  return uniq(binding.keyforms.flatMap((keyform) => keyform.parts.map((part) => part.partId)))
+}
+
+export const getDefaultParameterValues = (
+  document: PuppetDocument,
+  binding: PuppetParameterBinding | undefined,
+): PuppetParameterValues => {
+  const parameters = binding === undefined ? [] : getBindingParameters(document, binding)
+  return binding !== undefined && isTwoDimensionalParameterBinding(binding)
+    ? [parameters[0]?.defaultValue ?? 0, parameters[1]?.defaultValue ?? 0]
+    : [parameters[0]?.defaultValue ?? 0]
 }
 
 const getDocumentParts = (document: PuppetDocument, partIds: ReadonlyArray<string>) => {
@@ -62,225 +107,394 @@ const getPartVertices = (
   restVertices: ReadonlyArray<number>,
 ) => keyform.parts.find((part) => part.partId === partId)?.vertices ?? restVertices
 
-const interpolateVertices = (
-  first: ReadonlyArray<number>,
-  second: ReadonlyArray<number>,
-  progress: number,
-) =>
-  first.map(
-    (coordinate, index) => coordinate + ((second[index] ?? coordinate) - coordinate) * progress,
-  )
-
-export interface SampleParameterVerticesOptions {
-  readonly parameter?: PuppetParameter
-  readonly partId: string
-  readonly restVertices: ReadonlyArray<number>
-  readonly value: number
-}
-
-export const sampleParameterVertices = (options: SampleParameterVerticesOptions) => {
-  const keyforms = options.parameter?.keyforms ?? []
-
-  if (keyforms.length === 0) {
-    return options.restVertices
-  }
-
-  const nextIndex = keyforms.findIndex((keyform) => keyform.value >= options.value)
-
-  if (nextIndex === -1) {
-    return getPartVertices(keyforms.at(-1)!, options.partId, options.restVertices)
-  }
-
-  const nextKeyform = keyforms[nextIndex]
-
-  if (nextIndex === 0 || nextKeyform === undefined) {
-    return getPartVertices(keyforms[0]!, options.partId, options.restVertices)
-  }
-
-  const previousKeyform = keyforms[nextIndex - 1]
-
-  if (previousKeyform === undefined) {
-    return options.restVertices
-  }
-
-  const range = nextKeyform.value - previousKeyform.value
-  const progress = range === 0 ? 0 : (options.value - previousKeyform.value) / range
-
-  return interpolateVertices(
-    getPartVertices(previousKeyform, options.partId, options.restVertices),
-    getPartVertices(nextKeyform, options.partId, options.restVertices),
-    progress,
-  )
-}
-
-const replaceParameter = (
+const replaceBinding = (
   document: PuppetDocument,
-  parameterId: string,
-  update: (parameter: PuppetParameter) => PuppetParameter,
+  bindingId: string,
+  update: (binding: PuppetParameterBinding) => PuppetParameterBinding,
 ): PuppetDocument | undefined => {
-  const parameters = getDocumentParameters(document)
-
-  if (!parameters.some((parameter) => parameter.id === parameterId)) {
+  const bindings = getDocumentParameterBindings(document)
+  if (!bindings.some((binding) => binding.id === bindingId)) {
     return undefined
   }
 
   return {
     ...document,
-    parameters: parameters.map((parameter) =>
-      parameter.id === parameterId ? update(parameter) : parameter,
+    parameterBindings: bindings.map((binding) =>
+      binding.id === bindingId ? update(binding) : binding,
     ),
   }
 }
 
-const createParameterId = (document: PuppetDocument) => {
-  const ids = new Set(getDocumentParameters(document).map((parameter) => parameter.id))
-  let index = ids.size + 1
-  let id = `parameter-${index}`
+const createParameter = (id: string, name: string): PuppetParameter => ({
+  defaultValue: DEFAULT_PARAMETER_VALUE,
+  id,
+  maximum: DEFAULT_PARAMETER_MAXIMUM,
+  minimum: DEFAULT_PARAMETER_MINIMUM,
+  name,
+})
 
-  while (ids.has(id)) {
-    index += 1
-    id = `parameter-${index}`
-  }
-
-  return {id, index}
-}
-
-export const addParameter = (options: AddParameterOptions) => {
+export const addParameter = (options: AddParameterOptions): AddParameterResult | undefined => {
   const parts = getDocumentParts(options.document, options.partIds)
-
   if (parts.length === 0) {
     return undefined
   }
 
-  const {id, index} = createParameterId(options.document)
-  const parameter: PuppetParameter = {
-    defaultValue: DEFAULT_PARAMETER_VALUE,
+  const {ids, index} = createParameterIds(options.document, 1)
+  const id = ids[0]!
+  const parameter = createParameter(id, `Parameter ${index}`)
+  const binding: PuppetParameterBinding1D = {
     id,
     keyforms: [
       {
         parts: parts.map((part) => ({partId: part.id, vertices: part.mesh.vertices})),
-        value: DEFAULT_PARAMETER_VALUE,
+        values: [DEFAULT_PARAMETER_VALUE],
       },
     ],
-    maximum: DEFAULT_PARAMETER_MAXIMUM,
-    minimum: DEFAULT_PARAMETER_MINIMUM,
-    name: `Parameter ${index}`,
+    parameterIds: [id],
     targetPartIds: parts.map((part) => part.id),
   }
 
   return {
+    binding,
     document: {
       ...options.document,
+      parameterBindings: [...getDocumentParameterBindings(options.document), binding],
       parameters: [...getDocumentParameters(options.document), parameter],
     },
-    parameter,
   }
 }
 
-export const renameParameter = (options: ParameterTarget & {readonly name: string}) => {
-  const name = options.name.trim()
-
-  if (name.length === 0) {
+export const addTwoDimensionalParameter = (
+  options: AddParameterOptions,
+): AddParameterResult | undefined => {
+  const parts = getDocumentParts(options.document, options.partIds)
+  if (parts.length === 0) {
     return undefined
   }
 
-  return replaceParameter(options.document, options.parameterId, (parameter) => ({
-    ...parameter,
-    name,
-  }))
+  const {ids, index} = createParameterIds(options.document, 2)
+  const xId = ids[0]!
+  const yId = ids[1]!
+  const bindingId = createParameterBindingId(options.document, `${xId}-${yId}`)
+  const parameters = [
+    createParameter(xId, `Parameter ${index} X`),
+    createParameter(yId, `Parameter ${index} Y`),
+  ]
+  const binding: PuppetParameterBinding2D = {
+    id: bindingId,
+    keyforms: TWO_DIMENSIONAL_VALUES.flatMap((y) =>
+      TWO_DIMENSIONAL_VALUES.map((x) => ({
+        parts: parts.map((part) => ({partId: part.id, vertices: part.mesh.vertices})),
+        values: [x, y] as const,
+      })),
+    ),
+    parameterIds: [xId, yId],
+    targetPartIds: parts.map((part) => part.id),
+  }
+
+  return {
+    binding,
+    document: {
+      ...options.document,
+      parameterBindings: [...getDocumentParameterBindings(options.document), binding],
+      parameters: [...getDocumentParameters(options.document), ...parameters],
+    },
+  }
 }
 
-export const deleteParameter = (options: ParameterTarget): PuppetDocument | undefined => {
-  const parameters = getDocumentParameters(options.document)
-
-  if (!parameters.some((parameter) => parameter.id === options.parameterId)) {
+export const renameParameter = (
+  options: ParameterBindingTarget & {readonly name: string; readonly parameterId?: string},
+) => {
+  const name = options.name.trim()
+  const binding = getParameterBinding(options.document, options.bindingId)
+  const parameterId = options.parameterId ?? binding?.parameterIds[0]
+  if (name.length === 0 || parameterId === undefined) {
     return undefined
   }
 
   return {
     ...options.document,
-    parameters: parameters.filter((parameter) => parameter.id !== options.parameterId),
+    parameters: getDocumentParameters(options.document).map((parameter) =>
+      parameter.id === parameterId ? {...parameter, name} : parameter,
+    ),
   }
 }
 
-export const insertParameterKeyform = (options: ParameterValueTarget) => {
-  const parameter = getDocumentParameters(options.document).find(
-    (candidate) => candidate.id === options.parameterId,
+export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument | undefined => {
+  const binding = getParameterBinding(options.document, options.bindingId)
+  if (binding === undefined) {
+    return undefined
+  }
+
+  const remainingBindings = getDocumentParameterBindings(options.document).filter(
+    (candidate) => candidate.id !== binding.id,
   )
+  const retainedParameterIds = new Set(
+    remainingBindings.flatMap((candidate) => candidate.parameterIds),
+  )
+  const removedParameterIds = new Set(
+    binding.parameterIds.filter((parameterId) => !retainedParameterIds.has(parameterId)),
+  )
+  return {
+    ...options.document,
+    parameterBindings: remainingBindings,
+    parameters: getDocumentParameters(options.document).filter(
+      (parameter) => !removedParameterIds.has(parameter.id),
+    ),
+  }
+}
+
+export const insertParameterKeyform = (options: ParameterValuesTarget) => {
+  const binding = getParameterBinding(options.document, options.bindingId)
+  const parameters = binding === undefined ? [] : getBindingParameters(options.document, binding)
   const parts =
-    parameter === undefined
+    binding === undefined
       ? []
-      : getDocumentParts(options.document, getParameterTargetPartIds(parameter))
+      : getDocumentParts(options.document, getParameterTargetPartIds(binding))
 
   if (
-    parameter === undefined ||
+    binding === undefined ||
     parts.length === 0 ||
-    options.value < parameter.minimum ||
-    options.value > parameter.maximum ||
-    parameter.keyforms.some((keyform) => keyform.value === options.value)
+    options.values.length !== binding.parameterIds.length ||
+    parameters.length !== binding.parameterIds.length ||
+    binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, options.values)) ||
+    options.values.some((value, index) => {
+      const parameter = parameters[index]
+      return parameter === undefined || value < parameter.minimum || value > parameter.maximum
+    })
   ) {
     return undefined
   }
 
-  const keyform: PuppetParameterKeyform = {
-    parts: parts.map((part) => ({
+  const partsKeyforms = parts.map((part) => ({
+    partId: part.id,
+    vertices: sampleParameterVertices({
+      binding,
       partId: part.id,
-      vertices: sampleParameterVertices({
-        parameter,
-        partId: part.id,
-        restVertices: part.mesh.vertices,
-        value: options.value,
-      }),
-    })),
-    value: options.value,
-  }
-
-  return replaceParameter(options.document, options.parameterId, (candidate) => ({
-    ...candidate,
-    keyforms: sortBy([...candidate.keyforms, keyform], ['value']),
+      restVertices: part.mesh.vertices,
+      values: options.values,
+    }),
   }))
+
+  return replaceBinding(options.document, options.bindingId, (candidate) => {
+    if (isTwoDimensionalParameterBinding(candidate)) {
+      const [x, y] = options.values
+      if (x === undefined || y === undefined) {
+        return candidate
+      }
+
+      const keyform = {parts: partsKeyforms, values: [x, y] as const}
+      return {
+        ...candidate,
+        keyforms: [...candidate.keyforms, keyform].sort(
+          (first, second) =>
+            first.values[1] - second.values[1] || first.values[0] - second.values[0],
+        ),
+      }
+    }
+
+    const [value] = options.values
+    if (value === undefined) {
+      return candidate
+    }
+
+    const keyform = {
+      parts: partsKeyforms,
+      values: [value] as const,
+    }
+
+    return {
+      ...candidate,
+      keyforms: [...candidate.keyforms, keyform].sort(
+        (first, second) => first.values[0] - second.values[0],
+      ),
+    }
+  })
 }
 
-export const deleteParameterKeyform = (options: ParameterValueTarget) =>
-  replaceParameter(options.document, options.parameterId, (parameter) => ({
-    ...parameter,
-    keyforms: parameter.keyforms.filter((keyform) => keyform.value !== options.value),
-  }))
+export const deleteParameterKeyform = (options: ParameterValuesTarget) =>
+  replaceBinding(options.document, options.bindingId, (binding) => {
+    if (options.values.length !== binding.parameterIds.length) {
+      return binding
+    }
+
+    return {
+      ...binding,
+      keyforms: binding.keyforms.filter(
+        (keyform) => !parameterValuesEqual(keyform.values, options.values),
+      ),
+    } as PuppetParameterBinding
+  })
+
+const synchronizeKeyformParts = (
+  keyform: PuppetParameterKeyform,
+  parts: ReadonlyArray<PuppetDocument['parts'][number]>,
+) =>
+  parts.map(
+    (part) =>
+      keyform.parts.find((partKeyform) => partKeyform.partId === part.id) ?? {
+        partId: part.id,
+        vertices: part.mesh.vertices,
+      },
+  )
+
+const synchronizeBindingParts = (
+  binding: PuppetParameterBinding,
+  parts: ReadonlyArray<PuppetDocument['parts'][number]>,
+): PuppetParameterBinding => {
+  if (isTwoDimensionalParameterBinding(binding)) {
+    return {
+      ...binding,
+      keyforms: binding.keyforms.map((keyform) => ({
+        ...keyform,
+        parts: synchronizeKeyformParts(keyform, parts),
+      })),
+      targetPartIds: parts.map((part) => part.id),
+    }
+  }
+
+  return {
+    ...binding,
+    keyforms: binding.keyforms.map((keyform) => ({
+      ...keyform,
+      parts: synchronizeKeyformParts(keyform, parts),
+    })),
+    targetPartIds: parts.map((part) => part.id),
+  }
+}
+
+interface UpdateParameterTargetsOptions extends ParameterBindingTarget {
+  readonly partIds: ReadonlyArray<string>
+}
+
+export const connectParameterParts = (options: UpdateParameterTargetsOptions) => {
+  const binding = getParameterBinding(options.document, options.bindingId)
+  if (binding === undefined) {
+    return undefined
+  }
+
+  const requestedParts = getDocumentParts(options.document, options.partIds)
+  const targetPartIds = union(
+    getParameterTargetPartIds(binding),
+    requestedParts.map((part) => part.id),
+  )
+  const parts = getDocumentParts(options.document, targetPartIds)
+  if (parts.length === getParameterTargetPartIds(binding).length) {
+    return undefined
+  }
+
+  return replaceBinding(options.document, binding.id, (candidate) =>
+    synchronizeBindingParts(candidate, parts),
+  )
+}
+
+export const disconnectParameterParts = (options: UpdateParameterTargetsOptions) => {
+  const binding = getParameterBinding(options.document, options.bindingId)
+  if (binding === undefined) {
+    return undefined
+  }
+
+  const parts = getDocumentParts(
+    options.document,
+    difference(getParameterTargetPartIds(binding), options.partIds),
+  )
+  if (parts.length === getParameterTargetPartIds(binding).length) {
+    return undefined
+  }
+
+  const targetPartIds = new Set(parts.map((part) => part.id))
+  return replaceBinding(options.document, binding.id, (candidate) => {
+    if (isTwoDimensionalParameterBinding(candidate)) {
+      return {
+        ...candidate,
+        keyforms: candidate.keyforms.map((keyform) => ({
+          ...keyform,
+          parts: keyform.parts.filter((part) => targetPartIds.has(part.partId)),
+        })),
+        targetPartIds: parts.map((part) => part.id),
+      }
+    }
+
+    return {
+      ...candidate,
+      keyforms: candidate.keyforms.map((keyform) => ({
+        ...keyform,
+        parts: keyform.parts.filter((part) => targetPartIds.has(part.partId)),
+      })),
+      targetPartIds: parts.map((part) => part.id),
+    }
+  })
+}
 
 export const moveParameterKeyform = (options: MoveParameterKeyformOptions) => {
-  const parameter = getDocumentParameters(options.document).find(
-    (candidate) => candidate.id === options.parameterId,
-  )
-  const keyform = parameter?.keyforms.find((candidate) => candidate.value === options.value)
+  const binding = getParameterBinding(options.document, options.bindingId)
+  const parameters = binding === undefined ? [] : getBindingParameters(options.document, binding)
 
   if (
-    parameter === undefined ||
-    keyform === undefined ||
-    !Number.isFinite(options.nextValue) ||
-    options.nextValue < parameter.minimum ||
-    options.nextValue > parameter.maximum ||
-    parameter.keyforms.some(
-      (candidate) => candidate.value !== options.value && candidate.value === options.nextValue,
-    )
+    binding === undefined ||
+    options.values.length !== binding.parameterIds.length ||
+    options.nextValues.length !== binding.parameterIds.length ||
+    !binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, options.values)) ||
+    binding.keyforms.some(
+      (keyform) =>
+        !parameterValuesEqual(keyform.values, options.values) &&
+        parameterValuesEqual(keyform.values, options.nextValues),
+    ) ||
+    options.nextValues.some((value, index) => {
+      const parameter = parameters[index]
+      return (
+        parameter === undefined ||
+        !Number.isFinite(value) ||
+        value < parameter.minimum ||
+        value > parameter.maximum
+      )
+    })
   ) {
     return undefined
   }
 
-  if (options.nextValue === options.value) {
+  if (parameterValuesEqual(options.nextValues, options.values)) {
     return options.document
   }
 
-  return replaceParameter(options.document, options.parameterId, (candidate) => ({
-    ...candidate,
-    keyforms: sortBy(
-      candidate.keyforms.map((candidateKeyform) =>
-        candidateKeyform.value === options.value
-          ? {...candidateKeyform, value: options.nextValue}
-          : candidateKeyform,
-      ),
-      ['value'],
-    ),
-  }))
+  return replaceBinding(options.document, options.bindingId, (candidate) => {
+    if (isTwoDimensionalParameterBinding(candidate)) {
+      const [x, y] = options.nextValues
+      if (x === undefined || y === undefined) {
+        return candidate
+      }
+
+      return {
+        ...candidate,
+        keyforms: candidate.keyforms
+          .map((keyform) =>
+            parameterValuesEqual(keyform.values, options.values)
+              ? {...keyform, values: [x, y] as const}
+              : keyform,
+          )
+          .sort(
+            (first, second) =>
+              first.values[1] - second.values[1] || first.values[0] - second.values[0],
+          ),
+      }
+    }
+
+    const [value] = options.nextValues
+    if (value === undefined) {
+      return candidate
+    }
+
+    return {
+      ...candidate,
+      keyforms: candidate.keyforms
+        .map((keyform) =>
+          parameterValuesEqual(keyform.values, options.values)
+            ? {...keyform, values: [value] as const}
+            : keyform,
+        )
+        .sort((first, second) => first.values[0] - second.values[0]),
+    }
+  })
 }
 
 const replacePartKeyform = (
@@ -291,92 +505,20 @@ const replacePartKeyform = (
     ? parts.map((candidate) => (candidate.partId === part.partId ? part : candidate))
     : [...parts, part]
 
-interface UpdateParameterTargetsOptions extends ParameterTarget {
-  readonly partIds: ReadonlyArray<string>
-}
-
-const synchronizeKeyformParts = (
-  keyform: PuppetParameterKeyform,
-  parts: ReadonlyArray<PuppetDocument['parts'][number]>,
-): PuppetParameterKeyform => ({
-  ...keyform,
-  parts: parts.map(
-    (part) =>
-      keyform.parts.find((partKeyform) => partKeyform.partId === part.id) ?? {
-        partId: part.id,
-        vertices: part.mesh.vertices,
-      },
-  ),
-})
-
-export const connectParameterParts = (options: UpdateParameterTargetsOptions) => {
-  const parameter = getDocumentParameters(options.document).find(
-    (candidate) => candidate.id === options.parameterId,
-  )
-
-  if (parameter === undefined) {
-    return undefined
-  }
-
-  const requestedParts = getDocumentParts(options.document, options.partIds)
-  const targetPartIds = union(
-    getParameterTargetPartIds(parameter),
-    requestedParts.map((part) => part.id),
-  )
-  const parts = getDocumentParts(options.document, targetPartIds)
-
-  if (parts.length === getParameterTargetPartIds(parameter).length) {
-    return undefined
-  }
-
-  return replaceParameter(options.document, parameter.id, (candidate) => ({
-    ...candidate,
-    keyforms: candidate.keyforms.map((keyform) => synchronizeKeyformParts(keyform, parts)),
-    targetPartIds: parts.map((part) => part.id),
-  }))
-}
-
-export const disconnectParameterParts = (options: UpdateParameterTargetsOptions) => {
-  const parameter = getDocumentParameters(options.document).find(
-    (candidate) => candidate.id === options.parameterId,
-  )
-
-  if (parameter === undefined) {
-    return undefined
-  }
-
-  const parts = getDocumentParts(
-    options.document,
-    difference(getParameterTargetPartIds(parameter), options.partIds),
-  )
-
-  if (parts.length === getParameterTargetPartIds(parameter).length) {
-    return undefined
-  }
-
-  const targetPartIds = new Set(parts.map((part) => part.id))
-  return replaceParameter(options.document, parameter.id, (candidate) => ({
-    ...candidate,
-    keyforms: candidate.keyforms.map((keyform) => ({
-      ...keyform,
-      parts: keyform.parts.filter((part) => targetPartIds.has(part.partId)),
-    })),
-    targetPartIds: parts.map((part) => part.id),
-  }))
-}
-
 export const setParameterKeyformVertex = (options: SetParameterKeyformVertexOptions) => {
-  const parameter = getDocumentParameters(options.document).find(
-    (candidate) => candidate.id === options.parameterId,
+  const binding = getParameterBinding(options.document, options.bindingId)
+  const keyform = binding?.keyforms.find(
+    (candidate) =>
+      candidate.values.length === options.values.length &&
+      candidate.values.every((value, index) => value === options.values[index]),
   )
-  const keyform = parameter?.keyforms.find((candidate) => candidate.value === options.value)
   const part = options.document.parts.find((candidate) => candidate.id === options.partId)
 
-  if (parameter === undefined || keyform === undefined || part === undefined) {
+  if (binding === undefined || keyform === undefined || part === undefined) {
     return undefined
   }
 
-  if (!getParameterTargetPartIds(parameter).includes(part.id)) {
+  if (!getParameterTargetPartIds(binding).includes(part.id)) {
     return undefined
   }
 
@@ -402,38 +544,48 @@ export const setParameterKeyformVertex = (options: SetParameterKeyformVertexOpti
     return undefined
   }
 
-  return replaceParameter(options.document, parameter.id, (candidate) => ({
-    ...candidate,
-    keyforms: candidate.keyforms.map((candidateKeyform) =>
-      candidateKeyform.value === keyform.value
+  return replaceBinding(options.document, binding.id, (candidate) => {
+    const replaceKeyform = <Keyform extends PuppetParameterKeyform>(
+      candidateKeyform: Keyform,
+    ): Keyform =>
+      candidateKeyform.values.length === keyform.values.length &&
+      candidateKeyform.values.every((value, index) => value === keyform.values[index])
         ? {
             ...candidateKeyform,
             parts: replacePartKeyform(candidateKeyform.parts, {partId: part.id, vertices}),
           }
-        : candidateKeyform,
-    ),
-  }))
+        : candidateKeyform
+
+    if (isTwoDimensionalParameterBinding(candidate)) {
+      return {...candidate, keyforms: candidate.keyforms.map(replaceKeyform)}
+    }
+
+    return {...candidate, keyforms: candidate.keyforms.map(replaceKeyform)}
+  })
 }
 
 export interface CreateParameterPreviewOptions {
   readonly document: PuppetDocument
-  readonly parameter?: PuppetParameter
-  readonly value: number
+  readonly parameterValues?: PuppetParameterValueMap
 }
 
 export const createParameterPreview = (options: CreateParameterPreviewOptions): PuppetDocument => ({
   ...options.document,
   motions: [],
+  parameterBindings: [],
+  parameters: [],
   parts: options.document.parts.map((part) => ({
     ...part,
     mesh: {
       ...part.mesh,
-      vertices: sampleParameterVertices({
-        parameter: options.parameter,
+      vertices: composeParameterVertices({
+        document: options.document,
+        parameterValues: options.parameterValues,
         partId: part.id,
         restVertices: part.mesh.vertices,
-        value: options.value,
       }),
     },
   })),
 })
+
+export {sampleParameterVertices}
