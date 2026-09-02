@@ -56,7 +56,7 @@ const repositoryMocks = vi.hoisted(() => {
     markListened: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
-    updateJob: vi.fn().mockResolvedValue(undefined),
+    startJob: vi.fn().mockResolvedValue(true),
   }
 
   return {
@@ -116,7 +116,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
-  repositoryMocks.feedRepository.updateJob.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
   repositoryMocks.listConnections.mockReturnValue([])
   lifecycleMocks.deleteExpiredFeedDialogues.mockResolvedValue(0)
   lifecycleMocks.discardFeedJobs.mockResolvedValue([])
@@ -412,7 +412,7 @@ it('should synchronize again with changed connections after an active sync', asy
 })
 
 it('should generate with a voice changed after the feed job settings were resolved', async () => {
-  const jobUpdate = Promise.withResolvers<void>()
+  const jobStart = Promise.withResolvers<boolean>()
   const initialConnection: FeedConnection = {
     createdAt: '2026-08-14T00:00:00.000Z',
     id: 'feed-1',
@@ -467,9 +467,18 @@ it('should generate with a voice changed after the feed job settings were resolv
   vi.spyOn(feedGenerationRuntime, 'isModelDownloaded').mockResolvedValue(true)
   repositoryMocks.listConnections.mockReturnValue([initialConnection])
   repositoryMocks.feedRepository.listItems.mockResolvedValue([item])
-  repositoryMocks.feedRepository.updateJob.mockImplementationOnce(() => jobUpdate.promise)
+  repositoryMocks.feedRepository.startJob.mockImplementationOnce(() => jobStart.promise)
   preparationMocks.prepareFeedGeneration.mockImplementationOnce(async (options) => {
-    await options.repository.updateJob(options.job)
+    const didStart = await options.repository.startJob({
+      ...options.job,
+      status: 'generating',
+      updatedAt: options.now(),
+    })
+
+    if (!didStart) {
+      return {status: 'job-not-queued'}
+    }
+
     const settings = await options.resolveGenerationSettings(options.job.feedConnectionId)
     const currentJob = settings === null ? options.job : {...options.job, ...settings}
     await options.prepareModel(currentJob.modelId)
@@ -488,12 +497,12 @@ it('should generate with a voice changed after the feed job settings were resolv
   })
   const view = renderHook(() => usePFeeds({events: createEventContext()}))
 
-  await vi.waitFor(() => expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalledOnce())
+  await vi.waitFor(() => expect(repositoryMocks.feedRepository.startJob).toHaveBeenCalledOnce())
   repositoryMocks.listConnections.mockReturnValue([
     {...initialConnection, updatedAt: '2026-08-14T00:02:00.000Z', voiceId: 'M2'},
   ])
   window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
-  jobUpdate.resolve()
+  jobStart.resolve(true)
 
   await vi.waitFor(() => expect(generateDialogueAudio).toHaveBeenCalledOnce())
   const generationOptions = generateDialogueAudio.mock.calls[0]?.[0]

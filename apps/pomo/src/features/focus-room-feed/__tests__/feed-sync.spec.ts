@@ -65,7 +65,6 @@ const createRepository = () => {
       items.push(...nextItems)
     }),
     startJob: vi.fn(),
-    updateJob: vi.fn(),
   }
   return {items, jobs, repository}
 }

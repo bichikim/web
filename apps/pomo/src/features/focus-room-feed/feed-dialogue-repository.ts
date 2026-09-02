@@ -57,7 +57,6 @@ export interface FeedDialogueRepository {
   readonly retryJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
   readonly saveItems: (items: ReadonlyArray<FeedItemRecord>) => Promise<void>
   readonly startJob: (job: GeneratingFeedDialogueJob) => Promise<boolean>
-  readonly updateJob: (job: FeedDialogueJob, item?: FeedItemRecord) => Promise<void>
 }
 
 const parseJobs = (values: ReadonlyArray<unknown>) =>
@@ -279,19 +278,5 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
       await database.feedItems.bulkPut(items.map((item) => feedItemRecordSchema.parse(item)))
     },
     startJob: (job) => startQueuedJob(database, job),
-    async updateJob(job, item) {
-      const nextJob = feedDialogueJobSchema.parse(job)
-
-      if (item === undefined) {
-        await database.feedDialogueJobs.put(nextJob)
-        return
-      }
-
-      const nextItem = feedItemRecordSchema.parse(item)
-      await database.transaction('rw', database.feedDialogueJobs, database.feedItems, async () => {
-        await database.feedDialogueJobs.put(nextJob)
-        await database.feedItems.put(nextItem)
-      })
-    },
   }
 }

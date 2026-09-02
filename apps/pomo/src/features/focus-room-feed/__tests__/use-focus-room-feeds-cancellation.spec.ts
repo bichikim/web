@@ -60,7 +60,6 @@ it('should cancel active generation, clear queued jobs, and preserve them for re
   await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
   expect(feedGenerationRuntime.generateDialogueAudio).toHaveBeenCalledOnce()
   expect(repositoryMocks.feedRepository.complete).not.toHaveBeenCalled()
-  expect(repositoryMocks.feedRepository.updateJob).not.toHaveBeenCalled()
   view.cleanup()
 })
 

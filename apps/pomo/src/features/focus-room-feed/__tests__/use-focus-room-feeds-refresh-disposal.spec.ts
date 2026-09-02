@@ -56,7 +56,7 @@ const repositoryMocks = vi.hoisted(() => {
     markListened: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
-    updateJob: vi.fn().mockResolvedValue(undefined),
+    startJob: vi.fn().mockResolvedValue(true),
   }
 
   return {
@@ -116,7 +116,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
-  repositoryMocks.feedRepository.updateJob.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
   repositoryMocks.listConnections.mockReturnValue([])
   lifecycleMocks.deleteExpiredFeedDialogues.mockResolvedValue(0)
   lifecycleMocks.discardFeedJobs.mockResolvedValue([])
@@ -449,8 +449,6 @@ it('should skip failure handling after disposal', async () => {
   await vi.waitFor(() =>
     expect(error).toHaveBeenCalledWith('Failed to process feed dialogue job.', expect.any(Error)),
   )
-
-  expect(repositoryMocks.feedRepository.updateJob).not.toHaveBeenCalled()
 })
 
 it('should stop a queue between jobs and reject later queue runs after disposal', async () => {
