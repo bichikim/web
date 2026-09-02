@@ -115,6 +115,38 @@ describe('extractKeys', () => {
     expect(result.dynamicCalls).toEqual([])
   })
 
+  it.each([
+    {
+      code: `class Container { [t('computed method name')](t: Function) { return t('method body') } }`,
+      name: 'computed method name',
+    },
+    {
+      code: `class Container { set [t('computed accessor name')](t: Function) { t('accessor body') } }`,
+      name: 'computed accessor name',
+    },
+    {
+      code: `class Container { [t('computed field name')] = true }`,
+      name: 'computed field name',
+    },
+    {
+      code: `class Container { @decorate(t('method decorator')) method(t: string) {} }`,
+      name: 'method decorator',
+    },
+    {
+      code: `class Container { method(@decorate(t('parameter decorator')) t: Function) { t('method body') } }`,
+      name: 'parameter decorator',
+    },
+  ])('should extract an import call from a $name outside parameter scope', ({code, name}) => {
+    const result = extractKeys(
+      [`import {t} from '@/i18n'`, `declare const decorate: Function`, code].join('\n'),
+      '/src/example.ts',
+      detectTranslation,
+    )
+
+    expect(result.entries.map((entry) => entry.originalText)).toEqual([name])
+    expect(result.dynamicCalls).toEqual([])
+  })
+
   it('should not treat an ambient external module name as a lexical binding', () => {
     const result = extractKeys(
       [`import {t} from '@/i18n'`, `declare module 't' {}`, `t('import')`].join('\n'),
