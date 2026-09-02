@@ -6,7 +6,7 @@ import {
   assertPreparedPuppetDocument,
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
-import {applyMotionVertices} from './internal/motion'
+import {applyMotionVertices, sampleMotionParameterValues} from './internal/motion'
 import {getScenePartStates} from './scene'
 
 export interface Player {
@@ -51,10 +51,15 @@ interface ApplyFrameVerticesOptions {
 }
 
 const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
+  const frameParameterValues = sampleMotionParameterValues({
+    motion: options.motion,
+    parameterValues: options.parameterValues,
+    time: options.time,
+  })
   options.runtimePart.vertices.set(
     composeParameterVertices({
       document: options.document,
-      parameterValues: options.parameterValues,
+      parameterValues: frameParameterValues,
       partId: options.partId,
       restVertices: options.runtimePart.restVertices,
     }),

@@ -1,4 +1,11 @@
-import type {PuppetEasing, PuppetKeyframe, PuppetMotion, PuppetTrack} from '../document'
+import type {
+  PuppetEasing,
+  PuppetKeyframe,
+  PuppetMotion,
+  PuppetParameterTrack,
+  PuppetVertexTrack,
+} from '../document'
+import type {PuppetParameterValueMap} from '../../deformation'
 
 export interface ApplyMotionVerticesOptions {
   readonly motion: PuppetMotion | undefined
@@ -11,6 +18,12 @@ export interface SampleMotionVerticesOptions {
   readonly motion: PuppetMotion | undefined
   readonly partId: string
   readonly restVertices: ReadonlyArray<number>
+  readonly time: number
+}
+
+export interface SampleMotionParameterValuesOptions {
+  readonly motion: PuppetMotion | undefined
+  readonly parameterValues?: PuppetParameterValueMap
   readonly time: number
 }
 
@@ -67,7 +80,11 @@ const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number)
   return previousKeyframe.value + (nextKeyframe.value - previousKeyframe.value) * easedProgress
 }
 
-const getCoordinateIndex = (track: PuppetTrack) =>
+export const isParameterTrack = (
+  track: PuppetParameterTrack | PuppetVertexTrack,
+): track is PuppetParameterTrack => track.kind === 'parameter'
+
+const getCoordinateIndex = (track: PuppetVertexTrack) =>
   track.vertexIndex * COORDINATES_PER_VERTEX + (track.axis === 'y' ? Y_COORDINATE_OFFSET : 0)
 
 export const applyMotionVertices = (options: ApplyMotionVerticesOptions) => {
@@ -76,10 +93,24 @@ export const applyMotionVertices = (options: ApplyMotionVerticesOptions) => {
   }
 
   for (const track of options.motion.tracks) {
-    if (track.partId === options.partId) {
+    if (!isParameterTrack(track) && track.partId === options.partId) {
       options.vertices[getCoordinateIndex(track)] = sampleKeyframes(track.keyframes, options.time)
     }
   }
+}
+
+export const sampleMotionParameterValues = (
+  options: SampleMotionParameterValuesOptions,
+): PuppetParameterValueMap => {
+  const values = {...options.parameterValues}
+
+  for (const track of options.motion?.tracks ?? []) {
+    if (isParameterTrack(track)) {
+      values[track.parameterId] = sampleKeyframes(track.keyframes, options.time)
+    }
+  }
+
+  return values
 }
 
 export const sampleMotionVertices = (

@@ -102,7 +102,7 @@ const resetPartDeformations = (
   ...document,
   motions: document.motions.map((motion) => ({
     ...motion,
-    tracks: motion.tracks.filter((track) => track.partId !== partId),
+    tracks: motion.tracks.filter((track) => track.kind === 'parameter' || track.partId !== partId),
   })),
   parameterBindings: document.parameterBindings?.map((binding) =>
     resetParameterBinding(binding, partId, vertices),

@@ -6,7 +6,7 @@ import {
   type PuppetParameterValues,
 } from '../deformation'
 import type {PuppetDocument, PuppetPart} from '../player/document'
-import {sampleMotionVertices} from '../player/internal/motion'
+import {sampleMotionParameterValues, sampleMotionVertices} from '../player/internal/motion'
 import {getScenePartStates} from '../player/scene'
 import {addPartVertex, deletePartVertex, movePartVertex, type VertexPoint} from './edit-document'
 import {
@@ -232,9 +232,19 @@ const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart) => {
             return value === undefined ? [] : [[parameterId, value] as const]
           }),
         )
+  const parameterValueMap = {...props.parameterValueMap, ...activeParameterValues}
+  const [motion] = props.document.motions
+  const frameParameterValues =
+    props.editMode === 'parameter'
+      ? parameterValueMap
+      : sampleMotionParameterValues({
+          motion,
+          parameterValues: parameterValueMap,
+          time: props.previewTime ?? 0,
+        })
   const parameterVertices = composeParameterVertices({
     document: props.document,
-    parameterValues: {...props.parameterValueMap, ...activeParameterValues},
+    parameterValues: frameParameterValues,
     partId: part.id,
     restVertices: part.mesh.vertices,
   })
@@ -242,7 +252,7 @@ const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart) => {
   return props.editMode === 'parameter'
     ? parameterVertices
     : sampleMotionVertices({
-        motion: props.document.motions[0],
+        motion,
         partId: part.id,
         restVertices: parameterVertices,
         time: props.previewTime ?? 0,
@@ -401,6 +411,11 @@ const updatePointerDraft = (
   }
 }
 
+const canEditMeshTopology = (props: MeshEditorProps, state: MeshEditorState) =>
+  props.editMode !== 'parameter' &&
+  props.onDocumentChange !== undefined &&
+  state.part() !== undefined
+
 export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
   const state = createMeshEditorState(props)
   const handleAddVertex = (event: MouseEvent) => {
@@ -553,7 +568,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
   }
 
   return {
-    canEditTopology: () => props.editMode !== 'parameter' && state.part() !== undefined,
+    canEditTopology: () => canEditMeshTopology(props, state),
     handleAddVertex,
     handleDeleteVertex,
     handlePointerCancel: () => resetPointerState(state),

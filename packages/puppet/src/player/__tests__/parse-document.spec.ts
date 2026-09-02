@@ -15,6 +15,7 @@ const createLegacyDocument = () => {
 
   return {
     ...document,
+    motions: [],
     parameterBindings: undefined,
     parameters: [
       {
@@ -34,6 +35,43 @@ describe('parseDocument', () => {
     const document = createDemoDocument()
 
     expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
+  })
+
+  it('should normalize legacy untagged tracks to explicit kinds', () => {
+    const document = createDemoDocument()
+    const untaggedDocument = {
+      ...document,
+      motions: document.motions.map((motion) => ({
+        ...motion,
+        tracks: motion.tracks.map(({kind: _kind, ...track}) => track),
+      })),
+    }
+
+    expect(parseDocument(JSON.stringify(untaggedDocument))).toMatchObject({
+      document: {
+        motions: [{tracks: [{kind: 'parameter'}]}],
+      },
+      ok: true,
+    })
+  })
+
+  it('should reject a track whose declared kind contradicts its target', () => {
+    const document = createDemoDocument()
+    const parameterTrack = document.motions[0]!.tracks[0]!
+    const invalidDocument = {
+      ...document,
+      motions: [
+        {
+          ...document.motions[0]!,
+          tracks: [{...parameterTrack, kind: 'vertex'}],
+        },
+      ],
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
   })
 
   it('should reject fractional texture pixel dimensions', () => {
@@ -115,6 +153,65 @@ describe('parseDocument', () => {
         }),
       ),
     ).toEqual({error: {code: 'invalid-document'}, ok: false})
+  })
+
+  it('should reject a motion track for an unknown parameter', () => {
+    const document = createDemoDocument()
+    const invalidDocument = {
+      ...document,
+      motions: document.motions.map((motion) => ({
+        ...motion,
+        tracks: [{keyframes: [{time: 0, value: 0}], parameterId: 'missing'}],
+      })),
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
+  it('should reject duplicate tracks for one parameter', () => {
+    const document = createDemoDocument()
+    const track = document.motions[0]?.tracks[0]
+    const invalidDocument = {
+      ...document,
+      motions: document.motions.map((motion) => ({...motion, tracks: [track, track]})),
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toMatchObject({ok: false})
+  })
+
+  it('should reject ambiguous and out-of-range parameter tracks', () => {
+    const document = createDemoDocument()
+    const parameterTrack = document.motions[0]?.tracks[0]
+
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          motions: [
+            {
+              ...document.motions[0],
+              tracks: [{...parameterTrack, axis: 'x', partId: 'mesh-preview', vertexIndex: 0}],
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          motions: [
+            {
+              ...document.motions[0],
+              tracks: [{keyframes: [{time: 0, value: 31}], parameterId: 'angle-y'}],
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
   })
 
   it('should validate parameter keyform targets and coordinate counts', () => {
