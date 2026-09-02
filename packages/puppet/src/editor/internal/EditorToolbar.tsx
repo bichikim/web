@@ -11,8 +11,6 @@ const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
 
 export interface EditorToolbarProps {
   readonly activeWorkspace?: 'animation' | 'modeling'
-  readonly canAutoMesh?: boolean
-  readonly onAutoMesh?: () => void
   readonly onWorkspaceChange?: (workspace: 'animation' | 'modeling') => void
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
@@ -88,14 +86,6 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       </button>
     </nav>
     <div class="toolbar-actions">
-      <button
-        class="toolbar-button"
-        disabled={!props.canAutoMesh || props.onAutoMesh === undefined}
-        type="button"
-        onClick={() => props.onAutoMesh?.()}
-      >
-        자동 메시
-      </button>
       <label class="toolbar-button primary">
         PNG 불러오기
         <input

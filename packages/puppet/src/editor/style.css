@@ -267,6 +267,9 @@
 
 .puppet-editor .inspector-panel {
   grid-area: inspector;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   border-left: 1px solid #27302d;
 }
 
@@ -337,6 +340,33 @@
   color: #bfeee1;
   background: #17211e;
   cursor: pointer;
+}
+
+.puppet-editor .selection-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.puppet-editor .selection-actions button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid #3d5f56;
+  border-radius: 7px;
+  color: #bfeee1;
+  background: #17211e;
+  cursor: pointer;
+  text-align: left;
+}
+
+.puppet-editor .selection-actions button:hover:not(:disabled),
+.puppet-editor .selection-actions button:focus-visible {
+  border-color: #64e5c4;
+  outline: none;
+}
+
+.puppet-editor .selection-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .puppet-editor .parameter-list {
@@ -592,6 +622,17 @@
   padding: 4px 7px;
 }
 
+.puppet-editor .layer-toolbar-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
 .puppet-editor .layer-toolbar button:disabled,
 .puppet-editor .layer-state-actions button:disabled {
   opacity: 0.38;
@@ -629,7 +670,7 @@
 .puppet-editor .layer-row {
   position: relative;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   gap: 4px;
   align-items: center;
   padding-left: calc(var(--layer-depth) * 14px);
@@ -678,8 +719,8 @@
 .puppet-editor .layer-tree-toggle,
 .puppet-editor .layer-tree-spacer {
   display: grid;
-  width: 22px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   place-items: center;
 }
@@ -687,6 +728,17 @@
 .puppet-editor .layer-tree-toggle {
   border-color: transparent;
   background: transparent;
+}
+
+.puppet-editor .layer-tree-toggle-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentcolor;
+  transform-origin: center;
+}
+
+.puppet-editor .layer-tree-toggle-icon.expanded {
+  transform: rotate(90deg);
 }
 
 .puppet-editor .layer-select {
@@ -813,6 +865,75 @@
   font-size: 10px;
 }
 
+.puppet-editor .deformer-properties {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 10px;
+  border: 1px solid #313b37;
+  border-radius: 8px;
+}
+
+.puppet-editor .deformer-properties legend {
+  padding: 0 5px;
+  color: #bfeee1;
+  font-size: 10px;
+}
+
+.puppet-editor .deformer-properties label,
+.puppet-editor .grid-point-row {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+  color: #84918c;
+  font-size: 9px;
+}
+
+.puppet-editor .grid-point-row {
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.puppet-editor .grid-curve-button {
+  min-height: 26px;
+  padding: 3px 5px;
+  border: 1px solid #53655f;
+  border-radius: 5px;
+  color: #bfeee1;
+  background: #17211e;
+  font-size: 9px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.puppet-editor .grid-curve-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.puppet-editor .grid-resolution {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #313b37;
+}
+
+.puppet-editor .grid-resolution label {
+  grid-template-columns: 54px minmax(90px, 1fr);
+}
+
+.puppet-editor .deformer-properties input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid #35413d;
+  border-radius: 5px;
+  color: #dfe8e4;
+  background: #121816;
+  font: inherit;
+}
+
 .puppet-editor .panel-note,
 .puppet-editor .notice {
   margin: 16px 8px;
@@ -890,6 +1011,84 @@
   stroke: #fff1d6;
 }
 
+.puppet-editor .deformer-editor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.puppet-editor .deformer-editor svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.puppet-editor .deformer-editor line,
+.puppet-editor .deformer-editor path {
+  fill: none;
+  stroke: #ffbd59;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.puppet-editor .deformer-editor circle {
+  fill: #111715;
+  stroke: #ffbd59;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+}
+
+.puppet-editor .deformer-editor circle:active {
+  cursor: grabbing;
+}
+
+.puppet-editor .deformer-editor .angle-handle {
+  fill: #ffbd59;
+  stroke: #fff1d6;
+}
+
+.puppet-editor .deformer-editor .curve-handle-line {
+  stroke: #ff7087;
+  stroke-dasharray: 4 3;
+}
+
+.puppet-editor .deformer-editor .curve-handle {
+  fill: #ff7087;
+  stroke: #fff1f4;
+}
+
+.puppet-editor .deformer-editor .blocked line,
+.puppet-editor .deformer-editor .blocked path,
+.puppet-editor .deformer-editor .blocked circle {
+  stroke: #66716d;
+}
+
+.puppet-editor .deformer-editor .blocked circle {
+  fill: #202825;
+  cursor: not-allowed;
+}
+
+.puppet-editor .deformer-edit-message {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  margin: 0 auto;
+  padding: 9px 12px;
+  border: 1px solid #725e31;
+  border-radius: 8px;
+  color: #ffe0a3;
+  background: rgb(34 29 18 / 92%);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .puppet-editor .mesh-tools {
   position: absolute;
   top: 12px;
@@ -946,29 +1145,6 @@
 
 .puppet-editor .error-message {
   color: #ff9b96;
-}
-
-.puppet-editor .property-list {
-  display: grid;
-  margin: 0;
-}
-
-.puppet-editor .property-list div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 2px;
-  border-bottom: 1px solid #222b28;
-  font-size: 11px;
-}
-
-.puppet-editor .property-list dt {
-  color: #75827e;
-}
-
-.puppet-editor .property-list dd {
-  margin: 0;
-  color: #d0d9d5;
 }
 
 .puppet-editor .timeline {
@@ -1047,17 +1223,36 @@
 .puppet-editor .keyform-track-wrap {
   display: grid;
   min-width: 0;
-  grid-template-columns: 220px minmax(640px, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr);
   align-content: start;
+  overflow: hidden;
+}
+
+.puppet-editor .keyform-track-labels,
+.puppet-editor .keyform-tracks {
+  display: grid;
+  align-content: start;
+}
+
+.puppet-editor .keyform-track-scroll {
+  min-width: 0;
   overflow-x: auto;
 }
 
+.puppet-editor .keyform-tracks {
+  min-width: 696px;
+}
+
 .puppet-editor .keyform-track-label {
-  position: relative;
   min-width: 0;
+  min-height: 76px;
   border-right: 1px solid #27302d;
   border-bottom: 1px solid #222b28;
   background: #121816;
+}
+
+.puppet-editor .keyform-track-label.parameter-grid-label {
+  min-height: 124px;
 }
 
 .puppet-editor .keyform-track-label .parameter-swipe-row,
@@ -1125,6 +1320,7 @@
 .puppet-editor .keyform-track {
   position: relative;
   min-width: 640px;
+  min-height: 76px;
   margin: 0 28px;
   border-bottom: 1px solid #222b28;
   background-image: linear-gradient(to right, #27322e 1px, transparent 1px);

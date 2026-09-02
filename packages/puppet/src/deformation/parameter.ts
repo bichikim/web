@@ -248,3 +248,93 @@ export const sampleParameterVertices = (options: SampleParameterVerticesOptions)
 
 export const parameterValuesEqual = (first: ReadonlyArray<number>, second: ReadonlyArray<number>) =>
   first.length === second.length && first.every((value, index) => value === second[index])
+
+export interface SampleParameterCoordinatesOptions {
+  readonly binding: PuppetParameterBinding
+  readonly keyformCoordinates: ReadonlyArray<ReadonlyArray<number> | undefined>
+  readonly restCoordinates: ReadonlyArray<number>
+  readonly values: PuppetParameterValues
+}
+
+const getKeyformCoordinates = (options: SampleParameterCoordinatesOptions, index: number) =>
+  options.keyformCoordinates[index] ?? options.restCoordinates
+
+const sampleOneDimensionalCoordinates = (options: SampleParameterCoordinatesOptions) => {
+  const [value] = options.values
+  const {keyforms} = options.binding
+  if (value === undefined || keyforms.length === 0) {
+    return options.restCoordinates
+  }
+
+  const nextIndex = keyforms.findIndex((keyform) => keyform.values[0] >= value)
+  if (nextIndex === -1) {
+    return getKeyformCoordinates(options, keyforms.length - 1)
+  }
+
+  const nextKeyform = keyforms[nextIndex]
+  if (nextIndex === 0 || nextKeyform === undefined) {
+    return getKeyformCoordinates(options, 0)
+  }
+
+  const previousKeyform = keyforms[nextIndex - 1]
+  return previousKeyform === undefined
+    ? options.restCoordinates
+    : interpolateVertices(
+        getKeyformCoordinates(options, nextIndex - 1),
+        getKeyformCoordinates(options, nextIndex),
+        getProgress(previousKeyform.values[0], nextKeyform.values[0], value),
+      )
+}
+
+const sampleTwoDimensionalCoordinates = (
+  options: SampleParameterCoordinatesOptions,
+  binding: PuppetParameterBinding2D,
+) => {
+  const [x, y] = options.values
+  if (x === undefined || y === undefined || binding.keyforms.length === 0) {
+    return options.restCoordinates
+  }
+
+  const exactIndex = binding.keyforms.findIndex(
+    (keyform) => keyform.values[0] === x && keyform.values[1] === y,
+  )
+  if (exactIndex >= 0 || binding.keyforms.length === 1) {
+    return getKeyformCoordinates(options, Math.max(0, exactIndex))
+  }
+
+  const point = [x, y] as const
+  const {points, triangulation} = getTriangulation(binding)
+  for (let index = 0; index < triangulation.triangles.length; index += TRIANGLE_VERTEX_COUNT) {
+    const firstIndex = triangulation.triangles[index]
+    const secondIndex = triangulation.triangles[index + 1]
+    const thirdIndex = triangulation.triangles[index + 2]
+    const firstPoint = firstIndex === undefined ? undefined : points[firstIndex]
+    const secondPoint = secondIndex === undefined ? undefined : points[secondIndex]
+    const thirdPoint = thirdIndex === undefined ? undefined : points[thirdIndex]
+    if (firstPoint !== undefined && secondPoint !== undefined && thirdPoint !== undefined) {
+      const weights = getBarycentricWeights(point, firstPoint, secondPoint, thirdPoint)
+      if (weights !== undefined && containsPoint(weights)) {
+        return interpolateThreeVertices(
+          getKeyformCoordinates(options, firstIndex!),
+          getKeyformCoordinates(options, secondIndex!),
+          getKeyformCoordinates(options, thirdIndex!),
+          weights,
+        )
+      }
+    }
+  }
+
+  const closest = getClosestSegment(point, points, triangulation.hull)
+  return closest === undefined
+    ? options.restCoordinates
+    : interpolateVertices(
+        getKeyformCoordinates(options, closest.firstIndex),
+        getKeyformCoordinates(options, closest.secondIndex),
+        closest.progress,
+      )
+}
+
+export const sampleParameterCoordinates = (options: SampleParameterCoordinatesOptions) =>
+  isTwoDimensionalParameterBinding(options.binding)
+    ? sampleTwoDimensionalCoordinates(options, options.binding)
+    : sampleOneDimensionalCoordinates(options)

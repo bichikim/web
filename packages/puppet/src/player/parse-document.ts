@@ -13,6 +13,7 @@ import {
   type PuppetParameterPartKeyform,
   type PuppetPart,
   type PuppetScene,
+  type PuppetSceneNode,
   type PuppetTexture,
   type PuppetTrack,
   type PuppetTrackAxis,
@@ -21,6 +22,11 @@ import {
 import {normalizeMesh} from '../mesh/normalize'
 import {validateMesh} from '../mesh/validate'
 import {markPreparedPuppetDocument, type PreparedPuppetDocument} from './internal/prepared-document'
+import {
+  hasValidDeformerKeyform,
+  isDeformer,
+  isParameterDeformerKeyform,
+} from './internal/parse-deformer'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
 
@@ -111,6 +117,26 @@ const isPart = (value: unknown): value is PuppetPart =>
   isTexture(value.texture) &&
   isMesh(value.mesh)
 
+const inspectSceneNode = (
+  node: Record<string, unknown>,
+  partIds: ReadonlySet<string>,
+): {readonly children: ReadonlyArray<unknown>; readonly partId?: string} | undefined => {
+  switch (node.kind) {
+    case 'deformer':
+      return Array.isArray(node.children) && isDeformer(node)
+        ? {children: node.children}
+        : undefined
+    case 'group':
+      return Array.isArray(node.children) ? {children: node.children} : undefined
+    case 'part':
+      return typeof node.id === 'string' && partIds.has(node.id)
+        ? {children: [], partId: node.id}
+        : undefined
+    default:
+      return undefined
+  }
+}
+
 const isScene = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is PuppetScene => {
   if (!isRecord(value) || !Array.isArray(value.roots)) {
     return false
@@ -142,23 +168,13 @@ const isScene = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is Pup
     visitedNodes.add(node)
     nodeIds.add(node.id)
 
-    switch (node.kind) {
-      case 'group':
-        if (!Array.isArray(node.children)) {
-          return false
-        }
-
-        pendingNodes.push(...node.children)
-        break
-      case 'part':
-        if (!partIds.has(node.id)) {
-          return false
-        }
-
-        scenePartIds.add(node.id)
-        break
-      default:
-        return false
+    const inspection = inspectSceneNode(node, partIds)
+    if (inspection === undefined) {
+      return false
+    }
+    pendingNodes.push(...inspection.children)
+    if (inspection.partId !== undefined) {
+      scenePartIds.add(inspection.partId)
     }
   }
 
@@ -171,31 +187,16 @@ const isParameterPartKeyform = (value: unknown): value is PuppetParameterPartKey
   value.partId.length > 0 &&
   isFiniteNumberArray(value.vertices)
 
-interface LegacyParameterKeyform {
-  readonly parts: ReadonlyArray<PuppetParameterPartKeyform>
-  readonly value: number
-}
-
-interface LegacyParameter extends PuppetParameter {
-  readonly keyforms: ReadonlyArray<LegacyParameterKeyform>
-  readonly targetPartIds?: ReadonlyArray<string>
-}
-
-const hasValidTargetPartIds = (value: unknown) =>
+const hasValidTargetIds = (value: unknown) =>
   value === undefined ||
   (Array.isArray(value) &&
     value.every((partId) => typeof partId === 'string' && partId.length > 0) &&
     new Set(value).size === value.length)
 
-const isLegacyParameterKeyform = (value: unknown): value is LegacyParameterKeyform =>
-  isRecord(value) &&
-  isFiniteNumber(value.value) &&
-  Array.isArray(value.parts) &&
-  value.parts.every(isParameterPartKeyform) &&
-  new Set(value.parts.map((part) => part.partId)).size === value.parts.length
-
 const isParameterDefinition = (value: unknown): value is PuppetParameter =>
   isRecord(value) &&
+  value.keyforms === undefined &&
+  value.targetPartIds === undefined &&
   typeof value.id === 'string' &&
   value.id.length > 0 &&
   typeof value.name === 'string' &&
@@ -207,35 +208,16 @@ const isParameterDefinition = (value: unknown): value is PuppetParameter =>
   value.defaultValue >= value.minimum &&
   value.defaultValue <= value.maximum
 
-const isLegacyParameter = (value: unknown): value is LegacyParameter => {
-  if (!isRecord(value)) {
-    return false
-  }
-
-  const {keyforms, targetPartIds} = value
-  if (
-    !isParameterDefinition(value) ||
-    !hasValidTargetPartIds(targetPartIds) ||
-    !Array.isArray(keyforms) ||
-    !keyforms.every(isLegacyParameterKeyform)
-  ) {
-    return false
-  }
-
-  const {maximum, minimum} = value
-  return keyforms.every(
-    (keyform, index) =>
-      keyform.value >= minimum &&
-      keyform.value <= maximum &&
-      (index === 0 || keyform.value > keyforms[index - 1]!.value),
-  )
-}
-
 const isParameterKeyform = (value: unknown): value is PuppetParameterKeyform =>
   isRecord(value) &&
   Array.isArray(value.values) &&
   (value.values.length === 1 || value.values.length === 2) &&
   value.values.every(isFiniteNumber) &&
+  (value.deformers === undefined ||
+    (Array.isArray(value.deformers) &&
+      value.deformers.every(isParameterDeformerKeyform) &&
+      new Set(value.deformers.map((deformer) => deformer.nodeId)).size ===
+        value.deformers.length)) &&
   Array.isArray(value.parts) &&
   value.parts.every(isParameterPartKeyform) &&
   new Set(value.parts.map((part) => part.partId)).size === value.parts.length
@@ -245,7 +227,7 @@ const isParameterBinding = (value: unknown): value is PuppetParameterBinding => 
     return false
   }
 
-  const {keyforms, parameterIds, targetPartIds} = value
+  const {keyforms, parameterIds, targetDeformerIds, targetPartIds} = value
   if (
     typeof value.id !== 'string' ||
     value.id.length === 0 ||
@@ -255,7 +237,8 @@ const isParameterBinding = (value: unknown): value is PuppetParameterBinding => 
       (parameterId) => typeof parameterId === 'string' && parameterId.length > 0,
     ) ||
     new Set(parameterIds).size !== parameterIds.length ||
-    !hasValidTargetPartIds(targetPartIds) ||
+    !hasValidTargetIds(targetDeformerIds) ||
+    !hasValidTargetIds(targetPartIds) ||
     !Array.isArray(keyforms) ||
     !keyforms.every(isParameterKeyform) ||
     !keyforms.every((keyform) => keyform.values.length === parameterIds.length)
@@ -420,17 +403,32 @@ const hasValidParameterBindings = (
   parts: ReadonlyArray<PuppetPart>,
   parameters: ReadonlyArray<PuppetParameter>,
   bindings: ReadonlyArray<PuppetParameterBinding>,
+  scene: PuppetScene | undefined,
 ) => {
   const partById = new Map(parts.map((part) => [part.id, part]))
   const parameterById = new Map(parameters.map((parameter) => [parameter.id, parameter]))
+  const deformerById = new Map<string, PuppetSceneNode>()
+  const pendingNodes = [...(scene?.roots ?? [])]
+  while (pendingNodes.length > 0) {
+    const node = pendingNodes.pop()!
+    if (node.kind !== 'part') {
+      pendingNodes.push(...node.children)
+      if (node.kind !== 'group') {
+        deformerById.set(node.id, node)
+      }
+    }
+  }
 
   return bindings.every((binding) => {
-    const {keyforms, targetPartIds} = binding
+    const {keyforms, targetDeformerIds, targetPartIds} = binding
     const targetPartIdSet = targetPartIds === undefined ? undefined : new Set(targetPartIds)
+    const targetDeformerIdSet =
+      targetDeformerIds === undefined ? undefined : new Set(targetDeformerIds)
 
     if (
       binding.parameterIds.some((parameterId) => !parameterById.has(parameterId)) ||
       targetPartIds?.some((partId) => !partById.has(partId)) === true ||
+      targetDeformerIds?.some((nodeId) => !deformerById.has(nodeId)) === true ||
       keyforms.some((keyform) =>
         keyform.values.some((value, index) => {
           const parameter = parameterById.get(binding.parameterIds[index]!)
@@ -446,6 +444,23 @@ const hasValidParameterBindings = (
         targetPartIdSet !== undefined &&
         (keyform.parts.length !== targetPartIdSet.size ||
           keyform.parts.some((part) => !targetPartIdSet.has(part.partId)))
+      ) {
+        return false
+      }
+
+      const deformers = keyform.deformers ?? []
+      if (
+        targetDeformerIdSet !== undefined &&
+        (deformers.length !== targetDeformerIdSet.size ||
+          deformers.some((deformer) => !targetDeformerIdSet.has(deformer.nodeId)))
+      ) {
+        return false
+      }
+
+      if (
+        deformers.some(
+          (deformer) => !hasValidDeformerKeyform(deformer, deformerById.get(deformer.nodeId)),
+        )
       ) {
         return false
       }
@@ -502,70 +517,20 @@ const isDocument = (value: unknown): value is PuppetDocument => {
     hasUniqueIds(parameters) &&
     hasUniqueIds(parameterBindings) &&
     hasValidTrackTargets(value.parts, parameters, value.motions) &&
-    hasValidParameterBindings(value.parts, parameters, parameterBindings)
+    hasValidParameterBindings(value.parts, parameters, parameterBindings, value.scene)
   )
-}
-
-const migrateLegacyDocument = (value: unknown): PuppetDocument | undefined => {
-  if (
-    !isRecord(value) ||
-    value.format !== PUPPET_DOCUMENT_FORMAT ||
-    value.version !== 1 ||
-    !isViewport(value.viewport) ||
-    !Array.isArray(value.parts) ||
-    !value.parts.every(isPart) ||
-    (value.scene !== undefined && !isScene(value.scene, value.parts)) ||
-    !Array.isArray(value.motions) ||
-    !value.motions.every(isMotion) ||
-    (value.parameters !== undefined &&
-      (!Array.isArray(value.parameters) || !value.parameters.every(isLegacyParameter)))
-  ) {
-    return undefined
-  }
-
-  const legacyParameters = value.parameters ?? []
-  const document: PuppetDocument = {
-    format: PUPPET_DOCUMENT_FORMAT,
-    motions: value.motions,
-    parameterBindings: legacyParameters.map((parameter) => ({
-      id: parameter.id,
-      keyforms: parameter.keyforms.map((keyform) => ({
-        parts: keyform.parts,
-        values: [keyform.value],
-      })),
-      parameterIds: [parameter.id],
-      ...(parameter.targetPartIds === undefined ? {} : {targetPartIds: parameter.targetPartIds}),
-    })),
-    parameters: legacyParameters.map((parameter) => ({
-      defaultValue: parameter.defaultValue,
-      id: parameter.id,
-      maximum: parameter.maximum,
-      minimum: parameter.minimum,
-      name: parameter.name,
-    })),
-    parts: value.parts,
-    ...(value.scene === undefined ? {} : {scene: value.scene}),
-    version: PUPPET_DOCUMENT_VERSION,
-    viewport: value.viewport,
-  }
-
-  return isDocument(document) ? document : undefined
 }
 
 export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
   const normalizedValue = normalizeLegacyTrackKinds(value)
-  const document = isDocument(normalizedValue)
-    ? normalizedValue
-    : migrateLegacyDocument(normalizedValue)
-
-  if (document === undefined) {
+  if (!isDocument(normalizedValue)) {
     return {error: {code: 'invalid-document'}, ok: false}
   }
 
   return {
     document: markPreparedPuppetDocument({
-      ...document,
-      parts: document.parts.map((part) => ({...part, mesh: normalizeMesh(part.mesh)})),
+      ...normalizedValue,
+      parts: normalizedValue.parts.map((part) => ({...part, mesh: normalizeMesh(part.mesh)})),
     }),
     ok: true,
   }

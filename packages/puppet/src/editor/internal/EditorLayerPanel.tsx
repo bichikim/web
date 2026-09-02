@@ -1,4 +1,3 @@
-import {Button} from '@kobalte/core/button'
 import {Collapsible} from '@kobalte/core/collapsible'
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
@@ -6,29 +5,26 @@ import {createMemo, createSignal, createUniqueId, For, Show, untrack} from 'soli
 
 import {
   getDocumentScene,
+  isSceneContainerNode,
   type PuppetDocument,
-  type PuppetSceneGroupNode,
   type PuppetSceneNode,
 } from '../../player'
 import {
   createSceneGroup,
-  getSceneNode,
-  getSceneNodePartIds,
   isSceneNodeLocked,
-  moveSceneNodeBy,
   moveSceneNodeRelative,
-  moveSceneNodeToParent,
-  renameSceneGroup,
+  renameSceneNode,
   type SceneSelection,
-  ungroupSceneNode,
 } from './scene-graph'
+import {EditorLayerToolbar} from './EditorLayerToolbar'
 import {EditorLayerStateActions} from './EditorLayerStateActions'
 import {getLayerDropPosition, type LayerDropTarget} from './layer-drop'
 import {
   getBindingParameters,
   getDocumentParameterBindings,
-  getParameterTargetPartIds,
+  getParameterTargetNodeIds,
 } from './parameter-keyforms'
+import {getParameterSelectionNodeIds} from './parameter-targets'
 
 export interface EditorLayerPanelProps {
   readonly activePartId?: string
@@ -57,13 +53,13 @@ interface SceneNodeItemProps {
   readonly selectedNodeIds: ReadonlySet<string>
 }
 
-const getGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
+const getContainerIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
   const groupIds = new Set<string>()
 
   for (const node of nodes) {
-    if (node.kind === 'group') {
+    if (isSceneContainerNode(node)) {
       groupIds.add(node.id)
-      for (const childId of getGroupIds(node.children)) {
+      for (const childId of getContainerIds(node.children)) {
         groupIds.add(childId)
       }
     }
@@ -72,21 +68,51 @@ const getGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
   return groupIds
 }
 
+const createGroup = (document: PuppetDocument, nodeIds: ReadonlyArray<string>) => {
+  const previousIds = getContainerIds(getDocumentScene(document).roots)
+  const nextDocument = createSceneGroup(document, nodeIds)
+  return nextDocument === undefined
+    ? undefined
+    : {
+        document: nextDocument,
+        nodeId: [...getContainerIds(getDocumentScene(nextDocument).roots)].find(
+          (candidate) => !previousIds.has(candidate),
+        ),
+      }
+}
+
+const getNextSelection = (
+  current: SceneSelection,
+  event: MouseEvent,
+  node: PuppetSceneNode,
+): SceneSelection => {
+  const additive = event.metaKey || event.ctrlKey
+  const nodeIds = additive
+    ? current.nodeIds.includes(node.id)
+      ? current.nodeIds.filter((nodeId) => nodeId !== node.id)
+      : [...current.nodeIds, node.id]
+    : [node.id]
+  return {activeNodeId: nodeIds.includes(node.id) ? node.id : (nodeIds.at(-1) ?? null), nodeIds}
+}
+
 const getNodeParameterLinks = (document: PuppetDocument, nodeId: string) => {
-  const partIds = getSceneNodePartIds(document, nodeId)
+  const nodeIds = getParameterSelectionNodeIds({
+    document,
+    selection: {activeNodeId: nodeId, nodeIds: [nodeId]},
+  })
 
   return getDocumentParameterBindings(document).flatMap((binding) => {
-    const targetPartIds = new Set(getParameterTargetPartIds(binding))
-    const linkedPartCount = partIds.filter((partId) => targetPartIds.has(partId)).length
+    const targetNodeIds = new Set(getParameterTargetNodeIds(binding))
+    const linkedNodeCount = nodeIds.filter((candidate) => targetNodeIds.has(candidate)).length
 
-    if (linkedPartCount === 0) {
+    if (linkedNodeCount === 0) {
       return []
     }
 
     const name = getBindingParameters(document, binding)
       .map((parameter) => parameter.name)
       .join(' / ')
-    return [linkedPartCount === partIds.length ? name : `${name} 일부`]
+    return [linkedNodeCount === nodeIds.length ? name : `${name} 일부`]
   })
 }
 
@@ -107,7 +133,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
   let nameInput: HTMLInputElement | undefined
 
   const startRenaming = (event: MouseEvent) => {
-    if (props.node.kind !== 'group' || props.locked) {
+    if (!isSceneContainerNode(props.node) || props.locked) {
       return
     }
 
@@ -122,11 +148,11 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
   }
 
   const finishRenaming = () => {
-    if (!isRenaming() || props.node.kind !== 'group') {
+    if (!isRenaming() || !isSceneContainerNode(props.node)) {
       return
     }
 
-    const document = renameSceneGroup(props.document, props.node.id, nameDraft())
+    const document = renameSceneNode(props.document, props.node.id, nameDraft())
     if (document !== undefined) {
       props.onDocumentChange?.(document)
     }
@@ -135,13 +161,13 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
 
   return (
     <Show
-      when={props.node.kind === 'group' && isRenaming()}
+      when={isSceneContainerNode(props.node) && isRenaming()}
       fallback={
         <ToggleButton
           aria-label={`${props.node.name} 레이어 선택`}
           class="layer-select"
           pressed={props.selected}
-          title={props.node.kind === 'group' ? '더블클릭하여 그룹 이름 수정' : undefined}
+          title={isSceneContainerNode(props.node) ? '더블클릭하여 이름 수정' : undefined}
           onClick={(event) => props.onSelect(event, props.node)}
           onDblClick={startRenaming}
         >
@@ -160,7 +186,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
           <span class="layer-label">
             <strong>{props.node.name}</strong>
             <small>
-              {props.node.kind === 'group'
+              {isSceneContainerNode(props.node)
                 ? `${props.node.children.length} items`
                 : `${(part()?.mesh.vertices.length ?? 0) / 2} vertices`}
             </small>
@@ -199,7 +225,8 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
 }
 
 const SceneNodeItem = (props: SceneNodeItemProps) => {
-  const isExpanded = () => props.node.kind === 'group' && props.expandedGroupIds.has(props.node.id)
+  const isExpanded = () =>
+    isSceneContainerNode(props.node) && props.expandedGroupIds.has(props.node.id)
   const locked = () => props.inheritedLocked || props.node.locked
   const visible = () => props.inheritedVisible && props.node.visible
   const parameterLinks = createMemo(() => getNodeParameterLinks(props.document, props.node.id))
@@ -208,7 +235,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
 
   return (
     <li
-      aria-expanded={props.node.kind === 'group' ? isExpanded() : undefined}
+      aria-expanded={isSceneContainerNode(props.node) ? isExpanded() : undefined}
       aria-level={props.depth}
       aria-selected={props.selectedNodeIds.has(props.node.id)}
       class="layer-tree-item"
@@ -229,7 +256,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
         class="layer-tree-node"
         open={isExpanded()}
         onOpenChange={() => {
-          if (props.node.kind === 'group') {
+          if (isSceneContainerNode(props.node)) {
             props.onToggleExpanded(props.node.id)
           }
         }}
@@ -279,14 +306,21 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
           }}
         >
           <Show
-            when={props.node.kind === 'group'}
+            when={isSceneContainerNode(props.node)}
             fallback={<span class="layer-tree-spacer" aria-hidden="true" />}
           >
             <Collapsible.Trigger
               aria-label={`${props.node.name} ${isExpanded() ? '접기' : '펼치기'}`}
               class="layer-tree-toggle"
             >
-              {isExpanded() ? '▾' : '▸'}
+              <svg
+                aria-hidden="true"
+                class="layer-tree-toggle-icon"
+                classList={{expanded: isExpanded()}}
+                viewBox="0 0 16 16"
+              >
+                <path d="M4 2.5 13 8 4 13.5Z" />
+              </svg>
             </Collapsible.Trigger>
           </Show>
 
@@ -310,10 +344,10 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
           />
         </div>
 
-        <Show when={props.node.kind === 'group'}>
+        <Show when={isSceneContainerNode(props.node)}>
           <Collapsible.Content>
             <ul role="group">
-              <For each={props.node.kind === 'group' ? props.node.children : []}>
+              <For each={isSceneContainerNode(props.node) ? props.node.children : []}>
                 {(node) => (
                   <SceneNodeItem
                     depth={props.depth + 1}
@@ -342,84 +376,10 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
   )
 }
 
-interface LayerToolbarProps {
-  readonly activeGroup?: PuppetSceneGroupNode
-  readonly activeLocked: boolean
-  readonly document: PuppetDocument
-  readonly onDocumentChange: (document: PuppetDocument | undefined) => void
-  readonly onSelectionChange?: (selection: SceneSelection) => void
-  readonly selectionLocked: boolean
-  readonly selection: SceneSelection
-}
-
-const LayerToolbar = (props: LayerToolbarProps) => (
-  <div class="layer-toolbar" aria-label="레이어 계층 편집">
-    <Button
-      disabled={props.selectionLocked}
-      type="button"
-      onClick={() =>
-        props.onDocumentChange(createSceneGroup(props.document, props.selection.nodeIds))
-      }
-    >
-      그룹
-    </Button>
-    <Button
-      aria-label="선택 레이어 위로 이동"
-      disabled={props.selection.activeNodeId === null || props.activeLocked}
-      type="button"
-      onClick={() => {
-        const nodeId = props.selection.activeNodeId
-        if (nodeId !== null) {
-          props.onDocumentChange(moveSceneNodeBy(props.document, nodeId, -1))
-        }
-      }}
-    >
-      ↑
-    </Button>
-    <Button
-      aria-label="선택 레이어 아래로 이동"
-      disabled={props.selection.activeNodeId === null || props.activeLocked}
-      type="button"
-      onClick={() => {
-        const nodeId = props.selection.activeNodeId
-        if (nodeId !== null) {
-          props.onDocumentChange(moveSceneNodeBy(props.document, nodeId, 1))
-        }
-      }}
-    >
-      ↓
-    </Button>
-    <Button
-      disabled={props.selection.activeNodeId === null || props.activeLocked}
-      type="button"
-      onClick={() => {
-        const nodeId = props.selection.activeNodeId
-        if (nodeId !== null) {
-          props.onDocumentChange(moveSceneNodeToParent(props.document, nodeId))
-        }
-      }}
-    >
-      상위로
-    </Button>
-    <Button
-      disabled={props.activeGroup === undefined || props.activeLocked}
-      type="button"
-      onClick={() => {
-        const group = props.activeGroup
-        if (group !== undefined) {
-          props.onDocumentChange(ungroupSceneNode(props.document, group.id))
-          props.onSelectionChange?.({activeNodeId: null, nodeIds: []})
-        }
-      }}
-    >
-      그룹 해제
-    </Button>
-  </div>
-)
-
+// eslint-disable-next-line max-lines-per-function
 export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   const titleId = createUniqueId()
-  const initialGroupIds = untrack(() => getGroupIds(getDocumentScene(props.document).roots))
+  const initialGroupIds = untrack(() => getContainerIds(getDocumentScene(props.document).roots))
   const [expandedGroupIds, setExpandedGroupIds] = createSignal<ReadonlySet<string>>(initialGroupIds)
   const [draggedNodeId, setDraggedNodeId] = createSignal<string | null>(null)
   const [dropTarget, setDropTarget] = createSignal<LayerDropTarget | null>(null)
@@ -431,14 +391,6 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
       },
   )
   const selectedNodeIds = createMemo(() => new Set(selection().nodeIds))
-  const activeNode = createMemo(() => {
-    const {activeNodeId} = selection()
-    return activeNodeId === null ? undefined : getSceneNode(props.document, activeNodeId)
-  })
-  const activeGroup = createMemo(() => {
-    const node = activeNode()
-    return node?.kind === 'group' ? node : undefined
-  })
   const activeLocked = createMemo(() => {
     const {activeNodeId} = selection()
     return activeNodeId !== null && isSceneNodeLocked(props.document, activeNodeId)
@@ -448,17 +400,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   )
 
   const handleSelect = (event: MouseEvent, node: PuppetSceneNode) => {
-    const currentSelection = selection()
-    const additive = event.metaKey || event.ctrlKey
-    const nodeIds = additive
-      ? currentSelection.nodeIds.includes(node.id)
-        ? currentSelection.nodeIds.filter((nodeId) => nodeId !== node.id)
-        : [...currentSelection.nodeIds, node.id]
-      : [node.id]
-    const nextSelection = {
-      activeNodeId: nodeIds.includes(node.id) ? node.id : (nodeIds.at(-1) ?? null),
-      nodeIds,
-    }
+    const nextSelection = getNextSelection(selection(), event, node)
 
     props.onSelectionChange?.(nextSelection)
     if (node.kind === 'part' && nextSelection.activeNodeId === node.id) {
@@ -469,6 +411,18 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   const handleDocumentChange = (document: PuppetDocument | undefined) => {
     if (document !== undefined) {
       props.onDocumentChange?.(document)
+    }
+  }
+
+  const handleGroupCreate = () => {
+    const result = createGroup(props.document, selection().nodeIds)
+    if (result === undefined) {
+      return
+    }
+    props.onDocumentChange?.(result.document)
+    if (result.nodeId !== undefined) {
+      setExpandedGroupIds(new Set([...expandedGroupIds(), result.nodeId]))
+      props.onSelectionChange?.({activeNodeId: result.nodeId, nodeIds: [result.nodeId]})
     }
   }
 
@@ -500,14 +454,13 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
         <h2 id={titleId}>Layers</h2>
         <span>{props.document.parts.length}</span>
       </div>
-      <LayerToolbar
-        activeGroup={activeGroup()}
+      <EditorLayerToolbar
         activeLocked={activeLocked()}
         document={props.document}
         selection={selection()}
         selectionLocked={selectionLocked()}
         onDocumentChange={handleDocumentChange}
-        onSelectionChange={props.onSelectionChange}
+        onGroupCreate={handleGroupCreate}
       />
       <Show
         when={props.document.parts.length > 0}

@@ -238,7 +238,7 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
   )
 }
 
-interface KeyformTrackRowProps {
+interface KeyformTrackProps {
   readonly active: boolean
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly binding: PuppetParameterBinding
@@ -292,7 +292,51 @@ const ParameterValueFields = (props: ParameterValueFieldsProps) => {
   )
 }
 
-const KeyformTrackRow = (props: KeyformTrackRowProps) => {
+const KeyformTrackLabel = (props: KeyformTrackProps) => {
+  const firstParameter = () => props.parameters[0]
+  const secondParameter = () => props.parameters[1]
+  const handleValueChange = (values: PuppetParameterValues) => {
+    if (!props.active) {
+      props.onBindingSelect?.(props.binding.id)
+    }
+    props.onValueChange?.(values)
+  }
+
+  return (
+    <div
+      class="keyform-track-label"
+      classList={{'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding)}}
+    >
+      <Show when={firstParameter()}>
+        {(parameter) => (
+          <EditorParameterItem
+            name={parameter().name}
+            pressed={props.active}
+            secondaryName={secondParameter()?.name}
+            onDelete={
+              props.onBindingDelete === undefined
+                ? undefined
+                : () => props.onBindingDelete?.(props.binding.id)
+            }
+            onNameChange={(name) =>
+              props.onParameterNameChange?.(props.binding.id, parameter().id, name)
+            }
+            onNameEdit={() => props.onBindingSelect?.(props.binding.id)}
+            onSelect={() => props.onBindingSelect?.(props.binding.id)}
+          >
+            <ParameterValueFields
+              onValueChange={handleValueChange}
+              parameters={props.parameters}
+              values={props.values}
+            />
+          </EditorParameterItem>
+        )}
+      </Show>
+    </div>
+  )
+}
+
+const KeyformTrack = (props: KeyformTrackProps) => {
   const firstParameter = () => props.parameters[0]
   const secondParameter = () => props.parameters[1]
   const handleValueChange = (values: PuppetParameterValues) => {
@@ -322,94 +366,62 @@ const KeyformTrackRow = (props: KeyformTrackRowProps) => {
   }
 
   return (
-    <>
-      <div
-        class="keyform-track-label"
-        classList={{'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding)}}
-      >
-        <Show when={firstParameter()}>
-          {(parameter) => (
-            <EditorParameterItem
-              name={parameter().name}
-              pressed={props.active}
-              secondaryName={secondParameter()?.name}
-              onDelete={
-                props.onBindingDelete === undefined
-                  ? undefined
-                  : () => props.onBindingDelete?.(props.binding.id)
-              }
-              onNameChange={(name) =>
-                props.onParameterNameChange?.(props.binding.id, parameter().id, name)
-              }
-              onNameEdit={() => props.onBindingSelect?.(props.binding.id)}
-              onSelect={() => props.onBindingSelect?.(props.binding.id)}
-            >
-              <ParameterValueFields
-                onValueChange={handleValueChange}
-                parameters={props.parameters}
-                values={props.values}
-              />
-            </EditorParameterItem>
-          )}
-        </Show>
-      </div>
-      <Show
-        when={isTwoDimensionalParameterBinding(props.binding)}
-        fallback={
-          <div
-            class="keyform-track"
-            aria-label={`${firstParameter()?.name ?? 'Parameter'} 키폼 트랙`}
-            onPointerDown={handleOneDimensionalTrackPointerDown}
-          >
-            <Show when={firstParameter()}>
-              <ParameterValueScrubber
-                parameter={firstParameter()!}
-                value={props.values?.[0] ?? firstParameter()!.defaultValue}
-                onValueChange={handleValueChange}
-              />
-            </Show>
-            <Show when={firstParameter()}>
-              {(parameter) => (
-                <For each={props.binding.keyforms}>
-                  {(keyform) => (
-                    <EditorKeyformMarker
-                      active={
-                        props.active &&
-                        parameterValuesEqual(props.activeKeyformValues ?? [], keyform.values)
-                      }
-                      parameter={parameter()}
-                      value={keyform.values[0] ?? parameter().defaultValue}
-                      onMove={
-                        props.onKeyformMove === undefined
-                          ? undefined
-                          : (value, nextValue) =>
-                              props.onKeyformMove?.(props.binding.id, [value], [nextValue])
-                      }
-                      onSelect={() => props.onKeyformSelect?.(props.binding.id, keyform.values)}
-                    />
-                  )}
-                </For>
-              )}
-            </Show>
-          </div>
-        }
-      >
+    <Show
+      when={isTwoDimensionalParameterBinding(props.binding)}
+      fallback={
         <div
-          class="keyform-track parameter-grid-track"
-          aria-label={`${firstParameter()?.name}와 ${secondParameter()?.name} 2차원 키폼 grid`}
+          class="keyform-track"
+          aria-label={`${firstParameter()?.name ?? 'Parameter'} 키폼 트랙`}
+          onPointerDown={handleOneDimensionalTrackPointerDown}
         >
-          <TwoDimensionalGrid
-            active={props.active}
-            activeKeyformValues={props.activeKeyformValues}
-            binding={props.binding}
-            parameters={props.parameters}
-            values={props.values ?? [0, 0]}
-            onKeyformSelect={props.onKeyformSelect}
-            onValueChange={handleValueChange}
-          />
+          <Show when={firstParameter()}>
+            <ParameterValueScrubber
+              parameter={firstParameter()!}
+              value={props.values?.[0] ?? firstParameter()!.defaultValue}
+              onValueChange={handleValueChange}
+            />
+          </Show>
+          <Show when={firstParameter()}>
+            {(parameter) => (
+              <For each={props.binding.keyforms}>
+                {(keyform) => (
+                  <EditorKeyformMarker
+                    active={
+                      props.active &&
+                      parameterValuesEqual(props.activeKeyformValues ?? [], keyform.values)
+                    }
+                    parameter={parameter()}
+                    value={keyform.values[0] ?? parameter().defaultValue}
+                    onMove={
+                      props.onKeyformMove === undefined
+                        ? undefined
+                        : (value, nextValue) =>
+                            props.onKeyformMove?.(props.binding.id, [value], [nextValue])
+                    }
+                    onSelect={() => props.onKeyformSelect?.(props.binding.id, keyform.values)}
+                  />
+                )}
+              </For>
+            )}
+          </Show>
         </div>
-      </Show>
-    </>
+      }
+    >
+      <div
+        class="keyform-track parameter-grid-track"
+        aria-label={`${firstParameter()?.name}와 ${secondParameter()?.name} 2차원 키폼 grid`}
+      >
+        <TwoDimensionalGrid
+          active={props.active}
+          activeKeyformValues={props.activeKeyformValues}
+          binding={props.binding}
+          parameters={props.parameters}
+          values={props.values ?? [0, 0]}
+          onKeyformSelect={props.onKeyformSelect}
+          onValueChange={handleValueChange}
+        />
+      </div>
+    </Show>
   )
 }
 
@@ -433,6 +445,7 @@ export interface EditorKeyformPanelProps {
   readonly onSelectionDisconnect?: () => void
   readonly onTwoDimensionalParameterAdd?: () => void
   readonly onValueChange?: (values: PuppetParameterValues) => void
+  readonly parameterCreationAvailable?: boolean
   readonly parameters: ReadonlyArray<PuppetParameter>
   readonly parameterValueMap?: PuppetParameterValueMap
   readonly selectedPartIds?: ReadonlyArray<string>
@@ -473,6 +486,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
         onKeyformDelete={props.onKeyformDelete}
         onParameterAdd={props.onParameterAdd}
         onTwoDimensionalParameterAdd={props.onTwoDimensionalParameterAdd}
+        parameterCreationAvailable={props.parameterCreationAvailable}
         titleId={titleId}
       />
       <Show
@@ -480,23 +494,42 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
         fallback={<p class="timeline-empty">Parameter를 추가하세요.</p>}
       >
         <div class="keyform-track-wrap">
-          <For each={props.bindings}>
-            {(binding) => (
-              <KeyformTrackRow
-                active={binding.id === props.activeBindingId}
-                activeKeyformValues={props.activeKeyformValues}
-                binding={binding}
-                parameters={bindingParameters(binding)}
-                values={bindingValues(binding)}
-                onBindingDelete={props.onBindingDelete}
-                onBindingSelect={props.onBindingSelect}
-                onKeyformMove={props.onKeyformMove}
-                onKeyformSelect={props.onKeyformSelect}
-                onParameterNameChange={props.onParameterNameChange}
-                onValueChange={props.onValueChange}
-              />
-            )}
-          </For>
+          <div class="keyform-track-labels">
+            <For each={props.bindings}>
+              {(binding) => (
+                <KeyformTrackLabel
+                  active={binding.id === props.activeBindingId}
+                  activeKeyformValues={props.activeKeyformValues}
+                  binding={binding}
+                  parameters={bindingParameters(binding)}
+                  values={bindingValues(binding)}
+                  onBindingDelete={props.onBindingDelete}
+                  onBindingSelect={props.onBindingSelect}
+                  onParameterNameChange={props.onParameterNameChange}
+                  onValueChange={props.onValueChange}
+                />
+              )}
+            </For>
+          </div>
+          <div class="keyform-track-scroll">
+            <div class="keyform-tracks">
+              <For each={props.bindings}>
+                {(binding) => (
+                  <KeyformTrack
+                    active={binding.id === props.activeBindingId}
+                    activeKeyformValues={props.activeKeyformValues}
+                    binding={binding}
+                    parameters={bindingParameters(binding)}
+                    values={bindingValues(binding)}
+                    onBindingSelect={props.onBindingSelect}
+                    onKeyformMove={props.onKeyformMove}
+                    onKeyformSelect={props.onKeyformSelect}
+                    onValueChange={props.onValueChange}
+                  />
+                )}
+              </For>
+            </div>
+          </div>
         </div>
       </Show>
       <footer class="keyform-footer">
@@ -526,7 +559,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
           </Button>
         </div>
         <p class="keyform-help">
-          대상 {targetPartIds().length} · 선택 {selectedPartIds().length}개 파트
+          대상 {targetPartIds().length} · 선택 {selectedPartIds().length}개 노드
         </p>
       </footer>
     </section>

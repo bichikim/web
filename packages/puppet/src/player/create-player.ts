@@ -1,6 +1,11 @@
 import {Application, Container, MeshSimple, Texture} from 'pixi.js'
 
-import {composeParameterVertices, type PuppetParameterValueMap} from '../deformation'
+import {
+  composeParameterScene,
+  composeParameterVertices,
+  type PuppetParameterValueMap,
+} from '../deformation'
+import {applySceneDeformers} from './deformer'
 import type {PuppetDocument, PuppetMotion} from './document'
 import {
   assertPreparedPuppetDocument,
@@ -51,15 +56,10 @@ interface ApplyFrameVerticesOptions {
 }
 
 const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
-  const frameParameterValues = sampleMotionParameterValues({
-    motion: options.motion,
-    parameterValues: options.parameterValues,
-    time: options.time,
-  })
   options.runtimePart.vertices.set(
     composeParameterVertices({
       document: options.document,
-      parameterValues: frameParameterValues,
+      parameterValues: options.parameterValues,
       partId: options.partId,
       restVertices: options.runtimePart.restVertices,
     }),
@@ -230,16 +230,29 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   }
 
   const applyFrame = (activeMotion: PuppetMotion | undefined, time: number) => {
+    const frameParameterValues = sampleMotionParameterValues({
+      motion: activeMotion,
+      parameterValues,
+      time,
+    })
+
     for (const [partId, runtimePart] of partById) {
       applyFrameVertices({
         document,
         motion: activeMotion,
-        parameterValues,
+        parameterValues: frameParameterValues,
         partId,
         runtimePart,
         time,
       })
     }
+
+    applySceneDeformers({
+      document: {...document, scene: composeParameterScene(document, frameParameterValues)},
+      verticesByPartId: new Map(
+        [...partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
+      ),
+    })
 
     for (const runtimePart of partById.values()) {
       runtimePart.mesh.vertices = runtimePart.vertices

@@ -6,7 +6,8 @@ import {
   type PuppetParameterValues,
 } from '../deformation'
 import type {PuppetDocument, PuppetPart} from '../player/document'
-import {sampleMotionParameterValues, sampleMotionVertices} from '../player/internal/motion'
+import {applySceneDeformers, unapplySceneDeformersPoint} from '../player/deformer'
+import {sampleMotionVertices} from '../player/internal/motion'
 import {getScenePartStates} from '../player/scene'
 import {addPartVertex, deletePartVertex, movePartVertex, type VertexPoint} from './edit-document'
 import {
@@ -17,8 +18,9 @@ import {
   snapPointToEdge,
 } from './internal/mesh-view'
 import {setVertexKeyframe} from './internal/motion-keyframes'
+import {getDeformerPreviewDocument, getPartPreviewVertices} from './internal/mesh-preview'
 import {getEditErrorMessage} from './internal/notices'
-import {getParameterBinding, setParameterKeyformVertex} from './internal/parameter-keyforms'
+import {setParameterKeyformVertex} from './internal/parameter-keyforms'
 import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
 
@@ -218,47 +220,6 @@ const getPointerPoint = (
     viewBox: getEditorViewBox(document),
   })
 
-const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart) => {
-  const activeBinding =
-    props.activeBindingId === undefined
-      ? undefined
-      : getParameterBinding(props.document, props.activeBindingId)
-  const activeParameterValues =
-    activeBinding === undefined || props.parameterValues === undefined
-      ? {}
-      : Object.fromEntries(
-          activeBinding.parameterIds.flatMap((parameterId, index) => {
-            const value = props.parameterValues?.[index]
-            return value === undefined ? [] : [[parameterId, value] as const]
-          }),
-        )
-  const parameterValueMap = {...props.parameterValueMap, ...activeParameterValues}
-  const [motion] = props.document.motions
-  const frameParameterValues =
-    props.editMode === 'parameter'
-      ? parameterValueMap
-      : sampleMotionParameterValues({
-          motion,
-          parameterValues: parameterValueMap,
-          time: props.previewTime ?? 0,
-        })
-  const parameterVertices = composeParameterVertices({
-    document: props.document,
-    parameterValues: frameParameterValues,
-    partId: part.id,
-    restVertices: part.mesh.vertices,
-  })
-
-  return props.editMode === 'parameter'
-    ? parameterVertices
-    : sampleMotionVertices({
-        motion,
-        partId: part.id,
-        restVertices: parameterVertices,
-        time: props.previewTime ?? 0,
-      })
-}
-
 const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   const [tool, setTool] = createSignal<MeshEditTool>('select')
   const [selectedVertex, setSelectedVertex] = createSignal<number | null>(null)
@@ -309,12 +270,20 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
     const activeVertex = selectedVertex()
     const activeDraft = draftPoint()
 
+    const verticesByPartId = new Map(
+      parts().map((candidate) => [
+        candidate.id,
+        new Float32Array(getPartPreviewVertices(props, candidate)),
+      ]),
+    )
+    applySceneDeformers({document: getDeformerPreviewDocument(props), verticesByPartId})
+
     return parts().map((candidate) => {
       const vertices = getIndexedVertices({
         draftPoint: candidate.id === activePart?.id ? activeDraft : null,
         mesh: {
           ...candidate.mesh,
-          vertices: getPartPreviewVertices(props, candidate),
+          vertices: Array.from(verticesByPartId.get(candidate.id) ?? candidate.mesh.vertices),
         },
         selectedVertex: candidate.id === activePart?.id ? activeVertex : null,
       })
@@ -416,12 +385,10 @@ const canEditMeshTopology = (props: MeshEditorProps, state: MeshEditorState) =>
   props.onDocumentChange !== undefined &&
   state.part() !== undefined
 
-export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
-  const state = createMeshEditorState(props)
-  const handleAddVertex = (event: MouseEvent) => {
+const createAddVertexHandler =
+  (props: MeshEditorProps, state: MeshEditorState) => (event: MouseEvent) => {
     const activePart = state.part()
     const {onDocumentChange} = props
-
     if (
       props.editMode === 'parameter' ||
       state.tool() !== 'add' ||
@@ -441,8 +408,12 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       mesh: activePart.mesh,
       point: pointerPoint,
     })
-    const result = addPartVertex({...point, document: props.document, partId: activePart.id})
-
+    const localPoint = unapplySceneDeformersPoint({
+      document: getDeformerPreviewDocument(props),
+      partId: activePart.id,
+      point,
+    })
+    const result = addPartVertex({...localPoint, document: props.document, partId: activePart.id})
     if (!result.ok) {
       props.onNotice?.(getEditErrorMessage(result.error.code))
       return
@@ -454,6 +425,41 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     state.setTool('select')
     props.onNotice?.('새 정점을 추가하고 주변 메시를 다시 연결했습니다.')
   }
+
+const createDeleteVertexHandler = (props: MeshEditorProps, state: MeshEditorState) => () => {
+  const activePart = state.part()
+  const activeVertex = state.selectedVertex()
+  const {onDocumentChange} = props
+  if (
+    props.editMode === 'parameter' ||
+    activePart === undefined ||
+    activeVertex === null ||
+    onDocumentChange === undefined
+  ) {
+    return
+  }
+
+  const result = deletePartVertex({
+    document: props.document,
+    partId: activePart.id,
+    vertexIndex: activeVertex,
+  })
+  if (!result.ok) {
+    props.onNotice?.(getEditErrorMessage(result.error.code))
+    return
+  }
+
+  onDocumentChange(result.document)
+  state.setSelectedVertex(null)
+  props.onVertexSelect?.(null)
+  state.setDraftPoint(null)
+  state.setDragStartPoint(null)
+  props.onNotice?.('선택한 정점을 제거하고 남은 정점으로 메시를 다시 연결했습니다.')
+}
+
+export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
+  const state = createMeshEditorState(props)
+  const handleAddVertex = createAddVertexHandler(props, state)
 
   const handlePointerDown = (event: PointerEvent, partId: string, vertex: IndexedVertex) => {
     if (event.button > 0) {
@@ -514,8 +520,13 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       return
     }
 
+    const localPoint = unapplySceneDeformersPoint({
+      document: getDeformerPreviewDocument(props),
+      partId: activePart.id,
+      point,
+    })
     const result = commitVertexMove({
-      ...point,
+      ...localPoint,
       bindingId: props.activeBindingId,
       document: props.document,
       editMode: props.editMode ?? 'motion',
@@ -534,38 +545,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     }
   }
 
-  const handleDeleteVertex = () => {
-    const activePart = state.part()
-    const activeVertex = state.selectedVertex()
-    const {onDocumentChange} = props
-
-    if (
-      props.editMode === 'parameter' ||
-      activePart === undefined ||
-      activeVertex === null ||
-      onDocumentChange === undefined
-    ) {
-      return
-    }
-
-    const result = deletePartVertex({
-      document: props.document,
-      partId: activePart.id,
-      vertexIndex: activeVertex,
-    })
-
-    if (!result.ok) {
-      props.onNotice?.(getEditErrorMessage(result.error.code))
-      return
-    }
-
-    onDocumentChange(result.document)
-    state.setSelectedVertex(null)
-    props.onVertexSelect?.(null)
-    state.setDraftPoint(null)
-    state.setDragStartPoint(null)
-    props.onNotice?.('선택한 정점을 제거하고 남은 정점으로 메시를 다시 연결했습니다.')
-  }
+  const handleDeleteVertex = createDeleteVertexHandler(props, state)
 
   return {
     canEditTopology: () => canEditMeshTopology(props, state),

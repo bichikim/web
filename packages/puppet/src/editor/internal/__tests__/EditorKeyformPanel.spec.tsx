@@ -8,7 +8,7 @@ import {EditorKeyformPanel} from '../EditorKeyformPanel'
 import {addParameter, insertParameterKeyform} from '../parameter-keyforms'
 
 const createOneDimensionalDocument = () => {
-  const added = addParameter({document: createDemoDocument(), partIds: ['mesh-preview']})
+  const added = addParameter({document: createDemoDocument(), nodeIds: ['mesh-preview']})
   if (added === undefined) {
     throw new Error('Expected a one-dimensional parameter')
   }
@@ -63,6 +63,11 @@ describe('EditorKeyformPanel', () => {
     expect(view.getByRole('button', {name: 'Angle X'}).closest('.keyform-track-label')).toHaveClass(
       'parameter-grid-label',
     )
+    expect(view.container.querySelector('.keyform-track-labels .keyform-track-label')).toBeVisible()
+    expect(
+      view.container.querySelector('.keyform-track-scroll .parameter-grid-track'),
+    ).toBeVisible()
+    expect(view.container.querySelector('.keyform-track-scroll .keyform-track-label')).toBeNull()
     expect(markers).toHaveLength(9)
     expect(view.container.querySelectorAll('.parameter-grid-keyform.selected')).toHaveLength(1)
 
@@ -124,7 +129,7 @@ describe('EditorKeyformPanel', () => {
 
   test('should keep each binding current values visible when another binding is active', () => {
     const document = createDemoDocument()
-    const added = addParameter({document, partIds: ['mesh-preview']})
+    const added = addParameter({document, nodeIds: ['mesh-preview']})
     const onBindingSelect = vi.fn()
     const onValueChange = vi.fn()
 
@@ -165,7 +170,7 @@ describe('EditorKeyformPanel', () => {
 
   test('should select an inactive one-dimensional track and apply its clicked value', () => {
     const document = createDemoDocument()
-    const added = addParameter({document, partIds: ['mesh-preview']})
+    const added = addParameter({document, nodeIds: ['mesh-preview']})
     const onBindingSelect = vi.fn()
     const onValueChange = vi.fn()
     const view = render(() => (
@@ -206,7 +211,7 @@ describe('EditorKeyformPanel', () => {
 
   test('should select an inactive two-dimensional track and apply its clicked values', () => {
     const document = createDemoDocument()
-    const added = addParameter({document, partIds: ['mesh-preview']})
+    const added = addParameter({document, nodeIds: ['mesh-preview']})
     const onBindingSelect = vi.fn()
     const onValueChange = vi.fn()
     const view = render(() => (
