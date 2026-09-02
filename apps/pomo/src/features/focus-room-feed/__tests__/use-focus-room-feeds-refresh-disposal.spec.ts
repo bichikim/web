@@ -68,6 +68,7 @@ const repositoryMocks = vi.hoisted(() => {
 
 vi.mock('../../focus-room-dialogue/repository', () => ({
   createPDialogueRepository: () => repositoryMocks.dialogueRepository,
+  deleteDialogueAudio: vi.fn(),
 }))
 vi.mock('../feed-dialogue-repository', () => ({
   createFeedDialogueRepository: () => repositoryMocks.feedRepository,
