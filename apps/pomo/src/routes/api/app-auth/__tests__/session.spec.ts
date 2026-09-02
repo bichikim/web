@@ -62,6 +62,7 @@ it.each([
 
   expect(response.status).toBe(401)
   await expect(response.json()).resolves.toEqual({authenticated: false})
+  expect(repositoryMocks.resolveAppSessionUserId).not.toHaveBeenCalled()
   expect(repositoryMocks.revokeAppSession).not.toHaveBeenCalled()
 })
 

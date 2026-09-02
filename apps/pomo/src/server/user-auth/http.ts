@@ -1,4 +1,4 @@
-import {resolveAppSessionUserId} from './repository'
+import {getAppSessionUserId} from './repository'
 import {readBearerToken} from './token'
 
 export interface AppRequestIdentity {
@@ -15,6 +15,6 @@ export const authenticateAppRequest = async (
     return null
   }
 
-  const userId = await resolveAppSessionUserId(token)
+  const userId = await getAppSessionUserId(token)
   return userId === null ? null : {token, userId}
 }
