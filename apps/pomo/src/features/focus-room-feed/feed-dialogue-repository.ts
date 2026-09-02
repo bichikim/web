@@ -1,6 +1,5 @@
 import {createPDatabase, type PDatabase} from '../focus-room-dialogue/database'
 import {deleteDialogueRecord} from '../focus-room-dialogue/dialogue-record'
-import {deleteDialogueAudio} from '../focus-room-dialogue/repository'
 import {focusRoomDialogueSchema} from '../focus-room-dialogue/schema'
 import {
   type FeedDialogueJob,
@@ -22,6 +21,10 @@ export interface RecoverMissingDialogueOptions {
   readonly dialogueId: string
   readonly item: FeedItemRecord
   readonly job: FeedDialogueJob
+}
+
+export interface CreateFeedDialogueRepositoryOptions {
+  readonly deleteDialogueAudio: (audioKey: string) => Promise<void>
 }
 
 export interface FailedFeedDialogueJob extends FeedDialogueJob {
@@ -152,8 +155,11 @@ const startQueuedJob = async (database: PDatabase, job: GeneratingFeedDialogueJo
 }
 
 /** Persists feed discovery and generation state beside compatible dialogue records. */
-export const createFeedDialogueRepository = (): FeedDialogueRepository => {
+export const createFeedDialogueRepository = (
+  options: CreateFeedDialogueRepositoryOptions,
+): FeedDialogueRepository => {
   const database = createPDatabase()
+  const {deleteDialogueAudio} = options
 
   return {
     async complete(options) {

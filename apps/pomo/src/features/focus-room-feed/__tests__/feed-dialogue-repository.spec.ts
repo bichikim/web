@@ -9,7 +9,7 @@ import {
   getFeedItemRecordId,
 } from '../feed-dialogue-schema'
 import {
-  createFeedDialogueRepository,
+  createFeedDialogueRepository as createRepositoryAdapter,
   type FailedFeedDialogueJob,
   type FailedFeedItemRecord,
   type GeneratingFeedDialogueJob,
@@ -18,19 +18,14 @@ import {
 const databaseModuleMocks = vi.hoisted(() => ({
   createPDatabase: vi.fn(),
 }))
-const storageModuleMocks = vi.hoisted(() => ({
-  createModelStorage: vi.fn(),
-  delete: vi.fn(),
-  reportModelStorageError: vi.fn(),
-}))
+const dialogueAudioMocks = vi.hoisted(() => ({delete: vi.fn()}))
 
 vi.mock('../../focus-room-dialogue/database', () => ({
   createPDatabase: databaseModuleMocks.createPDatabase,
 }))
-vi.mock('../../model-storage/storage', () => ({
-  createModelStorage: storageModuleMocks.createModelStorage,
-  reportModelStorageError: storageModuleMocks.reportModelStorageError,
-}))
+
+const createFeedDialogueRepository = () =>
+  createRepositoryAdapter({deleteDialogueAudio: dialogueAudioMocks.delete})
 
 const metadataRangeToArray = vi.fn()
 const metadataBelowOrEqual = vi.fn(() => ({toArray: metadataRangeToArray}))
@@ -160,8 +155,7 @@ const createMetadata = (overrides: Partial<FeedDialogueMetadata> = {}): FeedDial
 beforeEach(() => {
   vi.clearAllMocks()
   databaseModuleMocks.createPDatabase.mockReturnValue(database)
-  storageModuleMocks.createModelStorage.mockReturnValue({delete: storageModuleMocks.delete})
-  storageModuleMocks.delete.mockResolvedValue({ok: true, value: true})
+  dialogueAudioMocks.delete.mockResolvedValue(undefined)
   dialogues.get.mockResolvedValue(undefined)
 })
 
@@ -283,10 +277,7 @@ describe('feed dialogue repository writes', () => {
     expect(feedDialogueMetadata.delete).toHaveBeenCalledWith('dialogue-1')
     expect(feedDialogueJobs.put).toHaveBeenCalledWith(job)
     expect(feedItems.put).toHaveBeenCalledWith(item)
-    expect(storageModuleMocks.delete.mock.calls.map(([path]) => path)).toEqual([
-      '/__pomo/dialogue-audio/audio-1.opus',
-      '/__pomo/dialogue-audio/audio-1.wav',
-    ])
+    expect(dialogueAudioMocks.delete).toHaveBeenCalledWith('audio-1')
     expect(databaseTransaction).toHaveBeenCalledOnce()
   })
 
@@ -309,14 +300,14 @@ describe('feed dialogue repository writes', () => {
       }),
     ).rejects.toBe(transactionError)
 
-    expect(storageModuleMocks.delete).not.toHaveBeenCalled()
+    expect(dialogueAudioMocks.delete).not.toHaveBeenCalled()
   })
 
-  it('should keep recovery committed and report cached audio deletion failures', async () => {
-    const storageError = {cause: new Error('cache unavailable'), operation: 'delete' as const}
+  it('should keep recovery committed when unexpected audio cleanup rejects', async () => {
+    const cleanupError = new Error('cache unavailable')
     feedDialogueMetadata.get.mockResolvedValue(createMetadata())
     dialogues.get.mockResolvedValue(createDialogue())
-    storageModuleMocks.delete.mockResolvedValue({error: storageError, ok: false})
+    dialogueAudioMocks.delete.mockRejectedValue(cleanupError)
     const repository = createFeedDialogueRepository()
 
     await expect(
@@ -325,11 +316,11 @@ describe('feed dialogue repository writes', () => {
         item: createItem(),
         job: createJob(),
       }),
-    ).resolves.toBe(true)
+    ).rejects.toBe(cleanupError)
 
-    expect(storageModuleMocks.reportModelStorageError).toHaveBeenCalledTimes(2)
-    expect(storageModuleMocks.reportModelStorageError).toHaveBeenNthCalledWith(1, storageError)
-    expect(storageModuleMocks.reportModelStorageError).toHaveBeenNthCalledWith(2, storageError)
+    expect(feedDialogueMetadata.delete).toHaveBeenCalledWith('dialogue-1')
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(createJob())
+    expect(feedItems.put).toHaveBeenCalledWith(createItem())
   })
 
   it('should skip recovery when another request already removed the dialogue metadata', async () => {

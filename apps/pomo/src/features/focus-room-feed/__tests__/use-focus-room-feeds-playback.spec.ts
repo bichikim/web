@@ -35,6 +35,10 @@ const gateMocks = vi.hoisted(() => ({
   createFeedSyncGate: vi.fn(),
   finishFeedSync: vi.fn(),
 }))
+const repositoryAdapterMocks = vi.hoisted(() => ({
+  createFeedDialogueRepository: vi.fn(),
+  deleteDialogueAudio: vi.fn(),
+}))
 
 const repositoryMocks = vi.hoisted(() => {
   const dialogueRepository = {
@@ -69,9 +73,10 @@ const repositoryMocks = vi.hoisted(() => {
 
 vi.mock('../../focus-room-dialogue/repository', () => ({
   createPDialogueRepository: () => repositoryMocks.dialogueRepository,
+  deleteDialogueAudio: repositoryAdapterMocks.deleteDialogueAudio,
 }))
 vi.mock('../feed-dialogue-repository', () => ({
-  createFeedDialogueRepository: () => repositoryMocks.feedRepository,
+  createFeedDialogueRepository: repositoryAdapterMocks.createFeedDialogueRepository,
 }))
 vi.mock('../feed-dialogue-repair', () => ({
   repairStoredDevFeedDialogues: repairMocks.repairStoredDevFeedDialogues,
@@ -103,6 +108,9 @@ vi.mock('../sync-gate', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  repositoryAdapterMocks.createFeedDialogueRepository.mockReturnValue(
+    repositoryMocks.feedRepository,
+  )
   repositoryMocks.dialogueRepository.deleteDialogue.mockResolvedValue(undefined)
   repositoryMocks.dialogueRepository.getDialogue.mockResolvedValue(null)
   repositoryMocks.dialogueRepository.saveDialogue.mockResolvedValue(undefined)
@@ -336,6 +344,9 @@ it('should load dialogue, issue, and recovery state during initialization', asyn
   expect(view.result.issues()).toEqual([issue])
   expect(view.result.unlistenedDialogues()).toEqual([available[0]])
   expect(view.result.latestReady()).toEqual(available[0])
+  expect(repositoryAdapterMocks.createFeedDialogueRepository).toHaveBeenCalledWith({
+    deleteDialogueAudio: repositoryAdapterMocks.deleteDialogueAudio,
+  })
   view.cleanup()
 })
 

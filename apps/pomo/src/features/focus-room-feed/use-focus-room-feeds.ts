@@ -2,6 +2,7 @@ import {onCleanup} from 'solid-js'
 
 import {
   createPDialogueRepository,
+  deleteDialogueAudio,
   type PDialogueRepository,
 } from '../focus-room-dialogue/repository'
 import {createFeedDialogueRepository, type FeedDialogueRepository} from './feed-dialogue-repository'
@@ -95,7 +96,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     connectionChangedEvent: FEED_CONNECTIONS_CHANGED_EVENT,
     async initialize() {
       dialogueRepository = createPDialogueRepository()
-      feedRepository = createFeedDialogueRepository()
+      feedRepository = createFeedDialogueRepository({deleteDialogueAudio})
       const repositories = getRepositories()
       generationController = createFeedGenerationController({
         createId: () => crypto.randomUUID(),
