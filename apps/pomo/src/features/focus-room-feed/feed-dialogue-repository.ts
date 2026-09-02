@@ -35,6 +35,10 @@ export interface FailFeedDialogueJobOptions {
   readonly job: FailedFeedDialogueJob
 }
 
+export interface GeneratingFeedDialogueJob extends FeedDialogueJob {
+  readonly status: 'generating'
+}
+
 export interface FeedDialogueRepository {
   readonly complete: (options: CompleteFeedDialogueOptions) => Promise<void>
   readonly deleteJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
@@ -52,7 +56,7 @@ export interface FeedDialogueRepository {
   readonly removeItem: (feedConnectionId: string, feedItemId: string) => Promise<void>
   readonly retryJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
   readonly saveItems: (items: ReadonlyArray<FeedItemRecord>) => Promise<void>
-  readonly updateJob: (job: FeedDialogueJob, item?: FeedItemRecord) => Promise<void>
+  readonly startJob: (job: GeneratingFeedDialogueJob) => Promise<boolean>
 }
 
 const parseJobs = (values: ReadonlyArray<unknown>) =>
@@ -116,6 +120,31 @@ const failGeneratingJob = async (database: PDatabase, options: FailFeedDialogueJ
       await database.feedItems.put(nextItem)
     }
 
+    return true
+  })
+}
+
+const startQueuedJob = async (database: PDatabase, job: GeneratingFeedDialogueJob) => {
+  const nextJob = feedDialogueJobSchema.parse(job)
+
+  if (nextJob.status !== 'generating') {
+    throw new Error('시작할 피드 생성 작업 상태가 올바르지 않아요.')
+  }
+
+  return database.transaction('rw', database.feedDialogueJobs, async () => {
+    const storedValue = await database.feedDialogueJobs.get(nextJob.id)
+
+    if (storedValue === undefined) {
+      return false
+    }
+
+    const storedJob = feedDialogueJobSchema.parse(storedValue)
+
+    if (storedJob.status !== 'queued') {
+      return false
+    }
+
+    await database.feedDialogueJobs.put(nextJob)
     return true
   })
 }
@@ -248,19 +277,6 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
     async saveItems(items) {
       await database.feedItems.bulkPut(items.map((item) => feedItemRecordSchema.parse(item)))
     },
-    async updateJob(job, item) {
-      const nextJob = feedDialogueJobSchema.parse(job)
-
-      if (item === undefined) {
-        await database.feedDialogueJobs.put(nextJob)
-        return
-      }
-
-      const nextItem = feedItemRecordSchema.parse(item)
-      await database.transaction('rw', database.feedDialogueJobs, database.feedItems, async () => {
-        await database.feedDialogueJobs.put(nextJob)
-        await database.feedItems.put(nextItem)
-      })
-    },
+    startJob: (job) => startQueuedJob(database, job),
   }
 }

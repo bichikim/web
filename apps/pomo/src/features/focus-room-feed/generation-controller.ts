@@ -33,7 +33,7 @@ export interface FeedGenerationRepository extends Pick<
   | 'interruptUnfinishedJobs'
   | 'listItems'
   | 'listJobs'
-  | 'updateJob'
+  | 'startJob'
 > {}
 
 export interface CreateFeedGenerationControllerOptions {
@@ -269,6 +269,8 @@ const generateJob = async (
   switch (preparation.status) {
     case 'connection-missing':
       await discardUnsubscribedJob(context, job)
+      return
+    case 'job-not-queued':
       return
     case 'model-download-required':
       await failJob(
