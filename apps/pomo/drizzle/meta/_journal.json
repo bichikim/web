@@ -120,6 +120,13 @@
       "when": 1788334168370,
       "tag": "0016_silky_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788347726181,
+      "tag": "0017_perpetual_zodiak",
+      "breakpoints": true
     }
   ]
 }

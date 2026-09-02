@@ -119,7 +119,13 @@ describe('createAlbum', () => {
     transactionSelect
       .mockReturnValueOnce(
         createAlbumQuery([
-          {coverFallback: 'music', coverImageUrl: null, id: albumId, status: 'draft'},
+          {
+            coverDraftId: null,
+            coverFallback: 'music',
+            coverImageUrl: null,
+            id: albumId,
+            status: 'draft',
+          },
         ]),
       )
       .mockReturnValueOnce(
@@ -140,7 +146,13 @@ describe('createAlbum', () => {
     transactionSelect
       .mockReturnValueOnce(
         createAlbumQuery([
-          {coverFallback: 'music', coverImageUrl: null, id: albumId, status: 'draft'},
+          {
+            coverDraftId: null,
+            coverFallback: 'music',
+            coverImageUrl: null,
+            id: albumId,
+            status: 'draft',
+          },
         ]),
       )
       .mockReturnValueOnce(
@@ -171,8 +183,9 @@ describe('createAlbum', () => {
       .mockReturnValueOnce(
         createAlbumQuery([
           {
+            coverDraftId: 'draft-id',
             coverFallback: 'music',
-            coverImageUrl: 'https://cdn.example/cover.webp',
+            coverImageUrl: 'https://cdn.example/original-cover.webp',
             id: albumId,
             status: 'draft',
           },
@@ -198,6 +211,40 @@ describe('createAlbum', () => {
     expect(updateWhere).toHaveBeenCalledOnce()
   })
 
+  it('should reject a retried creation ID when a different cover draft is uploaded', async () => {
+    const updateWhere = vi.fn().mockResolvedValue(undefined)
+    const updateSet = vi.fn(() => ({where: updateWhere}))
+    transactionUpdate.mockReturnValueOnce({set: updateSet})
+    transactionSelect
+      .mockReturnValueOnce(
+        createAlbumQuery([
+          {
+            coverDraftId: 'original-draft-id',
+            coverFallback: 'music',
+            coverImageUrl: 'https://cdn.example/original-cover.webp',
+            id: albumId,
+            status: 'draft',
+          },
+        ]),
+      )
+      .mockReturnValueOnce(
+        createAlbumTranslationsQuery([
+          {albumId, description: 'Description', locale: 'ko', title: 'Title'},
+        ]),
+      )
+
+    await expect(
+      createAlbum({
+        ...input,
+        coverDraftId: 'new-draft-id',
+        coverImageUrl: 'https://cdn.example/new-cover.webp',
+        coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf783',
+      }),
+    ).resolves.toEqual({code: 'album_creation_payload_mismatch', success: false})
+    expect(updateSet).toHaveBeenCalledWith({status: 'deleting', updatedAt: expect.any(Date)})
+    expect(updateWhere).toHaveBeenCalledOnce()
+  })
+
   it('should return a covered album completed while its reservation lookup was waiting', async () => {
     const updateWhere = vi.fn().mockResolvedValue(undefined)
     transactionUpdate.mockReturnValueOnce({set: vi.fn(() => ({where: updateWhere}))})
@@ -207,8 +254,9 @@ describe('createAlbum', () => {
       .mockReturnValueOnce(
         createAlbumQuery([
           {
+            coverDraftId: 'draft-id',
             coverFallback: 'music',
-            coverImageUrl: 'https://cdn.example/cover.webp',
+            coverImageUrl: 'https://cdn.example/original-cover.webp',
             id: albumId,
             status: 'draft',
           },

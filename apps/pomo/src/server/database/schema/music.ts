@@ -36,6 +36,7 @@ export const musicTrackAssetStatusEnum = pgEnum('music_track_asset_status', [
 export const musicAlbums = pgTable(
   'music_albums',
   {
+    coverDraftId: uuid(),
     coverFallback: musicCoverFallbackEnum().notNull().default('lp'),
     coverImageUrl: text(),
     createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),

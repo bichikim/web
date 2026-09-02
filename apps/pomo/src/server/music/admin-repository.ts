@@ -237,7 +237,8 @@ export const updateAlbumStatus = async (
     }),
   )
 
-type CreatedAlbum = {
+interface CreatedAlbum {
+  readonly coverDraftId: string | null
   readonly coverFallback: 'lp' | 'cd' | 'music'
   readonly coverImageUrl: string | null
   readonly id: string
@@ -255,9 +256,13 @@ const sortTranslationsByLocale = <T extends {readonly locale: string}>(
 ): T[] => [...translations].sort((left, right) => left.locale.localeCompare(right.locale))
 
 const matchesCreationInput = (existing: CreatedAlbum, candidate: CreateAlbumInput): boolean => {
+  const coverMatches =
+    existing.coverDraftId === candidate.coverDraftId &&
+    (candidate.coverDraftId !== null || existing.coverImageUrl === candidate.coverImageUrl)
+
   if (
+    !coverMatches ||
     existing.coverFallback !== candidate.coverFallback ||
-    existing.coverImageUrl !== candidate.coverImageUrl ||
     existing.translations.length !== candidate.translations.length
   ) {
     return false
@@ -283,6 +288,7 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
       const readCreatedAlbum = async (): Promise<CreatedAlbum | null> => {
         const [album] = await transaction
           .select({
+            coverDraftId: musicAlbums.coverDraftId,
             coverFallback: musicAlbums.coverFallback,
             coverImageUrl: musicAlbums.coverImageUrl,
             id: musicAlbums.id,
@@ -311,12 +317,22 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
       const returnMatchingCreatedAlbum = async (
         existingAlbum: CreatedAlbum,
       ): Promise<CreateAlbumResult> => {
+        await prepareUnusedCoverDeletion()
+
         if (!matchesCreationInput(existingAlbum, input)) {
           return {code: 'album_creation_payload_mismatch', success: false}
         }
 
-        await prepareUnusedCoverDeletion()
-        return {album: existingAlbum, success: true}
+        return {
+          album: {
+            coverFallback: existingAlbum.coverFallback,
+            coverImageUrl: existingAlbum.coverImageUrl,
+            id: existingAlbum.id,
+            status: existingAlbum.status,
+            translations: existingAlbum.translations,
+          },
+          success: true,
+        }
       }
       const prepareUnusedCoverDeletion = async (): Promise<void> => {
         if (
@@ -385,6 +401,7 @@ export const createAlbum = async (input: CreateAlbumInput): Promise<CreateAlbumR
       const [album] = await transaction
         .insert(musicAlbums)
         .values({
+          coverDraftId: input.coverDraftId,
           coverFallback: input.coverFallback,
           coverImageUrl: input.coverImageUrl,
           id: input.id,
