@@ -119,6 +119,7 @@ interface TrackPanelProps extends AlbumTaskFormProps {
 const TrackPanel = (props: TrackPanelProps) => {
   const [isFormOpen, setIsFormOpen] = createSignal(false)
   const [playingTrackId, setPlayingTrackId] = createSignal<string | null>(null)
+  const [requestedTrackId, setRequestedTrackId] = createSignal<string | null>(null)
   const activeTrackIds = () =>
     new Set(props.assets.filter((asset) => asset.status === 'active').map((asset) => asset.trackId))
   const playableTracks = () =>
@@ -220,10 +221,12 @@ const TrackPanel = (props: TrackPanelProps) => {
                   <div class="min-w-0 sm:col-start-2 sm:col-end-4">
                     <AdminTrackPreview
                       active={playingTrackId() === track.id}
+                      autoplay={requestedTrackId() === track.id}
                       fallback={
                         <div class="h-10 animate-pulse rounded-3 bg-white/5" aria-hidden="true" />
                       }
                       onPlay={() => setPlayingTrackId(track.id)}
+                      onRequest={() => setRequestedTrackId(track.id)}
                       title={track.title}
                       trackId={track.id}
                     />

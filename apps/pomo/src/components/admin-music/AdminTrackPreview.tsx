@@ -5,7 +5,9 @@ import {useAdminTrackPreview} from '../../features/admin-music'
 
 export interface AdminTrackPreviewProps {
   readonly active?: boolean
+  readonly autoplay?: boolean
   readonly onPlay?: () => void
+  readonly onRequest?: () => void
   readonly title?: string
   readonly trackId: string
 }
@@ -16,6 +18,7 @@ export const AdminTrackPreview = (props: AdminTrackPreviewProps) => {
 
   const handleLoad = () => {
     setHasPlayed(false)
+    props.onRequest?.()
     preview.startPlayback().catch(() => undefined)
   }
 
@@ -31,7 +34,7 @@ export const AdminTrackPreview = (props: AdminTrackPreviewProps) => {
   return (
     <div class="min-w-0">
       <PAudioPreview
-        autoplay
+        autoplay={props.autoplay !== false}
         class={props.active ? 'border-#e8bc88/45' : undefined}
         loading={preview.loading()}
         onCanPlay={() => preview.onPlaybackReady()}
