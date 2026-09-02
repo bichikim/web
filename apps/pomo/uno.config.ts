@@ -65,9 +65,9 @@ const colors = isAppsInToss
 const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
   'pomo-loading':
     'flex min-h-control-sm box-border items-center gap-2 rounded-control bg-surface py-0 px-3 ' +
-    'text-foreground text-xs font-650 leading-4 shadow-panel',
+    'text-foreground text-sm font-650 leading-5 shadow-panel',
   'pomo-loading__spinner':
-    'w-4 h-4 box-border flex-none animate-spin [border:2px_solid_rgb(255_255_255_/_28%)] ' +
+    'w-4.5 h-4.5 box-border flex-none animate-spin [border:2px_solid_rgb(255_255_255_/_28%)] ' +
     'border-t-highlight rounded-control motion-reduce:animate-[none]',
   'pomo-scene-fallback':
     'pointer-events-none absolute inset-0 grid place-items-center text-foreground',
@@ -330,6 +330,7 @@ body {
     },
     variants: [
       createParentVariant('player-compact', '@container pomo-player (width < 24rem)'),
+      createParentVariant('player-narrow', '@container pomo-player (width < 18rem)'),
       createParentVariant(
         'dialogue-library-compact',
         '@container pomo-dialogue-library-item (width < 19rem)',

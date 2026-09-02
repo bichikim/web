@@ -30,7 +30,8 @@ it('should render the city, Korean condition, zero temperature, and icon', () =>
 
   const status = screen.getByRole('status')
   expect(status.textContent).toContain('서울 · 맑음 · 0°')
-  expect(status.querySelector('.i-tabler-sun')).not.toBeNull()
+  expect(status).toHaveClass('text-sm')
+  expect(status.querySelector('.i-tabler-sun')).toHaveClass('size-4.5')
   expect(originalResult.container.querySelector('.pomo-weather-status__scribble-border')).toBeNull()
 })
 
@@ -72,13 +73,13 @@ it('should show loading and error states for the selected city', () => {
     <PWeatherStatus state={{location: LEGACY_WEATHER_LOCATIONS.busan, status: 'loading'}} />
   ))
   expect(screen.getByRole('status').textContent).toContain('부산')
-  expect(screen.getByRole('status').querySelector('.i-tabler-loader-2')).not.toBeNull()
+  expect(screen.getByRole('status').querySelector('.i-tabler-loader-2')).toHaveClass('size-4.5')
   unmount()
   render(() => (
     <PWeatherStatus state={{location: LEGACY_WEATHER_LOCATIONS.jeju, status: 'error'}} />
   ))
   expect(screen.getByRole('status').textContent).toContain('제주')
-  expect(screen.getByRole('status').querySelector('.i-tabler-cloud-off')).not.toBeNull()
+  expect(screen.getByRole('status').querySelector('.i-tabler-cloud-off')).toHaveClass('size-4.5')
 })
 
 it('should omit temperature when the feed has no measured temperature', () => {

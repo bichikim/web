@@ -23,6 +23,6 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => (
     title={props.accessibleLabel}
     type="button"
   >
-    <span aria-hidden="true" class={cx(props.icon, 'size-4')} />
+    <span aria-hidden="true" class={cx(props.icon, 'size-6')} />
   </button>
 )

@@ -3,7 +3,7 @@ import {Show} from 'solid-js'
 
 const CANCEL_CLASSES = cx(
   'ml-1 min-h-7 cursor-pointer border-0 rounded-control bg-secondary-soft px-2.5',
-  'text-foreground text-xs font-750 outline-none',
+  'text-foreground text-sm font-750 outline-none',
   'hover:bg-[rgb(114_123_96_/_30%)] focus-visible:shadow-focus',
 )
 

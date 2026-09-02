@@ -33,9 +33,11 @@ it('should generate initial scene fallback shortcuts without extracted source', 
   expect(loadingRule).toContain('padding-bottom:0;')
   expect(loadingRule).toContain('padding-left:0.75rem;')
   expect(loadingRule).toContain('padding-right:0.75rem;')
+  expect(loadingRule).toContain('font-size:0.875rem;')
+  expect(loadingRule).toContain('line-height:1.25rem;')
   expect(loadingRule).toContain('font-weight:650;')
-  expect(spinnerRule).toContain('width:1rem;')
-  expect(spinnerRule).toContain('height:1rem;')
+  expect(spinnerRule).toContain('width:1.125rem;')
+  expect(spinnerRule).toContain('height:1.125rem;')
   expect(spinnerRule).toContain('animation:spin 1s linear infinite;')
   expect(sceneFallbackRule).toContain('position:absolute;')
   expect(sceneFallbackRule).toContain('inset:0;')
@@ -43,4 +45,12 @@ it('should generate initial scene fallback shortcuts without extracted source', 
   expect(sceneFallbackRule).toContain('place-items:center;')
   expect(panelRule).toContain('border-style:solid;')
   expect(panelRule).toContain('backdrop-filter:')
+})
+
+it('should generate the narrow player container variant', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css} = await uno.generate('player-narrow:hidden')
+
+  expect(css).toContain('@container pomo-player (width < 18rem)')
+  expect(css).toContain('display:none;')
 })

@@ -332,10 +332,10 @@ describe('MusicPlayerView', () => {
     expect(scribbleResult.container.querySelector('.i-tabler-album')).toBeNull()
     expect(
       scribbleResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
-    ).toHaveLength(1)
+    ).toHaveLength(2)
   })
 
-  it('should constrain and wrap expanded controls on narrow screens', () => {
+  it('should constrain expanded content and keep compact controls in one row', () => {
     const result = renderMusicPlayerView()
     const controller = result.container.querySelector('media-controller') as HTMLElement
     const expandedFrame = result.container.querySelector(
@@ -350,6 +350,7 @@ describe('MusicPlayerView', () => {
     ) as HTMLElement
     const playlist = result.container.querySelector('.pomo-player__playlist') as HTMLElement
     const track = result.container.querySelector('.pomo-player__track') as HTMLElement
+    const modes = result.container.querySelector('.pomo-player__modes') as HTMLElement
     const transport = result.container.querySelector('.pomo-player__transport') as HTMLElement
     const volumeGroup = result.container.querySelector('.pomo-player__volume-group') as HTMLElement
 
@@ -361,6 +362,7 @@ describe('MusicPlayerView', () => {
       controls,
       playlist,
       track,
+      modes,
       transport,
       volumeGroup,
     ]) {
@@ -384,18 +386,28 @@ describe('MusicPlayerView', () => {
     expect(expandedPanel.classList.contains('box-border')).toBe(true)
     expect(expandedPanel.classList.contains('w-full')).toBe(true)
     expect(expandedPanel.classList.contains('flex-1')).toBe(true)
+    expect(controls.classList.contains('grid-cols-[1fr_auto_1fr]')).toBe(true)
     expect(
-      controls.classList.contains('player-compact:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'),
+      controls.classList.contains('player-compact:grid-cols-[max-content_max-content_max-content]'),
     ).toBe(true)
-    expect(controls.classList.contains('player-compact:px-0')).toBe(true)
+    expect(controls.classList.contains('player-compact:justify-evenly')).toBe(true)
+    expect(controls.classList.contains('player-compact:gap-1')).toBe(true)
+    expect(controls.classList.contains('px-1')).toBe(true)
     expect(expandedPanel.classList.contains('player-compact:pt-2')).toBe(true)
     expect(playlist.classList.contains('min-h-0')).toBe(true)
     expect(playlist.classList.contains('flex-1')).toBe(true)
     expect(playlist.classList.contains('player-compact:mt-2')).toBe(true)
+    expect(playlist.classList.contains('player-compact:max-h-none')).toBe(true)
     expect(track.classList.contains('player-compact:gap-2')).toBe(true)
     expect(track.classList.contains('player-compact:px-2')).toBe(true)
-    expect(track.classList.contains('player-compact:py-2')).toBe(true)
-    expect(transport.classList.contains('player-compact:col-span-2')).toBe(true)
-    expect(volumeGroup.classList.contains('player-compact:row-start-2')).toBe(true)
+    expect(track.classList.contains('player-compact:py-1.5')).toBe(true)
+    expect(modes.classList.contains('gap-0.5')).toBe(true)
+    expect(modes.classList.contains('p-1')).toBe(true)
+    expect(modes.classList.contains('player-narrow:gap-0')).toBe(true)
+    expect(modes.classList.contains('player-narrow:p-0.5')).toBe(true)
+    expect(modes.querySelector('.h-5.w-px')).toHaveClass('player-narrow:mx-0')
+    expect(transport.classList.contains('gap-1')).toBe(true)
+    expect(transport.classList.contains('player-compact:col-span-2')).toBe(false)
+    expect(volumeGroup.classList.contains('player-compact:row-start-2')).toBe(false)
   })
 })

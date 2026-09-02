@@ -22,13 +22,13 @@ export const SummaryPlayButton = (
         <PlayerIcon
           icon="i-tabler-player-play"
           sceneStyle={props.sceneStyle}
-          size="size-5"
+          size="size-6"
           slot="play"
         />
         <PlayerIcon
           icon="i-tabler-player-pause"
           sceneStyle={props.sceneStyle}
-          size="size-5"
+          size="size-6"
           slot="pause"
         />
       </media-play-button>

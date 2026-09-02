@@ -3,6 +3,14 @@ import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/focus-room-playlist'
 import type {RepeatMode} from '../../features/focus-room-audio/playback-policy'
 
+const PLAYER_VOLUME_RANGE_CLASSES = cx(
+  '[--media-range-padding-left:0.25rem] [--media-range-padding-right:0.25rem]',
+  '[--media-range-thumb-opacity:0]',
+  '[--media-range-thumb-transition:opacity_140ms_ease]',
+  'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
+  'motion-reduce:[--media-range-thumb-transition:none]',
+)
+
 export const CLASSES = {
   level: cx(
     'pomo-level bg-primary shadow-[0_0_0.7rem_rgb(216_104_69_/_42%)]',
@@ -50,7 +58,7 @@ export const CLASSES = {
   ),
   playerMute: cx(
     'pomo-player__mute size-10 shrink-0 [--media-control-padding:0.625rem]',
-    'player-compact:size-9 player-compact:[--media-control-padding:0.5rem]',
+    'player-compact:size-9',
   ),
   playerPlay: cx(
     'pomo-player__play w-11 h-11 text-white bg-primary',
@@ -99,11 +107,11 @@ export const CLASSES = {
     'shadow-[0_22px_70px_rgb(5_4_3_/_46%),_inset_0_1px_0_rgb(255_255_255_/_10%)]',
   ),
   playerSummary:
-    'pomo-player__summary relative flex min-h-16 flex-none items-center gap-3 px-2 py-2',
+    'pomo-player__summary relative flex min-h-16 flex-none items-center gap-3 px-2 py-2 player-compact:gap-2',
   playerTitle: 'pomo-player__title block text-foreground',
-  playerTrackArtist: 'pomo-player__track-artist text-muted-foreground text-[0.6875rem] leading-4',
+  playerTrackArtist: 'pomo-player__track-artist text-muted-foreground text-sm leading-5',
   playerTrackTitle: cx(
-    'pomo-player__track-title text-foreground text-[0.9375rem] font-[750] leading-5',
+    'pomo-player__track-title text-foreground text-lg font-[750] leading-6',
     'tracking-[-0.01em]',
   ),
   playerVisualizer: cx(
@@ -112,11 +120,13 @@ export const CLASSES = {
   ),
   playerVolume: cx(
     'pomo-player__volume min-w-0 w-[clamp(3rem,_18cqi,_4.75rem)]',
-    '[--media-range-padding-left:0.25rem] [--media-range-padding-right:0.25rem]',
-    '[--media-range-thumb-opacity:0]',
-    '[--media-range-thumb-transition:opacity_140ms_ease]',
-    'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
-    'motion-reduce:[--media-range-thumb-transition:none]',
+    'player-compact:min-w-6 player-compact:w-[clamp(1.5rem,_8cqi,_2rem)]',
+    PLAYER_VOLUME_RANGE_CLASSES,
+  ),
+  playerVolumePopover: cx(
+    'pomo-player__volume-popover-range h-6 min-w-24 w-24',
+    '[--media-control-padding:0]',
+    PLAYER_VOLUME_RANGE_CLASSES,
   ),
 } as const
 

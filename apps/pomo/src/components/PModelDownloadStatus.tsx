@@ -14,7 +14,7 @@ import {PProgress} from './PProgress'
 const ERROR_CLASSES = cx(
   'pointer-events-auto flex min-h-control-sm items-center gap-2',
   'border border-solid border-border rounded-control bg-surface px-3',
-  'text-foreground text-xs font-650 shadow-panel backdrop-blur-surface',
+  'text-foreground text-sm font-650 shadow-panel backdrop-blur-surface',
 )
 export const PModelDownloadStatus = () => {
   const download = useModelDownload()
@@ -45,7 +45,7 @@ export const PModelDownloadStatus = () => {
       <Match when={errorState()}>
         {(state) => (
           <PFormMessage class={ERROR_CLASSES} tone="error">
-            <span aria-hidden="true" class="i-tabler-alert-circle size-4 flex-none text-danger" />
+            <span aria-hidden="true" class="i-tabler-alert-circle size-4.5 flex-none text-danger" />
             <span>{state().message}</span>
             <PButton onPress={download.dismissError} size="small" tone="secondary">
               닫기
