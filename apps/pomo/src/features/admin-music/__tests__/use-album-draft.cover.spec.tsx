@@ -3,6 +3,12 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+vi.mock('@solidjs/router', () => ({
+  action: vi.fn((clientAction) => clientAction),
+  useAction: vi.fn((clientAction) => clientAction),
+  useSubmission: vi.fn(() => ({clear: vi.fn(), pending: false})),
+}))
+
 import {type AlbumDraftData, type AlbumDraftTranslations} from '../album-draft'
 import {useAlbumDraft} from '../use-album-draft'
 

@@ -4,6 +4,16 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  return {
+    ...actual,
+    action: vi.fn((clientAction) => clientAction),
+    useAction: vi.fn((clientAction) => clientAction),
+    useSubmission: vi.fn(() => ({clear: vi.fn(), pending: false})),
+  }
+})
+
 import type {AdminTrackPreviewController} from 'src/features/admin-music'
 import {AdminTrackPreview} from '../AdminTrackPreview'
 

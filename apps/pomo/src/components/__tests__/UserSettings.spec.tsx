@@ -9,24 +9,36 @@ import {readStoredAppSession, validateAppSession} from '../../features/user-auth
 import {readAccountSession} from '../../features/user-auth/web-session'
 import {UserSettings} from '../UserSettings'
 
+const queryMocks = vi.hoisted(() => ({accountSessionQuery: vi.fn()}))
+
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
-vi.mock('@solidjs/router', () => ({
-  A: (props: {readonly children?: JSX.Element; readonly class?: string; readonly href: string}) => (
-    <a class={props.class} href={props.href}>
-      {props.children}
-    </a>
-  ),
-}))
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  return {
+    ...actual,
+    A: (props: {
+      readonly children?: JSX.Element
+      readonly class?: string
+      readonly href: string
+    }) => (
+      <a class={props.class} href={props.href}>
+        {props.children}
+      </a>
+    ),
+  }
+})
 vi.mock('../../features/user-auth/app-session', () => ({
   clearStoredAppSession: vi.fn(),
   readStoredAppSession: vi.fn(),
   validateAppSession: vi.fn(),
 }))
 vi.mock('../../features/user-auth/web-session', () => ({readAccountSession: vi.fn()}))
+vi.mock('../../features/user-auth/session-query', () => queryMocks)
 
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  queryMocks.accountSessionQuery.mockReset().mockImplementation(() => readAccountSession())
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
 })
 

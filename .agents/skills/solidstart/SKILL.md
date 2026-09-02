@@ -8,8 +8,9 @@ description: Apply repository SolidStart conventions for routes, SSR/browser bou
 ## Runtime Boundaries
 
 1. Classify code before implementation: server-safe, browser-only, or shared/isomorphic.
-2. Never derive SSR markup or initial reactive state from `window`, `document`, `navigator`, or `typeof ... !== 'undefined'`. Server output and the client's first hydration output must match.
-3. Wrap an interactive browser-only subtree with `clientOnly` from `@solidjs/start`. Keep browser globals and browser-only imports behind its dynamic import; render a stable server fallback.
+2. When a standard global is available in every supported Node and browser runtime, use its unqualified or `globalThis` form instead of `window.*`, even in code currently rendered only on the client, to keep later runtime refactors cheap. Reserve `window` for browser-only APIs or semantics that specifically require the `Window` object.
+3. Never derive SSR markup or initial reactive state from `window`, `document`, `navigator`, or `typeof ... !== 'undefined'`. Server output and the client's first hydration output must match.
+4. Wrap an interactive browser-only subtree with `clientOnly` from `@solidjs/start`. Keep browser globals and browser-only imports behind its dynamic import; render a stable server fallback.
    The `clientOnly` call creates the runtime boundary; a `.client` filename suffix does not. Use a component name that describes its UI role instead.
 
 ```tsx
@@ -18,10 +19,10 @@ import {clientOnly} from '@solidjs/start'
 const BrowserCanvas = clientOnly(() => import('./BrowserCanvas'), {lazy: true})
 ```
 
-4. Keep SSR when only a capability check is browser-dependent: initialize a neutral `checking` state, then check inside `onMount`. Never render `unsupported` from the server.
-5. Prefer `clientOnly` for WebGPU, Workers, browser ML runtimes, maps, or modules that access browser globals during import.
-6. Do not use `NoHydration` as a client-only boundary for interactive UI; it deliberately leaves the server subtree unhydrated.
-7. Do not disable SSR application-wide to solve one browser-only component.
+5. Keep SSR when only a capability check is browser-dependent: initialize a neutral `checking` state, then check inside `onMount`. Never render `unsupported` from the server.
+6. Prefer `clientOnly` for WebGPU, Workers, browser ML runtimes, maps, or modules that access browser globals during import.
+7. Do not use `NoHydration` as a client-only boundary for interactive UI; it deliberately leaves the server subtree unhydrated.
+8. Do not disable SSR application-wide to solve one browser-only component.
 
 ## Runtime Verification
 

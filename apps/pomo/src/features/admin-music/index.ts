@@ -33,3 +33,7 @@ export type {
   AlbumDraftTranslations,
   AlbumLocale,
 } from './album-draft'
+export * from './actions'
+export * from './catalog-query'
+export * from './commands'
+export * from './track-playback-access'
