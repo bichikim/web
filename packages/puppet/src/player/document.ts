@@ -103,12 +103,19 @@ export interface PuppetKeyframe {
   readonly value: number
 }
 
-export interface PuppetTrack {
+export interface PuppetVertexTrack {
   readonly axis: PuppetTrackAxis
   readonly keyframes: ReadonlyArray<PuppetKeyframe>
   readonly partId: string
   readonly vertexIndex: number
 }
+
+export interface PuppetParameterTrack {
+  readonly keyframes: ReadonlyArray<PuppetKeyframe>
+  readonly parameterId: string
+}
+
+export type PuppetTrack = PuppetParameterTrack | PuppetVertexTrack
 
 export interface PuppetMotion {
   readonly duration: number

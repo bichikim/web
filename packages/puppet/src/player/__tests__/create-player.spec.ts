@@ -177,6 +177,13 @@ describe('createPlayer', () => {
               partId: 'part',
               vertexIndex: 0,
             },
+            {
+              keyframes: [
+                {time: 0, value: 0},
+                {time: 5, value: 1},
+              ],
+              parameterId: 'shift',
+            },
           ],
         },
       ],
@@ -248,7 +255,7 @@ describe('createPlayer', () => {
       | undefined
 
     expect(createdMesh?.vertices[0]).toBe(50)
-    expect(createdMesh?.vertices[2]).toBe(100)
+    expect(createdMesh?.vertices[2]).toBe(125)
     expect(onFrame).toHaveBeenLastCalledWith({
       duration: 10,
       motionId: 'hold-final-frame',

@@ -297,18 +297,27 @@ const hasOrderedKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, duration:
     return followsPrevious && keyframe.time <= duration
   })
 
-const isTrack = (value: unknown, duration: number): value is PuppetTrack =>
-  isRecord(value) &&
+const hasValidKeyframes = (value: Record<string, unknown>, duration: number) =>
+  Array.isArray(value.keyframes) &&
+  value.keyframes.length > 0 &&
+  value.keyframes.every(isKeyframe) &&
+  hasOrderedKeyframes(value.keyframes, duration)
+
+const isParameterTrack = (value: Record<string, unknown>) =>
+  typeof value.parameterId === 'string' && value.parameterId.length > 0
+
+const isVertexTrack = (value: Record<string, unknown>) =>
   typeof value.partId === 'string' &&
   value.partId.length > 0 &&
   isFiniteNumber(value.vertexIndex) &&
   Number.isInteger(value.vertexIndex) &&
   value.vertexIndex >= 0 &&
-  isTrackAxis(value.axis) &&
-  Array.isArray(value.keyframes) &&
-  value.keyframes.length > 0 &&
-  value.keyframes.every(isKeyframe) &&
-  hasOrderedKeyframes(value.keyframes, duration)
+  isTrackAxis(value.axis)
+
+const isTrack = (value: unknown, duration: number): value is PuppetTrack =>
+  isRecord(value) &&
+  hasValidKeyframes(value, duration) &&
+  isParameterTrack(value) !== isVertexTrack(value)
 
 const isMotion = (value: unknown): value is PuppetMotion => {
   if (
@@ -332,19 +341,39 @@ const hasUniqueIds = (values: ReadonlyArray<{readonly id: string}>) =>
 
 const hasValidTrackTargets = (
   parts: ReadonlyArray<PuppetPart>,
+  parameters: ReadonlyArray<PuppetParameter>,
   motions: ReadonlyArray<PuppetMotion>,
 ) => {
   const partById = new Map(parts.map((part) => [part.id, part]))
+  const parameterById = new Map(parameters.map((parameter) => [parameter.id, parameter]))
 
-  return motions.every((motion) =>
-    motion.tracks.every((track) => {
-      const part = partById.get(track.partId)
-      const vertexCount =
-        part === undefined ? 0 : part.mesh.vertices.length / COORDINATES_PER_VERTEX
+  return motions.every((motion) => {
+    const parameterTrackIds = motion.tracks.flatMap((track) =>
+      'parameterId' in track ? [track.parameterId] : [],
+    )
 
-      return part !== undefined && track.vertexIndex < vertexCount
-    }),
-  )
+    return (
+      new Set(parameterTrackIds).size === parameterTrackIds.length &&
+      motion.tracks.every((track) => {
+        if ('parameterId' in track) {
+          const parameter = parameterById.get(track.parameterId)
+          return (
+            parameter !== undefined &&
+            track.keyframes.every(
+              (keyframe) =>
+                keyframe.value >= parameter.minimum && keyframe.value <= parameter.maximum,
+            )
+          )
+        }
+
+        const part = partById.get(track.partId)
+        const vertexCount =
+          part === undefined ? 0 : part.mesh.vertices.length / COORDINATES_PER_VERTEX
+
+        return part !== undefined && track.vertexIndex < vertexCount
+      })
+    )
+  })
 }
 
 const hasValidParameterBindings = (
@@ -432,7 +461,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
     hasUniqueIds(value.motions) &&
     hasUniqueIds(parameters) &&
     hasUniqueIds(parameterBindings) &&
-    hasValidTrackTargets(value.parts, value.motions) &&
+    hasValidTrackTargets(value.parts, parameters, value.motions) &&
     hasValidParameterBindings(value.parts, parameters, parameterBindings)
   )
 }

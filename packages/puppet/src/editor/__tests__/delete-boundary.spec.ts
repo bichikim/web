@@ -184,7 +184,7 @@ describe('deletePartVertex boundary reconstruction', () => {
       expect(mesh.boundaryLoops?.[0]).toHaveLength(12)
       expect(promotedIndex).toBeDefined()
       expect(getMeshVertex(mesh, promotedIndex ?? -1)).toEqual({x: 222, y: 140})
-      expect(result.document.motions[0]?.tracks[0]?.vertexIndex).toBe(promotedIndex)
+      expect(result.document.motions[0]?.tracks[0]).toMatchObject({vertexIndex: promotedIndex})
       expect(validateMesh(mesh)).toEqual({valid: true})
     }
   })
@@ -337,7 +337,7 @@ describe('deletePartVertex boundary reconstruction', () => {
     expect(result.ok).toBe(true)
 
     if (result.ok) {
-      expect(result.document.motions[0]?.tracks[0]?.vertexIndex).toBe(4)
+      expect(result.document.motions[0]?.tracks[0]).toMatchObject({vertexIndex: 4})
       expect(result.document.motions[0]?.tracks[0]?.keyframes).toEqual([
         {time: 0, value: 0},
         {time: 1, value: 20},

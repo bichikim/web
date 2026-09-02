@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
 import type {PuppetMotion} from '../../document'
-import {applyMotionVertices, sampleMotionVertices} from '../motion'
+import {applyMotionVertices, sampleMotionParameterValues, sampleMotionVertices} from '../motion'
 
 const motion: PuppetMotion = {
   duration: 2,
@@ -74,5 +74,46 @@ describe('sampleMotionVertices', () => {
 
     expect(vertices).toEqual([0, 0, 10, 30])
     expect(restVertices).toEqual([0, 0, 10, 10])
+  })
+})
+
+describe('sampleMotionParameterValues', () => {
+  test('should interpolate each parameter track while preserving external values', () => {
+    const parameterMotion: PuppetMotion = {
+      duration: 2,
+      id: 'parameters',
+      tracks: [
+        {
+          keyframes: [
+            {time: 0, value: -30},
+            {time: 2, value: 30},
+          ],
+          parameterId: 'angle-x',
+        },
+        {
+          keyframes: [
+            {time: 0, value: 10},
+            {time: 2, value: -10},
+          ],
+          parameterId: 'angle-y',
+        },
+      ],
+    }
+
+    const values = sampleMotionParameterValues({
+      motion: parameterMotion,
+      parameterValues: {'angle-x': 5, expression: 1},
+      time: 1,
+    })
+
+    expect(values).toEqual({'angle-x': 0, 'angle-y': 0, expression: 1})
+  })
+
+  test('should preserve values when no motion is active', () => {
+    const values = {'angle-x': 5}
+
+    expect(
+      sampleMotionParameterValues({motion: undefined, parameterValues: values, time: 1}),
+    ).toEqual(values)
   })
 })

@@ -6,8 +6,8 @@ import type {
   PuppetEasing,
   PuppetKeyframe,
   PuppetMotion,
-  PuppetTrack,
   PuppetTrackAxis,
+  PuppetVertexTrack,
 } from '../../player/document'
 import {sampleMotionVertices} from '../../player/internal/motion'
 import type {VertexPoint} from '../edit-document'
@@ -33,6 +33,25 @@ export interface EditVertexKeyframeOptions extends VertexKeyframeTarget {
 }
 
 export interface SetVertexKeyframeEasingOptions extends EditVertexKeyframeOptions {
+  readonly easing: PuppetEasing
+}
+
+export interface ParameterKeyframeTarget {
+  readonly motionId: string
+  readonly parameterId: string
+  readonly time: number
+}
+
+export interface SetParameterKeyframeOptions extends ParameterKeyframeTarget {
+  readonly document: PuppetDocument
+  readonly value: number
+}
+
+export interface EditParameterKeyframeOptions extends ParameterKeyframeTarget {
+  readonly document: PuppetDocument
+}
+
+export interface SetParameterKeyframeEasingOptions extends EditParameterKeyframeOptions {
   readonly easing: PuppetEasing
 }
 
@@ -65,11 +84,12 @@ const upsertTrack = (
 ): PuppetMotion => {
   const trackIndex = motion.tracks.findIndex(
     (track) =>
+      !('parameterId' in track) &&
       track.axis === axis &&
       track.partId === target.partId &&
       track.vertexIndex === target.vertexIndex,
   )
-  const nextTrack: PuppetTrack = {
+  const nextTrack: PuppetVertexTrack = {
     axis,
     keyframes: upsertKeyframe(
       trackIndex < 0 ? [] : (motion.tracks[trackIndex]?.keyframes ?? []),
@@ -107,6 +127,75 @@ const replaceMotion = (
     ),
   }
 }
+
+export const setParameterKeyframe = (
+  options: SetParameterKeyframeOptions,
+): PuppetDocument | undefined => {
+  const parameter = options.document.parameters?.find(
+    (candidate) => candidate.id === options.parameterId,
+  )
+
+  if (parameter === undefined || !Number.isFinite(options.value)) {
+    return undefined
+  }
+
+  return replaceMotion(options.document, options.motionId, (motion) => {
+    const time = clamp(options.time, 0, motion.duration)
+    const trackIndex = motion.tracks.findIndex(
+      (track) => 'parameterId' in track && track.parameterId === options.parameterId,
+    )
+    const keyframes = upsertKeyframe(
+      trackIndex < 0 ? [] : (motion.tracks[trackIndex]?.keyframes ?? []),
+      time,
+      clamp(options.value, parameter.minimum, parameter.maximum),
+    )
+    const track = {keyframes, parameterId: options.parameterId}
+
+    return {
+      ...motion,
+      tracks:
+        trackIndex < 0
+          ? [...motion.tracks, track]
+          : motion.tracks.map((candidate, index) => (index === trackIndex ? track : candidate)),
+    }
+  })
+}
+
+export const deleteParameterKeyframe = (
+  options: EditParameterKeyframeOptions,
+): PuppetDocument | undefined =>
+  replaceMotion(options.document, options.motionId, (motion) => ({
+    ...motion,
+    tracks: motion.tracks.flatMap((track) => {
+      if (!('parameterId' in track) || track.parameterId !== options.parameterId) {
+        return [track]
+      }
+
+      const keyframes = track.keyframes.filter(
+        (keyframe) => !hasSameTime(keyframe.time, options.time),
+      )
+      return keyframes.length === 0 ? [] : [{...track, keyframes}]
+    }),
+  }))
+
+export const setParameterKeyframeEasing = (
+  options: SetParameterKeyframeEasingOptions,
+): PuppetDocument | undefined =>
+  replaceMotion(options.document, options.motionId, (motion) => ({
+    ...motion,
+    tracks: motion.tracks.map((track) =>
+      'parameterId' in track && track.parameterId === options.parameterId
+        ? {
+            ...track,
+            keyframes: track.keyframes.map((keyframe) =>
+              hasSameTime(keyframe.time, options.time)
+                ? {...keyframe, easing: options.easing}
+                : keyframe,
+            ),
+          }
+        : track,
+    ),
+  }))
 
 export const setVertexKeyframe = (options: SetVertexKeyframeOptions): PuppetDocument | undefined =>
   replaceMotion(options.document, options.motionId, (motion) => {
@@ -153,7 +242,11 @@ export const deleteVertexKeyframe = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.flatMap((track) => {
-      if (track.partId !== options.partId || track.vertexIndex !== options.vertexIndex) {
+      if (
+        'parameterId' in track ||
+        track.partId !== options.partId ||
+        track.vertexIndex !== options.vertexIndex
+      ) {
         return [track]
       }
 
@@ -170,7 +263,11 @@ export const setVertexKeyframeEasing = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.map((track) => {
-      if (track.partId !== options.partId || track.vertexIndex !== options.vertexIndex) {
+      if (
+        'parameterId' in track ||
+        track.partId !== options.partId ||
+        track.vertexIndex !== options.vertexIndex
+      ) {
         return track
       }
 

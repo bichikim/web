@@ -2,16 +2,19 @@ import {sortBy} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
 import {createMemo, createSignal, createUniqueId, For, Show} from 'solid-js'
 
+import {getDefaultParameterValueMap, type PuppetParameterValueMap} from '../../deformation'
 import {
   PUPPET_EASINGS,
   type PuppetDocument,
   type PuppetEasing,
   type PuppetMotion,
+  type PuppetParameter,
 } from '../../player/document'
+import {sampleMotionParameterValues} from '../../player/internal/motion'
 import {
-  deleteVertexKeyframe,
-  insertVertexKeyframe,
-  setVertexKeyframeEasing,
+  deleteParameterKeyframe,
+  setParameterKeyframe,
+  setParameterKeyframeEasing,
 } from './motion-keyframes'
 
 const PERCENT = 100
@@ -19,9 +22,8 @@ const RULER_INTERVAL_COUNT = 8
 const FRAMES_PER_SECOND = 24
 
 interface KeyframeSelection {
-  readonly partId: string
+  readonly parameterId: string
   readonly time: number
-  readonly vertexIndex: number
 }
 
 interface SelectedKeyframe {
@@ -29,74 +31,68 @@ interface SelectedKeyframe {
   readonly hasNext: boolean
 }
 
-interface VertexTimelineKeyframe {
+interface ParameterTimelineKeyframe {
   readonly easing: PuppetEasing
   readonly time: number
 }
 
-interface VertexTimelineTrack {
-  readonly keyframes: ReadonlyArray<VertexTimelineKeyframe>
-  readonly partId: string
-  readonly vertexIndex: number
+interface ParameterTimelineTrack {
+  readonly keyframes: ReadonlyArray<ParameterTimelineKeyframe>
+  readonly parameter: PuppetParameter
 }
 
 export interface EditorTimelineProps {
-  readonly activePartId?: string
-  readonly activeVertexIndex?: number | null
   readonly currentTime?: number
   readonly document: PuppetDocument
   readonly isPlaying?: boolean
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onPlaybackToggle?: () => void
   readonly onSeek?: (time: number) => void
-  readonly onTargetSelect?: (partId: string, vertexIndex: number) => void
+  readonly parameterValues?: PuppetParameterValueMap
 }
 
 const isSameSelection = (selection: KeyframeSelection | null, target: KeyframeSelection) =>
-  selection?.partId === target.partId &&
-  selection.time === target.time &&
-  selection.vertexIndex === target.vertexIndex
+  selection?.parameterId === target.parameterId && selection.time === target.time
 
-const getTrackLabel = (track: VertexTimelineTrack) =>
-  `${track.partId} 정점 ${track.vertexIndex + 1}`
+const getParameterTracks = (
+  document: PuppetDocument,
+  motion: PuppetMotion | undefined,
+): ReadonlyArray<ParameterTimelineTrack> =>
+  (document.parameters ?? []).map((parameter) => {
+    const track = motion?.tracks.find(
+      (candidate) => 'parameterId' in candidate && candidate.parameterId === parameter.id,
+    )
 
-const getVertexTracks = (motion: PuppetMotion | undefined): ReadonlyArray<VertexTimelineTrack> => {
-  const trackByTarget = new Map<
-    string,
-    {keyframes: Map<number, PuppetEasing>; partId: string; vertexIndex: number}
-  >()
-
-  for (const track of motion?.tracks ?? []) {
-    const key = `${track.partId}:${track.vertexIndex}`
-    const vertexTrack = trackByTarget.get(key) ?? {
-      keyframes: new Map<number, PuppetEasing>(),
-      partId: track.partId,
-      vertexIndex: track.vertexIndex,
+    return {
+      keyframes: sortBy(track?.keyframes ?? [], ['time']).map((keyframe) => ({
+        easing: keyframe.easing ?? 'linear',
+        time: keyframe.time,
+      })),
+      parameter,
     }
-
-    for (const keyframe of track.keyframes) {
-      if (!vertexTrack.keyframes.has(keyframe.time)) {
-        vertexTrack.keyframes.set(keyframe.time, keyframe.easing ?? 'linear')
-      }
-    }
-
-    trackByTarget.set(key, vertexTrack)
-  }
-
-  return [...trackByTarget.values()].map((track) => ({
-    keyframes: sortBy([...track.keyframes], [(keyframe) => keyframe[0]]).map(([time, easing]) => ({
-      easing,
-      time,
-    })),
-    partId: track.partId,
-    vertexIndex: track.vertexIndex,
-  }))
-}
+  })
 
 const getFrame = (time: number) => Math.round(time * FRAMES_PER_SECOND)
 
 const snapToFrame = (time: number, duration: number) =>
   Math.min(getFrame(time) / FRAMES_PER_SECOND, duration)
+
+const getSelectedKeyframe = (
+  selection: KeyframeSelection | null,
+  tracks: ReadonlyArray<ParameterTimelineTrack>,
+): SelectedKeyframe | null => {
+  if (selection === null) {
+    return null
+  }
+
+  const track = tracks.find((candidate) => candidate.parameter.id === selection.parameterId)
+  const keyframeIndex = track?.keyframes.findIndex((keyframe) => keyframe.time === selection.time)
+  const keyframe = keyframeIndex === undefined ? undefined : track?.keyframes[keyframeIndex]
+
+  return track === undefined || keyframe === undefined || keyframeIndex === undefined
+    ? null
+    : {easing: keyframe.easing, hasNext: keyframeIndex < track.keyframes.length - 1}
+}
 
 interface TimelineToolbarProps {
   readonly canAddKeyframe: boolean
@@ -170,10 +166,16 @@ interface TimelineDopesheetProps {
   readonly currentTime: number
   readonly duration: number
   readonly motion?: PuppetMotion
-  readonly onKeyframeSelect?: (track: VertexTimelineTrack, keyframe: VertexTimelineKeyframe) => void
+  readonly onKeyframeSelect?: (
+    track: ParameterTimelineTrack,
+    keyframe: ParameterTimelineKeyframe,
+  ) => void
+  readonly onParameterValueChange?: (track: ParameterTimelineTrack, value: number) => void
+  readonly onParameterSelect?: (parameterId: string) => void
   readonly onSeek?: (time: number) => void
   readonly selection: KeyframeSelection | null
-  readonly tracks: ReadonlyArray<VertexTimelineTrack>
+  readonly tracks: ReadonlyArray<ParameterTimelineTrack>
+  readonly values: Readonly<Record<string, number>>
 }
 
 const TimelineDopesheet = (props: TimelineDopesheetProps) => {
@@ -194,7 +196,7 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
       class="timeline-dopesheet"
       style={{'--timeline-frame-count': Math.max(1, getFrame(props.duration))}}
     >
-      <div class="timeline-ruler-label">레이어 / 속성</div>
+      <div class="timeline-ruler-label">Parameter / 값</div>
       <div class="timeline-ruler">
         <For each={rulerTimes()}>
           {(time) => (
@@ -220,27 +222,37 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
 
       <Show
         when={props.tracks.length > 0}
-        fallback={<p class="timeline-empty">애니메이션 트랙이 없습니다.</p>}
+        fallback={<p class="timeline-empty">Parameter가 없습니다.</p>}
       >
         <For each={props.tracks}>
           {(track) => (
             <>
-              <div class="timeline-row-label">
-                <span>{track.partId}</span>
-                <strong>정점 {track.vertexIndex + 1}</strong>
-              </div>
-              <div class="timeline-row" aria-label={`${getTrackLabel(track)} 트랙`}>
+              <label class="timeline-row-label">
+                <strong>{track.parameter.name}</strong>
+                <input
+                  aria-label={`${track.parameter.name} 현재 값`}
+                  disabled={
+                    props.motion === undefined || props.onParameterValueChange === undefined
+                  }
+                  max={track.parameter.maximum}
+                  min={track.parameter.minimum}
+                  step="any"
+                  type="number"
+                  value={props.values[track.parameter.id] ?? track.parameter.defaultValue}
+                  onFocus={() => props.onParameterSelect?.(track.parameter.id)}
+                  onInput={(event) =>
+                    props.onParameterValueChange?.(track, event.currentTarget.valueAsNumber)
+                  }
+                />
+              </label>
+              <div class="timeline-row" aria-label={`${track.parameter.name} 트랙`}>
                 <For each={track.keyframes}>
                   {(keyframe) => {
-                    const target = {
-                      partId: track.partId,
-                      time: keyframe.time,
-                      vertexIndex: track.vertexIndex,
-                    }
+                    const target = {parameterId: track.parameter.id, time: keyframe.time}
 
                     return (
                       <button
-                        aria-label={`${getTrackLabel(track)} ${keyframe.time.toFixed(2)}초 키프레임`}
+                        aria-label={`${track.parameter.name} ${keyframe.time.toFixed(2)}초 키프레임`}
                         aria-pressed={isSameSelection(props.selection, target)}
                         class="timeline-keyframe"
                         style={{
@@ -269,69 +281,63 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
 export const EditorTimeline = (props: EditorTimelineProps) => {
   const titleId = createUniqueId()
   const [selection, setSelection] = createSignal<KeyframeSelection | null>(null)
+  const [activeParameterId, setActiveParameterId] = createSignal<string | null>(null)
   const motion = () => props.document.motions[0]
   const duration = () => motion()?.duration ?? 0
   const currentTime = () => clamp(props.currentTime ?? 0, 0, duration())
-  const vertexTracks = createMemo(() => getVertexTracks(motion()))
-  const selectedKeyframe = createMemo<SelectedKeyframe | null>(() => {
-    const activeSelection = selection()
+  const parameterTracks = createMemo(() => getParameterTracks(props.document, motion()))
+  const parameterValues = createMemo(() =>
+    sampleMotionParameterValues({
+      motion: motion(),
+      parameterValues: props.parameterValues ?? getDefaultParameterValueMap(props.document),
+      time: currentTime(),
+    }),
+  )
+  const selectedKeyframe = createMemo(() => getSelectedKeyframe(selection(), parameterTracks()))
 
-    if (activeSelection === null) {
-      return null
-    }
-
-    const track = vertexTracks().find(
-      (candidate) =>
-        candidate.partId === activeSelection.partId &&
-        candidate.vertexIndex === activeSelection.vertexIndex,
-    )
-    const keyframeIndex = track?.keyframes.findIndex(
-      (keyframe) => keyframe.time === activeSelection.time,
-    )
-    const keyframe = keyframeIndex === undefined ? undefined : track?.keyframes[keyframeIndex]
-
-    return track === undefined || keyframe === undefined || keyframeIndex === undefined
-      ? null
-      : {easing: keyframe.easing, hasNext: keyframeIndex < track.keyframes.length - 1}
-  })
-
-  const handleKeyframeSelect = (track: VertexTimelineTrack, keyframe: VertexTimelineKeyframe) => {
-    setSelection({
-      partId: track.partId,
-      time: keyframe.time,
-      vertexIndex: track.vertexIndex,
-    })
-    props.onTargetSelect?.(track.partId, track.vertexIndex)
-    props.onSeek?.(keyframe.time)
-  }
-
-  const handleKeyframeAdd = () => {
+  const updateParameterKeyframe = (parameterId: string, value: number) => {
     const activeMotion = motion()
-    const partId = props.activePartId
-    const vertexIndex = props.activeVertexIndex
 
     if (
       activeMotion === undefined ||
-      partId === undefined ||
-      vertexIndex === undefined ||
-      vertexIndex === null ||
-      props.onDocumentChange === undefined
+      props.onDocumentChange === undefined ||
+      !Number.isFinite(value)
     ) {
       return
     }
 
     const time = snapToFrame(currentTime(), activeMotion.duration)
-    const document = insertVertexKeyframe({
+    const document = setParameterKeyframe({
       document: props.document,
       motionId: activeMotion.id,
-      partId,
+      parameterId,
       time,
-      vertexIndex,
+      value,
     })
 
     if (document !== undefined) {
       props.onDocumentChange(document)
-      setSelection({partId, time, vertexIndex})
+      setActiveParameterId(parameterId)
+      setSelection({parameterId, time})
+    }
+  }
+
+  const handleKeyframeSelect = (
+    track: ParameterTimelineTrack,
+    keyframe: ParameterTimelineKeyframe,
+  ) => {
+    const parameterId = track.parameter.id
+    setActiveParameterId(parameterId)
+    setSelection({parameterId, time: keyframe.time})
+    props.onSeek?.(keyframe.time)
+  }
+
+  const handleKeyframeAdd = () => {
+    const parameterId = activeParameterId() ?? parameterTracks()[0]?.parameter.id
+    const value = parameterId === undefined ? undefined : parameterValues()[parameterId]
+
+    if (parameterId !== undefined && value !== undefined) {
+      updateParameterKeyframe(parameterId, value)
     }
   }
 
@@ -347,7 +353,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
       return
     }
 
-    const document = deleteVertexKeyframe({
+    const document = deleteParameterKeyframe({
       ...activeSelection,
       document: props.document,
       motionId: activeMotion.id,
@@ -373,7 +379,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
       return
     }
 
-    const document = setVertexKeyframeEasing({
+    const document = setParameterKeyframeEasing({
       ...activeSelection,
       document: props.document,
       easing,
@@ -390,9 +396,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
       <TimelineToolbar
         canAddKeyframe={
           motion() !== undefined &&
-          props.activePartId !== undefined &&
-          props.activeVertexIndex !== undefined &&
-          props.activeVertexIndex !== null &&
+          parameterTracks().length > 0 &&
           props.onDocumentChange !== undefined
         }
         canDeleteKeyframe={selection() !== null && props.onDocumentChange !== undefined}
@@ -415,9 +419,14 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
         duration={duration()}
         motion={motion()}
         onKeyframeSelect={handleKeyframeSelect}
+        onParameterValueChange={(track, value) =>
+          updateParameterKeyframe(track.parameter.id, value)
+        }
+        onParameterSelect={setActiveParameterId}
         onSeek={props.onSeek}
         selection={selection()}
-        tracks={vertexTracks()}
+        tracks={parameterTracks()}
+        values={parameterValues()}
       />
     </section>
   )

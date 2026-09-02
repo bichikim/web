@@ -101,6 +101,25 @@ describe('PuppetEditor', () => {
     expect(editor).not.toHaveClass('left-panel-closed', 'right-panel-closed', 'bottom-panel-closed')
   })
 
+  test('should store animation edits as parameter tracks', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 현재 값'}), {
+      target: {value: '15'},
+    })
+
+    await waitFor(() => {
+      const document: PuppetDocument | undefined = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.motions[0]?.tracks).toEqual(
+        expect.arrayContaining([{keyframes: [{time: 0, value: 15}], parameterId: 'angle-x'}]),
+      )
+    })
+  })
+
   test('should configure automatic mesh generation before replacing the active part', async () => {
     const document = createDemoDocument()
     const generatedDocument = {...document, motions: []}

@@ -252,8 +252,6 @@ const EditorModelingPanel = (props: EditorModelingPanelProps) => (
 )
 
 interface EditorWorkspacePanelProps {
-  readonly activePartId: string | null
-  readonly activeVertexIndex: number | null
   readonly currentTime: number
   readonly document: PuppetDocument
   readonly editor: ParameterEditorResult
@@ -261,7 +259,6 @@ interface EditorWorkspacePanelProps {
   readonly onDocumentChange: (document: PuppetDocument) => void
   readonly onPlaybackToggle?: () => void
   readonly onSeek?: (time: number) => void
-  readonly onTargetSelect: (partId: string, vertexIndex: number) => void
   readonly selectedPartIds: ReadonlyArray<string>
   readonly workspace: 'animation' | 'modeling'
 }
@@ -271,15 +268,13 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
     when={props.workspace === 'modeling'}
     fallback={
       <EditorTimeline
-        activePartId={props.activePartId ?? undefined}
-        activeVertexIndex={props.activeVertexIndex}
         currentTime={props.currentTime}
         document={props.document}
         isPlaying={props.isPlaying}
         onDocumentChange={props.onDocumentChange}
         onPlaybackToggle={props.onPlaybackToggle}
         onSeek={props.onSeek}
-        onTargetSelect={props.onTargetSelect}
+        parameterValues={props.editor.parameterValueMap()}
       />
     }
   >
@@ -463,8 +458,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       <EditorPanelLayout
         bottom={
           <EditorWorkspacePanel
-            activePartId={activePartId()}
-            activeVertexIndex={activeVertexIndex()}
             currentTime={currentTime()}
             document={sourceDocument()}
             editor={parameterEditor}
@@ -472,11 +465,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onDocumentChange={handleTimelineDocumentChange}
             onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
             onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
-            onTargetSelect={(partId, vertexIndex) => {
-              setActivePartId(partId)
-              setLayerSelection({activeNodeId: partId, nodeIds: [partId]})
-              setActiveVertexIndex(vertexIndex)
-            }}
             selectedPartIds={selectedPartIds()}
             workspace={workspace()}
           />
@@ -525,7 +513,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             currentTime={currentTime()}
             document={sourceDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
-            onDocumentChange={setSourceDocument}
+            onDocumentChange={workspace() === 'modeling' ? setSourceDocument : undefined}
             onNotice={setNotice}
             onPlayerChange={handlePlayerChange}
             onStatusChange={setPlayerStatus}

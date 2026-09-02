@@ -46,6 +46,8 @@ const createPreviewDocument = () => {
   return {
     ...document,
     motions: [],
+    parameterBindings: [],
+    parameters: [],
     parts: document.parts.slice(0, 1),
     scene: undefined,
   }

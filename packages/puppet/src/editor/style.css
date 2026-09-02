@@ -1431,7 +1431,9 @@
 .puppet-editor .timeline-row-label {
   display: grid;
   height: 38px;
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  gap: 8px;
+  align-items: center;
   align-content: center;
   padding: 0 14px;
 }
@@ -1442,9 +1444,29 @@
 }
 
 .puppet-editor .timeline-row-label strong {
+  overflow: hidden;
   color: #c5d0cc;
   font-size: 10px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.puppet-editor .timeline-row-label input {
+  min-width: 0;
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid #35413d;
+  border-radius: 5px;
+  color: #d7e1dd;
+  background: #171e1b;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 9px;
+}
+
+.puppet-editor .timeline-row-label input:focus-visible {
+  border-color: #64e5c4;
+  outline: none;
 }
 
 .puppet-editor .timeline-row {
