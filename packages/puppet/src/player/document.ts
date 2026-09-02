@@ -1,5 +1,5 @@
 export const PUPPET_DOCUMENT_FORMAT = 'winter-love-puppet'
-export const PUPPET_DOCUMENT_VERSION = 2
+export const PUPPET_DOCUMENT_VERSION = 1
 
 export const PUPPET_EASINGS = ['linear', 'ease-in', 'ease-out', 'ease-in-out'] as const
 
@@ -37,16 +37,46 @@ export interface PuppetSceneNodeBase {
   readonly visible: boolean
 }
 
-export interface PuppetSceneGroupNode extends PuppetSceneNodeBase {
+export interface PuppetPoint {
+  readonly x: number
+  readonly y: number
+}
+
+export interface PuppetDeformerCurveHandle {
+  readonly horizontal: PuppetPoint
+  readonly pointIndex: number
+  readonly vertical: PuppetPoint
+}
+
+export interface PuppetSceneContainerNodeBase extends PuppetSceneNodeBase {
   readonly children: ReadonlyArray<PuppetSceneNode>
+}
+
+export interface PuppetSceneGroupNode extends PuppetSceneContainerNodeBase {
   readonly kind: 'group'
+}
+
+export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase {
+  readonly bounds: {
+    readonly height: number
+    readonly width: number
+    readonly x: number
+    readonly y: number
+  }
+  readonly columns: number
+  readonly controlPoints: ReadonlyArray<number>
+  readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
+  readonly kind: 'deformer'
+  readonly rows: number
 }
 
 export interface PuppetScenePartNode extends PuppetSceneNodeBase {
   readonly kind: 'part'
 }
 
-export type PuppetSceneNode = PuppetSceneGroupNode | PuppetScenePartNode
+export type PuppetSceneContainerNode = PuppetSceneDeformerNode | PuppetSceneGroupNode
+
+export type PuppetSceneNode = PuppetSceneContainerNode | PuppetScenePartNode
 
 export interface PuppetScene {
   readonly roots: ReadonlyArray<PuppetSceneNode>
@@ -57,7 +87,15 @@ export interface PuppetParameterPartKeyform {
   readonly vertices: ReadonlyArray<number>
 }
 
+export interface PuppetParameterDeformerKeyform {
+  readonly controlPoints: ReadonlyArray<number>
+  readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
+  readonly kind: 'deformer'
+  readonly nodeId: string
+}
+
 export interface PuppetParameterKeyformBase {
+  readonly deformers?: ReadonlyArray<PuppetParameterDeformerKeyform>
   readonly parts: ReadonlyArray<PuppetParameterPartKeyform>
 }
 
@@ -81,6 +119,7 @@ export type PuppetParameterKeyform = PuppetParameterKeyform1D | PuppetParameterK
 
 export interface PuppetParameterBindingBase {
   readonly id: string
+  readonly targetDeformerIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>
 }
 

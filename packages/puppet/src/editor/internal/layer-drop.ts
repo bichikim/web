@@ -1,4 +1,4 @@
-import type {PuppetSceneNode} from '../../player'
+import {isSceneContainerNode, type PuppetSceneNode} from '../../player'
 import type {SceneNodeDropPosition} from './scene-graph'
 
 const GROUP_DROP_START = 0.25
@@ -16,11 +16,11 @@ export const getLayerDropPosition = (
   clientY: number,
 ): SceneNodeDropPosition => {
   if (bounds.height <= 0) {
-    return node.kind === 'group' ? 'inside' : 'before'
+    return isSceneContainerNode(node) ? 'inside' : 'before'
   }
 
   const progress = (clientY - bounds.top) / bounds.height
-  if (node.kind === 'group' && progress >= GROUP_DROP_START && progress <= GROUP_DROP_END) {
+  if (isSceneContainerNode(node) && progress >= GROUP_DROP_START && progress <= GROUP_DROP_END) {
     return 'inside'
   }
 

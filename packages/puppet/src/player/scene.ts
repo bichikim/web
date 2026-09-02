@@ -1,4 +1,10 @@
-import type {PuppetDocument, PuppetScene, PuppetSceneNode, PuppetScenePartNode} from './document'
+import type {
+  PuppetDocument,
+  PuppetScene,
+  PuppetSceneContainerNode,
+  PuppetSceneNode,
+  PuppetScenePartNode,
+} from './document'
 
 export interface PuppetScenePartState {
   readonly locked: boolean
@@ -28,22 +34,18 @@ export const createFlatScene = (document: PuppetDocument): PuppetScene => ({
 export const getDocumentScene = (document: PuppetDocument): PuppetScene =>
   document.scene ?? createFlatScene(document)
 
+export const isSceneContainerNode = (node: PuppetSceneNode): node is PuppetSceneContainerNode =>
+  node.kind !== 'part'
+
 const flattenNodes = (options: FlattenSceneOptions) => {
   for (const node of options.nodes) {
     const visible = options.visible && node.visible
     const locked = options.locked || node.locked
 
-    switch (node.kind) {
-      case 'group':
-        flattenNodes({locked, nodes: node.children, parts: options.parts, visible})
-        break
-      case 'part':
-        options.parts.push({locked, partId: node.id, visible})
-        break
-      default: {
-        const exhaustiveNode: never = node
-        return exhaustiveNode
-      }
+    if (isSceneContainerNode(node)) {
+      flattenNodes({locked, nodes: node.children, parts: options.parts, visible})
+    } else {
+      options.parts.push({locked, partId: node.id, visible})
     }
   }
 }

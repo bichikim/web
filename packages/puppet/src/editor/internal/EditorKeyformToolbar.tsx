@@ -10,6 +10,7 @@ export interface EditorKeyformToolbarProps {
   readonly onKeyformDelete?: () => void
   readonly onParameterAdd?: () => void
   readonly onTwoDimensionalParameterAdd?: () => void
+  readonly parameterCreationAvailable?: boolean
   readonly titleId: string
 }
 
@@ -24,7 +25,9 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
         <Button
           aria-label="1차원 Parameter 추가"
           class="panel-add-button"
-          disabled={props.onParameterAdd === undefined}
+          disabled={
+            props.parameterCreationAvailable === false || props.onParameterAdd === undefined
+          }
           type="button"
           onClick={() => props.onParameterAdd?.()}
         >
@@ -33,7 +36,10 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
         <Button
           aria-label="2차원 Parameter 추가"
           class="panel-add-button"
-          disabled={props.onTwoDimensionalParameterAdd === undefined}
+          disabled={
+            props.parameterCreationAvailable === false ||
+            props.onTwoDimensionalParameterAdd === undefined
+          }
           type="button"
           onClick={() => props.onTwoDimensionalParameterAdd?.()}
         >

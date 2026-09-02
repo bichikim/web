@@ -270,24 +270,12 @@ describe('parseDocument', () => {
     expect(parseDocument(JSON.stringify(legacyDocument))).toMatchObject({ok: true})
   })
 
-  it('should migrate one-dimensional version one parameters into version two bindings', () => {
+  it('should reject the obsolete inline parameter shape without changing the document version', () => {
     const legacyDocument = createLegacyDocument()
     const legacyParameter = {...legacyDocument.parameters[0]!, targetPartIds: undefined}
     const result = parseDocument(JSON.stringify({...legacyDocument, parameters: [legacyParameter]}))
 
-    expect(result).toMatchObject({
-      document: {
-        parameterBindings: [
-          {
-            id: 'angle-x',
-            keyforms: [{values: [-30]}, {values: [0]}, {values: [30]}],
-            parameterIds: ['angle-x'],
-          },
-        ],
-        version: 2,
-      },
-      ok: true,
-    })
+    expect(result).toEqual({error: {code: 'invalid-document'}, ok: false})
   })
 
   test('should validate scene targets, uniqueness and complete part coverage', () => {
@@ -302,6 +290,78 @@ describe('parseDocument', () => {
         JSON.stringify({
           ...document,
           scene: {roots: [{...firstNode, id: 'missing-part'}]},
+        }),
+      ),
+    ).toEqual({error: {code: 'invalid-document'}, ok: false})
+  })
+
+  test('should accept a free-transform deformer and reject removed deformer kinds', () => {
+    const document = createDemoDocument()
+    const [firstNode, ...remainingNodes] = document.scene!.roots
+    const deformer = {
+      bounds: {height: 480, width: 640, x: 0, y: 0},
+      children: [firstNode],
+      columns: 1,
+      controlPoints: [0, 0, 640, 0, 0, 480, 640, 480],
+      id: 'deformer',
+      kind: 'deformer',
+      locked: false,
+      name: 'Deformer',
+      rows: 1,
+      visible: true,
+    }
+    const deformedDocument = {...document, scene: {roots: [deformer, ...remainingNodes]}}
+
+    expect(parseDocument(JSON.stringify(deformedDocument))).toMatchObject({ok: true})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...deformedDocument,
+          scene: {
+            roots: [
+              {
+                ...deformer,
+                curveHandles: [
+                  {
+                    horizontal: {x: 200, y: 0},
+                    pointIndex: 0,
+                    vertical: {x: 0, y: 160},
+                  },
+                ],
+              },
+              ...remainingNodes,
+            ],
+          },
+        }),
+      ),
+    ).toMatchObject({ok: true})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...deformedDocument,
+          scene: {
+            roots: [
+              {
+                ...deformer,
+                curveHandles: [
+                  {
+                    horizontal: {x: 200, y: 0},
+                    pointIndex: 4,
+                    vertical: {x: 0, y: 160},
+                  },
+                ],
+              },
+              ...remainingNodes,
+            ],
+          },
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...deformedDocument,
+          scene: {roots: [{...deformer, kind: 'gridDeformer'}, ...remainingNodes]},
         }),
       ),
     ).toEqual({error: {code: 'invalid-document'}, ok: false})

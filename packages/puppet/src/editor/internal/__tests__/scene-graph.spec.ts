@@ -1,17 +1,22 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument} from '../../../player'
+import {createDemoDocument, parseDocument} from '../../../player'
+import {addParameter, setParameterKeyformDeformerPoint} from '../parameter-keyforms'
 import {getDocumentScene} from '../../../player/scene'
 import {
+  createDeformer,
   createSceneGroup,
+  getSceneNode,
   getSceneSelectionPartIds,
   moveSceneNode,
   moveSceneNodeBy,
   moveSceneNodeRelative,
   moveSceneNodeToParent,
-  renameSceneGroup,
+  renameSceneNode,
+  resizeDeformer,
   setSceneNodeState,
-  ungroupSceneNode,
+  unwrapSceneNode,
+  unwrapSceneNodes,
 } from '../scene-graph'
 
 const getRootIds = (document: ReturnType<typeof createDemoDocument>) =>
@@ -47,7 +52,7 @@ describe('scene graph', () => {
   test('should rename, hide, move, promote and ungroup a group', () => {
     const document = {...createDemoDocument(), scene: undefined}
     const grouped = createSceneGroup(document, ['shape-circle', 'shape-diamond'])!
-    const renamed = renameSceneGroup(grouped, 'group', 'Face')!
+    const renamed = renameSceneNode(grouped, 'group', 'Face')!
     const hidden = setSceneNodeState({
       document: renamed,
       nodeId: 'group',
@@ -57,7 +62,7 @@ describe('scene graph', () => {
     const moved = moveSceneNodeBy(hidden, 'group', -1)!
     const nested = moveSceneNode({document: moved, nodeId: 'mesh-preview', parentId: 'group'})!
     const promoted = moveSceneNodeToParent(nested, 'mesh-preview')!
-    const ungrouped = ungroupSceneNode(promoted, 'group')!
+    const ungrouped = unwrapSceneNode(promoted, 'group')!
 
     expect(getDocumentScene(locked).roots[1]).toMatchObject({
       id: 'group',
@@ -68,6 +73,20 @@ describe('scene graph', () => {
     expect(getRootIds(moved)).toEqual(['group', 'mesh-preview'])
     expect(getRootIds(promoted)).toEqual(['group', 'mesh-preview'])
     expect(getRootIds(ungrouped)).toEqual(['shape-circle', 'shape-diamond', 'mesh-preview'])
+  })
+
+  test('should unwrap multiple selected containers atomically', () => {
+    const firstGroup = createSceneGroup({...createDemoDocument(), scene: undefined}, [
+      'mesh-preview',
+    ])!
+    const secondGroup = createSceneGroup(firstGroup, ['shape-circle', 'shape-diamond'])!
+    const containerIds = getDocumentScene(secondGroup)
+      .roots.filter((node) => node.kind === 'group')
+      .map((node) => node.id)
+    const unwrapped = unwrapSceneNodes(secondGroup, containerIds)!
+
+    expect(getRootIds(unwrapped)).toEqual(['mesh-preview', 'shape-circle', 'shape-diamond'])
+    expect(unwrapSceneNodes(secondGroup, [...containerIds, 'missing'])).toBeUndefined()
   })
 
   test('should reject moving a group inside its own descendant', () => {
@@ -146,6 +165,83 @@ describe('scene graph', () => {
 
     expect(moveSceneNodeBy(locked, 'shape-circle', 1)).toBeUndefined()
     expect(createSceneGroup(locked, ['shape-circle', 'shape-diamond'])).toBeUndefined()
-    expect(ungroupSceneNode(locked, 'shapes')).toBeUndefined()
+    expect(unwrapSceneNode(locked, 'shapes')).toBeUndefined()
+  })
+
+  test('should create deformers around selected descendants and preserve their order', () => {
+    const document = {...createDemoDocument(), scene: undefined}
+    const deformerDocument = createDeformer(document, ['shape-circle', 'shape-diamond'])!
+    const deformer = getDocumentScene(deformerDocument).roots[1]
+
+    expect(deformer).toMatchObject({
+      children: [{id: 'shape-circle'}, {id: 'shape-diamond'}],
+      columns: 2,
+      kind: 'deformer',
+      name: '새 자유 변형 디포머',
+      rows: 2,
+    })
+    expect(deformer?.kind === 'deformer' ? deformer.controlPoints : []).toHaveLength(18)
+  })
+
+  test('should move and reorder nodes inside a deformer', () => {
+    const document = createDemoDocument()
+    const deformerDocument = createDeformer(document, ['shape-circle'])!
+    const deformer = getSceneNode(deformerDocument, 'deformer')
+    const nested = moveSceneNodeRelative({
+      document: deformerDocument,
+      nodeId: 'shape-diamond',
+      position: 'inside',
+      targetNodeId: deformer?.id ?? null,
+    })!
+    const reordered = moveSceneNodeRelative({
+      document: nested,
+      nodeId: 'shape-diamond',
+      position: 'before',
+      targetNodeId: 'shape-circle',
+    })!
+
+    expect(deformer).toMatchObject({kind: 'deformer'})
+    expect(getSceneNode(reordered, deformer!.id)).toMatchObject({
+      children: [{id: 'shape-diamond'}, {id: 'shape-circle'}],
+      kind: 'deformer',
+    })
+  })
+
+  test('should resize a grid and synchronize every parameter keyform', () => {
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const deformerDocument = createDeformer(source, ['mesh-preview'])!
+    const deformer = getDocumentScene(deformerDocument).roots[0]!
+    const added = addParameter({document: deformerDocument, nodeIds: [deformer.id]})!
+    const edited = setParameterKeyformDeformerPoint({
+      bindingId: added.binding.id,
+      document: added.document,
+      nodeId: deformer.id,
+      pointIndex: 4,
+      values: [0],
+      x: 400,
+      y: 240,
+    })!
+    const resized = resizeDeformer({
+      columns: 3,
+      document: edited,
+      nodeId: deformer.id,
+      rows: 1,
+    })!
+    const resizedDeformer = getDocumentScene(resized).roots[0]
+    const keyformDeformer = resized.parameterBindings?.find(
+      (binding) => binding.id === added.binding.id,
+    )?.keyforms[0]?.deformers?.[0]
+
+    expect(resizedDeformer).toMatchObject({columns: 3, rows: 1})
+    expect(resizedDeformer?.kind === 'deformer' ? resizedDeformer.controlPoints : []).toHaveLength(
+      16,
+    )
+    expect(keyformDeformer?.controlPoints).toHaveLength(16)
+    expect(parseDocument(JSON.stringify(resized)).ok).toBe(true)
+
+    const locked = setSceneNodeState({document: resized, locked: true, nodeId: deformer.id})!
+    expect(
+      resizeDeformer({columns: 2, document: locked, nodeId: deformer.id, rows: 2}),
+    ).toBeUndefined()
   })
 })

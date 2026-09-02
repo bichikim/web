@@ -1,5 +1,6 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
 
+import type {PixelData} from '../mesh'
 import {
   getScenePartStates,
   type PuppetDocument,
@@ -19,11 +20,11 @@ import {
 } from './internal/read-texture-pixels'
 
 export interface UseAutoMeshProps {
-  readonly activePartId: Accessor<string | null>
   readonly document: Accessor<PuppetDocument>
   readonly onBeforeApply?: () => void
   readonly onDocumentChange: (document: PuppetDocument) => void
   readonly onNotice?: (message: string) => void
+  readonly partIds: Accessor<ReadonlyArray<string>>
 }
 
 export interface UseAutoMeshResult {
@@ -31,7 +32,7 @@ export interface UseAutoMeshResult {
   readonly generate: (settings: AutoMeshSettings) => Promise<boolean>
   readonly isOpen: Accessor<boolean>
   readonly onOpenChange: (open: boolean) => void
-  readonly target: Accessor<PuppetPart | undefined>
+  readonly targets: Accessor<ReadonlyArray<PuppetPart>>
 }
 
 type AutoMeshGenerationErrorCode = AutoMeshPartErrorCode | ReadTexturePixelsErrorCode
@@ -82,74 +83,103 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
     setErrorMessage(message)
     props.onNotice?.(message)
   }
-  const target = createMemo(() => {
-    const partId = props.activePartId()
-
-    if (partId === null) {
-      return undefined
-    }
-
+  const targets = createMemo(() => {
+    const partIds = props.partIds()
     const document = props.document()
-    const partState = getScenePartStates(document).find((state) => state.partId === partId)
+    const partStates = new Map(
+      getScenePartStates(document).map((state) => [state.partId, state] as const),
+    )
+    const parts = partIds.flatMap((partId) => {
+      const state = partStates.get(partId)
+      const part = document.parts.find((candidate) => candidate.id === partId)
+      return state?.visible === true && !state.locked && part !== undefined ? [part] : []
+    })
 
-    return partState?.visible === true && !partState.locked
-      ? document.parts.find((candidate) => candidate.id === partId)
-      : undefined
+    return parts.length === partIds.length ? parts : []
   })
   const generate = async (settings: AutoMeshSettings) => {
     generation += 1
     const activeGeneration = generation
     setErrorMessage(null)
     const document = props.document()
-    const part = target()
+    const parts = targets()
 
-    if (part === undefined) {
+    if (parts.length === 0) {
       reportError('자동 메시를 적용할 파트를 먼저 선택하세요.')
       return false
     }
 
-    const validation = validateAutoMeshPart({document, partId: part.id, settings})
+    const validatedParts: Array<PuppetPart> = []
 
-    if (!validation.ok) {
-      reportError(getAutoMeshErrorMessage(validation.error.code))
-      return false
+    for (const part of parts) {
+      const validation = validateAutoMeshPart({document, partId: part.id, settings})
+
+      if (!validation.ok) {
+        reportError(getAutoMeshErrorMessage(validation.error.code))
+        return false
+      }
+
+      validatedParts.push(validation.part)
     }
 
-    const pixelResult = await readAutoMeshPixels(validation.part.texture)
+    const pixelResults = await Promise.all(
+      validatedParts.map((part) => readAutoMeshPixels(part.texture)),
+    )
 
     if (activeGeneration !== generation) {
       return false
     }
 
-    if (props.document() !== document || props.activePartId() !== part.id) {
+    const currentPartIds = props.partIds()
+    if (
+      props.document() !== document ||
+      currentPartIds.length !== parts.length ||
+      parts.some((part, index) => currentPartIds[index] !== part.id)
+    ) {
       reportError('편집 대상이 변경되어 자동 메시 결과를 적용하지 않았습니다.')
       return false
     }
 
-    if (!pixelResult.ok) {
-      reportError(
-        pixelResult.error.code === 'unexpected'
-          ? '자동 메시 생성 중 예상하지 못한 오류가 발생했습니다.'
-          : getAutoMeshErrorMessage(pixelResult.error.code),
-      )
-      return false
+    const pixels: Array<PixelData> = []
+
+    for (const pixelResult of pixelResults) {
+      if (!pixelResult.ok) {
+        reportError(
+          pixelResult.error.code === 'unexpected'
+            ? '자동 메시 생성 중 예상하지 못한 오류가 발생했습니다.'
+            : getAutoMeshErrorMessage(pixelResult.error.code),
+        )
+        return false
+      }
+
+      pixels.push(pixelResult.pixels)
     }
 
-    const result = autoMeshPart({
-      document,
-      partId: part.id,
-      pixels: pixelResult.pixels,
-      settings,
-    })
+    let generatedDocument = document
 
-    if (!result.ok) {
-      reportError(getAutoMeshErrorMessage(result.error.code))
-      return false
+    for (const [index, part] of parts.entries()) {
+      const result = autoMeshPart({
+        document: generatedDocument,
+        partId: part.id,
+        pixels: pixels[index]!,
+        settings,
+      })
+
+      if (!result.ok) {
+        reportError(getAutoMeshErrorMessage(result.error.code))
+        return false
+      }
+
+      generatedDocument = result.document
     }
 
     props.onBeforeApply?.()
-    props.onDocumentChange(result.document)
-    props.onNotice?.(`${part.id} 파트의 메시를 다시 생성했습니다.`)
+    props.onDocumentChange(generatedDocument)
+    props.onNotice?.(
+      parts.length === 1
+        ? `${parts[0]!.id} 파트의 메시를 다시 생성했습니다.`
+        : `${parts.length}개 파트의 메시를 다시 생성했습니다.`,
+    )
     return true
   }
 
@@ -163,5 +193,5 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
     setIsOpen(open)
   }
 
-  return {errorMessage, generate, isOpen, onOpenChange, target}
+  return {errorMessage, generate, isOpen, onOpenChange, targets}
 }

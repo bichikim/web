@@ -1,5 +1,5 @@
 import {clamp} from 'es-toolkit/math'
-import {type Accessor, createMemo, createSignal, type Setter} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
 
 import {
   getDefaultParameterValueMap,
@@ -12,14 +12,15 @@ import type {PuppetDocument, PuppetParameterBinding} from '../player/document'
 import {
   addParameter,
   addTwoDimensionalParameter,
-  connectParameterParts,
+  connectParameterNodes,
   deleteParameter,
   deleteParameterKeyform,
-  disconnectParameterParts,
+  disconnectParameterNodes,
   getBindingParameters,
   getDefaultParameterValues,
   getDocumentParameterBindings,
-  getParameterTargetPartIds,
+  getParameterBindingsForNodeIds,
+  getParameterTargetNodeIds,
   insertParameterKeyform,
   moveParameterKeyform,
   renameParameter,
@@ -29,14 +30,14 @@ interface UseParameterEditorProps {
   readonly document: Accessor<PuppetDocument>
   readonly onDocumentChange: Setter<PuppetDocument>
   readonly onNotice: Setter<string | null>
-  readonly selectedPartIds: Accessor<ReadonlyArray<string>>
+  readonly selectedNodeIds: Accessor<ReadonlyArray<string>>
 }
 
 export interface ParameterEditorResult {
   readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
   readonly activeBindingId: Accessor<string | null>
   readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
-  readonly activeTargetPartIds: Accessor<ReadonlyArray<string>>
+  readonly activeTargetNodeIds: Accessor<ReadonlyArray<string>>
   readonly addKeyform: () => void
   readonly addParameter: () => void
   readonly addTwoDimensionalParameter: () => void
@@ -78,20 +79,20 @@ const updateParameterConnection = (
   binding: PuppetParameterBinding,
   operation: ParameterConnectionOperation,
 ) => {
-  const partIds = props.selectedPartIds()
-  if (partIds.length === 0) {
+  const nodeIds = props.selectedNodeIds()
+  if (nodeIds.length === 0) {
     return
   }
 
   const document =
     operation === 'connect'
-      ? connectParameterParts({bindingId: binding.id, document: props.document(), partIds})
-      : disconnectParameterParts({bindingId: binding.id, document: props.document(), partIds})
+      ? connectParameterNodes({bindingId: binding.id, document: props.document(), nodeIds})
+      : disconnectParameterNodes({bindingId: binding.id, document: props.document(), nodeIds})
 
   if (document !== undefined) {
     props.onDocumentChange(document)
     props.onNotice(
-      `${partIds.length}개 파트를 ${operation === 'connect' ? '연결했습니다.' : '연결 해제했습니다.'}`,
+      `${nodeIds.length}개 노드를 ${operation === 'connect' ? '연결했습니다.' : '연결 해제했습니다.'}`,
     )
   }
 }
@@ -99,6 +100,13 @@ const updateParameterConnection = (
 interface ParameterSelectionSetters {
   readonly activeBindingId: Setter<string | null>
   readonly activeKeyformValues: Setter<PuppetParameterValues | null>
+}
+
+interface ParameterSelectionSyncOptions {
+  readonly activeBindingId: Accessor<string | null>
+  readonly parameterValueMap: Accessor<PuppetParameterValueMap>
+  readonly props: UseParameterEditorProps
+  readonly setters: ParameterSelectionSetters
 }
 
 const selectBindingState = (
@@ -111,6 +119,20 @@ const selectBindingState = (
   setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
 }
 
+const createParameterSelectionSync = (options: ParameterSelectionSyncOptions) => {
+  createEffect(() => {
+    const document = options.props.document()
+    const bindings = getParameterBindingsForNodeIds(document, options.props.selectedNodeIds())
+    const currentBindingId = options.activeBindingId()
+
+    if (bindings.some((binding) => binding.id === currentBindingId)) {
+      return
+    }
+
+    selectBindingState(document, bindings[0], options.parameterValueMap(), options.setters)
+  })
+}
+
 const createParameterBindingHandler =
   (
     props: UseParameterEditorProps,
@@ -119,16 +141,16 @@ const createParameterBindingHandler =
     dimension: 1 | 2,
   ) =>
   () => {
-    const partIds = props.selectedPartIds()
-    if (partIds.length === 0) {
-      props.onNotice('Parameter를 연결할 레이어나 그룹을 먼저 선택하세요.')
+    const nodeIds = props.selectedNodeIds()
+    if (nodeIds.length === 0) {
+      props.onNotice('Parameter를 연결할 파츠나 자유 변형 디포머를 먼저 선택하세요.')
       return
     }
 
     const result =
       dimension === 1
-        ? addParameter({document: props.document(), partIds})
-        : addTwoDimensionalParameter({document: props.document(), partIds})
+        ? addParameter({document: props.document(), nodeIds})
+        : addTwoDimensionalParameter({document: props.document(), nodeIds})
     if (result !== undefined) {
       props.onDocumentChange(result.document)
       selectBindingState(result.document, result.binding, parameterValueMap(), setters)
@@ -246,18 +268,15 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   const [activeKeyformValues, setActiveKeyformValues] = createSignal<PuppetParameterValues | null>(
     getDefaultKeyformValues(props.document(), initialBinding, parameterValueMap()),
   )
-  const setters: ParameterSelectionSetters = {
-    activeBindingId: setActiveBindingId,
-    activeKeyformValues: setActiveKeyformValues,
-  }
+  const setters = {activeBindingId: setActiveBindingId, activeKeyformValues: setActiveKeyformValues}
   const activeBinding = createMemo(() =>
     getDocumentParameterBindings(props.document()).find(
       (binding) => binding.id === activeBindingId(),
     ),
   )
-  const activeTargetPartIds = createMemo(() => {
+  const activeTargetNodeIds = createMemo(() => {
     const binding = activeBinding()
-    return binding === undefined ? [] : getParameterTargetPartIds(binding)
+    return binding === undefined ? [] : getParameterTargetNodeIds(binding)
   })
   const parameterValues = createMemo<PuppetParameterValues>(() => {
     const binding = activeBinding()
@@ -269,6 +288,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
           parameterValues: parameterValueMap(),
         })
   })
+  createParameterSelectionSync({activeBindingId, parameterValueMap, props, setters})
   const selectBinding = (bindingId: string) => {
     const document = props.document()
     const binding = getDocumentParameterBindings(document).find(
@@ -289,7 +309,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   const createKeyform = () => {
     const binding = activeBinding()
     const values = parameterValues()
-    if (binding === undefined || activeTargetPartIds().length === 0) {
+    if (binding === undefined || activeTargetNodeIds().length === 0) {
       return
     }
 
@@ -329,7 +349,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     activeBinding,
     activeBindingId,
     activeKeyformValues,
-    activeTargetPartIds,
+    activeTargetNodeIds,
     addKeyform: createKeyform,
     addParameter: createParameter,
     addTwoDimensionalParameter: create2dParameter,

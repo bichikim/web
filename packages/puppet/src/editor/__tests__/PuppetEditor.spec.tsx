@@ -4,7 +4,16 @@ import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-libra
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type Player, type PuppetDocument, serializeDocument} from '../../player'
+import {
+  createDemoDocument,
+  getDocumentScene,
+  type Player,
+  type PuppetDocument,
+  serializeDocument,
+} from '../../player'
+import {getDeformerAngle} from '../internal/deformer-transform'
+import {addParameter} from '../internal/parameter-keyforms'
+import {createSceneGroup} from '../internal/scene-graph'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -61,7 +70,7 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('region', {name: 'Parameter와 키폼 편집'})).toContainElement(
       view.getByRole('region', {name: 'Parameters'}),
     )
-    expect(view.getByRole('heading', {name: 'Inspector'})).toBeVisible()
+    expect(view.getByRole('heading', {name: '선택 작업'})).toBeVisible()
     expect(view.container.querySelector('.inspector-panel.parameter-panel')).toBeNull()
     expect(view.getByRole('button', {name: 'JSON 내보내기'})).toBeVisible()
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
@@ -155,7 +164,7 @@ describe('PuppetEditor', () => {
   test.each([
     {locked: true, state: 'locked', visible: true},
     {locked: false, state: 'hidden', visible: false},
-  ])('should disable automatic mesh generation for a $state part', ({locked, visible}) => {
+  ])('should hide automatic mesh generation for a $state part', ({locked, visible}) => {
     const document = createDemoDocument()
     const restrictedDocument = {
       ...document,
@@ -168,7 +177,98 @@ describe('PuppetEditor', () => {
 
     render(() => <PuppetEditor initialDocument={restrictedDocument} />)
 
-    expect(screen.getByRole('button', {name: '자동 메시'})).toBeDisabled()
+    expect(screen.queryByRole('button', {name: '자동 메시'})).toBeNull()
+  })
+
+  test('should generate meshes for every selected part', async () => {
+    const document = createDemoDocument()
+    const firstDocument = {...document, motions: []}
+    const secondDocument = {...firstDocument, motions: document.motions.slice(0, 1)}
+    const pixels = {data: new Uint8ClampedArray(4), height: 1, width: 1}
+    const onDocumentChange = vi.fn()
+    mocks.readTexturePixels.mockResolvedValue({ok: true, pixels})
+    mocks.autoMeshPart
+      .mockReturnValueOnce({document: firstDocument, ok: true})
+      .mockReturnValueOnce({document: secondDocument, ok: true})
+    const view = render(() => (
+      <PuppetEditor initialDocument={document} onDocumentChange={onDocumentChange} />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}), {ctrlKey: true})
+    fireEvent.click(view.getByRole('button', {name: '자동 메시'}))
+    fireEvent.click(screen.getByRole('button', {name: '자동 메시 생성'}))
+
+    await waitFor(() => expect(mocks.autoMeshPart).toHaveBeenCalledTimes(2))
+    expect(mocks.autoMeshPart.mock.calls.map(([options]) => options.partId)).toEqual([
+      'shape-circle',
+      'shape-diamond',
+    ])
+    expect(onDocumentChange).toHaveBeenLastCalledWith(secondDocument)
+  })
+
+  test('should hide selection actions for mixed node kinds', () => {
+    const view = render(() => <PuppetEditor />)
+
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
+
+    expect(view.queryByRole('button', {name: '자동 메시'})).toBeNull()
+    expect(view.queryByRole('button', {name: '컨테이너 해제'})).toBeNull()
+  })
+
+  test('should show only group actions and unwrap the selected group', async () => {
+    const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+
+    expect(view.queryByRole('button', {name: '자동 메시'})).toBeNull()
+    expect(
+      within(view.getByLabelText('레이어 계층 편집')).queryByRole('button', {
+        name: '컨테이너 해제',
+      }),
+    ).toBeNull()
+    fireEvent.click(view.getByRole('button', {name: '컨테이너 해제'}))
+
+    await waitFor(() => {
+      expect(onDocumentChange.mock.calls.at(-1)?.[0]?.scene?.roots.map(({id}) => id)).toEqual([
+        'mesh-preview',
+        'shape-circle',
+        'shape-diamond',
+      ])
+    })
+    expect(view.queryByRole('button', {name: '컨테이너 해제'})).toBeNull()
+  })
+
+  test('should convert a selected group to a deformer and back', async () => {
+    const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: '자유 변형 디포머로 변경'}))
+
+    await waitFor(() => {
+      expect(
+        getDocumentScene(onDocumentChange.mock.calls.at(-1)![0]).roots.find(
+          (node) => node.id === 'shapes',
+        )?.kind,
+      ).toBe('deformer')
+    })
+    expect(view.getByRole('button', {name: '그룹으로 변경'})).toBeVisible()
+    expect(view.getByRole('spinbutton', {name: '격자 가로 칸'})).toBeVisible()
+
+    fireEvent.click(view.getByRole('button', {name: '그룹으로 변경'}))
+
+    await waitFor(() => {
+      expect(
+        getDocumentScene(onDocumentChange.mock.calls.at(-1)![0]).roots.find(
+          (node) => node.id === 'shapes',
+        )?.kind,
+      ).toBe('group')
+    })
+    expect(view.getByRole('button', {name: '자유 변형 디포머로 변경'})).toBeVisible()
+    expect(view.queryByRole('spinbutton', {name: '격자 가로 칸'})).toBeNull()
   })
 
   test('should reopen a serialized two-dimensional document', async () => {
@@ -189,7 +289,7 @@ describe('PuppetEditor', () => {
 
     await waitFor(() => {
       const reopenedDocument = onDocumentChange.mock.calls.at(-1)?.[0]
-      expect(reopenedDocument).toMatchObject({version: 2})
+      expect(reopenedDocument).toMatchObject({version: 1})
       expect(reopenedDocument?.parameterBindings?.[0]?.keyforms).toHaveLength(9)
     })
     expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(9)
@@ -262,6 +362,54 @@ describe('PuppetEditor', () => {
         'parameter-3': 10,
       }),
     )
+  })
+
+  test('should show the union of parameters connected to selected layers', async () => {
+    const added = addParameter({document: createDemoDocument(), nodeIds: ['shape-circle']})!
+    const view = render(() => <PuppetEditor initialDocument={added.document} />)
+
+    expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
+    expect(view.queryByRole('button', {name: 'Parameter 3'})).toBeNull()
+
+    fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
+
+    await waitFor(() => {
+      expect(view.queryByRole('button', {name: 'Angle X'})).toBeNull()
+      expect(view.getByRole('button', {name: 'Parameter 3'})).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+    })
+
+    fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
+
+    expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
+    expect(view.getByRole('button', {name: 'Parameter 3'})).toBeVisible()
+
+    fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
+
+    await waitFor(() => {
+      expect(view.queryByRole('button', {name: 'Angle X'})).toBeNull()
+      expect(view.queryByRole('button', {name: 'Parameter 3'})).toBeNull()
+    })
+  })
+
+  test('should not inherit descendant parameters when selecting nested groups', async () => {
+    const added = addParameter({document: createDemoDocument(), nodeIds: ['shape-circle']})!
+    const nested = createSceneGroup(added.document, ['shapes'])!
+    const view = render(() => <PuppetEditor initialDocument={nested} />)
+
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+
+    await waitFor(() => {
+      expect(view.queryByRole('button', {name: 'Parameter 3'})).toBeNull()
+      expect(view.getByRole('button', {name: '1차원 Parameter 추가'})).toBeDisabled()
+    })
+
+    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+
+    expect(view.queryByRole('button', {name: 'Parameter 3'})).toBeNull()
+    expect(view.getByRole('button', {name: '1차원 Parameter 추가'})).toBeDisabled()
   })
 
   test('should activate an inactive parameter track at the clicked values', async () => {
@@ -423,21 +571,24 @@ describe('PuppetEditor', () => {
     expect(replacementPlayer.pause).toHaveBeenCalledOnce()
   })
 
-  test('should connect a selected group to the active parameter', async () => {
+  test('should connect multiple selected parts to the active parameter', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
 
-    fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
-    expect(view.getByText('대상 1 · 선택 2개 파트')).toBeVisible()
-    expect(view.container.querySelector('.mesh-editor [data-part-id="mesh-preview"]')).toBeNull()
+    fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
+    fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}), {ctrlKey: true})
+    expect(view.getByText('대상 1 · 선택 3개 노드')).toBeVisible()
+    expect(
+      view.container.querySelector('.mesh-editor [data-part-id="mesh-preview"]'),
+    ).not.toBeNull()
     expect(
       view.container.querySelector('.mesh-editor [data-part-id="shape-circle"]'),
     ).not.toBeNull()
     expect(
       view.container.querySelector('.mesh-editor [data-part-id="shape-diamond"]'),
     ).not.toBeNull()
-    expect(view.container.querySelectorAll('.mesh-editor circle')).toHaveLength(18)
+    expect(view.container.querySelectorAll('.mesh-editor circle')).toHaveLength(23)
 
     fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결'}))
 
@@ -453,10 +604,73 @@ describe('PuppetEditor', () => {
     expect(within(modelingPanel).getAllByText('Angle X').length).toBeGreaterThan(0)
     expect(view.getByRole('button', {name: '선택 레이어 연결'})).toBeDisabled()
 
+    fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결 해제'}))
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]
       expect(document?.parameterBindings?.[0]?.targetPartIds).toEqual(['mesh-preview'])
+    })
+  })
+
+  test('should create and interpolate free-transform deformer parameter keyforms', async () => {
+    const onDocumentChange = vi.fn()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    fireEvent.click(view.getByRole('button', {name: '자유 변형 디포머로 변경'}))
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+
+    const parameterValue = view.getByRole('spinbutton', {name: 'Parameter 3 값'})
+    fireEvent.input(parameterValue, {target: {value: '30'}})
+    fireEvent.click(view.getByRole('button', {name: '+ 현재 값에 키폼'}))
+    fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {
+      target: {value: '60'},
+    })
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {
+      target: {value: '15'},
+    })
+
+    await waitFor(() => {
+      const document = onDocumentChange.mock.calls.at(-1)?.[0]
+      const binding = document?.parameterBindings?.find(
+        (candidate: {id: string}) => candidate.id === 'parameter-3',
+      )
+      const deformer = getDocumentScene(document).roots[0]
+      const keyform = binding?.keyforms[1]?.deformers[0]
+      expect(binding?.targetDeformerIds).toEqual(['group'])
+      expect(keyform).toMatchObject({kind: 'deformer', nodeId: 'group'})
+      expect(
+        deformer?.kind === 'deformer' && keyform?.kind === 'deformer'
+          ? getDeformerAngle({...deformer, controlPoints: keyform.controlPoints})
+          : undefined,
+      ).toBeCloseTo(60)
+      expect(
+        (view.getByRole('spinbutton', {name: '자유 변형 각도'}) as HTMLInputElement).valueAsNumber,
+      ).toBeCloseTo(30)
+    })
+  })
+
+  test('should guide deformer connection before allowing parameter edits', async () => {
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => <PuppetEditor />)
+
+    fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    fireEvent.click(view.getByRole('button', {name: '자유 변형 디포머로 변경'}))
+
+    expect(view.getByRole('status')).toHaveTextContent(
+      'Parameter를 선택해야 디포머를 편집할 수 있습니다.',
+    )
+    expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeDisabled()
+
+    fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
+    fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결'}))
+    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+
+    await waitFor(() => {
+      expect(view.queryByRole('status')).not.toBeInTheDocument()
+      expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeEnabled()
     })
   })
 

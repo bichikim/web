@@ -193,10 +193,31 @@ describe('createPlayer', () => {
         {
           id: 'shift-binding',
           keyforms: [
-            {parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 100]}], values: [0]},
-            {parts: [{partId: 'part', vertices: [0, 0, 125, 0, 0, 100]}], values: [1]},
+            {
+              deformers: [
+                {
+                  controlPoints: [0, 0, 100, 0, 0, 100, 100, 100],
+                  kind: 'deformer',
+                  nodeId: 'deformer',
+                },
+              ],
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 100]}],
+              values: [0],
+            },
+            {
+              deformers: [
+                {
+                  controlPoints: [0, 0, 0, 100, -100, 0, -100, 100],
+                  kind: 'deformer',
+                  nodeId: 'deformer',
+                },
+              ],
+              parts: [{partId: 'part', vertices: [0, 0, 125, 0, 0, 100]}],
+              values: [1],
+            },
           ],
           parameterIds: ['shift'],
+          targetDeformerIds: ['deformer'],
           targetPartIds: ['part'],
         },
       ],
@@ -213,6 +234,22 @@ describe('createPlayer', () => {
           texture: {height: 100, src: 'part.png', width: 100},
         },
       ],
+      scene: {
+        roots: [
+          {
+            bounds: {height: 100, width: 100, x: 0, y: 0},
+            children: [{id: 'part', kind: 'part', locked: false, name: 'Part', visible: true}],
+            columns: 1,
+            controlPoints: [0, 0, 100, 0, 0, 100, 100, 100],
+            id: 'deformer',
+            kind: 'deformer',
+            locked: false,
+            name: 'Deformer',
+            rows: 1,
+            visible: true,
+          },
+        ],
+      },
     }
 
     vi.stubGlobal(
@@ -256,8 +293,10 @@ describe('createPlayer', () => {
       | {readonly vertices: Float32Array}
       | undefined
 
-    expect(createdMesh?.vertices[0]).toBe(50)
-    expect(createdMesh?.vertices[2]).toBe(125)
+    expect(createdMesh?.vertices[0]).toBeCloseTo(0)
+    expect(createdMesh?.vertices[1]).toBeCloseTo(50)
+    expect(createdMesh?.vertices[2]).toBeCloseTo(0)
+    expect(createdMesh?.vertices[3]).toBeCloseTo(125)
     expect(onFrame).toHaveBeenLastCalledWith({
       duration: 10,
       motionId: 'hold-final-frame',
@@ -265,8 +304,13 @@ describe('createPlayer', () => {
     })
 
     player.setParameterValues({shift: 1})
-    expect(createdMesh?.vertices[0]).toBe(50)
-    expect(createdMesh?.vertices[2]).toBe(125)
+    expect(createdMesh?.vertices[0]).toBeCloseTo(0)
+    expect(createdMesh?.vertices[1]).toBeCloseTo(50)
+    expect(createdMesh?.vertices[2]).toBeCloseTo(0)
+    expect(createdMesh?.vertices[3]).toBeCloseTo(125)
+    player.setParameterValues({shift: 0})
+    expect(createdMesh?.vertices[0]).toBeCloseTo(0)
+    expect(createdMesh?.vertices[1]).toBeCloseTo(50)
 
     player.seek(2)
     const editedDocument = prepareDocument({

@@ -38,14 +38,14 @@ describe('useAutoMesh', () => {
     mocks.autoMeshPart.mockReturnValue({document: generatedDocument, ok: true})
 
     await createRoot(async (dispose) => {
-      const [activePartId] = createSignal<string | null>('mesh-preview')
+      const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
-        activePartId,
         document: sourceDocument,
         onBeforeApply,
         onDocumentChange,
         onNotice,
+        partIds,
       })
 
       await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(true)
@@ -59,6 +59,64 @@ describe('useAutoMesh', () => {
       expect(onBeforeApply).toHaveBeenCalledOnce()
       expect(onDocumentChange).toHaveBeenCalledWith(generatedDocument)
       expect(onNotice).toHaveBeenCalledWith('mesh-preview 파트의 메시를 다시 생성했습니다.')
+      dispose()
+    })
+  })
+
+  test('should apply every selected part in one document update', async () => {
+    const document = createDemoDocument()
+    const firstDocument = {...document, motions: []}
+    const generatedDocument = {...firstDocument, motions: document.motions.slice(0, 1)}
+    const onDocumentChange = vi.fn()
+    const onNotice = vi.fn()
+    mocks.autoMeshPart
+      .mockReturnValueOnce({document: firstDocument, ok: true})
+      .mockReturnValueOnce({document: generatedDocument, ok: true})
+
+    await createRoot(async (dispose) => {
+      const [partIds] = createSignal<ReadonlyArray<string>>(['shape-circle', 'shape-diamond'])
+      const [sourceDocument] = createSignal<PuppetDocument>(document)
+      const autoMesh = useAutoMesh({
+        document: sourceDocument,
+        onDocumentChange,
+        onNotice,
+        partIds,
+      })
+
+      await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(true)
+      expect(mocks.autoMeshPart).toHaveBeenCalledTimes(2)
+      expect(mocks.autoMeshPart).toHaveBeenNthCalledWith(2, {
+        document: firstDocument,
+        partId: 'shape-diamond',
+        pixels,
+        settings: {alphaThreshold: 16, cellSize: 32},
+      })
+      expect(onDocumentChange).toHaveBeenCalledOnce()
+      expect(onDocumentChange).toHaveBeenCalledWith(generatedDocument)
+      expect(onNotice).toHaveBeenCalledWith('2개 파트의 메시를 다시 생성했습니다.')
+      dispose()
+    })
+  })
+
+  test('should avoid partial updates when any selected texture fails', async () => {
+    const document = createDemoDocument()
+    const onDocumentChange = vi.fn()
+    mocks.readTexturePixels
+      .mockResolvedValueOnce({ok: true, pixels})
+      .mockResolvedValueOnce({error: {code: 'decode-failed'}, ok: false})
+
+    await createRoot(async (dispose) => {
+      const [partIds] = createSignal<ReadonlyArray<string>>(['shape-circle', 'shape-diamond'])
+      const [sourceDocument] = createSignal<PuppetDocument>(document)
+      const autoMesh = useAutoMesh({
+        document: sourceDocument,
+        onDocumentChange,
+        partIds,
+      })
+
+      await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
+      expect(mocks.autoMeshPart).not.toHaveBeenCalled()
+      expect(onDocumentChange).not.toHaveBeenCalled()
       dispose()
     })
   })
@@ -77,13 +135,13 @@ describe('useAutoMesh', () => {
     const onNotice = vi.fn()
 
     await createRoot(async (dispose) => {
-      const [activePartId] = createSignal<string | null>('mesh-preview')
+      const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument, setSourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
-        activePartId,
         document: sourceDocument,
         onDocumentChange,
         onNotice,
+        partIds,
       })
       const generation = autoMesh.generate({alphaThreshold: 16, cellSize: 32})
 
@@ -114,13 +172,13 @@ describe('useAutoMesh', () => {
     const onNotice = vi.fn()
 
     await createRoot(async (dispose) => {
-      const [activePartId] = createSignal<string | null>('mesh-preview')
+      const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
-        activePartId,
         document: sourceDocument,
         onDocumentChange,
         onNotice,
+        partIds,
       })
 
       autoMesh.onOpenChange(true)
@@ -144,13 +202,13 @@ describe('useAutoMesh', () => {
     mocks.readTexturePixels.mockRejectedValue(new Error('unexpected'))
 
     await createRoot(async (dispose) => {
-      const [activePartId] = createSignal<string | null>('mesh-preview')
+      const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
-        activePartId,
         document: sourceDocument,
         onDocumentChange,
         onNotice,
+        partIds,
       })
 
       await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
@@ -167,13 +225,13 @@ describe('useAutoMesh', () => {
     mocks.readTexturePixels.mockResolvedValue({error: {code: 'decode-failed'}, ok: false})
 
     await createRoot(async (dispose) => {
-      const [activePartId] = createSignal<string | null>('mesh-preview')
+      const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
-        activePartId,
         document: sourceDocument,
         onDocumentChange,
         onNotice,
+        partIds,
       })
 
       await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
@@ -190,13 +248,13 @@ describe('useAutoMesh', () => {
     const onNotice = vi.fn()
 
     await createRoot(async (dispose) => {
-      const [activePartId] = createSignal<string | null>('mesh-preview')
+      const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
-        activePartId,
         document: sourceDocument,
         onDocumentChange,
         onNotice,
+        partIds,
       })
 
       await expect(autoMesh.generate({alphaThreshold: 256, cellSize: 32})).resolves.toBe(false)

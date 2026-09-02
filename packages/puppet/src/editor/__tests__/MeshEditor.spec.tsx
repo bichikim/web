@@ -6,6 +6,11 @@ import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument, type PuppetDocument} from '../../player'
 import {MeshEditor} from '../MeshEditor'
+import {
+  connectParameterNodes,
+  setParameterKeyformDeformerControlPoints,
+} from '../internal/parameter-keyforms'
+import {createDeformer, getSceneNode} from '../internal/scene-graph'
 
 describe('MeshEditor', () => {
   test('should render the selected example layer mesh', () => {
@@ -47,6 +52,38 @@ describe('MeshEditor', () => {
     expect(view.container.querySelectorAll('circle')[4]).toBe(centerVertex)
     expect(centerVertex?.getAttribute('cy')).toBe('176')
     expect(document.parts[0]?.mesh.vertices).toEqual(sourceVertices)
+  })
+
+  test('should render parameter animation through the part and its deformer', () => {
+    const deformerDocument = createDeformer(createDemoDocument(), ['mesh-preview'])!
+    const deformer = getSceneNode(deformerDocument, 'deformer')!
+    const connected = connectParameterNodes({
+      bindingId: 'angle-xy',
+      document: deformerDocument,
+      nodeIds: [deformer.id],
+    })!
+    const controlPoints =
+      deformer.kind === 'deformer'
+        ? deformer.controlPoints.map((coordinate, index) =>
+            index % 2 === 0 ? coordinate + 100 : coordinate,
+          )
+        : []
+    const animated = setParameterKeyformDeformerControlPoints({
+      bindingId: 'angle-xy',
+      controlPoints,
+      document: connected,
+      nodeId: deformer.id,
+      values: [0, -30],
+    })!
+    const [previewTime, setPreviewTime] = createSignal(0)
+    const view = render(() => <MeshEditor document={animated} previewTime={previewTime()} />)
+
+    expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cx')).toBe('320')
+
+    setPreviewTime(1)
+
+    expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cx')).toBe('420')
+    expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cy')).toBe('176')
   })
 
   test('should snap a nearby click onto the current mesh boundary', () => {
@@ -115,6 +152,56 @@ describe('MeshEditor', () => {
     }
 
     expect(document().parts[0]?.mesh.vertices.slice(0, 2)).toEqual([-80, -60])
+  })
+
+  test('should store a displayed drag in part-local coordinates below a deformer', () => {
+    const initialDocument = createDemoDocument()
+    const [document, setDocument] = createSignal<PuppetDocument>({
+      ...initialDocument,
+      scene: {
+        roots: [
+          {
+            bounds: {height: 480, width: 640, x: 0, y: 0},
+            children: [initialDocument.scene!.roots[0]!],
+            columns: 1,
+            controlPoints: [0, 0, 0, 640, -480, 0, -480, 640],
+            id: 'deformer',
+            kind: 'deformer',
+            locked: false,
+            name: 'Deformer',
+            rows: 1,
+            visible: true,
+          },
+          ...initialDocument.scene!.roots.slice(1),
+        ],
+      },
+    })
+    const view = render(() => <MeshEditor document={document()} onDocumentChange={setDocument} />)
+    const svg = view.container.querySelector('svg')
+    const centerVertex = view.container.querySelectorAll('circle')[4]
+
+    expect(centerVertex?.getAttribute('cx')).toBe('-240')
+    expect(centerVertex?.getAttribute('cy')).toBe('320')
+
+    if (svg !== null && centerVertex !== undefined) {
+      vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+        bottom: 720,
+        height: 720,
+        left: 0,
+        right: 960,
+        toJSON: () => ({}),
+        top: 0,
+        width: 960,
+        x: 0,
+        y: 0,
+      })
+      fireEvent.pointerDown(centerVertex, {button: 0})
+      fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: -40, clientY: 460}))
+      fireEvent.pointerUp(svg)
+    }
+
+    expect(document().parts[0]?.mesh.vertices.at(-2)).toBeCloseTo(340)
+    expect(document().parts[0]?.mesh.vertices.at(-1)).toBeCloseTo(200)
   })
 
   test('should select a vertex without creating a keyframe when it does not move', () => {

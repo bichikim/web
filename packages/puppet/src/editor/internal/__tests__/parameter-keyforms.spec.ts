@@ -11,6 +11,7 @@ import {
   deleteParameterKeyform,
   disconnectParameterParts,
   getDocumentParameterBindings,
+  getParameterBindingsForNodeIds,
   getParameterTargetPartIds,
   insertParameterKeyform,
   moveParameterKeyform,
@@ -19,9 +20,25 @@ import {
 } from '../parameter-keyforms'
 
 describe('parameter keyform editing', () => {
+  test('should return the union of parameter bindings connected to selected nodes', () => {
+    const document = createDemoDocument()
+    const added = addParameter({document, nodeIds: ['shape-circle']})!
+
+    expect(getParameterBindingsForNodeIds(added.document, ['mesh-preview'])).toEqual([
+      document.parameterBindings![0],
+    ])
+    expect(getParameterBindingsForNodeIds(added.document, ['shape-circle'])).toEqual([
+      added.binding,
+    ])
+    expect(
+      getParameterBindingsForNodeIds(added.document, ['shape-circle', 'mesh-preview']),
+    ).toEqual(added.document.parameterBindings)
+    expect(getParameterBindingsForNodeIds(added.document, ['shape-diamond'])).toEqual([])
+  })
+
   test('should add, rename, and remove a one-dimensional keyform', () => {
-    const source = {...createDemoDocument(), parameterBindings: [], parameters: []}
-    const added = addParameter({document: source, partIds: ['mesh-preview']})
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const added = addParameter({document: source, nodeIds: ['mesh-preview']})
     const binding = added?.binding
 
     expect(binding).toMatchObject({id: 'parameter-1', parameterIds: ['parameter-1']})
@@ -60,8 +77,8 @@ describe('parameter keyform editing', () => {
   })
 
   test('should create a complete three-by-three two-dimensional grid', () => {
-    const source = {...createDemoDocument(), parameterBindings: [], parameters: []}
-    const added = addTwoDimensionalParameter({document: source, partIds: ['mesh-preview']})
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const added = addTwoDimensionalParameter({document: source, nodeIds: ['mesh-preview']})
 
     expect(added?.document.parameters?.map((parameter) => parameter.name)).toEqual([
       'Parameter 1 X',
@@ -82,7 +99,7 @@ describe('parameter keyform editing', () => {
   })
 
   test('should create a unique two-dimensional binding ID for an imported document', () => {
-    const source = {...createDemoDocument(), parameterBindings: [], parameters: []}
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
     const conflictingDocument = {
       ...source,
       parameterBindings: [
@@ -97,7 +114,7 @@ describe('parameter keyform editing', () => {
     }
     const added = addTwoDimensionalParameter({
       document: conflictingDocument,
-      partIds: ['mesh-preview'],
+      nodeIds: ['mesh-preview'],
     })
 
     expect(added?.binding.id).toBe('parameter-2-parameter-3-2')
