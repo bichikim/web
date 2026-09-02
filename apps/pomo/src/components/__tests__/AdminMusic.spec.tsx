@@ -12,8 +12,7 @@ interface ClientOnlyStubProps {
 }
 
 const startMocks = vi.hoisted(() => ({
-  clientOnly: vi.fn((loader: () => Promise<unknown>) => {
-    void loader()
+  clientOnly: vi.fn(() => {
     return vi.fn((props: ClientOnlyStubProps) => {
       if (props.onValuesChange !== undefined) {
         props.onValuesChange(props.values)

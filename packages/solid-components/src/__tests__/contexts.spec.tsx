@@ -3,6 +3,7 @@
 import {render} from '@solidjs/testing-library'
 import {createRoot, useContext} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import {useAudioPlayer} from '../audio-player/context'
 import {ButtonContext} from '../button/context'
 import {CheckboxContext} from '../checkbox/context'
 import {DragButtonContext} from '../drag-button/context'
@@ -17,6 +18,15 @@ import {
 describe('component context defaults', () => {
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  it('should reject audio player parts outside a root', () => {
+    createRoot((dispose) => {
+      expect(() => useAudioPlayer()).toThrow(
+        'Audio player parts must be rendered inside AudioPlayer.Root.',
+      )
+      dispose()
+    })
   })
 
   it('should expose button defaults and reject unimplemented actions', () => {

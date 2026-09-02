@@ -166,14 +166,13 @@ export const createDemoDocument = (): PuppetDocument => ({
       id: 'idle-deform',
       tracks: [
         {
-          axis: 'y',
           keyframes: [
-            {time: 0, value: CENTER_Y},
-            {time: 1, value: CENTER_Y - PREVIEW_DEFORM_OFFSET},
-            {time: 2, value: CENTER_Y},
+            {time: 0, value: 0},
+            {time: 1, value: -DEMO_PARAMETER_MAXIMUM},
+            {time: 2, value: 0},
           ],
-          partId: 'mesh-preview',
-          vertexIndex: CENTER_VERTEX_INDEX,
+          kind: 'parameter',
+          parameterId: 'angle-y',
         },
       ],
     },

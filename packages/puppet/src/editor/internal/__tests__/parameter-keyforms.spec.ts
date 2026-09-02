@@ -144,6 +144,7 @@ describe('parameter keyform editing', () => {
     expect(document.parameterBindings?.[0]?.keyforms).toHaveLength(9)
     expect(deleted?.parameterBindings).toEqual([])
     expect(deleted?.parameters).toEqual([])
+    expect(deleted?.motions[0]?.tracks).toEqual([])
     expect(deleteParameter({bindingId: 'missing', document})).toBeUndefined()
   })
 
@@ -157,12 +158,22 @@ describe('parameter keyform editing', () => {
     }
     const withSharedBinding = {
       ...document,
+      motions: document.motions.map((motion) => ({
+        ...motion,
+        tracks: [
+          ...motion.tracks,
+          {keyframes: [{time: 0, value: 0}], kind: 'parameter' as const, parameterId: 'angle-x'},
+        ],
+      })),
       parameterBindings: [...(document.parameterBindings ?? []), sharedBinding],
     }
     const deleted = deleteParameter({bindingId: 'angle-xy', document: withSharedBinding})
 
     expect(deleted?.parameterBindings).toEqual([sharedBinding])
     expect(deleted?.parameters?.map((parameter) => parameter.id)).toEqual(['angle-x'])
+    expect(deleted?.motions[0]?.tracks).toEqual([
+      {keyframes: [{time: 0, value: 0}], kind: 'parameter', parameterId: 'angle-x'},
+    ])
   })
 
   test('should update only the selected two-dimensional keyform', () => {
