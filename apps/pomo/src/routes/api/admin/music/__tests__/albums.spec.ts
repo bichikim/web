@@ -5,7 +5,7 @@ const repositoryMocks = vi.hoisted(() => ({createAlbum: vi.fn()}))
 const storageMocks = vi.hoisted(() => ({isManagedAlbumCoverUrl: vi.fn()}))
 
 vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/music/album-creation-repository', () => repositoryMocks)
 vi.mock('src/server/music/cover-upload', () => storageMocks)
 
 import {POST} from '../albums'
