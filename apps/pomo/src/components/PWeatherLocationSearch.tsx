@@ -1,10 +1,12 @@
 import {Combobox} from '@kobalte/core/combobox'
-import {Show} from 'solid-js'
+import {createSignal, createUniqueId, Show} from 'solid-js'
 
 import {
   DEFAULT_WEATHER_LOCATION,
+  LEGACY_WEATHER_LOCATIONS,
   useWeatherLocationSearch,
   type WeatherLocation,
+  type WeatherLocationSearchStatus,
 } from '../features/weather'
 import {getLocalizedWeatherLocationLabel} from '../features/localization'
 import * as m from '@paraglide/message'
@@ -20,11 +22,74 @@ const getLocationDescription = (location: WeatherLocation): string =>
 const getLocationName = (location: WeatherLocation): string =>
   getLocalizedWeatherLocationLabel(location)
 
+const DEFAULT_WEATHER_LOCATIONS = Object.values(LEGACY_WEATHER_LOCATIONS)
+const KOREAN_COUNTRIES = new Set(['KR', '대한민국'])
+
+const normalizeLocationName = (name: string): string => name.trim().toLowerCase()
+
+const getLocationNames = (location: WeatherLocation): ReadonlyArray<string> =>
+  [
+    location.name,
+    getLocalizedWeatherLocationLabel(location, {locale: 'en'}),
+    getLocalizedWeatherLocationLabel(location, {locale: 'ko'}),
+  ].map(normalizeLocationName)
+
+const isDefaultDuplicate = (
+  selectedLocation: WeatherLocation,
+  defaultLocation: WeatherLocation,
+): boolean => {
+  if (selectedLocation.id === defaultLocation.id) {
+    return true
+  }
+  if (selectedLocation.legacyCitySlug !== undefined) {
+    return selectedLocation.legacyCitySlug === defaultLocation.legacyCitySlug
+  }
+  if (!KOREAN_COUNTRIES.has(selectedLocation.country)) {
+    return false
+  }
+
+  const selectedNames = new Set(getLocationNames(selectedLocation))
+  return getLocationNames(defaultLocation).some((name) => selectedNames.has(name))
+}
+
+interface WeatherLocationSearchFeedbackProps {
+  readonly resultCount: number
+  readonly status: WeatherLocationSearchStatus
+}
+
+const WeatherLocationSearchFeedback = (props: WeatherLocationSearchFeedbackProps) => (
+  <>
+    <Show when={props.status === 'input-required'}>
+      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
+        {m.weather_location_search_minimum()}
+      </p>
+    </Show>
+    <Show when={props.status === 'error'}>
+      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_error()}</p>
+    </Show>
+    <Show when={props.status === 'ready' && props.resultCount === 0}>
+      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_empty()}</p>
+    </Show>
+  </>
+)
+
 export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
   const search = useWeatherLocationSearch()
+  const descriptionId = createUniqueId()
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [searchQuery, setSearchQuery] = createSignal('')
   const selectedLocation = () => props.location ?? DEFAULT_WEATHER_LOCATION
   const options = () => {
-    const locations = [selectedLocation(), ...search.results()]
+    const selected = selectedLocation()
+    const locations =
+      searchQuery() === ''
+        ? [
+            selected,
+            ...DEFAULT_WEATHER_LOCATIONS.filter(
+              (location) => !isDefaultDuplicate(selected, location),
+            ),
+          ]
+        : search.results()
     return locations.filter(
       (location, index) =>
         locations.findIndex((candidate) => candidate.id === location.id) === index,
@@ -35,10 +100,12 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
     const normalizedQuery = query.trim()
     const selectedNames = [location.name, getLocationName(location)]
     if (selectedNames.includes(normalizedQuery)) {
+      setSearchQuery('')
       search.onSelect(location)
       return
     }
 
+    setSearchQuery(normalizedQuery)
     search.onQueryChange(query)
   }
 
@@ -46,6 +113,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
     <Combobox<WeatherLocation>
       allowsEmptyCollection
       class="grid w-full min-w-0 gap-1.5"
+      defaultFilter={() => true}
       disallowEmptySelection
       gutter={6}
       itemComponent={(itemProps) => (
@@ -68,11 +136,14 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
       )}
       onChange={(location) => {
         if (location !== null) {
+          setSearchQuery('')
           search.onSelect(location)
           props.onChange?.(location)
         }
       }}
       onInputChange={onInputChange}
+      onOpenChange={(open) => setIsOpen(open)}
+      open={isOpen()}
       optionLabel={getLocationName}
       optionTextValue={(location) =>
         `${getLocationName(location)} ${location.name} ${location.region} ${location.country}`
@@ -95,25 +166,33 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
         }
       >
         <span aria-hidden="true" class="i-tabler-map-pin size-4 flex-none text-highlight" />
-        <Combobox.Input class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-650 leading-5 outline-none" />
-        <Show when={search.status() === 'searching'}>
+        <Combobox.Input
+          aria-describedby={descriptionId}
+          class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-650 leading-5 outline-none"
+          onFocus={() => setIsOpen(true)}
+        />
+        <Show
+          fallback={
+            <span
+              aria-hidden="true"
+              class="i-tabler-search size-4 flex-none text-muted-foreground"
+            />
+          }
+          when={search.status() === 'searching'}
+        >
           <span
             aria-hidden="true"
             class="i-tabler-loader-2 size-4 flex-none animate-spin motion-reduce:animate-none"
           />
         </Show>
       </Combobox.Control>
-      <p class="m-0 text-xs leading-5 text-muted-foreground">
-        <a
-          class="text-inherit underline"
-          href="https://openweathermap.org/"
-          rel="noreferrer"
-          target="_blank"
-        >
-          {m.weather_support_notice()}
-        </a>
+      <p class="m-0 text-xs leading-5 text-muted-foreground" id={descriptionId}>
+        {m.weather_location_search_description()}
       </p>
       <p aria-live="polite" class="sr-only">
+        <Show when={search.status() === 'input-required'}>
+          {m.weather_location_search_minimum()}
+        </Show>
         <Show when={search.status() === 'searching'}>{m.weather_location_searching()}</Show>
         <Show when={search.status() === 'error'}>{m.weather_location_search_error()}</Show>
       </p>
@@ -125,16 +204,10 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
             'text-foreground shadow-panel backdrop-blur-surface'
           }
         >
-          <Show when={search.status() === 'error'}>
-            <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
-              {m.weather_location_search_error()}
-            </p>
-          </Show>
-          <Show when={search.status() === 'ready' && search.results().length === 0}>
-            <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
-              {m.weather_location_search_empty()}
-            </p>
-          </Show>
+          <WeatherLocationSearchFeedback
+            resultCount={search.results().length}
+            status={search.status()}
+          />
           <Combobox.Listbox class="grid max-h-[inherit] gap-0.5 overflow-y-auto outline-none" />
         </Combobox.Content>
       </Combobox.Portal>

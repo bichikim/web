@@ -18,6 +18,7 @@ import {
   getWorldWeatherLocation,
   searchWorldWeatherLocations,
 } from '../world-locations'
+import {LEGACY_WEATHER_LOCATIONS} from 'src/features/weather'
 import type {Database} from '../../database'
 
 const createDatabase = (selected: ReadonlyArray<Record<string, unknown>> = []) => {
@@ -75,6 +76,77 @@ it('should avoid a database write for an empty provider search', async () => {
 
   await expect(searchWorldWeatherLocations({query: 'none'}, mocks.database)).resolves.toEqual([])
   expect(mocks.insert).not.toHaveBeenCalled()
+})
+
+it('should return a known provider coordinate as its stable legacy location', async () => {
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+    {
+      country: 'KR',
+      latitude: 37.5683,
+      longitude: 126.9778,
+      name: 'Seoul',
+      providerLocationId: '37.5683,126.9778',
+      region: 'Seoul',
+    },
+  ])
+  const mocks = createDatabase()
+
+  await expect(searchWorldWeatherLocations({query: 'Seoul'}, mocks.database)).resolves.toEqual([
+    LEGACY_WEATHER_LOCATIONS.seoul,
+  ])
+  expect(mocks.insert).not.toHaveBeenCalled()
+})
+
+it('should register a foreign provider location that shares a legacy city name', async () => {
+  const providerLocation = {
+    country: 'YE',
+    latitude: 14.34,
+    longitude: 44.18,
+    name: 'Busan',
+    providerLocationId: '14.3400,44.1800',
+    region: 'Dhamar Governorate',
+  }
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([providerLocation])
+  const mocks = createDatabase()
+
+  await expect(searchWorldWeatherLocations({query: 'Busan'}, mocks.database)).resolves.toEqual([
+    {
+      country: 'YE',
+      id: 'openweather:14.3400,44.1800',
+      name: 'Busan',
+      region: 'Dhamar Governorate',
+    },
+  ])
+  expect(mocks.values).toHaveBeenCalledWith([
+    expect.objectContaining({providerLocationId: providerLocation.providerLocationId}),
+  ])
+})
+
+it('should register a nearby Korean district whose name is not a legacy city alias', async () => {
+  const providerLocation = {
+    country: 'KR',
+    latitude: 35.1629,
+    longitude: 129.0532,
+    name: 'Busanjin-gu',
+    providerLocationId: '35.1629,129.0532',
+    region: 'Busan',
+  }
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([providerLocation])
+  const mocks = createDatabase()
+
+  await expect(
+    searchWorldWeatherLocations({query: 'Busanjin-gu'}, mocks.database),
+  ).resolves.toEqual([
+    {
+      country: 'KR',
+      id: 'openweather:35.1629,129.0532',
+      name: 'Busanjin-gu',
+      region: 'Busan',
+    },
+  ])
+  expect(mocks.values).toHaveBeenCalledWith([
+    expect.objectContaining({providerLocationId: providerLocation.providerLocationId}),
+  ])
 })
 
 it('should resolve legacy and registered provider locations', async () => {
