@@ -51,8 +51,12 @@ afterEach(() => {
 })
 
 it('should use enabled Seoul weather defaults without requiring handlers', () => {
-  render(() => <PWeatherSettings />)
+  const view = render(() => <PWeatherSettings />)
 
+  expect(view.container.firstElementChild).toHaveClass('items-start')
+  const attribution = screen.getByRole('link', {name: 'Weather data © OpenWeather'})
+  expect(attribution).toHaveAttribute('href', 'https://openweathermap.org/')
+  expect(attribution.parentElement).toHaveClass('col-span-full')
   fireEvent.click(screen.getByRole('button', {name: 'true'}))
   fireEvent.click(screen.getByRole('button', {name: LEGACY_WEATHER_LOCATIONS.seoul.id}))
   expect(PSelect).toHaveBeenCalledWith(expect.objectContaining({value: 'auto'}))

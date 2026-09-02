@@ -44,6 +44,7 @@ export const useWeatherLocationSearch = (): WeatherLocationSearchController => {
       return
     }
 
+    setResults([])
     setStatus('searching')
     searchTimer = setTimeout(() => {
       searchTimer = null

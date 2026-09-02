@@ -68,6 +68,21 @@ it('should clear a pending debounce when the query becomes too short', async () 
   root.dispose()
 })
 
+it('should clear stale results before searching for a new query', async () => {
+  clientMocks.searchWeatherLocations.mockResolvedValue([tokyo])
+  const root = createSearchRoot()
+
+  root.controller.onQueryChange('Tokyo')
+  await vi.advanceTimersByTimeAsync(300)
+  expect(root.controller.results()).toEqual([tokyo])
+
+  root.controller.onQueryChange('London')
+
+  expect(root.controller.results()).toEqual([])
+  expect(root.controller.status()).toBe('searching')
+  root.dispose()
+})
+
 it('should cancel a superseded request and ignore its late result', async () => {
   const first = Promise.withResolvers<ReadonlyArray<typeof tokyo>>()
   clientMocks.searchWeatherLocations
