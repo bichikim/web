@@ -1,4 +1,4 @@
-import {and, isNull, lte, or, sql} from 'drizzle-orm'
+import {and, isNotNull, isNull, lte, or, sql} from 'drizzle-orm'
 
 import {type Database, getDatabase, pomoAccountLinkChallenges, pomoAppSessions} from '../database'
 import type {AuthMaintenanceBatchResult, AuthMaintenanceRepository} from './maintenance'
@@ -13,6 +13,7 @@ interface DeleteBatchOptions {
 interface DeleteAppSessionBatchOptions {
   readonly batchSize: number
   readonly expiresAtCutoff: Date
+  readonly pendingExpiresAtCutoff: Date
   readonly revokedAtCutoff: Date
 }
 
@@ -67,7 +68,13 @@ export const createAuthMaintenanceRepository = (
         where ${or(
           and(
             isNull(pomoAppSessions.revokedAt),
+            isNotNull(pomoAppSessions.activatedAt),
             lte(pomoAppSessions.expiresAt, options.expiresAtCutoff),
+          ),
+          and(
+            isNull(pomoAppSessions.revokedAt),
+            isNull(pomoAppSessions.activatedAt),
+            lte(pomoAppSessions.expiresAt, options.pendingExpiresAtCutoff),
           ),
           lte(pomoAppSessions.revokedAt, options.revokedAtCutoff),
         )}

@@ -1,4 +1,4 @@
-import {and, desc, eq, gt, isNull, sql} from 'drizzle-orm'
+import {and, desc, eq, gt, isNotNull, isNull, sql} from 'drizzle-orm'
 
 import {
   getDatabase,
@@ -18,10 +18,13 @@ const SECONDS_PER_MINUTE = 60
 const MINUTES_PER_HOUR = 60
 const HOURS_PER_DAY = 24
 const APP_SESSION_DAYS = 30
+const PENDING_SESSION_MINUTES = 10
 const LINK_CHALLENGE_MINUTES = 30
 const LINK_CHALLENGE_COOLDOWN_SECONDS = 60
 const APP_SESSION_LIFETIME =
   APP_SESSION_DAYS * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+const PENDING_SESSION_LIFETIME =
+  PENDING_SESSION_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 const LINK_CHALLENGE_LIFETIME =
   LINK_CHALLENGE_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 
@@ -151,19 +154,20 @@ const findOrCreateUser = async (
   return user.id
 }
 
-export const createTossAppSession = async (
+export const createPendingTossAppSession = async (
   providerSubject: string,
   dependencies: ClockAndToken = DEFAULT_CLOCK_AND_TOKEN,
 ): Promise<AppSession> => {
   const token = dependencies.createToken()
   const now = dependencies.now()
-  const expiresAt = new Date(now.getTime() + APP_SESSION_LIFETIME)
+  const expiresAt = new Date(now.getTime() + PENDING_SESSION_LIFETIME)
 
   return withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
       const userId = await findOrCreateUser(transaction, 'toss', providerSubject)
 
       await transaction.insert(pomoAppSessions).values({
+        activatedAt: null,
         expiresAt,
         tokenHash: hashOpaqueToken(token),
         userId,
@@ -186,6 +190,7 @@ export const getAppSessionUserId = async (
     .where(
       and(
         eq(pomoAppSessions.tokenHash, tokenHash),
+        isNotNull(pomoAppSessions.activatedAt),
         isNull(pomoAppSessions.revokedAt),
         gt(pomoAppSessions.expiresAt, now),
       ),
@@ -193,6 +198,37 @@ export const getAppSessionUserId = async (
     .limit(1)
 
   return session?.userId ?? null
+}
+
+const activatePendingAppSession = async (token: string, now: Date): Promise<string | null> => {
+  const expiresAt = new Date(now.getTime() + APP_SESSION_LIFETIME)
+  const [activatedSession] = await getDatabase()
+    .update(pomoAppSessions)
+    .set({activatedAt: now, expiresAt})
+    .where(
+      and(
+        eq(pomoAppSessions.tokenHash, hashOpaqueToken(token)),
+        isNull(pomoAppSessions.activatedAt),
+        isNull(pomoAppSessions.revokedAt),
+        gt(pomoAppSessions.expiresAt, now),
+      ),
+    )
+    .returning({userId: pomoAppSessions.userId})
+
+  return activatedSession?.userId ?? null
+}
+
+export const resolveAppSessionUserId = async (
+  token: string,
+  now: Date = new Date(),
+): Promise<string | null> => {
+  const activeUserId = await getAppSessionUserId(token, now)
+
+  if (activeUserId !== null) {
+    return activeUserId
+  }
+
+  return (await activatePendingAppSession(token, now)) ?? getAppSessionUserId(token, now)
 }
 
 export const revokeAppSession = async (token: string, now: Date = new Date()): Promise<void> => {

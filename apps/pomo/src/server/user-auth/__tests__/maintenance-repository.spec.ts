@@ -13,24 +13,33 @@ it('should generate a bounded concurrent-safe app session delete', async () => {
   const execute = vi.fn().mockResolvedValue({rows: [{deleted: 2, hasMore: false}]})
   const repository = createAuthMaintenanceRepository({execute} as unknown as Database)
   const expiresAtCutoff = new Date('2026-08-23T18:17:00.000Z')
+  const pendingExpiresAtCutoff = new Date('2026-08-24T18:17:00.000Z')
   const revokedAtCutoff = new Date('2026-08-17T18:17:00.000Z')
 
   await expect(
-    repository.deleteAppSessionBatch({batchSize: 500, expiresAtCutoff, revokedAtCutoff}),
+    repository.deleteAppSessionBatch({
+      batchSize: 500,
+      expiresAtCutoff,
+      pendingExpiresAtCutoff,
+      revokedAtCutoff,
+    }),
   ).resolves.toEqual({deleted: 2, hasMore: false})
 
   const query = compile(execute.mock.calls[0]?.[0] as SQL)
   expect(query.sql).toContain('where (("pomo_app_sessions"."revoked_at" is null')
+  expect(query.sql).toContain('"pomo_app_sessions"."activated_at" is not null')
+  expect(query.sql).toContain('"pomo_app_sessions"."activated_at" is null')
   expect(query.sql).toContain('"pomo_app_sessions"."expires_at" <= $1)')
-  expect(query.sql).toContain('or "pomo_app_sessions"."revoked_at" <= $2)')
-  expect(query.sql).toContain('limit $3\n        for update skip locked')
+  expect(query.sql).toContain('or "pomo_app_sessions"."revoked_at" <= $3)')
+  expect(query.sql).toContain('limit $4\n        for update skip locked')
   expect(query.sql).toContain(
-    'deletion_candidates as (\n        select id from candidates limit $4',
+    'deletion_candidates as (\n        select id from candidates limit $5',
   )
   expect(query.sql).toContain('delete from "pomo_app_sessions"\n        using deletion_candidates')
-  expect(query.sql).toContain('(select count(*) from candidates) > $5 as "hasMore"')
+  expect(query.sql).toContain('(select count(*) from candidates) > $6 as "hasMore"')
   expect(query.params).toEqual([
     expiresAtCutoff.toISOString(),
+    pendingExpiresAtCutoff.toISOString(),
     revokedAtCutoff.toISOString(),
     501,
     500,
