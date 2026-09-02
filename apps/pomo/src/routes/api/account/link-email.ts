@@ -49,21 +49,23 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     )
   }
 
+  let wasSent: boolean
+
   try {
-    const wasSent = await sendAccountLinkEmail({
+    wasSent = await sendAccountLinkEmail({
       challengeToken: challenge.token,
       email: parsedRequest.data.email,
       request: event.request,
     })
-
-    if (!wasSent) {
-      await invalidateAccountLinkChallenge(challenge.token)
-      return noStoreJson({error: 'email_not_sent'}, {status: HTTP_BAD_GATEWAY})
-    }
-
-    return noStoreJson({expiresAt: challenge.expiresAt.toISOString()})
   } catch (error) {
     console.error('Failed to send an account link email', error)
+    wasSent = false
+  }
+
+  if (!wasSent) {
+    await invalidateAccountLinkChallenge(challenge.token)
     return noStoreJson({error: 'email_not_sent'}, {status: HTTP_BAD_GATEWAY})
   }
+
+  return noStoreJson({expiresAt: challenge.expiresAt.toISOString()})
 }
