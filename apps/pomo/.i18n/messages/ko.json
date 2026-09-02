@@ -189,6 +189,7 @@
   "weather_city": "도시 변경",
   "weather_location_search_placeholder": "전 세계 도시 검색",
   "weather_location_search_description": "입력란을 누르면 기본 도시가 열려요. 도시 이름을 입력하면 비슷한 도시를 검색해요.",
+  "weather_location_search_minimum": "도시 이름을 두 글자 이상 입력해 주세요.",
   "weather_location_searching": "도시 검색 중",
   "weather_location_search_empty": "검색 결과가 없어요",
   "weather_location_search_error": "도시를 검색하지 못했어요. 잠시 후 다시 시도해 주세요.",

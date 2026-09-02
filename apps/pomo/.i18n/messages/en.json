@@ -189,6 +189,7 @@
   "weather_city": "Change city",
   "weather_location_search_placeholder": "Search cities worldwide",
   "weather_location_search_description": "Focus the field to see default cities, or enter a city name to find similar cities.",
+  "weather_location_search_minimum": "Enter at least two characters of a city name.",
   "weather_location_searching": "Searching for cities",
   "weather_location_search_empty": "No cities found",
   "weather_location_search_error": "Couldn't search for cities. Try again shortly.",

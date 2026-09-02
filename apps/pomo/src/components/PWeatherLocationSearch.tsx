@@ -6,6 +6,7 @@ import {
   LEGACY_WEATHER_LOCATIONS,
   useWeatherLocationSearch,
   type WeatherLocation,
+  type WeatherLocationSearchStatus,
 } from '../features/weather'
 import {getLocalizedWeatherLocationLabel} from '../features/localization'
 import * as m from '@paraglide/message'
@@ -47,6 +48,27 @@ const isDefaultDuplicate = (
   const selectedNames = new Set(getLocationNames(selectedLocation))
   return getLocationNames(defaultLocation).some((name) => selectedNames.has(name))
 }
+
+interface WeatherLocationSearchFeedbackProps {
+  readonly resultCount: number
+  readonly status: WeatherLocationSearchStatus
+}
+
+const WeatherLocationSearchFeedback = (props: WeatherLocationSearchFeedbackProps) => (
+  <>
+    <Show when={props.status === 'input-required'}>
+      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
+        {m.weather_location_search_minimum()}
+      </p>
+    </Show>
+    <Show when={props.status === 'error'}>
+      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_error()}</p>
+    </Show>
+    <Show when={props.status === 'ready' && props.resultCount === 0}>
+      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_empty()}</p>
+    </Show>
+  </>
+)
 
 export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
   const search = useWeatherLocationSearch()
@@ -165,6 +187,9 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
         {m.weather_location_search_description()}
       </p>
       <p aria-live="polite" class="sr-only">
+        <Show when={search.status() === 'input-required'}>
+          {m.weather_location_search_minimum()}
+        </Show>
         <Show when={search.status() === 'searching'}>{m.weather_location_searching()}</Show>
         <Show when={search.status() === 'error'}>{m.weather_location_search_error()}</Show>
       </p>
@@ -176,16 +201,10 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
             'text-foreground shadow-panel backdrop-blur-surface'
           }
         >
-          <Show when={search.status() === 'error'}>
-            <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
-              {m.weather_location_search_error()}
-            </p>
-          </Show>
-          <Show when={search.status() === 'ready' && search.results().length === 0}>
-            <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
-              {m.weather_location_search_empty()}
-            </p>
-          </Show>
+          <WeatherLocationSearchFeedback
+            resultCount={search.results().length}
+            status={search.status()}
+          />
           <Combobox.Listbox class="grid max-h-[inherit] gap-0.5 overflow-y-auto outline-none" />
         </Combobox.Content>
       </Combobox.Portal>

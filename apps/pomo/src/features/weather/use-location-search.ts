@@ -6,7 +6,12 @@ import type {WeatherLocation} from './contract'
 const SEARCH_DELAY_MILLISECONDS = 300
 const MINIMUM_QUERY_LENGTH = 2
 
-export type WeatherLocationSearchStatus = 'error' | 'idle' | 'ready' | 'searching'
+export type WeatherLocationSearchStatus =
+  | 'error'
+  | 'idle'
+  | 'input-required'
+  | 'ready'
+  | 'searching'
 
 export interface WeatherLocationSearchController {
   readonly onQueryChange: (query: string) => void
@@ -38,9 +43,14 @@ export const useWeatherLocationSearch = (): WeatherLocationSearchController => {
     const currentRevision = revision
     const normalizedQuery = query.trim()
 
-    if (normalizedQuery.length < MINIMUM_QUERY_LENGTH) {
+    if (normalizedQuery.length === 0) {
       setResults([])
       setStatus('idle')
+      return
+    }
+    if (normalizedQuery.length < MINIMUM_QUERY_LENGTH) {
+      setResults([])
+      setStatus('input-required')
       return
     }
 

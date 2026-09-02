@@ -156,6 +156,15 @@ it.each(['searching', 'error', 'ready'] as const)(
   },
 )
 
+it('should explain the minimum query length', () => {
+  searchMocks.status.mockReturnValue('input-required')
+  searchMocks.results.mockReturnValue([])
+
+  render(() => <PWeatherLocationSearch />)
+
+  expect(screen.getAllByText('도시 이름을 두 글자 이상 입력해 주세요.')).toHaveLength(2)
+})
+
 it('should not duplicate a selected Korean city with its localized default', () => {
   render(() => <PWeatherLocationSearch location={worldSeoul} />)
 

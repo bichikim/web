@@ -39,7 +39,7 @@ it('should wait for a meaningful debounced query before searching', async () => 
   const root = createSearchRoot()
 
   root.controller.onQueryChange(' t ')
-  expect(root.controller.status()).toBe('idle')
+  expect(root.controller.status()).toBe('input-required')
   root.controller.onQueryChange(' Tokyo ')
   expect(root.controller.status()).toBe('searching')
 
@@ -64,7 +64,7 @@ it('should clear a pending debounce when the query becomes too short', async () 
   await vi.advanceTimersByTimeAsync(300)
 
   expect(clientMocks.searchWeatherLocations).not.toHaveBeenCalled()
-  expect(root.controller.status()).toBe('idle')
+  expect(root.controller.status()).toBe('input-required')
   root.dispose()
 })
 
