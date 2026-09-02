@@ -11,3 +11,6 @@ Apps in Toss 프로젝트만 실행하려면 `test:e2e:apps-in-toss`를 사용�
 
 전체 E2E 실행에는 별도 fixture에서 실제 SolidStart SSR과 Apps in Toss SSG를 빌드한 뒤, 빌드된
 정적 클라이언트가 SSR의 `/_server`를 호출하는 회귀 테스트도 포함됩니다.
+
+Client action E2E fixture는 production action과 API adapter를 직접 import하고 브라우저에서
+명령 workflow, submission 상태, native form fallback, 실제 HTTP 계약을 검증합니다.

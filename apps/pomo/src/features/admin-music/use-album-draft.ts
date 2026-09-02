@@ -1,17 +1,25 @@
+import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, onMount, type Setter} from 'solid-js'
 import {z} from 'zod'
 
-import {type AlbumCreationCallbacks, createAlbumSubmitHandler} from './album-creation'
+import {
+  type AlbumCreationCallbacks,
+  type AlbumCreationServices,
+  createAlbumSubmitHandler,
+} from './album-creation'
 import {albumCreationServices} from './album-creation-adapter'
 import {
+  ALBUM_LOCALES,
   type AlbumDraftData,
   type AlbumDraftTranslations,
   createEmptyAlbumTranslations,
 } from './album-draft'
+import {createAdminAlbumAction, type CreateAlbumActionResult} from './actions'
 import {validateAlbumCover} from './cover-upload'
 
 const getAlbumDraftStorage = () => import('./album-draft-storage')
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
+const COVER_SELECTION_ERROR = '커버 이미지를 선택하지 못했습니다.'
 
 type UseAlbumDraftProps = AlbumCreationCallbacks
 
@@ -339,6 +347,54 @@ const registerDraftRestoration = (options: RegisterDraftRestorationOptions): voi
   })
 }
 
+const useCreateAlbumAction = () => ({
+  submission: useSubmission(createAdminAlbumAction),
+  submit: useAction(createAdminAlbumAction),
+})
+
+const createAlbumThroughAction = async (
+  submit: (values: FormData) => Promise<CreateAlbumActionResult>,
+  clearSubmission: () => void,
+  draft: AlbumDraftData,
+  coverFile: File | null,
+): ReturnType<AlbumCreationServices['createAlbum']> => {
+  const values = new FormData()
+  values.set('albumId', draft.albumId ?? '')
+  values.set('coverDraftId', draft.coverDraftId ?? '')
+  values.set('coverFallback', draft.coverFallback)
+  values.set('coverImageUrl', draft.coverImageUrl)
+  for (const locale of ALBUM_LOCALES) {
+    values.set(`description.${locale}`, draft.translations[locale].description)
+    values.set(`title.${locale}`, draft.translations[locale].title)
+  }
+  if (coverFile !== null) {
+    values.set('coverFile', coverFile)
+  }
+
+  const result = await submit(values)
+  clearSubmission()
+  if (result.status === 'rejected') {
+    throw new Error(result.detail)
+  }
+
+  return result.status === 'created'
+    ? {albumId: result.albumId, success: true}
+    : {code: 'album_creation_payload_mismatch', success: false}
+}
+
+const createActionAlbumCreationServices = (
+  albumAction: ReturnType<typeof useCreateAlbumAction>,
+): AlbumCreationServices => ({
+  clearDraft: albumCreationServices.clearDraft,
+  createAlbum: (draft, coverFile) =>
+    createAlbumThroughAction(
+      albumAction.submit,
+      () => albumAction.submission.clear(),
+      draft,
+      coverFile,
+    ),
+})
+
 const persistRestoredEdits = (editedFields: ReadonlySet<DraftField>, persist: () => void): void => {
   if (editedFields.size > 0 && !editedFields.has('cover')) {
     persist()
@@ -346,8 +402,9 @@ const persistRestoredEdits = (editedFields: ReadonlySet<DraftField>, persist: ()
 }
 
 export const useAlbumDraft = (props: UseAlbumDraftProps) => {
+  const albumAction = useCreateAlbumAction()
   const albumCreationId = useAlbumCreationId()
-  const [isSavingAlbum, setIsSavingAlbum] = createSignal(false)
+  const [isSavingAlbumWorkflow, setIsSavingAlbumWorkflow] = createSignal(false)
   const [isProcessingCover, setIsProcessingCover] = createSignal(false)
   const [isRestoringDraft, setIsRestoringDraft] = createSignal(true)
   const [coverPreviewUrl, setCoverPreviewUrl] = createSignal<string | null>(null)
@@ -417,12 +474,12 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getDraftData,
     persistDraft: draftPersistence.persist,
     renewAlbumId: albumCreationId.renew,
-    services: albumCreationServices,
+    services: createActionAlbumCreationServices(albumAction),
     setAlbumId: albumCreationId.set,
     setCoverDraftId,
     setCoverFallback,
     setCoverImageUrl,
-    setIsSavingAlbum,
+    setIsSavingAlbum: setIsSavingAlbumWorkflow,
     setTranslations: setAlbumTranslations,
     waitForDraftPersistence: draftPersistence.wait,
   })
@@ -479,9 +536,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
       )
     } catch (error) {
       input.value = ''
-      props.setMessage(
-        error instanceof Error ? error.message : '커버 이미지를 선택하지 못했습니다.',
-      )
+      props.setMessage(error instanceof Error ? error.message : COVER_SELECTION_ERROR)
     } finally {
       if (preparationId === coverPreparationId) {
         setIsProcessingCover(false)
@@ -498,6 +553,6 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     handleCoverChange,
     isProcessingCover,
     isRestoringDraft,
-    isSavingAlbum,
+    isSavingAlbum: () => isSavingAlbumWorkflow() || albumAction.submission.pending === true,
   }
 }

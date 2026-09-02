@@ -4,6 +4,7 @@ import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
+  accountSessionQuery: vi.fn(),
   clearStoredAppSession: vi.fn(),
   readAccountSession: vi.fn(),
   readStoredAppSession: vi.fn(),
@@ -16,11 +17,13 @@ vi.mock('../app-session', () => ({
   validateAppSession: mocks.validateAppSession,
 }))
 vi.mock('../web-session', () => ({readAccountSession: mocks.readAccountSession}))
+vi.mock('../session-query', () => ({accountSessionQuery: mocks.accountSessionQuery}))
 
 import {useUserSettings} from '../use-user-settings'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.accountSessionQuery.mockImplementation(() => mocks.readAccountSession())
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
 })
 

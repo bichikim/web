@@ -3,6 +3,45 @@
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+const routerMocks = vi.hoisted(() => {
+  interface TestSubmission {
+    readonly clear: () => void
+    readonly input: ReadonlyArray<unknown>
+    pending: boolean
+  }
+
+  const submissions = new Map<string, Array<TestSubmission>>()
+  const getSubmissions = (clientAction: Function) => {
+    const current = submissions.get(clientAction.name) ?? []
+    submissions.set(clientAction.name, current)
+    return current
+  }
+
+  return {getSubmissions, submissions}
+})
+
+vi.mock('@solidjs/router', () => ({
+  action: vi.fn((clientAction) => clientAction),
+  useAction: vi.fn((clientAction: (...input: ReadonlyArray<unknown>) => Promise<unknown>) => {
+    return async (...input: ReadonlyArray<unknown>) => {
+      const submission = {clear: vi.fn(), input, pending: true}
+      routerMocks.getSubmissions(clientAction).push(submission)
+      try {
+        return await clientAction(...input)
+      } finally {
+        submission.pending = false
+      }
+    }
+  }),
+  useSubmission: vi.fn((clientAction: Function) => ({
+    clear: vi.fn(),
+    get pending() {
+      return routerMocks.getSubmissions(clientAction).some((submission) => submission.pending)
+    },
+  })),
+  useSubmissions: vi.fn((clientAction: Function) => routerMocks.getSubmissions(clientAction)),
+}))
+
 import {useTrackManagement} from '../use-track-management'
 
 const creationMocks = vi.hoisted(() => ({
@@ -65,6 +104,7 @@ const renderTrackManagement = (
 
 beforeEach(() => {
   vi.resetAllMocks()
+  routerMocks.submissions.clear()
   creationMocks.createTrackWithAudio.mockResolvedValue({success: true})
   creationMocks.removeTrack.mockResolvedValue(undefined)
   uploadMocks.confirmTrackAudioRegistration.mockResolvedValue({status: 'active'})
@@ -292,6 +332,29 @@ describe('useTrackManagement', () => {
     expect(refreshCatalog).toHaveBeenCalledOnce()
     expect(setMessage).toHaveBeenLastCalledWith('수록곡과 MP3 파일을 삭제했습니다.')
     expect(result.removingTrackId()).toBeNull()
+    cleanup()
+  })
+
+  it('should track concurrent removals independently', async () => {
+    const firstRemoval = Promise.withResolvers<void>()
+    const secondRemoval = Promise.withResolvers<void>()
+    creationMocks.removeTrack
+      .mockReturnValueOnce(firstRemoval.promise)
+      .mockReturnValueOnce(secondRemoval.promise)
+    const {cleanup, result} = renderTrackManagement()
+
+    const firstRequest = result.handleTrackRemove('track-one')
+    const secondRequest = result.handleTrackRemove('track-two')
+
+    expect(result.isRemovingTrack('track-one')).toBe(true)
+    expect(result.isRemovingTrack('track-two')).toBe(true)
+    firstRemoval.resolve()
+    await firstRequest
+    expect(result.isRemovingTrack('track-one')).toBe(false)
+    expect(result.isRemovingTrack('track-two')).toBe(true)
+    secondRemoval.resolve()
+    await secondRequest
+    expect(result.isRemovingTrack('track-two')).toBe(false)
     cleanup()
   })
 

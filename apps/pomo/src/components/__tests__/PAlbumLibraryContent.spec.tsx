@@ -9,9 +9,22 @@ import type {PTrack} from '../../features/focus-room-audio'
 const audioMocks = vi.hoisted(() => ({
   loadBundledPAlbums: vi.fn(),
   loadPublishedPAlbums: vi.fn(),
+  publishedAlbumCatalogQuery: Object.assign(vi.fn(), {
+    key: 'published-focus-room-album-catalog',
+    keyFor: vi.fn(),
+  }),
 }))
 const modalMocks = vi.hoisted(() => ({render: vi.fn()}))
 
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  return {
+    ...actual,
+    action: vi.fn((clientAction) => clientAction),
+    useAction: vi.fn((clientAction) => clientAction),
+    useSubmissions: vi.fn(() => []),
+  }
+})
 vi.mock('../../features/focus-room-audio', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../features/focus-room-audio')>()),
   ...audioMocks,
@@ -39,6 +52,9 @@ afterEach(() => {
   cleanup()
   audioMocks.loadBundledPAlbums.mockReset()
   audioMocks.loadPublishedPAlbums.mockReset()
+  audioMocks.publishedAlbumCatalogQuery
+    .mockReset()
+    .mockImplementation((locale) => audioMocks.loadPublishedPAlbums({locale}))
   modalMocks.render.mockClear()
   vi.restoreAllMocks()
 })

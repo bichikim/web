@@ -2,9 +2,18 @@
 
 import {afterEach, expect, it, vi} from 'vitest'
 
+const submissionMocks = vi.hoisted(() => ({clear: vi.fn()}))
+
+vi.mock('@solidjs/router', () => ({
+  action: vi.fn((clientAction) => clientAction),
+  useAction: vi.fn((clientAction) => clientAction),
+  useSubmission: vi.fn(() => ({clear: submissionMocks.clear, pending: false})),
+}))
+
 import {useAdminTrackPreview} from '../use-admin-track-preview'
 
 afterEach(() => {
+  vi.clearAllMocks()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -24,6 +33,7 @@ it('should load a private playback URL and clear playback errors when ready', as
   expect(fetcher).toHaveBeenCalledWith('/api/admin/music/tracks/track%2Fid/playback')
   expect(controller.loading()).toBe(false)
   expect(controller.playbackUrl()).toBe('https://example.com/private-track.mp3')
+  expect(submissionMocks.clear).toHaveBeenCalledOnce()
   controller.onPlaybackError()
   expect(controller.playbackUrl()).toBeNull()
   expect(controller.errorMessage()).toContain('다시 시도해 주세요')
@@ -32,7 +42,6 @@ it('should load a private playback URL and clear playback errors when ready', as
 })
 
 it('should expose a request failure and stop loading', async () => {
-  const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 503})))
   const controller = useAdminTrackPreview({trackId: 'track-id'})
 
@@ -40,8 +49,4 @@ it('should expose a request failure and stop loading', async () => {
 
   expect(controller.loading()).toBe(false)
   expect(controller.errorMessage()).toBe('미리듣기를 불러오지 못했습니다.')
-  expect(error).toHaveBeenCalledWith(
-    'Failed to load admin track preview',
-    expect.objectContaining({message: 'Playback access failed with status 503'}),
-  )
 })

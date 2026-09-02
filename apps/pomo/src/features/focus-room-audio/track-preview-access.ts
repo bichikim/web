@@ -1,17 +1,17 @@
 import {readStoredAppSession} from '../user-auth/app-session'
 
-interface PreviewTrackAccess {
+export interface PreviewTrackAccess {
   readonly mode: 'preview'
   readonly url: string
 }
 
-interface FullTrackAccess {
+export interface FullTrackAccess {
   readonly expiresAt: string
   readonly mode: 'full'
   readonly url: string
 }
 
-type TrackAccess = FullTrackAccess | PreviewTrackAccess
+export type TrackAccess = FullTrackAccess | PreviewTrackAccess
 const HTTP_UNAUTHORIZED = 401
 interface TrackPreviewAuthenticationRequired {
   readonly ok: false
@@ -111,9 +111,7 @@ const loadPreviewBlob = async (source: string): Promise<TrackPreviewSource> => {
   return {ok: true, release: () => URL.revokeObjectURL(objectUrl), source: objectUrl}
 }
 
-export const loadTrackPreviewSource = async (
-  trackId: string,
-): Promise<TrackPreviewSourceResult> => {
+export const requestTrackAccess = async (trackId: string): Promise<TrackAccess | null> => {
   const accessPath = `/api/music/tracks/${encodeURIComponent(trackId)}/access`
   const endpoint = usesRemotePublicOrigin()
     ? new URL(accessPath, getApiOrigin()).toString()
@@ -125,7 +123,7 @@ export const loadTrackPreviewSource = async (
   })
 
   if (response.status === HTTP_UNAUTHORIZED) {
-    return {ok: false, reason: 'authentication-required'}
+    return null
   }
 
   if (!response.ok) {
@@ -138,6 +136,17 @@ export const loadTrackPreviewSource = async (
     throw new TypeError('Track access response has an invalid format')
   }
 
+  return access
+}
+
+export const resolveTrackPreviewAccess = (
+  access: TrackAccess | null,
+  trackId: string,
+): Promise<TrackPreviewSourceResult> | TrackPreviewSourceResult => {
+  if (access === null) {
+    return {ok: false, reason: 'authentication-required'}
+  }
+
   const source =
     access.mode === 'preview' && usesRemotePublicOrigin()
       ? new URL(access.url, getApiOrigin()).toString()
@@ -145,3 +154,6 @@ export const loadTrackPreviewSource = async (
 
   return access.mode === 'preview' ? loadPreviewBlob(source) : {ok: true, source}
 }
+
+export const loadTrackPreviewSource = async (trackId: string): Promise<TrackPreviewSourceResult> =>
+  resolveTrackPreviewAccess(await requestTrackAccess(trackId), trackId)

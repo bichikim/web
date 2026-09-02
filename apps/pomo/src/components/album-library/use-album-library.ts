@@ -1,10 +1,11 @@
-import {type Accessor, createResource, createSignal} from 'solid-js'
+import {type Accessor, createResource, createSignal, onCleanup, onMount} from 'solid-js'
+import {createAsync, revalidate} from '@solidjs/router'
 
 import {
   loadBundledPAlbums,
-  loadPublishedPAlbums,
   type PPublishedAlbumCatalog,
   type PResolvedAlbum,
+  publishedAlbumCatalogQuery,
 } from '../../features/focus-room-audio'
 import {getLocale} from '@paraglide/runtime'
 
@@ -16,22 +17,54 @@ export interface AlbumLibraryController {
   readonly retryLibrary: () => Promise<void>
 }
 
-export const useAlbumLibrary = (): AlbumLibraryController => {
-  const [bundledAlbums, {refetch: refetchBundledAlbums}] = createResource(() =>
-    loadBundledPAlbums({locale: getLocale()}),
-  )
-  const [publishedCatalog, {refetch: refetchPublishedCatalog}] = createResource(() =>
-    loadPublishedPAlbums({locale: getLocale()}),
-  )
-  const [isCatalogRetrying, setIsCatalogRetrying] = createSignal(false)
-  const getPublishedCatalog = (): PPublishedAlbumCatalog | undefined => {
-    const {state} = publishedCatalog
+type PublishedCatalogLoadState =
+  | {readonly error: unknown; readonly kind: 'rejected'}
+  | {readonly kind: 'pending'}
+  | {readonly catalog: PPublishedAlbumCatalog; readonly kind: 'resolved'}
 
-    if (state === 'errored') {
-      throw publishedCatalog.error
+export const useAlbumLibrary = (): AlbumLibraryController => {
+  const locale = getLocale()
+  const [catalogActive, setCatalogActive] = createSignal(false)
+  const [bundledAlbums, {refetch: refetchBundledAlbums}] = createResource(() =>
+    loadBundledPAlbums({locale}),
+  )
+  const [publishedCatalogState, setPublishedCatalogState] = createSignal<PublishedCatalogLoadState>(
+    {kind: 'pending'},
+  )
+  let isDisposed = false
+  createAsync(async () => {
+    if (!catalogActive()) {
+      return
     }
 
-    return state === 'ready' || state === 'refreshing' ? publishedCatalog.latest : undefined
+    try {
+      const catalog = await publishedAlbumCatalogQuery(locale)
+
+      if (!isDisposed) {
+        setPublishedCatalogState({catalog, kind: 'resolved'})
+      }
+
+      return catalog
+    } catch (error: unknown) {
+      if (!isDisposed) {
+        setPublishedCatalogState({error, kind: 'rejected'})
+      }
+
+      throw error
+    }
+  })
+  const [isCatalogRetrying, setIsCatalogRetrying] = createSignal(false)
+  const refreshPublishedCatalog = async () => {
+    await revalidate(publishedAlbumCatalogQuery.keyFor(locale))
+  }
+  const getPublishedCatalog = (): PPublishedAlbumCatalog | undefined => {
+    const state = publishedCatalogState()
+
+    if (state.kind === 'rejected') {
+      throw state.error
+    }
+
+    return state.kind === 'resolved' ? state.catalog : undefined
   }
   const albums = () => {
     const bundled = bundledAlbums()
@@ -55,7 +88,7 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     setIsCatalogRetrying(true)
 
     try {
-      await refetchPublishedCatalog()
+      await refreshPublishedCatalog()
     } catch {
       // The resource preserves unexpected retry errors for the ErrorBoundary.
     } finally {
@@ -64,11 +97,16 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
   }
   const retryLibrary = async () => {
     try {
-      await Promise.all([refetchBundledAlbums(), refetchPublishedCatalog()])
+      await Promise.all([refetchBundledAlbums(), refreshPublishedCatalog()])
     } catch {
       // The resources preserve retry errors for the ErrorBoundary to render after reset.
     }
   }
+
+  onMount(() => setCatalogActive(true))
+  onCleanup(() => {
+    isDisposed = true
+  })
 
   return {albums, catalogError, isCatalogRetrying, retryCatalog, retryLibrary}
 }

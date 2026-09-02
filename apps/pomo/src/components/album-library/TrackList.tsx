@@ -1,11 +1,13 @@
+import {useAction, useSubmissions} from '@solidjs/router'
 import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
 
 import {PTag} from '../PTag'
 import {
-  loadTrackPreviewSource,
   type PTrack,
   type PTrackListing,
   type PTrackPreviewRequest,
+  requestTrackAccessAction,
+  resolveTrackPreviewAccess,
 } from '../../features/focus-room-audio'
 import * as m from '@paraglide/message'
 
@@ -70,6 +72,8 @@ interface PAlbumTrackListProps {
 }
 
 export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
+  const requestTrackAccess = useAction(requestTrackAccessAction)
+  const accessSubmissions = useSubmissions(requestTrackAccessAction)
   const [hasMoreBelow, setHasMoreBelow] = createSignal(false)
   let listElement!: HTMLOListElement
 
@@ -116,6 +120,10 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
             const isInPlayer = () => props.trackIds.has(track.id)
             const isPreviewing = () => props.playingTrackId === track.id
             const isLimited = () => playableTrack() === undefined
+            const isAccessPending = () =>
+              accessSubmissions.some(
+                (submission) => submission.pending && submission.input[0] === track.id,
+              )
 
             return (
               <li class="flex min-w-0 items-center gap-2 py-1 text-xs text-muted-foreground">
@@ -135,13 +143,36 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                 </span>
                 <PreviewButton
                   isLimited={isLimited()}
-                  isPending={props.pendingTrackId === track.id}
+                  isPending={props.pendingTrackId === track.id || isAccessPending()}
                   isPlaying={isPreviewing()}
                   onPress={() => {
                     const playable = playableTrack()
                     props.onPreview(
                       playable === undefined
-                        ? {id: track.id, loadSource: () => loadTrackPreviewSource(track.id)}
+                        ? {
+                            id: track.id,
+                            loadSource: async () => {
+                              try {
+                                const result = await requestTrackAccess(track.id)
+
+                                switch (result.status) {
+                                  case 'authentication-required':
+                                    return {ok: false, reason: 'authentication-required'}
+                                  case 'granted':
+                                    return resolveTrackPreviewAccess(result.access, track.id)
+                                  case 'unavailable':
+                                    throw new Error('Track access request is unavailable')
+                                }
+                              } finally {
+                                accessSubmissions
+                                  .findLast(
+                                    (submission) =>
+                                      !submission.pending && submission.input[0] === track.id,
+                                  )
+                                  ?.clear()
+                              }
+                            },
+                          }
                         : {id: track.id, source: playable.source},
                     )
                   }}

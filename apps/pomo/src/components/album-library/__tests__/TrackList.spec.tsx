@@ -4,9 +4,23 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-const audioMocks = vi.hoisted(() => ({loadTrackPreviewSource: vi.fn()}))
+const audioMocks = vi.hoisted(() => ({
+  requestTrackAccessAction: vi.fn(),
+  resolveTrackPreviewAccess: vi.fn(),
+}))
+const routerMocks = vi.hoisted(() => ({
+  submissions: [] as Array<{
+    readonly clear: () => void
+    readonly input: ReadonlyArray<unknown>
+    readonly pending: boolean
+  }>,
+}))
 
 vi.mock('../../../features/focus-room-audio', () => audioMocks)
+vi.mock('@solidjs/router', () => ({
+  useAction: vi.fn((clientAction) => clientAction),
+  useSubmissions: vi.fn(() => routerMocks.submissions),
+}))
 import {PAlbumTrackList} from '../TrackList'
 
 class TestResizeObserver {
@@ -26,7 +40,15 @@ class TestResizeObserver {
 
 beforeEach(() => {
   TestResizeObserver.instances.length = 0
-  audioMocks.loadTrackPreviewSource.mockResolvedValue({ok: true, source: '/audio/preview.mp3'})
+  routerMocks.submissions.length = 0
+  audioMocks.requestTrackAccessAction.mockResolvedValue({
+    access: {mode: 'preview', url: '/api/music/tracks/unowned-track/preview'},
+    status: 'granted',
+  })
+  audioMocks.resolveTrackPreviewAccess.mockResolvedValue({
+    ok: true,
+    source: '/audio/preview.mp3',
+  })
 })
 
 afterEach(() => {
@@ -80,8 +102,19 @@ it('should use full sources for playable tracks and access resolution for catalo
     throw new TypeError('Expected the catalog track to provide a preview source loader')
   }
 
+  const clearSubmission = vi.fn()
+  routerMocks.submissions.push({
+    clear: clearSubmission,
+    input: ['unowned-track'],
+    pending: false,
+  })
   await limitedPreviewRequest.loadSource()
-  expect(audioMocks.loadTrackPreviewSource).toHaveBeenCalledWith('unowned-track')
+  expect(audioMocks.requestTrackAccessAction).toHaveBeenCalledWith('unowned-track')
+  expect(audioMocks.resolveTrackPreviewAccess).toHaveBeenCalledWith(
+    {mode: 'preview', url: '/api/music/tracks/unowned-track/preview'},
+    'unowned-track',
+  )
+  expect(clearSubmission).toHaveBeenCalledOnce()
 })
 
 it('should visibly identify a limited preview only while it is playing', () => {

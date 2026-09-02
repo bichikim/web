@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {MemoryRouter, useAction} from '@solidjs/router'
+import {MemoryRouter, revalidate, useAction} from '@solidjs/router'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
@@ -16,10 +16,12 @@ vi.mock('../web-session', () => ({
 }))
 
 import {requestAccountMagicLinkAction, signOutAccountSessionAction} from '../../auth/actions'
+import {accountSessionQuery} from '../session-query'
 import {useWebAccount} from '../use-web-account'
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks()
+  await revalidate(accountSessionQuery.key)
 })
 
 const AccountFeedback = () => {
