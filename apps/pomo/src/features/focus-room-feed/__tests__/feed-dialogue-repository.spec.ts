@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PDatabase} from '../../focus-room-dialogue/database'
+import type {PDialogue} from '../../focus-room-dialogue/schema'
 import {
   type FeedDialogueJob,
   type FeedDialogueMetadata,
@@ -17,9 +18,18 @@ import {
 const databaseModuleMocks = vi.hoisted(() => ({
   createPDatabase: vi.fn(),
 }))
+const storageModuleMocks = vi.hoisted(() => ({
+  createModelStorage: vi.fn(),
+  delete: vi.fn(),
+  reportModelStorageError: vi.fn(),
+}))
 
 vi.mock('../../focus-room-dialogue/database', () => ({
   createPDatabase: databaseModuleMocks.createPDatabase,
+}))
+vi.mock('../../model-storage/storage', () => ({
+  createModelStorage: storageModuleMocks.createModelStorage,
+  reportModelStorageError: storageModuleMocks.reportModelStorageError,
 }))
 
 const metadataRangeToArray = vi.fn()
@@ -43,6 +53,7 @@ const feedDialogueJobs = {
 }
 const dialogues = {
   delete: vi.fn(),
+  get: vi.fn(),
 }
 const eventBindings = {
   delete: vi.fn(),
@@ -63,6 +74,10 @@ const feedItems = {
   put: vi.fn(),
   where: itemWhere,
 }
+const databaseTransaction = vi.fn(async (...arguments_: ReadonlyArray<unknown>) => {
+  const callback = arguments_.at(-1) as () => Promise<unknown>
+  return callback()
+})
 const database = {
   close: vi.fn(),
   dialogues,
@@ -70,14 +85,26 @@ const database = {
   feedDialogueJobs,
   feedDialogueMetadata,
   feedItems,
-  transaction: vi.fn(async (...arguments_: ReadonlyArray<unknown>) => {
-    const callback = arguments_.at(-1) as () => Promise<unknown>
-    return callback()
-  }),
+  transaction: databaseTransaction,
 } as unknown as PDatabase
 
 const CREATED_AT = '2026-08-25T00:00:00.000Z'
 const UPDATED_AT = '2026-08-25T01:00:00.000Z'
+
+const createDialogue = (overrides: Partial<PDialogue> = {}): PDialogue => ({
+  audioKey: 'audio-1',
+  createdAt: CREATED_AT,
+  durationMs: 1000,
+  id: 'dialogue-1',
+  language: 'ko',
+  modelId: 'int8',
+  segments: [{durationMs: 1000, index: 0, startMs: 0, text: '읽을 대사'}],
+  text: '읽을 대사',
+  updatedAt: UPDATED_AT,
+  version: 1,
+  voiceId: 'M1',
+  ...overrides,
+})
 
 const createJob = (overrides: Partial<FeedDialogueJob> = {}): FeedDialogueJob => ({
   createdAt: CREATED_AT,
@@ -133,6 +160,9 @@ const createMetadata = (overrides: Partial<FeedDialogueMetadata> = {}): FeedDial
 beforeEach(() => {
   vi.clearAllMocks()
   databaseModuleMocks.createPDatabase.mockReturnValue(database)
+  storageModuleMocks.createModelStorage.mockReturnValue({delete: storageModuleMocks.delete})
+  storageModuleMocks.delete.mockResolvedValue({ok: true, value: true})
+  dialogues.get.mockResolvedValue(undefined)
 })
 
 describe('feed dialogue repository writes', () => {
@@ -146,7 +176,7 @@ describe('feed dialogue repository writes', () => {
     expect(feedDialogueMetadata.put).toHaveBeenCalledWith(metadata)
     expect(feedItems.put).toHaveBeenCalledWith(item)
     expect(feedDialogueJobs.delete).toHaveBeenCalledWith('job-1')
-    expect(database.transaction).toHaveBeenCalledOnce()
+    expect(databaseTransaction).toHaveBeenCalledOnce()
   })
 
   it('should queue a job together with its item transactionally', async () => {
@@ -158,7 +188,7 @@ describe('feed dialogue repository writes', () => {
 
     expect(feedDialogueJobs.put).toHaveBeenCalledWith(queuedJob)
     expect(feedItems.put).toHaveBeenCalledWith(item)
-    expect(database.transaction).toHaveBeenCalledOnce()
+    expect(databaseTransaction).toHaveBeenCalledOnce()
   })
 
   it('should fail only a job that is still generating', async () => {
@@ -227,6 +257,7 @@ describe('feed dialogue repository writes', () => {
     const item = createItem()
     const job = createJob()
     feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+    dialogues.get.mockResolvedValue(createDialogue())
     eventBindings.get.mockImplementation((event: string) =>
       event === 'focus-start'
         ? {
@@ -252,7 +283,53 @@ describe('feed dialogue repository writes', () => {
     expect(feedDialogueMetadata.delete).toHaveBeenCalledWith('dialogue-1')
     expect(feedDialogueJobs.put).toHaveBeenCalledWith(job)
     expect(feedItems.put).toHaveBeenCalledWith(item)
-    expect(database.transaction).toHaveBeenCalledOnce()
+    expect(storageModuleMocks.delete.mock.calls.map(([path]) => path)).toEqual([
+      '/__pomo/dialogue-audio/audio-1.opus',
+      '/__pomo/dialogue-audio/audio-1.wav',
+    ])
+    expect(databaseTransaction).toHaveBeenCalledOnce()
+  })
+
+  it('should preserve cached audio when the recovery transaction fails', async () => {
+    const transactionError = new Error('transaction failed')
+    feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+    dialogues.get.mockResolvedValue(createDialogue())
+    databaseTransaction.mockImplementationOnce(async (...arguments_: ReadonlyArray<unknown>) => {
+      const callback = arguments_.at(-1) as () => Promise<unknown>
+      await callback()
+      throw transactionError
+    })
+    const repository = createFeedDialogueRepository()
+
+    await expect(
+      repository.recoverMissingDialogue({
+        dialogueId: 'dialogue-1',
+        item: createItem(),
+        job: createJob(),
+      }),
+    ).rejects.toBe(transactionError)
+
+    expect(storageModuleMocks.delete).not.toHaveBeenCalled()
+  })
+
+  it('should keep recovery committed and report cached audio deletion failures', async () => {
+    const storageError = {cause: new Error('cache unavailable'), operation: 'delete' as const}
+    feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+    dialogues.get.mockResolvedValue(createDialogue())
+    storageModuleMocks.delete.mockResolvedValue({error: storageError, ok: false})
+    const repository = createFeedDialogueRepository()
+
+    await expect(
+      repository.recoverMissingDialogue({
+        dialogueId: 'dialogue-1',
+        item: createItem(),
+        job: createJob(),
+      }),
+    ).resolves.toBe(true)
+
+    expect(storageModuleMocks.reportModelStorageError).toHaveBeenCalledTimes(2)
+    expect(storageModuleMocks.reportModelStorageError).toHaveBeenNthCalledWith(1, storageError)
+    expect(storageModuleMocks.reportModelStorageError).toHaveBeenNthCalledWith(2, storageError)
   })
 
   it('should skip recovery when another request already removed the dialogue metadata', async () => {

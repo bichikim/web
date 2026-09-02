@@ -1,5 +1,7 @@
 import {createPDatabase, type PDatabase} from '../focus-room-dialogue/database'
 import {deleteDialogueRecord} from '../focus-room-dialogue/dialogue-record'
+import {deleteDialogueAudio} from '../focus-room-dialogue/repository'
+import {focusRoomDialogueSchema} from '../focus-room-dialogue/schema'
 import {
   type FeedDialogueJob,
   feedDialogueJobSchema,
@@ -233,7 +235,7 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
       const nextJob = feedDialogueJobSchema.parse(options.job)
       const nextItem = feedItemRecordSchema.parse(options.item)
 
-      return database.transaction(
+      const recoveredAudioKey = await database.transaction(
         'rw',
         database.dialogues,
         database.eventBindings,
@@ -259,13 +261,27 @@ export const createFeedDialogueRepository = (): FeedDialogueRepository => {
             throw new Error('복구할 피드 대화와 생성 작업이 일치하지 않아요.')
           }
 
+          const storedDialogue = await database.dialogues.get(options.dialogueId)
+          const dialogue =
+            storedDialogue === undefined ? null : focusRoomDialogueSchema.parse(storedDialogue)
+
           await deleteDialogueRecord(database, options.dialogueId)
           await database.feedDialogueMetadata.delete(options.dialogueId)
           await database.feedDialogueJobs.put(nextJob)
           await database.feedItems.put(nextItem)
-          return true
+          return dialogue?.audioKey ?? null
         },
       )
+
+      if (recoveredAudioKey === false) {
+        return false
+      }
+
+      if (recoveredAudioKey !== null) {
+        await deleteDialogueAudio(recoveredAudioKey)
+      }
+
+      return true
     },
     async removeItem(feedConnectionId, feedItemId) {
       await database.feedItems.delete(getFeedItemRecordId(feedConnectionId, feedItemId))
