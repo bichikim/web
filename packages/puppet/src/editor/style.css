@@ -216,6 +216,11 @@
   font-weight: 700;
 }
 
+.puppet-editor .toolbar-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
 .puppet-editor .toolbar-button input {
   position: fixed;
   inline-size: 1px;
@@ -1499,4 +1504,253 @@
   margin: 4px 6px;
   border: 0;
   background: #2d3834;
+}
+
+.auto-mesh-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(3 7 6 / 72%);
+  backdrop-filter: blur(3px);
+}
+
+.auto-mesh-dialog-overlay[data-closed],
+.auto-mesh-dialog-content[data-closed] {
+  display: none;
+}
+
+.auto-mesh-dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border: 1px solid #3c4b46;
+  border-radius: 12px;
+  outline: none;
+  color: #e8f0ed;
+  background: #111714;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 48%);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  transform: translate(-50%, -50%);
+}
+
+.auto-mesh-dialog-content form {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+}
+
+.auto-mesh-dialog-content header,
+.auto-mesh-dialog-content footer {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auto-mesh-dialog-content header > div {
+  display: grid;
+  gap: 5px;
+}
+
+.auto-mesh-dialog-content h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.auto-mesh-dialog-content header p {
+  margin: 0;
+  color: #91a09a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.auto-mesh-dialog-content header button {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: #96a39e;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.auto-mesh-dialog-content header button:hover {
+  color: #f0f7f4;
+  background: #25302c;
+}
+
+.auto-mesh-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.auto-mesh-presets legend {
+  margin-bottom: 8px;
+  color: #bec9c5;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.auto-mesh-presets label {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.auto-mesh-presets input {
+  position: fixed;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+}
+
+.auto-mesh-presets label > span {
+  display: grid;
+  min-height: 88px;
+  gap: 5px;
+  align-content: start;
+  padding: 11px;
+  border: 1px solid #35413d;
+  border-radius: 8px;
+  background: #171e1b;
+}
+
+.auto-mesh-presets input:checked + span {
+  border-color: #64e5c4;
+  background: #192722;
+  box-shadow: inset 0 0 0 1px #64e5c4;
+}
+
+.auto-mesh-presets input:focus-visible + span,
+.auto-mesh-dialog-content button:focus-visible,
+.auto-mesh-dialog-content input[type='number']:focus-visible {
+  outline: 2px solid #64e5c4;
+  outline-offset: 2px;
+}
+
+.auto-mesh-presets strong {
+  color: #e6efeb;
+  font-size: 11px;
+}
+
+.auto-mesh-presets small {
+  color: #7f8d88;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.auto-mesh-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.auto-mesh-settings > label {
+  display: grid;
+  gap: 7px;
+  color: #bdc8c4;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.auto-mesh-number-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #7f8d88;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 10px;
+}
+
+.auto-mesh-number-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid #3b4743;
+  border-radius: 6px;
+  color: #eef5f2;
+  background: #0d1210;
+}
+
+.auto-mesh-settings label > small {
+  color: #75827d;
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.auto-mesh-warning {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid #e5b55a;
+  color: #c7b889;
+  background: #211d13;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.auto-mesh-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #8f4747;
+  border-radius: 7px;
+  color: #ffd1d1;
+  background: #2a1616;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.auto-mesh-dialog-content footer {
+  justify-content: flex-end;
+}
+
+.auto-mesh-dialog-content footer button {
+  min-width: 92px;
+  padding: 8px 12px;
+  border: 1px solid #64e5c4;
+  border-radius: 7px;
+  color: #07110f;
+  background: #64e5c4;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auto-mesh-dialog-content footer button.secondary {
+  border-color: #3b4743;
+  color: #b8c4bf;
+  background: #171e1b;
+}
+
+.auto-mesh-dialog-content footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .auto-mesh-presets,
+  .auto-mesh-settings {
+    grid-template-columns: 1fr;
+  }
+
+  .auto-mesh-presets label > span {
+    min-height: 0;
+  }
 }

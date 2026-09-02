@@ -11,6 +11,21 @@ describe('parseDocument', () => {
     expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
   })
 
+  it('should reject fractional texture pixel dimensions', () => {
+    const document = createDemoDocument()
+    const fractionalDocument = {
+      ...document,
+      parts: document.parts.map((part, index) =>
+        index === 0 ? {...part, texture: {...part.texture, width: part.texture.width + 0.5}} : part,
+      ),
+    }
+
+    expect(parseDocument(JSON.stringify(fractionalDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
   it('should preserve supported easing and reject unknown easing', () => {
     const document = createDemoDocument()
     const track = document.motions[0]!.tracks[0]!
