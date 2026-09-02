@@ -41,6 +41,17 @@ Pull request에서는 GitHub Actions가 타입 검사, Oxlint, 포맷 검사와 
 
 ## 릴리스
 
+Pomo 개발 환경도 자동 배포되지 않는다. `dev`에 변경을 반영한 뒤 GitHub `Actions`에서 다음 순서로 수동 배포한다.
+
+```text
+Deploy Pomo Audio Gateway 선택
+→ Run workflow
+→ Branch: dev 선택
+→ Run workflow 실행
+```
+
+이 workflow는 Pomo와 Pomo Audio Gateway를 함께 개발 환경에 배포한다.
+
 `dev`는 통합·검증 브랜치이고 `main`은 유일한 운영 릴리스 소스다. `main`에 병합해도 자동 배포되지 않으며, GitHub `Actions`에서 `main`을 선택해 다음 workflow를 필요한 시점에 각각 실행한다.
 
 - `Release packages`: public npm 패키지 배포
