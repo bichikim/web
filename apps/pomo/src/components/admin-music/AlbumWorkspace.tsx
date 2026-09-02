@@ -189,6 +189,8 @@ const TrackPanel = (props: TrackPanelProps) => {
         <PendingTrackList
           assets={props.assets}
           confirmingAssetId={props.model.confirmingAssetId()}
+          isConfirmingAsset={props.model.isConfirmingAsset}
+          isRemovingTrack={props.model.isRemovingTrack}
           onConfirm={props.model.handleTrackConfirmation}
           onRemove={props.model.handleTrackRemove}
           pendingTracks={props.pendingTracks}
@@ -209,11 +211,11 @@ const TrackPanel = (props: TrackPanelProps) => {
                   <button
                     aria-label={`${track.title} 수록곡 삭제`}
                     class={`${DANGER_BUTTON_CLASSES} justify-self-end`}
-                    disabled={props.model.removingTrackId() === track.id}
+                    disabled={props.model.isRemovingTrack(track.id)}
                     onClick={async (event) => handleTrackRemove(event, track)}
                     type="button"
                   >
-                    {props.model.removingTrackId() === track.id ? '삭제 중…' : '삭제'}
+                    {props.model.isRemovingTrack(track.id) ? '삭제 중…' : '삭제'}
                   </button>
                   <div class="min-w-0 sm:col-start-2 sm:col-end-4">
                     <AdminTrackPreview
@@ -334,7 +336,7 @@ const SalesPanel = (props: SalesPanelProps) => {
           </p>
           <button
             class={`${isPublished() ? SECONDARY_BUTTON_CLASSES : BUTTON_CLASSES} mt-5`}
-            disabled={props.model.updatingAlbumId() === props.album.id}
+            disabled={props.model.isUpdatingAlbum(props.album.id)}
             onClick={() => props.onStatusReviewOpen()}
             type="button"
           >
@@ -405,13 +407,13 @@ const SalesPanel = (props: SalesPanelProps) => {
             <button
               class={isPublished() ? SECONDARY_BUTTON_CLASSES : BUTTON_CLASSES}
               disabled={
-                props.model.updatingAlbumId() === props.album.id ||
+                props.model.isUpdatingAlbum(props.album.id) ||
                 (!isPublished() && !props.album.release.ready)
               }
               onClick={handleStatusConfirm}
               type="button"
             >
-              {props.model.updatingAlbumId() === props.album.id
+              {props.model.isUpdatingAlbum(props.album.id)
                 ? '처리 중…'
                 : isPublished()
                   ? '보관하기'

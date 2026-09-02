@@ -1,3 +1,4 @@
+import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, onMount, type Setter} from 'solid-js'
 import {z} from 'zod'
 
@@ -7,7 +8,8 @@ import {
   type AlbumDraftTranslations,
   createEmptyAlbumTranslations,
 } from './album-draft'
-import {uploadAlbumCover, validateAlbumCover} from './cover-upload'
+import {createAdminAlbumAction, type CreateAlbumActionResult} from './actions'
+import {validateAlbumCover} from './cover-upload'
 
 const getAlbumDraftStorage = () => import('./album-draft-storage')
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
@@ -16,39 +18,6 @@ interface UseAlbumDraftProps {
   readonly onAlbumCreated?: (albumId: string) => void
   readonly refreshCatalog: () => Promise<void>
   readonly setMessage: Setter<string | null>
-}
-
-const createAlbum = async (draft: AlbumDraftData, coverFile: File | null): Promise<string> => {
-  const configuredCoverImageUrl = draft.coverImageUrl.trim()
-  const uploadedCover =
-    coverFile === null ? null : await uploadAlbumCover(coverFile, draft.coverDraftId)
-  const coverImageUrl = uploadedCover?.coverImageUrl ?? configuredCoverImageUrl
-  const response = await fetch('/api/admin/music/albums', {
-    body: JSON.stringify({
-      coverDraftId: uploadedCover === null ? null : draft.coverDraftId,
-      coverFallback: draft.coverFallback,
-      coverImageUrl: coverImageUrl === '' ? null : coverImageUrl,
-      coverReservationId: uploadedCover?.coverReservationId ?? null,
-      translations: ALBUM_LOCALES.map((locale) => ({
-        description: draft.translations[locale].description.trim(),
-        locale,
-        title: draft.translations[locale].title.trim(),
-      })).filter(
-        (translation) =>
-          translation.locale === 'ko' ||
-          translation.title.length > 0 ||
-          translation.description.length > 0,
-      ),
-    }),
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-  })
-
-  if (!response.ok) {
-    throw new Error('저장하지 못했습니다. 입력값과 로그인 상태를 확인해 주세요.')
-  }
-
-  return z.object({id: z.string()}).parse(await response.json()).id
 }
 
 const refreshAfterAlbumCreation = async (
@@ -228,7 +197,7 @@ interface CreateAlbumSubmitHandlerOptions extends UseAlbumDraftProps {
   readonly setCoverDraftId: Setter<string | null>
   readonly setCoverFallback: Setter<AlbumDraftData['coverFallback']>
   readonly setCoverImageUrl: Setter<string>
-  readonly setIsSavingAlbum: Setter<boolean>
+  readonly submitAlbum: (values: FormData) => Promise<CreateAlbumActionResult>
   readonly setTranslations: Setter<AlbumDraftTranslations>
 }
 
@@ -238,11 +207,26 @@ const createAlbumSubmitHandler = (
   async function handleAlbumSubmit(event) {
     event.preventDefault()
     const albumForm = event.currentTarget
-    options.setIsSavingAlbum(true)
     options.setMessage(null)
+    const values = new FormData(albumForm)
+    const draft = options.getDraftData()
+    const coverFile = options.getCoverFile()
+    const coverDraftId = options.getCoverDraftId()
+    values.set('coverDraftId', coverDraftId ?? '')
+    values.set('coverFallback', draft.coverFallback)
+    values.set('coverImageUrl', draft.coverImageUrl)
+    for (const locale of ALBUM_LOCALES) {
+      values.set(`description.${locale}`, draft.translations[locale].description)
+      values.set(`title.${locale}`, draft.translations[locale].title)
+    }
+    if (coverFile === null) {
+      values.delete('coverFile')
+    } else {
+      values.set('coverFile', coverFile)
+    }
+    const result = await options.submitAlbum(values)
 
-    try {
-      const albumId = await createAlbum(options.getDraftData(), options.getCoverFile())
+    if (result.status === 'created') {
       const savedCoverDraftId = options.getCoverDraftId()
       albumForm.reset()
       options.clearPreparedCover()
@@ -252,12 +236,11 @@ const createAlbumSubmitHandler = (
       options.setCoverFallback('lp')
       const {deleteAlbumDraft} = await getAlbumDraftStorage()
       const deletionResult = await deleteAlbumDraft(savedCoverDraftId)
-      await refreshAfterAlbumCreation(options, albumId, deletionResult.success)
-    } catch (error) {
-      options.setMessage(error instanceof Error ? error.message : '앨범을 저장하지 못했습니다.')
-    } finally {
-      options.setIsSavingAlbum(false)
+      await refreshAfterAlbumCreation(options, result.albumId, deletionResult.success)
+      return
     }
+
+    options.setMessage(result.detail)
   }
 
 interface CreateDraftDataGetterOptions {
@@ -384,8 +367,13 @@ const registerDraftRestoration = (options: RegisterDraftRestorationOptions): voi
   })
 }
 
+const useCreateAlbumAction = () => ({
+  submission: useSubmission(createAdminAlbumAction),
+  submit: useAction(createAdminAlbumAction),
+})
+
 export const useAlbumDraft = (props: UseAlbumDraftProps) => {
-  const [isSavingAlbum, setIsSavingAlbum] = createSignal(false)
+  const albumAction = useCreateAlbumAction()
   const [isProcessingCover, setIsProcessingCover] = createSignal(false)
   const [isRestoringDraft, setIsRestoringDraft] = createSignal(true)
   const [coverPreviewUrl, setCoverPreviewUrl] = createSignal<string | null>(null)
@@ -400,7 +388,6 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const editedFields = new Set<DraftField>()
   let isDisposed = false
   const restorationBarrier = createDraftRestorationBarrier()
-
   const getDraftData = createDraftDataGetter({
     getCoverDraftId: coverDraftId,
     getCoverFallback: coverFallback,
@@ -466,8 +453,8 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     setCoverDraftId,
     setCoverFallback,
     setCoverImageUrl,
-    setIsSavingAlbum,
     setTranslations: setAlbumTranslations,
+    submitAlbum: albumAction.submit,
   })
 
   const handleCoverChange: JSX.EventHandler<HTMLInputElement, Event> = async (event) => {
@@ -547,6 +534,6 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     handleCoverChange,
     isProcessingCover,
     isRestoringDraft,
-    isSavingAlbum,
+    isSavingAlbum: () => albumAction.submission.pending === true,
   }
 }

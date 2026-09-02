@@ -1,32 +1,17 @@
-import {createMemo, createSignal, type JSX, onMount} from 'solid-js'
+import {createAsync, revalidate, useAction, useSubmission, useSubmissions} from '@solidjs/router'
+import {createEffect, createMemo, createSignal, type JSX, onMount} from 'solid-js'
 
-import {type AdminCatalog, type AlbumStatusAction, catalogSchema} from './catalog'
+import {changeAdminAlbumStatusAction, connectAdminAlbumOfferAction} from './actions'
+import {type AdminCatalog, type AlbumStatusAction} from './catalog'
+import {adminCatalogQuery} from './catalog-query'
 import {useAlbumDraft} from './use-album-draft'
 import {useTrackManagement} from './use-track-management'
 
-const readCatalog = async (): Promise<AdminCatalog> => {
-  const response = await fetch('/api/admin/music')
-
-  if (!response.ok) {
-    throw new Error('음악 목록을 불러오지 못했습니다.')
-  }
-
-  return catalogSchema.parse(await response.json())
-}
-
-const postJson = async (url: string, body: Readonly<Record<string, unknown>>): Promise<void> => {
-  const response = await fetch(url, {
-    body: JSON.stringify(body),
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-  })
-
-  if (!response.ok) {
-    throw new Error('저장하지 못했습니다. 입력값과 로그인 상태를 확인해 주세요.')
-  }
-}
-
 export const useAdminMusic = () => {
+  const changeAlbumStatus = useAction(changeAdminAlbumStatusAction)
+  const albumStatusSubmissions = useSubmissions(changeAdminAlbumStatusAction)
+  const connectOffer = useAction(connectAdminAlbumOfferAction)
+  const offerSubmission = useSubmission(connectAdminAlbumOfferAction)
   const [catalog, setCatalog] = createSignal<AdminCatalog>({
     albums: [],
     assets: [],
@@ -34,21 +19,36 @@ export const useAdminMusic = () => {
     pendingTracks: [],
     tracks: [],
   })
-  const [isLoading, setIsLoading] = createSignal(true)
-  const [isSavingOffer, setIsSavingOffer] = createSignal(false)
+  const [catalogActive, setCatalogActive] = createSignal(false)
+  const [catalogLoading, setCatalogLoading] = createSignal(true)
   const [isAlbumEditorOpen, setIsAlbumEditorOpen] = createSignal(false)
   const [selectedAlbumId, setSelectedAlbumId] = createSignal<string | null>(null)
-  const [updatingAlbumId, setUpdatingAlbumId] = createSignal<string | null>(null)
   const [message, setMessage] = createSignal<string | null>(null)
 
-  const refreshCatalog = async (): Promise<void> => {
-    const nextCatalog = await readCatalog()
+  const catalogResult = createAsync(async () => {
+    if (!catalogActive()) {
+      return
+    }
+
+    return adminCatalogQuery()
+  })
+  const applyCatalog = (nextCatalog: AdminCatalog): void => {
     setCatalog(nextCatalog)
     setSelectedAlbumId((currentAlbumId) =>
       nextCatalog.albums.some((album) => album.id === currentAlbumId)
         ? currentAlbumId
         : (nextCatalog.albums[0]?.id ?? null),
     )
+  }
+  const refreshCatalog = async (): Promise<void> => {
+    await revalidate(adminCatalogQuery.key)
+    const result = await adminCatalogQuery()
+
+    if (result.status === 'failed') {
+      throw new Error(result.message)
+    }
+
+    applyCatalog(result.catalog)
   }
 
   const albumDraft = useAlbumDraft({
@@ -80,55 +80,52 @@ export const useAdminMusic = () => {
     ).length
   }
 
-  onMount(async () => {
-    try {
-      await refreshCatalog()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : '음악 목록을 불러오지 못했습니다.')
-    } finally {
-      setIsLoading(false)
+  createEffect(() => {
+    const result = catalogResult()
+
+    if (result?.status === 'ready') {
+      setCatalogLoading(false)
+      applyCatalog(result.catalog)
+      return
+    }
+
+    if (result?.status === 'failed') {
+      setCatalogLoading(false)
+      setMessage(result.message)
     }
   })
+
+  onMount(() => setCatalogActive(true))
 
   const handleAlbumStatusChange = async (
     albumId: string,
     action: AlbumStatusAction,
   ): Promise<void> => {
-    setUpdatingAlbumId(albumId)
     setMessage(null)
-
-    try {
-      await postJson('/api/admin/music/status', {action, albumId})
+    const result = await changeAlbumStatus(albumId, action)
+    if (result.status === 'succeeded') {
       await refreshCatalog()
       setMessage(action === 'publish' ? '앨범을 공개했습니다.' : '앨범을 보관했습니다.')
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : '앨범 상태를 변경하지 못했습니다.')
-    } finally {
-      setUpdatingAlbumId(null)
+      return
     }
+
+    setMessage(result.detail)
   }
 
   const handleOfferSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
     event.preventDefault()
     const offerForm = event.currentTarget
     const form = new FormData(offerForm)
-    setIsSavingOffer(true)
     setMessage(null)
-
-    try {
-      await postJson('/api/admin/music/offers', {
-        albumId: String(form.get('albumId') ?? ''),
-        externalProductId: String(form.get('externalProductId') ?? ''),
-        provider: 'apps-in-toss',
-      })
+    const result = await connectOffer(form)
+    if (result.status === 'succeeded') {
       offerForm.reset()
       await refreshCatalog()
       setMessage('앱인토스 일회성 판매 상품을 연결했습니다.')
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : '판매 상품을 연결하지 못했습니다.')
-    } finally {
-      setIsSavingOffer(false)
+      return
     }
+
+    setMessage(result.detail)
   }
 
   return {
@@ -140,13 +137,18 @@ export const useAdminMusic = () => {
     handleAlbumStatusChange,
     handleOfferSubmit,
     isAlbumEditorOpen,
-    isLoading,
-    isSavingOffer,
+    isLoading: catalogLoading,
+    isSavingOffer: () => offerSubmission.pending === true,
+    isUpdatingAlbum: (albumId: string) =>
+      albumStatusSubmissions.some(
+        (submission) => submission.pending && submission.input[0] === albumId,
+      ),
     message,
     selectedAlbumId,
     setIsAlbumEditorOpen,
     setSelectedAlbumId,
-    updatingAlbumId,
+    updatingAlbumId: () =>
+      albumStatusSubmissions.findLast((submission) => submission.pending)?.input[0] ?? null,
   }
 }
 

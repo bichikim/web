@@ -14,6 +14,10 @@ import type {
 const audioMocks = vi.hoisted(() => ({
   loadBundledPAlbums: vi.fn(),
   loadPublishedPAlbums: vi.fn(),
+  publishedAlbumCatalogQuery: Object.assign(vi.fn(), {
+    key: 'published-focus-room-album-catalog',
+    keyFor: vi.fn(),
+  }),
   useTrackPreview: vi.fn(),
 }))
 const componentMocks = vi.hoisted(() => ({
@@ -21,8 +25,13 @@ const componentMocks = vi.hoisted(() => ({
   button: vi.fn(),
 }))
 const reporterMocks = vi.hoisted(() => ({reportClientError: vi.fn()}))
+const revalidationMocks = vi.hoisted(() => ({revalidate: vi.fn()}))
 
 vi.mock('../../../features/focus-room-audio', () => audioMocks)
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  return {...actual, revalidate: revalidationMocks.revalidate}
+})
 vi.mock('../../../features/client-error-reporter', () => reporterMocks)
 vi.mock('../../PButton', () => ({PButton: componentMocks.button}))
 vi.mock('../Card', () => ({AlbumCard: componentMocks.albumCard}))
@@ -85,12 +94,39 @@ let previewHandleEnded: () => void
 let previewHandleError: () => void
 let previewSetAudio: (element: HTMLAudioElement) => void
 let previewToggle: (request: PTrackPreviewRequest) => Promise<void>
+let publishedCatalogLocale = 'ko'
+let refreshPublishedCatalog: () => void = () => undefined
+let refreshedCatalogRequest: Promise<PPublishedAlbumCatalog> | undefined
 
 beforeEach(() => {
+  const [catalogRevision, setCatalogRevision] = createSignal(0)
+  refreshPublishedCatalog = () => setCatalogRevision((revision) => revision + 1)
+  refreshedCatalogRequest = undefined
   audioMocks.loadBundledPAlbums.mockReset().mockResolvedValue([])
   audioMocks.loadPublishedPAlbums.mockReset().mockResolvedValue({
     albums: [],
     status: 'ready',
+  })
+  audioMocks.publishedAlbumCatalogQuery.mockReset().mockImplementation((locale) => {
+    catalogRevision()
+    publishedCatalogLocale = locale
+
+    if (refreshedCatalogRequest !== undefined) {
+      const request = refreshedCatalogRequest
+      refreshedCatalogRequest = undefined
+      return request
+    }
+
+    return audioMocks.loadPublishedPAlbums({locale})
+  })
+  audioMocks.publishedAlbumCatalogQuery.keyFor
+    .mockReset()
+    .mockImplementation((locale) => `published-focus-room-album-catalog:${locale}`)
+  revalidationMocks.revalidate.mockReset().mockImplementation(() => {
+    const request = audioMocks.loadPublishedPAlbums({locale: publishedCatalogLocale})
+    refreshedCatalogRequest = request
+    refreshPublishedCatalog()
+    return request.then(() => undefined)
   })
   previewError = vi.fn(() => null)
   previewHandleEnded = vi.fn()

@@ -3,6 +3,16 @@
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  return {
+    ...actual,
+    action: vi.fn((clientAction) => clientAction),
+    useAction: vi.fn((clientAction) => clientAction),
+    useSubmissions: vi.fn(() => []),
+  }
+})
+
 import type {
   PAlbumSale,
   PResolvedAlbum,

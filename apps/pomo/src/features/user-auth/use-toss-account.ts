@@ -1,25 +1,23 @@
-import {useNavigate} from '@solidjs/router'
+import {useAction, useNavigate, useSubmission} from '@solidjs/router'
 import {createSignal, onCleanup, onMount} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
 import {createAuthenticationMachine} from '../auth/machine'
 import {
-  type AccountLinkEmailResult,
-  clearStoredAppSession,
-  createTossLoginSession,
-  readStoredAppSession,
-  requestAccountLinkEmail,
-  revokeTossLoginSession,
-  validateAppSession,
-} from './app-session'
+  type AccountLinkEmailActionResult,
+  createTossLoginSessionAction,
+  requestAccountLinkEmailAction,
+  revokeTossLoginSessionAction,
+} from './actions'
+import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
 
 interface AccountLinkFeedback {
   readonly errorMessage: string | null
   readonly successMessage: string | null
 }
 
-const getAccountLinkFeedback = (result: AccountLinkEmailResult): AccountLinkFeedback => {
+const getAccountLinkFeedback = (result: AccountLinkEmailActionResult): AccountLinkFeedback => {
   switch (result.status) {
     case 'sent': {
       return {
@@ -38,26 +36,12 @@ const getAccountLinkFeedback = (result: AccountLinkEmailResult): AccountLinkFeed
 
       return {errorMessage, successMessage: null}
     }
+    case 'unavailable': {
+      return {errorMessage: m.account_toss_link_server_failed(), successMessage: null}
+    }
     default: {
       const unhandledResult: never = result
       return unhandledResult
-    }
-  }
-}
-
-const useLoginNavigation = () => {
-  const navigate = useNavigate()
-  let isActive = true
-
-  onCleanup(() => {
-    isActive = false
-  })
-
-  return async () => {
-    await createTossLoginSession()
-
-    if (isActive) {
-      navigate('/', {replace: true})
     }
   }
 }
@@ -68,7 +52,7 @@ export interface TossAccountController {
   readonly isLoading: () => boolean
   readonly isSubmitting: () => boolean
   readonly onEmailChange: (email: string) => void
-  readonly onEmailLink: () => Promise<void>
+  readonly onEmailLink: (values: FormData) => Promise<void>
   readonly onLogin: () => Promise<void>
   readonly onLogout: () => Promise<void>
   readonly successMessage: () => string | null
@@ -77,12 +61,22 @@ export interface TossAccountController {
 
 export const useTossAccount = (): TossAccountController => {
   const authentication = createAuthenticationMachine()
-  const login = useLoginNavigation()
+  const navigate = useNavigate()
+  const login = useAction(createTossLoginSessionAction)
+  const loginSubmission = useSubmission(createTossLoginSessionAction)
+  const logout = useAction(revokeTossLoginSessionAction)
+  const logoutSubmission = useSubmission(revokeTossLoginSessionAction)
+  const requestEmailLink = useAction(requestAccountLinkEmailAction)
+  const emailLinkSubmission = useSubmission(requestAccountLinkEmailAction)
   const [token, setToken] = createSignal<string | null>(null)
   const [email, setEmail] = createSignal('')
-  const [isSubmitting, setIsSubmitting] = createSignal(false)
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [successMessage, setSuccessMessage] = createSignal<string | null>(null)
+  let isActive = true
+
+  onCleanup(() => {
+    isActive = false
+  })
 
   onMount(() => {
     const restoreSession = async () => {
@@ -115,14 +109,19 @@ export const useTossAccount = (): TossAccountController => {
   const onLogin = async () => {
     setErrorMessage(null)
     setSuccessMessage(null)
-    setIsSubmitting(true)
-
-    try {
-      await login()
-    } catch {
+    const result = await login()
+    if (result.status === 'unavailable') {
       setErrorMessage(m.account_toss_login_failed())
-    } finally {
-      setIsSubmitting(false)
+      authentication.send({type: 'resolve-unavailable'})
+      return
+    }
+
+    if (isActive) {
+      authentication.send({
+        session: {kind: 'authenticated', provider: 'toss'},
+        type: 'resolve-authenticated',
+      })
+      navigate('/', {replace: true})
     }
   }
 
@@ -135,26 +134,23 @@ export const useTossAccount = (): TossAccountController => {
 
     setErrorMessage(null)
     setSuccessMessage(null)
-    setIsSubmitting(true)
-
-    try {
-      const result = await revokeTossLoginSession(currentToken)
+    const result = await logout(currentToken)
+    if (result.status !== 'unavailable') {
       setToken(null)
       authentication.send({type: 'sign-out'})
 
-      if (result.storageStatus === 'cleared') {
+      if (result.status === 'signed-out') {
         setSuccessMessage(m.account_toss_logout_success())
       } else {
         setErrorMessage(m.account_toss_logout_cleanup_pending())
       }
-    } catch {
-      setErrorMessage(m.account_toss_logout_failed())
-    } finally {
-      setIsSubmitting(false)
+      return
     }
+
+    setErrorMessage(m.account_toss_logout_failed())
   }
 
-  const onEmailLink = async () => {
+  const onEmailLink = async (values: FormData) => {
     const currentToken = token()
 
     if (currentToken === null) {
@@ -163,25 +159,20 @@ export const useTossAccount = (): TossAccountController => {
 
     setErrorMessage(null)
     setSuccessMessage(null)
-    setIsSubmitting(true)
-
-    try {
-      const result = await requestAccountLinkEmail(currentToken, email())
-      const feedback = getAccountLinkFeedback(result)
-      setErrorMessage(feedback.errorMessage)
-      setSuccessMessage(feedback.successMessage)
-    } catch {
-      setErrorMessage(m.account_toss_link_server_failed())
-    } finally {
-      setIsSubmitting(false)
-    }
+    const result = await requestEmailLink(currentToken, values)
+    const feedback = getAccountLinkFeedback(result)
+    setErrorMessage(feedback.errorMessage)
+    setSuccessMessage(feedback.successMessage)
   }
 
   return {
     email,
     errorMessage,
     isLoading: () => authentication.state().kind === 'checking',
-    isSubmitting,
+    isSubmitting: () =>
+      loginSubmission.pending === true ||
+      logoutSubmission.pending === true ||
+      emailLinkSubmission.pending === true,
     onEmailChange: setEmail,
     onEmailLink,
     onLogin,

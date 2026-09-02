@@ -68,6 +68,7 @@ const REFERRER_POLICY = 'no-referrer'
 const CONTENT_TYPE_OPTIONS = 'nosniff'
 const SHORT_COMMIT_HASH_LENGTH = 12
 const ASSET_LIBRARY_PATTERN = /[/\\]asset-library[/\\]/u
+const E2E_FIXTURES_PATTERN = /[/\\]e2e[/\\]fixtures[/\\]/u
 const SECONDS_PER_MINUTE = 60
 const MINUTES_PER_HOUR = 60
 const HOURS_PER_DAY = 24
@@ -311,7 +312,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
     },
     server: {
       watch: {
-        ignored: [ASSET_LIBRARY_PATTERN],
+        ignored: [ASSET_LIBRARY_PATTERN, E2E_FIXTURES_PATTERN],
       },
     },
     worker: {

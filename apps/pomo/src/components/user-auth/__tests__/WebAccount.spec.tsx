@@ -7,12 +7,18 @@ import {beforeEach, expect, it, vi} from 'vitest'
 
 import {completeAccountLink, readAccountSession} from '../../../features/user-auth/web-session'
 
-vi.mock('@solidjs/router', () => ({action: vi.fn(), useAction: vi.fn(), useSubmission: vi.fn()}))
+const queryMocks = vi.hoisted(() => ({accountSessionQuery: vi.fn()}))
+
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  return {...actual, action: vi.fn(), useAction: vi.fn(), useSubmission: vi.fn()}
+})
 vi.mock('../../../features/user-auth/web-session', () => ({
   completeAccountLink: vi.fn(),
   readAccountSession: vi.fn(),
   signOutWebSession: vi.fn(),
 }))
+vi.mock('../../../features/user-auth/session-query', () => queryMocks)
 
 import {WebAccount} from '../WebAccount'
 
@@ -23,6 +29,7 @@ const [magicLinkPending, setMagicLinkPending] = createSignal(false)
 const [magicLinkResult, setMagicLinkResult] = createSignal<MagicLinkResult | undefined>()
 const [signOutPending, setSignOutPending] = createSignal(false)
 const [signOutResult, setSignOutResult] = createSignal<SignOutResult | undefined>()
+const completeLinkSubmission = {pending: false, result: undefined}
 const magicLinkSubmission = {
   get pending() {
     return magicLinkPending()
@@ -41,6 +48,9 @@ const signOutSubmission = {
 }
 const requestMagicLink = vi.fn()
 const signOut = vi.fn()
+const completeLink = vi.fn((token: string) =>
+  completeAccountLink(token).then((status) => ({status})),
+)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -51,11 +61,16 @@ beforeEach(() => {
   setSignOutResult(undefined)
   requestMagicLink.mockReset()
   signOut.mockReset()
-  vi.mocked(useAction).mockReturnValueOnce(requestMagicLink).mockReturnValueOnce(signOut)
+  vi.mocked(useAction)
+    .mockReturnValueOnce(completeLink)
+    .mockReturnValueOnce(requestMagicLink)
+    .mockReturnValueOnce(signOut)
   vi.mocked(useSubmission)
+    .mockReturnValueOnce(completeLinkSubmission as ReturnType<typeof useSubmission>)
     .mockReturnValueOnce(magicLinkSubmission as ReturnType<typeof useSubmission>)
     .mockReturnValueOnce(signOutSubmission as ReturnType<typeof useSubmission>)
   vi.mocked(readAccountSession).mockResolvedValue(null)
+  queryMocks.accountSessionQuery.mockReset().mockImplementation(() => readAccountSession())
 })
 
 it('should explain an email account-link callback failure and consume the query', async () => {

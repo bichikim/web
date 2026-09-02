@@ -4,9 +4,16 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-const audioMocks = vi.hoisted(() => ({loadTrackPreviewSource: vi.fn()}))
+const audioMocks = vi.hoisted(() => ({
+  requestTrackAccessAction: vi.fn(),
+  resolveTrackPreviewAccess: vi.fn(),
+}))
 
 vi.mock('../../../features/focus-room-audio', () => audioMocks)
+vi.mock('@solidjs/router', () => ({
+  useAction: vi.fn((clientAction) => clientAction),
+  useSubmissions: vi.fn(() => []),
+}))
 import {PAlbumTrackList} from '../TrackList'
 
 class TestResizeObserver {
@@ -26,7 +33,14 @@ class TestResizeObserver {
 
 beforeEach(() => {
   TestResizeObserver.instances.length = 0
-  audioMocks.loadTrackPreviewSource.mockResolvedValue({ok: true, source: '/audio/preview.mp3'})
+  audioMocks.requestTrackAccessAction.mockResolvedValue({
+    access: {mode: 'preview', url: '/api/music/tracks/unowned-track/preview'},
+    status: 'granted',
+  })
+  audioMocks.resolveTrackPreviewAccess.mockResolvedValue({
+    ok: true,
+    source: '/audio/preview.mp3',
+  })
 })
 
 afterEach(() => {
@@ -81,7 +95,11 @@ it('should use full sources for playable tracks and access resolution for catalo
   }
 
   await limitedPreviewRequest.loadSource()
-  expect(audioMocks.loadTrackPreviewSource).toHaveBeenCalledWith('unowned-track')
+  expect(audioMocks.requestTrackAccessAction).toHaveBeenCalledWith('unowned-track')
+  expect(audioMocks.resolveTrackPreviewAccess).toHaveBeenCalledWith(
+    {mode: 'preview', url: '/api/music/tracks/unowned-track/preview'},
+    'unowned-track',
+  )
 })
 
 it('should visibly identify a limited preview only while it is playing', () => {

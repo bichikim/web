@@ -11,7 +11,10 @@ export const TossAccount = () => {
 
   const handleEmailLink: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
     event.preventDefault()
-    await account.onEmailLink()
+    if (!(event.currentTarget instanceof HTMLFormElement)) {
+      return
+    }
+    await account.onEmailLink(new FormData(event.currentTarget))
   }
 
   return (
@@ -42,7 +45,12 @@ export const TossAccount = () => {
             </p>
           </div>
 
-          <form class="grid gap-4" onSubmit={handleEmailLink}>
+          <form
+            action="/api/account/link-email"
+            class="grid gap-4"
+            method="post"
+            onSubmit={handleEmailLink}
+          >
             <div>
               <h2 class="m-0 text-base font-750">{m.account_toss_use_on_web()}</h2>
               <p class="mb-0 mt-1 text-xs leading-5 text-white/50">
@@ -54,6 +62,7 @@ export const TossAccount = () => {
               disabled={account.isSubmitting()}
               inputMode="email"
               label={m.account_toss_email_label()}
+              name="email"
               onChange={account.onEmailChange}
               required
               type="email"

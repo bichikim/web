@@ -36,6 +36,8 @@ const getPendingTrackStatus = (asset: AdminAsset | undefined): string => {
 export interface PendingTrackListProps {
   readonly assets?: ReadonlyArray<AdminAsset>
   readonly confirmingAssetId?: string | null
+  readonly isConfirmingAsset?: (assetId: string) => boolean
+  readonly isRemovingTrack?: (trackId: string) => boolean
   readonly onConfirm?: (assetId: string) => Promise<void>
   readonly onRemove?: (trackId: string) => Promise<void>
   readonly pendingTracks?: ReadonlyArray<AdminPendingTrack>
@@ -92,13 +94,16 @@ export const PendingTrackList = (props: PendingTrackListProps) => {
                           aria-label={`${track.title} 등록 확인 재시도`}
                           class={SECONDARY_BUTTON_CLASSES}
                           disabled={
-                            props.confirmingAssetId === confirmableAsset.id ||
-                            props.removingTrackId === track.id
+                            (props.isConfirmingAsset?.(confirmableAsset.id) ??
+                              props.confirmingAssetId === confirmableAsset.id) ||
+                            (props.isRemovingTrack?.(track.id) ??
+                              props.removingTrackId === track.id)
                           }
                           onClick={() => props.onConfirm?.(confirmableAsset.id)}
                           type="button"
                         >
-                          {props.confirmingAssetId === confirmableAsset.id
+                          {(props.isConfirmingAsset?.(confirmableAsset.id) ??
+                          props.confirmingAssetId === confirmableAsset.id)
                             ? '확인 중…'
                             : '등록 확인'}
                         </button>
@@ -109,13 +114,18 @@ export const PendingTrackList = (props: PendingTrackListProps) => {
                         aria-label={`${track.title} 대기 등록 삭제`}
                         class={DANGER_BUTTON_CLASSES}
                         disabled={
-                          props.removingTrackId === track.id ||
-                          props.confirmingAssetId === asset()?.id
+                          (props.isRemovingTrack?.(track.id) ??
+                            props.removingTrackId === track.id) ||
+                          (asset() !== undefined &&
+                            (props.isConfirmingAsset?.(asset()!.id) ??
+                              props.confirmingAssetId === asset()?.id))
                         }
                         onClick={async (event) => handleRemove(event, track)}
                         type="button"
                       >
-                        {props.removingTrackId === track.id ? '삭제 중…' : '삭제'}
+                        {(props.isRemovingTrack?.(track.id) ?? props.removingTrackId === track.id)
+                          ? '삭제 중…'
+                          : '삭제'}
                       </button>
                     </Show>
                   </span>

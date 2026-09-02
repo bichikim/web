@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const navigate = vi.fn()
@@ -13,16 +14,71 @@ const sessionMocks = vi.hoisted(() => ({
   validateAppSession: vi.fn(),
 }))
 
-vi.mock('@solidjs/router', () => ({useNavigate: vi.fn()}))
+vi.mock('@solidjs/router', () => ({
+  action: vi.fn((clientAction) => clientAction),
+  useAction: vi.fn(),
+  useNavigate: vi.fn(),
+  useSubmission: vi.fn(),
+}))
 vi.mock('../../../features/user-auth/app-session', () => sessionMocks)
 
-import {useNavigate} from '@solidjs/router'
+import {useAction, useNavigate, useSubmission} from '@solidjs/router'
 
 import {TossAccount} from '../TossAccount'
 
+const [loginPending, setLoginPending] = createSignal(false)
+const [logoutPending, setLogoutPending] = createSignal(false)
+const [emailPending, setEmailPending] = createSignal(false)
+const loginSubmission = {
+  get pending() {
+    return loginPending()
+  },
+}
+const logoutSubmission = {
+  get pending() {
+    return logoutPending()
+  },
+}
+const emailSubmission = {
+  get pending() {
+    return emailPending()
+  },
+}
+
+const wrapAction =
+  (
+    clientAction: (...input: ReadonlyArray<unknown>) => Promise<unknown>,
+    setPending: (pending: boolean) => void,
+  ) =>
+  async (...input: ReadonlyArray<unknown>) => {
+    setPending(true)
+    try {
+      return await clientAction(...input)
+    } finally {
+      setPending(false)
+    }
+  }
+
 beforeEach(() => {
   vi.clearAllMocks()
+  setLoginPending(false)
+  setLogoutPending(false)
+  setEmailPending(false)
   vi.mocked(useNavigate).mockReturnValue(navigate)
+  vi.mocked(useAction)
+    .mockImplementationOnce(
+      (clientAction) => wrapAction(clientAction, setLoginPending) as ReturnType<typeof useAction>,
+    )
+    .mockImplementationOnce(
+      (clientAction) => wrapAction(clientAction, setLogoutPending) as ReturnType<typeof useAction>,
+    )
+    .mockImplementationOnce(
+      (clientAction) => wrapAction(clientAction, setEmailPending) as ReturnType<typeof useAction>,
+    )
+  vi.mocked(useSubmission)
+    .mockReturnValueOnce(loginSubmission as ReturnType<typeof useSubmission>)
+    .mockReturnValueOnce(logoutSubmission as ReturnType<typeof useSubmission>)
+    .mockReturnValueOnce(emailSubmission as ReturnType<typeof useSubmission>)
   sessionMocks.readStoredAppSession.mockResolvedValue('app-token')
   sessionMocks.validateAppSession.mockResolvedValue(true)
 })
@@ -200,8 +256,12 @@ it('should show email-link progress and confirm a sent link', async () => {
   render(() => <TossAccount />)
 
   const emailField = await screen.findByLabelText('연결할 이메일')
+  const emailForm = screen.getByRole('button', {name: '웹 로그인 연결하기'}).closest('form')
+  expect(emailForm).toHaveAttribute('action', '/api/account/link-email')
+  expect(emailForm).toHaveAttribute('method', 'post')
+  expect(emailField).toHaveAttribute('name', 'email')
   fireEvent.input(emailField, {target: {value: 'user@example.com'}})
-  fireEvent.submit(screen.getByRole('button', {name: '웹 로그인 연결하기'}).closest('form')!)
+  fireEvent.submit(emailForm!)
   expect(screen.getByRole('button', {name: '이메일 전송 중…'})).toBeDisabled()
 
   emailRequest.resolve({status: 'sent'})
