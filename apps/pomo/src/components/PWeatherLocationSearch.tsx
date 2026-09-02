@@ -41,6 +41,9 @@ const isDefaultDuplicate = (
   if (selectedLocation.id === defaultLocation.id) {
     return true
   }
+  if (selectedLocation.legacyCitySlug !== undefined) {
+    return selectedLocation.legacyCitySlug === defaultLocation.legacyCitySlug
+  }
   if (!KOREAN_COUNTRIES.has(selectedLocation.country)) {
     return false
   }

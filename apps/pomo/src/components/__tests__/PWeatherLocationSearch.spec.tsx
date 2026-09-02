@@ -165,7 +165,7 @@ it('should explain the minimum query length', () => {
   expect(screen.getAllByText('도시 이름을 두 글자 이상 입력해 주세요.')).toHaveLength(2)
 })
 
-it('should not duplicate a selected Korean city with its localized default', () => {
+it('should not duplicate an old stored Korean city with its localized default', () => {
   render(() => <PWeatherLocationSearch location={worldSeoul} />)
 
   const props = comboboxMocks.rootProps as {
@@ -175,6 +175,27 @@ it('should not duplicate a selected Korean city with its localized default', () 
     worldSeoul,
     ...Object.values(LEGACY_WEATHER_LOCATIONS).filter(
       (location) => location.id !== LEGACY_WEATHER_LOCATIONS.seoul.id,
+    ),
+  ])
+})
+
+it('should match a default city by its stable legacy slug', () => {
+  const selectedSeoul = {
+    ...worldSeoul,
+    country: 'Republic of Korea',
+    legacyCitySlug: 'seoul' as const,
+    name: 'Seoul City',
+  }
+
+  render(() => <PWeatherLocationSearch location={selectedSeoul} />)
+
+  const props = comboboxMocks.rootProps as {
+    options: ReadonlyArray<WeatherLocation>
+  }
+  expect(props.options).toEqual([
+    selectedSeoul,
+    ...Object.values(LEGACY_WEATHER_LOCATIONS).filter(
+      (location) => location.legacyCitySlug !== selectedSeoul.legacyCitySlug,
     ),
   ])
 })

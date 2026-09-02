@@ -10,6 +10,7 @@ import {
 } from 'src/features/weather'
 import {type Database, getDatabase, weatherLocations} from '../database'
 import {
+  type OpenWeatherSearchLocation,
   searchOpenWeatherLocations,
   type SearchOpenWeatherLocationsOptions,
 } from './openweather-client'
@@ -24,6 +25,9 @@ export interface WorldWeatherLocation extends WeatherLocation {
 interface LegacyWorldWeatherLocation extends WorldWeatherLocation {
   readonly legacyCitySlug: WeatherCitySlug
 }
+
+const LEGACY_LOCATION_MAXIMUM_DISTANCE_DEGREES = 0.05
+const LEGACY_LOCATION_PROVIDER_COUNTRY = 'KR'
 
 const LEGACY_WORLD_WEATHER_LOCATIONS = {
   busan: {
@@ -76,6 +80,12 @@ const LEGACY_WORLD_WEATHER_LOCATIONS = {
   },
 } as const satisfies Readonly<Record<WeatherCitySlug, LegacyWorldWeatherLocation>>
 
+const LEGACY_PROVIDER_LOCATION_ALIASES: Partial<
+  Readonly<Record<WeatherCitySlug, ReadonlyArray<string>>>
+> = {
+  jeju: ['Jeju City', '제주시'],
+}
+
 const createProviderLocationId = (providerLocationId: string): WeatherLocationId =>
   `openweather:${providerLocationId}`
 
@@ -97,6 +107,49 @@ const toWeatherLocation = (location: WorldWeatherLocation): WeatherLocation => (
   region: location.region,
 })
 
+const normalizeLocationName = (name: string): string =>
+  name
+    .normalize('NFKC')
+    .toLowerCase()
+    .replaceAll(/[^\p{Letter}]/gu, '')
+
+const findLegacyWorldWeatherLocation = (
+  location: OpenWeatherSearchLocation,
+): LegacyWorldWeatherLocation | undefined => {
+  if (location.country !== LEGACY_LOCATION_PROVIDER_COUNTRY) {
+    return undefined
+  }
+
+  const locationName = normalizeLocationName(location.name)
+  return Object.values(LEGACY_WORLD_WEATHER_LOCATIONS).find((legacyLocation) => {
+    const providerAliases = LEGACY_PROVIDER_LOCATION_ALIASES[legacyLocation.legacyCitySlug] ?? []
+    const matchesName = [
+      legacyLocation.legacyCitySlug,
+      legacyLocation.name,
+      legacyLocation.region,
+      ...providerAliases,
+    ].some((name) => locationName === normalizeLocationName(name))
+    const isNearby =
+      Math.abs(location.latitude - legacyLocation.latitude) <=
+        LEGACY_LOCATION_MAXIMUM_DISTANCE_DEGREES &&
+      Math.abs(location.longitude - legacyLocation.longitude) <=
+        LEGACY_LOCATION_MAXIMUM_DISTANCE_DEGREES
+    return matchesName && isNearby
+  })
+}
+
+const getSearchWeatherLocation = (location: OpenWeatherSearchLocation): WeatherLocation => {
+  const legacyLocation = findLegacyWorldWeatherLocation(location)
+  return legacyLocation === undefined
+    ? {
+        country: location.country,
+        id: createProviderLocationId(location.providerLocationId),
+        name: location.name,
+        region: location.region,
+      }
+    : toWeatherLocation(legacyLocation)
+}
+
 /** Searches and registers fixed provider coordinates for subsequent feed requests. */
 export const searchWorldWeatherLocations = async (
   options: SearchOpenWeatherLocationsOptions,
@@ -109,37 +162,38 @@ export const searchWorldWeatherLocations = async (
     return []
   }
 
-  await database
-    .insert(weatherLocations)
-    .values(
-      providerLocations.map((location) => ({
-        country: location.country,
-        id: createProviderLocationId(location.providerLocationId),
-        latitude: location.latitude,
-        longitude: location.longitude,
-        name: location.name,
-        providerLocationId: location.providerLocationId,
-        region: location.region,
-      })),
-    )
-    .onConflictDoUpdate({
-      set: {
-        country: sql`excluded.country`,
-        latitude: sql`excluded.latitude`,
-        longitude: sql`excluded.longitude`,
-        name: sql`excluded.name`,
-        region: sql`excluded.region`,
-        updatedAt: sql`now()`,
-      },
-      target: weatherLocations.providerLocationId,
-    })
+  const newProviderLocations = providerLocations.filter(
+    (location) => findLegacyWorldWeatherLocation(location) === undefined,
+  )
 
-  return providerLocations.map((location) => ({
-    country: location.country,
-    id: createProviderLocationId(location.providerLocationId),
-    name: location.name,
-    region: location.region,
-  }))
+  if (newProviderLocations.length > 0) {
+    await database
+      .insert(weatherLocations)
+      .values(
+        newProviderLocations.map((location) => ({
+          country: location.country,
+          id: createProviderLocationId(location.providerLocationId),
+          latitude: location.latitude,
+          longitude: location.longitude,
+          name: location.name,
+          providerLocationId: location.providerLocationId,
+          region: location.region,
+        })),
+      )
+      .onConflictDoUpdate({
+        set: {
+          country: sql`excluded.country`,
+          latitude: sql`excluded.latitude`,
+          longitude: sql`excluded.longitude`,
+          name: sql`excluded.name`,
+          region: sql`excluded.region`,
+          updatedAt: sql`now()`,
+        },
+        target: weatherLocations.providerLocationId,
+      })
+  }
+
+  return providerLocations.map(getSearchWeatherLocation)
 }
 
 /** Resolves only server-registered location IDs to fixed coordinates. */
