@@ -12,6 +12,7 @@ const MAXIMUM_DESCRIPTION_LENGTH = 2000
 const MAXIMUM_TITLE_LENGTH = 120
 const REQUIRED_TRANSLATION_COUNT = 4
 const HTTP_BAD_REQUEST = 400
+const HTTP_CONFLICT = 409
 const HTTP_CREATED = 201
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const translationSchema = z.object({
@@ -83,7 +84,11 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     if (!result.success) {
       return noStoreJson(
         {error: result.code},
-        {cookies: authorization.cookies, status: HTTP_BAD_REQUEST},
+        {
+          cookies: authorization.cookies,
+          status:
+            result.code === 'album_creation_payload_mismatch' ? HTTP_CONFLICT : HTTP_BAD_REQUEST,
+        },
       )
     }
 

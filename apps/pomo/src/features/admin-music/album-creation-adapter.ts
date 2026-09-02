@@ -1,12 +1,17 @@
 import {z} from 'zod'
 
-import type {AlbumCreationServices} from './album-creation'
+import {type AlbumCreationResult, type AlbumCreationServices} from './album-creation'
 import {ALBUM_LOCALES, type AlbumDraftData} from './album-draft'
 import {uploadAlbumCover} from './cover-upload'
 
 const getAlbumDraftStorage = () => import('./album-draft-storage')
+const HTTP_CONFLICT = 409
+const payloadMismatchSchema = z.object({error: z.literal('album_creation_payload_mismatch')})
 
-const createAlbum = async (draft: AlbumDraftData, coverFile: File | null): Promise<string> => {
+const createAlbum = async (
+  draft: AlbumDraftData,
+  coverFile: File | null,
+): Promise<AlbumCreationResult> => {
   const configuredCoverImageUrl = draft.coverImageUrl.trim()
   const uploadedCover =
     coverFile === null ? null : await uploadAlbumCover(coverFile, draft.coverDraftId)
@@ -34,10 +39,18 @@ const createAlbum = async (draft: AlbumDraftData, coverFile: File | null): Promi
   })
 
   if (!response.ok) {
+    if (response.status === HTTP_CONFLICT) {
+      const errorBody: unknown = await response.json().catch(() => null)
+
+      if (payloadMismatchSchema.safeParse(errorBody).success) {
+        return {code: 'album_creation_payload_mismatch', success: false}
+      }
+    }
+
     throw new Error('저장하지 못했습니다. 입력값과 로그인 상태를 확인해 주세요.')
   }
 
-  return z.object({id: z.string()}).parse(await response.json()).id
+  return {albumId: z.object({id: z.string()}).parse(await response.json()).id, success: true}
 }
 
 const clearDraft = async (coverDraftId: string | null): Promise<boolean> => {

@@ -14,6 +14,7 @@ export {useAlbumDraft} from './use-album-draft'
 export {createAlbumSubmitHandler} from './album-creation'
 export type {
   AlbumCreationCallbacks,
+  AlbumCreationResult,
   AlbumCreationServices,
   CreateAlbumSubmitHandlerOptions,
 } from './album-creation'

@@ -226,6 +226,7 @@ const createDraftRestorationBarrier = (): DraftRestorationBarrier => {
 
 interface AlbumCreationId {
   readonly get: () => string
+  readonly renew: () => void
   readonly set: Setter<string | null>
 }
 
@@ -243,6 +244,7 @@ const useAlbumCreationId = (): AlbumCreationId => {
       setAlbumId(nextAlbumId)
       return nextAlbumId
     },
+    renew: () => setAlbumId(crypto.randomUUID()),
     set: setAlbumId,
   }
 }
@@ -414,6 +416,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverFile: preparedCoverFile,
     getDraftData,
     persistDraft: draftPersistence.persist,
+    renewAlbumId: albumCreationId.renew,
     services: albumCreationServices,
     setAlbumId: albumCreationId.set,
     setCoverDraftId,

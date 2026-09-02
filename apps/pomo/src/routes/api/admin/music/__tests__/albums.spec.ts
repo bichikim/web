@@ -246,7 +246,7 @@ describe('admin music album route', () => {
 
     const response = await invokeApiRoute(POST, createRequest())
 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(409)
     await expect(response.json()).resolves.toEqual({error: 'album_creation_payload_mismatch'})
   })
 
