@@ -8,7 +8,7 @@ import {usePFeedContext} from '../../features/focus-room-feed/feed-context'
 import {usePFeeds} from '../../features/focus-room-feed/use-focus-room-feeds'
 import {PFeedProvider} from '../PFeedProvider'
 
-vi.mock('../../features/focus-room-dialogue', () => ({usePEvents: vi.fn(() => ({}))}))
+vi.mock('../../features/focus-room-dialogue/event-context', () => ({usePEvents: vi.fn(() => ({}))}))
 vi.mock('../../features/focus-room-feed/use-focus-room-feeds', () => ({usePFeeds: vi.fn()}))
 
 const createController = (): PFeedController => ({

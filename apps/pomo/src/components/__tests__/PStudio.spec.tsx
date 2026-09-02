@@ -9,7 +9,7 @@ import {
   supportsPSceneGyroscope,
   usePSceneStyle,
 } from '../../features/focus-room-animation'
-import {usePEvents} from '../../features/focus-room-dialogue'
+import {usePEvents} from '../../features/focus-room-dialogue/event-context'
 import {
   readFocusRoomEntrySession,
   writeFocusRoomEntrySession,
@@ -41,7 +41,7 @@ vi.mock('../../features/focus-room-animation', () => ({
   supportsPSceneGyroscope: vi.fn(),
   usePSceneStyle: vi.fn(),
 }))
-vi.mock('../../features/focus-room-dialogue', () => ({usePEvents: vi.fn()}))
+vi.mock('../../features/focus-room-dialogue/event-context', () => ({usePEvents: vi.fn()}))
 vi.mock('../../features/focus-room-entry', () => ({
   readFocusRoomEntrySession: vi.fn(),
   writeFocusRoomEntrySession: vi.fn(),

@@ -15,12 +15,17 @@ const [result, setResult] = createSignal<
   {readonly status: 'rejected' | 'sent' | 'unavailable'} | undefined
 >()
 const submission = {
+  clear: vi.fn(),
+  error: undefined,
+  input: [],
   get pending() {
     return pending()
   },
   get result() {
     return result()
   },
+  retry: vi.fn(),
+  url: 'https://action/request-admin-magic-link',
 }
 const requestMagicLink = vi.fn()
 

@@ -1,7 +1,7 @@
 import {useNavigate, useSubmission} from '@solidjs/router'
-import {createEffect, createMemo} from 'solid-js'
+import {createEffect, createMemo, createSignal} from 'solid-js'
 
-import {signOutAdminSessionAction} from '../auth/actions'
+import {type SignOutActionResult, signOutAdminSessionAction} from '../auth/actions'
 
 export interface AdminDashboardController {
   readonly errorMessage: () => string | null
@@ -11,8 +11,11 @@ export interface AdminDashboardController {
 export const useAdminDashboard = (): AdminDashboardController => {
   const navigate = useNavigate()
   const submission = useSubmission(signOutAdminSessionAction)
+  const [feedbackStatus, setFeedbackStatus] = createSignal<SignOutActionResult['status'] | null>(
+    null,
+  )
   const errorMessage = createMemo(() => {
-    const status = submission.result?.status
+    const status = feedbackStatus()
 
     return status === 'rejected' || status === 'unavailable'
       ? '로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.'
@@ -20,9 +23,25 @@ export const useAdminDashboard = (): AdminDashboardController => {
   })
 
   createEffect(() => {
-    if (submission.result?.status === 'signed-out') {
-      navigate('/admin/login', {replace: true})
+    if (submission.pending === true) {
+      setFeedbackStatus(null)
+      return
     }
+
+    const {result} = submission
+
+    if (result === undefined) {
+      return
+    }
+
+    setFeedbackStatus(result.status)
+    submission.clear()
+
+    if (result.status !== 'signed-out') {
+      return
+    }
+
+    navigate('/admin/login', {replace: true})
   })
 
   return {
