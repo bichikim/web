@@ -17,6 +17,7 @@ const player: Player = {
   play: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
+  setParameterValues: vi.fn(),
   updateDocument: mocks.updateDocument,
 }
 
@@ -95,6 +96,37 @@ describe('PlayerCanvas', () => {
     view.unmount()
     expect(controlledPlayer.destroy).toHaveBeenCalledOnce()
     expect(onPlayerChange).toHaveBeenLastCalledWith(null)
+  })
+
+  test('should apply reactive parameter values without recreating the player', async () => {
+    const [parameterValues, setParameterValues] = createSignal({'angle-x': 0, 'angle-y': 0})
+    const parameterPlayer: Player = {...player, setParameterValues: vi.fn()}
+    mocks.createPlayer.mockResolvedValueOnce(parameterPlayer)
+
+    render(() => (
+      <PlayerCanvas document={createDemoDocument()} parameterValues={parameterValues()} />
+    ))
+
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    await waitFor(() =>
+      expect(parameterPlayer.setParameterValues).toHaveBeenLastCalledWith({
+        'angle-x': 0,
+        'angle-y': 0,
+      }),
+    )
+    expect(mocks.createPlayer.mock.calls[0]?.[0].parameterValues).toEqual({
+      'angle-x': 0,
+      'angle-y': 0,
+    })
+
+    setParameterValues({'angle-x': 15, 'angle-y': -15})
+    await waitFor(() =>
+      expect(parameterPlayer.setParameterValues).toHaveBeenLastCalledWith({
+        'angle-x': 15,
+        'angle-y': -15,
+      }),
+    )
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
   })
 
   test('should debounce container resize renders without recreating the player', async () => {

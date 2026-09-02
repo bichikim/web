@@ -4,6 +4,7 @@ import {
   type PuppetDocument,
   type PuppetMesh,
   type PuppetParameter,
+  type PuppetParameterBinding2D,
 } from './document'
 
 const TEXTURE_WIDTH = 640
@@ -20,6 +21,9 @@ const FULL_ROTATION = Math.PI * 2
 const CIRCLE_TEXTURE_SIZE = 144
 const DIAMOND_TEXTURE_SIZE = 156
 const PREVIEW_DEFORM_OFFSET = 64
+const DEMO_PARAMETER_MINIMUM = -30
+const DEMO_PARAMETER_MAXIMUM = 30
+const DEMO_PARAMETER_VALUES = [DEMO_PARAMETER_MINIMUM, 0, DEMO_PARAMETER_MAXIMUM] as const
 const MESH_INDICES = [
   0,
   1,
@@ -102,7 +106,7 @@ const createRadialMesh = (options: RadialMeshOptions): PuppetMesh => {
   }
 }
 
-const createPreviewVertices = (centerX: number) => [
+const createPreviewVertices = (centerX: number, centerY = CENTER_Y) => [
   0,
   0,
   TEXTURE_WIDTH,
@@ -112,40 +116,44 @@ const createPreviewVertices = (centerX: number) => [
   0,
   TEXTURE_HEIGHT,
   centerX,
-  CENTER_Y,
+  centerY,
 ]
 
 const createDemoParameters = (): ReadonlyArray<PuppetParameter> => [
   {
     defaultValue: 0,
     id: 'angle-x',
-    keyforms: [
-      {
-        parts: [
-          {
-            partId: 'mesh-preview',
-            vertices: createPreviewVertices(CENTER_X - PREVIEW_DEFORM_OFFSET),
-          },
-        ],
-        value: -30,
-      },
-      {
-        parts: [{partId: 'mesh-preview', vertices: createPreviewVertices(CENTER_X)}],
-        value: 0,
-      },
-      {
-        parts: [
-          {
-            partId: 'mesh-preview',
-            vertices: createPreviewVertices(CENTER_X + PREVIEW_DEFORM_OFFSET),
-          },
-        ],
-        value: 30,
-      },
-    ],
-    maximum: 30,
-    minimum: -30,
+    maximum: DEMO_PARAMETER_MAXIMUM,
+    minimum: DEMO_PARAMETER_MINIMUM,
     name: 'Angle X',
+  },
+  {
+    defaultValue: 0,
+    id: 'angle-y',
+    maximum: DEMO_PARAMETER_MAXIMUM,
+    minimum: DEMO_PARAMETER_MINIMUM,
+    name: 'Angle Y',
+  },
+]
+
+const createDemoParameterBindings = (): ReadonlyArray<PuppetParameterBinding2D> => [
+  {
+    id: 'angle-xy',
+    keyforms: DEMO_PARAMETER_VALUES.flatMap((y) =>
+      DEMO_PARAMETER_VALUES.map((x) => ({
+        parts: [
+          {
+            partId: 'mesh-preview',
+            vertices: createPreviewVertices(
+              CENTER_X + (x / DEMO_PARAMETER_MAXIMUM) * PREVIEW_DEFORM_OFFSET,
+              CENTER_Y + (y / DEMO_PARAMETER_MAXIMUM) * PREVIEW_DEFORM_OFFSET,
+            ),
+          },
+        ],
+        values: [x, y] as const,
+      })),
+    ),
+    parameterIds: ['angle-x', 'angle-y'],
     targetPartIds: ['mesh-preview'],
   },
 ]
@@ -170,6 +178,7 @@ export const createDemoDocument = (): PuppetDocument => ({
       ],
     },
   ],
+  parameterBindings: createDemoParameterBindings(),
   parameters: createDemoParameters(),
   parts: [
     {

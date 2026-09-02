@@ -1,79 +1,51 @@
 import {Button} from '@kobalte/core/button'
-import {clamp} from 'es-toolkit/math'
-import {createSignal, createUniqueId, For, onCleanup, Show} from 'solid-js'
+import {createUniqueId, For, getOwner, onCleanup, runWithOwner, Show} from 'solid-js'
 
-import type {PuppetParameter} from '../../player/document'
+import {
+  isTwoDimensionalParameterBinding,
+  parameterValuesEqual,
+  type PuppetParameterValueMap,
+  type PuppetParameterValues,
+} from '../../deformation'
+import type {PuppetParameter, PuppetParameterBinding} from '../../player/document'
+import {EditorKeyformMarker} from './EditorKeyformMarker'
+import {EditorKeyformToolbar} from './EditorKeyformToolbar'
 import {EditorParameterItem} from './EditorParameterItem'
-
-const PERCENT = 100
-const VALUE_PRECISION = 6
-const VALUE_STEPS = 120
+import {
+  getParameterKeyboardValue,
+  getParameterPointerValue,
+  getParameterProgress,
+} from './parameter-value'
 
 interface ParameterValueScrubberProps {
-  readonly onValueChange?: (value: number) => void
+  readonly onValueChange?: (values: PuppetParameterValues) => void
   readonly parameter: PuppetParameter
   readonly value: number
 }
 
-const getProgress = (parameter: PuppetParameter, value: number) =>
-  ((value - parameter.minimum) / (parameter.maximum - parameter.minimum)) * PERCENT
-
-const getPointerValue = (
-  parameter: PuppetParameter,
-  bounds: DOMRect,
-  clientX: number,
-): number | undefined => {
-  if (bounds.width <= 0) {
-    return undefined
-  }
-
-  const progress = clamp((clientX - bounds.left) / bounds.width, 0, 1)
-  const value = parameter.minimum + progress * (parameter.maximum - parameter.minimum)
-  const step = (parameter.maximum - parameter.minimum) / VALUE_STEPS
-  const steppedValue = parameter.minimum + Math.round((value - parameter.minimum) / step) * step
-  return Number(clamp(steppedValue, parameter.minimum, parameter.maximum).toFixed(VALUE_PRECISION))
-}
-
-const getKeyboardValue = (parameter: PuppetParameter, value: number, key: string) => {
-  const step = (parameter.maximum - parameter.minimum) / VALUE_STEPS
-  let nextValue: number
-
-  switch (key) {
-    case 'ArrowLeft':
-    case 'ArrowDown':
-      nextValue = value - step
-      break
-    case 'ArrowRight':
-    case 'ArrowUp':
-      nextValue = value + step
-      break
-    case 'End':
-      nextValue = parameter.maximum
-      break
-    case 'Home':
-      nextValue = parameter.minimum
-      break
-    default:
-      return undefined
-  }
-
-  return Number(clamp(nextValue, parameter.minimum, parameter.maximum).toFixed(VALUE_PRECISION))
-}
-
 const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
   let removePointerListeners: (() => void) | undefined
+  const owner = getOwner()
+  const canUpdateValue = () => {
+    const read = () => props.onValueChange !== undefined
+    return owner === null ? read() : runWithOwner(owner, read)
+  }
+  const updateValue = (value: number) => {
+    const update = () => props.onValueChange?.([value])
+    return owner === null ? update() : runWithOwner(owner, update)
+  }
   const handleKeyDown = (event: KeyboardEvent) => {
-    const value = getKeyboardValue(props.parameter, props.value, event.key)
+    const value = getParameterKeyboardValue(props.parameter, props.value, event.key)
 
     if (value === undefined) {
       return
     }
 
     event.preventDefault()
-    props.onValueChange?.(value)
+    updateValue(value)
   }
   const handlePointerDown = (event: PointerEvent & {readonly currentTarget: HTMLButtonElement}) => {
-    if (event.button !== 0 || props.onValueChange === undefined) {
+    if (event.button !== 0 || !canUpdateValue()) {
       return
     }
 
@@ -82,22 +54,27 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
       return
     }
 
-    const updateValue = (clientX: number) => {
-      const value = getPointerValue(props.parameter, bounds, clientX)
-      if (value !== undefined) {
-        props.onValueChange?.(value)
+    const updatePointerValue = (clientX: number) =>
+      updateValue(getParameterPointerValue(props.parameter, bounds.left, bounds.width, clientX))
+    const {pointerId} = event
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) {
+        return
+      }
+
+      moveEvent.preventDefault()
+      updatePointerValue(moveEvent.clientX)
+    }
+    const finishPointerDrag = (finishEvent: PointerEvent) => {
+      if (finishEvent.pointerId === pointerId) {
+        removePointerListeners?.()
       }
     }
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      moveEvent.preventDefault()
-      updateValue(moveEvent.clientX)
-    }
-    const finishPointerDrag = () => removePointerListeners?.()
 
     event.preventDefault()
     event.stopPropagation()
     removePointerListeners?.()
-    updateValue(event.clientX)
+    updatePointerValue(event.clientX)
     // The stored callback only removes native drag listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
@@ -122,7 +99,7 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
       aria-valuenow={props.value}
       class="keyform-value-indicator"
       role="slider"
-      style={{left: `${getProgress(props.parameter, props.value)}%`}}
+      style={{left: `${getParameterProgress(props.parameter, props.value)}%`}}
       type="button"
       onKeyDown={handleKeyDown}
       onPointerDown={handlePointerDown}
@@ -130,279 +107,392 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
   )
 }
 
-interface KeyformMarkerProps {
-  readonly active: boolean
-  readonly onMove?: (value: number, nextValue: number) => void
-  readonly onSelect?: () => void
-  readonly parameter: PuppetParameter
-  readonly value: number
+interface TwoDimensionalGridProps {
+  readonly active?: boolean
+  readonly activeKeyformValues?: PuppetParameterValues | null
+  readonly binding: PuppetParameterBinding
+  readonly onKeyformSelect?: (bindingId: string, values: PuppetParameterValues) => void
+  readonly onValueChange?: (values: PuppetParameterValues) => void
+  readonly parameters: ReadonlyArray<PuppetParameter>
+  readonly values: PuppetParameterValues
 }
 
-const KeyformMarker = (props: KeyformMarkerProps) => {
-  const [dragValue, setDragValue] = createSignal<number | null>(null)
+const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
   let removePointerListeners: (() => void) | undefined
-  const displayValue = () => dragValue() ?? props.value
-  const finishPointerDrag = (commit: boolean) => {
-    const nextValue = dragValue()
-    removePointerListeners?.()
-    setDragValue(null)
-
-    if (commit && nextValue !== null && nextValue !== props.value) {
-      props.onMove?.(props.value, nextValue)
-    }
+  const owner = getOwner()
+  const canUpdateValue = () => {
+    const read = () => props.onValueChange !== undefined
+    return owner === null ? read() : runWithOwner(owner, read)
   }
-  const handlePointerDown = (event: PointerEvent & {readonly currentTarget: HTMLButtonElement}) => {
-    if (event.button !== 0 || props.onMove === undefined) {
+  const xParameter = () => props.parameters[0]
+  const yParameter = () => props.parameters[1]
+  const updateFromPointer = (bounds: DOMRect, clientX: number, clientY: number) => {
+    const update = () => {
+      const x = xParameter()
+      const y = yParameter()
+      if (x === undefined || y === undefined) {
+        return
+      }
+
+      props.onValueChange?.([
+        getParameterPointerValue(x, bounds.left, bounds.width, clientX),
+        getParameterPointerValue(
+          y,
+          bounds.top,
+          bounds.height,
+          bounds.top + bounds.bottom - clientY,
+        ),
+      ])
+    }
+
+    if (owner === null) {
+      update()
       return
     }
 
-    const bounds = event.currentTarget.parentElement?.getBoundingClientRect()
-    if (bounds === undefined) {
+    runWithOwner(owner, update)
+  }
+  const handlePointerDown = (event: PointerEvent & {readonly currentTarget: HTMLDivElement}) => {
+    if (event.button !== 0 || !canUpdateValue()) {
       return
     }
 
+    const bounds = event.currentTarget.getBoundingClientRect()
     const {pointerId} = event
     const handlePointerMove = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointerId) {
         return
       }
 
-      const nextValue = getPointerValue(props.parameter, bounds, moveEvent.clientX)
-
       moveEvent.preventDefault()
-      if (nextValue !== undefined) {
-        setDragValue(nextValue)
-      }
+      updateFromPointer(bounds, moveEvent.clientX, moveEvent.clientY)
     }
-    const handlePointerUp = (upEvent: PointerEvent) => {
-      if (upEvent.pointerId === pointerId) {
-        finishPointerDrag(true)
-      }
-    }
-    const handlePointerCancel = (cancelEvent: PointerEvent) => {
-      if (cancelEvent.pointerId === pointerId) {
-        finishPointerDrag(false)
+    const finishPointerDrag = (finishEvent: PointerEvent) => {
+      if (finishEvent.pointerId === pointerId) {
+        removePointerListeners?.()
       }
     }
 
     event.preventDefault()
-    event.stopPropagation()
-    props.onSelect?.()
     removePointerListeners?.()
+    updateFromPointer(bounds, event.clientX, event.clientY)
     // The stored callback only removes native drag listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
-      window.removeEventListener('pointercancel', handlePointerCancel)
+      window.removeEventListener('pointercancel', finishPointerDrag)
       window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointerup', finishPointerDrag)
       removePointerListeners = undefined
     }
-    window.addEventListener('pointercancel', handlePointerCancel)
+    window.addEventListener('pointercancel', finishPointerDrag)
     window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', handlePointerUp)
-  }
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (props.onMove === undefined) {
-      return
-    }
-
-    const nextValue = getKeyboardValue(props.parameter, props.value, event.key)
-    if (nextValue === undefined || nextValue === props.value) {
-      return
-    }
-
-    event.preventDefault()
-    props.onSelect?.()
-    props.onMove(props.value, nextValue)
+    window.addEventListener('pointerup', finishPointerDrag)
   }
 
   onCleanup(() => removePointerListeners?.())
 
   return (
-    <button
-      aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
-      aria-label={`${props.parameter.name} ${displayValue()} 키폼`}
-      aria-pressed={props.active}
-      class="keyform-marker"
-      classList={{draggable: props.onMove !== undefined, dragging: dragValue() !== null}}
-      style={{left: `${getProgress(props.parameter, displayValue())}%`}}
-      type="button"
-      onClick={(event) => {
-        if (event.detail === 0 || props.onMove === undefined) {
-          props.onSelect?.()
-        }
-      }}
-      onKeyDown={handleKeyDown}
-      onPointerDown={handlePointerDown}
-    >
-      <span>{displayValue()}</span>
-    </button>
+    <div aria-hidden="true" class="parameter-grid" onPointerDown={handlePointerDown}>
+      <Show when={xParameter() !== undefined && yParameter() !== undefined}>
+        <span
+          class="parameter-grid-current-x"
+          style={{
+            left: `${getParameterProgress(xParameter()!, props.values[0] ?? xParameter()!.defaultValue)}%`,
+          }}
+        />
+        <span
+          class="parameter-grid-current-y"
+          style={{
+            bottom: `${getParameterProgress(yParameter()!, props.values[1] ?? yParameter()!.defaultValue)}%`,
+          }}
+        />
+      </Show>
+      <For each={props.binding.keyforms}>
+        {(keyform) => {
+          const x = () => xParameter()
+          const y = () => yParameter()
+          return (
+            <button
+              aria-hidden="true"
+              class="parameter-grid-keyform"
+              classList={{
+                selected:
+                  props.active === true &&
+                  parameterValuesEqual(props.activeKeyformValues ?? [], keyform.values),
+              }}
+              style={{
+                bottom: `${y() === undefined ? 0 : getParameterProgress(y()!, keyform.values[1] ?? 0)}%`,
+                left: `${x() === undefined ? 0 : getParameterProgress(x()!, keyform.values[0] ?? 0)}%`,
+              }}
+              tabindex="-1"
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                props.onKeyformSelect?.(props.binding.id, keyform.values)
+              }}
+            />
+          )
+        }}
+      </For>
+    </div>
   )
 }
 
 interface KeyformTrackRowProps {
   readonly active: boolean
-  readonly activeKeyformValue?: number | null
-  readonly onKeyformMove?: (parameterId: string, value: number, nextValue: number) => void
-  readonly onKeyformSelect?: (parameterId: string, value: number) => void
-  readonly onParameterDelete?: (parameterId: string) => void
-  readonly onParameterNameChange?: (parameterId: string, name: string) => void
-  readonly onParameterSelect?: (parameterId: string) => void
-  readonly onValueChange?: (value: number) => void
-  readonly parameter: PuppetParameter
-  readonly value?: number
+  readonly activeKeyformValues?: PuppetParameterValues | null
+  readonly binding: PuppetParameterBinding
+  readonly onBindingDelete?: (bindingId: string) => void
+  readonly onBindingSelect?: (bindingId: string) => void
+  readonly onKeyformMove?: (
+    bindingId: string,
+    values: PuppetParameterValues,
+    nextValues: PuppetParameterValues,
+  ) => void
+  readonly onKeyformSelect?: (bindingId: string, values: PuppetParameterValues) => void
+  readonly onParameterNameChange?: (bindingId: string, parameterId: string, name: string) => void
+  readonly onValueChange?: (values: PuppetParameterValues) => void
+  readonly parameters: ReadonlyArray<PuppetParameter>
+  readonly values?: PuppetParameterValues
 }
 
-const KeyformTrackRow = (props: KeyformTrackRowProps) => (
-  <>
-    <div class="keyform-track-label">
-      <EditorParameterItem
-        keyformCount={props.parameter.keyforms.length}
-        maximum={props.parameter.maximum}
-        minimum={props.parameter.minimum}
-        name={props.parameter.name}
-        pressed={props.active}
-        value={props.parameter.defaultValue}
-        onDelete={
-          props.onParameterDelete === undefined
-            ? undefined
-            : () => props.onParameterDelete?.(props.parameter.id)
-        }
-        onNameChange={(name) => props.onParameterNameChange?.(props.parameter.id, name)}
-        onNameEdit={() => props.onParameterSelect?.(props.parameter.id)}
-        onSelect={() => props.onParameterSelect?.(props.parameter.id)}
-      />
-    </div>
-    <div class="keyform-track" aria-label={`${props.parameter.name} 키폼 트랙`}>
-      <Show when={props.active}>
-        <ParameterValueScrubber
-          parameter={props.parameter}
-          value={props.value ?? props.parameter.defaultValue}
-          onValueChange={props.onValueChange}
-        />
-      </Show>
-      <For each={props.parameter.keyforms}>
-        {(keyform) => (
-          <KeyformMarker
-            active={props.active && props.activeKeyformValue === keyform.value}
-            parameter={props.parameter}
-            value={keyform.value}
-            onMove={
-              props.onKeyformMove === undefined
-                ? undefined
-                : (value, nextValue) => props.onKeyformMove?.(props.parameter.id, value, nextValue)
-            }
-            onSelect={() => props.onKeyformSelect?.(props.parameter.id, keyform.value)}
-          />
+interface ParameterValueFieldsProps {
+  readonly onValueChange?: (values: PuppetParameterValues) => void
+  readonly parameters: ReadonlyArray<PuppetParameter>
+  readonly values?: PuppetParameterValues
+}
+
+const ParameterValueFields = (props: ParameterValueFieldsProps) => {
+  const updateAxisValue = (axis: number, value: number) => {
+    const values = [
+      ...(props.values ?? props.parameters.map((parameter) => parameter.defaultValue)),
+    ]
+    values[axis] = value
+    props.onValueChange?.(values as unknown as PuppetParameterValues)
+  }
+
+  return (
+    <div class="keyform-row-values">
+      <For each={props.parameters}>
+        {(parameter, index) => (
+          <label class="keyform-row-value">
+            <span>{parameter.name}</span>
+            <input
+              aria-label={`${parameter.name} 값`}
+              max={parameter.maximum}
+              min={parameter.minimum}
+              type="number"
+              value={props.values?.[index()] ?? parameter.defaultValue}
+              onInput={(event) => updateAxisValue(index(), event.currentTarget.valueAsNumber)}
+            />
+          </label>
         )}
       </For>
     </div>
-  </>
-)
+  )
+}
+
+const KeyformTrackRow = (props: KeyformTrackRowProps) => {
+  const firstParameter = () => props.parameters[0]
+  const secondParameter = () => props.parameters[1]
+  const handleValueChange = (values: PuppetParameterValues) => {
+    if (!props.active) {
+      props.onBindingSelect?.(props.binding.id)
+    }
+    props.onValueChange?.(values)
+  }
+  const handleOneDimensionalTrackPointerDown = (
+    event: PointerEvent & {readonly currentTarget: HTMLDivElement},
+  ) => {
+    const parameter = firstParameter()
+    if (
+      event.button !== 0 ||
+      event.target !== event.currentTarget ||
+      parameter === undefined ||
+      props.onValueChange === undefined
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    const bounds = event.currentTarget.getBoundingClientRect()
+    handleValueChange([
+      getParameterPointerValue(parameter, bounds.left, bounds.width, event.clientX),
+    ])
+  }
+
+  return (
+    <>
+      <div
+        class="keyform-track-label"
+        classList={{'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding)}}
+      >
+        <Show when={firstParameter()}>
+          {(parameter) => (
+            <EditorParameterItem
+              name={parameter().name}
+              pressed={props.active}
+              secondaryName={secondParameter()?.name}
+              onDelete={
+                props.onBindingDelete === undefined
+                  ? undefined
+                  : () => props.onBindingDelete?.(props.binding.id)
+              }
+              onNameChange={(name) =>
+                props.onParameterNameChange?.(props.binding.id, parameter().id, name)
+              }
+              onNameEdit={() => props.onBindingSelect?.(props.binding.id)}
+              onSelect={() => props.onBindingSelect?.(props.binding.id)}
+            >
+              <ParameterValueFields
+                onValueChange={handleValueChange}
+                parameters={props.parameters}
+                values={props.values}
+              />
+            </EditorParameterItem>
+          )}
+        </Show>
+      </div>
+      <Show
+        when={isTwoDimensionalParameterBinding(props.binding)}
+        fallback={
+          <div
+            class="keyform-track"
+            aria-label={`${firstParameter()?.name ?? 'Parameter'} 키폼 트랙`}
+            onPointerDown={handleOneDimensionalTrackPointerDown}
+          >
+            <Show when={firstParameter()}>
+              <ParameterValueScrubber
+                parameter={firstParameter()!}
+                value={props.values?.[0] ?? firstParameter()!.defaultValue}
+                onValueChange={handleValueChange}
+              />
+            </Show>
+            <Show when={firstParameter()}>
+              {(parameter) => (
+                <For each={props.binding.keyforms}>
+                  {(keyform) => (
+                    <EditorKeyformMarker
+                      active={
+                        props.active &&
+                        parameterValuesEqual(props.activeKeyformValues ?? [], keyform.values)
+                      }
+                      parameter={parameter()}
+                      value={keyform.values[0] ?? parameter().defaultValue}
+                      onMove={
+                        props.onKeyformMove === undefined
+                          ? undefined
+                          : (value, nextValue) =>
+                              props.onKeyformMove?.(props.binding.id, [value], [nextValue])
+                      }
+                      onSelect={() => props.onKeyformSelect?.(props.binding.id, keyform.values)}
+                    />
+                  )}
+                </For>
+              )}
+            </Show>
+          </div>
+        }
+      >
+        <div
+          class="keyform-track parameter-grid-track"
+          aria-label={`${firstParameter()?.name}와 ${secondParameter()?.name} 2차원 키폼 grid`}
+        >
+          <TwoDimensionalGrid
+            active={props.active}
+            activeKeyformValues={props.activeKeyformValues}
+            binding={props.binding}
+            parameters={props.parameters}
+            values={props.values ?? [0, 0]}
+            onKeyformSelect={props.onKeyformSelect}
+            onValueChange={handleValueChange}
+          />
+        </div>
+      </Show>
+    </>
+  )
+}
 
 export interface EditorKeyformPanelProps {
-  readonly activeKeyformValue?: number | null
-  readonly activeParameterId?: string
+  readonly activeBindingId?: string
+  readonly activeKeyformValues?: PuppetParameterValues | null
+  readonly bindings: ReadonlyArray<PuppetParameterBinding>
+  readonly onBindingDelete?: (bindingId: string) => void
+  readonly onBindingSelect?: (bindingId: string) => void
   readonly onKeyformAdd?: () => void
   readonly onKeyformDelete?: () => void
-  readonly onKeyformMove?: (parameterId: string, value: number, nextValue: number) => void
-  readonly onKeyformSelect?: (parameterId: string, value: number) => void
+  readonly onKeyformMove?: (
+    bindingId: string,
+    values: PuppetParameterValues,
+    nextValues: PuppetParameterValues,
+  ) => void
+  readonly onKeyformSelect?: (bindingId: string, values: PuppetParameterValues) => void
   readonly onParameterAdd?: () => void
-  readonly onParameterDelete?: (parameterId: string) => void
-  readonly onParameterNameChange?: (parameterId: string, name: string) => void
-  readonly onParameterSelect?: (parameterId: string) => void
+  readonly onParameterNameChange?: (bindingId: string, parameterId: string, name: string) => void
   readonly onSelectionConnect?: () => void
   readonly onSelectionDisconnect?: () => void
-  readonly onValueChange?: (value: number) => void
+  readonly onTwoDimensionalParameterAdd?: () => void
+  readonly onValueChange?: (values: PuppetParameterValues) => void
   readonly parameters: ReadonlyArray<PuppetParameter>
+  readonly parameterValueMap?: PuppetParameterValueMap
   readonly selectedPartIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>
-  readonly value?: number
+  readonly values?: PuppetParameterValues
 }
 
 export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
   const titleId = createUniqueId()
-  const activeParameter = () =>
-    props.parameters.find((parameter) => parameter.id === props.activeParameterId)
+  const activeBinding = () => props.bindings.find((binding) => binding.id === props.activeBindingId)
+  const parameterById = () =>
+    new Map(props.parameters.map((parameter) => [parameter.id, parameter]))
+  const bindingParameters = (binding: PuppetParameterBinding) =>
+    binding.parameterIds.flatMap((parameterId) => {
+      const parameter = parameterById().get(parameterId)
+      return parameter === undefined ? [] : [parameter]
+    })
+  const bindingValues = (binding: PuppetParameterBinding): PuppetParameterValues => {
+    return binding.id === props.activeBindingId && props.values !== undefined
+      ? props.values
+      : (bindingParameters(binding).map(
+          (parameter) => props.parameterValueMap?.[parameter.id] ?? parameter.defaultValue,
+        ) as unknown as PuppetParameterValues)
+  }
   const selectedPartIds = () => props.selectedPartIds ?? []
   const targetPartIds = () => props.targetPartIds ?? []
   const selectedTargetCount = () => {
     const targetIds = new Set(targetPartIds())
     return selectedPartIds().filter((partId) => targetIds.has(partId)).length
   }
-  const handleValueInput = (event: InputEvent & {readonly currentTarget: HTMLInputElement}) => {
-    props.onValueChange?.(event.currentTarget.valueAsNumber)
-  }
 
   return (
     <section class="keyform-panel" aria-labelledby={titleId}>
-      <header class="keyform-toolbar">
-        <div class="keyform-parameter-heading">
-          <span id={titleId}>Parameters</span>
-          <Button
-            aria-label="Parameter 추가"
-            class="panel-add-button"
-            disabled={props.onParameterAdd === undefined}
-            type="button"
-            onClick={() => props.onParameterAdd?.()}
-          >
-            +
-          </Button>
-        </div>
-        <div class="keyform-actions">
-          <button
-            disabled={activeParameter() === undefined || props.onKeyformAdd === undefined}
-            type="button"
-            onClick={() => props.onKeyformAdd?.()}
-          >
-            + 현재 값에 키폼
-          </button>
-          <button
-            class="danger"
-            disabled={
-              props.activeKeyformValue === undefined ||
-              props.activeKeyformValue === null ||
-              props.onKeyformDelete === undefined
-            }
-            type="button"
-            onClick={() => props.onKeyformDelete?.()}
-          >
-            선택 키폼 삭제
-          </button>
-        </div>
-        <Show when={activeParameter()} fallback={<span class="keyform-current-value">값 —</span>}>
-          {(parameter) => (
-            <label class="keyform-current-value">
-              <span>값</span>
-              <input
-                aria-label="Parameter 값"
-                max={parameter().maximum}
-                min={parameter().minimum}
-                type="number"
-                value={props.value ?? parameter().defaultValue}
-                onInput={handleValueInput}
-              />
-            </label>
-          )}
-        </Show>
-      </header>
+      <EditorKeyformToolbar
+        activeBinding={activeBinding()}
+        activeKeyformValues={props.activeKeyformValues}
+        onKeyformAdd={props.onKeyformAdd}
+        onKeyformDelete={props.onKeyformDelete}
+        onParameterAdd={props.onParameterAdd}
+        onTwoDimensionalParameterAdd={props.onTwoDimensionalParameterAdd}
+        titleId={titleId}
+      />
       <Show
-        when={props.parameters.length > 0}
+        when={props.bindings.length > 0}
         fallback={<p class="timeline-empty">Parameter를 추가하세요.</p>}
       >
         <div class="keyform-track-wrap">
-          <For each={props.parameters}>
-            {(parameter) => (
+          <For each={props.bindings}>
+            {(binding) => (
               <KeyformTrackRow
-                active={parameter.id === props.activeParameterId}
-                activeKeyformValue={props.activeKeyformValue}
-                parameter={parameter}
-                value={props.value}
+                active={binding.id === props.activeBindingId}
+                activeKeyformValues={props.activeKeyformValues}
+                binding={binding}
+                parameters={bindingParameters(binding)}
+                values={bindingValues(binding)}
+                onBindingDelete={props.onBindingDelete}
+                onBindingSelect={props.onBindingSelect}
                 onKeyformMove={props.onKeyformMove}
                 onKeyformSelect={props.onKeyformSelect}
-                onParameterDelete={props.onParameterDelete}
                 onParameterNameChange={props.onParameterNameChange}
-                onParameterSelect={props.onParameterSelect}
                 onValueChange={props.onValueChange}
               />
             )}
@@ -413,7 +503,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
         <div class="parameter-target-actions">
           <Button
             disabled={
-              activeParameter() === undefined ||
+              activeBinding() === undefined ||
               selectedPartIds().length === 0 ||
               selectedTargetCount() === selectedPartIds().length ||
               props.onSelectionConnect === undefined
@@ -425,7 +515,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
           </Button>
           <Button
             disabled={
-              activeParameter() === undefined ||
+              activeBinding() === undefined ||
               selectedTargetCount() === 0 ||
               props.onSelectionDisconnect === undefined
             }

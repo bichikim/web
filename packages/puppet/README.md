@@ -106,10 +106,10 @@ PixiJS 플레이어, 단위 테스트와 실제 브라우저 확인까지 연결
 | 10   | 제작 생산성               | undo/redo, 복수 객체 form 복사·붙여넣기·반전·혼합, 검색·필터, template, 자동 메시·얼굴 rig 보조, 대형 모델의 비차단 편집을 지원한다.                                                   |
 | 11   | 동등성 릴리스 게이트      | 기능 원장의 모든 안정판 항목이 `검증 완료`이고, 대표 모델이 editor에서 제작되어 자체 배포 포맷으로 player에 로드되며 기능별 시각·동작 회귀를 통과한다.                                 |
 
-현재 구현은 group/part scene graph와 레이어 트리, 메시 편집, 정점 기반 1축 parameter keyform,
-정점 motion track과 PixiJS 재생 경로까지 지원한다. 계층이 없는 기존 `parts[]` 문서는 각 part를
-루트 노드로 해석하고 다음 저장에서 명시적인 scene을 기록한다. 1단계 중 deformer 노드 추가는
-아직 남아 있으며, 다음 구현 우선순위는 2단계의 명시적인 parameter 대상 연결이다.
+현재 구현은 group/part scene graph와 레이어 트리, 메시 편집, 명시적인 parameter 대상 연결,
+정점 기반 1축·2축 grid keyform, 정점 motion track과 PixiJS 재생 경로까지 지원한다. 계층이 없는
+기존 `parts[]` 문서는 각 part를 루트 노드로 해석하고 다음 저장에서 명시적인 scene을 기록한다.
+1단계 중 deformer 노드 추가는 아직 남아 있다.
 
 ## 확인한 구현 정보
 
@@ -166,6 +166,5 @@ fixture로 활용할 수 있지만, layer decomposition model은 Puppet의 필�
 
 - project와 배포용 model을 같은 파일로 둘지 분리할지
 - texture를 파일 옆에 둘지 하나의 archive에 묶을지
-- parameter 2축 보간을 grid, triangulation, radial 중 무엇으로 시작할지
 - editor를 기존 앱에 넣을지 별도 앱으로 만들지
 - 모델 포맷과 파일 확장자의 공개 이름

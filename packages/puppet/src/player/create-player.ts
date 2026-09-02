@@ -1,5 +1,6 @@
 import {Application, Container, MeshSimple, Texture} from 'pixi.js'
 
+import {composeParameterVertices, type PuppetParameterValueMap} from '../deformation'
 import type {PuppetDocument, PuppetMotion} from './document'
 import {
   assertPreparedPuppetDocument,
@@ -14,6 +15,7 @@ export interface Player {
   play(): void
   resize(): void
   seek(time: number): void
+  setParameterValues(values: PuppetParameterValueMap): void
   updateDocument(document: PreparedPuppetDocument): boolean
 }
 
@@ -28,14 +30,41 @@ export interface CreatePlayerOptions {
   readonly document: PreparedPuppetDocument
   readonly motionId?: string
   readonly onFrame?: (frame: PlayerFrame) => void
+  readonly parameterValues?: PuppetParameterValueMap
   readonly resizeTo?: HTMLElement
   readonly viewportPadding?: number
 }
 
 interface RuntimePart {
   readonly mesh: MeshSimple
-  restVertices: Float32Array
+  restVertices: ReadonlyArray<number>
   vertices: Float32Array
+}
+
+interface ApplyFrameVerticesOptions {
+  readonly document: PuppetDocument
+  readonly motion: PuppetMotion | undefined
+  readonly parameterValues: PuppetParameterValueMap | undefined
+  readonly partId: string
+  readonly runtimePart: RuntimePart
+  readonly time: number
+}
+
+const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
+  options.runtimePart.vertices.set(
+    composeParameterVertices({
+      document: options.document,
+      parameterValues: options.parameterValues,
+      partId: options.partId,
+      restVertices: options.runtimePart.restVertices,
+    }),
+  )
+  applyMotionVertices({
+    motion: options.motion,
+    partId: options.partId,
+    time: options.time,
+    vertices: options.runtimePart.vertices,
+  })
 }
 
 const applyDocumentScene = (
@@ -84,6 +113,53 @@ const loadTexture = async (source: string) => {
   return Texture.from(image)
 }
 
+interface InitializeRuntimePartsOptions {
+  readonly document: PuppetDocument
+  readonly partById: Map<string, RuntimePart>
+  readonly root: Container
+}
+
+const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) => {
+  const textureResults = await Promise.allSettled(
+    options.document.parts.map((part) => loadTexture(part.texture.src)),
+  )
+  const failedTexture = textureResults.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected',
+  )
+
+  if (failedTexture !== undefined) {
+    for (const result of textureResults) {
+      if (result.status === 'fulfilled') {
+        result.value.destroy(true)
+      }
+    }
+
+    throw failedTexture.reason
+  }
+
+  for (const [index, part] of options.document.parts.entries()) {
+    const textureResult = textureResults[index]
+
+    if (textureResult?.status !== 'fulfilled') {
+      throw new Error(`Missing texture for part: ${part.id}`)
+    }
+
+    const restVertices = part.mesh.vertices
+    const vertices = new Float32Array(restVertices)
+    const mesh = new MeshSimple({
+      indices: new Uint32Array(part.mesh.indices),
+      texture: textureResult.value,
+      topology: 'triangle-list',
+      uvs: new Float32Array(part.mesh.uvs),
+      vertices,
+    })
+
+    options.partById.set(part.id, {mesh, restVertices, vertices})
+  }
+
+  applyDocumentScene(options.document, options.partById, options.root)
+}
+
 const getMotion = (document: PuppetDocument, motionId: string | undefined) =>
   motionId === undefined
     ? document.motions[0]
@@ -110,6 +186,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   const partById = new Map<string, RuntimePart>()
   let {document} = options
   let motion = getMotion(document, options.motionId)
+  let {parameterValues} = options
   let elapsedTime = 0
   let destroyed = false
 
@@ -123,44 +200,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   }
 
   try {
-    const textureResults = await Promise.allSettled(
-      options.document.parts.map((part) => loadTexture(part.texture.src)),
-    )
-    const failedTexture = textureResults.find(
-      (result): result is PromiseRejectedResult => result.status === 'rejected',
-    )
-
-    if (failedTexture !== undefined) {
-      for (const result of textureResults) {
-        if (result.status === 'fulfilled') {
-          result.value.destroy(true)
-        }
-      }
-
-      throw failedTexture.reason
-    }
-
-    for (const [index, part] of options.document.parts.entries()) {
-      const textureResult = textureResults[index]
-
-      if (textureResult?.status !== 'fulfilled') {
-        throw new Error(`Missing texture for part: ${part.id}`)
-      }
-
-      const restVertices = new Float32Array(part.mesh.vertices)
-      const vertices = new Float32Array(restVertices)
-      const mesh = new MeshSimple({
-        indices: new Uint32Array(part.mesh.indices),
-        texture: textureResult.value,
-        topology: 'triangle-list',
-        uvs: new Float32Array(part.mesh.uvs),
-        vertices,
-      })
-
-      partById.set(part.id, {mesh, restVertices, vertices})
-    }
-
-    applyDocumentScene(document, partById, root)
+    await initializeRuntimeParts({document, partById, root})
     application.stage.addChild(root)
   } catch (error) {
     destroy()
@@ -184,13 +224,16 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     )
   }
 
-  const applyMotion = (activeMotion: PuppetMotion | undefined, time: number) => {
-    for (const runtimePart of partById.values()) {
-      runtimePart.vertices.set(runtimePart.restVertices)
-    }
-
+  const applyFrame = (activeMotion: PuppetMotion | undefined, time: number) => {
     for (const [partId, runtimePart] of partById) {
-      applyMotionVertices({motion: activeMotion, partId, time, vertices: runtimePart.vertices})
+      applyFrameVertices({
+        document,
+        motion: activeMotion,
+        parameterValues,
+        partId,
+        runtimePart,
+        time,
+      })
     }
 
     for (const runtimePart of partById.values()) {
@@ -206,10 +249,10 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       elapsedTime = (elapsedTime + ticker.deltaMS / MILLISECONDS_PER_SECOND) % motion.duration
     }
 
-    applyMotion(motion, elapsedTime)
+    applyFrame(motion, elapsedTime)
   })
 
-  applyMotion(motion, elapsedTime)
+  applyFrame(motion, elapsedTime)
   application.render()
 
   const updateDocument = (nextDocument: PreparedPuppetDocument) => {
@@ -233,7 +276,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       const runtimePart = partById.get(part.id)
 
       if (runtimePart !== undefined) {
-        runtimePart.restVertices = new Float32Array(part.mesh.vertices)
+        runtimePart.restVertices = part.mesh.vertices
         runtimePart.vertices = new Float32Array(runtimePart.restVertices)
         runtimePart.mesh.geometry.positions = runtimePart.vertices
         runtimePart.mesh.geometry.uvs = new Float32Array(part.mesh.uvs)
@@ -243,7 +286,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
 
     applyDocumentScene(document, partById, root)
     elapsedTime = getSeekTime(motion, elapsedTime)
-    applyMotion(motion, elapsedTime)
+    applyFrame(motion, elapsedTime)
     application.render()
 
     return true
@@ -264,7 +307,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     },
     seek(time: number) {
       elapsedTime = getSeekTime(motion, time)
-      applyMotion(motion, elapsedTime)
+      applyFrame(motion, elapsedTime)
+      application.render()
+    },
+    setParameterValues(values) {
+      parameterValues = values
+      applyFrame(motion, elapsedTime)
       application.render()
     },
     updateDocument,

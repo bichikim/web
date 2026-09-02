@@ -249,12 +249,12 @@ describe('MeshEditor', () => {
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
     const view = render(() => (
       <MeshEditor
-        activeKeyformValue={30}
-        activeParameterId="angle-x"
+        activeBindingId="angle-xy"
+        activeKeyformValues={[30, 0]}
         document={document()}
         editMode="parameter"
         onDocumentChange={setDocument}
-        parameterValue={30}
+        parameterValues={[30, 0]}
       />
     ))
     const svg = view.container.querySelector('svg')
@@ -281,9 +281,13 @@ describe('MeshEditor', () => {
     }
 
     expect(document().parts[0]?.mesh.vertices).toBe(initialDocument.parts[0]?.mesh.vertices)
-    expect(document().parameters?.[0]?.keyforms[2]?.parts[0]?.vertices.slice(-2)).toEqual([
-      340, 240,
-    ])
+    expect(
+      document()
+        .parameterBindings?.[0]?.keyforms.find(
+          (keyform) => keyform.values[0] === 30 && keyform.values[1] === 0,
+        )
+        ?.parts[0]?.vertices.slice(-2),
+    ).toEqual([340, 240])
   })
 
   test('should remove a corner from both controls and rendered geometry', () => {

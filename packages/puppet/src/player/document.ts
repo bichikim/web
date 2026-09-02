@@ -1,5 +1,5 @@
 export const PUPPET_DOCUMENT_FORMAT = 'winter-love-puppet'
-export const PUPPET_DOCUMENT_VERSION = 1
+export const PUPPET_DOCUMENT_VERSION = 2
 
 export const PUPPET_EASINGS = ['linear', 'ease-in', 'ease-out', 'ease-in-out'] as const
 
@@ -57,20 +57,44 @@ export interface PuppetParameterPartKeyform {
   readonly vertices: ReadonlyArray<number>
 }
 
-export interface PuppetParameterKeyform {
+export interface PuppetParameterKeyformBase {
   readonly parts: ReadonlyArray<PuppetParameterPartKeyform>
-  readonly value: number
 }
 
 export interface PuppetParameter {
   readonly defaultValue: number
   readonly id: string
-  readonly keyforms: ReadonlyArray<PuppetParameterKeyform>
   readonly maximum: number
   readonly minimum: number
   readonly name: string
+}
+
+export interface PuppetParameterKeyform1D extends PuppetParameterKeyformBase {
+  readonly values: readonly [number]
+}
+
+export interface PuppetParameterKeyform2D extends PuppetParameterKeyformBase {
+  readonly values: readonly [number, number]
+}
+
+export type PuppetParameterKeyform = PuppetParameterKeyform1D | PuppetParameterKeyform2D
+
+export interface PuppetParameterBindingBase {
+  readonly id: string
   readonly targetPartIds?: ReadonlyArray<string>
 }
+
+export interface PuppetParameterBinding1D extends PuppetParameterBindingBase {
+  readonly keyforms: ReadonlyArray<PuppetParameterKeyform1D>
+  readonly parameterIds: readonly [string]
+}
+
+export interface PuppetParameterBinding2D extends PuppetParameterBindingBase {
+  readonly keyforms: ReadonlyArray<PuppetParameterKeyform2D>
+  readonly parameterIds: readonly [string, string]
+}
+
+export type PuppetParameterBinding = PuppetParameterBinding1D | PuppetParameterBinding2D
 
 export interface PuppetKeyframe {
   /** Applies from this keyframe to the next keyframe in the track. */
@@ -95,6 +119,7 @@ export interface PuppetMotion {
 export interface PuppetDocument {
   readonly format: typeof PUPPET_DOCUMENT_FORMAT
   readonly motions: ReadonlyArray<PuppetMotion>
+  readonly parameterBindings?: ReadonlyArray<PuppetParameterBinding>
   readonly parameters?: ReadonlyArray<PuppetParameter>
   readonly parts: ReadonlyArray<PuppetPart>
   readonly scene?: PuppetScene
