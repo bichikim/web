@@ -52,12 +52,12 @@ export const SpeechToTextLab = () => {
                 <span class="flex flex-wrap items-center gap-2 text-sm font-750 text-#f8edf1">
                   {model.label}
                   <Show when={model.id === RECOMMENDED_SPEECH_MODEL_ID}>
-                    <span class="rounded-full bg-#9ed6bb/16 px-2 py-0.5 text-[10px] text-#b8e8d0">
+                    <span class="rounded-full bg-#9ed6bb/16 px-2 py-0.5 text-[0.625rem] text-#b8e8d0">
                       추천
                     </span>
                   </Show>
                 </span>
-                <span class="text-[11px] font-650 text-#9ed6bb">
+                <span class="text-[0.6875rem] font-650 text-#9ed6bb">
                   {model.speedLabel} · {model.sizeLabel}
                 </span>
                 <span class="text-xs leading-5 text-#a99ead">{model.description}</span>

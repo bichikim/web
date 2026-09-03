@@ -25,7 +25,7 @@ export const CLASSES = {
     '[--media-primary-color:var(--pomo-color-foreground)]',
     '[--media-range-bar-color:var(--pomo-color-foreground)]',
     '[--media-range-track-background:var(--pomo-color-range-track)]',
-    '[--media-range-track-height:2px] [--media-secondary-color:transparent]',
+    '[--media-range-track-height:0.125rem] [--media-secondary-color:transparent]',
     'flex min-h-0 max-h-full w-full flex-col',
     'bg-transparent [&_media-control-bar]:w-full [&_media-control-bar]:bg-transparent',
     '[&_media-play-button]:rounded-full [&_media-mute-button]:rounded-full',
@@ -37,7 +37,7 @@ export const CLASSES = {
   playerExpanded: cx(
     'pomo-player__expanded isolate flex min-h-0 min-w-0 w-full flex-1 flex-col box-border',
     'bg-[linear-gradient(_180deg,_rgb(0_0_0_/_2%)_0%,_rgb(0_0_0_/_10%)_34%,_rgb(0_0_0_/_18%)_100%_)]',
-    'shadow-[inset_0_-1px_0_rgb(255_250_241_/_4%)]',
+    'shadow-[inset_0_-0.0625rem_0_rgb(255_250_241_/_4%)]',
   ),
   playerExpandedFrame: cx(
     'pomo-player__expanded-frame grid min-h-0 min-w-0 flex-1 grid-rows-[0fr]',
@@ -62,13 +62,13 @@ export const CLASSES = {
   ),
   playerPlay: cx(
     'pomo-player__play w-11 h-11 text-white bg-primary',
-    'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
+    'shadow-[0_0.5rem_1.25rem_rgb(125_49_29_/_34%),_inset_0_0.0625rem_0_rgb(255_255_255_/_24%)]',
     '[transition:filter_160ms_ease] [&:hover]:brightness-[1.08]',
     'motion-reduce:transition-none',
   ),
   playerPlayLarge: cx(
     'pomo-player__play--large w-13 h-13',
-    '[transition:transform_160ms_ease,_filter_160ms_ease] [&:hover]:translate-y-[-1px]',
+    '[transition:transform_160ms_ease,_filter_160ms_ease] [&:hover]:translate-y-[-0.0625rem]',
     'motion-reduce:transition-none',
   ),
   playerPlaySummary: 'pomo-player__play--summary',
@@ -83,8 +83,8 @@ export const CLASSES = {
   playerProgressCollapsed: cx(
     'pomo-player__progress--collapsed pointer-events-none cursor-default absolute inset-0 h-full w-full',
     '[--media-cursor:default]',
-    '[--media-control-height:100%] [--media-range-padding:0px]',
-    '[--media-range-track-height:100%] [--media-range-track-border-radius:0px]',
+    '[--media-control-height:100%] [--media-range-padding:0rem]',
+    '[--media-range-track-height:100%] [--media-range-track-border-radius:0rem]',
     '[--media-range-bar-color:rgb(0_0_0_/_25%)]',
     '[--media-time-range-buffered-color:transparent]',
     '[--media-range-track-background:transparent]',
@@ -96,7 +96,7 @@ export const CLASSES = {
     'overflow-visible opacity-0 transition-[height,opacity]',
     '[&.is-expanded]:h-0.5 [&.is-expanded]:opacity-100',
     'motion-reduce:transition-none',
-    '[--media-control-height:2px] [--media-range-padding:0px]',
+    '[--media-control-height:0.125rem] [--media-range-padding:0rem]',
     '[--media-range-bar-color:var(--pomo-color-foreground)]',
     '[--media-time-range-buffered-color:var(--pomo-color-muted-foreground)]',
     '[--media-range-track-background:var(--pomo-color-range-track)]',
@@ -104,7 +104,7 @@ export const CLASSES = {
   ),
   playerShell: cx(
     'pomo-player-shell',
-    'shadow-[0_22px_70px_rgb(5_4_3_/_46%),_inset_0_1px_0_rgb(255_255_255_/_10%)]',
+    'shadow-[0_1.375rem_4.375rem_rgb(5_4_3_/_46%),_inset_0_0.0625rem_0_rgb(255_255_255_/_10%)]',
   ),
   playerSummary:
     'pomo-player__summary relative flex min-h-16 flex-none items-center gap-3 px-2 py-2 player-compact:gap-2',
@@ -115,8 +115,8 @@ export const CLASSES = {
     'tracking-[-0.01em]',
   ),
   playerVisualizer: cx(
-    'pomo-player__visualizer top-[-8px] bottom-[-8px] left-[-8px] right-[-8px]',
-    '[filter:blur(8px)_saturate(1.25)_contrast(1.12)]',
+    'pomo-player__visualizer top-[-0.5rem] bottom-[-0.5rem] left-[-0.5rem] right-[-0.5rem]',
+    '[filter:blur(0.5rem)_saturate(1.25)_contrast(1.12)]',
   ),
   playerVolume: cx(
     'pomo-player__volume min-w-0 w-[clamp(3rem,_18cqi,_4.75rem)]',

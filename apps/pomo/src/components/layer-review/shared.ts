@@ -12,5 +12,5 @@ export const VISEME_LABELS: Readonly<Record<PViseme, string>> = {
 
 export const PANEL_CLASSES = cx(
   'rounded-6 border border-white/10 bg-#17131f/82',
-  'shadow-[0_24px_70px_rgba(5,2,10,0.24)] backdrop-blur-xl',
+  'shadow-[0_1.5rem_4.375rem_rgba(5,2,10,0.24)] backdrop-blur-xl',
 )

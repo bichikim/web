@@ -361,8 +361,8 @@ describe('PStudio', () => {
     renderStudio()
 
     const studio = screen.getByLabelText('Pomo')
-    expect(studio.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe('24px')
-    expect(screen.getByRole('img')).not.toHaveStyle({paddingTop: '24px'})
+    expect(studio.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe('1.5rem')
+    expect(screen.getByRole('img')).not.toHaveStyle({paddingTop: '1.5rem'})
   })
 
   it('should suspend the screen saver only while the window is the desktop background', () => {

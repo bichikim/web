@@ -6,7 +6,7 @@ export const CLASSES = {
   feedStatus: cx(
     'pomo-feed-status flex w-[min(36rem,_100%)] box-border items-center gap-3',
     'p-[0.8rem_0.9rem]',
-    'text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
+    'text-foreground shadow-[inset_0_0.0625rem_0_rgb(255_255_255_/_8%)] pointer-events-auto',
     'backdrop-blur-[0.75rem] [-webkit-backdrop-filter:blur(0.75rem)]',
     "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-highlight",
     "feed-status-compact:[&[data-state='recovery']]:flex-wrap",
@@ -24,7 +24,7 @@ export const CLASSES = {
   ),
   feedStatusSpinner: cx(
     'pomo-feed-status__spinner w-4 h-4 box-border flex-none',
-    'animate-spin [border:2px_solid_rgb(255_255_255_/_24%)]',
+    'animate-spin [border:0.125rem_solid_rgb(255_255_255_/_24%)]',
     'border-t-highlight rounded-full motion-reduce:animate-[none]',
   ),
 } as const

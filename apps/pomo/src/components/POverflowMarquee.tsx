@@ -1,6 +1,8 @@
 import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, onCleanup, onMount, Show} from 'solid-js'
 
+import {cssPixelsToRem} from '../features/css-units'
+
 const CONTENT_GAP_PIXELS = 32
 const MINIMUM_DURATION_SECONDS = 6
 const TRAVEL_SPEED_PX_PER_SECOND = 28
@@ -95,7 +97,7 @@ export const POverflowMarquee = (props: POverflowMarqueeProps) => {
           'motion-reduce:block motion-reduce:max-w-full motion-reduce:animate-none',
         )}
         style={{
-          '--pomo-marquee-distance': `${measurement().travelDistance}px`,
+          '--pomo-marquee-distance': cssPixelsToRem(measurement().travelDistance),
           'animation-duration': `${animationDuration()}s`,
         }}
       >

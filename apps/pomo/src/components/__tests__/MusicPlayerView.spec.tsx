@@ -194,7 +194,7 @@ describe('MusicPlayerView', () => {
     expect(collapsedRange.classList.contains('[--media-range-track-background:transparent]')).toBe(
       true,
     )
-    expect(collapsedRange.classList.contains('[--media-range-padding:0px]')).toBe(true)
+    expect(collapsedRange.classList.contains('[--media-range-padding:0rem]')).toBe(true)
     expect(collapsedRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
     expect(collapsedRange.classList.contains('[&.is-hidden]:opacity-0')).toBe(true)
     expect(collapsedRange.classList.contains('motion-reduce:transition-none')).toBe(true)
@@ -405,7 +405,10 @@ describe('MusicPlayerView', () => {
     expect(modes.classList.contains('p-1')).toBe(true)
     expect(modes.classList.contains('player-narrow:gap-0')).toBe(true)
     expect(modes.classList.contains('player-narrow:p-0.5')).toBe(true)
-    expect(modes.querySelector('.h-5.w-px')).toHaveClass('player-narrow:mx-0')
+    const separator = Array.from(modes.querySelectorAll('span')).find((element) =>
+      element.classList.contains('w-[0.0625rem]'),
+    )
+    expect(separator).toHaveClass('player-narrow:mx-0')
     expect(transport.classList.contains('gap-1')).toBe(true)
     expect(transport.classList.contains('player-compact:col-span-2')).toBe(false)
     expect(volumeGroup.classList.contains('player-compact:row-start-2')).toBe(false)

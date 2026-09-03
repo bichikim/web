@@ -10,9 +10,9 @@ const CLASSES = {
   playerMode: cx(
     'pomo-player__mode text-muted-foreground [&:hover]:text-foreground',
     '[&:hover]:bg-secondary-soft [&.is-active]:text-white',
-    '[&.is-active]:bg-primary [&.is-active]:shadow-[0_4px_12px_rgb(125_49_29_/_28%)]',
+    '[&.is-active]:bg-primary [&.is-active]:shadow-[0_0.25rem_0.75rem_rgb(125_49_29_/_28%)]',
     '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
-    '[&:focus-visible]:[outline-offset:2px]',
+    '[&:focus-visible]:[outline-offset:0.125rem]',
   ),
   playerModes: 'pomo-player__modes border border-solid border-border bg-surface-overlay',
 } as const
@@ -61,7 +61,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
         )}
       </For>
     </div>
-    <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-border player-narrow:mx-0" />
+    <span aria-hidden="true" class="mx-0.5 h-5 w-[0.0625rem] bg-border player-narrow:mx-0" />
     <button
       aria-label={m.player_shuffle()}
       aria-pressed={props.shuffleEnabled}

@@ -67,7 +67,7 @@ const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
     'flex min-h-control-sm box-border items-center gap-2 rounded-control bg-surface py-0 px-3 ' +
     'text-foreground text-sm font-650 leading-5 shadow-panel',
   'pomo-loading__spinner':
-    'w-4.5 h-4.5 box-border flex-none animate-spin [border:2px_solid_rgb(255_255_255_/_28%)] ' +
+    'w-4.5 h-4.5 box-border flex-none animate-spin [border:0.125rem_solid_rgb(255_255_255_/_28%)] ' +
     'border-t-highlight rounded-control motion-reduce:animate-[none]',
   'pomo-scene-fallback':
     'pointer-events-none absolute inset-0 grid place-items-center text-foreground',
@@ -116,9 +116,29 @@ const config = mergeConfigs([
       const safeAreaRight = 'var(--pomo-safe-area-inset-right)'
       const safeAreaTop = 'var(--pomo-safe-area-inset-top)'
 
+      theme.blur = {
+        ...theme.blur,
+        '2xl': '2.5rem',
+        '3xl': '4rem',
+        DEFAULT: '0.5rem',
+        lg: '1rem',
+        md: '0.75rem',
+        sm: '0.25rem',
+        xl: '1.5rem',
+      }
       theme.borderRadius = {
         ...theme.borderRadius,
+        full: '999rem',
         'panel-inner': `calc(${panelRadius} - ${panelInset})`,
+      }
+      theme.lineWidth = {
+        ...theme.lineWidth,
+        0: '0rem',
+        1: '0.0625rem',
+        2: '0.125rem',
+        3: '0.1875rem',
+        4: '0.25rem',
+        DEFAULT: '0.0625rem',
       }
       theme.height = {
         ...theme.height,
@@ -166,10 +186,10 @@ const config = mergeConfigs([
       {
         getCSS: ({theme}) => `
 :root {
-  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0px);
-  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0px);
-  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0rem);
+  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0rem);
+  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0rem);
+  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0rem);
   --pomo-color-foreground: ${theme.colors?.foreground};
   --pomo-color-muted-foreground: ${theme.colors?.['muted-foreground']};
   --pomo-color-range-track: ${isAppsInToss ? 'rgb(25 31 40 / 22%)' : 'rgb(255 250 241 / 22%)'};
@@ -191,11 +211,33 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid ${theme.colors?.primary};
-  outline-offset: 3px;
+  outline: 0.125rem solid ${theme.colors?.primary};
+  outline-offset: 0.1875rem;
 }
 `,
       },
+    ],
+    rules: [
+      [
+        'outline-none',
+        {
+          outline: '0.125rem solid transparent',
+          'outline-offset': '0.125rem',
+        },
+      ],
+      [
+        'sr-only',
+        {
+          clip: 'rect(0, 0, 0, 0)',
+          height: '0.0625rem',
+          margin: '-0.0625rem',
+          overflow: 'hidden',
+          padding: '0',
+          position: 'absolute',
+          'white-space': 'nowrap',
+          width: '0.0625rem',
+        },
+      ],
     ],
     // The SSR fallback must be styled before lazy client modules extend the generated CSS.
     safelist: [
@@ -303,17 +345,20 @@ body {
         },
       },
       blur: {
-        surface: '8px',
+        DEFAULT: '0.5rem',
+        surface: '0.5rem',
       },
       borderRadius: {
-        control: '999px',
+        control: '999rem',
         panel: '1.25rem',
       },
       boxShadow: {
-        focus: `0 0 0 2px ${colors.highlight}`,
-        panel: isAppsInToss ? '0 18px 54px rgb(25 31 40 / 16%)' : '0 18px 54px rgb(8 6 4 / 42%)',
+        focus: `0 0 0 0.125rem ${colors.highlight}`,
+        panel: isAppsInToss
+          ? '0 1.125rem 3.375rem rgb(25 31 40 / 16%)'
+          : '0 1.125rem 3.375rem rgb(8 6 4 / 42%)',
         'tab-active': `inset 0 -0.1875rem 0 ${colors.highlight}`,
-        'track-active': `inset 2px 0 0 ${colors.primary}`,
+        'track-active': `inset 0.125rem 0 0 ${colors.primary}`,
       },
       breakpoints: {
         '2xl': '64rem',

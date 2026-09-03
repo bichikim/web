@@ -30,7 +30,7 @@ const CLASSES = {
   feedSettingsDialogueList: cx(
     'pomo-feed-settings__dialogue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
-    '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
+    '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:0.0625rem_solid_rgb(255_255_255_/_6%)]',
     '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
     '[&_>_li]:px-4 [&_>_li]:py-3',
     'max-sm:[&_>_li]:items-stretch max-sm:[&_>_li]:flex-col',
@@ -48,7 +48,7 @@ const CLASSES = {
   feedSettingsIssueList: cx(
     'pomo-feed-settings__issue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
-    '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
+    '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:0.0625rem_solid_rgb(255_255_255_/_6%)]',
     '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
     '[&_>_li]:px-4 [&_>_li]:py-3 [&_>_li_>_span]:grid',
     '[&_>_li_>_span]:min-w-0 [&_>_li_>_span]:flex-1 [&_>_li_>_span]:gap-[0.2rem]',
@@ -81,7 +81,7 @@ const CLASSES = {
     'text-[0.6875rem] font-bold [&:hover]:border-highlight',
     '[&:hover]:text-foreground [&:focus-visible]:outline-2 ' +
       '[&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
-    '[&:focus-visible]:[outline-offset:2px]',
+    '[&:focus-visible]:[outline-offset:0.125rem]',
   ),
   feedSettingsMessage: cx(
     'pomo-feed-settings__message m-0 rounded-panel',
@@ -95,7 +95,7 @@ const CLASSES = {
     'text-[0.68rem] font-bold [&:hover]:border-highlight',
     '[&:hover]:text-foreground [&:focus-visible]:outline-2 ' +
       '[&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
-    '[&:focus-visible]:[outline-offset:2px]',
+    '[&:focus-visible]:[outline-offset:0.125rem]',
   ),
 } as const
 

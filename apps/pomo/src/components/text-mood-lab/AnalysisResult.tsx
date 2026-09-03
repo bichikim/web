@@ -36,7 +36,7 @@ export const TextMoodAnalysisResult = (props: TextMoodAnalysisResultProps) => {
             <div class="flex flex-wrap items-center gap-2">
               <p class="m-0 text-xs font-750 tracking-[0.16em] text-#9ed6bb uppercase">주 분위기</p>
               <Show when={props.analysis.uncertain}>
-                <span class="rounded-full bg-#f0c99a/14 px-2 py-1 text-[10px] font-700 text-#f4d7b5">
+                <span class="rounded-full bg-#f0c99a/14 px-2 py-1 text-[0.625rem] font-700 text-#f4d7b5">
                   판단 경계
                 </span>
               </Show>
@@ -82,7 +82,7 @@ export const TextMoodAnalysisResult = (props: TextMoodAnalysisResultProps) => {
                   </span>
                   <div>
                     <p class="m-0 text-xs font-700 text-#e9dfe9">{definition?.label}</p>
-                    <p class="mb-0 mt-1 text-[11px] text-#8f8297">
+                    <p class="mb-0 mt-1 text-[0.6875rem] text-#8f8297">
                       {modifierScore.active ? '감지됨' : '감지되지 않음'} ·{' '}
                       {formatPercentage(modifierScore.probability)}
                     </p>

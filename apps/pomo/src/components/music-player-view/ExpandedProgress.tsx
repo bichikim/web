@@ -3,7 +3,7 @@ import * as m from '@paraglide/message'
 import {CLASSES, MusicPlayerViewProps} from './shared'
 
 const MEDIA_FOCUS_CLASSES =
-  'focus-visible:outline-none [--media-focus-box-shadow:inset_0_0_0_2px_#727b60]'
+  'focus-visible:outline-none [--media-focus-box-shadow:inset_0_0_0_0.125rem_#727b60]'
 
 export const ExpandedPlayerProgress = (props: Pick<MusicPlayerViewProps, 'expanded'>) => (
   <media-time-range

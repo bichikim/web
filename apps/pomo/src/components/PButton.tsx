@@ -28,11 +28,11 @@ export const pButtonClasses = cva(
         glass:
           'border-border bg-surface text-foreground ' +
           'shadow-panel backdrop-blur-surface ' +
-          'hover:-translate-y-px hover:border-border-hover hover:bg-surface-interactive',
+          'hover:translate-y-[-0.0625rem] hover:border-border-hover hover:bg-surface-interactive',
         primary:
           'bg-primary-strong text-white ' +
-          'shadow-[0_8px_24px_rgb(83_28_16_/_32%),inset_0_1px_0_rgb(255_255_255_/_16%)] ' +
-          'hover:-translate-y-px hover:bg-primary-strong-hover',
+          'shadow-[0_0.5rem_1.5rem_rgb(83_28_16_/_32%),inset_0_0.0625rem_0_rgb(255_255_255_/_16%)] ' +
+          'hover:translate-y-[-0.0625rem] hover:bg-primary-strong-hover',
         secondary:
           'border-border bg-secondary-soft text-foreground ' +
           'hover:border-border-hover hover:bg-[rgb(114_123_96_/_30%)]',

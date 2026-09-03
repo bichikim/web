@@ -57,7 +57,7 @@ export const ChatTranscript = (props: ChatTranscriptProps) => {
             <article
               class={cx(
                 'mr-auto max-w-[86%] whitespace-pre-wrap rounded-6 rounded-bl-2 bg-white/7',
-                'px-4 py-3 text-[15px] leading-7 text-#eee5ef xs:max-w-[76%]',
+                'px-4 py-3 text-[0.9375rem] leading-7 text-#eee5ef xs:max-w-[76%]',
               )}
             >
               <ProcessedKoreanText text={props.chat.streamingText()} />

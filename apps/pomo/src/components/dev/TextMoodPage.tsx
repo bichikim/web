@@ -13,7 +13,7 @@ const BACKGROUND_CLASSES = cx(
 )
 const FALLBACK_CLASSES = cx(
   'min-h-96 rounded-8 border border-white/10 bg-#211a2b/92 p-8 text-sm text-#bdb2c4',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl',
+  'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
 
 function TextMoodPage() {

@@ -20,7 +20,7 @@ const TAB_CLASSES =
   'transition-[background-color_140ms_ease,box-shadow_140ms_ease,color_140ms_ease] ' +
   'hover:bg-secondary-soft hover:text-foreground ' +
   'ui-selected:bg-transparent ui-selected:text-foreground ui-selected:shadow-tab-active ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-highlight ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-[-0.125rem] focus-visible:outline-highlight ' +
   'motion-reduce:transition-none'
 
 const TAB_SCROLL_RATIO = 0.7
