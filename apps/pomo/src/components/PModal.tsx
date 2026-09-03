@@ -168,7 +168,7 @@ export const PModal = (props: PModalProps) => (
                 class={cx(
                   'min-w-0 overflow-hidden',
                   props.titleVisibility === 'visually-hidden'
-                    ? 'pl-1 max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
+                    ? 'max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
                     : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
                 )}
               >
