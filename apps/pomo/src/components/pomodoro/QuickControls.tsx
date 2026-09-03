@@ -5,7 +5,7 @@ import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import {type PomodoroPhase} from '../../features/pomodoro-timer/index'
 import * as m from '@paraglide/message'
 import {PScribbleCircleFrame} from '../scribble/CircleFrame'
-import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from '../scribble/Frame'
+import {PScribbleFrame} from '../scribble/Frame'
 import {CLASSES} from './shared'
 
 interface PomodoroQuickControlsProps {
@@ -41,13 +41,7 @@ const STRONG_FOCUS_RING_CLASSES =
   'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2 ' +
   'focus-visible:outline-highlight'
 
-const SCRIBBLE_MASK_CLASSES = cx(
-  '[mask-image:var(--pomo-pomodoro-scribble-mask)]',
-  '[-webkit-mask-image:var(--pomo-pomodoro-scribble-mask)]',
-  '[mask-mode:alpha] [mask-position:center] [mask-repeat:no-repeat] [mask-size:100%_100%]',
-  '[-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat]',
-  '[-webkit-mask-size:100%_100%]',
-)
+const SCRIBBLE_MASK_CLASSES = 'pomo-scribble-mask'
 
 const getQuickFrameClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble'
@@ -67,7 +61,6 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
           'bg-surface backdrop-blur-surface',
           SCRIBBLE_MASK_CLASSES,
         )}
-        style={{'--pomo-pomodoro-scribble-mask': SCRIBBLE_MASK_IMAGE}}
       />
     </Show>
 

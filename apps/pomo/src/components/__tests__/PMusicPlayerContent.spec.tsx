@@ -233,7 +233,8 @@ describe('PMusicPlayerContent', () => {
     await Promise.resolve()
 
     const firstLevel = result.container.querySelector<HTMLElement>('.pomo-level')
-    expect(firstLevel?.style.opacity).toBe('0.76')
+    expect(firstLevel?.classList.contains('opacity-76')).toBe(true)
+    expect(firstLevel?.style.opacity).toBe('')
   })
 
   it('should notify a controlled owner when the player expansion changes', () => {

@@ -1,7 +1,5 @@
 import {onCleanup, onMount} from 'solid-js'
 
-import {cssPixelsToRem} from '../css-units'
-
 const safeAreaProperties = {
   bottom: '--pomo-safe-area-inset-bottom',
   left: '--pomo-safe-area-inset-left',
@@ -20,9 +18,9 @@ const applySafeAreaInsets = (insets: SafeAreaInsetsValue): void => {
   const {style} = document.documentElement
   const {bottom, left, right} = insets
 
-  style.setProperty(safeAreaProperties.bottom, cssPixelsToRem(bottom))
-  style.setProperty(safeAreaProperties.left, cssPixelsToRem(left))
-  style.setProperty(safeAreaProperties.right, cssPixelsToRem(right))
+  style.setProperty(safeAreaProperties.bottom, `${bottom}px`)
+  style.setProperty(safeAreaProperties.left, `${left}px`)
+  style.setProperty(safeAreaProperties.right, `${right}px`)
   // The Toss utility header already owns the top safe area.
   style.setProperty(safeAreaProperties.top, '0rem')
 }

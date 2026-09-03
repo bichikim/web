@@ -51,8 +51,7 @@ beforeEach(() => {
       removeEventListener: vi.fn(),
     })),
   )
-  document.documentElement.dataset.colorScheme = 'dark'
-  document.head.innerHTML = '<meta name="theme-color" content="#17130f">'
+  document.documentElement.classList.add('dark')
 })
 
 afterEach(() => {
@@ -74,14 +73,11 @@ it('should restore the preference and apply explicit color schemes', async () =>
   ))
   await vi.waitFor(() => expect(controller?.preference()).toBe('bright'))
 
-  expect(document.documentElement.dataset.colorScheme).toBe('light')
-  expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe(
-    '#f7f8fa',
-  )
+  expect(document.documentElement.classList.contains('dark')).toBe(false)
 
   controller?.onPreferenceChange('dark')
 
-  expect(document.documentElement.dataset.colorScheme).toBe('dark')
+  expect(document.documentElement.classList.contains('dark')).toBe(true)
   expect(preferenceMocks.write).toHaveBeenCalledWith('dark')
 })
 
@@ -99,11 +95,11 @@ it('should follow later operating-system changes only in system mode', async () 
 
   prefersDark = true
   mediaListener?.({matches: true} as MediaQueryListEvent)
-  expect(document.documentElement.dataset.colorScheme).toBe('dark')
+  expect(document.documentElement.classList.contains('dark')).toBe(true)
 
   controller?.onPreferenceChange('bright')
   mediaListener?.({matches: true} as MediaQueryListEvent)
-  expect(document.documentElement.dataset.colorScheme).toBe('light')
+  expect(document.documentElement.classList.contains('dark')).toBe(false)
 })
 
 it('should preserve the bootstrapped color scheme until the saved preference is restored', () => {
@@ -115,10 +111,7 @@ it('should preserve the bootstrapped color scheme until the saved preference is 
 
   render(() => <Harness onController={() => undefined} onPreferenceChange={() => undefined} />)
 
-  expect(document.documentElement.dataset.colorScheme).toBe('dark')
-  expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe(
-    '#17130f',
-  )
+  expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
 
 it('should not overwrite a newer session choice with a delayed stored preference', async () => {

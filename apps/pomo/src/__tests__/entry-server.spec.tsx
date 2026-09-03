@@ -111,7 +111,8 @@ describe('entry-server', () => {
     const documentElement = renderedDocument as HTMLHtmlElement
     expect(documentElement.lang).toBe('ko')
     expect(documentElement.dir).toBe('rtl')
-    expect(documentElement.dataset.colorScheme).toBe('dark')
+    expect(documentElement.classList.contains('dark')).toBe(true)
+    expect(documentElement.querySelector('meta[name="theme-color"]')).toBeNull()
     expect(documentElement.querySelector('script')).not.toBeNull()
     expect(readChildren).toHaveBeenCalledOnce()
     expect(readScripts).toHaveBeenCalledOnce()
@@ -124,7 +125,8 @@ describe('entry-server', () => {
     await import('../entry-server')
     executeRegisteredHandler()
 
-    expect(renderedDocument?.dataset.colorScheme).toBe('light')
+    expect(renderedDocument?.classList.contains('dark')).toBe(false)
+    expect(renderedDocument?.querySelector('meta[name="theme-color"]')).toBeNull()
     expect(renderedDocument?.querySelector('script')).not.toBeNull()
     expect(readChildren).toHaveBeenCalledOnce()
     expect(readScripts).toHaveBeenCalledOnce()

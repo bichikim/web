@@ -94,10 +94,10 @@ const createParentVariant = (name: string, parent: string): Variant => {
 
 const isPresetNamed = (preset: unknown, name: string) =>
   typeof preset === 'object' && preset !== null && 'name' in preset && preset.name === name
-
 const config = mergeConfigs([
   baseConfig,
   defineConfig<PresetWind3Theme>({
+    blocklist: ['count(*)::integer'],
     content: {
       pipeline: {
         exclude: ['**/.i18n/paraglide/**'],
@@ -193,14 +193,16 @@ const config = mergeConfigs([
   --pomo-safe-area-inset-right: env(safe-area-inset-right, 0rem);
   --pomo-safe-area-inset-top: env(safe-area-inset-top, 0rem);
   --pomo-color-foreground: rgb(var(--pomo-color-foreground-channels) / var(--pomo-color-foreground-opacity));
-  --pomo-color-muted-foreground: rgb(var(--pomo-color-muted-foreground-channels) / var(--pomo-color-muted-foreground-opacity));
-  --pomo-color-secondary-soft: rgb(var(--pomo-color-secondary-soft-channels) / var(--pomo-color-secondary-soft-opacity));
+  --pomo-color-muted-foreground:
+    rgb(var(--pomo-color-muted-foreground-channels) / var(--pomo-color-muted-foreground-opacity));
+  --pomo-color-secondary-soft:
+    rgb(var(--pomo-color-secondary-soft-channels) / var(--pomo-color-secondary-soft-opacity));
   font-family: ${theme.fontFamily?.sans};
   background: ${theme.colors?.background};
   color: ${theme.colors?.foreground};
 }
 
-:root[data-color-scheme='dark'] {
+:root.dark {
   --pomo-color-backdrop-channels: 8 6 4;
   --pomo-color-backdrop-opacity: 68%;
   --pomo-color-background-channels: 23 19 15;
@@ -258,14 +260,23 @@ const config = mergeConfigs([
   --pomo-color-switch-track-opacity: 12%;
   --pomo-color-modal-scrollbar: rgb(255 250 241 / 24%);
   --pomo-color-player-scrollbar: rgb(255 250 241 / 18%);
-  --pomo-player-expanded-background: linear-gradient(180deg, rgb(0 0 0 / 2%) 0%, rgb(0 0 0 / 10%) 34%, rgb(0 0 0 / 18%) 100%);
+  --pomo-player-expanded-background: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 2%) 0%,
+    rgb(0 0 0 / 10%) 34%,
+    rgb(0 0 0 / 18%) 100%
+  );
   --pomo-shadow-player: 0 22px 70px rgb(5 4 3 / 46%), inset 0 1px 0 rgb(255 255 255 / 10%);
   --pomo-shadow-switch-thumb: 0 2px 6px rgb(8 6 4 / 35%);
   --pomo-shadow-panel: 0 18px 54px rgb(8 6 4 / 42%);
   color-scheme: dark;
 }
+`,
+      },
+      {
+        getCSS: ({theme}) => `
 
-:root[data-color-scheme='light'] {
+:root {
   --pomo-color-backdrop-channels: 25 31 40;
   --pomo-color-backdrop-opacity: 48%;
   --pomo-color-background-channels: 247 248 250;
@@ -280,7 +291,9 @@ const config = mergeConfigs([
   --pomo-color-content-surface-opacity: 6%;
   --pomo-color-content-surface-disabled-channels: 25 31 40;
   --pomo-color-content-surface-disabled-opacity: 3%;
-  --pomo-editor-background: radial-gradient(circle at 15% 0%, rgb(195 79 47 / 10%), transparent 32rem), rgb(247 248 250);
+  --pomo-editor-background:
+    radial-gradient(circle at 15% 0%, rgb(195 79 47 / 10%), transparent 32rem),
+    rgb(247 248 250);
   --pomo-color-danger-channels: 180 35 24;
   --pomo-color-danger-opacity: 100%;
   --pomo-color-foreground-channels: 25 31 40;
@@ -323,7 +336,12 @@ const config = mergeConfigs([
   --pomo-color-switch-track-opacity: 12%;
   --pomo-color-modal-scrollbar: rgb(25 31 40 / 24%);
   --pomo-color-player-scrollbar: rgb(25 31 40 / 18%);
-  --pomo-player-expanded-background: linear-gradient(180deg, rgb(255 255 255 / 2%) 0%, rgb(25 31 40 / 2%) 34%, rgb(25 31 40 / 5%) 100%);
+  --pomo-player-expanded-background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 2%) 0%,
+    rgb(25 31 40 / 2%) 34%,
+    rgb(25 31 40 / 5%) 100%
+  );
   --pomo-shadow-player: 0 18px 54px rgb(25 31 40 / 18%), inset 0 1px 0 rgb(255 255 255 / 55%);
   --pomo-shadow-switch-thumb: 0 2px 6px rgb(25 31 40 / 24%);
   --pomo-shadow-panel: 0 18px 54px rgb(25 31 40 / 16%);
@@ -343,6 +361,34 @@ body {
 :focus-visible {
   outline: 0.125rem solid ${theme.colors?.primary};
   outline-offset: 0.1875rem;
+}
+
+:root:has(.pomo-desktop-surface),
+:root:has(.pomo-desktop-surface) body {
+  background: transparent !important;
+}
+
+.pomo-entry {
+  background: radial-gradient(
+    ellipse 125% 105% at 0% 108%,
+    rgb(7 5 4 / 94%) 0%,
+    rgb(7 5 4 / 82%) 28%,
+    rgb(7 5 4 / 58%) 54%,
+    rgb(7 5 4 / 30%) 74%,
+    transparent 92%
+  );
+}
+
+.pomo-scribble-mask {
+  -webkit-mask-image: url('/masks/scribble-frame.svg');
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-image: url('/masks/scribble-frame.svg');
+  mask-mode: alpha;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
 }
 
 .pomo-orbit-border {
@@ -398,9 +444,9 @@ body {
         counts: {
           'dialogue-settings-spin': 'infinite',
           'focus-glow': 'infinite',
+          'orbit-border': 'infinite',
           'overflow-marquee': 'infinite',
           'rest-sway': 'infinite',
-          'orbit-border': 'infinite',
           'screen-saver-content-drift': 'infinite',
         },
         durations: {
@@ -411,10 +457,10 @@ body {
           'modal-content-in': '180ms',
           'modal-content-in-top': '180ms',
           'modal-overlay-in': '140ms',
+          'orbit-border': '3.2s',
           'overflow-marquee': '6s',
           'rest-sway': '2.4s',
           'screen-saver-content-drift': '48s',
-          'orbit-border': '3.2s',
           'select-in': '140ms',
         },
         keyframes: {
@@ -457,6 +503,7 @@ body {
             from { opacity: 0; transform: translate(-50%, 0.5rem) scale(0.98); }
           }`,
           'modal-overlay-in': '{ from { opacity: 0; } }',
+          'orbit-border': '{ to { transform: rotate(1turn); } }',
           'overflow-marquee': `{
             from { transform: translateX(0); }
             to { transform: translateX(calc(-1 * var(--pomo-marquee-distance))); }
@@ -471,7 +518,6 @@ body {
             66% { transform: translate(-1rem, 1.5rem); }
             100% { transform: translate(2rem, 0.75rem); }
           }`,
-          'orbit-border': '{ to { transform: rotate(1turn); } }',
           'select-in': `{
             from { opacity: 0; transform: scale(0.97) translateY(-0.25rem); }
             to { opacity: 1; transform: scale(1) translateY(0); }
@@ -489,10 +535,10 @@ body {
           'modal-content-in': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
           'modal-content-in-top': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
           'modal-overlay-in': 'ease-out',
+          'orbit-border': 'linear',
           'overflow-marquee': 'linear',
           'rest-sway': 'ease-in-out',
           'screen-saver-content-drift': 'ease-in-out',
-          'orbit-border': 'linear',
           'select-in': 'ease-out',
         },
       },

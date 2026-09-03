@@ -7,15 +7,9 @@ import {
 } from './model'
 import {readDisplayThemePreference, writeDisplayThemePreference} from './storage'
 
-const DARK_THEME_COLOR = '#17130f'
-const BRIGHT_THEME_COLOR = '#f7f8fa'
-
 const applyDocumentTheme = (preference: DisplayThemePreference, prefersDark: boolean) => {
-  const colorScheme = resolveDisplayColorScheme(preference, prefersDark)
-  document.documentElement.dataset.colorScheme = colorScheme
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', colorScheme === 'dark' ? DARK_THEME_COLOR : BRIGHT_THEME_COLOR)
+  const isDark = resolveDisplayColorScheme(preference, prefersDark) === 'dark'
+  document.documentElement.classList.toggle('dark', isDark)
 }
 
 /** Owns the saved theme preference and applies it to the browser document. */

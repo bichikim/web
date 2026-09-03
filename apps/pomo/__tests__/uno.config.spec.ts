@@ -12,7 +12,11 @@ const getRuleBody = (css: string, selector: string) => {
 }
 
 const getColorSchemeBody = (css: string, scheme: 'dark' | 'light') => {
-  const match = new RegExp(`:root\\[data-color-scheme='${scheme}'\\] \\{([^}]*)\\}`).exec(css)
+  const selector = scheme === 'dark' ? ':root\\.dark' : ':root(?!\\.dark)'
+  const matches = Array.from(css.matchAll(new RegExp(`${selector} \\{([^}]*)\\}`, 'gu')))
+  const match = matches.find((candidate) =>
+    candidate[1]?.includes('--pomo-color-background-channels:'),
+  )
 
   expect(match).not.toBeNull()
 
@@ -63,6 +67,47 @@ it('should generate the narrow player container variant', async () => {
   expect(css).toContain('display:none;')
 })
 
+it('should exclude SQL count expressions extracted as utility candidates', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css, matched} = await uno.generate('count(*)::integer')
+
+  expect(matched).not.toContain('count(*)::integer')
+  expect(css).not.toContain('--count(*)')
+})
+
+it('should generate reusable CSS for static runtime surfaces', async () => {
+  const uno = await createGenerator(unoConfig)
+  const runtimeClasses = [
+    '[--pomo-scene-object-position:60%_center]',
+    '[animation-duration:var(--pomo-marquee-duration)]',
+    '[anchor-name:var(--pomo-volume-popover-anchor)]',
+    '[height:var(--pomo-level-height)]',
+    '[object-position:var(--pomo-scene-object-position)]',
+    '[position-anchor:var(--pomo-volume-popover-anchor)]',
+    '[transform:translateX(var(--pomo-swipe-offset))]',
+    '[width:var(--pomo-progress-width)]',
+    'w-[max(0px,calc(-1*var(--pomo-swipe-offset)))]',
+    'w-[max(0px,var(--pomo-swipe-offset))]',
+  ]
+  const {css, matched} = await uno.generate(
+    `pomo-desktop-surface pomo-entry pomo-scribble-mask ${runtimeClasses.join(' ')}`,
+  )
+
+  expect(css).toContain(':root:has(.pomo-desktop-surface)')
+  expect(css).toContain('.pomo-entry {')
+  expect(css).toContain('radial-gradient(')
+  expect(css).toContain('ellipse 125% 105% at 0% 108%')
+  expect(css).toContain('.pomo-scribble-mask {')
+  expect(css).toContain("url('/masks/scribble-frame.svg')")
+  for (const runtimeClass of runtimeClasses) {
+    expect(matched).toContain(runtimeClass)
+  }
+  expect(css).toContain('animation-duration:var(--pomo-marquee-duration)')
+  expect(css).toContain('width:max(0px,var(--pomo-swipe-offset))')
+  expect(css).toContain('width:max(0px,calc(-1 * var(--pomo-swipe-offset)))')
+  expect(css).toContain('transform:translateX(var(--pomo-swipe-offset))')
+})
+
 it('should generate CSS for Tabler icons used by settings, weather, and modal close', async () => {
   const uno = await createGenerator(unoConfig)
   const {css, matched} = await uno.generate('i-tabler-x i-tabler-bolt i-tabler-cloud-rain', {
@@ -84,17 +129,20 @@ it('should generate theme utilities from runtime color variables', async () => {
     'bg-background bg-danger/10 text-foreground border-border border-danger/45',
   )
 
-  expect(css).toContain("[data-color-scheme='dark']")
-  expect(css).toContain("[data-color-scheme='light']")
+  expect(css).toContain(':root.dark')
+  expect(css).not.toContain('data-color-scheme')
   expect(css).toContain(
-    '--un-bg-opacity:var(--pomo-color-background-opacity);background-color:rgb(var(--pomo-color-background-channels) / var(--un-bg-opacity));',
+    '--un-bg-opacity:var(--pomo-color-background-opacity);' +
+      'background-color:rgb(var(--pomo-color-background-channels) / var(--un-bg-opacity));',
   )
   expect(css).toContain('background-color:rgb(var(--pomo-color-danger-channels) / 0.1);')
   expect(css).toContain(
-    '--un-text-opacity:var(--pomo-color-foreground-opacity);color:rgb(var(--pomo-color-foreground-channels) / var(--un-text-opacity));',
+    '--un-text-opacity:var(--pomo-color-foreground-opacity);' +
+      'color:rgb(var(--pomo-color-foreground-channels) / var(--un-text-opacity));',
   )
   expect(css).toContain(
-    '--un-border-opacity:var(--pomo-color-border-opacity);border-color:rgb(var(--pomo-color-border-channels) / var(--un-border-opacity));',
+    '--un-border-opacity:var(--pomo-color-border-opacity);' +
+      'border-color:rgb(var(--pomo-color-border-channels) / var(--un-border-opacity));',
   )
   expect(css).toContain('border-color:rgb(var(--pomo-color-danger-channels) / 0.45);')
 })

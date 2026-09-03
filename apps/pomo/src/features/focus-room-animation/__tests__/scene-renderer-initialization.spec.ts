@@ -404,7 +404,10 @@ describe('PSceneRenderer initialization', () => {
       width: SCENE_WIDTH,
     })
     expect(applications[0].canvas.getAttribute('aria-hidden')).toBe('true')
-    expect(applications[0].canvas.className).toContain('object-[60%_center]')
+    expect(applications[0].canvas.className).toContain('[--pomo-scene-object-position:60%_center]')
+    expect(applications[0].canvas.className).toContain(
+      '[object-position:var(--pomo-scene-object-position)]',
+    )
     expect(host.contains(applications[0].canvas)).toBe(true)
     expect(acquireTextureGroup).toHaveBeenCalledWith(['/scene.webp', '/depth.webp'])
     expect(Sprite).toHaveBeenCalledWith({source: '/scene.webp'})

@@ -33,6 +33,7 @@ it('should enter and finish its own exit animation', () => {
   const section = screen.getByRole('region')
 
   expect(section).not.toHaveAttribute('data-exiting')
+  expect(section).not.toHaveAttribute('style')
   fireEvent.click(screen.getByRole('button'))
   expect(onEnter).toHaveBeenCalledOnce()
   fireEvent.animationEnd(section)
