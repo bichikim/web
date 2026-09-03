@@ -4,7 +4,7 @@ import {renderHook} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import type {AuthController} from '../../auth/AuthProvider'
+import type {AuthController} from '../../auth/controller'
 import type {AuthenticationState} from '../../auth/machine'
 
 const authMocks = vi.hoisted(() => ({useAuth: vi.fn()}))
@@ -21,10 +21,6 @@ const authenticationSession = () => {
   return state.kind === 'authenticated' ? state : null
 }
 const authentication: AuthController = {
-  authenticatedEmail: () => {
-    const session = authenticationSession()
-    return session?.provider === 'email' ? session.email : null
-  },
   session: authenticationSession,
   state: authenticationState,
 }

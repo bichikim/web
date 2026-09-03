@@ -63,7 +63,6 @@ it('should share one authenticated web session with every consumer', async () =>
       provider: 'email',
     }),
   )
-  expect(observedContexts[0]?.authenticatedEmail()).toBe('user@example.com')
   expect(sessionMocks.accountSessionQuery).toHaveBeenCalledOnce()
   expect(sessionMocks.tossSessionQuery).not.toHaveBeenCalled()
 })
@@ -91,7 +90,7 @@ it('should expose an authenticated Toss session without exposing its token', asy
   await waitFor(() =>
     expect(authentication?.state()).toEqual({kind: 'authenticated', provider: 'toss'}),
   )
-  expect(authentication?.authenticatedEmail()).toBeNull()
+  expect(authentication).not.toHaveProperty('token')
   expect(sessionMocks.tossSessionQuery).toHaveBeenCalledOnce()
   expect(sessionMocks.accountSessionQuery).not.toHaveBeenCalled()
 })

@@ -4,7 +4,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import type {AuthController} from '../../../features/auth/AuthProvider'
+import type {AuthController} from '../../../features/auth/controller'
 import type {AuthenticationState} from '../../../features/auth/machine'
 
 const navigate = vi.fn()
@@ -43,7 +43,6 @@ const authenticationSession = () => {
   return state.kind === 'authenticated' ? state : null
 }
 const authentication: AuthController = {
-  authenticatedEmail: () => null,
   session: authenticationSession,
   state: authenticationState,
 }

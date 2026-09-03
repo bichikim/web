@@ -5,7 +5,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import type {AuthController} from '../../../features/auth/AuthProvider'
+import type {AuthController} from '../../../features/auth/controller'
 import type {AuthenticationState} from '../../../features/auth/machine'
 import {completeAccountLink} from '../../../features/user-auth/web-session'
 
@@ -38,10 +38,6 @@ const authenticationSession = () => {
   return state.kind === 'authenticated' ? state : null
 }
 const authentication: AuthController = {
-  authenticatedEmail: () => {
-    const session = authenticationSession()
-    return session?.provider === 'email' ? session.email : null
-  },
   session: authenticationSession,
   state: authenticationState,
 }
