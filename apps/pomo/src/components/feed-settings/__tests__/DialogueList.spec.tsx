@@ -169,6 +169,28 @@ it('should render saved feed dialogues in bounded pages', () => {
   expect(screen.getAllByRole('button', {name: '듣기'})).toHaveLength(21)
 })
 
+it('should use singular English copy for one remaining dialogue and one cleanup hour', () => {
+  overwriteGetLocale(() => 'en')
+  vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-16T00:00:00.000Z'))
+  const dialogues = Array.from({length: 21}, (_, index) => ({
+    ...FEED_DIALOGUE,
+    dialogue: {...FEED_DIALOGUE.dialogue, id: `dialogue-${index}`},
+    metadata: {
+      ...FEED_DIALOGUE.metadata,
+      dialogueId: `dialogue-${index}`,
+      expiresAt: '2026-08-16T01:00:00.000Z',
+      feedItemId: `item-${index}`,
+      itemTitle: `Feed update ${index}`,
+    },
+  }))
+  const {controller} = createController(dialogues)
+
+  render(() => <PFeedDialogueList controller={controller} />)
+
+  expect(screen.getAllByText(/Clean up in 1 hour/u)).toHaveLength(20)
+  expect(screen.getByRole('button', {name: 'Show 1 earlier feed dialogue'})).toBeDefined()
+})
+
 it('should apply compact spacing to feed dialogue rows', () => {
   const {controller} = createController()
   const result = render(() => <PFeedDialogueList controller={controller} />)

@@ -200,6 +200,8 @@ const LanguageLearningWordPronunciationButton = (
   props: LanguageLearningWordPronunciationButtonProps,
 ) => {
   const [audio, setAudio] = createSignal<HTMLAudioElement>()
+  const [playbackFailed, setPlaybackFailed] = createSignal(false)
+  let playRevision = 0
 
   const play = () => {
     const element = audio()
@@ -208,7 +210,21 @@ const LanguageLearningWordPronunciationButton = (
     }
 
     element.currentTime = 0
-    element.play().catch(() => undefined)
+    playRevision += 1
+    const currentRevision = playRevision
+    setPlaybackFailed(false)
+    element.play().then(
+      () => {
+        if (playRevision === currentRevision) {
+          setPlaybackFailed(false)
+        }
+      },
+      () => {
+        if (playRevision === currentRevision) {
+          setPlaybackFailed(true)
+        }
+      },
+    )
   }
 
   createEffect(() => {
@@ -220,27 +236,37 @@ const LanguageLearningWordPronunciationButton = (
 
   onCleanup(() => audio()?.pause())
 
+  const accessibleLabel = () => {
+    if (props.loading) {
+      return m.learning_words_pronouncing({word: props.word})
+    }
+    if (playbackFailed()) {
+      return m.learning_words_playback_failed({word: props.word})
+    }
+    return m.learning_words_pronounce({word: props.word})
+  }
+
+  const iconClass = () => {
+    if (props.loading) {
+      return 'i-tabler-loader-2 size-3.5 animate-spin'
+    }
+    return playbackFailed()
+      ? 'i-tabler-alert-circle size-3.5 text-[#f2a398]'
+      : 'i-tabler-volume-2 size-3.5'
+  }
+
   return (
     <>
       <button
         aria-busy={props.loading}
-        aria-label={
-          props.loading
-            ? m.learning_words_pronouncing({word: props.word})
-            : m.learning_words_pronounce({word: props.word})
-        }
+        aria-label={accessibleLabel()}
         class={`${WORD_ACTION_BUTTON_CLASS} border-l text-muted-foreground hover:text-foreground`}
         disabled={props.loading}
         onClick={() => props.onPress()}
-        title={m.learning_words_pronounce({word: props.word})}
+        title={accessibleLabel()}
         type="button"
       >
-        <span
-          aria-hidden="true"
-          class={
-            props.loading ? 'i-tabler-loader-2 size-3.5 animate-spin' : 'i-tabler-volume-2 size-3.5'
-          }
-        />
+        <span aria-hidden="true" class={iconClass()} />
       </button>
       <audio
         aria-hidden="true"

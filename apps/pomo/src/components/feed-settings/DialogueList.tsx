@@ -129,8 +129,14 @@ const formatPublishedAt = (value: string) =>
 
 const formatRemaining = (value: string) => {
   const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))
-  return hours === 0 ? m.settings_feed_cleanup_next() : m.settings_feed_cleanup_hours({hours})
+  if (hours === 0) {
+    return m.settings_feed_cleanup_next()
+  }
+  return hours === 1 ? m.settings_feed_cleanup_hours_one() : m.settings_feed_cleanup_hours({hours})
 }
+
+const formatLoadMore = (count: number) =>
+  count === 1 ? m.settings_feed_load_more_one() : m.settings_feed_load_more({count})
 
 export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
   const [visibleDialogueCount, setVisibleDialogueCount] = createSignal(DIALOGUE_PAGE_SIZE)
@@ -245,7 +251,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
             onClick={() => setVisibleDialogueCount((count) => count + DIALOGUE_PAGE_SIZE)}
             type="button"
           >
-            {m.settings_feed_load_more({count: nextDialogueCount()})}
+            {formatLoadMore(nextDialogueCount())}
           </button>
         </Show>
       </Show>

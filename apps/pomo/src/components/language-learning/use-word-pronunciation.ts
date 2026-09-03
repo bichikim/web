@@ -98,6 +98,7 @@ interface GeneratePronunciationOptions {
   readonly onMissingModel: (request: PendingPronunciation) => void
   readonly publish: (word: LanguageLearningWord, audio: Blob) => void
   readonly request: PendingPronunciation
+  readonly signal: AbortSignal
   readonly setError: (message: string) => void
   readonly setLoadingKey: (key: string | null) => void
 }
@@ -105,7 +106,7 @@ interface GeneratePronunciationOptions {
 const generatePronunciation = (options: GeneratePronunciationOptions) => {
   const key = getWordKey(options.request.word)
   options.setLoadingKey(key)
-  options.modelAssets
+  return options.modelAssets
     .runAfterVoiceModel({
       downloadIfMissing: options.downloadIfMissing,
       modelId: options.request.modelId,
@@ -113,6 +114,7 @@ const generatePronunciation = (options: GeneratePronunciationOptions) => {
         generateLanguageLearningWordPronunciation({
           language: options.request.word.language,
           modelId: options.request.modelId,
+          signal: options.signal,
           text: options.request.word.value,
           voiceId: options.request.voiceId,
         }),
@@ -137,6 +139,9 @@ const generatePronunciation = (options: GeneratePronunciationOptions) => {
         case 'complete': {
           const pronunciation = result.value
           switch (pronunciation.status) {
+            case 'cancelled':
+              options.setLoadingKey(null)
+              return
             case 'error':
               options.setLoadingKey(null)
               options.setError(pronunciation.message)
@@ -180,6 +185,7 @@ export interface LanguageLearningWordPronunciationState {
   readonly request: (word: LanguageLearningWord) => void
 }
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- Owns one pronunciation request lifecycle and its reactive state.
 export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPronunciationState => {
   const modelAssets = useModelAssetManager()
   const [audioUrls, setAudioUrls] = createSignal<AudioUrlMap>({})
@@ -188,6 +194,7 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
   const [loadingKey, setLoadingKey] = createSignal<string | null>(null)
   const [pendingRequest, setPendingRequest] = createSignal<PendingPronunciation | null>(null)
   let audioRepository: LanguageLearningWordAudioRepository | null = null
+  let activeGeneration: {readonly controller: AbortController; readonly key: string} | null = null
   let disposed = false
   const requestRevisions = new Map<string, number>()
   const publisher = createAudioPublisher({
@@ -209,7 +216,11 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
   const isCurrentRequest = (request: PendingPronunciation) =>
     !disposed && requestRevisions.get(getWordKey(request.word)) === request.revision
 
-  const generate = (request: PendingPronunciation, downloadIfMissing: boolean) =>
+  const generate = (request: PendingPronunciation, downloadIfMissing: boolean) => {
+    activeGeneration?.controller.abort()
+    const controller = new AbortController()
+    const key = getWordKey(request.word)
+    activeGeneration = {controller, key}
     generatePronunciation({
       audioRepository: getAudioRepository(),
       downloadIfMissing,
@@ -220,7 +231,15 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
       request,
       setError,
       setLoadingKey,
+      signal: controller.signal,
     })
+      .finally(() => {
+        if (activeGeneration?.controller === controller) {
+          activeGeneration = null
+        }
+      })
+      .catch(() => undefined)
+  }
 
   const request = (word: LanguageLearningWord) => {
     const key = getWordKey(word)
@@ -287,6 +306,10 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
   const remove = (word: LanguageLearningWord) => {
     const key = getWordKey(word)
     requestRevisions.set(key, (requestRevisions.get(key) ?? 0) + 1)
+    if (activeGeneration?.key === key) {
+      activeGeneration.controller.abort()
+      activeGeneration = null
+    }
     if (loadingKey() === key) {
       setLoadingKey(null)
     }
@@ -313,6 +336,8 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
 
   onCleanup(() => {
     disposed = true
+    activeGeneration?.controller.abort()
+    activeGeneration = null
     for (const url of Object.values(audioUrls())) {
       URL.revokeObjectURL(url)
     }

@@ -15,12 +15,13 @@ vi.mock('../../../features/supertonic', () => ({
 }))
 
 const dispose = vi.fn()
+const cancelGeneration = vi.fn()
 const initialize = vi.fn()
 
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(createSupertonicClient).mockReturnValue({
-    cancelGeneration: vi.fn(),
+    cancelGeneration,
     dispose,
     generate: vi.fn(),
     generateStream: vi.fn(),
@@ -39,10 +40,12 @@ afterEach(() => {
 })
 
 it('should initialize the selected model and create one word pronunciation', async () => {
+  const abortController = new AbortController()
   await expect(
     generateLanguageLearningWordPronunciation({
       language: 'en',
       modelId: 'full',
+      signal: abortController.signal,
       text: 'Home',
       voiceId: 'Yuna',
     }),
@@ -53,9 +56,51 @@ it('should initialize the selected model and create one word pronunciation', asy
     onStatus: expect.any(Function),
   })
   expect(generateCompressedDialogueAudio).toHaveBeenCalledWith(
-    expect.objectContaining({language: 'en', modelId: 'full', text: 'Home', voiceId: 'Yuna'}),
+    expect.objectContaining({
+      language: 'en',
+      modelId: 'full',
+      signal: abortController.signal,
+      text: 'Home',
+      voiceId: 'Yuna',
+    }),
   )
   expect(dispose).toHaveBeenCalledOnce()
+})
+
+it('should dispose active model work and return cancellation when aborted', async () => {
+  let resolveInitialization:
+    | ((value: {
+        readonly error: {
+          readonly code: 'cancelled'
+          readonly phase: 'initialize'
+          readonly retryable: false
+        }
+        readonly ok: false
+      }) => void)
+    | undefined
+  initialize.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveInitialization = resolve
+    }),
+  )
+  const abortController = new AbortController()
+  const pronunciation = generateLanguageLearningWordPronunciation({
+    language: 'en',
+    modelId: 'full',
+    signal: abortController.signal,
+    text: 'Home',
+    voiceId: 'Yuna',
+  })
+
+  abortController.abort()
+  expect(dispose).toHaveBeenCalledOnce()
+  resolveInitialization?.({
+    error: {code: 'cancelled', phase: 'initialize', retryable: false},
+    ok: false,
+  })
+
+  await expect(pronunciation).resolves.toEqual({status: 'cancelled'})
+  expect(generateCompressedDialogueAudio).not.toHaveBeenCalled()
 })
 
 it('should report initialization, generation, and unexpected failures', async () => {

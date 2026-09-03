@@ -125,12 +125,15 @@ it('should generate a pronunciation with a ready model and expose the audio URL'
   await vi.waitFor(() =>
     expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation'),
   )
-  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledWith({
-    language: 'en',
-    modelId: 'int8',
-    text: 'Home',
-    voiceId: 'Hana',
-  })
+  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledWith(
+    expect.objectContaining({
+      language: 'en',
+      modelId: 'int8',
+      signal: expect.any(AbortSignal),
+      text: 'Home',
+      voiceId: 'Hana',
+    }),
+  )
   expect(audioRepository.save).toHaveBeenCalledOnce()
   expect(manager.runAfterVoiceModel).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -189,6 +192,30 @@ it('should invalidate active pronunciation work before deleting its cached audio
   expect(audioRepository.delete).toHaveBeenCalledWith(word)
   expect(audioRepository.save).not.toHaveBeenCalled()
   expect(screen.getByTestId('audio')).toHaveTextContent('')
+})
+
+it('should abort active pronunciation work when its owner unmounts', async () => {
+  let generationSignal: AbortSignal | undefined
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  vi.mocked(generateLanguageLearningWordPronunciation).mockImplementation(
+    (options) =>
+      new Promise((resolve) => {
+        generationSignal = options.signal
+        options.signal?.addEventListener('abort', () => resolve({status: 'cancelled'}), {
+          once: true,
+        })
+      }),
+  )
+  const result = render(() => <Harness />)
+
+  requestWord(word)
+  await vi.waitFor(() => expect(generationSignal).toBeInstanceOf(AbortSignal))
+  result.unmount()
+
+  expect(generationSignal?.aborted).toBe(true)
 })
 
 it('should ask before downloading a missing model and continue the word after confirmation', async () => {

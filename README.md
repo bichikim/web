@@ -44,7 +44,7 @@ Pull request에서는 GitHub Actions가 타입 검사, Oxlint, 포맷 검사와 
 Pomo 개발 환경도 자동 배포되지 않는다. `dev`에 변경을 반영한 뒤 GitHub `Actions`에서 다음 순서로 수동 배포한다.
 
 ```text
-Deploy Pomo Audio Gateway 선택
+Deploy Pomo and Audio Gateway 선택
 → Run workflow
 → Branch: dev 선택
 → Run workflow 실행

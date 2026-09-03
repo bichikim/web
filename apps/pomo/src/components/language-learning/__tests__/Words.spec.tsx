@@ -346,6 +346,33 @@ it('should play only the requested word when saved and memorized words share the
   expect(playedSources).toEqual(['blob:word-audio-0', 'blob:word-audio-1', 'blob:word-audio-0'])
 })
 
+it('should replace the speaker with an alert when audio playback is rejected', async () => {
+  const play = vi
+    .spyOn(HTMLMediaElement.prototype, 'play')
+    .mockRejectedValue(new DOMException('Playback blocked', 'NotAllowedError'))
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:word-audio')
+  vi.mocked(generateLanguageLearningWordPronunciation).mockResolvedValue({
+    audio: new Blob(['audio'], {type: 'audio/ogg; codecs=opus'}),
+    status: 'complete',
+  })
+  vi.mocked(useModelAssetManager).mockReturnValue({
+    runAfterModel: vi.fn(),
+    runAfterVoiceModel: async (options) => ({status: 'complete', value: await options.task()}),
+  })
+  render(() => <LanguageLearningWords />)
+  const input = screen.getByRole('textbox', {name: '모르는 단어'})
+  fireEvent.input(input, {target: {value: 'Home'}})
+  fireEvent.click(screen.getByRole('button', {name: '단어 저장'}))
+
+  fireEvent.click(screen.getByRole('button', {name: 'Home 발음 듣기'}))
+
+  const failedButton = await screen.findByRole('button', {
+    name: 'Home 발음을 재생하지 못했어요. 다시 시도',
+  })
+  expect(failedButton.querySelector('span')).toHaveClass('i-tabler-alert-circle')
+  expect(play).toHaveBeenCalledOnce()
+})
+
 it('should report storage failures while saving and deleting words', () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const result = render(() => <LanguageLearningWords />)

@@ -147,6 +147,7 @@ it('should render event and dialogue settings in English', () => {
   expect(screen.getByRole('heading', {name: 'Dialogue options'})).toBeDefined()
   expect(screen.getByRole('heading', {name: 'Saved dialogue'})).toBeDefined()
   expect(screen.getByRole('link', {name: 'New dialogue'})).toBeDefined()
+  expect(screen.getByText('Yuna · 0:01 · 1 speech bubble')).toBeDefined()
 })
 
 it('should keep saved dialogue content full-width with bounded text and actions', () => {

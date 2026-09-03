@@ -85,11 +85,14 @@ const formatDuration = (durationMs: number) => {
 const getVoiceLabel = (voiceId: PDialogue['voiceId']) =>
   SUPERTONIC_VOICES.find((voice) => voice.id === voiceId)?.label ?? voiceId
 
+const formatBubbleCount = (count: number) =>
+  count === 1 ? m.settings_dialogue_bubble_count_one() : m.settings_dialogue_bubble_count({count})
+
 const getDialogueMetadata = (dialogue: PDialogue) =>
   [
     getVoiceLabel(dialogue.voiceId),
     formatDuration(dialogue.durationMs),
-    m.settings_dialogue_bubble_count({count: dialogue.segments.length}),
+    formatBubbleCount(dialogue.segments.length),
   ].join(' · ')
 
 export interface PDialogueSettingsContentProps {
