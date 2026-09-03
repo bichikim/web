@@ -1,11 +1,23 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {beforeEach, expect, test} from 'vitest'
+import {beforeEach, expect, test, vi} from 'vitest'
 
 import {EditorPanelLayout} from '../EditorPanelLayout'
 
 beforeEach(() => localStorage.clear())
+
+test('should activate its editor from pointer and keyboard focus', () => {
+  const onActivate = vi.fn()
+  const view = render(() => (
+    <EditorPanelLayout onActivate={onActivate} viewport={<button>편집 도구</button>} />
+  ))
+
+  fireEvent.pointerDown(view.getByRole('button', {name: '편집 도구'}))
+  fireEvent.focusIn(view.getByRole('button', {name: '편집 도구'}))
+
+  expect(onActivate).toHaveBeenCalledTimes(2)
+})
 
 test('should resize panels with separators and clamp keyboard resizing at the minimum size', () => {
   const view = render(() => (

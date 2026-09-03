@@ -71,12 +71,14 @@ const getEditorSvg = (container: HTMLElement) => {
 describe('DeformerEditor', () => {
   test('should rotate with the angle handle and translate from the deformer interior', () => {
     const [document, setDocument] = createSignal(createDocument(createDeformer()))
+    const onEditEnd = vi.fn()
     const onEditStart = vi.fn()
     const view = render(() => (
       <DeformerEditor
         activeNodeId="deformer"
         document={document()}
         onDocumentChange={setDocument}
+        onEditEnd={onEditEnd}
         onEditStart={onEditStart}
       />
     ))
@@ -138,6 +140,7 @@ describe('DeformerEditor', () => {
     expect(movedPoints[3]).toBeCloseTo(120)
     expect(moved?.kind === 'deformer' ? moved.rotationOrigin : undefined).toEqual({x: 80, y: 80})
     expect(onEditStart).toHaveBeenCalledTimes(3)
+    expect(onEditEnd).toHaveBeenCalledTimes(3)
   })
 
   test('should rotate around an independent rotation origin', () => {

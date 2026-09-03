@@ -11,6 +11,12 @@ const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
 
 export interface EditorToolbarProps {
   readonly activeWorkspace?: 'animation' | 'modeling'
+  readonly canRedo?: boolean
+  readonly canUndo?: boolean
+  readonly historyRedoCount?: number
+  readonly historyUndoCount?: number
+  readonly onRedo?: () => void
+  readonly onUndo?: () => void
   readonly onWorkspaceChange?: (workspace: 'animation' | 'modeling') => void
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
@@ -86,6 +92,26 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       </button>
     </nav>
     <div class="toolbar-actions">
+      <div class="history-controls" aria-label="편집 이력">
+        <button
+          aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z`}
+          aria-label="실행 취소"
+          disabled={props.canUndo !== true || props.onUndo === undefined}
+          type="button"
+          onClick={() => props.onUndo?.()}
+        >
+          Undo
+        </button>
+        <button
+          aria-description={`${props.historyRedoCount ?? 0}단계 다시 실행할 수 있음 · ⇧⌘Z / Ctrl+Y`}
+          aria-label="다시 실행"
+          disabled={props.canRedo !== true || props.onRedo === undefined}
+          type="button"
+          onClick={() => props.onRedo?.()}
+        >
+          Redo
+        </button>
+      </div>
       <label class="toolbar-button primary">
         PNG 불러오기
         <input

@@ -28,7 +28,7 @@ import {
 
 interface UseParameterEditorProps {
   readonly document: Accessor<PuppetDocument>
-  readonly onDocumentChange: Setter<PuppetDocument>
+  readonly onDocumentChange: (document: PuppetDocument) => void
   readonly onNotice: Setter<string | null>
   readonly selectedNodeIds: Accessor<ReadonlyArray<string>>
 }
@@ -226,7 +226,7 @@ const createParameterValueHandler = (options: CreateParameterValueHandlerOptions
   }
 
 interface CreateKeyformMoveHandlerOptions extends CreateParameterValueHandlerOptions {
-  readonly onDocumentChange: Setter<PuppetDocument>
+  readonly onDocumentChange: (document: PuppetDocument) => void
   readonly onNotice: Setter<string | null>
 }
 

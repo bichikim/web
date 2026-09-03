@@ -165,6 +165,31 @@
   border-left: 1px solid #313b37;
 }
 
+.puppet-editor .history-controls {
+  display: flex;
+  gap: 3px;
+}
+
+.puppet-editor .history-controls button {
+  padding: 6px 8px;
+  border: 1px solid #35413d;
+  border-radius: 6px;
+  color: #b9c5c0;
+  background: #121816;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.puppet-editor .history-controls button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.puppet-editor .history-controls button:focus-visible {
+  outline: 2px solid #64e5c4;
+  outline-offset: 2px;
+}
+
 .puppet-editor .panel-visibility-controls button {
   display: grid;
   width: 28px;
