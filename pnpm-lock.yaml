@@ -284,6 +284,9 @@ importers:
       '@winter-love/unocss-config':
         specifier: workspace:*
         version: link:packages/unocss-config
+      axe-core:
+        specifier: 4.11.4
+        version: 4.11.4
       chromatic:
         specifier: ^11.29.0
         version: 11.29.0
