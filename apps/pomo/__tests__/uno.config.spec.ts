@@ -69,3 +69,24 @@ it('should generate CSS for Tabler icons used by settings, weather, and modal cl
   expect(css).toContain('.i-tabler-cloud-rain')
   expect(css).toContain('--un-icon')
 })
+
+it('should generate theme utilities from runtime color variables', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css} = await uno.generate(
+    'bg-background bg-danger/10 text-foreground border-border border-danger/45',
+  )
+
+  expect(css).toContain("[data-color-scheme='dark']")
+  expect(css).toContain("[data-color-scheme='light']")
+  expect(css).toContain(
+    '--un-bg-opacity:var(--pomo-color-background-opacity);background-color:rgb(var(--pomo-color-background-channels) / var(--un-bg-opacity));',
+  )
+  expect(css).toContain('background-color:rgb(var(--pomo-color-danger-channels) / 0.1);')
+  expect(css).toContain(
+    '--un-text-opacity:var(--pomo-color-foreground-opacity);color:rgb(var(--pomo-color-foreground-channels) / var(--un-text-opacity));',
+  )
+  expect(css).toContain(
+    '--un-border-opacity:var(--pomo-color-border-opacity);border-color:rgb(var(--pomo-color-border-channels) / var(--un-border-opacity));',
+  )
+  expect(css).toContain('border-color:rgb(var(--pomo-color-danger-channels) / 0.45);')
+})

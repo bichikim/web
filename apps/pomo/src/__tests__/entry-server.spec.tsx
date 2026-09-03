@@ -112,20 +112,22 @@ describe('entry-server', () => {
     expect(documentElement.lang).toBe('ko')
     expect(documentElement.dir).toBe('rtl')
     expect(documentElement.dataset.colorScheme).toBe('dark')
+    expect(documentElement.querySelector('script')).not.toBeNull()
     expect(readChildren).toHaveBeenCalledOnce()
     expect(readScripts).toHaveBeenCalledOnce()
-    expect(insertedValues).toEqual(['children-slot', 'script-slot'])
+    expect(insertedValues).toEqual(expect.arrayContaining(['children-slot', 'script-slot']))
   })
 
-  it('should render the locked light document for the Apps in Toss target', async () => {
+  it('should render the light fallback document for the Apps in Toss target', async () => {
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
 
     await import('../entry-server')
     executeRegisteredHandler()
 
     expect(renderedDocument?.dataset.colorScheme).toBe('light')
+    expect(renderedDocument?.querySelector('script')).not.toBeNull()
     expect(readChildren).toHaveBeenCalledOnce()
     expect(readScripts).toHaveBeenCalledOnce()
-    expect(insertedValues).toEqual(['children-slot', 'script-slot'])
+    expect(insertedValues).toEqual(expect.arrayContaining(['children-slot', 'script-slot']))
   })
 })

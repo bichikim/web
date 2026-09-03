@@ -11,6 +11,7 @@ import {PSwitch} from './PSwitch'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {PActivity, PGaze} from '../features/focus-room-scene-preferences'
+import {type DisplayThemePreference, useDisplayTheme} from '../features/display-theme'
 import {useFullscreen} from '../features/fullscreen'
 import {
   getLocalizedActivityOptions,
@@ -75,6 +76,13 @@ const LANGUAGE_OPTIONS = [
   {label: '한국어', value: 'ko'},
   {label: 'English', value: 'en'},
 ] satisfies readonly PSelectOption<Locale>[]
+
+const getDisplayThemeOptions = () =>
+  [
+    {label: m.settings_theme_dark(), value: 'dark'},
+    {label: m.settings_theme_bright(), value: 'bright'},
+    {label: m.settings_theme_system(), value: 'system'},
+  ] satisfies readonly PSelectOption<DisplayThemePreference>[]
 
 const getScreenSaverDelayOptions = () =>
   [
@@ -277,20 +285,32 @@ interface PGeneralSettingsProps extends PSettingsProps {
   readonly wakeLock: ScreenWakeLockController
 }
 
-const PGeneralSettings = (props: PGeneralSettingsProps) => (
-  <div class={CLASSES.settingsContent}>
-    <PSelect
-      label={m.settings_language()}
-      onChange={setLocale}
-      options={LANGUAGE_OPTIONS}
-      value={getLocale()}
-    />
-    <PGeneralSceneSettings {...props} />
-    <PGeneralStyleSettings {...props} />
-    <PGeneralWeatherSettings {...props} />
-    <PGeneralDisplaySettings {...props} />
-  </div>
-)
+const PGeneralSettings = (props: PGeneralSettingsProps) => {
+  const displayTheme = useDisplayTheme()
+
+  return (
+    <div class={CLASSES.settingsContent}>
+      <div class={CLASSES.settingsGrid}>
+        <PSelect
+          label={m.settings_language()}
+          onChange={setLocale}
+          options={LANGUAGE_OPTIONS}
+          value={getLocale()}
+        />
+        <PSelect
+          label={m.settings_theme()}
+          onChange={displayTheme.onPreferenceChange}
+          options={getDisplayThemeOptions()}
+          value={displayTheme.preference()}
+        />
+      </div>
+      <PGeneralSceneSettings {...props} />
+      <PGeneralStyleSettings {...props} />
+      <PGeneralWeatherSettings {...props} />
+      <PGeneralDisplaySettings {...props} />
+    </div>
+  )
+}
 
 export const PSettings = (props: PSettingsProps) => {
   const [isOpen, setIsOpen] = createSignal(false)

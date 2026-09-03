@@ -3,6 +3,8 @@ import {createHandler, StartServer} from '@solidjs/start/server'
 
 import {getLocale, getTextDirection} from '@paraglide/runtime'
 
+import {DISPLAY_THEME_BOOTSTRAP_SCRIPT} from './features/display-theme/bootstrap'
+
 const isAppsInToss = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
 const viewport = isAppsInToss
   ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
@@ -12,7 +14,7 @@ const documentColorScheme = isAppsInToss ? 'light' : 'dark'
 const documentThemeColor = documentColorScheme === 'light' ? '#f7f8fa' : '#17130f'
 
 export default createHandler(
-  () => (
+  (event) => (
     <StartServer
       document={(props) => (
         <html data-color-scheme={documentColorScheme} dir={getTextDirection()} lang={getLocale()}>
@@ -20,6 +22,7 @@ export default createHandler(
             <meta charset="utf-8" />
             <meta name="viewport" content={viewport} />
             <meta name="theme-color" content={documentThemeColor} />
+            <script nonce={event.locals.securityNonce}>{DISPLAY_THEME_BOOTSTRAP_SCRIPT}</script>
             <link
               rel="stylesheet"
               href={import.meta.env.VITE_POMO_PRETENDARD_STYLESHEET_PATH}

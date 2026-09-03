@@ -7,8 +7,9 @@ import {beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/PModal'
 import {PRadioSwitch} from 'src/components/PRadioSwitch'
-import {PSelect} from 'src/components/PSelect'
+import {PSelect, type PSelectSingleProps} from 'src/components/PSelect'
 import {PSwitch, type PSwitchProps} from 'src/components/PSwitch'
+import {type DisplayThemePreference, useDisplayTheme} from 'src/features/display-theme'
 import {useFullscreen} from 'src/features/fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {LEGACY_WEATHER_LOCATIONS} from 'src/features/weather'
@@ -22,6 +23,7 @@ vi.mock('src/components/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
 vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/components/PSwitch', () => ({PSwitch: vi.fn()}))
 vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
+vi.mock('src/features/display-theme', () => ({useDisplayTheme: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 vi.mock('../PCreditsSettings', () => ({PCreditsSettings: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
@@ -120,6 +122,10 @@ beforeEach(() => {
     isRequestPending: () => false,
     onEnabledChange: vi.fn(),
   })
+  vi.mocked(useDisplayTheme).mockReturnValue({
+    onPreferenceChange: vi.fn(),
+    preference: () => 'system',
+  })
   vi.mocked(PDialogueSettings).mockImplementation((props) => (
     <button onClick={props.onRequestClose} type="button">
       대화 닫기
@@ -139,6 +145,32 @@ beforeEach(() => {
       날씨 변경
     </button>
   ))
+})
+
+it('should expose and change the saved display theme in general settings', () => {
+  const onPreferenceChange = vi.fn()
+  vi.mocked(useDisplayTheme).mockReturnValue({
+    onPreferenceChange,
+    preference: () => 'bright',
+  })
+
+  render(() => <PSettings />)
+
+  const themeSelect = vi
+    .mocked(PSelect)
+    .mock.calls.map(([props]) => props)
+    .find((props) => props.label === '테마') as
+    | PSelectSingleProps<DisplayThemePreference>
+    | undefined
+
+  expect(themeSelect?.value).toBe('bright')
+  expect(themeSelect?.options).toEqual([
+    {label: '다크', value: 'dark'},
+    {label: '브라이트', value: 'bright'},
+    {label: '시스템 설정', value: 'system'},
+  ])
+  themeSelect?.onChange('dark')
+  expect(onPreferenceChange).toHaveBeenCalledWith('dark')
 })
 
 it('should expose the guide and credits as the final settings tabs', () => {

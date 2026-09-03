@@ -18,6 +18,9 @@ vi.mock('src/components/PCreditsSettings', () => ({PCreditsSettings: () => null}
 vi.mock('src/components/PFeedSettings', () => ({PFeedSettings: () => null}))
 vi.mock('src/components/PGuideSettings', () => ({PGuideSettings: () => null}))
 vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
+vi.mock('src/features/display-theme', () => ({
+  useDisplayTheme: () => ({onPreferenceChange: vi.fn(), preference: () => 'system'}),
+}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 vi.mock('src/components/UserSettings', () => ({UserSettings: () => null}))
 
