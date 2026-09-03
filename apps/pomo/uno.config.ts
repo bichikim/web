@@ -1,3 +1,4 @@
+import {icons as tablerIcons} from '@iconify-json/tabler'
 import baseConfig from '@winter-love/unocss-config'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 
@@ -349,6 +350,7 @@ config.presets = [
   presetIcons({
     collections: {
       'pomo-scribble': () => scribbleIcons,
+      tabler: () => tablerIcons,
     },
   }),
 ]

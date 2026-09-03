@@ -54,3 +54,18 @@ it('should generate the narrow player container variant', async () => {
   expect(css).toContain('@container pomo-player (width < 18rem)')
   expect(css).toContain('display:none;')
 })
+
+it('should generate CSS for Tabler icons used by settings, weather, and modal close', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css, matched} = await uno.generate('i-tabler-x i-tabler-bolt i-tabler-cloud-rain', {
+    preflights: false,
+  })
+
+  expect(matched).toContain('i-tabler-x')
+  expect(matched).toContain('i-tabler-bolt')
+  expect(matched).toContain('i-tabler-cloud-rain')
+  expect(css).toContain('.i-tabler-x')
+  expect(css).toContain('.i-tabler-bolt')
+  expect(css).toContain('.i-tabler-cloud-rain')
+  expect(css).toContain('--un-icon')
+})
