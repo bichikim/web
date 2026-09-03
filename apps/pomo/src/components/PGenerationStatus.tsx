@@ -10,7 +10,7 @@ const STATUS_CLASSES = cx(
 const CANCEL_CLASSES = cx(
   'min-h-8 cursor-pointer border-0 rounded-full bg-[rgb(214_181_133_/_16%)] px-3',
   'text-[#fffaf1] text-xs font-[750] outline-none hover:bg-[rgb(214_181_133_/_24%)]',
-  'focus-visible:[outline:2px_solid_#d6b585] focus-visible:[outline-offset:2px]',
+  'focus-visible:[outline:0.125rem_solid_#d6b585] focus-visible:[outline-offset:0.125rem]',
 )
 
 const STATUS_ICONS = {

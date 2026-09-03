@@ -126,15 +126,15 @@ describe('PSwipeTrackItem', () => {
 
     const swipeLayers = button.closest('li')?.querySelectorAll(':scope > div')
 
-    expect(button.style.transform).toBe('translateX(80px)')
+    expect(button.style.transform).toBe('translateX(5rem)')
     expect(button.dataset.swipeDeleteReady).toBe('')
     expect(button.classList.contains('transition-none')).toBe(true)
-    expect(swipeLayers?.[0]?.getAttribute('style')).toContain('width: 80px')
-    expect(swipeLayers?.[1]?.getAttribute('style')).toContain('width: 0px')
+    expect(swipeLayers?.[0]?.getAttribute('style')).toContain('width: 5rem')
+    expect(swipeLayers?.[1]?.getAttribute('style')).toContain('width: 0rem')
     expect(screen.getByText('One, 놓으면 삭제')).toBeInTheDocument()
 
     fireEvent.pointerCancel(button, {pointerId: 2})
-    expect(button.style.transform).toBe('translateX(80px)')
+    expect(button.style.transform).toBe('translateX(5rem)')
 
     fireEvent.pointerCancel(button, {pointerId: 1})
     fireEvent.click(button)
@@ -170,7 +170,7 @@ describe('PSwipeTrackItem', () => {
     fireEvent.pointerDown(button, {button: 0, clientX: 0, clientY: 0, pointerId: 1})
     fireEvent.pointerMove(button, {clientX: 40, clientY: 0, pointerId: 1})
     fireEvent(button, new TestPointerEvent('lostpointercapture', {pointerId: 2}))
-    expect(button.style.transform).toBe('translateX(40px)')
+    expect(button.style.transform).toBe('translateX(2.5rem)')
 
     fireEvent(button, new TestPointerEvent('lostpointercapture', {pointerId: 1}))
     fireEvent.click(button)

@@ -54,7 +54,7 @@ export const PSwitch = (props: PSwitchProps) => (
       <Switch.Thumb
         class={
           'absolute left-0.75 top-0.75 size-5 translate-x-0 rounded-full bg-foreground ' +
-          'shadow-[0_2px_6px_rgb(8_6_4_/_35%)] ' +
+          'shadow-[0_0.125rem_0.375rem_rgb(8_6_4_/_35%)] ' +
           'transition-transform duration-180 ease-[cubic-bezier(0.2,0.8,0.2,1)] ' +
           'ui-checked:translate-x-5 motion-reduce:transition-none'
         }

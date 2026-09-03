@@ -14,7 +14,7 @@ export const PomodoroTimerRing = (props: PomodoroTimerRingProps) => (
       'rounded-full ' +
       'bg-[conic-gradient(var(--pomo-timer-phase)_var(--pomo-timer-progress),rgb(255_250_241_/_10%)_0)] ' +
       'p-2 ' +
-      'shadow-[0_18px_48px_rgb(0_0_0_/_28%),inset_0_1px_0_rgb(255_255_255_/_10%)]'
+      'shadow-[0_1.125rem_3rem_rgb(0_0_0_/_28%),inset_0_0.0625rem_0_rgb(255_255_255_/_10%)]'
     }
     data-pomo-timer-ring=""
     style={{'--pomo-timer-progress': props.progress}}

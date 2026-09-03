@@ -19,7 +19,7 @@ const CLASSES = {
   message: 'm-0 text-[0.625rem] leading-[1.5] text-muted-foreground',
   panel: cx(
     'pomo-dialogue-settings__volume-ducking grid gap-3 rounded-panel',
-    '[border:1px_solid_rgb(255_255_255_/_6%)] bg-[rgb(255_255_255_/_3%)] p-4',
+    '[border:0.0625rem_solid_rgb(255_255_255_/_6%)] bg-[rgb(255_255_255_/_3%)] p-4',
   ),
   range: cx(
     'col-span-2 h-5 w-full cursor-pointer accent-primary disabled:cursor-not-allowed',

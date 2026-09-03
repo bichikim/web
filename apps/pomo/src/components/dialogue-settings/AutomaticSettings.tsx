@@ -16,7 +16,7 @@ import {
 
 const CLASSES = {
   dialogueSettingsAutomatic: cx(
-    'pomo-dialogue-settings__automatic grid gap-3.5 [border:1px_solid_rgb(214_181_133_/_24%)]',
+    'pomo-dialogue-settings__automatic grid gap-3.5 [border:0.0625rem_solid_rgb(214_181_133_/_24%)]',
     'settings-compact:gap-3',
     'rounded-panel bg-[rgb(214_181_133_/_4%)] p-4',
     '[&_h4]:m-0 [&_p]:m-0 [&_h4]:text-foreground [&_h4]:text-[0.8125rem]',

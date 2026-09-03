@@ -15,7 +15,7 @@ const SAMPLE_TEXTS = [
 
 const PANEL_CLASSES = cx(
   'w-full rounded-8 border border-white/10 bg-#211a2b/94 p-5',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
+  'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 const TEXTAREA_CLASSES = cx(
   'min-h-44 w-full resize-y rounded-5 border border-white/10 bg-#17131f p-5',

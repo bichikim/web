@@ -47,7 +47,7 @@ describe('MusicPlayerView controls', () => {
       throw new TypeError('Expected the Pomo summary play button to be rendered')
     }
 
-    expect(summaryPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(false)
+    expect(summaryPlayButton.classList.contains('[&:hover]:translate-y-[-0.0625rem]')).toBe(false)
     expect(summaryPlayButton.classList.contains('[transition:filter_160ms_ease]')).toBe(true)
 
     cleanup()
@@ -59,7 +59,7 @@ describe('MusicPlayerView controls', () => {
       throw new TypeError('Expected the Pomo expanded play button to be rendered')
     }
 
-    expect(expandedPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(true)
+    expect(expandedPlayButton.classList.contains('[&:hover]:translate-y-[-0.0625rem]')).toBe(true)
     expect(
       expandedPlayButton.classList.contains('[transition:transform_160ms_ease,_filter_160ms_ease]'),
     ).toBe(true)

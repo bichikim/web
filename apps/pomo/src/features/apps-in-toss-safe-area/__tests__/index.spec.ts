@@ -38,10 +38,10 @@ describe('useAppsInTossSafeArea', () => {
 
     await vi.waitFor(() => expect(safeAreaMocks.subscribe).toHaveBeenCalledOnce())
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe(
-      '0px',
+      '0rem',
     )
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-bottom')).toBe(
-      '34px',
+      '2.125rem',
     )
 
     const [{onEvent}] = safeAreaMocks.subscribe.mock.calls[0] as [
@@ -50,10 +50,10 @@ describe('useAppsInTossSafeArea', () => {
     onEvent({bottom: 21, left: 8, right: 9, top: 10})
 
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe(
-      '0px',
+      '0rem',
     )
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-right')).toBe(
-      '9px',
+      '0.5625rem',
     )
   })
 

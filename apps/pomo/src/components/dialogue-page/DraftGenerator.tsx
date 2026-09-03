@@ -37,18 +37,18 @@ const FINISHING_PROGRESS_STEPS = [
 const BUTTON_CLASSES = cx(
   'min-h-11 cursor-pointer border-0 rounded-full bg-[#d6b585] py-0 px-[1.2rem]',
   'font-[750] text-[#241a12] [&:disabled]:[cursor:not-allowed] [&:disabled]:[opacity:0.4]',
-  '[&:focus-visible]:[outline:2px_solid_#d6b585] [&:focus-visible]:[outline-offset:2px]',
+  '[&:focus-visible]:[outline:0.125rem_solid_#d6b585] [&:focus-visible]:[outline-offset:0.125rem]',
 )
 const FIELD_CLASSES = cx(
   'grid gap-2 text-[#eee4d9] text-[0.82rem] font-bold',
   '[&_input[type=text]]:min-h-12 [&_input[type=text]]:w-full [&_input[type=text]]:box-border',
-  '[&_input[type=text]]:[border:1px_solid_rgb(255_255_255_/_12%)]',
+  '[&_input[type=text]]:[border:0.0625rem_solid_rgb(255_255_255_/_12%)]',
   '[&_input[type=text]]:rounded-xl [&_input[type=text]]:bg-[#17130f]',
   '[&_input[type=text]]:px-[0.9rem] [&_input[type=text]]:text-[#fffaf1]',
   '[&_input[type=text]]:[font:inherit] [&_input[type=text]]:font-[500]',
   '[&_input[type=text]]:outline-none',
-  '[&_input[type=text]:focus-visible]:[outline:2px_solid_#d6b585]',
-  '[&_input[type=text]:focus-visible]:[outline-offset:2px]',
+  '[&_input[type=text]:focus-visible]:[outline:0.125rem_solid_#d6b585]',
+  '[&_input[type=text]:focus-visible]:[outline-offset:0.125rem]',
 )
 const ACTION_CLASSES = 'flex justify-end gap-3'
 
