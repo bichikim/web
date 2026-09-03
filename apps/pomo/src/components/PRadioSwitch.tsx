@@ -95,7 +95,7 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
               />
               <RadioGroup.ItemControl
                 class={
-                  'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 ' +
+                  'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 px-2 ' +
                   'text-xs font-650 leading-4 text-muted-foreground outline-none ' +
                   'transition-[background-color_140ms_ease,color_140ms_ease] ' +
                   'hover:bg-secondary-soft hover:text-foreground ' +

@@ -98,6 +98,7 @@ describe('PRadioSwitch', () => {
     )
     expect(screen.getByRole('radio', {name: '낮'}).parentElement).toHaveClass('flex-1')
     expect(screen.getByText('자동')).toHaveClass('[word-break:keep-all]')
+    expect(screen.getByText('자동').parentElement).toHaveClass('px-2')
     expect(screen.getByText('낮').previousElementSibling).toHaveClass('i-pomo-scribble:sun')
     expect(screen.getAllByText('낮').at(-1)?.nextElementSibling?.firstElementChild).toHaveClass(
       'i-pomo-scribble:check',
