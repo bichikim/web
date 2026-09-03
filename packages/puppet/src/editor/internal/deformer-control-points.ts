@@ -2,6 +2,7 @@ import {
   getDocumentScene,
   type PuppetDeformerCurveHandle,
   type PuppetDocument,
+  type PuppetPoint,
   type PuppetScene,
   type PuppetSceneDeformerNode,
 } from '../../player'
@@ -20,6 +21,7 @@ interface SetDeformerControlPointsOptions {
   readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
   readonly document: PuppetDocument
   readonly nodeId: string
+  readonly rotationOrigin?: PuppetPoint
 }
 
 const withScene = (document: PuppetDocument, scene: PuppetScene): PuppetDocument => ({
@@ -38,6 +40,8 @@ export const setDeformerControlPoints = (
     findNodeLock(scene.roots, options.nodeId) === true ||
     options.controlPoints.length !== node.controlPoints.length ||
     options.controlPoints.some((coordinate) => !Number.isFinite(coordinate)) ||
+    (options.rotationOrigin !== undefined &&
+      (!Number.isFinite(options.rotationOrigin.x) || !Number.isFinite(options.rotationOrigin.y))) ||
     (options.curveHandles !== undefined &&
       (options.curveHandles.length !== (node.curveHandles?.length ?? 0) ||
         options.curveHandles.some(
@@ -59,6 +63,7 @@ export const setDeformerControlPoints = (
       ...(candidate as PuppetSceneDeformerNode),
       controlPoints: options.controlPoints,
       ...(options.curveHandles === undefined ? {} : {curveHandles: options.curveHandles}),
+      ...(options.rotationOrigin === undefined ? {} : {rotationOrigin: options.rotationOrigin}),
     })),
   })
 }

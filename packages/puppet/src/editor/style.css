@@ -572,7 +572,9 @@
 }
 
 .puppet-editor .parameter-target-actions button:disabled {
-  opacity: 0.4;
+  border-color: #5b6e67;
+  color: #84918c;
+  background: #121816;
   cursor: not-allowed;
 }
 
@@ -891,7 +893,7 @@
 }
 
 .puppet-editor .grid-point-row {
-  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
 }
 
 .puppet-editor .grid-curve-button {
@@ -915,8 +917,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #313b37;
 }
 
 .puppet-editor .grid-resolution label {
@@ -1035,6 +1035,22 @@
   vector-effect: non-scaling-stroke;
 }
 
+.puppet-editor .deformer-editor .translation-handle {
+  fill: transparent;
+  stroke: none;
+  pointer-events: fill;
+  cursor: grab;
+}
+
+.puppet-editor .deformer-editor .translation-handle:active {
+  cursor: grabbing;
+}
+
+.puppet-editor .deformer-editor line,
+.puppet-editor .deformer-editor .grid-deformer-controls > path:not(.translation-handle) {
+  pointer-events: none;
+}
+
 .puppet-editor .deformer-editor circle {
   fill: #111715;
   stroke: #ffbd59;
@@ -1047,9 +1063,24 @@
   cursor: grabbing;
 }
 
-.puppet-editor .deformer-editor .angle-handle {
+.puppet-editor .deformer-editor .rotation-origin-hit,
+.puppet-editor .deformer-editor .rotation-origin-hit:active {
+  fill: transparent;
+  stroke: transparent;
+  cursor: move;
+  pointer-events: all;
+}
+
+.puppet-editor .deformer-editor .rotation-origin {
+  fill: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.puppet-editor .deformer-editor circle.selected {
   fill: #ffbd59;
   stroke: #fff1d6;
+  stroke-width: 3;
 }
 
 .puppet-editor .deformer-editor .curve-handle-line {
@@ -1071,6 +1102,21 @@
 .puppet-editor .deformer-editor .blocked circle {
   fill: #202825;
   cursor: not-allowed;
+}
+
+.puppet-editor .deformer-editor .blocked .translation-handle {
+  cursor: not-allowed;
+}
+
+.puppet-editor .deformer-editor .blocked .rotation-origin,
+.puppet-editor .deformer-editor .blocked .rotation-origin-hit {
+  fill: none;
+}
+
+.puppet-editor .deformer-editor .blocked .rotation-origin-hit {
+  cursor: not-allowed;
+  fill: transparent;
+  stroke: transparent;
 }
 
 .puppet-editor .deformer-edit-message {
@@ -1194,6 +1240,23 @@
   text-transform: uppercase;
 }
 
+.puppet-editor .parameter-target-actions .parameter-visibility-toggle[aria-pressed='true'] {
+  border-color: #64e5c4;
+  color: #bfeee1;
+  background: #1a2925;
+}
+
+.puppet-editor .parameter-target-actions .parameter-visibility-toggle[aria-pressed='false'] {
+  border-color: #5b6e67;
+  color: #84918c;
+  background: #121816;
+}
+
+.puppet-editor .parameter-target-actions .parameter-visibility-toggle:focus-visible {
+  outline: 2px solid #64e5c4;
+  outline-offset: 2px;
+}
+
 .puppet-editor .keyform-actions {
   display: flex;
   gap: 8px;
@@ -1223,9 +1286,11 @@
 .puppet-editor .keyform-track-wrap {
   display: grid;
   min-width: 0;
+  min-height: 0;
   grid-template-columns: 220px minmax(0, 1fr);
   align-content: start;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .puppet-editor .keyform-track-labels,

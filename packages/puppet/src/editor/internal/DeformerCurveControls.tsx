@@ -1,7 +1,7 @@
 import {For} from 'solid-js'
 
 import type {PuppetDeformerCurveHandle, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
-import {getDeformerPoint} from './deformer-transform'
+import {getDeformerPoint, reflectCurveHandlePoint} from './deformer-transform'
 
 export interface DeformerCurveControlsProps {
   readonly deformer: PuppetSceneDeformerNode
@@ -13,12 +13,19 @@ export interface DeformerCurveControlsProps {
   ) => void
   readonly onMove: (pointIndex: number, axis: 'horizontal' | 'vertical', point: PuppetPoint) => void
   readonly radius: number
+  readonly selectedPointIndices?: ReadonlyArray<number>
   readonly transform: (point: PuppetPoint) => PuppetPoint
 }
 
 const KEYBOARD_LARGE_MOVE_DISTANCE = 10
 
 export const DeformerCurveControls = (props: DeformerCurveControlsProps) => {
+  const visibleHandles = () => {
+    const selectedPointIndices = new Set(props.selectedPointIndices ?? [])
+    return (props.deformer.curveHandles ?? []).filter((handle) =>
+      selectedPointIndices.has(handle.pointIndex),
+    )
+  }
   const handleKeyDown = (
     event: KeyboardEvent,
     handle: PuppetDeformerCurveHandle,
@@ -29,7 +36,12 @@ export const DeformerCurveControls = (props: DeformerCurveControlsProps) => {
     }
 
     const distance = event.shiftKey ? KEYBOARD_LARGE_MOVE_DISTANCE : 1
-    const point = handle[axis]
+    const point = reflectCurveHandlePoint({
+      axis,
+      deformer: props.deformer,
+      point: handle[axis],
+      pointIndex: handle.pointIndex,
+    })
     let nextPoint: PuppetPoint | undefined
 
     switch (event.key) {
@@ -50,16 +62,41 @@ export const DeformerCurveControls = (props: DeformerCurveControlsProps) => {
     }
 
     event.preventDefault()
-    props.onMove(handle.pointIndex, axis, nextPoint)
+    props.onMove(
+      handle.pointIndex,
+      axis,
+      reflectCurveHandlePoint({
+        axis,
+        deformer: props.deformer,
+        point: nextPoint,
+        pointIndex: handle.pointIndex,
+      }),
+    )
   }
 
   return (
     <g class="curve-deformer-controls" classList={{blocked: !props.editable}}>
-      <For each={props.deformer.curveHandles ?? []}>
+      <For each={visibleHandles()}>
         {(handle) => {
           const origin = () => props.transform(getDeformerPoint(props.deformer, handle.pointIndex))
-          const horizontal = () => props.transform(handle.horizontal)
-          const vertical = () => props.transform(handle.vertical)
+          const horizontal = () =>
+            props.transform(
+              reflectCurveHandlePoint({
+                axis: 'horizontal',
+                deformer: props.deformer,
+                point: handle.horizontal,
+                pointIndex: handle.pointIndex,
+              }),
+            )
+          const vertical = () =>
+            props.transform(
+              reflectCurveHandlePoint({
+                axis: 'vertical',
+                deformer: props.deformer,
+                point: handle.vertical,
+                pointIndex: handle.pointIndex,
+              }),
+            )
 
           return (
             <g>

@@ -7,10 +7,10 @@ const getItems = () =>
     {icon: 'i-tabler-vocabulary', label: m.learning_tab_words(), value: 'words'},
   ] satisfies ReadonlyArray<PModalTabItem>
 
-export const PLearningTabList = () => (
+export const PMemoryAssistTabList = () => (
   <PModalTabList
-    accessibleLabel={m.learning_category_label()}
-    class="pomo-learning__tabs"
+    accessibleLabel={m.memory_assist_category_label()}
+    class="pomo-memory-assist__tabs"
     items={getItems()}
   />
 )

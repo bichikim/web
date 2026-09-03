@@ -72,6 +72,35 @@ describe('EditorInspector', () => {
     expect(onContainerConvert).toHaveBeenCalledTimes(2)
   })
 
+  test('should separate grid settings and render only the selected control points', () => {
+    const deformerDocument = createDeformer(createDemoDocument(), ['mesh-preview'])!
+    const deformer = getDocumentScene(deformerDocument).roots[0]!
+    const [selectedPointIndices, setSelectedPointIndices] = createSignal<ReadonlyArray<number>>([])
+    const view = render(() => (
+      <EditorInspector
+        activeNodeId={deformer.id}
+        document={deformerDocument}
+        selectedControlPointIndices={selectedPointIndices()}
+      />
+    ))
+
+    expect(view.getByRole('group', {name: '회전'})).toBeVisible()
+    expect(view.getByRole('group', {name: '격자'})).toBeVisible()
+    expect(view.queryByRole('group', {name: /선택한 제어점/})).toBeNull()
+    expect(view.queryByRole('spinbutton', {name: /격자 제어점/})).toBeNull()
+
+    setSelectedPointIndices([0, 1])
+
+    expect(view.getByRole('group', {name: '선택한 제어점 1'})).toBeVisible()
+    expect(view.getByRole('group', {name: '선택한 제어점 2'})).toBeVisible()
+    expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeVisible()
+    expect(view.getByRole('spinbutton', {name: '격자 제어점 2 X'})).toBeVisible()
+    expect(view.getByRole('spinbutton', {name: '격자 제어점 2 Y'})).toBeVisible()
+
+    setSelectedPointIndices([])
+    expect(view.queryByRole('group', {name: /선택한 제어점/})).toBeNull()
+  })
+
   test('should edit transform and control-point values', () => {
     const deformerDocument = createDeformer(createDemoDocument(), ['mesh-preview'])!
     const deformer = getDocumentScene(deformerDocument).roots[0]!
@@ -81,6 +110,7 @@ describe('EditorInspector', () => {
         activeNodeId={deformer.id}
         document={document()}
         onDocumentChange={setDocument}
+        selectedControlPointIndices={[0]}
       />
     ))
 
@@ -89,6 +119,17 @@ describe('EditorInspector', () => {
     })
     const rotated = getDocumentScene(document()).roots[0]
     expect(rotated?.kind === 'deformer' ? getDeformerAngle(rotated) : undefined).toBeCloseTo(30)
+
+    const rotatedPoints = rotated?.kind === 'deformer' ? rotated.controlPoints : []
+    fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 회전 중심 X'}), {
+      target: {value: '400'},
+    })
+    const movedOrigin = getDocumentScene(document()).roots[0]
+    expect(movedOrigin?.kind === 'deformer' ? movedOrigin.rotationOrigin : undefined).toEqual({
+      x: 400,
+      y: 240,
+    })
+    expect(movedOrigin?.kind === 'deformer' ? movedOrigin.controlPoints : []).toEqual(rotatedPoints)
 
     fireEvent.input(view.getByRole('spinbutton', {name: '격자 제어점 1 X'}), {
       target: {value: '25'},
@@ -106,6 +147,7 @@ describe('EditorInspector', () => {
         activeNodeId={deformer.id}
         document={document()}
         onDocumentChange={setDocument}
+        selectedControlPointIndices={[0]}
       />
     ))
 
@@ -137,6 +179,7 @@ describe('EditorInspector', () => {
           parameterValues: {[added.binding.parameterIds[0]]: 0},
         })}
         onDocumentChange={setDocument}
+        selectedControlPointIndices={[0]}
         targetNodeIds={[deformer.id]}
       />
     ))
@@ -212,6 +255,7 @@ describe('EditorInspector', () => {
         editMode="parameter"
         onDocumentChange={onDocumentChange}
         previewDocument={deformerDocument}
+        selectedControlPointIndices={[0]}
         targetNodeIds={binding?.targetPartIds}
       />
     ))
@@ -231,6 +275,7 @@ describe('EditorInspector', () => {
         activeNodeId={deformer.id}
         document={document()}
         onDocumentChange={setDocument}
+        selectedControlPointIndices={[0]}
       />
     ))
 
@@ -243,7 +288,7 @@ describe('EditorInspector', () => {
 
     const resized = getDocumentScene(document()).roots[0]
     expect(resized).toMatchObject({columns: 3, rows: 1})
-    expect(view.getAllByRole('spinbutton', {name: /격자 제어점/})).toHaveLength(16)
+    expect(view.getAllByRole('spinbutton', {name: /격자 제어점/})).toHaveLength(2)
 
     setDocument(setSceneNodeState({document: document(), locked: true, nodeId: deformer.id})!)
     expect(view.getByRole('spinbutton', {name: '격자 가로 칸'})).toBeDisabled()

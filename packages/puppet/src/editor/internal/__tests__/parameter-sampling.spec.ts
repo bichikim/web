@@ -11,7 +11,7 @@ import {
 import {createParameterPreview, sampleParameterVertices} from '../parameter-sampling'
 import {
   getDeformerAngle,
-  getDeformerCenter,
+  getDeformerRotationOrigin,
   rotateDeformerControlPoints,
 } from '../deformer-transform'
 import {addDeformerCurveHandle} from '../deformer-curve-handles'
@@ -67,10 +67,14 @@ describe('createParameterPreview', () => {
       controlPoints: rotateDeformerControlPoints({
         controlPoints: deformer.controlPoints,
         degrees: 60,
-        origin: getDeformerCenter(deformer),
+        origin: getDeformerRotationOrigin(deformer),
       }),
       document: inserted,
       nodeId: deformer.id,
+      rotationOrigin: {
+        x: getDeformerRotationOrigin(deformer).x + 60,
+        y: getDeformerRotationOrigin(deformer).y + 30,
+      },
       values: [30],
     })!
     const updated = setParameterKeyformDeformerPoint({
@@ -94,6 +98,9 @@ describe('createParameterPreview', () => {
     expect(
       previewDeformer?.kind === 'deformer' ? previewDeformer.controlPoints.slice(8, 10) : [],
     ).toEqual([360, 270])
+    expect(
+      previewDeformer?.kind === 'deformer' ? previewDeformer.rotationOrigin : undefined,
+    ).toEqual({x: 350, y: 255})
   })
 
   test('should interpolate optional curve handles between deformer keyforms', () => {

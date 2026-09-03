@@ -25,9 +25,9 @@ import {CLASSES} from './shared'
 import {PWeatherStatus} from '../PWeatherStatus'
 import {PDesktopModeControl} from '../PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
-import {LearningPanel} from './LearningPanel'
+import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
-import {LANGUAGE_LEARNING_ICON} from '../learning/icon'
+import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -81,7 +81,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             value={props.activity}
           />
         </PScribbleCircleControl>
-        <LearningPanel
+        <MemoryAssistPanel
           fallback={
             <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
               <span
@@ -93,7 +93,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
               >
                 <span
                   class={cx(
-                    getPomoIconClass(LANGUAGE_LEARNING_ICON, props.sceneStyle),
+                    getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle),
                     'size-6 text-highlight',
                   )}
                 />

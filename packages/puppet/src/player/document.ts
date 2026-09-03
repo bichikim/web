@@ -67,6 +67,7 @@ export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase {
   readonly controlPoints: ReadonlyArray<number>
   readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
   readonly kind: 'deformer'
+  readonly rotationOrigin?: PuppetPoint
   readonly rows: number
 }
 
@@ -92,6 +93,7 @@ export interface PuppetParameterDeformerKeyform {
   readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
   readonly kind: 'deformer'
   readonly nodeId: string
+  readonly rotationOrigin?: PuppetPoint
 }
 
 export interface PuppetParameterKeyformBase {

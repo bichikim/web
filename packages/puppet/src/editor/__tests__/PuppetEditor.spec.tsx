@@ -613,6 +613,45 @@ describe('PuppetEditor', () => {
     })
   })
 
+  test('should toggle between selected and all parameters', () => {
+    const added = addParameter({document: createDemoDocument(), nodeIds: ['shape-circle']})
+    expect(added).toBeDefined()
+
+    const view = render(() => <PuppetEditor initialDocument={added!.document} />)
+    const parameterPanel = view.getByRole('region', {name: 'Parameters'})
+    const showAllButton = within(parameterPanel).getByRole('button', {
+      name: '모든 파라미터 보기',
+    })
+    const targetActions = showAllButton.closest<HTMLElement>('.parameter-target-actions')
+
+    expect(targetActions).not.toBeNull()
+    expect(within(targetActions!).getAllByRole('button')[0]).toBe(showAllButton)
+    expect(showAllButton.nextElementSibling).toHaveTextContent('선택 레이어 연결')
+    expect(showAllButton).toHaveAttribute('aria-pressed', 'false')
+    expect(
+      within(parameterPanel).queryByRole('button', {name: 'Parameter 3'}),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(showAllButton)
+
+    expect(showAllButton).toHaveAttribute('aria-pressed', 'true')
+    const otherParameter = within(parameterPanel).getByRole('button', {name: 'Parameter 3'})
+    expect(otherParameter).toBeVisible()
+    fireEvent.click(otherParameter)
+    expect(otherParameter).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(showAllButton)
+
+    expect(showAllButton).toHaveAttribute('aria-pressed', 'false')
+    expect(
+      within(parameterPanel).queryByRole('button', {name: 'Parameter 3'}),
+    ).not.toBeInTheDocument()
+    expect(within(parameterPanel).getByRole('button', {name: 'Angle X'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
   test('should create and interpolate free-transform deformer parameter keyforms', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
@@ -662,7 +701,7 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('status')).toHaveTextContent(
       'Parameter를 선택해야 디포머를 편집할 수 있습니다.',
     )
-    expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeDisabled()
+    expect(view.queryByRole('spinbutton', {name: '격자 제어점 1 X'})).not.toBeInTheDocument()
 
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결'}))
@@ -670,8 +709,19 @@ describe('PuppetEditor', () => {
 
     await waitFor(() => {
       expect(view.queryByRole('status')).not.toBeInTheDocument()
-      expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeEnabled()
     })
+    fireEvent(
+      view.getByRole('button', {name: '격자 제어점 1'}),
+      new MouseEvent('pointerdown', {bubbles: true}),
+    )
+    expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeEnabled()
+
+    fireEvent(
+      view.getByRole('button', {name: '격자 제어점 2'}),
+      new MouseEvent('pointerdown', {bubbles: true, ctrlKey: true}),
+    )
+    expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeEnabled()
+    expect(view.getByRole('spinbutton', {name: '격자 제어점 2 X'})).toBeEnabled()
   })
 
   test('should delete a parameter only after swiping beyond the threshold and releasing', async () => {
