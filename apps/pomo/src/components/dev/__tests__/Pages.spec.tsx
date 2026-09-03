@@ -10,6 +10,7 @@ import ChatPage from '../ChatPage'
 import DialoguePage from '../DialoguePage'
 import HomePage from '../HomePage'
 import LayerReviewPage from '../LayerReviewPage'
+import OptionResetPage from '../OptionResetPage'
 import SpeechToTextPage from '../SpeechToTextPage'
 import StoragePage from '../StoragePage'
 import TermsPage from '../TermsPage'
@@ -87,6 +88,7 @@ it.each([
   [TextMoodPage, 'mood workspace'],
   [CharacterPage, 'character studio'],
   [LayerReviewPage, 'layer review'],
+  [OptionResetPage, '각종 옵션 초기화'],
 ] as const)('should render a development page', (Page, expectedText) => {
   render(() => <Page />)
 
@@ -104,5 +106,13 @@ it('should link the development home to model storage management', () => {
 
   expect(screen.getByRole('link', {name: /모델 저장소 관리/u}).getAttribute('href')).toBe(
     '/dev/storage',
+  )
+})
+
+it('should link the development home to option reset management', () => {
+  render(() => <HomePage />)
+
+  expect(screen.getByRole('link', {name: /각종 옵션 초기화/u}).getAttribute('href')).toBe(
+    '/dev/options',
   )
 })

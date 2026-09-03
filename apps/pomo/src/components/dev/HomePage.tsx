@@ -5,6 +5,7 @@ import {cx} from 'class-variance-authority'
 import {SERVICE_POLICY_PATHS} from 'src/features/service-terms/policy-paths'
 import {TextMoodCard} from './home/TextMoodCard'
 import {StorageCard} from './home/StorageCard'
+import {OptionsCard} from './home/OptionsCard'
 import {CARD_CLASSES} from './home/shared'
 
 const MAIN_CLASSES = cx(
@@ -162,6 +163,7 @@ function HomePage() {
 
           <TextMoodCard />
           <StorageCard />
+          <OptionsCard />
         </div>
 
         <footer class="mt-8 flex justify-end">

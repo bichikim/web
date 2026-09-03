@@ -14,6 +14,7 @@ import {SceneToolbar} from '../Toolbar'
 
 vi.mock('../../PSelect', () => ({PSelect: () => null}))
 vi.mock('../LearningPanel', () => ({LearningPanel: () => null}))
+vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: () => null}))
 
 const seoulLocation = {
