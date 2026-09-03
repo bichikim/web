@@ -23,7 +23,8 @@ runtime에 이름을 묶지 않아 두 기능을 한 모델 계약 아래 둘 �
 
 현재 편집기는 PNG의 알파 픽셀 범위를 격자로 분석해 삼각형 메시를 만든다. 순수 데이터 API는
 삼각형 내부·간선·외곽 정점 추가, 뒤집힘을 방지하는 이동, 삭제 후 재삼각분할, 간선 연결·뒤집기·축약,
-메시 토폴로지 검증을 지원한다. PSD, 다중 레이어, undo/redo와 타임라인 편집은 아직 포함하지 않는다.
+메시 토폴로지 검증을 지원한다. 편집기는 최대 100단계 undo/redo와 parameter/property 타임라인을
+제공하지만 PSD와 다중 레이어 일괄 가져오기는 아직 포함하지 않는다.
 
 ## 개발 화면 실행
 
@@ -67,6 +68,21 @@ Live2D의 화면 배치나 내부 객체 이름을 복제하지 않는다. 대�
 단일 이미지의 자동 레이어 분리는 초기 범위에 넣지 않는다. 처음에는 사용자가 준비한 PNG나
 레이어 PSD를 입력으로 받고, See-through 연동은 별도 import 단계로 다룬다.
 
+## 모델링 기능 백로그
+
+현재 모델링 기능과 Live2D의 안정판 제작 기능을 대조해 다음 항목을 개발 순서에 포함한다. 번호는
+기능 비교에서 합의한 항목을 유지하며, Cubism 파일·API 호환은 범위에 포함하지 않는다.
+
+| 항목 | 결과물                    | 완료 기준                                                                                                                                                                            | 개발 단계 |
+| ---- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| 2    | 파트 렌더링 속성          | part에 opacity, draw order, blend mode, multiply/screen color, clipping/invert mask를 저장하고 parameter keyform으로 보간한다. 편집기와 플레이어의 중첩 합성을 시각 회귀로 검증한다. | 3, 5      |
+| 3    | 전용 rotation deformer    | warp deformer와 구분되는 관절점 중심 rotation deformer, 부모-자식 회전 체인과 다중 선택 편집을 저장·재생한다.                                                                        | 4         |
+| 4    | deform path·glue·skinning | 경로 기반 변형, 두 mesh 경계의 정점별 glue 가중치, 여러 rotation deformer의 skinning 가중치를 keyform과 함께 제작·저장·재생한다.                                                     | 6         |
+| 5    | blend shape parameter     | 일반 parameter와 구분되는 가산형 blend shape, 기준 key, 적용 가능 속성과 가중치 제한을 정의하고 여러 parameter와의 합성 순서를 editor/runtime에서 동일하게 검증한다.                 | 3         |
+| 6    | PSD 가져오기·재가져오기   | PSD 레이어·폴더 계층을 part/group으로 일괄 생성하고, 원본을 재가져올 때 기존 mesh·parameter 연결을 가능한 범위에서 보존하며 충돌을 사용자에게 표시한다.                              | 5         |
+| 7    | parameter 제작 보조       | 그룹/폴더, repeat, 표준 얼굴 preset, 설명·ID 관리, 형태 복사·붙여넣기·좌우 반전, 여러 keyform의 일괄 생성·보정을 제공한다.                                                           | 10        |
+| 8    | 모델 완성 도구            | physics, eye blink·lip sync·breath 연결, random pose 검사, model template, ArtPath 제작을 지원하고 대표 모델 fixture에서 저장·재열기·재생을 검증한다.                                | 7, 10     |
+
 ## 책임 경계
 
 초기에는 하나의 패키지에서 계약을 다듬되 내부 의존성 방향을 고정한다.
@@ -91,25 +107,25 @@ SolidJS와 편집기를 자체 번들에 포함해 호스트 프레임워크와 
 각 단계는 편집기에서 데이터만 생성하는 것으로 끝내지 않는다. 저장·재열기, 같은 문서를 사용하는
 PixiJS 플레이어, 단위 테스트와 실제 브라우저 확인까지 연결된 수직 기능으로 완료한다.
 
-| 단계 | 결과물                    | 완료 기준                                                                                                                                                                              |
-| ---- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | 기능 원장과 계약          | 안정판 Live2D의 모델링·애니메이션·SDK 기능을 빠짐없이 원장에 기록하고 Puppet 대응 기능, 제외되는 파일 호환, 검증 상태를 연결한다.                                                      |
-| 1    | scene graph와 레이어 트리 | group/part, mesh/image, deformer를 서로 다른 노드로 표현한다. 트리의 이동·중첩·다중 선택·visibility·lock·draw order가 저장되고 플레이어 합성 순서와 일치한다.                          |
-| 2    | parameter 대상 모델       | parameter는 전역 객체로 두고 mesh·deformer·part 속성을 다대다로 연결한다. 그룹 선택은 자식 일괄 연결을 제공하되 새 자식을 암묵적으로 연결하지 않으며 `전체/일부/없음` 상태를 표시한다. |
-| 3    | keyform 변형              | 정점 묶음, transform, opacity, draw order, color를 1축·2축 parameter에서 보간한다. keyform 추가·이동·복제·삭제와 blend shape 합성이 editor/runtime에서 같은 결과를 낸다.               |
-| 4    | deformer                  | warp·rotation deformer와 중첩 계층을 편집한다. 부모 변형이 모든 자식 mesh/deformer에 전파되고 역방향으로는 전파되지 않으며, 계층 변경과 순환 참조 차단을 검증한다.                     |
-| 5    | 메시·합성 완성            | PSD/PNG 재가져오기, texture atlas, deform path, clipping/invert mask, blend mode, multiply·screen color, culling을 지원하고 중첩 마스크와 draw order를 시각 회귀로 검증한다.           |
-| 6    | 연결형 리깅               | glue의 정점별 가중치·keyform 호환도, 다중 rotation deformer skinning, pose/part 전환을 제작·저장·재생한다.                                                                             |
-| 7    | physics와 자동 동작       | 입력·출력 parameter, pendulum 설정, FPS 독립 평가, eye blink·lip sync·breath를 지원한다. physics 미리보기와 keyframe bake 결과를 같은 입력 fixture로 검증한다.                         |
-| 8    | motion 제작               | parameter/property track, curve/easing, loop, marker/event, motion·expression·scene, fade와 mixing, audio 기반 lip sync를 타임라인에서 편집하고 플레이어에서 동일하게 재생한다.        |
-| 9    | 런타임 제어               | JS API로 parameter, motion, expression, physics, pose, hit area를 제어한다. 여러 motion 우선순위·혼합과 pause/seek/resume을 결정론적 프레임 테스트로 검증한다.                         |
-| 10   | 제작 생산성               | undo/redo, 복수 객체 form 복사·붙여넣기·반전·혼합, 검색·필터, template, 자동 메시·얼굴 rig 보조, 대형 모델의 비차단 편집을 지원한다.                                                   |
-| 11   | 동등성 릴리스 게이트      | 기능 원장의 모든 안정판 항목이 `검증 완료`이고, 대표 모델이 editor에서 제작되어 자체 배포 포맷으로 player에 로드되며 기능별 시각·동작 회귀를 통과한다.                                 |
+| 단계 | 결과물                    | 완료 기준                                                                                                                                                                                |
+| ---- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | 기능 원장과 계약          | 안정판 Live2D의 모델링·애니메이션·SDK 기능을 빠짐없이 원장에 기록하고 Puppet 대응 기능, 제외되는 파일 호환, 검증 상태를 연결한다.                                                        |
+| 1    | scene graph와 레이어 트리 | group/part, mesh/image, deformer를 서로 다른 노드로 표현한다. 트리의 이동·중첩·다중 선택·visibility·lock·draw order가 저장되고 플레이어 합성 순서와 일치한다.                            |
+| 2    | parameter 대상 모델       | parameter는 전역 객체로 두고 mesh·deformer·part 속성을 다대다로 연결한다. 그룹 선택은 자식 일괄 연결을 제공하되 새 자식을 암묵적으로 연결하지 않으며 `전체/일부/없음` 상태를 표시한다.   |
+| 3    | keyform 변형              | 정점 묶음, transform과 파트 렌더링 속성을 1축·2축 parameter에서 보간한다. 일반 변형과 별도 blend shape의 합성 순서, keyform 추가·이동·복제·삭제 결과가 editor/runtime에서 일치한다.      |
+| 4    | deformer                  | warp와 관절점 중심 rotation deformer를 별도 노드로 편집한다. 부모 변형이 모든 자식 mesh/deformer에 전파되고 역방향으로는 전파되지 않으며, 회전 체인·계층 변경·순환 참조 차단을 검증한다. |
+| 5    | 메시·합성 완성            | PSD/PNG 가져오기·재가져오기, texture atlas, opacity, draw order, clipping/invert mask, blend mode, multiply·screen color, culling을 지원하고 중첩 합성을 시각 회귀로 검증한다.           |
+| 6    | 연결형 리깅과 경로 변형   | deform path, glue의 정점별 가중치·keyform 호환도, 다중 rotation deformer skinning, pose/part 전환을 제작·저장·재생한다.                                                                  |
+| 7    | physics와 자동 동작       | 입력·출력 parameter, pendulum 설정, FPS 독립 평가, eye blink·lip sync·breath와 random pose 검사를 지원한다. physics 미리보기와 keyframe bake 결과를 같은 입력 fixture로 검증한다.        |
+| 8    | motion 제작               | parameter/property track, curve/easing, loop, marker/event, motion·expression·scene, fade와 mixing, audio 기반 lip sync를 타임라인에서 편집하고 플레이어에서 동일하게 재생한다.          |
+| 9    | 런타임 제어               | JS API로 parameter, motion, expression, physics, pose, hit area를 제어한다. 여러 motion 우선순위·혼합과 pause/seek/resume을 결정론적 프레임 테스트로 검증한다.                           |
+| 10   | 제작 생산성               | parameter 그룹·repeat·설명·ID·표준 preset, form 복사·붙여넣기·반전·일괄 보정, 검색·필터, template, ArtPath, 자동 얼굴 rig 보조와 대형 모델의 비차단 편집을 지원한다.                     |
+| 11   | 동등성 릴리스 게이트      | 기능 원장의 모든 안정판 항목이 `검증 완료`이고, 대표 모델이 editor에서 제작되어 자체 배포 포맷으로 player에 로드되며 기능별 시각·동작 회귀를 통과한다.                                   |
 
 현재 구현은 group/part scene graph와 레이어 트리, 메시 편집, 명시적인 parameter 대상 연결,
-정점 기반 1축·2축 grid keyform, 정점 motion track과 PixiJS 재생 경로까지 지원한다. 계층이 없는
-기존 `parts[]` 문서는 각 part를 루트 노드로 해석하고 다음 저장에서 명시적인 scene을 기록한다.
-1단계 중 deformer 노드 추가는 아직 남아 있다.
+정점 기반 1축·2축 grid keyform, warp deformer, 정점 motion track, undo/redo와 PixiJS 재생 경로까지
+지원한다. 계층이 없는 기존 `parts[]` 문서는 각 part를 루트 노드로 해석하고 다음 저장에서 명시적인
+scene을 기록한다. 전용 rotation deformer와 모델링 기능 백로그 2–8은 아직 남아 있다.
 
 ## 확인한 구현 정보
 
