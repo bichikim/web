@@ -20,7 +20,7 @@ const licenseDataJson = readFileSync(licenseDataPath, 'utf8')
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn())
   vi.stubEnv('POMO_ALLOW_LOCAL_ASSET_ORIGIN', 'false')
-  vi.stubEnv('POMO_LICENSE_ASSET_ORIGIN', 'https://www.pomofi.io')
+  vi.stubEnv('POMO_PUBLIC_ASSET_ORIGIN', 'https://www.pomofi.io')
   vi.mocked(getRequestEvent).mockReturnValue(undefined)
 })
 

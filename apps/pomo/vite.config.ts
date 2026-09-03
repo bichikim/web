@@ -27,7 +27,7 @@ interface ContentSecurityPolicyOptions {
 interface BuildEnvironment {
   readonly connectSourceList: string
   readonly environment: ImportMetaEnvValues
-  readonly licenseAssetOrigin: string
+  readonly publicAssetOrigin: string
   readonly publicOrigin: string
 }
 
@@ -125,6 +125,7 @@ const SHARED_STATIC_ROUTES = [
   SERVICE_POLICY_PATHS.appsInToss.terms,
   SERVICE_POLICY_PATHS.refund,
   '/third-party-notices',
+  '/whats-new',
   SERVICE_POLICY_PATHS.web.privacy,
   SERVICE_POLICY_PATHS.web.terms,
 ]
@@ -194,13 +195,13 @@ const loadBuildEnvironment = (mode: string): BuildEnvironment => {
     'https://pub-0e34511083544f8aaad14d0590013528.r2.dev',
   ].join(' ')
   const vercelUrl = process.env.VERCEL_URL
-  const licenseAssetOrigin = vercelUrl ? new URL(`https://${vercelUrl}`).origin : publicOrigin
+  const publicAssetOrigin = vercelUrl ? new URL(`https://${vercelUrl}`).origin : publicOrigin
 
-  return {connectSourceList, environment, licenseAssetOrigin, publicOrigin}
+  return {connectSourceList, environment, publicAssetOrigin, publicOrigin}
 }
 
 const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
-  const {connectSourceList, environment, licenseAssetOrigin, publicOrigin} =
+  const {connectSourceList, environment, publicAssetOrigin, publicOrigin} =
     loadBuildEnvironment(mode)
   const templates = resolveContentSecurityPolicyTemplates({
     POMO_CONTENT_SECURITY_POLICY_TEMPLATE: environment.POMO_CONTENT_SECURITY_POLICY_TEMPLATE,
@@ -235,7 +236,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       POMO_CONNECT_SOURCES: connectSourceList,
       POMO_CONTENT_SECURITY_POLICY_TEMPLATE: templates.page,
       POMO_CONTENT_TYPE_OPTIONS: CONTENT_TYPE_OPTIONS,
-      POMO_LICENSE_ASSET_ORIGIN: licenseAssetOrigin,
+      POMO_PUBLIC_ASSET_ORIGIN: publicAssetOrigin,
       POMO_PERMISSIONS_POLICY: PERMISSIONS_POLICY,
       POMO_REFERRER_POLICY: REFERRER_POLICY,
       POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE: templates.worker,

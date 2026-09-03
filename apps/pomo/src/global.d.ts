@@ -20,7 +20,7 @@ interface ImportMetaEnv {
   readonly POMO_CONNECT_SOURCES: string
   readonly POMO_CONTENT_SECURITY_POLICY_TEMPLATE: string
   readonly POMO_CONTENT_TYPE_OPTIONS: string
-  readonly POMO_LICENSE_ASSET_ORIGIN: string
+  readonly POMO_PUBLIC_ASSET_ORIGIN: string
   readonly POMO_PERMISSIONS_POLICY: string
   readonly POMO_REFERRER_POLICY: string
   readonly POMO_TOSS_CALLBACK_AUTHORIZATION?: string

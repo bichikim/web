@@ -195,6 +195,24 @@ body {
   outline: 2px solid ${theme.colors?.primary};
   outline-offset: 3px;
 }
+
+.pomo-orbit-border {
+  padding: 2px;
+  background: conic-gradient(
+    from -90deg,
+    transparent 0deg,
+    transparent 210deg,
+    rgb(255 255 255 / 8%) 235deg,
+    rgb(255 255 255 / 32%) 275deg,
+    rgb(255 255 255 / 68%) 320deg,
+    rgb(255 255 255 / 96%) 350deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
 `,
       },
     ],
@@ -211,6 +229,7 @@ body {
           'focus-glow': 'infinite',
           'overflow-marquee': 'infinite',
           'rest-sway': 'infinite',
+          'orbit-border': 'infinite',
           'screen-saver-content-drift': 'infinite',
         },
         durations: {
@@ -224,6 +243,7 @@ body {
           'overflow-marquee': '6s',
           'rest-sway': '2.4s',
           'screen-saver-content-drift': '48s',
+          'orbit-border': '3.2s',
           'select-in': '140ms',
         },
         keyframes: {
@@ -280,6 +300,7 @@ body {
             66% { transform: translate(-1rem, 1.5rem); }
             100% { transform: translate(2rem, 0.75rem); }
           }`,
+          'orbit-border': '{ to { transform: rotate(1turn); } }',
           'select-in': `{
             from { opacity: 0; transform: scale(0.97) translateY(-0.25rem); }
             to { opacity: 1; transform: scale(1) translateY(0); }
@@ -300,6 +321,7 @@ body {
           'overflow-marquee': 'linear',
           'rest-sway': 'ease-in-out',
           'screen-saver-content-drift': 'ease-in-out',
+          'orbit-border': 'linear',
           'select-in': 'ease-out',
         },
       },

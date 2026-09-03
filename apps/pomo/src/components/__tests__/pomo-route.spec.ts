@@ -56,6 +56,8 @@ it.each([
   ['/refund-policy/', true],
   ['/third-party-notices', true],
   ['/third-party-notices/', true],
+  ['/whats-new', true],
+  ['/whats-new/', true],
   ['/account', false],
   ['/admin/login', false],
   ['/dev/terms', false],
