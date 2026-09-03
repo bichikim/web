@@ -195,7 +195,7 @@ const config = mergeConfigs([
   --pomo-color-content-surface-opacity: 3%;
   --pomo-color-content-surface-disabled-channels: 255 255 255;
   --pomo-color-content-surface-disabled-opacity: 1.5%;
-  --pomo-dialogue-editor-background: radial-gradient(circle at 15% 0%, rgb(122 83 53 / 20%), transparent 32rem), rgb(23 19 15);
+  --pomo-editor-background: radial-gradient(circle at 15% 0%, rgb(122 83 53 / 20%), transparent 32rem), rgb(23 19 15);
   --pomo-color-danger-channels: 239 138 116;
   --pomo-color-danger-opacity: 100%;
   --pomo-color-foreground-channels: 255 250 241;
@@ -260,7 +260,7 @@ const config = mergeConfigs([
   --pomo-color-content-surface-opacity: 6%;
   --pomo-color-content-surface-disabled-channels: 25 31 40;
   --pomo-color-content-surface-disabled-opacity: 3%;
-  --pomo-dialogue-editor-background: radial-gradient(circle at 15% 0%, rgb(195 79 47 / 10%), transparent 32rem), rgb(247 248 250);
+  --pomo-editor-background: radial-gradient(circle at 15% 0%, rgb(195 79 47 / 10%), transparent 32rem), rgb(247 248 250);
   --pomo-color-danger-channels: 180 35 24;
   --pomo-color-danger-opacity: 100%;
   --pomo-color-foreground-channels: 25 31 40;

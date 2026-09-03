@@ -245,7 +245,7 @@ describe('PDialogueEditor fields', () => {
 
     expect(screen.getByRole('heading', {name: '새 대화 만들기'})).toBeInTheDocument()
     expect(result.container.querySelector('main')).toHaveClass(
-      '[background:var(--pomo-dialogue-editor-background)]',
+      '[background:var(--pomo-editor-background)]',
       'text-foreground',
     )
     expect(screen.getByRole('region', {name: '대사 입력'})).toHaveClass(

@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 
 const BUTTON_CLASS = cx(
-  'min-h-11 cursor-pointer rounded-full border-0 bg-highlight px-5 font-750 text-[#241a12]',
+  'min-h-11 cursor-pointer rounded-full border-0 bg-highlight px-5 font-750 text-background',
   'disabled:cursor-not-allowed disabled:opacity-40',
 )
 

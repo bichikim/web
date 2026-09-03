@@ -27,7 +27,7 @@ import {PModelDownloadConsent} from '../PModelDownloadConsent'
 const CLASSES = {
   dialogueEditor: cx(
     'pomo-dialogue-editor min-h-dvh box-border',
-    '[background:var(--pomo-dialogue-editor-background)]',
+    '[background:var(--pomo-editor-background)]',
     'pt-[max(1.25rem,_var(--pomo-safe-area-inset-top))]',
     'pr-[max(1.25rem,_var(--pomo-safe-area-inset-right))]',
     'pb-[max(1.25rem,_calc(1.25rem_+_var(--pomo-safe-area-inset-bottom)))]',
