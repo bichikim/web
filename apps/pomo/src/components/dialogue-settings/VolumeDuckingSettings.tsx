@@ -8,6 +8,7 @@ import {
   readDialogueVolumeDuckingSettings,
   writeDialogueVolumeDuckingSettings,
 } from '../../features/focus-room-dialogue'
+import * as m from '@paraglide/message'
 import {PSwitch} from '../PSwitch'
 import {PSettingsSectionHeading} from '../settings/SectionHeading'
 
@@ -52,12 +53,12 @@ export const DialogueVolumeDuckingSettings = () => {
     try {
       await writeDialogueVolumeDuckingSettings(nextSettings)
       if (!disposed) {
-        setMessage('플레이어 음량 설정을 저장했어요.')
+        setMessage(m.settings_dialogue_volume_saved())
       }
     } catch (error: unknown) {
       console.error('Failed to save dialogue volume ducking settings.', error)
       if (!disposed) {
-        setMessage('플레이어 음량 설정을 저장하지 못했어요.')
+        setMessage(m.settings_dialogue_volume_save_failed())
       }
     }
   }
@@ -90,7 +91,7 @@ export const DialogueVolumeDuckingSettings = () => {
       .catch((error: unknown) => {
         console.error('Failed to load dialogue volume ducking settings.', error)
         if (!disposed) {
-          setMessage('플레이어 음량 설정을 불러오지 못했어요.')
+          setMessage(m.settings_dialogue_volume_loaded_failed())
         }
       })
       .finally(() => {
@@ -120,24 +121,26 @@ export const DialogueVolumeDuckingSettings = () => {
     <section aria-labelledby="pomo-dialogue-volume-title" class="grid gap-3">
       <PSettingsSectionHeading
         divider="none"
-        title="대화 옵션"
+        title={m.settings_dialogue_options()}
         titleId="pomo-dialogue-volume-title"
       />
       <div class={CLASSES.panel}>
         <PSwitch
           checked={settings().enabled}
-          description="대화 중 음악을 설정한 비율로 낮추고, 끝나면 원래 음량으로 돌아가요."
+          description={m.settings_dialogue_ducking_description()}
           disabled={isLoading()}
-          label="대화 중 플레이어 음량 낮춤"
+          label={m.settings_dialogue_ducking()}
           onChange={(enabled) => scheduleSave({...settings(), enabled})}
         />
         <label class={CLASSES.field}>
-          <span class="text-[0.6875rem] font-bold text-muted-foreground">대화 중 음악 음량</span>
+          <span class="text-[0.6875rem] font-bold text-muted-foreground">
+            {m.settings_dialogue_music_volume()}
+          </span>
           <output class={CLASSES.value} for="pomo-dialogue-player-volume">
             {settings().playerVolumePercent}%
           </output>
           <input
-            aria-label="대화 중 플레이어 음량 비율"
+            aria-label={m.settings_dialogue_music_volume_label()}
             class={CLASSES.range}
             disabled={isLoading() || !settings().enabled}
             id="pomo-dialogue-player-volume"

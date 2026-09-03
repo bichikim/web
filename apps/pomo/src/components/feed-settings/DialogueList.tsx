@@ -2,6 +2,18 @@ import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import type {PFeedController} from '../../features/focus-room-feed'
+import * as m from '@paraglide/message'
+import {getLocale} from '@paraglide/runtime'
+
+interface FeedIssueMessageSource {
+  readonly contentLength: number
+  readonly status: string
+}
+
+const getFeedIssueMessage = (item: FeedIssueMessageSource) =>
+  item.status === 'too-long'
+    ? m.settings_feed_issue_too_long({count: item.contentLength})
+    : m.settings_feed_issue_failed()
 
 const CLASSES = {
   feedSettingsDialogueActions: cx(
@@ -110,15 +122,21 @@ export interface PFeedDialogueListProps {
 }
 
 const formatPublishedAt = (value: string) =>
-  new Intl.DateTimeFormat('ko-KR', {
+  new Intl.DateTimeFormat(getLocale() === 'ko' ? 'ko-KR' : 'en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
 
 const formatRemaining = (value: string) => {
   const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))
-  return hours === 0 ? '다음 확인 때 정리' : `${hours}시간 후 정리`
+  if (hours === 0) {
+    return m.settings_feed_cleanup_next()
+  }
+  return hours === 1 ? m.settings_feed_cleanup_hours_one() : m.settings_feed_cleanup_hours({hours})
 }
+
+const formatLoadMore = (count: number) =>
+  count === 1 ? m.settings_feed_load_more_one() : m.settings_feed_load_more({count})
 
 export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
   const [visibleDialogueCount, setVisibleDialogueCount] = createSignal(DIALOGUE_PAGE_SIZE)
@@ -143,31 +161,27 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
       setPendingDeleteId(null)
     } catch (error: unknown) {
       console.error('Failed to delete saved feed dialogue.', error)
-      setDeleteError('피드 대화를 삭제하지 못했어요.')
+      setDeleteError(m.settings_feed_dialogue_delete_failed())
     }
   }
 
   return (
     <>
       <div class={CLASSES.feedSettingsListHeading}>
-        <h4 id="pomo-feed-dialogues-title">피드 대화</h4>
-        <span>{props.controller.dialogues().length}개</span>
+        <h4 id="pomo-feed-dialogues-title">{m.settings_feed_dialogues()}</h4>
+        <span>{m.settings_count({count: props.controller.dialogues().length})}</span>
         <button
           class={CLASSES.feedSettingsRefresh}
           onClick={() => props.controller.syncNow()}
           type="button"
         >
           <span aria-hidden="true" class="i-tabler-refresh size-4" />
-          지금 확인
+          {m.settings_feed_check_now()}
         </button>
       </div>
       <Show
         when={props.controller.dialogues().length > 0}
-        fallback={
-          <p class={CLASSES.feedSettingsEmpty}>
-            아직 완성된 피드 대화가 없어요. 새 항목을 확인하면 자동으로 만들어요.
-          </p>
-        }
+        fallback={<p class={CLASSES.feedSettingsEmpty}>{m.settings_feed_empty()}</p>}
       >
         <ul aria-labelledby="pomo-feed-dialogues-title" class={CLASSES.feedSettingsDialogueList}>
           <For each={visibleDialogues()}>
@@ -181,41 +195,49 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                       class={CLASSES.feedSettingsListenedState}
                       data-listened={item.metadata.listenedAt === null ? undefined : ''}
                     >
-                      {item.metadata.listenedAt === null ? '안 들음' : '들음'}
+                      {item.metadata.listenedAt === null
+                        ? m.settings_feed_not_listened()
+                        : m.settings_feed_listened()}
                     </span>{' '}
                     · {formatRemaining(item.metadata.expiresAt)}
                   </small>
                 </span>
                 <span class={CLASSES.feedSettingsDialogueActions}>
                   <button onClick={() => handleListen(item.dialogue.id)} type="button">
-                    {item.metadata.listenedAt === null ? '듣기' : '다시 듣기'}
+                    {item.metadata.listenedAt === null
+                      ? m.settings_feed_listen()
+                      : m.settings_feed_listen_again()}
                   </button>
                   <Show
                     when={pendingDeleteId() === item.dialogue.id}
                     fallback={
                       <button
-                        aria-label={`${item.metadata.itemTitle} 피드 대화 삭제`}
+                        aria-label={m.settings_feed_dialogue_delete_label({
+                          title: item.metadata.itemTitle,
+                        })}
                         onClick={() => {
                           setDeleteError(null)
                           setPendingDeleteId(item.dialogue.id)
                         }}
                         type="button"
                       >
-                        삭제
+                        {m.settings_feed_delete()}
                       </button>
                     }
                   >
                     <button onClick={() => setPendingDeleteId(null)} type="button">
-                      취소
+                      {m.settings_feed_cancel()}
                     </button>
                     <button
-                      aria-label={`${item.metadata.itemTitle} 피드 대화 삭제 확인`}
+                      aria-label={m.settings_feed_dialogue_delete_confirm_label({
+                        title: item.metadata.itemTitle,
+                      })}
                       class="pomo-feed-settings__delete-confirm"
                       data-pomo-feed-delete-confirm=""
                       onClick={() => handleDelete(item.dialogue.id)}
                       type="button"
                     >
-                      삭제 확인
+                      {m.settings_feed_delete_confirm()}
                     </button>
                   </Show>
                 </span>
@@ -229,7 +251,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
             onClick={() => setVisibleDialogueCount((count) => count + DIALOGUE_PAGE_SIZE)}
             type="button"
           >
-            이전 피드 대화 {nextDialogueCount()}개 더 보기
+            {formatLoadMore(nextDialogueCount())}
           </button>
         </Show>
       </Show>
@@ -242,8 +264,8 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
       </Show>
       <Show when={props.controller.issues().length > 0}>
         <div class={CLASSES.feedSettingsIssueHeading}>
-          <h4 id="pomo-feed-issues-title">읽지 못한 항목</h4>
-          <span>{props.controller.issues().length}개</span>
+          <h4 id="pomo-feed-issues-title">{m.settings_feed_issues()}</h4>
+          <span>{m.settings_count({count: props.controller.issues().length})}</span>
         </div>
         <ul aria-labelledby="pomo-feed-issues-title" class={CLASSES.feedSettingsIssueList}>
           <For each={props.controller.issues()}>
@@ -251,10 +273,10 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
               <li>
                 <span>
                   <strong>{item.itemTitle}</strong>
-                  <small>{item.message}</small>
+                  <small>{getFeedIssueMessage(item)}</small>
                 </span>
                 <a href={item.sourceUrl} rel="noreferrer" target="_blank">
-                  원문 보기
+                  {m.settings_feed_open_source()}
                 </a>
               </li>
             )}

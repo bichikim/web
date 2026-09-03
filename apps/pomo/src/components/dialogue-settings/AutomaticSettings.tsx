@@ -13,6 +13,7 @@ import {
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from '../../features/supertonic/model'
+import * as m from '@paraglide/message'
 
 const CLASSES = {
   dialogueSettingsAutomatic: cx(
@@ -38,12 +39,15 @@ const CLASSES = {
   ),
 } as const
 
-const MODEL_OPTIONS: ReadonlyArray<PSelectOption<SupertonicModelId>> = SUPERTONIC_MODELS.map(
-  (model) => ({
-    label: `${model.label} · ${model.description}`,
+const getModelOptions = (): ReadonlyArray<PSelectOption<SupertonicModelId>> =>
+  SUPERTONIC_MODELS.map((model) => ({
+    label: `${model.label} · ${
+      model.id === 'full'
+        ? m.settings_dialogue_model_full_description()
+        : m.settings_dialogue_model_int8_description()
+    }`,
     value: model.id,
-  }),
-)
+  }))
 const VOICE_OPTIONS: ReadonlyArray<PSelectOption<SupertonicVoiceId>> = SUPERTONIC_VOICES.map(
   (voice) => ({label: voice.label, value: voice.id}),
 )
@@ -68,7 +72,7 @@ export const AutomaticDialogueSettings = () => {
       .catch((error: unknown) => {
         console.error('Failed to load automatic dialogue settings.', error)
         if (!disposed) {
-          setMessage('자동 음성 생성 설정을 불러오지 못했어요.')
+          setMessage(m.settings_dialogue_automatic_load_failed())
         }
       })
       .finally(() => {
@@ -86,18 +90,18 @@ export const AutomaticDialogueSettings = () => {
     const currentRepository = repository
 
     if (currentRepository === null) {
-      setMessage('자동 음성 생성 설정이 아직 준비되지 않았어요.')
+      setMessage(m.settings_dialogue_automatic_not_ready())
       return
     }
 
     try {
       currentRepository.save(nextSettings)
       setSettings(nextSettings)
-      setMessage('자동 음성 생성 설정을 저장했어요.')
+      setMessage(m.settings_dialogue_automatic_saved())
       window.dispatchEvent(new CustomEvent(AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT))
     } catch (error: unknown) {
       console.error('Failed to save automatic dialogue settings.', error)
-      setMessage('자동 음성 생성 설정을 저장하지 못했어요.')
+      setMessage(m.settings_dialogue_automatic_save_failed())
     }
   }
 
@@ -107,27 +111,28 @@ export const AutomaticDialogueSettings = () => {
       class={CLASSES.dialogueSettingsAutomatic}
     >
       <div>
-        <h4 id="pomo-automatic-dialogue-title">자동 음성 생성</h4>
-        <p>
-          모든 자동 음성 생성에 사용할 모델과 음성 기본값이에요. AI 생성 음성을 타인 사칭이나 괴롭힘
-          등에 악용할 수 없으며, 공개할 때는 AI 생성 음성임을 밝혀야 해요.
-        </p>
+        <h4 id="pomo-automatic-dialogue-title">{m.settings_dialogue_automatic_title()}</h4>
+        <p>{m.settings_dialogue_automatic_description()}</p>
       </div>
       <Show
         when={!isLoading()}
-        fallback={<p class={CLASSES.dialogueSettingsAutomaticLoading}>설정 불러오는 중</p>}
+        fallback={
+          <p class={CLASSES.dialogueSettingsAutomaticLoading}>
+            {m.settings_dialogue_automatic_loading()}
+          </p>
+        }
       >
         <div class={CLASSES.dialogueSettingsAutomaticControls}>
           <PSelect
-            accessibleLabel="자동 음성 생성 모델"
-            label="음성 모델"
+            accessibleLabel={m.settings_dialogue_automatic_model_label()}
+            label={m.settings_dialogue_automatic_model()}
             onChange={(modelId) => saveSettings({...settings(), modelId})}
-            options={MODEL_OPTIONS}
+            options={getModelOptions()}
             value={settings().modelId}
           />
           <PSelect
-            accessibleLabel="자동 음성 생성 목소리"
-            label="목소리"
+            accessibleLabel={m.settings_dialogue_automatic_voice_label()}
+            label={m.settings_dialogue_automatic_voice()}
             onChange={(voiceId) => saveSettings({...settings(), voiceId})}
             options={VOICE_OPTIONS}
             value={settings().voiceId}

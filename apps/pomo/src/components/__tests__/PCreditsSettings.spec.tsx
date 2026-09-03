@@ -8,12 +8,16 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import licenseData from '../../../public/licenses.json' with {type: 'json'}
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PCreditsSettings} from '../PCreditsSettings'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
 vi.mock('@solidjs/router', () => ({A: vi.fn()}))
 
+const originalGetLocale = getLocale
+
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   vi.clearAllMocks()
   vi.stubGlobal(
     'fetch',
@@ -30,7 +34,25 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.unstubAllGlobals()
+})
+
+it('should render license link roles in English', async () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <PCreditsSettings />)
+
+  expect(
+    await screen.findByRole('link', {name: 'SolidJS license text Opens in a new window'}),
+  ).toBeTruthy()
+  expect(
+    screen.getByRole('link', {name: 'Pretendard official repository Opens in a new window'}),
+  ).toBeTruthy()
+  expect(
+    screen.getByRole('link', {name: 'third-party license document'}).parentElement,
+  ).toHaveTextContent(
+    'See the third-party license document for the complete versions and distribution terms.',
+  )
 })
 
 it('should credit the creator and disclose current software and model licenses', async () => {

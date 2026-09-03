@@ -3,12 +3,13 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For, type JSX} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PSelect} from 'src/components/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import PDialogueSettingsContent from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
@@ -119,12 +120,34 @@ const createFeeds = (): PFeedController => ({
   unlistenedDialogues: () => [],
 })
 
+const originalGetLocale = getLocale
+
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   vi.clearAllMocks()
   localStorage.clear()
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
   vi.mocked(PSelect).mockImplementation(() => null)
   vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
+})
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should render event and dialogue settings in English', () => {
+  overwriteGetLocale(() => 'en')
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  render(() => <PDialogueSettingsContent />)
+
+  expect(screen.getByRole('heading', {name: 'Events'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
+  expect(screen.getByText('Play once when entering Pomofi')).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Dialogue options'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Saved dialogue'})).toBeDefined()
+  expect(screen.getByRole('link', {name: 'New dialogue'})).toBeDefined()
+  expect(screen.getByText('Yuna · 0:01 · 1 speech bubble')).toBeDefined()
 })
 
 it('should keep saved dialogue content full-width with bounded text and actions', () => {

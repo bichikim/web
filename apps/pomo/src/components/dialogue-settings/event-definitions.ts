@@ -1,4 +1,5 @@
 import type {DialogueEventId} from '../../features/focus-room-dialogue'
+import * as m from '@paraglide/message'
 
 export interface DialogueEventDefinition {
   readonly description: string
@@ -7,53 +8,53 @@ export interface DialogueEventDefinition {
   readonly label: string
 }
 
-export const DIALOGUE_EVENTS: ReadonlyArray<DialogueEventDefinition> = [
+export const getDialogueEvents = (): ReadonlyArray<DialogueEventDefinition> => [
   {
-    description: 'Pomofi에 들어올 때 한 번 재생',
+    description: m.settings_event_room_enter_description(),
     icon: 'i-tabler-door-enter',
     id: 'room-enter',
-    label: '입장',
+    label: m.settings_event_room_enter(),
   },
   {
-    description: '집중 시간이 시작될 때 재생',
+    description: m.settings_event_focus_start_description(),
     icon: 'i-tabler-player-play',
     id: 'focus-start',
-    label: '포모도르 집중 시작',
+    label: m.settings_event_focus_start(),
   },
   {
-    description: '집중 시간이 끝날 때 재생',
+    description: m.settings_event_focus_end_description(),
     icon: 'i-tabler-player-stop',
     id: 'focus-end',
-    label: '포모도르 집중 종료',
+    label: m.settings_event_focus_end(),
   },
   {
-    description: '휴식 시간이 시작될 때 재생',
+    description: m.settings_event_break_start_description(),
     icon: 'i-tabler-coffee',
     id: 'break-start',
-    label: '포모도르 휴식 시작',
+    label: m.settings_event_break_start(),
   },
   {
-    description: '휴식 시간이 끝날 때 재생',
+    description: m.settings_event_break_end_description(),
     icon: 'i-tabler-alarm',
     id: 'break-end',
-    label: '포모도르 휴식 종료',
+    label: m.settings_event_break_end(),
   },
   {
-    description: '긴 휴식 시간이 시작될 때 재생',
+    description: m.settings_event_long_break_start_description(),
     icon: 'i-tabler-armchair',
     id: 'long-break-start',
-    label: '포모도르 긴 휴식 시작',
+    label: m.settings_event_long_break_start(),
   },
   {
-    description: '긴 휴식 시간이 끝날 때 재생',
+    description: m.settings_event_long_break_end_description(),
     icon: 'i-tabler-clock-stop',
     id: 'long-break-end',
-    label: '포모도르 긴 휴식 종료',
+    label: m.settings_event_long_break_end(),
   },
   {
-    description: '설정한 랜덤 간격마다 재생',
+    description: m.settings_event_random_description(),
     icon: 'i-tabler-dice-5',
     id: 'random',
-    label: '랜덤 이벤트',
+    label: m.settings_event_random(),
   },
 ]

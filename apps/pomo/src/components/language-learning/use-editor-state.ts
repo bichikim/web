@@ -1,4 +1,4 @@
-import {createMemo, createSignal, onCleanup} from 'solid-js'
+import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {useDialogueWriter} from '../../features/dialogue-writer'
@@ -7,7 +7,9 @@ import {
   type LanguageLearningLanguage,
   type LanguageLearningWordSource,
   MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
+  readLanguageLearningWordSource,
   useLanguageLearningWords,
+  writeLanguageLearningWordSource,
 } from '../../features/language-learning'
 import {useModelDownload} from '../../features/model-download'
 import type {SupertonicModelId, SupertonicVoiceId} from '../../features/supertonic'
@@ -29,7 +31,9 @@ export const useLanguageLearningEditorState = () => {
   const [voiceId, setVoiceId] = createSignal<SupertonicVoiceId>('Yuna')
   const [modelId, setModelId] = createSignal<SupertonicModelId>('full')
   const [count, setCount] = createSignal<LanguageLearningCount>(1)
-  const [wordSource, setWordSource] = createSignal<LanguageLearningWordSource>('direct')
+  const [wordSource, setWordSource] = createSignal<LanguageLearningWordSource>(
+    readLanguageLearningWordSource(),
+  )
   const [tagInput, setTagInput] = createSignal('')
   const [tags, setTags] = createSignal<ReadonlyArray<string>>([])
   const [sentences, setSentences] = createSignal<ReadonlyArray<string>>([])
@@ -62,6 +66,12 @@ export const useLanguageLearningEditorState = () => {
   const savedWords = createMemo(() =>
     getUnmemorizedLanguageLearningWordValues({language: language(), words: learningWords()}),
   )
+  onMount(() => {
+    if (wordSource() === 'saved' && savedWords().length < MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS) {
+      setWordSource('direct')
+      writeLanguageLearningWordSource('direct')
+    }
+  })
   const fail = (nextMessage: string) => {
     setMessage(nextMessage)
     setPhase('error')
@@ -72,6 +82,7 @@ export const useLanguageLearningEditorState = () => {
   }
   const handleWordSourceChange = (nextSource: LanguageLearningWordSource) => {
     setWordSource(nextSource)
+    writeLanguageLearningWordSource(nextSource)
     setTags([])
     setTagInput('')
     setMessage(m.learning_editor_idle())
@@ -89,6 +100,7 @@ export const useLanguageLearningEditorState = () => {
 
       if (nextSavedWordCount < MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS) {
         setWordSource('direct')
+        writeLanguageLearningWordSource('direct')
         setMessage(m.learning_editor_idle())
         setPhase('idle')
       }

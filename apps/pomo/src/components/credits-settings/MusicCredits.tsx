@@ -1,5 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {createSignal, For, Show} from 'solid-js'
+import * as m from '@paraglide/message'
 
 export interface PMusicCredit {
   readonly artistName: string
@@ -53,7 +54,9 @@ export const PMusicCredits = (props: PMusicCreditsProps) => {
           onClick={() => setIsExpanded((expanded) => !expanded)}
           type="button"
         >
-          <span>{isExpanded() ? '접기' : `모두 보기 (+${hiddenCreditCount()})`}</span>
+          <span>
+            {isExpanded() ? m.credits_collapse() : m.credits_show_all({count: hiddenCreditCount()})}
+          </span>
           <span
             aria-hidden="true"
             class={isExpanded() ? 'i-tabler-chevron-up size-4' : 'i-tabler-chevron-down size-4'}

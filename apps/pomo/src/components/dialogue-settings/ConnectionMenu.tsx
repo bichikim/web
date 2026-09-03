@@ -1,5 +1,6 @@
 import {PSelect, type PSelectOption} from '../PSelect'
 import type {PDialogue} from '../../features/focus-room-dialogue/schema'
+import * as m from '@paraglide/message'
 
 interface DialogueConnectionMenuProps {
   readonly accessibleLabel?: string
@@ -20,20 +21,24 @@ export const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
 
   return (
     <PSelect
-      accessibleLabel={props.accessibleLabel ?? '대화 연결'}
+      accessibleLabel={props.accessibleLabel ?? m.settings_event_dialogue_connection()}
       appearance="detailed"
-      clearLabel="모두 연결 해제"
+      clearLabel={m.settings_event_dialogue_clear()}
       disabled={props.disabled}
       hideLabel
-      label="대화 연결"
+      label={m.settings_event_dialogue_connection()}
       multiple
       onChange={props.onChange}
       options={options()}
-      placeholder={props.dialogues.length === 0 ? '대화 없음' : '대화 선택'}
+      placeholder={
+        props.dialogues.length === 0
+          ? m.settings_event_dialogue_empty()
+          : m.settings_event_dialogue_select()
+      }
       selectionLabel={(selectedOptions) => {
         return selectedOptions.length === 1
-          ? (selectedOptions[0]?.label ?? '대화 선택')
-          : `${selectedOptions.length}개 대화 연결됨`
+          ? (selectedOptions[0]?.label ?? m.settings_event_dialogue_select())
+          : m.settings_event_dialogue_selected({count: selectedOptions.length})
       }}
       value={props.selectedDialogueIds}
     />
