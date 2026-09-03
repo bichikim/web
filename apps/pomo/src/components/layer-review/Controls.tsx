@@ -74,7 +74,6 @@ export const ReviewControls = (props: ReviewControlsProps) => (
             'hover:bg-white/14 hover:text-white',
           )}
           onClick={() => props.onCollapse()}
-          title="레이어 패널 축소"
           type="button"
         >
           <span aria-hidden="true" class="i-tabler-layout-sidebar-right-collapse size-4" />

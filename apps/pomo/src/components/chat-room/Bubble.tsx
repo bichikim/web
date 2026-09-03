@@ -11,7 +11,7 @@ interface ChatBubbleProps {
 export const ChatBubble = (props: ChatBubbleProps) => (
   <article
     class={cx(
-      'max-w-[86%] whitespace-pre-wrap rounded-6 px-4 py-3 text-[15px] leading-7 xs:max-w-[76%]',
+      'max-w-[86%] whitespace-pre-wrap rounded-6 px-4 py-3 text-[0.9375rem] leading-7 xs:max-w-[76%]',
       props.message.role === 'user'
         ? 'ml-auto rounded-br-2 bg-#9ed6bb text-#13231c'
         : 'mr-auto rounded-bl-2 bg-white/7 text-#eee5ef',

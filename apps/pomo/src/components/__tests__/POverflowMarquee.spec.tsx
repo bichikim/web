@@ -94,7 +94,7 @@ describe('POverflowMarquee', () => {
     expect(track.classList.contains('motion-reduce:animate-none')).toBe(true)
     expect(viewport.getAttribute('tabindex')).toBe('0')
     expect(viewport.getAttribute('aria-label')).toContain('흐름이 일시 정지됩니다')
-    expect(track.style.getPropertyValue('--pomo-marquee-distance')).toBe('144px')
+    expect(track.style.getPropertyValue('--pomo-marquee-distance')).toBe('9rem')
     expect(track.style.animationDuration).toBe('6s')
     const clone = result.container.querySelector('.pomo-overflow-marquee__clone')
     expect(clone?.getAttribute('aria-hidden')).toBe('true')

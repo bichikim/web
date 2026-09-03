@@ -556,9 +556,15 @@ describe('PDialogueEditor saving and timeline', () => {
     expect(screen.getByRole('button', {name: '2번 말풍선 음성 다시 만들기'})).toHaveTextContent(
       '만드는 중…',
     )
-    expect(screen.getByRole('button', {name: '1번 말풍선 음성 다시 만들기'})).toHaveTextContent(
-      '다시 만들기',
+    const regenerateButton = screen.getByRole('button', {
+      name: '1번 말풍선 음성 다시 만들기',
+    })
+    expect(regenerateButton).toHaveTextContent('다시 만들기')
+    expect(regenerateButton).toHaveAttribute(
+      'aria-description',
+      '전체 음성을 새로 만든 뒤 사용할 수 있어요.',
     )
+    expect(regenerateButton).not.toHaveAttribute('title')
     expect(screen.getByText('둘째 문장').parentElement).toHaveClass(
       'pomo-dialogue-editor__segment-content',
     )
@@ -566,7 +572,7 @@ describe('PDialogueEditor saving and timeline', () => {
       'pomo-dialogue-editor__segment-meta',
     )
 
-    fireEvent.click(screen.getByRole('button', {name: '1번 말풍선 음성 다시 만들기'}))
+    fireEvent.click(regenerateButton)
     fireEvent.click(screen.getByRole('button', {name: '2번 말풍선 음성 다시 만들기'}))
     expect(harness.controller.regenerateSegment).toHaveBeenNthCalledWith(1, 0)
     expect(harness.controller.regenerateSegment).toHaveBeenNthCalledWith(2, 1)

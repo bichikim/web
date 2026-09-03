@@ -61,7 +61,6 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onPreviousTrack()}
-          title={m.player_previous()}
           type="button"
         >
           <PlayerIcon
@@ -80,7 +79,6 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
             class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge)}
             disabled={!props.currentTrack}
             notooltip
-            title={m.player_toggle_playback()}
           >
             <PlayerIcon
               icon="i-tabler-player-play"
@@ -101,7 +99,6 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onNextTrack()}
-          title={m.player_next()}
           type="button"
         >
           <PlayerIcon

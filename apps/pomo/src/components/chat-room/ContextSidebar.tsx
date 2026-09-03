@@ -73,7 +73,7 @@ export const ContextSidebar = (props: ContextSidebarProps) => (
         />
         <span>
           <span class="block text-xs font-700 text-#eee5ef">리파이닝 전에 말하기</span>
-          <span class="mt-1 block text-[11px] leading-4 text-#918697">
+          <span class="mt-1 block text-[0.6875rem] leading-4 text-#918697">
             완성된 문장부터 읽고, 다듬어진 답변은 다시 읽지 않아요.
           </span>
         </span>
@@ -87,7 +87,7 @@ export const ContextSidebar = (props: ContextSidebarProps) => (
         />
         <span>
           <span class="block text-xs font-700 text-#eee5ef">리파이닝 끄기</span>
-          <span class="mt-1 block text-[11px] leading-4 text-#918697">
+          <span class="mt-1 block text-[0.6875rem] leading-4 text-#918697">
             두 번째 생성 단계를 건너뛰며 외국어 문자가 남을 수 있어요.
           </span>
         </span>
@@ -127,7 +127,7 @@ export const ContextSidebar = (props: ContextSidebarProps) => (
       새 대화
     </button>
 
-    <p class="mb-0 mt-5 text-[11px] leading-5 text-#786d80">
+    <p class="mb-0 mt-5 text-[0.6875rem] leading-5 text-#786d80">
       대화와 요약은 서버로 전송되지 않으며 페이지를 닫으면 사라져요.
     </p>
   </aside>

@@ -31,7 +31,6 @@ vi.mock('../PAlbumLibrary', () => ({
         aria-label="앨범 추가"
         data-player-utility="album"
         onClick={() => props.onAddTracks(albumLibraryMocks.addedTracks)}
-        title="앨범 추가"
         type="button"
       >
         <span
@@ -39,28 +38,17 @@ vi.mock('../PAlbumLibrary', () => ({
           class={props.sceneStyle === 'scribble' ? 'i-pomo-scribble:album' : 'i-tabler-album'}
         />
       </button>
-      <button
-        data-testid="album-clear"
-        onClick={() => props.onClearTracks?.()}
-        title="재생목록 모두 비우기"
-        type="button"
-      >
+      <button data-testid="album-clear" onClick={() => props.onClearTracks?.()} type="button">
         재생목록 모두 비우기
       </button>
       <button
         data-testid="album-preview-start"
         onClick={() => props.onPreviewStart?.(albumLibraryMocks.stopPreview)}
-        title="미리듣기 시작"
         type="button"
       >
         미리듣기 시작
       </button>
-      <button
-        data-testid="album-preview-end"
-        onClick={() => props.onPreviewEnd?.()}
-        title="미리듣기 종료"
-        type="button"
-      >
+      <button data-testid="album-preview-end" onClick={() => props.onPreviewEnd?.()} type="button">
         미리듣기 종료
       </button>
       <span data-testid="album-track-count">{props.tracks.length}</span>

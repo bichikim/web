@@ -26,6 +26,7 @@ import {PWeatherStatus} from '../PWeatherStatus'
 import {PDesktopModeControl} from '../PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
 import {LearningPanel} from './LearningPanel'
+import {VersionNoticePanel} from './VersionNoticePanel'
 import {LANGUAGE_LEARNING_ICON} from '../learning/icon'
 
 interface SceneToolbarProps {
@@ -67,6 +68,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
+        <VersionNoticePanel sceneStyle={props.sceneStyle} />
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
           <PSelect
             appearance="icon"

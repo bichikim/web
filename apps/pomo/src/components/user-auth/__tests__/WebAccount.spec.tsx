@@ -5,9 +5,11 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {completeAccountLink, readAccountSession} from '../../../features/user-auth/web-session'
+import type {AuthController} from '../../../features/auth/controller'
+import type {AuthenticationState} from '../../../features/auth/machine'
+import {completeAccountLink} from '../../../features/user-auth/web-session'
 
-const queryMocks = vi.hoisted(() => ({accountSessionQuery: vi.fn()}))
+const authMocks = vi.hoisted(() => ({useAuth: vi.fn()}))
 
 vi.mock('@solidjs/router', async () => {
   const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
@@ -15,10 +17,9 @@ vi.mock('@solidjs/router', async () => {
 })
 vi.mock('../../../features/user-auth/web-session', () => ({
   completeAccountLink: vi.fn(),
-  readAccountSession: vi.fn(),
   signOutWebSession: vi.fn(),
 }))
-vi.mock('../../../features/user-auth/session-query', () => queryMocks)
+vi.mock('../../../features/auth/AuthProvider', () => ({useAuth: authMocks.useAuth}))
 
 import {WebAccount} from '../WebAccount'
 
@@ -29,6 +30,17 @@ const [magicLinkPending, setMagicLinkPending] = createSignal(false)
 const [magicLinkResult, setMagicLinkResult] = createSignal<MagicLinkResult | undefined>()
 const [signOutPending, setSignOutPending] = createSignal(false)
 const [signOutResult, setSignOutResult] = createSignal<SignOutResult | undefined>()
+const [authenticationState, setAuthenticationState] = createSignal<AuthenticationState>({
+  kind: 'anonymous',
+})
+const authenticationSession = () => {
+  const state = authenticationState()
+  return state.kind === 'authenticated' ? state : null
+}
+const authentication: AuthController = {
+  session: authenticationSession,
+  state: authenticationState,
+}
 const completeLinkSubmission = {
   clear: vi.fn(),
   error: undefined,
@@ -77,6 +89,8 @@ beforeEach(() => {
   setMagicLinkResult(undefined)
   setSignOutPending(false)
   setSignOutResult(undefined)
+  setAuthenticationState({kind: 'anonymous'})
+  authMocks.useAuth.mockReturnValue(authentication)
   requestMagicLink.mockReset()
   signOut.mockReset()
   vi.mocked(useAction)
@@ -87,8 +101,6 @@ beforeEach(() => {
     .mockReturnValueOnce(completeLinkSubmission as ReturnType<typeof useSubmission>)
     .mockReturnValueOnce(magicLinkSubmission as ReturnType<typeof useSubmission>)
     .mockReturnValueOnce(signOutSubmission as ReturnType<typeof useSubmission>)
-  vi.mocked(readAccountSession).mockResolvedValue(null)
-  queryMocks.accountSessionQuery.mockReset().mockImplementation(() => readAccountSession())
 })
 
 it('should explain an email account-link callback failure and consume the query', async () => {
@@ -117,7 +129,7 @@ it('should prefer a valid account-link token over a conflicting callback error',
 
 it('should preserve account-link failure guidance when session loading also fails', async () => {
   window.history.replaceState(null, '', '/account?link_error=email')
-  vi.mocked(readAccountSession).mockRejectedValue(new Error('unavailable'))
+  setAuthenticationState({kind: 'unavailable'})
 
   render(() => <WebAccount />)
 
@@ -127,20 +139,23 @@ it('should preserve account-link failure guidance when session loading also fail
 
 it('should show account-link failure guidance without waiting for session loading', async () => {
   window.history.replaceState(null, '', '/account?link_error=email')
-  vi.mocked(readAccountSession).mockReturnValue(new Promise(() => {}))
+  setAuthenticationState({kind: 'checking'})
 
   render(() => <WebAccount />)
 
-  await waitFor(() => expect(readAccountSession).toHaveBeenCalled())
-  expect(screen.getByRole('alert').textContent).toContain('새 연결 이메일을 요청해 주세요.')
+  await waitFor(() =>
+    expect(screen.getByRole('alert').textContent).toContain('새 연결 이메일을 요청해 주세요.'),
+  )
 })
 
 it('should not show account-link success when the linked session cannot be loaded', async () => {
   window.history.replaceState(null, '', '/account?link_token=challenge')
   vi.mocked(completeAccountLink).mockResolvedValue('linked')
-  vi.mocked(readAccountSession).mockRejectedValue(new Error('unavailable'))
+  setAuthenticationState({kind: 'checking'})
 
   render(() => <WebAccount />)
+  await waitFor(() => expect(completeAccountLink).toHaveBeenCalledWith('challenge'))
+  setAuthenticationState({kind: 'unavailable'})
 
   await waitFor(() => expect(screen.queryByRole('alert')).not.toBeNull())
   expect(screen.getByRole('alert').textContent).toContain('계정 정보를 불러오지 못했습니다.')
@@ -198,7 +213,11 @@ it('should derive magic-link progress and feedback from its action submission', 
 })
 
 it('should render an authenticated email session with a pending-aware sign-out action', async () => {
-  vi.mocked(readAccountSession).mockResolvedValueOnce({email: 'user@example.com'})
+  setAuthenticationState({
+    email: 'user@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
 
   render(() => <WebAccount />)
 
@@ -217,17 +236,26 @@ it('should render an authenticated email session with a pending-aware sign-out a
 })
 
 it('should consume a successful client sign-out action and show the anonymous state', async () => {
-  vi.mocked(readAccountSession).mockResolvedValueOnce({email: 'user@example.com'})
+  setAuthenticationState({
+    email: 'user@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
   render(() => <WebAccount />)
   await screen.findByText('user@example.com')
   setSignOutResult({status: 'signed-out'})
+  setAuthenticationState({kind: 'anonymous'})
 
   expect(await screen.findByRole('status')).toHaveTextContent('로그아웃했습니다.')
   expect(screen.getByRole('button', {name: '로그인 링크 받기'})).toBeEnabled()
 })
 
 it('should preserve an authenticated session after a rejected client sign-out action', async () => {
-  vi.mocked(readAccountSession).mockResolvedValueOnce({email: 'user@example.com'})
+  setAuthenticationState({
+    email: 'user@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
 
   render(() => <WebAccount />)
   await screen.findByText('user@example.com')

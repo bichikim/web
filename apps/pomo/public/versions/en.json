@@ -1,0 +1,30 @@
+{
+  "releases": [
+    {
+      "version": "2026. 09. 03 00:57",
+      "releasedAt": "2026-09-03T00:57:00+09:00",
+      "title": "Update",
+      "changes": [
+        "Character movement and expressions in the focus space now feel more natural.",
+        "Added focus-space ambience that changes with the time and weather.",
+        "In Weather settings, you can now select major cities or search for cities worldwide.",
+        "Added language learning features and new voices.",
+        "Audio and music previews now let you seek and mute playback directly.",
+        "AI model downloads continue as you navigate, with options to view progress or stop them.",
+        "Feed generation status is now clearer, and in-progress tasks can be stopped directly.",
+        "Background music volume now adjusts naturally when a conversation begins.",
+        "Improved usability in fullscreen, screensaver, and desktop modes.",
+        "Improved reliability when saving settings and playlists.",
+        "Reduced errors during sign-in and session recovery.",
+        "Fixed duplicate and playback issues when recovering or retrying feed conversations, albums, and music.",
+        "Improved initial loading and the reliability of weather and music data refreshes."
+      ]
+    },
+    {
+      "version": "2026. 08. 25 05:26",
+      "releasedAt": "2026-08-25T05:26:00+09:00",
+      "title": "Initial release",
+      "changes": []
+    }
+  ]
+}

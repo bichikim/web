@@ -16,9 +16,7 @@ it('should share dialogue text, metadata, and actions in one library item', () =
     </ul>
   ))
 
-  expect(screen.getByText('I feel at home here.').getAttribute('title')).toBe(
-    'I feel at home here.',
-  )
+  expect(screen.getByText('I feel at home here.')).not.toHaveAttribute('title')
   expect(screen.getByText('사용 단어: home, wave')).toBeDefined()
   expect(screen.getByRole('button', {name: '듣기'})).toBeDefined()
   expect(screen.getByText('I feel at home here.').closest('li')).toHaveClass(
@@ -46,19 +44,19 @@ it('should support six visible text lines for learning dialogues', () => {
   expect(text.className).not.toContain('[-webkit-line-clamp:3]')
 })
 
-it('should limit long dialogue titles to 80 characters', () => {
-  const boundaryText = '가'.repeat(80)
+it('should expose complete long dialogue text without a native title tooltip', () => {
   const longText = '나'.repeat(81)
 
   render(() => (
     <ul>
-      <DialogueLibraryItem text={boundaryText} />
       <DialogueLibraryItem text={longText} />
     </ul>
   ))
 
-  expect(screen.getByText(boundaryText).getAttribute('title')).toBe(boundaryText)
-  expect(screen.getByText(longText).getAttribute('title')).toBe(`${'나'.repeat(79)}…`)
+  const text = screen.getByText(longText)
+
+  expect(text).toHaveTextContent(longText)
+  expect(text).not.toHaveAttribute('title')
 })
 
 it('should render a useful text-only item when optional regions are omitted', () => {

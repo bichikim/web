@@ -22,7 +22,11 @@ beforeEach(() => {
   Object.assign(Tabs, {
     Content: (props: {children: JSX.Element}) => <>{props.children}</>,
   })
-  vi.mocked(A).mockImplementation((props) => <a href={props.href}>{props.children}</a>)
+  vi.mocked(A).mockImplementation((props) => (
+    <a class={props.class} href={props.href}>
+      {props.children}
+    </a>
+  ))
 })
 
 afterEach(() => {
@@ -42,6 +46,11 @@ it('should credit the creator and disclose current software and model licenses',
   expect(screen.getByRole('heading', {name: '만든 사람'}).parentElement?.className).toContain(
     'pt-0',
   )
+  const versionCatalogLink = screen.getByRole('link', {name: '버전 카탈로그'})
+  expect(creatorDetails?.nextElementSibling).toBe(versionCatalogLink)
+  expect(versionCatalogLink.className).toContain('rounded-control')
+  expect(versionCatalogLink.className).toContain('border-highlight')
+  expect(versionCatalogLink.querySelector('.i-tabler-history')).not.toBeNull()
   expect(screen.getByRole('heading', {name: '음악'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'Rainy Monday'})).toBeTruthy()
   expect(screen.getByText('Bichi Kim · 음악 제작')).toBeTruthy()
@@ -104,6 +113,7 @@ it('should credit the creator and disclose current software and model licenses',
   expect(screen.getByRole('link', {name: '제3자 라이선스 관리 문서'}).getAttribute('href')).toBe(
     '/third-party-notices',
   )
+  expect(versionCatalogLink.getAttribute('href')).toBe('/whats-new')
 })
 
 it('should preserve static credits and report a license fetch failure', async () => {

@@ -8,6 +8,7 @@ import {PSelect} from '../../PSelect'
 import {PWeatherStatus} from '../../PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
 import {LearningPanel} from '../LearningPanel'
+import {VersionNoticePanel} from '../VersionNoticePanel'
 import {SceneSettingsPanel} from '../SettingsPanel'
 import {SceneToolbar} from '../Toolbar'
 import type {WeatherLocation} from '../../../features/weather'
@@ -29,6 +30,7 @@ vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}
 vi.mock('../../PModelDownloadStatus', () => ({PModelDownloadStatus: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
 vi.mock('../LearningPanel', () => ({LearningPanel: vi.fn()}))
+vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: vi.fn()}))
 
 const callbacks = {
   onActivityChange: vi.fn(),
@@ -88,6 +90,10 @@ beforeEach(() => {
     Object.values(props)
     return <div>learning control</div>
   })
+  vi.mocked(VersionNoticePanel).mockImplementation((props) => {
+    Object.values(props)
+    return <div>version notice control</div>
+  })
   vi.mocked(PWeatherStatus).mockImplementation((props) => {
     Object.values(props)
     return null
@@ -112,7 +118,11 @@ describe('SceneToolbar', () => {
       }),
     )
     expect(screen.getByText('learning control')).toBeInTheDocument()
+    expect(screen.getByText('version notice control')).toBeInTheDocument()
     expect(LearningPanel).toHaveBeenCalledWith(expect.objectContaining({sceneStyle: 'original'}))
+    expect(vi.mocked(VersionNoticePanel).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(PSelect).mock.invocationCallOrder.at(-1) ?? Number.POSITIVE_INFINITY,
+    )
     expect(vi.mocked(PSelect).mock.invocationCallOrder.at(-1)).toBeLessThan(
       vi.mocked(LearningPanel).mock.invocationCallOrder[0],
     )

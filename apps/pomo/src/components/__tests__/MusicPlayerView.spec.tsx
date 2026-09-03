@@ -157,6 +157,8 @@ describe('MusicPlayerView', () => {
     expect(playerBase?.classList.contains('bg-player-surface')).toBe(true)
     expect(visualizerFrame?.classList.contains('overflow-hidden')).toBe(true)
     expect(visualizerFrame?.classList.contains('rounded-panel')).toBe(true)
+    expect(expandedFrame).toHaveClass('h-0', 'flex-none')
+    expect(expandedFrame).not.toHaveClass('flex-1')
     expect(expandedFrame?.classList.contains('grid-rows-[0fr]')).toBe(true)
     expect(expandedFrame?.classList.contains('is-expanded')).toBe(false)
     expect(expandedFrame?.getAttribute('aria-hidden')).toBe('true')
@@ -197,7 +199,7 @@ describe('MusicPlayerView', () => {
     expect(collapsedRange.classList.contains('[--media-range-track-background:transparent]')).toBe(
       true,
     )
-    expect(collapsedRange.classList.contains('[--media-range-padding:0px]')).toBe(true)
+    expect(collapsedRange.classList.contains('[--media-range-padding:0rem]')).toBe(true)
     expect(collapsedRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
     expect(collapsedRange.classList.contains('[&.is-hidden]:opacity-0')).toBe(true)
     expect(collapsedRange.classList.contains('motion-reduce:transition-none')).toBe(true)
@@ -209,7 +211,7 @@ describe('MusicPlayerView', () => {
     expect(expandedRange.classList.contains('[--media-cursor:default]')).toBe(true)
     expect(expandedRange.getAttribute('aria-hidden')).toBe('true')
     expect(expandedRange.getAttribute('aria-label')).toBe('재생 위치 조절')
-    expect(expandedRange.getAttribute('title')).toBe('재생 위치 조절')
+    expect(expandedRange.hasAttribute('title')).toBe(false)
     expect(collapsedRange.hasAttribute('title')).toBe(false)
   })
 
@@ -376,7 +378,8 @@ describe('MusicPlayerView', () => {
     expect(controller.classList.contains('h-full')).toBe(true)
     expect(controller.classList.contains('max-h-full')).toBe(true)
     expect(expandedFrame.classList.contains('min-w-0')).toBe(true)
-    expect(expandedFrame.classList.contains('flex-1')).toBe(true)
+    expect(expandedFrame.classList.contains('flex-none')).toBe(true)
+    expect(expandedFrame.classList.contains('flex-1')).toBe(false)
     expect(expandedFrame.classList.contains('overflow-hidden')).toBe(true)
     expect(
       expandedFrame.classList.contains(
@@ -408,7 +411,10 @@ describe('MusicPlayerView', () => {
     expect(modes.classList.contains('p-1')).toBe(true)
     expect(modes.classList.contains('player-narrow:gap-0')).toBe(true)
     expect(modes.classList.contains('player-narrow:p-0.5')).toBe(true)
-    expect(modes.querySelector('.h-5.w-px')).toHaveClass('player-narrow:mx-0')
+    const separator = Array.from(modes.querySelectorAll('span')).find((element) =>
+      element.classList.contains('w-[0.0625rem]'),
+    )
+    expect(separator).toHaveClass('player-narrow:mx-0')
     expect(transport.classList.contains('gap-1')).toBe(true)
     expect(transport.classList.contains('player-compact:col-span-2')).toBe(false)
     expect(volumeGroup.classList.contains('player-compact:row-start-2')).toBe(false)

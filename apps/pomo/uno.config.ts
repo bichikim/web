@@ -69,7 +69,7 @@ const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
     'flex min-h-control-sm box-border items-center gap-2 rounded-control bg-surface py-0 px-3 ' +
     'text-foreground text-sm font-650 leading-5 shadow-panel',
   'pomo-loading__spinner':
-    'w-4.5 h-4.5 box-border flex-none animate-spin [border:2px_solid_rgb(255_255_255_/_28%)] ' +
+    'w-4.5 h-4.5 box-border flex-none animate-spin [border:0.125rem_solid_rgb(255_255_255_/_28%)] ' +
     'border-t-highlight rounded-control motion-reduce:animate-[none]',
   'pomo-scene-fallback':
     'pointer-events-none absolute inset-0 grid place-items-center text-foreground',
@@ -118,9 +118,29 @@ const config = mergeConfigs([
       const safeAreaRight = 'var(--pomo-safe-area-inset-right)'
       const safeAreaTop = 'var(--pomo-safe-area-inset-top)'
 
+      theme.blur = {
+        ...theme.blur,
+        '2xl': '2.5rem',
+        '3xl': '4rem',
+        DEFAULT: '0.5rem',
+        lg: '1rem',
+        md: '0.75rem',
+        sm: '0.25rem',
+        xl: '1.5rem',
+      }
       theme.borderRadius = {
         ...theme.borderRadius,
+        full: '999rem',
         'panel-inner': `calc(${panelRadius} - ${panelInset})`,
+      }
+      theme.lineWidth = {
+        ...theme.lineWidth,
+        0: '0rem',
+        1: '0.0625rem',
+        2: '0.125rem',
+        3: '0.1875rem',
+        4: '0.25rem',
+        DEFAULT: '0.0625rem',
       }
       theme.height = {
         ...theme.height,
@@ -168,10 +188,10 @@ const config = mergeConfigs([
       {
         getCSS: ({theme}) => `
 :root {
-  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0px);
-  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0px);
-  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0rem);
+  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0rem);
+  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0rem);
+  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0rem);
   --pomo-color-foreground: rgb(var(--pomo-color-foreground-channels) / var(--pomo-color-foreground-opacity));
   --pomo-color-muted-foreground: rgb(var(--pomo-color-muted-foreground-channels) / var(--pomo-color-muted-foreground-opacity));
   --pomo-color-secondary-soft: rgb(var(--pomo-color-secondary-soft-channels) / var(--pomo-color-secondary-soft-opacity));
@@ -321,11 +341,51 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid ${theme.colors?.primary};
-  outline-offset: 3px;
+  outline: 0.125rem solid ${theme.colors?.primary};
+  outline-offset: 0.1875rem;
+}
+
+.pomo-orbit-border {
+  padding: 2px;
+  background: conic-gradient(
+    from -90deg,
+    transparent 0deg,
+    transparent 210deg,
+    rgb(255 255 255 / 8%) 235deg,
+    rgb(255 255 255 / 32%) 275deg,
+    rgb(255 255 255 / 68%) 320deg,
+    rgb(255 255 255 / 96%) 350deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
 `,
       },
+    ],
+    rules: [
+      [
+        'outline-none',
+        {
+          outline: '0.125rem solid transparent',
+          'outline-offset': '0.125rem',
+        },
+      ],
+      [
+        'sr-only',
+        {
+          clip: 'rect(0, 0, 0, 0)',
+          height: '0.0625rem',
+          margin: '-0.0625rem',
+          overflow: 'hidden',
+          padding: '0',
+          position: 'absolute',
+          'white-space': 'nowrap',
+          width: '0.0625rem',
+        },
+      ],
     ],
     // The SSR fallback must be styled before lazy client modules extend the generated CSS.
     safelist: [
@@ -340,6 +400,7 @@ body {
           'focus-glow': 'infinite',
           'overflow-marquee': 'infinite',
           'rest-sway': 'infinite',
+          'orbit-border': 'infinite',
           'screen-saver-content-drift': 'infinite',
         },
         durations: {
@@ -353,6 +414,7 @@ body {
           'overflow-marquee': '6s',
           'rest-sway': '2.4s',
           'screen-saver-content-drift': '48s',
+          'orbit-border': '3.2s',
           'select-in': '140ms',
         },
         keyframes: {
@@ -409,6 +471,7 @@ body {
             66% { transform: translate(-1rem, 1.5rem); }
             100% { transform: translate(2rem, 0.75rem); }
           }`,
+          'orbit-border': '{ to { transform: rotate(1turn); } }',
           'select-in': `{
             from { opacity: 0; transform: scale(0.97) translateY(-0.25rem); }
             to { opacity: 1; transform: scale(1) translateY(0); }
@@ -429,23 +492,25 @@ body {
           'overflow-marquee': 'linear',
           'rest-sway': 'ease-in-out',
           'screen-saver-content-drift': 'ease-in-out',
+          'orbit-border': 'linear',
           'select-in': 'ease-out',
         },
       },
       blur: {
-        surface: '8px',
+        DEFAULT: '0.5rem',
+        surface: '0.5rem',
       },
       borderRadius: {
-        control: '999px',
+        control: '999rem',
         panel: '1.25rem',
       },
       boxShadow: {
-        focus: `0 0 0 2px ${colors.highlight}`,
+        focus: `0 0 0 0.125rem ${colors.highlight}`,
         panel: 'var(--pomo-shadow-panel)',
         player: 'var(--pomo-shadow-player)',
         'switch-thumb': 'var(--pomo-shadow-switch-thumb)',
         'tab-active': `inset 0 -0.1875rem 0 ${colors.highlight}`,
-        'track-active': `inset 2px 0 0 ${colors.primary}`,
+        'track-active': `inset 0.125rem 0 0 ${colors.primary}`,
       },
       breakpoints: {
         '2xl': '64rem',

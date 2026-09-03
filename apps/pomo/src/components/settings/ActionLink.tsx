@@ -8,7 +8,7 @@ const ACTION_LINK_CLASSES = cx(
   'text-[0.7rem] font-bold text-foreground no-underline [font:inherit]',
   'transition-[border-color_140ms_ease,_background-color_140ms_ease,_color_140ms_ease]',
   'hover:bg-secondary-soft focus-visible:outline-2 focus-visible:outline-solid',
-  'focus-visible:outline-highlight focus-visible:[outline-offset:2px] motion-reduce:transition-none',
+  'focus-visible:outline-highlight focus-visible:[outline-offset:0.125rem] motion-reduce:transition-none',
 )
 
 export interface PSettingsActionLinkProps {

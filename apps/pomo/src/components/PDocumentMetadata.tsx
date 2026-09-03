@@ -40,6 +40,8 @@ const getTitle = (pathname: string) => {
       return 'Pomofi — 개인정보처리방침'
     case '/third-party-notices':
       return 'Pomofi — 제3자 라이선스 및 배포 고지'
+    case '/whats-new':
+      return `Pomofi — ${m.version_notice_title()}`
     default:
       return 'Pomofi'
   }
@@ -61,6 +63,8 @@ const getDescription = (pathname: string) => {
       return TERMS_DESCRIPTION
     case '/third-party-notices':
       return THIRD_PARTY_NOTICES_DESCRIPTION
+    case '/whats-new':
+      return m.version_catalog_metadata_description()
     default:
       return m.app_default_description()
   }

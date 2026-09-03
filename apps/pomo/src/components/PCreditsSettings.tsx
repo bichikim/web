@@ -8,6 +8,7 @@ import {findLicenseGroup, type LicenseData, loadLicenseData} from 'src/features/
 import * as m from '@paraglide/message'
 import {CreditList} from './credits-settings/List'
 import {type PMusicCredit, PMusicCredits} from './credits-settings/MusicCredits'
+import {PSettingsActionLink} from './settings/ActionLink'
 import {PSettingsSectionHeading} from './settings/SectionHeading'
 
 const getMusicCredits = () =>
@@ -68,6 +69,13 @@ export const PCreditsSettings = () => {
               <dd class="m-0 font-750 text-foreground">Bichi Kim</dd>
             </div>
           </dl>
+          <PSettingsActionLink
+            class="min-h-control-md w-fit"
+            href="/whats-new"
+            icon="i-tabler-history"
+          >
+            {m.credits_version_catalog()}
+          </PSettingsActionLink>
         </section>
 
         <section aria-labelledby="pomo-music-credits-title" class="grid gap-3">

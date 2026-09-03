@@ -1,8 +1,8 @@
-import {getRequestEvent} from 'solid-js/web'
 import {z} from 'zod'
 
+import {getPublicAssetUrl} from 'src/features/public-assets'
+
 const LICENSE_DATA_PATH = '/licenses.json'
-const TRUSTED_LOCAL_HOSTNAMES = new Set(['127.0.0.1', 'localhost'])
 
 const LICENSE_LINK_SCHEMA = z.object({
   label: z.string(),
@@ -55,24 +55,6 @@ export interface LicenseData {
   readonly lastReviewed: string
 }
 
-const getLicenseDataUrl = (): string => {
-  const requestUrlValue = getRequestEvent()?.request.url
-
-  if (requestUrlValue === undefined) {
-    return LICENSE_DATA_PATH
-  }
-
-  const requestUrl = new URL(requestUrlValue)
-  const assetOrigin = new URL(import.meta.env.POMO_LICENSE_ASSET_ORIGIN)
-  const canUseLocalOrigin =
-    import.meta.env.POMO_ALLOW_LOCAL_ASSET_ORIGIN === 'true' &&
-    TRUSTED_LOCAL_HOSTNAMES.has(requestUrl.hostname)
-  const trustedOrigin =
-    requestUrl.origin === assetOrigin.origin || canUseLocalOrigin ? requestUrl : assetOrigin
-
-  return new URL(LICENSE_DATA_PATH, trustedOrigin).href
-}
-
 const parseLicenseData = (value: unknown): LicenseData => {
   const result = LICENSE_DATA_SCHEMA.safeParse(value)
 
@@ -88,7 +70,7 @@ export const loadLicenseData = async (): Promise<LicenseData> => {
   let response: Response
 
   try {
-    response = await fetch(getLicenseDataUrl())
+    response = await fetch(getPublicAssetUrl(LICENSE_DATA_PATH))
   } catch (error) {
     throw new Error('Failed to fetch license data.', {cause: error})
   }

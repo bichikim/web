@@ -18,7 +18,7 @@ const MAXIMUM_FILE_SIZE = 2_000_000
 const INITIAL_TEXT = '오늘도 서두르지 말고, 한 번에 하나씩 집중해 볼까요?'
 const SECTION_CLASSES = cx(
   'relative w-full max-w-3xl overflow-hidden rounded-8 border border-white/10',
-  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
+  'bg-#211a2b/88 p-5 shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 
 export const VoiceGenerator = () => {

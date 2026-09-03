@@ -11,7 +11,7 @@ export const CLASSES = {
     '[&:hover:not(:disabled)]:bg-secondary-soft',
     '[&:hover:not(:disabled)]:text-foreground',
     '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
-    '[&:focus-visible]:[outline-offset:2px] [&:disabled]:[cursor:not-allowed]',
+    '[&:focus-visible]:[outline-offset:0.125rem] [&:disabled]:[cursor:not-allowed]',
     '[&:disabled]:[opacity:0.55] max-sm:w-full motion-reduce:transition-[none]',
   ),
   feedSettingsAddress: cx(
@@ -34,11 +34,11 @@ export const CLASSES = {
     'transition-[border-color_140ms_ease,_background-color_140ms_ease,_color_140ms_ease] h-10',
     '[&:hover]:bg-secondary-soft [&:hover]:text-foreground',
     '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
-    '[&:focus-visible]:[outline-offset:2px] max-sm:w-full',
+    '[&:focus-visible]:[outline-offset:0.125rem] max-sm:w-full',
     'motion-reduce:transition-[none]',
   ),
   feedSettingsEmpty: cx(
-    'pomo-feed-settings__empty m-0 rounded-panel bg-[rgb(255_255_255_/_3%)]',
+    'pomo-feed-settings__empty m-0 rounded-panel bg-content-surface',
     'p-5 text-muted-foreground text-xs leading-[1.5] text-center settings-compact:p-4',
     'border border-dashed border-border',
   ),
@@ -52,8 +52,8 @@ export const CLASSES = {
     'pomo-feed-settings__list grid gap-3 m-0 p-0 list-none [&_>_li]:grid',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:grid-cols-[minmax(0,_1fr)_minmax(8.5rem,_auto)_auto] [&_>_li]:items-end',
-    '[&_>_li]:gap-3 [&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
-    '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
+    '[&_>_li]:gap-3 [&_>_li]:border [&_>_li]:border-solid',
+    '[&_>_li]:border-content-border [&_>_li]:rounded-panel [&_>_li]:bg-content-surface',
     '[&_>_li]:px-4 [&_>_li]:py-3',
     '[&_>_li[data-recommended]]:[border-style:dashed]',
     '[&_>_li[data-recommended]]:border-[rgb(214_181_133_/_28%)]',
@@ -69,7 +69,7 @@ export const CLASSES = {
   ),
   feedSettingsMessage: cx(
     'pomo-feed-settings__message m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
   feedSettingsRecommendationHeading: cx(
@@ -78,7 +78,7 @@ export const CLASSES = {
     '[&_>_span]:text-[0.6875rem] flex items-center gap-[0.45rem]',
   ),
   feedSettingsStatus: cx(
-    'pomo-feed-settings__status m-0 rounded-panel bg-[rgb(255_255_255_/_3%)]',
+    'pomo-feed-settings__status m-0 rounded-panel bg-content-surface',
     'p-5 text-muted-foreground text-xs leading-[1.5] text-center settings-compact:p-4',
   ),
   feedSettingsUrlField: cx(
@@ -95,7 +95,7 @@ export const CLASSES = {
     '[&_input:focus-visible]:border-highlight',
     '[&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-solid ' +
       '[&_input:focus-visible]:outline-highlight',
-    '[&_input:focus-visible]:[outline-offset:2px] settings-compact:col-span-full',
+    '[&_input:focus-visible]:[outline-offset:0.125rem] settings-compact:col-span-full',
     'motion-reduce:[&_input]:transition-[none]',
   ),
 } as const

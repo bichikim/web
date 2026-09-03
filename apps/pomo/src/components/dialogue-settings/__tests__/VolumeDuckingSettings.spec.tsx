@@ -52,6 +52,10 @@ it('should show the dialogue option and save the selected player volume percenta
   expect(screen.getByRole('heading', {name: '대화 옵션'})).toBeDefined()
   expect(screen.getByRole('switch', {name: '대화 중 플레이어 음량 낮춤'})).toBeChecked()
   expect(screen.getByRole('slider', {name: '대화 중 플레이어 음량 비율'})).toHaveValue('50')
+  expect(screen.getByRole('slider').closest('.pomo-dialogue-settings__volume-ducking')).toHaveClass(
+    'border-content-border',
+    'bg-content-surface',
+  )
 
   fireEvent.input(screen.getByRole('slider'), {target: {value: '37'}})
   expect(screen.getByText('37%')).toBeDefined()

@@ -60,7 +60,7 @@ export const Foundation: Story = {
                     <div class={`h-20 ${swatch.class}`} />
                     <div class="p-3">
                       <strong class="block text-xs">{swatch.label}</strong>
-                      <span class="mt-1 block text-[11px] text-muted-foreground">
+                      <span class="mt-1 block text-[0.6875rem] text-muted-foreground">
                         {swatch.value}
                       </span>
                     </div>

@@ -12,7 +12,7 @@ import {ContextSidebar} from './chat-room/ContextSidebar'
 import {MAXIMUM_DRAFT_LENGTH} from './chat-room/shared'
 const PANEL_CLASSES = cx(
   'overflow-hidden rounded-8 border border-white/10 bg-#211a2b/88',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl',
+  'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
 
 const ChatRoom = () => {

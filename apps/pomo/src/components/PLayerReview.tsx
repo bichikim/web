@@ -102,7 +102,7 @@ export const PLayerReview = () => {
           'absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] px-4 py-3 sm:bottom-6 sm:left-6 sm:max-w-xl',
         )}
       >
-        <p class="m-0 text-[10px] font-750 tracking-[0.2em] text-#e8c795 uppercase">
+        <p class="m-0 text-[0.625rem] font-750 tracking-[0.2em] text-#e8c795 uppercase">
           PixiJS 12 scene preview
         </p>
         <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -128,7 +128,6 @@ export const PLayerReview = () => {
               'hover:bg-#211a24/92 hover:text-white sm:bottom-6 sm:right-6',
             )}
             onClick={() => setControlsExpanded(true)}
-            title="레이어 패널 확대"
             type="button"
           >
             <span aria-hidden="true" class="i-tabler-layout-sidebar-right-expand size-5" />

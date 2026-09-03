@@ -44,6 +44,9 @@ vi.mock('../features/apps-in-toss-safe-area', () => ({useAppsInTossSafeArea: vi.
 vi.mock('../features/display-theme', () => ({
   DisplayThemeProvider: componentMocks.displayThemeProvider,
 }))
+vi.mock('../features/auth', () => ({
+  AuthProvider: (props: ChildrenProps) => props.children,
+}))
 vi.mock('../features/model-download/text-client', () => ({
   createTextModelDownloadClient: vi.fn(),
 }))

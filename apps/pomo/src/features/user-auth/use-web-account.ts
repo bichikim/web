@@ -1,4 +1,4 @@
-import {createAsync, useAction, useSubmission} from '@solidjs/router'
+import {useAction, useSubmission} from '@solidjs/router'
 import {createEffect, createMemo, createSignal, onMount} from 'solid-js'
 
 import * as m from '@paraglide/message'
@@ -9,9 +9,8 @@ import {
   signOutAccountSessionAction,
   type SignOutActionResult,
 } from '../auth/actions'
-import {createAuthenticationMachine} from '../auth/machine'
+import {useAuth} from '../auth/AuthProvider'
 import {completeAccountLinkAction} from './actions'
-import {accountSessionQuery} from './session-query'
 import type {AccountSession} from './web-session'
 
 export interface WebAccountController {
@@ -24,46 +23,24 @@ export interface WebAccountController {
   readonly successMessage: () => string | null
 }
 
-const getAccountSessionResolution = (resolvedSession: AccountSession | null) =>
-  resolvedSession === null
-    ? ({type: 'resolve-anonymous'} as const)
-    : ({
-        session: {
-          email: resolvedSession.email,
-          kind: 'authenticated',
-          provider: 'email',
-        },
-        type: 'resolve-authenticated',
-      } as const)
-
 export const useWebAccount = (): WebAccountController => {
-  const authentication = createAuthenticationMachine()
+  const authentication = useAuth()
   const completeLink = useAction(completeAccountLinkAction)
   const completeLinkSubmission = useSubmission(completeAccountLinkAction)
   const magicLinkSubmission = useSubmission(requestAccountMagicLinkAction)
   const signOutSubmission = useSubmission(signOutAccountSessionAction)
   const [email, setEmail] = createSignal('')
-  const [accountSessionActive, setAccountSessionActive] = createSignal(false)
   const [localErrorMessage, setLocalErrorMessage] = createSignal<string | null>(null)
   const [localSuccessMessage, setLocalSuccessMessage] = createSignal<string | null>(null)
-  const accountSession = createAsync(async () => {
-    if (!accountSessionActive()) {
-      return
-    }
-
-    return accountSessionQuery()
-  })
   let accountCallbackErrorMessage: string | null = null
   const [magicLinkStatus, setMagicLinkStatus] = createSignal<
     MagicLinkActionResult['status'] | null
   >(null)
   const [signOutStatus, setSignOutStatus] = createSignal<SignOutActionResult['status'] | null>(null)
   const session = createMemo<AccountSession | null>(() => {
-    const state = authentication.state()
+    const state = authentication.session()
 
-    return state.kind === 'authenticated' && state.provider === 'email'
-      ? {email: state.email}
-      : null
+    return state?.provider === 'email' ? {email: state.email} : null
   })
   const errorMessage = createMemo(() => {
     const magicLinkResultStatus = magicLinkStatus()
@@ -105,12 +82,15 @@ export const useWebAccount = (): WebAccountController => {
         window.history.replaceState(null, '', url)
 
         if (linkResult.status === 'linked') {
+          if (authentication.state().kind === 'unavailable') {
+            throw new Error('Linked account session is unavailable')
+          }
+
           setLocalSuccessMessage(m.web_account_linked())
         } else if (linkResult.status === 'invalid') {
           accountCallbackErrorMessage = m.web_account_link_expired()
           setLocalErrorMessage(accountCallbackErrorMessage)
         } else {
-          authentication.send({type: 'resolve-unavailable'})
           throw new Error('Account link completion is unavailable')
         }
       } else if (linkError === 'email') {
@@ -120,7 +100,6 @@ export const useWebAccount = (): WebAccountController => {
       }
 
       window.history.replaceState(null, '', url)
-      setAccountSessionActive(true)
     }
 
     loadAccount().catch(() => {
@@ -129,32 +108,18 @@ export const useWebAccount = (): WebAccountController => {
       if (accountCallbackErrorMessage === null) {
         setLocalErrorMessage(m.web_account_load_failed())
       }
-
-      authentication.send({type: 'resolve-unavailable'})
     })
   })
 
   createEffect(() => {
-    if (!accountSessionActive()) {
+    if (authentication.state().kind !== 'unavailable') {
       return
     }
 
-    try {
-      const resolvedSession = accountSession()
+    setLocalSuccessMessage(null)
 
-      if (resolvedSession === undefined) {
-        return
-      }
-
-      authentication.send(getAccountSessionResolution(resolvedSession))
-    } catch {
-      setLocalSuccessMessage(null)
-
-      if (accountCallbackErrorMessage === null) {
-        setLocalErrorMessage(m.web_account_load_failed())
-      }
-
-      authentication.send({type: 'resolve-unavailable'})
+    if (accountCallbackErrorMessage === null) {
+      setLocalErrorMessage(m.web_account_load_failed())
     }
   })
 
@@ -193,7 +158,6 @@ export const useWebAccount = (): WebAccountController => {
       return
     }
 
-    authentication.send({type: 'sign-out'})
     setLocalErrorMessage(null)
     setLocalSuccessMessage(m.web_account_signed_out())
   })

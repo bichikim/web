@@ -23,7 +23,7 @@ const modalContentClasses = cva(
           `max-md:top-modal-top-compact max-md:max-h-modal-top-compact`,
       },
       size: {
-        full: 'w-[min(calc(100vw-2rem),calc(1920px-2rem))]',
+        full: 'w-[min(calc(100vw-2rem),calc(120rem-2rem))]',
         regular: '',
         wide: 'w-[min(calc(100vw-2rem),42rem)]',
       },
@@ -92,7 +92,7 @@ export const PModal = (props: PModalProps) => (
     <Dialog.Portal>
       <Dialog.Overlay
         class={
-          'fixed inset-0 bg-backdrop backdrop-blur-[12px] ' +
+          'fixed inset-0 bg-backdrop backdrop-blur-[0.75rem] ' +
           'animate-modal-overlay-in motion-reduce:animate-none'
         }
       />
@@ -168,7 +168,7 @@ export const PModal = (props: PModalProps) => (
                 class={cx(
                   'min-w-0 overflow-hidden',
                   props.titleVisibility === 'visually-hidden'
-                    ? 'pl-1 max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
+                    ? 'max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
                     : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
                 )}
               >

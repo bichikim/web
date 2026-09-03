@@ -37,7 +37,7 @@ const CLASSES = {
     '[&_>_div:nth-child(2)_>_div]:items-center [&_>_div:nth-child(2)_>_div]:gap-[0.45rem]',
     '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-[0.8125rem] [&_h5]:font-[750]',
     '[&_>_div:nth-child(2)_>_div_>_span]:rounded-full',
-    '[&_>_div:nth-child(2)_>_div_>_span]:bg-[rgb(255_255_255_/_5%)]',
+    '[&_>_div:nth-child(2)_>_div_>_span]:bg-content-surface',
     '[&_>_div:nth-child(2)_>_div_>_span]:px-2 [&_>_div:nth-child(2)_>_div_>_span]:py-1',
     '[&_>_div:nth-child(2)_>_div_>_span]:text-muted-foreground',
     '[&_>_div:nth-child(2)_>_div_>_span]:text-[0.5625rem]',
@@ -59,14 +59,14 @@ const CLASSES = {
   ),
   dialogueSettingsLoading: cx(
     'pomo-dialogue-settings__loading m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center flex items-center justify-center gap-2',
     '[&_>_span]:animate-dialogue-settings-spin',
     'motion-reduce:[&_>_span]:animate-[none]',
   ),
   dialogueSettingsMessage: cx(
     'pomo-dialogue-settings__message m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
 } as const

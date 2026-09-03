@@ -1,11 +1,6 @@
 import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
-const TITLE_MAX_LENGTH = 80
-
-const getTitle = (text: string) =>
-  text.length > TITLE_MAX_LENGTH ? `${text.slice(0, TITLE_MAX_LENGTH - 1)}…` : text
-
 const textClasses = cva(
   [
     'min-w-0 overflow-hidden m-0 text-foreground text-xs font-[650] leading-[1.5]',
@@ -39,11 +34,11 @@ const CLASSES = {
     '[&_button:hover]:bg-secondary-soft [&_button:hover]:text-foreground',
     '[&_a:hover]:bg-secondary-soft [&_a:hover]:text-foreground',
     '[&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-solid',
-    '[&_button:focus-visible]:outline-highlight [&_button:focus-visible]:[outline-offset:2px]',
+    '[&_button:focus-visible]:outline-highlight [&_button:focus-visible]:[outline-offset:0.125rem]',
     '[&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-solid',
-    '[&_a:focus-visible]:outline-highlight [&_a:focus-visible]:[outline-offset:2px]',
-    '[&_[data-pomo-dialogue-delete-confirm]]:border-[rgb(239_135_120_/_50%)]',
-    '[&_[data-pomo-dialogue-delete-confirm]]:text-[#f2a398]',
+    '[&_a:focus-visible]:outline-highlight [&_a:focus-visible]:[outline-offset:0.125rem]',
+    '[&_[data-pomo-dialogue-delete-confirm]]:border-danger/50',
+    '[&_[data-pomo-dialogue-delete-confirm]]:text-danger',
     "dialogue-library-compact:[&_>_:is(button,_a)_>_[aria-hidden='true']]:hidden",
     'motion-reduce:[&_button]:transition-[none] motion-reduce:[&_a]:transition-[none]',
   ),
@@ -70,9 +65,7 @@ export const DialogueLibraryItem = (props: DialogueLibraryItemProps) => (
   <li class={CLASSES.item}>
     <div class={CLASSES.layout}>
       <div class={CLASSES.summary}>
-        <p class={textClasses({lineLimit: props.lineLimit})} title={getTitle(props.text)}>
-          {props.text}
-        </p>
+        <p class={textClasses({lineLimit: props.lineLimit})}>{props.text}</p>
         <Show when={props.metadata}>
           <span class={CLASSES.metadata}>{props.metadata}</span>
         </Show>

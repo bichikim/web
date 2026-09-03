@@ -10,7 +10,7 @@ export const CLASSES = {
   pomodoroActionIcon: 'pomo-pomodoro__action-icon w-4 h-4',
   pomodoroActionIndicator: cx(
     'pomo-pomodoro__action-indicator absolute right-[-0.3125rem] bottom-[0] grid w-5 h-5',
-    '[border:1px_solid_rgb(255_250_241_/_72%)] rounded-full bg-foreground',
+    '[border:0.0625rem_solid_rgb(255_250_241_/_72%)] rounded-full bg-foreground',
     'shadow-[0_0.125rem_0.25rem_rgb(0_0_0_/_36%)] text-background place-items-center',
     'pointer-events-none',
   ),

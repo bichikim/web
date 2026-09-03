@@ -29,6 +29,7 @@ it('should expose the medium icon button class contract', () => {
   expect(button.classList.contains('min-w-control-md')).toBe(true)
   expect(button.classList.contains('[padding-inline:0.5625rem]')).toBe(true)
   expect(button.querySelector('[data-pomo-icon-button-icon]')).toHaveClass('size-6')
+  expect(button).not.toHaveAttribute('title')
 })
 
 it('should expose the small icon button class contract', () => {

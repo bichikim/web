@@ -8,7 +8,7 @@ import {renderMusicPlayerView} from './music-player-view.test-support'
 describe('MusicPlayerView controls', () => {
   afterEach(() => cleanup())
 
-  it('should use native titles for every player button', () => {
+  it('should name every player control without native title tooltips', () => {
     const result = renderMusicPlayerView()
     const controller = result.container.querySelector('media-controller')
 
@@ -16,17 +16,19 @@ describe('MusicPlayerView controls', () => {
       throw new TypeError('Expected the Pomo media controller to be rendered')
     }
 
-    const buttons = controller.querySelectorAll('button, media-play-button, media-mute-button')
+    const controls = controller.querySelectorAll(
+      'button, media-play-button, media-mute-button, media-time-range, media-volume-range',
+    )
     const mediaButtons = controller.querySelectorAll('media-play-button, media-mute-button')
 
-    expect(buttons.length).toBeGreaterThan(0)
-    for (const button of buttons) {
-      expect(button.getAttribute('title')?.trim()).toBeTruthy()
+    expect(controls.length).toBeGreaterThan(0)
+    for (const control of controls) {
+      expect(control.hasAttribute('title')).toBe(false)
     }
     for (const button of mediaButtons) {
       expect(button.hasAttribute('notooltip')).toBe(true)
     }
-    expect(controller.querySelector('media-mute-button')?.getAttribute('title')).toBe(
+    expect(controller.querySelector('media-mute-button')?.getAttribute('aria-label')).toBe(
       '음소거 켜기/끄기',
     )
     expect(
@@ -45,7 +47,7 @@ describe('MusicPlayerView controls', () => {
       throw new TypeError('Expected the Pomo summary play button to be rendered')
     }
 
-    expect(summaryPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(false)
+    expect(summaryPlayButton.classList.contains('[&:hover]:translate-y-[-0.0625rem]')).toBe(false)
     expect(summaryPlayButton.classList.contains('[transition:filter_160ms_ease]')).toBe(true)
 
     cleanup()
@@ -57,7 +59,7 @@ describe('MusicPlayerView controls', () => {
       throw new TypeError('Expected the Pomo expanded play button to be rendered')
     }
 
-    expect(expandedPlayButton.classList.contains('[&:hover]:translate-y-[-1px]')).toBe(true)
+    expect(expandedPlayButton.classList.contains('[&:hover]:translate-y-[-0.0625rem]')).toBe(true)
     expect(
       expandedPlayButton.classList.contains('[transition:transform_160ms_ease,_filter_160ms_ease]'),
     ).toBe(true)
@@ -162,7 +164,7 @@ describe('MusicPlayerView controls', () => {
     expect(volumeRange.classList.contains('pomo-player__volume')).toBe(true)
     expect(volumeRange.classList.contains('max-sm:hidden')).toBe(false)
     expect(volumeRange.getAttribute('aria-label')).toBe('음량 조절')
-    expect(volumeRange.getAttribute('title')).toBe('음량 조절')
+    expect(volumeRange.hasAttribute('title')).toBe(false)
     expect(volumeRange.classList.contains('w-[clamp(3rem,_18cqi,_4.75rem)]')).toBe(true)
     expect(volumeRange.classList.contains('player-compact:min-w-6')).toBe(true)
     expect(volumeRange.classList.contains('player-compact:w-[clamp(1.5rem,_8cqi,_2rem)]')).toBe(

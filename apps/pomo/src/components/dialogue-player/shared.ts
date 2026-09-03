@@ -5,7 +5,7 @@ export const CLASSES = {
   dialogueBubble: cx(
     'pomo-dialogue-bubble w-full min-h-0 max-h-full box-border overflow-hidden p-4',
     'text-foreground',
-    'shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] backdrop-blur-[0.75rem]',
+    'shadow-[inset_0_0.0625rem_0_rgb(255_255_255_/_8%)] backdrop-blur-[0.75rem]',
     '[-webkit-backdrop-filter:blur(0.75rem)] [&_p]:min-h-0 [&_p]:overflow-y-auto [&_p]:m-0',
     '[&_p]:pr-1 [&_p]:text-[clamp(0.9rem,_2.5vw,_1rem)]',
     '[&_p]:leading-[1.65] [&_p]:[overscroll-behavior:contain]',

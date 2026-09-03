@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
 import type {PTrack} from '../../features/focus-room-audio'
+import {cssPixelsToRem} from '../../features/css-units'
 import {POverflowMarquee} from '../POverflowMarquee'
 
 const DELETE_COMMIT_DISTANCE = 64
@@ -13,7 +14,7 @@ const TRACK_CLASSES = cx(
   "[&[aria-current='true']]:text-foreground",
   "[&[aria-current='true']]:shadow-track-active",
   '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid',
-  '[&:focus-visible]:outline-primary [&:focus-visible]:[outline-offset:2px]',
+  '[&:focus-visible]:outline-primary [&:focus-visible]:[outline-offset:0.125rem]',
 )
 
 const releasePointer = (element: HTMLButtonElement, pointerId: number) => {
@@ -163,7 +164,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         aria-hidden="true"
         class="pointer-events-none absolute inset-y-0 left-0 grid place-items-center overflow-hidden
           text-danger"
-        style={{width: `${Math.max(0, gesture.offset())}px`}}
+        style={{width: cssPixelsToRem(Math.max(0, gesture.offset()))}}
       >
         <span
           class={
@@ -175,7 +176,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         aria-hidden="true"
         class="pointer-events-none absolute inset-y-0 right-0 grid place-items-center
           overflow-hidden text-danger"
-        style={{width: `${Math.max(0, -gesture.offset())}px`}}
+        style={{width: cssPixelsToRem(Math.max(0, -gesture.offset()))}}
       >
         <span
           class={
@@ -186,6 +187,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       <button
         aria-current={props.current ? 'true' : undefined}
         aria-keyshortcuts={removable() ? 'Delete' : undefined}
+        aria-label={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
         class={cx(
           TRACK_CLASSES,
           'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
@@ -221,9 +223,9 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         onPointerMove={gesture.handlePointerMove}
         onPointerUp={gesture.handlePointerUp}
         style={{
-          transform: gesture.offset() === 0 ? undefined : `translateX(${gesture.offset()}px)`,
+          transform:
+            gesture.offset() === 0 ? undefined : `translateX(${cssPixelsToRem(gesture.offset())})`,
         }}
-        title={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
         type="button"
       >
         <span class="w-4 text-center tabular-nums">{props.index + 1}</span>

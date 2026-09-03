@@ -16,11 +16,10 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => (
       'pomo-player__utility relative grid size-9 shrink-0 place-items-center rounded-full',
       'text-muted-foreground transition hover:bg-secondary-soft hover:text-foreground',
       'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-primary',
-      'focus-visible:[outline-offset:2px]',
+      'focus-visible:[outline-offset:0.125rem]',
     )}
     data-player-utility={props.purpose}
     onClick={(event) => props.onPress(event.currentTarget)}
-    title={props.accessibleLabel}
     type="button"
   >
     <span aria-hidden="true" class={cx(props.icon, 'size-6')} />

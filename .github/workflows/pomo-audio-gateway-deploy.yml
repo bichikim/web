@@ -1,4 +1,4 @@
-name: Deploy Pomo Audio Gateway
+name: Deploy Pomo and Audio Gateway
 
 on:
   pull_request:
