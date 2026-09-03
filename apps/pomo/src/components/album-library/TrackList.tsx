@@ -36,15 +36,6 @@ const PreviewButton = (props: PreviewButtonProps) => (
       hover:border-border-hover hover:bg-surface focus-visible:shadow-focus
       motion-reduce:transition-none"
     onClick={() => props.onPress()}
-    title={
-      props.isLimited
-        ? props.isPlaying
-          ? m.album_preview_limited_stop()
-          : m.album_preview_limited()
-        : props.isPlaying
-          ? m.album_preview_stop()
-          : m.album_preview()
-    }
     type="button"
   >
     <span
@@ -195,7 +186,6 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                           disabled:hover:bg-transparent motion-reduce:transition-none"
                         disabled={isInPlayer()}
                         onClick={() => props.onAddTrack(playable())}
-                        title={isInPlayer() ? m.album_in_player() : m.album_add_to_player()}
                         type="button"
                       >
                         <span

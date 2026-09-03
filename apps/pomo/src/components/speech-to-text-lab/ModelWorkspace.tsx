@@ -93,7 +93,6 @@ export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
           )}
           disabled={isBusy() || speech.isSupported() !== true}
           onClick={speech.toggleRecording}
-          title={buttonLabel()}
           type="button"
         >
           <MicrophoneIcon recording={isRecording()} />

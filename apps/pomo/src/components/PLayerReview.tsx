@@ -128,7 +128,6 @@ export const PLayerReview = () => {
               'hover:bg-#211a24/92 hover:text-white sm:bottom-6 sm:right-6',
             )}
             onClick={() => setControlsExpanded(true)}
-            title="레이어 패널 확대"
             type="button"
           >
             <span aria-hidden="true" class="i-tabler-layout-sidebar-right-expand size-5" />

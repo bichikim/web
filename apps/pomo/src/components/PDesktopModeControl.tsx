@@ -55,7 +55,6 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
               )}
               disabled={props.isChanging}
               onClick={() => requestMode(option.value)}
-              title={option.label}
               type="button"
             >
               <span aria-hidden="true" class={`${option.icon} size-4`} />

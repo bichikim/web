@@ -60,7 +60,6 @@ export const PButton = (props: PButtonProps) => (
     class={pButtonClasses({class: props.class, size: props.size, tone: props.tone})}
     disabled={props.disabled}
     onClick={(event) => props.onPress?.(event.currentTarget)}
-    title={props.accessibleLabel}
     type={props.type ?? 'button'}
   >
     <Show when={props.leadingImage}>

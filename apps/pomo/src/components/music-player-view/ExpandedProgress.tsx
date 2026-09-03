@@ -17,6 +17,5 @@ export const ExpandedPlayerProgress = (props: Pick<MusicPlayerViewProps, 'expand
       !props.expanded && 'pointer-events-none cursor-default [--media-cursor:default]',
     )}
     bool:disabled={!props.expanded}
-    title={m.player_seek()}
   />
 )

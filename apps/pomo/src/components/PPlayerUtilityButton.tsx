@@ -20,7 +20,6 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => (
     )}
     data-player-utility={props.purpose}
     onClick={(event) => props.onPress(event.currentTarget)}
-    title={props.accessibleLabel}
     type="button"
   >
     <span aria-hidden="true" class={cx(props.icon, 'size-6')} />

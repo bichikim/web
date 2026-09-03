@@ -69,7 +69,9 @@ describe('PButton', () => {
       </PButton>
     ))
 
-    expect(result.getByRole('button', {name: '99개 모두 중지'})).toBeDefined()
+    const button = result.getByRole('button', {name: '99개 모두 중지'})
+
+    expect(button).not.toHaveAttribute('title')
   })
 
   it('should forward an explicit button type', () => {

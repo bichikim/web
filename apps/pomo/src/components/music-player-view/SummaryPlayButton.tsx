@@ -17,7 +17,6 @@ export const SummaryPlayButton = (
         class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
         disabled={!props.currentTrack}
         notooltip
-        title={m.player_toggle_playback()}
       >
         <PlayerIcon
           icon="i-tabler-player-play"

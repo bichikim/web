@@ -208,7 +208,7 @@ describe('MusicPlayerView', () => {
     expect(expandedRange.classList.contains('[--media-cursor:default]')).toBe(true)
     expect(expandedRange.getAttribute('aria-hidden')).toBe('true')
     expect(expandedRange.getAttribute('aria-label')).toBe('재생 위치 조절')
-    expect(expandedRange.getAttribute('title')).toBe('재생 위치 조절')
+    expect(expandedRange.hasAttribute('title')).toBe(false)
     expect(collapsedRange.hasAttribute('title')).toBe(false)
   })
 

@@ -53,10 +53,9 @@ export const VolumeControl = (props: VolumeControlProps) => {
   return (
     <div class="pomo-player__volume-group flex min-w-0 items-center justify-end gap-0">
       <media-mute-button
-        aria-label={m.player_mute()}
+        aria-label={m.player_toggle_mute()}
         class={cx(CLASSES.playerMute, 'player-narrow:hidden')}
         notooltip
-        title={m.player_toggle_mute()}
       >
         <PlayerIcon
           icon="i-tabler-volume-off"
@@ -87,7 +86,6 @@ export const VolumeControl = (props: VolumeControlProps) => {
       <media-volume-range
         aria-label={m.player_volume()}
         class={cx(CLASSES.playerVolume, 'player-narrow:hidden')}
-        title={m.player_volume()}
       />
 
       <button
@@ -107,7 +105,6 @@ export const VolumeControl = (props: VolumeControlProps) => {
         popovertarget={popoverId}
         ref={setTriggerElement}
         style={{'anchor-name': popoverAnchor}}
-        title={m.player_volume()}
         type="button"
       >
         <PlayerIcon icon="i-tabler-volume-2" sceneStyle={props.sceneStyle} size="size-6" />
@@ -134,7 +131,6 @@ export const VolumeControl = (props: VolumeControlProps) => {
           aria-label={m.player_volume()}
           autofocus
           class={CLASSES.playerVolumePopover}
-          title={m.player_volume()}
         />
       </div>
     </div>
