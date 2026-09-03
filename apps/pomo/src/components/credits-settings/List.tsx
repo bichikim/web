@@ -9,6 +9,23 @@ const CREDIT_ITEM_CLASS = cx(
   'bg-[rgb(255_255_255_/_3%)] px-4 py-3',
 )
 
+const LICENSE_SOURCE_SUFFIX = ' 라이선스 원문'
+const OFFICIAL_REPOSITORY_SUFFIX = ' 공식 저장소'
+
+const getLicenseLinkLabel = (label: string): string => {
+  if (label.endsWith(LICENSE_SOURCE_SUFFIX)) {
+    return m.credits_license_source({name: label.slice(0, -LICENSE_SOURCE_SUFFIX.length)})
+  }
+
+  if (label.endsWith(OFFICIAL_REPOSITORY_SUFFIX)) {
+    return m.credits_official_repository({
+      name: label.slice(0, -OFFICIAL_REPOSITORY_SUFFIX.length),
+    })
+  }
+
+  return label
+}
+
 export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>}) => (
   <ul class="m-0 grid list-none gap-3 p-0">
     <For each={props.entries}>
@@ -27,7 +44,7 @@ export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>
                   rel="noreferrer"
                   target="_blank"
                 >
-                  {link.label}
+                  {getLicenseLinkLabel(link.label)}
                   <span class="sr-only"> {m.credits_new_window()}</span>
                 </a>
               )}

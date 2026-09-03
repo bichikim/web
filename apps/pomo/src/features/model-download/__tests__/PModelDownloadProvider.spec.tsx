@@ -12,11 +12,21 @@ vi.mock('../controller', async () => {
   return {...actual, createModelDownloadController: controllerMocks.createModelDownloadController}
 })
 
-import {PModelDownloadProvider, useModelDownload} from '../PModelDownloadProvider'
+import {
+  PModelDownloadProvider,
+  useModelAssetManager,
+  useModelDownload,
+} from '../PModelDownloadProvider'
 
 it('should require the model download provider', () => {
   expect(() => useModelDownload()).toThrow(
     'useModelDownload must be used inside PModelDownloadProvider.',
+  )
+})
+
+it('should require the model asset manager provider', () => {
+  expect(() => useModelAssetManager()).toThrow(
+    'useModelAssetManager must be used inside PModelDownloadProvider.',
   )
 })
 
@@ -26,8 +36,10 @@ it('should provide one controller and dispose it on cleanup', () => {
   const runtime = {} as ModelDownloadRuntime
   controllerMocks.createModelDownloadController.mockReturnValue(controller)
   let observedController: ModelDownloadController | undefined
+  let observedAssets: ReturnType<typeof useModelAssetManager> | undefined
   const Consumer = () => {
     observedController = useModelDownload()
+    observedAssets = useModelAssetManager()
     return null
   }
 
@@ -39,6 +51,7 @@ it('should provide one controller and dispose it on cleanup', () => {
 
   expect(controllerMocks.createModelDownloadController).toHaveBeenCalledWith(runtime)
   expect(observedController).toBe(controller)
+  expect(observedAssets?.runAfterVoiceModel).toBeTypeOf('function')
   result.unmount()
   expect(dispose).toHaveBeenCalledOnce()
 })

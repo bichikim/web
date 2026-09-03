@@ -16,8 +16,9 @@ import {
   useLanguageLearningSentences,
 } from '../../features/language-learning'
 import {SUPERTONIC_VOICES} from '../../features/supertonic'
+import * as m from '@paraglide/message'
 import {AutomaticDialogueSettings} from './AutomaticSettings'
-import {DIALOGUE_EVENTS} from './event-definitions'
+import {getDialogueEvents} from './event-definitions'
 import {DialogueConnectionMenu} from './ConnectionMenu'
 import {DialogueEventSettingRow} from './EventSettingRow'
 import {DialogueLibrary} from './Library'
@@ -85,7 +86,11 @@ const getVoiceLabel = (voiceId: PDialogue['voiceId']) =>
   SUPERTONIC_VOICES.find((voice) => voice.id === voiceId)?.label ?? voiceId
 
 const getDialogueMetadata = (dialogue: PDialogue) =>
-  `${getVoiceLabel(dialogue.voiceId)} · ${formatDuration(dialogue.durationMs)} · ${dialogue.segments.length}개 말풍선`
+  [
+    getVoiceLabel(dialogue.voiceId),
+    formatDuration(dialogue.durationMs),
+    m.settings_dialogue_bubble_count({count: dialogue.segments.length}),
+  ].join(' · ')
 
 export interface PDialogueSettingsContentProps {
   readonly onRequestClose?: () => void
@@ -94,6 +99,7 @@ export interface PDialogueSettingsContentProps {
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
 export default function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
   const events = usePEvents()
+  const dialogueEvents = getDialogueEvents()
   const feeds = usePFeedContext()
   const eventDialogues = createMemo(() =>
     excludeFeedDialogues(events.dialogues(), feeds.dialogues()),
@@ -119,7 +125,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to bind focus room event dialogue.', error)
-      setMessage('이벤트의 대화 연결을 변경하지 못했어요.')
+      setMessage(m.settings_events_binding_failed())
     }
   }
 
@@ -132,7 +138,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to change focus room event playback mode.', error)
-      setMessage('이벤트의 재생 모드를 변경하지 못했어요.')
+      setMessage(m.settings_events_playback_mode_failed())
     }
   }
 
@@ -142,21 +148,21 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
         <section class={CLASSES.dialogueSettings}>
           <PSettingsSectionHeading
             class="pomo-dialogue-settings__library-heading"
-            count={`${DIALOGUE_EVENTS.length}개`}
-            title="이벤트"
+            count={m.settings_count({count: dialogueEvents.length})}
+            title={m.settings_events_title()}
             titleId="pomo-dialogue-events-title"
           />
 
           <Show when={events.isLoading()}>
             <div aria-live="polite" class={CLASSES.dialogueSettingsLoading} role="status">
               <span aria-hidden="true" class="i-tabler-loader-2 size-5" />
-              이벤트와 대화를 불러오는 중
+              {m.settings_events_loading()}
             </div>
           </Show>
 
           <Show when={!events.isLoading()}>
             <ul aria-labelledby="pomo-dialogue-events-title" class={CLASSES.dialogueSettingsList}>
-              <For each={DIALOGUE_EVENTS}>
+              <For each={dialogueEvents}>
                 {(event) => {
                   const selectedDialogueIds = () => events.eventDialogueIds()[event.id] ?? []
                   const playbackMode = () =>
@@ -188,13 +194,15 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                       <DialogueEventSettingRow
                         description={
                           eventDialogues().length === 0
-                            ? '대화 탭에서 먼저 대화를 만들어 주세요.'
-                            : '이 이벤트에서 재생할 대화를 선택해요.'
+                            ? m.settings_event_dialogue_create_first()
+                            : m.settings_event_dialogue_select_description()
                         }
-                        label="대화 연결"
+                        label={m.settings_event_dialogue_connection()}
                       >
                         <DialogueConnectionMenu
-                          accessibleLabel={`${event.label} 대화 연결`}
+                          accessibleLabel={m.settings_event_dialogue_connection_label({
+                            event: event.label,
+                          })}
                           getMetadata={getDialogueMetadata}
                           dialogues={eventDialogues()}
                           disabled={eventDialogues().length === 0}
@@ -244,19 +252,19 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                 href="/dialogue"
                 icon="i-tabler-plus"
               >
-                새 대화
+                {m.settings_dialogue_new()}
               </PSettingsActionLink>
             }
             class="pomo-dialogue-settings__library-heading"
-            count={`${libraryDialogues().length}개`}
-            title="저장된 대화"
+            count={m.settings_count({count: libraryDialogues().length})}
+            title={m.settings_dialogue_saved_title()}
             titleId="pomo-dialogue-library-list-title"
           />
 
           <Show when={events.isLoading()}>
             <div aria-live="polite" class={CLASSES.dialogueSettingsLoading} role="status">
               <span aria-hidden="true" class="i-tabler-loader-2 size-5" />
-              대화를 불러오는 중
+              {m.settings_dialogue_loading()}
             </div>
           </Show>
 
@@ -265,7 +273,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
               when={libraryDialogues().length > 0}
               fallback={
                 <PSettingsEmptyState class="pomo-dialogue-settings__empty">
-                  아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.
+                  {m.settings_dialogue_empty()}
                 </PSettingsEmptyState>
               }
             >

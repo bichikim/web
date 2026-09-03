@@ -2,6 +2,7 @@ import {type Accessor, createSignal, onMount} from 'solid-js'
 
 import {createFeedConnectionRepository, type FeedConnectionRepository} from './repository'
 import {DEFAULT_FEED_VOICE_ID, type FeedConnection, normalizeFeedUrl} from './schema'
+import * as m from '@paraglide/message'
 
 export const FEED_CONNECTIONS_CHANGED_EVENT = 'pomo:focus-room-feed-connections-changed'
 
@@ -41,7 +42,7 @@ export const useFeedConnections = (): FeedConnectionController => {
     const currentRepository = repository
 
     if (currentRepository === null) {
-      setMessage('피드 저장소가 아직 준비되지 않았어요.')
+      setMessage(m.settings_feed_store_not_ready())
       return false
     }
 
@@ -52,7 +53,7 @@ export const useFeedConnections = (): FeedConnectionController => {
       return true
     } catch (error: unknown) {
       console.error('Failed to save focus room feed connections.', error)
-      setMessage('피드 연결을 기기에 저장하지 못했어요.')
+      setMessage(m.settings_feed_save_failed())
       return false
     }
   }
@@ -64,7 +65,7 @@ export const useFeedConnections = (): FeedConnectionController => {
       setConnections(nextRepository.list())
     } catch (error: unknown) {
       console.error('Failed to load focus room feed connections.', error)
-      setMessage('저장된 피드 연결을 불러오지 못했어요.')
+      setMessage(m.settings_feed_load_failed())
     } finally {
       setIsLoading(false)
     }
@@ -74,14 +75,14 @@ export const useFeedConnections = (): FeedConnectionController => {
     const normalizedUrl = normalizeFeedUrl(url)
 
     if (!normalizedUrl.ok) {
-      setMessage('HTTP 또는 HTTPS 피드 주소를 입력해 주세요.')
+      setMessage(m.settings_feed_invalid_url())
       return false
     }
 
     const currentConnections = connections()
 
     if (currentConnections.some((connection) => connection.url === normalizedUrl.value)) {
-      setMessage('이미 추가한 피드 주소예요.')
+      setMessage(m.settings_feed_duplicate_url())
       return false
     }
 
@@ -103,7 +104,7 @@ export const useFeedConnections = (): FeedConnectionController => {
       requestPersistentStorage()
     }
 
-    setMessage('피드 주소를 저장했어요.')
+    setMessage(m.settings_feed_url_saved())
     return true
   }
 
@@ -117,7 +118,7 @@ export const useFeedConnections = (): FeedConnectionController => {
     const nextConnections = connections().filter((connection) => connection.id !== connectionId)
 
     if (saveConnections(nextConnections)) {
-      setMessage('피드 연결을 삭제했어요.')
+      setMessage(m.settings_feed_deleted())
     }
   }
 
@@ -128,7 +129,7 @@ export const useFeedConnections = (): FeedConnectionController => {
     )
 
     if (saveConnections(nextConnections)) {
-      setMessage('피드 음성을 변경했어요.')
+      setMessage(m.settings_feed_voice_changed())
     }
   }
 

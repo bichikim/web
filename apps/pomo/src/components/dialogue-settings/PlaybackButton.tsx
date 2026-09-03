@@ -9,6 +9,7 @@ export const DialoguePlaybackButton = (props: DialoguePlaybackButtonProps) => (
       aria-hidden="true"
       class={`${props.isPlaying ? 'i-tabler-player-stop' : 'i-tabler-player-play'} size-4`}
     />
-    {props.isPlaying ? '중지' : '듣기'}
+    {props.isPlaying ? m.settings_dialogue_stop() : m.settings_dialogue_listen()}
   </button>
 )
+import * as m from '@paraglide/message'

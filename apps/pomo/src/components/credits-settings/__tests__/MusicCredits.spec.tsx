@@ -1,8 +1,9 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {expect, it} from 'vitest'
+import {afterEach, beforeEach, expect, it} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {type PMusicCredit, PMusicCredits} from '../MusicCredits'
 
 const MUSIC_CREDITS = Array.from({length: 5}, (_, index) => ({
@@ -10,6 +11,23 @@ const MUSIC_CREDITS = Array.from({length: 5}, (_, index) => ({
   contributorName: `Contributor ${index + 1}`,
   role: '음악 제작',
 })) satisfies ReadonlyArray<PMusicCredit>
+const originalGetLocale = getLocale
+
+beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
+})
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should render the expansion control in English', () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <PMusicCredits entries={MUSIC_CREDITS} />)
+
+  fireEvent.click(screen.getByRole('button', {name: 'Show all (+1)'}))
+  expect(screen.getByRole('button', {name: 'Collapse'})).toBeTruthy()
+})
 
 it('should show four credits before expanding and collapse the list again', () => {
   render(() => <PMusicCredits entries={MUSIC_CREDITS} />)

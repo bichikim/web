@@ -1,9 +1,10 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PFeedDialogueList} from '../DialogueList'
 
 const FEED_DIALOGUE: FeedDialogueListItem = {
@@ -57,8 +58,52 @@ const createController = (dialogues: ReadonlyArray<FeedDialogueListItem> = [FEED
   return {controller, onDeleteDialogue}
 }
 
+const originalGetLocale = getLocale
+
+beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
+})
+
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.restoreAllMocks()
+})
+
+it('should render feed dialogue controls in English', () => {
+  overwriteGetLocale(() => 'en')
+  const {controller} = createController()
+  render(() => <PFeedDialogueList controller={controller} />)
+
+  expect(screen.getByRole('heading', {name: 'Feed dialogues'})).toBeDefined()
+  expect(screen.getByRole('button', {name: 'Check now'})).toBeDefined()
+  expect(screen.getByText('Not listened')).toBeDefined()
+  expect(screen.getByRole('button', {name: 'Listen'})).toBeDefined()
+})
+
+it('should localize persisted feed issues for the current language', () => {
+  overwriteGetLocale(() => 'en')
+  const issue = {
+    contentLength: 0,
+    discoveredAt: '2026-08-14T00:00:00.000Z',
+    feedConnectionId: 'feed-1',
+    feedItemId: 'issue-1',
+    id: 'feed-1\u0000issue-1',
+    itemTitle: 'Unreadable article',
+    message: '읽을 수 있는 원문이 없어요.',
+    publishedAt: '2026-08-14T00:00:00.000Z',
+    sourceTitle: 'Test feed',
+    sourceUrl: 'https://example.com/issue',
+    status: 'failed',
+    updatedAt: '2026-08-14T00:00:00.000Z',
+    version: 1,
+  } as const
+  const {controller: baseController} = createController([])
+  const controller: PFeedController = {...baseController, issues: () => [issue]}
+
+  render(() => <PFeedDialogueList controller={controller} />)
+
+  expect(screen.getByText("Couldn't read the source text.")).toBeDefined()
+  expect(screen.queryByText('읽을 수 있는 원문이 없어요.')).toBeNull()
 })
 
 it('should omit source links from saved feed dialogue items', () => {
@@ -192,7 +237,7 @@ it('should show an empty dialogue state, refresh feeds, and list unreadable item
 
   expect(screen.getByText(/아직 완성된 피드 대화가 없어요/u)).toBeDefined()
   expect(screen.getByText('읽지 못한 소식')).toBeDefined()
-  expect(screen.getByText('본문을 가져오지 못했어요.')).toBeDefined()
+  expect(screen.getByText('읽을 수 있는 원문을 가져오지 못했어요.')).toBeDefined()
   expect(screen.getByRole('link', {name: '원문 보기'})).toHaveAttribute(
     'href',
     'https://example.com/issue',

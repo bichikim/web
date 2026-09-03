@@ -1,7 +1,7 @@
 import {Title} from '@solidjs/meta'
 
 import * as m from '@paraglide/message'
-import {LanguageLearningEditorContent} from '../components/language-learning/EditorContent'
+import {LanguageLearningEditorContent} from '../../components/language-learning/EditorContent'
 
 export default function LanguageLearningPage() {
   return (

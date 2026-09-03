@@ -8,6 +8,7 @@ import {
   readRandomEventSettings,
   writeRandomEventSettings,
 } from '../../features/focus-room-dialogue'
+import * as m from '@paraglide/message'
 import {DialogueEventSettingRow} from './EventSettingRow'
 
 const CLASSES = {
@@ -35,8 +36,6 @@ interface RandomEventInterval {
 const MAXIMUM_INTERVAL_MINUTES = 120
 const MINIMUM_INTERVAL_MINUTES = 1
 const SAVE_DEBOUNCE_MILLISECONDS = 500
-const INVALID_INTERVAL_MESSAGE =
-  '간격은 1~120분 사이의 정수여야 하고, 최소 간격은 최대 간격보다 클 수 없어요.'
 
 const createIntervalDraft = (settings: RandomEventSettingsValue): IntervalDraft => ({
   maximum: String(settings.maximumMinutes),
@@ -83,7 +82,7 @@ export const RandomEventSettings = () => {
         console.error('Failed to load random event settings.', error)
 
         if (!isDisposed) {
-          setMessage('랜덤 이벤트 설정을 불러오지 못했어요.')
+          setMessage(m.settings_random_load_failed())
         }
       })
       .finally(() => {
@@ -106,13 +105,13 @@ export const RandomEventSettings = () => {
 
       if (!isDisposed) {
         setSettings(nextSettings)
-        setMessage('랜덤 이벤트 설정을 저장했어요.')
+        setMessage(m.settings_random_saved())
       }
     } catch (error: unknown) {
       console.error('Failed to save random event settings.', error)
 
       if (!isDisposed) {
-        setMessage('랜덤 이벤트 설정을 저장하지 못했어요.')
+        setMessage(m.settings_random_save_failed())
       }
     }
   }
@@ -152,15 +151,15 @@ export const RandomEventSettings = () => {
 
   return (
     <DialogueEventSettingRow
-      description="포모와 시작한 뒤 이 범위에서 다음 발생 시간을 계속 새로 정해요."
-      label="발생 간격"
+      description={m.settings_random_interval_description()}
+      label={m.settings_random_interval()}
     >
       <div class={CLASSES.interval}>
         <div class={CLASSES.fields}>
           <label class={CLASSES.field}>
-            <span>최소(분)</span>
+            <span>{m.settings_random_interval_minimum()}</span>
             <input
-              aria-label="랜덤 이벤트 최소 간격(분)"
+              aria-label={m.settings_random_interval_minimum_label()}
               aria-invalid={interval() === null}
               class={CLASSES.input}
               disabled={isLoading()}
@@ -175,9 +174,9 @@ export const RandomEventSettings = () => {
             />
           </label>
           <label class={CLASSES.field}>
-            <span>최대(분)</span>
+            <span>{m.settings_random_interval_maximum()}</span>
             <input
-              aria-label="랜덤 이벤트 최대 간격(분)"
+              aria-label={m.settings_random_interval_maximum_label()}
               aria-invalid={interval() === null}
               class={CLASSES.input}
               disabled={isLoading()}
@@ -205,7 +204,7 @@ export const RandomEventSettings = () => {
           when={interval() === null}
         >
           <p aria-live="polite" class={CLASSES.message} role="status">
-            {INVALID_INTERVAL_MESSAGE}
+            {m.settings_random_interval_invalid()}
           </p>
         </Show>
       </div>

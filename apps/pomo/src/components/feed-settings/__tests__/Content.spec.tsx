@@ -7,14 +7,17 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PSelect} from 'src/components/PSelect'
 import {PFeedContext, type PFeedController} from 'src/features/focus-room-feed'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import PFeedSettingsContent from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
 
 const renderSettings = () => render(() => <PFeedSettingsContent />)
+const originalGetLocale = getLocale
 
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   localStorage.clear()
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
   vi.mocked(PSelect).mockImplementation((props) => {
@@ -40,7 +43,19 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.unstubAllEnvs()
+})
+
+it('should render feed settings in English', () => {
+  overwriteGetLocale(() => 'en')
+  renderSettings()
+
+  expect(screen.getByRole('textbox', {name: 'Feed URL'})).toBeDefined()
+  expect(screen.getByRole('button', {name: 'Add'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Saved feeds'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Recommended feeds'})).toBeDefined()
+  expect(screen.getByText('Today in history')).toBeDefined()
 })
 
 it('should add, update, restore, and delete a feed connection with its voice', () => {

@@ -3,6 +3,7 @@ import {A} from '@solidjs/router'
 import {createSignal, For, onCleanup, Show} from 'solid-js'
 
 import {type PDialogue, usePEvents} from '../../features/focus-room-dialogue'
+import * as m from '@paraglide/message'
 import {DialogueLibraryItem, type DialogueLibraryItemProps} from './LibraryItem'
 import {DialoguePlaybackButton} from './PlaybackButton'
 
@@ -78,14 +79,14 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
       }
 
       if (audio === null) {
-        setMessage('저장된 음성을 찾을 수 없어요. 대화를 다시 편집해 주세요.')
+        setMessage(m.settings_dialogue_audio_missing())
         return
       }
 
       const player = audioElement()
 
       if (player === undefined) {
-        setMessage('음성 재생기를 준비하지 못했어요.')
+        setMessage(m.settings_dialogue_player_failed())
         return
       }
 
@@ -101,7 +102,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
 
       stopPlayback()
       console.error('Failed to play focus room dialogue.', error)
-      setMessage('음성을 재생하지 못했어요.')
+      setMessage(m.settings_dialogue_playback_failed())
     }
   }
 
@@ -123,14 +124,14 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
       setPendingDeleteId(null)
     } catch (error: unknown) {
       console.error('Failed to delete focus room dialogue.', error)
-      setMessage('대화를 삭제하지 못했어요.')
+      setMessage(m.settings_dialogue_delete_failed())
     }
   }
 
   return (
     <>
       <audio class={CLASSES.audio} onEnded={stopPlayback} preload="none" ref={setAudioElement} />
-      <ul aria-label="저장된 대화" class={CLASSES.list}>
+      <ul aria-label={m.settings_dialogue_saved_list()} class={CLASSES.list}>
         <For each={props.entries}>
           {(entry) => (
             <DialogueLibraryItem
@@ -142,22 +143,22 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                   />
                   <button onClick={() => handleCharacterPlayback(entry.dialogue)} type="button">
                     <span aria-hidden="true" class="i-tabler-message-circle size-4" />
-                    캐릭터로 듣기
+                    {m.settings_dialogue_character_listen()}
                   </button>
                   <A href={`/dialogue?dialogueId=${encodeURIComponent(entry.dialogue.id)}`}>
                     <span aria-hidden="true" class="i-tabler-pencil size-4" />
-                    편집
+                    {m.settings_dialogue_edit()}
                   </A>
                   <Show
                     when={pendingDeleteId() === entry.dialogue.id}
                     fallback={
                       <button onClick={() => setPendingDeleteId(entry.dialogue.id)} type="button">
-                        삭제
+                        {m.settings_dialogue_delete()}
                       </button>
                     }
                   >
                     <button onClick={() => setPendingDeleteId(null)} type="button">
-                      취소
+                      {m.settings_dialogue_cancel()}
                     </button>
                     <button
                       class="pomo-dialogue-settings__delete-confirm"
@@ -165,7 +166,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                       onClick={() => handleDelete(entry.dialogue)}
                       type="button"
                     >
-                      삭제 확인
+                      {m.settings_dialogue_delete_confirm()}
                     </button>
                   </Show>
                 </>

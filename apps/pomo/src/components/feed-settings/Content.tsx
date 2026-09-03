@@ -9,36 +9,39 @@ import {
   useOptionalPFeeds,
 } from '../../features/focus-room-feed'
 import {SUPERTONIC_VOICES} from '../../features/supertonic'
+import * as m from '@paraglide/message'
 import {PFeedDialogueList} from './DialogueList'
 import {RecommendedFeedItem} from './RecommendedItem'
 import {CLASSES, RecommendedFeed} from './shared'
 
-const VOICE_OPTIONS: ReadonlyArray<PSelectOption<FeedVoiceId>> = [
-  {label: '기본값', value: DEFAULT_FEED_VOICE_ID},
+const getVoiceOptions = (): ReadonlyArray<PSelectOption<FeedVoiceId>> => [
+  {label: m.settings_feed_default_voice(), value: DEFAULT_FEED_VOICE_ID},
   ...SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id})),
 ]
-const RECOMMENDED_PUBLIC_FEEDS = [
-  {
-    description: '매일 오늘 있었던 역사적인 순간을 읽어 줘요.',
-    id: 'pomo-today-in-history',
-    label: '오늘의 역사',
-    path: '/api/feeds/today-in-history/rss.xml',
-  },
-] as const
-const RECOMMENDED_DEV_FEEDS = [
-  {
-    description: '5분마다 현재 시각으로 새 RSS 항목을 만들어요.',
-    id: 'pomo-dev-rss',
-    label: 'Pomofi 5분 RSS',
-    path: '/__dev/feeds/rss.xml',
-  },
-  {
-    description: '5분마다 현재 시각으로 새 Atom 항목을 만들어요.',
-    id: 'pomo-dev-atom',
-    label: 'Pomofi 5분 Atom',
-    path: '/__dev/feeds/atom.xml',
-  },
-] as const
+const getRecommendedPublicFeeds = () =>
+  [
+    {
+      description: m.settings_feed_today_history_description(),
+      id: 'pomo-today-in-history',
+      label: m.settings_feed_today_history(),
+      path: '/api/feeds/today-in-history/rss.xml',
+    },
+  ] as const
+const getRecommendedDevFeeds = () =>
+  [
+    {
+      description: m.settings_feed_dev_rss_description(),
+      id: 'pomo-dev-rss',
+      label: m.settings_feed_dev_rss(),
+      path: '/__dev/feeds/rss.xml',
+    },
+    {
+      description: m.settings_feed_dev_atom_description(),
+      id: 'pomo-dev-atom',
+      label: m.settings_feed_dev_atom(),
+      path: '/__dev/feeds/atom.xml',
+    },
+  ] as const
 
 export default function PFeedSettingsContent() {
   const feeds = useFeedConnections()
@@ -50,12 +53,12 @@ export default function PFeedSettingsContent() {
     ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN
     : window.location.origin
   const recommendedFeeds: ReadonlyArray<RecommendedFeed> = [
-    ...RECOMMENDED_PUBLIC_FEEDS.map((feed) => ({
+    ...getRecommendedPublicFeeds().map((feed) => ({
       ...feed,
       url: new URL(feed.path, publicOrigin).href,
     })),
     ...(import.meta.env.DEV
-      ? RECOMMENDED_DEV_FEEDS.map((feed) => ({
+      ? getRecommendedDevFeeds().map((feed) => ({
           ...feed,
           url: new URL(feed.path, window.location.origin).href,
         }))
@@ -76,7 +79,7 @@ export default function PFeedSettingsContent() {
       <section class={CLASSES.feedSettings}>
         <form class={CLASSES.feedSettingsForm} onSubmit={handleSubmit}>
           <label class={CLASSES.feedSettingsUrlField} for="pomo-feed-url">
-            <span>피드 주소</span>
+            <span>{m.settings_feed_url()}</span>
             <input
               autocomplete="url"
               id="pomo-feed-url"
@@ -89,18 +92,18 @@ export default function PFeedSettingsContent() {
           </label>
           <button class={CLASSES.feedSettingsAdd} disabled={feeds.isLoading()} type="submit">
             <span aria-hidden="true" class="i-tabler-plus size-4" />
-            추가
+            {m.settings_feed_add()}
           </button>
         </form>
 
         <div class={CLASSES.feedSettingsListHeading}>
-          <h3 id="pomo-feed-list-title">저장된 피드</h3>
-          <span>{feeds.connections().length}개</span>
+          <h3 id="pomo-feed-list-title">{m.settings_feed_saved()}</h3>
+          <span>{m.settings_count({count: feeds.connections().length})}</span>
         </div>
 
         <Show
           when={!feeds.isLoading()}
-          fallback={<p class={CLASSES.feedSettingsStatus}>피드를 불러오는 중</p>}
+          fallback={<p class={CLASSES.feedSettingsStatus}>{m.settings_feed_loading()}</p>}
         >
           <Show when={feeds.connections().length > 0}>
             <ul aria-labelledby="pomo-feed-list-title" class={CLASSES.feedSettingsList}>
@@ -114,21 +117,21 @@ export default function PFeedSettingsContent() {
                       </span>
                     </div>
                     <PSelect
-                      accessibleLabel={`${connection.url} 피드 음성`}
+                      accessibleLabel={m.settings_feed_voice_label({url: connection.url})}
                       hideLabel
-                      label="음성"
+                      label={m.settings_feed_voice()}
                       onChange={(voiceId) => feeds.onVoiceChange(connection.id, voiceId)}
-                      options={VOICE_OPTIONS}
+                      options={getVoiceOptions()}
                       value={connection.voiceId}
                     />
                     <button
-                      aria-label={`${connection.url} 피드 삭제`}
+                      aria-label={m.settings_feed_delete_label({url: connection.url})}
                       class={CLASSES.feedSettingsDelete}
                       onClick={() => feeds.onDelete(connection.id)}
                       type="button"
                     >
                       <span aria-hidden="true" class="i-tabler-trash size-4" />
-                      삭제
+                      {m.settings_feed_delete()}
                     </button>
                   </li>
                 )}
@@ -138,8 +141,8 @@ export default function PFeedSettingsContent() {
 
           <Show when={availableRecommendations().length > 0}>
             <div class={CLASSES.feedSettingsRecommendationHeading}>
-              <h4 id="pomo-feed-recommendations-title">추천 피드</h4>
-              <span>{availableRecommendations().length}개</span>
+              <h4 id="pomo-feed-recommendations-title">{m.settings_feed_recommended()}</h4>
+              <span>{m.settings_count({count: availableRecommendations().length})}</span>
             </div>
             <ul aria-labelledby="pomo-feed-recommendations-title" class={CLASSES.feedSettingsList}>
               <For each={availableRecommendations()}>

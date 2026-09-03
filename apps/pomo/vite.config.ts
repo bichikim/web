@@ -12,6 +12,7 @@ import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
 import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
 import {resolveContentSecurityPolicyTemplates} from './vite/content-security-policy-template'
 import {createInlineContentHashes} from './vite/prerender-security-headers'
+import {getOptimizeDepsInclude} from './vite/optimize-deps'
 import {resolvePublicOrigin} from './vite/public-origin'
 import {createRemoteServerFunctionsPlugin} from './vite/remote-server-functions'
 
@@ -99,19 +100,6 @@ const SCRIBBLE_ICON_SET_PATH = fileURLToPath(
   new URL('./scripts/unocss/scribble.json', import.meta.url),
 )
 // 첫 홈 로드나 늦은 dynamic import에서 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
-const OPTIMIZE_DEPS_INCLUDE = [
-  '@apps-in-toss/web-framework',
-  '@huggingface/transformers',
-  '@inlang/paraglide-js/urlpattern-polyfill',
-  '@tauri-apps/api/event',
-  '@tauri-apps/api/window',
-  'class-variance-authority',
-  'dexie',
-  'ofetch',
-  'pixi.js',
-  'wlipsync',
-  'zod',
-] as const
 const DEV_CLIENT_WARMUP_FILES = [
   './src/components/PHomePage.tsx',
   './src/components/PStudio.tsx',
@@ -300,7 +288,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       ...(IS_STATIC_BUILD && command === 'build' ? {preset: 'static'} : {}),
     },
     optimizeDeps: {
-      include: [...OPTIMIZE_DEPS_INCLUDE],
+      include: getOptimizeDepsInclude(),
     },
     plugins: [
       ...(USES_APPS_IN_TOSS_DEVTOOLS

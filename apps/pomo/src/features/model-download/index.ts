@@ -1,4 +1,12 @@
 export {createModelDownloadController} from './controller'
+export {createModelAssetManager} from './asset-manager'
+export type {
+  CreateModelAssetManagerOptions,
+  ModelAssetManager,
+  RunAfterModelOptions,
+  RunAfterModelResult,
+  RunAfterVoiceModelOptions,
+} from './asset-manager'
 export type {
   ErrorModelDownloadState,
   LoadingModelDownloadState,
@@ -10,5 +18,9 @@ export type {
   TextModelDownloadTarget,
   VoiceModelDownloadTarget,
 } from './controller'
-export {PModelDownloadProvider, useModelDownload} from './PModelDownloadProvider'
+export {
+  PModelDownloadProvider,
+  useModelAssetManager,
+  useModelDownload,
+} from './PModelDownloadProvider'
 export type {PModelDownloadProviderProps} from './PModelDownloadProvider'
