@@ -57,6 +57,10 @@ it('should show the signed-in email and account management entry', async () => {
   expect(screen.getByRole('status').textContent).toContain('계정 확인 중…')
   await waitFor(() => expect(screen.queryByText('pomo@example.com')).not.toBeNull())
   expect(screen.queryByText('이메일 링크')).not.toBeNull()
+  expect(screen.getByText('pomo@example.com').closest('div.rounded-panel')).toHaveClass(
+    'border-content-border',
+    'bg-content-surface',
+  )
   const accountLink = screen.getByRole('link', {name: '계정 관리'})
   expect(accountLink.getAttribute('href')).toBe('/account')
   expect(accountLink.className).toContain('rounded-control')
