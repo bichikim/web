@@ -40,6 +40,9 @@ vi.mock('../components/PRecoveryBoundary', () => ({
 vi.mock('../features/application-recovery', () => ({useApplicationRecovery: vi.fn()}))
 vi.mock('../features/apps-in-toss-devtools', () => ({useAppsInTossDevtools: vi.fn()}))
 vi.mock('../features/apps-in-toss-safe-area', () => ({useAppsInTossSafeArea: vi.fn()}))
+vi.mock('../features/auth', () => ({
+  AuthProvider: (props: ChildrenProps) => props.children,
+}))
 vi.mock('../features/model-download/text-client', () => ({
   createTextModelDownloadClient: vi.fn(),
 }))

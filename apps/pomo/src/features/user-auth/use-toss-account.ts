@@ -1,16 +1,15 @@
 import {useAction, useNavigate, useSubmission} from '@solidjs/router'
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
-import {createAuthenticationMachine} from '../auth/machine'
+import {useAuth} from '../auth/AuthProvider'
 import {
   type AccountLinkEmailActionResult,
   createTossLoginSessionAction,
   requestAccountLinkEmailAction,
   revokeTossLoginSessionAction,
 } from './actions'
-import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
 
 interface AccountLinkFeedback {
   readonly errorMessage: string | null
@@ -49,6 +48,7 @@ const getAccountLinkFeedback = (result: AccountLinkEmailActionResult): AccountLi
 export interface TossAccountController {
   readonly email: () => string
   readonly errorMessage: () => string | null
+  readonly isAuthenticated: () => boolean
   readonly isLoading: () => boolean
   readonly isSubmitting: () => boolean
   readonly onEmailChange: (email: string) => void
@@ -56,11 +56,10 @@ export interface TossAccountController {
   readonly onLogin: () => Promise<void>
   readonly onLogout: () => Promise<void>
   readonly successMessage: () => string | null
-  readonly token: () => string | null
 }
 
 export const useTossAccount = (): TossAccountController => {
-  const authentication = createAuthenticationMachine()
+  const authentication = useAuth()
   const navigate = useNavigate()
   const login = useAction(createTossLoginSessionAction)
   const loginSubmission = useSubmission(createTossLoginSessionAction)
@@ -68,7 +67,6 @@ export const useTossAccount = (): TossAccountController => {
   const logoutSubmission = useSubmission(revokeTossLoginSessionAction)
   const requestEmailLink = useAction(requestAccountLinkEmailAction)
   const emailLinkSubmission = useSubmission(requestAccountLinkEmailAction)
-  const [token, setToken] = createSignal<string | null>(null)
   const [email, setEmail] = createSignal('')
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [successMessage, setSuccessMessage] = createSignal<string | null>(null)
@@ -78,32 +76,10 @@ export const useTossAccount = (): TossAccountController => {
     isActive = false
   })
 
-  onMount(() => {
-    const restoreSession = async () => {
-      const storedToken = await readStoredAppSession()
-
-      if (storedToken === null) {
-        authentication.send({type: 'resolve-anonymous'})
-        return
-      }
-
-      if (await validateAppSession(storedToken)) {
-        setToken(storedToken)
-        authentication.send({
-          session: {kind: 'authenticated', provider: 'toss'},
-          type: 'resolve-authenticated',
-        })
-        return
-      }
-
-      await clearStoredAppSession()
-      authentication.send({type: 'resolve-anonymous'})
-    }
-
-    restoreSession().catch(() => {
+  createEffect(() => {
+    if (authentication.state().kind === 'unavailable') {
       setErrorMessage(m.account_toss_session_failed())
-      authentication.send({type: 'resolve-unavailable'})
-    })
+    }
   })
 
   const onLogin = async () => {
@@ -112,23 +88,16 @@ export const useTossAccount = (): TossAccountController => {
     const result = await login()
     if (result.status === 'unavailable') {
       setErrorMessage(m.account_toss_login_failed())
-      authentication.send({type: 'resolve-unavailable'})
       return
     }
 
     if (isActive) {
-      authentication.send({
-        session: {kind: 'authenticated', provider: 'toss'},
-        type: 'resolve-authenticated',
-      })
       navigate('/', {replace: true})
     }
   }
 
   const onLogout = async () => {
-    const currentToken = token()
-
-    if (currentToken === null) {
+    if (!(authentication.session()?.provider === 'toss')) {
       return
     }
 
@@ -136,9 +105,6 @@ export const useTossAccount = (): TossAccountController => {
     setSuccessMessage(null)
     const result = await logout()
     if (result.status !== 'unavailable') {
-      setToken(null)
-      authentication.send({type: 'sign-out'})
-
       if (result.status === 'signed-out') {
         setSuccessMessage(m.account_toss_logout_success())
       } else {
@@ -151,9 +117,7 @@ export const useTossAccount = (): TossAccountController => {
   }
 
   const onEmailLink = async (values: FormData) => {
-    const currentToken = token()
-
-    if (currentToken === null) {
+    if (!(authentication.session()?.provider === 'toss')) {
       return
     }
 
@@ -169,6 +133,7 @@ export const useTossAccount = (): TossAccountController => {
   return {
     email,
     errorMessage,
+    isAuthenticated: () => authentication.session()?.provider === 'toss',
     isLoading: () => authentication.state().kind === 'checking',
     isSubmitting: () =>
       loginSubmission.pending === true ||
@@ -179,6 +144,5 @@ export const useTossAccount = (): TossAccountController => {
     onLogin,
     onLogout,
     successMessage,
-    token,
   }
 }
