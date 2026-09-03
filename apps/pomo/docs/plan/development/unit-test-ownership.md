@@ -285,8 +285,8 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 - [ ] `apps/pomo/src/components/layer-review/Viewport.tsx`
 - [ ] `apps/pomo/src/components/layer-review/VisemePicker.tsx`
 - [ ] `apps/pomo/src/components/layer-review/shared.ts`
-- [ ] `apps/pomo/src/components/learning/TabList.tsx`
-- [ ] `apps/pomo/src/components/learning/icon.ts`
+- [ ] `apps/pomo/src/components/memory-assist/TabList.tsx`
+- [ ] `apps/pomo/src/components/memory-assist/icon.ts`
 - [ ] `apps/pomo/src/components/music-player/Panel.tsx`
 - [ ] `apps/pomo/src/components/music-player/model.ts`
 - [ ] `apps/pomo/src/components/music-player/use-music-player-controller.ts`
@@ -299,7 +299,7 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 - [ ] `apps/pomo/src/components/music-player-view/shared.ts`
 - [ ] `apps/pomo/src/components/not-found/Content.tsx`
 - [ ] `apps/pomo/src/components/p-select/shared.ts`
-- [ ] `apps/pomo/src/components/p-studio/LearningPanel.tsx`
+- [ ] `apps/pomo/src/components/p-studio/MemoryAssistPanel.tsx`
 - [ ] `apps/pomo/src/components/p-studio/Scene.tsx`
 - [ ] `apps/pomo/src/components/p-studio/SettingsPanel.tsx`
 - [ ] `apps/pomo/src/components/p-studio/shared.ts`

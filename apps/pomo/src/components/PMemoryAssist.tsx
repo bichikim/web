@@ -7,17 +7,17 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 import {getPomoIconClass} from './icon-style'
 import {PIconButton} from './PIconButton'
 import {PModal} from './PModal'
-import {LANGUAGE_LEARNING_ICON} from './learning/icon'
-import {PLearningTabList} from './learning/TabList'
+import {MEMORY_ASSIST_ICON} from './memory-assist/icon'
+import {PMemoryAssistTabList} from './memory-assist/TabList'
 import {LanguageLearningLibrary} from './language-learning/Library'
 import {LanguageLearningWords} from './language-learning/Words'
 import {PScribbleCircleControl} from './scribble/CircleControl'
 
-export interface PLearningProps {
+export interface PMemoryAssistProps {
   readonly sceneStyle?: PSceneStyle
 }
 
-export const PLearning = (props: PLearningProps) => {
+export const PMemoryAssist = (props: PMemoryAssistProps) => {
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('sentences')
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
@@ -31,21 +31,21 @@ export const PLearning = (props: PLearningProps) => {
     <>
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
         <PIconButton
-          accessibleLabel={m.learning_open()}
-          feedback={m.learning_feedback()}
-          icon={getPomoIconClass(LANGUAGE_LEARNING_ICON, props.sceneStyle)}
+          accessibleLabel={m.memory_assist_open()}
+          feedback={m.memory_assist_feedback()}
+          icon={getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle)}
           onPress={handleOpen}
         />
       </PScribbleCircleControl>
       <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>
         <PModal
           isOpen={isOpen()}
-          navigation={<PLearningTabList />}
+          navigation={<PMemoryAssistTabList />}
           onCloseAutoFocus={handleCloseAutoFocus}
           onOpenChange={setIsOpen}
           placement="top"
           size="wide"
-          title={m.learning_title()}
+          title={m.memory_assist_title()}
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="sentences">
@@ -60,4 +60,4 @@ export const PLearning = (props: PLearningProps) => {
   )
 }
 
-export default PLearning
+export default PMemoryAssist
