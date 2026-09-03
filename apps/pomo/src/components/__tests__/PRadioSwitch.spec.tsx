@@ -88,6 +88,9 @@ describe('PRadioSwitch', () => {
     expect(screen.getByText('시간')).toBeInTheDocument()
     expect(screen.getByTestId('radio-group')).toHaveClass('extra-layout')
     expect(screen.getAllByRole('radio')).toHaveLength(3)
+    expect(screen.getByRole('radio', {name: '낮'}).parentElement?.parentElement).toHaveClass(
+      'bg-surface-overlay',
+    )
     expect(screen.getByText('낮').previousElementSibling).toHaveClass('i-pomo-scribble:sun')
     expect(screen.getAllByText('낮').at(-1)?.nextElementSibling?.firstElementChild).toHaveClass(
       'i-pomo-scribble:check',

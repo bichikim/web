@@ -27,8 +27,12 @@ const colors = {
   danger: 'rgb(var(--pomo-color-danger-channels) / var(--pomo-color-danger-opacity))',
   foreground: 'rgb(var(--pomo-color-foreground-channels) / var(--pomo-color-foreground-opacity))',
   highlight: 'rgb(var(--pomo-color-highlight-channels) / var(--pomo-color-highlight-opacity))',
+  'modal-surface':
+    'rgb(var(--pomo-color-modal-surface-channels) / var(--pomo-color-modal-surface-opacity))',
   'muted-foreground':
     'rgb(var(--pomo-color-muted-foreground-channels) / var(--pomo-color-muted-foreground-opacity))',
+  'player-surface':
+    'rgb(var(--pomo-color-player-surface-channels) / var(--pomo-color-player-surface-opacity))',
   primary: 'rgb(var(--pomo-color-primary-channels) / var(--pomo-color-primary-opacity))',
   'primary-soft':
     'rgb(var(--pomo-color-primary-soft-channels) / var(--pomo-color-primary-soft-opacity))',
@@ -48,6 +52,10 @@ const colors = {
     'rgb(var(--pomo-color-surface-overlay-channels) / var(--pomo-color-surface-overlay-opacity))',
   'surface-strong':
     'rgb(var(--pomo-color-surface-strong-channels) / var(--pomo-color-surface-strong-opacity))',
+  'switch-thumb':
+    'rgb(var(--pomo-color-switch-thumb-channels) / var(--pomo-color-switch-thumb-opacity))',
+  'switch-track':
+    'rgb(var(--pomo-color-switch-track-channels) / var(--pomo-color-switch-track-opacity))',
 } as const
 
 const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
@@ -181,8 +189,13 @@ const config = mergeConfigs([
   --pomo-color-foreground-opacity: 100%;
   --pomo-color-highlight-channels: 217 185 138;
   --pomo-color-highlight-opacity: 100%;
+  --pomo-color-modal-surface-channels: 10 10 10;
+  --pomo-color-modal-surface-opacity: 68%;
   --pomo-color-muted-foreground-channels: 201 192 181;
   --pomo-color-muted-foreground-opacity: 100%;
+  --pomo-color-player-progress: rgb(0 0 0 / 25%);
+  --pomo-color-player-surface-channels: 10 10 10;
+  --pomo-color-player-surface-opacity: 68%;
   --pomo-color-primary-channels: 216 104 69;
   --pomo-color-primary-opacity: 100%;
   --pomo-color-primary-soft-channels: 216 104 69;
@@ -206,6 +219,15 @@ const config = mergeConfigs([
   --pomo-color-surface-overlay-opacity: 31.25%;
   --pomo-color-surface-strong-channels: 10 10 10;
   --pomo-color-surface-strong-opacity: 68%;
+  --pomo-color-switch-thumb-channels: 255 250 241;
+  --pomo-color-switch-thumb-opacity: 100%;
+  --pomo-color-switch-track-channels: 255 250 241;
+  --pomo-color-switch-track-opacity: 12%;
+  --pomo-color-modal-scrollbar: rgb(255 250 241 / 24%);
+  --pomo-color-player-scrollbar: rgb(255 250 241 / 18%);
+  --pomo-player-expanded-background: linear-gradient(180deg, rgb(0 0 0 / 2%) 0%, rgb(0 0 0 / 10%) 34%, rgb(0 0 0 / 18%) 100%);
+  --pomo-shadow-player: 0 22px 70px rgb(5 4 3 / 46%), inset 0 1px 0 rgb(255 255 255 / 10%);
+  --pomo-shadow-switch-thumb: 0 2px 6px rgb(8 6 4 / 35%);
   --pomo-shadow-panel: 0 18px 54px rgb(8 6 4 / 42%);
   color-scheme: dark;
 }
@@ -225,8 +247,13 @@ const config = mergeConfigs([
   --pomo-color-foreground-opacity: 100%;
   --pomo-color-highlight-channels: 138 90 50;
   --pomo-color-highlight-opacity: 100%;
+  --pomo-color-modal-surface-channels: 255 255 255;
+  --pomo-color-modal-surface-opacity: 84%;
   --pomo-color-muted-foreground-channels: 78 89 104;
   --pomo-color-muted-foreground-opacity: 100%;
+  --pomo-color-player-progress: rgb(255 255 255 / 36%);
+  --pomo-color-player-surface-channels: 255 255 255;
+  --pomo-color-player-surface-opacity: 76%;
   --pomo-color-primary-channels: 195 79 47;
   --pomo-color-primary-opacity: 100%;
   --pomo-color-primary-soft-channels: 195 79 47;
@@ -250,6 +277,15 @@ const config = mergeConfigs([
   --pomo-color-surface-overlay-opacity: 10%;
   --pomo-color-surface-strong-channels: 255 255 255;
   --pomo-color-surface-strong-opacity: 100%;
+  --pomo-color-switch-thumb-channels: 255 255 255;
+  --pomo-color-switch-thumb-opacity: 100%;
+  --pomo-color-switch-track-channels: 25 31 40;
+  --pomo-color-switch-track-opacity: 12%;
+  --pomo-color-modal-scrollbar: rgb(25 31 40 / 24%);
+  --pomo-color-player-scrollbar: rgb(25 31 40 / 18%);
+  --pomo-player-expanded-background: linear-gradient(180deg, rgb(255 255 255 / 2%) 0%, rgb(25 31 40 / 2%) 34%, rgb(25 31 40 / 5%) 100%);
+  --pomo-shadow-player: 0 18px 54px rgb(25 31 40 / 18%), inset 0 1px 0 rgb(255 255 255 / 55%);
+  --pomo-shadow-switch-thumb: 0 2px 6px rgb(25 31 40 / 24%);
   --pomo-shadow-panel: 0 18px 54px rgb(25 31 40 / 16%);
   color-scheme: light;
 }
@@ -386,6 +422,8 @@ body {
       boxShadow: {
         focus: `0 0 0 2px ${colors.highlight}`,
         panel: 'var(--pomo-shadow-panel)',
+        player: 'var(--pomo-shadow-player)',
+        'switch-thumb': 'var(--pomo-shadow-switch-thumb)',
         'tab-active': `inset 0 -0.1875rem 0 ${colors.highlight}`,
         'track-active': `inset 2px 0 0 ${colors.primary}`,
       },

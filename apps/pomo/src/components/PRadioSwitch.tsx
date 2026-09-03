@@ -81,7 +81,7 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
       <RadioGroup.Label class="mb-2 block text-xs font-700 leading-4 text-muted-foreground">
         {props.label}
       </RadioGroup.Label>
-      <div class="flex gap-1 rounded-3.5 border border-solid border-border bg-[rgb(4_4_3_/_28%)] p-1">
+      <div class="flex gap-1 rounded-3.5 border border-solid border-border bg-surface-overlay p-1">
         <For each={props.options}>
           {(option) => (
             <RadioGroup.Item

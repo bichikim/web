@@ -154,6 +154,7 @@ describe('MusicPlayerView', () => {
     expect(controller?.classList.contains('overflow-visible')).toBe(false)
     expect(controller?.classList.contains('pb-0.5')).toBe(true)
     expect(playerBase?.classList.contains('rounded-panel')).toBe(true)
+    expect(playerBase?.classList.contains('bg-player-surface')).toBe(true)
     expect(visualizerFrame?.classList.contains('overflow-hidden')).toBe(true)
     expect(visualizerFrame?.classList.contains('rounded-panel')).toBe(true)
     expect(expandedFrame?.classList.contains('grid-rows-[0fr]')).toBe(true)
@@ -185,9 +186,11 @@ describe('MusicPlayerView', () => {
     expect(collapsedRange.hasAttribute('disabled')).toBe(true)
     expect(collapsedRange.getAttribute('aria-hidden')).toBe('true')
     expect(collapsedRange.classList.contains('[--media-range-track-height:100%]')).toBe(true)
-    expect(collapsedRange.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]')).toBe(
-      true,
-    )
+    expect(
+      collapsedRange.classList.contains(
+        '[--media-range-bar-color:var(--pomo-color-player-progress)]',
+      ),
+    ).toBe(true)
     expect(
       collapsedRange.classList.contains('[--media-time-range-buffered-color:transparent]'),
     ).toBe(true)
