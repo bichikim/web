@@ -1,4 +1,4 @@
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {batch, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {
   type DisplayThemeController,
@@ -22,12 +22,16 @@ const applyDocumentTheme = (preference: DisplayThemePreference, prefersDark: boo
 export const useDisplayThemeController = (): DisplayThemeController => {
   const [preference, setPreference] = createSignal<DisplayThemePreference>('system')
   const [prefersDark, setPrefersDark] = createSignal(false)
+  const [isPreferenceReady, setIsPreferenceReady] = createSignal(false)
   let preferenceRevision = 0
   let isDisposed = false
 
   const onPreferenceChange = (nextPreference: DisplayThemePreference) => {
     preferenceRevision += 1
-    setPreference(nextPreference)
+    batch(() => {
+      setPreference(nextPreference)
+      setIsPreferenceReady(true)
+    })
     writeDisplayThemePreference(nextPreference).catch(() => {
       // The current session keeps the selected theme when persistence is unavailable.
     })
@@ -43,12 +47,19 @@ export const useDisplayThemeController = (): DisplayThemeController => {
     }
     mediaQuery.addEventListener('change', handleSystemThemeChange)
 
-    createEffect(() => applyDocumentTheme(preference(), prefersDark()))
+    createEffect(() => {
+      if (isPreferenceReady()) {
+        applyDocumentTheme(preference(), prefersDark())
+      }
+    })
 
     readDisplayThemePreference()
       .then((storedPreference) => {
         if (!isDisposed && preferenceRevision === initialPreferenceRevision) {
-          setPreference(storedPreference)
+          batch(() => {
+            setPreference(storedPreference)
+            setIsPreferenceReady(true)
+          })
         }
       })
       .catch(() => {

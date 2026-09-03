@@ -11,6 +11,14 @@ const getRuleBody = (css: string, selector: string) => {
   return match?.[1] ?? ''
 }
 
+const getColorSchemeBody = (css: string, scheme: 'dark' | 'light') => {
+  const match = new RegExp(`:root\\[data-color-scheme='${scheme}'\\] \\{([^}]*)\\}`).exec(css)
+
+  expect(match).not.toBeNull()
+
+  return match?.[1] ?? ''
+}
+
 it('should generate initial scene fallback shortcuts without extracted source', async () => {
   const uno = await createGenerator(unoConfig)
   const {css, matched} = await uno.generate('', {safelist: true})
@@ -89,4 +97,26 @@ it('should generate theme utilities from runtime color variables', async () => {
     '--un-border-opacity:var(--pomo-color-border-opacity);border-color:rgb(var(--pomo-color-border-channels) / var(--un-border-opacity));',
   )
   expect(css).toContain('border-color:rgb(var(--pomo-color-danger-channels) / 0.45);')
+})
+
+it('should keep light glass surfaces as translucent as their dark equivalents', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css} = await uno.generate(
+    'bg-surface bg-surface-interactive bg-surface-strong bg-modal-surface bg-player-surface',
+  )
+  const darkTheme = getColorSchemeBody(css, 'dark')
+  const lightTheme = getColorSchemeBody(css, 'light')
+
+  for (const variable of [
+    '--pomo-color-modal-surface-opacity',
+    '--pomo-color-player-surface-opacity',
+    '--pomo-color-surface-opacity',
+    '--pomo-color-surface-interactive-opacity',
+    '--pomo-color-surface-strong-opacity',
+  ]) {
+    const darkValue = new RegExp(`${variable}: ([^;]+);`).exec(darkTheme)?.[1]
+    const lightValue = new RegExp(`${variable}: ([^;]+);`).exec(lightTheme)?.[1]
+
+    expect(lightValue).toBe(darkValue)
+  }
 })

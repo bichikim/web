@@ -106,6 +106,21 @@ it('should follow later operating-system changes only in system mode', async () 
   expect(document.documentElement.dataset.colorScheme).toBe('light')
 })
 
+it('should preserve the bootstrapped color scheme until the saved preference is restored', () => {
+  preferenceMocks.read.mockReturnValue(
+    new Promise(() => {
+      // Keep restoration pending while the bootstrapped document state is asserted.
+    }),
+  )
+
+  render(() => <Harness onController={() => undefined} onPreferenceChange={() => undefined} />)
+
+  expect(document.documentElement.dataset.colorScheme).toBe('dark')
+  expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe(
+    '#17130f',
+  )
+})
+
 it('should not overwrite a newer session choice with a delayed stored preference', async () => {
   let completeRead: (preference: 'dark') => void = () => undefined
   preferenceMocks.read.mockReturnValue(
