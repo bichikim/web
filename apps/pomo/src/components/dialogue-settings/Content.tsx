@@ -51,11 +51,11 @@ const CLASSES = {
   dialogueSettingsList: cx(
     'pomo-dialogue-settings__list grid gap-3 m-0 p-0 list-none [&_>_li]:grid [&_>_li]:gap-3',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
-    '[&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
-    '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
+    '[&_>_li]:border [&_>_li]:border-solid [&_>_li]:border-content-border',
+    '[&_>_li]:rounded-panel [&_>_li]:bg-content-surface',
     '[&_>_li]:p-4 [&_>_li[data-connected]]:border-[rgb(214_181_133_/_32%)]',
     '[&_>_li[data-connected]]:bg-[rgb(214_181_133_/_5%)]',
-    '[&_>_li[data-disabled]]:bg-[rgb(255_255_255_/_1.5%)]',
+    '[&_>_li[data-disabled]]:bg-content-surface-disabled',
   ),
   dialogueSettingsLoading: cx(
     'pomo-dialogue-settings__loading m-0 rounded-panel',

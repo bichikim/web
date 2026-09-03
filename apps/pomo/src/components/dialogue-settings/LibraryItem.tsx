@@ -48,8 +48,8 @@ const CLASSES = {
     'motion-reduce:[&_button]:transition-[none] motion-reduce:[&_a]:transition-[none]',
   ),
   item: cx(
-    'grid gap-3 rounded-panel border border-solid border-[rgb(255_255_255_/_6%)]',
-    'bg-[rgb(255_255_255_/_3%)] px-4 py-3',
+    'grid gap-3 rounded-panel border border-solid border-content-border',
+    'bg-content-surface px-4 py-3',
   ),
   layout: cx(
     'pomo-dialogue-settings__selected-dialogue--library flex flex-col items-stretch gap-3',

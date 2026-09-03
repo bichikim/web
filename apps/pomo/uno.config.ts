@@ -24,6 +24,12 @@ const colors = {
   border: 'rgb(var(--pomo-color-border-channels) / var(--pomo-color-border-opacity))',
   'border-hover':
     'rgb(var(--pomo-color-border-hover-channels) / var(--pomo-color-border-hover-opacity))',
+  'content-border':
+    'rgb(var(--pomo-color-content-border-channels) / var(--pomo-color-content-border-opacity))',
+  'content-surface':
+    'rgb(var(--pomo-color-content-surface-channels) / var(--pomo-color-content-surface-opacity))',
+  'content-surface-disabled':
+    'rgb(var(--pomo-color-content-surface-disabled-channels) / var(--pomo-color-content-surface-disabled-opacity))',
   danger: 'rgb(var(--pomo-color-danger-channels) / var(--pomo-color-danger-opacity))',
   foreground: 'rgb(var(--pomo-color-foreground-channels) / var(--pomo-color-foreground-opacity))',
   highlight: 'rgb(var(--pomo-color-highlight-channels) / var(--pomo-color-highlight-opacity))',
@@ -183,6 +189,12 @@ const config = mergeConfigs([
   --pomo-color-border-opacity: 14%;
   --pomo-color-border-hover-channels: 255 250 241;
   --pomo-color-border-hover-opacity: 28%;
+  --pomo-color-content-border-channels: 255 255 255;
+  --pomo-color-content-border-opacity: 6%;
+  --pomo-color-content-surface-channels: 255 255 255;
+  --pomo-color-content-surface-opacity: 3%;
+  --pomo-color-content-surface-disabled-channels: 255 255 255;
+  --pomo-color-content-surface-disabled-opacity: 1.5%;
   --pomo-color-danger-channels: 239 138 116;
   --pomo-color-danger-opacity: 100%;
   --pomo-color-foreground-channels: 255 250 241;
@@ -241,6 +253,12 @@ const config = mergeConfigs([
   --pomo-color-border-opacity: 16%;
   --pomo-color-border-hover-channels: 2 32 71;
   --pomo-color-border-hover-opacity: 28%;
+  --pomo-color-content-border-channels: 2 32 71;
+  --pomo-color-content-border-opacity: 12%;
+  --pomo-color-content-surface-channels: 25 31 40;
+  --pomo-color-content-surface-opacity: 6%;
+  --pomo-color-content-surface-disabled-channels: 25 31 40;
+  --pomo-color-content-surface-disabled-opacity: 3%;
   --pomo-color-danger-channels: 180 35 24;
   --pomo-color-danger-opacity: 100%;
   --pomo-color-foreground-channels: 25 31 40;

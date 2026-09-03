@@ -150,6 +150,10 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(listenButton.textContent).toBe('듣기')
   expect(createLink.getAttribute('href')).toBe('/dialogue')
   expect(createLink.closest('.pomo-dialogue-settings__library-heading')).not.toBeNull()
+  const inactiveEvent = screen.getByRole('heading', {name: '포모도르 집중 시작'}).closest('li')
+  const eventList = inactiveEvent?.parentElement
+  expect(inactiveEvent).not.toHaveAttribute('data-connected')
+  expect(eventList).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
   expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
     '/dialogue?dialogueId=saved-dialogue',
   )
