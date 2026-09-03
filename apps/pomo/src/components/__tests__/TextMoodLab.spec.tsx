@@ -125,7 +125,12 @@ describe('TextMoodLab', () => {
         'aria-valuenow',
         '42',
       )
-      expect(screen.getByRole('progressbar').firstElementChild).toHaveStyle({width: '42%'})
+      const progressFill = screen.getByRole('progressbar').firstElementChild
+      expect((progressFill as HTMLElement).style.getPropertyValue('--pomo-progress-width')).toBe(
+        '42%',
+      )
+      expect((progressFill as HTMLElement).style.width).toBe('')
+      expect(progressFill).toHaveClass('[width:var(--pomo-progress-width)]')
       expect(screen.getByText('준비 중')).toBeInTheDocument()
     })
 

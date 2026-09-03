@@ -97,6 +97,7 @@ export const VolumeControl = (props: VolumeControlProps) => {
           'rounded-full text-muted-foreground transition',
           'hover:bg-secondary-soft hover:text-foreground',
           'player-narrow:grid',
+          '[anchor-name:var(--pomo-volume-popover-anchor)]',
         )}
         onClick={(event) => {
           event.preventDefault()
@@ -104,7 +105,7 @@ export const VolumeControl = (props: VolumeControlProps) => {
         }}
         popovertarget={popoverId}
         ref={setTriggerElement}
-        style={{'anchor-name': popoverAnchor}}
+        style={{'--pomo-volume-popover-anchor': popoverAnchor}}
         type="button"
       >
         <PlayerIcon icon="i-tabler-volume-2" sceneStyle={props.sceneStyle} size="size-6" />
@@ -117,15 +118,13 @@ export const VolumeControl = (props: VolumeControlProps) => {
           'border border-solid border-border rounded-control bg-surface-interactive p-2',
           'text-foreground shadow-panel',
           '[position-area:bottom]',
+          '[position-anchor:var(--pomo-volume-popover-anchor)]',
         )}
         id={popoverId}
         popover="auto"
         ref={setPopoverElement}
         role="dialog"
-        style={{
-          // oxlint-disable-next-line solid/style-prop -- CSS Anchor Positioning is supported by the target browser.
-          'position-anchor': popoverAnchor,
-        }}
+        style={{'--pomo-volume-popover-anchor': popoverAnchor}}
       >
         <media-volume-range
           aria-label={m.player_volume()}

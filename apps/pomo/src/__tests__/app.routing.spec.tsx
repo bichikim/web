@@ -16,6 +16,7 @@ import {createTextModelDownloadClient} from '../features/model-download/text-cli
 import {useApplicationRecovery} from '../features/application-recovery'
 
 const componentMocks = vi.hoisted(() => ({
+  displayThemeProvider: vi.fn(),
   fileRoutes: vi.fn(),
   focusRoomLayout: vi.fn(),
   metadata: vi.fn(),
@@ -40,6 +41,9 @@ vi.mock('../components/PRecoveryBoundary', () => ({
 vi.mock('../features/application-recovery', () => ({useApplicationRecovery: vi.fn()}))
 vi.mock('../features/apps-in-toss-devtools', () => ({useAppsInTossDevtools: vi.fn()}))
 vi.mock('../features/apps-in-toss-safe-area', () => ({useAppsInTossSafeArea: vi.fn()}))
+vi.mock('../features/display-theme', () => ({
+  DisplayThemeProvider: componentMocks.displayThemeProvider,
+}))
 vi.mock('../features/auth', () => ({
   AuthProvider: (props: ChildrenProps) => props.children,
 }))
@@ -101,6 +105,7 @@ beforeEach(() => {
   )
   vi.mocked(useNavigate).mockReturnValue((path) => setPathname(path.toString()))
   componentMocks.metaProvider.mockImplementation((props: ChildrenProps) => props.children)
+  componentMocks.displayThemeProvider.mockImplementation((props: ChildrenProps) => props.children)
   componentMocks.recoveryBoundary.mockImplementation((props: PRecoveryBoundaryProps) => (
     <>{props.children}</>
   ))

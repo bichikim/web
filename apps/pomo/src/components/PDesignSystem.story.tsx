@@ -30,13 +30,18 @@ export const Foundation: Story = {
     children: <span />,
   },
   render: () => (
-    <main
-      class="min-h-screen bg-cover bg-center p-6 xs:p-10"
-      style={{
-        'background-image': `linear-gradient(rgb(12 9 7 / 38%), rgb(12 9 7 / 68%)), url(${dayReadingImage})`,
-      }}
-    >
-      <PPanel class="mx-auto max-w-4xl rounded-panel" padding="spacious">
+    <main class="relative min-h-screen overflow-hidden p-6 xs:p-10">
+      <img
+        alt=""
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 size-full object-cover object-center"
+        src={dayReadingImage}
+      />
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(12_9_7_/_38%),rgb(12_9_7_/_68%))]"
+      />
+      <PPanel class="relative mx-auto max-w-4xl rounded-panel" padding="spacious">
         <div class="grid gap-8">
           <header class="max-w-2xl">
             <p class="m-0 text-xs font-700 tracking-[0.18em] text-primary uppercase">

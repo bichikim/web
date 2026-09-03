@@ -3,15 +3,15 @@
 ## Interaction
 
 - **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
-- **Intent analysis (mandatory)**: Before interpreting, use grammatical cues—particles, adverbs, comparisons—presuppositions, and dialogue context to reconstruct all contrasted or additive sides and the user's baseline: actual state, experience or memory, or prior dialogue. Preserve named entities and categories. If a reading leaves a cue unexplained, substitutes a related concept, or makes the user seem irrational, seek the coherent ordinary pragmatic reading before correcting them.
-  - “Starting with N, does X also move to Y?” presupposes that X was previously outside Y or handled differently in the user's experience; verify the actual state without replacing X. In the SolidStart example, retain server routes and their prior separate location—not API routes already in `src/routes`.
 - **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation.
 - **Existing code references**: When discussing existing code, always include its file path.
-- **Documentation**: When asked to add or write docs, keep it brief and concise—avoid verbosity and repeating the same points—without omitting essential meaning.
 
-## Code quality
+## Styling ownership
 
-**Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
+- CSS and UnoCSS own all visual style values.
+- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties; CSS and UnoCSS must define how those values affect visual styling.
+- JavaScript and TypeScript must not otherwise create style values or set them directly on the DOM.
+- If preserving the requested behavior requires other style handling in JavaScript or TypeScript, first present the concrete reason and alternatives and obtain explicit user approval.
 
 ## Scripts
 
@@ -28,7 +28,7 @@
 
 - When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
-- Do not treat prevalence as evidence of quality; make decisions at the standard of top 5% expert judgment.
+- Do not treat prevalence as evidence of quality.
 
 ## Evidence
 
@@ -58,10 +58,9 @@
 - Explicitly state the future need being covered and why the added effort is small.
 - Do not use future-proofing to justify speculative abstractions with uncertain value.
 
-## Package exports
+## Terminology
 
 - Never call code, APIs, exports, types, or control flow "safe" except when the claim is about security. There is nothing else in code to label safe.
-- An `index.ts` re-exports every sibling module in its directory. Always re-export them. Do not review `index.ts` export lists.
 
 ## Worktree initialization
 
@@ -102,6 +101,7 @@ When dependency installation is required:
 pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `globalPassThroughEnv` includes `pnpm_config_verify_deps_before_run` so Turbo strict mode does not strip pnpm 11’s lifecycle marker (which would re-enter `pnpm install` → postinstall).
 
 - **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
+- **Pomo** — `apps/pomo` (SolidStart SSR). `pnpm dev --port 3300` (:3300).
 - **Storybook** — root. `pnpm storybook:dev` (:6006).
 
 **Commands:** `pnpm lint` · `pnpm test` · `turbo prepare-build` · `pnpm typecheck` (`apps/coong`)

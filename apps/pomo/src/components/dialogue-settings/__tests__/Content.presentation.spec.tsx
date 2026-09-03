@@ -150,16 +150,20 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(listenButton.textContent).toBe('듣기')
   expect(createLink.getAttribute('href')).toBe('/dialogue')
   expect(createLink.closest('.pomo-dialogue-settings__library-heading')).not.toBeNull()
+  const inactiveEvent = screen.getByRole('heading', {name: '포모도르 집중 시작'}).closest('li')
+  const eventList = inactiveEvent?.parentElement
+  expect(inactiveEvent).not.toHaveAttribute('data-connected')
+  expect(eventList).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
   expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
     '/dialogue?dialogueId=saved-dialogue',
   )
 
   fireEvent.click(within(library).getByRole('button', {name: '삭제'}))
-  expect(
-    within(library)
-      .getByRole('button', {name: '삭제 확인'})
-      .hasAttribute('data-pomo-dialogue-delete-confirm'),
-  ).toBe(true)
+  const deleteConfirmation = within(library).getByRole('button', {name: '삭제 확인'})
+  expect(deleteConfirmation.hasAttribute('data-pomo-dialogue-delete-confirm')).toBe(true)
+  expect(deleteConfirmation.parentElement?.className).toContain(
+    '[&_[data-pomo-dialogue-delete-confirm]]:text-danger',
+  )
 })
 
 it('should hide learning dialogues only from the saved dialogue library', () => {
@@ -219,6 +223,16 @@ it('should apply compact spacing to dialogue settings groups', () => {
   expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
   expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
+})
+
+it('should use the theme surface for an empty dialogue library', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => []}))
+
+  render(() => <PDialogueSettingsContent />)
+
+  expect(screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.')).toHaveClass(
+    'bg-content-surface',
+  )
 })
 
 it('should offer and save a playback mode when an event has multiple dialogues', () => {

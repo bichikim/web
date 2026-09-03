@@ -11,6 +11,7 @@ import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {PRecoveryBoundary} from './components/PRecoveryBoundary'
 import {useApplicationRecovery} from './features/application-recovery'
 import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
+import {DisplayThemeProvider} from './features/display-theme'
 import {AuthProvider} from './features/auth'
 import {PModelDownloadProvider} from './features/model-download'
 
@@ -23,21 +24,23 @@ export default function App() {
       root={(props) => (
         <MetaProvider>
           <PDocumentMetadata />
-          <AuthProvider>
-            <PModelDownloadProvider>
-              <PRecoveryBoundary
-                canRetry={applicationRecovery.canRetry}
-                onError={applicationRecovery.onError}
-                onReady={applicationRecovery.onReady}
-                onReload={applicationRecovery.onReload}
-                onRetry={applicationRecovery.onRetry}
-              >
-                <Suspense>
-                  <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
-                </Suspense>
-              </PRecoveryBoundary>
-            </PModelDownloadProvider>
-          </AuthProvider>
+          <DisplayThemeProvider>
+            <AuthProvider>
+              <PModelDownloadProvider>
+                <PRecoveryBoundary
+                  canRetry={applicationRecovery.canRetry}
+                  onError={applicationRecovery.onError}
+                  onReady={applicationRecovery.onReady}
+                  onReload={applicationRecovery.onReload}
+                  onRetry={applicationRecovery.onRetry}
+                >
+                  <Suspense>
+                    <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
+                  </Suspense>
+                </PRecoveryBoundary>
+              </PModelDownloadProvider>
+            </AuthProvider>
+          </DisplayThemeProvider>
         </MetaProvider>
       )}
     >

@@ -47,10 +47,8 @@ it('should draw the shared hand-drawn frame in scribble style', () => {
 
   expect(border).toBeInstanceOf(SVGElement)
   expect(border?.querySelectorAll('path')).toHaveLength(2)
-  expect(surface.classList).toContain('[mask-image:var(--pomo-scribble-panel-mask)]')
-  expect(surface.style.getPropertyValue('--pomo-scribble-panel-mask')).toContain(
-    'data:image/svg+xml',
-  )
+  expect(surface.classList).toContain('pomo-scribble-mask')
+  expect(surface).not.toHaveAttribute('style')
   expect(surface.contains(border)).toBe(false)
   expect(status.classList).toContain('rounded-none')
   expect(status.classList).toContain('border-0')

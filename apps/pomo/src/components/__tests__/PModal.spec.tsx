@@ -25,6 +25,7 @@ it('should render and close the default modal content', async () => {
   const dialog = screen.getByRole('dialog', {name: 'Modal title'})
   expect(dialog).toHaveAttribute('data-placement', 'center')
   expect(dialog).toHaveAttribute('data-size', 'regular')
+  expect(dialog).toHaveClass('bg-modal-surface')
   expect(screen.getByText('Modal description')).toBeInTheDocument()
   expect(screen.getByText('Modal footer')).toBeInTheDocument()
   expect(screen.getByText('Modal body').parentElement).toHaveClass('overflow-y-auto')

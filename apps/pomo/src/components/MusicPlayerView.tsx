@@ -9,21 +9,13 @@ import * as m from '@paraglide/message'
 import {PAlbumLibrary} from './PAlbumLibrary'
 import {POverflowMarquee} from './POverflowMarquee'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
-import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from './scribble/Frame'
+import {PScribbleFrame} from './scribble/Frame'
 import {ExpandedPlayerControls} from './music-player-view/ExpandedControls'
 import {ExpandedPlayerProgress} from './music-player-view/ExpandedProgress'
 import {SummaryPlayButton} from './music-player-view/SummaryPlayButton'
 import {CLASSES, type MusicPlayerViewProps} from './music-player-view/shared'
 
-const ACTIVE_VISUALIZER_OPACITY = 0.76
-const IDLE_VISUALIZER_OPACITY = 0.34
-const SCRIBBLE_MASK_CLASSES = cx(
-  '[mask-image:var(--pomo-player-scribble-mask)]',
-  '[-webkit-mask-image:var(--pomo-player-scribble-mask)]',
-  '[mask-mode:alpha] [mask-position:center] [mask-repeat:no-repeat] [mask-size:100%_100%]',
-  '[-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat]',
-  '[-webkit-mask-size:100%_100%]',
-)
+const SCRIBBLE_MASK_CLASSES = 'pomo-scribble-mask'
 
 const getShellClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? cx('rounded-none', SCRIBBLE_MASK_CLASSES) : 'rounded-panel'
@@ -78,7 +70,6 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
           props.expanded ? 'h-full overflow-visible' : 'overflow-hidden',
           getShellClasses(props.sceneStyle),
         )}
-        style={{'--pomo-player-scribble-mask': SCRIBBLE_MASK_IMAGE}}
       >
         <audio
           crossorigin="anonymous"
@@ -114,12 +105,11 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
                   aria-hidden="true"
                   class={cx(
                     CLASSES.level,
-                    'min-w-0 flex-1 rounded-t-full transition-[height,opacity] duration-75',
+                    'min-w-0 flex-1 rounded-t-full [height:var(--pomo-level-height)]',
+                    'transition-[height,opacity] duration-75',
+                    props.isPlaying ? 'opacity-76' : 'opacity-34',
                   )}
-                  style={{
-                    height: `${level}%`,
-                    opacity: props.isPlaying ? ACTIVE_VISUALIZER_OPACITY : IDLE_VISUALIZER_OPACITY,
-                  }}
+                  style={{'--pomo-level-height': `${level}%`}}
                 />
               )}
             </For>

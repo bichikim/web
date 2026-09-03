@@ -241,9 +241,21 @@ afterEach(() => {
 describe('PDialogueEditor fields', () => {
   it('should render a new dialogue and update text, voice, language, model, and draft state', async () => {
     const harness = createEditorHarness()
-    renderEditor(harness)
+    const result = renderEditor(harness)
 
     expect(screen.getByRole('heading', {name: '새 대화 만들기'})).toBeInTheDocument()
+    expect(result.container.querySelector('main')).toHaveClass(
+      '[background:var(--pomo-editor-background)]',
+      'text-foreground',
+    )
+    expect(screen.getByRole('region', {name: '대사 입력'})).toHaveClass(
+      'border-border',
+      'bg-modal-surface',
+    )
+    expect(screen.getByRole('textbox', {name: /대사/}).closest('label')).toHaveClass(
+      '[&_textarea]:bg-surface-strong',
+      '[&_textarea]:text-foreground',
+    )
     expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
     expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
     expect(screen.getByText('13 / 3000')).toBeInTheDocument()

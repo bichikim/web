@@ -42,7 +42,7 @@ it('should credit the creator and disclose current software and model licenses',
   const creatorDetails = screen.getByText('Bichi Kim').closest('dl')
   expect(creatorDetails).not.toBeNull()
   expect(creatorDetails?.className).toContain('rounded-panel')
-  expect(creatorDetails?.className).toContain('border')
+  expect(creatorDetails).toHaveClass('border-content-border', 'bg-content-surface')
   expect(screen.getByRole('heading', {name: '만든 사람'}).parentElement?.className).toContain(
     'pt-0',
   )
@@ -106,6 +106,9 @@ it('should credit the creator and disclose current software and model licenses',
   expect(screen.queryByText('RobotExpressive')).toBeNull()
   expect(screen.queryByText('Ninomaru Teien')).toBeNull()
   expect(screen.getByText(/이 화면은 요약이며 원문 라이선스를 대체하지 않습니다/u)).toBeTruthy()
+  expect(
+    screen.getByText(/이 화면은 요약이며 원문 라이선스를 대체하지 않습니다/u).closest('aside'),
+  ).toHaveClass('border-content-border', 'bg-content-surface')
   expect(screen.queryByText(/이해를 돕기 위한 요약/u)).toBeNull()
   expect(screen.getByRole('link', {name: '제3자 라이선스 관리 문서'}).getAttribute('href')).toBe(
     '/third-party-notices',

@@ -37,14 +37,14 @@ const CLASSES = {
     '[&_button:focus-visible]:outline-highlight [&_button:focus-visible]:[outline-offset:0.125rem]',
     '[&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-solid',
     '[&_a:focus-visible]:outline-highlight [&_a:focus-visible]:[outline-offset:0.125rem]',
-    '[&_[data-pomo-dialogue-delete-confirm]]:border-[rgb(239_135_120_/_50%)]',
-    '[&_[data-pomo-dialogue-delete-confirm]]:text-[#f2a398]',
+    '[&_[data-pomo-dialogue-delete-confirm]]:border-danger/50',
+    '[&_[data-pomo-dialogue-delete-confirm]]:text-danger',
     "dialogue-library-compact:[&_>_:is(button,_a)_>_[aria-hidden='true']]:hidden",
     'motion-reduce:[&_button]:transition-[none] motion-reduce:[&_a]:transition-[none]',
   ),
   item: cx(
-    'grid gap-3 rounded-panel border border-solid border-[rgb(255_255_255_/_6%)]',
-    'bg-[rgb(255_255_255_/_3%)] px-4 py-3',
+    'grid gap-3 rounded-panel border border-solid border-content-border',
+    'bg-content-surface px-4 py-3',
   ),
   layout: cx(
     'pomo-dialogue-settings__selected-dialogue--library flex flex-col items-stretch gap-3',

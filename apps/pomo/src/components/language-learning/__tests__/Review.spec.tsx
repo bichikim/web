@@ -41,6 +41,10 @@ it('should toggle, regenerate, and save a reviewed sentence', () => {
   expect(onToggle).toHaveBeenCalledWith('candidate-1')
   expect(onRegenerate).toHaveBeenCalledWith('candidate-1')
   expect(onSave).toHaveBeenCalledOnce()
+  expect(screen.getByRole('button', {name: '선택 문장 저장'})).toHaveClass(
+    'bg-highlight',
+    'text-background',
+  )
   expect(screen.getByText('1/1개 선택')).toBeDefined()
   expect(screen.getByText(CANDIDATE.text)).toBeDefined()
 })

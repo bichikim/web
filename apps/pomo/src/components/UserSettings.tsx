@@ -13,7 +13,7 @@ export const UserSettings = () => {
   return (
     <Tabs.Content value="user">
       <section class="grid gap-4.5 settings-compact:gap-4">
-        <div class="rounded-panel border border-solid border-[rgb(255_255_255_/_6%)] bg-[rgb(255_255_255_/_3%)] p-4">
+        <div class="rounded-panel border border-solid border-content-border bg-content-surface p-4">
           <Switch>
             <Match when={settings.state().kind === 'loading'}>
               <p class="m-0 text-sm text-muted-foreground" role="status">

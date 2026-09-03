@@ -1,6 +1,6 @@
 import {Title} from '@solidjs/meta'
 import {cx} from 'class-variance-authority'
-import {type JSXElement, onCleanup, onMount, Show} from 'solid-js'
+import {type JSXElement, Show} from 'solid-js'
 
 interface DesktopSurfaceFrameProps {
   readonly accessibleLabel: string
@@ -10,43 +10,9 @@ interface DesktopSurfaceFrameProps {
   readonly title: string
 }
 
-interface BackgroundProperty {
-  readonly priority: string
-  readonly value: string
-}
-
-const useTransparentDocumentBackground = () => {
-  onMount(() => {
-    const elements = [document.documentElement, document.body]
-    const previous = elements.map(
-      (element): BackgroundProperty => ({
-        priority: element.style.getPropertyPriority('background'),
-        value: element.style.getPropertyValue('background'),
-      }),
-    )
-
-    for (const element of elements) {
-      element.style.setProperty('background', 'transparent', 'important')
-    }
-
-    onCleanup(() => {
-      for (const [index, element] of elements.entries()) {
-        const property = previous[index]
-        if (property?.value) {
-          element.style.setProperty('background', property.value, property.priority)
-        } else {
-          element.style.removeProperty('background')
-        }
-      }
-    })
-  })
-}
-
 export const DesktopSurfaceFrame = (props: DesktopSurfaceFrameProps) => {
-  useTransparentDocumentBackground()
-
   return (
-    <main class="box-border min-h-dvh w-full overflow-hidden bg-transparent text-foreground">
+    <main class="pomo-desktop-surface box-border min-h-dvh w-full overflow-hidden bg-transparent text-foreground">
       <Title>{props.title}</Title>
       <Show when={props.isVisible}>
         <section

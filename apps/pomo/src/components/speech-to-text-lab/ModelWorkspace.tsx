@@ -67,8 +67,8 @@ export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
           role="progressbar"
         >
           <div
-            class="h-full rounded-full bg-#9ed6bb transition-[width]"
-            style={{width: `${speech.modelProgress()}%`}}
+            class="h-full rounded-full bg-#9ed6bb [width:var(--pomo-progress-width)] transition-[width]"
+            style={{'--pomo-progress-width': `${speech.modelProgress()}%`}}
           />
         </div>
       </Show>

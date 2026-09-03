@@ -2,7 +2,6 @@ import {cx} from 'class-variance-authority'
 import {createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
 import type {PTrack} from '../../features/focus-room-audio'
-import {cssPixelsToRem} from '../../features/css-units'
 import {POverflowMarquee} from '../POverflowMarquee'
 
 const DELETE_COMMIT_DISTANCE = 64
@@ -159,12 +158,14 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
   const gesture = useSwipeTrackGesture(removable, () => props.onRemove?.())
 
   return (
-    <li class="relative min-w-0 overflow-clip rounded-3">
+    <li
+      class="pomo-player__swipe-track relative min-w-0 overflow-clip rounded-3"
+      style={{'--pomo-swipe-offset': `${gesture.offset()}px`}}
+    >
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-y-0 left-0 grid place-items-center overflow-hidden
-          text-danger"
-        style={{width: cssPixelsToRem(Math.max(0, gesture.offset()))}}
+        class="pomo-player__track-delete-start pointer-events-none absolute inset-y-0 left-0 grid
+          place-items-center overflow-hidden text-danger w-[max(0px,var(--pomo-swipe-offset))]"
       >
         <span
           class={
@@ -174,9 +175,9 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       </div>
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-y-0 right-0 grid place-items-center
-          overflow-hidden text-danger"
-        style={{width: cssPixelsToRem(Math.max(0, -gesture.offset()))}}
+        class="pomo-player__track-delete-end pointer-events-none absolute inset-y-0 right-0 grid
+          place-items-center overflow-hidden text-danger
+          w-[max(0px,calc(-1*var(--pomo-swipe-offset)))]"
       >
         <span
           class={
@@ -191,6 +192,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         class={cx(
           TRACK_CLASSES,
           'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
+          '[transform:translateX(var(--pomo-swipe-offset))]',
           'rounded-3 gap-3 player-compact:gap-2 px-3 py-2 text-left text-sm leading-5',
           'player-compact:px-2 player-compact:py-1.5',
           gesture.dragging()
@@ -222,10 +224,6 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         onPointerDown={gesture.handlePointerDown}
         onPointerMove={gesture.handlePointerMove}
         onPointerUp={gesture.handlePointerUp}
-        style={{
-          transform:
-            gesture.offset() === 0 ? undefined : `translateX(${cssPixelsToRem(gesture.offset())})`,
-        }}
         type="button"
       >
         <span class="w-4 text-center tabular-nums">{props.index + 1}</span>

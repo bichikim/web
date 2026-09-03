@@ -124,8 +124,11 @@ describe('MusicPlayerView', () => {
     )
 
     expect(idleLevels).toHaveLength(2)
-    expect(idleLevels[0]?.getAttribute('style')).toContain('height: 25%')
-    expect(idleLevels[0]?.getAttribute('style')).toContain('opacity: 0.34')
+    expect(idleLevels[0]?.getAttribute('style')).toContain('--pomo-level-height: 25%')
+    expect(idleLevels[0]?.classList.contains('[height:var(--pomo-level-height)]')).toBe(true)
+    expect((idleLevels[0] as HTMLElement | undefined)?.style.height).toBe('')
+    expect(idleLevels[0]?.classList.contains('opacity-34')).toBe(true)
+    expect(idleLevels[0]?.getAttribute('style')).not.toContain('opacity')
     expect(summaryLabels[0]?.textContent).toContain(m.player_fallback_title())
     expect(summaryLabels[1]?.textContent).toContain(m.player_fallback_artist())
 
@@ -134,8 +137,11 @@ describe('MusicPlayerView', () => {
     const playingResult = renderMusicPlayerView({isPlaying: true, levels: [50]})
     const playingLevel = playingResult.container.querySelector('.pomo-level')
 
-    expect(playingLevel?.getAttribute('style')).toContain('height: 50%')
-    expect(playingLevel?.getAttribute('style')).toContain('opacity: 0.76')
+    expect(playingLevel?.getAttribute('style')).toContain('--pomo-level-height: 50%')
+    expect(playingLevel?.classList.contains('[height:var(--pomo-level-height)]')).toBe(true)
+    expect((playingLevel as HTMLElement | null)?.style.height).toBe('')
+    expect(playingLevel?.classList.contains('opacity-76')).toBe(true)
+    expect(playingLevel?.getAttribute('style')).not.toContain('opacity')
   })
 
   it('should keep the collapsed player layers visually present but inactive', () => {
@@ -154,6 +160,7 @@ describe('MusicPlayerView', () => {
     expect(controller?.classList.contains('overflow-visible')).toBe(false)
     expect(controller?.classList.contains('pb-0.5')).toBe(true)
     expect(playerBase?.classList.contains('rounded-panel')).toBe(true)
+    expect(playerBase?.classList.contains('bg-player-surface')).toBe(true)
     expect(visualizerFrame?.classList.contains('overflow-hidden')).toBe(true)
     expect(visualizerFrame?.classList.contains('rounded-panel')).toBe(true)
     expect(expandedFrame).toHaveClass('h-0', 'flex-none')
@@ -187,9 +194,11 @@ describe('MusicPlayerView', () => {
     expect(collapsedRange.hasAttribute('disabled')).toBe(true)
     expect(collapsedRange.getAttribute('aria-hidden')).toBe('true')
     expect(collapsedRange.classList.contains('[--media-range-track-height:100%]')).toBe(true)
-    expect(collapsedRange.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]')).toBe(
-      true,
-    )
+    expect(
+      collapsedRange.classList.contains(
+        '[--media-range-bar-color:var(--pomo-color-player-progress)]',
+      ),
+    ).toBe(true)
     expect(
       collapsedRange.classList.contains('[--media-time-range-buffered-color:transparent]'),
     ).toBe(true)
@@ -268,9 +277,7 @@ describe('MusicPlayerView', () => {
     const originalController = originalResult.container.querySelector('media-controller')
 
     expect(originalResult.container.querySelector('.pomo-player__scribble-border')).toBeNull()
-    expect(
-      originalController?.classList.contains('[mask-image:var(--pomo-player-scribble-mask)]'),
-    ).toBe(false)
+    expect(originalController?.classList.contains('pomo-scribble-mask')).toBe(false)
     expect(originalController?.classList.contains('rounded-panel')).toBe(true)
     expect(originalController?.classList.contains('rounded-none')).toBe(false)
     expect(originalBase?.classList.contains('border-border')).toBe(true)
@@ -290,12 +297,8 @@ describe('MusicPlayerView', () => {
     expect(scribbleBorder?.querySelectorAll('path')[1]?.getAttribute('stroke-width')).toBe('3')
     expect(scribbleBorder?.parentElement).toBe(scribbleFrame)
     expect(scribbleController?.contains(scribbleBorder)).toBe(false)
-    expect(
-      scribbleController?.classList.contains('[mask-image:var(--pomo-player-scribble-mask)]'),
-    ).toBe(true)
-    expect(
-      (scribbleController as HTMLElement).style.getPropertyValue('--pomo-player-scribble-mask'),
-    ).toContain('data:image/svg+xml')
+    expect(scribbleController?.classList.contains('pomo-scribble-mask')).toBe(true)
+    expect(scribbleController).not.toHaveAttribute('style')
     expect(scribbleController?.classList.contains('rounded-none')).toBe(true)
     expect(scribbleController?.classList.contains('rounded-panel')).toBe(false)
     expect(scribbleBase?.classList.contains('border-transparent')).toBe(true)
