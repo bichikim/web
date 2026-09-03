@@ -110,7 +110,7 @@ export default function PFeedSettingsContent() {
                     <div class={CLASSES.feedSettingsAddress}>
                       <span aria-hidden="true" class="i-tabler-rss size-5" />
                       <span class={CLASSES.feedSettingsAddressCopy}>
-                        <strong title={connection.url}>{connection.url}</strong>
+                        <strong>{connection.url}</strong>
                       </span>
                     </div>
                     <PSelect

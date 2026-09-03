@@ -186,6 +186,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       <button
         aria-current={props.current ? 'true' : undefined}
         aria-keyshortcuts={removable() ? 'Delete' : undefined}
+        aria-label={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
         class={cx(
           TRACK_CLASSES,
           'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
@@ -223,7 +224,6 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         style={{
           transform: gesture.offset() === 0 ? undefined : `translateX(${gesture.offset()}px)`,
         }}
-        title={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
         type="button"
       >
         <span class="w-4 text-center tabular-nums">{props.index + 1}</span>

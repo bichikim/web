@@ -69,7 +69,6 @@ export const PIconButton = (props: PIconButtonProps) => {
       data-feedback-visible={feedbackVisible() ? '' : undefined}
       data-size={props.size ?? 'medium'}
       onClick={(event) => props.onPress(event.currentTarget)}
-      title={props.accessibleLabel}
       type="button"
     >
       <span

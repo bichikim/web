@@ -1,11 +1,6 @@
 import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
-const TITLE_MAX_LENGTH = 80
-
-const getTitle = (text: string) =>
-  text.length > TITLE_MAX_LENGTH ? `${text.slice(0, TITLE_MAX_LENGTH - 1)}…` : text
-
 const textClasses = cva(
   [
     'min-w-0 overflow-hidden m-0 text-foreground text-xs font-[650] leading-[1.5]',
@@ -70,9 +65,7 @@ export const DialogueLibraryItem = (props: DialogueLibraryItemProps) => (
   <li class={CLASSES.item}>
     <div class={CLASSES.layout}>
       <div class={CLASSES.summary}>
-        <p class={textClasses({lineLimit: props.lineLimit})} title={getTitle(props.text)}>
-          {props.text}
-        </p>
+        <p class={textClasses({lineLimit: props.lineLimit})}>{props.text}</p>
         <Show when={props.metadata}>
           <span class={CLASSES.metadata}>{props.metadata}</span>
         </Show>

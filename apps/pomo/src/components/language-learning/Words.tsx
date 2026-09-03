@@ -72,7 +72,6 @@ const LanguageLearningWordList = (props: LanguageLearningWordListProps) => (
                   aria-pressed={word.memorized}
                   class={memorizedButtonClasses({memorized: word.memorized})}
                   onClick={() => props.onToggleMemorized(word)}
-                  title={toggleLabel()}
                   type="button"
                 >
                   <span aria-hidden="true" class="i-tabler-check size-3.5" />

@@ -50,7 +50,6 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
               props.repeatMode === mode.value && 'is-active',
             )}
             onClick={() => props.onRepeatModeChange(mode.value)}
-            title={mode.label()}
             type="button"
           >
             <span
@@ -71,7 +70,6 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
         props.shuffleEnabled && 'is-active',
       )}
       onClick={() => props.onShuffleChange()}
-      title={m.player_shuffle()}
       type="button"
     >
       <span

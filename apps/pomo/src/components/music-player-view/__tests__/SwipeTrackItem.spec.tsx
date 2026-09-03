@@ -36,7 +36,7 @@ const renderTrack = () => {
   ))
 
   return {
-    button: screen.getByTitle('One · Artist · 밀어서 삭제'),
+    button: screen.getByRole('button', {name: 'One · Artist · 밀어서 삭제'}),
     onRemove,
     onSelect,
   }
@@ -195,10 +195,11 @@ describe('PSwipeTrackItem', () => {
   it('should render the current track without removal affordances', () => {
     const onSelect = vi.fn()
     render(() => <PSwipeTrackItem current index={1} onSelect={onSelect} track={TRACK} />)
-    const button = screen.getByTitle('One · Artist')
+    const button = screen.getByRole('button', {name: 'One · Artist'})
 
     expect(button.getAttribute('aria-current')).toBe('true')
     expect(button.getAttribute('aria-keyshortcuts')).toBeNull()
+    expect(button).not.toHaveAttribute('title')
     expect(button.classList.contains('bg-primary-soft')).toBe(true)
     expect(button.textContent).toContain('2')
     expect(button.textContent).toContain('One')

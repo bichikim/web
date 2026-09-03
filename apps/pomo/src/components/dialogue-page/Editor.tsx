@@ -476,6 +476,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
                           }}
                         </Show>
                         <button
+                          aria-description="전체 음성을 새로 만든 뒤 사용할 수 있어요."
                           aria-label={`${position() + 1}번 말풍선 음성 다시 만들기`}
                           class={cx(
                             CLASSES.dialogueEditorButton,
@@ -484,7 +485,6 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
                           )}
                           disabled={isBusy() || !editor.canRegenerateSegments()}
                           onClick={() => editor.regenerateSegment(position())}
-                          title="전체 음성을 새로 만든 뒤 사용할 수 있어요."
                           type="button"
                         >
                           <Show

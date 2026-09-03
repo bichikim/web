@@ -532,24 +532,32 @@ describe('PMusicPlayerContent', () => {
     )
     render(() => <PMusicPlayerContent />)
 
-    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeTruthy(),
+    )
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
-    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+    expect(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeTruthy()
 
     completeRead?.(null)
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+    expect(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeTruthy()
   })
 
   it('should restore album additions after the player remounts', async () => {
     stubPlaylistFetch(2)
     const first = render(() => <PMusicPlayerContent />)
 
-    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeTruthy(),
+    )
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
-    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+    expect(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeTruthy()
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
       trackIds: ['one', 'two', 'three', 'added'],
       version: 1,
@@ -558,16 +566,26 @@ describe('PMusicPlayerContent', () => {
 
     render(() => <PMusicPlayerContent />)
 
-    await waitFor(() => expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy())
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeTruthy(),
+    )
   })
 
   it('should preserve removed tracks after the player remounts', async () => {
     stubPlaylistFetch(2)
     const first = render(() => <PMusicPlayerContent />)
 
-    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
-    fireEvent.keyDown(screen.getByTitle('Two · Artist · 밀어서 삭제'), {key: 'Delete'})
-    expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeTruthy(),
+    )
+    fireEvent.keyDown(screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}), {
+      key: 'Delete',
+    })
+    expect(screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
       trackIds: ['one', 'three'],
       version: 1,
@@ -576,15 +594,27 @@ describe('PMusicPlayerContent', () => {
 
     render(() => <PMusicPlayerContent />)
 
-    await waitFor(() => expect(screen.getByTitle('Three · Artist · 밀어서 삭제')).toBeTruthy())
-    await waitFor(() => expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull())
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Three · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeTruthy(),
+    )
+    await waitFor(() =>
+      expect(
+        screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeNull(),
+    )
   })
 
   it('should preserve an empty playlist after the player remounts', async () => {
     stubPlaylistFetch(2)
     const first = render(() => <PMusicPlayerContent />)
 
-    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeTruthy(),
+    )
     fireEvent.click(screen.getByRole('button', {name: '재생목록 모두 비우기'}))
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
       trackIds: [],
@@ -600,7 +630,7 @@ describe('PMusicPlayerContent', () => {
     await Promise.resolve()
     await Promise.resolve()
     expect(screen.getByText('집중 음악을 준비 중이에요')).toBeTruthy()
-    expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
+    expect(screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
   })
 
   it('should preserve a removal made before the initial playlist finishes loading', async () => {
@@ -627,14 +657,20 @@ describe('PMusicPlayerContent', () => {
     render(() => <PMusicPlayerContent />)
 
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
-    fireEvent.keyDown(screen.getByTitle('Added · Artist · 밀어서 삭제'), {key: 'Delete'})
+    fireEvent.keyDown(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'}), {
+      key: 'Delete',
+    })
     completeTrackCatalog?.({
       json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
       ok: true,
     })
 
-    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
-    expect(screen.queryByTitle('Added · Artist · 밀어서 삭제')).toBeNull()
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+      ).toBeTruthy(),
+    )
+    expect(screen.queryByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
   })
 
   it('should stop playback and clear every loaded track from the album library', async () => {
@@ -691,9 +727,11 @@ describe('PMusicPlayerContent', () => {
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
-    fireEvent.keyDown(screen.getByTitle('Two · Artist · 밀어서 삭제'), {key: 'Delete'})
+    fireEvent.keyDown(screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}), {
+      key: 'Delete',
+    })
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/three.mp3'))
-    expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
+    expect(screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
   })
 })
