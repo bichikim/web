@@ -8,7 +8,7 @@ const TAB_LIST_CLASSES =
   '[&::-webkit-scrollbar]:hidden'
 
 const TAB_SCROLL_BUTTON_CLASSES =
-  'absolute inset-y-0 flex w-6 cursor-pointer items-center border-0 p-0 ' +
+  'absolute inset-y-0 flex cursor-pointer items-center border-0 p-0 ' +
   'text-muted-foreground outline-none transition-colors hover:text-foreground ' +
   'focus-visible:text-highlight motion-reduce:transition-none'
 
@@ -110,7 +110,7 @@ export const PModalTabList = (props: PModalTabListProps) => {
         <button
           aria-label={props.scrollControls?.previousLabel}
           class={
-            `${TAB_SCROLL_BUTTON_CLASSES} left-0 justify-start ` +
+            `${TAB_SCROLL_BUTTON_CLASSES} left-0 w-6 justify-start ` +
             'bg-gradient-to-r from-surface-strong to-transparent'
           }
           onClick={() => scrollTabs(-1)}
@@ -123,7 +123,7 @@ export const PModalTabList = (props: PModalTabListProps) => {
         <button
           aria-label={props.scrollControls?.nextLabel}
           class={
-            `${TAB_SCROLL_BUTTON_CLASSES} right-0 justify-end ` +
+            `${TAB_SCROLL_BUTTON_CLASSES} right-0 w-10 justify-end ` +
             'bg-gradient-to-r from-transparent to-surface-strong'
           }
           onClick={() => scrollTabs(1)}
