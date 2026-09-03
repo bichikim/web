@@ -1,6 +1,188 @@
 import {describe, expect, it} from 'vitest'
 
-import {envSchema, OPENAI_REASONING_EFFORTS_WITH_MINIMAL, OPENAI_SERVICE_TIERS} from '../schema'
+import {
+  allowedStringSchema,
+  defaultedStringSchema,
+  envSchema,
+  OPENAI_REASONING_EFFORTS_WITH_MINIMAL,
+  OPENAI_SERVICE_TIERS,
+  optionalStringSchema,
+  pemSchema,
+  postgresUrlSchema,
+  requiredStringSchema,
+  urlSchema,
+} from '../schema'
+
+describe('requiredStringSchema', () => {
+  const schema = requiredStringSchema('FOO')
+
+  it('should return a trimmed value', () => {
+    expect(schema.parse('  bar  ')).toBe('bar')
+  })
+
+  it.each(['', '  '])('should reject a missing value', (value) => {
+    expect(() => schema.parse(value)).toThrow('FOO is not set')
+  })
+})
+
+describe('optionalStringSchema', () => {
+  it.each([undefined, '', '  '])('should treat a blank value as omitted', (value) => {
+    expect(optionalStringSchema.parse(value)).toBeUndefined()
+  })
+
+  it('should return a trimmed value', () => {
+    expect(optionalStringSchema.parse('  bar  ')).toBe('bar')
+  })
+})
+
+describe('defaultedStringSchema', () => {
+  const schema = defaultedStringSchema('fallback')
+
+  it.each([undefined, '', '  '])('should fall back when the value is blank', (value) => {
+    expect(schema.parse(value)).toBe('fallback')
+  })
+
+  it('should return a trimmed value', () => {
+    expect(schema.parse('  explicit  ')).toBe('explicit')
+  })
+})
+
+describe('allowedStringSchema', () => {
+  const values = ['red', 'blue'] as const
+  const schema = allowedStringSchema('COLOR', values, 'red')
+
+  it.each(values)('should accept every supported value', (value) => {
+    expect(schema.parse(value)).toBe(value)
+  })
+
+  it.each([undefined, '', '  '])('should default a blank value', (value) => {
+    expect(schema.parse(value)).toBe('red')
+  })
+
+  it('should trim a supported value', () => {
+    expect(schema.parse('  blue  ')).toBe('blue')
+  })
+
+  it('should reject an unsupported value', () => {
+    expect(() => schema.parse('green')).toThrow('COLOR must be one of: red, blue')
+  })
+})
+
+describe('urlSchema', () => {
+  const schema = urlSchema('ORIGIN', ['https:', 'http:'])
+
+  it('should return a trimmed URL', () => {
+    expect(schema.parse(' https://example.com/path ')).toBe('https://example.com/path')
+  })
+
+  it.each(['', '  '])('should reject a missing URL', (value) => {
+    expect(() => schema.parse(value)).toThrow('ORIGIN is not set')
+  })
+
+  it('should reject an invalid URL without echoing its value', () => {
+    const invalidUrl = 'not-a-url-with-sensitive-text'
+
+    expect(() => schema.parse(invalidUrl)).toThrow('ORIGIN must be a valid URL')
+
+    try {
+      schema.parse(invalidUrl)
+    } catch (error) {
+      expect(String(error)).not.toContain(invalidUrl)
+    }
+  })
+
+  it('should reject a URL with an unsupported protocol', () => {
+    expect(() => schema.parse('ftp://example.com')).toThrow('ORIGIN must use https: or http:')
+  })
+})
+
+describe('postgresUrlSchema', () => {
+  const schema = postgresUrlSchema('DATABASE_URL')
+
+  it.each([
+    'postgres://user:password@example.com/pomo?sslmode=require',
+    'postgresql://user:password@example.com/pomo?sslmode=require',
+  ])('should return a valid Postgres URL', (url) => {
+    expect(schema.parse(url)).toBe(url)
+  })
+
+  it('should trim a valid URL', () => {
+    const url = 'postgresql://user:password@example.com/pomo?sslmode=require'
+
+    expect(schema.parse(` ${url} `)).toBe(url)
+  })
+
+  it('should reject a missing URL', () => {
+    expect(() => schema.parse('')).toThrow('DATABASE_URL is not set')
+  })
+
+  it('should reject a non-Postgres URL', () => {
+    expect(() => schema.parse('https://example.com/database')).toThrow(
+      'DATABASE_URL must use postgres: or postgresql:',
+    )
+  })
+
+  it('should reject an invalid URL without echoing its value', () => {
+    const invalidUrl = 'not-a-url-with-sensitive-text'
+
+    expect(() => schema.parse(invalidUrl)).toThrow('DATABASE_URL must be a valid URL')
+
+    try {
+      schema.parse(invalidUrl)
+    } catch (error) {
+      expect(String(error)).not.toContain(invalidUrl)
+    }
+  })
+})
+
+describe('pemSchema', () => {
+  const certSchema = pemSchema('POMO_TOSS_MTLS_CERT', ['CERTIFICATE'])
+  const keySchema = pemSchema('POMO_TOSS_MTLS_KEY', [
+    'PRIVATE KEY',
+    'RSA PRIVATE KEY',
+    'EC PRIVATE KEY',
+  ])
+
+  it('should restore PEM line breaks from environment values', () => {
+    expect(
+      certSchema.parse('-----BEGIN CERTIFICATE-----\\nCERT BODY\\n-----END CERTIFICATE-----'),
+    ).toBe('-----BEGIN CERTIFICATE-----\nCERT BODY\n-----END CERTIFICATE-----')
+    expect(
+      keySchema.parse('-----BEGIN PRIVATE KEY-----\\nKEY BODY\\n-----END PRIVATE KEY-----'),
+    ).toBe('-----BEGIN PRIVATE KEY-----\nKEY BODY\n-----END PRIVATE KEY-----')
+  })
+
+  it('should normalize CRLF PEM values', () => {
+    expect(
+      certSchema.parse('-----BEGIN CERTIFICATE-----\r\nCERT BODY\r\n-----END CERTIFICATE-----'),
+    ).toBe('-----BEGIN CERTIFICATE-----\nCERT BODY\n-----END CERTIFICATE-----')
+    expect(
+      keySchema.parse(
+        '-----BEGIN RSA PRIVATE KEY-----\r\nKEY BODY\r\n-----END RSA PRIVATE KEY-----',
+      ),
+    ).toBe('-----BEGIN RSA PRIVATE KEY-----\nKEY BODY\n-----END RSA PRIVATE KEY-----')
+  })
+
+  it('should reject values without the expected PEM envelope', () => {
+    expect(() => certSchema.parse('CERT BODY')).toThrow(
+      'POMO_TOSS_MTLS_CERT must contain a valid PEM value',
+    )
+  })
+
+  it('should reject a missing certificate', () => {
+    expect(() => certSchema.parse('')).toThrow('POMO_TOSS_MTLS_CERT')
+  })
+
+  it('should reject a missing private key', () => {
+    expect(() => keySchema.parse('  ')).toThrow('POMO_TOSS_MTLS_KEY')
+  })
+
+  it('should accept an EC private key envelope', () => {
+    expect(
+      keySchema.parse('-----BEGIN EC PRIVATE KEY-----\nKEY BODY\n-----END EC PRIVATE KEY-----'),
+    ).toBe('-----BEGIN EC PRIVATE KEY-----\nKEY BODY\n-----END EC PRIVATE KEY-----')
+  })
+})
 
 it('should import env schemas without reading process environment', async () => {
   await expect(import('../schema')).resolves.toMatchObject({

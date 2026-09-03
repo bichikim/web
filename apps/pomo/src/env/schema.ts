@@ -1,8 +1,79 @@
-import {allowedStringSchema} from './allowed'
-import {pemSchema} from './pem'
-import {postgresUrlSchema} from './postgres-url'
-import {defaultedStringSchema, optionalStringSchema, requiredStringSchema} from './required'
-import {urlSchema} from './url'
+import {z} from 'zod'
+
+/** Schema for a required environment string that treats whitespace as missing. */
+export const requiredStringSchema = (name: string) =>
+  z.string(`${name} is not set`).trim().min(1, `${name} is not set`)
+
+/** Schema for an optional environment string that treats whitespace as omitted. */
+export const optionalStringSchema = z
+  .string()
+  .optional()
+  .transform((value) => {
+    const trimmed = value?.trim()
+    return trimmed ? trimmed : undefined
+  })
+
+/** Schema for an optional environment string that falls back to a default. */
+export const defaultedStringSchema = (defaultValue: string) =>
+  optionalStringSchema.pipe(z.string().default(defaultValue))
+
+/** Schema for an environment enum that falls back to a default. */
+export const allowedStringSchema = <const Value extends string>(
+  name: string,
+  values: readonly [Value, ...Value[]],
+  defaultValue: Value,
+) =>
+  optionalStringSchema.pipe(
+    z.enum(values, `${name} must be one of: ${values.join(', ')}`).default(defaultValue),
+  )
+
+/** Schema for an environment URL restricted to the given protocols. */
+export const urlSchema = (name: string, protocols: ReadonlyArray<string>) =>
+  requiredStringSchema(name).superRefine((value, context) => {
+    let url: URL
+
+    try {
+      url = new URL(value)
+    } catch {
+      context.addIssue({
+        code: 'custom',
+        message: `${name} must be a valid URL`,
+      })
+      return
+    }
+
+    if (protocols.includes(url.protocol)) {
+      return
+    }
+
+    context.addIssue({
+      code: 'custom',
+      message: `${name} must use ${protocols.join(' or ')}`,
+    })
+  })
+
+/** Schema for a postgres or postgresql environment URL. */
+export const postgresUrlSchema = (name: string) => urlSchema(name, ['postgres:', 'postgresql:'])
+
+/** Schema for a PEM environment value with restored line breaks. */
+export const pemSchema = (name: string, labels: ReadonlyArray<string>) =>
+  requiredStringSchema(name)
+    .transform((value) => value.replaceAll('\\n', '\n').replaceAll('\r\n', '\n').trim())
+    .superRefine((pem, context) => {
+      const hasExpectedEnvelope = labels.some(
+        (label) =>
+          pem.startsWith(`-----BEGIN ${label}-----\n`) && pem.endsWith(`-----END ${label}-----`),
+      )
+
+      if (hasExpectedEnvelope) {
+        return
+      }
+
+      context.addIssue({
+        code: 'custom',
+        message: `${name} must contain a valid PEM value`,
+      })
+    })
 
 export const OPENAI_REASONING_EFFORTS = ['none', 'low', 'medium', 'high', 'xhigh', 'max'] as const
 

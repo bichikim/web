@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {readServerEnv, throwEnvError} from '../read-server'
-import {requiredStringSchema} from '../required'
+import {requiredStringSchema} from '../schema'
 
 const fooSchema = {FOO: requiredStringSchema('FOO')}
 
