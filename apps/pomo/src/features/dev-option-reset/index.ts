@@ -1,7 +1,11 @@
+import {resetLocale as resetLocaleStorage} from '../apps-in-toss-locale'
+import {localStorageKey} from '@paraglide/runtime'
+
 interface OptionResetGroupDefinition {
   readonly description: string
   readonly id: OptionResetGroupId
   readonly label: string
+  readonly resetKind?: 'locale'
   readonly storageKeys: ReadonlyArray<string>
 }
 
@@ -33,7 +37,16 @@ export interface OptionResetStorage {
 }
 
 interface CreateOptionResetManagerOptions {
+  readonly resetLocale: () => Promise<void>
   readonly storage: OptionResetStorage
+}
+
+const withResetError = async (operation: () => Promise<void>): Promise<void> => {
+  try {
+    await operation()
+  } catch (error) {
+    throw new Error('Failed to reset Pomo options.', {cause: error})
+  }
 }
 
 const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
@@ -82,7 +95,8 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     description: '선택한 화면 언어',
     id: 'language',
     label: '언어',
-    storageKeys: ['PARAGLIDE_LOCALE'],
+    resetKind: 'locale',
+    storageKeys: [localStorageKey],
   },
   {
     description: 'What’s new 팝업의 마지막 열람 버전',
@@ -101,40 +115,58 @@ export const OPTION_RESET_GROUPS: ReadonlyArray<OptionResetGroup> = GROUP_DEFINI
   }),
 )
 
-const getGroupKeys = (groupId: OptionResetGroupId): ReadonlyArray<string> => {
-  const group = GROUP_DEFINITIONS.find((candidate) => candidate.id === groupId)
-
-  if (group === undefined) {
-    throw new Error(`Unknown option reset group: ${groupId}`)
-  }
-
-  return group.storageKeys
-}
-
 const getAllKeys = (): ReadonlyArray<string> => [
-  ...new Set(GROUP_DEFINITIONS.flatMap((group) => group.storageKeys)),
+  ...new Set(
+    GROUP_DEFINITIONS.filter((group) => group.resetKind === undefined).flatMap(
+      (group) => group.storageKeys,
+    ),
+  ),
 ]
 
 export const createOptionResetManager = (
   options: CreateOptionResetManagerOptions,
 ): OptionResetManager => {
-  const resetKeys = async (keys: ReadonlyArray<string>): Promise<void> => {
-    try {
-      if (options.storage.isNative()) {
-        await Promise.all(keys.map((key) => options.storage.removeNative(key)))
-      }
+  const removeKeys = async (keys: ReadonlyArray<string>): Promise<void> => {
+    if (options.storage.isNative()) {
+      await Promise.all(keys.map((key) => options.storage.removeNative(key)))
+    }
 
-      for (const key of keys) {
-        options.storage.removeWeb(key)
-      }
-    } catch (error) {
-      throw new Error('Failed to reset Pomo options.', {cause: error})
+    for (const key of keys) {
+      options.storage.removeWeb(key)
     }
   }
 
+  const resetKeys = (keys: ReadonlyArray<string>): Promise<void> =>
+    withResetError(() => removeKeys(keys))
+
+  const resetLocale = (): Promise<void> => withResetError(options.resetLocale)
+
+  const resetGroup = async (group: OptionResetGroupDefinition): Promise<void> => {
+    if (group.resetKind === 'locale') {
+      await resetLocale()
+      return
+    }
+
+    await resetKeys(group.storageKeys)
+  }
+
+  const getGroup = (groupId: OptionResetGroupId): OptionResetGroupDefinition => {
+    const group = GROUP_DEFINITIONS.find((candidate) => candidate.id === groupId)
+
+    if (group === undefined) {
+      throw new Error(`Unknown option reset group: ${groupId}`)
+    }
+
+    return group
+  }
+
   return {
-    reset: (groupId) => resetKeys(getGroupKeys(groupId)),
-    resetAll: () => resetKeys(getAllKeys()),
+    reset: (groupId) => resetGroup(getGroup(groupId)),
+    resetAll: () =>
+      withResetError(async () => {
+        await removeKeys(getAllKeys())
+        await options.resetLocale()
+      }),
   }
 }
 
@@ -147,5 +179,15 @@ const runtimeStorage: OptionResetStorage = {
   removeWeb: (key) => localStorage.removeItem(key),
 }
 
+const runtimeLocaleStorage = {
+  ...runtimeStorage,
+  removeCookie: (cookie: string) => {
+    document.cookie = cookie
+  },
+}
+
 export const createRuntimeOptionResetManager = (): OptionResetManager =>
-  createOptionResetManager({storage: runtimeStorage})
+  createOptionResetManager({
+    resetLocale: () => resetLocaleStorage(runtimeLocaleStorage),
+    storage: runtimeStorage,
+  })
