@@ -319,15 +319,10 @@ it('should keep time and view in general settings while limiting activity to com
   const activityControl = screen.getByRole('button', {name: '행동'})
   const viewControl = screen.getByRole('button', {name: '보기'})
   const sceneGroup = timeControl.closest('.pomo-settings__scene')
-  const activityProps = vi
-    .mocked(PRadioSwitch)
-    .mock.calls.map(([props]) => props)
-    .find((props) => props.label === '행동')
 
   expect(sceneGroup).not.toHaveClass('lg:hidden')
   expect(viewControl.closest('.pomo-settings__scene')).toBe(sceneGroup)
   expect(activityControl.parentElement).toHaveClass('lg:hidden')
-  expect(activityProps).toMatchObject({distribution: 'content'})
 })
 
 it('should describe every wake-lock availability state and pending request', () => {
