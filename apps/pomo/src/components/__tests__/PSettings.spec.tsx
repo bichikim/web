@@ -165,8 +165,8 @@ it('should expose and change the saved display theme in general settings', () =>
 
   expect(themeSelect?.value).toBe('bright')
   expect(themeSelect?.options).toEqual([
-    {label: '다크', value: 'dark'},
-    {label: '브라이트', value: 'bright'},
+    {label: '다크 모드', value: 'dark'},
+    {label: '라이트 모드', value: 'bright'},
     {label: '시스템 설정', value: 'system'},
   ])
   themeSelect?.onChange('dark')
