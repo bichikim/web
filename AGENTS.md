@@ -81,10 +81,6 @@
 
 Function JSDoc: contract (what) only; call sites: intent (why) only.
 
-## Pull requests
-
-- Wait for required CI checks when appropriate, but do not wait for Vercel deployment checks to complete. Report pending Vercel checks and finish the task.
-
 ## GitHub CLI authentication
 
 - `gh` credentials are stored in the macOS Keychain and may appear invalid in the default sandbox.
