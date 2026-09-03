@@ -9,11 +9,9 @@ import {
 import {MAXIMUM_GRID_DIVISIONS, MINIMUM_GRID_DIVISIONS} from './grid-control-points'
 import {
   getDeformerAngle,
-  getDeformerCenter,
+  getDeformerRotationOrigin,
   rotateDeformerControlPoints,
   rotateDeformerCurveHandles,
-  translateDeformerControlPoints,
-  translateDeformerCurveHandles,
 } from './deformer-transform'
 import {getSceneNode, isSceneNodeLocked, resizeDeformer} from './scene-graph'
 import type {SceneContainerConversionTarget} from './container-conversion'
@@ -35,6 +33,7 @@ export interface EditorInspectorProps {
   readonly onContainerUnwrap?: () => void
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly previewDocument?: PuppetDocument
+  readonly selectedControlPointIndices?: ReadonlyArray<number>
   readonly targetNodeIds?: ReadonlyArray<string>
 }
 
@@ -63,14 +62,14 @@ const DeformerNumberInput = (props: DeformerNumberInputProps) => (
   />
 )
 
-type TransformProperty = 'angle' | 'centerX' | 'centerY'
+type TransformProperty = 'angle' | 'rotationOriginX' | 'rotationOriginY'
 
 const getTransformedGeometry = (
   node: PuppetSceneDeformerNode,
   property: TransformProperty,
   value: number,
 ) => {
-  const center = getDeformerCenter(node)
+  const origin = getDeformerRotationOrigin(node)
 
   switch (property) {
     case 'angle': {
@@ -79,27 +78,28 @@ const getTransformedGeometry = (
         controlPoints: rotateDeformerControlPoints({
           controlPoints: node.controlPoints,
           degrees,
-          origin: center,
+          origin,
         }),
         curveHandles: rotateDeformerCurveHandles({
           curveHandles: node.curveHandles,
           degrees,
-          origin: center,
+          origin,
         }),
+        rotationOrigin: origin,
       }
     }
-    case 'centerX': {
-      const offset = {x: value - center.x, y: 0}
+    case 'rotationOriginX': {
       return {
-        controlPoints: translateDeformerControlPoints({controlPoints: node.controlPoints, offset}),
-        curveHandles: translateDeformerCurveHandles({curveHandles: node.curveHandles, offset}),
+        controlPoints: node.controlPoints,
+        curveHandles: node.curveHandles,
+        rotationOrigin: {...origin, x: value},
       }
     }
-    case 'centerY': {
-      const offset = {x: 0, y: value - center.y}
+    case 'rotationOriginY': {
       return {
-        controlPoints: translateDeformerControlPoints({controlPoints: node.controlPoints, offset}),
-        curveHandles: translateDeformerCurveHandles({curveHandles: node.curveHandles, offset}),
+        controlPoints: node.controlPoints,
+        curveHandles: node.curveHandles,
+        rotationOrigin: {...origin, y: value},
       }
     }
     default: {
@@ -193,7 +193,7 @@ interface TransformPropertiesProps {
 
 const TransformProperties = (props: TransformPropertiesProps) => (
   <fieldset class="deformer-properties">
-    <legend>자유 변형 디포머</legend>
+    <legend>회전</legend>
     <label>
       각도
       <DeformerNumberInput
@@ -205,23 +205,23 @@ const TransformProperties = (props: TransformPropertiesProps) => (
       />
     </label>
     <label>
-      중심 X
+      회전 중심 X
       <DeformerNumberInput
         disabled={props.disabled}
-        label="자유 변형 중심 X"
-        name="deformer-center-x"
-        value={getDeformerCenter(props.node).x}
-        onChange={(value) => props.onChange('centerX', value)}
+        label="자유 변형 회전 중심 X"
+        name="deformer-rotation-origin-x"
+        value={getDeformerRotationOrigin(props.node).x}
+        onChange={(value) => props.onChange('rotationOriginX', value)}
       />
     </label>
     <label>
-      중심 Y
+      회전 중심 Y
       <DeformerNumberInput
         disabled={props.disabled}
-        label="자유 변형 중심 Y"
-        name="deformer-center-y"
-        value={getDeformerCenter(props.node).y}
-        onChange={(value) => props.onChange('centerY', value)}
+        label="자유 변형 회전 중심 Y"
+        name="deformer-rotation-origin-y"
+        value={getDeformerRotationOrigin(props.node).y}
+        onChange={(value) => props.onChange('rotationOriginY', value)}
       />
     </label>
   </fieldset>
@@ -229,16 +229,13 @@ const TransformProperties = (props: TransformPropertiesProps) => (
 
 interface GridPropertiesProps {
   readonly node: PuppetSceneDeformerNode
-  readonly pointEditingDisabled: boolean
   readonly resolutionEditingDisabled: boolean
   readonly onDivisionChange: (axis: 'columns' | 'rows', value: string) => void
-  readonly onCurveToggle: (pointIndex: number, hasHandle: boolean) => void
-  readonly onPointChange: (pointIndex: number, axis: 'x' | 'y', value: string) => void
 }
 
 const GridProperties = (props: GridPropertiesProps) => (
-  <fieldset class="deformer-properties grid-points">
-    <legend>격자 제어점</legend>
+  <fieldset class="deformer-properties">
+    <legend>격자</legend>
     <div class="grid-resolution">
       <label>
         가로 칸
@@ -267,43 +264,58 @@ const GridProperties = (props: GridPropertiesProps) => (
         />
       </label>
     </div>
-    <For each={Array.from({length: props.node.controlPoints.length / 2}, (_, index) => index)}>
-      {(pointIndex) => {
-        const hasHandle = () =>
-          props.node.curveHandles?.some((handle) => handle.pointIndex === pointIndex) === true
-
-        return (
-          <div class="grid-point-row">
-            <span>{pointIndex + 1}</span>
-            <DeformerNumberInput
-              disabled={props.pointEditingDisabled}
-              label={`격자 제어점 ${pointIndex + 1} X`}
-              name={`deformer-point-${pointIndex + 1}-x`}
-              value={props.node.controlPoints[pointIndex * 2]}
-              onChange={(value) => props.onPointChange(pointIndex, 'x', value)}
-            />
-            <DeformerNumberInput
-              disabled={props.pointEditingDisabled}
-              label={`격자 제어점 ${pointIndex + 1} Y`}
-              name={`deformer-point-${pointIndex + 1}-y`}
-              value={props.node.controlPoints[pointIndex * 2 + 1]}
-              onChange={(value) => props.onPointChange(pointIndex, 'y', value)}
-            />
-            <button
-              aria-label={`격자 제어점 ${pointIndex + 1} 곡률 핸들 ${hasHandle() ? '삭제' : '추가'}`}
-              class="grid-curve-button"
-              disabled={props.resolutionEditingDisabled}
-              type="button"
-              onClick={() => props.onCurveToggle(pointIndex, hasHandle())}
-            >
-              곡률 {hasHandle() ? '−' : '+'}
-            </button>
-          </div>
-        )
-      }}
-    </For>
   </fieldset>
 )
+
+interface ControlPointPropertiesProps {
+  readonly curveEditingDisabled: boolean
+  readonly node: PuppetSceneDeformerNode
+  readonly onCurveToggle: (pointIndex: number, hasHandle: boolean) => void
+  readonly onPointChange: (pointIndex: number, axis: 'x' | 'y', value: string) => void
+  readonly pointEditingDisabled: boolean
+  readonly pointIndex: number
+}
+
+const ControlPointProperties = (props: ControlPointPropertiesProps) => {
+  const hasHandle = () =>
+    props.node.curveHandles?.some((handle) => handle.pointIndex === props.pointIndex) === true
+
+  return (
+    <fieldset class="deformer-properties grid-points">
+      <legend>선택한 제어점 {props.pointIndex + 1}</legend>
+      <div class="grid-point-row">
+        <DeformerNumberInput
+          disabled={props.pointEditingDisabled}
+          label={`격자 제어점 ${props.pointIndex + 1} X`}
+          name={`deformer-point-${props.pointIndex + 1}-x`}
+          value={props.node.controlPoints[props.pointIndex * 2]}
+          onChange={(value) => props.onPointChange(props.pointIndex, 'x', value)}
+        />
+        <DeformerNumberInput
+          disabled={props.pointEditingDisabled}
+          label={`격자 제어점 ${props.pointIndex + 1} Y`}
+          name={`deformer-point-${props.pointIndex + 1}-y`}
+          value={props.node.controlPoints[props.pointIndex * 2 + 1]}
+          onChange={(value) => props.onPointChange(props.pointIndex, 'y', value)}
+        />
+        <button
+          aria-label={`격자 제어점 ${props.pointIndex + 1} 곡률 핸들 ${hasHandle() ? '삭제' : '추가'}`}
+          class="grid-curve-button"
+          disabled={props.curveEditingDisabled}
+          type="button"
+          onClick={() => props.onCurveToggle(props.pointIndex, hasHandle())}
+        >
+          곡률 {hasHandle() ? '−' : '+'}
+        </button>
+      </div>
+    </fieldset>
+  )
+}
+
+interface SelectedControlPoint {
+  readonly node: PuppetSceneDeformerNode
+  readonly pointIndex: number
+}
 
 export const EditorInspector = (props: EditorInspectorProps) => {
   const titleId = createUniqueId()
@@ -314,6 +326,16 @@ export const EditorInspector = (props: EditorInspectorProps) => {
   const deformerNode = () => {
     const node = activeNode()
     return node?.kind === 'deformer' ? node : undefined
+  }
+  const selectedControlPoints = (): ReadonlyArray<SelectedControlPoint> => {
+    const node = deformerNode()
+    if (node === undefined) {
+      return []
+    }
+
+    return [...new Set(props.selectedControlPointIndices ?? [])].flatMap((pointIndex) =>
+      pointIndex >= 0 && pointIndex < node.controlPoints.length / 2 ? [{node, pointIndex}] : [],
+    )
   }
   const canEditRestDeformer = () =>
     props.activeNodeId !== undefined && !isSceneNodeLocked(props.document, props.activeNodeId)
@@ -434,14 +456,23 @@ export const EditorInspector = (props: EditorInspectorProps) => {
         {(node) => (
           <GridProperties
             node={node}
-            pointEditingDisabled={!canEditDeformer()}
             resolutionEditingDisabled={!canEditRestDeformer()}
-            onCurveToggle={handleCurveToggle}
             onDivisionChange={handleGridDivisionChange}
-            onPointChange={handleGridPointChange}
           />
         )}
       </Show>
+      <For each={selectedControlPoints()}>
+        {(selection) => (
+          <ControlPointProperties
+            curveEditingDisabled={!canEditRestDeformer()}
+            node={selection.node}
+            pointEditingDisabled={!canEditDeformer()}
+            pointIndex={selection.pointIndex}
+            onCurveToggle={handleCurveToggle}
+            onPointChange={handleGridPointChange}
+          />
+        )}
+      </For>
       <Show when={props.notice}>{(message) => <p class="notice">{message()}</p>}</Show>
     </aside>
   )

@@ -53,7 +53,8 @@ export const isDeformer = (value: Record<string, unknown>) => {
   return (
     isFiniteNumberArray(value.controlPoints) &&
     value.controlPoints.length === pointCount * COORDINATES_PER_POINT &&
-    isCurveHandles(value.curveHandles, pointCount)
+    isCurveHandles(value.curveHandles, pointCount) &&
+    (value.rotationOrigin === undefined || isPoint(value.rotationOrigin))
   )
 }
 
@@ -65,7 +66,8 @@ export const isParameterDeformerKeyform = (
   value.nodeId.length > 0 &&
   value.kind === 'deformer' &&
   isFiniteNumberArray(value.controlPoints) &&
-  isCurveHandles(value.curveHandles)
+  isCurveHandles(value.curveHandles) &&
+  (value.rotationOrigin === undefined || isPoint(value.rotationOrigin))
 
 export const hasValidDeformerKeyform = (
   deformer: PuppetParameterDeformerKeyform,

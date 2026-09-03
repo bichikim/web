@@ -15,7 +15,11 @@ import {EditorAutoMeshDialog} from './internal/EditorAutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
 import {EditorKeyformPanel} from './internal/EditorKeyformPanel'
 import {EditorLayerPanel} from './internal/EditorLayerPanel'
-import {getDocumentParameters, getParameterBindingsForNodeIds} from './internal/parameter-keyforms'
+import {
+  getDocumentParameterBindings,
+  getDocumentParameters,
+  getParameterBindingsForNodeIds,
+} from './internal/parameter-keyforms'
 import {createParameterPreview} from './internal/parameter-sampling'
 import {getParameterSelectionNodeIds} from './internal/parameter-targets'
 import {convertSceneContainers} from './internal/container-conversion'
@@ -152,6 +156,7 @@ interface EditorViewportProps {
   readonly document: PuppetDocument
   readonly editMode?: 'motion' | 'parameter'
   readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly onDeformerControlPointsSelect?: (pointIndices: ReadonlyArray<number>) => void
   readonly onNotice?: (message: string) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
@@ -203,6 +208,7 @@ const EditorViewport = (props: EditorViewportProps) => (
         document={props.document}
         editMode={props.editMode}
         onDocumentChange={props.onDocumentChange}
+        onControlPointsSelect={props.onDeformerControlPointsSelect}
         onEditStart={props.onVertexEditStart}
         previewDocument={props.previewDocument}
         targetNodeIds={props.targetNodeIds}
@@ -218,12 +224,16 @@ interface EditorModelingKeyformPanelProps {
 }
 
 const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
-  const bindings = () => getParameterBindingsForNodeIds(props.document, props.selectedNodeIds)
+  const bindings = () =>
+    props.editor.allParametersVisible()
+      ? getDocumentParameterBindings(props.document)
+      : getParameterBindingsForNodeIds(props.document, props.selectedNodeIds)
 
   return (
     <EditorKeyformPanel
       activeBindingId={props.editor.activeBindingId() ?? undefined}
       activeKeyformValues={props.editor.activeKeyformValues()}
+      allParametersVisible={props.editor.allParametersVisible()}
       bindings={bindings()}
       parameters={getDocumentParameters(props.document)}
       parameterCreationAvailable={props.selectedNodeIds.length > 0}
@@ -250,27 +260,12 @@ const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
       }}
       onSelectionConnect={props.editor.connectSelection}
       onSelectionDisconnect={props.editor.disconnectSelection}
+      onAllParametersVisibleChange={props.editor.setAllParametersVisible}
       onTwoDimensionalParameterAdd={props.editor.addTwoDimensionalParameter}
       onValueChange={props.editor.setParameterValues}
     />
   )
 }
-
-interface EditorModelingPanelProps {
-  readonly document: PuppetDocument
-  readonly editor: ParameterEditorResult
-  readonly selectedNodeIds: ReadonlyArray<string>
-}
-
-const EditorModelingPanel = (props: EditorModelingPanelProps) => (
-  <section class="modeling-panel" aria-label="Parameter와 키폼 편집">
-    <EditorModelingKeyformPanel
-      document={props.document}
-      editor={props.editor}
-      selectedNodeIds={props.selectedNodeIds}
-    />
-  </section>
-)
 
 interface EditorWorkspacePanelProps {
   readonly currentTime: number
@@ -299,11 +294,13 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
       />
     }
   >
-    <EditorModelingPanel
-      document={props.document}
-      editor={props.editor}
-      selectedNodeIds={props.selectedNodeIds}
-    />
+    <section class="modeling-panel" aria-label="Parameter와 키폼 편집">
+      <EditorModelingKeyformPanel
+        document={props.document}
+        editor={props.editor}
+        selectedNodeIds={props.selectedNodeIds}
+      />
+    </section>
   </Show>
 )
 
@@ -392,6 +389,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
+  const [activeDeformerPointIndices, setActiveDeformerPointIndices] = createSignal<
+    ReadonlyArray<number>
+  >([])
   const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>('modeling')
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [player, setPlayer] = createSignal<Player | null>(null)
@@ -426,6 +426,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
+      setActiveDeformerPointIndices([])
       parameterEditor.reset(document)
     })
   }
@@ -525,6 +526,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onContainerUnwrap={handleContainerUnwrap}
             onDocumentChange={setSourceDocument}
             previewDocument={parameterPreviewDocument()}
+            selectedControlPointIndices={activeDeformerPointIndices()}
             targetNodeIds={parameterEditor.activeTargetNodeIds()}
           />
         }
@@ -537,6 +539,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
               setLayerSelection(selection)
               setActivePartId(getSelectedPartId(sourceDocument(), selection))
               setActiveVertexIndex(null)
+              setActiveDeformerPointIndices([])
             }}
           />
         }
@@ -565,6 +568,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             document={sourceDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
             onDocumentChange={workspace() === 'modeling' ? setSourceDocument : undefined}
+            onDeformerControlPointsSelect={(pointIndices) =>
+              setActiveDeformerPointIndices(pointIndices)
+            }
             onNotice={setNotice}
             onPlayerChange={handlePlayerChange}
             onStatusChange={setPlayerStatus}

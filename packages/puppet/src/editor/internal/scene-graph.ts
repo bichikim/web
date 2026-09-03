@@ -211,6 +211,7 @@ export const createDeformer = (
         kind: 'deformer',
         locked: false,
         name: '새 자유 변형 디포머',
+        rotationOrigin: {x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2},
         rows: 2,
         visible: true,
       } as const
