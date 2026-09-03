@@ -36,15 +36,31 @@ export interface OptionResetGroup {
   readonly storageKeyCount: number
 }
 
+export interface CompleteOptionResetResult {
+  readonly status: 'complete'
+}
+
+export interface PartialOptionResetResult {
+  readonly preservedCount: number
+  readonly resetCount: number
+  readonly status: 'partial'
+  readonly unresolvedCount: number
+}
+
+export type OptionResetResult = CompleteOptionResetResult | PartialOptionResetResult
+
 export interface OptionResetManager {
-  readonly reset: (groupId: OptionResetGroupId) => Promise<void>
-  readonly resetAll: () => Promise<void>
+  readonly reset: (groupId: OptionResetGroupId) => Promise<OptionResetResult>
+  readonly resetAll: () => Promise<OptionResetResult>
 }
 
 export interface OptionResetStorage {
+  readonly getNative: (key: string) => Promise<string | null>
   readonly isNative: () => boolean
   readonly removeNative: (key: string) => Promise<void>
   readonly removeWeb: (key: string) => void
+  readonly setNative: (key: string, value: string) => Promise<void>
+  readonly setWeb: (key: string, value: string) => void
 }
 
 interface CreateOptionResetManagerOptions {
@@ -52,9 +68,33 @@ interface CreateOptionResetManagerOptions {
   readonly storage: OptionResetStorage
 }
 
-const withResetError = async (operation: () => Promise<void>): Promise<void> => {
+interface NativeSnapshot {
+  readonly key: string
+  readonly value: string | null
+}
+
+interface NativeOptionResetStorage {
+  readonly getItem: (key: string) => Promise<string | null>
+  readonly removeItem: (key: string) => Promise<void>
+  readonly setItem: (key: string, value: string) => Promise<void>
+}
+
+interface NativeReadResult {
+  readonly snapshots: ReadonlyArray<NativeSnapshot>
+  readonly unresolvedKeys: ReadonlyArray<string>
+}
+
+const COMPLETE_RESET_RESULT: CompleteOptionResetResult = {status: 'complete'}
+let nativeStoragePromise: Promise<NativeOptionResetStorage> | null = null
+
+const loadNativeStorage = (): Promise<NativeOptionResetStorage> => {
+  nativeStoragePromise ??= import('@apps-in-toss/web-framework').then(({Storage}) => Storage)
+  return nativeStoragePromise
+}
+
+const withResetError = async <Result>(operation: () => Promise<Result>): Promise<Result> => {
   try {
-    await operation()
+    return await operation()
   } catch (error) {
     throw new Error('Failed to reset Pomo options.', {cause: error})
   }
@@ -133,31 +173,184 @@ const getAllKeys = (): ReadonlyArray<string> => [
   ),
 ]
 
-export const createOptionResetManager = (
-  options: CreateOptionResetManagerOptions,
-): OptionResetManager => {
-  const removeKeys = async (keys: ReadonlyArray<string>): Promise<void> => {
-    if (options.storage.isNative()) {
-      await Promise.all(keys.map((key) => options.storage.removeNative(key)))
+const readNativeSnapshots = (
+  storage: OptionResetStorage,
+  keys: ReadonlyArray<string>,
+): Promise<ReadonlyArray<NativeSnapshot>> =>
+  Promise.all(
+    keys.map(async (key) => ({
+      key,
+      value: await storage.getNative(key),
+    })),
+  )
+
+const restoreNativeSnapshots = async (
+  storage: OptionResetStorage,
+  snapshots: ReadonlyArray<NativeSnapshot>,
+): Promise<boolean> => {
+  const restorationResults = await Promise.allSettled(
+    snapshots
+      .filter(
+        (snapshot): snapshot is NativeSnapshot & {readonly value: string} =>
+          snapshot.value !== null,
+      )
+      .toReversed()
+      .map((snapshot) => storage.setNative(snapshot.key, snapshot.value)),
+  )
+
+  return restorationResults.every((result) => result.status === 'fulfilled')
+}
+
+const readAvailableNativeSnapshots = async (
+  storage: OptionResetStorage,
+  keys: ReadonlyArray<string>,
+): Promise<NativeReadResult> => {
+  const readResults = await Promise.allSettled(
+    keys.map(async (key) => ({key, value: await storage.getNative(key)})),
+  )
+  const snapshots: Array<NativeSnapshot> = []
+  const unresolvedKeys: Array<string> = []
+
+  for (const [index, readResult] of readResults.entries()) {
+    const key = keys[index]
+    if (key === undefined) {
+      throw new Error('Native storage read result has no matching key.')
     }
 
-    for (const key of keys) {
-      options.storage.removeWeb(key)
+    if (readResult.status === 'fulfilled') {
+      snapshots.push(readResult.value)
+    } else {
+      unresolvedKeys.push(key)
     }
   }
 
-  const resetKeys = (keys: ReadonlyArray<string>): Promise<void> =>
-    withResetError(() => removeKeys(keys))
+  return {snapshots, unresolvedKeys}
+}
 
-  const resetLocale = (): Promise<void> => withResetError(options.resetLocale)
+const convergeWebStorage = (
+  storage: OptionResetStorage,
+  snapshots: ReadonlyArray<NativeSnapshot>,
+  initialUnresolvedKeys: ReadonlyArray<string> = [],
+): OptionResetResult => {
+  const preservedKeys: Array<string> = []
+  const resetKeys: Array<string> = []
+  const unresolvedKeys = [...initialUnresolvedKeys]
 
-  const resetGroup = async (group: OptionResetGroupDefinition): Promise<void> => {
-    if (group.resetKind === 'locale') {
-      await resetLocale()
-      return
+  for (const snapshot of snapshots) {
+    try {
+      if (snapshot.value === null) {
+        storage.removeWeb(snapshot.key)
+        resetKeys.push(snapshot.key)
+      } else {
+        storage.setWeb(snapshot.key, snapshot.value)
+        preservedKeys.push(snapshot.key)
+      }
+    } catch {
+      unresolvedKeys.push(snapshot.key)
+    }
+  }
+
+  if (preservedKeys.length === 0 && unresolvedKeys.length === 0) {
+    return COMPLETE_RESET_RESULT
+  }
+
+  return {
+    preservedCount: preservedKeys.length,
+    resetCount: resetKeys.length,
+    status: 'partial',
+    unresolvedCount: unresolvedKeys.length,
+  }
+}
+
+const recoverNativeDeletion = async (
+  storage: OptionResetStorage,
+  attemptedSnapshots: ReadonlyArray<NativeSnapshot>,
+  originalSnapshots: ReadonlyArray<NativeSnapshot>,
+  deletionError: unknown,
+): Promise<OptionResetResult> => {
+  const isRestored = await restoreNativeSnapshots(storage, attemptedSnapshots)
+  if (isRestored) {
+    throw deletionError
+  }
+
+  const currentRead = await readAvailableNativeSnapshots(
+    storage,
+    originalSnapshots.map((snapshot) => snapshot.key),
+  )
+  const matchesOriginal =
+    currentRead.unresolvedKeys.length === 0 &&
+    currentRead.snapshots.every(
+      (snapshot, index) => snapshot.value === originalSnapshots[index]?.value,
+    )
+  if (matchesOriginal) {
+    throw deletionError
+  }
+
+  return convergeWebStorage(storage, currentRead.snapshots, currentRead.unresolvedKeys)
+}
+
+const removeNativeKeys = async (
+  storage: OptionResetStorage,
+  keys: ReadonlyArray<string>,
+): Promise<OptionResetResult> => {
+  const originalSnapshots = await readNativeSnapshots(storage, keys)
+  const attemptedSnapshots: Array<NativeSnapshot> = []
+
+  try {
+    for (const snapshot of originalSnapshots) {
+      attemptedSnapshots.push(snapshot)
+      // Deletions stay serial so a failure has a bounded rollback set.
+      // eslint-disable-next-line no-await-in-loop
+      await storage.removeNative(snapshot.key)
+    }
+  } catch (error) {
+    return recoverNativeDeletion(storage, attemptedSnapshots, originalSnapshots, error)
+  }
+
+  return COMPLETE_RESET_RESULT
+}
+
+const removeKeys = async (
+  storage: OptionResetStorage,
+  keys: ReadonlyArray<string>,
+): Promise<OptionResetResult> => {
+  if (storage.isNative()) {
+    const nativeResult = await removeNativeKeys(storage, keys)
+    if (nativeResult.status === 'partial') {
+      return nativeResult
     }
 
-    await resetKeys(group.storageKeys)
+    return convergeWebStorage(
+      storage,
+      keys.map((key) => ({key, value: null})),
+    )
+  }
+
+  for (const key of keys) {
+    storage.removeWeb(key)
+  }
+
+  return COMPLETE_RESET_RESULT
+}
+
+export const createOptionResetManager = (
+  options: CreateOptionResetManagerOptions,
+): OptionResetManager => {
+  const resetKeys = (keys: ReadonlyArray<string>): Promise<OptionResetResult> =>
+    withResetError(() => removeKeys(options.storage, keys))
+
+  const resetLocale = (): Promise<OptionResetResult> =>
+    withResetError(async () => {
+      await options.resetLocale()
+      return COMPLETE_RESET_RESULT
+    })
+
+  const resetGroup = (group: OptionResetGroupDefinition): Promise<OptionResetResult> => {
+    if (group.resetKind === 'locale') {
+      return resetLocale()
+    }
+
+    return resetKeys(group.storageKeys)
   }
 
   const getGroup = (groupId: OptionResetGroupId): OptionResetGroupDefinition => {
@@ -174,19 +367,46 @@ export const createOptionResetManager = (
     reset: (groupId) => resetGroup(getGroup(groupId)),
     resetAll: () =>
       withResetError(async () => {
-        await removeKeys(getAllKeys())
-        await options.resetLocale()
+        const storageResult = await removeKeys(options.storage, getAllKeys())
+        if (storageResult.status === 'partial') {
+          return {
+            ...storageResult,
+            preservedCount: storageResult.preservedCount + LOCALE_RESET_STORAGE_COUNT,
+          }
+        }
+
+        try {
+          await options.resetLocale()
+        } catch {
+          return {
+            preservedCount: 0,
+            resetCount: getAllKeys().length,
+            status: 'partial',
+            unresolvedCount: LOCALE_RESET_STORAGE_COUNT,
+          }
+        }
+
+        return COMPLETE_RESET_RESULT
       }),
   }
 }
 
 const runtimeStorage: OptionResetStorage = {
+  async getNative(key) {
+    const storage = await loadNativeStorage()
+    return storage.getItem(key)
+  },
   isNative: () => 'ReactNativeWebView' in window,
   async removeNative(key) {
-    const {Storage} = await import('@apps-in-toss/web-framework')
-    await Storage.removeItem(key)
+    const storage = await loadNativeStorage()
+    await storage.removeItem(key)
   },
   removeWeb: (key) => localStorage.removeItem(key),
+  async setNative(key, value) {
+    const storage = await loadNativeStorage()
+    await storage.setItem(key, value)
+  },
+  setWeb: (key, value) => localStorage.setItem(key, value),
 }
 
 const runtimeLocaleStorage = {
