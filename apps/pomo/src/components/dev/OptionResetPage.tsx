@@ -32,6 +32,22 @@ interface AllResetRequest {
 
 type ResetRequest = AllResetRequest | GroupResetRequest
 
+const getPartialResetMessage = (
+  resetCount: number,
+  preservedCount: number,
+  unresolvedCount: number,
+): string => {
+  const resultMessage =
+    `일부 옵션만 초기화됐어요. 저장 항목 ${resetCount}개는 초기화됐고 ` +
+    `${preservedCount}개는 유지됐`
+
+  if (unresolvedCount === 0) {
+    return `${resultMessage}습니다. 다시 시도해 주세요.`
+  }
+
+  return `${resultMessage}으며 ${unresolvedCount}개는 상태를 확인하지 못했습니다. 다시 시도해 주세요.`
+}
+
 interface OptionGroupCardProps {
   readonly busy: boolean
   readonly group: OptionResetGroup
@@ -95,15 +111,30 @@ function OptionResetPage(props: OptionResetPageProps) {
     setSuccessMessage(null)
 
     try {
+      let result
       switch (currentRequest.kind) {
         case 'all':
-          await manager.resetAll()
+          result = await manager.resetAll()
           break
         case 'group':
-          await manager.reset(currentRequest.groupId)
+          result = await manager.reset(currentRequest.groupId)
           break
       }
-      setSuccessMessage(`${currentRequest.label}을 초기화했습니다.`)
+
+      switch (result.status) {
+        case 'complete':
+          setSuccessMessage(`${currentRequest.label}을 초기화했습니다.`)
+          break
+        case 'partial':
+          setErrorMessage(
+            getPartialResetMessage(
+              result.resetKeys.length,
+              result.preservedKeys.length,
+              result.unresolvedKeys.length,
+            ),
+          )
+          break
+      }
     } catch {
       setErrorMessage('옵션을 초기화하지 못했어요. 저장소 상태를 확인하고 다시 시도해 주세요.')
     } finally {

@@ -17,8 +17,8 @@ vi.mock('@solidjs/router', () => ({
 vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
 
 const createManager = (): OptionResetManager => ({
-  reset: vi.fn(async () => undefined),
-  resetAll: vi.fn(async () => undefined),
+  reset: vi.fn(async () => ({status: 'complete'}) as const),
+  resetAll: vi.fn(async () => ({status: 'complete'}) as const),
 })
 
 beforeEach(() => {
@@ -97,4 +97,46 @@ it('should report a reset failure without claiming completion', async () => {
 
   expect(await screen.findByRole('alert')).toHaveTextContent('옵션을 초기화하지 못했어요.')
   expect(screen.queryByRole('status')).not.toBeInTheDocument()
+})
+
+it('should report reset and preserved item counts for a partial reset', async () => {
+  const manager = createManager()
+  vi.mocked(manager.reset).mockResolvedValue({
+    preservedKeys: [
+      'pomo:focus-room-scene-style:v1',
+      'pomo:weather-preference:v2',
+      'pomo:weather-preference:v1',
+      'pomo:screen-saver-delay:v1',
+    ],
+    resetKeys: ['pomo:focus-room-scene-preferences:v1'],
+    status: 'partial',
+    unresolvedKeys: [],
+  })
+  render(() => <OptionResetPage manager={manager} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '집중 공간 옵션 초기화'}))
+  fireEvent.click(screen.getByRole('button', {name: '초기화'}))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    '일부 옵션만 초기화됐어요. 저장 항목 1개는 초기화됐고 4개는 유지됐습니다.',
+  )
+  expect(screen.queryByRole('status')).not.toBeInTheDocument()
+})
+
+it('should distinguish unresolved storage items in a partial reset', async () => {
+  const manager = createManager()
+  vi.mocked(manager.resetAll).mockResolvedValue({
+    preservedKeys: [],
+    resetKeys: ['pomo:timer-config:v1'],
+    status: 'partial',
+    unresolvedKeys: ['PARAGLIDE_LOCALE'],
+  })
+  render(() => <OptionResetPage manager={manager} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '모든 옵션 초기화'}))
+  fireEvent.click(screen.getByRole('button', {name: '초기화'}))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    '저장 항목 1개는 초기화됐고 0개는 유지됐으며 1개는 상태를 확인하지 못했습니다.',
+  )
 })
