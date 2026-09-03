@@ -7,7 +7,7 @@ import {getPomoIconClass} from '../../icon-style'
 import {PSelect} from '../../PSelect'
 import {PWeatherStatus} from '../../PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
-import {LearningPanel} from '../LearningPanel'
+import {MemoryAssistPanel} from '../MemoryAssistPanel'
 import {VersionNoticePanel} from '../VersionNoticePanel'
 import {SceneSettingsPanel} from '../SettingsPanel'
 import {SceneToolbar} from '../Toolbar'
@@ -29,7 +29,7 @@ vi.mock('../../PDesktopModeControl', () => ({
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 vi.mock('../../PModelDownloadStatus', () => ({PModelDownloadStatus: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
-vi.mock('../LearningPanel', () => ({LearningPanel: vi.fn()}))
+vi.mock('../MemoryAssistPanel', () => ({MemoryAssistPanel: vi.fn()}))
 vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: vi.fn()}))
 
 const callbacks = {
@@ -86,9 +86,9 @@ beforeEach(() => {
     Object.values(props)
     return <div>{props.fallback}</div>
   })
-  vi.mocked(LearningPanel).mockImplementation((props) => {
+  vi.mocked(MemoryAssistPanel).mockImplementation((props) => {
     Object.values(props)
-    return <div>learning control</div>
+    return <div>memory assist control</div>
   })
   vi.mocked(VersionNoticePanel).mockImplementation((props) => {
     Object.values(props)
@@ -117,16 +117,18 @@ describe('SceneToolbar', () => {
         weatherSceneMode: 'auto',
       }),
     )
-    expect(screen.getByText('learning control')).toBeInTheDocument()
+    expect(screen.getByText('memory assist control')).toBeInTheDocument()
     expect(screen.getByText('version notice control')).toBeInTheDocument()
-    expect(LearningPanel).toHaveBeenCalledWith(expect.objectContaining({sceneStyle: 'original'}))
+    expect(MemoryAssistPanel).toHaveBeenCalledWith(
+      expect.objectContaining({sceneStyle: 'original'}),
+    )
     expect(vi.mocked(VersionNoticePanel).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(PSelect).mock.invocationCallOrder.at(-1) ?? Number.POSITIVE_INFINITY,
     )
     expect(vi.mocked(PSelect).mock.invocationCallOrder.at(-1)).toBeLessThan(
-      vi.mocked(LearningPanel).mock.invocationCallOrder[0],
+      vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0],
     )
-    expect(vi.mocked(LearningPanel).mock.invocationCallOrder[0]).toBeLessThan(
+    expect(vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(SceneSettingsPanel).mock.invocationCallOrder[0],
     )
     expect(PWeatherStatus).toHaveBeenCalledWith(

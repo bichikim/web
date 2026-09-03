@@ -12,7 +12,7 @@ vi.mock('../layer-review/Canvas', () => ({default: vi.fn()}))
 vi.mock('../music-player/Content', () => ({default: vi.fn()}))
 vi.mock('../p-studio/SceneCanvas', () => ({default: vi.fn()}))
 vi.mock('../PSettings', () => ({default: vi.fn()}))
-vi.mock('../PLearning', () => ({default: vi.fn()}))
+vi.mock('../PMemoryAssist', () => ({default: vi.fn()}))
 vi.mock('src/components/ChatRoom', () => ({default: vi.fn()}))
 vi.mock('src/components/DialogueWriter', () => ({default: vi.fn()}))
 vi.mock('src/components/SpeechToTextLab', () => ({default: vi.fn()}))
@@ -30,7 +30,7 @@ const wrapperCases = [
   ['music player', () => import('../music-player/Panel')],
   ['studio scene', () => import('../p-studio/Scene')],
   ['studio settings', () => import('../p-studio/SettingsPanel')],
-  ['studio learning', () => import('../p-studio/LearningPanel')],
+  ['studio memory assist', () => import('../p-studio/MemoryAssistPanel')],
   ['speech workspace', () => import('../dev/speech-to-text/Workspace')],
   ['text mood workspace', () => import('../dev/text-mood/Workspace')],
 ] as const
