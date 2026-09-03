@@ -1,8 +1,39 @@
 /** @vitest-environment jsdom */
 
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
-import {normalizeDeviceLocale, resolveAppsInTossLocale} from '../index'
+import {normalizeDeviceLocale, resetLocale, resolveAppsInTossLocale} from '../index'
+import {cookieDomain, cookieName} from '@paraglide/runtime'
+
+const createStorage = () => ({
+  isNative: vi.fn(() => false),
+  removeCookie: vi.fn(),
+  removeNative: vi.fn(async () => undefined),
+  removeWeb: vi.fn(),
+})
+
+describe('resetLocale', () => {
+  it('should clear only the configured cookie for the web strategy', async () => {
+    const storage = createStorage()
+
+    await resetLocale(storage)
+
+    expect(storage.removeNative).not.toHaveBeenCalled()
+    expect(storage.removeWeb).not.toHaveBeenCalled()
+    expect(storage.removeCookie).toHaveBeenCalledWith(
+      `${cookieName}=; path=/; max-age=0${cookieDomain ? `; domain=${cookieDomain}` : ''}`,
+    )
+  })
+
+  it('should report cookie deletion failures', async () => {
+    const storage = createStorage()
+    storage.removeCookie.mockImplementation(() => {
+      throw new Error('cookie unavailable')
+    })
+
+    await expect(resetLocale(storage)).rejects.toThrow('cookie unavailable')
+  })
+})
 
 describe('normalizeDeviceLocale', () => {
   it('should normalize exact and regional Apps in Toss locales', () => {

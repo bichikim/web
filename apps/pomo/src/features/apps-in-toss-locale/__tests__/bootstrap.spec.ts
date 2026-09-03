@@ -49,6 +49,19 @@ it('should fall back to the framework locale API when Device has no locale', asy
   expect(getLocale).toHaveBeenCalledOnce()
 })
 
+it('should use the cookie locale when browser storage has no persisted locale', async () => {
+  runtimeMocks.extractLocaleFromCookie.mockReturnValue('en')
+  runtimeMocks.extractLocaleFromNavigator.mockReturnValue('ko')
+  vi.doMock('@apps-in-toss/web-framework', () => ({
+    Device: {locale: 'ko'},
+    getLocale: vi.fn(),
+  }))
+
+  const {getInitialAppsInTossLocale} = await import('../bootstrap')
+
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('en')
+})
+
 it('should use browser evidence when storage and the device framework are unavailable', async () => {
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
     throw new Error('storage unavailable')
