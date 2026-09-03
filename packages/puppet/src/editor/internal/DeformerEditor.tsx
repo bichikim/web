@@ -11,7 +11,12 @@ import {
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
 import {setDeformerCurveHandle} from './deformer-curve-handles'
 import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
-import {DeformerControls, type DeformerDragTarget} from './DeformerControls'
+import {DeformerControls} from './DeformerControls'
+import {
+  createDeformerControlSelection,
+  type DeformerControlSelection,
+  type DeformerDragTarget,
+} from './deformer-control-selection'
 import {
   setParameterKeyformDeformerControlPoints,
   setParameterKeyformDeformerCurveHandle,
@@ -36,7 +41,7 @@ interface DeformerEditorProps {
   readonly editMode?: 'motion' | 'parameter'
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onEditStart?: () => void
-  readonly onControlPointsSelect?: (pointIndices: ReadonlyArray<number>) => void
+  readonly controlSelection?: DeformerControlSelection
   readonly previewDocument?: PuppetDocument
   readonly targetNodeIds?: ReadonlyArray<string>
 }
@@ -262,6 +267,7 @@ const getEditBlockMessage = (options: EditBlockOptions) => {
 }
 
 export const DeformerEditor = (props: DeformerEditorProps) => {
+  const controlSelection = untrack(() => props.controlSelection) ?? createDeformerControlSelection()
   let dragTarget: DragTarget | null = null
   let svgElement: SVGSVGElement | undefined
   const displayDocument = () => props.previewDocument ?? props.document
@@ -378,6 +384,7 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
             onPointerUp={stopDrag}
           >
             <DeformerControls
+              controlSelection={controlSelection}
               deformer={activeDeformer()}
               editable={editable()}
               handle={getRotationHandle(
@@ -391,7 +398,6 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
               movePoint={(pointIndex, point) =>
                 updateDeformer({kind: 'controlPoint', pointIndex}, point)
               }
-              onControlPointsSelect={props.onControlPointsSelect}
               origin={rotationOrigin(activeDeformer())}
               radius={handleRadius()}
               startDrag={startDrag}

@@ -11,6 +11,10 @@ import {
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
 import {importPng, type ImportPngErrorCode} from './import-png'
 import {DeformerEditor} from './internal/DeformerEditor'
+import {
+  createDeformerControlSelection,
+  type DeformerControlSelection,
+} from './internal/deformer-control-selection'
 import {EditorAutoMeshDialog} from './internal/EditorAutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
 import {EditorKeyformPanel} from './internal/EditorKeyformPanel'
@@ -153,10 +157,10 @@ interface EditorViewportProps {
   readonly activeNodeId?: string
   readonly activeVertexIndex?: number | null
   readonly currentTime?: number
+  readonly deformerControlSelection: DeformerControlSelection
   readonly document: PuppetDocument
   readonly editMode?: 'motion' | 'parameter'
   readonly onDocumentChange?: (document: PuppetDocument) => void
-  readonly onDeformerControlPointsSelect?: (pointIndices: ReadonlyArray<number>) => void
   readonly onNotice?: (message: string) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
@@ -205,10 +209,10 @@ const EditorViewport = (props: EditorViewportProps) => (
         activeBindingId={props.activeBindingId}
         activeKeyformValues={props.activeKeyformValues}
         activeNodeId={props.activeNodeId}
+        controlSelection={props.deformerControlSelection}
         document={props.document}
         editMode={props.editMode}
         onDocumentChange={props.onDocumentChange}
-        onControlPointsSelect={props.onDeformerControlPointsSelect}
         onEditStart={props.onVertexEditStart}
         previewDocument={props.previewDocument}
         targetNodeIds={props.targetNodeIds}
@@ -389,9 +393,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
-  const [activeDeformerPointIndices, setActiveDeformerPointIndices] = createSignal<
-    ReadonlyArray<number>
-  >([])
+  const deformerControlSelection = createDeformerControlSelection()
   const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>('modeling')
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [player, setPlayer] = createSignal<Player | null>(null)
@@ -426,7 +428,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
-      setActiveDeformerPointIndices([])
+      deformerControlSelection.clear()
       parameterEditor.reset(document)
     })
   }
@@ -526,7 +528,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onContainerUnwrap={handleContainerUnwrap}
             onDocumentChange={setSourceDocument}
             previewDocument={parameterPreviewDocument()}
-            selectedControlPointIndices={activeDeformerPointIndices()}
+            selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
             targetNodeIds={parameterEditor.activeTargetNodeIds()}
           />
         }
@@ -539,7 +541,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
               setLayerSelection(selection)
               setActivePartId(getSelectedPartId(sourceDocument(), selection))
               setActiveVertexIndex(null)
-              setActiveDeformerPointIndices([])
+              deformerControlSelection.clear()
             }}
           />
         }
@@ -565,12 +567,10 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             activePartId={activePartId() ?? undefined}
             activeVertexIndex={activeVertexIndex()}
             currentTime={currentTime()}
+            deformerControlSelection={deformerControlSelection}
             document={sourceDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
             onDocumentChange={workspace() === 'modeling' ? setSourceDocument : undefined}
-            onDeformerControlPointsSelect={(pointIndices) =>
-              setActiveDeformerPointIndices(pointIndices)
-            }
             onNotice={setNotice}
             onPlayerChange={handlePlayerChange}
             onStatusChange={setPlayerStatus}

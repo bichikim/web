@@ -11,6 +11,7 @@ import {
   type PuppetSceneNode,
 } from '../../player'
 import {DeformerEditor} from '../internal/DeformerEditor'
+import {createDeformerControlSelection} from '../internal/deformer-control-selection'
 import {addParameter, insertParameterKeyform} from '../internal/parameter-keyforms'
 import {createParameterPreview} from '../internal/parameter-sampling'
 import {getSceneNode} from '../internal/scene-graph'
@@ -203,12 +204,12 @@ describe('DeformerEditor', () => {
   })
 
   test('should select multiple control points additively and keep rotation controls exclusive', () => {
-    const onControlPointsSelect = vi.fn()
+    const controlSelection = createDeformerControlSelection()
     const view = render(() => (
       <DeformerEditor
         activeNodeId="deformer"
+        controlSelection={controlSelection}
         document={createDocument(createDeformer())}
-        onControlPointsSelect={onControlPointsSelect}
       />
     ))
     const firstPoint = view.getByRole('button', {name: /^격자 제어점 1$/})
@@ -224,7 +225,7 @@ describe('DeformerEditor', () => {
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'true')
     expect(firstPoint).toHaveClass('selected')
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([0])
+    expect(controlSelection.selectedPointIndices()).toEqual([0])
 
     fireEvent(secondPoint, new MouseEvent('pointerdown', {bubbles: true, ctrlKey: true}))
 
@@ -232,20 +233,20 @@ describe('DeformerEditor', () => {
     expect(firstPoint).toHaveClass('selected')
     expect(secondPoint).toHaveAttribute('aria-pressed', 'true')
     expect(secondPoint).toHaveClass('selected')
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([0, 1])
+    expect(controlSelection.selectedPointIndices()).toEqual([0, 1])
 
     fireEvent(firstPoint, new MouseEvent('pointerdown', {bubbles: true, metaKey: true}))
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'false')
     expect(firstPoint).not.toHaveClass('selected')
     expect(secondPoint).toHaveAttribute('aria-pressed', 'true')
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([1])
+    expect(controlSelection.selectedPointIndices()).toEqual([1])
 
     fireEvent(firstPoint, new MouseEvent('pointerdown', {bubbles: true}))
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'true')
     expect(secondPoint).toHaveAttribute('aria-pressed', 'false')
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([0])
+    expect(controlSelection.selectedPointIndices()).toEqual([0])
 
     fireEvent(rotationHandle, new MouseEvent('pointerdown', {bubbles: true}))
 
@@ -253,7 +254,7 @@ describe('DeformerEditor', () => {
     expect(firstPoint).not.toHaveClass('selected')
     expect(rotationHandle).toHaveAttribute('aria-pressed', 'true')
     expect(rotationHandle).toHaveClass('selected')
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([])
+    expect(controlSelection.selectedPointIndices()).toEqual([])
 
     fireEvent(rotationOrigin, new MouseEvent('pointerdown', {bubbles: true}))
 
@@ -264,12 +265,12 @@ describe('DeformerEditor', () => {
   })
 
   test('should select control points and rotation controls with the keyboard', () => {
-    const onControlPointsSelect = vi.fn()
+    const controlSelection = createDeformerControlSelection()
     const view = render(() => (
       <DeformerEditor
         activeNodeId="deformer"
+        controlSelection={controlSelection}
         document={createDocument(createDeformer())}
-        onControlPointsSelect={onControlPointsSelect}
       />
     ))
     const firstPoint = view.getByRole('button', {name: /^격자 제어점 1$/})
@@ -282,12 +283,12 @@ describe('DeformerEditor', () => {
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'true')
     expect(secondPoint).toHaveAttribute('aria-pressed', 'true')
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([0, 1])
+    expect(controlSelection.selectedPointIndices()).toEqual([0, 1])
     expect(rotationHandle).toHaveAttribute('tabindex', '0')
 
     fireEvent.keyDown(rotationHandle, {key: 'Enter'})
     expect(rotationHandle).toHaveAttribute('aria-pressed', 'true')
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([])
+    expect(controlSelection.selectedPointIndices()).toEqual([])
 
     fireEvent.keyDown(rotationOrigin, {key: ' '})
     expect(rotationOrigin).toHaveAttribute('aria-pressed', 'true')
@@ -302,12 +303,12 @@ describe('DeformerEditor', () => {
       scene: {roots: [firstDeformer, secondDeformer]},
     })
     const [activeNodeId, setActiveNodeId] = createSignal(firstDeformer.id)
-    const onControlPointsSelect = vi.fn()
+    const controlSelection = createDeformerControlSelection()
     const view = render(() => (
       <DeformerEditor
         activeNodeId={activeNodeId()}
+        controlSelection={controlSelection}
         document={document()}
-        onControlPointsSelect={onControlPointsSelect}
       />
     ))
     const firstPoint = view.getByRole('button', {name: /^격자 제어점 1$/})
@@ -322,7 +323,7 @@ describe('DeformerEditor', () => {
       'aria-pressed',
       'false',
     )
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([])
+    expect(controlSelection.selectedPointIndices()).toEqual([])
 
     fireEvent(
       view.getByRole('button', {name: /^격자 제어점 1$/}),
@@ -346,7 +347,7 @@ describe('DeformerEditor', () => {
       'aria-pressed',
       'false',
     )
-    expect(onControlPointsSelect).toHaveBeenLastCalledWith([])
+    expect(controlSelection.selectedPointIndices()).toEqual([])
   })
 
   test('should show curve handles only for selected control points and keep them while dragging', () => {

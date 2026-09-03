@@ -1,41 +1,17 @@
-import {createEffect, createSignal, For, untrack} from 'solid-js'
+import {createEffect, For} from 'solid-js'
 
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {createGridPaths, createTranslationPath} from './deformer-paths'
 import {getDeformerPoint} from './deformer-transform'
 import {DeformerCurveControls} from './DeformerCurveControls'
-
-export type DeformerDragTarget =
-  | {readonly kind: 'controlPoint'; readonly pointIndex: number}
-  | {
-      readonly axis: 'horizontal' | 'vertical'
-      readonly kind: 'curveHandle'
-      readonly pointIndex: number
-    }
-  | {readonly kind: 'rotation'}
-  | {readonly kind: 'rotationOrigin'}
-  | {readonly kind: 'translation'; readonly previousPoint: PuppetPoint}
-
-type ExclusiveDeformerControl = 'rotation' | 'rotationOrigin'
-
-interface DeformerControlSelection {
-  readonly exclusiveControl: ExclusiveDeformerControl | null
-  readonly nodeId: string
-  readonly pointIndices: ReadonlyArray<number>
-}
-
-interface SelectionModifiers {
-  readonly ctrlKey: boolean
-  readonly metaKey: boolean
-}
-
-interface DeformerTopology {
-  readonly columns: number
-  readonly nodeId: string
-  readonly rows: number
-}
+import {
+  type DeformerControlSelection,
+  type DeformerDragTarget,
+  type DeformerSelectionModifiers,
+} from './deformer-control-selection'
 
 export interface DeformerControlsProps {
+  readonly controlSelection: DeformerControlSelection
   readonly deformer: PuppetSceneDeformerNode
   readonly editable: boolean
   readonly handle: PuppetPoint
@@ -45,7 +21,6 @@ export interface DeformerControlsProps {
     point: PuppetPoint,
   ) => void
   readonly movePoint: (pointIndex: number, point: PuppetPoint) => void
-  readonly onControlPointsSelect?: (pointIndices: ReadonlyArray<number>) => void
   readonly origin: PuppetPoint
   readonly radius: number
   readonly startDrag: (event: PointerEvent, target: DeformerDragTarget) => void
@@ -79,52 +54,6 @@ const GRID_COORDINATES_PER_POINT = 2
 const KEYBOARD_LARGE_MOVE_DISTANCE = 10
 const ROTATION_ORIGIN_HIT_RADIUS_MULTIPLIER = 2.5
 const ROTATION_ORIGIN_RADIUS_MULTIPLIER = 2
-
-const getExclusiveControl = (target: DeformerDragTarget): ExclusiveDeformerControl | null => {
-  switch (target.kind) {
-    case 'rotation':
-      return 'rotation'
-    case 'rotationOrigin':
-      return 'rotationOrigin'
-    case 'controlPoint':
-    case 'curveHandle':
-    case 'translation':
-      return null
-    default: {
-      const unreachable: never = target
-      return unreachable
-    }
-  }
-}
-
-const getNextSelection = (
-  current: DeformerControlSelection | null,
-  event: SelectionModifiers,
-  nodeId: string,
-  target: DeformerDragTarget,
-): DeformerControlSelection | null => {
-  if (target.kind === 'translation') {
-    return null
-  }
-
-  if (target.kind === 'curveHandle') {
-    return current?.nodeId === nodeId ? current : null
-  }
-
-  if (target.kind !== 'controlPoint') {
-    return {exclusiveControl: getExclusiveControl(target), nodeId, pointIndices: []}
-  }
-
-  const additive = event.metaKey || event.ctrlKey
-  const currentIndices = current?.nodeId === nodeId ? current.pointIndices : []
-  const pointIndices = additive
-    ? currentIndices.includes(target.pointIndex)
-      ? currentIndices.filter((pointIndex) => pointIndex !== target.pointIndex)
-      : [...currentIndices, target.pointIndex]
-    : [target.pointIndex]
-
-  return pointIndices.length === 0 ? null : {exclusiveControl: null, nodeId, pointIndices}
-}
 
 const GridControls = (props: GridControlsProps) => {
   const pointIndices = () =>
@@ -271,57 +200,17 @@ const RotationControls = (props: RotationControlsProps) => {
 }
 
 export const DeformerControls = (props: DeformerControlsProps) => {
-  const [selection, setSelection] = createSignal<DeformerControlSelection | null>(null)
-  let previousTopology: DeformerTopology | null = null
   createEffect(() => {
-    const topology: DeformerTopology = {
+    props.controlSelection.syncTopology({
       columns: props.deformer.columns,
       nodeId: props.deformer.id,
       rows: props.deformer.rows,
-    }
-    const current = untrack(selection)
-    const changed =
-      previousTopology !== null &&
-      (topology.nodeId !== previousTopology.nodeId ||
-        topology.columns !== previousTopology.columns ||
-        topology.rows !== previousTopology.rows)
-    previousTopology = topology
-
-    if (current !== null && changed) {
-      setSelection(null)
-      untrack(() => props.onControlPointsSelect)?.([])
-    }
+    })
   })
-  const selectedPointIndices = () => {
-    const current = selection()
-    return current?.nodeId === props.deformer.id ? current.pointIndices : []
-  }
-  const isSelected = (target: DeformerDragTarget) => {
-    const current = selection()
-    if (current === null || current.nodeId !== props.deformer.id) {
-      return false
-    }
-
-    switch (target.kind) {
-      case 'controlPoint':
-        return current.pointIndices.includes(target.pointIndex)
-      case 'rotation':
-      case 'rotationOrigin':
-        return current.exclusiveControl === target.kind
-      case 'curveHandle':
-      case 'translation':
-        return false
-      default: {
-        const unreachable: never = target
-        return unreachable
-      }
-    }
-  }
-  const selectTarget = (event: SelectionModifiers, target: DeformerDragTarget) => {
-    const nextSelection = getNextSelection(selection(), event, props.deformer.id, target)
-    setSelection(nextSelection)
-    props.onControlPointsSelect?.(nextSelection?.pointIndices ?? [])
-  }
+  const isSelected = (target: DeformerDragTarget) =>
+    props.controlSelection.isSelected(props.deformer.id, target)
+  const selectTarget = (event: DeformerSelectionModifiers, target: DeformerDragTarget) =>
+    props.controlSelection.select(event, props.deformer.id, target)
   const startDrag = (event: PointerEvent, target: DeformerDragTarget) => {
     if (event.button === 0 && props.editable) {
       selectTarget(event, target)
@@ -330,8 +219,7 @@ export const DeformerControls = (props: DeformerControlsProps) => {
   }
   const startTranslationDrag = (event: PointerEvent) => {
     if (event.button === 0 && props.editable) {
-      setSelection(null)
-      props.onControlPointsSelect?.([])
+      props.controlSelection.clear()
     }
     props.startTranslationDrag(event)
   }
@@ -357,7 +245,7 @@ export const DeformerControls = (props: DeformerControlsProps) => {
         }
         onMove={props.moveCurveHandle}
         radius={props.radius}
-        selectedPointIndices={selectedPointIndices()}
+        selectedPointIndices={props.controlSelection.selectedPointIndices()}
         transform={props.transform}
       />
       <RotationControls
