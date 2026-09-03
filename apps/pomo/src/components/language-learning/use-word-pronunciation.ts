@@ -9,6 +9,7 @@ import {
   createLanguageLearningWordAudioRepository,
   type LanguageLearningWord,
   type LanguageLearningWordAudioRepository,
+  LanguageLearningWordAudioStorageError,
 } from '../../features/language-learning'
 import {type ModelAssetManager, useModelAssetManager} from '../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../features/supertonic'
@@ -25,8 +26,21 @@ interface PendingPronunciation {
 
 type AudioUrlMap = Readonly<Record<string, string>>
 
-const getFailureMessage = (reason: unknown) =>
-  reason instanceof Error ? reason.message : m.learning_words_pronunciation_failed()
+const getFailureMessage = (reason: unknown) => {
+  if (reason instanceof LanguageLearningWordAudioStorageError) {
+    switch (reason.operation) {
+      case 'delete':
+        return m.learning_words_audio_delete_failed()
+      case 'open':
+      case 'read':
+        return m.learning_words_audio_load_failed()
+      case 'write':
+        return m.learning_words_audio_save_failed()
+    }
+  }
+
+  return reason instanceof Error ? reason.message : m.learning_words_pronunciation_failed()
+}
 
 interface AudioPublisherOptions {
   readonly getAudioUrls: () => AudioUrlMap

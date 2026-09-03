@@ -1,13 +1,15 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {readonly children: unknown}) => <>{props.children}</>,
 }))
 vi.mock('../user-auth/TossAccount', () => ({TossAccount: () => <p>Toss account</p>}))
 vi.mock('../user-auth/WebAccount', () => ({WebAccount: () => <p>Web account</p>}))
+
+beforeEach(() => cleanup())
 
 afterEach(() => {
   cleanup()

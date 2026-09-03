@@ -17,7 +17,7 @@ import {
   FOCUS_ROOM_ENTRY_EVENT,
   type PDialogue,
 } from './schema'
-import * as m from '@paraglide/message'
+import {settings_events_loading_failed} from '@paraglide/message/settings_events_loading_failed'
 
 export interface UsePEventControllerProps {
   readonly isPlaybackEnabled?: boolean
@@ -144,7 +144,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       }
 
       console.error('Failed to initialize focus room events.', error)
-      setErrorMessage(m.settings_events_loading_failed())
+      setErrorMessage(settings_events_loading_failed())
     } finally {
       if (!isDisposed) {
         setIsLoading(false)

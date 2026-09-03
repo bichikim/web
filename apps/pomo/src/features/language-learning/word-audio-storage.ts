@@ -10,23 +10,22 @@ export interface LanguageLearningWordAudioRepository {
   readonly save: (word: LanguageLearningWord, audio: Blob) => Promise<void>
 }
 
-const getAudioPath = (word: LanguageLearningWord) =>
-  `${AUDIO_PATH_PREFIX}/${word.language}/${encodeURIComponent(word.value)}.opus`
+export class LanguageLearningWordAudioStorageError extends Error {
+  override readonly name = 'LanguageLearningWordAudioStorageError'
 
-const getStorageErrorMessage = (error: ModelStorageError) => {
-  switch (error.operation) {
-    case 'delete':
-      return '단어 발음을 삭제하지 못했어요.'
-    case 'open':
-    case 'read':
-      return '저장된 단어 발음을 불러오지 못했어요.'
-    case 'write':
-      return '단어 발음을 저장하지 못했어요.'
+  constructor(
+    readonly operation: ModelStorageError['operation'],
+    options: ErrorOptions,
+  ) {
+    super('Language learning word audio storage failed', options)
   }
 }
 
+const getAudioPath = (word: LanguageLearningWord) =>
+  `${AUDIO_PATH_PREFIX}/${word.language}/${encodeURIComponent(word.value)}.opus`
+
 const throwStorageError = (error: ModelStorageError): never => {
-  throw new Error(getStorageErrorMessage(error), {cause: error.cause})
+  throw new LanguageLearningWordAudioStorageError(error.operation, {cause: error.cause})
 }
 
 /** Persists compressed word pronunciation audio in the browser cache. */

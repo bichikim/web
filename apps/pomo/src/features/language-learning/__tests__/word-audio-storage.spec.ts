@@ -2,7 +2,10 @@ import {expect, it, vi} from 'vitest'
 
 import type {ModelStorage} from '../../model-storage'
 import type {LanguageLearningWord} from '../word-schema'
-import {createLanguageLearningWordAudioRepository} from '../word-audio-storage'
+import {
+  createLanguageLearningWordAudioRepository,
+  LanguageLearningWordAudioStorageError,
+} from '../word-audio-storage'
 
 const word: LanguageLearningWord = {
   createdAt: '2026-09-03T00:00:00.000Z',
@@ -44,4 +47,20 @@ it('should delete the saved word audio entry', async () => {
   await repository.delete(word)
 
   expect(storage.delete).toHaveBeenCalledWith(expect.stringMatching(/\.opus$/u))
+})
+
+it('should expose a stable storage operation instead of a localized error message', async () => {
+  const storage = createStorage()
+  const cause = new Error('cache unavailable')
+  vi.mocked(storage.set).mockResolvedValueOnce({
+    error: {cause, operation: 'write'},
+    ok: false,
+  })
+  const repository = createLanguageLearningWordAudioRepository(storage)
+
+  await expect(repository.save(word, new Blob(['audio']))).rejects.toMatchObject({
+    cause,
+    name: 'LanguageLearningWordAudioStorageError',
+    operation: 'write',
+  } satisfies Partial<LanguageLearningWordAudioStorageError>)
 })

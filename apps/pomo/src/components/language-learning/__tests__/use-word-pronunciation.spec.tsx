@@ -1,22 +1,27 @@
 /** @vitest-environment jsdom */
 
 import {render, screen} from '@solidjs/testing-library'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
   createLanguageLearningWordAudioRepository,
   type LanguageLearningWord,
   type LanguageLearningWordAudioRepository,
+  LanguageLearningWordAudioStorageError,
 } from '../../../features/language-learning'
 import {type ModelAssetManager, useModelAssetManager} from '../../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {generateLanguageLearningWordPronunciation} from '../word-pronunciation'
 import {useLanguageLearningWordPronunciation} from '../use-word-pronunciation'
 
 vi.mock('../../../features/model-download', () => ({useModelAssetManager: vi.fn()}))
-vi.mock('../../../features/language-learning', () => ({
-  createLanguageLearningWordAudioRepository: vi.fn(),
-}))
+vi.mock('../../../features/language-learning', async () => {
+  const actual = await vi.importActual<typeof import('../../../features/language-learning')>(
+    '../../../features/language-learning',
+  )
+  return {...actual, createLanguageLearningWordAudioRepository: vi.fn()}
+})
 vi.mock('../../../features/supertonic', () => ({isSupertonicModelDownloaded: vi.fn()}))
 vi.mock('../word-pronunciation', () => ({generateLanguageLearningWordPronunciation: vi.fn()}))
 
@@ -27,6 +32,7 @@ const word: LanguageLearningWord = {
   value: 'Home',
   version: 1,
 }
+const originalGetLocale = getLocale
 
 const createManager = () => ({
   runAfterModel: vi.fn(),
@@ -66,6 +72,7 @@ const Harness = () => {
 }
 
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   vi.clearAllMocks()
   manager = createManager()
   audioRepository = createAudioRepository()
@@ -84,6 +91,26 @@ beforeEach(() => {
   })
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pronunciation')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+})
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should localize word-audio storage failures at the UI boundary', async () => {
+  overwriteGetLocale(() => 'en')
+  audioRepository.get.mockRejectedValueOnce(
+    new LanguageLearningWordAudioStorageError('read', {cause: new Error('cache unavailable')}),
+  )
+  render(() => <Harness />)
+
+  requestWord(word)
+
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('error')).toHaveTextContent(
+      'The saved word pronunciation could not be loaded.',
+    ),
+  )
 })
 
 it('should generate a pronunciation with a ready model and expose the audio URL', async () => {
