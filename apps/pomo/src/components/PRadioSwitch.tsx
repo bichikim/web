@@ -1,9 +1,33 @@
 import {RadioGroup} from '@kobalte/core/radio-group'
-import {cx} from 'class-variance-authority'
+import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {For, type JSX, Show} from 'solid-js'
 
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {getPomoIconClass} from './icon-style'
+
+const radioItemClasses = cva('group min-w-0', {
+  defaultVariants: {
+    distribution: 'equal',
+  },
+  variants: {
+    distribution: {
+      content: 'flex-auto',
+      equal: 'flex-1',
+    },
+  },
+})
+
+const radioLabelClasses = cva('', {
+  defaultVariants: {
+    distribution: 'equal',
+  },
+  variants: {
+    distribution: {
+      content: 'whitespace-nowrap',
+      equal: '',
+    },
+  },
+})
 
 export interface PRadioSwitchOption<TValue extends string> {
   readonly disabled?: boolean
@@ -12,7 +36,9 @@ export interface PRadioSwitchOption<TValue extends string> {
   readonly value: TValue
 }
 
-export interface PRadioSwitchProps<TValue extends string> {
+export interface PRadioSwitchProps<TValue extends string> extends VariantProps<
+  typeof radioItemClasses
+> {
   readonly class?: string
   readonly disabled?: boolean
   readonly label: string
@@ -85,7 +111,7 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
         <For each={props.options}>
           {(option) => (
             <RadioGroup.Item
-              class="group min-w-0 flex-1"
+              class={radioItemClasses({distribution: props.distribution})}
               disabled={props.disabled || option.disabled}
               value={option.value}
             >
@@ -117,7 +143,9 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                     />
                   )}
                 </Show>
-                <span>{option.label}</span>
+                <span class={radioLabelClasses({distribution: props.distribution})}>
+                  {option.label}
+                </span>
                 <RadioGroup.ItemIndicator class="inline-flex flex-none text-primary">
                   <span
                     aria-hidden="true"

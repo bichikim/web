@@ -113,6 +113,7 @@ const PGeneralSceneSettings = (props: PSettingsProps) => (
       />
       <div class="lg:hidden">
         <PRadioSwitch
+          distribution="content"
           label={m.settings_activity()}
           onChange={(activity) => props.onActivityChange?.(activity)}
           options={getLocalizedActivityOptions()}
