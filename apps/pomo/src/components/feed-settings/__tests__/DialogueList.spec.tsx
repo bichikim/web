@@ -108,10 +108,14 @@ it('should localize persisted feed issues for the current language', () => {
 
 it('should omit source links from saved feed dialogue items', () => {
   const {controller} = createController()
-  render(() => <PFeedDialogueList controller={controller} />)
+  const result = render(() => <PFeedDialogueList controller={controller} />)
 
   const dialogueList = screen.getByRole('list', {name: '피드 대화'})
   expect(within(dialogueList).queryByRole('link')).toBeNull()
+  expect(result.container.querySelector('.pomo-feed-settings__dialogue-list')).toHaveClass(
+    '[&_>_li]:border-content-border',
+    '[&_>_li]:bg-content-surface',
+  )
 })
 
 it('should require confirmation before deleting a feed dialogue', async () => {
@@ -122,7 +126,13 @@ it('should require confirmation before deleting a feed dialogue', async () => {
 
   expect(onDeleteDialogue).not.toHaveBeenCalled()
   expect(screen.getByRole('button', {name: '취소'})).toBeDefined()
-  fireEvent.click(screen.getByRole('button', {name: '새 피드 소식 피드 대화 삭제 확인'}))
+  const deleteConfirmation = screen.getByRole('button', {
+    name: '새 피드 소식 피드 대화 삭제 확인',
+  })
+  expect(deleteConfirmation.parentElement?.className).toContain(
+    '[&_[data-pomo-feed-delete-confirm]]:text-danger',
+  )
+  fireEvent.click(deleteConfirmation)
 
   await waitFor(() => expect(onDeleteDialogue).toHaveBeenCalledWith('dialogue-1'))
 })
@@ -257,7 +267,7 @@ it('should show an empty dialogue state, refresh feeds, and list unreadable item
 
   render(() => <PFeedDialogueList controller={controller} />)
 
-  expect(screen.getByText(/아직 완성된 피드 대화가 없어요/u)).toBeDefined()
+  expect(screen.getByText(/아직 완성된 피드 대화가 없어요/u)).toHaveClass('bg-content-surface')
   expect(screen.getByText('읽지 못한 소식')).toBeDefined()
   expect(screen.getByText('읽을 수 있는 원문을 가져오지 못했어요.')).toBeDefined()
   expect(screen.getByRole('link', {name: '원문 보기'})).toHaveAttribute(

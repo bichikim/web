@@ -35,20 +35,22 @@ const FINISHING_PROGRESS_STEPS = [
   FINAL_GENERATING_PROGRESS,
 ] as const
 const BUTTON_CLASSES = cx(
-  'min-h-11 cursor-pointer border-0 rounded-full bg-[#d6b585] py-0 px-[1.2rem]',
-  'font-[750] text-[#241a12] [&:disabled]:[cursor:not-allowed] [&:disabled]:[opacity:0.4]',
-  '[&:focus-visible]:[outline:0.125rem_solid_#d6b585] [&:focus-visible]:[outline-offset:0.125rem]',
+  'min-h-11 cursor-pointer border-0 rounded-full bg-highlight py-0 px-[1.2rem]',
+  'font-[750] text-background [&:disabled]:[cursor:not-allowed] [&:disabled]:[opacity:0.4]',
+  'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-highlight',
+  'focus-visible:outline-offset-2',
 )
 const FIELD_CLASSES = cx(
-  'grid gap-2 text-[#eee4d9] text-[0.82rem] font-bold',
+  'grid gap-2 text-foreground text-[0.82rem] font-bold',
   '[&_input[type=text]]:min-h-12 [&_input[type=text]]:w-full [&_input[type=text]]:box-border',
-  '[&_input[type=text]]:[border:0.0625rem_solid_rgb(255_255_255_/_12%)]',
-  '[&_input[type=text]]:rounded-xl [&_input[type=text]]:bg-[#17130f]',
-  '[&_input[type=text]]:px-[0.9rem] [&_input[type=text]]:text-[#fffaf1]',
+  '[&_input[type=text]]:border [&_input[type=text]]:border-solid [&_input[type=text]]:border-border',
+  '[&_input[type=text]]:rounded-xl [&_input[type=text]]:bg-surface-strong',
+  '[&_input[type=text]]:px-[0.9rem] [&_input[type=text]]:text-foreground',
   '[&_input[type=text]]:[font:inherit] [&_input[type=text]]:font-[500]',
   '[&_input[type=text]]:outline-none',
-  '[&_input[type=text]:focus-visible]:[outline:0.125rem_solid_#d6b585]',
-  '[&_input[type=text]:focus-visible]:[outline-offset:0.125rem]',
+  '[&_input[type=text]:focus-visible]:outline-2 [&_input[type=text]:focus-visible]:outline-solid',
+  '[&_input[type=text]:focus-visible]:outline-highlight',
+  '[&_input[type=text]:focus-visible]:[outline-offset:2px]',
 )
 const ACTION_CLASSES = 'flex justify-end gap-3'
 
@@ -316,14 +318,14 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
   })
 
   return (
-    <section aria-labelledby="dialogue-draft-title" class="rounded-xl bg-white/4">
+    <section aria-labelledby="dialogue-draft-title" class="rounded-xl bg-content-surface">
       <button
         aria-controls="dialogue-draft-content"
         aria-expanded={isExpanded()}
         class={cx(
           'flex min-h-16 w-full cursor-pointer items-center gap-3 border-0 rounded-xl',
-          'bg-transparent px-4 py-3 text-left text-[#fffaf1] outline-none',
-          'hover:bg-white/4 focus-visible:outline-2 focus-visible:outline-highlight',
+          'bg-transparent px-4 py-3 text-left text-foreground outline-none',
+          'hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-highlight',
           'focus-visible:outline-offset-2',
         )}
         onClick={() => setIsExpanded((expanded) => !expanded)}
@@ -333,7 +335,7 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
           <span class="text-[0.95rem] font-[750]" id="dialogue-draft-title">
             초안 만들기
           </span>
-          <span class="text-[#ad9f90] text-xs leading-[1.5]">AI 도움 · 선택 기능</span>
+          <span class="text-muted-foreground text-xs leading-[1.5]">AI 도움 · 선택 기능</span>
         </span>
         <span
           aria-hidden="true"
@@ -344,7 +346,7 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
 
       <div hidden={!isExpanded()} id="dialogue-draft-content">
         <div class="grid gap-4 px-4 pb-4">
-          <p class="m-0 text-[#ad9f90] text-xs leading-[1.5]">
+          <p class="m-0 text-muted-foreground text-xs leading-[1.5]">
             주제와 분량을 정하면 기기 안에서 대사 초안을 작성해요.
           </p>
           <label class={FIELD_CLASSES}>
@@ -359,10 +361,10 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
             />
           </label>
 
-          <label class="grid gap-2 text-[#eee4d9] text-[0.82rem] font-bold">
+          <label class="grid gap-2 text-foreground text-[0.82rem] font-bold">
             <span class="flex justify-between gap-4">
               생성 분량
-              <strong class="text-[#e6c998]">{length()}자</strong>
+              <strong class="text-highlight">{length()}자</strong>
             </span>
             <input
               aria-label="생성 분량"
@@ -376,7 +378,7 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
               type="range"
               value={length()}
             />
-            <span class="flex justify-between text-[#ad9f90] text-[0.72rem] font-[550]">
+            <span class="flex justify-between text-muted-foreground text-[0.72rem] font-[550]">
               <span>{MINIMUM_DIALOGUE_SCRIPT_LENGTH}자</span>
               <span>{MAXIMUM_DIALOGUE_SCRIPT_LENGTH}자</span>
             </span>

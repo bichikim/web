@@ -19,6 +19,10 @@ it('should share dialogue text, metadata, and actions in one library item', () =
   expect(screen.getByText('I feel at home here.')).not.toHaveAttribute('title')
   expect(screen.getByText('사용 단어: home, wave')).toBeDefined()
   expect(screen.getByRole('button', {name: '듣기'})).toBeDefined()
+  expect(screen.getByText('I feel at home here.').closest('li')).toHaveClass(
+    'border-content-border',
+    'bg-content-surface',
+  )
   expect(
     screen
       .getByText('I feel at home here.')

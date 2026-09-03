@@ -107,6 +107,9 @@ it('should add several unknown words at once and filter them by language', () =>
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   expect(input.parentElement?.className).toContain('bg-surface')
+  expect(result.container.querySelector('.pomo-learning-words > div')).toHaveClass(
+    'bg-content-surface',
+  )
   expect(screen.getByRole('button', {name: '단어 저장'}).className).toContain('rounded-control')
   expect(vi.mocked(PSelect).mock.calls[0]?.[0].class).toBe('w-full')
 
@@ -130,7 +133,10 @@ it('should add several unknown words at once and filter them by language', () =>
   fireEvent.change(screen.getByRole('combobox', {name: '학습 언어'}), {
     target: {value: 'ja'},
   })
-  expect(screen.getByText('저장한 단어가 없어요.').className).toContain('border-dashed')
+  expect(screen.getByText('저장한 단어가 없어요.')).toHaveClass(
+    'border-dashed',
+    'bg-content-surface',
+  )
 
   result.unmount()
 })
@@ -383,6 +389,7 @@ it('should report storage failures while saving and deleting words', () => {
 
   fireEvent.input(input, {target: {value: 'unavailable'}})
   fireEvent.click(screen.getByRole('button', {name: '단어 저장'}))
+  expect(screen.getByRole('status')).toHaveClass('text-danger')
   expect(screen.getByRole('status')).toHaveTextContent('학습 단어를 저장하지 못했어요.')
 
   setItem.mockRestore()

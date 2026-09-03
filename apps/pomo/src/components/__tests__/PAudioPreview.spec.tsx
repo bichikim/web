@@ -19,6 +19,11 @@ it('should request a source through the shared loading interface', () => {
 
   fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
   expect(onRequest).toHaveBeenCalledOnce()
+  expect(screen.getByRole('button', {name: '첫 곡 미리 듣기'})).toHaveClass(
+    'border-border',
+    'bg-content-surface',
+    'text-foreground',
+  )
   expect(result.container.querySelector('audio')).toBeNull()
 
   result.unmount()

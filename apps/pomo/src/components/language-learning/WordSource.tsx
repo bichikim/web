@@ -55,7 +55,7 @@ export const LanguageLearningWordSourceControl = (
       <Show
         when={props.source === 'direct'}
         fallback={
-          <div class="grid gap-2 rounded-panel border border-solid border-border bg-[rgb(255_255_255_/_3%)] p-4">
+          <div class="grid gap-2 rounded-panel border border-solid border-border bg-content-surface p-4">
             <Show
               when={hasEnoughSavedWords()}
               fallback={

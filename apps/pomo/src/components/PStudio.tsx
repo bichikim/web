@@ -30,7 +30,6 @@ import {
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsListener,
 } from '../features/desktop-mode'
-import {cssPixelsToRem} from '../features/css-units'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
 import {PSceneFallback} from './p-studio/SceneFallback'
@@ -181,7 +180,7 @@ export const PStudio = () => {
     <section
       aria-label="Pomo"
       class="pomo-studio relative h-dvh w-full overflow-hidden"
-      style={{'--pomo-safe-area-inset-top': cssPixelsToRem(desktopSafeAreaTop())}}
+      style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
     >
       <figure
         aria-label={selectedScene().label}

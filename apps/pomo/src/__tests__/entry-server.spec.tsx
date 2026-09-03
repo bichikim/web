@@ -111,21 +111,25 @@ describe('entry-server', () => {
     const documentElement = renderedDocument as HTMLHtmlElement
     expect(documentElement.lang).toBe('ko')
     expect(documentElement.dir).toBe('rtl')
-    expect(documentElement.dataset.colorScheme).toBe('dark')
+    expect(documentElement.classList.contains('dark')).toBe(true)
+    expect(documentElement.querySelector('meta[name="theme-color"]')).toBeNull()
+    expect(documentElement.querySelector('script')).not.toBeNull()
     expect(readChildren).toHaveBeenCalledOnce()
     expect(readScripts).toHaveBeenCalledOnce()
-    expect(insertedValues).toEqual(['children-slot', 'script-slot'])
+    expect(insertedValues).toEqual(expect.arrayContaining(['children-slot', 'script-slot']))
   })
 
-  it('should render the locked light document for the Apps in Toss target', async () => {
+  it('should render the light fallback document for the Apps in Toss target', async () => {
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
 
     await import('../entry-server')
     executeRegisteredHandler()
 
-    expect(renderedDocument?.dataset.colorScheme).toBe('light')
+    expect(renderedDocument?.classList.contains('dark')).toBe(false)
+    expect(renderedDocument?.querySelector('meta[name="theme-color"]')).toBeNull()
+    expect(renderedDocument?.querySelector('script')).not.toBeNull()
     expect(readChildren).toHaveBeenCalledOnce()
     expect(readScripts).toHaveBeenCalledOnce()
-    expect(insertedValues).toEqual(['children-slot', 'script-slot'])
+    expect(insertedValues).toEqual(expect.arrayContaining(['children-slot', 'script-slot']))
   })
 })

@@ -41,7 +41,7 @@ describe('useAppsInTossSafeArea', () => {
       '0rem',
     )
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-bottom')).toBe(
-      '2.125rem',
+      '34px',
     )
 
     const [{onEvent}] = safeAreaMocks.subscribe.mock.calls[0] as [
@@ -53,7 +53,7 @@ describe('useAppsInTossSafeArea', () => {
       '0rem',
     )
     expect(document.documentElement.style.getPropertyValue('--pomo-safe-area-inset-right')).toBe(
-      '0.5625rem',
+      '9px',
     )
   })
 

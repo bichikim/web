@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {cookieName, localStorageKey, setLocale} from '@paraglide/runtime'
-import {expect, it, vi} from 'vitest'
+import {cookieName, getLocale, localStorageKey, setLocale} from '@paraglide/runtime'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import {
   createOptionResetManager,
@@ -22,6 +22,12 @@ const createManager = (
 ) => ({
   manager: createOptionResetManager({resetLocale, storage}),
   resetLocale,
+})
+
+afterEach(() => {
+  document.cookie = `${cookieName}=; path=/; max-age=0`
+  localStorage.clear()
+  vi.restoreAllMocks()
 })
 
 it('should reset only the storage keys owned by one option group', async () => {
@@ -114,4 +120,30 @@ it('should remove the Paraglide cookie through the runtime manager', async () =>
 
   expect(document.cookie).not.toContain(`${cookieName}=en`)
   expect(localStorage.getItem(localStorageKey)).toBe('en')
+})
+
+it('should remove the Paraglide cookie when every option is reset', async () => {
+  await setLocale('en', {reload: false})
+  localStorage.setItem(localStorageKey, 'en')
+  localStorage.setItem('pomo:viewed-version-release:v1', '1.0.0')
+
+  const manager = createRuntimeOptionResetManager()
+  await manager.resetAll()
+
+  expect(document.cookie).not.toContain(`${cookieName}=en`)
+  expect(localStorage.getItem(localStorageKey)).toBe('en')
+  expect(localStorage.getItem('pomo:viewed-version-release:v1')).toBeNull()
+})
+
+it('should use the preferred browser locale on the next web bootstrap after reset', async () => {
+  vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['en-US'])
+  await setLocale('ko', {reload: false})
+  localStorage.setItem(localStorageKey, 'ko')
+
+  const manager = createRuntimeOptionResetManager()
+  await manager.reset('language')
+
+  expect(document.cookie).not.toContain(`${cookieName}=ko`)
+  expect(localStorage.getItem(localStorageKey)).toBe('ko')
+  expect(getLocale()).toBe('en')
 })

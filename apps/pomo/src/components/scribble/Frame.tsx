@@ -14,10 +14,6 @@ const SCRIBBLE_ACCENT_PATH = cx(
   'M 0 82 C 2 61 -1 37 2 17',
 )
 
-export const SCRIBBLE_MASK_IMAGE = `url("data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 100 100"><path d="${SCRIBBLE_BORDER_PATH}" fill="white"/></svg>`,
-)}")`
-
 interface PScribbleFrameProps {
   readonly class?: string
 }

@@ -1,13 +1,24 @@
-import {resetLocale as resetLocaleStorage} from '../apps-in-toss-locale'
-import {localStorageKey} from '@paraglide/runtime'
+import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 
-interface OptionResetGroupDefinition {
+interface OptionResetGroupDefinitionBase {
   readonly description: string
   readonly id: OptionResetGroupId
   readonly label: string
-  readonly resetKind?: 'locale'
+}
+
+interface StorageOptionResetGroupDefinition extends OptionResetGroupDefinitionBase {
+  readonly resetKind?: undefined
   readonly storageKeys: ReadonlyArray<string>
 }
+
+interface LocaleOptionResetGroupDefinition extends OptionResetGroupDefinitionBase {
+  readonly resetKind: 'locale'
+  readonly storageKeyCount: number
+}
+
+type OptionResetGroupDefinition =
+  | LocaleOptionResetGroupDefinition
+  | StorageOptionResetGroupDefinition
 
 export type OptionResetGroupId =
   | 'desktop'
@@ -96,7 +107,7 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     id: 'language',
     label: '언어',
     resetKind: 'locale',
-    storageKeys: [localStorageKey],
+    storageKeyCount: LOCALE_RESET_STORAGE_COUNT,
   },
   {
     description: 'What’s new 팝업의 마지막 열람 버전',
@@ -111,15 +122,14 @@ export const OPTION_RESET_GROUPS: ReadonlyArray<OptionResetGroup> = GROUP_DEFINI
     description: group.description,
     id: group.id,
     label: group.label,
-    storageKeyCount: group.storageKeys.length,
+    storageKeyCount:
+      group.resetKind === 'locale' ? group.storageKeyCount : group.storageKeys.length,
   }),
 )
 
 const getAllKeys = (): ReadonlyArray<string> => [
   ...new Set(
-    GROUP_DEFINITIONS.filter((group) => group.resetKind === undefined).flatMap(
-      (group) => group.storageKeys,
-    ),
+    GROUP_DEFINITIONS.flatMap((group) => (group.resetKind === 'locale' ? [] : group.storageKeys)),
   ),
 ]
 
@@ -180,10 +190,10 @@ const runtimeStorage: OptionResetStorage = {
 }
 
 const runtimeLocaleStorage = {
-  ...runtimeStorage,
   removeCookie: (cookie: string) => {
     document.cookie = cookie
   },
+  removeWeb: runtimeStorage.removeWeb,
 }
 
 export const createRuntimeOptionResetManager = (): OptionResetManager =>

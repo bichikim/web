@@ -5,8 +5,8 @@ import * as m from '@paraglide/message'
 import {PTag} from '../PTag'
 
 const CREDIT_ITEM_CLASS = cx(
-  'rounded-panel border border-solid border-[rgb(255_255_255_/_6%)]',
-  'bg-[rgb(255_255_255_/_3%)] px-4 py-3',
+  'rounded-panel border border-solid border-content-border',
+  'bg-content-surface px-4 py-3',
 )
 
 const LICENSE_SOURCE_SUFFIX = ' 라이선스 원문'

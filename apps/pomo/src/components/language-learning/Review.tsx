@@ -10,7 +10,7 @@ const REGENERATE_CLASS = cx(
   'px-4 text-sm font-700 text-foreground disabled:cursor-not-allowed disabled:opacity-40',
 )
 const SAVE_CLASS = cx(
-  'min-h-11 cursor-pointer border-0 rounded-full bg-highlight px-5 font-750 text-[#241a12]',
+  'min-h-11 cursor-pointer border-0 rounded-full bg-highlight px-5 font-750 text-background',
   'disabled:cursor-not-allowed disabled:opacity-40',
 )
 

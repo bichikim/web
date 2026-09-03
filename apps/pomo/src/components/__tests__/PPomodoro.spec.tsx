@@ -128,13 +128,9 @@ describe('PPomodoro', () => {
     expect(scribbleControls.classList.contains('rounded-none')).toBe(true)
     expect(scribbleControls.classList.contains('border-0')).toBe(true)
     expect(scribbleControls.classList.contains('bg-transparent')).toBe(true)
-    expect(
-      scribbleSurface?.classList.contains('[mask-image:var(--pomo-pomodoro-scribble-mask)]'),
-    ).toBe(true)
+    expect(scribbleSurface?.classList.contains('pomo-scribble-mask')).toBe(true)
     expect(scribbleControls.contains(scribbleSurface)).toBe(false)
-    expect(
-      (scribbleSurface as HTMLElement).style.getPropertyValue('--pomo-pomodoro-scribble-mask'),
-    ).toContain('data:image/svg+xml')
+    expect(scribbleSurface).not.toHaveAttribute('style')
   })
 
   it('should use the status icon set matching the scene style', () => {

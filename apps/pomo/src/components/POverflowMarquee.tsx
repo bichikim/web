@@ -1,8 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, onCleanup, onMount, Show} from 'solid-js'
 
-import {cssPixelsToRem} from '../features/css-units'
-
 const CONTENT_GAP_PIXELS = 32
 const MINIMUM_DURATION_SECONDS = 6
 const TRAVEL_SPEED_PX_PER_SECOND = 28
@@ -92,13 +90,14 @@ export const POverflowMarquee = (props: POverflowMarqueeProps) => {
         class={cx(
           'pomo-overflow-marquee__track flex w-max whitespace-nowrap',
           measurement().overflowing && 'animate-overflow-marquee',
+          '[animation-duration:var(--pomo-marquee-duration)]',
           'group-hover:[animation-play-state:paused]',
           'group-focus:[animation-play-state:paused]',
           'motion-reduce:block motion-reduce:max-w-full motion-reduce:animate-none',
         )}
         style={{
-          '--pomo-marquee-distance': cssPixelsToRem(measurement().travelDistance),
-          'animation-duration': `${animationDuration()}s`,
+          '--pomo-marquee-distance': `${measurement().travelDistance}px`,
+          '--pomo-marquee-duration': `${animationDuration()}s`,
         }}
       >
         <span

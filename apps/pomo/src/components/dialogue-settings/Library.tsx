@@ -15,7 +15,7 @@ const CLASSES = {
   ),
   message: cx(
     'pomo-dialogue-settings__message m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
 } as const

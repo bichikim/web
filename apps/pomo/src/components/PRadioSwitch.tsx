@@ -81,7 +81,7 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
       <RadioGroup.Label class="mb-2 block text-xs font-700 leading-4 text-muted-foreground">
         {props.label}
       </RadioGroup.Label>
-      <div class="flex gap-1 rounded-3.5 border border-solid border-border bg-[rgb(4_4_3_/_28%)] p-1">
+      <div class="flex gap-1 rounded-3.5 border border-solid border-border bg-surface-overlay p-1">
         <For each={props.options}>
           {(option) => (
             <RadioGroup.Item
@@ -95,7 +95,7 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
               />
               <RadioGroup.ItemControl
                 class={
-                  'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 ' +
+                  'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 px-2 ' +
                   'text-xs font-650 leading-4 text-muted-foreground outline-none ' +
                   'transition-[background-color_140ms_ease,color_140ms_ease] ' +
                   'hover:bg-secondary-soft hover:text-foreground ' +
@@ -117,7 +117,7 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                     />
                   )}
                 </Show>
-                <span>{option.label}</span>
+                <span class="[word-break:keep-all]">{option.label}</span>
                 <RadioGroup.ItemIndicator class="inline-flex flex-none text-primary">
                   <span
                     aria-hidden="true"

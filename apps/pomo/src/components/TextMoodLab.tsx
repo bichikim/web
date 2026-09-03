@@ -122,8 +122,8 @@ export const TextMoodLab = () => {
             role="progressbar"
           >
             <div
-              class="h-full rounded-full bg-#9ed6bb transition-[width]"
-              style={{width: `${mood.progress()}%`}}
+              class="h-full rounded-full bg-#9ed6bb [width:var(--pomo-progress-width)] transition-[width]"
+              style={{'--pomo-progress-width': `${mood.progress()}%`}}
             />
           </div>
         </Show>
