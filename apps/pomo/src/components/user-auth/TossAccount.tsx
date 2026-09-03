@@ -23,7 +23,7 @@ export const TossAccount = () => {
       fallback={<p class="m-0 text-sm text-white/60">{m.account_toss_checking()}</p>}
     >
       <Show
-        when={account.token()}
+        when={account.isAuthenticated()}
         fallback={
           <div class="grid gap-5">
             <p class="m-0 text-sm leading-6 text-white/60">{m.account_toss_intro()}</p>

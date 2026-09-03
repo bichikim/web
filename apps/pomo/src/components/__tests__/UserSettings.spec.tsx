@@ -2,14 +2,15 @@
 
 import {Tabs} from '@kobalte/core/tabs'
 import {render, screen, waitFor} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {createSignal, type JSX} from 'solid-js'
+import {beforeEach, expect, it, vi} from 'vitest'
 
-import {readStoredAppSession, validateAppSession} from '../../features/user-auth/app-session'
-import {readAccountSession} from '../../features/user-auth/web-session'
-import {UserSettings} from '../UserSettings'
+import type {
+  UserSettingsController,
+  UserSettingsState,
+} from '../../features/user-auth/use-user-settings'
 
-const queryMocks = vi.hoisted(() => ({accountSessionQuery: vi.fn()}))
+const settingsMocks = vi.hoisted(() => ({useUserSettings: vi.fn()}))
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('@solidjs/router', async () => {
@@ -27,34 +28,45 @@ vi.mock('@solidjs/router', async () => {
     ),
   }
 })
-vi.mock('../../features/user-auth/app-session', () => ({
-  clearStoredAppSession: vi.fn(),
-  readStoredAppSession: vi.fn(),
-  validateAppSession: vi.fn(),
+vi.mock('../../features/user-auth/use-user-settings', () => ({
+  useUserSettings: settingsMocks.useUserSettings,
 }))
-vi.mock('../../features/user-auth/web-session', () => ({readAccountSession: vi.fn()}))
-vi.mock('../../features/user-auth/session-query', () => queryMocks)
+
+import {UserSettings} from '../UserSettings'
+
+const [settingsState, setSettingsState] = createSignal<UserSettingsState>({kind: 'loading'})
+const authenticatedUser = () => {
+  const state = settingsState()
+  return state.kind === 'authenticated' ? state : null
+}
+const settings: UserSettingsController = {
+  authenticatedEmail: () => {
+    const account = authenticatedUser()
+    return account?.provider === 'email' ? account.email : null
+  },
+  authenticatedUser,
+  state: settingsState,
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
-  queryMocks.accountSessionQuery.mockReset().mockImplementation(() => readAccountSession())
+  setSettingsState({kind: 'loading'})
+  settingsMocks.useUserSettings.mockReturnValue(settings)
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
 })
 
-afterEach(() => {
-  vi.unstubAllEnvs()
-})
-
 it('should show the signed-in email and account management entry', async () => {
-  vi.mocked(readAccountSession).mockResolvedValue({email: 'pomo@example.com'})
-
   render(() => <UserSettings />)
 
   expect(screen.queryByText('Pomo account')).toBeNull()
   expect(screen.queryByRole('heading', {name: '사용자'})).toBeNull()
   expect(screen.queryByText('현재 로그인 상태와 연결된 계정을 확인할 수 있어요.')).toBeNull()
   expect(screen.getByRole('status').textContent).toContain('계정 확인 중…')
+  setSettingsState({
+    email: 'pomo@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
   await waitFor(() => expect(screen.queryByText('pomo@example.com')).not.toBeNull())
   expect(screen.queryByText('이메일 링크')).not.toBeNull()
   const accountLink = screen.getByRole('link', {name: '계정 관리'})
@@ -64,7 +76,7 @@ it('should show the signed-in email and account management entry', async () => {
 })
 
 it('should provide the login entry for an anonymous user', async () => {
-  vi.mocked(readAccountSession).mockResolvedValue(null)
+  setSettingsState({kind: 'anonymous'})
 
   render(() => <UserSettings />)
 
@@ -84,9 +96,7 @@ it('should provide the login entry for an anonymous user', async () => {
 })
 
 it('should show the Toss login method for an app session', async () => {
-  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
-  vi.mocked(readStoredAppSession).mockResolvedValue('app-session')
-  vi.mocked(validateAppSession).mockResolvedValue(true)
+  setSettingsState({kind: 'authenticated', provider: 'toss'})
 
   render(() => <UserSettings />)
 
@@ -95,11 +105,10 @@ it('should show the Toss login method for an app session', async () => {
   expect(
     screen.getByRole('link', {name: '이메일 추가해서 웹에서도 로그인하기'}).getAttribute('href'),
   ).toBe('/account')
-  expect(readAccountSession).not.toHaveBeenCalled()
 })
 
 it('should distinguish an account service failure from an anonymous session', async () => {
-  vi.mocked(readAccountSession).mockRejectedValue(new Error('unavailable'))
+  setSettingsState({kind: 'error'})
 
   render(() => <UserSettings />)
 

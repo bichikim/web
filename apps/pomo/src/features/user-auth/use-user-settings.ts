@@ -1,49 +1,45 @@
-import {createAsync} from '@solidjs/router'
-import {createEffect, createMemo, createSignal, onMount} from 'solid-js'
+import {createMemo} from 'solid-js'
 
-import {createAuthenticationMachine} from '../auth/machine'
-import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
-import {accountSessionQuery} from './session-query'
+import {useAuth} from '../auth/AuthProvider'
 
-export type UserSettingsState =
-  | {readonly kind: 'anonymous'}
-  | {readonly email: string; readonly kind: 'authenticated'; readonly provider: 'email'}
-  | {readonly kind: 'authenticated'; readonly provider: 'toss'}
-  | {readonly kind: 'error'}
-  | {readonly kind: 'loading'}
-
-const readTossUserSettingsState = async (): Promise<UserSettingsState> => {
-  const token = await readStoredAppSession()
-
-  if (token === null) {
-    return {kind: 'anonymous'}
-  }
-
-  if (await validateAppSession(token)) {
-    return {kind: 'authenticated', provider: 'toss'}
-  }
-
-  await clearStoredAppSession()
-  return {kind: 'anonymous'}
+interface AnonymousUserSettings {
+  readonly kind: 'anonymous'
 }
+
+interface EmailUserSettings {
+  readonly email: string
+  readonly kind: 'authenticated'
+  readonly provider: 'email'
+}
+
+interface TossUserSettings {
+  readonly kind: 'authenticated'
+  readonly provider: 'toss'
+}
+
+interface ErrorUserSettings {
+  readonly kind: 'error'
+}
+
+interface LoadingUserSettings {
+  readonly kind: 'loading'
+}
+
+export type AuthenticatedUserSettings = EmailUserSettings | TossUserSettings
+export type UserSettingsState =
+  | AnonymousUserSettings
+  | AuthenticatedUserSettings
+  | ErrorUserSettings
+  | LoadingUserSettings
 
 export interface UserSettingsController {
   readonly authenticatedEmail: () => string | null
-  readonly authenticatedUser: () => Extract<UserSettingsState, {kind: 'authenticated'}> | null
+  readonly authenticatedUser: () => AuthenticatedUserSettings | null
   readonly state: () => UserSettingsState
 }
 
 export const useUserSettings = (): UserSettingsController => {
-  const authentication = createAuthenticationMachine()
-  const isAppsInToss = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
-  const [accountSessionActive, setAccountSessionActive] = createSignal(false)
-  const accountSession = createAsync(async () => {
-    if (!accountSessionActive() || isAppsInToss) {
-      return
-    }
-
-    return accountSessionQuery()
-  })
+  const authentication = useAuth()
   const state = createMemo<UserSettingsState>(() => {
     const currentState = authentication.state()
 
@@ -73,67 +69,6 @@ export const useUserSettings = (): UserSettingsController => {
     const account = authenticatedUser()
 
     return account?.provider === 'email' ? account.email : null
-  })
-
-  createEffect(() => {
-    if (!accountSessionActive() || isAppsInToss) {
-      return
-    }
-
-    try {
-      const session = accountSession()
-
-      if (session === undefined) {
-        return
-      }
-
-      authentication.send(
-        session === null
-          ? {type: 'resolve-anonymous'}
-          : {
-              session: {email: session.email, kind: 'authenticated', provider: 'email'},
-              type: 'resolve-authenticated',
-            },
-      )
-    } catch {
-      authentication.send({type: 'resolve-unavailable'})
-    }
-  })
-
-  onMount(() => {
-    if (!isAppsInToss) {
-      setAccountSessionActive(true)
-      return
-    }
-
-    readTossUserSettingsState()
-      .then((resolvedState) => {
-        switch (resolvedState.kind) {
-          case 'anonymous':
-            authentication.send({type: 'resolve-anonymous'})
-            return
-          case 'authenticated':
-            authentication.send({
-              session:
-                resolvedState.provider === 'email'
-                  ? resolvedState
-                  : {kind: 'authenticated', provider: 'toss'},
-              type: 'resolve-authenticated',
-            })
-            return
-          case 'error':
-            authentication.send({type: 'resolve-unavailable'})
-            return
-          case 'loading':
-            authentication.send({type: 'check'})
-            return
-          default: {
-            const unhandledState: never = resolvedState
-            return unhandledState
-          }
-        }
-      })
-      .catch(() => authentication.send({type: 'resolve-unavailable'}))
   })
 
   return {
