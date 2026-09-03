@@ -348,7 +348,7 @@ it('should forward every scene, weather, and modal action', () => {
   expect(vi.mocked(PModal).mock.calls.at(-1)?.[0].isOpen).toBe(false)
 })
 
-it('should keep time and view in general settings while limiting activity to compact layouts', () => {
+it('should keep time, activity, and view together in general settings at every layout size', () => {
   render(() => <PSettings />)
   fireEvent.click(screen.getByRole('button', {name: '설정 열기'}))
 
@@ -359,7 +359,8 @@ it('should keep time and view in general settings while limiting activity to com
 
   expect(sceneGroup).not.toHaveClass('lg:hidden')
   expect(viewControl.closest('.pomo-settings__scene')).toBe(sceneGroup)
-  expect(activityControl.parentElement).toHaveClass('lg:hidden')
+  expect(activityControl.closest('.pomo-settings__scene')).toBe(sceneGroup)
+  expect(activityControl.closest('.lg\\:hidden')).toBeNull()
 })
 
 it('should describe every wake-lock availability state and pending request', () => {

@@ -34,6 +34,7 @@ import {SceneToolbar} from '../p-studio/Toolbar'
 import {useStudioScreenSaver} from '../p-studio/use-screen-saver'
 import {PStudio} from '../PStudio'
 import {PScreenSaver} from '../PScreenSaver'
+import {PTour} from '../tour/PTour'
 import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 
 vi.mock('../../features/focus-room-animation', () => ({
@@ -69,6 +70,7 @@ vi.mock('../p-studio/Events', () => ({PStudioEvents: vi.fn()}))
 vi.mock('../p-studio/Toolbar', () => ({SceneToolbar: vi.fn()}))
 vi.mock('../p-studio/use-screen-saver', () => ({useStudioScreenSaver: vi.fn()}))
 vi.mock('../PScreenSaver', () => ({PScreenSaver: vi.fn()}))
+vi.mock('../tour/PTour', () => ({PTour: vi.fn()}))
 vi.mock('../use-dialogue-scene-gaze', () => ({useDialogueSceneGaze: vi.fn()}))
 
 interface StudioOptions {
@@ -228,13 +230,23 @@ beforeEach(() => {
   })
   vi.mocked(PStudioEvents).mockImplementation((props) => {
     Object.values(props)
-    return <div>이벤트</div>
+    return (
+      <div>
+        이벤트
+        <div class="pomo-pomodoro">포모도로</div>
+        <div class="pomo-player-stage">음악</div>
+      </div>
+    )
   })
   vi.mocked(SceneToolbar).mockImplementation((props) => {
     Object.values(props)
 
     return (
-      <div data-transitioning={String(props.isSceneTransitioning)}>
+      <div data-tour-step="settings" data-transitioning={String(props.isSceneTransitioning)}>
+        <button onClick={() => props.onTourOpen?.()} type="button">
+          둘러보기
+        </button>
+        <div data-tour-step="memory-assist">기억 보조</div>
         <button onClick={() => props.onActivityChange('writing')} type="button">
           글쓰기
         </button>
@@ -268,6 +280,10 @@ beforeEach(() => {
   vi.mocked(PScreenSaver).mockImplementation((props) => {
     Object.values(props)
     return <div data-active={String(props.isActive)}>화면 보호기</div>
+  })
+  vi.mocked(PTour).mockImplementation((props) => {
+    Object.values(props)
+    return <div data-open={String(props.isOpen)}>투어</div>
   })
   vi.mocked(useDialogueSceneGaze).mockImplementation((sceneGaze) => sceneGaze)
 })
@@ -321,6 +337,65 @@ describe('PStudio', () => {
       'data-transitioning',
       'true',
     )
+  })
+
+  it('should open the studio tour and resolve every target inside the studio', () => {
+    configureStudio({entrySession: true})
+
+    renderStudio()
+    fireEvent.click(screen.getByRole('button', {name: '둘러보기'}))
+
+    expect(screen.getByText('투어')).toHaveAttribute('data-open', 'true')
+    const tourProps = vi.mocked(PTour).mock.calls.at(-1)?.[0]
+    expect(tourProps?.steps.map((step) => step.id)).toEqual([
+      'pomodoro',
+      'pomodoro-control',
+      'pomodoro-detail',
+      'pomodoro-duration',
+      'music',
+      'music-album',
+      'music-expand',
+      'memory-assist',
+      'settings',
+    ])
+    expect(tourProps?.steps[1]).toMatchObject({
+      title: '포모도로 타이머',
+      video: {source: '/tour/pomodoro-control.webm'},
+    })
+    expect(tourProps?.steps[2]).toMatchObject({
+      title: '포모도로 타이머',
+      video: {source: '/tour/pomodoro-detail.webm'},
+    })
+    expect(tourProps?.steps[3]).toMatchObject({
+      title: '포모도로 타이머',
+      video: {source: '/tour/pomodoro-duration.webm'},
+    })
+    expect(tourProps?.steps[5]).toMatchObject({
+      title: '집중 음악',
+      video: {source: '/tour/add-album.webm'},
+    })
+    expect(tourProps?.steps[6]).toMatchObject({
+      title: '집중 음악',
+      video: {source: '/tour/expand-player.webm'},
+    })
+    expect(tourProps?.steps[8]).toMatchObject({
+      description:
+        '장면과 화면부터 이벤트, 피드, 대화, 사용자 정보까지 Pomofi의 다양한 기능을 설정할 수 있어요.',
+      title: '설정',
+    })
+    expect(tourProps?.getStepElement('pomodoro')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('pomodoro-control')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('pomodoro-detail')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('pomodoro-duration')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('music')).toHaveClass('pomo-player-stage')
+    expect(tourProps?.getStepElement('music-album')).toHaveClass('pomo-player-stage')
+    expect(tourProps?.getStepElement('music-expand')).toHaveClass('pomo-player-stage')
+    expect(tourProps?.getStepElement('memory-assist')).toHaveAttribute(
+      'data-tour-step',
+      'memory-assist',
+    )
+    expect(tourProps?.getStepElement('settings')).toHaveAttribute('data-tour-step', 'settings')
+    expect(tourProps?.getStepElement('unknown')).toBeNull()
   })
 
   it('should restore a stored entry session without creating the scene before preferences are ready', () => {
