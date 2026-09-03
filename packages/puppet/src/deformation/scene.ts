@@ -23,6 +23,7 @@ export const createDeformerKeyform = (
   ...(node.curveHandles === undefined ? {} : {curveHandles: node.curveHandles}),
   kind: node.kind,
   nodeId: node.id,
+  ...(node.rotationOrigin === undefined ? {} : {rotationOrigin: node.rotationOrigin}),
 })
 
 const getKeyformCoordinates = (
@@ -31,6 +32,32 @@ const getKeyformCoordinates = (
 ) => keyform.deformers?.find((candidate) => candidate.nodeId === deformer.id)?.controlPoints
 
 const getRestCoordinates = (deformer: PuppetSceneDeformerNode) => deformer.controlPoints
+
+const getControlPointCenter = (controlPoints: ReadonlyArray<number>) => {
+  const pointCount = controlPoints.length / 2
+  let x = 0
+  let y = 0
+
+  for (let index = 0; index < controlPoints.length; index += 2) {
+    x += controlPoints[index] ?? 0
+    y += controlPoints[index + 1] ?? 0
+  }
+
+  return {x: x / pointCount, y: y / pointCount}
+}
+
+const getRestRotationOrigin = (deformer: PuppetSceneDeformerNode) =>
+  deformer.rotationOrigin ?? getControlPointCenter(deformer.controlPoints)
+
+const getKeyformRotationOrigin = (
+  keyform: PuppetParameterKeyform,
+  deformer: PuppetSceneDeformerNode,
+) => {
+  const origin =
+    keyform.deformers?.find((candidate) => candidate.nodeId === deformer.id)?.rotationOrigin ??
+    getRestRotationOrigin(deformer)
+  return [origin.x, origin.y]
+}
 
 const getCurveHandleCoordinates = (
   handles: PuppetParameterDeformerKeyform['curveHandles'],
@@ -69,6 +96,7 @@ const createSampledDeformer = (
     deformer.curveHandles,
     deformer,
   ),
+  rotationOriginCoordinates: ReadonlyArray<number> = Object.values(getRestRotationOrigin(deformer)),
 ): PuppetParameterDeformerKeyform => ({
   controlPoints: coordinates,
   ...(deformer.curveHandles === undefined
@@ -76,6 +104,10 @@ const createSampledDeformer = (
     : {curveHandles: createCurveHandles(deformer, curveHandleCoordinates)}),
   kind: deformer.kind,
   nodeId: deformer.id,
+  rotationOrigin: {
+    x: rotationOriginCoordinates[0] ?? getRestRotationOrigin(deformer).x,
+    y: rotationOriginCoordinates[1] ?? getRestRotationOrigin(deformer).y,
+  },
 })
 
 const addDeformerDelta = (
@@ -119,6 +151,14 @@ export const sampleParameterDeformer = (
       restCoordinates: getCurveHandleCoordinates(options.deformer.curveHandles, options.deformer),
       values: options.values,
     }),
+    sampleParameterCoordinates({
+      binding: options.binding,
+      keyformCoordinates: options.binding.keyforms.map((keyform) =>
+        getKeyformRotationOrigin(keyform, options.deformer),
+      ),
+      restCoordinates: Object.values(getRestRotationOrigin(options.deformer)),
+      values: options.values,
+    }),
   )
 
 const composeDeformer = (
@@ -128,8 +168,10 @@ const composeDeformer = (
 ) => {
   const restCoordinates = getRestCoordinates(deformer)
   const restCurveHandleCoordinates = getCurveHandleCoordinates(deformer.curveHandles, deformer)
+  const restRotationOrigin = Object.values(getRestRotationOrigin(deformer))
   let coordinates = restCoordinates
   let curveHandleCoordinates = restCurveHandleCoordinates
+  let rotationOriginCoordinates = restRotationOrigin
 
   for (const binding of document.parameterBindings ?? []) {
     if (binding.targetDeformerIds?.includes(deformer.id) === true) {
@@ -144,11 +186,26 @@ const composeDeformer = (
         getCurveHandleCoordinates(sampled.curveHandles, deformer),
         restCurveHandleCoordinates,
       )
+      rotationOriginCoordinates = addDeformerDelta(
+        rotationOriginCoordinates,
+        Object.values(sampled.rotationOrigin ?? getRestRotationOrigin(deformer)),
+        restRotationOrigin,
+      )
     }
   }
 
-  const sampled = createSampledDeformer(deformer, coordinates, curveHandleCoordinates)
-  return {...deformer, controlPoints: sampled.controlPoints, curveHandles: sampled.curveHandles}
+  const sampled = createSampledDeformer(
+    deformer,
+    coordinates,
+    curveHandleCoordinates,
+    rotationOriginCoordinates,
+  )
+  return {
+    ...deformer,
+    controlPoints: sampled.controlPoints,
+    curveHandles: sampled.curveHandles,
+    rotationOrigin: sampled.rotationOrigin,
+  }
 }
 
 const composeSceneNodes = (

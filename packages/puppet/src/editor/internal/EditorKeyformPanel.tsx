@@ -1,4 +1,5 @@
 import {Button} from '@kobalte/core/button'
+import {ToggleButton} from '@kobalte/core/toggle-button'
 import {createUniqueId, For, getOwner, onCleanup, runWithOwner, Show} from 'solid-js'
 
 import {
@@ -428,6 +429,7 @@ const KeyformTrack = (props: KeyformTrackProps) => {
 export interface EditorKeyformPanelProps {
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
+  readonly allParametersVisible?: boolean
   readonly bindings: ReadonlyArray<PuppetParameterBinding>
   readonly onBindingDelete?: (bindingId: string) => void
   readonly onBindingSelect?: (bindingId: string) => void
@@ -443,6 +445,7 @@ export interface EditorKeyformPanelProps {
   readonly onParameterNameChange?: (bindingId: string, parameterId: string, name: string) => void
   readonly onSelectionConnect?: () => void
   readonly onSelectionDisconnect?: () => void
+  readonly onAllParametersVisibleChange?: (visible: boolean) => void
   readonly onTwoDimensionalParameterAdd?: () => void
   readonly onValueChange?: (values: PuppetParameterValues) => void
   readonly parameterCreationAvailable?: boolean
@@ -534,6 +537,15 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
       </Show>
       <footer class="keyform-footer">
         <div class="parameter-target-actions">
+          <ToggleButton
+            class="parameter-visibility-toggle"
+            pressed={props.allParametersVisible === true}
+            onClick={() =>
+              props.onAllParametersVisibleChange?.(props.allParametersVisible !== true)
+            }
+          >
+            모든 파라미터 보기
+          </ToggleButton>
           <Button
             disabled={
               activeBinding() === undefined ||

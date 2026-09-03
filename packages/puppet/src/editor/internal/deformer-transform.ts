@@ -11,7 +11,34 @@ export const getDeformerPoint = (
   y: deformer.controlPoints[pointIndex * COORDINATES_PER_POINT + 1] ?? 0,
 })
 
-export const getDeformerCenter = (deformer: PuppetSceneDeformerNode): PuppetPoint => {
+interface ReflectCurveHandlePointOptions {
+  readonly axis: 'horizontal' | 'vertical'
+  readonly deformer: PuppetSceneDeformerNode
+  readonly point: PuppetPoint
+  readonly pointIndex: number
+}
+
+export const reflectCurveHandlePoint = (options: ReflectCurveHandlePointOptions): PuppetPoint => {
+  const column = options.pointIndex % (options.deformer.columns + 1)
+  const row = Math.floor(options.pointIndex / (options.deformer.columns + 1))
+  const pastCenter =
+    options.axis === 'horizontal'
+      ? column > options.deformer.columns / 2
+      : row > options.deformer.rows / 2
+
+  if (!pastCenter) {
+    return options.point
+  }
+
+  const origin = getDeformerPoint(options.deformer, options.pointIndex)
+  return {x: origin.x * 2 - options.point.x, y: origin.y * 2 - options.point.y}
+}
+
+export const getDeformerRotationOrigin = (deformer: PuppetSceneDeformerNode): PuppetPoint => {
+  if (deformer.rotationOrigin !== undefined) {
+    return deformer.rotationOrigin
+  }
+
   const pointCount = deformer.controlPoints.length / COORDINATES_PER_POINT
   const total = deformer.controlPoints.reduce(
     (result, coordinate, index) =>

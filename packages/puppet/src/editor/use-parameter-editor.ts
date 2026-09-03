@@ -38,6 +38,7 @@ export interface ParameterEditorResult {
   readonly activeBindingId: Accessor<string | null>
   readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
   readonly activeTargetNodeIds: Accessor<ReadonlyArray<string>>
+  readonly allParametersVisible: Accessor<boolean>
   readonly addKeyform: () => void
   readonly addParameter: () => void
   readonly addTwoDimensionalParameter: () => void
@@ -52,6 +53,7 @@ export interface ParameterEditorResult {
   readonly reset: (document: PuppetDocument) => void
   readonly selectBinding: (bindingId: string) => void
   readonly selectKeyform: (values: PuppetParameterValues) => void
+  readonly setAllParametersVisible: Setter<boolean>
   readonly setParameterValues: (values: PuppetParameterValues) => void
 }
 
@@ -119,10 +121,15 @@ const selectBindingState = (
   setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
 }
 
-const createParameterSelectionSync = (options: ParameterSelectionSyncOptions) => {
+const createParameterSelectionSync = (
+  options: ParameterSelectionSyncOptions,
+  allParametersVisible: Accessor<boolean>,
+) => {
   createEffect(() => {
     const document = options.props.document()
-    const bindings = getParameterBindingsForNodeIds(document, options.props.selectedNodeIds())
+    const bindings = allParametersVisible()
+      ? getDocumentParameterBindings(document)
+      : getParameterBindingsForNodeIds(document, options.props.selectedNodeIds())
     const currentBindingId = options.activeBindingId()
 
     if (bindings.some((binding) => binding.id === currentBindingId)) {
@@ -257,6 +264,39 @@ const createKeyformMoveHandler =
     }
   }
 
+interface CreateKeyformInsertionHandlerOptions {
+  readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
+  readonly activeTargetNodeIds: Accessor<ReadonlyArray<string>>
+  readonly parameterValues: Accessor<PuppetParameterValues>
+  readonly props: UseParameterEditorProps
+  readonly setActiveKeyformValues: Setter<PuppetParameterValues | null>
+}
+
+const createKeyformInsertionHandler = (options: CreateKeyformInsertionHandlerOptions) => () => {
+  const binding = options.activeBinding()
+  const values = options.parameterValues()
+  if (binding === undefined || options.activeTargetNodeIds().length === 0) {
+    return
+  }
+
+  if (binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, values))) {
+    options.setActiveKeyformValues(values)
+    options.props.onNotice('현재 값에는 이미 키폼이 있습니다.')
+    return
+  }
+
+  const document = insertParameterKeyform({
+    bindingId: binding.id,
+    document: options.props.document(),
+    values,
+  })
+  if (document !== undefined) {
+    options.props.onDocumentChange(document)
+    options.setActiveKeyformValues(values)
+    options.props.onNotice(`${formatValues(values)} 값에 키폼을 추가했습니다.`)
+  }
+}
+
 export const useParameterEditor = (props: UseParameterEditorProps): ParameterEditorResult => {
   const [initialBinding] = getDocumentParameterBindings(props.document())
   const [activeBindingId, setActiveBindingId] = createSignal<string | null>(
@@ -268,6 +308,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   const [activeKeyformValues, setActiveKeyformValues] = createSignal<PuppetParameterValues | null>(
     getDefaultKeyformValues(props.document(), initialBinding, parameterValueMap()),
   )
+  const [allParametersVisible, setAllParametersVisible] = createSignal(false)
   const setters = {activeBindingId: setActiveBindingId, activeKeyformValues: setActiveKeyformValues}
   const activeBinding = createMemo(() =>
     getDocumentParameterBindings(props.document()).find(
@@ -288,7 +329,10 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
           parameterValues: parameterValueMap(),
         })
   })
-  createParameterSelectionSync({activeBindingId, parameterValueMap, props, setters})
+  createParameterSelectionSync(
+    {activeBindingId, parameterValueMap, props, setters},
+    allParametersVisible,
+  )
   const selectBinding = (bindingId: string) => {
     const document = props.document()
     const binding = getDocumentParameterBindings(document).find(
@@ -306,30 +350,13 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   })
   const createParameter = createParameterBindingHandler(props, parameterValueMap, setters, 1)
   const create2dParameter = createParameterBindingHandler(props, parameterValueMap, setters, 2)
-  const createKeyform = () => {
-    const binding = activeBinding()
-    const values = parameterValues()
-    if (binding === undefined || activeTargetNodeIds().length === 0) {
-      return
-    }
-
-    if (binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, values))) {
-      setActiveKeyformValues(values)
-      props.onNotice('현재 값에는 이미 키폼이 있습니다.')
-      return
-    }
-
-    const document = insertParameterKeyform({
-      bindingId: binding.id,
-      document: props.document(),
-      values,
-    })
-    if (document !== undefined) {
-      props.onDocumentChange(document)
-      setActiveKeyformValues(values)
-      props.onNotice(`${formatValues(values)} 값에 키폼을 추가했습니다.`)
-    }
-  }
+  const createKeyform = createKeyformInsertionHandler({
+    activeBinding,
+    activeTargetNodeIds,
+    parameterValues,
+    props,
+    setActiveKeyformValues,
+  })
   const removeKeyform = createKeyformRemovalHandler(
     props,
     activeBinding,
@@ -344,7 +371,6 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     setActiveKeyformValues,
     setParameterValueMap,
   })
-
   return {
     activeBinding,
     activeBindingId,
@@ -353,6 +379,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     addKeyform: createKeyform,
     addParameter: createParameter,
     addTwoDimensionalParameter: create2dParameter,
+    allParametersVisible,
     connectSelection: () => {
       const binding = activeBinding()
       if (binding !== undefined) {
@@ -407,6 +434,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     selectKeyform(values) {
       updateValues(values)
     },
+    setAllParametersVisible,
     setParameterValues: updateValues,
   }
 }

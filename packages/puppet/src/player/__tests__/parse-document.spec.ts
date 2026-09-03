@@ -307,12 +307,23 @@ describe('parseDocument', () => {
       kind: 'deformer',
       locked: false,
       name: 'Deformer',
+      rotationOrigin: {x: 320, y: 240},
       rows: 1,
       visible: true,
     }
     const deformedDocument = {...document, scene: {roots: [deformer, ...remainingNodes]}}
 
     expect(parseDocument(JSON.stringify(deformedDocument))).toMatchObject({ok: true})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...deformedDocument,
+          scene: {
+            roots: [{...deformer, rotationOrigin: {x: 'invalid', y: 240}}, ...remainingNodes],
+          },
+        }),
+      ),
+    ).toMatchObject({ok: false})
     expect(
       parseDocument(
         JSON.stringify({

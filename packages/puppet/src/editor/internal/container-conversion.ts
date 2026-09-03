@@ -72,6 +72,7 @@ const createConvertedDeformer = (
     kind: 'deformer',
     locked: node.locked,
     name: node.name,
+    rotationOrigin: {x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2},
     rows: 2,
     visible: node.visible,
   } as const

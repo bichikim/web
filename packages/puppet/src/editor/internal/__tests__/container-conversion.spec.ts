@@ -23,6 +23,7 @@ describe('convertSceneContainers', () => {
       id: 'shapes',
       kind: 'deformer',
       name: 'Shapes',
+      rotationOrigin: {x: 328, y: 243},
       rows: 2,
     })
     expect(empty).toMatchObject({
@@ -31,6 +32,10 @@ describe('convertSceneContainers', () => {
       id: 'group',
       kind: 'deformer',
       name: '새 그룹',
+      rotationOrigin: {
+        x: converted.viewport.width / 2,
+        y: converted.viewport.height / 2,
+      },
     })
     expect(parseDocument(JSON.stringify(converted)).ok).toBe(true)
   })

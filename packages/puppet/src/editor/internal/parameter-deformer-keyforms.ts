@@ -24,6 +24,8 @@ interface ParameterDeformerValuesTarget {
   readonly values: PuppetParameterValues
 }
 
+const isFinitePoint = (point: PuppetPoint) => Number.isFinite(point.x) && Number.isFinite(point.y)
+
 const replaceBinding = (
   document: PuppetDocument,
   bindingId: string,
@@ -60,6 +62,7 @@ const replaceKeyformDeformer = (
 export interface SetParameterKeyformDeformerControlPointsOptions extends ParameterDeformerValuesTarget {
   readonly controlPoints: ReadonlyArray<number>
   readonly curveHandles?: PuppetParameterDeformerKeyform['curveHandles']
+  readonly rotationOrigin?: PuppetPoint
 }
 
 export const setParameterKeyformDeformerControlPoints = (
@@ -77,6 +80,7 @@ export const setParameterKeyformDeformerControlPoints = (
     !getParameterTargetDeformerIds(binding).includes(options.nodeId) ||
     options.controlPoints.length !== deformer.controlPoints.length ||
     options.controlPoints.some((coordinate) => !Number.isFinite(coordinate)) ||
+    (options.rotationOrigin !== undefined && !isFinitePoint(options.rotationOrigin)) ||
     (options.curveHandles !== undefined &&
       (options.curveHandles.length !== (deformer.curveHandles?.length ?? 0) ||
         options.curveHandles.some(
@@ -97,6 +101,7 @@ export const setParameterKeyformDeformerControlPoints = (
     ...deformer,
     controlPoints: options.controlPoints,
     ...(options.curveHandles === undefined ? {} : {curveHandles: options.curveHandles}),
+    ...(options.rotationOrigin === undefined ? {} : {rotationOrigin: options.rotationOrigin}),
   })
 }
 
