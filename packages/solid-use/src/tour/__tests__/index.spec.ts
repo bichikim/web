@@ -4,7 +4,7 @@ import {createRoot, createSignal} from 'solid-js'
 import {scrollIntoViewIfNeeded} from '@winter-love/utils'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {type TourEvent, type TourStep, useTour} from '@winter-love/solid-use/tour'
+import {type TourEvent, type TourStep, useTour} from '../index'
 
 vi.mock('@winter-love/utils', () => ({scrollIntoViewIfNeeded: vi.fn()}))
 
