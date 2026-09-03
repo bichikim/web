@@ -13,8 +13,9 @@ Create a new PR using the steps below.
 2. If there are uncommitted changes, review them briefly (see **Safety** below), then commit.
 3. Push the branch to the remote.
 4. Create a PR with `dev` as the base branch.
+5. Finish after the PR is created. Do not poll or wait for remote CI or deployment checks unless the user explicitly asks.
 
-If the current branch is not `dev`, use it as-is and run steps 2-4 above.
+If the current branch is not `dev`, use it as-is and run steps 2-5 above.
 
 ## Safety
 
