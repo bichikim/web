@@ -30,6 +30,7 @@ import {PCreditsSettings} from './PCreditsSettings'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
+import {PHealthCheck} from './PHealthCheck'
 import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from './pomo-scene-options'
 import {PScribbleCircleControl} from './scribble/CircleControl'
 import {PSettingsSectionHeading} from './settings/SectionHeading'
@@ -289,6 +290,7 @@ const PGeneralSettings = (props: PGeneralSettingsProps) => (
     <PGeneralStyleSettings {...props} />
     <PGeneralWeatherSettings {...props} />
     <PGeneralDisplaySettings {...props} />
+    <PHealthCheck />
   </div>
 )
 

@@ -13,6 +13,7 @@ import {useFullscreen} from 'src/features/fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {LEGACY_WEATHER_LOCATIONS} from 'src/features/weather'
 import {PDialogueSettings} from '../PDialogueSettings'
+import {PHealthCheck} from '../PHealthCheck'
 import {PWeatherSettings} from '../PWeatherSettings'
 import {PSettings} from '../PSettings'
 
@@ -26,6 +27,7 @@ vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 vi.mock('../PCreditsSettings', () => ({PCreditsSettings: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
 vi.mock('../PFeedSettings', () => ({PFeedSettings: vi.fn()}))
+vi.mock('../PHealthCheck', () => ({PHealthCheck: vi.fn()}))
 vi.mock('../PWeatherSettings', () => ({PWeatherSettings: vi.fn()}))
 vi.mock('../UserSettings', () => ({UserSettings: vi.fn()}))
 
@@ -125,6 +127,7 @@ beforeEach(() => {
       대화 닫기
     </button>
   ))
+  vi.mocked(PHealthCheck).mockImplementation(() => <div>헬스 체크 진단</div>)
   vi.mocked(PWeatherSettings).mockImplementation((props) => (
     <button
       data-location={props.location?.id}
@@ -139,6 +142,40 @@ beforeEach(() => {
       날씨 변경
     </button>
   ))
+})
+
+it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'] as const)(
+  'should show health checks in the %s app runtime',
+  (environmentName) => {
+    vi.stubEnv(environmentName, 'true')
+
+    render(() => <PSettings />)
+
+    expect(screen.getByText('헬스 체크 진단')).toBeInTheDocument()
+    vi.unstubAllEnvs()
+  },
+)
+
+it('should show health checks in the web development runtime', () => {
+  vi.stubEnv('DEV', true)
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+
+  render(() => <PSettings />)
+
+  expect(screen.getByText('헬스 체크 진단')).toBeInTheDocument()
+  vi.unstubAllEnvs()
+})
+
+it('should show health checks in the production web runtime', () => {
+  vi.stubEnv('DEV', false)
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+
+  render(() => <PSettings />)
+
+  expect(screen.getByText('헬스 체크 진단')).toBeInTheDocument()
+  vi.unstubAllEnvs()
 })
 
 it('should expose the guide and credits as the final settings tabs', () => {
