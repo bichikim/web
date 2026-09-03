@@ -1,25 +1,5 @@
-import {afterEach, expect, vi} from 'vitest'
+import {afterEach, expect} from 'vitest'
 import {page} from 'vitest/browser'
-
-const {axeCoreMock} = vi.hoisted(() => {
-  const axeCoreMock = {
-    configure: () => undefined,
-    reset: () => undefined,
-    run: async () => ({
-      inapplicable: [],
-      incomplete: [],
-      passes: [],
-      violations: [],
-    }),
-  }
-
-  return {axeCoreMock}
-})
-
-vi.mock('axe-core', () => ({
-  ...axeCoreMock,
-  default: axeCoreMock,
-}))
 
 const focusRoomButtonStoryPath = '/apps/pomo/src/components/PButton.story.tsx'
 const sharedControlsStoryPath = '/apps/pomo/src/components/SharedControls.story.tsx'

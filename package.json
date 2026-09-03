@@ -61,6 +61,7 @@
     "@winter-love/oxlint-plugins": "workspace:*",
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
+    "axe-core": "4.11.4",
     "chromatic": "^11.29.0",
     "cpx2": "^8.0.2",
     "eslint-plugin-solid": "^0.14.5",
