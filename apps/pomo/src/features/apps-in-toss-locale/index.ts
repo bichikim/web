@@ -1,36 +1,4 @@
-import {
-  baseLocale,
-  cookieDomain,
-  cookieName,
-  type Locale,
-  localStorageKey,
-  strategy,
-  toLocale,
-} from '@paraglide/runtime'
-
-export interface LocaleResetStorage {
-  readonly isNative: () => boolean
-  readonly removeCookie: (cookie: string) => void
-  readonly removeNative: (key: string) => Promise<void>
-  readonly removeWeb: (key: string) => void
-}
-
-const getLocaleCookieDeletion = (): string => {
-  const domain = cookieDomain ? `; domain=${cookieDomain}` : ''
-  return `${cookieName}=; path=/; max-age=0${domain}`
-}
-
-export const resetLocale = async (storage: LocaleResetStorage): Promise<void> => {
-  if (strategy.includes('localStorage')) {
-    if (storage.isNative()) {
-      await storage.removeNative(localStorageKey)
-    }
-
-    storage.removeWeb(localStorageKey)
-  }
-
-  storage.removeCookie(getLocaleCookieDeletion())
-}
+import {baseLocale, type Locale, toLocale} from '@paraglide/runtime'
 
 interface ResolveAppsInTossLocaleOptions {
   readonly browserLocale?: Locale
