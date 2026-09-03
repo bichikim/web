@@ -10,6 +10,7 @@ import {useAppsInTossSafeArea} from '../features/apps-in-toss-safe-area'
 
 const componentMocks = vi.hoisted(() => ({
   authProvider: vi.fn(),
+  displayThemeProvider: vi.fn(),
   fileRoutes: vi.fn(),
   focusRoomLayout: vi.fn(),
   metadata: vi.fn(),
@@ -31,6 +32,9 @@ vi.mock('../components/PRecoveryBoundary', () => ({
 }))
 vi.mock('../features/application-recovery', () => ({useApplicationRecovery: vi.fn()}))
 vi.mock('../features/apps-in-toss-safe-area', () => ({useAppsInTossSafeArea: vi.fn()}))
+vi.mock('../features/display-theme', () => ({
+  DisplayThemeProvider: componentMocks.displayThemeProvider,
+}))
 vi.mock('../features/auth', () => ({AuthProvider: componentMocks.authProvider}))
 vi.mock('../features/model-download', () => ({
   PModelDownloadProvider: componentMocks.modelDownloadProvider,
@@ -70,6 +74,7 @@ describe('App', () => {
       }),
     )
     componentMocks.metaProvider.mockImplementation((props: ChildrenProps) => props.children)
+    componentMocks.displayThemeProvider.mockImplementation((props: ChildrenProps) => props.children)
     componentMocks.authProvider.mockImplementation((props: ChildrenProps) => props.children)
     componentMocks.modelDownloadProvider.mockImplementation(
       (props: ChildrenProps) => props.children,
@@ -105,6 +110,7 @@ describe('App', () => {
     expect(useApplicationRecovery).toHaveBeenCalledOnce()
     expect(componentMocks.router).toHaveBeenCalledOnce()
     expect(componentMocks.metaProvider).toHaveBeenCalledOnce()
+    expect(componentMocks.displayThemeProvider).toHaveBeenCalledOnce()
     expect(componentMocks.authProvider).toHaveBeenCalledOnce()
     expect(componentMocks.modelDownloadProvider).toHaveBeenCalledOnce()
     expect(screen.getByText('document metadata')).toBeTruthy()

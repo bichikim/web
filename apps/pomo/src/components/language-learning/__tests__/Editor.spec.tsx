@@ -291,7 +291,12 @@ const renderGeneratedReview = async () => {
 }
 
 it('should generate, review, regenerate, toggle, and save a sentence', async () => {
-  render(() => <LanguageLearningEditor />)
+  const result = render(() => <LanguageLearningEditor />)
+
+  expect(result.container.querySelector('main')).toHaveClass(
+    '[background:var(--pomo-editor-background)]',
+    'text-foreground',
+  )
 
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()

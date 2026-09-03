@@ -87,6 +87,7 @@ describe('PSwipeTrackItem', () => {
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
     expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('0px')
   })
 
   it('should preserve selection after a vertical gesture', () => {
@@ -126,20 +127,27 @@ describe('PSwipeTrackItem', () => {
 
     const swipeLayers = button.closest('li')?.querySelectorAll(':scope > div')
 
-    expect(button.style.transform).toBe('translateX(5rem)')
+    expect(button.style.transform).toBe('')
+    expect(button.classList.contains('[transform:translateX(var(--pomo-swipe-offset))]')).toBe(true)
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('80px')
     expect(button.dataset.swipeDeleteReady).toBe('')
     expect(button.classList.contains('transition-none')).toBe(true)
-    expect(swipeLayers?.[0]?.getAttribute('style')).toContain('width: 5rem')
-    expect(swipeLayers?.[1]?.getAttribute('style')).toContain('width: 0rem')
+    expect(swipeLayers?.[0]).not.toHaveAttribute('style')
+    expect(swipeLayers?.[1]).not.toHaveAttribute('style')
+    expect(swipeLayers?.[0]?.classList.contains('w-[max(0px,var(--pomo-swipe-offset))]')).toBe(true)
+    expect(
+      swipeLayers?.[1]?.classList.contains('w-[max(0px,calc(-1*var(--pomo-swipe-offset)))]'),
+    ).toBe(true)
     expect(screen.getByText('One, 놓으면 삭제')).toBeInTheDocument()
 
     fireEvent.pointerCancel(button, {pointerId: 2})
-    expect(button.style.transform).toBe('translateX(5rem)')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('80px')
 
     fireEvent.pointerCancel(button, {pointerId: 1})
     fireEvent.click(button)
 
     expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('0px')
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
     expect(pointerCapture.setPointerCapture).toHaveBeenCalledWith(1)
@@ -170,7 +178,8 @@ describe('PSwipeTrackItem', () => {
     fireEvent.pointerDown(button, {button: 0, clientX: 0, clientY: 0, pointerId: 1})
     fireEvent.pointerMove(button, {clientX: 40, clientY: 0, pointerId: 1})
     fireEvent(button, new TestPointerEvent('lostpointercapture', {pointerId: 2}))
-    expect(button.style.transform).toBe('translateX(2.5rem)')
+    expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('40px')
 
     fireEvent(button, new TestPointerEvent('lostpointercapture', {pointerId: 1}))
     fireEvent.click(button)
@@ -178,6 +187,7 @@ describe('PSwipeTrackItem', () => {
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
     expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('0px')
   })
 
   it('should provide the Delete key as a gesture alternative', () => {

@@ -118,10 +118,10 @@ export const TextMoodAnalysisResult = (props: TextMoodAnalysisResultProps) => {
                   <div class="h-2 overflow-hidden rounded-full bg-white/7">
                     <div
                       class={cx(
-                        'h-full rounded-full',
+                        'h-full rounded-full [width:var(--pomo-progress-width)]',
                         score.id === props.analysis.primary.id ? 'bg-#9ed6bb' : 'bg-#655b6c',
                       )}
-                      style={{width: formatPercentage(score.probability)}}
+                      style={{'--pomo-progress-width': formatPercentage(score.probability)}}
                     />
                   </div>
                   <span class="text-right tabular-nums text-#8f8297">

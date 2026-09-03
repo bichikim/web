@@ -19,7 +19,7 @@ import {LanguageLearningTagInput} from './TagInput'
 
 const WORD_CLASS = cx(
   'inline-flex min-h-9 max-w-full items-stretch overflow-hidden rounded-control border border-solid',
-  'border-border bg-[rgb(255_255_255_/_3%)]',
+  'border-border bg-content-surface',
 )
 const WORD_ACTION_BUTTON_CLASS = cx(
   'inline-flex size-9 flex-none cursor-pointer items-center justify-center border-0',
@@ -55,7 +55,7 @@ const LanguageLearningWordList = (props: LanguageLearningWordListProps) => (
         class={
           'm-0 flex max-h-[19rem] list-none content-start items-start gap-2 overflow-y-auto ' +
           'overscroll-contain p-0 pr-1 flex-wrap ' +
-          '[scrollbar-color:rgb(255_250_241_/_24%)_transparent] [scrollbar-width:thin]'
+          '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]'
         }
       >
         <For each={props.words}>
@@ -154,7 +154,7 @@ export const LanguageLearningWords = () => {
     <section class="pomo-learning-words grid gap-4.5 settings-compact:gap-4">
       <LanguageLearningLanguageSelect class="w-full" onChange={setLanguage} value={language()} />
 
-      <div class="grid gap-3 rounded-panel border border-solid border-border bg-[rgb(255_255_255_/_3%)] p-4">
+      <div class="grid gap-3 rounded-panel border border-solid border-border bg-content-surface p-4">
         <LanguageLearningTagInput
           description={m.learning_words_input_hint()}
           getRemoveLabel={(word) => m.learning_words_remove({word})}
@@ -188,7 +188,7 @@ export const LanguageLearningWords = () => {
 
       <Show when={message()}>
         {(currentMessage) => (
-          <p aria-live="polite" class="m-0 text-sm text-[#f2a398]" role="status">
+          <p aria-live="polite" class="m-0 text-sm text-danger" role="status">
             {currentMessage()}
           </p>
         )}

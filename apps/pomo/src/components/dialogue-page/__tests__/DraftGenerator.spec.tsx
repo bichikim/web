@@ -86,11 +86,18 @@ it('should request a script with the selected topic and length after download co
   const writer = createWriter()
   vi.mocked(useDialogueWriter).mockReturnValue(writer)
   const onGenerated = vi.fn()
-  render(() => <PDialogueDraftGenerator onGenerated={onGenerated} />)
+  const result = render(() => <PDialogueDraftGenerator onGenerated={onGenerated} />)
 
   expect(useDialogueWriter).toHaveBeenCalledWith(expect.objectContaining({modelId: 'gemma-4-e2b'}))
+  expect(result.container.querySelector('section')).toHaveClass('bg-content-surface')
+  expect(screen.getByRole('button', {name: /초안 만들기/})).toHaveClass('text-foreground')
   expect(screen.queryByText(/Gemma 4 E2B/)).toBeNull()
   fireEvent.click(screen.getByRole('button', {name: /초안 만들기/}))
+
+  expect(screen.getByRole('textbox', {name: '어떤 말을 만들까요?'}).closest('label')).toHaveClass(
+    '[&_input[type=text]]:bg-surface-strong',
+    '[&_input[type=text]]:text-foreground',
+  )
 
   fireEvent.input(screen.getByRole('slider', {name: '생성 분량'}), {
     target: {value: '180'},

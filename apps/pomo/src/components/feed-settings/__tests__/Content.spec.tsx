@@ -177,4 +177,5 @@ it('should apply compact spacing to feed settings groups', () => {
   expect(form.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+  expect(list).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
 })

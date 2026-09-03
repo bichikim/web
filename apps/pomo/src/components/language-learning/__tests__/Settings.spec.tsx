@@ -42,6 +42,10 @@ it('should expose and update every language learning generation setting', () => 
   expect(screen.getByRole('option', {name: '한국어'})).toBeDefined()
   expect(screen.getByRole('option', {name: '영어'})).toBeDefined()
   expect(screen.getByRole('option', {name: '일본어'})).toBeDefined()
+  expect(screen.getByRole('combobox', {name: '학습 언어'}).closest('label')).toHaveClass(
+    '[&_select]:bg-surface-strong',
+    '[&_select]:text-foreground',
+  )
 })
 
 it('should ignore unknown setting values and disable every select', () => {

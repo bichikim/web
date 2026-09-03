@@ -15,7 +15,9 @@ import {LanguageLearningWordSourceControl} from './WordSource'
 
 const TEXT_MODEL = getTextModel(TEXT_MODEL_ID)
 const CLASSES = {
-  page: 'min-h-dvh box-border bg-[#17130f] p-[max(1.25rem,var(--pomo-safe-area-inset-top))] text-foreground',
+  page:
+    'min-h-dvh box-border [background:var(--pomo-editor-background)] ' +
+    'p-[max(1.25rem,var(--pomo-safe-area-inset-top))] text-foreground',
   panel: 'grid gap-5 rounded-5 border border-solid border-border bg-surface p-5',
 } as const
 

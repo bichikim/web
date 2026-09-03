@@ -1,13 +1,24 @@
-import {resetLocale as resetLocaleStorage} from '../apps-in-toss-locale'
-import {localStorageKey} from '@paraglide/runtime'
+import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 
-interface OptionResetGroupDefinition {
+interface OptionResetGroupDefinitionBase {
   readonly description: string
   readonly id: OptionResetGroupId
   readonly label: string
-  readonly resetKind?: 'locale'
+}
+
+interface StorageOptionResetGroupDefinition extends OptionResetGroupDefinitionBase {
+  readonly resetKind?: undefined
   readonly storageKeys: ReadonlyArray<string>
 }
+
+interface LocaleOptionResetGroupDefinition extends OptionResetGroupDefinitionBase {
+  readonly resetKind: 'locale'
+  readonly storageKeyCount: number
+}
+
+type OptionResetGroupDefinition =
+  | LocaleOptionResetGroupDefinition
+  | StorageOptionResetGroupDefinition
 
 export type OptionResetGroupId =
   | 'desktop'
@@ -30,10 +41,10 @@ export interface CompleteOptionResetResult {
 }
 
 export interface PartialOptionResetResult {
-  readonly preservedKeys: ReadonlyArray<string>
-  readonly resetKeys: ReadonlyArray<string>
+  readonly preservedCount: number
+  readonly resetCount: number
   readonly status: 'partial'
-  readonly unresolvedKeys: ReadonlyArray<string>
+  readonly unresolvedCount: number
 }
 
 export type OptionResetResult = CompleteOptionResetResult | PartialOptionResetResult
@@ -136,7 +147,7 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     id: 'language',
     label: '언어',
     resetKind: 'locale',
-    storageKeys: [localStorageKey],
+    storageKeyCount: LOCALE_RESET_STORAGE_COUNT,
   },
   {
     description: 'What’s new 팝업의 마지막 열람 버전',
@@ -151,15 +162,14 @@ export const OPTION_RESET_GROUPS: ReadonlyArray<OptionResetGroup> = GROUP_DEFINI
     description: group.description,
     id: group.id,
     label: group.label,
-    storageKeyCount: group.storageKeys.length,
+    storageKeyCount:
+      group.resetKind === 'locale' ? group.storageKeyCount : group.storageKeys.length,
   }),
 )
 
 const getAllKeys = (): ReadonlyArray<string> => [
   ...new Set(
-    GROUP_DEFINITIONS.filter((group) => group.resetKind === undefined).flatMap(
-      (group) => group.storageKeys,
-    ),
+    GROUP_DEFINITIONS.flatMap((group) => (group.resetKind === 'locale' ? [] : group.storageKeys)),
   ),
 ]
 
@@ -244,7 +254,12 @@ const convergeWebStorage = (
     return COMPLETE_RESET_RESULT
   }
 
-  return {preservedKeys, resetKeys, status: 'partial', unresolvedKeys}
+  return {
+    preservedCount: preservedKeys.length,
+    resetCount: resetKeys.length,
+    status: 'partial',
+    unresolvedCount: unresolvedKeys.length,
+  }
 }
 
 const recoverNativeDeletion = async (
@@ -356,7 +371,7 @@ export const createOptionResetManager = (
         if (storageResult.status === 'partial') {
           return {
             ...storageResult,
-            preservedKeys: [...storageResult.preservedKeys, localStorageKey],
+            preservedCount: storageResult.preservedCount + LOCALE_RESET_STORAGE_COUNT,
           }
         }
 
@@ -364,10 +379,10 @@ export const createOptionResetManager = (
           await options.resetLocale()
         } catch {
           return {
-            preservedKeys: [],
-            resetKeys: getAllKeys(),
+            preservedCount: 0,
+            resetCount: getAllKeys().length,
             status: 'partial',
-            unresolvedKeys: [localStorageKey],
+            unresolvedCount: LOCALE_RESET_STORAGE_COUNT,
           }
         }
 
@@ -395,10 +410,10 @@ const runtimeStorage: OptionResetStorage = {
 }
 
 const runtimeLocaleStorage = {
-  ...runtimeStorage,
   removeCookie: (cookie: string) => {
     document.cookie = cookie
   },
+  removeWeb: runtimeStorage.removeWeb,
 }
 
 export const createRuntimeOptionResetManager = (): OptionResetManager =>

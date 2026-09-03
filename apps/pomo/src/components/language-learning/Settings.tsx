@@ -16,7 +16,7 @@ const LANGUAGES = ['ko', 'en', 'ja'] as const
 const FIELD_CLASS = cx(
   'grid gap-2 text-sm font-700 [&_select]:min-h-12 [&_select]:rounded-xl',
   '[&_select]:border [&_select]:border-solid [&_select]:border-border',
-  '[&_select]:bg-[#17130f] [&_select]:px-4 [&_select]:text-foreground',
+  '[&_select]:bg-surface-strong [&_select]:px-4 [&_select]:text-foreground',
 )
 
 export type LanguageLearningCount = (typeof COUNTS)[number]

@@ -171,12 +171,12 @@ it('should render frame content only while its surface is visible', () => {
       <p>내용</p>
     </DesktopSurfaceFrame>
   ))
-  expect(document.documentElement.style.getPropertyValue('background')).toBe('transparent')
-  expect(document.body.style.getPropertyPriority('background')).toBe('important')
+  expect(hidden.container.querySelector('main')).toHaveClass('pomo-desktop-surface')
+  expect(document.documentElement.style.getPropertyValue('background')).toBe('')
+  expect(document.body.style.getPropertyValue('background')).toBe('red')
   expect(screen.queryByText('내용')).not.toBeInTheDocument()
 
   hidden.unmount()
-  expect(document.documentElement.style.getPropertyValue('background')).toBe('')
   expect(document.body.style.getPropertyValue('background')).toBe('red')
   render(() => (
     <DesktopSurfaceFrame accessibleLabel="표면" class="custom" isVisible title="제목">

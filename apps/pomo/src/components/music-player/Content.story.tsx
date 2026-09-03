@@ -12,10 +12,13 @@ const meta = {
   component: PMusicPlayerContent,
   decorators: [
     (Story) => (
-      <main
-        class="relative h-screen min-h-150 overflow-hidden bg-cover bg-[position:60%_center]"
-        style={{'background-image': `url(${dayReadingImage})`}}
-      >
+      <main class="relative h-screen min-h-150 overflow-hidden">
+        <img
+          alt=""
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-0 size-full object-cover object-[60%_center]"
+          src={dayReadingImage}
+        />
         <Story />
       </main>
     ),

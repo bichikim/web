@@ -102,15 +102,10 @@ it('should report a reset failure without claiming completion', async () => {
 it('should report reset and preserved item counts for a partial reset', async () => {
   const manager = createManager()
   vi.mocked(manager.reset).mockResolvedValue({
-    preservedKeys: [
-      'pomo:focus-room-scene-style:v1',
-      'pomo:weather-preference:v2',
-      'pomo:weather-preference:v1',
-      'pomo:screen-saver-delay:v1',
-    ],
-    resetKeys: ['pomo:focus-room-scene-preferences:v1'],
+    preservedCount: 4,
+    resetCount: 1,
     status: 'partial',
-    unresolvedKeys: [],
+    unresolvedCount: 0,
   })
   render(() => <OptionResetPage manager={manager} />)
 
@@ -126,10 +121,10 @@ it('should report reset and preserved item counts for a partial reset', async ()
 it('should distinguish unresolved storage items in a partial reset', async () => {
   const manager = createManager()
   vi.mocked(manager.resetAll).mockResolvedValue({
-    preservedKeys: [],
-    resetKeys: ['pomo:timer-config:v1'],
+    preservedCount: 0,
+    resetCount: 1,
     status: 'partial',
-    unresolvedKeys: ['PARAGLIDE_LOCALE'],
+    unresolvedCount: 1,
   })
   render(() => <OptionResetPage manager={manager} />)
 

@@ -128,9 +128,9 @@ function OptionResetPage(props: OptionResetPageProps) {
         case 'partial':
           setErrorMessage(
             getPartialResetMessage(
-              result.resetKeys.length,
-              result.preservedKeys.length,
-              result.unresolvedKeys.length,
+              result.resetCount,
+              result.preservedCount,
+              result.unresolvedCount,
             ),
           )
           break

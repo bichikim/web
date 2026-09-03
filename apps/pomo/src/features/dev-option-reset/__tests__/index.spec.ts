@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cookieName, localStorageKey, setLocale} from '@paraglide/runtime'
+import {cookieName, getLocale, localStorageKey, setLocale} from '@paraglide/runtime'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {
@@ -19,9 +19,13 @@ const storageMocks = vi.hoisted(() => ({
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
 afterEach(() => {
+  document.cookie = `${cookieName}=; path=/; max-age=0`
   localStorage.clear()
   Reflect.deleteProperty(window, 'ReactNativeWebView')
-  vi.clearAllMocks()
+  storageMocks.getItem.mockReset()
+  storageMocks.removeItem.mockReset()
+  storageMocks.setItem.mockReset()
+  vi.restoreAllMocks()
 })
 
 const createStorage = (): OptionResetStorage => ({
@@ -203,15 +207,10 @@ it('should converge web values and report a partial reset when restoration fails
   const {manager} = createManager(storage)
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
-    preservedKeys: [
-      'pomo:focus-room-scene-style:v1',
-      failedKey,
-      'pomo:weather-preference:v1',
-      'pomo:screen-saver-delay:v1',
-    ],
-    resetKeys: [firstKey],
+    preservedCount: 4,
+    resetCount: 1,
     status: 'partial',
-    unresolvedKeys: [],
+    unresolvedCount: 0,
   })
   expect(storage.removeWeb).toHaveBeenCalledWith(firstKey)
   expect(storage.setWeb).toHaveBeenCalledTimes(4)
@@ -230,15 +229,10 @@ it('should report an unresolved web value without hiding completed native deleti
   const {manager} = createManager(storage)
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
-    preservedKeys: [],
-    resetKeys: [
-      'pomo:focus-room-scene-preferences:v1',
-      'pomo:focus-room-scene-style:v1',
-      'pomo:weather-preference:v1',
-      'pomo:screen-saver-delay:v1',
-    ],
+    preservedCount: 0,
+    resetCount: 4,
     status: 'partial',
-    unresolvedKeys: [unresolvedKey],
+    unresolvedCount: 1,
   })
 })
 
@@ -282,14 +276,10 @@ it('should preserve readable recovery results when one native verification fails
   const {manager} = createManager(storage)
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
-    preservedKeys: [
-      'pomo:focus-room-scene-style:v1',
-      'pomo:weather-preference:v1',
-      'pomo:screen-saver-delay:v1',
-    ],
-    resetKeys: [firstKey],
+    preservedCount: 3,
+    resetCount: 1,
     status: 'partial',
-    unresolvedKeys: [unreadableKey],
+    unresolvedCount: 1,
   })
   expect(storage.removeWeb).toHaveBeenCalledWith(firstKey)
   expect(storage.setWeb).toHaveBeenCalledTimes(3)
@@ -301,14 +291,17 @@ it('should report a partial reset when locale cleanup fails after other options 
   const {manager} = createManager(storage, resetLocale)
 
   const result = await manager.resetAll()
+  const languageStorageCount = OPTION_RESET_GROUPS.find(
+    (group) => group.id === 'language',
+  )?.storageKeyCount
 
   expect(result).toMatchObject({
-    preservedKeys: [],
+    preservedCount: 0,
     status: 'partial',
-    unresolvedKeys: [localStorageKey],
+    unresolvedCount: languageStorageCount,
   })
   if (result.status === 'partial') {
-    expect(result.resetKeys).toHaveLength(
+    expect(result.resetCount).toBe(
       OPTION_RESET_GROUPS.filter((group) => group.id !== 'language').reduce(
         (total, group) => total + group.storageKeyCount,
         0,
@@ -329,11 +322,14 @@ it('should report language as preserved when reset all stops after a partial sto
   const {manager, resetLocale} = createManager(storage)
 
   const result = await manager.resetAll()
+  const languageStorageCount = OPTION_RESET_GROUPS.find(
+    (group) => group.id === 'language',
+  )?.storageKeyCount
 
   expect(result).toMatchObject({
-    preservedKeys: [localStorageKey],
+    preservedCount: languageStorageCount,
     status: 'partial',
-    unresolvedKeys: [unresolvedKey],
+    unresolvedCount: 1,
   })
   expect(resetLocale).not.toHaveBeenCalled()
 })
@@ -400,11 +396,37 @@ it('should converge runtime web storage with native values after restoration fai
   })
 
   await expect(createRuntimeOptionResetManager().reset('focus-room')).resolves.toEqual({
-    preservedKeys: groupKeys.slice(1),
-    resetKeys: [firstKey],
+    preservedCount: groupKeys.length - 1,
+    resetCount: 1,
     status: 'partial',
-    unresolvedKeys: [],
+    unresolvedCount: 0,
   })
   expect(localStorage.getItem(firstKey)).toBeNull()
   expect(localStorage.getItem(failedKey)).toBe(`${failedKey}:native`)
+})
+
+it('should remove the Paraglide cookie when every option is reset', async () => {
+  await setLocale('en', {reload: false})
+  localStorage.setItem(localStorageKey, 'en')
+  localStorage.setItem('pomo:viewed-version-release:v1', '1.0.0')
+
+  const manager = createRuntimeOptionResetManager()
+  await manager.resetAll()
+
+  expect(document.cookie).not.toContain(`${cookieName}=en`)
+  expect(localStorage.getItem(localStorageKey)).toBe('en')
+  expect(localStorage.getItem('pomo:viewed-version-release:v1')).toBeNull()
+})
+
+it('should use the preferred browser locale on the next web bootstrap after reset', async () => {
+  vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['en-US'])
+  await setLocale('ko', {reload: false})
+  localStorage.setItem(localStorageKey, 'ko')
+
+  const manager = createRuntimeOptionResetManager()
+  await manager.reset('language')
+
+  expect(document.cookie).not.toContain(`${cookieName}=ko`)
+  expect(localStorage.getItem(localStorageKey)).toBe('ko')
+  expect(getLocale()).toBe('en')
 })

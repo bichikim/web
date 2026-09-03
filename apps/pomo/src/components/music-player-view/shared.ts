@@ -33,10 +33,10 @@ export const CLASSES = {
     '[&_media-mute-button:hover]:text-foreground',
     '[&_media-mute-button:hover]:bg-secondary-soft',
   ),
-  playerBase: 'pomo-player__base bg-surface',
+  playerBase: 'pomo-player__base bg-player-surface',
   playerExpanded: cx(
     'pomo-player__expanded isolate flex min-h-0 min-w-0 w-full flex-1 flex-col box-border',
-    'bg-[linear-gradient(_180deg,_rgb(0_0_0_/_2%)_0%,_rgb(0_0_0_/_10%)_34%,_rgb(0_0_0_/_18%)_100%_)]',
+    'bg-[var(--pomo-player-expanded-background)]',
     'shadow-[inset_0_-0.0625rem_0_rgb(255_250_241_/_4%)]',
   ),
   playerExpandedFrame: cx(
@@ -50,7 +50,7 @@ export const CLASSES = {
   playerExpandedInner: cx(
     'pomo-player__expanded-inner flex min-h-0 min-w-0 w-full flex-col',
     'overflow-x-clip overflow-y-auto overscroll-contain',
-    '[scrollbar-color:rgb(255_250_241_/_18%)_transparent] [scrollbar-width:thin]',
+    '[scrollbar-color:var(--pomo-color-player-scrollbar)_transparent] [scrollbar-width:thin]',
     'opacity-0 pointer-events-none',
     '[transition:opacity_160ms_ease]',
     '[&.is-expanded]:opacity-100 [&.is-expanded]:pointer-events-auto',
@@ -85,7 +85,7 @@ export const CLASSES = {
     '[--media-cursor:default]',
     '[--media-control-height:100%] [--media-range-padding:0rem]',
     '[--media-range-track-height:100%] [--media-range-track-border-radius:0rem]',
-    '[--media-range-bar-color:rgb(0_0_0_/_25%)]',
+    '[--media-range-bar-color:var(--pomo-color-player-progress)]',
     '[--media-time-range-buffered-color:transparent]',
     '[--media-range-track-background:transparent]',
     '[transition:opacity_160ms_ease] [&.is-hidden]:opacity-0',
@@ -102,10 +102,7 @@ export const CLASSES = {
     '[--media-range-track-background:var(--pomo-color-range-track)]',
     'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
   ),
-  playerShell: cx(
-    'pomo-player-shell',
-    'shadow-[0_1.375rem_4.375rem_rgb(5_4_3_/_46%),_inset_0_0.0625rem_0_rgb(255_255_255_/_10%)]',
-  ),
+  playerShell: 'pomo-player-shell shadow-player',
   playerSummary:
     'pomo-player__summary relative flex min-h-16 flex-none items-center gap-3 px-2 py-2 player-compact:gap-2',
   playerTitle: 'pomo-player__title block text-foreground',

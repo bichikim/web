@@ -33,10 +33,15 @@ vi.mock('@kobalte/core/radio-group', () => {
   const Label = (props: {readonly children: JSX.Element}) => <span>{props.children}</span>
   const Item = (props: {
     readonly children: JSX.Element
+    readonly class?: string
     readonly disabled?: boolean
     readonly value: string
   }) => (
-    <div data-disabled={props.disabled ? '' : undefined} data-radio-value={props.value}>
+    <div
+      class={props.class}
+      data-disabled={props.disabled ? '' : undefined}
+      data-radio-value={props.value}
+    >
       {props.children}
     </div>
   )
@@ -88,6 +93,12 @@ describe('PRadioSwitch', () => {
     expect(screen.getByText('시간')).toBeInTheDocument()
     expect(screen.getByTestId('radio-group')).toHaveClass('extra-layout')
     expect(screen.getAllByRole('radio')).toHaveLength(3)
+    expect(screen.getByRole('radio', {name: '낮'}).parentElement?.parentElement).toHaveClass(
+      'bg-surface-overlay',
+    )
+    expect(screen.getByRole('radio', {name: '낮'}).parentElement).toHaveClass('flex-1')
+    expect(screen.getByText('자동')).toHaveClass('[word-break:keep-all]')
+    expect(screen.getByText('자동').parentElement).toHaveClass('px-2')
     expect(screen.getByText('낮').previousElementSibling).toHaveClass('i-pomo-scribble:sun')
     expect(screen.getAllByText('낮').at(-1)?.nextElementSibling?.firstElementChild).toHaveClass(
       'i-pomo-scribble:check',
@@ -101,6 +112,7 @@ describe('PRadioSwitch', () => {
 
     fireEvent.click(screen.getByRole('radio', {name: '밤'}))
     expect(onChange).toHaveBeenCalledWith('night')
+    expect(screen.getByRole('radio', {name: '밤'}).parentElement).toHaveClass('flex-1')
 
     radioGroupMock.onChange?.('unsupported')
     expect(onChange).toHaveBeenCalledOnce()

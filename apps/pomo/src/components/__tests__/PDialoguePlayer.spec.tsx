@@ -154,10 +154,8 @@ it('should replace the dialogue border only in scribble style', () => {
 
   expect(scribbleBorder).toBeInstanceOf(SVGElement)
   expect(scribbleBorder?.parentElement?.classList).toContain('pomo-dialogue-bubble-frame')
-  expect(scribbleSurface.classList).toContain('[mask-image:var(--pomo-scribble-panel-mask)]')
-  expect(scribbleSurface.style.getPropertyValue('--pomo-scribble-panel-mask')).toContain(
-    'data:image/svg+xml',
-  )
+  expect(scribbleSurface.classList).toContain('pomo-scribble-mask')
+  expect(scribbleSurface).not.toHaveAttribute('style')
   expect(scribbleSurface.contains(scribbleBorder)).toBe(false)
   expect(scribbleBubble?.classList).toContain('rounded-none')
   expect(scribbleBubble?.classList).toContain('border-0')
