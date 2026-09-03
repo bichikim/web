@@ -156,6 +156,8 @@ describe('MusicPlayerView', () => {
     expect(playerBase?.classList.contains('rounded-panel')).toBe(true)
     expect(visualizerFrame?.classList.contains('overflow-hidden')).toBe(true)
     expect(visualizerFrame?.classList.contains('rounded-panel')).toBe(true)
+    expect(expandedFrame).toHaveClass('h-0', 'flex-none')
+    expect(expandedFrame).not.toHaveClass('flex-1')
     expect(expandedFrame?.classList.contains('grid-rows-[0fr]')).toBe(true)
     expect(expandedFrame?.classList.contains('is-expanded')).toBe(false)
     expect(expandedFrame?.getAttribute('aria-hidden')).toBe('true')
@@ -373,7 +375,8 @@ describe('MusicPlayerView', () => {
     expect(controller.classList.contains('h-full')).toBe(true)
     expect(controller.classList.contains('max-h-full')).toBe(true)
     expect(expandedFrame.classList.contains('min-w-0')).toBe(true)
-    expect(expandedFrame.classList.contains('flex-1')).toBe(true)
+    expect(expandedFrame.classList.contains('flex-none')).toBe(true)
+    expect(expandedFrame.classList.contains('flex-1')).toBe(false)
     expect(expandedFrame.classList.contains('overflow-hidden')).toBe(true)
     expect(
       expandedFrame.classList.contains(

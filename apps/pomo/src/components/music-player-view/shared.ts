@@ -40,11 +40,11 @@ export const CLASSES = {
     'shadow-[inset_0_-1px_0_rgb(255_250_241_/_4%)]',
   ),
   playerExpandedFrame: cx(
-    'pomo-player__expanded-frame grid min-h-0 min-w-0 flex-1 grid-rows-[0fr]',
+    'pomo-player__expanded-frame grid h-0 min-h-0 min-w-0 flex-none grid-rows-[0fr]',
     'overflow-hidden',
     '[transition:grid-template-rows_280ms_cubic-bezier(0.22,_1,_0.36,_1)]',
     '[&.is-expanded]:h-[calc(100cqh_-_var(--pomo-player-summary-space))]',
-    '[&.is-expanded]:flex-none [&.is-expanded]:grid-rows-[1fr]',
+    '[&.is-expanded]:grid-rows-[1fr]',
     'motion-reduce:transition-none',
   ),
   playerExpandedInner: cx(
