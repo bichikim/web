@@ -110,6 +110,51 @@ describe('PuppetEditor', () => {
     expect(editor).not.toHaveClass('left-panel-closed', 'right-panel-closed', 'bottom-panel-closed')
   })
 
+  test('should undo and redo document edits from the toolbar', async () => {
+    const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const undoButton = view.getByRole('button', {name: '실행 취소'})
+    const redoButton = view.getByRole('button', {name: '다시 실행'})
+
+    expect(undoButton).toBeDisabled()
+    expect(redoButton).toBeDisabled()
+
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    await waitFor(() => expect(undoButton).toBeEnabled())
+    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z')
+
+    fireEvent.click(undoButton)
+    await waitFor(() => {
+      expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(2)
+    })
+    expect(redoButton).toBeEnabled()
+
+    fireEvent.click(redoButton)
+    await waitFor(() => {
+      expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(3)
+    })
+  })
+
+  test('should handle document history keyboard shortcuts outside editable controls', async () => {
+    const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    fireEvent.keyDown(window, {ctrlKey: true, key: 'z'})
+    await waitFor(() => {
+      expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(2)
+    })
+
+    fireEvent.keyDown(window, {ctrlKey: true, key: 'y'})
+    await waitFor(() => {
+      expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(3)
+    })
+
+    const nameInput = view.getByRole('spinbutton', {name: 'Parameter 3 값'})
+    fireEvent.keyDown(nameInput, {ctrlKey: true, key: 'z'})
+    expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(3)
+  })
+
   test('should store animation edits as parameter tracks', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)

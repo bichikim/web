@@ -40,6 +40,7 @@ interface DeformerEditorProps {
   readonly document: PuppetDocument
   readonly editMode?: 'motion' | 'parameter'
   readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
   readonly controlSelection?: DeformerControlSelection
   readonly previewDocument?: PuppetDocument
@@ -365,6 +366,9 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
   }
 
   const stopDrag = () => {
+    if (dragTarget !== null) {
+      props.onEditEnd?.()
+    }
     dragTarget = null
   }
 

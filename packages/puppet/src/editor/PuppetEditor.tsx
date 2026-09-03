@@ -3,18 +3,14 @@ import {batch, createEffect, createMemo, createSignal, onCleanup, Show, untrack}
 import {
   createDemoDocument,
   type Player,
-  type PlayerFrame,
   preparePuppetDocument,
   type PuppetDocument,
   serializeDocument,
 } from '../player'
-import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
+import type {PuppetParameterValues} from '../deformation'
+import {EditorViewport} from './EditorViewport'
 import {importPng, type ImportPngErrorCode} from './import-png'
-import {DeformerEditor} from './internal/DeformerEditor'
-import {
-  createDeformerControlSelection,
-  type DeformerControlSelection,
-} from './internal/deformer-control-selection'
+import {createDeformerControlSelection} from './internal/deformer-control-selection'
 import {EditorAutoMeshDialog} from './internal/EditorAutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
 import {EditorKeyformPanel} from './internal/EditorKeyformPanel'
@@ -40,10 +36,11 @@ import {
 import {EditorPanelLayout} from './internal/EditorPanelLayout'
 import {EditorTimeline} from './internal/EditorTimeline'
 import {EditorToolbar} from './internal/EditorToolbar'
-import {MeshEditor} from './MeshEditor'
 import {type ParameterEditorResult, useParameterEditor} from './use-parameter-editor'
 import {useAutoMesh} from './use-auto-mesh'
-import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
+import {useDocumentHistory} from './use-document-history'
+import {useDocumentHistoryShortcuts} from './use-document-history-shortcuts'
+import type {PlayerCanvasStatus} from './PlayerCanvas'
 import editorStyle from './style.css?inline'
 
 export interface PuppetEditorProps {
@@ -149,77 +146,6 @@ const pauseEditorPlayback = (options: PauseEditorPlaybackOptions) => {
     options.pause()
   }
 }
-
-interface EditorViewportProps {
-  readonly activeBindingId?: string
-  readonly activeKeyformValues?: PuppetParameterValues | null
-  readonly activePartId?: string
-  readonly activeNodeId?: string
-  readonly activeVertexIndex?: number | null
-  readonly currentTime?: number
-  readonly deformerControlSelection: DeformerControlSelection
-  readonly document: PuppetDocument
-  readonly editMode?: 'motion' | 'parameter'
-  readonly onDocumentChange?: (document: PuppetDocument) => void
-  readonly onNotice?: (message: string) => void
-  readonly onPlayerChange?: (player: Player | null) => void
-  readonly onStatusChange?: (status: PlayerCanvasStatus) => void
-  readonly onTimeChange?: (time: number) => void
-  readonly onVertexEditStart?: () => void
-  readonly onVertexSelect?: (vertexIndex: number | null) => void
-  readonly parameterValues?: PuppetParameterValues
-  readonly parameterValueMap?: PuppetParameterValueMap
-  readonly previewDocument?: PuppetDocument
-  readonly selectedPartIds?: ReadonlyArray<string>
-  readonly targetNodeIds?: ReadonlyArray<string>
-}
-
-const EditorViewport = (props: EditorViewportProps) => (
-  <section
-    aria-label={
-      props.editMode === 'parameter' ? 'Parameter 정점 형태 편집' : '저장 데이터 플레이어 미리보기'
-    }
-    class="viewport-panel"
-  >
-    <div class="viewport">
-      <PlayerCanvas
-        document={props.document}
-        onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
-        onPlayerChange={props.onPlayerChange}
-        onStatusChange={props.onStatusChange}
-        parameterValues={props.parameterValueMap}
-      />
-      <MeshEditor
-        activeBindingId={props.activeBindingId}
-        activeKeyformValues={props.activeKeyformValues}
-        activePartId={props.activePartId}
-        document={props.document}
-        editMode={props.editMode}
-        onDocumentChange={props.onDocumentChange}
-        onNotice={props.onNotice}
-        onVertexEditStart={props.onVertexEditStart}
-        onVertexSelect={props.onVertexSelect}
-        previewTime={props.currentTime}
-        parameterValues={props.parameterValues}
-        parameterValueMap={props.parameterValueMap}
-        selectedPartIds={props.selectedPartIds}
-        selectedVertexIndex={props.activeVertexIndex}
-      />
-      <DeformerEditor
-        activeBindingId={props.activeBindingId}
-        activeKeyformValues={props.activeKeyformValues}
-        activeNodeId={props.activeNodeId}
-        controlSelection={props.deformerControlSelection}
-        document={props.document}
-        editMode={props.editMode}
-        onDocumentChange={props.onDocumentChange}
-        onEditStart={props.onVertexEditStart}
-        previewDocument={props.previewDocument}
-        targetNodeIds={props.targetNodeIds}
-      />
-    </div>
-  </section>
-)
 
 interface EditorModelingKeyformPanelProps {
   readonly document: PuppetDocument
@@ -389,7 +315,8 @@ const useEditorImports = (options: UseEditorImportsOptions) => {
 export const PuppetEditor = (props: PuppetEditorProps) => {
   const initialDocument = untrack(() => props.initialDocument ?? createDemoDocument())
   const initialPartId = initialDocument.parts[0]?.id ?? null
-  const [sourceDocument, setSourceDocument] = createSignal(initialDocument)
+  const history = useDocumentHistory({initialDocument})
+  const sourceDocument = history.document
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
@@ -411,7 +338,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   )
   const parameterEditor = useParameterEditor({
     document: sourceDocument,
-    onDocumentChange: setSourceDocument,
+    onDocumentChange: history.setDocument,
     onNotice: setNotice,
     selectedNodeIds,
   })
@@ -424,7 +351,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const resetEditorDocument = (document: PuppetDocument) => {
     const partId = document.parts[0]?.id ?? null
     batch(() => {
-      setSourceDocument(document)
+      history.resetDocument(document)
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
@@ -438,11 +365,29 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   })
   const pausePlayback = () =>
     pauseEditorPlayback({pause: () => setIsPlaying(false), player: player(), playing: isPlaying()})
+  const handleUndo = () => {
+    const changed = history.undo()
+    if (changed) {
+      pausePlayback()
+    }
+    return changed
+  }
+  const handleRedo = () => {
+    const changed = history.redo()
+    if (changed) {
+      pausePlayback()
+    }
+    return changed
+  }
+  const activateHistoryShortcuts = useDocumentHistoryShortcuts({
+    onRedo: handleRedo,
+    onUndo: handleUndo,
+  })
   const autoMesh = useAutoMesh({
     document: sourceDocument,
     onBeforeApply: pausePlayback,
     onDocumentChange(document) {
-      setSourceDocument(document)
+      history.setDocument(document)
       setActiveVertexIndex(null)
     },
     onNotice: setNotice,
@@ -468,13 +413,13 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
 
   const handleTimelineDocumentChange = (document: PuppetDocument) => {
     pausePlayback()
-    setSourceDocument(document)
+    history.setDocument(document)
   }
   const handleContainerUnwrap = () => {
     const document = unwrapSceneNodes(sourceDocument(), selectionActions().containerIds)
     if (document !== undefined) {
       batch(() => {
-        setSourceDocument(document)
+        history.setDocument(document)
         setLayerSelection({activeNodeId: null, nodeIds: []})
         setActivePartId(null)
         setActiveVertexIndex(null)
@@ -489,7 +434,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         : convertSceneContainers({...conversion, document: sourceDocument()})
     if (document !== undefined) {
       batch(() => {
-        setSourceDocument(document)
+        history.setDocument(document)
         setActiveVertexIndex(null)
       })
     }
@@ -499,6 +444,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     <>
       <style>{editorStyle}</style>
       <EditorPanelLayout
+        onActivate={activateHistoryShortcuts}
         bottom={
           <EditorWorkspacePanel
             currentTime={currentTime()}
@@ -526,7 +472,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onAutoMesh={() => autoMesh.onOpenChange(true)}
             onContainerConvert={handleContainerConvert}
             onContainerUnwrap={handleContainerUnwrap}
-            onDocumentChange={setSourceDocument}
+            onDocumentChange={history.setDocument}
             previewDocument={parameterPreviewDocument()}
             selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
             targetNodeIds={parameterEditor.activeTargetNodeIds()}
@@ -536,7 +482,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
           <EditorLayerPanel
             document={sourceDocument()}
             selection={layerSelection()}
-            onDocumentChange={setSourceDocument}
+            onDocumentChange={history.setDocument}
             onSelectionChange={(selection) => {
               setLayerSelection(selection)
               setActivePartId(getSelectedPartId(sourceDocument(), selection))
@@ -548,11 +494,17 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         toolbar={(visibility) => (
           <EditorToolbar
             activeWorkspace={workspace()}
+            canRedo={history.canRedo()}
+            canUndo={history.canUndo()}
+            historyRedoCount={history.redoCount()}
+            historyUndoCount={history.undoCount()}
             panelVisibility={visibility}
             playerStatus={playerStatus()}
+            onRedo={handleRedo}
             onExport={() => downloadDocument(sourceDocument())}
             onJsonImport={editorImports.handleImport}
             onPngImport={editorImports.handlePngImport}
+            onUndo={handleUndo}
             onWorkspaceChange={(nextWorkspace) => {
               pausePlayback()
               setWorkspace(nextWorkspace)
@@ -570,7 +522,12 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             deformerControlSelection={deformerControlSelection}
             document={sourceDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
-            onDocumentChange={workspace() === 'modeling' ? setSourceDocument : undefined}
+            onDeformerEditEnd={history.endTransaction}
+            onDeformerEditStart={() => {
+              pausePlayback()
+              history.beginTransaction()
+            }}
+            onDocumentChange={workspace() === 'modeling' ? history.setDocument : undefined}
             onNotice={setNotice}
             onPlayerChange={handlePlayerChange}
             onStatusChange={setPlayerStatus}

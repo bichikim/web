@@ -16,6 +16,7 @@ export interface EditorPanelLayoutProps {
   readonly bottom?: JSX.Element
   readonly inspector?: JSX.Element
   readonly layers?: JSX.Element
+  readonly onActivate?: () => void
   readonly toolbar?: (visibility: EditorPanelVisibility) => JSX.Element
   readonly viewport?: JSX.Element
 }
@@ -50,6 +51,8 @@ export const EditorPanelLayout = (props: EditorPanelLayoutProps) => {
         '--left-panel-size': `${layout.leftSize()}px`,
         '--right-panel-size': `${layout.rightSize()}px`,
       }}
+      onFocusIn={() => props.onActivate?.()}
+      onPointerDown={() => props.onActivate?.()}
     >
       {props.toolbar?.(visibility)}
       {props.layers}
