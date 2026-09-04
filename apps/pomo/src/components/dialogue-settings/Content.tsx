@@ -15,6 +15,7 @@ import {
   excludeLanguageLearningDialogues,
   useLanguageLearningSentences,
 } from '../../features/language-learning'
+import {excludeMemoryMemoDialogues} from '../../features/memory-assist'
 import {SUPERTONIC_VOICES} from '../../features/supertonic'
 import {AutomaticDialogueSettings} from './AutomaticSettings'
 import {DIALOGUE_EVENTS} from './event-definitions'
@@ -100,7 +101,9 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
   )
   const learningSentences = useLanguageLearningSentences()
   const libraryDialogues = createMemo(() =>
-    excludeLanguageLearningDialogues(eventDialogues(), learningSentences()),
+    excludeMemoryMemoDialogues(
+      excludeLanguageLearningDialogues(eventDialogues(), learningSentences()),
+    ),
   )
   const libraryEntries = createMemo(() =>
     libraryDialogues().map((dialogue) => ({

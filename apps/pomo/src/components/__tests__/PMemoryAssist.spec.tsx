@@ -10,6 +10,7 @@ import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PIconButton} from '../PIconButton'
 import {PMemoryAssist} from '../PMemoryAssist'
 import {LanguageLearningLibrary} from '../language-learning/Library'
+import {MemoryMemoList} from '../memory-assist/Memos'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
@@ -20,6 +21,9 @@ vi.mock('../language-learning/Library', () => ({
 }))
 vi.mock('../language-learning/Words', () => ({
   LanguageLearningWords: () => <div>language learning words</div>,
+}))
+vi.mock('../memory-assist/Memos', () => ({
+  MemoryMemoList: vi.fn(() => <div>memory memos</div>),
 }))
 vi.mock('../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 
@@ -112,6 +116,7 @@ it('should open a Korean memory assist modal', () => {
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '학습 문장',
     '학습 단어',
+    '메모',
   ])
   expect(screen.getByRole('tablist', {name: '기억 보조 종류'}).className).toContain(
     'pomo-memory-assist__tabs',
@@ -119,6 +124,8 @@ it('should open a Korean memory assist modal', () => {
   expect(screen.getAllByRole('tab')[0]?.className).toContain('ui-selected:shadow-tab-active')
   expect(screen.getByText('language learning library')).toBeInTheDocument()
   expect(screen.getByText('language learning words')).toBeInTheDocument()
+  expect(screen.getByText('memory memos')).toBeInTheDocument()
+  expect(MemoryMemoList).toHaveBeenCalled()
 
   fireEvent.click(screen.getByRole('button', {name: 'Restore focus'}))
   expect(document.activeElement).toBe(trigger)
@@ -147,5 +154,6 @@ it('should open an English memory assist modal', () => {
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     'Learning sentences',
     'Learning words',
+    'Memos',
   ])
 })
