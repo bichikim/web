@@ -7,6 +7,7 @@ import {
   useRandomEvent,
 } from '../../features/focus-room-dialogue/index'
 import {type PSayController} from '../../features/pomo-webmcp/index'
+import {useMemoryReminders} from '../../features/memory-assist'
 import {PDialoguePlayer} from '../PDialoguePlayer'
 import {PFeedStatus} from '../PFeedStatus'
 import {PMusicPlayer} from '../PMusicPlayer'
@@ -38,6 +39,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
     })
 
+  useMemoryReminders({events})
   useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
 
   return (

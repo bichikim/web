@@ -9,6 +9,7 @@ import {PIconButton} from './PIconButton'
 import {PModal} from './PModal'
 import {MEMORY_ASSIST_ICON} from './memory-assist/icon'
 import {PMemoryAssistTabList} from './memory-assist/TabList'
+import {MemoryMemoList} from './memory-assist/Memos'
 import {LanguageLearningLibrary} from './language-learning/Library'
 import {LanguageLearningWords} from './language-learning/Words'
 import {PScribbleCircleControl} from './scribble/CircleControl'
@@ -53,6 +54,9 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
           </Tabs.Content>
           <Tabs.Content value="words">
             <LanguageLearningWords />
+          </Tabs.Content>
+          <Tabs.Content value="memos">
+            <MemoryMemoList />
           </Tabs.Content>
         </PModal>
       </Tabs>
