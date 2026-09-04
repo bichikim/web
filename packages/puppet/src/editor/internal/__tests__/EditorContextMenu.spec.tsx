@@ -4,6 +4,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {describe, expect, test, vi} from 'vitest'
 
 import {EditorContextMenu, type EditorContextMenuEntry} from '../EditorContextMenu'
+import {EditorPortalProvider} from '../EditorPortalProvider'
 
 describe('EditorContextMenu', () => {
   test('should open at a context-menu request and run the selected action', async () => {
@@ -49,5 +50,23 @@ describe('EditorContextMenu', () => {
     await waitFor(() => expect(menu).toHaveAttribute('data-closed'))
     expect(onOpenChange).toHaveBeenCalledWith(true)
     expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  test('should mount the menu in the editor portal target', async () => {
+    const portalMount = document.createElement('div')
+    document.body.append(portalMount)
+    const view = render(() => (
+      <EditorPortalProvider mount={portalMount}>
+        <EditorContextMenu entries={[]} label="레이어 작업">
+          <button type="button">대상 레이어</button>
+        </EditorContextMenu>
+      </EditorPortalProvider>
+    ))
+
+    fireEvent.contextMenu(view.getByRole('button', {name: '대상 레이어'}))
+
+    expect(await screen.findByRole('menu', {name: '레이어 작업'})).toBe(
+      portalMount.querySelector('[role="menu"]'),
+    )
   })
 })
