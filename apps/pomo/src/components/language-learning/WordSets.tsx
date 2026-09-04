@@ -12,7 +12,7 @@ const CLASSES = {
     'min-h-11 inline-flex items-center rounded-full border border-solid border-border',
     'px-4 text-foreground no-underline',
   ),
-  page: 'min-h-dvh box-border bg-[#17130f] p-[max(1.25rem,var(--pomo-safe-area-inset-top))] text-foreground',
+  page: 'min-h-dvh box-border bg-background p-[max(1.25rem,var(--pomo-safe-area-inset-top))] text-foreground',
   panel: 'grid gap-4 rounded-5 border border-solid border-border bg-surface p-5',
   set: cx(
     'flex min-h-16 items-center justify-between gap-3 rounded-control border',
