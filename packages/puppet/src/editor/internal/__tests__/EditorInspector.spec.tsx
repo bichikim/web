@@ -73,6 +73,7 @@ describe('EditorInspector', () => {
 
     expect(view.getByRole('combobox', {name: '파트 블렌드 모드'})).toBeEnabled()
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
+    fireEvent.click(view.getByRole('button', {name: '마스크 추가'}))
     expect(view.getByRole('checkbox', {name: 'shape-circle로 자르기'})).toBeEnabled()
     expect(view.queryByRole('spinbutton', {name: '파트 그리기 순서'})).toBeNull()
     fireEvent.input(view.getByRole('spinbutton', {name: '파트 불투명도'}), {
@@ -81,6 +82,7 @@ describe('EditorInspector', () => {
     fireEvent.change(view.getByRole('combobox', {name: '파트 블렌드 모드'}), {
       target: {value: 'screen'},
     })
+    fireEvent.click(view.getByRole('button', {name: '마스크 추가'}))
     fireEvent.click(view.getByRole('checkbox', {name: 'shape-circle로 자르기'}))
     fireEvent.click(view.getByRole('checkbox', {name: '마스크 반전'}))
     fireEvent.click(view.getByRole('checkbox', {name: '파츠도 계속 표시'}))
@@ -103,6 +105,7 @@ describe('EditorInspector', () => {
       />
     ))
 
+    fireEvent.click(view.getByRole('button', {name: '마스크 추가'}))
     const circleMask = view.getByRole('checkbox', {name: 'shape-circle로 자르기'})
 
     expect(circleMask).toBeDisabled()
@@ -111,6 +114,34 @@ describe('EditorInspector', () => {
       '이 파트를 마스크로 지정하면 순환 참조가 생깁니다.',
     )
     expect(view.getByRole('checkbox', {name: 'shape-diamond로 자르기'})).toBeDisabled()
+  })
+
+  test('should keep the mask picker open while adding multiple masks', () => {
+    const source = createDemoDocument()
+    const [document, setDocument] = createSignal({
+      ...source,
+      parts: source.parts.map((part) =>
+        part.id === 'mesh-preview' ? part : {...part, properties: undefined},
+      ),
+    })
+    const view = render(() => (
+      <EditorInspector
+        activeNodeId="mesh-preview"
+        document={document()}
+        editMode="parameter"
+        onDocumentChange={setDocument}
+      />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: '마스크 추가'}))
+    fireEvent.click(view.getByRole('checkbox', {name: 'shape-circle로 자르기'}))
+    expect(view.getByRole('dialog', {name: '마스크 추가'})).toBeVisible()
+    fireEvent.click(view.getByRole('checkbox', {name: 'shape-diamond로 자르기'}))
+
+    expect(document().parts[0]?.properties?.clippingMaskIds).toEqual([
+      'shape-circle',
+      'shape-diamond',
+    ])
   })
 
   test('should edit render values on an active part keyform while keeping model controls enabled', () => {
@@ -201,7 +232,8 @@ describe('EditorInspector', () => {
     ))
 
     expect(view.getByRole('combobox', {name: '파트 블렌드 모드'})).toBeDisabled()
-    expect(view.getByRole('checkbox', {name: 'shape-circle로 자르기'})).toBeDisabled()
+    expect(view.getByRole('button', {name: '마스크 추가'})).toBeDisabled()
+    expect(view.queryByRole('checkbox', {name: 'shape-circle로 자르기'})).toBeNull()
     expect(view.getByRole('checkbox', {name: '마스크 반전'})).toBeDisabled()
     expect(view.getByRole('checkbox', {name: '파츠도 계속 표시'})).toBeDisabled()
   })

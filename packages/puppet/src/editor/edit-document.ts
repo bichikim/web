@@ -19,6 +19,7 @@ import type {PuppetDocument, PuppetMesh, PuppetPart} from '../player/document'
 import {collapseBoundaryVertex, isBoundaryCorner} from './internal/collapse-boundary'
 import {interpolateEdgeUv, interpolateTriangleUv} from './internal/interpolate-uv'
 import {collapseMotionIndices, updateMotionIndices} from './internal/motion-tracks'
+import {resetParameterPartKeyforms} from './internal/reset-part-deformations'
 import {deduplicateTriangles} from './internal/triangles'
 import {triangulatePolygon} from './internal/triangulate'
 
@@ -275,6 +276,23 @@ const createPartResult = (
     : {error: {code: 'invalid-mesh'}, ok: false}
 }
 
+const resetResultParameterVertices = (
+  result: EditDocumentResult,
+  partId: string,
+): EditDocumentResult => {
+  if (!result.ok) {
+    return result
+  }
+
+  const part = getPart(result.document, partId)
+  return part === undefined
+    ? result
+    : {
+        ...result,
+        document: resetParameterPartKeyforms(result.document, partId, part.mesh.vertices),
+      }
+}
+
 export const addPartVertex = (options: AddPartVertexOptions): EditDocumentResult => {
   const part = getPart(options.document, options.partId)
 
@@ -330,7 +348,10 @@ export const addPartVertex = (options: AddPartVertexOptions): EditDocumentResult
         : splitTriangle(appendedMesh, triangleRecord, vertexIndex)
       : splitEdge(appendedMesh, edge, vertexIndex)
 
-  return createPartResult(options.document, part, reconstructMesh(mesh), vertexIndex)
+  return resetResultParameterVertices(
+    createPartResult(options.document, part, reconstructMesh(mesh), vertexIndex),
+    part.id,
+  )
 }
 
 export const splitPartTriangle = (options: SplitPartTriangleOptions): EditDocumentResult =>
@@ -424,21 +445,24 @@ export const deletePartVertex = (options: DeletePartVertexOptions): EditDocument
 
     const result = createPartResult(options.document, part, boundaryCollapse.mesh)
 
-    return result.ok
-      ? {
-          ...result,
-          document: {
-            ...result.document,
-            motions: collapseMotionIndices({
-              deletedVertexIndex: options.vertexIndex,
-              document: options.document,
-              partId: part.id,
-              promotedOffset: boundaryCollapse.promotedOffset,
-              promotedVertexIndex: boundaryCollapse.promotedVertexIndex,
-            }),
-          },
-        }
-      : result
+    return resetResultParameterVertices(
+      result.ok
+        ? {
+            ...result,
+            document: {
+              ...result.document,
+              motions: collapseMotionIndices({
+                deletedVertexIndex: options.vertexIndex,
+                document: options.document,
+                partId: part.id,
+                promotedOffset: boundaryCollapse.promotedOffset,
+                promotedVertexIndex: boundaryCollapse.promotedVertexIndex,
+              }),
+            },
+          }
+        : result,
+      part.id,
+    )
   }
 
   const deletionMesh = part.mesh
@@ -465,13 +489,16 @@ export const deletePartVertex = (options: DeletePartVertexOptions): EditDocument
   )
   const result = createPartResult(options.document, part, reconstructMesh(mesh))
 
-  return result.ok
-    ? {
-        ...result,
-        document: {
-          ...result.document,
-          motions: updateMotionIndices(options.document, part.id, options.vertexIndex),
-        },
-      }
-    : result
+  return resetResultParameterVertices(
+    result.ok
+      ? {
+          ...result,
+          document: {
+            ...result.document,
+            motions: updateMotionIndices(options.document, part.id, options.vertexIndex),
+          },
+        }
+      : result,
+    part.id,
+  )
 }

@@ -67,8 +67,6 @@ const createPreviewTexture = () => {
       </defs>
       <rect width="100%" height="100%" fill="url(#color)"/>
       <rect width="100%" height="100%" fill="url(#grid)"/>
-      <text x="50%" y="52%" text-anchor="middle" font-family="system-ui" font-size="46"
-        font-weight="600" fill="#07110f" fill-opacity="0.78">PUPPET</text>
   `
 
   return createSvgSource(TEXTURE_WIDTH, TEXTURE_HEIGHT, svg)

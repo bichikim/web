@@ -16,6 +16,7 @@ import {
   setParameterKeyframe,
   setParameterKeyframeEasing,
 } from './motion-keyframes'
+import {EditorNumberField} from './EditorNumberField'
 
 const PERCENT = 100
 const RULER_INTERVAL_COUNT = 8
@@ -46,6 +47,8 @@ export interface EditorTimelineProps {
   readonly document: PuppetDocument
   readonly isPlaying?: boolean
   readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
   readonly onPlaybackToggle?: () => void
   readonly onSeek?: (time: number) => void
   readonly parameterValues?: PuppetParameterValueMap
@@ -166,6 +169,8 @@ interface TimelineDopesheetProps {
   readonly currentTime: number
   readonly duration: number
   readonly motion?: PuppetMotion
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
   readonly onKeyframeSelect?: (
     track: ParameterTimelineTrack,
     keyframe: ParameterTimelineKeyframe,
@@ -229,20 +234,21 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
             <>
               <label class="timeline-row-label">
                 <strong>{track.parameter.name}</strong>
-                <input
-                  aria-label={`${track.parameter.name} 현재 값`}
+                <EditorNumberField
                   disabled={
                     props.motion === undefined || props.onParameterValueChange === undefined
                   }
-                  max={track.parameter.maximum}
-                  min={track.parameter.minimum}
+                  label={`${track.parameter.name} 현재 값`}
+                  maximum={track.parameter.maximum}
+                  minimum={track.parameter.minimum}
                   step="any"
-                  type="number"
                   value={props.values[track.parameter.id] ?? track.parameter.defaultValue}
-                  onFocus={() => props.onParameterSelect?.(track.parameter.id)}
-                  onInput={(event) =>
-                    props.onParameterValueChange?.(track, event.currentTarget.valueAsNumber)
-                  }
+                  onEditEnd={props.onEditEnd}
+                  onEditStart={() => {
+                    props.onParameterSelect?.(track.parameter.id)
+                    props.onEditStart?.()
+                  }}
+                  onValueChange={(value) => props.onParameterValueChange?.(track, value)}
                 />
               </label>
               <div class="timeline-row" aria-label={`${track.parameter.name} 트랙`}>
@@ -418,6 +424,8 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
         currentTime={currentTime()}
         duration={duration()}
         motion={motion()}
+        onEditEnd={props.onEditEnd}
+        onEditStart={props.onEditStart}
         onKeyframeSelect={handleKeyframeSelect}
         onParameterValueChange={(track, value) =>
           updateParameterKeyframe(track.parameter.id, value)

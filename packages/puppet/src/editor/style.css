@@ -785,6 +785,18 @@
   color: #f3f7f5;
 }
 
+.puppet-editor .layer-select.mask-pick-candidate {
+  border-radius: 6px;
+  color: #d7fff4;
+  background: #17352d;
+  box-shadow: inset 0 0 0 1px #4fcaa9;
+}
+
+.puppet-editor .layer-select:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .puppet-editor .layer-label {
   display: grid;
   min-width: 0;
@@ -814,6 +826,38 @@
   font-size: 8px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.puppet-editor .layer-mask-usage {
+  display: inline-flex;
+  min-width: 26px;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 2px 4px;
+  border: 1px solid #3d5f56;
+  border-radius: 999px;
+  color: #9fe7d4;
+  background: #14231f;
+  font-size: 8px;
+}
+
+.puppet-editor .layer-mask-usage svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentcolor;
+}
+
+.puppet-editor .mask-pick-notice {
+  margin: 0 0 8px;
+  padding: 7px 8px;
+  border: 1px solid #3d5f56;
+  border-radius: 6px;
+  color: #c7f7e9;
+  background: #173029;
+  font-size: 9px;
 }
 
 .puppet-editor .layer-label strong {
@@ -1001,6 +1045,191 @@
   grid-template-columns: auto minmax(0, 1fr);
 }
 
+.puppet-editor .mask-chip-list {
+  display: flex;
+  min-height: 28px;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.puppet-editor .mask-empty-state,
+.puppet-editor .mask-usage-count,
+.puppet-editor .mask-picker-count,
+.puppet-editor .mask-picker-empty {
+  color: #84918c;
+  font-size: 9px;
+}
+
+.puppet-editor .mask-chip {
+  display: inline-grid;
+  min-width: 0;
+  grid-template-columns: 20px minmax(0, 1fr) 20px;
+  gap: 4px;
+  align-items: center;
+  padding: 2px;
+  border: 1px solid #3d5f56;
+  border-radius: 6px;
+  color: #d9eee8;
+  background: #17231f;
+  font-size: 9px;
+}
+
+.puppet-editor .mask-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.puppet-editor .mask-chip img,
+.puppet-editor .mask-picker-thumbnail {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: #25312d;
+  object-fit: contain;
+}
+
+.puppet-editor .mask-chip button,
+.puppet-editor .mask-picker-heading button {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  color: #93a29d;
+  background: transparent;
+  cursor: pointer;
+}
+
+.puppet-editor .mask-chip button:hover:not(:disabled),
+.puppet-editor .mask-chip button:focus-visible,
+.puppet-editor .mask-picker-heading button:hover,
+.puppet-editor .mask-picker-heading button:focus-visible {
+  color: #f4f8f6;
+  background: #293832;
+  outline: none;
+}
+
+.puppet-editor .mask-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+}
+
+.puppet-editor .mask-action-button {
+  min-height: 28px;
+  padding: 5px 7px;
+  border: 1px solid #3d5f56;
+  border-radius: 6px;
+  color: #bfeee1;
+  background: #17211e;
+  font: inherit;
+  cursor: pointer;
+}
+
+.puppet-editor .mask-action-button:hover:not(:disabled),
+.puppet-editor .mask-action-button:focus-visible {
+  border-color: #64e5c4;
+  outline: none;
+}
+
+.puppet-editor .mask-action-button:disabled,
+.puppet-editor .mask-chip button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.puppet-editor .mask-picker {
+  width: min(300px, calc(100vw - 24px));
+  padding: 10px;
+  border: 1px solid #45544f;
+  border-radius: 9px;
+  color: #dfe8e4;
+  background: #111816;
+  box-shadow: 0 12px 34px rgb(0 0 0 / 42%);
+}
+
+.puppet-editor .mask-picker-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.puppet-editor .mask-picker-heading h2 {
+  margin: 0;
+  color: #dfe8e4;
+  font-size: 11px;
+}
+
+.puppet-editor .mask-picker-list {
+  display: grid;
+  max-height: 220px;
+  gap: 3px;
+  margin: 8px 0;
+  overflow-y: auto;
+}
+
+.puppet-editor .mask-picker-list label {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto 24px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 5px;
+  border-radius: 6px;
+  color: #cbd7d3;
+  cursor: pointer;
+}
+
+.puppet-editor .mask-picker-list label:hover {
+  background: #1c2824;
+}
+
+.puppet-editor .mask-picker-list label:has(input:disabled) {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.puppet-editor .mask-picker-thumbnail {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.puppet-editor .mask-picker-thumbnail img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.puppet-editor .mask-picker-label {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.puppet-editor .mask-picker-label strong,
+.puppet-editor .mask-picker-label small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.puppet-editor .mask-picker-label strong {
+  font-size: 10px;
+}
+
+.puppet-editor .mask-picker-label small,
+.puppet-editor .mask-picker-reason {
+  color: #82908b;
+  font-size: 8px;
+}
+
 .puppet-editor .panel-note,
 .puppet-editor .notice {
   margin: 16px 8px;
@@ -1075,19 +1304,6 @@
 
 .puppet-editor .mesh-editor .clipped-part-preview.filled .clipped-part-boundary {
   fill: rgb(255 189 89 / 12%);
-}
-
-.puppet-editor .mesh-editor .clipped-part-preview text {
-  fill: #ffddaa;
-  stroke: #111715;
-  stroke-width: 3;
-  paint-order: stroke;
-  font-size: 38px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-anchor: middle;
-  transform: translateY(-16px);
-  vector-effect: non-scaling-stroke;
 }
 
 .puppet-editor .mesh-editor circle {
@@ -2197,6 +2413,158 @@
   background: #2a1616;
   font-size: 10px;
   line-height: 1.6;
+}
+
+.puppet-editor .editor-number-field,
+.auto-mesh-dialog-content .editor-number-field {
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #35413d;
+  border-radius: 5px;
+  color: #dfe8e4;
+  background: #121816;
+}
+
+.puppet-editor .editor-number-field[data-bounded]::before,
+.auto-mesh-dialog-content .editor-number-field[data-bounded]::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--number-field-progress);
+  background: #24443b;
+  content: '';
+  pointer-events: none;
+}
+
+.puppet-editor .editor-number-field:focus-within,
+.auto-mesh-dialog-content .editor-number-field:focus-within {
+  border-color: #64e5c4;
+  outline: 1px solid #64e5c4;
+  outline-offset: 1px;
+}
+
+.puppet-editor .editor-number-field:has(input:disabled),
+.auto-mesh-dialog-content .editor-number-field:has(input:disabled) {
+  border-color: #303936;
+  color: #77837e;
+  background: #111613;
+}
+
+.puppet-editor .editor-number-field > input[type='number'],
+.auto-mesh-dialog-content .editor-number-field > input[type='number'] {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: ew-resize;
+  appearance: textfield;
+  touch-action: none;
+}
+
+.puppet-editor .editor-number-field > input[type='number']:focus:not(:active),
+.auto-mesh-dialog-content .editor-number-field > input[type='number']:focus:not(:active) {
+  cursor: text;
+}
+
+.puppet-editor .editor-number-field.scrubbing > input[type='number'],
+.auto-mesh-dialog-content .editor-number-field.scrubbing > input[type='number'] {
+  cursor: ew-resize;
+  user-select: none;
+}
+
+.puppet-editor .editor-number-field > input[type='number']::-webkit-inner-spin-button,
+.puppet-editor .editor-number-field > input[type='number']::-webkit-outer-spin-button,
+.auto-mesh-dialog-content .editor-number-field > input[type='number']::-webkit-inner-spin-button,
+.auto-mesh-dialog-content .editor-number-field > input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.puppet-editor .editor-number-field > span,
+.auto-mesh-dialog-content .editor-number-field > span {
+  position: relative;
+  padding-right: 7px;
+  color: #81908a;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 9px;
+  pointer-events: none;
+}
+
+.puppet-editor .editor-number-step,
+.auto-mesh-dialog-content .editor-number-step {
+  position: relative;
+  display: grid;
+  width: 20px;
+  align-self: stretch;
+  flex: 0 0 20px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #91a19a;
+  background: #18201d;
+  font: inherit;
+  cursor: pointer;
+}
+
+.puppet-editor .editor-number-step.decrement,
+.auto-mesh-dialog-content .editor-number-step.decrement {
+  border-right: 1px solid #35413d;
+}
+
+.puppet-editor .editor-number-step.increment,
+.auto-mesh-dialog-content .editor-number-step.increment {
+  border-left: 1px solid #35413d;
+}
+
+.puppet-editor .editor-number-step:hover:not(:disabled),
+.auto-mesh-dialog-content .editor-number-step:hover:not(:disabled) {
+  color: #dffff6;
+  background: #29443b;
+}
+
+.puppet-editor .editor-number-step:focus-visible,
+.auto-mesh-dialog-content .editor-number-step:focus-visible {
+  outline: 1px solid #64e5c4;
+  outline-offset: -2px;
+}
+
+.puppet-editor .editor-number-step:disabled,
+.auto-mesh-dialog-content .editor-number-step:disabled {
+  color: #4b5752;
+  cursor: default;
+}
+
+.puppet-editor .editor-number-step > span,
+.auto-mesh-dialog-content .editor-number-step > span {
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  font-size: 0;
+  pointer-events: none;
+}
+
+.puppet-editor .editor-number-step.decrement > span,
+.auto-mesh-dialog-content .editor-number-step.decrement > span {
+  transform: rotate(135deg);
+}
+
+.puppet-editor .editor-number-step.increment > span,
+.auto-mesh-dialog-content .editor-number-step.increment > span {
+  transform: rotate(-45deg);
 }
 
 .auto-mesh-dialog-content footer {

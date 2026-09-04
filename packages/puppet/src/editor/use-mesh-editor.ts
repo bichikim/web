@@ -366,16 +366,14 @@ const updatePointerDraft = (
 }
 
 const canEditMeshTopology = (props: MeshEditorProps, state: MeshEditorState) =>
-  props.editMode !== 'parameter' &&
-  props.onDocumentChange !== undefined &&
-  state.part() !== undefined
+  props.editMode !== 'motion' && props.onDocumentChange !== undefined && state.part() !== undefined
 
 const createAddVertexHandler =
   (props: MeshEditorProps, state: MeshEditorState) => (event: MouseEvent) => {
     const activePart = state.part()
     const {onDocumentChange} = props
     if (
-      props.editMode === 'parameter' ||
+      props.editMode === 'motion' ||
       state.tool() !== 'add' ||
       activePart === undefined ||
       onDocumentChange === undefined
@@ -416,7 +414,7 @@ const createDeleteVertexHandler = (props: MeshEditorProps, state: MeshEditorStat
   const activeVertex = state.selectedVertex()
   const {onDocumentChange} = props
   if (
-    props.editMode === 'parameter' ||
+    props.editMode === 'motion' ||
     activePart === undefined ||
     activeVertex === null ||
     onDocumentChange === undefined

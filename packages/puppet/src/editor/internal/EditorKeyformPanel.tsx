@@ -10,6 +10,7 @@ import {
 } from '../../deformation'
 import type {PuppetParameter, PuppetParameterBinding} from '../../player/document'
 import {EditorKeyformMarker} from './EditorKeyformMarker'
+import {EditorNumberField} from './EditorNumberField'
 import {EditorKeyformToolbar} from './EditorKeyformToolbar'
 import {EditorParameterItem} from './EditorParameterItem'
 import {
@@ -245,6 +246,8 @@ interface KeyformTrackProps {
   readonly binding: PuppetParameterBinding
   readonly onBindingDelete?: (bindingId: string) => void
   readonly onBindingSelect?: (bindingId: string) => void
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
   readonly onKeyformMove?: (
     bindingId: string,
     values: PuppetParameterValues,
@@ -258,6 +261,8 @@ interface KeyformTrackProps {
 }
 
 interface ParameterValueFieldsProps {
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
   readonly onValueChange?: (values: PuppetParameterValues) => void
   readonly parameters: ReadonlyArray<PuppetParameter>
   readonly values?: PuppetParameterValues
@@ -278,13 +283,14 @@ const ParameterValueFields = (props: ParameterValueFieldsProps) => {
         {(parameter, index) => (
           <label class="keyform-row-value">
             <span>{parameter.name}</span>
-            <input
-              aria-label={`${parameter.name} 값`}
-              max={parameter.maximum}
-              min={parameter.minimum}
-              type="number"
+            <EditorNumberField
+              label={`${parameter.name} 값`}
+              maximum={parameter.maximum}
+              minimum={parameter.minimum}
               value={props.values?.[index()] ?? parameter.defaultValue}
-              onInput={(event) => updateAxisValue(index(), event.currentTarget.valueAsNumber)}
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
+              onValueChange={(value) => updateAxisValue(index(), value)}
             />
           </label>
         )}
@@ -326,6 +332,8 @@ const KeyformTrackLabel = (props: KeyformTrackProps) => {
             onSelect={() => props.onBindingSelect?.(props.binding.id)}
           >
             <ParameterValueFields
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
               onValueChange={handleValueChange}
               parameters={props.parameters}
               values={props.values}
@@ -433,6 +441,8 @@ export interface EditorKeyformPanelProps {
   readonly bindings: ReadonlyArray<PuppetParameterBinding>
   readonly onBindingDelete?: (bindingId: string) => void
   readonly onBindingSelect?: (bindingId: string) => void
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
   readonly onKeyformAdd?: () => void
   readonly onKeyformDelete?: () => void
   readonly onKeyformMove?: (
@@ -508,6 +518,8 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                   values={bindingValues(binding)}
                   onBindingDelete={props.onBindingDelete}
                   onBindingSelect={props.onBindingSelect}
+                  onEditEnd={props.onEditEnd}
+                  onEditStart={props.onEditStart}
                   onParameterNameChange={props.onParameterNameChange}
                   onValueChange={props.onValueChange}
                 />
