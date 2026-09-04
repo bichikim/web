@@ -12,6 +12,7 @@ import {type PSayController} from '../../features/pomo-webmcp/index'
 import {PDialogueComposer} from '../PDialogueComposer'
 import {PDialoguePlayer} from '../PDialoguePlayer'
 import {PFeedStatus} from '../PFeedStatus'
+import {PFormMessage} from '../PFormMessage'
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
 import {PMusicPlayer} from '../PMusicPlayer'
 import {PPomodoro, type PPomodoroPresentation} from '../PPomodoro'
@@ -97,6 +98,9 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
           />
         </div>
         <div class={CLASSES.mediaMessages} ref={setMediaMessages}>
+          <Show when={oneOffChat.errorMessage()}>
+            {(message) => <PFormMessage tone="error">{message()}</PFormMessage>}
+          </Show>
           <PFeedStatus sceneStyle={props.sceneStyle} />
           <PDialoguePlayer
             externalText={props.pomoSay.speechText()}
