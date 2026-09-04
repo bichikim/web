@@ -31,9 +31,11 @@ import {PIconButton} from '../PIconButton'
 interface SceneToolbarProps {
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
+  readonly dialogueComposerVisible?: boolean
   readonly gaze: PGaze
   readonly isSceneTransitioning: boolean
   readonly onActivityChange: (activity: PActivity) => void
+  readonly onDialogueComposerVisibleChange?: (visible: boolean) => void
   readonly onGazeChange: (gaze: PGaze) => void
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange: (motionMode: PSceneMotionMode) => void
@@ -107,8 +109,10 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           <SceneSettingsPanel
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}
+            dialogueComposerVisible={props.dialogueComposerVisible}
             gaze={props.gaze}
             onActivityChange={props.onActivityChange}
+            onDialogueComposerVisibleChange={props.onDialogueComposerVisibleChange}
             onGazeChange={props.onGazeChange}
             onMotionInputChange={props.onMotionInputChange}
             onMotionModeChange={props.onMotionModeChange}

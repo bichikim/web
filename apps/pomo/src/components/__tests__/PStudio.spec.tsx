@@ -10,6 +10,7 @@ import {
   usePSceneStyle,
 } from '../../features/focus-room-animation'
 import {usePEvents} from '../../features/focus-room-dialogue/event-context'
+import {usePDisplayPreferences} from '../../features/focus-room-display-preferences'
 import {
   readFocusRoomEntrySession,
   writeFocusRoomEntrySession,
@@ -43,6 +44,7 @@ vi.mock('../../features/focus-room-animation', () => ({
   usePSceneStyle: vi.fn(),
 }))
 vi.mock('../../features/focus-room-dialogue/event-context', () => ({usePEvents: vi.fn()}))
+vi.mock('../../features/focus-room-display-preferences', () => ({usePDisplayPreferences: vi.fn()}))
 vi.mock('../../features/focus-room-entry', () => ({
   readFocusRoomEntrySession: vi.fn(),
   writeFocusRoomEntrySession: vi.fn(),
@@ -110,6 +112,7 @@ const configureStudio = (options: StudioOptions = {}) => {
   const [hasEntered, setHasEntered] = createSignal(false)
   const [activity, setActivity] = createSignal<'reading' | 'writing'>('reading')
   const [desktopMode, setDesktopMode] = createSignal(options.desktopMode ?? 'normal')
+  const [dialogueComposerVisible, setDialogueComposerVisible] = createSignal(false)
   const [gaze, setGaze] = createSignal<'focused' | 'user'>('focused')
   const [timeMode, setTimeMode] = createSignal<'day' | 'auto'>('day')
   const [sceneStyle, setSceneStyle] = createSignal<'original' | 'scribble'>('original')
@@ -129,6 +132,11 @@ const configureStudio = (options: StudioOptions = {}) => {
     isPlaying: () => false,
     speechText: () => '안녕하세요',
   } as unknown as ReturnType<typeof usePSay>)
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    dialogueComposerVisible,
+    isReady: () => true,
+    onDialogueComposerVisibleChange: setDialogueComposerVisible,
+  })
   vi.mocked(usePScenePreferences).mockReturnValue({
     activity,
     gaze,
@@ -231,7 +239,7 @@ beforeEach(() => {
   vi.mocked(PStudioEvents).mockImplementation((props) => {
     Object.values(props)
     return (
-      <div>
+      <div data-dialogue-composer-visible={String(props.dialogueComposerVisible)}>
         이벤트
         <div class="pomo-pomodoro">포모도로</div>
         <div class="pomo-player-stage">음악</div>
@@ -252,6 +260,9 @@ beforeEach(() => {
         </button>
         <button onClick={() => props.onGazeChange('user')} type="button">
           사용자 보기
+        </button>
+        <button onClick={() => props.onDialogueComposerVisibleChange?.(true)} type="button">
+          대화 입력 표시
         </button>
         <button onClick={() => props.onMotionInputChange?.('drag')} type="button">
           드래그
@@ -314,9 +325,11 @@ describe('PStudio', () => {
     fireEvent.click(screen.getByRole('button', {name: '입장 화면 닫기'}))
     expect(writeFocusRoomEntrySession).toHaveBeenCalledTimes(2)
     expect(screen.getByText('이벤트')).toBeInTheDocument()
+    expect(screen.getByText('이벤트')).toHaveAttribute('data-dialogue-composer-visible', 'false')
 
     fireEvent.click(screen.getByRole('button', {name: '글쓰기'}))
     fireEvent.click(screen.getByRole('button', {name: '사용자 보기'}))
+    fireEvent.click(screen.getByRole('button', {name: '대화 입력 표시'}))
     fireEvent.click(screen.getByRole('button', {name: '드래그'}))
     fireEvent.click(screen.getByRole('button', {name: '평면'}))
     fireEvent.click(screen.getByRole('button', {name: '낙서'}))
@@ -327,6 +340,7 @@ describe('PStudio', () => {
     fireEvent.click(screen.getByRole('button', {name: '장면 다시 로드'}))
 
     expect(screen.getByRole('img', {name: 'night-writing-user'})).toBeInTheDocument()
+    expect(screen.getByText('이벤트')).toHaveAttribute('data-dialogue-composer-visible', 'true')
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute('data-time', 'night')
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute('data-weather', 'rain')
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute(

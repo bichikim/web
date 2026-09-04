@@ -288,6 +288,7 @@ it('should map the scribble style switch to the scene style value', () => {
 })
 
 it('should forward every scene, weather, and modal action', () => {
+  const onDialogueComposerVisibleChange = vi.fn()
   const onActivityChange = vi.fn()
   const onGazeChange = vi.fn()
   const onMotionInputChange = vi.fn()
@@ -301,8 +302,10 @@ it('should forward every scene, weather, and modal action', () => {
   render(() => (
     <PSettings
       canUseGyroscope
+      dialogueComposerVisible={false}
       onActivityChange={onActivityChange}
       onGazeChange={onGazeChange}
+      onDialogueComposerVisibleChange={onDialogueComposerVisibleChange}
       onMotionInputChange={onMotionInputChange}
       onMotionModeChange={onMotionModeChange}
       onSceneStyleChange={onSceneStyleChange}
@@ -324,6 +327,7 @@ it('should forward every scene, weather, and modal action', () => {
   fireEvent.click(screen.getByRole('button', {name: '스크린 세이버'}))
   fireEvent.click(screen.getByRole('button', {name: '전체 화면'}))
   fireEvent.click(screen.getByRole('button', {name: '화면 자동 꺼짐 방지'}))
+  fireEvent.click(screen.getByRole('button', {name: '대화 입력 버튼 표시'}))
   fireEvent.click(screen.getByRole('button', {name: '날씨 변경'}))
   fireEvent.click(screen.getByRole('button', {name: '대화 닫기'}))
 
@@ -340,6 +344,7 @@ it('should forward every scene, weather, and modal action', () => {
   expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
   expect(onWeatherLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.seoul)
   expect(onWeatherSceneModeChange).toHaveBeenCalledWith('rain')
+  expect(onDialogueComposerVisibleChange).toHaveBeenCalledWith(true)
   const wakeLockSwitch = vi
     .mocked(PSwitch)
     .mock.calls.map(([props]) => props)

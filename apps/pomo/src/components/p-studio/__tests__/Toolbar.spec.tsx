@@ -32,6 +32,7 @@ vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: vi.fn()}))
 
 const callbacks = {
   onActivityChange: vi.fn(),
+  onDialogueComposerVisibleChange: vi.fn(),
   onGazeChange: vi.fn(),
   onMotionInputChange: vi.fn(),
   onMotionModeChange: vi.fn(),
@@ -54,6 +55,7 @@ const seoulLocation = {
 const baseProps = {
   activity: 'reading',
   canUseGyroscope: true,
+  dialogueComposerVisible: false,
   gaze: 'focused',
   isSceneTransitioning: false,
   motionInput: 'drag',
@@ -109,6 +111,7 @@ describe('SceneToolbar', () => {
     expect(SceneSettingsPanel).toHaveBeenCalledWith(
       expect.objectContaining({
         activity: 'reading',
+        dialogueComposerVisible: false,
         gaze: 'focused',
         motionInput: 'drag',
         sceneStyle: 'original',

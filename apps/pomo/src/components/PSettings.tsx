@@ -52,8 +52,10 @@ const CLASSES = {
 export interface PSettingsProps {
   readonly activity?: PActivity
   readonly canUseGyroscope?: boolean
+  readonly dialogueComposerVisible?: boolean
   readonly gaze?: PGaze
   readonly onActivityChange?: (activity: PActivity) => void
+  readonly onDialogueComposerVisibleChange?: (visible: boolean) => void
   readonly onGazeChange?: (gaze: PGaze) => void
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange?: (motionMode: PSceneMotionMode) => void
@@ -250,6 +252,17 @@ const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
         titleId="pomo-settings-display-title"
       />
       <div class={CLASSES.settingsGrid}>
+        <Show when={props.onDialogueComposerVisibleChange}>
+          {(onDialogueComposerVisibleChange) => (
+            <PSwitch
+              checked={props.dialogueComposerVisible ?? false}
+              class={CLASSES.settingsToggle}
+              description={m.settings_dialogue_composer_visible_description()}
+              label={m.settings_dialogue_composer_visible()}
+              onChange={onDialogueComposerVisibleChange()}
+            />
+          )}
+        </Show>
         <PSwitch
           checked={fullscreen.isEnabled()}
           class={CLASSES.settingsToggle}
