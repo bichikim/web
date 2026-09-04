@@ -1,5 +1,6 @@
 export * from './composition'
 export * from './grid'
 export * from './parameter'
+export * from './part-properties'
 export * from './scene'
 export * from './vertices'

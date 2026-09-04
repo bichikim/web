@@ -211,6 +211,7 @@ export const createDemoDocument = (): PuppetDocument => ({
     {
       id: 'shape-circle',
       mesh: createRadialMesh({centerX: 150, centerY: 140, radius: 72, rotation: 0, sides: 12}),
+      properties: {clippingMaskIds: ['mesh-preview']},
       texture: {
         height: CIRCLE_TEXTURE_SIZE,
         src: createSvgSource(
@@ -224,12 +225,13 @@ export const createDemoDocument = (): PuppetDocument => ({
     {
       id: 'shape-diamond',
       mesh: createRadialMesh({
-        centerX: 500,
+        centerX: 620,
         centerY: 340,
         radius: 78,
         rotation: -Math.PI / 2,
         sides: 4,
       }),
+      properties: {clippingMaskIds: ['mesh-preview']},
       texture: {
         height: DIAMOND_TEXTURE_SIZE,
         src: createSvgSource(

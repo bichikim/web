@@ -3,6 +3,7 @@ import {Show, untrack} from 'solid-js'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
+import {getParameterEditTarget} from './parameter-edit-target'
 import {setDeformerCurveHandle} from './deformer-curve-handles'
 import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
 import {DeformerControls} from './DeformerControls'
@@ -93,23 +94,26 @@ interface UpdateDraggedDeformerOptions {
   readonly nodeId: string
   readonly point: PuppetPoint
   readonly target: DragTarget
+  readonly targetNodeIds?: ReadonlyArray<string>
 }
 
 const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => {
-  const isParameterKeyform =
-    options.editMode === 'parameter' &&
-    options.activeBindingId !== undefined &&
-    options.activeKeyformValues !== undefined &&
-    options.activeKeyformValues !== null
+  const editTarget = getParameterEditTarget({
+    activeBindingId: options.activeBindingId,
+    activeKeyformValues: options.activeKeyformValues,
+    editMode: options.editMode,
+    nodeId: options.nodeId,
+    targetNodeIds: options.targetNodeIds,
+  })
 
   if (options.target.kind === 'controlPoint') {
-    return isParameterKeyform
+    return editTarget.kind === 'keyform'
       ? setParameterKeyformDeformerPoint({
-          bindingId: options.activeBindingId,
+          bindingId: editTarget.bindingId,
           document: options.document,
           nodeId: options.nodeId,
           pointIndex: options.target.pointIndex,
-          values: options.activeKeyformValues,
+          values: editTarget.values,
           x: options.point.x,
           y: options.point.y,
         })
@@ -133,15 +137,15 @@ const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => {
       point: options.point,
       pointIndex: options.target.pointIndex,
     })
-    return isParameterKeyform
+    return editTarget.kind === 'keyform'
       ? setParameterKeyformDeformerCurveHandle({
           axis: options.target.axis,
-          bindingId: options.activeBindingId,
+          bindingId: editTarget.bindingId,
           document: options.document,
           nodeId: options.nodeId,
           point,
           pointIndex: options.target.pointIndex,
-          values: options.activeKeyformValues,
+          values: editTarget.values,
         })
       : setDeformerCurveHandle({
           axis: options.target.axis,
@@ -164,12 +168,12 @@ const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => {
       curveHandles: options.deformer.curveHandles,
       rotationOrigin: options.point,
     }
-    return isParameterKeyform
+    return editTarget.kind === 'keyform'
       ? setParameterKeyformDeformerControlPoints({
-          bindingId: options.activeBindingId,
+          bindingId: editTarget.bindingId,
           document: options.document,
           nodeId: options.nodeId,
-          values: options.activeKeyformValues,
+          values: editTarget.values,
           ...geometry,
         })
       : setDeformerControlPoints({...geometry, document: options.document, nodeId: options.nodeId})
@@ -206,15 +210,15 @@ const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => {
       })
   const rotationOrigin = isTranslation ? {x: origin.x + offset.x, y: origin.y + offset.y} : origin
 
-  return isParameterKeyform
+  return editTarget.kind === 'keyform'
     ? setParameterKeyformDeformerControlPoints({
-        bindingId: options.activeBindingId,
+        bindingId: editTarget.bindingId,
         controlPoints,
         curveHandles,
         document: options.document,
         nodeId: options.nodeId,
         rotationOrigin,
-        values: options.activeKeyformValues,
+        values: editTarget.values,
       })
     : setDeformerControlPoints({
         controlPoints,
@@ -226,12 +230,8 @@ const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => {
 }
 
 interface EditBlockOptions {
-  readonly activeBindingId?: string
-  readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activeNodeId?: string
   readonly document: PuppetDocument
-  readonly editMode?: 'motion' | 'parameter'
-  readonly targetNodeIds?: ReadonlyArray<string>
 }
 
 const getEditBlockMessage = (options: EditBlockOptions) => {
@@ -242,24 +242,7 @@ const getEditBlockMessage = (options: EditBlockOptions) => {
     return '잠긴 디포머는 편집할 수 없습니다.'
   }
 
-  if (options.editMode !== 'parameter') {
-    return undefined
-  }
-
-  if (options.activeBindingId === undefined) {
-    return 'Parameter를 선택해야 디포머를 편집할 수 있습니다.'
-  }
-
-  if (
-    options.activeNodeId === undefined ||
-    options.targetNodeIds?.includes(options.activeNodeId) !== true
-  ) {
-    return '현재 Parameter에 연결되지 않은 디포머입니다. 아래의 ‘선택 레이어 연결’을 누르세요.'
-  }
-
-  return options.activeKeyformValues === undefined || options.activeKeyformValues === null
-    ? '현재 값에 키폼을 추가해야 디포머를 편집할 수 있습니다.'
-    : undefined
+  return undefined
 }
 
 export const DeformerEditor = (props: DeformerEditorProps) => {
@@ -270,12 +253,8 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
   const deformer = () => getSelectedDeformer(displayDocument(), props.activeNodeId)
   const editBlockMessage = () =>
     getEditBlockMessage({
-      activeBindingId: props.activeBindingId,
-      activeKeyformValues: props.activeKeyformValues,
       activeNodeId: props.activeNodeId,
       document: props.document,
-      editMode: props.editMode,
-      targetNodeIds: props.targetNodeIds,
     })
   const editable = () => editBlockMessage() === undefined
   const viewBox = () => getEditorViewBox(displayDocument())
@@ -333,6 +312,7 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
       nodeId: activeNodeId,
       point: untransformPoint(point),
       target,
+      targetNodeIds: props.targetNodeIds,
     })
 
     if (document !== undefined) {

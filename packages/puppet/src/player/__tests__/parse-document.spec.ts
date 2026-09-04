@@ -89,6 +89,104 @@ describe('parseDocument', () => {
     })
   })
 
+  it('should validate optional part render properties while retaining legacy defaults', () => {
+    const source = createDemoDocument()
+    const document = {
+      ...source,
+      parts: source.parts.map((part) =>
+        part.id === 'shape-circle' ? {...part, properties: undefined} : part,
+      ),
+    }
+    const part = document.parts[0]!
+    const properties = {
+      blendMode: 'multiply',
+      clippingMaskIds: ['shape-circle'],
+      invertedMask: true,
+      multiplyColor: [1, 0.5, 0.25],
+      opacity: 0.5,
+      renderWhenUsedAsMask: true,
+      screenColor: [0, 0.25, 0.5],
+    }
+
+    const result = parseDocument(
+      JSON.stringify({
+        ...document,
+        parts: [{...part, properties}, ...document.parts.slice(1)],
+      }),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.ok ? result.document.parts[0]?.properties : undefined).toEqual(properties)
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [{...part, properties: {...properties, drawOrder: 2}}, ...document.parts.slice(1)],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [
+            {...part, properties: {...properties, renderWhenUsedAsMask: 'yes'}},
+            ...document.parts.slice(1),
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [{...part, properties: {...properties, opacity: 1.1}}, ...document.parts.slice(1)],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [
+            {...part, properties: {...properties, clippingMaskIds: [part.id]}},
+            ...document.parts.slice(1),
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+  })
+
+  test('should accept chained masks and reject cyclic masks', () => {
+    const document = createDemoDocument()
+    const chain = {
+      ...document,
+      parts: document.parts.map((part) => {
+        if (part.id === 'mesh-preview') {
+          return {...part, properties: {clippingMaskIds: ['shape-circle']}}
+        }
+        if (part.id === 'shape-diamond') {
+          return {...part, properties: {clippingMaskIds: ['mesh-preview']}}
+        }
+        return {...part, properties: undefined}
+      }),
+    }
+    const cycle = {
+      ...chain,
+      parts: chain.parts.map((part) =>
+        part.id === 'shape-circle'
+          ? {...part, properties: {clippingMaskIds: ['mesh-preview']}}
+          : part,
+      ),
+    }
+
+    expect(parseDocument(JSON.stringify(chain)).ok).toBe(true)
+    expect(parseDocument(JSON.stringify(cycle))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
   it('should parse sparse two-dimensional keyforms', () => {
     const document = createDemoDocument()
     const binding = document.parameterBindings?.[0]

@@ -825,14 +825,32 @@
   font-size: 9px;
 }
 
-.puppet-editor .layer-group-icon {
-  display: grid;
+.puppet-editor .layer-container-icon {
   width: 38px;
   height: 30px;
   flex: none;
-  place-items: center;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.puppet-editor .layer-container-icon.group {
   color: #e5b55a;
-  font-size: 19px;
+  stroke: currentcolor;
+}
+
+.puppet-editor .layer-container-icon.group rect:last-child {
+  fill: #2b2618;
+}
+
+.puppet-editor .layer-container-icon.deformer {
+  color: #76d8c0;
+  stroke: currentcolor;
+}
+
+.puppet-editor .layer-container-icon.deformer circle {
+  fill: #171e1b;
 }
 
 .puppet-editor .layer-state-actions {
@@ -948,7 +966,8 @@
   grid-template-columns: 54px minmax(90px, 1fr);
 }
 
-.puppet-editor .deformer-properties input {
+.puppet-editor .deformer-properties input:not([type='checkbox'], [type='color']),
+.puppet-editor .deformer-properties select {
   width: 100%;
   min-width: 0;
   padding: 5px 6px;
@@ -957,6 +976,29 @@
   color: #dfe8e4;
   background: #121816;
   font: inherit;
+}
+
+.puppet-editor .deformer-properties input[type='color'] {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid #35413d;
+  border-radius: 5px;
+  background: #121816;
+}
+
+.puppet-editor .part-mask-properties {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 8px;
+  border: 1px solid #2a3430;
+  border-radius: 6px;
+}
+
+.puppet-editor .part-mask-properties label {
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
 .puppet-editor .panel-note,
@@ -1016,6 +1058,35 @@
   fill: rgb(100 229 196 / 4%);
   stroke: rgb(100 229 196 / 58%);
   stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.puppet-editor .mesh-editor .clipped-part-preview {
+  pointer-events: none;
+}
+
+.puppet-editor .mesh-editor .clipped-part-preview .clipped-part-boundary {
+  clip-path: var(--active-mask-clip);
+  fill: none;
+  stroke: #ffbd59;
+  stroke-dasharray: 7 5;
+  stroke-width: 2;
+}
+
+.puppet-editor .mesh-editor .clipped-part-preview.filled .clipped-part-boundary {
+  fill: rgb(255 189 89 / 12%);
+}
+
+.puppet-editor .mesh-editor .clipped-part-preview text {
+  fill: #ffddaa;
+  stroke: #111715;
+  stroke-width: 3;
+  paint-order: stroke;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-anchor: middle;
+  transform: translateY(-16px);
   vector-effect: non-scaling-stroke;
 }
 
@@ -1192,6 +1263,21 @@
 .puppet-editor .mesh-tools button:disabled {
   opacity: 0.42;
   cursor: not-allowed;
+}
+
+.puppet-editor .mask-fill-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 4px;
+  color: #c7d0cc;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.puppet-editor .mask-fill-toggle input {
+  margin: 0;
+  accent-color: #64e5c4;
 }
 
 .puppet-editor .player-canvas,
