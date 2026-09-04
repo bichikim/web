@@ -9,8 +9,48 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  test-scopes:
+    name: Detect test scopes
+    runs-on: ubuntu-latest
+    outputs:
+      coong: ${{ steps.scopes.outputs.coong }}
+      pomo: ${{ steps.scopes.outputs.pomo }}
+      workspace: ${{ steps.scopes.outputs.workspace }}
+    steps:
+      - name: Read changed files
+        id: changed_files
+        uses: actions/github-script@v9
+        with:
+          retries: 3
+          script: |
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              ...context.repo,
+              pull_number: context.issue.number,
+              per_page: 100,
+            })
+            const paths = files.flatMap(({filename, previous_filename: previousFilename}) =>
+              previousFilename === undefined ? [filename] : [filename, previousFilename],
+            )
+            const limitReached = files.length >= 3000
+
+            core.setOutput('limit_reached', String(limitReached))
+            core.setOutput('paths', JSON.stringify(limitReached ? [] : paths))
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Select affected scopes
+        id: scopes
+        env:
+          CHANGED_FILES_LIMIT_REACHED: ${{ steps.changed_files.outputs.limit_reached }}
+          CHANGED_PATHS: ${{ steps.changed_files.outputs.paths }}
+        run: node scripts/ci/coverage-scopes.mjs
+
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
@@ -29,6 +69,15 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - name: Restore Turbo cache
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
       - name: Install dependencies
         id: install
         run: pnpm install --frozen-lockfile
@@ -44,8 +93,10 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm format:check
 
-  tests:
-    name: Tests
+  pomo-coverage:
+    name: Pomo coverage
+    needs: test-scopes
+    if: ${{ needs.test-scopes.outputs.pomo == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -62,12 +113,127 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - name: Restore Turbo cache
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
+      - name: Run Pomo coverage
+        run: SOURCE_COVERAGE_SCOPE=pomo pnpm exec vitest run --config vitest.source-coverage.config.mts --reporter=dot --silent=passed-only
+
+  coong-coverage:
+    name: Coong coverage
+    needs: test-scopes
+    if: ${{ needs.test-scopes.outputs.coong == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Coong coverage
+        run: SOURCE_COVERAGE_SCOPE=coong pnpm exec vitest run --config vitest.source-coverage.config.mts --reporter=dot --silent=passed-only
+
+  workspace-tests:
+    name: Workspace tests
+    needs: test-scopes
+    if: ${{ needs.test-scopes.outputs.workspace == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run workspace tests
         run: |
-          SOURCE_COVERAGE_SCOPE=apps pnpm exec vitest run --config vitest.source-coverage.config.mts --reporter=dot
-          SOURCE_COVERAGE_SCOPE=workspace pnpm exec vitest run --config vitest.source-coverage.config.mts --reporter=dot
+          SOURCE_COVERAGE_SCOPE=workspace pnpm exec vitest run --config vitest.source-coverage.config.mts --reporter=dot --silent=passed-only
           pnpm run test:stress
           pnpm run test:integration:build
+
+  tests:
+    name: Tests
+    needs:
+      - coong-coverage
+      - pomo-coverage
+      - test-scopes
+      - workspace-tests
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify test results
+        env:
+          COONG_SELECTED: ${{ needs.test-scopes.outputs.coong }}
+          COONG_RESULT: ${{ needs.coong-coverage.result }}
+          POMO_SELECTED: ${{ needs.test-scopes.outputs.pomo }}
+          POMO_RESULT: ${{ needs.pomo-coverage.result }}
+          SCOPES_RESULT: ${{ needs.test-scopes.result }}
+          WORKSPACE_SELECTED: ${{ needs.test-scopes.outputs.workspace }}
+          WORKSPACE_RESULT: ${{ needs.workspace-tests.result }}
+        run: |
+          if [[ "$SCOPES_RESULT" != 'success' ]]; then
+            exit 1
+          fi
+
+          for selection_and_result in \
+            "$COONG_SELECTED:$COONG_RESULT" \
+            "$POMO_SELECTED:$POMO_RESULT" \
+            "$WORKSPACE_SELECTED:$WORKSPACE_RESULT"; do
+            IFS=':' read -r selected result <<< "$selection_and_result"
+            if [[ "$selected" == 'true' && "$result" != 'success' ]]; then
+              exit 1
+            fi
+            if [[ "$selected" != 'true' && "$result" != 'skipped' ]]; then
+              exit 1
+            fi
+          done
