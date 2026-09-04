@@ -197,7 +197,6 @@
   "memory_memo_remove": "{memo} 메모 삭제",
   "memory_memo_edit": "{memo} 메모 편집",
   "memory_memo_edit_save": "변경 저장",
-  "memory_memo_edit_cancel": "편집 취소",
   "memory_memo_next_exact": "다음 예약 알림 {time}",
   "memory_memo_next_recall": "다음 반복 {time}",
   "memory_memo_history": "{count}번 알려줌",

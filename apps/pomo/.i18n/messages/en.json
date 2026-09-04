@@ -197,7 +197,6 @@
   "memory_memo_remove": "Delete memo: {memo}",
   "memory_memo_edit": "Edit memo: {memo}",
   "memory_memo_edit_save": "Save changes",
-  "memory_memo_edit_cancel": "Cancel editing",
   "memory_memo_next_exact": "Next scheduled reminder {time}",
   "memory_memo_next_recall": "Next repeat {time}",
   "memory_memo_history": "Reminded {count} times",
