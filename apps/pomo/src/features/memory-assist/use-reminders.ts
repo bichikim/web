@@ -37,11 +37,14 @@ const loadAutomaticDialogueSettings = async () => {
 }
 
 const getReminderTime = (memo: MemoryMemo) => {
-  const timestamps = [memo.exactReminderAt, memo.nextRecallAt].flatMap((value) =>
+  const timestamps = [memo.nextExactReminderAt, memo.nextRecallAt].flatMap((value) =>
     value === null ? [] : [Date.parse(value)],
   )
   return timestamps.length === 0 ? null : Math.min(...timestamps)
 }
+
+const isMemoryMemoCurrent = (memos: ReadonlyArray<MemoryMemo>, deliveredMemo: MemoryMemo) =>
+  memos.some((memo) => memo.id === deliveredMemo.id && memo.updatedAt === deliveredMemo.updatedAt)
 
 interface ReplaceDeliveredMemoOptions {
   readonly deliveredMemo: MemoryMemo
@@ -52,17 +55,64 @@ interface ReplaceDeliveredMemoOptions {
   readonly random: () => number
 }
 
-const replaceDeliveredMemo = (options: ReplaceDeliveredMemoOptions) =>
-  options.memos.map((memo) =>
-    memo.id === options.deliveredMemo.id
-      ? advanceMemoryMemo({
-          kind: options.kind,
-          memo: {...memo, dialogueId: options.dialogueId},
-          now: options.now,
-          random: options.random,
-        })
-      : memo,
+interface ReplaceDeliveredMemoResult {
+  readonly memos: ReadonlyArray<MemoryMemo>
+  readonly wasReplaced: boolean
+}
+
+const replaceDeliveredMemo = (options: ReplaceDeliveredMemoOptions): ReplaceDeliveredMemoResult => {
+  const currentMemo = options.memos.find(
+    (memo) =>
+      memo.id === options.deliveredMemo.id && memo.updatedAt === options.deliveredMemo.updatedAt,
   )
+
+  if (currentMemo === undefined) {
+    return {memos: options.memos, wasReplaced: false}
+  }
+
+  return {
+    memos: options.memos.map((memo) =>
+      memo === currentMemo
+        ? advanceMemoryMemo({
+            kind: options.kind,
+            memo: {...memo, dialogueId: options.dialogueId},
+            now: options.now,
+            random: options.random,
+          })
+        : memo,
+    ),
+    wasReplaced: true,
+  }
+}
+
+interface CommitDeliveredMemoOptions {
+  readonly deliveredMemo: MemoryMemo
+  readonly dialogueId: string
+  readonly kind: MemoryReminderKind
+  readonly now: Date
+  readonly onDiscard: () => Promise<void>
+  readonly random: () => number
+}
+
+const commitDeliveredMemo = async (options: CommitDeliveredMemoOptions) => {
+  let wasReplaced = false
+
+  try {
+    await updateMemoryMemos((currentMemos) => {
+      const replacement = replaceDeliveredMemo({...options, memos: currentMemos})
+      const {memos, wasReplaced: currentWasReplaced} = replacement
+      wasReplaced = currentWasReplaced
+      return memos
+    })
+  } catch (error: unknown) {
+    await options.onDiscard().catch((cleanupError: unknown) => {
+      console.error('Failed to discard an uncommitted memory memo dialogue.', cleanupError)
+    })
+    throw error
+  }
+
+  return wasReplaced
+}
 
 /** Runs persisted memo reminders while the Pomo room is mounted. */
 export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
@@ -132,21 +182,21 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       dialogueId = generatedDialogueId
     }
 
-    const memoExists = () => memos().some((currentMemo) => currentMemo.id === memo.id)
+    const memoIsCurrent = () => isMemoryMemoCurrent(memos(), memo)
     const discardGeneratedDialogue = async () => {
       if (generatedDialogueId !== null) {
         await repository?.deleteDialogue(generatedDialogueId)
       }
     }
 
-    if (!memoExists()) {
+    if (!memoIsCurrent()) {
       await discardGeneratedDialogue()
       return
     }
 
     await props.events.refreshDialogues()
 
-    if (!memoExists()) {
+    if (!memoIsCurrent()) {
       await discardGeneratedDialogue()
       return
     }
@@ -154,21 +204,25 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
     props.onBeforePlayback?.()
     await props.events.playDialogue(dialogueId)
 
-    if (!memoExists()) {
+    if (!memoIsCurrent()) {
       await discardGeneratedDialogue()
       return
     }
 
-    await updateMemoryMemos((currentMemos) =>
-      replaceDeliveredMemo({
-        deliveredMemo: memo,
-        dialogueId,
-        kind,
-        memos: currentMemos,
-        now,
-        random: props.random ?? Math.random,
-      }),
-    )
+    const wasReplaced = await commitDeliveredMemo({
+      deliveredMemo: memo,
+      dialogueId,
+      kind,
+      now,
+      onDiscard: discardGeneratedDialogue,
+      random: props.random ?? Math.random,
+    })
+
+    if (!wasReplaced) {
+      await discardGeneratedDialogue()
+      return
+    }
+
     retryAfter.delete(memo.id)
   }
 

@@ -229,3 +229,114 @@ it('should discard generated audio when its memo is deleted during generation', 
 
   view.cleanup()
 })
+
+it('should discard generated audio when its memo is edited during generation', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  const generation = Promise.withResolvers<string>()
+  mocks.createDialogue.mockReturnValue(generation.promise)
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(undefined),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() =>
+    useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
+  )
+
+  await vi.advanceTimersToNextTimerAsync()
+  await vi.waitFor(() => expect(mocks.createDialogue).toHaveBeenCalledOnce())
+  mocks.memos = [
+    {
+      ...mocks.memos[0]!,
+      text: '여권과 사진 갱신하기',
+      updatedAt: '2026-09-04T03:00:01.000Z',
+    },
+  ]
+  generation.resolve('memory-memo-memo-1')
+  await flushPromises()
+
+  expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
+  expect(events.refreshDialogues).not.toHaveBeenCalled()
+  expect(events.playDialogue).not.toHaveBeenCalled()
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+
+  view.cleanup()
+})
+
+it('should preserve an edit made while reminder persistence is waiting', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  const persistence = Promise.withResolvers<void>()
+  mocks.updateMemos.mockImplementation(async (update) => {
+    await persistence.promise
+    mocks.memos = update(mocks.memos)
+    return mocks.memos
+  })
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(undefined),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() =>
+    useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
+  )
+
+  await vi.advanceTimersToNextTimerAsync()
+  await vi.waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  const editedMemo = {
+    ...mocks.memos[0]!,
+    text: '여권과 사진 갱신하기',
+    updatedAt: '2026-09-04T03:00:01.000Z',
+  }
+  mocks.memos = [editedMemo]
+  persistence.resolve()
+  await flushPromises()
+
+  expect(mocks.memos).toEqual([editedMemo])
+  expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
+
+  view.cleanup()
+})
+
+it('should discard generated audio when reminder persistence fails', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  mocks.updateMemos.mockRejectedValue(new Error('write failed'))
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(undefined),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() =>
+    useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
+  )
+
+  await vi.advanceTimersToNextTimerAsync()
+  await flushPromises()
+
+  expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
+
+  view.cleanup()
+})
