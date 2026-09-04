@@ -18,7 +18,6 @@
     "verbatimModuleSyntax": false,
     "paths": {
       "@paraglide/message": ["./.i18n/paraglide/messages.js"],
-      "@paraglide/message/*": ["./.i18n/paraglide/messages/*.js"],
       "@paraglide/runtime": ["./.i18n/paraglide/runtime.js"],
       "@paraglide/server": ["./.i18n/paraglide/server.js"],
       "assets/*": ["./assets/*"],
