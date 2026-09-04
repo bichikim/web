@@ -1,6 +1,5 @@
 export * from './create-demo-document'
 export * from './create-player'
-export * from './deformer'
 export * from './document'
 export * from './parse-document'
 export * from './prepare-puppet-document'

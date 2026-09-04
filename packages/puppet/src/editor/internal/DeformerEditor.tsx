@@ -1,13 +1,7 @@
 import {Show, untrack} from 'solid-js'
 
 import type {PuppetParameterValues} from '../../deformation'
-import {
-  applySceneNodeAncestorsPoint,
-  type PuppetDocument,
-  type PuppetPoint,
-  type PuppetSceneDeformerNode,
-  unapplySceneNodeAncestorsPoint,
-} from '../../player'
+import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
 import {setDeformerCurveHandle} from './deformer-curve-handles'
 import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
@@ -22,6 +16,7 @@ import {
   setParameterKeyformDeformerCurveHandle,
   setParameterKeyformDeformerPoint,
 } from './parameter-keyforms'
+import {applySceneNodeAncestorsPoint, unapplySceneNodeAncestorsPoint} from './scene-deformation'
 import {
   getDeformerAngle,
   getDeformerRotationOrigin,

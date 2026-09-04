@@ -13,6 +13,23 @@ interface ResampleGridControlPointsOptions {
 
 const COORDINATES_PER_POINT = 2
 
+export const createDeformerControlPoints = (
+  node: Pick<PuppetSceneDeformerNode, 'bounds' | 'columns' | 'rows'>,
+) => {
+  const points: number[] = []
+
+  for (let row = 0; row <= node.rows; row += 1) {
+    for (let column = 0; column <= node.columns; column += 1) {
+      points.push(
+        node.bounds.x + (node.bounds.width * column) / node.columns,
+        node.bounds.y + (node.bounds.height * row) / node.rows,
+      )
+    }
+  }
+
+  return points
+}
+
 const getPoint = (
   options: Pick<ResampleGridControlPointsOptions, 'columns' | 'controlPoints'>,
   column: number,

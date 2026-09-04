@@ -6,7 +6,6 @@ import {
   type PuppetParameterValues,
 } from '../deformation'
 import type {PuppetDocument, PuppetPart} from '../player/document'
-import {applySceneDeformers, unapplySceneDeformersPoint} from '../player/deformer'
 import {sampleMotionVertices} from '../player/internal/motion'
 import {getScenePartStates} from '../player/scene'
 import {addPartVertex, deletePartVertex, movePartVertex, type VertexPoint} from './edit-document'
@@ -21,6 +20,7 @@ import {setVertexKeyframe} from './internal/motion-keyframes'
 import {getDeformerPreviewDocument, getPartPreviewVertices} from './internal/mesh-preview'
 import {getEditErrorMessage} from './internal/notices'
 import {setParameterKeyformVertex} from './internal/parameter-keyforms'
+import {applySceneDeformers, unapplySceneDeformersPoint} from './internal/scene-deformation'
 import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
 
