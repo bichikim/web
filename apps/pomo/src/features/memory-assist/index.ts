@@ -8,6 +8,7 @@ export type {MemoryMemoRepository, MemoryMemoStorage} from './repository'
 export {
   advanceMemoryMemo,
   createMemoryMemo,
+  editMemoryMemo,
   getDueMemoryReminder,
   getNextRecallAt,
   MEMORY_REINFORCEMENT_INTERVALS,
@@ -22,3 +23,5 @@ export {createMemoryMemoDialogue} from './dialogue'
 export type {CreateMemoryMemoDialogueOptions} from './dialogue'
 export {getMemoryMemoDialogueId, isMemoryMemoDialogueId} from './dialogue-id'
 export {excludeMemoryMemoDialogues} from './dialogue-library'
+export {deleteMemoryMemoDraft, readMemoryMemoDraft, writeMemoryMemoDraft} from './draft-storage'
+export type {MemoryMemoDraft} from './draft-storage'
