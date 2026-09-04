@@ -93,6 +93,41 @@ it('should generate, store, and play a due memo reminder', async () => {
   view.cleanup()
 })
 
+it('should run the playback callback before playing a due memo reminder', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  const playbackOrder: string[] = []
+  const events = {
+    playDialogue: vi.fn(async () => {
+      playbackOrder.push('play')
+    }),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() =>
+    useMemoryReminders({
+      events,
+      loadSettings: mocks.loadSettings,
+      onBeforePlayback: () => playbackOrder.push('before'),
+      random: () => 0,
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+  await flushPromises()
+
+  expect(playbackOrder).toEqual(['before', 'play'])
+
+  view.cleanup()
+})
+
 it('should use the automatic dialogue model and voice for generated memo audio', async () => {
   mocks.memos = [
     createMemoryMemo({

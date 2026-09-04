@@ -10,6 +10,7 @@ import {
   usePSceneStyle,
 } from '../features/focus-room-animation'
 import {usePEvents} from '../features/focus-room-dialogue/event-context'
+import {usePDisplayPreferences} from '../features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
   type PActivity,
@@ -160,6 +161,7 @@ export const PStudio = () => {
   const weather = useWeather()
   const desktopMode = useDesktopMode({isSurfaceOwner: true})
   const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
+  const displayPreferences = usePDisplayPreferences()
   const scenePreferences = usePScenePreferences()
   const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
@@ -189,12 +191,7 @@ export const PStudio = () => {
     ),
   )
   const handleLoadingChange = createLoadingHandler(setIsSceneLoading, setHasSceneRendered)
-  useStudioRuntime({
-    entry,
-    setAutomaticPeriod,
-    setCanUseGyroscope,
-    setMotionInput,
-  })
+  useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
 
   return (
     <section
@@ -233,6 +230,7 @@ export const PStudio = () => {
       <div class={CLASSES.ui} hidden={!hasEntered() || desktopMode.mode() === 'desktop'}>
         <Show when={hasEntered() && desktopMode.mode() !== 'desktop'}>
           <PStudioEvents
+            dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
             isPlayerExpanded={isPlayerExpanded()}
             onMusicPlayingChange={screenSaver.onMusicPlayingChange}
             onPlayerExpandedChange={setIsPlayerExpanded}
@@ -245,9 +243,11 @@ export const PStudio = () => {
             <SceneToolbar
               activity={scenePreferences.activity()}
               canUseGyroscope={canUseGyroscope()}
+              dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
               gaze={sceneGaze()}
               isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
               onActivityChange={scenePreferences.onActivityChange}
+              onDialogueComposerVisibleChange={displayPreferences.onDialogueComposerVisibleChange}
               onGazeChange={scenePreferences.onGazeChange}
               onMotionInputChange={setMotionInput}
               onMotionModeChange={setMotionMode}
