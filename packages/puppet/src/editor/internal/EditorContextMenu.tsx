@@ -1,6 +1,8 @@
 import {ContextMenu} from '@kobalte/core/context-menu'
 import {For, type JSX, Show} from 'solid-js'
 
+import {useEditorPortalMount} from './EditorPortalProvider'
+
 export interface EditorContextMenuAction {
   readonly disabled?: boolean
   readonly id: string
@@ -58,18 +60,22 @@ const EditorContextMenuEntryView = (props: EditorContextMenuEntryProps) => {
   )
 }
 
-export const EditorContextMenu = (props: EditorContextMenuProps) => (
-  <ContextMenu modal={false} onOpenChange={(open) => props.onOpenChange?.(open)}>
-    <ContextMenu.Trigger class="editor-context-menu-trigger" disabled={props.disabled}>
-      {props.children}
-    </ContextMenu.Trigger>
-    <ContextMenu.Portal>
-      <ContextMenu.Content
-        aria-label={props.label ?? '작업 메뉴'}
-        class="editor-context-menu-content"
-      >
-        <For each={props.entries}>{(entry) => <EditorContextMenuEntryView entry={entry} />}</For>
-      </ContextMenu.Content>
-    </ContextMenu.Portal>
-  </ContextMenu>
-)
+export const EditorContextMenu = (props: EditorContextMenuProps) => {
+  const portalMount = useEditorPortalMount()
+
+  return (
+    <ContextMenu modal={false} onOpenChange={(open) => props.onOpenChange?.(open)}>
+      <ContextMenu.Trigger class="editor-context-menu-trigger" disabled={props.disabled}>
+        {props.children}
+      </ContextMenu.Trigger>
+      <ContextMenu.Portal mount={portalMount}>
+        <ContextMenu.Content
+          aria-label={props.label ?? '작업 메뉴'}
+          class="editor-context-menu-content"
+        >
+          <For each={props.entries}>{(entry) => <EditorContextMenuEntryView entry={entry} />}</For>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu>
+  )
+}
