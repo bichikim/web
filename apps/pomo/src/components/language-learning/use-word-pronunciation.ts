@@ -178,6 +178,7 @@ export interface LanguageLearningWordPronunciationState {
   readonly cancelDownload: () => void
   readonly confirmDownload: () => void
   readonly error: () => string | null
+  readonly isBusy: () => boolean
   readonly isLoading: (word: LanguageLearningWord) => boolean
   readonly pendingModelId: () => AutomaticDialogueSettings['modelId'] | null
   readonly pendingWord: () => LanguageLearningWord | null
@@ -349,6 +350,7 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     cancelDownload,
     confirmDownload,
     error,
+    isBusy: () => loadingKey() !== null,
     isLoading: (word) => loadingKey() === getWordKey(word),
     pendingModelId: () => pendingRequest()?.modelId ?? null,
     pendingWord: () => pendingRequest()?.word ?? null,
