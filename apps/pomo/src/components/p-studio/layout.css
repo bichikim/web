@@ -1,0 +1,65 @@
+.pomo-media-dock {
+  container-type: inline-size;
+}
+
+@media (width >= 28rem) {
+  .pomo-media-controls > .pomo-dialogue-composer[data-expanded] {
+    flex: 1 1 16rem;
+    width: auto;
+  }
+}
+
+.pomo-media-dock:has(.pomo-dialogue-bubble-frame) .pomo-dialogue-composer[data-expanded] {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.pomo-media-dock:has(.pomo-dialogue-bubble-frame):has(.pomo-dialogue-composer[data-expanded])
+  .pomo-media-messages {
+  margin-bottom: 4rem;
+}
+
+.pomo-media-dock:has(.pomo-feed-status-frame):not(:has(.pomo-dialogue-bubble-frame))
+  .pomo-dialogue-composer[data-expanded] {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.pomo-media-dock:has(.pomo-feed-status-frame):not(:has(.pomo-dialogue-bubble-frame)):has(
+    .pomo-dialogue-composer[data-expanded]
+  )
+  .pomo-media-messages {
+  margin-bottom: 4rem;
+}
+
+@container (min-width: 45.75rem) {
+  .pomo-media-dock:has(.pomo-feed-status-frame):not(:has(.pomo-dialogue-bubble-frame))
+    .pomo-dialogue-composer[data-expanded] {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: calc(100% - 29.75rem);
+  }
+
+  .pomo-media-dock:has(.pomo-feed-status-frame):not(:has(.pomo-dialogue-bubble-frame)):has(
+      .pomo-dialogue-composer[data-expanded]
+    )
+    .pomo-media-messages {
+    margin-bottom: 0;
+  }
+}
+
+@container (min-width: 52.75rem) {
+  .pomo-media-dock:has(.pomo-dialogue-bubble-frame) .pomo-dialogue-composer[data-expanded] {
+    width: calc(100% - 36.75rem);
+  }
+
+  .pomo-media-dock:has(.pomo-dialogue-bubble-frame):has(.pomo-dialogue-composer[data-expanded])
+    .pomo-media-messages {
+    margin-bottom: 0;
+  }
+}

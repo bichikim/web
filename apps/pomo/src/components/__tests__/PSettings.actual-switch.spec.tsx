@@ -68,10 +68,13 @@ afterEach(() => {
 })
 
 it('should bind the full-screen and wake-lock checked accessors through real switches', () => {
-  render(() => <PSettings />)
+  render(() => (
+    <PSettings dialogueComposerVisible={false} onDialogueComposerVisibleChange={vi.fn()} />
+  ))
 
   expect(screen.getByRole('switch', {name: '전체 화면'})).toBeChecked()
   expect(screen.getByRole('switch', {name: '화면 자동 꺼짐 방지'})).toBeChecked()
+  expect(screen.getByRole('switch', {name: '대화 입력 버튼 표시'})).not.toBeChecked()
 })
 
 it('should keep the wake-lock controller mounted across settings tab changes', async () => {

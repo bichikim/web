@@ -26,6 +26,7 @@ const RETRY_DELAY = 300_000
 export interface UseMemoryRemindersProps {
   readonly events: PEventContextValue
   readonly loadSettings?: () => Promise<AutomaticDialogueSettings>
+  readonly onBeforePlayback?: () => void
   readonly random?: () => number
 }
 
@@ -150,6 +151,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       return
     }
 
+    props.onBeforePlayback?.()
     await props.events.playDialogue(dialogueId)
 
     if (!memoExists()) {
