@@ -18,6 +18,7 @@ import {generateLanguageLearningWordPronunciation} from './word-pronunciation'
 const getWordKey = (word: LanguageLearningWord) => `${word.language}:${word.value}`
 
 interface PendingPronunciation {
+  readonly audioOwner: string
   readonly modelId: AutomaticDialogueSettings['modelId']
   readonly revision: number
   readonly voiceId: AutomaticDialogueSettings['voiceId']
@@ -148,14 +149,20 @@ const generatePronunciation = (options: GeneratePronunciationOptions) => {
               return
             case 'complete':
               try {
-                await options.audioRepository.save(options.request.word, pronunciation.audio)
+                await options.audioRepository.save(
+                  options.request.word,
+                  pronunciation.audio,
+                  options.request.audioOwner,
+                )
               } catch (reason: unknown) {
                 if (options.isCurrent()) {
                   options.setError(getFailureMessage(reason))
                 }
               }
               if (!options.isCurrent()) {
-                await options.audioRepository.delete(options.request.word).catch(() => undefined)
+                await options.audioRepository
+                  .delete(options.request.word, options.request.audioOwner)
+                  .catch(() => undefined)
                 return
               }
               options.publish(options.request.word, pronunciation.audio)
@@ -277,7 +284,13 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
           return
         }
 
-        const pending = {modelId: settings.modelId, revision, voiceId: settings.voiceId, word}
+        const pending = {
+          audioOwner: globalThis.crypto.randomUUID(),
+          modelId: settings.modelId,
+          revision,
+          voiceId: settings.voiceId,
+          word,
+        }
         setLoadingKey(null)
         if (downloaded) {
           generate(pending, false)
