@@ -4,7 +4,6 @@ import {render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {getPomoIconClass} from '../../icon-style'
-import {PSelect} from '../../PSelect'
 import {PWeatherStatus} from '../../PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
 import {MemoryAssistPanel} from '../MemoryAssistPanel'
@@ -14,7 +13,6 @@ import {SceneToolbar} from '../Toolbar'
 import type {WeatherLocation} from '../../../features/weather'
 
 vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
-vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
 vi.mock('../../PDesktopModeControl', () => ({
   PDesktopModeControl: (props: {
@@ -60,6 +58,7 @@ const baseProps = {
   isSceneTransitioning: false,
   motionInput: 'drag',
   motionMode: 'pan',
+  onTourOpen: vi.fn(),
   sceneStyle: 'original',
   screenSaverDelay: '5s',
   timeMode: 'auto',
@@ -76,11 +75,6 @@ beforeEach(() => {
   vi.mocked(PScribbleCircleControl).mockImplementation((props) => {
     Object.values(props)
     return <div>{props.children}</div>
-  })
-  vi.mocked(PSelect).mockImplementation((props) => {
-    Object.values(props)
-    props.getIconClass?.('i-tabler-test')
-    return null
   })
   vi.mocked(SceneSettingsPanel).mockImplementation((props) => {
     Object.values(props)
@@ -101,11 +95,17 @@ beforeEach(() => {
 })
 
 describe('SceneToolbar', () => {
-  it('should keep only activity as a direct scene selector and forward all settings properties', () => {
+  it('should replace the direct activity selector with the tour action', () => {
     render(() => <SceneToolbar {...baseProps} />)
 
-    expect(PSelect).toHaveBeenCalledWith(expect.objectContaining({label: '행동', value: 'reading'}))
-    expect(vi.mocked(PSelect).mock.calls.every(([props]) => props.label === '행동')).toBe(true)
+    screen.getByRole('button', {name: 'Pomofi 둘러보기'}).click()
+    expect(baseProps.onTourOpen).toHaveBeenCalledOnce()
+    expect(
+      vi
+        .mocked(PScribbleCircleControl)
+        .mock.calls.some(([props]) => props.class?.includes('max-lg:hidden')),
+    ).toBe(false)
+    expect(getPomoIconClass).toHaveBeenCalledWith('i-tabler-route', 'original')
     expect(SceneSettingsPanel).toHaveBeenCalledWith(
       expect.objectContaining({
         activity: 'reading',
@@ -119,13 +119,13 @@ describe('SceneToolbar', () => {
     )
     expect(screen.getByText('memory assist control')).toBeInTheDocument()
     expect(screen.getByText('version notice control')).toBeInTheDocument()
+    expect(
+      screen.getByText('memory assist control').closest('[data-tour-step="memory-assist"]'),
+    ).toHaveClass('inline-flex')
     expect(MemoryAssistPanel).toHaveBeenCalledWith(
       expect.objectContaining({sceneStyle: 'original'}),
     )
     expect(vi.mocked(VersionNoticePanel).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(PSelect).mock.invocationCallOrder.at(-1) ?? Number.POSITIVE_INFINITY,
-    )
-    expect(vi.mocked(PSelect).mock.invocationCallOrder.at(-1)).toBeLessThan(
       vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0],
     )
     expect(vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0]).toBeLessThan(

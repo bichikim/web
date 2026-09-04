@@ -41,6 +41,8 @@ import {PStudioEvents} from './p-studio/Events'
 import {SceneToolbar} from './p-studio/Toolbar'
 import {useStudioScreenSaver} from './p-studio/use-screen-saver'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
+import {PStudioTour} from './p-studio/Tour'
+import {useStudioTour} from './p-studio/use-tour'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
@@ -117,6 +119,30 @@ const useStudioDesktopSceneSettings = (options: StudioDesktopSceneSettingsOption
   })
 }
 
+interface StudioRuntimeOptions {
+  readonly entry: ReturnType<typeof useStudioEntry>
+  readonly setAutomaticPeriod: Setter<ScenePeriod>
+  readonly setCanUseGyroscope: Setter<boolean>
+  readonly setMotionInput: Setter<PSceneMotionInput>
+}
+
+const useStudioRuntime = (options: StudioRuntimeOptions) => {
+  onMount(() => {
+    const gyroscopeAvailable = supportsPSceneGyroscope()
+    const updateAutomaticPeriod = () =>
+      options.setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
+    const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
+    options.entry.restore()
+    options.setCanUseGyroscope(gyroscopeAvailable)
+    if (gyroscopeAvailable) {
+      options.setMotionInput('gyroscope')
+    }
+
+    updateAutomaticPeriod()
+    onCleanup(() => window.clearInterval(timer))
+  })
+}
+
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -127,6 +153,7 @@ export const PStudio = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
+  const tour = useStudioTour()
   const hasEntered = events.hasEnteredFocusRoom
   const entry = useStudioEntry(events)
   const screenSaver = useStudioScreenSaver()
@@ -162,24 +189,18 @@ export const PStudio = () => {
     ),
   )
   const handleLoadingChange = createLoadingHandler(setIsSceneLoading, setHasSceneRendered)
-  onMount(() => {
-    const gyroscopeAvailable = supportsPSceneGyroscope()
-    const updateAutomaticPeriod = () => setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
-    const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
-    entry.restore()
-    setCanUseGyroscope(gyroscopeAvailable)
-    if (gyroscopeAvailable) {
-      setMotionInput('gyroscope')
-    }
-
-    updateAutomaticPeriod()
-    onCleanup(() => window.clearInterval(timer))
+  useStudioRuntime({
+    entry,
+    setAutomaticPeriod,
+    setCanUseGyroscope,
+    setMotionInput,
   })
 
   return (
     <section
       aria-label="Pomo"
       class="pomo-studio relative h-dvh w-full overflow-hidden"
+      ref={tour.setStudioElement}
       style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
     >
       <figure
@@ -233,6 +254,7 @@ export const PStudio = () => {
               onScreenSaverDelayChange={screenSaver.onDelayChange}
               onSceneStyleChange={sceneStyleController.onSceneStyleChange}
               onTimeModeChange={scenePreferences.onTimeModeChange}
+              onTourOpen={() => tour.setIsOpen(true)}
               onWeatherEnabledChange={weather.onEnabledChange}
               onWeatherLocationChange={weather.onLocationChange}
               onWeatherSceneModeChange={weather.onSceneModeChange}
@@ -253,6 +275,7 @@ export const PStudio = () => {
           </Show>
         </Show>
       </div>
+      <PStudioTour tour={tour} />
       <Show when={entry.isVisible()}>
         <PEntry isExiting={hasEntered()} onEnter={entry.enter} onExitComplete={entry.hide} />
       </Show>

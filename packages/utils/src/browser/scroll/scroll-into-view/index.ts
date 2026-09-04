@@ -6,6 +6,13 @@ export type {StandardBehaviorOptions} from 'scroll-into-view-if-needed'
 
 export type ScrollIntoView = (target: Element, options?: StandardBehaviorOptions) => void
 
+export type ScrollIntoViewIfNeededOptions = Omit<StandardBehaviorOptions, 'scrollMode'>
+
+export type ScrollIntoViewIfNeeded = (
+  target: Element,
+  options?: ScrollIntoViewIfNeededOptions,
+) => void
+
 export const scrollIntoView: ScrollIntoView = (target, options) => {
   const document = getDocument()
 
@@ -20,4 +27,13 @@ export const scrollIntoView: ScrollIntoView = (target, options) => {
   }
 
   smoothScrollIntoView(target, options)
+}
+
+export const scrollIntoViewIfNeeded: ScrollIntoViewIfNeeded = (target, options) => {
+  scrollIntoView(target, {
+    block: 'nearest',
+    inline: 'nearest',
+    ...options,
+    scrollMode: 'if-needed',
+  })
 }

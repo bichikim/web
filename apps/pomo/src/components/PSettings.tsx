@@ -112,15 +112,13 @@ const PGeneralSceneSettings = (props: PSettingsProps) => (
         sceneStyle={props.sceneStyle}
         value={props.timeMode ?? 'day'}
       />
-      <div class="lg:hidden">
-        <PRadioSwitch
-          label={m.settings_activity()}
-          onChange={(activity) => props.onActivityChange?.(activity)}
-          options={getLocalizedActivityOptions()}
-          sceneStyle={props.sceneStyle}
-          value={props.activity ?? 'reading'}
-        />
-      </div>
+      <PRadioSwitch
+        label={m.settings_activity()}
+        onChange={(activity) => props.onActivityChange?.(activity)}
+        options={getLocalizedActivityOptions()}
+        sceneStyle={props.sceneStyle}
+        value={props.activity ?? 'reading'}
+      />
       <PRadioSwitch
         label={m.settings_view()}
         onChange={(gaze) => props.onGazeChange?.(gaze)}

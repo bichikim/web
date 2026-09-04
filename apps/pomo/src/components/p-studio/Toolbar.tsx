@@ -1,14 +1,12 @@
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {getPomoIconClass} from '../icon-style'
-import {PSelect} from '../PSelect'
 import {
   type PSceneMotionInput,
   type PSceneMotionMode,
   type PSceneStyle,
 } from '../../features/focus-room-animation/index'
 import {type PActivity, type PGaze} from '../../features/focus-room-scene-preferences/index'
-import {getLocalizedActivityOptions} from '../../features/localization/index'
 import type {SceneTimeMode} from '../../features/focus-room-time/index'
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
 import {
@@ -28,6 +26,7 @@ import type {DesktopMode} from '../../features/desktop-mode/index'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
 import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
+import {PIconButton} from '../PIconButton'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -41,6 +40,7 @@ interface SceneToolbarProps {
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
+  readonly onTourOpen?: () => void
   readonly onWeatherEnabledChange: (enabled: boolean) => void
   readonly onWeatherLocationChange: (location: WeatherLocation) => void
   readonly onWeatherSceneModeChange: (mode: WeatherSceneMode) => void
@@ -69,80 +69,83 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
         <VersionNoticePanel sceneStyle={props.sceneStyle} />
-        <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
-          <PSelect
-            appearance="icon"
-            class={CLASSES.sceneControl}
-            getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
-            hideLabel
-            label={m.settings_activity()}
-            onChange={props.onActivityChange}
-            options={getLocalizedActivityOptions()}
-            value={props.activity}
+        <Show when={props.onTourOpen !== undefined}>
+          <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+            <PIconButton
+              accessibleLabel={m.tour_open()}
+              class={CLASSES.sceneControl}
+              feedback={m.tour_feedback()}
+              icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
+              onPress={() => props.onTourOpen?.()}
+            />
+          </PScribbleCircleControl>
+        </Show>
+        <div class="inline-flex" data-tour-step="memory-assist">
+          <MemoryAssistPanel
+            fallback={
+              <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+                <span
+                  aria-hidden="true"
+                  class={cx(
+                    'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
+                    'border border-solid border-border bg-surface text-foreground shadow-panel',
+                  )}
+                >
+                  <span
+                    class={cx(
+                      getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle),
+                      'size-6 text-highlight',
+                    )}
+                  />
+                </span>
+              </PScribbleCircleControl>
+            }
+            sceneStyle={props.sceneStyle}
           />
-        </PScribbleCircleControl>
-        <MemoryAssistPanel
-          fallback={
-            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-              <span
-                aria-hidden="true"
-                class={cx(
-                  'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
-                  'border border-solid border-border bg-surface text-foreground shadow-panel',
-                )}
-              >
+        </div>
+        <div class="inline-flex" data-tour-step="settings">
+          <SceneSettingsPanel
+            activity={props.activity}
+            canUseGyroscope={props.canUseGyroscope}
+            gaze={props.gaze}
+            onActivityChange={props.onActivityChange}
+            onGazeChange={props.onGazeChange}
+            onMotionInputChange={props.onMotionInputChange}
+            onMotionModeChange={props.onMotionModeChange}
+            onScreenSaverDelayChange={props.onScreenSaverDelayChange}
+            onSceneStyleChange={props.onSceneStyleChange}
+            onTimeModeChange={props.onTimeModeChange}
+            onWeatherEnabledChange={props.onWeatherEnabledChange}
+            onWeatherLocationChange={props.onWeatherLocationChange}
+            onWeatherSceneModeChange={props.onWeatherSceneModeChange}
+            screenSaverDelay={props.screenSaverDelay}
+            sceneStyle={props.sceneStyle}
+            motionInput={props.motionInput}
+            motionMode={props.motionMode}
+            timeMode={props.timeMode}
+            weatherEnabled={props.weatherEnabled}
+            weatherLocation={props.weatherLocation}
+            weatherSceneMode={props.weatherSceneMode}
+            fallback={
+              <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
                 <span
+                  aria-hidden="true"
                   class={cx(
-                    getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle),
-                    'size-6 text-highlight',
+                    'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
+                    'border border-solid border-border bg-surface text-foreground shadow-panel',
                   )}
-                />
-              </span>
-            </PScribbleCircleControl>
-          }
-          sceneStyle={props.sceneStyle}
-        />
-        <SceneSettingsPanel
-          activity={props.activity}
-          canUseGyroscope={props.canUseGyroscope}
-          gaze={props.gaze}
-          onActivityChange={props.onActivityChange}
-          onGazeChange={props.onGazeChange}
-          onMotionInputChange={props.onMotionInputChange}
-          onMotionModeChange={props.onMotionModeChange}
-          onScreenSaverDelayChange={props.onScreenSaverDelayChange}
-          onSceneStyleChange={props.onSceneStyleChange}
-          onTimeModeChange={props.onTimeModeChange}
-          onWeatherEnabledChange={props.onWeatherEnabledChange}
-          onWeatherLocationChange={props.onWeatherLocationChange}
-          onWeatherSceneModeChange={props.onWeatherSceneModeChange}
-          screenSaverDelay={props.screenSaverDelay}
-          sceneStyle={props.sceneStyle}
-          motionInput={props.motionInput}
-          motionMode={props.motionMode}
-          timeMode={props.timeMode}
-          weatherEnabled={props.weatherEnabled}
-          weatherLocation={props.weatherLocation}
-          weatherSceneMode={props.weatherSceneMode}
-          fallback={
-            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-              <span
-                aria-hidden="true"
-                class={cx(
-                  'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
-                  'border border-solid border-border bg-surface text-foreground shadow-panel',
-                )}
-              >
-                <span
-                  class={cx(
-                    getPomoIconClass('i-tabler-settings', props.sceneStyle),
-                    'size-6 text-highlight',
-                  )}
-                />
-              </span>
-            </PScribbleCircleControl>
-          }
-        />
+                >
+                  <span
+                    class={cx(
+                      getPomoIconClass('i-tabler-settings', props.sceneStyle),
+                      'size-6 text-highlight',
+                    )}
+                  />
+                </span>
+              </PScribbleCircleControl>
+            }
+          />
+        </div>
       </div>
       <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
       <PDesktopModeControl
