@@ -1,4 +1,4 @@
-import {createSignal, For} from 'solid-js'
+import {createSignal, For, onCleanup, onMount} from 'solid-js'
 import {expect, fn, userEvent, waitFor, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
@@ -112,6 +112,47 @@ const TourStory = (props: TourStoryProps) => {
   )
 }
 
+interface PlacementWidthStoryProps {
+  readonly rootFontClass: 'text-[16px]' | 'text-[32px]'
+}
+
+const PlacementWidthStory = (props: PlacementWidthStoryProps) => {
+  const [targetElement, setTargetElement] = createSignal<Element>()
+
+  onMount(() => {
+    document.documentElement.classList.add(props.rootFontClass)
+    onCleanup(() => document.documentElement.classList.remove(props.rootFontClass))
+  })
+
+  return (
+    <main class="min-h-screen bg-background text-foreground">
+      <button class="fixed right-4 top-4" ref={setTargetElement} type="button">
+        배치 대상
+      </button>
+      <PTour getStepElement={() => targetElement() ?? null} isOpen steps={STEPS.slice(0, 1)} />
+    </main>
+  )
+}
+
+const verifyPlacementWidth = async (canvasElement: HTMLElement, expectedWidth: number) => {
+  const page = within(canvasElement.ownerDocument.body)
+  const view = canvasElement.ownerDocument.defaultView
+
+  if (view === null) {
+    throw new Error('Story document has no window')
+  }
+
+  await waitFor(() => {
+    const dialog = page.getByRole('dialog', {name: '집중 타이머'})
+    const rectangle = dialog.getBoundingClientRect()
+
+    expect(view.getComputedStyle(dialog).width).toBe(`${expectedWidth}px`)
+    expect(dialog.style.left).toBe(`${view.innerWidth - expectedWidth - 16}px`)
+    expect(rectangle.left).toBeGreaterThanOrEqual(16)
+    expect(rectangle.right).toBeLessThanOrEqual(view.innerWidth - 16)
+  })
+}
+
 const meta = {
   args: {
     maskPadding: 8,
@@ -152,4 +193,18 @@ export const Default: Story = {
     await expect(args.onEvent).toHaveBeenCalledTimes(4)
     await expect(args.onOpenChange).toHaveBeenLastCalledWith(false)
   },
+}
+
+export const PlacementWidth16: Story = {
+  play: async ({canvasElement}: TourPlayContext) => {
+    await verifyPlacementWidth(canvasElement, 352)
+  },
+  render: () => <PlacementWidthStory rootFontClass="text-[16px]" />,
+}
+
+export const PlacementWidth32: Story = {
+  play: async ({canvasElement}: TourPlayContext) => {
+    await verifyPlacementWidth(canvasElement, 704)
+  },
+  render: () => <PlacementWidthStory rootFontClass="text-[32px]" />,
 }

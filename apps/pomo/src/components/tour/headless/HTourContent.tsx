@@ -1,5 +1,5 @@
 import {Dialog} from '@kobalte/core/dialog'
-import {createMemo, type JSX} from 'solid-js'
+import {createEffect, createMemo, createSignal, type JSX, onCleanup} from 'solid-js'
 
 import type {TourTargetBounds} from './types'
 
@@ -13,7 +13,6 @@ export interface HTourContentProps {
   readonly style?: JSX.CSSProperties
   readonly targetBounds?: TourTargetBounds | null
   readonly viewportInset?: number
-  readonly width?: number
 }
 
 interface TourContentPlacement {
@@ -23,14 +22,13 @@ interface TourContentPlacement {
 
 interface ResolvePlacementOptions {
   readonly bounds: TourTargetBounds | null | undefined
+  readonly contentWidth: number | null
   readonly gap: number | undefined
   readonly viewportInset: number | undefined
-  readonly width: number | undefined
 }
 
 const DEFAULT_GAP = 12
 const DEFAULT_VIEWPORT_INSET = 16
-const DEFAULT_WIDTH = 352
 
 const resolvePlacement = (options: ResolvePlacementOptions): TourContentPlacement => {
   const {bounds} = options
@@ -45,7 +43,7 @@ const resolvePlacement = (options: ResolvePlacementOptions): TourContentPlacemen
   const gap = Math.max(0, options.gap ?? DEFAULT_GAP)
   const viewportInset = Math.max(0, options.viewportInset ?? DEFAULT_VIEWPORT_INSET)
   const availableWidth = Math.max(0, bounds.viewportWidth - viewportInset * 2)
-  const contentWidth = Math.min(Math.max(0, options.width ?? DEFAULT_WIDTH), availableWidth)
+  const contentWidth = Math.min(Math.max(0, options.contentWidth ?? availableWidth), availableWidth)
   const left = Math.max(
     viewportInset,
     Math.min(bounds.left, bounds.viewportWidth - contentWidth - viewportInset),
@@ -78,12 +76,32 @@ const resolvePlacement = (options: ResolvePlacementOptions): TourContentPlacemen
 
 /** 대상 위치에 맞춰 접근 가능한 투어 패널을 배치합니다. */
 export const HTourContent = (props: HTourContentProps) => {
+  const [contentElement, setContentElement] = createSignal<HTMLDivElement>()
+  const [contentWidth, setContentWidth] = createSignal<number | null>(null)
+
+  createEffect(() => {
+    const element = contentElement()
+
+    if (element === undefined) {
+      return
+    }
+
+    const updateWidth = () => setContentWidth(element.getBoundingClientRect().width)
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateWidth)
+
+    updateWidth()
+    resizeObserver?.observe(element)
+
+    onCleanup(() => resizeObserver?.disconnect())
+  })
+
   const placement = createMemo(() =>
     resolvePlacement({
       bounds: props.targetBounds,
+      contentWidth: contentWidth(),
       gap: props.gap,
       viewportInset: props.viewportInset,
-      width: props.width,
     }),
   )
 
@@ -94,6 +112,7 @@ export const HTourContent = (props: HTourContentProps) => {
       class={props.class}
       data-placement={placement().name}
       id={props.id}
+      ref={setContentElement}
       style={{...placement().style, ...props.style}}
     >
       {props.children}
