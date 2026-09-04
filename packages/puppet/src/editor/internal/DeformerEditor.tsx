@@ -3,7 +3,7 @@ import {Show, untrack} from 'solid-js'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
-import {getDeformerEditTarget} from './deformer-edit-target'
+import {getParameterEditTarget} from './parameter-edit-target'
 import {setDeformerCurveHandle} from './deformer-curve-handles'
 import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
 import {DeformerControls} from './DeformerControls'
@@ -98,7 +98,7 @@ interface UpdateDraggedDeformerOptions {
 }
 
 const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => {
-  const editTarget = getDeformerEditTarget({
+  const editTarget = getParameterEditTarget({
     activeBindingId: options.activeBindingId,
     activeKeyformValues: options.activeKeyformValues,
     editMode: options.editMode,

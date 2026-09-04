@@ -23,7 +23,7 @@ import {getSceneNode, isSceneNodeLocked, resizeDeformer} from './scene-graph'
 import type {SceneContainerConversionTarget} from './container-conversion'
 import {addDeformerCurveHandle, removeDeformerCurveHandle} from './deformer-curve-handles'
 import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
-import {getDeformerEditTarget} from './deformer-edit-target'
+import {getParameterEditTarget} from './parameter-edit-target'
 import {setParameterKeyformPartProperties, setPartRenderProperties} from './part-properties'
 import {PartProperties} from './PartProperties'
 
@@ -133,7 +133,7 @@ const updateInspectorTransform = (
   value: number,
 ) => {
   const geometry = getTransformedGeometry(node, property, value)
-  const editTarget = getDeformerEditTarget({
+  const editTarget = getParameterEditTarget({
     activeBindingId: props.activeBindingId,
     activeKeyformValues: props.activeKeyformValues,
     editMode: props.editMode,
@@ -170,7 +170,7 @@ const updateInspectorGrid = (options: UpdateInspectorGridOptions) => {
       ? options.value
       : (options.node.controlPoints[options.pointIndex * 2 + 1] ?? 0)
 
-  const editTarget = getDeformerEditTarget({
+  const editTarget = getParameterEditTarget({
     activeBindingId: options.props.activeBindingId,
     activeKeyformValues: options.props.activeKeyformValues,
     editMode: options.props.editMode,
@@ -349,7 +349,7 @@ const getDeformerNode = (node: PuppetSceneNode | undefined) =>
 
 const createPartPropertiesController = (props: EditorInspectorProps) => {
   const getEditTarget = (partId: string) =>
-    getDeformerEditTarget({
+    getParameterEditTarget({
       activeBindingId: props.activeBindingId,
       activeKeyformValues: props.activeKeyformValues,
       editMode: props.editMode,
@@ -502,10 +502,10 @@ export const EditorInspector = (props: EditorInspectorProps) => {
       <Show keyed when={partProperties.activePart()}>
         {(part) => (
           <PartProperties
-            interpolatedDisabled={!partProperties.canEditVisual()}
             maskPartOptions={getMaskPartOptions(props.document, part.id)}
             part={part}
             staticDisabled={!partProperties.canEditRest() || props.editMode !== 'parameter'}
+            visualDisabled={!partProperties.canEditVisual()}
             onInterpolatedChange={(properties) =>
               partProperties.update(part, properties, props.editMode === 'parameter')
             }

@@ -1,18 +1,18 @@
 import type {PuppetParameterValues} from '../../deformation'
 
-interface DeformerRestEditTarget {
+interface ParameterRestEditTarget {
   readonly kind: 'rest'
 }
 
-interface DeformerKeyformEditTarget {
+interface ParameterKeyformEditTarget {
   readonly bindingId: string
   readonly kind: 'keyform'
   readonly values: PuppetParameterValues
 }
 
-export type DeformerEditTarget = DeformerKeyformEditTarget | DeformerRestEditTarget
+export type ParameterEditTarget = ParameterKeyformEditTarget | ParameterRestEditTarget
 
-export interface GetDeformerEditTargetOptions {
+export interface GetParameterEditTargetOptions {
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly editMode?: 'motion' | 'parameter'
@@ -20,9 +20,9 @@ export interface GetDeformerEditTargetOptions {
   readonly targetNodeIds?: ReadonlyArray<string>
 }
 
-export const getDeformerEditTarget = (
-  options: GetDeformerEditTargetOptions,
-): DeformerEditTarget => {
+export const getParameterEditTarget = (
+  options: GetParameterEditTargetOptions,
+): ParameterEditTarget => {
   if (
     options.editMode !== 'parameter' ||
     options.activeBindingId === undefined ||

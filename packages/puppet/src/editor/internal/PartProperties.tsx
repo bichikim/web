@@ -15,10 +15,10 @@ type InterpolatedPartProperties = Pick<
 >
 
 export interface PartPropertiesProps {
-  readonly interpolatedDisabled: boolean
   readonly maskPartOptions: ReadonlyArray<PartMaskOption>
   readonly part: PuppetPart
   readonly staticDisabled: boolean
+  readonly visualDisabled: boolean
   readonly onInterpolatedChange: (properties: InterpolatedPartProperties) => void
   readonly onStaticChange: (properties: PuppetPartRenderProperties) => void
 }
@@ -84,7 +84,7 @@ export const PartProperties = (props: PartPropertiesProps) => {
         불투명도
         <input
           aria-label="파트 불투명도"
-          disabled={props.interpolatedDisabled}
+          disabled={props.visualDisabled}
           max={1}
           min={0}
           name="part-opacity"
@@ -116,7 +116,7 @@ export const PartProperties = (props: PartPropertiesProps) => {
         곱하기 색상
         <input
           aria-label="파트 곱하기 색상"
-          disabled={props.interpolatedDisabled}
+          disabled={props.visualDisabled}
           type="color"
           value={colorToHex(properties().multiplyColor)}
           onInput={(event) => handleColorInput('multiplyColor', event.currentTarget.value)}
@@ -126,7 +126,7 @@ export const PartProperties = (props: PartPropertiesProps) => {
         스크린 색상
         <input
           aria-label="파트 스크린 색상"
-          disabled={props.interpolatedDisabled}
+          disabled={props.visualDisabled}
           type="color"
           value={colorToHex(properties().screenColor)}
           onInput={(event) => handleColorInput('screenColor', event.currentTarget.value)}

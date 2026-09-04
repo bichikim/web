@@ -9,10 +9,10 @@ import {
 } from 'pixi.js'
 
 import {
-  composeParameterPartProperties,
   composeParameterScene,
   composeParameterVertices,
   type PuppetParameterValueMap,
+  type ResolvedPartRenderProperties,
 } from '../deformation'
 import type {PuppetDocument, PuppetMotion} from './document'
 import {
@@ -20,8 +20,13 @@ import {
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
 import {applyMotionVertices, sampleMotionParameterValues} from './internal/motion'
+import {
+  canReusePartResources,
+  getPartRenderPlans,
+  type PartMaskRenderPlan,
+  type PartRenderPlan,
+} from './internal/render-plan'
 import {applySceneDeformers} from './internal/scene-deformation'
-import {getScenePartStates} from './scene'
 
 export interface Player {
   destroy(): void
@@ -106,29 +111,19 @@ const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
 }
 
 const applyDocumentScene = (
-  document: PuppetDocument,
+  plans: ReadonlyArray<PartRenderPlan>,
   partById: ReadonlyMap<string, RuntimePart>,
   root: Container,
-  parameterValues?: PuppetParameterValueMap,
 ) => {
-  const maskPartIds = new Set(
-    document.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
-  )
-  for (const state of getScenePartStates(document)) {
-    const runtimePart = partById.get(state.partId)
+  for (const plan of plans) {
+    const runtimePart = partById.get(plan.partId)
 
     if (runtimePart !== undefined) {
-      const properties = composeParameterPartProperties({
-        document,
-        parameterValues,
-        partId: state.partId,
-      })
-      const shouldRender = !maskPartIds.has(state.partId) || properties.renderWhenUsedAsMask
-      runtimePart.mesh.visible = state.visible && shouldRender
-      if (shouldRender) {
+      runtimePart.mesh.visible = plan.visible
+      if (plan.render) {
         if (runtimePart.mask !== undefined) {
           root.addChild(runtimePart.mask.container)
-          updateMeshMask(runtimePart.mesh, runtimePart.mask, properties.invertedMask)
+          updateMeshMask(runtimePart.mesh, runtimePart.mask, plan.properties.invertedMask)
         }
         root.addChild(runtimePart.mesh)
       }
@@ -136,7 +131,7 @@ const applyDocumentScene = (
   }
 }
 
-const valuesEqual = (first: ReadonlyArray<number>, second: ReadonlyArray<number>) =>
+const colorsEqual = (first: ReadonlyArray<number>, second: ReadonlyArray<number>) =>
   first.length === second.length && first.every((value, index) => value === second[index])
 
 const createColorMatrix = (
@@ -166,18 +161,15 @@ const createColorMatrix = (
 ]
 
 const applyPartRenderProperties = (
-  document: PuppetDocument,
-  parameterValues: PuppetParameterValueMap | undefined,
-  partId: string,
+  properties: ResolvedPartRenderProperties,
   runtimePart: RuntimePart,
 ) => {
-  const properties = composeParameterPartProperties({document, parameterValues, partId})
   runtimePart.mesh.alpha = properties.opacity
   runtimePart.mesh.blendMode = properties.blendMode
 
   const hasColorEffect =
-    !valuesEqual(properties.multiplyColor, [1, 1, 1]) ||
-    !valuesEqual(properties.screenColor, [0, 0, 0])
+    !colorsEqual(properties.multiplyColor, [1, 1, 1]) ||
+    !colorsEqual(properties.screenColor, [0, 0, 0])
   if (!hasColorEffect) {
     runtimePart.mesh.filters = null
     return
@@ -227,31 +219,16 @@ interface InitializeRuntimePartsOptions {
 }
 
 interface CreateRuntimePartMaskOptions {
-  readonly ancestorPartIds: ReadonlySet<string>
   readonly document: PuppetDocument
+  readonly plan: PartMaskRenderPlan
   readonly partById: ReadonlyMap<string, RuntimePart>
-  readonly targetPartId: string
 }
 
-const createRuntimePartMask = (
-  options: CreateRuntimePartMaskOptions,
-): RuntimePartMask | undefined => {
-  if (options.ancestorPartIds.has(options.targetPartId)) {
-    return undefined
-  }
-
-  const targetPart = options.document.parts.find((part) => part.id === options.targetPartId)
-  const maskPartIds = targetPart?.properties?.clippingMaskIds ?? []
-  if (maskPartIds.length === 0) {
-    return undefined
-  }
-
-  const ancestorPartIds = new Set(options.ancestorPartIds)
-  ancestorPartIds.add(options.targetPartId)
+const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): RuntimePartMask => {
   const container = new Container()
-  const meshes = maskPartIds.flatMap((sourcePartId) => {
-    const sourcePart = options.document.parts.find((part) => part.id === sourcePartId)
-    const sourceRuntimePart = options.partById.get(sourcePartId)
+  const meshes = options.plan.sources.flatMap((sourcePlan) => {
+    const sourcePart = options.document.parts.find((part) => part.id === sourcePlan.partId)
+    const sourceRuntimePart = options.partById.get(sourcePlan.partId)
     if (sourcePart === undefined || sourceRuntimePart === undefined) {
       return []
     }
@@ -263,28 +240,26 @@ const createRuntimePartMask = (
       uvs: new Float32Array(sourcePart.mesh.uvs),
       vertices: new Float32Array(sourceRuntimePart.vertices),
     })
-    const mask = createRuntimePartMask({
-      ancestorPartIds,
-      document: options.document,
-      partById: options.partById,
-      targetPartId: sourcePartId,
-    })
+    const mask =
+      sourcePlan.mask === undefined
+        ? undefined
+        : createRuntimePartMask({
+            document: options.document,
+            partById: options.partById,
+            plan: sourcePlan.mask,
+          })
 
     if (mask !== undefined) {
       container.addChild(mask.container)
-      const inverse = composeParameterPartProperties({
-        document: options.document,
-        partId: sourcePartId,
-      }).invertedMask
       if (mask.effect === undefined) {
-        updateMeshMask(mesh, mask, inverse)
+        updateMeshMask(mesh, mask, sourcePlan.invertedMask)
       } else {
-        mask.effect.inverse = inverse
+        mask.effect.inverse = sourcePlan.invertedMask
         mesh.addEffect(mask.effect)
       }
     }
     container.addChild(mesh)
-    return [{mask, mesh, sourcePartId}]
+    return [{mask, mesh, sourcePartId: sourcePlan.partId}]
   })
 
   const effect = meshes.some((mesh) => mesh.mask !== undefined)
@@ -334,36 +309,33 @@ const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) =>
     options.partById.set(part.id, {mesh, partId: part.id, restVertices, vertices})
   }
 
+  const plans = getPartRenderPlans(options.document)
+  const planById = new Map(plans.map((plan) => [plan.partId, plan]))
   for (const runtimePart of options.partById.values()) {
-    runtimePart.mask = createRuntimePartMask({
-      ancestorPartIds: new Set(),
-      document: options.document,
-      partById: options.partById,
-      targetPartId: runtimePart.partId,
-    })
+    const plan = planById.get(runtimePart.partId)
+    runtimePart.mask =
+      plan?.mask === undefined
+        ? undefined
+        : createRuntimePartMask({
+            document: options.document,
+            partById: options.partById,
+            plan: plan.mask,
+          })
     if (runtimePart.mask !== undefined) {
       if (runtimePart.mask.effect === undefined) {
-        updateMeshMask(
-          runtimePart.mesh,
-          runtimePart.mask,
-          composeParameterPartProperties({
-            document: options.document,
-            partId: runtimePart.partId,
-          }).invertedMask,
-        )
+        updateMeshMask(runtimePart.mesh, runtimePart.mask, plan?.properties.invertedMask ?? false)
       } else {
         runtimePart.mesh.addEffect(runtimePart.mask.effect)
       }
     }
   }
 
-  applyDocumentScene(options.document, options.partById, options.root)
+  applyDocumentScene(plans, options.partById, options.root)
 }
 
 interface UpdateRuntimeMaskOptions {
-  readonly document: PuppetDocument
   readonly mask: RuntimePartMask
-  readonly parameterValues: PuppetParameterValueMap | undefined
+  readonly planById: ReadonlyMap<string, PartRenderPlan>
   readonly partById: ReadonlyMap<string, RuntimePart>
 }
 
@@ -378,11 +350,7 @@ const updateRuntimeMask = (options: UpdateRuntimeMaskOptions) => {
       updateMeshMask(
         maskMesh.mesh,
         maskMesh.mask,
-        composeParameterPartProperties({
-          document: options.document,
-          parameterValues: options.parameterValues,
-          partId: maskMesh.sourcePartId,
-        }).invertedMask,
+        options.planById.get(maskMesh.sourcePartId)?.properties.invertedMask ?? false,
       )
     }
   }
@@ -393,24 +361,28 @@ const getMotion = (document: PuppetDocument, motionId: string | undefined) =>
     ? document.motions[0]
     : document.motions.find((motion) => motion.id === motionId)
 
-const canReuseRuntimeParts = (document: PuppetDocument, nextDocument: PuppetDocument) => {
-  const maskPartIds = new Set(
-    nextDocument.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
-  )
-  return (
-    nextDocument.parts.length === document.parts.length &&
-    nextDocument.parts.every((part, index) => {
-      const previousPart = document.parts[index]
-      return (
-        previousPart?.id === part.id &&
-        previousPart.texture.src === part.texture.src &&
-        (!maskPartIds.has(part.id) ||
-          (valuesEqual(previousPart.mesh.indices, part.mesh.indices) &&
-            valuesEqual(previousPart.mesh.uvs, part.mesh.uvs))) &&
-        (previousPart.properties?.clippingMaskIds ?? []).join('\0') ===
-          (part.properties?.clippingMaskIds ?? []).join('\0')
-      )
-    })
+interface LayoutPlayerRootOptions {
+  readonly document: PuppetDocument
+  readonly root: Container
+  readonly screen: {
+    readonly height: number
+    readonly width: number
+  }
+  readonly viewportPadding?: number
+}
+
+const layoutPlayerRoot = (options: LayoutPlayerRootOptions) => {
+  const viewportPadding = Math.max(0, options.viewportPadding ?? 0)
+  const viewportWidth = options.document.viewport.width * (1 + viewportPadding * 2)
+  const viewportHeight = options.document.viewport.height * (1 + viewportPadding * 2)
+  const scale =
+    Math.min(options.screen.width / viewportWidth, options.screen.height / viewportHeight) *
+    VIEWPORT_PADDING
+
+  options.root.scale.set(scale)
+  options.root.position.set(
+    (options.screen.width - options.document.viewport.width * scale) / 2,
+    (options.screen.height - options.document.viewport.height * scale) / 2,
   )
 }
 
@@ -457,20 +429,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   }
 
   const layoutRoot = () => {
-    const viewportPadding = Math.max(0, options.viewportPadding ?? 0)
-    const viewportWidth = document.viewport.width * (1 + viewportPadding * 2)
-    const viewportHeight = document.viewport.height * (1 + viewportPadding * 2)
-    const scale =
-      Math.min(
-        application.screen.width / viewportWidth,
-        application.screen.height / viewportHeight,
-      ) * VIEWPORT_PADDING
-
-    root.scale.set(scale)
-    root.position.set(
-      (application.screen.width - document.viewport.width * scale) / 2,
-      (application.screen.height - document.viewport.height * scale) / 2,
-    )
+    layoutPlayerRoot({
+      document,
+      root,
+      screen: application.screen,
+      viewportPadding: options.viewportPadding,
+    })
   }
 
   const applyFrame = (activeMotion: PuppetMotion | undefined, time: number) => {
@@ -479,6 +443,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       parameterValues,
       time,
     })
+    const renderPlans = getPartRenderPlans(document, frameParameterValues)
+    const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
 
     for (const [partId, runtimePart] of partById) {
       applyFrameVertices({
@@ -500,21 +466,23 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
 
     for (const runtimePart of partById.values()) {
       runtimePart.mesh.vertices = runtimePart.vertices
-      applyPartRenderProperties(document, frameParameterValues, runtimePart.partId, runtimePart)
+      const plan = planById.get(runtimePart.partId)
+      if (plan !== undefined) {
+        applyPartRenderProperties(plan.properties, runtimePart)
+      }
     }
 
     for (const runtimePart of partById.values()) {
       if (runtimePart.mask !== undefined) {
         updateRuntimeMask({
-          document,
           mask: runtimePart.mask,
-          parameterValues: frameParameterValues,
           partById,
+          planById,
         })
       }
     }
 
-    applyDocumentScene(document, partById, root, frameParameterValues)
+    applyDocumentScene(renderPlans, partById, root)
     layoutRoot()
     options.onFrame?.(createPlayerFrame(activeMotion, time))
   }
@@ -533,7 +501,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   const updateDocument = (nextDocument: PreparedPuppetDocument) => {
     assertPreparedPuppetDocument(nextDocument)
 
-    const canReuseResources = canReuseRuntimeParts(document, nextDocument)
+    const canReuseResources = canReusePartResources(document, nextDocument)
 
     if (!canReuseResources) {
       return false
@@ -554,7 +522,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       }
     }
 
-    applyDocumentScene(document, partById, root)
     elapsedTime = getSeekTime(motion, elapsedTime)
     applyFrame(motion, elapsedTime)
     application.render()
