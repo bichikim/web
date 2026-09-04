@@ -341,27 +341,62 @@ export const resizeDeformer = (options: ResizeDeformerOptions): PuppetDocument |
   }
 }
 
+export const removeParameterDeformerTargets = (
+  document: PuppetDocument,
+  nodeIds: ReadonlySet<string>,
+): PuppetDocument => {
+  if (document.parameterBindings === undefined) {
+    return document
+  }
+
+  const removeKeyformTargets = <Keyform extends PuppetParameterKeyform>(
+    keyform: Keyform,
+  ): Keyform =>
+    ({
+      ...keyform,
+      deformers: keyform.deformers?.filter((deformer) => !nodeIds.has(deformer.nodeId)),
+    }) as Keyform
+
+  return {
+    ...document,
+    parameterBindings: document.parameterBindings.map((binding): PuppetParameterBinding => {
+      const targetDeformerIds = binding.targetDeformerIds?.filter((id) => !nodeIds.has(id))
+
+      return isTwoDimensionalParameterBinding(binding)
+        ? {...binding, keyforms: binding.keyforms.map(removeKeyformTargets), targetDeformerIds}
+        : {...binding, keyforms: binding.keyforms.map(removeKeyformTargets), targetDeformerIds}
+    }),
+  }
+}
+
 export const unwrapSceneNode = (
   document: PuppetDocument,
-  groupId: string,
+  nodeId: string,
 ): PuppetDocument | undefined => {
   const scene = getDocumentScene(document)
-  const group = findNode(scene.roots, groupId)
-  const parentId = findParentId(scene.roots, groupId)
+  const node = findNode(scene.roots, nodeId)
+  const parentId = findParentId(scene.roots, nodeId)
 
   if (
-    group === undefined ||
-    !isSceneContainerNode(group) ||
+    node === undefined ||
+    !isSceneContainerNode(node) ||
     parentId === undefined ||
-    isSceneNodeLocked(document, groupId)
+    isSceneNodeLocked(document, nodeId)
   ) {
     return undefined
   }
 
   const nextScene = updateChildren(scene, parentId, (children) =>
-    children.flatMap((child) => (child.id === groupId ? group.children : [child])),
+    children.flatMap((child) => (child.id === nodeId ? node.children : [child])),
   )
-  return nextScene === undefined ? undefined : withScene(document, nextScene)
+  if (nextScene === undefined) {
+    return undefined
+  }
+
+  const nextDocument = withScene(document, nextScene)
+  return node.kind === 'deformer'
+    ? removeParameterDeformerTargets(nextDocument, new Set([nodeId]))
+    : nextDocument
 }
 
 export const unwrapSceneNodes = (
