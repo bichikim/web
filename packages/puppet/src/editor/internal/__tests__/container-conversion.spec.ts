@@ -23,7 +23,7 @@ describe('convertSceneContainers', () => {
       id: 'shapes',
       kind: 'deformer',
       name: 'Shapes',
-      rotationOrigin: {x: 328, y: 243},
+      rotationOrigin: {x: 388, y: 243},
       rows: 2,
     })
     expect(empty).toMatchObject({

@@ -82,7 +82,11 @@ describe('PuppetEditor', () => {
 
     playerOptions?.onFrame?.({duration: 2, motionId: 'idle-deform', time: 1})
     await waitFor(() =>
-      expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cy')).toBe('176'),
+      expect(
+        view.container
+          .querySelectorAll('[data-part-id="mesh-preview"] circle')[4]
+          ?.getAttribute('cy'),
+      ).toBe('176'),
     )
 
     fireEvent.click(view.getByRole('button', {name: '재생'}))
@@ -703,7 +707,6 @@ describe('PuppetEditor', () => {
     const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
 
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
-    fireEvent.click(view.getByRole('button', {name: '자유 변형 디포머로 변경'}))
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
 
     const parameterValue = view.getByRole('spinbutton', {name: 'Parameter 3 값'})
@@ -723,8 +726,8 @@ describe('PuppetEditor', () => {
       )
       const deformer = getDocumentScene(document).roots[0]
       const keyform = binding?.keyforms[1]?.deformers[0]
-      expect(binding?.targetDeformerIds).toEqual(['group'])
-      expect(keyform).toMatchObject({kind: 'deformer', nodeId: 'group'})
+      expect(binding?.targetDeformerIds).toEqual(['deformer'])
+      expect(keyform).toMatchObject({kind: 'deformer', nodeId: 'deformer'})
       expect(
         deformer?.kind === 'deformer' && keyform?.kind === 'deformer'
           ? getDeformerAngle({...deformer, controlPoints: keyform.controlPoints})
@@ -736,21 +739,22 @@ describe('PuppetEditor', () => {
     })
   })
 
-  test('should guide deformer connection before allowing parameter edits', async () => {
+  test('should edit a deformer before connecting it to a parameter', async () => {
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => <PuppetEditor />)
 
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
-    fireEvent.click(view.getByRole('button', {name: '자유 변형 디포머로 변경'}))
 
-    expect(view.getByRole('status')).toHaveTextContent(
-      'Parameter를 선택해야 디포머를 편집할 수 있습니다.',
-    )
+    expect(view.queryByRole('status')).not.toBeInTheDocument()
     expect(view.queryByRole('spinbutton', {name: '격자 제어점 1 X'})).not.toBeInTheDocument()
+    const angle = view.getByRole('spinbutton', {name: '자유 변형 각도'})
+    expect(angle).toBeEnabled()
+    fireEvent.input(angle, {target: {value: '15'}})
+    expect(angle).toHaveValue(15)
 
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결'}))
-    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
 
     await waitFor(() => {
       expect(view.queryByRole('status')).not.toBeInTheDocument()

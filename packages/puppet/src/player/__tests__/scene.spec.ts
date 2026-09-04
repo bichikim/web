@@ -39,4 +39,19 @@ describe('scene', () => {
     ])
     expect(getRenderableParts(hiddenDocument).map((part) => part.id)).toEqual(['mesh-preview'])
   })
+
+  test('should retain layer-tree order when the part array uses a different order', () => {
+    const document = createDemoDocument()
+    const orderedDocument = {
+      ...document,
+      parts: [...document.parts].reverse(),
+    }
+
+    expect(getScenePartStates(orderedDocument).map((state) => state.partId)).toEqual([
+      'mesh-preview',
+      'shape-circle',
+      'shape-diamond',
+    ])
+    expect(orderedDocument.scene).toBe(document.scene)
+  })
 })

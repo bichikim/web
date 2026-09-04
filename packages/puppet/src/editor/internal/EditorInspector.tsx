@@ -1,7 +1,13 @@
 import {createUniqueId, For, Show} from 'solid-js'
 
-import type {PuppetParameterValues} from '../../deformation'
-import type {PuppetDocument, PuppetSceneDeformerNode} from '../../player'
+import {getPartRenderProperties, type PuppetParameterValues} from '../../deformation'
+import {
+  canUsePartAsMask,
+  type PuppetDocument,
+  type PuppetPart,
+  type PuppetSceneDeformerNode,
+  type PuppetSceneNode,
+} from '../../player'
 import {
   setParameterKeyformDeformerControlPoints,
   setParameterKeyformDeformerPoint,
@@ -17,6 +23,17 @@ import {getSceneNode, isSceneNodeLocked, resizeDeformer} from './scene-graph'
 import type {SceneContainerConversionTarget} from './container-conversion'
 import {addDeformerCurveHandle, removeDeformerCurveHandle} from './deformer-curve-handles'
 import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
+import {getDeformerEditTarget} from './deformer-edit-target'
+import {setParameterKeyformPartProperties, setPartRenderProperties} from './part-properties'
+import {PartProperties} from './PartProperties'
+
+const getMaskPartOptions = (document: PuppetDocument, partId: string) =>
+  document.parts
+    .filter((part) => part.id !== partId)
+    .map((part) => ({
+      disabled: !canUsePartAsMask({maskPartId: part.id, partId, parts: document.parts}),
+      part,
+    }))
 
 export interface EditorInspectorProps {
   readonly activeBindingId?: string
@@ -116,26 +133,24 @@ const updateInspectorTransform = (
   value: number,
 ) => {
   const geometry = getTransformedGeometry(node, property, value)
+  const editTarget = getDeformerEditTarget({
+    activeBindingId: props.activeBindingId,
+    activeKeyformValues: props.activeKeyformValues,
+    editMode: props.editMode,
+    nodeId: node.id,
+    targetNodeIds: props.targetNodeIds,
+  })
 
-  if (props.editMode !== 'parameter') {
+  if (editTarget.kind === 'rest') {
     return setDeformerControlPoints({...geometry, document: props.document, nodeId: node.id})
   }
 
-  if (
-    props.activeBindingId === undefined ||
-    props.activeKeyformValues === undefined ||
-    props.activeKeyformValues === null ||
-    props.targetNodeIds?.includes(node.id) !== true
-  ) {
-    return undefined
-  }
-
   return setParameterKeyformDeformerControlPoints({
-    bindingId: props.activeBindingId,
+    bindingId: editTarget.bindingId,
     ...geometry,
     document: props.document,
     nodeId: node.id,
-    values: props.activeKeyformValues,
+    values: editTarget.values,
   })
 }
 
@@ -155,7 +170,15 @@ const updateInspectorGrid = (options: UpdateInspectorGridOptions) => {
       ? options.value
       : (options.node.controlPoints[options.pointIndex * 2 + 1] ?? 0)
 
-  if (options.props.editMode !== 'parameter') {
+  const editTarget = getDeformerEditTarget({
+    activeBindingId: options.props.activeBindingId,
+    activeKeyformValues: options.props.activeKeyformValues,
+    editMode: options.props.editMode,
+    nodeId: options.node.id,
+    targetNodeIds: options.props.targetNodeIds,
+  })
+
+  if (editTarget.kind === 'rest') {
     return setDeformerControlPoint({
       document: options.props.document,
       nodeId: options.node.id,
@@ -165,21 +188,12 @@ const updateInspectorGrid = (options: UpdateInspectorGridOptions) => {
     })
   }
 
-  if (
-    options.props.activeBindingId === undefined ||
-    options.props.activeKeyformValues === undefined ||
-    options.props.activeKeyformValues === null ||
-    options.props.targetNodeIds?.includes(options.node.id) !== true
-  ) {
-    return undefined
-  }
-
   return setParameterKeyformDeformerPoint({
-    bindingId: options.props.activeBindingId,
+    bindingId: editTarget.bindingId,
     document: options.props.document,
     nodeId: options.node.id,
     pointIndex: options.pointIndex,
-    values: options.props.activeKeyformValues,
+    values: editTarget.values,
     x,
     y,
   })
@@ -317,36 +331,78 @@ interface SelectedControlPoint {
   readonly pointIndex: number
 }
 
+const getSelectedControlPoints = (
+  node: PuppetSceneDeformerNode | undefined,
+  indices: ReadonlyArray<number> | undefined,
+): ReadonlyArray<SelectedControlPoint> =>
+  node === undefined
+    ? []
+    : [...new Set(indices ?? [])].flatMap((pointIndex) =>
+        pointIndex >= 0 && pointIndex < node.controlPoints.length / 2 ? [{node, pointIndex}] : [],
+      )
+
+const getActiveNode = (document: PuppetDocument, nodeId: string | undefined) =>
+  nodeId === undefined ? undefined : getSceneNode(document, nodeId)
+
+const getDeformerNode = (node: PuppetSceneNode | undefined) =>
+  node?.kind === 'deformer' ? node : undefined
+
+const createPartPropertiesController = (props: EditorInspectorProps) => {
+  const getEditTarget = (partId: string) =>
+    getDeformerEditTarget({
+      activeBindingId: props.activeBindingId,
+      activeKeyformValues: props.activeKeyformValues,
+      editMode: props.editMode,
+      nodeId: partId,
+      targetNodeIds: props.targetNodeIds,
+    })
+  const activePart = () => {
+    const part = props.document.parts.find((candidate) => candidate.id === props.activeNodeId)
+    if (part === undefined || getEditTarget(part.id).kind === 'rest') {
+      return part
+    }
+
+    return props.previewDocument?.parts.find((candidate) => candidate.id === part.id) ?? part
+  }
+  const canEditRest = () =>
+    props.activeNodeId !== undefined && !isSceneNodeLocked(props.document, props.activeNodeId)
+  const canEditVisual = () => canEditRest() && props.editMode === 'parameter'
+  const update = (
+    part: PuppetPart,
+    properties: Parameters<typeof setPartRenderProperties>[0]['properties'],
+    interpolated: boolean,
+  ) => {
+    const editTarget = getEditTarget(part.id)
+    const document =
+      interpolated && editTarget.kind === 'keyform'
+        ? setParameterKeyformPartProperties({
+            bindingId: editTarget.bindingId,
+            currentProperties: getPartRenderProperties(part),
+            document: props.document,
+            partId: part.id,
+            properties: {
+              ...properties,
+            },
+            values: editTarget.values,
+          })
+        : setPartRenderProperties({document: props.document, partId: part.id, properties})
+    if (document !== undefined) {
+      props.onDocumentChange?.(document)
+    }
+  }
+
+  return {activePart, canEditRest, canEditVisual, update}
+}
+
 export const EditorInspector = (props: EditorInspectorProps) => {
   const titleId = createUniqueId()
   const activeNode = () =>
-    props.activeNodeId === undefined
-      ? undefined
-      : getSceneNode(props.previewDocument ?? props.document, props.activeNodeId)
-  const deformerNode = () => {
-    const node = activeNode()
-    return node?.kind === 'deformer' ? node : undefined
-  }
-  const selectedControlPoints = (): ReadonlyArray<SelectedControlPoint> => {
-    const node = deformerNode()
-    if (node === undefined) {
-      return []
-    }
-
-    return [...new Set(props.selectedControlPointIndices ?? [])].flatMap((pointIndex) =>
-      pointIndex >= 0 && pointIndex < node.controlPoints.length / 2 ? [{node, pointIndex}] : [],
-    )
-  }
+    getActiveNode(props.previewDocument ?? props.document, props.activeNodeId)
+  const deformerNode = () => getDeformerNode(activeNode())
+  const partProperties = createPartPropertiesController(props)
   const canEditRestDeformer = () =>
     props.activeNodeId !== undefined && !isSceneNodeLocked(props.document, props.activeNodeId)
-  const canEditDeformer = () =>
-    canEditRestDeformer() &&
-    (props.editMode !== 'parameter' ||
-      (props.activeNodeId !== undefined &&
-        props.targetNodeIds?.includes(props.activeNodeId) === true &&
-        props.activeBindingId !== undefined &&
-        props.activeKeyformValues !== undefined &&
-        props.activeKeyformValues !== null))
+  const canEditDeformer = canEditRestDeformer
   const handleTransformChange = (property: TransformProperty, value: string) => {
     const node = activeNode()
     const number = Number(value)
@@ -443,6 +499,20 @@ export const EditorInspector = (props: EditorInspectorProps) => {
           </Show>
         </section>
       </Show>
+      <Show keyed when={partProperties.activePart()}>
+        {(part) => (
+          <PartProperties
+            interpolatedDisabled={!partProperties.canEditVisual()}
+            maskPartOptions={getMaskPartOptions(props.document, part.id)}
+            part={part}
+            staticDisabled={!partProperties.canEditRest() || props.editMode !== 'parameter'}
+            onInterpolatedChange={(properties) =>
+              partProperties.update(part, properties, props.editMode === 'parameter')
+            }
+            onStaticChange={(properties) => partProperties.update(part, properties, false)}
+          />
+        )}
+      </Show>
       <Show keyed when={deformerNode()}>
         {(node) => (
           <TransformProperties
@@ -461,7 +531,7 @@ export const EditorInspector = (props: EditorInspectorProps) => {
           />
         )}
       </Show>
-      <For each={selectedControlPoints()}>
+      <For each={getSelectedControlPoints(deformerNode(), props.selectedControlPointIndices)}>
         {(selection) => (
           <ControlPointProperties
             curveEditingDisabled={!canEditRestDeformer()}

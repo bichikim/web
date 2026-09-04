@@ -10,6 +10,7 @@ import {
   type PuppetSceneNode,
 } from '../../player'
 import {
+  createDeformer,
   createSceneGroup,
   isSceneNodeLocked,
   moveSceneNodeRelative,
@@ -70,7 +71,7 @@ const getContainerIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
 
 const createGroup = (document: PuppetDocument, nodeIds: ReadonlyArray<string>) => {
   const previousIds = getContainerIds(getDocumentScene(document).roots)
-  const nextDocument = createSceneGroup(document, nodeIds)
+  const nextDocument = createDeformer(document, nodeIds) ?? createSceneGroup(document, nodeIds)
   return nextDocument === undefined
     ? undefined
     : {
@@ -126,6 +127,41 @@ interface SceneNodeSelectProps {
   readonly selected: boolean
 }
 
+interface LayerContainerIconProps {
+  readonly kind: 'deformer' | 'group'
+}
+
+const LayerContainerIcon = (props: LayerContainerIconProps) => (
+  <Show
+    when={props.kind === 'deformer'}
+    fallback={
+      <svg
+        aria-hidden="true"
+        class="layer-container-icon group"
+        data-layer-icon="group"
+        viewBox="0 0 24 24"
+      >
+        <rect height="11" rx="2" width="12" x="3" y="4" />
+        <rect height="11" rx="2" width="12" x="9" y="9" />
+      </svg>
+    }
+  >
+    <svg
+      aria-hidden="true"
+      class="layer-container-icon deformer"
+      data-layer-icon="deformer"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 4 20 3 19 20 3 19Z" />
+      <path d="m12 3.5-.5 16M3.5 11.5l16-.5" />
+      <circle cx="4" cy="4" r="1.25" />
+      <circle cx="20" cy="3" r="1.25" />
+      <circle cx="19" cy="20" r="1.25" />
+      <circle cx="3" cy="19" r="1.25" />
+    </svg>
+  </Show>
+)
+
 const SceneNodeSelect = (props: SceneNodeSelectProps) => {
   const [isRenaming, setIsRenaming] = createSignal(false)
   const [nameDraft, setNameDraft] = createSignal('')
@@ -174,9 +210,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
           <Show
             when={props.node.kind === 'part'}
             fallback={
-              <span class="layer-group-icon" aria-hidden="true">
-                ▰
-              </span>
+              <LayerContainerIcon kind={props.node.kind === 'deformer' ? 'deformer' : 'group'} />
             }
           >
             <span class="layer-thumbnail" aria-hidden="true">
@@ -200,9 +234,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
       }
     >
       <TextField class="layer-inline-name-editor" value={nameDraft()} onChange={setNameDraft}>
-        <span class="layer-group-icon" aria-hidden="true">
-          ▰
-        </span>
+        <LayerContainerIcon kind={props.node.kind === 'deformer' ? 'deformer' : 'group'} />
         <TextField.Input
           ref={(element) => {
             nameInput = element

@@ -37,6 +37,76 @@ describe('MeshEditor', () => {
     expect(view.container.querySelectorAll('polygon')).toHaveLength(16)
   })
 
+  test('should identify parts clipped by the selected mask', () => {
+    const document = createDemoDocument()
+    const maskedDocument: PuppetDocument = {
+      ...document,
+      parts: document.parts.map((part) =>
+        part.id === 'shape-circle' || part.id === 'shape-diamond'
+          ? {...part, properties: {clippingMaskIds: ['mesh-preview']}}
+          : part,
+      ),
+    }
+    const view = render(() => <MeshEditor activePartId="mesh-preview" document={maskedDocument} />)
+
+    const clippedCircle = view.container.querySelector('[data-clipped-part-id="shape-circle"]')
+    const clippedDiamond = view.container.querySelector('[data-clipped-part-id="shape-diamond"]')
+    const fillToggle = view.getByRole('checkbox', {name: '마스크 영역 칠해서 보기'})
+
+    expect(clippedCircle).not.toHaveClass('filled')
+    expect(clippedCircle?.querySelectorAll('.clipped-part-boundary')).toHaveLength(1)
+    expect(clippedDiamond?.querySelectorAll('.clipped-part-boundary')).toHaveLength(1)
+    expect(fillToggle).not.toBeChecked()
+    expect(view.getByText('클리핑 적용 · shape-circle')).toBeVisible()
+    expect(view.getByText('클리핑 적용 · shape-diamond')).toBeVisible()
+
+    fireEvent.click(fillToggle)
+
+    expect(clippedCircle).toHaveClass('filled')
+    expect(clippedDiamond).toHaveClass('filled')
+  })
+
+  test('should scope mask preview clips to each editor instance', () => {
+    const document = createDemoDocument()
+    const view = render(() => (
+      <>
+        <MeshEditor activePartId="mesh-preview" document={document} />
+        <MeshEditor activePartId="shape-circle" document={document} />
+      </>
+    ))
+    const clips = [...view.container.querySelectorAll('clipPath')]
+    const clipIds = clips.map((clip) => clip.id)
+    const svgs = [...view.container.querySelectorAll('.mesh-editor > svg')]
+
+    expect(new Set(clipIds).size).toBe(2)
+    expect(svgs[0]).toHaveStyle(`--active-mask-clip: url("#${clipIds[0]}")`)
+    expect(svgs[1]).toHaveStyle(`--active-mask-clip: url("#${clipIds[1]}")`)
+  })
+
+  test('should preserve holes as even-odd subpaths in a mask preview', () => {
+    const source = createDemoDocument()
+    const document: PuppetDocument = {
+      ...source,
+      parts: source.parts.map((part) =>
+        part.id === 'mesh-preview'
+          ? {
+              ...part,
+              mesh: {
+                ...part.mesh,
+                boundaryLoops: [part.mesh.boundaryLoops![0]!, part.mesh.boundaryLoops![0]!],
+              },
+            }
+          : part,
+      ),
+    }
+    const view = render(() => <MeshEditor activePartId="mesh-preview" document={document} />)
+    const clipPath = view.container.querySelector('clipPath')
+
+    expect(clipPath?.querySelectorAll('path')).toHaveLength(1)
+    expect(clipPath?.querySelector('path')).toHaveAttribute('clip-rule', 'evenodd')
+    expect(clipPath?.querySelector('path')?.getAttribute('d')?.match(/M /gu)).toHaveLength(2)
+  })
+
   test('should render animated vertices without mutating the source mesh', () => {
     const document = createDemoDocument()
     const [previewTime, setPreviewTime] = createSignal(0)
@@ -389,7 +459,7 @@ describe('MeshEditor', () => {
 
     expect(firstCorner).not.toBeNull()
     expect(view.container.querySelectorAll('circle')).toHaveLength(5)
-    expect(view.container.querySelectorAll('polygon')).toHaveLength(4)
+    expect(view.container.querySelectorAll('[data-part-id="mesh-preview"] polygon')).toHaveLength(4)
 
     if (firstCorner !== null) {
       fireEvent.pointerDown(firstCorner, {button: 0})
@@ -398,7 +468,7 @@ describe('MeshEditor', () => {
 
     expect(onDocumentChange).toHaveBeenCalledTimes(1)
     expect(view.container.querySelectorAll('circle')).toHaveLength(4)
-    expect(view.container.querySelectorAll('polygon')).toHaveLength(2)
+    expect(view.container.querySelectorAll('[data-part-id="mesh-preview"] polygon')).toHaveLength(2)
     expect(document().parts[0]?.mesh.vertices).toHaveLength(8)
     expect(document().parts[0]?.mesh.indices).toHaveLength(6)
     expect(document().parts[0]?.mesh.vertices).not.toBe(initialDocument.parts[0]?.mesh.vertices)
