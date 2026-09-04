@@ -248,7 +248,7 @@ describe('display theme runtime storage adapter', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe('"dark"')
   })
 
-  it('should convert a serial native writer error into a rejected save', async () => {
+  it('should propagate a native storage error as a rejected save', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.setItem.mockRejectedValue(new Error('Native storage unavailable'))
 

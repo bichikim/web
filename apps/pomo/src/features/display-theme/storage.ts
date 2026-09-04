@@ -1,10 +1,10 @@
 import {z} from 'zod'
 
 import {
-  createSerialNativeStorageWriter,
   hasNativeStorageBridge,
   readNativeStorageJson,
   readWebStorageJson,
+  writeNativeStorageJson,
   writeWebStorageJson,
 } from 'src/features/runtime-storage'
 
@@ -110,19 +110,12 @@ export const createDisplayThemePreferenceRepository = (
   return {read, write}
 }
 
-const nativeWriter = createSerialNativeStorageWriter()
 const preserveStoredValue = (value: unknown) => value
 const runtimeStorage = {
   isNative: hasNativeStorageBridge,
   readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
   readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  async writeNative(key: string, value: unknown) {
-    const error = await nativeWriter.write(key, value)
-
-    if (error !== null) {
-      throw error
-    }
-  },
+  writeNative: writeNativeStorageJson,
   writeWeb(key: string, value: unknown) {
     const error = writeWebStorageJson(key, value)
 
