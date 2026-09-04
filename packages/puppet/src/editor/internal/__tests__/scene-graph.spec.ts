@@ -1,6 +1,8 @@
 import {describe, expect, test} from 'vitest'
 
+import {transformDeformerPoint} from '../../../deformation'
 import {createDemoDocument, parseDocument} from '../../../player'
+import {addDeformerCurveHandle, setDeformerCurveHandle} from '../deformer-curve-handles'
 import {addParameter, setParameterKeyformDeformerPoint} from '../parameter-keyforms'
 import {getDocumentScene} from '../../../player/scene'
 import {
@@ -243,5 +245,59 @@ describe('scene graph', () => {
     expect(
       resizeDeformer({columns: 2, document: locked, nodeId: deformer.id, rows: 2}),
     ).toBeUndefined()
+  })
+
+  test('should resample rest and parameter keyforms from the curved surface', () => {
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const deformerDocument = createDeformer(source, ['mesh-preview'])!
+    const deformer = getDocumentScene(deformerDocument).roots[0]!
+    const withHandle = addDeformerCurveHandle(deformerDocument, deformer.id, 0)!
+    const handledDeformer = getDocumentScene(withHandle).roots[0]
+    const neutralHandle =
+      handledDeformer?.kind === 'deformer' ? handledDeformer.curveHandles?.[0] : undefined
+
+    if (neutralHandle === undefined) {
+      throw new Error('Expected a curve handle')
+    }
+
+    const curved = setDeformerCurveHandle({
+      axis: 'horizontal',
+      document: withHandle,
+      nodeId: deformer.id,
+      point: {x: neutralHandle.horizontal.x, y: neutralHandle.horizontal.y + 100},
+      pointIndex: 0,
+    })!
+    const added = addParameter({document: curved, nodeIds: [deformer.id]})!
+    const sourceDeformer = getDocumentScene(added.document).roots[0]!
+
+    if (sourceDeformer.kind !== 'deformer') {
+      throw new Error('Expected a deformer')
+    }
+
+    const expected = transformDeformerPoint(sourceDeformer, {
+      x: sourceDeformer.bounds.x + sourceDeformer.bounds.width / 4,
+      y: sourceDeformer.bounds.y,
+    })
+    const resized = resizeDeformer({
+      columns: 4,
+      document: added.document,
+      nodeId: deformer.id,
+      rows: sourceDeformer.rows,
+    })!
+    const resizedDeformer = getDocumentScene(resized).roots[0]
+    const restPoint =
+      resizedDeformer?.kind === 'deformer' ? resizedDeformer.controlPoints.slice(2, 4) : undefined
+    const keyformPoints = resized.parameterBindings?.[0]?.keyforms.map((keyform) =>
+      keyform.deformers?.[0]?.controlPoints.slice(2, 4),
+    )
+
+    expect(restPoint?.[0]).toBeCloseTo(expected.x, 8)
+    expect(restPoint?.[1]).toBeCloseTo(expected.y, 8)
+    expect(keyformPoints?.length).toBeGreaterThan(0)
+    for (const point of keyformPoints ?? []) {
+      expect(point?.[0]).toBeCloseTo(expected.x, 8)
+      expect(point?.[1]).toBeCloseTo(expected.y, 8)
+    }
+    expect(parseDocument(JSON.stringify(resized)).ok).toBe(true)
   })
 })
