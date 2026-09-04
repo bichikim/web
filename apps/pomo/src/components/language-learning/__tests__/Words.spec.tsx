@@ -301,6 +301,39 @@ it('should show only a speaker after the selectable word and request pronunciati
   )
 })
 
+it('should disable every pronunciation button while one cached audio read is pending', async () => {
+  const get = vi.fn(
+    () =>
+      new Promise<null>(() => {
+        // Keep the cache read pending for the duration of the interaction.
+      }),
+  )
+  audioRepositoryMocks.create.mockReturnValue({
+    delete: vi.fn(async () => undefined),
+    get,
+    save: vi.fn(async () => undefined),
+  })
+  render(() => <LanguageLearningWords />)
+  const input = screen.getByRole('textbox', {name: '모르는 단어'})
+
+  fireEvent.input(input, {target: {value: 'Home,wave'}})
+  fireEvent.click(screen.getByRole('button', {name: '단어 저장'}))
+
+  const homeButton = screen.getByRole('button', {name: 'Home 발음 듣기'})
+  const waveButton = screen.getByRole('button', {name: 'wave 발음 듣기'})
+  fireEvent.click(homeButton)
+
+  await vi.waitFor(() => expect(get).toHaveBeenCalledOnce())
+  expect(homeButton).toBeDisabled()
+  expect(homeButton).toHaveAttribute('aria-busy', 'true')
+  expect(waveButton).toBeDisabled()
+  expect(waveButton).toHaveAttribute('aria-busy', 'false')
+  expect(waveButton).toHaveClass('disabled:cursor-not-allowed', 'disabled:opacity-40')
+
+  fireEvent.click(waveButton)
+  expect(get).toHaveBeenCalledOnce()
+})
+
 it('should play only the requested word when saved and memorized words share the page', async () => {
   const playedSources: string[] = []
   function recordPlay(this: HTMLMediaElement) {

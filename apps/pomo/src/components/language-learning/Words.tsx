@@ -38,6 +38,7 @@ const wordClasses = cva(
 const WORD_ACTION_BUTTON_CLASS = cx(
   'inline-flex min-h-7 w-9 flex-none cursor-pointer self-stretch items-center justify-center border-0',
   'border-solid border-border bg-transparent',
+  'disabled:cursor-not-allowed disabled:opacity-40',
 )
 const WORD_SELECT_BUTTON_CLASS = cx(
   'flex min-w-0 flex-1 cursor-pointer items-center break-words border-0 bg-transparent',
@@ -105,6 +106,7 @@ const toggleLanguageLearningWordSelection = (
 
 interface LanguageLearningWordListProps {
   readonly autoplayKey: () => string | null
+  readonly pronunciationBusy: boolean
   readonly getAudioUrl: (word: LanguageLearningWord) => string | null
   readonly emptyMessage: string
   readonly isPronunciationLoading: (word: LanguageLearningWord) => boolean
@@ -118,6 +120,7 @@ interface LanguageLearningWordListProps {
 
 interface LanguageLearningWordPronunciationButtonProps {
   readonly autoplay: boolean
+  readonly disabled: boolean
   readonly loading: boolean
   readonly onPress: () => void
   readonly src: string | null
@@ -260,7 +263,7 @@ const LanguageLearningWordPronunciationButton = (
         aria-busy={props.loading}
         aria-label={accessibleLabel()}
         class={`${WORD_ACTION_BUTTON_CLASS} border-l text-muted-foreground hover:text-foreground`}
-        disabled={props.loading}
+        disabled={props.disabled}
         onClick={() => props.onPress()}
         title={accessibleLabel()}
         type="button"
@@ -293,6 +296,7 @@ const LanguageLearningWordList = (props: LanguageLearningWordListProps) => (
       >
         <For each={props.words}>
           {(word) => {
+            const audioUrl = () => props.getAudioUrl(word)
             const selected = () =>
               props.selectedWords().some((selectedWord) => selectedWord.value === word.value)
 
@@ -309,9 +313,10 @@ const LanguageLearningWordList = (props: LanguageLearningWordListProps) => (
                 </button>
                 <LanguageLearningWordPronunciationButton
                   autoplay={props.autoplayKey() === `${word.language}:${word.value}`}
+                  disabled={props.pronunciationBusy && audioUrl() === null}
                   loading={props.isPronunciationLoading(word)}
                   onPress={() => props.onPronounce(word)}
-                  src={props.getAudioUrl(word)}
+                  src={audioUrl()}
                   word={word.value}
                 />
               </li>
@@ -337,6 +342,7 @@ interface LanguageLearningSavedWordsProps {
   readonly getAudioUrl: (word: LanguageLearningWord) => string | null
   readonly isPronunciationLoading: (word: LanguageLearningWord) => boolean
   readonly memorizedWords: ReadonlyArray<LanguageLearningWord>
+  readonly pronunciationBusy: boolean
   readonly onDelete: (words: ReadonlyArray<LanguageLearningWord>) => void
   readonly onFilterChange: (value: string) => void
   readonly onPronounce: (word: LanguageLearningWord) => void
@@ -387,6 +393,7 @@ const LanguageLearningSavedWords = (props: LanguageLearningSavedWordsProps) => (
           onPronounce={props.onPronounce}
           onSelect={props.onSelect}
           onToggleMemorized={props.onToggleMemorized}
+          pronunciationBusy={props.pronunciationBusy}
           selectedWords={props.selectedWords}
           words={props.filterView.words}
         />
@@ -514,6 +521,7 @@ export const LanguageLearningWords = () => {
         onPronounce={pronunciation.request}
         onSelect={handleSelect}
         onToggleMemorized={handleToggleMemorized}
+        pronunciationBusy={pronunciation.isBusy()}
         selectedWords={selectedWords}
         unmemorizedWords={unmemorizedWords()}
       />
