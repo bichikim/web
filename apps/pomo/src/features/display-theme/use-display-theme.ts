@@ -57,7 +57,12 @@ export const useDisplayThemeController = (): DisplayThemeController => {
         }
       })
       .catch(() => {
-        // Storage adapters already recover to the system preference.
+        if (!isDisposed && preferenceRevision === initialPreferenceRevision) {
+          batch(() => {
+            setPreference('system')
+            setIsPreferenceReady(true)
+          })
+        }
       })
 
     onCleanup(() => {

@@ -10,71 +10,132 @@ import {
 
 import {DISPLAY_THEME_STORAGE_KEY, type DisplayThemePreference} from './model'
 
+export interface DisplayThemePreferenceStorage {
+  readonly isNative: () => boolean
+  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly readWeb: (key: string) => unknown | null
+  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeWeb: (key: string, value: unknown) => void
+}
+
+export interface DisplayThemePreferenceRepository {
+  readonly read: () => Promise<DisplayThemePreference>
+  readonly write: (preference: DisplayThemePreference) => Promise<void>
+}
+
+export interface CreateDisplayThemePreferenceRepositoryOptions {
+  readonly storage: DisplayThemePreferenceStorage
+}
+
 const DEFAULT_DISPLAY_THEME: DisplayThemePreference = 'system'
 const displayThemeSchema = z.enum(['bright', 'dark', 'system'])
-const nativeWriter = createSerialNativeStorageWriter()
-let preferenceWriteRevision = 0
 
 const parseDisplayThemePreference = (value: unknown): DisplayThemePreference | null => {
   const result = displayThemeSchema.safeParse(value)
   return result.success ? result.data : null
 }
 
-const readWebPreference = () =>
-  readWebStorageJson(DISPLAY_THEME_STORAGE_KEY, parseDisplayThemePreference)
+/** Creates the display theme persistence policy over one storage boundary. */
+export const createDisplayThemePreferenceRepository = (
+  options: CreateDisplayThemePreferenceRepositoryOptions,
+): DisplayThemePreferenceRepository => {
+  const {storage} = options
+  let preferenceWriteRevision = 0
+  let nativeWriteQueue = Promise.resolve()
 
-const writeWebPreference = (preference: DisplayThemePreference) => {
-  writeWebStorageJson(DISPLAY_THEME_STORAGE_KEY, preference)
-}
+  const readWebPreference = () =>
+    parseDisplayThemePreference(storage.readWeb(DISPLAY_THEME_STORAGE_KEY))
 
-/** Reads the display theme preference persisted for the current runtime. */
-export const readDisplayThemePreference = async (): Promise<DisplayThemePreference> => {
-  const initialWriteRevision = preferenceWriteRevision
-  const webPreference = readWebPreference()
-
-  if (webPreference !== null) {
-    if (hasNativeStorageBridge()) {
-      nativeWriter.write(DISPLAY_THEME_STORAGE_KEY, webPreference).catch(globalThis.reportError)
+  const writeWebPreference = (preference: DisplayThemePreference) => {
+    try {
+      storage.writeWeb(DISPLAY_THEME_STORAGE_KEY, preference)
+      return null
+    } catch (error: unknown) {
+      return error
     }
-
-    return webPreference
   }
 
-  if (!hasNativeStorageBridge()) {
-    return DEFAULT_DISPLAY_THEME
-  }
-
-  try {
-    const nativePreference = await readNativeStorageJson(
-      DISPLAY_THEME_STORAGE_KEY,
-      parseDisplayThemePreference,
+  const enqueueNativeWrite = (preference: DisplayThemePreference) => {
+    const nativeWrite = nativeWriteQueue.then(() =>
+      storage.writeNative(DISPLAY_THEME_STORAGE_KEY, preference),
     )
+    nativeWriteQueue = nativeWrite.catch(() => undefined)
+    return nativeWrite
+  }
 
-    if (preferenceWriteRevision !== initialWriteRevision) {
+  const read = async (): Promise<DisplayThemePreference> => {
+    const initialWriteRevision = preferenceWriteRevision
+
+    if (!storage.isNative()) {
       return readWebPreference() ?? DEFAULT_DISPLAY_THEME
     }
 
-    if (nativePreference === null) {
-      return DEFAULT_DISPLAY_THEME
+    try {
+      await nativeWriteQueue
+      const nativePreference = parseDisplayThemePreference(
+        await storage.readNative(DISPLAY_THEME_STORAGE_KEY),
+      )
+
+      if (preferenceWriteRevision !== initialWriteRevision) {
+        return read()
+      }
+
+      const restoredPreference = nativePreference ?? DEFAULT_DISPLAY_THEME
+      writeWebPreference(restoredPreference)
+      return restoredPreference
+    } catch (error: unknown) {
+      throw new Error('Failed to read display theme preference.', {cause: error})
+    }
+  }
+
+  const write = async (preference: DisplayThemePreference): Promise<void> => {
+    preferenceWriteRevision += 1
+    const webWriteError = writeWebPreference(preference)
+
+    if (!storage.isNative()) {
+      if (webWriteError !== null) {
+        throw new Error('Failed to persist display theme preference.', {cause: webWriteError})
+      }
+
+      return
     }
 
-    writeWebPreference(nativePreference)
-    return nativePreference
-  } catch {
-    return readWebPreference() ?? DEFAULT_DISPLAY_THEME
+    try {
+      await enqueueNativeWrite(preference)
+    } catch (error: unknown) {
+      throw new Error('Failed to persist display theme preference.', {cause: error})
+    }
   }
+
+  return {read, write}
 }
+
+const nativeWriter = createSerialNativeStorageWriter()
+const preserveStoredValue = (value: unknown) => value
+const runtimeStorage = {
+  isNative: hasNativeStorageBridge,
+  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
+  readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
+  async writeNative(key: string, value: unknown) {
+    const error = await nativeWriter.write(key, value)
+
+    if (error !== null) {
+      throw error
+    }
+  },
+  writeWeb(key: string, value: unknown) {
+    const error = writeWebStorageJson(key, value)
+
+    if (error !== null) {
+      throw error
+    }
+  },
+} satisfies DisplayThemePreferenceStorage
+const runtimeRepository = createDisplayThemePreferenceRepository({storage: runtimeStorage})
+
+/** Reads the display theme preference persisted for the current runtime. */
+export const readDisplayThemePreference = () => runtimeRepository.read()
 
 /** Persists the display theme preference until the host app or browser data is removed. */
-export const writeDisplayThemePreference = async (
-  preference: DisplayThemePreference,
-): Promise<void> => {
-  preferenceWriteRevision += 1
-  writeWebPreference(preference)
-
-  if (!hasNativeStorageBridge()) {
-    return
-  }
-
-  await nativeWriter.write(DISPLAY_THEME_STORAGE_KEY, preference)
-}
+export const writeDisplayThemePreference = (preference: DisplayThemePreference) =>
+  runtimeRepository.write(preference)
