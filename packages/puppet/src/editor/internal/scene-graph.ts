@@ -312,6 +312,7 @@ export const resizeDeformer = (options: ResizeDeformerOptions): PuppetDocument |
               controlPoints: resampleGridControlPoints({
                 columns: node.columns,
                 controlPoints: deformer.controlPoints,
+                curveHandles: deformer.curveHandles,
                 nextColumns: options.columns,
                 nextRows: options.rows,
                 rows: node.rows,

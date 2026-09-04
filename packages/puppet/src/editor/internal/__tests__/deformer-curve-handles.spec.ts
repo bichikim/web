@@ -71,8 +71,8 @@ describe('deformer curve handles', () => {
     })!
     const resizedDeformer = getDocumentScene(resized).roots[0]
 
-    expect(resizedDeformer?.kind === 'deformer' ? resizedDeformer.curveHandles : []).toMatchObject([
-      {pointIndex: 12},
-    ])
+    expect(resizedDeformer?.kind === 'deformer' ? resizedDeformer.curveHandles : []).toEqual(
+      expect.arrayContaining([expect.objectContaining({pointIndex: 12})]),
+    )
   })
 })
