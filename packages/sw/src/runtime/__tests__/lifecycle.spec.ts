@@ -124,13 +124,18 @@ describe('registerLifecycleHandlers', () => {
     ])
   })
 
-  it('should skip waiting when requested by a client', () => {
+  it('should keep the skip waiting request alive when requested by a client', () => {
     const messageListener = listeners.get('message')
+    const skipWaitingTask = Promise.resolve()
+    const waitUntil = vi.fn()
+
+    skipWaiting.mockReturnValue(skipWaitingTask)
 
     expect(messageListener).toBeDefined()
-    messageListener?.({data: {type: 'SKIP_WAITING'}, waitUntil: vi.fn()})
+    messageListener?.({data: {type: 'SKIP_WAITING'}, waitUntil})
 
     expect(skipWaiting).toHaveBeenCalledOnce()
+    expect(waitUntil).toHaveBeenCalledWith(skipWaitingTask)
     expect(log).toHaveBeenCalledWith('info', 'Received skip waiting message')
   })
 
