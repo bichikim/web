@@ -48,11 +48,12 @@ export const createMemoryMemoRepository = (
         storage.writeWeb(nativeMemos)
         return nativeMemos
       }
-    } catch {
-      return storage.readWeb() ?? []
+    } catch (error) {
+      throw new Error('Failed to read memory memos.', {cause: error})
     }
 
-    return storage.readWeb() ?? []
+    storage.writeWeb([])
+    return []
   },
   async write(memos) {
     const snapshot = parseMemoryMemos(memos)
