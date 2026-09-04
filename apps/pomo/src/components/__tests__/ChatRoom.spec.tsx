@@ -5,6 +5,7 @@ import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {type ChatController, type ChatMessage, useChat} from '../../features/chat'
+import {loadCalendarPromptContext} from '../../features/calendar'
 import {
   type ChatVoiceController,
   createStreamingSpeechBuffer,
@@ -27,6 +28,7 @@ import {MAXIMUM_DRAFT_LENGTH} from '../chat-room/shared'
 import {ChatTranscript} from '../chat-room/Transcript'
 
 vi.mock('../../features/chat', () => ({useChat: vi.fn()}))
+vi.mock('../../features/calendar', () => ({loadCalendarPromptContext: vi.fn()}))
 vi.mock('../../features/chat-voice', () => ({
   createStreamingSpeechBuffer: vi.fn(),
   useChatVoice: vi.fn(),
@@ -144,6 +146,7 @@ const createControllers = () => {
 beforeEach(() => {
   createControllers()
   vi.mocked(useChat).mockReturnValue(chat)
+  vi.mocked(loadCalendarPromptContext).mockResolvedValue(null)
   vi.mocked(useChatVoice).mockReturnValue(voice)
   vi.mocked(createStreamingSpeechBuffer).mockReturnValue(speechBuffer)
   vi.mocked(useSpeechToText).mockImplementation((props) => {
@@ -190,7 +193,7 @@ afterEach(() => {
 })
 
 describe('ChatRoom', () => {
-  it('should wire controllers and apply transcript limits and settings', () => {
+  it('should wire controllers and apply transcript limits and settings', async () => {
     render(() => <ChatRoom />)
 
     expect(useChat).toHaveBeenCalledWith({modelId: 'qwen-4b'})
@@ -223,7 +226,23 @@ describe('ChatRoom', () => {
     composerProps.onSend()
     expect(voice.arm).toHaveBeenCalledOnce()
     expect(speechBuffer.reset).toHaveBeenCalledOnce()
-    expect(chat.send).toHaveBeenCalledWith({refineAnswer: false})
+    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: false}))
+  })
+
+  it('should ground calendar questions with transient calendar context', async () => {
+    vi.mocked(loadCalendarPromptContext).mockResolvedValue('캘린더 조회 결과')
+    controls.setDraft('오늘 일정 알려줘')
+    render(() => <ChatRoom />)
+
+    composerProps.onSend()
+
+    await waitFor(() =>
+      expect(chat.send).toHaveBeenCalledWith({
+        refineAnswer: true,
+        supplementaryContext: '캘린더 조회 결과',
+      }),
+    )
+    expect(loadCalendarPromptContext).toHaveBeenCalledWith({text: '오늘 일정 알려줘'})
   })
 
   it('should handle recording, preparation, model changes, clearing, and speech toggles', async () => {
@@ -239,7 +258,7 @@ describe('ChatRoom', () => {
     controls.setActivity('recording')
     composerProps.onSend()
     await waitFor(() => expect(speech.stopRecording).toHaveBeenCalledOnce())
-    expect(chat.send).toHaveBeenCalledWith({refineAnswer: true})
+    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: true}))
 
     controls.setActivity('processing')
     composerProps.onSend()

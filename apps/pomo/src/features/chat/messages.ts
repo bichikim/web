@@ -28,6 +28,7 @@ export interface GenerateChatRequest {
   readonly modelId: TextModelId
   readonly refineAnswer: boolean
   readonly replyId: string
+  readonly supplementaryContext?: string
   readonly type: 'generate'
 }
 

@@ -4,6 +4,7 @@ import * as schema from '..'
 
 it('should re-export every database schema module', () => {
   expect(schema).toMatchObject({
+    calendarConnections: expect.any(Object),
     commerceProducts: expect.any(Object),
     feedChannels: expect.any(Object),
     historicalGenerationRuns: expect.any(Object),

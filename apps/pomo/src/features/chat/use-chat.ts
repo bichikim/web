@@ -76,6 +76,7 @@ export interface ChatController {
 
 export interface SendChatOptions {
   readonly refineAnswer?: boolean
+  readonly supplementaryContext?: string
 }
 
 const EMPTY_CONTEXT: ChatContext = {messages: [], summary: ''}
@@ -282,6 +283,9 @@ export const useChat = (props: UseChatProps): ChatController => {
     setState({status: 'generating'})
     clientOwner.get().generate(nextContext, runtime.createId(), {
       refineAnswer: options.refineAnswer ?? true,
+      ...(options.supplementaryContext === undefined
+        ? {}
+        : {supplementaryContext: options.supplementaryContext}),
     })
   }
 

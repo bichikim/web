@@ -3,8 +3,8 @@ import {cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
 const TONE_CLASSES = {
-  error: 'bg-#b84747/18 text-#ffc6c6',
-  success: 'bg-#4d9b73/18 text-#bff5d5',
+  error: 'bg-danger/10 text-danger',
+  success: 'bg-secondary-soft text-foreground',
 } as const
 
 export interface PFormMessageProps {

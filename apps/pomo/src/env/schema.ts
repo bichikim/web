@@ -97,7 +97,11 @@ export const envSchema = {
     `CRON_SECRET must contain at least ${MINIMUM_CRON_SECRET_LENGTH} characters`,
   ),
   DATABASE_URL: postgresUrlSchema('DATABASE_URL'),
+  GOOGLE_CALENDAR_CLIENT_ID: optionalStringSchema,
+  GOOGLE_CALENDAR_CLIENT_SECRET: optionalStringSchema,
   KMA_SERVICE_KEY: requiredStringSchema('KMA_SERVICE_KEY'),
+  MICROSOFT_CALENDAR_CLIENT_ID: optionalStringSchema,
+  MICROSOFT_CALENDAR_CLIENT_SECRET: optionalStringSchema,
   NEON_AUTH_BASE_URL: urlSchema('NEON_AUTH_BASE_URL', ['https:', 'http:']),
   NEON_AUTH_COOKIE_SECRET: requiredStringSchema('NEON_AUTH_COOKIE_SECRET').min(
     MINIMUM_COOKIE_SECRET_LENGTH,
@@ -114,6 +118,7 @@ export const envSchema = {
   OPENAI_SERVICE_TIER: allowedStringSchema('OPENAI_SERVICE_TIER', OPENAI_SERVICE_TIERS, 'default'),
   OPENAI_WEBHOOK_SECRET: requiredStringSchema('OPENAI_WEBHOOK_SECRET'),
   OPENWEATHER_API_KEY: requiredStringSchema('OPENWEATHER_API_KEY'),
+  POMO_CALENDAR_TOKEN_ENCRYPTION_KEY: optionalStringSchema,
   POMO_TOSS_CALLBACK_AUTHORIZATION: optionalStringSchema.superRefine((authorization, context) => {
     if (authorization === undefined) {
       return
