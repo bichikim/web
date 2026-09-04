@@ -2,7 +2,7 @@
 
 ## Interaction
 
-- **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
+- **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
 - **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation.
 - **Existing code references**: When discussing existing code, always include its file path.
 
