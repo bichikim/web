@@ -26,7 +26,7 @@ it('should store and read compressed word audio without a WAV entry', async () =
   const repository = createLanguageLearningWordAudioRepository(storage)
   const audio = new Blob(['opus'], {type: 'audio/ogg; codecs=opus'})
 
-  await repository.save(word, audio)
+  await repository.save(word, audio, 'request-1')
   expect(storage.set).toHaveBeenCalledWith(
     expect.stringMatching(/\.opus$/u),
     expect.objectContaining({}),
@@ -58,9 +58,87 @@ it('should expose a stable storage operation instead of a localized error messag
   })
   const repository = createLanguageLearningWordAudioRepository(storage)
 
-  await expect(repository.save(word, new Blob(['audio']))).rejects.toMatchObject({
+  await expect(repository.save(word, new Blob(['audio']), 'request-1')).rejects.toMatchObject({
     cause,
     name: 'LanguageLearningWordAudioStorageError',
     operation: 'write',
   } satisfies Partial<LanguageLearningWordAudioStorageError>)
+})
+
+it('should not let an older request delete audio saved by a newer request', async () => {
+  let storedResponse: Response | null = null
+  let resolveFirstWrite: (() => void) | undefined
+  let writeCount = 0
+  const storage: ModelStorage = {
+    delete: vi.fn(async () => {
+      storedResponse = null
+      return {ok: true as const, value: true}
+    }),
+    get: vi.fn(async () => ({ok: true as const, value: storedResponse?.clone() ?? null})),
+    set: vi.fn(async (_key, response) => {
+      writeCount += 1
+      if (writeCount === 1) {
+        await new Promise<void>((resolve) => {
+          resolveFirstWrite = resolve
+        })
+      }
+      storedResponse = response.clone()
+      return {ok: true as const, value: undefined}
+    }),
+  }
+  const repository = createLanguageLearningWordAudioRepository(storage)
+
+  const olderSave = repository.save(word, new Blob(['old']), 'request-1')
+  const removal = repository.delete(word)
+  const newerSave = repository.save(word, new Blob(['newer audio']), 'request-2')
+  await vi.waitFor(() => expect(resolveFirstWrite).toBeTypeOf('function'))
+  resolveFirstWrite?.()
+  await Promise.all([olderSave, removal, newerSave])
+  await repository.delete(word, 'request-1')
+
+  const storedResult = await storage.get('unused')
+  expect(storedResult.ok).toBe(true)
+  if (!storedResult.ok) {
+    throw new Error('Expected stored audio')
+  }
+  expect(storedResult.value?.headers.get('X-Pomo-Word-Audio-Owner')).toBe('request-2')
+})
+
+it('should order writes across repository instances sharing the audio cache', async () => {
+  let storedResponse: Response | null = null
+  let resolveFirstWrite: (() => void) | undefined
+  let writeCount = 0
+  const storage: ModelStorage = {
+    delete: vi.fn(async () => {
+      storedResponse = null
+      return {ok: true as const, value: true}
+    }),
+    get: vi.fn(async () => ({ok: true as const, value: storedResponse?.clone() ?? null})),
+    set: vi.fn(async (_key, response) => {
+      writeCount += 1
+      if (writeCount === 1) {
+        await new Promise<void>((resolve) => {
+          resolveFirstWrite = resolve
+        })
+      }
+      storedResponse = response.clone()
+      return {ok: true as const, value: undefined}
+    }),
+  }
+  const olderRepository = createLanguageLearningWordAudioRepository(storage)
+  const newerRepository = createLanguageLearningWordAudioRepository(storage)
+
+  const olderSave = olderRepository.save(word, new Blob(['old']), 'request-1')
+  const newerSave = newerRepository.save(word, new Blob(['newer audio']), 'request-2')
+  await vi.waitFor(() => expect(resolveFirstWrite).toBeTypeOf('function'))
+  resolveFirstWrite?.()
+  await Promise.all([olderSave, newerSave])
+  await olderRepository.delete(word, 'request-1')
+
+  const storedResult = await storage.get('unused')
+  expect(storedResult.ok).toBe(true)
+  if (!storedResult.ok) {
+    throw new Error('Expected stored audio')
+  }
+  expect(storedResult.value?.headers.get('X-Pomo-Word-Audio-Owner')).toBe('request-2')
 })

@@ -194,6 +194,47 @@ it('should invalidate active pronunciation work before deleting its cached audio
   expect(screen.getByTestId('audio')).toHaveTextContent('')
 })
 
+it('should preserve newer cached audio when an older save finishes late', async () => {
+  const storedAudio = new Map<string, {readonly audio: Blob; readonly owner: string}>()
+  let resolveOlderSave: (() => void) | undefined
+  let saveCount = 0
+  audioRepository.save.mockImplementation(async (savedWord, audio, owner) => {
+    saveCount += 1
+    storedAudio.set(`${savedWord.language}:${savedWord.value}`, {audio, owner})
+    if (saveCount === 1) {
+      await new Promise<void>((resolve) => {
+        resolveOlderSave = resolve
+      })
+    }
+  })
+  audioRepository.delete.mockImplementation(async (deletedWord, owner) => {
+    const key = `${deletedWord.language}:${deletedWord.value}`
+    if (owner === undefined || storedAudio.get(key)?.owner === owner) {
+      storedAudio.delete(key)
+    }
+  })
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  vi.mocked(generateLanguageLearningWordPronunciation)
+    .mockResolvedValueOnce({audio: new Blob(['old']), status: 'complete'})
+    .mockResolvedValueOnce({audio: new Blob(['newer audio']), status: 'complete'})
+  render(() => <Harness />)
+
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.save).toHaveBeenCalledOnce())
+  removeWord(word)
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.save).toHaveBeenCalledTimes(2))
+  resolveOlderSave?.()
+  await vi.waitFor(() => expect(audioRepository.delete).toHaveBeenCalledTimes(2))
+
+  const savedAudio = storedAudio.get('en:Home')?.audio
+  expect(savedAudio).toBeDefined()
+  expect(savedAudio?.size).toBe(11)
+})
+
 it('should abort active pronunciation work when its owner unmounts', async () => {
   let generationSignal: AbortSignal | undefined
   vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
