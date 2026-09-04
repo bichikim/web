@@ -1,5 +1,4 @@
 import {
-  createDeformerControlPoints,
   getDocumentScene,
   isSceneContainerNode,
   type PuppetDocument,
@@ -14,6 +13,7 @@ import {
 import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {getDeformerBounds} from './deformer-bounds'
 import {
+  createDeformerControlPoints,
   isGridDivisionCount,
   resampleDeformerGrid,
   resampleGridControlPoints,

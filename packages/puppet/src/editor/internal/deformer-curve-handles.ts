@@ -1,7 +1,7 @@
 import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {
-  createDeformerCurveHandle,
   getDocumentScene,
+  type PuppetDeformerCurveHandle,
   type PuppetDocument,
   type PuppetParameterBinding,
   type PuppetParameterKeyform,
@@ -17,6 +17,71 @@ interface SetDeformerCurveHandleOptions {
   readonly nodeId: string
   readonly point: PuppetPoint
   readonly pointIndex: number
+}
+
+const BEZIER_TANGENT_MULTIPLIER = 3
+const COORDINATES_PER_POINT = 2
+
+const getControlPoint = (
+  node: PuppetSceneDeformerNode,
+  column: number,
+  row: number,
+): PuppetPoint => {
+  const coordinateIndex = (row * (node.columns + 1) + column) * COORDINATES_PER_POINT
+  return {
+    x: node.controlPoints[coordinateIndex] ?? 0,
+    y: node.controlPoints[coordinateIndex + 1] ?? 0,
+  }
+}
+
+const getPointTangent = (
+  previous: PuppetPoint | undefined,
+  point: PuppetPoint,
+  next: PuppetPoint | undefined,
+): PuppetPoint => {
+  if (previous !== undefined && next !== undefined) {
+    return {x: (next.x - previous.x) / 2, y: (next.y - previous.y) / 2}
+  }
+
+  return next === undefined
+    ? {x: point.x - (previous?.x ?? point.x), y: point.y - (previous?.y ?? point.y)}
+    : {x: next.x - point.x, y: next.y - point.y}
+}
+
+export const createDeformerCurveHandle = (
+  node: PuppetSceneDeformerNode,
+  pointIndex: number,
+): PuppetDeformerCurveHandle | undefined => {
+  const pointCount = (node.columns + 1) * (node.rows + 1)
+  if (!Number.isInteger(pointIndex) || pointIndex < 0 || pointIndex >= pointCount) {
+    return undefined
+  }
+
+  const column = pointIndex % (node.columns + 1)
+  const row = Math.floor(pointIndex / (node.columns + 1))
+  const point = getControlPoint(node, column, row)
+  const horizontalTangent = getPointTangent(
+    column === 0 ? undefined : getControlPoint(node, column - 1, row),
+    point,
+    column === node.columns ? undefined : getControlPoint(node, column + 1, row),
+  )
+  const verticalTangent = getPointTangent(
+    row === 0 ? undefined : getControlPoint(node, column, row - 1),
+    point,
+    row === node.rows ? undefined : getControlPoint(node, column, row + 1),
+  )
+
+  return {
+    horizontal: {
+      x: point.x + horizontalTangent.x / BEZIER_TANGENT_MULTIPLIER,
+      y: point.y + horizontalTangent.y / BEZIER_TANGENT_MULTIPLIER,
+    },
+    pointIndex,
+    vertical: {
+      x: point.x + verticalTangent.x / BEZIER_TANGENT_MULTIPLIER,
+      y: point.y + verticalTangent.y / BEZIER_TANGENT_MULTIPLIER,
+    },
+  }
 }
 
 const withScene = (document: PuppetDocument, scene: PuppetScene): PuppetDocument => ({

@@ -1,6 +1,5 @@
 import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {
-  createDeformerControlPoints,
   getDocumentScene,
   type PuppetDocument,
   type PuppetParameterBinding,
@@ -10,6 +9,7 @@ import {
   type PuppetSceneNode,
 } from '../../player'
 import {getDeformerBounds} from './deformer-bounds'
+import {createDeformerControlPoints} from './grid-control-points'
 import {isSceneNodeLocked} from './scene-graph'
 import {collectPartIds, findNode, updateNode} from './scene-tree'
 

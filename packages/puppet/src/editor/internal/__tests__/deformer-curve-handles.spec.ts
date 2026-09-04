@@ -1,11 +1,41 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument, getDocumentScene, parseDocument} from '../../../player'
-import {addDeformerCurveHandle, removeDeformerCurveHandle} from '../deformer-curve-handles'
+import {
+  createDemoDocument,
+  getDocumentScene,
+  parseDocument,
+  type PuppetSceneDeformerNode,
+} from '../../../player'
+import {
+  addDeformerCurveHandle,
+  createDeformerCurveHandle,
+  removeDeformerCurveHandle,
+} from '../deformer-curve-handles'
 import {addParameter} from '../parameter-keyforms'
 import {createDeformer, resizeDeformer} from '../scene-graph'
 
 describe('deformer curve handles', () => {
+  test('should create a neutral curve handle for a selected grid point', () => {
+    const deformer: PuppetSceneDeformerNode = {
+      bounds: {height: 100, width: 100, x: 0, y: 0},
+      children: [],
+      columns: 1,
+      controlPoints: [0, 0, 100, 0, 0, 100, 100, 100],
+      id: 'deformer',
+      kind: 'deformer',
+      locked: false,
+      name: 'Deformer',
+      rows: 1,
+      visible: true,
+    }
+
+    expect(createDeformerCurveHandle(deformer, 0)).toEqual({
+      horizontal: {x: 100 / 3, y: 0},
+      pointIndex: 0,
+      vertical: {x: 0, y: 100 / 3},
+    })
+  })
+
   test('should add and remove optional curve handles across parameter keyforms', () => {
     const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
     const deformerDocument = createDeformer(source, ['mesh-preview'])!

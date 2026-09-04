@@ -1,3 +1,5 @@
 export * from './composition'
+export * from './grid'
 export * from './parameter'
 export * from './scene'
+export * from './vertices'

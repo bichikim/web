@@ -5,13 +5,13 @@ import {
   composeParameterVertices,
   type PuppetParameterValueMap,
 } from '../deformation'
-import {applySceneDeformers} from './deformer'
 import type {PuppetDocument, PuppetMotion} from './document'
 import {
   assertPreparedPuppetDocument,
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
 import {applyMotionVertices, sampleMotionParameterValues} from './internal/motion'
+import {applySceneDeformers} from './internal/scene-deformation'
 import {getScenePartStates} from './scene'
 
 export interface Player {

@@ -1,13 +1,8 @@
 import {describe, expect, test} from 'vitest'
 
-import {
-  applySceneDeformers,
-  createDeformerControlPoints,
-  createDeformerCurveHandle,
-  unapplySceneDeformersPoint,
-} from '../deformer'
-import {createDemoDocument} from '../create-demo-document'
-import type {PuppetDocument, PuppetSceneDeformerNode, PuppetSceneNode} from '../document'
+import {createDemoDocument} from '../../create-demo-document'
+import type {PuppetDocument, PuppetSceneDeformerNode, PuppetSceneNode} from '../../document'
+import {applySceneDeformers} from '../scene-deformation'
 
 const createDocument = (root: PuppetSceneNode): PuppetDocument => ({
   ...createDemoDocument(),
@@ -115,54 +110,5 @@ describe('applySceneDeformers', () => {
 
     expect(vertices[0]).toBeCloseTo(0)
     expect(vertices[1]).toBeCloseTo(10)
-  })
-
-  test('should restore a point through nested deformers', () => {
-    const child = createDeformer({
-      controlPoints: [0, 0, 120, 10, -10, 100, 130, 120],
-      id: 'child',
-    })
-    const parent = createDeformer({
-      children: [child],
-      controlPoints: [25, -15, 25, 105, -55, -15, -55, 105],
-      id: 'parent',
-    })
-    const document = createDocument(parent)
-    const vertices = [35, 65]
-
-    applySceneDeformers({document, verticesByPartId: new Map([['mesh-preview', vertices]])})
-    const restored = unapplySceneDeformersPoint({
-      document,
-      partId: 'mesh-preview',
-      point: {x: vertices[0]!, y: vertices[1]!},
-    })
-
-    expect(restored.x).toBeCloseTo(35, 5)
-    expect(restored.y).toBeCloseTo(65, 5)
-  })
-})
-
-describe('createDeformerControlPoints', () => {
-  test('should create a row-major control lattice over the bounds', () => {
-    expect(
-      createDeformerControlPoints({
-        bounds: {height: 20, width: 20, x: 10, y: 30},
-        columns: 2,
-        rows: 1,
-      }),
-    ).toEqual([10, 30, 20, 30, 30, 30, 10, 50, 20, 50, 30, 50])
-  })
-
-  test('should create a neutral curve handle for a selected grid point', () => {
-    const deformer = createDeformer({
-      controlPoints: [0, 0, 100, 0, 0, 100, 100, 100],
-      id: 'deformer',
-    })
-
-    expect(createDeformerCurveHandle(deformer, 0)).toEqual({
-      horizontal: {x: 100 / 3, y: 0},
-      pointIndex: 0,
-      vertical: {x: 0, y: 100 / 3},
-    })
   })
 })

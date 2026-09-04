@@ -1,8 +1,22 @@
 import {describe, expect, test} from 'vitest'
 
-import {isGridDivisionCount, resampleGridControlPoints} from '../grid-control-points'
+import {
+  createDeformerControlPoints,
+  isGridDivisionCount,
+  resampleGridControlPoints,
+} from '../grid-control-points'
 
 describe('grid control points', () => {
+  test('should create a row-major control lattice over the bounds', () => {
+    expect(
+      createDeformerControlPoints({
+        bounds: {height: 20, width: 20, x: 10, y: 30},
+        columns: 2,
+        rows: 1,
+      }),
+    ).toEqual([10, 30, 20, 30, 30, 30, 10, 50, 20, 50, 30, 50])
+  })
+
   test('should preserve the deformed surface while changing its divisions', () => {
     const controlPoints = resampleGridControlPoints({
       columns: 1,

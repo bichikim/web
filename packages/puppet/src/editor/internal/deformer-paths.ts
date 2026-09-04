@@ -1,4 +1,5 @@
-import {type PuppetPoint, type PuppetSceneDeformerNode, transformDeformerPoint} from '../../player'
+import {transformDeformerPoint} from '../../deformation'
+import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 
 interface GridPath {
   readonly data: string

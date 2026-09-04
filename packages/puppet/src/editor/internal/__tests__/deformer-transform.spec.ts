@@ -1,6 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDeformerControlPoints, type PuppetSceneDeformerNode} from '../../../player'
+import type {PuppetSceneDeformerNode} from '../../../player'
+import {createDeformerControlPoints} from '../grid-control-points'
 import {
   getDeformerAngle,
   getDeformerRotationOrigin,
