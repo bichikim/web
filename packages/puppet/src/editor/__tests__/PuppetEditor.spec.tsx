@@ -7,13 +7,14 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import {
   createDemoDocument,
   getDocumentScene,
+  parseDocument,
   type Player,
   type PuppetDocument,
   serializeDocument,
 } from '../../player'
 import {getDeformerAngle} from '../internal/deformer-transform'
 import {addParameter} from '../internal/parameter-keyforms'
-import {createSceneGroup} from '../internal/scene-graph'
+import {createDeformer, createSceneGroup} from '../internal/scene-graph'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -288,6 +289,30 @@ describe('PuppetEditor', () => {
       ])
     })
     expect(view.queryByRole('button', {name: '컨테이너 해제'})).toBeNull()
+  })
+
+  test('should export a valid document after unwrapping a parameter deformer', async () => {
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const deformerDocument = createDeformer(source, ['mesh-preview'])!
+    const deformer = getDocumentScene(deformerDocument).roots[0]!
+    const added = addParameter({document: deformerDocument, nodeIds: [deformer.id]})!
+    const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => (
+      <PuppetEditor initialDocument={added.document} onDocumentChange={onDocumentChange} />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: '컨테이너 해제'}))
+
+    await waitFor(() => {
+      const document = onDocumentChange.mock.calls.at(-1)?.[0]
+      expect(document?.parameterBindings?.[0]).toMatchObject({
+        keyforms: [{deformers: []}],
+        targetDeformerIds: [],
+      })
+      expect(parseDocument(serializeDocument(document!)).ok).toBe(true)
+    })
   })
 
   test('should convert a selected group to a deformer and back', async () => {
