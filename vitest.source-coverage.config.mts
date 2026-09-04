@@ -2,34 +2,57 @@ import {createVitestConfig, unitTestProject} from './vitest.base.config.mts'
 
 const scope = process.env.SOURCE_COVERAGE_SCOPE
 
-if (scope !== 'apps' && scope !== 'workspace') {
-  throw new Error('SOURCE_COVERAGE_SCOPE must be either "apps" or "workspace".')
+if (scope !== 'coong' && scope !== 'pomo' && scope !== 'workspace') {
+  throw new Error('SOURCE_COVERAGE_SCOPE must be "coong", "pomo", or "workspace".')
 }
 
 const testIncludes = {
-  apps: [
+  coong: [
+    'apps/coong/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
+    'apps/coong/scripts/**/*.spec.?(c|m)[jt]s?(x)',
+    'apps/coong/src/**/*.spec.?(c|m)[jt]s?(x)',
+  ],
+  pomo: [
+    'apps/pomo/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
+    'apps/pomo/scripts/**/*.spec.?(c|m)[jt]s?(x)',
+    'apps/pomo/src/**/*.spec.?(c|m)[jt]s?(x)',
+    'apps/pomo-audio-gateway/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
+    'apps/pomo-audio-gateway/scripts/**/*.spec.?(c|m)[jt]s?(x)',
+    'apps/pomo-audio-gateway/src/**/*.spec.?(c|m)[jt]s?(x)',
+  ],
+  workspace: [
     'apps/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
     'apps/*/scripts/**/*.spec.?(c|m)[jt]s?(x)',
     'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
-  ],
-  workspace: [
     'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
     'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
     'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
     'packages/*/guest-js/**/*.spec.?(c|m)[jt]s?(x)',
+    'scripts/**/*.spec.?(c|m)[jt]s?(x)',
     '.agents/skills/*/scripts/**/*.spec.ts',
   ],
 } satisfies Readonly<Record<typeof scope, readonly string[]>>
 
 const sourceIncludes = {
-  apps: ['apps/*/src/**/*.{js,jsx,mjs,mts,ts,tsx}'],
+  coong: ['apps/coong/src/**/*.{js,jsx,mjs,mts,ts,tsx}'],
+  pomo: [
+    'apps/pomo/src/**/*.{js,jsx,mjs,mts,ts,tsx}',
+    'apps/pomo-audio-gateway/src/**/*.{js,jsx,mjs,mts,ts,tsx}',
+  ],
   workspace: [
+    'apps/*/src/**/*.{js,jsx,mjs,mts,ts,tsx}',
     'packages/*/src/**/*.{js,jsx,mjs,mts,ts,tsx}',
     'packages/desktop-surface/guest-js/**/*.{js,jsx,mjs,mts,ts,tsx}',
     'packages/oxlint-plugins/*.{js,mjs,mts,ts}',
     'packages/oxlint-plugins/rules/**/*.{js,mjs,mts,ts}',
     'packages/vite-lib-config/*.{js,mjs,mts,ts}',
   ],
+} satisfies Readonly<Record<typeof scope, readonly string[]>>
+
+const scopeExcludes = {
+  coong: [],
+  pomo: [],
+  workspace: ['apps/coong/**', 'apps/pomo/**', 'apps/pomo-audio-gateway/**'],
 } satisfies Readonly<Record<typeof scope, readonly string[]>>
 
 const reportsDirectory = `coverage/source/${scope}/${process.pid}`
@@ -39,6 +62,7 @@ const config = createVitestConfig([
     ...unitTestProject,
     test: {
       ...unitTestProject.test,
+      exclude: [...(unitTestProject.test.exclude ?? []), ...scopeExcludes[scope]],
       include: testIncludes[scope],
     },
   },
@@ -51,6 +75,7 @@ export default {
     coverage: {
       enabled: true,
       exclude: [
+        ...scopeExcludes[scope],
         '**/__stories__/**',
         '**/__tests__/**',
         '**/_demo-data/**',
