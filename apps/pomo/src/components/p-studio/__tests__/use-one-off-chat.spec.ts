@@ -126,4 +126,44 @@ describe('useOneOffChat', () => {
     expect(chat.send).not.toHaveBeenCalled()
     cleanup()
   })
+
+  it('should release a failed model preparation and allow it to be retried', async () => {
+    const {chat, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    await result.submit('첫 질문')
+    setState({message: '모델 준비 실패', modelReady: false, status: 'error'})
+
+    expect(result.errorMessage()).toBe('모델 준비 실패')
+    expect(result.isBusy()).toBe(false)
+
+    const retry = await result.submit('다시 시도')
+
+    expect(retry).toBe(true)
+    expect(chat.prepare).toHaveBeenCalledTimes(2)
+    expect(result.errorMessage()).toBeNull()
+
+    setState({status: 'ready'})
+
+    expect(chat.setDraft).toHaveBeenLastCalledWith('다시 시도')
+    expect(chat.send).toHaveBeenCalledOnce()
+    cleanup()
+  })
+
+  it('should expose a generation failure after the pending question was sent', async () => {
+    const {chat, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    await result.submit('답변해 줘')
+    setState({status: 'ready'})
+    setState({message: '답변 생성 실패', modelReady: true, status: 'error'})
+
+    expect(result.errorMessage()).toBe('답변 생성 실패')
+    expect(result.isBusy()).toBe(false)
+    cleanup()
+  })
 })

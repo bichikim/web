@@ -11,6 +11,7 @@ export const ONE_OFF_CHAT_MODEL = getTextModel(CHAT_MODEL_ID)
 export interface OneOffChatController {
   readonly cancelDownloadConsent: () => void
   readonly downloadConsentOpen: Accessor<boolean>
+  readonly errorMessage: Accessor<string | null>
   readonly isBusy: Accessor<boolean>
   readonly startDownload: () => Promise<void>
   readonly submit: (text: string) => Promise<boolean>
@@ -40,6 +41,11 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   }
   const isBusy = () =>
     pendingText() !== null || isCheckingModel() || isModelDownloading() || chat.isBusy()
+  const errorMessage = () => {
+    const state = chat.state()
+
+    return state.status === 'error' ? state.message : null
+  }
   const sendPending = () => {
     const text = pendingText()
 
@@ -119,7 +125,14 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   }
 
   createEffect(() => {
-    if (chat.state().status === 'ready' && pendingText() !== null) {
+    const {status} = chat.state()
+
+    if (status === 'error') {
+      setPendingText(null)
+      return
+    }
+
+    if (status === 'ready') {
       untrack(sendPending)
     }
   })
@@ -146,6 +159,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   return {
     cancelDownloadConsent,
     downloadConsentOpen,
+    errorMessage,
     isBusy,
     startDownload,
     submit,
