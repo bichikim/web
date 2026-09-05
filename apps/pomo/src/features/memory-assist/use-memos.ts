@@ -40,5 +40,5 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
     })
   })
 
-  return memos
+  return () => memos().filter((memo) => memo.deletionPending !== true)
 }

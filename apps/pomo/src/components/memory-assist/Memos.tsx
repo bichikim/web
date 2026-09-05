@@ -5,6 +5,7 @@ import {usePEvents} from '../../features/focus-room-dialogue'
 import {
   editMemoryMemo,
   type MemoryMemo,
+  memoryMemoDeletion,
   updateMemoryMemos,
   useMemoryMemos,
 } from '../../features/memory-assist'
@@ -21,13 +22,7 @@ export const MemoryMemoList = () => {
 
   const handleDelete = async (memo: MemoryMemo) => {
     try {
-      if (memo.dialogueId !== null) {
-        await events.deleteDialogue(memo.dialogueId)
-      }
-
-      await updateMemoryMemos((currentMemos) =>
-        currentMemos.filter((currentMemo) => currentMemo.id !== memo.id),
-      )
+      await memoryMemoDeletion.delete({deleteDialogue: events.deleteDialogue, memoId: memo.id})
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to delete a memory memo.', error)
@@ -50,7 +45,7 @@ export const MemoryMemoList = () => {
     try {
       await updateMemoryMemos((currentMemos) =>
         currentMemos.map((currentMemo) => {
-          if (currentMemo.id !== memo.id) {
+          if (currentMemo.id !== memo.id || currentMemo.deletionPending === true) {
             return currentMemo
           }
 

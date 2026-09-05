@@ -14,6 +14,8 @@ import {
   type SupertonicClient,
   type SupertonicModelId,
 } from '../supertonic'
+import {useDeletionRecovery} from './use-deletion-recovery'
+import {memoryMemoDeletion} from './deletion-runtime'
 import {createMemoryMemoDialogue} from './dialogue'
 import {updateMemoryMemos} from './repository'
 import {advanceMemoryMemo, getDueMemoryReminder, type MemoryReminderKind} from './schedule'
@@ -63,7 +65,9 @@ interface ReplaceDeliveredMemoResult {
 const replaceDeliveredMemo = (options: ReplaceDeliveredMemoOptions): ReplaceDeliveredMemoResult => {
   const currentMemo = options.memos.find(
     (memo) =>
-      memo.id === options.deliveredMemo.id && memo.updatedAt === options.deliveredMemo.updatedAt,
+      memo.id === options.deliveredMemo.id &&
+      memo.updatedAt === options.deliveredMemo.updatedAt &&
+      memo.deletionPending !== true,
   )
 
   if (currentMemo === undefined) {
@@ -117,6 +121,7 @@ const commitDeliveredMemo = async (options: CommitDeliveredMemoOptions) => {
 /** Runs persisted memo reminders while the Pomo room is mounted. */
 export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
   const memos = useMemoryMemos()
+  useDeletionRecovery(() => memoryMemoDeletion.retry(props.events.deleteDialogue))
   const [clockRevision, setClockRevision] = createSignal(0)
   const [isPending, setIsPending] = createSignal(false)
   const retryAfter = new Map<string, number>()
