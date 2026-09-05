@@ -174,8 +174,28 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
     let {dialogueId} = memo
     let generatedDialogueId: string | null = null
 
+    const discardGeneratedDialogue = async () => {
+      if (generatedDialogueId !== null) {
+        await repository?.deleteDialogue(generatedDialogueId)
+      }
+    }
+
+    const abortIfInactive = async () => {
+      if (!isDisposed) {
+        return false
+      }
+
+      await discardGeneratedDialogue()
+      return true
+    }
+
     if (dialogueId === null) {
       const settings = await (props.loadSettings ?? loadAutomaticDialogueSettings)()
+
+      if (await abortIfInactive()) {
+        return
+      }
+
       generatedDialogueId = await createMemoryMemoDialogue({
         client: await getClient(settings.modelId),
         language: getLocale(),
@@ -187,12 +207,11 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       dialogueId = generatedDialogueId
     }
 
-    const memoIsCurrent = () => isMemoryMemoCurrent(memos(), memo)
-    const discardGeneratedDialogue = async () => {
-      if (generatedDialogueId !== null) {
-        await repository?.deleteDialogue(generatedDialogueId)
-      }
+    if (await abortIfInactive()) {
+      return
     }
+
+    const memoIsCurrent = () => isMemoryMemoCurrent(memos(), memo)
 
     if (!memoIsCurrent()) {
       await discardGeneratedDialogue()
@@ -201,13 +220,26 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
 
     await props.events.refreshDialogues()
 
+    if (await abortIfInactive()) {
+      return
+    }
+
     if (!memoIsCurrent()) {
       await discardGeneratedDialogue()
       return
     }
 
     props.onBeforePlayback?.()
-    await props.events.playDialogue(dialogueId)
+    const played = await props.events.playDialogue(dialogueId)
+
+    if (!played) {
+      await discardGeneratedDialogue()
+      return
+    }
+
+    if (await abortIfInactive()) {
+      return
+    }
 
     if (!memoIsCurrent()) {
       await discardGeneratedDialogue()
