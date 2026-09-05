@@ -111,6 +111,23 @@ const sampleEntry = (text: string): PictureDiaryEntry => ({
   version: 1,
 })
 
+it('should cancel a turn when its responsive page geometry changes before completion', () => {
+  let compact = true
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query === '(width < 48rem)' && compact,
+  }))
+  const onGoNewer = vi.fn()
+  renderEditor({canGoNewer: true, onGoNewer})
+  const book = screen.getByLabelText('일기장')
+  installTurnBounds(book)
+  fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
+  vi.advanceTimersByTime(100)
+  compact = false
+  finishPageTurn()
+  expect(onGoNewer).not.toHaveBeenCalled()
+  expect(book).not.toHaveAttribute('data-turn-phase')
+})
+
 it('should show the receiving visible page on the reverse of a compact newer turn', () => {
   vi.stubGlobal('matchMedia', (query: string) => ({matches: query === '(width < 48rem)'}))
   renderEditor({

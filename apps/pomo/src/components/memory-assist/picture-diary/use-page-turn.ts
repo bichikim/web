@@ -206,7 +206,7 @@ class PictureDiaryPageTurnMachine {
     }
 
     event.preventDefault()
-    const metrics = this.getMetrics()
+    const metrics = this.getGestureMetrics(currentGesture)
     if (metrics === null) {
       this.resetGesture()
       return
@@ -330,6 +330,19 @@ class PictureDiaryPageTurnMachine {
     }
   }
 
+  private getGestureMetrics(gesture: PageTurnGesture): PageMetrics | null {
+    const metrics = this.getMetrics()
+    if (
+      metrics === null ||
+      metrics.compact !== gesture.compact ||
+      metrics.height !== gesture.pageHeight ||
+      metrics.pageWidth !== gesture.pageWidth
+    ) {
+      return null
+    }
+    return metrics
+  }
+
   private setFoldView(
     currentGesture: PageTurnGesture,
     target: FoldPoint,
@@ -365,6 +378,10 @@ class PictureDiaryPageTurnMachine {
 
   private animateTo(animation: PageTurnAnimation) {
     this.stopAnimation()
+    if (this.getGestureMetrics(animation.currentGesture) === null) {
+      this.resetGesture()
+      return
+    }
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       this.finishAnimation(animation.currentGesture, animation.completed)
       return
@@ -373,6 +390,10 @@ class PictureDiaryPageTurnMachine {
     this.setFoldView(animation.currentGesture, animation.from, 'settle')
 
     const step = (time: number) => {
+      if (this.getGestureMetrics(animation.currentGesture) === null) {
+        this.resetGesture()
+        return
+      }
       startTime ??= time
       const linearProgress = Math.min(1, (time - startTime) / PAGE_TURN_DURATION)
       const progress = easeOutCubic(linearProgress)
@@ -436,6 +457,7 @@ class PictureDiaryPageTurnMachine {
   }
 
   private resetGesture() {
+    this.stopAnimation()
     this.detachPointerListeners()
     this.gesture = undefined
     this.gestureAxis = 'pending'
