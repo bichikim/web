@@ -366,3 +366,38 @@ it('should not restore the previous session events while a new login is loading'
   await waitFor(() => expect(listCalendarEvents).toHaveBeenCalledTimes(2))
   expect(screen.queryByText('팀 회의', {selector: 'p'})).not.toBeInTheDocument()
 })
+
+it.each([
+  {allDay: true, end: '2026-09-06', start: '2026-09-03'},
+  {allDay: true, end: '2026-09-06', start: '2026-08-31'},
+  {allDay: false, end: '2026-09-04T02:00:00.000Z', start: '2026-09-03T14:00:00.000Z'},
+])('should display a spanning event on a covered date after $start', async (range) => {
+  vi.mocked(listCalendarEvents).mockResolvedValue({
+    connectedConnections: 1,
+    events: [
+      {
+        ...range,
+        accountLabel: 'test@example.com',
+        calendarLabel: 'test',
+        id: 'spanning',
+        provider: 'google',
+        title: '계속되는 일정',
+      },
+    ],
+    timeZone: 'Asia/Seoul',
+    truncated: false,
+    unavailableConnections: 0,
+  })
+  render(() => <CalendarMonth />)
+  await waitFor(() => expect(screen.queryByText('일정을 불러오는 중…')).not.toBeInTheDocument())
+  const agenda = screen.getByRole('region', {name: '2026년 9월 4일'})
+  expect(within(agenda).getByText('계속되는 일정')).toBeVisible()
+  expect(within(agenda).getByRole('button', {name: '계속되는 일정 알람 설정'})).toBeVisible()
+  expect(screen.getByRole('button', {name: '2026년 9월 4일, 일정 1개'})).toBeVisible()
+  fireEvent.click(screen.getByRole('button', {name: '2026년 9월 6일, 일정 0개'}))
+  expect(
+    within(screen.getByRole('region', {name: '2026년 9월 6일'})).getByText(
+      '선택한 날짜에 일정이 없습니다.',
+    ),
+  ).toBeVisible()
+})

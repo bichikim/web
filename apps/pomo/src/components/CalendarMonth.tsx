@@ -8,6 +8,7 @@ import {
   type CalendarEvent,
   type CalendarEvents,
   type CalendarMonthRange,
+  groupCalendarEvents,
   listCalendarEvents,
   readCalendarMonthCache,
   writeCalendarMonthCache,
@@ -43,31 +44,12 @@ interface CalendarMonthRequest {
 }
 
 const WEEK_LENGTH = 7
-const DATE_KEY_LENGTH = 10
 const WEEKDAY_REFERENCE_YEAR = 2024
 const FIRST_SUNDAY_DATE = 7
 
 const padNumber = (value: number) => String(value).padStart(2, '0')
 const createLocalDateKey = (date: Date) =>
   `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
-
-const readDatePart = (parts: ReadonlyArray<Intl.DateTimeFormatPart>, type: string) =>
-  parts.find((part) => part.type === type)?.value ?? ''
-
-const createZonedDateKey = (date: Date, timeZone: string) => {
-  const parts = new Intl.DateTimeFormat('en', {
-    day: '2-digit',
-    month: '2-digit',
-    timeZone,
-    year: 'numeric',
-  }).formatToParts(date)
-  return `${readDatePart(parts, 'year')}-${readDatePart(parts, 'month')}-${readDatePart(parts, 'day')}`
-}
-
-const createEventDateKey = (event: CalendarEvent, timeZone: string) =>
-  event.allDay
-    ? event.start.slice(0, DATE_KEY_LENGTH)
-    : createZonedDateKey(new Date(event.start), timeZone)
 
 const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay | null>> => {
   const year = month.getFullYear()
@@ -414,11 +396,10 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
       return grouped
     }
 
-    for (const event of result.events) {
-      const key = createEventDateKey(event, result.timeZone)
-      grouped.set(key, [...(grouped.get(key) ?? []), event])
-    }
-    return grouped
+    const visibleDates = days().flatMap((week) =>
+      week.flatMap((day) => (day === null ? [] : [day.key])),
+    )
+    return groupCalendarEvents(result.events, visibleDates, result.timeZone)
   })
   const selectedKey = createMemo(() => createLocalDateKey(selectedDate()))
   const selectedEvents = createMemo(() => eventsByDay().get(selectedKey()) ?? [])
