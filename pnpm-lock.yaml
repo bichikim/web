@@ -635,6 +635,9 @@ importers:
       '@vercel/functions':
         specifier: ^3.9.3
         version: 3.9.3(ws@8.21.3)
+      '@winter-love/bonsai':
+        specifier: workspace:*
+        version: link:../../packages/bonsai
       '@winter-love/desktop-surface':
         specifier: workspace:*
         version: link:../../packages/desktop-surface
@@ -803,6 +806,8 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
+
+  packages/bonsai: {}
 
   packages/desktop-surface:
     dependencies:
