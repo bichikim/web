@@ -15,7 +15,7 @@ export interface PFormMessageProps {
 
 export const PFormMessage = (props: PFormMessageProps) => {
   const classes = () =>
-    cx('m-0 rounded-control px-4 py-3 text-sm leading-6', TONE_CLASSES[props.tone], props.class)
+    cx('m-0 rounded-panel-inner px-4 py-3 text-sm leading-6', TONE_CLASSES[props.tone], props.class)
 
   return (
     <Show

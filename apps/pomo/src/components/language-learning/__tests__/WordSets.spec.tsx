@@ -19,7 +19,7 @@ it('should show the word set catalog page and Pomo return link', () => {
 
   expect(screen.getByRole('main')).toHaveClass('bg-background', 'text-foreground')
   expect(screen.getByRole('heading', {level: 1, name: '단어 세트 가져오기'})).toBeInTheDocument()
-  expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
   expect(screen.getByRole('heading', {level: 2, name: '단어 세트'})).toBeInTheDocument()
   expect(screen.getByRole('tablist', {name: '단어 세트 언어'})).toBeInTheDocument()
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([

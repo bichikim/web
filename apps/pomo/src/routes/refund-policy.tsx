@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
@@ -29,7 +31,7 @@ export default function RefundPolicyPage() {
       <div class="relative mx-auto grid w-full max-w-6xl gap-8">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
-            ← Pomofi로 돌아가기
+            <span aria-hidden="true">←</span> {m.app_return()}
           </A>
           <PServicePolicyLinks currentPolicy="refund" platform="apps-in-toss" tone="overlay" />
         </div>

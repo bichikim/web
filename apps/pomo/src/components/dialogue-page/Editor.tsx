@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createSignal, For, onCleanup, Show} from 'solid-js'
@@ -305,7 +307,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
         <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
         <A class={CLASSES.dialogueEditorBack} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
-          Pomofi로
+          {m.app_return()}
         </A>
       </header>
 

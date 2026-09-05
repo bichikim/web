@@ -18,5 +18,5 @@ it('should show the editor title and Pomo root return link', () => {
   render(() => <LanguageLearningEditorHeader />)
 
   expect(screen.getByRole('heading', {name: '언어 학습 문장 만들기'})).toBeInTheDocument()
-  expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
 })

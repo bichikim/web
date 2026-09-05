@@ -56,16 +56,35 @@ it.each([
     render(() => <AccountPage connectedCalendarProvider={provider} />)
 
     expect(screen.getByRole('heading', {name: heading})).toBeVisible()
-    expect(screen.getByRole('link', {name: 'Pomo로 돌아가기'})).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', {name: 'Pomo로 돌아가기'})).toHaveClass(
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveClass(
       'bg-highlight',
       'rounded-panel-inner',
       'text-background',
     )
-    expect(screen.getByRole('link', {name: 'Pomo로 돌아가기'})).not.toHaveClass('rounded-full')
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).not.toHaveClass('rounded-full')
     expect(
       screen.queryByText('이제 Pomo에게 일정에 관해 물어보세요. 질문에 필요한 기간만 읽어요.'),
     ).not.toBeInTheDocument()
     expect(screen.queryByText('Web account')).not.toBeInTheDocument()
   },
 )
+
+it.each([
+  ['ko', '앱으로 돌아가기'],
+  ['en', 'Back to app'],
+] as const)('should localize the app return link in %s', async (locale, label) => {
+  const runtime = await import('@paraglide/runtime')
+  const originalLocale = runtime.getLocale
+  runtime.overwriteGetLocale(() => locale)
+  try {
+    const {AccountPage} = await import('../AccountPage')
+    render(() => <AccountPage />)
+    const link = screen.getByRole('link', {name: label})
+    expect(link).toHaveAttribute('href', '/')
+    expect(link).toHaveTextContent('←')
+  } finally {
+    cleanup()
+    runtime.overwriteGetLocale(originalLocale)
+  }
+})

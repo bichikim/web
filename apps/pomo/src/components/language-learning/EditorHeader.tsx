@@ -13,7 +13,7 @@ export const LanguageLearningEditorHeader = () => (
       )}
       href="/"
     >
-      {m.learning_editor_back()}
+      {m.app_return()}
     </A>
   </header>
 )

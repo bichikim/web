@@ -43,7 +43,7 @@ it('should return a 404 page with a route back to Pomofi', () => {
 
   expect(screen.getByTestId('http-status').textContent).toBe('404')
   expect(screen.getByRole('heading', {name: '페이지를 찾을 수 없어요'})).toBeTruthy()
-  expect(screen.getByRole('link', {name: 'Pomofi로 돌아가기'}).getAttribute('href')).toBe('/')
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'}).getAttribute('href')).toBe('/')
 })
 
 it('should dispatch a development URL from the catch-all route in development', async () => {

@@ -148,7 +148,7 @@ export const LanguageLearningWordSets = (props: LanguageLearningWordSetsProps) =
         <header class="flex flex-wrap items-center justify-between gap-4">
           <h1 class="m-0 text-3xl">{m.learning_word_sets_title()}</h1>
           <A class={CLASSES.back} href="/">
-            {m.learning_word_sets_back()}
+            {m.app_return()}
           </A>
         </header>
 
