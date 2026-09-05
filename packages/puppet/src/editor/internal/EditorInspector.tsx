@@ -25,6 +25,7 @@ import {addDeformerCurveHandle, removeDeformerCurveHandle} from './deformer-curv
 import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
 import {getParameterEditTarget} from './parameter-edit-target'
 import {setParameterKeyformPartProperties, setPartRenderProperties} from './part-properties'
+import {getMaskUsageCount} from './mask-usage'
 import {EditorNumberField} from './EditorNumberField'
 import {PartProperties} from './PartProperties'
 
@@ -42,9 +43,6 @@ const getMaskPartOptions = (document: PuppetDocument, partId: string) =>
       },
     ]
   })
-
-const getMaskUsageCount = (document: PuppetDocument, partId: string) =>
-  document.parts.filter((part) => part.properties?.clippingMaskIds?.includes(partId)).length
 
 export interface EditorInspectorProps {
   readonly activeBindingId?: string

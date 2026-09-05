@@ -14,6 +14,3 @@ export const isLayerMaskPickDisabled = (options: LayerMaskStateOptions) =>
       partId: options.targetPartId,
       parts: options.document.parts,
     }))
-
-export const getLayerMaskUsageCount = (document: PuppetDocument, nodeId: string) =>
-  document.parts.filter((part) => part.properties?.clippingMaskIds?.includes(nodeId)).length

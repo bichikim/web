@@ -22,7 +22,8 @@ import {EditorLayerStateActions} from './EditorLayerStateActions'
 import {EditorLayerMaskUsage} from './EditorLayerMaskUsage'
 import {EditorLayerTreeToggle} from './EditorLayerTreeToggle'
 import {getLayerDropPosition, type LayerDropTarget} from './layer-drop'
-import {getLayerMaskUsageCount, isLayerMaskPickDisabled} from './layer-mask'
+import {isLayerMaskPickDisabled} from './layer-mask'
+import {getMaskUsageCount} from './mask-usage'
 import {
   getBindingParameters,
   getDocumentParameterBindings,
@@ -286,7 +287,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
       node: props.node,
       targetPartId: props.maskPickTargetPartId,
     })
-  const maskUsageCount = () => getLayerMaskUsageCount(props.document, props.node.id)
+  const maskUsageCount = () => getMaskUsageCount(props.document, props.node.id)
   const dropPosition = () =>
     props.dropTarget?.nodeId === props.node.id ? props.dropTarget.position : null
 
