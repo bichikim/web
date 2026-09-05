@@ -19,6 +19,7 @@ vi.mock('../HomePage', () => ({default: createPage('home')}))
 vi.mock('../CharacterPage', () => ({default: createPage('character')}))
 vi.mock('../ChatPage', () => ({default: createPage('chat')}))
 vi.mock('../DialoguePage', () => ({default: createPage('dialogue')}))
+vi.mock('../HwpPage', () => ({default: createPage('hwp')}))
 vi.mock('../LayerReviewPage', () => ({default: createPage('layer-review')}))
 vi.mock('../OptionResetPage', () => ({default: createPage('option-reset')}))
 vi.mock('../RecoveryPage', () => ({default: createPage('recovery')}))
@@ -37,6 +38,7 @@ it.each([
   ['/dev/character', 'character'],
   ['/dev/chat', 'chat'],
   ['/dev/dialogue', 'dialogue'],
+  ['/dev/hwp', 'hwp'],
   ['/dev/focus-room-layer-review', 'layer-review'],
   ['/dev/options', 'option-reset'],
   ['/dev/recovery', 'recovery'],

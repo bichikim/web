@@ -5,6 +5,7 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
 import {SERVICE_POLICY_PATHS} from 'src/features/service-terms/policy-paths'
+import {HwpCard} from './home/HwpCard'
 import {TextMoodCard} from './home/TextMoodCard'
 import {StorageCard} from './home/StorageCard'
 import {OptionsCard} from './home/OptionsCard'
@@ -126,6 +127,8 @@ function HomePage() {
             </div>
             <span class="mt-8 text-sm font-700 text-#b8e8d0">답변 실험실 열기 →</span>
           </A>
+
+          <HwpCard />
 
           <A class={CARD_CLASSES} href="/dev/chat">
             <div class="flex items-start justify-between gap-5">

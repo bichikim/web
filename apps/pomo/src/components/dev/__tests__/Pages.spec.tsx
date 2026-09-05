@@ -116,3 +116,11 @@ it('should link the development home to option reset management', () => {
     '/dev/options',
   )
 })
+
+it('should link the development home to the HWP editor', () => {
+  render(() => <HomePage />)
+
+  expect(screen.getByRole('link', {name: /한글 문서 실험실/u}).getAttribute('href')).toBe(
+    '/dev/hwp',
+  )
+})

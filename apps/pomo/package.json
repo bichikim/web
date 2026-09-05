@@ -43,6 +43,8 @@
     "@neondatabase/auth": "0.5.0-beta",
     "@neondatabase/serverless": "^1.1.0",
     "@pomo/playback-token": "workspace:*",
+    "@rhwp/core": "0.8.6",
+    "@rhwp/editor": "0.8.6",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "catalog:",
