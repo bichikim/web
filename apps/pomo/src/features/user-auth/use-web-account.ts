@@ -73,6 +73,11 @@ export const useWebAccount = (): WebAccountController => {
       if (linkToken !== null) {
         const linkResult = await completeLink(linkToken)
         completeLinkSubmission.clear()
+
+        if (linkResult.status === 'unavailable') {
+          throw new Error('Account link completion is unavailable')
+        }
+
         url.searchParams.delete('link_token')
 
         if (linkError === 'email') {
@@ -87,11 +92,9 @@ export const useWebAccount = (): WebAccountController => {
           }
 
           setLocalSuccessMessage(m.web_account_linked())
-        } else if (linkResult.status === 'invalid') {
+        } else {
           accountCallbackErrorMessage = m.web_account_link_expired()
           setLocalErrorMessage(accountCallbackErrorMessage)
-        } else {
-          throw new Error('Account link completion is unavailable')
         }
       } else if (linkError === 'email') {
         url.searchParams.delete('link_error')
