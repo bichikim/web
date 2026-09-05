@@ -36,7 +36,7 @@ export const AccountPage = (props: AccountPageProps) => {
             <section class={ACCOUNT_CARD_CLASSES}>
               <header class="mb-7">
                 <a class="text-xs font-700 text-highlight no-underline hover:underline" href="/">
-                  {m.account_back()}
+                  <span aria-hidden="true">←</span> {m.app_return()}
                 </a>
                 <p class="mb-0 mt-6 text-xs font-750 tracking-[0.24em] text-highlight uppercase">
                   Pomo account
@@ -76,7 +76,7 @@ export const AccountPage = (props: AccountPageProps) => {
                 {m.calendar_connection_success_title({provider: provider()})}
               </h1>
               <a class={CALENDAR_SUCCESS_ACTION_CLASSES} href="/">
-                {m.calendar_connection_success_action()}
+                {m.app_return()}
               </a>
             </section>
           </>

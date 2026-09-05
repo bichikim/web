@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {HttpStatusCode} from '@solidjs/start'
@@ -27,7 +29,7 @@ export const NotFoundContent = () => {
           주소가 올바른지 확인하거나 Pomofi 첫 화면으로 돌아가 주세요.
         </p>
         <A class={LINK_CLASSES} href="/">
-          Pomofi로 돌아가기
+          {m.app_return()}
         </A>
       </section>
     </main>
