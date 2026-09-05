@@ -49,6 +49,7 @@
     "@tauri-apps/api": "2.11.1",
     "@unocss/reset": "catalog:",
     "@vercel/functions": "^3.9.3",
+    "@winter-love/bonsai": "workspace:*",
     "@winter-love/desktop-surface": "workspace:*",
     "@winter-love/solid-components": "workspace:*",
     "@winter-love/solid-use": "workspace:*",

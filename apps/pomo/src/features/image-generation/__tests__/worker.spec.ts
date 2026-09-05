@@ -1,10 +1,10 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {createTransformersRuntime} from '../../text-generation/transformers-runtime'
-import {Flux2KleinPipeline} from '../vendor/runtime.mjs'
+import {Flux2KleinPipeline} from '@winter-love/bonsai'
 import type {GenerationRequest} from '../messages'
 
 vi.mock('../../text-generation/transformers-runtime', () => ({createTransformersRuntime: vi.fn()}))
-vi.mock('../vendor/runtime.mjs', () => ({Flux2KleinPipeline: {from_pretrained: vi.fn()}}))
+vi.mock('@winter-love/bonsai', () => ({Flux2KleinPipeline: {from_pretrained: vi.fn()}}))
 
 const scope = {
   onmessage: null as null | ((event: {data: GenerationRequest}) => void),

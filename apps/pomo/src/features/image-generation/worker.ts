@@ -42,7 +42,7 @@ const generate = async (request: GenerationRequest) => {
     }
     case 'image': {
       const settings = parseSettings(request.settings)
-      const {Flux2KleinPipeline} = await import('./vendor/runtime.mjs')
+      const {Flux2KleinPipeline} = await import('@winter-love/bonsai')
       const model =
         settings.variant === 'ternary'
           ? 'prism-ml/bonsai-image-ternary-4B-mlx-2bit'
