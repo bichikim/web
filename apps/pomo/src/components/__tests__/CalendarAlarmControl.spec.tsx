@@ -5,7 +5,12 @@ import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {CalendarEvent} from '../../features/calendar'
-import {createMemoryMemo, type MemoryMemo} from '../../features/memory-assist'
+import {
+  advanceMemoryMemo,
+  createMemoryMemo,
+  getDueMemoryReminder,
+  type MemoryMemo,
+} from '../../features/memory-assist'
 import {CalendarAlarmControl} from '../CalendarAlarmControl'
 
 const mocks = vi.hoisted(() => ({
@@ -150,6 +155,69 @@ const ownedAlarm = () => ({
     text: '팀 회의 일정 알람이에요.',
   }),
   dialogueId: 'memory-memo-calendar-alarm:connection-1:event-1',
+})
+
+it.each(['2026-09-05', '2026-09-07'])(
+  'should reschedule an existing alarm to %s and preserve its dialogue',
+  async (date) => {
+    const oldTime = new Date('2026-09-06T08:30')
+    const memo = {
+      ...ownedAlarm(),
+      exactReminderAt: oldTime.toISOString(),
+      nextExactReminderAt: oldTime.toISOString(),
+    }
+    mocks.memos = [memo]
+    render(() => <CalendarAlarmControl event={event} memos={() => mocks.memos} />)
+    fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 수정'}))
+    fireEvent.input(screen.getByLabelText('날짜'), {target: {value: date}})
+    fireEvent.input(screen.getByLabelText('시간'), {target: {value: '08:30'}})
+    fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+
+    await waitFor(() => expect(HTMLElement.prototype.hidePopover).toHaveBeenCalledOnce())
+    const saved = mocks.memos[0]!
+    const newTime = new Date(`${date}T08:30`)
+    expect(saved).toMatchObject({
+      createdAt: memo.createdAt,
+      dialogueId: memo.dialogueId,
+      exactReminderAt: newTime.toISOString(),
+      nextExactReminderAt: newTime.toISOString(),
+    })
+    expect(getDueMemoryReminder(saved, new Date(newTime.getTime() - 1))).toBeNull()
+    expect(getDueMemoryReminder(saved, newTime)).toBe('exact')
+    if (newTime > oldTime) {
+      expect(getDueMemoryReminder(saved, oldTime)).toBeNull()
+    }
+    expect(mocks.deleteDialogue).not.toHaveBeenCalled()
+  },
+)
+
+it('should rearm a consumed alarm and preserve its reminder history', async () => {
+  const memo = ownedAlarm()
+  const consumed = advanceMemoryMemo({
+    kind: 'exact',
+    memo,
+    now: new Date(memo.exactReminderAt!),
+    random: () => 0,
+  })
+  vi.setSystemTime(new Date('2026-09-05T12:00:00.000Z'))
+  mocks.memos = [consumed]
+  render(() => <CalendarAlarmControl event={event} memos={() => mocks.memos} />)
+  fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
+  fireEvent.input(screen.getByLabelText('날짜'), {target: {value: '2026-09-07'}})
+  fireEvent.input(screen.getByLabelText('시간'), {target: {value: '08:30'}})
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+
+  await waitFor(() => expect(HTMLElement.prototype.hidePopover).toHaveBeenCalledOnce())
+  const saved = mocks.memos[0]!
+  const newTime = new Date('2026-09-07T08:30')
+  expect(saved).toMatchObject({
+    dialogueId: memo.dialogueId,
+    exactReminderAt: newTime.toISOString(),
+    nextExactReminderAt: newTime.toISOString(),
+    reminderHistory: consumed.reminderHistory,
+  })
+  expect(getDueMemoryReminder(saved, new Date())).toBeNull()
+  expect(getDueMemoryReminder(saved, newTime)).toBe('exact')
 })
 
 it('should preserve owned dialogue when alarm removal persistence fails', async () => {
