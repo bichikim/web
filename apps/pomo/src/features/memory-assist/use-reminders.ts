@@ -213,7 +213,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       deliveredMemo: memo,
       dialogueId,
       kind,
-      now,
+      now: new Date(),
       onDiscard: discardGeneratedDialogue,
       random: props.random ?? Math.random,
     })
