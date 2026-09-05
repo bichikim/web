@@ -32,7 +32,7 @@ const DEFAULT_PROPERTIES: ResolvedPartRenderProperties = {
   invertedMask: false,
   multiplyColor: [1, 1, 1],
   opacity: 1,
-  renderWhenUsedAsMask: false,
+  renderWhenUsedAsMask: true,
   screenColor: [0, 0, 0],
 }
 

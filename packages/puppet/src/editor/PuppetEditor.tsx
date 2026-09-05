@@ -42,7 +42,7 @@ import {useAutoMesh} from './use-auto-mesh'
 import {useDocumentHistory} from './use-document-history'
 import {useDocumentHistoryShortcuts} from './use-document-history-shortcuts'
 import type {PlayerCanvasStatus} from './PlayerCanvas'
-import editorStyle from './style.css?inline'
+import {EditorStyles} from './internal/EditorStyles'
 
 export interface PuppetEditorProps {
   readonly initialDocument?: PuppetDocument
@@ -73,7 +73,6 @@ const importDocument = async (options: ImportDocumentOptions) => {
   if (options.file === undefined) {
     return
   }
-
   const result = await preparePuppetDocument({
     signal: options.signal,
     source: await options.file.text(),
@@ -245,7 +244,6 @@ const useEditorImports = (options: UseEditorImportsOptions) => {
     importGeneration += 1
     importAbortController?.abort()
   })
-
   const handleImport = (file: File | undefined) => {
     if (file === undefined) {
       return
@@ -276,7 +274,6 @@ const useEditorImports = (options: UseEditorImportsOptions) => {
       }
     })
   }
-
   const handlePngImport = (file: File | undefined) => {
     if (file === undefined) {
       return
@@ -407,7 +404,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const document = sourceDocument()
     untrack(() => props.onDocumentChange)?.(document)
   })
-
   const handlePlayerChange = (nextPlayer: Player | null) => {
     setPlayer(syncPlayerPlayback(nextPlayer, isPlaying()))
   }
@@ -479,7 +475,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
 
   return (
     <>
-      <style>{editorStyle}</style>
+      <EditorStyles />
       <EditorPanelLayout
         onActivate={activateHistoryShortcuts}
         bottom={

@@ -13,7 +13,7 @@ export interface EditorLayerStateActionsProps {
 }
 
 export const EditorLayerStateActions = (props: EditorLayerStateActionsProps) => (
-  <div class="layer-state-actions">
+  <div class="layer-state-actions puppet-layer-state-actions">
     <ToggleButton
       aria-label={`${props.node.name} ${props.node.visible ? '숨기기' : '표시하기'}`}
       pressed={props.visible}

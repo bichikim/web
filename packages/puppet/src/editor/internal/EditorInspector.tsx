@@ -505,7 +505,7 @@ export const EditorInspector = (props: EditorInspectorProps) => {
         <h2 id={titleId}>선택 작업</h2>
       </div>
       <Show when={props.autoMeshAvailable && props.onAutoMesh !== undefined}>
-        <section aria-label="파트 작업" class="selection-actions">
+        <section aria-label="파트 작업" class="selection-actions puppet-selection-actions">
           <button type="button" onClick={() => props.onAutoMesh?.()}>
             자동 메시
           </button>
@@ -518,7 +518,7 @@ export const EditorInspector = (props: EditorInspectorProps) => {
           (props.containerUnwrapAvailable && props.onContainerUnwrap !== undefined)
         }
       >
-        <section aria-label="컨테이너 작업" class="selection-actions">
+        <section aria-label="컨테이너 작업" class="selection-actions puppet-selection-actions">
           <Show when={props.containerConversionTarget}>
             {(targetKind) => (
               <button type="button" onClick={() => props.onContainerConvert?.()}>

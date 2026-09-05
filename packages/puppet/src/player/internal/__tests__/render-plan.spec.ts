@@ -26,8 +26,12 @@ const createDocument = (): PuppetDocument => ({
   motions: [],
   parts: [
     createPart('target', {clippingMaskIds: ['middle'], opacity: 0.5}),
-    createPart('middle', {clippingMaskIds: ['source'], invertedMask: true}),
-    createPart('source', {renderWhenUsedAsMask: true}),
+    createPart('middle', {
+      clippingMaskIds: ['source'],
+      invertedMask: true,
+      renderWhenUsedAsMask: false,
+    }),
+    createPart('source'),
   ],
   scene: {
     roots: [
