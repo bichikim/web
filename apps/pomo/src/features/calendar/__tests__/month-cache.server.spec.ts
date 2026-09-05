@@ -15,6 +15,7 @@ const calendar = {
   connectedConnections: 1,
   events: [],
   timeZone: 'Asia/Seoul',
+  truncated: false,
   unavailableConnections: 0,
 }
 

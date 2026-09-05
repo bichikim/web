@@ -15,6 +15,7 @@ export interface CalendarConnection {
 }
 
 export interface CalendarEvents {
+  readonly truncated: boolean
   readonly connectedConnections: number
   readonly events: ReadonlyArray<CalendarEvent>
   readonly timeZone: string
@@ -49,6 +50,7 @@ const calendarEventsSchema = z.object({
   connectedConnections: z.number().int().nonnegative(),
   events: z.array(calendarEventSchema),
   timeZone: z.string(),
+  truncated: z.boolean(),
   unavailableConnections: z.number().int().nonnegative(),
 })
 
@@ -152,6 +154,10 @@ export const loadCalendarPromptContext = async (
 
   const context = createCalendarPromptContext({
     events: response.events.slice(0, MAXIMUM_PROMPT_EVENTS),
+    incomplete:
+      response.truncated ||
+      response.unavailableConnections > 0 ||
+      response.events.length > MAXIMUM_PROMPT_EVENTS,
     timeZone: response.timeZone,
   })
   return response.unavailableConnections === 0

@@ -25,6 +25,7 @@ const calendarEventsSchema: z.ZodType<CalendarEvents> = z.object({
   connectedConnections: z.number().int().nonnegative(),
   events: z.array(calendarEventSchema),
   timeZone: z.string(),
+  truncated: z.boolean(),
   unavailableConnections: z.number().int().nonnegative(),
 })
 const cacheEntrySchema = z.object({

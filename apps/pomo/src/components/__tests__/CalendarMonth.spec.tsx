@@ -25,6 +25,22 @@ vi.mock('../CalendarAlarmControl', () => ({
 
 const originalGetLocale = getLocale
 
+it('should show a notice when only part of the calendar could be loaded', async () => {
+  vi.mocked(listCalendarEvents).mockResolvedValue({
+    connectedConnections: 1,
+    events: [],
+    timeZone: 'Asia/Seoul',
+    truncated: true,
+    unavailableConnections: 0,
+  })
+  render(() => <CalendarMonth />)
+  expect(
+    await screen.findByText(
+      '일정이 많아 일부만 표시하고 있어요. 전체 일정은 연결된 캘린더에서 확인해 주세요.',
+    ),
+  ).toBeVisible()
+})
+
 beforeEach(() => {
   vi.clearAllMocks()
   sessionStorage.clear()
@@ -56,6 +72,7 @@ beforeEach(() => {
       },
     ],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   })
 })
@@ -113,6 +130,7 @@ it('should explain empty and partially unavailable calendar results', async () =
     connectedConnections: 1,
     events: [],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 1,
   })
 
@@ -155,6 +173,7 @@ it('should show cached events before replacing them with refreshed events', asyn
       },
     ],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   }
   writeCalendarMonthCache(range, cachedCalendar)
@@ -203,6 +222,7 @@ it('should retain cached events when the background refresh fails', async () => 
         },
       ],
       timeZone: 'Asia/Seoul',
+      truncated: false,
       unavailableConnections: 0,
     },
   )
@@ -241,6 +261,7 @@ it('should not let an obsolete refresh overwrite the latest month cache', async 
     connectedConnections: 1,
     events: [],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   }
   const obsoleteCalendar: CalendarEvents = {

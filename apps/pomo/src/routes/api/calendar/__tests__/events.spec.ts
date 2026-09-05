@@ -26,6 +26,7 @@ beforeEach(() => {
   dependencyMocks.listEvents.mockResolvedValue({
     connectedConnections: 0,
     events: [],
+    truncated: false,
     unavailableConnections: 0,
   })
 })
@@ -78,6 +79,7 @@ it('should return normalized events for the authenticated user', async () => {
   dependencyMocks.listEvents.mockResolvedValue({
     connectedConnections: 2,
     events: [{id: 'event-1'}],
+    truncated: false,
     unavailableConnections: 1,
   })
   const response = await GET(
@@ -91,6 +93,7 @@ it('should return normalized events for the authenticated user', async () => {
     connectedConnections: 2,
     events: [{id: 'event-1'}],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 1,
   })
   expect(dependencyMocks.listEvents).toHaveBeenCalledWith({

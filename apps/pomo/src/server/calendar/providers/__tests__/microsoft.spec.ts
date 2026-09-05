@@ -2,6 +2,70 @@ import {expect, it, vi} from 'vitest'
 
 import {createMicrosoftCalendarProvider} from '../microsoft'
 
+it.each([100, 101])(
+  'should report calendar truncation only when %i calendars exceed the limit',
+  async (count) => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(
+        Response.json({
+          value: Array.from({length: count}, (_, index) => ({id: String(index), name: 'Calendar'})),
+        }),
+      )
+      .mockImplementation(async () => Response.json({value: []}))
+    const provider = createMicrosoftCalendarProvider({
+      clientId: 'client',
+      clientSecret: 'secret',
+      fetch,
+    })
+    const result = await provider.listEvents({
+      accessToken: 'access',
+      end: '2026-10-01T00:00:00.000Z',
+      start: '2026-09-01T00:00:00.000Z',
+    })
+    expect(result.truncated).toBe(count > 100)
+    expect(fetch).toHaveBeenCalledTimes(101)
+  },
+)
+
+it.each([false, true])(
+  'should report whether events remain after the final allowed page: %s',
+  async (hasMore) => {
+    let page = 0
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(Response.json({value: [{id: 'calendar', name: 'Calendar'}]}))
+      .mockImplementation(async () => {
+        page += 1
+        return Response.json({
+          '@odata.nextLink':
+            page < 20 || hasMore
+              ? 'https://graph.microsoft.com/v1.0/me/calendars/calendar/calendarView?$skiptoken=next'
+              : undefined,
+          value: Array.from({length: 250}, (_, index) => ({
+            id: `event-${page}-${index}`,
+            isAllDay: true,
+            end: {dateTime: '2026-09-06T00:00:00', timeZone: 'UTC'},
+            start: {dateTime: '2026-09-05T00:00:00', timeZone: 'UTC'},
+          })),
+        })
+      })
+    const provider = createMicrosoftCalendarProvider({
+      clientId: 'client',
+      clientSecret: 'secret',
+      fetch,
+    })
+    const result = await provider.listEvents({
+      accessToken: 'access',
+      end: '2026-10-01T00:00:00.000Z',
+      start: '2026-09-01T00:00:00.000Z',
+    })
+    expect(result.truncated).toBe(hasMore)
+    expect(result.events).toHaveLength(5000)
+    expect(fetch).toHaveBeenCalledTimes(21)
+  },
+)
+
 it('should create a Microsoft read-only authorization request with offline access and PKCE', () => {
   const provider = createMicrosoftCalendarProvider({
     clientId: 'microsoft-client',
@@ -103,24 +167,27 @@ it('should use calendarView to expand occurrences and normalize UTC values', asy
       end: '2026-09-08T00:00:00.000Z',
       start: '2026-09-04T00:00:00.000Z',
     }),
-  ).resolves.toEqual([
-    {
-      allDay: false,
-      calendarLabel: '업무',
-      end: '2026-09-05T01:00:00.000Z',
-      id: 'event-1',
-      start: '2026-09-05T00:00:00.000Z',
-      title: '회의',
-    },
-    {
-      allDay: false,
-      calendarLabel: '업무',
-      end: '2026-09-06T01:00:00.000Z',
-      id: 'event-2',
-      start: '2026-09-06T00:00:00.000Z',
-      title: '후속 회의',
-    },
-  ])
+  ).resolves.toEqual({
+    events: [
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-05T01:00:00.000Z',
+        id: 'event-1',
+        start: '2026-09-05T00:00:00.000Z',
+        title: '회의',
+      },
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-06T01:00:00.000Z',
+        id: 'event-2',
+        start: '2026-09-06T00:00:00.000Z',
+        title: '후속 회의',
+      },
+    ],
+    truncated: false,
+  })
 
   const requestUrl = new URL(String(fetch.mock.calls[1]?.[0]))
   expect(requestUrl.pathname).toBe('/v1.0/me/calendars/work/calendarView')

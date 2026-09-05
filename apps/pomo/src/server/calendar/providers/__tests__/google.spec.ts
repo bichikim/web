@@ -2,6 +2,69 @@ import {expect, it, vi} from 'vitest'
 
 import {createGoogleCalendarProvider} from '../google'
 
+it.each([100, 101])(
+  'should report calendar truncation only when %i calendars exceed the limit',
+  async (count) => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(
+        Response.json({
+          items: Array.from({length: count}, (_, index) => ({
+            id: String(index),
+            summary: 'Calendar',
+          })),
+        }),
+      )
+      .mockImplementation(async () => Response.json({items: []}))
+    const provider = createGoogleCalendarProvider({
+      clientId: 'client',
+      clientSecret: 'secret',
+      fetch,
+    })
+    const result = await provider.listEvents({
+      accessToken: 'access',
+      end: '2026-10-01T00:00:00.000Z',
+      start: '2026-09-01T00:00:00.000Z',
+    })
+    expect(result.truncated).toBe(count > 100)
+    expect(fetch).toHaveBeenCalledTimes(101)
+  },
+)
+
+it.each([false, true])(
+  'should report whether events remain after the final allowed page: %s',
+  async (hasMore) => {
+    let page = 0
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(Response.json({items: [{id: 'calendar', summary: 'Calendar'}]}))
+      .mockImplementation(async () => {
+        page += 1
+        return Response.json({
+          items: Array.from({length: 250}, (_, index) => ({
+            id: `event-${page}-${index}`,
+            end: {date: '2026-09-06'},
+            start: {date: '2026-09-05'},
+          })),
+          nextPageToken: page < 20 || hasMore ? 'next-page' : undefined,
+        })
+      })
+    const provider = createGoogleCalendarProvider({
+      clientId: 'client',
+      clientSecret: 'secret',
+      fetch,
+    })
+    const result = await provider.listEvents({
+      accessToken: 'access',
+      end: '2026-10-01T00:00:00.000Z',
+      start: '2026-09-01T00:00:00.000Z',
+    })
+    expect(result.truncated).toBe(hasMore)
+    expect(result.events).toHaveLength(5000)
+    expect(fetch).toHaveBeenCalledTimes(21)
+  },
+)
+
 it('should create a Google offline read-only authorization request with PKCE', () => {
   const provider = createGoogleCalendarProvider({
     clientId: 'google-client',
@@ -100,24 +163,27 @@ it('should expand recurring Google events and normalize timed and all-day values
       end: '2026-09-08T00:00:00.000Z',
       start: '2026-09-04T00:00:00.000Z',
     }),
-  ).resolves.toEqual([
-    {
-      allDay: false,
-      calendarLabel: '업무',
-      end: '2026-09-05T01:00:00.000Z',
-      id: 'timed',
-      start: '2026-09-05T00:00:00.000Z',
-      title: '회의',
-    },
-    {
-      allDay: true,
-      calendarLabel: '업무',
-      end: '2026-09-07',
-      id: 'all-day',
-      start: '2026-09-06',
-      title: '제목 없는 일정',
-    },
-  ])
+  ).resolves.toEqual({
+    events: [
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-05T01:00:00.000Z',
+        id: 'timed',
+        start: '2026-09-05T00:00:00.000Z',
+        title: '회의',
+      },
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        end: '2026-09-07',
+        id: 'all-day',
+        start: '2026-09-06',
+        title: '제목 없는 일정',
+      },
+    ],
+    truncated: false,
+  })
 
   const requestUrl = new URL(String(fetch.mock.calls[1]?.[0]))
   expect(requestUrl.pathname).toBe('/calendar/v3/calendars/work/events')

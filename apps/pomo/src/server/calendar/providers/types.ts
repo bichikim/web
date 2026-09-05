@@ -13,10 +13,15 @@ export interface ListProviderEventsOptions {
   readonly start: string
 }
 
+export interface ProviderEventsResult {
+  readonly events: ReadonlyArray<ProviderEvent>
+  readonly truncated: boolean
+}
+
 export interface CalendarProvider {
   readonly createAuthorizationUrl: (options: CreateAuthorizationUrlOptions) => string
   readonly exchangeCode: (options: ExchangeCalendarCodeOptions) => Promise<CalendarProviderTokens>
-  readonly listEvents: (options: ListProviderEventsOptions) => Promise<ReadonlyArray<ProviderEvent>>
+  readonly listEvents: (options: ListProviderEventsOptions) => Promise<ProviderEventsResult>
   readonly provider: CalendarProviderId
   readonly readAccount: (accessToken: string) => Promise<CalendarProviderAccount>
   readonly refreshTokens: (refreshToken: string) => Promise<CalendarProviderTokens>

@@ -5,6 +5,7 @@ import type {
   CreateCalendarProviderOptions,
   ListProviderEventsOptions,
   ProviderEvent,
+  ProviderEventsResult,
 } from './types'
 import {mapInBatches} from './batch'
 import {requestTokens} from './oauth'
@@ -78,8 +79,9 @@ const listCalendarEvents = async (
   calendarLabel: string,
   options: ListProviderEventsOptions,
   fetch: typeof globalThis.fetch,
-): Promise<ReadonlyArray<ProviderEvent>> => {
+): Promise<ProviderEventsResult> => {
   const events: Array<ProviderEvent> = []
+  let truncated = false
   const headers = {Authorization: `Bearer ${options.accessToken}`}
   const loadPage = async (pageToken: string | null, pageCount: number): Promise<void> => {
     const url = new URL(`${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`)
@@ -99,16 +101,15 @@ const listCalendarEvents = async (
     }
 
     const body = googleEventsSchema.parse(await response.json())
+    const normalizedEvents = body.items.flatMap((event) => {
+      const normalized = normalizeEvent(event, calendarLabel)
+      return normalized === null ? [] : [normalized]
+    })
     const remainingEvents = MAXIMUM_EVENTS_PER_CALENDAR - events.length
-    events.push(
-      ...body.items
-        .flatMap((event) => {
-          const normalized = normalizeEvent(event, calendarLabel)
-          return normalized === null ? [] : [normalized]
-        })
-        .slice(0, remainingEvents),
-    )
+    truncated = normalizedEvents.length > remainingEvents
+    events.push(...normalizedEvents.slice(0, remainingEvents))
     const nextPageToken = body.nextPageToken ?? null
+    truncated ||= nextPageToken !== null
     if (
       nextPageToken !== null &&
       pageCount + 1 < MAXIMUM_EVENT_PAGES &&
@@ -120,14 +121,20 @@ const listCalendarEvents = async (
 
   await loadPage(null, 0)
 
-  return events
+  return {events, truncated}
+}
+
+interface CalendarListResult {
+  readonly calendars: ReadonlyArray<z.infer<typeof googleCalendarsSchema>['items'][number]>
+  readonly truncated: boolean
 }
 
 const listCalendars = async (
   accessToken: string,
   fetch: typeof globalThis.fetch,
-): Promise<ReadonlyArray<z.infer<typeof googleCalendarsSchema>['items'][number]>> => {
+): Promise<CalendarListResult> => {
   const calendars: Array<z.infer<typeof googleCalendarsSchema>['items'][number]> = []
+  let truncated = false
   const headers = {Authorization: `Bearer ${accessToken}`}
   const loadPage = async (pageToken: string | null, pageCount: number): Promise<void> => {
     const url = new URL(`${GOOGLE_CALENDAR_API}/users/me/calendarList`)
@@ -142,8 +149,10 @@ const listCalendars = async (
     }
 
     const body = googleCalendarsSchema.parse(await response.json())
+    truncated = body.items.length > MAXIMUM_CALENDARS - calendars.length
     calendars.push(...body.items.slice(0, MAXIMUM_CALENDARS - calendars.length))
     const nextPageToken = body.nextPageToken ?? null
+    truncated ||= nextPageToken !== null
     if (
       nextPageToken !== null &&
       pageCount + 1 < MAXIMUM_CALENDAR_PAGES &&
@@ -155,18 +164,21 @@ const listCalendars = async (
 
   await loadPage(null, 0)
 
-  return calendars
+  return {calendars, truncated}
 }
 
 const listEvents = async (
   options: ListProviderEventsOptions,
   fetch: typeof globalThis.fetch,
-): Promise<ReadonlyArray<ProviderEvent>> => {
-  const calendars = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
+): Promise<ProviderEventsResult> => {
+  const result = await listCalendars(options.accessToken, fetch)
+  const eventLists = await mapInBatches(result.calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
     listCalendarEvents(calendar.id, calendar.summary, options, fetch),
   )
-  return eventLists.flat()
+  return {
+    events: eventLists.flatMap((result) => result.events),
+    truncated: result.truncated || eventLists.some((result) => result.truncated),
+  }
 }
 
 export const createGoogleCalendarProvider = (

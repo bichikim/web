@@ -82,7 +82,12 @@ interface ListCalendarEventsOptions extends CalendarEventRange {
   readonly userId: string
 }
 
-export interface CalendarEventsResult {
+interface ConnectionEventsResult {
+  readonly events: ReadonlyArray<CalendarEvent>
+  readonly truncated: boolean
+}
+
+export interface CalendarEventsResult extends ConnectionEventsResult {
   readonly connectedConnections: number
   readonly events: ReadonlyArray<CalendarEvent>
   readonly unavailableConnections: number
@@ -106,7 +111,7 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
   const readConnectionEvents = async (
     connection: CalendarConnectionRecord,
     range: CalendarEventRange,
-  ): Promise<ReadonlyArray<CalendarEvent>> => {
+  ): Promise<ConnectionEventsResult> => {
     const provider = options.providerFor(connection.provider)
     let tokens = options.vault.open(connection.encryptedTokens)
 
@@ -131,13 +136,16 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
       tokens = options.vault.open(encryptedTokens)
     }
 
-    const events = await provider.listEvents({accessToken: tokens.accessToken, ...range})
-    return events.map((event) => ({
-      ...event,
-      accountLabel: connection.accountLabel,
-      id: `${connection.id}:${event.id}`,
-      provider: connection.provider,
-    }))
+    const result = await provider.listEvents({accessToken: tokens.accessToken, ...range})
+    return {
+      events: result.events.map((event) => ({
+        ...event,
+        accountLabel: connection.accountLabel,
+        id: `${connection.id}:${event.id}`,
+        provider: connection.provider,
+      })),
+      truncated: result.truncated,
+    }
   }
 
   return {
@@ -189,12 +197,15 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
         connections.map((connection) => readConnectionEvents(connection, range)),
       )
       const events = results
-        .flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+        .flatMap((result) => (result.status === 'fulfilled' ? result.value.events : []))
         .sort((left, right) => left.start.localeCompare(right.start))
 
       return {
         connectedConnections: connections.length,
         events,
+        truncated: results.some(
+          (result) => result.status === 'fulfilled' && result.value.truncated,
+        ),
         unavailableConnections: results.filter((result) => result.status === 'rejected').length,
       }
     },

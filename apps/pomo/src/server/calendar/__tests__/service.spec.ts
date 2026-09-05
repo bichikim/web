@@ -141,16 +141,19 @@ it('should refresh expired tokens and preserve events from another provider fail
     expiresAt: '2026-09-04T11:00:00.000Z',
     refreshToken: 'new-refresh',
   })
-  vi.mocked(googleProvider.listEvents).mockResolvedValue([
-    {
-      allDay: false,
-      calendarLabel: '업무',
-      end: '2026-09-04T11:00:00.000Z',
-      id: 'event-1',
-      start: '2026-09-04T10:30:00.000Z',
-      title: '회의',
-    },
-  ])
+  vi.mocked(googleProvider.listEvents).mockResolvedValue({
+    events: [
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-04T11:00:00.000Z',
+        id: 'event-1',
+        start: '2026-09-04T10:30:00.000Z',
+        title: '회의',
+      },
+    ],
+    truncated: true,
+  })
   vi.mocked(microsoftProvider.listEvents).mockRejectedValue(new Error('Graph unavailable'))
   const service = createCalendarService({
     now: () => new Date('2026-09-04T10:00:00.000Z'),
@@ -179,6 +182,7 @@ it('should refresh expired tokens and preserve events from another provider fail
         title: '회의',
       },
     ],
+    truncated: true,
     unavailableConnections: 1,
   })
   expect(googleProvider.listEvents).toHaveBeenCalledWith({
@@ -206,8 +210,8 @@ it('should preserve more than forty events for the calendar view', async () => {
     expiresAt: '2026-09-04T11:00:00.000Z',
     refreshToken: 'refresh',
   })
-  vi.mocked(googleProvider.listEvents).mockResolvedValue(
-    Array.from({length: 41}, (_, index) => ({
+  vi.mocked(googleProvider.listEvents).mockResolvedValue({
+    events: Array.from({length: 41}, (_, index) => ({
       allDay: true,
       calendarLabel: '업무',
       end: `2026-09-${String(index + 2).padStart(2, '0')}`,
@@ -215,7 +219,8 @@ it('should preserve more than forty events for the calendar view', async () => {
       start: `2026-09-${String(index + 1).padStart(2, '0')}`,
       title: `일정 ${index}`,
     })),
-  )
+    truncated: false,
+  })
   const service = createCalendarService({providerFor, repository, vault})
 
   const result = await service.listEvents({

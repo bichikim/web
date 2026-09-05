@@ -266,6 +266,11 @@ const CalendarAgenda = (props: CalendarAgendaProps) => (
         </Show>
       </Show>
     </Show>
+    <Show when={props.calendar?.truncated}>
+      <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
+        {m.calendar_events_truncated()}
+      </p>
+    </Show>
     <Show when={(props.calendar?.unavailableConnections ?? 0) > 0}>
       <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
         {m.calendar_events_partial()}

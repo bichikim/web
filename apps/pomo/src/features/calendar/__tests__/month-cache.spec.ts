@@ -14,6 +14,7 @@ const calendar: CalendarEvents = {
   connectedConnections: 1,
   events: [],
   timeZone: 'Asia/Seoul',
+  truncated: false,
   unavailableConnections: 0,
 }
 
@@ -32,4 +33,9 @@ it('should ignore a malformed calendar cache', () => {
   sessionStorage.setItem('pomo:calendar-month-cache:v1', '{bad')
 
   expect(readCalendarMonthCache(range)).toBeNull()
+})
+
+it('should preserve truncation when restoring cached events', () => {
+  writeCalendarMonthCache(range, {...calendar, truncated: true})
+  expect(readCalendarMonthCache(range)?.truncated).toBe(true)
 })

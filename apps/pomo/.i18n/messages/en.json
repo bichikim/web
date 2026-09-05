@@ -661,6 +661,7 @@
   "web_account_signed_in_email": "Signed-in email",
   "web_account_sign_out": "Sign out",
   "calendar_tab": "Calendar",
+  "calendar_events_truncated": "Only some events are shown because there are many. Check your connected calendar for the full schedule.",
   "calendar_connections_description": "Pomofi only reads the time range needed for your question and cannot change events.",
   "calendar_connections_loading": "Checking calendar connections…",
   "calendar_connections_failed": "Couldn't check calendar connections.",

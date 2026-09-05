@@ -5,6 +5,7 @@ import type {
   CreateCalendarProviderOptions,
   ListProviderEventsOptions,
   ProviderEvent,
+  ProviderEventsResult,
 } from './types'
 import {mapInBatches} from './batch'
 import {requestTokens} from './oauth'
@@ -94,8 +95,9 @@ const listCalendarEvents = async (
   calendarLabel: string,
   options: ListProviderEventsOptions,
   fetch: typeof globalThis.fetch,
-): Promise<ReadonlyArray<ProviderEvent>> => {
+): Promise<ProviderEventsResult> => {
   const events: Array<ProviderEvent> = []
+  let truncated = false
   const headers = {
     Authorization: `Bearer ${options.accessToken}`,
     Prefer: 'outlook.timezone="UTC"',
@@ -115,16 +117,15 @@ const listCalendarEvents = async (
     }
 
     const body = graphEventsSchema.parse(await response.json())
+    const normalizedEvents = body.value.flatMap((event) => {
+      const normalized = normalizeEvent(event, calendarLabel)
+      return normalized === null ? [] : [normalized]
+    })
     const remainingEvents = MAXIMUM_EVENTS_PER_CALENDAR - events.length
-    events.push(
-      ...body.value
-        .flatMap((event) => {
-          const normalized = normalizeEvent(event, calendarLabel)
-          return normalized === null ? [] : [normalized]
-        })
-        .slice(0, remainingEvents),
-    )
+    truncated = normalizedEvents.length > remainingEvents
+    events.push(...normalizedEvents.slice(0, remainingEvents))
     const nextUrl = readNextUrl(body['@odata.nextLink'])
+    truncated ||= nextUrl !== null
     if (
       nextUrl !== null &&
       pageCount + 1 < MAXIMUM_EVENT_PAGES &&
@@ -136,14 +137,20 @@ const listCalendarEvents = async (
 
   await loadPage(initialUrl, 0)
 
-  return events
+  return {events, truncated}
+}
+
+interface CalendarListResult {
+  readonly calendars: ReadonlyArray<z.infer<typeof graphCalendarsSchema>['value'][number]>
+  readonly truncated: boolean
 }
 
 const listCalendars = async (
   accessToken: string,
   fetch: typeof globalThis.fetch,
-): Promise<ReadonlyArray<z.infer<typeof graphCalendarsSchema>['value'][number]>> => {
+): Promise<CalendarListResult> => {
   const calendars: Array<z.infer<typeof graphCalendarsSchema>['value'][number]> = []
+  let truncated = false
   const headers = {Authorization: `Bearer ${accessToken}`}
   const initialUrl = new URL(`${MICROSOFT_GRAPH_API}/me/calendars`)
   initialUrl.searchParams.set('$top', String(CALENDAR_PAGE_SIZE))
@@ -154,8 +161,10 @@ const listCalendars = async (
     }
 
     const body = graphCalendarsSchema.parse(await response.json())
+    truncated = body.value.length > MAXIMUM_CALENDARS - calendars.length
     calendars.push(...body.value.slice(0, MAXIMUM_CALENDARS - calendars.length))
     const nextUrl = readNextUrl(body['@odata.nextLink'])
+    truncated ||= nextUrl !== null
     if (
       nextUrl !== null &&
       pageCount + 1 < MAXIMUM_CALENDAR_PAGES &&
@@ -167,18 +176,21 @@ const listCalendars = async (
 
   await loadPage(initialUrl, 0)
 
-  return calendars
+  return {calendars, truncated}
 }
 
 const listEvents = async (
   options: ListProviderEventsOptions,
   fetch: typeof globalThis.fetch,
-): Promise<ReadonlyArray<ProviderEvent>> => {
-  const calendars = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
+): Promise<ProviderEventsResult> => {
+  const result = await listCalendars(options.accessToken, fetch)
+  const eventLists = await mapInBatches(result.calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
     listCalendarEvents(calendar.id, calendar.name, options, fetch),
   )
-  return eventLists.flat()
+  return {
+    events: eventLists.flatMap((result) => result.events),
+    truncated: result.truncated || eventLists.some((result) => result.truncated),
+  }
 }
 
 export const createMicrosoftCalendarProvider = (

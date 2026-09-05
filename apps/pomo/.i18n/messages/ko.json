@@ -661,6 +661,7 @@
   "web_account_signed_in_email": "로그인된 이메일",
   "web_account_sign_out": "로그아웃",
   "calendar_tab": "캘린더",
+  "calendar_events_truncated": "일정이 많아 일부만 표시하고 있어요. 전체 일정은 연결된 캘린더에서 확인해 주세요.",
   "calendar_connections_description": "일정을 만들거나 바꾸지 않고, 질문에 필요한 기간만 읽어요.",
   "calendar_connections_loading": "캘린더 연결 확인 중…",
   "calendar_connections_failed": "캘린더 연결을 확인하지 못했습니다.",

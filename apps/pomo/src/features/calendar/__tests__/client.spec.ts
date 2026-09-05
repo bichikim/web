@@ -14,6 +14,7 @@ it('should load a requested calendar range for calendar views', async () => {
     connectedConnections: 1,
     events: [],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   })
 
@@ -27,6 +28,7 @@ it('should load a requested calendar range for calendar views', async () => {
     connectedConnections: 1,
     events: [],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   })
   const [requestUrl, requestOptions] = vi.mocked(apiJson).mock.calls[0] ?? []
@@ -55,6 +57,7 @@ it('should fetch only the resolved range and create grounded prompt context', as
     connectedConnections: 1,
     events: [],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   })
 
@@ -77,6 +80,7 @@ it('should tell the model when no calendar is connected', async () => {
     connectedConnections: 0,
     events: [],
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   })
 
@@ -101,6 +105,7 @@ it('should bound calendar events added to the local-model prompt', async () => {
       title: `일정 ${index}`,
     })),
     timeZone: 'Asia/Seoul',
+    truncated: false,
     unavailableConnections: 0,
   })
 
@@ -111,4 +116,21 @@ it('should bound calendar events added to the local-model prompt', async () => {
 
   expect(context).toContain('일정 39')
   expect(context).not.toContain('일정 40')
+  expect(context).toContain('일부 일정만 확인했습니다.')
+})
+
+it('should not claim an empty schedule when the provider result is truncated', async () => {
+  vi.mocked(apiJson).mockResolvedValue({
+    connectedConnections: 1,
+    events: [],
+    timeZone: 'Asia/Seoul',
+    truncated: true,
+    unavailableConnections: 0,
+  })
+  const context = await loadCalendarPromptContext({
+    text: '오늘 일정 알려줘',
+    timeZone: 'Asia/Seoul',
+  })
+  expect(context).toContain('일부 일정만 확인했습니다.')
+  expect(context).not.toContain('조회 기간에 등록된 일정이 없습니다.')
 })
