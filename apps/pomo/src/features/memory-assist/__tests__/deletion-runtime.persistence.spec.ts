@@ -2,7 +2,7 @@
 
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {deleteMemoryMemo, readMemoryMemos, retryMemoryMemoDeletions} from '..'
+import {memoryMemoDeletion, readMemoryMemos} from '..'
 import {createMemoryMemo} from '../schedule'
 import type {MemoryMemo} from '../schema'
 
@@ -67,7 +67,7 @@ it.each([true, false])(
       mocks.webError = new Error('web failed')
     }
     const deleteDialogue = vi.fn()
-    await expect(deleteMemoryMemo({deleteDialogue, memoId: memo.id})).rejects.toThrow(
+    await expect(memoryMemoDeletion.delete({deleteDialogue, memoId: memo.id})).rejects.toThrow(
       'Failed to persist memory memos.',
     )
     await expect(readMemoryMemos()).resolves.toEqual([memo])
@@ -85,13 +85,13 @@ it.each([true, false])(
       metadataExists = false
     })
     mocks.audio.mockRejectedValueOnce(new Error('cache failed'))
-    await expect(deleteMemoryMemo({deleteDialogue, memoId: memo.id})).resolves.toBe(
+    await expect(memoryMemoDeletion.delete({deleteDialogue, memoId: memo.id})).resolves.toBe(
       'cleanupPending',
     )
     expect(metadataExists).toBe(false)
     await expect(readMemoryMemos()).resolves.toEqual([{...memo, deletionPending: true}])
 
-    await retryMemoryMemoDeletions(deleteDialogue)
+    await memoryMemoDeletion.retry(deleteDialogue)
     await expect(readMemoryMemos()).resolves.toEqual([])
     expect(mocks.audio).toHaveBeenCalledTimes(2)
   },

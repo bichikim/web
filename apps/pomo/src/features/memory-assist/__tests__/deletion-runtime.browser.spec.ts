@@ -2,7 +2,7 @@
 
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {deleteMemoryMemo, readMemoryMemos} from '..'
+import {memoryMemoDeletion, readMemoryMemos} from '..'
 import {createMemoryMemo} from '../schedule'
 
 vi.mock('../../focus-room-dialogue', () => ({
@@ -33,9 +33,9 @@ it('should not erase stored memos when the initial browser read fails', async ()
   vi.spyOn(Storage.prototype, 'getItem').mockImplementationOnce(() => {
     throw new Error('read unavailable')
   })
-  const result = await deleteMemoryMemo({deleteDialogue, memoId: memo.id}).catch(
-    (error: unknown) => error,
-  )
+  const result = await memoryMemoDeletion
+    .delete({deleteDialogue, memoId: memo.id})
+    .catch((error: unknown) => error)
   await expect(readMemoryMemos()).resolves.toEqual([memo, other])
   expect(result).toBeInstanceOf(Error)
   expect(deleteDialogue).not.toHaveBeenCalled()
@@ -47,7 +47,7 @@ it('should preserve unrelated memos and cleanup intent when the final browser re
       throw new Error('read unavailable')
     })
   })
-  const result = await deleteMemoryMemo({deleteDialogue, memoId: memo.id})
+  const result = await memoryMemoDeletion.delete({deleteDialogue, memoId: memo.id})
   await expect(readMemoryMemos()).resolves.toEqual([{...memo, deletionPending: true}, other])
   expect(result).toBe('cleanupPending')
 })

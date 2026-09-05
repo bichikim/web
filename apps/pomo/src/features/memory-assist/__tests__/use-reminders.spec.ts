@@ -8,6 +8,7 @@ import type {PEventContextValue} from '../../focus-room-dialogue'
 import {createMemoryMemo} from '../schedule'
 import type {MemoryMemo} from '../schema'
 import {useMemoryReminders} from '../use-reminders'
+import {useDeletionRecovery} from '../use-deletion-recovery'
 
 const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
@@ -17,10 +18,12 @@ const mocks = vi.hoisted(() => ({
   initializeClient: vi.fn(),
   loadSettings: vi.fn(),
   memos: [] as ReadonlyArray<MemoryMemo>,
+  retryDeletions: vi.fn(),
   updateMemos: vi.fn(),
 }))
 
 vi.mock('../use-deletion-recovery', () => ({useDeletionRecovery: vi.fn()}))
+vi.mock('../deletion-runtime', () => ({memoryMemoDeletion: {retry: mocks.retryDeletions}}))
 vi.mock('../use-memos', () => ({useMemoryMemos: () => () => mocks.memos}))
 vi.mock('../dialogue', () => ({createMemoryMemoDialogue: mocks.createDialogue}))
 vi.mock('../repository', () => ({updateMemoryMemos: mocks.updateMemos}))
@@ -36,6 +39,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-09-04T03:00:00.000Z'))
   vi.clearAllMocks()
+  mocks.retryDeletions.mockResolvedValue(undefined)
   mocks.createClient.mockReturnValue({
     dispose: vi.fn(),
     initialize: mocks.initializeClient,
@@ -367,5 +371,15 @@ it('should not resurrect a deleted memo when reminder persistence was already qu
   await vi.advanceTimersToNextTimerAsync()
   await flushPromises()
   expect(mocks.memos).toEqual([{...memo, deletionPending: true}])
+  view.cleanup()
+})
+
+it('should bind recovery to the shared runtime controller and current dialogue events', async () => {
+  mocks.memos = []
+  const events = {deleteDialogue: vi.fn()} as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+  const retry = vi.mocked(useDeletionRecovery).mock.calls[0]![0]
+  await retry()
+  expect(mocks.retryDeletions).toHaveBeenCalledExactlyOnceWith(events.deleteDialogue)
   view.cleanup()
 })

@@ -1,15 +1,13 @@
 import {onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
-import {type DeleteMemoryMemoOptions, retryMemoryMemoDeletions} from './deletion'
-
 const RETRY_DELAY = 300_000
 
 /** Retries persisted deletions while the room is mounted. */
-export const useDeletionRecovery = (deleteDialogue: DeleteMemoryMemoOptions['deleteDialogue']) => {
+export const useDeletionRecovery = (retryDeletions: () => Promise<void>) => {
   onMount(() => {
     const retry = () => {
-      retryMemoryMemoDeletions(deleteDialogue).catch((error: unknown) => {
+      retryDeletions().catch((error: unknown) => {
         console.error('Failed to retry memory memo deletions.', error)
       })
     }
