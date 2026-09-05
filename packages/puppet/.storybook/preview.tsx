@@ -1,8 +1,16 @@
 import type {Preview} from 'storybook-solidjs-vite'
 
-import '../src/editor/style.css'
+import {EditorStyles} from '../src/editor/internal/EditorStyles'
 
 const preview: Preview = {
+  decorators: [
+    (Story) => (
+      <>
+        <EditorStyles />
+        <Story />
+      </>
+    ),
+  ],
   parameters: {
     actions: {argTypesRegex: '^on.*'},
     backgrounds: {

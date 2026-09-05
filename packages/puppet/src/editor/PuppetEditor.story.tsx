@@ -3,7 +3,6 @@ import {fn} from 'storybook/test'
 
 import {createDemoDocument} from '../player'
 import {PuppetEditor} from './PuppetEditor'
-import './story.css'
 
 const meta = {
   args: {

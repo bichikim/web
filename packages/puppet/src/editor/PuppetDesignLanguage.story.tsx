@@ -2,7 +2,6 @@ import {For} from 'solid-js'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 import {PuppetEditor} from './PuppetEditor'
-import './story.css'
 
 const SWATCHES = [
   {color: '#0b0f0e', label: 'Canvas', use: '작업 공간의 가장 깊은 바탕'},

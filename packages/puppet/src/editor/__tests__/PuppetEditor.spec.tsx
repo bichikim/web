@@ -76,6 +76,15 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('heading', {name: '선택 작업'})).toBeVisible()
     expect(view.container.querySelector('.inspector-panel.parameter-panel')).toBeNull()
     expect(view.getByRole('button', {name: 'JSON 내보내기'})).toBeVisible()
+    expect(view.container.querySelector('.viewport')).toContainElement(
+      view.getByRole('checkbox', {name: '마스크 경계 표시'}),
+    )
+    expect(view.getByRole('group', {name: '표시 설정'})).toContainElement(
+      view.getByRole('checkbox', {name: '마스크 경계 표시'}),
+    )
+    expect(view.container.querySelector('.toolbar')).not.toContainElement(
+      view.getByRole('checkbox', {name: '마스크 경계 표시'}),
+    )
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
 
     fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
@@ -107,8 +116,6 @@ describe('PuppetEditor', () => {
     const svg = view.container.querySelector<SVGSVGElement>('svg[aria-label="메시 정점 편집 영역"]')
 
     expect(svg).not.toBeNull()
-    const addButton = view.getByRole('button', {name: '정점 추가'})
-    expect(addButton).toBeEnabled()
 
     if (svg === null) {
       throw new Error('메시 정점 편집 영역을 찾지 못했습니다.')
@@ -125,8 +132,7 @@ describe('PuppetEditor', () => {
       x: 0,
       y: 0,
     })
-    fireEvent.click(addButton)
-    fireEvent(svg, new MouseEvent('click', {bubbles: true, clientX: 480, clientY: 116}))
+    fireEvent(svg, new MouseEvent('dblclick', {bubbles: true, clientX: 480, clientY: 116}))
 
     await waitFor(() => {
       expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parts[0]?.mesh.vertices).toHaveLength(12)
@@ -138,7 +144,7 @@ describe('PuppetEditor', () => {
     if (addedVertex !== undefined) {
       fireEvent.pointerDown(addedVertex, {button: 0})
     }
-    fireEvent.click(view.getByRole('button', {name: '정점 삭제'}))
+    fireEvent.keyDown(view.getByLabelText('메시 정점 편집 영역'), {key: 'Backspace'})
 
     await waitFor(() => {
       expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parts[0]?.mesh.vertices).toHaveLength(10)
@@ -157,14 +163,12 @@ describe('PuppetEditor', () => {
     })
 
     fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
-    expect(view.getByRole('button', {name: '정점 추가'})).toBeDisabled()
 
     const centerVertex = view.container.querySelectorAll('[data-part-id="mesh-preview"] circle')[4]
     expect(centerVertex).toBeDefined()
     if (centerVertex !== undefined) {
       fireEvent.pointerDown(centerVertex, {button: 0})
     }
-    expect(view.getByRole('button', {name: '정점 삭제'})).toBeDisabled()
   })
 
   test('should toggle the left, right, and bottom editor panels from the toolbar', async () => {

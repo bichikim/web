@@ -1,3 +1,5 @@
+import type {JSX} from 'solid-js'
+
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
 import type {PuppetDocument} from '../player/document'
 
@@ -14,6 +16,7 @@ export interface MeshEditorProps {
   readonly previewTime?: number
   readonly parameterValues?: PuppetParameterValues
   readonly parameterValueMap?: PuppetParameterValueMap
+  readonly renderDisplayControls?: (controls: JSX.Element) => JSX.Element
   readonly selectedPartIds?: ReadonlyArray<string>
   readonly selectedVertexIndex?: number | null
 }
