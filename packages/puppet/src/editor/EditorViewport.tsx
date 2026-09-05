@@ -1,4 +1,5 @@
-import {createSignal, Show} from 'solid-js'
+import type {DeformerEditMode} from './internal/DeformerMode'
+import {createSignal, type JSX, Show} from 'solid-js'
 import {Portal} from 'solid-js/web'
 
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
@@ -9,6 +10,9 @@ import {MeshEditor} from './MeshEditor'
 import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
 
 export interface EditorViewportProps {
+  readonly deformerMode?: DeformerEditMode
+  readonly onDeformerModeChange?: (mode: DeformerEditMode) => void
+  readonly renderDeformerControls?: (controls: JSX.Element) => JSX.Element
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activePartId?: string
@@ -75,6 +79,9 @@ export const EditorViewport = (props: EditorViewportProps) => {
           selectedVertexIndex={props.activeVertexIndex}
         />
         <DeformerEditor
+          deformerMode={props.deformerMode}
+          onDeformerModeChange={props.onDeformerModeChange}
+          renderControls={props.renderDeformerControls}
           activeBindingId={props.activeBindingId}
           activeKeyformValues={props.activeKeyformValues}
           activeNodeId={props.activeNodeId}

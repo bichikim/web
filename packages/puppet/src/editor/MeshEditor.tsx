@@ -1,3 +1,4 @@
+import {EditorCheckbox} from './internal/EditorCheckbox'
 import {createSignal, createUniqueId, Index, Show} from 'solid-js'
 
 import type {MeshEditorProps} from './mesh-editor-contract'
@@ -31,10 +32,10 @@ export const MeshEditor = (props: MeshEditorProps) => {
     <div class="display-controls" role="group" aria-label="표시 설정">
       <Show when={editor.clippedPartViews().length > 0}>
         <label class="mask-boundary-toggle">
-          <input
+          <EditorCheckbox
+            label="마스크 경계 표시"
             checked={maskBoundaryVisible()}
-            type="checkbox"
-            onChange={(event) => setMaskBoundaryVisible(event.currentTarget.checked)}
+            onChange={setMaskBoundaryVisible}
           />
           마스크 경계 표시
         </label>

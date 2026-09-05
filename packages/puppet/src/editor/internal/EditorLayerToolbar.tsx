@@ -17,22 +17,14 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
     <Button
       aria-label="그룹"
       disabled={props.selectionLocked}
-      title="자유 변형 그룹 만들기"
+      title="일반 그룹 만들기"
       type="button"
       onClick={props.onGroupCreate}
     >
-      <svg
+      <span
         aria-hidden="true"
-        class="layer-toolbar-icon puppet-layer-toolbar-icon"
-        viewBox="0 0 16 16"
-      >
-        <path d="m2.5 2.5 11-.5-.5 11.5L2 13Z" />
-        <path d="m8 2.25-.25 11M2.25 7.75l11-.25" />
-        <circle cx="2.5" cy="2.5" r="0.9" />
-        <circle cx="13.5" cy="2" r="0.9" />
-        <circle cx="13" cy="13.5" r="0.9" />
-        <circle cx="2" cy="13" r="0.9" />
-      </svg>
+        class="puppet-icon puppet-icon-squares layer-toolbar-icon puppet-layer-toolbar-icon"
+      />
     </Button>
     <Button
       aria-label="선택 레이어 위로 이동"
@@ -45,7 +37,7 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
         }
       }}
     >
-      ↑
+      <span aria-hidden="true" class="puppet-icon puppet-icon-arrow-up puppet-layer-toolbar-icon" />
     </Button>
     <Button
       aria-label="선택 레이어 아래로 이동"
@@ -58,7 +50,10 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
         }
       }}
     >
-      ↓
+      <span
+        aria-hidden="true"
+        class="puppet-icon puppet-icon-arrow-down puppet-layer-toolbar-icon"
+      />
     </Button>
     <Button
       aria-label="선택 레이어를 상위 컨테이너로 이동"
@@ -72,13 +67,10 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
         }
       }}
     >
-      <svg
+      <span
         aria-hidden="true"
-        class="layer-toolbar-icon puppet-layer-toolbar-icon"
-        viewBox="0 0 16 16"
-      >
-        <path d="M7 4h7M7 8h7M7 12h7M5 6 3 8l2 2" />
-      </svg>
+        class="puppet-icon puppet-icon-indent-decrease layer-toolbar-icon puppet-layer-toolbar-icon"
+      />
     </Button>
   </div>
 )

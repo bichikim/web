@@ -1,3 +1,4 @@
+import {Button} from '@kobalte/core/button'
 import {For} from 'solid-js'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
@@ -97,15 +98,15 @@ export const DesignLanguage: Story = {
         <h2 id="puppet-control-title">Control hierarchy</h2>
         <div class="puppet-editor puppet-story-surface">
           <div class="puppet-control-row">
-            <button class="toolbar-button primary" type="button">
+            <Button class="toolbar-button primary" type="button">
               주요 행동
-            </button>
-            <button class="toolbar-button" type="button">
+            </Button>
+            <Button class="toolbar-button" type="button">
               보조 행동
-            </button>
-            <button class="toolbar-button" disabled type="button">
+            </Button>
+            <Button class="toolbar-button" disabled type="button">
               비활성
-            </button>
+            </Button>
             <div class="renderer-status" data-status="ready">
               <span class="status-dot" aria-hidden="true" /> 준비됨
             </div>

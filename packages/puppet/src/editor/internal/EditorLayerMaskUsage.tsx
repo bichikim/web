@@ -10,10 +10,7 @@ export const EditorLayerMaskUsage = (props: EditorLayerMaskUsageProps) => (
       aria-label={`${props.count}개 파츠의 마스크로 사용`}
       class="layer-mask-usage puppet-layer-mask-usage"
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16">
-        <path d="M3 3h7v7H3z" />
-        <path d="M6 6h7v7H6z" />
-      </svg>
+      <span aria-hidden="true" class="puppet-icon puppet-icon-layers-intersect" />
       {props.count}
     </span>
   </Show>

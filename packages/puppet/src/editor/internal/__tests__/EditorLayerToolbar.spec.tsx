@@ -7,7 +7,7 @@ import {createDemoDocument} from '../../../player'
 import {EditorLayerToolbar} from '../EditorLayerToolbar'
 
 describe('EditorLayerToolbar', () => {
-  test('should render the default group action as a free deformer icon button', () => {
+  test('should render the default group action as a normal group icon button', () => {
     const onGroupCreate = vi.fn()
     const view = render(() => (
       <EditorLayerToolbar
@@ -21,10 +21,10 @@ describe('EditorLayerToolbar', () => {
     ))
     const button = view.getByRole('button', {name: '그룹'})
 
-    expect(button).toHaveAttribute('title', '자유 변형 그룹 만들기')
+    expect(button).toHaveAttribute('title', '일반 그룹 만들기')
     expect(button.textContent?.trim()).toBe('')
-    expect(button.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
-    expect(button.querySelectorAll('circle')).toHaveLength(4)
+    expect(button.querySelector('.puppet-icon[aria-hidden="true"]')).not.toBeNull()
+    expect(button.querySelector('.puppet-icon')).toHaveClass('puppet-icon-squares')
 
     fireEvent.click(button)
     expect(onGroupCreate).toHaveBeenCalledOnce()
@@ -48,6 +48,6 @@ describe('EditorLayerToolbar', () => {
 
     expect(button).toHaveAttribute('title', '상위 컨테이너로 이동')
     expect(button.textContent?.trim()).toBe('')
-    expect(button.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+    expect(button.querySelector('.puppet-icon[aria-hidden="true"]')).not.toBeNull()
   })
 })

@@ -14,16 +14,17 @@ describe('EditorLayerPanel', () => {
     const view = render(() => <EditorLayerPanel document={document} />)
     const groupIcon = view
       .getByRole('button', {name: 'Shapes 레이어 선택'})
-      .querySelector<SVGSVGElement>('[data-layer-icon="group"]')
+      .parentElement!.querySelector<HTMLElement>('[data-layer-icon="group"]')
     const deformerIcon = view
       .getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'})
-      .querySelector<SVGSVGElement>('[data-layer-icon="deformer"]')
+      .parentElement!.querySelector<HTMLElement>('[data-layer-icon="deformer"]')
 
     expect(groupIcon).not.toBeNull()
     expect(deformerIcon).not.toBeNull()
-    expect(groupIcon?.querySelectorAll('rect')).toHaveLength(2)
-    expect(deformerIcon?.querySelectorAll('circle')).toHaveLength(4)
-    expect(groupIcon?.innerHTML).not.toBe(deformerIcon?.innerHTML)
+    expect(groupIcon).toHaveClass('puppet-icon-squares')
+    expect(deformerIcon).toHaveClass('puppet-icon-mesh')
+    expect(groupIcon).toHaveAttribute('aria-hidden', 'true')
+    expect(deformerIcon).toHaveAttribute('aria-hidden', 'true')
   })
 
   test('should render and select each example layer', () => {
@@ -48,19 +49,20 @@ describe('EditorLayerPanel', () => {
     expect(onPartSelect).toHaveBeenCalledWith('shape-circle')
   })
 
-  test('should pick an available mask part without changing the layer selection', () => {
+  test('should pick a mask target without changing the source selection', () => {
     const onMaskPick = vi.fn()
     const onSelectionChange = vi.fn()
     const view = render(() => (
       <EditorLayerPanel
         document={createDemoDocument()}
-        maskPickTargetPartId="shape-circle"
+        maskPickSourcePartId="shape-circle"
         onMaskPick={onMaskPick}
         onSelectionChange={onSelectionChange}
       />
     ))
 
     expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeDisabled()
+    expect(view.getByRole('button', {name: 'mesh-preview 레이어 선택'})).toBeDisabled()
     expect(view.getByLabelText('2개 파츠의 마스크로 사용')).toBeVisible()
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
 
@@ -87,31 +89,29 @@ describe('EditorLayerPanel', () => {
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
 
-    expect(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'})).toBeDefined()
+    expect(view.getByRole('button', {name: '새 그룹 레이어 선택'})).toBeDefined()
     expect(document().scene?.roots[0]).toMatchObject({
       children: [{id: 'mesh-preview'}, {id: 'shape-circle'}],
-      columns: 2,
-      kind: 'deformer',
-      rows: 2,
+      kind: 'group',
     })
 
-    fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
 
     expect(
       view
-        .getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'})
+        .getByRole('button', {name: '새 그룹 레이어 선택'})
         .closest('[role="treeitem"]')
         ?.getAttribute('aria-selected'),
     ).toBe('true')
-    fireEvent.dblClick(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    fireEvent.dblClick(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
     const groupNameInput = view.getByRole('textbox', {
-      name: '새 자유 변형 디포머 그룹 이름',
+      name: '새 그룹 그룹 이름',
     })
 
     fireEvent.input(groupNameInput, {target: {value: 'Face'}})
     fireEvent.keyDown(groupNameInput, {key: 'Enter'})
 
-    expect(view.queryByRole('textbox', {name: '새 자유 변형 디포머 그룹 이름'})).toBeNull()
+    expect(view.queryByRole('textbox', {name: '새 그룹 그룹 이름'})).toBeNull()
     fireEvent.click(view.getByRole('button', {name: 'Face 숨기기'}))
     fireEvent.click(view.getByRole('button', {name: 'Face 잠그기'}))
 

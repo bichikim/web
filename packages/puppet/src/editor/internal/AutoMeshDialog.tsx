@@ -1,3 +1,5 @@
+import {RadioGroup} from '@kobalte/core/radio-group'
+import {Button} from '@kobalte/core/button'
 import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
@@ -62,9 +64,9 @@ const AutoMeshDialogFooter = (props: AutoMeshDialogFooterProps) => (
     <Dialog.CloseButton aria-label="취소" class="secondary">
       취소
     </Dialog.CloseButton>
-    <button disabled={props.isGenerating || !props.canGenerate} type="submit">
+    <Button disabled={props.isGenerating || !props.canGenerate} type="submit">
       {props.isGenerating ? '생성 중…' : '자동 메시 생성'}
-    </button>
+    </Button>
   </footer>
 )
 
@@ -134,29 +136,30 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
                   {props.partName ?? '선택한 파트'}의 텍스처 알파를 기준으로 메시를 다시 만듭니다.
                 </Dialog.Description>
               </div>
-              <Dialog.CloseButton aria-label="자동 메시 설정 닫기">×</Dialog.CloseButton>
+              <Dialog.CloseButton aria-label="자동 메시 설정 닫기">
+                <span aria-hidden="true" class="puppet-icon puppet-icon-x" />
+              </Dialog.CloseButton>
             </header>
 
-            <fieldset class="auto-mesh-presets">
-              <legend>프리셋</legend>
+            <RadioGroup
+              as="fieldset"
+              class="auto-mesh-presets"
+              value={preset()}
+              onChange={handlePresetChange}
+            >
+              <RadioGroup.Label as="legend">프리셋</RadioGroup.Label>
               <For each={PRESET_OPTIONS}>
                 {(option) => (
-                  <label>
-                    <input
-                      checked={preset() === option.value}
-                      name="auto-mesh-preset"
-                      type="radio"
-                      value={option.value}
-                      onChange={(event) => handlePresetChange(event.currentTarget.value)}
-                    />
-                    <span>
+                  <RadioGroup.Item as="label" value={option.value}>
+                    <RadioGroup.ItemInput aria-label={option.label} />
+                    <RadioGroup.ItemControl as="span">
                       <strong>{option.label}</strong>
                       <small>{option.description}</small>
-                    </span>
-                  </label>
+                    </RadioGroup.ItemControl>
+                  </RadioGroup.Item>
                 )}
               </For>
-            </fieldset>
+            </RadioGroup>
 
             <div class="auto-mesh-settings">
               <label>

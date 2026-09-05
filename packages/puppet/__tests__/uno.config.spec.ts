@@ -5,7 +5,22 @@ import {describe, expect, it} from 'vitest'
 import unoConfig from '../uno.config'
 
 describe('unoConfig', () => {
-  it('should keep timeline number-step text hidden behind the CSS arrow', async () => {
+  it('should generate local Iconify masks for every editor icon in the embedded stylesheet', async () => {
+    const generator = await createGenerator(unoConfig)
+    const result = await generator.generate('', {safelist: true})
+    const icons = Object.keys(unoConfig.shortcuts ?? {}).filter((name) =>
+      name.startsWith('puppet-icon-'),
+    )
+    expect(icons.length).toBeGreaterThan(0)
+    for (const name of icons) {
+      expect(result.matched.has(name), name).toBe(true)
+    }
+    expect(result.css).toContain('data:image/svg+xml;utf8,')
+    expect(result.css).toContain('mask:')
+    expect(result.css).not.toContain('https://api.iconify.design')
+  })
+
+  it('should size number icons without CSS borders or rotation', async () => {
     const generator = await createGenerator(unoConfig)
     const result = await generator.generate('editor-number-step timeline-row-label', {
       safelist: false,
@@ -15,12 +30,16 @@ describe('unoConfig', () => {
     const surface = document.createElement('div')
     surface.className = 'puppet-editor'
     surface.innerHTML = `<div class="timeline-row-label">
-      <button class="editor-number-step decrement"><span>‹</span></button>
+      <button class="editor-number-step decrement"><span class="puppet-icon"></span></button>
     </div>`
     document.head.append(style)
     document.body.append(surface)
     try {
-      expect(getComputedStyle(surface.querySelector('span')!).fontSize).toBe('0px')
+      const icon = getComputedStyle(surface.querySelector('span')!)
+      expect(icon.width).toBe('0.75rem')
+      expect(icon.height).toBe('0.75rem')
+      expect(icon.transform).not.toContain('rotate')
+      expect(icon.borderRightStyle).not.toBe('solid')
     } finally {
       surface.remove()
       style.remove()

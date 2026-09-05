@@ -1,3 +1,5 @@
+import {LayerContainerIcon} from './LayerContainerIcon'
+import {ContainerKindSelect} from './ContainerKindSelect'
 import {Collapsible} from '@kobalte/core/collapsible'
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
@@ -10,7 +12,6 @@ import {
   type PuppetSceneNode,
 } from '../../player'
 import {
-  createDeformer,
   createSceneGroup,
   isSceneNodeLocked,
   moveSceneNodeRelative,
@@ -34,7 +35,7 @@ import {getParameterSelectionNodeIds} from './parameter-targets'
 export interface EditorLayerPanelProps {
   readonly activePartId?: string
   readonly document: PuppetDocument
-  readonly maskPickTargetPartId?: string
+  readonly maskPickSourcePartId?: string
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onMaskPick?: (partId: string) => void
   readonly onPartSelect?: (partId: string) => void
@@ -50,7 +51,7 @@ interface SceneNodeItemProps {
   readonly expandedGroupIds: ReadonlySet<string>
   readonly inheritedLocked: boolean
   readonly inheritedVisible: boolean
-  readonly maskPickTargetPartId?: string
+  readonly maskPickSourcePartId?: string
   readonly node: PuppetSceneNode
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onDragOver: (target: LayerDropTarget) => void
@@ -78,7 +79,7 @@ const getContainerIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
 
 const createGroup = (document: PuppetDocument, nodeIds: ReadonlyArray<string>) => {
   const previousIds = getContainerIds(getDocumentScene(document).roots)
-  const nextDocument = createDeformer(document, nodeIds) ?? createSceneGroup(document, nodeIds)
+  const nextDocument = createSceneGroup(document, nodeIds)
   return nextDocument === undefined
     ? undefined
     : {
@@ -137,41 +138,6 @@ interface SceneNodeSelectProps {
   readonly selected: boolean
 }
 
-interface LayerContainerIconProps {
-  readonly kind: 'deformer' | 'group'
-}
-
-const LayerContainerIcon = (props: LayerContainerIconProps) => (
-  <Show
-    when={props.kind === 'deformer'}
-    fallback={
-      <svg
-        aria-hidden="true"
-        class="layer-container-icon puppet-layer-container-icon group"
-        data-layer-icon="group"
-        viewBox="0 0 24 24"
-      >
-        <rect height="11" rx="2" width="12" x="3" y="4" />
-        <rect height="11" rx="2" width="12" x="9" y="9" />
-      </svg>
-    }
-  >
-    <svg
-      aria-hidden="true"
-      class="layer-container-icon puppet-layer-container-icon deformer"
-      data-layer-icon="deformer"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4 4 20 3 19 20 3 19Z" />
-      <path d="m12 3.5-.5 16M3.5 11.5l16-.5" />
-      <circle cx="4" cy="4" r="1.25" />
-      <circle cx="20" cy="3" r="1.25" />
-      <circle cx="19" cy="20" r="1.25" />
-      <circle cx="3" cy="19" r="1.25" />
-    </svg>
-  </Show>
-)
-
 const SceneNodeSelect = (props: SceneNodeSelectProps) => {
   const [isRenaming, setIsRenaming] = createSignal(false)
   const [nameDraft, setNameDraft] = createSignal('')
@@ -209,51 +175,62 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
     <Show
       when={isSceneContainerNode(props.node) && isRenaming()}
       fallback={
-        <ToggleButton
-          aria-label={`${props.node.name} 레이어 선택`}
-          class="layer-select"
-          classList={{'mask-pick-candidate': props.maskPicking && !props.maskPickDisabled}}
-          disabled={props.maskPickDisabled}
-          pressed={props.selected}
-          title={
-            props.maskPickDisabled
-              ? '이 레이어는 현재 파츠의 마스크로 사용할 수 없습니다.'
-              : isSceneContainerNode(props.node)
-                ? '더블클릭하여 이름 수정'
-                : undefined
-          }
-          onClick={(event) => props.onSelect(event, props.node)}
-          onDblClick={startRenaming}
-        >
-          <Show
-            when={props.node.kind === 'part'}
-            fallback={
-              <LayerContainerIcon kind={props.node.kind === 'deformer' ? 'deformer' : 'group'} />
-            }
-          >
-            <span class="layer-thumbnail" aria-hidden="true">
-              <img alt="" src={part()?.texture.src} />
-            </span>
+        <div class="puppet-layer-choice">
+          <Show when={isSceneContainerNode(props.node)}>
+            <ContainerKindSelect
+              onSelect={(event) => props.onSelect(event, props.node)}
+              document={props.document}
+              node={props.node}
+              disabled={props.locked || props.maskPicking}
+              onDocumentChange={props.onDocumentChange}
+            />
           </Show>
-          <span class="layer-label">
-            <strong>{props.node.name}</strong>
-            <small>
-              {isSceneContainerNode(props.node)
-                ? `${props.node.children.length} items`
-                : `${(part()?.mesh.vertices.length ?? 0) / 2} vertices`}
-            </small>
-            <Show when={props.parameterLinks.length > 0}>
-              <span class="layer-parameter-links puppet-layer-parameter-links">
-                <For each={props.parameterLinks}>{(name) => <span>{name}</span>}</For>
+          <ToggleButton
+            aria-label={`${props.node.name} 레이어 선택`}
+            class="layer-select"
+            classList={{'mask-pick-candidate': props.maskPicking && !props.maskPickDisabled}}
+            disabled={props.maskPickDisabled}
+            pressed={props.selected}
+            title={
+              props.maskPickDisabled
+                ? '이 레이어에는 현재 파트의 마스크를 적용할 수 없습니다.'
+                : isSceneContainerNode(props.node)
+                  ? '더블클릭하여 이름 수정'
+                  : undefined
+            }
+            onClick={(event) => props.onSelect(event, props.node)}
+            onDblClick={startRenaming}
+          >
+            <Show when={props.node.kind === 'part'}>
+              <span class="layer-thumbnail" aria-hidden="true">
+                <img alt="" src={part()?.texture.src} />
               </span>
             </Show>
-          </span>
-          <EditorLayerMaskUsage count={props.maskUsageCount} />
-        </ToggleButton>
+            <span class="layer-label">
+              <strong>{props.node.name}</strong>
+              <small>
+                {isSceneContainerNode(props.node)
+                  ? `${props.node.children.length} items`
+                  : `${(part()?.mesh.vertices.length ?? 0) / 2} vertices`}
+              </small>
+              <Show when={props.parameterLinks.length > 0}>
+                <span class="layer-parameter-links puppet-layer-parameter-links">
+                  <For each={props.parameterLinks}>{(name) => <span>{name}</span>}</For>
+                </span>
+              </Show>
+            </span>
+            <EditorLayerMaskUsage count={props.maskUsageCount} />
+          </ToggleButton>
+        </div>
       }
     >
       <TextField class="puppet-layer-name-editor" value={nameDraft()} onChange={setNameDraft}>
-        <LayerContainerIcon kind={props.node.kind === 'deformer' ? 'deformer' : 'group'} />
+        <LayerContainerIcon
+          kind={props.node.kind === 'deformer' ? 'deformer' : 'group'}
+          pin={props.node.kind === 'deformer' && props.node.pins !== undefined}
+          bone={props.node.kind === 'deformer' && props.node.boneRestPoints !== undefined}
+          curve={props.node.kind === 'deformer' && props.node.curveAxis !== undefined}
+        />
         <TextField.Input
           ref={(element) => {
             nameInput = element
@@ -284,8 +261,8 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
   const maskPickDisabled = () =>
     isLayerMaskPickDisabled({
       document: props.document,
+      maskPartId: props.maskPickSourcePartId,
       node: props.node,
-      targetPartId: props.maskPickTargetPartId,
     })
   const maskUsageCount = () => getMaskUsageCount(props.document, props.node.id)
   const dropPosition = () =>
@@ -298,7 +275,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
       aria-selected={props.selectedNodeIds.has(props.node.id)}
       class="layer-tree-item puppet-layer-tree-item"
       classList={{dragging: props.draggedNodeId === props.node.id}}
-      draggable={!locked() && props.maskPickTargetPartId === undefined}
+      draggable={!locked() && props.maskPickSourcePartId === undefined}
       role="treeitem"
       onDragEnd={() => props.onDragStart('')}
       onDragStart={(event) => {
@@ -376,7 +353,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
             document={props.document}
             locked={locked()}
             maskPickDisabled={maskPickDisabled()}
-            maskPicking={props.maskPickTargetPartId !== undefined}
+            maskPicking={props.maskPickSourcePartId !== undefined}
             maskUsageCount={maskUsageCount()}
             node={props.node}
             parameterLinks={parameterLinks()}
@@ -408,7 +385,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
                     expandedGroupIds={props.expandedGroupIds}
                     inheritedLocked={locked()}
                     inheritedVisible={visible()}
-                    maskPickTargetPartId={props.maskPickTargetPartId}
+                    maskPickSourcePartId={props.maskPickSourcePartId}
                     node={node}
                     onDocumentChange={props.onDocumentChange}
                     onDragOver={props.onDragOver}
@@ -452,7 +429,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   )
 
   const handleSelect = (event: MouseEvent, node: PuppetSceneNode) => {
-    if (props.maskPickTargetPartId !== undefined && node.kind === 'part') {
+    if (props.maskPickSourcePartId !== undefined && node.kind === 'part') {
       props.onMaskPick?.(node.id)
       return
     }
@@ -508,7 +485,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   return (
     <aside
       class="panel layers-panel"
-      classList={{'mask-picking': props.maskPickTargetPartId !== undefined}}
+      classList={{'mask-picking': props.maskPickSourcePartId !== undefined}}
       aria-labelledby={titleId}
     >
       <div class="panel-heading">
@@ -521,77 +498,78 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
         selection={selection()}
         selectionLocked={selectionLocked()}
         onDocumentChange={handleDocumentChange}
-        onGroupCreate={handleGroupCreate}
+        onGroupCreate={() => handleGroupCreate()}
       />
-      <Show when={props.maskPickTargetPartId !== undefined}>
+      <Show when={props.maskPickSourcePartId !== undefined}>
         <p class="mask-pick-notice" role="status">
-          마스크로 사용할 레이어를 선택하세요.
+          마스크를 적용할 대상 레이어를 선택하세요.
         </p>
       </Show>
-      <Show
-        when={props.document.parts.length > 0}
-        fallback={<p class="panel-note">PNG를 불러오세요.</p>}
-      >
-        <ul
-          class="layer-tree"
-          classList={{'root-drop-active': dropTarget()?.nodeId === null}}
-          role="tree"
-          aria-label="모델 레이어"
-          onDragOver={(event) => {
-            if (draggedNodeId() === null) {
-              return
-            }
-
-            event.preventDefault()
-            if (event.target === event.currentTarget) {
-              setDropTarget({nodeId: null, position: 'inside'})
-            }
-          }}
-          onDrop={(event) => {
-            if (draggedNodeId() !== null && event.target === event.currentTarget) {
-              event.preventDefault()
-              handleDrop({nodeId: null, position: 'inside'})
-            }
-          }}
+      <div class="layer-scroll" tabindex={0} aria-label="레이어 목록 스크롤">
+        <Show
+          when={props.document.parts.length > 0}
+          fallback={<p class="panel-note">PNG를 불러오세요.</p>}
         >
-          <For each={getDocumentScene(props.document).roots}>
-            {(node) => (
-              <SceneNodeItem
-                depth={1}
-                document={props.document}
-                draggedNodeId={draggedNodeId()}
-                dropTarget={dropTarget()}
-                expandedGroupIds={expandedGroupIds()}
-                inheritedLocked={false}
-                inheritedVisible={true}
-                maskPickTargetPartId={props.maskPickTargetPartId}
-                node={node}
-                onDocumentChange={props.onDocumentChange}
-                onDragOver={setDropTarget}
-                onDragStart={(nodeId) => {
-                  setDraggedNodeId(nodeId.length === 0 ? null : nodeId)
-                  if (nodeId.length === 0) {
-                    setDropTarget(null)
-                  }
-                }}
-                onDrop={handleDrop}
-                onSelect={handleSelect}
-                onToggleExpanded={(groupId) => {
-                  const nextGroupIds = new Set(expandedGroupIds())
-                  if (nextGroupIds.has(groupId)) {
-                    nextGroupIds.delete(groupId)
-                  } else {
-                    nextGroupIds.add(groupId)
-                  }
-                  setExpandedGroupIds(nextGroupIds)
-                }}
-                selectedNodeIds={selectedNodeIds()}
-              />
-            )}
-          </For>
-        </ul>
-      </Show>
-      <p class="panel-note">⌘ 또는 Ctrl을 누르고 여러 레이어를 선택해 그룹으로 묶을 수 있습니다.</p>
+          <ul
+            class="layer-tree"
+            classList={{'root-drop-active': dropTarget()?.nodeId === null}}
+            role="tree"
+            aria-label="모델 레이어"
+            onDragOver={(event) => {
+              if (draggedNodeId() === null) {
+                return
+              }
+
+              event.preventDefault()
+              if (event.target === event.currentTarget) {
+                setDropTarget({nodeId: null, position: 'inside'})
+              }
+            }}
+            onDrop={(event) => {
+              if (draggedNodeId() !== null && event.target === event.currentTarget) {
+                event.preventDefault()
+                handleDrop({nodeId: null, position: 'inside'})
+              }
+            }}
+          >
+            <For each={getDocumentScene(props.document).roots}>
+              {(node) => (
+                <SceneNodeItem
+                  depth={1}
+                  document={props.document}
+                  draggedNodeId={draggedNodeId()}
+                  dropTarget={dropTarget()}
+                  expandedGroupIds={expandedGroupIds()}
+                  inheritedLocked={false}
+                  inheritedVisible={true}
+                  maskPickSourcePartId={props.maskPickSourcePartId}
+                  node={node}
+                  onDocumentChange={props.onDocumentChange}
+                  onDragOver={setDropTarget}
+                  onDragStart={(nodeId) => {
+                    setDraggedNodeId(nodeId.length === 0 ? null : nodeId)
+                    if (nodeId.length === 0) {
+                      setDropTarget(null)
+                    }
+                  }}
+                  onDrop={handleDrop}
+                  onSelect={handleSelect}
+                  onToggleExpanded={(groupId) => {
+                    const nextGroupIds = new Set(expandedGroupIds())
+                    if (nextGroupIds.has(groupId)) {
+                      nextGroupIds.delete(groupId)
+                    } else {
+                      nextGroupIds.add(groupId)
+                    }
+                    setExpandedGroupIds(nextGroupIds)
+                  }}
+                  selectedNodeIds={selectedNodeIds()}
+                />
+              )}
+            </For>
+          </ul>
+        </Show>
+      </div>
     </aside>
   )
 }

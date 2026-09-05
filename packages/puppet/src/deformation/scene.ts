@@ -1,3 +1,4 @@
+import {getBoneChannels, poseBoneChannels} from './bone'
 import type {
   PuppetDocument,
   PuppetParameterBinding,
@@ -26,12 +27,26 @@ export const createDeformerKeyform = (
   ...(node.rotationOrigin === undefined ? {} : {rotationOrigin: node.rotationOrigin}),
 })
 
+const getDeformerCoordinates = (
+  deformer: PuppetSceneDeformerNode,
+  coordinates: ReadonlyArray<number>,
+) =>
+  deformer.boneRestPoints === undefined
+    ? coordinates
+    : getBoneChannels(deformer.boneRestPoints, coordinates)
+
 const getKeyformCoordinates = (
   keyform: PuppetParameterKeyform,
   deformer: PuppetSceneDeformerNode,
-) => keyform.deformers?.find((candidate) => candidate.nodeId === deformer.id)?.controlPoints
+) => {
+  const coordinates = keyform.deformers?.find(
+    (candidate) => candidate.nodeId === deformer.id,
+  )?.controlPoints
+  return coordinates === undefined ? undefined : getDeformerCoordinates(deformer, coordinates)
+}
 
-const getRestCoordinates = (deformer: PuppetSceneDeformerNode) => deformer.controlPoints
+const getRestCoordinates = (deformer: PuppetSceneDeformerNode) =>
+  getDeformerCoordinates(deformer, deformer.controlPoints)
 
 const getControlPointCenter = (controlPoints: ReadonlyArray<number>) => {
   const pointCount = controlPoints.length / 2
@@ -98,7 +113,10 @@ const createSampledDeformer = (
   ),
   rotationOriginCoordinates: ReadonlyArray<number> = Object.values(getRestRotationOrigin(deformer)),
 ): PuppetParameterDeformerKeyform => ({
-  controlPoints: coordinates,
+  controlPoints:
+    deformer.boneRestPoints === undefined
+      ? coordinates
+      : poseBoneChannels(deformer.boneRestPoints, coordinates),
   ...(deformer.curveHandles === undefined
     ? {}
     : {curveHandles: createCurveHandles(deformer, curveHandleCoordinates)}),
@@ -180,7 +198,11 @@ const composeDeformer = (
         deformer,
         values: getParameterBindingValues({binding, document, parameterValues}),
       })
-      coordinates = addDeformerDelta(coordinates, sampled.controlPoints, restCoordinates)
+      coordinates = addDeformerDelta(
+        coordinates,
+        getDeformerCoordinates(deformer, sampled.controlPoints),
+        restCoordinates,
+      )
       curveHandleCoordinates = addDeformerDelta(
         curveHandleCoordinates,
         getCurveHandleCoordinates(sampled.curveHandles, deformer),

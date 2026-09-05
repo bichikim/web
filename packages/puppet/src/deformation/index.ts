@@ -1,6 +1,10 @@
-export * from './composition'
 export * from './grid'
-export * from './parameter'
+export * from './composition'
 export * from './part-properties'
-export * from './scene'
+export * from './parameter'
 export * from './vertices'
+export * from './scene'
+
+export * from './binding'
+
+export * from './pin'

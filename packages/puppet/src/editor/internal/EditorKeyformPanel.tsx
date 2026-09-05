@@ -93,7 +93,7 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
   onCleanup(() => removePointerListeners?.())
 
   return (
-    <button
+    <Button
       aria-label={`${props.parameter.name} 현재 값`}
       aria-orientation="horizontal"
       aria-valuemax={props.parameter.maximum}
@@ -214,7 +214,7 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
           const x = () => xParameter()
           const y = () => yParameter()
           return (
-            <button
+            <Button
               aria-hidden="true"
               class="parameter-grid-keyform"
               classList={{

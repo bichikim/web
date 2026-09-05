@@ -116,7 +116,7 @@ describe('EditorKeyformPanel', () => {
       />
     ))
 
-    const addButton = view.getByRole('button', {name: '+ 현재 값에 키폼'})
+    const addButton = view.getByRole('button', {name: '현재 값에 키폼'})
     const deleteButton = view.getByRole('button', {name: '선택 키폼 삭제'})
     expect(addButton).toBeEnabled()
     expect(deleteButton).toBeEnabled()

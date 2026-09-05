@@ -1,3 +1,4 @@
+import {Button} from '@kobalte/core/button'
 import {createSignal, onCleanup} from 'solid-js'
 
 import type {PuppetParameter} from '../../player/document'
@@ -94,7 +95,7 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
   onCleanup(() => removePointerListeners?.())
 
   return (
-    <button
+    <Button
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
       aria-label={`${props.parameter.name} ${displayValue()} 키폼`}
       aria-pressed={props.active}
@@ -111,6 +112,6 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
       onPointerDown={handlePointerDown}
     >
       <span>{displayValue()}</span>
-    </button>
+    </Button>
   )
 }

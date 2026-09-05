@@ -1,4 +1,29 @@
 export const layersShortcuts = {
+  'container-kind-trigger': [
+    'relative flex shrink-0 items-center justify-center gap-0.5 py-0 pl-0 pr-1 rounded-lg',
+    'border border-solid border-transparent bg-transparent cursor-pointer',
+    'hover:bg-[#25382f] hover:border-[#4c6e61] focus-visible:outline focus-visible:outline-[#64e5c4]',
+    '[&[data-expanded]]:bg-[#254c40] [&[data-expanded]]:border-[#64e5c4]',
+    '[&[data-expanded]:hover]:bg-[#254c40] [&[data-expanded]:hover]:border-[#64e5c4]',
+    '[&[data-expanded]]:shadow-[0_0_0_2px_#64e5c426] [&:disabled]:opacity-40',
+  ],
+  'kind-check': 'text-[#75e5be] inline-flex',
+  'kind-chevron': [
+    'shrink-0 w-3 h-3 text-[#c1d8cc]',
+    '[.container-kind-trigger[data-expanded]_&]:[transform:rotate(180deg)]',
+  ],
+  'kind-menu': [
+    'w-56 p-1.5 rounded-xl border border-solid border-[#3b5147] bg-[#151e19] text-[#e1ebe6] outline-none',
+    'shadow-[0_12px_32px_#0008] [&[data-closed]]:hidden',
+    '[&_.puppet-layer-container-icon]:w-5 [&_.puppet-layer-container-icon]:h-5',
+  ],
+  'kind-menu-heading': 'block px-2 py-1.5 text-[10px] font-semibold text-[#98afa3]',
+  'kind-menu-item': [
+    'grid grid-cols-[1.25rem_1fr_1rem] items-center gap-2 px-2 py-2 rounded-md text-xs outline-none cursor-pointer',
+    '[&[data-checked]]:bg-[#233c30] [&[data-checked]]:text-[#a4f3d9]',
+    '[&[data-highlighted]]:bg-[#355946] [&[data-highlighted]]:text-white',
+  ],
+  'kind-menu-note': 'm-0 px-2 py-1.5 text-[10px] leading-relaxed text-[#a1b3a8]',
   'layer-label': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[gap:0.125rem]',
     '[.puppet-editor_&_strong]:overflow-hidden [.puppet-editor_&_strong]:[text-overflow:ellipsis]',
@@ -9,6 +34,7 @@ export const layersShortcuts = {
     '[.puppet-editor_&_small]:[color:#8f9d98] [.puppet-editor_&_small]:[font-size:0.5625rem]',
   ],
   'layer-row': [
+    '[.puppet-editor_&]:[max-width:calc(20rem_+_var(--layer-depth)_*_0.875rem)]',
     '[.puppet-editor_&]:relative [.puppet-editor_&]:grid',
     '[.puppet-editor_&]:[grid-template-columns:2.25rem_minmax(0,_1fr)_auto] [.puppet-editor_&]:[gap:0.25rem]',
     '[.puppet-editor_&]:items-center [.puppet-editor_&]:[padding-left:calc(var(--layer-depth)_*_0.875rem)]',
@@ -28,6 +54,10 @@ export const layersShortcuts = {
     '[.puppet-editor_&.drop-before::before]:[top:-0.1875rem]',
     '[.puppet-editor_&.drop-after::after]:[bottom:-0.1875rem]',
     '[.puppet-editor_&.drop-inside]:[border-color:#e5b55a] [.puppet-editor_&.drop-inside]:[background:#2b2618]',
+  ],
+  'layer-scroll': [
+    '[.puppet-editor_&]:min-h-0 [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:flex-1',
+    '[.puppet-editor_&]:overflow-auto',
   ],
   'layer-select': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[gap:0.5rem]',
@@ -55,18 +85,19 @@ export const layersShortcuts = {
     '[.puppet-editor_&_img]:[object-fit:contain]',
   ],
   'layer-toolbar': [
-    '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-wrap [.puppet-editor_&]:[gap:0.3125rem]',
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-wrap [.puppet-editor_&]:[gap:0.25rem]',
     '[.puppet-editor_&]:[margin-bottom:0.625rem]',
     '[.puppet-editor_&_button]:[min-height:1.625rem] [.puppet-editor_&_button]:[border:0.0625rem_solid_#35413d]',
     '[.puppet-editor_&_button]:[border-radius:0.3125rem] [.puppet-editor_&_button]:[color:#a7b3af]',
     '[.puppet-editor_&_button]:[background:#171e1b] [.puppet-editor_&_button]:[font-size:0.625rem]',
     '[.puppet-editor_&_button]:cursor-pointer',
-    '[.puppet-editor_&_button]:[padding:0.25rem_0.4375rem]',
+    '[.puppet-editor_&_button]:[padding:0.25rem] [.puppet-editor_&_button]:flex-none',
     '[.puppet-editor_&_button:disabled]:[opacity:0.38] [.puppet-editor_&_button:disabled]:cursor-not-allowed',
     '[.puppet-editor_&_button:focus-visible]:[outline:0.125rem_solid_#61e3c1]',
     '[.puppet-editor_&_button:focus-visible]:[outline-offset:0.0625rem]',
   ],
   'layer-tree': [
+    '[.puppet-editor_&]:w-max [.puppet-editor_&]:min-w-full',
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.25rem] [.puppet-editor_&]:m-0 [.puppet-editor_&]:p-0',
     '[.puppet-editor_&]:[list-style:none]',
     '[.puppet-editor_&_ul]:grid [.puppet-editor_&_ul]:[gap:0.25rem] [.puppet-editor_&_ul]:m-0',
@@ -74,16 +105,18 @@ export const layersShortcuts = {
     '[.puppet-editor_&.root-drop-active]:[box-shadow:inset_0_-0.125rem_0_#e5b55a]',
   ],
   'layers-panel': [
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-col [.puppet-editor_&]:min-w-0',
+    '[.puppet-editor_&]:overflow-hidden [.puppet-editor_&_>_:not(.layer-scroll)]:shrink-0',
     '[.puppet-editor_&]:[grid-area:layers] [.puppet-editor_&]:[border-right:0.0625rem_solid_#27302d]',
+  ],
+  'puppet-layer-choice': [
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:items-center',
+    '[.puppet-editor_&]:gap-2 [.puppet-editor_&_>_.layer-select]:flex-1',
   ],
   'puppet-layer-container-icon': [
     '[.puppet-editor_&]:[width:2.375rem] [.puppet-editor_&]:[height:1.875rem] [.puppet-editor_&]:[flex:none]',
-    '[.puppet-editor_&]:fill-none [.puppet-editor_&]:stroke-cap-round',
-    '[.puppet-editor_&]:[stroke-linejoin:round] [.puppet-editor_&]:[stroke-width:0.10625rem]',
-    '[.puppet-editor_&.group]:[color:#e5b55a] [.puppet-editor_&.group]:[stroke:currentcolor]',
-    '[.puppet-editor_&.group_rect:last-child]:[fill:#2b2618]',
-    '[.puppet-editor_&.deformer]:[color:#76d8c0] [.puppet-editor_&.deformer]:[stroke:currentcolor]',
-    '[.puppet-editor_&.deformer_circle]:[fill:#171e1b]',
+    '[.puppet-editor_&.group]:[color:#e5b55a]',
+    '[.puppet-editor_&.deformer]:[color:#76d8c0]',
   ],
   'puppet-layer-name-editor': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0',
@@ -97,6 +130,7 @@ export const layersShortcuts = {
     '[.puppet-editor_&_input:focus-visible]:[outline-offset:0.0625rem]',
   ],
   'puppet-layer-state-actions': [
+    '[.puppet-editor_&_button]:inline-grid [.puppet-editor_&_button]:place-items-center',
     '[.puppet-editor_&_button]:[min-height:1.625rem] [.puppet-editor_&_button]:[border:0.0625rem_solid_#35413d]',
     '[.puppet-editor_&_button]:[border-radius:0.3125rem] [.puppet-editor_&_button]:[color:#a7b3af]',
     '[.puppet-editor_&_button]:[background:#171e1b] [.puppet-editor_&_button]:[font-size:0.625rem]',
@@ -108,10 +142,11 @@ export const layersShortcuts = {
     '[.puppet-editor_&_button:focus-visible]:[outline:0.125rem_solid_#61e3c1]',
     '[.puppet-editor_&_button:focus-visible]:[outline-offset:0.0625rem]',
   ],
+  'puppet-layer-state-icon': [
+    '[.puppet-editor_&]:block [.puppet-editor_&]:[width:0.875rem] [.puppet-editor_&]:[height:0.875rem]',
+  ],
   'puppet-layer-toolbar-icon': [
     '[.puppet-editor_&]:block [.puppet-editor_&]:[width:0.875rem] [.puppet-editor_&]:[height:0.875rem]',
-    '[.puppet-editor_&]:fill-none [.puppet-editor_&]:[stroke:currentColor] [.puppet-editor_&]:stroke-cap-round',
-    '[.puppet-editor_&]:[stroke-linejoin:round] [.puppet-editor_&]:[stroke-width:0.09375rem]',
   ],
   'puppet-layer-tree-item': [
     "[.puppet-editor_&[aria-selected='true']_>_.layer-tree-node_>_.layer-row]:[border-color:#64e5c4]",
@@ -135,8 +170,8 @@ export const layersShortcuts = {
     '[.puppet-editor_&:focus-visible]:[outline-offset:0.0625rem]',
   ],
   'puppet-layer-tree-toggle-icon': [
-    '[.puppet-editor_&]:[width:1.25rem] [.puppet-editor_&]:[height:1.25rem]',
-    '[.puppet-editor_&]:[fill:currentcolor] [.puppet-editor_&]:[transform-origin:center]',
+    '[.puppet-editor_&]:[width:calc(1.25rem_*_2_/_3)] [.puppet-editor_&]:[height:calc(1.25rem_*_2_/_3)]',
+    '[.puppet-editor_&]:[transform-origin:center]',
     '[.puppet-editor_&.expanded]:[transform:rotate(90deg)]',
   ],
 }
