@@ -1,0 +1,36 @@
+.picture-diary-drawing__trigger {
+  display: block;
+  width: 100%;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.picture-diary-drawing__trigger:focus-visible {
+  outline: 0.125rem solid rgb(var(--pomo-color-primary-channels));
+  outline-offset: 0.125rem;
+}
+
+.picture-diary-drawing__trigger > svg {
+  pointer-events: none;
+}
+
+.picture-diary-drawing__surface {
+  width: min(100%, max(6rem, calc((100dvh - 15rem) * 1000 / 562)));
+  margin-inline: auto;
+  border-radius: 0.25rem;
+  background: rgb(var(--picture-diary-page));
+}
+
+.picture-diary-drawing__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.picture-diary-drawing__done {
+  margin-left: auto;
+}

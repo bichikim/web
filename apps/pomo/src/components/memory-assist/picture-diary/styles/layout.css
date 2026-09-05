@@ -1,0 +1,66 @@
+.picture-diary-book__frame,
+.picture-diary-drawing__surface {
+  --picture-diary-ink: 51 48 43;
+  --picture-diary-muted-ink: 112 106 96;
+  --picture-diary-page: 250 247 238;
+  --picture-diary-rule: 137 128 113;
+  --picture-diary-cover: 92 57 39;
+  --picture-diary-cover-inside: 133 92 65;
+}
+
+.picture-diary-book__frame {
+  position: relative;
+}
+
+.picture-diary-book {
+  position: relative;
+  padding: 0.5rem;
+  perspective: 106.25rem;
+  outline: 0;
+}
+
+.picture-diary-book:focus-visible {
+  border-radius: 0.65rem;
+  box-shadow: 0 0 0 0.125rem rgb(var(--pomo-color-primary-channels) / 72%);
+}
+
+.picture-diary-book__spread {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 0.0625rem solid rgb(var(--picture-diary-rule) / 20%);
+  border-radius: 0.5rem;
+  background: rgb(var(--picture-diary-page));
+  box-shadow:
+    0 0.9rem 2.5rem rgb(20 18 15 / 24%),
+    0 0.16rem 0.35rem rgb(20 18 15 / 12%);
+}
+
+.picture-diary-book__spread--closed {
+  width: 50%;
+  margin-right: 0;
+}
+
+.picture-diary-book__frame[data-picture-diary-cover-closed='front']
+  .picture-diary-book__spread--closed {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+@media (width < 48rem) {
+  .picture-diary-book__spread--closed {
+    width: 100%;
+  }
+}
+
+@media (width >= 48rem) {
+  .picture-diary-book__spread {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .picture-diary-book__spread--closed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
