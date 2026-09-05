@@ -74,7 +74,7 @@ it('should generate, store, and play a due memo reminder', async () => {
     }),
   ]
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() =>
@@ -113,6 +113,7 @@ it('should run the playback callback before playing a due memo reminder', async 
   const events = {
     playDialogue: vi.fn(async () => {
       playbackOrder.push('play')
+      return true
     }),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
@@ -157,7 +158,7 @@ it.each([
       }),
     ]
     const completion = Promise.withResolvers<void>()
-    const playDialogue = vi.fn().mockResolvedValue(undefined)
+    const playDialogue = vi.fn().mockResolvedValue(true)
     const refreshDialogues = vi.fn().mockResolvedValue(undefined)
     const stages = {
       generation: () =>
@@ -170,7 +171,7 @@ it.each([
           await completion.promise
           return {ok: true, value: undefined}
         }),
-      playback: () => playDialogue.mockReturnValueOnce(completion.promise),
+      playback: () => playDialogue.mockReturnValueOnce(completion.promise.then(() => true)),
       refresh: () => refreshDialogues.mockReturnValueOnce(completion.promise),
     }
     stages[stage]()
@@ -224,7 +225,7 @@ it('should use the automatic dialogue model and voice for generated memo audio',
     }),
   ]
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() =>
@@ -261,7 +262,7 @@ it('should reuse compressed dialogue audio for a later recall', async () => {
     },
   ]
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() =>
@@ -293,7 +294,7 @@ it('should discard generated audio when its memo is deleted during generation', 
   const generation = Promise.withResolvers<string>()
   mocks.createDialogue.mockReturnValue(generation.promise)
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() =>
@@ -328,7 +329,7 @@ it('should discard generated audio when its memo is edited during generation', a
   const generation = Promise.withResolvers<string>()
   mocks.createDialogue.mockReturnValue(generation.promise)
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() =>
@@ -373,7 +374,7 @@ it('should preserve an edit made while reminder persistence is waiting', async (
     return mocks.memos
   })
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() =>
@@ -410,7 +411,7 @@ it('should discard generated audio when reminder persistence fails', async () =>
   ]
   mocks.updateMemos.mockRejectedValue(new Error('write failed'))
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() =>
@@ -443,13 +444,78 @@ it('should not resurrect a deleted memo when reminder persistence was already qu
     return mocks.memos
   })
   const events = {
-    playDialogue: vi.fn().mockResolvedValue(undefined),
+    playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
   const view = renderHook(() => useMemoryReminders({events}))
   await vi.advanceTimersToNextTimerAsync()
   await flushPromises()
   expect(mocks.memos).toEqual([{...memo, deletionPending: true}])
+  view.cleanup()
+})
+
+it('should discard generated audio when the reminder owner is disposed during generation', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  const generation = Promise.withResolvers<string>()
+  mocks.createDialogue.mockReturnValue(generation.promise)
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(true),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() =>
+    useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
+  )
+
+  await vi.advanceTimersToNextTimerAsync()
+  await vi.waitFor(() => expect(mocks.createDialogue).toHaveBeenCalledOnce())
+  view.cleanup()
+  generation.resolve('memory-memo-memo-1')
+  await flushPromises()
+
+  expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
+  expect(events.refreshDialogues).not.toHaveBeenCalled()
+  expect(events.playDialogue).not.toHaveBeenCalled()
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+})
+
+it('should not advance a reminder when playback is skipped', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(false),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() =>
+    useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+  await flushPromises()
+
+  expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
+  expect(mocks.memos[0]).toMatchObject({
+    exactReminderAt: '2026-09-04T03:00:00.000Z',
+    reminderHistory: [],
+  })
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+
   view.cleanup()
 })
 
