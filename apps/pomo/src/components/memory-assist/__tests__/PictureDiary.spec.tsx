@@ -6,6 +6,8 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import type {PictureDiaryEntry, PictureDiaryRepository} from '../../../features/picture-diary'
 import type {WeatherState} from '../../../features/weather'
 import {PictureDiary} from '../PictureDiary'
+import {createBrowserDiaryEnvironment} from '../picture-diary/environment'
+import {createTurnHarness} from '../picture-diary/__tests__/fixtures/turns'
 
 const createRepository = (entries: ReadonlyArray<PictureDiaryEntry> = []) =>
   ({
@@ -14,51 +16,34 @@ const createRepository = (entries: ReadonlyArray<PictureDiaryEntry> = []) =>
     save: vi.fn().mockResolvedValue(undefined),
   }) satisfies PictureDiaryRepository
 
-let animationTime = 0
+const turns = createTurnHarness()
+let compact = false
+const environment = {
+  ...createBrowserDiaryEnvironment(),
+  observeCompact: (onChange: (value: boolean) => void) => {
+    onChange(compact)
+    return () => undefined
+  },
+}
 
 beforeEach(() => {
-  animationTime = 0
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
-    function getPictureDiaryBounds(this: HTMLElement) {
-      const width = this.classList.contains('picture-diary-book__edge-turns') ? 800 : 0
-      const height = width > 0 ? 500 : 0
-      return {
-        bottom: height,
-        height,
-        left: 0,
-        right: width,
-        toJSON: () => ({}),
-        top: 0,
-        width,
-        x: 0,
-        y: 0,
-      }
-    },
-  )
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
-    window.setTimeout(() => {
-      animationTime += 100
-      callback(animationTime)
-    }),
-  )
-  vi.stubGlobal('cancelAnimationFrame', (handle: number) => window.clearTimeout(handle))
+  turns.reset()
+  compact = false
 })
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  vi.unstubAllGlobals()
 })
 
 const finishPageTurn = async () => {
   const turnSheet = screen.getByLabelText('일기장').querySelector('[data-picture-diary-turn-sheet]')
 
   expect(turnSheet).toBeInTheDocument()
-  await waitFor(() =>
-    expect(
-      screen.getByLabelText('일기장').querySelector('[data-picture-diary-turn-sheet]'),
-    ).not.toBeInTheDocument(),
-  )
+  turns.advance(700)
+  expect(
+    screen.getByLabelText('일기장').querySelector('[data-picture-diary-turn-sheet]'),
+  ).not.toBeInTheDocument()
 }
 
 const getSpread = () => {
@@ -97,7 +82,14 @@ const readyWeather = {
 
 it('should save writing to local diary storage without a separate new-entry control', async () => {
   const repository = createRepository()
-  render(() => <PictureDiary repository={repository} weatherState={readyWeather} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+      weatherState={readyWeather}
+    />
+  ))
 
   await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
   expect(screen.queryByRole('button', {name: '새 일기'})).not.toBeInTheDocument()
@@ -117,7 +109,14 @@ it('should save writing to local diary storage without a separate new-entry cont
 
 it('should save normally without weather while the current weather is unavailable', async () => {
   const repository = createRepository()
-  render(() => <PictureDiary repository={repository} weatherState={{status: 'disabled'}} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+      weatherState={{status: 'disabled'}}
+    />
+  ))
 
   await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '날씨 없는 일기'}})
@@ -140,7 +139,13 @@ it('should restore and delete a saved picture diary entry', async () => {
     version: 1,
   } satisfies PictureDiaryEntry
   const repository = createRepository([entry])
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
 
   await waitFor(() =>
     expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
@@ -168,7 +173,13 @@ it('should prevent duplicate saves and preserve changes made during a pending sa
   const pending = Promise.withResolvers<void>()
   const repository = createRepository()
   repository.save.mockReturnValue(pending.promise)
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
   await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '첫 초안'}})
   const save = screen.getByRole('button', {name: '일기 저장'})
@@ -185,7 +196,13 @@ it('should retain a saved entry when the initial load resolves afterward', async
   const pending = Promise.withResolvers<ReadonlyArray<PictureDiaryEntry>>()
   const repository = createRepository()
   repository.list.mockReturnValue(pending.promise)
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '먼저 저장한 일기'}})
   fireEvent.click(screen.getByRole('button', {name: '일기 저장'}))
   await waitFor(() => expect(screen.getByText('먼저 저장한 일기')).toBeInTheDocument())
@@ -198,7 +215,13 @@ it('should retain the draft and allow retry after storage failure', async () => 
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const repository = createRepository()
   repository.save.mockRejectedValueOnce(new Error('disk full'))
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
   await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '재시도할 초안'}})
   fireEvent.click(screen.getByRole('button', {name: '일기 저장'}))
@@ -209,8 +232,15 @@ it('should retain the draft and allow retry after storage failure', async () => 
 })
 
 it('should close and reopen the final cover on a compact empty diary', async () => {
-  vi.stubGlobal('matchMedia', (query: string) => ({matches: query === '(width < 48rem)'}))
-  render(() => <PictureDiary repository={createRepository()} />)
+  compact = true
+  turns.setCompact(true)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={createRepository()}
+    />
+  ))
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '모바일 초안'}})
   fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
   await finishPageTurn()
@@ -236,7 +266,13 @@ it('should keep saved entries read-only and preserve the draft through newer nav
     version: 1,
   } satisfies PictureDiaryEntry
   const repository = createRepository([entry])
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
 
   await waitFor(() =>
     expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
@@ -272,7 +308,13 @@ it('should keep saved entries read-only and preserve the draft through newer nav
 
 it('should save multiple entries with distinct identities on the same date', async () => {
   const repository = createRepository()
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
 
   await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '아침 일기'}})
@@ -311,7 +353,13 @@ it('should page backward and forward through locally stored entries', async () =
     text: '이전 일기',
     updatedAt: '2026-09-03T03:00:00.000Z',
   } satisfies PictureDiaryEntry
-  render(() => <PictureDiary repository={createRepository([newerEntry, olderEntry])} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={createRepository([newerEntry, olderEntry])}
+    />
+  ))
 
   await screen.findByText('최근 일기')
   expect(within(getSpread()).getByText('최근 일기').closest('section')).toHaveAttribute(
@@ -346,7 +394,13 @@ it.each([0, 2, 4])(
       version: 1,
     }))
     const repository = createRepository(entries)
-    render(() => <PictureDiary repository={repository} />)
+    render(() => (
+      <PictureDiary
+        environment={environment}
+        turnEnvironment={turns.environment}
+        repository={repository}
+      />
+    ))
     await waitFor(() => expect(repository.list).toHaveBeenCalled())
     fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '보존할 초안'}})
     fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
@@ -378,7 +432,13 @@ it('should close the right cover and reopen the writing page without losing the 
     updatedAt: '2026-09-05T00:00:00.000Z',
     version: 1,
   }
-  render(() => <PictureDiary repository={createRepository([entry])} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={createRepository([entry])}
+    />
+  ))
   await waitFor(() =>
     expect(getSpread().querySelector('.picture-diary-book__page--current')).toHaveClass(
       'picture-diary-book__back-cover--inside',
@@ -403,7 +463,13 @@ it('should close the right cover and reopen the writing page without losing the 
 
 it('should close an empty diary and reopen its unchanged draft', async () => {
   const repository = createRepository()
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
   await waitFor(() => expect(repository.list).toHaveBeenCalled())
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '작성 중인 초안'}})
   const olderButton = screen.getByRole('button', {name: '이전 일기 보기'})
@@ -431,7 +497,13 @@ it('should close the back cover after the oldest entry and reopen to that entry'
     updatedAt: '2026-09-01T03:00:00.000Z',
     version: 1,
   } satisfies PictureDiaryEntry
-  render(() => <PictureDiary repository={createRepository([oldestEntry])} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={createRepository([oldestEntry])}
+    />
+  ))
 
   await waitFor(() =>
     expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
@@ -478,7 +550,13 @@ it('should report local load, save, and delete failures without discarding the d
   const repository = createRepository([entry])
   vi.mocked(repository.save).mockRejectedValue(new Error('save failed'))
   vi.mocked(repository.delete).mockRejectedValue(new Error('delete failed'))
-  render(() => <PictureDiary repository={repository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
 
   await waitFor(() =>
     expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
@@ -501,6 +579,12 @@ it('should report local load, save, and delete failures without discarding the d
 
   const failedRepository = createRepository()
   vi.mocked(failedRepository.list).mockRejectedValue(new Error('load failed'))
-  render(() => <PictureDiary repository={failedRepository} />)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={failedRepository}
+    />
+  ))
   expect(await screen.findByText('이 기기의 일기장을 불러오지 못했어요.')).toBeInTheDocument()
 })

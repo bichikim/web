@@ -1,4 +1,18 @@
-import {type Accessor, batch, createSignal, type JSX, onCleanup, type Setter} from 'solid-js'
+import {
+  type Accessor,
+  batch,
+  createSignal,
+  type JSX,
+  onCleanup,
+  type Setter,
+  untrack,
+} from 'solid-js'
+
+import {
+  createBrowserTurnEnvironment,
+  type PageMetrics,
+  type PageTurnEnvironment,
+} from './turn-environment'
 
 import {
   clampFoldTarget,
@@ -44,14 +58,6 @@ interface PointerSample {
   readonly x: number
 }
 
-interface PageMetrics {
-  readonly compact: boolean
-  readonly height: number
-  readonly left: number
-  readonly pageWidth: number
-  readonly top: number
-}
-
 interface PageTurnAnimation {
   readonly completed: boolean
   readonly currentGesture: PageTurnGesture
@@ -64,7 +70,8 @@ interface UsePictureDiaryPageTurnOptions {
   readonly disabled: Accessor<boolean>
   readonly onComplete: (intent: PictureDiaryTurnIntent) => void
   readonly resolveIntent: (direction: PictureDiaryTurnDirection) => PictureDiaryTurnIntent | null
-  readonly surface: Accessor<HTMLDivElement | undefined>
+  readonly surface?: Accessor<HTMLDivElement | undefined>
+  readonly environment?: PageTurnEnvironment
 }
 
 export interface PictureDiaryPageTurnController {
@@ -90,11 +97,12 @@ class PictureDiaryPageTurnMachine {
   private gesture: PageTurnGesture | undefined
   private gestureAxis: 'horizontal' | 'pending' | 'vertical' = 'pending'
   private lastTarget: FoldPoint | undefined
-  private pointerListenersAttached = false
+  private detachPointers: (() => void) | undefined
   private pointerSamples: Array<PointerSample> = []
 
   constructor(
     private readonly options: UsePictureDiaryPageTurnOptions,
+    private readonly environment: PageTurnEnvironment,
     private readonly view: Accessor<PictureDiaryTurnView | null>,
     private readonly setView: Setter<PictureDiaryTurnView | null>,
   ) {}
@@ -111,7 +119,7 @@ class PictureDiaryPageTurnMachine {
     }
 
     const intent = this.options.resolveIntent(direction)
-    const metrics = this.getMetrics()
+    const metrics = this.environment.getMetrics()
     if (intent === null || metrics === null) {
       return
     }
@@ -122,7 +130,7 @@ class PictureDiaryPageTurnMachine {
       x: direction === 'older' ? -metrics.pageWidth : metrics.pageWidth,
       y: startPoint.y,
     }
-    const now = performance.now()
+    const now = this.environment.now()
     this.gesture = {
       anchor,
       compact: metrics.compact,
@@ -156,7 +164,7 @@ class PictureDiaryPageTurnMachine {
     }
 
     const intent = this.options.resolveIntent(direction)
-    const metrics = this.getMetrics()
+    const metrics = this.environment.getMetrics()
     if (intent === null || metrics === null) {
       return
     }
@@ -176,7 +184,7 @@ class PictureDiaryPageTurnMachine {
       startClientX: 0,
       startClientY: 0,
       startPoint: anchor,
-      startTime: performance.now(),
+      startTime: this.environment.now(),
     }
     this.gesture = currentGesture
     this.animateTo({
@@ -218,7 +226,7 @@ class PictureDiaryPageTurnMachine {
       currentGesture.intent.direction,
       metrics,
     )
-    this.recordPointerSample(target.x, performance.now())
+    this.recordPointerSample(target.x, this.environment.now())
     this.setFoldView(currentGesture, target, 'move')
   }
 
@@ -237,13 +245,13 @@ class PictureDiaryPageTurnMachine {
       return
     }
 
-    this.recordPointerSample(target.x, performance.now())
+    this.recordPointerSample(target.x, this.environment.now())
     const completed = shouldCompletePageFold({
       anchorX: currentGesture.anchor.x,
       progress: activeView?.fold?.progress ?? 0,
       swiping:
         Math.abs(horizontalDistance) >= SWIPE_DISTANCE &&
-        performance.now() - currentGesture.startTime <= SWIPE_TIME,
+        this.environment.now() - currentGesture.startTime <= SWIPE_TIME,
       velocityX: this.getReleaseVelocity(),
     })
     this.animateTo({
@@ -300,23 +308,6 @@ class PictureDiaryPageTurnMachine {
     return this.gestureAxis === 'horizontal'
   }
 
-  private getMetrics(): PageMetrics | null {
-    const bounds = this.options.surface()?.getBoundingClientRect()
-    if (bounds === undefined || bounds.width <= 0 || bounds.height <= 0) {
-      return null
-    }
-
-    const compact =
-      typeof window.matchMedia === 'function' && window.matchMedia('(width < 48rem)').matches
-    return {
-      compact,
-      height: bounds.height,
-      left: bounds.left,
-      pageWidth: compact ? bounds.width : bounds.width / 2,
-      top: bounds.top,
-    }
-  }
-
   private getLocalPoint(
     clientX: number,
     clientY: number,
@@ -331,7 +322,7 @@ class PictureDiaryPageTurnMachine {
   }
 
   private getGestureMetrics(gesture: PageTurnGesture): PageMetrics | null {
-    const metrics = this.getMetrics()
+    const metrics = this.environment.getMetrics()
     if (
       metrics === null ||
       metrics.compact !== gesture.compact ||
@@ -382,7 +373,7 @@ class PictureDiaryPageTurnMachine {
       this.resetGesture()
       return
     }
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    if (this.environment.prefersReducedMotion()) {
       this.finishAnimation(animation.currentGesture, animation.completed)
       return
     }
@@ -409,13 +400,13 @@ class PictureDiaryPageTurnMachine {
       )
 
       if (linearProgress < 1) {
-        this.animationFrame = requestAnimationFrame(step)
+        this.animationFrame = this.environment.requestFrame(step)
       } else {
         this.finishAnimation(animation.currentGesture, animation.completed)
       }
     }
 
-    this.animationFrame = requestAnimationFrame(step)
+    this.animationFrame = this.environment.requestFrame(step)
   }
 
   private finishAnimation(currentGesture: PageTurnGesture, completed: boolean) {
@@ -433,27 +424,22 @@ class PictureDiaryPageTurnMachine {
 
   private stopAnimation() {
     if (this.animationFrame !== undefined) {
-      cancelAnimationFrame(this.animationFrame)
+      this.environment.cancelFrame(this.animationFrame)
       this.animationFrame = undefined
     }
   }
 
   private attachPointerListeners() {
-    window.addEventListener('pointermove', this.handlePointerMove, {passive: false})
-    window.addEventListener('pointerup', this.handlePointerUp)
-    window.addEventListener('pointercancel', this.handlePointerCancel)
-    this.pointerListenersAttached = true
+    this.detachPointers = this.environment.listenPointers({
+      cancel: this.handlePointerCancel,
+      move: this.handlePointerMove,
+      up: this.handlePointerUp,
+    })
   }
 
   private detachPointerListeners() {
-    if (!this.pointerListenersAttached) {
-      return
-    }
-
-    window.removeEventListener('pointermove', this.handlePointerMove)
-    window.removeEventListener('pointerup', this.handlePointerUp)
-    window.removeEventListener('pointercancel', this.handlePointerCancel)
-    this.pointerListenersAttached = false
+    this.detachPointers?.()
+    this.detachPointers = undefined
   }
 
   private resetGesture() {
@@ -487,7 +473,10 @@ export const usePictureDiaryPageTurn = (
   options: UsePictureDiaryPageTurnOptions,
 ): PictureDiaryPageTurnController => {
   const [view, setView] = createSignal<PictureDiaryTurnView | null>(null)
-  const machine = new PictureDiaryPageTurnMachine(options, view, setView)
+  const environment = untrack(
+    () => options.environment ?? createBrowserTurnEnvironment({surface: options.surface}),
+  )
+  const machine = new PictureDiaryPageTurnMachine(options, environment, view, setView)
 
   onCleanup(() => machine.destroy())
 

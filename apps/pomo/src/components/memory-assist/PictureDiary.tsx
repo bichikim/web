@@ -13,12 +13,19 @@ import {
 import type {WeatherState} from '../../features/weather'
 import {type BookSpread, getBookPagination} from './picture-diary/pagination'
 import {PictureDiaryEditor} from './picture-diary/Editor'
+import type {PageTurnEnvironment} from './picture-diary/turn-environment'
+import {
+  createBrowserDiaryEnvironment,
+  type PictureDiaryEnvironment,
+} from './picture-diary/environment'
 
 const padNumber = (value: number) => String(value).padStart(2, '0')
 const getDateValue = (date: Date) =>
   `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
 
 export interface PictureDiaryProps {
+  readonly turnEnvironment?: PageTurnEnvironment
+  readonly environment?: PictureDiaryEnvironment
   readonly repository?: PictureDiaryRepository
   readonly weatherState?: WeatherState
 }
@@ -83,10 +90,11 @@ const getWeatherSnapshot = (state?: WeatherState): PictureDiaryWeather | undefin
 }
 
 export const PictureDiary = (props: PictureDiaryProps) => {
+  const environment = untrack(() => props.environment ?? createBrowserDiaryEnvironment())
   const repository = untrack(() => props.repository ?? createPictureDiaryRepository())
   const [entries, setEntries] = createSignal<ReadonlyArray<PictureDiaryEntry>>([])
   const [view, setView] = createSignal<PictureDiaryView>({kind: 'writing'})
-  const [date, setDate] = createSignal(getDateValue(new Date()))
+  const [date, setDate] = createSignal(getDateValue(environment.now()))
   const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
   const [text, setText] = createSignal('')
   const [compact, setCompact] = createSignal(false)
@@ -142,11 +150,11 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     const snapshot = {date: date(), strokes: strokes(), text: text(), view: view()}
     setSaving(true)
     try {
-      const now = new Date()
+      const now = environment.now()
       const entry = createPictureDiaryEntry({
         createdAt: now.toISOString(),
         date: snapshot.date,
-        id: crypto.randomUUID(),
+        id: environment.createId(),
         now,
         strokes: snapshot.strokes,
         text: snapshot.text,
@@ -160,7 +168,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         ]),
       )
       if (date() === snapshot.date && strokes() === snapshot.strokes && text() === snapshot.text) {
-        setDate(getDateValue(new Date()))
+        setDate(getDateValue(environment.now()))
         setStrokes([])
         setText('')
         if (view() === snapshot.view) {
@@ -191,13 +199,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   }
 
   onMount(() => {
-    const media = window.matchMedia?.('(width < 48rem)')
-    if (media !== undefined) {
-      const update = () => setCompact(media.matches)
-      update()
-      media.addEventListener?.('change', update)
-      onCleanup(() => media.removeEventListener?.('change', update))
-    }
+    onCleanup(environment.observeCompact(setCompact))
     repository
       .list()
       .then((loaded) => setEntries((current) => mergeLoadedEntries(loaded, current)))
@@ -210,6 +212,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   return (
     <section class="grid gap-5 settings-compact:gap-4">
       <PictureDiaryEditor
+        turnEnvironment={props.turnEnvironment}
         frontCoverClosed={view().kind === 'front-cover'}
         onFrontCoverChange={(closed) => setView({kind: closed ? 'front-cover' : 'ending'})}
         backCoverClosed={backCoverClosed()}

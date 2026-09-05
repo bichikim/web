@@ -16,6 +16,7 @@ import {PictureDiaryDrawing} from './Drawing'
 import {PictureDiaryEdgeTurns} from './EdgeTurns'
 import type {BookPage, BookSpread} from './pagination'
 import {getTurnProperties} from './turn-properties'
+import type {PageTurnEnvironment} from './turn-environment'
 import {
   type PictureDiaryTurnDirection,
   type PictureDiaryTurnIntent,
@@ -25,6 +26,7 @@ import {
 import './editor.css'
 
 export interface PictureDiaryEditorProps {
+  readonly turnEnvironment?: PageTurnEnvironment
   readonly frontCoverClosed?: boolean
   readonly onFrontCoverChange?: (closed: boolean) => void
   readonly backCoverClosed?: boolean
@@ -424,6 +426,9 @@ export const PictureDiaryEditor = (props: PictureDiaryEditorProps) => {
 
   const pageTurn = usePictureDiaryPageTurn({
     disabled: () => false,
+    get environment() {
+      return props.turnEnvironment
+    },
     onComplete: handleCompletedTurn,
     resolveIntent: resolveTurnIntent,
     surface: () => turnSurface,
