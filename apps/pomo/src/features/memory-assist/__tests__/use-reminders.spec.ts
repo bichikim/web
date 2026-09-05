@@ -128,6 +128,85 @@ it('should run the playback callback before playing a due memo reminder', async 
   view.cleanup()
 })
 
+it.each([
+  ['model preparation', '2026-09-04T03:35:00.000Z', '2026-09-04T03:40:00.000Z'],
+  ['generation', '2026-09-04T03:35:00.000Z', '2026-09-04T03:40:00.000Z'],
+  ['refresh', '2026-09-04T03:35:00.000Z', '2026-09-04T03:40:00.000Z'],
+  ['playback', '2026-09-04T03:35:00.000Z', '2026-09-04T03:40:00.000Z'],
+  ['playback', '2026-09-04T03:40:00.000Z', '2026-09-04T03:50:00.000Z'],
+  ['playback', '2026-09-04T05:05:00.000Z', null],
+] as const)(
+  'should skip elapsed repeats when %s completes at %s',
+  async (stage, completedAt, nextReminderAt) => {
+    mocks.memos = [
+      createMemoryMemo({
+        exactReminderAdvanceMinutes: 60,
+        exactReminderAt: '2026-09-04T04:00:00.000Z',
+        exactReminderRepeatIntervalMinutes: 10,
+        exactReminderRepeatUntilMinutes: 60,
+        id: 'memo-1',
+        now: new Date('2026-09-04T02:00:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: '여권 갱신하기',
+      }),
+    ]
+    const completion = Promise.withResolvers<void>()
+    const playDialogue = vi.fn().mockResolvedValue(undefined)
+    const refreshDialogues = vi.fn().mockResolvedValue(undefined)
+    const stages = {
+      generation: () =>
+        mocks.createDialogue.mockImplementationOnce(async () => {
+          await completion.promise
+          return 'memory-memo-memo-1'
+        }),
+      'model preparation': () =>
+        mocks.initializeClient.mockImplementationOnce(async () => {
+          await completion.promise
+          return {ok: true, value: undefined}
+        }),
+      playback: () => playDialogue.mockReturnValueOnce(completion.promise),
+      refresh: () => refreshDialogues.mockReturnValueOnce(completion.promise),
+    }
+    stages[stage]()
+    const events = {playDialogue, refreshDialogues} as unknown as PEventContextValue
+    const view = renderHook(() =>
+      useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
+    )
+
+    try {
+      await vi.advanceTimersToNextTimerAsync()
+      await flushPromises()
+      expect(mocks.updateMemos).not.toHaveBeenCalled()
+
+      vi.setSystemTime(new Date(completedAt))
+      completion.resolve()
+      await flushPromises()
+
+      expect(mocks.memos[0]).toMatchObject({
+        exactReminderAt: nextReminderAt === null ? null : '2026-09-04T04:00:00.000Z',
+        nextExactReminderAt: nextReminderAt,
+        reminderHistory: [completedAt],
+        updatedAt: completedAt,
+      })
+      await vi.advanceTimersByTimeAsync(1)
+      expect(playDialogue).toHaveBeenCalledExactlyOnceWith('memory-memo-memo-1')
+      expect(mocks.updateMemos).toHaveBeenCalledOnce()
+      expect(vi.getTimerCount()).toBe(nextReminderAt === null ? 0 : 1)
+
+      if (nextReminderAt !== null) {
+        await vi.advanceTimersToNextTimerAsync()
+        await flushPromises()
+        expect(new Date().toISOString()).toBe(nextReminderAt)
+        expect(playDialogue).toHaveBeenCalledTimes(2)
+        expect(mocks.createDialogue).toHaveBeenCalledOnce()
+      }
+    } finally {
+      view.cleanup()
+    }
+  },
+)
+
 it('should use the automatic dialogue model and voice for generated memo audio', async () => {
   mocks.memos = [
     createMemoryMemo({
