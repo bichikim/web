@@ -1,5 +1,9 @@
 export {createPDialogueRepository, deleteDialogueAudio} from './repository'
-export type {PDialogueRepository, SaveDialogueOptions} from './repository'
+export type {
+  DeleteDialogueAudioOptions,
+  PDialogueRepository,
+  SaveDialogueOptions,
+} from './repository'
 export {PEventContext, usePEvents} from './event-context'
 export type {PEventContextValue} from './event-context'
 export {usePEventController} from './use-p-event-controller'

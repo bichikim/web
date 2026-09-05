@@ -9,22 +9,18 @@ import type {PuppetDocument, PuppetPart} from '../player/document'
 import {sampleMotionVertices} from '../player/internal/motion'
 import {getScenePartStates} from '../player/scene'
 import {addPartVertex, deletePartVertex, movePartVertex, type VertexPoint} from './edit-document'
-import {
-  getIndexedVertices,
-  getMeshViewTriangles,
-  type IndexedVertex,
-  type MeshTriangle,
-  snapPointToEdge,
-} from './internal/mesh-view'
+import {type IndexedVertex, type MeshTriangle, snapPointToEdge} from './internal/mesh-view'
 import {setVertexKeyframe} from './internal/motion-keyframes'
-import {getDeformerPreviewDocument, getPartPreviewVertices} from './internal/mesh-preview'
+import {getDeformerPreviewDocument} from './internal/mesh-preview'
 import {getEditErrorMessage} from './internal/notices'
+import {createPartViews, type MeshPartView} from './internal/part-views'
 import {setParameterKeyformVertex} from './internal/parameter-keyforms'
-import {applySceneDeformers, unapplySceneDeformersPoint} from './internal/scene-deformation'
+import {unapplySceneDeformersPoint} from './internal/scene-deformation'
 import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
 
 export type {IndexedVertex, MeshTriangle} from './internal/mesh-view'
+export type {MeshPartView} from './internal/part-views'
 
 export type MeshEditTool = 'add' | 'select'
 
@@ -36,6 +32,7 @@ export interface UseMeshEditorResult {
   readonly handlePointerDown: (event: PointerEvent, partId: string, vertex: IndexedVertex) => void
   readonly handlePointerEnd: () => void
   readonly handlePointerMove: (event: PointerEvent) => void
+  readonly clippedPartViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly part: Accessor<PuppetPart | undefined>
   readonly partViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly selectAddTool: () => void
@@ -47,18 +44,13 @@ export interface UseMeshEditorResult {
   readonly vertices: Accessor<ReadonlyArray<IndexedVertex>>
 }
 
-export interface MeshPartView {
-  readonly partId: string
-  readonly triangles: ReadonlyArray<MeshTriangle>
-  readonly vertices: ReadonlyArray<IndexedVertex>
-}
-
 interface MeshEditorState {
   readonly draftPoint: Accessor<VertexPoint | null>
   readonly dragStartPoint: Accessor<VertexPoint | null>
   readonly draggingTime: Accessor<number | null>
   readonly draggingValues: Accessor<PuppetParameterValues | null>
   readonly draggingVertex: Accessor<number | null>
+  readonly clippedPartViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly part: Accessor<PuppetPart | undefined>
   readonly partViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly selectedVertex: Accessor<number | null>
@@ -267,32 +259,24 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   )
   const partViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
     const activePart = part()
-    const activeVertex = selectedVertex()
-    const activeDraft = draftPoint()
-
-    const verticesByPartId = new Map(
-      parts().map((candidate) => [
-        candidate.id,
-        new Float32Array(getPartPreviewVertices(props, candidate)),
-      ]),
-    )
-    applySceneDeformers({document: getDeformerPreviewDocument(props), verticesByPartId})
-
-    return parts().map((candidate) => {
-      const vertices = getIndexedVertices({
-        draftPoint: candidate.id === activePart?.id ? activeDraft : null,
-        mesh: {
-          ...candidate.mesh,
-          vertices: Array.from(verticesByPartId.get(candidate.id) ?? candidate.mesh.vertices),
-        },
-        selectedVertex: candidate.id === activePart?.id ? activeVertex : null,
-      })
-
-      return {
-        partId: candidate.id,
-        triangles: getMeshViewTriangles({mesh: candidate.mesh, vertices}),
-        vertices,
-      }
+    return createPartViews({
+      activePartId: activePart?.id,
+      candidates: parts(),
+      draftPoint: draftPoint(),
+      props,
+      selectedVertex: selectedVertex(),
+    })
+  })
+  const clippedPartViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
+    const maskPartId = part()?.id
+    return createPartViews({
+      candidates: props.document.parts.filter(
+        (candidate) =>
+          maskPartId !== undefined && candidate.properties?.clippingMaskIds?.includes(maskPartId),
+      ),
+      draftPoint: null,
+      props,
+      selectedVertex: null,
     })
   })
   const vertices = createMemo<ReadonlyArray<IndexedVertex>>(() => {
@@ -339,6 +323,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   })
 
   return {
+    clippedPartViews,
     draftPoint,
     draggingTime,
     draggingValues,
@@ -381,16 +366,14 @@ const updatePointerDraft = (
 }
 
 const canEditMeshTopology = (props: MeshEditorProps, state: MeshEditorState) =>
-  props.editMode !== 'parameter' &&
-  props.onDocumentChange !== undefined &&
-  state.part() !== undefined
+  props.editMode !== 'motion' && props.onDocumentChange !== undefined && state.part() !== undefined
 
 const createAddVertexHandler =
   (props: MeshEditorProps, state: MeshEditorState) => (event: MouseEvent) => {
     const activePart = state.part()
     const {onDocumentChange} = props
     if (
-      props.editMode === 'parameter' ||
+      props.editMode === 'motion' ||
       state.tool() !== 'add' ||
       activePart === undefined ||
       onDocumentChange === undefined
@@ -431,7 +414,7 @@ const createDeleteVertexHandler = (props: MeshEditorProps, state: MeshEditorStat
   const activeVertex = state.selectedVertex()
   const {onDocumentChange} = props
   if (
-    props.editMode === 'parameter' ||
+    props.editMode === 'motion' ||
     activePart === undefined ||
     activeVertex === null ||
     onDocumentChange === undefined
@@ -549,6 +532,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
 
   return {
     canEditTopology: () => canEditMeshTopology(props, state),
+    clippedPartViews: state.clippedPartViews,
     handleAddVertex,
     handleDeleteVertex,
     handlePointerCancel: () => resetPointerState(state),

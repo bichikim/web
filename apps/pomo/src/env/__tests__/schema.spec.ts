@@ -234,6 +234,18 @@ describe('OPENAI_*', () => {
   })
 })
 
+describe('calendar integration settings', () => {
+  it('should treat calendar credentials as optional until the feature is used', () => {
+    expect(envSchema.GOOGLE_CALENDAR_CLIENT_ID.parse('')).toBeUndefined()
+    expect(envSchema.GOOGLE_CALENDAR_CLIENT_SECRET.parse(' google-secret ')).toBe('google-secret')
+    expect(envSchema.MICROSOFT_CALENDAR_CLIENT_ID.parse(' microsoft-client ')).toBe(
+      'microsoft-client',
+    )
+    expect(envSchema.MICROSOFT_CALENDAR_CLIENT_SECRET.parse(undefined)).toBeUndefined()
+    expect(envSchema.POMO_CALENDAR_TOKEN_ENCRYPTION_KEY.parse(' token-key ')).toBe('token-key')
+  })
+})
+
 describe('OPENAI_WEBHOOK_SECRET', () => {
   it('should return a trimmed webhook secret', () => {
     expect(envSchema.OPENAI_WEBHOOK_SECRET.parse(' whsec_test ')).toBe('whsec_test')

@@ -23,6 +23,8 @@ describe('PButton', () => {
     const trailingIcon = result.container.querySelector('[data-pomo-button-trailing-icon]')
 
     expect(button.tagName).toBe('BUTTON')
+    expect(button).toHaveClass('rounded-panel-inner')
+    expect(button).not.toHaveClass('rounded-control')
     expect(image?.getAttribute('src')).toBe('pomo-smile.png')
     expect(image?.classList.contains('size-16')).toBe(true)
     expect(image?.classList.contains('size-6')).toBe(false)

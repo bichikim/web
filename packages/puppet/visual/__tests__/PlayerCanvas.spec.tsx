@@ -53,6 +53,60 @@ const createPreviewDocument = () => {
   }
 }
 
+const createPartRenderingDocument = () => {
+  const document = createDemoDocument()
+  return {
+    ...document,
+    motions: [],
+    parameterBindings: [],
+    parameters: [],
+    parts: document.parts.map((part) =>
+      part.id === 'shape-circle'
+        ? {
+            ...part,
+            properties: {
+              blendMode: 'screen' as const,
+              clippingMaskIds: [PART_ID],
+              multiplyColor: [0.45, 0.8, 1] as const,
+              opacity: 0.65,
+              screenColor: [0.2, 0.05, 0.35] as const,
+            },
+          }
+        : part,
+    ),
+  }
+}
+
+const createOverlappingChainedMaskDocument = (renderWhenUsedAsMask = false) => {
+  const document = createDemoDocument()
+  return {
+    ...document,
+    motions: [],
+    parameterBindings: [],
+    parameters: [],
+    parts: document.parts.map((part) => {
+      if (part.id === 'shape-circle') {
+        return {...part, properties: {clippingMaskIds: ['shape-diamond']}}
+      }
+
+      if (part.id === 'shape-diamond') {
+        return {
+          ...part,
+          mesh: {
+            ...part.mesh,
+            vertices: part.mesh.vertices.map(
+              (value, index) => value - (index % 2 === 0 ? 470 : 200),
+            ),
+          },
+          properties: {clippingMaskIds: ['mesh-preview'], renderWhenUsedAsMask},
+        }
+      }
+
+      return part
+    }),
+  }
+}
+
 const waitForFrame = () =>
   new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve())
@@ -142,5 +196,23 @@ describe('PlayerCanvas visual rendering', () => {
 
     const stage = await renderDocument(moved.document)
     await expect.element(stage).toMatchScreenshot('texture-stretched-outside-bounds')
+  })
+
+  test('should composite part rendering properties', async () => {
+    const stage = await renderDocument(createPartRenderingDocument())
+
+    await expect.element(stage).toMatchScreenshot('part-rendering-properties')
+  })
+
+  test('should render an overlapping chained mask', async () => {
+    const stage = await renderDocument(createOverlappingChainedMaskDocument())
+
+    await expect.element(stage).toMatchScreenshot('overlapping-chained-mask')
+  })
+
+  test('should keep rendering a visible mask source', async () => {
+    const stage = await renderDocument(createOverlappingChainedMaskDocument(true))
+
+    await expect.element(stage).toMatchScreenshot('visible-chained-mask-source')
   })
 })

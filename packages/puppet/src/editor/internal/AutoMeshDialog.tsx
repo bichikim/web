@@ -2,6 +2,8 @@ import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {type AutoMeshSettings, getMinimumAutoMeshCellSize} from '../auto-mesh-part'
+import {EditorNumberField} from './EditorNumberField'
+import {useEditorPortalMount} from './EditorPortalProvider'
 
 type AutoMeshPreset = 'balanced' | 'custom' | 'detailed' | 'flexible'
 
@@ -67,6 +69,7 @@ const AutoMeshDialogFooter = (props: AutoMeshDialogFooterProps) => (
 )
 
 export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
+  const portalMount = useEditorPortalMount()
   const [preset, setPreset] = createSignal<AutoMeshPreset>('balanced')
   const [cellSize, setCellSize] = createSignal(1)
   const [alphaThreshold, setAlphaThreshold] = createSignal(DEFAULT_ALPHA_THRESHOLD)
@@ -120,7 +123,7 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
 
   return (
     <Dialog modal open={props.isOpen ?? false} onOpenChange={props.onOpenChange}>
-      <Dialog.Portal>
+      <Dialog.Portal mount={portalMount}>
         <Dialog.Overlay class="auto-mesh-dialog-overlay" />
         <Dialog.Content aria-busy={isGenerating()} class="auto-mesh-dialog-content">
           <form onSubmit={handleSubmit}>
@@ -159,16 +162,16 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
               <label>
                 <span>정점 간격</span>
                 <span class="auto-mesh-number-field">
-                  <input
-                    aria-describedby="auto-mesh-cell-size-help"
-                    min={minimumCellSize()}
+                  <EditorNumberField
+                    describedBy="auto-mesh-cell-size-help"
+                    label="정점 간격"
+                    minimum={minimumCellSize()}
                     required
-                    step="1"
-                    type="number"
+                    step={1}
                     value={cellSize()}
-                    onInput={(event) => {
+                    onValueChange={(value) => {
                       setPreset('custom')
-                      setCellSize(event.currentTarget.valueAsNumber)
+                      setCellSize(value)
                     }}
                   />
                   px
@@ -180,15 +183,15 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
               <label>
                 <span>투명 판정값</span>
                 <span class="auto-mesh-number-field">
-                  <input
-                    aria-describedby="auto-mesh-alpha-help"
-                    max="255"
-                    min="0"
+                  <EditorNumberField
+                    describedBy="auto-mesh-alpha-help"
+                    label="투명 판정값"
+                    maximum={255}
+                    minimum={0}
                     required
-                    step="1"
-                    type="number"
+                    step={1}
                     value={alphaThreshold()}
-                    onInput={(event) => setAlphaThreshold(event.currentTarget.valueAsNumber)}
+                    onValueChange={setAlphaThreshold}
                   />
                   / 255
                 </span>

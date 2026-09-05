@@ -3,5 +3,12 @@ export {
   type PDisplayPreferences,
   type PDisplayPreferencesController,
 } from './model'
-export {readPDisplayPreferences, writePDisplayPreferences} from './storage'
+export {
+  type CreatePDisplayPreferencesRepositoryOptions,
+  createPDisplayPreferencesRepository,
+  type PDisplayPreferencesRepository,
+  type PDisplayPreferencesStorage,
+  readPDisplayPreferences,
+  writePDisplayPreferences,
+} from './storage'
 export {usePDisplayPreferences} from './use-preferences'

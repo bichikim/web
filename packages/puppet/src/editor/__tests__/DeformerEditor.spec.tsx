@@ -534,29 +534,26 @@ describe('DeformerEditor', () => {
     expect(keyform?.controlPoints[3]).toBeCloseTo(100)
   })
 
-  test('should explain and block editing outside the active parameter', () => {
+  test('should edit the rest deformer without a parameter', () => {
     const document = createDocument(createDeformer())
-    const binding = document.parameterBindings?.[0]
     const onDocumentChange = vi.fn()
     const view = render(() => (
       <DeformerEditor
-        activeBindingId={binding?.id}
-        activeKeyformValues={binding?.keyforms[0]?.values}
         activeNodeId="deformer"
         document={document}
         editMode="parameter"
         onDocumentChange={onDocumentChange}
         previewDocument={document}
-        targetNodeIds={binding?.targetPartIds}
       />
     ))
     const point = view.getByRole('button', {name: '격자 제어점 1'})
 
-    expect(view.getByRole('status')).toHaveTextContent(
-      '현재 Parameter에 연결되지 않은 디포머입니다. 아래의 ‘선택 레이어 연결’을 누르세요.',
-    )
-    expect(point).toHaveAttribute('aria-disabled', 'true')
+    expect(view.queryByRole('status')).toBeNull()
+    expect(point).toHaveAttribute('aria-disabled', 'false')
     fireEvent.keyDown(point, {key: 'ArrowRight'})
-    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onDocumentChange).toHaveBeenCalledOnce()
+    const updated = onDocumentChange.mock.calls[0]?.[0] as PuppetDocument
+    const deformer = getSceneNode(updated, 'deformer')
+    expect(deformer?.kind === 'deformer' ? deformer.controlPoints.slice(0, 2) : []).toEqual([1, 0])
   })
 })

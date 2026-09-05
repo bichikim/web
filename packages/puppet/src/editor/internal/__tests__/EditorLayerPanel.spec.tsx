@@ -5,10 +5,27 @@ import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument, type PuppetDocument} from '../../../player'
-import type {SceneSelection} from '../scene-graph'
+import {createDeformer, type SceneSelection} from '../scene-graph'
 import {EditorLayerPanel} from '../EditorLayerPanel'
 
 describe('EditorLayerPanel', () => {
+  test('should distinguish group and free deformation icons by shape', () => {
+    const document = createDeformer(createDemoDocument(), ['mesh-preview'])!
+    const view = render(() => <EditorLayerPanel document={document} />)
+    const groupIcon = view
+      .getByRole('button', {name: 'Shapes 레이어 선택'})
+      .querySelector<SVGSVGElement>('[data-layer-icon="group"]')
+    const deformerIcon = view
+      .getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'})
+      .querySelector<SVGSVGElement>('[data-layer-icon="deformer"]')
+
+    expect(groupIcon).not.toBeNull()
+    expect(deformerIcon).not.toBeNull()
+    expect(groupIcon?.querySelectorAll('rect')).toHaveLength(2)
+    expect(deformerIcon?.querySelectorAll('circle')).toHaveLength(4)
+    expect(groupIcon?.innerHTML).not.toBe(deformerIcon?.innerHTML)
+  })
+
   test('should render and select each example layer', () => {
     const onPartSelect = vi.fn()
     const view = render(() => (
@@ -31,7 +48,27 @@ describe('EditorLayerPanel', () => {
     expect(onPartSelect).toHaveBeenCalledWith('shape-circle')
   })
 
-  test('should group a multiple selection and edit group state', () => {
+  test('should pick an available mask part without changing the layer selection', () => {
+    const onMaskPick = vi.fn()
+    const onSelectionChange = vi.fn()
+    const view = render(() => (
+      <EditorLayerPanel
+        document={createDemoDocument()}
+        maskPickTargetPartId="shape-circle"
+        onMaskPick={onMaskPick}
+        onSelectionChange={onSelectionChange}
+      />
+    ))
+
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeDisabled()
+    expect(view.getByLabelText('2개 파츠의 마스크로 사용')).toBeVisible()
+    fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
+
+    expect(onMaskPick).toHaveBeenCalledWith('shape-diamond')
+    expect(onSelectionChange).not.toHaveBeenCalled()
+  })
+
+  test('should create a free deformer for a multiple selection and edit its state', () => {
     const initialDocument = {...createDemoDocument(), scene: undefined}
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
     const [selection, setSelection] = createSignal<SceneSelection>({
@@ -50,27 +87,31 @@ describe('EditorLayerPanel', () => {
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
 
-    expect(view.getByRole('button', {name: '새 그룹 레이어 선택'})).toBeDefined()
+    expect(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'})).toBeDefined()
     expect(document().scene?.roots[0]).toMatchObject({
       children: [{id: 'mesh-preview'}, {id: 'shape-circle'}],
-      kind: 'group',
+      columns: 2,
+      kind: 'deformer',
+      rows: 2,
     })
 
-    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
 
     expect(
       view
-        .getByRole('button', {name: '새 그룹 레이어 선택'})
+        .getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'})
         .closest('[role="treeitem"]')
         ?.getAttribute('aria-selected'),
     ).toBe('true')
-    fireEvent.dblClick(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
-    const groupNameInput = view.getByRole('textbox', {name: '새 그룹 그룹 이름'})
+    fireEvent.dblClick(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    const groupNameInput = view.getByRole('textbox', {
+      name: '새 자유 변형 디포머 그룹 이름',
+    })
 
     fireEvent.input(groupNameInput, {target: {value: 'Face'}})
     fireEvent.keyDown(groupNameInput, {key: 'Enter'})
 
-    expect(view.queryByRole('textbox', {name: '새 그룹 그룹 이름'})).toBeNull()
+    expect(view.queryByRole('textbox', {name: '새 자유 변형 디포머 그룹 이름'})).toBeNull()
     fireEvent.click(view.getByRole('button', {name: 'Face 숨기기'}))
     fireEvent.click(view.getByRole('button', {name: 'Face 잠그기'}))
 
@@ -79,6 +120,19 @@ describe('EditorLayerPanel', () => {
       name: 'Face',
       visible: false,
     })
+  })
+
+  test('should preserve empty organizational group creation without deformation bounds', () => {
+    const initialDocument = {...createDemoDocument(), scene: undefined}
+    const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
+    const view = render(() => (
+      <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: '그룹'}))
+
+    expect(view.getByRole('button', {name: '새 그룹 레이어 선택'})).toBeDefined()
+    expect(document().scene?.roots[3]).toMatchObject({children: [], kind: 'group'})
   })
 
   test('should move a part into and back out of a group with row drop positions', () => {

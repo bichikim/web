@@ -1,4 +1,4 @@
-import {Index, Show} from 'solid-js'
+import {createSignal, createUniqueId, Index, Show} from 'solid-js'
 
 import type {MeshEditorProps} from './mesh-editor-contract'
 import {getEditorViewBox} from './internal/viewport'
@@ -6,14 +6,26 @@ import {type MeshTriangle, useMeshEditor} from './use-mesh-editor'
 
 export type {MeshEditorProps} from './mesh-editor-contract'
 
+const getPolygonPoints = (points: ReadonlyArray<{readonly x: number; readonly y: number}>) =>
+  points.map((point) => `${point.x},${point.y}`).join(' ')
+
+const getClosedPath = (points: ReadonlyArray<{readonly x: number; readonly y: number}>) =>
+  `${points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')} Z`
+
+const getBoundaryPath = (
+  boundaries: ReadonlyArray<ReadonlyArray<{readonly x: number; readonly y: number}>>,
+) => boundaries.map(getClosedPath).join(' ')
+
 const getTrianglePoints = (triangle: MeshTriangle) =>
-  [triangle.first, triangle.second, triangle.third]
-    .map((point) => `${point.x},${point.y}`)
-    .join(' ')
+  getPolygonPoints([triangle.first, triangle.second, triangle.third])
 
 export const MeshEditor = (props: MeshEditorProps) => {
   const editor = useMeshEditor(props)
+  const maskClipId = createUniqueId()
+  const [maskFillVisible, setMaskFillVisible] = createSignal(false)
   const viewBox = () => getEditorViewBox(props.document)
+  const activePartView = () =>
+    editor.partViews().find((partView) => partView.partId === editor.part()?.id)
 
   return (
     <div class="mesh-editor">
@@ -22,12 +34,22 @@ export const MeshEditor = (props: MeshEditorProps) => {
           aria-label="메시 정점 편집 영역"
           classList={{'add-tool': editor.tool() === 'add'}}
           preserveAspectRatio="xMidYMid meet"
+          style={{'--active-mask-clip': `url("#${maskClipId}")`}}
           viewBox={`${viewBox().x} ${viewBox().y} ${viewBox().width} ${viewBox().height}`}
           onClick={editor.handleAddVertex}
           onPointerCancel={editor.handlePointerCancel}
           onPointerMove={editor.handlePointerMove}
           onPointerUp={editor.handlePointerEnd}
         >
+          <defs>
+            <clipPath id={maskClipId}>
+              <Show when={activePartView()}>
+                {(partView) => (
+                  <path clip-rule="evenodd" d={getBoundaryPath(partView().boundaryLoops)} />
+                )}
+              </Show>
+            </clipPath>
+          </defs>
           <Index each={editor.partViews()}>
             {(partView) => (
               <g data-part-id={partView().partId}>
@@ -51,6 +73,21 @@ export const MeshEditor = (props: MeshEditorProps) => {
                     />
                   )}
                 </Index>
+              </g>
+            )}
+          </Index>
+          <Index each={editor.clippedPartViews()}>
+            {(clippedPartView) => (
+              <g
+                aria-label={`${clippedPartView().partId} 클리핑 적용 영역`}
+                classList={{'clipped-part-preview': true, filled: maskFillVisible()}}
+                data-clipped-part-id={clippedPartView().partId}
+              >
+                <path
+                  class="clipped-part-boundary"
+                  d={getBoundaryPath(clippedPartView().boundaryLoops)}
+                  fill-rule="evenodd"
+                />
               </g>
             )}
           </Index>
@@ -79,6 +116,16 @@ export const MeshEditor = (props: MeshEditorProps) => {
         >
           정점 삭제
         </button>
+        <Show when={editor.clippedPartViews().length > 0}>
+          <label class="mask-fill-toggle">
+            <input
+              checked={maskFillVisible()}
+              type="checkbox"
+              onChange={(event) => setMaskFillVisible(event.currentTarget.checked)}
+            />
+            마스크 영역 칠해서 보기
+          </label>
+        </Show>
       </div>
     </div>
   )

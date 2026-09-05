@@ -1,9 +1,18 @@
-import {Application, Container, MeshSimple, Texture} from 'pixi.js'
+import {
+  AlphaMask,
+  Application,
+  type ColorMatrix,
+  ColorMatrixFilter,
+  Container,
+  MeshSimple,
+  Texture,
+} from 'pixi.js'
 
 import {
   composeParameterScene,
   composeParameterVertices,
   type PuppetParameterValueMap,
+  type ResolvedPartRenderProperties,
 } from '../deformation'
 import type {PuppetDocument, PuppetMotion} from './document'
 import {
@@ -11,8 +20,13 @@ import {
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
 import {applyMotionVertices, sampleMotionParameterValues} from './internal/motion'
+import {
+  canReusePartResources,
+  getPartRenderPlans,
+  type PartMaskRenderPlan,
+  type PartRenderPlan,
+} from './internal/render-plan'
 import {applySceneDeformers} from './internal/scene-deformation'
-import {getScenePartStates} from './scene'
 
 export interface Player {
   destroy(): void
@@ -41,9 +55,33 @@ export interface CreatePlayerOptions {
 }
 
 interface RuntimePart {
+  colorFilter?: ColorMatrixFilter
+  mask?: RuntimePartMask
   readonly mesh: MeshSimple
+  readonly partId: string
   restVertices: ReadonlyArray<number>
   vertices: Float32Array
+}
+
+interface RuntimePartMaskMesh {
+  readonly mask?: RuntimePartMask
+  readonly mesh: MeshSimple
+  readonly sourcePartId: string
+}
+
+interface RuntimePartMask {
+  readonly container: Container
+  readonly effect?: AlphaMask
+  readonly meshes: ReadonlyArray<RuntimePartMaskMesh>
+}
+
+const updateMeshMask = (mesh: MeshSimple, mask: RuntimePartMask, inverse: boolean) => {
+  if (mask.effect !== undefined) {
+    mask.effect.inverse = inverse
+    return
+  }
+
+  mesh.setMask({channel: 'alpha', inverse, mask: mask.container})
 }
 
 interface ApplyFrameVerticesOptions {
@@ -73,18 +111,74 @@ const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
 }
 
 const applyDocumentScene = (
-  document: PuppetDocument,
+  plans: ReadonlyArray<PartRenderPlan>,
   partById: ReadonlyMap<string, RuntimePart>,
   root: Container,
 ) => {
-  for (const state of getScenePartStates(document)) {
-    const runtimePart = partById.get(state.partId)
+  for (const plan of plans) {
+    const runtimePart = partById.get(plan.partId)
 
     if (runtimePart !== undefined) {
-      runtimePart.mesh.visible = state.visible
-      root.addChild(runtimePart.mesh)
+      runtimePart.mesh.visible = plan.visible
+      if (plan.render) {
+        if (runtimePart.mask !== undefined) {
+          root.addChild(runtimePart.mask.container)
+          updateMeshMask(runtimePart.mesh, runtimePart.mask, plan.properties.invertedMask)
+        }
+        root.addChild(runtimePart.mesh)
+      }
     }
   }
+}
+
+const colorsEqual = (first: ReadonlyArray<number>, second: ReadonlyArray<number>) =>
+  first.length === second.length && first.every((value, index) => value === second[index])
+
+const createColorMatrix = (
+  multiplyColor: readonly [number, number, number],
+  screenColor: readonly [number, number, number],
+): ColorMatrix => [
+  multiplyColor[0] * (1 - screenColor[0]),
+  0,
+  0,
+  0,
+  screenColor[0],
+  0,
+  multiplyColor[1] * (1 - screenColor[1]),
+  0,
+  0,
+  screenColor[1],
+  0,
+  0,
+  multiplyColor[2] * (1 - screenColor[2]),
+  0,
+  screenColor[2],
+  0,
+  0,
+  0,
+  1,
+  0,
+]
+
+const applyPartRenderProperties = (
+  properties: ResolvedPartRenderProperties,
+  runtimePart: RuntimePart,
+) => {
+  runtimePart.mesh.alpha = properties.opacity
+  runtimePart.mesh.blendMode = properties.blendMode
+
+  const hasColorEffect =
+    !colorsEqual(properties.multiplyColor, [1, 1, 1]) ||
+    !colorsEqual(properties.screenColor, [0, 0, 0])
+  if (!hasColorEffect) {
+    runtimePart.mesh.filters = null
+    return
+  }
+
+  const colorFilter = runtimePart.colorFilter ?? new ColorMatrixFilter()
+  runtimePart.colorFilter = colorFilter
+  colorFilter.matrix = createColorMatrix(properties.multiplyColor, properties.screenColor)
+  runtimePart.mesh.filters = [colorFilter]
 }
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -124,6 +218,59 @@ interface InitializeRuntimePartsOptions {
   readonly root: Container
 }
 
+interface CreateRuntimePartMaskOptions {
+  readonly document: PuppetDocument
+  readonly plan: PartMaskRenderPlan
+  readonly partById: ReadonlyMap<string, RuntimePart>
+}
+
+const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): RuntimePartMask => {
+  const container = new Container()
+  const meshes = options.plan.sources.flatMap((sourcePlan) => {
+    const sourcePart = options.document.parts.find((part) => part.id === sourcePlan.partId)
+    const sourceRuntimePart = options.partById.get(sourcePlan.partId)
+    if (sourcePart === undefined || sourceRuntimePart === undefined) {
+      return []
+    }
+
+    const mesh = new MeshSimple({
+      indices: new Uint32Array(sourcePart.mesh.indices),
+      texture: sourceRuntimePart.mesh.texture,
+      topology: 'triangle-list',
+      uvs: new Float32Array(sourcePart.mesh.uvs),
+      vertices: new Float32Array(sourceRuntimePart.vertices),
+    })
+    const mask =
+      sourcePlan.mask === undefined
+        ? undefined
+        : createRuntimePartMask({
+            document: options.document,
+            partById: options.partById,
+            plan: sourcePlan.mask,
+          })
+
+    if (mask !== undefined) {
+      container.addChild(mask.container)
+      if (mask.effect === undefined) {
+        updateMeshMask(mesh, mask, sourcePlan.invertedMask)
+      } else {
+        mask.effect.inverse = sourcePlan.invertedMask
+        mesh.addEffect(mask.effect)
+      }
+    }
+    container.addChild(mesh)
+    return [{mask, mesh, sourcePartId: sourcePlan.partId}]
+  })
+
+  const effect = meshes.some((mesh) => mesh.mask !== undefined)
+    ? new AlphaMask({mask: container})
+    : undefined
+  if (effect !== undefined) {
+    effect.channel = 'alpha'
+  }
+  return {container, effect, meshes}
+}
+
 const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) => {
   const textureResults = await Promise.allSettled(
     options.document.parts.map((part) => loadTexture(part.texture.src)),
@@ -159,16 +306,85 @@ const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) =>
       vertices,
     })
 
-    options.partById.set(part.id, {mesh, restVertices, vertices})
+    options.partById.set(part.id, {mesh, partId: part.id, restVertices, vertices})
   }
 
-  applyDocumentScene(options.document, options.partById, options.root)
+  const plans = getPartRenderPlans(options.document)
+  const planById = new Map(plans.map((plan) => [plan.partId, plan]))
+  for (const runtimePart of options.partById.values()) {
+    const plan = planById.get(runtimePart.partId)
+    runtimePart.mask =
+      plan?.mask === undefined
+        ? undefined
+        : createRuntimePartMask({
+            document: options.document,
+            partById: options.partById,
+            plan: plan.mask,
+          })
+    if (runtimePart.mask !== undefined) {
+      if (runtimePart.mask.effect === undefined) {
+        updateMeshMask(runtimePart.mesh, runtimePart.mask, plan?.properties.invertedMask ?? false)
+      } else {
+        runtimePart.mesh.addEffect(runtimePart.mask.effect)
+      }
+    }
+  }
+
+  applyDocumentScene(plans, options.partById, options.root)
+}
+
+interface UpdateRuntimeMaskOptions {
+  readonly mask: RuntimePartMask
+  readonly planById: ReadonlyMap<string, PartRenderPlan>
+  readonly partById: ReadonlyMap<string, RuntimePart>
+}
+
+const updateRuntimeMask = (options: UpdateRuntimeMaskOptions) => {
+  for (const maskMesh of options.mask.meshes) {
+    const sourcePart = options.partById.get(maskMesh.sourcePartId)
+    if (sourcePart !== undefined) {
+      maskMesh.mesh.vertices = sourcePart.vertices
+    }
+    if (maskMesh.mask !== undefined) {
+      updateRuntimeMask({...options, mask: maskMesh.mask})
+      updateMeshMask(
+        maskMesh.mesh,
+        maskMesh.mask,
+        options.planById.get(maskMesh.sourcePartId)?.properties.invertedMask ?? false,
+      )
+    }
+  }
 }
 
 const getMotion = (document: PuppetDocument, motionId: string | undefined) =>
   motionId === undefined
     ? document.motions[0]
     : document.motions.find((motion) => motion.id === motionId)
+
+interface LayoutPlayerRootOptions {
+  readonly document: PuppetDocument
+  readonly root: Container
+  readonly screen: {
+    readonly height: number
+    readonly width: number
+  }
+  readonly viewportPadding?: number
+}
+
+const layoutPlayerRoot = (options: LayoutPlayerRootOptions) => {
+  const viewportPadding = Math.max(0, options.viewportPadding ?? 0)
+  const viewportWidth = options.document.viewport.width * (1 + viewportPadding * 2)
+  const viewportHeight = options.document.viewport.height * (1 + viewportPadding * 2)
+  const scale =
+    Math.min(options.screen.width / viewportWidth, options.screen.height / viewportHeight) *
+    VIEWPORT_PADDING
+
+  options.root.scale.set(scale)
+  options.root.position.set(
+    (options.screen.width - options.document.viewport.width * scale) / 2,
+    (options.screen.height - options.document.viewport.height * scale) / 2,
+  )
+}
 
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
@@ -213,20 +429,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   }
 
   const layoutRoot = () => {
-    const viewportPadding = Math.max(0, options.viewportPadding ?? 0)
-    const viewportWidth = document.viewport.width * (1 + viewportPadding * 2)
-    const viewportHeight = document.viewport.height * (1 + viewportPadding * 2)
-    const scale =
-      Math.min(
-        application.screen.width / viewportWidth,
-        application.screen.height / viewportHeight,
-      ) * VIEWPORT_PADDING
-
-    root.scale.set(scale)
-    root.position.set(
-      (application.screen.width - document.viewport.width * scale) / 2,
-      (application.screen.height - document.viewport.height * scale) / 2,
-    )
+    layoutPlayerRoot({
+      document,
+      root,
+      screen: application.screen,
+      viewportPadding: options.viewportPadding,
+    })
   }
 
   const applyFrame = (activeMotion: PuppetMotion | undefined, time: number) => {
@@ -235,6 +443,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       parameterValues,
       time,
     })
+    const renderPlans = getPartRenderPlans(document, frameParameterValues)
+    const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
 
     for (const [partId, runtimePart] of partById) {
       applyFrameVertices({
@@ -256,8 +466,23 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
 
     for (const runtimePart of partById.values()) {
       runtimePart.mesh.vertices = runtimePart.vertices
+      const plan = planById.get(runtimePart.partId)
+      if (plan !== undefined) {
+        applyPartRenderProperties(plan.properties, runtimePart)
+      }
     }
 
+    for (const runtimePart of partById.values()) {
+      if (runtimePart.mask !== undefined) {
+        updateRuntimeMask({
+          mask: runtimePart.mask,
+          partById,
+          planById,
+        })
+      }
+    }
+
+    applyDocumentScene(renderPlans, partById, root)
     layoutRoot()
     options.onFrame?.(createPlayerFrame(activeMotion, time))
   }
@@ -276,12 +501,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   const updateDocument = (nextDocument: PreparedPuppetDocument) => {
     assertPreparedPuppetDocument(nextDocument)
 
-    const canReuseResources =
-      nextDocument.parts.length === document.parts.length &&
-      nextDocument.parts.every((part, index) => {
-        const previousPart = document.parts[index]
-        return previousPart?.id === part.id && previousPart.texture.src === part.texture.src
-      })
+    const canReuseResources = canReusePartResources(document, nextDocument)
 
     if (!canReuseResources) {
       return false
@@ -302,7 +522,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       }
     }
 
-    applyDocumentScene(document, partById, root)
     elapsedTime = getSeekTime(motion, elapsedTime)
     applyFrame(motion, elapsedTime)
     application.render()

@@ -1,4 +1,5 @@
 import {
+  composeParameterPartProperties,
   composeParameterScene,
   composeParameterVertices,
   createDeformerKeyform,
@@ -29,6 +30,11 @@ export const createParameterPreview = (options: CreateParameterPreviewOptions): 
         restVertices: part.mesh.vertices,
       }),
     },
+    properties: composeParameterPartProperties({
+      document: options.document,
+      parameterValues: options.parameterValues,
+      partId: part.id,
+    }),
   })),
   scene: composeParameterScene(options.document, options.parameterValues),
 })

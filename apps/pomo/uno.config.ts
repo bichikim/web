@@ -397,10 +397,10 @@ body {
     from -90deg,
     transparent 0deg,
     transparent 210deg,
-    rgb(255 255 255 / 8%) 235deg,
-    rgb(255 255 255 / 32%) 275deg,
-    rgb(255 255 255 / 68%) 320deg,
-    rgb(255 255 255 / 96%) 350deg,
+    rgb(var(--pomo-color-foreground-channels) / 8%) 235deg,
+    rgb(var(--pomo-color-foreground-channels) / 32%) 275deg,
+    rgb(var(--pomo-color-foreground-channels) / 68%) 320deg,
+    rgb(var(--pomo-color-foreground-channels) / 96%) 350deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);

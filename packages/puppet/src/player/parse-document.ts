@@ -2,6 +2,7 @@ import {
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
   PUPPET_EASINGS,
+  PUPPET_PART_BLEND_MODES,
   type PuppetDocument,
   type PuppetEasing,
   type PuppetKeyframe,
@@ -12,6 +13,7 @@ import {
   type PuppetParameterKeyform,
   type PuppetParameterPartKeyform,
   type PuppetPart,
+  type PuppetPartRenderProperties,
   type PuppetScene,
   type PuppetSceneNode,
   type PuppetTexture,
@@ -22,6 +24,7 @@ import {
 import {normalizeMesh} from '../mesh/normalize'
 import {validateMesh} from '../mesh/validate'
 import {markPreparedPuppetDocument, type PreparedPuppetDocument} from './internal/prepared-document'
+import {canUsePartAsMask} from './part-mask'
 import {
   hasValidDeformerKeyform,
   isDeformer,
@@ -47,6 +50,7 @@ export interface ParseDocumentFailure {
 export type ParseDocumentResult = ParseDocumentFailure | ParseDocumentSuccess
 
 const COORDINATES_PER_VERTEX = 2
+const COLOR_CHANNEL_COUNT = 3
 const INDICES_PER_TRIANGLE = 3
 const MINIMUM_VERTEX_COUNT = 3
 
@@ -110,10 +114,29 @@ const isMesh = (value: unknown): value is PuppetMesh => {
   return hasValidCoordinates && hasValidTriangles && validateMesh(mesh).valid
 }
 
+const isUnitColor = (value: unknown) =>
+  Array.isArray(value) &&
+  value.length === COLOR_CHANNEL_COUNT &&
+  value.every((channel) => isFiniteNumber(channel) && channel >= 0 && channel <= 1)
+
+const isPartRenderProperties = (value: unknown): value is PuppetPartRenderProperties =>
+  isRecord(value) &&
+  (value.blendMode === undefined ||
+    PUPPET_PART_BLEND_MODES.some((blendMode) => blendMode === value.blendMode)) &&
+  (value.clippingMaskIds === undefined || hasValidTargetIds(value.clippingMaskIds)) &&
+  value.drawOrder === undefined &&
+  (value.invertedMask === undefined || typeof value.invertedMask === 'boolean') &&
+  (value.multiplyColor === undefined || isUnitColor(value.multiplyColor)) &&
+  (value.opacity === undefined ||
+    (isFiniteNumber(value.opacity) && value.opacity >= 0 && value.opacity <= 1)) &&
+  (value.renderWhenUsedAsMask === undefined || typeof value.renderWhenUsedAsMask === 'boolean') &&
+  (value.screenColor === undefined || isUnitColor(value.screenColor))
+
 const isPart = (value: unknown): value is PuppetPart =>
   isRecord(value) &&
   typeof value.id === 'string' &&
   value.id.length > 0 &&
+  (value.properties === undefined || isPartRenderProperties(value.properties)) &&
   isTexture(value.texture) &&
   isMesh(value.mesh)
 
@@ -185,6 +208,12 @@ const isParameterPartKeyform = (value: unknown): value is PuppetParameterPartKey
   isRecord(value) &&
   typeof value.partId === 'string' &&
   value.partId.length > 0 &&
+  (value.properties === undefined ||
+    (isPartRenderProperties(value.properties) &&
+      value.properties.blendMode === undefined &&
+      value.properties.clippingMaskIds === undefined &&
+      value.properties.invertedMask === undefined &&
+      value.properties.renderWhenUsedAsMask === undefined)) &&
   isFiniteNumberArray(value.vertices)
 
 const hasValidTargetIds = (value: unknown) =>
@@ -362,6 +391,17 @@ const isMotion = (value: unknown): value is PuppetMotion => {
 const hasUniqueIds = (values: ReadonlyArray<{readonly id: string}>) =>
   new Set(values.map((value) => value.id)).size === values.length
 
+const hasValidPartMasks = (parts: ReadonlyArray<PuppetPart>) => {
+  const partIds = new Set(parts.map((part) => part.id))
+  return parts.every((part) => {
+    const maskIds = part.properties?.clippingMaskIds ?? []
+    return maskIds.every(
+      (maskPartId) =>
+        partIds.has(maskPartId) && canUsePartAsMask({maskPartId, partId: part.id, parts}),
+    )
+  })
+}
+
 const hasValidTrackTargets = (
   parts: ReadonlyArray<PuppetPart>,
   parameters: ReadonlyArray<PuppetParameter>,
@@ -513,6 +553,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
 
   return (
     hasUniqueIds(value.parts) &&
+    hasValidPartMasks(value.parts) &&
     hasUniqueIds(value.motions) &&
     hasUniqueIds(parameters) &&
     hasUniqueIds(parameterBindings) &&

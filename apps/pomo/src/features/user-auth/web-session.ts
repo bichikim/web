@@ -1,7 +1,6 @@
 import {z} from 'zod'
 
 import {apiJson, ApiJsonError, apiJsonRequest} from '../api-json'
-import {apiFetch} from '../http-client'
 
 export interface AccountSession {
   readonly email: string
@@ -60,7 +59,8 @@ export const completeAccountLink = async (token: string): Promise<CompleteWebAcc
 }
 
 export const signOutWebSession = async (): Promise<boolean> => {
-  const response = await apiFetch('auth/sign-out', {
+  const response = await apiJsonRequest('auth/sign-out', {
+    body: {},
     credentials: 'include',
     method: 'POST',
   })

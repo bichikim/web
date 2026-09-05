@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
@@ -30,7 +32,7 @@ function HomePage() {
       <section class="relative w-full max-w-5xl">
         <A class={POMO_LINK_CLASSES} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-4" />
-          Pomofi로 돌아가기
+          {m.app_return()}
         </A>
         <header class="max-w-2xl">
           <p class="m-0 text-xs font-750 tracking-[0.28em] text-#f2a7b8 uppercase">

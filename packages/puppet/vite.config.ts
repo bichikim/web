@@ -1,5 +1,9 @@
+import UnoCSS from 'unocss/vite'
+import {fileURLToPath} from 'node:url'
 import solidPlugin from 'vite-plugin-solid'
 import {defineConfig} from 'vite'
+
+const UNO_CONFIG_PATH = fileURLToPath(new URL('./uno.config.ts', import.meta.url))
 
 const BUILD_TARGETS = {
   editor: './src/editor/index.ts',
@@ -12,8 +16,10 @@ type BuildTarget = keyof typeof BUILD_TARGETS
 const isBuildTarget = (mode: string): mode is BuildTarget => mode in BUILD_TARGETS
 
 export default defineConfig(({command, mode}) => {
+  const plugins = [UnoCSS({configFile: UNO_CONFIG_PATH}), solidPlugin()]
+
   if (command !== 'build') {
-    return {plugins: [solidPlugin()]}
+    return {plugins}
   }
 
   if (!isBuildTarget(mode)) {
@@ -33,6 +39,6 @@ export default defineConfig(({command, mode}) => {
         external: mode === 'editor' ? ['solid-js', 'solid-js/web'] : [],
       },
     },
-    plugins: [solidPlugin()],
+    plugins,
   }
 })

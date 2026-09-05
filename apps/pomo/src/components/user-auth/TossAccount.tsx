@@ -20,13 +20,13 @@ export const TossAccount = () => {
   return (
     <Show
       when={!account.isLoading()}
-      fallback={<p class="m-0 text-sm text-white/60">{m.account_toss_checking()}</p>}
+      fallback={<p class="m-0 text-sm text-muted-foreground">{m.account_toss_checking()}</p>}
     >
       <Show
         when={account.isAuthenticated()}
         fallback={
           <div class="grid gap-5">
-            <p class="m-0 text-sm leading-6 text-white/60">{m.account_toss_intro()}</p>
+            <p class="m-0 text-sm leading-6 text-muted-foreground">{m.account_toss_intro()}</p>
             <PButton
               class="w-full"
               disabled={account.isSubmitting()}
@@ -38,9 +38,9 @@ export const TossAccount = () => {
         }
       >
         <div class="grid gap-6">
-          <div class="rounded-3 border border-white/10 bg-white/5 px-4 py-4">
+          <div class="rounded-3 border border-border bg-content-surface px-4 py-4">
             <p class="m-0 text-sm font-750">{m.account_toss_active()}</p>
-            <p class="mb-0 mt-1 text-xs leading-5 text-white/50">
+            <p class="mb-0 mt-1 text-xs leading-5 text-muted-foreground">
               {m.account_toss_email_optional()}
             </p>
           </div>
@@ -53,7 +53,7 @@ export const TossAccount = () => {
           >
             <div>
               <h2 class="m-0 text-base font-750">{m.account_toss_use_on_web()}</h2>
-              <p class="mb-0 mt-1 text-xs leading-5 text-white/50">
+              <p class="mb-0 mt-1 text-xs leading-5 text-muted-foreground">
                 {m.account_toss_web_description()}
               </p>
             </div>

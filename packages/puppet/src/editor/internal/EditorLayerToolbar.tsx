@@ -17,13 +17,17 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
     <Button
       aria-label="그룹"
       disabled={props.selectionLocked}
-      title="그룹 만들기"
+      title="자유 변형 그룹 만들기"
       type="button"
       onClick={props.onGroupCreate}
     >
       <svg aria-hidden="true" class="layer-toolbar-icon" viewBox="0 0 16 16">
-        <path d="M1.5 4.5h5l1.5 2h6.5v7h-13z" />
-        <path d="M10.5 8.5v3M9 10h3" />
+        <path d="m2.5 2.5 11-.5-.5 11.5L2 13Z" />
+        <path d="m8 2.25-.25 11M2.25 7.75l11-.25" />
+        <circle cx="2.5" cy="2.5" r="0.9" />
+        <circle cx="13.5" cy="2" r="0.9" />
+        <circle cx="13" cy="13.5" r="0.9" />
+        <circle cx="2" cy="13" r="0.9" />
       </svg>
     </Button>
     <Button

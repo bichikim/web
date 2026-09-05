@@ -24,9 +24,25 @@ export interface PuppetMesh {
   readonly vertices: ReadonlyArray<number>
 }
 
+export const PUPPET_PART_BLEND_MODES = ['normal', 'add', 'multiply', 'screen'] as const
+
+export type PuppetPartBlendMode = (typeof PUPPET_PART_BLEND_MODES)[number]
+export type PuppetColor = readonly [number, number, number]
+
+export interface PuppetPartRenderProperties {
+  readonly blendMode?: PuppetPartBlendMode
+  readonly clippingMaskIds?: ReadonlyArray<string>
+  readonly invertedMask?: boolean
+  readonly multiplyColor?: PuppetColor
+  readonly opacity?: number
+  readonly renderWhenUsedAsMask?: boolean
+  readonly screenColor?: PuppetColor
+}
+
 export interface PuppetPart {
   readonly id: string
   readonly mesh: PuppetMesh
+  readonly properties?: PuppetPartRenderProperties
   readonly texture: PuppetTexture
 }
 
@@ -85,6 +101,10 @@ export interface PuppetScene {
 
 export interface PuppetParameterPartKeyform {
   readonly partId: string
+  readonly properties?: Pick<
+    PuppetPartRenderProperties,
+    'multiplyColor' | 'opacity' | 'screenColor'
+  >
   readonly vertices: ReadonlyArray<number>
 }
 

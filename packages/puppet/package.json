@@ -38,6 +38,7 @@
   "devDependencies": {
     "solid-js": "catalog:",
     "typescript": "catalog:",
+    "unocss": "catalog:",
     "vite": "catalog:",
     "vite-plugin-solid": "catalog:"
   },

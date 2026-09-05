@@ -1,5 +1,6 @@
 import {action} from '@solidjs/router'
 
+import {clearCalendarMonthCache} from '../calendar'
 import {requestAdminMagicLink} from '../admin-auth/magic-link'
 import {signOutAdminSession} from '../admin-auth/session'
 import {requestUserMagicLink} from '../user-auth/magic-link'
@@ -57,6 +58,14 @@ const signOut = async (request: () => Promise<boolean>): Promise<SignOutActionRe
   }
 }
 
+const signOutAccount = async (): Promise<SignOutActionResult> => {
+  const result = await signOut(signOutWebSession)
+  if (result.status === 'signed-out') {
+    clearCalendarMonthCache()
+  }
+  return result
+}
+
 export const requestAccountMagicLinkAction = action(
   (values: FormValues) => requestMagicLink(values, requestUserMagicLink),
   'request-account-magic-link',
@@ -66,7 +75,7 @@ export const requestAdminMagicLinkAction = action(
   'request-admin-magic-link',
 )
 export const signOutAccountSessionAction = action(
-  (_values: FormValues) => signOut(signOutWebSession),
+  (_values: FormValues) => signOutAccount(),
   'sign-out-account-session',
 )
 export const signOutAdminSessionAction = action(

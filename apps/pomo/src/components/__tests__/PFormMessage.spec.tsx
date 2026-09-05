@@ -11,10 +11,12 @@ it('should announce errors assertively', () => {
 
   expect(alert.tagName).toBe('DIV')
   expect(alert).toHaveTextContent('전송하지 못했습니다.')
+  expect(alert).toHaveClass('bg-danger/10', 'text-danger')
 })
 
 it('should announce successful feedback politely', () => {
   const result = render(() => <PFormMessage tone="success">전송했습니다.</PFormMessage>)
 
   expect(result.getByRole('status')).toHaveTextContent('전송했습니다.')
+  expect(result.getByRole('status')).toHaveClass('bg-secondary-soft', 'text-foreground')
 })

@@ -1,52 +1,38 @@
 .puppet-editor {
-  --bottom-grid-size: var(--bottom-panel-size, 260px);
-  --bottom-resizer-size: 6px;
-  --left-grid-size: var(--left-panel-size, 300px);
-  --left-resizer-size: 6px;
-  --right-grid-size: var(--right-panel-size, 260px);
-  --right-resizer-size: 6px;
+  @apply [--bottom-grid-size:var(--bottom-panel-size,_16.25rem)];
+  @apply [--bottom-resizer-size:0.375rem];
+  @apply [--left-grid-size:var(--left-panel-size,_18.75rem)];
+  @apply [--left-resizer-size:0.375rem];
+  @apply [--right-grid-size:var(--right-panel-size,_16.25rem)];
+  @apply [--right-resizer-size:0.375rem];
 
-  display: grid;
-  grid-template:
-    'toolbar toolbar toolbar toolbar toolbar' 64px
-    'layers left-resizer viewport right-resizer inspector' minmax(0, 1fr)
-    'bottom-resizer bottom-resizer bottom-resizer bottom-resizer bottom-resizer'
-    var(--bottom-resizer-size)
-    'timeline timeline timeline timeline timeline' var(--bottom-grid-size) /
-    var(--left-grid-size) var(--left-resizer-size) minmax(0, 1fr) var(--right-resizer-size)
-    var(--right-grid-size);
-  width: 100%;
-  min-width: 820px;
-  height: 100%;
-  min-height: 640px;
-  overflow: hidden;
-  color: #edf4f0;
-  background: #0b0f0e;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  @apply [display:grid];
+  @apply [grid-template:'toolbar_toolbar_toolbar_toolbar_toolbar'_4rem_'layers_left-resizer_viewport_right-resizer_inspector'_minmax(0,_1fr)_'bottom-resizer_bottom-resizer_bottom-resizer_bottom-resizer_bottom-resizer'_var(--bottom-resizer-size)_'timeline_timeline_timeline_timeline_timeline'_var(--bottom-grid-size)_/_var(--left-grid-size)_var(--left-resizer-size)_minmax(0,_1fr)_var(--right-resizer-size)_var(--right-grid-size)];
+  @apply [width:100%];
+  @apply [min-width:51.25rem];
+  @apply [height:100%];
+  @apply [min-height:40rem];
+  @apply [overflow:hidden];
+  @apply [color:#edf4f0];
+  @apply [background:#0b0f0e];
+  @apply [font-family:Inter,_ui-sans-serif,_system-ui,_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_sans-serif];
+  @apply [font-synthesis:none];
+  @apply [text-rendering:optimizeLegibility];
 }
 
 .puppet-editor.left-panel-closed {
-  --left-grid-size: 0px;
-  --left-resizer-size: 0px;
+  @apply [--left-grid-size:0rem];
+  @apply [--left-resizer-size:0rem];
 }
 
 .puppet-editor.right-panel-closed {
-  --right-grid-size: 0px;
-  --right-resizer-size: 0px;
+  @apply [--right-grid-size:0rem];
+  @apply [--right-resizer-size:0rem];
 }
 
 .puppet-editor.bottom-panel-closed {
-  --bottom-grid-size: 0px;
-  --bottom-resizer-size: 0px;
+  @apply [--bottom-grid-size:0rem];
+  @apply [--bottom-resizer-size:0rem];
 }
 
 .puppet-editor.left-panel-closed .layers-panel,
@@ -57,795 +43,857 @@
 .puppet-editor.left-panel-closed .panel-resizer.left,
 .puppet-editor.right-panel-closed .panel-resizer.right,
 .puppet-editor.bottom-panel-closed .panel-resizer.bottom {
-  display: none;
+  @apply [display:none];
 }
 
 .puppet-editor,
 .puppet-editor * {
-  box-sizing: border-box;
+  @apply [box-sizing:border-box];
 }
 
 .puppet-editor button,
 .puppet-editor input {
-  font: inherit;
+  @apply [font:inherit];
 }
 
 .puppet-editor button {
-  color: inherit;
+  @apply [color:inherit];
 }
 
 .puppet-editor .toolbar {
-  grid-area: toolbar;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  border-bottom: 1px solid #27302d;
-  background: #111614;
+  @apply [grid-area:toolbar];
+  @apply [display:flex];
+  @apply [align-items:center];
+  @apply [justify-content:space-between];
+  @apply [padding:0_1.25rem];
+  @apply [border-bottom:0.0625rem_solid_#27302d];
+  @apply [background:#111614];
 }
 
 .puppet-editor .brand,
 .puppet-editor .toolbar-actions,
 .puppet-editor .renderer-status,
 .puppet-editor .workspace-switcher {
-  display: flex;
-  align-items: center;
+  @apply [display:flex];
+  @apply [align-items:center];
 }
 
 .puppet-editor .workspace-switcher {
-  gap: 3px;
-  padding: 3px;
-  border: 1px solid #313b37;
-  border-radius: 8px;
-  background: #0d1210;
+  @apply [gap:0.1875rem];
+  @apply [padding:0.1875rem];
+  @apply [border:0.0625rem_solid_#313b37];
+  @apply [border-radius:0.5rem];
+  @apply [background:#0d1210];
 }
 
 .puppet-editor .workspace-switcher button {
-  padding: 6px 12px;
-  border: 0;
-  border-radius: 5px;
-  color: #7f8d88;
-  background: transparent;
-  font-size: 11px;
-  cursor: pointer;
+  @apply [padding:0.375rem_0.75rem];
+  @apply [border:0];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#7f8d88];
+  @apply [background:transparent];
+  @apply [font-size:0.6875rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .workspace-switcher button[aria-pressed='true'] {
-  color: #e9f3ef;
-  background: #26332f;
+  @apply [color:#e9f3ef];
+  @apply [background:#26332f];
 }
 
 .puppet-editor .workspace-switcher button:focus-visible {
-  outline: 2px solid #64e5c4;
-  outline-offset: 2px;
+  @apply [outline:0.125rem_solid_#64e5c4];
+  @apply [outline-offset:0.125rem];
 }
 
 .puppet-editor .brand {
-  gap: 11px;
+  @apply [gap:0.6875rem];
 }
 
 .puppet-editor .brand-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid #64e5c4;
-  border-radius: 10px;
-  color: #08110f;
-  background: #64e5c4;
-  font-size: 15px;
-  font-weight: 800;
+  @apply [display:grid];
+  @apply [width:2.125rem];
+  @apply [height:2.125rem];
+  @apply [place-items:center];
+  @apply [border:0.0625rem_solid_#64e5c4];
+  @apply [border-radius:0.625rem];
+  @apply [color:#08110f];
+  @apply [background:#64e5c4];
+  @apply [font-size:0.9375rem];
+  @apply [font-weight:800];
 }
 
 .puppet-editor .brand div {
-  display: grid;
-  gap: 2px;
+  @apply [display:grid];
+  @apply [gap:0.125rem];
 }
 
 .puppet-editor .brand strong {
-  font-size: 14px;
-  letter-spacing: 0.04em;
+  @apply [font-size:0.875rem];
+  @apply [letter-spacing:0.04rem];
 }
 
 .puppet-editor .brand span:last-child {
-  color: #7f8d88;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  @apply [color:#7f8d88];
+  @apply [font-size:0.625rem];
+  @apply [letter-spacing:0.08rem];
+  @apply [text-transform:uppercase];
 }
 
 .puppet-editor .toolbar-actions {
-  gap: 10px;
+  @apply [gap:0.625rem];
 }
 
 .puppet-editor .panel-visibility-controls {
-  display: flex;
-  gap: 3px;
-  padding-left: 8px;
-  border-left: 1px solid #313b37;
+  @apply [display:flex];
+  @apply [gap:0.1875rem];
+  @apply [padding-left:0.5rem];
+  @apply [border-left:0.0625rem_solid_#313b37];
 }
 
 .puppet-editor .history-controls {
-  display: flex;
-  gap: 3px;
+  @apply [display:flex];
+  @apply [gap:0.1875rem];
 }
 
 .puppet-editor .history-controls button {
-  padding: 6px 8px;
-  border: 1px solid #35413d;
-  border-radius: 6px;
-  color: #b9c5c0;
-  background: #121816;
-  font-size: 10px;
-  cursor: pointer;
+  @apply [padding:0.375rem_0.5rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.375rem];
+  @apply [color:#b9c5c0];
+  @apply [background:#121816];
+  @apply [font-size:0.625rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .history-controls button:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .history-controls button:focus-visible {
-  outline: 2px solid #64e5c4;
-  outline-offset: 2px;
+  @apply [outline:0.125rem_solid_#64e5c4];
+  @apply [outline-offset:0.125rem];
 }
 
 .puppet-editor .panel-visibility-controls button {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  place-items: center;
-  border: 1px solid #35413d;
-  border-radius: 6px;
-  color: #788681;
-  background: #121816;
-  cursor: pointer;
+  @apply [display:grid];
+  @apply [width:1.75rem];
+  @apply [height:1.75rem];
+  @apply [padding:0];
+  @apply [place-items:center];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.375rem];
+  @apply [color:#788681];
+  @apply [background:#121816];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .panel-visibility-controls button[aria-pressed='true'] {
-  border-color: #4b756a;
-  color: #bfeee1;
-  background: #1a2925;
+  @apply [border-color:#4b756a];
+  @apply [color:#bfeee1];
+  @apply [background:#1a2925];
 }
 
 .puppet-editor .panel-visibility-controls button:focus-visible {
-  outline: 2px solid #64e5c4;
-  outline-offset: 2px;
+  @apply [outline:0.125rem_solid_#64e5c4];
+  @apply [outline-offset:0.125rem];
 }
 
 .puppet-editor .panel-visibility-controls svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentcolor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.25;
+  @apply [width:1rem];
+  @apply [height:1rem];
+  @apply [fill:none];
+  @apply [stroke:currentcolor];
+  @apply [stroke-linecap:round];
+  @apply [stroke-linejoin:round];
+  @apply [stroke-width:0.078125rem];
 }
 
 .puppet-editor .toolbar-button {
-  padding: 7px 10px;
-  border: 1px solid #35413d;
-  border-radius: 7px;
-  color: #b9c5c0;
-  background: #171e1b;
-  font-size: 11px;
-  cursor: pointer;
+  @apply [padding:0.4375rem_0.625rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.4375rem];
+  @apply [color:#b9c5c0];
+  @apply [background:#171e1b];
+  @apply [font-size:0.6875rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .toolbar-button.primary {
-  border-color: #64e5c4;
-  color: #07110f;
-  background: #64e5c4;
-  font-weight: 700;
+  @apply [border-color:#64e5c4];
+  @apply [color:#07110f];
+  @apply [background:#64e5c4];
+  @apply [font-weight:700];
 }
 
 .puppet-editor .toolbar-button:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .toolbar-button input {
-  position: fixed;
-  inline-size: 1px;
-  block-size: 1px;
-  opacity: 0;
-  pointer-events: none;
+  @apply [position:fixed];
+  @apply [inline-size:0.0625rem];
+  @apply [block-size:0.0625rem];
+  @apply [opacity:0];
+  @apply [pointer-events:none];
 }
 
 .puppet-editor .renderer-status {
-  gap: 8px;
-  margin-left: 4px;
-  color: #a7b3af;
-  font-size: 12px;
+  @apply [gap:0.5rem];
+  @apply [margin-left:0.25rem];
+  @apply [color:#a7b3af];
+  @apply [font-size:0.75rem];
 }
 
 .puppet-editor .status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #e5b55a;
-  box-shadow: 0 0 0 4px rgb(229 181 90 / 10%);
+  @apply [width:0.4375rem];
+  @apply [height:0.4375rem];
+  @apply [border-radius:62.4375rem];
+  @apply [background:#e5b55a];
+  @apply [box-shadow:0_0_0_0.25rem_rgb(229_181_90_/_10%)];
 }
 
 .puppet-editor .renderer-status[data-status='ready'] .status-dot {
-  background: #64e5c4;
-  box-shadow: 0 0 0 4px rgb(100 229 196 / 10%);
+  @apply [background:#64e5c4];
+  @apply [box-shadow:0_0_0_0.25rem_rgb(100_229_196_/_10%)];
 }
 
 .puppet-editor .renderer-status[data-status='error'] .status-dot {
-  background: #ff7a76;
-  box-shadow: 0 0 0 4px rgb(255 122 118 / 10%);
+  @apply [background:#ff7a76];
+  @apply [box-shadow:0_0_0_0.25rem_rgb(255_122_118_/_10%)];
 }
 
 .puppet-editor .panel {
-  min-height: 0;
-  padding: 16px 14px;
-  background: #101513;
+  @apply [min-height:0];
+  @apply [padding:1rem_0.875rem];
+  @apply [background:#101513];
 }
 
 .puppet-editor .layers-panel {
-  grid-area: layers;
-  border-right: 1px solid #27302d;
+  @apply [grid-area:layers];
+  @apply [border-right:0.0625rem_solid_#27302d];
 }
 
 .puppet-editor .inspector-panel {
-  grid-area: inspector;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  border-left: 1px solid #27302d;
+  @apply [grid-area:inspector];
+  @apply [overflow-y:auto];
+  @apply [overscroll-behavior:contain];
+  @apply [scrollbar-gutter:stable];
+  @apply [border-left:0.0625rem_solid_#27302d];
 }
 
 .puppet-editor .panel-resizer {
-  min-width: 0;
-  min-height: 0;
-  background: #27302d;
-  touch-action: none;
+  @apply [min-width:0];
+  @apply [min-height:0];
+  @apply [background:#27302d];
+  @apply [touch-action:none];
 }
 
 .puppet-editor .panel-resizer:hover,
 .puppet-editor .panel-resizer.dragging,
 .puppet-editor .panel-resizer:focus-visible {
-  outline: none;
-  background: #64e5c4;
+  @apply [outline:none];
+  @apply [background:#64e5c4];
 }
 
 .puppet-editor .panel-resizer.left {
-  grid-area: left-resizer;
-  cursor: col-resize;
+  @apply [grid-area:left-resizer];
+  @apply [cursor:col-resize];
 }
 
 .puppet-editor .panel-resizer.right {
-  grid-area: right-resizer;
-  cursor: col-resize;
+  @apply [grid-area:right-resizer];
+  @apply [cursor:col-resize];
 }
 
 .puppet-editor .panel-resizer.bottom {
-  grid-area: bottom-resizer;
-  cursor: row-resize;
+  @apply [grid-area:bottom-resizer];
+  @apply [cursor:row-resize];
 }
 
 .puppet-editor .panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 34px;
-  margin-bottom: 12px;
+  @apply [display:flex];
+  @apply [align-items:center];
+  @apply [justify-content:space-between];
+  @apply [min-height:2.125rem];
+  @apply [margin-bottom:0.75rem];
 }
 
 .puppet-editor .panel-heading h2 {
-  margin: 0;
-  color: #a7b3af;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  @apply [margin:0];
+  @apply [color:#a7b3af];
+  @apply [font-size:0.6875rem];
+  @apply [letter-spacing:0.12rem];
+  @apply [text-transform:uppercase];
 }
 
 .puppet-editor .panel-heading > span {
-  display: grid;
-  min-width: 22px;
-  height: 22px;
-  place-items: center;
-  border: 1px solid #313b37;
-  border-radius: 6px;
-  color: #84918c;
-  font-size: 10px;
+  @apply [display:grid];
+  @apply [min-width:1.375rem];
+  @apply [height:1.375rem];
+  @apply [place-items:center];
+  @apply [border:0.0625rem_solid_#313b37];
+  @apply [border-radius:0.375rem];
+  @apply [color:#84918c];
+  @apply [font-size:0.625rem];
 }
 
 .puppet-editor .panel-add-button {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  place-items: center;
-  border: 1px solid #3d5f56;
-  border-radius: 6px;
-  color: #bfeee1;
-  background: #17211e;
-  cursor: pointer;
+  @apply [display:grid];
+  @apply [width:1.625rem];
+  @apply [height:1.625rem];
+  @apply [padding:0];
+  @apply [place-items:center];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.375rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .selection-actions {
-  display: grid;
-  gap: 8px;
+  @apply [display:grid];
+  @apply [gap:0.5rem];
 }
 
 .puppet-editor .selection-actions button {
-  min-height: 34px;
-  padding: 7px 10px;
-  border: 1px solid #3d5f56;
-  border-radius: 7px;
-  color: #bfeee1;
-  background: #17211e;
-  cursor: pointer;
-  text-align: left;
+  @apply [min-height:2.125rem];
+  @apply [padding:0.4375rem_0.625rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.4375rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [cursor:pointer];
+  @apply [text-align:left];
 }
 
 .puppet-editor .selection-actions button:hover:not(:disabled),
 .puppet-editor .selection-actions button:focus-visible {
-  border-color: #64e5c4;
-  outline: none;
+  @apply [border-color:#64e5c4];
+  @apply [outline:none];
 }
 
 .puppet-editor .selection-actions button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+  @apply [opacity:0.45];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .parameter-list {
-  display: grid;
-  gap: 6px;
+  @apply [display:grid];
+  @apply [gap:0.375rem];
 }
 
 .puppet-editor .parameter-swipe-row {
-  position: relative;
-  min-width: 0;
-  border-radius: 7px;
-  overflow: hidden;
-  background: #351918;
-  touch-action: pan-y;
+  @apply [position:relative];
+  @apply [min-width:0];
+  @apply [border-radius:0.4375rem];
+  @apply [overflow:hidden];
+  @apply [background:#351918];
+  @apply [touch-action:pan-y];
 }
 
 .puppet-editor .parameter-swipe-delete {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  display: grid;
-  width: 80px;
-  gap: 2px;
-  align-content: center;
-  justify-items: center;
-  color: #f3aaa5;
-  background: #471f1d;
-  font-size: 8px;
-  font-weight: 700;
+  @apply [position:absolute];
+  @apply [top:0];
+  @apply [right:0];
+  @apply [bottom:0];
+  @apply [display:grid];
+  @apply [width:5rem];
+  @apply [gap:0.125rem];
+  @apply [align-content:center];
+  @apply [justify-items:center];
+  @apply [color:#f3aaa5];
+  @apply [background:#471f1d];
+  @apply [font-size:0.5rem];
+  @apply [font-weight:700];
 }
 
 .puppet-editor .parameter-swipe-row.armed .parameter-swipe-delete {
-  color: #fff1ef;
-  background: #a63f3a;
+  @apply [color:#fff1ef];
+  @apply [background:#a63f3a];
 }
 
 .puppet-editor .parameter-swipe-delete svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentcolor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.4;
+  @apply [width:1rem];
+  @apply [height:1rem];
+  @apply [fill:none];
+  @apply [stroke:currentcolor];
+  @apply [stroke-linecap:round];
+  @apply [stroke-linejoin:round];
+  @apply [stroke-width:0.0875rem];
 }
 
 .puppet-editor .parameter-item {
-  position: relative;
-  display: grid;
-  width: 100%;
-  gap: 4px;
-  padding: 9px 30px 9px 10px;
-  border: 1px solid #313b37;
-  border-radius: 7px;
-  color: #a7b3af;
-  background: #121916;
-  cursor: pointer;
-  text-align: left;
-  transform: translateX(calc(var(--parameter-swipe-offset) * -1));
-  transition: transform 160ms ease-out;
-  user-select: none;
+  @apply [position:relative];
+  @apply [display:grid];
+  @apply [width:100%];
+  @apply [gap:0.25rem];
+  @apply [padding:0.5625rem_1.875rem_0.5625rem_0.625rem];
+  @apply [border:0.0625rem_solid_#313b37];
+  @apply [border-radius:0.4375rem];
+  @apply [color:#a7b3af];
+  @apply [background:#121916];
+  @apply [cursor:pointer];
+  @apply [text-align:left];
+  @apply [transform:translateX(calc(var(--parameter-swipe-offset)_*_-1))];
+  @apply [transition:transform_160ms_ease-out];
+  @apply [user-select:none];
 }
 
 .puppet-editor .parameter-swipe-row.dragging .parameter-item {
-  cursor: grabbing;
-  transition: none;
+  @apply [cursor:grabbing];
+  @apply [transition:none];
 }
 
 .puppet-editor .parameter-item[aria-pressed='true'] {
-  border-color: #4a776b;
-  color: #f3f7f5;
-  background: #17211e;
+  @apply [border-color:#4a776b];
+  @apply [color:#f3f7f5];
+  @apply [background:#17211e];
 }
 
 .puppet-editor .parameter-item strong {
-  font-size: 11px;
+  @apply [font-size:0.6875rem];
 }
 
 .puppet-editor .parameter-item small {
-  color: #8f9d98;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 9px;
+  @apply [color:#8f9d98];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5625rem];
 }
 
 .puppet-editor .parameter-name-editor {
-  min-height: 48px;
-  align-content: center;
+  @apply [min-height:3rem];
+  @apply [align-content:center];
 }
 
 .puppet-editor .parameter-name-editor input {
-  width: 100%;
-  min-width: 0;
-  padding: 5px 7px;
-  border: 1px solid #64e5c4;
-  border-radius: 5px;
-  color: #f3f7f5;
-  background: #171e1b;
-  font-size: 11px;
-  font-weight: 700;
+  @apply [width:100%];
+  @apply [min-width:0];
+  @apply [padding:0.3125rem_0.4375rem];
+  @apply [border:0.0625rem_solid_#64e5c4];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#f3f7f5];
+  @apply [background:#171e1b];
+  @apply [font-size:0.6875rem];
+  @apply [font-weight:700];
 }
 
 .puppet-editor .parameter-name-editor input:focus-visible {
-  outline: 2px solid #64e5c4;
-  outline-offset: 1px;
+  @apply [outline:0.125rem_solid_#64e5c4];
+  @apply [outline-offset:0.0625rem];
 }
 
 .puppet-editor .parameter-swipe-hint {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  color: #596762;
-  font-size: 12px;
-  transform: translateY(-50%);
+  @apply [position:absolute];
+  @apply [top:50%];
+  @apply [right:0.625rem];
+  @apply [color:#596762];
+  @apply [font-size:0.75rem];
+  @apply [transform:translateY(-50%)];
 }
 
 .puppet-editor .visually-hidden {
-  position: fixed;
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  @apply [position:fixed];
+  @apply [inline-size:0.0625rem];
+  @apply [block-size:0.0625rem];
+  @apply [overflow:hidden];
+  @apply [clip-path:inset(50%)];
+  @apply [white-space:nowrap];
 }
 
 .puppet-editor .parameter-editor {
-  display: grid;
-  gap: 10px;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid #27302d;
+  @apply [display:grid];
+  @apply [gap:0.625rem];
+  @apply [margin-top:1.125rem];
+  @apply [padding-top:1rem];
+  @apply [border-top:0.0625rem_solid_#27302d];
 }
 
 .puppet-editor .parameter-editor label {
-  display: grid;
-  grid-template-columns: 74px minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-  color: #84918c;
-  font-size: 10px;
+  @apply [display:grid];
+  @apply [grid-template-columns:4.625rem_minmax(0,_1fr)];
+  @apply [gap:0.5rem];
+  @apply [align-items:center];
+  @apply [color:#84918c];
+  @apply [font-size:0.625rem];
 }
 
 .puppet-editor .parameter-target-editor {
-  display: grid;
-  gap: 8px;
-  margin-top: 6px;
-  padding-top: 12px;
-  border-top: 1px solid #27302d;
+  @apply [display:grid];
+  @apply [gap:0.5rem];
+  @apply [margin-top:0.375rem];
+  @apply [padding-top:0.75rem];
+  @apply [border-top:0.0625rem_solid_#27302d];
 }
 
 .puppet-editor .parameter-target-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #c6d2cd;
-  font-size: 10px;
+  @apply [display:flex];
+  @apply [align-items:center];
+  @apply [justify-content:space-between];
+  @apply [color:#c6d2cd];
+  @apply [font-size:0.625rem];
 }
 
 .puppet-editor .parameter-target-heading span {
-  color: #64e5c4;
-  font-family: 'SFMono-Regular', Consolas, monospace;
+  @apply [color:#64e5c4];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
 }
 
 .puppet-editor .parameter-target-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  @apply [display:flex];
+  @apply [flex-wrap:wrap];
+  @apply [gap:0.3125rem];
+  @apply [margin:0];
+  @apply [padding:0];
+  @apply [list-style:none];
 }
 
 .puppet-editor .parameter-target-list li {
-  padding: 3px 6px;
-  border: 1px solid #35564e;
-  border-radius: 999px;
-  color: #bfeee1;
-  background: #17211e;
-  font-size: 9px;
+  @apply [padding:0.1875rem_0.375rem];
+  @apply [border:0.0625rem_solid_#35564e];
+  @apply [border-radius:62.4375rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [font-size:0.5625rem];
 }
 
 .puppet-editor .parameter-target-editor p {
-  margin: 0;
-  color: #788580;
-  font-size: 9px;
-  line-height: 1.5;
+  @apply [margin:0];
+  @apply [color:#788580];
+  @apply [font-size:0.5625rem];
+  @apply [line-height:1.5];
 }
 
 .puppet-editor .parameter-target-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  @apply [display:flex];
+  @apply [flex-wrap:wrap];
+  @apply [gap:0.375rem];
 }
 
 .puppet-editor .parameter-target-actions button {
-  padding: 5px 7px;
-  border: 1px solid #3d5f56;
-  border-radius: 6px;
-  color: #bfeee1;
-  background: #17211e;
-  font-size: 9px;
-  cursor: pointer;
+  @apply [padding:0.3125rem_0.4375rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.375rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [font-size:0.5625rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .parameter-target-actions button:disabled {
-  border-color: #5b6e67;
-  color: #84918c;
-  background: #121816;
-  cursor: not-allowed;
+  @apply [border-color:#5b6e67];
+  @apply [color:#84918c];
+  @apply [background:#121816];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .parameter-editor input[type='number'],
 .puppet-editor .parameter-editor input:not([type]) {
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid #3b4743;
-  border-radius: 6px;
-  color: #e5eeea;
-  background: #171e1b;
+  @apply [min-width:0];
+  @apply [padding:0.375rem_0.5rem];
+  @apply [border:0.0625rem_solid_#3b4743];
+  @apply [border-radius:0.375rem];
+  @apply [color:#e5eeea];
+  @apply [background:#171e1b];
 }
 
 .puppet-editor .parameter-editor input[type='range'] {
-  width: 100%;
-  accent-color: #64e5c4;
+  @apply [width:100%];
+  @apply [accent-color:#64e5c4];
 }
 
 .puppet-editor .parameter-range {
-  display: flex;
-  justify-content: space-between;
-  color: #6f7d78;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 9px;
+  @apply [display:flex];
+  @apply [justify-content:space-between];
+  @apply [color:#6f7d78];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5625rem];
 }
 
 .puppet-editor .layer-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 10px;
+  @apply [display:flex];
+  @apply [flex-wrap:wrap];
+  @apply [gap:0.3125rem];
+  @apply [margin-bottom:0.625rem];
 }
 
 .puppet-editor .layer-toolbar button,
 .puppet-editor .layer-state-actions button,
 .puppet-editor .layer-tree-toggle {
-  min-height: 26px;
-  border: 1px solid #35413d;
-  border-radius: 5px;
-  color: #a7b3af;
-  background: #171e1b;
-  font-size: 10px;
-  cursor: pointer;
+  @apply [min-height:1.625rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#a7b3af];
+  @apply [background:#171e1b];
+  @apply [font-size:0.625rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .layer-toolbar button {
-  padding: 4px 7px;
+  @apply [padding:0.25rem_0.4375rem];
 }
 
 .puppet-editor .layer-toolbar-icon {
-  display: block;
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.5;
+  @apply [display:block];
+  @apply [width:0.875rem];
+  @apply [height:0.875rem];
+  @apply [fill:none];
+  @apply [stroke:currentColor];
+  @apply [stroke-linecap:round];
+  @apply [stroke-linejoin:round];
+  @apply [stroke-width:0.09375rem];
 }
 
 .puppet-editor .layer-toolbar button:disabled,
 .puppet-editor .layer-state-actions button:disabled {
-  opacity: 0.38;
-  cursor: not-allowed;
+  @apply [opacity:0.38];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .layer-inline-name-editor {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: 38px minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-  padding: 6px 3px;
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [grid-template-columns:2.375rem_minmax(0,_1fr)];
+  @apply [gap:0.5rem];
+  @apply [align-items:center];
+  @apply [padding:0.375rem_0.1875rem];
 }
 
 .puppet-editor .layer-inline-name-editor input {
-  min-width: 0;
-  padding: 5px 7px;
-  border: 1px solid #64e5c4;
-  border-radius: 5px;
-  color: #e5eeea;
-  background: #171e1b;
-  font-size: 11px;
+  @apply [min-width:0];
+  @apply [padding:0.3125rem_0.4375rem];
+  @apply [border:0.0625rem_solid_#64e5c4];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#e5eeea];
+  @apply [background:#171e1b];
+  @apply [font-size:0.6875rem];
 }
 
 .puppet-editor .layer-tree,
 .puppet-editor .layer-tree ul {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  @apply [display:grid];
+  @apply [gap:0.25rem];
+  @apply [margin:0];
+  @apply [padding:0];
+  @apply [list-style:none];
 }
 
 .puppet-editor .layer-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  gap: 4px;
-  align-items: center;
-  padding-left: calc(var(--layer-depth) * 14px);
-  border: 1px solid transparent;
-  border-radius: 7px;
+  @apply [position:relative];
+  @apply [display:grid];
+  @apply [grid-template-columns:2.25rem_minmax(0,_1fr)_auto];
+  @apply [gap:0.25rem];
+  @apply [align-items:center];
+  @apply [padding-left:calc(var(--layer-depth)_*_0.875rem)];
+  @apply [border:0.0625rem_solid_transparent];
+  @apply [border-radius:0.4375rem];
 }
 
 .puppet-editor .layer-row.drop-before::before,
 .puppet-editor .layer-row.drop-after::after {
-  position: absolute;
-  right: 4px;
-  left: calc(var(--layer-depth) * 14px + 4px);
-  height: 2px;
-  border-radius: 999px;
-  background: #e5b55a;
-  content: '';
+  @apply [position:absolute];
+  @apply [right:0.25rem];
+  @apply [left:calc(var(--layer-depth)_*_0.875rem_+_0.25rem)];
+  @apply [height:0.125rem];
+  @apply [border-radius:62.4375rem];
+  @apply [background:#e5b55a];
+  @apply [content:''];
 }
 
 .puppet-editor .layer-row.drop-before::before {
-  top: -3px;
+  @apply [top:-0.1875rem];
 }
 
 .puppet-editor .layer-row.drop-after::after {
-  bottom: -3px;
+  @apply [bottom:-0.1875rem];
 }
 
 .puppet-editor .layer-row.drop-inside {
-  border-color: #e5b55a;
-  background: #2b2618;
+  @apply [border-color:#e5b55a];
+  @apply [background:#2b2618];
 }
 
 .puppet-editor .layer-tree.root-drop-active {
-  box-shadow: inset 0 -2px 0 #e5b55a;
+  @apply [box-shadow:inset_0_-0.125rem_0_#e5b55a];
 }
 
 .puppet-editor .layer-tree-item[aria-selected='true'] > .layer-tree-node > .layer-row {
-  border-color: #64e5c4;
-  background: #1a2925;
-  box-shadow: inset 3px 0 0 #64e5c4;
+  @apply [border-color:#64e5c4];
+  @apply [background:#1a2925];
+  @apply [box-shadow:inset_0.1875rem_0_0_#64e5c4];
 }
 
 .puppet-editor .layer-tree-item.dragging > .layer-tree-node > .layer-row {
-  opacity: 0.5;
+  @apply [opacity:0.5];
 }
 
 .puppet-editor .layer-tree-toggle,
 .puppet-editor .layer-tree-spacer {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  place-items: center;
+  @apply [display:grid];
+  @apply [width:2.25rem];
+  @apply [height:2.25rem];
+  @apply [padding:0];
+  @apply [place-items:center];
 }
 
 .puppet-editor .layer-tree-toggle {
-  border-color: transparent;
-  background: transparent;
+  @apply [border-color:transparent];
+  @apply [background:transparent];
 }
 
 .puppet-editor .layer-tree-toggle-icon {
-  width: 20px;
-  height: 20px;
-  fill: currentcolor;
-  transform-origin: center;
+  @apply [width:1.25rem];
+  @apply [height:1.25rem];
+  @apply [fill:currentcolor];
+  @apply [transform-origin:center];
 }
 
 .puppet-editor .layer-tree-toggle-icon.expanded {
-  transform: rotate(90deg);
+  @apply [transform:rotate(90deg)];
 }
 
 .puppet-editor .layer-select {
-  display: flex;
-  min-width: 0;
-  gap: 8px;
-  align-items: center;
-  padding: 6px 3px;
-  border: 0;
-  color: #a7b3af;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
+  @apply [display:flex];
+  @apply [min-width:0];
+  @apply [gap:0.5rem];
+  @apply [align-items:center];
+  @apply [padding:0.375rem_0.1875rem];
+  @apply [border:0];
+  @apply [color:#a7b3af];
+  @apply [background:transparent];
+  @apply [cursor:pointer];
+  @apply [text-align:left];
 }
 
 .puppet-editor .layer-select[aria-pressed='true'] {
-  color: #f3f7f5;
+  @apply [color:#f3f7f5];
+}
+
+.puppet-editor .layer-select.mask-pick-candidate {
+  @apply [border-radius:0.375rem];
+  @apply [color:#d7fff4];
+  @apply [background:#17352d];
+  @apply [box-shadow:inset_0_0_0_0.0625rem_#4fcaa9];
+}
+
+.puppet-editor .layer-select:disabled {
+  @apply [opacity:0.35];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .layer-label {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [gap:0.125rem];
 }
 
 .puppet-editor .layer-label strong,
 .puppet-editor .layer-label small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @apply [overflow:hidden];
+  @apply [text-overflow:ellipsis];
+  @apply [white-space:nowrap];
 }
 
 .puppet-editor .layer-parameter-links {
-  display: flex;
-  min-width: 0;
-  gap: 3px;
-  overflow: hidden;
+  @apply [display:flex];
+  @apply [min-width:0];
+  @apply [gap:0.1875rem];
+  @apply [overflow:hidden];
 }
 
 .puppet-editor .layer-parameter-links span {
-  padding: 1px 4px;
-  overflow: hidden;
-  border-radius: 999px;
-  color: #9fe7d4;
-  background: #1b302a;
-  font-size: 8px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @apply [padding:0.0625rem_0.25rem];
+  @apply [overflow:hidden];
+  @apply [border-radius:62.4375rem];
+  @apply [color:#9fe7d4];
+  @apply [background:#1b302a];
+  @apply [font-size:0.5rem];
+  @apply [text-overflow:ellipsis];
+  @apply [white-space:nowrap];
+}
+
+.puppet-editor .layer-mask-usage {
+  @apply [display:inline-flex];
+  @apply [min-width:1.625rem];
+  @apply [gap:0.125rem];
+  @apply [align-items:center];
+  @apply [justify-content:center];
+  @apply [margin-left:auto];
+  @apply [padding:0.125rem_0.25rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:62.4375rem];
+  @apply [color:#9fe7d4];
+  @apply [background:#14231f];
+  @apply [font-size:0.5rem];
+}
+
+.puppet-editor .layer-mask-usage svg {
+  @apply [width:0.625rem];
+  @apply [height:0.625rem];
+  @apply [fill:none];
+  @apply [stroke:currentcolor];
+}
+
+.puppet-editor .mask-pick-notice {
+  @apply [margin:0_0_0.5rem];
+  @apply [padding:0.4375rem_0.5rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.375rem];
+  @apply [color:#c7f7e9];
+  @apply [background:#173029];
+  @apply [font-size:0.5625rem];
 }
 
 .puppet-editor .layer-label strong {
-  font-size: 11px;
+  @apply [font-size:0.6875rem];
 }
 
 .puppet-editor .layer-label small {
-  color: #8f9d98;
-  font-size: 9px;
+  @apply [color:#8f9d98];
+  @apply [font-size:0.5625rem];
 }
 
-.puppet-editor .layer-group-icon {
-  display: grid;
-  width: 38px;
-  height: 30px;
-  flex: none;
-  place-items: center;
-  color: #e5b55a;
-  font-size: 19px;
+.puppet-editor .layer-container-icon {
+  @apply [width:2.375rem];
+  @apply [height:1.875rem];
+  @apply [flex:none];
+  @apply [fill:none];
+  @apply [stroke-linecap:round];
+  @apply [stroke-linejoin:round];
+  @apply [stroke-width:0.10625rem];
+}
+
+.puppet-editor .layer-container-icon.group {
+  @apply [color:#e5b55a];
+  @apply [stroke:currentcolor];
+}
+
+.puppet-editor .layer-container-icon.group rect:last-child {
+  @apply [fill:#2b2618];
+}
+
+.puppet-editor .layer-container-icon.deformer {
+  @apply [color:#76d8c0];
+  @apply [stroke:currentcolor];
+}
+
+.puppet-editor .layer-container-icon.deformer circle {
+  @apply [fill:#171e1b];
 }
 
 .puppet-editor .layer-state-actions {
-  display: flex;
-  gap: 2px;
-  padding-right: 4px;
+  @apply [display:flex];
+  @apply [gap:0.125rem];
+  @apply [padding-right:0.25rem];
 }
 
 .puppet-editor .layer-state-actions button {
-  width: 24px;
-  padding: 0;
-  border-color: transparent;
-  background: transparent;
+  @apply [width:1.5rem];
+  @apply [padding:0];
+  @apply [border-color:transparent];
+  @apply [background:transparent];
 }
 
 .puppet-editor .layer-toolbar button:focus-visible,
@@ -853,1300 +901,1673 @@
 .puppet-editor .layer-tree-toggle:focus-visible,
 .puppet-editor .layer-select:focus-visible,
 .puppet-editor .layer-inline-name-editor input:focus-visible {
-  outline: 2px solid #61e3c1;
-  outline-offset: 1px;
+  @apply [outline:0.125rem_solid_#61e3c1];
+  @apply [outline-offset:0.0625rem];
 }
 
 .puppet-editor .layer-thumbnail {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  flex: none;
-  border: 1px solid #4c615a;
-  border-radius: 6px;
-  background:
-    linear-gradient(45deg, #1b2421 25%, transparent 25%),
-    linear-gradient(-45deg, #1b2421 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #1b2421 75%),
-    linear-gradient(-45deg, transparent 75%, #1b2421 75%), #28332f;
-  background-position:
-    0 0,
-    0 8px,
-    8px -8px,
-    -8px 0;
-  background-size: 16px 16px;
-  overflow: hidden;
-  place-items: center;
+  @apply [display:grid];
+  @apply [width:2.375rem];
+  @apply [height:2.375rem];
+  @apply [flex:none];
+  @apply [border:0.0625rem_solid_#4c615a];
+  @apply [border-radius:0.375rem];
+  @apply [background:linear-gradient(45deg,_#1b2421_25%,_transparent_25%),_linear-gradient(-45deg,_#1b2421_25%,_transparent_25%),_linear-gradient(45deg,_transparent_75%,_#1b2421_75%),_linear-gradient(-45deg,_transparent_75%,_#1b2421_75%),_#28332f];
+  @apply [background-position:0_0,_0_0.5rem,_0.5rem_-0.5rem,_-0.5rem_0];
+  @apply [background-size:1rem_1rem];
+  @apply [overflow:hidden];
+  @apply [place-items:center];
 }
 
 .puppet-editor .layer-thumbnail img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  @apply [display:block];
+  @apply [width:100%];
+  @apply [height:100%];
+  @apply [object-fit:contain];
 }
 
 .puppet-editor .panel-note,
 .puppet-editor .notice {
-  color: #788681;
-  font-size: 10px;
+  @apply [color:#788681];
+  @apply [font-size:0.625rem];
 }
 
 .puppet-editor .deformer-properties {
-  display: grid;
-  gap: 8px;
-  margin: 14px 0 0;
-  padding: 10px;
-  border: 1px solid #313b37;
-  border-radius: 8px;
+  @apply [display:grid];
+  @apply [gap:0.5rem];
+  @apply [margin:0.875rem_0_0];
+  @apply [padding:0.625rem];
+  @apply [border:0.0625rem_solid_#313b37];
+  @apply [border-radius:0.5rem];
 }
 
 .puppet-editor .deformer-properties legend {
-  padding: 0 5px;
-  color: #bfeee1;
-  font-size: 10px;
+  @apply [padding:0_0.3125rem];
+  @apply [color:#bfeee1];
+  @apply [font-size:0.625rem];
 }
 
 .puppet-editor .deformer-properties label,
 .puppet-editor .grid-point-row {
-  display: grid;
-  grid-template-columns: 54px minmax(0, 1fr);
-  gap: 7px;
-  align-items: center;
-  color: #84918c;
-  font-size: 9px;
+  @apply [display:grid];
+  @apply [grid-template-columns:3.375rem_minmax(0,_1fr)];
+  @apply [gap:0.4375rem];
+  @apply [align-items:center];
+  @apply [color:#84918c];
+  @apply [font-size:0.5625rem];
 }
 
 .puppet-editor .grid-point-row {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  @apply [grid-template-columns:minmax(0,_1fr)_minmax(0,_1fr)_auto];
 }
 
 .puppet-editor .grid-curve-button {
-  min-height: 26px;
-  padding: 3px 5px;
-  border: 1px solid #53655f;
-  border-radius: 5px;
-  color: #bfeee1;
-  background: #17211e;
-  font-size: 9px;
-  white-space: nowrap;
-  cursor: pointer;
+  @apply [min-height:1.625rem];
+  @apply [padding:0.1875rem_0.3125rem];
+  @apply [border:0.0625rem_solid_#53655f];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [font-size:0.5625rem];
+  @apply [white-space:nowrap];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .grid-curve-button:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .grid-resolution {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
+  @apply [display:grid];
+  @apply [grid-template-columns:minmax(0,_1fr)];
+  @apply [gap:0.5rem];
 }
 
 .puppet-editor .grid-resolution label {
-  grid-template-columns: 54px minmax(90px, 1fr);
+  @apply [grid-template-columns:3.375rem_minmax(5.625rem,_1fr)];
 }
 
-.puppet-editor .deformer-properties input {
-  width: 100%;
-  min-width: 0;
-  padding: 5px 6px;
-  border: 1px solid #35413d;
-  border-radius: 5px;
-  color: #dfe8e4;
-  background: #121816;
-  font: inherit;
+.puppet-editor .deformer-properties input:not([type='checkbox'], [type='color']),
+.puppet-editor .deformer-properties select {
+  @apply [width:100%];
+  @apply [min-width:0];
+  @apply [padding:0.3125rem_0.375rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#dfe8e4];
+  @apply [background:#121816];
+  @apply [font:inherit];
+}
+
+.puppet-editor .deformer-properties input[type='color'] {
+  @apply [width:100%];
+  @apply [min-width:0];
+  @apply [height:1.75rem];
+  @apply [padding:0.125rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.3125rem];
+  @apply [background:#121816];
+}
+
+.puppet-editor .part-mask-properties {
+  @apply [display:grid];
+  @apply [gap:0.375rem];
+  @apply [margin:0.125rem_0_0];
+  @apply [padding:0.5rem];
+  @apply [border:0.0625rem_solid_#2a3430];
+  @apply [border-radius:0.375rem];
+}
+
+.puppet-editor .part-mask-properties label {
+  @apply [grid-template-columns:auto_minmax(0,_1fr)];
+}
+
+.puppet-editor .mask-chip-list {
+  @apply [display:flex];
+  @apply [min-height:1.75rem];
+  @apply [flex-wrap:wrap];
+  @apply [gap:0.3125rem];
+  @apply [align-items:center];
+}
+
+.puppet-editor .mask-empty-state,
+.puppet-editor .mask-usage-count,
+.puppet-editor .mask-picker-count,
+.puppet-editor .mask-picker-empty {
+  @apply [color:#84918c];
+  @apply [font-size:0.5625rem];
+}
+
+.puppet-editor .mask-chip {
+  @apply [display:inline-grid];
+  @apply [min-width:0];
+  @apply [grid-template-columns:1.25rem_minmax(0,_1fr)_1.25rem];
+  @apply [gap:0.25rem];
+  @apply [align-items:center];
+  @apply [padding:0.125rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.375rem];
+  @apply [color:#d9eee8];
+  @apply [background:#17231f];
+  @apply [font-size:0.5625rem];
+}
+
+.puppet-editor .mask-chip > span {
+  @apply [overflow:hidden];
+  @apply [text-overflow:ellipsis];
+  @apply [white-space:nowrap];
+}
+
+.puppet-editor .mask-chip img,
+.puppet-editor .mask-picker-thumbnail {
+  @apply [width:1.25rem];
+  @apply [height:1.25rem];
+  @apply [border-radius:0.25rem];
+  @apply [background:#25312d];
+  @apply [object-fit:contain];
+}
+
+.puppet-editor .mask-chip button,
+.puppet-editor .mask-picker-heading button {
+  @apply [display:grid];
+  @apply [width:1.25rem];
+  @apply [height:1.25rem];
+  @apply [padding:0];
+  @apply [place-items:center];
+  @apply [border:0];
+  @apply [border-radius:0.25rem];
+  @apply [color:#93a29d];
+  @apply [background:transparent];
+  @apply [cursor:pointer];
+}
+
+.puppet-editor .mask-chip button:hover:not(:disabled),
+.puppet-editor .mask-chip button:focus-visible,
+.puppet-editor .mask-picker-heading button:hover,
+.puppet-editor .mask-picker-heading button:focus-visible {
+  @apply [color:#f4f8f6];
+  @apply [background:#293832];
+  @apply [outline:none];
+}
+
+.puppet-editor .mask-actions {
+  @apply [display:grid];
+  @apply [grid-template-columns:minmax(0,_1fr)];
+  @apply [gap:0.3125rem];
+}
+
+.puppet-editor .mask-action-button {
+  @apply [min-height:1.75rem];
+  @apply [padding:0.3125rem_0.4375rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.375rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [font:inherit];
+  @apply [cursor:pointer];
+}
+
+.puppet-editor .mask-action-button:hover:not(:disabled),
+.puppet-editor .mask-action-button:focus-visible {
+  @apply [border-color:#64e5c4];
+  @apply [outline:none];
+}
+
+.puppet-editor .mask-action-button:disabled,
+.puppet-editor .mask-chip button:disabled {
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
+}
+
+.puppet-editor .mask-picker {
+  @apply [width:min(18.75rem,_calc(100vw_-_1.5rem))];
+  @apply [padding:0.625rem];
+  @apply [border:0.0625rem_solid_#45544f];
+  @apply [border-radius:0.5625rem];
+  @apply [color:#dfe8e4];
+  @apply [background:#111816];
+  @apply [box-shadow:0_0.75rem_2.125rem_rgb(0_0_0_/_42%)];
+}
+
+.puppet-editor .mask-picker-heading {
+  @apply [display:flex];
+  @apply [align-items:center];
+  @apply [justify-content:space-between];
+  @apply [margin-bottom:0.5rem];
+}
+
+.puppet-editor .mask-picker-heading h2 {
+  @apply [margin:0];
+  @apply [color:#dfe8e4];
+  @apply [font-size:0.6875rem];
+}
+
+.puppet-editor .mask-picker-list {
+  @apply [display:grid];
+  @apply [max-height:13.75rem];
+  @apply [gap:0.1875rem];
+  @apply [margin:0.5rem_0];
+  @apply [overflow-y:auto];
+}
+
+.puppet-editor .mask-picker-list label {
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [grid-template-columns:auto_1.5rem_minmax(0,_1fr)_auto];
+  @apply [gap:0.375rem];
+  @apply [align-items:center];
+  @apply [padding:0.3125rem];
+  @apply [border-radius:0.375rem];
+  @apply [color:#cbd7d3];
+  @apply [cursor:pointer];
+}
+
+.puppet-editor .mask-picker-list label:hover {
+  @apply [background:#1c2824];
+}
+
+.puppet-editor .mask-picker-list label:has(input:disabled) {
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
+}
+
+.puppet-editor .mask-picker-thumbnail {
+  @apply [display:grid];
+  @apply [place-items:center];
+  @apply [overflow:hidden];
+}
+
+.puppet-editor .mask-picker-thumbnail img {
+  @apply [display:block];
+  @apply [width:100%];
+  @apply [height:100%];
+  @apply [object-fit:contain];
+}
+
+.puppet-editor .mask-picker-label {
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [gap:0.0625rem];
+}
+
+.puppet-editor .mask-picker-label strong,
+.puppet-editor .mask-picker-label small {
+  @apply [overflow:hidden];
+  @apply [text-overflow:ellipsis];
+  @apply [white-space:nowrap];
+}
+
+.puppet-editor .mask-picker-label strong {
+  @apply [font-size:0.625rem];
+}
+
+.puppet-editor .mask-picker-label small,
+.puppet-editor .mask-picker-reason {
+  @apply [color:#82908b];
+  @apply [font-size:0.5rem];
 }
 
 .puppet-editor .panel-note,
 .puppet-editor .notice {
-  margin: 16px 8px;
-  line-height: 1.6;
+  @apply [margin:1rem_0.5rem];
+  @apply [line-height:1.6];
 }
 
 .puppet-editor .viewport-panel {
-  grid-area: viewport;
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  grid-template-rows: minmax(0, 1fr);
-  background: #0d1210;
+  @apply [grid-area:viewport];
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [min-height:0];
+  @apply [grid-template-rows:minmax(0,_1fr)];
+  @apply [background:#0d1210];
 }
 
 .puppet-editor .timeline-label span {
-  color: #74817d;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  @apply [color:#74817d];
+  @apply [font-size:0.5625rem];
+  @apply [font-weight:700];
+  @apply [letter-spacing:0.12rem];
+  @apply [text-transform:uppercase];
 }
 
 .puppet-editor .viewport {
-  position: relative;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background-color: #111715;
-  background-image: radial-gradient(#34413d 0.75px, transparent 0.75px);
-  background-size: 18px 18px;
+  @apply [position:relative];
+  @apply [min-width:0];
+  @apply [min-height:0];
+  @apply [overflow:hidden];
+  @apply [background-color:#111715];
+  @apply [background-image:radial-gradient(#34413d_0.046875rem,_transparent_0.046875rem)];
+  @apply [background-size:1.125rem_1.125rem];
 }
 
 .puppet-editor .mesh-editor {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+  @apply [position:absolute];
+  @apply [inset:0];
+  @apply [pointer-events:none];
 }
 
 .puppet-editor .mesh-editor svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: auto;
-  touch-action: none;
+  @apply [position:absolute];
+  @apply [inset:0];
+  @apply [width:100%];
+  @apply [height:100%];
+  @apply [overflow:visible];
+  @apply [pointer-events:auto];
+  @apply [touch-action:none];
 }
 
 .puppet-editor .mesh-editor svg.add-tool {
-  cursor: crosshair;
+  @apply [cursor:crosshair];
 }
 
 .puppet-editor .mesh-editor polygon {
-  fill: rgb(100 229 196 / 4%);
-  stroke: rgb(100 229 196 / 58%);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+  @apply [fill:rgb(100_229_196_/_4%)];
+  @apply [stroke:rgb(100_229_196_/_58%)];
+  @apply [stroke-width:0.0625rem];
+  @apply [vector-effect:non-scaling-stroke];
+}
+
+.puppet-editor .mesh-editor .clipped-part-preview {
+  @apply [pointer-events:none];
+}
+
+.puppet-editor .mesh-editor .clipped-part-preview .clipped-part-boundary {
+  @apply [clip-path:var(--active-mask-clip)];
+  @apply [fill:none];
+  @apply [stroke:#ffbd59];
+  @apply [stroke-dasharray:7_5];
+  @apply [stroke-width:0.125rem];
+}
+
+.puppet-editor .mesh-editor .clipped-part-preview.filled .clipped-part-boundary {
+  @apply [fill:rgb(255_189_89_/_12%)];
 }
 
 .puppet-editor .mesh-editor circle {
-  fill: #101513;
-  stroke: #64e5c4;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-  cursor: grab;
+  @apply [fill:#101513];
+  @apply [stroke:#64e5c4];
+  @apply [stroke-width:0.125rem];
+  @apply [vector-effect:non-scaling-stroke];
+  @apply [cursor:grab];
 }
 
 .puppet-editor .mesh-editor circle:active {
-  cursor: grabbing;
+  @apply [cursor:grabbing];
 }
 
 .puppet-editor .mesh-editor circle.selected {
-  fill: #ffbd59;
-  stroke: #fff1d6;
+  @apply [fill:#ffbd59];
+  @apply [stroke:#fff1d6];
 }
 
 .puppet-editor .deformer-editor {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+  @apply [position:absolute];
+  @apply [inset:0];
+  @apply [pointer-events:none];
 }
 
 .puppet-editor .deformer-editor svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: auto;
-  touch-action: none;
+  @apply [position:absolute];
+  @apply [inset:0];
+  @apply [width:100%];
+  @apply [height:100%];
+  @apply [overflow:visible];
+  @apply [pointer-events:auto];
+  @apply [touch-action:none];
 }
 
 .puppet-editor .deformer-editor line,
 .puppet-editor .deformer-editor path {
-  fill: none;
-  stroke: #ffbd59;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
+  @apply [fill:none];
+  @apply [stroke:#ffbd59];
+  @apply [stroke-width:0.09375rem];
+  @apply [vector-effect:non-scaling-stroke];
 }
 
 .puppet-editor .deformer-editor .translation-handle {
-  fill: transparent;
-  stroke: none;
-  pointer-events: fill;
-  cursor: grab;
+  @apply [fill:transparent];
+  @apply [stroke:none];
+  @apply [pointer-events:fill];
+  @apply [cursor:grab];
 }
 
 .puppet-editor .deformer-editor .translation-handle:active {
-  cursor: grabbing;
+  @apply [cursor:grabbing];
 }
 
 .puppet-editor .deformer-editor line,
 .puppet-editor .deformer-editor .grid-deformer-controls > path:not(.translation-handle) {
-  pointer-events: none;
+  @apply [pointer-events:none];
 }
 
 .puppet-editor .deformer-editor circle {
-  fill: #111715;
-  stroke: #ffbd59;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-  cursor: grab;
+  @apply [fill:#111715];
+  @apply [stroke:#ffbd59];
+  @apply [stroke-width:0.125rem];
+  @apply [vector-effect:non-scaling-stroke];
+  @apply [cursor:grab];
 }
 
 .puppet-editor .deformer-editor circle:active {
-  cursor: grabbing;
+  @apply [cursor:grabbing];
 }
 
 .puppet-editor .deformer-editor .rotation-origin-hit,
 .puppet-editor .deformer-editor .rotation-origin-hit:active {
-  fill: transparent;
-  stroke: transparent;
-  cursor: move;
-  pointer-events: all;
+  @apply [fill:transparent];
+  @apply [stroke:transparent];
+  @apply [cursor:move];
+  @apply [pointer-events:all];
 }
 
 .puppet-editor .deformer-editor .rotation-origin {
-  fill: none;
-  cursor: default;
-  pointer-events: none;
+  @apply [fill:none];
+  @apply [cursor:default];
+  @apply [pointer-events:none];
 }
 
 .puppet-editor .deformer-editor circle.selected {
-  fill: #ffbd59;
-  stroke: #fff1d6;
-  stroke-width: 3;
+  @apply [fill:#ffbd59];
+  @apply [stroke:#fff1d6];
+  @apply [stroke-width:0.1875rem];
 }
 
 .puppet-editor .deformer-editor .curve-handle-line {
-  stroke: #ff7087;
-  stroke-dasharray: 4 3;
+  @apply [stroke:#ff7087];
+  @apply [stroke-dasharray:4_3];
 }
 
 .puppet-editor .deformer-editor .curve-handle {
-  fill: #ff7087;
-  stroke: #fff1f4;
+  @apply [fill:#ff7087];
+  @apply [stroke:#fff1f4];
 }
 
 .puppet-editor .deformer-editor .blocked line,
 .puppet-editor .deformer-editor .blocked path,
 .puppet-editor .deformer-editor .blocked circle {
-  stroke: #66716d;
+  @apply [stroke:#66716d];
 }
 
 .puppet-editor .deformer-editor .blocked circle {
-  fill: #202825;
-  cursor: not-allowed;
+  @apply [fill:#202825];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .deformer-editor .blocked .translation-handle {
-  cursor: not-allowed;
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .deformer-editor .blocked .rotation-origin,
 .puppet-editor .deformer-editor .blocked .rotation-origin-hit {
-  fill: none;
+  @apply [fill:none];
 }
 
 .puppet-editor .deformer-editor .blocked .rotation-origin-hit {
-  cursor: not-allowed;
-  fill: transparent;
-  stroke: transparent;
+  @apply [cursor:not-allowed];
+  @apply [fill:transparent];
+  @apply [stroke:transparent];
 }
 
 .puppet-editor .deformer-edit-message {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-  left: 18px;
-  margin: 0 auto;
-  padding: 9px 12px;
-  border: 1px solid #725e31;
-  border-radius: 8px;
-  color: #ffe0a3;
-  background: rgb(34 29 18 / 92%);
-  font-size: 11px;
-  line-height: 1.5;
-  text-align: center;
+  @apply [position:absolute];
+  @apply [right:1.125rem];
+  @apply [bottom:1.125rem];
+  @apply [left:1.125rem];
+  @apply [margin:0_auto];
+  @apply [padding:0.5625rem_0.75rem];
+  @apply [border:0.0625rem_solid_#725e31];
+  @apply [border-radius:0.5rem];
+  @apply [color:#ffe0a3];
+  @apply [background:rgb(34_29_18_/_92%)];
+  @apply [font-size:0.6875rem];
+  @apply [line-height:1.5];
+  @apply [text-align:center];
 }
 
 .puppet-editor .mesh-tools {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  gap: 6px;
-  padding: 6px;
-  border: 1px solid #35413d;
-  border-radius: 9px;
-  background: rgb(11 15 14 / 88%);
-  pointer-events: auto;
+  @apply [position:absolute];
+  @apply [top:0.75rem];
+  @apply [left:0.75rem];
+  @apply [display:flex];
+  @apply [gap:0.375rem];
+  @apply [padding:0.375rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.5625rem];
+  @apply [background:rgb(11_15_14_/_88%)];
+  @apply [pointer-events:auto];
 }
 
 .puppet-editor .mesh-tools button {
-  padding: 6px 9px;
-  border: 1px solid #35413d;
-  border-radius: 6px;
-  color: #9eaaa5;
-  background: #171e1b;
-  font-size: 10px;
-  cursor: pointer;
+  @apply [padding:0.375rem_0.5625rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.375rem];
+  @apply [color:#9eaaa5];
+  @apply [background:#171e1b];
+  @apply [font-size:0.625rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .mesh-tools button[aria-pressed='true'] {
-  border-color: #64e5c4;
-  color: #07110f;
-  background: #64e5c4;
+  @apply [border-color:#64e5c4];
+  @apply [color:#07110f];
+  @apply [background:#64e5c4];
 }
 
 .puppet-editor .mesh-tools button:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
+}
+
+.puppet-editor .mask-fill-toggle {
+  @apply [display:flex];
+  @apply [align-items:center];
+  @apply [gap:0.3125rem];
+  @apply [padding:0_0.25rem];
+  @apply [color:#c7d0cc];
+  @apply [font-size:0.625rem];
+  @apply [cursor:pointer];
+}
+
+.puppet-editor .mask-fill-toggle input {
+  @apply [margin:0];
+  @apply [accent-color:#64e5c4];
 }
 
 .puppet-editor .player-canvas,
 .puppet-editor .canvas-host,
 .puppet-editor .canvas-host canvas {
-  width: 100%;
-  height: 100%;
+  @apply [width:100%];
+  @apply [height:100%];
 }
 
 .puppet-editor .canvas-host canvas {
-  display: block;
+  @apply [display:block];
 }
 
 .puppet-editor .viewport-message {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  margin: 0;
-  color: #7f8d88;
-  font-size: 12px;
-  transform: translate(-50%, -50%);
+  @apply [position:absolute];
+  @apply [inset:50%_auto_auto_50%];
+  @apply [margin:0];
+  @apply [color:#7f8d88];
+  @apply [font-size:0.75rem];
+  @apply [transform:translate(-50%,_-50%)];
 }
 
 .puppet-editor .error-message {
-  color: #ff9b96;
+  @apply [color:#ff9b96];
 }
 
 .puppet-editor .timeline {
-  grid-area: timeline;
-  display: grid;
-  min-height: 0;
-  grid-template-rows: auto minmax(0, 1fr);
-  border-top: 1px solid #27302d;
-  background: #111614;
+  @apply [grid-area:timeline];
+  @apply [display:grid];
+  @apply [min-height:0];
+  @apply [grid-template-rows:auto_minmax(0,_1fr)];
+  @apply [border-top:0.0625rem_solid_#27302d];
+  @apply [background:#111614];
 }
 
 .puppet-editor .modeling-panel {
-  grid-area: timeline;
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  border-top: 1px solid #27302d;
-  background: #111614;
+  @apply [grid-area:timeline];
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [min-height:0];
+  @apply [border-top:0.0625rem_solid_#27302d];
+  @apply [background:#111614];
 }
 
 .puppet-editor .keyform-panel {
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  grid-template-rows: auto minmax(76px, 1fr) auto;
-  background: #111614;
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [min-height:0];
+  @apply [grid-template-rows:auto_minmax(4.75rem,_1fr)_auto];
+  @apply [background:#111614];
 }
 
 .puppet-editor .keyform-toolbar {
-  display: grid;
-  min-height: 58px;
-  grid-template-columns: 210px minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
-  padding: 9px 16px;
-  border-bottom: 1px solid #27302d;
+  @apply [display:grid];
+  @apply [min-height:3.625rem];
+  @apply [grid-template-columns:13.125rem_minmax(0,_1fr)];
+  @apply [gap:0.875rem];
+  @apply [align-items:center];
+  @apply [padding:0.5625rem_1rem];
+  @apply [border-bottom:0.0625rem_solid_#27302d];
 }
 
 .puppet-editor .keyform-parameter-heading {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  color: #c5d0cc;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  @apply [display:flex];
+  @apply [gap:0.5rem];
+  @apply [align-items:center];
+  @apply [color:#c5d0cc];
+  @apply [font-size:0.625rem];
+  @apply [font-weight:700];
+  @apply [letter-spacing:0.08rem];
+  @apply [text-transform:uppercase];
 }
 
 .puppet-editor .parameter-target-actions .parameter-visibility-toggle[aria-pressed='true'] {
-  border-color: #64e5c4;
-  color: #bfeee1;
-  background: #1a2925;
+  @apply [border-color:#64e5c4];
+  @apply [color:#bfeee1];
+  @apply [background:#1a2925];
 }
 
 .puppet-editor .parameter-target-actions .parameter-visibility-toggle[aria-pressed='false'] {
-  border-color: #5b6e67;
-  color: #84918c;
-  background: #121816;
+  @apply [border-color:#5b6e67];
+  @apply [color:#84918c];
+  @apply [background:#121816];
 }
 
 .puppet-editor .parameter-target-actions .parameter-visibility-toggle:focus-visible {
-  outline: 2px solid #64e5c4;
-  outline-offset: 2px;
+  @apply [outline:0.125rem_solid_#64e5c4];
+  @apply [outline-offset:0.125rem];
 }
 
 .puppet-editor .keyform-actions {
-  display: flex;
-  gap: 8px;
+  @apply [display:flex];
+  @apply [gap:0.5rem];
 }
 
 .puppet-editor .keyform-actions button {
-  padding: 6px 10px;
-  border: 1px solid #3d5f56;
-  border-radius: 6px;
-  color: #bfeee1;
-  background: #17211e;
-  font-size: 10px;
-  cursor: pointer;
+  @apply [padding:0.375rem_0.625rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.375rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [font-size:0.625rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .keyform-actions button.danger {
-  border-color: #66403e;
-  color: #ffc5c0;
-  background: #241817;
+  @apply [border-color:#66403e];
+  @apply [color:#ffc5c0];
+  @apply [background:#241817];
 }
 
 .puppet-editor .keyform-actions button:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .keyform-track-wrap {
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  grid-template-columns: 220px minmax(0, 1fr);
-  align-content: start;
-  overflow-x: hidden;
-  overflow-y: auto;
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [min-height:0];
+  @apply [grid-template-columns:13.75rem_minmax(0,_1fr)];
+  @apply [align-content:start];
+  @apply [overflow-x:hidden];
+  @apply [overflow-y:auto];
 }
 
 .puppet-editor .keyform-track-labels,
 .puppet-editor .keyform-tracks {
-  display: grid;
-  align-content: start;
+  @apply [display:grid];
+  @apply [align-content:start];
 }
 
 .puppet-editor .keyform-track-scroll {
-  min-width: 0;
-  overflow-x: auto;
+  @apply [min-width:0];
+  @apply [overflow-x:auto];
 }
 
 .puppet-editor .keyform-tracks {
-  min-width: 696px;
+  @apply [min-width:43.5rem];
 }
 
 .puppet-editor .keyform-track-label {
-  min-width: 0;
-  min-height: 76px;
-  border-right: 1px solid #27302d;
-  border-bottom: 1px solid #222b28;
-  background: #121816;
+  @apply [min-width:0];
+  @apply [min-height:4.75rem];
+  @apply [border-right:0.0625rem_solid_#27302d];
+  @apply [border-bottom:0.0625rem_solid_#222b28];
+  @apply [background:#121816];
 }
 
 .puppet-editor .keyform-track-label.parameter-grid-label {
-  min-height: 124px;
+  @apply [min-height:7.75rem];
 }
 
 .puppet-editor .keyform-track-label .parameter-swipe-row,
 .puppet-editor .keyform-track-label .parameter-item {
-  min-height: 76px;
-  border-radius: 0;
+  @apply [min-height:4.75rem];
+  @apply [border-radius:0];
 }
 
 .puppet-editor .keyform-track-label .parameter-item {
-  padding-bottom: 38px;
-  border-width: 0;
+  @apply [padding-bottom:2.375rem];
+  @apply [border-width:0];
 }
 
 .puppet-editor .keyform-track-label.parameter-grid-label .parameter-swipe-row,
 .puppet-editor .keyform-track-label.parameter-grid-label .parameter-item {
-  min-height: 124px;
+  @apply [min-height:7.75rem];
 }
 
 .puppet-editor .keyform-track-label.parameter-grid-label .parameter-item {
-  padding-bottom: 66px;
+  @apply [padding-bottom:4.125rem];
 }
 
 .puppet-editor .parameter-item-details {
-  position: absolute;
-  right: 30px;
-  bottom: 9px;
-  left: 10px;
-  color: #a7b3af;
-  transform: translateX(calc(var(--parameter-swipe-offset) * -1));
-  transition: transform 160ms ease-out;
+  @apply [position:absolute];
+  @apply [right:1.875rem];
+  @apply [bottom:0.5625rem];
+  @apply [left:0.625rem];
+  @apply [color:#a7b3af];
+  @apply [transform:translateX(calc(var(--parameter-swipe-offset)_*_-1))];
+  @apply [transition:transform_160ms_ease-out];
 }
 
 .puppet-editor .parameter-swipe-row.dragging .parameter-item-details {
-  transition: none;
+  @apply [transition:none];
 }
 
 .puppet-editor .keyform-row-values {
-  display: grid;
-  gap: 5px;
+  @apply [display:grid];
+  @apply [gap:0.3125rem];
 }
 
 .puppet-editor .keyform-row-value {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr) 72px;
-  gap: 7px;
-  align-items: center;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 9px;
-  white-space: nowrap;
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [grid-template-columns:minmax(0,_1fr)_4.5rem];
+  @apply [gap:0.4375rem];
+  @apply [align-items:center];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5625rem];
+  @apply [white-space:nowrap];
 }
 
 .puppet-editor .keyform-row-value input {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  padding: 4px 6px;
-  border: 1px solid #3b4743;
-  border-radius: 5px;
-  color: #e5eeea;
-  background: #171e1b;
-  font: inherit;
+  @apply [box-sizing:border-box];
+  @apply [width:100%];
+  @apply [min-width:0];
+  @apply [padding:0.25rem_0.375rem];
+  @apply [border:0.0625rem_solid_#3b4743];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#e5eeea];
+  @apply [background:#171e1b];
+  @apply [font:inherit];
 }
 
 .puppet-editor .keyform-track {
-  position: relative;
-  min-width: 640px;
-  min-height: 76px;
-  margin: 0 28px;
-  border-bottom: 1px solid #222b28;
-  background-image: linear-gradient(to right, #27322e 1px, transparent 1px);
-  background-size: 12.5% 100%;
-  cursor: crosshair;
-  touch-action: none;
+  @apply [position:relative];
+  @apply [min-width:40rem];
+  @apply [min-height:4.75rem];
+  @apply [margin:0_1.75rem];
+  @apply [border-bottom:0.0625rem_solid_#222b28];
+  @apply [background-image:linear-gradient(to_right,_#27322e_0.0625rem,_transparent_0.0625rem)];
+  @apply [background-size:12.5%_100%];
+  @apply [cursor:crosshair];
+  @apply [touch-action:none];
 }
 
 .puppet-editor .keyform-track::before {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: #3a4642;
-  content: '';
+  @apply [position:absolute];
+  @apply [top:50%];
+  @apply [right:0];
+  @apply [left:0];
+  @apply [height:0.0625rem];
+  @apply [background:#3a4642];
+  @apply [content:''];
 }
 
 .puppet-editor .parameter-grid-track {
-  min-height: 124px;
+  @apply [min-height:7.75rem];
 }
 
 .puppet-editor .parameter-grid-track::before {
-  top: 50%;
+  @apply [top:50%];
 }
 
 .puppet-editor .parameter-grid {
-  position: absolute;
-  inset: 16px 0;
-  cursor: crosshair;
-  touch-action: none;
+  @apply [position:absolute];
+  @apply [inset:1rem_0];
+  @apply [cursor:crosshair];
+  @apply [touch-action:none];
 }
 
 .puppet-editor .parameter-grid-keyform {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  padding: 0;
-  border: 2px solid #b8f5e5;
-  border-radius: 2px;
-  background: #64e5c4;
-  transform: translate(-50%, 50%) rotate(45deg);
-  cursor: pointer;
+  @apply [position:absolute];
+  @apply [width:0.875rem];
+  @apply [height:0.875rem];
+  @apply [padding:0];
+  @apply [border:0.125rem_solid_#b8f5e5];
+  @apply [border-radius:0.125rem];
+  @apply [background:#64e5c4];
+  @apply [transform:translate(-50%,_50%)_rotate(45deg)];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .parameter-grid-keyform.selected {
-  border-color: #fff0cf;
-  background: #ffbd59;
-  box-shadow: 0 0 0 3px rgb(255 189 89 / 18%);
+  @apply [border-color:#fff0cf];
+  @apply [background:#ffbd59];
+  @apply [box-shadow:0_0_0_0.1875rem_rgb(255_189_89_/_18%)];
 }
 
 .puppet-editor .parameter-grid-current-x,
 .puppet-editor .parameter-grid-current-y {
-  position: absolute;
-  background: #ffbd59;
-  pointer-events: none;
+  @apply [position:absolute];
+  @apply [background:#ffbd59];
+  @apply [pointer-events:none];
 }
 
 .puppet-editor .parameter-grid-current-x {
-  top: -16px;
-  bottom: -16px;
-  width: 1px;
-  transform: translateX(-50%);
+  @apply [top:-1rem];
+  @apply [bottom:-1rem];
+  @apply [width:0.0625rem];
+  @apply [transform:translateX(-50%)];
 }
 
 .puppet-editor .parameter-grid-current-y {
-  right: 0;
-  left: 0;
-  height: 1px;
-  transform: translateY(50%);
+  @apply [right:0];
+  @apply [left:0];
+  @apply [height:0.0625rem];
+  @apply [transform:translateY(50%)];
 }
 
 .puppet-editor .keyform-value-indicator {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 11px;
-  padding: 0;
-  border: 0;
-  background: linear-gradient(to right, transparent 5px, #ffbd59 5px 6px, transparent 6px);
-  transform: translateX(-50%);
-  cursor: ew-resize;
-  touch-action: none;
+  @apply [position:absolute];
+  @apply [top:0];
+  @apply [bottom:0];
+  @apply [width:0.6875rem];
+  @apply [padding:0];
+  @apply [border:0];
+  @apply [background:linear-gradient(to_right,_transparent_0.3125rem,_#ffbd59_0.3125rem_0.375rem,_transparent_0.375rem)];
+  @apply [transform:translateX(-50%)];
+  @apply [cursor:ew-resize];
+  @apply [touch-action:none];
 }
 
 .puppet-editor .keyform-value-indicator:focus-visible {
-  outline: 2px solid #fff0cf;
-  outline-offset: -2px;
+  @apply [outline:0.125rem_solid_#fff0cf];
+  @apply [outline-offset:-0.125rem];
 }
 
 .puppet-editor .keyform-marker {
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  padding: 0;
-  border: 2px solid #b8f5e5;
-  border-radius: 2px;
-  background: #64e5c4;
-  transform: translate(-50%, -50%) rotate(45deg);
-  cursor: pointer;
+  @apply [position:absolute];
+  @apply [top:50%];
+  @apply [width:0.875rem];
+  @apply [height:0.875rem];
+  @apply [padding:0];
+  @apply [border:0.125rem_solid_#b8f5e5];
+  @apply [border-radius:0.125rem];
+  @apply [background:#64e5c4];
+  @apply [transform:translate(-50%,_-50%)_rotate(45deg)];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .keyform-marker.draggable {
-  cursor: ew-resize;
-  touch-action: none;
+  @apply [cursor:ew-resize];
+  @apply [touch-action:none];
 }
 
 .puppet-editor .keyform-marker.dragging {
-  border-color: #fff0cf;
-  background: #ffbd59;
+  @apply [border-color:#fff0cf];
+  @apply [background:#ffbd59];
 }
 
 .puppet-editor .keyform-marker > span {
-  position: absolute;
-  top: 16px;
-  left: 14px;
-  color: #82908b;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 8px;
-  transform: rotate(-45deg) translateX(-50%);
+  @apply [position:absolute];
+  @apply [top:1rem];
+  @apply [left:0.875rem];
+  @apply [color:#82908b];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5rem];
+  @apply [transform:rotate(-45deg)_translateX(-50%)];
 }
 
 .puppet-editor .keyform-marker[aria-pressed='true'] {
-  border-color: #fff0cf;
-  background: #ffbd59;
-  box-shadow: 0 0 0 3px rgb(255 189 89 / 18%);
+  @apply [border-color:#fff0cf];
+  @apply [background:#ffbd59];
+  @apply [box-shadow:0_0_0_0.1875rem_rgb(255_189_89_/_18%)];
 }
 
 .puppet-editor .keyform-marker:focus-visible {
-  outline: 2px solid #fff0cf;
-  outline-offset: 4px;
+  @apply [outline:0.125rem_solid_#fff0cf];
+  @apply [outline-offset:0.25rem];
 }
 
 .puppet-editor .keyform-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  border-top: 1px solid #27302d;
+  @apply [display:flex];
+  @apply [align-items:center];
+  @apply [justify-content:space-between];
+  @apply [padding:0.5rem_1rem];
+  @apply [border-top:0.0625rem_solid_#27302d];
 }
 
 .puppet-editor .keyform-help {
-  margin: 0;
-  color: #84918c;
-  font-size: 10px;
-  line-height: 1.5;
+  @apply [margin:0];
+  @apply [color:#84918c];
+  @apply [font-size:0.625rem];
+  @apply [line-height:1.5];
 }
 
 .puppet-editor .timeline-toolbar {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) 110px;
-  gap: 14px;
-  align-items: center;
-  min-height: 58px;
-  padding: 9px 16px;
-  border-bottom: 1px solid #27302d;
+  @apply [display:grid];
+  @apply [grid-template-columns:11.25rem_minmax(0,_1fr)_6.875rem];
+  @apply [gap:0.875rem];
+  @apply [align-items:center];
+  @apply [min-height:3.625rem];
+  @apply [padding:0.5625rem_1rem];
+  @apply [border-bottom:0.0625rem_solid_#27302d];
 }
 
 .puppet-editor .timeline-label {
-  display: grid;
-  gap: 3px;
+  @apply [display:grid];
+  @apply [gap:0.1875rem];
 }
 
 .puppet-editor .timeline-label strong {
-  font-size: 12px;
+  @apply [font-size:0.75rem];
 }
 
 .puppet-editor .timeline-actions {
-  display: flex;
-  min-width: 0;
-  gap: 8px;
-  align-items: center;
+  @apply [display:flex];
+  @apply [min-width:0];
+  @apply [gap:0.5rem];
+  @apply [align-items:center];
 }
 
 .puppet-editor .timeline-playback,
 .puppet-editor .timeline-keyframe-add,
 .puppet-editor .timeline-keyframe-delete {
-  padding: 5px 9px;
-  border: 1px solid #3d5f56;
-  border-radius: 6px;
-  color: #bfeee1;
-  background: #17211e;
-  font-size: 10px;
-  cursor: pointer;
+  @apply [padding:0.3125rem_0.5625rem];
+  @apply [border:0.0625rem_solid_#3d5f56];
+  @apply [border-radius:0.375rem];
+  @apply [color:#bfeee1];
+  @apply [background:#17211e];
+  @apply [font-size:0.625rem];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .timeline-keyframe-add {
-  color: #d9e3df;
-  border-color: #46534f;
-  background: #19201e;
+  @apply [color:#d9e3df];
+  @apply [border-color:#46534f];
+  @apply [background:#19201e];
 }
 
 .puppet-editor .timeline-keyframe-delete {
-  border-color: #66403e;
-  color: #ffc5c0;
-  background: #241817;
+  @apply [border-color:#66403e];
+  @apply [color:#ffc5c0];
+  @apply [background:#241817];
 }
 
 .puppet-editor .timeline-playback:disabled,
 .puppet-editor .timeline-keyframe-add:disabled,
 .puppet-editor .timeline-keyframe-delete:disabled,
 .puppet-editor .timeline-easing select:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
+  @apply [opacity:0.42];
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .timeline-easing {
-  display: flex;
-  min-width: 0;
-  gap: 7px;
-  align-items: center;
-  color: #84918c;
-  font-size: 9px;
+  @apply [display:flex];
+  @apply [min-width:0];
+  @apply [gap:0.4375rem];
+  @apply [align-items:center];
+  @apply [color:#84918c];
+  @apply [font-size:0.5625rem];
 }
 
 .puppet-editor .timeline-easing select {
-  min-width: 104px;
-  padding: 5px 22px 5px 7px;
-  border: 1px solid #3b4743;
-  border-radius: 6px;
-  color: #d7e1dd;
-  background: #171e1b;
-  font-size: 10px;
+  @apply [min-width:6.5rem];
+  @apply [padding:0.3125rem_1.375rem_0.3125rem_0.4375rem];
+  @apply [border:0.0625rem_solid_#3b4743];
+  @apply [border-radius:0.375rem];
+  @apply [color:#d7e1dd];
+  @apply [background:#171e1b];
+  @apply [font-size:0.625rem];
 }
 
 .puppet-editor .timeline-dopesheet {
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  grid-template-columns: 220px minmax(640px, 1fr);
-  align-content: start;
-  overflow: auto;
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [min-height:0];
+  @apply [grid-template-columns:13.75rem_minmax(40rem,_1fr)];
+  @apply [align-content:start];
+  @apply [overflow:auto];
 }
 
 .puppet-editor .timeline-ruler-label,
 .puppet-editor .timeline-row-label {
-  border-right: 1px solid #313a37;
-  border-bottom: 1px solid #27302d;
-  background: #121816;
+  @apply [border-right:0.0625rem_solid_#313a37];
+  @apply [border-bottom:0.0625rem_solid_#27302d];
+  @apply [background:#121816];
 }
 
 .puppet-editor .timeline-ruler-label {
-  display: flex;
-  height: 32px;
-  align-items: center;
-  padding: 0 14px;
-  color: #788580;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  @apply [display:flex];
+  @apply [height:2rem];
+  @apply [align-items:center];
+  @apply [padding:0_0.875rem];
+  @apply [color:#788580];
+  @apply [font-size:0.5625rem];
+  @apply [font-weight:700];
+  @apply [letter-spacing:0.08rem];
+  @apply [text-transform:uppercase];
 }
 
 .puppet-editor .timeline-ruler,
 .puppet-editor .timeline-row {
-  position: relative;
-  min-width: 640px;
-  background-image:
-    linear-gradient(to right, #1d2522 1px, transparent 1px),
-    linear-gradient(to right, #313c38 1px, transparent 1px);
-  background-size:
-    calc(100% / var(--timeline-frame-count)) 100%,
-    12.5% 100%;
+  @apply [position:relative];
+  @apply [min-width:40rem];
+  @apply [background-image:linear-gradient(to_right,_#1d2522_0.0625rem,_transparent_0.0625rem),_linear-gradient(to_right,_#313c38_0.0625rem,_transparent_0.0625rem)];
+  @apply [background-size:calc(100%_/_var(--timeline-frame-count))_100%,_12.5%_100%];
 }
 
 .puppet-editor .timeline-ruler {
-  height: 32px;
-  border-bottom: 1px solid #27302d;
-  background-color: #101513;
+  @apply [height:2rem];
+  @apply [border-bottom:0.0625rem_solid_#27302d];
+  @apply [background-color:#101513];
 }
 
 .puppet-editor .timeline-ruler > span:not(.timeline-ruler-playhead) {
-  position: absolute;
-  top: 8px;
-  color: #788580;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 8px;
-  transform: translateX(-50%);
+  @apply [position:absolute];
+  @apply [top:0.5rem];
+  @apply [color:#788580];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5rem];
+  @apply [transform:translateX(-50%)];
 }
 
 .puppet-editor .timeline-ruler > span:first-child {
-  transform: none;
+  @apply [transform:none];
 }
 
 .puppet-editor .timeline-ruler > span:nth-child(9) {
-  transform: translateX(-100%);
+  @apply [transform:translateX(-100%)];
 }
 
 .puppet-editor .timeline-ruler input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: ew-resize;
+  @apply [position:absolute];
+  @apply [inset:0];
+  @apply [width:100%];
+  @apply [height:100%];
+  @apply [margin:0];
+  @apply [opacity:0];
+  @apply [cursor:ew-resize];
 }
 
 .puppet-editor .timeline-ruler input:disabled {
-  cursor: not-allowed;
+  @apply [cursor:not-allowed];
 }
 
 .puppet-editor .timeline-row-label {
-  display: grid;
-  height: 38px;
-  grid-template-columns: minmax(0, 1fr) 64px;
-  gap: 8px;
-  align-items: center;
-  align-content: center;
-  padding: 0 14px;
+  @apply [display:grid];
+  @apply [height:2.375rem];
+  @apply [grid-template-columns:minmax(0,_1fr)_4rem];
+  @apply [gap:0.5rem];
+  @apply [align-items:center];
+  @apply [align-content:center];
+  @apply [padding:0_0.875rem];
 }
 
 .puppet-editor .timeline-row-label span {
-  color: #6f7d78;
-  font-size: 8px;
+  @apply [color:#6f7d78];
+  @apply [font-size:0.5rem];
 }
 
 .puppet-editor .timeline-row-label strong {
-  overflow: hidden;
-  color: #c5d0cc;
-  font-size: 10px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @apply [overflow:hidden];
+  @apply [color:#c5d0cc];
+  @apply [font-size:0.625rem];
+  @apply [font-weight:600];
+  @apply [text-overflow:ellipsis];
+  @apply [white-space:nowrap];
 }
 
 .puppet-editor .timeline-row-label input {
-  min-width: 0;
-  width: 100%;
-  padding: 4px 6px;
-  border: 1px solid #35413d;
-  border-radius: 5px;
-  color: #d7e1dd;
-  background: #171e1b;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 9px;
+  @apply [min-width:0];
+  @apply [width:100%];
+  @apply [padding:0.25rem_0.375rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#d7e1dd];
+  @apply [background:#171e1b];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5625rem];
 }
 
 .puppet-editor .timeline-row-label input:focus-visible {
-  border-color: #64e5c4;
-  outline: none;
+  @apply [border-color:#64e5c4];
+  @apply [outline:none];
 }
 
 .puppet-editor .timeline-row {
-  height: 38px;
-  border-bottom: 1px solid #222b28;
-  background-color: #0f1412;
+  @apply [height:2.375rem];
+  @apply [border-bottom:0.0625rem_solid_#222b28];
+  @apply [background-color:#0f1412];
 }
 
 .puppet-editor .timeline-keyframe {
-  position: absolute;
-  top: 50%;
-  width: 10px;
-  height: 10px;
-  padding: 0;
-  border: 1px solid #b8f5e5;
-  border-radius: 1px;
-  background: #64e5c4;
-  transform: translate(-50%, -50%) rotate(45deg);
-  cursor: pointer;
+  @apply [position:absolute];
+  @apply [top:50%];
+  @apply [width:0.625rem];
+  @apply [height:0.625rem];
+  @apply [padding:0];
+  @apply [border:0.0625rem_solid_#b8f5e5];
+  @apply [border-radius:0.0625rem];
+  @apply [background:#64e5c4];
+  @apply [transform:translate(-50%,_-50%)_rotate(45deg)];
+  @apply [cursor:pointer];
 }
 
 .puppet-editor .timeline-keyframe[aria-pressed='true'] {
-  border-color: #fff0cf;
-  background: #ffbd59;
-  box-shadow: 0 0 0 3px rgb(255 189 89 / 18%);
+  @apply [border-color:#fff0cf];
+  @apply [background:#ffbd59];
+  @apply [box-shadow:0_0_0_0.1875rem_rgb(255_189_89_/_18%)];
 }
 
 .puppet-editor .timeline-keyframe:focus-visible {
-  outline: 2px solid #fff0cf;
-  outline-offset: 3px;
+  @apply [outline:0.125rem_solid_#fff0cf];
+  @apply [outline-offset:0.1875rem];
 }
 
 .puppet-editor .timeline-ruler-playhead,
 .puppet-editor .timeline-row-playhead {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: #ffbd59;
-  pointer-events: none;
+  @apply [position:absolute];
+  @apply [top:0];
+  @apply [bottom:0];
+  @apply [width:0.0625rem];
+  @apply [background:#ffbd59];
+  @apply [pointer-events:none];
 }
 
 .puppet-editor .timeline-ruler-playhead::before {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #ffbd59;
-  content: '';
-  transform: translateX(-50%);
+  @apply [position:absolute];
+  @apply [top:0];
+  @apply [left:50%];
+  @apply [width:0.4375rem];
+  @apply [height:0.4375rem];
+  @apply [border-radius:50%];
+  @apply [background:#ffbd59];
+  @apply [content:''];
+  @apply [transform:translateX(-50%)];
 }
 
 .puppet-editor .timeline-time {
-  justify-self: end;
-  color: #7f8d88;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 10px;
+  @apply [justify-self:end];
+  @apply [color:#7f8d88];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.625rem];
 }
 
 .puppet-editor .timeline-empty {
-  grid-column: 1 / -1;
-  margin: 0;
-  padding: 18px;
-  color: #788580;
-  font-size: 10px;
-  text-align: center;
+  @apply [grid-column:1_/_-1];
+  @apply [margin:0];
+  @apply [padding:1.125rem];
+  @apply [color:#788580];
+  @apply [font-size:0.625rem];
+  @apply [text-align:center];
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 67.5rem) {
   .puppet-editor .toolbar {
-    padding: 0 12px;
+    @apply [padding:0_0.75rem];
   }
 
   .puppet-editor .toolbar-actions {
-    gap: 6px;
+    @apply [gap:0.375rem];
   }
 
   .puppet-editor .renderer-status {
-    display: none;
+    @apply [display:none];
   }
 }
 
 .editor-context-menu-content {
-  min-width: 180px;
-  padding: 5px;
-  border: 1px solid #35413d;
-  border-radius: 7px;
-  outline: none;
-  color: #dbe5e1;
-  background: #121816;
-  box-shadow: 0 10px 28px rgb(0 0 0 / 36%);
+  @apply [min-width:11.25rem];
+  @apply [padding:0.3125rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.4375rem];
+  @apply [outline:none];
+  @apply [color:#dbe5e1];
+  @apply [background:#121816];
+  @apply [box-shadow:0_0.625rem_1.75rem_rgb(0_0_0_/_36%)];
 }
 
 .editor-context-menu-content[data-closed] {
-  display: none;
+  @apply [display:none];
 }
 
 .editor-context-menu-item {
-  display: flex;
-  min-height: 30px;
-  gap: 18px;
-  align-items: center;
-  padding: 5px 8px;
-  border-radius: 5px;
-  outline: none;
-  font-size: 10px;
-  cursor: default;
-  user-select: none;
+  @apply [display:flex];
+  @apply [min-height:1.875rem];
+  @apply [gap:1.125rem];
+  @apply [align-items:center];
+  @apply [padding:0.3125rem_0.5rem];
+  @apply [border-radius:0.3125rem];
+  @apply [outline:none];
+  @apply [font-size:0.625rem];
+  @apply [cursor:default];
+  @apply [user-select:none];
 }
 
 .editor-context-menu-item[data-highlighted] {
-  color: #effffb;
-  background: #28594c;
+  @apply [color:#effffb];
+  @apply [background:#28594c];
 }
 
 .editor-context-menu-item.danger {
-  color: #f3aaa5;
+  @apply [color:#f3aaa5];
 }
 
 .editor-context-menu-item.danger[data-highlighted] {
-  color: #fff1ef;
-  background: #873b37;
+  @apply [color:#fff1ef];
+  @apply [background:#873b37];
 }
 
 .editor-context-menu-item[data-disabled] {
-  opacity: 0.42;
-  pointer-events: none;
+  @apply [opacity:0.42];
+  @apply [pointer-events:none];
 }
 
 .editor-context-menu-shortcut {
-  margin-left: auto;
-  color: #788681;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 9px;
+  @apply [margin-left:auto];
+  @apply [color:#788681];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5625rem];
 }
 
 .editor-context-menu-item[data-highlighted] .editor-context-menu-shortcut {
-  color: currentcolor;
+  @apply [color:currentcolor];
 }
 
 .editor-context-menu-separator {
-  height: 1px;
-  margin: 4px 6px;
-  border: 0;
-  background: #2d3834;
+  @apply [height:0.0625rem];
+  @apply [margin:0.25rem_0.375rem];
+  @apply [border:0];
+  @apply [background:#2d3834];
 }
 
 .auto-mesh-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgb(3 7 6 / 72%);
-  backdrop-filter: blur(3px);
+  @apply [position:fixed];
+  @apply [inset:0];
+  @apply [background:rgb(3_7_6_/_72%)];
+  @apply [backdrop-filter:blur(0.1875rem)];
 }
 
 .auto-mesh-dialog-overlay[data-closed],
 .auto-mesh-dialog-content[data-closed] {
-  display: none;
+  @apply [display:none];
 }
 
 .auto-mesh-dialog-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: min(520px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  border: 1px solid #3c4b46;
-  border-radius: 12px;
-  outline: none;
-  color: #e8f0ed;
-  background: #111714;
-  box-shadow: 0 24px 70px rgb(0 0 0 / 48%);
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  transform: translate(-50%, -50%);
+  @apply [position:fixed];
+  @apply [top:50%];
+  @apply [left:50%];
+  @apply [width:min(32.5rem,_calc(100vw_-_2rem))];
+  @apply [max-height:calc(100vh_-_2rem)];
+  @apply [overflow-y:auto];
+  @apply [border:0.0625rem_solid_#3c4b46];
+  @apply [border-radius:0.75rem];
+  @apply [outline:none];
+  @apply [color:#e8f0ed];
+  @apply [background:#111714];
+  @apply [box-shadow:0_1.5rem_4.375rem_rgb(0_0_0_/_48%)];
+  @apply [font-family:Inter,_ui-sans-serif,_system-ui,_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_sans-serif];
+  @apply [transform:translate(-50%,_-50%)];
 }
 
 .auto-mesh-dialog-content form {
-  display: grid;
-  gap: 20px;
-  padding: 22px;
+  @apply [display:grid];
+  @apply [gap:1.25rem];
+  @apply [padding:1.375rem];
 }
 
 .auto-mesh-dialog-content header,
 .auto-mesh-dialog-content footer {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
+  @apply [display:flex];
+  @apply [gap:1rem];
+  @apply [align-items:center];
+  @apply [justify-content:space-between];
 }
 
 .auto-mesh-dialog-content header > div {
-  display: grid;
-  gap: 5px;
+  @apply [display:grid];
+  @apply [gap:0.3125rem];
 }
 
 .auto-mesh-dialog-content h2 {
-  margin: 0;
-  font-size: 17px;
+  @apply [margin:0];
+  @apply [font-size:1.0625rem];
 }
 
 .auto-mesh-dialog-content header p {
-  margin: 0;
-  color: #91a09a;
-  font-size: 11px;
-  line-height: 1.5;
+  @apply [margin:0];
+  @apply [color:#91a09a];
+  @apply [font-size:0.6875rem];
+  @apply [line-height:1.5];
 }
 
 .auto-mesh-dialog-content header button {
-  width: 30px;
-  height: 30px;
-  flex: none;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  color: #96a39e;
-  background: transparent;
-  font-size: 22px;
-  cursor: pointer;
+  @apply [width:1.875rem];
+  @apply [height:1.875rem];
+  @apply [flex:none];
+  @apply [padding:0];
+  @apply [border:0];
+  @apply [border-radius:0.375rem];
+  @apply [color:#96a39e];
+  @apply [background:transparent];
+  @apply [font-size:1.375rem];
+  @apply [cursor:pointer];
 }
 
 .auto-mesh-dialog-content header button:hover {
-  color: #f0f7f4;
-  background: #25302c;
+  @apply [color:#f0f7f4];
+  @apply [background:#25302c];
 }
 
 .auto-mesh-presets {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  border: 0;
+  @apply [display:grid];
+  @apply [grid-template-columns:repeat(3,_minmax(0,_1fr))];
+  @apply [gap:0.5rem];
+  @apply [margin:0];
+  @apply [padding:0];
+  @apply [border:0];
 }
 
 .auto-mesh-presets legend {
-  margin-bottom: 8px;
-  color: #bec9c5;
-  font-size: 11px;
-  font-weight: 700;
+  @apply [margin-bottom:0.5rem];
+  @apply [color:#bec9c5];
+  @apply [font-size:0.6875rem];
+  @apply [font-weight:700];
 }
 
 .auto-mesh-presets label {
-  position: relative;
-  display: grid;
-  min-width: 0;
-  cursor: pointer;
+  @apply [position:relative];
+  @apply [display:grid];
+  @apply [min-width:0];
+  @apply [cursor:pointer];
 }
 
 .auto-mesh-presets input {
-  position: fixed;
-  inline-size: 1px;
-  block-size: 1px;
-  opacity: 0;
+  @apply [position:fixed];
+  @apply [inline-size:0.0625rem];
+  @apply [block-size:0.0625rem];
+  @apply [opacity:0];
 }
 
 .auto-mesh-presets label > span {
-  display: grid;
-  min-height: 88px;
-  gap: 5px;
-  align-content: start;
-  padding: 11px;
-  border: 1px solid #35413d;
-  border-radius: 8px;
-  background: #171e1b;
+  @apply [display:grid];
+  @apply [min-height:5.5rem];
+  @apply [gap:0.3125rem];
+  @apply [align-content:start];
+  @apply [padding:0.6875rem];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.5rem];
+  @apply [background:#171e1b];
 }
 
 .auto-mesh-presets input:checked + span {
-  border-color: #64e5c4;
-  background: #192722;
-  box-shadow: inset 0 0 0 1px #64e5c4;
+  @apply [border-color:#64e5c4];
+  @apply [background:#192722];
+  @apply [box-shadow:inset_0_0_0_0.0625rem_#64e5c4];
 }
 
 .auto-mesh-presets input:focus-visible + span,
 .auto-mesh-dialog-content button:focus-visible,
 .auto-mesh-dialog-content input[type='number']:focus-visible {
-  outline: 2px solid #64e5c4;
-  outline-offset: 2px;
+  @apply [outline:0.125rem_solid_#64e5c4];
+  @apply [outline-offset:0.125rem];
 }
 
 .auto-mesh-presets strong {
-  color: #e6efeb;
-  font-size: 11px;
+  @apply [color:#e6efeb];
+  @apply [font-size:0.6875rem];
 }
 
 .auto-mesh-presets small {
-  color: #7f8d88;
-  font-size: 9px;
-  line-height: 1.5;
+  @apply [color:#7f8d88];
+  @apply [font-size:0.5625rem];
+  @apply [line-height:1.5];
 }
 
 .auto-mesh-settings {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  @apply [display:grid];
+  @apply [grid-template-columns:repeat(2,_minmax(0,_1fr))];
+  @apply [gap:1rem];
 }
 
 .auto-mesh-settings > label {
-  display: grid;
-  gap: 7px;
-  color: #bdc8c4;
-  font-size: 11px;
-  font-weight: 700;
+  @apply [display:grid];
+  @apply [gap:0.4375rem];
+  @apply [color:#bdc8c4];
+  @apply [font-size:0.6875rem];
+  @apply [font-weight:700];
 }
 
 .auto-mesh-number-field {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  color: #7f8d88;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 10px;
+  @apply [display:flex];
+  @apply [gap:0.5rem];
+  @apply [align-items:center];
+  @apply [color:#7f8d88];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.625rem];
 }
 
 .auto-mesh-number-field input {
-  width: 100%;
-  min-width: 0;
-  padding: 8px 9px;
-  border: 1px solid #3b4743;
-  border-radius: 6px;
-  color: #eef5f2;
-  background: #0d1210;
+  @apply [width:100%];
+  @apply [min-width:0];
+  @apply [padding:0.5rem_0.5625rem];
+  @apply [border:0.0625rem_solid_#3b4743];
+  @apply [border-radius:0.375rem];
+  @apply [color:#eef5f2];
+  @apply [background:#0d1210];
 }
 
 .auto-mesh-settings label > small {
-  color: #75827d;
-  font-size: 9px;
-  font-weight: 400;
-  line-height: 1.5;
+  @apply [color:#75827d];
+  @apply [font-size:0.5625rem];
+  @apply [font-weight:400];
+  @apply [line-height:1.5];
 }
 
 .auto-mesh-warning {
-  margin: 0;
-  padding: 10px 12px;
-  border-left: 3px solid #e5b55a;
-  color: #c7b889;
-  background: #211d13;
-  font-size: 10px;
-  line-height: 1.6;
+  @apply [margin:0];
+  @apply [padding:0.625rem_0.75rem];
+  @apply [border-left:0.1875rem_solid_#e5b55a];
+  @apply [color:#c7b889];
+  @apply [background:#211d13];
+  @apply [font-size:0.625rem];
+  @apply [line-height:1.6];
 }
 
 .auto-mesh-error {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid #8f4747;
-  border-radius: 7px;
-  color: #ffd1d1;
-  background: #2a1616;
-  font-size: 10px;
-  line-height: 1.6;
+  @apply [margin:0];
+  @apply [padding:0.625rem_0.75rem];
+  @apply [border:0.0625rem_solid_#8f4747];
+  @apply [border-radius:0.4375rem];
+  @apply [color:#ffd1d1];
+  @apply [background:#2a1616];
+  @apply [font-size:0.625rem];
+  @apply [line-height:1.6];
+}
+
+.puppet-editor .editor-number-field,
+.auto-mesh-dialog-content .editor-number-field {
+  @apply [position:relative];
+  @apply [display:flex];
+  @apply [box-sizing:border-box];
+  @apply [width:100%];
+  @apply [min-width:0];
+  @apply [align-items:center];
+  @apply [overflow:hidden];
+  @apply [border:0.0625rem_solid_#35413d];
+  @apply [border-radius:0.3125rem];
+  @apply [color:#dfe8e4];
+  @apply [background:#121816];
+}
+
+.puppet-editor .editor-number-field[data-bounded]::before,
+.auto-mesh-dialog-content .editor-number-field[data-bounded]::before {
+  @apply [position:absolute];
+  @apply [inset:0_auto_0_0];
+  @apply [width:var(--number-field-progress)];
+  @apply [background:#24443b];
+  @apply [content:''];
+  @apply [pointer-events:none];
+}
+
+.puppet-editor .editor-number-field:focus-within,
+.auto-mesh-dialog-content .editor-number-field:focus-within {
+  @apply [border-color:#64e5c4];
+  @apply [outline:0.0625rem_solid_#64e5c4];
+  @apply [outline-offset:0.0625rem];
+}
+
+.puppet-editor .editor-number-field:has(input:disabled),
+.auto-mesh-dialog-content .editor-number-field:has(input:disabled) {
+  @apply [border-color:#303936];
+  @apply [color:#77837e];
+  @apply [background:#111613];
+}
+
+.puppet-editor .editor-number-field > input[type='number'],
+.auto-mesh-dialog-content .editor-number-field > input[type='number'] {
+  @apply [position:relative];
+  @apply [width:100%];
+  @apply [min-width:0];
+  @apply [flex:1];
+  @apply [padding:0.3125rem_0.4375rem];
+  @apply [border:0];
+  @apply [border-radius:0];
+  @apply [outline:0];
+  @apply [color:inherit];
+  @apply [background:transparent];
+  @apply [font:inherit];
+  @apply [cursor:ew-resize];
+  @apply [appearance:textfield];
+  @apply [touch-action:none];
+}
+
+.puppet-editor .editor-number-field > input[type='number']:focus:not(:active),
+.auto-mesh-dialog-content .editor-number-field > input[type='number']:focus:not(:active) {
+  @apply [cursor:text];
+}
+
+.puppet-editor .editor-number-field.scrubbing > input[type='number'],
+.auto-mesh-dialog-content .editor-number-field.scrubbing > input[type='number'] {
+  @apply [cursor:ew-resize];
+  @apply [user-select:none];
+}
+
+.puppet-editor .editor-number-field > input[type='number']::-webkit-inner-spin-button,
+.puppet-editor .editor-number-field > input[type='number']::-webkit-outer-spin-button,
+.auto-mesh-dialog-content .editor-number-field > input[type='number']::-webkit-inner-spin-button,
+.auto-mesh-dialog-content .editor-number-field > input[type='number']::-webkit-outer-spin-button {
+  @apply [margin:0];
+  @apply [appearance:none];
+}
+
+.puppet-editor .editor-number-field > span,
+.auto-mesh-dialog-content .editor-number-field > span {
+  @apply [position:relative];
+  @apply [padding-right:0.4375rem];
+  @apply [color:#81908a];
+  @apply [font-family:'SFMono-Regular',_Consolas,_monospace];
+  @apply [font-size:0.5625rem];
+  @apply [pointer-events:none];
+}
+
+.puppet-editor .editor-number-step,
+.auto-mesh-dialog-content .editor-number-step {
+  @apply [position:relative];
+  @apply [display:grid];
+  @apply [width:1.25rem];
+  @apply [align-self:stretch];
+  @apply [flex:0_0_1.25rem];
+  @apply [place-items:center];
+  @apply [padding:0];
+  @apply [border:0];
+  @apply [border-radius:0];
+  @apply [color:#91a19a];
+  @apply [background:#18201d];
+  @apply [font:inherit];
+  @apply [cursor:pointer];
+}
+
+.puppet-editor .editor-number-step.decrement,
+.auto-mesh-dialog-content .editor-number-step.decrement {
+  @apply [border-right:0.0625rem_solid_#35413d];
+}
+
+.puppet-editor .editor-number-step.increment,
+.auto-mesh-dialog-content .editor-number-step.increment {
+  @apply [border-left:0.0625rem_solid_#35413d];
+}
+
+.puppet-editor .editor-number-step:hover:not(:disabled),
+.auto-mesh-dialog-content .editor-number-step:hover:not(:disabled) {
+  @apply [color:#dffff6];
+  @apply [background:#29443b];
+}
+
+.puppet-editor .editor-number-step:focus-visible,
+.auto-mesh-dialog-content .editor-number-step:focus-visible {
+  @apply [outline:0.0625rem_solid_#64e5c4];
+  @apply [outline-offset:-0.125rem];
+}
+
+.puppet-editor .editor-number-step:disabled,
+.auto-mesh-dialog-content .editor-number-step:disabled {
+  @apply [color:#4b5752];
+  @apply [cursor:default];
+}
+
+.puppet-editor .editor-number-step > span,
+.auto-mesh-dialog-content .editor-number-step > span {
+  @apply [box-sizing:border-box];
+  @apply [width:0.5rem];
+  @apply [height:0.5rem];
+  @apply [border-right:0.125rem_solid_currentColor];
+  @apply [border-bottom:0.125rem_solid_currentColor];
+  @apply [font-size:0];
+  @apply [pointer-events:none];
+}
+
+.puppet-editor .editor-number-step.decrement > span,
+.auto-mesh-dialog-content .editor-number-step.decrement > span {
+  @apply [transform:rotate(135deg)];
+}
+
+.puppet-editor .editor-number-step.increment > span,
+.auto-mesh-dialog-content .editor-number-step.increment > span {
+  @apply [transform:rotate(-45deg)];
 }
 
 .auto-mesh-dialog-content footer {
-  justify-content: flex-end;
+  @apply [justify-content:flex-end];
 }
 
 .auto-mesh-dialog-content footer button {
-  min-width: 92px;
-  padding: 8px 12px;
-  border: 1px solid #64e5c4;
-  border-radius: 7px;
-  color: #07110f;
-  background: #64e5c4;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
+  @apply [min-width:5.75rem];
+  @apply [padding:0.5rem_0.75rem];
+  @apply [border:0.0625rem_solid_#64e5c4];
+  @apply [border-radius:0.4375rem];
+  @apply [color:#07110f];
+  @apply [background:#64e5c4];
+  @apply [font-size:0.6875rem];
+  @apply [font-weight:700];
+  @apply [cursor:pointer];
 }
 
 .auto-mesh-dialog-content footer button.secondary {
-  border-color: #3b4743;
-  color: #b8c4bf;
-  background: #171e1b;
+  @apply [border-color:#3b4743];
+  @apply [color:#b8c4bf];
+  @apply [background:#171e1b];
 }
 
 .auto-mesh-dialog-content footer button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  @apply [opacity:0.5];
+  @apply [cursor:not-allowed];
 }
 
-@media (max-width: 560px) {
+@media (max-width: 35rem) {
   .auto-mesh-presets,
   .auto-mesh-settings {
-    grid-template-columns: 1fr;
+    @apply [grid-template-columns:1fr];
   }
 
   .auto-mesh-presets label > span {
-    min-height: 0;
+    @apply [min-height:0];
   }
 }

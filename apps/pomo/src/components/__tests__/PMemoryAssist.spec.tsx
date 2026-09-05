@@ -7,6 +7,8 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/PModal'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {CalendarConnections} from '../CalendarConnections'
+import {CalendarMonth} from '../CalendarMonth'
 import {PIconButton} from '../PIconButton'
 import {PMemoryAssist} from '../PMemoryAssist'
 import {LanguageLearningLibrary} from '../language-learning/Library'
@@ -16,6 +18,17 @@ import {PScribbleCircleControl} from '../scribble/CircleControl'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
 vi.mock('../PModal', () => ({PModal: vi.fn()}))
+vi.mock('../CalendarConnections', () => ({
+  CalendarConnections: vi.fn(() => <div>calendar connections</div>),
+}))
+vi.mock('../CalendarMonth', () => ({
+  CalendarMonth: vi.fn((props: {settings?: JSX.Element}) => (
+    <div>
+      calendar month
+      {props.settings}
+    </div>
+  )),
+}))
 vi.mock('../PIconButton', () => ({PIconButton: vi.fn()}))
 vi.mock('../language-learning/Library', () => ({
   LanguageLearningLibrary: vi.fn(),
@@ -42,6 +55,7 @@ const originalGetLocale = getLocale
 
 beforeEach(() => {
   vi.clearAllMocks()
+  sessionStorage.clear()
   overwriteGetLocale(() => 'ko')
   Object.assign(Tabs, {
     Content: (props: {children: JSX.Element}) => <>{props.children}</>,
@@ -65,6 +79,9 @@ beforeEach(() => {
       {props.children}
       <button onClick={() => props.onChange?.('words')} type="button">
         Change tab
+      </button>
+      <button onClick={() => props.onChange?.('calendar')} type="button">
+        Change to calendar
       </button>
     </div>
   ))
@@ -124,6 +141,7 @@ it('should open a Korean memory assist modal', () => {
     '학습 단어',
     '메모',
     '일기장',
+    '캘린더',
   ])
   expect(screen.getByRole('tablist', {name: '기억 보조 종류'}).className).toContain(
     'pomo-memory-assist__tabs',
@@ -132,8 +150,26 @@ it('should open a Korean memory assist modal', () => {
   expect(screen.getByText('language learning library')).toBeInTheDocument()
   expect(screen.getByText('language learning words')).toBeInTheDocument()
   expect(screen.getByText('memory memos')).toBeInTheDocument()
+  expect(screen.getByText('calendar connections')).toBeInTheDocument()
+  expect(screen.getByText('calendar month')).toBeInTheDocument()
+  expect(CalendarConnections).toHaveBeenCalledWith(
+    expect.objectContaining({onConnectionsChange: expect.any(Function)}),
+  )
+  expect(CalendarMonth).toHaveBeenCalledWith(expect.objectContaining({revision: 0}))
   expect(MemoryMemoList).toHaveBeenCalled()
   expect(PictureDiary).toHaveBeenCalledWith(expect.objectContaining({weatherState}))
+
+  fireEvent.click(screen.getByRole('button', {name: 'Change to calendar'}))
+  expect(CalendarMonth).toHaveBeenLastCalledWith(expect.objectContaining({revision: 1}))
+  fireEvent.click(screen.getByRole('button', {name: 'Close modal'}))
+  fireEvent.click(trigger)
+  expect(CalendarMonth).toHaveBeenLastCalledWith(expect.objectContaining({revision: 2}))
+
+  sessionStorage.setItem('pomo:calendar-month-cache:v1', 'cached')
+  const connectionProps = vi.mocked(CalendarConnections).mock.calls[0]?.[0]
+  connectionProps?.onConnectionsChange?.()
+  expect(sessionStorage.getItem('pomo:calendar-month-cache:v1')).toBeNull()
+  expect(CalendarMonth).toHaveBeenLastCalledWith(expect.objectContaining({revision: 3}))
 
   fireEvent.click(screen.getByRole('button', {name: 'Restore focus'}))
   expect(document.activeElement).toBe(trigger)
@@ -164,5 +200,6 @@ it('should open an English memory assist modal', () => {
     'Learning words',
     'Memos',
     'Diary',
+    'Calendar',
   ])
 })

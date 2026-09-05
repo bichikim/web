@@ -3,8 +3,11 @@ import {createSignal} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
+import {clearCalendarMonthCache} from '../features/calendar'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import type {WeatherState} from '../features/weather'
+import {CalendarConnections} from './CalendarConnections'
+import {CalendarMonth} from './CalendarMonth'
 import {getPomoIconClass} from './icon-style'
 import {PIconButton} from './PIconButton'
 import {PModal} from './PModal'
@@ -24,10 +27,21 @@ export interface PMemoryAssistProps {
 export const PMemoryAssist = (props: PMemoryAssistProps) => {
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('sentences')
+  const [calendarRevision, setCalendarRevision] = createSignal(0)
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
+  const refreshCalendar = () => setCalendarRevision((revision) => revision + 1)
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
+    if (activeTab() === 'calendar') {
+      refreshCalendar()
+    }
     setIsOpen(true)
+  }
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    if (value === 'calendar') {
+      refreshCalendar()
+    }
   }
   const handleCloseAutoFocus = () => triggerElement()?.focus()
 
@@ -41,7 +55,7 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
           onPress={handleOpen}
         />
       </PScribbleCircleControl>
-      <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>
+      <Tabs class="contents" value={activeTab()} onChange={handleTabChange}>
         <PModal
           isOpen={isOpen()}
           navigation={<PMemoryAssistTabList />}
@@ -63,6 +77,19 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
           </Tabs.Content>
           <Tabs.Content value="picture-diary">
             <PictureDiary weatherState={props.weatherState} />
+          </Tabs.Content>
+          <Tabs.Content value="calendar">
+            <CalendarMonth
+              revision={calendarRevision()}
+              settings={
+                <CalendarConnections
+                  onConnectionsChange={() => {
+                    clearCalendarMonthCache()
+                    refreshCalendar()
+                  }}
+                />
+              }
+            />
           </Tabs.Content>
         </PModal>
       </Tabs>

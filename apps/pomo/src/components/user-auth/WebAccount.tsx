@@ -8,7 +8,7 @@ import {
   signOutAccountSessionAction,
 } from '../../features/auth/actions'
 import {useWebAccount} from '../../features/user-auth/use-web-account'
-import {PButton} from '../PButton'
+import {PButton, pButtonClasses} from '../PButton'
 import {PFormMessage} from '../PFormMessage'
 import {PTextField} from '../PTextField'
 
@@ -31,7 +31,7 @@ export const WebAccount = () => {
     <>
       <Show
         when={!account.isLoading()}
-        fallback={<p class="m-0 text-sm text-white/60">{m.web_account_checking()}</p>}
+        fallback={<p class="m-0 text-sm text-muted-foreground">{m.web_account_checking()}</p>}
       >
         <Show
           when={account.session()}
@@ -42,7 +42,7 @@ export const WebAccount = () => {
               method="post"
               onSubmit={handleMagicLinkSubmit}
             >
-              <p class="m-0 text-sm leading-6 text-white/60">{m.web_account_intro()}</p>
+              <p class="m-0 text-sm leading-6 text-muted-foreground">{m.web_account_intro()}</p>
               <PTextField
                 autoComplete="email"
                 disabled={account.isSubmitting()}
@@ -62,20 +62,25 @@ export const WebAccount = () => {
         >
           {(session) => (
             <div class="grid gap-5">
-              <div class="rounded-3 border border-white/10 bg-white/5 px-4 py-4">
-                <p class="m-0 text-xs text-white/45">{m.web_account_signed_in_email()}</p>
+              <div class="rounded-3 border border-border bg-content-surface px-4 py-4">
+                <p class="m-0 text-xs text-muted-foreground">{m.web_account_signed_in_email()}</p>
                 <p class="mb-0 mt-1 break-all text-sm font-700">{session().email}</p>
               </div>
-              <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>
-                <PButton
-                  class="w-full"
-                  disabled={account.isSubmitting()}
-                  tone="secondary"
-                  type="submit"
-                >
-                  {m.web_account_sign_out()}
-                </PButton>
-              </form>
+              <div class="flex flex-wrap items-center gap-3">
+                <a class={pButtonClasses({class: 'no-underline', size: 'small'})} href="/">
+                  {m.app_return()}
+                </a>
+                <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>
+                  <PButton
+                    size="small"
+                    disabled={account.isSubmitting()}
+                    tone="secondary"
+                    type="submit"
+                  >
+                    {m.web_account_sign_out()}
+                  </PButton>
+                </form>
+              </div>
             </div>
           )}
         </Show>
