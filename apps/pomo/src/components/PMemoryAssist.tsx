@@ -4,18 +4,21 @@ import {createSignal} from 'solid-js'
 import * as m from '@paraglide/message'
 
 import type {PSceneStyle} from '../features/focus-room-animation'
+import type {WeatherState} from '../features/weather'
 import {getPomoIconClass} from './icon-style'
 import {PIconButton} from './PIconButton'
 import {PModal} from './PModal'
 import {MEMORY_ASSIST_ICON} from './memory-assist/icon'
 import {PMemoryAssistTabList} from './memory-assist/TabList'
 import {MemoryMemoList} from './memory-assist/Memos'
+import {PictureDiary} from './memory-assist/PictureDiary'
 import {LanguageLearningLibrary} from './language-learning/Library'
 import {LanguageLearningWords} from './language-learning/Words'
 import {PScribbleCircleControl} from './scribble/CircleControl'
 
 export interface PMemoryAssistProps {
   readonly sceneStyle?: PSceneStyle
+  readonly weatherState?: WeatherState
 }
 
 export const PMemoryAssist = (props: PMemoryAssistProps) => {
@@ -45,7 +48,7 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
           onCloseAutoFocus={handleCloseAutoFocus}
           onOpenChange={setIsOpen}
           placement="top"
-          size="wide"
+          size="full"
           title={m.memory_assist_title()}
           titleVisibility="visually-hidden"
         >
@@ -57,6 +60,9 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
           </Tabs.Content>
           <Tabs.Content value="memos">
             <MemoryMemoList />
+          </Tabs.Content>
+          <Tabs.Content value="picture-diary">
+            <PictureDiary weatherState={props.weatherState} />
           </Tabs.Content>
         </PModal>
       </Tabs>

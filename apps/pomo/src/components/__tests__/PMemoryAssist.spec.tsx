@@ -11,6 +11,7 @@ import {PIconButton} from '../PIconButton'
 import {PMemoryAssist} from '../PMemoryAssist'
 import {LanguageLearningLibrary} from '../language-learning/Library'
 import {MemoryMemoList} from '../memory-assist/Memos'
+import {PictureDiary} from '../memory-assist/PictureDiary'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
@@ -24,6 +25,9 @@ vi.mock('../language-learning/Words', () => ({
 }))
 vi.mock('../memory-assist/Memos', () => ({
   MemoryMemoList: vi.fn(() => <div>memory memos</div>),
+}))
+vi.mock('../memory-assist/PictureDiary', () => ({
+  PictureDiary: vi.fn(() => <div>picture diary</div>),
 }))
 vi.mock('../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 
@@ -99,7 +103,8 @@ afterEach(() => {
 })
 
 it('should open a Korean memory assist modal', () => {
-  render(() => <PMemoryAssist />)
+  const weatherState = {status: 'disabled'} as const
+  render(() => <PMemoryAssist weatherState={weatherState} />)
 
   const trigger = screen.getByRole('button', {name: '기억 보조 열기'})
   fireEvent.click(trigger)
@@ -112,11 +117,13 @@ it('should open a Korean memory assist modal', () => {
       icon: 'i-tabler-brain',
     }),
   )
+  expect(PModal).toHaveBeenCalledWith(expect.objectContaining({size: 'full'}))
   expect(Tabs).toHaveBeenCalledWith(expect.objectContaining({class: 'contents'}))
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '학습 문장',
     '학습 단어',
     '메모',
+    '일기장',
   ])
   expect(screen.getByRole('tablist', {name: '기억 보조 종류'}).className).toContain(
     'pomo-memory-assist__tabs',
@@ -126,6 +133,7 @@ it('should open a Korean memory assist modal', () => {
   expect(screen.getByText('language learning words')).toBeInTheDocument()
   expect(screen.getByText('memory memos')).toBeInTheDocument()
   expect(MemoryMemoList).toHaveBeenCalled()
+  expect(PictureDiary).toHaveBeenCalledWith(expect.objectContaining({weatherState}))
 
   fireEvent.click(screen.getByRole('button', {name: 'Restore focus'}))
   expect(document.activeElement).toBe(trigger)
@@ -155,5 +163,6 @@ it('should open an English memory assist modal', () => {
     'Learning sentences',
     'Learning words',
     'Memos',
+    'Diary',
   ])
 })
