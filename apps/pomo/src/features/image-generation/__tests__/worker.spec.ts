@@ -59,6 +59,10 @@ it('should forward the seed, dimensions and steps to Bonsai and return its PNG b
     },
   })
   await vi.waitFor(() => expect(scope.postMessage).toHaveBeenCalledWith({blob, type: 'image'}))
+  expect(Flux2KleinPipeline.from_pretrained).toHaveBeenCalledWith(
+    'https://storage.pomofi.io/models/image-generation/prism-ml/bonsai-image-ternary-4B-mlx-2bit/2c24c81b934a658ba5590cf39088ba929985b4a8',
+    expect.any(Object),
+  )
   expect(generate).toHaveBeenCalledWith(
     expect.objectContaining({
       guidanceScale: 1,
@@ -87,5 +91,20 @@ it('should dispose Bonsai and report an inference failure', async () => {
       type: 'error',
     }),
   )
+  expect(Flux2KleinPipeline.from_pretrained).toHaveBeenCalledWith(
+    'https://storage.pomofi.io/models/image-generation/prism-ml/bonsai-image-binary-4B-mlx-1bit/d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2',
+    expect.any(Object),
+  )
   expect(destroy).toHaveBeenCalledOnce()
+})
+
+it('should prepare and release the image model for the shared downloader without generating an image', async () => {
+  scope.onmessage?.({data: {type: 'prepare-image', variant: 'ternary'}})
+  await vi.waitFor(() => expect(scope.postMessage).toHaveBeenCalledWith({type: 'ready'}))
+  expect(Flux2KleinPipeline.from_pretrained).toHaveBeenCalledWith(
+    'https://storage.pomofi.io/models/image-generation/prism-ml/bonsai-image-ternary-4B-mlx-2bit/2c24c81b934a658ba5590cf39088ba929985b4a8',
+    expect.any(Object),
+  )
+  expect(destroy).toHaveBeenCalledOnce()
+  expect(generate).not.toHaveBeenCalled()
 })

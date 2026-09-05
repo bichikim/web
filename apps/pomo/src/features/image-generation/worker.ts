@@ -2,6 +2,7 @@
 
 import type {GenerationRequest, GenerationResponse} from './messages'
 import {createPromptMessages, parseSettings} from './settings'
+import {loadImageModel} from './loader'
 
 const PERCENTAGE_SCALE = 100
 const scope = self as DedicatedWorkerGlobalScope
@@ -14,13 +15,13 @@ const generate = async (request: GenerationRequest) => {
       const runtime = createTransformersRuntime({
         onProgress: (progress) =>
           send({
-            label: '채팅 모델 다운로드·준비',
+            label: '프롬프트 모델을 준비하고 있어요',
             percentage: progress.percentage,
             type: 'progress',
           }),
       })
       await runtime.prepare(request.modelId)
-      send({label: '영어 이미지 프롬프트를 만들고 있어요…', type: 'progress'})
+      send({label: '이미지 생성을 위한 프롬프트를 준비하고 있어요', type: 'progress'})
       const prompt = (
         await runtime.generate({
           maximumTokens: 192,
@@ -34,31 +35,21 @@ const generate = async (request: GenerationRequest) => {
       ).trim()
       if (!/[a-z]/iu.test(prompt) || /[\p{Script=Hangul}\p{Script=Han}]/u.test(prompt)) {
         throw new Error(
-          '영어 프롬프트를 만들지 못했어요. 내용을 조금 더 구체적으로 적고 다시 시도해 주세요.',
+          '이미지 생성을 위한 프롬프트를 만들지 못했어요. 내용을 조금 더 구체적으로 적고 다시 시도해 주세요.',
         )
       }
       send({prompt, type: 'prompt'})
       return
     }
+    case 'prepare-image': {
+      const pipeline = await loadImageModel({onProgress: send, variant: request.variant})
+      await pipeline.destroy()
+      send({type: 'ready'})
+      return
+    }
     case 'image': {
       const settings = parseSettings(request.settings)
-      const {Flux2KleinPipeline} = await import('@winter-love/bonsai')
-      const model =
-        settings.variant === 'ternary'
-          ? 'prism-ml/bonsai-image-ternary-4B-mlx-2bit'
-          : 'prism-ml/bonsai-image-binary-4B-mlx-1bit'
-      const pipeline = await Flux2KleinPipeline.from_pretrained(model, {
-        onProgress: (progress) =>
-          send({
-            label: `Bonsai 모델 다운로드·준비${progress.component === undefined ? '' : ` · ${progress.component}`}`,
-            ...(progress.total === undefined ||
-            progress.loaded === undefined ||
-            progress.total === 0
-              ? {}
-              : {percentage: Math.round((progress.loaded / progress.total) * PERCENTAGE_SCALE)}),
-            type: 'progress',
-          }),
-      })
+      const pipeline = await loadImageModel({onProgress: send, variant: settings.variant})
       try {
         send({label: `이미지 생성 중 · 0/${settings.steps}`, percentage: 0, type: 'progress'})
         const image = await pipeline.generate({

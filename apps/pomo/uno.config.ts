@@ -4,6 +4,8 @@ import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Var
 
 import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
+import {diaryShortcuts} from './uno/diary'
+import {initialSceneFallbackShortcuts} from './uno/loading'
 
 const sansFontFamily = [
   "'Pretendard Variable'",
@@ -62,19 +64,6 @@ const colors = {
     'rgb(var(--pomo-color-switch-thumb-channels) / var(--pomo-color-switch-thumb-opacity))',
   'switch-track':
     'rgb(var(--pomo-color-switch-track-channels) / var(--pomo-color-switch-track-opacity))',
-} as const
-
-const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
-  'pomo-loading':
-    'flex min-h-control-sm box-border items-center gap-2 rounded-control bg-surface py-0 px-3 ' +
-    'text-foreground text-sm font-650 leading-5 shadow-panel',
-  'pomo-loading__spinner':
-    'w-4.5 h-4.5 box-border flex-none animate-spin [border:0.125rem_solid_rgb(255_255_255_/_28%)] ' +
-    'border-t-highlight rounded-control motion-reduce:animate-[none]',
-  'pomo-scene-fallback':
-    'pointer-events-none absolute inset-0 grid place-items-center text-foreground',
-  'pomo-scene-fallback__panel':
-    'border border-solid border-border rounded-control backdrop-blur-surface',
 } as const
 
 const createParentVariant = (name: string, parent: string): Variant => {
@@ -435,14 +424,15 @@ body {
     ],
     // The SSR fallback must be styled before lazy client modules extend the generated CSS.
     safelist: [
-      ...Object.keys(INITIAL_SCENE_FALLBACK_SHORTCUTS),
+      ...Object.keys(initialSceneFallbackShortcuts),
       ...albumData.albums.map((album) => album.icon),
     ],
-    shortcuts: INITIAL_SCENE_FALLBACK_SHORTCUTS,
+    shortcuts: {...initialSceneFallbackShortcuts, ...diaryShortcuts},
     theme: {
       animation: {
         counts: {
           'dialogue-settings-spin': 'infinite',
+          'diary-progress-pending': 'infinite',
           'focus-glow': 'infinite',
           'orbit-border': 'infinite',
           'overflow-marquee': 'infinite',
@@ -452,6 +442,7 @@ body {
         durations: {
           'dialogue-menu-in': '140ms',
           'dialogue-settings-spin': '800ms',
+          'diary-progress-pending': '1.8s',
           'entry-reveal-room': '700ms',
           'focus-glow': '19s',
           'modal-content-in': '180ms',
@@ -469,6 +460,7 @@ body {
             to { opacity: 1; transform: scale(1) translateY(0); }
           }`,
           'dialogue-settings-spin': '{ to { transform: rotate(1turn); } }',
+          'diary-progress-pending': '{ to { background-position: 150% 0; } }',
           'entry-reveal-room': '{ from { opacity: 1; } to { opacity: 0; } }',
           'focus-glow': `{
             0% { transform: scale(0); }
@@ -530,6 +522,7 @@ body {
         timingFns: {
           'dialogue-menu-in': 'ease-out',
           'dialogue-settings-spin': 'linear',
+          'diary-progress-pending': 'ease-in-out',
           'entry-reveal-room': 'cubic-bezier(0.22, 1, 0.36, 1)',
           'focus-glow': 'ease-in-out',
           'modal-content-in': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
@@ -547,7 +540,7 @@ body {
         surface: '0.5rem',
       },
       borderRadius: {
-        control: '999rem',
+        control: '0.5rem',
         panel: '1.25rem',
       },
       boxShadow: {

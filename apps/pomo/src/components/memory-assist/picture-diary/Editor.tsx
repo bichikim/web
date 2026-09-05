@@ -5,6 +5,7 @@ import * as m from '@paraglide/message'
 import {
   MAXIMUM_PICTURE_DIARY_TEXT_LENGTH,
   type PictureDiaryEntry,
+  type PictureDiaryImage,
   type PictureDiaryStroke,
 } from '../../../features/picture-diary'
 import {getLocalizedWeatherLabel} from '../../../features/localization'
@@ -23,9 +24,16 @@ import {
   type PictureDiaryTurnView,
   usePictureDiaryPageTurn,
 } from './use-page-turn'
+import type {EntryEditingController} from './use-entry-editing'
 import './editor.css'
 
 export interface PictureDiaryEditorProps {
+  readonly editing?: ReturnType<EntryEditingController['editor']>
+  readonly disabled?: boolean
+  readonly editingMessage?: string
+  readonly onCancelEdit?: () => void
+  readonly image?: PictureDiaryImage
+  readonly onImageChange?: (image: PictureDiaryImage | undefined) => void
   readonly turnEnvironment?: PageTurnEnvironment
   readonly frontCoverClosed?: boolean
   readonly onFrontCoverChange?: (closed: boolean) => void
@@ -40,6 +48,7 @@ export interface PictureDiaryEditorProps {
   readonly date: string
   readonly onCloseBackCover?: () => void
   readonly onDateChange: (date: string) => void
+  readonly onEditEntry?: (entry: PictureDiaryEntry) => void
   readonly onDeleteEntry?: (id: string) => void
   readonly onGoNewer?: () => void
   readonly onGoOlder?: () => void
@@ -58,6 +67,7 @@ type PageSide = 'current' | 'previous'
 
 interface PictureDiaryReadPageProps {
   readonly entry?: PictureDiaryEntry | null
+  readonly onEdit?: (entry: PictureDiaryEntry) => void
   readonly onDelete?: (id: string) => void
   readonly side: PageSide
 }
@@ -97,13 +107,23 @@ const PictureDiaryReadPage = (props: PictureDiaryReadPageProps) => (
               <time class="picture-diary-book__date" datetime={entry().date}>
                 {formatPageDate(entry().date)}
               </time>
+              <Show when={props.onEdit}>
+                <button
+                  aria-label={m.picture_diary_edit_entry()}
+                  class="diary-page-action"
+                  type="button"
+                  onClick={() => props.onEdit?.(entry())}
+                >
+                  <span aria-hidden="true" class="i-tabler-pencil w-4 h-4" />
+                </button>
+              </Show>
               <Show when={props.onDelete}>
                 {(onDelete) => (
                   <HConfirmButton
                     accessibleLabel={m.picture_diary_delete_entry({
                       date: formatPageDate(entry().date),
                     })}
-                    class="picture-diary-book__delete"
+                    class="diary-page-action diary-page-delete"
                     confirmationAccessibleLabel={m.picture_diary_delete_confirm_label({
                       date: formatPageDate(entry().date),
                     })}
@@ -114,7 +134,7 @@ const PictureDiaryReadPage = (props: PictureDiaryReadPageProps) => (
                     }
                     onConfirm={() => onDelete()(entry().id)}
                   >
-                    <span aria-hidden="true" class="i-tabler-x picture-diary-book__delete-icon" />
+                    <span aria-hidden="true" class="i-tabler-x w-4 h-4" />
                   </HConfirmButton>
                 )}
               </Show>
@@ -139,6 +159,7 @@ const PictureDiaryReadPage = (props: PictureDiaryReadPageProps) => (
           </div>
           <PictureDiaryCanvas
             accessibleLabel={m.picture_diary_saved_drawing()}
+            image={entry().image}
             readOnly={true}
             strokes={entry().strokes}
           />
@@ -168,7 +189,7 @@ const PictureDiaryWritingPage = (props: PictureDiaryWritingPageProps) => (
         <span class="sr-only">{m.picture_diary_date()}</span>
         <input
           aria-label={m.picture_diary_date()}
-          disabled={props.preview}
+          disabled={props.preview || props.editor.disabled}
           onInput={(event) => props.editor.onDateChange(event.currentTarget.value)}
           type="date"
           value={props.editor.date}
@@ -176,23 +197,25 @@ const PictureDiaryWritingPage = (props: PictureDiaryWritingPageProps) => (
       </label>
     </div>
     <PictureDiaryDrawing
-      disabled={props.preview}
+      disabled={props.preview || props.editor.disabled}
+      image={props.editor.image}
+      onImageChange={props.editor.onImageChange}
+      idea={props.editor.text}
       onChange={props.editor.onStrokesChange}
       strokes={props.editor.strokes}
     />
     <textarea
       aria-label={m.picture_diary_writing()}
       class="picture-diary-book__writing"
-      disabled={props.preview}
+      disabled={props.preview || props.editor.disabled}
       maxlength={MAXIMUM_PICTURE_DIARY_TEXT_LENGTH}
       onInput={(event) => props.editor.onTextChange(event.currentTarget.value)}
       placeholder={m.picture_diary_placeholder()}
       value={props.editor.text}
     />
-    <footer class="picture-diary-book__footer picture-diary-book__footer--current">
+    <footer class="picture-diary-book__footer picture-diary-book__footer--current flex-wrap gap-3">
       <PButton
         accessibleLabel={m.picture_diary_save()}
-        class="picture-diary-book__save"
         disabled={props.preview || !props.editor.canSave}
         icon="i-tabler-device-floppy"
         onPress={props.editor.onSave}
@@ -200,7 +223,23 @@ const PictureDiaryWritingPage = (props: PictureDiaryWritingPageProps) => (
       >
         {m.picture_diary_save()}
       </PButton>
+      <Show when={props.editor.onCancelEdit}>
+        <PButton
+          class="diary-edit-cancel"
+          size="small"
+          tone="secondary"
+          disabled={props.preview || props.editor.disabled}
+          onPress={props.editor.onCancelEdit}
+        >
+          {m.picture_diary_cancel_edit()}
+        </PButton>
+      </Show>
     </footer>
+    <Show when={props.editor.editingMessage}>
+      <p role="alert" class="m-0 text-sm">
+        {props.editor.editingMessage}
+      </p>
+    </Show>
   </section>
 )
 
@@ -220,11 +259,25 @@ const PictureDiaryPage = (props: PictureDiaryPageProps) => (
     </Match>
     <Match when={props.page.kind === 'entry' ? props.page.entry : null}>
       {(entry) => (
-        <PictureDiaryReadPage
-          entry={entry()}
-          onDelete={props.preview ? undefined : props.editor.onDeleteEntry}
-          side={props.side}
-        />
+        <Show
+          when={props.editor.editing?.id === entry().id ? props.editor.editing : undefined}
+          fallback={
+            <PictureDiaryReadPage
+              entry={entry()}
+              onEdit={props.preview ? undefined : props.editor.onEditEntry}
+              onDelete={props.preview ? undefined : props.editor.onDeleteEntry}
+              side={props.side}
+            />
+          }
+        >
+          {(draft) => (
+            <PictureDiaryWritingPage
+              editor={{...props.editor, ...draft()}}
+              side={props.side}
+              preview={props.preview}
+            />
+          )}
+        </Show>
       )}
     </Match>
   </Switch>

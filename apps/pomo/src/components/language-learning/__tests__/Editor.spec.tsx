@@ -185,6 +185,8 @@ beforeEach(() => {
     cancel: vi.fn(),
     dismissError: vi.fn(),
     dispose: vi.fn(),
+    downloads: () => [],
+    startImageModel: vi.fn(),
     startTextModel,
     startVoiceModel,
     state: modelDownloadState,

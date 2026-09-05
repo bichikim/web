@@ -23,6 +23,7 @@ const modalContentClasses = cva(
           `max-md:top-modal-top-compact max-md:max-h-modal-top-compact`,
       },
       size: {
+        expanded: 'w-[min(calc(100vw-2rem),52rem)]',
         full: 'w-[min(calc(100vw-2rem),calc(120rem-2rem))]',
         regular: '',
         wide: 'w-[min(calc(100vw-2rem),42rem)]',
@@ -66,7 +67,7 @@ export interface PModalProps {
   readonly onCloseAutoFocus?: () => void
   readonly onOpenChange: (isOpen: boolean) => void
   readonly placement?: 'center' | 'top'
-  readonly size?: 'full' | 'regular' | 'wide'
+  readonly size?: 'expanded' | 'full' | 'regular' | 'wide'
   readonly title: string
   readonly titleVisibility?: 'visible' | 'visually-hidden'
 }

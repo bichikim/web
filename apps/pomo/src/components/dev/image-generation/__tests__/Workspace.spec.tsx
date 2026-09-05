@@ -1,4 +1,8 @@
 /** @vitest-environment jsdom */
+import {useModelDownload} from 'src/features/model-download'
+import {createModelDownloadController} from 'src/features/model-download/controller'
+vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
+
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {runImageGeneration} from 'src/features/image-generation/client'
@@ -6,6 +10,7 @@ import Workspace from '../Workspace'
 
 vi.mock('src/features/image-generation/client', () => ({runImageGeneration: vi.fn()}))
 beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownloadController())
   vi.stubGlobal('navigator', {
     gpu: {requestAdapter: vi.fn().mockResolvedValue({features: new Set(['shader-f16'])})},
   })

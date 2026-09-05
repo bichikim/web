@@ -112,6 +112,8 @@ const createModelDownload = (): ModelDownloadController => ({
   cancel: vi.fn(),
   dismissError: vi.fn(),
   dispose: vi.fn(),
+  downloads: () => [],
+  startImageModel: vi.fn(),
   startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}),

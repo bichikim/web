@@ -109,3 +109,20 @@ it('should expose a labelled read-only drawing without changing it', () => {
   expect(canvas).toHaveAttribute('data-read-only')
   expect(onChange).not.toHaveBeenCalled()
 })
+
+it('should display the generated image behind strokes and release preview URLs', () => {
+  const createUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:canvas')
+  const revokeUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+  const image = {blob: new Blob(['png'], {type: 'image/png'}), prompt: 'A park'}
+  const view = render(() => (
+    <PictureDiaryCanvas image={image} strokes={[{points: [{x: 0.5, y: 0.5}]}]} />
+  ))
+  const canvas = view.container.querySelector('svg')!
+  expect(canvas.firstElementChild?.tagName).toBe('image')
+  expect(canvas.querySelector('image')).toHaveAttribute('href', 'blob:canvas')
+  expect(canvas.querySelector('circle')).toBeInTheDocument()
+  view.unmount()
+  expect(revokeUrl).toHaveBeenCalledWith('blob:canvas')
+  createUrl.mockRestore()
+  revokeUrl.mockRestore()
+})

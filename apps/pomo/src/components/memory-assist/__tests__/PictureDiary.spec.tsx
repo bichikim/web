@@ -1,11 +1,18 @@
 /** @vitest-environment jsdom */
 
+import {useModelDownload} from 'src/features/model-download'
+import {createModelDownloadController} from 'src/features/model-download/controller'
+vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
+
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {PictureDiaryEntry, PictureDiaryRepository} from '../../../features/picture-diary'
 import type {WeatherState} from '../../../features/weather'
+import {runImageGeneration} from 'src/features/image-generation/client'
 import {PictureDiary} from '../PictureDiary'
+
+vi.mock('src/features/image-generation/client', () => ({runImageGeneration: vi.fn()}))
 import {createBrowserDiaryEnvironment} from '../picture-diary/environment'
 import {createTurnHarness} from '../picture-diary/__tests__/fixtures/turns'
 
@@ -27,6 +34,7 @@ const environment = {
 }
 
 beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownloadController())
   turns.reset()
   compact = false
 })
@@ -34,6 +42,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 const finishPageTurn = async () => {
@@ -587,4 +596,141 @@ it('should report local load, save, and delete failures without discarding the d
     />
   ))
   expect(await screen.findByText('이 기기의 일기장을 불러오지 못했어요.')).toBeInTheDocument()
+})
+
+it.each(['draw', 'done', 'switch-tabs'])(
+  'should save and restore an image-only diary via %s',
+  async (action) => {
+    const getComputedStyle = window.getComputedStyle.bind(window)
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
+      const styles = getComputedStyle(element, pseudoElement)
+      Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
+      return styles
+    })
+    vi.stubGlobal('navigator', {
+      gpu: {requestAdapter: vi.fn().mockResolvedValue({features: new Set(['shader-f16'])})},
+    })
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:diary')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const image = {blob: new Blob(['png'], {type: 'image/png'}), prompt: 'A quiet park'}
+    vi.mocked(runImageGeneration).mockResolvedValue(image)
+    const repository = createRepository()
+    const view = render(() => (
+      <PictureDiary
+        environment={environment}
+        turnEnvironment={turns.environment}
+        repository={repository}
+      />
+    ))
+    fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
+    fireEvent.click(screen.getByRole('tab', {name: '이미지 생성'}))
+    fireEvent.input(await screen.findByLabelText('어떤 장면을 그릴까요?'), {
+      target: {value: '공원'},
+    })
+    const generate = screen
+      .getAllByRole('button', {name: '이미지 생성'})
+      .find((button) => !button.hasAttribute('aria-pressed'))!
+    await waitFor(() => expect(generate).toBeEnabled())
+    fireEvent.click(generate)
+    const drawOnImage = await screen.findByRole('button', {name: '이 그림 위에 그림 그리기'})
+    if (action === 'switch-tabs') {
+      fireEvent.click(screen.getByRole('tab', {name: '직접 그리기'}))
+      fireEvent.click(screen.getByRole('tab', {name: '이미지 생성'}))
+      expect(await screen.findByRole('img', {name: image.prompt})).toBeInTheDocument()
+      expect(screen.getByLabelText('어떤 장면을 그릴까요?')).toHaveValue('공원')
+    }
+    if (action === 'draw') {
+      fireEvent.click(drawOnImage)
+      expect(screen.getByRole('tab', {name: '직접 그리기'})).toHaveAttribute(
+        'aria-selected',
+        'true',
+      )
+      expect(screen.getByRole('dialog').querySelector('image')).toHaveAttribute(
+        'href',
+        'blob:diary',
+      )
+    }
+    fireEvent.click(screen.getByRole('button', {name: '완료'}))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', {name: '일기 저장'}))
+    await waitFor(() => expect(repository.save).toHaveBeenCalledOnce())
+    const saved = repository.save.mock.calls[0]![0]
+    expect(saved).toMatchObject({image, strokes: [], text: ''})
+    view.unmount()
+    render(() => (
+      <PictureDiary
+        environment={environment}
+        turnEnvironment={turns.environment}
+        repository={createRepository([saved])}
+      />
+    ))
+    await waitFor(() =>
+      expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
+        'data-picture-diary-page',
+        'previous',
+      ),
+    )
+    fireEvent.click(screen.getByRole('button', {name: '이전 일기 보기'}))
+    await finishPageTurn()
+    expect(screen.getByLabelText('저장된 일기의 그림').querySelector('image')).toHaveAttribute(
+      'href',
+      'blob:diary',
+    )
+  },
+)
+
+it('should edit an existing entry, retry a failed save, and preserve the new diary draft', async () => {
+  const entry: PictureDiaryEntry = {
+    createdAt: '2026-09-04T03:00:00.000Z',
+    date: '2026-09-04',
+    id: 'edit-entry',
+    strokes: [{points: [{x: 0.5, y: 0.5}]}],
+    text: '기존 일기',
+    updatedAt: '2026-09-04T03:00:00.000Z',
+    version: 1,
+    weather: {condition: 'clear', temperatureCelsius: 24},
+  }
+  const repository = createRepository([entry])
+  repository.save.mockRejectedValueOnce(new Error('Storage failed'))
+  render(() => (
+    <PictureDiary
+      repository={repository}
+      environment={environment}
+      turnEnvironment={turns.environment}
+    />
+  ))
+  await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
+  fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '작성 중인 새 일기'}})
+  fireEvent.click(screen.getByRole('button', {name: '이전 일기 보기'}))
+  await finishPageTurn()
+  fireEvent.click(await screen.findByRole('button', {name: '편집'}))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  const modal = screen.getByLabelText('그림일기 내용').closest('section')!
+  expect(within(modal).getByLabelText('그림일기 내용')).toHaveValue('기존 일기')
+  expect(modal.querySelector('circle')).toBeInTheDocument()
+  fireEvent.input(within(modal).getByLabelText('그림일기 내용'), {target: {value: '취소할 수정'}})
+  fireEvent.click(within(modal).getByRole('button', {name: '편집 취소'}))
+  expect(repository.save).not.toHaveBeenCalled()
+  expect(screen.getByText('기존 일기')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: '편집'}))
+  const editingPage = screen.getByLabelText('그림일기 내용').closest('section')!
+  expect(within(editingPage).getByLabelText('그림일기 내용')).toHaveValue('기존 일기')
+  fireEvent.input(within(editingPage).getByLabelText('그림일기 내용'), {
+    target: {value: '수정한 일기'},
+  })
+  fireEvent.click(within(editingPage).getByRole('button', {name: '일기 저장'}))
+  expect(await within(editingPage).findByRole('alert')).toBeInTheDocument()
+  expect(within(editingPage).getByLabelText('그림일기 내용')).toHaveValue('수정한 일기')
+  fireEvent.click(within(editingPage).getByRole('button', {name: '일기 저장'}))
+  await waitFor(() => expect(repository.save).toHaveBeenCalledTimes(2))
+  expect(repository.save.mock.lastCall?.[0]).toMatchObject({
+    ...entry,
+    text: '수정한 일기',
+    updatedAt: expect.any(String),
+  })
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  await screen.findByText('수정한 일기')
+  fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
+  await finishPageTurn()
+  expect(screen.getByLabelText('그림일기 내용')).toHaveValue('작성 중인 새 일기')
 })

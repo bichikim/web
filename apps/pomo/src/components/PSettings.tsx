@@ -353,7 +353,7 @@ export const PSettings = (props: PSettingsProps) => {
           onCloseAutoFocus={handleCloseAutoFocus}
           onOpenChange={setIsOpen}
           placement="top"
-          size="wide"
+          size="expanded"
           title={m.settings_title()}
           titleVisibility="visually-hidden"
         >
