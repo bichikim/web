@@ -1,6 +1,7 @@
 import {render} from 'solid-js/web'
 
 import {PuppetEditor} from '../editor'
+import {EditorPortalProvider} from '../editor/internal/EditorPortalProvider'
 import {createDemoDocument, type PuppetDocument} from '../player'
 
 export const PUPPET_EDITOR_TAG_NAME = 'puppet-editor'
@@ -32,19 +33,21 @@ export class PuppetEditorElement extends HTMLElement {
 
     this.#dispose = render(
       () => (
-        <PuppetEditor
-          initialDocument={this.#currentDocument}
-          onDocumentChange={(nextDocument) => {
-            this.#currentDocument = nextDocument
-            this.dispatchEvent(
-              new CustomEvent<PuppetDocument>('puppet-document-change', {
-                bubbles: true,
-                composed: true,
-                detail: nextDocument,
-              }),
-            )
-          }}
-        />
+        <EditorPortalProvider mount={shadowRoot}>
+          <PuppetEditor
+            initialDocument={this.#currentDocument}
+            onDocumentChange={(nextDocument) => {
+              this.#currentDocument = nextDocument
+              this.dispatchEvent(
+                new CustomEvent<PuppetDocument>('puppet-document-change', {
+                  bubbles: true,
+                  composed: true,
+                  detail: nextDocument,
+                }),
+              )
+            }}
+          />
+        </EditorPortalProvider>
       ),
       shadowRoot,
     )

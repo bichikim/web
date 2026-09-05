@@ -3,7 +3,11 @@ import {describe, expect, test} from 'vitest'
 import {transformDeformerPoint} from '../../../deformation'
 import {createDemoDocument, parseDocument} from '../../../player'
 import {addDeformerCurveHandle, setDeformerCurveHandle} from '../deformer-curve-handles'
-import {addParameter, setParameterKeyformDeformerPoint} from '../parameter-keyforms'
+import {
+  addParameter,
+  addTwoDimensionalParameter,
+  setParameterKeyformDeformerPoint,
+} from '../parameter-keyforms'
 import {getDocumentScene} from '../../../player/scene'
 import {
   createDeformer,
@@ -207,6 +211,39 @@ describe('scene graph', () => {
       children: [{id: 'shape-diamond'}, {id: 'shape-circle'}],
       kind: 'deformer',
     })
+  })
+
+  test('should remove only the unwrapped deformer from every parameter binding', () => {
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const firstDocument = createDeformer(source, ['mesh-preview'])!
+    const secondDocument = createDeformer(firstDocument, ['shapes'])!
+    const deformers = getDocumentScene(secondDocument).roots.filter(
+      (node) => node.kind === 'deformer',
+    )
+    const firstDeformer = deformers[0]!
+    const secondDeformer = deformers[1]!
+    const added1D = addParameter({
+      document: secondDocument,
+      nodeIds: deformers.map((deformer) => deformer.id),
+    })!
+    const added2D = addTwoDimensionalParameter({
+      document: added1D.document,
+      nodeIds: deformers.map((deformer) => deformer.id),
+    })!
+    const unwrapped = unwrapSceneNode(added2D.document, firstDeformer.id)!
+
+    expect(getRootIds(unwrapped)).toContain('mesh-preview')
+    expect(unwrapped.parameterBindings).toHaveLength(2)
+    for (const binding of unwrapped.parameterBindings ?? []) {
+      expect(binding.targetDeformerIds).toEqual([secondDeformer.id])
+      expect(
+        binding.keyforms.every(
+          (keyform) =>
+            keyform.deformers?.length === 1 && keyform.deformers[0]?.nodeId === secondDeformer.id,
+        ),
+      ).toBe(true)
+    }
+    expect(parseDocument(JSON.stringify(unwrapped)).ok).toBe(true)
   })
 
   test('should resize a grid and synchronize every parameter keyform', () => {

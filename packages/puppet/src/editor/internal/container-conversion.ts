@@ -1,16 +1,13 @@
-import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {
   getDocumentScene,
   type PuppetDocument,
-  type PuppetParameterBinding,
-  type PuppetParameterKeyform,
   type PuppetSceneDeformerNode,
   type PuppetSceneGroupNode,
   type PuppetSceneNode,
 } from '../../player'
 import {getDeformerBounds} from './deformer-bounds'
 import {createDeformerControlPoints} from './grid-control-points'
-import {isSceneNodeLocked} from './scene-graph'
+import {isSceneNodeLocked, removeParameterDeformerTargets} from './scene-graph'
 import {collectPartIds, findNode, updateNode} from './scene-tree'
 
 export type SceneContainerConversionTarget = 'deformer' | 'group'
@@ -22,34 +19,6 @@ export interface SceneContainerConversion {
 
 export interface ConvertSceneContainersOptions extends SceneContainerConversion {
   readonly document: PuppetDocument
-}
-
-const removeDeformerTargets = (
-  document: PuppetDocument,
-  nodeIds: ReadonlySet<string>,
-): PuppetDocument => {
-  if (document.parameterBindings === undefined) {
-    return document
-  }
-
-  const removeKeyformTargets = <Keyform extends PuppetParameterKeyform>(
-    keyform: Keyform,
-  ): Keyform =>
-    ({
-      ...keyform,
-      deformers: keyform.deformers?.filter((deformer) => !nodeIds.has(deformer.nodeId)),
-    }) as Keyform
-
-  return {
-    ...document,
-    parameterBindings: document.parameterBindings.map((binding): PuppetParameterBinding => {
-      const targetDeformerIds = binding.targetDeformerIds?.filter((id) => !nodeIds.has(id))
-
-      return isTwoDimensionalParameterBinding(binding)
-        ? {...binding, keyforms: binding.keyforms.map(removeKeyformTargets), targetDeformerIds}
-        : {...binding, keyforms: binding.keyforms.map(removeKeyformTargets), targetDeformerIds}
-    }),
-  }
 }
 
 const createConvertedDeformer = (
@@ -132,5 +101,7 @@ export const convertSceneContainers = (
   }
 
   const document = {...options.document, scene: {...scene, roots}}
-  return options.targetKind === 'group' ? removeDeformerTargets(document, nodeIds) : document
+  return options.targetKind === 'group'
+    ? removeParameterDeformerTargets(document, nodeIds)
+    : document
 }

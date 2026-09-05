@@ -19,6 +19,7 @@ import {useMobileLayout} from '../use-mobile-layout'
 const oneOffChatMocks = vi.hoisted(() => ({
   cancelDownloadConsent: vi.fn(),
   downloadConsentOpen: vi.fn(() => false),
+  errorMessage: vi.fn((): string | null => null),
   isBusy: vi.fn(() => false),
   startDownload: vi.fn(async () => undefined),
   submit: vi.fn(async () => undefined),
@@ -193,6 +194,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useChildPresence).mockReturnValue(() => false)
     vi.mocked(useMobileLayout).mockReturnValue(() => false)
     oneOffChatMocks.downloadConsentOpen.mockReturnValue(false)
+    oneOffChatMocks.errorMessage.mockReturnValue(null)
     oneOffChatMocks.isBusy.mockReturnValue(false)
   })
 
@@ -382,6 +384,14 @@ describe('PStudioEvents', () => {
     renderEvents({pomoSay: {...createPomoSay('재생 중인 답변'), isPlaying: () => true}})
 
     expect(screen.getByRole('button', {name: '대화 보내기'})).toBeEnabled()
+  })
+
+  it('should show the one-off dialogue error to the user', () => {
+    oneOffChatMocks.errorMessage.mockReturnValue('모델 준비 실패')
+
+    renderEvents()
+
+    expect(screen.getByRole('alert')).toHaveTextContent('모델 준비 실패')
   })
 
   it('should queue an input reply after the existing dialogue stack', async () => {
