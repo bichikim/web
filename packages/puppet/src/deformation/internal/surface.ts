@@ -1,4 +1,4 @@
-import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player/document'
+import type {PuppetDeformerShape, PuppetPoint} from '../../player/document'
 
 const BEZIER_TANGENT_MULTIPLIER = 3
 const COORDINATES_PER_POINT = 2
@@ -20,15 +20,11 @@ export interface DeformerSurfaceSample {
 
 export interface SampleDeformerSurfaceOptions {
   readonly horizontalProgress: number
-  readonly node: PuppetSceneDeformerNode
+  readonly node: PuppetDeformerShape
   readonly verticalProgress: number
 }
 
-const getControlPoint = (
-  node: PuppetSceneDeformerNode,
-  column: number,
-  row: number,
-): PuppetPoint => {
+const getControlPoint = (node: PuppetDeformerShape, column: number, row: number): PuppetPoint => {
   const coordinateIndex = (row * (node.columns + 1) + column) * COORDINATES_PER_POINT
   return {
     x: node.controlPoints[coordinateIndex] ?? 0,
@@ -36,7 +32,7 @@ const getControlPoint = (
   }
 }
 
-const getCurveHandle = (node: PuppetSceneDeformerNode, pointIndex: number) =>
+const getCurveHandle = (node: PuppetDeformerShape, pointIndex: number) =>
   node.curveHandles?.find((handle) => handle.pointIndex === pointIndex)
 
 const subtractPoint = (end: PuppetPoint, start: PuppetPoint): PuppetPoint => ({
@@ -45,7 +41,7 @@ const subtractPoint = (end: PuppetPoint, start: PuppetPoint): PuppetPoint => ({
 })
 
 const getAxisTangent = (
-  node: PuppetSceneDeformerNode,
+  node: PuppetDeformerShape,
   pointIndex: number,
   axis: 'horizontal' | 'vertical',
   fallback: PuppetPoint,

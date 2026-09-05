@@ -187,9 +187,7 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
       style={{'--parameter-swipe-offset': `${offset()}px`}}
     >
       <div class="parameter-swipe-delete" aria-hidden="true">
-        <svg viewBox="0 0 16 16">
-          <path d="M3 4.5h10M6 2.5h4M5 6.5v5M8 6.5v5M11 6.5v5M4 4.5l.6 9h6.8l.6-9" />
-        </svg>
+        <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
         <span>{offset() >= DELETE_THRESHOLD ? '놓아 삭제' : '삭제'}</span>
       </div>
       <Show
@@ -212,9 +210,10 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
           >
             <strong>{props.name}</strong>
             <Show when={props.secondaryName}>{(name) => <strong>{name()}</strong>}</Show>
-            <span class="parameter-swipe-hint" aria-hidden="true">
-              ←
-            </span>
+            <span
+              aria-hidden="true"
+              class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint"
+            />
           </ToggleButton>
         }
       >

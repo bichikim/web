@@ -1,3 +1,5 @@
+import {NumberField} from '@kobalte/core/number-field'
+import {Button} from '@kobalte/core/button'
 import {clamp} from 'es-toolkit/math'
 import {createSignal, onCleanup, Show} from 'solid-js'
 
@@ -227,21 +229,30 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
   })
 
   return (
-    <span
+    <NumberField
+      as="span"
+      value={displayedValue()}
+      format={false}
+      minValue={props.minimum}
+      maxValue={props.maximum}
+      disabled={props.disabled}
+      required={props.required}
+      name={props.name}
+      onChange={setDraft}
       classList={{'editor-number-field': true, scrubbing: scrubbing()}}
       data-bounded={isBounded() ? '' : undefined}
       style={{'--number-field-progress': `${progress()}%`}}
     >
-      <button
+      <Button
         aria-label={`${props.label} 감소`}
         class="editor-number-step decrement"
         disabled={!canDecrease()}
         type="button"
         onClick={() => handleStep(-1)}
       >
-        <span aria-hidden="true">‹</span>
-      </button>
-      <input
+        <span aria-hidden="true" class="puppet-icon puppet-icon-chevron-left" />
+      </Button>
+      <NumberField.Input
         ref={setInput}
         aria-describedby={props.describedBy}
         aria-label={props.label}
@@ -254,7 +265,7 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
         type="number"
         value={displayedValue()}
         onBlur={commitDraft}
-        onClick={(event) => {
+        onClick={(event: MouseEvent) => {
           if (ignoreNextClick) {
             event.preventDefault()
             ignoreNextClick = false
@@ -277,7 +288,7 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
             emitValue(event.currentTarget.valueAsNumber)
           }
         }}
-        onKeyDown={(event) => {
+        onKeyDown={(event: KeyboardEvent) => {
           if (event.key === 'Enter') {
             event.preventDefault()
             commitDraft()
@@ -291,15 +302,15 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
         onPointerDown={handlePointerDown}
       />
       <Show when={props.unit}>{(unit) => <span aria-hidden="true">{unit()}</span>}</Show>
-      <button
+      <Button
         aria-label={`${props.label} 증가`}
         class="editor-number-step increment"
         disabled={!canIncrease()}
         type="button"
         onClick={() => handleStep(1)}
       >
-        <span aria-hidden="true">›</span>
-      </button>
-    </span>
+        <span aria-hidden="true" class="puppet-icon puppet-icon-chevron-right" />
+      </Button>
+    </NumberField>
   )
 }

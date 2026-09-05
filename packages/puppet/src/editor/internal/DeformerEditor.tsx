@@ -1,35 +1,39 @@
-import {Show, untrack} from 'solid-js'
+import {updateDraggedDeformer} from './deformer-drag'
+import {PinEditor} from './PinEditor'
+import {DeformerTools} from './DeformerTools'
+import type {DeformerEditMode} from './DeformerMode'
+import {isDeformerRestEditable, preserveDeformerPlacement} from './deformer-placement'
+import {BoneEditor} from './BoneEditor'
+import {editCurveTopology} from './curve-topology'
+import {findCurveSplit} from './deformer-paths'
+import {
+  type Accessor,
+  createEffect,
+  createSignal,
+  type JSX,
+  on,
+  onCleanup,
+  Show,
+  untrack,
+} from 'solid-js'
 
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
-import {getParameterEditTarget} from './parameter-edit-target'
-import {setDeformerCurveHandle} from './deformer-curve-handles'
-import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-control-points'
 import {DeformerControls} from './DeformerControls'
 import {
   createDeformerControlSelection,
   type DeformerControlSelection,
   type DeformerDragTarget,
 } from './deformer-control-selection'
-import {
-  setParameterKeyformDeformerControlPoints,
-  setParameterKeyformDeformerCurveHandle,
-  setParameterKeyformDeformerPoint,
-} from './parameter-keyforms'
 import {applySceneNodeAncestorsPoint, unapplySceneNodeAncestorsPoint} from './scene-deformation'
-import {
-  getDeformerAngle,
-  getDeformerRotationOrigin,
-  reflectCurveHandlePoint,
-  rotateDeformerControlPoints,
-  rotateDeformerCurveHandles,
-  translateDeformerControlPoints,
-  translateDeformerCurveHandles,
-} from './deformer-transform'
+import {getDeformerAngle, getDeformerRotationOrigin} from './deformer-transform'
 import {getEditorPoint, getEditorViewBox} from './viewport'
 
-interface DeformerEditorProps {
+export interface DeformerEditorProps {
+  readonly deformerMode?: DeformerEditMode
+  readonly onDeformerModeChange?: (mode: DeformerEditMode) => void
+  readonly renderControls?: (controls: JSX.Element) => JSX.Element
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activeNodeId?: string
@@ -45,7 +49,7 @@ interface DeformerEditorProps {
 
 interface PointerEditorPointOptions {
   readonly element?: SVGSVGElement
-  readonly event: PointerEvent
+  readonly event: MouseEvent
   readonly viewBox: ReturnType<typeof getEditorViewBox>
 }
 
@@ -85,150 +89,6 @@ const getRotationHandle = (
   })
 }
 
-interface UpdateDraggedDeformerOptions {
-  readonly activeBindingId?: string
-  readonly activeKeyformValues?: PuppetParameterValues | null
-  readonly deformer?: PuppetSceneDeformerNode
-  readonly document: PuppetDocument
-  readonly editMode?: 'motion' | 'parameter'
-  readonly nodeId: string
-  readonly point: PuppetPoint
-  readonly target: DragTarget
-  readonly targetNodeIds?: ReadonlyArray<string>
-}
-
-const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => {
-  const editTarget = getParameterEditTarget({
-    activeBindingId: options.activeBindingId,
-    activeKeyformValues: options.activeKeyformValues,
-    editMode: options.editMode,
-    nodeId: options.nodeId,
-    targetNodeIds: options.targetNodeIds,
-  })
-
-  if (options.target.kind === 'controlPoint') {
-    return editTarget.kind === 'keyform'
-      ? setParameterKeyformDeformerPoint({
-          bindingId: editTarget.bindingId,
-          document: options.document,
-          nodeId: options.nodeId,
-          pointIndex: options.target.pointIndex,
-          values: editTarget.values,
-          x: options.point.x,
-          y: options.point.y,
-        })
-      : setDeformerControlPoint({
-          document: options.document,
-          nodeId: options.nodeId,
-          pointIndex: options.target.pointIndex,
-          x: options.point.x,
-          y: options.point.y,
-        })
-  }
-
-  if (options.target.kind === 'curveHandle') {
-    if (options.deformer === undefined) {
-      return undefined
-    }
-
-    const point = reflectCurveHandlePoint({
-      axis: options.target.axis,
-      deformer: options.deformer,
-      point: options.point,
-      pointIndex: options.target.pointIndex,
-    })
-    return editTarget.kind === 'keyform'
-      ? setParameterKeyformDeformerCurveHandle({
-          axis: options.target.axis,
-          bindingId: editTarget.bindingId,
-          document: options.document,
-          nodeId: options.nodeId,
-          point,
-          pointIndex: options.target.pointIndex,
-          values: editTarget.values,
-        })
-      : setDeformerCurveHandle({
-          axis: options.target.axis,
-          document: options.document,
-          nodeId: options.nodeId,
-          point,
-          pointIndex: options.target.pointIndex,
-        })
-  }
-
-  if (options.deformer === undefined) {
-    return undefined
-  }
-
-  const origin = getDeformerRotationOrigin(options.deformer)
-
-  if (options.target.kind === 'rotationOrigin') {
-    const geometry = {
-      controlPoints: options.deformer.controlPoints,
-      curveHandles: options.deformer.curveHandles,
-      rotationOrigin: options.point,
-    }
-    return editTarget.kind === 'keyform'
-      ? setParameterKeyformDeformerControlPoints({
-          bindingId: editTarget.bindingId,
-          document: options.document,
-          nodeId: options.nodeId,
-          values: editTarget.values,
-          ...geometry,
-        })
-      : setDeformerControlPoints({...geometry, document: options.document, nodeId: options.nodeId})
-  }
-
-  const isTranslation = options.target.kind === 'translation'
-  const offset = isTranslation
-    ? {
-        x: options.point.x - options.target.previousPoint.x,
-        y: options.point.y - options.target.previousPoint.y,
-      }
-    : {x: options.point.x - origin.x, y: options.point.y - origin.y}
-  const degrees =
-    (Math.atan2(options.point.y - origin.y, options.point.x - origin.x) *
-      DEGREES_PER_HALF_ROTATION) /
-      Math.PI -
-    getDeformerAngle(options.deformer)
-  const controlPoints = isTranslation
-    ? translateDeformerControlPoints({
-        controlPoints: options.deformer.controlPoints,
-        offset,
-      })
-    : rotateDeformerControlPoints({
-        controlPoints: options.deformer.controlPoints,
-        degrees,
-        origin,
-      })
-  const curveHandles = isTranslation
-    ? translateDeformerCurveHandles({curveHandles: options.deformer.curveHandles, offset})
-    : rotateDeformerCurveHandles({
-        curveHandles: options.deformer.curveHandles,
-        degrees,
-        origin,
-      })
-  const rotationOrigin = isTranslation ? {x: origin.x + offset.x, y: origin.y + offset.y} : origin
-
-  return editTarget.kind === 'keyform'
-    ? setParameterKeyformDeformerControlPoints({
-        bindingId: editTarget.bindingId,
-        controlPoints,
-        curveHandles,
-        document: options.document,
-        nodeId: options.nodeId,
-        rotationOrigin,
-        values: editTarget.values,
-      })
-    : setDeformerControlPoints({
-        controlPoints,
-        curveHandles,
-        document: options.document,
-        nodeId: options.nodeId,
-        rotationOrigin,
-      })
-}
-
 interface EditBlockOptions {
   readonly activeNodeId?: string
   readonly document: PuppetDocument
@@ -245,18 +105,125 @@ const getEditBlockMessage = (options: EditBlockOptions) => {
   return undefined
 }
 
-export const DeformerEditor = (props: DeformerEditorProps) => {
+interface CurveTopologyHandlersOptions {
+  readonly deformer: Accessor<PuppetSceneDeformerNode | undefined>
+  readonly document: Accessor<PuppetDocument>
+  readonly editable: Accessor<boolean>
+  readonly getPoint: (event: MouseEvent) => PuppetPoint | undefined
+  readonly transform: (point: PuppetPoint) => PuppetPoint
+  readonly focus: () => void
+  readonly selection: DeformerControlSelection
+  readonly onDocumentChange: (document: PuppetDocument) => void
+}
+
+const createCurveTopologyHandlers = (options: CurveTopologyHandlersOptions) => {
+  const CUBIC_DEGREE = 3
+  const handleCurveSplit = (event: MouseEvent) => {
+    const node = options.deformer()
+    const point = options.getPoint(event)
+    if (!options.editable() || node?.curveAxis === undefined || point === undefined) {
+      return
+    }
+    const split = findCurveSplit({node, point, transform: options.transform})
+    if (split === undefined) {
+      return
+    }
+    const document = editCurveTopology({
+      document: options.document(),
+      nodeId: node.id,
+      operation: 'split',
+      ...split,
+    })
+    if (document !== undefined) {
+      event.preventDefault()
+      event.stopPropagation()
+      options.onDocumentChange?.(document)
+      options.selection.select({ctrlKey: false, metaKey: false}, node.id, {
+        kind: 'controlPoint',
+        pointIndex: (split.index + 1) * CUBIC_DEGREE,
+      })
+      options.focus()
+    }
+  }
+  const handleTopologyKey = (event: KeyboardEvent) => {
+    if (
+      event.defaultPrevented ||
+      event.isComposing ||
+      event.repeat ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      event.shiftKey ||
+      (event.key !== 'Backspace' && event.key !== 'Delete') ||
+      !options.editable() ||
+      !(event.target instanceof SVGElement)
+    ) {
+      return
+    }
+    const node = options.deformer()
+    if (node?.curveAxis === undefined) {
+      return
+    }
+    const indices = options.selection
+      .selectedPointIndices()
+      .filter(
+        (index) =>
+          index > 0 && index < node.controlPoints.length / 2 - 1 && index % CUBIC_DEGREE === 0,
+      )
+      .toSorted((left, right) => right - left)
+    let document = options.document()
+    for (const index of indices) {
+      document =
+        editCurveTopology({
+          document,
+          index: index / CUBIC_DEGREE,
+          nodeId: node.id,
+          operation: 'remove',
+        }) ?? document
+    }
+    if (document !== options.document()) {
+      event.preventDefault()
+      event.stopPropagation()
+      options.onDocumentChange?.(document)
+      options.selection.clear()
+      options.focus()
+    }
+  }
+
+  return {handleCurveSplit, handleTopologyKey}
+}
+
+const getRotationStart = (node: PuppetSceneDeformerNode | undefined, point: PuppetPoint) => {
+  if (node === undefined) {
+    return undefined
+  }
+  const origin = getDeformerRotationOrigin(node)
+  return {
+    angle:
+      (Math.atan2(point.y - origin.y, point.x - origin.x) * DEGREES_PER_HALF_ROTATION) / Math.PI,
+    deformer: node,
+  }
+}
+
+const useSurfaceEditor = (props: DeformerEditorProps) => {
   const controlSelection = untrack(() => props.controlSelection) ?? createDeformerControlSelection()
   let dragTarget: DragTarget | null = null
+  let pointerId: number | undefined
+  let rotationStart: {deformer: PuppetSceneDeformerNode; angle: number} | undefined
   let svgElement: SVGSVGElement | undefined
   const displayDocument = () => props.previewDocument ?? props.document
   const deformer = () => getSelectedDeformer(displayDocument(), props.activeNodeId)
   const editBlockMessage = () =>
-    getEditBlockMessage({
-      activeNodeId: props.activeNodeId,
-      document: props.document,
-    })
-  const editable = () => editBlockMessage() === undefined
+    getEditBlockMessage({activeNodeId: props.activeNodeId, document: props.document})
+  const restEditable = () => isDeformerRestEditable(props.document, props.activeNodeId ?? '')
+  const editable = () =>
+    editBlockMessage() === undefined && (props.deformerMode !== 'rest' || restEditable())
+  const save = (document: PuppetDocument) =>
+    props.onDocumentChange?.(
+      props.deformerMode === 'rest'
+        ? preserveDeformerPlacement(props.document, document, props.activeNodeId)
+        : document,
+    )
   const viewBox = () => getEditorViewBox(displayDocument())
   const handleRadius = () => Math.min(viewBox().width, viewBox().height) / HANDLE_RADIUS_DIVISOR
   const transformPoint = (point: PuppetPoint) =>
@@ -273,7 +240,7 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
     })
   const rotationOrigin = (activeDeformer: PuppetSceneDeformerNode) =>
     transformPoint(getDeformerRotationOrigin(activeDeformer))
-  const getPointerPoint = (event: PointerEvent) =>
+  const getPointerPoint = (event: MouseEvent) =>
     getPointerEditorPoint({element: svgElement, event, viewBox: viewBox()})
   const startDrag = (event: PointerEvent, target: DragTarget) => {
     if (event.button !== 0 || !editable()) {
@@ -282,7 +249,14 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
 
     event.preventDefault()
     event.stopPropagation()
+    svgElement?.focus()
     dragTarget = target
+    ;({pointerId} = event)
+    const point = getPointerPoint(event)
+    rotationStart =
+      target.kind === 'rotation' && point !== undefined
+        ? getRotationStart(deformer(), untransformPoint(point))
+        : undefined
     svgElement?.setPointerCapture?.(event.pointerId)
     props.onEditStart?.()
   }
@@ -306,24 +280,23 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
     const document = updateDraggedDeformer({
       activeBindingId: props.activeBindingId,
       activeKeyformValues: props.activeKeyformValues,
-      deformer: deformer(),
+      deformer: target.kind === 'rotation' ? (rotationStart?.deformer ?? deformer()) : deformer(),
       document: props.document,
       editMode: props.editMode,
       nodeId: activeNodeId,
       point: untransformPoint(point),
+      rotationAngle: target.kind === 'rotation' ? rotationStart?.angle : undefined,
       target,
       targetNodeIds: props.targetNodeIds,
     })
 
     if (document !== undefined) {
-      props.onDocumentChange?.(document)
+      save(document)
     }
   }
   const handlePointerMove = (event: PointerEvent) => {
     const target = dragTarget
-    const activeNodeId = untrack(() => props.activeNodeId)
-
-    if (target === null || activeNodeId === undefined) {
+    if (target === null || event.pointerId !== pointerId) {
       return
     }
 
@@ -340,51 +313,112 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
     }
   }
 
-  const stopDrag = () => {
-    if (dragTarget !== null) {
-      props.onEditEnd?.()
+  const stopDrag = (event?: PointerEvent) => {
+    if (dragTarget === null || (event !== undefined && event.pointerId !== pointerId)) {
+      return
     }
     dragTarget = null
+    rotationStart = undefined
+    const capturedId = pointerId
+    pointerId = undefined
+    if (capturedId !== undefined && svgElement?.hasPointerCapture?.(capturedId)) {
+      svgElement.releasePointerCapture(capturedId)
+    }
+    props.onEditEnd?.()
   }
+  const selectedId = () => props.activeNodeId
+  createEffect(on(selectedId, () => stopDrag()))
+  onCleanup(stopDrag)
 
+  const topology = createCurveTopologyHandlers({
+    deformer,
+    document: () => props.document,
+    editable,
+    focus: () => svgElement?.focus(),
+    getPoint: getPointerPoint,
+    onDocumentChange: (document) => save(document),
+    selection: controlSelection,
+    transform: transformPoint,
+  })
+
+  return {
+    bind: (element: SVGSVGElement) => {
+      svgElement = element
+    },
+    changeMode: (mode: DeformerEditMode) => {
+      stopDrag()
+      controlSelection.clear()
+      props.onDeformerModeChange?.(mode)
+    },
+    controlSelection,
+    deformer,
+    editable,
+    editBlockMessage,
+    handlePointerMove,
+    handleRadius,
+    restEditable,
+    rotationOrigin,
+    startDrag,
+    startTranslationDrag,
+    stopDrag,
+    topology,
+    transformPoint,
+    updateDeformer,
+    viewBox,
+  }
+}
+
+const SurfaceEditor = (props: DeformerEditorProps) => {
+  const editor = useSurfaceEditor(props)
+  const controls = (
+    <DeformerTools
+      mode={props.deformerMode ?? 'pose'}
+      restEditable={editor.restEditable()}
+      onChange={editor.changeMode}
+    />
+  )
   return (
-    <Show when={deformer()}>
+    <Show when={editor.deformer()}>
       {(activeDeformer) => (
         <div class="deformer-editor">
+          {props.renderControls === undefined ? controls : props.renderControls(controls)}
           <svg
-            ref={(element) => {
-              svgElement = element
-            }}
+            ref={editor.bind}
             aria-label="디포머 편집 영역"
             preserveAspectRatio="xMidYMid meet"
-            viewBox={`${viewBox().x} ${viewBox().y} ${viewBox().width} ${viewBox().height}`}
-            onPointerCancel={stopDrag}
-            onPointerMove={handlePointerMove}
-            onPointerUp={stopDrag}
+            viewBox={`${editor.viewBox().x} ${editor.viewBox().y} ${editor.viewBox().width} ${editor.viewBox().height}`}
+            tabindex={0}
+            on:keydown={editor.topology.handleTopologyKey}
+            onLostPointerCapture={editor.stopDrag}
+            onPointerCancel={editor.stopDrag}
+            onPointerMove={editor.handlePointerMove}
+            onPointerUp={editor.stopDrag}
           >
             <DeformerControls
-              controlSelection={controlSelection}
+              onCurveSplit={editor.topology.handleCurveSplit}
+              controlSelection={editor.controlSelection}
               deformer={activeDeformer()}
-              editable={editable()}
+              editable={editor.editable()}
               handle={getRotationHandle(
                 activeDeformer(),
-                Math.min(viewBox().width, viewBox().height) / ROTATION_HANDLE_LENGTH_DIVISOR,
-                transformPoint,
+                Math.min(editor.viewBox().width, editor.viewBox().height) /
+                  ROTATION_HANDLE_LENGTH_DIVISOR,
+                editor.transformPoint,
               )}
               moveCurveHandle={(pointIndex, axis, point) =>
-                updateDeformer({axis, kind: 'curveHandle', pointIndex}, point)
+                editor.updateDeformer({axis, kind: 'curveHandle', pointIndex}, point)
               }
               movePoint={(pointIndex, point) =>
-                updateDeformer({kind: 'controlPoint', pointIndex}, point)
+                editor.updateDeformer({kind: 'controlPoint', pointIndex}, point)
               }
-              origin={rotationOrigin(activeDeformer())}
-              radius={handleRadius()}
-              startDrag={startDrag}
-              startTranslationDrag={startTranslationDrag}
-              transform={transformPoint}
+              origin={editor.rotationOrigin(activeDeformer())}
+              radius={editor.handleRadius()}
+              startDrag={editor.startDrag}
+              startTranslationDrag={editor.startTranslationDrag}
+              transform={editor.transformPoint}
             />
           </svg>
-          <Show when={editBlockMessage()}>
+          <Show when={editor.editBlockMessage()}>
             {(message) => (
               <p class="deformer-edit-message" role="status">
                 {message()}
@@ -393,6 +427,44 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
           </Show>
         </div>
       )}
+    </Show>
+  )
+}
+
+export const DeformerEditor = (props: DeformerEditorProps) => {
+  const [localMode, setLocalMode] = createSignal<DeformerEditMode>('pose')
+  const mode = () => props.deformerMode ?? localMode()
+  const changeMode = (value: DeformerEditMode) => {
+    setLocalMode(value)
+    props.onDeformerModeChange?.(value)
+  }
+  const node = () =>
+    getSelectedDeformer(props.previewDocument ?? props.document, props.activeNodeId)
+  return (
+    <Show
+      when={node()?.pins !== undefined}
+      fallback={
+        <Show
+          when={node()?.boneRestPoints !== undefined}
+          fallback={
+            <SurfaceEditor {...props} deformerMode={mode()} onDeformerModeChange={changeMode} />
+          }
+        >
+          <BoneEditor
+            {...props}
+            node={node()!}
+            deformerMode={mode()}
+            onDeformerModeChange={changeMode}
+          />
+        </Show>
+      }
+    >
+      <PinEditor
+        {...props}
+        node={node()!}
+        deformerMode={mode()}
+        onDeformerModeChange={changeMode}
+      />
     </Show>
   )
 }

@@ -22,7 +22,7 @@ const createPart = (id: string): PuppetPart => ({
 test('should disable only visual rendering inputs when visual editing is disabled', () => {
   render(() => (
     <PartProperties
-      maskPartOptions={[]}
+      maskTargetOptions={[]}
       part={part}
       staticDisabled={false}
       visualDisabled={true}
@@ -38,44 +38,47 @@ test('should disable only visual rendering inputs when visual editing is disable
 })
 
 test('should show selected masks as chips and open searchable mask choices on demand', () => {
-  const maskA = createPart('mask-a')
-  const maskB = createPart('mask-b')
-  const [selectedPart, setSelectedPart] = createSignal<PuppetPart>({
-    ...part,
-    properties: {clippingMaskIds: ['mask-a']},
-  })
+  const [targets, setTargets] = createSignal([
+    {...createPart('mask-a'), properties: {clippingMaskIds: ['part']}},
+    {...createPart('mask-b'), properties: {clippingMaskIds: [] as string[]}},
+  ])
   render(() => (
     <PartProperties
-      maskPartOptions={[
-        {disabled: false, label: 'Mask A', part: maskA},
-        {disabled: false, label: 'Mask B', part: maskB},
-      ]}
-      part={selectedPart()}
+      maskTargetOptions={targets().map((target, index) => ({
+        disabled: false,
+        label: index === 0 ? 'Mask A' : 'Mask B',
+        part: target,
+      }))}
+      part={part}
       staticDisabled={false}
       visualDisabled={false}
       onInterpolatedChange={vi.fn()}
-      onStaticChange={(properties) =>
-        setSelectedPart((current) => ({
-          ...current,
-          properties: {...current.properties, ...properties},
-        }))
+      onStaticChange={vi.fn()}
+      onMaskTargetChange={(id, checked) =>
+        setTargets((current) =>
+          current.map((target) =>
+            target.id === id
+              ? {...target, properties: {clippingMaskIds: checked ? ['part'] : []}}
+              : target,
+          ),
+        )
       }
     />
   ))
 
-  expect(screen.getByRole('button', {name: 'Mask A 마스크 제거'})).toBeVisible()
-  expect(screen.queryByRole('checkbox', {name: 'Mask B로 자르기'})).toBeNull()
+  expect(screen.getByRole('button', {name: 'Mask A 적용 해제'})).toBeVisible()
+  expect(screen.queryByRole('checkbox', {name: 'Mask B에 마스크 적용'})).toBeNull()
 
-  fireEvent.click(screen.getByRole('button', {name: '마스크 추가'}))
+  fireEvent.click(screen.getByRole('button', {name: '대상 추가'}))
 
-  const picker = screen.getByRole('dialog', {name: '마스크 추가'})
-  fireEvent.input(within(picker).getByRole('searchbox', {name: '마스크 검색'}), {
+  const picker = screen.getByRole('dialog', {name: '대상 추가'})
+  fireEvent.input(within(picker).getByRole('searchbox', {name: '적용 대상 검색'}), {
     target: {value: 'mask b'},
   })
-  expect(within(picker).queryByRole('checkbox', {name: 'Mask A로 자르기'})).toBeNull()
-  fireEvent.click(within(picker).getByRole('checkbox', {name: 'Mask B로 자르기'}))
+  expect(within(picker).queryByRole('checkbox', {name: 'Mask A에 마스크 적용'})).toBeNull()
+  fireEvent.click(within(picker).getByRole('checkbox', {name: 'Mask B에 마스크 적용'}))
 
-  expect(screen.getByRole('button', {name: 'Mask B 마스크 제거'})).toBeVisible()
+  expect(screen.getByRole('button', {name: 'Mask B 적용 해제'})).toBeVisible()
   expect(screen.getByText('2개 적용')).toBeVisible()
 })
 
@@ -84,8 +87,7 @@ test('should expose layer mask picking and group source behavior separately', ()
   const onMaskPickStart = vi.fn()
   const view = render(() => (
     <PartProperties
-      maskPartOptions={[]}
-      maskUsageCount={2}
+      maskTargetOptions={[]}
       part={part}
       staticDisabled={false}
       visualDisabled={false}
@@ -96,16 +98,15 @@ test('should expose layer mask picking and group source behavior separately', ()
     />
   ))
 
-  fireEvent.click(view.getByRole('button', {name: '레이어에서 마스크 선택'}))
+  fireEvent.click(view.getByRole('button', {name: '레이어에서 선택'}))
   expect(onMaskPickStart).toHaveBeenCalledWith('part')
-  const sourceFieldset = view.getByRole('group', {name: '이 파트를 마스크로 사용할 때'})
-  expect(within(sourceFieldset).getByText('2개 파츠에서 사용 중')).toBeVisible()
+  const sourceFieldset = view.getByRole('group', {name: '마스크 적용 대상'})
   expect(within(sourceFieldset).getByRole('checkbox', {name: '마스크 반전'})).toBeVisible()
 
   view.unmount()
   render(() => (
     <PartProperties
-      maskPartOptions={[]}
+      maskTargetOptions={[]}
       maskPicking={true}
       part={part}
       staticDisabled={false}
@@ -116,6 +117,6 @@ test('should expose layer mask picking and group source behavior separately', ()
       onStaticChange={vi.fn()}
     />
   ))
-  fireEvent.click(screen.getByRole('button', {name: '마스크 선택 취소'}))
+  fireEvent.click(screen.getByRole('button', {name: '대상 선택 취소'}))
   expect(onMaskPickCancel).toHaveBeenCalledOnce()
 })

@@ -1,4 +1,6 @@
-import {defineConfig, presetWind3} from 'unocss'
+import {icons as tablerIcons} from '@iconify-json/tabler'
+import {defineConfig, presetIcons, presetWind3} from 'unocss'
+import {iconShortcuts} from './uno/shortcuts/icons'
 import {rules} from './uno/rules'
 import {layoutShortcuts} from './uno/shortcuts/layout'
 import {layersShortcuts} from './uno/shortcuts/layers'
@@ -12,6 +14,7 @@ const shortcuts = {
     'w-full h-full m-0 [&_body]:w-full [&_body]:h-full [&_body]:m-0 [&_body]:overflow-hidden',
     '[&_#root]:w-full [&_#root]:h-full [&_puppet-editor]:w-full [&_puppet-editor]:h-full',
   ],
+  ...iconShortcuts,
   ...layoutShortcuts,
   ...layersShortcuts,
   ...propertiesShortcuts,
@@ -21,7 +24,10 @@ const shortcuts = {
 }
 
 export default defineConfig({
-  presets: [presetWind3({preflight: false})],
+  presets: [
+    presetWind3({preflight: false}),
+    presetIcons({collections: {tabler: () => tablerIcons}, warn: true}),
+  ],
   rules,
   // Child components share one stylesheet inside the editor Shadow DOM.
   safelist: Object.keys(shortcuts),

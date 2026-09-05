@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -8,7 +8,7 @@ import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {EditorTimeline} from '../EditorTimeline'
 
 describe('EditorTimeline', () => {
-  test('should render parameter rows and emit playback and keyframe selection', () => {
+  test('should render parameter rows and emit playback and keyframe selection', async () => {
     const onPlaybackToggle = vi.fn()
     const onSeek = vi.fn()
     const view = render(() => (
@@ -30,11 +30,15 @@ describe('EditorTimeline', () => {
     )
 
     fireEvent.click(view.getByRole('button', {name: '정지'}))
-    fireEvent.input(view.getByRole('slider', {name: '재생 위치'}), {target: {value: '1.25'}})
+    await waitFor(() =>
+      expect(view.getByRole('slider', {name: '재생 위치'})).toHaveAttribute('aria-valuenow', '0.5'),
+    )
+    fireEvent.focus(view.getByRole('slider', {name: '재생 위치'}))
+    fireEvent.keyDown(view.getByRole('slider', {name: '재생 위치'}), {key: 'End'})
     fireEvent.click(view.getByRole('button', {name: 'Angle Y 1.00초 키프레임'}))
 
     expect(onPlaybackToggle).toHaveBeenCalledOnce()
-    expect(onSeek).toHaveBeenNthCalledWith(1, 1.25)
+    expect(onSeek).toHaveBeenNthCalledWith(1, 2)
     expect(onSeek).toHaveBeenNthCalledWith(2, 1)
   })
 
@@ -63,11 +67,10 @@ describe('EditorTimeline', () => {
     expect(view.getAllByRole('button', {name: /초 키프레임$/})).toHaveLength(4)
 
     fireEvent.click(view.getByRole('button', {name: 'Angle Y 1.00초 키프레임'}))
-    expect(view.getByLabelText('키프레임 이징')).toBeEnabled()
+    expect(view.getByRole('button', {name: /^키프레임 이징/})).toBeEnabled()
 
-    fireEvent.change(view.getByLabelText('키프레임 이징'), {
-      target: {value: 'ease-in-out'},
-    })
+    fireEvent.keyDown(view.getByRole('button', {name: /^키프레임 이징/}), {key: 'Enter'})
+    fireEvent.keyDown(screen.getByRole('option', {name: 'ease-in-out'}), {key: 'Enter'})
 
     expect(document().motions[0]?.tracks[0]?.keyframes[1]).toEqual({
       easing: 'ease-in-out',
@@ -90,8 +93,8 @@ describe('EditorTimeline', () => {
     expect(view.getByLabelText('Angle X 트랙')).toBeVisible()
     expect(view.getByRole('spinbutton', {name: 'Angle X 현재 값'})).toBeDisabled()
     expect(view.getByRole('button', {name: '정지'})).toBeDisabled()
-    expect(view.getByRole('button', {name: '+ 현재 위치에 키프레임'})).toBeDisabled()
+    expect(view.getByRole('button', {name: '현재 위치에 키프레임'})).toBeDisabled()
     expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
-    expect(view.getByRole('slider', {name: '재생 위치'})).toBeDisabled()
+    expect(view.getByRole('slider', {name: '재생 위치'})).toHaveAttribute('aria-disabled', 'true')
   })
 })

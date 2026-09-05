@@ -1,3 +1,6 @@
+import {Slider} from '@kobalte/core/slider'
+import {EditorSelect} from './EditorSelect'
+import {Button} from '@kobalte/core/button'
 import {sortBy} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
 import {createMemo, createSignal, createUniqueId, For, Show} from 'solid-js'
@@ -106,7 +109,7 @@ interface TimelineToolbarProps {
   readonly hasEditableSelection: boolean
   readonly isPlaying?: boolean
   readonly motionId?: string
-  readonly onEasingChange?: (event: Event & {readonly currentTarget: HTMLSelectElement}) => void
+  readonly onEasingChange?: (value: string) => void
   readonly onKeyframeAdd?: () => void
   readonly onKeyframeDelete?: () => void
   readonly onPlaybackToggle?: () => void
@@ -120,43 +123,39 @@ const TimelineToolbar = (props: TimelineToolbarProps) => (
       <strong id={props.titleId}>{props.motionId ?? 'Static mesh'}</strong>
     </div>
     <div class="timeline-actions">
-      <button
+      <Button
         class="timeline-playback"
         disabled={props.motionId === undefined || props.onPlaybackToggle === undefined}
         type="button"
         onClick={() => props.onPlaybackToggle?.()}
       >
         {props.isPlaying === false ? '재생' : '정지'}
-      </button>
-      <button
+      </Button>
+      <Button
         class="timeline-keyframe-add"
         disabled={!props.canAddKeyframe || props.onKeyframeAdd === undefined}
         type="button"
         onClick={() => props.onKeyframeAdd?.()}
       >
-        + 현재 위치에 키프레임
-      </button>
-      <button
+        <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 현재 위치에 키프레임
+      </Button>
+      <Button
         class="timeline-keyframe-delete"
         disabled={!props.canDeleteKeyframe || props.onKeyframeDelete === undefined}
         type="button"
         onClick={() => props.onKeyframeDelete?.()}
       >
         선택 키프레임 삭제
-      </button>
+      </Button>
       <label class="timeline-easing">
         <span>다음 키프레임까지</span>
-        <select
-          aria-label="키프레임 이징"
+        <EditorSelect
+          label="키프레임 이징"
           disabled={!props.hasEditableSelection || props.onEasingChange === undefined}
           value={props.easing}
-          onChange={(event) => props.onEasingChange?.(event)}
-        >
-          <option value="linear">Linear</option>
-          <option value="ease-in">Ease in</option>
-          <option value="ease-out">Ease out</option>
-          <option value="ease-in-out">Ease in out</option>
-        </select>
+          options={['linear', 'ease-in', 'ease-out', 'ease-in-out']}
+          onChange={(value) => props.onEasingChange?.(value)}
+        />
       </label>
     </div>
     <span class="timeline-time">
@@ -192,9 +191,6 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
       (_, index) => (timelineDuration * index) / RULER_INTERVAL_COUNT,
     )
   })
-  const handleSeek = (event: InputEvent & {readonly currentTarget: HTMLInputElement}) => {
-    props.onSeek?.(event.currentTarget.valueAsNumber)
-  }
 
   return (
     <div
@@ -213,16 +209,25 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
           )}
         </For>
         <span aria-hidden="true" class="timeline-ruler-playhead" style={{left: `${progress()}%`}} />
-        <input
-          aria-label="재생 위치"
-          disabled={props.motion === undefined || props.onSeek === undefined}
-          max={props.duration}
-          min="0"
+        <Slider
+          class="timeline-seek"
+          minValue={0}
+          maxValue={Math.max(1 / FRAMES_PER_SECOND, props.duration)}
           step={1 / FRAMES_PER_SECOND}
-          type="range"
-          value={props.currentTime}
-          onInput={handleSeek}
-        />
+          value={[props.currentTime]}
+          disabled={props.motion === undefined || props.onSeek === undefined}
+          onChange={(values) => props.onSeek?.(values[0]!)}
+        >
+          <Slider.Track class="timeline-seek-track">
+            <Slider.Thumb
+              class="timeline-seek-thumb"
+              aria-label="재생 위치"
+              aria-disabled={props.motion === undefined || props.onSeek === undefined}
+            >
+              <Slider.Input />
+            </Slider.Thumb>
+          </Slider.Track>
+        </Slider>
       </div>
 
       <Show
@@ -257,7 +262,7 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
                     const target = {parameterId: track.parameter.id, time: keyframe.time}
 
                     return (
-                      <button
+                      <Button
                         aria-label={`${track.parameter.name} ${keyframe.time.toFixed(2)}초 키프레임`}
                         aria-pressed={isSameSelection(props.selection, target)}
                         class="timeline-keyframe"
@@ -371,10 +376,10 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     }
   }
 
-  const handleEasingChange = (event: Event & {readonly currentTarget: HTMLSelectElement}) => {
+  const handleEasingChange = (value: string) => {
     const activeMotion = motion()
     const activeSelection = selection()
-    const easing = PUPPET_EASINGS.find((candidate) => candidate === event.currentTarget.value)
+    const easing = PUPPET_EASINGS.find((candidate) => candidate === value)
 
     if (
       activeMotion === undefined ||

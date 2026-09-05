@@ -1,3 +1,4 @@
+import {EditorSelect} from './EditorSelect'
 import {For} from 'solid-js'
 
 import {getPartRenderProperties} from '../../deformation'
@@ -8,10 +9,11 @@ import {
   type PuppetPartBlendMode,
   type PuppetPartRenderProperties,
 } from '../../player'
+import {EditorColorField} from './EditorColorField'
 import {EditorNumberField} from './EditorNumberField'
-import {type PartMaskOption, PartMaskProperties} from './PartMaskProperties'
+import {type MaskTargetOption, PartMaskProperties} from './PartMaskProperties'
 
-export type {PartMaskOption} from './PartMaskProperties'
+export type {MaskTargetOption} from './PartMaskProperties'
 
 type InterpolatedPartProperties = Pick<
   PuppetPartRenderProperties,
@@ -19,15 +21,15 @@ type InterpolatedPartProperties = Pick<
 >
 
 export interface PartPropertiesProps {
-  readonly maskPartOptions: ReadonlyArray<PartMaskOption>
+  readonly maskTargetOptions: ReadonlyArray<MaskTargetOption>
   readonly maskPicking?: boolean
-  readonly maskUsageCount?: number
   readonly part: PuppetPart
   readonly staticDisabled: boolean
   readonly visualDisabled: boolean
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
   readonly onInterpolatedChange: (properties: InterpolatedPartProperties) => void
+  readonly onMaskTargetChange?: (partId: string, checked: boolean) => void
   readonly onMaskPickCancel?: () => void
   readonly onMaskPickStart?: (partId: string) => void
   readonly onStaticChange: (properties: PuppetPartRenderProperties) => void
@@ -89,48 +91,46 @@ export const PartProperties = (props: PartPropertiesProps) => {
       </label>
       <label>
         블렌드 모드
-        <select
-          aria-label="파트 블렌드 모드"
+        <EditorSelect
+          label="파트 블렌드 모드"
           disabled={props.staticDisabled}
           value={properties().blendMode}
-          onChange={(event) => {
-            const blendMode = event.currentTarget.value
+          options={PUPPET_PART_BLEND_MODES}
+          onChange={(blendMode) => {
             if (isPartBlendMode(blendMode)) {
               props.onStaticChange({blendMode})
             }
           }}
-        >
-          <For each={PUPPET_PART_BLEND_MODES}>
-            {(blendMode) => <option value={blendMode}>{blendMode}</option>}
-          </For>
-        </select>
+        />
       </label>
-      <label>
-        곱하기 색상
-        <input
-          aria-label="파트 곱하기 색상"
+      <div class="editor-color-row">
+        <span>곱하기 색상</span>
+        <EditorColorField
+          label="파트 곱하기 색상"
           disabled={props.visualDisabled}
-          type="color"
           value={colorToHex(properties().multiplyColor)}
-          onInput={(event) => handleColorInput('multiplyColor', event.currentTarget.value)}
+          onEditStart={props.onEditStart}
+          onEditEnd={props.onEditEnd}
+          onValueChange={(value) => handleColorInput('multiplyColor', value)}
         />
-      </label>
-      <label>
-        스크린 색상
-        <input
-          aria-label="파트 스크린 색상"
+      </div>
+      <div class="editor-color-row">
+        <span>스크린 색상</span>
+        <EditorColorField
+          label="파트 스크린 색상"
           disabled={props.visualDisabled}
-          type="color"
           value={colorToHex(properties().screenColor)}
-          onInput={(event) => handleColorInput('screenColor', event.currentTarget.value)}
+          onEditStart={props.onEditStart}
+          onEditEnd={props.onEditEnd}
+          onValueChange={(value) => handleColorInput('screenColor', value)}
         />
-      </label>
+      </div>
       <PartMaskProperties
-        maskPartOptions={props.maskPartOptions}
+        maskTargetOptions={props.maskTargetOptions}
         maskPicking={props.maskPicking}
-        maskUsageCount={props.maskUsageCount}
         part={props.part}
         staticDisabled={props.staticDisabled}
+        onMaskTargetChange={props.onMaskTargetChange}
         onMaskPickCancel={props.onMaskPickCancel}
         onMaskPickStart={props.onMaskPickStart}
         onStaticChange={props.onStaticChange}

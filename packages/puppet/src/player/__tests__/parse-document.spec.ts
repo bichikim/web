@@ -1,3 +1,6 @@
+import {getDocumentScene} from '../scene'
+import {rebindDeformer} from '../../deformation/binding'
+import type {PuppetSceneDeformerNode} from '../document'
 import {describe, expect, it, test} from 'vitest'
 
 import {createDemoDocument} from '../create-demo-document'
@@ -543,4 +546,84 @@ describe('parseDocument', () => {
       expect(result.document.parts[0]?.mesh).not.toHaveProperty('controlVertexIndices')
     }
   })
+})
+
+test('should reject invalid curve axis and grid metadata', () => {
+  const document = createDemoDocument()
+  const root = {
+    bounds: {height: 100, width: 100, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [0, 50, 30, 50, 70, 50, 100, 50],
+    curveAxis: 'x',
+    id: 'curve',
+    kind: 'deformer',
+    locked: false,
+    name: 'Curve',
+    rows: 1,
+    visible: true,
+  }
+  for (const change of [{curveAxis: 'z'}, {rows: 2}, {controlPoints: [0, 0]}, {curveHandles: []}]) {
+    expect(
+      parseDocument(JSON.stringify({...document, scene: {roots: [{...root, ...change}]}})).ok,
+    ).toBe(false)
+  }
+})
+
+test.each([
+  {boneRestPoints: [0, 0, 0, 0]},
+  {boneRestPoints: [0, 0, 10]},
+  {boneRestPoints: [0, 0, Number.NaN, 10]},
+  {boneRestPoints: [0, 0]},
+])('should reject malformed bone bind coordinates $boneRestPoints', ({boneRestPoints}) => {
+  const document = createDemoDocument()
+  const node = {
+    children: [],
+    id: 'bone',
+    columns: 1,
+    kind: 'deformer',
+    boneRestPoints,
+    locked: false,
+    bounds: {x: 0, width: 100, y: 0, height: 100},
+    name: 'Bone',
+    controlPoints: boneRestPoints,
+    visible: true,
+    rows: 1,
+  }
+  expect(parseDocument(JSON.stringify({...document, scene: {roots: [node]}})).ok).toBe(false)
+})
+
+test('should validate persisted deformer placement shapes and reject malformed reference steps', () => {
+  const shape: PuppetSceneDeformerNode = {
+    bounds: {width: 100, x: 0, height: 100, y: 0},
+    children: getDocumentScene(createDemoDocument()).roots,
+    columns: 1,
+    controlPoints: [0, 0, 100, 0, 0, 100, 100, 100],
+    rows: 1,
+    id: 'grid',
+    kind: 'deformer',
+    locked: false,
+    name: 'Grid',
+    visible: true,
+  }
+  const node = rebindDeformer(shape, {
+    ...shape,
+    controlPoints: shape.controlPoints.map((value) => value + 10),
+  })
+  const document = {...createDemoDocument(), scene: {roots: [node]}}
+  const parsed = parseDocument(serializeDocument(document))
+  expect(parsed.ok).toBe(true)
+  if (parsed.ok) {
+    expect(parsed.document.scene?.roots[0]).toEqual(JSON.parse(JSON.stringify(node)))
+  }
+  for (const binding of [
+    {rest: node.binding!.rest, steps: []},
+    {rest: {...node.binding!.rest, controlPoints: [0]}, steps: node.binding!.steps},
+    {rest: node.binding!.rest, steps: [{shape: {...shape, bounds: {...shape.bounds, width: 0}}}]},
+    {rest: node.binding!.rest, steps: [{rest: {}, shape}]},
+  ]) {
+    expect(
+      parseDocument(JSON.stringify({...document, scene: {roots: [{...node, binding}]}})).ok,
+    ).toBe(false)
+  }
 })

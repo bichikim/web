@@ -10,6 +10,7 @@ import {
 } from '../parameter-keyforms'
 import {getDocumentScene} from '../../../player/scene'
 import {
+  createCurveDeformer,
   createDeformer,
   createSceneGroup,
   getSceneNode,
@@ -337,4 +338,28 @@ describe('scene graph', () => {
     }
     expect(parseDocument(JSON.stringify(resized)).ok).toBe(true)
   })
+})
+
+test('should create an identity curve deformer and preserve it through JSON', () => {
+  const document = createCurveDeformer(createDemoDocument(), ['mesh-preview'])!
+  const node = getSceneNode(document, 'curve')!
+  expect(node.kind).toBe('deformer')
+  if (node.kind !== 'deformer') {
+    throw new Error('Expected curve deformer')
+  }
+  expect(node.curveAxis).toBeDefined()
+  expect(node.controlPoints).toHaveLength(8)
+  const point = {
+    x: node.bounds.x + node.bounds.width * 0.25,
+    y: node.bounds.y + node.bounds.height * 0.75,
+  }
+  const transformed = transformDeformerPoint(node, point)
+  expect(transformed.x).toBeCloseTo(point.x)
+  expect(transformed.y).toBeCloseTo(point.y)
+  const parsed = parseDocument(JSON.stringify(document))
+  expect(parsed.ok).toBe(true)
+  if (parsed.ok) {
+    expect(getSceneNode(parsed.document, node.id)).toEqual(node)
+  }
+  expect(resizeDeformer({columns: 2, document, nodeId: node.id, rows: 2})).toBeUndefined()
 })

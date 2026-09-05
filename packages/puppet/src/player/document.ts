@@ -72,7 +72,18 @@ export interface PuppetSceneGroupNode extends PuppetSceneContainerNodeBase {
   readonly kind: 'group'
 }
 
-export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase {
+export interface PuppetDeformerPin extends PuppetPoint {
+  readonly radius: number
+  readonly strength: number
+}
+
+export interface PuppetDeformerShape {
+  readonly pins?: ReadonlyArray<PuppetDeformerPin>
+  /** Bind joints of a connected bone chain, packed as XY pairs. Control points store posed joints. */
+  readonly boneRestPoints?: ReadonlyArray<number>
+  /** Cubic centerline with shared endpoints: start, outgoing handle, incoming handle, end, then successive handle pairs and endpoints. */
+  readonly curveBreaks?: ReadonlyArray<number>
+  readonly curveAxis?: 'x' | 'y'
   readonly bounds: {
     readonly height: number
     readonly width: number
@@ -82,9 +93,24 @@ export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase {
   readonly columns: number
   readonly controlPoints: ReadonlyArray<number>
   readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
-  readonly kind: 'deformer'
   readonly rotationOrigin?: PuppetPoint
   readonly rows: number
+}
+
+export interface PuppetDeformerBindingStep {
+  readonly shape: PuppetDeformerShape
+  readonly rest?: PuppetDeformerShape
+}
+
+export interface PuppetDeformerBinding {
+  readonly rest: PuppetDeformerShape
+  readonly steps: ReadonlyArray<PuppetDeformerBindingStep>
+}
+
+export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase, PuppetDeformerShape {
+  readonly kind: 'deformer'
+  /** Preserved deformation followed by the current control layout's bind mapping. */
+  readonly binding?: PuppetDeformerBinding
 }
 
 export interface PuppetScenePartNode extends PuppetSceneNodeBase {

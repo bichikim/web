@@ -1,16 +1,18 @@
+import {isSceneNodeLocked} from './scene-graph'
 import {canUsePartAsMask, type PuppetDocument, type PuppetSceneNode} from '../../player'
 
 interface LayerMaskStateOptions {
   readonly document: PuppetDocument
   readonly node: PuppetSceneNode
-  readonly targetPartId?: string
+  readonly maskPartId?: string
 }
 
 export const isLayerMaskPickDisabled = (options: LayerMaskStateOptions) =>
-  options.targetPartId !== undefined &&
+  options.maskPartId !== undefined &&
   (options.node.kind !== 'part' ||
+    isSceneNodeLocked(options.document, options.node.id) ||
     !canUsePartAsMask({
-      maskPartId: options.node.id,
-      partId: options.targetPartId,
+      maskPartId: options.maskPartId,
+      partId: options.node.id,
       parts: options.document.parts,
     }))

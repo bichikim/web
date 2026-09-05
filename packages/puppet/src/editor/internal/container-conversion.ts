@@ -10,7 +10,7 @@ import {createDeformerControlPoints} from './grid-control-points'
 import {isSceneNodeLocked, removeParameterDeformerTargets} from './scene-graph'
 import {collectPartIds, findNode, updateNode} from './scene-tree'
 
-export type SceneContainerConversionTarget = 'deformer' | 'group'
+export type SceneContainerConversionTarget = 'deformer' | 'group' | 'curve' | 'bone' | 'pin'
 
 export interface SceneContainerConversion {
   readonly nodeIds: ReadonlyArray<string>
@@ -58,20 +58,63 @@ const createConvertedGroup = (node: PuppetSceneDeformerNode): PuppetSceneGroupNo
   visible: node.visible,
 })
 
+export const getContainerKind = (node: PuppetSceneNode): SceneContainerConversionTarget =>
+  node.kind === 'deformer'
+    ? node.pins === undefined
+      ? node.boneRestPoints === undefined
+        ? node.curveAxis === undefined
+          ? 'deformer'
+          : 'curve'
+        : 'bone'
+      : 'pin'
+    : 'group'
+
 const convertContainer = (
   document: PuppetDocument,
   node: PuppetSceneNode,
   targetKind: SceneContainerConversionTarget,
-) => {
-  if (targetKind === 'deformer' && node.kind === 'group') {
-    return createConvertedDeformer(document, node)
+): PuppetSceneNode => {
+  if (node.kind === 'part') {
+    return node
   }
-
-  if (targetKind === 'group' && node.kind === 'deformer') {
-    return createConvertedGroup(node)
+  const group = node.kind === 'group' ? node : createConvertedGroup(node)
+  if (targetKind === 'group') {
+    return group
   }
-
-  return node
+  const base = createConvertedDeformer(document, group)
+  if (targetKind === 'deformer') {
+    return base
+  }
+  const {bounds} = base
+  if (targetKind === 'pin') {
+    const x = bounds.x + bounds.width / 2
+    const y = bounds.y + bounds.height / 2
+    return {
+      ...base,
+      columns: 1,
+      rotationOrigin: undefined,
+      rows: 1,
+      controlPoints: [x, y],
+      pins: [{x, radius: Math.max(bounds.width, bounds.height) / 2, y, strength: 1}],
+    }
+  }
+  const axis = bounds.height > bounds.width ? 'y' : 'x'
+  const CUBIC_POINTS = 4
+  const count = targetKind === 'bone' ? 2 : CUBIC_POINTS
+  const controlPoints = Array.from({length: count}, (_, index) =>
+    axis === 'x'
+      ? [bounds.x + (bounds.width * index) / (count - 1), bounds.y + bounds.height / 2]
+      : [bounds.x + bounds.width / 2, bounds.y + (bounds.height * index) / (count - 1)],
+  ).flat()
+  return {
+    ...base,
+    boneRestPoints: targetKind === 'bone' ? controlPoints : undefined,
+    columns: 1,
+    controlPoints,
+    curveAxis: targetKind === 'curve' ? axis : undefined,
+    rotationOrigin: undefined,
+    rows: 1,
+  }
 }
 
 export const convertSceneContainers = (
@@ -83,12 +126,16 @@ export const convertSceneContainers = (
     const node = findNode(scene.roots, nodeId)
     return node === undefined ? [] : [node]
   })
-  const sourceKind = options.targetKind === 'deformer' ? 'group' : 'deformer'
 
   if (
     nodeIds.size === 0 ||
     nodes.length !== nodeIds.size ||
-    nodes.some((node) => node.kind !== sourceKind || isSceneNodeLocked(options.document, node.id))
+    nodes.some(
+      (node) =>
+        node.kind === 'part' ||
+        getContainerKind(node) === options.targetKind ||
+        isSceneNodeLocked(options.document, node.id),
+    )
   ) {
     return undefined
   }
@@ -101,7 +148,8 @@ export const convertSceneContainers = (
   }
 
   const document = {...options.document, scene: {...scene, roots}}
-  return options.targetKind === 'group'
-    ? removeParameterDeformerTargets(document, nodeIds)
-    : document
+  return removeParameterDeformerTargets(
+    document,
+    new Set(nodes.filter((node) => node.kind === 'deformer').map((node) => node.id)),
+  )
 }

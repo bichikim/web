@@ -31,7 +31,7 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
           type="button"
           onClick={() => props.onParameterAdd?.()}
         >
-          + 1D
+          <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 1D
         </Button>
         <Button
           aria-label="2차원 Parameter 추가"
@@ -43,25 +43,25 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
           type="button"
           onClick={() => props.onTwoDimensionalParameterAdd?.()}
         >
-          + 2D
+          <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 2D
         </Button>
       </div>
       <div class="keyform-actions">
-        <button
+        <Button
           disabled={props.activeBinding === undefined || props.onKeyformAdd === undefined}
           type="button"
           onClick={() => props.onKeyformAdd?.()}
         >
-          + 현재 값에 키폼
-        </button>
-        <button
+          <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 현재 값에 키폼
+        </Button>
+        <Button
           class="danger"
           disabled={!hasActiveKeyform() || props.onKeyformDelete === undefined}
           type="button"
           onClick={() => props.onKeyformDelete?.()}
         >
           선택 키폼 삭제
-        </button>
+        </Button>
       </div>
     </header>
   )
