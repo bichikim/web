@@ -7,6 +7,7 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
   '/dev/chat': lazy(() => import('./ChatPage')),
   '/dev/dialogue': lazy(() => import('./DialoguePage')),
   '/dev/focus-room-layer-review': lazy(() => import('./LayerReviewPage')),
+  '/dev/hwp': lazy(() => import('./HwpPage')),
   '/dev/image-generation': lazy(() => import('./ImageGenerationPage')),
   '/dev/options': lazy(() => import('./OptionResetPage')),
   '/dev/recovery': lazy(() => import('./RecoveryPage')),
