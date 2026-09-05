@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {createEffect, createSignal} from 'solid-js'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 import {useChat} from '../features/chat'
 import {loadCalendarPromptContext} from '../features/calendar'
@@ -16,6 +16,7 @@ const PANEL_CLASSES = cx(
   'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- Keeps chat, calendar, and speech callbacks in the same component lifetime.
 const ChatRoom = () => {
   const chat = useChat({modelId: 'qwen-4b'})
   const model = () => getTextModel(chat.modelId())
@@ -28,6 +29,12 @@ const ChatRoom = () => {
   let spokenMessageId: string | null = null
   let speakDraftForReply = false
   let calendarRequestPending = false
+  let disposed = false
+  let sendRevision = 0
+
+  onCleanup(() => {
+    disposed = true
+  })
 
   const speech = useSpeechToText({
     accumulateText: false,
@@ -40,10 +47,11 @@ const ChatRoom = () => {
   })
 
   const sendDraft = async () => {
-    if (!chat.canSend() || calendarRequestPending) {
+    if (disposed || !chat.canSend() || calendarRequestPending) {
       return
     }
 
+    const submittedRevision = sendRevision
     const submittedDraft = chat.draft()
     calendarRequestPending = true
     voice.arm()
@@ -54,6 +62,10 @@ const ChatRoom = () => {
     try {
       supplementaryContext = await loadCalendarPromptContext({text: submittedDraft})
     } catch (error: unknown) {
+      if (disposed || submittedRevision !== sendRevision) {
+        return
+      }
+
       console.error('Failed to load calendar context for chat', error)
       supplementaryContext =
         '캘린더 일정을 조회하지 못했습니다. 일정을 추측하지 말고 현재 조회할 수 없다고 안내하세요.'
@@ -61,7 +73,12 @@ const ChatRoom = () => {
       calendarRequestPending = false
     }
 
-    if (!chat.canSend() || chat.draft() !== submittedDraft) {
+    if (
+      disposed ||
+      submittedRevision !== sendRevision ||
+      !chat.canSend() ||
+      chat.draft() !== submittedDraft
+    ) {
       return
     }
 
@@ -70,8 +87,18 @@ const ChatRoom = () => {
       ...(supplementaryContext === null ? {} : {supplementaryContext}),
     })
   }
-  const stopSpeechAndSend = () => {
-    speech.stopRecording().then(sendDraft).catch(console.error)
+  const stopSpeechAndSend = async () => {
+    const submittedRevision = sendRevision
+
+    try {
+      await speech.stopRecording()
+
+      if (submittedRevision === sendRevision) {
+        await sendDraft()
+      }
+    } catch (error: unknown) {
+      console.error(error)
+    }
   }
   const handleSend = () => {
     const speechActivity = speech.activity()
@@ -90,11 +117,13 @@ const ChatRoom = () => {
     voice.prepare().catch(console.error)
   }
   const handleModelChange = (modelId: TextModelId) => {
+    sendRevision += 1
     voice.stop()
     speechBuffer.reset()
     chat.selectModel(modelId)
   }
   const handleClear = () => {
+    sendRevision += 1
     voice.stop()
     chat.clear()
   }

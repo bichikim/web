@@ -4,7 +4,13 @@ import {render, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {type ChatController, type ChatMessage, useChat} from '../../features/chat'
+import {
+  type ChatClient,
+  type ChatController,
+  type ChatMessage,
+  type ChatRuntime,
+  useChat,
+} from '../../features/chat'
 import {loadCalendarPromptContext} from '../../features/calendar'
 import {
   type ChatVoiceController,
@@ -144,6 +150,7 @@ const createControllers = () => {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
   createControllers()
   vi.mocked(useChat).mockReturnValue(chat)
   vi.mocked(loadCalendarPromptContext).mockResolvedValue(null)
@@ -193,6 +200,106 @@ afterEach(() => {
 })
 
 describe('ChatRoom', () => {
+  it.each(['success', 'failure'] as const)(
+    'should discard delayed calendar %s after unmount without recreating the real chat client',
+    async (outcome) => {
+      const actual = await vi.importActual<typeof import('../../features/chat/use-chat')>(
+        '../../features/chat/use-chat',
+      )
+      const clients: Array<ChatClient> = []
+      const runtime: ChatRuntime = {
+        createClient: (options) => {
+          const client: ChatClient = {
+            dispose: vi.fn(),
+            generate: vi.fn(),
+            prepare: vi.fn(() => options.onResponse({type: 'ready'})),
+          }
+          clients.push(client)
+          return client
+        },
+        createId: () => 'message-id',
+        supportsWebGpu: () => true,
+      }
+      vi.mocked(useChat).mockImplementation((props) => {
+        chat = actual.useChat({...props, runtime})
+        return chat
+      })
+      const deferred = Promise.withResolvers<string | null>()
+      vi.mocked(loadCalendarPromptContext).mockReturnValue(deferred.promise)
+      vi.spyOn(console, 'error').mockImplementation(() => undefined)
+      const view = render(() => <ChatRoom />)
+      chat.prepare()
+      chat.setDraft('오늘 일정 알려줘')
+      composerProps.onSend()
+      view.unmount()
+      expect(clients[0]?.dispose).toHaveBeenCalledOnce()
+
+      if (outcome === 'success') {
+        deferred.resolve('캘린더 조회 결과')
+      } else {
+        deferred.reject(new Error('calendar failed'))
+      }
+      await deferred.promise.catch(() => undefined)
+      await Promise.resolve()
+
+      expect(clients).toHaveLength(1)
+      expect(clients[0]?.generate).not.toHaveBeenCalled()
+      expect(chat.state()).toEqual({status: 'ready'})
+    },
+  )
+
+  it.each(['model', 'clear'] as const)(
+    'should discard pending calendar context after %s changes and allow a new send',
+    async (change) => {
+      const deferred = Promise.withResolvers<string | null>()
+      vi.mocked(loadCalendarPromptContext).mockReturnValueOnce(deferred.promise)
+      render(() => <ChatRoom />)
+      composerProps.onSend()
+      composerProps.onSend()
+      expect(loadCalendarPromptContext).toHaveBeenCalledOnce()
+
+      if (change === 'model') {
+        headerProps.onModelChange('qwen-2b')
+        headerProps.onModelChange('qwen-4b')
+      } else {
+        sidebarProps.onClear()
+      }
+      deferred.resolve('obsolete context')
+      await deferred.promise
+      expect(chat.send).not.toHaveBeenCalled()
+
+      composerProps.onSend()
+      await waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+      expect(chat.send).toHaveBeenCalledWith({refineAnswer: true})
+    },
+  )
+
+  it('should discard a recording completion after unmount before starting calendar lookup', async () => {
+    const deferred = Promise.withResolvers<void>()
+    vi.mocked(speech.stopRecording).mockReturnValue(deferred.promise)
+    controls.setActivity('recording')
+    const view = render(() => <ChatRoom />)
+    composerProps.onSend()
+    view.unmount()
+    deferred.resolve()
+    await deferred.promise
+    expect(loadCalendarPromptContext).not.toHaveBeenCalled()
+    expect(voice.arm).not.toHaveBeenCalled()
+  })
+
+  it('should discard a recording completion after starting a new conversation', async () => {
+    const deferred = Promise.withResolvers<void>()
+    vi.mocked(speech.stopRecording).mockReturnValue(deferred.promise)
+    controls.setActivity('recording')
+    render(() => <ChatRoom />)
+    composerProps.onSend()
+    sidebarProps.onClear()
+    deferred.resolve()
+    await deferred.promise
+    expect(loadCalendarPromptContext).not.toHaveBeenCalled()
+    expect(chat.send).not.toHaveBeenCalled()
+  })
+
   it('should wire controllers and apply transcript limits and settings', async () => {
     render(() => <ChatRoom />)
 
@@ -243,6 +350,23 @@ describe('ChatRoom', () => {
       }),
     )
     expect(loadCalendarPromptContext).toHaveBeenCalledWith({text: '오늘 일정 알려줘'})
+  })
+
+  it('should send calendar failure context while mounted', async () => {
+    const error = new Error('calendar failed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.mocked(loadCalendarPromptContext).mockRejectedValue(error)
+    render(() => <ChatRoom />)
+    composerProps.onSend()
+
+    await waitFor(() =>
+      expect(chat.send).toHaveBeenCalledWith({
+        refineAnswer: true,
+        supplementaryContext:
+          '캘린더 일정을 조회하지 못했습니다. 일정을 추측하지 말고 현재 조회할 수 없다고 안내하세요.',
+      }),
+    )
+    expect(consoleError).toHaveBeenCalledWith('Failed to load calendar context for chat', error)
   })
 
   it('should handle recording, preparation, model changes, clearing, and speech toggles', async () => {
