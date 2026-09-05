@@ -18,17 +18,6 @@ export const layoutShortcuts = {
     '[.puppet-editor_&]:[gap:0.5rem]',
     '[.puppet-editor_&_label]:[grid-template-columns:3.375rem_minmax(5.625rem,_1fr)]',
   ],
-  'history-controls': [
-    '[.puppet-editor_&]:flex [.puppet-editor_&]:[gap:0.1875rem]',
-    '[.puppet-editor_&_button]:[padding:0.375rem_0.5rem]',
-    '[.puppet-editor_&_button]:[border:0.0625rem_solid_#35413d]',
-    '[.puppet-editor_&_button]:[border-radius:0.375rem] [.puppet-editor_&_button]:[color:#b9c5c0]',
-    '[.puppet-editor_&_button]:[background:#121816] [.puppet-editor_&_button]:[font-size:0.625rem]',
-    '[.puppet-editor_&_button]:cursor-pointer',
-    '[.puppet-editor_&_button:disabled]:[opacity:0.42] [.puppet-editor_&_button:disabled]:cursor-not-allowed',
-    '[.puppet-editor_&_button:focus-visible]:[outline:0.125rem_solid_#64e5c4]',
-    '[.puppet-editor_&_button:focus-visible]:[outline-offset:0.125rem]',
-  ],
   'modeling-panel': [
     '[.puppet-editor_&]:[grid-area:timeline] [.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0',
     '[.puppet-editor_&]:min-h-0 [.puppet-editor_&]:[border-top:0.0625rem_solid_#27302d]',
