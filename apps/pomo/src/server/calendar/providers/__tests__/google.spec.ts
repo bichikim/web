@@ -42,8 +42,8 @@ it.each([false, true])(
         page += 1
         return Response.json({
           items: Array.from({length: 250}, (_, index) => ({
-            id: `event-${page}-${index}`,
             end: {date: '2026-09-06'},
+            id: `event-${page}-${index}`,
             start: {date: '2026-09-05'},
           })),
           nextPageToken: page < 20 || hasMore ? 'next-page' : undefined,

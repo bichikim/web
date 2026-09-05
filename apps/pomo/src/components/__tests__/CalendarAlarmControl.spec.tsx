@@ -5,7 +5,7 @@ import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {CalendarEvent} from '../../features/calendar'
-import type {MemoryMemo} from '../../features/memory-assist'
+import {createMemoryMemo, type MemoryMemo} from '../../features/memory-assist'
 import {CalendarAlarmControl} from '../CalendarAlarmControl'
 
 const mocks = vi.hoisted(() => ({
@@ -111,17 +111,15 @@ it('should save an exact Pomo reminder for a calendar event', async () => {
 it('should show and remove an existing calendar alarm', async () => {
   mocks.memos = [
     {
-      createdAt: '2026-09-04T03:00:00.000Z',
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-05T09:00:00.000Z',
+        id: 'calendar-alarm:connection-1:event-1',
+        now: new Date('2026-09-04T03:00:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: '팀 회의 일정 알람이에요.',
+      }),
       dialogueId: 'memory-memo-calendar-alarm:connection-1:event-1',
-      exactReminderAt: '2026-09-05T09:00:00.000Z',
-      id: 'calendar-alarm:connection-1:event-1',
-      nextRecallAt: null,
-      recallMode: 'none',
-      reinforcementIndex: 0,
-      reminderHistory: [],
-      text: '팀 회의 일정 알람이에요.',
-      updatedAt: '2026-09-04T03:00:00.000Z',
-      version: 1,
     },
   ]
   render(() => <CalendarAlarmControl event={event} memos={() => mocks.memos} />)

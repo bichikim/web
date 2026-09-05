@@ -43,9 +43,9 @@ it.each([false, true])(
               ? 'https://graph.microsoft.com/v1.0/me/calendars/calendar/calendarView?$skiptoken=next'
               : undefined,
           value: Array.from({length: 250}, (_, index) => ({
+            end: {dateTime: '2026-09-06T00:00:00', timeZone: 'UTC'},
             id: `event-${page}-${index}`,
             isAllDay: true,
-            end: {dateTime: '2026-09-06T00:00:00', timeZone: 'UTC'},
             start: {dateTime: '2026-09-05T00:00:00', timeZone: 'UTC'},
           })),
         })
