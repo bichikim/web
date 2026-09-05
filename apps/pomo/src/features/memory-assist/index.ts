@@ -25,3 +25,8 @@ export {getMemoryMemoDialogueId, isMemoryMemoDialogueId} from './dialogue-id'
 export {excludeMemoryMemoDialogues} from './dialogue-library'
 export {deleteMemoryMemoDraft, readMemoryMemoDraft, writeMemoryMemoDraft} from './draft-storage'
 export type {MemoryMemoDraft} from './draft-storage'
+
+export {deleteMemoryMemo, retryMemoryMemoDeletions} from './deletion'
+export type {DeleteMemoryMemoOptions, MemoryMemoDeletionResult} from './deletion'
+
+export {useDeletionRecovery} from './use-deletion-recovery'

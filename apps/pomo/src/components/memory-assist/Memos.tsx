@@ -3,6 +3,7 @@ import {createSignal, For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {usePEvents} from '../../features/focus-room-dialogue'
 import {
+  deleteMemoryMemo,
   editMemoryMemo,
   type MemoryMemo,
   updateMemoryMemos,
@@ -21,13 +22,7 @@ export const MemoryMemoList = () => {
 
   const handleDelete = async (memo: MemoryMemo) => {
     try {
-      if (memo.dialogueId !== null) {
-        await events.deleteDialogue(memo.dialogueId)
-      }
-
-      await updateMemoryMemos((currentMemos) =>
-        currentMemos.filter((currentMemo) => currentMemo.id !== memo.id),
-      )
+      await deleteMemoryMemo({deleteDialogue: events.deleteDialogue, memoId: memo.id})
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to delete a memory memo.', error)
@@ -50,7 +45,7 @@ export const MemoryMemoList = () => {
     try {
       await updateMemoryMemos((currentMemos) =>
         currentMemos.map((currentMemo) => {
-          if (currentMemo.id !== memo.id) {
+          if (currentMemo.id !== memo.id || currentMemo.deletionPending === true) {
             return currentMemo
           }
 

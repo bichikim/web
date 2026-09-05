@@ -7,6 +7,7 @@ export type MemoryRecallMode = (typeof MEMORY_RECALL_MODES)[number]
 
 const memoryMemoSchema = z.object({
   createdAt: z.iso.datetime(),
+  deletionPending: z.literal(true).optional(),
   dialogueId: z.string().min(1).nullable(),
   exactReminderAdvanceMinutes: z.number().int().nonnegative().default(0),
   exactReminderAt: z.iso.datetime().nullable(),
