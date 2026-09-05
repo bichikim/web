@@ -1,3 +1,4 @@
+import {ImageGenerationCard} from './home/ImageGenerationCard'
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
@@ -48,6 +49,7 @@ function HomePage() {
         </header>
 
         <div class="mt-10 grid gap-4 md:grid-cols-2">
+          <ImageGenerationCard />
           <A class={CARD_CLASSES} href="/dev/focus-room-layer-review">
             <div class="flex items-start justify-between gap-5">
               <div>

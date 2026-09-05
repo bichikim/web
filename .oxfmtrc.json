@@ -3,5 +3,6 @@
   "semi": false,
   "singleQuote": true,
   "bracketSpacing": false,
+  "ignorePatterns": ["apps/pomo/src/features/image-generation/vendor/runtime.mjs"],
   "sortPackageJson": true
 }
