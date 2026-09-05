@@ -105,3 +105,39 @@ describe('sortPictureDiaryEntries', () => {
     ])
   })
 })
+
+it('should retain a generated PNG in an image-only entry', () => {
+  const image = {blob: new Blob(['png'], {type: 'image/png'}), prompt: 'A quiet day'}
+  const entry = createPictureDiaryEntry({
+    createdAt: '2026-09-05T03:00:00.000Z',
+    date: '2026-09-05',
+    id: 'image',
+    image,
+    now: new Date('2026-09-05T03:00:00.000Z'),
+    strokes: [],
+    text: '',
+  })
+  expect(entry.image).toEqual(image)
+  expect(parsePictureDiaryEntries([entry])?.[0]?.image).toEqual(image)
+})
+
+it.each([
+  {blob: 'blob:temporary', prompt: 'Scene'},
+  {blob: new Blob(['svg'], {type: 'image/svg+xml'}), prompt: 'Scene'},
+  {blob: new Blob([], {type: 'image/png'}), prompt: 'Scene'},
+])('should reject invalid generated image data', (image) => {
+  expect(
+    parsePictureDiaryEntries([
+      {
+        createdAt: '2026-09-05T03:00:00.000Z',
+        date: '2026-09-05',
+        id: 'image',
+        image,
+        strokes: [],
+        text: 'Diary',
+        updatedAt: '2026-09-05T03:00:00.000Z',
+        version: 1,
+      },
+    ]),
+  ).toBeNull()
+})

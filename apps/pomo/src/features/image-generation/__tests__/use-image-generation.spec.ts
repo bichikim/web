@@ -1,4 +1,8 @@
 /** @vitest-environment jsdom */
+import {useModelDownload} from 'src/features/model-download'
+import {createModelDownloadController} from 'src/features/model-download/controller'
+vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
+
 import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {runImageGeneration} from '../client'
@@ -7,6 +11,7 @@ import {useImageGeneration} from '../use-image-generation'
 vi.mock('../client', () => ({runImageGeneration: vi.fn()}))
 
 beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownloadController())
   vi.stubGlobal('navigator', {
     gpu: {requestAdapter: vi.fn().mockResolvedValue({features: new Set(['shader-f16'])})},
   })
@@ -31,6 +36,9 @@ it('should preserve the generated image metadata and revoke its URL on disposal'
   result.selectRatio('16:9')
   await result.generate()
   expect(result.result()).toMatchObject({height: 288, seed: 123, url: 'blob:generated', width: 512})
+  expect(result.result()?.blob).toBe(
+    vi.mocked(runImageGeneration).mock.settledResults[0]?.value.blob,
+  )
   expect(result.busy()).toBe(false)
   cleanup()
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')

@@ -1,5 +1,5 @@
 import type {TextModelId} from '../text-generation'
-import type {ImageSettings} from './settings'
+import type {ImageSettings, ImageVariant} from './settings'
 
 export interface PromptRequest {
   readonly idea: string
@@ -11,7 +11,14 @@ export interface ImageRequest {
   readonly settings: ImageSettings
   readonly type: 'image'
 }
-export type GenerationRequest = PromptRequest | ImageRequest
+export interface PrepareImageRequest {
+  readonly type: 'prepare-image'
+  readonly variant: ImageVariant
+}
+export interface ImageReadyResponse {
+  readonly type: 'ready'
+}
+export type GenerationRequest = PromptRequest | ImageRequest | PrepareImageRequest
 
 export interface GenerationProgress {
   readonly label: string
@@ -31,6 +38,7 @@ export interface GenerationError {
   readonly type: 'error'
 }
 export type GenerationResponse =
+  | ImageReadyResponse
   | GenerationProgress
   | PromptResponse
   | ImageResponse

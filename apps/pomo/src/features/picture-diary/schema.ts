@@ -26,20 +26,29 @@ const pictureDiaryWeatherSchema = z
   })
   .readonly()
 
+const imageSchema = z
+  .object({
+    blob: z.instanceof(Blob).refine((blob) => blob.type === 'image/png' && blob.size > 0),
+    prompt: z.string(),
+  })
+  .readonly()
+
 const pictureDiaryEntrySchema = z
   .object({
     createdAt: z.iso.datetime(),
     date: z.iso.date(),
     id: z.string().min(1),
+    image: imageSchema.optional(),
     strokes: z.array(strokeSchema).max(MAXIMUM_STROKE_COUNT).readonly(),
     text: z.string().trim().max(MAXIMUM_PICTURE_DIARY_TEXT_LENGTH),
     updatedAt: z.iso.datetime(),
     version: z.literal(1),
     weather: pictureDiaryWeatherSchema.optional(),
   })
-  .refine((entry) => entry.text.length > 0 || entry.strokes.length > 0)
+  .refine((entry) => entry.text.length > 0 || entry.strokes.length > 0 || entry.image !== undefined)
   .readonly()
 
+export type PictureDiaryImage = z.infer<typeof imageSchema>
 export type PictureDiaryEntry = z.infer<typeof pictureDiaryEntrySchema>
 export type PictureDiaryPoint = z.infer<typeof pointSchema>
 export type PictureDiaryStroke = z.infer<typeof strokeSchema>
@@ -48,6 +57,7 @@ export type PictureDiaryWeather = z.infer<typeof pictureDiaryWeatherSchema>
 export interface CreatePictureDiaryEntryOptions {
   readonly createdAt: string
   readonly date: string
+  readonly image?: PictureDiaryImage
   readonly id: string
   readonly now: Date
   readonly strokes: ReadonlyArray<PictureDiaryStroke>
@@ -62,6 +72,7 @@ export const createPictureDiaryEntry = (
     createdAt: options.createdAt,
     date: options.date,
     id: options.id,
+    ...(options.image === undefined ? {} : {image: options.image}),
     strokes: options.strokes,
     text: options.text,
     updatedAt: options.now.toISOString(),

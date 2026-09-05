@@ -5,6 +5,7 @@ import {
   createPictureDiaryEntry,
   createPictureDiaryRepository,
   type PictureDiaryEntry,
+  type PictureDiaryImage,
   type PictureDiaryRepository,
   type PictureDiaryStroke,
   type PictureDiaryWeather,
@@ -13,6 +14,7 @@ import {
 import type {WeatherState} from '../../features/weather'
 import {type BookSpread, getBookPagination} from './picture-diary/pagination'
 import {PictureDiaryEditor} from './picture-diary/Editor'
+import {useEntryEditing} from './picture-diary/use-entry-editing'
 import type {PageTurnEnvironment} from './picture-diary/turn-environment'
 import {
   createBrowserDiaryEnvironment,
@@ -52,6 +54,19 @@ const getSpreadView = (spread: BookSpread): PictureDiaryView => {
   const page = spread.left.kind === 'writing' ? spread.left : spread.right
   return page.kind === 'entry' ? {id: page.entry.id, kind: 'entry'} : {kind: 'writing'}
 }
+
+const getViewPagination = (options: {
+  readonly view: PictureDiaryView
+  readonly compact: boolean
+  readonly entries: ReadonlyArray<PictureDiaryEntry>
+}) =>
+  getBookPagination({
+    closed: options.view.kind === 'back-cover',
+    compact: options.compact,
+    ending: options.view.kind === 'ending' || options.view.kind === 'front-cover',
+    entries: options.entries,
+    selectedId: options.view.kind === 'entry' ? options.view.id : undefined,
+  })
 
 const mergeLoadedEntries = (
   loaded: ReadonlyArray<PictureDiaryEntry>,
@@ -93,29 +108,30 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   const environment = untrack(() => props.environment ?? createBrowserDiaryEnvironment())
   const repository = untrack(() => props.repository ?? createPictureDiaryRepository())
   const [entries, setEntries] = createSignal<ReadonlyArray<PictureDiaryEntry>>([])
+  const editing = useEntryEditing({
+    environment,
+    onSaved: (entry) => setEntries((current) => mergeLoadedEntries(current, [entry])),
+    repository,
+  })
   const [view, setView] = createSignal<PictureDiaryView>({kind: 'writing'})
   const [date, setDate] = createSignal(getDateValue(environment.now()))
   const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
+  const [image, setImage] = createSignal<PictureDiaryImage>()
   const [text, setText] = createSignal('')
   const [compact, setCompact] = createSignal(false)
   const [message, setMessage] = createSignal<string | null>(null)
   const [saving, setSaving] = createSignal(false)
   const canSave = createMemo(
-    () => !saving() && date().length > 0 && (text().trim().length > 0 || strokes().length > 0),
+    () =>
+      !saving() &&
+      date().length > 0 &&
+      (text().trim().length > 0 || strokes().length > 0 || image() !== undefined),
   )
   const backCoverClosed = createMemo(() => view().kind === 'back-cover')
-  const pagination = createMemo(() => {
-    const current = view()
-    return getBookPagination({
-      closed: current.kind === 'back-cover',
-      compact: compact(),
-      ending: current.kind === 'ending' || current.kind === 'front-cover',
-      entries: entries(),
-      selectedId: current.kind === 'entry' ? current.id : undefined,
-    })
-  })
+  const pagination = createMemo(() =>
+    getViewPagination({compact: compact(), entries: entries(), view: view()}),
+  )
   const canCloseBackCover = createMemo(() => !backCoverClosed() && pagination().older === null)
-  const canGoNewer = createMemo(() => pagination().newer !== null)
 
   const handleOpenSpread = (spread: BookSpread | null) => {
     if (spread === null) {
@@ -147,7 +163,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
       return
     }
 
-    const snapshot = {date: date(), strokes: strokes(), text: text(), view: view()}
+    const snapshot = {date: date(), image: image(), strokes: strokes(), text: text(), view: view()}
     setSaving(true)
     try {
       const now = environment.now()
@@ -155,21 +171,23 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         createdAt: now.toISOString(),
         date: snapshot.date,
         id: environment.createId(),
+        image: snapshot.image,
         now,
         strokes: snapshot.strokes,
         text: snapshot.text,
         weather: getWeatherSnapshot(props.weatherState),
       })
       await repository.save(entry)
-      setEntries((currentEntries) =>
-        sortPictureDiaryEntries([
-          entry,
-          ...currentEntries.filter((current) => current.id !== entry.id),
-        ]),
-      )
-      if (date() === snapshot.date && strokes() === snapshot.strokes && text() === snapshot.text) {
+      setEntries((currentEntries) => mergeLoadedEntries(currentEntries, [entry]))
+      if (
+        image() === snapshot.image &&
+        date() === snapshot.date &&
+        strokes() === snapshot.strokes &&
+        text() === snapshot.text
+      ) {
         setDate(getDateValue(environment.now()))
         setStrokes([])
+        setImage(undefined)
         setText('')
         if (view() === snapshot.view) {
           setView({id: entry.id, kind: 'entry'})
@@ -217,7 +235,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         onFrontCoverChange={(closed) => setView({kind: closed ? 'front-cover' : 'ending'})}
         backCoverClosed={backCoverClosed()}
         canCloseBackCover={canCloseBackCover()}
-        canGoNewer={canGoNewer()}
+        canGoNewer={pagination().newer !== null}
         canGoOlder={pagination().older !== null}
         canSave={canSave()}
         spread={pagination().current}
@@ -227,10 +245,14 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         onCloseBackCover={handleCloseBackCover}
         onDateChange={handleDateChange}
         onDeleteEntry={handleDelete}
+        onEditEntry={editing.open}
+        editing={editing.editor()}
         onGoNewer={() => handleOpenSpread(pagination().newer)}
         onGoOlder={() => handleOpenSpread(pagination().older)}
         onOpenBackCover={handleOpenBackCover}
         onSave={handleSave}
+        image={image()}
+        onImageChange={setImage}
         onStrokesChange={setStrokes}
         onTextChange={setText}
         strokes={strokes()}

@@ -58,6 +58,8 @@ beforeEach(() => {
     cancel: vi.fn(),
     dismissError: vi.fn(),
     dispose: vi.fn(),
+    downloads: () => [],
+    startImageModel: vi.fn(),
     startTextModel: vi.fn(),
     startVoiceModel: vi.fn(),
     state: () => ({status: 'idle'}),

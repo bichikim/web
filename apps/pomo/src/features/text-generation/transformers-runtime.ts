@@ -12,6 +12,7 @@ import {
 
 import {getTextModelImplementation, type TextModelId, type TextModelImplementation} from './model'
 import {createTextGenerationProgress} from './progress'
+import {getTextRuntimeAssetUrl} from './runtime-assets'
 import type {QwenTextGenerationModel} from './qwen-model'
 import type {
   CreateTextGenerationRuntimeOptions,
@@ -114,6 +115,14 @@ export const createTransformersRuntime = (
       activeModelId = modelId
       const modelDefinition = getTextModelImplementation(modelId)
       const {assetSource} = modelDefinition
+      const wasm = env.backends?.onnx?.wasm
+      const paths = wasm?.wasmPaths
+      if (wasm !== undefined && typeof paths === 'object' && paths !== null) {
+        wasm.wasmPaths = {
+          mjs: getTextRuntimeAssetUrl(paths.mjs),
+          wasm: getTextRuntimeAssetUrl(paths.wasm),
+        }
+      }
       env.allowLocalModels = false
       env.allowRemoteModels = true
       env.remoteHost = assetSource.host

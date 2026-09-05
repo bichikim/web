@@ -62,7 +62,7 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
           onCloseAutoFocus={handleCloseAutoFocus}
           onOpenChange={setIsOpen}
           placement="top"
-          size="full"
+          size="expanded"
           title={m.memory_assist_title()}
           titleVisibility="visually-hidden"
         >

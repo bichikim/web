@@ -1,4 +1,7 @@
-import {type Accessor, createSignal} from 'solid-js'
+import {type Accessor} from 'solid-js'
+import {createDownloadQueue} from './queue'
+import {createImageModelDownloadClient, type CreateImageModelDownloadOptions} from './image-client'
+import type {ImageVariant} from '../image-generation/settings'
 
 import {
   createSupertonicClient,
@@ -25,7 +28,26 @@ export interface VoiceModelDownloadTarget {
   readonly modelId: SupertonicModelId
 }
 
-export type ModelDownloadTarget = TextModelDownloadTarget | VoiceModelDownloadTarget
+export interface ImageModelDownloadTarget {
+  readonly kind: 'image'
+  readonly modelId: ImageVariant
+}
+
+export type ModelDownloadTarget =
+  | TextModelDownloadTarget
+  | VoiceModelDownloadTarget
+  | ImageModelDownloadTarget
+
+export interface QueuedModelDownloadState {
+  readonly label: string
+  readonly status: 'queued'
+  readonly target: ModelDownloadTarget
+}
+
+export type ModelDownloadItem =
+  | LoadingModelDownloadState
+  | ErrorModelDownloadState
+  | QueuedModelDownloadState
 
 interface IdleModelDownloadState {
   readonly status: 'idle'
@@ -69,15 +91,18 @@ export type ModelDownloadResult =
   | ErrorModelDownloadResult
 
 export interface ModelDownloadController {
-  readonly cancel: () => void
-  readonly dismissError: () => void
+  readonly cancel: (target?: ModelDownloadTarget) => void
+  readonly dismissError: (target?: ModelDownloadTarget) => void
   readonly dispose: () => void
+  readonly downloads: Accessor<ReadonlyArray<ModelDownloadItem>>
+  readonly startImageModel: (modelId: ImageVariant) => Promise<ModelDownloadResult>
   readonly startTextModel: (modelId: TextModelId) => Promise<ModelDownloadResult>
   readonly startVoiceModel: (modelId: SupertonicModelId) => Promise<ModelDownloadResult>
   readonly state: Accessor<ModelDownloadState>
 }
 
 export interface ModelDownloadRuntime {
+  readonly createImageClient?: (options: CreateImageModelDownloadOptions) => ModelDownloadClient
   readonly createTextClient: (
     options: CreateTextModelDownloadClientOptions,
   ) => TextModelDownloadClient
@@ -85,39 +110,28 @@ export interface ModelDownloadRuntime {
 }
 
 const DEFAULT_RUNTIME: ModelDownloadRuntime = {
+  createImageClient: createImageModelDownloadClient,
   createTextClient: createTextModelDownloadClient,
   createVoiceClient: createSupertonicClient,
 }
-const NOOP_DOWNLOAD_RESOLVER = () => undefined
 const MAXIMUM_PERCENTAGE = 100
 
-interface ModelDownloadCallbacks {
+export interface ModelDownloadCallbacks {
   readonly onError: (message: string) => void
   readonly onProgress: (percentage: number) => void
   readonly onReady: () => void
 }
 
-interface ModelDownloadClient {
+export interface ModelDownloadClient {
   readonly dispose: () => void
   readonly prepare: () => void
 }
 
-interface ActiveDownload {
-  readonly client: ModelDownloadClient
-  readonly promise: Promise<ModelDownloadResult>
-  readonly resolve: (result: ModelDownloadResult) => void
-  readonly session: object
-  readonly target: ModelDownloadTarget
-}
-
-interface StartModelDownloadOptions {
+export interface StartModelDownloadOptions {
   readonly createClient: (callbacks: ModelDownloadCallbacks) => ModelDownloadClient
   readonly label: string
   readonly target: ModelDownloadTarget
 }
-
-const isSameTarget = (left: ModelDownloadTarget, right: ModelDownloadTarget) =>
-  left.kind === right.kind && left.modelId === right.modelId
 
 const getPercentage = (progress: SupertonicProgress) =>
   progress.totalBytes > 0
@@ -196,121 +210,21 @@ const createVoiceDownloadOptions = (
 export const createModelDownloadController = (
   runtime: ModelDownloadRuntime = DEFAULT_RUNTIME,
 ): ModelDownloadController => {
-  const [state, setState] = createSignal<ModelDownloadState>({status: 'idle'})
-  let activeDownload: ActiveDownload | null = null
-
-  const finish = (download: ActiveDownload, result: ModelDownloadResult) => {
-    if (activeDownload !== download) {
-      return
-    }
-
-    download.client.dispose()
-    activeDownload = null
-    download.resolve(result)
-  }
-
-  const start = (options: StartModelDownloadOptions) => {
-    if (activeDownload !== null) {
-      if (isSameTarget(activeDownload.target, options.target)) {
-        return activeDownload.promise
-      }
-
-      return Promise.resolve({
-        message: '다른 모델을 내려받고 있어요. 완료하거나 취소한 뒤 다시 시도해 주세요.',
-        status: 'error',
-      } satisfies ErrorModelDownloadResult)
-    }
-
-    let resolveDownload: (result: ModelDownloadResult) => void = NOOP_DOWNLOAD_RESOLVER
-    const promise = new Promise<ModelDownloadResult>((resolve) => {
-      resolveDownload = resolve
-    })
-    const session = {}
-    const getCurrentDownload = () => {
-      const download = activeDownload
-      return download !== null && download.session === session ? download : null
-    }
-    const callbacks: ModelDownloadCallbacks = {
-      onError: (message) => {
-        const download = getCurrentDownload()
-
-        if (download === null) {
-          return
-        }
-
-        setState({
-          label: options.label,
-          message,
-          status: 'error',
-          target: options.target,
-        })
-        finish(download, {message, status: 'error'})
-      },
-      onProgress: (percentage) => {
-        if (getCurrentDownload() !== null) {
-          setState({label: options.label, percentage, status: 'loading', target: options.target})
-        }
-      },
-      onReady: () => {
-        const download = getCurrentDownload()
-
-        if (download === null) {
-          return
-        }
-
-        setState({status: 'idle'})
-        finish(download, {status: 'complete'})
-      },
-    }
-    let client: ModelDownloadClient
-
-    try {
-      client = options.createClient(callbacks)
-    } catch (error: unknown) {
-      const message = getUnknownErrorMessage(error)
-      setState({label: options.label, message, status: 'error', target: options.target})
-      return Promise.resolve({message, status: 'error'} satisfies ErrorModelDownloadResult)
-    }
-
-    const download = {client, promise, resolve: resolveDownload, session, target: options.target}
-    activeDownload = download
-    setState({label: options.label, percentage: 0, status: 'loading', target: options.target})
-    try {
-      client.prepare()
-    } catch (error: unknown) {
-      callbacks.onError(getUnknownErrorMessage(error))
-    }
-    return promise
-  }
-
-  const startTextModel = (modelId: TextModelId) =>
-    start(createTextDownloadOptions(runtime, modelId))
-  const startVoiceModel = (modelId: SupertonicModelId) =>
-    start(createVoiceDownloadOptions(runtime, modelId))
-
-  const cancel = () => {
-    const download = activeDownload
-
-    if (download === null) {
-      return
-    }
-
-    setState({status: 'idle'})
-    finish(download, {status: 'cancelled'})
-  }
-
-  const dismissError = () => {
-    if (state().status === 'error') {
-      setState({status: 'idle'})
-    }
-  }
-
+  const queue = createDownloadQueue()
   return {
-    cancel,
-    dismissError,
-    dispose: cancel,
-    startTextModel,
-    startVoiceModel,
-    state,
+    cancel: queue.cancel,
+    dismissError: queue.dismissError,
+    dispose: queue.dispose,
+    downloads: queue.downloads,
+    startImageModel: (modelId) =>
+      queue.start({
+        createClient: (callbacks) =>
+          (runtime.createImageClient ?? createImageModelDownloadClient)({callbacks, modelId}),
+        label: `Bonsai 4B · ${modelId === 'ternary' ? 'Ternary' : '1-bit'}`,
+        target: {kind: 'image', modelId},
+      }),
+    startTextModel: (modelId) => queue.start(createTextDownloadOptions(runtime, modelId)),
+    startVoiceModel: (modelId) => queue.start(createVoiceDownloadOptions(runtime, modelId)),
+    state: queue.state,
   }
 }

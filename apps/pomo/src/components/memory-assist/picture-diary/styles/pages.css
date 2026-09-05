@@ -132,52 +132,6 @@
   box-shadow: 0 0 0 0.125rem rgb(var(--pomo-color-primary-channels) / 72%);
 }
 
-.picture-diary-book__delete {
-  box-sizing: border-box;
-  display: inline-flex;
-  min-width: 2rem;
-  min-height: 2rem;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  border: 0.0625rem solid transparent;
-  border-radius: 999rem;
-  outline: 0;
-  background: transparent;
-  color: rgb(var(--picture-diary-muted-ink));
-  font: inherit;
-  font-size: 0.7rem;
-  font-weight: 700;
-  line-height: 1;
-  padding: 0.4rem;
-  white-space: nowrap;
-  transition:
-    color 160ms ease,
-    border-color 160ms ease,
-    background-color 160ms ease;
-}
-
-.picture-diary-book__delete:hover {
-  background: rgb(var(--picture-diary-rule) / 8%);
-  color: rgb(var(--picture-diary-ink));
-}
-
-.picture-diary-book__delete:focus-visible {
-  box-shadow: 0 0 0 0.125rem rgb(var(--pomo-color-primary-channels) / 72%);
-}
-
-.picture-diary-book__delete[data-confirming] {
-  border-color: rgb(187 66 50 / 28%);
-  background: rgb(187 66 50 / 9%);
-  color: rgb(151 46 34);
-  padding-inline: 0.65rem;
-}
-
-.picture-diary-book__delete-icon {
-  width: 1rem;
-  height: 1rem;
-}
-
 .picture-diary-book__writing,
 .picture-diary-book__entry-writing {
   box-sizing: border-box;
@@ -230,10 +184,6 @@
 
 .picture-diary-book__footer--current {
   justify-content: center;
-}
-
-.picture-diary-book__save {
-  min-width: min(9rem, 100%);
 }
 
 @media (width < 48rem) {

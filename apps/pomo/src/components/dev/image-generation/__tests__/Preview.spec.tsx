@@ -1,4 +1,8 @@
 /** @vitest-environment jsdom */
+import {useModelDownload} from 'src/features/model-download'
+import {createModelDownloadController} from 'src/features/model-download/controller'
+vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
+
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {type ImageGenerationController, useImageGeneration} from 'src/features/image-generation'
@@ -14,6 +18,7 @@ afterEach(() => {
 })
 
 it('should keep the displayed image paired with its original prompt when the next generation fails', async () => {
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownloadController())
   vi.stubGlobal('navigator', {
     gpu: {requestAdapter: vi.fn().mockResolvedValue({features: new Set(['shader-f16'])})},
   })

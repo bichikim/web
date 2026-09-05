@@ -1,9 +1,10 @@
-import {For, type JSX, Show} from 'solid-js'
+import {createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
   MAXIMUM_POINT_COUNT,
   MAXIMUM_STROKE_COUNT,
+  type PictureDiaryImage,
   type PictureDiaryPoint,
   type PictureDiaryStroke,
 } from '../../../features/picture-diary'
@@ -12,6 +13,7 @@ const DRAWING_WIDTH = 1_000
 const DRAWING_HEIGHT = 562
 
 export interface PictureDiaryCanvasProps {
+  readonly image?: PictureDiaryImage
   readonly accessibleLabel?: string
   readonly onChange?: (strokes: ReadonlyArray<PictureDiaryStroke>) => void
   readonly onLimit?: () => void
@@ -33,6 +35,17 @@ const getPolylinePoints = (stroke: PictureDiaryStroke) =>
   stroke.points.map((point) => `${point.x * DRAWING_WIDTH},${point.y * DRAWING_HEIGHT}`).join(' ')
 
 export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
+  const [imageUrl, setImageUrl] = createSignal<string>()
+  createEffect(() => {
+    const storedImage = props.image
+    if (storedImage === undefined) {
+      setImageUrl(undefined)
+      return
+    }
+    const url = URL.createObjectURL(storedImage.blob)
+    setImageUrl(url)
+    onCleanup(() => URL.revokeObjectURL(url))
+  })
   let activePointerId: number | null = null
 
   const handlePointerDown: JSX.EventHandler<SVGSVGElement, PointerEvent> = (event) => {
@@ -92,6 +105,17 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
       role="img"
       viewBox={`0 0 ${DRAWING_WIDTH} ${DRAWING_HEIGHT}`}
     >
+      <Show when={imageUrl()}>
+        {(url) => (
+          <image
+            href={url()}
+            width={DRAWING_WIDTH}
+            height={DRAWING_HEIGHT}
+            preserveAspectRatio="xMidYMid meet"
+            class="pointer-events-none"
+          />
+        )}
+      </Show>
       <For each={props.strokes ?? []}>
         {(stroke) => (
           <Show

@@ -70,6 +70,16 @@ const createProcessor = () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.env.backends = {
+    onnx: {
+      wasm: {
+        wasmPaths: {
+          mjs: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort-wasm-simd-threaded.asyncify.mjs',
+          wasm: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort-wasm-simd-threaded.asyncify.wasm',
+        },
+      },
+    },
+  }
   mocks.cacheOptions = null
   mocks.streamerOptions = null
 })
@@ -105,6 +115,16 @@ it('should prepare Gemma once, report byte progress, and configure versioned cac
   expect(mocks.env).toMatchObject({
     allowLocalModels: false,
     allowRemoteModels: true,
+    backends: {
+      onnx: {
+        wasm: {
+          wasmPaths: {
+            mjs: 'https://storage.pomofi.io/runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.asyncify.mjs',
+            wasm: 'https://storage.pomofi.io/runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.asyncify.wasm',
+          },
+        },
+      },
+    },
     remoteHost: 'https://models.example/',
   })
 })

@@ -1,8 +1,13 @@
+import type {ModelDownloadController} from '../model-download'
+import {prepareImageModels} from './prepare'
+import {ART_STYLES, type ArtStyle} from './styles'
 import type {TextModelId} from '../text-generation'
 import type {GenerationRequest, GenerationResponse, GenerationUpdate} from './messages'
 import {type ImageSettings, MAXIMUM_IDEA_LENGTH, parseSettings} from './settings'
 
 export interface RunImageGenerationOptions {
+  readonly downloads: ModelDownloadController
+  readonly style?: ArtStyle
   readonly idea: string
   readonly modelId: TextModelId
   readonly onUpdate: (update: GenerationUpdate) => void
@@ -48,6 +53,7 @@ const runWorker = (options: RunWorkerOptions): Promise<GenerationResponse> =>
           cleanup()
           reject(new Error(response.message))
           return
+        case 'ready':
         case 'prompt':
         case 'image':
           cleanup()
@@ -74,7 +80,14 @@ export const runImageGeneration = async (
   if (idea.length === 0 || idea.length > MAXIMUM_IDEA_LENGTH) {
     throw new Error('만들고 싶은 장면을 1–2,000자로 입력해 주세요.')
   }
-  options.onUpdate({label: '채팅 모델로 영어 프롬프트를 준비하고 있어요…', type: 'progress'})
+  options.onUpdate({label: '모델 다운로드를 준비하고 있어요', type: 'progress'})
+  await prepareImageModels({
+    downloads: options.downloads,
+    modelId: options.modelId,
+    signal: options.signal,
+    variant: settings.variant,
+  })
+  options.onUpdate({label: '이미지 생성을 위한 프롬프트를 준비하고 있어요', type: 'progress'})
   const prompt = await runWorker({
     onUpdate: options.onUpdate,
     request: {idea, modelId: options.modelId, type: 'prompt'},
@@ -84,15 +97,17 @@ export const runImageGeneration = async (
     throw new Error('영어 프롬프트 응답을 받지 못했어요.')
   }
   options.signal.throwIfAborted()
-  options.onUpdate(prompt)
+  const context = ART_STYLES[options.style ?? 'none']
+  const styledPrompt = context === '' ? prompt.prompt : `${prompt.prompt}\nArt style: ${context}`
+  options.onUpdate({prompt: styledPrompt, type: 'prompt'})
   options.onUpdate({label: 'Bonsai Image 4B를 준비하고 있어요…', type: 'progress'})
   const image = await runWorker({
     onUpdate: options.onUpdate,
-    request: {prompt: prompt.prompt, settings, type: 'image'},
+    request: {prompt: styledPrompt, settings, type: 'image'},
     signal: options.signal,
   })
   if (image.type !== 'image') {
     throw new Error('이미지 응답을 받지 못했어요.')
   }
-  return {blob: image.blob, prompt: prompt.prompt}
+  return {blob: image.blob, prompt: styledPrompt}
 }

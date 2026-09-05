@@ -65,6 +65,8 @@ export const createModelAssetManager = (
     options.isModelDownloaded ??
     ((target: ModelDownloadTarget) => {
       switch (target.kind) {
+        case 'image':
+          return Promise.resolve(false)
         case 'text':
           return isTextModelDownloaded({modelId: target.modelId})
         case 'voice':
@@ -74,6 +76,8 @@ export const createModelAssetManager = (
 
   const startModel = (target: ModelDownloadTarget) => {
     switch (target.kind) {
+      case 'image':
+        return options.controller.startImageModel(target.modelId)
       case 'text':
         return options.controller.startTextModel(target.modelId)
       case 'voice':

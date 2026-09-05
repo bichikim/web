@@ -134,7 +134,7 @@ it('should open a Korean memory assist modal', () => {
       icon: 'i-tabler-brain',
     }),
   )
-  expect(PModal).toHaveBeenCalledWith(expect.objectContaining({size: 'full'}))
+  expect(PModal).toHaveBeenCalledWith(expect.objectContaining({size: 'expanded'}))
   expect(Tabs).toHaveBeenCalledWith(expect.objectContaining({class: 'contents'}))
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '학습 문장',

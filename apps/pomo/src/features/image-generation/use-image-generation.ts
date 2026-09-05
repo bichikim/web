@@ -1,6 +1,9 @@
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {useModelDownload} from '../model-download'
+import {createSignal, onCleanup} from 'solid-js'
 import {type TextModelId} from '../text-generation'
 import {runImageGeneration} from './client'
+import {useImageSupport} from './use-support'
+import type {ArtStyle} from './styles'
 import {
   type AspectRatio,
   DEFAULT_DIMENSION,
@@ -10,17 +13,13 @@ import {
 } from './settings'
 
 export interface ImageResult {
+  readonly blob: Blob
   readonly height: number
   readonly prompt: string
   readonly seed: number
   readonly steps: number
   readonly url: string
   readonly width: number
-}
-
-const supportsImageGeneration = async () => {
-  const adapter = await navigator.gpu?.requestAdapter()
-  return adapter !== null && adapter !== undefined && adapter.features.has('shader-f16')
 }
 
 const parseSeed = (text: string) => {
@@ -33,7 +32,9 @@ const parseSeed = (text: string) => {
 export type ImageGenerationController = ReturnType<typeof useImageGeneration>
 
 export const useImageGeneration = () => {
+  const downloads = useModelDownload()
   const [idea, setIdea] = createSignal('')
+  const [style, setStyle] = createSignal<ArtStyle>('none')
   const [modelId, setModelId] = createSignal<TextModelId>('gemma-4-e2b')
   const [variant, setVariant] = createSignal<ImageVariant>('ternary')
   const [width, setWidth] = createSignal(DEFAULT_DIMENSION)
@@ -42,7 +43,6 @@ export const useImageGeneration = () => {
   const [seed, setSeed] = createSignal('')
   const [prompt, setPrompt] = createSignal('')
   const [busy, setBusy] = createSignal(false)
-  const [supported, setSupported] = createSignal(false)
   const [status, setStatus] = createSignal('WebGPU를 확인하고 있어요…')
   const [percentage, setPercentage] = createSignal<number | undefined>()
   const [error, setError] = createSignal<string | null>(null)
@@ -50,26 +50,7 @@ export const useImageGeneration = () => {
   let controller: AbortController | null = null
   let disposed = false
 
-  onMount(() => {
-    ;(async () => {
-      try {
-        const available = await supportsImageGeneration()
-        if (disposed) {
-          return
-        }
-        setSupported(available)
-        setStatus(
-          available
-            ? '장면을 입력하고 이미지를 만들어 보세요.'
-            : 'WebGPU와 shader-f16을 지원하는 브라우저·GPU가 필요해요.',
-        )
-      } catch {
-        if (!disposed) {
-          setStatus('WebGPU를 확인하지 못했어요. 브라우저의 GPU 설정을 확인해 주세요.')
-        }
-      }
-    })()
-  })
+  const supported = useImageSupport({onStatus: setStatus})
 
   const stop = () => {
     controller?.abort()
@@ -107,6 +88,7 @@ export const useImageGeneration = () => {
         width: width(),
       }
       const image = await runImageGeneration({
+        downloads,
         idea: idea(),
         modelId: modelId(),
         onUpdate: (update) => {
@@ -126,18 +108,25 @@ export const useImageGeneration = () => {
         },
         settings,
         signal: abort.signal,
+        style: style(),
       })
       if (abort.signal.aborted || disposed) {
         return
       }
       const previous = result()
       const url = URL.createObjectURL(image.blob)
-      setResult({...settings, prompt: image.prompt, url})
+      setResult({...settings, blob: image.blob, prompt: image.prompt, url})
       if (previous !== null) {
         URL.revokeObjectURL(previous.url)
       }
       setStatus('이미지를 만들었어요.')
     } catch (failure) {
+      if (failure instanceof DOMException && failure.name === 'AbortError') {
+        if (!disposed && controller === abort) {
+          stop()
+        }
+        return
+      }
       if (!abort.signal.aborted && !disposed) {
         setError(failure instanceof Error ? failure.message : '이미지를 생성하지 못했어요.')
         setStatus('설정과 오류를 확인한 뒤 다시 시도해 주세요.')
@@ -151,13 +140,6 @@ export const useImageGeneration = () => {
     }
   }
 
-  const selectRatio = (ratio: AspectRatio) => {
-    const size = resolvePreset(ratio)
-    setWidth(size.width)
-    setHeight(size.height)
-  }
-  const randomizeSeed = () => setSeed(String(crypto.getRandomValues(new Uint32Array(1))[0]))
-
   return {
     busy,
     error,
@@ -167,20 +149,26 @@ export const useImageGeneration = () => {
     modelId,
     percentage,
     prompt,
-    randomizeSeed,
+    randomizeSeed: () => setSeed(String(crypto.getRandomValues(new Uint32Array(1))[0])),
     result,
     seed,
-    selectRatio,
+    selectRatio: (ratio: AspectRatio) => {
+      const size = resolvePreset(ratio)
+      setWidth(size.width)
+      setHeight(size.height)
+    },
     setHeight,
     setIdea,
     setModelId,
     setSeed,
     setSteps,
+    setStyle,
     setVariant,
     setWidth,
     status,
     steps,
     stop,
+    style,
     supported,
     variant,
     width,
