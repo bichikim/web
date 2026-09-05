@@ -2,7 +2,7 @@ import {createSignal, createUniqueId, Index, Show} from 'solid-js'
 
 import type {MeshEditorProps} from './mesh-editor-contract'
 import {getEditorViewBox} from './internal/viewport'
-import {type MeshPartView, type MeshTriangle, useMeshEditor} from './use-mesh-editor'
+import {type MeshTriangle, useMeshEditor} from './use-mesh-editor'
 
 export type {MeshEditorProps} from './mesh-editor-contract'
 
@@ -18,19 +18,6 @@ const getBoundaryPath = (
 
 const getTrianglePoints = (triangle: MeshTriangle) =>
   getPolygonPoints([triangle.first, triangle.second, triangle.third])
-
-const getPartLabelPoint = (partView: MeshPartView) => {
-  const points = partView.boundaryLoops.flat()
-  if (points.length === 0) {
-    return undefined
-  }
-
-  const horizontal = points.map((point) => point.x)
-  return {
-    x: (Math.min(...horizontal) + Math.max(...horizontal)) / 2,
-    y: Math.min(...points.map((point) => point.y)),
-  }
-}
 
 export const MeshEditor = (props: MeshEditorProps) => {
   const editor = useMeshEditor(props)
@@ -101,13 +88,6 @@ export const MeshEditor = (props: MeshEditorProps) => {
                   d={getBoundaryPath(clippedPartView().boundaryLoops)}
                   fill-rule="evenodd"
                 />
-                <Show keyed when={getPartLabelPoint(clippedPartView())}>
-                  {(anchor) => (
-                    <text x={anchor.x} y={anchor.y}>
-                      클리핑 적용 · {clippedPartView().partId}
-                    </text>
-                  )}
-                </Show>
               </g>
             )}
           </Index>

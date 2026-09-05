@@ -19,7 +19,11 @@ import {
 } from './scene-graph'
 import {EditorLayerToolbar} from './EditorLayerToolbar'
 import {EditorLayerStateActions} from './EditorLayerStateActions'
+import {EditorLayerMaskUsage} from './EditorLayerMaskUsage'
+import {EditorLayerTreeToggle} from './EditorLayerTreeToggle'
 import {getLayerDropPosition, type LayerDropTarget} from './layer-drop'
+import {isLayerMaskPickDisabled} from './layer-mask'
+import {getMaskUsageCount} from './mask-usage'
 import {
   getBindingParameters,
   getDocumentParameterBindings,
@@ -30,7 +34,9 @@ import {getParameterSelectionNodeIds} from './parameter-targets'
 export interface EditorLayerPanelProps {
   readonly activePartId?: string
   readonly document: PuppetDocument
+  readonly maskPickTargetPartId?: string
   readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly onMaskPick?: (partId: string) => void
   readonly onPartSelect?: (partId: string) => void
   readonly onSelectionChange?: (selection: SceneSelection) => void
   readonly selection?: SceneSelection
@@ -44,6 +50,7 @@ interface SceneNodeItemProps {
   readonly expandedGroupIds: ReadonlySet<string>
   readonly inheritedLocked: boolean
   readonly inheritedVisible: boolean
+  readonly maskPickTargetPartId?: string
   readonly node: PuppetSceneNode
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onDragOver: (target: LayerDropTarget) => void
@@ -120,6 +127,9 @@ const getNodeParameterLinks = (document: PuppetDocument, nodeId: string) => {
 interface SceneNodeSelectProps {
   readonly document: PuppetDocument
   readonly locked: boolean
+  readonly maskPickDisabled: boolean
+  readonly maskPicking: boolean
+  readonly maskUsageCount: number
   readonly node: PuppetSceneNode
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onSelect: (event: MouseEvent, node: PuppetSceneNode) => void
@@ -202,8 +212,16 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
         <ToggleButton
           aria-label={`${props.node.name} 레이어 선택`}
           class="layer-select"
+          classList={{'mask-pick-candidate': props.maskPicking && !props.maskPickDisabled}}
+          disabled={props.maskPickDisabled}
           pressed={props.selected}
-          title={isSceneContainerNode(props.node) ? '더블클릭하여 이름 수정' : undefined}
+          title={
+            props.maskPickDisabled
+              ? '이 레이어는 현재 파츠의 마스크로 사용할 수 없습니다.'
+              : isSceneContainerNode(props.node)
+                ? '더블클릭하여 이름 수정'
+                : undefined
+          }
           onClick={(event) => props.onSelect(event, props.node)}
           onDblClick={startRenaming}
         >
@@ -230,6 +248,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
               </span>
             </Show>
           </span>
+          <EditorLayerMaskUsage count={props.maskUsageCount} />
         </ToggleButton>
       }
     >
@@ -262,6 +281,13 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
   const locked = () => props.inheritedLocked || props.node.locked
   const visible = () => props.inheritedVisible && props.node.visible
   const parameterLinks = createMemo(() => getNodeParameterLinks(props.document, props.node.id))
+  const maskPickDisabled = () =>
+    isLayerMaskPickDisabled({
+      document: props.document,
+      node: props.node,
+      targetPartId: props.maskPickTargetPartId,
+    })
+  const maskUsageCount = () => getMaskUsageCount(props.document, props.node.id)
   const dropPosition = () =>
     props.dropTarget?.nodeId === props.node.id ? props.dropTarget.position : null
 
@@ -272,7 +298,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
       aria-selected={props.selectedNodeIds.has(props.node.id)}
       class="layer-tree-item"
       classList={{dragging: props.draggedNodeId === props.node.id}}
-      draggable={!locked()}
+      draggable={!locked() && props.maskPickTargetPartId === undefined}
       role="treeitem"
       onDragEnd={() => props.onDragStart('')}
       onDragStart={(event) => {
@@ -341,24 +367,15 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
             when={isSceneContainerNode(props.node)}
             fallback={<span class="layer-tree-spacer" aria-hidden="true" />}
           >
-            <Collapsible.Trigger
-              aria-label={`${props.node.name} ${isExpanded() ? '접기' : '펼치기'}`}
-              class="layer-tree-toggle"
-            >
-              <svg
-                aria-hidden="true"
-                class="layer-tree-toggle-icon"
-                classList={{expanded: isExpanded()}}
-                viewBox="0 0 16 16"
-              >
-                <path d="M4 2.5 13 8 4 13.5Z" />
-              </svg>
-            </Collapsible.Trigger>
+            <EditorLayerTreeToggle expanded={isExpanded()} name={props.node.name} />
           </Show>
 
           <SceneNodeSelect
             document={props.document}
             locked={locked()}
+            maskPickDisabled={maskPickDisabled()}
+            maskPicking={props.maskPickTargetPartId !== undefined}
+            maskUsageCount={maskUsageCount()}
             node={props.node}
             parameterLinks={parameterLinks()}
             selected={props.selectedNodeIds.has(props.node.id)}
@@ -389,6 +406,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
                     expandedGroupIds={props.expandedGroupIds}
                     inheritedLocked={locked()}
                     inheritedVisible={visible()}
+                    maskPickTargetPartId={props.maskPickTargetPartId}
                     node={node}
                     onDocumentChange={props.onDocumentChange}
                     onDragOver={props.onDragOver}
@@ -432,6 +450,11 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   )
 
   const handleSelect = (event: MouseEvent, node: PuppetSceneNode) => {
+    if (props.maskPickTargetPartId !== undefined && node.kind === 'part') {
+      props.onMaskPick?.(node.id)
+      return
+    }
+
     const nextSelection = getNextSelection(selection(), event, node)
 
     props.onSelectionChange?.(nextSelection)
@@ -481,7 +504,11 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   }
 
   return (
-    <aside class="panel layers-panel" aria-labelledby={titleId}>
+    <aside
+      class="panel layers-panel"
+      classList={{'mask-picking': props.maskPickTargetPartId !== undefined}}
+      aria-labelledby={titleId}
+    >
       <div class="panel-heading">
         <h2 id={titleId}>Layers</h2>
         <span>{props.document.parts.length}</span>
@@ -494,6 +521,11 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
         onDocumentChange={handleDocumentChange}
         onGroupCreate={handleGroupCreate}
       />
+      <Show when={props.maskPickTargetPartId !== undefined}>
+        <p class="mask-pick-notice" role="status">
+          마스크로 사용할 레이어를 선택하세요.
+        </p>
+      </Show>
       <Show
         when={props.document.parts.length > 0}
         fallback={<p class="panel-note">PNG를 불러오세요.</p>}
@@ -530,6 +562,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
                 expandedGroupIds={expandedGroupIds()}
                 inheritedLocked={false}
                 inheritedVisible={true}
+                maskPickTargetPartId={props.maskPickTargetPartId}
                 node={node}
                 onDocumentChange={props.onDocumentChange}
                 onDragOver={setDropTarget}

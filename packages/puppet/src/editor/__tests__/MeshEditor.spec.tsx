@@ -56,9 +56,8 @@ describe('MeshEditor', () => {
     expect(clippedCircle).not.toHaveClass('filled')
     expect(clippedCircle?.querySelectorAll('.clipped-part-boundary')).toHaveLength(1)
     expect(clippedDiamond?.querySelectorAll('.clipped-part-boundary')).toHaveLength(1)
+    expect(view.container.querySelectorAll('[data-clipped-part-id] text')).toHaveLength(0)
     expect(fillToggle).not.toBeChecked()
-    expect(view.getByText('클리핑 적용 · shape-circle')).toBeVisible()
-    expect(view.getByText('클리핑 적용 · shape-diamond')).toBeVisible()
 
     fireEvent.click(fillToggle)
 
@@ -419,7 +418,7 @@ describe('MeshEditor', () => {
     const centerVertex = view.container.querySelectorAll('circle')[4]
 
     expect(centerVertex?.getAttribute('cx')).toBe('384')
-    expect(view.getByRole('button', {name: '정점 추가'})).toBeDisabled()
+    expect(view.getByRole('button', {name: '정점 추가'})).toBeEnabled()
 
     if (svg !== null && centerVertex !== undefined) {
       vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
@@ -446,6 +445,19 @@ describe('MeshEditor', () => {
         )
         ?.parts[0]?.vertices.slice(-2),
     ).toEqual([340, 240])
+  })
+
+  test('should disable topology editing in motion mode', () => {
+    const view = render(() => (
+      <MeshEditor document={createDemoDocument()} editMode="motion" onDocumentChange={vi.fn()} />
+    ))
+    const firstVertex = view.container.querySelector('circle')
+
+    expect(view.getByRole('button', {name: '정점 추가'})).toBeDisabled()
+    if (firstVertex !== null) {
+      fireEvent.pointerDown(firstVertex, {button: 0})
+    }
+    expect(view.getByRole('button', {name: '정점 삭제'})).toBeDisabled()
   })
 
   test('should remove a corner from both controls and rendered geometry', () => {

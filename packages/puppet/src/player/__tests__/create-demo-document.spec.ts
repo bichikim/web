@@ -5,8 +5,10 @@ import {createDemoDocument} from '../create-demo-document'
 describe('createDemoDocument', () => {
   test('should use the preview mesh to clip the circle and diamond', () => {
     const document = createDemoDocument()
+    const preview = document.parts.find((part) => part.id === 'mesh-preview')!
 
-    expect(document.parts.find((part) => part.id === 'mesh-preview')?.properties).toBeUndefined()
+    expect(preview.properties).toBeUndefined()
+    expect(decodeURIComponent(preview.texture.src)).not.toContain('<text')
     expect(document.parts.find((part) => part.id === 'shape-circle')?.properties).toEqual({
       clippingMaskIds: ['mesh-preview'],
     })

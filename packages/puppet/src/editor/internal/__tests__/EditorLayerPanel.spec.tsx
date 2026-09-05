@@ -48,6 +48,26 @@ describe('EditorLayerPanel', () => {
     expect(onPartSelect).toHaveBeenCalledWith('shape-circle')
   })
 
+  test('should pick an available mask part without changing the layer selection', () => {
+    const onMaskPick = vi.fn()
+    const onSelectionChange = vi.fn()
+    const view = render(() => (
+      <EditorLayerPanel
+        document={createDemoDocument()}
+        maskPickTargetPartId="shape-circle"
+        onMaskPick={onMaskPick}
+        onSelectionChange={onSelectionChange}
+      />
+    ))
+
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeDisabled()
+    expect(view.getByLabelText('2개 파츠의 마스크로 사용')).toBeVisible()
+    fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
+
+    expect(onMaskPick).toHaveBeenCalledWith('shape-diamond')
+    expect(onSelectionChange).not.toHaveBeenCalled()
+  })
+
   test('should create a free deformer for a multiple selection and edit its state', () => {
     const initialDocument = {...createDemoDocument(), scene: undefined}
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)

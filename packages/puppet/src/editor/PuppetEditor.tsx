@@ -20,6 +20,7 @@ import {
   getDocumentParameters,
   getParameterBindingsForNodeIds,
 } from './internal/parameter-keyforms'
+import {setPartRenderProperties} from './internal/part-properties'
 import {createParameterPreview} from './internal/parameter-sampling'
 import {getParameterSelectionNodeIds} from './internal/parameter-targets'
 import {convertSceneContainers} from './internal/container-conversion'
@@ -134,22 +135,11 @@ const syncPlayerPlayback = (player: Player | null, isPlaying: boolean) => {
   return player
 }
 
-interface PauseEditorPlaybackOptions {
-  readonly pause: () => void
-  readonly player: Player | null
-  readonly playing: boolean
-}
-
-const pauseEditorPlayback = (options: PauseEditorPlaybackOptions) => {
-  if (options.player !== null && options.playing) {
-    options.player.pause()
-    options.pause()
-  }
-}
-
 interface EditorModelingKeyformPanelProps {
   readonly document: PuppetDocument
   readonly editor: ParameterEditorResult
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
   readonly selectedNodeIds: ReadonlyArray<string>
 }
 
@@ -171,6 +161,8 @@ const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
       selectedPartIds={props.selectedNodeIds}
       targetPartIds={props.editor.activeTargetNodeIds()}
       values={props.editor.parameterValues()}
+      onEditEnd={props.onEditEnd}
+      onEditStart={props.onEditStart}
       onKeyformAdd={props.editor.addKeyform}
       onKeyformDelete={props.editor.deleteKeyform}
       onKeyformMove={(bindingId, values, nextValues) => {
@@ -203,6 +195,8 @@ interface EditorWorkspacePanelProps {
   readonly editor: ParameterEditorResult
   readonly isPlaying: boolean
   readonly onDocumentChange: (document: PuppetDocument) => void
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
   readonly onPlaybackToggle?: () => void
   readonly onSeek?: (time: number) => void
   readonly selectedNodeIds: ReadonlyArray<string>
@@ -218,6 +212,8 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         document={props.document}
         isPlaying={props.isPlaying}
         onDocumentChange={props.onDocumentChange}
+        onEditEnd={props.onEditEnd}
+        onEditStart={props.onEditStart}
         onPlaybackToggle={props.onPlaybackToggle}
         onSeek={props.onSeek}
         parameterValues={props.editor.parameterValueMap()}
@@ -228,6 +224,8 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
       <EditorModelingKeyformPanel
         document={props.document}
         editor={props.editor}
+        onEditEnd={props.onEditEnd}
+        onEditStart={props.onEditStart}
         selectedNodeIds={props.selectedNodeIds}
       />
     </section>
@@ -327,6 +325,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [currentTime, setCurrentTime] = createSignal(0)
   const [isPlaying, setIsPlaying] = createSignal(false)
   const [notice, setNotice] = createSignal<string | null>(null)
+  const [maskPickTargetPartId, setMaskPickTargetPartId] = createSignal<string | null>(null)
   const selectedPartIds = createMemo(() =>
     getSceneSelectionPartIds(sourceDocument(), layerSelection()),
   )
@@ -355,6 +354,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
+      setMaskPickTargetPartId(null)
       deformerControlSelection.clear()
       parameterEditor.reset(document)
     })
@@ -363,8 +363,17 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     onDocumentChange: resetEditorDocument,
     onNotice: setNotice,
   })
-  const pausePlayback = () =>
-    pauseEditorPlayback({pause: () => setIsPlaying(false), player: player(), playing: isPlaying()})
+  const pausePlayback = () => {
+    const currentPlayer = player()
+    if (currentPlayer !== null && isPlaying()) {
+      currentPlayer.pause()
+      setIsPlaying(false)
+    }
+  }
+  const handleDocumentEditStart = () => {
+    pausePlayback()
+    history.beginTransaction()
+  }
   const handleUndo = () => {
     const changed = history.undo()
     if (changed) {
@@ -439,6 +448,34 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       })
     }
   }
+  const handleMaskPick = (maskPartId: string) => {
+    const targetPartId = maskPickTargetPartId()
+    const document = sourceDocument()
+    const part = document.parts.find((candidate) => candidate.id === targetPartId)
+    if (targetPartId === null || part === undefined) {
+      setMaskPickTargetPartId(null)
+      return
+    }
+
+    const currentMaskIds = part.properties?.clippingMaskIds ?? []
+    const nextDocument = setPartRenderProperties({
+      document,
+      partId: targetPartId,
+      properties: {
+        clippingMaskIds: currentMaskIds.includes(maskPartId)
+          ? currentMaskIds
+          : [...currentMaskIds, maskPartId],
+      },
+    })
+    if (nextDocument === undefined) {
+      setNotice('이 레이어는 순환 참조 때문에 마스크로 사용할 수 없습니다.')
+      return
+    }
+
+    history.setDocument(nextDocument)
+    setMaskPickTargetPartId(null)
+    setNotice(`${maskPartId} 레이어를 클리핑 마스크로 연결했습니다.`)
+  }
 
   return (
     <>
@@ -452,6 +489,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             editor={parameterEditor}
             isPlaying={isPlaying()}
             onDocumentChange={handleTimelineDocumentChange}
+            onEditEnd={history.endTransaction}
+            onEditStart={handleDocumentEditStart}
             onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
             onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
             selectedNodeIds={selectedNodeIds()}
@@ -468,11 +507,19 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             containerUnwrapAvailable={selectionActions().containerIds.length > 0}
             document={sourceDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
+            maskPickTargetPartId={maskPickTargetPartId() ?? undefined}
             notice={notice()}
             onAutoMesh={() => autoMesh.onOpenChange(true)}
             onContainerConvert={handleContainerConvert}
             onContainerUnwrap={handleContainerUnwrap}
             onDocumentChange={history.setDocument}
+            onEditEnd={history.endTransaction}
+            onEditStart={handleDocumentEditStart}
+            onMaskPickCancel={() => setMaskPickTargetPartId(null)}
+            onMaskPickStart={(partId) => {
+              setMaskPickTargetPartId(partId)
+              setNotice('마스크로 사용할 레이어를 왼쪽 패널에서 선택하세요.')
+            }}
             previewDocument={parameterPreviewDocument()}
             selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
             targetNodeIds={parameterEditor.activeTargetNodeIds()}
@@ -481,9 +528,12 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         layers={
           <EditorLayerPanel
             document={sourceDocument()}
+            maskPickTargetPartId={maskPickTargetPartId() ?? undefined}
             selection={layerSelection()}
             onDocumentChange={history.setDocument}
+            onMaskPick={handleMaskPick}
             onSelectionChange={(selection) => {
+              setMaskPickTargetPartId(null)
               setLayerSelection(selection)
               setActivePartId(getSelectedPartId(sourceDocument(), selection))
               setActiveVertexIndex(null)
@@ -523,11 +573,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             document={sourceDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
             onDeformerEditEnd={history.endTransaction}
-            onDeformerEditStart={() => {
-              pausePlayback()
-              history.beginTransaction()
-            }}
-            onDocumentChange={workspace() === 'modeling' ? history.setDocument : undefined}
+            onDeformerEditStart={handleDocumentEditStart}
+            onDocumentChange={history.setDocument}
             onNotice={setNotice}
             onPlayerChange={handlePlayerChange}
             onStatusChange={setPlayerStatus}
