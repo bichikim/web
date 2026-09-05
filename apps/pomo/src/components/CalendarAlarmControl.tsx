@@ -5,7 +5,12 @@ import * as m from '@paraglide/message'
 
 import type {CalendarEvent} from '../features/calendar'
 import {usePEvents} from '../features/focus-room-dialogue'
-import {createMemoryMemo, type MemoryMemo, updateMemoryMemos} from '../features/memory-assist'
+import {
+  createMemoryMemo,
+  type MemoryMemo,
+  memoryMemoDeletion,
+  updateMemoryMemos,
+} from '../features/memory-assist'
 import {PButton} from './PButton'
 
 const CALENDAR_ALARM_ID_PREFIX = 'calendar-alarm:'
@@ -126,6 +131,10 @@ const useCalendarAlarmController = (
       const currentAlarmId = alarmId()
       await updateMemoryMemos((currentMemos) => {
         const existingMemo = currentMemos.find((memo) => memo.id === currentAlarmId)
+        if (existingMemo?.deletionPending === true) {
+          throw new Error('Calendar alarm cleanup must finish before rearming.')
+        }
+
         const alarm: MemoryMemo =
           existingMemo === undefined
             ? createMemoryMemo({
@@ -158,20 +167,17 @@ const useCalendarAlarmController = (
 
   const removeAlarm = async () => {
     const currentMemo = storedMemo()
-    if (currentMemo === undefined) {
+    if (currentMemo === undefined || pending()) {
       return
     }
 
     setPending(true)
     setMessage(null)
     try {
-      if (currentMemo.dialogueId !== null) {
-        await events.deleteDialogue(currentMemo.dialogueId)
-      }
-      const currentAlarmId = alarmId()
-      await updateMemoryMemos((currentMemos) =>
-        currentMemos.filter((memo) => memo.id !== currentAlarmId),
-      )
+      await memoryMemoDeletion.delete({
+        deleteDialogue: events.deleteDialogue,
+        memoId: currentMemo.id,
+      })
       popoverElement()?.hidePopover()
     } catch (error: unknown) {
       console.error('Failed to remove a calendar alarm.', error)
