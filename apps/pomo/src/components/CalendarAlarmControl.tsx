@@ -7,6 +7,7 @@ import type {CalendarEvent} from '../features/calendar'
 import {usePEvents} from '../features/focus-room-dialogue'
 import {
   createMemoryMemo,
+  editMemoryMemo,
   type MemoryMemo,
   memoryMemoDeletion,
   updateMemoryMemos,
@@ -145,15 +146,14 @@ const useCalendarAlarmController = (
                 recallMode: 'none',
                 text,
               })
-            : {
-                ...existingMemo,
-                dialogueId: existingMemo.text === text ? existingMemo.dialogueId : null,
+            : editMemoryMemo({
                 exactReminderAt: alarmAt.toISOString(),
-                nextRecallAt: null,
+                memo: existingMemo,
+                now,
+                random: Math.random,
                 recallMode: 'none',
                 text,
-                updatedAt: now.toISOString(),
-              }
+              })
         return [alarm, ...currentMemos.filter((memo) => memo.id !== currentAlarmId)]
       })
       popoverElement()?.hidePopover()
