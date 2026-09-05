@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {createEffect, createSignal} from 'solid-js'
 
 import {useChat} from '../features/chat'
+import {loadCalendarPromptContext} from '../features/calendar'
 import {createStreamingSpeechBuffer, useChatVoice} from '../features/chat-voice'
 import {appendSpeechTranscript, useSpeechToText} from '../features/speech-to-text'
 import {getTextModel, type TextModelId} from '../features/text-generation'
@@ -26,6 +27,7 @@ const ChatRoom = () => {
   const [speakBeforeRefining, setSpeakBeforeRefining] = createSignal(false)
   let spokenMessageId: string | null = null
   let speakDraftForReply = false
+  let calendarRequestPending = false
 
   const speech = useSpeechToText({
     accumulateText: false,
@@ -37,15 +39,36 @@ const ChatRoom = () => {
     },
   })
 
-  const sendDraft = () => {
-    if (!chat.canSend()) {
+  const sendDraft = async () => {
+    if (!chat.canSend() || calendarRequestPending) {
       return
     }
 
+    const submittedDraft = chat.draft()
+    calendarRequestPending = true
     voice.arm()
     speechBuffer.reset()
     speakDraftForReply = speakBeforeRefining()
-    chat.send({refineAnswer: !disableRefining()})
+    let supplementaryContext: string | null = null
+
+    try {
+      supplementaryContext = await loadCalendarPromptContext({text: submittedDraft})
+    } catch (error: unknown) {
+      console.error('Failed to load calendar context for chat', error)
+      supplementaryContext =
+        '캘린더 일정을 조회하지 못했습니다. 일정을 추측하지 말고 현재 조회할 수 없다고 안내하세요.'
+    } finally {
+      calendarRequestPending = false
+    }
+
+    if (!chat.canSend() || chat.draft() !== submittedDraft) {
+      return
+    }
+
+    chat.send({
+      refineAnswer: !disableRefining(),
+      ...(supplementaryContext === null ? {} : {supplementaryContext}),
+    })
   }
   const stopSpeechAndSend = () => {
     speech.stopRecording().then(sendDraft).catch(console.error)

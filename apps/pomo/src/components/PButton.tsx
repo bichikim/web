@@ -8,7 +8,7 @@ const BUTTON_TRANSITION =
 
 export const pButtonClasses = cva(
   `group inline-flex box-border cursor-pointer items-center justify-center gap-2 border border-solid ` +
-    `border-transparent rounded-control font-[inherit] font-750 leading-4 ` +
+    `border-transparent rounded-panel-inner font-[inherit] font-750 leading-4 ` +
     `outline-none ${BUTTON_TRANSITION} ` +
     `focus-visible:shadow-focus disabled:cursor-not-allowed ` +
     `disabled:opacity-50 disabled:transform-none motion-reduce:transition-none`,

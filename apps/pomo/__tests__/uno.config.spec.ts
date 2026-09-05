@@ -4,7 +4,7 @@ import {expect, it} from 'vitest'
 import unoConfig from '../uno.config'
 
 const getRuleBody = (css: string, selector: string) => {
-  const match = new RegExp(`\\.${selector}\\{([^}]*)\\}`).exec(css)
+  const match = new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`).exec(css)
 
   expect(match).not.toBeNull()
 
@@ -167,4 +167,13 @@ it('should keep light glass surfaces as translucent as their dark equivalents', 
 
     expect(lightValue).toBe(darkValue)
   }
+})
+
+it('should theme the orbit border with the foreground color', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css} = await uno.generate('', {preflights: true})
+  const orbitBorderRule = getRuleBody(css, 'pomo-orbit-border')
+
+  expect(orbitBorderRule).toContain('rgb(var(--pomo-color-foreground-channels) / 96%)')
+  expect(orbitBorderRule).not.toContain('rgb(255 255 255')
 })
