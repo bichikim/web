@@ -1,6 +1,6 @@
 import {type Accessor} from 'solid-js'
 import {createDownloadQueue} from './queue'
-import {createImageModelDownloadClient} from './image-client'
+import {createImageModelDownloadClient, type CreateImageModelDownloadOptions} from './image-client'
 import type {ImageVariant} from '../image-generation/settings'
 
 import {
@@ -102,6 +102,7 @@ export interface ModelDownloadController {
 }
 
 export interface ModelDownloadRuntime {
+  readonly createImageClient?: (options: CreateImageModelDownloadOptions) => ModelDownloadClient
   readonly createTextClient: (
     options: CreateTextModelDownloadClientOptions,
   ) => TextModelDownloadClient
@@ -109,6 +110,7 @@ export interface ModelDownloadRuntime {
 }
 
 const DEFAULT_RUNTIME: ModelDownloadRuntime = {
+  createImageClient: createImageModelDownloadClient,
   createTextClient: createTextModelDownloadClient,
   createVoiceClient: createSupertonicClient,
 }
@@ -216,7 +218,8 @@ export const createModelDownloadController = (
     downloads: queue.downloads,
     startImageModel: (modelId) =>
       queue.start({
-        createClient: (callbacks) => createImageModelDownloadClient({callbacks, modelId}),
+        createClient: (callbacks) =>
+          (runtime.createImageClient ?? createImageModelDownloadClient)({callbacks, modelId}),
         label: `Bonsai 4B · ${modelId === 'ternary' ? 'Ternary' : '1-bit'}`,
         target: {kind: 'image', modelId},
       }),
