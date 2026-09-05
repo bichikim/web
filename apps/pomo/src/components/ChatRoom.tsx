@@ -1,8 +1,7 @@
 import {cx} from 'class-variance-authority'
-import {createEffect, createSignal, onCleanup} from 'solid-js'
+import {createEffect, createSignal} from 'solid-js'
 
 import {useChat} from '../features/chat'
-import {loadCalendarPromptContext} from '../features/calendar'
 import {createStreamingSpeechBuffer, useChatVoice} from '../features/chat-voice'
 import {appendSpeechTranscript, useSpeechToText} from '../features/speech-to-text'
 import {getTextModel, type TextModelId} from '../features/text-generation'
@@ -11,12 +10,12 @@ import {ChatHeader} from './chat-room/Header'
 import {ChatTranscript} from './chat-room/Transcript'
 import {ContextSidebar} from './chat-room/ContextSidebar'
 import {MAXIMUM_DRAFT_LENGTH} from './chat-room/shared'
+import {useSend} from './chat-room/use-send'
 const PANEL_CLASSES = cx(
   'overflow-hidden rounded-8 border border-white/10 bg-#211a2b/88',
   'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
 
-// oxlint-disable-next-line eslint/max-lines-per-function -- Keeps chat, calendar, and speech callbacks in the same component lifetime.
 const ChatRoom = () => {
   const chat = useChat({modelId: 'qwen-4b'})
   const model = () => getTextModel(chat.modelId())
@@ -28,13 +27,6 @@ const ChatRoom = () => {
   const [speakBeforeRefining, setSpeakBeforeRefining] = createSignal(false)
   let spokenMessageId: string | null = null
   let speakDraftForReply = false
-  let calendarRequestPending = false
-  let disposed = false
-  let sendRevision = 0
-
-  onCleanup(() => {
-    disposed = true
-  })
 
   const speech = useSpeechToText({
     accumulateText: false,
@@ -46,84 +38,28 @@ const ChatRoom = () => {
     },
   })
 
-  const sendDraft = async () => {
-    if (disposed || !chat.canSend() || calendarRequestPending) {
-      return
-    }
-
-    const submittedRevision = sendRevision
-    const submittedDraft = chat.draft()
-    calendarRequestPending = true
-    voice.arm()
-    speechBuffer.reset()
-    speakDraftForReply = speakBeforeRefining()
-    let supplementaryContext: string | null = null
-
-    try {
-      supplementaryContext = await loadCalendarPromptContext({text: submittedDraft})
-    } catch (error: unknown) {
-      if (disposed || submittedRevision !== sendRevision) {
-        return
-      }
-
-      console.error('Failed to load calendar context for chat', error)
-      supplementaryContext =
-        '캘린더 일정을 조회하지 못했습니다. 일정을 추측하지 말고 현재 조회할 수 없다고 안내하세요.'
-    } finally {
-      calendarRequestPending = false
-    }
-
-    if (
-      disposed ||
-      submittedRevision !== sendRevision ||
-      !chat.canSend() ||
-      chat.draft() !== submittedDraft
-    ) {
-      return
-    }
-
-    chat.send({
-      refineAnswer: !disableRefining(),
-      ...(supplementaryContext === null ? {} : {supplementaryContext}),
-    })
-  }
-  const stopSpeechAndSend = async () => {
-    const submittedRevision = sendRevision
-
-    try {
-      await speech.stopRecording()
-
-      if (submittedRevision === sendRevision) {
-        await sendDraft()
-      }
-    } catch (error: unknown) {
-      console.error(error)
-    }
-  }
-  const handleSend = () => {
-    const speechActivity = speech.activity()
-
-    if (speechActivity === 'recording') {
-      stopSpeechAndSend()
-      return
-    }
-
-    if (speechActivity === 'idle') {
-      sendDraft()
-    }
-  }
+  const sending = useSend({
+    chat,
+    onSendStarted: () => {
+      voice.arm()
+      speechBuffer.reset()
+      speakDraftForReply = speakBeforeRefining()
+    },
+    refineAnswer: () => !disableRefining(),
+    speech,
+  })
   const handlePrepare = () => {
     chat.prepare()
     voice.prepare().catch(console.error)
   }
   const handleModelChange = (modelId: TextModelId) => {
-    sendRevision += 1
+    sending.invalidate()
     voice.stop()
     speechBuffer.reset()
     chat.selectModel(modelId)
   }
   const handleClear = () => {
-    sendRevision += 1
+    sending.invalidate()
     voice.stop()
     chat.clear()
   }
@@ -193,7 +129,7 @@ const ChatRoom = () => {
             chat={chat}
             endpointing={endpointing()}
             onEndpointingChange={setEndpointing}
-            onSend={handleSend}
+            onSend={sending.send}
             onSpeechToggle={handleSpeechToggle}
             speech={speech}
           />
