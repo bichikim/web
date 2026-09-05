@@ -7,6 +7,19 @@ import {expect, it, vi} from 'vitest'
 import * as m from '@paraglide/message'
 import {PModal} from '../PModal'
 
+it('should omit the header while preserving the accessible dialog title', () => {
+  render(() => (
+    <PModal headerMode="hidden" isOpen onOpenChange={vi.fn()} title="Drawing">
+      Canvas
+    </PModal>
+  ))
+  const dialog = screen.getByRole('dialog', {name: 'Drawing'})
+  expect(dialog.querySelector('header')).toBeNull()
+  expect(screen.getByText('Drawing')).toHaveClass('sr-only')
+  expect(screen.queryByRole('button', {name: m.common_close()})).not.toBeInTheDocument()
+  expect(screen.getByText('Canvas')).toBeInTheDocument()
+})
+
 it('should render and close the default modal content', async () => {
   const onOpenChange = vi.fn()
 

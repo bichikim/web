@@ -85,6 +85,7 @@ describe('EditorInspector', () => {
     fireEvent.click(view.getByRole('button', {name: '마스크 추가'}))
     fireEvent.click(view.getByRole('checkbox', {name: 'shape-circle로 자르기'}))
     fireEvent.click(view.getByRole('checkbox', {name: '마스크 반전'}))
+    expect(view.getByRole('checkbox', {name: '파츠도 계속 표시'})).toBeChecked()
     fireEvent.click(view.getByRole('checkbox', {name: '파츠도 계속 표시'}))
 
     expect(document().parts[0]?.properties).toEqual({
@@ -92,7 +93,7 @@ describe('EditorInspector', () => {
       clippingMaskIds: ['shape-circle'],
       invertedMask: true,
       opacity: 0.4,
-      renderWhenUsedAsMask: true,
+      renderWhenUsedAsMask: false,
     })
   })
 

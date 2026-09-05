@@ -103,6 +103,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
               </PScribbleCircleControl>
             }
             sceneStyle={props.sceneStyle}
+            weatherState={props.weatherState}
           />
         </div>
         <div class="inline-flex" data-tour-step="settings">

@@ -11,6 +11,7 @@ import {
   listCalendarConnections,
   openCalendarAuthorization,
 } from '../features/calendar'
+import {useAuth} from '../features/auth/AuthProvider'
 import {PButton} from './PButton'
 
 const PROVIDER_LABELS = {
@@ -81,10 +82,14 @@ const CalendarProviderActions = (props: CalendarProviderActionsProps) => {
 }
 
 export const CalendarConnections = (props: CalendarConnectionsProps) => {
+  const authentication = useAuth()
   const popoverId = `pomo-calendar-settings-${createUniqueId()}`
   const titleId = `${popoverId}-title`
   const popoverAnchor = `--${popoverId}`
-  const [connections, {refetch}] = createResource(listCalendarConnections)
+  const [connections, {refetch}] = createResource(
+    () => authentication.session() !== null,
+    listCalendarConnections,
+  )
   const [confirmingId, setConfirmingId] = createSignal<string | null>(null)
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [pendingAction, setPendingAction] = createSignal<string | null>(null)
@@ -189,28 +194,36 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
           {m.calendar_connections_description()}
         </p>
 
-        <Show when={!connections.loading} fallback={<p>{m.calendar_connections_loading()}</p>}>
+        <Show
+          when={authentication.state().kind !== 'anonymous'}
+          fallback={<p>{m.calendar_connections_login_required()}</p>}
+        >
           <Show
-            when={!connections.error}
-            fallback={<p role="alert">{m.calendar_connections_failed()}</p>}
+            when={!connections.loading && authentication.state().kind !== 'checking'}
+            fallback={<p>{m.calendar_connections_loading()}</p>}
           >
-            <div class="grid gap-2">
-              <For each={CALENDAR_PROVIDERS}>
-                {(provider) => (
-                  <CalendarProviderActions
-                    connections={connections() ?? []}
-                    confirmingId={confirmingId()}
-                    onConnect={connect}
-                    onDisconnect={disconnect}
-                    pending={pendingAction() !== null}
-                    provider={provider}
-                  />
-                )}
-              </For>
-            </div>
+            <Show
+              when={authentication.state().kind !== 'unavailable' && !connections.error}
+              fallback={<p role="alert">{m.calendar_connections_failed()}</p>}
+            >
+              <div class="grid gap-2">
+                <For each={CALENDAR_PROVIDERS}>
+                  {(provider) => (
+                    <CalendarProviderActions
+                      connections={connections() ?? []}
+                      confirmingId={confirmingId()}
+                      onConnect={connect}
+                      onDisconnect={disconnect}
+                      pending={pendingAction() !== null}
+                      provider={provider}
+                    />
+                  )}
+                </For>
+              </div>
+            </Show>
           </Show>
+          <Show when={errorMessage()}>{(message) => <p role="alert">{message()}</p>}</Show>
         </Show>
-        <Show when={errorMessage()}>{(message) => <p role="alert">{message()}</p>}</Show>
       </section>
     </>
   )

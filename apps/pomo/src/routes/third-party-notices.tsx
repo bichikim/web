@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createResource, ErrorBoundary, For, Show, Suspense} from 'solid-js'
@@ -26,7 +28,7 @@ const ThirdPartyNoticesDocument = (props: {readonly licenseData: LicenseData}) =
 
       <div class="relative mx-auto grid w-full max-w-5xl gap-8">
         <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
-          ← Pomofi로 돌아가기
+          <span aria-hidden="true">←</span> {m.app_return()}
         </A>
 
         <header>
@@ -74,7 +76,7 @@ const ThirdPartyNoticesDocument = (props: {readonly licenseData: LicenseData}) =
         <footer class="flex flex-wrap items-center justify-between gap-3 text-xs text-#8f8297">
           <span>© Pomofi</span>
           <A class="font-650 text-#bdb2c4 no-underline hover:text-white" href="/">
-            Pomofi로 돌아가기 →
+            {m.app_return()} <span aria-hidden="true">→</span>
           </A>
         </footer>
       </div>

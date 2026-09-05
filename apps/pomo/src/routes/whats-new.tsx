@@ -24,7 +24,7 @@ const VersionCatalogDocument = (props: {readonly catalog: VersionCatalog}) => (
 
     <div class="relative mx-auto grid w-full max-w-4xl gap-8">
       <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
-        ← {m.version_catalog_back()}
+        <span aria-hidden="true">←</span> {m.app_return()}
       </A>
 
       <header>
@@ -58,7 +58,7 @@ const VersionCatalogDocument = (props: {readonly catalog: VersionCatalog}) => (
       <footer class="flex flex-wrap items-center justify-between gap-3 text-xs text-#8f8297">
         <span>© Pomofi</span>
         <A class="font-650 text-#bdb2c4 no-underline hover:text-white" href="/">
-          {m.version_catalog_back()} →
+          {m.app_return()} <span aria-hidden="true">→</span>
         </A>
       </footer>
     </div>

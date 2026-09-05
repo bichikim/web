@@ -126,7 +126,7 @@ describe('SceneToolbar', () => {
       screen.getByText('memory assist control').closest('[data-tour-step="memory-assist"]'),
     ).toHaveClass('inline-flex')
     expect(MemoryAssistPanel).toHaveBeenCalledWith(
-      expect.objectContaining({sceneStyle: 'original'}),
+      expect.objectContaining({sceneStyle: 'original', weatherState: {status: 'disabled'}}),
     )
     expect(vi.mocked(VersionNoticePanel).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0],

@@ -147,7 +147,7 @@ const LayerContainerIcon = (props: LayerContainerIconProps) => (
     fallback={
       <svg
         aria-hidden="true"
-        class="layer-container-icon group"
+        class="layer-container-icon puppet-layer-container-icon group"
         data-layer-icon="group"
         viewBox="0 0 24 24"
       >
@@ -158,7 +158,7 @@ const LayerContainerIcon = (props: LayerContainerIconProps) => (
   >
     <svg
       aria-hidden="true"
-      class="layer-container-icon deformer"
+      class="layer-container-icon puppet-layer-container-icon deformer"
       data-layer-icon="deformer"
       viewBox="0 0 24 24"
     >
@@ -243,7 +243,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
                 : `${(part()?.mesh.vertices.length ?? 0) / 2} vertices`}
             </small>
             <Show when={props.parameterLinks.length > 0}>
-              <span class="layer-parameter-links">
+              <span class="layer-parameter-links puppet-layer-parameter-links">
                 <For each={props.parameterLinks}>{(name) => <span>{name}</span>}</For>
               </span>
             </Show>
@@ -252,7 +252,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
         </ToggleButton>
       }
     >
-      <TextField class="layer-inline-name-editor" value={nameDraft()} onChange={setNameDraft}>
+      <TextField class="puppet-layer-name-editor" value={nameDraft()} onChange={setNameDraft}>
         <LayerContainerIcon kind={props.node.kind === 'deformer' ? 'deformer' : 'group'} />
         <TextField.Input
           ref={(element) => {
@@ -296,7 +296,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
       aria-expanded={isSceneContainerNode(props.node) ? isExpanded() : undefined}
       aria-level={props.depth}
       aria-selected={props.selectedNodeIds.has(props.node.id)}
-      class="layer-tree-item"
+      class="layer-tree-item puppet-layer-tree-item"
       classList={{dragging: props.draggedNodeId === props.node.id}}
       draggable={!locked() && props.maskPickTargetPartId === undefined}
       role="treeitem"
@@ -365,7 +365,9 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
         >
           <Show
             when={isSceneContainerNode(props.node)}
-            fallback={<span class="layer-tree-spacer" aria-hidden="true" />}
+            fallback={
+              <span class="layer-tree-spacer puppet-layer-tree-spacer" aria-hidden="true" />
+            }
           >
             <EditorLayerTreeToggle expanded={isExpanded()} name={props.node.name} />
           </Show>

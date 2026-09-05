@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {expect, fn, userEvent, within} from 'storybook/test'
 
-import '../story.css'
 import {EditorParameterItem} from './EditorParameterItem'
 
 const meta = {

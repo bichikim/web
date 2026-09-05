@@ -8,7 +8,7 @@ import {
   signOutAccountSessionAction,
 } from '../../features/auth/actions'
 import {useWebAccount} from '../../features/user-auth/use-web-account'
-import {PButton} from '../PButton'
+import {PButton, pButtonClasses} from '../PButton'
 import {PFormMessage} from '../PFormMessage'
 import {PTextField} from '../PTextField'
 
@@ -66,16 +66,21 @@ export const WebAccount = () => {
                 <p class="m-0 text-xs text-muted-foreground">{m.web_account_signed_in_email()}</p>
                 <p class="mb-0 mt-1 break-all text-sm font-700">{session().email}</p>
               </div>
-              <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>
-                <PButton
-                  class="w-full"
-                  disabled={account.isSubmitting()}
-                  tone="secondary"
-                  type="submit"
-                >
-                  {m.web_account_sign_out()}
-                </PButton>
-              </form>
+              <div class="flex flex-wrap items-center gap-3">
+                <a class={pButtonClasses({class: 'no-underline', size: 'small'})} href="/">
+                  {m.app_return()}
+                </a>
+                <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>
+                  <PButton
+                    size="small"
+                    disabled={account.isSubmitting()}
+                    tone="secondary"
+                    type="submit"
+                  >
+                    {m.web_account_sign_out()}
+                  </PButton>
+                </form>
+              </div>
             </div>
           )}
         </Show>

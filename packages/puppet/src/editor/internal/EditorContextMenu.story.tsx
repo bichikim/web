@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {expect, fireEvent, fn, within} from 'storybook/test'
 
-import '../story.css'
 import {EditorContextMenu, type EditorContextMenuEntry} from './EditorContextMenu'
 
 const ENTRIES: ReadonlyArray<EditorContextMenuEntry> = [

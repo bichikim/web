@@ -1,4 +1,6 @@
+import {EditorHelp} from './EditorHelp'
 import {ToggleButton} from '@kobalte/core/toggle-button'
+import {createSignal, createUniqueId} from 'solid-js'
 
 import type {PlayerCanvasStatus} from '../PlayerCanvas'
 import type {EditorPanelVisibility} from './EditorPanelLayout'
@@ -64,41 +66,81 @@ const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
   </div>
 )
 
-export const EditorToolbar = (props: EditorToolbarProps) => (
-  <header class="toolbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">
-        P
-      </span>
-      <div>
-        <strong>Puppet</strong>
-        <span>2D mesh editor</span>
-      </div>
-    </div>
-    <nav class="workspace-switcher" aria-label="편집 작업 공간">
+interface ToolbarMenuProps {
+  readonly canUndo?: boolean
+  readonly canRedo?: boolean
+  readonly historyUndoCount?: number
+  readonly historyRedoCount?: number
+  readonly onUndo?: () => void
+  readonly onRedo?: () => void
+  readonly onExport: () => void
+  readonly onJsonImport: (file: File | undefined) => void
+  readonly onPngImport: (file: File | undefined) => void
+}
+
+const ToolbarMenu = (props: ToolbarMenuProps) => {
+  const menuId = createUniqueId()
+  const [menu, setMenu] = createSignal<HTMLDivElement>()
+  const [pngInput, setPngInput] = createSignal<HTMLInputElement>()
+  const [jsonInput, setJsonInput] = createSignal<HTMLInputElement>()
+
+  return (
+    <div class="toolbar-menu">
       <button
-        aria-pressed={props.activeWorkspace !== 'animation'}
+        aria-label="메인 메뉴"
+        class="toolbar-menu-trigger"
+        popovertarget={menuId}
         type="button"
-        onClick={() => props.onWorkspaceChange?.('modeling')}
       >
-        모델링
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
       </button>
-      <button
-        aria-pressed={props.activeWorkspace === 'animation'}
-        type="button"
-        onClick={() => props.onWorkspaceChange?.('animation')}
+      <div
+        ref={setMenu}
+        aria-label="파일 및 편집 작업"
+        class="toolbar-menu-content"
+        id={menuId}
+        popover="auto"
       >
-        애니메이션
-      </button>
-    </nav>
-    <div class="toolbar-actions">
-      <div class="history-controls" aria-label="편집 이력">
+        <button
+          type="button"
+          onClick={() => {
+            menu()?.hidePopover?.()
+            pngInput()?.click()
+          }}
+        >
+          PNG 불러오기
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            menu()?.hidePopover?.()
+            jsonInput()?.click()
+          }}
+        >
+          JSON 가져오기
+        </button>
+        <hr />
+        <button
+          type="button"
+          onClick={() => {
+            menu()?.hidePopover?.()
+            props.onExport()
+          }}
+        >
+          JSON 내보내기
+        </button>
+        <hr />
         <button
           aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z`}
           aria-label="실행 취소"
           disabled={props.canUndo !== true || props.onUndo === undefined}
           type="button"
-          onClick={() => props.onUndo?.()}
+          onClick={() => {
+            menu()?.hidePopover?.()
+            props.onUndo?.()
+          }}
         >
           Undo
         </button>
@@ -107,42 +149,79 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
           aria-label="다시 실행"
           disabled={props.canRedo !== true || props.onRedo === undefined}
           type="button"
-          onClick={() => props.onRedo?.()}
+          onClick={() => {
+            menu()?.hidePopover?.()
+            props.onRedo?.()
+          }}
         >
           Redo
         </button>
+        <hr />
+        <EditorHelp onOpen={() => menu()?.hidePopover?.()} />
       </div>
-      <label class="toolbar-button primary">
-        PNG 불러오기
-        <input
-          accept="image/png,.png"
-          type="file"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0]
-            event.currentTarget.value = ''
-            props.onPngImport(file)
-          }}
-        />
-      </label>
-      <label class="toolbar-button">
-        JSON 가져오기
-        <input
-          accept="application/json,.json"
-          type="file"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0]
-            event.currentTarget.value = ''
-            props.onJsonImport(file)
-          }}
-        />
-      </label>
-      <button class="toolbar-button primary" type="button" onClick={() => props.onExport()}>
-        JSON 내보내기
-      </button>
+      <input
+        ref={setPngInput}
+        accept="image/png,.png"
+        aria-label="PNG 불러오기"
+        hidden
+        type="file"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0]
+          event.currentTarget.value = ''
+          props.onPngImport(file)
+        }}
+      />
+      <input
+        ref={setJsonInput}
+        accept="application/json,.json"
+        aria-label="JSON 가져오기"
+        hidden
+        type="file"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0]
+          event.currentTarget.value = ''
+          props.onJsonImport(file)
+        }}
+      />
+    </div>
+  )
+}
+
+export const EditorToolbar = (props: EditorToolbarProps) => (
+  <header class="toolbar">
+    <ToolbarMenu
+      canUndo={props.canUndo}
+      canRedo={props.canRedo}
+      historyUndoCount={props.historyUndoCount}
+      historyRedoCount={props.historyRedoCount}
+      onUndo={props.onUndo}
+      onRedo={props.onRedo}
+      onExport={props.onExport}
+      onJsonImport={props.onJsonImport}
+      onPngImport={props.onPngImport}
+    />
+    <div class="toolbar-actions">
       <div class="renderer-status" data-status={props.playerStatus}>
         <span class="status-dot" aria-hidden="true" />
         {STATUS_LABEL[props.playerStatus]}
       </div>
+
+      <nav class="workspace-switcher" aria-label="편집 작업 공간">
+        <button
+          aria-pressed={props.activeWorkspace !== 'animation'}
+          type="button"
+          onClick={() => props.onWorkspaceChange?.('modeling')}
+        >
+          모델링
+        </button>
+        <button
+          aria-pressed={props.activeWorkspace === 'animation'}
+          type="button"
+          onClick={() => props.onWorkspaceChange?.('animation')}
+        >
+          애니메이션
+        </button>
+      </nav>
       <PanelVisibilityControls visibility={props.panelVisibility} />
     </div>
   </header>

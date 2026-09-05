@@ -11,6 +11,8 @@ import {
   writeCalendarMonthCache,
 } from '../../features/calendar'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import type {AuthenticationState} from '../../features/auth/machine'
+import {useAuth} from '../../features/auth/AuthProvider'
 import {CalendarMonth} from '../CalendarMonth'
 
 vi.mock('../../features/calendar', async () => {
@@ -41,7 +43,13 @@ it('should show a notice when only part of the calendar could be loaded', async 
   ).toBeVisible()
 })
 
+vi.mock('../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
+
 beforeEach(() => {
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => ({kind: 'authenticated', provider: 'toss'}),
+    state: () => ({kind: 'authenticated', provider: 'toss'}),
+  })
   vi.clearAllMocks()
   sessionStorage.clear()
   vi.useFakeTimers({toFake: ['Date']})
@@ -294,4 +302,67 @@ it('should not let an obsolete refresh overwrite the latest month cache', async 
   await firstRefresh.promise
 
   expect(readCalendarMonthCache(range)).toEqual(freshCalendar)
+})
+
+it('should request login without fetching calendars when signed out', async () => {
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => null,
+    state: () => ({kind: 'anonymous'}),
+  })
+  render(() => <CalendarMonth />)
+
+  expect(
+    await screen.findByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.'),
+  ).toBeVisible()
+  expect(listCalendarEvents).not.toHaveBeenCalled()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+it('should load after login and restore the login notice after logout', async () => {
+  const [state, setState] = createSignal<AuthenticationState>({kind: 'anonymous'})
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarMonth />)
+  expect(screen.getByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.')).toBeVisible()
+
+  setState({kind: 'authenticated', provider: 'toss'})
+  await waitFor(() => expect(listCalendarEvents).toHaveBeenCalledTimes(1))
+  expect(await screen.findByText('팀 회의', {selector: 'p'})).toBeVisible()
+  expect(
+    screen.queryByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.'),
+  ).not.toBeInTheDocument()
+
+  setState({kind: 'anonymous'})
+  expect(
+    await screen.findByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.'),
+  ).toBeVisible()
+  expect(screen.queryByText('팀 회의')).not.toBeInTheDocument()
+})
+
+it('should not restore the previous session events while a new login is loading', async () => {
+  const [state, setState] = createSignal<AuthenticationState>({
+    kind: 'authenticated',
+    provider: 'toss',
+  })
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarMonth />)
+  expect(await screen.findByText('팀 회의', {selector: 'p'})).toBeVisible()
+
+  setState({kind: 'anonymous'})
+  sessionStorage.clear()
+  vi.mocked(listCalendarEvents).mockImplementationOnce(() => new Promise(() => {}))
+  setState({kind: 'authenticated', provider: 'toss'})
+  await waitFor(() => expect(listCalendarEvents).toHaveBeenCalledTimes(2))
+  expect(screen.queryByText('팀 회의', {selector: 'p'})).not.toBeInTheDocument()
 })

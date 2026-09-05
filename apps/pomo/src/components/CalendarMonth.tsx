@@ -12,6 +12,7 @@ import {
   readCalendarMonthCache,
   writeCalendarMonthCache,
 } from '../features/calendar'
+import {useAuth} from '../features/auth/AuthProvider'
 import {useMemoryMemos} from '../features/memory-assist'
 import {CalendarAlarmControl} from './CalendarAlarmControl'
 
@@ -209,6 +210,7 @@ const CalendarGrid = (props: CalendarGridProps) => (
 interface CalendarAgendaProps {
   readonly calendar: CalendarEvents | null
   readonly failed: boolean
+  readonly loginRequired: boolean
   readonly loading: boolean
   readonly memos: ReturnType<typeof useMemoryMemos>
   readonly refreshFailed: boolean
@@ -221,70 +223,127 @@ const CalendarAgenda = (props: CalendarAgendaProps) => (
     <h3 class="m-0 text-sm font-750" id="calendar-day-title">
       {formatDate(props.selectedDate)}
     </h3>
-    <Show when={!props.loading} fallback={<p class="m-0 text-sm">{m.calendar_loading()}</p>}>
-      <Show when={!props.failed} fallback={<p role="alert">{m.calendar_events_failed()}</p>}>
-        <Show
-          when={(props.calendar?.connectedConnections ?? 0) > 0}
-          fallback={<p class="m-0 text-sm">{m.calendar_events_connect_required()}</p>}
-        >
+    <Show
+      when={!props.loginRequired}
+      fallback={<p class="m-0 text-sm">{m.calendar_events_login_required()}</p>}
+    >
+      <Show when={!props.loading} fallback={<p class="m-0 text-sm">{m.calendar_loading()}</p>}>
+        <Show when={!props.failed} fallback={<p role="alert">{m.calendar_events_failed()}</p>}>
           <Show
-            when={props.selectedEvents.length > 0}
-            fallback={<p class="m-0 text-sm text-muted-foreground">{m.calendar_day_empty()}</p>}
+            when={(props.calendar?.connectedConnections ?? 0) > 0}
+            fallback={<p class="m-0 text-sm">{m.calendar_events_connect_required()}</p>}
           >
-            <ul
-              aria-labelledby="calendar-day-title"
-              class={
-                'm-0 grid max-h-[min(18rem,35dvh)] list-none gap-2 overflow-y-auto ' +
-                'overscroll-contain p-0 pr-1 outline-none [scrollbar-gutter:stable] ' +
-                'focus-visible:shadow-focus'
-              }
-              tabIndex={0}
+            <Show
+              when={props.selectedEvents.length > 0}
+              fallback={<p class="m-0 text-sm text-muted-foreground">{m.calendar_day_empty()}</p>}
             >
-              <For each={props.selectedEvents}>
-                {(event) => (
-                  <li
-                    class={
-                      'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 ' +
-                      'rounded-panel-inner bg-content-surface px-3 py-2.5'
-                    }
-                  >
-                    <span class="text-xs font-750 text-highlight">
-                      {formatEventTime(event, props.calendar?.timeZone ?? 'UTC')}
-                    </span>
-                    <div class="min-w-0">
-                      <p class="m-0 truncate text-sm font-750">{event.title}</p>
-                      <p class="mb-0 mt-1 truncate text-xs text-muted-foreground">
-                        {event.calendarLabel} · {event.accountLabel}
-                      </p>
-                    </div>
-                    <CalendarAlarmControl event={event} memos={props.memos} />
-                  </li>
-                )}
-              </For>
-            </ul>
+              <ul
+                aria-labelledby="calendar-day-title"
+                class={
+                  'm-0 grid max-h-[min(18rem,35dvh)] list-none gap-2 overflow-y-auto ' +
+                  'overscroll-contain p-0 pr-1 outline-none [scrollbar-gutter:stable] ' +
+                  'focus-visible:shadow-focus'
+                }
+                tabIndex={0}
+              >
+                <For each={props.selectedEvents}>
+                  {(event) => (
+                    <li
+                      class={
+                        'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 ' +
+                        'rounded-panel-inner bg-content-surface px-3 py-2.5'
+                      }
+                    >
+                      <span class="text-xs font-750 text-highlight">
+                        {formatEventTime(event, props.calendar?.timeZone ?? 'UTC')}
+                      </span>
+                      <div class="min-w-0">
+                        <p class="m-0 truncate text-sm font-750">{event.title}</p>
+                        <p class="mb-0 mt-1 truncate text-xs text-muted-foreground">
+                          {event.calendarLabel} · {event.accountLabel}
+                        </p>
+                      </div>
+                      <CalendarAlarmControl event={event} memos={props.memos} />
+                    </li>
+                  )}
+                </For>
+              </ul>
+            </Show>
           </Show>
         </Show>
       </Show>
-    </Show>
-    <Show when={props.calendar?.truncated}>
-      <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
-        {m.calendar_events_truncated()}
-      </p>
-    </Show>
-    <Show when={(props.calendar?.unavailableConnections ?? 0) > 0}>
-      <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
-        {m.calendar_events_partial()}
-      </p>
-    </Show>
-    <Show when={props.refreshFailed}>
-      <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
-        {m.calendar_refresh_failed()}
-      </p>
+      <Show when={props.calendar?.truncated}>
+        <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
+          {m.calendar_events_truncated()}
+        </p>
+      </Show>
+      <Show when={(props.calendar?.unavailableConnections ?? 0) > 0}>
+        <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
+          {m.calendar_events_partial()}
+        </p>
+      </Show>
+      <Show when={props.refreshFailed}>
+        <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
+          {m.calendar_refresh_failed()}
+        </p>
+      </Show>
     </Show>
   </section>
 )
 
+interface CalendarHeaderProps {
+  readonly month: Date
+  readonly onChange: (offset: number) => void
+  readonly settings?: JSX.Element
+}
+
+const CalendarHeader = (props: CalendarHeaderProps) => (
+  <header class="flex items-center justify-between gap-3">
+    <h2 class="m-0 text-lg font-800" id="calendar-month-title">
+      {formatMonth(props.month)}
+    </h2>
+    <div class="flex items-center gap-2">
+      <nav aria-label={m.calendar_month_navigation()} class="flex gap-2">
+        <button
+          aria-label={m.calendar_month_previous()}
+          class={
+            'grid size-9 place-items-center rounded-control border border-border ' +
+            'bg-content-surface text-foreground outline-none hover:border-border-hover ' +
+            'hover:bg-surface-interactive focus-visible:shadow-focus'
+          }
+          onClick={() => props.onChange(-1)}
+          type="button"
+        >
+          <span aria-hidden="true" class="i-tabler-chevron-left size-5" />
+        </button>
+        <button
+          aria-label={m.calendar_month_next()}
+          class={
+            'grid size-9 place-items-center rounded-control border border-border ' +
+            'bg-content-surface text-foreground outline-none hover:border-border-hover ' +
+            'hover:bg-surface-interactive focus-visible:shadow-focus'
+          }
+          onClick={() => props.onChange(1)}
+          type="button"
+        >
+          <span aria-hidden="true" class="i-tabler-chevron-right size-5" />
+        </button>
+      </nav>
+      <Show when={props.settings}>{(settings) => settings()}</Show>
+    </div>
+  </header>
+)
+
 export const CalendarMonth = (props: CalendarMonthProps) => {
+  const authentication = useAuth()
+  const accountKey = createMemo(() => {
+    const session = authentication.session()
+    return session?.provider === 'email' ? session.email : (session?.provider ?? null)
+  })
+  const sessionRevision = createMemo((revision: number) => {
+    accountKey()
+    return revision + 1
+  }, 0)
   const today = new Date()
   const memos = useMemoryMemos()
   const [month, setMonth] = createSignal(new Date(today.getFullYear(), today.getMonth(), 1))
@@ -301,17 +360,29 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
     const revision = props.revision ?? 0
     return {
       range,
-      requestKey: JSON.stringify([range.start, range.end, range.timeZone, revision]),
+      requestKey: JSON.stringify([
+        range.start,
+        range.end,
+        range.timeZone,
+        revision,
+        sessionRevision(),
+      ]),
       revision,
     }
   })
-  const [calendarResult] = createResource(monthRange, loadCalendarMonth)
-  const cachedCalendar = createMemo(() => readCalendarMonthCache(monthRange().range))
+  const [calendarResult] = createResource(
+    () => (authentication.session() === null ? false : monthRange()),
+    loadCalendarMonth,
+  )
+  const cachedCalendar = createMemo(() =>
+    accountKey() === null ? null : readCalendarMonthCache(monthRange().range),
+  )
   let lastCachedResult: LoadedCalendarMonth | null = null
   createEffect(() => {
     const request = monthRange()
     const result = calendarResult()
     if (
+      authentication.session() === null ||
       result?.kind !== 'loaded' ||
       result.requestKey !== request.requestKey ||
       result === lastCachedResult
@@ -326,6 +397,9 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
     }
   })
   const calendar = createMemo(() => {
+    if (authentication.session() === null) {
+      return null
+    }
     const request = monthRange()
     const result = calendarResult()
     return result?.kind === 'loaded' && result.requestKey === request.requestKey
@@ -367,40 +441,7 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
 
   return (
     <section aria-labelledby="calendar-month-title" class="grid gap-4">
-      <header class="flex items-center justify-between gap-3">
-        <h2 class="m-0 text-lg font-800" id="calendar-month-title">
-          {formatMonth(month())}
-        </h2>
-        <div class="flex items-center gap-2">
-          <nav aria-label={m.calendar_month_navigation()} class="flex gap-2">
-            <button
-              aria-label={m.calendar_month_previous()}
-              class={
-                'grid size-9 place-items-center rounded-control border border-border ' +
-                'bg-content-surface text-foreground outline-none hover:border-border-hover ' +
-                'hover:bg-surface-interactive focus-visible:shadow-focus'
-              }
-              onClick={() => changeMonth(-1)}
-              type="button"
-            >
-              <span aria-hidden="true" class="i-tabler-chevron-left size-5" />
-            </button>
-            <button
-              aria-label={m.calendar_month_next()}
-              class={
-                'grid size-9 place-items-center rounded-control border border-border ' +
-                'bg-content-surface text-foreground outline-none hover:border-border-hover ' +
-                'hover:bg-surface-interactive focus-visible:shadow-focus'
-              }
-              onClick={() => changeMonth(1)}
-              type="button"
-            >
-              <span aria-hidden="true" class="i-tabler-chevron-right size-5" />
-            </button>
-          </nav>
-          <Show when={props.settings}>{(settings) => settings()}</Show>
-        </div>
-      </header>
+      <CalendarHeader month={month()} onChange={changeMonth} settings={props.settings} />
 
       <CalendarGrid
         days={days()}
@@ -411,8 +452,15 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
       />
       <CalendarAgenda
         calendar={calendar()}
-        failed={calendarResult()?.kind === 'failed' && calendar() === null}
-        loading={calendarResult.loading && calendar() === null}
+        failed={
+          authentication.state().kind === 'unavailable' ||
+          (calendarResult()?.kind === 'failed' && calendar() === null)
+        }
+        loginRequired={authentication.state().kind === 'anonymous'}
+        loading={
+          authentication.state().kind === 'checking' ||
+          (calendarResult.loading && calendar() === null)
+        }
         memos={memos}
         refreshFailed={refreshFailed()}
         selectedDate={selectedDate()}
