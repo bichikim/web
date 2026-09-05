@@ -45,6 +45,11 @@ export const stressTestFiles = [
   'packages/vite-plugin-key-similarity/src/__tests__/core.stress.spec.ts',
 ] as const
 
+const buildIntegrationTestFiles = [
+  'packages/sw/src/__tests__/build-output.spec.ts',
+  'packages/vite-plugin-monorepo-alias/__tests__/*.spec.ts',
+]
+
 export const unitTestProject = {
   extends: true,
   plugins: [virtualUnoCssPlugin],
@@ -52,7 +57,7 @@ export const unitTestProject = {
     // 테스트 런타임 환경 (DOM API 제공)
     environment: 'jsdom',
     // 테스트로 포함할 파일 glob 패턴
-    exclude: [...stressTestFiles, 'packages/sw/src/__tests__/build-output.spec.ts'],
+    exclude: [...stressTestFiles, ...buildIntegrationTestFiles],
     include: [
       'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
@@ -91,7 +96,7 @@ export const buildIntegrationTestProject = {
   test: {
     environment: 'node',
     fileParallelism: false,
-    include: ['packages/sw/src/__tests__/build-output.spec.ts'],
+    include: [...buildIntegrationTestFiles],
     maxWorkers: 1,
     name: 'integration-build',
     testTimeout: 20_000,
