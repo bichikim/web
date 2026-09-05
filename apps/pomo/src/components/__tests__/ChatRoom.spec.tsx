@@ -144,6 +144,7 @@ const createControllers = () => {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
   createControllers()
   vi.mocked(useChat).mockReturnValue(chat)
   vi.mocked(loadCalendarPromptContext).mockResolvedValue(null)
@@ -193,6 +194,45 @@ afterEach(() => {
 })
 
 describe('ChatRoom', () => {
+  it.each(['model', 'clear'] as const)(
+    'should discard pending calendar context after %s changes and allow a new send',
+    async (change) => {
+      const deferred = Promise.withResolvers<string | null>()
+      vi.mocked(loadCalendarPromptContext).mockReturnValueOnce(deferred.promise)
+      render(() => <ChatRoom />)
+      composerProps.onSend()
+      composerProps.onSend()
+      expect(loadCalendarPromptContext).toHaveBeenCalledOnce()
+
+      if (change === 'model') {
+        headerProps.onModelChange('qwen-2b')
+        headerProps.onModelChange('qwen-4b')
+      } else {
+        sidebarProps.onClear()
+      }
+      deferred.resolve('obsolete context')
+      await deferred.promise
+      expect(chat.send).not.toHaveBeenCalled()
+
+      composerProps.onSend()
+      await waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+      expect(chat.send).toHaveBeenCalledWith({refineAnswer: true})
+    },
+  )
+
+  it('should discard a recording completion after starting a new conversation', async () => {
+    const deferred = Promise.withResolvers<void>()
+    vi.mocked(speech.stopRecording).mockReturnValue(deferred.promise)
+    controls.setActivity('recording')
+    render(() => <ChatRoom />)
+    composerProps.onSend()
+    sidebarProps.onClear()
+    deferred.resolve()
+    await deferred.promise
+    expect(loadCalendarPromptContext).not.toHaveBeenCalled()
+    expect(chat.send).not.toHaveBeenCalled()
+  })
+
   it('should wire controllers and apply transcript limits and settings', async () => {
     render(() => <ChatRoom />)
 
@@ -227,22 +267,6 @@ describe('ChatRoom', () => {
     expect(voice.arm).toHaveBeenCalledOnce()
     expect(speechBuffer.reset).toHaveBeenCalledOnce()
     await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: false}))
-  })
-
-  it('should ground calendar questions with transient calendar context', async () => {
-    vi.mocked(loadCalendarPromptContext).mockResolvedValue('캘린더 조회 결과')
-    controls.setDraft('오늘 일정 알려줘')
-    render(() => <ChatRoom />)
-
-    composerProps.onSend()
-
-    await waitFor(() =>
-      expect(chat.send).toHaveBeenCalledWith({
-        refineAnswer: true,
-        supplementaryContext: '캘린더 조회 결과',
-      }),
-    )
-    expect(loadCalendarPromptContext).toHaveBeenCalledWith({text: '오늘 일정 알려줘'})
   })
 
   it('should handle recording, preparation, model changes, clearing, and speech toggles', async () => {
