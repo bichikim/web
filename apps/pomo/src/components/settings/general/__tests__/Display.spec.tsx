@@ -1,0 +1,191 @@
+/** @vitest-environment jsdom */
+import {render, screen} from '@solidjs/testing-library'
+import {PSelect} from 'src/components/PSelect'
+import {PSwitch} from 'src/components/PSwitch'
+import {useFullscreen} from 'src/features/fullscreen'
+import {useScreenWakeLock} from 'src/features/screen-wake-lock'
+import {beforeEach, expect, it, vi} from 'vitest'
+import {PGeneralDisplaySettings} from '../Display'
+vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/PSwitch', () => ({PSwitch: vi.fn()}))
+vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
+vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(PSelect).mockImplementation((props) => (
+    <button
+      data-value={props.value}
+      onClick={() => {
+        if (props.multiple === true) {
+          props.onChange(props.value)
+        } else {
+          props.onChange(props.value)
+        }
+      }}
+      type="button"
+    >
+      {props.label}
+    </button>
+  ))
+  vi.mocked(PSwitch).mockImplementation((props) => {
+    const checked =
+      Object.getOwnPropertyDescriptor(props, 'checked')?.get?.call(props) ?? props.checked
+    const className = props.class
+    const disabled = props.disabled
+    const description = props.description
+    return (
+      <button
+        aria-disabled={disabled}
+        aria-pressed={checked}
+        class={className}
+        data-description={description}
+        onClick={() => props.onChange(!checked)}
+        type="button"
+      >
+        {props.label}
+      </button>
+    )
+  })
+  vi.mocked(useScreenWakeLock).mockReturnValue({
+    availability: () => 'supported',
+    errorMessage: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  vi.mocked(useFullscreen).mockReturnValue({
+    availability: () => 'supported',
+    error: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+})
+it('should expose the five-second screen saver delay during development', () => {
+  render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+
+  const screenSaverSelect = vi
+    .mocked(PSelect)
+    .mock.calls.map(([props]) => props)
+    .find((props) => props.label === '스크린 세이버')
+
+  expect(screenSaverSelect?.options).toContainEqual({label: '5초 후', value: '5s'})
+})
+
+it('should omit the development-only screen saver delay in production mode', () => {
+  vi.stubEnv('DEV', false)
+  render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+
+  const screenSaverSelect = vi
+    .mocked(PSelect)
+    .mock.calls.map(([props]) => props)
+    .find((props) => props.label === '스크린 세이버')
+
+  expect(screenSaverSelect?.options).not.toContainEqual({label: '5초 후', value: '5s'})
+  vi.unstubAllEnvs()
+})
+
+it('should describe every wake-lock availability state and pending request', () => {
+  const states = [
+    {availability: () => 'checking' as const, isRequestPending: () => false},
+    {availability: () => 'supported' as const, isRequestPending: () => false},
+    {availability: () => 'supported' as const, isRequestPending: () => true},
+    {availability: () => 'unsupported' as const, isRequestPending: () => false},
+  ]
+
+  for (const state of states) {
+    vi.mocked(useScreenWakeLock).mockReturnValue({
+      ...state,
+      errorMessage: () => null,
+      isEnabled: () => false,
+      onEnabledChange: vi.fn(),
+    })
+    render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+    expect(
+      screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
+    ).toHaveAttribute('data-description', expect.any(String))
+  }
+
+  vi.mocked(useScreenWakeLock).mockReturnValue({
+    availability: () => 'unsupported',
+    errorMessage: () => '권한을 확인할 수 없어요.',
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+  expect(
+    screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
+  ).toHaveAttribute('data-description', '권한을 확인할 수 없어요.')
+
+  vi.mocked(useScreenWakeLock).mockReturnValue({
+    availability: () => 'future-runtime' as never,
+    errorMessage: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+  expect(
+    screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
+  ).toHaveAttribute('data-description', 'future-runtime')
+})
+
+it('should describe every full-screen availability, pending, and failure state', () => {
+  const states = [
+    {availability: () => 'checking' as const, error: () => null, isRequestPending: () => false},
+    {availability: () => 'supported' as const, error: () => null, isRequestPending: () => false},
+    {availability: () => 'supported' as const, error: () => null, isRequestPending: () => true},
+    {availability: () => 'unsupported' as const, error: () => null, isRequestPending: () => false},
+    {
+      availability: () => 'supported' as const,
+      error: () => 'enter-failed' as const,
+      isRequestPending: () => false,
+    },
+    {
+      availability: () => 'supported' as const,
+      error: () => 'exit-failed' as const,
+      isRequestPending: () => false,
+    },
+  ]
+
+  for (const state of states) {
+    vi.mocked(useFullscreen).mockReturnValue({
+      ...state,
+      isEnabled: () => false,
+      onEnabledChange: vi.fn(),
+    })
+    render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+    expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+      'data-description',
+      expect.any(String),
+    )
+  }
+
+  vi.mocked(useFullscreen).mockReturnValue({
+    availability: () => 'future-runtime' as never,
+    error: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+  expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+    'data-description',
+    'future-runtime',
+  )
+
+  vi.mocked(useFullscreen).mockReturnValue({
+    availability: () => 'supported',
+    error: () => 'future-error' as never,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  })
+  render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+  expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+    'data-description',
+    'future-error',
+  )
+})

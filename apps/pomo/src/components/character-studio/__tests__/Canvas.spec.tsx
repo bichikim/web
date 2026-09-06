@@ -12,7 +12,7 @@ import {createSignal, onCleanup, onMount} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {reportClientError} from '../../../features/client-error-reporter'
-import CharacterCanvas from '../Canvas'
+import {CharacterCanvas} from '../Canvas'
 
 vi.mock('@babylonjs/core/Cameras/arcRotateCamera', () => ({ArcRotateCamera: vi.fn()}))
 vi.mock('@babylonjs/core/Engines/engine', () => ({Engine: vi.fn()}))

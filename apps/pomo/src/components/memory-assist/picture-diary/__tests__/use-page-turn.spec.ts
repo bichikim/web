@@ -1,7 +1,7 @@
 import {createRoot} from 'solid-js'
 import {expect, it, vi} from 'vitest'
-import {usePictureDiaryPageTurn} from '../use-page-turn'
 import type {PageTurnEnvironment} from '../turn-environment'
+import {usePictureDiaryPageTurn} from '../use-page-turn'
 
 const createHarness = () => {
   let time = 0

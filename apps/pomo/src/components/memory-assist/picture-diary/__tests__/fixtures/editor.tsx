@@ -1,8 +1,8 @@
 import {cleanup, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, vi} from 'vitest'
 import type {PictureDiaryEntry} from '../../../../../features/picture-diary'
-import type {BookPage} from '../../pagination'
 import {PictureDiaryEditor} from '../../Editor'
+import type {BookPage} from '../../pagination'
 import {createTurnHarness} from './turns'
 
 export const turns = createTurnHarness()

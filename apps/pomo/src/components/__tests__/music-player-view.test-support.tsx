@@ -3,8 +3,8 @@ import {vi} from 'vitest'
 
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import type {PTrack} from '../../features/focus-room-audio'
-import type {PAlbumLibraryProps} from '../PAlbumLibrary'
 import {MusicPlayerView} from '../MusicPlayerView'
+import type {PAlbumLibraryProps} from '../PAlbumLibrary'
 
 vi.mock('media-chrome', () => ({}))
 

@@ -3,7 +3,7 @@
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import PMusicPlayerContent from '../Content'
+import {PMusicPlayerContent} from '../Content'
 
 vi.mock('media-chrome', () => ({}))
 vi.mock('../../PAlbumLibrary', () => ({PAlbumLibrary: () => null}))

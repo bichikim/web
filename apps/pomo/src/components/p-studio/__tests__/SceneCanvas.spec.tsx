@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {render, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, waitFor} from '@solidjs/testing-library'
 import {createSignal, on, onCleanup, onMount} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -8,7 +8,7 @@ import {reportClientError} from '../../../features/client-error-reporter'
 import {getPSceneLayer} from '../../../features/focus-room-animation/scene-layer-catalog'
 import {PSceneRenderer} from '../../../features/focus-room-animation/scene-renderer'
 import {applyWeatherSceneLayer} from '../../../features/weather'
-import PSceneCanvas, {type PSceneCanvasProps} from '../SceneCanvas'
+import {PSceneCanvas, type PSceneCanvasProps} from '../SceneCanvas'
 
 vi.mock('../../../features/client-error-reporter', () => ({reportClientError: vi.fn()}))
 vi.mock('../../../features/focus-room-animation/scene-layer-catalog', () => ({
@@ -31,6 +31,11 @@ vi.mock('solid-js', async () => {
 })
 
 interface MockRenderer {
+  readonly onPointerDown: ReturnType<typeof vi.fn>
+  readonly onPointerMove: ReturnType<typeof vi.fn>
+  readonly onPointerUp: ReturnType<typeof vi.fn>
+  readonly onPointerCancel: ReturnType<typeof vi.fn>
+
   readonly destroy: ReturnType<typeof vi.fn>
   readonly initialize: ReturnType<typeof vi.fn>
   readonly update: ReturnType<typeof vi.fn>
@@ -56,6 +61,10 @@ const createRenderer = (): MockRenderer => {
   const renderer: MockRenderer = {
     destroy: vi.fn(),
     initialize: vi.fn().mockResolvedValue(undefined),
+    onPointerCancel: vi.fn(),
+    onPointerDown: vi.fn(),
+    onPointerMove: vi.fn(),
+    onPointerUp: vi.fn(),
     update: vi.fn(),
   }
   renderers.push(renderer)
@@ -86,6 +95,19 @@ afterEach(() => {
 })
 
 describe('PSceneCanvas', () => {
+  it('should forward host pointer events through JSX handlers', () => {
+    const view = render(() => <PSceneCanvas {...initialProps} />)
+    const host = view.container.firstElementChild!
+    fireEvent.pointerDown(host)
+    fireEvent.pointerMove(host)
+    fireEvent.pointerUp(host)
+    fireEvent.pointerCancel(host)
+    expect(renderers[0].onPointerDown).toHaveBeenCalledOnce()
+    expect(renderers[0].onPointerMove).toHaveBeenCalledOnce()
+    expect(renderers[0].onPointerUp).toHaveBeenCalledOnce()
+    expect(renderers[0].onPointerCancel).toHaveBeenCalledOnce()
+  })
+
   it('should initialize, reactively update, and destroy the scene renderer', async () => {
     const onLoadingChange = vi.fn()
     const onMotionInputChange = vi.fn()

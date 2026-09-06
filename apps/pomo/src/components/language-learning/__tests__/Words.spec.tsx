@@ -4,6 +4,7 @@ import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {readLanguageLearningWords} from '../../../features/language-learning'
 import {
   type RunAfterModelResult,
@@ -12,7 +13,6 @@ import {
   useModelDownload,
 } from '../../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from '../../PSelect'
 import {LanguageLearningWords} from '../Words'
 import {generateLanguageLearningWordPronunciation} from '../word-pronunciation'

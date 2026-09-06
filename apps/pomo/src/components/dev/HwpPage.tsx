@@ -21,7 +21,7 @@ const FALLBACK_CLASSES = cx(
   'text-sm text-#bdb2c4',
 )
 
-function HwpPage() {
+export function HwpPage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — 한글 문서 실험실</Title>
@@ -119,5 +119,3 @@ function HwpPage() {
     </main>
   )
 }
-
-export default HwpPage

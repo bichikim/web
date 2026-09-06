@@ -301,7 +301,7 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
   }
 }
 
-export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
+export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
   const [topic, setTopic] = createSignal(DEFAULT_TOPIC)
   const [length, setLength] = createSignal(DEFAULT_DIALOGUE_SCRIPT_LENGTH)
   const [isExpanded, setIsExpanded] = createSignal(false)

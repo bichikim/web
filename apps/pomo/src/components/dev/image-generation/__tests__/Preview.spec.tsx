@@ -4,9 +4,9 @@ import {createModelDownloadController} from 'src/features/model-download/control
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
 import {type ImageGenerationController, useImageGeneration} from 'src/features/image-generation'
 import {runImageGeneration} from 'src/features/image-generation/client'
+import {afterEach, expect, it, vi} from 'vitest'
 import {Preview} from '../Preview'
 
 vi.mock('src/features/image-generation/client', () => ({runImageGeneration: vi.fn()}))

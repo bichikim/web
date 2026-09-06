@@ -9,11 +9,11 @@ import {
   type PEventContextValue,
   usePEvents,
 } from '../../../features/focus-room-dialogue'
-import {PSelect} from '../../PSelect'
 import {
   readLanguageLearningSentences,
   writeLanguageLearningSentences,
 } from '../../../features/language-learning'
+import {PSelect} from '../../PSelect'
 import {LanguageLearningLibrary} from '../Library'
 
 vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))

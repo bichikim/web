@@ -17,7 +17,7 @@ interface TrackFieldsProps {
   readonly title: string
 }
 
-const TrackFields = (props: TrackFieldsProps) => {
+export const TrackFields = (props: TrackFieldsProps) => {
   const [audioInput, setAudioInput] = createSignal<HTMLInputElement>()
   const fields = useTrackFields(props)
 
@@ -80,5 +80,3 @@ const TrackFields = (props: TrackFieldsProps) => {
     </div>
   )
 }
-
-export default TrackFields

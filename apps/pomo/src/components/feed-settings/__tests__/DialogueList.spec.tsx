@@ -3,8 +3,8 @@
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
 import {PFeedDialogueList} from '../DialogueList'
 
 const FEED_DIALOGUE: FeedDialogueListItem = {

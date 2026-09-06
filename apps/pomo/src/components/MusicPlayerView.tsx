@@ -1,8 +1,6 @@
 import 'media-chrome'
-
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
-
 import {getPomoIconClass} from './icon-style'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import * as m from '@paraglide/message'
@@ -14,40 +12,15 @@ import {ExpandedPlayerControls} from './music-player-view/ExpandedControls'
 import {ExpandedPlayerProgress} from './music-player-view/ExpandedProgress'
 import {SummaryPlayButton} from './music-player-view/SummaryPlayButton'
 import {CLASSES, type MusicPlayerViewProps} from './music-player-view/shared'
+import {ExpandedSummaryPlayback} from './music-player-view/ExpandedSummaryPlayback'
 
 const SCRIBBLE_MASK_CLASSES = 'pomo-scribble-mask'
 
 const getShellClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? cx('rounded-none', SCRIBBLE_MASK_CLASSES) : 'rounded-panel'
+
 const getBaseClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? 'rounded-none border-transparent' : 'rounded-panel border-border'
-
-const TrackArtwork = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
-  <Show keyed when={props.currentTrack?.artworkUrl}>
-    {(artworkUrl) => (
-      <img
-        alt=""
-        class="pomo-player__artwork size-11 shrink-0 rounded-control object-cover
-          player-compact:hidden"
-        onError={({currentTarget}) => {
-          currentTarget.hidden = true
-        }}
-        src={artworkUrl}
-      />
-    )}
-  </Show>
-)
-
-const ExpandedSummaryPlayback = (
-  props: Pick<MusicPlayerViewProps, 'currentTrack' | 'sceneStyle'>,
-) => (
-  <>
-    <TrackArtwork currentTrack={props.currentTrack} />
-    <div class="pomo-player__compact-summary-play hidden size-11 shrink-0 player-compact:block">
-      <SummaryPlayButton currentTrack={props.currentTrack} sceneStyle={props.sceneStyle} />
-    </div>
-  </>
-)
 
 export const MusicPlayerView = (props: MusicPlayerViewProps) => (
   <div
@@ -72,6 +45,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         )}
       >
         <audio
+          {...props.mediaEvents}
           crossorigin="anonymous"
           preload="metadata"
           ref={(element) => props.onAudioElement(element)}

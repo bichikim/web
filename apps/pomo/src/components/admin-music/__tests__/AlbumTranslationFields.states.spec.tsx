@@ -26,7 +26,7 @@ vi.mock('../../../features/album-translation/use-album-translation', () => ({
   },
 }))
 
-import AlbumTranslationFields from '../AlbumTranslationFields'
+import {AlbumTranslationFields} from '../AlbumTranslationFields'
 
 const renderFields = (initial = createEmptyAlbumTranslations()) => {
   const [values, setValues] = createSignal(initial)

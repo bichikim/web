@@ -3,8 +3,8 @@
 import {render} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-import type {PFeedController} from '../../features/focus-room-feed/feed-controller'
 import {usePFeedContext} from '../../features/focus-room-feed/feed-context'
+import type {PFeedController} from '../../features/focus-room-feed/feed-controller'
 import {usePFeeds} from '../../features/focus-room-feed/use-focus-room-feeds'
 import {PFeedProvider} from '../PFeedProvider'
 

@@ -2,13 +2,10 @@
 
 import './p-event-provider.test-support'
 
-import {render, waitFor} from '@solidjs/testing-library'
+import {waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
-import {type PEventContextValue, usePEvents} from '../../features/focus-room-dialogue/event-context'
-import type {PDialogue} from '../../features/focus-room-dialogue/schema'
-import {createPDialogueRepository} from '../../features/focus-room-dialogue/repository'
 import {
   createDialogue,
   createMood,
@@ -16,7 +13,8 @@ import {
   stubAnimationFrame,
   stubAudioElements,
 } from '../../features/focus-room-dialogue/__tests__/support/fixtures'
-import {PEventProvider} from '../PEventProvider'
+import {createPDialogueRepository} from '../../features/focus-room-dialogue/repository'
+import type {PDialogue} from '../../features/focus-room-dialogue/schema'
 import {renderContext} from './support/render-context'
 
 const repositoryMocks = {create: vi.mocked(createPDialogueRepository)}

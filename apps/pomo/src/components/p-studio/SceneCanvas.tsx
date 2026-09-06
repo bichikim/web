@@ -19,7 +19,7 @@ export interface PSceneCanvasProps extends Omit<PSceneState, 'layerScene'> {
   readonly weatherCondition?: WeatherSceneCondition
 }
 
-export default function PSceneCanvas(props: PSceneCanvasProps) {
+export function PSceneCanvas(props: PSceneCanvasProps) {
   const [canvasHost, setCanvasHost] = createSignal<HTMLDivElement>()
   let renderer: PSceneRenderer | null = null
 
@@ -90,6 +90,10 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
     <div
       class="absolute inset-0 cursor-grab touch-none select-none active:cursor-grabbing"
       ref={setCanvasHost}
+      onPointerDown={(event) => renderer?.onPointerDown(event)}
+      onPointerMove={(event) => renderer?.onPointerMove(event)}
+      onPointerUp={(event) => renderer?.onPointerUp(event)}
+      onPointerCancel={(event) => renderer?.onPointerCancel(event)}
     />
   )
 }

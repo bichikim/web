@@ -4,8 +4,8 @@ import {render, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {type ChatController, type ChatMessage, useChat} from '../../features/chat'
 import {loadCalendarPromptContext} from '../../features/calendar'
+import {type ChatController, type ChatMessage, useChat} from '../../features/chat'
 import {
   type ChatVoiceController,
   createStreamingSpeechBuffer,
@@ -20,12 +20,12 @@ import {
   type UseSpeechToTextProps,
 } from '../../features/speech-to-text'
 import {getTextModel} from '../../features/text-generation'
-import ChatRoom from '../ChatRoom'
 import {ChatComposer} from '../chat-room/Composer'
 import {ContextSidebar} from '../chat-room/ContextSidebar'
 import {ChatHeader} from '../chat-room/Header'
 import {MAXIMUM_DRAFT_LENGTH} from '../chat-room/shared'
 import {ChatTranscript} from '../chat-room/Transcript'
+import {ChatRoom} from '../ChatRoom'
 
 vi.mock('../../features/chat', () => ({useChat: vi.fn()}))
 vi.mock('../../features/calendar', () => ({loadCalendarPromptContext: vi.fn()}))

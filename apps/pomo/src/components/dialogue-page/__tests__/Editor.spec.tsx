@@ -2,7 +2,7 @@
 
 import {A, useNavigate} from '@solidjs/router'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createSignal, type JSX, Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {usePSceneStyle} from '../../../features/focus-room-animation'
@@ -24,8 +24,8 @@ import {getPrimaryMood} from '../../../features/text-mood'
 import {PFaceIcon} from '../../PFaceIcon'
 import {PGenerationStatus} from '../../PGenerationStatus'
 import {PModelDownloadConsent} from '../../PModelDownloadConsent'
-import PDialogueDraftGenerator from '../DraftGenerator'
-import PDialogueEditor from '../Editor'
+import {PDialogueDraftGenerator} from '../DraftGenerator'
+import {PDialogueEditor} from '../Editor'
 
 vi.mock('@solidjs/router', () => ({A: vi.fn(), useNavigate: vi.fn()}))
 vi.mock('../../../features/focus-room-animation', () => ({usePSceneStyle: vi.fn()}))
@@ -47,7 +47,7 @@ vi.mock('../../../features/supertonic', async () => {
   }
 })
 vi.mock('../../../features/text-mood', () => ({getPrimaryMood: vi.fn()}))
-vi.mock('../DraftGenerator', () => ({default: vi.fn()}))
+vi.mock('../DraftGenerator', () => ({PDialogueDraftGenerator: vi.fn()}))
 vi.mock('../../PFaceIcon', () => ({PFaceIcon: vi.fn()}))
 vi.mock('../../PGenerationStatus', () => ({PGenerationStatus: vi.fn()}))
 vi.mock('../../PModelDownloadConsent', () => ({PModelDownloadConsent: vi.fn()}))

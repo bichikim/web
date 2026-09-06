@@ -3,14 +3,14 @@
 import {render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import type {WeatherLocation} from '../../../features/weather'
 import {getPomoIconClass} from '../../icon-style'
 import {PWeatherStatus} from '../../PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
 import {MemoryAssistPanel} from '../MemoryAssistPanel'
-import {VersionNoticePanel} from '../VersionNoticePanel'
 import {SceneSettingsPanel} from '../SettingsPanel'
 import {SceneToolbar} from '../Toolbar'
-import type {WeatherLocation} from '../../../features/weather'
+import {VersionNoticePanel} from '../VersionNoticePanel'
 
 vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
 vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))

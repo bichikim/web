@@ -2,7 +2,7 @@
 
 import {fireEvent, render} from '@solidjs/testing-library'
 import {createRoot} from 'solid-js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {SScrollBar} from '../SScrollBar'
 import {SScrollBody} from '../SScrollBody'
 import {SScrollHandle} from '../SScrollHandle'
@@ -12,13 +12,17 @@ import {useScrollContext} from '../scroll-context'
 
 describe('scroll components', () => {
   it('should expose scroll geometry through the bar and handle', async () => {
+    const onScroll = vi.fn()
+    const onPointerDown = vi.fn()
     const view = render(() => (
       <SScrollRoot component="section">
-        <SScrollBody component="div" data-testid="body">
+        <SScrollBody component="div" data-testid="body" onScroll={[onScroll, 'caller']}>
           Content
         </SScrollBody>
         <SScrollBar component="div" data-testid="bar">
-          <SScrollHandle component="button">Handle</SScrollHandle>
+          <SScrollHandle component="button" onPointerDown={onPointerDown}>
+            Handle
+          </SScrollHandle>
         </SScrollBar>
       </SScrollRoot>
     ))
@@ -43,6 +47,11 @@ describe('scroll components', () => {
     })
 
     await fireEvent.scroll(body)
+
+    expect(onScroll).toHaveBeenCalledWith('caller', expect.any(Event))
+    fireEvent.pointerDown(view.getByRole('scrollbar'))
+    expect(onPointerDown).toHaveBeenCalledOnce()
+    fireEvent.mouseUp(window)
 
     expect(view.getByTestId('bar').getAttribute('data-show')).toBe('true')
     expect(view.getByRole('scrollbar').getAttribute('aria-valuenow')).toBe('150')

@@ -8,7 +8,7 @@ export type SScrollRootProps<T extends ValidComponent> = DynamicProps<T>
 
 export const SScrollRoot = <T extends ValidComponent>(props: SScrollRootProps<T>) => {
   const [scrollBodyElement, setScrollBodyElement] = createSignal<HTMLElement | null>(null)
-  const nativeScrollState = useScrollState(scrollBodyElement)
+  const [nativeScrollState, handlers] = useScrollState(scrollBodyElement)
   const scrollId = createUniqueId()
 
   const scrollValue = createMemo(() => {
@@ -68,6 +68,7 @@ export const SScrollRoot = <T extends ValidComponent>(props: SScrollRootProps<T>
     <ScrollContext.Provider
       value={{
         moveScroll,
+        onScroll: handlers.onScroll,
         setScroll,
         setScrollBodyElement,
         value: scrollValue,

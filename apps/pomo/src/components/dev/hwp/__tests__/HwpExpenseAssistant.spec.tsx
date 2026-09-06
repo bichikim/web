@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {ChatController, ChatMessage} from '../../../../features/chat'
 
@@ -18,7 +18,7 @@ vi.mock('../../../../features/chat', () => ({
   useChat: chatMocks.useChat,
 }))
 
-import HwpExpenseAssistant from '../HwpExpenseAssistant'
+import {HwpExpenseAssistant} from '../HwpExpenseAssistant'
 
 const createController = (
   messages: () => ReadonlyArray<ChatMessage> = () => [],

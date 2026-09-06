@@ -9,7 +9,13 @@ import {PModalTabList} from '../../PModalTabList'
 import {PictureDiaryCanvas} from './Canvas'
 import './drawing.css'
 
-const Generation = clientOnly(() => import('./Generation'), {lazy: true})
+const Generation = clientOnly(
+  async () => {
+    const {Generation} = await import('./Generation')
+    return {default: Generation}
+  },
+  {lazy: true},
+)
 
 export interface PictureDiaryDrawingProps {
   readonly image?: PictureDiaryImage

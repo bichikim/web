@@ -388,7 +388,7 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
             preserveAspectRatio="xMidYMid meet"
             viewBox={`${editor.viewBox().x} ${editor.viewBox().y} ${editor.viewBox().width} ${editor.viewBox().height}`}
             tabindex={0}
-            on:keydown={editor.topology.handleTopologyKey}
+            onKeyDown={editor.topology.handleTopologyKey}
             onLostPointerCapture={editor.stopDrag}
             onPointerCancel={editor.stopDrag}
             onPointerMove={editor.handlePointerMove}

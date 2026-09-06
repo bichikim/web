@@ -5,10 +5,10 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {For} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/PSelect'
 import {PFeedContext, type PFeedController} from 'src/features/focus-room-feed'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import PFeedSettingsContent from '../Content'
+import {PFeedSettingsContent} from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))

@@ -139,5 +139,3 @@ export const TextMoodLab = () => {
     </section>
   )
 }
-
-export default TextMoodLab

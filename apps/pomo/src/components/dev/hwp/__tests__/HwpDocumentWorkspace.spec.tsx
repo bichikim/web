@@ -28,13 +28,13 @@ vi.mock('@rhwp/editor', () => ({
 }))
 vi.stubGlobal('fetch', fetchMocks.fetch)
 vi.mock('../HwpExpenseAssistant', () => ({
-  default: (props: {readonly onApply: (form: ExpenseForm) => Promise<void> | void}) => {
+  HwpExpenseAssistant: (props: {readonly onApply: (form: ExpenseForm) => Promise<void> | void}) => {
     assistantMocks.onApply = props.onApply
     return <output>expense assistant</output>
   },
 }))
 
-import HwpDocumentWorkspace from '../HwpDocumentWorkspace'
+import {HwpDocumentWorkspace} from '../HwpDocumentWorkspace'
 
 const documentMock = {
   exportHwp: vi.fn(),

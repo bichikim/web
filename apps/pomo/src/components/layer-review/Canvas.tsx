@@ -11,7 +11,7 @@ export interface PLayerReviewCanvasProps extends PLayerReviewState {
   readonly sceneId: PSceneId
 }
 
-export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
+export function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
   const [canvasHost, setCanvasHost] = createSignal<HTMLDivElement>()
   let renderer: PLayerReviewRenderer | null = null
 

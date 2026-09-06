@@ -1,13 +1,13 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {For} from 'solid-js'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
   type AutomaticDialogueSettingsRepository,
   type AutomaticDialogueSettings as AutomaticDialogueSettingsValue,
 } from '../../../features/focus-room-dialogue'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {For} from 'solid-js'
 import {AutomaticDialogueSettings} from '../AutomaticSettings'
 
 const mocks = vi.hoisted(() => ({createRepository: vi.fn()}))

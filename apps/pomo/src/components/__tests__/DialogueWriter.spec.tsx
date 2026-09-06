@@ -10,7 +10,7 @@ import {
   useDialogueWriter,
 } from '../../features/dialogue-writer'
 import {getTextModel} from '../../features/text-generation'
-import DialogueWriter from '../DialogueWriter'
+import {DialogueWriter} from '../DialogueWriter'
 import {DirectAnswerHeader} from '../dialogue-writer/AnswerHeader'
 import {ModelPanel} from '../dialogue-writer/ModelPanel'
 

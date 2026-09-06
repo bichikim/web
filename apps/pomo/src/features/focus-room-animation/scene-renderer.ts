@@ -94,6 +94,14 @@ export class PSceneRenderer {
     })
   }
 
+  readonly onPointerDown = (event: PointerEvent) => this.#parallax.onPointerDown(event)
+
+  readonly onPointerMove = (event: PointerEvent) => this.#parallax.onPointerMove(event)
+
+  readonly onPointerUp = (event: PointerEvent) => this.#parallax.onPointerUp(event)
+
+  readonly onPointerCancel = (event: PointerEvent) => this.#parallax.onPointerCancel(event)
+
   async initialize(state: PSceneState) {
     this.#loading.start()
     this.#state = state

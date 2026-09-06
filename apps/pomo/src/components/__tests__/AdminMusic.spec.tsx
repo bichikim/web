@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 interface ClientOnlyStubProps {
@@ -106,9 +106,9 @@ vi.mock('@solidjs/start', () => startMocks)
 vi.mock('src/features/admin-music/cover-image', () => coverImageMocks)
 vi.mock('../../features/admin-music/catalog-query', () => catalogQueryMocks)
 
-import {AdminMusic} from '../AdminMusic'
 import {createEmptyAlbumTranslations} from '../../features/admin-music'
 import {writeAlbumDraftData} from '../../features/admin-music/album-draft-storage'
+import {AdminMusic} from '../AdminMusic'
 
 const catalogWithAlbum = {
   albums: [

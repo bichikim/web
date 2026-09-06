@@ -29,19 +29,6 @@ describe('MusicPlayerView', () => {
     expect(artwork?.getAttribute('alt')).toBe('')
   })
 
-  it('should hide failed artwork requests', () => {
-    const result = renderMusicPlayerView()
-    const artwork = result.container.querySelector('.pomo-player__artwork')
-
-    if (!(artwork instanceof HTMLImageElement)) {
-      throw new TypeError('Expected the current track artwork to be rendered')
-    }
-
-    fireEvent.error(artwork)
-
-    expect(artwork.hidden).toBe(true)
-  })
-
   it('should forward album and expanded player control events', () => {
     const onAlbumAdd = vi.fn()
     const onAlbumClear = vi.fn()

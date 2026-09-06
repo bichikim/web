@@ -6,7 +6,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/PModal'
 import type {OptionResetManager} from 'src/features/dev-option-reset'
-import OptionResetPage from '../OptionResetPage'
+import {OptionResetPage} from '../OptionResetPage'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {children?: JSX.Element}) => <>{props.children}</>,
@@ -134,4 +134,9 @@ it('should distinguish unresolved storage items in a partial reset', async () =>
   expect(await screen.findByRole('alert')).toHaveTextContent(
     '저장 항목 1개는 초기화됐고 0개는 유지됐으며 1개는 상태를 확인하지 못했습니다.',
   )
+})
+
+it('should render its development page content', () => {
+  render(() => <OptionResetPage />)
+  expect(screen.getAllByText('각종 옵션 초기화', {exact: false}).length).toBeGreaterThan(0)
 })

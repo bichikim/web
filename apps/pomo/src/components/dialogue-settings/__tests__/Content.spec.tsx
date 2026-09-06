@@ -89,7 +89,7 @@ vi.mock('../PlaybackButton', () => ({
   ),
 }))
 
-import PDialogueSettingsContent from '../Content'
+import {PDialogueSettingsContent} from '../Content'
 
 const DIALOGUE: PDialogue = {
   audioKey: 'audio-key',

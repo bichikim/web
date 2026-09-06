@@ -1,3 +1,4 @@
+import type {JSX} from 'solid-js'
 import {cx} from 'class-variance-authority'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/focus-room-playlist'
@@ -128,6 +129,17 @@ export const CLASSES = {
 } as const
 
 export interface MusicPlayerViewProps {
+  readonly mediaEvents?: Pick<
+    JSX.AudioHTMLAttributes<HTMLAudioElement>,
+    | 'onPlay'
+    | 'onPause'
+    | 'onEnded'
+    | 'onError'
+    | 'onLoadedMetadata'
+    | 'onSeeking'
+    | 'onSeeked'
+    | 'onTimeUpdate'
+  >
   readonly currentIndex: number
   readonly currentTrack?: PTrack
   readonly expanded: boolean

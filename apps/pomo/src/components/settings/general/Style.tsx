@@ -1,0 +1,44 @@
+import {Show} from 'solid-js'
+import {PRadioSwitch} from '../../PRadioSwitch'
+import {PSwitch} from '../../PSwitch'
+import {
+  getLocalizedMotionInputOptions,
+  getLocalizedMotionOptions,
+} from '../../../features/localization'
+import * as m from '@paraglide/message'
+import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from '../../pomo-scene-options'
+import {PSettingsSectionHeading} from '../SectionHeading'
+import {CLASSES, type PSettingsProps} from './shared'
+
+export const PGeneralStyleSettings = (props: PSettingsProps) => (
+  <section aria-labelledby="pomo-settings-style-title" class={CLASSES.settingsSection}>
+    <PSettingsSectionHeading
+      divider="none"
+      title={m.settings_section_style()}
+      titleId="pomo-settings-style-title"
+    />
+    <div class={CLASSES.settingsGrid}>
+      <PSwitch
+        checked={(props.sceneStyle ?? 'original') === 'scribble'}
+        description={m.settings_scribble_description()}
+        label={m.settings_scribble_style()}
+        onChange={(isChecked) => props.onSceneStyleChange?.(isChecked ? 'scribble' : 'original')}
+      />
+      <PRadioSwitch
+        label={m.settings_scene_motion()}
+        onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}
+        options={getLocalizedMotionOptions(P_SCENE_MOTION_OPTIONS)}
+        value={props.motionMode ?? 'depth'}
+      />
+      <Show when={props.canUseGyroscope}>
+        <PRadioSwitch
+          class="col-span-full"
+          label={m.settings_scene_control()}
+          onChange={(motionInput) => props.onMotionInputChange?.(motionInput)}
+          options={getLocalizedMotionInputOptions(P_SCENE_MOTION_INPUT_OPTIONS)}
+          value={props.motionInput ?? 'drag'}
+        />
+      </Show>
+    </div>
+  </section>
+)

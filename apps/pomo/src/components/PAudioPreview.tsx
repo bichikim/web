@@ -1,15 +1,19 @@
-import {AudioPlayer, useAudioPlayer} from '@winter-love/solid-components'
+import {AudioPlayer} from './audio-player'
 import {cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
+import {PlaybackIcon} from './audio-preview/PlaybackIcon'
+import {MuteIcon} from './audio-preview/MuteIcon'
 
 const PREVIEW_CLASSES = cx(
   'min-w-0 overflow-hidden rounded-3 border border-border bg-content-surface',
   'text-foreground',
 )
+
 const CONTROL_BUTTON_CLASSES = cx(
   'grid size-10 shrink-0 cursor-pointer place-items-center border-0 bg-transparent',
   'text-highlight outline-none hover:bg-primary-soft focus-visible:shadow-focus',
 )
+
 const formatAudioPosition = (currentTime: number, duration: number) =>
   `${currentTime.toFixed(1)}초 / ${duration.toFixed(1)}초`
 
@@ -27,28 +31,6 @@ export interface PAudioPreviewProps {
   readonly preload?: 'auto' | 'metadata' | 'none'
   readonly src?: string | null
   readonly title?: string
-}
-
-const PlaybackIcon = () => {
-  const [state] = useAudioPlayer()
-
-  return (
-    <span
-      aria-hidden="true"
-      class={state().paused ? 'i-tabler-player-play size-4' : 'i-tabler-player-pause size-4'}
-    />
-  )
-}
-
-const MuteIcon = () => {
-  const [state] = useAudioPlayer()
-
-  return (
-    <span
-      aria-hidden="true"
-      class={state().muted ? 'i-tabler-volume-off size-4' : 'i-tabler-volume size-4'}
-    />
-  )
 }
 
 export const PAudioPreview = (props: PAudioPreviewProps) => {
@@ -122,5 +104,3 @@ export const PAudioPreview = (props: PAudioPreviewProps) => {
     </Show>
   )
 }
-
-export default PAudioPreview

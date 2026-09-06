@@ -6,7 +6,7 @@ import {afterEach, expect, it, vi} from 'vitest'
 vi.mock('@solidjs/start', () => ({
   clientOnly: vi.fn((load: () => Promise<unknown>) => load),
 }))
-vi.mock('src/components/dev/hwp/HwpDocumentWorkspace', () => ({default: vi.fn()}))
+vi.mock('src/components/dev/hwp/HwpDocumentWorkspace', () => ({HwpDocumentWorkspace: vi.fn()}))
 
 it('should configure a lazy client-only HWP workspace', async () => {
   const {HwpWorkspace} = await import('../Workspace')

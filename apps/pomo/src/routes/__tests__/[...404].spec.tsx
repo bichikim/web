@@ -24,7 +24,7 @@ vi.mock('@solidjs/start', () => ({
 }))
 
 vi.mock('src/components/dev/PageDispatcher', () => ({
-  default: (props: {fallback: JSX.Element; pathname: string}) => (
+  PageDispatcher: (props: {fallback: JSX.Element; pathname: string}) => (
     <>
       <span hidden>{props.fallback}</span>
       <output data-testid="dev-dispatcher">{props.pathname}</output>

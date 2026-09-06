@@ -3,6 +3,7 @@
 import {render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {
   createLanguageLearningWordAudioRepository,
   type LanguageLearningWord,
@@ -11,9 +12,8 @@ import {
 } from '../../../features/language-learning'
 import {type ModelAssetManager, useModelAssetManager} from '../../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import {generateLanguageLearningWordPronunciation} from '../word-pronunciation'
 import {useLanguageLearningWordPronunciation} from '../use-word-pronunciation'
+import {generateLanguageLearningWordPronunciation} from '../word-pronunciation'
 
 vi.mock('../../../features/model-download', () => ({useModelAssetManager: vi.fn()}))
 vi.mock('../../../features/language-learning', async () => {

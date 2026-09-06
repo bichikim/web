@@ -7,7 +7,10 @@ import {PlaylistFooter} from './Footer'
 import {LoadingStatus} from './LoadingStatus'
 import * as m from '@paraglide/message'
 
-const PAlbumLibraryContent = lazy(() => import('./Content'))
+const PAlbumLibraryContent = lazy(async () => {
+  const {PAlbumLibraryContent} = await import('./Content')
+  return {default: PAlbumLibraryContent}
+})
 
 export interface PAlbumLibraryPanelProps {
   readonly isOpen: boolean

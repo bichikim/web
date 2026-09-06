@@ -1,5 +1,4 @@
-import {createEffect, createMemo, ErrorBoundary, For, Show, Suspense} from 'solid-js'
-
+import {createMemo, ErrorBoundary, For, Show, Suspense} from 'solid-js'
 import {PButton} from '../PButton'
 import {reportClientError} from '../../features/client-error-reporter'
 import {type PResolvedAlbum, type PTrack, useTrackPreview} from '../../features/focus-room-audio'
@@ -7,6 +6,7 @@ import {AlbumCard} from './Card'
 import {LoadingStatus} from './LoadingStatus'
 import {useAlbumLibrary} from './use-album-library'
 import * as m from '@paraglide/message'
+import {PublishedCatalogError} from './PublishedCatalogError'
 
 export interface PAlbumLibraryContentProps {
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
@@ -15,38 +15,7 @@ export interface PAlbumLibraryContentProps {
   readonly tracks: readonly PTrack[]
 }
 
-interface PublishedCatalogErrorProps {
-  readonly error: Error
-  readonly isRetrying: boolean
-  readonly onRetry: () => void
-}
-
-const PublishedCatalogError = (props: PublishedCatalogErrorProps) => {
-  createEffect(() => {
-    reportClientError(props.error, {feature: 'album-library', source: 'direct'})
-  })
-
-  return (
-    <div
-      class="mb-3 rounded-control border border-solid border-danger/45 bg-danger/10 px-3 py-3
-        text-danger"
-      role="alert"
-    >
-      <p class="m-0 text-sm font-650">{m.album_catalog_load_failed()}</p>
-      <PButton
-        class="mt-2"
-        disabled={props.isRetrying}
-        onPress={props.onRetry}
-        size="small"
-        tone="secondary"
-      >
-        {m.album_retry()}
-      </PButton>
-    </div>
-  )
-}
-
-export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
+export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
   const albumLibrary = useAlbumLibrary()
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>

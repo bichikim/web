@@ -1,15 +1,13 @@
 import {cx} from 'class-variance-authority'
 import {Tabs} from '@kobalte/core/tabs'
 import {A} from '@solidjs/router'
-import {createMemo, createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
-
-import {findLicenseGroup, type LicenseData, loadLicenseData} from 'src/features/licenses'
-
+import {createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
+import {loadLicenseData} from 'src/features/licenses'
 import * as m from '@paraglide/message'
-import {CreditList} from './credits-settings/List'
 import {type PMusicCredit, PMusicCredits} from './credits-settings/MusicCredits'
 import {PSettingsActionLink} from './settings/ActionLink'
 import {PSettingsSectionHeading} from './settings/SectionHeading'
+import {LicenseCredits} from './credits-settings/LicenseCredits'
 
 const getMusicCredits = () =>
   [
@@ -29,27 +27,6 @@ const NOTICE_CLASS = cx(
   'rounded-panel border border-solid border-content-border bg-content-surface p-4',
   'text-xs leading-5 text-muted-foreground',
 )
-
-const LicenseCredits = (props: {readonly licenseData: LicenseData}) => {
-  const openSourceLicenseGroup = createMemo(() =>
-    findLicenseGroup(props.licenseData, 'core-software'),
-  )
-  const modelLicenseGroup = createMemo(() => findLicenseGroup(props.licenseData, 'models'))
-
-  return (
-    <>
-      <section aria-labelledby="pomo-open-source-title" class="grid gap-3">
-        <PSettingsSectionHeading title={m.credits_open_source()} titleId="pomo-open-source-title" />
-        <CreditList entries={openSourceLicenseGroup().entries} />
-      </section>
-
-      <section aria-labelledby="pomo-model-credits-title" class="grid gap-3">
-        <PSettingsSectionHeading title={m.credits_models()} titleId="pomo-model-credits-title" />
-        <CreditList entries={modelLicenseGroup().entries} />
-      </section>
-    </>
-  )
-}
 
 export const PCreditsSettings = () => {
   const [licenseData] = createResource(loadLicenseData)

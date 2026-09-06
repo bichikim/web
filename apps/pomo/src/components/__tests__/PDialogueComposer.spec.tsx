@@ -4,8 +4,8 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {PDialogueComposer} from '../PDialogueComposer'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {PDialogueComposer} from '../PDialogueComposer'
 
 const originalGetLocale = getLocale
 

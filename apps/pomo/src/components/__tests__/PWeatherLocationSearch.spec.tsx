@@ -44,8 +44,8 @@ vi.mock('@kobalte/core/combobox', () => {
   return {Combobox}
 })
 
-import {PWeatherLocationSearch} from '../PWeatherLocationSearch'
 import {LEGACY_WEATHER_LOCATIONS, type WeatherLocation} from '../../features/weather'
+import {PWeatherLocationSearch} from '../PWeatherLocationSearch'
 
 const seoul = {
   country: '대한민국',
