@@ -41,11 +41,7 @@ export const LanguageLearningLibrary = (props: LanguageLearningLibraryProps) => 
           onChange={setLanguage}
           value={language()}
         />
-        <PSettingsActionLink
-          class="min-h-control-md"
-          href="/language-learning"
-          icon="i-tabler-plus"
-        >
+        <PSettingsActionLink size="medium" href="/language-learning" icon="i-tabler-plus">
           {m.learning_create_action()}
         </PSettingsActionLink>
       </div>

@@ -28,10 +28,12 @@ export const PModelDownloadConsent = (props: PModelDownloadConsentProps) => (
         받은 모델은 보관되며, 다운로드 후 {props.actionLabel}가 자동으로 시작돼요.
       </p>
       <div class="flex justify-end gap-2">
-        <PButton onPress={props.onCancel} tone="secondary">
+        <PButton bordered transparent onPress={props.onCancel} tone="secondary">
           취소
         </PButton>
-        <PButton onPress={props.onConfirm}>받고 시작</PButton>
+        <PButton raised onPress={props.onConfirm}>
+          받고 시작
+        </PButton>
       </div>
     </div>
   </PModal>

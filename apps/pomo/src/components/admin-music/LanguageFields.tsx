@@ -1,3 +1,5 @@
+import {PInput} from 'src/components/PInput'
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {
   type AlbumDraftTranslation,
@@ -35,7 +37,8 @@ export const LanguageFields = (props: LanguageFieldsProps) => (
     </div>
     <label class="grid gap-2 text-sm">
       앨범명
-      <input
+      <PInput
+        unstyled
         class={FIELD_CLASSES}
         maxlength="120"
         name={`title.${props.language.locale}`}
@@ -48,7 +51,8 @@ export const LanguageFields = (props: LanguageFieldsProps) => (
     </label>
     <label class="grid gap-2 text-sm">
       설명
-      <textarea
+      <PTextarea
+        unstyled
         class={TEXTAREA_CLASSES}
         maxlength="2000"
         name={`description.${props.language.locale}`}

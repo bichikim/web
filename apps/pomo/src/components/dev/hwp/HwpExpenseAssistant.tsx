@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, Show} from 'solid-js'
 import {useChat} from '../../../features/chat'
@@ -117,7 +118,8 @@ export function HwpExpenseAssistant(props: HwpExpenseAssistantProps) {
 
       <label class="grid gap-2 text-sm font-650 text-#d9cbd7" for="expense-input">
         가계부 입력
-        <textarea
+        <PTextarea
+          unstyled
           class={INPUT_CLASSES}
           id="expense-input"
           onInput={(event) => setInputText(event.currentTarget.value)}

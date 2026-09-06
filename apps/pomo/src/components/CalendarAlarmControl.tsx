@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createMemo, createSignal, createUniqueId, type Setter, Show} from 'solid-js'
 
@@ -267,7 +268,8 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
         <div class="grid grid-cols-1 gap-3">
           <label class="grid gap-1.5 text-sm font-650">
             <span>{m.calendar_alarm_date()}</span>
-            <input
+            <PInput
+              unstyled
               class={INPUT_CLASSES}
               min={getDateInputValue(new Date())}
               onInput={(event) => alarm.setDate(event.currentTarget.value)}
@@ -277,7 +279,8 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
           </label>
           <label class="grid gap-1.5 text-sm font-650">
             <span>{m.calendar_alarm_time()}</span>
-            <input
+            <PInput
+              unstyled
               class={INPUT_CLASSES}
               onInput={(event) => alarm.setTime(event.currentTarget.value)}
               type="time"
@@ -287,11 +290,18 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
         </div>
 
         <div class="mt-4 grid gap-2">
-          <PButton class="w-full" disabled={alarm.pending()} onPress={alarm.save}>
+          <PButton raised class="w-full" disabled={alarm.pending()} onPress={alarm.save}>
             {m.calendar_alarm_save()}
           </PButton>
           <Show when={alarm.storedMemo() !== undefined}>
-            <PButton class="w-full" disabled={alarm.pending()} onPress={alarm.remove} tone="danger">
+            <PButton
+              bordered
+              transparent
+              class="w-full"
+              disabled={alarm.pending()}
+              onPress={alarm.remove}
+              tone="danger"
+            >
               {m.calendar_alarm_remove()}
             </PButton>
           </Show>

@@ -1,3 +1,4 @@
+import {useTooltipTrigger} from './tooltip'
 import {PTooltip} from './PTooltip'
 import {For, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
@@ -44,11 +45,13 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
         role="group"
       >
         <For each={getModeOptions()}>
-          {(option) => (
-            <PTooltip label={option.label}>
-              {(tooltip) => (
+          {(option) => {
+            const tooltip = useTooltipTrigger()
+            return (
+              <>
                 <button
-                  {...tooltip}
+                  {...tooltip.events}
+                  ref={tooltip.setTarget}
                   aria-label={option.label}
                   aria-pressed={props.mode === option.value}
                   class={cx(
@@ -63,9 +66,10 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
                 >
                   <span aria-hidden="true" class={`${option.icon} size-4`} />
                 </button>
-              )}
-            </PTooltip>
-          )}
+                <PTooltip target={tooltip.target()} show={tooltip.show()} text={option.label} />
+              </>
+            )
+          }}
         </For>
       </div>
       <Show when={props.error}>

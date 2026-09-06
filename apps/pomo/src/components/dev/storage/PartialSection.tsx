@@ -28,6 +28,8 @@ export const PartialSection = (props: PartialSectionProps) => (
         </p>
       </div>
       <PButton
+        bordered
+        transparent
         disabled={props.busy || props.count === 0}
         onPress={props.onClear}
         size="small"

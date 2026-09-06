@@ -1,3 +1,6 @@
+// Vite provides the default string export for raw source imports.
+// oxlint-disable-next-line import/default
+import progressSource from '../src/components/memory-assist/picture-diary/Generation.tsx?raw'
 import {createGenerator} from 'unocss'
 import {expect, it} from 'vitest'
 
@@ -176,4 +179,19 @@ it('should theme the orbit border with the foreground color', async () => {
 
   expect(orbitBorderRule).toContain('rgb(var(--pomo-color-foreground-channels) / 96%)')
   expect(orbitBorderRule).not.toContain('rgb(255 255 255')
+})
+
+it('should extract diary progress selectors from component constants', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css} = await uno.generate(progressSource, {safelist: false})
+
+  expect(css).toContain(
+    '--progress-fill:linear-gradient(90deg,transparent,currentColor,transparent);',
+  )
+  expect(css).toContain(
+    'background:var(--progress-fill) -50% 0/40% 100% no-repeat,var(--progress-track);',
+  )
+  expect(css).toContain('::-webkit-progress-value')
+  expect(css).toContain('::-moz-progress-bar')
+  expect(css).toContain('@media (prefers-reduced-motion: reduce)')
 })

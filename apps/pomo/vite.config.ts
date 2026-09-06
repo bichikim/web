@@ -10,11 +10,11 @@ import {createDevFeedPlugin} from './scripts/vite/dev-feed/plugin'
 import {createScribbleIconRestartPlugin} from './scripts/vite/scribble-icon/plugin'
 import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
 import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
-import {resolveContentSecurityPolicyTemplates} from './vite/content-security-policy-template'
-import {createInlineContentHashes} from './vite/prerender-security-headers'
-import {getOptimizeDepsInclude} from './vite/optimize-deps'
-import {resolvePublicOrigin} from './vite/public-origin'
-import {createRemoteServerFunctionsPlugin} from './vite/remote-server-functions'
+import {resolveContentSecurityPolicyTemplates} from './scripts/vite/content-security-policy-template'
+import {createInlineContentHashes} from './scripts/vite/prerender-security-headers'
+import {getOptimizeDepsInclude} from './scripts/vite/optimize-deps'
+import {resolvePublicOrigin} from './scripts/vite/public-origin'
+import {createRemoteServerFunctionsPlugin} from './scripts/vite/remote-server-functions'
 
 interface ImportMetaEnvValues {
   readonly [name: string]: string

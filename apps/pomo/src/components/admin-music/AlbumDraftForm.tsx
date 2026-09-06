@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
@@ -83,7 +84,8 @@ export const AlbumDraftForm = (props: AdminMusicFormProps) => (
           <div class="mt-3 grid gap-4">
             <label class="grid gap-2 text-sm">
               외부 HTTPS 주소
-              <input
+              <PInput
+                unstyled
                 class={FIELD_CLASSES}
                 name="coverImageUrl"
                 onInput={(event) => props.model.handleCoverImageUrlInput(event)}

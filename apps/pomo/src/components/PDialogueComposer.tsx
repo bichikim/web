@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {useEvent} from '@winter-love/solid-use'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createEffect, createSignal, type Setter, Show} from 'solid-js'
@@ -187,7 +188,8 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
       >
         <label class="contents">
           <span class="sr-only">{m.dialogue_composer_input_label()}</span>
-          <input
+          <PInput
+            unstyled
             autocomplete="off"
             class={cx(
               'h-full min-w-0 border-0 bg-transparent px-4 text-lg text-foreground outline-none',

@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
@@ -82,7 +83,8 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
           />
           <label class="grid gap-1.5 text-sm font-650 text-foreground">
             <span>{m.memory_memo_time()}</span>
-            <input
+            <PInput
+              unstyled
               class={INPUT_CLASSES}
               onInput={(event) => updateDraft({reminderTime: event.currentTarget.value})}
               type="time"
@@ -93,7 +95,8 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
         <Show when={props.draft().reminderDay === 'custom'}>
           <label class="grid gap-1.5 text-sm font-650 text-foreground">
             <span>{m.memory_memo_date()}</span>
-            <input
+            <PInput
+              unstyled
               class={INPUT_CLASSES}
               min={props.minimumDate}
               onInput={(event) => updateDraft({customDate: event.currentTarget.value})}
@@ -105,7 +108,8 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
 
         <label class="grid gap-1.5 text-sm font-650 text-foreground">
           <span>{m.memory_memo_exact_advance()}</span>
-          <input
+          <PInput
+            unstyled
             class={INPUT_CLASSES}
             min="0"
             onInput={(event) =>
@@ -129,7 +133,8 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
           <div class="grid grid-cols-2 gap-3 max-xs:grid-cols-1">
             <label class="grid gap-1.5 text-sm font-650 text-foreground">
               <span>{m.memory_memo_exact_repeat_interval()}</span>
-              <input
+              <PInput
+                unstyled
                 class={INPUT_CLASSES}
                 min="1"
                 onInput={(event) =>
@@ -146,7 +151,8 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
             </label>
             <label class="grid gap-1.5 text-sm font-650 text-foreground">
               <span>{m.memory_memo_exact_repeat_until()}</span>
-              <input
+              <PInput
+                unstyled
                 class={INPUT_CLASSES}
                 min="0"
                 onInput={(event) =>

@@ -26,7 +26,8 @@ import type {DesktopMode} from '../../features/desktop-mode/index'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
 import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
-import {PIconButton} from '../PIconButton'
+import {GLASS_ICON_BUTTON} from '../button-presets'
+import {PButton} from '../PButton'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -72,17 +73,18 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       )}
     >
       <div
-        class="flex flex-wrap justify-end gap-2 [&_.pomo-icon-button]:rounded-full"
+        class="flex flex-wrap justify-end gap-2 [&_button[data-icon-only]]:rounded-full"
         role="group"
         aria-label={m.scene_group_label()}
       >
         <VersionNoticePanel sceneStyle={props.sceneStyle} />
         <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
           <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-            <PIconButton
+            <PButton
+              {...GLASS_ICON_BUTTON}
               accessibleLabel={m.tour_open()}
-              class={CLASSES.sceneControl}
-              feedback={m.tour_feedback()}
+              tooltip={m.tour_open()}
+              class={cx(GLASS_ICON_BUTTON.class, CLASSES.sceneControl)}
               icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
               onPress={() => props.onTourOpen?.()}
             />

@@ -1,3 +1,4 @@
+import {useTooltipTrigger} from '../tooltip'
 import {PTooltip} from '../PTooltip'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
@@ -52,77 +53,86 @@ const getQuickFrameClasses = (sceneStyle?: PSceneStyle) =>
         'rounded-panel border border-solid border-border bg-surface backdrop-blur-surface',
       )
 
-export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
-  <div class="pomo-pomodoro-frame relative inline-flex w-fit overflow-visible">
-    <Show when={props.sceneStyle === 'scribble'}>
+export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
+  const actionTooltip = useTooltipTrigger()
+  const openTooltip = useTooltipTrigger()
+  return (
+    <div class="pomo-pomodoro-frame relative inline-flex w-fit overflow-visible">
+      <Show when={props.sceneStyle === 'scribble'}>
+        <div
+          aria-hidden="true"
+          class={cx(
+            'pomo-pomodoro__scribble-surface pointer-events-none absolute inset-0',
+            'bg-surface backdrop-blur-surface',
+            SCRIBBLE_MASK_CLASSES,
+          )}
+        />
+      </Show>
+
+      <Show when={props.sceneStyle === 'scribble'}>
+        <PScribbleFrame class="pomo-pomodoro__scribble-border" />
+      </Show>
+
       <div
-        aria-hidden="true"
-        class={cx(
-          'pomo-pomodoro__scribble-surface pointer-events-none absolute inset-0',
-          'bg-surface backdrop-blur-surface',
-          SCRIBBLE_MASK_CLASSES,
-        )}
-      />
-    </Show>
+        aria-label={m.pomodoro_quick_controls()}
+        class={cx(CLASSES.pomodoroTrigger, getQuickFrameClasses(props.sceneStyle))}
+        data-phase={props.phase}
+        role="group"
+      >
+        <button
+          {...actionTooltip.events}
+          ref={actionTooltip.setTarget}
+          aria-label={props.primaryLabel}
+          class={cx(
+            INTERACTIVE_GLASS_PART_CLASSES,
+            STRONG_FOCUS_RING_CLASSES,
+            CLASSES.pomodoroEmotionAction,
+          )}
+          data-glass-part=""
+          onClick={() => props.onPrimaryPress()}
+          type="button"
+        >
+          <PCharacterEmotion
+            active={props.isActive}
+            emotion={props.characterEmotion}
+            image={props.characterImage}
+          />
+          <span aria-hidden="true" class={CLASSES.pomodoroActionIndicator}>
+            <Show when={props.sceneStyle === 'scribble'}>
+              <PScribbleCircleFrame class="pomo-pomodoro__action-scribble-border" />
+            </Show>
+            <span class={cx(props.primaryIcon, CLASSES.pomodoroActionIcon)} />
+          </span>
+        </button>
+        <PTooltip
+          target={actionTooltip.target()}
+          show={actionTooltip.show()}
+          text={props.primaryLabel}
+        />
 
-    <Show when={props.sceneStyle === 'scribble'}>
-      <PScribbleFrame class="pomo-pomodoro__scribble-border" />
-    </Show>
-
-    <div
-      aria-label={m.pomodoro_quick_controls()}
-      class={cx(CLASSES.pomodoroTrigger, getQuickFrameClasses(props.sceneStyle))}
-      data-phase={props.phase}
-      role="group"
-    >
-      <PTooltip label={props.primaryLabel}>
-        {(tooltip) => (
-          <button
-            {...tooltip}
-            aria-label={props.primaryLabel}
-            class={cx(
-              INTERACTIVE_GLASS_PART_CLASSES,
-              STRONG_FOCUS_RING_CLASSES,
-              CLASSES.pomodoroEmotionAction,
-            )}
-            data-glass-part=""
-            onClick={() => props.onPrimaryPress()}
-            type="button"
-          >
-            <PCharacterEmotion
-              active={props.isActive}
-              emotion={props.characterEmotion}
-              image={props.characterImage}
-            />
-            <span aria-hidden="true" class={CLASSES.pomodoroActionIndicator}>
-              <Show when={props.sceneStyle === 'scribble'}>
-                <PScribbleCircleFrame class="pomo-pomodoro__action-scribble-border" />
-              </Show>
-              <span class={cx(props.primaryIcon, CLASSES.pomodoroActionIcon)} />
-            </span>
-          </button>
-        )}
-      </PTooltip>
-      <PTooltip label={m.pomodoro_open({status: props.statusLabel, time: props.timeLabel})}>
-        {(tooltip) => (
-          <button
-            {...tooltip}
-            aria-haspopup="dialog"
-            aria-label={m.pomodoro_open({status: props.statusLabel, time: props.timeLabel})}
-            class={cx(
-              INTERACTIVE_GLASS_PART_CLASSES,
-              STRONG_FOCUS_RING_CLASSES,
-              CLASSES.pomodoroTimeAction,
-            )}
-            data-glass-part=""
-            data-glass-trigger=""
-            onClick={(event) => props.onOpen(event.currentTarget)}
-            type="button"
-          >
-            <span class={CLASSES.pomodoroTriggerTime}>{props.timeLabel}</span>
-          </button>
-        )}
-      </PTooltip>
+        <button
+          {...openTooltip.events}
+          ref={openTooltip.setTarget}
+          aria-haspopup="dialog"
+          aria-label={m.pomodoro_open({status: props.statusLabel, time: props.timeLabel})}
+          class={cx(
+            INTERACTIVE_GLASS_PART_CLASSES,
+            STRONG_FOCUS_RING_CLASSES,
+            CLASSES.pomodoroTimeAction,
+          )}
+          data-glass-part=""
+          data-glass-trigger=""
+          onClick={(event) => props.onOpen(event.currentTarget)}
+          type="button"
+        >
+          <span class={CLASSES.pomodoroTriggerTime}>{props.timeLabel}</span>
+        </button>
+        <PTooltip
+          target={openTooltip.target()}
+          show={openTooltip.show()}
+          text={m.pomodoro_open({status: props.statusLabel, time: props.timeLabel})}
+        />
+      </div>
     </div>
-  </div>
-)
+  )
+}

@@ -111,9 +111,10 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
       revision,
     }
   })
-  const [calendarResult] = createResource(
+  const [calendarResult] = createResource<CalendarMonthResult | null, CalendarMonthRequest>(
     () => (authentication.session() === null ? false : monthRange()),
     loadCalendarMonth,
+    {initialValue: null},
   )
   const cachedCalendar = createMemo(() =>
     accountKey() === null ? null : readCalendarMonthCache(monthRange().range),
@@ -121,7 +122,7 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
   let lastCachedResult: LoadedCalendarMonth | null = null
   createEffect(() => {
     const request = monthRange()
-    const result = calendarResult()
+    const result = calendarResult.latest
     if (
       authentication.session() === null ||
       result?.kind !== 'loaded' ||
@@ -142,7 +143,7 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
       return null
     }
     const request = monthRange()
-    const result = calendarResult()
+    const result = calendarResult.latest
     return result?.kind === 'loaded' && result.requestKey === request.requestKey
       ? result.value
       : cachedCalendar()
@@ -164,7 +165,7 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
   const selectedEvents = createMemo(() => eventsByDay().get(selectedKey()) ?? [])
   const todayKey = createLocalDateKey(today)
   const refreshFailed = createMemo(() => {
-    const result = calendarResult()
+    const result = calendarResult.latest
     return (
       result?.kind === 'failed' &&
       result.requestKey === monthRange().requestKey &&
@@ -194,7 +195,7 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
         calendar={calendar()}
         failed={
           authentication.state().kind === 'unavailable' ||
-          (calendarResult()?.kind === 'failed' && calendar() === null)
+          (calendarResult.latest?.kind === 'failed' && calendar() === null)
         }
         loginRequired={authentication.state().kind === 'anonymous'}
         loading={

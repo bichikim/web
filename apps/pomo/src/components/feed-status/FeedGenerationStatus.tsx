@@ -21,6 +21,8 @@ export const FeedGenerationStatus = (props: FeedGenerationStatusProps) => (
       <small>{props.message}</small>
     </span>
     <PButton
+      bordered
+      transparent
       class={CLASSES.feedStatusAction}
       disabled={props.cancelDisabled}
       onPress={props.onCancel}

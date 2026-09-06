@@ -138,6 +138,8 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                 <div class={CLASSES.dialogueBubbleActions}>
                   <Show when={!isExternalSpeech()}>
                     <PButton
+                      bordered
+                      transparent
                       accessibleLabel={m.dialogue_skip()}
                       class={SKIP_BUTTON_CLASS}
                       icon="i-tabler-player-track-next"
@@ -152,6 +154,8 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                     </PButton>
                   </Show>
                   <PButton
+                    bordered
+                    transparent
                     accessibleLabel={stopLabel()}
                     class={STOP_BUTTON_CLASS}
                     icon="i-tabler-player-stop"

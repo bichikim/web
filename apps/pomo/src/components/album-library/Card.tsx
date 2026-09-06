@@ -65,6 +65,9 @@ export const AlbumCard = (props: AlbumCardProps) => {
       <Show when={props.album.sale === undefined && props.album.tracks.length > 0}>
         <div class="px-4 pb-4">
           <PButton
+            bordered={props.isInPlayer}
+            transparent={props.isInPlayer}
+            raised={!props.isInPlayer}
             class="w-full"
             disabled={props.isInPlayer}
             icon="i-tabler-playlist-add"

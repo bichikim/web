@@ -26,6 +26,8 @@ export const CacheSection = (props: CacheSectionProps) => (
         </p>
       </div>
       <PButton
+        bordered
+        transparent
         disabled={props.busy || props.entries.length === 0}
         onPress={props.onClear}
         size="small"
@@ -57,6 +59,8 @@ export const CacheSection = (props: CacheSectionProps) => (
                 <p class="mb-0 mt-1 truncate text-modal-detail text-#8f8297">{key}</p>
               </div>
               <PButton
+                bordered
+                transparent
                 accessibleLabel={`${getEntryLabel(key)} 삭제`}
                 disabled={props.busy}
                 onPress={(source) => props.onDelete(key, source)}

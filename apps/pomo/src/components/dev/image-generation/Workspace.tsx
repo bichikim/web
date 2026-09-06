@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {Preview} from './Preview'
 import {For, Show} from 'solid-js'
 import {useImageGeneration} from 'src/features/image-generation'
@@ -24,7 +25,8 @@ export function Workspace() {
         >
           <fieldset disabled={studio.busy()}>
             <label for="image-idea">어떤 장면을 만들까요?</label>
-            <textarea
+            <PTextarea
+              unstyled
               id="image-idea"
               maxlength={2000}
               placeholder="추상화, 춤추는 햄버거"

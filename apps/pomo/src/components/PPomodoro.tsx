@@ -4,7 +4,7 @@ import {createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
 import {getPomoIconClass} from './icon-style'
 import {PButton} from './PButton'
 import {type PCharacterEmotionType} from './PCharacterEmotion'
-import {PIconButton} from './PIconButton'
+import {GLASS_ICON_BUTTON} from './button-presets'
 import {PModal} from './PModal'
 import {PSwitch} from './PSwitch'
 import type {PSceneStyle} from '../features/focus-room-animation'
@@ -227,6 +227,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
 
           <div class={CLASSES.pomodoroPanelActions} ref={setActionContainer}>
             <PButton
+              raised
               class={CLASSES.pomodoroPanelPrimaryAction}
               icon={primaryIcon()}
               onPress={handlePrimaryPress}
@@ -234,21 +235,20 @@ export const PPomodoro = (props: PPomodoroProps) => {
             >
               {primaryLabel()}
             </PButton>
-            <PIconButton
+            <PButton
+              {...GLASS_ICON_BUTTON}
               accessibleLabel={m.pomodoro_next_phase()}
+              tooltip={m.pomodoro_next_phase()}
               class={CLASSES.pomodoroPanelCompactAction}
-              feedback={m.pomodoro_next_phase_feedback()}
               icon={getPomoIconClass('i-tabler-player-track-next', props.sceneStyle)}
               onPress={timer.onNextPhase}
             />
             <Show when={timer.state().status !== 'idle'}>
-              <PIconButton
+              <PButton
+                {...GLASS_ICON_BUTTON}
                 accessibleLabel={m.pomodoro_end_session()}
-                class={cx(
-                  CLASSES.pomodoroPanelCompactAction,
-                  CLASSES.pomodoroPanelCompactActionDanger,
-                )}
-                feedback={m.pomodoro_end_session_feedback()}
+                tooltip={m.pomodoro_end_session()}
+                class={CLASSES.pomodoroPanelCompactActionDanger}
                 icon={getPomoIconClass('i-tabler-square', props.sceneStyle)}
                 onPress={timer.onStop}
               />

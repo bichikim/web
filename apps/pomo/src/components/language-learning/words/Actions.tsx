@@ -23,6 +23,8 @@ export const LanguageLearningWordActions = (props: LanguageLearningWordActionsPr
         {m.learning_words_selection_count({count: selectedCount()})}
       </span>
       <PButton
+        bordered
+        transparent
         accessibleLabel={toggleLabel()}
         disabled={selectedCount() === 0}
         icon="i-tabler-check"
@@ -33,6 +35,8 @@ export const LanguageLearningWordActions = (props: LanguageLearningWordActionsPr
         {allMemorized() ? m.learning_words_unmark_action() : m.learning_words_mark_action()}
       </PButton>
       <PButton
+        bordered
+        transparent
         accessibleLabel={m.learning_words_delete_selected({count: selectedCount()})}
         disabled={selectedCount() === 0}
         icon="i-tabler-trash"

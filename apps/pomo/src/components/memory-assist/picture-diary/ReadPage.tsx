@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type PictureDiaryEntry} from '../../../features/picture-diary'
@@ -6,6 +7,19 @@ import {getWeatherPresentation} from '../../../features/weather'
 import {HConfirmButton} from '../../HConfirmButton'
 import {PictureDiaryCanvas} from './Canvas'
 import {type PageSide} from './editor-props'
+
+const DELETE_CLASSES =
+  '[&[data-confirming]]:[border-color:rgb(187_66_50/28%)] ' +
+  '[&[data-confirming]]:[background:rgb(187_66_50/9%)] ' +
+  '[&[data-confirming]]:[color:rgb(151_46_34)] [&[data-confirming]]:px-[0.65rem]'
+
+const ACTION_CLASSES =
+  'box-border inline-flex min-w-8 min-h-8 cursor-pointer items-center justify-center ' +
+  'border border-solid border-transparent rounded-[999rem] outline-none bg-transparent ' +
+  '[color:rgb(var(--picture-diary-muted-ink))] [font:inherit] text-modal-detail font-700 leading-none ' +
+  'p-[0.4rem] whitespace-nowrap [transition:color_160ms_ease,border-color_160ms_ease,background-color_160ms_ease] ' +
+  'hover:[background:rgb(var(--picture-diary-rule)/8%)] hover:[color:rgb(var(--picture-diary-ink))] ' +
+  'focus-visible:[box-shadow:0_0_0_0.125rem_rgb(var(--pomo-color-primary-channels)/72%)]'
 
 const formatPageDate = (date: string) => `${date.replaceAll('-', '. ')}.`
 
@@ -36,7 +50,7 @@ export const PictureDiaryReadPage = (props: PictureDiaryReadPageProps) => (
               <Show when={props.onEdit}>
                 <button
                   aria-label={m.picture_diary_edit_entry()}
-                  class="diary-page-action"
+                  class={ACTION_CLASSES}
                   type="button"
                   onClick={() => props.onEdit?.(entry())}
                 >
@@ -49,7 +63,7 @@ export const PictureDiaryReadPage = (props: PictureDiaryReadPageProps) => (
                     accessibleLabel={m.picture_diary_delete_entry({
                       date: formatPageDate(entry().date),
                     })}
-                    class="diary-page-action diary-page-delete"
+                    class={cx(ACTION_CLASSES, DELETE_CLASSES)}
                     confirmationAccessibleLabel={m.picture_diary_delete_confirm_label({
                       date: formatPageDate(entry().date),
                     })}

@@ -86,6 +86,8 @@ export const PTourBody = <Step extends PTourStep>(props: PTourBodyProps<Step>) =
             </Show>
             <footer class="mt-5 flex items-center justify-end gap-2">
               <PButton
+                bordered
+                transparent
                 disabled={props.tour.isFirstStep()}
                 onPress={() => props.tour.previous()}
                 size="small"
@@ -93,7 +95,7 @@ export const PTourBody = <Step extends PTourStep>(props: PTourBodyProps<Step>) =
               >
                 {m.tour_previous()}
               </PButton>
-              <PButton onPress={() => props.tour.next()} size="small">
+              <PButton raised onPress={() => props.tour.next()} size="small">
                 {props.tour.isLastStep() ? m.tour_finish() : m.tour_next()}
               </PButton>
             </footer>

@@ -9,7 +9,7 @@ import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PModal, type PModalProps} from 'src/components/PModal'
 import {CalendarConnections} from '../CalendarConnections'
 import {CalendarMonth} from '../CalendarMonth'
-import {PIconButton} from '../PIconButton'
+import {PButton} from '../PButton'
 import {PMemoryAssist} from '../PMemoryAssist'
 import {LanguageLearningLibrary} from '../language-learning/Library'
 import {MemoryMemoList} from '../memory-assist/Memos'
@@ -29,7 +29,7 @@ vi.mock('../CalendarMonth', () => ({
     </div>
   )),
 }))
-vi.mock('../PIconButton', () => ({PIconButton: vi.fn()}))
+vi.mock('../PButton', () => ({PButton: vi.fn()}))
 vi.mock('../language-learning/Library', () => ({
   LanguageLearningLibrary: vi.fn(),
 }))
@@ -102,11 +102,11 @@ beforeEach(() => {
       </button>
     </div>
   ))
-  vi.mocked(PIconButton).mockImplementation((props) => (
-    <button onClick={(event) => props.onPress(event.currentTarget)} type="button">
+  vi.mocked(PButton).mockImplementation((props) => (
+    <button onClick={(event) => props.onPress?.(event.currentTarget)} type="button">
       {props.accessibleLabel}
       <span aria-hidden="true">
-        {props.feedback} {props.icon}
+        {props.tooltip} {props.icon}
       </span>
     </button>
   ))
@@ -127,11 +127,11 @@ it('should open a Korean memory assist modal', () => {
   fireEvent.click(trigger)
 
   expect(screen.getByRole('dialog', {name: 'Pomofi 기억 보조'}).hasAttribute('hidden')).toBe(false)
-  expect(PIconButton).toHaveBeenCalledWith(
+  expect(PButton).toHaveBeenCalledWith(
     expect.objectContaining({
       accessibleLabel: '기억보조',
-      feedback: '기억 보조',
       icon: 'i-tabler-brain',
+      tooltip: '기억보조',
     }),
   )
   expect(PModal).toHaveBeenCalledWith(expect.objectContaining({size: 'expanded'}))
@@ -181,7 +181,7 @@ it('should open a Korean memory assist modal', () => {
 it('should use the scribble brain icon in scribble scenes', () => {
   render(() => <PMemoryAssist sceneStyle="scribble" />)
 
-  expect(PIconButton).toHaveBeenCalledWith(expect.objectContaining({icon: 'i-pomo-scribble:brain'}))
+  expect(PButton).toHaveBeenCalledWith(expect.objectContaining({icon: 'i-pomo-scribble:brain'}))
   expect(PScribbleCircleControl).toHaveBeenCalledWith(expect.objectContaining({enabled: true}))
 })
 
@@ -192,8 +192,8 @@ it('should open an English memory assist modal', () => {
   fireEvent.click(screen.getByRole('button', {name: 'Open memory aid'}))
 
   expect(screen.getByRole('dialog', {name: 'Pomofi memory aid'}).hasAttribute('hidden')).toBe(false)
-  expect(PIconButton).toHaveBeenCalledWith(
-    expect.objectContaining({accessibleLabel: 'Open memory aid', feedback: 'Memory aid'}),
+  expect(PButton).toHaveBeenCalledWith(
+    expect.objectContaining({accessibleLabel: 'Open memory aid', tooltip: 'Open memory aid'}),
   )
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     'Learning sentences',

@@ -1,3 +1,4 @@
+import {PTooltipContent, PTooltipProvider} from '../../tooltip'
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
@@ -83,9 +84,12 @@ describe('PSwipeTrackItem', () => {
     })
     try {
       const {container} = render(() => (
-        <PSwipeTrackItem current={current} index={0} onSelect={vi.fn()} track={TRACK} />
+        <PTooltipProvider>
+          <PSwipeTrackItem current={current} index={0} onSelect={vi.fn()} track={TRACK} />
+          <PTooltipContent />
+        </PTooltipProvider>
       ))
-      const title = container.querySelector('[data-pomo-tooltip-trigger]')
+      const title = container.querySelector('button > span.min-w-0.flex-1')
       expect(title).not.toBeNull()
       fireEvent.pointerEnter(title!)
       vi.advanceTimersByTime(400)

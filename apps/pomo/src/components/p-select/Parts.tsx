@@ -1,3 +1,4 @@
+import {FIELD_DESCRIPTION, FIELD_LABEL, FIELD_VALUE} from 'src/components/field-classes'
 import {Select} from '@kobalte/core/select'
 import {cva, cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
@@ -32,10 +33,10 @@ const selectTriggerClasses = cva(
       appearance: {
         default:
           'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 py-2 pomo-field-value',
+          `px-4 py-2 ${FIELD_VALUE}`,
         detailed:
           'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 py-2 pomo-field-value',
+          `px-4 py-2 ${FIELD_VALUE}`,
         icon:
           'grid size-control-md place-items-center text-highlight shadow-panel ' +
           'hover:bg-surface-interactive focus-visible:bg-surface-interactive ' +
@@ -64,7 +65,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
   <>
     <Show when={!props.hideLabel || props.accessibleLabel === undefined}>
       <Select.Label
-        class={props.hideLabel ? 'sr-only' : 'pomo-field-label'}
+        class={props.hideLabel ? 'sr-only' : FIELD_LABEL}
         data-visually-hidden={props.hideLabel ? '' : undefined}
       >
         {props.label}
@@ -72,7 +73,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
     </Show>
     <Show when={props.description}>
       {(description) => (
-        <Select.Description class="pomo-field-description">{description()}</Select.Description>
+        <Select.Description class={FIELD_DESCRIPTION}>{description()}</Select.Description>
       )}
     </Show>
     <Select.Trigger

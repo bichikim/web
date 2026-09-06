@@ -141,3 +141,16 @@ it.each([
     ]),
   ).toBeNull()
 })
+
+it('should retain drawing tools when saving a diary', () => {
+  const strokes = [{color: 'blue', points: [{x: 0.5, y: 0.5}], thickness: 'thick'}] as const
+  const entry = createPictureDiaryEntry({
+    createdAt: '2026-09-06T00:00:00.000Z',
+    date: '2026-09-06',
+    id: 'colored',
+    now: new Date('2026-09-06T00:00:00.000Z'),
+    strokes,
+    text: '',
+  })
+  expect(parsePictureDiaryEntries([entry])?.[0]?.strokes).toEqual(strokes)
+})

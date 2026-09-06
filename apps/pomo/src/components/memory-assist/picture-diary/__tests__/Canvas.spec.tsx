@@ -126,3 +126,93 @@ it('should display the generated image behind strokes and release preview URLs',
   createUrl.mockRestore()
   revokeUrl.mockRestore()
 })
+
+it('should keep the selected color and thickness while extending a stroke', () => {
+  let latest: ReadonlyArray<PictureDiaryStroke> = []
+  render(() => {
+    const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
+    return (
+      <PictureDiaryCanvas
+        color="blue"
+        thickness="thick"
+        strokes={strokes()}
+        onChange={(next) => {
+          latest = next
+          setStrokes(next)
+        }}
+      />
+    )
+  })
+  const canvas = screen.getByLabelText('그림 그리는 곳')
+  for (const type of ['pointerdown', 'pointermove']) {
+    const event = new Event(type, {bubbles: true})
+    Object.defineProperties(event, {
+      button: {value: 0},
+      buttons: {value: 1},
+      clientX: {value: 0},
+      clientY: {value: 0},
+      pointerId: {value: 1},
+    })
+    canvas.dispatchEvent(event)
+  }
+  expect(latest[0]).toMatchObject({color: 'blue', thickness: 'thick'})
+  expect(latest[0]?.points).toHaveLength(2)
+})
+
+it('should erase only the selected stroke and leave the background image alone', () => {
+  const onChange = vi.fn()
+  const strokes = [{points: [{x: 0.5, y: 0.5}]}, {points: [{x: 0.2, y: 0.2}]}]
+  render(() => <PictureDiaryCanvas tool="eraser" strokes={strokes} onChange={onChange} />)
+  const event = new Event('pointerdown', {bubbles: true})
+  Object.defineProperties(event, {button: {value: 0}, pointerId: {value: 1}})
+  screen.getByLabelText('그림 그리는 곳').querySelector('circle')!.dispatchEvent(event)
+  expect(onChange).toHaveBeenCalledWith([strokes[1]])
+})
+
+it('should erase crossed strokes during one drag and record one undo step', () => {
+  const onStart = vi.fn()
+  render(() => {
+    const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([
+      {points: [{x: 0.2, y: 0.5}]},
+      {points: [{x: 0.5, y: 0.5}]},
+    ])
+    return (
+      <PictureDiaryCanvas
+        tool="eraser"
+        strokes={strokes()}
+        onChange={setStrokes}
+        onStart={onStart}
+      />
+    )
+  })
+  const canvas = screen.getByLabelText('그림 그리는 곳')
+  const circles = Array.from(canvas.querySelectorAll('circle'))
+  const hitTest = vi.fn((x: number) =>
+    x === 20 ? [circles[0]!] : x === 50 ? [circles[1]!] : [canvas],
+  )
+  Object.defineProperty(document, 'elementsFromPoint', {configurable: true, value: hitTest})
+  const pointer = (type: string, x: number, pointerId = 1) => {
+    const event = new Event(type, {bubbles: true})
+    Object.defineProperties(event, {
+      button: {value: 0},
+      buttons: {value: 1},
+      clientX: {value: x},
+      clientY: {value: 10},
+      pointerId: {value: pointerId},
+    })
+    canvas.dispatchEvent(event)
+  }
+  pointer('pointerdown', 0)
+  pointer('pointermove', 60, 2)
+  expect(canvas.querySelectorAll('circle')).toHaveLength(2)
+  pointer('pointermove', 30)
+  expect(canvas.querySelectorAll('circle')).toHaveLength(1)
+  pointer('pointermove', 60)
+  expect(canvas.querySelectorAll('circle')).toHaveLength(0)
+  expect(onStart).toHaveBeenCalledOnce()
+  pointer('pointerup', 60)
+  hitTest.mockClear()
+  pointer('pointermove', 80)
+  expect(hitTest).not.toHaveBeenCalled()
+  Reflect.deleteProperty(document, 'elementsFromPoint')
+})

@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
 
@@ -158,7 +159,8 @@ export const RandomEventSettings = () => {
         <div class={CLASSES.fields}>
           <label class={CLASSES.field}>
             <span>{m.settings_random_interval_minimum()}</span>
-            <input
+            <PInput
+              unstyled
               aria-label={m.settings_random_interval_minimum_label()}
               aria-invalid={interval() === null}
               class={CLASSES.input}
@@ -175,7 +177,8 @@ export const RandomEventSettings = () => {
           </label>
           <label class={CLASSES.field}>
             <span>{m.settings_random_interval_maximum()}</span>
-            <input
+            <PInput
+              unstyled
               aria-label={m.settings_random_interval_maximum_label()}
               aria-invalid={interval() === null}
               class={CLASSES.input}

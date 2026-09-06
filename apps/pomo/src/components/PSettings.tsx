@@ -1,7 +1,8 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createSignal} from 'solid-js'
 import {getPomoIconClass} from './icon-style'
-import {PIconButton} from './PIconButton'
+import {GLASS_ICON_BUTTON} from './button-presets'
+import {PButton} from './PButton'
 import {PModal} from './PModal'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {UserSettings} from './UserSettings'
@@ -29,9 +30,10 @@ export const PSettings = (props: PSettingsProps) => {
   return (
     <>
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-        <PIconButton
+        <PButton
+          {...GLASS_ICON_BUTTON}
           accessibleLabel={m.settings_open()}
-          feedback={m.settings_feedback()}
+          tooltip={m.settings_open()}
           icon={getPomoIconClass('i-tabler-settings', props.sceneStyle)}
           onPress={handleOpen}
         />

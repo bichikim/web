@@ -167,9 +167,9 @@ const renderEditor = (harness: EditorHarness, dialogueId: string | null = null) 
   return render(() => <PDialogueEditor dialogueId={dialogueId} />)
 }
 
-const getVoiceSelect = () => screen.getByRole('combobox', {name: '목소리'})
-const getLanguageSelect = () => screen.getByRole('combobox', {name: '언어'})
-const getModelSelect = () => screen.getByRole('combobox', {name: '모델'})
+const getVoiceSelect = () => screen.getByRole('button', {name: /목소리/})
+const getLanguageSelect = () => screen.getByRole('button', {name: /언어/})
+const getModelSelect = () => screen.getByRole('button', {name: /모델/})
 const getGenerateButton = () => screen.getByRole('button', {name: '음성 만들기'})
 const getSaveButton = () => screen.getByRole('button', {name: '대화 저장'})
 
@@ -268,16 +268,16 @@ describe('PDialogueEditor fields', () => {
     })
     expect(harness.controller.setText).toHaveBeenCalledWith('직접 입력')
 
-    fireEvent.change(getVoiceSelect(), {target: {value: 'F1'}})
-    fireEvent.change(getLanguageSelect(), {target: {value: 'en'}})
-    fireEvent.change(getModelSelect(), {target: {value: 'int8'}})
-    expect(harness.controller.voiceId()).toBe('F1')
-    expect(harness.controller.language()).toBe('en')
-    expect(harness.controller.modelId()).toBe('int8')
-
-    fireEvent.change(getVoiceSelect(), {target: {value: 'missing'}})
-    fireEvent.change(getLanguageSelect(), {target: {value: 'missing'}})
-    fireEvent.change(getModelSelect(), {target: {value: 'missing'}})
+    for (const [select, value] of [
+      [getVoiceSelect(), 'F1'],
+      [getLanguageSelect(), 'en'],
+      [getModelSelect(), 'int8'],
+    ] as const) {
+      fireEvent.keyDown(select, {key: 'ArrowDown'})
+      const option = document.querySelector(`[role="option"][data-key="${value}"]`)
+      expect(option).not.toBeNull()
+      fireEvent.click(option!)
+    }
     expect(harness.controller.voiceId()).toBe('F1')
     expect(harness.controller.language()).toBe('en')
     expect(harness.controller.modelId()).toBe('int8')

@@ -1,19 +1,5 @@
 export const CLASSES = {
   feedSettings: 'pomo-feed-settings grid gap-4.5 settings-compact:gap-4',
-  feedSettingsAdd: cx(
-    'pomo-feed-settings__add inline-flex min-h-control-md box-border',
-    'cursor-pointer items-center justify-center gap-[0.35rem]',
-    'border border-solid border-border rounded-control bg-transparent',
-    'py-2 px-3 text-muted-foreground [font:inherit] text-modal-detail',
-    'font-bold',
-    'transition-[border-color_140ms_ease,_background-color_140ms_ease,_color_140ms_ease]',
-    'border-highlight text-foreground',
-    '[&:hover:not(:disabled)]:bg-secondary-soft',
-    '[&:hover:not(:disabled)]:text-foreground',
-    '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
-    '[&:focus-visible]:[outline-offset:0.125rem] [&:disabled]:[cursor:not-allowed]',
-    '[&:disabled]:[opacity:0.55] max-sm:w-full motion-reduce:transition-[none]',
-  ),
   feedSettingsAddress: cx(
     'pomo-feed-settings__address flex min-w-0 min-h-10 items-center gap-[0.6rem]',
     'text-highlight settings-compact:col-span-full',

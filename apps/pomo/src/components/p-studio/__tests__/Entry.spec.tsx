@@ -32,9 +32,10 @@ it('should enter and finish its own exit animation', () => {
   ))
   const section = screen.getByRole('region')
 
+  expect(PButton).toHaveBeenCalledWith(expect.objectContaining({leadingOverflow: true, pill: true}))
   expect(section).not.toHaveAttribute('data-exiting')
   expect(section).not.toHaveAttribute('style')
-  fireEvent.click(screen.getByRole('button'))
+  fireEvent.click(screen.getByRole('button', {name: '시작하기'}))
   expect(onEnter).toHaveBeenCalledOnce()
   fireEvent.animationEnd(section)
   expect(onExitComplete).toHaveBeenCalledOnce()

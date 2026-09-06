@@ -1,5 +1,4 @@
 export * from './Content'
-export * from './Root'
-export * from './Trigger'
-export * from './context'
+export * from './Provider'
 export * from './surface'
+export * from './use-trigger'
