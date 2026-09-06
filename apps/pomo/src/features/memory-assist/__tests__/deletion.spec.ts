@@ -153,3 +153,11 @@ it('should share pending work between foreground deletion and recovery on one co
   await Promise.all([first, recovery])
   expect(mocks.deleteDialogue).toHaveBeenCalledOnce()
 })
+
+it('should delete generation-specific dialogue and audio owned by the memo', async () => {
+  const dialogueId = 'memory-memo-one:61f5d718-00b9-4187-a01e-c4a9792d7c31'
+  mocks.memos = [{...memo, dialogueId}]
+  await expect(remove()).resolves.toBe('deleted')
+  expect(mocks.deleteDialogue).toHaveBeenCalledExactlyOnceWith(dialogueId)
+  expect(mocks.audio).toHaveBeenCalledExactlyOnceWith(dialogueId)
+})

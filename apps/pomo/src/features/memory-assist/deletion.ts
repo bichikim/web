@@ -1,4 +1,4 @@
-import {getMemoryMemoDialogueId} from './dialogue-id'
+import {isMemoryMemoOwnedDialogue} from './dialogue-id'
 import type {MemoryMemo} from './schema'
 
 export interface DeleteMemoryMemoOptions {
@@ -41,7 +41,7 @@ export const createMemoryMemoDeletion = (
     }
 
     try {
-      if (memo.dialogueId === getMemoryMemoDialogueId(memo.id)) {
+      if (memo.dialogueId !== null && isMemoryMemoOwnedDialogue(memo.dialogueId, memo.id)) {
         await options.deleteDialogue(memo.dialogueId)
         // Metadata may already be gone after an earlier attempt; retain the owned audio key until both formats are removed.
         await dependencies.deleteAudio(memo.dialogueId)
