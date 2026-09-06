@@ -495,6 +495,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       document: getDeformerPreviewDocument(props),
       partId: activePart.id,
       point,
+      vertexIndex,
     })
     const result = commitVertexMove({
       ...localPoint,

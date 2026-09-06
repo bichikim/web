@@ -1,3 +1,4 @@
+import {DeformerWeights} from './DeformerWeights'
 import {DeformerMode} from './DeformerMode'
 import {ToggleButton} from '@kobalte/core/toggle-button'
 import {Button} from '@kobalte/core/button'
@@ -128,6 +129,7 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
         </For>
       </svg>
       {props.renderControls === undefined ? controls : props.renderControls(controls)}
+      <DeformerWeights {...props} />
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import {DeformerWeights} from './DeformerWeights'
 import {updateDraggedDeformer} from './deformer-drag'
 import {PinEditor} from './PinEditor'
 import {DeformerTools} from './DeformerTools'
@@ -29,6 +30,10 @@ import {
 import {applySceneNodeAncestorsPoint, unapplySceneNodeAncestorsPoint} from './scene-deformation'
 import {getDeformerAngle, getDeformerRotationOrigin} from './deformer-transform'
 import {getEditorPoint, getEditorViewBox} from './viewport'
+
+export interface SelectedDeformerProps extends DeformerEditorProps {
+  readonly node: PuppetSceneDeformerNode
+}
 
 export interface DeformerEditorProps {
   readonly deformerMode?: DeformerEditMode
@@ -418,6 +423,7 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
               transform={editor.transformPoint}
             />
           </svg>
+          <DeformerWeights {...props} node={activeDeformer()} />
           <Show when={editor.editBlockMessage()}>
             {(message) => (
               <p class="deformer-edit-message" role="status">

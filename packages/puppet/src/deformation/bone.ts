@@ -1,4 +1,4 @@
-import type {PuppetDeformerShape, PuppetPoint} from '../player/document'
+import type {PuppetDeformerShape, PuppetPoint, PuppetVertexReference} from '../player/document'
 
 const EPSILON = 0.000001
 const COORDINATES = 2
@@ -69,10 +69,19 @@ export const moveBoneJoint = (options: MoveBoneJointOptions): number[] => {
   })
 }
 
-export const transformBonePoint = (node: PuppetDeformerShape, point: PuppetPoint): PuppetPoint => {
+export const getBoneWeights = (
+  node: PuppetDeformerShape,
+  point: PuppetPoint,
+  vertex?: PuppetVertexReference,
+): readonly number[] => {
+  const manual = node.boneWeights?.find(
+    (entry) => entry.partId === vertex?.partId && entry.vertexIndex === vertex?.vertexIndex,
+  )
+  if (manual !== undefined) {
+    return manual.weights
+  }
   const rest = node.boneRestPoints!
-  const pose = normalizeBonePose(rest, node.controlPoints)
-  const influences = Array.from({length: rest.length / COORDINATES - 1}, (_, index) => {
+  const weights = Array.from({length: rest.length / COORDINATES - 1}, (_, index) => {
     const start = joint(rest, index)
     const end = joint(rest, index + 1)
     const horizontal = end.x - start.x
@@ -89,6 +98,25 @@ export const transformBonePoint = (node: PuppetDeformerShape, point: PuppetPoint
       point.x - start.x - progress * horizontal,
       point.y - start.y - progress * vertical,
     )
+    return 1 / (distance * distance + Math.max(EPSILON, length * length * EPSILON))
+  })
+  const total = weights.reduce((sum, value) => sum + value, 0)
+  return weights.map((value) => value / total)
+}
+
+export const transformBonePoint = (
+  node: PuppetDeformerShape,
+  point: PuppetPoint,
+  vertex?: PuppetVertexReference,
+): PuppetPoint => {
+  const rest = node.boneRestPoints!
+  const pose = normalizeBonePose(rest, node.controlPoints)
+  const weights = getBoneWeights(node, point, vertex)
+  const influences = Array.from({length: rest.length / COORDINATES - 1}, (_, index) => {
+    const start = joint(rest, index)
+    const end = joint(rest, index + 1)
+    const horizontal = end.x - start.x
+    const vertical = end.y - start.y
     const origin = joint(pose, index)
     const target = joint(pose, index + 1)
     const angle =
@@ -96,11 +124,18 @@ export const transformBonePoint = (node: PuppetDeformerShape, point: PuppetPoint
     const cosine = Math.cos(angle)
     const sine = Math.sin(angle)
     return {
-      weight: 1 / (distance * distance + Math.max(EPSILON, length * length * EPSILON)),
+      weight: weights[index]!,
       x: origin.x + (point.x - start.x) * cosine - (point.y - start.y) * sine,
       y: origin.y + (point.x - start.x) * sine + (point.y - start.y) * cosine,
     }
   })
+  if (influences.length === 1) {
+    const influence = influences[0]!
+    return {
+      x: point.x + (influence.x - point.x) * influence.weight,
+      y: point.y + (influence.y - point.y) * influence.weight,
+    }
+  }
   const weight = influences.reduce((sum, influence) => sum + influence.weight, 0)
   return influences.reduce(
     (result, influence) => ({

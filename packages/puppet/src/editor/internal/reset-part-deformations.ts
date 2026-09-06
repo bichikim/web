@@ -1,3 +1,4 @@
+import {clearPartDeformerWeights} from './deformer-weights'
 import {isTwoDimensionalParameterBinding} from '../../deformation'
 import type {
   PuppetDocument,
@@ -51,7 +52,7 @@ export const resetParameterPartKeyforms = (
   partId: string,
   vertices: ReadonlyArray<number>,
 ): PuppetDocument => ({
-  ...document,
+  ...clearPartDeformerWeights(document, partId),
   parameterBindings: document.parameterBindings?.map((binding) =>
     resetParameterBinding(binding, partId, vertices),
   ),

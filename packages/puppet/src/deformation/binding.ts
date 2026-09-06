@@ -2,6 +2,7 @@ import type {PuppetDeformerShape, PuppetSceneDeformerNode} from '../player/docum
 
 export const getDeformerShape = (node: PuppetDeformerShape): PuppetDeformerShape => ({
   boneRestPoints: node.boneRestPoints,
+  boneWeights: node.boneWeights,
   bounds: {
     height: node.bounds.height,
     width: node.bounds.width,
@@ -13,8 +14,9 @@ export const getDeformerShape = (node: PuppetDeformerShape): PuppetDeformerShape
   curveAxis: node.curveAxis,
   curveBreaks: node.curveBreaks,
   curveHandles: node.curveHandles,
-  rows: node.rows,
   pins: node.pins,
+  rows: node.rows,
+  vertexInfluences: node.vertexInfluences,
 })
 
 export const sameDeformerShape = (left: PuppetDeformerShape, right: PuppetDeformerShape): boolean =>
