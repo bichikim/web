@@ -2,6 +2,7 @@
 
 import {cleanup, fireEvent} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
@@ -13,6 +14,59 @@ import {
 
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
+
+  it('should expose the complete current track title in its tooltip and update it when the track changes', () => {
+    const [currentTrack, setTrack] = createSignal({
+      artist: 'Artist',
+      durationSeconds: 1,
+      id: 'title-one',
+      source: '/one.mp3',
+      title: '화면보다 긴 첫 번째 곡 제목',
+    })
+    const result = renderMusicPlayerView({
+      get currentTrack() {
+        return currentTrack()
+      },
+    })
+    const title = result.container.querySelector('[data-pomo-player-title] p')
+    expect(title).toHaveAttribute('data-pomo-tooltip-trigger', '')
+    expect(title?.nextElementSibling).toHaveAttribute('role', 'tooltip')
+    expect(title?.nextElementSibling).toHaveTextContent('화면보다 긴 첫 번째 곡 제목')
+    setTrack({
+      artist: 'Artist',
+      durationSeconds: 1,
+      id: 'title-two',
+      source: '/two.mp3',
+      title: '두 번째 곡 제목',
+    })
+    expect(title?.nextElementSibling).toHaveTextContent('두 번째 곡 제목')
+  })
+
+  it.each([false, true])(
+    'should update every playback tooltip with the playback state (expanded: %s)',
+    (expanded) => {
+      const [isPlaying, setPlaying] = createSignal(false)
+      const result = renderMusicPlayerView({
+        expanded,
+        get isPlaying() {
+          return isPlaying()
+        },
+      })
+      const buttons = result.container.querySelectorAll('media-play-button')
+      expect(buttons).toHaveLength(2)
+      for (const button of buttons) {
+        expect(button.nextElementSibling).toHaveTextContent(/^재생$/)
+      }
+      setPlaying(true)
+      for (const button of buttons) {
+        expect(button.nextElementSibling).toHaveTextContent(/^일시 정지$/)
+      }
+      setPlaying(false)
+      for (const button of buttons) {
+        expect(button.nextElementSibling).toHaveTextContent(/^재생$/)
+      }
+    },
+  )
 
   it('should render the current track artwork only in the expanded player', () => {
     const collapsedResult = renderMusicPlayerView({expanded: false})

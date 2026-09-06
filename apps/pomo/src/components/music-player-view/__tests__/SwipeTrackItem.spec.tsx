@@ -70,6 +70,37 @@ describe('PSwipeTrackItem', () => {
     vi.unstubAllGlobals()
   })
 
+  it.each([false, true])('should show the full title on hover when current is %s', (current) => {
+    vi.useFakeTimers()
+    vi.stubGlobal('CSS', {supports: () => true})
+    Object.defineProperty(HTMLElement.prototype, 'showPopover', {
+      configurable: true,
+      value: vi.fn(),
+    })
+    Object.defineProperty(HTMLElement.prototype, 'hidePopover', {
+      configurable: true,
+      value: vi.fn(),
+    })
+    try {
+      const {container} = render(() => (
+        <PSwipeTrackItem current={current} index={0} onSelect={vi.fn()} track={TRACK} />
+      ))
+      const title = container.querySelector('[data-pomo-tooltip-trigger]')
+      expect(title).not.toBeNull()
+      fireEvent.pointerEnter(title!)
+      vi.advanceTimersByTime(400)
+      const tooltip = screen.getByRole('tooltip')
+      expect(tooltip).toHaveTextContent(TRACK.title)
+      expect(title).toHaveAttribute('aria-describedby', tooltip.id)
+      expect(tooltip.showPopover).toHaveBeenCalledOnce()
+    } finally {
+      cleanup()
+      vi.useRealTimers()
+      Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
+      Reflect.deleteProperty(HTMLElement.prototype, 'hidePopover')
+    }
+  })
+
   it.each([-64, 64])('should remove after crossing the swipe threshold at %i pixels', (endX) => {
     const {button, onRemove} = renderTrack()
 
