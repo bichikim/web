@@ -7,6 +7,15 @@ import * as m from '@paraglide/message'
 const SECONDS_PER_MINUTE = 60
 const minutes = (seconds: number) => seconds / SECONDS_PER_MINUTE
 const getGuideSections = () => [
+  ...(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS !== 'true' &&
+  import.meta.env.VITE_POMO_IS_DESKTOP !== 'true'
+    ? [
+        {
+          details: [m.guide_install_browser(), m.guide_install_ios(), m.guide_install_connection()],
+          title: m.guide_install_title(),
+        },
+      ]
+    : []),
   {
     details: [m.guide_start_one(), m.guide_start_two()],
     title: m.guide_start_title(),
