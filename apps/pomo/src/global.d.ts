@@ -59,6 +59,10 @@ type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {
 
 declare module 'solid-js' {
   namespace JSX {
+    interface ExplicitAttributes {
+      autofocus: string
+    }
+
     interface ExplicitBoolAttributes {
       disabled: boolean
     }
@@ -68,6 +72,7 @@ declare module 'solid-js' {
       'media-controller': MediaChromeAttributes
       'media-mute-button': MediaChromeAttributes
       'media-play-button': MediaChromeAttributes
+      'media-preview-time-display': MediaChromeAttributes
       'media-time-display': MediaChromeAttributes
       'media-time-range': MediaChromeAttributes
       'media-volume-range': MediaChromeAttributes

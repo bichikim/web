@@ -1,6 +1,7 @@
 import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 import {CLASSES, MusicPlayerViewProps} from './shared'
+import {TOOLTIP_SURFACE_CLASSES} from '../tooltip'
 
 const MEDIA_FOCUS_CLASSES =
   'focus-visible:outline-none [--media-focus-box-shadow:inset_0_0_0_0.125rem_#727b60]'
@@ -17,5 +18,9 @@ export const ExpandedPlayerProgress = (props: Pick<MusicPlayerViewProps, 'expand
       !props.expanded && 'pointer-events-none cursor-default [--media-cursor:default]',
     )}
     bool:disabled={!props.expanded}
-  />
+  >
+    <span class={cx(TOOLTIP_SURFACE_CLASSES, 'block whitespace-nowrap')} slot="preview">
+      <media-preview-time-display class="[font:inherit] text-inherit bg-transparent p-0" />
+    </span>
+  </media-time-range>
 )

@@ -214,7 +214,7 @@ it('should expose the guide and credits as the final settings tabs', () => {
   render(() => <PSettings />)
 
   expect(screen.queryByRole('button', {name: 'Pomofi 설명서'})).toBeNull()
-  fireEvent.click(screen.getByRole('button', {name: '설정 열기'}))
+  fireEvent.click(screen.getByRole('button', {name: '설정'}))
   fireEvent.click(screen.getByRole('button', {name: '포커스 복원'}))
 
   expect(screen.getByRole('dialog', {name: 'Pomofi 설정'}).hasAttribute('hidden')).toBe(false)
@@ -261,7 +261,7 @@ it('should map the scribble style switch to the scene style value', () => {
 
   render(() => <PSettings onSceneStyleChange={onSceneStyleChange} sceneStyle="scribble" />)
 
-  const settingsTrigger = screen.getByRole('button', {name: '설정 열기'})
+  const settingsTrigger = screen.getByRole('button', {name: '설정'})
 
   expect(settingsTrigger.parentElement?.classList).toContain('pomo-scribble-circle-control')
   expect(
@@ -317,7 +317,7 @@ it('should forward every scene, weather, and modal action', () => {
     />
   ))
 
-  fireEvent.click(screen.getByRole('button', {name: '설정 열기'}))
+  fireEvent.click(screen.getByRole('button', {name: '설정'}))
   fireEvent.click(screen.getByRole('button', {name: '시간'}))
   fireEvent.click(screen.getByRole('button', {name: '행동'}))
   fireEvent.click(screen.getByRole('button', {name: '보기'}))
@@ -355,7 +355,7 @@ it('should forward every scene, weather, and modal action', () => {
 
 it('should keep time, activity, and view together in general settings at every layout size', () => {
   render(() => <PSettings />)
-  fireEvent.click(screen.getByRole('button', {name: '설정 열기'}))
+  fireEvent.click(screen.getByRole('button', {name: '설정'}))
 
   const timeControl = screen.getByRole('button', {name: '시간'})
   const activityControl = screen.getByRole('button', {name: '행동'})

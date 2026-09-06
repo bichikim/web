@@ -1,3 +1,4 @@
+import {PTooltip} from '../PTooltip'
 import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 import {createSignal, createUniqueId, onCleanup, onMount} from 'solid-js'
@@ -5,6 +6,10 @@ import {createSignal, createUniqueId, onCleanup, onMount} from 'solid-js'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import {PlayerIcon} from './Icon'
 import {CLASSES} from './shared'
+
+// oxlint-disable-next-line eslint-js/max-len -- UnoCSS needs the complete anchor-list utility.
+const POPOVER_ANCHOR_CLASS =
+  '[&[data-pomo-tooltip-trigger]]:[anchor-name:var(--pomo-volume-popover-anchor),var(--pomo-tooltip-anchor)]'
 
 interface VolumeControlProps {
   readonly sceneStyle?: PSceneStyle
@@ -52,64 +57,79 @@ export const VolumeControl = (props: VolumeControlProps) => {
 
   return (
     <div class="pomo-player__volume-group flex min-w-0 items-center justify-end gap-0">
-      <media-mute-button
-        aria-label={m.player_toggle_mute()}
-        class={cx(CLASSES.playerMute, 'player-narrow:hidden')}
-        notooltip
-      >
-        <PlayerIcon
-          icon="i-tabler-volume-off"
-          sceneStyle={props.sceneStyle}
-          size="size-6"
-          slot="off"
-        />
-        <PlayerIcon
-          icon="i-tabler-volume-4"
-          sceneStyle={props.sceneStyle}
-          size="size-6"
-          slot="low"
-        />
-        <PlayerIcon
-          icon="i-tabler-volume-2"
-          sceneStyle={props.sceneStyle}
-          size="size-6"
-          slot="medium"
-        />
-        <PlayerIcon
-          icon="i-tabler-volume"
-          sceneStyle={props.sceneStyle}
-          size="size-6"
-          slot="high"
-        />
-      </media-mute-button>
-
-      <media-volume-range
-        aria-label={m.player_volume()}
-        class={cx(CLASSES.playerVolume, 'player-narrow:hidden')}
-      />
-
-      <button
-        aria-controls={popoverId}
-        aria-haspopup="dialog"
-        aria-label={m.player_volume()}
-        class={cx(
-          'pomo-player__volume-popover-trigger hidden size-9 shrink-0 place-items-center',
-          'rounded-full text-muted-foreground transition',
-          'hover:bg-secondary-soft hover:text-foreground',
-          'player-narrow:grid',
-          '[anchor-name:var(--pomo-volume-popover-anchor)]',
+      <PTooltip label={m.player_toggle_mute()}>
+        {(tooltip) => (
+          <media-mute-button
+            {...tooltip}
+            aria-label={m.player_toggle_mute()}
+            class={cx(CLASSES.playerMute, 'player-narrow:hidden')}
+            notooltip
+          >
+            <PlayerIcon
+              icon="i-tabler-volume-off"
+              sceneStyle={props.sceneStyle}
+              size="size-6"
+              slot="off"
+            />
+            <PlayerIcon
+              icon="i-tabler-volume-4"
+              sceneStyle={props.sceneStyle}
+              size="size-6"
+              slot="low"
+            />
+            <PlayerIcon
+              icon="i-tabler-volume-2"
+              sceneStyle={props.sceneStyle}
+              size="size-6"
+              slot="medium"
+            />
+            <PlayerIcon
+              icon="i-tabler-volume"
+              sceneStyle={props.sceneStyle}
+              size="size-6"
+              slot="high"
+            />
+          </media-mute-button>
         )}
-        onClick={(event) => {
-          event.preventDefault()
-          handleTriggerClick()
-        }}
-        popovertarget={popoverId}
-        ref={setTriggerElement}
-        style={{'--pomo-volume-popover-anchor': popoverAnchor}}
-        type="button"
-      >
-        <PlayerIcon icon="i-tabler-volume-2" sceneStyle={props.sceneStyle} size="size-6" />
-      </button>
+      </PTooltip>
+
+      <PTooltip label={m.player_volume()}>
+        {(tooltip) => (
+          <media-volume-range
+            {...tooltip}
+            aria-label={m.player_volume()}
+            class={cx(CLASSES.playerVolume, 'player-narrow:hidden')}
+          />
+        )}
+      </PTooltip>
+
+      <PTooltip label={m.player_volume()}>
+        {(tooltip) => (
+          <button
+            {...tooltip}
+            aria-controls={popoverId}
+            aria-haspopup="dialog"
+            aria-label={m.player_volume()}
+            class={cx(
+              'pomo-player__volume-popover-trigger hidden size-9 shrink-0 place-items-center',
+              'rounded-full text-muted-foreground transition',
+              'hover:bg-secondary-soft hover:text-foreground',
+              'player-narrow:grid',
+              POPOVER_ANCHOR_CLASS,
+            )}
+            onClick={(event) => {
+              event.preventDefault()
+              handleTriggerClick()
+            }}
+            popovertarget={popoverId}
+            ref={setTriggerElement}
+            style={{...tooltip.style, '--pomo-volume-popover-anchor': popoverAnchor}}
+            type="button"
+          >
+            <PlayerIcon icon="i-tabler-volume-2" sceneStyle={props.sceneStyle} size="size-6" />
+          </button>
+        )}
+      </PTooltip>
 
       <div
         aria-label={m.player_volume()}
@@ -126,11 +146,16 @@ export const VolumeControl = (props: VolumeControlProps) => {
         role="dialog"
         style={{'--pomo-volume-popover-anchor': popoverAnchor}}
       >
-        <media-volume-range
-          aria-label={m.player_volume()}
-          autofocus
-          class={CLASSES.playerVolumePopover}
-        />
+        <PTooltip label={m.player_volume()}>
+          {(tooltip) => (
+            <media-volume-range
+              {...tooltip}
+              aria-label={m.player_volume()}
+              attr:autofocus=""
+              class={CLASSES.playerVolumePopover}
+            />
+          )}
+        </PTooltip>
       </div>
     </div>
   )

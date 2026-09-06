@@ -8,6 +8,7 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 import * as m from '@paraglide/message'
 import {PAlbumLibrary} from './PAlbumLibrary'
 import {POverflowMarquee} from './POverflowMarquee'
+import {PTooltip} from './PTooltip'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
 import {PScribbleFrame} from './scribble/Frame'
 import {ExpandedPlayerControls} from './music-player-view/ExpandedControls'
@@ -39,14 +40,36 @@ const TrackArtwork = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
 )
 
 const ExpandedSummaryPlayback = (
-  props: Pick<MusicPlayerViewProps, 'currentTrack' | 'sceneStyle'>,
+  props: Pick<MusicPlayerViewProps, 'currentTrack' | 'isPlaying' | 'sceneStyle'>,
 ) => (
   <>
     <TrackArtwork currentTrack={props.currentTrack} />
     <div class="pomo-player__compact-summary-play hidden size-11 shrink-0 player-compact:block">
-      <SummaryPlayButton currentTrack={props.currentTrack} sceneStyle={props.sceneStyle} />
+      <SummaryPlayButton
+        isPlaying={props.isPlaying}
+        currentTrack={props.currentTrack}
+        sceneStyle={props.sceneStyle}
+      />
     </div>
   </>
+)
+
+const TrackSummary = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
+  <div
+    class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2 player-compact:px-1')}
+    data-pomo-player-title=""
+  >
+    <PTooltip label={props.currentTrack?.title ?? m.player_fallback_title()}>
+      {(tooltip) => (
+        <p {...tooltip} class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
+          <POverflowMarquee text={props.currentTrack?.title ?? m.player_fallback_title()} />
+        </p>
+      )}
+    </PTooltip>
+    <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
+      <POverflowMarquee text={props.currentTrack?.artist ?? m.player_fallback_artist()} />
+    </p>
+  </div>
 )
 
 export const MusicPlayerView = (props: MusicPlayerViewProps) => (
@@ -128,26 +151,21 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
 
         <div class={CLASSES.playerSummary}>
           <Show when={!props.expanded}>
-            <SummaryPlayButton currentTrack={props.currentTrack} sceneStyle={props.sceneStyle} />
+            <SummaryPlayButton
+              isPlaying={props.isPlaying}
+              currentTrack={props.currentTrack}
+              sceneStyle={props.sceneStyle}
+            />
           </Show>
           <Show when={props.expanded}>
             <ExpandedSummaryPlayback
+              isPlaying={props.isPlaying}
               currentTrack={props.currentTrack}
               sceneStyle={props.sceneStyle}
             />
           </Show>
 
-          <div
-            class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2 player-compact:px-1')}
-            data-pomo-player-title=""
-          >
-            <p class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
-              <POverflowMarquee text={props.currentTrack?.title ?? m.player_fallback_title()} />
-            </p>
-            <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
-              <POverflowMarquee text={props.currentTrack?.artist ?? m.player_fallback_artist()} />
-            </p>
-          </div>
+          <TrackSummary currentTrack={props.currentTrack} />
 
           <PAlbumLibrary
             onAddTracks={(tracks) => props.onAlbumAdd?.(tracks)}
@@ -179,6 +197,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         >
           <div class={cx(CLASSES.playerExpandedInner, props.expanded && 'is-expanded')}>
             <ExpandedPlayerControls
+              isPlaying={props.isPlaying}
               currentIndex={props.currentIndex}
               currentTrack={props.currentTrack}
               onNextTrack={props.onNextTrack}

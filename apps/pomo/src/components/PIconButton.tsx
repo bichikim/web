@@ -1,3 +1,4 @@
+import {PTooltip} from './PTooltip'
 import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 
@@ -47,51 +48,56 @@ export const PIconButton = (props: PIconButtonProps) => {
   })
 
   return (
-    <button
-      aria-label={props.accessibleLabel}
-      class={cx(
-        'pomo-icon-button border border-solid border-border backdrop-blur-surface ' +
-          'hover:border-border-hover hover:bg-surface-interactive ' +
-          'focus-visible:border-highlight focus-visible:bg-surface-interactive ' +
-          'ui-expanded:border-highlight ui-expanded:bg-surface-interactive ' +
-          'focus-visible:outline-3 focus-visible:outline-solid ' +
-          'focus-visible:outline-offset-2 focus-visible:outline-highlight ' +
-          'inline-flex box-border items-center justify-center ' +
-          'overflow-hidden rounded-control bg-surface ' +
-          'text-foreground shadow-panel outline-none ' +
-          'transition-[border-color_160ms_ease,background-color_160ms_ease,color_160ms_ease] ' +
-          'motion-reduce:transition-none',
-        (props.size ?? 'medium') === 'small'
-          ? 'h-control-sm min-w-control-sm [padding-inline:0.4375rem]'
-          : 'h-control-md min-w-control-md [padding-inline:0.5625rem]',
-        props.class,
+    <PTooltip label={props.accessibleLabel}>
+      {(tooltip) => (
+        <button
+          {...tooltip}
+          aria-label={props.accessibleLabel}
+          class={cx(
+            'pomo-icon-button border border-solid border-border backdrop-blur-surface ' +
+              'hover:border-border-hover hover:bg-surface-interactive ' +
+              'focus-visible:border-highlight focus-visible:bg-surface-interactive ' +
+              'ui-expanded:border-highlight ui-expanded:bg-surface-interactive ' +
+              'focus-visible:outline-3 focus-visible:outline-solid ' +
+              'focus-visible:outline-offset-2 focus-visible:outline-highlight ' +
+              'inline-flex box-border items-center justify-center ' +
+              'overflow-hidden rounded-control bg-surface ' +
+              'text-foreground shadow-panel outline-none ' +
+              'transition-[border-color_160ms_ease,background-color_160ms_ease,color_160ms_ease] ' +
+              'motion-reduce:transition-none',
+            (props.size ?? 'medium') === 'small'
+              ? 'h-control-sm min-w-control-sm [padding-inline:0.4375rem]'
+              : 'h-control-md min-w-control-md [padding-inline:0.5625rem]',
+            props.class,
+          )}
+          data-feedback-visible={feedbackVisible() ? '' : undefined}
+          data-size={props.size ?? 'medium'}
+          onClick={(event) => props.onPress(event.currentTarget)}
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+            class={cx(
+              props.icon,
+              'pomo-icon-button__icon flex-none text-highlight',
+              (props.size ?? 'medium') === 'small' ? 'size-4' : 'size-6',
+            )}
+            data-pomo-icon-button-icon=""
+          />
+          <span
+            aria-hidden="true"
+            class={cx(
+              `overflow-hidden whitespace-nowrap text-foreground font-650 leading-4 ` +
+                `${FEEDBACK_TRANSITION} ` +
+                `motion-reduce:transition-none`,
+              (props.size ?? 'medium') === 'small' ? 'text-xs' : 'text-[0.8125rem]',
+              feedbackVisible() ? 'ml-2 max-w-32 opacity-100' : 'max-w-0 opacity-0',
+            )}
+          >
+            {props.feedback}
+          </span>
+        </button>
       )}
-      data-feedback-visible={feedbackVisible() ? '' : undefined}
-      data-size={props.size ?? 'medium'}
-      onClick={(event) => props.onPress(event.currentTarget)}
-      type="button"
-    >
-      <span
-        aria-hidden="true"
-        class={cx(
-          props.icon,
-          'pomo-icon-button__icon flex-none text-highlight',
-          (props.size ?? 'medium') === 'small' ? 'size-4' : 'size-6',
-        )}
-        data-pomo-icon-button-icon=""
-      />
-      <span
-        aria-hidden="true"
-        class={cx(
-          `overflow-hidden whitespace-nowrap text-foreground font-650 leading-4 ` +
-            `${FEEDBACK_TRANSITION} ` +
-            `motion-reduce:transition-none`,
-          (props.size ?? 'medium') === 'small' ? 'text-xs' : 'text-[0.8125rem]',
-          feedbackVisible() ? 'ml-2 max-w-32 opacity-100' : 'max-w-0 opacity-0',
-        )}
-      >
-        {props.feedback}
-      </span>
-    </button>
+    </PTooltip>
   )
 }
