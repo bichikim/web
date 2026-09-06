@@ -10,11 +10,12 @@ import {
 import type {PuppetDocument} from '../../player'
 
 export interface CreateParameterPreviewOptions {
+  readonly editingBindingId?: string
   readonly document: PuppetDocument
   readonly parameterValues?: PuppetParameterValueMap
 }
 
-export const createParameterPreview = (options: CreateParameterPreviewOptions): PuppetDocument => ({
+const sampleParameterPreview = (options: CreateParameterPreviewOptions): PuppetDocument => ({
   ...options.document,
   motions: [],
   parameterBindings: [],
@@ -40,3 +41,24 @@ export const createParameterPreview = (options: CreateParameterPreviewOptions): 
 })
 
 export {createDeformerKeyform, sampleParameterDeformer, sampleParameterVertices}
+
+export const getParameterEditingDocument = (
+  document: PuppetDocument,
+  bindingId?: string,
+): PuppetDocument => {
+  if (bindingId === undefined) {
+    return document
+  }
+  return {
+    ...document,
+    parameterBindings: document.parameterBindings?.map((binding) =>
+      binding.id === bindingId ? {...binding, influences: undefined} : binding,
+    ),
+  }
+}
+
+export const createParameterPreview = (options: CreateParameterPreviewOptions): PuppetDocument =>
+  sampleParameterPreview({
+    ...options,
+    document: getParameterEditingDocument(options.document, options.editingBindingId),
+  })

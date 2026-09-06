@@ -26,6 +26,35 @@ runtime에 이름을 묶지 않아 두 기능을 한 모델 계약 아래 둘 �
 메시 토폴로지 검증을 지원한다. 편집기는 최대 100단계 undo/redo와 parameter/property 타임라인을
 제공하지만 PSD와 다중 레이어 일괄 가져오기는 아직 포함하지 않는다.
 
+## Parameter 영향도
+
+Parameter를 선택하면 패널 안에서 영향도 기준과 곡선을 바로 조절할 수 있다.
+각 파라미터 행 아래의 영향도 손잡이를 누르면 설정이 슬라이드로 펼쳐지고 다음 행이 내려간다.
+한 번에 한 행만 펼쳐지며, 기준 추가 버튼은 목록 아래에 표시된다.
+**기준 추가** 후 **약하게 / 강하게 / 중간에서 최대**를 선택하고 최대 적용량을 조절한다.
+**직접 설정**을 누르면 드롭다운에서 그래프와 현재 입력 위치를 보며 점을 편집할 수 있다.
+중간에서 최대는 입력 범위의 중앙에서 가장 강하게 적용한다.
+
+변경은 즉시 반영한다. 슬라이더 드래그 한 번과 커스텀 드롭다운을 열고 닫는 한 번의 편집은
+각각 undo 한 번으로 되돌린다. 잘못된 입력값은 반영하지 않으며, 드롭다운을 닫으면 마지막으로
+반영한 값으로 돌아간다. 기준이 없으면 변형을 100% 적용한다.
+
+관계는 해당 연결의 모든 대상에 적용한다. 정점, 파트의 불투명도·색상, 디포머 변형의
+기준 형태 대비 차이에 같은 영향도를 곱한다. 여러 관계는 가장 낮은 영향도를 사용하고,
+제어값은 다른 관계를 거치기 전의 입력값을 사용하므로 서로 참조해도 재귀 평가하지 않는다.
+입력값 사이를 선형 보간하고 곡선 바깥은 끝점의 영향도를 유지한다.
+
+모델링 화면에서는 선택한 파라미터의 영향도를 제외한 원본 형태·속성을 편집한다.
+영향도는 저장된 관계를 유지하며 플레이어 미리보기에 적용된다. 0%에서도 키폼을 편집·추가할 수 있다.
+블렌드 모드와 마스크 설정은 영향도와 무관하게 편집할 수 있으며, 레이어 잠금은 유지된다.
+Parameter 값과 영향도 설정은 계속 조절할 수 있다. 제어 parameter를 삭제하면 그 값을
+참조하던 관계도 제거한다. 관계가 없는 기존 문서는 기존 합성 결과를 유지한다.
+이 필드를 모르는 이전 플레이어는 영향도 관계를 적용하지 않으므로 새 문서는 현재 플레이어로 재생한다.
+
+계약은 [`PuppetParameterInfluence`](src/player/document.ts),
+계산은 [`getBindingInfluence`](src/deformation/influence.ts)에 정의한다.
+발음·표정 이름이나 음성 분석은 이 기능의 계약에 포함하지 않는다.
+
 ## 개발 화면 실행
 
 ```sh
@@ -73,14 +102,14 @@ Live2D의 화면 배치나 내부 객체 이름을 복제하지 않는다. 대�
 현재 모델링 기능과 Live2D의 안정판 제작 기능을 대조해 다음 항목을 개발 순서에 포함한다. 번호는
 기능 비교에서 합의한 항목을 유지하며, Cubism 파일·API 호환은 범위에 포함하지 않는다.
 
-| 항목 | 결과물                    | 완료 기준                                                                                                                                                            | 개발 단계 |
-| ---- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| 3    | 전용 rotation deformer    | warp deformer와 구분되는 관절점 중심 rotation deformer, 부모-자식 회전 체인과 다중 선택 편집을 저장·재생한다.                                                        | 4         |
-| 4    | deform path·glue·skinning | 경로 기반 변형, 두 mesh 경계의 정점별 glue 가중치, 여러 rotation deformer의 skinning 가중치를 keyform과 함께 제작·저장·재생한다.                                     | 6         |
-| 5    | blend shape parameter     | 일반 parameter와 구분되는 가산형 blend shape, 기준 key, 적용 가능 속성과 가중치 제한을 정의하고 여러 parameter와의 합성 순서를 editor/runtime에서 동일하게 검증한다. | 3         |
-| 6    | PSD 가져오기·재가져오기   | PSD 레이어·폴더 계층을 part/group으로 일괄 생성하고, 원본을 재가져올 때 기존 mesh·parameter 연결을 가능한 범위에서 보존하며 충돌을 사용자에게 표시한다.              | 5         |
-| 7    | parameter 제작 보조       | 그룹/폴더, repeat, 표준 얼굴 preset, 설명·ID 관리, 형태 복사·붙여넣기·좌우 반전, 여러 keyform의 일괄 생성·보정을 제공한다.                                           | 10        |
-| 8    | 모델 완성 도구            | physics, eye blink·lip sync·breath 연결, random pose 검사, model template, ArtPath 제작을 지원하고 대표 모델 fixture에서 저장·재열기·재생을 검증한다.                | 7, 10     |
+| 항목 | 결과물                    | 완료 기준                                                                                                                                               | 개발 단계 |
+| ---- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 3    | 전용 rotation deformer    | warp deformer와 구분되는 관절점 중심 rotation deformer, 부모-자식 회전 체인과 다중 선택 편집을 저장·재생한다.                                           | 4         |
+| 4    | deform path·glue·skinning | 경로 기반 변형, 두 mesh 경계의 정점별 glue 가중치, 여러 rotation deformer의 skinning 가중치를 keyform과 함께 제작·저장·재생한다.                        | 6         |
+| 5    | parameter 영향도 관계     | 기존 가산형 변형에 범용 영향도 관계를 연결하고, 정점·파트 속성·디포머의 합성과 저장·재열기 결과가 editor/runtime에서 일치하는지 검증한다.               | 3         |
+| 6    | PSD 가져오기·재가져오기   | PSD 레이어·폴더 계층을 part/group으로 일괄 생성하고, 원본을 재가져올 때 기존 mesh·parameter 연결을 가능한 범위에서 보존하며 충돌을 사용자에게 표시한다. | 5         |
+| 7    | parameter 제작 보조       | 그룹/폴더, repeat, 표준 얼굴 preset, 설명·ID 관리, 형태 복사·붙여넣기·좌우 반전, 여러 keyform의 일괄 생성·보정을 제공한다.                              | 10        |
+| 8    | 모델 완성 도구            | physics, eye blink·lip sync·breath 연결, random pose 검사, model template, ArtPath 제작을 지원하고 대표 모델 fixture에서 저장·재열기·재생을 검증한다.   | 7, 10     |
 
 ## 책임 경계
 
@@ -111,7 +140,7 @@ PixiJS 플레이어, 단위 테스트와 실제 브라우저 확인까지 연결
 | 0    | 기능 원장과 계약          | 안정판 Live2D의 모델링·애니메이션·SDK 기능을 빠짐없이 원장에 기록하고 Puppet 대응 기능, 제외되는 파일 호환, 검증 상태를 연결한다.                                                        |
 | 1    | scene graph와 레이어 트리 | group/part, mesh/image, deformer를 서로 다른 노드로 표현한다. 트리의 이동·중첩·다중 선택·visibility·lock이 저장되고 레이어 순서가 플레이어 합성 순서와 일치한다.                         |
 | 2    | parameter 대상 모델       | parameter는 전역 객체로 두고 mesh·deformer·part 속성을 다대다로 연결한다. 그룹 선택은 자식 일괄 연결을 제공하되 새 자식을 암묵적으로 연결하지 않으며 `전체/일부/없음` 상태를 표시한다.   |
-| 3    | keyform 변형              | 정점 묶음, transform과 파트 렌더링 속성을 1축·2축 parameter에서 보간한다. 일반 변형과 별도 blend shape의 합성 순서, keyform 추가·이동·복제·삭제 결과가 editor/runtime에서 일치한다.      |
+| 3    | keyform 변형              | 정점 묶음, transform과 파트 렌더링 속성을 1축·2축 parameter에서 보간한다. 일반 변형과 parameter 영향도의 합성 순서, keyform 추가·이동·복제·삭제 결과가 editor/runtime에서 일치한다.      |
 | 4    | deformer                  | warp와 관절점 중심 rotation deformer를 별도 노드로 편집한다. 부모 변형이 모든 자식 mesh/deformer에 전파되고 역방향으로는 전파되지 않으며, 회전 체인·계층 변경·순환 참조 차단을 검증한다. |
 | 5    | 메시·합성 완성            | PSD/PNG 가져오기·재가져오기, texture atlas, opacity, clipping/invert mask, blend mode, multiply·screen color, culling을 지원하고 중첩 합성을 시각 회귀로 검증한다.                       |
 | 6    | 연결형 리깅과 경로 변형   | deform path, glue의 정점별 가중치·keyform 호환도, 다중 rotation deformer skinning, pose/part 전환을 제작·저장·재생한다.                                                                  |
@@ -125,7 +154,7 @@ PixiJS 플레이어, 단위 테스트와 실제 브라우저 확인까지 연결
 정점과 파트의 opacity·multiply/screen color를 보간하는 1축·2축 grid keyform,
 blend mode·clipping/invert mask, warp deformer, 정점 motion track, undo/redo와 PixiJS 재생 경로까지
 지원한다. 계층이 없는 기존 `parts[]` 문서는 각 part를 루트 노드로 해석하고 다음 저장에서 명시적인
-scene을 기록한다. 전용 rotation deformer와 모델링 기능 백로그 3–8은 아직 남아 있다.
+scene을 기록한다. 범용 parameter 영향도 관계를 지원하며, 전용 rotation deformer와 모델링 기능 백로그 4, 6–8은 아직 남아 있다.
 
 ## 확인한 구현 정보
 

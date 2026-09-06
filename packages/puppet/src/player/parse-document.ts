@@ -1,3 +1,4 @@
+import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
 import {
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
@@ -258,6 +259,7 @@ const isParameterBinding = (value: unknown): value is PuppetParameterBinding => 
 
   const {keyforms, parameterIds, targetDeformerIds, targetPartIds} = value
   if (
+    (value.influences !== undefined && !isParameterInfluences(value.influences)) ||
     typeof value.id !== 'string' ||
     value.id.length === 0 ||
     !Array.isArray(parameterIds) ||
@@ -466,6 +468,7 @@ const hasValidParameterBindings = (
       targetDeformerIds === undefined ? undefined : new Set(targetDeformerIds)
 
     if (
+      !hasValidInfluences(binding.influences ?? [], parameters) ||
       binding.parameterIds.some((parameterId) => !parameterById.has(parameterId)) ||
       targetPartIds?.some((partId) => !partById.has(partId)) === true ||
       targetDeformerIds?.some((nodeId) => !deformerById.has(nodeId)) === true ||

@@ -353,3 +353,25 @@ describe('createParameterPreview', () => {
     expect(preview.parameters).toEqual([])
   })
 })
+
+test('should remove influence references when their source parameter is deleted', () => {
+  const base = createDemoDocument()
+  const source = base.parameterBindings![0]!
+  const target = {
+    ...source,
+    id: 'independent',
+    influences: [{parameterId: 'angle-y', points: [{value: 0, weight: 1}]}],
+    keyforms: [],
+    parameterIds: ['other'] as const,
+  }
+  const document = {
+    ...base,
+    parameterBindings: [...base.parameterBindings!, target],
+    parameters: [
+      ...base.parameters!,
+      {id: 'other', minimum: 0, defaultValue: 0, name: 'Other', maximum: 1},
+    ],
+  }
+  const result = deleteParameter({bindingId: source.id, document})!
+  expect(result.parameterBindings![0]!.influences).toEqual([])
+})

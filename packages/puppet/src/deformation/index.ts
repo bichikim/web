@@ -1,12 +1,14 @@
-export * from './part-properties'
+export * from './binding'
 export * from './composition'
 export * from './grid'
-export * from './parameter'
 export * from './vertices'
-export * from './pin'
+export * from './parameter'
+export * from './part-properties'
 
-export * from './binding'
+export * from './pin'
 
 export * from './scene'
 
 export * from './weights'
+
+export * from './influence'

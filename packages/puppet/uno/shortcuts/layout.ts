@@ -84,7 +84,7 @@ export const layoutShortcuts = {
     '[--left-grid-size:var(--left-panel-size,_18.75rem)] [--left-resizer-size:0.375rem]',
     '[--right-grid-size:var(--right-panel-size,_16.25rem)] [--right-resizer-size:0.375rem] grid',
     'editor-workspace-grid',
-    'w-full [min-width:51.25rem] h-full [min-height:40rem] overflow-hidden [color:#edf4f0] [background:#0b0f0e]',
+    'w-full min-w-0 h-full [min-height:40rem] overflow-hidden [color:#edf4f0] [background:#0b0f0e]',
     "[font-family:Inter,_ui-sans-serif,_system-ui,_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_sans-serif]",
     '[font-synthesis:none] [text-rendering:optimizeLegibility]',
     '[&.left-panel-closed]:[--left-grid-size:0rem] [&.left-panel-closed]:[--left-resizer-size:0rem]',

@@ -1,3 +1,4 @@
+import {getParameterEditingDocument} from './parameter-sampling'
 import {
   composeParameterScene,
   composeParameterVertices,
@@ -40,7 +41,10 @@ const getPreviewParameterValues = (props: MeshEditorProps) => {
 export const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart) => {
   const [motion] = props.document.motions
   const parameterVertices = composeParameterVertices({
-    document: props.document,
+    document: getParameterEditingDocument(
+      props.document,
+      props.editMode === 'parameter' ? props.activeBindingId : undefined,
+    ),
     parameterValues: getPreviewParameterValues(props),
     partId: part.id,
     restVertices: part.mesh.vertices,
@@ -58,5 +62,11 @@ export const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart)
 
 export const getDeformerPreviewDocument = (props: MeshEditorProps): PuppetDocument => ({
   ...props.document,
-  scene: composeParameterScene(props.document, getPreviewParameterValues(props)),
+  scene: composeParameterScene(
+    getParameterEditingDocument(
+      props.document,
+      props.editMode === 'parameter' ? props.activeBindingId : undefined,
+    ),
+    getPreviewParameterValues(props),
+  ),
 })

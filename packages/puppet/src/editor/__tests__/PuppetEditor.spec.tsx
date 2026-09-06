@@ -1087,3 +1087,34 @@ test('should preserve the posed mesh through inspector placement edits and undo 
   fireEvent.input(view.getByLabelText('자유 변형 각도'), {target: {value: '90'}})
   expect(transformDeformerPoint(node(), point)).not.toEqual(expected)
 })
+
+test('should edit original keyform properties below full influence and preserve the influence relation', async () => {
+  const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+  const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+  fireEvent.click(view.getByRole('button', {name: 'Angle X / Angle Y · 영향도'}))
+  fireEvent.click(view.getByRole('button', {name: '기준 추가'}))
+  expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
+  expect(view.getByRole('textbox', {name: '파트 곱하기 색상'})).toBeEnabled()
+  fireEvent.input(view.getByRole('spinbutton', {name: '파트 불투명도'}), {target: {value: '0.4'}})
+  const blend = view.getByRole('button', {name: /^파트 블렌드 모드/})
+  expect(blend).toBeEnabled()
+  fireEvent.keyDown(blend, {key: 'Enter'})
+  fireEvent.keyDown(screen.getByRole('option', {name: 'screen'}), {key: 'Enter'})
+  const inverted = view.getByRole('checkbox', {name: '마스크 반전'})
+  expect(inverted).toBeEnabled()
+  fireEvent.click(inverted)
+  expect(view.getByRole('button', {name: '대상 추가'})).toBeEnabled()
+  expect(view.getByRole('button', {name: '레이어에서 선택'})).toBeEnabled()
+  await waitFor(() => {
+    const document = onDocumentChange.mock.calls.at(-1)?.[0]
+    expect(document?.parts[0]?.properties?.blendMode).toBe('screen')
+    expect(document?.parts[0]?.properties?.invertedMask).toBe(true)
+    const binding = document?.parameterBindings?.[0]
+    expect(binding?.influences).toHaveLength(1)
+    expect(
+      binding?.keyforms.find((keyform) => keyform.values.every((value) => value === 0))?.parts[0]
+        ?.properties?.opacity,
+    ).toBeCloseTo(0.4)
+  })
+  expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
+})

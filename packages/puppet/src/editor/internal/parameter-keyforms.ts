@@ -1,3 +1,4 @@
+import {removeInfluenceSources} from './parameter-influences'
 import {difference, union, uniq} from 'es-toolkit/array'
 
 import {
@@ -296,7 +297,7 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
         (track) => track.kind !== 'parameter' || !removedParameterIds.has(track.parameterId),
       ),
     })),
-    parameterBindings: remainingBindings,
+    parameterBindings: removeInfluenceSources(remainingBindings, removedParameterIds),
     parameters: getDocumentParameters(options.document).filter(
       (parameter) => !removedParameterIds.has(parameter.id),
     ),

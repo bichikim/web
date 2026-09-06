@@ -1,15 +1,20 @@
 export const propertiesShortcuts = {
   'editor-checkbox': 'relative inline-flex shrink-0 align-middle',
-  'editor-select-list': 'm-0 p-0 list-none',
-
   'editor-checkbox-control': [
     'inline-grid w-3.5 h-3.5 place-items-center rounded border border-solid border-[#60776a] text-[#11231a]',
     '[&[data-checked]]:bg-[#79d7b1] [&[data-checked]]:border-[#79d7b1]',
     '[&[data-disabled]]:opacity-40 [&[data-focus-visible]]:outline [&[data-focus-visible]]:outline-[#a4f3d9]',
   ],
-  'editor-select-trigger': [
-    'flex w-full items-center justify-between gap-2 rounded border border-solid border-[#40534a]',
-    'bg-[#141c18] px-2 py-1.5 text-xs text-[#dbe5e1]',
+
+  'editor-select-list': 'm-0 p-0 list-none',
+  'editor-button': [
+    'box-border inline-flex items-center justify-center gap-1.5 min-h-7 px-2 py-1',
+    'border border-solid border-[#35413d] rounded-md bg-[#171e1b] text-[#b9c5c0] text-xs leading-4',
+    '[font-family:inherit] cursor-pointer whitespace-nowrap',
+    'hover:bg-[#293832] hover:text-[#f4f8f6]',
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#64e5c4]',
+    'disabled:opacity-40 disabled:cursor-not-allowed',
+    '[&[data-selected]]:bg-[#24443b] [&[data-selected]]:border-[#64e5c4] [&[data-selected]]:text-[#e8f0ed]',
   ],
   'editor-color-area': [
     '[.puppet-editor_&]:relative',
@@ -17,6 +22,8 @@ export const propertiesShortcuts = {
     '[.puppet-editor_&]:[border-radius:0.25rem]',
     '[.puppet-editor_&]:touch-none',
   ],
+
+  'editor-select-trigger': 'editor-button w-full justify-between min-w-0 [&_span]:truncate',
   'editor-color-field': [
     '[.puppet-editor_&]:grid',
     '[.puppet-editor_&]:[grid-template-columns:1.75rem_minmax(0,_1fr)]',

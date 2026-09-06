@@ -1,3 +1,5 @@
+import {useInfluencePreview} from './internal/use-influence-preview'
+import {setParameterInfluences} from './internal/parameter-influences'
 import {clamp} from 'es-toolkit/math'
 import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
 
@@ -8,7 +10,11 @@ import {
   type PuppetParameterValueMap,
   type PuppetParameterValues,
 } from '../deformation'
-import type {PuppetDocument, PuppetParameterBinding} from '../player/document'
+import type {
+  PuppetDocument,
+  PuppetParameterBinding,
+  PuppetParameterInfluence,
+} from '../player/document'
 import {
   addParameter,
   addTwoDimensionalParameter,
@@ -34,6 +40,10 @@ interface UseParameterEditorProps {
 }
 
 export interface ParameterEditorResult {
+  readonly previewDocument: Accessor<PuppetDocument>
+  readonly previewInfluences: (influences: ReadonlyArray<PuppetParameterInfluence> | null) => void
+  readonly influence: Accessor<number>
+  readonly setInfluences: (influences: ReadonlyArray<PuppetParameterInfluence>) => boolean
   readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
   readonly activeBindingId: Accessor<string | null>
   readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
@@ -297,6 +307,42 @@ const createKeyformInsertionHandler = (options: CreateKeyformInsertionHandlerOpt
   }
 }
 
+const applyInfluences = (
+  props: UseParameterEditorProps,
+  binding: PuppetParameterBinding | undefined,
+  influences: ReadonlyArray<PuppetParameterInfluence>,
+): boolean => {
+  if (binding === undefined) {
+    return false
+  }
+  const document = setParameterInfluences({
+    bindingId: binding.id,
+    document: props.document(),
+    influences,
+  })
+  if (document === undefined) {
+    return false
+  }
+  props.onDocumentChange(document)
+  props.onNotice('Parameter 영향도 관계를 변경했습니다.')
+  return true
+}
+
+const applyParameterName = (
+  props: UseParameterEditorProps,
+  bindingId: string | null,
+  parameterId: string,
+  name: string,
+) => {
+  if (bindingId === null) {
+    return
+  }
+  const document = renameParameter({bindingId, document: props.document(), name, parameterId})
+  if (document !== undefined) {
+    props.onDocumentChange(document)
+  }
+}
+
 export const useParameterEditor = (props: UseParameterEditorProps): ParameterEditorResult => {
   const [initialBinding] = getDocumentParameterBindings(props.document())
   const [activeBindingId, setActiveBindingId] = createSignal<string | null>(
@@ -315,6 +361,11 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       (binding) => binding.id === activeBindingId(),
     ),
   )
+  const {previewDocument, previewInfluences, influence} = useInfluencePreview({
+    binding: activeBinding,
+    document: props.document,
+    parameterValues: parameterValueMap,
+  })
   const activeTargetNodeIds = createMemo(() => {
     const binding = activeBinding()
     return binding === undefined ? [] : getParameterTargetNodeIds(binding)
@@ -392,7 +443,6 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       if (document === undefined) {
         return
       }
-
       props.onDocumentChange(document)
       if (bindingId === activeBindingId()) {
         const [nextBinding] = getDocumentParameterBindings(document)
@@ -400,26 +450,21 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       }
       props.onNotice('Parameter를 삭제했습니다.')
     },
+    influence,
     disconnectSelection: () => {
       const binding = activeBinding()
       if (binding !== undefined) {
         updateParameterConnection(props, binding, 'disconnect')
       }
     },
+    previewDocument,
     moveKeyform,
+    previewInfluences,
     parameterValueMap,
+    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     parameterValues,
-    renameParameter(parameterId, name) {
-      const bindingId = activeBindingId()
-      if (bindingId === null) {
-        return
-      }
-
-      const document = renameParameter({bindingId, document: props.document(), name, parameterId})
-      if (document !== undefined) {
-        props.onDocumentChange(document)
-      }
-    },
+    renameParameter: (parameterId, name) =>
+      applyParameterName(props, activeBindingId(), parameterId, name),
     reset(document) {
       const nextParameterValues = getDefaultParameterValueMap(document)
       setParameterValueMap(nextParameterValues)

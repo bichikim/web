@@ -1,3 +1,5 @@
+import {getBindingInfluence} from './influence'
+
 import {clamp} from 'es-toolkit/math'
 
 import type {
@@ -99,9 +101,15 @@ export const composeParameterPartProperties = (
           parameterValues: options.parameterValues,
         }),
       })
+      const weight = getBindingInfluence({
+        binding,
+        document: options.document,
+        parameterValues: options.parameterValues,
+      })
       coordinates = coordinates.map(
         (coordinate, index) =>
-          coordinate + (sampled[index] ?? restCoordinates[index]!) - restCoordinates[index]!,
+          coordinate +
+          ((sampled[index] ?? restCoordinates[index]!) - restCoordinates[index]!) * weight,
       )
     }
   }

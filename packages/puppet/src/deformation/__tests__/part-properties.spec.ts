@@ -54,3 +54,33 @@ describe('part render properties', () => {
     ).toMatchObject({opacity: 0.75})
   })
 })
+
+test('should weight property deltas before clamping the combined result', () => {
+  const source = createDemoDocument()
+  const binding = source.parameterBindings![0]!
+  const document: PuppetDocument = {
+    ...source,
+    parameterBindings: [
+      {
+        ...binding,
+        influences: [{parameterId: 'angle-y', points: [{value: 0, weight: 0.5}]}],
+        keyforms: binding.keyforms.map((keyform) => ({
+          ...keyform,
+          parts: keyform.parts.map((part) => ({
+            ...part,
+            properties: {
+              multiplyColor: [0, 0, 0] as const,
+              opacity: 0,
+              screenColor: [1, 1, 1] as const,
+            },
+          })),
+        })),
+      } as typeof binding,
+    ],
+  }
+  expect(composeParameterPartProperties({document, partId: 'mesh-preview'})).toMatchObject({
+    multiplyColor: [0.5, 0.5, 0.5],
+    opacity: 0.5,
+    screenColor: [0.5, 0.5, 0.5],
+  })
+})

@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument} from '../../../player'
@@ -480,4 +481,82 @@ describe('EditorKeyformPanel', () => {
     dispatchPointerEvent(window, 'pointerup', 1, 550)
     expect(onKeyformMove).toHaveBeenCalledWith(fixture.bindingId, [0], [15])
   })
+})
+
+test('should expand influences directly below their track and close the previous row', async () => {
+  render(() => <style>{'.influence-drawer { animation-name: none; }'}</style>)
+  const {document} = createOneDimensionalDocument()
+  const bindings = document.parameterBindings!
+  const [active, setActive] = createSignal(bindings[0]!.id)
+  const view = render(() => (
+    <EditorKeyformPanel
+      bindings={bindings}
+      parameters={document.parameters!}
+      activeBindingId={active()}
+      onBindingSelect={setActive}
+    />
+  ))
+  const rows = view.container.querySelectorAll('.keyform-binding-row')
+  expect(rows).toHaveLength(bindings.length)
+  const toggles = view.getAllByRole('button', {name: / · 영향도$/})
+  expect(toggles[0]).toHaveAttribute('aria-expanded', 'false')
+  fireEvent.click(toggles[0]!)
+  expect(toggles[0]).toHaveAttribute('aria-expanded', 'true')
+  expect(rows[0]!.querySelector('.influence-inline')).toBeInTheDocument()
+  fireEvent.click(toggles[1]!)
+  expect(active()).toBe(bindings[1]!.id)
+  expect(toggles[0]).toHaveAttribute('aria-expanded', 'false')
+  expect(toggles[1]).toHaveAttribute('aria-expanded', 'true')
+  await waitFor(() => expect(rows[0]!.querySelector('.influence-inline')).not.toBeInTheDocument())
+  expect(rows[1]!.querySelector('.influence-inline')).toBeInTheDocument()
+})
+
+test('should retain the open curve editor when an influence edit replaces the binding', () => {
+  const document = createDemoDocument()
+  const [bindings, setBindings] = createSignal(document.parameterBindings!)
+  const bindingId = bindings()[0]!.id
+  const view = render(() => (
+    <EditorKeyformPanel
+      bindings={bindings()}
+      parameters={document.parameters!}
+      activeBindingId={bindingId}
+      onInfluencesChange={(influences) => {
+        setBindings((current) =>
+          current.map((binding) => (binding.id === bindingId ? {...binding, influences} : binding)),
+        )
+        return true
+      }}
+    />
+  ))
+  fireEvent.click(view.getByRole('button', {name: / · 영향도$/}))
+  fireEvent.click(view.getByRole('button', {name: '기준 추가'}))
+  fireEvent.click(view.getByRole('button', {name: '직접 설정 1'}))
+  const dialog = screen.getByRole('dialog', {name: '커스텀 곡선'})
+  fireEvent.input(screen.getByRole('spinbutton', {name: '관계 1 영향도 1'}), {
+    target: {value: '60'},
+  })
+  expect(bindings()[0]!.influences![0]!.points[0]!.weight).toBe(0.6)
+  expect(screen.getByRole('dialog', {name: '커스텀 곡선'})).toBe(dialog)
+})
+
+test('should swipe the influence tab together with the parameter values', () => {
+  const document = createDemoDocument()
+  const remove = vi.fn()
+  const view = render(() => (
+    <EditorKeyformPanel
+      bindings={document.parameterBindings!}
+      parameters={document.parameters!}
+      activeBindingId="angle-xy"
+      onBindingDelete={remove}
+    />
+  ))
+  const toggle = view.getByRole('button', {name: 'Angle X / Angle Y · 영향도'})
+  const surface = toggle.closest('.parameter-item-surface')!
+  expect(surface).toContainElement(view.getByRole('spinbutton', {name: 'Angle X 값'}))
+  expect(surface).toContainElement(view.getByRole('button', {name: 'Angle X'}))
+  dispatchPointerEvent(toggle, 'pointerdown', 1, 160)
+  dispatchPointerEvent(window, 'pointermove', 1, 80)
+  expect(surface.closest('.parameter-swipe-row')).toHaveClass('armed')
+  dispatchPointerEvent(window, 'pointerup', 1, 80)
+  expect(remove).toHaveBeenCalledWith('angle-xy')
 })

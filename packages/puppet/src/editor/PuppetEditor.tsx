@@ -151,6 +151,8 @@ const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
 
   return (
     <EditorKeyformPanel
+      influence={props.editor.influence()}
+      onInfluencesChange={props.editor.setInfluences}
       activeBindingId={props.editor.activeBindingId() ?? undefined}
       activeKeyformValues={props.editor.activeKeyformValues()}
       allParametersVisible={props.editor.allParametersVisible()}
@@ -347,7 +349,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   })
   const parameterPreviewDocument = createMemo(() =>
     createParameterPreview({
-      document: sourceDocument(),
+      document: parameterEditor.previewDocument(),
+      editingBindingId:
+        workspace() === 'modeling' ? (parameterEditor.activeBindingId() ?? undefined) : undefined,
       parameterValues: parameterEditor.parameterValueMap(),
     }),
   )
@@ -444,9 +448,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       return
     }
     const document = setMaskTarget({
+      checked: true,
       document: sourceDocument(),
       maskPartId,
-      checked: true,
       targetPartId,
     })
     if (document === undefined) {
@@ -558,7 +562,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             activeVertexIndex={activeVertexIndex()}
             currentTime={currentTime()}
             deformerControlSelection={deformerControlSelection}
-            document={sourceDocument()}
+            document={parameterEditor.previewDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
             onDeformerEditEnd={history.endTransaction}
             onDeformerEditStart={handleDocumentEditStart}

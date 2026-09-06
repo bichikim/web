@@ -527,7 +527,7 @@ describe('DeformerEditor', () => {
     expect(movedPoint[1]).toBeCloseTo(0)
   })
 
-  test('should edit the selected parameter keyform without changing the rest deformer', () => {
+  test.each([0, 0.5, 1])('should edit the original deformer keyform at influence %s', (weight) => {
     const initial = {
       ...createDocument(createDeformer()),
       motions: [],
@@ -540,7 +540,13 @@ describe('DeformerEditor', () => {
       document: added.document,
       values: [30],
     })!
-    const [document, setDocument] = createSignal(inserted)
+    const [document, setDocument] = createSignal({
+      ...inserted,
+      parameterBindings: inserted.parameterBindings!.map((binding) => ({
+        ...binding,
+        influences: [{parameterId: added.binding.parameterIds[0], points: [{value: 30, weight}]}],
+      })),
+    })
     const view = render(() => (
       <DeformerEditor
         activeBindingId={added.binding.id}
@@ -550,6 +556,7 @@ describe('DeformerEditor', () => {
         editMode="parameter"
         previewDocument={createParameterPreview({
           document: document(),
+          editingBindingId: added.binding.id,
           parameterValues: {[added.binding.parameterIds[0]]: 30},
         })}
         onDocumentChange={setDocument}
