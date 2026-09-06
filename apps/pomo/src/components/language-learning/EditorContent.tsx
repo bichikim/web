@@ -1,3 +1,9 @@
 import {clientOnly} from '@solidjs/start'
 
-export const LanguageLearningEditorContent = clientOnly(() => import('./Editor'), {lazy: true})
+export const LanguageLearningEditorContent = clientOnly(
+  async () => {
+    const {LanguageLearningEditor} = await import('./Editor')
+    return {default: LanguageLearningEditor}
+  },
+  {lazy: true},
+)

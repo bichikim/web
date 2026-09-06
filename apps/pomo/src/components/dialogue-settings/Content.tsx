@@ -100,7 +100,7 @@ export interface PDialogueSettingsContentProps {
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export default function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
+export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
   const events = usePEvents()
   const dialogueEvents = getDialogueEvents()
   const feeds = usePFeedContext()

@@ -2,9 +2,9 @@
 
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
+import type {PictureDiaryRepository} from '../../../features/picture-diary'
 import {PictureDiary} from '../PictureDiary'
 import type {PictureDiaryEnvironment} from '../picture-diary/environment'
-import type {PictureDiaryRepository} from '../../../features/picture-diary'
 
 afterEach(cleanup)
 

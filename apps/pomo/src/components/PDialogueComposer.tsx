@@ -1,8 +1,8 @@
 import {useEvent} from '@winter-love/solid-use'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createEffect, createSignal, type Setter, Show} from 'solid-js'
-
 import * as m from '@paraglide/message'
+import {DialogueTrigger} from './dialogue-composer/DialogueTrigger'
 
 export interface PDialogueComposerProps {
   readonly autoExpand?: boolean
@@ -63,47 +63,11 @@ const COMPOSER_CLASSES = cx(
   'motion-reduce:transition-none',
 )
 
-const TRIGGER_CLASSES = cx(
-  'grid size-full cursor-pointer place-items-center border-0 bg-transparent',
-  'text-highlight outline-none hover:bg-surface-interactive disabled:cursor-not-allowed',
-)
-
 const SUBMIT_CLASSES = cx(
   'm-2 grid size-9 flex-none cursor-pointer place-items-center rounded-full border-0',
   'bg-highlight text-[#241a12] outline-none transition-transform duration-160',
   'hover:-translate-y-0.5 focus-visible:shadow-focus disabled:cursor-not-allowed',
   'disabled:opacity-45 disabled:transform-none motion-reduce:transition-none',
-)
-
-interface DialogueTriggerProps {
-  readonly disabled: boolean
-  readonly loading: boolean
-  readonly onClick: () => void
-  readonly onMount: (element: HTMLButtonElement) => void
-}
-
-const DialogueTrigger = (props: DialogueTriggerProps) => (
-  <button
-    aria-expanded="false"
-    aria-label={
-      props.loading ? m.dialogue_composer_preparing_label() : m.dialogue_composer_start_label()
-    }
-    class={TRIGGER_CLASSES}
-    disabled={props.disabled}
-    onClick={() => props.onClick()}
-    ref={props.onMount}
-    type="button"
-  >
-    <Show
-      when={props.loading}
-      fallback={<span aria-hidden="true" class="i-tabler-message-circle size-6" />}
-    >
-      <span
-        aria-hidden="true"
-        class="i-tabler-loader-2 size-6 animate-spin motion-reduce:animate-none"
-      />
-    </Show>
-  </button>
 )
 
 export const PDialogueComposer = (props: PDialogueComposerProps) => {

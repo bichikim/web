@@ -2,20 +2,62 @@ import {Meta, Title} from '@solidjs/meta'
 import {type Component, type JSX, lazy, Show} from 'solid-js'
 
 const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
-  '/dev': lazy(() => import('./HomePage')),
-  '/dev/character': lazy(() => import('./CharacterPage')),
-  '/dev/chat': lazy(() => import('./ChatPage')),
-  '/dev/dialogue': lazy(() => import('./DialoguePage')),
-  '/dev/focus-room-layer-review': lazy(() => import('./LayerReviewPage')),
-  '/dev/hwp': lazy(() => import('./HwpPage')),
-  '/dev/image-generation': lazy(() => import('./ImageGenerationPage')),
-  '/dev/options': lazy(() => import('./OptionResetPage')),
-  '/dev/recovery': lazy(() => import('./RecoveryPage')),
-  '/dev/speech-to-text': lazy(() => import('./SpeechToTextPage')),
-  '/dev/storage': lazy(() => import('./StoragePage')),
-  '/dev/terms': lazy(() => import('./TermsPage')),
-  '/dev/text-mood': lazy(() => import('./TextMoodPage')),
-  '/dev/voice': lazy(() => import('./VoicePage')),
+  '/dev': lazy(async () => {
+    const {HomePage} = await import('./HomePage')
+    return {default: HomePage}
+  }),
+  '/dev/character': lazy(async () => {
+    const {CharacterPage} = await import('./CharacterPage')
+    return {default: CharacterPage}
+  }),
+  '/dev/chat': lazy(async () => {
+    const {ChatPage} = await import('./ChatPage')
+    return {default: ChatPage}
+  }),
+  '/dev/dialogue': lazy(async () => {
+    const {DialoguePage} = await import('./DialoguePage')
+    return {default: DialoguePage}
+  }),
+  '/dev/focus-room-layer-review': lazy(async () => {
+    const {LayerReviewPage} = await import('./LayerReviewPage')
+    return {default: LayerReviewPage}
+  }),
+  '/dev/hwp': lazy(async () => {
+    const {HwpPage} = await import('./HwpPage')
+    return {default: HwpPage}
+  }),
+  '/dev/image-generation': lazy(async () => {
+    const {ImageGenerationPage} = await import('./ImageGenerationPage')
+    return {default: ImageGenerationPage}
+  }),
+  '/dev/options': lazy(async () => {
+    const {OptionResetPage} = await import('./OptionResetPage')
+    return {default: OptionResetPage}
+  }),
+  '/dev/recovery': lazy(async () => {
+    const {RecoveryPage} = await import('./RecoveryPage')
+    return {default: RecoveryPage}
+  }),
+  '/dev/speech-to-text': lazy(async () => {
+    const {SpeechToTextPage} = await import('./SpeechToTextPage')
+    return {default: SpeechToTextPage}
+  }),
+  '/dev/storage': lazy(async () => {
+    const {StoragePage} = await import('./StoragePage')
+    return {default: StoragePage}
+  }),
+  '/dev/terms': lazy(async () => {
+    const {TermsPage} = await import('./TermsPage')
+    return {default: TermsPage}
+  }),
+  '/dev/text-mood': lazy(async () => {
+    const {TextMoodPage} = await import('./TextMoodPage')
+    return {default: TextMoodPage}
+  }),
+  '/dev/voice': lazy(async () => {
+    const {VoicePage} = await import('./VoicePage')
+    return {default: VoicePage}
+  }),
 }
 
 const TERMS_DESCRIPTION =
@@ -28,7 +70,7 @@ export interface PageDispatcherProps {
 
 const normalizePathname = (pathname: string) => pathname.replace(/\/+$/u, '') || '/'
 
-export default function PageDispatcher(props: PageDispatcherProps) {
+export function PageDispatcher(props: PageDispatcherProps) {
   const pathname = () => normalizePathname(props.pathname)
   const Page = () => DEV_PAGE_COMPONENTS[pathname()]
 

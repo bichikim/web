@@ -1,9 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
-
 import {PButton} from '../PButton'
 import {
-  type PAlbumSale,
   type PResolvedAlbum,
   type PTrack,
   type PTrackListing,
@@ -12,23 +10,11 @@ import {
 import {PAlbumTrackList} from './TrackList'
 import * as m from '@paraglide/message'
 import {AlbumSummary} from './Summary'
+import {AlbumSaleStatus} from './SaleStatus'
 
 const ALBUM_CARD_CLASSES = cx(
   'overflow-hidden rounded-panel-inner border border-solid border-border',
   'bg-surface-interactive',
-)
-
-interface AlbumSaleStatusProps {
-  readonly sale: PAlbumSale
-}
-
-const AlbumSaleStatus = (props: AlbumSaleStatusProps) => (
-  <div class="flex items-center justify-between gap-3 border-t border-solid border-border px-4 py-3">
-    <Show when={props.sale.priceLabel}>
-      {(priceLabel) => <span class="text-sm font-750 text-foreground">{priceLabel()}</span>}
-    </Show>
-    <span class="ml-auto text-modal-detail font-700 text-highlight">{props.sale.statusLabel}</span>
-  </div>
 )
 
 interface AlbumCardProps {
@@ -43,6 +29,11 @@ interface AlbumCardProps {
   readonly trackIds: ReadonlySet<string>
 }
 
+/**
+ * 앨범 라이브러리에서 앨범 정보와 트랙 목록, 미리듣기·플레이어 추가 UI를 표시한다.
+ * 판매 정보가 있으면 전체 추가 버튼 대신 가격과 판매 상태를 표시한다.
+ * 실제 미리듣기와 플레이어 추가 처리는 전달받은 콜백에 맡긴다.
+ */
 export const AlbumCard = (props: AlbumCardProps) => {
   const listedTracks = (): readonly PTrackListing[] =>
     props.album.trackListings ?? props.album.tracks

@@ -3,11 +3,11 @@
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from '../PModal'
 import {PIconButton} from '../PIconButton'
+import {PModal, type PModalProps} from '../PModal'
 import {POrbitBorder, type POrbitBorderProps} from '../POrbitBorder'
-import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {PVersionNotice} from '../PVersionNotice'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
 
 const versionMocks = vi.hoisted(() => ({
   load: vi.fn(),

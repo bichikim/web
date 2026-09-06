@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
 import type {SelectRootItemComponentProps} from '@kobalte/core/select'
+import {render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 import {PSelectItem} from '../Item'

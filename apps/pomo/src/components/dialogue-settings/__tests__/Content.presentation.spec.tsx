@@ -5,12 +5,12 @@ import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import PDialogueSettingsContent from '../Content'
+import {PDialogueSettingsContent} from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('@kobalte/core/dropdown-menu', () => {

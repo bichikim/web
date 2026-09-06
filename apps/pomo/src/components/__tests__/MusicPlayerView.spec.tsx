@@ -15,33 +15,6 @@ import {
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
 
-  it('should expose the complete current track title in its tooltip and update it when the track changes', () => {
-    const [currentTrack, setTrack] = createSignal({
-      artist: 'Artist',
-      durationSeconds: 1,
-      id: 'title-one',
-      source: '/one.mp3',
-      title: '화면보다 긴 첫 번째 곡 제목',
-    })
-    const result = renderMusicPlayerView({
-      get currentTrack() {
-        return currentTrack()
-      },
-    })
-    const title = result.container.querySelector('[data-pomo-player-title] p')
-    expect(title).toHaveAttribute('data-pomo-tooltip-trigger', '')
-    expect(title?.nextElementSibling).toHaveAttribute('role', 'tooltip')
-    expect(title?.nextElementSibling).toHaveTextContent('화면보다 긴 첫 번째 곡 제목')
-    setTrack({
-      artist: 'Artist',
-      durationSeconds: 1,
-      id: 'title-two',
-      source: '/two.mp3',
-      title: '두 번째 곡 제목',
-    })
-    expect(title?.nextElementSibling).toHaveTextContent('두 번째 곡 제목')
-  })
-
   it.each([false, true])(
     'should update every playback tooltip with the playback state (expanded: %s)',
     (expanded) => {
@@ -81,19 +54,6 @@ describe('MusicPlayerView', () => {
     expect(artwork).toBeInstanceOf(HTMLImageElement)
     expect(artwork?.getAttribute('src')).toBe('/audio/artwork/one.jpg')
     expect(artwork?.getAttribute('alt')).toBe('')
-  })
-
-  it('should hide failed artwork requests', () => {
-    const result = renderMusicPlayerView()
-    const artwork = result.container.querySelector('.pomo-player__artwork')
-
-    if (!(artwork instanceof HTMLImageElement)) {
-      throw new TypeError('Expected the current track artwork to be rendered')
-    }
-
-    fireEvent.error(artwork)
-
-    expect(artwork.hidden).toBe(true)
   })
 
   it('should forward album and expanded player control events', () => {

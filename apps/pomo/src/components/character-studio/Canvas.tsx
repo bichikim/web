@@ -85,7 +85,7 @@ const fitCamera = (camera: ArcRotateCamera, scene: Scene, container: AssetContai
   )
 }
 
-const CharacterCanvas = (props: CharacterCanvasProps) => {
+export const CharacterCanvas = (props: CharacterCanvasProps) => {
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
 
   onMount(() => {
@@ -221,5 +221,3 @@ const CharacterCanvas = (props: CharacterCanvasProps) => {
 
   return <canvas class="absolute inset-0 h-full w-full touch-none outline-none" ref={setCanvas} />
 }
-
-export default CharacterCanvas

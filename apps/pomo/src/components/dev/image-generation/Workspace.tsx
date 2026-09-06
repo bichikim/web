@@ -5,7 +5,7 @@ import {TEXT_MODELS} from 'src/features/text-generation'
 import {Settings} from './Settings'
 import './workspace.css'
 
-export default function Workspace() {
+export function Workspace() {
   const studio = useImageGeneration()
   return (
     <div class="image-studio">

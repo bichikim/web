@@ -49,7 +49,7 @@ export default function HomePage() {
     },
   )
 
-  useRestoreScroll(mainElement)
+  const scroll = useRestoreScroll(mainElement)
 
   const settingData = useContext(SettingContext)
   const isLoaded = createMemo(() => splendidGrandPiano().loaded)
@@ -128,6 +128,7 @@ export default function HomePage() {
       <main
         class=":uno: relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
         ref={setMainElement}
+        onScroll={scroll.onScroll}
       >
         <SScale
           class=":uno: h-full w-max origin-top-left"

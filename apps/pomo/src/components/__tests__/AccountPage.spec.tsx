@@ -2,6 +2,8 @@
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {AccountPage} from '../AccountPage'
+import * as runtime from '@paraglide/runtime'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {readonly children: unknown}) => <>{props.children}</>,
@@ -14,7 +16,6 @@ beforeEach(() => cleanup())
 afterEach(() => {
   cleanup()
   vi.unstubAllEnvs()
-  vi.resetModules()
 })
 
 it.each([
@@ -22,9 +23,8 @@ it.each([
   [true, 'Toss account'],
 ] as const)(
   'should render the account page for Toss=%s',
-  async (isAppsInToss, accountText) => {
+  (isAppsInToss, accountText) => {
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', isAppsInToss ? 'true' : '')
-    const {AccountPage} = await import('../AccountPage')
 
     render(() => <AccountPage />)
 
@@ -50,9 +50,8 @@ it.each([
   ['microsoft', 'Microsoft Outlook 캘린더가 연결되었습니다'],
 ] as const)(
   'should replace account controls with the %s calendar connection success',
-  async (provider, heading) => {
+  (provider, heading) => {
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
-    const {AccountPage} = await import('../AccountPage')
 
     render(() => <AccountPage connectedCalendarProvider={provider} />)
 
@@ -74,12 +73,10 @@ it.each([
 it.each([
   ['ko', '앱으로 돌아가기'],
   ['en', 'Back to app'],
-] as const)('should localize the app return link in %s', async (locale, label) => {
-  const runtime = await import('@paraglide/runtime')
+] as const)('should localize the app return link in %s', (locale, label) => {
   const originalLocale = runtime.getLocale
   runtime.overwriteGetLocale(() => locale)
   try {
-    const {AccountPage} = await import('../AccountPage')
     render(() => <AccountPage />)
     const link = screen.getByRole('link', {name: label})
     expect(link).toHaveAttribute('href', '/')

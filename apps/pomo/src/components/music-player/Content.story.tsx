@@ -3,7 +3,7 @@ import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 import dayReadingImage from '../../features/focus-room-animation/assets/concept-art/day-reading.webp'
 import * as m from '@paraglide/message'
-import PMusicPlayerContent from './Content'
+import {PMusicPlayerContent} from './Content'
 
 const meta = {
   args: {

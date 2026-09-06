@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {renderHook} from '@solidjs/testing-library'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {renderHook} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it} from 'vitest'
 
 import {useStudioTour} from '../use-tour'

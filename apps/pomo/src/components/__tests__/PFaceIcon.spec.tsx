@@ -4,9 +4,9 @@ import {render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, it} from 'vitest'
 
+import type {PSceneStyle} from '../../features/focus-room-animation'
 import originalJoyFace from '../../features/text-mood/assets/faces/joy.webp'
 import scribbleJoyFace from '../../features/text-mood/assets/faces/scribble/joy.webp'
-import type {PSceneStyle} from '../../features/focus-room-animation'
 import {PFaceIcon} from '../PFaceIcon'
 
 it('should render the face icon set matching the scene style', () => {

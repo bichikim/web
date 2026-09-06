@@ -3,7 +3,7 @@
 import {fireEvent, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 import type {PictureDiaryEntry} from '../../../../features/picture-diary'
-import {finishPageTurn, renderEditor, sampleEntry, turns} from './fixtures/editor'
+import {renderEditor} from './fixtures/editor'
 
 it('should use accessible names without visible section labels or a control-shaped textarea', () => {
   renderEditor()

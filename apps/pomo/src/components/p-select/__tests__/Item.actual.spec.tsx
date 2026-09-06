@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
 import {Select} from '@kobalte/core/select'
+import {render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 import {PSelectItem} from '../Item'
 

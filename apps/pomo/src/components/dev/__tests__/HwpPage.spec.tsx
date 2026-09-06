@@ -4,7 +4,7 @@ import {cleanup, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import HwpPage from '../HwpPage'
+import {HwpPage} from '../HwpPage'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {children?: JSX.Element}) => <>{props.children}</>,

@@ -17,7 +17,7 @@ import {
   useModelDownload,
 } from '../../../features/model-download'
 import {isTextModelDownloaded} from '../../../features/text-generation'
-import PDialogueDraftGenerator from '../DraftGenerator'
+import {PDialogueDraftGenerator} from '../DraftGenerator'
 
 vi.mock('../../../features/dialogue-writer', () => ({
   useDialogueWriter: vi.fn(),

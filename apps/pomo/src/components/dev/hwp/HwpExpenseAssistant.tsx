@@ -1,8 +1,9 @@
 import {cx} from 'class-variance-authority'
-import {createEffect, createSignal, For, Show} from 'solid-js'
-
+import {createEffect, createSignal, Show} from 'solid-js'
 import {useChat} from '../../../features/chat'
 import {type ExpenseForm, parseExpenseAssistantResponse, parseExpenseText} from './expense'
+import {BUTTON_CLASSES} from './expense/button-classes'
+import {ExpenseResult} from './expense/Result'
 
 const EXPENSE_PROMPT = `가계부 원문을 양식 필드에 넣을 데이터로 변환하세요.
 JSON 한 줄만 출력하세요. 설명, 마크다운, 코드 블록은 쓰지 마세요.
@@ -12,99 +13,22 @@ JSON 한 줄만 출력하세요. 설명, 마크다운, 코드 블록은 쓰지 �
 날짜가 없으면 date는 null로 두세요.`
 
 const PANEL_CLASSES = cx('grid gap-5 rounded-6 border border-white/8 bg-white/4 p-5')
-const BUTTON_CLASSES = cx(
-  'inline-flex min-h-10 items-center justify-center rounded-3 border border-white/12 px-3',
-  'text-sm font-700 text-#f8edf1 transition hover:border-#f2a7b8/45 hover:bg-white/8',
-  'disabled:cursor-not-allowed disabled:opacity-45',
-)
+
 const PRIMARY_BUTTON_CLASSES = cx(
   BUTTON_CLASSES,
   'border-#f2a7b8/35 bg-#f2a7b8/12 text-#ffc0ce hover:bg-#f2a7b8/20',
 )
+
 const INPUT_CLASSES = cx(
   'min-h-32 w-full resize-y rounded-4 border border-white/10 bg-#17131f/70 p-4',
   'text-sm leading-6 text-#f8edf1 outline-none placeholder:text-#8f8297 focus:border-#f2a7b8/55',
 )
 
-const formatWon = (amount: number) => `${new Intl.NumberFormat('ko-KR').format(amount)}원`
-
 export interface HwpExpenseAssistantProps {
   readonly onApply: (form: ExpenseForm) => Promise<void> | void
 }
 
-interface ExpenseResultProps {
-  readonly form: ExpenseForm
-  readonly isApplied: boolean
-  readonly isApplying: boolean
-  readonly onApply: () => void
-}
-
-function ExpenseResult(props: ExpenseResultProps) {
-  return (
-    <section
-      class="grid gap-4 rounded-4 border border-white/8 bg-#17131f/55 p-4"
-      aria-live="polite"
-    >
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h3 class="m-0 text-base font-750">해석 결과</h3>
-        <span class="text-sm font-750 text-#f4d7b5">합계 {formatWon(props.form.total)}</span>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full min-w-120 border-collapse text-left text-sm">
-          <thead class="text-xs text-#8f8297">
-            <tr>
-              <th class="border-b border-white/8 px-2 py-2 font-650">품목</th>
-              <th class="border-b border-white/8 px-2 py-2 text-right font-650">단가</th>
-              <th class="border-b border-white/8 px-2 py-2 text-right font-650">수량</th>
-              <th class="border-b border-white/8 px-2 py-2 text-right font-650">금액</th>
-            </tr>
-          </thead>
-          <tbody>
-            <For each={props.form.items}>
-              {(item) => (
-                <tr>
-                  <td class="border-b border-white/6 px-2 py-2 text-#f8edf1">{item.name}</td>
-                  <td class="border-b border-white/6 px-2 py-2 text-right text-#d9cbd7">
-                    {formatWon(item.unitPrice)}
-                  </td>
-                  <td class="border-b border-white/6 px-2 py-2 text-right text-#d9cbd7">
-                    {item.quantity}
-                  </td>
-                  <td class="border-b border-white/6 px-2 py-2 text-right text-#d9cbd7">
-                    {formatWon(item.amount)}
-                  </td>
-                </tr>
-              )}
-            </For>
-          </tbody>
-        </table>
-      </div>
-      <Show when={props.form.questions.length > 0}>
-        <div class="grid gap-1 rounded-3 bg-#f4d7b5/8 p-3 text-sm text-#f4d7b5">
-          <strong>확인이 필요한 내용</strong>
-          <For each={props.form.questions}>{(question) => <span>· {question}</span>}</For>
-        </div>
-      </Show>
-      <div class="flex flex-wrap items-center gap-3">
-        <button
-          class={BUTTON_CLASSES}
-          disabled={props.isApplying || props.form.questions.length > 0}
-          onClick={() => props.onApply()}
-          type="button"
-        >
-          {props.isApplying ? '양식에 적용 중…' : '양식 필드에 적용'}
-        </button>
-        <Show when={props.isApplied}>
-          <span class="text-sm text-#b8e0c0" role="status">
-            양식 필드에 적용했어요.
-          </span>
-        </Show>
-      </div>
-    </section>
-  )
-}
-
-export default function HwpExpenseAssistant(props: HwpExpenseAssistantProps) {
+export function HwpExpenseAssistant(props: HwpExpenseAssistantProps) {
   const chat = useChat({modelId: 'gemma-4-e2b'})
   const [inputText, setInputText] = createSignal('당근 2000원\n고구마 1000원 2개')
   const [expenseForm, setExpenseForm] = createSignal<ExpenseForm | null>(null)

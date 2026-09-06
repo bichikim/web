@@ -2,9 +2,15 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 
-const Workspace = clientOnly(() => import('./image-generation/Workspace'), {lazy: true})
+const Workspace = clientOnly(
+  async () => {
+    const {Workspace} = await import('./image-generation/Workspace')
+    return {default: Workspace}
+  },
+  {lazy: true},
+)
 
-export default function ImageGenerationPage() {
+export function ImageGenerationPage() {
   return (
     <main class="min-h-dvh bg-#17131f px-5 py-8 text-#f8edf1 sm:px-8">
       <Title>Pomofi — 이미지 생성</Title>

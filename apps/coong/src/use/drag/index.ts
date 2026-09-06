@@ -1,8 +1,6 @@
 import {createEffect, createSignal, onCleanup} from 'solid-js'
-import {MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
 
-export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
-  const elementAccessor = resolveAccessor(element)
+export const useDrag = () => {
   const [isDragging, setIsDragging] = createSignal(false)
   const [position, setPosition] = createSignal({x: 0, y: 0})
 
@@ -13,12 +11,8 @@ export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
     event.preventDefault()
     setIsDragging(true)
 
-    const element = elementAccessor()
-
-    if (element) {
-      startX = event.clientX - position().x
-      startY = event.clientY - position().y
-    }
+    startX = event.clientX - position().x
+    startY = event.clientY - position().y
   }
 
   const handleMouseMove = (event: MouseEvent) => {
@@ -36,19 +30,6 @@ export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
     setIsDragging(false)
   }
 
-  // 엘리먼트 이벤트 handleMouseDown 연결
-  createEffect(() => {
-    const element = elementAccessor()
-
-    if (element) {
-      element.addEventListener('mousedown', handleMouseDown)
-    }
-
-    onCleanup(() => {
-      element?.removeEventListener('mousedown', handleMouseDown)
-    })
-  })
-
   // 전역 마우스 이벤트 연결
   createEffect(() => {
     if (isDragging()) {
@@ -64,6 +45,7 @@ export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
 
   return {
     isDragging,
+    onMouseDown: handleMouseDown,
     position,
   }
 }

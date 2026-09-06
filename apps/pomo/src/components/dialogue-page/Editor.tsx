@@ -20,7 +20,7 @@ import {
   SUPERTONIC_VOICES,
 } from '../../features/supertonic'
 import {getPrimaryMood} from '../../features/text-mood'
-import PDialogueDraftGenerator from './DraftGenerator'
+import {PDialogueDraftGenerator} from './DraftGenerator'
 import {PFaceIcon} from '../PFaceIcon'
 import {PGenerationStatus} from '../PGenerationStatus'
 import {PAudioPreview} from '../PAudioPreview'
@@ -157,7 +157,7 @@ const formatDuration = (durationMs: number) => {
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- The form follows one numbered authoring workflow and shares one controller.
-export default function PDialogueEditor(props: PDialogueEditorProps) {
+export function PDialogueEditor(props: PDialogueEditorProps) {
   const navigate = useNavigate()
   const events = usePEvents()
   const sceneStyleController = usePSceneStyle()

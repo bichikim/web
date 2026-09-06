@@ -1,5 +1,4 @@
-import {createMemo, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
-
+import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
@@ -20,8 +19,10 @@ import {
   createBrowserDiaryEnvironment,
   type PictureDiaryEnvironment,
 } from './picture-diary/environment'
+import {PictureDiaryStatus} from './picture-diary/Status'
 
 const padNumber = (value: number) => String(value).padStart(2, '0')
+
 const getDateValue = (date: Date) =>
   `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
 
@@ -78,20 +79,6 @@ const mergeLoadedEntries = (
     ...current,
   ])
 }
-
-interface PictureDiaryStatusProps {
-  readonly message: string | null
-}
-
-const PictureDiaryStatus = (props: PictureDiaryStatusProps) => (
-  <Show when={props.message}>
-    {(message) => (
-      <p aria-live="polite" class="m-0 text-sm text-muted-foreground" role="status">
-        {message()}
-      </p>
-    )}
-  </Show>
-)
 
 const getWeatherSnapshot = (state?: WeatherState): PictureDiaryWeather | undefined => {
   if (state?.status !== 'ready') {

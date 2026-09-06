@@ -32,7 +32,7 @@ const activateModel = (
   writer.prepare()
 }
 
-const DialogueWriter = () => {
+export const DialogueWriter = () => {
   const compactModel = getTextModel('qwen-0.8b')
   const qualityModel = getTextModel('qwen-2b')
   const largerModel = getTextModel('qwen-4b')
@@ -168,5 +168,3 @@ const DialogueWriter = () => {
     </section>
   )
 }
-
-export default DialogueWriter

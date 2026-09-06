@@ -1,6 +1,5 @@
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
-
 import {useAlbumTranslation} from '../../features/album-translation/use-album-translation'
 import {
   ALBUM_LOCALES,
@@ -8,25 +7,14 @@ import {
   type AlbumDraftTranslations,
   type AlbumLocale,
 } from '../../features/admin-music'
+import {type LanguageOption} from './language-option'
+import {LanguageFields} from './LanguageFields'
 
-const FIELD_CLASSES = cx(
-  'h-11 w-full rounded-3 border border-white/15 bg-white/5 px-3 text-sm text-white outline-none',
-  'placeholder:text-white/30 focus:border-#e8bc88/70',
-)
-const TEXTAREA_CLASSES = cx(
-  'min-h-24 w-full resize-y rounded-3 border border-white/15 bg-white/5 p-3 text-sm',
-  'text-white outline-none focus:border-#e8bc88/70',
-)
 const TRANSLATE_BUTTON_CLASSES = cx(
   'h-10 rounded-3 border border-#9fc8ff/45 bg-#9fc8ff/10 px-4 text-sm font-700 text-#cfe4ff',
   'transition hover:bg-#9fc8ff/18 focus-visible:outline-2 focus-visible:outline-offset-3',
   'focus-visible:outline-#9fc8ff disabled:cursor-wait disabled:opacity-45',
 )
-
-interface LanguageOption {
-  readonly label: string
-  readonly locale: AlbumLocale
-}
 
 const OPTIONAL_LANGUAGE_OPTIONS: ReadonlyArray<LanguageOption> = [
   {label: 'English', locale: 'en'},
@@ -39,53 +27,7 @@ export interface AlbumTranslationFieldsProps {
   readonly values: AlbumDraftTranslations
 }
 
-interface LanguageFieldsProps {
-  readonly language: LanguageOption
-  readonly onFieldChange: (
-    locale: AlbumLocale,
-    field: keyof AlbumDraftTranslation,
-    value: string,
-  ) => void
-  readonly required?: boolean
-  readonly values: AlbumDraftTranslations
-}
-
-const LanguageFields = (props: LanguageFieldsProps) => (
-  <section class="grid gap-4">
-    <div class="flex items-center justify-between gap-3">
-      <h3 class="m-0 text-sm font-750">{props.language.label}</h3>
-      <span class="text-xs text-white/45">{props.required ? '필수' : '선택'}</span>
-    </div>
-    <label class="grid gap-2 text-sm">
-      앨범명
-      <input
-        class={FIELD_CLASSES}
-        maxlength="120"
-        name={`title.${props.language.locale}`}
-        onInput={(event) =>
-          props.onFieldChange(props.language.locale, 'title', event.currentTarget.value)
-        }
-        required={props.required}
-        value={props.values[props.language.locale].title}
-      />
-    </label>
-    <label class="grid gap-2 text-sm">
-      설명
-      <textarea
-        class={TEXTAREA_CLASSES}
-        maxlength="2000"
-        name={`description.${props.language.locale}`}
-        onInput={(event) =>
-          props.onFieldChange(props.language.locale, 'description', event.currentTarget.value)
-        }
-        required={props.required}
-        value={props.values[props.language.locale].description}
-      />
-    </label>
-  </section>
-)
-
-const AlbumTranslationFields = (props: AlbumTranslationFieldsProps) => {
+export const AlbumTranslationFields = (props: AlbumTranslationFieldsProps) => {
   const translation = useAlbumTranslation({
     onComplete: (translatedValues) => props.onValuesChange({...props.values, ...translatedValues}),
   })
@@ -168,5 +110,3 @@ const AlbumTranslationFields = (props: AlbumTranslationFieldsProps) => {
     </fieldset>
   )
 }
-
-export default AlbumTranslationFields

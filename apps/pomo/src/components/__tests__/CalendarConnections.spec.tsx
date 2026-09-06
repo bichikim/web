@@ -4,14 +4,14 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
+import {useAuth} from '../../features/auth/AuthProvider'
+import type {AuthenticationState} from '../../features/auth/machine'
 import {
   createCalendarAuthorization,
   deleteCalendarConnection,
   listCalendarConnections,
   openCalendarAuthorization,
 } from '../../features/calendar'
-import type {AuthenticationState} from '../../features/auth/machine'
-import {useAuth} from '../../features/auth/AuthProvider'
 import {CalendarConnections} from '../CalendarConnections'
 
 vi.mock('../../features/calendar', () => ({

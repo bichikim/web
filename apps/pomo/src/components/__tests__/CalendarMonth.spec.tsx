@@ -4,15 +4,15 @@ import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-libra
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {useAuth} from '../../features/auth/AuthProvider'
+import type {AuthenticationState} from '../../features/auth/machine'
 import {
   type CalendarEvents,
   listCalendarEvents,
   readCalendarMonthCache,
   writeCalendarMonthCache,
 } from '../../features/calendar'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import type {AuthenticationState} from '../../features/auth/machine'
-import {useAuth} from '../../features/auth/AuthProvider'
 import {CalendarMonth} from '../CalendarMonth'
 
 vi.mock('../../features/calendar', async () => {

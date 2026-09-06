@@ -80,8 +80,8 @@ export const PinEditor = (props: PinEditorProps) => {
         aria-label="핀 디포머 편집 영역"
         viewBox={editor.viewBox()}
         tabindex={0}
-        on:dblclick={editor.append}
-        on:keydown={editor.keyDown}
+        onDblClick={editor.append}
+        onKeyDown={editor.keyDown}
         onPointerMove={editor.drag}
         onPointerUp={editor.stop}
         onLostPointerCapture={editor.stop}

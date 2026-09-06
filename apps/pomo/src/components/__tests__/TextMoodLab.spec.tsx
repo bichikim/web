@@ -5,7 +5,7 @@ import {createSignal} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {type TextMoodController, type TextMoodState, useTextMood} from '../../features/text-mood'
-import TextMoodLab from '../TextMoodLab'
+import {TextMoodLab} from '../TextMoodLab'
 import {TextMoodAnalysisResult} from '../text-mood-lab/AnalysisResult'
 import {TextMoodEvaluation} from '../text-mood-lab/Evaluation'
 import {TextMoodInsufficientResult} from '../text-mood-lab/InsufficientResult'

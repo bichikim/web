@@ -5,7 +5,7 @@ import {useModelDownload} from './use-model-download'
 import {useSentenceGeneration} from './use-sentence-generation'
 import {useVoiceGeneration} from './use-voice-generation'
 
-export default function LanguageLearningEditor() {
+export function LanguageLearningEditor() {
   const state = useLanguageLearningEditorState()
   const voiceGeneration = useVoiceGeneration({state})
   const sentenceGeneration = useSentenceGeneration({

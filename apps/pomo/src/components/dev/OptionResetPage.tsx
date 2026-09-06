@@ -2,7 +2,6 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createSignal, For, Show, untrack} from 'solid-js'
-
 import {PButton} from 'src/components/PButton'
 import {PModal} from 'src/components/PModal'
 import {
@@ -12,6 +11,7 @@ import {
   type OptionResetGroupId,
   type OptionResetManager,
 } from 'src/features/dev-option-reset'
+import {OptionGroupCard} from './option-reset/OptionGroupCard'
 
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1 xs:px-8',
@@ -48,43 +48,11 @@ const getPartialResetMessage = (
   return `${resultMessage}으며 ${unresolvedCount}개는 상태를 확인하지 못했습니다. 다시 시도해 주세요.`
 }
 
-interface OptionGroupCardProps {
-  readonly busy: boolean
-  readonly group: OptionResetGroup
-  readonly onReset: (group: OptionResetGroup, source: HTMLButtonElement) => void
-}
-
-const OptionGroupCard = (props: OptionGroupCardProps) => (
-  <li
-    class={
-      'grid gap-5 rounded-6 border border-white/10 bg-white/4 p-5 ' +
-      'sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-6'
-    }
-  >
-    <div>
-      <h2 class="m-0 text-xl font-750">{props.group.label}</h2>
-      <p class="mb-0 mt-2 text-sm leading-6 text-#aaa0b1">{props.group.description}</p>
-      <p class="mb-0 mt-2 text-modal-detail text-#8f8297">
-        저장 항목 {props.group.storageKeyCount}개
-      </p>
-    </div>
-    <PButton
-      accessibleLabel={`${props.group.label} 옵션 초기화`}
-      disabled={props.busy}
-      onPress={(source) => props.onReset(props.group, source)}
-      size="small"
-      tone="danger"
-    >
-      초기화
-    </PButton>
-  </li>
-)
-
 export interface OptionResetPageProps {
   readonly manager?: OptionResetManager
 }
 
-function OptionResetPage(props: OptionResetPageProps) {
+export function OptionResetPage(props: OptionResetPageProps) {
   const manager = untrack(() => props.manager ?? createRuntimeOptionResetManager())
   const [request, setRequest] = createSignal<ResetRequest | null>(null)
   const [isBusy, setIsBusy] = createSignal(false)
@@ -231,5 +199,3 @@ function OptionResetPage(props: OptionResetPageProps) {
     </main>
   )
 }
-
-export default OptionResetPage

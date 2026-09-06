@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
 import {render, screen} from '@solidjs/testing-library'
-import type {TextModelDefinition} from '../../../features/text-generation'
 import {describe, expect, it} from 'vitest'
+import type {TextModelDefinition} from '../../../features/text-generation'
 import {ModelStatus} from '../ModelStatus'
 
 const model: TextModelDefinition = {

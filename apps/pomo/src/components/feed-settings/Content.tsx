@@ -43,7 +43,7 @@ const getRecommendedDevFeeds = () =>
     },
   ] as const
 
-export default function PFeedSettingsContent() {
+export function PFeedSettingsContent() {
   const feeds = useFeedConnections()
   const runtime = useOptionalPFeeds()
   const usesRemotePublicOrigin =

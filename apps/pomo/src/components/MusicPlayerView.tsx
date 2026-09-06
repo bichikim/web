@@ -1,76 +1,26 @@
+import {TrackSummary} from './music-player-view/TrackSummary'
 import 'media-chrome'
-
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
-
 import {getPomoIconClass} from './icon-style'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import * as m from '@paraglide/message'
 import {PAlbumLibrary} from './PAlbumLibrary'
-import {POverflowMarquee} from './POverflowMarquee'
-import {PTooltip} from './PTooltip'
 import {PPlayerUtilityButton} from './PPlayerUtilityButton'
 import {PScribbleFrame} from './scribble/Frame'
 import {ExpandedPlayerControls} from './music-player-view/ExpandedControls'
 import {ExpandedPlayerProgress} from './music-player-view/ExpandedProgress'
 import {SummaryPlayButton} from './music-player-view/SummaryPlayButton'
 import {CLASSES, type MusicPlayerViewProps} from './music-player-view/shared'
+import {ExpandedSummaryPlayback} from './music-player-view/ExpandedSummaryPlayback'
 
 const SCRIBBLE_MASK_CLASSES = 'pomo-scribble-mask'
 
 const getShellClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? cx('rounded-none', SCRIBBLE_MASK_CLASSES) : 'rounded-panel'
+
 const getBaseClasses = (sceneStyle?: PSceneStyle) =>
   sceneStyle === 'scribble' ? 'rounded-none border-transparent' : 'rounded-panel border-border'
-
-const TrackArtwork = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
-  <Show keyed when={props.currentTrack?.artworkUrl}>
-    {(artworkUrl) => (
-      <img
-        alt=""
-        class="pomo-player__artwork size-11 shrink-0 rounded-control object-cover
-          player-compact:hidden"
-        onError={({currentTarget}) => {
-          currentTarget.hidden = true
-        }}
-        src={artworkUrl}
-      />
-    )}
-  </Show>
-)
-
-const ExpandedSummaryPlayback = (
-  props: Pick<MusicPlayerViewProps, 'currentTrack' | 'isPlaying' | 'sceneStyle'>,
-) => (
-  <>
-    <TrackArtwork currentTrack={props.currentTrack} />
-    <div class="pomo-player__compact-summary-play hidden size-11 shrink-0 player-compact:block">
-      <SummaryPlayButton
-        isPlaying={props.isPlaying}
-        currentTrack={props.currentTrack}
-        sceneStyle={props.sceneStyle}
-      />
-    </div>
-  </>
-)
-
-const TrackSummary = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
-  <div
-    class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2 player-compact:px-1')}
-    data-pomo-player-title=""
-  >
-    <PTooltip label={props.currentTrack?.title ?? m.player_fallback_title()}>
-      {(tooltip) => (
-        <p {...tooltip} class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
-          <POverflowMarquee text={props.currentTrack?.title ?? m.player_fallback_title()} />
-        </p>
-      )}
-    </PTooltip>
-    <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
-      <POverflowMarquee text={props.currentTrack?.artist ?? m.player_fallback_artist()} />
-    </p>
-  </div>
-)
 
 export const MusicPlayerView = (props: MusicPlayerViewProps) => (
   <div
@@ -95,6 +45,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         )}
       >
         <audio
+          {...props.mediaEvents}
           crossorigin="anonymous"
           preload="metadata"
           ref={(element) => props.onAudioElement(element)}

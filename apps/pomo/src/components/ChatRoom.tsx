@@ -16,7 +16,7 @@ const PANEL_CLASSES = cx(
   'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
 
-const ChatRoom = () => {
+export const ChatRoom = () => {
   const chat = useChat({modelId: 'qwen-4b'})
   const model = () => getTextModel(chat.modelId())
   const voice = useChatVoice()
@@ -149,5 +149,3 @@ const ChatRoom = () => {
     </section>
   )
 }
-
-export default ChatRoom

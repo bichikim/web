@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import type {SpeechModelDefinition} from '../../features/speech-to-text'
 import {describe, expect, it, vi} from 'vitest'
-import SpeechToTextLab, {SpeechToTextLab as NamedSpeechToTextLab} from '../SpeechToTextLab'
+import type {SpeechModelDefinition} from '../../features/speech-to-text'
+import {SpeechToTextLab as NamedSpeechToTextLab, SpeechToTextLab} from '../SpeechToTextLab'
 
 vi.mock('../speech-to-text-lab/ModelWorkspace', () => ({
   SpeechModelWorkspace: (props: {readonly model: SpeechModelDefinition}) => (

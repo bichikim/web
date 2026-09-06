@@ -96,5 +96,3 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
     </>
   )
 }
-
-export default PMemoryAssist

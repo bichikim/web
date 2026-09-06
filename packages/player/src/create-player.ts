@@ -1,5 +1,4 @@
-import {useEvent} from '@winter-love/solid-use'
-import {Accessor, createEffect, createSignal, onCleanup, Setter} from 'solid-js'
+import {Accessor, createEffect, createSignal, type JSX, onCleanup, Setter} from 'solid-js'
 import {
   LoadOptions,
   PlayerApi,
@@ -9,6 +8,16 @@ import {
   PlayerStateMutable,
 } from 'src/player/types'
 import {createShakaPlayer} from './player/shaka'
+
+export interface PlayerMediaEvents {
+  readonly onLoadedMetadata: JSX.EventHandler<HTMLVideoElement, Event>
+  readonly onVolumeChange: JSX.EventHandler<HTMLVideoElement, Event>
+  readonly onSeeking: JSX.EventHandler<HTMLVideoElement, Event>
+  readonly onSeeked: JSX.EventHandler<HTMLVideoElement, Event>
+  readonly onTimeUpdate: JSX.EventHandler<HTMLVideoElement, Event>
+  readonly onPlay: JSX.EventHandler<HTMLVideoElement, Event>
+  readonly onPause: JSX.EventHandler<HTMLVideoElement, Event>
+}
 
 const getState = (videoElement?: HTMLVideoElement | null): PlayerState => {
   if (!videoElement) {
@@ -35,7 +44,7 @@ const getState = (videoElement?: HTMLVideoElement | null): PlayerState => {
 export const createPlayer = (
   videoElement: Accessor<HTMLVideoElement | null>,
   options: PlayerAPiOptions = {},
-): [Accessor<PlayerState>, Setter<PlayerStateMutable>, PlayerApi] => {
+): [Accessor<PlayerState>, Setter<PlayerStateMutable>, PlayerApi, PlayerMediaEvents] => {
   let player: PlayerLoadApi | undefined
   const destroyedPlayers = new WeakSet<PlayerLoadApi>()
 
@@ -88,21 +97,11 @@ export const createPlayer = (
     })
   })
 
-  const update = (event: Event) => {
-    const {target} = event
-
-    if (target instanceof HTMLVideoElement) {
-      _setState(getState(target))
+  const update: JSX.EventHandler<HTMLVideoElement, Event> = (event) => {
+    if (event.currentTarget === videoElement()) {
+      _setState(getState(event.currentTarget))
     }
   }
-
-  useEvent(videoElement, 'loadedmetadata', update)
-  useEvent(videoElement, 'volumechange', update)
-  useEvent(videoElement, 'seeking', update)
-  useEvent(videoElement, 'seeked', update)
-  useEvent(videoElement, 'timeupdate', update)
-  useEvent(videoElement, 'play', update)
-  useEvent(videoElement, 'pause', update)
 
   const pause = () => {
     videoElement()?.pause()
@@ -166,6 +165,15 @@ export const createPlayer = (
       load,
       pause,
       play,
+    },
+    {
+      onLoadedMetadata: update,
+      onPause: update,
+      onPlay: update,
+      onSeeked: update,
+      onSeeking: update,
+      onTimeUpdate: update,
+      onVolumeChange: update,
     },
   ]
 }

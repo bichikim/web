@@ -1,5 +1,4 @@
-import {createEffect, createSignal, type JSX, Match, Show, Switch} from 'solid-js'
-
+import {createEffect, createSignal, Match, Show, Switch} from 'solid-js'
 import {PButton} from './PButton'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type FeedDialogueJob, type PFeedState, usePFeedContext} from '../features/focus-room-feed'
@@ -19,6 +18,7 @@ import * as m from '@paraglide/message'
 import {FeedStatusSurface} from './feed-status/Surface'
 import {CLASSES} from './feed-status/shared'
 import {PModelDownloadConsent} from './PModelDownloadConsent'
+import {FeedGenerationStatus} from './feed-status/FeedGenerationStatus'
 
 interface PFeedStatusProps {
   readonly sceneStyle?: PSceneStyle
@@ -29,38 +29,11 @@ interface MissingModelDownloads {
   readonly size: number
 }
 
-interface FeedGenerationStatusProps {
-  readonly cancelDisabled: boolean
-  readonly message: JSX.Element
-  readonly onCancel: () => void
-  readonly sceneStyle?: PSceneStyle
-  readonly state: 'generating' | 'preparing'
-}
-
 interface ActiveFeedState {
   readonly message: string
   readonly progress: number | null
   readonly status: 'generating' | 'preparing'
 }
-
-const FeedGenerationStatus = (props: FeedGenerationStatusProps) => (
-  <FeedStatusSurface sceneStyle={props.sceneStyle} state={props.state}>
-    <span aria-hidden="true" class={CLASSES.feedStatusSpinner} />
-    <span class={CLASSES.feedStatusCopy}>
-      <strong>{m.feed_reading()}</strong>
-      <small>{props.message}</small>
-    </span>
-    <PButton
-      class={CLASSES.feedStatusAction}
-      disabled={props.cancelDisabled}
-      onPress={props.onCancel}
-      size="small"
-      tone="secondary"
-    >
-      {m.feed_stop()}
-    </PButton>
-  </FeedStatusSurface>
-)
 
 const getMissingModelDownloads = async (
   jobs: ReadonlyArray<FeedDialogueJob>,

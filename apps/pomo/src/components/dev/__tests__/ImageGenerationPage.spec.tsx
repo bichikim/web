@@ -2,15 +2,15 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
-import {lazy} from 'solid-js'
 import {cleanup, render, screen} from '@solidjs/testing-library'
+import {lazy} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import Workspace from '../image-generation/Workspace'
+import {Workspace} from '../image-generation/Workspace'
 
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
 vi.mock('@solidjs/meta', () => ({Title: vi.fn()}))
 vi.mock('@solidjs/router', () => ({A: vi.fn()}))
-vi.mock('../image-generation/Workspace', () => ({default: vi.fn()}))
+vi.mock('../image-generation/Workspace', () => ({Workspace: vi.fn()}))
 
 beforeEach(() => {
   vi.mocked(clientOnly).mockImplementation((load) => lazy(load))
@@ -24,7 +24,7 @@ afterEach(() => {
 })
 
 it('should load the client workspace and provide navigation back to the lab', async () => {
-  const {default: ImageGenerationPage} = await import('../ImageGenerationPage')
+  const {ImageGenerationPage} = await import('../ImageGenerationPage')
   render(() => <ImageGenerationPage />)
 
   expect(screen.getByText('Pomofi — 이미지 생성')).toBeDefined()

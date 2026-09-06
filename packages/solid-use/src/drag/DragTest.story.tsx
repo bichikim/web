@@ -4,18 +4,13 @@ import {type DragPayload, useDrag} from './'
 
 const DragTestComponent = () => {
   const [parentElement, setParentElement] = createSignal<HTMLElement | null>(null)
-  const [dragElement, setDragElement] = createSignal<HTMLElement | null>(null)
   const [drag, setDrag] = createSignal<DragPayload | null>(null)
   const [isDragging, setIsDragging] = createSignal(false)
 
-  useDrag(
-    dragElement,
-    (type, payload) => {
-      setDrag(payload)
-      setIsDragging(type !== 'end')
-    },
-    parentElement,
-  )
+  const dragHandlers = useDrag((type, payload) => {
+    setDrag(payload)
+    setIsDragging(type !== 'end')
+  }, parentElement)
 
   const currentPosition = createMemo(() => {
     const {currentPoint, relativePoint} = drag() ?? {}
@@ -62,7 +57,7 @@ const DragTestComponent = () => {
       </div>
 
       <div
-        ref={setDragElement}
+        onPointerDown={dragHandlers.onPointerDown}
         class="w-24 h-24 bg-blue-500 rounded-lg shadow-lg cursor-grab select-none absolute"
         style={{
           cursor: isDragging() ? 'grabbing' : 'grab',

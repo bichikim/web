@@ -5,7 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
 import type {MusicPlayerViewProps} from '../../music-player-view/shared'
-import PMusicPlayerContent from '../Content'
+import {PMusicPlayerContent} from '../Content'
 
 type EventHandler = (value?: unknown) => void
 
@@ -99,13 +99,18 @@ const latestViewProps = () => {
 }
 
 const emit = (event: string, value: unknown = new Event(event)) => {
-  const handler = eventMocks.handlers.get(event)
+  const entry = Object.entries(latestViewProps().mediaEvents ?? {}).find(
+    ([name]) => name.slice(2).toLowerCase() === event,
+  )
+  const handler = entry?.[1] ?? eventMocks.handlers.get(event)
 
   if (handler === undefined) {
     throw new Error(`Expected ${event} handler`)
   }
 
-  handler(value)
+  if (typeof handler === 'function') {
+    handler(value as never)
+  }
 }
 
 const createAudio = () => {

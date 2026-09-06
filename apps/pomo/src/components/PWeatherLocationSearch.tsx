@@ -1,15 +1,14 @@
 import {Combobox} from '@kobalte/core/combobox'
 import {createSignal, createUniqueId, Show} from 'solid-js'
-
 import {
   DEFAULT_WEATHER_LOCATION,
   LEGACY_WEATHER_LOCATIONS,
   useWeatherLocationSearch,
   type WeatherLocation,
-  type WeatherLocationSearchStatus,
 } from '../features/weather'
 import {getLocalizedWeatherLocationLabel} from '../features/localization'
 import * as m from '@paraglide/message'
+import {WeatherLocationSearchFeedback} from './weather-location-search/Feedback'
 
 export interface PWeatherLocationSearchProps {
   readonly location?: WeatherLocation
@@ -23,6 +22,7 @@ const getLocationName = (location: WeatherLocation): string =>
   getLocalizedWeatherLocationLabel(location)
 
 const DEFAULT_WEATHER_LOCATIONS = Object.values(LEGACY_WEATHER_LOCATIONS)
+
 const KOREAN_COUNTRIES = new Set(['KR', '대한민국'])
 
 const normalizeLocationName = (name: string): string => name.trim().toLowerCase()
@@ -51,27 +51,6 @@ const isDefaultDuplicate = (
   const selectedNames = new Set(getLocationNames(selectedLocation))
   return getLocationNames(defaultLocation).some((name) => selectedNames.has(name))
 }
-
-interface WeatherLocationSearchFeedbackProps {
-  readonly resultCount: number
-  readonly status: WeatherLocationSearchStatus
-}
-
-const WeatherLocationSearchFeedback = (props: WeatherLocationSearchFeedbackProps) => (
-  <>
-    <Show when={props.status === 'input-required'}>
-      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
-        {m.weather_location_search_minimum()}
-      </p>
-    </Show>
-    <Show when={props.status === 'error'}>
-      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_error()}</p>
-    </Show>
-    <Show when={props.status === 'ready' && props.resultCount === 0}>
-      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_empty()}</p>
-    </Show>
-  </>
-)
 
 export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
   const search = useWeatherLocationSearch()

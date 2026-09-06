@@ -16,7 +16,7 @@ const FALLBACK_CLASSES = cx(
   'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
 
-function TextMoodPage() {
+export function TextMoodPage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — 글 분위기 분석 실험실</Title>
@@ -36,5 +36,3 @@ function TextMoodPage() {
     </main>
   )
 }
-
-export default TextMoodPage

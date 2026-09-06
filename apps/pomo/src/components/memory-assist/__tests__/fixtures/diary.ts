@@ -1,11 +1,11 @@
 import {cleanup, screen} from '@solidjs/testing-library'
-import {afterEach, beforeEach, expect, vi} from 'vitest'
 import {useModelDownload} from 'src/features/model-download'
 import {createModelDownloadController} from 'src/features/model-download/controller'
+import {afterEach, beforeEach, expect, vi} from 'vitest'
 import type {PictureDiaryEntry, PictureDiaryRepository} from '../../../../features/picture-diary'
 import type {WeatherState} from '../../../../features/weather'
-import {createBrowserDiaryEnvironment} from '../../picture-diary/environment'
 import {createTurnHarness} from '../../picture-diary/__tests__/fixtures/turns'
+import {createBrowserDiaryEnvironment} from '../../picture-diary/environment'
 
 const PAGE_TURN_DURATION = 700
 

@@ -67,8 +67,8 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
         aria-label="본 디포머 편집 영역"
         tabindex={0}
         viewBox={editor.viewBox()}
-        on:keydown={editor.keyDown}
-        on:dblclick={(event) => {
+        onKeyDown={editor.keyDown}
+        onDblClick={(event) => {
           if (event.target !== event.currentTarget) {
             return
           }
@@ -98,7 +98,7 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
                   y1={editor.point(index - 1).y}
                   x2={editor.point(index).x}
                   y2={editor.point(index).y}
-                  on:dblclick={(event) => {
+                  onDblClick={(event) => {
                     event.stopPropagation()
                     const position = editor.eventPoint(event)
                     if (position !== undefined) {

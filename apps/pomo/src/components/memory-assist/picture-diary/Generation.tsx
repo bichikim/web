@@ -30,7 +30,7 @@ const getStyles = () =>
     {label: m.picture_diary_style_photo(), value: 'photo'},
   ] satisfies ReadonlyArray<StyleOption>
 
-export default function Generation(props: GenerationProps) {
+export function Generation(props: GenerationProps) {
   const studio = useImageGeneration()
   studio.setIdea(untrack(() => props.initialIdea ?? ''))
   studio.setStyle('coloredPencil')

@@ -26,7 +26,7 @@ const POMO_LINK_CLASSES = cx(
   'focus-visible:outline-#f4d7b5',
 )
 
-function HomePage() {
+export function HomePage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — Creative Labs</Title>
@@ -185,5 +185,3 @@ function HomePage() {
     </main>
   )
 }
-
-export default HomePage

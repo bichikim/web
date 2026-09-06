@@ -1,11 +1,13 @@
+import {callEventHandler} from '../utils/event-handler'
 import {DragType, stopPropagation, StyleType, useDrag, useStyles} from '@winter-love/solid-use'
-import {createMemo, createSignal, splitProps, ValidComponent} from 'solid-js'
+import {createMemo, createSignal, type JSX, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {POSITION_VAR, SIZE_VAR} from '../css-var'
 import {useScrollBar} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 
 interface InnerProps {
+  onPointerDown?: JSX.EventHandlerUnion<HTMLElement, PointerEvent> | undefined
   style?: StyleType
 }
 
@@ -17,7 +19,7 @@ export const SScrollHandle = <T extends ValidComponent>(props: SScrollHandleProp
   const scrollContext = useScrollContext()
   const [barState, setBarState] = createSignal<DragType>('end')
 
-  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
+  const [innerProps, restProps] = splitProps(props, ['style', 'onPointerDown']) as unknown as [
     InnerProps,
     DynamicProps<T>,
   ]
@@ -49,7 +51,7 @@ export const SScrollHandle = <T extends ValidComponent>(props: SScrollHandleProp
     scrollContext.setScroll(type, position)
   }
 
-  useDrag(element, (type, payload) => {
+  const drag = useDrag((type, payload) => {
     setBarState(type)
 
     if (type !== 'move') {
@@ -90,6 +92,10 @@ export const SScrollHandle = <T extends ValidComponent>(props: SScrollHandleProp
       aria-valuemax={scrollBar().scrollSize}
       role="scrollbar"
       style={style()}
+      onPointerDown={(event) => {
+        drag.onPointerDown(event)
+        callEventHandler(innerProps.onPointerDown, event)
+      }}
       onClick={stopPropagation()}
     >
       {props.children}
