@@ -1,4 +1,3 @@
-import {cx} from 'class-variance-authority'
 import type {PSceneMotionInput, PSceneMotionMode} from '../../../features/focus-room-animation'
 import type {PSceneStyle} from '../../../features/focus-room-animation/scene-style'
 import type {PActivity, PGaze} from '../../../features/focus-room-scene-preferences'
@@ -9,15 +8,14 @@ import type {WeatherLocation, WeatherSceneMode} from '../../../features/weather'
 export const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
   settingsGrid: 'grid gap-4 min-[60rem]:grid-cols-2',
-  settingsScreenSaver: cx(
-    'pomo-settings__screen-saver grid gap-2 [&_>_div]:w-full [&_p]:m-0',
-    '[&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
-  ),
+  settingsScreenSaver: 'pomo-settings__screen-saver grid gap-2 [&_>_div]:w-full',
   settingsSection: 'grid gap-4 border-t border-solid border-border pt-5',
   settingsToggle: 'min-h-12',
 } as const
 
 export interface PSettingsProps {
+  readonly tourButtonVisible?: boolean
+  readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly activity?: PActivity
   readonly canUseGyroscope?: boolean
   readonly dialogueComposerVisible?: boolean

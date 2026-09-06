@@ -12,13 +12,13 @@ const WORD_FILTER_LIST_CLASS =
 
 const WORD_FILTER_TAB_CLASS = cx(
   'inline-flex min-h-9 cursor-pointer items-center justify-center gap-1.5 rounded-control',
-  'border-0 bg-transparent px-2 text-xs font-700 text-muted-foreground outline-none',
+  'border-0 bg-transparent px-2 text-modal-detail font-700 text-muted-foreground outline-none',
   'transition-colors hover:bg-secondary-soft hover:text-foreground',
   'ui-selected:bg-surface-strong ui-selected:text-foreground focus-visible:shadow-focus',
   'motion-reduce:transition-none',
 )
 
-const WORD_FILTER_COUNT_CLASS = 'text-[0.6875rem] font-650 tabular-nums opacity-70'
+const WORD_FILTER_COUNT_CLASS = 'text-modal-detail font-650 tabular-nums opacity-70'
 
 interface LanguageLearningSavedWordsProps {
   readonly allWords: ReadonlyArray<LanguageLearningWord>

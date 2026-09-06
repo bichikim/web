@@ -120,7 +120,7 @@ export function OptionResetPage(props: OptionResetPageProps) {
           <A class="text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
             ← 실험실 목록
           </A>
-          <p class="mb-0 mt-8 text-xs font-750 tracking-[0.24em] text-#9ed6bb uppercase">
+          <p class="mb-0 mt-8 text-modal-detail font-750 tracking-[0.24em] text-#9ed6bb uppercase">
             Local preferences
           </p>
           <h1 class="mb-0 mt-3 text-4xl font-800 tracking--0.04em">각종 옵션 초기화</h1>

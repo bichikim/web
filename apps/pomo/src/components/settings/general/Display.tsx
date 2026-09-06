@@ -5,7 +5,6 @@ import {useFullscreen} from '../../../features/fullscreen'
 import type {ScreenSaverDelay} from '../../../features/screen-saver'
 import {type ScreenWakeLockController} from '../../../features/screen-wake-lock'
 import * as m from '@paraglide/message'
-import {PSettingsSectionHeading} from '../SectionHeading'
 import {CLASSES, type PSettingsProps} from './shared'
 
 const getScreenSaverDelayOptions = () =>
@@ -82,12 +81,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
   const isWakeLockDisabled = () => props.wakeLock.availability() !== 'supported'
 
   return (
-    <section aria-labelledby="pomo-settings-display-title" class={CLASSES.settingsSection}>
-      <PSettingsSectionHeading
-        divider="none"
-        title={m.settings_section_display()}
-        titleId="pomo-settings-display-title"
-      />
+    <section aria-label={m.settings_section_display()} class={CLASSES.settingsSection}>
       <div class={CLASSES.settingsGrid}>
         <Show when={props.onDialogueComposerVisibleChange}>
           {(onDialogueComposerVisibleChange) => (
@@ -97,6 +91,17 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
               description={m.settings_dialogue_composer_visible_description()}
               label={m.settings_dialogue_composer_visible()}
               onChange={onDialogueComposerVisibleChange()}
+            />
+          )}
+        </Show>
+        <Show when={props.onTourButtonVisibleChange}>
+          {(onChange) => (
+            <PSwitch
+              checked={props.tourButtonVisible ?? true}
+              class={CLASSES.settingsToggle}
+              description={m.settings_tour_button_visible_description()}
+              label={m.settings_tour_button_visible()}
+              onChange={onChange()}
             />
           )}
         </Show>
@@ -123,7 +128,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             options={getScreenSaverDelayOptions()}
             value={props.screenSaverDelay ?? '10m'}
           />
-          <p>{m.settings_screen_saver_description()}</p>
+          <p class="pomo-field-description m-0">{m.settings_screen_saver_description()}</p>
         </div>
       </div>
     </section>

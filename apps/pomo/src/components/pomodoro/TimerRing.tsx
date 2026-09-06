@@ -30,7 +30,7 @@ export const PomodoroTimerRing = (props: PomodoroTimerRingProps) => (
           'absolute top-[clamp(0.625rem,2.25dvh,1.125rem)] inline-flex items-center ' +
           'gap-1.5 rounded-control ' +
           'bg-[color-mix(in_srgb,var(--pomo-timer-phase)_18%,transparent)] ' +
-          'px-3 py-1.5 text-xs font-750 leading-4 text-foreground'
+          'px-3 py-1.5 text-modal-detail font-750 leading-5 text-foreground'
         }
       >
         <span aria-hidden="true" class={cx(props.icon, 'size-4 text-[var(--pomo-timer-phase)]')} />

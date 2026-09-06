@@ -29,10 +29,10 @@ export const AdminDashboard = () => {
 
   return (
     <main class="min-h-dvh bg-#15120f px-5 py-8 text-#fffaf1 sm:px-8">
-      <Title>Pomo 관리자</Title>
+      <Title>앱 관리자</Title>
       <header class="mx-auto flex w-full max-w-6xl items-center justify-between gap-5">
         <div>
-          <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">Pomo admin</p>
+          <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">앱 관리</p>
           <h1 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em">콘텐츠 관리</h1>
         </div>
         <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>

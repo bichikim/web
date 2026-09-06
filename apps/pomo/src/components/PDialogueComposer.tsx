@@ -190,7 +190,7 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
           <input
             autocomplete="off"
             class={cx(
-              'h-full min-w-0 border-0 bg-transparent px-4 text-sm text-foreground outline-none',
+              'h-full min-w-0 border-0 bg-transparent px-4 text-lg text-foreground outline-none',
               'placeholder:text-muted-foreground',
             )}
             disabled={props.disabled}

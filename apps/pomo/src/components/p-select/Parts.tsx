@@ -31,11 +31,11 @@ const selectTriggerClasses = cva(
     variants: {
       appearance: {
         default:
-          'flex h-control-md w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 text-sm font-650 leading-5',
+          'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
+          'px-4 py-2 pomo-field-value',
         detailed:
-          'flex h-control-md w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 text-sm font-650 leading-5',
+          'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
+          'px-4 py-2 pomo-field-value',
         icon:
           'grid size-control-md place-items-center text-highlight shadow-panel ' +
           'hover:bg-surface-interactive focus-visible:bg-surface-interactive ' +
@@ -64,7 +64,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
   <>
     <Show when={!props.hideLabel || props.accessibleLabel === undefined}>
       <Select.Label
-        class={props.hideLabel ? 'sr-only' : 'text-xs font-650 leading-4 text-muted-foreground'}
+        class={props.hideLabel ? 'sr-only' : 'pomo-field-label'}
         data-visually-hidden={props.hideLabel ? '' : undefined}
       >
         {props.label}
@@ -72,9 +72,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
     </Show>
     <Show when={props.description}>
       {(description) => (
-        <Select.Description class="text-xs leading-5 text-muted-foreground">
-          {description()}
-        </Select.Description>
+        <Select.Description class="pomo-field-description">{description()}</Select.Description>
       )}
     </Show>
     <Select.Trigger
@@ -84,9 +82,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
       <Show
         when={props.appearance === 'icon' ? props.selectedIcon : undefined}
         fallback={
-          <Select.Value<
-            PSelectOption<TValue>
-          > class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+          <Select.Value<PSelectOption<TValue>> class="min-w-0 break-words whitespace-normal">
             {(state) =>
               props.multiple
                 ? (props.selectionLabel?.(state.selectedOptions()) ??
@@ -110,7 +106,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
             'transition-transform duration-160 ui-group-expanded:rotate-180 motion-reduce:transition-none'
           }
         >
-          <span aria-hidden="true" class="i-tabler-chevron-down size-4" />
+          <span aria-hidden="true" class="i-tabler-chevron-down size-5 flex-none" />
         </Select.Icon>
       </Show>
     </Select.Trigger>

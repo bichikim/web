@@ -255,6 +255,8 @@ export const PStudio = () => {
               onSceneStyleChange={sceneStyleController.onSceneStyleChange}
               onTimeModeChange={scenePreferences.onTimeModeChange}
               onTourOpen={() => tour.setIsOpen(true)}
+              tourButtonVisible={displayPreferences.tourButtonVisible()}
+              onTourButtonVisibleChange={displayPreferences.onTourButtonVisibleChange}
               onWeatherEnabledChange={weather.onEnabledChange}
               onWeatherLocationChange={weather.onLocationChange}
               onWeatherSceneModeChange={weather.onSceneModeChange}

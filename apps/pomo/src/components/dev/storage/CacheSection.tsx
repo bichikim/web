@@ -54,7 +54,7 @@ export const CacheSection = (props: CacheSectionProps) => (
             >
               <div class="min-w-0">
                 <p class="m-0 truncate text-sm font-700">{getEntryLabel(key)}</p>
-                <p class="mb-0 mt-1 truncate text-xs text-#8f8297">{key}</p>
+                <p class="mb-0 mt-1 truncate text-modal-detail text-#8f8297">{key}</p>
               </div>
               <PButton
                 accessibleLabel={`${getEntryLabel(key)} 삭제`}

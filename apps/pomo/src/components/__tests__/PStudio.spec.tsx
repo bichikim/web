@@ -136,6 +136,8 @@ const configureStudio = (options: StudioOptions = {}) => {
     dialogueComposerVisible,
     isReady: () => true,
     onDialogueComposerVisibleChange: setDialogueComposerVisible,
+    onTourButtonVisibleChange: vi.fn(),
+    tourButtonVisible: () => true,
   })
   vi.mocked(usePScenePreferences).mockReturnValue({
     activity,

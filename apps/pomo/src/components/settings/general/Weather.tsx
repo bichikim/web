@@ -1,15 +1,9 @@
 import * as m from '@paraglide/message'
-import {PSettingsSectionHeading} from '../SectionHeading'
 import {PWeatherSettings} from '../../PWeatherSettings'
 import {CLASSES, type PSettingsProps} from './shared'
 
 export const PGeneralWeatherSettings = (props: PSettingsProps) => (
-  <section aria-labelledby="pomo-settings-weather-title" class={CLASSES.settingsSection}>
-    <PSettingsSectionHeading
-      divider="none"
-      title={m.settings_section_weather()}
-      titleId="pomo-settings-weather-title"
-    />
+  <section aria-label={m.settings_section_weather()} class={CLASSES.settingsSection}>
     <PWeatherSettings
       enabled={props.weatherEnabled}
       onEnabledChange={props.onWeatherEnabledChange}

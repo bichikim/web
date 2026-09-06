@@ -10,6 +10,6 @@ export const AlbumSaleStatus = (props: AlbumSaleStatusProps) => (
     <Show when={props.sale.priceLabel}>
       {(priceLabel) => <span class="text-sm font-750 text-foreground">{priceLabel()}</span>}
     </Show>
-    <span class="ml-auto text-xs font-700 text-highlight">{props.sale.statusLabel}</span>
+    <span class="ml-auto text-modal-detail font-700 text-highlight">{props.sale.statusLabel}</span>
   </div>
 )

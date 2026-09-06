@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {PSelect} from 'src/components/PSelect'
 import {PSwitch} from 'src/components/PSwitch'
 import {useFullscreen} from 'src/features/fullscreen'
@@ -188,4 +188,37 @@ it('should describe every full-screen availability, pending, and failure state',
     'data-description',
     'future-error',
   )
+})
+
+it('should show the guide-button preference and forward its change', () => {
+  const onTourButtonVisibleChange = vi.fn()
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onTourButtonVisibleChange={onTourButtonVisibleChange}
+    />
+  ))
+  const control = screen.getByRole('button', {name: '투어 버튼 표시'})
+  expect(control).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(control)
+  expect(onTourButtonVisibleChange).toHaveBeenCalledWith(false)
+})
+
+it('should preserve a hidden guide-button preference', () => {
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      tourButtonVisible={false}
+      onTourButtonVisibleChange={vi.fn()}
+    />
+  ))
+  expect(screen.getByRole('button', {name: '투어 버튼 표시'})).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
+})
+
+it('should omit the guide-button preference without a change callback', () => {
+  render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
+  expect(screen.queryByRole('button', {name: '투어 버튼 표시'})).not.toBeInTheDocument()
 })

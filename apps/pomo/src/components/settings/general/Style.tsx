@@ -7,16 +7,10 @@ import {
 } from '../../../features/localization'
 import * as m from '@paraglide/message'
 import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from '../../pomo-scene-options'
-import {PSettingsSectionHeading} from '../SectionHeading'
 import {CLASSES, type PSettingsProps} from './shared'
 
 export const PGeneralStyleSettings = (props: PSettingsProps) => (
-  <section aria-labelledby="pomo-settings-style-title" class={CLASSES.settingsSection}>
-    <PSettingsSectionHeading
-      divider="none"
-      title={m.settings_section_style()}
-      titleId="pomo-settings-style-title"
-    />
+  <section aria-label={m.settings_section_style()} class={CLASSES.settingsSection}>
     <div class={CLASSES.settingsGrid}>
       <PSwitch
         checked={(props.sceneStyle ?? 'original') === 'scribble'}

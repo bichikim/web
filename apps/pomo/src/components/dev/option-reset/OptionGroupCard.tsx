@@ -17,7 +17,9 @@ export const OptionGroupCard = (props: OptionGroupCardProps) => (
     <div>
       <h2 class="m-0 text-xl font-750">{props.group.label}</h2>
       <p class="mb-0 mt-2 text-sm leading-6 text-#aaa0b1">{props.group.description}</p>
-      <p class="mb-0 mt-2 text-xs text-#8f8297">저장 항목 {props.group.storageKeyCount}개</p>
+      <p class="mb-0 mt-2 text-modal-detail text-#8f8297">
+        저장 항목 {props.group.storageKeyCount}개
+      </p>
     </div>
     <PButton
       accessibleLabel={`${props.group.label} 옵션 초기화`}

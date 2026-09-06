@@ -30,7 +30,7 @@ export const PWeatherSettings = (props: PWeatherSettingsProps) => (
       value={props.sceneMode ?? 'auto'}
     />
     <PWeatherLocationSearch location={props.location} onChange={props.onLocationChange} />
-    <p class="col-span-full m-0 text-xs leading-5 text-muted-foreground">
+    <p class="col-span-full m-0 pomo-field-description">
       <a
         class="text-inherit underline"
         href="https://openweathermap.org/"

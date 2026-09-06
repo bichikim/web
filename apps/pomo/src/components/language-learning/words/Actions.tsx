@@ -19,7 +19,7 @@ export const LanguageLearningWordActions = (props: LanguageLearningWordActionsPr
 
   return (
     <div class="flex flex-wrap items-center gap-2" role="group">
-      <span class="mr-auto text-xs font-650 text-muted-foreground">
+      <span class="mr-auto text-modal-detail font-650 text-muted-foreground">
         {m.learning_words_selection_count({count: selectedCount()})}
       </span>
       <PButton

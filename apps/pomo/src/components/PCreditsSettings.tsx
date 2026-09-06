@@ -5,7 +5,7 @@ import {createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
 import {loadLicenseData} from 'src/features/licenses'
 import * as m from '@paraglide/message'
 import {type PMusicCredit, PMusicCredits} from './credits-settings/MusicCredits'
-import {PSettingsActionLink} from './settings/ActionLink'
+
 import {PSettingsSectionHeading} from './settings/SectionHeading'
 import {LicenseCredits} from './credits-settings/LicenseCredits'
 
@@ -25,7 +25,7 @@ const CREATOR_DETAILS_CLASS = cx(
 
 const NOTICE_CLASS = cx(
   'rounded-panel border border-solid border-content-border bg-content-surface p-4',
-  'text-xs leading-5 text-muted-foreground',
+  'text-modal-detail leading-5 text-muted-foreground',
 )
 
 export const PCreditsSettings = () => {
@@ -46,13 +46,6 @@ export const PCreditsSettings = () => {
               <dd class="m-0 font-750 text-foreground">Bichi Kim</dd>
             </div>
           </dl>
-          <PSettingsActionLink
-            class="min-h-control-md w-fit"
-            href="/whats-new"
-            icon="i-tabler-history"
-          >
-            {m.credits_version_catalog()}
-          </PSettingsActionLink>
         </section>
 
         <section aria-labelledby="pomo-music-credits-title" class="grid gap-3">

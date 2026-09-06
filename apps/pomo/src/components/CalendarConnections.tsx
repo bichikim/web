@@ -125,7 +125,7 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
         <h2 class="m-0 text-base font-750" id={titleId}>
           {m.calendar_settings()}
         </h2>
-        <p class="mb-4 mt-1 text-xs leading-5 text-muted-foreground">
+        <p class="mb-4 mt-1 text-modal-detail leading-5 text-muted-foreground">
           {m.calendar_connections_description()}
         </p>
 

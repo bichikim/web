@@ -54,7 +54,7 @@ export const CalendarProviderActions = (props: CalendarProviderActionsProps) => 
                         provider: PROVIDER_LABELS[connection.provider],
                       })}
                 </span>
-                <span class="break-all text-xs font-500 text-muted-foreground">
+                <span class="break-all text-modal-detail font-500 text-muted-foreground">
                   {connection.accountLabel}
                 </span>
               </span>

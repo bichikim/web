@@ -31,7 +31,10 @@ export const CalendarGrid = (props: CalendarGridProps) => (
     <div class="contents" role="row">
       <For each={getWeekdayLabels()}>
         {(label) => (
-          <span class="py-1 text-center text-xs font-700 text-muted-foreground" role="columnheader">
+          <span
+            class="py-1 text-center text-modal-detail font-700 text-muted-foreground"
+            role="columnheader"
+          >
             {label}
           </span>
         )}
@@ -72,7 +75,7 @@ export const CalendarGrid = (props: CalendarGridProps) => (
                           {(event) => (
                             <span
                               aria-hidden="true"
-                              class="flex w-full min-w-0 items-center justify-center gap-0.5 text-[0.625rem] leading-4"
+                              class="flex w-full min-w-0 items-center justify-center gap-0.5 text-modal-detail"
                             >
                               <span class="truncate font-650 text-muted-foreground">
                                 {event().title}

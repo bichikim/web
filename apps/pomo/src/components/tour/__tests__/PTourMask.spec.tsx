@@ -34,15 +34,12 @@ describe('PTourMask', () => {
     })
     expect(container.querySelector('[data-part="bottom"]')).toHaveStyle({top: '116px'})
     expect(container.querySelectorAll('[data-corner]')).toHaveLength(4)
-    expect(container.querySelector('[data-corner="top-left"]')).toHaveStyle({
-      height: '32px',
-      left: '32px',
-      top: '52px',
-      width: '32px',
-    })
-    expect(container.querySelector('[data-corner="top-left"]')).toHaveStyle({
-      maskImage: 'radial-gradient(circle at 100% 100%, transparent 32px, black 32px)',
-    })
+    expect(container.querySelector('[data-corner="top-left"]')).toHaveClass('pomo-tour-corner')
+    const corner = container.querySelector<HTMLElement>('[data-corner="top-left"]')
+    expect(corner?.style.getPropertyValue('--target-height')).toBe('64px')
+    expect(corner?.style.getPropertyValue('--target-left')).toBe('32px')
+    expect(corner?.style.getPropertyValue('--target-top')).toBe('52px')
+    expect(corner?.style.getPropertyValue('--target-width')).toBe('136px')
     expect(container.querySelector('[data-part="highlight"]')).not.toBeInTheDocument()
   })
 

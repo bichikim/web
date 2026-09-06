@@ -12,15 +12,15 @@ import * as m from '@paraglide/message'
 import {DialogueEventSettingRow} from './EventSettingRow'
 
 const CLASSES = {
-  field: 'grid min-w-0 gap-1 text-[0.625rem] font-bold text-muted-foreground',
+  field: 'grid min-w-0 gap-1 text-modal-detail font-bold text-muted-foreground',
   fields: 'grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-2',
   input: cx(
     'h-9 min-w-0 w-full box-border rounded-control border border-solid border-border',
-    'bg-surface px-3 text-xs font-bold tabular-nums text-foreground outline-none',
+    'bg-surface px-3 text-modal-body font-bold tabular-nums text-foreground outline-none',
     'focus:border-highlight disabled:cursor-not-allowed disabled:opacity-45',
   ),
   interval: 'grid gap-2',
-  message: 'm-0 text-[0.625rem] leading-[1.5] text-muted-foreground',
+  message: 'm-0 text-modal-detail leading-[1.5] text-muted-foreground',
 } as const
 
 interface IntervalDraft {
