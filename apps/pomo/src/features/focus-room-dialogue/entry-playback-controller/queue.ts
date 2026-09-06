@@ -19,7 +19,7 @@ export interface PlaybackQueueRequest {
   readonly onSequenceStop: PlayPDialogueSequenceOptions['onSequenceStop']
   readonly reject: (error: unknown) => void
   readonly repository: PDialogueRepository
-  readonly resolve: () => void
+  readonly resolve: (completion: PlaybackCompletion) => void
   nextDialoguePosition: number
   settled: boolean
 }
@@ -42,13 +42,16 @@ export interface DialoguePlaybackQueue {
   readonly enqueue: (
     repository: PDialogueRepository,
     options: PlayPDialogueSequenceOptions,
-  ) => Promise<void>
+  ) => Promise<PlaybackCompletion>
   readonly finish: (notifyStop: boolean) => void
   readonly isScheduled: (dialogueId: string) => boolean
   readonly scheduledDialogueCount: Accessor<number>
 }
 
-const settleQueueRequest = async (request: PlaybackQueueRequest, notifyStop: boolean) => {
+const settleQueueRequest = async (
+  request: PlaybackQueueRequest,
+  completion: PlaybackCompletion,
+) => {
   if (request.settled) {
     return
   }
@@ -56,11 +59,11 @@ const settleQueueRequest = async (request: PlaybackQueueRequest, notifyStop: boo
   request.settled = true
 
   try {
-    if (notifyStop) {
+    if (completion === 'stopped') {
       await request.onSequenceStop(request.dialogueIds)
     }
 
-    request.resolve()
+    request.resolve(completion)
   } catch (error: unknown) {
     request.reject(error)
   }
@@ -115,7 +118,7 @@ export const createDialoguePlaybackQueue = (
       )
 
       if (completion === 'ended' || completion === 'failed') {
-        await settleQueueRequest(request, false)
+        await settleQueueRequest(request, completion)
       }
     } catch (error: unknown) {
       options.onRequestFailure()
@@ -148,7 +151,7 @@ export const createDialoguePlaybackQueue = (
 
   return {
     enqueue: (repository, sequenceOptions) =>
-      new Promise<void>((resolve, reject) => {
+      new Promise<PlaybackCompletion>((resolve, reject) => {
         requestQueue.push({
           dialogueIds: [...sequenceOptions.dialogueIds],
           nextDialoguePosition: 0,
@@ -172,7 +175,7 @@ export const createDialoguePlaybackQueue = (
       updateScheduledDialogueCount()
       options.finishPlayback(completion)
       requests.forEach((request) => {
-        settleQueueRequest(request, notifyStop).catch(reportSettlementFailure)
+        settleQueueRequest(request, completion).catch(reportSettlementFailure)
       })
     },
     isScheduled: (dialogueId) =>

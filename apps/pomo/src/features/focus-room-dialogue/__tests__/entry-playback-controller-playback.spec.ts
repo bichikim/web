@@ -173,7 +173,7 @@ describe('createEntryPlaybackController', () => {
     expect(controller.isDialogueScheduled(dialogue.id)).toBe(true)
 
     audio.dispatchEvent(new Event('ended'))
-    await expect(playback).resolves.toBeUndefined()
+    await expect(playback).resolves.toBe(true)
     await flush()
     animationFrames.at(-1)?.(0)
     controller.cancel()
@@ -195,7 +195,7 @@ describe('createEntryPlaybackController', () => {
     firstAudio.dispatchEvent(new Event('ended'))
     firstAudio.dispatchEvent(new Event('error'))
     latestAudio().dispatchEvent(new Event('error'))
-    await expect(second).resolves.toBeUndefined()
+    await expect(second).resolves.toBe(false)
   })
 
   it('should block autoplay, retry after interaction, and ignore retry otherwise', async () => {
@@ -428,3 +428,24 @@ describe('createEntryPlaybackController', () => {
     expect(controller.activeViseme()).toBe('closed')
   })
 })
+
+it.each(['cancel', 'stop', 'dispose'] as const)(
+  'should return false when %s interrupts preparation',
+  async (action) => {
+    const controller = createEntryPlaybackController()
+    const playback = controller.prepare(createRepository(), DIALOGUE.id)
+    controller[action]()
+    await expect(playback).resolves.toBe(false)
+  },
+)
+
+it.each([null, DIALOGUE])(
+  'should return false when dialogue or audio is unavailable (%s)',
+  async (dialogue) => {
+    const controller = createEntryPlaybackController()
+    await expect(controller.prepare(createRepository(dialogue, null), DIALOGUE.id)).resolves.toBe(
+      false,
+    )
+    controller.dispose()
+  },
+)
