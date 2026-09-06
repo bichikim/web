@@ -123,13 +123,13 @@ it('should open a Korean memory assist modal', () => {
   const weatherState = {status: 'disabled'} as const
   render(() => <PMemoryAssist weatherState={weatherState} />)
 
-  const trigger = screen.getByRole('button', {name: '기억 보조 열기'})
+  const trigger = screen.getByRole('button', {name: '기억보조'})
   fireEvent.click(trigger)
 
   expect(screen.getByRole('dialog', {name: 'Pomofi 기억 보조'}).hasAttribute('hidden')).toBe(false)
   expect(PIconButton).toHaveBeenCalledWith(
     expect.objectContaining({
-      accessibleLabel: '기억 보조 열기',
+      accessibleLabel: '기억보조',
       feedback: '기억 보조',
       icon: 'i-tabler-brain',
     }),

@@ -12,6 +12,7 @@ afterEach(() => {
 it('should compose artwork and compact playback for the current track', () => {
   const view = render(() => (
     <ExpandedSummaryPlayback
+      isPlaying
       currentTrack={{
         artist: '가수',
         artworkUrl: '/cover.webp',
@@ -25,5 +26,8 @@ it('should compose artwork and compact playback for the current track', () => {
   ))
   expect(view.container.querySelector('img')).toHaveAttribute('src', '/cover.webp')
   expect(view.container.querySelector('.pomo-player__compact-summary-play')).toBeInTheDocument()
-  expect(view.container.querySelector('media-play-button')).toBeInTheDocument()
+  expect(view.container.querySelector('media-play-button')).toHaveAttribute(
+    'aria-label',
+    '일시 정지',
+  )
 })

@@ -2,6 +2,7 @@
 
 import {cleanup, fireEvent} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
@@ -13,6 +14,32 @@ import {
 
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
+
+  it.each([false, true])(
+    'should update every playback tooltip with the playback state (expanded: %s)',
+    (expanded) => {
+      const [isPlaying, setPlaying] = createSignal(false)
+      const result = renderMusicPlayerView({
+        expanded,
+        get isPlaying() {
+          return isPlaying()
+        },
+      })
+      const buttons = result.container.querySelectorAll('media-play-button')
+      expect(buttons).toHaveLength(2)
+      for (const button of buttons) {
+        expect(button.nextElementSibling).toHaveTextContent(/^재생$/)
+      }
+      setPlaying(true)
+      for (const button of buttons) {
+        expect(button.nextElementSibling).toHaveTextContent(/^일시 정지$/)
+      }
+      setPlaying(false)
+      for (const button of buttons) {
+        expect(button.nextElementSibling).toHaveTextContent(/^재생$/)
+      }
+    },
+  )
 
   it('should render the current track artwork only in the expanded player', () => {
     const collapsedResult = renderMusicPlayerView({expanded: false})

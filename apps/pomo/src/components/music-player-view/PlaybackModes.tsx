@@ -1,3 +1,4 @@
+import {PTooltip} from '../PTooltip'
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
@@ -8,8 +9,9 @@ import * as m from '@paraglide/message'
 
 const CLASSES = {
   playerMode: cx(
-    'pomo-player__mode text-muted-foreground [&:hover]:text-foreground',
-    '[&:hover]:bg-secondary-soft [&.is-active]:text-white',
+    'pomo-player__mode text-muted-foreground [&:not(.is-active):hover]:text-foreground',
+    '[&:not(.is-active):hover]:bg-secondary-soft [&.is-active]:text-white',
+    '[&.is-active:hover]:brightness-110',
     '[&.is-active]:bg-primary [&.is-active]:shadow-[0_0.25rem_0.75rem_rgb(125_49_29_/_28%)]',
     '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
     '[&:focus-visible]:[outline-offset:0.125rem]',
@@ -41,41 +43,51 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
     <div class="contents" role="group" aria-label={m.player_repeat_mode()}>
       <For each={REPEAT_MODES}>
         {(mode) => (
-          <button
-            aria-label={mode.label()}
-            aria-pressed={props.repeatMode === mode.value}
-            class={cx(
-              CLASSES.playerMode,
-              'grid size-8 place-items-center rounded-full transition player-compact:size-7',
-              props.repeatMode === mode.value && 'is-active',
+          <PTooltip label={mode.label()}>
+            {(tooltip) => (
+              <button
+                {...tooltip}
+                aria-label={mode.label()}
+                aria-pressed={props.repeatMode === mode.value}
+                class={cx(
+                  CLASSES.playerMode,
+                  'grid size-8 place-items-center rounded-full transition player-compact:size-7',
+                  props.repeatMode === mode.value && 'is-active',
+                )}
+                onClick={() => props.onRepeatModeChange(mode.value)}
+                type="button"
+              >
+                <span
+                  aria-hidden="true"
+                  class={cx(getPomoIconClass(mode.icon, props.sceneStyle), 'size-6')}
+                />
+              </button>
             )}
-            onClick={() => props.onRepeatModeChange(mode.value)}
-            type="button"
-          >
-            <span
-              aria-hidden="true"
-              class={cx(getPomoIconClass(mode.icon, props.sceneStyle), 'size-6')}
-            />
-          </button>
+          </PTooltip>
         )}
       </For>
     </div>
     <span aria-hidden="true" class="mx-0.5 h-5 w-[0.0625rem] bg-border player-narrow:mx-0" />
-    <button
-      aria-label={m.player_shuffle()}
-      aria-pressed={props.shuffleEnabled}
-      class={cx(
-        CLASSES.playerMode,
-        'grid size-8 place-items-center rounded-full transition player-compact:size-7',
-        props.shuffleEnabled && 'is-active',
+    <PTooltip label={m.player_shuffle()}>
+      {(tooltip) => (
+        <button
+          {...tooltip}
+          aria-label={m.player_shuffle()}
+          aria-pressed={props.shuffleEnabled}
+          class={cx(
+            CLASSES.playerMode,
+            'grid size-8 place-items-center rounded-full transition player-compact:size-7',
+            props.shuffleEnabled && 'is-active',
+          )}
+          onClick={() => props.onShuffleChange()}
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+            class={cx(getPomoIconClass('i-tabler-arrows-shuffle', props.sceneStyle), 'size-6')}
+          />
+        </button>
       )}
-      onClick={() => props.onShuffleChange()}
-      type="button"
-    >
-      <span
-        aria-hidden="true"
-        class={cx(getPomoIconClass('i-tabler-arrows-shuffle', props.sceneStyle), 'size-6')}
-      />
-    </button>
+    </PTooltip>
   </div>
 )

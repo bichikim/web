@@ -3,6 +3,7 @@ import {createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
 import type {PTrack} from '../../features/focus-room-audio'
 import {POverflowMarquee} from '../POverflowMarquee'
+import {PTooltip} from '../PTooltip'
 
 const DELETE_COMMIT_DISTANCE = 64
 const DRAG_INTENT_DISTANCE = 8
@@ -185,67 +186,73 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
           }
         />
       </div>
-      <button
-        aria-current={props.current ? 'true' : undefined}
-        aria-keyshortcuts={removable() ? 'Delete' : undefined}
-        aria-label={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
-        class={cx(
-          TRACK_CLASSES,
-          'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
-          '[transform:translateX(var(--pomo-swipe-offset))]',
-          'rounded-3 gap-3 player-compact:gap-2 px-3 py-2 text-left text-sm leading-5',
-          'player-compact:px-2 player-compact:py-1.5',
-          gesture.dragging()
-            ? 'transition-none'
-            : 'transition-[transform,background-color,color] duration-180 ease-out',
-          props.current
-            ? 'bg-primary-soft text-foreground'
-            : 'text-muted-foreground hover:bg-secondary-soft',
+      <PTooltip label={props.track.title}>
+        {(tooltip) => (
+          <button
+            aria-current={props.current ? 'true' : undefined}
+            aria-keyshortcuts={removable() ? 'Delete' : undefined}
+            aria-label={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
+            class={cx(
+              TRACK_CLASSES,
+              'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
+              '[transform:translateX(var(--pomo-swipe-offset))]',
+              'rounded-3 gap-3 player-compact:gap-2 px-3 py-2 text-left text-sm leading-5',
+              'player-compact:px-2 player-compact:py-1.5',
+              gesture.dragging()
+                ? 'transition-none'
+                : 'transition-[transform,background-color,color] duration-180 ease-out',
+              props.current
+                ? 'bg-primary-soft text-foreground'
+                : 'text-muted-foreground hover:bg-secondary-soft',
+            )}
+            data-swipe-delete-ready={gesture.deleteReady() ? '' : undefined}
+            onClick={(event) => {
+              gesture.handleClick(event)
+              if (event.defaultPrevented) {
+                return
+              }
+
+              props.onSelect()
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Delete' || !removable()) {
+                return
+              }
+
+              event.preventDefault()
+              props.onRemove?.()
+            }}
+            onLostPointerCapture={gesture.handleLostPointerCapture}
+            onPointerCancel={gesture.handlePointerCancel}
+            onPointerDown={gesture.handlePointerDown}
+            onPointerMove={gesture.handlePointerMove}
+            onPointerUp={gesture.handlePointerUp}
+            type="button"
+          >
+            <span class="w-4 text-center tabular-nums">{props.index + 1}</span>
+            <span {...tooltip} class="min-w-0 flex-1">
+              <Show
+                fallback={<span class="block truncate">{props.track.title}</span>}
+                when={props.current}
+              >
+                <POverflowMarquee focusable={false} text={props.track.title} />
+              </Show>
+            </span>
+            <Show
+              fallback={
+                <span class="min-w-0 w-22 shrink-0 truncate opacity-70">{props.track.artist}</span>
+              }
+              when={props.current}
+            >
+              <POverflowMarquee
+                class="w-22 shrink-0 opacity-70"
+                focusable={false}
+                text={props.track.artist}
+              />
+            </Show>
+          </button>
         )}
-        data-swipe-delete-ready={gesture.deleteReady() ? '' : undefined}
-        onClick={(event) => {
-          gesture.handleClick(event)
-          if (event.defaultPrevented) {
-            return
-          }
-
-          props.onSelect()
-        }}
-        onKeyDown={(event) => {
-          if (event.key !== 'Delete' || !removable()) {
-            return
-          }
-
-          event.preventDefault()
-          props.onRemove?.()
-        }}
-        onLostPointerCapture={gesture.handleLostPointerCapture}
-        onPointerCancel={gesture.handlePointerCancel}
-        onPointerDown={gesture.handlePointerDown}
-        onPointerMove={gesture.handlePointerMove}
-        onPointerUp={gesture.handlePointerUp}
-        type="button"
-      >
-        <span class="w-4 text-center tabular-nums">{props.index + 1}</span>
-        <Show
-          fallback={<span class="min-w-0 flex-1 truncate">{props.track.title}</span>}
-          when={props.current}
-        >
-          <POverflowMarquee class="flex-1" focusable={false} text={props.track.title} />
-        </Show>
-        <Show
-          fallback={
-            <span class="min-w-0 w-22 shrink-0 truncate opacity-70">{props.track.artist}</span>
-          }
-          when={props.current}
-        >
-          <POverflowMarquee
-            class="w-22 shrink-0 opacity-70"
-            focusable={false}
-            text={props.track.artist}
-          />
-        </Show>
-      </button>
+      </PTooltip>
       <span aria-live="polite" class="sr-only">
         {gesture.deleteReady() ? `${props.track.title}, 놓으면 삭제` : ''}
       </span>

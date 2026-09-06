@@ -1,3 +1,5 @@
+/** @vitest-environment jsdom */
+
 import {fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
@@ -7,6 +9,18 @@ describe('VolumeControl', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+  })
+
+  it('should attach a volume tooltip to both inline and popover sliders', () => {
+    const {container} = render(() => <VolumeControl />)
+    const sliders = container.querySelectorAll('media-volume-range')
+    expect(sliders).toHaveLength(2)
+    for (const slider of sliders) {
+      expect(slider).toHaveAttribute('data-pomo-tooltip-trigger', '')
+      expect(slider).toHaveAttribute('title', '음량 조절')
+      expect(slider.nextElementSibling).toHaveAttribute('role', 'tooltip')
+      expect(slider.nextElementSibling).toHaveTextContent('음량 조절')
+    }
   })
 
   it('moves volume adjustment into a popover on narrow players', () => {
@@ -25,7 +39,9 @@ describe('VolumeControl', () => {
     expect(trigger).toHaveAttribute('popovertarget', popover?.id)
     expect(trigger?.style.getPropertyValue('--pomo-volume-popover-anchor')).toBe(`--${popover?.id}`)
     expect(trigger?.style.anchorName).toBe('')
-    expect(trigger).toHaveClass('[anchor-name:var(--pomo-volume-popover-anchor)]')
+    expect(trigger).toHaveClass(
+      '[&[data-pomo-tooltip-trigger]]:[anchor-name:var(--pomo-volume-popover-anchor),var(--pomo-tooltip-anchor)]',
+    )
     expect(popover).toHaveAttribute('popover', 'auto')
     expect(popover).toHaveAttribute('role', 'dialog')
     expect(popover?.style.getPropertyValue('--pomo-volume-popover-anchor')).toBe(`--${popover?.id}`)

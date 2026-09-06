@@ -1,3 +1,4 @@
+import {PTooltip} from './PTooltip'
 import {For, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
@@ -44,21 +45,26 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
       >
         <For each={getModeOptions()}>
           {(option) => (
-            <button
-              aria-label={option.label}
-              aria-pressed={props.mode === option.value}
-              class={cx(
-                'inline-flex min-h-9 min-w-9 items-center justify-center rounded-control',
-                'border-0 bg-transparent text-foreground outline-none hover:bg-surface-interactive',
-                'focus-visible:outline-2 focus-visible:outline-highlight',
-                'aria-pressed:bg-highlight aria-pressed:text-background',
+            <PTooltip label={option.label}>
+              {(tooltip) => (
+                <button
+                  {...tooltip}
+                  aria-label={option.label}
+                  aria-pressed={props.mode === option.value}
+                  class={cx(
+                    'inline-flex min-h-9 min-w-9 items-center justify-center rounded-control',
+                    'border-0 bg-transparent text-foreground outline-none hover:bg-surface-interactive',
+                    'focus-visible:outline-2 focus-visible:outline-highlight',
+                    'aria-pressed:bg-highlight aria-pressed:text-background',
+                  )}
+                  disabled={props.isChanging}
+                  onClick={() => requestMode(option.value)}
+                  type="button"
+                >
+                  <span aria-hidden="true" class={`${option.icon} size-4`} />
+                </button>
               )}
-              disabled={props.isChanging}
-              onClick={() => requestMode(option.value)}
-              type="button"
-            >
-              <span aria-hidden="true" class={`${option.icon} size-4`} />
-            </button>
+            </PTooltip>
           )}
         </For>
       </div>

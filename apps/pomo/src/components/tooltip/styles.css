@@ -1,0 +1,26 @@
+[data-pomo-tooltip-trigger] {
+  anchor-name: var(--pomo-tooltip-anchor);
+}
+
+[data-pomo-tooltip-content] {
+  position: fixed;
+  position-anchor: var(--pomo-tooltip-anchor);
+  position-area: top;
+  position-try-fallbacks:
+    flip-block,
+    top span-right,
+    top span-left,
+    bottom span-right,
+    bottom span-left;
+  position-visibility: anchors-visible;
+  inset: auto;
+  margin: 0.5rem;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 1rem));
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+[data-pomo-tooltip-content][hidden] {
+  display: none;
+}
