@@ -32,7 +32,14 @@ export const PHealthCheck = () => {
       class="grid gap-2 border-t border-solid border-border pt-5"
     >
       <div class="flex flex-wrap items-center gap-2.5">
-        <PButton disabled={isChecking()} onPress={handleCheck} size="small" tone="secondary">
+        <PButton
+          bordered
+          transparent
+          disabled={isChecking()}
+          onPress={handleCheck}
+          size="small"
+          tone="secondary"
+        >
           {m.settings_health_action()}
         </PButton>
         <p

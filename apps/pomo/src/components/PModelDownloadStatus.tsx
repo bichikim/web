@@ -48,6 +48,8 @@ export const PModelDownloadStatus = () => {
                         {state().label}: {state().message}
                       </span>
                       <PButton
+                        bordered
+                        transparent
                         onPress={() => download.dismissError(item.target)}
                         size="small"
                         tone="secondary"
@@ -61,6 +63,8 @@ export const PModelDownloadStatus = () => {
                   <div class={ERROR_CLASSES} role="status">
                     <span>{item.label} · 다운로드 대기 중</span>
                     <PButton
+                      bordered
+                      transparent
                       size="small"
                       tone="secondary"
                       onPress={() => download.cancel(item.target)}

@@ -226,6 +226,9 @@ it('should render an authenticated email session with a pending-aware sign-out a
 
   expect(email).toBeVisible()
   expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).not.toHaveClass(
+    'hover:translate-y-[-0.0625rem]',
+  )
   expect(emailLabel).toHaveClass('text-muted-foreground')
   expect(email.closest('div')).toHaveClass('border-border', 'bg-content-surface')
   const form = screen.getByRole('button', {name: '로그아웃'}).closest('form')

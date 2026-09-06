@@ -23,7 +23,7 @@ export const LanguageLearningWordInputSection = (props: LanguageLearningWordInpu
       placeholder={m.learning_words_input_placeholder()}
       tags={props.tags}
     />
-    <PButton class="w-full" disabled={props.saveDisabled} onPress={props.onSave}>
+    <PButton raised class="w-full" disabled={props.saveDisabled} onPress={props.onSave}>
       {m.learning_words_save()}
     </PButton>
   </div>

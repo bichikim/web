@@ -1,4 +1,10 @@
 import {cx} from 'class-variance-authority'
+import {GLASS_ICON_BUTTON} from '../button-presets'
+
+const COMPACT_ACTION = cx(
+  GLASS_ICON_BUTTON.class,
+  'pomo-pomodoro-panel__compact-action data-[icon-only]:shadow-none',
+)
 
 export const CLASSES = {
   pomodoro: cx(
@@ -29,10 +35,11 @@ export const CLASSES = {
     'pomo-pomodoro-panel__auto-start w-full box-border mt-4',
     'border-t border-solid border-border pt-4',
   ),
-  pomodoroPanelCompactAction: 'pomo-pomodoro-panel__compact-action shadow-none',
+  pomodoroPanelCompactAction: COMPACT_ACTION,
   pomodoroPanelCompactActionDanger: cx(
+    COMPACT_ACTION,
     'pomo-pomodoro-panel__compact-action--danger border-[rgb(239_138_116_/_34%)]',
-    '[&_[data-pomo-icon-button-icon]]:text-danger',
+    '[&_[data-pomo-button-icon]]:text-danger',
   ),
   pomodoroPanelPrimaryAction: cx(
     'pomo-pomodoro-panel__primary-action min-w-0 flex-1 [&]:text-modal-body',

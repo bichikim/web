@@ -28,15 +28,17 @@ describe('MusicPlayerView', () => {
       const buttons = result.container.querySelectorAll('media-play-button')
       expect(buttons).toHaveLength(2)
       for (const button of buttons) {
-        expect(button.nextElementSibling).toHaveTextContent(/^재생$/)
+        fireEvent.focus(button)
+        expect(button).toHaveAttribute('title', '재생')
       }
       setPlaying(true)
       for (const button of buttons) {
-        expect(button.nextElementSibling).toHaveTextContent(/^일시 정지$/)
+        expect(button).toHaveAttribute('title', '일시 정지')
       }
       setPlaying(false)
       for (const button of buttons) {
-        expect(button.nextElementSibling).toHaveTextContent(/^재생$/)
+        fireEvent.focus(button)
+        expect(button).toHaveAttribute('title', '재생')
       }
     },
   )

@@ -104,3 +104,24 @@ it('should place the drawing modes in the modal header and associate their panel
   fireEvent.click(within(header).getByRole('button', {name: '닫기'}))
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
 })
+
+it('should undo and redo clearing without losing stroke styles', () => {
+  render(() => {
+    const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([
+      {color: 'blue', points: [{x: 0.5, y: 0.5}], thickness: 'thick'},
+    ])
+    return <PictureDiaryDrawing strokes={strokes()} onChange={setStrokes} />
+  })
+  fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
+  fireEvent.click(screen.getByRole('button', {name: '그림 지우기'}))
+  fireEvent.click(screen.getByRole('button', {name: '한 획 취소'}))
+  expect(screen.getByRole('dialog').querySelector('circle')).toHaveClass('[r:8]')
+  fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+  expect(screen.getByRole('dialog').querySelector('circle')).toBeNull()
+  const color = screen.getByRole('button', {name: '펜 색상 기본색'})
+  const footer = screen.getByRole('button', {name: '완료'}).parentElement!
+  expect(footer).toContainElement(color)
+  expect(footer).toContainElement(screen.getByRole('button', {name: '펜'}))
+  expect(footer).toContainElement(screen.getByRole('button', {name: '굵게'}))
+  expect(screen.queryByRole('button', {name: '파랑'})).not.toBeInTheDocument()
+})

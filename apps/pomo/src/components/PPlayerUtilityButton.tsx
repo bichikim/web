@@ -1,3 +1,4 @@
+import {useTooltipTrigger} from './tooltip'
 import {PTooltip} from './PTooltip'
 import {cx} from 'class-variance-authority'
 
@@ -9,11 +10,13 @@ export interface PPlayerUtilityButtonProps {
   readonly purpose?: 'album' | 'expand'
 }
 
-export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => (
-  <PTooltip label={props.accessibleLabel}>
-    {(tooltip) => (
+export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => {
+  const tooltip = useTooltipTrigger()
+  return (
+    <>
       <button
-        {...tooltip}
+        {...tooltip.events}
+        ref={tooltip.setTarget}
         aria-expanded={props.expanded}
         aria-label={props.accessibleLabel}
         class={cx(
@@ -28,6 +31,7 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => (
       >
         <span aria-hidden="true" class={cx(props.icon, 'size-6')} />
       </button>
-    )}
-  </PTooltip>
-)
+      <PTooltip target={tooltip.target()} show={tooltip.show()} text={props.accessibleLabel} />
+    </>
+  )
+}

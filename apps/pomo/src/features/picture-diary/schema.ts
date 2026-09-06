@@ -15,7 +15,9 @@ const pointSchema = z
 
 const strokeSchema = z
   .object({
+    color: z.enum(['ink', 'red', 'orange', 'green', 'blue', 'violet']).optional(),
     points: z.array(pointSchema).min(1).max(MAXIMUM_POINT_COUNT).readonly(),
+    thickness: z.enum(['thin', 'medium', 'thick']).optional(),
   })
   .readonly()
 

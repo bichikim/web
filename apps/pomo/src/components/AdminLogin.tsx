@@ -60,7 +60,7 @@ export const AdminLogin = () => {
             {(message) => <PFormMessage tone="success">{message()}</PFormMessage>}
           </Show>
 
-          <PButton class="mt-2 w-full" disabled={login.isSubmitting()} type="submit">
+          <PButton raised class="mt-2 w-full" disabled={login.isSubmitting()} type="submit">
             {login.isSubmitting() ? '이메일 전송 중…' : '로그인 링크 받기'}
           </PButton>
         </form>

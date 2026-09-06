@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import * as m from '@paraglide/message'
 
 import {A, useNavigate} from '@solidjs/router'
@@ -21,6 +22,7 @@ import {
 } from '../../features/supertonic'
 import {getPrimaryMood} from '../../features/text-mood'
 import {PDialogueDraftGenerator} from './DraftGenerator'
+import {PSelect} from '../PSelect'
 import {PFaceIcon} from '../PFaceIcon'
 import {PGenerationStatus} from '../PGenerationStatus'
 import {PAudioPreview} from '../PAudioPreview'
@@ -333,7 +335,8 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
                 {editor.text().length} / {MAXIMUM_TEXT_LENGTH}
               </small>
             </span>
-            <textarea
+            <PTextarea
+              unstyled
               disabled={isBusy()}
               maxlength={MAXIMUM_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
@@ -356,42 +359,27 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
           </div>
 
           <div class={CLASSES.dialogueEditorSelects}>
-            <label class={CLASSES.dialogueEditorField}>
-              <span>목소리</span>
-              <select
-                disabled={isBusy()}
-                onChange={(event) => handleVoiceChange(event.currentTarget.value)}
-                value={editor.voiceId()}
-              >
-                <For each={SUPERTONIC_VOICES}>
-                  {(voice) => <option value={voice.id}>{voice.label}</option>}
-                </For>
-              </select>
-            </label>
-            <label class={CLASSES.dialogueEditorField}>
-              <span>언어</span>
-              <select
-                disabled={isBusy()}
-                onChange={(event) => handleLanguageChange(event.currentTarget.value)}
-                value={editor.language()}
-              >
-                <For each={SUPERTONIC_LANGUAGE_OPTIONS}>
-                  {(language) => <option value={language.value}>{language.label}</option>}
-                </For>
-              </select>
-            </label>
-            <label class={CLASSES.dialogueEditorField}>
-              <span>모델</span>
-              <select
-                disabled={isBusy()}
-                onChange={(event) => handleModelChange(event.currentTarget.value)}
-                value={editor.modelId()}
-              >
-                <For each={SUPERTONIC_MODELS}>
-                  {(model) => <option value={model.id}>{model.label}</option>}
-                </For>
-              </select>
-            </label>
+            <PSelect
+              label="목소리"
+              disabled={isBusy()}
+              onChange={handleVoiceChange}
+              value={editor.voiceId()}
+              options={SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id}))}
+            />
+            <PSelect
+              label="언어"
+              disabled={isBusy()}
+              onChange={handleLanguageChange}
+              value={editor.language()}
+              options={SUPERTONIC_LANGUAGE_OPTIONS}
+            />
+            <PSelect
+              label="모델"
+              disabled={isBusy()}
+              onChange={handleModelChange}
+              value={editor.modelId()}
+              options={SUPERTONIC_MODELS.map((model) => ({label: model.label, value: model.id}))}
+            />
           </div>
 
           <PGenerationStatus

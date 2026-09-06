@@ -1,3 +1,5 @@
+import {PInput} from 'src/components/PInput'
+import {FIELD_DESCRIPTION, FIELD_LABEL, FIELD_VALUE} from 'src/components/field-classes'
 import {Combobox} from '@kobalte/core/combobox'
 import {createSignal, createUniqueId, Show} from 'solid-js'
 import {
@@ -134,7 +136,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
       triggerMode="input"
       value={selectedLocation()}
     >
-      <Combobox.Label class="pomo-field-label">{m.weather_city()}</Combobox.Label>
+      <Combobox.Label class={FIELD_LABEL}>{m.weather_city()}</Combobox.Label>
       <Combobox.Control
         class={
           'flex h-control-md w-full min-w-0 items-center gap-3 rounded-control border border-solid ' +
@@ -144,8 +146,10 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
       >
         <span aria-hidden="true" class="i-tabler-map-pin size-4 flex-none text-highlight" />
         <Combobox.Input
+          as={PInput}
+          unstyled
           aria-describedby={descriptionId}
-          class="min-w-0 flex-1 border-0 bg-transparent p-0 pomo-field-value outline-none"
+          class={`min-w-0 flex-1 border-0 bg-transparent p-0 ${FIELD_VALUE} outline-none`}
           onFocus={() => setIsOpen(true)}
         />
         <Show
@@ -163,7 +167,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
           />
         </Show>
       </Combobox.Control>
-      <p class="m-0 pomo-field-description" id={descriptionId}>
+      <p class={`m-0 ${FIELD_DESCRIPTION}`} id={descriptionId}>
         {m.weather_location_search_description()}
       </p>
       <p aria-live="polite" class="sr-only">

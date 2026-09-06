@@ -8,8 +8,9 @@
 
 ## Styling ownership
 
-- CSS and UnoCSS own all visual style values.
-- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties; CSS and UnoCSS must define how those values affect visual styling.
+- Prefer UnoCSS over standalone `.css` files. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
+- UnoCSS owns all visual style values.
+- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties; UnoCSS must define how those values affect visual styling.
 - JavaScript and TypeScript must not otherwise create style values or set them directly on the DOM.
 - If preserving the requested behavior requires other style handling in JavaScript or TypeScript, first present the concrete reason and alternatives and obtain explicit user approval.
 

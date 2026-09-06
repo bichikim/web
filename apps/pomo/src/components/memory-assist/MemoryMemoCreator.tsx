@@ -114,7 +114,14 @@ export const MemoryMemoCreator = () => {
 
   return (
     <>
-      <PButton class="w-full" icon="i-tabler-plus" onPress={handleOpen} tone="secondary">
+      <PButton
+        bordered
+        transparent
+        class="w-full"
+        icon="i-tabler-plus"
+        onPress={handleOpen}
+        tone="secondary"
+      >
         {m.memory_memo_new()}
       </PButton>
 

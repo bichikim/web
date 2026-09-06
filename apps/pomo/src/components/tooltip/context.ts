@@ -1,22 +1,20 @@
 import {type Accessor, createContext, useContext} from 'solid-js'
 
+export interface TooltipRequest {
+  readonly owner: string
+  readonly target: HTMLElement
+  readonly text: Accessor<string>
+}
+
 export interface TooltipContext {
-  readonly anchor: string
-  readonly id: string
-  readonly isOpen: Accessor<boolean>
-  readonly supported: Accessor<boolean | undefined>
+  readonly active: Accessor<TooltipRequest | undefined>
   readonly close: () => void
   readonly cancelClose: () => void
   readonly scheduleClose: () => void
-  readonly open: (source: HTMLElement, immediate: boolean) => void
+  readonly supported: Accessor<boolean | undefined>
+  readonly present: (request: TooltipRequest) => void
+  readonly dismiss: (owner: string, immediate?: boolean) => void
 }
 
 export const tooltipContext = createContext<TooltipContext>()
-
-export const useTooltip = (): TooltipContext => {
-  const context = useContext(tooltipContext)
-  if (context === undefined) {
-    throw new Error('Tooltip.Trigger and Tooltip.Content require Tooltip.Root.')
-  }
-  return context
-}
+export const useTooltip = () => useContext(tooltipContext)

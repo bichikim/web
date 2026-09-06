@@ -25,6 +25,8 @@ export const CalendarProviderActions = (props: CalendarProviderActionsProps) => 
       when={providerConnections().length > 0}
       fallback={
         <PButton
+          bordered
+          transparent
           class="w-full"
           disabled={props.pending}
           onPress={() => props.onConnect(props.provider)}
@@ -40,6 +42,8 @@ export const CalendarProviderActions = (props: CalendarProviderActionsProps) => 
         {(connection) => (
           <div class="grid gap-1.5">
             <PButton
+              bordered
+              transparent
               accessibleLabel={m.calendar_disconnect({account: connection.accountLabel})}
               class="w-full"
               disabled={props.pending}

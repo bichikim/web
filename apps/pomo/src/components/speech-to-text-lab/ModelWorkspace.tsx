@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {type JSX, Match, Show, Switch, untrack} from 'solid-js'
 import {type SpeechModelDefinition, useSpeechToText} from '../../features/speech-to-text/index'
@@ -77,7 +78,8 @@ export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
         받아쓰기 결과
       </label>
       <div class="relative">
-        <textarea
+        <PTextarea
+          unstyled
           class={SPEECH_TEXTAREA_CLASSES}
           id="speech-transcript"
           onInput={handleTextInput}

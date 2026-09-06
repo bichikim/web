@@ -1,3 +1,4 @@
+import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {Switch} from '@kobalte/core/switch'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
@@ -32,7 +33,7 @@ export const PSwitch = (props: PSwitchProps) => (
       </Switch.Label>
       <Show when={props.description}>
         {(description) => (
-          <Switch.Description class="mt-1 pomo-field-description empty:hidden">
+          <Switch.Description class={`mt-1 ${FIELD_DESCRIPTION} empty:hidden`}>
             {description()}
           </Switch.Description>
         )}

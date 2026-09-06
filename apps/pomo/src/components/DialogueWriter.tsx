@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 
 import {type DialogueWriterController, useDialogueWriter} from '../features/dialogue-writer'
@@ -82,7 +83,8 @@ export const DialogueWriter = () => {
               {compactWriter.request().length} / {MAXIMUM_REQUEST_LENGTH}
             </span>
           </span>
-          <textarea
+          <PTextarea
+            unstyled
             class={TEXTAREA_CLASSES}
             disabled={isBusy()}
             maxlength={MAXIMUM_REQUEST_LENGTH}

@@ -1,9 +1,18 @@
+import {PInput} from 'src/components/PInput'
+import {PTextarea} from 'src/components/PTextarea'
 import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {MAXIMUM_PICTURE_DIARY_TEXT_LENGTH} from '../../../features/picture-diary'
 import {PButton} from '../../PButton'
 import {PictureDiaryDrawing} from './Drawing'
 import {type PageSide, type PictureDiaryEditorProps} from './editor-props'
+
+const CANCEL_CLASSES =
+  '[&&]:[color:rgb(var(--picture-diary-ink))] ' +
+  '[&&]:[background:rgb(var(--picture-diary-rule)/6%)] ' +
+  '[&&]:[border-color:rgb(var(--picture-diary-rule)/32%)] ' +
+  '[&&]:hover:[background:rgb(var(--picture-diary-rule)/14%)] ' +
+  '[&&]:hover:[border-color:rgb(var(--picture-diary-rule)/52%)]'
 
 interface PictureDiaryWritingPageProps {
   readonly editor: PictureDiaryEditorProps
@@ -20,7 +29,8 @@ export const PictureDiaryWritingPage = (props: PictureDiaryWritingPageProps) => 
     <div class="picture-diary-book__heading">
       <label class="picture-diary-book__date-field">
         <span class="sr-only">{m.picture_diary_date()}</span>
-        <input
+        <PInput
+          unstyled
           aria-label={m.picture_diary_date()}
           disabled={props.preview || props.editor.disabled}
           onInput={(event) => props.editor.onDateChange(event.currentTarget.value)}
@@ -37,7 +47,8 @@ export const PictureDiaryWritingPage = (props: PictureDiaryWritingPageProps) => 
       onChange={props.editor.onStrokesChange}
       strokes={props.editor.strokes}
     />
-    <textarea
+    <PTextarea
+      unstyled
       aria-label={m.picture_diary_writing()}
       class="picture-diary-book__writing"
       disabled={props.preview || props.editor.disabled}
@@ -48,6 +59,7 @@ export const PictureDiaryWritingPage = (props: PictureDiaryWritingPageProps) => 
     />
     <footer class="picture-diary-book__footer picture-diary-book__footer--current flex-wrap gap-3">
       <PButton
+        raised
         accessibleLabel={m.picture_diary_save()}
         disabled={props.preview || !props.editor.canSave}
         icon="i-tabler-device-floppy"
@@ -58,7 +70,9 @@ export const PictureDiaryWritingPage = (props: PictureDiaryWritingPageProps) => 
       </PButton>
       <Show when={props.editor.onCancelEdit}>
         <PButton
-          class="diary-edit-cancel"
+          bordered
+          transparent
+          class={CANCEL_CLASSES}
           size="small"
           tone="secondary"
           disabled={props.preview || props.editor.disabled}

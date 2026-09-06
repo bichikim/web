@@ -62,7 +62,14 @@ const TourStory = (props: TourStoryProps) => {
             <p class="m-0 text-xs font-750 tracking-wide text-highlight">Pomo 둘러보기</p>
             <h1 class="mb-0 mt-1 text-2xl font-750">집중 화면</h1>
           </div>
-          <PButton icon="i-tabler-route" onPress={() => handleOpenChange(true)} tone="glass">
+          <PButton
+            bordered
+            backdropBlur
+            transparent
+            icon="i-tabler-route"
+            onPress={() => handleOpenChange(true)}
+            tone="glass"
+          >
             투어 보기
           </PButton>
         </header>

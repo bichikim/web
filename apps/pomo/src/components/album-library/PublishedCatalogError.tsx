@@ -22,6 +22,8 @@ export const PublishedCatalogError = (props: PublishedCatalogErrorProps) => {
     >
       <p class="m-0 text-sm font-650">{m.album_catalog_load_failed()}</p>
       <PButton
+        bordered
+        transparent
         class="mt-2"
         disabled={props.isRetrying}
         onPress={props.onRetry}

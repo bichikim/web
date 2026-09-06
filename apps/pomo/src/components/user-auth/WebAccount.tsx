@@ -54,7 +54,7 @@ export const WebAccount = () => {
                 type="email"
                 value={account.email()}
               />
-              <PButton class="w-full" disabled={account.isSubmitting()} type="submit">
+              <PButton raised class="w-full" disabled={account.isSubmitting()} type="submit">
                 {account.isSubmitting() ? m.web_account_sending() : m.web_account_send()}
               </PButton>
             </form>
@@ -67,11 +67,16 @@ export const WebAccount = () => {
                 <p class="mb-0 mt-1 break-all text-sm font-700">{session().email}</p>
               </div>
               <div class="flex flex-wrap items-center gap-3">
-                <a class={pButtonClasses({class: 'no-underline', size: 'small'})} href="/">
+                <a
+                  class={pButtonClasses({class: 'no-underline', raised: true, size: 'small'})}
+                  href="/"
+                >
                   {m.app_return()}
                 </a>
                 <form action="/api/auth/sign-out" method="post" onSubmit={handleSignOut}>
                   <PButton
+                    bordered
+                    transparent
                     size="small"
                     disabled={account.isSubmitting()}
                     tone="secondary"

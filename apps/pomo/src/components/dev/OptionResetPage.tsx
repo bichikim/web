@@ -163,7 +163,7 @@ export function OptionResetPage(props: OptionResetPageProps) {
           <p class="m-0 max-w-xl text-sm leading-6 text-#aaa0b1">
             모든 설정과 업데이트 안내 열람 상태를 한 번에 기본값으로 되돌립니다.
           </p>
-          <PButton disabled={isBusy()} onPress={requestAllReset} tone="danger">
+          <PButton bordered transparent disabled={isBusy()} onPress={requestAllReset} tone="danger">
             모든 옵션 초기화
           </PButton>
         </section>
@@ -188,10 +188,10 @@ export function OptionResetPage(props: OptionResetPageProps) {
           이 작업은 되돌릴 수 없으며 다음 실행부터 기본값이 적용됩니다.
         </p>
         <div class="mt-5 flex justify-end gap-2">
-          <PButton onPress={handleCancel} size="small" tone="secondary">
+          <PButton bordered transparent onPress={handleCancel} size="small" tone="secondary">
             취소
           </PButton>
-          <PButton onPress={() => handleConfirm()} size="small" tone="danger">
+          <PButton bordered transparent onPress={() => handleConfirm()} size="small" tone="danger">
             초기화
           </PButton>
         </div>

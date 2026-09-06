@@ -22,6 +22,8 @@ export const OptionGroupCard = (props: OptionGroupCardProps) => (
       </p>
     </div>
     <PButton
+      bordered
+      transparent
       accessibleLabel={`${props.group.label} 옵션 초기화`}
       disabled={props.busy}
       onPress={(source) => props.onReset(props.group, source)}

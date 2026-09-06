@@ -4,9 +4,8 @@ import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Var
 
 import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
-import {diaryShortcuts} from './uno/diary'
-import {initialSceneFallbackShortcuts} from './uno/loading'
-import {typographyShortcuts} from './uno/typography'
+import {initialSceneFallbackShortcuts} from './scripts/unocss/loading'
+import {typographyShortcuts} from './scripts/unocss/typography'
 
 const sansFontFamily = [
   "'Pretendard Variable'",
@@ -177,6 +176,10 @@ const config = mergeConfigs([
     preflights: [
       {
         getCSS: ({theme}) => `
+[data-pomo-tooltip-trigger] {
+  anchor-name: var(--pomo-tooltip-anchor);
+}
+
 :root {
   --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0rem);
   --pomo-safe-area-inset-left: env(safe-area-inset-left, 0rem);
@@ -430,7 +433,6 @@ body {
     ],
     shortcuts: {
       ...initialSceneFallbackShortcuts,
-      ...diaryShortcuts,
       ...typographyShortcuts,
     },
     theme: {

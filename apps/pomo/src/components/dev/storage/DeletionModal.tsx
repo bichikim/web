@@ -24,10 +24,17 @@ export const DeletionModal = (props: DeletionModalProps) => (
   >
     <p class="m-0 text-sm leading-6 text-foreground">{props.request?.label}</p>
     <div class="mt-5 flex justify-end gap-2">
-      <PButton onPress={props.onCancel} size="small" tone="secondary">
+      <PButton bordered transparent onPress={props.onCancel} size="small" tone="secondary">
         취소
       </PButton>
-      <PButton disabled={props.disabled} onPress={props.onConfirm} size="small" tone="danger">
+      <PButton
+        bordered
+        transparent
+        disabled={props.disabled}
+        onPress={props.onConfirm}
+        size="small"
+        tone="danger"
+      >
         삭제 확정
       </PButton>
     </div>

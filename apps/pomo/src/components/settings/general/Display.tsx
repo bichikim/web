@@ -1,3 +1,4 @@
+import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {createMemo, Show} from 'solid-js'
 import {PSelect, type PSelectOption} from '../../PSelect'
 import {PSwitch} from '../../PSwitch'
@@ -128,7 +129,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             options={getScreenSaverDelayOptions()}
             value={props.screenSaverDelay ?? '10m'}
           />
-          <p class="pomo-field-description m-0">{m.settings_screen_saver_description()}</p>
+          <p class={`${FIELD_DESCRIPTION} m-0`}>{m.settings_screen_saver_description()}</p>
         </div>
       </div>
     </section>

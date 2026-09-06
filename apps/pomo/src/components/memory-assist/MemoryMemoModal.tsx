@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createSignal, Show} from 'solid-js'
 
@@ -61,7 +62,8 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
       <div class="grid gap-4">
         <label class="grid gap-2 text-sm font-650 text-foreground">
           <span>{m.memory_memo_input()}</span>
-          <textarea
+          <PTextarea
+            unstyled
             class={TEXTAREA_CLASSES}
             maxlength={MAXIMUM_MEMORY_MEMO_LENGTH}
             onInput={(event) => props.onTextInput(event.currentTarget.value)}
@@ -85,7 +87,12 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
           )}
         </Show>
 
-        <PButton class="w-full" disabled={!props.canSave || isPending()} onPress={handleSave}>
+        <PButton
+          raised
+          class="w-full"
+          disabled={!props.canSave || isPending()}
+          onPress={handleSave}
+        >
           {props.saveLabel}
         </PButton>
       </div>

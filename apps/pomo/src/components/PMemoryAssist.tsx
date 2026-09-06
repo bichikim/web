@@ -9,7 +9,8 @@ import type {WeatherState} from '../features/weather'
 import {CalendarConnections} from './CalendarConnections'
 import {CalendarMonth} from './CalendarMonth'
 import {getPomoIconClass} from './icon-style'
-import {PIconButton} from './PIconButton'
+import {GLASS_ICON_BUTTON} from './button-presets'
+import {PButton} from './PButton'
 import {PModal} from './PModal'
 import {MEMORY_ASSIST_ICON} from './memory-assist/icon'
 import {PMemoryAssistTabList} from './memory-assist/TabList'
@@ -48,9 +49,10 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
   return (
     <>
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-        <PIconButton
+        <PButton
+          {...GLASS_ICON_BUTTON}
           accessibleLabel={m.memory_assist_open()}
-          feedback={m.memory_assist_feedback()}
+          tooltip={m.memory_assist_open()}
           icon={getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle)}
           onPress={handleOpen}
         />

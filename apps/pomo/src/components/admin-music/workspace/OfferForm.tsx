@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {BUTTON_CLASSES} from '../button-classes'
 import {type AlbumTaskFormProps} from './form-props'
@@ -20,7 +21,8 @@ export const OfferForm = (props: AlbumTaskFormProps) => (
     <div class="mt-5 grid gap-4">
       <label class="grid gap-2 text-sm">
         앱인토스 상품 ID (SKU)
-        <input
+        <PInput
+          unstyled
           class={FIELD_CLASSES}
           maxlength="255"
           name="externalProductId"

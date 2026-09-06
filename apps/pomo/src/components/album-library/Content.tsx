@@ -64,6 +64,8 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                 />
                 <p class="m-0 text-sm font-650">{m.album_load_failed()}</p>
                 <PButton
+                  bordered
+                  transparent
                   class="mt-3"
                   onPress={() => albumLibrary.retryLibrary().then(reset)}
                   size="small"

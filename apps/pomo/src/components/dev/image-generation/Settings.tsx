@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {For} from 'solid-js'
 import {ASPECT_RATIOS, type ImageGenerationController} from 'src/features/image-generation'
 
@@ -57,7 +58,8 @@ export const Settings = (props: SettingsProps) => (
     </label>
     <div class="image-studio-seed">
       <label for="image-seed">시드</label>
-      <input
+      <PInput
+        unstyled
         id="image-seed"
         type="text"
         inputmode="numeric"

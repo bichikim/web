@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {TextField} from '@kobalte/core/text-field'
 import {createSignal, For} from 'solid-js'
@@ -104,6 +105,8 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
           )}
         </For>
         <TextField.Input
+          as={PInput}
+          unstyled
           class={INPUT_CLASS}
           disabled={props.disabled || props.tags.length >= maximumTags()}
           maxlength="300"

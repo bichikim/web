@@ -73,7 +73,8 @@ export const UserSettings = () => {
           </Switch>
 
           <PSettingsActionLink
-            class="col-start-2 row-start-1 min-h-control-md w-fit max-w-full text-sm"
+            class="col-start-2 row-start-1 w-fit max-w-full text-sm"
+            size="medium"
             href="/account"
             icon="i-tabler-user-circle"
           >

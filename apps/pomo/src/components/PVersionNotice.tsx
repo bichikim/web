@@ -9,7 +9,8 @@ import {
   writeViewedRelease,
 } from '../features/version-catalog'
 import {getPomoIconClass} from './icon-style'
-import {PIconButton} from './PIconButton'
+import {GLASS_ICON_BUTTON} from './button-presets'
+import {PButton} from './PButton'
 import {PModal} from './PModal'
 import {POrbitBorder} from './POrbitBorder'
 import {PScribbleCircleControl} from './scribble/CircleControl'
@@ -68,9 +69,10 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
     <Show when={releases().length > 0}>
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
         <POrbitBorder>
-          <PIconButton
+          <PButton
+            {...GLASS_ICON_BUTTON}
             accessibleLabel={m.version_notice_open()}
-            feedback={m.version_notice_feedback()}
+            tooltip={m.version_notice_open()}
             icon={getPomoIconClass('i-tabler-gift', props.sceneStyle)}
             onPress={handleOpen}
           />

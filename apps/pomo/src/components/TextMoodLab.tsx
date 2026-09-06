@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createMemo, For, type JSX, Show} from 'solid-js'
 
@@ -60,7 +61,8 @@ export const TextMoodLab = () => {
         <label class="text-sm font-700 text-#e9dfe9" for="text-mood-input">
           분석할 문장
         </label>
-        <textarea
+        <PTextarea
+          unstyled
           class={TEXTAREA_CLASSES}
           id="text-mood-input"
           onInput={handleTextInput}

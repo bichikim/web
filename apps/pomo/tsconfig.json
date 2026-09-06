@@ -38,7 +38,7 @@
     "src/**/*.mjs",
     "src/**/*.d.ts",
     "vite.config.ts",
-    "vite/**/*.ts",
+    "scripts/vite/**/*.ts",
     "uno.config.ts",
     "vitest.storybook.config.mts"
   ]
