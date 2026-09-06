@@ -61,6 +61,7 @@ declare module 'solid-js' {
   namespace JSX {
     interface ExplicitAttributes {
       autofocus: string
+      notooltip: string
     }
 
     interface ExplicitBoolAttributes {

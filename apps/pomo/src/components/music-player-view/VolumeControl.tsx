@@ -63,7 +63,7 @@ export const VolumeControl = (props: VolumeControlProps) => {
             {...tooltip}
             aria-label={m.player_toggle_mute()}
             class={cx(CLASSES.playerMute, 'player-narrow:hidden')}
-            notooltip
+            attr:notooltip=""
           >
             <PlayerIcon
               icon="i-tabler-volume-off"

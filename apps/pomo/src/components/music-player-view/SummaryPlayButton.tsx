@@ -20,7 +20,7 @@ export const SummaryPlayButton = (
             aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
             class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
             disabled={!props.currentTrack}
-            notooltip
+            attr:notooltip=""
           >
             <PlayerIcon
               icon="i-tabler-player-play"
