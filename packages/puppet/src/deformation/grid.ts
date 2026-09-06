@@ -1,7 +1,13 @@
+import {getVertexInfluence} from './weights'
 import {transformPinPoint} from './pin'
 import {sameDeformerShape} from './binding'
 import {transformBonePoint} from './bone'
-import type {PuppetDeformerShape, PuppetPoint, PuppetSceneDeformerNode} from '../player/document'
+import type {
+  PuppetDeformerShape,
+  PuppetPoint,
+  PuppetSceneDeformerNode,
+  PuppetVertexReference,
+} from '../player/document'
 import {transformCurvePoint} from './curve'
 import {sampleDeformerSurface} from './internal/surface'
 
@@ -11,15 +17,16 @@ const GRID_INVERSE_EPSILON_RATIO = 0.0001
 const GRID_INVERSE_ITERATIONS = 8
 const MINIMUM_DETERMINANT = 0.000_000_1
 
-export const transformDeformerShape = (
+const transformUnweightedShape = (
   node: PuppetDeformerShape,
   point: PuppetPoint,
+  vertex?: PuppetVertexReference,
 ): PuppetPoint => {
   if (node.pins !== undefined) {
     return transformPinPoint(node, point)
   }
   if (node.boneRestPoints !== undefined) {
-    return transformBonePoint(node, point)
+    return transformBonePoint(node, point, vertex)
   }
   if (node.curveAxis !== undefined) {
     return transformCurvePoint(node, point)
@@ -31,16 +38,33 @@ export const transformDeformerShape = (
   }).point
 }
 
-export const transformDeformerPoint = (
+export const transformDeformerShape = (
+  node: PuppetDeformerShape,
+  point: PuppetPoint,
+  vertex?: PuppetVertexReference,
+): PuppetPoint => {
+  const weight = getVertexInfluence(node, vertex)
+  if (weight === 0) {
+    return point
+  }
+  const transformed = transformUnweightedShape(node, point, vertex)
+  return {
+    x: point.x + (transformed.x - point.x) * weight,
+    y: point.y + (transformed.y - point.y) * weight,
+  }
+}
+
+const transformUnweightedPoint = (
   node: PuppetSceneDeformerNode,
   point: PuppetPoint,
+  vertex?: PuppetVertexReference,
 ): PuppetPoint => {
   const {binding} = node
   if (binding === undefined) {
-    return transformDeformerShape(node, point)
+    return transformUnweightedShape(node, point, vertex)
   }
   const preserved = binding.steps.reduce(
-    (current, step) => applyBindingStep(step.shape, step.rest, current),
+    (current, step) => applyBindingStep(step.shape, step.rest, current, vertex),
     point,
   )
   let unchanged = bindingMatches.get(node)
@@ -48,20 +72,58 @@ export const transformDeformerPoint = (
     unchanged = sameDeformerShape(node, binding.rest)
     bindingMatches.set(node, unchanged)
   }
-  return unchanged ? preserved : applyBindingStep(node, binding.rest, preserved)
+  return unchanged ? preserved : applyBindingStep(node, binding.rest, preserved, vertex)
+}
+
+export const transformDeformerPoint = (
+  node: PuppetSceneDeformerNode,
+  point: PuppetPoint,
+  vertex?: PuppetVertexReference,
+): PuppetPoint => {
+  const weight = getVertexInfluence(node, vertex)
+  if (weight === 0) {
+    return point
+  }
+  const transformed = transformUnweightedPoint(node, point, vertex)
+  return {
+    x: point.x + (transformed.x - point.x) * weight,
+    y: point.y + (transformed.y - point.y) * weight,
+  }
+}
+
+/** Returns the input coordinates of the current control layout after preserved binding steps. */
+export const getDeformerInputPoint = (
+  node: PuppetSceneDeformerNode,
+  point: PuppetPoint,
+  vertex?: PuppetVertexReference,
+): PuppetPoint => {
+  const {binding} = node
+  if (binding === undefined) {
+    return point
+  }
+  const preserved = binding.steps.reduce(
+    (current, step) => applyBindingStep(step.shape, step.rest, current, vertex),
+    point,
+  )
+  return invertPoint(binding.rest, preserved, (position) =>
+    transformUnweightedShape(binding.rest, position, vertex),
+  )
 }
 
 const applyBindingStep = (
   shape: PuppetDeformerShape,
   rest: PuppetDeformerShape | undefined,
   point: PuppetPoint,
+  vertex?: PuppetVertexReference,
 ): PuppetPoint => {
   if (rest === undefined) {
-    return transformDeformerShape(shape, point)
+    return transformUnweightedShape(shape, point, vertex)
   }
-  const local = invertPoint(rest, point, (position) => transformDeformerShape(rest, position))
-  const reference = transformDeformerShape(rest, local)
-  const posed = transformDeformerShape(shape, local)
+  const local = invertPoint(rest, point, (position) =>
+    transformUnweightedShape(rest, position, vertex),
+  )
+  const reference = transformUnweightedShape(rest, local, vertex)
+  const posed = transformUnweightedShape(shape, local, vertex)
   // Preserve the point's residual when the inverse is approximate or the layout is degenerate.
   return {x: point.x + posed.x - reference.x, y: point.y + posed.y - reference.y}
 }
@@ -69,7 +131,9 @@ const applyBindingStep = (
 export const untransformDeformerPoint = (
   node: PuppetSceneDeformerNode,
   target: PuppetPoint,
-): PuppetPoint => invertPoint(node, target, (position) => transformDeformerPoint(node, position))
+  vertex?: PuppetVertexReference,
+): PuppetPoint =>
+  invertPoint(node, target, (position) => transformDeformerPoint(node, position, vertex))
 
 const invertPoint = (
   node: PuppetDeformerShape,

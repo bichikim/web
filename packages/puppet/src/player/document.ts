@@ -77,7 +77,24 @@ export interface PuppetDeformerPin extends PuppetPoint {
   readonly strength: number
 }
 
+export interface PuppetVertexReference {
+  readonly partId: string
+  readonly vertexIndex: number
+}
+
+export interface PuppetBoneWeights extends PuppetVertexReference {
+  /** Weights for consecutive segments, normalized for multiple bones. A single bone blends with the input position; omission uses distance-based weights. */
+  readonly weights: ReadonlyArray<number>
+}
+
+export interface PuppetVertexInfluence extends PuppetVertexReference {
+  readonly weight: number
+}
+
 export interface PuppetDeformerShape {
+  /** Per-vertex deformation amount; omission applies the full deformation. */
+  readonly vertexInfluences?: ReadonlyArray<PuppetVertexInfluence>
+  readonly boneWeights?: ReadonlyArray<PuppetBoneWeights>
   readonly pins?: ReadonlyArray<PuppetDeformerPin>
   /** Bind joints of a connected bone chain, packed as XY pairs. Control points store posed joints. */
   readonly boneRestPoints?: ReadonlyArray<number>

@@ -146,6 +146,7 @@ export const editBoneRest = (options: EditBoneRestOptions): PuppetDocument | und
         rebindDeformer(node, {
           ...node,
           boneRestPoints: points,
+          boneWeights: options.operation === 'move' ? node.boneWeights : undefined,
           controlPoints: points,
         }),
       ),

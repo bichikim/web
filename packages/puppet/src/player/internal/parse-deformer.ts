@@ -66,6 +66,72 @@ const hasValidCurveAxis = (value: Record<string, unknown>) =>
       value.rows === 1 &&
       value.curveHandles === undefined))
 
+const hasValidWeights = (value: Record<string, unknown>): boolean => {
+  if (value.boneWeights === undefined) {
+    return true
+  }
+  const points = value.boneRestPoints
+  if (!isFiniteNumberArray(points) || !Array.isArray(value.boneWeights)) {
+    return false
+  }
+  const TOLERANCE = 0.000001
+  const keys = new Set<string>()
+  return value.boneWeights.every((entry: unknown) => {
+    if (
+      !isRecord(entry) ||
+      typeof entry.partId !== 'string' ||
+      entry.partId.length === 0 ||
+      !isFiniteNumber(entry.vertexIndex) ||
+      !Number.isInteger(entry.vertexIndex) ||
+      entry.vertexIndex < 0 ||
+      !isFiniteNumberArray(entry.weights) ||
+      entry.weights.length !== points.length / 2 - 1 ||
+      entry.weights.some((weight) => weight < 0 || weight > 1) ||
+      (entry.weights.length > 1 &&
+        Math.abs(entry.weights.reduce((sum, weight) => sum + weight, 0) - 1) > TOLERANCE)
+    ) {
+      return false
+    }
+    const key = JSON.stringify([entry.partId, entry.vertexIndex])
+    if (keys.has(key)) {
+      return false
+    }
+    keys.add(key)
+    return true
+  })
+}
+
+const hasValidInfluences = (value: Record<string, unknown>): boolean => {
+  if (value.vertexInfluences === undefined) {
+    return true
+  }
+  if (!Array.isArray(value.vertexInfluences)) {
+    return false
+  }
+  const keys = new Set<string>()
+  return value.vertexInfluences.every((entry: unknown) => {
+    if (
+      !isRecord(entry) ||
+      typeof entry.partId !== 'string' ||
+      entry.partId.length === 0 ||
+      !isFiniteNumber(entry.vertexIndex) ||
+      !Number.isInteger(entry.vertexIndex) ||
+      entry.vertexIndex < 0 ||
+      !isFiniteNumber(entry.weight) ||
+      entry.weight < 0 ||
+      entry.weight > 1
+    ) {
+      return false
+    }
+    const key = JSON.stringify([entry.partId, entry.vertexIndex])
+    if (keys.has(key)) {
+      return false
+    }
+    keys.add(key)
+    return true
+  })
+}
+
 const hasValidBones = (value: Record<string, unknown>) => {
   if (value.boneRestPoints === undefined) {
     return true
@@ -142,7 +208,13 @@ const isDeformerShape = (value: Record<string, unknown>): boolean => {
     return false
   }
 
-  if (!hasValidCurveAxis(value) || !hasValidBones(value) || !hasValidPins(value)) {
+  if (
+    !hasValidCurveAxis(value) ||
+    !hasValidBones(value) ||
+    !hasValidPins(value) ||
+    !hasValidWeights(value) ||
+    !hasValidInfluences(value)
+  ) {
     return false
   }
   const pointCount = ((value.columns as number) + 1) * ((value.rows as number) + 1)

@@ -1,7 +1,32 @@
 export const canvasShortcuts = {
+  'weight-legend': 'flex items-center gap-2 text-xs text-[#c4d1cb] my-2',
+  'weight-heatmap': [
+    '[.puppet-editor_&]:pointer-events-none [.puppet-editor_&]:opacity-70',
+    '[.puppet-editor_&]:[fill:color-mix(in_srgb,#f35e62_calc(var(--weight)*100%),#3185e8)]',
+  ],
+  'weight-tool-options': 'flex flex-wrap gap-1 mt-2',
+  'weight-brush-ring': [
+    '[.puppet-editor_&.weight-brush-ring]:pointer-events-none [.puppet-editor_&.weight-brush-ring]:fill-none',
+    '[.puppet-editor_&.weight-brush-ring]:[stroke:#ffffff] [.puppet-editor_&.weight-brush-ring]:[stroke-width:1.5px]',
+    '[.puppet-editor_&.weight-brush-ring]:[r:calc(var(--brush-radius)*1px)]',
+  ],
+  'weight-legend-ramp': 'flex-1 h-2 rounded [background:linear-gradient(to_right,#3185e8,#f35e62)]',
+  'bone-weight-label': [
+    '[.puppet-editor_&]:pointer-events-none [.puppet-editor_&]:[fill:#fff1d6]',
+    '[.puppet-editor_&]:[font-size:12px] [.puppet-editor_&]:[paint-order:stroke] [.puppet-editor_&]:[stroke:#111715]',
+    '[.puppet-editor_&]:[stroke-width:3px] [.puppet-editor_&]:[text-anchor:middle]',
+  ],
+
   'bone-tools': [
     'mt-3 min-w-0 pointer-events-auto',
     '[&_button[aria-pressed=true]]:bg-[#24463b] [&_button[aria-pressed=true]]:border-[#56e1c3]',
+  ],
+  'weight-paint-active':
+    '[.puppet-editor_&_.bone-weight-vertex]:pointer-events-none [.puppet-editor_&]:cursor-crosshair',
+  'bone-weight-vertex': [
+    '[.puppet-editor_&]:[r:5px] [.puppet-editor_&]:cursor-pointer',
+    '[.puppet-editor_&.bone-weight-vertex]:[fill:color-mix(in_srgb,#f35e62_calc(var(--weight)*100%),#3185e8)]',
+    '[.puppet-editor_&:focus-visible]:[stroke:#ffffff] [.puppet-editor_&:focus-visible]:[stroke-width:3px]',
   ],
 
   'canvas-host': [

@@ -1,3 +1,4 @@
+import {DeformerWeights} from './DeformerWeights'
 import {Button} from '@kobalte/core/button'
 import {For, Show} from 'solid-js'
 import {DeformerMode} from './DeformerMode'
@@ -106,6 +107,7 @@ export const PinEditor = (props: PinEditorProps) => {
         </For>
       </svg>
       {props.renderControls === undefined ? controls : props.renderControls(controls)}
+      <DeformerWeights {...props} />
     </div>
   )
 }
