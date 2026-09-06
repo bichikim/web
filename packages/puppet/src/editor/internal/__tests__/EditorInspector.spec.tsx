@@ -467,3 +467,39 @@ describe('EditorInspector', () => {
     expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeDisabled()
   })
 })
+
+test('should restrict visual edits while allowing static settings below full influence', () => {
+  const onDocumentChange = vi.fn()
+  const view = render(() => (
+    <EditorInspector
+      activeNodeId="mesh-preview"
+      document={createDemoDocument()}
+      editMode="parameter"
+      editingDisabled
+      onDocumentChange={onDocumentChange}
+    />
+  ))
+  expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeDisabled()
+  expect(view.getByRole('button', {name: '대상 추가'})).toBeEnabled()
+  expect(onDocumentChange).not.toHaveBeenCalled()
+})
+
+test('should keep static and visual controls disabled for a locked part', () => {
+  const document = setSceneNodeState({
+    document: createDemoDocument(),
+    locked: true,
+    nodeId: 'mesh-preview',
+  })!
+  const view = render(() => (
+    <EditorInspector
+      activeNodeId="mesh-preview"
+      document={document}
+      editMode="parameter"
+      editingDisabled
+    />
+  ))
+  expect(view.getByRole('button', {name: /^파트 블렌드 모드/})).toBeDisabled()
+  expect(view.getByRole('checkbox', {name: '마스크 반전'})).toBeDisabled()
+  expect(view.getByRole('button', {name: '대상 추가'})).toBeDisabled()
+  expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeDisabled()
+})

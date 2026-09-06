@@ -396,8 +396,15 @@ describe('MeshEditor', () => {
     expect(vertexTracks?.[1]?.keyframes).toEqual([{time: 0.5, value: 200}])
   })
 
-  test('should edit only an explicitly selected parameter keyform', () => {
-    const initialDocument = createDemoDocument()
+  test.each([0, 0.5, 1])('should edit the original selected keyform at influence %s', (weight) => {
+    const source = createDemoDocument()
+    const initialDocument = {
+      ...source,
+      parameterBindings: source.parameterBindings!.map((binding) => ({
+        ...binding,
+        influences: [{parameterId: 'angle-y', points: [{value: 0, weight}]}],
+      })),
+    }
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
     const view = render(() => (
       <MeshEditor
@@ -439,6 +446,7 @@ describe('MeshEditor', () => {
         )
         ?.parts[0]?.vertices.slice(-2),
     ).toEqual([340, 240])
+    expect(document().parameterBindings?.[0]?.influences?.[0]?.points[0]?.weight).toBe(weight)
   })
 
   test('should disable topology editing in motion mode', () => {

@@ -1,6 +1,12 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument, type PuppetDocument, type PuppetParameterBinding1D} from '../../player'
+import {
+  createDemoDocument,
+  parseDocument,
+  type PuppetDocument,
+  type PuppetParameterBinding1D,
+  serializeDocument,
+} from '../../player'
 import {
   composeParameterVertices,
   getDefaultParameterValueMap,
@@ -83,4 +89,90 @@ describe('parameter composition', () => {
       }),
     ).toBe(restVertices)
   })
+})
+
+test('should attenuate only the selected binding delta using another raw parameter', () => {
+  const initial = createComposedDocument()
+  const document: PuppetDocument = {
+    ...initial,
+    parameterBindings: initial.parameterBindings.map((binding) =>
+      binding.id === 'smile'
+        ? {
+            ...binding,
+            influences: [
+              {
+                parameterId: 'angle-y',
+                points: [
+                  {value: 0, weight: 1},
+                  {value: 30, weight: 0},
+                ],
+              },
+            ],
+          }
+        : binding,
+    ),
+  }
+  const part = document.parts[0]!
+  expect(
+    composeParameterVertices({
+      document,
+      parameterValues: {'angle-x': 15, 'angle-y': 15, smile: 10},
+      partId: part.id,
+      restVertices: part.mesh.vertices,
+    }).slice(-2),
+  ).toEqual([357, 272])
+})
+
+test('should combine five independent inputs with authored suppression through a document round trip', () => {
+  const base = createDemoDocument()
+  const part = base.parts[0]!
+  const ids = ['a', 'i', 'u', 'e', 'o']
+  const document: PuppetDocument = {
+    ...base,
+    motions: [],
+    parameterBindings: ids.map((id, index) => ({
+      id,
+      parameterIds: [id],
+      targetPartIds: [part.id],
+      influences: ids.slice(index + 1).map((parameterId) => ({
+        parameterId,
+        points: [
+          {value: 0, weight: 1},
+          {value: 1, weight: 0},
+        ],
+      })),
+      keyforms: [
+        {values: [0], parts: [{partId: part.id, vertices: part.mesh.vertices}]},
+        {
+          values: [1],
+          parts: [
+            {
+              partId: part.id,
+              vertices: part.mesh.vertices.map((value, coordinate) =>
+                coordinate === part.mesh.vertices.length - 2 ? value + (index + 1) * 10 : value,
+              ),
+            },
+          ],
+        },
+      ],
+    })),
+    parameters: ids.map((id) => ({id, name: id, minimum: 0, maximum: 1, defaultValue: 0})),
+  }
+  const parsed = parseDocument(serializeDocument(document))
+  if (!parsed.ok) {
+    throw new Error('Expected a valid influence document')
+  }
+  const sample = (parameterValues: Record<string, number>) =>
+    composeParameterVertices({
+      document: parsed.document,
+      parameterValues,
+      partId: part.id,
+      restVertices: part.mesh.vertices,
+    }).at(-2)
+  expect(sample({a: 1})).toBe(330)
+  expect(sample({a: 0.5, i: 0.5})).toBe(332.5)
+  expect(sample({a: 1, i: 0.5, u: 0.75})).toBe(347.5)
+  expect(sample({a: 1, i: 1, e: 1, u: 1, o: 1})).toBe(370)
+  expect(sample({a: 0})).toBe(320)
+  expect(sample({a: 0.5, i: 0.5})).toBe(332.5)
 })

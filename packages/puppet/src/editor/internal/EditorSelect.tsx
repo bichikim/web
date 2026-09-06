@@ -1,7 +1,9 @@
+import {untrack} from 'solid-js'
 import {Select} from '@kobalte/core/select'
 import {useEditorPortalMount} from './EditorPortalProvider'
 interface EditorSelectProps {
   readonly label: string
+  readonly optionLabel?: (value: string) => string
   readonly options: readonly string[]
   readonly value?: string
   readonly disabled?: boolean
@@ -12,16 +14,21 @@ export const EditorSelect = (props: EditorSelectProps) => {
   return (
     <Select
       options={[...props.options]}
+      optionTextValue={props.optionLabel}
       value={props.value}
       disabled={props.disabled}
       onChange={(value) => {
-        if (value !== null) {
-          props.onChange?.(value)
-        }
+        untrack(() => {
+          if (value !== null && value !== props.value) {
+            props.onChange?.(value)
+          }
+        })
       }}
       itemComponent={(item) => (
         <Select.Item item={item.item} class="editor-context-menu-item">
-          <Select.ItemLabel>{item.item.rawValue}</Select.ItemLabel>
+          <Select.ItemLabel>
+            {props.optionLabel?.(item.item.rawValue) ?? item.item.rawValue}
+          </Select.ItemLabel>
           <Select.ItemIndicator>
             <span aria-hidden="true" class="puppet-icon puppet-icon-check" />
           </Select.ItemIndicator>
@@ -29,7 +36,9 @@ export const EditorSelect = (props: EditorSelectProps) => {
       )}
     >
       <Select.Trigger aria-label={props.label} class="editor-select-trigger">
-        <Select.Value<string>>{(state) => state.selectedOption()}</Select.Value>
+        <Select.Value<string>>
+          {(state) => props.optionLabel?.(state.selectedOption()) ?? state.selectedOption()}
+        </Select.Value>
         <Select.Icon>
           <span aria-hidden="true" class="puppet-icon puppet-icon-chevron-down" />
         </Select.Icon>

@@ -1,3 +1,4 @@
+import {getBindingInfluence} from './influence'
 import {getBoneChannels, poseBoneChannels} from './bone'
 import type {
   PuppetDocument,
@@ -132,10 +133,11 @@ const addDeformerDelta = (
   current: ReadonlyArray<number>,
   sampled: ReadonlyArray<number>,
   rest: ReadonlyArray<number>,
+  weight: number,
 ) =>
   rest.map(
     (coordinate, index) =>
-      (current[index] ?? coordinate) + (sampled[index] ?? coordinate) - coordinate,
+      (current[index] ?? coordinate) + ((sampled[index] ?? coordinate) - coordinate) * weight,
   )
 
 export interface SampleParameterDeformerOptions {
@@ -198,20 +200,24 @@ const composeDeformer = (
         deformer,
         values: getParameterBindingValues({binding, document, parameterValues}),
       })
+      const weight = getBindingInfluence({binding, document, parameterValues})
       coordinates = addDeformerDelta(
         coordinates,
         getDeformerCoordinates(deformer, sampled.controlPoints),
         restCoordinates,
+        weight,
       )
       curveHandleCoordinates = addDeformerDelta(
         curveHandleCoordinates,
         getCurveHandleCoordinates(sampled.curveHandles, deformer),
         restCurveHandleCoordinates,
+        weight,
       )
       rotationOriginCoordinates = addDeformerDelta(
         rotationOriginCoordinates,
         Object.values(sampled.rotationOrigin ?? getRestRotationOrigin(deformer)),
         restRotationOrigin,
+        weight,
       )
     }
   }

@@ -182,7 +182,18 @@ export interface PuppetParameterKeyform2D extends PuppetParameterKeyformBase {
 
 export type PuppetParameterKeyform = PuppetParameterKeyform1D | PuppetParameterKeyform2D
 
+export interface PuppetInfluencePoint {
+  readonly value: number
+  readonly weight: number
+}
+
+export interface PuppetParameterInfluence {
+  readonly parameterId: string
+  readonly points: ReadonlyArray<PuppetInfluencePoint>
+}
+
 export interface PuppetParameterBindingBase {
+  readonly influences?: ReadonlyArray<PuppetParameterInfluence>
   readonly id: string
   readonly targetDeformerIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>

@@ -62,6 +62,7 @@ const ParameterNameEditor = (props: ParameterNameEditorProps) => {
 }
 
 export interface EditorParameterItemProps {
+  readonly footer?: JSX.Element
   readonly children?: JSX.Element
   readonly name: string
   readonly onDelete?: () => void
@@ -72,40 +73,58 @@ export interface EditorParameterItemProps {
   readonly secondaryName?: string
 }
 
+interface ParameterFooterProps {
+  readonly children?: JSX.Element
+  readonly onPointerDown: (event: PointerEvent) => void
+  readonly clickState: {ignore: boolean}
+}
+const ParameterFooter = (props: ParameterFooterProps) => (
+  <div
+    onPointerDown={(event) => props.onPointerDown(event)}
+    ref={(element) => {
+      const capture = (event: MouseEvent) => {
+        if (props.clickState.ignore) {
+          props.clickState.ignore = false
+          event.preventDefault()
+          event.stopPropagation()
+        }
+      }
+      element.addEventListener('click', capture, true)
+      onCleanup(() => element.removeEventListener('click', capture, true))
+    }}
+  >
+    {props.children}
+  </div>
+)
+
 export const EditorParameterItem = (props: EditorParameterItemProps) => {
   const descriptionId = createUniqueId()
   const [dragging, setDragging] = createSignal(false)
   const [editing, setEditing] = createSignal(false)
   const [offset, setOffset] = createSignal(0)
-  let ignoreNextClick = false
+  const clickState = {ignore: false}
   let lastClickTime = Number.NEGATIVE_INFINITY
   let removeGestureListeners: (() => void) | undefined
-
   const finishGesture = (deleteWhenArmed: boolean, moved: boolean) => {
     const armed = offset() >= DELETE_THRESHOLD
-    ignoreNextClick = moved
+    clickState.ignore = moved
     removeGestureListeners?.()
     setDragging(false)
-
     if (deleteWhenArmed && armed) {
       props.onDelete?.()
       return
     }
-
     setOffset(0)
   }
-
   const handlePointerDown = (event: PointerEvent) => {
     if (event.button !== 0 || props.onDelete === undefined) {
       return
     }
-
     const initialPointerX = event.clientX
     const initialOffset = offset()
     let moved = false
     removeGestureListeners?.()
     setDragging(true)
-
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const pointerDelta = initialPointerX - moveEvent.clientX
       moved ||= Math.abs(pointerDelta) >= SWIPE_ACTIVATION_DISTANCE
@@ -116,7 +135,6 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
     }
     const handlePointerUp = () => finishGesture(true, moved)
     const handlePointerCancel = () => finishGesture(false, moved)
-
     // The stored callback only removes native gesture listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removeGestureListeners = () => {
@@ -129,31 +147,26 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
   }
-
   const startNameEdit = () => {
     if (props.onNameChange === undefined) {
       return
     }
-
     props.onNameEdit?.()
     setOffset(0)
     setEditing(true)
   }
-
   const handleClick = (event: MouseEvent) => {
-    if (ignoreNextClick) {
+    if (clickState.ignore) {
       event.preventDefault()
-      ignoreNextClick = false
+      clickState.ignore = false
       return
     }
-
     if (event.timeStamp - lastClickTime <= DOUBLE_CLICK_INTERVAL) {
       event.preventDefault()
       lastClickTime = Number.NEGATIVE_INFINITY
       startNameEdit()
       return
     }
-
     lastClickTime = event.timeStamp
     props.onSelect?.()
   }
@@ -190,45 +203,52 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
         <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
         <span>{offset() >= DELETE_THRESHOLD ? '놓아 삭제' : '삭제'}</span>
       </div>
-      <Show
-        when={editing()}
-        fallback={
-          <ToggleButton
-            aria-describedby={descriptionId}
-            aria-keyshortcuts="Delete"
-            aria-label={props.name}
-            class="parameter-item"
-            pressed={props.pressed}
-            title="더블클릭하여 Parameter 이름 수정"
-            onClick={handleClick}
-            onDblClick={(event: MouseEvent) => {
-              event.preventDefault()
-              startNameEdit()
-            }}
-            onKeyDown={handleKeyDown}
-            onPointerDown={handlePointerDown}
+      <div class="parameter-item-surface">
+        <div class="parameter-item-main">
+          <Show
+            when={editing()}
+            fallback={
+              <ToggleButton
+                aria-describedby={descriptionId}
+                aria-keyshortcuts="Delete"
+                aria-label={props.name}
+                class="parameter-item"
+                pressed={props.pressed}
+                title="더블클릭하여 Parameter 이름 수정"
+                onClick={handleClick}
+                onDblClick={(event: MouseEvent) => {
+                  event.preventDefault()
+                  startNameEdit()
+                }}
+                onKeyDown={handleKeyDown}
+                onPointerDown={handlePointerDown}
+              >
+                <strong>{props.name}</strong>
+                <Show when={props.secondaryName}>{(name) => <strong>{name()}</strong>}</Show>
+                <span
+                  aria-hidden="true"
+                  class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint"
+                />
+              </ToggleButton>
+            }
           >
-            <strong>{props.name}</strong>
-            <Show when={props.secondaryName}>{(name) => <strong>{name()}</strong>}</Show>
-            <span
-              aria-hidden="true"
-              class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint"
+            <ParameterNameEditor
+              name={props.name}
+              onCancel={() => setEditing(false)}
+              onCommit={(name) => {
+                props.onNameChange?.(name)
+                setEditing(false)
+              }}
             />
-          </ToggleButton>
-        }
-      >
-        <ParameterNameEditor
-          name={props.name}
-          onCancel={() => setEditing(false)}
-          onCommit={(name) => {
-            props.onNameChange?.(name)
-            setEditing(false)
-          }}
-        />
-      </Show>
-      <Show when={!editing() && props.children !== undefined}>
-        <div class="parameter-item-details">{props.children}</div>
-      </Show>
+          </Show>
+          <Show when={!editing() && props.children !== undefined}>
+            <div class="parameter-item-details">{props.children}</div>
+          </Show>
+        </div>
+        <ParameterFooter onPointerDown={handlePointerDown} clickState={clickState}>
+          {props.footer}
+        </ParameterFooter>
+      </div>
       <span id={descriptionId} class="visually-hidden">
         왼쪽으로 밀어 놓으면 삭제합니다. 키보드에서는 Delete 키를 두 번 누릅니다.
       </span>

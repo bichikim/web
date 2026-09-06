@@ -144,3 +144,50 @@ describe('createParameterPreview', () => {
     ).toBeCloseTo(restHandle.horizontal.y + 30)
   })
 })
+
+test('should apply influence to the editor preview and preserve source keyforms', () => {
+  const source = createDemoDocument()
+  const document = {
+    ...source,
+    parameterBindings: source.parameterBindings!.map((binding) => ({
+      ...binding,
+      influences: [
+        {
+          parameterId: 'angle-y',
+          points: [
+            {value: -30, weight: 1},
+            {value: 30, weight: 0},
+          ],
+        },
+      ],
+    })),
+  }
+  const preview = createParameterPreview({document, parameterValues: {'angle-x': 15, 'angle-y': 0}})
+  expect(preview.parts[0]!.mesh.vertices.slice(-2)).toEqual([336, 240])
+  expect(document.parts[0]!.mesh.vertices.slice(-2)).toEqual([320, 240])
+})
+
+test('should show the original binding for editing without changing its runtime influence', () => {
+  const source = createDemoDocument()
+  for (const weight of [0, 0.5]) {
+    const document = {
+      ...source,
+      parameterBindings: source.parameterBindings!.map((binding) => ({
+        ...binding,
+        influences: [{parameterId: 'angle-y', points: [{value: 0, weight}]}],
+      })),
+    }
+    const values = {'angle-x': 15, 'angle-y': 0}
+    const original = createParameterPreview({document: source, parameterValues: values})
+    const editing = createParameterPreview({
+      document,
+      editingBindingId: document.parameterBindings[0]!.id,
+      parameterValues: values,
+    })
+    expect(editing.parts[0]!.mesh.vertices).toEqual(original.parts[0]!.mesh.vertices)
+    expect(
+      createParameterPreview({document, parameterValues: values}).parts[0]!.mesh.vertices.at(-2),
+    ).toBe(320 + 32 * weight)
+    expect(document.parameterBindings[0]!.influences[0]!.points[0]!.weight).toBe(weight)
+  }
+})

@@ -41,13 +41,14 @@ const getMaskTargetOptions = (document: PuppetDocument, partId: string) =>
           isSceneNodeLocked(document, part.id) ||
           !canUsePartAsMask({maskPartId: partId, partId: part.id, parts: document.parts}),
         label: getSceneNode(document, part.id)?.name ?? part.id,
-        reason: isSceneNodeLocked(document, part.id) ? '잠긴 레이어' : '순환 참조',
         part,
+        reason: isSceneNodeLocked(document, part.id) ? '잠긴 레이어' : '순환 참조',
       },
     ]
   })
 
 export interface EditorInspectorProps {
+  readonly editingDisabled?: boolean
   readonly children?: JSX.Element
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
@@ -379,8 +380,9 @@ const createPartPropertiesController = (props: EditorInspectorProps) => {
 
     return props.previewDocument?.parts.find((candidate) => candidate.id === part.id) ?? part
   }
-  const canEditRest = () =>
+  const canEditStatic = () =>
     props.activeNodeId !== undefined && !isSceneNodeLocked(props.document, props.activeNodeId)
+  const canEditRest = () => props.editingDisabled !== true && canEditStatic()
   const canEditVisual = () => canEditRest() && props.editMode === 'parameter'
   const update = (
     part: PuppetPart,
@@ -406,7 +408,7 @@ const createPartPropertiesController = (props: EditorInspectorProps) => {
     }
   }
 
-  return {activePart, canEditRest, canEditVisual, update}
+  return {activePart, canEditRest, canEditStatic, canEditVisual, update}
 }
 
 export const EditorInspector = (props: EditorInspectorProps) => {
@@ -495,7 +497,7 @@ export const EditorInspector = (props: EditorInspectorProps) => {
             maskTargetOptions={getMaskTargetOptions(props.document, part().id)}
             maskPicking={props.maskPickSourcePartId === part().id}
             part={part()}
-            staticDisabled={!partProperties.canEditRest() || props.editMode !== 'parameter'}
+            staticDisabled={!partProperties.canEditStatic() || props.editMode !== 'parameter'}
             visualDisabled={!partProperties.canEditVisual()}
             onEditEnd={props.onEditEnd}
             onEditStart={props.onEditStart}
@@ -504,9 +506,9 @@ export const EditorInspector = (props: EditorInspectorProps) => {
             }
             onMaskTargetChange={(targetPartId, checked) => {
               const document = setMaskTarget({
+                checked,
                 document: props.document,
                 maskPartId: part().id,
-                checked,
                 targetPartId,
               })
               if (document !== undefined) {

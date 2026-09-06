@@ -35,8 +35,12 @@ export default defineConfig({
   theme: {
     animation: {
       counts: {'mask-march': 'infinite'},
-      durations: {'mask-march': '0.8s'},
-      keyframes: {'mask-march': '{from{stroke-dashoffset:0}to{stroke-dashoffset:-12}}'},
+      durations: {'influence-close': '180ms', 'influence-open': '220ms', 'mask-march': '0.8s'},
+      keyframes: {
+        'influence-close': '{from{height:var(--kb-collapsible-content-height)}to{height:0}}',
+        'influence-open': '{from{height:0}to{height:var(--kb-collapsible-content-height)}}',
+        'mask-march': '{from{stroke-dashoffset:0}to{stroke-dashoffset:-12}}',
+      },
       timingFns: {'mask-march': 'linear'},
     },
   },

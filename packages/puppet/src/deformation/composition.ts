@@ -1,3 +1,5 @@
+import {getBindingInfluence} from './influence'
+
 import {clamp} from 'es-toolkit/math'
 
 import type {PuppetDocument, PuppetParameter, PuppetParameterBinding} from '../player/document'
@@ -64,11 +66,12 @@ const addParameterDelta = (
   currentVertices: ReadonlyArray<number>,
   sampledVertices: ReadonlyArray<number>,
   restVertices: ReadonlyArray<number>,
+  weight: number,
 ) =>
   restVertices.map((restCoordinate, index) => {
     const currentCoordinate = currentVertices[index] ?? restCoordinate
     const sampledCoordinate = sampledVertices[index] ?? restCoordinate
-    return currentCoordinate + sampledCoordinate - restCoordinate
+    return currentCoordinate + (sampledCoordinate - restCoordinate) * weight
   })
 
 export const composeParameterVertices = (
@@ -89,7 +92,16 @@ export const composeParameterVertices = (
     })
 
     if (sampledVertices !== options.restVertices) {
-      composedVertices = addParameterDelta(composedVertices, sampledVertices, options.restVertices)
+      composedVertices = addParameterDelta(
+        composedVertices,
+        sampledVertices,
+        options.restVertices,
+        getBindingInfluence({
+          binding,
+          document: options.document,
+          parameterValues: options.parameterValues,
+        }),
+      )
     }
   }
 
