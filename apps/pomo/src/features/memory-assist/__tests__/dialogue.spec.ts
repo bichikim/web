@@ -33,15 +33,15 @@ it('should generate and save compressed dialogue audio for a memo', async () => 
       repository: {saveDialogue},
       voiceId: 'M2',
     }),
-  ).resolves.toBe('memory-memo-memo-1')
+  ).resolves.toMatch(/^memory-memo-memo-1:/u)
   expect(generate).toHaveBeenCalledWith(
     expect.objectContaining({language: 'ko', modelId: 'int8', text: memo.text, voiceId: 'M2'}),
   )
   expect(saveDialogue).toHaveBeenCalledWith({
     audio,
     dialogue: expect.objectContaining({
-      audioKey: 'memory-memo-memo-1',
-      id: 'memory-memo-memo-1',
+      audioKey: expect.stringMatching(/^memory-memo-memo-1:/u),
+      id: expect.stringMatching(/^memory-memo-memo-1:/u),
       language: 'ko',
       modelId: 'int8',
       text: memo.text,
@@ -74,4 +74,42 @@ it('should reject a failed voice generation without saving a dialogue', async ()
     }),
   ).rejects.toThrow('failed')
   expect(saveDialogue).not.toHaveBeenCalled()
+})
+
+it('should isolate overlapping generations of the same memo from stale cleanup', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '여권 갱신하기',
+  })
+  const stored = new Set<string>()
+  const options = {
+    client: {} as never,
+    generate: vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        audio: new Blob(['audio']),
+        durationMs: 1200,
+        segments: [],
+      },
+    }),
+    language: 'ko' as const,
+    memo,
+    modelId: 'int8' as const,
+    repository: {
+      saveDialogue: vi.fn(async ({dialogue}) => {
+        stored.add(dialogue.id)
+      }),
+    },
+    voiceId: 'M2' as const,
+  }
+  const [discarded, delivered] = await Promise.all([
+    createMemoryMemoDialogue(options),
+    createMemoryMemoDialogue(options),
+  ])
+  stored.delete(discarded)
+  expect(stored.has(delivered)).toBe(true)
 })

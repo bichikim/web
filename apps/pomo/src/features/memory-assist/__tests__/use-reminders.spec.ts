@@ -398,33 +398,42 @@ it('should preserve an edit made while reminder persistence is waiting', async (
   view.cleanup()
 })
 
-it('should discard generated audio when reminder persistence fails', async () => {
-  mocks.memos = [
-    createMemoryMemo({
-      exactReminderAt: '2026-09-04T03:00:00.000Z',
-      id: 'memo-1',
-      now: new Date('2026-09-04T02:00:00.000Z'),
-      random: () => 0,
-      recallMode: 'none',
-      text: '여권 갱신하기',
-    }),
-  ]
-  mocks.updateMemos.mockRejectedValue(new Error('write failed'))
-  const events = {
-    playDialogue: vi.fn().mockResolvedValue(true),
-    refreshDialogues: vi.fn().mockResolvedValue(undefined),
-  } as unknown as PEventContextValue
-  const view = renderHook(() =>
-    useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
-  )
+it.each(['persistence', 'refresh', 'playback'] as const)(
+  'should discard generated audio when %s fails',
+  async (stage) => {
+    mocks.memos = [
+      createMemoryMemo({
+        exactReminderAt: '2026-09-04T03:00:00.000Z',
+        id: 'memo-1',
+        now: new Date('2026-09-04T02:00:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: '여권 갱신하기',
+      }),
+    ]
+    const failure = vi.fn().mockRejectedValue(new Error('delivery failed'))
+    const events = {
+      playDialogue: vi.fn().mockResolvedValue(true),
+      refreshDialogues: vi.fn().mockResolvedValue(undefined),
+    } as unknown as PEventContextValue
+    const failures = {
+      persistence: mocks.updateMemos,
+      playback: vi.mocked(events.playDialogue),
+      refresh: vi.mocked(events.refreshDialogues),
+    }
+    failures[stage].mockImplementation(failure)
+    const view = renderHook(() =>
+      useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
+    )
 
-  await vi.advanceTimersToNextTimerAsync()
-  await flushPromises()
+    await vi.advanceTimersToNextTimerAsync()
+    await flushPromises()
 
-  expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
+    expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
 
-  view.cleanup()
-})
+    view.cleanup()
+  },
+)
 
 it('should not resurrect a deleted memo when reminder persistence was already queued', async () => {
   const memo = {
@@ -554,6 +563,7 @@ it('should dispose a client initialized after owner cleanup without generating a
   expect(mocks.initializeClient).toHaveBeenCalledOnce()
   const client = mocks.createClient.mock.results[0].value
   view.cleanup()
+  expect(client.dispose).toHaveBeenCalledOnce()
   initialization.resolve({ok: true, value: undefined})
   await flushPromises()
   expect(mocks.createDialogue).not.toHaveBeenCalled()

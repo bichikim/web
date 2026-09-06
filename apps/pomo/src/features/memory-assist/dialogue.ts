@@ -36,7 +36,7 @@ export const createMemoryMemoDialogue = async (options: CreateMemoryMemoDialogue
     throw new Error(generated.message)
   }
 
-  const dialogueId = getMemoryMemoDialogueId(options.memo.id)
+  const dialogueId = `${getMemoryMemoDialogueId(options.memo.id)}:${crypto.randomUUID()}`
   const timestamp = new Date().toISOString()
   await options.repository.saveDialogue({
     audio: generated.value.audio,

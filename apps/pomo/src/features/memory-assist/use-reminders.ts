@@ -94,26 +94,18 @@ interface CommitDeliveredMemoOptions {
   readonly dialogueId: string
   readonly kind: MemoryReminderKind
   readonly now: Date
-  readonly onDiscard: () => Promise<void>
   readonly random: () => number
 }
 
 const commitDeliveredMemo = async (options: CommitDeliveredMemoOptions) => {
   let wasReplaced = false
 
-  try {
-    await updateMemoryMemos((currentMemos) => {
-      const replacement = replaceDeliveredMemo({...options, memos: currentMemos})
-      const {memos, wasReplaced: currentWasReplaced} = replacement
-      wasReplaced = currentWasReplaced
-      return memos
-    })
-  } catch (error: unknown) {
-    await options.onDiscard().catch((cleanupError: unknown) => {
-      console.error('Failed to discard an uncommitted memory memo dialogue.', cleanupError)
-    })
-    throw error
-  }
+  await updateMemoryMemos((currentMemos) => {
+    const replacement = replaceDeliveredMemo({...options, memos: currentMemos})
+    const {memos, wasReplaced: currentWasReplaced} = replacement
+    wasReplaced = currentWasReplaced
+    return memos
+  })
 
   return wasReplaced
 }
@@ -142,6 +134,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
 
     clientPreparation ??= (async () => {
       const nextClient = createSupertonicClient()
+      client = nextClient
       const result = await nextClient.initialize({
         modelId,
         onProgress: () => undefined,
@@ -149,12 +142,12 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       })
 
       if (!result.ok) {
-        nextClient.dispose()
+        client?.dispose()
+        client = null
         throw new Error(getSupertonicErrorMessage(result.error))
       }
 
       if (isDisposed) {
-        nextClient.dispose()
         return nextClient
       }
 
@@ -212,45 +205,47 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       dialogueId = generatedDialogueId
     }
 
-    if (isDisposed || !memoIsCurrent()) {
-      await discardGeneratedDialogue()
-      return
+    try {
+      if (isDisposed || !memoIsCurrent()) {
+        return
+      }
+
+      await props.events.refreshDialogues()
+
+      if (isDisposed || !memoIsCurrent()) {
+        return
+      }
+
+      props.onBeforePlayback?.()
+      const played = await props.events.playDialogue(dialogueId)
+
+      if (!played) {
+        retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+      }
+
+      if (!played || isDisposed || !memoIsCurrent()) {
+        return
+      }
+
+      const wasReplaced = await commitDeliveredMemo({
+        deliveredMemo: memo,
+        dialogueId,
+        kind,
+        now: new Date(),
+        random: props.random ?? Math.random,
+      })
+
+      if (!wasReplaced) {
+        return
+      }
+
+      generatedDialogueId = null
+      retryAfter.delete(memo.id)
+    } finally {
+      await discardGeneratedDialogue().catch((error: unknown) => {
+        console.error('Failed to discard an uncommitted memory memo dialogue.', error)
+      })
     }
-
-    await props.events.refreshDialogues()
-
-    if (isDisposed || !memoIsCurrent()) {
-      await discardGeneratedDialogue()
-      return
-    }
-
-    props.onBeforePlayback?.()
-    const played = await props.events.playDialogue(dialogueId)
-
-    if (!played) {
-      retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
-    }
-
-    if (!played || isDisposed || !memoIsCurrent()) {
-      await discardGeneratedDialogue()
-      return
-    }
-
-    const wasReplaced = await commitDeliveredMemo({
-      deliveredMemo: memo,
-      dialogueId,
-      kind,
-      now: new Date(),
-      onDiscard: discardGeneratedDialogue,
-      random: props.random ?? Math.random,
-    })
-
-    if (!wasReplaced) {
-      await discardGeneratedDialogue()
-      return
-    }
-
-    retryAfter.delete(memo.id)
   }
 
   const runDelivery = async (memo: MemoryMemo) => {
@@ -282,6 +277,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
     onCleanup(() => {
       isDisposed = true
       client?.dispose()
+      client = null
       if (!isPending()) {
         repository?.dispose()
       }
