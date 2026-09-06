@@ -48,7 +48,11 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
   const [mode, setMode] = createSignal<'draw' | 'generate'>('draw')
   const [isOpen, setIsOpen] = createSignal(false)
   const [limitReached, setLimitReached] = createSignal(false)
+  const [gestureRevision, setGestureRevision] = createSignal(0)
   const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
+  const invalidateGesture = () => {
+    setGestureRevision((revision) => revision + 1)
+  }
   return (
     <>
       <button
@@ -99,14 +103,17 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
               canClear={props.strokes.length > 0}
               onUndo={() => {
                 history.undo()
+                invalidateGesture()
                 setLimitReached(false)
               }}
               onRedo={() => {
                 history.redo()
+                invalidateGesture()
                 setLimitReached(false)
               }}
               onClear={() => {
                 history.clear()
+                invalidateGesture()
                 setLimitReached(false)
               }}
               doneDisabled={mode() === 'generate' && generating()}
@@ -150,6 +157,7 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
                 color={color()}
                 thickness={thickness()}
                 tool={tool()}
+                gestureRevision={gestureRevision()}
                 onStart={history.begin}
                 onChange={props.onChange}
                 onLimit={() => setLimitReached(true)}

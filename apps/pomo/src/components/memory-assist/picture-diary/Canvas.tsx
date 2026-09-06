@@ -19,6 +19,7 @@ export interface PictureDiaryCanvasProps {
   readonly color?: PictureDiaryStroke['color']
   readonly thickness?: PictureDiaryStroke['thickness']
   readonly tool?: 'pen' | 'eraser'
+  readonly gestureRevision?: number
   readonly onStart?: () => void
   readonly image?: PictureDiaryImage
   readonly accessibleLabel?: string
@@ -53,10 +54,25 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
     setImageUrl(url)
     onCleanup(() => URL.revokeObjectURL(url))
   })
+  let svgElement: SVGSVGElement | undefined
   let activePointerId: number | null = null
+  let activeGestureRevision = 0
   let erasing = false
   let erased = false
   let previousPoint = {x: 0, y: 0}
+  const cancelActiveGesture = () => {
+    if (activePointerId !== null) {
+      svgElement?.releasePointerCapture?.(activePointerId)
+    }
+
+    activePointerId = null
+    erasing = false
+    erased = false
+  }
+  createEffect(() => {
+    props.gestureRevision
+    cancelActiveGesture()
+  })
   const erase = (event: PointerEvent & {currentTarget: SVGSVGElement}) => {
     const point = {x: event.clientX ?? 0, y: event.clientY ?? 0}
     const indices = findErasedStrokes({
@@ -80,6 +96,7 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
     if (props.readOnly === true || event.button !== 0 || activePointerId !== null) {
       return
     }
+    activeGestureRevision = props.gestureRevision ?? 0
     erasing = props.tool === 'eraser'
     if (erasing) {
       activePointerId = event.pointerId
@@ -104,7 +121,11 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
   }
 
   const handlePointerMove: JSX.EventHandler<SVGSVGElement, PointerEvent> = (event) => {
-    if (activePointerId !== event.pointerId || event.buttons !== 1) {
+    if (
+      activePointerId !== event.pointerId ||
+      event.buttons !== 1 ||
+      (props.gestureRevision ?? 0) !== activeGestureRevision
+    ) {
       return
     }
 
@@ -142,6 +163,7 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
     <svg
       aria-label={props.accessibleLabel ?? m.picture_diary_canvas()}
       class="picture-diary-book__canvas"
+      ref={svgElement}
       onPointerCancel={handlePointerEnd}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
