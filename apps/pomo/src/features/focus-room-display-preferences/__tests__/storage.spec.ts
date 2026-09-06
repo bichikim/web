@@ -17,7 +17,7 @@ const storageMocks = vi.hoisted(() => ({
 
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
-const visiblePreferences = {dialogueComposerVisible: true} as const
+const visiblePreferences = {dialogueComposerVisible: true, tourButtonVisible: true} as const
 const STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
 
 const createStorageHarness = () => {
@@ -166,7 +166,7 @@ it('should reject a native read failure instead of using the browser copy', asyn
 
 it('should replace a stale browser copy with the native preferences', async () => {
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  const hiddenPreferences = {dialogueComposerVisible: false} as const
+  const hiddenPreferences = {dialogueComposerVisible: false, tourButtonVisible: true} as const
   localStorage.setItem('pomo:focus-room-display-preferences:v1', JSON.stringify(hiddenPreferences))
   storageMocks.getItem.mockResolvedValue(JSON.stringify(visiblePreferences))
 
@@ -188,7 +188,7 @@ it('should reject a native save when native storage fails', async () => {
 
 it('should restore native state after a failed native save', async () => {
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  const hiddenPreferences = {dialogueComposerVisible: false} as const
+  const hiddenPreferences = {dialogueComposerVisible: false, tourButtonVisible: true} as const
   storageMocks.getItem.mockResolvedValue(JSON.stringify(hiddenPreferences))
   storageMocks.setItem.mockRejectedValueOnce(new Error('native unavailable'))
 
@@ -203,7 +203,7 @@ it('should restore native state after a failed native save', async () => {
 
 it('should preserve a newer choice while native preferences are loading', async () => {
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  let nativePreferences = JSON.stringify({dialogueComposerVisible: false})
+  let nativePreferences = JSON.stringify({dialogueComposerVisible: false, tourButtonVisible: true})
   let completeRead: (value: string) => void = () => undefined
   storageMocks.getItem
     .mockReturnValueOnce(
@@ -218,7 +218,7 @@ it('should preserve a newer choice while native preferences are loading', async 
 
   const pendingRead = readPDisplayPreferences()
   await writePDisplayPreferences(visiblePreferences)
-  completeRead(JSON.stringify({dialogueComposerVisible: false}))
+  completeRead(JSON.stringify({dialogueComposerVisible: false, tourButtonVisible: true}))
 
   await expect(pendingRead).resolves.toEqual(visiblePreferences)
 })
@@ -229,7 +229,7 @@ it('should preserve native write order during rapid preference changes', async (
   storageMocks.setItem.mockImplementation(async (_key, value) => {
     nativeWrites.push(value)
   })
-  const hiddenPreferences = {dialogueComposerVisible: false} as const
+  const hiddenPreferences = {dialogueComposerVisible: false, tourButtonVisible: true} as const
 
   await Promise.all([
     writePDisplayPreferences(visiblePreferences),
@@ -252,4 +252,22 @@ it('should persist dialogue composer visibility to native storage', async () => 
     'pomo:focus-room-display-preferences:v1',
     JSON.stringify(visiblePreferences),
   )
+})
+
+it('should keep the tour visible for preferences saved before the tour setting existed', async () => {
+  const harness = createStorageHarness()
+  harness.webValues.set(STORAGE_KEY, {dialogueComposerVisible: true})
+  await expect(harness.repository.read()).resolves.toEqual({
+    dialogueComposerVisible: true,
+    tourButtonVisible: true,
+  })
+})
+
+it('should persist and restore a hidden tour button', async () => {
+  const harness = createStorageHarness()
+  await harness.repository.write({dialogueComposerVisible: false, tourButtonVisible: false})
+  await expect(harness.repository.read()).resolves.toEqual({
+    dialogueComposerVisible: false,
+    tourButtonVisible: false,
+  })
 })

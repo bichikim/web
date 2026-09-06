@@ -1,3 +1,4 @@
+import './mask.css'
 import {For, Show} from 'solid-js'
 
 import type {TourTargetBounds} from './headless'
@@ -10,12 +11,7 @@ const MASK_CLASSES =
   'fixed box-border bg-backdrop backdrop-blur-[8px] pointer-events-auto ' +
   'motion-reduce:transition-none transition-[top_160ms_ease,left_160ms_ease,width_160ms_ease,height_160ms_ease]'
 
-const CORNERS = [
-  {horizontal: 'start', maskOrigin: '100% 100%', name: 'top-left', vertical: 'start'},
-  {horizontal: 'end', maskOrigin: '0% 100%', name: 'top-right', vertical: 'start'},
-  {horizontal: 'start', maskOrigin: '100% 0%', name: 'bottom-left', vertical: 'end'},
-  {horizontal: 'end', maskOrigin: '0% 0%', name: 'bottom-right', vertical: 'end'},
-] as const
+const CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
 
 /** 활성 대상의 화면 영역만 남기고 나머지 뷰포트를 가립니다. */
 export const PTourMask = (props: PTourMaskProps) => {
@@ -62,32 +58,21 @@ export const PTourMask = (props: PTourMaskProps) => {
               style={{bottom: 0, left: 0, top: `${bounds().bottom}px`, width: '100%'}}
             />
             <For each={CORNERS}>
-              {(corner) => {
-                const radius = () => Math.min(bounds().width, bounds().height) / 2
-                const maskImage = () =>
-                  `radial-gradient(circle at ${corner.maskOrigin}, ` +
-                  `transparent ${radius()}px, black ${radius()}px)`
-
-                return (
-                  <div
-                    aria-hidden="true"
-                    class={MASK_CLASSES}
-                    data-corner={corner.name}
-                    style={{
-                      '-webkit-mask-image': maskImage(),
-                      height: `${radius()}px`,
-                      left: `${
-                        corner.horizontal === 'start' ? bounds().left : bounds().right - radius()
-                      }px`,
-                      'mask-image': maskImage(),
-                      top: `${
-                        corner.vertical === 'start' ? bounds().top : bounds().bottom - radius()
-                      }px`,
-                      width: `${radius()}px`,
-                    }}
-                  />
-                )
-              }}
+              {(corner) => (
+                <div
+                  aria-hidden="true"
+                  class={`${MASK_CLASSES} pomo-tour-corner`}
+                  data-corner={corner}
+                  style={{
+                    '--target-bottom': `${bounds().bottom}px`,
+                    '--target-height': `${bounds().height}px`,
+                    '--target-left': `${bounds().left}px`,
+                    '--target-right': `${bounds().right}px`,
+                    '--target-top': `${bounds().top}px`,
+                    '--target-width': `${bounds().width}px`,
+                  }}
+                />
+              )}
             </For>
           </>
         )}

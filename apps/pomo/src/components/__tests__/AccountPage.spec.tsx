@@ -32,9 +32,10 @@ it.each([
       '[background:var(--pomo-editor-background)]',
       'text-foreground',
     )
-    expect(screen.getByRole('main')).toHaveTextContent('Pomo account')
+    expect(screen.getByRole('heading', {level: 1, name: '계정 관리'})).toBeVisible()
     expect(screen.getByRole('link')).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link')).toHaveClass('text-highlight')
+    expect(screen.getByRole('link')).toHaveClass('text-foreground', 'rounded-full', 'border')
+    expect(screen.getByRole('link').parentElement).toHaveClass('flex', 'justify-end')
     expect(screen.getByRole('main').querySelector('section')).toHaveClass(
       'border-border',
       'bg-surface',
@@ -82,7 +83,7 @@ it.each([
     render(() => <AccountPage />)
     const link = screen.getByRole('link', {name: label})
     expect(link).toHaveAttribute('href', '/')
-    expect(link).toHaveTextContent('←')
+    expect(link.querySelector('[aria-hidden]')).toHaveClass('i-tabler-arrow-left')
   } finally {
     cleanup()
     runtime.overwriteGetLocale(originalLocale)

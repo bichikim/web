@@ -153,7 +153,7 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
         triggerElement={triggerElement}
       />
 
-      <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs leading-5 text-muted-foreground">
+      <div class="flex flex-wrap gap-x-3 gap-y-1 text-modal-detail leading-5 text-muted-foreground">
         <Show when={props.memo.nextExactReminderAt}>
           {(time) => <span>{m.memory_memo_next_exact({time: formatReminderTime(time())})}</span>}
         </Show>

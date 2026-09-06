@@ -50,11 +50,11 @@ it('should show provider actions in a settings popover', async () => {
   expect(accountLabel).toHaveClass('text-muted-foreground')
   const disconnectButton = screen.getByRole('button', {name: 'person@example.com 연결 해제'})
   expect(disconnectButton).toHaveTextContent('Google Calendar 연결 해제')
-  expect(disconnectButton).toHaveClass('rounded-panel-inner')
+  expect(disconnectButton).toHaveClass('rounded-control')
   expect(accountLabel.closest('button')).toBe(disconnectButton)
 
   const microsoftButton = screen.getByRole('button', {name: 'Microsoft Outlook 연결'})
-  expect(microsoftButton).toHaveClass('rounded-panel-inner')
+  expect(microsoftButton).toHaveClass('rounded-control')
   fireEvent.click(microsoftButton)
   await waitFor(() =>
     expect(openCalendarAuthorization).toHaveBeenCalledWith('https://accounts.google.com/authorize'),

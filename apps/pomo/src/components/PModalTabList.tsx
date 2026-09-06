@@ -15,7 +15,7 @@ const TAB_SCROLL_BUTTON_CLASSES =
 const TAB_CLASSES =
   'inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 ' +
   'whitespace-nowrap border-0 rounded-0 bg-transparent px-4 ' +
-  'text-[0.8125rem] font-700 text-muted-foreground ' +
+  'text-[0.9375rem] leading-5 font-700 text-muted-foreground ' +
   'shadow-[inset_0_-0.1875rem_0_transparent] outline-none ' +
   'transition-[background-color_140ms_ease,box-shadow_140ms_ease,color_140ms_ease] ' +
   'hover:bg-secondary-soft hover:text-foreground ' +
@@ -100,7 +100,7 @@ export const PModalTabList = (props: PModalTabListProps) => {
         <For each={props.items}>
           {(item) => (
             <Tabs.Trigger class={TAB_CLASSES} value={item.value}>
-              <span aria-hidden="true" class={cx(item.icon, 'size-4')} />
+              <span aria-hidden="true" class={cx(item.icon, 'size-5 flex-none')} />
               <span>{item.label}</span>
             </Tabs.Trigger>
           )}

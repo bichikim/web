@@ -263,7 +263,7 @@ export const AdminMusic = () => {
 
   return (
     <main class="min-h-dvh bg-#15120f px-5 py-8 text-#fffaf1 sm:px-8">
-      <Title>음악 / 앨범 관리 · Pomo</Title>
+      <Title>음악 / 앨범 관리 · 앱</Title>
       <AdminMusicHeader model={model} />
 
       <Show when={model.message()}>

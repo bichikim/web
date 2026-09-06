@@ -93,6 +93,12 @@ it('should provide the login entry for an anonymous user', async () => {
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
     '/web/privacy',
   )
+  const versionCatalogLink = screen.getByRole('link', {name: '버전 카탈로그'})
+  expect(versionCatalogLink.getAttribute('href')).toBe('/whats-new')
+  expect(screen.getByRole('region', {name: '서비스 정보'})).toContainElement(versionCatalogLink)
+  expect(versionCatalogLink.className).toBe(
+    screen.getByRole('link', {name: '개인정보처리방침'}).className,
+  )
   expect(screen.queryByRole('link', {name: '환불 및 청약철회 정책'})).toBeNull()
   expect(screen.getByRole('heading', {name: '서비스 정보'}).parentElement?.className).toContain(
     'border-t',

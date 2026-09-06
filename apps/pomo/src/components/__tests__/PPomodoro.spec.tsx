@@ -98,7 +98,7 @@ describe('PPomodoro', () => {
     expect(
       originalResult.container.querySelector('.pomo-pomodoro__action-scribble-border'),
     ).toBeNull()
-    expect(originalControls.classList.contains('rounded-control')).toBe(true)
+    expect(originalControls.classList.contains('rounded-panel')).toBe(true)
     expect(originalControls.classList.contains('border-border')).toBe(true)
 
     originalResult.unmount()

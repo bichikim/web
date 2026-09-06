@@ -35,7 +35,7 @@ export const PMusicCredits = (props: PMusicCreditsProps) => {
               <span aria-hidden="true" class="i-tabler-music size-4 shrink-0 text-highlight" />
               <div class="min-w-0">
                 <h4 class="m-0 truncate text-sm font-750 text-foreground">{credit.artistName}</h4>
-                <p class="mb-0 mt-0.5 text-xs font-600 leading-5 text-muted-foreground">
+                <p class="mb-0 mt-0.5 text-modal-detail font-600 leading-5 text-muted-foreground">
                   {credit.contributorName} · {credit.role}
                 </p>
               </div>
@@ -49,7 +49,7 @@ export const PMusicCredits = (props: PMusicCreditsProps) => {
           aria-controls={MUSIC_CREDIT_LIST_ID}
           aria-expanded={isExpanded()}
           class="flex min-h-8 cursor-pointer items-center justify-center gap-1.5 rounded-3 border-0
-            bg-transparent px-3 text-xs font-650 text-highlight outline-none transition-colors
+            bg-transparent px-3 text-modal-detail font-650 text-highlight outline-none transition-colors
             hover:bg-surface focus-visible:shadow-focus motion-reduce:transition-none"
           onClick={() => setIsExpanded((expanded) => !expanded)}
           type="button"

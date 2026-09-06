@@ -30,7 +30,9 @@ export const PTextField = (props: PTextFieldProps) => (
     validationState={props.errorMessage === undefined ? undefined : 'invalid'}
     value={props.value}
   >
-    <TextField.Label class="w-fit text-sm font-650 text-foreground">{props.label}</TextField.Label>
+    <TextField.Label class="w-fit text-base font-650 text-foreground">
+      {props.label}
+    </TextField.Label>
     <TextField.Input
       autocomplete={props.autoComplete}
       class={cx(
@@ -47,14 +49,14 @@ export const PTextField = (props: PTextFieldProps) => (
     />
     <Show when={props.description}>
       {(description) => (
-        <TextField.Description class="text-xs leading-5 text-muted-foreground">
+        <TextField.Description class="pomo-field-description">
           {description()}
         </TextField.Description>
       )}
     </Show>
     <Show when={props.errorMessage}>
       {(message) => (
-        <TextField.ErrorMessage class="text-xs leading-5 text-danger">
+        <TextField.ErrorMessage class="text-sm leading-5 text-danger">
           {message()}
         </TextField.ErrorMessage>
       )}

@@ -1,6 +1,7 @@
 import {Title} from '@solidjs/meta'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
+import {PAppReturnLink} from './PAppReturnLink'
 
 import type {CalendarProviderId} from '../features/calendar'
 import {TossAccount} from './user-auth/TossAccount'
@@ -27,21 +28,23 @@ export const AccountPage = (props: AccountPageProps) => {
       : getCalendarProviderLabel(props.connectedCalendarProvider)
 
   return (
-    <main class={ACCOUNT_PAGE_CLASSES}>
+    <main
+      class={cx(
+        ACCOUNT_PAGE_CLASSES,
+        connectedProvider() === null && 'grid-rows-[auto_1fr] gap-6 [&]:pt-5',
+      )}
+    >
       <Show
         when={connectedProvider()}
         fallback={
           <>
             <Title>{m.account_title()}</Title>
+            <div class="flex w-full justify-end">
+              <PAppReturnLink />
+            </div>
             <section class={ACCOUNT_CARD_CLASSES}>
               <header class="mb-7">
-                <a class="text-xs font-700 text-highlight no-underline hover:underline" href="/">
-                  <span aria-hidden="true">←</span> {m.app_return()}
-                </a>
-                <p class="mb-0 mt-6 text-xs font-750 tracking-[0.24em] text-highlight uppercase">
-                  Pomo account
-                </p>
-                <h1 class="mb-0 mt-3 text-3xl font-800 tracking--0.03em">{m.account_heading()}</h1>
+                <h1 class="m-0 text-3xl font-800 tracking--0.03em">{m.account_heading()}</h1>
               </header>
 
               {import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? (
