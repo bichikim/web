@@ -31,16 +31,17 @@ const getDateInputValue = (date: Date) =>
 const getTimeInputValue = (date: Date) =>
   `${padNumber(date.getHours())}:${padNumber(date.getMinutes())}`
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
-const getEventAlarmAt = (event: CalendarEvent) => {
+const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
   if (event.allDay) {
-    const [year, month, day] = event.start.slice(0, DATE_KEY_LENGTH).split('-').map(Number)
-    return new Date(year, month - 1, day, ALL_DAY_ALARM_HOUR)
+    const date = defaultAlarmDate ?? new Date(event.start.slice(0, DATE_KEY_LENGTH))
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), ALL_DAY_ALARM_HOUR)
   }
 
   return new Date(event.start)
 }
 
 interface CalendarAlarmControlProps {
+  readonly defaultAlarmDate?: Date
   readonly event: CalendarEvent
   readonly memos: Accessor<ReadonlyArray<MemoryMemo>>
 }
@@ -66,6 +67,7 @@ interface CalendarAlarmController {
 const useCalendarAlarmController = (
   event: Accessor<CalendarEvent>,
   memos: Accessor<ReadonlyArray<MemoryMemo>>,
+  defaultAlarmDate: Accessor<Date | undefined>,
 ): CalendarAlarmController => {
   const alarmId = () => getMemoId(event().id)
   const events = usePEvents()
@@ -87,7 +89,7 @@ const useCalendarAlarmController = (
     const storedAlarmAt = storedMemo()?.exactReminderAt
     const alarmAt =
       storedAlarmAt === null || storedAlarmAt === undefined
-        ? getEventAlarmAt(event())
+        ? getEventAlarmAt(event(), defaultAlarmDate())
         : new Date(storedAlarmAt)
     setDate(getDateInputValue(alarmAt))
     setTime(getTimeInputValue(alarmAt))
@@ -211,6 +213,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
   const alarm = useCalendarAlarmController(
     () => props.event,
     () => props.memos(),
+    () => props.defaultAlarmDate,
   )
 
   return (
