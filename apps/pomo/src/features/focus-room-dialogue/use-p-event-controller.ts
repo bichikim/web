@@ -265,8 +265,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         return false
       }
 
-      await playback.prepare(repository, dialogueId)
-      return true
+      return playback.prepare(repository, dialogueId)
     },
     async playDialogueEvents(eventIds, onBeforePlayback) {
       if (!isPlaybackEnabled()) {

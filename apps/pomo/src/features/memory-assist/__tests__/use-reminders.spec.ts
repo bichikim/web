@@ -477,7 +477,9 @@ it('should discard generated audio when the reminder owner is disposed during ge
 
   await vi.advanceTimersToNextTimerAsync()
   await vi.waitFor(() => expect(mocks.createDialogue).toHaveBeenCalledOnce())
+  const repository = mocks.createRepository.mock.results[0].value
   view.cleanup()
+  expect(repository.dispose).not.toHaveBeenCalled()
   generation.resolve('memory-memo-memo-1')
   await flushPromises()
 
@@ -485,6 +487,7 @@ it('should discard generated audio when the reminder owner is disposed during ge
   expect(events.refreshDialogues).not.toHaveBeenCalled()
   expect(events.playDialogue).not.toHaveBeenCalled()
   expect(mocks.updateMemos).not.toHaveBeenCalled()
+  expect(repository.dispose).toHaveBeenCalledOnce()
 })
 
 it('should not advance a reminder when playback is skipped', async () => {
@@ -526,5 +529,58 @@ it('should bind recovery to the shared runtime controller and current dialogue e
   const retry = vi.mocked(useDeletionRecovery).mock.calls[0]![0]
   await retry()
   expect(mocks.retryDeletions).toHaveBeenCalledExactlyOnceWith(events.deleteDialogue)
+  view.cleanup()
+})
+
+it('should dispose a client initialized after owner cleanup without generating audio', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  const initialization = Promise.withResolvers<{ok: true; value: undefined}>()
+  mocks.initializeClient.mockReturnValue(initialization.promise)
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(true),
+    refreshDialogues: vi.fn(),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, loadSettings: mocks.loadSettings}))
+  await vi.advanceTimersToNextTimerAsync()
+  expect(mocks.initializeClient).toHaveBeenCalledOnce()
+  const client = mocks.createClient.mock.results[0].value
+  view.cleanup()
+  initialization.resolve({ok: true, value: undefined})
+  await flushPromises()
+  expect(mocks.createDialogue).not.toHaveBeenCalled()
+  expect(client.dispose).toHaveBeenCalledOnce()
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+})
+
+it('should delay retry after skipped playback instead of regenerating immediately', async () => {
+  mocks.memos = [
+    createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+  ]
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(false),
+    refreshDialogues: vi.fn(),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, loadSettings: mocks.loadSettings}))
+  await vi.advanceTimersToNextTimerAsync()
+  await flushPromises()
+  await vi.advanceTimersByTimeAsync(100)
+  expect(events.playDialogue).toHaveBeenCalledOnce()
+  expect(mocks.createDialogue).toHaveBeenCalledOnce()
   view.cleanup()
 })

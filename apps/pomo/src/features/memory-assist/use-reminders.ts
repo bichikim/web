@@ -119,6 +119,7 @@ const commitDeliveredMemo = async (options: CommitDeliveredMemoOptions) => {
 }
 
 /** Runs persisted memo reminders while the Pomo room is mounted. */
+// oxlint-disable-next-line eslint/max-lines-per-function -- One owner coordinates reminder scheduling, delivery, and asynchronous resource cleanup.
 export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
   const memos = useMemoryMemos()
   useDeletionRecovery(() => memoryMemoDeletion.retry(props.events.deleteDialogue))
@@ -152,6 +153,11 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
         throw new Error(getSupertonicErrorMessage(result.error))
       }
 
+      if (isDisposed) {
+        nextClient.dispose()
+        return nextClient
+      }
+
       client = nextClient
       clientModelId = modelId
       return nextClient
@@ -180,24 +186,23 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       }
     }
 
-    const abortIfInactive = async () => {
-      if (!isDisposed) {
-        return false
-      }
-
-      await discardGeneratedDialogue()
-      return true
-    }
+    const memoIsCurrent = () => isMemoryMemoCurrent(memos(), memo)
 
     if (dialogueId === null) {
       const settings = await (props.loadSettings ?? loadAutomaticDialogueSettings)()
 
-      if (await abortIfInactive()) {
+      if (isDisposed) {
+        return
+      }
+
+      const currentClient = await getClient(settings.modelId)
+
+      if (isDisposed) {
         return
       }
 
       generatedDialogueId = await createMemoryMemoDialogue({
-        client: await getClient(settings.modelId),
+        client: currentClient,
         language: getLocale(),
         memo,
         modelId: settings.modelId,
@@ -207,24 +212,14 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       dialogueId = generatedDialogueId
     }
 
-    if (await abortIfInactive()) {
-      return
-    }
-
-    const memoIsCurrent = () => isMemoryMemoCurrent(memos(), memo)
-
-    if (!memoIsCurrent()) {
+    if (isDisposed || !memoIsCurrent()) {
       await discardGeneratedDialogue()
       return
     }
 
     await props.events.refreshDialogues()
 
-    if (await abortIfInactive()) {
-      return
-    }
-
-    if (!memoIsCurrent()) {
+    if (isDisposed || !memoIsCurrent()) {
       await discardGeneratedDialogue()
       return
     }
@@ -233,15 +228,10 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
     const played = await props.events.playDialogue(dialogueId)
 
     if (!played) {
-      await discardGeneratedDialogue()
-      return
+      retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
     }
 
-    if (await abortIfInactive()) {
-      return
-    }
-
-    if (!memoIsCurrent()) {
+    if (!played || isDisposed || !memoIsCurrent()) {
       await discardGeneratedDialogue()
       return
     }
@@ -272,7 +262,9 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       console.error('Failed to deliver a memory memo reminder.', error)
       retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
     } finally {
-      if (!isDisposed) {
+      if (isDisposed) {
+        repository?.dispose()
+      } else {
         setIsPending(false)
         setClockRevision((revision) => revision + 1)
       }
@@ -290,7 +282,9 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
     onCleanup(() => {
       isDisposed = true
       client?.dispose()
-      repository?.dispose()
+      if (!isPending()) {
+        repository?.dispose()
+      }
     })
   })
 
