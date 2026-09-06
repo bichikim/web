@@ -14,6 +14,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.unstubAllEnvs()
 })
 
 it('should explain the complete Pomofi experience inside the settings tab', () => {
@@ -29,3 +30,20 @@ it('should explain the complete Pomofi experience inside the settings tab', () =
   expect(screen.getByRole('heading', {name: '피드'})).toBeDefined()
   expect(screen.getByRole('heading', {name: '설정과 화면'})).toBeDefined()
 })
+
+it('should explain browser installation on the web', () => {
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+  render(() => <PGuideSettings />)
+  expect(screen.getByRole('heading', {name: '앱 설치'})).toBeDefined()
+  expect(screen.getByText(/홈 화면에 추가/)).toBeDefined()
+})
+
+it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'])(
+  'should omit browser installation instructions for %s',
+  (target) => {
+    vi.stubEnv(target, 'true')
+    render(() => <PGuideSettings />)
+    expect(screen.queryByRole('heading', {name: '앱 설치'})).toBeNull()
+  },
+)

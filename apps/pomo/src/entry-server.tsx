@@ -3,6 +3,8 @@ import {createHandler, StartServer} from '@solidjs/start/server'
 
 import {getLocale, getTextDirection} from '@paraglide/runtime'
 
+import {InstallationMetadata} from './components/InstallationMetadata'
+
 import {DISPLAY_THEME_BOOTSTRAP_SCRIPT} from './features/display-theme/bootstrap'
 
 const isAppsInToss = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
@@ -27,6 +29,7 @@ export default createHandler(
               type="text/css"
             />
             <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+            <InstallationMetadata />
             {props.assets}
           </head>
           <body>

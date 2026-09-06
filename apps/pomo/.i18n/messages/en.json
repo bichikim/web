@@ -749,5 +749,9 @@
   "picture_diary_style_coloredPencil": "Colored pencil",
   "picture_diary_style_pixel": "Pixel art",
   "picture_diary_style_comic": "Comic",
-  "picture_diary_style_photo": "Photographic"
+  "picture_diary_style_photo": "Photographic",
+  "guide_install_title": "Install the app",
+  "guide_install_browser": "In Chrome or Edge, select the install icon in the address bar or the install option in the browser menu. Availability varies by browser and device.",
+  "guide_install_ios": "On iPhone or iPad, open the Share menu in Safari and select Add to Home Screen.",
+  "guide_install_connection": "An internet connection is still required for music and online features in the installed app."
 }
