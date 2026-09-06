@@ -313,7 +313,9 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
   const modeControlLayout = modeLayout?.lastElementChild
   expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
-  expect(settingRows).toHaveLength(10)
+  expect(settingRows).toHaveLength(2)
+  expect(screen.queryByText('대화 연결')).toBeNull()
+  expect(screen.queryByText('이 이벤트에서 재생할 대화를 선택해요.')).toBeNull()
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
   expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
   expect(modeControlLayout?.classList).toContain('w-full')

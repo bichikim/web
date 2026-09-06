@@ -62,11 +62,11 @@ export const AlbumSummary = (props: AlbumSummaryProps) => (
     </Show>
     <div class="min-w-0 flex-1 py-0.5">
       <h3 class="m-0 truncate text-base font-750 leading-5 text-foreground">{props.album.title}</h3>
-      <p class="mb-0 mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+      <p class="mb-0 mt-1 line-clamp-2 text-modal-detail leading-5 text-muted-foreground">
         {props.album.description}
       </p>
       <Show when={(props.album.trackCount ?? props.album.tracks.length) > 0}>
-        <p class="mb-0 mt-2 flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground">
+        <p class="mb-0 mt-2 flex items-center gap-1.5 text-modal-detail text-muted-foreground">
           <span aria-hidden="true" class="i-tabler-music size-3.5" />
           <span>
             {m.album_track_count({count: props.album.trackCount ?? props.album.tracks.length})}

@@ -48,7 +48,7 @@ const getQuickFrameClasses = (sceneStyle?: PSceneStyle) =>
     ? 'rounded-none border-0 bg-transparent'
     : cx(
         QUICK_CONTROLS_INTERACTION_CLASSES,
-        'rounded-control border border-solid border-border bg-surface backdrop-blur-surface',
+        'rounded-panel border border-solid border-border bg-surface backdrop-blur-surface',
       )
 
 export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (

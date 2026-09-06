@@ -2,9 +2,9 @@
   box-sizing: border-box;
   display: flex;
   position: relative;
-  height: 31.25rem;
+  height: auto;
   min-width: 0;
-  min-height: 0;
+  min-height: 31.25rem;
   flex-direction: column;
   gap: 0.875rem;
   padding: clamp(1rem, 2.5vw, 1.5rem);
@@ -52,6 +52,7 @@
   display: block;
   width: 100%;
   aspect-ratio: 1000 / 562;
+  flex: none;
   touch-action: none;
   border-radius: 0.25rem;
   outline: 0;
@@ -99,7 +100,7 @@
   flex: none;
   gap: 0.3rem;
   color: rgb(var(--picture-diary-muted-ink));
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -136,8 +137,8 @@
 .picture-diary-book__entry-writing {
   box-sizing: border-box;
   width: 100%;
-  min-height: 0;
-  flex: 1;
+  min-height: 7rem;
+  flex: 1 0 7rem;
   overflow-y: auto;
   background: repeating-linear-gradient(
     to bottom,

@@ -75,7 +75,7 @@ export const LanguageLearningWordSourceControl = (
               </p>
             </Show>
             <Show when={props.words.length > 0}>
-              <p class="m-0 text-xs leading-5 text-muted-foreground">
+              <p class="m-0 text-modal-detail leading-5 text-muted-foreground">
                 {m.learning_editor_selected_words({words: props.words.join(', ')})}
               </p>
             </Show>

@@ -12,11 +12,11 @@ const selectItemClasses = cva(
     variants: {
       appearance: {
         default:
-          'flex justify-between text-sm font-600 leading-5 text-muted-foreground ' +
+          'flex justify-between text-modal-body font-600 text-muted-foreground ' +
           'ui-highlighted:text-foreground ui-selected:bg-primary-soft ui-selected:text-foreground',
-        detailed: 'grid grid-cols-[auto_minmax(0,_1fr)] text-[0.6875rem] text-foreground',
+        detailed: 'grid grid-cols-[auto_minmax(0,_1fr)] text-modal-detail text-foreground',
         icon:
-          'grid grid-cols-[auto_minmax(0,_1fr)_auto] whitespace-nowrap text-sm font-600 ' +
+          'grid grid-cols-[auto_minmax(0,_1fr)_auto] whitespace-nowrap text-modal-body font-600 ' +
           'leading-5 text-muted-foreground ui-highlighted:text-foreground ' +
           'ui-selected:bg-primary-soft ui-selected:text-foreground',
       },
@@ -49,7 +49,7 @@ const selectItemTextClasses = cva('min-w-0', {
 })
 
 const SELECT_ITEM_DESCRIPTION_CLASS =
-  'overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground text-[0.6rem]'
+  'overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground text-modal-detail'
 
 interface PSelectItemProps<TValue extends string> extends SelectRootItemComponentProps<
   PSelectOption<TValue>

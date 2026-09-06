@@ -48,7 +48,7 @@ const VersionReleaseCard = (props: VersionReleaseCardProps) => {
             {props.release.title}
           </h3>
           <time
-            class="mt-1 block text-xs font-650 leading-4 text-muted-foreground"
+            class="mt-1 block text-modal-detail font-650 leading-5 text-muted-foreground"
             dateTime={props.release.releasedAt}
           >
             {props.release.version}

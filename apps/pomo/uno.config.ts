@@ -6,6 +6,7 @@ import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
 import {diaryShortcuts} from './uno/diary'
 import {initialSceneFallbackShortcuts} from './uno/loading'
+import {typographyShortcuts} from './uno/typography'
 
 const sansFontFamily = [
   "'Pretendard Variable'",
@@ -427,7 +428,11 @@ body {
       ...Object.keys(initialSceneFallbackShortcuts),
       ...albumData.albums.map((album) => album.icon),
     ],
-    shortcuts: {...initialSceneFallbackShortcuts, ...diaryShortcuts},
+    shortcuts: {
+      ...initialSceneFallbackShortcuts,
+      ...diaryShortcuts,
+      ...typographyShortcuts,
+    },
     theme: {
       animation: {
         counts: {
@@ -540,7 +545,7 @@ body {
         surface: '0.5rem',
       },
       borderRadius: {
-        control: '0.5rem',
+        control: '0.875rem',
         panel: '1.25rem',
       },
       boxShadow: {

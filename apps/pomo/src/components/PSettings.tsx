@@ -34,17 +34,13 @@ import {PGuideSettings} from './PGuideSettings'
 import {PHealthCheck} from './PHealthCheck'
 import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from './pomo-scene-options'
 import {PScribbleCircleControl} from './scribble/CircleControl'
-import {PSettingsSectionHeading} from './settings/SectionHeading'
 import {PSettingsTabList} from './settings/TabList'
 import {PWeatherSettings} from './PWeatherSettings'
 
 const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
   settingsGrid: 'grid gap-4 min-[60rem]:grid-cols-2',
-  settingsScreenSaver: cx(
-    'pomo-settings__screen-saver grid gap-2 [&_>_div]:w-full [&_p]:m-0',
-    '[&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
-  ),
+  settingsScreenSaver: 'pomo-settings__screen-saver grid gap-2 [&_>_div]:w-full',
   settingsSection: 'grid gap-4 border-t border-solid border-border pt-5',
   settingsToggle: 'min-h-12',
 } as const
@@ -52,6 +48,8 @@ const CLASSES = {
 export interface PSettingsProps {
   readonly activity?: PActivity
   readonly canUseGyroscope?: boolean
+  readonly tourButtonVisible?: boolean
+  readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly dialogueComposerVisible?: boolean
   readonly gaze?: PGaze
   readonly onActivityChange?: (activity: PActivity) => void
@@ -100,12 +98,7 @@ const getScreenSaverDelayOptions = () =>
   ] satisfies readonly PSelectOption<ScreenSaverDelay>[]
 
 const PGeneralSceneSettings = (props: PSettingsProps) => (
-  <section aria-labelledby="pomo-settings-scene-title" class={CLASSES.settingsSection}>
-    <PSettingsSectionHeading
-      divider="none"
-      title={m.settings_section_scene()}
-      titleId="pomo-settings-scene-title"
-    />
+  <section aria-label={m.settings_section_scene()} class={CLASSES.settingsSection}>
     <div class={`pomo-settings__scene ${CLASSES.settingsGrid}`}>
       <PRadioSwitch
         label={m.settings_time()}
@@ -133,12 +126,7 @@ const PGeneralSceneSettings = (props: PSettingsProps) => (
 )
 
 const PGeneralStyleSettings = (props: PSettingsProps) => (
-  <section aria-labelledby="pomo-settings-style-title" class={CLASSES.settingsSection}>
-    <PSettingsSectionHeading
-      divider="none"
-      title={m.settings_section_style()}
-      titleId="pomo-settings-style-title"
-    />
+  <section aria-label={m.settings_section_style()} class={CLASSES.settingsSection}>
     <div class={CLASSES.settingsGrid}>
       <PSwitch
         checked={(props.sceneStyle ?? 'original') === 'scribble'}
@@ -166,12 +154,7 @@ const PGeneralStyleSettings = (props: PSettingsProps) => (
 )
 
 const PGeneralWeatherSettings = (props: PSettingsProps) => (
-  <section aria-labelledby="pomo-settings-weather-title" class={CLASSES.settingsSection}>
-    <PSettingsSectionHeading
-      divider="none"
-      title={m.settings_section_weather()}
-      titleId="pomo-settings-weather-title"
-    />
+  <section aria-label={m.settings_section_weather()} class={CLASSES.settingsSection}>
     <PWeatherSettings
       enabled={props.weatherEnabled}
       onEnabledChange={props.onWeatherEnabledChange}
@@ -245,12 +228,7 @@ const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
   const isWakeLockDisabled = () => props.wakeLock.availability() !== 'supported'
 
   return (
-    <section aria-labelledby="pomo-settings-display-title" class={CLASSES.settingsSection}>
-      <PSettingsSectionHeading
-        divider="none"
-        title={m.settings_section_display()}
-        titleId="pomo-settings-display-title"
-      />
+    <section aria-label={m.settings_section_display()} class={CLASSES.settingsSection}>
       <div class={CLASSES.settingsGrid}>
         <Show when={props.onDialogueComposerVisibleChange}>
           {(onDialogueComposerVisibleChange) => (
@@ -260,6 +238,17 @@ const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
               description={m.settings_dialogue_composer_visible_description()}
               label={m.settings_dialogue_composer_visible()}
               onChange={onDialogueComposerVisibleChange()}
+            />
+          )}
+        </Show>
+        <Show when={props.onTourButtonVisibleChange}>
+          {(onChange) => (
+            <PSwitch
+              checked={props.tourButtonVisible ?? true}
+              class={CLASSES.settingsToggle}
+              description={m.settings_tour_button_visible_description()}
+              label={m.settings_tour_button_visible()}
+              onChange={onChange()}
             />
           )}
         </Show>
@@ -286,7 +275,7 @@ const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
             options={getScreenSaverDelayOptions()}
             value={props.screenSaverDelay ?? '10m'}
           />
-          <p>{m.settings_screen_saver_description()}</p>
+          <p class="pomo-field-description m-0">{m.settings_screen_saver_description()}</p>
         </div>
       </div>
     </section>

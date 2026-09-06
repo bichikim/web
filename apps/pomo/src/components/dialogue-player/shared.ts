@@ -22,8 +22,8 @@ export const CLASSES = {
   dialogueBubblePlay: cx(
     'pomo-dialogue-bubble--play flex cursor-pointer items-center gap-3',
     '[font:inherit] text-left [&_>_span:last-child]:grid',
-    '[&_>_span:last-child]:gap-1 [&_strong]:text-[0.8125rem]',
-    '[&_small]:text-muted-foreground [&_small]:text-[0.6875rem] [&_small]:leading-[1.5]',
+    '[&_>_span:last-child]:gap-1 [&_strong]:text-lg',
+    '[&_small]:text-muted-foreground [&_small]:text-sm [&_small]:leading-[1.5]',
   ),
   dialogueBubblePlayIcon: cx(
     'pomo-dialogue-bubble__play-icon grid w-9 h-9 flex-none place-items-center rounded-full',

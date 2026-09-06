@@ -155,9 +155,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
       triggerMode="input"
       value={selectedLocation()}
     >
-      <Combobox.Label class="text-xs font-650 leading-4 text-muted-foreground">
-        {m.weather_city()}
-      </Combobox.Label>
+      <Combobox.Label class="pomo-field-label">{m.weather_city()}</Combobox.Label>
       <Combobox.Control
         class={
           'flex h-control-md w-full min-w-0 items-center gap-3 rounded-control border border-solid ' +
@@ -168,7 +166,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
         <span aria-hidden="true" class="i-tabler-map-pin size-4 flex-none text-highlight" />
         <Combobox.Input
           aria-describedby={descriptionId}
-          class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-650 leading-5 outline-none"
+          class="min-w-0 flex-1 border-0 bg-transparent p-0 pomo-field-value outline-none"
           onFocus={() => setIsOpen(true)}
         />
         <Show
@@ -186,7 +184,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
           />
         </Show>
       </Combobox.Control>
-      <p class="m-0 text-xs leading-5 text-muted-foreground" id={descriptionId}>
+      <p class="m-0 pomo-field-description" id={descriptionId}>
         {m.weather_location_search_description()}
       </p>
       <p aria-live="polite" class="sr-only">

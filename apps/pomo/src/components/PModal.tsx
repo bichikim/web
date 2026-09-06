@@ -157,7 +157,7 @@ export const PModal = (props: PModalProps) => (
                   {(description) => (
                     <Dialog.Description
                       class={
-                        'mb-0 ml-0 mr-0 mt-1.5 text-[0.8125rem] leading-5 ' +
+                        'mb-0 ml-0 mr-0 mt-1.5 text-modal-detail leading-5 ' +
                         'text-muted-foreground empty:hidden'
                       }
                     >
@@ -197,7 +197,7 @@ export const PModal = (props: PModalProps) => (
                   aria-label={m.common_close()}
                   class={cx(
                     'grid flex-none cursor-pointer place-items-center border-0 ' +
-                      'rounded-control bg-transparent text-muted-foreground ' +
+                      'rounded-full bg-transparent text-muted-foreground ' +
                       'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
                       'hover:bg-secondary-soft hover:text-foreground ' +
                       'focus-visible:shadow-focus motion-reduce:transition-none size-11',

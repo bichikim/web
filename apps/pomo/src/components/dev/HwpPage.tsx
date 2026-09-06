@@ -98,7 +98,7 @@ function HwpPage() {
               브라우저 처리
             </h2>
             <p class="mb-0 mt-2 text-sm leading-6 text-#aaa0b1">
-              직접 렌더링은 Pomo 서버에 문서를 업로드하지 않고, Rust/WASM 엔진을 클라이언트에서
+              직접 렌더링은 앱 서버에 문서를 업로드하지 않고, Rust/WASM 엔진을 클라이언트에서
               실행합니다. iframe 모드는 rhwp-studio를 사용합니다.
             </p>
           </section>

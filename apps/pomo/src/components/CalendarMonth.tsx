@@ -122,7 +122,10 @@ const CalendarGrid = (props: CalendarGridProps) => (
     <div class="contents" role="row">
       <For each={getWeekdayLabels()}>
         {(label) => (
-          <span class="py-1 text-center text-xs font-700 text-muted-foreground" role="columnheader">
+          <span
+            class="py-1 text-center text-modal-detail font-700 text-muted-foreground"
+            role="columnheader"
+          >
             {label}
           </span>
         )}
@@ -163,7 +166,7 @@ const CalendarGrid = (props: CalendarGridProps) => (
                           {(event) => (
                             <span
                               aria-hidden="true"
-                              class="flex w-full min-w-0 items-center justify-center gap-0.5 text-[0.625rem] leading-4"
+                              class="flex w-full min-w-0 items-center justify-center gap-0.5 text-modal-detail"
                             >
                               <span class="truncate font-650 text-muted-foreground">
                                 {event().title}
@@ -236,12 +239,12 @@ const CalendarAgenda = (props: CalendarAgendaProps) => (
                         'rounded-panel-inner bg-content-surface px-3 py-2.5'
                       }
                     >
-                      <span class="text-xs font-750 text-highlight">
+                      <span class="text-modal-detail font-750 text-highlight">
                         {formatEventTime(event, props.calendar?.timeZone ?? 'UTC')}
                       </span>
                       <div class="min-w-0">
                         <p class="m-0 truncate text-sm font-750">{event.title}</p>
-                        <p class="mb-0 mt-1 truncate text-xs text-muted-foreground">
+                        <p class="mb-0 mt-1 truncate text-modal-detail text-muted-foreground">
                           {event.calendarLabel} · {event.accountLabel}
                         </p>
                       </div>
@@ -255,17 +258,17 @@ const CalendarAgenda = (props: CalendarAgendaProps) => (
         </Show>
       </Show>
       <Show when={props.calendar?.truncated}>
-        <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
+        <p class="m-0 text-modal-detail leading-5 text-muted-foreground" role="status">
           {m.calendar_events_truncated()}
         </p>
       </Show>
       <Show when={(props.calendar?.unavailableConnections ?? 0) > 0}>
-        <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
+        <p class="m-0 text-modal-detail leading-5 text-muted-foreground" role="status">
           {m.calendar_events_partial()}
         </p>
       </Show>
       <Show when={props.refreshFailed}>
-        <p class="m-0 text-xs leading-5 text-muted-foreground" role="status">
+        <p class="m-0 text-modal-detail leading-5 text-muted-foreground" role="status">
           {m.calendar_refresh_failed()}
         </p>
       </Show>

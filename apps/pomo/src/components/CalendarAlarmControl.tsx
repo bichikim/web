@@ -224,7 +224,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
         }
         class={cx(
           'inline-flex min-h-control-sm items-center gap-1.5 rounded-panel-inner border px-2.5',
-          'text-xs font-750 outline-none focus-visible:shadow-focus',
+          'text-modal-detail font-750 outline-none focus-visible:shadow-focus',
           '[anchor-name:var(--pomo-calendar-alarm-anchor)]',
           alarm.active()
             ? 'border-highlight bg-primary-soft text-foreground'
@@ -260,7 +260,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
           {m.calendar_alarm_title()}
         </h2>
         <p class="mb-1 mt-2 truncate text-sm font-700">{props.event.title}</p>
-        <p class="mb-4 mt-0 text-xs leading-5 text-muted-foreground">
+        <p class="mb-4 mt-0 text-modal-detail leading-5 text-muted-foreground">
           {m.calendar_alarm_description()}
         </p>
 

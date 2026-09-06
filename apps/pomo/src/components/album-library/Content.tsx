@@ -72,7 +72,7 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           <p
             aria-live="polite"
             class="mb-3 mt-0 rounded-control border border-solid border-danger/45 bg-danger/10
-              px-3 py-2 text-xs text-danger"
+              px-3 py-2 text-modal-detail text-danger"
             role="status"
           >
             {message()}

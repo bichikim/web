@@ -17,7 +17,7 @@ const CLASSES = {
     'grid grid-cols-[minmax(0,_1fr)_auto] items-center gap-x-4 gap-y-2',
     'border-t border-solid border-border pt-3',
   ),
-  message: 'm-0 text-[0.625rem] leading-[1.5] text-muted-foreground',
+  message: 'm-0 text-modal-detail leading-[1.5] text-muted-foreground',
   panel: cx(
     'pomo-dialogue-settings__volume-ducking grid gap-3 rounded-panel',
     'border border-solid border-content-border bg-content-surface p-4',
@@ -26,7 +26,7 @@ const CLASSES = {
     'col-span-2 h-5 w-full cursor-pointer accent-primary disabled:cursor-not-allowed',
     'disabled:opacity-45',
   ),
-  value: 'text-xs font-bold tabular-nums text-foreground',
+  value: 'text-modal-detail font-bold tabular-nums text-foreground',
 } as const
 
 const MINIMUM_PLAYER_VOLUME_PERCENT = 0
@@ -133,7 +133,7 @@ export const DialogueVolumeDuckingSettings = () => {
           onChange={(enabled) => scheduleSave({...settings(), enabled})}
         />
         <label class={CLASSES.field}>
-          <span class="text-[0.6875rem] font-bold text-muted-foreground">
+          <span class="text-modal-detail font-bold text-muted-foreground">
             {m.settings_dialogue_music_volume()}
           </span>
           <output class={CLASSES.value} for="pomo-dialogue-player-volume">

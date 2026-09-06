@@ -69,7 +69,7 @@ const CalendarProviderActions = (props: CalendarProviderActionsProps) => {
                         provider: PROVIDER_LABELS[connection.provider],
                       })}
                 </span>
-                <span class="break-all text-xs font-500 text-muted-foreground">
+                <span class="break-all text-modal-detail font-500 text-muted-foreground">
                   {connection.accountLabel}
                 </span>
               </span>
@@ -190,7 +190,7 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
         <h2 class="m-0 text-base font-750" id={titleId}>
           {m.calendar_settings()}
         </h2>
-        <p class="mb-4 mt-1 text-xs leading-5 text-muted-foreground">
+        <p class="mb-4 mt-1 text-modal-detail leading-5 text-muted-foreground">
           {m.calendar_connections_description()}
         </p>
 

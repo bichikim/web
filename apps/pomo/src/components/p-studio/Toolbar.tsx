@@ -31,6 +31,8 @@ import {PIconButton} from '../PIconButton'
 interface SceneToolbarProps {
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
+  readonly tourButtonVisible?: boolean
+  readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly dialogueComposerVisible?: boolean
   readonly gaze: PGaze
   readonly isSceneTransitioning: boolean
@@ -69,9 +71,13 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         props.layout === 'surface' ? 'flex w-full flex-col items-end gap-2' : CLASSES.sceneToolbar,
       )}
     >
-      <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
+      <div
+        class="flex flex-wrap justify-end gap-2 [&_.pomo-icon-button]:rounded-full"
+        role="group"
+        aria-label={m.scene_group_label()}
+      >
         <VersionNoticePanel sceneStyle={props.sceneStyle} />
-        <Show when={props.onTourOpen !== undefined}>
+        <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
           <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
             <PIconButton
               accessibleLabel={m.tour_open()}
@@ -110,6 +116,8 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           <SceneSettingsPanel
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}
+            tourButtonVisible={props.tourButtonVisible}
+            onTourButtonVisibleChange={props.onTourButtonVisibleChange}
             dialogueComposerVisible={props.dialogueComposerVisible}
             gaze={props.gaze}
             onActivityChange={props.onActivityChange}

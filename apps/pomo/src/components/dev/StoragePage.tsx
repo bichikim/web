@@ -82,7 +82,7 @@ const CacheSection = (props: CacheSectionProps) => (
             >
               <div class="min-w-0">
                 <p class="m-0 truncate text-sm font-700">{getEntryLabel(key)}</p>
-                <p class="mb-0 mt-1 truncate text-xs text-#8f8297">{key}</p>
+                <p class="mb-0 mt-1 truncate text-modal-detail text-#8f8297">{key}</p>
               </div>
               <PButton
                 accessibleLabel={`${getEntryLabel(key)} 삭제`}
@@ -285,7 +285,7 @@ function StoragePage(props: StoragePageProps) {
           <A class="text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
             ← 실험실 목록
           </A>
-          <p class="mb-0 mt-8 text-xs font-750 tracking-[0.24em] text-#f2a7b8 uppercase">
+          <p class="mb-0 mt-8 text-modal-detail font-750 tracking-[0.24em] text-#f2a7b8 uppercase">
             Browser model storage
           </p>
           <h1 class="mb-0 mt-3 text-4xl font-800 tracking--0.04em">모델 저장소 관리</h1>
