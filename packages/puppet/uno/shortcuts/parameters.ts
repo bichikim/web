@@ -70,7 +70,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d]',
   ],
   'keyform-track': [
-    '[.puppet-editor_&]:relative [.puppet-editor_&]:[min-width:40rem] [.puppet-editor_&]:[min-height:4.75rem]',
+    '[.puppet-editor_&]:relative [.puppet-editor_&]:[min-width:10rem] [.puppet-editor_&]:[min-height:4.75rem]',
     '[.puppet-editor_&]:[margin:0_1.75rem]',
     '[.puppet-editor_&]:[background-image:linear-gradient(to_right,_#27322e_0.0625rem,_transparent_0.0625rem)]',
     '[.puppet-editor_&]:[background-size:12.5%_100%] [.puppet-editor_&]:[cursor:crosshair]',
@@ -117,7 +117,7 @@ export const parametersShortcuts = {
   'keyform-tracks': [
     '[.puppet-editor_&]:h-full [.puppet-editor_&]:[grid-template-rows:1fr]',
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[align-content:start]',
-    '[.puppet-editor_&]:[min-width:43.5rem]',
+    '[.puppet-editor_&]:[min-width:13.5rem]',
   ],
   'timeline-seek-track': 'relative w-full h-full',
   'keyform-value-indicator': [
