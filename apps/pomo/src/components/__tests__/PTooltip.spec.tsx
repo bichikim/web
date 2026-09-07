@@ -4,6 +4,7 @@ import {render as baseRender, cleanup, fireEvent, screen} from '@solidjs/testing
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {createSignal, type JSX} from 'solid-js'
 import {PTooltip} from '../PTooltip'
+import {installTooltipBrowser} from '../tooltip/__tests__/support/browser'
 
 import {PTooltipContent, PTooltipProvider, useTooltipTrigger} from '../tooltip'
 
@@ -34,35 +35,18 @@ const Trigger = (props: {
   )
 }
 
+let browser: ReturnType<typeof installTooltipBrowser>
+
 beforeEach(() => {
   vi.useFakeTimers()
-  const matches = HTMLElement.prototype.matches
-  vi.spyOn(HTMLElement.prototype, 'matches').mockImplementation(
-    function matchesFocus(this: HTMLElement, selector) {
-      return selector === ':focus-visible'
-        ? this.hasAttribute('data-test-visible-focus')
-        : matches.call(this, selector)
-    },
-  )
-  vi.stubGlobal('CSS', {supports: () => true})
-  vi.stubGlobal('PointerEvent', MouseEvent)
-  Object.defineProperty(HTMLElement.prototype, 'showPopover', {
-    configurable: true,
-    value: vi.fn(),
-  })
-  Object.defineProperty(HTMLElement.prototype, 'hidePopover', {
-    configurable: true,
-    value: vi.fn(),
-  })
+  browser = installTooltipBrowser()
 })
 
 afterEach(() => {
   cleanup()
+  browser.restore()
   vi.restoreAllMocks()
   vi.useRealTimers()
-  vi.unstubAllGlobals()
-  Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
-  Reflect.deleteProperty(HTMLElement.prototype, 'hidePopover')
 })
 
 const renderTooltip = () =>
@@ -129,7 +113,7 @@ it('should not open on pointer-originated restored focus', () => {
 it('should show for visible focus and retain it until blur', () => {
   const result = renderTooltip()
   const button = result.getByRole('button')
-  button.setAttribute('data-test-visible-focus', '')
+  browser.setVisibleFocus(button)
   button.focus()
   expect(button).toHaveAttribute('aria-describedby')
   fireEvent.pointerEnter(button)

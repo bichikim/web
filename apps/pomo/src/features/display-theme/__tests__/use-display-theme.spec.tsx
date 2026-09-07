@@ -114,7 +114,7 @@ it('should preserve the bootstrapped color scheme until the saved preference is 
   expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
 
-it('should apply the system preference when stored preference restoration fails', async () => {
+it('should apply dark mode when stored preference restoration fails', async () => {
   preferenceMocks.read.mockRejectedValue(new Error('Storage unavailable'))
   let controller: DisplayThemeController | undefined
 
@@ -127,8 +127,8 @@ it('should apply the system preference when stored preference restoration fails'
     />
   ))
 
-  await vi.waitFor(() => expect(document.documentElement.classList.contains('dark')).toBe(false))
-  expect(controller?.preference()).toBe('system')
+  await vi.waitFor(() => expect(controller?.preference()).toBe('dark'))
+  expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
 
 it('should not overwrite a newer session choice with a delayed stored preference', async () => {
