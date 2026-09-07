@@ -17,14 +17,25 @@ for primitive in doc['meshes'][body['mesh']]['primitives']:
  faces.extend((f+len(points)).tolist());points.extend(p.tolist())
 body_tree=BVHTree.FromPolygons(points,faces,all_triangles=True)
 snapshots=json.loads(Path('/private/tmp/pomo-cloth-frames.json').read_text())
+garment=next(n for n in doc['nodes'] if n.get('name')=='Settled knit sweater')
+primitive=doc['meshes'][garment['mesh']]['primitives'][0]
+assert np.array_equal(np.array(snapshots['original']).reshape(-1,3),accessor(primitive['attributes']['POSITION'])), 'Snapshots do not match the candidate garment'
+assert np.array_equal(np.array(snapshots['faces']).reshape(-1,1),accessor(primitive['indices'])), 'Snapshots do not match the candidate topology'
 faces=np.array(snapshots['faces']).reshape(-1,3).tolist()
 def contacts(positions):
  return set(BVHTree.FromPolygons(np.array(positions).reshape(-1,3).tolist(),faces,all_triangles=True).overlap(body_tree))
-baseline=contacts(snapshots['original']);counts=[];added=[]
+report=json.loads((ROOT/'validation.json').read_text())
+original=np.array(snapshots['original']).reshape(-1,3)
+thickness=report['fabric_thickness_m_assumption']
+distances=np.array([body_tree.find_nearest(point)[3] for point in original])
+motion_budget=np.maximum(0,distances-thickness)*.4
+baseline=contacts(snapshots['original']);counts=[];added=[];overshoots=[]
 for frame in snapshots['frames']:
  overlap=contacts(frame);counts.append(len(overlap));added.append(len(overlap-baseline))
-report=json.loads((ROOT/'validation.json').read_text())
-report.update(sampled_frames=len(counts),baseline_triangle_intersections=len(baseline),maximum_triangle_intersections=max(counts),maximum_new_triangle_intersections=max(added))
+ displacement=np.linalg.norm(np.array(frame).reshape(-1,3)-original,axis=1)
+ overshoots.append(float(np.maximum(0,displacement-motion_budget).max()))
+report.update(sampled_frames=len(counts),baseline_triangle_intersections=len(baseline),maximum_triangle_intersections=max(counts),maximum_new_triangle_intersections=max(added),maximum_thickness_motion_budget_overshoot_m=max(overshoots))
 (ROOT/'validation.json').write_text(json.dumps(report,indent=2))
 print(json.dumps(report),flush=True)
 assert max(added)==0
+assert max(overshoots)<1e-6

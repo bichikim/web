@@ -7,6 +7,7 @@ import {createCharacterRenderer} from '../renderer'
 import {applyCameraCommand, type CameraCommand} from '../camera-control'
 import {reportClientError} from '../../../features/client-error-reporter'
 import CharacterCanvas from '../Canvas'
+import {useCharacterRenderer} from '../../../features/character-renderer'
 
 vi.mock('@babylonjs/core/Engines/engine', () => ({Engine: vi.fn()}))
 vi.mock('../camera-control', () => ({applyCameraCommand: vi.fn()}))
@@ -72,6 +73,27 @@ describe('CharacterCanvas', () => {
     expect(engine.stopRenderLoop).toHaveBeenCalledOnce()
     expect(renderer.dispose).toHaveBeenCalledOnce()
     expect(engine.dispose).toHaveBeenCalledOnce()
+  })
+
+  it('should reload the same model URL after a failed load', () => {
+    const view = render(() => {
+      const controller = useCharacterRenderer({
+        defaultModelName: 'Pomo',
+        defaultModelUrl: '/model.glb',
+      })
+      return (
+        <>
+          <button type="button" onClick={() => controller.loadDefaultModel()}>
+            Retry
+          </button>
+          <CharacterCanvas modelUrl={controller.modelUrl()} {...callbacks()} />
+        </>
+      )
+    })
+    events().onError(new Error('Temporary model request failure'))
+    fireEvent.click(view.getByRole('button', {name: 'Retry'}))
+    expect(renderer.load).toHaveBeenCalledTimes(2)
+    expect(renderer.load).toHaveBeenLastCalledWith('/model.glb')
   })
 
   it('should forward repeated camera commands without loading again', () => {

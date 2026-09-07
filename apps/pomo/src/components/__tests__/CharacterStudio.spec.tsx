@@ -83,6 +83,18 @@ describe('CharacterStudio', () => {
     )
   })
 
+  it('should retry the selected model after a loading error', () => {
+    const renderer = createRenderer()
+    vi.mocked(useCharacterRenderer).mockReturnValue({
+      ...renderer,
+      modelUrl: () => '/character-studio/pomo.glb',
+      status: () => 'error',
+    })
+    render(() => <CharacterStudio />)
+    fireEvent.click(screen.getByRole('button', {name: 'Pomo'}))
+    expect(renderer.loadDefaultModel).toHaveBeenCalledOnce()
+  })
+
   it('should retain VRoid settings when switching to Pomo and back', () => {
     const [url, setUrl] = createSignal('/character-studio/scene.glb')
     const renderer = createRenderer()

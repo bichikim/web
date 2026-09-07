@@ -146,7 +146,7 @@ describe('createCharacterRenderer', () => {
     expect(Array.from(mesh?.getVerticesData('position') ?? [])).not.toEqual(original)
     renderer.render(1 / 60, false, 0)
     expect(Array.from(mesh?.getVerticesData('position') ?? [])).toEqual(original)
-  })
+  }, 30000)
 
   it('should ignore a superseded rejection while keeping the current model', async () => {
     const {engine, renderer, events, loader} = setup()

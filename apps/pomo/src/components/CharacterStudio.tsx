@@ -49,7 +49,7 @@ export const CharacterStudio = () => {
 
   const handleDefaultModelClick = () => {
     setUrlInput('')
-    if (renderer.modelUrl() !== DEFAULT_MODEL_URL) {
+    if (renderer.modelUrl() !== DEFAULT_MODEL_URL || renderer.status() === 'error') {
       renderer.loadDefaultModel()
     }
   }
@@ -77,7 +77,7 @@ export const CharacterStudio = () => {
               class="min-h-11 rounded-3 border border-white/15 bg-transparent text-sm aria-pressed:bg-#31534b"
               aria-pressed={renderer.modelUrl() === VROID_MODEL_URL}
               onClick={() => {
-                if (renderer.modelUrl() !== VROID_MODEL_URL) {
+                if (renderer.modelUrl() !== VROID_MODEL_URL || renderer.status() === 'error') {
                   renderer.loadUrl(VROID_MODEL_URL)
                 }
               }}

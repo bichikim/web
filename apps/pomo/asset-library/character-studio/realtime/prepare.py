@@ -1,11 +1,13 @@
 """Attach bounded elastic particles and body-derived contacts to the accepted GLB."""
-import json, struct, math
+import json, struct, math, os
 from pathlib import Path
 import numpy as np
 from mathutils.bvhtree import BVHTree
 
 ROOT=Path(__file__).resolve().parent
-source=ROOT.parents[2]/'public/character-studio/pomo.glb'
+source=Path(os.environ.get('CLOTH_SOURCE', str(ROOT.parents[2]/'public/character-studio/pomo.glb')))
+thickness=float(os.environ.get('CLOTH_THICKNESS', '.005'))
+assert math.isfinite(thickness) and 0 < thickness <= .02
 data=source.read_bytes()
 length=struct.unpack_from('<I',data,12)[0]
 doc=json.loads(data[20:20+length]); binary=data[28+length:]
@@ -39,7 +41,8 @@ for point in points:
  location,normal,face,distance=body_tree.find_nearest(point)
  clearances.append(distance)
  amount=mobility(point)
- limits[key]=min(.006*amount,max(0,distance-.0015)*.4)
+ # The rendered surface is the outside of the fabric; reserve its full thickness.
+ limits[key]=min(.006*amount,max(0,distance-thickness)*.4)
  bucket=tuple(math.floor(float(v)/.025) for v in point)
  # Separate fixed and moving zones to retain the accepted collar/chest silhouette.
  bucket=(*bucket,amount>0)
@@ -48,7 +51,7 @@ for point in points:
   particles.append(point.tolist());movement.append(amount)
   direction=np.array(point)-np.array(location)
   direction/=max(float(np.linalg.norm(direction)),1e-9)
-  contacts.extend([*direction.tolist(),max(0,distance-.0015)])
+  contacts.extend([*direction.tolist(),max(0,distance-thickness)])
  mapping.append(buckets[bucket])
 edges=set()
 for a,b,c in faces:
@@ -61,6 +64,6 @@ node.setdefault('extras',{})['pomoCloth']=json.dumps(metadata,separators=(',',':
 encoded=json.dumps(doc,separators=(',',':')).encode();encoded+=b' '*((-len(encoded))%4)
 result=struct.pack('<III',0x46546c67,2,28+len(encoded)+len(binary))+struct.pack('<II',len(encoded),0x4e4f534a)+encoded+struct.pack('<II',len(binary),0x004e4942)+binary
 (ROOT/'model.glb').write_bytes(result)
-report={'particles':len(particles),'springs':len(edges),'render_vertices':len(points),'moving_vertices':sum(v>0 for v in limits.values()),'max_surface_motion_m':max(limits.values()),'body_faces':len(body_faces),'binary_geometry_materials_unchanged':binary==result[28+len(encoded):],'collision_method':'Body nearest-surface contact planes with per-vertex clearance bounds for the fixed wearing pose'}
+report={'particles':len(particles),'springs':len(edges),'render_vertices':len(points),'moving_vertices':sum(v>0 for v in limits.values()),'max_surface_motion_m':max(limits.values()),'body_faces':len(body_faces),'fabric_thickness_m_assumption':thickness,'binary_geometry_materials_unchanged':binary==result[28+len(encoded):],'collision_method':'Body nearest-surface contact planes with per-vertex clearance bounds reserving fabric thickness for the fixed wearing pose'}
 (ROOT/'validation.json').write_text(json.dumps(report,indent=2))
 print(json.dumps(report),flush=True)
