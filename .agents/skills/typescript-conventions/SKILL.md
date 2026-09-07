@@ -9,7 +9,7 @@ Open and apply the reference files for the relevant section before working. For 
 
 ## Core Rules
 
-1. For every TypeScript implementation task, first write the intended specification as a unit test, then write the code that makes it pass. Apply the `unit-test` skill when writing or editing the test.
+1. For observable behavior changes and bug fixes, first express the intended behavior in a relevant test, then implement it. For wording, naming, type-only, or other changes without behavior changes, choose verification appropriate to the change instead of requiring a new unit test. Apply the `unit-test` skill when writing or editing unit tests.
 2. Use PascalCase for classes, interfaces, and types; camelCase for variables, functions, and methods; UPPER_SNAKE_CASE for constants.
 3. Do not abbreviate variable names, keep them to at most three words, and avoid repeating outer object names in nested variables.
 4. Define and compose object shapes with named `interface`s; prefer `extends` over intersections, name boundary union members instead of reconstructing them with `Extract`, and reserve `type` for unions and type operators.
