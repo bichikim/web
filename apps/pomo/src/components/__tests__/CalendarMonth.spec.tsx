@@ -4,13 +4,15 @@ import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-libra
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {useAuth} from '../../features/auth/AuthProvider'
+import type {AuthenticationState} from '../../features/auth/machine'
 import {
   type CalendarEvents,
   listCalendarEvents,
   readCalendarMonthCache,
   writeCalendarMonthCache,
 } from '../../features/calendar'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {CalendarMonth} from '../CalendarMonth'
 
 vi.mock('../../features/calendar', async () => {
@@ -41,7 +43,13 @@ it('should show a notice when only part of the calendar could be loaded', async 
   ).toBeVisible()
 })
 
+vi.mock('../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
+
 beforeEach(() => {
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => ({kind: 'authenticated', provider: 'toss'}),
+    state: () => ({kind: 'authenticated', provider: 'toss'}),
+  })
   vi.clearAllMocks()
   sessionStorage.clear()
   vi.useFakeTimers({toFake: ['Date']})
@@ -294,4 +302,102 @@ it('should not let an obsolete refresh overwrite the latest month cache', async 
   await firstRefresh.promise
 
   expect(readCalendarMonthCache(range)).toEqual(freshCalendar)
+})
+
+it('should request login without fetching calendars when signed out', async () => {
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => null,
+    state: () => ({kind: 'anonymous'}),
+  })
+  render(() => <CalendarMonth />)
+
+  expect(
+    await screen.findByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.'),
+  ).toBeVisible()
+  expect(listCalendarEvents).not.toHaveBeenCalled()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+it('should load after login and restore the login notice after logout', async () => {
+  const [state, setState] = createSignal<AuthenticationState>({kind: 'anonymous'})
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarMonth />)
+  expect(screen.getByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.')).toBeVisible()
+
+  setState({kind: 'authenticated', provider: 'toss'})
+  await waitFor(() => expect(listCalendarEvents).toHaveBeenCalledTimes(1))
+  expect(await screen.findByText('팀 회의', {selector: 'p'})).toBeVisible()
+  expect(
+    screen.queryByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.'),
+  ).not.toBeInTheDocument()
+
+  setState({kind: 'anonymous'})
+  expect(
+    await screen.findByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.'),
+  ).toBeVisible()
+  expect(screen.queryByText('팀 회의')).not.toBeInTheDocument()
+})
+
+it('should not restore the previous session events while a new login is loading', async () => {
+  const [state, setState] = createSignal<AuthenticationState>({
+    kind: 'authenticated',
+    provider: 'toss',
+  })
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarMonth />)
+  expect(await screen.findByText('팀 회의', {selector: 'p'})).toBeVisible()
+
+  setState({kind: 'anonymous'})
+  sessionStorage.clear()
+  vi.mocked(listCalendarEvents).mockImplementationOnce(() => new Promise(() => {}))
+  setState({kind: 'authenticated', provider: 'toss'})
+  await waitFor(() => expect(listCalendarEvents).toHaveBeenCalledTimes(2))
+  expect(screen.queryByText('팀 회의', {selector: 'p'})).not.toBeInTheDocument()
+})
+
+it.each([
+  {allDay: true, end: '2026-09-06', start: '2026-09-03'},
+  {allDay: true, end: '2026-09-06', start: '2026-08-31'},
+  {allDay: false, end: '2026-09-04T02:00:00.000Z', start: '2026-09-03T14:00:00.000Z'},
+])('should display a spanning event on a covered date after $start', async (range) => {
+  vi.mocked(listCalendarEvents).mockResolvedValue({
+    connectedConnections: 1,
+    events: [
+      {
+        ...range,
+        accountLabel: 'test@example.com',
+        calendarLabel: 'test',
+        id: 'spanning',
+        provider: 'google',
+        title: '계속되는 일정',
+      },
+    ],
+    timeZone: 'Asia/Seoul',
+    truncated: false,
+    unavailableConnections: 0,
+  })
+  render(() => <CalendarMonth />)
+  await waitFor(() => expect(screen.queryByText('일정을 불러오는 중…')).not.toBeInTheDocument())
+  const agenda = screen.getByRole('region', {name: '2026년 9월 4일'})
+  expect(within(agenda).getByText('계속되는 일정')).toBeVisible()
+  expect(within(agenda).getByRole('button', {name: '계속되는 일정 알람 설정'})).toBeVisible()
+  expect(screen.getByRole('button', {name: '2026년 9월 4일, 일정 1개'})).toBeVisible()
+  fireEvent.click(screen.getByRole('button', {name: '2026년 9월 6일, 일정 0개'}))
+  expect(
+    within(screen.getByRole('region', {name: '2026년 9월 6일'})).getByText(
+      '선택한 날짜에 일정이 없습니다.',
+    ),
+  ).toBeVisible()
 })

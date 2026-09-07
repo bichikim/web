@@ -1,8 +1,9 @@
+import {PInput} from 'src/components/PInput'
 import {useEvent} from '@winter-love/solid-use'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createEffect, createSignal, type Setter, Show} from 'solid-js'
-
 import * as m from '@paraglide/message'
+import {DialogueTrigger} from './dialogue-composer/DialogueTrigger'
 
 export interface PDialogueComposerProps {
   readonly autoExpand?: boolean
@@ -52,20 +53,15 @@ const useAutoExpand = (options: UseAutoExpandOptions) => {
 }
 
 const COMPOSER_CLASSES = cx(
-  'pomo-dialogue-composer grid size-13 self-end grid-cols-[1fr] sm:self-start',
+  'pomo-dialogue-composer grid h-control-md w-control-md self-end grid-cols-[1fr] sm:self-start',
   'box-border items-center overflow-hidden rounded-full border border-solid border-border',
   'bg-surface backdrop-blur-surface outline-none',
   'transition-[width_180ms_ease,background-color_160ms_ease,border-color_160ms_ease]',
-  '[&[data-expanded]]:min-w-0 [&[data-expanded]]:max-w-full [&[data-expanded]]:w-full',
+  '[&[data-expanded]]:h-auto [&[data-expanded]]:min-w-0 [&[data-expanded]]:max-w-full [&[data-expanded]]:w-full',
   '[&[data-expanded]]:[flex:none] [&[data-expanded]]:self-start',
   '[&[data-expanded]]:grid-cols-[minmax(0,_1fr)_auto]',
   'focus-within:border-highlight focus-within:bg-surface-interactive',
   'motion-reduce:transition-none',
-)
-
-const TRIGGER_CLASSES = cx(
-  'grid size-full cursor-pointer place-items-center border-0 bg-transparent',
-  'text-highlight outline-none hover:bg-surface-interactive disabled:cursor-not-allowed',
 )
 
 const SUBMIT_CLASSES = cx(
@@ -73,37 +69,6 @@ const SUBMIT_CLASSES = cx(
   'bg-highlight text-[#241a12] outline-none transition-transform duration-160',
   'hover:-translate-y-0.5 focus-visible:shadow-focus disabled:cursor-not-allowed',
   'disabled:opacity-45 disabled:transform-none motion-reduce:transition-none',
-)
-
-interface DialogueTriggerProps {
-  readonly disabled: boolean
-  readonly loading: boolean
-  readonly onClick: () => void
-  readonly onMount: (element: HTMLButtonElement) => void
-}
-
-const DialogueTrigger = (props: DialogueTriggerProps) => (
-  <button
-    aria-expanded="false"
-    aria-label={
-      props.loading ? m.dialogue_composer_preparing_label() : m.dialogue_composer_start_label()
-    }
-    class={TRIGGER_CLASSES}
-    disabled={props.disabled}
-    onClick={() => props.onClick()}
-    ref={props.onMount}
-    type="button"
-  >
-    <Show
-      when={props.loading}
-      fallback={<span aria-hidden="true" class="i-tabler-message-circle size-6" />}
-    >
-      <span
-        aria-hidden="true"
-        class="i-tabler-loader-2 size-6 animate-spin motion-reduce:animate-none"
-      />
-    </Show>
-  </button>
 )
 
 export const PDialogueComposer = (props: PDialogueComposerProps) => {
@@ -223,10 +188,11 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
       >
         <label class="contents">
           <span class="sr-only">{m.dialogue_composer_input_label()}</span>
-          <input
+          <PInput
+            unstyled
             autocomplete="off"
             class={cx(
-              'h-full min-w-0 border-0 bg-transparent px-4 text-sm text-foreground outline-none',
+              'h-full min-w-0 border-0 bg-transparent px-4 text-lg text-foreground outline-none',
               'placeholder:text-muted-foreground',
             )}
             disabled={props.disabled}

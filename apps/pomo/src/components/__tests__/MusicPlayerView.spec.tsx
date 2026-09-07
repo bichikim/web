@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent} from '@solidjs/testing-library'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
@@ -11,8 +12,49 @@ import {
   renderMusicPlayerView,
 } from './music-player-view.test-support'
 
+import {installTooltipBrowser} from '../tooltip/__tests__/support/browser'
+
 describe('MusicPlayerView', () => {
-  afterEach(() => cleanup())
+  let browser: ReturnType<typeof installTooltipBrowser>
+  beforeEach(() => {
+    browser = installTooltipBrowser()
+    vi.stubGlobal('CSS', {supports: () => false})
+  })
+
+  afterEach(() => {
+    cleanup()
+    browser.restore()
+  })
+
+  it.each([false, true])(
+    'should update every playback tooltip with the playback state (expanded: %s)',
+    (expanded) => {
+      const [isPlaying, setPlaying] = createSignal(false)
+      const result = renderMusicPlayerView({
+        expanded,
+        get isPlaying() {
+          return isPlaying()
+        },
+      })
+      const buttons = result.container.querySelectorAll<HTMLElement>('media-play-button')
+      expect(buttons).toHaveLength(2)
+      for (const button of buttons) {
+        browser.setVisibleFocus(button)
+        fireEvent.focus(button)
+        expect(button).toHaveAttribute('title', '재생')
+      }
+      setPlaying(true)
+      for (const button of buttons) {
+        expect(button).toHaveAttribute('title', '일시 정지')
+      }
+      setPlaying(false)
+      for (const button of buttons) {
+        browser.setVisibleFocus(button)
+        fireEvent.focus(button)
+        expect(button).toHaveAttribute('title', '재생')
+      }
+    },
+  )
 
   it('should render the current track artwork only in the expanded player', () => {
     const collapsedResult = renderMusicPlayerView({expanded: false})
@@ -27,19 +69,6 @@ describe('MusicPlayerView', () => {
     expect(artwork).toBeInstanceOf(HTMLImageElement)
     expect(artwork?.getAttribute('src')).toBe('/audio/artwork/one.jpg')
     expect(artwork?.getAttribute('alt')).toBe('')
-  })
-
-  it('should hide failed artwork requests', () => {
-    const result = renderMusicPlayerView()
-    const artwork = result.container.querySelector('.pomo-player__artwork')
-
-    if (!(artwork instanceof HTMLImageElement)) {
-      throw new TypeError('Expected the current track artwork to be rendered')
-    }
-
-    fireEvent.error(artwork)
-
-    expect(artwork.hidden).toBe(true)
   })
 
   it('should forward album and expanded player control events', () => {

@@ -3,14 +3,14 @@
 import {render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import type {WeatherLocation} from '../../../features/weather'
 import {getPomoIconClass} from '../../icon-style'
 import {PWeatherStatus} from '../../PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
 import {MemoryAssistPanel} from '../MemoryAssistPanel'
-import {VersionNoticePanel} from '../VersionNoticePanel'
 import {SceneSettingsPanel} from '../SettingsPanel'
 import {SceneToolbar} from '../Toolbar'
-import type {WeatherLocation} from '../../../features/weather'
+import {VersionNoticePanel} from '../VersionNoticePanel'
 
 vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
 vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
@@ -80,7 +80,7 @@ beforeEach(() => {
   })
   vi.mocked(SceneSettingsPanel).mockImplementation((props) => {
     Object.values(props)
-    return <div>{props.fallback}</div>
+    return <div>settings control</div>
   })
   vi.mocked(MemoryAssistPanel).mockImplementation((props) => {
     Object.values(props)
@@ -126,7 +126,7 @@ describe('SceneToolbar', () => {
       screen.getByText('memory assist control').closest('[data-tour-step="memory-assist"]'),
     ).toHaveClass('inline-flex')
     expect(MemoryAssistPanel).toHaveBeenCalledWith(
-      expect.objectContaining({sceneStyle: 'original'}),
+      expect.objectContaining({sceneStyle: 'original', weatherState: {status: 'disabled'}}),
     )
     expect(vi.mocked(VersionNoticePanel).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0],
@@ -155,7 +155,9 @@ describe('SceneToolbar', () => {
     ))
 
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(getPomoIconClass).toHaveBeenCalledWith('i-tabler-brain', 'scribble')
+    expect(MemoryAssistPanel).toHaveBeenCalledWith(
+      expect.objectContaining({sceneStyle: 'scribble'}),
+    )
     expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
     expect(onDesktopModeChange).toHaveBeenCalledWith('widget')
   })

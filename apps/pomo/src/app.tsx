@@ -1,3 +1,4 @@
+import {PTooltipContent, PTooltipProvider} from './components/tooltip'
 import '@unocss/reset/tailwind.css'
 import 'virtual:uno.css'
 
@@ -10,41 +11,46 @@ import {PDocumentMetadata} from './components/PDocumentMetadata'
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
 import {PRecoveryBoundary} from './components/PRecoveryBoundary'
 import {useApplicationRecovery} from './features/application-recovery'
-import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
+import {SafeArea} from './components/SafeArea'
 import {DisplayThemeProvider} from './features/display-theme'
 import {AuthProvider} from './features/auth'
 import {PModelDownloadProvider} from './features/model-download'
 
 export default function App() {
-  useAppsInTossSafeArea()
   const applicationRecovery = useApplicationRecovery()
 
   return (
-    <Router
-      root={(props) => (
-        <MetaProvider>
-          <PDocumentMetadata />
-          <DisplayThemeProvider>
-            <AuthProvider>
-              <PModelDownloadProvider>
-                <PRecoveryBoundary
-                  canRetry={applicationRecovery.canRetry}
-                  onError={applicationRecovery.onError}
-                  onReady={applicationRecovery.onReady}
-                  onReload={applicationRecovery.onReload}
-                  onRetry={applicationRecovery.onRetry}
-                >
-                  <Suspense>
-                    <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
-                  </Suspense>
-                </PRecoveryBoundary>
-              </PModelDownloadProvider>
-            </AuthProvider>
-          </DisplayThemeProvider>
-        </MetaProvider>
-      )}
-    >
-      <FileRoutes />
-    </Router>
+    <>
+      <SafeArea />
+      <Router
+        root={(props) => (
+          <MetaProvider>
+            <PDocumentMetadata />
+            <DisplayThemeProvider>
+              <PTooltipProvider>
+                <AuthProvider>
+                  <PModelDownloadProvider>
+                    <PRecoveryBoundary
+                      canRetry={applicationRecovery.canRetry}
+                      onError={applicationRecovery.onError}
+                      onReady={applicationRecovery.onReady}
+                      onReload={applicationRecovery.onReload}
+                      onRetry={applicationRecovery.onRetry}
+                    >
+                      <Suspense>
+                        <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
+                      </Suspense>
+                    </PRecoveryBoundary>
+                  </PModelDownloadProvider>
+                </AuthProvider>
+                <PTooltipContent />
+              </PTooltipProvider>
+            </DisplayThemeProvider>
+          </MetaProvider>
+        )}
+      >
+        <FileRoutes />
+      </Router>
+    </>
   )
 }

@@ -1,15 +1,16 @@
+import {PInput} from 'src/components/PInput'
+import {FIELD_DESCRIPTION, FIELD_LABEL, FIELD_VALUE} from 'src/components/field-classes'
 import {Combobox} from '@kobalte/core/combobox'
 import {createSignal, createUniqueId, Show} from 'solid-js'
-
 import {
   DEFAULT_WEATHER_LOCATION,
   LEGACY_WEATHER_LOCATIONS,
   useWeatherLocationSearch,
   type WeatherLocation,
-  type WeatherLocationSearchStatus,
 } from '../features/weather'
 import {getLocalizedWeatherLocationLabel} from '../features/localization'
 import * as m from '@paraglide/message'
+import {WeatherLocationSearchFeedback} from './weather-location-search/Feedback'
 
 export interface PWeatherLocationSearchProps {
   readonly location?: WeatherLocation
@@ -23,6 +24,7 @@ const getLocationName = (location: WeatherLocation): string =>
   getLocalizedWeatherLocationLabel(location)
 
 const DEFAULT_WEATHER_LOCATIONS = Object.values(LEGACY_WEATHER_LOCATIONS)
+
 const KOREAN_COUNTRIES = new Set(['KR', '대한민국'])
 
 const normalizeLocationName = (name: string): string => name.trim().toLowerCase()
@@ -51,27 +53,6 @@ const isDefaultDuplicate = (
   const selectedNames = new Set(getLocationNames(selectedLocation))
   return getLocationNames(defaultLocation).some((name) => selectedNames.has(name))
 }
-
-interface WeatherLocationSearchFeedbackProps {
-  readonly resultCount: number
-  readonly status: WeatherLocationSearchStatus
-}
-
-const WeatherLocationSearchFeedback = (props: WeatherLocationSearchFeedbackProps) => (
-  <>
-    <Show when={props.status === 'input-required'}>
-      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
-        {m.weather_location_search_minimum()}
-      </p>
-    </Show>
-    <Show when={props.status === 'error'}>
-      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_error()}</p>
-    </Show>
-    <Show when={props.status === 'ready' && props.resultCount === 0}>
-      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_search_empty()}</p>
-    </Show>
-  </>
-)
 
 export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
   const search = useWeatherLocationSearch()
@@ -155,9 +136,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
       triggerMode="input"
       value={selectedLocation()}
     >
-      <Combobox.Label class="text-xs font-650 leading-4 text-muted-foreground">
-        {m.weather_city()}
-      </Combobox.Label>
+      <Combobox.Label class={FIELD_LABEL}>{m.weather_city()}</Combobox.Label>
       <Combobox.Control
         class={
           'flex h-control-md w-full min-w-0 items-center gap-3 rounded-control border border-solid ' +
@@ -167,8 +146,10 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
       >
         <span aria-hidden="true" class="i-tabler-map-pin size-4 flex-none text-highlight" />
         <Combobox.Input
+          as={PInput}
+          unstyled
           aria-describedby={descriptionId}
-          class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-650 leading-5 outline-none"
+          class={`min-w-0 flex-1 border-0 bg-transparent p-0 ${FIELD_VALUE} outline-none`}
           onFocus={() => setIsOpen(true)}
         />
         <Show
@@ -186,7 +167,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
           />
         </Show>
       </Combobox.Control>
-      <p class="m-0 text-xs leading-5 text-muted-foreground" id={descriptionId}>
+      <p class={`m-0 ${FIELD_DESCRIPTION}`} id={descriptionId}>
         {m.weather_location_search_description()}
       </p>
       <p aria-live="polite" class="sr-only">

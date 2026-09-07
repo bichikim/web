@@ -5,11 +5,11 @@ const TOSS_SESSION_STORAGE_KEY = '__ait_storage:pomo:app-session:v1'
 
 const enterFocusRoom = async (page: Page): Promise<void> => {
   await page.getByRole('button', {name: '포모와 시작하기'}).click()
-  await expect(page.getByRole('button', {name: '설정 열기'})).toBeVisible()
+  await expect(page.getByRole('button', {name: '설정'})).toBeVisible()
 }
 
 const openUserSettings = async (page: Page): Promise<void> => {
-  await page.getByRole('button', {name: '설정 열기'}).click()
+  await page.getByRole('button', {name: '설정'}).click()
   await page.getByRole('tab', {name: '사용자'}).click()
 }
 

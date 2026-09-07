@@ -13,7 +13,7 @@ interface CharacterCanvasProps extends AppearanceSettings {
   readonly onLoadSuccess: () => void
 }
 const MILLISECONDS_PER_SECOND = 1000
-const CharacterCanvas = (props: CharacterCanvasProps) => {
+export const CharacterCanvas = (props: CharacterCanvasProps) => {
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
   const [clothAvailable, setClothAvailable] = createSignal(false)
   const [clothEnabled, setClothEnabled] = createSignal(true)
@@ -108,5 +108,3 @@ const CharacterCanvas = (props: CharacterCanvasProps) => {
     </>
   )
 }
-
-export default CharacterCanvas

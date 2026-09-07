@@ -3,6 +3,8 @@ import type {Accessor} from 'solid-js'
 export type DisplayColorScheme = 'dark' | 'light'
 export type DisplayThemePreference = 'bright' | 'dark' | 'system'
 
+export const DEFAULT_DISPLAY_THEME: DisplayThemePreference = 'dark'
+
 export const DISPLAY_THEME_STORAGE_KEY = 'pomo:display-theme:v1'
 
 export interface DisplayThemeController {

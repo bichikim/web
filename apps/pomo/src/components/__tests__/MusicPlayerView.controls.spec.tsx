@@ -8,7 +8,7 @@ import {renderMusicPlayerView} from './music-player-view.test-support'
 describe('MusicPlayerView controls', () => {
   afterEach(() => cleanup())
 
-  it('should name every player control without native title tooltips', () => {
+  it('should name player controls without tooltips when no provider is installed', () => {
     const result = renderMusicPlayerView()
     const controller = result.container.querySelector('media-controller')
 
@@ -24,6 +24,7 @@ describe('MusicPlayerView controls', () => {
     expect(controls.length).toBeGreaterThan(0)
     for (const control of controls) {
       expect(control.hasAttribute('title')).toBe(false)
+      expect(control.hasAttribute('data-pomo-tooltip-trigger')).toBe(false)
     }
     for (const button of mediaButtons) {
       expect(button.hasAttribute('notooltip')).toBe(true)
@@ -95,7 +96,7 @@ describe('MusicPlayerView controls', () => {
     expect(summaryArtwork?.classList.contains('player-compact:hidden')).toBe(true)
     expect(compactSummaryPlay?.classList.contains('hidden')).toBe(true)
     expect(compactSummaryPlay?.classList.contains('player-compact:block')).toBe(true)
-    expect(summaryPlayButton?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
+    expect(summaryPlayButton?.getAttribute('aria-label')).toBe('재생')
     expect(summaryPlayButton?.classList.contains('pomo-player__play--summary')).toBe(true)
     expect(summaryPlayIcon?.classList.contains('size-6')).toBe(true)
     expect(summaryPauseIcon?.classList.contains('size-6')).toBe(true)
@@ -164,7 +165,7 @@ describe('MusicPlayerView controls', () => {
     expect(volumeRange.classList.contains('pomo-player__volume')).toBe(true)
     expect(volumeRange.classList.contains('max-sm:hidden')).toBe(false)
     expect(volumeRange.getAttribute('aria-label')).toBe('음량 조절')
-    expect(volumeRange.hasAttribute('title')).toBe(false)
+    expect(volumeRange).not.toHaveAttribute('title')
     expect(volumeRange.classList.contains('w-[clamp(3rem,_18cqi,_4.75rem)]')).toBe(true)
     expect(volumeRange.classList.contains('player-compact:min-w-6')).toBe(true)
     expect(volumeRange.classList.contains('player-compact:w-[clamp(1.5rem,_8cqi,_2rem)]')).toBe(

@@ -521,3 +521,13 @@ it('should preserve existing audio when metadata persistence fails without repla
 
   expect(storageMocks.delete).not.toHaveBeenCalled()
 })
+
+it('should reject audio cleanup failure when the caller needs durable retries', async () => {
+  const error = {cause: new Error('cache unavailable'), operation: 'delete' as const}
+  storageMocks.delete.mockResolvedValueOnce({error, ok: false})
+  await expect(deleteDialogueAudio('memo-key', {failureMode: 'throw'})).rejects.toMatchObject({
+    cause: error,
+  })
+  expect(storageMocks.delete).toHaveBeenCalledTimes(2)
+  await expect(deleteDialogueAudio('memo-key', {failureMode: 'throw'})).resolves.toBeUndefined()
+})

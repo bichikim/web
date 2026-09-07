@@ -1,5 +1,4 @@
-import {createEffect, createSignal, type JSX, Match, Show, Switch} from 'solid-js'
-
+import {createEffect, createSignal, Match, Show, Switch} from 'solid-js'
 import {PButton} from './PButton'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {type FeedDialogueJob, type PFeedState, usePFeedContext} from '../features/focus-room-feed'
@@ -19,6 +18,7 @@ import * as m from '@paraglide/message'
 import {FeedStatusSurface} from './feed-status/Surface'
 import {CLASSES} from './feed-status/shared'
 import {PModelDownloadConsent} from './PModelDownloadConsent'
+import {FeedGenerationStatus} from './feed-status/FeedGenerationStatus'
 
 interface PFeedStatusProps {
   readonly sceneStyle?: PSceneStyle
@@ -29,38 +29,11 @@ interface MissingModelDownloads {
   readonly size: number
 }
 
-interface FeedGenerationStatusProps {
-  readonly cancelDisabled: boolean
-  readonly message: JSX.Element
-  readonly onCancel: () => void
-  readonly sceneStyle?: PSceneStyle
-  readonly state: 'generating' | 'preparing'
-}
-
 interface ActiveFeedState {
   readonly message: string
   readonly progress: number | null
   readonly status: 'generating' | 'preparing'
 }
-
-const FeedGenerationStatus = (props: FeedGenerationStatusProps) => (
-  <FeedStatusSurface sceneStyle={props.sceneStyle} state={props.state}>
-    <span aria-hidden="true" class={CLASSES.feedStatusSpinner} />
-    <span class={CLASSES.feedStatusCopy}>
-      <strong>{m.feed_reading()}</strong>
-      <small>{props.message}</small>
-    </span>
-    <PButton
-      class={CLASSES.feedStatusAction}
-      disabled={props.cancelDisabled}
-      onPress={props.onCancel}
-      size="small"
-      tone="secondary"
-    >
-      {m.feed_stop()}
-    </PButton>
-  </FeedStatusSurface>
-)
 
 const getMissingModelDownloads = async (
   jobs: ReadonlyArray<FeedDialogueJob>,
@@ -203,6 +176,12 @@ const createFeedStatusActions = (
     }
   }
 
+  createEffect(() => {
+    if (downloadSize() !== null && isRetryDisabled()) {
+      setDownloadSize(null)
+    }
+  })
+
   return {
     downloadSize,
     handleCancel,
@@ -218,28 +197,21 @@ const createFeedStatusActions = (
   }
 }
 
+const getRetryStatusMessage = (download: ReturnType<typeof getRecoveryModelDownload>) =>
+  download === null
+    ? m.feed_retrying()
+    : m.feed_downloading_model({label: download.label, percentage: download.percentage})
+
 export const PFeedStatus = (props: PFeedStatusProps) => {
   const feeds = usePFeedContext()
   const modelDownload = useModelDownload()
   const actions = createFeedStatusActions(feeds, modelDownload)
   const activeRecoveryDownload = () =>
     getRecoveryModelDownload(modelDownload.state(), feeds.recoveryJobs())
-  const retryStatusMessage = () => {
-    const download = activeRecoveryDownload()
-    return download === null
-      ? m.feed_retrying()
-      : m.feed_downloading_model({label: download.label, percentage: download.percentage})
-  }
+  const retryStatusMessage = () => getRetryStatusMessage(activeRecoveryDownload())
   const isRetryInProgress = () => actions.isRetrying() || activeRecoveryDownload() !== null
   const activeGenerationState = () => getActiveGenerationState(feeds.state())
   const errorState = () => getErrorState(feeds.state())
-
-  createEffect(() => {
-    if (actions.downloadSize() !== null && actions.isRetryDisabled()) {
-      actions.setDownloadSize(null)
-    }
-  })
-
   return (
     <>
       <Show when={!feeds.isListening()}>
@@ -282,6 +254,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
               </span>
               <span class={CLASSES.feedStatusActions}>
                 <PButton
+                  bordered
+                  transparent
                   class={CLASSES.feedStatusAction}
                   disabled={actions.isRetryDisabled()}
                   onPress={actions.handleRetry}
@@ -291,6 +265,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                   {actions.isCheckingModel() ? m.feed_checking() : m.feed_retry()}
                 </PButton>
                 <PButton
+                  bordered
+                  transparent
                   class={CLASSES.feedStatusAction}
                   disabled={actions.isCheckingModel()}
                   onPress={feeds.dismissRecovery}
@@ -300,6 +276,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                   {m.feed_later()}
                 </PButton>
                 <PButton
+                  bordered
+                  transparent
                   class={CLASSES.feedStatusAction}
                   disabled={actions.isCheckingModel()}
                   onPress={actions.handleDelete}
@@ -326,6 +304,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                   </small>
                 </span>
                 <PButton
+                  bordered
+                  transparent
                   class={CLASSES.feedStatusAction}
                   onPress={actions.handleListenAll}
                   size="small"
@@ -345,6 +325,8 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                   <small>{feedState().message}</small>
                 </span>
                 <PButton
+                  bordered
+                  transparent
                   class={CLASSES.feedStatusAction}
                   onPress={feeds.syncNow}
                   size="small"

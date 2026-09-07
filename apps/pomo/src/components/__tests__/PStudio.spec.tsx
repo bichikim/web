@@ -5,6 +5,12 @@ import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
+  isDesktopBackgroundMode,
+  useDesktopMode,
+  useDesktopSafeAreaTop,
+  useDesktopSceneSettingsListener,
+} from '../../features/desktop-mode'
+import {
   getPScene,
   supportsPSceneGyroscope,
   usePSceneStyle,
@@ -16,25 +22,19 @@ import {
   writeFocusRoomEntrySession,
 } from '../../features/focus-room-entry'
 import {usePScenePreferences} from '../../features/focus-room-scene-preferences'
+import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
 import {getLocalizedSceneLabel} from '../../features/localization'
 import {type ModelDownloadRuntime, PModelDownloadProvider} from '../../features/model-download'
-import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather, type WeatherLocation} from '../../features/weather'
-import {
-  isDesktopBackgroundMode,
-  useDesktopMode,
-  useDesktopSafeAreaTop,
-  useDesktopSceneSettingsListener,
-} from '../../features/desktop-mode'
 import {PEntry} from '../p-studio/Entry'
-import {PSceneFallback} from '../p-studio/SceneFallback'
-import {PStudioScene} from '../p-studio/Scene'
 import {PStudioEvents} from '../p-studio/Events'
+import {PStudioScene} from '../p-studio/Scene'
+import {PSceneFallback} from '../p-studio/SceneFallback'
 import {SceneToolbar} from '../p-studio/Toolbar'
 import {useStudioScreenSaver} from '../p-studio/use-screen-saver'
-import {PStudio} from '../PStudio'
 import {PScreenSaver} from '../PScreenSaver'
+import {PStudio} from '../PStudio'
 import {PTour} from '../tour/PTour'
 import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 
@@ -136,6 +136,8 @@ const configureStudio = (options: StudioOptions = {}) => {
     dialogueComposerVisible,
     isReady: () => true,
     onDialogueComposerVisibleChange: setDialogueComposerVisible,
+    onTourButtonVisibleChange: vi.fn(),
+    tourButtonVisible: () => true,
   })
   vi.mocked(usePScenePreferences).mockReturnValue({
     activity,

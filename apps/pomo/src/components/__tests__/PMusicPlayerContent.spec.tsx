@@ -4,7 +4,7 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import PMusicPlayerContent from '../music-player/Content'
+import {PMusicPlayerContent} from '../music-player/Content'
 
 vi.mock('media-chrome', () => ({}))
 
@@ -270,7 +270,7 @@ describe('PMusicPlayerContent', () => {
     for (const playButton of [expandedPlayButton, compactPlayButton]) {
       expect(playButton).toBeInstanceOf(HTMLElement)
       expect(playButton?.hasAttribute('notooltip')).toBe(true)
-      expect(playButton?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
+      expect(playButton?.getAttribute('aria-label')).toBe('재생')
     }
   })
 
@@ -630,7 +630,9 @@ describe('PMusicPlayerContent', () => {
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
-    expect(screen.getByText('집중 음악을 준비 중이에요')).toBeTruthy()
+    expect(
+      screen.getByText('집중 음악을 준비 중이에요', {selector: '.pomo-overflow-marquee__content'}),
+    ).toBeTruthy()
     expect(screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
   })
 
@@ -702,7 +704,9 @@ describe('PMusicPlayerContent', () => {
 
     expect(audio.getAttribute('src')).toBeNull()
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
-    expect(screen.getByText('집중 음악을 준비 중이에요')).toBeTruthy()
+    expect(
+      screen.getByText('집중 음악을 준비 중이에요', {selector: '.pomo-overflow-marquee__content'}),
+    ).toBeTruthy()
   })
 
   it('should continue with the following track after removing the current loaded track', async () => {

@@ -17,3 +17,4 @@ export {
   writeCalendarMonthCache,
 } from './month-cache'
 export type {CalendarMonthRange} from './month-cache'
+export {groupCalendarEvents} from './group-events'

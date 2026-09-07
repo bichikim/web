@@ -82,6 +82,7 @@ export const unitTestProject = {
           '@solid-primitives/props',
           '@solid-primitives/resize-observer',
           '@solidjs/router',
+          '@solidjs/start',
           'solid-presence',
           'solid-prevent-scroll',
         ],

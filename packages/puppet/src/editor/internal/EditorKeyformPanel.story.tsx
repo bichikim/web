@@ -4,7 +4,6 @@ import {fn} from 'storybook/test'
 
 import type {PuppetParameterValues} from '../../deformation'
 import {createDemoDocument} from '../../player'
-import '../story.css'
 import {EditorKeyformPanel} from './EditorKeyformPanel'
 
 const DOCUMENT = createDemoDocument()

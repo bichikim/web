@@ -4,7 +4,7 @@ import {cleanup, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import PageDispatcher from '../PageDispatcher'
+import {PageDispatcher} from '../PageDispatcher'
 
 const createPage = (name: string) => () => <output data-testid="dev-page">{name}</output>
 
@@ -15,18 +15,20 @@ vi.mock('@solidjs/meta', () => ({
   Title: (props: {children: JSX.Element}) => <output data-testid="title">{props.children}</output>,
 }))
 
-vi.mock('../HomePage', () => ({default: createPage('home')}))
-vi.mock('../CharacterPage', () => ({default: createPage('character')}))
-vi.mock('../ChatPage', () => ({default: createPage('chat')}))
-vi.mock('../DialoguePage', () => ({default: createPage('dialogue')}))
-vi.mock('../LayerReviewPage', () => ({default: createPage('layer-review')}))
-vi.mock('../OptionResetPage', () => ({default: createPage('option-reset')}))
-vi.mock('../RecoveryPage', () => ({default: createPage('recovery')}))
-vi.mock('../SpeechToTextPage', () => ({default: createPage('speech-to-text')}))
-vi.mock('../StoragePage', () => ({default: createPage('storage')}))
-vi.mock('../TermsPage', () => ({default: createPage('terms')}))
-vi.mock('../TextMoodPage', () => ({default: createPage('text-mood')}))
-vi.mock('../VoicePage', () => ({default: createPage('voice')}))
+vi.mock('../HomePage', () => ({HomePage: createPage('home')}))
+vi.mock('../ImageGenerationPage', () => ({ImageGenerationPage: createPage('image-generation')}))
+vi.mock('../CharacterPage', () => ({CharacterPage: createPage('character')}))
+vi.mock('../ChatPage', () => ({ChatPage: createPage('chat')}))
+vi.mock('../DialoguePage', () => ({DialoguePage: createPage('dialogue')}))
+vi.mock('../HwpPage', () => ({HwpPage: createPage('hwp')}))
+vi.mock('../LayerReviewPage', () => ({LayerReviewPage: createPage('layer-review')}))
+vi.mock('../OptionResetPage', () => ({OptionResetPage: createPage('option-reset')}))
+vi.mock('../RecoveryPage', () => ({RecoveryPage: createPage('recovery')}))
+vi.mock('../SpeechToTextPage', () => ({SpeechToTextPage: createPage('speech-to-text')}))
+vi.mock('../StoragePage', () => ({StoragePage: createPage('storage')}))
+vi.mock('../TermsPage', () => ({TermsPage: createPage('terms')}))
+vi.mock('../TextMoodPage', () => ({TextMoodPage: createPage('text-mood')}))
+vi.mock('../VoicePage', () => ({VoicePage: createPage('voice')}))
 
 afterEach(() => {
   cleanup()
@@ -34,9 +36,11 @@ afterEach(() => {
 
 it.each([
   ['/dev', 'home'],
+  ['/dev/image-generation', 'image-generation'],
   ['/dev/character', 'character'],
   ['/dev/chat', 'chat'],
   ['/dev/dialogue', 'dialogue'],
+  ['/dev/hwp', 'hwp'],
   ['/dev/focus-room-layer-review', 'layer-review'],
   ['/dev/options', 'option-reset'],
   ['/dev/recovery', 'recovery'],

@@ -1,3 +1,1 @@
-import {clientOnly} from '@solidjs/start'
-
-export const SceneSettingsPanel = clientOnly(() => import('../PSettings'), {lazy: true})
+export {PSettings as SceneSettingsPanel} from '../PSettings'

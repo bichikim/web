@@ -530,14 +530,6 @@ export const useMusicPlayerController = (props: PMusicPlayerContentProps) => {
       })
     }
 
-    useEvent(audioElement ?? null, 'play', handlePlay)
-    useEvent(audioElement ?? null, 'pause', handlePause)
-    useEvent(audioElement ?? null, 'ended', handleEnded)
-    useEvent(audioElement ?? null, 'error', handleAudioError)
-    useEvent(audioElement ?? null, 'loadedmetadata', restorePendingPlayback)
-    useEvent(audioElement ?? null, 'seeking', handleSeeking)
-    useEvent(audioElement ?? null, 'seeked', playbackPersistence.persistCurrentPlayback)
-    useEvent(audioElement ?? null, 'timeupdate', playbackPersistence.persistPlaybackProgress)
     useEvent(window, 'pagehide', playbackPersistence.persistCurrentPlayback)
   })
 
@@ -557,6 +549,16 @@ export const useMusicPlayerController = (props: PMusicPlayerContentProps) => {
     expanded,
     isPlaying,
     levels: visualizer.levels,
+    mediaEvents: {
+      onEnded: handleEnded,
+      onError: handleAudioError,
+      onLoadedMetadata: restorePendingPlayback,
+      onPause: handlePause,
+      onPlay: handlePlay,
+      onSeeked: playbackPersistence.persistCurrentPlayback,
+      onSeeking: handleSeeking,
+      onTimeUpdate: playbackPersistence.persistPlaybackProgress,
+    },
     previewPlayback,
     removeTrackFromQueue,
     repeatMode,

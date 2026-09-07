@@ -90,6 +90,7 @@ export default {
         'apps/coong/src/kata/resource/index.tsx',
         'apps/coong/src/use/focus-controller/KeyCap.tsx',
         'apps/coong/src/use/focus-controller/SolidWindow.tsx',
+        'packages/puppet/src/element-demo.tsx',
         'packages/puppet/src/main.tsx',
         // V8 does not attribute code executed in worker threads.
         'packages/puppet/src/player/internal/prepare-puppet-document-worker.ts',

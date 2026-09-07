@@ -2,7 +2,7 @@ import {MusicPlayerView} from '../MusicPlayerView'
 import type {PMusicPlayerContentProps} from './model'
 import {useMusicPlayerController} from './use-music-player-controller'
 
-export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
+export function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   const player = useMusicPlayerController(props)
 
   return (
@@ -12,6 +12,7 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
       expanded={player.expanded()}
       isPlaying={player.isPlaying()}
       levels={player.levels()}
+      mediaEvents={player.mediaEvents}
       onAudioElement={player.setAudioElement}
       onAlbumAdd={player.addTracksToQueue}
       onAlbumClear={player.canEditQueue() ? player.clearTrackQueue : undefined}

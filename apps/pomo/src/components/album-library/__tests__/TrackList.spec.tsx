@@ -3,6 +3,7 @@
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PAlbumTrackList} from '../TrackList'
 
 const audioMocks = vi.hoisted(() => ({
   requestTrackAccessAction: vi.fn(),
@@ -21,7 +22,6 @@ vi.mock('@solidjs/router', () => ({
   useAction: vi.fn((clientAction) => clientAction),
   useSubmissions: vi.fn(() => routerMocks.submissions),
 }))
-import {PAlbumTrackList} from '../TrackList'
 
 class TestResizeObserver {
   static instances: TestResizeObserver[] = []

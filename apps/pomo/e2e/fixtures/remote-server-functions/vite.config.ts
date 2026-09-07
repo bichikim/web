@@ -4,7 +4,7 @@ import {nitro} from 'nitro/vite'
 import {defineConfig} from 'vite'
 
 import {staticNitroEntryPlugin} from '../../../scripts/vite/static-nitro-entry/plugin'
-import {createRemoteServerFunctionsPlugin} from '../../../vite/remote-server-functions'
+import {createRemoteServerFunctionsPlugin} from '../../../scripts/vite/remote-server-functions'
 
 const SSR_ORIGIN = 'http://127.0.0.1:45173'
 type BuildTarget = 'ssg' | 'ssr'

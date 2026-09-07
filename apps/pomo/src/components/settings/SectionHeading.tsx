@@ -5,8 +5,8 @@ import {type JSX, Show} from 'solid-js'
 const sectionHeadingClasses = cva(
   [
     'flex items-center gap-[0.45rem]',
-    '[&_h3]:m-0 [&_h3]:text-[0.9375rem] [&_h3]:font-[750] [&_h3]:text-foreground',
-    '[&_>_span]:text-[0.6875rem] [&_>_span]:text-muted-foreground',
+    '[&_h3]:m-0 [&_h3]:text-base [&_h3]:font-[750] [&_h3]:text-foreground',
+    '[&_>_span]:text-sm [&_>_span]:text-muted-foreground',
   ],
   {
     defaultVariants: {divider: 'top'},

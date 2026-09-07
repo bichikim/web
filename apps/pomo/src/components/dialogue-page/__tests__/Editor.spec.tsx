@@ -2,7 +2,7 @@
 
 import {A, useNavigate} from '@solidjs/router'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createSignal, type JSX, Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {usePSceneStyle} from '../../../features/focus-room-animation'
@@ -24,8 +24,8 @@ import {getPrimaryMood} from '../../../features/text-mood'
 import {PFaceIcon} from '../../PFaceIcon'
 import {PGenerationStatus} from '../../PGenerationStatus'
 import {PModelDownloadConsent} from '../../PModelDownloadConsent'
-import PDialogueDraftGenerator from '../DraftGenerator'
-import PDialogueEditor from '../Editor'
+import {PDialogueDraftGenerator} from '../DraftGenerator'
+import {PDialogueEditor} from '../Editor'
 
 vi.mock('@solidjs/router', () => ({A: vi.fn(), useNavigate: vi.fn()}))
 vi.mock('../../../features/focus-room-animation', () => ({usePSceneStyle: vi.fn()}))
@@ -47,7 +47,7 @@ vi.mock('../../../features/supertonic', async () => {
   }
 })
 vi.mock('../../../features/text-mood', () => ({getPrimaryMood: vi.fn()}))
-vi.mock('../DraftGenerator', () => ({default: vi.fn()}))
+vi.mock('../DraftGenerator', () => ({PDialogueDraftGenerator: vi.fn()}))
 vi.mock('../../PFaceIcon', () => ({PFaceIcon: vi.fn()}))
 vi.mock('../../PGenerationStatus', () => ({PGenerationStatus: vi.fn()}))
 vi.mock('../../PModelDownloadConsent', () => ({PModelDownloadConsent: vi.fn()}))
@@ -94,6 +94,8 @@ const createModelDownload = (): ModelDownloadController => ({
   cancel: vi.fn(),
   dismissError: vi.fn(),
   dispose: vi.fn(),
+  downloads: () => [],
+  startImageModel: vi.fn(),
   startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}),
@@ -165,9 +167,9 @@ const renderEditor = (harness: EditorHarness, dialogueId: string | null = null) 
   return render(() => <PDialogueEditor dialogueId={dialogueId} />)
 }
 
-const getVoiceSelect = () => screen.getByRole('combobox', {name: '목소리'})
-const getLanguageSelect = () => screen.getByRole('combobox', {name: '언어'})
-const getModelSelect = () => screen.getByRole('combobox', {name: '모델'})
+const getVoiceSelect = () => screen.getByRole('button', {name: /목소리/})
+const getLanguageSelect = () => screen.getByRole('button', {name: /언어/})
+const getModelSelect = () => screen.getByRole('button', {name: /모델/})
 const getGenerateButton = () => screen.getByRole('button', {name: '음성 만들기'})
 const getSaveButton = () => screen.getByRole('button', {name: '대화 저장'})
 
@@ -256,7 +258,7 @@ describe('PDialogueEditor fields', () => {
       '[&_textarea]:bg-surface-strong',
       '[&_textarea]:text-foreground',
     )
-    expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
     expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
     expect(screen.getByText('13 / 3000')).toBeInTheDocument()
     expect(screen.getByTestId('download-consent')).toHaveAttribute('data-download-size', '123 MB')
@@ -266,16 +268,16 @@ describe('PDialogueEditor fields', () => {
     })
     expect(harness.controller.setText).toHaveBeenCalledWith('직접 입력')
 
-    fireEvent.change(getVoiceSelect(), {target: {value: 'F1'}})
-    fireEvent.change(getLanguageSelect(), {target: {value: 'en'}})
-    fireEvent.change(getModelSelect(), {target: {value: 'int8'}})
-    expect(harness.controller.voiceId()).toBe('F1')
-    expect(harness.controller.language()).toBe('en')
-    expect(harness.controller.modelId()).toBe('int8')
-
-    fireEvent.change(getVoiceSelect(), {target: {value: 'missing'}})
-    fireEvent.change(getLanguageSelect(), {target: {value: 'missing'}})
-    fireEvent.change(getModelSelect(), {target: {value: 'missing'}})
+    for (const [select, value] of [
+      [getVoiceSelect(), 'F1'],
+      [getLanguageSelect(), 'en'],
+      [getModelSelect(), 'int8'],
+    ] as const) {
+      fireEvent.keyDown(select, {key: 'ArrowDown'})
+      const option = document.querySelector(`[role="option"][data-key="${value}"]`)
+      expect(option).not.toBeNull()
+      fireEvent.click(option!)
+    }
     expect(harness.controller.voiceId()).toBe('F1')
     expect(harness.controller.language()).toBe('en')
     expect(harness.controller.modelId()).toBe('int8')

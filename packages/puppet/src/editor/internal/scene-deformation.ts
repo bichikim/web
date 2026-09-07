@@ -19,6 +19,7 @@ export interface ApplySceneDeformersOptions {
 export interface UnapplySceneDeformersPointOptions {
   readonly document: PuppetDocument
   readonly partId: string
+  readonly vertexIndex?: number
   readonly point: PuppetPoint
 }
 
@@ -43,10 +44,13 @@ const createNodeTransform = (node: PuppetSceneContainerNode): PointTransform => 
   }
 }
 
-const createInverseNodeTransform = (node: PuppetSceneContainerNode): PointTransform => {
+const createInverseNodeTransform = (
+  node: PuppetSceneContainerNode,
+  vertex?: {partId: string; vertexIndex: number},
+): PointTransform => {
   switch (node.kind) {
     case 'deformer':
-      return (point) => untransformDeformerPoint(node, point)
+      return (point) => untransformDeformerPoint(node, point, vertex)
     case 'group':
       return (point) => point
     default: {
@@ -86,7 +90,16 @@ export const unapplySceneDeformersPoint = (
   options: UnapplySceneDeformersPointOptions,
 ): PuppetPoint => {
   const path = findNodeAncestorPath(getDocumentScene(options.document).roots, options.partId) ?? []
-  return path.reduce((point, node) => createInverseNodeTransform(node)(point), options.point)
+  return path.reduce(
+    (point, node) =>
+      createInverseNodeTransform(
+        node,
+        options.vertexIndex === undefined
+          ? undefined
+          : {partId: options.partId, vertexIndex: options.vertexIndex},
+      )(point),
+    options.point,
+  )
 }
 
 export const applySceneNodeAncestorsPoint = (

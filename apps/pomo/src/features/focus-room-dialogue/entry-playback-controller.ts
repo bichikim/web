@@ -65,7 +65,7 @@ export interface EntryPlaybackController {
   readonly isBlocked: Accessor<boolean>
   readonly isDialogueScheduled: (dialogueId: string) => boolean
   readonly isPlaying: Accessor<boolean>
-  readonly prepare: (repository: PDialogueRepository, dialogueId: string) => Promise<void>
+  readonly prepare: (repository: PDialogueRepository, dialogueId: string) => Promise<boolean>
   readonly playSequence: (
     repository: PDialogueRepository,
     options: PlayPDialogueSequenceOptions,
@@ -441,13 +441,25 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     isDialogueScheduled: (dialogueId) =>
       dialogue?.id === dialogueId || queue.isScheduled(dialogueId),
     isPlaying,
-    playSequence: queue.enqueue,
-    prepare: (repository, dialogueId) =>
-      queue.enqueue(repository, {
+    async playSequence(repository, options) {
+      await queue.enqueue(repository, options)
+    },
+    async prepare(repository, dialogueId) {
+      if (isDisposed) {
+        return false
+      }
+
+      let isUnavailable = false
+      const completion = await queue.enqueue(repository, {
         dialogueIds: [dialogueId],
         onDialogueStart: () => undefined,
+        onDialogueUnavailable: () => {
+          isUnavailable = true
+        },
         onSequenceStop: () => undefined,
-      }),
+      })
+      return completion === 'ended' && !isUnavailable
+    },
     retry() {
       if (!isAwaitingSceneInteraction) {
         return

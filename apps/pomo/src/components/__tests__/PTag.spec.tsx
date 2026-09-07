@@ -13,7 +13,7 @@ describe('PTag', () => {
     expect(tag.getAttribute('data-pomo-tag')).toBe('')
     expect(tag.classList).toContain('whitespace-nowrap')
     expect(tag.classList).toContain('bg-secondary-soft')
-    expect(tag.classList).toContain('text-[0.625rem]')
+    expect(tag.classList).toContain('text-modal-detail')
   })
 
   it('should render explicit size and tone variants with consumer classes', () => {
@@ -25,7 +25,7 @@ describe('PTag', () => {
     const tag = result.getByText('오류')
 
     expect(tag.classList).toContain('consumer-tag')
-    expect(tag.classList).toContain('text-xs')
+    expect(tag.classList).toContain('text-modal-detail')
     expect(tag.classList).toContain('text-danger')
   })
 })

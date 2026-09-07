@@ -254,16 +254,18 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     onStopEntryPlayback: playback.stop,
     async playDialogue(dialogueId) {
       if (!isPlaybackEnabled()) {
-        return
+        return false
       }
 
       if (repository === null) {
         await initialization
       }
 
-      if (!isDisposed && isPlaybackEnabled() && repository !== null) {
-        await playback.prepare(repository, dialogueId)
+      if (isDisposed || !isPlaybackEnabled() || repository === null) {
+        return false
       }
+
+      return playback.prepare(repository, dialogueId)
     },
     async playDialogueEvents(eventIds, onBeforePlayback) {
       if (!isPlaybackEnabled()) {

@@ -1,8 +1,8 @@
 import {
   createSerialNativeStorageWriter,
   hasNativeStorageBridge,
+  parseStorageJson,
   readNativeStorageJson,
-  readWebStorageJson,
   writeWebStorageJson,
 } from '../runtime-storage'
 import {type MemoryMemo, parseMemoryMemos} from './schema'
@@ -28,7 +28,7 @@ const runtimeNativeWriter = createSerialNativeStorageWriter()
 const runtimeStorage = {
   hasNative: hasNativeStorageBridge,
   readNative: () => readNativeStorageJson(STORAGE_KEY, parseMemoryMemos),
-  readWeb: () => readWebStorageJson(STORAGE_KEY, parseMemoryMemos),
+  readWeb: () => parseStorageJson(localStorage.getItem(STORAGE_KEY), parseMemoryMemos),
   writeNative: (memos) => runtimeNativeWriter.write(STORAGE_KEY, memos),
   writeWeb: (memos) => writeWebStorageJson(STORAGE_KEY, memos),
 } satisfies MemoryMemoStorage

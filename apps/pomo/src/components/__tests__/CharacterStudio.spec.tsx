@@ -2,11 +2,11 @@
 
 import {createSignal} from 'solid-js'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   type CharacterRendererController,
   useCharacterRenderer,
 } from '../../features/character-renderer'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {CharacterStudio} from '../CharacterStudio'
 
 vi.mock('../../features/character-renderer', () => ({useCharacterRenderer: vi.fn()}))

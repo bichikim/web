@@ -17,6 +17,7 @@ const preview: Preview = {
       // ],
       options: {
         black: {name: 'black', value: 'black'},
+        blur: {name: '블러 확인', value: 'var(--storybook-blur-background)'},
         chessboard: {
           name: 'chessboard',
           value: 'repeating-linear-gradient(45deg, #000 0, #000 25px, #fff 25px, #fff 50px)',

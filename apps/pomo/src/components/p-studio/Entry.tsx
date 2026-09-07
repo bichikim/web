@@ -24,10 +24,12 @@ export const PEntry = (props: PEntryProps) => (
     <div class={CLASSES.entryContent}>
       <div class="grid gap-3">
         <PButton
+          pill
+          raised
           class={CLASSES.entryAction}
           disabled={props.isExiting}
           leadingImage={smilingFaceSource}
-          leadingImageClass={CLASSES.entryLeadingImage}
+          leadingOverflow
           onPress={() => props.onEnter()}
           tone="primary"
           trailingIcon="i-tabler-arrow-right"

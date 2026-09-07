@@ -41,7 +41,7 @@ export interface PEventContextValue {
   readonly onStopDialoguePlayback: () => void
   readonly onStopEntryPlayback: () => void
   readonly enterFocusRoom: () => void
-  readonly playDialogue: (dialogueId: string) => Promise<void>
+  readonly playDialogue: (dialogueId: string) => Promise<boolean>
   readonly playDialogueEvents: (
     eventIds: ReadonlyArray<DialogueEventId>,
     onBeforePlayback?: () => void,

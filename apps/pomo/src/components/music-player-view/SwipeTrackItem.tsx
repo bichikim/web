@@ -1,8 +1,10 @@
+import {useTooltipTrigger} from '../tooltip'
 import {cx} from 'class-variance-authority'
 import {createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
 import type {PTrack} from '../../features/focus-room-audio'
 import {POverflowMarquee} from '../POverflowMarquee'
+import {PTooltip} from '../PTooltip'
 
 const DELETE_COMMIT_DISTANCE = 64
 const DRAG_INTENT_DISTANCE = 8
@@ -154,6 +156,8 @@ export interface PSwipeTrackItemProps {
 }
 
 export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
+  const tooltip = useTooltipTrigger()
+
   const removable = () => props.onRemove !== undefined
   const gesture = useSwipeTrackGesture(removable, () => props.onRemove?.())
 
@@ -185,6 +189,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
           }
         />
       </div>
+
       <button
         aria-current={props.current ? 'true' : undefined}
         aria-keyshortcuts={removable() ? 'Delete' : undefined}
@@ -227,12 +232,14 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         type="button"
       >
         <span class="w-4 text-center tabular-nums">{props.index + 1}</span>
-        <Show
-          fallback={<span class="min-w-0 flex-1 truncate">{props.track.title}</span>}
-          when={props.current}
-        >
-          <POverflowMarquee class="flex-1" focusable={false} text={props.track.title} />
-        </Show>
+        <span {...tooltip.events} ref={tooltip.setTarget} class="min-w-0 flex-1">
+          <Show
+            fallback={<span class="block truncate">{props.track.title}</span>}
+            when={props.current}
+          >
+            <POverflowMarquee focusable={false} text={props.track.title} />
+          </Show>
+        </span>
         <Show
           fallback={
             <span class="min-w-0 w-22 shrink-0 truncate opacity-70">{props.track.artist}</span>
@@ -246,6 +253,8 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
           />
         </Show>
       </button>
+      <PTooltip target={tooltip.target()} show={tooltip.show()} text={props.track.title} />
+
       <span aria-live="polite" class="sr-only">
         {gesture.deleteReady() ? `${props.track.title}, 놓으면 삭제` : ''}
       </span>

@@ -1,18 +1,48 @@
-import {fireEvent, render} from '@solidjs/testing-library'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+/** @vitest-environment jsdom */
 
+import {cleanup, fireEvent, render} from '@solidjs/testing-library'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {PTooltipContent, PTooltipProvider} from '../../tooltip'
 import {VolumeControl} from '../VolumeControl'
 
+import {installTooltipBrowser} from '../../tooltip/__tests__/support/browser'
+
 describe('VolumeControl', () => {
+  let browser: ReturnType<typeof installTooltipBrowser>
+  beforeEach(() => {
+    browser = installTooltipBrowser()
+    vi.stubGlobal('CSS', {supports: () => false})
+  })
+
   afterEach(() => {
+    cleanup()
+    browser.restore()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+  })
+
+  it('should attach a volume tooltip to both inline and popover sliders', () => {
+    const {container} = render(() => (
+      <PTooltipProvider>
+        <VolumeControl />
+        <PTooltipContent />
+      </PTooltipProvider>
+    ))
+    const sliders = container.querySelectorAll<HTMLElement>('media-volume-range')
+    expect(sliders).toHaveLength(2)
+    for (const slider of sliders) {
+      expect(slider).not.toHaveAttribute('title')
+      browser.setVisibleFocus(slider)
+      fireEvent.focus(slider)
+      expect(slider).toHaveAttribute('title', '음량 조절')
+    }
   })
 
   it('moves volume adjustment into a popover on narrow players', () => {
     const {container} = render(() => <VolumeControl />)
     const inlineMute = container.querySelector('media-mute-button')
-    const ranges = container.querySelectorAll('media-volume-range')
+    const ranges = container.querySelectorAll<HTMLElement>('media-volume-range')
     const trigger = container.querySelector<HTMLButtonElement>(
       '.pomo-player__volume-popover-trigger',
     )
@@ -26,6 +56,9 @@ describe('VolumeControl', () => {
     expect(trigger?.style.getPropertyValue('--pomo-volume-popover-anchor')).toBe(`--${popover?.id}`)
     expect(trigger?.style.anchorName).toBe('')
     expect(trigger).toHaveClass('[anchor-name:var(--pomo-volume-popover-anchor)]')
+    expect(trigger).toHaveClass(
+      '[&[data-pomo-tooltip-trigger]]:[anchor-name:var(--pomo-volume-popover-anchor),var(--pomo-tooltip-anchor)]',
+    )
     expect(popover).toHaveAttribute('popover', 'auto')
     expect(popover).toHaveAttribute('role', 'dialog')
     expect(popover?.style.getPropertyValue('--pomo-volume-popover-anchor')).toBe(`--${popover?.id}`)

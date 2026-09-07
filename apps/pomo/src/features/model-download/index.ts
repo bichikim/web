@@ -24,3 +24,15 @@ export {
   useModelDownload,
 } from './PModelDownloadProvider'
 export type {PModelDownloadProviderProps} from './PModelDownloadProvider'
+
+export {createDownloadQueue} from './queue'
+export {createImageModelDownloadClient} from './image-client'
+export type {CreateImageModelDownloadOptions} from './image-client'
+export type {
+  ImageModelDownloadTarget,
+  ModelDownloadItem,
+  QueuedModelDownloadState,
+  ModelDownloadCallbacks,
+  ModelDownloadClient,
+  StartModelDownloadOptions,
+} from './controller'

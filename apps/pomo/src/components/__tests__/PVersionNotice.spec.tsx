@@ -3,11 +3,11 @@
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {PButton} from '../PButton'
 import {PModal, type PModalProps} from '../PModal'
-import {PIconButton} from '../PIconButton'
 import {POrbitBorder, type POrbitBorderProps} from '../POrbitBorder'
-import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {PVersionNotice} from '../PVersionNotice'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
 
 const versionMocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('src/features/version-catalog', async (importOriginal) => {
   }
 })
 vi.mock('../PModal', () => ({PModal: vi.fn()}))
-vi.mock('../PIconButton', () => ({PIconButton: vi.fn()}))
+vi.mock('../PButton', () => ({PButton: vi.fn()}))
 vi.mock('../POrbitBorder', () => ({POrbitBorder: vi.fn()}))
 vi.mock('../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 
@@ -67,14 +67,14 @@ beforeEach(() => {
       </button>
     </div>
   ))
-  vi.mocked(PIconButton).mockImplementation((props) => (
+  vi.mocked(PButton).mockImplementation((props) => (
     <button
       aria-label={props.accessibleLabel}
-      onClick={(event) => props.onPress(event.currentTarget)}
+      onClick={(event) => props.onPress?.(event.currentTarget)}
       type="button"
     >
       {props.accessibleLabel}
-      <span class={props.icon}>{props.feedback}</span>
+      <span class={props.icon}>{props.tooltip}</span>
     </button>
   ))
   vi.mocked(POrbitBorder).mockImplementation((props: POrbitBorderProps) => (
@@ -92,8 +92,8 @@ it('should show recent releases in a gift modal and persist the newest marker on
 
   const trigger = await screen.findByRole('button', {name: '새 업데이트 보기'})
   expect(POrbitBorder).toHaveBeenCalledOnce()
-  expect(PIconButton).toHaveBeenCalledWith(
-    expect.objectContaining({feedback: '새로운 소식', icon: 'i-tabler-gift'}),
+  expect(PButton).toHaveBeenCalledWith(
+    expect.objectContaining({icon: 'i-tabler-gift', tooltip: '새 업데이트 보기'}),
   )
   fireEvent.click(trigger)
 

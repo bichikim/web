@@ -1,3 +1,4 @@
+import {moveCurveHandles} from './curve-control-points'
 import {
   isTwoDimensionalParameterBinding,
   parameterValuesEqual,
@@ -15,7 +16,7 @@ import {
   getParameterBinding,
   getParameterTargetDeformerIds,
 } from './parameter-keyforms'
-import {isSceneNodeLocked} from './scene-graph'
+import {getSceneNode, isSceneNodeLocked} from './scene-graph'
 
 interface ParameterDeformerValuesTarget {
   readonly bindingId: string
@@ -133,11 +134,20 @@ export const setParameterKeyformDeformerPoint = (
     return undefined
   }
 
-  const controlPoints = [...deformer.controlPoints]
+  let controlPoints = [...deformer.controlPoints]
   const previousX = controlPoints[options.pointIndex * 2] ?? 0
   const previousY = controlPoints[options.pointIndex * 2 + 1] ?? 0
   controlPoints[options.pointIndex * 2] = options.x
   controlPoints[options.pointIndex * 2 + 1] = options.y
+  const node = getSceneNode(options.document, options.nodeId)
+  if (node?.kind === 'deformer' && node.curveAxis !== undefined) {
+    controlPoints = moveCurveHandles({
+      controlPoints,
+      offsetX: options.x - previousX,
+      offsetY: options.y - previousY,
+      pointIndex: options.pointIndex,
+    })
+  }
   return replaceKeyformDeformer(options.document, binding.id, options.values, {
     ...deformer,
     controlPoints,

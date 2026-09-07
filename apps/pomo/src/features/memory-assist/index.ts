@@ -21,7 +21,22 @@ export {useMemoryReminders} from './use-reminders'
 export type {UseMemoryRemindersProps} from './use-reminders'
 export {createMemoryMemoDialogue} from './dialogue'
 export type {CreateMemoryMemoDialogueOptions} from './dialogue'
-export {getMemoryMemoDialogueId, isMemoryMemoDialogueId} from './dialogue-id'
+export {
+  getMemoryMemoDialogueId,
+  isMemoryMemoDialogueId,
+  isMemoryMemoOwnedDialogue,
+} from './dialogue-id'
 export {excludeMemoryMemoDialogues} from './dialogue-library'
 export {deleteMemoryMemoDraft, readMemoryMemoDraft, writeMemoryMemoDraft} from './draft-storage'
 export type {MemoryMemoDraft} from './draft-storage'
+
+export {createMemoryMemoDeletion} from './deletion'
+export {memoryMemoDeletion} from './deletion-runtime'
+export type {
+  DeleteMemoryMemoOptions,
+  MemoryMemoDeletionResult,
+  MemoryMemoDeletion,
+  MemoryMemoDeletionOptions,
+} from './deletion'
+
+export {useDeletionRecovery} from './use-deletion-recovery'

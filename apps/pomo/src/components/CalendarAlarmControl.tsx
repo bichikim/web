@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createMemo, createSignal, createUniqueId, type Setter, Show} from 'solid-js'
 
@@ -5,7 +6,13 @@ import * as m from '@paraglide/message'
 
 import type {CalendarEvent} from '../features/calendar'
 import {usePEvents} from '../features/focus-room-dialogue'
-import {createMemoryMemo, type MemoryMemo, updateMemoryMemos} from '../features/memory-assist'
+import {
+  createMemoryMemo,
+  editMemoryMemo,
+  type MemoryMemo,
+  memoryMemoDeletion,
+  updateMemoryMemos,
+} from '../features/memory-assist'
 import {PButton} from './PButton'
 
 const CALENDAR_ALARM_ID_PREFIX = 'calendar-alarm:'
@@ -126,6 +133,10 @@ const useCalendarAlarmController = (
       const currentAlarmId = alarmId()
       await updateMemoryMemos((currentMemos) => {
         const existingMemo = currentMemos.find((memo) => memo.id === currentAlarmId)
+        if (existingMemo?.deletionPending === true) {
+          throw new Error('Calendar alarm cleanup must finish before rearming.')
+        }
+
         const alarm: MemoryMemo =
           existingMemo === undefined
             ? createMemoryMemo({
@@ -136,15 +147,14 @@ const useCalendarAlarmController = (
                 recallMode: 'none',
                 text,
               })
-            : {
-                ...existingMemo,
-                dialogueId: existingMemo.text === text ? existingMemo.dialogueId : null,
+            : editMemoryMemo({
                 exactReminderAt: alarmAt.toISOString(),
-                nextRecallAt: null,
+                memo: existingMemo,
+                now,
+                random: Math.random,
                 recallMode: 'none',
                 text,
-                updatedAt: now.toISOString(),
-              }
+              })
         return [alarm, ...currentMemos.filter((memo) => memo.id !== currentAlarmId)]
       })
       popoverElement()?.hidePopover()
@@ -158,20 +168,17 @@ const useCalendarAlarmController = (
 
   const removeAlarm = async () => {
     const currentMemo = storedMemo()
-    if (currentMemo === undefined) {
+    if (currentMemo === undefined || pending()) {
       return
     }
 
     setPending(true)
     setMessage(null)
     try {
-      if (currentMemo.dialogueId !== null) {
-        await events.deleteDialogue(currentMemo.dialogueId)
-      }
-      const currentAlarmId = alarmId()
-      await updateMemoryMemos((currentMemos) =>
-        currentMemos.filter((memo) => memo.id !== currentAlarmId),
-      )
+      await memoryMemoDeletion.delete({
+        deleteDialogue: events.deleteDialogue,
+        memoId: currentMemo.id,
+      })
       popoverElement()?.hidePopover()
     } catch (error: unknown) {
       console.error('Failed to remove a calendar alarm.', error)
@@ -218,7 +225,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
         }
         class={cx(
           'inline-flex min-h-control-sm items-center gap-1.5 rounded-panel-inner border px-2.5',
-          'text-xs font-750 outline-none focus-visible:shadow-focus',
+          'text-modal-detail font-750 outline-none focus-visible:shadow-focus',
           '[anchor-name:var(--pomo-calendar-alarm-anchor)]',
           alarm.active()
             ? 'border-highlight bg-primary-soft text-foreground'
@@ -254,14 +261,15 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
           {m.calendar_alarm_title()}
         </h2>
         <p class="mb-1 mt-2 truncate text-sm font-700">{props.event.title}</p>
-        <p class="mb-4 mt-0 text-xs leading-5 text-muted-foreground">
+        <p class="mb-4 mt-0 text-modal-detail leading-5 text-muted-foreground">
           {m.calendar_alarm_description()}
         </p>
 
         <div class="grid grid-cols-1 gap-3">
           <label class="grid gap-1.5 text-sm font-650">
             <span>{m.calendar_alarm_date()}</span>
-            <input
+            <PInput
+              unstyled
               class={INPUT_CLASSES}
               min={getDateInputValue(new Date())}
               onInput={(event) => alarm.setDate(event.currentTarget.value)}
@@ -271,7 +279,8 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
           </label>
           <label class="grid gap-1.5 text-sm font-650">
             <span>{m.calendar_alarm_time()}</span>
-            <input
+            <PInput
+              unstyled
               class={INPUT_CLASSES}
               onInput={(event) => alarm.setTime(event.currentTarget.value)}
               type="time"
@@ -281,11 +290,18 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
         </div>
 
         <div class="mt-4 grid gap-2">
-          <PButton class="w-full" disabled={alarm.pending()} onPress={alarm.save}>
+          <PButton raised class="w-full" disabled={alarm.pending()} onPress={alarm.save}>
             {m.calendar_alarm_save()}
           </PButton>
           <Show when={alarm.storedMemo() !== undefined}>
-            <PButton class="w-full" disabled={alarm.pending()} onPress={alarm.remove} tone="danger">
+            <PButton
+              bordered
+              transparent
+              class="w-full"
+              disabled={alarm.pending()}
+              onPress={alarm.remove}
+              tone="danger"
+            >
               {m.calendar_alarm_remove()}
             </PButton>
           </Show>

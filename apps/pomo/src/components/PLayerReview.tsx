@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, Show} from 'solid-js'
@@ -110,7 +112,7 @@ export const PLayerReview = () => {
             {selectedScene().label}
           </h1>
           <A class="text-xs font-700 text-#d7c7b3 no-underline hover:text-white" href="/">
-            Pomofi로 →
+            {m.app_return()} <span aria-hidden="true">→</span>
           </A>
         </div>
         <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · 분리 레이어</p>

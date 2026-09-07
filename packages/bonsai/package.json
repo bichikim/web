@@ -1,0 +1,18 @@
+{
+  "name": "@winter-love/bonsai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bonsai Image 4B WebGPU inference runtime",
+  "files": [
+    "runtime.mjs",
+    "runtime.d.mts",
+    "runtime.md"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./runtime.d.mts",
+      "import": "./runtime.mjs"
+    }
+  }
+}

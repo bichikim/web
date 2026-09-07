@@ -1,14 +1,19 @@
-import type {PuppetPoint, PuppetSceneContainerNode, PuppetSceneNode} from '../player/document'
+import type {
+  PuppetPoint,
+  PuppetSceneContainerNode,
+  PuppetSceneNode,
+  PuppetVertexReference,
+} from '../player/document'
 import {transformDeformerPoint} from './grid'
 
-type PointTransform = (point: PuppetPoint) => PuppetPoint
+type PointTransform = (point: PuppetPoint, vertex: PuppetVertexReference) => PuppetPoint
 
 const COORDINATES_PER_POINT = 2
 
 const createNodeTransform = (node: PuppetSceneContainerNode): PointTransform => {
   switch (node.kind) {
     case 'deformer':
-      return (point) => transformDeformerPoint(node, point)
+      return (point, vertex) => transformDeformerPoint(node, point, vertex)
     case 'group':
       return (point) => point
     default: {
@@ -20,12 +25,19 @@ const createNodeTransform = (node: PuppetSceneContainerNode): PointTransform => 
 
 const composeTransform =
   (parent: PointTransform, child: PointTransform): PointTransform =>
-  (point) =>
-    parent(child(point))
+  (point, vertex) =>
+    parent(child(point, vertex), vertex)
 
-const applyTransform = (vertices: Float32Array | number[], transform: PointTransform) => {
+const applyTransform = (
+  partId: string,
+  vertices: Float32Array | number[],
+  transform: PointTransform,
+) => {
   for (let index = 0; index < vertices.length; index += COORDINATES_PER_POINT) {
-    const point = transform({x: vertices[index] ?? 0, y: vertices[index + 1] ?? 0})
+    const point = transform(
+      {x: vertices[index] ?? 0, y: vertices[index + 1] ?? 0},
+      {partId, vertexIndex: index / COORDINATES_PER_POINT},
+    )
     vertices[index] = point.x
     vertices[index + 1] = point.y
   }
@@ -41,7 +53,7 @@ const applyNodes = (
       const vertices = verticesByPartId.get(node.id)
 
       if (vertices !== undefined) {
-        applyTransform(vertices, parentTransform)
+        applyTransform(node.id, vertices, parentTransform)
       }
     } else {
       applyNodes(

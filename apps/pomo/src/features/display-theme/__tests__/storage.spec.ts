@@ -61,11 +61,11 @@ afterEach(() => {
 })
 
 describe('display theme preference repository', () => {
-  it('should default invalid or missing browser preferences to system', async () => {
-    await expect(repository.read()).resolves.toBe('system')
+  it('should default invalid or missing browser preferences to dark', async () => {
+    await expect(repository.read()).resolves.toBe('dark')
 
     webValues.set(STORAGE_KEY, 'unknown')
-    await expect(repository.read()).resolves.toBe('system')
+    await expect(repository.read()).resolves.toBe('dark')
   })
 
   it('should persist and restore a browser preference', async () => {
@@ -108,11 +108,11 @@ describe('display theme preference repository', () => {
     storage.isNative.mockReturnValue(true)
     webValues.set(STORAGE_KEY, 'dark')
 
-    await expect(repository.read()).resolves.toBe('system')
-    expect(webValues.get(STORAGE_KEY)).toBe('system')
+    await expect(repository.read()).resolves.toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toBe('dark')
 
     nativeValues.set(STORAGE_KEY, 'unknown')
-    await expect(repository.read()).resolves.toBe('system')
+    await expect(repository.read()).resolves.toBe('dark')
   })
 
   it('should reject a native read failure instead of using the browser copy', async () => {

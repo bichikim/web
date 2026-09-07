@@ -17,7 +17,7 @@ import {
   useModelDownload,
 } from '../../../features/model-download'
 import {isTextModelDownloaded} from '../../../features/text-generation'
-import PDialogueDraftGenerator from '../DraftGenerator'
+import {PDialogueDraftGenerator} from '../DraftGenerator'
 
 vi.mock('../../../features/dialogue-writer', () => ({
   useDialogueWriter: vi.fn(),
@@ -60,6 +60,8 @@ const createModelDownload = (): ModelDownloadController => ({
   cancel: vi.fn(),
   dismissError: vi.fn(),
   dispose: vi.fn(),
+  downloads: () => [],
+  startImageModel: vi.fn(),
   startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}),

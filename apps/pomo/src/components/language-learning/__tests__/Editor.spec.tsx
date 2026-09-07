@@ -20,12 +20,12 @@ import {isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {isTextModelDownloaded} from '../../../features/text-generation'
 import {PGenerationStatus} from '../../PGenerationStatus'
 import {PModelDownloadConsent} from '../../PModelDownloadConsent'
+import {LanguageLearningEditor} from '../Editor'
 import {LanguageLearningEditorHeader} from '../EditorHeader'
 import {LanguageLearningGenerateButton} from '../GenerateButton'
-import LanguageLearningEditor from '../Editor'
 import {LanguageLearningReview} from '../Review'
-import {LanguageLearningSettings} from '../Settings'
 import {saveLanguageLearningCandidates} from '../save'
+import {LanguageLearningSettings} from '../Settings'
 import {generateVoiceCandidates, regenerateCandidateVoice} from '../voice-generation'
 import {LanguageLearningWordSourceControl} from '../WordSource'
 
@@ -185,6 +185,8 @@ beforeEach(() => {
     cancel: vi.fn(),
     dismissError: vi.fn(),
     dispose: vi.fn(),
+    downloads: () => [],
+    startImageModel: vi.fn(),
     startTextModel,
     startVoiceModel,
     state: modelDownloadState,

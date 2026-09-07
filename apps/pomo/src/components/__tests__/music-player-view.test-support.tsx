@@ -1,10 +1,11 @@
+import {PTooltipProvider} from '../tooltip'
 import {render} from '@solidjs/testing-library'
 import {vi} from 'vitest'
 
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import type {PTrack} from '../../features/focus-room-audio'
-import type {PAlbumLibraryProps} from '../PAlbumLibrary'
 import {MusicPlayerView} from '../MusicPlayerView'
+import type {PAlbumLibraryProps} from '../PAlbumLibrary'
 
 vi.mock('media-chrome', () => ({}))
 
@@ -89,28 +90,32 @@ interface RenderMusicPlayerViewOptions {
 
 export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) =>
   render(() => (
-    <MusicPlayerView
-      currentIndex={0}
-      currentTrack={options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])}
-      expanded={options.expanded ?? true}
-      isPlaying={options.isPlaying ?? false}
-      levels={options.levels ?? []}
-      onAudioElement={options.onAudioElement ?? vi.fn()}
-      onAlbumAdd={options.onAlbumAdd}
-      onAlbumClear={options.onAlbumClear}
-      onExpandedChange={options.onExpandedChange ?? vi.fn()}
-      onNextTrack={options.onNextTrack ?? vi.fn()}
-      onPreviewEnd={options.onPreviewEnd}
-      onPreviewStart={options.onPreviewStart}
-      onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
-      onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
-      onShuffleChange={options.onShuffleChange ?? vi.fn()}
-      onTrackSelect={options.onTrackSelect ?? vi.fn()}
-      repeatMode="repeat-all"
-      sceneStyle={options.sceneStyle ?? 'original'}
-      shuffleEnabled={true}
-      tracks={TRACKS}
-    />
+    <PTooltipProvider>
+      <MusicPlayerView
+        currentIndex={0}
+        currentTrack={
+          options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])
+        }
+        expanded={options.expanded ?? true}
+        isPlaying={options.isPlaying ?? false}
+        levels={options.levels ?? []}
+        onAudioElement={options.onAudioElement ?? vi.fn()}
+        onAlbumAdd={options.onAlbumAdd}
+        onAlbumClear={options.onAlbumClear}
+        onExpandedChange={options.onExpandedChange ?? vi.fn()}
+        onNextTrack={options.onNextTrack ?? vi.fn()}
+        onPreviewEnd={options.onPreviewEnd}
+        onPreviewStart={options.onPreviewStart}
+        onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
+        onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
+        onShuffleChange={options.onShuffleChange ?? vi.fn()}
+        onTrackSelect={options.onTrackSelect ?? vi.fn()}
+        repeatMode="repeat-all"
+        sceneStyle={options.sceneStyle ?? 'original'}
+        shuffleEnabled={true}
+        tracks={TRACKS}
+      />
+    </PTooltipProvider>
   ))
 
 export const getProgressRanges = (container: HTMLElement) => {

@@ -5,14 +5,14 @@ import './p-event-provider.test-support'
 import {cleanup, render, waitFor} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-import {usePEvents} from '../../features/focus-room-dialogue/event-context'
-import {createPDialogueRepository} from '../../features/focus-room-dialogue/repository'
-import type {DialogueEventBinding, PDialogue} from '../../features/focus-room-dialogue/schema'
 import {
   createDialogue,
   createRepository,
   stubAudioElements,
 } from '../../features/focus-room-dialogue/__tests__/support/fixtures'
+import {usePEvents} from '../../features/focus-room-dialogue/event-context'
+import {createPDialogueRepository} from '../../features/focus-room-dialogue/repository'
+import type {DialogueEventBinding, PDialogue} from '../../features/focus-room-dialogue/schema'
 import {renderImmediateContext} from './p-event-provider.test-support'
 import {renderContext} from './support/render-context'
 

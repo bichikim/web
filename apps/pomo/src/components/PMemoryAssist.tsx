@@ -1,27 +1,40 @@
+import {PLoadingStatus} from './PLoadingStatus'
 import {Tabs} from '@kobalte/core/tabs'
-import {createSignal} from 'solid-js'
+import {createSignal, ErrorBoundary, lazy, onMount, Suspense} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
-import {clearCalendarMonthCache} from '../features/calendar'
 import type {PSceneStyle} from '../features/focus-room-animation'
-import {CalendarConnections} from './CalendarConnections'
-import {CalendarMonth} from './CalendarMonth'
+import type {WeatherState} from '../features/weather'
 import {getPomoIconClass} from './icon-style'
-import {PIconButton} from './PIconButton'
+import {GLASS_ICON_BUTTON} from './button-presets'
+import {PButton} from './PButton'
 import {PModal} from './PModal'
 import {MEMORY_ASSIST_ICON} from './memory-assist/icon'
 import {PMemoryAssistTabList} from './memory-assist/TabList'
-import {MemoryMemoList} from './memory-assist/Memos'
-import {LanguageLearningLibrary} from './language-learning/Library'
-import {LanguageLearningWords} from './language-learning/Words'
 import {PScribbleCircleControl} from './scribble/CircleControl'
 
 export interface PMemoryAssistProps {
   readonly sceneStyle?: PSceneStyle
+  readonly weatherState?: WeatherState
 }
 
+const PMemoryAssistContent = lazy(async () => {
+  try {
+    const module = await import('./memory-assist/Content')
+    return {default: module.PMemoryAssistContent}
+  } catch (error) {
+    // Preload must settle so module failures reach the modal's error boundary.
+    return {
+      default: () => {
+        throw error
+      },
+    }
+  }
+})
+
 export const PMemoryAssist = (props: PMemoryAssistProps) => {
+  onMount(() => PMemoryAssistContent.preload())
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('sentences')
   const [calendarRevision, setCalendarRevision] = createSignal(0)
@@ -45,9 +58,11 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
   return (
     <>
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-        <PIconButton
+        <PButton
+          {...GLASS_ICON_BUTTON}
+          pill
           accessibleLabel={m.memory_assist_open()}
-          feedback={m.memory_assist_feedback()}
+          tooltip={m.memory_assist_open()}
           icon={getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle)}
           onPress={handleOpen}
         />
@@ -59,36 +74,28 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
           onCloseAutoFocus={handleCloseAutoFocus}
           onOpenChange={setIsOpen}
           placement="top"
-          size="wide"
+          size="expanded"
           title={m.memory_assist_title()}
           titleVisibility="visually-hidden"
         >
-          <Tabs.Content value="sentences">
-            <LanguageLearningLibrary onRequestClose={() => setIsOpen(false)} />
-          </Tabs.Content>
-          <Tabs.Content value="words">
-            <LanguageLearningWords />
-          </Tabs.Content>
-          <Tabs.Content value="memos">
-            <MemoryMemoList />
-          </Tabs.Content>
-          <Tabs.Content value="calendar">
-            <CalendarMonth
-              revision={calendarRevision()}
-              settings={
-                <CalendarConnections
-                  onConnectionsChange={() => {
-                    clearCalendarMonthCache()
-                    refreshCalendar()
-                  }}
-                />
+          <ErrorBoundary fallback={<p role="alert">{m.modal_content_load_error()}</p>}>
+            <Suspense
+              fallback={
+                <div role="status">
+                  <PLoadingStatus message={m.modal_content_loading()} />
+                </div>
               }
-            />
-          </Tabs.Content>
+            >
+              <PMemoryAssistContent
+                weatherState={props.weatherState}
+                calendarRevision={calendarRevision()}
+                onRefreshCalendar={refreshCalendar}
+                onRequestClose={() => setIsOpen(false)}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </PModal>
       </Tabs>
     </>
   )
 }
-
-export default PMemoryAssist

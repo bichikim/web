@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
+import {transformDeformerPoint} from '../../deformation'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -87,7 +88,7 @@ describe('DeformerEditor', () => {
 
     fireEvent(
       view.getByRole('button', {name: '자유 변형 회전 핸들'}),
-      new MouseEvent('pointerdown', {bubbles: true}),
+      new MouseEvent('pointerdown', {bubbles: true, clientX: 330, clientY: 170}),
     )
     fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 210, clientY: 220}))
     fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
@@ -143,6 +144,49 @@ describe('DeformerEditor', () => {
     expect(onEditEnd).toHaveBeenCalledTimes(3)
   })
 
+  test('should preserve the rotation grab offset and stop when capture is lost', () => {
+    const initial = createDocument(createDeformer())
+    const [document, setDocument] = createSignal(initial)
+    const onEditEnd = vi.fn()
+    const view = render(() => (
+      <DeformerEditor
+        activeNodeId="deformer"
+        document={document()}
+        onDocumentChange={setDocument}
+        onEditEnd={onEditEnd}
+      />
+    ))
+    const svg = getEditorSvg(view.container)
+    mockViewportBounds(svg)
+    const capture = vi.fn()
+    Object.defineProperty(svg, 'setPointerCapture', {value: capture})
+    const pointer = (type: string, x: number, y: number, id = 7) => {
+      const event = new MouseEvent(type, {bubbles: true, clientX: x, clientY: y})
+      Object.defineProperty(event, 'pointerId', {value: id})
+      return event
+    }
+    fireEvent(
+      view.getByRole('button', {name: '자유 변형 회전 핸들'}),
+      pointer('pointerdown', 328, 176),
+    )
+    expect(capture).toHaveBeenCalledWith(7)
+    fireEvent(svg, pointer('pointermove', 328, 176))
+    expect(getSceneNode(document(), 'deformer')).toEqual(getSceneNode(initial, 'deformer'))
+    fireEvent(svg, pointer('pointermove', 204, 288))
+    const rotated = getSceneNode(document(), 'deformer')
+    expect(rotated?.kind === 'deformer' ? rotated.controlPoints[0] : undefined).toBeCloseTo(100)
+    fireEvent(svg, pointer('pointermove', 204, 288))
+    expect(getSceneNode(document(), 'deformer')).toEqual(rotated)
+    fireEvent(svg, pointer('pointermove', 500, 400, 8))
+    fireEvent(svg, pointer('pointerup', 500, 400, 8))
+    expect(getSceneNode(document(), 'deformer')).toEqual(rotated)
+    expect(onEditEnd).not.toHaveBeenCalled()
+    fireEvent(svg, pointer('lostpointercapture', 204, 288))
+    fireEvent(svg, pointer('pointermove', 328, 176))
+    expect(getSceneNode(document(), 'deformer')).toEqual(rotated)
+    expect(onEditEnd).toHaveBeenCalledTimes(1)
+  })
+
   test('should rotate around an independent rotation origin', () => {
     const [document, setDocument] = createSignal(
       createDocument({...createDeformer(), rotationOrigin: {x: 0, y: 0}}),
@@ -159,7 +203,7 @@ describe('DeformerEditor', () => {
 
     fireEvent(
       view.getByRole('button', {name: '자유 변형 회전 핸들'}),
-      new MouseEvent('pointerdown', {bubbles: true}),
+      new MouseEvent('pointerdown', {bubbles: true, clientX: 280, clientY: 120}),
     )
     fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 160, clientY: 220}))
     fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
@@ -483,7 +527,7 @@ describe('DeformerEditor', () => {
     expect(movedPoint[1]).toBeCloseTo(0)
   })
 
-  test('should edit the selected parameter keyform without changing the rest deformer', () => {
+  test.each([0, 0.5, 1])('should edit the original deformer keyform at influence %s', (weight) => {
     const initial = {
       ...createDocument(createDeformer()),
       motions: [],
@@ -496,7 +540,13 @@ describe('DeformerEditor', () => {
       document: added.document,
       values: [30],
     })!
-    const [document, setDocument] = createSignal(inserted)
+    const [document, setDocument] = createSignal({
+      ...inserted,
+      parameterBindings: inserted.parameterBindings!.map((binding) => ({
+        ...binding,
+        influences: [{parameterId: added.binding.parameterIds[0], points: [{value: 30, weight}]}],
+      })),
+    })
     const view = render(() => (
       <DeformerEditor
         activeBindingId={added.binding.id}
@@ -506,6 +556,7 @@ describe('DeformerEditor', () => {
         editMode="parameter"
         previewDocument={createParameterPreview({
           document: document(),
+          editingBindingId: added.binding.id,
           parameterValues: {[added.binding.parameterIds[0]]: 30},
         })}
         onDocumentChange={setDocument}
@@ -517,7 +568,7 @@ describe('DeformerEditor', () => {
 
     fireEvent(
       view.getByRole('button', {name: '자유 변형 회전 핸들'}),
-      new MouseEvent('pointerdown', {bubbles: true}),
+      new MouseEvent('pointerdown', {bubbles: true, clientX: 330, clientY: 170}),
     )
     fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 210, clientY: 220}))
     fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
@@ -556,4 +607,133 @@ describe('DeformerEditor', () => {
     const deformer = getSceneNode(updated, 'deformer')
     expect(deformer?.kind === 'deformer' ? deformer.controlPoints.slice(0, 2) : []).toEqual([1, 0])
   })
+})
+
+test('should edit a curve handle through the keyboard', () => {
+  const curve: PuppetSceneDeformerNode = {
+    ...createDeformer(),
+    controlPoints: [0, 50, 100 / 3, 50, 200 / 3, 50, 100, 50],
+    curveAxis: 'x',
+  }
+  const [document, setDocument] = createSignal(createDocument(curve))
+  const view = render(() => (
+    <DeformerEditor document={document()} activeNodeId="deformer" onDocumentChange={setDocument} />
+  ))
+  expect(view.queryByLabelText('자유 변형 회전 중심')).toBeNull()
+  expect(view.queryByLabelText('자유 변형 회전 핸들')).toBeNull()
+  fireEvent.keyDown(view.getByRole('button', {name: '곡선 핸들 2'}), {key: 'ArrowDown'})
+  const node = getSceneNode(document(), 'deformer')
+  expect(node?.kind === 'deformer' && node.controlPoints[3]).toBe(51)
+  expect(view.getByRole('button', {name: '곡선 제어점 4'})).toBeDefined()
+})
+
+test.each(['Backspace', 'Delete'])(
+  'should split a curve at the double click and remove its selected knot with %s',
+  (key) => {
+    const curve: PuppetSceneDeformerNode = {
+      ...createDeformer(),
+      controlPoints: [0, 50, 100 / 3, 50, 200 / 3, 50, 100, 50],
+      curveAxis: 'x',
+    }
+    const [document, setDocument] = createSignal(createDocument(curve))
+    const view = render(() => (
+      <DeformerEditor
+        document={document()}
+        activeNodeId="deformer"
+        onDocumentChange={setDocument}
+      />
+    ))
+    const svg = getEditorSvg(view.container)
+    mockViewportBounds(svg)
+    // The demo view box maps model (25, 50) to client (185, 170).
+    fireEvent.dblClick(view.getByLabelText('곡선 연결점 추가 영역'), {clientX: 185, clientY: 170})
+    const node = getSceneNode(document(), 'deformer')
+    expect(node?.kind === 'deformer' && node.curveBreaks?.[1]).toBeCloseTo(0.25)
+    expect(view.getAllByRole('button', {name: /곡선 (제어점|핸들)/})).toHaveLength(7)
+    fireEvent.keyDown(svg, {key, repeat: true})
+    expect(view.getAllByRole('button', {name: /곡선 (제어점|핸들)/})).toHaveLength(7)
+    fireEvent.keyDown(svg, {key})
+    expect(view.getAllByRole('button', {name: /곡선 (제어점|핸들)/})).toHaveLength(4)
+    fireEvent.keyDown(view.getByLabelText('곡선 제어점 1'), {key: 'Enter'})
+    fireEvent.keyDown(svg, {key})
+    expect(view.getAllByRole('button', {name: /곡선 (제어점|핸들)/})).toHaveLength(4)
+  },
+)
+
+test('should move only the control layout in placement mode and deform again after switching back', () => {
+  const source = createDeformer()
+  const [document, setDocument] = createSignal(createDocument(source))
+  const view = render(() => (
+    <DeformerEditor document={document()} activeNodeId="deformer" onDocumentChange={setDocument} />
+  ))
+  fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
+  fireEvent.keyDown(view.getByRole('button', {name: '격자 제어점 1'}), {
+    key: 'ArrowRight',
+    shiftKey: true,
+  })
+  const placed = getSceneNode(document(), 'deformer') as PuppetSceneDeformerNode
+  expect(placed.controlPoints[0]).toBe(10)
+  expect(transformDeformerPoint(placed, {x: 20, y: 30})).toEqual(
+    transformDeformerPoint(source, {x: 20, y: 30}),
+  )
+  fireEvent.click(view.getByRole('button', {name: '변형 편집'}))
+  fireEvent.keyDown(view.getByRole('button', {name: '격자 제어점 1'}), {
+    key: 'ArrowDown',
+    shiftKey: true,
+  })
+  const posed = getSceneNode(document(), 'deformer') as PuppetSceneDeformerNode
+  expect(transformDeformerPoint(posed, {x: 20, y: 30}).y).toBeGreaterThan(30)
+})
+
+test('should end a drag before switching the selected deformer', () => {
+  const first = createDeformer()
+  const second = {
+    ...createDeformer(),
+    controlPoints: first.controlPoints.map((value) => value + 200),
+    id: 'second',
+  }
+  const [document, setDocument] = createSignal({
+    ...createDocument(first),
+    scene: {roots: [first, second]},
+  })
+  const [active, setActive] = createSignal(first.id)
+  const onEditEnd = vi.fn()
+  const view = render(() => (
+    <DeformerEditor
+      document={document()}
+      activeNodeId={active()}
+      onDocumentChange={setDocument}
+      onEditEnd={onEditEnd}
+    />
+  ))
+  const svg = getEditorSvg(view.container)
+  mockViewportBounds(svg)
+  fireEvent(
+    view.getByRole('button', {name: '자유 변형 회전 핸들'}),
+    new MouseEvent('pointerdown', {bubbles: true, clientX: 330, clientY: 170}),
+  )
+  setActive('second')
+  const before = document()
+  fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 210, clientY: 220}))
+  expect(document()).toBe(before)
+  expect(onEditEnd).toHaveBeenCalledTimes(1)
+})
+
+test('should expose and edit influence masks for pin, curve and grid deformers', async () => {
+  const {convertSceneContainers} = await import('../internal/container-conversion')
+  for (const targetKind of ['pin', 'curve', 'deformer'] as const) {
+    const [document, setDocument] = createSignal(
+      convertSceneContainers({document: createDemoDocument(), nodeIds: ['shapes'], targetKind})!,
+    )
+    const view = render(() => (
+      <DeformerEditor document={document()} activeNodeId="shapes" onDocumentChange={setDocument} />
+    ))
+    fireEvent.click(view.getByRole('button', {name: '영향도 편집'}))
+    fireEvent.click(view.getByRole('button', {name: '정점 선택'}))
+    fireEvent.click(view.getByRole('button', {name: 'shape-circle 정점 1'}))
+    fireEvent.input(view.getByRole('spinbutton', {name: '디포머 영향도'}), {target: {value: '25'}})
+    expect(getSceneNode(document(), 'shapes')).toMatchObject({vertexInfluences: [{weight: 0.25}]})
+    expect(view.queryByRole('button', {name: '칠할 본 1'})).toBeNull()
+    view.unmount()
+  }
 })

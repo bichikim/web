@@ -2,19 +2,19 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {PTrack} from '../../../features/focus-room-audio'
-import {useMemoryReminders} from '../../../features/memory-assist'
-import type {PSayController} from '../../../features/pomo-webmcp'
 import {
   RANDOM_DIALOGUE_EVENT,
   usePEvents,
   useRandomEvent,
 } from '../../../features/focus-room-dialogue'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {useMemoryReminders} from '../../../features/memory-assist'
+import type {PSayController} from '../../../features/pomo-webmcp'
 import {PStudioEvents} from '../Events'
 import {useChildPresence} from '../use-child-presence'
-import {useOneOffChat} from '../use-one-off-chat'
 import {useMobileLayout} from '../use-mobile-layout'
+import {useOneOffChat} from '../use-one-off-chat'
 
 const oneOffChatMocks = vi.hoisted(() => ({
   cancelDownloadConsent: vi.fn(),

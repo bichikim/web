@@ -15,7 +15,7 @@ const CLIENT_FALLBACK_CLASSES = cx(
   'w-full rounded-8 border border-white/10 bg-#211a2b/88 p-8',
   'text-sm text-#bdb2c4 shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
-function DialoguePage() {
+export function DialoguePage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — Direct Answer Lab</Title>
@@ -35,5 +35,3 @@ function DialoguePage() {
     </main>
   )
 }
-
-export default DialoguePage

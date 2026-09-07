@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {cx} from 'class-variance-authority'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
@@ -37,7 +39,7 @@ export const PServiceTerms = (props: PServiceTermsProps) => (
     <div class="relative mx-auto grid w-full max-w-6xl gap-8">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <a class={BACK_LINK_CLASSES} href={props.backHref ?? '/'}>
-          ← {props.backLabel ?? 'Pomofi로 돌아가기'}
+          <span aria-hidden="true">←</span> {props.backLabel ?? m.app_return()}
         </a>
         <PServicePolicyLinks
           currentPolicy="terms"

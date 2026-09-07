@@ -1,35 +1,39 @@
+import {EditorCheckbox} from './EditorCheckbox'
+import {TextField} from '@kobalte/core/text-field'
+import {Button} from '@kobalte/core/button'
 import {Popover} from '@kobalte/core/popover'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import {getPartRenderProperties} from '../../deformation'
 import type {PuppetPart, PuppetPartRenderProperties} from '../../player'
 
-export interface PartMaskOption {
+export interface MaskTargetOption {
   readonly disabled: boolean
+  readonly reason?: string
   readonly label: string
   readonly part: PuppetPart
 }
 
 export interface PartMaskPropertiesProps {
-  readonly maskPartOptions: ReadonlyArray<PartMaskOption>
+  readonly maskTargetOptions: ReadonlyArray<MaskTargetOption>
   readonly maskPicking?: boolean
-  readonly maskUsageCount?: number
   readonly part: PuppetPart
   readonly staticDisabled: boolean
+  readonly onMaskTargetChange?: (partId: string, checked: boolean) => void
   readonly onMaskPickCancel?: () => void
   readonly onMaskPickStart?: (partId: string) => void
   readonly onStaticChange: (properties: PuppetPartRenderProperties) => void
 }
 
-interface MaskPickerProps {
+interface MaskTargetPickerProps {
   readonly disabled: boolean
-  readonly maskIds: ReadonlyArray<string>
-  readonly options: ReadonlyArray<PartMaskOption>
+  readonly targetIds: ReadonlyArray<string>
+  readonly options: ReadonlyArray<MaskTargetOption>
   readonly selectedCount: number
-  readonly onMaskChange: (partId: string, checked: boolean) => void
+  readonly onTargetChange: (partId: string, checked: boolean) => void
 }
 
-const MaskPicker = (props: MaskPickerProps) => {
+const MaskTargetPicker = (props: MaskTargetPickerProps) => {
   const [query, setQuery] = createSignal('')
   const filteredOptions = createMemo(() => {
     const normalizedQuery = query().trim().toLocaleLowerCase()
@@ -45,40 +49,35 @@ const MaskPicker = (props: MaskPickerProps) => {
   return (
     <Popover onOpenChange={(open) => open && setQuery('')}>
       <Popover.Trigger class="mask-action-button" disabled={props.disabled}>
-        <span aria-hidden="true">＋</span>
-        마스크 추가
+        <span aria-hidden="true" class="puppet-icon puppet-icon-plus" />
+        대상 추가
       </Popover.Trigger>
       <Popover.Content class="mask-picker">
         <div class="mask-picker-heading">
-          <Popover.Title>마스크 추가</Popover.Title>
-          <Popover.CloseButton aria-label="마스크 선택기 닫기">×</Popover.CloseButton>
+          <Popover.Title>대상 추가</Popover.Title>
+          <Popover.CloseButton aria-label="대상 선택기 닫기">
+            <span aria-hidden="true" class="puppet-icon puppet-icon-x" />
+          </Popover.CloseButton>
         </div>
-        <input
-          aria-label="마스크 검색"
-          placeholder="레이어 이름 또는 ID 검색"
-          type="search"
-          value={query()}
-          onInput={(event) => setQuery(event.currentTarget.value)}
-        />
+        <TextField value={query()} onChange={setQuery}>
+          <TextField.Input
+            aria-label="적용 대상 검색"
+            placeholder="레이어 이름 또는 ID 검색"
+            type="search"
+          />
+        </TextField>
         <div class="mask-picker-list">
           <For
             each={filteredOptions()}
             fallback={<p class="mask-picker-empty">일치하는 파츠가 없습니다.</p>}
           >
             {(option) => (
-              <label
-                title={
-                  option.disabled ? '이 파트를 마스크로 지정하면 순환 참조가 생깁니다.' : undefined
-                }
-              >
-                <input
-                  aria-label={`${option.label}로 자르기`}
-                  checked={props.maskIds.includes(option.part.id)}
+              <label title={option.disabled ? option.reason : undefined}>
+                <EditorCheckbox
+                  label={`${option.label}에 마스크 적용`}
+                  checked={props.targetIds.includes(option.part.id)}
                   disabled={props.disabled || option.disabled}
-                  type="checkbox"
-                  onChange={(event) =>
-                    props.onMaskChange(option.part.id, event.currentTarget.checked)
-                  }
+                  onChange={(checked) => props.onTargetChange(option.part.id, checked)}
                 />
                 <span class="mask-picker-thumbnail" aria-hidden="true">
                   <img alt="" src={option.part.texture.src} />
@@ -88,7 +87,7 @@ const MaskPicker = (props: MaskPickerProps) => {
                   <small>{option.part.id}</small>
                 </span>
                 <Show when={option.disabled}>
-                  <small class="mask-picker-reason">순환 참조</small>
+                  <small class="mask-picker-reason">{option.reason}</small>
                 </Show>
               </label>
             )}
@@ -102,58 +101,51 @@ const MaskPicker = (props: MaskPickerProps) => {
 
 export const PartMaskProperties = (props: PartMaskPropertiesProps) => {
   const properties = () => getPartRenderProperties(props.part)
-  const selectedOptions = createMemo(() => {
-    const maskIds = new Set(properties().clippingMaskIds)
-    return props.maskPartOptions.filter((option) => maskIds.has(option.part.id))
-  })
-  const handleMaskChange = (partId: string, checked: boolean) => {
-    const maskIds = properties().clippingMaskIds
-    props.onStaticChange({
-      clippingMaskIds: checked
-        ? maskIds.includes(partId)
-          ? maskIds
-          : [...maskIds, partId]
-        : maskIds.filter((id) => id !== partId),
-    })
-  }
+  const selectedOptions = createMemo(() =>
+    props.maskTargetOptions.filter((option) =>
+      option.part.properties?.clippingMaskIds?.includes(props.part.id),
+    ),
+  )
+  const handleTargetChange = (partId: string, checked: boolean) =>
+    props.onMaskTargetChange?.(partId, checked)
 
   return (
     <>
       <fieldset class="part-mask-properties">
-        <legend>이 파트를 자르는 마스크</legend>
+        <legend>마스크 적용 대상</legend>
         <div class="mask-chip-list">
           <Show
             when={selectedOptions().length > 0}
-            fallback={<span class="mask-empty-state">적용된 마스크 없음</span>}
+            fallback={<span class="mask-empty-state">적용 대상 없음</span>}
           >
             <For each={selectedOptions()}>
               {(option) => (
                 <span class="mask-chip">
                   <img alt="" src={option.part.texture.src} />
                   <span>{option.label}</span>
-                  <button
-                    aria-label={`${option.label} 마스크 제거`}
-                    disabled={props.staticDisabled}
+                  <Button
+                    aria-label={`${option.label} 적용 해제`}
+                    disabled={props.staticDisabled || option.disabled}
                     type="button"
-                    onClick={() => handleMaskChange(option.part.id, false)}
+                    onClick={() => handleTargetChange(option.part.id, false)}
                   >
-                    ×
-                  </button>
+                    <span aria-hidden="true" class="puppet-icon puppet-icon-x" />
+                  </Button>
                 </span>
               )}
             </For>
           </Show>
         </div>
         <div class="mask-actions">
-          <MaskPicker
+          <MaskTargetPicker
             disabled={props.staticDisabled}
-            maskIds={properties().clippingMaskIds}
-            options={props.maskPartOptions}
+            targetIds={selectedOptions().map((option) => option.part.id)}
+            options={props.maskTargetOptions}
             selectedCount={selectedOptions().length}
-            onMaskChange={handleMaskChange}
+            onTargetChange={handleTargetChange}
           />
           <Show when={props.onMaskPickStart !== undefined}>
-            <button
+            <Button
               class="mask-action-button"
               disabled={props.staticDisabled}
               type="button"
@@ -163,35 +155,27 @@ export const PartMaskProperties = (props: PartMaskPropertiesProps) => {
                   : props.onMaskPickStart?.(props.part.id)
               }
             >
-              {props.maskPicking ? '마스크 선택 취소' : '레이어에서 마스크 선택'}
-            </button>
+              {props.maskPicking ? '대상 선택 취소' : '레이어에서 선택'}
+            </Button>
           </Show>
         </div>
-      </fieldset>
-      <fieldset class="part-mask-properties">
-        <legend>이 파트를 마스크로 사용할 때</legend>
-        <Show when={(props.maskUsageCount ?? 0) > 0}>
-          <span class="mask-usage-count">{props.maskUsageCount}개 파츠에서 사용 중</span>
-        </Show>
         <label>
-          <input
+          <EditorCheckbox
+            label="마스크 반전"
             checked={properties().invertedMask}
             disabled={props.staticDisabled}
-            type="checkbox"
-            onChange={(event) => props.onStaticChange({invertedMask: event.currentTarget.checked})}
+            onChange={(checked) => props.onStaticChange({invertedMask: checked})}
           />
           마스크 반전
         </label>
         <label>
-          <input
+          <EditorCheckbox
+            label="이 파트도 표시"
             checked={properties().renderWhenUsedAsMask}
             disabled={props.staticDisabled}
-            type="checkbox"
-            onChange={(event) =>
-              props.onStaticChange({renderWhenUsedAsMask: event.currentTarget.checked})
-            }
+            onChange={(checked) => props.onStaticChange({renderWhenUsedAsMask: checked})}
           />
-          파츠도 계속 표시
+          이 파트도 표시
         </label>
       </fieldset>
     </>

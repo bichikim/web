@@ -21,10 +21,6 @@ export const CLASSES = {
     'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
   ),
-  entryLeadingImage: cx(
-    'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem]',
-    '[filter:drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]',
-  ),
   mediaControls: cx(
     'pomo-media-controls flex w-full min-h-0 max-h-full [flex:0_1_auto]',
     'flex-col-reverse items-end justify-start gap-3',
@@ -69,7 +65,7 @@ export const CLASSES = {
     'gap-3 overflow-hidden pointer-events-none [&_>_*]:pointer-events-auto',
   ),
   sceneControl: cx(
-    'pomo-scene-control max-lg:[&.pomo-icon-button]:hidden',
+    'pomo-scene-control max-lg:[&[data-icon-only]]:hidden',
     'max-lg:[&.pomo-icon-select]:hidden',
   ),
   sceneToolbar: cx(

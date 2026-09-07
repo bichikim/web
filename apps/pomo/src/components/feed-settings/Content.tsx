@@ -1,7 +1,9 @@
+import {PInput} from 'src/components/PInput'
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, For, Show} from 'solid-js'
 
 import {PSelect, type PSelectOption} from '../PSelect'
+import {PSettingsActionButton} from '../settings/ActionButton'
 import {
   DEFAULT_FEED_VOICE_ID,
   type FeedVoiceId,
@@ -43,7 +45,7 @@ const getRecommendedDevFeeds = () =>
     },
   ] as const
 
-export default function PFeedSettingsContent() {
+export function PFeedSettingsContent() {
   const feeds = useFeedConnections()
   const runtime = useOptionalPFeeds()
   const usesRemotePublicOrigin =
@@ -80,7 +82,8 @@ export default function PFeedSettingsContent() {
         <form class={CLASSES.feedSettingsForm} onSubmit={handleSubmit}>
           <label class={CLASSES.feedSettingsUrlField} for="pomo-feed-url">
             <span>{m.settings_feed_url()}</span>
-            <input
+            <PInput
+              unstyled
               autocomplete="url"
               id="pomo-feed-url"
               inputmode="url"
@@ -90,10 +93,15 @@ export default function PFeedSettingsContent() {
               value={feeds.draftUrl()}
             />
           </label>
-          <button class={CLASSES.feedSettingsAdd} disabled={feeds.isLoading()} type="submit">
-            <span aria-hidden="true" class="i-tabler-plus size-4" />
+          <PSettingsActionButton
+            class="pomo-feed-settings__add max-sm:w-full"
+            disabled={feeds.isLoading()}
+            icon="i-tabler-plus"
+            size="medium"
+            type="submit"
+          >
             {m.settings_feed_add()}
-          </button>
+          </PSettingsActionButton>
         </form>
 
         <div class={CLASSES.feedSettingsListHeading}>

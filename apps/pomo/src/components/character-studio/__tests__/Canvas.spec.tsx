@@ -6,7 +6,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createCharacterRenderer} from '../renderer'
 import {applyCameraCommand, type CameraCommand} from '../camera-control'
 import {reportClientError} from '../../../features/client-error-reporter'
-import CharacterCanvas from '../Canvas'
+import {CharacterCanvas} from '../Canvas'
 import {useCharacterRenderer} from '../../../features/character-renderer'
 
 vi.mock('@babylonjs/core/Engines/engine', () => ({Engine: vi.fn()}))

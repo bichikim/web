@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../features/focus-room-dialogue', () => ({
+  deleteDialogueAudio: vi.fn().mockResolvedValue(undefined),
   usePEvents: () => ({deleteDialogue: mocks.deleteDialogue}),
 }))
 vi.mock('../../../features/memory-assist', async () => {
@@ -24,6 +25,10 @@ vi.mock('../../../features/memory-assist', async () => {
     useMemoryMemos: () => () => mocks.memos,
   }
 })
+vi.mock('../../../features/memory-assist/repository', async () => ({
+  ...(await vi.importActual('../../../features/memory-assist/repository')),
+  updateMemoryMemos: mocks.updateMemos,
+}))
 vi.mock('../../PButton', () => ({
   PButton: (props: {
     accessibleLabel?: string
@@ -310,4 +315,28 @@ it('should stop ongoing recall when an exact reminder is enabled while editing',
     updatedAt: '2026-09-04T03:30:00.000Z',
   })
   expect(mocks.deleteDialogue).not.toHaveBeenCalled()
+})
+
+it('should preserve memo audio when deleting the memo cannot be persisted', async () => {
+  mocks.memos = [createStoredMemo()]
+  mocks.updateMemos.mockRejectedValueOnce(new Error('write failed'))
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 삭제'}))
+
+  await waitFor(() =>
+    expect(screen.getByRole('status')).toHaveTextContent('메모를 삭제하지 못했어요.'),
+  )
+  expect(mocks.memos).toEqual([createStoredMemo()])
+  expect(mocks.deleteDialogue).not.toHaveBeenCalled()
+})
+
+it('should not report a committed deletion as failed when dialogue cleanup is pending', async () => {
+  mocks.memos = [createStoredMemo()]
+  mocks.deleteDialogue.mockRejectedValueOnce(new Error('database failed'))
+  render(() => <MemoryMemoList />)
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 삭제'}))
+  await waitFor(() => expect(mocks.deleteDialogue).toHaveBeenCalledOnce())
+  expect(mocks.memos).toEqual([{...createStoredMemo(), deletionPending: true}])
+  expect(screen.queryByText('메모를 삭제하지 못했어요.')).not.toBeInTheDocument()
 })

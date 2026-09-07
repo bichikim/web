@@ -1,6 +1,5 @@
 import {useAction, useSubmissions} from '@solidjs/router'
 import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
-
 import {PTag} from '../PTag'
 import {
   type PTrack,
@@ -10,46 +9,7 @@ import {
   resolveTrackPreviewAccess,
 } from '../../features/focus-room-audio'
 import * as m from '@paraglide/message'
-
-interface PreviewButtonProps {
-  readonly isLimited: boolean
-  readonly isPending: boolean
-  readonly isPlaying: boolean
-  readonly onPress: () => void
-  readonly title: string
-}
-
-const PreviewButton = (props: PreviewButtonProps) => (
-  <button
-    aria-label={`${props.title} ${
-      props.isLimited
-        ? props.isPlaying
-          ? m.album_preview_limited_stop()
-          : m.album_preview_limited()
-        : props.isPlaying
-          ? m.album_preview_stop()
-          : m.album_preview()
-    }`}
-    aria-pressed={props.isPlaying}
-    class="grid size-8 flex-none cursor-pointer place-items-center rounded-control border
-      border-solid border-border bg-transparent text-highlight outline-none transition-colors
-      hover:border-border-hover hover:bg-surface focus-visible:shadow-focus
-      motion-reduce:transition-none"
-    onClick={() => props.onPress()}
-    type="button"
-  >
-    <span
-      aria-hidden="true"
-      class={
-        props.isPending
-          ? 'i-tabler-loader-2 size-4 animate-spin motion-reduce:animate-none'
-          : props.isPlaying
-            ? 'i-tabler-player-stop size-4'
-            : 'i-tabler-player-play size-4'
-      }
-    />
-  </button>
-)
+import {PreviewButton} from './PreviewButton'
 
 interface PAlbumTrackListProps {
   readonly albumTitle: string
@@ -117,13 +77,13 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
               )
 
             return (
-              <li class="flex min-w-0 items-center gap-2 py-1 text-xs text-muted-foreground">
+              <li class="flex min-w-0 items-center gap-2 py-1 text-modal-detail text-muted-foreground">
                 <span class="w-3 flex-none text-center tabular-nums opacity-50">
                   {trackIndex() + 1}
                 </span>
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-foreground">{track.title}</span>
-                  <span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.6875rem]">
+                  <span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-modal-detail">
                     <span class="min-w-0 truncate">{track.artist}</span>
                     <Show when={isPreviewing() && props.pendingTrackId !== track.id && isLimited()}>
                       <PTag class="flex-none" tone="highlight">

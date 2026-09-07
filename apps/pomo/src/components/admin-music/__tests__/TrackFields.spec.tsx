@@ -8,7 +8,7 @@ const metadataMocks = vi.hoisted(() => ({readTrackMetadata: vi.fn()}))
 
 vi.mock('../../../features/admin-music/track-metadata', () => metadataMocks)
 
-import TrackFields from '../TrackFields'
+import {TrackFields} from '../TrackFields'
 
 const renderFields = () => {
   const [artist, setArtist] = createSignal('직접 입력한 아티스트')

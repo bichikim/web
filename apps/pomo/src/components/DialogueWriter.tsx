@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 
 import {type DialogueWriterController, useDialogueWriter} from '../features/dialogue-writer'
@@ -32,7 +33,7 @@ const activateModel = (
   writer.prepare()
 }
 
-const DialogueWriter = () => {
+export const DialogueWriter = () => {
   const compactModel = getTextModel('qwen-0.8b')
   const qualityModel = getTextModel('qwen-2b')
   const largerModel = getTextModel('qwen-4b')
@@ -82,7 +83,8 @@ const DialogueWriter = () => {
               {compactWriter.request().length} / {MAXIMUM_REQUEST_LENGTH}
             </span>
           </span>
-          <textarea
+          <PTextarea
+            unstyled
             class={TEXTAREA_CLASSES}
             disabled={isBusy()}
             maxlength={MAXIMUM_REQUEST_LENGTH}
@@ -168,5 +170,3 @@ const DialogueWriter = () => {
     </section>
   )
 }
-
-export default DialogueWriter

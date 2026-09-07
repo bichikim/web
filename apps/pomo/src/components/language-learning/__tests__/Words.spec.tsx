@@ -4,6 +4,7 @@ import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {readLanguageLearningWords} from '../../../features/language-learning'
 import {
   type RunAfterModelResult,
@@ -12,7 +13,6 @@ import {
   useModelDownload,
 } from '../../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from '../../PSelect'
 import {LanguageLearningWords} from '../Words'
 import {generateLanguageLearningWordPronunciation} from '../word-pronunciation'
@@ -58,6 +58,8 @@ beforeEach(() => {
     cancel: vi.fn(),
     dismissError: vi.fn(),
     dispose: vi.fn(),
+    downloads: () => [],
+    startImageModel: vi.fn(),
     startTextModel: vi.fn(),
     startVoiceModel: vi.fn(),
     state: () => ({status: 'idle'}),
@@ -110,7 +112,7 @@ it('should add several unknown words at once and filter them by language', () =>
   expect(result.container.querySelector('.pomo-learning-words > div')).toHaveClass(
     'bg-content-surface',
   )
-  expect(screen.getByRole('button', {name: '단어 저장'}).className).toContain('rounded-panel-inner')
+  expect(screen.getByRole('button', {name: '단어 저장'}).className).toContain('rounded-control')
   expect(vi.mocked(PSelect).mock.calls[0]?.[0].class).toBe('w-full')
 
   fireEvent.paste(input, {

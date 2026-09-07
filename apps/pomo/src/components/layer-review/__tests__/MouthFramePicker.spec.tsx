@@ -2,8 +2,8 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import type {PReviewMouthFrame} from '../../../features/focus-room-layer-review/scene-renderer'
 import {describe, expect, it, vi} from 'vitest'
+import type {PReviewMouthFrame} from '../../../features/focus-room-layer-review/scene-renderer'
 import {MouthFramePicker} from '../MouthFramePicker'
 
 describe('MouthFramePicker', () => {

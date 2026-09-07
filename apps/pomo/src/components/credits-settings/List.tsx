@@ -35,7 +35,7 @@ export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>
             <h4 class="m-0 text-sm font-750 text-foreground">{entry.summaryName ?? entry.name}</h4>
             <PTag tone="highlight">{entry.license}</PTag>
           </div>
-          <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+          <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-modal-detail">
             <For each={entry.links}>
               {(link) => (
                 <a

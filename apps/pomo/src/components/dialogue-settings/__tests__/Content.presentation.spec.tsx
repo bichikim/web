@@ -5,12 +5,12 @@ import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import PDialogueSettingsContent from '../Content'
+import {PDialogueSettingsContent} from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('@kobalte/core/dropdown-menu', () => {
@@ -86,7 +86,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   isLoading: () => false,
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
@@ -313,7 +313,9 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
   const modeControlLayout = modeLayout?.lastElementChild
   expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
-  expect(settingRows).toHaveLength(10)
+  expect(settingRows).toHaveLength(2)
+  expect(screen.queryByText('대화 연결')).toBeNull()
+  expect(screen.queryByText('이 이벤트에서 재생할 대화를 선택해요.')).toBeNull()
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
   expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
   expect(modeControlLayout?.classList).toContain('w-full')

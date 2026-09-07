@@ -1,3 +1,4 @@
+import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {PSelect} from './PSelect'
 import {PSwitch} from './PSwitch'
 import {getLocalizedWeatherSceneModeOptions} from '../features/localization'
@@ -30,7 +31,7 @@ export const PWeatherSettings = (props: PWeatherSettingsProps) => (
       value={props.sceneMode ?? 'auto'}
     />
     <PWeatherLocationSearch location={props.location} onChange={props.onLocationChange} />
-    <p class="col-span-full m-0 text-xs leading-5 text-muted-foreground">
+    <p class={`col-span-full m-0 ${FIELD_DESCRIPTION}`}>
       <a
         class="text-inherit underline"
         href="https://openweathermap.org/"

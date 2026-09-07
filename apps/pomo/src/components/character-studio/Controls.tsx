@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 
 const INPUT_CLASSES = cx(
@@ -66,7 +67,8 @@ export const CharacterControls = (props: CharacterControlsProps) => (
       <label class="text-sm font-650 text-#d9e1e6" for="character-model-url">
         GLB URL
       </label>
-      <input
+      <PInput
+        unstyled
         class={INPUT_CLASSES}
         id="character-model-url"
         onInput={(event) => props.onUrlInput(event)}

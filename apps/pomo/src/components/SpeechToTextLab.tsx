@@ -73,5 +73,3 @@ export const SpeechToTextLab = () => {
     </section>
   )
 }
-
-export default SpeechToTextLab

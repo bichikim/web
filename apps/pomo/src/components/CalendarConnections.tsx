@@ -1,8 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {createResource, createSignal, createUniqueId, For, Show} from 'solid-js'
-
 import * as m from '@paraglide/message'
-
 import {
   CALENDAR_PROVIDERS,
   type CalendarConnection,
@@ -11,80 +9,22 @@ import {
   listCalendarConnections,
   openCalendarAuthorization,
 } from '../features/calendar'
-import {PButton} from './PButton'
-
-const PROVIDER_LABELS = {
-  google: 'Google Calendar',
-  microsoft: 'Microsoft Outlook',
-} as const
+import {useAuth} from '../features/auth/AuthProvider'
+import {CalendarProviderActions} from './calendar-connections/ProviderActions'
 
 interface CalendarConnectionsProps {
   readonly onConnectionsChange?: () => void
 }
 
-interface CalendarProviderActionsProps {
-  readonly connections: ReadonlyArray<CalendarConnection>
-  readonly confirmingId: string | null
-  readonly onConnect: (provider: CalendarConnection['provider']) => void
-  readonly onDisconnect: (connection: CalendarConnection) => void
-  readonly pending: boolean
-  readonly provider: CalendarConnection['provider']
-}
-
-const CalendarProviderActions = (props: CalendarProviderActionsProps) => {
-  const providerConnections = () =>
-    props.connections.filter((connection) => connection.provider === props.provider)
-  return (
-    <Show
-      when={providerConnections().length > 0}
-      fallback={
-        <PButton
-          class="w-full"
-          disabled={props.pending}
-          onPress={() => props.onConnect(props.provider)}
-          tone="secondary"
-        >
-          {props.provider === 'google'
-            ? m.calendar_connect_google()
-            : m.calendar_connect_microsoft()}
-        </PButton>
-      }
-    >
-      <For each={providerConnections()}>
-        {(connection) => (
-          <div class="grid gap-1.5">
-            <PButton
-              accessibleLabel={m.calendar_disconnect({account: connection.accountLabel})}
-              class="w-full"
-              disabled={props.pending}
-              onPress={() => props.onDisconnect(connection)}
-              tone={props.confirmingId === connection.id ? 'danger' : 'secondary'}
-            >
-              <span class="grid gap-1 text-center leading-tight">
-                <span>
-                  {props.confirmingId === connection.id
-                    ? m.calendar_disconnect_confirm()
-                    : m.calendar_disconnect_provider({
-                        provider: PROVIDER_LABELS[connection.provider],
-                      })}
-                </span>
-                <span class="break-all text-xs font-500 text-muted-foreground">
-                  {connection.accountLabel}
-                </span>
-              </span>
-            </PButton>
-          </div>
-        )}
-      </For>
-    </Show>
-  )
-}
-
 export const CalendarConnections = (props: CalendarConnectionsProps) => {
+  const authentication = useAuth()
   const popoverId = `pomo-calendar-settings-${createUniqueId()}`
   const titleId = `${popoverId}-title`
   const popoverAnchor = `--${popoverId}`
-  const [connections, {refetch}] = createResource(listCalendarConnections)
+  const [connections, {refetch}] = createResource(
+    () => authentication.session() !== null,
+    listCalendarConnections,
+  )
   const [confirmingId, setConfirmingId] = createSignal<string | null>(null)
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [pendingAction, setPendingAction] = createSignal<string | null>(null)
@@ -185,32 +125,40 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
         <h2 class="m-0 text-base font-750" id={titleId}>
           {m.calendar_settings()}
         </h2>
-        <p class="mb-4 mt-1 text-xs leading-5 text-muted-foreground">
+        <p class="mb-4 mt-1 text-modal-detail leading-5 text-muted-foreground">
           {m.calendar_connections_description()}
         </p>
 
-        <Show when={!connections.loading} fallback={<p>{m.calendar_connections_loading()}</p>}>
+        <Show
+          when={authentication.state().kind !== 'anonymous'}
+          fallback={<p>{m.calendar_connections_login_required()}</p>}
+        >
           <Show
-            when={!connections.error}
-            fallback={<p role="alert">{m.calendar_connections_failed()}</p>}
+            when={!connections.loading && authentication.state().kind !== 'checking'}
+            fallback={<p>{m.calendar_connections_loading()}</p>}
           >
-            <div class="grid gap-2">
-              <For each={CALENDAR_PROVIDERS}>
-                {(provider) => (
-                  <CalendarProviderActions
-                    connections={connections() ?? []}
-                    confirmingId={confirmingId()}
-                    onConnect={connect}
-                    onDisconnect={disconnect}
-                    pending={pendingAction() !== null}
-                    provider={provider}
-                  />
-                )}
-              </For>
-            </div>
+            <Show
+              when={authentication.state().kind !== 'unavailable' && !connections.error}
+              fallback={<p role="alert">{m.calendar_connections_failed()}</p>}
+            >
+              <div class="grid gap-2">
+                <For each={CALENDAR_PROVIDERS}>
+                  {(provider) => (
+                    <CalendarProviderActions
+                      connections={connections() ?? []}
+                      confirmingId={confirmingId()}
+                      onConnect={connect}
+                      onDisconnect={disconnect}
+                      pending={pendingAction() !== null}
+                      provider={provider}
+                    />
+                  )}
+                </For>
+              </div>
+            </Show>
           </Show>
+          <Show when={errorMessage()}>{(message) => <p role="alert">{message()}</p>}</Show>
         </Show>
-        <Show when={errorMessage()}>{(message) => <p role="alert">{message()}</p>}</Show>
       </section>
     </>
   )

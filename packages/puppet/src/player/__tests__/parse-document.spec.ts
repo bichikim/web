@@ -1,3 +1,6 @@
+import {getDocumentScene} from '../scene'
+import {rebindDeformer} from '../../deformation/binding'
+import type {PuppetSceneDeformerNode} from '../document'
 import {describe, expect, it, test} from 'vitest'
 
 import {createDemoDocument} from '../create-demo-document'
@@ -542,5 +545,147 @@ describe('parseDocument', () => {
     if (result.ok) {
       expect(result.document.parts[0]?.mesh).not.toHaveProperty('controlVertexIndices')
     }
+  })
+})
+
+test('should reject invalid curve axis and grid metadata', () => {
+  const document = createDemoDocument()
+  const root = {
+    bounds: {height: 100, width: 100, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [0, 50, 30, 50, 70, 50, 100, 50],
+    curveAxis: 'x',
+    id: 'curve',
+    kind: 'deformer',
+    locked: false,
+    name: 'Curve',
+    rows: 1,
+    visible: true,
+  }
+  for (const change of [{curveAxis: 'z'}, {rows: 2}, {controlPoints: [0, 0]}, {curveHandles: []}]) {
+    expect(
+      parseDocument(JSON.stringify({...document, scene: {roots: [{...root, ...change}]}})).ok,
+    ).toBe(false)
+  }
+})
+
+test.each([
+  {boneRestPoints: [0, 0, 0, 0]},
+  {boneRestPoints: [0, 0, 10]},
+  {boneRestPoints: [0, 0, Number.NaN, 10]},
+  {boneRestPoints: [0, 0]},
+])('should reject malformed bone bind coordinates $boneRestPoints', ({boneRestPoints}) => {
+  const document = createDemoDocument()
+  const node = {
+    children: [],
+    boneRestPoints,
+    columns: 1,
+    bounds: {x: 0, width: 100, y: 0, height: 100},
+    id: 'bone',
+    controlPoints: boneRestPoints,
+    kind: 'deformer',
+    locked: false,
+    name: 'Bone',
+    rows: 1,
+    visible: true,
+  }
+  expect(parseDocument(JSON.stringify({...document, scene: {roots: [node]}})).ok).toBe(false)
+})
+
+test('should validate persisted deformer placement shapes and reject malformed reference steps', () => {
+  const shape: PuppetSceneDeformerNode = {
+    bounds: {height: 100, width: 100, x: 0, y: 0},
+    children: getDocumentScene(createDemoDocument()).roots,
+    columns: 1,
+    controlPoints: [0, 0, 100, 0, 0, 100, 100, 100],
+    id: 'grid',
+    kind: 'deformer',
+    locked: false,
+    rows: 1,
+    name: 'Grid',
+    visible: true,
+  }
+  const node = rebindDeformer(shape, {
+    ...shape,
+    controlPoints: shape.controlPoints.map((value) => value + 10),
+  })
+  const document = {...createDemoDocument(), scene: {roots: [node]}}
+  const parsed = parseDocument(serializeDocument(document))
+  expect(parsed.ok).toBe(true)
+  if (parsed.ok) {
+    expect(parsed.document.scene?.roots[0]).toEqual(JSON.parse(JSON.stringify(node)))
+  }
+  for (const binding of [
+    {rest: node.binding!.rest, steps: []},
+    {rest: {...node.binding!.rest, controlPoints: [0]}, steps: node.binding!.steps},
+    {rest: node.binding!.rest, steps: [{shape: {...shape, bounds: {...shape.bounds, width: 0}}}]},
+    {rest: node.binding!.rest, steps: [{rest: {}, shape}]},
+  ]) {
+    expect(
+      parseDocument(JSON.stringify({...document, scene: {roots: [{...node, binding}]}})).ok,
+    ).toBe(false)
+  }
+})
+
+describe('parameter influence relations', () => {
+  const createInfluenced = (influences: unknown) => {
+    const document = createDemoDocument()
+    return {
+      ...document,
+      parameterBindings: document.parameterBindings!.map((binding) => ({...binding, influences})),
+    }
+  }
+  test('should preserve influence curves through serialization and parsing', () => {
+    const document = createDemoDocument()
+    const influenced = {
+      ...document,
+      parameterBindings: document.parameterBindings!.map((binding) => ({
+        ...binding,
+        influences: [
+          {
+            parameterId: 'angle-y',
+            points: [
+              {value: -30, weight: 1},
+              {value: 30, weight: 0},
+            ],
+          },
+        ],
+      })),
+    }
+    expect(parseDocument(serializeDocument(influenced))).toEqual({document: influenced, ok: true})
+  })
+  test.each(
+    [
+      null,
+      [{parameterId: 'missing', points: [{value: 0, weight: 1}]}],
+      [{parameterId: 'angle-y', points: []}],
+      [{parameterId: 'angle-y', points: [{value: 0, weight: 2}]}],
+      [{parameterId: 'angle-y', points: [{value: -31, weight: 1}]}],
+      [
+        {
+          parameterId: 'angle-y',
+          points: [
+            {value: 0, weight: 1},
+            {value: 0, weight: 0},
+          ],
+        },
+      ],
+      [
+        {
+          parameterId: 'angle-y',
+          points: [
+            {value: 30, weight: 1},
+            {value: 0, weight: 0},
+          ],
+        },
+      ],
+      [
+        {parameterId: 'angle-y', points: [{value: 0, weight: 1}]},
+        {parameterId: 'angle-y', points: [{value: 0, weight: 0}]},
+      ],
+    ].map((value) => [value]),
+  )('should reject invalid influence contracts: %j', (influences) => {
+    expect(parseDocument(JSON.stringify(createInfluenced(influences))).ok).toBe(false)
   })
 })

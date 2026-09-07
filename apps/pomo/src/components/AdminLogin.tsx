@@ -25,10 +25,10 @@ export const AdminLogin = () => {
 
   return (
     <main class={PAGE_CLASSES}>
-      <Title>Pomo 관리자 로그인</Title>
+      <Title>앱 관리자 로그인</Title>
       <section class="w-full max-w-100">
         <header class="mb-8">
-          <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">Pomo admin</p>
+          <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">앱 관리</p>
           <h1 class="mb-0 mt-3 text-3xl font-800 tracking--0.03em">관리자 로그인</h1>
           <p class="mb-0 mt-3 text-sm leading-6 text-white/60">
             관리자 이메일로 일회용 로그인 링크를 보내드립니다.
@@ -60,7 +60,7 @@ export const AdminLogin = () => {
             {(message) => <PFormMessage tone="success">{message()}</PFormMessage>}
           </Show>
 
-          <PButton class="mt-2 w-full" disabled={login.isSubmitting()} type="submit">
+          <PButton raised class="mt-2 w-full" disabled={login.isSubmitting()} type="submit">
             {login.isSubmitting() ? '이메일 전송 중…' : '로그인 링크 받기'}
           </PButton>
         </form>

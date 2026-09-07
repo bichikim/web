@@ -28,6 +28,7 @@ export const TossAccount = () => {
           <div class="grid gap-5">
             <p class="m-0 text-sm leading-6 text-muted-foreground">{m.account_toss_intro()}</p>
             <PButton
+              raised
               class="w-full"
               disabled={account.isSubmitting()}
               onPress={() => account.onLogin()}
@@ -68,12 +69,14 @@ export const TossAccount = () => {
               type="email"
               value={account.email()}
             />
-            <PButton class="w-full" disabled={account.isSubmitting()} type="submit">
+            <PButton raised class="w-full" disabled={account.isSubmitting()} type="submit">
               {account.isSubmitting() ? m.account_toss_sending_email() : m.account_toss_link_web()}
             </PButton>
           </form>
 
           <PButton
+            bordered
+            transparent
             class="w-full"
             disabled={account.isSubmitting()}
             onPress={() => account.onLogout()}

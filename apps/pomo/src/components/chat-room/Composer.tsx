@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {type ChatController} from '../../features/chat/index'
@@ -45,7 +46,8 @@ export const ChatComposer = (props: ChatComposerProps) => {
     <form class="border-t border-white/8 p-4 xs:p-5" onSubmit={handleSubmit}>
       <label class="grid gap-2">
         <span class="sr-only">메시지</span>
-        <textarea
+        <PTextarea
+          unstyled
           class={cx(
             'min-h-24 w-full resize-none box-border rounded-5 border border-white/10 bg-#17131f p-4',
             'text-[0.9375rem] leading-6 text-#f8edf1 outline-none transition placeholder:text-#655b6c',

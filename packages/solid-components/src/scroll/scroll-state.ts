@@ -1,4 +1,4 @@
-import {createManualMemo, MaybeAccessor, resolveAccessor, useEvent} from '@winter-love/solid-use'
+import {createManualMemo, MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
 import {Accessor, onMount} from 'solid-js'
 import {ScrollState} from './scroll-context'
 
@@ -8,7 +8,7 @@ import {ScrollState} from './scroll-context'
  */
 export const useScrollState = (
   element: MaybeAccessor<HTMLElement | null>,
-): Accessor<ScrollState> => {
+): readonly [Accessor<ScrollState>, {readonly onScroll: () => void}] => {
   const elementAccessor = resolveAccessor(element)
 
   const [nativeScrollState, updateNativeScrollState] = createManualMemo(() => {
@@ -54,9 +54,5 @@ export const useScrollState = (
     updateNativeScrollState()
   })
 
-  useEvent(elementAccessor, 'scroll', () => {
-    updateNativeScrollState()
-  })
-
-  return nativeScrollState
+  return [nativeScrollState, {onScroll: updateNativeScrollState}]
 }

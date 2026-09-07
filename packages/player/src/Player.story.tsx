@@ -39,7 +39,7 @@ export const Root = (props: RootProps) => {
   const [apiCredential, setApiCredential] = useStorage<string | null>('local', '__api_credential', {
     initValue: null,
   })
-  const [playerState, setPlayerState, playerController] = createPlayer(element)
+  const [playerState, setPlayerState, playerController, mediaEvents] = createPlayer(element)
 
   const stop = () => {
     playerController.pause()
@@ -58,7 +58,7 @@ export const Root = (props: RootProps) => {
 
   return (
     <div>
-      <video ref={setElement} class="w-500px" controls />
+      <video {...mediaEvents} ref={setElement} class="w-500px" controls />
       <br />
       <span>state currentTime {playerState().currentTime}</span>
       <br />

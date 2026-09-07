@@ -2,7 +2,6 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createSignal, For, Show, untrack} from 'solid-js'
-
 import {PButton} from 'src/components/PButton'
 import {PModal} from 'src/components/PModal'
 import {
@@ -12,6 +11,7 @@ import {
   type OptionResetGroupId,
   type OptionResetManager,
 } from 'src/features/dev-option-reset'
+import {OptionGroupCard} from './option-reset/OptionGroupCard'
 
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1 xs:px-8',
@@ -48,41 +48,11 @@ const getPartialResetMessage = (
   return `${resultMessage}으며 ${unresolvedCount}개는 상태를 확인하지 못했습니다. 다시 시도해 주세요.`
 }
 
-interface OptionGroupCardProps {
-  readonly busy: boolean
-  readonly group: OptionResetGroup
-  readonly onReset: (group: OptionResetGroup, source: HTMLButtonElement) => void
-}
-
-const OptionGroupCard = (props: OptionGroupCardProps) => (
-  <li
-    class={
-      'grid gap-5 rounded-6 border border-white/10 bg-white/4 p-5 ' +
-      'sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-6'
-    }
-  >
-    <div>
-      <h2 class="m-0 text-xl font-750">{props.group.label}</h2>
-      <p class="mb-0 mt-2 text-sm leading-6 text-#aaa0b1">{props.group.description}</p>
-      <p class="mb-0 mt-2 text-xs text-#8f8297">저장 항목 {props.group.storageKeyCount}개</p>
-    </div>
-    <PButton
-      accessibleLabel={`${props.group.label} 옵션 초기화`}
-      disabled={props.busy}
-      onPress={(source) => props.onReset(props.group, source)}
-      size="small"
-      tone="danger"
-    >
-      초기화
-    </PButton>
-  </li>
-)
-
 export interface OptionResetPageProps {
   readonly manager?: OptionResetManager
 }
 
-function OptionResetPage(props: OptionResetPageProps) {
+export function OptionResetPage(props: OptionResetPageProps) {
   const manager = untrack(() => props.manager ?? createRuntimeOptionResetManager())
   const [request, setRequest] = createSignal<ResetRequest | null>(null)
   const [isBusy, setIsBusy] = createSignal(false)
@@ -150,7 +120,7 @@ function OptionResetPage(props: OptionResetPageProps) {
           <A class="text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">
             ← 실험실 목록
           </A>
-          <p class="mb-0 mt-8 text-xs font-750 tracking-[0.24em] text-#9ed6bb uppercase">
+          <p class="mb-0 mt-8 text-modal-detail font-750 tracking-[0.24em] text-#9ed6bb uppercase">
             Local preferences
           </p>
           <h1 class="mb-0 mt-3 text-4xl font-800 tracking--0.04em">각종 옵션 초기화</h1>
@@ -193,7 +163,7 @@ function OptionResetPage(props: OptionResetPageProps) {
           <p class="m-0 max-w-xl text-sm leading-6 text-#aaa0b1">
             모든 설정과 업데이트 안내 열람 상태를 한 번에 기본값으로 되돌립니다.
           </p>
-          <PButton disabled={isBusy()} onPress={requestAllReset} tone="danger">
+          <PButton bordered transparent disabled={isBusy()} onPress={requestAllReset} tone="danger">
             모든 옵션 초기화
           </PButton>
         </section>
@@ -218,10 +188,10 @@ function OptionResetPage(props: OptionResetPageProps) {
           이 작업은 되돌릴 수 없으며 다음 실행부터 기본값이 적용됩니다.
         </p>
         <div class="mt-5 flex justify-end gap-2">
-          <PButton onPress={handleCancel} size="small" tone="secondary">
+          <PButton bordered transparent onPress={handleCancel} size="small" tone="secondary">
             취소
           </PButton>
-          <PButton onPress={() => handleConfirm()} size="small" tone="danger">
+          <PButton bordered transparent onPress={() => handleConfirm()} size="small" tone="danger">
             초기화
           </PButton>
         </div>
@@ -229,5 +199,3 @@ function OptionResetPage(props: OptionResetPageProps) {
     </main>
   )
 }
-
-export default OptionResetPage

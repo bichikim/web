@@ -55,5 +55,3 @@ export const AdminTrackPreview = (props: AdminTrackPreviewProps) => {
     </div>
   )
 }
-
-export default AdminTrackPreview

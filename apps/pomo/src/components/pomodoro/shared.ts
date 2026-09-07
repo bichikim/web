@@ -1,4 +1,10 @@
 import {cx} from 'class-variance-authority'
+import {GLASS_ICON_BUTTON} from '../button-presets'
+
+const COMPACT_ACTION = cx(
+  GLASS_ICON_BUTTON.class,
+  'pomo-pomodoro-panel__compact-action data-[icon-only]:shadow-none',
+)
 
 export const CLASSES = {
   pomodoro: cx(
@@ -29,12 +35,16 @@ export const CLASSES = {
     'pomo-pomodoro-panel__auto-start w-full box-border mt-4',
     'border-t border-solid border-border pt-4',
   ),
-  pomodoroPanelCompactAction: 'pomo-pomodoro-panel__compact-action shadow-none',
+  pomodoroPanelCompactAction: COMPACT_ACTION,
   pomodoroPanelCompactActionDanger: cx(
+    COMPACT_ACTION,
     'pomo-pomodoro-panel__compact-action--danger border-[rgb(239_138_116_/_34%)]',
-    '[&_[data-pomo-icon-button-icon]]:text-danger',
+    '[&_[data-pomo-button-icon]]:text-danger',
   ),
-  pomodoroPanelPrimaryAction: 'pomo-pomodoro-panel__primary-action min-w-0 flex-1',
+  pomodoroPanelPrimaryAction: cx(
+    'pomo-pomodoro-panel__primary-action min-w-0 flex-1 [&]:text-modal-body',
+    '[&>span[aria-hidden]]:size-6',
+  ),
   pomodoroPanelSession: cx(
     'pomo-pomodoro-panel__session w-2 h-2 border border-solid border-border-hover',
     'rounded-full bg-transparent [&[data-complete]]:border-[var(--pomo-timer-phase)]',
@@ -42,7 +52,7 @@ export const CLASSES = {
   ),
   pomodoroPanelSessionReset: cx(
     'pomo-pomodoro-panel__session-reset inline-flex items-center gap-1 border-0 bg-transparent',
-    'p-1 text-muted-foreground cursor-pointer text-[0.625rem] leading-3.5',
+    'p-1 text-muted-foreground cursor-pointer text-modal-detail leading-5',
     '[&:hover]:text-danger [&:focus-visible]:text-danger',
   ),
   pomodoroPanelSessionRow: 'pomo-pomodoro-panel__session-row flex items-center gap-2 mt-4',

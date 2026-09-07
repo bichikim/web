@@ -8,7 +8,11 @@ import {
   writeWebStorageJson,
 } from 'src/features/runtime-storage'
 
-import {DISPLAY_THEME_STORAGE_KEY, type DisplayThemePreference} from './model'
+import {
+  DEFAULT_DISPLAY_THEME,
+  DISPLAY_THEME_STORAGE_KEY,
+  type DisplayThemePreference,
+} from './model'
 
 export interface DisplayThemePreferenceStorage {
   readonly isNative: () => boolean
@@ -27,7 +31,6 @@ export interface CreateDisplayThemePreferenceRepositoryOptions {
   readonly storage: DisplayThemePreferenceStorage
 }
 
-const DEFAULT_DISPLAY_THEME: DisplayThemePreference = 'system'
 const displayThemeSchema = z.enum(['bright', 'dark', 'system'])
 
 const parseDisplayThemePreference = (value: unknown): DisplayThemePreference | null => {

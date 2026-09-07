@@ -1,11 +1,28 @@
 /** @vitest-environment jsdom */
 
+import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
 import {PModal} from '../PModal'
+import {PModalTabList} from '../PModalTabList'
+
+afterEach(() => vi.restoreAllMocks())
+
+it('should omit the header while preserving the accessible dialog title', () => {
+  render(() => (
+    <PModal headerMode="hidden" isOpen onOpenChange={vi.fn()} title="Drawing">
+      Canvas
+    </PModal>
+  ))
+  const dialog = screen.getByRole('dialog', {name: 'Drawing'})
+  expect(dialog.querySelector('header')).toBeNull()
+  expect(screen.getByText('Drawing')).toHaveClass('sr-only')
+  expect(screen.queryByRole('button', {name: m.common_close()})).not.toBeInTheDocument()
+  expect(screen.getByText('Canvas')).toBeInTheDocument()
+})
 
 it('should render and close the default modal content', async () => {
   const onOpenChange = vi.fn()
@@ -127,4 +144,50 @@ it('should apply custom open and close focus behavior', async () => {
   fireEvent.animationEnd(dialog)
   unmount()
   await waitFor(() => expect(onCloseAutoFocus).toHaveBeenCalledOnce())
+})
+
+it('should preserve the tabs context through navigation, portal, and reopening', async () => {
+  const readStyles = window.getComputedStyle.bind(window)
+  vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+    const styles = readStyles(element)
+    Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
+    return styles
+  })
+  const [isOpen, setIsOpen] = createSignal(false)
+  render(() => (
+    <Tabs defaultValue="general">
+      <PModal
+        isOpen={isOpen()}
+        navigation={
+          <PModalTabList
+            accessibleLabel="Settings tabs"
+            items={[
+              {icon: 'i-tabler-settings', label: 'General', value: 'general'},
+              {icon: 'i-tabler-help', label: 'Guide', value: 'guide'},
+            ]}
+          />
+        }
+        onOpenChange={setIsOpen}
+        title="Settings"
+      >
+        <Tabs.Content value="general">General content</Tabs.Content>
+        <Tabs.Content value="guide">Guide content</Tabs.Content>
+      </PModal>
+    </Tabs>
+  ))
+
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  setIsOpen(true)
+  await screen.findByRole('dialog', {name: 'Settings'})
+  expect(screen.getByRole('tabpanel')).toHaveTextContent('General content')
+  fireEvent.click(screen.getByRole('tab', {name: 'Guide'}))
+  await waitFor(() => expect(screen.getByRole('tabpanel')).toHaveTextContent('Guide content'))
+  expect(screen.getByRole('tab', {name: 'Guide'})).toHaveAttribute('aria-selected', 'true')
+  fireEvent.click(screen.getByRole('button', {name: m.common_close()}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  setIsOpen(true)
+  await screen.findByRole('dialog', {name: 'Settings'})
+  expect(screen.getByRole('tabpanel')).toHaveTextContent('Guide content')
+  fireEvent.click(screen.getByRole('tab', {name: 'General'}))
+  await waitFor(() => expect(screen.getByRole('tabpanel')).toHaveTextContent('General content'))
 })

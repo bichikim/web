@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {
   type Accessor,
@@ -301,7 +302,7 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
   }
 }
 
-export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
+export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
   const [topic, setTopic] = createSignal(DEFAULT_TOPIC)
   const [length, setLength] = createSignal(DEFAULT_DIALOGUE_SCRIPT_LENGTH)
   const [isExpanded, setIsExpanded] = createSignal(false)
@@ -351,7 +352,8 @@ export default function PDialogueDraftGenerator(props: PDialogueDraftGeneratorPr
           </p>
           <label class={FIELD_CLASSES}>
             <span>어떤 말을 만들까요?</span>
-            <input
+            <PInput
+              unstyled
               disabled={props.disabled || draftModel.isBusy()}
               maxlength="200"
               onInput={(event) => setTopic(event.currentTarget.value)}

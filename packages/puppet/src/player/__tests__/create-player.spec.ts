@@ -351,6 +351,38 @@ describe('createPlayer', () => {
       motionId: 'hold-final-frame',
       time: 10,
     })
+
+    const influencedDocument = prepareDocument({
+      ...motionDocument,
+      motions: [],
+      parameterBindings: motionDocument.parameterBindings!.map((binding) => ({
+        ...binding,
+        influences: [
+          {
+            parameterId: 'control',
+            points: [
+              {value: 0, weight: 1},
+              {value: 1, weight: 0},
+            ],
+          },
+        ],
+      })),
+      parameters: [
+        ...motionDocument.parameters!,
+        {id: 'control', minimum: 0, name: 'Control', defaultValue: 0, maximum: 1},
+      ],
+    })
+    expect(player.updateDocument(influencedDocument)).toBe(true)
+    player.setParameterValues({control: 0.5, shift: 1})
+    expect(createdMesh!.vertices[2]).toBeCloseTo(56.25)
+    expect(createdMesh!.vertices[3]).toBeCloseTo(56.25)
+    player.setParameterValues({control: 1, shift: 1})
+    expect(createdMesh!.vertices[2]).toBeCloseTo(100)
+    expect(createdMesh!.vertices[3]).toBeCloseTo(0)
+    player.setParameterValues({control: 0, shift: 1})
+    expect(createdMesh!.vertices[2]).toBeCloseTo(0)
+    expect(createdMesh!.vertices[3]).toBeCloseTo(125)
+    player.destroy()
   })
 
   test('should apply scene order and inherited visibility to runtime meshes', async () => {

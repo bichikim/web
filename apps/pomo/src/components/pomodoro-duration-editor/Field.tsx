@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {NumberField} from '@kobalte/core/number-field'
 import {CLASSES} from './shared'
 
@@ -24,7 +25,7 @@ export const DurationField = (props: DurationFieldProps) => (
     <span aria-hidden="true">{props.label}</span>
     <NumberField.Label class="sr-only">{props.accessibleLabel}</NumberField.Label>
     <span class={CLASSES.pomodoroPanelDurationInput}>
-      <NumberField.Input />
+      <NumberField.Input as={PInput} unstyled />
       <span>{props.suffix}</span>
     </span>
   </NumberField>

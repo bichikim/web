@@ -78,3 +78,19 @@ it('should classify a consumed account link as invalid', () => {
 
   return expect(completeAccountLink('challenge')).resolves.toBe('invalid')
 })
+
+it('should send the JSON payload required by the auth sign-out endpoint', async () => {
+  const fetchMock = vi.fn<typeof fetch>().mockImplementation(async (_input, init) => {
+    const contentType = new Headers(init?.headers).get('Content-Type')
+    return new Response(null, {
+      status: contentType === 'application/json' && init?.body === '{}' ? 200 : 415,
+    })
+  })
+  vi.stubGlobal('fetch', fetchMock)
+
+  await expect(signOutWebSession()).resolves.toBe(true)
+  expect(fetchMock).toHaveBeenCalledWith(
+    '/api/auth/sign-out',
+    expect.objectContaining({credentials: 'include', method: 'POST'}),
+  )
+})

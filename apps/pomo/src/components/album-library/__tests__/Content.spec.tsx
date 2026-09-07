@@ -36,7 +36,7 @@ vi.mock('../../../features/client-error-reporter', () => reporterMocks)
 vi.mock('../../PButton', () => ({PButton: componentMocks.button}))
 vi.mock('../Card', () => ({AlbumCard: componentMocks.albumCard}))
 
-import PAlbumLibraryContent from '../Content'
+import {PAlbumLibraryContent} from '../Content'
 
 interface ButtonProps {
   readonly children: JSX.Element

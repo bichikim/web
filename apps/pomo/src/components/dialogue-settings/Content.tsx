@@ -21,7 +21,6 @@ import * as m from '@paraglide/message'
 import {AutomaticDialogueSettings} from './AutomaticSettings'
 import {getDialogueEvents} from './event-definitions'
 import {DialogueConnectionMenu} from './ConnectionMenu'
-import {DialogueEventSettingRow} from './EventSettingRow'
 import {DialogueLibrary} from './Library'
 import {DialoguePlaybackModeSelect} from './PlaybackModeSelect'
 import {RandomEventSettings} from './RandomEventSettings'
@@ -37,14 +36,14 @@ const CLASSES = {
     'items-center gap-[0.7rem] settings-compact:gap-2 [&_>_div:nth-child(2)]:min-w-0',
     '[&_>_div:nth-child(2)_>_div]:min-w-0 [&_>_div:nth-child(2)_>_div]:flex',
     '[&_>_div:nth-child(2)_>_div]:items-center [&_>_div:nth-child(2)_>_div]:gap-[0.45rem]',
-    '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-[0.8125rem] [&_h5]:font-[750]',
+    '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-modal-body [&_h5]:font-[750]',
     '[&_>_div:nth-child(2)_>_div_>_span]:rounded-full',
     '[&_>_div:nth-child(2)_>_div_>_span]:bg-content-surface',
     '[&_>_div:nth-child(2)_>_div_>_span]:px-2 [&_>_div:nth-child(2)_>_div_>_span]:py-1',
     '[&_>_div:nth-child(2)_>_div_>_span]:text-muted-foreground',
-    '[&_>_div:nth-child(2)_>_div_>_span]:text-[0.5625rem]',
+    '[&_>_div:nth-child(2)_>_div_>_span]:text-modal-detail',
     '[&_>_div:nth-child(2)_>_div_>_span]:font-bold [&_p]:m-[0.2rem_0_0]',
-    '[&_p]:text-muted-foreground [&_p]:text-[0.65rem] [&_p]:leading-[1.4]',
+    '[&_p]:text-muted-foreground [&_p]:text-modal-detail [&_p]:leading-[1.4]',
   ),
   dialogueSettingsEventSymbol: cx(
     'pomo-dialogue-settings__event-symbol grid w-9 h-9 place-items-center rounded-full',
@@ -61,14 +60,14 @@ const CLASSES = {
   ),
   dialogueSettingsLoading: cx(
     'pomo-dialogue-settings__loading m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'bg-content-surface p-5 text-muted-foreground text-modal-detail settings-compact:p-4',
     'leading-[1.5] text-center flex items-center justify-center gap-2',
     '[&_>_span]:animate-dialogue-settings-spin',
     'motion-reduce:[&_>_span]:animate-[none]',
   ),
   dialogueSettingsMessage: cx(
     'pomo-dialogue-settings__message m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'bg-content-surface p-5 text-muted-foreground text-modal-detail settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
 } as const
@@ -101,7 +100,7 @@ export interface PDialogueSettingsContentProps {
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export default function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
+export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
   const events = usePEvents()
   const dialogueEvents = getDialogueEvents()
   const feeds = usePFeedContext()
@@ -155,6 +154,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
           <PSettingsSectionHeading
             class="pomo-dialogue-settings__library-heading"
             count={m.settings_count({count: dialogueEvents.length})}
+            divider="none"
             title={m.settings_events_title()}
             titleId="pomo-dialogue-events-title"
           />
@@ -197,14 +197,12 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                         <RandomEventSettings />
                       </Show>
 
-                      <DialogueEventSettingRow
-                        description={
-                          eventDialogues().length === 0
-                            ? m.settings_event_dialogue_create_first()
-                            : m.settings_event_dialogue_select_description()
-                        }
-                        label={m.settings_event_dialogue_connection()}
-                      >
+                      <div class="grid min-w-0 gap-2 border-t border-solid border-border pt-3">
+                        <Show when={eventDialogues().length === 0}>
+                          <p class="m-0 text-muted-foreground text-modal-detail">
+                            {m.settings_event_dialogue_create_first()}
+                          </p>
+                        </Show>
                         <DialogueConnectionMenu
                           accessibleLabel={m.settings_event_dialogue_connection_label({
                             event: event.label,
@@ -217,7 +215,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                           }}
                           selectedDialogueIds={selectedDialogueIds()}
                         />
-                      </DialogueEventSettingRow>
+                      </div>
 
                       <Show when={selectedDialogues().length > 1}>
                         <DialoguePlaybackModeSelect

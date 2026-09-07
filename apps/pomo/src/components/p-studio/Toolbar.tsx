@@ -25,12 +25,14 @@ import {PDesktopModeControl} from '../PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
-import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
-import {PIconButton} from '../PIconButton'
+import {GLASS_ICON_BUTTON} from '../button-presets'
+import {PButton} from '../PButton'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
+  readonly tourButtonVisible?: boolean
+  readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly dialogueComposerVisible?: boolean
   readonly gaze: PGaze
   readonly isSceneTransitioning: boolean
@@ -69,46 +71,33 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         props.layout === 'surface' ? 'flex w-full flex-col items-end gap-2' : CLASSES.sceneToolbar,
       )}
     >
-      <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
+      <div
+        class="flex flex-wrap justify-end gap-2 [&_button[data-icon-only]]:rounded-full"
+        role="group"
+        aria-label={m.scene_group_label()}
+      >
         <VersionNoticePanel sceneStyle={props.sceneStyle} />
-        <Show when={props.onTourOpen !== undefined}>
+        <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
           <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-            <PIconButton
+            <PButton
+              {...GLASS_ICON_BUTTON}
               accessibleLabel={m.tour_open()}
-              class={CLASSES.sceneControl}
-              feedback={m.tour_feedback()}
+              tooltip={m.tour_open()}
+              class={cx(GLASS_ICON_BUTTON.class, CLASSES.sceneControl)}
               icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
               onPress={() => props.onTourOpen?.()}
             />
           </PScribbleCircleControl>
         </Show>
         <div class="inline-flex" data-tour-step="memory-assist">
-          <MemoryAssistPanel
-            fallback={
-              <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-                <span
-                  aria-hidden="true"
-                  class={cx(
-                    'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
-                    'border border-solid border-border bg-surface text-foreground shadow-panel',
-                  )}
-                >
-                  <span
-                    class={cx(
-                      getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle),
-                      'size-6 text-highlight',
-                    )}
-                  />
-                </span>
-              </PScribbleCircleControl>
-            }
-            sceneStyle={props.sceneStyle}
-          />
+          <MemoryAssistPanel sceneStyle={props.sceneStyle} weatherState={props.weatherState} />
         </div>
         <div class="inline-flex" data-tour-step="settings">
           <SceneSettingsPanel
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}
+            tourButtonVisible={props.tourButtonVisible}
+            onTourButtonVisibleChange={props.onTourButtonVisibleChange}
             dialogueComposerVisible={props.dialogueComposerVisible}
             gaze={props.gaze}
             onActivityChange={props.onActivityChange}
@@ -130,24 +119,6 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             weatherEnabled={props.weatherEnabled}
             weatherLocation={props.weatherLocation}
             weatherSceneMode={props.weatherSceneMode}
-            fallback={
-              <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-                <span
-                  aria-hidden="true"
-                  class={cx(
-                    'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
-                    'border border-solid border-border bg-surface text-foreground shadow-panel',
-                  )}
-                >
-                  <span
-                    class={cx(
-                      getPomoIconClass('i-tabler-settings', props.sceneStyle),
-                      'size-6 text-highlight',
-                    )}
-                  />
-                </span>
-              </PScribbleCircleControl>
-            }
           />
         </div>
       </div>

@@ -1,3 +1,5 @@
+import {useDeformerMode} from './internal/use-deformer-mode'
+import {Portal} from 'solid-js/web'
 import {batch, createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
 import {
@@ -20,10 +22,9 @@ import {
   getDocumentParameters,
   getParameterBindingsForNodeIds,
 } from './internal/parameter-keyforms'
-import {setPartRenderProperties} from './internal/part-properties'
+import {setMaskTarget} from './internal/mask-targets'
 import {createParameterPreview} from './internal/parameter-sampling'
 import {getParameterSelectionNodeIds} from './internal/parameter-targets'
-import {convertSceneContainers} from './internal/container-conversion'
 import {
   createSceneSelection,
   getSceneSelectionActions,
@@ -42,7 +43,7 @@ import {useAutoMesh} from './use-auto-mesh'
 import {useDocumentHistory} from './use-document-history'
 import {useDocumentHistoryShortcuts} from './use-document-history-shortcuts'
 import type {PlayerCanvasStatus} from './PlayerCanvas'
-import editorStyle from './style.css?inline'
+import {EditorStyles} from './internal/EditorStyles'
 
 export interface PuppetEditorProps {
   readonly initialDocument?: PuppetDocument
@@ -73,7 +74,6 @@ const importDocument = async (options: ImportDocumentOptions) => {
   if (options.file === undefined) {
     return
   }
-
   const result = await preparePuppetDocument({
     signal: options.signal,
     source: await options.file.text(),
@@ -151,6 +151,8 @@ const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
 
   return (
     <EditorKeyformPanel
+      influence={props.editor.influence()}
+      onInfluencesChange={props.editor.setInfluences}
       activeBindingId={props.editor.activeBindingId() ?? undefined}
       activeKeyformValues={props.editor.activeKeyformValues()}
       allParametersVisible={props.editor.allParametersVisible()}
@@ -245,7 +247,6 @@ const useEditorImports = (options: UseEditorImportsOptions) => {
     importGeneration += 1
     importAbortController?.abort()
   })
-
   const handleImport = (file: File | undefined) => {
     if (file === undefined) {
       return
@@ -276,7 +277,6 @@ const useEditorImports = (options: UseEditorImportsOptions) => {
       }
     })
   }
-
   const handlePngImport = (file: File | undefined) => {
     if (file === undefined) {
       return
@@ -318,14 +318,20 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
+  const deformerEditing = useDeformerMode({
+    document: sourceDocument,
+    nodeId: () => layerSelection().activeNodeId ?? undefined,
+    onDocumentChange: history.setDocument,
+  })
   const deformerControlSelection = createDeformerControlSelection()
   const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>('modeling')
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [player, setPlayer] = createSignal<Player | null>(null)
   const [currentTime, setCurrentTime] = createSignal(0)
   const [isPlaying, setIsPlaying] = createSignal(false)
+  const [inspectorMount, setInspectorMount] = createSignal<HTMLDivElement>()
   const [notice, setNotice] = createSignal<string | null>(null)
-  const [maskPickTargetPartId, setMaskPickTargetPartId] = createSignal<string | null>(null)
+  const [maskPickSourcePartId, setMaskPickSourcePartId] = createSignal<string | null>(null)
   const selectedPartIds = createMemo(() =>
     getSceneSelectionPartIds(sourceDocument(), layerSelection()),
   )
@@ -343,7 +349,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   })
   const parameterPreviewDocument = createMemo(() =>
     createParameterPreview({
-      document: sourceDocument(),
+      document: parameterEditor.previewDocument(),
+      editingBindingId:
+        workspace() === 'modeling' ? (parameterEditor.activeBindingId() ?? undefined) : undefined,
       parameterValues: parameterEditor.parameterValueMap(),
     }),
   )
@@ -354,7 +362,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
-      setMaskPickTargetPartId(null)
+      setMaskPickSourcePartId(null)
       deformerControlSelection.clear()
       parameterEditor.reset(document)
     })
@@ -407,7 +415,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const document = sourceDocument()
     untrack(() => props.onDocumentChange)?.(document)
   })
-
   const handlePlayerChange = (nextPlayer: Player | null) => {
     setPlayer(syncPlayerPlayback(nextPlayer, isPlaying()))
   }
@@ -435,51 +442,29 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       })
     }
   }
-  const handleContainerConvert = () => {
-    const conversion = selectionActions().containerConversion
-    const document =
-      conversion === undefined
-        ? undefined
-        : convertSceneContainers({...conversion, document: sourceDocument()})
-    if (document !== undefined) {
-      batch(() => {
-        history.setDocument(document)
-        setActiveVertexIndex(null)
-      })
-    }
-  }
-  const handleMaskPick = (maskPartId: string) => {
-    const targetPartId = maskPickTargetPartId()
-    const document = sourceDocument()
-    const part = document.parts.find((candidate) => candidate.id === targetPartId)
-    if (targetPartId === null || part === undefined) {
-      setMaskPickTargetPartId(null)
+  const handleMaskPick = (targetPartId: string) => {
+    const maskPartId = maskPickSourcePartId()
+    if (maskPartId === null) {
       return
     }
-
-    const currentMaskIds = part.properties?.clippingMaskIds ?? []
-    const nextDocument = setPartRenderProperties({
-      document,
-      partId: targetPartId,
-      properties: {
-        clippingMaskIds: currentMaskIds.includes(maskPartId)
-          ? currentMaskIds
-          : [...currentMaskIds, maskPartId],
-      },
+    const document = setMaskTarget({
+      checked: true,
+      document: sourceDocument(),
+      maskPartId,
+      targetPartId,
     })
-    if (nextDocument === undefined) {
-      setNotice('이 레이어는 순환 참조 때문에 마스크로 사용할 수 없습니다.')
+    if (document === undefined) {
+      setNotice('잠금 또는 순환 참조 때문에 이 레이어에 마스크를 적용할 수 없습니다.')
       return
     }
-
-    history.setDocument(nextDocument)
-    setMaskPickTargetPartId(null)
-    setNotice(`${maskPartId} 레이어를 클리핑 마스크로 연결했습니다.`)
+    history.setDocument(document)
+    setMaskPickSourcePartId(null)
+    setNotice(`${targetPartId} 레이어에 마스크를 적용했습니다.`)
   }
 
   return (
     <>
-      <style>{editorStyle}</style>
+      <EditorStyles />
       <EditorPanelLayout
         onActivate={activateHistoryShortcuts}
         bottom={
@@ -503,37 +488,37 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             activeKeyformValues={parameterEditor.activeKeyformValues()}
             activeNodeId={selectionActions().singleNodeId}
             autoMeshAvailable={workspace() === 'modeling' && autoMesh.targets().length > 0}
-            containerConversionTarget={selectionActions().containerConversion?.targetKind}
             containerUnwrapAvailable={selectionActions().containerIds.length > 0}
             document={sourceDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
-            maskPickTargetPartId={maskPickTargetPartId() ?? undefined}
+            maskPickSourcePartId={maskPickSourcePartId() ?? undefined}
             notice={notice()}
             onAutoMesh={() => autoMesh.onOpenChange(true)}
-            onContainerConvert={handleContainerConvert}
             onContainerUnwrap={handleContainerUnwrap}
-            onDocumentChange={history.setDocument}
+            onDocumentChange={deformerEditing.updateInspector}
             onEditEnd={history.endTransaction}
             onEditStart={handleDocumentEditStart}
-            onMaskPickCancel={() => setMaskPickTargetPartId(null)}
+            onMaskPickCancel={() => setMaskPickSourcePartId(null)}
             onMaskPickStart={(partId) => {
-              setMaskPickTargetPartId(partId)
-              setNotice('마스크로 사용할 레이어를 왼쪽 패널에서 선택하세요.')
+              setMaskPickSourcePartId(partId)
+              setNotice('마스크를 적용할 대상 레이어를 왼쪽 패널에서 선택하세요.')
             }}
             previewDocument={parameterPreviewDocument()}
             selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
             targetNodeIds={parameterEditor.activeTargetNodeIds()}
-          />
+          >
+            <div ref={setInspectorMount} />
+          </EditorInspector>
         }
         layers={
           <EditorLayerPanel
             document={sourceDocument()}
-            maskPickTargetPartId={maskPickTargetPartId() ?? undefined}
+            maskPickSourcePartId={maskPickSourcePartId() ?? undefined}
             selection={layerSelection()}
             onDocumentChange={history.setDocument}
             onMaskPick={handleMaskPick}
             onSelectionChange={(selection) => {
-              setMaskPickTargetPartId(null)
+              setMaskPickSourcePartId(null)
               setLayerSelection(selection)
               setActivePartId(getSelectedPartId(sourceDocument(), selection))
               setActiveVertexIndex(null)
@@ -563,6 +548,13 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         )}
         viewport={
           <EditorViewport
+            deformerMode={deformerEditing.mode()}
+            onDeformerModeChange={deformerEditing.setMode}
+            renderDeformerControls={(controls) => (
+              <Show when={inspectorMount()}>
+                {(mount) => <Portal mount={mount()}>{controls}</Portal>}
+              </Show>
+            )}
             activeBindingId={parameterEditor.activeBindingId() ?? undefined}
             activeKeyformValues={parameterEditor.activeKeyformValues()}
             activeNodeId={layerSelection().activeNodeId ?? undefined}
@@ -570,7 +562,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             activeVertexIndex={activeVertexIndex()}
             currentTime={currentTime()}
             deformerControlSelection={deformerControlSelection}
-            document={sourceDocument()}
+            document={parameterEditor.previewDocument()}
             editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
             onDeformerEditEnd={history.endTransaction}
             onDeformerEditStart={handleDocumentEditStart}

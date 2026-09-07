@@ -24,31 +24,25 @@ it('should expose and update every language learning generation setting', () => 
     />
   ))
 
-  fireEvent.change(screen.getByRole('combobox', {name: '학습 언어'}), {
-    target: {value: 'ja'},
-  })
-  fireEvent.change(screen.getByRole('combobox', {name: '만들 개수'}), {target: {value: '3'}})
-  fireEvent.change(screen.getByRole('combobox', {name: '목소리'}), {
-    target: {value: 'Hana'},
-  })
-  fireEvent.change(screen.getByRole('combobox', {name: '음성 모델'}), {
-    target: {value: 'int8'},
-  })
+  for (const [name, value] of [
+    ['학습 언어', 'ja'],
+    ['만들 개수', '3'],
+    ['목소리', 'Hana'],
+    ['음성 모델', 'int8'],
+  ]) {
+    fireEvent.keyDown(screen.getByRole('button', {name: new RegExp(name)}), {key: 'ArrowDown'})
+    const option = document.querySelector(`[role="option"][data-key="${value}"]`)
+    expect(option).not.toBeNull()
+    fireEvent.click(option!)
+  }
 
   expect(onLanguageChange).toHaveBeenCalledWith('ja')
   expect(onCountChange).toHaveBeenCalledWith(3)
   expect(onVoiceChange).toHaveBeenCalledWith('Hana')
   expect(onModelChange).toHaveBeenCalledWith('int8')
-  expect(screen.getByRole('option', {name: '한국어'})).toBeDefined()
-  expect(screen.getByRole('option', {name: '영어'})).toBeDefined()
-  expect(screen.getByRole('option', {name: '일본어'})).toBeDefined()
-  expect(screen.getByRole('combobox', {name: '학습 언어'}).closest('label')).toHaveClass(
-    '[&_select]:bg-surface-strong',
-    '[&_select]:text-foreground',
-  )
 })
 
-it('should ignore unknown setting values and disable every select', () => {
+it('should disable every dropdown', () => {
   const onChange = vi.fn()
   render(() => (
     <LanguageLearningSettings
@@ -64,9 +58,8 @@ it('should ignore unknown setting values and disable every select', () => {
     />
   ))
 
-  for (const select of screen.getAllByRole('combobox')) {
-    select.removeAttribute('disabled')
-    fireEvent.change(select, {target: {value: 'unknown'}})
+  for (const select of screen.getAllByRole('button')) {
+    expect(select).toBeDisabled()
   }
 
   expect(onChange).not.toHaveBeenCalled()
@@ -88,8 +81,8 @@ it('should lock sentence settings while preserving voice regeneration choices', 
     />
   ))
 
-  expect(screen.getByRole('combobox', {name: '학습 언어'})).toBeDisabled()
-  expect(screen.getByRole('combobox', {name: '만들 개수'})).toBeDisabled()
-  expect(screen.getByRole('combobox', {name: '목소리'})).toBeEnabled()
-  expect(screen.getByRole('combobox', {name: '음성 모델'})).toBeEnabled()
+  expect(screen.getByRole('button', {name: /학습 언어/})).toBeDisabled()
+  expect(screen.getByRole('button', {name: /만들 개수/})).toBeDisabled()
+  expect(screen.getByRole('button', {name: /목소리/})).toBeEnabled()
+  expect(screen.getByRole('button', {name: /음성 모델/})).toBeEnabled()
 })

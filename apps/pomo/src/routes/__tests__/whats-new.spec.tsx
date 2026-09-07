@@ -35,7 +35,10 @@ it('should show the newest changes and the first release from the public catalog
   expect(screen.getAllByRole('listitem')).toHaveLength(13)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   expect(screen.getByText('2026. 08. 25 05:26')).toBeTruthy()
-  expect(screen.getByRole('link', {name: '← Pomofi로 돌아가기'}).getAttribute('href')).toBe('/')
+  expect(screen.getAllByRole('link', {name: '앱으로 돌아가기'})).toHaveLength(2)
+  for (const link of screen.getAllByRole('link', {name: '앱으로 돌아가기'})) {
+    expect(link).toHaveAttribute('href', '/')
+  }
 })
 
 it('should report a catalog fetch failure', async () => {

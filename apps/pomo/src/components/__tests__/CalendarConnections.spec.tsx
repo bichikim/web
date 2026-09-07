@@ -1,8 +1,11 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
+import {useAuth} from '../../features/auth/AuthProvider'
+import type {AuthenticationState} from '../../features/auth/machine'
 import {
   createCalendarAuthorization,
   deleteCalendarConnection,
@@ -19,7 +22,13 @@ vi.mock('../../features/calendar', () => ({
   openCalendarAuthorization: vi.fn(),
 }))
 
+vi.mock('../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
+
 beforeEach(() => {
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => ({kind: 'authenticated', provider: 'toss'}),
+    state: () => ({kind: 'authenticated', provider: 'toss'}),
+  })
   vi.clearAllMocks()
   vi.mocked(listCalendarConnections).mockResolvedValue([
     {accountLabel: 'person@example.com', id: 'connection-1', provider: 'google'},
@@ -41,11 +50,11 @@ it('should show provider actions in a settings popover', async () => {
   expect(accountLabel).toHaveClass('text-muted-foreground')
   const disconnectButton = screen.getByRole('button', {name: 'person@example.com 연결 해제'})
   expect(disconnectButton).toHaveTextContent('Google Calendar 연결 해제')
-  expect(disconnectButton).toHaveClass('rounded-panel-inner')
+  expect(disconnectButton).toHaveClass('rounded-control')
   expect(accountLabel.closest('button')).toBe(disconnectButton)
 
   const microsoftButton = screen.getByRole('button', {name: 'Microsoft Outlook 연결'})
-  expect(microsoftButton).toHaveClass('rounded-panel-inner')
+  expect(microsoftButton).toHaveClass('rounded-control')
   fireEvent.click(microsoftButton)
   await waitFor(() =>
     expect(openCalendarAuthorization).toHaveBeenCalledWith('https://accounts.google.com/authorize'),
@@ -69,4 +78,38 @@ it('should require a second press before disconnecting a calendar', async () => 
   fireEvent.click(disconnectButton)
   await waitFor(() => expect(deleteCalendarConnection).toHaveBeenCalledWith('connection-1'))
   await waitFor(() => expect(onConnectionsChange).toHaveBeenCalledTimes(1))
+})
+
+it('should request login without fetching calendars when signed out', async () => {
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => null,
+    state: () => ({kind: 'anonymous'}),
+  })
+  render(() => <CalendarConnections />)
+
+  expect(await screen.findByText('캘린더에 연결하기 위해 로그인하세요.')).toBeVisible()
+  expect(listCalendarConnections).not.toHaveBeenCalled()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+it('should load after login and restore the login notice after logout', async () => {
+  const [state, setState] = createSignal<AuthenticationState>({kind: 'anonymous'})
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarConnections />)
+  expect(screen.getByText('캘린더에 연결하기 위해 로그인하세요.')).toBeVisible()
+
+  setState({kind: 'authenticated', provider: 'toss'})
+  await waitFor(() => expect(listCalendarConnections).toHaveBeenCalledTimes(1))
+  expect(await screen.findByText('person@example.com')).toBeVisible()
+  expect(screen.queryByText('캘린더에 연결하기 위해 로그인하세요.')).not.toBeInTheDocument()
+
+  setState({kind: 'anonymous'})
+  expect(await screen.findByText('캘린더에 연결하기 위해 로그인하세요.')).toBeVisible()
+  expect(screen.queryByText('person@example.com')).not.toBeInTheDocument()
 })

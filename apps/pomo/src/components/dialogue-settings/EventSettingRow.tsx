@@ -16,10 +16,10 @@ export const DialogueEventSettingRow = (props: DialogueEventSettingRowProps) => 
     }
   >
     <div class="min-w-0">
-      <span class="block text-muted-foreground text-[0.6875rem] font-bold">{props.label}</span>
+      <span class="block text-muted-foreground text-modal-body font-bold">{props.label}</span>
       <Show when={props.description}>
         {(description) => (
-          <p class="m-[0.2rem_0_0] text-muted-foreground text-[0.625rem] leading-[1.5]">
+          <p class="m-[0.2rem_0_0] text-muted-foreground text-modal-detail leading-[1.5]">
             {description()}
           </p>
         )}
