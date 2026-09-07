@@ -119,7 +119,7 @@ afterEach(() => {
   overwriteGetLocale(originalGetLocale)
 })
 
-it('should open a Korean memory assist modal', () => {
+it('should open a Korean memory assist modal', async () => {
   const weatherState = {status: 'disabled'} as const
   render(() => <PMemoryAssist weatherState={weatherState} />)
 
@@ -147,7 +147,7 @@ it('should open a Korean memory assist modal', () => {
     'pomo-memory-assist__tabs',
   )
   expect(screen.getAllByRole('tab')[0]?.className).toContain('ui-selected:shadow-tab-active')
-  expect(screen.getByText('language learning library')).toBeInTheDocument()
+  expect(await screen.findByText('language learning library')).toBeInTheDocument()
   expect(screen.getByText('language learning words')).toBeInTheDocument()
   expect(screen.getByText('memory memos')).toBeInTheDocument()
   expect(screen.getByText('calendar connections')).toBeInTheDocument()

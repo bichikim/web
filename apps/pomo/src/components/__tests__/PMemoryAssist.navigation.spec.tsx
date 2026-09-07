@@ -80,7 +80,7 @@ it.each(['events', 'connections'] as const)(
     await waitFor(() => expect(listCalendarEvents).toHaveBeenCalled())
     await waitFor(() => expect(listCalendarConnections).toHaveBeenCalled())
 
-    expect(screen.getByRole('grid')).toBeVisible()
+    expect(await screen.findByRole('grid')).toBeVisible()
     fireEvent.click(screen.getByRole('tab', {name: '메모'}))
     expect(await screen.findByRole('tabpanel', {name: '메모'})).toHaveTextContent('메모 내용')
     await waitFor(() =>
@@ -125,7 +125,7 @@ it('should show cached events and the month grid before the refresh resolves', a
   ))
   fireEvent.click(screen.getByRole('button', {name: '기억보조'}))
   fireEvent.click(await screen.findByRole('tab', {name: '캘린더'}))
-  expect(screen.getByRole('grid')).toBeVisible()
+  expect(await screen.findByRole('grid')).toBeVisible()
   expect(screen.getAllByText('저장된 일정')).toHaveLength(2)
   fireEvent.click(screen.getByRole('tab', {name: '메모'}))
   expect(await screen.findByRole('tabpanel', {name: '메모'})).toHaveTextContent('메모 내용')

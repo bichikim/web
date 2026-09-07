@@ -4,38 +4,41 @@ const OPEN_DELAY = 400
 
 export const useTooltipTrigger = () => {
   const [target, setTarget] = createSignal<HTMLElement>()
-  const [show, setShow] = createSignal(false)
+  // Reissue hover requests after the provider dismisses a tooltip.
+  const [show, setShow] = createSignal(false, {equals: false})
+  let visibleFocus = false
   let timer: ReturnType<typeof setTimeout> | undefined
-  let focused = false
-  let pointerFocus = false
   const cancel = () => {
     clearTimeout(timer)
     timer = undefined
   }
   const events = {
     onBlur: () => {
-      pointerFocus = false
-      focused = false
+      visibleFocus = false
       cancel()
       setShow(false)
     },
-    onFocus: () => {
-      if (!pointerFocus) {
-        focused = true
+    onFocus: ((event) => {
+      visibleFocus = event.currentTarget.matches(':focus-visible')
+      if (visibleFocus) {
         cancel()
         setShow(true)
       }
-    },
+    }) satisfies JSX.EventHandler<HTMLElement, FocusEvent>,
     onPointerDown: () => {
-      pointerFocus = true
+      visibleFocus = false
       cancel()
       setShow(false)
     },
     onPointerEnter: ((event) => {
-      if (event.pointerType === 'touch' || focused) {
+      if (event.pointerType === 'touch') {
         return
       }
       cancel()
+      if (visibleFocus) {
+        setShow(true)
+        return
+      }
       timer = setTimeout(() => {
         timer = undefined
         setShow(true)
@@ -43,7 +46,7 @@ export const useTooltipTrigger = () => {
     }) satisfies JSX.EventHandler<HTMLElement, PointerEvent>,
     onPointerLeave: () => {
       cancel()
-      if (!focused) {
+      if (!visibleFocus) {
         setShow(false)
       }
     },

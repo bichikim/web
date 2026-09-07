@@ -1,6 +1,7 @@
 import {batch, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {
+  DEFAULT_DISPLAY_THEME,
   type DisplayThemeController,
   type DisplayThemePreference,
   resolveDisplayColorScheme,
@@ -14,7 +15,7 @@ const applyDocumentTheme = (preference: DisplayThemePreference, prefersDark: boo
 
 /** Owns the saved theme preference and applies it to the browser document. */
 export const useDisplayThemeController = (): DisplayThemeController => {
-  const [preference, setPreference] = createSignal<DisplayThemePreference>('system')
+  const [preference, setPreference] = createSignal<DisplayThemePreference>(DEFAULT_DISPLAY_THEME)
   const [prefersDark, setPrefersDark] = createSignal(false)
   const [isPreferenceReady, setIsPreferenceReady] = createSignal(false)
   let preferenceRevision = 0
@@ -59,7 +60,7 @@ export const useDisplayThemeController = (): DisplayThemeController => {
       .catch(() => {
         if (!isDisposed && preferenceRevision === initialPreferenceRevision) {
           batch(() => {
-            setPreference('system')
+            setPreference(DEFAULT_DISPLAY_THEME)
             setIsPreferenceReady(true)
           })
         }
