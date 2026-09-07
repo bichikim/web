@@ -15,6 +15,7 @@ export interface ChatClient {
 
 export interface GenerateChatOptions {
   readonly refineAnswer?: boolean
+  readonly supplementaryContext?: string
 }
 
 /** Owns the browser model Worker for one chat session. */
@@ -42,6 +43,9 @@ export const createChatClient = (options: CreateChatClientOptions): ChatClient =
         modelId: options.modelId,
         refineAnswer: generateOptions.refineAnswer ?? true,
         replyId,
+        ...(generateOptions.supplementaryContext === undefined
+          ? {}
+          : {supplementaryContext: generateOptions.supplementaryContext}),
         type: 'generate',
       }),
     prepare: () => transport.send({modelId: options.modelId, type: 'prepare'}),

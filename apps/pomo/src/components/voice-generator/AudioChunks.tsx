@@ -1,5 +1,6 @@
 import {For, Show} from 'solid-js'
 import {type SupertonicVoiceChunkResult} from '../../features/supertonic/index'
+import {PAudioPreview} from '../PAudioPreview'
 import {MILLISECONDS_PER_SECOND} from './shared'
 
 interface AudioChunksProps {
@@ -25,7 +26,7 @@ export const AudioChunks = (props: AudioChunksProps) => (
                   {(chunk.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
                 </span>
               </div>
-              <audio class="h-9 w-full" controls preload="metadata" src={chunk.url} />
+              <PAudioPreview src={chunk.url} title={`AI 생성 음성 청크 ${chunk.index + 1}`} />
             </div>
           )}
         </For>

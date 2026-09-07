@@ -1,0 +1,3304 @@
+{
+  "id": "4fb63809-8d13-4899-8f8f-4463e8c09d53",
+  "prevId": "83a6dd2e-9fbc-44fd-b02e-2fb3a3f03ac7",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.calendar_connections": {
+      "name": "calendar_connections",
+      "schema": "",
+      "columns": {
+        "account_label": {
+          "name": "account_label",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "encrypted_tokens": {
+          "name": "encrypted_tokens",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "calendar_provider",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_subject": {
+          "name": "provider_subject",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "calendar_connections_user_provider_subject_index": {
+          "name": "calendar_connections_user_provider_subject_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_subject",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "calendar_connections_user_index": {
+          "name": "calendar_connections_user_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "calendar_connections_user_id_pomo_users_id_fk": {
+          "name": "calendar_connections_user_id_pomo_users_id_fk",
+          "tableFrom": "calendar_connections",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.calendar_oauth_states": {
+      "name": "calendar_oauth_states",
+      "schema": "",
+      "columns": {
+        "code_verifier": {
+          "name": "code_verifier",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "calendar_provider",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "redirect_uri": {
+          "name": "redirect_uri",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state_hash": {
+          "name": "state_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "calendar_oauth_states_expiry_index": {
+          "name": "calendar_oauth_states_expiry_index",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "calendar_oauth_states_user_id_pomo_users_id_fk": {
+          "name": "calendar_oauth_states_user_id_pomo_users_id_fk",
+          "tableFrom": "calendar_oauth_states",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "calendar_oauth_states_state_hash_provider_pk": {
+          "name": "calendar_oauth_states_state_hash_provider_pk",
+          "columns": ["state_hash", "provider"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.commerce_entitlement_grants": {
+      "name": "commerce_entitlement_grants",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "order_item_id": {
+          "name": "order_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoke_reason": {
+          "name": "revoke_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "commerce_entitlement_grants_order_item_index": {
+          "name": "commerce_entitlement_grants_order_item_index",
+          "columns": [
+            {
+              "expression": "order_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "commerce_entitlement_grants_access_index": {
+          "name": "commerce_entitlement_grants_access_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ends_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "commerce_entitlement_grants_order_item_id_commerce_order_items_id_fk": {
+          "name": "commerce_entitlement_grants_order_item_id_commerce_order_items_id_fk",
+          "tableFrom": "commerce_entitlement_grants",
+          "tableTo": "commerce_order_items",
+          "columnsFrom": ["order_item_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "commerce_entitlement_grants_product_id_commerce_products_id_fk": {
+          "name": "commerce_entitlement_grants_product_id_commerce_products_id_fk",
+          "tableFrom": "commerce_entitlement_grants",
+          "tableTo": "commerce_products",
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "commerce_entitlement_grants_user_id_pomo_users_id_fk": {
+          "name": "commerce_entitlement_grants_user_id_pomo_users_id_fk",
+          "tableFrom": "commerce_entitlement_grants",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "commerce_entitlement_grants_period_check": {
+          "name": "commerce_entitlement_grants_period_check",
+          "value": "\"commerce_entitlement_grants\".\"ends_at\" is null or \"commerce_entitlement_grants\".\"ends_at\" > \"commerce_entitlement_grants\".\"starts_at\""
+        },
+        "commerce_entitlement_grants_revocation_check": {
+          "name": "commerce_entitlement_grants_revocation_check",
+          "value": "(\"commerce_entitlement_grants\".\"revoked_at\" is null and \"commerce_entitlement_grants\".\"revoke_reason\" is null)\n        or (\"commerce_entitlement_grants\".\"revoked_at\" is not null and \"commerce_entitlement_grants\".\"revoke_reason\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.commerce_offers": {
+      "name": "commerce_offers",
+      "schema": "",
+      "columns": {
+        "billing_type": {
+          "name": "billing_type",
+          "type": "commerce_offer_billing_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "external_product_id": {
+          "name": "external_product_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "commerce_offer_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'inactive'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "commerce_offers_provider_external_product_index": {
+          "name": "commerce_offers_provider_external_product_index",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "external_product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "commerce_offers_product_provider_index": {
+          "name": "commerce_offers_product_provider_index",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "commerce_offers_product_status_index": {
+          "name": "commerce_offers_product_status_index",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "commerce_offers_product_id_commerce_products_id_fk": {
+          "name": "commerce_offers_product_id_commerce_products_id_fk",
+          "tableFrom": "commerce_offers",
+          "tableTo": "commerce_products",
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.commerce_order_items": {
+      "name": "commerce_order_items",
+      "schema": "",
+      "columns": {
+        "amount_minor": {
+          "name": "amount_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "varchar(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fractional_digits": {
+          "name": "fractional_digits",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order_id": {
+          "name": "order_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_code": {
+          "name": "product_code",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "commerce_order_items_order_offer_index": {
+          "name": "commerce_order_items_order_offer_index",
+          "columns": [
+            {
+              "expression": "order_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "offer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "commerce_order_items_offer_id_commerce_offers_id_fk": {
+          "name": "commerce_order_items_offer_id_commerce_offers_id_fk",
+          "tableFrom": "commerce_order_items",
+          "tableTo": "commerce_offers",
+          "columnsFrom": ["offer_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "commerce_order_items_order_id_commerce_orders_id_fk": {
+          "name": "commerce_order_items_order_id_commerce_orders_id_fk",
+          "tableFrom": "commerce_order_items",
+          "tableTo": "commerce_orders",
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "commerce_order_items_product_id_commerce_products_id_fk": {
+          "name": "commerce_order_items_product_id_commerce_products_id_fk",
+          "tableFrom": "commerce_order_items",
+          "tableTo": "commerce_products",
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "commerce_order_items_amount_minor_check": {
+          "name": "commerce_order_items_amount_minor_check",
+          "value": "\"commerce_order_items\".\"amount_minor\" >= 0"
+        },
+        "commerce_order_items_currency_check": {
+          "name": "commerce_order_items_currency_check",
+          "value": "\"commerce_order_items\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "commerce_order_items_fractional_digits_check": {
+          "name": "commerce_order_items_fractional_digits_check",
+          "value": "\"commerce_order_items\".\"fractional_digits\" between 0 and 6"
+        },
+        "commerce_order_items_quantity_check": {
+          "name": "commerce_order_items_quantity_check",
+          "value": "\"commerce_order_items\".\"quantity\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.commerce_orders": {
+      "name": "commerce_orders",
+      "schema": "",
+      "columns": {
+        "amount_minor": {
+          "name": "amount_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canceled_at": {
+          "name": "canceled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "currency": {
+          "name": "currency",
+          "type": "varchar(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "failed_at": {
+          "name": "failed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fractional_digits": {
+          "name": "fractional_digits",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paid_at": {
+          "name": "paid_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_order_id": {
+          "name": "provider_order_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refunded_amount_minor": {
+          "name": "refunded_amount_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "refunded_at": {
+          "name": "refunded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "commerce_order_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "commerce_orders_provider_order_index": {
+          "name": "commerce_orders_provider_order_index",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_order_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "commerce_orders_user_created_at_index": {
+          "name": "commerce_orders_user_created_at_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "commerce_orders_offer_id_commerce_offers_id_fk": {
+          "name": "commerce_orders_offer_id_commerce_offers_id_fk",
+          "tableFrom": "commerce_orders",
+          "tableTo": "commerce_offers",
+          "columnsFrom": ["offer_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "commerce_orders_user_id_pomo_users_id_fk": {
+          "name": "commerce_orders_user_id_pomo_users_id_fk",
+          "tableFrom": "commerce_orders",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "commerce_orders_amount_minor_check": {
+          "name": "commerce_orders_amount_minor_check",
+          "value": "\"commerce_orders\".\"amount_minor\" >= 0"
+        },
+        "commerce_orders_refunded_amount_check": {
+          "name": "commerce_orders_refunded_amount_check",
+          "value": "\"commerce_orders\".\"refunded_amount_minor\" between 0 and \"commerce_orders\".\"amount_minor\""
+        },
+        "commerce_orders_currency_check": {
+          "name": "commerce_orders_currency_check",
+          "value": "\"commerce_orders\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "commerce_orders_fractional_digits_check": {
+          "name": "commerce_orders_fractional_digits_check",
+          "value": "\"commerce_orders\".\"fractional_digits\" between 0 and 6"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.commerce_product_albums": {
+      "name": "commerce_product_albums",
+      "schema": "",
+      "columns": {
+        "album_id": {
+          "name": "album_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "commerce_product_albums_album_id_music_albums_id_fk": {
+          "name": "commerce_product_albums_album_id_music_albums_id_fk",
+          "tableFrom": "commerce_product_albums",
+          "tableTo": "music_albums",
+          "columnsFrom": ["album_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "commerce_product_albums_product_id_commerce_products_id_fk": {
+          "name": "commerce_product_albums_product_id_commerce_products_id_fk",
+          "tableFrom": "commerce_product_albums",
+          "tableTo": "commerce_products",
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "commerce_product_albums_product_id_album_id_pk": {
+          "name": "commerce_product_albums_product_id_album_id_pk",
+          "columns": ["product_id", "album_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.commerce_products": {
+      "name": "commerce_products",
+      "schema": "",
+      "columns": {
+        "code": {
+          "name": "code",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "status": {
+          "name": "status",
+          "type": "commerce_product_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "commerce_products_code_index": {
+          "name": "commerce_products_code_index",
+          "columns": [
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.commerce_provider_events": {
+      "name": "commerce_provider_events",
+      "schema": "",
+      "columns": {
+        "error_code": {
+          "name": "error_code",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_event_id": {
+          "name": "provider_event_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "commerce_provider_event_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'received'"
+        }
+      },
+      "indexes": {
+        "commerce_provider_events_provider_event_index": {
+          "name": "commerce_provider_events_provider_event_index",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "commerce_provider_events_status_received_at_index": {
+          "name": "commerce_provider_events_status_received_at_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "received_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.feed_channels": {
+      "name": "feed_channels",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "language": {
+          "name": "language",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "feed_channels_slug_unique": {
+          "name": "feed_channels_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["slug"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.historical_generation_runs": {
+      "name": "historical_generation_runs",
+      "schema": "",
+      "columns": {
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "channel_id": {
+          "name": "channel_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "open_ai_response_id": {
+          "name": "open_ai_response_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "open_ai_submission_key": {
+          "name": "open_ai_submission_key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_policy_version": {
+          "name": "source_policy_version",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_urls": {
+          "name": "source_urls",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "status": {
+          "name": "status",
+          "type": "historical_generation_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'preparing'"
+        },
+        "submission_expires_at": {
+          "name": "submission_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submission_state": {
+          "name": "submission_state",
+          "type": "historical_generation_submission_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_date": {
+          "name": "target_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "historical_generation_runs_channel_target_date_index": {
+          "name": "historical_generation_runs_channel_target_date_index",
+          "columns": [
+            {
+              "expression": "channel_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "target_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "historical_generation_runs_openai_response_id_index": {
+          "name": "historical_generation_runs_openai_response_id_index",
+          "columns": [
+            {
+              "expression": "open_ai_response_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "historical_generation_runs_recovery_index": {
+          "name": "historical_generation_runs_recovery_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "historical_generation_runs_submission_recovery_index": {
+          "name": "historical_generation_runs_submission_recovery_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "submission_state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "submission_expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "historical_generation_runs_channel_id_feed_channels_id_fk": {
+          "name": "historical_generation_runs_channel_id_feed_channels_id_fk",
+          "tableFrom": "historical_generation_runs",
+          "tableTo": "feed_channels",
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "historical_generation_runs_attempt_count_check": {
+          "name": "historical_generation_runs_attempt_count_check",
+          "value": "\"historical_generation_runs\".\"attempt_count\" between 1 and 2"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.processed_openai_webhook_events": {
+      "name": "processed_openai_webhook_events",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "varchar(128)",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.historical_moment_sources": {
+      "name": "historical_moment_sources",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "moment_id": {
+          "name": "moment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "publisher": {
+          "name": "publisher",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "historical_moment_sources_moment_url_index": {
+          "name": "historical_moment_sources_moment_url_index",
+          "columns": [
+            {
+              "expression": "moment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "url",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "historical_moment_sources_moment_id_historical_moments_id_fk": {
+          "name": "historical_moment_sources_moment_id_historical_moments_id_fk",
+          "tableFrom": "historical_moment_sources",
+          "tableTo": "historical_moments",
+          "columnsFrom": ["moment_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "historical_moment_sources_sort_order_check": {
+          "name": "historical_moment_sources_sort_order_check",
+          "value": "\"historical_moment_sources\".\"sort_order\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.historical_moments": {
+      "name": "historical_moments",
+      "schema": "",
+      "columns": {
+        "channel_id": {
+          "name": "channel_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_html": {
+          "name": "content_html",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "event_day": {
+          "name": "event_day",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_month": {
+          "name": "event_month",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_year": {
+          "name": "event_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generation_model": {
+          "name": "generation_model",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "historical_era": {
+          "name": "historical_era",
+          "type": "historical_era",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ce'"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stable_key": {
+          "name": "stable_key",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "historical_moment_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "historical_moments_channel_stable_key_index": {
+          "name": "historical_moments_channel_stable_key_index",
+          "columns": [
+            {
+              "expression": "channel_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "stable_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "historical_moments_feed_date_index": {
+          "name": "historical_moments_feed_date_index",
+          "columns": [
+            {
+              "expression": "channel_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_month",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_day",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "historical_moments_channel_id_feed_channels_id_fk": {
+          "name": "historical_moments_channel_id_feed_channels_id_fk",
+          "tableFrom": "historical_moments",
+          "tableTo": "feed_channels",
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "historical_moments_event_year_check": {
+          "name": "historical_moments_event_year_check",
+          "value": "\"historical_moments\".\"event_year\" > 0"
+        },
+        "historical_moments_event_month_check": {
+          "name": "historical_moments_event_month_check",
+          "value": "\"historical_moments\".\"event_month\" between 1 and 12"
+        },
+        "historical_moments_event_day_check": {
+          "name": "historical_moments_event_day_check",
+          "value": "\"historical_moments\".\"event_day\" between 1 and 31"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.music_album_cover_reservations": {
+      "name": "music_album_cover_reservations",
+      "schema": "",
+      "columns": {
+        "cover_image_url": {
+          "name": "cover_image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "draft_id": {
+          "name": "draft_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "music_album_cover_reservation_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'uploading'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "music_album_cover_reservations_object_key_index": {
+          "name": "music_album_cover_reservations_object_key_index",
+          "columns": [
+            {
+              "expression": "object_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "music_album_cover_reservations_cleanup_index": {
+          "name": "music_album_cover_reservations_cleanup_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "music_album_cover_reservations_object_key_check": {
+          "name": "music_album_cover_reservations_object_key_check",
+          "value": "\"music_album_cover_reservations\".\"object_key\"\n        = 'album-covers/' || \"music_album_cover_reservations\".\"id\"::text || '/cover.webp'"
+        },
+        "music_album_cover_reservations_url_check": {
+          "name": "music_album_cover_reservations_url_check",
+          "value": "(\"music_album_cover_reservations\".\"status\" = 'uploading' and \"music_album_cover_reservations\".\"cover_image_url\" is null)\n        or \"music_album_cover_reservations\".\"status\" = 'deleting'\n        or (\"music_album_cover_reservations\".\"status\" = 'pending'\n          and \"music_album_cover_reservations\".\"cover_image_url\" is not null\n          and \"music_album_cover_reservations\".\"cover_image_url\" like 'https://%')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.music_album_tracks": {
+      "name": "music_album_tracks",
+      "schema": "",
+      "columns": {
+        "album_id": {
+          "name": "album_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "music_album_tracks_album_position_index": {
+          "name": "music_album_tracks_album_position_index",
+          "columns": [
+            {
+              "expression": "album_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "music_album_tracks_album_id_music_albums_id_fk": {
+          "name": "music_album_tracks_album_id_music_albums_id_fk",
+          "tableFrom": "music_album_tracks",
+          "tableTo": "music_albums",
+          "columnsFrom": ["album_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "music_album_tracks_track_id_music_tracks_id_fk": {
+          "name": "music_album_tracks_track_id_music_tracks_id_fk",
+          "tableFrom": "music_album_tracks",
+          "tableTo": "music_tracks",
+          "columnsFrom": ["track_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "music_album_tracks_album_id_track_id_pk": {
+          "name": "music_album_tracks_album_id_track_id_pk",
+          "columns": ["album_id", "track_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "music_album_tracks_position_check": {
+          "name": "music_album_tracks_position_check",
+          "value": "\"music_album_tracks\".\"position\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.music_album_translations": {
+      "name": "music_album_translations",
+      "schema": "",
+      "columns": {
+        "album_id": {
+          "name": "album_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "music_album_locale",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "music_album_translations_locale_album_id_index": {
+          "name": "music_album_translations_locale_album_id_index",
+          "columns": [
+            {
+              "expression": "locale",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "album_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "music_album_translations_album_id_music_albums_id_fk": {
+          "name": "music_album_translations_album_id_music_albums_id_fk",
+          "tableFrom": "music_album_translations",
+          "tableTo": "music_albums",
+          "columnsFrom": ["album_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "music_album_translations_album_id_locale_pk": {
+          "name": "music_album_translations_album_id_locale_pk",
+          "columns": ["album_id", "locale"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.music_albums": {
+      "name": "music_albums",
+      "schema": "",
+      "columns": {
+        "cover_draft_id": {
+          "name": "cover_draft_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cover_fallback": {
+          "name": "cover_fallback",
+          "type": "music_cover_fallback",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'lp'"
+        },
+        "cover_image_url": {
+          "name": "cover_image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "music_album_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "music_albums_status_published_at_index": {
+          "name": "music_albums_status_published_at_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "music_albums_cover_image_url_check": {
+          "name": "music_albums_cover_image_url_check",
+          "value": "\"music_albums\".\"cover_image_url\" is null or \"music_albums\".\"cover_image_url\" like 'https://%'"
+        },
+        "music_albums_published_at_check": {
+          "name": "music_albums_published_at_check",
+          "value": "(\"music_albums\".\"status\" = 'draft' and \"music_albums\".\"published_at\" is null)\n        or (\"music_albums\".\"status\" in ('published', 'archived') and \"music_albums\".\"published_at\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.music_track_assets": {
+      "name": "music_track_assets",
+      "schema": "",
+      "columns": {
+        "activated_at": {
+          "name": "activated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "artwork_url": {
+          "name": "artwork_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content_type": {
+          "name": "content_type",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_ms": {
+          "name": "duration_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "etag": {
+          "name": "etag",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "retired_at": {
+          "name": "retired_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "music_track_asset_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "storage_role": {
+          "name": "storage_role",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'paid-private'"
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploaded_at": {
+          "name": "uploaded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_at": {
+          "name": "validated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "music_track_assets_object_key_index": {
+          "name": "music_track_assets_object_key_index",
+          "columns": [
+            {
+              "expression": "object_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "music_track_assets_active_track_index": {
+          "name": "music_track_assets_active_track_index",
+          "columns": [
+            {
+              "expression": "track_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"music_track_assets\".\"status\" = 'active'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "music_track_assets_status_created_at_index": {
+          "name": "music_track_assets_status_created_at_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "music_track_assets_track_id_music_tracks_id_fk": {
+          "name": "music_track_assets_track_id_music_tracks_id_fk",
+          "tableFrom": "music_track_assets",
+          "tableTo": "music_tracks",
+          "columnsFrom": ["track_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "music_track_assets_artwork_url_check": {
+          "name": "music_track_assets_artwork_url_check",
+          "value": "\"music_track_assets\".\"artwork_url\" is null or \"music_track_assets\".\"artwork_url\" like 'https://%'"
+        },
+        "music_track_assets_storage_role_check": {
+          "name": "music_track_assets_storage_role_check",
+          "value": "\"music_track_assets\".\"storage_role\" = 'paid-private'"
+        },
+        "music_track_assets_object_key_check": {
+          "name": "music_track_assets_object_key_check",
+          "value": "\"music_track_assets\".\"object_key\"\n        = 'tracks/' || \"music_track_assets\".\"track_id\"::text || '/' || \"music_track_assets\".\"id\"::text || '/source.mp3'"
+        },
+        "music_track_assets_content_type_check": {
+          "name": "music_track_assets_content_type_check",
+          "value": "\"music_track_assets\".\"content_type\" is null or \"music_track_assets\".\"content_type\" = 'audio/mpeg'"
+        },
+        "music_track_assets_size_bytes_check": {
+          "name": "music_track_assets_size_bytes_check",
+          "value": "\"music_track_assets\".\"size_bytes\" is null or \"music_track_assets\".\"size_bytes\" > 0"
+        },
+        "music_track_assets_duration_ms_check": {
+          "name": "music_track_assets_duration_ms_check",
+          "value": "\"music_track_assets\".\"duration_ms\" is null or \"music_track_assets\".\"duration_ms\" > 0"
+        },
+        "music_track_assets_uploaded_metadata_check": {
+          "name": "music_track_assets_uploaded_metadata_check",
+          "value": "\"music_track_assets\".\"status\" not in ('uploaded', 'ready', 'active', 'retired', 'deleted')\n        or (\"music_track_assets\".\"content_type\" is not null and \"music_track_assets\".\"size_bytes\" is not null\n          and \"music_track_assets\".\"etag\" is not null and \"music_track_assets\".\"uploaded_at\" is not null)"
+        },
+        "music_track_assets_validated_metadata_check": {
+          "name": "music_track_assets_validated_metadata_check",
+          "value": "\"music_track_assets\".\"status\" not in ('ready', 'active', 'retired', 'deleted')\n        or (\"music_track_assets\".\"duration_ms\" is not null and \"music_track_assets\".\"validated_at\" is not null)"
+        },
+        "music_track_assets_activated_at_check": {
+          "name": "music_track_assets_activated_at_check",
+          "value": "\"music_track_assets\".\"status\" not in ('active', 'retired', 'deleted') or \"music_track_assets\".\"activated_at\" is not null"
+        },
+        "music_track_assets_retired_at_check": {
+          "name": "music_track_assets_retired_at_check",
+          "value": "\"music_track_assets\".\"status\" not in ('retired', 'deleted') or \"music_track_assets\".\"retired_at\" is not null"
+        },
+        "music_track_assets_deleted_at_check": {
+          "name": "music_track_assets_deleted_at_check",
+          "value": "\"music_track_assets\".\"status\" <> 'deleted' or \"music_track_assets\".\"deleted_at\" is not null"
+        },
+        "music_track_assets_failure_code_check": {
+          "name": "music_track_assets_failure_code_check",
+          "value": "\"music_track_assets\".\"status\" <> 'failed' or \"music_track_assets\".\"failure_code\" is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.music_track_deletion_jobs": {
+      "name": "music_track_deletion_jobs",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "object_keys": {
+          "name": "object_keys",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_deleted_at": {
+          "name": "storage_deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "music_track_deletion_jobs_track_id_music_tracks_id_fk": {
+          "name": "music_track_deletion_jobs_track_id_music_tracks_id_fk",
+          "tableFrom": "music_track_deletion_jobs",
+          "tableTo": "music_tracks",
+          "columnsFrom": ["track_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.music_track_registrations": {
+      "name": "music_track_registrations",
+      "schema": "",
+      "columns": {
+        "album_id": {
+          "name": "album_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "music_track_registrations_created_at_index": {
+          "name": "music_track_registrations_created_at_index",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "music_track_registrations_album_id_music_albums_id_fk": {
+          "name": "music_track_registrations_album_id_music_albums_id_fk",
+          "tableFrom": "music_track_registrations",
+          "tableTo": "music_albums",
+          "columnsFrom": ["album_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "music_track_registrations_track_id_music_tracks_id_fk": {
+          "name": "music_track_registrations_track_id_music_tracks_id_fk",
+          "tableFrom": "music_track_registrations",
+          "tableTo": "music_tracks",
+          "columnsFrom": ["track_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.music_tracks": {
+      "name": "music_tracks",
+      "schema": "",
+      "columns": {
+        "artist": {
+          "name": "artist",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pomo_account_link_attempt_limits": {
+      "name": "pomo_account_link_attempt_limits",
+      "schema": "",
+      "columns": {
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "window_started_at": {
+          "name": "window_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pomo_account_link_attempt_limits_user_id_pomo_users_id_fk": {
+          "name": "pomo_account_link_attempt_limits_user_id_pomo_users_id_fk",
+          "tableFrom": "pomo_account_link_attempt_limits",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "pomo_account_link_attempt_limits_positive_count_check": {
+          "name": "pomo_account_link_attempt_limits_positive_count_check",
+          "value": "\"pomo_account_link_attempt_limits\".\"attempt_count\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.pomo_account_link_challenges": {
+      "name": "pomo_account_link_challenges",
+      "schema": "",
+      "columns": {
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "email_hash": {
+          "name": "email_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "pomo_account_link_challenges_token_hash_index": {
+          "name": "pomo_account_link_challenges_token_hash_index",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pomo_account_link_challenges_expiry_index": {
+          "name": "pomo_account_link_challenges_expiry_index",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pomo_account_link_challenges_user_id_pomo_users_id_fk": {
+          "name": "pomo_account_link_challenges_user_id_pomo_users_id_fk",
+          "tableFrom": "pomo_account_link_challenges",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pomo_app_sessions": {
+      "name": "pomo_app_sessions",
+      "schema": "",
+      "columns": {
+        "activated_at": {
+          "name": "activated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "last_used_at": {
+          "name": "last_used_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "pomo_app_sessions_token_hash_index": {
+          "name": "pomo_app_sessions_token_hash_index",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pomo_app_sessions_expiry_index": {
+          "name": "pomo_app_sessions_expiry_index",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pomo_app_sessions_revoked_index": {
+          "name": "pomo_app_sessions_revoked_index",
+          "columns": [
+            {
+              "expression": "revoked_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"pomo_app_sessions\".\"revoked_at\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pomo_app_sessions_user_expiry_index": {
+          "name": "pomo_app_sessions_user_expiry_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pomo_app_sessions_user_id_pomo_users_id_fk": {
+          "name": "pomo_app_sessions_user_id_pomo_users_id_fk",
+          "tableFrom": "pomo_app_sessions",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pomo_identities": {
+      "name": "pomo_identities",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "pomo_identity_provider",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_subject": {
+          "name": "provider_subject",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "pomo_identities_provider_subject_index": {
+          "name": "pomo_identities_provider_subject_index",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_subject",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pomo_identities_user_provider_index": {
+          "name": "pomo_identities_user_provider_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pomo_identities_user_id_pomo_users_id_fk": {
+          "name": "pomo_identities_user_id_pomo_users_id_fk",
+          "tableFrom": "pomo_identities",
+          "tableTo": "pomo_users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pomo_users": {
+      "name": "pomo_users",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.weather": {
+      "name": "weather",
+      "schema": "",
+      "columns": {
+        "collected_at": {
+          "name": "collected_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "humidity_percent": {
+          "name": "humidity_percent",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "location": {
+          "name": "location",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "precipitation": {
+          "name": "precipitation",
+          "type": "weather_precipitation",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "precipitation_millimeters": {
+          "name": "precipitation_millimeters",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sky": {
+          "name": "sky",
+          "type": "weather_sky",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "temperature_celsius": {
+          "name": "temperature_celsius",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "weather_at": {
+          "name": "weather_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wind_speed_meters_per_second": {
+          "name": "wind_speed_meters_per_second",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "weather_location_time_index": {
+          "name": "weather_location_time_index",
+          "columns": [
+            {
+              "expression": "location",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "weather_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.weather_collection_state": {
+      "name": "weather_collection_state",
+      "schema": "",
+      "columns": {
+        "consecutive_failures": {
+          "name": "consecutive_failures",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_attempted_at": {
+          "name": "last_attempted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_failed_at": {
+          "name": "last_failed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_expires_at": {
+          "name": "lease_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_key": {
+          "name": "lease_key",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_token": {
+          "name": "lease_token",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location": {
+          "name": "location",
+          "type": "varchar(64)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "retry_after": {
+          "name": "retry_after",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "weather_collection_state_failures_nonnegative": {
+          "name": "weather_collection_state_failures_nonnegative",
+          "value": "\"weather_collection_state\".\"consecutive_failures\" >= 0"
+        },
+        "weather_collection_state_lease_complete": {
+          "name": "weather_collection_state_lease_complete",
+          "value": "(\"weather_collection_state\".\"lease_expires_at\" is null and \"weather_collection_state\".\"lease_key\" is null and \"weather_collection_state\".\"lease_token\" is null) or (\"weather_collection_state\".\"lease_expires_at\" is not null and \"weather_collection_state\".\"lease_key\" is not null and \"weather_collection_state\".\"lease_token\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.weather_locations": {
+      "name": "weather_locations",
+      "schema": "",
+      "columns": {
+        "country": {
+          "name": "country",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar(64)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_location_id": {
+          "name": "provider_location_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "region": {
+          "name": "region",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "weather_locations_provider_id_index": {
+          "name": "weather_locations_provider_id_index",
+          "columns": [
+            {
+              "expression": "provider_location_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "weather_locations_latitude_range": {
+          "name": "weather_locations_latitude_range",
+          "value": "\"weather_locations\".\"latitude\" between -90 and 90"
+        },
+        "weather_locations_longitude_range": {
+          "name": "weather_locations_longitude_range",
+          "value": "\"weather_locations\".\"longitude\" between -180 and 180"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.weather_provider_usage": {
+      "name": "weather_provider_usage",
+      "schema": "",
+      "columns": {
+        "billing_month": {
+          "name": "billing_month",
+          "type": "varchar(7)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "current_requests": {
+          "name": "current_requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rate_requests": {
+          "name": "rate_requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rate_window_minute": {
+          "name": "rate_window_minute",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "search_requests": {
+          "name": "search_requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "weather_provider_usage_month_format": {
+          "name": "weather_provider_usage_month_format",
+          "value": "\"weather_provider_usage\".\"billing_month\" ~ '^[0-9]{4}-[0-9]{2}$'"
+        },
+        "weather_provider_usage_requests_nonnegative": {
+          "name": "weather_provider_usage_requests_nonnegative",
+          "value": "\"weather_provider_usage\".\"current_requests\" >= 0 and \"weather_provider_usage\".\"rate_requests\" >= 0 and \"weather_provider_usage\".\"search_requests\" >= 0"
+        },
+        "weather_provider_usage_rate_window_format": {
+          "name": "weather_provider_usage_rate_window_format",
+          "value": "\"weather_provider_usage\".\"rate_window_minute\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$'"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.calendar_provider": {
+      "name": "calendar_provider",
+      "schema": "public",
+      "values": ["google", "microsoft"]
+    },
+    "public.commerce_offer_billing_type": {
+      "name": "commerce_offer_billing_type",
+      "schema": "public",
+      "values": ["one_time", "subscription"]
+    },
+    "public.commerce_offer_status": {
+      "name": "commerce_offer_status",
+      "schema": "public",
+      "values": ["active", "inactive"]
+    },
+    "public.commerce_order_status": {
+      "name": "commerce_order_status",
+      "schema": "public",
+      "values": ["pending", "paid", "partially_refunded", "refunded", "canceled", "failed"]
+    },
+    "public.commerce_product_status": {
+      "name": "commerce_product_status",
+      "schema": "public",
+      "values": ["active", "archived"]
+    },
+    "public.commerce_provider_event_status": {
+      "name": "commerce_provider_event_status",
+      "schema": "public",
+      "values": ["received", "processed", "failed"]
+    },
+    "public.historical_generation_status": {
+      "name": "historical_generation_status",
+      "schema": "public",
+      "values": ["preparing", "submitted", "completed", "failed", "rejected"]
+    },
+    "public.historical_generation_submission_state": {
+      "name": "historical_generation_submission_state",
+      "schema": "public",
+      "values": ["unknown", "expired"]
+    },
+    "public.historical_era": {
+      "name": "historical_era",
+      "schema": "public",
+      "values": ["bce", "ce"]
+    },
+    "public.historical_moment_status": {
+      "name": "historical_moment_status",
+      "schema": "public",
+      "values": ["draft", "published", "archived"]
+    },
+    "public.music_album_cover_reservation_status": {
+      "name": "music_album_cover_reservation_status",
+      "schema": "public",
+      "values": ["uploading", "pending", "deleting"]
+    },
+    "public.music_album_locale": {
+      "name": "music_album_locale",
+      "schema": "public",
+      "values": ["ko", "en", "ja", "zh-Hans"]
+    },
+    "public.music_album_status": {
+      "name": "music_album_status",
+      "schema": "public",
+      "values": ["draft", "published", "archived"]
+    },
+    "public.music_cover_fallback": {
+      "name": "music_cover_fallback",
+      "schema": "public",
+      "values": ["lp", "cd", "music"]
+    },
+    "public.music_track_asset_status": {
+      "name": "music_track_asset_status",
+      "schema": "public",
+      "values": ["pending", "uploaded", "ready", "active", "failed", "retired", "deleted"]
+    },
+    "public.pomo_identity_provider": {
+      "name": "pomo_identity_provider",
+      "schema": "public",
+      "values": ["neon", "toss"]
+    },
+    "public.weather_precipitation": {
+      "name": "weather_precipitation",
+      "schema": "public",
+      "values": ["none", "rain", "mixed", "snow"]
+    },
+    "public.weather_sky": {
+      "name": "weather_sky",
+      "schema": "public",
+      "values": ["clear", "cloudy", "overcast"]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

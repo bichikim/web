@@ -60,7 +60,12 @@ export const usePPlaybackPersistence = (
     const track = props.currentTrack()
     const audioElement = props.getAudioElement()
 
-    if (playback === null || track?.id !== playback.trackId || audioElement === undefined) {
+    if (
+      playback === null ||
+      track?.id !== playback.trackId ||
+      audioElement === undefined ||
+      audioElement.readyState < HTMLMediaElement.HAVE_METADATA
+    ) {
       return null
     }
 

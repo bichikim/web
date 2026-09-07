@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import type {ChatVoiceController, ChatVoiceRuntime} from '../../chat-voice'
@@ -108,6 +109,30 @@ afterEach(() => {
 })
 
 describe('usePSay', () => {
+  it('should expose the same one-off speech path to Pomo callers', async () => {
+    let completeSpeech: () => void = () => undefined
+    const speech = new Promise<void>((resolve) => {
+      completeSpeech = resolve
+    })
+    const [isPlaying, setIsPlaying] = createSignal(false)
+    const voice = {...createVoice(), isPlaying}
+    vi.mocked(voice.speak).mockReturnValueOnce(speech)
+    vi.mocked(useLazyChatVoice).mockReturnValue(voice)
+    const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
+
+    const activeCall = result.speak({text: '한 번만 들려줄 답변'})
+
+    expect(result.isPreparing()).toBe(true)
+    expect(result.speechText()).toBeNull()
+    setIsPlaying(true)
+    await vi.waitFor(() => expect(result.speechText()).toBe('한 번만 들려줄 답변'))
+    expect(result.isPreparing()).toBe(false)
+    completeSpeech()
+    await expect(activeCall).resolves.toBeUndefined()
+    expect(result.speechText()).toBeNull()
+    cleanup()
+  })
+
   it('should keep newer speech text while a superseded generation settles', async () => {
     let releaseFirstGeneration: () => void = () => undefined
     const firstGeneration = new Promise<void>((resolve) => {
@@ -140,7 +165,7 @@ describe('usePSay', () => {
     await vi.waitFor(() => expect(client.cancelGeneration).toHaveBeenCalledOnce())
     await Promise.resolve()
 
-    expect(result.speechText()).toBe('두 번째 소식')
+    expect(result.speechText()).toBeNull()
 
     releaseFirstGeneration()
     await expect(supersededCall).rejects.toMatchObject({name: 'AbortError'})

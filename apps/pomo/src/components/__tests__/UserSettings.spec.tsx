@@ -2,70 +2,102 @@
 
 import {Tabs} from '@kobalte/core/tabs'
 import {render, screen, waitFor} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {createSignal, type JSX} from 'solid-js'
+import {beforeEach, expect, it, vi} from 'vitest'
 
-import {readStoredAppSession, validateAppSession} from '../../features/user-auth/app-session'
-import {readAccountSession} from '../../features/user-auth/web-session'
-import {UserSettings} from '../UserSettings'
+import type {
+  UserSettingsController,
+  UserSettingsState,
+} from '../../features/user-auth/use-user-settings'
+
+const settingsMocks = vi.hoisted(() => ({useUserSettings: vi.fn()}))
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
-vi.mock('@solidjs/router', () => ({
-  A: (props: {readonly children?: JSX.Element; readonly class?: string; readonly href: string}) => (
-    <a class={props.class} href={props.href}>
-      {props.children}
-    </a>
-  ),
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  return {
+    ...actual,
+    A: (props: {
+      readonly children?: JSX.Element
+      readonly class?: string
+      readonly href: string
+    }) => (
+      <a class={props.class} href={props.href}>
+        {props.children}
+      </a>
+    ),
+  }
+})
+vi.mock('../../features/user-auth/use-user-settings', () => ({
+  useUserSettings: settingsMocks.useUserSettings,
 }))
-vi.mock('../../features/user-auth/app-session', () => ({
-  clearStoredAppSession: vi.fn(),
-  readStoredAppSession: vi.fn(),
-  validateAppSession: vi.fn(),
-}))
-vi.mock('../../features/user-auth/web-session', () => ({readAccountSession: vi.fn()}))
+
+import {UserSettings} from '../UserSettings'
+
+const [settingsState, setSettingsState] = createSignal<UserSettingsState>({kind: 'loading'})
+const authenticatedUser = () => {
+  const state = settingsState()
+  return state.kind === 'authenticated' ? state : null
+}
+const settings: UserSettingsController = {
+  authenticatedEmail: () => {
+    const account = authenticatedUser()
+    return account?.provider === 'email' ? account.email : null
+  },
+  authenticatedUser,
+  state: settingsState,
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  setSettingsState({kind: 'loading'})
+  settingsMocks.useUserSettings.mockReturnValue(settings)
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
 })
 
-afterEach(() => {
-  vi.unstubAllEnvs()
-})
-
 it('should show the signed-in email and account management entry', async () => {
-  vi.mocked(readAccountSession).mockResolvedValue({email: 'pomo@example.com'})
-
   render(() => <UserSettings />)
 
   expect(screen.queryByText('Pomo account')).toBeNull()
   expect(screen.queryByRole('heading', {name: '사용자'})).toBeNull()
   expect(screen.queryByText('현재 로그인 상태와 연결된 계정을 확인할 수 있어요.')).toBeNull()
   expect(screen.getByRole('status').textContent).toContain('계정 확인 중…')
+  setSettingsState({
+    email: 'pomo@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
   await waitFor(() => expect(screen.queryByText('pomo@example.com')).not.toBeNull())
   expect(screen.queryByText('이메일 링크')).not.toBeNull()
+  expect(screen.getByText('pomo@example.com').closest('div.rounded-panel')).toHaveClass(
+    'border-content-border',
+    'bg-content-surface',
+  )
   const accountLink = screen.getByRole('link', {name: '계정 관리'})
-  expect(accountLink.getAttribute('href')).toBe('/ko/account/')
+  expect(accountLink.getAttribute('href')).toBe('/account')
   expect(accountLink.className).toContain('rounded-control')
   expect(accountLink.className).toContain('border-highlight')
 })
 
 it('should provide the login entry for an anonymous user', async () => {
-  vi.mocked(readAccountSession).mockResolvedValue(null)
+  setSettingsState({kind: 'anonymous'})
 
   render(() => <UserSettings />)
 
   await waitFor(() => expect(screen.queryByText('로그인하지 않았어요.')).not.toBeNull())
   expect(screen.getByText('로그인하지 않았어요.').closest('div.rounded-panel')).not.toBeNull()
-  expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe(
-    '/ko/account/',
-  )
+  expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe('/account')
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
     '/web/terms',
   )
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
     '/web/privacy',
+  )
+  const versionCatalogLink = screen.getByRole('link', {name: '버전 카탈로그'})
+  expect(versionCatalogLink.getAttribute('href')).toBe('/whats-new')
+  expect(screen.getByRole('region', {name: '서비스 정보'})).toContainElement(versionCatalogLink)
+  expect(versionCatalogLink.className).toBe(
+    screen.getByRole('link', {name: '개인정보처리방침'}).className,
   )
   expect(screen.queryByRole('link', {name: '환불 및 청약철회 정책'})).toBeNull()
   expect(screen.getByRole('heading', {name: '서비스 정보'}).parentElement?.className).toContain(
@@ -74,9 +106,7 @@ it('should provide the login entry for an anonymous user', async () => {
 })
 
 it('should show the Toss login method for an app session', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
-  vi.mocked(readStoredAppSession).mockResolvedValue('app-session')
-  vi.mocked(validateAppSession).mockResolvedValue(true)
+  setSettingsState({kind: 'authenticated', provider: 'toss'})
 
   render(() => <UserSettings />)
 
@@ -84,12 +114,11 @@ it('should show the Toss login method for an app session', async () => {
   expect(screen.queryByText('로그인됨')).not.toBeNull()
   expect(
     screen.getByRole('link', {name: '이메일 추가해서 웹에서도 로그인하기'}).getAttribute('href'),
-  ).toBe('/ko/account/')
-  expect(readAccountSession).not.toHaveBeenCalled()
+  ).toBe('/account')
 })
 
 it('should distinguish an account service failure from an anonymous session', async () => {
-  vi.mocked(readAccountSession).mockRejectedValue(new Error('unavailable'))
+  setSettingsState({kind: 'error'})
 
   render(() => <UserSettings />)
 

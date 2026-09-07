@@ -1,7 +1,6 @@
 import {render} from 'solid-js/web'
 
 import {PuppetEditor} from './editor'
-import './dev.css'
 
 const rootElement = document.querySelector('#root')
 

@@ -1,6 +1,6 @@
-import {fileURLToPath, URL} from 'node:url'
+import {fileURLToPath} from 'node:url'
 
-import {createStorybookTestConfig} from '../../.storybook/create-test-config'
+import {createStorybookTestConfig} from '../../.storybook/create-test-config.ts'
 import storybookViteConfig from './.storybook/vite.config.mts'
 
 export default createStorybookTestConfig({

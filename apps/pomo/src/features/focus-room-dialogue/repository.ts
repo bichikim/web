@@ -54,6 +54,36 @@ const getAudioPath = (audioKey: string, format: AudioFormat) =>
 const getAudioMediaType = (audio: Blob, format: AudioFormat) =>
   audio.type.length > 0 ? audio.type : format === 'opus' ? 'audio/ogg; codecs=opus' : 'audio/wav'
 
+export interface DeleteDialogueAudioOptions {
+  readonly failureMode?: 'report' | 'throw'
+}
+
+const deleteAudioFromStorage = async (
+  audioStorage: ModelStorage,
+  audioKey: string,
+  options: DeleteDialogueAudioOptions = {},
+) => {
+  const deletions = await Promise.all(
+    AUDIO_FORMATS.map((format) => audioStorage.delete(getAudioPath(audioKey, format))),
+  )
+
+  for (const deletion of deletions) {
+    if (!deletion.ok) {
+      if (options.failureMode === 'throw') {
+        throw new Error('Failed to delete dialogue audio.', {cause: deletion.error})
+      }
+      reportModelStorageError(deletion.error)
+    }
+  }
+}
+
+/** Deletes all audio formats; reports failures by default and rejects in throw mode. */
+export const deleteDialogueAudio = (
+  audioKey: string,
+  options: DeleteDialogueAudioOptions = {},
+): Promise<void> =>
+  deleteAudioFromStorage(createModelStorage({cacheName: AUDIO_CACHE_NAME}), audioKey, options)
+
 interface MigrateLegacyAudioOptions {
   readonly audioKey: string
   readonly audioStorage: ModelStorage
@@ -111,17 +141,7 @@ export const createPDialogueRepository = (): PDialogueRepository => {
   const database = createPDatabase()
   const audioStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME})
   const getMigratedAudio = createLegacyAudioMigrator(audioStorage)
-  const deleteAudio = async (audioKey: string) => {
-    const deletions = await Promise.all(
-      AUDIO_FORMATS.map((format) => audioStorage.delete(getAudioPath(audioKey, format))),
-    )
-
-    for (const deletion of deletions) {
-      if (!deletion.ok) {
-        reportModelStorageError(deletion.error)
-      }
-    }
-  }
+  const deleteAudio = (audioKey: string) => deleteAudioFromStorage(audioStorage, audioKey)
   const setEventBinding = async (
     event: DialogueEventId,
     dialogueIds: ReadonlyArray<string> | string | null,

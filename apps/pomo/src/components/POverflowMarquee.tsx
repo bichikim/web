@@ -90,13 +90,14 @@ export const POverflowMarquee = (props: POverflowMarqueeProps) => {
         class={cx(
           'pomo-overflow-marquee__track flex w-max whitespace-nowrap',
           measurement().overflowing && 'animate-overflow-marquee',
+          '[animation-duration:var(--pomo-marquee-duration)]',
           'group-hover:[animation-play-state:paused]',
           'group-focus:[animation-play-state:paused]',
           'motion-reduce:block motion-reduce:max-w-full motion-reduce:animate-none',
         )}
         style={{
           '--pomo-marquee-distance': `${measurement().travelDistance}px`,
-          'animation-duration': `${animationDuration()}s`,
+          '--pomo-marquee-duration': `${animationDuration()}s`,
         }}
       >
         <span

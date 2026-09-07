@@ -9,9 +9,12 @@ const runtimeMocks = vi.hoisted(() => ({
 
 vi.mock('@paraglide/runtime', () => ({
   baseLocale: 'ko',
+  cookieDomain: '',
+  cookieName: 'PARAGLIDE_LOCALE',
   extractLocaleFromCookie: runtimeMocks.extractLocaleFromCookie,
   extractLocaleFromNavigator: runtimeMocks.extractLocaleFromNavigator,
-  localStorageKey: 'pomo-locale',
+  localStorageKey: 'PARAGLIDE_LOCALE',
+  strategy: ['localStorage', 'cookie', 'baseLocale'],
   toLocale: (value: unknown) =>
     typeof value === 'string' && ['en', 'ja', 'ko', 'zh-Hans'].includes(value) ? value : undefined,
 }))
@@ -24,7 +27,7 @@ afterEach(() => {
 })
 
 it('should prefer a persisted locale over the device locale', async () => {
-  window.localStorage.setItem('pomo-locale', 'zh-Hans')
+  window.localStorage.setItem('PARAGLIDE_LOCALE', 'zh-Hans')
   runtimeMocks.extractLocaleFromCookie.mockReturnValue('ko')
   runtimeMocks.extractLocaleFromNavigator.mockReturnValue('en')
   vi.doMock('@apps-in-toss/web-framework', () => ({
@@ -37,6 +40,33 @@ it('should prefer a persisted locale over the device locale', async () => {
   await expect(getInitialAppsInTossLocale()).resolves.toBe('zh-Hans')
 })
 
+it('should bootstrap from the device locale after locale storage is reset', async () => {
+  window.localStorage.setItem('PARAGLIDE_LOCALE', 'en')
+  document.cookie = 'PARAGLIDE_LOCALE=en; path=/'
+  runtimeMocks.extractLocaleFromCookie.mockImplementation(() =>
+    document.cookie.includes('PARAGLIDE_LOCALE=en') ? 'en' : undefined,
+  )
+  runtimeMocks.extractLocaleFromNavigator.mockReturnValue('en')
+  vi.doMock('@apps-in-toss/web-framework', () => ({
+    Device: {locale: 'ko-KR'},
+    getLocale: vi.fn(),
+  }))
+
+  const {resetLocale} = await import('../../locale')
+  const {getInitialAppsInTossLocale} = await import('../bootstrap')
+
+  await resetLocale({
+    removeCookie: (cookie) => {
+      document.cookie = cookie
+    },
+    removeWeb: (key) => window.localStorage.removeItem(key),
+  })
+
+  expect(window.localStorage.getItem('PARAGLIDE_LOCALE')).toBeNull()
+  expect(document.cookie).not.toContain('PARAGLIDE_LOCALE=en')
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('ko')
+})
+
 it('should fall back to the framework locale API when Device has no locale', async () => {
   runtimeMocks.extractLocaleFromCookie.mockReturnValue(undefined)
   runtimeMocks.extractLocaleFromNavigator.mockReturnValue('ja')
@@ -47,6 +77,19 @@ it('should fall back to the framework locale API when Device has no locale', asy
 
   await expect(getInitialAppsInTossLocale()).resolves.toBe('en')
   expect(getLocale).toHaveBeenCalledOnce()
+})
+
+it('should use the cookie locale when browser storage has no persisted locale', async () => {
+  runtimeMocks.extractLocaleFromCookie.mockReturnValue('en')
+  runtimeMocks.extractLocaleFromNavigator.mockReturnValue('ko')
+  vi.doMock('@apps-in-toss/web-framework', () => ({
+    Device: {locale: 'ko'},
+    getLocale: vi.fn(),
+  }))
+
+  const {getInitialAppsInTossLocale} = await import('../bootstrap')
+
+  await expect(getInitialAppsInTossLocale()).resolves.toBe('en')
 })
 
 it('should use browser evidence when storage and the device framework are unavailable', async () => {

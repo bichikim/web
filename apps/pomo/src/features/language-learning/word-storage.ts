@@ -7,6 +7,11 @@ const STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
 
+export interface AppendLanguageLearningWordsResult {
+  readonly addedCount: number
+  readonly skippedCount: number
+}
+
 export const readLanguageLearningWords = (): ReadonlyArray<LanguageLearningWord> => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -26,7 +31,7 @@ export const writeLanguageLearningWords = (words: ReadonlyArray<LanguageLearning
 export const appendLanguageLearningWords = (
   language: LanguageLearningLanguage,
   values: ReadonlyArray<string>,
-) => {
+): AppendLanguageLearningWordsResult => {
   const storedWords = readLanguageLearningWords()
   const existingValues = new Set(
     storedWords
@@ -45,15 +50,30 @@ export const appendLanguageLearningWords = (
     return [{createdAt, language, memorized: false, value, version: 1}]
   })
 
-  writeLanguageLearningWords([...storedWords, ...newWords])
+  if (newWords.length > 0) {
+    writeLanguageLearningWords([...storedWords, ...newWords])
+  }
+
+  return {
+    addedCount: newWords.length,
+    skippedCount: values.length - newWords.length,
+  }
+}
+
+export const deleteLanguageLearningWords = (
+  language: LanguageLearningLanguage,
+  values: ReadonlyArray<string>,
+) => {
+  const selectedValues = new Set(values)
+  writeLanguageLearningWords(
+    readLanguageLearningWords().filter(
+      (word) => word.language !== language || !selectedValues.has(word.value),
+    ),
+  )
 }
 
 export const deleteLanguageLearningWord = (language: LanguageLearningLanguage, value: string) =>
-  writeLanguageLearningWords(
-    readLanguageLearningWords().filter(
-      (word) => word.language !== language || word.value !== value,
-    ),
-  )
+  deleteLanguageLearningWords(language, [value])
 
 export interface SetLanguageLearningWordMemorizedOptions {
   readonly language: LanguageLearningLanguage
@@ -61,13 +81,30 @@ export interface SetLanguageLearningWordMemorizedOptions {
   readonly value: string
 }
 
-export const setLanguageLearningWordMemorized = (
-  options: SetLanguageLearningWordMemorizedOptions,
-) =>
+export interface SetLanguageLearningWordsMemorizedOptions {
+  readonly language: LanguageLearningLanguage
+  readonly memorized: boolean
+  readonly values: ReadonlyArray<string>
+}
+
+export const setLanguageLearningWordsMemorized = (
+  options: SetLanguageLearningWordsMemorizedOptions,
+) => {
+  const selectedValues = new Set(options.values)
   writeLanguageLearningWords(
     readLanguageLearningWords().map((word) =>
-      word.language === options.language && word.value === options.value
+      word.language === options.language && selectedValues.has(word.value)
         ? {...word, memorized: options.memorized}
         : word,
     ),
   )
+}
+
+export const setLanguageLearningWordMemorized = (
+  options: SetLanguageLearningWordMemorizedOptions,
+) =>
+  setLanguageLearningWordsMemorized({
+    language: options.language,
+    memorized: options.memorized,
+    values: [options.value],
+  })

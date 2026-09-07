@@ -35,6 +35,10 @@ const gateMocks = vi.hoisted(() => ({
   createFeedSyncGate: vi.fn(),
   finishFeedSync: vi.fn(),
 }))
+const repositoryAdapterMocks = vi.hoisted(() => ({
+  createFeedDialogueRepository: vi.fn(),
+  deleteDialogueAudio: vi.fn(),
+}))
 
 const repositoryMocks = vi.hoisted(() => {
   const dialogueRepository = {
@@ -47,6 +51,7 @@ const repositoryMocks = vi.hoisted(() => {
     complete: vi.fn().mockResolvedValue(undefined),
     deleteJobs: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
+    failJob: vi.fn().mockResolvedValue(true),
     interruptUnfinishedJobs: vi.fn().mockResolvedValue([]),
     listExpiredMetadata: vi.fn().mockResolvedValue([]),
     listItems: vi.fn().mockResolvedValue([]),
@@ -56,7 +61,7 @@ const repositoryMocks = vi.hoisted(() => {
     recoverMissingDialogue: vi.fn().mockResolvedValue(true),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
-    updateJob: vi.fn().mockResolvedValue(undefined),
+    startJob: vi.fn().mockResolvedValue(true),
   }
 
   return {
@@ -68,9 +73,10 @@ const repositoryMocks = vi.hoisted(() => {
 
 vi.mock('../../focus-room-dialogue/repository', () => ({
   createPDialogueRepository: () => repositoryMocks.dialogueRepository,
+  deleteDialogueAudio: repositoryAdapterMocks.deleteDialogueAudio,
 }))
 vi.mock('../feed-dialogue-repository', () => ({
-  createFeedDialogueRepository: () => repositoryMocks.feedRepository,
+  createFeedDialogueRepository: repositoryAdapterMocks.createFeedDialogueRepository,
 }))
 vi.mock('../feed-dialogue-repair', () => ({
   repairStoredDevFeedDialogues: repairMocks.repairStoredDevFeedDialogues,
@@ -102,11 +108,15 @@ vi.mock('../sync-gate', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  repositoryAdapterMocks.createFeedDialogueRepository.mockReturnValue(
+    repositoryMocks.feedRepository,
+  )
   repositoryMocks.dialogueRepository.deleteDialogue.mockResolvedValue(undefined)
   repositoryMocks.dialogueRepository.getDialogue.mockResolvedValue(null)
   repositoryMocks.dialogueRepository.saveDialogue.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.complete.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.deleteJobs.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.failJob.mockResolvedValue(true)
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listExpiredMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.listItems.mockResolvedValue([])
@@ -116,7 +126,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.recoverMissingDialogue.mockResolvedValue(true)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
-  repositoryMocks.feedRepository.updateJob.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
   repositoryMocks.listConnections.mockReturnValue([])
   lifecycleMocks.deleteExpiredFeedDialogues.mockResolvedValue(0)
   lifecycleMocks.discardFeedJobs.mockResolvedValue([])
@@ -207,7 +217,7 @@ const createEventContext = (
   isLoading: vi.fn(() => false),
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues,
@@ -334,6 +344,9 @@ it('should load dialogue, issue, and recovery state during initialization', asyn
   expect(view.result.issues()).toEqual([issue])
   expect(view.result.unlistenedDialogues()).toEqual([available[0]])
   expect(view.result.latestReady()).toEqual(available[0])
+  expect(repositoryAdapterMocks.createFeedDialogueRepository).toHaveBeenCalledWith({
+    deleteDialogueAudio: repositoryAdapterMocks.deleteDialogueAudio,
+  })
   view.cleanup()
 })
 
@@ -504,6 +517,19 @@ it('should skip listening to an empty feed batch', async () => {
   view.cleanup()
 })
 
+it('should ignore a recovery retry when no jobs remain', async () => {
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
+  const initialState = view.result.state()
+
+  await view.result.retryRecovery()
+
+  expect(repositoryMocks.feedRepository.retryJobs).not.toHaveBeenCalled()
+  expect(queueMocks.scheduleFeedJobs).not.toHaveBeenCalled()
+  expect(view.result.state()).toEqual(initialState)
+  view.cleanup()
+})
+
 it('should delete, dismiss, and retry recovery jobs', async () => {
   const jobs = [createJob({id: 'failed', status: 'failed'})]
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
@@ -536,6 +562,23 @@ it('should delete, dismiss, and retry recovery jobs', async () => {
   retryView.result.dismissRecovery()
   expect(retryView.result.recoveryJobs()).toEqual([])
   retryView.cleanup()
+})
+
+it('should expose preparation while recovered jobs wait for the generation queue', async () => {
+  const jobs = [createJob({id: 'failed', status: 'failed'})]
+  repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
+  queueMocks.scheduleFeedJobs.mockImplementationOnce(() => undefined)
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  await vi.waitFor(() => expect(view.result.recoveryJobs()).toEqual(jobs))
+
+  await view.result.retryRecovery()
+
+  expect(view.result.state()).toEqual({
+    message: '피드 대화를 다시 만들 준비 중…',
+    progress: 0,
+    status: 'preparing',
+  })
+  view.cleanup()
 })
 
 it('should reload dialogues after metadata removal succeeds or fails', async () => {

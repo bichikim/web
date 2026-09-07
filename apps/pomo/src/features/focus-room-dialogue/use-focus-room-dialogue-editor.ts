@@ -2,8 +2,6 @@ import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 
 import {
   createOpusBlob,
-  createSupertonicClient,
-  getSupertonicErrorMessage,
   type SupertonicClient,
   type SupertonicLanguage,
   type SupertonicModelId,
@@ -17,6 +15,7 @@ import {
   writeDialogueDraft,
 } from './dialogue-draft'
 import {createDialogueEditorAudioState} from './dialogue-editor-audio-state'
+import {createDialogueModelSession} from './use-focus-room-dialogue-editor/model-session'
 import type {PDialogueEditorController, UsePDialogueEditorProps} from './dialogue-editor-contract'
 import {type DialogueEditorState, isDialogueEditorBusy} from './dialogue-editor-state'
 import {
@@ -66,9 +65,6 @@ const revokeUrl = (url: string | null) => {
   }
 }
 
-const getProgress = (loadedBytes: number, totalBytes: number) =>
-  Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
-
 /** Owns the browser-only lifecycle for editing, generating and persisting a dialogue. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- The editor hook owns one disposable model, audio URL and persistence lifecycle.
 export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEditorController => {
@@ -110,18 +106,21 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
   let audioBlob: Blob | null = null
   let audioKey: string | null = null
   let audioNeedsWrite = false
-  let client: SupertonicClient | null = null
   let createdAt: string | null = null
   let generatedKey: string | null = null
   let isDisposed = false
   let moodAnalyzer: TextMoodAnalyzer | null = null
-  let preparedModelId: SupertonicModelId | null = null
 
   const setEditorState = (nextState: DialogueEditorState) => {
     if (!isDisposed) {
       setState(nextState)
     }
   }
+  const modelSession = createDialogueModelSession({
+    isDisposed: () => isDisposed,
+    setState: setEditorState,
+    state,
+  })
   const isBusy = createMemo(() => isDialogueEditorBusy(state()))
   const currentGenerationKey = () => getGenerationKey(language(), modelId(), voiceId(), text())
   const hasCurrentAudio = () => audioBlob !== null && generatedKey === currentGenerationKey()
@@ -134,7 +133,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     const currentState = state()
     return currentState.status === 'preparing'
       ? currentState.progress
-      : preparedModelId === modelId()
+      : modelSession.getPreparedModelId() === modelId()
         ? MAXIMUM_PROGRESS
         : 0
   })
@@ -249,79 +248,19 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
   onCleanup(() => {
     isDisposed = true
     abortOpusEncoding()
-    client?.dispose()
-    client = null
+    modelSession.dispose()
     moodAnalyzer?.dispose()
     moodAnalyzer = null
     repository.dispose()
     revokeUrl(audioUrl())
   })
 
-  const prepareModel = async (selectedModelId: SupertonicModelId) => {
-    client?.dispose()
-    let nextClient: SupertonicClient
-
-    try {
-      nextClient = createSupertonicClient()
-    } catch (error: unknown) {
-      client = null
-      preparedModelId = null
-      console.error('Failed to create focus room dialogue model client.', error)
-      setEditorState({message: '음성 모델을 시작하지 못했어요.', status: 'error'})
-      return null
-    }
-
-    client = nextClient
-    setEditorState({message: '음성 모델을 확인하고 있어요.', progress: 0, status: 'preparing'})
-
-    try {
-      const result = await nextClient.initialize({
-        modelId: selectedModelId,
-        onProgress: (nextProgress) => {
-          if (client === nextClient && !isDisposed) {
-            setEditorState({
-              message: `${nextProgress.fileName} 준비 중…`,
-              progress: getProgress(nextProgress.loadedBytes, nextProgress.totalBytes),
-              status: 'preparing',
-            })
-          }
-        },
-        onStatus: (message) => {
-          if (client === nextClient && !isDisposed) {
-            const currentState = state()
-            setEditorState({...currentState, message})
-          }
-        },
-      })
-
-      if (client !== nextClient || isDisposed) {
-        return null
-      }
-
-      if (!result.ok) {
-        setEditorState({message: getSupertonicErrorMessage(result.error), status: 'error'})
-        return null
-      }
-    } catch (error: unknown) {
-      if (client !== nextClient || isDisposed) {
-        return null
-      }
-
-      console.error('Failed to prepare focus room dialogue model.', error)
-      setEditorState({message: '음성 모델을 준비하지 못했어요.', status: 'error'})
-      return null
-    }
-
-    preparedModelId = selectedModelId
-    return nextClient
-  }
-
   const requestDialogueAudio = async (request: DialogueAudioRequest) => {
     setEditorState({message: '첫 번째 음성 구간을 만들고 있어요.', status: 'generating'})
     const generated = await generateDialogueAudio({
       ...request,
       onChunk: (completed, total) => {
-        if (client === request.client && !isDisposed) {
+        if (modelSession.isCurrent(request.client)) {
           setEditorState({
             message: `${completed}/${total} 음성 구간을 만들었어요.`,
             status: 'generating',
@@ -330,7 +269,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       },
     })
 
-    if (isDisposed || client !== request.client) {
+    if (!modelSession.isCurrent(request.client)) {
       return null
     }
 
@@ -351,10 +290,11 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     const selectedLanguage = language()
     const sourceText = text().trim()
     const selectedVoiceId = voiceId()
+    const activeClient = modelSession.getClient()
     const currentClient =
-      client === null || preparedModelId !== selectedModelId
-        ? await prepareModel(selectedModelId)
-        : client
+      activeClient === null || modelSession.getPreparedModelId() !== selectedModelId
+        ? await modelSession.prepare(selectedModelId)
+        : activeClient
 
     if (currentClient === null) {
       return
@@ -415,7 +355,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
         segments: generatedAudio.segments,
       })
 
-      if (isDisposed || client !== currentClient) {
+      if (!modelSession.isCurrent(currentClient)) {
         return
       }
 
@@ -433,7 +373,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
   const regenerateSegment = async (position: number) => {
     const currentAudio = editableAudio()
-    const currentClient = client
+    const currentClient = modelSession.getClient()
 
     if (!canRegenerateSegments() || currentAudio === null || currentClient === null) {
       return
@@ -453,7 +393,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       voiceId: voiceId(),
     })
 
-    if (isDisposed || client !== currentClient) {
+    if (!modelSession.isCurrent(currentClient)) {
       return
     }
 
@@ -541,9 +481,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       return
     }
 
-    client?.dispose()
-    client = null
-    preparedModelId = null
+    modelSession.invalidate()
     setModelIdSignal(nextModelId)
     clearGeneratedAudio('음성 만들기를 누르면 선택한 모델을 자동으로 준비해요.')
   }

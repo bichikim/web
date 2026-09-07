@@ -6,7 +6,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {getPSceneReviewLayer} from '../../../features/focus-room-animation/scene-layer-catalog'
 import {PLayerReviewRenderer} from '../../../features/focus-room-layer-review/scene-renderer'
-import PLayerReviewCanvas, {type PLayerReviewCanvasProps} from '../Canvas'
+import {PLayerReviewCanvas, type PLayerReviewCanvasProps} from '../Canvas'
 
 vi.mock('../../../features/focus-room-animation/scene-layer-catalog', () => ({
   getPSceneReviewLayer: vi.fn(),
@@ -138,7 +138,7 @@ describe('PLayerReviewCanvas', () => {
     )
     vi.mocked(isolatedSolid.onMount).mockImplementation((callback) => callback())
 
-    const {default: IsolatedCanvas} = await import('../Canvas')
+    const {PLayerReviewCanvas: IsolatedCanvas} = await import('../Canvas')
     const {PLayerReviewRenderer: IsolatedRenderer} =
       await import('../../../features/focus-room-layer-review/scene-renderer')
 

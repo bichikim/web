@@ -1,35 +1,51 @@
-import {createSignal} from 'solid-js'
+import {useNavigate, useSubmission} from '@solidjs/router'
+import {createEffect, createMemo, createSignal} from 'solid-js'
 
-import {signOutAdminSession} from './session'
+import {type SignOutActionResult, signOutAdminSessionAction} from '../auth/actions'
 
 export interface AdminDashboardController {
+  readonly errorMessage: () => string | null
   readonly isSigningOut: () => boolean
-  readonly onSignOut: () => Promise<boolean>
 }
 
 export const useAdminDashboard = (): AdminDashboardController => {
-  const [isSigningOut, setIsSigningOut] = createSignal(false)
+  const navigate = useNavigate()
+  const submission = useSubmission(signOutAdminSessionAction)
+  const [feedbackStatus, setFeedbackStatus] = createSignal<SignOutActionResult['status'] | null>(
+    null,
+  )
+  const errorMessage = createMemo(() => {
+    const status = feedbackStatus()
 
-  const onSignOut = async () => {
-    setIsSigningOut(true)
+    return status === 'rejected' || status === 'unavailable'
+      ? '로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+      : null
+  })
 
-    try {
-      const wasSignedOut = await signOutAdminSession()
-
-      if (!wasSignedOut) {
-        return false
-      }
-
-      return true
-    } catch {
-      return false
-    } finally {
-      setIsSigningOut(false)
+  createEffect(() => {
+    if (submission.pending === true) {
+      setFeedbackStatus(null)
+      return
     }
-  }
+
+    const {result} = submission
+
+    if (result === undefined) {
+      return
+    }
+
+    setFeedbackStatus(result.status)
+    submission.clear()
+
+    if (result.status !== 'signed-out') {
+      return
+    }
+
+    navigate('/admin/login', {replace: true})
+  })
 
   return {
-    isSigningOut,
-    onSignOut,
+    errorMessage,
+    isSigningOut: () => submission.pending === true,
   }
 }

@@ -1,7 +1,13 @@
+import {fileURLToPath} from 'node:url'
 import {defineConfig, devices} from '@playwright/test'
 
 const webBaseUrl = 'http://127.0.0.1:44173'
 const appsInTossBaseUrl = 'http://127.0.0.1:44174'
+const clientActionsBaseUrl = 'http://127.0.0.1:44175'
+const clientActionsFixtureDirectory = fileURLToPath(
+  new URL('./e2e/fixtures/client-actions/', import.meta.url),
+)
+const DEFAULT_LOCALE_STORAGE = [{name: 'PARAGLIDE_LOCALE', value: 'ko'}]
 
 export default defineConfig({
   expect: {
@@ -13,6 +19,7 @@ export default defineConfig({
   projects: [
     {
       name: 'web',
+      testIgnore: 'remote-server-functions.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
         baseURL: webBaseUrl,
@@ -20,6 +27,7 @@ export default defineConfig({
     },
     {
       name: 'apps-in-toss',
+      testIgnore: 'client-actions.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
         baseURL: appsInTossBaseUrl,
@@ -35,6 +43,13 @@ export default defineConfig({
       reducedMotion: 'reduce',
     },
     screenshot: 'only-on-failure',
+    storageState: {
+      cookies: [],
+      origins: [webBaseUrl, appsInTossBaseUrl].map((origin) => ({
+        localStorage: DEFAULT_LOCALE_STORAGE,
+        origin,
+      })),
+    },
     trace: 'on-first-retry',
     video: 'retain-on-failure',
   },
@@ -51,6 +66,13 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
       url: appsInTossBaseUrl,
+    },
+    {
+      command: 'pnpm exec vite dev --host 127.0.0.1 --port 44175',
+      cwd: clientActionsFixtureDirectory,
+      reuseExistingServer: false,
+      timeout: 120_000,
+      url: clientActionsBaseUrl,
     },
   ],
 })

@@ -94,6 +94,28 @@ describe('useChat', () => {
     cleanup()
   })
 
+  it('should forward transient supplementary context without storing it in conversation history', () => {
+    const {clients, runtime} = createRuntime()
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+    result.prepare()
+    const clientRecord = clients[0]
+    clientRecord?.respond({type: 'ready'})
+    result.setDraft('오늘 일정 알려줘')
+
+    result.send({supplementaryContext: '캘린더 조회 결과'})
+
+    expect(clientRecord?.client.generate).toHaveBeenCalledWith(
+      {
+        messages: [{content: '오늘 일정 알려줘', id: 'id-1', role: 'user'}],
+        summary: '',
+      },
+      'id-2',
+      {refineAnswer: true, supplementaryContext: '캘린더 조회 결과'},
+    )
+    expect(result.messages()).toEqual([{content: '오늘 일정 알려줘', id: 'id-1', role: 'user'}])
+    cleanup()
+  })
+
   it('should expose unsupported state and keep preparation disabled without WebGPU', () => {
     const {clients, runtime, supportsWebGpu} = createRuntime()
     supportsWebGpu.mockReturnValue(false)

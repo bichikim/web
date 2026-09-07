@@ -3,6 +3,7 @@ import type {ChatMessage} from './messages'
 interface CreateChatPromptOptions {
   readonly messages: ReadonlyArray<ChatMessage>
   readonly summary: string
+  readonly supplementaryContext?: string
 }
 
 interface CreateSummaryPromptOptions {
@@ -49,10 +50,14 @@ export const limitChatAnswer = (text: string) => {
 }
 
 export const createChatMessages = (options: CreateChatPromptOptions): Array<ChatModelMessage> => {
-  const systemContent =
+  let systemContent =
     options.summary.length > 0
       ? `${CHAT_SYSTEM_PROMPT}\n\n이전 대화 요약:\n${options.summary}`
       : CHAT_SYSTEM_PROMPT
+
+  if (options.supplementaryContext !== undefined && options.supplementaryContext.length > 0) {
+    systemContent = `${systemContent}\n\n현재 질문을 위한 외부 정보:\n${options.supplementaryContext}`
+  }
 
   return [
     {content: systemContent, role: 'system'},

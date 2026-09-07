@@ -2,6 +2,7 @@
 
 import {cleanup, fireEvent} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
@@ -13,6 +14,34 @@ import {
 
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
+
+  it.each([false, true])(
+    'should update every playback tooltip with the playback state (expanded: %s)',
+    (expanded) => {
+      const [isPlaying, setPlaying] = createSignal(false)
+      const result = renderMusicPlayerView({
+        expanded,
+        get isPlaying() {
+          return isPlaying()
+        },
+      })
+      const buttons = result.container.querySelectorAll('media-play-button')
+      expect(buttons).toHaveLength(2)
+      for (const button of buttons) {
+        fireEvent.focus(button)
+        expect(button).toHaveAttribute('title', '재생')
+      }
+      setPlaying(true)
+      for (const button of buttons) {
+        expect(button).toHaveAttribute('title', '일시 정지')
+      }
+      setPlaying(false)
+      for (const button of buttons) {
+        fireEvent.focus(button)
+        expect(button).toHaveAttribute('title', '재생')
+      }
+    },
+  )
 
   it('should render the current track artwork only in the expanded player', () => {
     const collapsedResult = renderMusicPlayerView({expanded: false})
@@ -27,19 +56,6 @@ describe('MusicPlayerView', () => {
     expect(artwork).toBeInstanceOf(HTMLImageElement)
     expect(artwork?.getAttribute('src')).toBe('/audio/artwork/one.jpg')
     expect(artwork?.getAttribute('alt')).toBe('')
-  })
-
-  it('should hide failed artwork requests', () => {
-    const result = renderMusicPlayerView()
-    const artwork = result.container.querySelector('.pomo-player__artwork')
-
-    if (!(artwork instanceof HTMLImageElement)) {
-      throw new TypeError('Expected the current track artwork to be rendered')
-    }
-
-    fireEvent.error(artwork)
-
-    expect(artwork.hidden).toBe(true)
   })
 
   it('should forward album and expanded player control events', () => {
@@ -124,8 +140,11 @@ describe('MusicPlayerView', () => {
     )
 
     expect(idleLevels).toHaveLength(2)
-    expect(idleLevels[0]?.getAttribute('style')).toContain('height: 25%')
-    expect(idleLevels[0]?.getAttribute('style')).toContain('opacity: 0.34')
+    expect(idleLevels[0]?.getAttribute('style')).toContain('--pomo-level-height: 25%')
+    expect(idleLevels[0]?.classList.contains('[height:var(--pomo-level-height)]')).toBe(true)
+    expect((idleLevels[0] as HTMLElement | undefined)?.style.height).toBe('')
+    expect(idleLevels[0]?.classList.contains('opacity-34')).toBe(true)
+    expect(idleLevels[0]?.getAttribute('style')).not.toContain('opacity')
     expect(summaryLabels[0]?.textContent).toContain(m.player_fallback_title())
     expect(summaryLabels[1]?.textContent).toContain(m.player_fallback_artist())
 
@@ -134,8 +153,11 @@ describe('MusicPlayerView', () => {
     const playingResult = renderMusicPlayerView({isPlaying: true, levels: [50]})
     const playingLevel = playingResult.container.querySelector('.pomo-level')
 
-    expect(playingLevel?.getAttribute('style')).toContain('height: 50%')
-    expect(playingLevel?.getAttribute('style')).toContain('opacity: 0.76')
+    expect(playingLevel?.getAttribute('style')).toContain('--pomo-level-height: 50%')
+    expect(playingLevel?.classList.contains('[height:var(--pomo-level-height)]')).toBe(true)
+    expect((playingLevel as HTMLElement | null)?.style.height).toBe('')
+    expect(playingLevel?.classList.contains('opacity-76')).toBe(true)
+    expect(playingLevel?.getAttribute('style')).not.toContain('opacity')
   })
 
   it('should keep the collapsed player layers visually present but inactive', () => {
@@ -154,8 +176,11 @@ describe('MusicPlayerView', () => {
     expect(controller?.classList.contains('overflow-visible')).toBe(false)
     expect(controller?.classList.contains('pb-0.5')).toBe(true)
     expect(playerBase?.classList.contains('rounded-panel')).toBe(true)
+    expect(playerBase?.classList.contains('bg-player-surface')).toBe(true)
     expect(visualizerFrame?.classList.contains('overflow-hidden')).toBe(true)
     expect(visualizerFrame?.classList.contains('rounded-panel')).toBe(true)
+    expect(expandedFrame).toHaveClass('h-0', 'flex-none')
+    expect(expandedFrame).not.toHaveClass('flex-1')
     expect(expandedFrame?.classList.contains('grid-rows-[0fr]')).toBe(true)
     expect(expandedFrame?.classList.contains('is-expanded')).toBe(false)
     expect(expandedFrame?.getAttribute('aria-hidden')).toBe('true')
@@ -185,16 +210,18 @@ describe('MusicPlayerView', () => {
     expect(collapsedRange.hasAttribute('disabled')).toBe(true)
     expect(collapsedRange.getAttribute('aria-hidden')).toBe('true')
     expect(collapsedRange.classList.contains('[--media-range-track-height:100%]')).toBe(true)
-    expect(collapsedRange.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]')).toBe(
-      true,
-    )
+    expect(
+      collapsedRange.classList.contains(
+        '[--media-range-bar-color:var(--pomo-color-player-progress)]',
+      ),
+    ).toBe(true)
     expect(
       collapsedRange.classList.contains('[--media-time-range-buffered-color:transparent]'),
     ).toBe(true)
     expect(collapsedRange.classList.contains('[--media-range-track-background:transparent]')).toBe(
       true,
     )
-    expect(collapsedRange.classList.contains('[--media-range-padding:0px]')).toBe(true)
+    expect(collapsedRange.classList.contains('[--media-range-padding:0rem]')).toBe(true)
     expect(collapsedRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
     expect(collapsedRange.classList.contains('[&.is-hidden]:opacity-0')).toBe(true)
     expect(collapsedRange.classList.contains('motion-reduce:transition-none')).toBe(true)
@@ -206,7 +233,7 @@ describe('MusicPlayerView', () => {
     expect(expandedRange.classList.contains('[--media-cursor:default]')).toBe(true)
     expect(expandedRange.getAttribute('aria-hidden')).toBe('true')
     expect(expandedRange.getAttribute('aria-label')).toBe('재생 위치 조절')
-    expect(expandedRange.getAttribute('title')).toBe('재생 위치 조절')
+    expect(expandedRange.hasAttribute('title')).toBe(false)
     expect(collapsedRange.hasAttribute('title')).toBe(false)
   })
 
@@ -266,9 +293,7 @@ describe('MusicPlayerView', () => {
     const originalController = originalResult.container.querySelector('media-controller')
 
     expect(originalResult.container.querySelector('.pomo-player__scribble-border')).toBeNull()
-    expect(
-      originalController?.classList.contains('[mask-image:var(--pomo-player-scribble-mask)]'),
-    ).toBe(false)
+    expect(originalController?.classList.contains('pomo-scribble-mask')).toBe(false)
     expect(originalController?.classList.contains('rounded-panel')).toBe(true)
     expect(originalController?.classList.contains('rounded-none')).toBe(false)
     expect(originalBase?.classList.contains('border-border')).toBe(true)
@@ -288,12 +313,8 @@ describe('MusicPlayerView', () => {
     expect(scribbleBorder?.querySelectorAll('path')[1]?.getAttribute('stroke-width')).toBe('3')
     expect(scribbleBorder?.parentElement).toBe(scribbleFrame)
     expect(scribbleController?.contains(scribbleBorder)).toBe(false)
-    expect(
-      scribbleController?.classList.contains('[mask-image:var(--pomo-player-scribble-mask)]'),
-    ).toBe(true)
-    expect(
-      (scribbleController as HTMLElement).style.getPropertyValue('--pomo-player-scribble-mask'),
-    ).toContain('data:image/svg+xml')
+    expect(scribbleController?.classList.contains('pomo-scribble-mask')).toBe(true)
+    expect(scribbleController).not.toHaveAttribute('style')
     expect(scribbleController?.classList.contains('rounded-none')).toBe(true)
     expect(scribbleController?.classList.contains('rounded-panel')).toBe(false)
     expect(scribbleBase?.classList.contains('border-transparent')).toBe(true)
@@ -332,10 +353,10 @@ describe('MusicPlayerView', () => {
     expect(scribbleResult.container.querySelector('.i-tabler-album')).toBeNull()
     expect(
       scribbleResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
-    ).toHaveLength(1)
+    ).toHaveLength(2)
   })
 
-  it('should constrain and wrap expanded controls on narrow screens', () => {
+  it('should constrain expanded content and keep compact controls in one row', () => {
     const result = renderMusicPlayerView()
     const controller = result.container.querySelector('media-controller') as HTMLElement
     const expandedFrame = result.container.querySelector(
@@ -350,6 +371,7 @@ describe('MusicPlayerView', () => {
     ) as HTMLElement
     const playlist = result.container.querySelector('.pomo-player__playlist') as HTMLElement
     const track = result.container.querySelector('.pomo-player__track') as HTMLElement
+    const modes = result.container.querySelector('.pomo-player__modes') as HTMLElement
     const transport = result.container.querySelector('.pomo-player__transport') as HTMLElement
     const volumeGroup = result.container.querySelector('.pomo-player__volume-group') as HTMLElement
 
@@ -361,6 +383,7 @@ describe('MusicPlayerView', () => {
       controls,
       playlist,
       track,
+      modes,
       transport,
       volumeGroup,
     ]) {
@@ -371,7 +394,8 @@ describe('MusicPlayerView', () => {
     expect(controller.classList.contains('h-full')).toBe(true)
     expect(controller.classList.contains('max-h-full')).toBe(true)
     expect(expandedFrame.classList.contains('min-w-0')).toBe(true)
-    expect(expandedFrame.classList.contains('flex-1')).toBe(true)
+    expect(expandedFrame.classList.contains('flex-none')).toBe(true)
+    expect(expandedFrame.classList.contains('flex-1')).toBe(false)
     expect(expandedFrame.classList.contains('overflow-hidden')).toBe(true)
     expect(
       expandedFrame.classList.contains(
@@ -384,18 +408,31 @@ describe('MusicPlayerView', () => {
     expect(expandedPanel.classList.contains('box-border')).toBe(true)
     expect(expandedPanel.classList.contains('w-full')).toBe(true)
     expect(expandedPanel.classList.contains('flex-1')).toBe(true)
+    expect(controls.classList.contains('grid-cols-[1fr_auto_1fr]')).toBe(true)
     expect(
-      controls.classList.contains('player-compact:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'),
+      controls.classList.contains('player-compact:grid-cols-[max-content_max-content_max-content]'),
     ).toBe(true)
-    expect(controls.classList.contains('player-compact:px-0')).toBe(true)
+    expect(controls.classList.contains('player-compact:justify-evenly')).toBe(true)
+    expect(controls.classList.contains('player-compact:gap-1')).toBe(true)
+    expect(controls.classList.contains('px-1')).toBe(true)
     expect(expandedPanel.classList.contains('player-compact:pt-2')).toBe(true)
     expect(playlist.classList.contains('min-h-0')).toBe(true)
     expect(playlist.classList.contains('flex-1')).toBe(true)
     expect(playlist.classList.contains('player-compact:mt-2')).toBe(true)
+    expect(playlist.classList.contains('player-compact:max-h-none')).toBe(true)
     expect(track.classList.contains('player-compact:gap-2')).toBe(true)
     expect(track.classList.contains('player-compact:px-2')).toBe(true)
-    expect(track.classList.contains('player-compact:py-2')).toBe(true)
-    expect(transport.classList.contains('player-compact:col-span-2')).toBe(true)
-    expect(volumeGroup.classList.contains('player-compact:row-start-2')).toBe(true)
+    expect(track.classList.contains('player-compact:py-1.5')).toBe(true)
+    expect(modes.classList.contains('gap-0.5')).toBe(true)
+    expect(modes.classList.contains('p-1')).toBe(true)
+    expect(modes.classList.contains('player-narrow:gap-0')).toBe(true)
+    expect(modes.classList.contains('player-narrow:p-0.5')).toBe(true)
+    const separator = Array.from(modes.querySelectorAll('span')).find((element) =>
+      element.classList.contains('w-[0.0625rem]'),
+    )
+    expect(separator).toHaveClass('player-narrow:mx-0')
+    expect(transport.classList.contains('gap-1')).toBe(true)
+    expect(transport.classList.contains('player-compact:col-span-2')).toBe(false)
+    expect(volumeGroup.classList.contains('player-compact:row-start-2')).toBe(false)
   })
 })

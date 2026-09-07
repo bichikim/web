@@ -1,14 +1,10 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {
-  connectAlbumOffer,
-  createAlbum,
-  listAdminMusic,
-  updateAlbumStatus,
-} from '../admin-repository'
+import {connectAlbumOffer, listAdminMusic, updateAlbumStatus} from '../admin-repository'
 
 const databaseMocks = vi.hoisted(() => ({getDatabase: vi.fn(), withTransactionalDatabase: vi.fn()}))
 
+vi.mock('src/env', () => ({env: {}}))
 vi.mock('../../database', async () => {
   const actual = await vi.importActual<typeof import('../../database')>('../../database')
   return {...actual, ...databaseMocks}
@@ -87,10 +83,6 @@ const createOfferQuery = (result: ReadonlyArray<unknown>) => ({
 
 const createStatusUpdate = () => ({
   set: vi.fn(() => ({where: vi.fn().mockResolvedValue(undefined)})),
-})
-
-const createReturningInsert = (result: ReadonlyArray<unknown>) => ({
-  values: vi.fn(() => ({returning: vi.fn().mockResolvedValue(result)})),
 })
 
 const createProductInsert = (result: ReadonlyArray<unknown>) => ({
@@ -292,55 +284,6 @@ describe('updateAlbumStatus', () => {
   it('should propagate a transaction failure', async () => {
     transactionalDatabase.transaction.mockRejectedValueOnce(new Error('transaction failed'))
     await expect(updateAlbumStatus('album-1', 'publish')).rejects.toThrow('transaction failed')
-  })
-})
-
-describe('createAlbum', () => {
-  const input = {
-    coverFallback: 'music' as const,
-    coverImageUrl: null,
-    translations: [{description: 'Description', locale: 'ko' as const, title: 'Title'}],
-  }
-
-  it('should create an album and its translations atomically', async () => {
-    transactionInsert
-      .mockReturnValueOnce(
-        createReturningInsert([
-          {coverFallback: 'music', coverImageUrl: null, id: 'album-1', status: 'draft'},
-        ]),
-      )
-      .mockReturnValueOnce(
-        createReturningInsert([
-          {albumId: 'album-1', description: 'Description', locale: 'ko', title: 'Title'},
-        ]),
-      )
-    await expect(createAlbum(input)).resolves.toMatchObject({
-      id: 'album-1',
-      translations: [{albumId: 'album-1', locale: 'ko'}],
-    })
-  })
-
-  it('should support an album with no translations', async () => {
-    transactionInsert
-      .mockReturnValueOnce(
-        createReturningInsert([
-          {coverFallback: 'cd', coverImageUrl: 'cover.webp', id: 'album-1', status: 'draft'},
-        ]),
-      )
-      .mockReturnValueOnce(createReturningInsert([]))
-    await expect(
-      createAlbum({coverFallback: 'cd', coverImageUrl: 'cover.webp', translations: []}),
-    ).resolves.toMatchObject({id: 'album-1', translations: []})
-  })
-
-  it('should reject when the album insert returns no row', async () => {
-    transactionInsert.mockReturnValueOnce(createReturningInsert([]))
-    await expect(createAlbum(input)).rejects.toThrow('Failed to create a music album')
-  })
-
-  it('should propagate a transaction failure', async () => {
-    transactionalDatabase.transaction.mockRejectedValueOnce(new Error('create failed'))
-    await expect(createAlbum(input)).rejects.toThrow('create failed')
   })
 })
 

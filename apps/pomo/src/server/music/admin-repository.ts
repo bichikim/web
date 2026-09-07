@@ -27,16 +27,6 @@ export type UpdateAlbumStatusResult =
     }
   | {readonly status: 'archived' | 'published'; readonly success: true}
 
-export interface CreateAlbumInput {
-  readonly coverFallback: 'lp' | 'cd' | 'music'
-  readonly coverImageUrl: string | null
-  readonly translations: ReadonlyArray<{
-    readonly description: string
-    readonly locale: 'en' | 'ja' | 'ko' | 'zh-Hans'
-    readonly title: string
-  }>
-}
-
 export interface ConnectAlbumOfferInput {
   readonly albumId: string
   readonly externalProductId: string
@@ -209,37 +199,6 @@ export const updateAlbumStatus = async (
         .set({publishedAt: album.publishedAt ?? now, status: 'published', updatedAt: now})
         .where(and(eq(musicAlbums.id, albumId), eq(musicAlbums.status, album.status)))
       return {status: 'published', success: true}
-    }),
-  )
-
-export const createAlbum = async (input: CreateAlbumInput) =>
-  withTransactionalDatabase((database) =>
-    database.transaction(async (transaction) => {
-      const [album] = await transaction
-        .insert(musicAlbums)
-        .values({coverFallback: input.coverFallback, coverImageUrl: input.coverImageUrl})
-        .returning({
-          coverFallback: musicAlbums.coverFallback,
-          coverImageUrl: musicAlbums.coverImageUrl,
-          id: musicAlbums.id,
-          status: musicAlbums.status,
-        })
-
-      if (album === undefined) {
-        throw new Error('Failed to create a music album')
-      }
-
-      const translations = await transaction
-        .insert(musicAlbumTranslations)
-        .values(input.translations.map((translation) => ({...translation, albumId: album.id})))
-        .returning({
-          albumId: musicAlbumTranslations.albumId,
-          description: musicAlbumTranslations.description,
-          locale: musicAlbumTranslations.locale,
-          title: musicAlbumTranslations.title,
-        })
-
-      return {...album, translations}
     }),
   )
 

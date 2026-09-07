@@ -27,7 +27,7 @@ export const ScenePicker = (props: {
           onClick={() => props.onSelect(scene.id)}
           type="button"
         >
-          <span class="block text-[10px] font-800 tracking-[0.14em] uppercase opacity-70">
+          <span class="block text-[0.625rem] font-800 tracking-[0.14em] uppercase opacity-70">
             preview {String(index() + 1).padStart(2, '0')}
           </span>
           <span class="mt-1 block text-xs font-750">{scene.label}</span>

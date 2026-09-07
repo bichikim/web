@@ -23,7 +23,7 @@ it('should hide internal details and expose an error ID with recovery actions', 
   expect(screen.queryByText(/private-token/u)).toBeNull()
   expect(screen.getByRole('button', {name: '다시 시도'})).toBeTruthy()
   const homeLink = screen.getByRole('link', {name: '홈으로 이동'})
-  expect(homeLink.getAttribute('href')).toBe('/ko/')
+  expect(homeLink.getAttribute('href')).toBe('/')
   expect(homeLink.getAttribute('target')).toBe('_self')
   fireEvent.click(screen.getByRole('button', {name: '새로고침'}))
   expect(reload).toHaveBeenCalledTimes(1)

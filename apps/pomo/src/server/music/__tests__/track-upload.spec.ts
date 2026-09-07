@@ -1,0 +1,160 @@
+// oxlint-disable no-magic-numbers -- MP3 fixtures use fixed frame sizes and binary headers.
+import {describe, expect, it, vi} from 'vitest'
+
+import {
+  createTrackPlayback,
+  createTrackUpload,
+  deleteTrackObject,
+  inspectTrackUpload,
+  isTrackValidationError,
+} from '../track-upload'
+
+const OBJECT_KEY =
+  'tracks/019d1990-1dc9-7255-a7b5-f9459dfaf781/019d1990-1dc9-7255-a7b5-f9459dfaf782/source.mp3'
+const environment = {CLOUDFLARE_R2_ACCOUNT_ID: 'account-id'}
+
+describe('createTrackUpload', () => {
+  it('should create a short-lived signed PUT URL constrained to audio MPEG', async () => {
+    const signRequest = vi.fn(async (request: Request) => {
+      const url = new URL(request.url)
+      url.searchParams.set('X-Amz-Signature', 'signature')
+      return new Request(url, request)
+    })
+    const result = await createTrackUpload(OBJECT_KEY, {environment, signRequest})
+    const request = signRequest.mock.calls[0]?.[0]
+
+    expect(result.uploadUrl).toContain('X-Amz-Signature=signature')
+    expect(request?.method).toBe('PUT')
+    expect(request?.headers.get('Content-Type')).toBe('audio/mpeg')
+    expect(request?.url).toContain('X-Amz-Expires=900')
+    expect(signRequest).toHaveBeenCalledWith(expect.any(Request), true)
+  })
+})
+
+describe('inspectTrackUpload', () => {
+  it('should return server-inspected MPEG layer 3 metadata', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response('mp3', {
+        headers: {'Content-Length': '1234', 'Content-Type': 'audio/mpeg', ETag: 'etag-value'},
+      }),
+    )
+    const parseAudio = vi.fn().mockResolvedValue({
+      format: {codec: 'MPEG 1 Layer 3', container: 'MPEG', duration: 12.345},
+    })
+    const result = await inspectTrackUpload(OBJECT_KEY, {
+      environment,
+      fetcher,
+      parseAudio,
+      signRequest: async (request) => request,
+    })
+
+    expect(result).toEqual({durationMs: 12_345, etag: 'etag-value', sizeBytes: 1234n})
+    expect(parseAudio).toHaveBeenCalledWith(expect.any(ReadableStream), {
+      mimeType: 'audio/mpeg',
+      size: 1234,
+    })
+  })
+
+  it('should extract a supported embedded front cover during upload inspection', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1])
+    const result = await inspectTrackUpload(OBJECT_KEY, {
+      environment,
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(
+        new Response('mp3', {
+          headers: {'Content-Length': '1234', ETag: 'etag-value'},
+        }),
+      ),
+      parseAudio: vi.fn().mockResolvedValue({
+        common: {
+          picture: [
+            {data: new Uint8Array([1]), format: 'image/jpeg'},
+            {data: png, format: 'image/png', type: 'Cover (front)'},
+          ],
+        },
+        format: {codec: 'MPEG 1 Layer 3', container: 'MPEG', duration: 12.345},
+      }),
+      signRequest: async (request) => request,
+    })
+
+    expect(result.artwork?.contentType).toBe('image/png')
+    expect(new Uint8Array(result.artwork?.body ?? new ArrayBuffer(0))).toEqual(png)
+  })
+
+  it('should reject a file that is not MPEG layer 3', () =>
+    expect(
+      inspectTrackUpload(OBJECT_KEY, {
+        environment,
+        fetcher: vi
+          .fn<typeof fetch>()
+          .mockResolvedValue(
+            new Response('wav', {headers: {'Content-Length': '1234', ETag: 'etag-value'}}),
+          ),
+        parseAudio: vi.fn().mockResolvedValue({
+          format: {codec: 'PCM', container: 'WAVE', duration: 12},
+        }),
+        signRequest: async (request) => request,
+      }),
+    ).rejects.toThrow('invalid_mp3'))
+})
+
+describe('isTrackValidationError', () => {
+  it('should recognize only expected MP3 validation failures', () => {
+    expect(isTrackValidationError(new TypeError('invalid_mp3'))).toBe(true)
+    expect(isTrackValidationError(new TypeError('invalid_mp3_frames'))).toBe(true)
+    expect(isTrackValidationError(new TypeError('CLOUDFLARE_R2_ACCOUNT_ID is not set'))).toBe(false)
+    expect(isTrackValidationError(new Error('invalid_mp3'))).toBe(false)
+  })
+})
+
+describe('deleteTrackObject', () => {
+  it('should send a signed DELETE request to R2', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 204}))
+    const signRequest = vi.fn(async (request: Request) => request)
+
+    await deleteTrackObject(OBJECT_KEY, {environment, fetcher, signRequest})
+
+    expect(signRequest).toHaveBeenCalledWith(expect.any(Request), false)
+    const requests = fetcher.mock.calls.map(([request]) => request)
+
+    if (requests.some((request) => !(request instanceof Request))) {
+      throw new TypeError('R2 삭제 요청을 찾지 못했습니다.')
+    }
+
+    expect(requests).toHaveLength(3)
+    expect(
+      requests.every((request) => request instanceof Request && request.method === 'DELETE'),
+    ).toBe(true)
+    expect(
+      requests.some(
+        (request) => request instanceof Request && request.url.includes('/preview-v1.mp3'),
+      ),
+    ).toBe(true)
+  })
+
+  it('should reject when R2 does not delete the object', () =>
+    expect(
+      deleteTrackObject(OBJECT_KEY, {
+        environment,
+        fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 503})),
+        signRequest: async (request) => request,
+      }),
+    ).rejects.toThrow('R2 track delete failed with status 503'))
+})
+
+describe('createTrackPlayback', () => {
+  it('should create a short-lived signed GET URL for direct R2 playback', async () => {
+    const signRequest = vi.fn(async (request: Request) => {
+      const url = new URL(request.url)
+      url.searchParams.set('X-Amz-Signature', 'signature')
+      return new Request(url, request)
+    })
+    const result = await createTrackPlayback(OBJECT_KEY, {environment, signRequest})
+    const request = signRequest.mock.calls[0]?.[0]
+
+    expect(result.url).toContain('X-Amz-Signature=signature')
+    expect(result.expiresAt).toBeInstanceOf(Date)
+    expect(request?.method).toBe('GET')
+    expect(request?.url).toContain('X-Amz-Expires=900')
+    expect(signRequest).toHaveBeenCalledWith(expect.any(Request), true)
+  })
+})

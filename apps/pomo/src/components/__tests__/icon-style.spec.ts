@@ -16,6 +16,7 @@ describe('getPomoIconClass', () => {
   it('should replace scene and settings controls in scribble style', () => {
     expect(getPomoIconClass('i-tabler-sun', 'scribble')).toBe('i-pomo-scribble:sun')
     expect(getPomoIconClass('i-tabler-book-2', 'scribble')).toBe('i-pomo-scribble:book')
+    expect(getPomoIconClass('i-tabler-brain', 'scribble')).toBe('i-pomo-scribble:brain')
     expect(getPomoIconClass('i-tabler-user-scan', 'scribble')).toBe('i-pomo-scribble:user-scan')
     expect(getPomoIconClass('i-tabler-settings', 'scribble')).toBe('i-pomo-scribble:settings')
   })

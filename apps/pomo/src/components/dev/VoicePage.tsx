@@ -15,10 +15,10 @@ const BACKGROUND_CLASSES = cx(
 )
 const GLOW_CLASSES = cx(
   'pointer-events-none absolute left-[8%] top-[18%] h-2 w-2 rounded-full',
-  'bg-#f2a7b8/60 shadow-[0_0_30px_8px_rgba(242,167,184,0.22)]',
+  'bg-#f2a7b8/60 shadow-[0_0_1.875rem_0.5rem_rgba(242,167,184,0.22)]',
 )
 
-function VoicePage() {
+export function VoicePage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — Voice Lab</Title>
@@ -41,5 +41,3 @@ function VoicePage() {
     </main>
   )
 }
-
-export default VoicePage

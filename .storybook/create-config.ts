@@ -2,6 +2,7 @@ import {mergeConfig} from 'vite'
 import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 interface CreateStorybookConfigOptions {
+  readonly includeAccessibilityAddon?: boolean
   readonly stories: StorybookConfig['stories']
   readonly viteConfigPath: string
 }
@@ -13,7 +14,7 @@ export const createStorybookConfig = (options: CreateStorybookConfigOptions): St
   addons: [
     '@storybook/addon-onboarding',
     '@storybook/addon-docs',
-    '@storybook/addon-a11y',
+    ...(options.includeAccessibilityAddon === false ? [] : ['@storybook/addon-a11y']),
     '@storybook/addon-links',
     {
       name: '@storybook/addon-vitest',

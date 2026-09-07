@@ -38,6 +38,126 @@ describe('extractKeys', () => {
     },
   )
 
+  it.each([
+    {
+      code: `const run = (t: (value: string) => string) => t('parameter')`,
+      name: 'function parameter',
+    },
+    {
+      code: `{ const t = (value: string) => value; t('block') }`,
+      name: 'block variable',
+    },
+    {
+      code: `function run() { if (true) { var t = (value: string) => value }; t('var') }`,
+      name: 'function variable',
+    },
+    {
+      code: `try { throw new Error() } catch (t) { t('catch') }`,
+      name: 'catch binding',
+    },
+    {
+      code: `for (const t of [(value: string) => value]) { t('loop') }`,
+      name: 'loop binding',
+    },
+    {
+      code: `const run = ({t}: {t: (value: string) => string}) => t('binding pattern')`,
+      name: 'binding pattern',
+    },
+    {
+      code: `{ t('before declaration'); function t(value: string) { return value } }`,
+      name: 'function declaration',
+    },
+    {
+      code: `const run = function t() { return t('function expression') }`,
+      name: 'named function expression',
+    },
+    {
+      code: `class Container { static { { var t = (value: string) => value } t('static block') } }`,
+      name: 'class static block variable',
+    },
+    {
+      code: `async function run() { if (true) { var t = (value: string) => value } return t('async') }`,
+      name: 'async function variable',
+    },
+    {
+      code: `function* run() { if (true) { var t = (value: string) => value } yield t('generator') }`,
+      name: 'generator variable',
+    },
+    {
+      code: `namespace Container { var t = (value: string) => value; t('namespace') }`,
+      name: 'namespace variable',
+    },
+  ])('should ignore an import name shadowed by a $name', ({code}) => {
+    const result = extractKeys(
+      [`import {t} from '@/i18n'`, `t('before')`, code, `t('after')`].join('\n'),
+      '/src/example.ts',
+      detectTranslation,
+    )
+
+    expect(result.entries.map((entry) => entry.originalText)).toEqual(['before', 'after'])
+    expect(result.dynamicCalls).toEqual([])
+  })
+
+  it('should keep extracting an unshadowed aliased import in a nested scope', () => {
+    const result = extractKeys(
+      [
+        `import {t as translate} from '@/i18n'`,
+        `const run = () => {`,
+        `  const t = (value: string) => value`,
+        `  return translate('nested import') + t('local')`,
+        `}`,
+      ].join('\n'),
+      '/src/example.ts',
+      detectTranslation,
+    )
+
+    expect(result.entries.map((entry) => entry.originalText)).toEqual(['nested import'])
+    expect(result.dynamicCalls).toEqual([])
+  })
+
+  it.each([
+    {
+      code: `class Container { [t('computed method name')](t: Function) { return t('method body') } }`,
+      name: 'computed method name',
+    },
+    {
+      code: `class Container { set [t('computed accessor name')](t: Function) { t('accessor body') } }`,
+      name: 'computed accessor name',
+    },
+    {
+      code: `class Container { [t('computed field name')] = true }`,
+      name: 'computed field name',
+    },
+    {
+      code: `class Container { @decorate(t('method decorator')) method(t: string) {} }`,
+      name: 'method decorator',
+    },
+    {
+      code: `class Container { method(@decorate(t('parameter decorator')) t: Function) { t('method body') } }`,
+      name: 'parameter decorator',
+    },
+  ])('should extract an import call from a $name outside parameter scope', ({code, name}) => {
+    const result = extractKeys(
+      [`import {t} from '@/i18n'`, `declare const decorate: Function`, code].join('\n'),
+      '/src/example.ts',
+      detectTranslation,
+    )
+
+    expect(result.entries.map((entry) => entry.originalText)).toEqual([name])
+    expect(result.dynamicCalls).toEqual([])
+  })
+
+  it('should not treat an ambient external module name as a lexical binding', () => {
+    const result = extractKeys(
+      [`import {t} from '@/i18n'`, `declare module 't' {}`, `t('import')`].join('\n'),
+      '/src/example.ts',
+      detectTranslation,
+    )
+
+    expect(result.entries.map((entry) => entry.originalText)).toEqual(['import'])
+    expect(result.dynamicCalls).toEqual([])
+  })
+
   it('should reconstruct simple template expressions as literal placeholders', () => {
     const result = extractKeys(
       `import {t} from '@/i18n'; t("이메일 \${email}"); t(\`이메일 \${email}\`); t(\`이메일 \${user.profile.email}\`)`,

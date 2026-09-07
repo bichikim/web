@@ -1,7 +1,13 @@
 # Puppet
 
 레이어로 나눈 PNG 또는 PSD를 삼각형 메시와 연결해 편집하고, 자체 모델 포맷을 PixiJS로
-재생하는 2D 퍼펫 도구다. Live2D/Cubism 데이터·API 호환은 목표로 하지 않는다.
+재생하는 2D 퍼펫 도구다. Live2D/Cubism과 다른 UI·데이터 구조를 사용하지만, 모델링부터
+애니메이션과 런타임 재생까지 Live2D가 제공하는 제작 능력을 모두 제공하는 것을 장기 목표로 한다.
+
+여기서 목표는 **기능 동등성**이지 **파일·API 호환성**이 아니다. `.cmo3`, `.moc3`,
+`.model3.json`, `.motion3.json`을 비롯한 Cubism 파일 확장자, 직렬화 형식과 Cubism SDK API를
+읽거나 쓰는 기능은 목표에 포함하지 않는다. Puppet은 자체 프로젝트·배포 포맷과 공개 API를
+유지한다.
 
 `puppet`은 결과물의 도메인을 나타내는 이름이다. 구현 수단인 mesh나 한쪽 사용처인 editor,
 runtime에 이름을 묶지 않아 두 기능을 한 모델 계약 아래 둘 수 있다.
@@ -17,7 +23,37 @@ runtime에 이름을 묶지 않아 두 기능을 한 모델 계약 아래 둘 �
 
 현재 편집기는 PNG의 알파 픽셀 범위를 격자로 분석해 삼각형 메시를 만든다. 순수 데이터 API는
 삼각형 내부·간선·외곽 정점 추가, 뒤집힘을 방지하는 이동, 삭제 후 재삼각분할, 간선 연결·뒤집기·축약,
-메시 토폴로지 검증을 지원한다. PSD, 다중 레이어, undo/redo와 타임라인 편집은 아직 포함하지 않는다.
+메시 토폴로지 검증을 지원한다. 편집기는 최대 100단계 undo/redo와 parameter/property 타임라인을
+제공하지만 PSD와 다중 레이어 일괄 가져오기는 아직 포함하지 않는다.
+
+## Parameter 영향도
+
+Parameter를 선택하면 패널 안에서 영향도 기준과 곡선을 바로 조절할 수 있다.
+각 파라미터 행 아래의 영향도 손잡이를 누르면 설정이 슬라이드로 펼쳐지고 다음 행이 내려간다.
+한 번에 한 행만 펼쳐지며, 기준 추가 버튼은 목록 아래에 표시된다.
+**기준 추가** 후 **약하게 / 강하게 / 중간에서 최대**를 선택하고 최대 적용량을 조절한다.
+**직접 설정**을 누르면 드롭다운에서 그래프와 현재 입력 위치를 보며 점을 편집할 수 있다.
+중간에서 최대는 입력 범위의 중앙에서 가장 강하게 적용한다.
+
+변경은 즉시 반영한다. 슬라이더 드래그 한 번과 커스텀 드롭다운을 열고 닫는 한 번의 편집은
+각각 undo 한 번으로 되돌린다. 잘못된 입력값은 반영하지 않으며, 드롭다운을 닫으면 마지막으로
+반영한 값으로 돌아간다. 기준이 없으면 변형을 100% 적용한다.
+
+관계는 해당 연결의 모든 대상에 적용한다. 정점, 파트의 불투명도·색상, 디포머 변형의
+기준 형태 대비 차이에 같은 영향도를 곱한다. 여러 관계는 가장 낮은 영향도를 사용하고,
+제어값은 다른 관계를 거치기 전의 입력값을 사용하므로 서로 참조해도 재귀 평가하지 않는다.
+입력값 사이를 선형 보간하고 곡선 바깥은 끝점의 영향도를 유지한다.
+
+모델링 화면에서는 선택한 파라미터의 영향도를 제외한 원본 형태·속성을 편집한다.
+영향도는 저장된 관계를 유지하며 플레이어 미리보기에 적용된다. 0%에서도 키폼을 편집·추가할 수 있다.
+블렌드 모드와 마스크 설정은 영향도와 무관하게 편집할 수 있으며, 레이어 잠금은 유지된다.
+Parameter 값과 영향도 설정은 계속 조절할 수 있다. 제어 parameter를 삭제하면 그 값을
+참조하던 관계도 제거한다. 관계가 없는 기존 문서는 기존 합성 결과를 유지한다.
+이 필드를 모르는 이전 플레이어는 영향도 관계를 적용하지 않으므로 새 문서는 현재 플레이어로 재생한다.
+
+계약은 [`PuppetParameterInfluence`](src/player/document.ts),
+계산은 [`getBindingInfluence`](src/deformation/influence.ts)에 정의한다.
+발음·표정 이름이나 음성 분석은 이 기능의 계약에 포함하지 않는다.
 
 ## 개발 화면 실행
 
@@ -29,18 +65,51 @@ pnpm dev
 저장소 루트에서는 `pnpm --filter @winter-love/puppet dev`로 실행한다. `/`는 SolidJS 컴포넌트,
 `/element.html`은 일반 HTML에서 웹 컴포넌트를 불러오는 개발 화면이다.
 
-## 목표
+## 기능 동등성의 기준
 
-- PNG/PSD 레이어를 가져와 draw order와 계층을 구성한다.
-- 이미지 알파 경계와 내부 표본으로 메시를 자동 생성한다.
-- 정점 추가·이동·삭제, 삼각형 재구성, UV 확인을 지원한다.
-- parameter의 keyform으로 정점·transform·opacity를 변형한다.
-- timeline에서 parameter와 motion을 편집하고 미리 본다.
-- 같은 모델을 PixiJS 런타임에서 동일하게 재생한다.
-- 모델 포맷에 버전을 두고 이전 버전의 migration 경로를 유지한다.
+Live2D의 화면 배치나 내부 객체 이름을 복제하지 않는다. 대신 사용자가 Puppet만으로 같은 종류의
+모델을 제작하고 애니메이션하며 애플리케이션에서 제어할 수 있는지를 기준으로 삼는다.
+
+- **입력과 모델 구성:** PNG와 레이어 PSD 가져오기, 재가져오기, texture atlas, 레이어 트리 기반 합성 순서,
+  visibility·lock, 중첩 가능한 group/part 트리
+- **메시 제작:** 자동·수동 메시 생성, 정점·간선·삼각형·UV 편집, 경계와 deform path 편집
+- **계층 변형:** warp·rotation deformer, 부모-자식 변형 전파, 여러 대상에 대한 parameter 연결,
+  1축·2축 keyform과 blend shape
+- **합성과 연결:** clipping mask, invert mask, opacity, multiply·screen color, blend mode, glue,
+  skinning과 가중치
+- **리깅과 자동 동작:** 표준 parameter, physics, pose/part 전환, eye blink, lip sync, breath,
+  자동 얼굴 deformer·움직임 생성에 대응하는 제작 보조 기능
+- **애니메이션:** motion·expression·scene, curve와 easing, loop, fade와 motion mixing, event,
+  audio 기반 lip sync, physics 결과의 keyframe bake
+- **런타임:** 외부 parameter 입력, motion·expression 재생과 혼합, physics·pose 평가, hit area,
+  mask와 blend를 포함한 editor와 동일한 렌더링
+- **편집 작업 흐름:** 다중 선택, undo/redo, copy/paste·mirror·form blending, 검색·필터,
+  template, 키보드 접근과 대형 모델 편집 성능
+- **포맷 유지:** 자체 포맷 version과 migration, 편집용 project와 배포용 model의 손실 없는 변환
+
+기능 목록은 고정된 기억에 의존하지 않는다. 구현 단계마다 현재 안정판
+[Cubism Editor Manual](https://docs.live2d.com/en/cubism-editor-manual/)과
+[Cubism SDK Manual](https://docs.live2d.com/en/cubism-sdk-manual/)을 기준으로 기능 원장을 갱신한다.
+각 기능은 `미착수`, `부분 지원`, `편집기 완료`, `런타임 완료`, `검증 완료` 중 하나로 기록하고,
+공식 기능마다 Puppet의 대응 기능과 editor/runtime 검증을 연결해야 기능 동등성이 완료된 것으로
+본다. alpha·beta 기능은 안정판에 포함된 뒤 기본 목표에 편입하고, 그 전에는 별도 후보로 관리한다.
 
 단일 이미지의 자동 레이어 분리는 초기 범위에 넣지 않는다. 처음에는 사용자가 준비한 PNG나
 레이어 PSD를 입력으로 받고, See-through 연동은 별도 import 단계로 다룬다.
+
+## 모델링 기능 백로그
+
+현재 모델링 기능과 Live2D의 안정판 제작 기능을 대조해 다음 항목을 개발 순서에 포함한다. 번호는
+기능 비교에서 합의한 항목을 유지하며, Cubism 파일·API 호환은 범위에 포함하지 않는다.
+
+| 항목 | 결과물                    | 완료 기준                                                                                                                                               | 개발 단계 |
+| ---- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 3    | 전용 rotation deformer    | warp deformer와 구분되는 관절점 중심 rotation deformer, 부모-자식 회전 체인과 다중 선택 편집을 저장·재생한다.                                           | 4         |
+| 4    | deform path·glue·skinning | 경로 기반 변형, 두 mesh 경계의 정점별 glue 가중치, 여러 rotation deformer의 skinning 가중치를 keyform과 함께 제작·저장·재생한다.                        | 6         |
+| 5    | parameter 영향도 관계     | 기존 가산형 변형에 범용 영향도 관계를 연결하고, 정점·파트 속성·디포머의 합성과 저장·재열기 결과가 editor/runtime에서 일치하는지 검증한다.               | 3         |
+| 6    | PSD 가져오기·재가져오기   | PSD 레이어·폴더 계층을 part/group으로 일괄 생성하고, 원본을 재가져올 때 기존 mesh·parameter 연결을 가능한 범위에서 보존하며 충돌을 사용자에게 표시한다. | 5         |
+| 7    | parameter 제작 보조       | 그룹/폴더, repeat, 표준 얼굴 preset, 설명·ID 관리, 형태 복사·붙여넣기·좌우 반전, 여러 keyform의 일괄 생성·보정을 제공한다.                              | 10        |
+| 8    | 모델 완성 도구            | physics, eye blink·lip sync·breath 연결, random pose 검사, model template, ArtPath 제작을 지원하고 대표 모델 fixture에서 저장·재열기·재생을 검증한다.   | 7, 10     |
 
 ## 책임 경계
 
@@ -63,18 +132,29 @@ SolidJS와 편집기를 자체 번들에 포함해 호스트 프레임워크와 
 
 ## 개발 순서
 
-| 단계 | 결과물                   | 완료 기준                                                                                              |
-| ---- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
-| 1    | 최소 모델과 PixiJS spike | PNG 한 장의 vertices·UVs·indices를 저장하고 다시 열어 같은 모양을 렌더링한다.                          |
-| 2    | 자동 메시 생성           | 알파가 분리된 여러 영역을 포함해 contour·내부점·삼각형을 생성하고 결과를 재현하는 fixture test를 둔다. |
-| 3    | 메시 편집                | 정점을 추가·이동·삭제하고 재삼각분할한 뒤 undo/redo와 저장·재열기가 동작한다.                          |
-| 4    | parameter와 keyform      | 입력값 사이에서 정점·transform·opacity를 보간하며 editor와 runtime 결과가 일치한다.                    |
-| 5    | timeline과 motion        | 여러 parameter track을 편집·재생·반복하고 motion을 모델과 분리해 저장한다.                             |
-| 6    | 합성 기능                | draw order, clipping mask, blend mode, 계층 deformer를 추가하고 중첩 상태를 검증한다.                  |
-| 7    | 실시간 입력              | 눈·입·고개 parameter를 외부 값으로 갱신하고 프레임 할당과 GPU buffer update를 측정한다.                |
+각 단계는 편집기에서 데이터만 생성하는 것으로 끝내지 않는다. 저장·재열기, 같은 문서를 사용하는
+PixiJS 플레이어, 단위 테스트와 실제 브라우저 확인까지 연결된 수직 기능으로 완료한다.
 
-1단계에서는 포맷 전체를 먼저 설계하지 않는다. 한 장의 이미지가 편집기에서 메시로 바뀌고,
-저장한 결과가 PixiJS에서 재생되는 가장 짧은 수직 기능으로 좌표계와 데이터 계약을 먼저 확정한다.
+| 단계 | 결과물                    | 완료 기준                                                                                                                                                                                |
+| ---- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | 기능 원장과 계약          | 안정판 Live2D의 모델링·애니메이션·SDK 기능을 빠짐없이 원장에 기록하고 Puppet 대응 기능, 제외되는 파일 호환, 검증 상태를 연결한다.                                                        |
+| 1    | scene graph와 레이어 트리 | group/part, mesh/image, deformer를 서로 다른 노드로 표현한다. 트리의 이동·중첩·다중 선택·visibility·lock이 저장되고 레이어 순서가 플레이어 합성 순서와 일치한다.                         |
+| 2    | parameter 대상 모델       | parameter는 전역 객체로 두고 mesh·deformer·part 속성을 다대다로 연결한다. 그룹 선택은 자식 일괄 연결을 제공하되 새 자식을 암묵적으로 연결하지 않으며 `전체/일부/없음` 상태를 표시한다.   |
+| 3    | keyform 변형              | 정점 묶음, transform과 파트 렌더링 속성을 1축·2축 parameter에서 보간한다. 일반 변형과 parameter 영향도의 합성 순서, keyform 추가·이동·복제·삭제 결과가 editor/runtime에서 일치한다.      |
+| 4    | deformer                  | warp와 관절점 중심 rotation deformer를 별도 노드로 편집한다. 부모 변형이 모든 자식 mesh/deformer에 전파되고 역방향으로는 전파되지 않으며, 회전 체인·계층 변경·순환 참조 차단을 검증한다. |
+| 5    | 메시·합성 완성            | PSD/PNG 가져오기·재가져오기, texture atlas, opacity, clipping/invert mask, blend mode, multiply·screen color, culling을 지원하고 중첩 합성을 시각 회귀로 검증한다.                       |
+| 6    | 연결형 리깅과 경로 변형   | deform path, glue의 정점별 가중치·keyform 호환도, 다중 rotation deformer skinning, pose/part 전환을 제작·저장·재생한다.                                                                  |
+| 7    | physics와 자동 동작       | 입력·출력 parameter, pendulum 설정, FPS 독립 평가, eye blink·lip sync·breath와 random pose 검사를 지원한다. physics 미리보기와 keyframe bake 결과를 같은 입력 fixture로 검증한다.        |
+| 8    | motion 제작               | parameter/property track, curve/easing, loop, marker/event, motion·expression·scene, fade와 mixing, audio 기반 lip sync를 타임라인에서 편집하고 플레이어에서 동일하게 재생한다.          |
+| 9    | 런타임 제어               | JS API로 parameter, motion, expression, physics, pose, hit area를 제어한다. 여러 motion 우선순위·혼합과 pause/seek/resume을 결정론적 프레임 테스트로 검증한다.                           |
+| 10   | 제작 생산성               | parameter 그룹·repeat·설명·ID·표준 preset, form 복사·붙여넣기·반전·일괄 보정, 검색·필터, template, ArtPath, 자동 얼굴 rig 보조와 대형 모델의 비차단 편집을 지원한다.                     |
+| 11   | 동등성 릴리스 게이트      | 기능 원장의 모든 안정판 항목이 `검증 완료`이고, 대표 모델이 editor에서 제작되어 자체 배포 포맷으로 player에 로드되며 기능별 시각·동작 회귀를 통과한다.                                   |
+
+현재 구현은 group/part scene graph와 레이어 트리, 메시 편집, 명시적인 parameter 대상 연결,
+정점과 파트의 opacity·multiply/screen color를 보간하는 1축·2축 grid keyform,
+blend mode·clipping/invert mask, warp deformer, 정점 motion track, undo/redo와 PixiJS 재생 경로까지
+지원한다. 계층이 없는 기존 `parts[]` 문서는 각 part를 루트 노드로 해석하고 다음 저장에서 명시적인
+scene을 기록한다. 범용 parameter 영향도 관계를 지원하며, 전용 rotation deformer와 모델링 기능 백로그 4, 6–8은 아직 남아 있다.
 
 ## 확인한 구현 정보
 
@@ -131,6 +211,5 @@ fixture로 활용할 수 있지만, layer decomposition model은 Puppet의 필�
 
 - project와 배포용 model을 같은 파일로 둘지 분리할지
 - texture를 파일 옆에 둘지 하나의 archive에 묶을지
-- parameter 2축 보간을 grid, triangulation, radial 중 무엇으로 시작할지
 - editor를 기존 앱에 넣을지 별도 앱으로 만들지
 - 모델 포맷과 파일 확장자의 공개 이름

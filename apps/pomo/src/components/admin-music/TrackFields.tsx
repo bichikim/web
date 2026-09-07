@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {createSignal} from 'solid-js'
 
@@ -17,7 +18,7 @@ interface TrackFieldsProps {
   readonly title: string
 }
 
-const TrackFields = (props: TrackFieldsProps) => {
+export const TrackFields = (props: TrackFieldsProps) => {
   const [audioInput, setAudioInput] = createSignal<HTMLInputElement>()
   const fields = useTrackFields(props)
 
@@ -25,7 +26,8 @@ const TrackFields = (props: TrackFieldsProps) => {
     <div class="grid gap-4">
       <label class="grid gap-2 text-sm">
         곡명
-        <input
+        <PInput
+          unstyled
           class={FIELD_CLASSES}
           disabled={fields.useMetadata()}
           maxlength="120"
@@ -37,7 +39,8 @@ const TrackFields = (props: TrackFieldsProps) => {
       </label>
       <label class="grid gap-2 text-sm">
         아티스트
-        <input
+        <PInput
+          unstyled
           class={FIELD_CLASSES}
           disabled={fields.useMetadata()}
           maxlength="120"
@@ -80,5 +83,3 @@ const TrackFields = (props: TrackFieldsProps) => {
     </div>
   )
 }
-
-export default TrackFields

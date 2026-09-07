@@ -91,7 +91,7 @@ coverage
 
 .temp
 .cache
-apps/pomo/scripts/text-mood/embeddings.*.json
+apps/pomo/scripts/agent-tasks/text-mood/embeddings.*.json
 .vitest-attachments
 apps/pomo/playwright-report
 apps/pomo/test-results

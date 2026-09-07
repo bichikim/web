@@ -10,8 +10,8 @@ const tagClasses = cva(
     },
     variants: {
       size: {
-        medium: 'px-2.5 py-1 text-xs',
-        small: 'px-1.5 py-0.5 text-[0.625rem]',
+        medium: 'px-2.5 py-1 text-modal-detail',
+        small: 'px-1.5 py-0.5 text-modal-detail',
       },
       tone: {
         danger: 'border-danger/35 bg-danger/10 text-danger',

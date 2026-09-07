@@ -22,6 +22,7 @@ it('should forward player state and events', () => {
   render(() => (
     <PMusicPlayer
       expanded
+      isDialogueActive
       onExpandedChange={onExpandedChange}
       onPlayingChange={onPlayingChange}
       onTrackChange={onTrackChange}
@@ -30,7 +31,7 @@ it('should forward player state and events', () => {
   ))
 
   expect(PMusicPlayerPanel).toHaveBeenCalledWith(
-    expect.objectContaining({expanded: true, sceneStyle: 'original'}),
+    expect.objectContaining({expanded: true, isDialogueActive: true, sceneStyle: 'original'}),
   )
   expect(onExpandedChange).toHaveBeenCalledWith(true)
   expect(onPlayingChange).toHaveBeenCalledWith(true)

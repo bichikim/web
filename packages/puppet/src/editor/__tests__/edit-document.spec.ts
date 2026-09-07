@@ -21,6 +21,7 @@ const createAnimatedDocument = (): PuppetDocument => ({
             {time: 0, value: 320},
             {time: 1, value: 360},
           ],
+          kind: 'vertex',
           partId: PART_ID,
           vertexIndex: CENTER_VERTEX_INDEX,
         },
@@ -280,7 +281,7 @@ describe('deletePartVertex', () => {
       expect(mesh.uvs).toEqual([1, 0, 1, 1, 0, 1, 0, 0])
       expect(mesh.indices).toHaveLength(6)
       expect(mesh.boundaryLoops?.[0]).toHaveLength(4)
-      expect(result.document.motions[0]?.tracks[0]?.vertexIndex).toBe(3)
+      expect(result.document.motions[0]?.tracks[0]).toMatchObject({vertexIndex: 3})
       expect(validateMesh(mesh)).toEqual({valid: true})
     }
   })

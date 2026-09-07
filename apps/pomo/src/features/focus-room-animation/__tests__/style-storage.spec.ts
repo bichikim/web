@@ -26,7 +26,7 @@ afterEach(() => {
 })
 
 it('should default to the original style on the web', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
 
   expect(await readPSceneStyle()).toBe('original')
 
@@ -38,7 +38,7 @@ it('should default to the original style on the web', async () => {
 })
 
 it('should default to the scribble style in Apps in Toss', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
 
   expect(await readPSceneStyle()).toBe('scribble')
 
@@ -47,11 +47,11 @@ it('should default to the scribble style in Apps in Toss', async () => {
 })
 
 it('should prefer a stored style over the runtime default', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   localStorage.setItem('pomo:focus-room-scene-style:v1', '"original"')
   expect(await readPSceneStyle()).toBe('original')
 
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
   expect(await readPSceneStyle()).toBe('scribble')
 })
@@ -65,7 +65,7 @@ it('should persist and restore both scene styles', async () => {
 })
 
 it('should keep the preference usable when browser storage is unavailable', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
     throw new Error('storage unavailable')
   })
@@ -78,7 +78,7 @@ it('should keep the preference usable when browser storage is unavailable', asyn
 })
 
 it('should restore an Apps in Toss preference after browser storage is cleared', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValue('"original"')
 
@@ -87,7 +87,7 @@ it('should restore an Apps in Toss preference after browser storage is cleared',
 })
 
 it('should use the runtime default when native storage is empty or unavailable', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('unavailable'))
 
@@ -112,7 +112,7 @@ it('should recover a browser choice when a native read fails', async () => {
 })
 
 it('should preserve the latest choice while a native preference is loading', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
   let completeRead: (value: string) => void = () => undefined
   storageMocks.getItem.mockReturnValue(
@@ -131,7 +131,7 @@ it('should preserve the latest choice while a native preference is loading', asy
 })
 
 it('should use the default when a newer choice is no longer readable', async () => {
-  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
   let completeRead: (value: string) => void = () => undefined
   storageMocks.getItem.mockReturnValue(

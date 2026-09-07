@@ -37,7 +37,7 @@ const createTrack = async (body: Readonly<Record<string, unknown>>): Promise<str
   return createdTrackSchema.parse(await response.json()).id
 }
 
-const deleteTrack = async (trackId: string): Promise<void> => {
+export const removeTrack = async (trackId: string): Promise<void> => {
   const response = await fetch(`/api/admin/music/tracks/${encodeURIComponent(trackId)}`, {
     method: 'DELETE',
   })
@@ -65,7 +65,7 @@ export const createTrackWithAudio = async (
 
     return {success: true}
   } catch (error) {
-    const cleanupSucceeded = await deleteTrack(trackId)
+    const cleanupSucceeded = await removeTrack(trackId)
       .then(() => true)
       .catch(() => false)
     return {
@@ -75,5 +75,3 @@ export const createTrackWithAudio = async (
     }
   }
 }
-
-export const removeTrack = deleteTrack

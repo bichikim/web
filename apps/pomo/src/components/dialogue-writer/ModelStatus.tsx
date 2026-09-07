@@ -46,8 +46,8 @@ export const ModelStatus = (props: ModelStatusProps) => (
         role="progressbar"
       >
         <div
-          class="h-full rounded-full bg-#9ed6bb transition-[width]"
-          style={{width: `${props.percentage}%`}}
+          class="h-full rounded-full bg-#9ed6bb [width:var(--pomo-progress-width)] transition-[width]"
+          style={{'--pomo-progress-width': `${props.percentage}%`}}
         />
       </div>
     </Show>

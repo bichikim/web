@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createMemo, For, type JSX, Show} from 'solid-js'
 
@@ -15,7 +16,7 @@ const SAMPLE_TEXTS = [
 
 const PANEL_CLASSES = cx(
   'w-full rounded-8 border border-white/10 bg-#211a2b/94 p-5',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
+  'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 const TEXTAREA_CLASSES = cx(
   'min-h-44 w-full resize-y rounded-5 border border-white/10 bg-#17131f p-5',
@@ -60,7 +61,8 @@ export const TextMoodLab = () => {
         <label class="text-sm font-700 text-#e9dfe9" for="text-mood-input">
           분석할 문장
         </label>
-        <textarea
+        <PTextarea
+          unstyled
           class={TEXTAREA_CLASSES}
           id="text-mood-input"
           onInput={handleTextInput}
@@ -122,8 +124,8 @@ export const TextMoodLab = () => {
             role="progressbar"
           >
             <div
-              class="h-full rounded-full bg-#9ed6bb transition-[width]"
-              style={{width: `${mood.progress()}%`}}
+              class="h-full rounded-full bg-#9ed6bb [width:var(--pomo-progress-width)] transition-[width]"
+              style={{'--pomo-progress-width': `${mood.progress()}%`}}
             />
           </div>
         </Show>
@@ -139,5 +141,3 @@ export const TextMoodLab = () => {
     </section>
   )
 }
-
-export default TextMoodLab

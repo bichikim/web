@@ -1,11 +1,39 @@
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {deleteTrackArtwork, storeAlbumCover, storeTrackArtwork} from '../cover-upload'
+import {
+  deleteAlbumCover,
+  deleteTrackArtwork,
+  isManagedAlbumCoverUrl,
+  storeAlbumCover,
+  storeTrackArtwork,
+} from '../cover-upload'
 
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllEnvs()
   vi.unstubAllGlobals()
+})
+
+describe('isManagedAlbumCoverUrl', () => {
+  it('should identify only exact album cover URLs from the configured public origin', () => {
+    const objectId = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
+
+    expect(
+      isManagedAlbumCoverUrl(`https://cdn.example/assets/album-covers/${objectId}/cover.webp`, {
+        POMO_PUBLIC_ASSETS_ORIGIN: ' https://cdn.example/assets/ ',
+      }),
+    ).toBe(true)
+    expect(
+      isManagedAlbumCoverUrl(`https://external.example/album-covers/${objectId}/cover.webp`),
+    ).toBe(false)
+    expect(
+      isManagedAlbumCoverUrl(`https://storage.pomofi.io/album-covers/${objectId}/cover.webp?x=1`),
+    ).toBe(false)
+  })
+
+  it('should reject a URL without an album cover object path', () => {
+    expect(isManagedAlbumCoverUrl('https://storage.pomofi.io/other/cover.webp')).toBe(false)
+  })
 })
 
 describe('storeAlbumCover', () => {
@@ -57,6 +85,28 @@ describe('storeAlbumCover', () => {
         },
       ),
     ).rejects.toThrow('R2 cover upload failed with status 500'))
+
+  it('should delete an album cover idempotently', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 404}))
+
+    await expect(
+      deleteAlbumCover('album-covers/019d1990-1dc9-7255-a7b5-f9459dfaf782/cover.webp', {
+        environment: {CLOUDFLARE_R2_ACCOUNT_ID: 'account-id'},
+        fetcher,
+        signRequest: async (request) => request,
+      }),
+    ).resolves.toBeUndefined()
+    expect(fetcher).toHaveBeenCalledWith(expect.objectContaining({method: 'DELETE'}))
+  })
+
+  it('should reject an unsuccessful album cover deletion', () =>
+    expect(
+      deleteAlbumCover('album-covers/019d1990-1dc9-7255-a7b5-f9459dfaf782/cover.webp', {
+        environment: {CLOUDFLARE_R2_ACCOUNT_ID: 'account-id'},
+        fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 503})),
+        signRequest: async (request) => request,
+      }),
+    ).rejects.toThrow('R2 album cover delete failed with status 503'))
 })
 
 describe('storeTrackArtwork', () => {
@@ -134,6 +184,7 @@ describe('storeTrackArtwork', () => {
       contentType: 'image/webp',
     })
     await deleteTrackArtwork('019d1990-1dc9-7255-a7b5-f9459dfaf782')
+    await deleteAlbumCover('album-covers/019d1990-1dc9-7255-a7b5-f9459dfaf782/cover.png')
 
     expect(album.coverImageUrl).toMatch(
       /^https:\/\/cdn\.example\/album-covers\/[0-9a-f-]+\/cover\.png$/u,
@@ -141,7 +192,7 @@ describe('storeTrackArtwork', () => {
     expect(track).toEqual({
       artworkUrl: 'https://cdn.example/track-artwork/019d1990-1dc9-7255-a7b5-f9459dfaf782/cover',
     })
-    expect(fetcher).toHaveBeenCalledTimes(3)
+    expect(fetcher).toHaveBeenCalledTimes(4)
     for (const [request] of fetcher.mock.calls) {
       expect(request).toBeInstanceOf(Request)
       expect(request instanceof Request && request.url).toContain('/custom-bucket/')

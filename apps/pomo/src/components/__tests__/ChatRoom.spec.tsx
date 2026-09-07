@@ -4,6 +4,7 @@ import {render, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {loadCalendarPromptContext} from '../../features/calendar'
 import {type ChatController, type ChatMessage, useChat} from '../../features/chat'
 import {
   type ChatVoiceController,
@@ -19,14 +20,15 @@ import {
   type UseSpeechToTextProps,
 } from '../../features/speech-to-text'
 import {getTextModel} from '../../features/text-generation'
-import ChatRoom from '../ChatRoom'
 import {ChatComposer} from '../chat-room/Composer'
 import {ContextSidebar} from '../chat-room/ContextSidebar'
 import {ChatHeader} from '../chat-room/Header'
 import {MAXIMUM_DRAFT_LENGTH} from '../chat-room/shared'
 import {ChatTranscript} from '../chat-room/Transcript'
+import {ChatRoom} from '../ChatRoom'
 
 vi.mock('../../features/chat', () => ({useChat: vi.fn()}))
+vi.mock('../../features/calendar', () => ({loadCalendarPromptContext: vi.fn()}))
 vi.mock('../../features/chat-voice', () => ({
   createStreamingSpeechBuffer: vi.fn(),
   useChatVoice: vi.fn(),
@@ -142,8 +144,10 @@ const createControllers = () => {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
   createControllers()
   vi.mocked(useChat).mockReturnValue(chat)
+  vi.mocked(loadCalendarPromptContext).mockResolvedValue(null)
   vi.mocked(useChatVoice).mockReturnValue(voice)
   vi.mocked(createStreamingSpeechBuffer).mockReturnValue(speechBuffer)
   vi.mocked(useSpeechToText).mockImplementation((props) => {
@@ -190,7 +194,46 @@ afterEach(() => {
 })
 
 describe('ChatRoom', () => {
-  it('should wire controllers and apply transcript limits and settings', () => {
+  it.each(['model', 'clear'] as const)(
+    'should discard pending calendar context after %s changes and allow a new send',
+    async (change) => {
+      const deferred = Promise.withResolvers<string | null>()
+      vi.mocked(loadCalendarPromptContext).mockReturnValueOnce(deferred.promise)
+      render(() => <ChatRoom />)
+      composerProps.onSend()
+      composerProps.onSend()
+      expect(loadCalendarPromptContext).toHaveBeenCalledOnce()
+
+      if (change === 'model') {
+        headerProps.onModelChange('qwen-2b')
+        headerProps.onModelChange('qwen-4b')
+      } else {
+        sidebarProps.onClear()
+      }
+      deferred.resolve('obsolete context')
+      await deferred.promise
+      expect(chat.send).not.toHaveBeenCalled()
+
+      composerProps.onSend()
+      await waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+      expect(chat.send).toHaveBeenCalledWith({refineAnswer: true})
+    },
+  )
+
+  it('should discard a recording completion after starting a new conversation', async () => {
+    const deferred = Promise.withResolvers<void>()
+    vi.mocked(speech.stopRecording).mockReturnValue(deferred.promise)
+    controls.setActivity('recording')
+    render(() => <ChatRoom />)
+    composerProps.onSend()
+    sidebarProps.onClear()
+    deferred.resolve()
+    await deferred.promise
+    expect(loadCalendarPromptContext).not.toHaveBeenCalled()
+    expect(chat.send).not.toHaveBeenCalled()
+  })
+
+  it('should wire controllers and apply transcript limits and settings', async () => {
     render(() => <ChatRoom />)
 
     expect(useChat).toHaveBeenCalledWith({modelId: 'qwen-4b'})
@@ -223,7 +266,7 @@ describe('ChatRoom', () => {
     composerProps.onSend()
     expect(voice.arm).toHaveBeenCalledOnce()
     expect(speechBuffer.reset).toHaveBeenCalledOnce()
-    expect(chat.send).toHaveBeenCalledWith({refineAnswer: false})
+    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: false}))
   })
 
   it('should handle recording, preparation, model changes, clearing, and speech toggles', async () => {
@@ -239,7 +282,7 @@ describe('ChatRoom', () => {
     controls.setActivity('recording')
     composerProps.onSend()
     await waitFor(() => expect(speech.stopRecording).toHaveBeenCalledOnce())
-    expect(chat.send).toHaveBeenCalledWith({refineAnswer: true})
+    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: true}))
 
     controls.setActivity('processing')
     composerProps.onSend()

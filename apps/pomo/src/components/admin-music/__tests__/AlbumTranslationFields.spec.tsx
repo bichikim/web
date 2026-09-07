@@ -4,8 +4,8 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import AlbumTranslationFields from '../AlbumTranslationFields'
 import {createEmptyAlbumTranslations} from '../../../features/admin-music'
+import {AlbumTranslationFields} from '../AlbumTranslationFields'
 
 const renderFields = () => {
   const [values, setValues] = createSignal(createEmptyAlbumTranslations())

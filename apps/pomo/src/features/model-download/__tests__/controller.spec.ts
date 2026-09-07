@@ -92,27 +92,51 @@ it('should terminate the Worker and resolve cancellation without accepting late 
   expect(controller.state()).toEqual({status: 'idle'})
 })
 
-it('should expose a dismissible error and reject a different concurrent model', async () => {
+it('should queue another model, share queued requests, and continue after failure', async () => {
   const testRuntime = createRuntime()
   const controller = createModelDownloadController(testRuntime.runtime)
-  const download = controller.startTextModel('gemma-4-e2b')
-
-  await expect(controller.startTextModel('gemma-4-e2b-mobile')).resolves.toEqual({
-    message: '다른 모델을 내려받고 있어요. 완료하거나 취소한 뒤 다시 시도해 주세요.',
-    status: 'error',
-  })
+  const first = controller.startTextModel('gemma-4-e2b')
+  const second = controller.startTextModel('gemma-4-e2b-mobile')
+  expect(controller.startTextModel('gemma-4-e2b-mobile')).toBe(second)
+  expect(testRuntime.runtime.createTextClient).toHaveBeenCalledTimes(1)
+  expect(controller.downloads().map((item) => item.status)).toEqual(['loading', 'queued'])
   testRuntime.emit({message: '저장 공간이 부족해요.', restartRequired: false, type: 'error'})
-
-  await expect(download).resolves.toEqual({message: '저장 공간이 부족해요.', status: 'error'})
-  expect(controller.state()).toEqual({
-    label: 'Gemma 4 E2B',
-    message: '저장 공간이 부족해요.',
-    status: 'error',
-    target: {kind: 'text', modelId: 'gemma-4-e2b'},
-  })
-
+  await expect(first).resolves.toEqual({message: '저장 공간이 부족해요.', status: 'error'})
+  expect(testRuntime.runtime.createTextClient).toHaveBeenCalledTimes(2)
+  expect(controller.downloads().map((item) => item.status)).toEqual(['error', 'loading'])
+  testRuntime.emit({type: 'ready'})
+  await expect(second).resolves.toEqual({status: 'complete'})
+  expect(controller.state().status).toBe('error')
   controller.dismissError()
-  expect(controller.state()).toEqual({status: 'idle'})
+  expect(controller.downloads()).toEqual([])
+})
+
+it('should cancel a queued item without starting its worker or cancelling the active one', async () => {
+  const testRuntime = createRuntime()
+  const controller = createModelDownloadController(testRuntime.runtime)
+  const first = controller.startTextModel('gemma-4-e2b')
+  const second = controller.startTextModel('gemma-4-e2b-mobile')
+  controller.cancel({kind: 'text', modelId: 'gemma-4-e2b-mobile'})
+  await expect(second).resolves.toEqual({status: 'cancelled'})
+  expect(testRuntime.runtime.createTextClient).toHaveBeenCalledTimes(1)
+  expect(controller.state().status).toBe('loading')
+  controller.dispose()
+  await expect(first).resolves.toEqual({status: 'cancelled'})
+  expect(controller.downloads()).toEqual([])
+})
+
+it('should dispose every queued request without starting another worker', async () => {
+  const testRuntime = createRuntime()
+  const controller = createModelDownloadController(testRuntime.runtime)
+  const first = controller.startTextModel('gemma-4-e2b')
+  const second = controller.startTextModel('gemma-4-e2b-mobile')
+  controller.dispose()
+  await expect(Promise.all([first, second])).resolves.toEqual([
+    {status: 'cancelled'},
+    {status: 'cancelled'},
+  ])
+  expect(testRuntime.runtime.createTextClient).toHaveBeenCalledTimes(1)
+  expect(controller.downloads()).toEqual([])
 })
 
 it('should download a voice model through the same global lifecycle', async () => {
@@ -213,7 +237,7 @@ it('should normalize a non-error voice initialization rejection', async () => {
   expect(dispose).toHaveBeenCalledOnce()
 })
 
-it('should ignore a stale completion after an idle observer cancels the download', async () => {
+it('should commit completion before notifying idle observers', async () => {
   const testRuntime = createRuntime()
   const controller = createModelDownloadController(testRuntime.runtime)
   const download = controller.startTextModel('gemma-4-e2b')
@@ -228,7 +252,7 @@ it('should ignore a stale completion after an idle observer cancels the download
 
   testRuntime.emit({type: 'ready'})
 
-  await expect(download).resolves.toEqual({status: 'cancelled'})
+  await expect(download).resolves.toEqual({status: 'complete'})
   expect(testRuntime.client.dispose).toHaveBeenCalledOnce()
   disposeRoot()
 })

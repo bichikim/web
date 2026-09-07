@@ -5,7 +5,7 @@ import {z} from 'zod'
 
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreEmpty, noStoreText} from 'src/server/http/response'
-import {getTossCallbackAuthorization} from 'src/server/toss-auth/environment'
+import {env} from 'src/env'
 import {revokeTossAppSessions} from 'src/server/user-auth/repository'
 
 const MAXIMUM_BODY_SIZE = 4096
@@ -22,12 +22,13 @@ const unlinkRequestSchema = z.object({
 
 const hasValidAuthorization = (request: Request): boolean => {
   const actual = request.headers.get('Authorization')
+  const expected = env.POMO_TOSS_CALLBACK_AUTHORIZATION
 
-  if (actual === null) {
+  if (actual === null || expected === undefined) {
     return false
   }
 
-  const expectedDigest = createHash('sha256').update(getTossCallbackAuthorization()).digest()
+  const expectedDigest = createHash('sha256').update(expected).digest()
   const actualDigest = createHash('sha256').update(actual).digest()
 
   return timingSafeEqual(actualDigest, expectedDigest)

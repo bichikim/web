@@ -9,11 +9,11 @@ import {
   type PEventContextValue,
   usePEvents,
 } from '../../../features/focus-room-dialogue'
-import {PSelect} from '../../PSelect'
 import {
   readLanguageLearningSentences,
   writeLanguageLearningSentences,
 } from '../../../features/language-learning'
+import {PSelect} from '../../PSelect'
 import {LanguageLearningLibrary} from '../Library'
 
 vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
@@ -72,7 +72,7 @@ const createEvents = (): PEventContextValue => ({
   isLoading: () => false,
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),

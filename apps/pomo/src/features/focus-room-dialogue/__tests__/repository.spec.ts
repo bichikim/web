@@ -1,6 +1,6 @@
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {createPDialogueRepository} from '../repository'
+import {createPDialogueRepository, deleteDialogueAudio} from '../repository'
 
 const readBlobAsText = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
@@ -64,6 +64,22 @@ beforeEach(() => {
   legacyAudioMocks.compress.mockResolvedValue(
     new Blob(['compressed'], {type: 'audio/ogg; codecs=opus'}),
   )
+})
+
+it('should delete every cached dialogue audio format and report cleanup failures', async () => {
+  const storageError = {cause: new Error('cache unavailable'), operation: 'delete' as const}
+  storageMocks.delete
+    .mockResolvedValueOnce({ok: true, value: true})
+    .mockResolvedValueOnce({error: storageError, ok: false})
+
+  await expect(deleteDialogueAudio('audio-key')).resolves.toBeUndefined()
+
+  expect(storageMocks.delete.mock.calls.map(([path]) => path)).toEqual([
+    '/__pomo/dialogue-audio/audio-key.opus',
+    '/__pomo/dialogue-audio/audio-key.wav',
+  ])
+  expect(reportStorageError).toHaveBeenCalledOnce()
+  expect(reportStorageError).toHaveBeenCalledWith(storageError)
 })
 
 it('should finish metadata deletion when obsolete audio cleanup fails', async () => {
@@ -504,4 +520,14 @@ it('should preserve existing audio when metadata persistence fails without repla
   await expect(repository.saveDialogue({dialogue})).rejects.toThrow('database unavailable')
 
   expect(storageMocks.delete).not.toHaveBeenCalled()
+})
+
+it('should reject audio cleanup failure when the caller needs durable retries', async () => {
+  const error = {cause: new Error('cache unavailable'), operation: 'delete' as const}
+  storageMocks.delete.mockResolvedValueOnce({error, ok: false})
+  await expect(deleteDialogueAudio('memo-key', {failureMode: 'throw'})).rejects.toMatchObject({
+    cause: error,
+  })
+  expect(storageMocks.delete).toHaveBeenCalledTimes(2)
+  await expect(deleteDialogueAudio('memo-key', {failureMode: 'throw'})).resolves.toBeUndefined()
 })

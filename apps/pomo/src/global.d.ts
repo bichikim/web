@@ -4,12 +4,44 @@
 import type {JSX} from 'solid-js'
 
 interface ImportMetaEnv {
-  readonly POMO_ENVIRONMENT: string
-  readonly POMO_HAS_APPS_IN_TOSS_DEVTOOLS: boolean
-  readonly POMO_IS_APPS_IN_TOSS: boolean
-  readonly POMO_IS_DESKTOP: boolean
-  readonly POMO_PUBLIC_ORIGIN: string
-  readonly POMO_RELEASE: string
+  readonly CRON_SECRET?: string
+  readonly DATABASE_URL?: string
+  readonly KMA_SERVICE_KEY?: string
+  readonly NEON_AUTH_BASE_URL?: string
+  readonly NEON_AUTH_COOKIE_SECRET?: string
+  readonly NODE_ENV?: string
+  readonly OPENAI_API_KEY?: string
+  readonly OPENAI_MODEL?: string
+  readonly OPENAI_REASONING_EFFORT?: string
+  readonly OPENAI_SERVICE_TIER?: string
+  readonly OPENAI_WEBHOOK_SECRET?: string
+  readonly OPENWEATHER_API_KEY?: string
+  readonly POMO_ALLOW_LOCAL_ASSET_ORIGIN: string
+  readonly POMO_CONNECT_SOURCES: string
+  readonly POMO_CONTENT_SECURITY_POLICY_TEMPLATE: string
+  readonly POMO_CONTENT_TYPE_OPTIONS: string
+  readonly POMO_PUBLIC_ASSET_ORIGIN: string
+  readonly POMO_PERMISSIONS_POLICY: string
+  readonly POMO_REFERRER_POLICY: string
+  readonly POMO_TOSS_CALLBACK_AUTHORIZATION?: string
+  readonly POMO_TOSS_MTLS_CERT?: string
+  readonly POMO_TOSS_MTLS_KEY?: string
+  readonly POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE: string
+  readonly VERCEL_ENV?: string
+  readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
+  readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string
+  readonly VITE_POMO_ENVIRONMENT: string
+  readonly VITE_POMO_IS_APPS_IN_TOSS: string
+  readonly VITE_POMO_IS_DESKTOP: string
+  readonly VITE_POMO_LEGACY_PRIVACY_PATH: string
+  readonly VITE_POMO_LEGACY_TERMS_PATH: string
+  readonly VITE_POMO_PRETENDARD_BASE_PATH: string
+  readonly VITE_POMO_PRETENDARD_STYLESHEET_PATH: string
+  readonly VITE_POMO_PUBLIC_ORIGIN: string
+  readonly VITE_POMO_REFUND_PATH: string
+  readonly VITE_POMO_RELEASE: string
+  readonly VITE_POMO_WEB_PRIVACY_PATH: string
+  readonly VITE_POMO_WEB_TERMS_PATH: string
 }
 
 declare namespace App {
@@ -27,6 +59,11 @@ type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {
 
 declare module 'solid-js' {
   namespace JSX {
+    interface ExplicitAttributes {
+      autofocus: string
+      notooltip: string
+    }
+
     interface ExplicitBoolAttributes {
       disabled: boolean
     }
@@ -36,6 +73,7 @@ declare module 'solid-js' {
       'media-controller': MediaChromeAttributes
       'media-mute-button': MediaChromeAttributes
       'media-play-button': MediaChromeAttributes
+      'media-preview-time-display': MediaChromeAttributes
       'media-time-display': MediaChromeAttributes
       'media-time-range': MediaChromeAttributes
       'media-volume-range': MediaChromeAttributes

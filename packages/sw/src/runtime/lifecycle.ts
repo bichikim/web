@@ -94,7 +94,7 @@ export const registerLifecycleHandlers = (options: LifecycleOptions): void => {
         return
       case 'SKIP_WAITING':
         options.log('info', 'Received skip waiting message')
-        self.skipWaiting()
+        event.waitUntil(self.skipWaiting())
         return
     }
 

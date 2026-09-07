@@ -1,8 +1,18 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const repositoryMocks = vi.hoisted(() => ({revokeTossAppSessions: vi.fn()}))
+const environmentMocks = vi.hoisted(() => {
+  const env: {POMO_TOSS_CALLBACK_AUTHORIZATION: string | undefined} = {
+    POMO_TOSS_CALLBACK_AUTHORIZATION: 'Basic dXNlcjpwYXNz',
+  }
+
+  return {env}
+})
 
 vi.mock('src/server/user-auth/repository', () => repositoryMocks)
+vi.mock('src/env', () => ({
+  env: environmentMocks.env,
+}))
 
 import {GET, POST} from '../unlink'
 import {invokeApiRoute} from '../../__tests__/invoke'
@@ -18,16 +28,21 @@ const createPostRequest = (authorization = CALLBACK_AUTHORIZATION): Request =>
 
 describe('Toss unlink callback route', () => {
   beforeEach(() => {
-    vi.stubEnv('POMO_TOSS_CALLBACK_AUTHORIZATION', CALLBACK_AUTHORIZATION)
+    environmentMocks.env.POMO_TOSS_CALLBACK_AUTHORIZATION = CALLBACK_AUTHORIZATION
     repositoryMocks.revokeTossAppSessions.mockReset().mockResolvedValue(undefined)
-  })
-
-  afterEach(() => {
-    vi.unstubAllEnvs()
   })
 
   it('should reject a callback with the wrong authorization', async () => {
     const response = await invokeApiRoute(POST, createPostRequest('Basic wrong'))
+
+    expect(response.status).toBe(401)
+    expect(repositoryMocks.revokeTossAppSessions).not.toHaveBeenCalled()
+  })
+
+  it('should reject a callback when authorization is not configured', async () => {
+    environmentMocks.env.POMO_TOSS_CALLBACK_AUTHORIZATION = undefined
+
+    const response = await invokeApiRoute(POST, createPostRequest())
 
     expect(response.status).toBe(401)
     expect(repositoryMocks.revokeTossAppSessions).not.toHaveBeenCalled()

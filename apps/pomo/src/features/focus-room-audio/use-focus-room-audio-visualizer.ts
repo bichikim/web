@@ -10,9 +10,11 @@ const MINIMUM_LEVEL = 12
 const MAXIMUM_LEVEL = 100
 const BYTE_MAXIMUM = 255
 const LEVEL_GAIN = 112
+const OUTPUT_GAIN_TIME_CONSTANT_SECONDS = 0.03
 
 export interface PAudioVisualizer {
   readonly levels: Accessor<readonly number[]>
+  readonly setOutputGain: (gain: number) => void
   readonly start: (audioElement: HTMLAudioElement) => void
   readonly stop: () => void
 }
@@ -22,10 +24,24 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
   let audioContext: AudioContext | undefined
   let analyserNode: AnalyserNode | undefined
   let mediaSource: MediaElementAudioSourceNode | undefined
+  let outputGainNode: GainNode | undefined
   let spectrumData: Uint8Array<ArrayBuffer> | undefined
   let animationFrame: number | undefined
   let active = false
   let disposed = false
+  let outputGain = 1
+
+  const setOutputGain = (gain: number) => {
+    outputGain = gain
+    const context = audioContext
+    const gainNode = outputGainNode
+
+    if (context === undefined || gainNode === undefined) {
+      return
+    }
+
+    gainNode.gain.setTargetAtTime(gain, context.currentTime, OUTPUT_GAIN_TIME_CONSTANT_SECONDS)
+  }
 
   const stopAnimation = () => {
     if (animationFrame !== undefined) {
@@ -45,14 +61,17 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
     }
 
     analyserNode ??= context.createAnalyser()
+    outputGainNode ??= context.createGain()
     analyserNode.fftSize = 128
     analyserNode.smoothingTimeConstant = 0.78
+    outputGainNode.gain.value = outputGain
     spectrumData ??= new Uint8Array(analyserNode.frequencyBinCount)
 
     if (!mediaSource) {
       mediaSource = context.createMediaElementSource(audioElement)
       mediaSource.connect(analyserNode)
-      analyserNode.connect(context.destination)
+      analyserNode.connect(outputGainNode)
+      outputGainNode.connect(context.destination)
     }
   }
 
@@ -116,8 +135,9 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
     }
     mediaSource?.disconnect()
     analyserNode?.disconnect()
+    outputGainNode?.disconnect()
     audioContext?.close().catch(() => undefined)
   })
 
-  return {levels, start, stop}
+  return {levels, setOutputGain, start, stop}
 }

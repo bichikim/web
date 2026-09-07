@@ -27,9 +27,8 @@ describe('PLayerReview mouth time mode', () => {
     render(() => <PLayerReview />)
 
     fireEvent.click(screen.getByRole('button', {name: new RegExp(testCase.scene, 'u')}))
-    fireEvent.change(screen.getByRole('combobox', {name: /개별 입 이미지/u}), {
-      target: {value: 'closed-wide-early'},
-    })
+    fireEvent.keyDown(screen.getByRole('button', {name: /개별 입 이미지/u}), {key: 'ArrowDown'})
+    fireEvent.click(await screen.findByRole('option', {name: 'closed → wide · 중간 1'}))
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {level: 1}).textContent).toBe(testCase.expectedScene)

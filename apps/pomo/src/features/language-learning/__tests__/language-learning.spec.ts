@@ -8,18 +8,22 @@ import {
   createLanguageLearningPrompt,
   deleteLanguageLearningSentence,
   deleteLanguageLearningWord,
+  deleteLanguageLearningWords,
   getUnmemorizedLanguageLearningWordValues,
   isValidLanguageLearningSentence,
   normalizeLanguageLearningSentence,
   parseLanguageLearningTags,
   readLanguageLearningSentences,
   readLanguageLearningWords,
+  readLanguageLearningWordSource,
   rollbackLanguageLearningDialogues,
   selectLanguageLearningPromptWords,
   selectRandomLanguageLearningWords,
   setLanguageLearningWordMemorized,
+  setLanguageLearningWordsMemorized,
   writeLanguageLearningSentences,
   writeLanguageLearningWords,
+  writeLanguageLearningWordSource,
 } from '../index'
 
 const STORED_SENTENCE = {
@@ -198,6 +202,25 @@ describe('language learning random word selection', () => {
   })
 })
 
+describe('language learning word source preference', () => {
+  it('should restore the last selected word source', () => {
+    expect(readLanguageLearningWordSource()).toBe('direct')
+
+    writeLanguageLearningWordSource('saved')
+
+    expect(readLanguageLearningWordSource()).toBe('saved')
+  })
+
+  it('should fall back to direct input when the stored value is invalid', () => {
+    localStorage.setItem(
+      'pomo:language-learning:word-source:v1',
+      JSON.stringify({source: 'unknown', version: 1}),
+    )
+
+    expect(readLanguageLearningWordSource()).toBe('direct')
+  })
+})
+
 describe('language learning storage', () => {
   it('should write, append, read, and announce stored sentences', () => {
     const listener = vi.fn()
@@ -242,6 +265,25 @@ describe('language learning dialogue rollback', () => {
 })
 
 describe('language learning word storage', () => {
+  it('should append each new word and report individually skipped duplicates', () => {
+    appendLanguageLearningWords('en', ['Home', 'wave'])
+    const listener = vi.fn()
+    window.addEventListener('pomo:language-learning:words-changed', listener, {once: true})
+
+    const result = appendLanguageLearningWords('en', ['home', 'asset', 'ASSET', 'perspective'])
+    const duplicateResult = appendLanguageLearningWords('en', ['HOME', 'wave'])
+
+    expect(result).toEqual({addedCount: 2, skippedCount: 2})
+    expect(duplicateResult).toEqual({addedCount: 0, skippedCount: 2})
+    expect(readLanguageLearningWords().map((word) => word.value)).toEqual([
+      'Home',
+      'wave',
+      'asset',
+      'perspective',
+    ])
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
   it('should store language-specific words without duplicates and announce changes', () => {
     const listener = vi.fn()
     window.addEventListener('pomo:language-learning:words-changed', listener)
@@ -266,6 +308,26 @@ describe('language learning word storage', () => {
 
     expect(readLanguageLearningWords()).toEqual([])
     expect(warning).toHaveBeenCalledOnce()
+  })
+
+  it('should update and delete several words with one storage change per action', () => {
+    appendLanguageLearningWords('en', ['Home', 'wave', 'asset'])
+    appendLanguageLearningWords('ja', ['家'])
+    const listener = vi.fn()
+    window.addEventListener('pomo:language-learning:words-changed', listener)
+
+    setLanguageLearningWordsMemorized({
+      language: 'en',
+      memorized: true,
+      values: ['Home', 'wave'],
+    })
+    deleteLanguageLearningWords('en', ['wave', 'asset'])
+
+    expect(readLanguageLearningWords()).toMatchObject([
+      {language: 'en', memorized: true, value: 'Home'},
+      {language: 'ja', memorized: false, value: '家'},
+    ])
+    expect(listener).toHaveBeenCalledTimes(2)
   })
 
   it('should write an explicit word collection', () => {

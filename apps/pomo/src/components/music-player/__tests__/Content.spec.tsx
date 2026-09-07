@@ -5,7 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
 import type {MusicPlayerViewProps} from '../../music-player-view/shared'
-import PMusicPlayerContent from '../Content'
+import {PMusicPlayerContent} from '../Content'
 
 type EventHandler = (value?: unknown) => void
 
@@ -27,6 +27,7 @@ const featureMocks = vi.hoisted(() => ({
   resolvePPlaylist: vi.fn(),
   resolveTrackEnd: vi.fn(),
   resolveTrackRemoval: vi.fn(),
+  setOutputGain: vi.fn(),
   setPendingPosition: vi.fn(),
   visualizerStart: vi.fn(),
   visualizerStop: vi.fn(),
@@ -53,6 +54,7 @@ vi.mock('../../../features/focus-room-audio', () => ({
   resolveTrackRemoval: featureMocks.resolveTrackRemoval,
   usePAudioVisualizer: () => ({
     levels: () => [0.25],
+    setOutputGain: featureMocks.setOutputGain,
     start: featureMocks.visualizerStart,
     stop: featureMocks.visualizerStop,
   }),
@@ -97,21 +99,35 @@ const latestViewProps = () => {
 }
 
 const emit = (event: string, value: unknown = new Event(event)) => {
-  const handler = eventMocks.handlers.get(event)
+  const entry = Object.entries(latestViewProps().mediaEvents ?? {}).find(
+    ([name]) => name.slice(2).toLowerCase() === event,
+  )
+  const handler = entry?.[1] ?? eventMocks.handlers.get(event)
 
   if (handler === undefined) {
     throw new Error(`Expected ${event} handler`)
   }
 
-  handler(value)
+  if (typeof handler === 'function') {
+    handler(value as never)
+  }
 }
 
 const createAudio = () => {
   const audio = document.createElement('audio')
+  vi.spyOn(audio, 'load').mockImplementation(() => undefined)
   vi.spyOn(audio, 'play').mockResolvedValue()
   vi.spyOn(audio, 'pause').mockImplementation(() => undefined)
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
   latestViewProps().onAudioElement(audio)
   return audio
+}
+
+const setAudioReadyState = (audio: HTMLAudioElement, readyState: number) => {
+  Object.defineProperty(audio, 'readyState', {configurable: true, value: readyState})
 }
 
 beforeEach(() => {
@@ -226,6 +242,27 @@ describe('PMusicPlayerContent control paths', () => {
     featureMocks.resolveTrackEnd.mockReturnValueOnce('impossible')
     expect(() => emit('ended')).toThrow('Unsupported track end action: impossible')
     expect(audio.play).toHaveBeenCalled()
+  })
+
+  it('should wait for metadata before resuming the next track', async () => {
+    featureMocks.resolveTrackEnd.mockReturnValue('play-next')
+    featureMocks.applyPendingPosition.mockReturnValue({
+      isPlaying: true,
+      positionSeconds: 0,
+      trackId: TRACKS[2].id,
+    })
+    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = createAudio()
+    setAudioReadyState(audio, HTMLMediaElement.HAVE_NOTHING)
+
+    emit('ended')
+    await Promise.resolve()
+    expect(audio.load).toHaveBeenCalledOnce()
+    expect(audio.play).not.toHaveBeenCalled()
+
+    setAudioReadyState(audio, HTMLMediaElement.HAVE_METADATA)
+    emit('loadedmetadata')
+    expect(audio.play).toHaveBeenCalledOnce()
   })
 
   it('should handle empty and single-track transport without an audio element', () => {

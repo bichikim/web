@@ -13,6 +13,7 @@ vi.mock('src/components/service-worker', () => ({
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('ReloadPrompt', () => {
@@ -60,4 +61,35 @@ describe('ReloadPrompt', () => {
     expect(turnOffMessage).toHaveBeenCalledWith('__confirm_pwa_update__')
     expect(setMessage).not.toHaveBeenCalled()
   })
+
+  it.each([
+    {didActivate: false, expectedDismissals: 1, expectedReloads: 0},
+    {didActivate: true, expectedDismissals: 0, expectedReloads: 1},
+  ])(
+    'should reload only after worker activation succeeds when didActivate is $didActivate',
+    async ({didActivate, expectedDismissals, expectedReloads}) => {
+      const handleSkipWaiting = vi.fn().mockResolvedValue(didActivate)
+      vi.mocked(useServiceWorker).mockReturnValue([
+        () => ({offline: false, state: 'waiting'}),
+        {handleSkipUpdate: vi.fn(), handleSkipWaiting},
+      ] as unknown as ReturnType<typeof useServiceWorker>)
+      const reload = vi.fn()
+      const setMessage = vi.fn()
+      const turnOffMessage = vi.fn()
+
+      vi.stubGlobal('location', {reload})
+
+      render(() => (
+        <ToastContext.Provider value={{setMessage, turnOffMessage} as never}>
+          <ReloadPrompt pageReload={true} />
+        </ToastContext.Provider>
+      ))
+
+      const waitingMessage = setMessage.mock.calls[0]?.[0]
+      await waitingMessage?.actions?.[0]?.action?.({close: vi.fn()})
+
+      expect(reload).toHaveBeenCalledTimes(expectedReloads)
+      expect(turnOffMessage).toHaveBeenCalledTimes(expectedDismissals)
+    },
+  )
 })

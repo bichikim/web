@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {createSignal, untrack} from 'solid-js'
 import {expect, fn, userEvent, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
@@ -32,10 +33,10 @@ const meta = {
     (Story) => (
       <main class="grid min-h-screen place-items-center bg-background p-6">
         <div
-          class={[
+          class={cx(
             'w-full max-w-md border border-solid border-border backdrop-blur-surface',
             'rounded-5 bg-surface p-5',
-          ].join(' ')}
+          )}
         >
           <Story />
         </div>

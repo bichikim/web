@@ -5,35 +5,37 @@ import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
-  getPScene,
-  supportsPSceneGyroscope,
-  usePSceneStyle,
-} from '../../features/focus-room-animation'
-import {usePEvents} from '../../features/focus-room-dialogue'
-import {
-  readFocusRoomEntrySession,
-  writeFocusRoomEntrySession,
-} from '../../features/focus-room-entry'
-import {usePScenePreferences} from '../../features/focus-room-scene-preferences'
-import {getLocalizedSceneLabel} from '../../features/localization'
-import {type ModelDownloadRuntime, PModelDownloadProvider} from '../../features/model-download'
-import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
-import {usePSay} from '../../features/pomo-webmcp'
-import {useWeather} from '../../features/weather'
-import {
   isDesktopBackgroundMode,
   useDesktopMode,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsListener,
 } from '../../features/desktop-mode'
+import {
+  getPScene,
+  supportsPSceneGyroscope,
+  usePSceneStyle,
+} from '../../features/focus-room-animation'
+import {usePEvents} from '../../features/focus-room-dialogue/event-context'
+import {usePDisplayPreferences} from '../../features/focus-room-display-preferences'
+import {
+  readFocusRoomEntrySession,
+  writeFocusRoomEntrySession,
+} from '../../features/focus-room-entry'
+import {usePScenePreferences} from '../../features/focus-room-scene-preferences'
+import {getAutomaticScenePeriod, resolveScenePeriod} from '../../features/focus-room-time'
+import {getLocalizedSceneLabel} from '../../features/localization'
+import {type ModelDownloadRuntime, PModelDownloadProvider} from '../../features/model-download'
+import {usePSay} from '../../features/pomo-webmcp'
+import {useWeather, type WeatherLocation} from '../../features/weather'
 import {PEntry} from '../p-studio/Entry'
-import {PSceneFallback} from '../p-studio/SceneFallback'
-import {PStudioScene} from '../p-studio/Scene'
 import {PStudioEvents} from '../p-studio/Events'
+import {PStudioScene} from '../p-studio/Scene'
+import {PSceneFallback} from '../p-studio/SceneFallback'
 import {SceneToolbar} from '../p-studio/Toolbar'
 import {useStudioScreenSaver} from '../p-studio/use-screen-saver'
-import {PStudio} from '../PStudio'
 import {PScreenSaver} from '../PScreenSaver'
+import {PStudio} from '../PStudio'
+import {PTour} from '../tour/PTour'
 import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 
 vi.mock('../../features/focus-room-animation', () => ({
@@ -41,7 +43,8 @@ vi.mock('../../features/focus-room-animation', () => ({
   supportsPSceneGyroscope: vi.fn(),
   usePSceneStyle: vi.fn(),
 }))
-vi.mock('../../features/focus-room-dialogue', () => ({usePEvents: vi.fn()}))
+vi.mock('../../features/focus-room-dialogue/event-context', () => ({usePEvents: vi.fn()}))
+vi.mock('../../features/focus-room-display-preferences', () => ({usePDisplayPreferences: vi.fn()}))
 vi.mock('../../features/focus-room-entry', () => ({
   readFocusRoomEntrySession: vi.fn(),
   writeFocusRoomEntrySession: vi.fn(),
@@ -69,6 +72,7 @@ vi.mock('../p-studio/Events', () => ({PStudioEvents: vi.fn()}))
 vi.mock('../p-studio/Toolbar', () => ({SceneToolbar: vi.fn()}))
 vi.mock('../p-studio/use-screen-saver', () => ({useStudioScreenSaver: vi.fn()}))
 vi.mock('../PScreenSaver', () => ({PScreenSaver: vi.fn()}))
+vi.mock('../tour/PTour', () => ({PTour: vi.fn()}))
 vi.mock('../use-dialogue-scene-gaze', () => ({useDialogueSceneGaze: vi.fn()}))
 
 interface StudioOptions {
@@ -89,6 +93,14 @@ const modelDownloadRuntime: ModelDownloadRuntime = {
   },
 }
 
+const seoulLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:seoul',
+  legacyCitySlug: 'seoul',
+  name: '서울',
+  region: '서울특별시',
+} as const satisfies WeatherLocation
+
 const renderStudio = () =>
   render(() => (
     <PModelDownloadProvider runtime={modelDownloadRuntime}>
@@ -100,11 +112,12 @@ const configureStudio = (options: StudioOptions = {}) => {
   const [hasEntered, setHasEntered] = createSignal(false)
   const [activity, setActivity] = createSignal<'reading' | 'writing'>('reading')
   const [desktopMode, setDesktopMode] = createSignal(options.desktopMode ?? 'normal')
+  const [dialogueComposerVisible, setDialogueComposerVisible] = createSignal(false)
   const [gaze, setGaze] = createSignal<'focused' | 'user'>('focused')
   const [timeMode, setTimeMode] = createSignal<'day' | 'auto'>('day')
   const [sceneStyle, setSceneStyle] = createSignal<'original' | 'scribble'>('original')
   const [weatherEnabled, setWeatherEnabled] = createSignal(false)
-  const [weatherCity, setWeatherCity] = createSignal<string | null>(null)
+  const [weatherLocation, setWeatherLocation] = createSignal<WeatherLocation>(seoulLocation)
   const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>('auto')
 
   vi.mocked(usePEvents).mockReturnValue({
@@ -119,6 +132,13 @@ const configureStudio = (options: StudioOptions = {}) => {
     isPlaying: () => false,
     speechText: () => '안녕하세요',
   } as unknown as ReturnType<typeof usePSay>)
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    dialogueComposerVisible,
+    isReady: () => true,
+    onDialogueComposerVisibleChange: setDialogueComposerVisible,
+    onTourButtonVisibleChange: vi.fn(),
+    tourButtonVisible: () => true,
+  })
   vi.mocked(usePScenePreferences).mockReturnValue({
     activity,
     gaze,
@@ -134,10 +154,10 @@ const configureStudio = (options: StudioOptions = {}) => {
     sceneStyle,
   } as ReturnType<typeof usePSceneStyle>)
   vi.mocked(useWeather).mockReturnValue({
-    citySlug: weatherCity,
     enabled: weatherEnabled,
-    onCityChange: setWeatherCity,
+    location: weatherLocation,
     onEnabledChange: setWeatherEnabled,
+    onLocationChange: setWeatherLocation,
     onSceneModeChange: setWeatherSceneMode,
     sceneCondition: () => (weatherSceneMode() === 'rain' ? 'rain' : 'clear'),
     sceneMode: weatherSceneMode,
@@ -220,18 +240,31 @@ beforeEach(() => {
   })
   vi.mocked(PStudioEvents).mockImplementation((props) => {
     Object.values(props)
-    return <div>이벤트</div>
+    return (
+      <div data-dialogue-composer-visible={String(props.dialogueComposerVisible)}>
+        이벤트
+        <div class="pomo-pomodoro">포모도로</div>
+        <div class="pomo-player-stage">음악</div>
+      </div>
+    )
   })
   vi.mocked(SceneToolbar).mockImplementation((props) => {
     Object.values(props)
 
     return (
-      <div data-transitioning={String(props.isSceneTransitioning)}>
+      <div data-tour-step="settings" data-transitioning={String(props.isSceneTransitioning)}>
+        <button onClick={() => props.onTourOpen?.()} type="button">
+          둘러보기
+        </button>
+        <div data-tour-step="memory-assist">기억 보조</div>
         <button onClick={() => props.onActivityChange('writing')} type="button">
           글쓰기
         </button>
         <button onClick={() => props.onGazeChange('user')} type="button">
           사용자 보기
+        </button>
+        <button onClick={() => props.onDialogueComposerVisibleChange?.(true)} type="button">
+          대화 입력 표시
         </button>
         <button onClick={() => props.onMotionInputChange?.('drag')} type="button">
           드래그
@@ -248,7 +281,7 @@ beforeEach(() => {
         <button onClick={() => props.onWeatherEnabledChange(true)} type="button">
           날씨 켜기
         </button>
-        <button onClick={() => props.onWeatherCityChange('seoul')} type="button">
+        <button onClick={() => props.onWeatherLocationChange(seoulLocation)} type="button">
           서울
         </button>
         <button onClick={() => props.onWeatherSceneModeChange('rain')} type="button">
@@ -260,6 +293,10 @@ beforeEach(() => {
   vi.mocked(PScreenSaver).mockImplementation((props) => {
     Object.values(props)
     return <div data-active={String(props.isActive)}>화면 보호기</div>
+  })
+  vi.mocked(PTour).mockImplementation((props) => {
+    Object.values(props)
+    return <div data-open={String(props.isOpen)}>투어</div>
   })
   vi.mocked(useDialogueSceneGaze).mockImplementation((sceneGaze) => sceneGaze)
 })
@@ -290,9 +327,11 @@ describe('PStudio', () => {
     fireEvent.click(screen.getByRole('button', {name: '입장 화면 닫기'}))
     expect(writeFocusRoomEntrySession).toHaveBeenCalledTimes(2)
     expect(screen.getByText('이벤트')).toBeInTheDocument()
+    expect(screen.getByText('이벤트')).toHaveAttribute('data-dialogue-composer-visible', 'false')
 
     fireEvent.click(screen.getByRole('button', {name: '글쓰기'}))
     fireEvent.click(screen.getByRole('button', {name: '사용자 보기'}))
+    fireEvent.click(screen.getByRole('button', {name: '대화 입력 표시'}))
     fireEvent.click(screen.getByRole('button', {name: '드래그'}))
     fireEvent.click(screen.getByRole('button', {name: '평면'}))
     fireEvent.click(screen.getByRole('button', {name: '낙서'}))
@@ -303,6 +342,7 @@ describe('PStudio', () => {
     fireEvent.click(screen.getByRole('button', {name: '장면 다시 로드'}))
 
     expect(screen.getByRole('img', {name: 'night-writing-user'})).toBeInTheDocument()
+    expect(screen.getByText('이벤트')).toHaveAttribute('data-dialogue-composer-visible', 'true')
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute('data-time', 'night')
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute('data-weather', 'rain')
     expect(screen.getByText('장면 로드 완료').parentElement).toHaveAttribute(
@@ -313,6 +353,65 @@ describe('PStudio', () => {
       'data-transitioning',
       'true',
     )
+  })
+
+  it('should open the studio tour and resolve every target inside the studio', () => {
+    configureStudio({entrySession: true})
+
+    renderStudio()
+    fireEvent.click(screen.getByRole('button', {name: '둘러보기'}))
+
+    expect(screen.getByText('투어')).toHaveAttribute('data-open', 'true')
+    const tourProps = vi.mocked(PTour).mock.calls.at(-1)?.[0]
+    expect(tourProps?.steps.map((step) => step.id)).toEqual([
+      'pomodoro',
+      'pomodoro-control',
+      'pomodoro-detail',
+      'pomodoro-duration',
+      'music',
+      'music-album',
+      'music-expand',
+      'memory-assist',
+      'settings',
+    ])
+    expect(tourProps?.steps[1]).toMatchObject({
+      title: '포모도로 타이머',
+      video: {source: '/tour/pomodoro-control.webm'},
+    })
+    expect(tourProps?.steps[2]).toMatchObject({
+      title: '포모도로 타이머',
+      video: {source: '/tour/pomodoro-detail.webm'},
+    })
+    expect(tourProps?.steps[3]).toMatchObject({
+      title: '포모도로 타이머',
+      video: {source: '/tour/pomodoro-duration.webm'},
+    })
+    expect(tourProps?.steps[5]).toMatchObject({
+      title: '집중 음악',
+      video: {source: '/tour/add-album.webm'},
+    })
+    expect(tourProps?.steps[6]).toMatchObject({
+      title: '집중 음악',
+      video: {source: '/tour/expand-player.webm'},
+    })
+    expect(tourProps?.steps[8]).toMatchObject({
+      description:
+        '장면과 화면부터 이벤트, 피드, 대화, 사용자 정보까지 Pomofi의 다양한 기능을 설정할 수 있어요.',
+      title: '설정',
+    })
+    expect(tourProps?.getStepElement('pomodoro')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('pomodoro-control')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('pomodoro-detail')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('pomodoro-duration')).toHaveClass('pomo-pomodoro')
+    expect(tourProps?.getStepElement('music')).toHaveClass('pomo-player-stage')
+    expect(tourProps?.getStepElement('music-album')).toHaveClass('pomo-player-stage')
+    expect(tourProps?.getStepElement('music-expand')).toHaveClass('pomo-player-stage')
+    expect(tourProps?.getStepElement('memory-assist')).toHaveAttribute(
+      'data-tour-step',
+      'memory-assist',
+    )
+    expect(tourProps?.getStepElement('settings')).toHaveAttribute('data-tour-step', 'settings')
+    expect(tourProps?.getStepElement('unknown')).toBeNull()
   })
 
   it('should restore a stored entry session without creating the scene before preferences are ready', () => {

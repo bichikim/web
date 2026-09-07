@@ -1,9 +1,11 @@
 import {Link, Meta, Title} from '@solidjs/meta'
 import {useLocation} from '@solidjs/router'
+import {onMount} from 'solid-js'
 import {getCanonicalPathname, isSearchIndexablePath, normalizePathname} from './pomo-route'
 import {SEARCH_CONFIG} from '../features/search-discovery/canonical'
 import {SERVICE_POLICY_PATHS} from '../features/service-terms/policy-paths'
 import * as m from '@paraglide/message'
+import {getLocale, getTextDirection} from '@paraglide/runtime'
 
 const REFUND_POLICY_DESCRIPTION =
   'Pomofi 앱인토스 곡·앨범 단위 음악 이용권의 환불 및 청약철회 기준을 안내합니다.'
@@ -38,6 +40,8 @@ const getTitle = (pathname: string) => {
       return 'Pomofi — 개인정보처리방침'
     case '/third-party-notices':
       return 'Pomofi — 제3자 라이선스 및 배포 고지'
+    case '/whats-new':
+      return `Pomofi — ${m.version_notice_title()}`
     default:
       return 'Pomofi'
   }
@@ -59,6 +63,8 @@ const getDescription = (pathname: string) => {
       return TERMS_DESCRIPTION
     case '/third-party-notices':
       return THIRD_PARTY_NOTICES_DESCRIPTION
+    case '/whats-new':
+      return m.version_catalog_metadata_description()
     default:
       return m.app_default_description()
   }
@@ -68,6 +74,13 @@ export const PDocumentMetadata = () => {
   const location = useLocation()
   const canonicalUrl = () =>
     new URL(getCanonicalPathname(location.pathname), SEARCH_CONFIG.origin).href
+
+  onMount(() => {
+    const locale = getLocale()
+
+    document.documentElement.lang = locale
+    document.documentElement.dir = getTextDirection(locale)
+  })
 
   return (
     <>

@@ -3,6 +3,8 @@ import {AwsClient} from 'aws4fetch'
 const DEFAULT_BUCKET = 'pomofi-audio'
 const DEFAULT_PUBLIC_ORIGIN = 'https://storage.pomofi.io'
 const HTTP_NOT_FOUND = 404
+const ALBUM_COVER_PATH_PATTERN =
+  /\/album-covers\/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}\/cover\.webp$/u
 const CONTENT_TYPE_EXTENSIONS = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -92,6 +94,26 @@ const createPublicObjectUrl = (
   }
 }
 
+export const isManagedAlbumCoverUrl = (
+  coverImageUrl: string,
+  environment: PublicAssetsEnvironment = process.env,
+): boolean => {
+  const pathMatch = ALBUM_COVER_PATH_PATTERN.exec(new URL(coverImageUrl).pathname)
+
+  if (pathMatch === null) {
+    return false
+  }
+
+  const [objectPath] = pathMatch
+  const publicOrigin = environment.POMO_PUBLIC_ASSETS_ORIGIN?.trim() || DEFAULT_PUBLIC_ORIGIN
+  const expectedUrl = new URL(
+    objectPath.slice(1),
+    `${publicOrigin.replace(/\/$/u, '')}/`,
+  ).toString()
+
+  return coverImageUrl === expectedUrl
+}
+
 export const storeAlbumCover = async (
   input: StoreArtworkInput,
   options: StoreAlbumCoverOptions = {},
@@ -114,6 +136,21 @@ export const storeAlbumCover = async (
 
   return {
     coverImageUrl: publicUrl,
+  }
+}
+
+export const deleteAlbumCover = async (
+  objectKey: string,
+  options: StoreAlbumCoverOptions = {},
+): Promise<void> => {
+  const environment = options.environment ?? process.env
+  const {uploadUrl} = createPublicObjectUrl(objectKey, environment)
+  const request = new Request(uploadUrl, {method: 'DELETE'})
+  const signedRequest = await (options.signRequest ?? createSigner(environment))(request)
+  const response = await (options.fetcher ?? fetch)(signedRequest)
+
+  if (!response.ok && response.status !== HTTP_NOT_FOUND) {
+    throw new Error(`R2 album cover delete failed with status ${response.status}`)
   }
 }
 

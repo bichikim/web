@@ -1,5 +1,6 @@
 import {For, Show} from 'solid-js'
 import {getSupertonicModel, type SupertonicVoiceResult} from '../../features/supertonic/index'
+import {PAudioPreview} from '../PAudioPreview'
 import {MILLISECONDS_PER_SECOND} from './shared'
 
 interface AudioResultsProps {
@@ -21,7 +22,7 @@ export const AudioResults = (props: AudioResultsProps) => (
                   {(result.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
                 </span>
               </div>
-              <audio class="h-10 w-full" controls preload="metadata" src={result.url} />
+              <PAudioPreview src={result.url} title={`${model.label} AI 생성 음성`} />
               <a
                 class="justify-self-end text-xs font-650 text-#b8e8d0 underline"
                 download={`pomo-voice-${model.id}.wav`}

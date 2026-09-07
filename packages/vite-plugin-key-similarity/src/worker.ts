@@ -11,7 +11,6 @@ if (!port) {
 const sourceOptions = workerData as WorkerOptions
 const options: ResolvedKeySimilarityOptions = {
   ...sourceOptions,
-  __embeddingProvider: undefined,
   exclude: [],
   keyDetector: () => undefined,
   scanInclude: [],

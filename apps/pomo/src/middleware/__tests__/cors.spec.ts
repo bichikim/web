@@ -153,13 +153,79 @@ describe('corsMiddleware', () => {
       'GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE',
     )
     expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
-      'Authorization, Content-Type, Range, X-CSRF-Token',
+      'Authorization, Content-Type, Range, X-CSRF-Token, X-Server-Id, X-Server-Instance, X-Start-Type, X-Single-Flight',
     )
     expect(response.headers.get('Access-Control-Max-Age')).toBe('86400')
     expect(response.headers.get('Vary')).toBe(
       'Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
     )
     expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should answer an allowed SolidStart server-function preflight request', async () => {
+    useProductionEnvironment()
+    const origin = 'https://pomo-app.apps.tossmini.com'
+    const next = vi.fn()
+    const response = await corsMiddleware(
+      createMiddlewareEvent(
+        new Request('https://www.pomofi.io/_server', {
+          headers: {
+            'Access-Control-Request-Headers':
+              'content-type, x-server-id, x-server-instance, x-start-type, x-single-flight',
+            'Access-Control-Request-Method': 'POST',
+            Origin: origin,
+          },
+          method: 'OPTIONS',
+        }),
+      ),
+      next,
+    )
+
+    expect(response).toBeInstanceOf(Response)
+    if (!(response instanceof Response)) {
+      throw new TypeError('Expected preflight middleware to return a Response')
+    }
+
+    expect(response.status).toBe(204)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+    expect(response.headers.get('Access-Control-Allow-Headers')?.split(', ')).toEqual(
+      expect.arrayContaining([
+        'Content-Type',
+        'X-Server-Id',
+        'X-Server-Instance',
+        'X-Start-Type',
+        'X-Single-Flight',
+      ]),
+    )
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should expose SolidStart response control headers to an allowed static origin', async () => {
+    useProductionEnvironment()
+    const origin = 'https://tauri.localhost'
+    const response = await applyResponseMiddleware(
+      new Request('https://www.pomofi.io/_server', {headers: {Origin: origin}}),
+      new Response(null, {
+        headers: {
+          Location: '/account',
+          'X-Revalidate': 'account',
+          'X-Start-Type': 'redirect',
+        },
+        status: 302,
+      }),
+    )
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+    expect(response.headers.get('Access-Control-Expose-Headers')?.split(', ')).toEqual(
+      expect.arrayContaining([
+        'Location',
+        'X-Error',
+        'X-Revalidate',
+        'X-Single-Flight',
+        'X-Start-Type',
+      ]),
+    )
   })
 
   it('should continue an API preflight without an Origin header', async () => {
@@ -182,19 +248,22 @@ describe('corsMiddleware', () => {
     expect((response as Response).headers.get('Vary')).toBe('Origin')
   })
 
-  it('should omit CORS permission for an untrusted origin', async () => {
-    useProductionEnvironment()
-    const response = await applyResponseMiddleware(
-      new Request('https://api.pomofi.example/api/test', {
-        headers: {Origin: 'https://untrusted.example'},
-      }),
-    )
+  it.each(['/api/test', '/_server'])(
+    'should omit CORS permission for an untrusted origin on %s',
+    async (path) => {
+      useProductionEnvironment()
+      const response = await applyResponseMiddleware(
+        new Request(`https://api.pomofi.example${path}`, {
+          headers: {Origin: 'https://untrusted.example'},
+        }),
+      )
 
-    expect(response.headers.has('Access-Control-Allow-Origin')).toBe(false)
-    expect(response.headers.get('Vary')).toBe('Origin')
-  })
+      expect(response.headers.has('Access-Control-Allow-Origin')).toBe(false)
+      expect(response.headers.get('Vary')).toBe('Origin')
+    },
+  )
 
-  it('should not add CORS headers outside the API namespace', async () => {
+  it('should not add CORS headers outside the supported namespaces', async () => {
     useProductionEnvironment()
     const originalResponse = new Response(null, {status: 200})
     const response = await applyResponseMiddleware(

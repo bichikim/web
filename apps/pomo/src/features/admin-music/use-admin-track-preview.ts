@@ -1,10 +1,7 @@
+import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal} from 'solid-js'
-import {z} from 'zod'
 
-const playbackResponseSchema = z.object({
-  expiresAt: z.string().datetime(),
-  url: z.string().url(),
-})
+import {requestAdminTrackPlaybackAction} from './actions'
 
 export interface UseAdminTrackPreviewProps {
   readonly trackId: string
@@ -22,8 +19,12 @@ export interface AdminTrackPreviewController {
 export const useAdminTrackPreview = (
   props: UseAdminTrackPreviewProps,
 ): AdminTrackPreviewController => {
+  const requestPlayback = useAction(requestAdminTrackPlaybackAction)
+  const submission = useSubmission(
+    requestAdminTrackPlaybackAction,
+    (input) => input[0] === props.trackId,
+  )
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
-  const [loading, setLoading] = createSignal(false)
   const [playbackUrl, setPlaybackUrl] = createSignal<string | null>(null)
 
   const onPlaybackError = () => {
@@ -32,31 +33,20 @@ export const useAdminTrackPreview = (
   }
 
   const startPlayback = async (): Promise<void> => {
-    setLoading(true)
     setErrorMessage(null)
-
-    try {
-      const response = await fetch(
-        `/api/admin/music/tracks/${encodeURIComponent(props.trackId)}/playback`,
-      )
-
-      if (!response.ok) {
-        throw new Error(`Playback access failed with status ${response.status}`)
-      }
-
-      const playback = playbackResponseSchema.parse(await response.json())
-      setPlaybackUrl(playback.url)
-    } catch (error) {
-      console.error('Failed to load admin track preview', error)
-      setErrorMessage('미리듣기를 불러오지 못했습니다.')
-    } finally {
-      setLoading(false)
+    const result = await requestPlayback(props.trackId)
+    submission.clear()
+    if (result.status === 'granted') {
+      setPlaybackUrl(result.url)
+      return
     }
+
+    setErrorMessage('미리듣기를 불러오지 못했습니다.')
   }
 
   return {
     errorMessage,
-    loading,
+    loading: () => submission.pending === true,
     onPlaybackError,
     onPlaybackReady: () => setErrorMessage(null),
     playbackUrl,

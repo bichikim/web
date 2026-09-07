@@ -1,8 +1,6 @@
-import 'server-only'
-
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
-import {getNeonAuthProxyConfig} from '../auth/environment'
+import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 
 interface NeonSessionIdentity {
   readonly email: string
@@ -41,7 +39,7 @@ const createSessionRequest = (request: Request): Request => {
 
 export const getNeonSession = async (request: Request): Promise<NeonSessionResult> => {
   const response = await handleAuthProxyRequest({
-    ...getNeonAuthProxyConfig(),
+    ...readNeonAuthProxyConfig(),
     path: 'get-session',
     request: createSessionRequest(request),
   })

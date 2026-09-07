@@ -4,22 +4,58 @@ import {Tabs} from '@kobalte/core/tabs'
 import {A} from '@solidjs/router'
 import {render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import licenseData from '../../../public/licenses.json' with {type: 'json'}
+
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PCreditsSettings} from '../PCreditsSettings'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
 vi.mock('@solidjs/router', () => ({A: vi.fn()}))
 
+const originalGetLocale = getLocale
+
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   vi.clearAllMocks()
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify(licenseData))),
+  )
   Object.assign(Tabs, {
     Content: (props: {children: JSX.Element}) => <>{props.children}</>,
   })
-  vi.mocked(A).mockImplementation((props) => <a href={props.href}>{props.children}</a>)
+  vi.mocked(A).mockImplementation((props) => (
+    <a class={props.class} href={props.href}>
+      {props.children}
+    </a>
+  ))
 })
 
-it('should credit the creator and disclose current software and model licenses', () => {
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+  vi.unstubAllGlobals()
+})
+
+it('should render license link roles in English', async () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <PCreditsSettings />)
+
+  expect(
+    await screen.findByRole('link', {name: 'SolidJS license text Opens in a new window'}),
+  ).toBeTruthy()
+  expect(
+    screen.getByRole('link', {name: 'Pretendard official repository Opens in a new window'}),
+  ).toBeTruthy()
+  expect(
+    screen.getByRole('link', {name: 'third-party license document'}).parentElement,
+  ).toHaveTextContent(
+    'See the third-party license document for the complete versions and distribution terms.',
+  )
+})
+
+it('should credit the creator and disclose current software and model licenses', async () => {
   render(() => <PCreditsSettings />)
 
   expect(screen.queryByText('Pomofi credits')).toBeNull()
@@ -28,16 +64,17 @@ it('should credit the creator and disclose current software and model licenses',
   const creatorDetails = screen.getByText('Bichi Kim').closest('dl')
   expect(creatorDetails).not.toBeNull()
   expect(creatorDetails?.className).toContain('rounded-panel')
-  expect(creatorDetails?.className).toContain('border')
+  expect(creatorDetails).toHaveClass('border-content-border', 'bg-content-surface')
   expect(screen.getByRole('heading', {name: '만든 사람'}).parentElement?.className).toContain(
     'pt-0',
   )
+  expect(screen.queryByRole('link', {name: '버전 카탈로그'})).toBeNull()
   expect(screen.getByRole('heading', {name: '음악'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'Rainy Monday'})).toBeTruthy()
   expect(screen.getByText('Bichi Kim · 음악 제작')).toBeTruthy()
   expect(screen.queryByText('Pomofi에서 재생되는 음악을 만든 아티스트입니다.')).toBeNull()
   expect(screen.queryByText('프로젝트별 라이선스와 원문 링크입니다.')).toBeNull()
-  expect(screen.getByRole('heading', {name: '오픈소스 소프트웨어'})).toBeTruthy()
+  expect(await screen.findByRole('heading', {name: '오픈소스 소프트웨어'})).toBeTruthy()
   expect(screen.queryByRole('heading', {name: '주요 오픈소스 소프트웨어'})).toBeNull()
   expect(screen.getByRole('link', {name: 'SolidJS 라이선스 원문 새 창에서 열기'})).toBeTruthy()
   expect(screen.getByRole('link', {name: 'SolidStart 라이선스 원문 새 창에서 열기'})).toBeTruthy()
@@ -87,8 +124,20 @@ it('should credit the creator and disclose current software and model licenses',
   expect(screen.queryByText('RobotExpressive')).toBeNull()
   expect(screen.queryByText('Ninomaru Teien')).toBeNull()
   expect(screen.getByText(/이 화면은 요약이며 원문 라이선스를 대체하지 않습니다/u)).toBeTruthy()
+  expect(
+    screen.getByText(/이 화면은 요약이며 원문 라이선스를 대체하지 않습니다/u).closest('aside'),
+  ).toHaveClass('border-content-border', 'bg-content-surface')
   expect(screen.queryByText(/이해를 돕기 위한 요약/u)).toBeNull()
   expect(screen.getByRole('link', {name: '제3자 라이선스 관리 문서'}).getAttribute('href')).toBe(
     '/third-party-notices',
   )
+})
+
+it('should preserve static credits and report a license fetch failure', async () => {
+  vi.mocked(fetch).mockRejectedValue(new Error('offline'))
+
+  render(() => <PCreditsSettings />)
+
+  expect(screen.getByRole('heading', {name: '만든 사람'})).toBeTruthy()
+  expect(await screen.findByRole('alert')).toHaveTextContent('라이선스 정보를 불러오지 못했어요.')
 })

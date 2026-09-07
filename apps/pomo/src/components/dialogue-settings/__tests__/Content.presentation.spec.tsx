@@ -3,13 +3,14 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For, type JSX} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
-import PDialogueSettingsContent from '../Content'
+import {PDialogueSettingsContent} from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('@kobalte/core/dropdown-menu', () => {
@@ -85,7 +86,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   isLoading: () => false,
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
@@ -102,6 +103,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
 })
 
 const createFeeds = (): PFeedController => ({
+  cancelProcessing: vi.fn(async () => undefined),
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => [],
   dismissRecovery: vi.fn(),
@@ -118,12 +120,34 @@ const createFeeds = (): PFeedController => ({
   unlistenedDialogues: () => [],
 })
 
+const originalGetLocale = getLocale
+
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   vi.clearAllMocks()
   localStorage.clear()
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
   vi.mocked(PSelect).mockImplementation(() => null)
   vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
+})
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should render event and dialogue settings in English', () => {
+  overwriteGetLocale(() => 'en')
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  render(() => <PDialogueSettingsContent />)
+
+  expect(screen.getByRole('heading', {name: 'Events'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
+  expect(screen.getByText('Play once when entering Pomofi')).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Dialogue options'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Saved dialogue'})).toBeDefined()
+  expect(screen.getByRole('link', {name: 'New dialogue'})).toBeDefined()
+  expect(screen.getByText('Yuna · 0:01 · 1 speech bubble')).toBeDefined()
 })
 
 it('should keep saved dialogue content full-width with bounded text and actions', () => {
@@ -149,16 +173,20 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(listenButton.textContent).toBe('듣기')
   expect(createLink.getAttribute('href')).toBe('/dialogue')
   expect(createLink.closest('.pomo-dialogue-settings__library-heading')).not.toBeNull()
+  const inactiveEvent = screen.getByRole('heading', {name: '포모도르 집중 시작'}).closest('li')
+  const eventList = inactiveEvent?.parentElement
+  expect(inactiveEvent).not.toHaveAttribute('data-connected')
+  expect(eventList).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
   expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
     '/dialogue?dialogueId=saved-dialogue',
   )
 
   fireEvent.click(within(library).getByRole('button', {name: '삭제'}))
-  expect(
-    within(library)
-      .getByRole('button', {name: '삭제 확인'})
-      .hasAttribute('data-pomo-dialogue-delete-confirm'),
-  ).toBe(true)
+  const deleteConfirmation = within(library).getByRole('button', {name: '삭제 확인'})
+  expect(deleteConfirmation.hasAttribute('data-pomo-dialogue-delete-confirm')).toBe(true)
+  expect(deleteConfirmation.parentElement?.className).toContain(
+    '[&_[data-pomo-dialogue-delete-confirm]]:text-danger',
+  )
 })
 
 it('should hide learning dialogues only from the saved dialogue library', () => {
@@ -220,6 +248,16 @@ it('should apply compact spacing to dialogue settings groups', () => {
   expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
 })
 
+it('should use the theme surface for an empty dialogue library', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => []}))
+
+  render(() => <PDialogueSettingsContent />)
+
+  expect(screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.')).toHaveClass(
+    'bg-content-surface',
+  )
+})
+
 it('should offer and save a playback mode when an event has multiple dialogues', () => {
   const secondDialogue = {
     ...DIALOGUE,
@@ -275,7 +313,9 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
   const modeControlLayout = modeLayout?.lastElementChild
   expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
-  expect(settingRows).toHaveLength(10)
+  expect(settingRows).toHaveLength(2)
+  expect(screen.queryByText('대화 연결')).toBeNull()
+  expect(screen.queryByText('이 이벤트에서 재생할 대화를 선택해요.')).toBeNull()
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
   expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
   expect(modeControlLayout?.classList).toContain('w-full')

@@ -16,9 +16,9 @@ const createPreviewAccessResponse = () =>
 
 describe('loadTrackPreviewSource', () => {
   beforeEach(() => {
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
-    vi.stubEnv('POMO_IS_DESKTOP', '')
-    vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+    vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
     sessionMocks.readStoredAppSession.mockReset().mockResolvedValue(null)
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pomo-track-preview')
     vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined)
@@ -31,13 +31,13 @@ describe('loadTrackPreviewSource', () => {
   })
 
   it.each([
-    ['Apps in Toss', 'POMO_IS_APPS_IN_TOSS'],
-    ['desktop', 'POMO_IS_DESKTOP'],
+    ['Apps in Toss', 'VITE_POMO_IS_APPS_IN_TOSS'],
+    ['desktop', 'VITE_POMO_IS_DESKTOP'],
   ] as const)(
     'should use the Pomo API origin for %s preview access and audio',
     async (_name, key) => {
-      vi.stubEnv(key, '1')
-      vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+      vi.stubEnv(key, 'true')
+      vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
       sessionMocks.readStoredAppSession.mockResolvedValue('app-token')
       const fetcher = vi
         .fn<typeof fetch>()

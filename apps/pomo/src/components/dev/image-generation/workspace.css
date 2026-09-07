@@ -1,0 +1,220 @@
+.image-studio {
+  --studio-muted: #bdb2c4;
+  --studio-accent: #f4d7b5;
+  font-family: inherit;
+  line-height: 1.6;
+}
+.image-studio-heading {
+  max-width: 42rem;
+  margin: 2rem 0;
+}
+.image-studio-eyebrow {
+  color: var(--studio-accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+}
+.image-studio-heading h1 {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.image-studio-heading > p:last-child {
+  color: var(--studio-muted);
+}
+.image-studio-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+.image-studio fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.image-studio label {
+  display: block;
+  font-size: 0.875rem;
+}
+.image-studio textarea,
+.image-studio select,
+.image-studio input[type='text'] {
+  width: 100%;
+  border: 1px solid #756a80;
+  border-radius: 0.8rem;
+  background: #211a2b;
+  color: #f8edf1;
+  padding: 0.8rem;
+  font: inherit;
+  box-sizing: border-box;
+}
+.image-studio textarea {
+  margin-top: 0.65rem;
+  resize: vertical;
+  min-height: 8rem;
+}
+.image-studio textarea::placeholder,
+.image-studio input::placeholder {
+  color: var(--studio-muted);
+}
+.image-studio-models {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.image-studio select {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.875rem;
+}
+.image-studio-note,
+.image-studio-status,
+.image-studio figcaption {
+  color: var(--studio-muted);
+  font-size: 0.8rem;
+}
+.image-studio-note {
+  margin: 1rem 0 1.5rem;
+}
+.image-studio-size {
+  padding-top: 1.5rem;
+  border-top: 1px solid #43384f;
+}
+.image-studio-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.8rem 0 1.3rem;
+}
+.image-studio button {
+  border: 1px solid #756a80;
+  border-radius: 2rem;
+  background: transparent;
+  color: #f8edf1;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+.image-studio button:hover:not(:disabled) {
+  background: #3a2c45;
+}
+.image-studio :focus-visible {
+  outline: 2px solid var(--studio-accent);
+  outline-offset: 4px;
+}
+.image-studio :disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.image-studio .image-studio-slider {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) 3rem;
+  gap: 1rem;
+  align-items: center;
+  min-height: 3.4rem;
+}
+.image-studio input[type='range'] {
+  width: 100%;
+  min-width: 0;
+  height: 2.75rem;
+  margin: 0;
+  accent-color: var(--studio-accent);
+  cursor: pointer;
+}
+.image-studio output {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.image-studio-seed {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0 1.6rem;
+}
+.image-studio-seed button {
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+}
+.image-studio-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+.image-studio button.image-studio-generate {
+  flex: 1;
+  background: var(--studio-accent);
+  color: #211a2b;
+  font-weight: 700;
+  min-height: 3.5rem;
+  border: 0;
+}
+.image-studio button.image-studio-generate:hover:not(:disabled) {
+  background: #ffe7cd;
+}
+.image-studio progress {
+  width: 100%;
+  accent-color: var(--studio-accent);
+}
+.image-studio-error {
+  color: #ffc0ce;
+  overflow-wrap: anywhere;
+}
+.image-studio-preview {
+  min-width: 0;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: #211a2b;
+}
+.image-studio h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+.image-studio-empty {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: 20rem;
+  color: var(--studio-muted);
+  text-align: center;
+}
+.image-studio figure {
+  margin: 0;
+}
+.image-studio figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+.image-studio figcaption {
+  margin: 0.8rem 0;
+  overflow-wrap: anywhere;
+}
+.image-studio-download {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--studio-accent);
+}
+.image-studio-prompt {
+  border-top: 1px solid #43384f;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+.image-studio-prompt p {
+  overflow-wrap: anywhere;
+  color: var(--studio-muted);
+}
+@media (max-width: 760px) {
+  .image-studio-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .image-studio-empty {
+    min-height: 12rem;
+  }
+}

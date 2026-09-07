@@ -5,7 +5,7 @@ import {RefundProcessSections} from './RefundProcessSections'
 
 const ARTICLE_CLASSES = cx(
   'rounded-8 border border-white/10 bg-#211a2b/88 p-5',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8 lg:p-10',
+  'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8 lg:p-10',
 )
 
 export const PolicyArticle = () => (

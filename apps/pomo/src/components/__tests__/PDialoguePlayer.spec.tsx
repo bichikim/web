@@ -39,7 +39,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   isLoading: () => false,
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
@@ -90,6 +90,9 @@ it('should show segment progress and stop the current dialogue playback', () => 
   expect(activeBubble?.classList.contains('border-highlight')).toBe(true)
   expect(activeBubble?.classList.contains('bg-surface-interactive')).toBe(true)
   expect(screen.getByRole('img', {name: '총 3개 중 2번째 대사 읽는 중'})).toBeDefined()
+  expect(result.container.querySelector('.pomo-dialogue-bubble__speaker-group')).toHaveClass(
+    'gap-3.5',
+  )
   expect(screen.getByRole('img', {name: '밝음·즐거움 감정'}).classList).toContain('scale-[1.5556]')
   expect(screen.queryByText('Pomo')).toBeNull()
   expect(screen.getByRole('status').textContent).toBe('집중을 시작해 볼까요? AI 음성')
@@ -151,10 +154,8 @@ it('should replace the dialogue border only in scribble style', () => {
 
   expect(scribbleBorder).toBeInstanceOf(SVGElement)
   expect(scribbleBorder?.parentElement?.classList).toContain('pomo-dialogue-bubble-frame')
-  expect(scribbleSurface.classList).toContain('[mask-image:var(--pomo-scribble-panel-mask)]')
-  expect(scribbleSurface.style.getPropertyValue('--pomo-scribble-panel-mask')).toContain(
-    'data:image/svg+xml',
-  )
+  expect(scribbleSurface.classList).toContain('pomo-scribble-mask')
+  expect(scribbleSurface).not.toHaveAttribute('style')
   expect(scribbleSurface.contains(scribbleBorder)).toBe(false)
   expect(scribbleBubble?.classList).toContain('rounded-none')
   expect(scribbleBubble?.classList).toContain('border-0')

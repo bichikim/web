@@ -10,7 +10,6 @@ import {
   pausePomodoroTimer,
   type PomodoroTimerConfig,
   type PomodoroTimerState,
-  resetPomodoroTimer,
   startPomodoroTimer,
   stopPomodoroTimer,
   synchronizePomodoroTimer,
@@ -26,17 +25,6 @@ const CONFIG = {
 describe('createPomodoroTimerState', () => {
   it('should create an idle focus session from the supplied configuration', () => {
     expect(createPomodoroTimerState(CONFIG)).toEqual({
-      completedFocusSessions: 0,
-      phase: 'focus',
-      remainingSeconds: 10,
-      status: 'idle',
-    })
-  })
-})
-
-describe('resetPomodoroTimer', () => {
-  it('should return the first focus session while preserving the supplied configuration', () => {
-    expect(resetPomodoroTimer(CONFIG)).toEqual({
       completedFocusSessions: 0,
       phase: 'focus',
       remainingSeconds: 10,

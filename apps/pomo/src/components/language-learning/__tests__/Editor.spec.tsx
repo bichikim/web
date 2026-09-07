@@ -2,14 +2,11 @@
 
 import {useNavigate} from '@solidjs/router'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {type ComponentProps, createSignal} from 'solid-js'
+import {type ComponentProps, createSignal, onMount} from 'solid-js'
 import {afterEach, beforeEach, expect, it, type Mock, vi} from 'vitest'
 
 import {type DialogueWriterState, useDialogueWriter} from '../../../features/dialogue-writer'
-import {
-  createPDialogueRepository,
-  generateCompressedDialogueAudio,
-} from '../../../features/focus-room-dialogue'
+import {createPDialogueRepository} from '../../../features/focus-room-dialogue'
 import {
   getUnmemorizedLanguageLearningWordValues,
   isValidLanguageLearningSentence,
@@ -17,30 +14,25 @@ import {
   selectLanguageLearningPromptWords,
   useLanguageLearningWords,
 } from '../../../features/language-learning'
-import {useModelDownload} from '../../../features/model-download'
+import {type ModelDownloadState, useModelDownload} from '../../../features/model-download'
 import type {ModelDownloadController} from '../../../features/model-download/controller'
-import {
-  createSupertonicClient,
-  getSupertonicErrorMessage,
-  isSupertonicModelDownloaded,
-  type SupertonicClient,
-} from '../../../features/supertonic'
+import {isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {isTextModelDownloaded} from '../../../features/text-generation'
 import {PGenerationStatus} from '../../PGenerationStatus'
 import {PModelDownloadConsent} from '../../PModelDownloadConsent'
+import {LanguageLearningEditor} from '../Editor'
 import {LanguageLearningEditorHeader} from '../EditorHeader'
 import {LanguageLearningGenerateButton} from '../GenerateButton'
-import LanguageLearningEditor from '../Editor'
 import {LanguageLearningReview} from '../Review'
-import {LanguageLearningSettings} from '../Settings'
 import {saveLanguageLearningCandidates} from '../save'
+import {LanguageLearningSettings} from '../Settings'
+import {generateVoiceCandidates, regenerateCandidateVoice} from '../voice-generation'
 import {LanguageLearningWordSourceControl} from '../WordSource'
 
 vi.mock('@solidjs/router', () => ({useNavigate: vi.fn()}))
 vi.mock('../../../features/dialogue-writer', () => ({useDialogueWriter: vi.fn()}))
 vi.mock('../../../features/focus-room-dialogue', () => ({
   createPDialogueRepository: vi.fn(),
-  generateCompressedDialogueAudio: vi.fn(),
 }))
 vi.mock('../../../features/language-learning', async () => {
   const actual = await vi.importActual('../../../features/language-learning')
@@ -58,8 +50,6 @@ vi.mock('../../../features/language-learning', async () => {
 vi.mock('../../../features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('../../../features/model-storage', () => ({formatModelDownloadSize: vi.fn(() => '1 MB')}))
 vi.mock('../../../features/supertonic', () => ({
-  createSupertonicClient: vi.fn(),
-  getSupertonicErrorMessage: vi.fn(),
   getSupertonicModel: vi.fn(() => ({size: 1})),
   isSupertonicModelDownloaded: vi.fn(),
 }))
@@ -74,6 +64,10 @@ vi.mock('../GenerateButton', () => ({LanguageLearningGenerateButton: vi.fn()}))
 vi.mock('../Review', () => ({LanguageLearningReview: vi.fn()}))
 vi.mock('../Settings', () => ({LanguageLearningSettings: vi.fn()}))
 vi.mock('../save', () => ({saveLanguageLearningCandidates: vi.fn()}))
+vi.mock('../voice-generation', () => ({
+  generateVoiceCandidates: vi.fn(),
+  regenerateCandidateVoice: vi.fn(),
+}))
 vi.mock('../WordSource', () => ({LanguageLearningWordSourceControl: vi.fn()}))
 
 const flush = async () => {
@@ -102,27 +96,41 @@ function getLatestProps<T>(mock: {readonly mock: {readonly calls: ReadonlyArray<
   return props
 }
 
-const generatedAudio = () => ({
-  ok: true as const,
-  value: {audio: new Blob(['audio']), durationMs: 1000, segments: []},
+const candidate = () => ({
+  audio: new Blob(['audio']),
+  audioKey: 'audio-key',
+  audioUrl: 'blob:generated',
+  durationMs: 1000,
+  id: 'candidate-id',
+  modelId: 'full' as const,
+  segments: [],
+  selected: true,
+  text: 'A useful sentence.',
+  voiceId: 'Yuna' as const,
 })
 
 let setWriterOutput: (value: string) => string
 let setWriterState: (value: DialogueWriterState) => DialogueWriterState
 let disposeRepository: Mock<() => void>
-let disposeVoiceClient: Mock<() => void>
+let generateWithPreparation: Mock<() => void>
 let navigate: Mock<(to: string) => void>
 let startTextModel: Mock<ModelDownloadController['startTextModel']>
 let startVoiceModel: Mock<ModelDownloadController['startVoiceModel']>
+let setModelDownloadState: (value: ModelDownloadState) => ModelDownloadState
 
 beforeEach(() => {
+  localStorage.clear()
   vi.clearAllMocks()
   const [writerOutput, updateWriterOutput] = createSignal('A useful sentence.')
   const [writerState, updateWriterState] = createSignal<DialogueWriterState>({status: 'idle'})
+  const [modelDownloadState, updateModelDownloadState] = createSignal<ModelDownloadState>({
+    status: 'idle',
+  })
   setWriterOutput = updateWriterOutput
   setWriterState = updateWriterState
+  setModelDownloadState = updateModelDownloadState
   disposeRepository = vi.fn()
-  disposeVoiceClient = vi.fn()
+  generateWithPreparation = vi.fn()
   navigate = vi.fn<(to: string) => void>()
   startTextModel = vi.fn<ModelDownloadController['startTextModel']>().mockResolvedValue({
     status: 'complete',
@@ -138,7 +146,7 @@ beforeEach(() => {
     canPrepare: () => true,
     copyOutput: vi.fn(),
     generate: vi.fn(),
-    generateWithPreparation: vi.fn(),
+    generateWithPreparation,
     isBusy: () => false,
     isModelReady: () => true,
     output: writerOutput,
@@ -161,41 +169,30 @@ beforeEach(() => {
   vi.mocked(isValidLanguageLearningSentence).mockReturnValue(true)
   vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
-  vi.mocked(getSupertonicErrorMessage).mockReturnValue('voice model failed')
-  vi.mocked(generateCompressedDialogueAudio).mockImplementation(async (options) => {
-    options.onChunk(1, 1)
-    return generatedAudio()
-  })
   vi.mocked(createPDialogueRepository).mockReturnValue({
     dispose: disposeRepository,
   } as unknown as ReturnType<typeof createPDialogueRepository>)
   vi.mocked(saveLanguageLearningCandidates).mockResolvedValue(undefined)
+  vi.mocked(generateVoiceCandidates).mockResolvedValue({
+    candidates: [candidate()],
+    status: 'complete',
+  })
+  vi.mocked(regenerateCandidateVoice).mockImplementation(async (options) => ({
+    candidate: {...options.candidate, audioUrl: 'blob:regenerated'},
+    status: 'complete',
+  }))
   vi.mocked(useModelDownload).mockReturnValue({
     cancel: vi.fn(),
     dismissError: vi.fn(),
     dispose: vi.fn(),
+    downloads: () => [],
+    startImageModel: vi.fn(),
     startTextModel,
     startVoiceModel,
-    state: () => ({status: 'idle'}),
-  })
-  vi.mocked(createSupertonicClient).mockReturnValue({
-    cancelGeneration: vi.fn(),
-    dispose: disposeVoiceClient,
-    generate: vi.fn(),
-    generateStream: vi.fn(),
-    initialize: vi.fn<SupertonicClient['initialize']>(async (options) => {
-      options.onProgress({fileName: 'model.onnx', loadedBytes: 1, totalBytes: 1})
-      options.onStatus('voice ready')
-      return {ok: true as const, value: undefined}
-    }),
+    state: modelDownloadState,
   })
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:generated')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
-  let uuidCounter = 0
-  vi.spyOn(crypto, 'randomUUID').mockImplementation(() => {
-    uuidCounter += 1
-    return `00000000-0000-4000-8000-${String(uuidCounter).padStart(12, '0')}`
-  })
 
   vi.mocked(LanguageLearningEditorHeader).mockImplementation(() => <h1>editor</h1>)
   vi.mocked(PGenerationStatus).mockImplementation((props) => (
@@ -297,14 +294,19 @@ const renderGeneratedReview = async () => {
 }
 
 it('should generate, review, regenerate, toggle, and save a sentence', async () => {
-  render(() => <LanguageLearningEditor />)
+  const result = render(() => <LanguageLearningEditor />)
+
+  expect(result.container.querySelector('main')).toHaveClass(
+    '[background:var(--pomo-editor-background)]',
+    'text-foreground',
+  )
 
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   await completeTextGeneration()
 
   fireEvent.click(screen.getByRole('button', {name: 'regenerate'}))
-  await waitFor(() => expect(generateCompressedDialogueAudio).toHaveBeenCalledTimes(2))
+  await waitFor(() => expect(regenerateCandidateVoice).toHaveBeenCalledOnce())
   fireEvent.click(screen.getByRole('button', {name: 'toggle'}))
   fireEvent.click(screen.getByRole('button', {name: 'save'}))
   await flush()
@@ -312,7 +314,7 @@ it('should generate, review, regenerate, toggle, and save a sentence', async () 
   fireEvent.click(screen.getByRole('button', {name: 'save'}))
 
   await waitFor(() => expect(saveLanguageLearningCandidates).toHaveBeenCalledOnce())
-  expect(navigate).toHaveBeenCalledOnce()
+  expect(navigate).toHaveBeenCalledExactlyOnceWith('/')
   expect(disposeRepository).toHaveBeenCalledOnce()
 })
 
@@ -369,6 +371,23 @@ it('should download a missing text model and handle failed or cancelled download
   await flush()
   expect(startTextModel).toHaveBeenCalledOnce()
 
+  setModelDownloadState({
+    label: 'Gemma 4 E2B',
+    percentage: 37,
+    status: 'loading',
+    target: {kind: 'text', modelId: 'gemma-4-e2b'},
+  })
+  expect(screen.getByRole('button', {name: 'generate'})).toBeDisabled()
+  expect(
+    getLatestProps<ComponentProps<typeof PGenerationStatus>>(vi.mocked(PGenerationStatus)),
+  ).toMatchObject({
+    kind: 'draft',
+    message: 'Gemma 4 E2B 모델 받는 중 · 37%',
+    progress: 37,
+    progressLabel: '모델 다운로드 진행률',
+  })
+  setModelDownloadState({status: 'idle'})
+
   cleanup()
   setWriterState({status: 'idle'})
   startTextModel.mockResolvedValue({message: 'download failed', status: 'error'})
@@ -388,6 +407,41 @@ it('should download a missing text model and handle failed or cancelled download
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
   await flush()
   expect(startTextModel).toHaveBeenCalled()
+})
+
+it('should start one text workflow while the installed-model check is pending', async () => {
+  const modelCheck = createDeferred<boolean>()
+  vi.mocked(isTextModelDownloaded).mockReturnValue(modelCheck.promise)
+  render(() => <LanguageLearningEditor />)
+  const generateButton = screen.getByRole('button', {name: 'generate'})
+
+  fireEvent.click(generateButton)
+  expect(generateButton).toBeDisabled()
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningSettings>>(
+      vi.mocked(LanguageLearningSettings),
+    ).disabled,
+  ).toBe(true)
+  getLatestProps<ComponentProps<typeof LanguageLearningGenerateButton>>(
+    vi.mocked(LanguageLearningGenerateButton),
+  ).onPress()
+  modelCheck.resolve(true)
+  await flush()
+
+  expect(isTextModelDownloaded).toHaveBeenCalledOnce()
+  expect(generateWithPreparation).toHaveBeenCalledOnce()
+})
+
+it('should report a text model check failure and unlock the editor', async () => {
+  vi.mocked(isTextModelDownloaded).mockRejectedValue(new Error('model storage failed'))
+  render(() => <LanguageLearningEditor />)
+
+  fireEvent.click(screen.getByRole('button', {name: 'generate'}))
+  await flush()
+
+  expect(screen.getByText('학습 문장을 만들지 못했어요.')).toBeDefined()
+  expect(screen.getByRole('button', {name: 'generate'})).not.toBeDisabled()
+  expect(generateWithPreparation).not.toHaveBeenCalled()
 })
 
 it('should cancel or complete a missing all-sentence voice model download', async () => {
@@ -464,7 +518,9 @@ it('should generate every requested sentence before starting voice generation', 
   setWriterState({status: 'complete'})
 
   await waitFor(() => expect(LanguageLearningReview).toHaveBeenCalled())
-  expect(generateCompressedDialogueAudio).toHaveBeenCalledTimes(2)
+  expect(generateVoiceCandidates).toHaveBeenCalledWith(
+    expect.objectContaining({sentences: ['First sentence.', 'Second sentence.']}),
+  )
   fireEvent.click(screen.getByRole('button', {name: 'toggle'}))
   const reviewProps = getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
     vi.mocked(LanguageLearningReview),
@@ -473,37 +529,21 @@ it('should generate every requested sentence before starting voice generation', 
   await reviewProps.onRegenerate(reviewProps.candidates[0]?.id ?? 'missing')
 })
 
-it('should report voice initialization, generation, and model-check failures', async () => {
-  const client = vi.mocked(createSupertonicClient).getMockImplementation()?.()
-  if (client === undefined) {
-    throw new Error('음성 client mock이 준비되지 않았습니다.')
-  }
-  vi.mocked(createSupertonicClient).mockReturnValue(client)
-  vi.mocked(client.initialize).mockResolvedValue({
-    error: {code: 'cancelled', phase: 'initialize', retryable: false},
-    ok: false,
+it('should report voice workflow and model-check failures', async () => {
+  vi.mocked(generateVoiceCandidates).mockResolvedValue({
+    message: 'voice workflow failed',
+    status: 'error',
   })
   render(() => <LanguageLearningEditor />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'complete'})
   await flush()
-  expect(screen.getAllByText(/voice model failed/)).not.toHaveLength(0)
+  await expectStatusMessage(/voice workflow failed/)
 
   cleanup()
   setWriterState({status: 'idle'})
-  vi.mocked(client.initialize).mockResolvedValue({ok: true, value: undefined})
-  vi.mocked(generateCompressedDialogueAudio).mockResolvedValue({message: 'audio failed', ok: false})
-  render(() => <LanguageLearningEditor />)
-  fireEvent.click(screen.getByRole('button', {name: 'generate'}))
-  await flush()
-  setWriterState({status: 'generating'})
-  setWriterState({status: 'complete'})
-  await flush()
-  await expectStatusMessage(/audio failed/)
-
-  cleanup()
-  setWriterState({status: 'idle'})
+  vi.mocked(generateVoiceCandidates).mockResolvedValue({status: 'cancelled'})
   vi.mocked(isSupertonicModelDownloaded).mockRejectedValue(new Error('model check failed'))
   render(() => <LanguageLearningEditor />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
@@ -514,18 +554,7 @@ it('should report voice initialization, generation, and model-check failures', a
   await expectStatusMessage(/음성을 만들지 못했어요/)
 })
 
-it('should report unexpected voice generation and save failures', async () => {
-  vi.mocked(generateCompressedDialogueAudio).mockRejectedValue(new Error('voice crashed'))
-  render(() => <LanguageLearningEditor />)
-  fireEvent.click(screen.getByRole('button', {name: 'generate'}))
-  await flush()
-  setWriterState({status: 'complete'})
-  await flush()
-  await expectStatusMessage(/음성을 만들지 못했어요/)
-
-  cleanup()
-  setWriterState({status: 'idle'})
-  vi.mocked(generateCompressedDialogueAudio).mockResolvedValue(generatedAudio())
+it('should report save failures', async () => {
   vi.mocked(saveLanguageLearningCandidates).mockRejectedValue(new Error('save failed'))
   render(() => <LanguageLearningEditor />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
@@ -553,7 +582,7 @@ it('should handle missing and failed candidate voice regeneration', async () => 
   await expectStatusMessage(/음성을 만들지 못했어요/)
 })
 
-it('should handle candidate voice downloads and every regeneration failure', async () => {
+it('should handle candidate voice downloads and workflow results', async () => {
   render(() => <LanguageLearningEditor />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
@@ -591,39 +620,32 @@ it('should handle candidate voice downloads and every regeneration failure', asy
   fireEvent.click(screen.getByRole('button', {name: 'regenerate'}))
   await flush()
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
-  await waitFor(() => expect(generateCompressedDialogueAudio).toHaveBeenCalledTimes(2))
+  await waitFor(() => expect(regenerateCandidateVoice).toHaveBeenCalled())
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
 
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
-  const client = vi.mocked(createSupertonicClient).getMockImplementation()?.()
-  if (client === undefined) {
-    throw new Error('음성 client mock이 준비되지 않았습니다.')
-  }
-  vi.mocked(createSupertonicClient).mockReturnValue(client)
-  vi.mocked(client.initialize).mockResolvedValueOnce({
-    error: {code: 'cancelled', phase: 'initialize', retryable: false},
-    ok: false,
+  vi.mocked(regenerateCandidateVoice).mockResolvedValueOnce({
+    message: 'candidate voice failed',
+    status: 'error',
   })
   await getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
     vi.mocked(LanguageLearningReview),
   ).onRegenerate(candidateId)
-  await expectStatusMessage(/voice model failed/)
+  await expectStatusMessage(/candidate voice failed/)
 
-  vi.mocked(client.initialize).mockResolvedValue({ok: true, value: undefined})
-  vi.mocked(generateCompressedDialogueAudio).mockResolvedValueOnce({
-    message: 'candidate audio failed',
-    ok: false,
+  vi.mocked(regenerateCandidateVoice).mockResolvedValueOnce({status: 'cancelled'})
+  await getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
+    vi.mocked(LanguageLearningReview),
+  ).onRegenerate(candidateId)
+
+  vi.mocked(regenerateCandidateVoice).mockResolvedValueOnce({
+    candidate: {...candidate(), audioUrl: 'blob:replacement'},
+    status: 'complete',
   })
   await getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
     vi.mocked(LanguageLearningReview),
   ).onRegenerate(candidateId)
-  await expectStatusMessage(/candidate audio failed/)
-
-  vi.mocked(generateCompressedDialogueAudio).mockRejectedValueOnce(new Error('candidate crashed'))
-  await getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
-    vi.mocked(LanguageLearningReview),
-  ).onRegenerate(candidateId)
-  await expectStatusMessage(/음성을 만들지 못했어요/)
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
 })
 
 it('should keep direct word entry when changing the learning language', () => {
@@ -639,6 +661,83 @@ it('should keep direct word entry when changing the learning language', () => {
       vi.mocked(LanguageLearningWordSourceControl),
     ).source,
   ).toBe('direct')
+})
+
+it('should restore the last selected word source after reopening the editor', () => {
+  localStorage.setItem(
+    'pomo:language-learning:word-source:v1',
+    JSON.stringify({source: 'saved', version: 1}),
+  )
+  let view = render(() => <LanguageLearningEditor />)
+
+  const sourceProps = getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+    vi.mocked(LanguageLearningWordSourceControl),
+  )
+  expect(sourceProps.source).toBe('saved')
+
+  sourceProps.onSourceChange('direct')
+  expect(JSON.parse(localStorage.getItem('pomo:language-learning:word-source:v1') ?? '')).toEqual({
+    source: 'direct',
+    version: 1,
+  })
+
+  view.unmount()
+  vi.mocked(LanguageLearningWordSourceControl).mockClear()
+  view = render(() => <LanguageLearningEditor />)
+
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+      vi.mocked(LanguageLearningWordSourceControl),
+    ).source,
+  ).toBe('direct')
+  view.unmount()
+})
+
+it('should validate a saved-word preference after persisted words load on mount', () => {
+  localStorage.setItem(
+    'pomo:language-learning:word-source:v1',
+    JSON.stringify({source: 'saved', version: 1}),
+  )
+  vi.mocked(useLanguageLearningWords).mockImplementation(() => {
+    const [words, setWords] = createSignal<ReadonlyArray<{readonly value: string}>>([])
+    onMount(() => setWords([{value: 'one'}, {value: 'two'}, {value: 'three'}]))
+    return words as ReturnType<typeof useLanguageLearningWords>
+  })
+  vi.mocked(getUnmemorizedLanguageLearningWordValues).mockImplementation(({words}) =>
+    words.map((word) => word.value),
+  )
+
+  render(() => <LanguageLearningEditor />)
+
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+      vi.mocked(LanguageLearningWordSourceControl),
+    ).source,
+  ).toBe('saved')
+  expect(JSON.parse(localStorage.getItem('pomo:language-learning:word-source:v1') ?? '')).toEqual({
+    source: 'saved',
+    version: 1,
+  })
+})
+
+it('should replace an unavailable saved-word preference with direct entry', () => {
+  localStorage.setItem(
+    'pomo:language-learning:word-source:v1',
+    JSON.stringify({source: 'saved', version: 1}),
+  )
+  vi.mocked(getUnmemorizedLanguageLearningWordValues).mockReturnValue([])
+
+  render(() => <LanguageLearningEditor />)
+
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+      vi.mocked(LanguageLearningWordSourceControl),
+    ).source,
+  ).toBe('direct')
+  expect(JSON.parse(localStorage.getItem('pomo:language-learning:word-source:v1') ?? '')).toEqual({
+    source: 'direct',
+    version: 1,
+  })
 })
 
 it('should stop every pending workflow after the editor is disposed', async () => {
@@ -677,37 +776,18 @@ it('should stop every pending workflow after the editor is disposed', async () =
   voiceCheck.resolve(true)
   await flush()
 
-  const client = vi.mocked(createSupertonicClient).getMockImplementation()?.()
-  if (client === undefined) {
-    throw new Error('음성 client mock이 준비되지 않았습니다.')
-  }
-  vi.mocked(createSupertonicClient).mockReturnValue(client)
-  const initialize = createDeferred<Awaited<ReturnType<SupertonicClient['initialize']>>>()
-  vi.mocked(client.initialize).mockReturnValueOnce(initialize.promise)
+  const voiceGeneration = createDeferred<Awaited<ReturnType<typeof generateVoiceCandidates>>>()
+  vi.mocked(generateVoiceCandidates).mockReturnValueOnce(voiceGeneration.promise)
   setWriterState({status: 'idle'})
   view = render(() => <LanguageLearningEditor />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'complete'})
-  await waitFor(() => expect(client.initialize).toHaveBeenCalled())
+  await waitFor(() => expect(generateVoiceCandidates).toHaveBeenCalled())
   view.unmount()
-  initialize.resolve({ok: true, value: undefined})
+  voiceGeneration.resolve({candidates: [candidate()], status: 'complete'})
   await flush()
 
-  vi.mocked(client.initialize).mockResolvedValue({ok: true, value: undefined})
-  const audio = createDeferred<Awaited<ReturnType<typeof generateCompressedDialogueAudio>>>()
-  vi.mocked(generateCompressedDialogueAudio).mockReturnValueOnce(audio.promise)
-  setWriterState({status: 'idle'})
-  view = render(() => <LanguageLearningEditor />)
-  fireEvent.click(screen.getByRole('button', {name: 'generate'}))
-  await flush()
-  setWriterState({status: 'complete'})
-  await waitFor(() => expect(generateCompressedDialogueAudio).toHaveBeenCalled())
-  view.unmount()
-  audio.resolve(generatedAudio())
-  await flush()
-
-  vi.mocked(generateCompressedDialogueAudio).mockResolvedValue(generatedAudio())
   view = await renderGeneratedReview()
   const regenerateCheck = createDeferred<boolean>()
   vi.mocked(isSupertonicModelDownloaded).mockReturnValueOnce(regenerateCheck.promise)
@@ -718,27 +798,17 @@ it('should stop every pending workflow after the editor is disposed', async () =
   await flush()
 
   view = await renderGeneratedReview()
-  const regenerateInitialize = createDeferred<Awaited<ReturnType<SupertonicClient['initialize']>>>()
-  vi.mocked(client.initialize).mockReturnValueOnce(regenerateInitialize.promise)
+  const regeneration = createDeferred<Awaited<ReturnType<typeof regenerateCandidateVoice>>>()
+  vi.mocked(regenerateCandidateVoice).mockReturnValueOnce(regeneration.promise)
   fireEvent.click(screen.getByRole('button', {name: 'regenerate'}))
-  await waitFor(() => expect(client.initialize).toHaveBeenCalled())
+  await waitFor(() => expect(regenerateCandidateVoice).toHaveBeenCalled())
   view.unmount()
-  regenerateInitialize.resolve({ok: true, value: undefined})
+  regeneration.resolve({
+    candidate: {...candidate(), audioUrl: 'blob:disposed-regeneration'},
+    status: 'complete',
+  })
   await flush()
 
-  vi.mocked(client.initialize).mockResolvedValue({ok: true, value: undefined})
-  view = await renderGeneratedReview()
-  const regenerateAudio =
-    createDeferred<Awaited<ReturnType<typeof generateCompressedDialogueAudio>>>()
-  vi.mocked(generateCompressedDialogueAudio).mockClear()
-  vi.mocked(generateCompressedDialogueAudio).mockReturnValueOnce(regenerateAudio.promise)
-  fireEvent.click(screen.getByRole('button', {name: 'regenerate'}))
-  await waitFor(() => expect(generateCompressedDialogueAudio).toHaveBeenCalled())
-  view.unmount()
-  regenerateAudio.resolve(generatedAudio())
-  await flush()
-
-  vi.mocked(generateCompressedDialogueAudio).mockResolvedValue(generatedAudio())
   view = await renderGeneratedReview()
   const save = createDeferred<void>()
   vi.mocked(saveLanguageLearningCandidates).mockReturnValueOnce(save.promise)

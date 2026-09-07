@@ -1,0 +1,205 @@
+.picture-diary-book__turn-sheet {
+  position: absolute;
+  inset-block: 0.5rem;
+  width: calc(50% - 0.5rem);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.picture-diary-book__turn-sheet--older {
+  left: 0.5rem;
+}
+
+.picture-diary-book__turn-sheet--newer {
+  right: 0.5rem;
+}
+
+.picture-diary-book__cover-turn-sheet {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.picture-diary-book__cover-turn-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.picture-diary-book__cover-turn-face--back {
+  transform: rotateY(180deg);
+}
+
+.picture-diary-book__cover-turn-face > .picture-diary-book__back-cover {
+  width: 100%;
+  height: 100%;
+}
+
+.picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--older
+  .picture-diary-book__cover-turn-sheet {
+  transform-origin: right center;
+}
+
+.picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--newer
+  .picture-diary-book__cover-turn-sheet {
+  transform-origin: left center;
+}
+
+.picture-diary-book__turn-rest,
+.picture-diary-book__turn-flap {
+  box-sizing: border-box;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 0.0625rem solid rgb(var(--picture-diary-rule) / 18%);
+  border-radius: 0.3rem;
+  background: rgb(var(--picture-diary-page));
+}
+
+.picture-diary-book__turn-rest {
+  transform-origin: 0 0;
+}
+
+.picture-diary-book__turn-flap {
+  overflow: visible;
+  transform-origin: 0 0;
+}
+
+.picture-diary-book__turn-flap::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    rgb(35 31 26 / 30%),
+    rgb(35 31 26 / 10%) 18%,
+    transparent 52%,
+    rgb(255 255 255 / 34%)
+  );
+  content: '';
+  pointer-events: none;
+}
+
+.picture-diary-book__turn-flap-content {
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+}
+
+.picture-diary-book__turn-rest > .picture-diary-book__page,
+.picture-diary-book__turn-flap-content > .picture-diary-book__page {
+  width: 100%;
+  height: 100%;
+}
+
+@media (width < 48rem) {
+  .picture-diary-book__turn-sheet {
+    width: calc(100% - 1rem);
+  }
+
+  .picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--newer {
+    right: 0.5rem;
+    left: auto;
+  }
+}
+
+.picture-diary-book__turn-rest {
+  clip-path: var(--picture-diary-flat-clip, polygon(0 0, 100% 0, 100% 100%, 0 100%));
+}
+
+.picture-diary-book__turn-flap {
+  clip-path: var(--picture-diary-flap-clip, polygon(0 0, 0 0, 0 0));
+  filter: drop-shadow(
+    0.7rem 0.55rem 1rem rgb(20 18 15 / calc(var(--picture-diary-fold-shadow, 0) * 30%))
+  );
+  transform: var(--picture-diary-flap-transform, matrix(1, 0, 0, 1, 0, 0));
+}
+
+.picture-diary-book__turn-sheet[data-turn-phase='grab'] .picture-diary-book__turn-flap {
+  opacity: 0;
+}
+
+.picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--newer {
+  right: 0.5rem;
+  left: auto;
+}
+
+.picture-diary-book__turn-sheet--cover .picture-diary-book__cover-turn-sheet {
+  box-shadow: 0.8rem 0.8rem 1.8rem rgb(20 18 15 / calc(var(--picture-diary-fold-shadow, 0) * 32%));
+  transform: rotateY(var(--picture-diary-hard-angle, 0deg));
+}
+
+.picture-diary-book__turn-sheet--cover {
+  transform-style: preserve-3d;
+}
+
+.picture-diary-book[data-turn-kind='cover'] > .picture-diary-book__spread {
+  overflow: visible;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.picture-diary-book[data-turn-kind='cover'][data-cover-end='back']
+  > .picture-diary-book__spread
+  > .picture-diary-book__page--previous {
+  visibility: hidden;
+}
+
+.picture-diary-book[data-turn-kind='cover'][data-cover-end='front']
+  > .picture-diary-book__spread
+  > .picture-diary-book__page--current {
+  visibility: hidden;
+}
+
+.picture-diary-book[data-turn-kind='cover']
+  > .picture-diary-book__spread
+  > .picture-diary-book__page--previous {
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+
+.picture-diary-book[data-turn-kind='cover']
+  > .picture-diary-book__spread
+  > .picture-diary-book__page--current {
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--older
+  .picture-diary-book__cover-turn-sheet {
+  transform-origin: right center;
+}
+
+.picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--newer
+  .picture-diary-book__cover-turn-sheet {
+  transform-origin: left center;
+}
+
+@media (width < 48rem) {
+  .picture-diary-book[data-turn-kind='cover']
+    > .picture-diary-book__spread
+    > .picture-diary-book__page--current {
+    border-radius: 0.5rem;
+  }
+
+  .picture-diary-book__turn-sheet .picture-diary-book__page--previous {
+    display: flex;
+  }
+
+  .picture-diary-book[data-cover-end='front']
+    .picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--older {
+    left: 0.5rem;
+  }
+
+  .picture-diary-book[data-turn-kind='cover'][data-cover-end='front']
+    > .picture-diary-book__spread
+    > .picture-diary-book__page--current {
+    visibility: visible;
+  }
+
+  .picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--older {
+    left: calc(1.5rem - 100%);
+  }
+
+  .picture-diary-book__turn-sheet--cover .picture-diary-book__cover-turn-sheet {
+    transform: rotateY(var(--picture-diary-hard-angle, 0deg));
+  }
+}

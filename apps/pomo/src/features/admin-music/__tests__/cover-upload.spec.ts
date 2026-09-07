@@ -40,13 +40,17 @@ describe('uploadAlbumCover', () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(
       Response.json({
         coverImageUrl: 'https://storage.pomofi.io/album-covers/id/cover.webp',
+        coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf782',
       }),
     )
     vi.stubGlobal('fetch', fetcher)
 
-    const coverImageUrl = await uploadAlbumCover(file, '019d1990-1dc9-7255-a7b5-f9459dfaf782')
+    const result = await uploadAlbumCover(file, '019d1990-1dc9-7255-a7b5-f9459dfaf782')
 
-    expect(coverImageUrl).toBe('https://storage.pomofi.io/album-covers/id/cover.webp')
+    expect(result).toEqual({
+      coverImageUrl: 'https://storage.pomofi.io/album-covers/id/cover.webp',
+      coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf782',
+    })
     expect(fetcher).toHaveBeenCalledWith(
       '/api/admin/music/covers',
       expect.objectContaining({
@@ -91,7 +95,15 @@ describe('uploadAlbumCover', () => {
   })
 
   it('should reject an invalid upload response', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({coverImageUrl: 'invalid'})))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        Response.json({
+          coverImageUrl: 'invalid',
+          coverReservationId: '019d1990-1dc9-7255-a7b5-f9459dfaf782',
+        }),
+      ),
+    )
     const file = new File(['cover'], 'cover.webp', {type: 'image/webp'})
 
     await expect(uploadAlbumCover(file, 'draft-id')).rejects.toBeDefined()

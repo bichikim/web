@@ -3,9 +3,9 @@
 import {cleanup, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getTextDirection, setLocale} from '@paraglide/runtime'
 import {getInitialAppsInTossLocale} from '../../features/apps-in-toss-locale/bootstrap'
 import {reportClientError} from '../../features/client-error-reporter'
-import {getTextDirection, setLocale} from '@paraglide/runtime'
 import {AppsInTossHomePage} from '../AppsInTossHomePage'
 
 vi.mock('../../features/apps-in-toss-locale/bootstrap', () => ({

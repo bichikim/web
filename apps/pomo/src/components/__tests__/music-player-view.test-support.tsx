@@ -1,10 +1,11 @@
+import {PTooltipProvider} from '../tooltip'
 import {render} from '@solidjs/testing-library'
 import {vi} from 'vitest'
 
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import type {PTrack} from '../../features/focus-room-audio'
-import type {PAlbumLibraryProps} from '../PAlbumLibrary'
 import {MusicPlayerView} from '../MusicPlayerView'
+import type {PAlbumLibraryProps} from '../PAlbumLibrary'
 
 vi.mock('media-chrome', () => ({}))
 
@@ -31,7 +32,6 @@ vi.mock('../PAlbumLibrary', () => ({
         aria-label="앨범 추가"
         data-player-utility="album"
         onClick={() => props.onAddTracks(albumLibraryMocks.addedTracks)}
-        title="앨범 추가"
         type="button"
       >
         <span
@@ -39,28 +39,17 @@ vi.mock('../PAlbumLibrary', () => ({
           class={props.sceneStyle === 'scribble' ? 'i-pomo-scribble:album' : 'i-tabler-album'}
         />
       </button>
-      <button
-        data-testid="album-clear"
-        onClick={() => props.onClearTracks?.()}
-        title="재생목록 모두 비우기"
-        type="button"
-      >
+      <button data-testid="album-clear" onClick={() => props.onClearTracks?.()} type="button">
         재생목록 모두 비우기
       </button>
       <button
         data-testid="album-preview-start"
         onClick={() => props.onPreviewStart?.(albumLibraryMocks.stopPreview)}
-        title="미리듣기 시작"
         type="button"
       >
         미리듣기 시작
       </button>
-      <button
-        data-testid="album-preview-end"
-        onClick={() => props.onPreviewEnd?.()}
-        title="미리듣기 종료"
-        type="button"
-      >
+      <button data-testid="album-preview-end" onClick={() => props.onPreviewEnd?.()} type="button">
         미리듣기 종료
       </button>
       <span data-testid="album-track-count">{props.tracks.length}</span>
@@ -101,28 +90,32 @@ interface RenderMusicPlayerViewOptions {
 
 export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) =>
   render(() => (
-    <MusicPlayerView
-      currentIndex={0}
-      currentTrack={options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])}
-      expanded={options.expanded ?? true}
-      isPlaying={options.isPlaying ?? false}
-      levels={options.levels ?? []}
-      onAudioElement={options.onAudioElement ?? vi.fn()}
-      onAlbumAdd={options.onAlbumAdd}
-      onAlbumClear={options.onAlbumClear}
-      onExpandedChange={options.onExpandedChange ?? vi.fn()}
-      onNextTrack={options.onNextTrack ?? vi.fn()}
-      onPreviewEnd={options.onPreviewEnd}
-      onPreviewStart={options.onPreviewStart}
-      onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
-      onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
-      onShuffleChange={options.onShuffleChange ?? vi.fn()}
-      onTrackSelect={options.onTrackSelect ?? vi.fn()}
-      repeatMode="repeat-all"
-      sceneStyle={options.sceneStyle ?? 'original'}
-      shuffleEnabled={true}
-      tracks={TRACKS}
-    />
+    <PTooltipProvider>
+      <MusicPlayerView
+        currentIndex={0}
+        currentTrack={
+          options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])
+        }
+        expanded={options.expanded ?? true}
+        isPlaying={options.isPlaying ?? false}
+        levels={options.levels ?? []}
+        onAudioElement={options.onAudioElement ?? vi.fn()}
+        onAlbumAdd={options.onAlbumAdd}
+        onAlbumClear={options.onAlbumClear}
+        onExpandedChange={options.onExpandedChange ?? vi.fn()}
+        onNextTrack={options.onNextTrack ?? vi.fn()}
+        onPreviewEnd={options.onPreviewEnd}
+        onPreviewStart={options.onPreviewStart}
+        onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
+        onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
+        onShuffleChange={options.onShuffleChange ?? vi.fn()}
+        onTrackSelect={options.onTrackSelect ?? vi.fn()}
+        repeatMode="repeat-all"
+        sceneStyle={options.sceneStyle ?? 'original'}
+        shuffleEnabled={true}
+        tracks={TRACKS}
+      />
+    </PTooltipProvider>
   ))
 
 export const getProgressRanges = (container: HTMLElement) => {

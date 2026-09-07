@@ -1,113 +1,106 @@
-import {cva} from 'class-variance-authority'
-import {createMemo, createSignal, For, Show} from 'solid-js'
-
+import {createMemo, createSignal, Show} from 'solid-js'
 import * as m from '@paraglide/message'
+import {formatModelDownloadSize} from '../../features/model-storage'
 import {
   appendLanguageLearningWords,
-  deleteLanguageLearningWord,
+  deleteLanguageLearningWords,
   type LanguageLearningLanguage,
   type LanguageLearningWord,
   parseLanguageLearningTags,
-  setLanguageLearningWordMemorized,
+  setLanguageLearningWordsMemorized,
   useLanguageLearningWords,
 } from '../../features/language-learning'
-import {PButton} from '../PButton'
-import {PSettingsEmptyState} from '../settings/EmptyState'
-import {PSettingsSectionHeading} from '../settings/SectionHeading'
+import {getSupertonicModel} from '../../features/supertonic'
+import {PModelDownloadConsent} from '../PModelDownloadConsent'
 import {LanguageLearningLanguageSelect} from './LanguageSelect'
-import {LanguageLearningTagInput} from './TagInput'
+import {useLanguageLearningWordPronunciation} from './use-word-pronunciation'
+import {type LanguageLearningWordFilter, type LanguageLearningWordFilterView} from './words/filter'
+import {LanguageLearningWordInputSection} from './words/InputSection'
+import {LanguageLearningSavedWords} from './words/SavedWords'
 
-const WORD_CLASS = [
-  'inline-flex min-h-9 max-w-full items-stretch overflow-hidden rounded-control border border-solid',
-  'border-border bg-[rgb(255_255_255_/_3%)]',
-].join(' ')
-const WORD_ACTION_BUTTON_CLASS = [
-  'inline-flex size-9 flex-none cursor-pointer items-center justify-center border-0',
-  'border-solid border-border bg-transparent',
-].join(' ')
-const memorizedButtonClasses = cva(`${WORD_ACTION_BUTTON_CLASS} border-r`, {
-  defaultVariants: {memorized: false},
-  variants: {
-    memorized: {
-      false: 'text-muted-foreground hover:text-foreground',
-      true: 'bg-primary-soft text-primary hover:text-foreground',
-    },
-  },
-})
-
-interface LanguageLearningWordListProps {
-  readonly emptyMessage: string
-  readonly onDelete: (value: string) => void
-  readonly onToggleMemorized: (word: LanguageLearningWord) => void
-  readonly title: string
-  readonly words: ReadonlyArray<LanguageLearningWord>
+const getLanguageLearningWordFilterView = (
+  filter: LanguageLearningWordFilter,
+  allWords: ReadonlyArray<LanguageLearningWord>,
+  unmemorizedWords: ReadonlyArray<LanguageLearningWord>,
+  memorizedWords: ReadonlyArray<LanguageLearningWord>,
+): LanguageLearningWordFilterView => {
+  switch (filter) {
+    case 'all':
+      return {emptyMessage: m.learning_words_empty(), words: allWords}
+    case 'unmemorized':
+      return {emptyMessage: m.learning_words_unmemorized_empty(), words: unmemorizedWords}
+    case 'memorized':
+      return {emptyMessage: m.learning_words_memorized_empty(), words: memorizedWords}
+  }
 }
 
-const LanguageLearningWordList = (props: LanguageLearningWordListProps) => (
-  <>
-    <PSettingsSectionHeading count={`${props.words.length}개`} title={props.title} />
+const parseLanguageLearningWordFilter = (value: string): LanguageLearningWordFilter | null => {
+  switch (value) {
+    case 'all':
+    case 'unmemorized':
+    case 'memorized':
+      return value
+    default:
+      return null
+  }
+}
 
-    <Show
-      when={props.words.length > 0}
-      fallback={<PSettingsEmptyState>{props.emptyMessage}</PSettingsEmptyState>}
-    >
-      <ul
-        class={
-          'm-0 flex max-h-[19rem] list-none content-start items-start gap-2 overflow-y-auto ' +
-          'overscroll-contain p-0 pr-1 flex-wrap ' +
-          '[scrollbar-color:rgb(255_250_241_/_24%)_transparent] [scrollbar-width:thin]'
-        }
-      >
-        <For each={props.words}>
-          {(word) => {
-            const toggleLabel = () =>
-              word.memorized
-                ? m.learning_words_unmark_memorized({word: word.value})
-                : m.learning_words_mark_memorized({word: word.value})
+const getSelectedLanguageLearningWords = (
+  words: ReadonlyArray<LanguageLearningWord>,
+  values: ReadonlyArray<string>,
+) => {
+  const selectedValues = new Set(values)
+  return words.filter((word) => selectedValues.has(word.value))
+}
 
-            return (
-              <li class={WORD_CLASS}>
-                <button
-                  aria-label={toggleLabel()}
-                  aria-pressed={word.memorized}
-                  class={memorizedButtonClasses({memorized: word.memorized})}
-                  onClick={() => props.onToggleMemorized(word)}
-                  title={toggleLabel()}
-                  type="button"
-                >
-                  <span aria-hidden="true" class="i-tabler-check size-3.5" />
-                </button>
-                <span class="min-w-0 flex-1 break-words px-2.5 py-2 text-xs font-650 text-foreground">
-                  {word.value}
-                </span>
-                <button
-                  aria-label={m.learning_words_remove({word: word.value})}
-                  class={`${WORD_ACTION_BUTTON_CLASS} border-l text-muted-foreground hover:text-foreground`}
-                  onClick={() => props.onDelete(word.value)}
-                  type="button"
-                >
-                  <span aria-hidden="true">×</span>
-                </button>
-              </li>
-            )
-          }}
-        </For>
-      </ul>
-    </Show>
-  </>
-)
+const toggleLanguageLearningWordSelection = (
+  values: ReadonlyArray<string>,
+  value: string,
+): ReadonlyArray<string> =>
+  values.includes(value)
+    ? values.filter((selectedValue) => selectedValue !== value)
+    : [...values, value]
 
 export const LanguageLearningWords = () => {
   const [language, setLanguage] = createSignal<LanguageLearningLanguage>('en')
   const [inputValue, setInputValue] = createSignal('')
   const [pendingWords, setPendingWords] = createSignal<ReadonlyArray<string>>([])
   const [message, setMessage] = createSignal<string | null>(null)
+  const [wordFilter, setWordFilter] = createSignal<LanguageLearningWordFilter>('all')
+  const [selectedWordValues, setSelectedWordValues] = createSignal<ReadonlyArray<string>>([])
+  const pronunciation = useLanguageLearningWordPronunciation()
   const words = useLanguageLearningWords()
   const filteredWords = createMemo(() => words().filter((word) => word.language === language()))
-  const savedWords = createMemo(() => filteredWords().filter((word) => !word.memorized))
+  const unmemorizedWords = createMemo(() => filteredWords().filter((word) => !word.memorized))
   const memorizedWords = createMemo(() => filteredWords().filter((word) => word.memorized))
+  const filterView = createMemo(() =>
+    getLanguageLearningWordFilterView(
+      wordFilter(),
+      filteredWords(),
+      unmemorizedWords(),
+      memorizedWords(),
+    ),
+  )
+  const selectedWords = createMemo(() =>
+    getSelectedLanguageLearningWords(filterView().words, selectedWordValues()),
+  )
   const wordsToSave = () => parseLanguageLearningTags([...pendingWords(), inputValue()].join(','))
+  const handleLanguageChange = (value: LanguageLearningLanguage) => {
+    setSelectedWordValues([])
+    setLanguage(value)
+  }
+  const handleWordFilterChange = (value: string) => {
+    const nextFilter = parseLanguageLearningWordFilter(value)
+    if (nextFilter === null) {
+      return
+    }
 
+    setSelectedWordValues([])
+    setWordFilter(nextFilter)
+  }
+  const handleSelect = (word: LanguageLearningWord) => {
+    setSelectedWordValues((values) => toggleLanguageLearningWordSelection(values, word.value))
+  }
   const handleSave = () => {
     const values = wordsToSave()
 
@@ -126,24 +119,30 @@ export const LanguageLearningWords = () => {
       setMessage(m.learning_words_save_failed())
     }
   }
-
-  const handleDelete = (value: string) => {
+  const handleDelete = (wordsToDelete: ReadonlyArray<LanguageLearningWord>) => {
     try {
-      deleteLanguageLearningWord(language(), value)
+      deleteLanguageLearningWords(
+        language(),
+        wordsToDelete.map((word) => word.value),
+      )
+      for (const word of wordsToDelete) {
+        pronunciation.remove(word)
+      }
+      setSelectedWordValues([])
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to delete a language learning word.', error)
       setMessage(m.learning_words_delete_failed())
     }
   }
-
-  const handleToggleMemorized = (word: LanguageLearningWord) => {
+  const handleToggleMemorized = (wordsToChange: ReadonlyArray<LanguageLearningWord>) => {
     try {
-      setLanguageLearningWordMemorized({
-        language: word.language,
-        memorized: !word.memorized,
-        value: word.value,
+      setLanguageLearningWordsMemorized({
+        language: language(),
+        memorized: !wordsToChange.every((word) => word.memorized),
+        values: wordsToChange.map((word) => word.value),
       })
+      setSelectedWordValues([])
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to update a language learning word.', error)
@@ -153,47 +152,56 @@ export const LanguageLearningWords = () => {
 
   return (
     <section class="pomo-learning-words grid gap-4.5 settings-compact:gap-4">
-      <LanguageLearningLanguageSelect class="w-full" onChange={setLanguage} value={language()} />
-
-      <div class="grid gap-3 rounded-panel border border-solid border-border bg-[rgb(255_255_255_/_3%)] p-4">
-        <LanguageLearningTagInput
-          description={m.learning_words_input_hint()}
-          getRemoveLabel={(word) => m.learning_words_remove({word})}
-          inputValue={inputValue()}
-          label={m.learning_words_input()}
-          onInputChange={setInputValue}
-          onTagsChange={setPendingWords}
-          placeholder={m.learning_words_input_placeholder()}
-          tags={pendingWords()}
-        />
-        <PButton class="w-full" disabled={wordsToSave().length === 0} onPress={handleSave}>
-          {m.learning_words_save()}
-        </PButton>
-      </div>
-
-      <LanguageLearningWordList
-        emptyMessage={m.learning_words_empty()}
-        onDelete={handleDelete}
-        onToggleMemorized={handleToggleMemorized}
-        title={m.learning_words_saved()}
-        words={savedWords()}
+      <LanguageLearningLanguageSelect
+        class="w-full"
+        onChange={handleLanguageChange}
+        value={language()}
       />
 
-      <LanguageLearningWordList
-        emptyMessage={m.learning_words_memorized_empty()}
-        onDelete={handleDelete}
-        onToggleMemorized={handleToggleMemorized}
-        title={m.learning_words_memorized()}
-        words={memorizedWords()}
+      <LanguageLearningWordInputSection
+        inputValue={inputValue()}
+        onInputChange={setInputValue}
+        onSave={handleSave}
+        onTagsChange={setPendingWords}
+        saveDisabled={wordsToSave().length === 0}
+        tags={pendingWords()}
       />
 
-      <Show when={message()}>
+      <LanguageLearningSavedWords
+        allWords={filteredWords()}
+        autoplayKey={pronunciation.autoplayKey}
+        filter={wordFilter()}
+        filterView={filterView()}
+        getAudioUrl={pronunciation.audioUrl}
+        isPronunciationLoading={pronunciation.isLoading}
+        memorizedWords={memorizedWords()}
+        onDelete={handleDelete}
+        onFilterChange={handleWordFilterChange}
+        onPronounce={pronunciation.request}
+        onSelect={handleSelect}
+        onToggleMemorized={handleToggleMemorized}
+        pronunciationBusy={pronunciation.isBusy()}
+        selectedWords={selectedWords}
+        unmemorizedWords={unmemorizedWords()}
+      />
+
+      <Show when={message() ?? pronunciation.error()}>
         {(currentMessage) => (
-          <p aria-live="polite" class="m-0 text-sm text-[#f2a398]" role="status">
+          <p aria-live="polite" class="m-0 text-sm text-danger" role="status">
             {currentMessage()}
           </p>
         )}
       </Show>
+
+      <PModelDownloadConsent
+        actionLabel={m.learning_words_listen()}
+        downloadSize={formatModelDownloadSize(
+          getSupertonicModel(pronunciation.pendingModelId() ?? 'int8').size,
+        )}
+        isOpen={pronunciation.pendingWord() !== null}
+        onCancel={pronunciation.cancelDownload}
+        onConfirm={pronunciation.confirmDownload}
+      />
     </section>
   )
 }

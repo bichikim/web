@@ -10,10 +10,8 @@ vi.mock('../../features/focus-room-dialogue/repository', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => 'blob:focus-room-dialogue'),
-    revokeObjectURL: vi.fn(),
-  })
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:focus-room-dialogue')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
 })
 

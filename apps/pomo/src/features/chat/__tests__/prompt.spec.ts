@@ -35,6 +35,19 @@ describe('createChatMessages', () => {
     expect(messages[0]?.content).toContain('보통 200자 이내')
     expect(messages[0]?.content).toContain('이전 대화 요약:\n사용자는 짧은 답변을 좋아함.')
   })
+
+  it('should place transient calendar grounding in the system message', () => {
+    const messages = createChatMessages({
+      messages: [{content: '오늘 일정 알려줘', id: 'user-1', role: 'user'}],
+      summary: '',
+      supplementaryContext: '캘린더 조회 결과:\n- 오전 10시 회의',
+    })
+
+    expect(messages[0]?.content).toContain(
+      '현재 질문을 위한 외부 정보:\n캘린더 조회 결과:\n- 오전 10시 회의',
+    )
+    expect(messages[1]?.content).toBe('오늘 일정 알려줘')
+  })
 })
 
 describe('chat answer length policy', () => {

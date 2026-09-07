@@ -1,7 +1,6 @@
 ---
 name: new-pr
-description: Create a GitHub pull request from the current branch by committing changes, pushing, and opening against main with generated Summary and Testing sections.
-disable-model-invocation: true
+description: Create a GitHub pull request from the current branch by committing changes, pushing, and opening against dev with generated Summary and Testing sections.
 ---
 
 # Create new pull request
@@ -14,8 +13,9 @@ Create a new PR using the steps below.
 2. If there are uncommitted changes, review them briefly (see **Safety** below), then commit.
 3. Push the branch to the remote.
 4. Create a PR with `dev` as the base branch.
+5. Finish after the PR is created. Do not poll or wait for remote CI or deployment checks unless the user explicitly asks.
 
-If the current branch is not `dev`, use it as-is and run steps 2-4 above.
+If the current branch is not `dev`, use it as-is and run steps 2-5 above.
 
 ## Safety
 
@@ -30,7 +30,7 @@ Before committing or pushing:
 
 - Unless the user explicitly asks for a ready (non-draft) PR, create it as a **draft**.
 - Generate the PR title automatically based on the changes.
-- If GitHub MCP is configured, create the PR. If it is not configured, stop the task.
+- Prefer GitHub MCP when it is configured. Otherwise, use the authenticated GitHub CLI (`gh pr create`). Stop only when neither is available or authentication fails.
 
 Include the following sections in the PR body:
 

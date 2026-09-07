@@ -2,8 +2,6 @@
 
 import {describe, expect, it} from 'vitest'
 
-import {deLocalizeHref, localizeHref} from '@paraglide/runtime'
-
 import {
   getLocalizedActivityOptions,
   getLocalizedGazeOptions,
@@ -11,6 +9,7 @@ import {
   getLocalizedTimeOptions,
   getLocalizedWeatherCityOptions,
   getLocalizedWeatherLabel,
+  getLocalizedWeatherLocationLabel,
   getLocalizedWeatherSceneModeOptions,
 } from '../index'
 
@@ -61,6 +60,17 @@ describe('scene localization', () => {
     ])
   })
 
+  it('should preserve provider labels for searched world locations', () => {
+    expect(
+      getLocalizedWeatherLocationLabel({
+        country: 'Japan',
+        id: 'openweather:35.6900,139.6900',
+        name: 'Tokyo',
+        region: 'Tokyo',
+      }),
+    ).toBe('Tokyo')
+  })
+
   it('should localize every weather scene mode without changing its value', () => {
     expect(getLocalizedWeatherSceneModeOptions({locale: 'en'})).toEqual([
       {label: 'Automatic', value: 'auto'},
@@ -70,14 +80,5 @@ describe('scene localization', () => {
       {label: 'Mostly cloudy', value: 'cloudy'},
       {label: 'Overcast', value: 'overcast'},
     ])
-  })
-})
-
-describe('localized routes', () => {
-  it('should prefix both the base and additional locales', () => {
-    expect(localizeHref('/', {locale: 'ko'})).toBe('/ko/')
-    expect(localizeHref('/', {locale: 'en'})).toBe('/en/')
-    expect(localizeHref('/account', {locale: 'ko'})).toBe('/ko/account/')
-    expect(deLocalizeHref('/en/account/')).toBe('/account/')
   })
 })

@@ -175,6 +175,30 @@ export class ParallaxController {
     this.#onMotionPreferenceChange = options.onMotionPreferenceChange ?? (() => undefined)
   }
 
+  readonly onPointerDown = (event: PointerEvent) => {
+    if (this.#dragListening && !this.#destroyed) {
+      this.#handleDragStart(event)
+    }
+  }
+
+  readonly onPointerMove = (event: PointerEvent) => {
+    if (this.#dragListening && !this.#destroyed) {
+      this.#handleDragMove(event)
+    }
+  }
+
+  readonly onPointerUp = (event: PointerEvent) => {
+    if (this.#dragListening && !this.#destroyed) {
+      this.#handleDragEnd(event)
+    }
+  }
+
+  readonly onPointerCancel = (event: PointerEvent) => {
+    if (this.#dragListening && !this.#destroyed) {
+      this.#handleDragEnd(event)
+    }
+  }
+
   get prefersReducedMotion() {
     return this.#motionPreference.matches
   }
@@ -247,10 +271,6 @@ export class ParallaxController {
     }
 
     this.#dragListening = true
-    this.#host.addEventListener('pointerdown', this.#handleDragStart)
-    this.#host.addEventListener('pointermove', this.#handleDragMove)
-    this.#host.addEventListener('pointerup', this.#handleDragEnd)
-    this.#host.addEventListener('pointercancel', this.#handleDragEnd)
   }
 
   #stopDragInput() {
@@ -259,10 +279,6 @@ export class ParallaxController {
     }
 
     this.#dragListening = false
-    this.#host.removeEventListener('pointerdown', this.#handleDragStart)
-    this.#host.removeEventListener('pointermove', this.#handleDragMove)
-    this.#host.removeEventListener('pointerup', this.#handleDragEnd)
-    this.#host.removeEventListener('pointercancel', this.#handleDragEnd)
 
     if (this.#activePointerId !== null) {
       this.#releasePointer(this.#activePointerId)

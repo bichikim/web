@@ -10,6 +10,7 @@ interface PSelectSharedProps<TValue extends string> {
   readonly accessibleLabel?: string
   readonly appearance?: PSelectAppearance
   readonly class?: string
+  readonly description?: string
   readonly disabled?: boolean
   readonly getIconClass?: (icon: string) => string
   readonly hideLabel?: boolean
@@ -77,6 +78,7 @@ const renderSingleSelect = <TValue extends string>(props: PSelectSingleProps<TVa
           (appearance() === 'icon' ? `${props.label} ${selectedOption()?.label ?? ''}` : undefined)
         }
         appearance={appearance()}
+        description={props.description}
         getIconClass={props.getIconClass}
         hideLabel={props.hideLabel}
         label={props.label}
@@ -124,6 +126,7 @@ const renderMultipleSelect = <TValue extends string>(props: PSelectMultipleProps
         appearance={appearance()}
         clearDisabled={selectedOptions().length === 0}
         clearLabel={props.clearLabel}
+        description={props.description}
         getIconClass={props.getIconClass}
         hideLabel={props.hideLabel}
         label={props.label}

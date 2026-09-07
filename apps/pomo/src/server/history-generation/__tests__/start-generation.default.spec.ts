@@ -3,12 +3,15 @@ import {beforeEach, expect, it, vi} from 'vitest'
 const generationMocks = vi.hoisted(() => ({
   markFailed: vi.fn(),
   markSubmitted: vi.fn(),
+  markUnknown: vi.fn(),
   prepare: vi.fn(),
   submit: vi.fn(),
 }))
 
+vi.mock('src/env', () => ({env: {}}))
 vi.mock('../generation-repository', () => ({
   markGenerationFailed: generationMocks.markFailed,
+  markGenerationSubmissionUnknown: generationMocks.markUnknown,
   markGenerationSubmitted: generationMocks.markSubmitted,
   prepareGenerationRun: generationMocks.prepare,
 }))

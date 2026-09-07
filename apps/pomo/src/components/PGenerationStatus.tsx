@@ -1,15 +1,18 @@
+import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
+import {PProgress} from './PProgress'
 
-const STATUS_CLASSES = [
+const STATUS_CLASSES = cx(
   'pomo-generation-status flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
-  'bg-[rgb(214_181_133_/_9%)] p-3 text-[#d8caba] text-[0.8rem] leading-[1.4]',
-  '[&_strong]:text-[#e6c998]',
-].join(' ')
-const CANCEL_CLASSES = [
-  'min-h-8 cursor-pointer border-0 rounded-full bg-[rgb(214_181_133_/_16%)] px-3',
-  'text-[#fffaf1] text-xs font-[750] outline-none hover:bg-[rgb(214_181_133_/_24%)]',
-  'focus-visible:[outline:2px_solid_#d6b585] focus-visible:[outline-offset:2px]',
-].join(' ')
+  'bg-primary-soft p-3 text-foreground text-[0.8rem] leading-[1.4]',
+  '[&_strong]:text-highlight',
+)
+const CANCEL_CLASSES = cx(
+  'min-h-8 cursor-pointer border border-solid border-highlight rounded-full bg-transparent px-3',
+  'text-foreground text-xs font-[750] outline-none hover:bg-primary-soft',
+  'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-highlight',
+  'focus-visible:outline-offset-2',
+)
 
 const STATUS_ICONS = {
   draft: 'i-tabler-pencil',
@@ -30,14 +33,7 @@ export const PGenerationStatus = (props: PGenerationStatusProps) => (
     <span class="min-w-0 flex-1">{props.message}</span>
     <Show when={props.progress !== null && props.progress !== undefined}>
       <strong>{props.progress}%</strong>
-      <span
-        aria-label={props.progressLabel}
-        aria-valuemax="100"
-        aria-valuemin="0"
-        aria-valuenow={props.progress ?? 0}
-        class="sr-only"
-        role="progressbar"
-      />
+      <PProgress label={props.progressLabel} value={props.progress ?? 0} />
     </Show>
     <Show when={props.onCancel}>
       {(onCancel) => (

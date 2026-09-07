@@ -3,8 +3,8 @@ import {beforeEach, expect, it, vi} from 'vitest'
 const authMocks = vi.hoisted(() => ({handleAuthProxyRequest: vi.fn()}))
 
 vi.mock('@neondatabase/auth/server', () => authMocks)
-vi.mock('../../auth/environment', () => ({
-  getNeonAuthProxyConfig: () => ({baseUrl: 'https://auth.example', cookieSecret: 'secret'}),
+vi.mock('src/server/auth/neon-config', () => ({
+  readNeonAuthProxyConfig: () => ({baseUrl: 'https://auth.example', cookieSecret: 'secret'}),
 }))
 
 import {sendAccountLinkEmail} from '../magic-link'

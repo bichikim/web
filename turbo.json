@@ -19,7 +19,7 @@
     "prepare-build": {
       "dependsOn": ["^prepare-build"],
       "inputs": ["$TURBO_DEFAULT$", "!.output/**", ".env"],
-      "outputs": ["dist/**", "es-tone/**", ".supabase/**"],
+      "outputs": ["dist/**", "es-tone/**", ".i18n/**", ".supabase/**"],
       "env": ["SUPABASE_PROJECT_ID"],
       "passThroughEnv": ["SUPABASE_ACCESS_TOKEN"]
     },

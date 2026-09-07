@@ -3,6 +3,7 @@ import type {PSceneStyle} from '../../features/focus-room-animation'
 
 export interface PMusicPlayerContentProps {
   readonly expanded?: boolean
+  readonly isDialogueActive?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void
   readonly onPlayingChange?: (isPlaying: boolean) => void
   readonly onTrackChange?: (track: PTrack | null) => void

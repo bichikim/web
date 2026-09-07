@@ -4,26 +4,13 @@ import {createIPX, createIPXWebServer, type IPXStorage} from 'ipx'
 import {getSelfUrl} from 'src/env'
 import {joinURL} from 'ufo'
 
-export interface SelfStorageOptions {
-  /**
-   * @default 300
-   */
-  defaultMaxAge?: number
-  /**
-   * @default false
-   */
-  ignoreCacheControl?: boolean
-  /**
-   * @default 'images'
-   */
-  path?: string
+interface SelfStorageOptions {
   selfUrl: string
 }
 
-export type ImageHandler = (request: Request) => Promise<Response>
-
 const DEFAULT_MAX_AGE = 300
 const IMAGE_API_PATH = '/api/img'
+const IMAGE_STORAGE_PATH = 'images'
 const ENCODED_BYTE_PATTERN = /%[\dA-F]{2}/iu
 const MAX_PATH_DECODE_PASSES = 8
 const HTTP_NOT_FOUND = 404
@@ -49,8 +36,7 @@ const decodePathname = (pathname: string) => {
 }
 
 const resolveStorageUrl = (options: SelfStorageOptions, id: string) => {
-  const {path = 'images', selfUrl} = options
-  const storageRoot = new URL(`${joinURL(selfUrl, path)}/`)
+  const storageRoot = new URL(`${joinURL(options.selfUrl, IMAGE_STORAGE_PATH)}/`)
   const target = new URL(joinURL(storageRoot.href, id))
   const decodedPathname = decodePathname(target.pathname)
 
@@ -86,23 +72,16 @@ const acceptUpstreamResponse = (response: Response) => {
   })
 }
 
-export function parseResponse(
-  response: Response,
-  options: Pick<SelfStorageOptions, 'defaultMaxAge' | 'ignoreCacheControl'> = {},
-) {
-  const {defaultMaxAge = DEFAULT_MAX_AGE, ignoreCacheControl = false} = options
+function parseResponse(response: Response) {
+  let maxAge = DEFAULT_MAX_AGE
 
-  let maxAge = defaultMaxAge
+  const _cacheControl = response.headers.get('cache-control')
 
-  if (ignoreCacheControl !== true) {
-    const _cacheControl = response.headers.get('cache-control')
+  if (_cacheControl) {
+    const m = _cacheControl.match(/max-age=(?<maxAge>\d+)/u)
 
-    if (_cacheControl) {
-      const m = _cacheControl.match(/max-age=(?<maxAge>\d+)/u)
-
-      if (m?.groups?.maxAge) {
-        maxAge = Number.parseInt(m.groups.maxAge, 10)
-      }
+    if (m?.groups?.maxAge) {
+      maxAge = Number.parseInt(m.groups.maxAge, 10)
     }
   }
 
@@ -116,10 +95,7 @@ export function parseResponse(
   return {maxAge, mtime}
 }
 
-export const createSelfStorage = (
-  options: SelfStorageOptions,
-  fetcher: typeof fetch = fetch,
-): IPXStorage => {
+const createSelfStorage = (options: SelfStorageOptions): IPXStorage => {
   return {
     getData: async (id: string) => {
       const url = resolveStorageUrl(options, id)
@@ -128,7 +104,7 @@ export const createSelfStorage = (
         return undefined
       }
 
-      const response = acceptUpstreamResponse(await fetcher(url))
+      const response = acceptUpstreamResponse(await fetch(url))
 
       return response?.arrayBuffer()
     },
@@ -140,27 +116,18 @@ export const createSelfStorage = (
       }
 
       const response = acceptUpstreamResponse(
-        await fetcher(url, {
+        await fetch(url, {
           method: 'HEAD',
         }),
       )
 
-      return response === undefined ? undefined : parseResponse(response, options)
+      return response === undefined ? undefined : parseResponse(response)
     },
     name: 'ipx:self',
   }
 }
 
-export const createImageHandler = (
-  options: SelfStorageOptions,
-  fetcher: typeof fetch = fetch,
-): ImageHandler => {
-  const ipx = createIPX({storage: createSelfStorage(options, fetcher)})
-
-  return createIPXWebServer(ipx)
-}
-
-export const createImageRequest = (request: Request) => {
+const createImageRequest = (request: Request) => {
   const url = new URL(request.url)
   const imagePath = url.pathname.slice(IMAGE_API_PATH.length)
 
@@ -169,19 +136,8 @@ export const createImageRequest = (request: Request) => {
   return new Request(url, request)
 }
 
-export const createLazyImageHandler = (
-  createHandler: () => ImageHandler = () => createImageHandler({selfUrl: getSelfUrl()}),
-): ImageHandler => {
-  let handler: ImageHandler | undefined
-
-  return (request) => {
-    handler ??= createHandler()
-
-    return handler(request)
-  }
-}
-
-const handleImage = createLazyImageHandler()
+const imageProcessor = createIPX({storage: createSelfStorage({selfUrl: getSelfUrl()})})
+const handleImage = createIPXWebServer(imageProcessor)
 
 export const GET = (event: APIEvent) => {
   return handleImage(createImageRequest(event.request))

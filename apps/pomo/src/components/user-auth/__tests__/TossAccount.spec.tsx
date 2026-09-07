@@ -1,9 +1,14 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
+import type {AuthController} from '../../../features/auth/controller'
+import type {AuthenticationState} from '../../../features/auth/machine'
+
 const navigate = vi.fn()
+const authMocks = vi.hoisted(() => ({useAuth: vi.fn()}))
 const sessionMocks = vi.hoisted(() => ({
   clearStoredAppSession: vi.fn(),
   createTossLoginSession: vi.fn(),
@@ -13,21 +18,112 @@ const sessionMocks = vi.hoisted(() => ({
   validateAppSession: vi.fn(),
 }))
 
-vi.mock('@solidjs/router', () => ({useNavigate: vi.fn()}))
+vi.mock('@solidjs/router', () => ({
+  action: vi.fn((clientAction) => clientAction),
+  useAction: vi.fn(),
+  useNavigate: vi.fn(),
+  useSubmission: vi.fn(),
+}))
 vi.mock('../../../features/user-auth/app-session', () => sessionMocks)
+vi.mock('../../../features/auth/AuthProvider', () => ({useAuth: authMocks.useAuth}))
 
-import {useNavigate} from '@solidjs/router'
+import {useAction, useNavigate, useSubmission} from '@solidjs/router'
 
 import {TossAccount} from '../TossAccount'
 
+const [loginPending, setLoginPending] = createSignal(false)
+const [logoutPending, setLogoutPending] = createSignal(false)
+const [emailPending, setEmailPending] = createSignal(false)
+const [authenticationState, setAuthenticationState] = createSignal<AuthenticationState>({
+  kind: 'authenticated',
+  provider: 'toss',
+})
+const authenticationSession = () => {
+  const state = authenticationState()
+  return state.kind === 'authenticated' ? state : null
+}
+const authentication: AuthController = {
+  session: authenticationSession,
+  state: authenticationState,
+}
+const loginSubmission = {
+  get pending() {
+    return loginPending()
+  },
+}
+const logoutSubmission = {
+  get pending() {
+    return logoutPending()
+  },
+}
+const emailSubmission = {
+  clear: vi.fn(),
+  error: undefined,
+  input: [],
+  get pending() {
+    return emailPending()
+  },
+  result: undefined,
+  retry: vi.fn(),
+  url: 'https://action/request-toss-account-link-email',
+}
+
+const wrapAction =
+  (
+    clientAction: (...input: ReadonlyArray<unknown>) => Promise<unknown>,
+    setPending: (pending: boolean) => void,
+  ) =>
+  async (...input: ReadonlyArray<unknown>) => {
+    setPending(true)
+    try {
+      return await clientAction(...input)
+    } finally {
+      setPending(false)
+    }
+  }
+
 beforeEach(() => {
   vi.clearAllMocks()
+  setLoginPending(false)
+  setLogoutPending(false)
+  setEmailPending(false)
+  setAuthenticationState({kind: 'authenticated', provider: 'toss'})
+  authMocks.useAuth.mockReturnValue(authentication)
   vi.mocked(useNavigate).mockReturnValue(navigate)
+  vi.mocked(useAction)
+    .mockImplementationOnce(
+      (clientAction) =>
+        wrapAction(async (...input) => {
+          const result = await clientAction(...input)
+          if ((result as {status?: string}).status === 'authenticated') {
+            setAuthenticationState({kind: 'authenticated', provider: 'toss'})
+          }
+          return result
+        }, setLoginPending) as ReturnType<typeof useAction>,
+    )
+    .mockImplementationOnce(
+      (clientAction) =>
+        wrapAction(async (...input) => {
+          const result = await clientAction(...input)
+          if ((result as {status?: string}).status !== 'unavailable') {
+            setAuthenticationState({kind: 'anonymous'})
+          }
+          return result
+        }, setLogoutPending) as ReturnType<typeof useAction>,
+    )
+    .mockImplementationOnce(
+      (clientAction) => wrapAction(clientAction, setEmailPending) as ReturnType<typeof useAction>,
+    )
+  vi.mocked(useSubmission)
+    .mockReturnValueOnce(loginSubmission as ReturnType<typeof useSubmission>)
+    .mockReturnValueOnce(logoutSubmission as ReturnType<typeof useSubmission>)
+    .mockReturnValueOnce(emailSubmission as ReturnType<typeof useSubmission>)
   sessionMocks.readStoredAppSession.mockResolvedValue('app-token')
   sessionMocks.validateAppSession.mockResolvedValue(true)
 })
 
-it('should return to Pomo without showing account linking after Toss login', async () => {
+it('should return to Pomo after Toss login', async () => {
+  setAuthenticationState({kind: 'anonymous'})
   sessionMocks.readStoredAppSession.mockResolvedValue(null)
   sessionMocks.createTossLoginSession.mockResolvedValue('app-token')
 
@@ -36,11 +132,11 @@ it('should return to Pomo without showing account linking after Toss login', asy
   const loginButton = await screen.findByRole('button', {name: '토스로 시작하기'})
   fireEvent.click(loginButton)
 
-  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/ko/', {replace: true}))
-  expect(screen.queryByLabelText('연결할 이메일')).toBeNull()
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/', {replace: true}))
 })
 
 it('should preserve later navigation when Toss login finishes after unmount', async () => {
+  setAuthenticationState({kind: 'anonymous'})
   const loginSession = Promise.withResolvers<string>()
   sessionMocks.readStoredAppSession.mockResolvedValue(null)
   sessionMocks.createTossLoginSession.mockReturnValue(loginSession.promise)
@@ -74,27 +170,8 @@ it('should show the remaining delay when account link requests are rate limited'
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('42초 후'))
 })
 
-it('should clear an expired stored session before offering Toss login', async () => {
-  sessionMocks.readStoredAppSession.mockResolvedValue('expired-token')
-  sessionMocks.validateAppSession.mockResolvedValue(false)
-
-  render(() => <TossAccount />)
-
-  await screen.findByRole('button', {name: '토스로 시작하기'})
-  expect(sessionMocks.validateAppSession).toHaveBeenCalledWith('expired-token')
-  expect(sessionMocks.clearStoredAppSession).toHaveBeenCalledOnce()
-})
-
-it('should explain when restoring the Toss session fails', async () => {
-  sessionMocks.readStoredAppSession.mockRejectedValueOnce(new Error('storage unavailable'))
-
-  render(() => <TossAccount />)
-
-  await screen.findByRole('button', {name: '토스로 시작하기'})
-  expect(screen.getByRole('alert')).toHaveTextContent('로그인 상태를 확인하지 못했습니다.')
-})
-
 it('should show login progress and explain a failed Toss login', async () => {
+  setAuthenticationState({kind: 'anonymous'})
   const loginSession = Promise.withResolvers<string>()
   sessionMocks.readStoredAppSession.mockResolvedValue(null)
   sessionMocks.createTossLoginSession.mockReturnValue(loginSession.promise)
@@ -116,6 +193,8 @@ it('should sign out the active Toss session and show confirmation', async () => 
 
   render(() => <TossAccount />)
 
+  const activeAccount = await screen.findByText('토스 계정으로 사용 중')
+  expect(activeAccount.closest('div')).toHaveClass('border-border', 'bg-content-surface')
   const logoutButton = await screen.findByRole('button', {name: '로그아웃'})
   fireEvent.click(logoutButton)
 
@@ -200,8 +279,12 @@ it('should show email-link progress and confirm a sent link', async () => {
   render(() => <TossAccount />)
 
   const emailField = await screen.findByLabelText('연결할 이메일')
+  const emailForm = screen.getByRole('button', {name: '웹 로그인 연결하기'}).closest('form')
+  expect(emailForm).toHaveAttribute('action', '/api/account/link-email')
+  expect(emailForm).toHaveAttribute('method', 'post')
+  expect(emailField).toHaveAttribute('name', 'email')
   fireEvent.input(emailField, {target: {value: 'user@example.com'}})
-  fireEvent.submit(screen.getByRole('button', {name: '웹 로그인 연결하기'}).closest('form')!)
+  fireEvent.submit(emailForm!)
   expect(screen.getByRole('button', {name: '이메일 전송 중…'})).toBeDisabled()
 
   emailRequest.resolve({status: 'sent'})

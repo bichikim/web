@@ -25,7 +25,7 @@ const ScreenWakeLockHarness = (props: ScreenWakeLockHarnessProps) => {
 
 describe('useScreenWakeLock', () => {
   beforeEach(() => {
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
     appsInTossMocks.setAwakeMode
       .mockReset()
       .mockImplementation(({enabled}) => Promise.resolve({enabled}))
@@ -64,7 +64,7 @@ describe('useScreenWakeLock', () => {
   }
 
   const setBrowserWakeLock = (request: ReturnType<typeof vi.fn>) => {
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
     Object.defineProperty(navigator, 'wakeLock', {
       configurable: true,
       value: {request},
@@ -137,7 +137,7 @@ describe('useScreenWakeLock', () => {
 
   it('should keep the browser capability boundary in a regular web build', async () => {
     let controller: ScreenWakeLockController | undefined
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
     render(() => (
       <ScreenWakeLockHarness
         onController={(nextController) => {

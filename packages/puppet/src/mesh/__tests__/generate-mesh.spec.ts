@@ -114,6 +114,10 @@ describe('generateMesh', () => {
       error: {code: 'no-opaque-pixels'},
       ok: false,
     })
+    expect(generateMesh({alphaThreshold: 0, pixels: createPixels(1, 1, [])})).toEqual({
+      error: {code: 'no-opaque-pixels'},
+      ok: false,
+    })
   })
 
   it('should reject invalid pixel, threshold, and cell-size inputs', () => {

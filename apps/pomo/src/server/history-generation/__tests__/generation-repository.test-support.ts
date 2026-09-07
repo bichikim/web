@@ -16,8 +16,8 @@ export {
   associateGenerationResponse,
   failHistoryResponse,
   findGenerationRun,
-  listRecoverableGenerationRuns,
   markGenerationFailed,
+  markGenerationSubmissionUnknown,
   markGenerationSubmitted,
   prepareGenerationRerun,
   prepareGenerationRun,
@@ -42,6 +42,8 @@ export interface HistoricalGenerationRunRow {
   readonly sourcePolicyVersion: string
   readonly sourceUrls: ReadonlyArray<string>
   readonly status: GenerationRun['status']
+  readonly submissionExpiresAt: Date | null
+  readonly submissionState: GenerationRun['submissionState']
   readonly targetDate: string
   readonly updatedAt: Date
 }
@@ -50,6 +52,7 @@ export const createRun = (
   status: GenerationRun['status'],
   openAiResponseId: string | null = RESPONSE_ID,
   updatedAt = new Date('2026-08-15T00:00:00.000Z'),
+  submissionState: GenerationRun['submissionState'] = null,
 ): HistoricalGenerationRunRow => ({
   attemptCount: 1,
   channelId: 'channel-1',
@@ -63,6 +66,8 @@ export const createRun = (
   sourcePolicyVersion: 'history-sources-v1',
   sourceUrls: [],
   status,
+  submissionExpiresAt: null,
+  submissionState,
   targetDate: '2026-08-16',
   updatedAt,
 })

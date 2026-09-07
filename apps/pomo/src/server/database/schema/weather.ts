@@ -1,6 +1,7 @@
 import {sql} from 'drizzle-orm'
 import {
   check,
+  doublePrecision,
   integer,
   pgEnum,
   pgTable,
@@ -19,6 +20,52 @@ export const weatherPrecipitationEnum = pgEnum('weather_precipitation', [
 ])
 
 export const weatherSkyEnum = pgEnum('weather_sky', ['clear', 'cloudy', 'overcast'])
+
+export const weatherLocations = pgTable(
+  'weather_locations',
+  {
+    country: varchar({length: 128}).notNull(),
+    createdAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+    id: varchar({length: 64}).primaryKey(),
+    latitude: doublePrecision().notNull(),
+    longitude: doublePrecision().notNull(),
+    name: varchar({length: 128}).notNull(),
+    providerLocationId: varchar({length: 64}).notNull(),
+    region: varchar({length: 128}).notNull(),
+    updatedAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+  },
+  (table) => [
+    check('weather_locations_latitude_range', sql`${table.latitude} between -90 and 90`),
+    check('weather_locations_longitude_range', sql`${table.longitude} between -180 and 180`),
+    uniqueIndex('weather_locations_provider_id_index').on(table.providerLocationId),
+  ],
+)
+
+export const weatherProviderUsage = pgTable(
+  'weather_provider_usage',
+  {
+    billingMonth: varchar({length: 7}).primaryKey(),
+    currentRequests: integer().notNull().default(0),
+    rateRequests: integer().notNull().default(0),
+    rateWindowMinute: varchar({length: 16}).notNull(),
+    searchRequests: integer().notNull().default(0),
+    updatedAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+  },
+  (table) => [
+    check(
+      'weather_provider_usage_month_format',
+      sql`${table.billingMonth} ~ '^[0-9]{4}-[0-9]{2}$'`,
+    ),
+    check(
+      'weather_provider_usage_requests_nonnegative',
+      sql`${table.currentRequests} >= 0 and ${table.rateRequests} >= 0 and ${table.searchRequests} >= 0`,
+    ),
+    check(
+      'weather_provider_usage_rate_window_format',
+      sql`${table.rateWindowMinute} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$'`,
+    ),
+  ],
+)
 
 export const weather = pgTable(
   'weather',

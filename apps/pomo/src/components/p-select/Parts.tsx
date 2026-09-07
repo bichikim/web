@@ -1,3 +1,4 @@
+import {FIELD_DESCRIPTION, FIELD_LABEL, FIELD_VALUE} from 'src/components/field-classes'
 import {Select} from '@kobalte/core/select'
 import {cva, cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
@@ -31,11 +32,11 @@ const selectTriggerClasses = cva(
     variants: {
       appearance: {
         default:
-          'flex h-control-md w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 text-sm font-650 leading-5',
+          'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
+          `px-4 py-2 ${FIELD_VALUE}`,
         detailed:
-          'flex h-control-md w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 text-sm font-650 leading-5',
+          'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
+          `px-4 py-2 ${FIELD_VALUE}`,
         icon:
           'grid size-control-md place-items-center text-highlight shadow-panel ' +
           'hover:bg-surface-interactive focus-visible:bg-surface-interactive ' +
@@ -50,6 +51,7 @@ interface PSelectPartsProps<TValue extends string> {
   readonly appearance: PSelectAppearance
   readonly clearDisabled?: boolean
   readonly clearLabel?: string
+  readonly description?: string
   readonly getIconClass?: (icon: string) => string
   readonly hideLabel?: boolean
   readonly label: string
@@ -63,11 +65,16 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
   <>
     <Show when={!props.hideLabel || props.accessibleLabel === undefined}>
       <Select.Label
-        class={props.hideLabel ? 'sr-only' : 'text-xs font-650 leading-4 text-muted-foreground'}
+        class={props.hideLabel ? 'sr-only' : FIELD_LABEL}
         data-visually-hidden={props.hideLabel ? '' : undefined}
       >
         {props.label}
       </Select.Label>
+    </Show>
+    <Show when={props.description}>
+      {(description) => (
+        <Select.Description class={FIELD_DESCRIPTION}>{description()}</Select.Description>
+      )}
     </Show>
     <Select.Trigger
       aria-label={props.accessibleLabel}
@@ -76,9 +83,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
       <Show
         when={props.appearance === 'icon' ? props.selectedIcon : undefined}
         fallback={
-          <Select.Value<
-            PSelectOption<TValue>
-          > class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+          <Select.Value<PSelectOption<TValue>> class="min-w-0 break-words whitespace-normal">
             {(state) =>
               props.multiple
                 ? (props.selectionLabel?.(state.selectedOptions()) ??
@@ -91,7 +96,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
         {(selectedIcon) => (
           <span
             aria-hidden="true"
-            class={cx('size-5', props.getIconClass?.(selectedIcon()) ?? selectedIcon())}
+            class={cx('size-6', props.getIconClass?.(selectedIcon()) ?? selectedIcon())}
           />
         )}
       </Show>
@@ -102,7 +107,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
             'transition-transform duration-160 ui-group-expanded:rotate-180 motion-reduce:transition-none'
           }
         >
-          <span aria-hidden="true" class="i-tabler-chevron-down size-4" />
+          <span aria-hidden="true" class="i-tabler-chevron-down size-5 flex-none" />
         </Select.Icon>
       </Show>
     </Select.Trigger>

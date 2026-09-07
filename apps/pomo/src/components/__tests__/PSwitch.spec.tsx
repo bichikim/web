@@ -25,10 +25,13 @@ describe('PSwitch', () => {
       />
     ))
     const input = screen.getByRole('switch', {name: '화면 자동 꺼짐 방지'})
+    const control = input.nextElementSibling
 
     expect(result.container.firstElementChild).toHaveClass('extra-switch')
     expect(screen.getByText('집중하는 동안 화면을 켜 둬요.')).toBeInTheDocument()
     expect(input).not.toBeChecked()
+    expect(control).toHaveClass('bg-switch-track')
+    expect(control?.firstElementChild).toHaveClass('bg-switch-thumb')
 
     fireEvent.click(input)
     expect(onChange).toHaveBeenCalledWith(true)

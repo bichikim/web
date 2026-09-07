@@ -1,21 +1,31 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PDatabase} from '../../focus-room-dialogue/database'
+import type {PDialogue} from '../../focus-room-dialogue/schema'
 import {
   type FeedDialogueJob,
   type FeedDialogueMetadata,
   type FeedItemRecord,
   getFeedItemRecordId,
 } from '../feed-dialogue-schema'
-import {createFeedDialogueRepository} from '../feed-dialogue-repository'
+import {
+  createFeedDialogueRepository as createRepositoryAdapter,
+  type FailedFeedDialogueJob,
+  type FailedFeedItemRecord,
+  type GeneratingFeedDialogueJob,
+} from '../feed-dialogue-repository'
 
 const databaseModuleMocks = vi.hoisted(() => ({
   createPDatabase: vi.fn(),
 }))
+const dialogueAudioMocks = vi.hoisted(() => ({delete: vi.fn()}))
 
 vi.mock('../../focus-room-dialogue/database', () => ({
   createPDatabase: databaseModuleMocks.createPDatabase,
 }))
+
+const createFeedDialogueRepository = () =>
+  createRepositoryAdapter({deleteDialogueAudio: dialogueAudioMocks.delete})
 
 const metadataRangeToArray = vi.fn()
 const metadataBelowOrEqual = vi.fn(() => ({toArray: metadataRangeToArray}))
@@ -31,12 +41,14 @@ const feedDialogueJobs = {
   bulkGet: vi.fn(),
   bulkPut: vi.fn(),
   delete: vi.fn(),
+  get: vi.fn(),
   orderBy: jobOrderBy,
   put: vi.fn(),
   toArray: vi.fn(),
 }
 const dialogues = {
   delete: vi.fn(),
+  get: vi.fn(),
 }
 const eventBindings = {
   delete: vi.fn(),
@@ -57,6 +69,10 @@ const feedItems = {
   put: vi.fn(),
   where: itemWhere,
 }
+const databaseTransaction = vi.fn(async (...arguments_: ReadonlyArray<unknown>) => {
+  const callback = arguments_.at(-1) as () => Promise<unknown>
+  return callback()
+})
 const database = {
   close: vi.fn(),
   dialogues,
@@ -64,14 +80,26 @@ const database = {
   feedDialogueJobs,
   feedDialogueMetadata,
   feedItems,
-  transaction: vi.fn(async (...arguments_: ReadonlyArray<unknown>) => {
-    const callback = arguments_.at(-1) as () => Promise<unknown>
-    return callback()
-  }),
+  transaction: databaseTransaction,
 } as unknown as PDatabase
 
 const CREATED_AT = '2026-08-25T00:00:00.000Z'
 const UPDATED_AT = '2026-08-25T01:00:00.000Z'
+
+const createDialogue = (overrides: Partial<PDialogue> = {}): PDialogue => ({
+  audioKey: 'audio-1',
+  createdAt: CREATED_AT,
+  durationMs: 1000,
+  id: 'dialogue-1',
+  language: 'ko',
+  modelId: 'int8',
+  segments: [{durationMs: 1000, index: 0, startMs: 0, text: '읽을 대사'}],
+  text: '읽을 대사',
+  updatedAt: UPDATED_AT,
+  version: 1,
+  voiceId: 'M1',
+  ...overrides,
+})
 
 const createJob = (overrides: Partial<FeedDialogueJob> = {}): FeedDialogueJob => ({
   createdAt: CREATED_AT,
@@ -127,6 +155,8 @@ const createMetadata = (overrides: Partial<FeedDialogueMetadata> = {}): FeedDial
 beforeEach(() => {
   vi.clearAllMocks()
   databaseModuleMocks.createPDatabase.mockReturnValue(database)
+  dialogueAudioMocks.delete.mockResolvedValue(undefined)
+  dialogues.get.mockResolvedValue(undefined)
 })
 
 describe('feed dialogue repository writes', () => {
@@ -140,22 +170,80 @@ describe('feed dialogue repository writes', () => {
     expect(feedDialogueMetadata.put).toHaveBeenCalledWith(metadata)
     expect(feedItems.put).toHaveBeenCalledWith(item)
     expect(feedDialogueJobs.delete).toHaveBeenCalledWith('job-1')
-    expect(database.transaction).toHaveBeenCalledOnce()
+    expect(databaseTransaction).toHaveBeenCalledOnce()
   })
 
-  it('should queue and update a job together with its item when provided', async () => {
+  it('should queue a job together with its item transactionally', async () => {
     const repository = createFeedDialogueRepository()
     const item = createItem()
     const queuedJob = createJob()
-    const generatingJob = createJob({status: 'generating', updatedAt: UPDATED_AT})
 
     await repository.queue(queuedJob, item)
-    await repository.updateJob(generatingJob, createItem({status: 'ready'}))
 
-    expect(feedDialogueJobs.put).toHaveBeenNthCalledWith(1, queuedJob)
-    expect(feedDialogueJobs.put).toHaveBeenNthCalledWith(2, generatingJob)
-    expect(feedItems.put).toHaveBeenCalledTimes(2)
-    expect(database.transaction).toHaveBeenCalledTimes(2)
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(queuedJob)
+    expect(feedItems.put).toHaveBeenCalledWith(item)
+    expect(databaseTransaction).toHaveBeenCalledOnce()
+  })
+
+  it('should fail only a job that is still generating', async () => {
+    const repository = createFeedDialogueRepository()
+    const failedJob: FailedFeedDialogueJob = {
+      ...createJob(),
+      errorMessage: '실패',
+      status: 'failed',
+      updatedAt: UPDATED_AT,
+    }
+    const failedItem: FailedFeedItemRecord = {
+      ...createItem(),
+      message: '실패',
+      status: 'failed',
+      updatedAt: UPDATED_AT,
+    }
+    feedDialogueJobs.get.mockResolvedValue(createJob({status: 'generating'}))
+
+    await expect(repository.failJob({item: failedItem, job: failedJob})).resolves.toBe(true)
+
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(failedJob)
+    expect(feedItems.put).toHaveBeenCalledWith(failedItem)
+  })
+
+  it('should preserve an interrupted or missing job instead of failing it', async () => {
+    const repository = createFeedDialogueRepository()
+    const failedJob: FailedFeedDialogueJob = {
+      ...createJob(),
+      errorMessage: '실패',
+      status: 'failed',
+      updatedAt: UPDATED_AT,
+    }
+    feedDialogueJobs.get
+      .mockResolvedValueOnce(createJob({status: 'interrupted'}))
+      .mockResolvedValueOnce(undefined)
+
+    await expect(repository.failJob({job: failedJob})).resolves.toBe(false)
+    await expect(repository.failJob({job: failedJob})).resolves.toBe(false)
+
+    expect(feedDialogueJobs.put).not.toHaveBeenCalled()
+    expect(feedItems.put).not.toHaveBeenCalled()
+  })
+
+  it('should start only a job that is still queued', async () => {
+    const repository = createFeedDialogueRepository()
+    const generatingJob: GeneratingFeedDialogueJob = {
+      ...createJob(),
+      status: 'generating',
+      updatedAt: UPDATED_AT,
+    }
+    feedDialogueJobs.get
+      .mockResolvedValueOnce(createJob())
+      .mockResolvedValueOnce(createJob({status: 'interrupted'}))
+      .mockResolvedValueOnce(undefined)
+
+    await expect(repository.startJob(generatingJob)).resolves.toBe(true)
+    await expect(repository.startJob(generatingJob)).resolves.toBe(false)
+    await expect(repository.startJob(generatingJob)).resolves.toBe(false)
+
+    expect(feedDialogueJobs.put).toHaveBeenCalledOnce()
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(generatingJob)
   })
 
   it('should replace a dialogue without audio with a queued recovery job transactionally', async () => {
@@ -163,6 +251,7 @@ describe('feed dialogue repository writes', () => {
     const item = createItem()
     const job = createJob()
     feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+    dialogues.get.mockResolvedValue(createDialogue())
     eventBindings.get.mockImplementation((event: string) =>
       event === 'focus-start'
         ? {
@@ -188,7 +277,50 @@ describe('feed dialogue repository writes', () => {
     expect(feedDialogueMetadata.delete).toHaveBeenCalledWith('dialogue-1')
     expect(feedDialogueJobs.put).toHaveBeenCalledWith(job)
     expect(feedItems.put).toHaveBeenCalledWith(item)
-    expect(database.transaction).toHaveBeenCalledOnce()
+    expect(dialogueAudioMocks.delete).toHaveBeenCalledWith('audio-1')
+    expect(databaseTransaction).toHaveBeenCalledOnce()
+  })
+
+  it('should preserve cached audio when the recovery transaction fails', async () => {
+    const transactionError = new Error('transaction failed')
+    feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+    dialogues.get.mockResolvedValue(createDialogue())
+    databaseTransaction.mockImplementationOnce(async (...arguments_: ReadonlyArray<unknown>) => {
+      const callback = arguments_.at(-1) as () => Promise<unknown>
+      await callback()
+      throw transactionError
+    })
+    const repository = createFeedDialogueRepository()
+
+    await expect(
+      repository.recoverMissingDialogue({
+        dialogueId: 'dialogue-1',
+        item: createItem(),
+        job: createJob(),
+      }),
+    ).rejects.toBe(transactionError)
+
+    expect(dialogueAudioMocks.delete).not.toHaveBeenCalled()
+  })
+
+  it('should keep recovery committed when unexpected audio cleanup rejects', async () => {
+    const cleanupError = new Error('cache unavailable')
+    feedDialogueMetadata.get.mockResolvedValue(createMetadata())
+    dialogues.get.mockResolvedValue(createDialogue())
+    dialogueAudioMocks.delete.mockRejectedValue(cleanupError)
+    const repository = createFeedDialogueRepository()
+
+    await expect(
+      repository.recoverMissingDialogue({
+        dialogueId: 'dialogue-1',
+        item: createItem(),
+        job: createJob(),
+      }),
+    ).rejects.toBe(cleanupError)
+
+    expect(feedDialogueMetadata.delete).toHaveBeenCalledWith('dialogue-1')
+    expect(feedDialogueJobs.put).toHaveBeenCalledWith(createJob())
+    expect(feedItems.put).toHaveBeenCalledWith(createItem())
   })
 
   it('should skip recovery when another request already removed the dialogue metadata', async () => {
@@ -240,17 +372,6 @@ describe('feed dialogue repository writes', () => {
     expect(dialogues.delete).not.toHaveBeenCalled()
     expect(feedDialogueMetadata.delete).not.toHaveBeenCalled()
     expect(feedDialogueJobs.put).not.toHaveBeenCalled()
-  })
-
-  it('should update only the job when an item is omitted', async () => {
-    const repository = createFeedDialogueRepository()
-    const job = createJob({status: 'failed'})
-
-    await repository.updateJob(job)
-
-    expect(feedDialogueJobs.put).toHaveBeenCalledWith(job)
-    expect(feedItems.put).not.toHaveBeenCalled()
-    expect(database.transaction).not.toHaveBeenCalled()
   })
 
   it('should save and remove records and close the database', async () => {

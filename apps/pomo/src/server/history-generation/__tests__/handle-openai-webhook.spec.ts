@@ -40,6 +40,8 @@ const RUN = {
   openAiSubmissionKey: '019d0000-0000-7000-8000-000000000001',
   sourcePolicyVersion: 'history-sources-v1',
   status: 'submitted' as const,
+  submissionExpiresAt: null,
+  submissionState: null,
   targetDate: '2026-08-16',
 }
 

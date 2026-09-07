@@ -5,7 +5,7 @@ import {
   type LanguageLearningSentence,
   rollbackLanguageLearningDialogues,
 } from '../../features/language-learning'
-import type {LanguageLearningCandidate} from './Review'
+import type {LanguageLearningCandidate} from './candidate'
 
 export interface SaveLanguageLearningCandidatesOptions {
   readonly candidates: ReadonlyArray<LanguageLearningCandidate>

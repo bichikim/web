@@ -1,30 +1,18 @@
+import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
 import * as m from '@paraglide/message'
-import type {DialogueSegment} from '../../features/focus-room-dialogue'
-import type {SupertonicModelId, SupertonicVoiceId} from '../../features/supertonic'
+import {PAudioPreview} from '../PAudioPreview'
+import type {LanguageLearningCandidate} from './candidate'
 
-const REGENERATE_CLASS = [
+const REGENERATE_CLASS = cx(
   'min-h-10 cursor-pointer border border-solid border-border rounded-full bg-surface',
   'px-4 text-sm font-700 text-foreground disabled:cursor-not-allowed disabled:opacity-40',
-].join(' ')
-const SAVE_CLASS = [
-  'min-h-11 cursor-pointer border-0 rounded-full bg-highlight px-5 font-750 text-[#241a12]',
+)
+const SAVE_CLASS = cx(
+  'min-h-11 cursor-pointer border-0 rounded-full bg-highlight px-5 font-750 text-background',
   'disabled:cursor-not-allowed disabled:opacity-40',
-].join(' ')
-
-export interface LanguageLearningCandidate {
-  readonly audio: Blob
-  readonly audioKey: string
-  readonly audioUrl: string
-  readonly durationMs: number
-  readonly id: string
-  readonly modelId: SupertonicModelId
-  readonly segments: ReadonlyArray<DialogueSegment>
-  readonly selected: boolean
-  readonly text: string
-  readonly voiceId: SupertonicVoiceId
-}
+)
 
 export interface LanguageLearningReviewProps {
   readonly busy: boolean
@@ -64,12 +52,10 @@ export const LanguageLearningReview = (props: LanguageLearningReviewProps) => {
                 <span>{candidate.text}</span>
               </label>
               <div class="flex flex-wrap items-center gap-3">
-                <audio
+                <PAudioPreview
                   class="min-w-0 flex-1"
-                  controls
-                  controlslist="nodownload noplaybackrate"
-                  preload="metadata"
                   src={candidate.audioUrl}
+                  title={candidate.text}
                 />
                 <button
                   class={REGENERATE_CLASS}

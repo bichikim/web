@@ -1,106 +1,47 @@
-import {
-  createMemo,
-  createResource,
-  createSignal,
-  ErrorBoundary,
-  For,
-  Show,
-  Suspense,
-} from 'solid-js'
-
+import {createMemo, ErrorBoundary, For, Show, Suspense} from 'solid-js'
 import {PButton} from '../PButton'
-import {PModal} from '../PModal'
 import {reportClientError} from '../../features/client-error-reporter'
-import {
-  loadPAlbums,
-  type PResolvedAlbum,
-  type PTrack,
-  useTrackPreview,
-} from '../../features/focus-room-audio'
+import {type PResolvedAlbum, type PTrack, useTrackPreview} from '../../features/focus-room-audio'
 import {AlbumCard} from './Card'
-import {PlaylistFooter} from './Footer'
+import {LoadingStatus} from './LoadingStatus'
+import {useAlbumLibrary} from './use-album-library'
 import * as m from '@paraglide/message'
-import {getLocale} from '@paraglide/runtime'
+import {PublishedCatalogError} from './PublishedCatalogError'
 
 export interface PAlbumLibraryContentProps {
-  readonly isOpen: boolean
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
-  readonly onClearTracks?: () => void
-  readonly onCloseAutoFocus: () => void
-  readonly onOpenChange: (isOpen: boolean) => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly tracks: readonly PTrack[]
 }
 
-export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
-  const [albums, {refetch}] = createResource(() => loadPAlbums({locale: getLocale()}))
-  const [clearedTracks, setClearedTracks] = createSignal<readonly PTrack[]>([])
+export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
+  const albumLibrary = useAlbumLibrary()
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>
     album.tracks.length > 0 && album.tracks.every((track) => trackIds().has(track.id))
-  const addTracks = (tracks: readonly PTrack[]) => {
-    setClearedTracks([])
-    props.onAddTracks(tracks)
-  }
-  const handleAlbumAdd = (album: PResolvedAlbum) => addTracks(album.tracks)
-  const handleTrackAdd = (track: PTrack) => addTracks([track])
-  const handleClearTracks = () => {
-    const currentTracks = props.tracks
-
-    if (currentTracks.length === 0 || props.onClearTracks === undefined) {
-      return
-    }
-
-    setClearedTracks(currentTracks)
-    props.onClearTracks()
-  }
-  const handleRestoreTracks = () => {
-    const tracksToRestore = clearedTracks()
-
-    if (tracksToRestore.length === 0) {
-      return
-    }
-
-    addTracks(tracksToRestore)
-  }
+  const handleAlbumAdd = (album: PResolvedAlbum) => props.onAddTracks(album.tracks)
+  const handleTrackAdd = (track: PTrack) => props.onAddTracks([track])
   const preview = useTrackPreview({
     onEnd: () => props.onPreviewEnd?.(),
     onStart: (stopPreview) => props.onPreviewStart?.(stopPreview),
   })
 
   return (
-    <PModal
-      description={m.album_description()}
-      footer={
-        <PlaylistFooter
-          canClear={props.onClearTracks !== undefined}
-          clearedTrackCount={clearedTracks().length}
-          onClear={handleClearTracks}
-          onRestore={handleRestoreTracks}
-          trackCount={props.tracks.length}
-        />
-      }
-      isOpen={props.isOpen}
-      onCloseAutoFocus={props.onCloseAutoFocus}
-      onOpenChange={props.onOpenChange}
-      placement="top"
-      size="full"
-      title={m.album_title()}
-    >
+    <>
       <audio
         class="hidden"
         onEnded={preview.handleEnded}
         onError={preview.handleError}
         preload="none"
-        ref={preview.setAudioElement}
+        ref={(element) => preview.setAudioElement(element)}
       />
       <Show when={preview.errorMessage()}>
         {(message) => (
           <p
             aria-live="polite"
             class="mb-3 mt-0 rounded-control border border-solid border-danger/45 bg-danger/10
-              px-3 py-2 text-xs text-danger"
+              px-3 py-2 text-modal-detail text-danger"
             role="status"
           >
             {message()}
@@ -123,11 +64,10 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                 />
                 <p class="m-0 text-sm font-650">{m.album_load_failed()}</p>
                 <PButton
+                  bordered
+                  transparent
                   class="mt-3"
-                  onPress={() => {
-                    reset()
-                    return refetch()
-                  }}
+                  onPress={() => albumLibrary.retryLibrary().then(reset)}
                   size="small"
                   tone="secondary"
                 >
@@ -138,32 +78,37 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           )
         }}
       >
-        <Suspense
-          fallback={
-            <div class="grid min-h-32 place-items-center text-sm text-muted-foreground">
-              {m.album_loading()}
-            </div>
-          }
-        >
+        <Suspense fallback={<LoadingStatus />}>
+          <Show when={albumLibrary.catalogError()}>
+            {(error) => (
+              <PublishedCatalogError
+                error={error()}
+                isRetrying={albumLibrary.isCatalogRetrying()}
+                onRetry={albumLibrary.retryCatalog}
+              />
+            )}
+          </Show>
           <Show
             fallback={
-              <div
-                class="grid min-h-32 place-items-center rounded-control border border-dashed
-                  border-border p-5 text-center"
-              >
-                <div>
-                  <span
-                    aria-hidden="true"
-                    class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
-                  />
-                  <p class="m-0 text-sm font-650">{m.album_empty()}</p>
+              <Show when={albumLibrary.catalogError() === null}>
+                <div
+                  class="grid min-h-32 place-items-center rounded-control border border-dashed
+                    border-border p-5 text-center"
+                >
+                  <div>
+                    <span
+                      aria-hidden="true"
+                      class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
+                    />
+                    <p class="m-0 text-sm font-650">{m.album_empty()}</p>
+                  </div>
                 </div>
-              </div>
+              </Show>
             }
-            when={(albums() ?? []).length > 0}
+            when={albumLibrary.albums().length > 0}
           >
             <div class="grid gap-3 2xl:grid-cols-2">
-              <For each={albums() ?? []}>
+              <For each={albumLibrary.albums()}>
                 {(album, index) => (
                   <AlbumCard
                     album={album}
@@ -186,6 +131,6 @@ export default function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           </Show>
         </Suspense>
       </ErrorBoundary>
-    </PModal>
+    </>
   )
 }

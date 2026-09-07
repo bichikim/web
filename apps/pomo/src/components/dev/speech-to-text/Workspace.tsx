@@ -1,5 +1,11 @@
 import {clientOnly} from '@solidjs/start'
 
-export const SpeechToTextWorkspace = clientOnly(() => import('src/components/SpeechToTextLab'), {
-  lazy: true,
-})
+export const SpeechToTextWorkspace = clientOnly(
+  async () => {
+    const {SpeechToTextLab} = await import('src/components/SpeechToTextLab')
+    return {default: SpeechToTextLab}
+  },
+  {
+    lazy: true,
+  },
+)

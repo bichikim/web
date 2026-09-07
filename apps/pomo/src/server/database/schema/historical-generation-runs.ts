@@ -23,6 +23,11 @@ export const historicalGenerationStatusEnum = pgEnum('historical_generation_stat
   'rejected',
 ])
 
+export const historicalGenerationSubmissionStateEnum = pgEnum(
+  'historical_generation_submission_state',
+  ['unknown', 'expired'],
+)
+
 export const historicalGenerationRuns = pgTable(
   'historical_generation_runs',
   {
@@ -43,6 +48,8 @@ export const historicalGenerationRuns = pgTable(
       .notNull()
       .default(sql`'[]'::jsonb`),
     status: historicalGenerationStatusEnum().notNull().default('preparing'),
+    submissionExpiresAt: timestamp({withTimezone: true}),
+    submissionState: historicalGenerationSubmissionStateEnum(),
     targetDate: date({mode: 'string'}).notNull(),
     updatedAt: timestamp({withTimezone: true}).notNull().defaultNow(),
   },
@@ -57,6 +64,11 @@ export const historicalGenerationRuns = pgTable(
     ),
     uniqueIndex('historical_generation_runs_openai_response_id_index').on(table.openAiResponseId),
     index('historical_generation_runs_recovery_index').on(table.status, table.updatedAt),
+    index('historical_generation_runs_submission_recovery_index').on(
+      table.status,
+      table.submissionState,
+      table.submissionExpiresAt,
+    ),
   ],
 )
 

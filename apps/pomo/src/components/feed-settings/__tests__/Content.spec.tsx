@@ -5,16 +5,19 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {For} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/PSelect'
 import {PFeedContext, type PFeedController} from 'src/features/focus-room-feed'
-import PFeedSettingsContent from '../Content'
+import {PFeedSettingsContent} from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
 
 const renderSettings = () => render(() => <PFeedSettingsContent />)
+const originalGetLocale = getLocale
 
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   localStorage.clear()
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
   vi.mocked(PSelect).mockImplementation((props) => {
@@ -40,7 +43,19 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.unstubAllEnvs()
+})
+
+it('should render feed settings in English', () => {
+  overwriteGetLocale(() => 'en')
+  renderSettings()
+
+  expect(screen.getByRole('textbox', {name: 'Feed URL'})).toBeDefined()
+  expect(screen.getByRole('button', {name: 'Add'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Saved feeds'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Recommended feeds'})).toBeDefined()
+  expect(screen.getByText('Today in history')).toBeDefined()
 })
 
 it('should add, update, restore, and delete a feed connection with its voice', () => {
@@ -120,11 +135,11 @@ it('should replace an added recommendation with a stored feed item', () => {
   )
 })
 
-it.each(['POMO_IS_APPS_IN_TOSS', 'POMO_IS_DESKTOP'] as const)(
+it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'] as const)(
   'should use the public server origin for %s recommendations',
   (runtime) => {
-    vi.stubEnv(runtime, '1')
-    vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    vi.stubEnv(runtime, 'true')
+    vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
     renderSettings()
     const developmentAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
 
@@ -177,4 +192,5 @@ it('should apply compact spacing to feed settings groups', () => {
   expect(form.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+  expect(list).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
 })

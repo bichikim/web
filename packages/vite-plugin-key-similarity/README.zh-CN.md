@@ -186,7 +186,7 @@ keySimilarity({
 })
 ```
 
-如果需要根据 key 长度或格式使用不同阈值，可以传入函数。代码字面量和每个注释表示都会分别调用该 resolver。
+对于大多数项目，建议使用根据 key 长度调整阈值的函数，而不是单一的固定值。也可以将 key 格式作为条件。代码字面量和每个注释表示都会分别调用该 resolver。
 
 ```ts
 keySimilarity({
@@ -236,6 +236,7 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | ------------------- | ------------------------------------ | ------------------------------------------- |
 | `keyDetector`       | 必填                                 | 选择要检查的 import 调用及包含 key 的参数。 |
 | `semanticThreshold` | `0.9`                                | 固定数字或 `(key) => number` 阈值 resolver  |
+| `skipIdenticalKeys` | `false`                              | 跳过原始 key 值完全相同的 pair。            |
 | `serveMode`         | `warn`                               | 开发服务器诊断模式                          |
 | `buildMode`         | `error`                              | 生产构建诊断模式                            |
 | `exclude`           | 排除测试、generated 和 node_modules  | Vite 与 CLI 检查中排除的 glob 模式          |

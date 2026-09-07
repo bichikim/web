@@ -6,15 +6,15 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PRecoveryBoundaryProps} from '../components/PRecoveryBoundary'
 import {useApplicationRecovery} from '../features/application-recovery'
-import {useAppsInTossDevtools} from '../features/apps-in-toss-devtools'
-import {useAppsInTossSafeArea} from '../features/apps-in-toss-safe-area'
+import {SafeArea} from '../components/SafeArea'
 
 const componentMocks = vi.hoisted(() => ({
+  authProvider: vi.fn(),
+  displayThemeProvider: vi.fn(),
   fileRoutes: vi.fn(),
   focusRoomLayout: vi.fn(),
   metadata: vi.fn(),
   metaProvider: vi.fn(),
-  modelDownloadOverlay: vi.fn(),
   modelDownloadProvider: vi.fn(),
   recoveryBoundary: vi.fn(),
   router: vi.fn(),
@@ -27,15 +27,15 @@ vi.mock('../components/PDocumentMetadata', () => ({PDocumentMetadata: componentM
 vi.mock('../components/PFocusRoomLayout', () => ({
   PFocusRoomLayout: componentMocks.focusRoomLayout,
 }))
-vi.mock('../components/PModelDownloadOverlay', () => ({
-  PModelDownloadOverlay: componentMocks.modelDownloadOverlay,
-}))
 vi.mock('../components/PRecoveryBoundary', () => ({
   PRecoveryBoundary: componentMocks.recoveryBoundary,
 }))
 vi.mock('../features/application-recovery', () => ({useApplicationRecovery: vi.fn()}))
-vi.mock('../features/apps-in-toss-devtools', () => ({useAppsInTossDevtools: vi.fn()}))
-vi.mock('../features/apps-in-toss-safe-area', () => ({useAppsInTossSafeArea: vi.fn()}))
+vi.mock('../components/SafeArea', () => ({SafeArea: vi.fn()}))
+vi.mock('../features/display-theme', () => ({
+  DisplayThemeProvider: componentMocks.displayThemeProvider,
+}))
+vi.mock('../features/auth', () => ({AuthProvider: componentMocks.authProvider}))
 vi.mock('../features/model-download', () => ({
   PModelDownloadProvider: componentMocks.modelDownloadProvider,
 }))
@@ -74,6 +74,8 @@ describe('App', () => {
       }),
     )
     componentMocks.metaProvider.mockImplementation((props: ChildrenProps) => props.children)
+    componentMocks.displayThemeProvider.mockImplementation((props: ChildrenProps) => props.children)
+    componentMocks.authProvider.mockImplementation((props: ChildrenProps) => props.children)
     componentMocks.modelDownloadProvider.mockImplementation(
       (props: ChildrenProps) => props.children,
     )
@@ -93,7 +95,6 @@ describe('App', () => {
     ))
     componentMocks.fileRoutes.mockImplementation(() => <div>file routes</div>)
     componentMocks.metadata.mockImplementation(() => <div>document metadata</div>)
-    componentMocks.modelDownloadOverlay.mockImplementation(() => <div>download overlay</div>)
   })
 
   afterEach(() => {
@@ -102,18 +103,18 @@ describe('App', () => {
     vi.clearAllMocks()
   })
 
-  it('should compose application services, route content, recovery, and download UI', () => {
+  it('should compose application services, route content, and model download state', () => {
     render(() => <App />)
 
-    expect(useAppsInTossDevtools).toHaveBeenCalledOnce()
-    expect(useAppsInTossSafeArea).toHaveBeenCalledOnce()
+    expect(SafeArea).toHaveBeenCalledOnce()
     expect(useApplicationRecovery).toHaveBeenCalledOnce()
     expect(componentMocks.router).toHaveBeenCalledOnce()
     expect(componentMocks.metaProvider).toHaveBeenCalledOnce()
+    expect(componentMocks.displayThemeProvider).toHaveBeenCalledOnce()
+    expect(componentMocks.authProvider).toHaveBeenCalledOnce()
     expect(componentMocks.modelDownloadProvider).toHaveBeenCalledOnce()
     expect(screen.getByText('document metadata')).toBeTruthy()
     expect(screen.getByText('file routes')).toBeTruthy()
-    expect(screen.getByText('download overlay')).toBeTruthy()
     expect(screen.getByTestId('focus-room-layout')).toBeTruthy()
     expect(screen.getByTestId('recovery-boundary')).toBeTruthy()
     expect(recoveryProps).toMatchObject({canRetry, onError, onReady, onReload, onRetry})

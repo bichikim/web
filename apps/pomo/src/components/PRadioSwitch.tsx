@@ -78,14 +78,20 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
       orientation="horizontal"
       value={props.value}
     >
-      <RadioGroup.Label class="mb-2 block text-xs font-700 leading-4 text-muted-foreground">
+      <RadioGroup.Label class="mb-2 block text-sm font-700 leading-5 text-muted-foreground">
         {props.label}
       </RadioGroup.Label>
-      <div class="flex gap-1 rounded-3.5 border border-solid border-border bg-[rgb(4_4_3_/_28%)] p-1">
+      <div
+        class={
+          'flex min-h-control-md box-border gap-1 rounded-control ' +
+          'border border-solid border-border bg-surface-overlay p-1'
+        }
+        role="presentation"
+      >
         <For each={props.options}>
           {(option) => (
             <RadioGroup.Item
-              class="group min-w-0 flex-1"
+              class="group flex min-w-0 flex-1"
               disabled={props.disabled || option.disabled}
               value={option.value}
             >
@@ -95,15 +101,15 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
               />
               <RadioGroup.ItemControl
                 class={
-                  'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 ' +
-                  'text-xs font-650 leading-4 text-muted-foreground outline-none ' +
+                  'flex min-h-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 px-2 py-1 ' +
+                  'text-base font-650 leading-6 text-muted-foreground outline-none ' +
                   'transition-[background-color_140ms_ease,color_140ms_ease] ' +
                   'hover:bg-secondary-soft hover:text-foreground ' +
                   'ui-checked:bg-primary-soft ui-checked:text-foreground ' +
                   'ui-disabled:cursor-not-allowed ui-disabled:opacity-35 ' +
                   'ui-disabled:hover:bg-transparent ui-disabled:hover:text-muted-foreground ' +
                   'group-focus-within:shadow-focus ' +
-                  'max-xs:gap-1 max-xs:text-[0.6875rem] motion-reduce:transition-none'
+                  'max-xs:gap-1 motion-reduce:transition-none'
                 }
               >
                 <Show when={option.icon}>
@@ -111,17 +117,17 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                     <span
                       aria-hidden="true"
                       class={cx(
-                        'size-4 flex-none text-highlight max-xs:hidden',
+                        'size-5 flex-none text-highlight max-xs:hidden',
                         getPomoIconClass(icon(), props.sceneStyle),
                       )}
                     />
                   )}
                 </Show>
-                <span>{option.label}</span>
+                <span class="[word-break:keep-all]">{option.label}</span>
                 <RadioGroup.ItemIndicator class="inline-flex flex-none text-primary">
                   <span
                     aria-hidden="true"
-                    class={cx(getPomoIconClass('i-tabler-check', props.sceneStyle), 'size-4')}
+                    class={cx(getPomoIconClass('i-tabler-check', props.sceneStyle), 'size-5')}
                   />
                 </RadioGroup.ItemIndicator>
               </RadioGroup.ItemControl>

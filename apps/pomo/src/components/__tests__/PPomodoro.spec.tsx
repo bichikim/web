@@ -98,7 +98,7 @@ describe('PPomodoro', () => {
     expect(
       originalResult.container.querySelector('.pomo-pomodoro__action-scribble-border'),
     ).toBeNull()
-    expect(originalControls.classList.contains('rounded-control')).toBe(true)
+    expect(originalControls.classList.contains('rounded-panel')).toBe(true)
     expect(originalControls.classList.contains('border-border')).toBe(true)
 
     originalResult.unmount()
@@ -128,13 +128,9 @@ describe('PPomodoro', () => {
     expect(scribbleControls.classList.contains('rounded-none')).toBe(true)
     expect(scribbleControls.classList.contains('border-0')).toBe(true)
     expect(scribbleControls.classList.contains('bg-transparent')).toBe(true)
-    expect(
-      scribbleSurface?.classList.contains('[mask-image:var(--pomo-pomodoro-scribble-mask)]'),
-    ).toBe(true)
+    expect(scribbleSurface?.classList.contains('pomo-scribble-mask')).toBe(true)
     expect(scribbleControls.contains(scribbleSurface)).toBe(false)
-    expect(
-      (scribbleSurface as HTMLElement).style.getPropertyValue('--pomo-pomodoro-scribble-mask'),
-    ).toContain('data:image/svg+xml')
+    expect(scribbleSurface).not.toHaveAttribute('style')
   })
 
   it('should use the status icon set matching the scene style', () => {
@@ -179,12 +175,16 @@ describe('PPomodoro', () => {
     const actionIndicator = quickControls.querySelector('.pomo-pomodoro__action-indicator')
     expect(characterEmotion?.getAttribute('data-emotion')).toBe('focus')
     expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
-    expect(actionIndicator?.querySelector('.i-tabler-player-play')).toBeInstanceOf(HTMLElement)
+    const playIcon = actionIndicator?.querySelector('.i-tabler-player-play')
+    expect(playIcon).toBeInstanceOf(HTMLElement)
+    expect(playIcon).toHaveClass('w-4', 'h-4')
 
     fireEvent.click(within(quickControls).getByRole('button', {name: '집중 시작'}))
     expect(within(quickControls).getByRole('button', {name: '일시정지'})).toBeDefined()
     expect(characterEmotion?.getAttribute('data-active')).toBe('')
-    expect(actionIndicator?.querySelector('.i-tabler-player-pause')).toBeInstanceOf(HTMLElement)
+    const pauseIcon = actionIndicator?.querySelector('.i-tabler-player-pause')
+    expect(pauseIcon).toBeInstanceOf(HTMLElement)
+    expect(pauseIcon).toHaveClass('w-4', 'h-4')
 
     fireEvent.click(within(quickControls).getByRole('button', {name: '일시정지'}))
     expect(within(quickControls).getByRole('button', {name: '계속하기'})).toBeDefined()

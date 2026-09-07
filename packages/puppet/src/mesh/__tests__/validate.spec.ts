@@ -45,6 +45,20 @@ describe('validateMesh', () => {
     })
   })
 
+  it('should detect duplicate vertices within the geometry tolerance after sorting', () => {
+    expect(
+      validateMesh(
+        createMesh({
+          indices: [0, 1, 2, 0, 2, 3],
+          uvs: [0, 0, 1, 0, 0, 1, 0, 0],
+          vertices: [0, 0, 10, 0, 0, 10, 0.000_000_5, 0],
+        }),
+      ),
+    ).toEqual(
+      expect.objectContaining({issues: expect.arrayContaining(['duplicate-vertex']), valid: false}),
+    )
+  })
+
   it('should report duplicate triangles and non-manifold edges', () => {
     const result = validateMesh(createMesh({indices: [0, 1, 2, 0, 1, 2, 0, 1, 2]}))
 
@@ -76,6 +90,20 @@ describe('validateMesh', () => {
       indices: [0, 1, 2, 3, 4, 5],
       uvs: [0, 0, 1, 0, 0, 1, 0.2, 0.2, 0.3, 0.2, 0.2, 0.3],
       vertices: [0, 0, 10, 0, 0, 10, 2, 2, 3, 2, 2, 3],
+    })
+
+    expect(result.valid).toBe(false)
+
+    if (!result.valid) {
+      expect(result.issues).toContain('intersecting-triangles')
+    }
+  })
+
+  it('should report contained triangles that share a vertex', () => {
+    const result = validateMesh({
+      indices: [0, 1, 2, 0, 3, 4],
+      uvs: [0, 0, 1, 0, 0, 1, 0.2, 0.1, 0.1, 0.2],
+      vertices: [0, 0, 10, 0, 0, 10, 2, 1, 1, 2],
     })
 
     expect(result.valid).toBe(false)

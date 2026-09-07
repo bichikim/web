@@ -1,20 +1,22 @@
+import {useTooltipTrigger} from '../tooltip'
 import {cx} from 'class-variance-authority'
 import {createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
 import type {PTrack} from '../../features/focus-room-audio'
 import {POverflowMarquee} from '../POverflowMarquee'
+import {PTooltip} from '../PTooltip'
 
 const DELETE_COMMIT_DISTANCE = 64
 const DRAG_INTENT_DISTANCE = 8
 const MAX_SWIPE_DISTANCE = 80
 
-const TRACK_CLASSES = [
+const TRACK_CLASSES = cx(
   'pomo-player__track text-muted-foreground',
   "[&[aria-current='true']]:text-foreground",
   "[&[aria-current='true']]:shadow-track-active",
   '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid',
-  '[&:focus-visible]:outline-primary [&:focus-visible]:[outline-offset:2px]',
-].join(' ')
+  '[&:focus-visible]:outline-primary [&:focus-visible]:[outline-offset:0.125rem]',
+)
 
 const releasePointer = (element: HTMLButtonElement, pointerId: number) => {
   if (element.hasPointerCapture?.(pointerId)) {
@@ -154,16 +156,20 @@ export interface PSwipeTrackItemProps {
 }
 
 export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
+  const tooltip = useTooltipTrigger()
+
   const removable = () => props.onRemove !== undefined
   const gesture = useSwipeTrackGesture(removable, () => props.onRemove?.())
 
   return (
-    <li class="relative min-w-0 overflow-clip rounded-3">
+    <li
+      class="pomo-player__swipe-track relative min-w-0 overflow-clip rounded-3"
+      style={{'--pomo-swipe-offset': `${gesture.offset()}px`}}
+    >
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-y-0 left-0 grid place-items-center overflow-hidden
-          text-danger"
-        style={{width: `${Math.max(0, gesture.offset())}px`}}
+        class="pomo-player__track-delete-start pointer-events-none absolute inset-y-0 left-0 grid
+          place-items-center overflow-hidden text-danger w-[max(0px,var(--pomo-swipe-offset))]"
       >
         <span
           class={
@@ -173,9 +179,9 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       </div>
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-y-0 right-0 grid place-items-center
-          overflow-hidden text-danger"
-        style={{width: `${Math.max(0, -gesture.offset())}px`}}
+        class="pomo-player__track-delete-end pointer-events-none absolute inset-y-0 right-0 grid
+          place-items-center overflow-hidden text-danger
+          w-[max(0px,calc(-1*var(--pomo-swipe-offset)))]"
       >
         <span
           class={
@@ -183,14 +189,17 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
           }
         />
       </div>
+
       <button
         aria-current={props.current ? 'true' : undefined}
         aria-keyshortcuts={removable() ? 'Delete' : undefined}
+        aria-label={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
         class={cx(
           TRACK_CLASSES,
           'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
-          'rounded-3 gap-3 player-compact:gap-2 px-3 py-2.5 text-left text-xs',
-          'player-compact:px-2 player-compact:py-2',
+          '[transform:translateX(var(--pomo-swipe-offset))]',
+          'rounded-3 gap-3 player-compact:gap-2 px-3 py-2 text-left text-sm leading-5',
+          'player-compact:px-2 player-compact:py-1.5',
           gesture.dragging()
             ? 'transition-none'
             : 'transition-[transform,background-color,color] duration-180 ease-out',
@@ -220,19 +229,17 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         onPointerDown={gesture.handlePointerDown}
         onPointerMove={gesture.handlePointerMove}
         onPointerUp={gesture.handlePointerUp}
-        style={{
-          transform: gesture.offset() === 0 ? undefined : `translateX(${gesture.offset()}px)`,
-        }}
-        title={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
         type="button"
       >
         <span class="w-4 text-center tabular-nums">{props.index + 1}</span>
-        <Show
-          fallback={<span class="min-w-0 flex-1 truncate">{props.track.title}</span>}
-          when={props.current}
-        >
-          <POverflowMarquee class="flex-1" focusable={false} text={props.track.title} />
-        </Show>
+        <span {...tooltip.events} ref={tooltip.setTarget} class="min-w-0 flex-1">
+          <Show
+            fallback={<span class="block truncate">{props.track.title}</span>}
+            when={props.current}
+          >
+            <POverflowMarquee focusable={false} text={props.track.title} />
+          </Show>
+        </span>
         <Show
           fallback={
             <span class="min-w-0 w-22 shrink-0 truncate opacity-70">{props.track.artist}</span>
@@ -246,6 +253,8 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
           />
         </Show>
       </button>
+      <PTooltip target={tooltip.target()} show={tooltip.show()} text={props.track.title} />
+
       <span aria-live="polite" class="sr-only">
         {gesture.deleteReady() ? `${props.track.title}, 놓으면 삭제` : ''}
       </span>

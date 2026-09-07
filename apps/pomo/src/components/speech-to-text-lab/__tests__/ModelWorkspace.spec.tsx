@@ -2,6 +2,7 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   type SpeechActivity,
   type SpeechModelDefinition,
@@ -9,7 +10,6 @@ import {
   type SpeechToTextController,
   useSpeechToText,
 } from '../../../features/speech-to-text/index'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {SpeechModelWorkspace} from '../ModelWorkspace'
 
@@ -129,7 +129,11 @@ describe('SpeechModelWorkspace', () => {
     expect(progress).toHaveAttribute('aria-valuemin', '0')
     expect(progress).toHaveAttribute('aria-valuemax', '100')
     expect(progress).toHaveAttribute('aria-valuenow', '42')
-    expect(progress.firstElementChild).toHaveStyle({width: '42%'})
+    expect(
+      (progress.firstElementChild as HTMLElement).style.getPropertyValue('--pomo-progress-width'),
+    ).toBe('42%')
+    expect((progress.firstElementChild as HTMLElement).style.width).toBe('')
+    expect(progress.firstElementChild).toHaveClass('[width:var(--pomo-progress-width)]')
     expect(screen.getByText('WebGPU')).toBeInTheDocument()
 
     speech.setIsSupported(null)

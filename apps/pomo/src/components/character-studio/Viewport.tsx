@@ -5,7 +5,7 @@ import {CharacterViewportCanvas} from './ViewportCanvas'
 
 const VIEWER_CLASSES = cx(
   'relative min-h-105 overflow-hidden rounded-7 border border-white/10 bg-#111820',
-  'shadow-[0_30px_100px_rgba(0,0,0,0.35)] 2xl:min-h-155',
+  'shadow-[0_1.875rem_6.25rem_rgba(0,0,0,0.35)] 2xl:min-h-155',
 )
 
 const STATUS_CLASSES = cx(

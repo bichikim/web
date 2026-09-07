@@ -3,6 +3,7 @@
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import type {PuppetEditorProps} from '../../editor'
+import {AutoMeshDialog} from '../../editor/internal/AutoMeshDialog'
 import {createDemoDocument} from '../../player'
 import {PUPPET_EDITOR_TAG_NAME, PuppetEditorElement} from '../index'
 
@@ -43,5 +44,15 @@ describe('PuppetEditorElement', () => {
     expect(mocks.PuppetEditor).toHaveBeenCalledTimes(2)
 
     element.remove()
+  })
+
+  test('should keep editor portals inside the shadow root', () => {
+    mocks.PuppetEditor.mockImplementationOnce(() => <AutoMeshDialog isOpen />)
+    const element = document.createElement(PUPPET_EDITOR_TAG_NAME)
+
+    document.body.append(element)
+
+    expect(element.shadowRoot?.querySelector('[role="dialog"]')).not.toBeNull()
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull()
   })
 })

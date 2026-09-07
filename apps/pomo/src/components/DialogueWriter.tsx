@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 
 import {type DialogueWriterController, useDialogueWriter} from '../features/dialogue-writer'
@@ -9,7 +10,7 @@ const MAXIMUM_REQUEST_LENGTH = 800
 const INITIAL_REQUEST = '삶의 행복에 대해 이야기해줘'
 const SECTION_CLASSES = cx(
   'relative w-full overflow-hidden rounded-8 border border-white/10',
-  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
+  'bg-#211a2b/88 p-5 shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 const TEXTAREA_CLASSES = cx(
   'min-h-44 w-full resize-y box-border rounded-5 border border-white/10 bg-#17131f p-4',
@@ -32,7 +33,7 @@ const activateModel = (
   writer.prepare()
 }
 
-const DialogueWriter = () => {
+export const DialogueWriter = () => {
   const compactModel = getTextModel('qwen-0.8b')
   const qualityModel = getTextModel('qwen-2b')
   const largerModel = getTextModel('qwen-4b')
@@ -82,7 +83,8 @@ const DialogueWriter = () => {
               {compactWriter.request().length} / {MAXIMUM_REQUEST_LENGTH}
             </span>
           </span>
-          <textarea
+          <PTextarea
+            unstyled
             class={TEXTAREA_CLASSES}
             disabled={isBusy()}
             maxlength={MAXIMUM_REQUEST_LENGTH}
@@ -168,5 +170,3 @@ const DialogueWriter = () => {
     </section>
   )
 }
-
-export default DialogueWriter

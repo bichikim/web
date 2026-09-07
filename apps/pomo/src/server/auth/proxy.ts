@@ -1,9 +1,7 @@
-import 'server-only'
-
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
 import {withNoStore} from '../http/response'
-import {getNeonAuthProxyConfig} from './environment'
+import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 
 interface AuthProxyEvent {
   readonly params: {
@@ -35,7 +33,7 @@ export const handlePomoAuthProxy = async (event: AuthProxyEvent): Promise<Respon
   try {
     return withNoStore(
       await handleAuthProxyRequest({
-        ...getNeonAuthProxyConfig(),
+        ...readNeonAuthProxyConfig(),
         path,
         request: event.request,
       }),

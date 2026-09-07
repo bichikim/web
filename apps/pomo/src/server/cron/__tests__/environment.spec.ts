@@ -1,12 +1,17 @@
-import {expect, it} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 
-import {getCronSecret, isAuthorizedCronRequest} from '../environment'
+const environmentMocks = vi.hoisted(() => ({
+  env: {CRON_SECRET: 'cron-secret-1234'},
+}))
 
-it.each([
-  {error: 'CRON_SECRET is not set', secret: ' '},
-  {error: 'CRON_SECRET must contain at least 16 characters', secret: 'too-short'},
-])('should reject an invalid cron secret', ({error, secret}) => {
-  expect(() => getCronSecret({CRON_SECRET: secret})).toThrow(error)
+vi.mock('src/env', () => ({
+  env: environmentMocks.env,
+}))
+
+import {isAuthorizedCronRequest} from '../environment'
+
+afterEach(() => {
+  environmentMocks.env.CRON_SECRET = 'cron-secret-1234'
 })
 
 it('should authorize only the configured bearer token', () => {
@@ -14,10 +19,12 @@ it('should authorize only the configured bearer token', () => {
     headers: {authorization: 'Bearer cron-secret-1234'},
   })
 
-  expect(isAuthorizedCronRequest(request, {CRON_SECRET: 'cron-secret-1234'})).toBe(true)
-  expect(isAuthorizedCronRequest(request, {CRON_SECRET: 'cron-secret-5678'})).toBe(false)
+  expect(isAuthorizedCronRequest(request)).toBe(true)
+
+  environmentMocks.env.CRON_SECRET = 'cron-secret-5678'
+  expect(isAuthorizedCronRequest(request)).toBe(false)
 })
 
-it('should trim the configured bearer token', () => {
-  expect(getCronSecret({CRON_SECRET: '  cron-secret-1234  '})).toBe('cron-secret-1234')
+it('should reject a request without an authorization header', () => {
+  expect(isAuthorizedCronRequest(new Request('https://pomo.example/api/cron'))).toBe(false)
 })

@@ -51,8 +51,9 @@ const createResponseFetch = (fetchInstance: $Fetch): typeof fetch =>
   }
 
 const usesRemotePublicOrigin =
-  import.meta.env.POMO_IS_APPS_IN_TOSS || import.meta.env.POMO_IS_DESKTOP
-const publicBaseURL = usesRemotePublicOrigin ? import.meta.env.POMO_PUBLIC_ORIGIN : undefined
+  import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
+  import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
+const publicBaseURL = usesRemotePublicOrigin ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN : undefined
 const sharedFetch = ofetch.create({
   baseURL: publicBaseURL,
   retryDelay: RETRY_DELAY_MILLISECONDS,
@@ -62,13 +63,13 @@ const sharedFetch = ofetch.create({
 export const httpFetch = createResponseFetch(sharedFetch)
 
 const apiBaseURL = usesRemotePublicOrigin
-  ? new URL('/api/', import.meta.env.POMO_PUBLIC_ORIGIN).href
+  ? new URL('/api/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
   : '/api/'
 
 export const apiFetch = createResponseFetch(sharedFetch.create({baseURL: apiBaseURL}))
 
 const audioBaseURL = usesRemotePublicOrigin
-  ? new URL('/audio/', import.meta.env.POMO_PUBLIC_ORIGIN).href
+  ? new URL('/audio/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
   : '/audio/'
 
 export const audioFetch = createResponseFetch(sharedFetch.create({baseURL: audioBaseURL}))

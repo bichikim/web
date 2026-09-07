@@ -58,9 +58,9 @@ const prepareModel = async (modelId: TextModelId) => {
   sendResponse({type: 'ready'})
 }
 
-const countPromptTokens = async (context: ChatContext) => {
+const countPromptTokens = async (context: ChatContext, supplementaryContext?: string) => {
   const textRuntime = await getTextRuntime()
-  return textRuntime.countTokens(createChatMessages(context))
+  return textRuntime.countTokens(createChatMessages({...context, supplementaryContext}))
 }
 
 interface GenerateChatTextOptions {
@@ -171,6 +171,7 @@ interface GenerateAnswerOptions {
   readonly modelId: TextModelId
   readonly refineAnswer: boolean
   readonly replyId: string
+  readonly supplementaryContext?: string
 }
 
 const generateAnswer = async (options: GenerateAnswerOptions) => {
@@ -178,12 +179,15 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
   await textRuntime.prepare(options.modelId)
 
   const compacted = await compactContext(options.context)
-  const contextTokens = await countPromptTokens(compacted.context)
+  const contextTokens = await countPromptTokens(compacted.context, options.supplementaryContext)
   let streamedCharacters = 0
   sendResponse({contextTokens, type: 'started', wasCompacted: compacted.wasCompacted})
   const rawGeneratedText = await generateText({
     maximumTokens: MAXIMUM_ANSWER_TOKENS,
-    messages: createChatMessages(compacted.context),
+    messages: createChatMessages({
+      ...compacted.context,
+      supplementaryContext: options.supplementaryContext,
+    }),
     onToken: (token) => {
       const remainingCharacters = MAXIMUM_CHAT_ANSWER_CHARACTERS - streamedCharacters
       const visibleText = takeChatAnswerPrefix(token, remainingCharacters)

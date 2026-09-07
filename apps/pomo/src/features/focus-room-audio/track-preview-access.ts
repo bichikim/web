@@ -1,17 +1,17 @@
 import {readStoredAppSession} from '../user-auth/app-session'
 
-interface PreviewTrackAccess {
+export interface PreviewTrackAccess {
   readonly mode: 'preview'
   readonly url: string
 }
 
-interface FullTrackAccess {
+export interface FullTrackAccess {
   readonly expiresAt: string
   readonly mode: 'full'
   readonly url: string
 }
 
-type TrackAccess = FullTrackAccess | PreviewTrackAccess
+export type TrackAccess = FullTrackAccess | PreviewTrackAccess
 const HTTP_UNAUTHORIZED = 401
 interface TrackPreviewAuthenticationRequired {
   readonly ok: false
@@ -29,9 +29,10 @@ const UUID_REGEXP = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}
 // Keep client buffering aligned with the server's bounded preview object limit.
 // oxlint-disable-next-line eslint/no-magic-numbers -- Preview response limit is two MiB.
 const MAXIMUM_PREVIEW_BYTES = 2 * 1024 * 1024
-const getApiOrigin = (): string => import.meta.env.POMO_PUBLIC_ORIGIN
+const getApiOrigin = (): string => import.meta.env.VITE_POMO_PUBLIC_ORIGIN
 const usesRemotePublicOrigin = (): boolean =>
-  import.meta.env.POMO_IS_APPS_IN_TOSS || import.meta.env.POMO_IS_DESKTOP
+  import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
+  import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
 
 const isTrackAccess = (value: unknown, trackId: string): value is TrackAccess => {
   if (typeof value !== 'object' || value === null) {
@@ -110,9 +111,7 @@ const loadPreviewBlob = async (source: string): Promise<TrackPreviewSource> => {
   return {ok: true, release: () => URL.revokeObjectURL(objectUrl), source: objectUrl}
 }
 
-export const loadTrackPreviewSource = async (
-  trackId: string,
-): Promise<TrackPreviewSourceResult> => {
+export const requestTrackAccess = async (trackId: string): Promise<TrackAccess | null> => {
   const accessPath = `/api/music/tracks/${encodeURIComponent(trackId)}/access`
   const endpoint = usesRemotePublicOrigin()
     ? new URL(accessPath, getApiOrigin()).toString()
@@ -124,7 +123,7 @@ export const loadTrackPreviewSource = async (
   })
 
   if (response.status === HTTP_UNAUTHORIZED) {
-    return {ok: false, reason: 'authentication-required'}
+    return null
   }
 
   if (!response.ok) {
@@ -137,6 +136,17 @@ export const loadTrackPreviewSource = async (
     throw new TypeError('Track access response has an invalid format')
   }
 
+  return access
+}
+
+export const resolveTrackPreviewAccess = (
+  access: TrackAccess | null,
+  trackId: string,
+): Promise<TrackPreviewSourceResult> | TrackPreviewSourceResult => {
+  if (access === null) {
+    return {ok: false, reason: 'authentication-required'}
+  }
+
   const source =
     access.mode === 'preview' && usesRemotePublicOrigin()
       ? new URL(access.url, getApiOrigin()).toString()
@@ -144,3 +154,6 @@ export const loadTrackPreviewSource = async (
 
   return access.mode === 'preview' ? loadPreviewBlob(source) : {ok: true, source}
 }
+
+export const loadTrackPreviewSource = async (trackId: string): Promise<TrackPreviewSourceResult> =>
+  resolveTrackPreviewAccess(await requestTrackAccess(trackId), trackId)

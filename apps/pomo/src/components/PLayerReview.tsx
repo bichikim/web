@@ -1,6 +1,8 @@
+import * as m from '@paraglide/message'
+
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, type JSX, Show} from 'solid-js'
+import {createMemo, createSignal, Show} from 'solid-js'
 
 import {
   FOCUS_ROOM_SCENES,
@@ -42,9 +44,6 @@ export const PLayerReview = () => {
 
     return scene
   })
-  const handleReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
-    setReferenceOpacity(event.currentTarget.valueAsNumber)
-  }
   const handleSelect = (id: PSceneId) => {
     setSelectedId(id)
     setHeadVisible(true)
@@ -105,7 +104,7 @@ export const PLayerReview = () => {
           'absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] px-4 py-3 sm:bottom-6 sm:left-6 sm:max-w-xl',
         )}
       >
-        <p class="m-0 text-[10px] font-750 tracking-[0.2em] text-#e8c795 uppercase">
+        <p class="m-0 text-[0.625rem] font-750 tracking-[0.2em] text-#e8c795 uppercase">
           PixiJS 12 scene preview
         </p>
         <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -113,7 +112,7 @@ export const PLayerReview = () => {
             {selectedScene().label}
           </h1>
           <A class="text-xs font-700 text-#d7c7b3 no-underline hover:text-white" href="/">
-            Pomofi로 →
+            {m.app_return()} <span aria-hidden="true">→</span>
           </A>
         </div>
         <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · 분리 레이어</p>
@@ -131,7 +130,6 @@ export const PLayerReview = () => {
               'hover:bg-#211a24/92 hover:text-white sm:bottom-6 sm:right-6',
             )}
             onClick={() => setControlsExpanded(true)}
-            title="레이어 패널 확대"
             type="button"
           >
             <span aria-hidden="true" class="i-tabler-layout-sidebar-right-expand size-5" />
@@ -158,7 +156,7 @@ export const PLayerReview = () => {
           onMouthChange={setMouthVisible}
           onMouthFrameChange={handleMouthFrameChange}
           onMouthPositionComparisonChange={setMouthPositionComparison}
-          onReferenceChange={handleReferenceChange}
+          onReferenceChange={setReferenceOpacity}
           onSceneStyleChange={setSceneStyle}
           onShowAll={() => setAllLayersVisible(true)}
           onVisemeChange={(nextViseme) => {

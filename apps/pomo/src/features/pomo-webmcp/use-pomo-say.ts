@@ -1,4 +1,4 @@
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {useLazyChatVoice} from '../chat-voice/lazy'
 import type {PViseme} from '../lip-sync'
@@ -13,6 +13,8 @@ export type UsePSayOptions = UsePSayProps
 export interface PSayController {
   readonly activeViseme: Accessor<PViseme>
   readonly isPlaying: Accessor<boolean>
+  readonly isPreparing: Accessor<boolean>
+  readonly speak: (request: PSayRequest) => Promise<void>
   readonly speechText: Accessor<string | null>
   readonly stop: () => void
 }
@@ -22,6 +24,8 @@ const createCancelledError = () => new DOMException('Pomo speech was cancelled.'
 /** Registers and owns the cancellable WebMCP speech lifecycle for Pomo. */
 export const usePSay = (props: UsePSayProps): PSayController => {
   const [speechText, setSpeechText] = createSignal<string | null>(null)
+  const [pendingSpeechText, setPendingSpeechText] = createSignal<string | null>(null)
+  const [isPreparing, setIsPreparing] = createSignal(false)
   const voice = useLazyChatVoice()
   let speechSession = 0
 
@@ -34,7 +38,9 @@ export const usePSay = (props: UsePSayProps): PSayController => {
   const speak = async (request: PSayRequest) => {
     speechSession += 1
     const activeSession = speechSession
-    setSpeechText(request.text)
+    setIsPreparing(true)
+    setPendingSpeechText(null)
+    setSpeechText(null)
 
     try {
       props.onBeforeSpeech()
@@ -48,6 +54,7 @@ export const usePSay = (props: UsePSayProps): PSayController => {
       }
 
       voice.arm()
+      setPendingSpeechText(request.text)
       const speech = voice.speak(request.text, request.voiceId)
       await speech
       assertActive(activeSession)
@@ -61,6 +68,8 @@ export const usePSay = (props: UsePSayProps): PSayController => {
       }
     } finally {
       if (activeSession === speechSession) {
+        setIsPreparing(false)
+        setPendingSpeechText(null)
         setSpeechText(null)
       }
     }
@@ -68,9 +77,23 @@ export const usePSay = (props: UsePSayProps): PSayController => {
 
   const stop = () => {
     speechSession += 1
+    setIsPreparing(false)
+    setPendingSpeechText(null)
     setSpeechText(null)
     voice.stop()
   }
+
+  createEffect(() => {
+    const pendingText = pendingSpeechText()
+
+    if (pendingText === null || !voice.isPlaying()) {
+      return
+    }
+
+    setPendingSpeechText(null)
+    setSpeechText(pendingText)
+    setIsPreparing(false)
+  })
 
   onMount(() => {
     const registration = new AbortController()
@@ -84,5 +107,12 @@ export const usePSay = (props: UsePSayProps): PSayController => {
     })
   })
 
-  return {activeViseme: voice.activeViseme, isPlaying: voice.isPlaying, speechText, stop}
+  return {
+    activeViseme: voice.activeViseme,
+    isPlaying: voice.isPlaying,
+    isPreparing,
+    speak,
+    speechText,
+    stop,
+  }
 }

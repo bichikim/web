@@ -6,8 +6,13 @@ const openAiMocks = vi.hoisted(() => ({
   unwrap: vi.fn(),
 }))
 const environmentMocks = vi.hoisted(() => ({
-  getOpenAiConfiguration: vi.fn(),
-  getOpenAiWebhookSecret: vi.fn(),
+  env: {
+    OPENAI_API_KEY: 'test-key',
+    OPENAI_MODEL: 'gpt-5.5',
+    OPENAI_REASONING_EFFORT: 'medium',
+    OPENAI_SERVICE_TIER: 'default',
+    OPENAI_WEBHOOK_SECRET: 'webhook-secret',
+  },
 }))
 
 vi.mock('openai', () => ({
@@ -20,20 +25,15 @@ vi.mock('openai', () => ({
     }
   },
 }))
-vi.mock('../../ai/environment', () => environmentMocks)
+vi.mock('src/env', () => ({
+  env: environmentMocks.env,
+}))
 
 import {HISTORY_SOURCE_POLICY} from 'src/features/history-generation'
 import {getOpenAiClient, submitHistoryResponse, unwrapOpenAiWebhook} from '../openai-client'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  environmentMocks.getOpenAiConfiguration.mockReturnValue({
-    apiKey: 'test-key',
-    model: 'gpt-5.5',
-    reasoningEffort: 'medium',
-    serviceTier: 'default',
-  })
-  environmentMocks.getOpenAiWebhookSecret.mockReturnValue('webhook-secret')
   openAiMocks.create.mockResolvedValue({id: 'resp-default'})
   openAiMocks.unwrap.mockReturnValue({id: 'event-1'})
 })

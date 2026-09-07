@@ -1,10 +1,8 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {createSignal} from 'solid-js'
 import {useDrag} from './index'
 
 const DragTestComponent = () => {
-  const [dragElement, setDragElement] = createSignal<HTMLElement | null>(null)
-  const drag = useDrag(dragElement)
+  const drag = useDrag()
 
   return (
     <div class="relative w-full h-96 bg-gray-100 border-2 border-dashed border-gray-300 p-4">
@@ -24,7 +22,7 @@ const DragTestComponent = () => {
       </div>
 
       <div
-        ref={setDragElement}
+        onMouseDown={drag.onMouseDown}
         class="w-24 h-24 bg-blue-500 rounded-lg shadow-lg cursor-grab select-none absolute"
         style={{
           cursor: drag.isDragging() ? 'grabbing' : 'grab',

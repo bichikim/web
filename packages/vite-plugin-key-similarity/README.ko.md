@@ -186,7 +186,7 @@ keySimilarity({
 })
 ```
 
-key 길이나 형식에 따라 값을 다르게 적용하려면 함수를 전달한다. 주석으로 추가한 표현에도 각각 이 함수가 실행된다.
+대부분의 프로젝트에서는 하나의 고정값보다 key 길이에 따라 임계값을 조정하는 함수를 권장한다. key 형식도 조건으로 사용할 수 있다. 주석으로 추가한 표현에도 각각 이 함수가 실행된다.
 
 ```ts
 keySimilarity({
@@ -236,6 +236,7 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | ------------------- | ------------------------------------ | -------------------------------------------------------- |
 | `keyDetector`       | 필수                                 | 검사할 import 호출과 key 인수를 선택한다.                |
 | `semanticThreshold` | `0.9`                                | 고정 숫자 또는 `(key) => number` 형태의 임계값 resolver  |
+| `skipIdenticalKeys` | `false`                              | 원래 key 값이 완전히 같은 pair를 건너뛴다.               |
 | `serveMode`         | `warn`                               | 개발 서버 진단 방식                                      |
 | `buildMode`         | `error`                              | 빌드 진단 방식                                           |
 | `exclude`           | 테스트, generated, node_modules 제외 | Vite와 CLI에서 제외할 glob 목록                          |

@@ -110,7 +110,18 @@ describe('account link email route', () => {
     expect(repositoryMocks.invalidateAccountLinkChallenge).toHaveBeenCalledWith('challenge-token')
   })
 
-  it('should preserve the challenge when email delivery is uncertain', async () => {
+  it('should not retry challenge invalidation when the repository rejects it', async () => {
+    const error = new Error('Database unavailable')
+    emailMocks.sendAccountLinkEmail.mockResolvedValue(false)
+    repositoryMocks.invalidateAccountLinkChallenge.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(500)
+    expect(repositoryMocks.invalidateAccountLinkChallenge).toHaveBeenCalledOnce()
+  })
+
+  it('should invalidate the challenge when email delivery throws', async () => {
     const error = new Error('Email provider unavailable')
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     emailMocks.sendAccountLinkEmail.mockRejectedValue(error)
@@ -119,6 +130,6 @@ describe('account link email route', () => {
 
     expect(response.status).toBe(502)
     expect(errorSpy).toHaveBeenCalledWith('Failed to send an account link email', error)
-    expect(repositoryMocks.invalidateAccountLinkChallenge).not.toHaveBeenCalled()
+    expect(repositoryMocks.invalidateAccountLinkChallenge).toHaveBeenCalledWith('challenge-token')
   })
 })

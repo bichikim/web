@@ -1,6 +1,6 @@
 import {type JSX, onCleanup} from 'solid-js'
 
-import {usePEvents} from '../features/focus-room-dialogue'
+import {usePEvents} from '../features/focus-room-dialogue/event-context'
 import type {PFeedController} from '../features/focus-room-feed/feed-controller'
 import {PFeedContext} from '../features/focus-room-feed/feed-context'
 import {usePFeeds} from '../features/focus-room-feed/use-focus-room-feeds'

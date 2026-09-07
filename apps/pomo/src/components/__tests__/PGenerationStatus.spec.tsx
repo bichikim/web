@@ -6,7 +6,7 @@ import {expect, it, vi} from 'vitest'
 import {PGenerationStatus} from '../PGenerationStatus'
 
 it('should show a concrete status without progress when no value is provided', () => {
-  render(() => (
+  const result = render(() => (
     <PGenerationStatus
       kind="voice"
       message="대사를 입력한 뒤 음성 만들기를 눌러 주세요."
@@ -15,6 +15,10 @@ it('should show a concrete status without progress when no value is provided', (
   ))
 
   expect(screen.getByRole('status').textContent).toBe('대사를 입력한 뒤 음성 만들기를 눌러 주세요.')
+  expect(result.container.querySelector('[role="status"]')).toHaveClass(
+    'bg-primary-soft',
+    'text-foreground',
+  )
   expect(screen.queryByRole('progressbar')).toBeNull()
   expect(screen.queryByRole('button', {name: '취소'})).toBeNull()
 })

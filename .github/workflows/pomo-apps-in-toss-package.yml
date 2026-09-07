@@ -1,0 +1,79 @@
+name: Build Pomo Apps in Toss package
+
+on:
+  workflow_dispatch:
+
+run-name: Build Pomo Apps in Toss package from ${{ github.ref_name }} at ${{ github.sha }}
+
+concurrency:
+  group: pomo-apps-in-toss-package
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24
+  PNPM_VERSION: 11.8.0
+
+jobs:
+  build:
+    name: Build and upload package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Validate build source
+        run: |
+          test "${GITHUB_REF}" = "refs/heads/main" || {
+            echo "::error::Select the main branch when running this workflow."
+            exit 1
+          }
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Apps in Toss package
+        env:
+          POMO_ENVIRONMENT: production
+          POMO_RELEASE: ${{ github.sha }}
+          POMO_APPS_IN_TOSS_APP_NAME: pomo-app
+        run: pnpm --filter @apps/pomo build:apps-in-toss-package
+
+      - name: Upload Apps in Toss package
+        id: package
+        uses: actions/upload-artifact@v7
+        with:
+          name: pomo-apps-in-toss-${{ github.sha }}-${{ github.run_attempt }}
+          path: apps/pomo/pomo-app.ait
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Summarize package download
+        env:
+          ARTIFACT_URL: ${{ steps.package.outputs.artifact-url }}
+        run: |
+          {
+            echo "### Pomo Apps in Toss package"
+            echo ""
+            echo "[Download package](${ARTIFACT_URL}) (retained for 30 days)."
+            echo ""
+            echo "Extract pomo-app.ait from the downloaded archive and upload it to the Apps in Toss console."
+            echo ""
+            echo "Source commit: ${GITHUB_SHA}"
+          } >> "${GITHUB_STEP_SUMMARY}"

@@ -1,5 +1,11 @@
 import {clientOnly} from '@solidjs/start'
 
-export const TextMoodWorkspace = clientOnly(() => import('src/components/TextMoodLab'), {
-  lazy: true,
-})
+export const TextMoodWorkspace = clientOnly(
+  async () => {
+    const {TextMoodLab} = await import('src/components/TextMoodLab')
+    return {default: TextMoodLab}
+  },
+  {
+    lazy: true,
+  },
+)

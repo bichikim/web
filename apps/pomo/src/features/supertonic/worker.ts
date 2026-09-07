@@ -33,7 +33,6 @@ import {
 } from './model-assets'
 import {
   getSupertonicAssetUrl,
-  getSupertonicModel,
   SUPERTONIC_MODEL_ASSETS_URL,
   type SupertonicModel,
   type SupertonicVoiceId,
@@ -42,6 +41,7 @@ import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} f
 import {type LoadBufferOptions, loadSessions, releaseSessions} from './sessions'
 import {failureResult, type Result, successResult} from '../result'
 import {splitSpeechText} from './text-chunking'
+import {createSupertonicWorkerDispatch} from './worker/dispatch'
 
 const workerScope = self as DedicatedWorkerGlobalScope
 const modelStorage = createModelStorage()
@@ -480,78 +480,17 @@ const generate = async (
   }
 }
 
-workerScope.onmessage = async (event: MessageEvent<SupertonicWorkerInput>) => {
-  const message = event.data
-
-  try {
-    switch (message.type) {
-      case 'cancel-generation':
-        activeGenerationAbortController?.abort()
-        return
-      case 'dispose':
-        activeAbortController?.abort()
-        await engine?.release()
-        engine = null
-        activeModel = null
-        activeRuntime = null
-        voiceCache.clear()
-        postMessage({type: 'disposed'})
-        return
-      case 'generate': {
-        const result = await generate(message)
-
-        if (result.ok) {
-          postMessage(
-            {
-              generationTime: result.value.generationTime,
-              requestId: message.requestId,
-              sampleRate: result.value.sampleRate,
-              samples: result.value.samples,
-              type: 'result',
-            },
-            [result.value.samples.buffer],
-          )
-        } else {
-          postMessage({error: result.error, requestId: message.requestId, type: 'error'})
-        }
-        return
-      }
-      case 'initialize': {
-        let model: SupertonicModel
-
-        try {
-          model = getSupertonicModel(message.modelId)
-        } catch {
-          postMessage({
-            error: {
-              code: 'invalid-model',
-              modelId: message.modelId,
-              phase: 'initialize',
-              retryable: false,
-            },
-            requestId: null,
-            type: 'error',
-          })
-          return
-        }
-
-        const result = await initialize(model)
-
-        if (result.ok) {
-          postMessage({backend: result.value, type: 'ready'})
-        } else {
-          postMessage({error: result.error, requestId: null, type: 'error'})
-        }
-        return
-      }
-    }
-
-    message satisfies never
-  } catch (error: unknown) {
-    postMessage({
-      error: createWorkerError(message.type === 'generate' ? 'generate' : 'initialize', error),
-      requestId: message.type === 'generate' ? message.requestId : null,
-      type: 'error',
-    })
-  }
-}
+workerScope.onmessage = createSupertonicWorkerDispatch({
+  cancelGeneration: () => activeGenerationAbortController?.abort(),
+  async dispose() {
+    activeAbortController?.abort()
+    await engine?.release()
+    engine = null
+    activeModel = null
+    activeRuntime = null
+    voiceCache.clear()
+  },
+  generate,
+  initialize,
+  postMessage,
+})

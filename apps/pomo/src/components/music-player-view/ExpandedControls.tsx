@@ -1,3 +1,5 @@
+import {useTooltipTrigger} from '../tooltip'
+import {PTooltip} from '../PTooltip'
 import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 import {PPlaybackModes} from './PlaybackModes'
@@ -5,16 +7,18 @@ import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {PTrackList} from './TrackList'
 import {PlayerIcon} from './Icon'
 import {CLASSES, MusicPlayerViewProps} from './shared'
+import {VolumeControl} from './VolumeControl'
 
-const SKIP_BUTTON_CLASSES = [
+const SKIP_BUTTON_CLASSES = cx(
   'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
   'disabled:opacity-35 player-compact:size-9',
-].join(' ')
+)
 
 type ExpandedPlayerControlsProps = Pick<
   MusicPlayerViewProps,
   | 'currentIndex'
   | 'currentTrack'
+  | 'isPlaying'
   | 'onNextTrack'
   | 'onPreviousTrack'
   | 'onRepeatModeChange'
@@ -27,143 +31,123 @@ type ExpandedPlayerControlsProps = Pick<
   | 'tracks'
 >
 
-export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
-  <div
-    class={cx(
-      CLASSES.playerExpanded,
-      'relative px-2 pb-2',
-      'pt-3 rounded-b-panel-inner player-compact:pt-2',
-    )}
-  >
+export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
+  const previousTooltip = useTooltipTrigger()
+  const playTooltip = useTooltipTrigger()
+  const nextTooltip = useTooltipTrigger()
+  return (
     <div
       class={cx(
-        'pomo-player__expanded-controls grid min-w-0 flex-none grid-cols-[1fr_auto_1fr]',
-        'items-center gap-2 px-1',
-        'player-compact:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]',
-        'player-compact:gap-y-2 player-compact:px-0',
+        CLASSES.playerExpanded,
+        'relative px-2 pb-2',
+        'pt-3 rounded-b-panel-inner player-compact:pt-2',
       )}
     >
-      <div class="min-w-0 player-compact:col-start-1 player-compact:row-start-2">
-        <PPlaybackModes
-          onRepeatModeChange={props.onRepeatModeChange}
-          onShuffleChange={props.onShuffleChange}
-          repeatMode={props.repeatMode}
-          sceneStyle={props.sceneStyle}
-          shuffleEnabled={props.shuffleEnabled}
-        />
-      </div>
-
       <div
         class={cx(
-          'pomo-player__transport flex items-center justify-center gap-1',
-          'player-compact:col-span-2 player-compact:col-start-1 player-compact:row-start-1',
+          'pomo-player__expanded-controls grid min-w-0 flex-none grid-cols-[1fr_auto_1fr]',
+          'items-center gap-2 px-1',
+          'player-compact:grid-cols-[max-content_max-content_max-content]',
+          'player-compact:justify-evenly',
+          'player-compact:gap-1',
         )}
       >
-        <button
-          aria-label={m.player_previous()}
-          class={SKIP_BUTTON_CLASSES}
-          disabled={props.tracks.length < 2}
-          onClick={() => props.onPreviousTrack()}
-          title={m.player_previous()}
-          type="button"
-        >
-          <PlayerIcon
-            icon="i-tabler-player-track-prev"
+        <div class="min-w-0">
+          <PPlaybackModes
+            onRepeatModeChange={props.onRepeatModeChange}
+            onShuffleChange={props.onShuffleChange}
+            repeatMode={props.repeatMode}
             sceneStyle={props.sceneStyle}
-            size="size-4"
+            shuffleEnabled={props.shuffleEnabled}
           />
-        </button>
-        <PScribbleCircleControl
-          class="pomo-player__play-scribble-frame"
-          enabled={props.sceneStyle === 'scribble'}
-        >
-          <media-play-button
-            aria-label={m.player_toggle_playback()}
-            class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge, 'player-compact:size-12')}
-            disabled={!props.currentTrack}
-            notooltip
-            title={m.player_toggle_playback()}
+        </div>
+
+        <div class="pomo-player__transport flex items-center justify-center gap-1">
+          <button
+            {...previousTooltip.events}
+            ref={previousTooltip.setTarget}
+            aria-label={m.player_previous()}
+            class={SKIP_BUTTON_CLASSES}
+            disabled={props.tracks.length < 2}
+            onClick={() => props.onPreviousTrack()}
+            type="button"
           >
             <PlayerIcon
-              icon="i-tabler-player-play"
+              icon="i-tabler-player-track-prev"
               sceneStyle={props.sceneStyle}
-              size="size-5"
-              slot="play"
+              size="size-6"
             />
+          </button>
+          <PTooltip
+            target={previousTooltip.target()}
+            show={previousTooltip.show()}
+            text={m.player_previous()}
+          />
+
+          <PScribbleCircleControl
+            class="pomo-player__play-scribble-frame pomo-player__transport-play-frame
+            player-compact:hidden"
+            enabled={props.sceneStyle === 'scribble'}
+          >
+            <media-play-button
+              {...playTooltip.events}
+              ref={playTooltip.setTarget}
+              aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
+              class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge)}
+              disabled={!props.currentTrack}
+              attr:notooltip=""
+            >
+              <PlayerIcon
+                icon="i-tabler-player-play"
+                sceneStyle={props.sceneStyle}
+                size="size-6"
+                slot="play"
+              />
+              <PlayerIcon
+                icon="i-tabler-player-pause"
+                sceneStyle={props.sceneStyle}
+                size="size-6"
+                slot="pause"
+              />
+            </media-play-button>
+            <PTooltip
+              target={playTooltip.target()}
+              show={playTooltip.show()}
+              text={props.isPlaying ? m.player_pause() : m.player_play()}
+            />
+          </PScribbleCircleControl>
+
+          <button
+            {...nextTooltip.events}
+            ref={nextTooltip.setTarget}
+            aria-label={m.player_next()}
+            class={SKIP_BUTTON_CLASSES}
+            disabled={props.tracks.length < 2}
+            onClick={() => props.onNextTrack()}
+            type="button"
+          >
             <PlayerIcon
-              icon="i-tabler-player-pause"
+              icon="i-tabler-player-track-next"
               sceneStyle={props.sceneStyle}
-              size="size-5"
-              slot="pause"
+              size="size-6"
             />
-          </media-play-button>
-        </PScribbleCircleControl>
-        <button
-          aria-label={m.player_next()}
-          class={SKIP_BUTTON_CLASSES}
-          disabled={props.tracks.length < 2}
-          onClick={() => props.onNextTrack()}
-          title={m.player_next()}
-          type="button"
-        >
-          <PlayerIcon
-            icon="i-tabler-player-track-next"
-            sceneStyle={props.sceneStyle}
-            size="size-4"
+          </button>
+          <PTooltip
+            target={nextTooltip.target()}
+            show={nextTooltip.show()}
+            text={m.player_next()}
           />
-        </button>
+        </div>
+
+        <VolumeControl sceneStyle={props.sceneStyle} />
       </div>
 
-      <div
-        class={cx(
-          'pomo-player__volume-group flex min-w-0 items-center justify-end gap-0',
-          'player-compact:col-start-2 player-compact:row-start-2',
-        )}
-      >
-        <media-mute-button
-          aria-label={m.player_mute()}
-          class={CLASSES.playerMute}
-          notooltip
-          title={m.player_toggle_mute()}
-        >
-          <PlayerIcon
-            icon="i-tabler-volume-off"
-            sceneStyle={props.sceneStyle}
-            size="size-5"
-            slot="off"
-          />
-          <PlayerIcon
-            icon="i-tabler-volume-4"
-            sceneStyle={props.sceneStyle}
-            size="size-5"
-            slot="low"
-          />
-          <PlayerIcon
-            icon="i-tabler-volume-2"
-            sceneStyle={props.sceneStyle}
-            size="size-5"
-            slot="medium"
-          />
-          <PlayerIcon
-            icon="i-tabler-volume"
-            sceneStyle={props.sceneStyle}
-            size="size-5"
-            slot="high"
-          />
-        </media-mute-button>
-        <media-volume-range
-          aria-label={m.player_volume()}
-          class={CLASSES.playerVolume}
-          title={m.player_volume()}
-        />
-      </div>
+      <PTrackList
+        currentIndex={props.currentIndex}
+        onTrackRemove={props.onTrackRemove}
+        onTrackSelect={props.onTrackSelect}
+        tracks={props.tracks}
+      />
     </div>
-
-    <PTrackList
-      currentIndex={props.currentIndex}
-      onTrackRemove={props.onTrackRemove}
-      onTrackSelect={props.onTrackSelect}
-      tracks={props.tracks}
-    />
-  </div>
-)
+  )
+}

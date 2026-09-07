@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {createAuthMaintenanceRepository} from './maintenance-repository'
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -22,6 +20,7 @@ interface DeleteBatchOptions {
 interface DeleteAppSessionBatchOptions {
   readonly batchSize: number
   readonly expiresAtCutoff: Date
+  readonly pendingExpiresAtCutoff: Date
   readonly revokedAtCutoff: Date
 }
 
@@ -101,6 +100,7 @@ export const runAuthMaintenance = async (
     resolvedDependencies.repository.deleteAppSessionBatch({
       batchSize: DELETE_BATCH_SIZE,
       expiresAtCutoff,
+      pendingExpiresAtCutoff: now,
       revokedAtCutoff,
     }),
   )

@@ -3,7 +3,7 @@
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import PMusicPlayerContent from '../Content'
+import {PMusicPlayerContent} from '../Content'
 
 vi.mock('media-chrome', () => ({}))
 vi.mock('../../PAlbumLibrary', () => ({PAlbumLibrary: () => null}))
@@ -29,6 +29,13 @@ const getAudioElement = (container: HTMLElement): HTMLAudioElement => {
   }
 
   return audio
+}
+
+const markAudioMetadataReady = (audio: HTMLAudioElement) => {
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
 }
 
 describe('PMusicPlayerContent playback persistence', () => {
@@ -59,6 +66,7 @@ describe('PMusicPlayerContent playback persistence', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const audio = getAudioElement(result.container)
 
+    markAudioMetadataReady(audio)
     await Promise.resolve()
     await Promise.resolve()
     fireEvent(audio, new Event('loadedmetadata'))

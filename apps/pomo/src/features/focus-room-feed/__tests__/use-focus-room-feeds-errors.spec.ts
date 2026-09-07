@@ -47,6 +47,7 @@ const repositoryMocks = vi.hoisted(() => {
     complete: vi.fn().mockResolvedValue(undefined),
     deleteJobs: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
+    failJob: vi.fn().mockResolvedValue(true),
     interruptUnfinishedJobs: vi.fn().mockResolvedValue([]),
     listExpiredMetadata: vi.fn().mockResolvedValue([]),
     listItems: vi.fn().mockResolvedValue([]),
@@ -55,7 +56,7 @@ const repositoryMocks = vi.hoisted(() => {
     markListened: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
-    updateJob: vi.fn().mockResolvedValue(undefined),
+    startJob: vi.fn().mockResolvedValue(true),
   }
 
   return {
@@ -67,6 +68,7 @@ const repositoryMocks = vi.hoisted(() => {
 
 vi.mock('../../focus-room-dialogue/repository', () => ({
   createPDialogueRepository: () => repositoryMocks.dialogueRepository,
+  deleteDialogueAudio: vi.fn(),
 }))
 vi.mock('../feed-dialogue-repository', () => ({
   createFeedDialogueRepository: () => repositoryMocks.feedRepository,
@@ -106,6 +108,7 @@ beforeEach(() => {
   repositoryMocks.dialogueRepository.saveDialogue.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.complete.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.deleteJobs.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.failJob.mockResolvedValue(true)
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listExpiredMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.listItems.mockResolvedValue([])
@@ -114,7 +117,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
-  repositoryMocks.feedRepository.updateJob.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
   repositoryMocks.listConnections.mockReturnValue([])
   lifecycleMocks.deleteExpiredFeedDialogues.mockResolvedValue(0)
   lifecycleMocks.discardFeedJobs.mockResolvedValue([])
@@ -205,7 +208,7 @@ const createEventContext = (
   isLoading: vi.fn(() => false),
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues,
@@ -319,6 +322,9 @@ it('should reject repository actions before the hook is mounted', async () => {
   await expect(controller.deleteRecovery()).rejects.toThrow(
     '피드 대화 저장소가 아직 준비되지 않았어요.',
   )
+  await expect(controller.cancelProcessing()).rejects.toThrow(
+    '피드 대화 저장소가 아직 준비되지 않았어요.',
+  )
   Object.defineProperty(repositoryMocks, 'dialogueRepository', {
     value: dialogueRepository,
     writable: true,
@@ -372,7 +378,7 @@ it('should dispose a client whose model initialization fails', async () => {
 
   await vi.waitFor(() => expect(client.dispose).toHaveBeenCalled())
 
-  expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalled()
+  expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled()
   view.cleanup()
 })
 
@@ -418,13 +424,13 @@ it('should fail generation when the stored feed item is missing', async () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const view = renderHook(() => usePFeeds({events: createEventContext()}))
 
-  await vi.waitFor(() => expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalled())
+  await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
   expect(error).toHaveBeenCalledWith('Failed to process feed dialogue job.', expect.any(Error))
-  expect(repositoryMocks.feedRepository.updateJob).toHaveBeenCalledWith(
-    expect.objectContaining({errorMessage: '피드 대화를 저장하지 못했어요.'}),
-    undefined,
-  )
+  expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalledWith({
+    item: undefined,
+    job: expect.objectContaining({errorMessage: '피드 대화를 저장하지 못했어요.'}),
+  })
   view.cleanup()
 })
 
@@ -461,7 +467,6 @@ it('should stop deferred generation cleanly after disposal', async () => {
   await generation.promise
 
   expect(client.cancelGeneration).toHaveBeenCalled()
-  expect(repositoryMocks.feedRepository.updateJob).not.toHaveBeenCalled()
 })
 
 it('should ignore a missing scheduled queue entry', async () => {

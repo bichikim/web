@@ -55,7 +55,7 @@ export const LanguageLearningWordSourceControl = (
       <Show
         when={props.source === 'direct'}
         fallback={
-          <div class="grid gap-2 rounded-panel border border-solid border-border bg-[rgb(255_255_255_/_3%)] p-4">
+          <div class="grid gap-2 rounded-panel border border-solid border-border bg-content-surface p-4">
             <Show
               when={hasEnoughSavedWords()}
               fallback={
@@ -75,7 +75,7 @@ export const LanguageLearningWordSourceControl = (
               </p>
             </Show>
             <Show when={props.words.length > 0}>
-              <p class="m-0 text-xs leading-5 text-muted-foreground">
+              <p class="m-0 text-modal-detail leading-5 text-muted-foreground">
                 {m.learning_editor_selected_words({words: props.words.join(', ')})}
               </p>
             </Show>

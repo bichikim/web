@@ -9,7 +9,7 @@ const MAIN_CLASSES = cx(
   'bg-[radial-gradient(circle_at_70%_8%,#263a3c_0%,#151b23_34%,#0e1117_68%)]',
 )
 
-function CharacterPage() {
+export function CharacterPage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — 3D Character Lab</Title>
@@ -30,5 +30,3 @@ function CharacterPage() {
     </main>
   )
 }
-
-export default CharacterPage

@@ -48,6 +48,12 @@ it('should show scroll hints, scroll in both directions, and react to layout cha
   TestResizeObserver.instances[0]?.trigger()
   const buttons = screen.getAllByRole('button')
   expect(buttons).toHaveLength(2)
+  expect(buttons[1]).toHaveClass(
+    'w-10',
+    'bg-gradient-to-r',
+    'from-transparent',
+    'to-surface-strong',
+  )
   fireEvent.click(buttons[0]!)
   fireEvent.click(buttons[1]!)
   expect(scrollBy).toHaveBeenNthCalledWith(1, {behavior: 'smooth', left: -70})

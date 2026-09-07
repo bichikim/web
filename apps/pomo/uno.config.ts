@@ -1,54 +1,70 @@
+import {icons as tablerIcons} from '@iconify-json/tabler'
 import baseConfig from '@winter-love/unocss-config'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 
-import scribbleIcons from './icon-sets/scribble.json'
+import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
+import {initialSceneFallbackShortcuts} from './scripts/unocss/loading'
+import {typographyShortcuts} from './scripts/unocss/typography'
 
-const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const sansFontFamily = [
+  "'Pretendard Variable'",
+  'Pretendard',
+  'system-ui',
+  '-apple-system',
+  'BlinkMacSystemFont',
+  "'Segoe UI'",
+  "'Apple SD Gothic Neo'",
+  "'Noto Sans KR'",
+  "'Malgun Gothic'",
+  'sans-serif',
+].join(', ')
 
-const colors = isAppsInToss
-  ? {
-      backdrop: 'rgb(25 31 40 / 48%)',
-      background: '#f7f8fa',
-      border: 'rgb(2 32 71 / 16%)',
-      'border-hover': 'rgb(2 32 71 / 28%)',
-      danger: '#b42318',
-      foreground: '#191f28',
-      highlight: '#8a5a32',
-      'muted-foreground': '#4e5968',
-      primary: '#c34f2f',
-      'primary-soft': 'rgb(195 79 47 / 12%)',
-      'primary-strong': '#a83b20',
-      'primary-strong-hover': '#8f2f18',
-      secondary: '#667052',
-      'secondary-soft': 'rgb(102 112 82 / 14%)',
-      'secondary-strong': '#525b41',
-      surface: 'rgb(255 255 255 / 88%)',
-      'surface-interactive': 'rgb(255 255 255 / 98%)',
-      'surface-overlay': 'rgb(25 31 40 / 10%)',
-      'surface-strong': '#ffffff',
-    }
-  : {
-      backdrop: 'rgb(8 6 4 / 68%)',
-      background: '#17130f',
-      border: 'rgb(255 250 241 / 14%)',
-      'border-hover': 'rgb(255 250 241 / 28%)',
-      danger: '#ef8a74',
-      foreground: '#fffaf1',
-      highlight: '#d9b98a',
-      'muted-foreground': '#c9c0b5',
-      primary: '#d86845',
-      'primary-soft': 'rgb(216 104 69 / 18%)',
-      'primary-strong': '#a94329',
-      'primary-strong-hover': '#b84f32',
-      secondary: '#727b60',
-      'secondary-soft': 'rgb(114 123 96 / 20%)',
-      'secondary-strong': '#5f684e',
-      surface: 'rgb(10 10 10 / 68%)',
-      'surface-interactive': 'rgb(10 10 10 / 78%)',
-      'surface-overlay': 'rgb(10 10 10 / 31.25%)',
-      'surface-strong': 'rgb(10 10 10 / 68%)',
-    }
+const colors = {
+  backdrop: 'rgb(var(--pomo-color-backdrop-channels) / var(--pomo-color-backdrop-opacity))',
+  background: 'rgb(var(--pomo-color-background-channels) / var(--pomo-color-background-opacity))',
+  border: 'rgb(var(--pomo-color-border-channels) / var(--pomo-color-border-opacity))',
+  'border-hover':
+    'rgb(var(--pomo-color-border-hover-channels) / var(--pomo-color-border-hover-opacity))',
+  'content-border':
+    'rgb(var(--pomo-color-content-border-channels) / var(--pomo-color-content-border-opacity))',
+  'content-surface':
+    'rgb(var(--pomo-color-content-surface-channels) / var(--pomo-color-content-surface-opacity))',
+  'content-surface-disabled':
+    'rgb(var(--pomo-color-content-surface-disabled-channels) / var(--pomo-color-content-surface-disabled-opacity))',
+  danger: 'rgb(var(--pomo-color-danger-channels) / var(--pomo-color-danger-opacity))',
+  foreground: 'rgb(var(--pomo-color-foreground-channels) / var(--pomo-color-foreground-opacity))',
+  highlight: 'rgb(var(--pomo-color-highlight-channels) / var(--pomo-color-highlight-opacity))',
+  'modal-surface':
+    'rgb(var(--pomo-color-modal-surface-channels) / var(--pomo-color-modal-surface-opacity))',
+  'muted-foreground':
+    'rgb(var(--pomo-color-muted-foreground-channels) / var(--pomo-color-muted-foreground-opacity))',
+  'player-surface':
+    'rgb(var(--pomo-color-player-surface-channels) / var(--pomo-color-player-surface-opacity))',
+  primary: 'rgb(var(--pomo-color-primary-channels) / var(--pomo-color-primary-opacity))',
+  'primary-soft':
+    'rgb(var(--pomo-color-primary-soft-channels) / var(--pomo-color-primary-soft-opacity))',
+  'primary-strong':
+    'rgb(var(--pomo-color-primary-strong-channels) / var(--pomo-color-primary-strong-opacity))',
+  'primary-strong-hover':
+    'rgb(var(--pomo-color-primary-strong-hover-channels) / var(--pomo-color-primary-strong-hover-opacity))',
+  secondary: 'rgb(var(--pomo-color-secondary-channels) / var(--pomo-color-secondary-opacity))',
+  'secondary-soft':
+    'rgb(var(--pomo-color-secondary-soft-channels) / var(--pomo-color-secondary-soft-opacity))',
+  'secondary-strong':
+    'rgb(var(--pomo-color-secondary-strong-channels) / var(--pomo-color-secondary-strong-opacity))',
+  surface: 'rgb(var(--pomo-color-surface-channels) / var(--pomo-color-surface-opacity))',
+  'surface-interactive':
+    'rgb(var(--pomo-color-surface-interactive-channels) / var(--pomo-color-surface-interactive-opacity))',
+  'surface-overlay':
+    'rgb(var(--pomo-color-surface-overlay-channels) / var(--pomo-color-surface-overlay-opacity))',
+  'surface-strong':
+    'rgb(var(--pomo-color-surface-strong-channels) / var(--pomo-color-surface-strong-opacity))',
+  'switch-thumb':
+    'rgb(var(--pomo-color-switch-thumb-channels) / var(--pomo-color-switch-thumb-opacity))',
+  'switch-track':
+    'rgb(var(--pomo-color-switch-track-channels) / var(--pomo-color-switch-track-opacity))',
+} as const
 
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
@@ -67,10 +83,10 @@ const createParentVariant = (name: string, parent: string): Variant => {
 
 const isPresetNamed = (preset: unknown, name: string) =>
   typeof preset === 'object' && preset !== null && 'name' in preset && preset.name === name
-
 const config = mergeConfigs([
   baseConfig,
   defineConfig<PresetWind3Theme>({
+    blocklist: ['count(*)::integer'],
     content: {
       pipeline: {
         exclude: ['**/.i18n/paraglide/**'],
@@ -91,9 +107,29 @@ const config = mergeConfigs([
       const safeAreaRight = 'var(--pomo-safe-area-inset-right)'
       const safeAreaTop = 'var(--pomo-safe-area-inset-top)'
 
+      theme.blur = {
+        ...theme.blur,
+        '2xl': '2.5rem',
+        '3xl': '4rem',
+        DEFAULT: '0.5rem',
+        lg: '1rem',
+        md: '0.75rem',
+        sm: '0.25rem',
+        xl: '1.5rem',
+      }
       theme.borderRadius = {
         ...theme.borderRadius,
+        full: '999rem',
         'panel-inner': `calc(${panelRadius} - ${panelInset})`,
+      }
+      theme.lineWidth = {
+        ...theme.lineWidth,
+        0: '0rem',
+        1: '0.0625rem',
+        2: '0.125rem',
+        3: '0.1875rem',
+        4: '0.25rem',
+        DEFAULT: '0.0625rem',
       }
       theme.height = {
         ...theme.height,
@@ -140,19 +176,169 @@ const config = mergeConfigs([
     preflights: [
       {
         getCSS: ({theme}) => `
+[data-pomo-tooltip-trigger] {
+  anchor-name: var(--pomo-tooltip-anchor);
+}
+
 :root {
-  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0px);
-  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0px);
-  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0px);
-  --pomo-color-foreground: ${theme.colors?.foreground};
-  --pomo-color-muted-foreground: ${theme.colors?.['muted-foreground']};
-  --pomo-color-range-track: ${isAppsInToss ? 'rgb(25 31 40 / 22%)' : 'rgb(255 250 241 / 22%)'};
-  --pomo-color-secondary-soft: ${theme.colors?.['secondary-soft']};
-  color-scheme: ${isAppsInToss ? 'light' : 'dark'};
+  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0rem);
+  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0rem);
+  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0rem);
+  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0rem);
+  --pomo-color-foreground: rgb(var(--pomo-color-foreground-channels) / var(--pomo-color-foreground-opacity));
+  --pomo-color-muted-foreground:
+    rgb(var(--pomo-color-muted-foreground-channels) / var(--pomo-color-muted-foreground-opacity));
+  --pomo-color-secondary-soft:
+    rgb(var(--pomo-color-secondary-soft-channels) / var(--pomo-color-secondary-soft-opacity));
   font-family: ${theme.fontFamily?.sans};
   background: ${theme.colors?.background};
   color: ${theme.colors?.foreground};
+}
+
+:root.dark {
+  --pomo-color-backdrop-channels: 8 6 4;
+  --pomo-color-backdrop-opacity: 68%;
+  --pomo-color-background-channels: 23 19 15;
+  --pomo-color-background-opacity: 100%;
+  --pomo-color-border-channels: 255 250 241;
+  --pomo-color-border-opacity: 14%;
+  --pomo-color-border-hover-channels: 255 250 241;
+  --pomo-color-border-hover-opacity: 28%;
+  --pomo-color-content-border-channels: 255 255 255;
+  --pomo-color-content-border-opacity: 6%;
+  --pomo-color-content-surface-channels: 255 255 255;
+  --pomo-color-content-surface-opacity: 3%;
+  --pomo-color-content-surface-disabled-channels: 255 255 255;
+  --pomo-color-content-surface-disabled-opacity: 1.5%;
+  --pomo-editor-background: radial-gradient(circle at 15% 0%, rgb(122 83 53 / 20%), transparent 32rem), rgb(23 19 15);
+  --pomo-color-danger-channels: 239 138 116;
+  --pomo-color-danger-opacity: 100%;
+  --pomo-color-foreground-channels: 255 250 241;
+  --pomo-color-foreground-opacity: 100%;
+  --pomo-color-highlight-channels: 217 185 138;
+  --pomo-color-highlight-opacity: 100%;
+  --pomo-color-modal-surface-channels: 10 10 10;
+  --pomo-color-modal-surface-opacity: 68%;
+  --pomo-color-muted-foreground-channels: 201 192 181;
+  --pomo-color-muted-foreground-opacity: 100%;
+  --pomo-color-player-progress: rgb(0 0 0 / 25%);
+  --pomo-color-player-surface-channels: 10 10 10;
+  --pomo-color-player-surface-opacity: 68%;
+  --pomo-color-primary-channels: 216 104 69;
+  --pomo-color-primary-opacity: 100%;
+  --pomo-color-primary-soft-channels: 216 104 69;
+  --pomo-color-primary-soft-opacity: 18%;
+  --pomo-color-primary-strong-channels: 169 67 41;
+  --pomo-color-primary-strong-opacity: 100%;
+  --pomo-color-primary-strong-hover-channels: 184 79 50;
+  --pomo-color-primary-strong-hover-opacity: 100%;
+  --pomo-color-range-track: rgb(255 250 241 / 22%);
+  --pomo-color-secondary-channels: 114 123 96;
+  --pomo-color-secondary-opacity: 100%;
+  --pomo-color-secondary-soft-channels: 114 123 96;
+  --pomo-color-secondary-soft-opacity: 20%;
+  --pomo-color-secondary-strong-channels: 95 104 78;
+  --pomo-color-secondary-strong-opacity: 100%;
+  --pomo-color-surface-channels: 10 10 10;
+  --pomo-color-surface-opacity: 68%;
+  --pomo-color-surface-interactive-channels: 10 10 10;
+  --pomo-color-surface-interactive-opacity: 78%;
+  --pomo-color-surface-overlay-channels: 10 10 10;
+  --pomo-color-surface-overlay-opacity: 31.25%;
+  --pomo-color-surface-strong-channels: 10 10 10;
+  --pomo-color-surface-strong-opacity: 68%;
+  --pomo-color-switch-thumb-channels: 255 250 241;
+  --pomo-color-switch-thumb-opacity: 100%;
+  --pomo-color-switch-track-channels: 255 250 241;
+  --pomo-color-switch-track-opacity: 12%;
+  --pomo-color-modal-scrollbar: rgb(255 250 241 / 24%);
+  --pomo-color-player-scrollbar: rgb(255 250 241 / 18%);
+  --pomo-player-expanded-background: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 2%) 0%,
+    rgb(0 0 0 / 10%) 34%,
+    rgb(0 0 0 / 18%) 100%
+  );
+  --pomo-shadow-player: 0 22px 70px rgb(5 4 3 / 46%), inset 0 1px 0 rgb(255 255 255 / 10%);
+  --pomo-shadow-switch-thumb: 0 2px 6px rgb(8 6 4 / 35%);
+  --pomo-shadow-panel: 0 18px 54px rgb(8 6 4 / 42%);
+  color-scheme: dark;
+}
+`,
+      },
+      {
+        getCSS: ({theme}) => `
+
+:root {
+  --pomo-color-backdrop-channels: 25 31 40;
+  --pomo-color-backdrop-opacity: 48%;
+  --pomo-color-background-channels: 247 248 250;
+  --pomo-color-background-opacity: 100%;
+  --pomo-color-border-channels: 2 32 71;
+  --pomo-color-border-opacity: 16%;
+  --pomo-color-border-hover-channels: 2 32 71;
+  --pomo-color-border-hover-opacity: 28%;
+  --pomo-color-content-border-channels: 2 32 71;
+  --pomo-color-content-border-opacity: 12%;
+  --pomo-color-content-surface-channels: 25 31 40;
+  --pomo-color-content-surface-opacity: 6%;
+  --pomo-color-content-surface-disabled-channels: 25 31 40;
+  --pomo-color-content-surface-disabled-opacity: 3%;
+  --pomo-editor-background:
+    radial-gradient(circle at 15% 0%, rgb(195 79 47 / 10%), transparent 32rem),
+    rgb(247 248 250);
+  --pomo-color-danger-channels: 180 35 24;
+  --pomo-color-danger-opacity: 100%;
+  --pomo-color-foreground-channels: 25 31 40;
+  --pomo-color-foreground-opacity: 100%;
+  --pomo-color-highlight-channels: 138 90 50;
+  --pomo-color-highlight-opacity: 100%;
+  --pomo-color-modal-surface-channels: 255 255 255;
+  --pomo-color-modal-surface-opacity: 68%;
+  --pomo-color-muted-foreground-channels: 78 89 104;
+  --pomo-color-muted-foreground-opacity: 100%;
+  --pomo-color-player-progress: rgb(255 255 255 / 36%);
+  --pomo-color-player-surface-channels: 255 255 255;
+  --pomo-color-player-surface-opacity: 68%;
+  --pomo-color-primary-channels: 195 79 47;
+  --pomo-color-primary-opacity: 100%;
+  --pomo-color-primary-soft-channels: 195 79 47;
+  --pomo-color-primary-soft-opacity: 12%;
+  --pomo-color-primary-strong-channels: 168 59 32;
+  --pomo-color-primary-strong-opacity: 100%;
+  --pomo-color-primary-strong-hover-channels: 143 47 24;
+  --pomo-color-primary-strong-hover-opacity: 100%;
+  --pomo-color-range-track: rgb(25 31 40 / 22%);
+  --pomo-color-secondary-channels: 102 112 82;
+  --pomo-color-secondary-opacity: 100%;
+  --pomo-color-secondary-soft-channels: 102 112 82;
+  --pomo-color-secondary-soft-opacity: 14%;
+  --pomo-color-secondary-strong-channels: 82 91 65;
+  --pomo-color-secondary-strong-opacity: 100%;
+  --pomo-color-surface-channels: 255 255 255;
+  --pomo-color-surface-opacity: 68%;
+  --pomo-color-surface-interactive-channels: 255 255 255;
+  --pomo-color-surface-interactive-opacity: 78%;
+  --pomo-color-surface-overlay-channels: 25 31 40;
+  --pomo-color-surface-overlay-opacity: 10%;
+  --pomo-color-surface-strong-channels: 255 255 255;
+  --pomo-color-surface-strong-opacity: 68%;
+  --pomo-color-switch-thumb-channels: 255 255 255;
+  --pomo-color-switch-thumb-opacity: 100%;
+  --pomo-color-switch-track-channels: 25 31 40;
+  --pomo-color-switch-track-opacity: 12%;
+  --pomo-color-modal-scrollbar: rgb(25 31 40 / 24%);
+  --pomo-color-player-scrollbar: rgb(25 31 40 / 18%);
+  --pomo-player-expanded-background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 2%) 0%,
+    rgb(25 31 40 / 2%) 34%,
+    rgb(25 31 40 / 5%) 100%
+  );
+  --pomo-shadow-player: 0 18px 54px rgb(25 31 40 / 18%), inset 0 1px 0 rgb(255 255 255 / 55%);
+  --pomo-shadow-switch-thumb: 0 2px 6px rgb(25 31 40 / 24%);
+  --pomo-shadow-panel: 0 18px 54px rgb(25 31 40 / 16%);
+  color-scheme: light;
 }
 
 html,
@@ -166,18 +352,96 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid ${theme.colors?.primary};
-  outline-offset: 3px;
+  outline: 0.125rem solid ${theme.colors?.primary};
+  outline-offset: 0.1875rem;
+}
+
+:root:has(.pomo-desktop-surface),
+:root:has(.pomo-desktop-surface) body {
+  background: transparent !important;
+}
+
+.pomo-entry {
+  background: radial-gradient(
+    ellipse 125% 105% at 0% 108%,
+    rgb(7 5 4 / 94%) 0%,
+    rgb(7 5 4 / 82%) 28%,
+    rgb(7 5 4 / 58%) 54%,
+    rgb(7 5 4 / 30%) 74%,
+    transparent 92%
+  );
+}
+
+.pomo-scribble-mask {
+  -webkit-mask-image: url('/masks/scribble-frame.svg');
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-image: url('/masks/scribble-frame.svg');
+  mask-mode: alpha;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+}
+
+.pomo-orbit-border {
+  padding: 2px;
+  background: conic-gradient(
+    from -90deg,
+    transparent 0deg,
+    transparent 210deg,
+    rgb(var(--pomo-color-foreground-channels) / 8%) 235deg,
+    rgb(var(--pomo-color-foreground-channels) / 32%) 275deg,
+    rgb(var(--pomo-color-foreground-channels) / 68%) 320deg,
+    rgb(var(--pomo-color-foreground-channels) / 96%) 350deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
 `,
       },
     ],
-    safelist: albumData.albums.map((album) => album.icon),
+    rules: [
+      [
+        'outline-none',
+        {
+          outline: '0.125rem solid transparent',
+          'outline-offset': '0.125rem',
+        },
+      ],
+      [
+        'sr-only',
+        {
+          clip: 'rect(0, 0, 0, 0)',
+          height: '0.0625rem',
+          margin: '-0.0625rem',
+          overflow: 'hidden',
+          padding: '0',
+          position: 'absolute',
+          'white-space': 'nowrap',
+          width: '0.0625rem',
+        },
+      ],
+    ],
+    // The SSR fallback must be styled before lazy client modules extend the generated CSS.
+    safelist: [
+      ...Object.keys(initialSceneFallbackShortcuts),
+      ...albumData.albums.map((album) => album.icon),
+    ],
+    shortcuts: {
+      ...initialSceneFallbackShortcuts,
+      ...typographyShortcuts,
+    },
     theme: {
       animation: {
         counts: {
           'dialogue-settings-spin': 'infinite',
+          'diary-progress-pending': 'infinite',
           'focus-glow': 'infinite',
+          'orbit-border': 'infinite',
           'overflow-marquee': 'infinite',
           'rest-sway': 'infinite',
           'screen-saver-content-drift': 'infinite',
@@ -185,11 +449,13 @@ body {
         durations: {
           'dialogue-menu-in': '140ms',
           'dialogue-settings-spin': '800ms',
+          'diary-progress-pending': '1.8s',
           'entry-reveal-room': '700ms',
           'focus-glow': '19s',
           'modal-content-in': '180ms',
           'modal-content-in-top': '180ms',
           'modal-overlay-in': '140ms',
+          'orbit-border': '3.2s',
           'overflow-marquee': '6s',
           'rest-sway': '2.4s',
           'screen-saver-content-drift': '48s',
@@ -201,6 +467,7 @@ body {
             to { opacity: 1; transform: scale(1) translateY(0); }
           }`,
           'dialogue-settings-spin': '{ to { transform: rotate(1turn); } }',
+          'diary-progress-pending': '{ to { background-position: 150% 0; } }',
           'entry-reveal-room': '{ from { opacity: 1; } to { opacity: 0; } }',
           'focus-glow': `{
             0% { transform: scale(0); }
@@ -235,6 +502,7 @@ body {
             from { opacity: 0; transform: translate(-50%, 0.5rem) scale(0.98); }
           }`,
           'modal-overlay-in': '{ from { opacity: 0; } }',
+          'orbit-border': '{ to { transform: rotate(1turn); } }',
           'overflow-marquee': `{
             from { transform: translateX(0); }
             to { transform: translateX(calc(-1 * var(--pomo-marquee-distance))); }
@@ -261,11 +529,13 @@ body {
         timingFns: {
           'dialogue-menu-in': 'ease-out',
           'dialogue-settings-spin': 'linear',
+          'diary-progress-pending': 'ease-in-out',
           'entry-reveal-room': 'cubic-bezier(0.22, 1, 0.36, 1)',
           'focus-glow': 'ease-in-out',
           'modal-content-in': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
           'modal-content-in-top': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
           'modal-overlay-in': 'ease-out',
+          'orbit-border': 'linear',
           'overflow-marquee': 'linear',
           'rest-sway': 'ease-in-out',
           'screen-saver-content-drift': 'ease-in-out',
@@ -273,17 +543,20 @@ body {
         },
       },
       blur: {
-        surface: '8px',
+        DEFAULT: '0.5rem',
+        surface: '0.5rem',
       },
       borderRadius: {
-        control: '999px',
+        control: '0.875rem',
         panel: '1.25rem',
       },
       boxShadow: {
-        focus: `0 0 0 2px ${colors.highlight}`,
-        panel: isAppsInToss ? '0 18px 54px rgb(25 31 40 / 16%)' : '0 18px 54px rgb(8 6 4 / 42%)',
+        focus: `0 0 0 0.125rem ${colors.highlight}`,
+        panel: 'var(--pomo-shadow-panel)',
+        player: 'var(--pomo-shadow-player)',
+        'switch-thumb': 'var(--pomo-shadow-switch-thumb)',
         'tab-active': `inset 0 -0.1875rem 0 ${colors.highlight}`,
-        'track-active': `inset 2px 0 0 ${colors.primary}`,
+        'track-active': `inset 0.125rem 0 0 ${colors.primary}`,
       },
       breakpoints: {
         '2xl': '64rem',
@@ -295,11 +568,12 @@ body {
       },
       colors,
       fontFamily: {
-        sans: "Inter, Pretendard, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        sans: sansFontFamily,
       },
     },
     variants: [
       createParentVariant('player-compact', '@container pomo-player (width < 24rem)'),
+      createParentVariant('player-narrow', '@container pomo-player (width < 18rem)'),
       createParentVariant(
         'dialogue-library-compact',
         '@container pomo-dialogue-library-item (width < 19rem)',
@@ -318,6 +592,7 @@ config.presets = [
   presetIcons({
     collections: {
       'pomo-scribble': () => scribbleIcons,
+      tabler: () => tablerIcons,
     },
   }),
 ]

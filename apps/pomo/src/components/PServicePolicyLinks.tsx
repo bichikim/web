@@ -5,17 +5,20 @@ import {SERVICE_POLICY_PATHS} from '../features/service-terms'
 import * as m from '@paraglide/message'
 import {PolicyLink} from './service-terms/PolicyLink'
 
-const policyLinksClasses = cva('flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5', {
-  defaultVariants: {
-    tone: 'surface',
-  },
-  variants: {
-    tone: {
-      overlay: 'text-[#fff9f1]/80 [text-shadow:0_1px_3px_rgb(0_0_0_/_55%)]',
-      surface: 'text-muted-foreground',
+const policyLinksClasses = cva(
+  'flex flex-wrap items-center gap-x-2 gap-y-1 text-modal-detail leading-5',
+  {
+    defaultVariants: {
+      tone: 'surface',
+    },
+    variants: {
+      tone: {
+        overlay: 'text-[#fff9f1]/80 [text-shadow:0_0.0625rem_0.1875rem_rgb(0_0_0_/_55%)]',
+        surface: 'text-muted-foreground',
+      },
     },
   },
-})
+)
 
 export interface PServicePolicyLinksProps extends VariantProps<typeof policyLinksClasses> {
   currentPolicy?: 'privacy' | 'refund' | 'terms'
@@ -33,7 +36,8 @@ const privacyPolicyPath = (platform: 'apps-in-toss' | 'web') =>
 
 export const PServicePolicyLinks = (props: PServicePolicyLinksProps) => {
   const platform = () =>
-    props.platform ?? (import.meta.env.POMO_IS_APPS_IN_TOSS ? 'apps-in-toss' : 'web')
+    props.platform ??
+    (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'apps-in-toss' : 'web')
 
   return (
     <nav aria-label={m.policy_navigation()} class={policyLinksClasses({tone: props.tone})}>

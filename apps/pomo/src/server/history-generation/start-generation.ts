@@ -5,11 +5,16 @@ import {
 } from 'src/features/history-generation'
 import {
   markGenerationFailed,
+  markGenerationSubmissionUnknown,
   markGenerationSubmitted,
   prepareGenerationRun,
 } from './generation-repository'
 import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
-import {persistGenerationSubmission} from './submission-persistence'
+import {
+  persistGenerationSubmission,
+  persistUnknownGenerationSubmission,
+} from './submission-persistence'
+import {getSubmissionRecoveryDeadline} from './submission-recovery-policy'
 
 const MAX_ERROR_LENGTH = 2000
 
@@ -22,6 +27,7 @@ export interface StartGenerationResult {
 
 interface StartGenerationDependencies {
   readonly markFailed: typeof markGenerationFailed
+  readonly markUnknown: typeof markGenerationSubmissionUnknown
   readonly markSubmitted: typeof markGenerationSubmitted
   readonly now: () => Date
   readonly prepare: typeof prepareGenerationRun
@@ -31,6 +37,7 @@ interface StartGenerationDependencies {
 const DEFAULT_DEPENDENCIES: StartGenerationDependencies = {
   markFailed: markGenerationFailed,
   markSubmitted: markGenerationSubmitted,
+  markUnknown: markGenerationSubmissionUnknown,
   now: () => new Date(),
   prepare: prepareGenerationRun,
   submit: submitHistoryResponse,
@@ -70,8 +77,25 @@ export const startHistoryGeneration = async (
       targetDate,
     })
   } catch (error) {
-    if (error instanceof HistorySubmissionError && error.acceptance === 'rejected') {
-      await dependencies.markFailed(prepared.run.id, getErrorMessage(error))
+    if (error instanceof HistorySubmissionError) {
+      const errorMessage = getErrorMessage(error)
+
+      if (error.acceptance === 'rejected') {
+        await dependencies.markFailed(
+          prepared.run.id,
+          prepared.run.openAiSubmissionKey,
+          errorMessage,
+        )
+      } else {
+        const submissionExpiresAt = getSubmissionRecoveryDeadline(dependencies.now())
+        await persistUnknownGenerationSubmission({
+          errorMessage,
+          markUnknown: dependencies.markUnknown,
+          runId: prepared.run.id,
+          submissionExpiresAt,
+          submissionKey: prepared.run.openAiSubmissionKey,
+        })
+      }
     }
 
     throw error
@@ -79,6 +103,7 @@ export const startHistoryGeneration = async (
 
   await persistGenerationSubmission(
     prepared.run.id,
+    prepared.run.openAiSubmissionKey,
     submitted.responseId,
     dependencies.markSubmitted,
   )

@@ -1,46 +1,65 @@
-import {createMemo, createSignal, onMount} from 'solid-js'
+import {createMemo} from 'solid-js'
 
-import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
-import {readAccountSession} from './web-session'
+import {useAuth} from '../auth/AuthProvider'
 
-export type UserSettingsState =
-  | {readonly kind: 'anonymous'}
-  | {readonly email: string; readonly kind: 'authenticated'; readonly provider: 'email'}
-  | {readonly kind: 'authenticated'; readonly provider: 'toss'}
-  | {readonly kind: 'error'}
-  | {readonly kind: 'loading'}
-
-const readUserSettingsState = async (): Promise<UserSettingsState> => {
-  if (!import.meta.env.POMO_IS_APPS_IN_TOSS) {
-    const session = await readAccountSession()
-
-    return session === null
-      ? {kind: 'anonymous'}
-      : {email: session.email, kind: 'authenticated', provider: 'email'}
-  }
-
-  const token = await readStoredAppSession()
-
-  if (token === null) {
-    return {kind: 'anonymous'}
-  }
-
-  if (await validateAppSession(token)) {
-    return {kind: 'authenticated', provider: 'toss'}
-  }
-
-  await clearStoredAppSession()
-  return {kind: 'anonymous'}
+interface AnonymousUserSettings {
+  readonly kind: 'anonymous'
 }
+
+interface EmailUserSettings {
+  readonly email: string
+  readonly kind: 'authenticated'
+  readonly provider: 'email'
+}
+
+interface TossUserSettings {
+  readonly kind: 'authenticated'
+  readonly provider: 'toss'
+}
+
+interface ErrorUserSettings {
+  readonly kind: 'error'
+}
+
+interface LoadingUserSettings {
+  readonly kind: 'loading'
+}
+
+export type AuthenticatedUserSettings = EmailUserSettings | TossUserSettings
+export type UserSettingsState =
+  | AnonymousUserSettings
+  | AuthenticatedUserSettings
+  | ErrorUserSettings
+  | LoadingUserSettings
 
 export interface UserSettingsController {
   readonly authenticatedEmail: () => string | null
-  readonly authenticatedUser: () => Extract<UserSettingsState, {kind: 'authenticated'}> | null
+  readonly authenticatedUser: () => AuthenticatedUserSettings | null
   readonly state: () => UserSettingsState
 }
 
 export const useUserSettings = (): UserSettingsController => {
-  const [state, setState] = createSignal<UserSettingsState>({kind: 'loading'})
+  const authentication = useAuth()
+  const state = createMemo<UserSettingsState>(() => {
+    const currentState = authentication.state()
+
+    switch (currentState.kind) {
+      case 'checking':
+        return {kind: 'loading'}
+      case 'anonymous':
+        return currentState
+      case 'authenticated':
+        return currentState.provider === 'email'
+          ? currentState
+          : {kind: 'authenticated', provider: 'toss'}
+      case 'unavailable':
+        return {kind: 'error'}
+      default: {
+        const unhandledState: never = currentState
+        return unhandledState
+      }
+    }
+  })
   const authenticatedUser = createMemo(() => {
     const currentState = state()
 
@@ -50,12 +69,6 @@ export const useUserSettings = (): UserSettingsController => {
     const account = authenticatedUser()
 
     return account?.provider === 'email' ? account.email : null
-  })
-
-  onMount(() => {
-    readUserSettingsState()
-      .then(setState)
-      .catch(() => setState({kind: 'error'}))
   })
 
   return {

@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 
 const INPUT_CLASSES = cx(
@@ -12,7 +13,7 @@ const BUTTON_CLASSES = cx(
 
 const ASIDE_CLASSES = cx(
   'grid content-start gap-5 rounded-7 border border-white/10 bg-#171f28/88 p-5',
-  'shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl xs:p-6',
+  'shadow-[0_1.5rem_5rem_rgba(0,0,0,0.24)] backdrop-blur-xl xs:p-6',
 )
 
 const FILE_PICKER_CLASSES = cx(
@@ -66,7 +67,8 @@ export const CharacterControls = (props: CharacterControlsProps) => (
       <label class="text-sm font-650 text-#d9e1e6" for="character-model-url">
         GLB URL
       </label>
-      <input
+      <PInput
+        unstyled
         class={INPUT_CLASSES}
         id="character-model-url"
         onInput={(event) => props.onUrlInput(event)}

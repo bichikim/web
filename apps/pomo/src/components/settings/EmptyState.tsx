@@ -1,10 +1,10 @@
 import {cx} from 'class-variance-authority'
 import type {JSX} from 'solid-js'
 
-const EMPTY_STATE_CLASSES = [
-  'm-0 rounded-panel border border-dashed border-border bg-[rgb(255_255_255_/_3%)]',
-  'p-5 text-center text-xs leading-[1.5] text-muted-foreground settings-compact:p-4',
-].join(' ')
+const EMPTY_STATE_CLASSES = cx(
+  'm-0 rounded-panel border border-dashed border-border bg-content-surface',
+  'p-5 text-center text-modal-detail leading-[1.5] text-muted-foreground settings-compact:p-4',
+)
 
 export interface PSettingsEmptyStateProps {
   readonly children: JSX.Element

@@ -10,6 +10,7 @@ export interface AlbumDraftTranslation {
 export type AlbumDraftTranslations = Record<AlbumLocale, AlbumDraftTranslation>
 
 export interface AlbumDraftData {
+  readonly albumId?: string
   readonly coverDraftId: string | null
   readonly coverFallback: 'cd' | 'lp' | 'music'
   readonly coverImageUrl: string

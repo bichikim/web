@@ -67,7 +67,7 @@ const getOpaqueBounds = (pixels: PixelData, alphaThreshold: number): Bounds | un
 
   for (let y = 0; y < pixels.height; y += 1) {
     for (let x = 0; x < pixels.width; x += 1) {
-      if (getAlpha(pixels, x, y) >= alphaThreshold) {
+      if (getAlpha(pixels, x, y) > alphaThreshold) {
         left = Math.min(left, x)
         top = Math.min(top, y)
         right = Math.max(right, x)
@@ -94,7 +94,7 @@ const createGridCoordinates = (start: number, end: number, cellSize: number) => 
 const hasOpaquePixel = (pixels: PixelData, alphaThreshold: number, bounds: Bounds) => {
   for (let y = bounds.top; y < bounds.bottom; y += 1) {
     for (let x = bounds.left; x < bounds.right; x += 1) {
-      if (getAlpha(pixels, x, y) >= alphaThreshold) {
+      if (getAlpha(pixels, x, y) > alphaThreshold) {
         return true
       }
     }

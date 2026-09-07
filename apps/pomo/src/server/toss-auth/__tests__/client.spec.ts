@@ -3,7 +3,10 @@ import {EventEmitter} from 'node:events'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const dependencyMocks = vi.hoisted(() => ({
-  getTossMtlsCredentials: vi.fn(),
+  env: {
+    POMO_TOSS_MTLS_CERT: 'certificate',
+    POMO_TOSS_MTLS_KEY: 'private-key',
+  },
   httpsRequest: vi.fn(),
 }))
 
@@ -16,8 +19,8 @@ vi.mock('node:https', async () => {
     request: dependencyMocks.httpsRequest,
   }
 })
-vi.mock('../environment', () => ({
-  getTossMtlsCredentials: dependencyMocks.getTossMtlsCredentials,
+vi.mock('src/env', () => ({
+  env: dependencyMocks.env,
 }))
 
 import {exchangeTossAuthorization} from '../client'
@@ -88,10 +91,6 @@ const queueHttpResponses = (fixtures: ReadonlyArray<HttpResponseFixture>) => {
 beforeEach(() => {
   vi.clearAllMocks()
   dependencyMocks.httpsRequest.mockReset()
-  dependencyMocks.getTossMtlsCredentials.mockReturnValue({
-    certificate: 'certificate',
-    privateKey: 'private-key',
-  })
 })
 
 describe('exchangeTossAuthorization', () => {
@@ -200,7 +199,6 @@ describe('mTLS Toss requester', () => {
       exchangeTossAuthorization({authorizationCode: 'one-time-code', referrer: 'SANDBOX'}),
     ).resolves.toEqual({userKey: '123'})
 
-    expect(dependencyMocks.getTossMtlsCredentials).toHaveBeenCalledOnce()
     expect(requests).toHaveLength(2)
     expect(requests[0]?.url.href).toBe(
       'https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss/user/oauth2/generate-token',

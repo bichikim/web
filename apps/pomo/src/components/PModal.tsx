@@ -7,7 +7,7 @@ import * as m from '@paraglide/message'
 const modalContentClasses = cva(
   `fixed left-1/2 flex max-h-modal border border-solid border-border backdrop-blur-surface ` +
     `w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 flex-col overflow-clip ` +
-    `box-border rounded-panel bg-surface-strong ` +
+    `box-border rounded-panel bg-modal-surface ` +
     `text-foreground shadow-panel outline-none ` +
     `focus-visible:border-highlight motion-reduce:animate-none`,
   {
@@ -23,7 +23,8 @@ const modalContentClasses = cva(
           `max-md:top-modal-top-compact max-md:max-h-modal-top-compact`,
       },
       size: {
-        full: 'w-[min(calc(100vw-2rem),calc(1920px-2rem))]',
+        expanded: 'w-[min(calc(100vw-2rem),52rem)]',
+        full: 'w-[min(calc(100vw-2rem),calc(120rem-2rem))]',
         regular: '',
         wide: 'w-[min(calc(100vw-2rem),42rem)]',
       },
@@ -60,13 +61,13 @@ export interface PModalProps {
   readonly description?: string
   readonly footer?: JSX.Element
   readonly getInitialFocus?: () => HTMLElement | null
-  readonly headerMode?: 'closeOnly' | 'default'
+  readonly headerMode?: 'closeOnly' | 'default' | 'hidden'
   readonly isOpen: boolean
   readonly navigation?: JSX.Element
   readonly onCloseAutoFocus?: () => void
   readonly onOpenChange: (isOpen: boolean) => void
   readonly placement?: 'center' | 'top'
-  readonly size?: 'full' | 'regular' | 'wide'
+  readonly size?: 'expanded' | 'full' | 'regular' | 'wide'
   readonly title: string
   readonly titleVisibility?: 'visible' | 'visually-hidden'
 }
@@ -92,7 +93,7 @@ export const PModal = (props: PModalProps) => (
     <Dialog.Portal>
       <Dialog.Overlay
         class={
-          'fixed inset-0 bg-backdrop backdrop-blur-[12px] ' +
+          'fixed inset-0 bg-backdrop backdrop-blur-[0.75rem] ' +
           'animate-modal-overlay-in motion-reduce:animate-none'
         }
       />
@@ -122,91 +123,96 @@ export const PModal = (props: PModalProps) => (
           initialFocus.focus()
         }}
       >
-        <header
-          class={modalHeaderClasses({
-            layout: resolveHeaderLayout(
-              props.headerMode,
-              props.navigation !== undefined,
-              props.titleVisibility,
-            ),
-          })}
-          data-has-navigation={props.navigation === undefined ? undefined : ''}
-          data-mode={props.headerMode ?? 'default'}
-          data-title-visibility={props.titleVisibility ?? 'visible'}
+        <Show
+          when={props.headerMode !== 'hidden'}
+          fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
         >
-          <Show
-            fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
-            when={(props.headerMode ?? 'default') === 'default'}
+          <header
+            class={modalHeaderClasses({
+              layout: resolveHeaderLayout(
+                props.headerMode,
+                props.navigation !== undefined,
+                props.titleVisibility,
+              ),
+            })}
+            data-has-navigation={props.navigation === undefined ? undefined : ''}
+            data-mode={props.headerMode ?? 'default'}
+            data-title-visibility={props.titleVisibility ?? 'visible'}
           >
-            <div
-              class={cx(
-                'min-w-0',
-                props.titleVisibility === 'visually-hidden' && 'sr-only',
-                props.navigation !== undefined && 'self-center',
-              )}
+            <Show
+              fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
+              when={(props.headerMode ?? 'default') === 'default'}
             >
-              <Dialog.Title class="m-0 text-lg font-750 leading-6 text-foreground">
-                {props.title}
-              </Dialog.Title>
-              <Show when={props.description}>
-                {(description) => (
-                  <Dialog.Description
-                    class={
-                      'mb-0 ml-0 mr-0 mt-1.5 text-[0.8125rem] leading-5 ' +
-                      'text-muted-foreground empty:hidden'
-                    }
-                  >
-                    {description()}
-                  </Dialog.Description>
-                )}
-              </Show>
-            </div>
-          </Show>
-          <Show when={props.navigation}>
-            {(navigation) => (
               <div
                 class={cx(
-                  'min-w-0 overflow-hidden',
-                  props.titleVisibility === 'visually-hidden'
-                    ? 'pl-1 max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
-                    : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
+                  'min-w-0',
+                  props.titleVisibility === 'visually-hidden' && 'sr-only',
+                  props.navigation !== undefined && 'self-center',
                 )}
               >
-                {navigation()}
+                <Dialog.Title class="m-0 text-lg font-750 leading-6 text-foreground">
+                  {props.title}
+                </Dialog.Title>
+                <Show when={props.description}>
+                  {(description) => (
+                    <Dialog.Description
+                      class={
+                        'mb-0 ml-0 mr-0 mt-1.5 text-modal-detail leading-5 ' +
+                        'text-muted-foreground empty:hidden'
+                      }
+                    >
+                      {description()}
+                    </Dialog.Description>
+                  )}
+                </Show>
               </div>
-            )}
-          </Show>
-          <Show when={(props.closeButtonVisibility ?? 'visible') === 'visible'}>
-            <div
-              class={cx(
-                'flex flex-none items-center justify-center',
-                props.navigation !== undefined && 'self-stretch',
-                props.navigation !== undefined &&
-                  props.titleVisibility === 'visually-hidden' &&
-                  'border-l border-solid border-border px-3 ' +
-                    'max-md:col-start-2 max-md:row-start-1 ' +
-                    'max-md:px-2',
+            </Show>
+            <Show when={props.navigation}>
+              {(navigation) => (
+                <div
+                  class={cx(
+                    'min-w-0 overflow-hidden',
+                    props.titleVisibility === 'visually-hidden'
+                      ? 'max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
+                      : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
+                  )}
+                >
+                  {navigation()}
+                </div>
               )}
-            >
-              <Dialog.CloseButton
-                aria-label={m.common_close()}
+            </Show>
+            <Show when={(props.closeButtonVisibility ?? 'visible') === 'visible'}>
+              <div
                 class={cx(
-                  'grid flex-none cursor-pointer place-items-center border-0 ' +
-                    'rounded-control bg-transparent text-muted-foreground ' +
-                    'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
-                    'hover:bg-secondary-soft hover:text-foreground ' +
-                    'focus-visible:shadow-focus motion-reduce:transition-none size-11',
+                  'flex flex-none items-center justify-center',
+                  props.navigation !== undefined && 'self-stretch',
+                  props.navigation !== undefined &&
+                    props.titleVisibility === 'visually-hidden' &&
+                    'border-l border-solid border-border px-3 ' +
+                      'max-md:col-start-2 max-md:row-start-1 ' +
+                      'max-md:px-2',
                 )}
               >
-                <span aria-hidden="true" class="i-tabler-x size-5" />
-              </Dialog.CloseButton>
-            </div>
-          </Show>
-        </header>
+                <Dialog.CloseButton
+                  aria-label={m.common_close()}
+                  class={cx(
+                    'grid flex-none cursor-pointer place-items-center border-0 ' +
+                      'rounded-full bg-transparent text-muted-foreground ' +
+                      'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
+                      'hover:bg-secondary-soft hover:text-foreground ' +
+                      'focus-visible:shadow-focus motion-reduce:transition-none size-11',
+                  )}
+                >
+                  <span aria-hidden="true" class="i-tabler-x size-5" />
+                </Dialog.CloseButton>
+              </div>
+            </Show>
+          </header>
+        </Show>
         <div
           class={cx(
             'min-h-0 overscroll-contain p-5 ' +
-              '[scrollbar-color:rgb(255_250_241_/_24%)_transparent] [scrollbar-width:thin]',
+              '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]',
             props.navigation !== undefined && 'settings-compact:p-4',
             (props.contentOverflow ?? 'auto') === 'hidden' ? 'overflow-hidden' : 'overflow-y-auto',
           )}

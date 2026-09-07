@@ -10,12 +10,13 @@ import {ChatHeader} from './chat-room/Header'
 import {ChatTranscript} from './chat-room/Transcript'
 import {ContextSidebar} from './chat-room/ContextSidebar'
 import {MAXIMUM_DRAFT_LENGTH} from './chat-room/shared'
+import {useSend} from './chat-room/use-send'
 const PANEL_CLASSES = cx(
   'overflow-hidden rounded-8 border border-white/10 bg-#211a2b/88',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl',
+  'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
 
-const ChatRoom = () => {
+export const ChatRoom = () => {
   const chat = useChat({modelId: 'qwen-4b'})
   const model = () => getTextModel(chat.modelId())
   const voice = useChatVoice()
@@ -37,41 +38,28 @@ const ChatRoom = () => {
     },
   })
 
-  const sendDraft = () => {
-    if (!chat.canSend()) {
-      return
-    }
-
-    voice.arm()
-    speechBuffer.reset()
-    speakDraftForReply = speakBeforeRefining()
-    chat.send({refineAnswer: !disableRefining()})
-  }
-  const stopSpeechAndSend = () => {
-    speech.stopRecording().then(sendDraft).catch(console.error)
-  }
-  const handleSend = () => {
-    const speechActivity = speech.activity()
-
-    if (speechActivity === 'recording') {
-      stopSpeechAndSend()
-      return
-    }
-
-    if (speechActivity === 'idle') {
-      sendDraft()
-    }
-  }
+  const sending = useSend({
+    chat,
+    onSendStarted: () => {
+      voice.arm()
+      speechBuffer.reset()
+      speakDraftForReply = speakBeforeRefining()
+    },
+    refineAnswer: () => !disableRefining(),
+    speech,
+  })
   const handlePrepare = () => {
     chat.prepare()
     voice.prepare().catch(console.error)
   }
   const handleModelChange = (modelId: TextModelId) => {
+    sending.invalidate()
     voice.stop()
     speechBuffer.reset()
     chat.selectModel(modelId)
   }
   const handleClear = () => {
+    sending.invalidate()
     voice.stop()
     chat.clear()
   }
@@ -141,7 +129,7 @@ const ChatRoom = () => {
             chat={chat}
             endpointing={endpointing()}
             onEndpointingChange={setEndpointing}
-            onSend={handleSend}
+            onSend={sending.send}
             onSpeechToggle={handleSpeechToggle}
             speech={speech}
           />
@@ -161,5 +149,3 @@ const ChatRoom = () => {
     </section>
   )
 }
-
-export default ChatRoom

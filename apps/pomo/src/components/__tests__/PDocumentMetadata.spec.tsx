@@ -29,6 +29,12 @@ vi.mock('@solidjs/router', () => ({useLocation: () => metadata.location}))
 vi.mock('@paraglide/message', () => ({
   app_default_description: () => '기본 설명',
   app_home_description: () => '홈 설명',
+  version_catalog_metadata_description: () => '업데이트 내역 설명',
+  version_notice_title: () => '새로운 소식',
+}))
+vi.mock('@paraglide/runtime', () => ({
+  getLocale: () => 'en',
+  getTextDirection: () => 'ltr',
 }))
 vi.mock('../pomo-route', () => ({
   getCanonicalPathname: (pathname: string) => pathname.replace(/\/+$/u, '') || '/',
@@ -37,12 +43,21 @@ vi.mock('../pomo-route', () => ({
 }))
 
 beforeEach(() => {
+  document.documentElement.dir = 'rtl'
+  document.documentElement.lang = 'ko'
   metadata.links.length = 0
   metadata.metas.length = 0
   metadata.titles.length = 0
 })
 
 afterEach(cleanup)
+
+it('should synchronize the document language with the hydrated locale', () => {
+  render(() => <PDocumentMetadata />)
+
+  expect(document.documentElement.lang).toBe('en')
+  expect(document.documentElement.dir).toBe('ltr')
+})
 
 it.each([
   ['/', 'Pomofi', '홈 설명', 'index, follow'],
@@ -54,6 +69,7 @@ it.each([
   ['/privacy', 'Pomofi — 개인정보처리방침', '계정·세션 정보', 'noindex'],
   ['/web/privacy', 'Pomofi — 개인정보처리방침', '계정·세션 정보', 'noindex'],
   ['/third-party-notices', 'Pomofi — 제3자 라이선스 및 배포 고지', '제3자 소프트웨어', 'noindex'],
+  ['/whats-new', 'Pomofi — 새로운 소식', '업데이트 내역', 'noindex'],
   ['/dialogue/', 'Pomofi', '기본 설명', 'noindex'],
 ])('should render metadata for %s', (pathname, title, description, robots) => {
   metadata.location.pathname = pathname

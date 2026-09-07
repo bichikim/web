@@ -7,6 +7,7 @@ import {
   type PEventContextValue,
 } from './event-context'
 import {selectEventDialogues} from './event-playback'
+import {createEntryEventPlayback} from './use-p-event-controller/entry-playback'
 import type {PDialogueRepository} from './repository'
 import {
   DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
@@ -16,6 +17,7 @@ import {
   FOCUS_ROOM_ENTRY_EVENT,
   type PDialogue,
 } from './schema'
+import * as m from '@paraglide/message'
 
 export interface UsePEventControllerProps {
   readonly isPlaybackEnabled?: boolean
@@ -77,14 +79,12 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   const [eventDialogueIds, setEventDialogueIds] = createSignal<EventDialogueIds>({})
   const [eventPlaybackModes, setEventPlaybackModes] = createSignal<EventPlaybackModes>({})
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
-  const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   const [isLoading, setIsLoading] = createSignal(true)
   let repository: PDialogueRepository | null = null
   let isDisposed = false
   let bindingUpdate = Promise.resolve()
   let bindingRevision = 0
   const eventBindingRevisions: Partial<Record<DialogueEventId, number>> = {}
-  let hasStartedEntryPlayback = false
   let persistedBindings: EventDialogueIds = {}
   let persistedPlaybackModes: EventPlaybackModes = {}
   let resolveInitialization: (() => void) | null = null
@@ -101,40 +101,13 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   }
 
   const isPlaybackEnabled = () => props.isPlaybackEnabled ?? true
-  const playEntryDialogue = () => {
-    if (
-      hasStartedEntryPlayback ||
-      !hasEnteredFocusRoom() ||
-      !isPlaybackEnabled() ||
-      repository === null
-    ) {
-      return
-    }
-
-    const entryDialogueIds = eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? []
-    const playbackMode =
-      eventPlaybackModes()[FOCUS_ROOM_ENTRY_EVENT] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE
-    const selectedDialogueIds = selectEventDialogues({
-      dialogueIds: entryDialogueIds,
-      playbackMode,
-    })
-
-    if (selectedDialogueIds.length === 0) {
-      return
-    }
-
-    hasStartedEntryPlayback = true
-
-    playback
-      .playSequence(repository, {
-        dialogueIds: selectedDialogueIds,
-        onDialogueStart: () => undefined,
-        onSequenceStop: () => undefined,
-      })
-      .catch((error: unknown) => {
-        console.error('Unexpected entry dialogue sequence failure.', error)
-      })
-  }
+  const entryPlayback = createEntryEventPlayback({
+    eventDialogueIds,
+    eventPlaybackModes,
+    getRepository: () => repository,
+    isPlaybackEnabled,
+    playback,
+  })
 
   const initializeEvents = async () => {
     try {
@@ -164,14 +137,14 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       setEventPlaybackModes(storedPlaybackModes)
       setErrorMessage(null)
 
-      playEntryDialogue()
+      entryPlayback.tryPlay()
     } catch (error: unknown) {
       if (isDisposed) {
         return
       }
 
       console.error('Failed to initialize focus room events.', error)
-      setErrorMessage('이벤트와 저장된 대화를 불러오지 못했어요.')
+      setErrorMessage(m.settings_events_loading_failed())
     } finally {
       if (!isDisposed) {
         setIsLoading(false)
@@ -216,7 +189,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
       if (!isDisposed) {
         if (eventId === FOCUS_ROOM_ENTRY_EVENT) {
-          playEntryDialogue()
+          entryPlayback.tryPlay()
         }
       }
     } catch (error: unknown) {
@@ -264,21 +237,14 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       setEventPlaybackModes(remainingPlaybackModes)
     },
     dialogues,
-    enterFocusRoom() {
-      if (hasEnteredFocusRoom()) {
-        return
-      }
-
-      setHasEnteredFocusRoom(true)
-      playEntryDialogue()
-    },
+    enterFocusRoom: entryPlayback.enterFocusRoom,
     entryDialogueId: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT]?.[0] ?? null,
     entryDialogueIds: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? [],
     errorMessage,
     eventDialogueIds,
     eventPlaybackModes,
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
-    hasEnteredFocusRoom,
+    hasEnteredFocusRoom: entryPlayback.hasEnteredFocusRoom,
     isDialoguePlaybackBlocked: playback.isBlocked,
     isDialoguePlaying: playback.isPlaying,
     isDialogueScheduled: playback.isDialogueScheduled,
@@ -288,16 +254,18 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     onStopEntryPlayback: playback.stop,
     async playDialogue(dialogueId) {
       if (!isPlaybackEnabled()) {
-        return
+        return false
       }
 
       if (repository === null) {
         await initialization
       }
 
-      if (!isDisposed && isPlaybackEnabled() && repository !== null) {
-        await playback.prepare(repository, dialogueId)
+      if (isDisposed || !isPlaybackEnabled() || repository === null) {
+        return false
       }
+
+      return playback.prepare(repository, dialogueId)
     },
     async playDialogueEvents(eventIds, onBeforePlayback) {
       if (!isPlaybackEnabled()) {
@@ -425,7 +393,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
   createEffect(() => {
     if (isPlaybackEnabled()) {
-      playEntryDialogue()
+      entryPlayback.tryPlay()
     } else {
       // AI_NOTE - Route suspension cancels without stop callbacks so queued feeds are not marked listened.
       playback.cancel()

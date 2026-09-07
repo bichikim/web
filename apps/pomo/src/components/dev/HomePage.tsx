@@ -1,9 +1,15 @@
+import {ImageGenerationCard} from './home/ImageGenerationCard'
+import * as m from '@paraglide/message'
+
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
 import {SERVICE_POLICY_PATHS} from 'src/features/service-terms/policy-paths'
+import {HwpCard} from './home/HwpCard'
 import {TextMoodCard} from './home/TextMoodCard'
+import {StorageCard} from './home/StorageCard'
+import {OptionsCard} from './home/OptionsCard'
 import {CARD_CLASSES} from './home/shared'
 
 const MAIN_CLASSES = cx(
@@ -20,7 +26,7 @@ const POMO_LINK_CLASSES = cx(
   'focus-visible:outline-#f4d7b5',
 )
 
-function HomePage() {
+export function HomePage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — Creative Labs</Title>
@@ -28,7 +34,7 @@ function HomePage() {
       <section class="relative w-full max-w-5xl">
         <A class={POMO_LINK_CLASSES} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-4" />
-          Pomofi로 돌아가기
+          {m.app_return()}
         </A>
         <header class="max-w-2xl">
           <p class="m-0 text-xs font-750 tracking-[0.28em] text-#f2a7b8 uppercase">
@@ -46,6 +52,7 @@ function HomePage() {
         </header>
 
         <div class="mt-10 grid gap-4 md:grid-cols-2">
+          <ImageGenerationCard />
           <A class={CARD_CLASSES} href="/dev/focus-room-layer-review">
             <div class="flex items-start justify-between gap-5">
               <div>
@@ -123,6 +130,8 @@ function HomePage() {
             <span class="mt-8 text-sm font-700 text-#b8e8d0">답변 실험실 열기 →</span>
           </A>
 
+          <HwpCard />
+
           <A class={CARD_CLASSES} href="/dev/chat">
             <div class="flex items-start justify-between gap-5">
               <div>
@@ -160,6 +169,8 @@ function HomePage() {
           </A>
 
           <TextMoodCard />
+          <StorageCard />
+          <OptionsCard />
         </div>
 
         <footer class="mt-8 flex justify-end">
@@ -174,5 +185,3 @@ function HomePage() {
     </main>
   )
 }
-
-export default HomePage

@@ -4,7 +4,11 @@ import {z} from 'zod'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {exchangeTossAuthorization} from 'src/server/toss-auth/client'
-import {createTossAppSession} from 'src/server/user-auth/repository'
+import {
+  type AppSession,
+  createPendingTossAppSession,
+  createTossAppSession,
+} from 'src/server/user-auth/repository'
 
 const MAXIMUM_BODY_SIZE = 8192
 const MAX_AUTHORIZATION_CODE_LENGTH = 2048
@@ -15,7 +19,10 @@ const exchangeRequestSchema = z.object({
   referrer: z.enum(['DEFAULT', 'SANDBOX']),
 })
 
-export const POST = async (event: APIEvent): Promise<Response> => {
+const handleExchange = async (
+  event: APIEvent,
+  createSession: (providerSubject: string) => Promise<AppSession>,
+): Promise<Response> => {
   const bodyResult = await readJsonBody(event, MAXIMUM_BODY_SIZE)
   const parsedRequest = exchangeRequestSchema.safeParse(bodyResult.success ? bodyResult.body : null)
 
@@ -28,7 +35,7 @@ export const POST = async (event: APIEvent): Promise<Response> => {
 
   try {
     const identity = await exchangeTossAuthorization(parsedRequest.data)
-    const session = await createTossAppSession(identity.userKey)
+    const session = await createSession(identity.userKey)
 
     return noStoreJson({
       expiresAt: session.expiresAt.toISOString(),
@@ -40,3 +47,8 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     return noStoreJson({error: 'login_failed'}, {status: HTTP_BAD_GATEWAY})
   }
 }
+
+export const POST = (event: APIEvent): Promise<Response> =>
+  handleExchange(event, createTossAppSession)
+export const PUT = (event: APIEvent): Promise<Response> =>
+  handleExchange(event, createPendingTossAppSession)

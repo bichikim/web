@@ -4,7 +4,7 @@ import {type SupertonicVoiceLabState} from '../../features/supertonic/index'
 
 const BUTTON_CLASSES = cx(
   'h-13 rounded-full bg-#f2a7b8 px-7 font-750 text-#2d1723',
-  'shadow-[0_10px_28px_rgba(242,167,184,0.22)] transition hover:bg-#ffc0ce',
+  'shadow-[0_0.625rem_1.75rem_rgba(242,167,184,0.22)] transition hover:bg-#ffc0ce',
   'disabled:cursor-not-allowed disabled:opacity-35',
 )
 

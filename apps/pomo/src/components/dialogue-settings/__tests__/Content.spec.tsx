@@ -89,7 +89,7 @@ vi.mock('../PlaybackButton', () => ({
   ),
 }))
 
-import PDialogueSettingsContent from '../Content'
+import {PDialogueSettingsContent} from '../Content'
 
 const DIALOGUE: PDialogue = {
   audioKey: 'audio-key',
@@ -129,7 +129,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   isLoading: () => false,
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
@@ -146,6 +146,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
 })
 
 const FEEDS: PFeedController = {
+  cancelProcessing: vi.fn(async () => undefined),
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => [],
   dismissRecovery: vi.fn(),

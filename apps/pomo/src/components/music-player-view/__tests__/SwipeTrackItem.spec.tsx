@@ -1,3 +1,4 @@
+import {PTooltipContent, PTooltipProvider} from '../../tooltip'
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
@@ -36,7 +37,7 @@ const renderTrack = () => {
   ))
 
   return {
-    button: screen.getByTitle('One · Artist · 밀어서 삭제'),
+    button: screen.getByRole('button', {name: 'One · Artist · 밀어서 삭제'}),
     onRemove,
     onSelect,
   }
@@ -70,6 +71,40 @@ describe('PSwipeTrackItem', () => {
     vi.unstubAllGlobals()
   })
 
+  it.each([false, true])('should show the full title on hover when current is %s', (current) => {
+    vi.useFakeTimers()
+    vi.stubGlobal('CSS', {supports: () => true})
+    Object.defineProperty(HTMLElement.prototype, 'showPopover', {
+      configurable: true,
+      value: vi.fn(),
+    })
+    Object.defineProperty(HTMLElement.prototype, 'hidePopover', {
+      configurable: true,
+      value: vi.fn(),
+    })
+    try {
+      const {container} = render(() => (
+        <PTooltipProvider>
+          <PSwipeTrackItem current={current} index={0} onSelect={vi.fn()} track={TRACK} />
+          <PTooltipContent />
+        </PTooltipProvider>
+      ))
+      const title = container.querySelector('button > span.min-w-0.flex-1')
+      expect(title).not.toBeNull()
+      fireEvent.pointerEnter(title!)
+      vi.advanceTimersByTime(400)
+      const tooltip = screen.getByRole('tooltip')
+      expect(tooltip).toHaveTextContent(TRACK.title)
+      expect(title).toHaveAttribute('aria-describedby', tooltip.id)
+      expect(tooltip.showPopover).toHaveBeenCalledOnce()
+    } finally {
+      cleanup()
+      vi.useRealTimers()
+      Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
+      Reflect.deleteProperty(HTMLElement.prototype, 'hidePopover')
+    }
+  })
+
   it.each([-64, 64])('should remove after crossing the swipe threshold at %i pixels', (endX) => {
     const {button, onRemove} = renderTrack()
 
@@ -87,6 +122,7 @@ describe('PSwipeTrackItem', () => {
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
     expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('0px')
   })
 
   it('should preserve selection after a vertical gesture', () => {
@@ -126,20 +162,27 @@ describe('PSwipeTrackItem', () => {
 
     const swipeLayers = button.closest('li')?.querySelectorAll(':scope > div')
 
-    expect(button.style.transform).toBe('translateX(80px)')
+    expect(button.style.transform).toBe('')
+    expect(button.classList.contains('[transform:translateX(var(--pomo-swipe-offset))]')).toBe(true)
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('80px')
     expect(button.dataset.swipeDeleteReady).toBe('')
     expect(button.classList.contains('transition-none')).toBe(true)
-    expect(swipeLayers?.[0]?.getAttribute('style')).toContain('width: 80px')
-    expect(swipeLayers?.[1]?.getAttribute('style')).toContain('width: 0px')
+    expect(swipeLayers?.[0]).not.toHaveAttribute('style')
+    expect(swipeLayers?.[1]).not.toHaveAttribute('style')
+    expect(swipeLayers?.[0]?.classList.contains('w-[max(0px,var(--pomo-swipe-offset))]')).toBe(true)
+    expect(
+      swipeLayers?.[1]?.classList.contains('w-[max(0px,calc(-1*var(--pomo-swipe-offset)))]'),
+    ).toBe(true)
     expect(screen.getByText('One, 놓으면 삭제')).toBeInTheDocument()
 
     fireEvent.pointerCancel(button, {pointerId: 2})
-    expect(button.style.transform).toBe('translateX(80px)')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('80px')
 
     fireEvent.pointerCancel(button, {pointerId: 1})
     fireEvent.click(button)
 
     expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('0px')
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
     expect(pointerCapture.setPointerCapture).toHaveBeenCalledWith(1)
@@ -170,7 +213,8 @@ describe('PSwipeTrackItem', () => {
     fireEvent.pointerDown(button, {button: 0, clientX: 0, clientY: 0, pointerId: 1})
     fireEvent.pointerMove(button, {clientX: 40, clientY: 0, pointerId: 1})
     fireEvent(button, new TestPointerEvent('lostpointercapture', {pointerId: 2}))
-    expect(button.style.transform).toBe('translateX(40px)')
+    expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('40px')
 
     fireEvent(button, new TestPointerEvent('lostpointercapture', {pointerId: 1}))
     fireEvent.click(button)
@@ -178,6 +222,7 @@ describe('PSwipeTrackItem', () => {
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
     expect(button.style.transform).toBe('')
+    expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('0px')
   })
 
   it('should provide the Delete key as a gesture alternative', () => {
@@ -195,10 +240,11 @@ describe('PSwipeTrackItem', () => {
   it('should render the current track without removal affordances', () => {
     const onSelect = vi.fn()
     render(() => <PSwipeTrackItem current index={1} onSelect={onSelect} track={TRACK} />)
-    const button = screen.getByTitle('One · Artist')
+    const button = screen.getByRole('button', {name: 'One · Artist'})
 
     expect(button.getAttribute('aria-current')).toBe('true')
     expect(button.getAttribute('aria-keyshortcuts')).toBeNull()
+    expect(button).not.toHaveAttribute('title')
     expect(button.classList.contains('bg-primary-soft')).toBe(true)
     expect(button.textContent).toContain('2')
     expect(button.textContent).toContain('One')

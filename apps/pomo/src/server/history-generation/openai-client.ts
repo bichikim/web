@@ -1,5 +1,3 @@
-import 'server-only'
-
 // oxlint-disable eslint-js/camelcase -- OpenAI request fields follow the external API contract.
 import OpenAI from 'openai'
 import {zodTextFormat} from 'openai/helpers/zod'
@@ -11,11 +9,16 @@ import {
   type HistorySourcePolicy,
   type HistoryTargetDate,
 } from 'src/features/history-generation'
-import {
-  getOpenAiConfiguration,
-  getOpenAiWebhookSecret,
-  type OpenAiConfiguration,
-} from '../ai/environment'
+import {env} from 'src/env'
+
+import {isGpt56Model} from './is-gpt-56-model'
+
+interface OpenAiConfiguration {
+  readonly apiKey: string
+  readonly model: string
+  readonly reasoningEffort: typeof env.OPENAI_REASONING_EFFORT
+  readonly serviceTier: typeof env.OPENAI_SERVICE_TIER
+}
 
 const HTTP_CLIENT_ERROR_MINIMUM = 400
 const HTTP_SERVER_ERROR_MINIMUM = 500
@@ -49,6 +52,19 @@ export class HistorySubmissionError extends Error {
 }
 
 let openAiClient: OpenAI | undefined
+
+const readOpenAiConfiguration = (): OpenAiConfiguration => {
+  if (isGpt56Model(env.OPENAI_MODEL) && env.OPENAI_REASONING_EFFORT === 'minimal') {
+    throw new TypeError('OPENAI_REASONING_EFFORT cannot be minimal when OPENAI_MODEL is GPT-5.6')
+  }
+
+  return {
+    apiKey: env.OPENAI_API_KEY,
+    model: env.OPENAI_MODEL,
+    reasoningEffort: env.OPENAI_REASONING_EFFORT,
+    serviceTier: env.OPENAI_SERVICE_TIER,
+  }
+}
 
 const buildHistoryResponseRequest = (
   options: SubmitHistoryResponseOptions,
@@ -100,11 +116,11 @@ const buildHistoryResponseRequest = (
 
 /** Returns the lazily initialized server-only OpenAI client. */
 export const getOpenAiClient = (): OpenAI => {
-  const configuration = getOpenAiConfiguration()
+  const configuration = readOpenAiConfiguration()
 
   openAiClient ??= new OpenAI({
     apiKey: configuration.apiKey,
-    webhookSecret: process.env.OPENAI_WEBHOOK_SECRET,
+    webhookSecret: env.OPENAI_WEBHOOK_SECRET,
   })
 
   return openAiClient
@@ -119,7 +135,7 @@ export const submitHistoryResponse = async (
   let responseClient: OpenAI
 
   try {
-    const configuration = getOpenAiConfiguration()
+    const configuration = readOpenAiConfiguration()
     request = buildHistoryResponseRequest(options, configuration)
     responseClient = client ?? getOpenAiClient()
   } catch (error) {
@@ -146,4 +162,4 @@ export const submitHistoryResponse = async (
 
 /** Verifies and parses an OpenAI webhook from its untouched request body. */
 export const unwrapOpenAiWebhook = (body: string, headers: Headers) =>
-  getOpenAiClient().webhooks.unwrap(body, headers, getOpenAiWebhookSecret())
+  getOpenAiClient().webhooks.unwrap(body, headers, env.OPENAI_WEBHOOK_SECRET)

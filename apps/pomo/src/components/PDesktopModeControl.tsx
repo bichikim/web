@@ -1,3 +1,5 @@
+import {useTooltipTrigger} from './tooltip'
+import {PTooltip} from './PTooltip'
 import {For, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
@@ -36,31 +38,38 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
   }
 
   return (
-    <Show when={import.meta.env.POMO_IS_DESKTOP}>
+    <Show when={import.meta.env.VITE_POMO_IS_DESKTOP === 'true'}>
       <div
         aria-label={m.desktop_mode_label()}
         class="flex rounded-control border border-solid border-border bg-surface p-1 shadow-panel"
         role="group"
       >
         <For each={getModeOptions()}>
-          {(option) => (
-            <button
-              aria-label={option.label}
-              aria-pressed={props.mode === option.value}
-              class={cx(
-                'inline-flex min-h-9 min-w-9 items-center justify-center rounded-control',
-                'border-0 bg-transparent text-foreground outline-none hover:bg-surface-interactive',
-                'focus-visible:outline-2 focus-visible:outline-highlight',
-                'aria-pressed:bg-highlight aria-pressed:text-background',
-              )}
-              disabled={props.isChanging}
-              onClick={() => requestMode(option.value)}
-              title={option.label}
-              type="button"
-            >
-              <span aria-hidden="true" class={`${option.icon} size-4`} />
-            </button>
-          )}
+          {(option) => {
+            const tooltip = useTooltipTrigger()
+            return (
+              <>
+                <button
+                  {...tooltip.events}
+                  ref={tooltip.setTarget}
+                  aria-label={option.label}
+                  aria-pressed={props.mode === option.value}
+                  class={cx(
+                    'inline-flex min-h-9 min-w-9 items-center justify-center rounded-control',
+                    'border-0 bg-transparent text-foreground outline-none hover:bg-surface-interactive',
+                    'focus-visible:outline-2 focus-visible:outline-highlight',
+                    'aria-pressed:bg-highlight aria-pressed:text-background',
+                  )}
+                  disabled={props.isChanging}
+                  onClick={() => requestMode(option.value)}
+                  type="button"
+                >
+                  <span aria-hidden="true" class={`${option.icon} size-4`} />
+                </button>
+                <PTooltip target={tooltip.target()} show={tooltip.show()} text={option.label} />
+              </>
+            )
+          }}
         </For>
       </div>
       <Show when={props.error}>

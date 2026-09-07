@@ -2,15 +2,17 @@
 
 ## Interaction
 
-- **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
-- **Intent analysis (mandatory)**: Before interpreting, use grammatical cues—particles, adverbs, comparisons—presuppositions, and dialogue context to reconstruct all contrasted or additive sides and the user's baseline: actual state, experience or memory, or prior dialogue. Preserve named entities and categories. If a reading leaves a cue unexplained, substitutes a related concept, or makes the user seem irrational, seek the coherent ordinary pragmatic reading before correcting them.
-  - “Starting with N, does X also move to Y?” presupposes that X was previously outside Y or handled differently in the user's experience; verify the actual state without replacing X. In the SolidStart example, retain server routes and their prior separate location—not API routes already in `src/routes`.
+- **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
 - **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation.
-- **Documentation**: When asked to add or write docs, keep it brief and concise—avoid verbosity and repeating the same points—without omitting essential meaning.
+- **Existing code references**: When discussing existing code, always include its file path.
 
-## Code quality
+## Styling ownership
 
-**Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
+- Prefer UnoCSS over standalone `.css` files. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
+- UnoCSS owns all visual style values.
+- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties; UnoCSS must define how those values affect visual styling.
+- JavaScript and TypeScript must not otherwise create style values or set them directly on the DOM.
+- If preserving the requested behavior requires other style handling in JavaScript or TypeScript, first present the concrete reason and alternatives and obtain explicit user approval.
 
 ## Scripts
 
@@ -27,16 +29,16 @@
 
 - When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
-- Do not treat prevalence as evidence of quality; make decisions at the standard of top 5% expert judgment.
+- Do not treat prevalence as evidence of quality.
 
 ## Evidence
 
-- Do not make factual or technical claims without showing the decisive evidence to the user.
-- Verify changeable external information from a current authoritative internet source in the same turn before claiming it; learned knowledge, prior conversation, and the repository's local state are not substitutes for current external evidence.
-- Before using any term, status, label, or qualifier to reach a conclusion, establish its exact meaning in context from authoritative evidence. Do not skip that meaning or infer consequences from familiarity or connotation; verify the consequence relevant to the user's question separately.
-- Prefer evidence from the actual project and runtime over assumptions based on learned patterns.
-- When evidence is unavailable, run the smallest safe experiment that can answer the question.
-- If no evidence exists and no viable experiment is possible, do not infer or speculate. Tell the user that the answer cannot be verified and why.
+- Do not infer, speculate, or fill gaps. Treat learned knowledge, memory, prior conversation, common patterns, names, and probabilities as false or unverified until current evidence establishes them.
+- Use only directly observed evidence from the actual project's files, configuration, and data; its actual runtime; current official documentation; relevant existing tests executed against the actual code path; or new tests created and executed against that path as sources of truth.
+- Verify every factual or technical conclusion with the source capable of proving it. Source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised.
+- Verify changeable external information from a current authoritative source in the same turn. Before relying on a term, status, label, or qualifier, establish its exact contextual meaning and separately verify the consequence relevant to the question.
+- When direct evidence is missing, run the smallest relevant test or runtime experiment that can establish the fact. Distinguish product evidence from setup, runner, sandbox, and environment failures.
+- Show the user the decisive evidence. If the permitted sources cannot verify a claim and no viable experiment can establish it, state that it cannot be determined; do not provide a likely answer.
 
 ## Architecture authority
 
@@ -57,10 +59,9 @@
 - Explicitly state the future need being covered and why the added effort is small.
 - Do not use future-proofing to justify speculative abstractions with uncertain value.
 
-## Package exports
+## Terminology
 
 - Never call code, APIs, exports, types, or control flow "safe" except when the claim is about security. There is nothing else in code to label safe.
-- An `index.ts` re-exports every sibling module in its directory. Always re-export them. Do not review `index.ts` export lists.
 
 ## Worktree initialization
 
@@ -79,10 +80,6 @@
 ## Comments
 
 Function JSDoc: contract (what) only; call sites: intent (why) only.
-
-## Pull requests
-
-- Wait for required CI checks when appropriate, but do not wait for Vercel deployment checks to complete. Report pending Vercel checks and finish the task.
 
 ## GitHub CLI authentication
 
@@ -105,6 +102,7 @@ When dependency installation is required:
 pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `globalPassThroughEnv` includes `pnpm_config_verify_deps_before_run` so Turbo strict mode does not strip pnpm 11’s lifecycle marker (which would re-enter `pnpm install` → postinstall).
 
 - **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
+- **Pomo** — `apps/pomo` (SolidStart SSR). `pnpm dev --port 3300` (:3300).
 - **Storybook** — root. `pnpm storybook:dev` (:6006).
 
 **Commands:** `pnpm lint` · `pnpm test` · `turbo prepare-build` · `pnpm typecheck` (`apps/coong`)

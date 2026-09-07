@@ -1,5 +1,7 @@
 import {type FeedConnectionController} from '../../features/focus-room-feed/index'
 import {CLASSES, RecommendedFeed} from './shared'
+import * as m from '@paraglide/message'
+import {PSettingsActionButton} from '../settings/ActionButton'
 
 interface RecommendedFeedItemProps {
   readonly feed: RecommendedFeed
@@ -16,15 +18,15 @@ export const RecommendedFeedItem = (props: RecommendedFeedItemProps) => {
           <small>{props.feed.description}</small>
         </span>
       </div>
-      <button
-        aria-label={`${props.feed.label} 추천 피드 추가`}
-        class={CLASSES.feedSettingsAdd}
-        onClick={() => props.onAdd(props.feed.url)}
-        type="button"
+      <PSettingsActionButton
+        accessibleLabel={m.settings_feed_recommendation_add_label({feed: props.feed.label})}
+        class="pomo-feed-settings__add max-sm:w-full"
+        icon="i-tabler-plus"
+        onPress={() => props.onAdd(props.feed.url)}
+        size="medium"
       >
-        <span aria-hidden="true" class="i-tabler-plus size-4" />
-        추가
-      </button>
+        {m.settings_feed_add()}
+      </PSettingsActionButton>
     </li>
   )
 }

@@ -3,15 +3,16 @@
 import {render} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-import type {PFeedController} from '../../features/focus-room-feed/feed-controller'
 import {usePFeedContext} from '../../features/focus-room-feed/feed-context'
+import type {PFeedController} from '../../features/focus-room-feed/feed-controller'
 import {usePFeeds} from '../../features/focus-room-feed/use-focus-room-feeds'
 import {PFeedProvider} from '../PFeedProvider'
 
-vi.mock('../../features/focus-room-dialogue', () => ({usePEvents: vi.fn(() => ({}))}))
+vi.mock('../../features/focus-room-dialogue/event-context', () => ({usePEvents: vi.fn(() => ({}))}))
 vi.mock('../../features/focus-room-feed/use-focus-room-feeds', () => ({usePFeeds: vi.fn()}))
 
 const createController = (): PFeedController => ({
+  cancelProcessing: vi.fn(async () => undefined),
   deleteRecovery: vi.fn(async () => undefined),
   dialogues: () => [],
   dismissRecovery: vi.fn(),

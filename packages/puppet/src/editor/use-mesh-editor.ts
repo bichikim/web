@@ -1,34 +1,41 @@
-import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, type Setter, untrack} from 'solid-js'
 
-import type {PuppetDocument, PuppetPart} from '../player/document'
-import {addPartVertex, deletePartVertex, movePartVertex, type VertexPoint} from './edit-document'
 import {
-  getIndexedVertices,
-  getMeshViewTriangles,
-  type IndexedVertex,
-  type MeshTriangle,
-  snapPointToEdge,
-} from './internal/mesh-view'
+  composeParameterVertices,
+  type PuppetParameterValueMap,
+  type PuppetParameterValues,
+} from '../deformation'
+import type {PuppetDocument, PuppetPart} from '../player/document'
+import {sampleMotionVertices} from '../player/internal/motion'
+import {getScenePartStates} from '../player/scene'
+import {addPartVertex, deletePartVertex, movePartVertex, type VertexPoint} from './edit-document'
+import {type IndexedVertex, type MeshTriangle, snapPointToEdge} from './internal/mesh-view'
+import {setVertexKeyframe} from './internal/motion-keyframes'
+import {getDeformerPreviewDocument} from './internal/mesh-preview'
 import {getEditErrorMessage} from './internal/notices'
+import {createPartViews, type MeshPartView} from './internal/part-views'
+import {setParameterKeyformVertex} from './internal/parameter-keyforms'
+import {unapplySceneDeformersPoint} from './internal/scene-deformation'
 import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
 
 export type {IndexedVertex, MeshTriangle} from './internal/mesh-view'
-
-export type MeshEditTool = 'add' | 'select'
+export type {MeshPartView} from './internal/part-views'
 
 export interface UseMeshEditorResult {
+  readonly canEditTopology: Accessor<boolean>
   readonly handleAddVertex: (event: MouseEvent) => void
+  readonly handleCanvasClick: (event: MouseEvent) => void
+  readonly handleKeyDown: (event: KeyboardEvent) => void
   readonly handleDeleteVertex: () => void
   readonly handlePointerCancel: () => void
-  readonly handlePointerDown: (event: PointerEvent, vertex: IndexedVertex) => void
+  readonly handlePointerDown: (event: PointerEvent, partId: string, vertex: IndexedVertex) => void
   readonly handlePointerEnd: () => void
   readonly handlePointerMove: (event: PointerEvent) => void
+  readonly clippedPartViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly part: Accessor<PuppetPart | undefined>
-  readonly selectAddTool: () => void
-  readonly selectMoveTool: () => void
+  readonly partViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly selectedVertex: Accessor<number | null>
-  readonly tool: Accessor<MeshEditTool>
   readonly triangles: Accessor<ReadonlyArray<MeshTriangle>>
   readonly vertexRadius: Accessor<number>
   readonly vertices: Accessor<ReadonlyArray<IndexedVertex>>
@@ -36,14 +43,21 @@ export interface UseMeshEditorResult {
 
 interface MeshEditorState {
   readonly draftPoint: Accessor<VertexPoint | null>
+  readonly dragStartPoint: Accessor<VertexPoint | null>
+  readonly draggingTime: Accessor<number | null>
+  readonly draggingValues: Accessor<PuppetParameterValues | null>
   readonly draggingVertex: Accessor<number | null>
+  readonly clippedPartViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly part: Accessor<PuppetPart | undefined>
+  readonly partViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly selectedVertex: Accessor<number | null>
   readonly setDraftPoint: Setter<VertexPoint | null>
+  readonly setDragStartPoint: Setter<VertexPoint | null>
+  readonly setDraggingTime: Setter<number | null>
+  readonly setDraggingValues: Setter<PuppetParameterValues | null>
   readonly setDraggingVertex: Setter<number | null>
+  readonly setFocusedPartId: Setter<string | null>
   readonly setSelectedVertex: Setter<number | null>
-  readonly setTool: Setter<MeshEditTool>
-  readonly tool: Accessor<MeshEditTool>
   readonly triangles: Accessor<ReadonlyArray<MeshTriangle>>
   readonly vertexRadius: Accessor<number>
   readonly vertices: Accessor<ReadonlyArray<IndexedVertex>>
@@ -53,6 +67,134 @@ const COORDINATES_PER_VERTEX = 2
 const VERTEX_RADIUS_DIVISOR = 150
 const MINIMUM_VERTEX_RADIUS = 3
 const EDGE_SNAP_RADIUS_MULTIPLIER = 2
+
+interface CommitVertexMoveOptions extends VertexPoint {
+  readonly editMode: 'motion' | 'parameter'
+  readonly document: PuppetDocument
+  readonly keyframeTime: number | null
+  readonly bindingId?: string
+  readonly parameterValueMap?: PuppetParameterValueMap
+  readonly parameterValues: PuppetParameterValues | null
+  readonly part: PuppetPart
+  readonly vertexIndex: number
+}
+
+interface CommitVertexMoveSuccess {
+  readonly document: PuppetDocument
+  readonly keyframeTime: number | null
+  readonly ok: true
+}
+
+interface CommitVertexMoveFailure {
+  readonly message: string
+  readonly ok: false
+}
+
+type CommitVertexMoveResult = CommitVertexMoveFailure | CommitVertexMoveSuccess
+
+const canEditSelectedKeyform = (props: MeshEditorProps) =>
+  props.editMode !== 'parameter' ||
+  (props.activeBindingId !== undefined &&
+    props.activeKeyformValues !== null &&
+    props.activeKeyformValues !== undefined)
+
+const getVertexMoveNotice = (
+  editMode: MeshEditorProps['editMode'],
+  keyframeTime: number | null,
+  vertexIndex: number,
+) => {
+  if (editMode === 'parameter') {
+    return '선택한 Parameter 키폼을 변경했습니다.'
+  }
+
+  return keyframeTime === null
+    ? `정점 ${vertexIndex + 1} 위치를 변경했습니다.`
+    : `${keyframeTime.toFixed(2)}초에 정점 ${vertexIndex + 1} 키프레임을 저장했습니다.`
+}
+
+const commitVertexMove = (options: CommitVertexMoveOptions): CommitVertexMoveResult => {
+  if (options.editMode === 'parameter') {
+    if (options.bindingId === undefined || options.parameterValues === null) {
+      return {message: '편집할 Parameter 키폼을 먼저 선택하세요.', ok: false}
+    }
+
+    const activePart = options.part
+    const otherBindings = (options.document.parameterBindings ?? []).filter(
+      (binding) => binding.id !== options.bindingId,
+    )
+    const otherVertices = composeParameterVertices({
+      document: {...options.document, parameterBindings: otherBindings},
+      parameterValues: options.parameterValueMap,
+      partId: activePart.id,
+      restVertices: activePart.mesh.vertices,
+    })
+    const coordinateIndex = options.vertexIndex * COORDINATES_PER_VERTEX
+    const restX = activePart.mesh.vertices[coordinateIndex] ?? options.x
+    const restY = activePart.mesh.vertices[coordinateIndex + 1] ?? options.y
+    const otherX = otherVertices[coordinateIndex] ?? restX
+    const otherY = otherVertices[coordinateIndex + 1] ?? restY
+    const document = setParameterKeyformVertex({
+      bindingId: options.bindingId,
+      document: options.document,
+      partId: options.part.id,
+      values: options.parameterValues,
+      vertexIndex: options.vertexIndex,
+      x: options.x - otherX + restX,
+      y: options.y - otherY + restY,
+    })
+
+    return document === undefined
+      ? {message: '정점 위치가 메시를 뒤집거나 유효 범위를 벗어났습니다.', ok: false}
+      : {document, keyframeTime: options.keyframeTime, ok: true}
+  }
+
+  const [motion] = options.document.motions
+  const sampledVertices =
+    options.keyframeTime === null || motion === undefined
+      ? options.part.mesh.vertices
+      : sampleMotionVertices({
+          motion,
+          partId: options.part.id,
+          restVertices: options.part.mesh.vertices,
+          time: options.keyframeTime,
+        })
+  const validationDocument = {
+    ...options.document,
+    parts: options.document.parts.map((part) =>
+      part.id === options.part.id
+        ? {...part, mesh: {...part.mesh, vertices: sampledVertices}}
+        : part,
+    ),
+  }
+  const result = movePartVertex({
+    document: validationDocument,
+    partId: options.part.id,
+    vertexIndex: options.vertexIndex,
+    x: options.x,
+    y: options.y,
+  })
+
+  if (!result.ok) {
+    return {message: getEditErrorMessage(result.error.code), ok: false}
+  }
+
+  if (options.keyframeTime === null || motion === undefined) {
+    return {document: result.document, keyframeTime: null, ok: true}
+  }
+
+  const document = setVertexKeyframe({
+    document: options.document,
+    motionId: motion.id,
+    partId: options.part.id,
+    point: {x: options.x, y: options.y},
+    time: options.keyframeTime,
+    vertexIndex: options.vertexIndex,
+  })
+
+  return document === undefined
+    ? {message: '선택한 시간에 정점 키프레임을 만들지 못했습니다.', ok: false}
+    : {document, keyframeTime: options.keyframeTime, ok: true}
+}
 
 const getPointerPoint = (
   event: PointerEvent | MouseEvent,
@@ -66,15 +208,42 @@ const getPointerPoint = (
   })
 
 const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
-  const [tool, setTool] = createSignal<MeshEditTool>('select')
   const [selectedVertex, setSelectedVertex] = createSignal<number | null>(null)
   const [draggingVertex, setDraggingVertex] = createSignal<number | null>(null)
+  const [draggingTime, setDraggingTime] = createSignal<number | null>(null)
+  const [draggingValues, setDraggingValues] = createSignal<PuppetParameterValues | null>(null)
   const [draftPoint, setDraftPoint] = createSignal<VertexPoint | null>(null)
-  const part = createMemo(() =>
-    props.activePartId === undefined
-      ? props.document.parts[0]
-      : props.document.parts.find((candidate) => candidate.id === props.activePartId),
-  )
+  const [dragStartPoint, setDragStartPoint] = createSignal<VertexPoint | null>(null)
+  const [focusedPartId, setFocusedPartId] = createSignal<string | null>(null)
+  let activeDocument = untrack(() => props.document)
+  const selectedPartIds = createMemo<ReadonlyArray<string>>(() => {
+    if (props.selectedPartIds !== undefined) {
+      return props.selectedPartIds
+    }
+
+    const partId = props.activePartId ?? props.document.parts[0]?.id
+    return partId === undefined ? [] : [partId]
+  })
+  const parts = createMemo<ReadonlyArray<PuppetPart>>(() => {
+    const partStates = new Map(
+      getScenePartStates(props.document).map((state) => [state.partId, state] as const),
+    )
+
+    return selectedPartIds().flatMap((partId) => {
+      const state = partStates.get(partId)
+      const part = props.document.parts.find((candidate) => candidate.id === partId)
+      return state === undefined || state.locked || !state.visible || part === undefined
+        ? []
+        : [part]
+    })
+  })
+  const part = createMemo(() => {
+    const partId =
+      props.activePartId ??
+      focusedPartId() ??
+      (props.selectedPartIds === undefined ? selectedPartIds()[0] : undefined)
+    return parts().find((candidate) => candidate.id === partId)
+  })
   const vertexRadius = createMemo(() =>
     Math.max(
       MINIMUM_VERTEX_RADIUS,
@@ -82,30 +251,54 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
         VERTEX_RADIUS_DIVISOR,
     ),
   )
+  const partViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
+    const activePart = part()
+    return createPartViews({
+      activePartId: activePart?.id,
+      candidates: parts(),
+      draftPoint: draftPoint(),
+      props,
+      selectedVertex: selectedVertex(),
+    })
+  })
+  const clippedPartViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
+    const maskPartId = part()?.id
+    return createPartViews({
+      candidates: props.document.parts.filter(
+        (candidate) =>
+          maskPartId !== undefined && candidate.properties?.clippingMaskIds?.includes(maskPartId),
+      ),
+      draftPoint: null,
+      props,
+      selectedVertex: null,
+    })
+  })
   const vertices = createMemo<ReadonlyArray<IndexedVertex>>(() => {
     const activePart = part()
-    const activeVertex = selectedVertex()
-    const activeDraft = draftPoint()
-
-    if (activePart === undefined) {
-      return []
-    }
-
-    return getIndexedVertices({
-      draftPoint: activeDraft,
-      mesh: activePart.mesh,
-      selectedVertex: activeVertex,
-    })
+    return partViews().find((view) => view.partId === activePart?.id)?.vertices ?? []
   })
   const triangles = createMemo<ReadonlyArray<MeshTriangle>>(() => {
     const activePart = part()
-    const activeVertices = vertices()
+    return partViews().find((view) => view.partId === activePart?.id)?.triangles ?? []
+  })
 
-    if (activePart === undefined) {
-      return []
+  createEffect(() => {
+    const {document} = props
+
+    if (document !== activeDocument) {
+      activeDocument = document
+      setDraggingVertex(null)
+      setDraggingTime(null)
+      setDraggingValues(null)
+      setDraftPoint(null)
+      setDragStartPoint(null)
     }
+  })
 
-    return getMeshViewTriangles({mesh: activePart.mesh, vertices: activeVertices})
+  createEffect(() => {
+    if (props.selectedVertexIndex !== undefined) {
+      setSelectedVertex(props.selectedVertexIndex)
+    }
   })
 
   createEffect(() => {
@@ -119,33 +312,64 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
     if (activeVertex !== null && missingVertex) {
       setSelectedVertex(null)
       setDraftPoint(null)
+      setDragStartPoint(null)
     }
   })
 
   return {
+    clippedPartViews,
     draftPoint,
+    draggingTime,
+    draggingValues,
     draggingVertex,
+    dragStartPoint,
     part,
+    partViews,
     selectedVertex,
     setDraftPoint,
+    setDraggingTime,
+    setDraggingValues,
     setDraggingVertex,
+    setDragStartPoint,
+    setFocusedPartId,
     setSelectedVertex,
-    setTool,
-    tool,
     triangles,
     vertexRadius,
     vertices,
   }
 }
 
-export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
-  const state = createMeshEditorState(props)
+const resetPointerState = (state: MeshEditorState) => {
+  state.setDraggingVertex(null)
+  state.setDraggingTime(null)
+  state.setDraggingValues(null)
+  state.setDraftPoint(null)
+  state.setDragStartPoint(null)
+}
 
-  const handleAddVertex = (event: MouseEvent) => {
+const updatePointerDraft = (
+  state: MeshEditorState,
+  document: PuppetDocument,
+  event: PointerEvent,
+) => {
+  if (state.draggingVertex() !== null) {
+    state.setDraftPoint(getPointerPoint(event, event.currentTarget as SVGSVGElement, document))
+  }
+}
+
+const canEditMeshTopology = (props: MeshEditorProps, state: MeshEditorState) =>
+  props.editMode !== 'motion' && props.onDocumentChange !== undefined && state.part() !== undefined
+
+const createAddVertexHandler =
+  (props: MeshEditorProps, state: MeshEditorState) => (event: MouseEvent) => {
     const activePart = state.part()
     const {onDocumentChange} = props
-
-    if (state.tool() !== 'add' || activePart === undefined || onDocumentChange === undefined) {
+    if (
+      props.editMode === 'motion' ||
+      (event.target instanceof Element && event.target.closest('circle') !== null) ||
+      activePart === undefined ||
+      onDocumentChange === undefined
+    ) {
       return
     }
 
@@ -159,8 +383,12 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       mesh: activePart.mesh,
       point: pointerPoint,
     })
-    const result = addPartVertex({...point, document: props.document, partId: activePart.id})
-
+    const localPoint = unapplySceneDeformersPoint({
+      document: getDeformerPreviewDocument(props),
+      partId: activePart.id,
+      point,
+    })
+    const result = addPartVertex({...localPoint, document: props.document, partId: activePart.id})
     if (!result.ok) {
       props.onNotice?.(getEditErrorMessage(result.error.code))
       return
@@ -168,40 +396,81 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
 
     onDocumentChange(result.document)
     state.setSelectedVertex(result.vertexIndex ?? null)
-    state.setTool('select')
+    props.onVertexSelect?.(result.vertexIndex ?? null)
     props.onNotice?.('새 정점을 추가하고 주변 메시를 다시 연결했습니다.')
   }
 
-  const handlePointerDown = (event: PointerEvent, vertex: IndexedVertex) => {
+const createDeleteVertexHandler = (props: MeshEditorProps, state: MeshEditorState) => () => {
+  const activePart = state.part()
+  const activeVertex = state.selectedVertex()
+  const {onDocumentChange} = props
+  if (
+    props.editMode === 'motion' ||
+    activePart === undefined ||
+    activeVertex === null ||
+    onDocumentChange === undefined
+  ) {
+    return
+  }
+
+  const result = deletePartVertex({
+    document: props.document,
+    partId: activePart.id,
+    vertexIndex: activeVertex,
+  })
+  if (!result.ok) {
+    props.onNotice?.(getEditErrorMessage(result.error.code))
+    return
+  }
+
+  onDocumentChange(result.document)
+  state.setSelectedVertex(null)
+  props.onVertexSelect?.(null)
+  state.setDraftPoint(null)
+  state.setDragStartPoint(null)
+  props.onNotice?.('선택한 정점을 제거하고 남은 정점으로 메시를 다시 연결했습니다.')
+}
+
+export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
+  const state = createMeshEditorState(props)
+  const handleAddVertex = createAddVertexHandler(props, state)
+
+  const handlePointerDown = (event: PointerEvent, partId: string, vertex: IndexedVertex) => {
+    if (event.button > 0) {
+      return
+    }
+
     const target = event.currentTarget as SVGCircleElement
 
     event.stopPropagation()
+    target.ownerSVGElement?.focus()
     target.setPointerCapture?.(event.pointerId)
+    state.setFocusedPartId(partId)
     state.setSelectedVertex(vertex.index)
+    props.onVertexSelect?.(vertex.index)
     state.setDraftPoint({x: vertex.x, y: vertex.y})
+    state.setDragStartPoint({x: vertex.x, y: vertex.y})
 
-    if (state.tool() === 'select' && props.onDocumentChange !== undefined) {
+    if (props.onDocumentChange !== undefined && canEditSelectedKeyform(props)) {
+      state.setDraggingTime(props.editMode === 'parameter' ? null : (props.previewTime ?? null))
+      state.setDraggingValues(
+        props.editMode === 'parameter' ? (props.activeKeyformValues ?? null) : null,
+      )
       state.setDraggingVertex(vertex.index)
+      props.onVertexEditStart?.()
     }
   }
 
   const handlePointerMove = (event: PointerEvent) => {
-    const vertexIndex = state.draggingVertex()
-    const svgElement = event.currentTarget as SVGSVGElement
-
-    if (vertexIndex !== null) {
-      state.setDraftPoint(getPointerPoint(event, svgElement, props.document))
-    }
-  }
-
-  const handlePointerCancel = () => {
-    state.setDraggingVertex(null)
-    state.setDraftPoint(null)
+    updatePointerDraft(state, props.document, event)
   }
 
   const handlePointerEnd = () => {
     const activePart = state.part()
     const point = state.draftPoint()
+    const startPoint = state.dragStartPoint()
+    const keyframeTime = state.draggingTime()
+    const parameterValues = state.draggingValues()
     const vertexIndex = state.draggingVertex()
     const {onDocumentChange} = props
 
@@ -214,62 +483,82 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       return
     }
 
-    const result = movePartVertex({
-      ...point,
-      document: props.document,
+    const hasMoved = startPoint !== null && (point.x !== startPoint.x || point.y !== startPoint.y)
+
+    resetPointerState(state)
+
+    if (!hasMoved) {
+      return
+    }
+
+    const localPoint = unapplySceneDeformersPoint({
+      document: getDeformerPreviewDocument(props),
       partId: activePart.id,
+      point,
+      vertexIndex,
+    })
+    const result = commitVertexMove({
+      ...localPoint,
+      bindingId: props.activeBindingId,
+      document: props.document,
+      editMode: props.editMode ?? 'motion',
+      keyframeTime,
+      parameterValueMap: props.parameterValueMap,
+      parameterValues,
+      part: activePart,
       vertexIndex,
     })
 
-    state.setDraggingVertex(null)
-    state.setDraftPoint(null)
-
     if (result.ok) {
       onDocumentChange(result.document)
-      props.onNotice?.(`정점 ${vertexIndex + 1} 위치를 변경했습니다.`)
+      props.onNotice?.(getVertexMoveNotice(props.editMode, result.keyframeTime, vertexIndex))
     } else {
-      props.onNotice?.(getEditErrorMessage(result.error.code))
+      props.onNotice?.(result.message)
     }
   }
 
-  const handleDeleteVertex = () => {
-    const activePart = state.part()
-    const activeVertex = state.selectedVertex()
-    const {onDocumentChange} = props
-
-    if (activePart === undefined || activeVertex === null || onDocumentChange === undefined) {
-      return
-    }
-
-    const result = deletePartVertex({
-      document: props.document,
-      partId: activePart.id,
-      vertexIndex: activeVertex,
-    })
-
-    if (!result.ok) {
-      props.onNotice?.(getEditErrorMessage(result.error.code))
-      return
-    }
-
-    onDocumentChange(result.document)
-    state.setSelectedVertex(null)
-    state.setDraftPoint(null)
-    props.onNotice?.('선택한 정점을 제거하고 남은 정점으로 메시를 다시 연결했습니다.')
-  }
+  const handleDeleteVertex = createDeleteVertexHandler(props, state)
 
   return {
+    canEditTopology: () => canEditMeshTopology(props, state),
+    clippedPartViews: state.clippedPartViews,
     handleAddVertex,
+    handleCanvasClick: (event) => {
+      const svg = event.currentTarget as SVGSVGElement
+      if (event.target instanceof Element && event.target.closest('circle') !== null) {
+        return
+      }
+      svg.focus()
+      state.setSelectedVertex(null)
+      props.onVertexSelect?.(null)
+    },
     handleDeleteVertex,
-    handlePointerCancel,
+    handleKeyDown: (event) => {
+      if (
+        event.target !== event.currentTarget ||
+        event.isComposing ||
+        event.repeat ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.shiftKey ||
+        (event.key !== 'Backspace' && event.key !== 'Delete') ||
+        !canEditMeshTopology(props, state) ||
+        state.selectedVertex() === null
+      ) {
+        return
+      }
+      event.preventDefault()
+      event.stopPropagation()
+      handleDeleteVertex()
+    },
+    handlePointerCancel: () => resetPointerState(state),
     handlePointerDown,
     handlePointerEnd,
     handlePointerMove,
     part: state.part,
-    selectAddTool: () => state.setTool('add'),
+    partViews: state.partViews,
     selectedVertex: state.selectedVertex,
-    selectMoveTool: () => state.setTool('select'),
-    tool: state.tool,
     triangles: state.triangles,
     vertexRadius: state.vertexRadius,
     vertices: state.vertices,

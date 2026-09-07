@@ -1,17 +1,23 @@
 import {PSelect, type PSelectOption} from '../PSelect'
 import type {DialogueEventPlaybackMode} from '../../features/focus-room-dialogue'
+import * as m from '@paraglide/message'
 import {DialogueEventSettingRow} from './EventSettingRow'
 
-const PLAYBACK_MODE_OPTIONS: ReadonlyArray<PSelectOption<DialogueEventPlaybackMode>> = [
-  {label: '순차 모두 재생', value: 'sequential-all'},
-  {label: '랜덤 모두 재생', value: 'random-all'},
-  {label: '랜덤 1개 재생', value: 'random-one'},
+const getPlaybackModeOptions = (): ReadonlyArray<PSelectOption<DialogueEventPlaybackMode>> => [
+  {label: m.settings_event_playback_sequential_all(), value: 'sequential-all'},
+  {label: m.settings_event_playback_random_all(), value: 'random-all'},
+  {label: m.settings_event_playback_random_one(), value: 'random-one'},
 ]
 
-const PLAYBACK_MODE_DESCRIPTIONS: Readonly<Record<DialogueEventPlaybackMode, string>> = {
-  'random-all': '이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.',
-  'random-one': '이벤트가 발생할 때마다 연결된 대화 중 하나만 골라요.',
-  'sequential-all': '연결한 순서대로 모든 대화를 재생해요.',
+const getPlaybackModeDescription = (mode: DialogueEventPlaybackMode): string => {
+  switch (mode) {
+    case 'random-all':
+      return m.settings_event_playback_random_all_description()
+    case 'random-one':
+      return m.settings_event_playback_random_one_description()
+    case 'sequential-all':
+      return m.settings_event_playback_sequential_all_description()
+  }
 }
 
 export interface DialoguePlaybackModeSelectProps {
@@ -25,15 +31,17 @@ export const DialoguePlaybackModeSelect = (props: DialoguePlaybackModeSelectProp
 
   return (
     <DialogueEventSettingRow
-      description={PLAYBACK_MODE_DESCRIPTIONS[playbackMode()]}
-      label="재생 방식"
+      description={getPlaybackModeDescription(playbackMode())}
+      label={m.settings_event_playback_mode()}
     >
       <PSelect
-        accessibleLabel={`${props.eventLabel ?? '이벤트'} 재생 방식`}
+        accessibleLabel={m.settings_event_playback_mode_label({
+          event: props.eventLabel ?? m.settings_events_title(),
+        })}
         hideLabel
-        label="재생 방식"
+        label={m.settings_event_playback_mode()}
         onChange={(nextMode) => props.onChange?.(nextMode)}
-        options={PLAYBACK_MODE_OPTIONS}
+        options={getPlaybackModeOptions()}
         value={playbackMode()}
       />
     </DialogueEventSettingRow>

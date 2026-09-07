@@ -1,25 +1,25 @@
+import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {PSelect} from './PSelect'
 import {PSwitch} from './PSwitch'
-import {
-  getLocalizedWeatherCityOptions,
-  getLocalizedWeatherSceneModeOptions,
-} from '../features/localization'
-import type {WeatherCitySlug, WeatherSceneMode} from '../features/weather'
+import {getLocalizedWeatherSceneModeOptions} from '../features/localization'
+import type {WeatherLocation, WeatherSceneMode} from '../features/weather'
 import * as m from '@paraglide/message'
+import {PWeatherLocationSearch} from './PWeatherLocationSearch'
 
 export interface PWeatherSettingsProps {
-  readonly citySlug?: WeatherCitySlug
   readonly enabled?: boolean
-  readonly onCityChange?: (citySlug: WeatherCitySlug) => void
   readonly onEnabledChange?: (enabled: boolean) => void
+  readonly location?: WeatherLocation
+  readonly onLocationChange?: (location: WeatherLocation) => void
   readonly onSceneModeChange?: (mode: WeatherSceneMode) => void
   readonly sceneMode?: WeatherSceneMode
 }
 
 export const PWeatherSettings = (props: PWeatherSettingsProps) => (
-  <div class="grid gap-4 border-b border-solid border-border pb-5">
+  <div class="grid items-start gap-4 min-[60rem]:grid-cols-2">
     <PSwitch
       checked={props.enabled ?? true}
+      class="col-span-full"
       description={m.weather_show_description()}
       label={m.weather_show()}
       onChange={(enabled) => props.onEnabledChange?.(enabled)}
@@ -30,12 +30,16 @@ export const PWeatherSettings = (props: PWeatherSettingsProps) => (
       options={getLocalizedWeatherSceneModeOptions()}
       value={props.sceneMode ?? 'auto'}
     />
-    <PSelect
-      label={m.weather_city()}
-      onChange={(citySlug) => props.onCityChange?.(citySlug)}
-      options={getLocalizedWeatherCityOptions()}
-      value={props.citySlug ?? 'seoul'}
-    />
-    <p class="m-0 text-xs leading-5 text-muted-foreground">{m.weather_support_notice()}</p>
+    <PWeatherLocationSearch location={props.location} onChange={props.onLocationChange} />
+    <p class={`col-span-full m-0 ${FIELD_DESCRIPTION}`}>
+      <a
+        class="text-inherit underline"
+        href="https://openweathermap.org/"
+        rel="noreferrer"
+        target="_blank"
+      >
+        {m.weather_support_notice()}
+      </a>
+    </p>
   </div>
 )

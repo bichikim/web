@@ -1,4 +1,5 @@
 import type {PuppetMesh} from '../player/document'
+import {GEOMETRY_EPSILON} from './internal/constants'
 
 export interface MeshPoint {
   readonly x: number
@@ -20,7 +21,6 @@ export interface MeshEdgeRecord {
 
 const COORDINATES_PER_VERTEX = 2
 const INDICES_PER_TRIANGLE = 3
-const GEOMETRY_EPSILON = 0.000_001
 
 export const getMeshVertex = (mesh: PuppetMesh, vertexIndex: number): MeshPoint | undefined => {
   const x = mesh.vertices[vertexIndex * COORDINATES_PER_VERTEX]

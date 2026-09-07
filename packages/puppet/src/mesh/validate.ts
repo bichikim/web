@@ -10,7 +10,10 @@ import {
   hasSamePoint,
   isDegenerateArea,
   type MeshEdge,
+  type MeshPoint,
+  type MeshTriangleIndices,
 } from './geometry'
+import {GEOMETRY_EPSILON} from './internal/constants'
 
 export type MeshIssueCode =
   | 'degenerate-triangle'
@@ -39,9 +42,76 @@ interface IndexedEdge extends MeshEdge {
   readonly key: string
 }
 
+interface BoundingBox {
+  readonly maximumX: number
+  readonly maximumY: number
+  readonly minimumX: number
+  readonly minimumY: number
+}
+
+interface BoundedEdge extends IndexedEdge {
+  readonly bounds: BoundingBox
+  readonly first: MeshPoint
+  readonly second: MeshPoint
+}
+
+interface BoundedTriangle {
+  readonly bounds: BoundingBox
+  readonly triangle: MeshTriangleIndices
+}
+
+interface TriangleBranch {
+  readonly bounds: BoundingBox
+  readonly commonIndices: ReadonlyArray<number>
+  readonly first: TriangleTree
+  readonly kind: 'branch'
+  readonly second: TriangleTree
+}
+
+interface TriangleLeaf {
+  readonly bounds: BoundingBox
+  readonly commonIndices: ReadonlyArray<number>
+  readonly kind: 'leaf'
+  readonly triangle: MeshTriangleIndices
+}
+
+type TriangleTree = TriangleBranch | TriangleLeaf
+
 const COORDINATES_PER_VERTEX = 2
 const INDICES_PER_TRIANGLE = 3
 const MINIMUM_BOUNDARY_VERTEX_COUNT = 3
+
+const getBoundingBox = (points: readonly [MeshPoint, ...MeshPoint[]]): BoundingBox => {
+  let maximumX = points[0].x
+  let maximumY = points[0].y
+  let minimumX = points[0].x
+  let minimumY = points[0].y
+
+  for (const point of points) {
+    maximumX = Math.max(maximumX, point.x)
+    maximumY = Math.max(maximumY, point.y)
+    minimumX = Math.min(minimumX, point.x)
+    minimumY = Math.min(minimumY, point.y)
+  }
+
+  return {maximumX, maximumY, minimumX, minimumY}
+}
+
+const overlapsVertically = (first: BoundingBox, second: BoundingBox) =>
+  first.minimumY <= second.maximumY && second.minimumY <= first.maximumY
+
+const mergeBoundingBoxes = (first: BoundingBox, second: BoundingBox): BoundingBox => ({
+  maximumX: Math.max(first.maximumX, second.maximumX),
+  maximumY: Math.max(first.maximumY, second.maximumY),
+  minimumX: Math.min(first.minimumX, second.minimumX),
+  minimumY: Math.min(first.minimumY, second.minimumY),
+})
+
+const containsPoint = (bounds: BoundingBox, point: MeshPoint) =>
+  point.x >= bounds.minimumX &&
+  point.x <= bounds.maximumX &&
+  point.y >= bounds.minimumY &&
+  point.y <= bounds.maximumY
 
 const collectEdges = (mesh: PuppetMesh) => {
   const edgeCount = new Map<string, number>()
@@ -58,54 +128,77 @@ const collectEdges = (mesh: PuppetMesh) => {
 }
 
 const hasDuplicateVertices = (mesh: PuppetMesh, vertexCount: number) => {
-  for (let firstIndex = 0; firstIndex < vertexCount; firstIndex += 1) {
-    const first = getMeshVertex(mesh, firstIndex)
+  const vertices: MeshPoint[] = []
 
-    for (let secondIndex = firstIndex + 1; secondIndex < vertexCount; secondIndex += 1) {
-      const second = getMeshVertex(mesh, secondIndex)
+  for (let index = 0; index < vertexCount; index += 1) {
+    const vertex = getMeshVertex(mesh, index)
 
-      if (first !== undefined && second !== undefined && hasSamePoint(first, second)) {
+    if (vertex !== undefined) {
+      vertices.push(vertex)
+    }
+  }
+
+  vertices.sort((first, second) => first.x - second.x)
+
+  for (const [firstIndex, first] of vertices.entries()) {
+    let secondIndex = firstIndex + 1
+    let second = vertices[secondIndex]
+
+    while (second !== undefined && second.x - first.x <= GEOMETRY_EPSILON) {
+      if (hasSamePoint(first, second)) {
         return true
       }
+
+      secondIndex += 1
+      second = vertices[secondIndex]
     }
   }
 
   return false
 }
 
-const hasIntersectingEdges = (mesh: PuppetMesh, edges: ReadonlyArray<IndexedEdge>) => {
-  for (let firstIndex = 0; firstIndex < edges.length; firstIndex += 1) {
-    const firstEdge = edges[firstIndex]
+const getBoundedEdges = (
+  mesh: PuppetMesh,
+  edges: ReadonlyArray<IndexedEdge>,
+): ReadonlyArray<BoundedEdge> => {
+  const boundedEdges: BoundedEdge[] = []
 
-    if (firstEdge === undefined) {
-      return false
+  for (const edge of edges) {
+    const first = getMeshVertex(mesh, edge.firstIndex)
+    const second = getMeshVertex(mesh, edge.secondIndex)
+
+    if (first !== undefined && second !== undefined) {
+      boundedEdges.push({...edge, bounds: getBoundingBox([first, second]), first, second})
     }
+  }
 
-    for (let secondIndex = firstIndex + 1; secondIndex < edges.length; secondIndex += 1) {
-      const secondEdge = edges[secondIndex]
+  return boundedEdges.sort((first, second) => first.bounds.minimumX - second.bounds.minimumX)
+}
+
+const hasIntersectingEdges = (mesh: PuppetMesh, edges: ReadonlyArray<IndexedEdge>) => {
+  const boundedEdges = getBoundedEdges(mesh, edges)
+
+  for (const [firstIndex, firstEdge] of boundedEdges.entries()) {
+    let secondIndex = firstIndex + 1
+    let secondEdge = boundedEdges[secondIndex]
+
+    while (secondEdge !== undefined && secondEdge.bounds.minimumX <= firstEdge.bounds.maximumX) {
       const sharesVertex =
-        secondEdge === undefined ||
         firstEdge.firstIndex === secondEdge.firstIndex ||
         firstEdge.firstIndex === secondEdge.secondIndex ||
         firstEdge.secondIndex === secondEdge.firstIndex ||
         firstEdge.secondIndex === secondEdge.secondIndex
 
-      if (!sharesVertex && secondEdge !== undefined) {
-        const firstStart = getMeshVertex(mesh, firstEdge.firstIndex)
-        const firstEnd = getMeshVertex(mesh, firstEdge.secondIndex)
-        const secondStart = getMeshVertex(mesh, secondEdge.firstIndex)
-        const secondEnd = getMeshVertex(mesh, secondEdge.secondIndex)
-
-        if (
-          firstStart !== undefined &&
-          firstEnd !== undefined &&
-          secondStart !== undefined &&
-          secondEnd !== undefined &&
-          doSegmentsCross(firstStart, firstEnd, secondStart, secondEnd)
-        ) {
-          return true
-        }
+      if (
+        !sharesVertex &&
+        overlapsVertically(firstEdge.bounds, secondEdge.bounds) &&
+        doSegmentsCross(firstEdge.first, firstEdge.second, secondEdge.first, secondEdge.second)
+      ) {
+        return true
       }
+
+      secondIndex += 1
+      secondEdge = boundedEdges[secondIndex]
     }
   }
 
@@ -138,24 +231,103 @@ const isVertexStrictlyInsideTriangle = (
   )
 }
 
+const getTriangleTree = (triangles: ReadonlyArray<BoundedTriangle>): TriangleTree | undefined => {
+  const [firstTriangle] = triangles
+
+  if (firstTriangle === undefined) {
+    return undefined
+  }
+
+  if (triangles.length === 1) {
+    return {
+      bounds: firstTriangle.bounds,
+      commonIndices: firstTriangle.triangle,
+      kind: 'leaf',
+      triangle: firstTriangle.triangle,
+    }
+  }
+
+  const bounds = triangles
+    .slice(1)
+    .reduce(
+      (combined, triangle) => mergeBoundingBoxes(combined, triangle.bounds),
+      firstTriangle.bounds,
+    )
+  const splitOnX = bounds.maximumX - bounds.minimumX >= bounds.maximumY - bounds.minimumY
+  const sorted = [...triangles].sort((first, second) => {
+    const firstCenter = splitOnX
+      ? first.bounds.minimumX + first.bounds.maximumX
+      : first.bounds.minimumY + first.bounds.maximumY
+    const secondCenter = splitOnX
+      ? second.bounds.minimumX + second.bounds.maximumX
+      : second.bounds.minimumY + second.bounds.maximumY
+
+    return firstCenter - secondCenter
+  })
+  const middleIndex = Math.floor(sorted.length / 2)
+  const first = getTriangleTree(sorted.slice(0, middleIndex))
+  const second = getTriangleTree(sorted.slice(middleIndex))
+
+  if (first === undefined || second === undefined) {
+    throw new Error('Triangle tree branches require non-empty children')
+  }
+
+  return {
+    bounds,
+    commonIndices: first.commonIndices.filter((index) => second.commonIndices.includes(index)),
+    first,
+    kind: 'branch',
+    second,
+  }
+}
+
+const hasContainingTriangle = (
+  mesh: PuppetMesh,
+  tree: TriangleTree,
+  vertexIndex: number,
+  point: MeshPoint,
+): boolean => {
+  if (tree.commonIndices.includes(vertexIndex) || !containsPoint(tree.bounds, point)) {
+    return false
+  }
+
+  if (tree.kind === 'leaf') {
+    return isVertexStrictlyInsideTriangle(mesh, tree.triangle, vertexIndex)
+  }
+
+  return (
+    hasContainingTriangle(mesh, tree.first, vertexIndex, point) ||
+    hasContainingTriangle(mesh, tree.second, vertexIndex, point)
+  )
+}
+
 const hasIntersectingTriangles = (mesh: PuppetMesh) => {
+  const boundedTriangles: BoundedTriangle[] = []
   const triangles = getMeshTriangles(mesh)
 
-  for (let firstIndex = 0; firstIndex < triangles.length; firstIndex += 1) {
-    const first = triangles[firstIndex]
+  for (const triangle of triangles) {
+    const first = getMeshVertex(mesh, triangle[0])
+    const second = getMeshVertex(mesh, triangle[1])
+    const third = getMeshVertex(mesh, triangle[2])
 
-    if (first !== undefined) {
-      for (let secondIndex = firstIndex + 1; secondIndex < triangles.length; secondIndex += 1) {
-        const second = triangles[secondIndex]
+    if (first !== undefined && second !== undefined && third !== undefined) {
+      boundedTriangles.push({bounds: getBoundingBox([first, second, third]), triangle})
+    }
+  }
 
-        if (
-          second !== undefined &&
-          (first.some((vertexIndex) => isVertexStrictlyInsideTriangle(mesh, second, vertexIndex)) ||
-            second.some((vertexIndex) => isVertexStrictlyInsideTriangle(mesh, first, vertexIndex)))
-        ) {
-          return true
-        }
-      }
+  const tree = getTriangleTree(boundedTriangles)
+
+  if (tree === undefined) {
+    return false
+  }
+
+  const vertexIndices = new Set(triangles.flatMap((triangle) => triangle))
+
+  for (const vertexIndex of vertexIndices) {
+    const point = getMeshVertex(mesh, vertexIndex)
+
+    if (point !== undefined && hasContainingTriangle(mesh, tree, vertexIndex, point)) {
+      return true
     }
   }
 

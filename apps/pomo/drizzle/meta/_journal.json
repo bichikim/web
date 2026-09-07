@@ -92,6 +92,48 @@
       "when": 1787654840318,
       "tag": "0012_short_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788027670960,
+      "tag": "0013_amazing_gauntlet",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788067402765,
+      "tag": "0014_closed_maddog",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1788252790108,
+      "tag": "0015_overconfident_owl",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1788334168370,
+      "tag": "0016_silky_true_believers",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788347726181,
+      "tag": "0017_perpetual_zodiak",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788517330501,
+      "tag": "0018_gifted_jack_murdock",
+      "breakpoints": true
     }
   ]
 }

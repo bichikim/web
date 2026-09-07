@@ -33,7 +33,7 @@ export const DirectAnswerOutput = (props: DirectAnswerOutputProps) => (
     <div
       aria-busy={props.isGenerating}
       class={cx(
-        'min-h-52 whitespace-pre-wrap rounded-5 border p-5 text-[15px] leading-7',
+        'min-h-52 whitespace-pre-wrap rounded-5 border p-5 text-[0.9375rem] leading-7',
         props.output.length > 0
           ? 'border-#9ed6bb/20 bg-#9ed6bb/6 text-#edf8f2'
           : 'border-white/8 bg-#17131f/70 text-#776c7f',

@@ -1,18 +1,10 @@
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
-import {locales} from '@paraglide/runtime'
 
-import {getNeonAuthProxyConfig} from '../server/auth/environment'
+import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 
 const ACCOUNT_PATH = '/account'
 const ACCOUNT_PATH_WITH_TRAILING_SLASH = `${ACCOUNT_PATH}/`
-const ACCOUNT_PATHS: ReadonlySet<string> = new Set([
-  ACCOUNT_PATH,
-  ACCOUNT_PATH_WITH_TRAILING_SLASH,
-  ...locales.flatMap((locale) => [
-    `/${locale}${ACCOUNT_PATH}`,
-    `/${locale}${ACCOUNT_PATH_WITH_TRAILING_SLASH}`,
-  ]),
-])
+const ACCOUNT_PATHS: ReadonlySet<string> = new Set([ACCOUNT_PATH, ACCOUNT_PATH_WITH_TRAILING_SLASH])
 const SESSION_VERIFIER_PARAM = 'neon_auth_session_verifier'
 
 interface UserAuthRequest {
@@ -53,7 +45,7 @@ export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Res
 
   try {
     const sessionResponse = await handleAuthProxyRequest({
-      ...getNeonAuthProxyConfig(),
+      ...readNeonAuthProxyConfig(),
       path: 'get-session',
       request: createSessionRequest(input.request),
     })

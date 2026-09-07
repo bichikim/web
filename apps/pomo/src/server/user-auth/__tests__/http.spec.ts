@@ -23,11 +23,12 @@ it('should reject a request without a bearer token', async () => {
   expect(getAppSessionUserId).not.toHaveBeenCalled()
 })
 
-it('should reject an expired or unknown app session', async () => {
+it('should reject a pending, expired, or unknown app session', async () => {
   readBearerToken.mockReturnValue('token')
   getAppSessionUserId.mockResolvedValue(null)
 
   await expect(authenticateAppRequest(request)).resolves.toBeNull()
+  expect(getAppSessionUserId).toHaveBeenCalledWith('token')
 })
 
 it('should return the authenticated app identity', async () => {

@@ -83,7 +83,11 @@ beforeEach(() => {
         <button onClick={() => props.onMouthPositionComparisonChange(true)} type="button">
           입 위치 비교
         </button>
-        <input aria-label="원본 불투명도" onInput={props.onReferenceChange} type="range" />
+        <input
+          aria-label="원본 불투명도"
+          onInput={(event) => props.onReferenceChange(event.currentTarget.valueAsNumber)}
+          type="range"
+        />
       </div>
     )
   })

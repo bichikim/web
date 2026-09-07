@@ -9,7 +9,8 @@ import {
   supportsPSceneGyroscope,
   usePSceneStyle,
 } from '../features/focus-room-animation'
-import {usePEvents} from '../features/focus-room-dialogue'
+import {usePEvents} from '../features/focus-room-dialogue/event-context'
+import {usePDisplayPreferences} from '../features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
   type PActivity,
@@ -41,6 +42,8 @@ import {PStudioEvents} from './p-studio/Events'
 import {SceneToolbar} from './p-studio/Toolbar'
 import {useStudioScreenSaver} from './p-studio/use-screen-saver'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
+import {PStudioTour} from './p-studio/Tour'
+import {useStudioTour} from './p-studio/use-tour'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
@@ -111,9 +114,33 @@ const useStudioDesktopSceneSettings = (options: StudioDesktopSceneSettingsOption
     onSceneStyleChange: sceneStyleController.onSceneStyleChange,
     onScreenSaverDelayChange: screenSaver.onDelayChange,
     onTimeModeChange: scenePreferences.onTimeModeChange,
-    onWeatherCityChange: weather.onCityChange,
     onWeatherEnabledChange: weather.onEnabledChange,
+    onWeatherLocationChange: weather.onLocationChange,
     onWeatherSceneModeChange: weather.onSceneModeChange,
+  })
+}
+
+interface StudioRuntimeOptions {
+  readonly entry: ReturnType<typeof useStudioEntry>
+  readonly setAutomaticPeriod: Setter<ScenePeriod>
+  readonly setCanUseGyroscope: Setter<boolean>
+  readonly setMotionInput: Setter<PSceneMotionInput>
+}
+
+const useStudioRuntime = (options: StudioRuntimeOptions) => {
+  onMount(() => {
+    const gyroscopeAvailable = supportsPSceneGyroscope()
+    const updateAutomaticPeriod = () =>
+      options.setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
+    const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
+    options.entry.restore()
+    options.setCanUseGyroscope(gyroscopeAvailable)
+    if (gyroscopeAvailable) {
+      options.setMotionInput('gyroscope')
+    }
+
+    updateAutomaticPeriod()
+    onCleanup(() => window.clearInterval(timer))
   })
 }
 
@@ -127,12 +154,14 @@ export const PStudio = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
+  const tour = useStudioTour()
   const hasEntered = events.hasEnteredFocusRoom
   const entry = useStudioEntry(events)
   const screenSaver = useStudioScreenSaver()
   const weather = useWeather()
   const desktopMode = useDesktopMode({isSurfaceOwner: true})
   const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
+  const displayPreferences = usePDisplayPreferences()
   const scenePreferences = usePScenePreferences()
   const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
@@ -162,24 +191,13 @@ export const PStudio = () => {
     ),
   )
   const handleLoadingChange = createLoadingHandler(setIsSceneLoading, setHasSceneRendered)
-  onMount(() => {
-    const gyroscopeAvailable = supportsPSceneGyroscope()
-    const updateAutomaticPeriod = () => setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
-    const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
-    entry.restore()
-    setCanUseGyroscope(gyroscopeAvailable)
-    if (gyroscopeAvailable) {
-      setMotionInput('gyroscope')
-    }
-
-    updateAutomaticPeriod()
-    onCleanup(() => window.clearInterval(timer))
-  })
+  useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
 
   return (
     <section
       aria-label="Pomo"
       class="pomo-studio relative h-dvh w-full overflow-hidden"
+      ref={tour.setStudioElement}
       style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
     >
       <figure
@@ -212,6 +230,7 @@ export const PStudio = () => {
       <div class={CLASSES.ui} hidden={!hasEntered() || desktopMode.mode() === 'desktop'}>
         <Show when={hasEntered() && desktopMode.mode() !== 'desktop'}>
           <PStudioEvents
+            dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
             isPlayerExpanded={isPlayerExpanded()}
             onMusicPlayingChange={screenSaver.onMusicPlayingChange}
             onPlayerExpandedChange={setIsPlayerExpanded}
@@ -224,25 +243,30 @@ export const PStudio = () => {
             <SceneToolbar
               activity={scenePreferences.activity()}
               canUseGyroscope={canUseGyroscope()}
+              dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
               gaze={sceneGaze()}
               isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
               onActivityChange={scenePreferences.onActivityChange}
+              onDialogueComposerVisibleChange={displayPreferences.onDialogueComposerVisibleChange}
               onGazeChange={scenePreferences.onGazeChange}
               onMotionInputChange={setMotionInput}
               onMotionModeChange={setMotionMode}
               onScreenSaverDelayChange={screenSaver.onDelayChange}
               onSceneStyleChange={sceneStyleController.onSceneStyleChange}
               onTimeModeChange={scenePreferences.onTimeModeChange}
-              onWeatherCityChange={weather.onCityChange}
+              onTourOpen={() => tour.setIsOpen(true)}
+              tourButtonVisible={displayPreferences.tourButtonVisible()}
+              onTourButtonVisibleChange={displayPreferences.onTourButtonVisibleChange}
               onWeatherEnabledChange={weather.onEnabledChange}
+              onWeatherLocationChange={weather.onLocationChange}
               onWeatherSceneModeChange={weather.onSceneModeChange}
               screenSaverDelay={screenSaver.delay()}
               sceneStyle={sceneStyleController.sceneStyle()}
               motionInput={motionInput()}
               motionMode={motionMode()}
               timeMode={scenePreferences.timeMode()}
-              weatherCitySlug={weather.citySlug()}
               weatherEnabled={weather.enabled()}
+              weatherLocation={weather.location()}
               weatherSceneMode={weather.sceneMode()}
               weatherState={weather.state()}
               desktopMode={desktopMode.mode()}
@@ -253,6 +277,7 @@ export const PStudio = () => {
           </Show>
         </Show>
       </div>
+      <PStudioTour tour={tour} />
       <Show when={entry.isVisible()}>
         <PEntry isExiting={hasEntered()} onEnter={entry.enter} onExitComplete={entry.hide} />
       </Show>

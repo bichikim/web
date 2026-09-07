@@ -1,5 +1,8 @@
+import UnoCSS from 'unocss/vite'
 import solidPlugin from 'vite-plugin-solid'
 import {defineConfig} from 'vite'
+
+import unoConfig from './uno.config'
 
 const BUILD_TARGETS = {
   editor: './src/editor/index.ts',
@@ -12,8 +15,10 @@ type BuildTarget = keyof typeof BUILD_TARGETS
 const isBuildTarget = (mode: string): mode is BuildTarget => mode in BUILD_TARGETS
 
 export default defineConfig(({command, mode}) => {
+  const plugins = [UnoCSS({...unoConfig, configFile: false, mode: 'shadow-dom'}), solidPlugin()]
+
   if (command !== 'build') {
-    return {plugins: [solidPlugin()]}
+    return {plugins}
   }
 
   if (!isBuildTarget(mode)) {
@@ -21,6 +26,7 @@ export default defineConfig(({command, mode}) => {
   }
 
   return {
+    base: './',
     build: {
       emptyOutDir: mode === 'player',
       lib: {
@@ -32,6 +38,6 @@ export default defineConfig(({command, mode}) => {
         external: mode === 'editor' ? ['solid-js', 'solid-js/web'] : [],
       },
     },
-    plugins: [solidPlugin()],
+    plugins,
   }
 })

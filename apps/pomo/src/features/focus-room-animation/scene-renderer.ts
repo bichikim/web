@@ -1,3 +1,4 @@
+import 'pixi.js/unsafe-eval'
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
 import {DepthParallaxFilter} from './depth-parallax-filter'
@@ -93,6 +94,14 @@ export class PSceneRenderer {
     })
   }
 
+  readonly onPointerDown = (event: PointerEvent) => this.#parallax.onPointerDown(event)
+
+  readonly onPointerMove = (event: PointerEvent) => this.#parallax.onPointerMove(event)
+
+  readonly onPointerUp = (event: PointerEvent) => this.#parallax.onPointerUp(event)
+
+  readonly onPointerCancel = (event: PointerEvent) => this.#parallax.onPointerCancel(event)
+
   async initialize(state: PSceneState) {
     this.#loading.start()
     this.#state = state
@@ -115,7 +124,8 @@ export class PSceneRenderer {
 
     this.#application.canvas.setAttribute('aria-hidden', 'true')
     this.#application.canvas.className =
-      'absolute inset-0 h-full w-full object-cover object-[60%_center]'
+      'absolute inset-0 h-full w-full object-cover [--pomo-scene-object-position:60%_center] ' +
+      '[object-position:var(--pomo-scene-object-position)]'
     this.#host.append(this.#application.canvas)
     this.#application.stage.addChild(this.#sceneLayer)
     this.#sceneLayer.addChild(this.#eyes.container)
@@ -186,15 +196,19 @@ export class PSceneRenderer {
     if ((this.#state?.motionMode ?? 'depth') === 'pan') {
       this.#depthFilter?.setPointerOffset(0, 0)
       this.#steam.setParallaxOffset(0, 0)
-      this.#application.canvas.style.objectPosition = `${getPScenePanPosition(
-        this.#motionPositionX,
-      )}% center`
+      this.#application.canvas.style.setProperty(
+        '--pomo-scene-object-position',
+        `${getPScenePanPosition(this.#motionPositionX)}% center`,
+      )
       return
     }
 
     const depthOffsetX = this.#motionPositionX * DEPTH_PARALLAX_MAXIMUM_X
     const depthOffsetY = this.#motionPositionY * DEPTH_PARALLAX_MAXIMUM_Y
-    this.#application.canvas.style.objectPosition = `${getPScenePanPosition(0)}% center`
+    this.#application.canvas.style.setProperty(
+      '--pomo-scene-object-position',
+      `${getPScenePanPosition(0)}% center`,
+    )
     this.#depthFilter?.setPointerOffset(depthOffsetX, depthOffsetY)
     this.#steam.setParallaxOffset(
       -depthOffsetX * STEAM_PARALLAX_DEPTH,

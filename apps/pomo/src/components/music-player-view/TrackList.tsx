@@ -5,11 +5,11 @@ import type {PTrack} from '../../features/focus-room-audio'
 import {PSwipeTrackItem} from './SwipeTrackItem'
 
 const CLASSES = {
-  playerPlaylist: [
+  playerPlaylist: cx(
     'pomo-player__playlist pt-1.5',
     'bg-[linear-gradient(180deg,_rgb(255_250_241_/_2%),_transparent_1.5rem)]',
     '[scrollbar-color:rgb(255_250_241_/_18%)_transparent] [scrollbar-width:thin]',
-  ].join(' '),
+  ),
 } as const
 
 export interface PTrackListProps {
@@ -25,7 +25,7 @@ export const PTrackList = (props: PTrackListProps) => (
       class={cx(
         CLASSES.playerPlaylist,
         'mb-0 mt-3 grid min-h-0 min-w-0 flex-1 player-compact:mt-2',
-        'grid-cols-[minmax(0,1fr)] max-h-38 list-none overflow-auto',
+        'grid-cols-[minmax(0,1fr)] max-h-38 player-compact:max-h-none list-none overflow-auto',
         'gap-1 p-1',
       )}
     >

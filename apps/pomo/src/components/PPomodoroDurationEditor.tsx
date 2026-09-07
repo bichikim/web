@@ -157,6 +157,8 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
           </div>
           <div class={CLASSES.pomodoroPanelDurationActions}>
             <PButton
+              bordered
+              transparent
               class="w-full"
               disabled={nextConfig() === null}
               icon="i-tabler-check"
@@ -167,6 +169,8 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
               {m.pomodoro_save()}
             </PButton>
             <PButton
+              bordered
+              transparent
               class="w-full"
               icon="i-tabler-x"
               onPress={() => props.onEditingChange(false)}

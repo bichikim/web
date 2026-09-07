@@ -44,7 +44,12 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
         message,
         title,
       })
-      await handleSkipWaiting()
+      const didActivate = await handleSkipWaiting()
+
+      if (!didActivate) {
+        turnOffMessage(id)
+        return
+      }
 
       if (props.pageReload) {
         location.reload()

@@ -12,11 +12,11 @@ const authMocks = vi.hoisted(() => ({
   handleAuthProxyRequest: vi.fn<(options: AuthProxyOptions) => Promise<Response>>(),
 }))
 const environmentMocks = vi.hoisted(() => ({
-  getNeonAuthProxyConfig: vi.fn<() => {baseUrl: string; cookieSecret: string; sameSite: 'lax'}>(),
+  readNeonAuthProxyConfig: vi.fn<() => {baseUrl: string; cookieSecret: string; sameSite: 'lax'}>(),
 }))
 
 vi.mock('@neondatabase/auth/server', () => authMocks)
-vi.mock('../../auth/environment', () => environmentMocks)
+vi.mock('src/server/auth/neon-config', () => environmentMocks)
 
 import {getAdminSession} from '../session'
 
@@ -28,7 +28,7 @@ const AUTH_CONFIG = {
 
 beforeEach(() => {
   authMocks.handleAuthProxyRequest.mockReset()
-  environmentMocks.getNeonAuthProxyConfig.mockReset().mockReturnValue(AUTH_CONFIG)
+  environmentMocks.readNeonAuthProxyConfig.mockReset().mockReturnValue(AUTH_CONFIG)
 })
 
 describe('getAdminSession', () => {

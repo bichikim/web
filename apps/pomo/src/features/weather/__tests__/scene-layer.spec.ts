@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import type {PixiLayerSceneDefinition, PSceneId} from '../../focus-room-animation'
+import type {PActivity, PixiLayerSceneDefinition, PTime} from '../../focus-room-animation'
 import {applyWeatherSceneLayer, type WeatherSceneCondition} from '..'
 
 const createScene = (
@@ -18,26 +18,47 @@ const createScene = (
   width: 1672,
 })
 
+const WEATHER_SCENES = [
+  ['day', 'reading'],
+  ['day', 'typing'],
+  ['day', 'writing'],
+  ['night', 'reading'],
+  ['night', 'typing'],
+  ['night', 'writing'],
+] satisfies ReadonlyArray<readonly [PTime, PActivity]>
+
+const WEATHER_CONDITIONS = ['clear', 'cloudy', 'overcast', 'rain', 'snow'] as const
+
+const WEATHER_CASES = WEATHER_SCENES.flatMap(([time, activity]) =>
+  WEATHER_CONDITIONS.map(
+    (condition) =>
+      [time, activity, condition, `${time}-${condition}.jpg`] as const satisfies readonly [
+        PTime,
+        PActivity,
+        WeatherSceneCondition,
+        string,
+      ],
+  ),
+)
+
 describe('applyWeatherSceneLayer', () => {
-  it.each([
-    ['day-reading-focused', 'clear', 'day-clear.jpg'],
-    ['day-reading-focused', 'cloudy', 'day-cloudy.jpg'],
-    ['day-reading-focused', 'overcast', 'day-overcast.jpg'],
-    ['day-reading-focused', 'rain', 'day-rain.jpg'],
-    ['day-reading-focused', 'snow', 'day-snow.jpg'],
-    ['night-reading-focused', 'clear', 'night-clear.jpg'],
-    ['night-reading-focused', 'cloudy', 'night-cloudy.jpg'],
-    ['night-reading-focused', 'overcast', 'night-overcast.jpg'],
-    ['night-reading-focused', 'rain', 'night-rain.jpg'],
-    ['night-reading-focused', 'snow', 'night-snow.jpg'],
-  ] satisfies ReadonlyArray<[PSceneId, WeatherSceneCondition, string]>)(
-    'should insert the %s %s view before character layers',
-    (sceneId, condition, sourceName) => {
-      const scene = createScene(true, `${sceneId}-layers`)
-      const result = applyWeatherSceneLayer(scene, sceneId, 'original', condition)
+  it.each(WEATHER_CASES)(
+    'should insert the %s %s %s view before character layers',
+    (time, activity, condition, sourceName) => {
+      const scene = createScene(true, `${time}-${activity}-layers`)
+      const result = applyWeatherSceneLayer({
+        activity,
+        condition,
+        scene,
+        sceneStyle: 'original',
+        time,
+      })
+      const maskPrefix = activity === 'typing' ? `${time}-${activity}` : activity
+      const windowMaskName = `${maskPrefix}-mask.png`
+      const precipitationMaskName = `${maskPrefix}-precipitation-effect-mask.png`
 
       expect(result).not.toBe(scene)
-      expect(result.id).toBe(`${sceneId}-layers-weather-${condition}`)
+      expect(result.id).toBe(`${time}-${activity}-layers-weather-${condition}`)
       expect(result.layers.map((layer) => layer.id)).toEqual([
         'background',
         `weather-${condition}`,
@@ -45,7 +66,7 @@ describe('applyWeatherSceneLayer', () => {
         'left-hand',
       ])
       expect(result.layers[1]).toMatchObject({
-        maskSource: expect.stringContaining('day-reading-focused-mask.png'),
+        maskSource: expect.stringContaining(windowMaskName),
         source: expect.stringContaining(sourceName),
       })
       expect(result.effects).toEqual(
@@ -55,8 +76,8 @@ describe('applyWeatherSceneLayer', () => {
                 beforeLayerId: 'head',
                 id: 'weather-rain',
                 kind: 'falling-streaks',
-                maskSource: expect.stringContaining('precipitation-effect-mask.png'),
-                opacity: sceneId === 'night-reading-focused' ? 0.4 : 1,
+                maskSource: expect.stringContaining(precipitationMaskName),
+                opacity: time === 'night' ? 0.4 : 1,
               },
             ]
           : condition === 'snow'
@@ -65,8 +86,8 @@ describe('applyWeatherSceneLayer', () => {
                   beforeLayerId: 'head',
                   id: 'weather-snow',
                   kind: 'falling-flakes',
-                  maskSource: expect.stringContaining('precipitation-effect-mask.png'),
-                  opacity: sceneId === 'night-reading-focused' ? 0.4 : 1,
+                  maskSource: expect.stringContaining(precipitationMaskName),
+                  opacity: time === 'night' ? 0.4 : 1,
                 },
               ]
             : [],
@@ -75,24 +96,27 @@ describe('applyWeatherSceneLayer', () => {
   )
 
   it.each([
-    ['day-reading-focused', 'scribble', 'rain'],
-    ['day-typing-focused', 'original', 'rain'],
-  ] satisfies ReadonlyArray<[PSceneId, 'original' | 'scribble', WeatherSceneCondition]>)(
-    'should preserve an unsupported scene for %s %s %s',
-    (sceneId, sceneStyle, condition) => {
+    ['day', 'reading', 'scribble', 'rain'],
+    ['night', 'writing', 'scribble', 'rain'],
+  ] satisfies ReadonlyArray<
+    readonly [PTime, PActivity, 'original' | 'scribble', WeatherSceneCondition]
+  >)(
+    'should preserve an unsupported style for %s %s %s %s',
+    (time, activity, sceneStyle, condition) => {
       const scene = createScene()
 
-      expect(applyWeatherSceneLayer(scene, sceneId, sceneStyle, condition)).toBe(scene)
+      expect(applyWeatherSceneLayer({activity, condition, scene, sceneStyle, time})).toBe(scene)
     },
   )
 
   it('should append the weather view when a scene has no character layer', () => {
-    const result = applyWeatherSceneLayer(
-      createScene(false),
-      'day-reading-focused',
-      'original',
-      'rain',
-    )
+    const result = applyWeatherSceneLayer({
+      activity: 'reading',
+      condition: 'rain',
+      scene: createScene(false),
+      sceneStyle: 'original',
+      time: 'day',
+    })
 
     expect(result.layers.map((layer) => layer.id)).toEqual([
       'background',
@@ -113,7 +137,13 @@ describe('applyWeatherSceneLayer', () => {
       ],
     }
 
-    const result = applyWeatherSceneLayer(scene, 'night-reading-focused', 'original', 'clear')
+    const result = applyWeatherSceneLayer({
+      activity: 'reading',
+      condition: 'clear',
+      scene,
+      sceneStyle: 'original',
+      time: 'night',
+    })
 
     expect(result.layers.map((layer) => layer.id)).toEqual([
       'background',
@@ -133,7 +163,13 @@ describe('applyWeatherSceneLayer', () => {
       ],
     }
 
-    const result = applyWeatherSceneLayer(scene, 'day-reading-focused', 'original', 'clear')
+    const result = applyWeatherSceneLayer({
+      activity: 'reading',
+      condition: 'clear',
+      scene,
+      sceneStyle: 'original',
+      time: 'day',
+    })
 
     expect(result.layers.map((layer) => layer.id)).toEqual(['weather-clear', 'head', 'left-hand'])
   })

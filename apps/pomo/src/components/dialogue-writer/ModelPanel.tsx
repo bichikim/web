@@ -6,7 +6,7 @@ import {ModelStatus} from './ModelStatus'
 
 const PRIMARY_BUTTON_CLASSES = cx(
   'h-13 rounded-full bg-#9ed6bb px-7 font-750 text-#14251d',
-  'shadow-[0_10px_28px_rgba(158,214,187,0.2)] transition hover:bg-#b8e8d0',
+  'shadow-[0_0.625rem_1.75rem_rgba(158,214,187,0.2)] transition hover:bg-#b8e8d0',
   'disabled:cursor-not-allowed disabled:opacity-35',
 )
 

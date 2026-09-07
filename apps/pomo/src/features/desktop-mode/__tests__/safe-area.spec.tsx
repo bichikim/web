@@ -44,7 +44,7 @@ const createMonitor = (top: number, workAreaTop: number, scaleFactor = 2): Monit
 
 describe('desktop safe area', () => {
   beforeEach(() => {
-    vi.stubEnv('POMO_IS_DESKTOP', '1')
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
     windowMocks.currentMonitor.mockReset().mockResolvedValue(createMonitor(0, 48))
     windowMocks.getCurrentWindow.mockReset().mockReturnValue({
       onResized: windowMocks.onResized,
@@ -248,7 +248,7 @@ describe('desktop safe area', () => {
   })
 
   it('should not load native window state in a web build', async () => {
-    vi.stubEnv('POMO_IS_DESKTOP', '')
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
     const [mode] = createSignal<'desktop'>('desktop')
     let inset = () => -1
     render(() => {

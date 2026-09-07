@@ -1,3 +1,4 @@
+import {PTextarea} from 'src/components/PTextarea'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {type ChatController} from '../../features/chat/index'
@@ -45,10 +46,11 @@ export const ChatComposer = (props: ChatComposerProps) => {
     <form class="border-t border-white/8 p-4 xs:p-5" onSubmit={handleSubmit}>
       <label class="grid gap-2">
         <span class="sr-only">메시지</span>
-        <textarea
+        <PTextarea
+          unstyled
           class={cx(
             'min-h-24 w-full resize-none box-border rounded-5 border border-white/10 bg-#17131f p-4',
-            'text-[15px] leading-6 text-#f8edf1 outline-none transition placeholder:text-#655b6c',
+            'text-[0.9375rem] leading-6 text-#f8edf1 outline-none transition placeholder:text-#655b6c',
             'focus:border-#9ed6bb/65 disabled:cursor-not-allowed disabled:opacity-50',
           )}
           disabled={!props.chat.isModelReady() || props.chat.isBusy()}
@@ -69,7 +71,7 @@ export const ChatComposer = (props: ChatComposerProps) => {
           <button
             aria-pressed={props.endpointing}
             class={cx(
-              'rounded-full border px-3 py-1 text-[11px] font-700 transition',
+              'rounded-full border px-3 py-1 text-[0.6875rem] font-700 transition',
               'disabled:cursor-not-allowed disabled:opacity-40',
               props.endpointing
                 ? 'border-#9ed6bb/40 bg-#9ed6bb/12 text-#b8e8d0'

@@ -1,22 +1,21 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {AccountPage} from '../AccountPage'
+import * as runtime from '@paraglide/runtime'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {readonly children: unknown}) => <>{props.children}</>,
 }))
-vi.mock('@paraglide/runtime', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@paraglide/runtime')>()),
-  localizeHref: (href: string) => `/ko${href}`,
-}))
 vi.mock('../user-auth/TossAccount', () => ({TossAccount: () => <p>Toss account</p>}))
 vi.mock('../user-auth/WebAccount', () => ({WebAccount: () => <p>Web account</p>}))
+
+beforeEach(() => cleanup())
 
 afterEach(() => {
   cleanup()
   vi.unstubAllEnvs()
-  vi.resetModules()
 })
 
 it.each([
@@ -24,15 +23,66 @@ it.each([
   [true, 'Toss account'],
 ] as const)(
   'should render the account page for Toss=%s',
-  async (isAppsInToss, accountText) => {
-    vi.stubEnv('POMO_IS_APPS_IN_TOSS', isAppsInToss ? '1' : '')
-    const {AccountPage} = await import('../AccountPage')
+  (isAppsInToss, accountText) => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', isAppsInToss ? 'true' : '')
 
     render(() => <AccountPage />)
 
-    expect(screen.getByRole('main')).toHaveTextContent('Pomo account')
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/ko/')
+    expect(screen.getByRole('main')).toHaveClass(
+      '[background:var(--pomo-editor-background)]',
+      'text-foreground',
+    )
+    expect(screen.getByRole('heading', {level: 1, name: '계정 관리'})).toBeVisible()
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link')).toHaveClass('text-foreground', 'rounded-full', 'border')
+    expect(screen.getByRole('link').parentElement).toHaveClass('flex', 'justify-end')
+    expect(screen.getByRole('main').querySelector('section')).toHaveClass(
+      'border-border',
+      'bg-surface',
+    )
     expect(screen.getByText(accountText)).toBeInTheDocument()
   },
   15_000,
 )
+
+it.each([
+  ['google', 'Google 캘린더가 연결되었습니다'],
+  ['microsoft', 'Microsoft Outlook 캘린더가 연결되었습니다'],
+] as const)(
+  'should replace account controls with the %s calendar connection success',
+  (provider, heading) => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+
+    render(() => <AccountPage connectedCalendarProvider={provider} />)
+
+    expect(screen.getByRole('heading', {name: heading})).toBeVisible()
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveClass(
+      'bg-highlight',
+      'rounded-panel-inner',
+      'text-background',
+    )
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).not.toHaveClass('rounded-full')
+    expect(
+      screen.queryByText('이제 Pomo에게 일정에 관해 물어보세요. 질문에 필요한 기간만 읽어요.'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Web account')).not.toBeInTheDocument()
+  },
+)
+
+it.each([
+  ['ko', '앱으로 돌아가기'],
+  ['en', 'Back to app'],
+] as const)('should localize the app return link in %s', (locale, label) => {
+  const originalLocale = runtime.getLocale
+  runtime.overwriteGetLocale(() => locale)
+  try {
+    render(() => <AccountPage />)
+    const link = screen.getByRole('link', {name: label})
+    expect(link).toHaveAttribute('href', '/')
+    expect(link.querySelector('[aria-hidden]')).toHaveClass('i-tabler-arrow-left')
+  } finally {
+    cleanup()
+    runtime.overwriteGetLocale(originalLocale)
+  }
+})

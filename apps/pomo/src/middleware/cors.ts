@@ -25,7 +25,16 @@ const VERCEL_HOST_VARIABLES = [
   'VERCEL_PROJECT_PRODUCTION_URL',
 ] as const
 const ALLOWED_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-const ALLOWED_HEADERS = ['Authorization', 'Content-Type', 'Range', 'X-CSRF-Token']
+const ALLOWED_HEADERS = [
+  'Authorization',
+  'Content-Type',
+  'Range',
+  'X-CSRF-Token',
+  'X-Server-Id',
+  'X-Server-Instance',
+  'X-Start-Type',
+  'X-Single-Flight',
+]
 const EXPOSED_HEADERS = [
   'Accept-Ranges',
   'Content-Length',
@@ -33,7 +42,12 @@ const EXPOSED_HEADERS = [
   'Content-Type',
   'ETag',
   'Last-Modified',
+  'Location',
   'Retry-After',
+  'X-Error',
+  'X-Revalidate',
+  'X-Single-Flight',
+  'X-Start-Type',
 ]
 const PREFLIGHT_VARY_HEADERS = [
   'Origin',
@@ -77,7 +91,8 @@ const isAllowedOrigin = (origin: string, requestOrigin: string): boolean => {
   })
 }
 
-const isApiPath = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/')
+const isCorsPath = (pathname: string): boolean =>
+  pathname === '/_server' || pathname === '/api' || pathname.startsWith('/api/')
 
 const getAllowedOrigin = (request: Request): string | undefined => {
   const origin = request.headers.get('Origin')
@@ -109,7 +124,7 @@ const createPreflightResponse = (request: Request): Response | undefined => {
   const requestUrl = new URL(request.url)
 
   if (
-    !isApiPath(requestUrl.pathname) ||
+    !isCorsPath(requestUrl.pathname) ||
     request.method !== 'OPTIONS' ||
     request.headers.get('Access-Control-Request-Method') === null
   ) {
@@ -145,7 +160,7 @@ const applyResponseCors = (request: Request, headers: Headers): void => {
 export const corsMiddleware: Middleware = async (event, next) => {
   const requestUrl = new URL(event.req.url)
 
-  if (!isApiPath(requestUrl.pathname)) {
+  if (!isCorsPath(requestUrl.pathname)) {
     return next()
   }
 

@@ -1,7 +1,6 @@
 {
   "name": "@winter-love/vite-plugin-monorepo-alias",
   "version": "1.0.38",
-  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "description": "vite monorepo alias plugin",
   "keywords": [
     "alias",
@@ -12,7 +11,11 @@
   ],
   "license": "MIT",
   "author": "bichi@live.co.kr",
-  "repository": "git@github.com:winter-love/web.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/vite-plugin-monorepo-alias"
+  },
   "source": "src/index.ts",
   "files": [
     "dist/*",
@@ -30,8 +33,9 @@
     },
     "./*": "./*",
     "./plugin": {
-      "import": "./dist/plugin.mjs",
-      "require": "./dist/plugin.js"
+      "types": "./dist/alias.d.ts",
+      "import": "./dist/alias.mjs",
+      "require": "./dist/alias.js"
     }
   },
   "publishConfig": {
@@ -52,20 +56,5 @@
     "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*"
   },
-  "stage": "alpha",
-  "tsup": {
-    "entry": [
-      "src/index.ts",
-      "src/plugin.ts"
-    ],
-    "clean": true,
-    "format": [
-      "cjs",
-      "esm",
-      "iife"
-    ],
-    "outDir": "dist",
-    "sourcemap": true,
-    "splitting": false
-  }
+  "stage": "alpha"
 }

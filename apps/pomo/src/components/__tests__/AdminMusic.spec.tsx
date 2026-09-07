@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 interface ClientOnlyStubProps {
@@ -12,8 +12,7 @@ interface ClientOnlyStubProps {
 }
 
 const startMocks = vi.hoisted(() => ({
-  clientOnly: vi.fn((loader: () => Promise<unknown>) => {
-    void loader()
+  clientOnly: vi.fn(() => {
     return vi.fn((props: ClientOnlyStubProps) => {
       if (props.onValuesChange !== undefined) {
         props.onValuesChange(props.values)
@@ -24,15 +23,92 @@ const startMocks = vi.hoisted(() => ({
   }),
 }))
 const coverImageMocks = vi.hoisted(() => ({prepareAlbumCover: vi.fn()}))
+const catalogQueryMocks = vi.hoisted(() => ({
+  adminCatalogQuery: Object.assign(vi.fn(), {key: 'admin-music-catalog'}),
+}))
 
 vi.mock('@solidjs/meta', () => ({Title: vi.fn()}))
-vi.mock('@solidjs/router', () => ({A: vi.fn()}))
+vi.mock('@solidjs/router', async () => {
+  const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
+  const {createSignal} = await import('solid-js')
+  interface ClientAction extends Function {
+    (...input: ReadonlyArray<unknown>): Promise<unknown>
+  }
+  interface TestSubmission {
+    readonly clear: () => void
+    readonly input: ReadonlyArray<unknown>
+    pending: boolean
+  }
+  interface ActionState {
+    readonly pending: () => boolean
+    readonly setPending: (pending: boolean) => void
+    readonly setSubmissions: (
+      update: (submissions: Array<TestSubmission>) => Array<TestSubmission>,
+    ) => void
+    readonly submissions: () => Array<TestSubmission>
+  }
+  const states = new WeakMap<ClientAction, ActionState>()
+  const getState = (clientAction: ClientAction): ActionState => {
+    const existingState = states.get(clientAction)
+    if (existingState !== undefined) {
+      return existingState
+    }
+    const [pending, setPending] = createSignal(false)
+    const [submissions, setSubmissions] = createSignal<Array<TestSubmission>>([])
+    const state = {pending, setPending, setSubmissions, submissions}
+    states.set(clientAction, state)
+    return state
+  }
+
+  return {
+    ...actual,
+    A: vi.fn(),
+    action: vi.fn((clientAction: ClientAction) => clientAction),
+    revalidate: vi.fn(async () => undefined),
+    useAction: vi.fn((clientAction: ClientAction) => async (...input: ReadonlyArray<unknown>) => {
+      const state = getState(clientAction)
+      const submission: TestSubmission = {
+        clear: () =>
+          state.setSubmissions((current) => current.filter((entry) => entry !== submission)),
+        input,
+        pending: true,
+      }
+      state.setSubmissions((current) => [...current, submission])
+      state.setPending(true)
+      try {
+        return await clientAction(...input)
+      } finally {
+        submission.pending = false
+        state.setSubmissions((current) => [...current])
+        state.setPending(state.submissions().some((current) => current.pending))
+      }
+    }),
+    useSubmission: vi.fn((clientAction: ClientAction) => ({
+      clear: () => {
+        const state = getState(clientAction)
+        state.setSubmissions((current) => current.filter((submission) => submission.pending))
+      },
+      get pending() {
+        return getState(clientAction).pending()
+      },
+    })),
+    useSubmissions: vi.fn((clientAction: ClientAction) => {
+      const state = getState(clientAction)
+      return new Proxy([] as Array<TestSubmission>, {
+        get(_target, property) {
+          return Reflect.get(state.submissions(), property, state.submissions())
+        },
+      })
+    }),
+  }
+})
 vi.mock('@solidjs/start', () => startMocks)
 vi.mock('src/features/admin-music/cover-image', () => coverImageMocks)
+vi.mock('../../features/admin-music/catalog-query', () => catalogQueryMocks)
 
-import {AdminMusic} from '../AdminMusic'
 import {createEmptyAlbumTranslations} from '../../features/admin-music'
 import {writeAlbumDraftData} from '../../features/admin-music/album-draft-storage'
+import {AdminMusic} from '../AdminMusic'
 
 const catalogWithAlbum = {
   albums: [
@@ -65,6 +141,22 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue(new File(['prepared-cover'], 'cover.webp', {type: 'image/webp'}))
   sessionStorage.clear()
+  catalogQueryMocks.adminCatalogQuery.mockReset().mockImplementation(async () => {
+    try {
+      const response = await fetch('/api/admin/music')
+
+      if (!response.ok) {
+        throw new Error('음악 목록을 불러오지 못했습니다.')
+      }
+
+      return {catalog: await response.json(), status: 'ready'}
+    } catch (error: unknown) {
+      return {
+        message: error instanceof Error ? error.message : '음악 목록을 불러오지 못했습니다.',
+        status: 'failed',
+      }
+    }
+  })
 })
 
 afterEach(() => {
@@ -221,6 +313,52 @@ describe('AdminMusic', () => {
     expect(
       screen.getByText('수록곡이 없어도 공개됩니다. 상품이 없으면 가격을 표시하지 않습니다.'),
     ).toBeTruthy()
+  })
+
+  it('should discard a status review when selecting another album', async () => {
+    const catalog = {
+      ...catalogWithAlbum,
+      albums: [
+        {
+          ...catalogWithAlbum.albums[0],
+          id: 'draft-album',
+          translations: [
+            {
+              albumId: 'draft-album',
+              description: '초안 설명',
+              locale: 'ko',
+              title: '초안 앨범',
+            },
+          ],
+        },
+        {
+          ...catalogWithAlbum.albums[0],
+          id: 'published-album',
+          status: 'published',
+          translations: [
+            {
+              albumId: 'published-album',
+              description: '공개 설명',
+              locale: 'ko',
+              title: '공개 앨범',
+            },
+          ],
+        },
+      ],
+    } as const
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalog))
+    vi.stubGlobal('fetch', fetcher)
+    render(() => <AdminMusic />)
+
+    fireEvent.click(await screen.findByRole('button', {name: '공개 설정'}))
+    expect(screen.getByRole('heading', {name: '이 앨범을 공개할까요?'})).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', {name: /공개 앨범/u}))
+
+    expect(screen.getByRole('tab', {name: '수록곡 0'}).getAttribute('aria-selected')).toBe('true')
+    expect(screen.queryByLabelText('앨범 상태 변경 확인')).toBeNull()
+    expect(screen.queryByRole('button', {name: '보관하기'})).toBeNull()
+    expect(fetcher).toHaveBeenCalledOnce()
   })
 
   it('should warn about the public catalog and R2 before deleting a published track', async () => {

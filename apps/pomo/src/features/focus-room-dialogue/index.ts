@@ -1,5 +1,9 @@
-export {createPDialogueRepository} from './repository'
-export type {PDialogueRepository, SaveDialogueOptions} from './repository'
+export {createPDialogueRepository, deleteDialogueAudio} from './repository'
+export type {
+  DeleteDialogueAudioOptions,
+  PDialogueRepository,
+  SaveDialogueOptions,
+} from './repository'
 export {PEventContext, usePEvents} from './event-context'
 export type {PEventContextValue} from './event-context'
 export {usePEventController} from './use-p-event-controller'
@@ -67,6 +71,22 @@ export {
 export type {RandomEventSettings} from './random-event-settings'
 export {useRandomEvent} from './use-random-event'
 export type {UseRandomEventProps} from './use-random-event'
+export {resolveDialoguePlayerGain, usePlayerVolumeDucking} from './use-player-volume-ducking'
+export type {UsePlayerVolumeDuckingOptions} from './use-player-volume-ducking'
+export {
+  createDialogueVolumeDuckingSettingsRepository,
+  DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+  DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT,
+  parseDialogueVolumeDuckingSettings,
+  readDialogueVolumeDuckingSettings,
+  writeDialogueVolumeDuckingSettings,
+} from './volume-ducking-settings'
+export type {
+  CreateDialogueVolumeDuckingSettingsRepositoryOptions,
+  DialogueVolumeDuckingSettings,
+  DialogueVolumeDuckingSettingsRepository,
+  DialogueVolumeDuckingSettingsStorage,
+} from './volume-ducking-settings'
 export type {
   AutomaticDialogueSettings,
   AutomaticDialogueSettingsRepository,

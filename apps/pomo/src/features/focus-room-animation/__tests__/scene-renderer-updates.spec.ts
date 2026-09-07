@@ -403,13 +403,19 @@ describe('PSceneRenderer updates and motion', () => {
     expect(depthFilters[0].setPointerOffset).toHaveBeenCalledWith(2.5, -3)
     expect(steamInstances[0].setParallaxOffset.mock.calls[0]?.[0]).toBeCloseTo(-1.375)
     expect(steamInstances[0].setParallaxOffset.mock.calls[0]?.[1]).toBeCloseTo(1.65)
-    expect(applications[0].canvas.style.objectPosition).toBe('60% center')
+    expect(applications[0].canvas.style.getPropertyValue('--pomo-scene-object-position')).toBe(
+      '60% center',
+    )
+    expect(applications[0].canvas.style.objectPosition).toBe('')
 
     renderer.update(createState({motionInput: 'gyroscope', motionMode: 'pan', viseme: 'open'}))
     expect(parallaxInstances[0].setInputMode).toHaveBeenCalledWith('gyroscope')
     expect(depthFilters[0].setPointerOffset).toHaveBeenLastCalledWith(0, 0)
     expect(steamInstances[0].setParallaxOffset).toHaveBeenLastCalledWith(0, 0)
-    expect(applications[0].canvas.style.objectPosition).toBe('65% center')
+    expect(applications[0].canvas.style.getPropertyValue('--pomo-scene-object-position')).toBe(
+      '65% center',
+    )
+    expect(applications[0].canvas.style.objectPosition).toBe('')
     expect(mouths[0].update).toHaveBeenCalledWith('rest', 'open', false)
 
     vi.clearAllMocks()

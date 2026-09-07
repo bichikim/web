@@ -15,7 +15,7 @@ import {
 } from '../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../features/supertonic'
 import type {PModelDownloadConsentProps} from '../PModelDownloadConsent'
-import PDialogueEditor from '../dialogue-page/Editor'
+import {PDialogueEditor} from '../dialogue-page/Editor'
 
 vi.mock('@solidjs/router', () => ({
   A: (props: {readonly children?: JSX.Element; readonly href: string}) => (
@@ -45,7 +45,7 @@ vi.mock('../../features/supertonic', async () => {
   return {...actual, isSupertonicModelDownloaded: vi.fn()}
 })
 
-vi.mock('../dialogue-page/DraftGenerator', () => ({default: () => null}))
+vi.mock('../dialogue-page/DraftGenerator', () => ({PDialogueDraftGenerator: () => null}))
 vi.mock('../PModelDownloadConsent', () => ({
   PModelDownloadConsent: (props: PModelDownloadConsentProps) => (
     <Show when={props.isOpen}>
@@ -84,6 +84,8 @@ const createModelDownload = (): ModelDownloadController => ({
   cancel: vi.fn(),
   dismissError: vi.fn(),
   dispose: vi.fn(),
+  downloads: () => [],
+  startImageModel: vi.fn(),
   startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}),
@@ -98,11 +100,11 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('should link directly to the localized Pomofi home', () => {
+it('should link directly to the Pomofi root', () => {
   vi.mocked(usePDialogueEditor).mockReturnValue(createEditor())
   render(() => <PDialogueEditor dialogueId={null} />)
 
-  expect(screen.getByRole('link', {name: 'Pomofi로'}).getAttribute('href')).toBe('/ko/')
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'}).getAttribute('href')).toBe('/')
 })
 
 it('should not start audio generation after disposal during the stored-model check', async () => {

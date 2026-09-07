@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+
 import {cx} from 'class-variance-authority'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
@@ -22,7 +24,7 @@ const BACKGROUND_CLASSES = cx(
 )
 const ARTICLE_CLASSES = cx(
   'rounded-8 border border-white/10 bg-#211a2b/88 p-5',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8 lg:p-10',
+  'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8 lg:p-10',
 )
 const BACK_LINK_CLASSES =
   'w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white focus-visible:text-white'
@@ -37,7 +39,7 @@ export const PServiceTerms = (props: PServiceTermsProps) => (
     <div class="relative mx-auto grid w-full max-w-6xl gap-8">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <a class={BACK_LINK_CLASSES} href={props.backHref ?? '/'}>
-          ← {props.backLabel ?? 'Pomofi로 돌아가기'}
+          <span aria-hidden="true">←</span> {props.backLabel ?? m.app_return()}
         </a>
         <PServicePolicyLinks
           currentPolicy="terms"
