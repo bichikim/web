@@ -1,0 +1,6 @@
+Animation: Idle_Loop, Universal Animation Library (Standard)
+Creator: Quaternius
+License: CC0 1.0
+Official: https://quaternius.itch.io/universal-animation-library
+Download mirror: https://github.com/J-Ponzo/gltf-universal-animation-library
+Modified: upper-body motion retargeted onto Pomo standing pose; feet fixed; 3-second loop with endpoint blending.
