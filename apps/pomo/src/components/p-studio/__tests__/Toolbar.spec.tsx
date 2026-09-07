@@ -80,7 +80,7 @@ beforeEach(() => {
   })
   vi.mocked(SceneSettingsPanel).mockImplementation((props) => {
     Object.values(props)
-    return <div>{props.fallback}</div>
+    return <div>settings control</div>
   })
   vi.mocked(MemoryAssistPanel).mockImplementation((props) => {
     Object.values(props)
@@ -155,7 +155,9 @@ describe('SceneToolbar', () => {
     ))
 
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(getPomoIconClass).toHaveBeenCalledWith('i-tabler-brain', 'scribble')
+    expect(MemoryAssistPanel).toHaveBeenCalledWith(
+      expect.objectContaining({sceneStyle: 'scribble'}),
+    )
     expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
     expect(onDesktopModeChange).toHaveBeenCalledWith('widget')
   })

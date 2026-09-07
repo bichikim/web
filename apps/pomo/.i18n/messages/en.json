@@ -6,6 +6,8 @@
   "app_default_description": "Pomofi is a focus app with Pomo, a Pomodoro timer, and focus music.",
   "app_home_description": "Focus with Pomo using scenes, Pomodoro sessions, music, dialogue, and feeds in one place.",
   "app_load_error": "We couldn't load Pomofi",
+  "modal_content_loading": "Getting the content ready…",
+  "modal_content_load_error": "Could not load the content. Refresh the page and try again.",
   "app_loading": "Getting the app ready…",
   "settings_category_label": "Settings categories",
   "settings_tab_general": "General",

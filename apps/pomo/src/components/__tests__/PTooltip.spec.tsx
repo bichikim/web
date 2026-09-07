@@ -4,6 +4,7 @@ import {render as baseRender, cleanup, fireEvent, screen} from '@solidjs/testing
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {createSignal, type JSX} from 'solid-js'
 import {PTooltip} from '../PTooltip'
+import {installTooltipBrowser} from '../tooltip/__tests__/support/browser'
 
 import {PTooltipContent, PTooltipProvider, useTooltipTrigger} from '../tooltip'
 
@@ -34,26 +35,18 @@ const Trigger = (props: {
   )
 }
 
+let browser: ReturnType<typeof installTooltipBrowser>
+
 beforeEach(() => {
   vi.useFakeTimers()
-  vi.stubGlobal('CSS', {supports: () => true})
-  vi.stubGlobal('PointerEvent', MouseEvent)
-  Object.defineProperty(HTMLElement.prototype, 'showPopover', {
-    configurable: true,
-    value: vi.fn(),
-  })
-  Object.defineProperty(HTMLElement.prototype, 'hidePopover', {
-    configurable: true,
-    value: vi.fn(),
-  })
+  browser = installTooltipBrowser()
 })
 
 afterEach(() => {
   cleanup()
+  browser.restore()
+  vi.restoreAllMocks()
   vi.useRealTimers()
-  vi.unstubAllGlobals()
-  Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
-  Reflect.deleteProperty(HTMLElement.prototype, 'hidePopover')
 })
 
 const renderTooltip = () =>
@@ -104,20 +97,35 @@ it('should remain open while moving onto the tooltip and dismiss with Escape', (
   expect(button).not.toHaveAttribute('aria-describedby')
 })
 
-it('should open on keyboard focus and close on blur or activation', () => {
+it('should not open on pointer-originated restored focus', () => {
   const result = renderTooltip()
   const button = result.getByRole('button')
-  fireEvent.focus(button)
-  expect(button).toHaveAttribute('aria-describedby')
-  fireEvent.blur(button)
-  vi.advanceTimersByTime(150)
+  button.focus()
+  vi.advanceTimersByTime(500)
+  expect(button).toHaveFocus()
   expect(button).not.toHaveAttribute('aria-describedby')
-  fireEvent.focus(button)
-  fireEvent.click(button)
+  button.blur()
+  button.focus()
+  vi.advanceTimersByTime(500)
   expect(button).not.toHaveAttribute('aria-describedby')
 })
 
-it('should close the previous tooltip when another trigger is focused', () => {
+it('should show for visible focus and retain it until blur', () => {
+  const result = renderTooltip()
+  const button = result.getByRole('button')
+  browser.setVisibleFocus(button)
+  button.focus()
+  expect(button).toHaveAttribute('aria-describedby')
+  fireEvent.pointerEnter(button)
+  fireEvent.pointerLeave(button)
+  vi.advanceTimersByTime(500)
+  expect(button).toHaveAttribute('aria-describedby')
+  button.blur()
+  vi.advanceTimersByTime(150)
+  expect(button).not.toHaveAttribute('aria-describedby')
+})
+
+it('should replace the previous tooltip when another trigger is hovered', () => {
   const result = render(() => (
     <>
       <Trigger label="첫 번째">{(trigger) => <button {...trigger}>첫째</button>}</Trigger>
@@ -125,8 +133,10 @@ it('should close the previous tooltip when another trigger is focused', () => {
     </>
   ))
   const buttons = result.getAllByRole('button')
-  fireEvent.focus(buttons[0]!)
-  fireEvent.focus(buttons[1]!)
+  fireEvent.pointerEnter(buttons[0]!)
+  vi.advanceTimersByTime(400)
+  fireEvent.pointerEnter(buttons[1]!)
+  vi.advanceTimersByTime(400)
   expect(buttons[0]).not.toHaveAttribute('aria-describedby')
   expect(buttons[1]).toHaveAttribute('aria-describedby')
 })
@@ -148,7 +158,8 @@ it('should provide a native title when top-layer anchor positioning is unavailab
   const result = renderTooltip()
   const button = result.getByRole('button')
   expect(button).not.toHaveAttribute('title')
-  fireEvent.focus(button)
+  fireEvent.pointerEnter(button)
+  vi.advanceTimersByTime(400)
   expect(button).toHaveAttribute('title', '설정 열기')
   expect(button).not.toHaveAttribute('aria-describedby')
 })
@@ -160,15 +171,17 @@ it('should clear pending work when unmounted', () => {
   expect(vi.getTimerCount()).toBe(0)
 })
 
-it('should keep a focused tooltip visible when the mouse enters its trigger', () => {
+it('should close on pointer leave while preserving button focus', () => {
   const result = renderTooltip()
   const button = result.getByRole('button')
-  fireEvent.focus(button)
+  button.focus()
   fireEvent.pointerEnter(button)
+  vi.advanceTimersByTime(400)
   expect(button).toHaveAttribute('aria-describedby')
   fireEvent.pointerLeave(button)
-  vi.advanceTimersByTime(500)
-  expect(button).toHaveAttribute('aria-describedby')
+  vi.advanceTimersByTime(150)
+  expect(button).toHaveFocus()
+  expect(button).not.toHaveAttribute('aria-describedby')
 })
 
 it('should update the visible description when the action label changes', () => {
@@ -176,7 +189,8 @@ it('should update the visible description when the action label changes', () => 
   const result = render(() => (
     <Trigger label={label()}>{(trigger) => <button {...trigger}>타이머</button>}</Trigger>
   ))
-  fireEvent.focus(result.getByRole('button'))
+  fireEvent.pointerEnter(result.getByRole('button'))
+  vi.advanceTimersByTime(400)
   setLabel('일시 정지')
   expect(screen.getByRole('tooltip')).toHaveTextContent('일시 정지')
 })
@@ -205,10 +219,12 @@ it('should cancel showing a trigger that becomes disabled during the hover delay
 it('should close on scroll and remove global listeners on unmount', () => {
   const result = renderTooltip()
   const button = result.getByRole('button')
-  fireEvent.focus(button)
+  fireEvent.pointerEnter(button)
+  vi.advanceTimersByTime(400)
   fireEvent.scroll(document)
   expect(button).not.toHaveAttribute('aria-describedby')
-  fireEvent.focus(button)
+  fireEvent.pointerEnter(button)
+  vi.advanceTimersByTime(400)
   result.unmount()
   const escape = new KeyboardEvent('keydown', {cancelable: true, key: 'Escape'})
   document.dispatchEvent(escape)
@@ -221,7 +237,8 @@ it('should write anchor and description attributes onto custom media elements', 
     <Trigger label="재생 또는 일시 정지">{(trigger) => <media-play-button {...trigger} />}</Trigger>
   ))
   const button = result.container.querySelector('media-play-button')!
-  fireEvent.focus(button)
+  fireEvent.pointerEnter(button)
+  vi.advanceTimersByTime(400)
   expect(button).toHaveAttribute('data-pomo-tooltip-trigger', '')
   expect(button).toHaveAttribute('aria-describedby', screen.getByRole('tooltip').id)
   fireEvent.blur(button)
@@ -388,4 +405,59 @@ it('should respect controlled visibility in the native title fallback', () => {
   expect(button).toHaveAttribute('title', '설명')
   setShow(false)
   expect(button).not.toHaveAttribute('title')
+})
+
+it.each(['escape', 'scroll', 'click'] as const)(
+  'should reopen on hover while focus remains after dismissal by %s',
+  (dismissal) => {
+    const result = renderTooltip()
+    const button = result.getByRole('button')
+    button.focus()
+    fireEvent.pointerEnter(button)
+    vi.advanceTimersByTime(400)
+    expect(button).toHaveAttribute('aria-describedby')
+    switch (dismissal) {
+      case 'escape':
+        fireEvent.keyDown(document, {key: 'Escape'})
+        break
+      case 'scroll':
+        fireEvent.scroll(document)
+        break
+      case 'click':
+        fireEvent.click(button)
+        break
+    }
+    expect(button).not.toHaveAttribute('aria-describedby')
+    fireEvent.pointerLeave(button)
+    fireEvent.pointerEnter(button)
+    vi.advanceTimersByTime(400)
+    expect(button).toHaveAttribute('aria-describedby', screen.getByRole('tooltip').id)
+  },
+)
+
+it.each([
+  {side: 'bottom', top: 76},
+  {side: 'top', top: 10},
+])('should point the arrow toward the trigger from $side', ({side, top}) => {
+  const bounds = vi
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockImplementation(function bounds(this: HTMLElement) {
+      return this.getAttribute('role') === 'tooltip'
+        ? new DOMRect(80, top, 60, 30)
+        : new DOMRect(90, 48, 44, 20)
+    })
+  try {
+    const result = renderTooltip()
+    fireEvent.pointerEnter(result.getByRole('button'))
+    vi.advanceTimersByTime(400)
+    const tooltip = screen.getByRole('tooltip')
+    expect(tooltip).toHaveAttribute('data-side', side)
+    expect(tooltip.style.getPropertyValue('--pomo-tooltip-arrow-x')).toBe('32px')
+    expect(tooltip.querySelector('[data-pomo-tooltip-arrow]')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
+  } finally {
+    bounds.mockRestore()
+  }
 })

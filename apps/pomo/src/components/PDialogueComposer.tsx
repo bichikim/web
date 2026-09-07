@@ -53,11 +53,11 @@ const useAutoExpand = (options: UseAutoExpandOptions) => {
 }
 
 const COMPOSER_CLASSES = cx(
-  'pomo-dialogue-composer grid size-13 self-end grid-cols-[1fr] sm:self-start',
+  'pomo-dialogue-composer grid h-control-md w-control-md self-end grid-cols-[1fr] sm:self-start',
   'box-border items-center overflow-hidden rounded-full border border-solid border-border',
   'bg-surface backdrop-blur-surface outline-none',
   'transition-[width_180ms_ease,background-color_160ms_ease,border-color_160ms_ease]',
-  '[&[data-expanded]]:min-w-0 [&[data-expanded]]:max-w-full [&[data-expanded]]:w-full',
+  '[&[data-expanded]]:h-auto [&[data-expanded]]:min-w-0 [&[data-expanded]]:max-w-full [&[data-expanded]]:w-full',
   '[&[data-expanded]]:[flex:none] [&[data-expanded]]:self-start',
   '[&[data-expanded]]:grid-cols-[minmax(0,_1fr)_auto]',
   'focus-within:border-highlight focus-within:bg-surface-interactive',

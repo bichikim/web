@@ -1,26 +1,36 @@
+import {useScreenWakeLock} from '../features/screen-wake-lock'
+import {PLoadingStatus} from './PLoadingStatus'
 import {Tabs} from '@kobalte/core/tabs'
-import {createSignal} from 'solid-js'
+import {createSignal, ErrorBoundary, lazy, onMount, Suspense} from 'solid-js'
 import {getPomoIconClass} from './icon-style'
 import {GLASS_ICON_BUTTON} from './button-presets'
 import {PButton} from './PButton'
 import {PModal} from './PModal'
-import {useScreenWakeLock} from '../features/screen-wake-lock'
-import {UserSettings} from './UserSettings'
 import * as m from '@paraglide/message'
-import {PCreditsSettings} from './PCreditsSettings'
-import {PDialogueSettings} from './PDialogueSettings'
-import {PFeedSettings} from './PFeedSettings'
-import {PGuideSettings} from './PGuideSettings'
 import {PScribbleCircleControl} from './scribble/CircleControl'
 import {PSettingsTabList} from './settings/TabList'
 import {type PSettingsProps} from './settings/general/shared'
-import {PGeneralSettings} from './settings/general/General'
+
+const PSettingsContent = lazy(async () => {
+  try {
+    const module = await import('./settings/Content')
+    return {default: module.PSettingsContent}
+  } catch (error) {
+    // Preload must settle so module failures reach the modal's error boundary.
+    return {
+      default: () => {
+        throw error
+      },
+    }
+  }
+})
 
 export const PSettings = (props: PSettingsProps) => {
+  const wakeLock = useScreenWakeLock()
+  onMount(() => PSettingsContent.preload())
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('general')
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
-  const wakeLock = useScreenWakeLock()
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
     setIsOpen(true)
@@ -32,9 +42,11 @@ export const PSettings = (props: PSettingsProps) => {
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
         <PButton
           {...GLASS_ICON_BUTTON}
+          pill
           accessibleLabel={m.settings_open()}
           tooltip={m.settings_open()}
           icon={getPomoIconClass('i-tabler-settings', props.sceneStyle)}
+          iconClass="size-6! text-highlight"
           onPress={handleOpen}
         />
       </PScribbleCircleControl>
@@ -49,14 +61,21 @@ export const PSettings = (props: PSettingsProps) => {
           title={m.settings_title()}
           titleVisibility="visually-hidden"
         >
-          <Tabs.Content value="general">
-            <PGeneralSettings {...props} wakeLock={wakeLock} />
-          </Tabs.Content>
-          <PGuideSettings />
-          <PCreditsSettings />
-          <PFeedSettings />
-          <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
-          <UserSettings />
+          <ErrorBoundary fallback={<p role="alert">{m.modal_content_load_error()}</p>}>
+            <Suspense
+              fallback={
+                <div role="status">
+                  <PLoadingStatus message={m.modal_content_loading()} />
+                </div>
+              }
+            >
+              <PSettingsContent
+                {...props}
+                wakeLock={wakeLock}
+                onRequestClose={() => setIsOpen(false)}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </PModal>
       </Tabs>
     </>
