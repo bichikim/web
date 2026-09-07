@@ -38,7 +38,7 @@ export const useCharacterRenderer = (
   props: UseCharacterRendererProps,
 ): CharacterRendererController => {
   const runtime = props.runtime ?? DEFAULT_RUNTIME
-  const [modelUrl, setModelUrl] = createSignal(props.defaultModelUrl)
+  const [modelUrl, setModelUrl] = createSignal(props.defaultModelUrl, {equals: false})
   const [modelName, setModelName] = createSignal(props.defaultModelName)
   const [progress, setProgress] = createSignal(0)
   const [status, setStatus] = createSignal<CharacterRendererStatus>('loading')
