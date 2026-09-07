@@ -6,6 +6,8 @@
   "app_default_description": "Pomo와 함께 포모도로 타이머와 집중 음악을 사용하는 집중 앱 Pomofi입니다.",
   "app_home_description": "Pomo와 함께 장면, 포모도로, 음악, 대화와 피드를 한곳에서 사용하는 집중 앱 Pomofi입니다.",
   "app_load_error": "Pomofi를 불러오지 못했어요",
+  "modal_content_loading": "내용을 준비하고 있어요…",
+  "modal_content_load_error": "내용을 불러오지 못했어요. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
   "app_loading": "앱을 준비하고 있어요…",
   "settings_category_label": "설정 종류",
   "settings_tab_general": "일반",

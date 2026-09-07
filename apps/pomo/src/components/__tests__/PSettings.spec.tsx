@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {Tabs} from '@kobalte/core/tabs'
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
@@ -150,7 +150,7 @@ beforeEach(() => {
   ))
 })
 
-it('should expose the guide and credits as the final settings tabs', () => {
+it('should expose the guide and credits as the final settings tabs', async () => {
   render(() => <PSettings />)
 
   expect(screen.queryByRole('button', {name: 'Pomofi 설명서'})).toBeNull()
@@ -172,7 +172,7 @@ it('should expose the guide and credits as the final settings tabs', () => {
   expect(screen.queryByRole('tab', {name: '날씨'})).toBeNull()
 })
 
-it('should map the scribble style switch to the scene style value', () => {
+it('should map the scribble style switch to the scene style value', async () => {
   const onSceneStyleChange = vi.fn()
 
   render(() => <PSettings onSceneStyleChange={onSceneStyleChange} sceneStyle="scribble" />)
@@ -185,6 +185,7 @@ it('should map the scribble style switch to the scene style value', () => {
   ).not.toBeNull()
   expect(settingsTrigger.querySelector('.i-pomo-scribble\\:settings')).not.toBeNull()
 
+  await waitFor(() => expect(PSwitch).toHaveBeenCalled())
   const styleSwitch = vi
     .mocked(PSwitch)
     .mock.calls.map(([props]) => props as PSwitchProps)
@@ -203,7 +204,7 @@ it('should map the scribble style switch to the scene style value', () => {
   expect(onSceneStyleChange).toHaveBeenLastCalledWith('scribble')
 })
 
-it('should forward every scene, weather, and modal action', () => {
+it('should forward every scene, weather, and modal action', async () => {
   const onDialogueComposerVisibleChange = vi.fn()
   const onActivityChange = vi.fn()
   const onGazeChange = vi.fn()
@@ -234,7 +235,7 @@ it('should forward every scene, weather, and modal action', () => {
   ))
 
   fireEvent.click(screen.getByRole('button', {name: '설정'}))
-  fireEvent.click(screen.getByRole('button', {name: '시간'}))
+  fireEvent.click(await screen.findByRole('button', {name: '시간'}))
   fireEvent.click(screen.getByRole('button', {name: '행동'}))
   fireEvent.click(screen.getByRole('button', {name: '보기'}))
   fireEvent.click(screen.getByRole('button', {name: '장면 움직임'}))
@@ -267,4 +268,10 @@ it('should forward every scene, weather, and modal action', () => {
     .find((props) => props.label === '화면 자동 꺼짐 방지')
   expect(Object.getOwnPropertyDescriptor(wakeLockSwitch ?? {}, 'checked')?.get?.()).toBe(false)
   expect(vi.mocked(PModal).mock.calls.at(-1)?.[0].isOpen).toBe(false)
+})
+
+it('should keep the settings icon at its explicit toolbar size', () => {
+  render(() => <PSettings />)
+  const icon = screen.getByRole('button', {name: '설정'}).querySelector('[data-pomo-button-icon]')
+  expect(icon).toHaveClass('size-6!')
 })
