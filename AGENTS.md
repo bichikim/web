@@ -3,7 +3,7 @@
 ## Interaction
 
 - **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
-- **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation.
+- **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include its file path.
 
 ## Styling ownership
@@ -33,7 +33,7 @@
 
 ## Evidence
 
-- Do not infer, speculate, or fill gaps. Treat learned knowledge, memory, prior conversation, common patterns, names, and probabilities as false or unverified until current evidence establishes them.
+- Do not present unverified facts as established. Use conversation context to interpret user intent and scope; verify factual claims separately and distinguish assumptions from observations.
 - Use only directly observed evidence from the actual project's files, configuration, and data; its actual runtime; current official documentation; relevant existing tests executed against the actual code path; or new tests created and executed against that path as sources of truth.
 - Verify every factual or technical conclusion with the source capable of proving it. Source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised.
 - Verify changeable external information from a current authoritative source in the same turn. Before relying on a term, status, label, or qualifier, establish its exact contextual meaning and separately verify the consequence relevant to the question.
@@ -42,8 +42,8 @@
 
 ## Architecture authority
 
-- Treat current official documentation as binding for folder structure and code design. If existing or proposed code differs, disclose the difference and reason before implementation; do not deviate unless the user explicitly directs it.
-- If official documentation does not map directly to the code, analyze multiple analogous implementations from authoritative maintainers or projects, show the decisive evidence, and choose the best-supported pattern instead of inventing a familiar local design.
+- Follow explicit requirements in current official documentation. Disclose conflicts with those requirements before implementation; do not deviate unless the user explicitly directs it.
+- Where official documentation leaves design or folder structure open, decide using project contracts and relevant evidence. Consult authoritative implementations when needed to resolve a material uncertainty.
 
 ## Layering without z-index
 

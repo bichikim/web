@@ -23,7 +23,7 @@ Severity: **P0** active widespread security incident, irreversible data loss, or
 
 ## Verification gate
 
-Warnings, size, unusual code, and analyzer output are leads. A finding requires a falsifiable cause, a check capable of disproving it, the observed result, and concrete runtime or user impact.
+Warnings, size, unusual code, and analyzer output are leads. A finding requires a falsifiable cause, a check capable of disproving it, and the observed result. Behavior defects require concrete runtime or user impact. P3/P4 structural improvements require observed design evidence and a concrete maintenance or testability cost; they do not require a current behavior defect and must not imply one.
 
 Trace browser/server/Worker, build/runtime, and eager/on-demand boundaries. Performance claims require measurement of the affected client artifact or request; server warnings, raw size, and `import()` alone are insufficient.
 

@@ -24,7 +24,7 @@ Before committing or pushing:
 - **Secrets/credentials**: If changes may include secrets or credentials (e.g. `.env`, API keys, tokens, passwords), stop and tell the user. Do not commit or push.
 - **Destructive git commands**: Prefer normal commands (`git push`, `git merge`, etc.). Do not use destructive commands (e.g. `git push --force`, `git reset --hard`) unless the user explicitly requests them; ask first if unsure.
 - **Git config**: Do not change git config. If a config change seems necessary, ask the user first.
-- **Pre-commit review**: Briefly review staged and unstaged changes before committing. If fixes are needed (secrets, unrelated files, incomplete work), stop and tell the user what to change before proceeding.
+- **Pre-commit review**: Briefly review staged and unstaged changes before committing. Complete authorized fixes and select only task-related changes for the commit, preserving unrelated work. Ask only when proceeding requires additional authority or a user decision; follow the secrets rule above.
 
 ## Pull request
 
