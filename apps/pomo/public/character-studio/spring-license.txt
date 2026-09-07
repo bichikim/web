@@ -1,5 +1,0 @@
-Spring Rig (CC-BY) Blender Foundation | studio.blender.org
-Source: https://studio.blender.org/characters/spring/v1/
-License: https://creativecommons.org/licenses/by/4.0/
-Changes: evaluated low-resolution meshes; simplified web materials; added proportion and face-width morph targets.
-This derivative is an unrigged proportion study. Original rig scripts, particle hair, expression controls and skeletal animation are not included.

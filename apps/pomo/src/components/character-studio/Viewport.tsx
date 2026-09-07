@@ -1,4 +1,3 @@
-import type {SpringSettings} from './spring'
 import type {FaceSettings} from './face-deformation'
 import type {ExpressionSettings} from './expressions'
 import {cx} from 'class-variance-authority'
@@ -24,7 +23,6 @@ const HELP_CLASSES = cx(
 )
 
 interface CharacterViewportProps {
-  readonly springSettings?: SpringSettings
   readonly expressions?: ExpressionSettings
   readonly faceSettings?: FaceSettings
   readonly eyeNarrowing?: number
@@ -59,7 +57,6 @@ export const CharacterViewport = (props: CharacterViewportProps) => {
     <div class="grid min-w-0 content-start gap-3">
       <div class={VIEWER_CLASSES}>
         <CharacterViewportCanvas
-          springSettings={props.springSettings}
           cameraCommand={cameraCommand()}
           faceSettings={props.faceSettings}
           expressions={props.expressions}
