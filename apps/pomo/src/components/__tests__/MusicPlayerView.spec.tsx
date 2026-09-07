@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent} from '@solidjs/testing-library'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createSignal} from 'solid-js'
 
 import * as m from '@paraglide/message'
@@ -12,8 +12,19 @@ import {
   renderMusicPlayerView,
 } from './music-player-view.test-support'
 
+import {installTooltipBrowser} from '../tooltip/__tests__/support/browser'
+
 describe('MusicPlayerView', () => {
-  afterEach(() => cleanup())
+  let browser: ReturnType<typeof installTooltipBrowser>
+  beforeEach(() => {
+    browser = installTooltipBrowser()
+    vi.stubGlobal('CSS', {supports: () => false})
+  })
+
+  afterEach(() => {
+    cleanup()
+    browser.restore()
+  })
 
   it.each([false, true])(
     'should update every playback tooltip with the playback state (expanded: %s)',
@@ -25,9 +36,10 @@ describe('MusicPlayerView', () => {
           return isPlaying()
         },
       })
-      const buttons = result.container.querySelectorAll('media-play-button')
+      const buttons = result.container.querySelectorAll<HTMLElement>('media-play-button')
       expect(buttons).toHaveLength(2)
       for (const button of buttons) {
+        browser.setVisibleFocus(button)
         fireEvent.focus(button)
         expect(button).toHaveAttribute('title', '재생')
       }
@@ -37,6 +49,7 @@ describe('MusicPlayerView', () => {
       }
       setPlaying(false)
       for (const button of buttons) {
+        browser.setVisibleFocus(button)
         fireEvent.focus(button)
         expect(button).toHaveAttribute('title', '재생')
       }
