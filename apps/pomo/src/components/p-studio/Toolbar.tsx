@@ -27,6 +27,7 @@ import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
 import {GLASS_ICON_BUTTON} from '../button-presets'
 import {PButton} from '../PButton'
+import {PTools} from '../PTools'
 
 interface SceneToolbarProps {
   readonly activity: PActivity
@@ -91,6 +92,9 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             </div>
           </PScribbleCircleControl>
         </Show>
+        <div class="inline-flex" data-tour-step="tools">
+          <PTools sceneStyle={props.sceneStyle} />
+        </div>
         <div class="inline-flex" data-tour-step="memory-assist">
           <MemoryAssistPanel sceneStyle={props.sceneStyle} weatherState={props.weatherState} />
         </div>
