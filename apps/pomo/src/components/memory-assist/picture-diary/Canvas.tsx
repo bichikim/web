@@ -1,4 +1,4 @@
-import {createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
+import {type Accessor, createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
 
 import {findErasedStrokes} from './erase-path'
 import {DRAWING_COLORS, DRAWING_THICKNESSES} from './brush-classes'
@@ -42,10 +42,10 @@ const getPoint = (event: PointerEvent & {currentTarget: SVGSVGElement}): Picture
 const getPolylinePoints = (stroke: PictureDiaryStroke) =>
   stroke.points.map((point) => `${point.x * DRAWING_WIDTH},${point.y * DRAWING_HEIGHT}`).join(' ')
 
-export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
+const useImageUrl = (image: Accessor<PictureDiaryImage | undefined>) => {
   const [imageUrl, setImageUrl] = createSignal<string>()
   createEffect(() => {
-    const storedImage = props.image
+    const storedImage = image()
     if (storedImage === undefined) {
       setImageUrl(undefined)
       return
@@ -54,6 +54,11 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
     setImageUrl(url)
     onCleanup(() => URL.revokeObjectURL(url))
   })
+  return imageUrl
+}
+
+export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
+  const imageUrl = useImageUrl(() => props.image)
   let svgElement: SVGSVGElement | undefined
   let activePointerId: number | null = null
   let activeGestureRevision = 0
@@ -163,7 +168,7 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
     <svg
       aria-label={props.accessibleLabel ?? m.picture_diary_canvas()}
       class="picture-diary-book__canvas"
-      ref={svgElement}
+      ref={(element) => (svgElement = element)}
       onPointerCancel={handlePointerEnd}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

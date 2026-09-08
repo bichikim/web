@@ -50,8 +50,10 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
   const [limitReached, setLimitReached] = createSignal(false)
   const [gestureRevision, setGestureRevision] = createSignal(0)
   const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
-  const invalidateGesture = () => {
+  const changeHistory = (action: () => void) => {
+    action()
     setGestureRevision((revision) => revision + 1)
+    setLimitReached(false)
   }
   return (
     <>
@@ -101,21 +103,9 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
               canUndo={history.canUndo()}
               canRedo={history.canRedo()}
               canClear={props.strokes.length > 0}
-              onUndo={() => {
-                history.undo()
-                invalidateGesture()
-                setLimitReached(false)
-              }}
-              onRedo={() => {
-                history.redo()
-                invalidateGesture()
-                setLimitReached(false)
-              }}
-              onClear={() => {
-                history.clear()
-                invalidateGesture()
-                setLimitReached(false)
-              }}
+              onUndo={() => changeHistory(history.undo)}
+              onRedo={() => changeHistory(history.redo)}
+              onClear={() => changeHistory(history.clear)}
               doneDisabled={mode() === 'generate' && generating()}
               onDone={() => {
                 const image = preview()

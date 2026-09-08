@@ -93,6 +93,14 @@ afterEach(() => {
   })
 })
 
+it('should preserve the all-day event date when no selected date is provided', () => {
+  render(() => <CalendarAlarmControl event={event} memos={() => mocks.memos} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
+  expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-05')
+  expect(screen.getByLabelText('시간')).toHaveValue('09:00')
+})
+
 it('should default a spanning all-day alarm to the selected calendar day', () => {
   const spanningEvent: CalendarEvent = {
     ...event,
@@ -101,7 +109,7 @@ it('should default a spanning all-day alarm to the selected calendar day', () =>
   }
   render(() => (
     <CalendarAlarmControl
-      defaultAlarmDate={new Date('2026-09-06T12:00:00.000Z')}
+      defaultAlarmDate={new Date(2026, 8, 6)}
       event={spanningEvent}
       memos={() => mocks.memos}
     />

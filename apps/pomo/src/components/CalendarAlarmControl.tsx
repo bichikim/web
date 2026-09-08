@@ -33,8 +33,16 @@ const getTimeInputValue = (date: Date) =>
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
 const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
   if (event.allDay) {
-    const date = defaultAlarmDate ?? new Date(event.start.slice(0, DATE_KEY_LENGTH))
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), ALL_DAY_ALARM_HOUR)
+    if (defaultAlarmDate !== undefined) {
+      return new Date(
+        defaultAlarmDate.getFullYear(),
+        defaultAlarmDate.getMonth(),
+        defaultAlarmDate.getDate(),
+        ALL_DAY_ALARM_HOUR,
+      )
+    }
+    const [year, month, day] = event.start.slice(0, DATE_KEY_LENGTH).split('-').map(Number)
+    return new Date(year, month - 1, day, ALL_DAY_ALARM_HOUR)
   }
 
   return new Date(event.start)
