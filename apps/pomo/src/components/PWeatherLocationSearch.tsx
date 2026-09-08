@@ -8,8 +8,12 @@ import {
   useWeatherLocationSearch,
   type WeatherLocation,
 } from '../features/weather'
-import {getLocalizedWeatherLocationLabel} from '../features/localization'
+import {
+  getLocalizedWeatherLocationLabel,
+  getWeatherLocationDescription,
+} from '../features/localization'
 import * as m from '@paraglide/message'
+import {getLocale} from '@paraglide/runtime'
 import {WeatherLocationSearchFeedback} from './weather-location-search/Feedback'
 
 export interface PWeatherLocationSearchProps {
@@ -17,17 +21,26 @@ export interface PWeatherLocationSearchProps {
   readonly onChange?: (location: WeatherLocation) => void
 }
 
-const getLocationDescription = (location: WeatherLocation): string =>
-  [location.region, location.country].filter(Boolean).join(' · ')
-
-const getLocationName = (location: WeatherLocation): string =>
-  getLocalizedWeatherLocationLabel(location)
+const getLocationName = (location: WeatherLocation): string => {
+  const english = getLocalizedWeatherLocationLabel(location, {locale: 'en'})
+  if (getLocale() !== 'ko') {
+    return english
+  }
+  const korean = getLocalizedWeatherLocationLabel(location, {locale: 'ko'})
+  return korean === english ? english : `${korean} / ${english}`
+}
 
 const DEFAULT_WEATHER_LOCATIONS = Object.values(LEGACY_WEATHER_LOCATIONS)
+const LISTBOX_CLASS =
+  'grid min-h-0 auto-rows-max gap-0.5 overflow-y-auto overscroll-contain outline-none'
 
 const KOREAN_COUNTRIES = new Set(['KR', '대한민국'])
 
-const normalizeLocationName = (name: string): string => name.trim().toLowerCase()
+const normalizeLocationName = (name: string): string =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/(?:-si|시)$/u, '')
 
 const getLocationNames = (location: WeatherLocation): ReadonlyArray<string> =>
   [
@@ -79,7 +92,11 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
   const onInputChange = (query: string) => {
     const location = selectedLocation()
     const normalizedQuery = query.trim()
-    const selectedNames = [location.name, getLocationName(location)]
+    const selectedNames = [
+      location.name,
+      getLocalizedWeatherLocationLabel(location),
+      getLocationName(location),
+    ]
     if (selectedNames.includes(normalizedQuery)) {
       setSearchQuery('')
       search.onSelect(location)
@@ -93,6 +110,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
   return (
     <Combobox<WeatherLocation>
       allowsEmptyCollection
+      modal
       class="grid w-full min-w-0 gap-1.5"
       defaultFilter={() => true}
       disallowEmptySelection
@@ -111,7 +129,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
             {getLocationName(itemProps.item.rawValue)}
           </Combobox.ItemLabel>
           <Combobox.ItemDescription class="overflow-hidden text-ellipsis whitespace-nowrap text-xs">
-            {getLocationDescription(itemProps.item.rawValue)}
+            {getWeatherLocationDescription(itemProps.item.rawValue)}
           </Combobox.ItemDescription>
         </Combobox.Item>
       )}
@@ -180,7 +198,8 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
       <Combobox.Portal>
         <Combobox.Content
           class={
-            'max-h-[min(18rem,var(--kb-popper-available-height))] w-[var(--kb-popper-anchor-width)] ' +
+            'flex max-h-[min(18rem,var(--kb-popper-content-available-height,18rem))] flex-col ' +
+            'w-[var(--kb-popper-anchor-width)] ' +
             'overflow-hidden rounded-4 border border-solid border-border bg-surface-strong p-2 ' +
             'text-foreground shadow-panel backdrop-blur-surface'
           }
@@ -189,7 +208,7 @@ export const PWeatherLocationSearch = (props: PWeatherLocationSearchProps) => {
             resultCount={search.results().length}
             status={search.status()}
           />
-          <Combobox.Listbox class="grid max-h-[inherit] gap-0.5 overflow-y-auto outline-none" />
+          <Combobox.Listbox class={LISTBOX_CLASS} />
         </Combobox.Content>
       </Combobox.Portal>
       <Combobox.HiddenSelect />

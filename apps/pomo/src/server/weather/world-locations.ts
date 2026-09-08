@@ -14,6 +14,7 @@ import {
   searchOpenWeatherLocations,
   type SearchOpenWeatherLocationsOptions,
 } from './openweather-client'
+import {WEATHER_COORDINATES} from './coordinates'
 import {reserveOpenWeatherRequest} from './provider-quota'
 
 export interface WorldWeatherLocation extends WeatherLocation {
@@ -29,56 +30,20 @@ interface LegacyWorldWeatherLocation extends WorldWeatherLocation {
 const LEGACY_LOCATION_MAXIMUM_DISTANCE_DEGREES = 0.05
 const LEGACY_LOCATION_PROVIDER_COUNTRY = 'KR'
 
-const LEGACY_WORLD_WEATHER_LOCATIONS = {
-  busan: {
-    ...LEGACY_WEATHER_LOCATIONS.busan,
-    latitude: 35.1796,
-    longitude: 129.0756,
-    providerLocationId: 'legacy:busan',
-  },
-  daegu: {
-    ...LEGACY_WEATHER_LOCATIONS.daegu,
-    latitude: 35.8714,
-    longitude: 128.6014,
-    providerLocationId: 'legacy:daegu',
-  },
-  daejeon: {
-    ...LEGACY_WEATHER_LOCATIONS.daejeon,
-    latitude: 36.3504,
-    longitude: 127.3845,
-    providerLocationId: 'legacy:daejeon',
-  },
-  gwangju: {
-    ...LEGACY_WEATHER_LOCATIONS.gwangju,
-    latitude: 35.1595,
-    longitude: 126.8526,
-    providerLocationId: 'legacy:gwangju',
-  },
-  incheon: {
-    ...LEGACY_WEATHER_LOCATIONS.incheon,
-    latitude: 37.4563,
-    longitude: 126.7052,
-    providerLocationId: 'legacy:incheon',
-  },
-  jeju: {
-    ...LEGACY_WEATHER_LOCATIONS.jeju,
-    latitude: 33.4996,
-    longitude: 126.5312,
-    providerLocationId: 'legacy:jeju',
-  },
-  seoul: {
-    ...LEGACY_WEATHER_LOCATIONS.seoul,
-    latitude: 37.5665,
-    longitude: 126.978,
-    providerLocationId: 'legacy:seoul',
-  },
-  ulsan: {
-    ...LEGACY_WEATHER_LOCATIONS.ulsan,
-    latitude: 35.5384,
-    longitude: 129.3114,
-    providerLocationId: 'legacy:ulsan',
-  },
-} as const satisfies Readonly<Record<WeatherCitySlug, LegacyWorldWeatherLocation>>
+const LEGACY_WORLD_WEATHER_LOCATIONS = Object.fromEntries(
+  Object.values(LEGACY_WEATHER_LOCATIONS).map((location) => {
+    const coordinates = WEATHER_COORDINATES[location.legacyCitySlug]
+    return [
+      location.legacyCitySlug,
+      {
+        ...location,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        providerLocationId: `legacy:${location.legacyCitySlug}`,
+      } satisfies LegacyWorldWeatherLocation,
+    ]
+  }),
+) as Readonly<Record<WeatherCitySlug, LegacyWorldWeatherLocation>>
 
 const LEGACY_PROVIDER_LOCATION_ALIASES: Partial<
   Readonly<Record<WeatherCitySlug, ReadonlyArray<string>>>
@@ -145,6 +110,7 @@ const getSearchWeatherLocation = (location: OpenWeatherSearchLocation): WeatherL
         country: location.country,
         id: createProviderLocationId(location.providerLocationId),
         name: location.name,
+        ...(location.names === undefined ? {} : {names: location.names}),
         region: location.region,
       }
     : toWeatherLocation(legacyLocation)

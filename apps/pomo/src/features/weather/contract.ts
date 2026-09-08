@@ -1,16 +1,8 @@
 import {z} from 'zod'
 
-export const WEATHER_CITY_SLUGS = [
-  'seoul',
-  'busan',
-  'daegu',
-  'incheon',
-  'gwangju',
-  'daejeon',
-  'ulsan',
-  'jeju',
-] as const
-export type WeatherCitySlug = (typeof WEATHER_CITY_SLUGS)[number]
+import {WEATHER_CITY_SLUGS, type WeatherCitySlug} from './catalog'
+
+export {WEATHER_CITY_SLUGS, type WeatherCitySlug} from './catalog'
 const weatherCitySlugSchema = z.enum(WEATHER_CITY_SLUGS)
 
 const weatherLocationIdSchema = z
@@ -23,6 +15,7 @@ export interface WeatherLocation {
   readonly id: WeatherLocationId
   readonly legacyCitySlug?: WeatherCitySlug
   readonly name: string
+  readonly names?: {readonly en?: string; readonly ko?: string}
   readonly region: string
 }
 
@@ -31,6 +24,7 @@ export const weatherLocationSchema: z.ZodType<WeatherLocation> = z.object({
   id: weatherLocationIdSchema as z.ZodType<WeatherLocationId>,
   legacyCitySlug: weatherCitySlugSchema.optional(),
   name: z.string().min(1),
+  names: z.object({en: z.string().min(1).optional(), ko: z.string().min(1).optional()}).optional(),
   region: z.string(),
 })
 

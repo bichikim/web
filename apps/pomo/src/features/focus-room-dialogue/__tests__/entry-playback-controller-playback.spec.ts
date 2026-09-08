@@ -275,6 +275,41 @@ describe('createEntryPlaybackController', () => {
     await expect(playback).rejects.toThrow('start failed')
   })
 
+  it('should resume pending autoplay synchronously when another dialogue is requested', async () => {
+    const resumed = Promise.withResolvers<void>()
+    const resume = vi
+      .fn()
+      .mockReturnValueOnce(resumed.promise)
+      .mockImplementation(() => {
+        resumed.resolve()
+        return Promise.resolve()
+      })
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'suspended'
+        destination = {}
+        resume = resume
+        suspend = vi.fn().mockResolvedValue(undefined)
+        close = vi.fn().mockResolvedValue(undefined)
+        createMediaElementSource = () => ({connect: vi.fn(), disconnect: vi.fn()})
+      },
+    )
+    const controller = createEntryPlaybackController()
+    const first = controller.prepare(createRepository(), DIALOGUE.id)
+    await flush()
+    expect(controller.isBlocked()).toBe(true)
+    expect(TestAudio.instances[0].play).not.toHaveBeenCalled()
+    const second = controller.prepare(createRepository(), DIALOGUE.id)
+    expect(resume).toHaveBeenCalledTimes(2)
+    await flush()
+    expect(TestAudio.instances[0].play).toHaveBeenCalledTimes(1)
+    expect(controller.isPlaying()).toBe(true)
+    expect(controller.isBlocked()).toBe(false)
+    controller.dispose()
+    await Promise.all([first, second])
+  })
+
   it('should dispose analyzer, source, and audio context safely', async () => {
     const source = {connect: vi.fn(), disconnect: vi.fn()}
     const context = {
