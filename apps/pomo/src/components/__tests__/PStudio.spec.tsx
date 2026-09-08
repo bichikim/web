@@ -32,6 +32,7 @@ import {PStudioEvents} from '../p-studio/Events'
 import {PStudioScene} from '../p-studio/Scene'
 import {PSceneFallback} from '../p-studio/SceneFallback'
 import {SceneToolbar} from '../p-studio/Toolbar'
+import {PStudioTourHint} from '../p-studio/TourHint'
 import {useStudioScreenSaver} from '../p-studio/use-screen-saver'
 import {PScreenSaver} from '../PScreenSaver'
 import {PStudio} from '../PStudio'
@@ -70,6 +71,7 @@ vi.mock('../p-studio/SceneFallback', () => ({PSceneFallback: vi.fn()}))
 vi.mock('../p-studio/Scene', () => ({PStudioScene: vi.fn()}))
 vi.mock('../p-studio/Events', () => ({PStudioEvents: vi.fn()}))
 vi.mock('../p-studio/Toolbar', () => ({SceneToolbar: vi.fn()}))
+vi.mock('../p-studio/TourHint', () => ({PStudioTourHint: vi.fn()}))
 vi.mock('../p-studio/use-screen-saver', () => ({useStudioScreenSaver: vi.fn()}))
 vi.mock('../PScreenSaver', () => ({PScreenSaver: vi.fn()}))
 vi.mock('../tour/PTour', () => ({PTour: vi.fn()}))
@@ -200,6 +202,16 @@ const configureStudio = (options: StudioOptions = {}) => {
   return {setDesktopMode}
 }
 
+const expectTourStepTargets = (
+  tourProps: Parameters<typeof PTour>[0],
+  stepIds: readonly string[],
+  expectedStep: string,
+) => {
+  for (const stepId of stepIds) {
+    expect(tourProps.getStepElement(stepId)).toHaveAttribute('data-tour-step', expectedStep)
+  }
+}
+
 beforeEach(() => {
   vi.useFakeTimers()
   vi.clearAllMocks()
@@ -298,6 +310,10 @@ beforeEach(() => {
     Object.values(props)
     return <div data-open={String(props.isOpen)}>투어</div>
   })
+  vi.mocked(PStudioTourHint).mockImplementation((props) => {
+    Object.values(props)
+    return <div>첫 입장 투어 안내</div>
+  })
   vi.mocked(useDialogueSceneGaze).mockImplementation((sceneGaze) => sceneGaze)
 })
 
@@ -363,7 +379,12 @@ describe('PStudio', () => {
 
     expect(screen.getByText('투어')).toHaveAttribute('data-open', 'true')
     const tourProps = vi.mocked(PTour).mock.calls.at(-1)?.[0]
-    expect(tourProps?.steps.map((step) => step.id)).toEqual([
+    expect(tourProps).toBeDefined()
+    if (!tourProps) {
+      return
+    }
+
+    expect(tourProps.steps.map((step) => step.id)).toEqual([
       'pomodoro',
       'pomodoro-control',
       'pomodoro-detail',
@@ -372,46 +393,89 @@ describe('PStudio', () => {
       'music-album',
       'music-expand',
       'memory-assist',
+      'memory-assist-sentences',
+      'memory-assist-words',
+      'memory-assist-memos',
+      'memory-assist-picture-diary',
+      'memory-assist-calendar',
       'settings',
+      'settings-general',
+      'settings-events',
+      'settings-feeds',
+      'settings-dialogue',
+      'settings-user',
     ])
-    expect(tourProps?.steps[1]).toMatchObject({
+    expect(tourProps.steps[1]).toMatchObject({
       title: '포모도로 타이머',
       video: {source: '/tour/pomodoro-control.webm'},
     })
-    expect(tourProps?.steps[2]).toMatchObject({
+    expect(tourProps.steps[2]).toMatchObject({
       title: '포모도로 타이머',
       video: {source: '/tour/pomodoro-detail.webm'},
     })
-    expect(tourProps?.steps[3]).toMatchObject({
+    expect(tourProps.steps[3]).toMatchObject({
       title: '포모도로 타이머',
       video: {source: '/tour/pomodoro-duration.webm'},
     })
-    expect(tourProps?.steps[5]).toMatchObject({
+    expect(tourProps.steps[5]).toMatchObject({
       title: '집중 음악',
       video: {source: '/tour/add-album.webm'},
     })
-    expect(tourProps?.steps[6]).toMatchObject({
+    expect(tourProps.steps[6]).toMatchObject({
       title: '집중 음악',
       video: {source: '/tour/expand-player.webm'},
     })
-    expect(tourProps?.steps[8]).toMatchObject({
+    expect(tourProps.steps.find((step) => step.id === 'settings')).toMatchObject({
       description:
-        '장면과 화면부터 이벤트, 피드, 대화, 사용자 정보까지 Pomofi의 다양한 기능을 설정할 수 있어요.',
+        '장면과 화면부터 이벤트, 피드, 대화, 사용자 정보까지 앱의 다양한 기능을 설정할 수 있어요.',
       title: '설정',
     })
-    expect(tourProps?.getStepElement('pomodoro')).toHaveClass('pomo-pomodoro')
-    expect(tourProps?.getStepElement('pomodoro-control')).toHaveClass('pomo-pomodoro')
-    expect(tourProps?.getStepElement('pomodoro-detail')).toHaveClass('pomo-pomodoro')
-    expect(tourProps?.getStepElement('pomodoro-duration')).toHaveClass('pomo-pomodoro')
-    expect(tourProps?.getStepElement('music')).toHaveClass('pomo-player-stage')
-    expect(tourProps?.getStepElement('music-album')).toHaveClass('pomo-player-stage')
-    expect(tourProps?.getStepElement('music-expand')).toHaveClass('pomo-player-stage')
-    expect(tourProps?.getStepElement('memory-assist')).toHaveAttribute(
-      'data-tour-step',
+    expect(tourProps.getStepElement('pomodoro')).toHaveClass('pomo-pomodoro')
+    expect(tourProps.getStepElement('pomodoro-control')).toHaveClass('pomo-pomodoro')
+    expect(tourProps.getStepElement('pomodoro-detail')).toHaveClass('pomo-pomodoro')
+    expect(tourProps.getStepElement('pomodoro-duration')).toHaveClass('pomo-pomodoro')
+    expect(tourProps.getStepElement('music')).toHaveClass('pomo-player-stage')
+    expect(tourProps.getStepElement('music-album')).toHaveClass('pomo-player-stage')
+    expect(tourProps.getStepElement('music-expand')).toHaveClass('pomo-player-stage')
+    expectTourStepTargets(
+      tourProps,
+      [
+        'memory-assist',
+        'memory-assist-sentences',
+        'memory-assist-words',
+        'memory-assist-memos',
+        'memory-assist-picture-diary',
+        'memory-assist-calendar',
+      ],
       'memory-assist',
     )
-    expect(tourProps?.getStepElement('settings')).toHaveAttribute('data-tour-step', 'settings')
-    expect(tourProps?.getStepElement('unknown')).toBeNull()
+    expectTourStepTargets(
+      tourProps,
+      [
+        'settings',
+        'settings-general',
+        'settings-events',
+        'settings-feeds',
+        'settings-dialogue',
+        'settings-user',
+      ],
+      'settings',
+    )
+    expect(tourProps.getStepElement('unknown')).toBeNull()
+  })
+
+  it('should show the tour hint after a first entry and hide it when the tour opens', () => {
+    renderStudio()
+
+    fireEvent.click(screen.getByRole('button', {name: '입장'}))
+    expect(screen.queryByText('첫 입장 투어 안내')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', {name: '입장 화면 닫기'}))
+    expect(screen.getByText('첫 입장 투어 안내')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', {name: '둘러보기'}))
+    expect(screen.queryByText('첫 입장 투어 안내')).not.toBeInTheDocument()
+    expect(screen.getByText('투어')).toHaveAttribute('data-open', 'true')
   })
 
   it('should restore a stored entry session without creating the scene before preferences are ready', () => {

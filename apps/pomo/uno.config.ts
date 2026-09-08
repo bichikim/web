@@ -1,10 +1,10 @@
 import {icons as tablerIcons} from '@iconify-json/tabler'
 import baseConfig from '@winter-love/unocss-config'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
-
 import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
 import {initialSceneFallbackShortcuts} from './scripts/unocss/loading'
+import {pomoComponentStylePreflight} from './scripts/unocss/component-styles'
 import {typographyShortcuts} from './scripts/unocss/typography'
 
 const sansFontFamily = [
@@ -174,6 +174,7 @@ const config = mergeConfigs([
       }
     },
     preflights: [
+      pomoComponentStylePreflight,
       {
         getCSS: ({theme}) => `
 [data-pomo-tooltip-trigger] {
@@ -596,5 +597,4 @@ config.presets = [
     },
   }),
 ]
-
 export default config

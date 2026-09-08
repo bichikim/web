@@ -12,6 +12,7 @@ import {
 import {usePEvents} from '../features/focus-room-dialogue/event-context'
 import {usePDisplayPreferences} from '../features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
+import type {PViseme} from '../features/lip-sync'
 import {
   type PActivity,
   type PGaze,
@@ -24,8 +25,9 @@ import {
   type ScenePeriod,
 } from '../features/focus-room-time'
 import {usePSay} from '../features/pomo-webmcp'
-import {useWeather} from '../features/weather'
+import {useWeather, type WeatherSceneCondition} from '../features/weather'
 import {
+  type DesktopMode,
   isDesktopBackgroundMode,
   useDesktopMode,
   useDesktopSafeAreaTop,
@@ -43,6 +45,7 @@ import {SceneToolbar} from './p-studio/Toolbar'
 import {useStudioScreenSaver} from './p-studio/use-screen-saver'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 import {PStudioTour} from './p-studio/Tour'
+import {PStudioTourHint} from './p-studio/TourHint'
 import {useStudioTour} from './p-studio/use-tour'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
@@ -80,10 +83,12 @@ const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
     }
   }
   const enter = () => {
+    const isFirstEntry = !events.hasEnteredFocusRoom() && !readFocusRoomEntrySession()
     writeFocusRoomEntrySession()
     if (!events.hasEnteredFocusRoom()) {
       events.enterFocusRoom()
     }
+    return isFirstEntry
   }
 
   return {enter, hide: () => setIsVisible(false), isVisible, restore}
@@ -94,6 +99,90 @@ const createLoadingHandler =
     setLoading(isLoading)
     setRendered((hasRendered) => hasRendered || !isLoading)
   }
+
+interface StudioSceneViewProps {
+  readonly activity: PActivity
+  readonly activeViseme: PViseme
+  readonly hasSceneRendered: boolean
+  readonly motionInput: PSceneMotionInput
+  readonly motionMode: PSceneMotionMode
+  readonly onLoadingChange: (isLoading: boolean) => void
+  readonly onMotionInputChange: (motionInput: PSceneMotionInput) => void
+  readonly scene: SceneAsset
+  readonly sceneGaze: PGaze
+  readonly sceneStyle: PSceneStyle
+  readonly time: SceneTime
+  readonly weatherCondition: WeatherSceneCondition
+  readonly isReady: boolean
+  readonly styleReady: boolean
+}
+
+const StudioSceneView = (props: StudioSceneViewProps) => (
+  <figure
+    aria-label={props.scene.label}
+    class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
+    role="img"
+  >
+    <Show when={!props.hasSceneRendered}>
+      <PSceneFallback />
+    </Show>
+    <Show when={props.isReady && props.styleReady}>
+      <PStudioScene
+        activity={props.activity}
+        depthSource={props.scene.depthSource}
+        gaze={props.sceneGaze}
+        motionInput={props.motionInput}
+        motionMode={props.motionMode}
+        onLoadingChange={props.onLoadingChange}
+        onMotionInputChange={props.onMotionInputChange}
+        source={props.scene.source}
+        sceneId={props.scene.id}
+        sceneStyle={props.sceneStyle}
+        time={props.time}
+        viseme={props.activeViseme}
+        weatherCondition={props.weatherCondition}
+      />
+    </Show>
+  </figure>
+)
+
+interface StudioOverlayProps {
+  readonly desktopMode: DesktopMode
+  readonly entryVisible: boolean
+  readonly hasEntered: boolean
+  readonly isTourHintVisible: boolean
+  readonly onDismissTourHint: () => void
+  readonly screenSaver: ReturnType<typeof useStudioScreenSaver>
+  readonly tour: ReturnType<typeof useStudioTour>
+  readonly tourButtonVisible: boolean
+}
+
+const StudioOverlay = (props: StudioOverlayProps) => (
+  <>
+    <PStudioTour tour={props.tour} />
+    <Show
+      when={
+        props.isTourHintVisible &&
+        !props.entryVisible &&
+        props.tourButtonVisible &&
+        props.desktopMode !== 'desktop'
+      }
+    >
+      <PStudioTourHint onDismiss={props.onDismissTourHint} />
+    </Show>
+    <PScreenSaver
+      isActive={
+        props.hasEntered &&
+        !isDesktopBackgroundMode(props.desktopMode) &&
+        props.screenSaver.isActive()
+      }
+      isMusicPlaying={props.screenSaver.isMusicPlaying()}
+      onDismiss={props.screenSaver.onDismiss}
+      timer={props.screenSaver.timer()}
+      track={props.screenSaver.currentTrack()}
+    />
+  </>
+)
 
 interface StudioDesktopSceneSettingsOptions {
   readonly scenePreferences: ReturnType<typeof usePScenePreferences>
@@ -154,6 +243,7 @@ export const PStudio = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
+  const [isTourHintVisible, setIsTourHintVisible] = createSignal(false)
   const tour = useStudioTour()
   const hasEntered = events.hasEnteredFocusRoom
   const entry = useStudioEntry(events)
@@ -191,6 +281,15 @@ export const PStudio = () => {
     ),
   )
   const handleLoadingChange = createLoadingHandler(setIsSceneLoading, setHasSceneRendered)
+  const handleEntry = () => {
+    if (entry.enter()) {
+      setIsTourHintVisible(true)
+    }
+  }
+  const handleTourOpen = () => {
+    setIsTourHintVisible(false)
+    tour.setIsOpen(true)
+  }
   useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
 
   return (
@@ -200,32 +299,22 @@ export const PStudio = () => {
       ref={tour.setStudioElement}
       style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
     >
-      <figure
-        aria-label={selectedScene().label}
-        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
-        role="img"
-      >
-        <Show when={!hasSceneRendered()}>
-          <PSceneFallback />
-        </Show>
-        <Show when={scenePreferences.isReady() && sceneStyleController.isReady()}>
-          <PStudioScene
-            activity={scenePreferences.activity()}
-            depthSource={selectedScene().depthSource}
-            gaze={sceneGaze()}
-            motionInput={motionInput()}
-            motionMode={motionMode()}
-            onLoadingChange={handleLoadingChange}
-            onMotionInputChange={setMotionInput}
-            source={selectedScene().source}
-            sceneId={selectedScene().id}
-            sceneStyle={sceneStyleController.sceneStyle()}
-            time={time()}
-            viseme={activeViseme()}
-            weatherCondition={weather.sceneCondition()}
-          />
-        </Show>
-      </figure>
+      <StudioSceneView
+        activity={scenePreferences.activity()}
+        activeViseme={activeViseme()}
+        hasSceneRendered={hasSceneRendered()}
+        isReady={scenePreferences.isReady()}
+        motionInput={motionInput()}
+        motionMode={motionMode()}
+        onLoadingChange={handleLoadingChange}
+        onMotionInputChange={setMotionInput}
+        scene={selectedScene()}
+        sceneGaze={sceneGaze()}
+        sceneStyle={sceneStyleController.sceneStyle()}
+        styleReady={sceneStyleController.isReady()}
+        time={time()}
+        weatherCondition={weather.sceneCondition()}
+      />
 
       <div class={CLASSES.ui} hidden={!hasEntered() || desktopMode.mode() === 'desktop'}>
         <Show when={hasEntered() && desktopMode.mode() !== 'desktop'}>
@@ -254,7 +343,7 @@ export const PStudio = () => {
               onScreenSaverDelayChange={screenSaver.onDelayChange}
               onSceneStyleChange={sceneStyleController.onSceneStyleChange}
               onTimeModeChange={scenePreferences.onTimeModeChange}
-              onTourOpen={() => tour.setIsOpen(true)}
+              onTourOpen={handleTourOpen}
               tourButtonVisible={displayPreferences.tourButtonVisible()}
               onTourButtonVisibleChange={displayPreferences.onTourButtonVisibleChange}
               onWeatherEnabledChange={weather.onEnabledChange}
@@ -277,19 +366,19 @@ export const PStudio = () => {
           </Show>
         </Show>
       </div>
-      <PStudioTour tour={tour} />
       <Show when={entry.isVisible()}>
-        <PEntry isExiting={hasEntered()} onEnter={entry.enter} onExitComplete={entry.hide} />
+        <PEntry isExiting={hasEntered()} onEnter={handleEntry} onExitComplete={entry.hide} />
       </Show>
       <SceneModelDownloadFallback isVisible={!hasEntered() || !scenePreferences.isReady()} />
-      <PScreenSaver
-        isActive={
-          hasEntered() && !isDesktopBackgroundMode(desktopMode.mode()) && screenSaver.isActive()
-        }
-        isMusicPlaying={screenSaver.isMusicPlaying()}
-        onDismiss={screenSaver.onDismiss}
-        timer={screenSaver.timer()}
-        track={screenSaver.currentTrack()}
+      <StudioOverlay
+        desktopMode={desktopMode.mode()}
+        entryVisible={entry.isVisible()}
+        hasEntered={hasEntered()}
+        isTourHintVisible={isTourHintVisible()}
+        onDismissTourHint={() => setIsTourHintVisible(false)}
+        screenSaver={screenSaver}
+        tour={tour}
+        tourButtonVisible={displayPreferences.tourButtonVisible()}
       />
     </section>
   )

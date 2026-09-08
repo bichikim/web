@@ -1,3 +1,4 @@
+export const pictureDiaryDrawingStyles = `
 .picture-diary-drawing__trigger {
   display: block;
   width: 100%;
@@ -34,3 +35,4 @@
 .picture-diary-drawing__done {
   margin-left: auto;
 }
+`

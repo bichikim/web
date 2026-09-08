@@ -25,7 +25,7 @@ export const PTourBody = <Step extends PTourStep>(props: PTourBodyProps<Step>) =
           <HTour.Content
             aria-labelledby={props.titleId}
             class={
-              'box-border max-h-[calc(100dvh-2rem)] w-[min(calc(100vw-2rem),22rem)] ' +
+              'box-border max-h-[calc(100dvh-2rem)] w-[min(calc(100vw-2rem),26rem)] ' +
               'overflow-y-auto rounded-panel border border-solid border-border bg-surface-strong ' +
               'p-5 text-foreground shadow-panel outline-none backdrop-blur-surface ' +
               'focus-visible:border-highlight motion-reduce:transition-none ' +

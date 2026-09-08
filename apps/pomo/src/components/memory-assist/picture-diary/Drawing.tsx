@@ -8,7 +8,6 @@ import {PModal} from '../../PModal'
 import {PModalTabList} from '../../PModalTabList'
 import {PictureDiaryCanvas} from './Canvas'
 import {useDrawingHistory} from './use-history'
-import './drawing.css'
 import {DrawingActions} from './Actions'
 import {DrawingTools} from './Tools'
 

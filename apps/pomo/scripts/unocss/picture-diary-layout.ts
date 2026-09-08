@@ -1,3 +1,4 @@
+export const pictureDiaryLayoutStyles = `
 .picture-diary-book__frame,
 .picture-diary-drawing__surface {
   --picture-diary-ink: 51 48 43;
@@ -64,3 +65,4 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+`

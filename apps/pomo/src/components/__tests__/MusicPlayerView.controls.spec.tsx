@@ -40,6 +40,17 @@ describe('MusicPlayerView controls', () => {
     ).toBe('expand')
   })
 
+  it('should keep album and expand buttons at the primary utility size', () => {
+    const result = renderMusicPlayerView()
+    const utilityButtons =
+      result.container.querySelectorAll<HTMLButtonElement>('[data-player-utility]')
+
+    expect(utilityButtons).toHaveLength(2)
+    for (const utilityButton of utilityButtons) {
+      expect(utilityButton).toHaveClass('size-10')
+    }
+  })
+
   it('should keep the summary play button stationary on hover', () => {
     const collapsedResult = renderMusicPlayerView({expanded: false})
     const summaryPlayButton = collapsedResult.container.querySelector('.pomo-player__play--summary')
@@ -64,6 +75,18 @@ describe('MusicPlayerView controls', () => {
     expect(
       expandedPlayButton.classList.contains('[transition:transform_160ms_ease,_filter_160ms_ease]'),
     ).toBe(true)
+  })
+
+  it('should keep player icons from shrinking in compact layouts', () => {
+    const result = renderMusicPlayerView()
+    const icons = result.container.querySelectorAll<HTMLElement>(
+      '.pomo-player [class*="i-tabler-"], .pomo-player [class*="i-pomo-"]',
+    )
+
+    expect(icons.length).toBeGreaterThan(0)
+    for (const icon of icons) {
+      expect(icon).toHaveClass('flex-none')
+    }
   })
 
   it('should replace the compact summary artwork with the collapsed play button', () => {
@@ -100,6 +123,8 @@ describe('MusicPlayerView controls', () => {
     expect(summaryPlayButton?.classList.contains('pomo-player__play--summary')).toBe(true)
     expect(summaryPlayIcon?.classList.contains('size-6')).toBe(true)
     expect(summaryPauseIcon?.classList.contains('size-6')).toBe(true)
+    expect(summaryPlayIcon?.classList.contains('flex-none')).toBe(true)
+    expect(summaryPauseIcon?.classList.contains('flex-none')).toBe(true)
 
     cleanup()
 
