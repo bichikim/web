@@ -11,5 +11,5 @@
     "types": ["vite/client"],
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "vite.config.ts", "uno.config.ts"]
+  "include": ["src", "vite.config.ts", "uno.config.ts", "../../vitest.d.ts"]
 }
