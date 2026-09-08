@@ -31,6 +31,7 @@ const getDateInputValue = (date: Date) =>
 const getTimeInputValue = (date: Date) =>
   `${padNumber(date.getHours())}:${padNumber(date.getMinutes())}`
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
+const systemNow = () => new Date()
 const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
   if (event.allDay) {
     if (defaultAlarmDate !== undefined) {
@@ -49,6 +50,7 @@ const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
 }
 
 interface CalendarAlarmControlProps {
+  readonly now?: Accessor<Date>
   readonly defaultAlarmDate?: Date
   readonly event: CalendarEvent
   readonly memos: Accessor<ReadonlyArray<MemoryMemo>>
@@ -76,6 +78,7 @@ const useCalendarAlarmController = (
   event: Accessor<CalendarEvent>,
   memos: Accessor<ReadonlyArray<MemoryMemo>>,
   defaultAlarmDate: Accessor<Date | undefined>,
+  clock: Accessor<Date>,
 ): CalendarAlarmController => {
   const alarmId = () => getMemoId(event().id)
   const events = usePEvents()
@@ -121,7 +124,7 @@ const useCalendarAlarmController = (
 
   const saveAlarm = async () => {
     const alarmAt = new Date(`${date()}T${time()}:00`)
-    if (Number.isNaN(alarmAt.getTime()) || alarmAt.getTime() <= Date.now()) {
+    if (Number.isNaN(alarmAt.getTime()) || alarmAt.getTime() <= clock().getTime()) {
       setMessage(m.calendar_alarm_invalid_time())
       return
     }
@@ -139,7 +142,7 @@ const useCalendarAlarmController = (
         await events.deleteDialogue(currentMemo.dialogueId)
       }
 
-      const now = new Date()
+      const now = clock()
       const currentAlarmId = alarmId()
       await updateMemoryMemos((currentMemos) => {
         const existingMemo = currentMemos.find((memo) => memo.id === currentAlarmId)
@@ -218,10 +221,12 @@ const useCalendarAlarmController = (
 }
 
 export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
+  const clock = () => (props.now ?? systemNow)()
   const alarm = useCalendarAlarmController(
     () => props.event,
     () => props.memos(),
     () => props.defaultAlarmDate,
+    clock,
   )
 
   return (
@@ -282,7 +287,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
             <PInput
               unstyled
               class={INPUT_CLASSES}
-              min={getDateInputValue(new Date())}
+              min={getDateInputValue(clock())}
               onInput={(event) => alarm.setDate(event.currentTarget.value)}
               type="date"
               value={alarm.date()}
