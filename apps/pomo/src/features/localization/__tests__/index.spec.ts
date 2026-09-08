@@ -127,3 +127,49 @@ describe('scene localization', () => {
     ])
   })
 })
+it('should preserve every original city label and option order in both locales', () => {
+  const expected = [
+    ['seoul', 'Seoul', '서울'],
+    ['busan', 'Busan', '부산'],
+    ['daegu', 'Daegu', '대구'],
+    ['incheon', 'Incheon', '인천'],
+    ['gwangju', 'Gwangju', '광주'],
+    ['daejeon', 'Daejeon', '대전'],
+    ['ulsan', 'Ulsan', '울산'],
+    ['jeju', 'Jeju', '제주'],
+    ['sejong', 'Sejong', '세종'],
+    ['suwon', 'Suwon', '수원'],
+    ['seongnam', 'Seongnam', '성남'],
+    ['goyang', 'Goyang', '고양'],
+    ['yongin', 'Yongin', '용인'],
+    ['chuncheon', 'Chuncheon', '춘천'],
+    ['wonju', 'Wonju', '원주'],
+    ['gangneung', 'Gangneung', '강릉'],
+    ['sokcho', 'Sokcho', '속초'],
+    ['cheongju', 'Cheongju', '청주'],
+    ['chungju', 'Chungju', '충주'],
+    ['cheonan', 'Cheonan', '천안'],
+    ['asan', 'Asan', '아산'],
+    ['jeonju', 'Jeonju', '전주'],
+    ['iksan', 'Iksan', '익산'],
+    ['gunsan', 'Gunsan', '군산'],
+    ['mokpo', 'Mokpo', '목포'],
+    ['yeosu', 'Yeosu', '여수'],
+    ['suncheon', 'Suncheon', '순천'],
+    ['pohang', 'Pohang', '포항'],
+    ['gyeongju', 'Gyeongju', '경주'],
+    ['gumi', 'Gumi', '구미'],
+    ['andong', 'Andong', '안동'],
+    ['changwon', 'Changwon', '창원'],
+    ['gimhae', 'Gimhae', '김해'],
+    ['jinju', 'Jinju', '진주'],
+    ['geoje', 'Geoje', '거제'],
+    ['miryang', 'Miryang', '밀양'],
+  ] as const
+  expect(getLocalizedWeatherCityOptions({locale: 'en'})).toEqual(
+    expected.map(([value, label]) => ({label, value})),
+  )
+  expect(getLocalizedWeatherCityOptions({locale: 'ko'})).toEqual(
+    expected.map(([value, , label]) => ({label, value})),
+  )
+})

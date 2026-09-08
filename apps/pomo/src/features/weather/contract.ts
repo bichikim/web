@@ -1,44 +1,8 @@
 import {z} from 'zod'
 
-export const WEATHER_CITY_SLUGS = [
-  'seoul',
-  'busan',
-  'daegu',
-  'incheon',
-  'gwangju',
-  'daejeon',
-  'ulsan',
-  'jeju',
-  'sejong',
-  'suwon',
-  'seongnam',
-  'goyang',
-  'yongin',
-  'chuncheon',
-  'wonju',
-  'gangneung',
-  'sokcho',
-  'cheongju',
-  'chungju',
-  'cheonan',
-  'asan',
-  'jeonju',
-  'iksan',
-  'gunsan',
-  'mokpo',
-  'yeosu',
-  'suncheon',
-  'pohang',
-  'gyeongju',
-  'gumi',
-  'andong',
-  'changwon',
-  'gimhae',
-  'jinju',
-  'geoje',
-  'miryang',
-] as const
-export type WeatherCitySlug = (typeof WEATHER_CITY_SLUGS)[number]
+import {WEATHER_CITY_SLUGS, type WeatherCitySlug} from './catalog'
+
+export {WEATHER_CITY_SLUGS, type WeatherCitySlug} from './catalog'
 const weatherCitySlugSchema = z.enum(WEATHER_CITY_SLUGS)
 
 const weatherLocationIdSchema = z

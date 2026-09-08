@@ -229,3 +229,58 @@ it('should report a missing registered location and hide server-only coordinates
     }),
   ).toMatchObject({legacyCitySlug: 'seoul'})
 })
+it('should preserve all legacy coordinates and IDs without reading the database', async () => {
+  const mocks = createDatabase()
+  const expected = [
+    ['seoul', 37.5665, 126.978],
+    ['busan', 35.1796, 129.0756],
+    ['daegu', 35.8714, 128.6014],
+    ['incheon', 37.4563, 126.7052],
+    ['gwangju', 35.1595, 126.8526],
+    ['daejeon', 36.3504, 127.3845],
+    ['ulsan', 35.5384, 129.3114],
+    ['jeju', 33.4996, 126.5312],
+    ['sejong', 36.48, 127.289],
+    ['suwon', 37.2636, 127.0286],
+    ['seongnam', 37.42, 127.1267],
+    ['goyang', 37.6584, 126.832],
+    ['yongin', 37.2411, 127.1776],
+    ['chuncheon', 37.8813, 127.7298],
+    ['wonju', 37.3422, 127.9202],
+    ['gangneung', 37.7519, 128.8761],
+    ['sokcho', 38.207, 128.5918],
+    ['cheongju', 36.6424, 127.489],
+    ['chungju', 36.991, 127.926],
+    ['cheonan', 36.8151, 127.1139],
+    ['asan', 36.7898, 127.0018],
+    ['jeonju', 35.8242, 127.148],
+    ['iksan', 35.9483, 126.9577],
+    ['gunsan', 35.9677, 126.7366],
+    ['mokpo', 34.8118, 126.3922],
+    ['yeosu', 34.7604, 127.6622],
+    ['suncheon', 34.9506, 127.4875],
+    ['pohang', 36.019, 129.3435],
+    ['gyeongju', 35.8562, 129.2247],
+    ['gumi', 36.1195, 128.3446],
+    ['andong', 36.5684, 128.7294],
+    ['changwon', 35.2281, 128.6811],
+    ['gimhae', 35.2285, 128.8894],
+    ['jinju', 35.1799, 128.1076],
+    ['geoje', 34.8806, 128.6211],
+    ['miryang', 35.5038, 128.7464],
+  ] as const
+  await Promise.all(
+    expected.map(async ([slug, latitude, longitude]) => {
+      await expect(
+        getWorldWeatherLocation(`openweather:legacy:${slug}`, mocks.database),
+      ).resolves.toEqual({
+        ...LEGACY_WEATHER_LOCATIONS[slug],
+        latitude,
+        longitude,
+        providerLocationId: `legacy:${slug}`,
+      })
+    }),
+  )
+  expect(mocks.database.select).not.toHaveBeenCalled()
+  expect(mocks.insert).not.toHaveBeenCalled()
+})

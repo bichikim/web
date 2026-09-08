@@ -7,6 +7,7 @@ import {
   type WeatherPreferenceRepository,
   type WeatherPreferenceStorage,
 } from '../preference'
+import type {WeatherLocation} from '../contract'
 
 const STORAGE_KEY = 'pomo:weather-preference:v2'
 const LEGACY_STORAGE_KEY = 'pomo:weather-preference:v1'
@@ -265,4 +266,123 @@ it('should wait for an active native write before reading the preference', async
   await expect(pendingWrite).resolves.toBeUndefined()
   await expect(pendingRead).resolves.toEqual(disabledPreference)
   expect(storage.readNative).toHaveBeenCalledOnce()
+})
+
+const storedLocation = {
+  country: 'US',
+  id: 'openweather:40.7128,-74.0060',
+  name: 'New York',
+  region: 'New York',
+} as const satisfies WeatherLocation
+const storedPreference = {...DEFAULT_WEATHER_PREFERENCE, location: storedLocation}
+const restoredLocation = {...storedLocation, names: {en: 'New York', ko: '뉴욕'}}
+
+it.each([false, true])(
+  'should persist restored names through the repository with native=%s',
+  async (native) => {
+    storage.isNative.mockReturnValue(native)
+    webValues.set(STORAGE_KEY, storedPreference)
+    nativeValues.set(STORAGE_KEY, storedPreference)
+    const restoreLocation = vi.fn().mockResolvedValue(restoredLocation)
+    const restoring = createWeatherPreferenceRepository({restoreLocation, storage})
+    expect(await restoring.read()).toEqual({...storedPreference, location: restoredLocation})
+    expect(restoreLocation).toHaveBeenCalledWith(storedLocation)
+    expect(webValues.get(STORAGE_KEY)).toEqual({...storedPreference, location: restoredLocation})
+    if (native) {
+      expect(nativeValues.get(STORAGE_KEY)).toEqual(webValues.get(STORAGE_KEY))
+    }
+  },
+)
+
+it('should preserve a different city selected during name restoration', async () => {
+  const pending = Promise.withResolvers<WeatherLocation>()
+  const restoreLocation = vi.fn(() => pending.promise)
+  webValues.set(STORAGE_KEY, storedPreference)
+  const restoring = createWeatherPreferenceRepository({restoreLocation, storage})
+  const reading = restoring.read()
+  await vi.waitFor(() => expect(restoreLocation).toHaveBeenCalledOnce())
+  await restoring.write(disabledPreference)
+  pending.resolve(restoredLocation)
+  expect(await reading).toEqual(disabledPreference)
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+})
+
+it('should merge names without reverting settings changed during lookup', async () => {
+  const pending = Promise.withResolvers<WeatherLocation>()
+  const restoreLocation = vi.fn(() => pending.promise)
+  webValues.set(STORAGE_KEY, storedPreference)
+  const restoring = createWeatherPreferenceRepository({restoreLocation, storage})
+  const reading = restoring.read()
+  await vi.waitFor(() => expect(restoreLocation).toHaveBeenCalledOnce())
+  await restoring.write({...storedPreference, enabled: false, sceneMode: 'rain'})
+  pending.resolve(restoredLocation)
+  expect(await reading).toEqual({
+    ...storedPreference,
+    enabled: false,
+    location: restoredLocation,
+    sceneMode: 'rain',
+  })
+})
+
+it('should keep stored data when name lookup fails', async () => {
+  webValues.set(STORAGE_KEY, storedPreference)
+  const restoring = createWeatherPreferenceRepository({
+    restoreLocation: async () => {
+      throw new Error('lookup failed')
+    },
+    storage,
+  })
+  expect(await restoring.read()).toEqual(storedPreference)
+  expect(storage.writeWeb).not.toHaveBeenCalled()
+})
+
+it('should avoid writing when lookup does not enrich the stored city', async () => {
+  webValues.set(STORAGE_KEY, storedPreference)
+  const restoring = createWeatherPreferenceRepository({
+    restoreLocation: async (location) => location,
+    storage,
+  })
+  expect(await restoring.read()).toEqual(storedPreference)
+  expect(storage.writeWeb).not.toHaveBeenCalled()
+})
+
+it('should return a newer selection written while restored names are being persisted', async () => {
+  storage.isNative.mockReturnValue(true)
+  nativeValues.set(STORAGE_KEY, storedPreference)
+  const pending = Promise.withResolvers<void>()
+  storage.writeNative.mockImplementationOnce(async (key, value) => {
+    await pending.promise
+    nativeValues.set(key, value)
+  })
+  const restoring = createWeatherPreferenceRepository({
+    restoreLocation: async () => restoredLocation,
+    storage,
+  })
+  const reading = restoring.read()
+  await vi.waitFor(() => expect(storage.writeNative).toHaveBeenCalledOnce())
+  const selection = restoring.write(disabledPreference)
+  pending.resolve()
+  await selection
+  expect(await reading).toEqual(disabledPreference)
+  expect(nativeValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+})
+
+it('should not write stale names if the selection changes during the final storage read', async () => {
+  webValues.set(STORAGE_KEY, storedPreference)
+  let selection: Promise<void> | undefined
+  const restoring = createWeatherPreferenceRepository({
+    restoreLocation: async () => {
+      storage.readWeb.mockImplementationOnce(() => {
+        selection = restoring.write(disabledPreference)
+        return storedPreference
+      })
+      return restoredLocation
+    },
+    storage,
+  })
+  expect(await restoring.read()).toEqual(disabledPreference)
+  await selection
+  expect(storage.writeWeb).toHaveBeenCalledOnce()
+  expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })

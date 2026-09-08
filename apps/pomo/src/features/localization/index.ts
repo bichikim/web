@@ -8,6 +8,7 @@ import {
 import type {PSceneMotionInput, PSceneMotionMode} from '../focus-room-animation'
 import type {SceneTimeMode} from '../focus-room-time'
 import {
+  WEATHER_CITIES_BY_SLUG,
   WEATHER_CITY_SLUGS,
   WEATHER_SCENE_MODES,
   type WeatherCitySlug,
@@ -146,49 +147,10 @@ export const getLocalizedWeatherLabel = (
   }
 }
 
-const WEATHER_CITY_LABELS = {
-  andong: (options: LocalizationOptions) => m.weather_andong({}, options),
-  asan: (options: LocalizationOptions) => m.weather_asan({}, options),
-  busan: (options: LocalizationOptions) => m.weather_busan({}, options),
-  changwon: (options: LocalizationOptions) => m.weather_changwon({}, options),
-  cheonan: (options: LocalizationOptions) => m.weather_cheonan({}, options),
-  cheongju: (options: LocalizationOptions) => m.weather_cheongju({}, options),
-  chuncheon: (options: LocalizationOptions) => m.weather_chuncheon({}, options),
-  chungju: (options: LocalizationOptions) => m.weather_chungju({}, options),
-  daegu: (options: LocalizationOptions) => m.weather_daegu({}, options),
-  daejeon: (options: LocalizationOptions) => m.weather_daejeon({}, options),
-  gangneung: (options: LocalizationOptions) => m.weather_gangneung({}, options),
-  geoje: (options: LocalizationOptions) => m.weather_geoje({}, options),
-  gimhae: (options: LocalizationOptions) => m.weather_gimhae({}, options),
-  goyang: (options: LocalizationOptions) => m.weather_goyang({}, options),
-  gumi: (options: LocalizationOptions) => m.weather_gumi({}, options),
-  gunsan: (options: LocalizationOptions) => m.weather_gunsan({}, options),
-  gwangju: (options: LocalizationOptions) => m.weather_gwangju({}, options),
-  gyeongju: (options: LocalizationOptions) => m.weather_gyeongju({}, options),
-  iksan: (options: LocalizationOptions) => m.weather_iksan({}, options),
-  incheon: (options: LocalizationOptions) => m.weather_incheon({}, options),
-  jeju: (options: LocalizationOptions) => m.weather_jeju({}, options),
-  jeonju: (options: LocalizationOptions) => m.weather_jeonju({}, options),
-  jinju: (options: LocalizationOptions) => m.weather_jinju({}, options),
-  miryang: (options: LocalizationOptions) => m.weather_miryang({}, options),
-  mokpo: (options: LocalizationOptions) => m.weather_mokpo({}, options),
-  pohang: (options: LocalizationOptions) => m.weather_pohang({}, options),
-  sejong: (options: LocalizationOptions) => m.weather_sejong({}, options),
-  seongnam: (options: LocalizationOptions) => m.weather_seongnam({}, options),
-  seoul: (options: LocalizationOptions) => m.weather_seoul({}, options),
-  sokcho: (options: LocalizationOptions) => m.weather_sokcho({}, options),
-  suncheon: (options: LocalizationOptions) => m.weather_suncheon({}, options),
-  suwon: (options: LocalizationOptions) => m.weather_suwon({}, options),
-  ulsan: (options: LocalizationOptions) => m.weather_ulsan({}, options),
-  wonju: (options: LocalizationOptions) => m.weather_wonju({}, options),
-  yeosu: (options: LocalizationOptions) => m.weather_yeosu({}, options),
-  yongin: (options: LocalizationOptions) => m.weather_yongin({}, options),
-} satisfies Readonly<Record<WeatherCitySlug, (options: LocalizationOptions) => string>>
-
 export const getLocalizedWeatherCityLabel = (
   citySlug: WeatherCitySlug,
   options: LocalizationOptions = {},
-) => WEATHER_CITY_LABELS[citySlug](options)
+) => WEATHER_CITIES_BY_SLUG[citySlug].names[options.locale ?? getLocale()]
 
 export const getLocalizedWeatherCityOptions = (options: LocalizationOptions = {}) =>
   WEATHER_CITY_SLUGS.map((citySlug) => ({
