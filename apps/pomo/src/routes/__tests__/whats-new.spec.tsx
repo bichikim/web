@@ -4,7 +4,7 @@ import {A} from '@solidjs/router'
 import {render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import catalog from '../../../public/versions/ko.json' with {type: 'json'}
+import catalog from '../../../public/versions/v2/ko.json' with {type: 'json'}
 
 import WhatsNewPage from '../whats-new'
 
@@ -27,12 +27,16 @@ it('should show the newest changes and the first release from the public catalog
   render(() => <WhatsNewPage />)
 
   expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeTruthy()
-  expect(screen.getByRole('heading', {name: '업데이트'})).toBeTruthy()
+  expect(screen.getByRole('heading', {name: 'Pomo 업데이트 안내'})).toBeVisible()
+  expect(
+    screen.getByText('기억할 일부터 하루의 기록까지, Pomo에서 할 수 있는 일이 늘어났어요.'),
+  ).toBeVisible()
+  expect(screen.getByText('메모와 알림')).toBeVisible()
   expect(screen.getByText('2026. 09. 03 00:57')).toBeTruthy()
   expect(
     screen.getByText('집중 공간의 캐릭터 움직임과 표정을 더 자연스럽게 다듬었습니다.'),
   ).toBeTruthy()
-  expect(screen.getAllByRole('listitem')).toHaveLength(13)
+  expect(screen.getAllByRole('listitem')).toHaveLength(21)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   expect(screen.getByText('2026. 08. 25 05:26')).toBeTruthy()
   expect(screen.getAllByRole('link', {name: '앱으로 돌아가기'})).toHaveLength(2)
