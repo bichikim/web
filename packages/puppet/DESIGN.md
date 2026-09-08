@@ -4,19 +4,19 @@ Puppet is a compact, canvas-first modeling and animation editor. Preserve the es
 
 This document records the accepted design contract. Use the linked components and styles to implement it; do not recreate their appearance independently. Existing one-off styles are not permission to introduce more exceptions. An explicit user-requested design change takes precedence; update this document when that change becomes the new shared convention.
 
-Shared primitives live in [design-system](src/design-system/index.ts), with their tests, size contract, icons, and UnoCSS shortcuts. Keep editor-specific panels and modeling behavior in the editor. Register shared styles through [uno.config.ts](uno.config.ts); do not import style configuration into runtime components.
+Shared primitives live in [design-system](src/design-system/index.ts), with their tests and size contract. Build-only icons and control shortcuts live in `uno/shortcuts`, outside runtime source. Keep editor-specific panels and modeling behavior in the editor. Register shared styles through [uno.config.ts](uno.config.ts); do not import style configuration into runtime components.
 
 ## Implementation map
 
 | Concern                                       | Source of truth                                                                                          |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Shared control sizes, inputs, buttons, colors | [Control styles](src/design-system/shortcuts.ts), [size API](src/design-system/control-size.ts)          |
+| Shared control sizes, inputs, buttons, colors | [Control styles](uno/shortcuts/controls.ts), [size API](src/design-system/control-size.ts)               |
 | Workspace, panels, typography                 | [Layout styles](uno/shortcuts/layout.ts), [panel layout](src/editor/internal/EditorPanelLayout.tsx)      |
 | Layer density, selection, names               | [Layer styles](uno/shortcuts/layers.ts), [layer panel](src/editor/internal/EditorLayerPanel.tsx)         |
 | Canvas, rulers, floating controls             | [Canvas styles](uno/shortcuts/canvas.ts), [camera viewport](src/editor/internal/CameraViewport.tsx)      |
 | Parameters and keyform markers                | [Parameter styles](uno/shortcuts/parameters.ts)                                                          |
 | Dialogs and menus                             | [Dialog styles](uno/shortcuts/dialogs.ts), [portal provider](src/design-system/EditorPortalProvider.tsx) |
-| Icons and motion                              | [Icon shortcuts](src/design-system/icons.ts), [UnoCSS configuration](uno.config.ts)                      |
+| Icons and motion                              | [Icon shortcuts](uno/shortcuts/icons.ts), [UnoCSS configuration](uno.config.ts)                          |
 
 CSS and UnoCSS own visual values. TypeScript communicates semantic state through classes and data attributes, or runtime measurements through CSS custom properties. Follow the parent AGENTS.md restrictions on styling and layering; do not add `z-index`.
 

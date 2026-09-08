@@ -1,4 +1,4 @@
-import {numberFieldDescendants} from '../../src/design-system/shortcuts'
+import {numberFieldDescendants} from './controls'
 
 export const dialogsShortcuts = {
   'auto-mesh-dialog-content': [
