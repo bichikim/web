@@ -222,3 +222,24 @@ it('should omit the guide-button preference without a change callback', () => {
   render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
   expect(screen.queryByRole('button', {name: '투어 버튼 표시'})).not.toBeInTheDocument()
 })
+
+it('should show both toolbar toggles enabled by default and emit hidden choices', () => {
+  const tools = vi.fn()
+  const memory = vi.fn()
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onToolsButtonVisibleChange={tools}
+      onMemoryAssistVisibleChange={memory}
+    />
+  ))
+  for (const [label, change] of [
+    ['도구 표시', tools],
+    ['기억보조 표시', memory],
+  ] as const) {
+    const control = screen.getByRole('button', {name: label})
+    expect(control).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(control)
+    expect(change).toHaveBeenCalledWith(false)
+  }
+})

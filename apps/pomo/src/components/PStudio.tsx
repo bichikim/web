@@ -10,7 +10,10 @@ import {
   usePSceneStyle,
 } from '../features/focus-room-animation'
 import {usePEvents} from '../features/focus-room-dialogue/event-context'
-import {usePDisplayPreferences} from '../features/focus-room-display-preferences'
+import {
+  usePDisplayPreferences,
+  type PDisplayPreferencesController,
+} from '../features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import type {PViseme} from '../features/lip-sync'
 import {
@@ -233,6 +236,17 @@ const useStudioRuntime = (options: StudioRuntimeOptions) => {
   })
 }
 
+const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
+  get memoryAssistVisible() {
+    return preferences.memoryAssistVisible()
+  },
+  get toolsButtonVisible() {
+    return preferences.toolsButtonVisible()
+  },
+  onMemoryAssistVisibleChange: preferences.onMemoryAssistVisibleChange,
+  onToolsButtonVisibleChange: preferences.onToolsButtonVisibleChange,
+})
+
 export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -330,6 +344,7 @@ export const PStudio = () => {
           />
           <Show when={scenePreferences.isReady()}>
             <SceneToolbar
+              {...toolbarVisibility(displayPreferences)}
               activity={scenePreferences.activity()}
               canUseGyroscope={canUseGyroscope()}
               dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}

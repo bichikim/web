@@ -61,6 +61,7 @@
     "dexie": "^4.4.4",
     "drizzle-orm": "^0.45.2",
     "h3": "catalog:",
+    "korean-lunar-calendar": "^0.4.0",
     "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
     "music-metadata": "^11.15.0",

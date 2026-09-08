@@ -194,6 +194,18 @@
           ],
           "name": "Pretendard",
           "use": "한국어와 라틴 문자 사용자 인터페이스 글꼴"
+        },
+        {
+          "condition": "저작권 및 MIT 라이선스 고지를 배포물에 보존합니다.",
+          "license": "MIT",
+          "links": [
+            {
+              "label": "라이선스 원문",
+              "url": "https://github.com/usingsky/korean_lunar_calendar_js/blob/main/LICENSE"
+            }
+          ],
+          "name": "korean-lunar-calendar",
+          "use": "한국 음력·양력 변환과 손 없는 날 계산"
         }
       ],
       "id": "core-software",
