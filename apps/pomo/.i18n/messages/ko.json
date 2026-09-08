@@ -840,5 +840,7 @@
   "picker_clear": "선택 지우기",
   "picker_today": "오늘",
   "picker_hint": "방향키로 날짜 이동, Enter로 선택, Escape로 닫기",
-  "tools_precision": "결과는 유효숫자 최대 12자리로 표시합니다."
+  "tools_precision": "결과는 유효숫자 최대 12자리로 표시합니다.",
+  "settings_tools_visible": "도구 표시",
+  "settings_memory_visible": "기억보조 표시"
 }

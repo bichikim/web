@@ -88,12 +88,12 @@ export const CLASSES = {
     'max-lg:[&>.pomo-pomodoro]:static max-lg:[&>.pomo-pomodoro]:float-left',
     'max-lg:[&>.pomo-pomodoro]:mr-2',
     'max-lg:[&>.pomo-scene-toolbar]:static max-lg:[&>.pomo-scene-toolbar]:block',
-    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions]:block',
-    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions]:text-right',
-    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions]:leading-[3.75rem]',
-    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions>div]:inline-flex',
-    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions>div]:align-top',
-    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions>div]:ml-2',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:block',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:text-right',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:leading-[3.75rem]',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:inline-flex',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:align-top',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:ml-2',
   ),
 } as const
 

@@ -173,3 +173,12 @@ describe('SceneToolbar', () => {
     expect(view.container.firstElementChild).not.toHaveClass('absolute')
   })
 })
+
+it('should hide optional toolbar controls while keeping settings available', () => {
+  render(() => (
+    <SceneToolbar {...baseProps} toolsButtonVisible={false} memoryAssistVisible={false} />
+  ))
+  expect(screen.queryByRole('button', {name: '도구'})).not.toBeInTheDocument()
+  expect(screen.queryByText('memory assist control')).not.toBeInTheDocument()
+  expect(screen.getByText('settings control')).toBeInTheDocument()
+})

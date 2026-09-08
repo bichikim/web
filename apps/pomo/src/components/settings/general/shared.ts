@@ -14,6 +14,10 @@ export const CLASSES = {
 } as const
 
 export interface PSettingsProps {
+  readonly toolsButtonVisible?: boolean
+  readonly onToolsButtonVisibleChange?: (visible: boolean) => void
+  readonly memoryAssistVisible?: boolean
+  readonly onMemoryAssistVisibleChange?: (visible: boolean) => void
   readonly tourButtonVisible?: boolean
   readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly activity?: PActivity

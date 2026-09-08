@@ -148,3 +148,27 @@ pnpm --filter @apps/pomo build:apps-in-toss-ssg
 
 1. **P3 — 외부 저장소·클립보드·시계 경계 주입:** [저장소](../../../src/features/tools/selection-storage.ts), [복무 설정](../../../src/features/tools/service-storage.ts), [복사](../../../src/features/tools/clipboard.ts)는 런타임 전역에 의존한다. 실제 테스트가 SDK 모듈 모킹과 `ReactNativeWebView`·`navigator` 전역 대체를 요구한다. [날짜 선택기](../../../src/components/date-picker/use-picker.ts), [전역일](../../../src/components/tools/Service.tsx), [손 없는 날](../../../src/components/tools/Moving.tsx)의 현재 시각도 내부에서 직접 읽는다. 기본 런타임 어댑터를 유지하며 저장소·복사·시계를 주입하면 실패·시간 경계 테스트를 독립적으로 실행할 수 있다. 승인 후 별도 리팩터링할 수 있다.
 2. **P4 — 미사용 번역 키:** `picker_day`, `picker_today`는 한·영 메시지에만 있고 소스 소비자가 없다. 실제 필요한 시점에 추가하도록 두 키를 제거하면 번역 관리 범위가 줄어든다.
+
+### 표시 설정과 가용 너비 후속 검증
+
+설정 → 일반의 `기억보조 표시`, `도구 표시`는 기본 켜짐이다. 기존 표시 설정 저장소에 두 필드를 추가했으며 이전 저장값에는 켜짐을 적용한다. 웹과 앱인토스 저장소를 사용하고 복원 중 사용자가 변경한 값을 보존한다. 숨겨도 설정 버튼은 유지한다.
+
+툴바는 화면 폭 분기점 대신 표시된 버튼 너비·간격과 포모도로가 차지하는 공간을 측정한다. 여유가 있으면 선물·투어·도구·기억보조·설정의 시각 순서를 적용하며, 부족하면 보조 버튼을 뒤에 배치해 다음 줄에서 전체 폭을 사용한다. 날씨는 별도 줄에서 필요한 너비를 유지한다. 도구를 먼저 두는 DOM 순서는 유지되므로 넓은 화면의 시각 순서와 Tab 순서는 다르다.
+
+후속 전체 리뷰 2회에서 재현된 P0/P1/P2는 없었다. 관찰자의 너비 변경·버튼 추가 재계산·해제 시 disconnect 회귀 테스트를 추가했다. 아래 테스트는 47개 모두 통과했다.
+
+```sh
+wallaby run apps/pomo/src/features/focus-room-display-preferences/__tests__/*.spec.* apps/pomo/src/components/settings/general/__tests__/Display.spec.tsx apps/pomo/src/components/p-studio/__tests__/Toolbar.spec.tsx apps/pomo/src/components/p-studio/__tests__/use-toolbar-wrap.spec.tsx apps/pomo/src/components/__tests__/PStudio.spec.tsx --config wallaby.js
+pnpm --filter @apps/pomo typecheck
+pnpm lint
+pnpm format
+```
+
+실제 Chrome에서 두 스위치의 기본 켜짐, 변경 직후 버튼 숨김, 새로고침 후 숨김 복원을 확인했다. 449px에서 다섯 버튼이 이전 순서로 한 줄에 배치되고 300px에서는 두 줄로 배치됨을 확인했다. 앱인토스 저장소는 모의 경계 테스트이며 실기기는 미검증이다.
+
+이번 범위의 미구현 후속 제안:
+
+1. **P3 — 표시 설정 복원 중복 축소:** `use-preferences.ts`에서 필드별 signal·revision·복원·변경 검사를 반복한다. 설정 추가 시 여러 구간을 함께 수정해야 한다. 필드별 최신 변경을 보존하는 계약을 유지하며 중복을 줄이는 리팩터링을 별도 승인 후 진행할 수 있다.
+2. **P3 — 너비 관찰자 테스트 경계 분리:** `use-toolbar-wrap.spec.tsx`는 관찰자 전역과 DOM 측정을 대체한다. 너비 판정을 명시적 입력으로 분리하고 실제 배치는 브라우저 테스트로 검증하면 전역 대체 범위를 줄일 수 있다. 현재 기능 결함이 확인된 것은 아니다.
+
+이번 범위의 P4는 없다.
