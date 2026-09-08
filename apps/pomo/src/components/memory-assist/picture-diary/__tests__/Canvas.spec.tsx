@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
@@ -215,4 +215,74 @@ it('should erase crossed strokes during one drag and record one undo step', () =
   pointer('pointermove', 80)
   expect(hitTest).not.toHaveBeenCalled()
   Reflect.deleteProperty(document, 'elementsFromPoint')
+})
+
+it('should cancel an active stroke when the drawing history changes', () => {
+  const initialStroke = {
+    points: [
+      {x: 0.1, y: 0.1},
+      {x: 0.2, y: 0.2},
+    ],
+  }
+  let latest: ReadonlyArray<PictureDiaryStroke> = [initialStroke]
+  const TestCanvas = () => {
+    const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([initialStroke])
+    const [gestureRevision, setGestureRevision] = createSignal(0)
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            latest = [initialStroke]
+            setStrokes([initialStroke])
+            setGestureRevision((revision) => revision + 1)
+          }}
+        >
+          undo
+        </button>
+        <PictureDiaryCanvas
+          gestureRevision={gestureRevision()}
+          strokes={strokes()}
+          onChange={(next) => {
+            latest = next
+            setStrokes(next)
+          }}
+        />
+      </>
+    )
+  }
+  render(() => <TestCanvas />)
+  const canvas = screen.getByLabelText('그림 그리는 곳')
+  const releaseCapture = vi.fn()
+  Object.defineProperty(canvas, 'releasePointerCapture', {value: releaseCapture})
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({height: 100, left: 0, top: 0, width: 100}),
+  })
+  const dispatchPointer = (
+    type: string,
+    values: {readonly buttons?: number; readonly pointerId: number},
+  ) => {
+    const event = new Event(type, {bubbles: true})
+    Object.defineProperties(event, {
+      button: {value: 0},
+      buttons: {value: values.buttons ?? 0},
+      clientX: {value: 50},
+      clientY: {value: 50},
+      pointerId: {value: values.pointerId},
+    })
+    canvas.dispatchEvent(event)
+  }
+
+  dispatchPointer('pointerdown', {pointerId: 1})
+  expect(latest).toHaveLength(2)
+  fireEvent.click(screen.getByRole('button', {name: 'undo'}))
+  dispatchPointer('pointermove', {buttons: 1, pointerId: 1})
+
+  expect(latest).toEqual([initialStroke])
+  expect(releaseCapture).toHaveBeenCalledWith(1)
+  dispatchPointer('pointerdown', {pointerId: 2})
+  dispatchPointer('pointermove', {buttons: 1, pointerId: 2})
+  expect(latest).toHaveLength(2)
+  expect(latest[0]).toEqual(initialStroke)
+  expect(latest[1]?.points).toHaveLength(2)
 })

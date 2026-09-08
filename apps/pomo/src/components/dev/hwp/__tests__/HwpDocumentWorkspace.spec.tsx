@@ -394,3 +394,97 @@ it('should retain the current document and release a failed replacement', async 
   expect(replacement.free).toHaveBeenCalledOnce()
   expect(documentMock.free).toHaveBeenCalledOnce()
 })
+
+it('should destroy a studio that resolves after WASM initialization fails', async () => {
+  const pending = Promise.withResolvers<typeof editorMock>()
+  coreMocks.init.mockRejectedValueOnce(new Error('wasm init failed'))
+  editorMocks.createStudio.mockReturnValueOnce(pending.promise)
+  const view = render(() => <HwpDocumentWorkspace />)
+  await screen.findByText('문서 엔진을 준비하지 못했어요.')
+
+  pending.resolve(editorMock)
+  await waitFor(() => expect(editorMock.destroy).toHaveBeenCalledOnce())
+  view.unmount()
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+})
+
+it('should destroy an acquired studio when WASM initialization later fails', async () => {
+  const pending = Promise.withResolvers<void>()
+  coreMocks.init.mockReturnValueOnce(pending.promise)
+  const view = render(() => <HwpDocumentWorkspace />)
+  await Promise.resolve()
+
+  pending.reject(new Error('wasm init failed'))
+  await screen.findByText('문서 엔진을 준비하지 못했어요.')
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+  view.unmount()
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+})
+
+it('should destroy an acquired studio on unmount while WASM is pending', async () => {
+  const pending = Promise.withResolvers<void>()
+  coreMocks.init.mockReturnValueOnce(pending.promise)
+  const view = render(() => <HwpDocumentWorkspace />)
+  await Promise.resolve()
+
+  view.unmount()
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+  pending.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+})
+
+it('should destroy a studio arriving after unmount without waiting for WASM', async () => {
+  const wasm = Promise.withResolvers<void>()
+  const studio = Promise.withResolvers<typeof editorMock>()
+  coreMocks.init.mockReturnValueOnce(wasm.promise)
+  editorMocks.createStudio.mockReturnValueOnce(studio.promise)
+  const view = render(() => <HwpDocumentWorkspace />)
+  view.unmount()
+
+  studio.resolve(editorMock)
+  await waitFor(() => expect(editorMock.destroy).toHaveBeenCalledOnce())
+  wasm.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+})
+
+it('should remain unavailable when studio creation fails before WASM resolves', async () => {
+  const pending = Promise.withResolvers<void>()
+  coreMocks.init.mockReturnValueOnce(pending.promise)
+  editorMocks.createStudio.mockRejectedValueOnce(new Error('studio init failed'))
+  render(() => <HwpDocumentWorkspace />)
+  await screen.findByText('문서 엔진을 준비하지 못했어요.')
+
+  pending.resolve()
+  await Promise.resolve()
+  expect(screen.getByText('문서 엔진을 준비하지 못했어요.')).toBeDefined()
+  expect(screen.getByRole('button', {name: '예제 바로 열기'})).toBeDisabled()
+  expect(editorMock.destroy).not.toHaveBeenCalled()
+})
+
+it('should destroy the ready studio once on unmount', async () => {
+  const view = render(() => <HwpDocumentWorkspace />)
+  await screen.findByText('Rust/WASM 문서 엔진과 iframe 에디터 준비 완료')
+  expect(editorMock.destroy).not.toHaveBeenCalled()
+
+  view.unmount()
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+})
+
+it('should not destroy the studio again when WASM fails after unmount', async () => {
+  const pending = Promise.withResolvers<void>()
+  coreMocks.init.mockReturnValueOnce(pending.promise)
+  const view = render(() => <HwpDocumentWorkspace />)
+  await Promise.resolve()
+  view.unmount()
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+
+  pending.reject(new Error('wasm init failed'))
+  await new Promise<void>((resolve) => {
+    queueMicrotask(resolve)
+  })
+  expect(editorMock.destroy).toHaveBeenCalledOnce()
+})

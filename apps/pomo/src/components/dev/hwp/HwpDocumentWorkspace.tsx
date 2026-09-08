@@ -154,65 +154,80 @@ const createPageChangeHandler =
     setPageSvg(renderedPage.svg)
   }
 
-interface UseEditorRuntimeProps {
-  readonly host: () => HTMLDivElement
-  readonly onError: (message: string) => void
-  readonly onStatus: (message: string) => void
-}
-
-const useEditorRuntime = (props: UseEditorRuntimeProps) => {
+const useDocumentRuntime = () => {
   const [editor, setEditor] = createSignal<RhwpEditor | null>(null)
-  let ownedEditor: RhwpEditor | null = null
+  const [statusMessage, setStatusMessage] = createSignal(
+    'Rust/WASM 문서 엔진과 iframe 에디터 준비 중…',
+  )
+  const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
+  const [isReady, setIsReady] = createSignal(false)
+  let viewerHost: HTMLDivElement | undefined
   let disposed = false
-  let failed = false
-  const releaseEditor = () => {
-    const current = ownedEditor
-    ownedEditor = null
-    current?.destroy()
+  let initializationFailed = false
+  const destroyEditor = () => {
+    const currentEditor = untrack(editor)
+    setEditor(null)
+    currentEditor?.destroy()
   }
   onMount(() => {
     configureTextMeasurement()
-    const onStatus = untrack(() => props.onStatus)
-    const onError = untrack(() => props.onError)
+    // rhwp's wasm-bindgen initializer exposes this snake_case option.
     Promise.all([
-      // rhwp's wasm-bindgen initializer exposes this snake_case option.
       // oxlint-disable-next-line eslint-js/camelcase
       initWasm({module_or_path: wasmUrl}),
-      createStudio(props.host(), {
+      createStudio(viewerHost!, {
         chrome: {menu: true, statusbar: true, toolbar: true},
         plugins: ['hwpctrl'],
         renderer: 'canvas2d',
       }).then((nextEditor) => {
-        if (disposed || failed) {
+        if (disposed || initializationFailed) {
           nextEditor.destroy()
-          return null
-        }
-        ownedEditor = nextEditor
-        return nextEditor
-      }),
-    ])
-      .then(([, nextEditor]) => {
-        if (disposed || nextEditor === null) {
           return
         }
-        nextEditor.element.title = 'HWP 문서 편집기'
+
         setEditor(nextEditor)
-        onStatus('Rust/WASM 문서 엔진과 iframe 에디터 준비 완료')
+      }),
+    ])
+      .then(() => {
+        if (disposed) {
+          return
+        }
+
+        const nextEditor = untrack(editor)
+        if (nextEditor === null) {
+          return
+        }
+
+        nextEditor.element.title = 'HWP 문서 편집기'
+        setIsReady(true)
+        setStatusMessage('Rust/WASM 문서 엔진과 iframe 에디터 준비 완료')
       })
       .catch(() => {
-        failed = true
-        releaseEditor()
-        if (!disposed) {
-          onError('Rust/WASM 문서 엔진 또는 iframe 에디터를 불러오지 못했어요.')
-          onStatus('문서 엔진을 준비하지 못했어요.')
+        initializationFailed = true
+        destroyEditor()
+        if (disposed) {
+          return
         }
+
+        setErrorMessage('Rust/WASM 문서 엔진 또는 iframe 에디터를 불러오지 못했어요.')
+        setStatusMessage('문서 엔진을 준비하지 못했어요.')
       })
   })
   onCleanup(() => {
     disposed = true
-    releaseEditor()
+    destroyEditor()
   })
-  return editor
+  return {
+    editor,
+    errorMessage,
+    isReady,
+    setErrorMessage,
+    setStatusMessage,
+    statusMessage,
+    viewerHost: (element: HTMLDivElement) => {
+      viewerHost = element
+    },
+  }
 }
 
 const exportExpenseDocument = (document: HwpDocument, form: ExpenseForm) => {
@@ -236,19 +251,17 @@ const useDocumentWorkspace = () => {
   const [pageSvg, setPageSvg] = createSignal<string | null>(null)
   const [loadedFileName, setLoadedFileName] = createSignal('expense-form.hwp')
   const [viewerMode, setViewerMode] = createSignal<ViewerMode>('direct')
-  const [statusMessage, setStatusMessage] = createSignal(
-    'Rust/WASM 문서 엔진과 iframe 에디터 준비 중…',
-  )
-  const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
+  const {
+    editor,
+    errorMessage,
+    isReady,
+    setErrorMessage,
+    setStatusMessage,
+    statusMessage,
+    viewerHost,
+  } = useDocumentRuntime()
   const [isBusy, setIsBusy] = createSignal(false)
-  let viewerHost: HTMLDivElement | undefined
   let disposed = false
-  const editor = useEditorRuntime({
-    host: () => viewerHost!,
-    onError: setErrorMessage,
-    onStatus: setStatusMessage,
-  })
-  const isReady = () => editor() !== null
   onCleanup(() => {
     disposed = true
     documentInstance()?.free()
@@ -378,9 +391,7 @@ const useDocumentWorkspace = () => {
     pageSvg,
     setViewerMode,
     statusMessage,
-    viewerHost: (element: HTMLDivElement) => {
-      viewerHost = element
-    },
+    viewerHost,
     viewerMode,
   }
 }
