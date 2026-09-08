@@ -1,3 +1,4 @@
+export const pictureDiaryNavigationStyles = `
 .picture-diary-book__pager {
   position: absolute;
   right: 1rem;
@@ -137,3 +138,4 @@
     left: 1rem;
   }
 }
+`

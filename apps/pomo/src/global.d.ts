@@ -36,7 +36,6 @@ interface ImportMetaEnv {
   readonly VITE_POMO_LEGACY_PRIVACY_PATH: string
   readonly VITE_POMO_LEGACY_TERMS_PATH: string
   readonly VITE_POMO_PRETENDARD_BASE_PATH: string
-  readonly VITE_POMO_PRETENDARD_STYLESHEET_PATH: string
   readonly VITE_POMO_PUBLIC_ORIGIN: string
   readonly VITE_POMO_REFUND_PATH: string
   readonly VITE_POMO_RELEASE: string

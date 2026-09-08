@@ -79,14 +79,16 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         <VersionNoticePanel sceneStyle={props.sceneStyle} />
         <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
           <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-            <PButton
-              {...GLASS_ICON_BUTTON}
-              accessibleLabel={m.tour_open()}
-              tooltip={m.tour_open()}
-              class={cx(GLASS_ICON_BUTTON.class, CLASSES.sceneControl)}
-              icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
-              onPress={() => props.onTourOpen?.()}
-            />
+            <div class="inline-flex" data-tour-step="tour">
+              <PButton
+                {...GLASS_ICON_BUTTON}
+                accessibleLabel={m.tour_open()}
+                tooltip={m.tour_open()}
+                class={cx(GLASS_ICON_BUTTON.class, 'pomo-tour-control')}
+                icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
+                onPress={() => props.onTourOpen?.()}
+              />
+            </div>
           </PScribbleCircleControl>
         </Show>
         <div class="inline-flex" data-tour-step="memory-assist">

@@ -4,7 +4,6 @@ import {For, Show} from 'solid-js'
 import {useImageGeneration} from 'src/features/image-generation'
 import {TEXT_MODELS} from 'src/features/text-generation'
 import {Settings} from './Settings'
-import './workspace.css'
 
 export function Workspace() {
   const studio = useImageGeneration()

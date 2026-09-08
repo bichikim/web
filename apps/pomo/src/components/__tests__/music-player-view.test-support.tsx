@@ -30,13 +30,18 @@ vi.mock('../PAlbumLibrary', () => ({
     <>
       <button
         aria-label="앨범 추가"
+        class="pomo-player__utility relative grid size-10 shrink-0 place-items-center rounded-full"
         data-player-utility="album"
         onClick={() => props.onAddTracks(albumLibraryMocks.addedTracks)}
         type="button"
       >
         <span
           aria-hidden="true"
-          class={props.sceneStyle === 'scribble' ? 'i-pomo-scribble:album' : 'i-tabler-album'}
+          class={
+            props.sceneStyle === 'scribble'
+              ? 'i-pomo-scribble:album size-6 flex-none'
+              : 'i-tabler-album size-6 flex-none'
+          }
         />
       </button>
       <button data-testid="album-clear" onClick={() => props.onClearTracks?.()} type="button">

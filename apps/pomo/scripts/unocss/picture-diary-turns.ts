@@ -1,3 +1,4 @@
+export const pictureDiaryTurnsStyles = `
 .picture-diary-book__turn-sheet {
   position: absolute;
   inset-block: 0.5rem;
@@ -203,3 +204,4 @@
     transform: rotateY(var(--picture-diary-hard-angle, 0deg));
   }
 }
+`

@@ -7,6 +7,7 @@ import {InstallationMetadata} from './components/InstallationMetadata'
 import {ViewportMetadata} from './components/ViewportMetadata'
 
 import {DISPLAY_THEME_BOOTSTRAP_SCRIPT} from './features/display-theme/bootstrap'
+import {pretendardFontFaceStyles} from '../scripts/unocss/pretendard'
 
 const isAppsInToss = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
 const documentClass = isAppsInToss ? undefined : 'dark'
@@ -20,11 +21,8 @@ export default createHandler(
             <meta charset="utf-8" />
             <ViewportMetadata />
             <script nonce={event.locals.securityNonce}>{DISPLAY_THEME_BOOTSTRAP_SCRIPT}</script>
-            <link
-              rel="stylesheet"
-              href={import.meta.env.VITE_POMO_PRETENDARD_STYLESHEET_PATH}
-              type="text/css"
-            />
+            {/* Keep font faces in the document so code-split CSS assets do not duplicate them. */}
+            <style nonce={event.locals.securityNonce}>{pretendardFontFaceStyles}</style>
             <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
             <InstallationMetadata />
             {props.assets}

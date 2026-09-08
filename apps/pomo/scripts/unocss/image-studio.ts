@@ -1,3 +1,4 @@
+export const imageStudioStyles = `
 .image-studio {
   --studio-muted: #bdb2c4;
   --studio-accent: #f4d7b5;
@@ -218,3 +219,4 @@
     min-height: 12rem;
   }
 }
+`

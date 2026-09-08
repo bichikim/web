@@ -8,7 +8,6 @@ import {
   type PictureDiaryTurnView,
   usePictureDiaryPageTurn,
 } from './use-page-turn'
-import './editor.css'
 import {type PictureDiaryEditorProps} from './editor-props'
 import {PictureDiarySpread} from './Spread'
 import {PictureDiaryTurnSheet} from './TurnSheet'

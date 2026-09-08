@@ -64,7 +64,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => {
                 >
                   <span
                     aria-hidden="true"
-                    class={cx(getPomoIconClass(mode.icon, props.sceneStyle), 'size-6')}
+                    class={cx(getPomoIconClass(mode.icon, props.sceneStyle), 'size-6 flex-none')}
                   />
                 </button>
                 <PTooltip
@@ -94,7 +94,10 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => {
       >
         <span
           aria-hidden="true"
-          class={cx(getPomoIconClass('i-tabler-arrows-shuffle', props.sceneStyle), 'size-6')}
+          class={cx(
+            getPomoIconClass('i-tabler-arrows-shuffle', props.sceneStyle),
+            'size-6 flex-none',
+          )}
         />
       </button>
       <PTooltip

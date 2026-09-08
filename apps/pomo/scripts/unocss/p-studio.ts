@@ -1,3 +1,4 @@
+export const pStudioStyles = `
 .pomo-media-dock {
   container-type: inline-size;
 }
@@ -63,3 +64,4 @@
     margin-bottom: 0;
   }
 }
+`

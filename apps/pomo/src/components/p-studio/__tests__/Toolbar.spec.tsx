@@ -102,6 +102,10 @@ describe('SceneToolbar', () => {
 
     screen.getByRole('button', {name: 'Pomofi 둘러보기'}).click()
     expect(baseProps.onTourOpen).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', {name: 'Pomofi 둘러보기'}).parentElement).toHaveAttribute(
+      'data-tour-step',
+      'tour',
+    )
     expect(
       vi
         .mocked(PScribbleCircleControl)

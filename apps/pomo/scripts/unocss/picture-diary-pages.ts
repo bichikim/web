@@ -1,3 +1,4 @@
+export const pictureDiaryPagesStyles = `
 .picture-diary-book__page {
   box-sizing: border-box;
   display: flex;
@@ -203,3 +204,4 @@
     box-shadow: inset 1.5rem 0 1.8rem -1.8rem rgb(32 29 24 / 18%);
   }
 }
+`

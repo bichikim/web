@@ -173,7 +173,9 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       >
         <span
           class={
-            gesture.deleteReady() ? 'i-tabler-trash size-5 scale-110' : 'i-tabler-trash size-5'
+            gesture.deleteReady()
+              ? 'i-tabler-trash size-5 flex-none scale-110'
+              : 'i-tabler-trash size-5 flex-none'
           }
         />
       </div>
@@ -185,7 +187,9 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       >
         <span
           class={
-            gesture.deleteReady() ? 'i-tabler-trash size-5 scale-110' : 'i-tabler-trash size-5'
+            gesture.deleteReady()
+              ? 'i-tabler-trash size-5 flex-none scale-110'
+              : 'i-tabler-trash size-5 flex-none'
           }
         />
       </div>
