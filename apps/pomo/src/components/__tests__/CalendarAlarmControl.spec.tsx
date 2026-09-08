@@ -184,6 +184,33 @@ const ownedAlarm = () => ({
   dialogueId: 'memory-memo-calendar-alarm:connection-1:event-1',
 })
 
+it('should retain the stored alarm date instead of the selected day', () => {
+  mocks.memos = [{...ownedAlarm(), exactReminderAt: new Date(2026, 8, 5, 8, 30).toISOString()}]
+  render(() => (
+    <CalendarAlarmControl
+      defaultAlarmDate={new Date(2026, 8, 6)}
+      event={event}
+      memos={() => mocks.memos}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 수정'}))
+  expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-05')
+  expect(screen.getByLabelText('시간')).toHaveValue('08:30')
+})
+
+it('should retain a timed event start instead of the selected day', () => {
+  render(() => (
+    <CalendarAlarmControl
+      defaultAlarmDate={new Date(2026, 8, 6)}
+      event={{...event, allDay: false, start: new Date(2026, 8, 5, 13, 30).toISOString()}}
+      memos={() => mocks.memos}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
+  expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-05')
+  expect(screen.getByLabelText('시간')).toHaveValue('13:30')
+})
+
 it.each(['2026-09-05', '2026-09-07'])(
   'should reschedule an existing alarm to %s and preserve its dialogue',
   async (date) => {

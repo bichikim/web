@@ -253,6 +253,8 @@ it('should cancel an active stroke when the drawing history changes', () => {
   }
   render(() => <TestCanvas />)
   const canvas = screen.getByLabelText('그림 그리는 곳')
+  const releaseCapture = vi.fn()
+  Object.defineProperty(canvas, 'releasePointerCapture', {value: releaseCapture})
   Object.defineProperty(canvas, 'getBoundingClientRect', {
     value: () => ({height: 100, left: 0, top: 0, width: 100}),
   })
@@ -277,4 +279,10 @@ it('should cancel an active stroke when the drawing history changes', () => {
   dispatchPointer('pointermove', {buttons: 1, pointerId: 1})
 
   expect(latest).toEqual([initialStroke])
+  expect(releaseCapture).toHaveBeenCalledWith(1)
+  dispatchPointer('pointerdown', {pointerId: 2})
+  dispatchPointer('pointermove', {buttons: 1, pointerId: 2})
+  expect(latest).toHaveLength(2)
+  expect(latest[0]).toEqual(initialStroke)
+  expect(latest[1]?.points).toHaveLength(2)
 })
