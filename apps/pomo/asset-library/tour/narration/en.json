@@ -1,0 +1,135 @@
+{
+  "model": "supertonic-3",
+  "revision": "724fb5abbf5502583fb520898d45929e62f02c0b",
+  "sdk": "supertonic==1.3.1",
+  "voice": "Sarah",
+  "voiceId": "F1",
+  "voiceStyleUrl": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/sarah.json",
+  "voiceStyleSha256": "25e6eb47754d9af858194da4a56b99e5a32e06cdf53e38935314c0d9d4239022",
+  "language": "en",
+  "speed": 1.0,
+  "totalSteps": 10,
+  "seed": 20260909,
+  "clips": [
+    {
+      "id": "completion",
+      "messageKey": "tour_completion_description",
+      "text": "That wraps up the tour. Enjoy the app at your own pace!",
+      "sha256": "6b438aca1bfe349e15c505bdb8711cba2ddad34292950e3bc5fe59432b478b44"
+    },
+    {
+      "id": "memory-assist",
+      "messageKey": "tour_memory_assist_description",
+      "text": "Manage learning sentences, learning words, memos, a diary, and your calendar in one place.",
+      "sha256": "89519d89417c222d3c393994e53931b1face134edbf0eac97a3f4215a688c0b6"
+    },
+    {
+      "id": "memory-assist-calendar",
+      "messageKey": "tour_memory_assist_calendar_description",
+      "text": "Review connected calendar events by month. The app reads only the time range needed for a question.",
+      "sha256": "554a9cb28b9bbea0eaf294dffa9a6f67c388ab6aee4c967db60bf9edea4414c0"
+    },
+    {
+      "id": "memory-assist-memos",
+      "messageKey": "tour_memory_assist_memos_description",
+      "text": "Save something to remember and set a date-and-time reminder or ongoing memory reminders.",
+      "sha256": "4182727916c4b5685e57098df825a590fc73c2f36eb22c41b6780847be7e27fd"
+    },
+    {
+      "id": "memory-assist-picture-diary",
+      "messageKey": "tour_memory_assist_picture_diary_description",
+      "text": "Draw a picture, write what you want to remember about today, and save it to this device.",
+      "sha256": "73532d67a07917b596334355822ed2a0d0d630b20ef765aedae011f73f085ce9"
+    },
+    {
+      "id": "memory-assist-sentences",
+      "messageKey": "tour_memory_assist_sentences_description",
+      "text": "Choose a learning language, create sentences, and listen to saved sentences in dialogue.",
+      "sha256": "cefa6b1d856e20b43c82a6d1b6d79546b41630c9d15464e3a306cf5e4db9a3dc"
+    },
+    {
+      "id": "memory-assist-words",
+      "messageKey": "tour_memory_assist_words_description",
+      "text": "Save unfamiliar words with commas or Enter, listen to pronunciations, and mark words as memorized.",
+      "sha256": "f7cd7cd7a20241de48e097b9ba38d419be688a7fbade61cd6065fa044219a32a"
+    },
+    {
+      "id": "music",
+      "messageKey": "tour_music_description",
+      "text": "Choose and play music for your focus session.",
+      "sha256": "a0ddabad6f99ad0a5e727d1c4b9637848302e019d4eb76fc4a9e65d6b55afef7"
+    },
+    {
+      "id": "music-album",
+      "messageKey": "tour_music_album_description",
+      "text": "Open Albums and select Add entire album to put it in your playlist.",
+      "sha256": "4f81d9c496617c71f573cf686ad773d8d13e94c63ee5974662da94f4df9754b2"
+    },
+    {
+      "id": "music-expand",
+      "messageKey": "tour_music_expand_description",
+      "text": "Expand the player to see playback controls and your playlist together.",
+      "sha256": "1fbb516bba943ab41b046c2790c94252d0cf121853c99409420a43e89abb7553"
+    },
+    {
+      "id": "pomodoro",
+      "messageKey": "tour_pomodoro_description",
+      "text": "Set your focus and break times, then start the timer.",
+      "sha256": "d570c1d5c3d350505a03871f21c0beecb93408883efefb922b3110ea774af4ee"
+    },
+    {
+      "id": "pomodoro-control",
+      "messageKey": "tour_pomodoro_control_description",
+      "text": "Press the character icon to the left of the clock to pause or resume the timer.",
+      "sha256": "0c05b3fc049a20c2b285b28f4503f9b5495bff1bb25772d494d1f136be60c95e"
+    },
+    {
+      "id": "pomodoro-detail",
+      "messageKey": "tour_pomodoro_detail_description",
+      "text": "Press the time to see the current phase, progress, and full timer controls.",
+      "sha256": "ab14d76c0bdc9d5f42af8a85cca48db1e54412503d175e6fe673b38b0fd12a15"
+    },
+    {
+      "id": "pomodoro-duration",
+      "messageKey": "tour_pomodoro_duration_description",
+      "text": "Press the pencil button at the bottom of the details to set focus and break times and the focus count.",
+      "sha256": "d9a17046055c544fa770f39fa4a57ec0a3902416bc942432bc1d58f4cf3cfe9a"
+    },
+    {
+      "id": "settings",
+      "messageKey": "tour_settings_description",
+      "text": "Configure scenes, display, events, feeds, dialogue, user information, and more across the app.",
+      "sha256": "0641f7b7a3a79838daa38c6326a1058f47615442ed59f5929bbf09cc0a78b3bd"
+    },
+    {
+      "id": "settings-dialogue",
+      "messageKey": "tour_settings_dialogue_description",
+      "text": "In Dialogue, create dialogues and set the automatic voice model, voice, and music volume during dialogue.",
+      "sha256": "29a344fbcdab7ac50f1aa94b915ca1f6236f5f4d0af7c3edc28f61c568c0f1ff"
+    },
+    {
+      "id": "settings-events",
+      "messageKey": "tour_settings_events_description",
+      "text": "In Events, connect dialogue to opening the app and focus or break transitions, and set the random event interval.",
+      "sha256": "a89c00009de1451e669c07ac4bace0af413ad7b22b4dff02a280ae239c7f8987"
+    },
+    {
+      "id": "settings-feeds",
+      "messageKey": "tour_settings_feeds_description",
+      "text": "In Feeds, add RSS or Atom feeds, choose a voice for new posts, and manage saved feeds.",
+      "sha256": "ae30303c97162e1c11f72891917c4a762399821e58d7c62a3db9496b55b08993"
+    },
+    {
+      "id": "settings-general",
+      "messageKey": "tour_settings_general_description",
+      "text": "In General, set the language and theme, then adjust the scene, style, weather, and display options.",
+      "sha256": "59dff5bd0e257bff134867474703f0fe79d1e600cf162054086ac3ae8ca330d8"
+    },
+    {
+      "id": "settings-user",
+      "messageKey": "tour_settings_user_description",
+      "text": "In User, check your sign-in status and account information, and open account management and service policies.",
+      "sha256": "8751b2aadf78158d7341125d492a62125197761293fa30896db7aa150c1aa568"
+    }
+  ]
+}

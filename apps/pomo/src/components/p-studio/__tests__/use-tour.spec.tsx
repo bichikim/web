@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import {renderHook} from '@solidjs/testing-library'
+import {fireEvent, render, renderHook, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {useStudioTour} from '../use-tour'
+import {PTour} from '../../tour/PTour'
 
 const originalGetLocale = getLocale
 
@@ -14,6 +15,52 @@ afterEach(() => {
 })
 
 describe('useStudioTour', () => {
+  it.each([
+    {
+      description: '투어가 끝났어요. 이제 앱을 편하게 즐겨보세요!',
+      finish: '완료',
+      locale: 'ko',
+      next: '다음',
+      title: '이제 시작해 볼까요?',
+    },
+    {
+      description: 'That wraps up the tour. Enjoy the app at your own pace!',
+      finish: 'Done',
+      locale: 'en',
+      next: 'Next',
+      title: "You're all set!",
+    },
+  ] as const)('should show a closing greeting before finishing the $locale tour', async (copy) => {
+    overwriteGetLocale(() => copy.locale)
+    const view = renderHook(() => useStudioTour())
+    const last = view.result.steps().at(-1)
+    expect(last).toMatchObject({
+      audio: {source: `/tour/audio/${copy.locale}/completion.mp3`},
+      description: copy.description,
+      id: 'completion',
+      title: copy.title,
+    })
+    expect(view.result.getStepElement('completion')).toBeNull()
+    view.result.setIsOpen(true)
+    render(() => (
+      <PTour
+        getStepElement={view.result.getStepElement}
+        initialStepId="settings-user"
+        isOpen={view.result.isOpen()}
+        onOpenChange={view.result.setIsOpen}
+        steps={view.result.steps()}
+      />
+    ))
+    fireEvent.click(await screen.findByRole('button', {name: copy.next}))
+    expect(await screen.findByRole('dialog', {name: copy.title})).toBeInTheDocument()
+    expect(screen.getByText(copy.description)).toBeInTheDocument()
+    expect(screen.getByText('20 / 20')).toBeInTheDocument()
+    expect(view.result.isOpen()).toBe(true)
+    fireEvent.click(screen.getByRole('button', {name: copy.finish}))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(view.result.isOpen()).toBe(false)
+  })
+
   it('should use English copy and recordings for the English locale', () => {
     overwriteGetLocale(() => 'en')
 
@@ -41,7 +88,10 @@ describe('useStudioTour', () => {
       '/tour/en/settings-dialogue.webm',
       '/tour/en/settings-user.webm',
     ])
-    expect(steps.every((step) => step.audio === undefined)).toBe(true)
+    expect(steps).toHaveLength(20)
+    expect(steps.map((step) => step.audio?.source)).toEqual(
+      steps.map((step) => `/tour/audio/en/${step.id}.mp3`),
+    )
     expect(steps.filter((step) => step.id.startsWith('memory-assist-'))).toMatchObject([
       {
         description:
@@ -85,7 +135,7 @@ describe('useStudioTour', () => {
       },
       {
         description:
-          'Review connected calendar events by month. Pomofi reads only the time range needed for a question.',
+          'Review connected calendar events by month. The app reads only the time range needed for a question.',
         id: 'memory-assist-calendar',
         title: 'Calendar',
         video: {
@@ -96,7 +146,7 @@ describe('useStudioTour', () => {
     ])
     expect(steps.find((step) => step.id === 'settings')).toMatchObject({
       description:
-        'Configure scenes, display, events, feeds, dialogue, user information, and more across Pomofi.',
+        'Configure scenes, display, events, feeds, dialogue, user information, and more across the app.',
       title: 'Settings',
     })
     expect(steps.filter((step) => step.id.startsWith('settings-'))).toMatchObject([
@@ -112,7 +162,7 @@ describe('useStudioTour', () => {
       },
       {
         description:
-          'In Events, connect dialogue to Pomofi entry and focus or break ' +
+          'In Events, connect dialogue to opening the app and focus or break ' +
           'transitions, and set the random event interval.',
         id: 'settings-events',
         title: 'Events',
@@ -186,6 +236,7 @@ describe('useStudioTour', () => {
       '/tour/audio/ko/settings-feeds.mp3',
       '/tour/audio/ko/settings-dialogue.mp3',
       '/tour/audio/ko/settings-user.mp3',
+      '/tour/audio/ko/completion.mp3',
     ])
     expect(steps.filter((step) => step.id.startsWith('settings-'))).toMatchObject([
       {
@@ -243,31 +294,34 @@ describe('useStudioTour', () => {
     expect(steps.some((step) => step.id === 'settings-credits')).toBe(false)
   })
 
-  it('should play the active Korean narration when the tour starts', () => {
-    overwriteGetLocale(() => 'ko')
-    class AudioMock {
-      static lastInstance: AudioMock | undefined
+  it.each(['ko', 'en'] as const)(
+    'should play the active %s narration when the tour starts',
+    (locale) => {
+      overwriteGetLocale(() => locale)
+      class AudioMock {
+        static lastInstance: AudioMock | undefined
 
-      currentTime = 0
-      load = vi.fn()
-      pause = vi.fn()
-      play = vi.fn().mockResolvedValue(undefined)
-      removeAttribute = vi.fn()
-      source: string
+        currentTime = 0
+        load = vi.fn()
+        pause = vi.fn()
+        play = vi.fn().mockResolvedValue(undefined)
+        removeAttribute = vi.fn()
+        source: string
 
-      constructor(source: string) {
-        this.source = source
-        AudioMock.lastInstance = this
+        constructor(source: string) {
+          this.source = source
+          AudioMock.lastInstance = this
+        }
       }
-    }
-    vi.stubGlobal('Audio', AudioMock)
+      vi.stubGlobal('Audio', AudioMock)
 
-    const view = renderHook(() => useStudioTour())
-    const step = view.result.steps()[0]!
+      const view = renderHook(() => useStudioTour())
+      const step = view.result.steps()[0]!
 
-    view.result.onEvent({activeElement: null, step, type: 'started'})
+      view.result.onEvent({activeElement: null, step, type: 'started'})
 
-    expect(AudioMock.lastInstance?.source).toBe('/tour/audio/ko/pomodoro.mp3')
-    expect(AudioMock.lastInstance?.play).toHaveBeenCalledOnce()
-  })
+      expect(AudioMock.lastInstance?.source).toBe(`/tour/audio/${locale}/pomodoro.mp3`)
+      expect(AudioMock.lastInstance?.play).toHaveBeenCalledOnce()
+    },
+  )
 })
