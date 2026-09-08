@@ -1,5 +1,6 @@
+import {convertSceneContainers} from '../container-conversion'
 import {expect, test} from 'vitest'
-import {createDemoDocument, parseDocument} from '../../../player'
+import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '../../../player'
 import {createBoneDeformer, editBoneRest} from '../bone-editing'
 import {getSceneNode} from '../scene-graph'
 import {addParameter} from '../parameter-keyforms'
@@ -53,4 +54,28 @@ test('should project an inserted joint onto its bone without changing the endpoi
       point: {x: 320, y: 240},
     }),
   ).toBeUndefined()
+})
+
+test('should preserve the rotation pivot layout without allowing extra joints', () => {
+  const document = convertSceneContainers({
+    document: createDemoDocument(),
+    nodeIds: ['shapes'],
+    targetKind: 'rotation',
+  })!
+  for (const operation of ['append', 'insert', 'remove'] as const) {
+    expect(
+      editBoneRest({document, nodeId: 'shapes', index: 1, operation, point: {x: 100, y: 100}}),
+    ).toBeUndefined()
+  }
+  const moved = editBoneRest({
+    document,
+    nodeId: 'shapes',
+    index: 0,
+    operation: 'move',
+    point: {x: 100, y: 100},
+  })!
+  expect(parseDocument(JSON.stringify(moved)).ok).toBe(true)
+  const node = getSceneNode(moved, 'shapes') as PuppetSceneDeformerNode
+  expect(node.deformerType).toBe('rotation')
+  expect(node.binding?.rest.deformerType).toBe('rotation')
 })

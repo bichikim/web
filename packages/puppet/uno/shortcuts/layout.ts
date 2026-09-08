@@ -32,8 +32,8 @@ export const layoutShortcuts = {
     '[.puppet-editor_&]:[background:#101513]',
   ],
   'panel-add-button': [
-    '[.puppet-editor_&]:inline-flex [.puppet-editor_&]:[width:1.625rem] [.puppet-editor_&]:[height:1.625rem]',
-    '[.puppet-editor_&]:p-0 [.puppet-editor_&]:items-center [.puppet-editor_&]:justify-center',
+    '[.puppet-editor_&]:inline-flex [.puppet-editor_&]:w-auto [.puppet-editor_&]:shrink-0',
+    '[.puppet-editor_&]:[padding:0_0.5rem] [.puppet-editor_&]:items-center [.puppet-editor_&]:justify-center',
     '[.puppet-editor_&]:[border:0.0625rem_solid_#3d5f56] [.puppet-editor_&]:[border-radius:0.375rem]',
     '[.puppet-editor_&]:[color:#bfeee1] [.puppet-editor_&]:[background:#17211e]',
     '[.puppet-editor_&]:cursor-pointer',
@@ -80,6 +80,7 @@ export const layoutShortcuts = {
     '[.puppet-editor_&_.puppet-icon]:[width:1rem] [.puppet-editor_&_.puppet-icon]:[height:1rem]',
   ],
   'puppet-editor': [
+    '[--editor-control-height:1.40625rem]',
     '[--bottom-grid-size:var(--bottom-panel-size,_16.25rem)] [--bottom-resizer-size:0.375rem]',
     '[--left-grid-size:var(--left-panel-size,_18.75rem)] [--left-resizer-size:0.375rem]',
     '[--right-grid-size:var(--right-panel-size,_16.25rem)] [--right-resizer-size:0.375rem] grid',

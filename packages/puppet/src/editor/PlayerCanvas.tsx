@@ -9,6 +9,7 @@ import {EDITOR_VIEWPORT_PADDING} from './internal/viewport'
 export type PlayerCanvasStatus = 'error' | 'loading' | 'ready'
 
 const RESIZE_DEBOUNCE_MILLISECONDS = 100
+const MAXIMUM_RENDER_DIMENSION = 4096
 
 export interface PlayerCanvasProps {
   /** Editor-owned document. Untrusted input must be parsed before reaching this component. */
@@ -94,6 +95,14 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       onFrame: notifyFrame,
       parameterValues: untrack(() => props.parameterValues),
       resizeTo: hostElement,
+      // Bound the backing buffer while retaining the document's editing coordinates.
+      resolution: Math.min(
+        window.devicePixelRatio,
+        2,
+        MAXIMUM_RENDER_DIMENSION /
+          (Math.max(preparedDocument.viewport.width, preparedDocument.viewport.height) *
+            (1 + 2 * EDITOR_VIEWPORT_PADDING)),
+      ),
       viewportPadding: EDITOR_VIEWPORT_PADDING,
     })
       .then((createdPlayer) => {

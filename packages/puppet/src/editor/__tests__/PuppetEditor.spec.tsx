@@ -62,6 +62,53 @@ afterEach(() => {
 beforeEach(() => localStorage.clear())
 
 describe('PuppetEditor', () => {
+  test('should leave mesh editing when the part selection is cleared', async () => {
+    mocks.createPlayer.mockResolvedValue(player)
+    const view = render(() => (
+      <PuppetEditor initialDocument={{...createDemoDocument(), motions: []}} />
+    ))
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
+    expect(view.getByRole('complementary', {name: '선택 작업'})).toContainElement(
+      view.getByRole('group', {name: '정점 편집 방식'}),
+    )
+    expect(view.container.querySelector('.viewport-tools')).not.toContainElement(
+      view.getByRole('group', {name: '정점 편집 방식'}),
+    )
+    fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
+    expect(view.getByRole('button', {name: '기준 배치'})).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(view.container.querySelector('.layer-scroll')!)
+    fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    expect(view.getByRole('button', {name: '변형 편집'})).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('should explain unsupported mesh editing before a drag starts', async () => {
+    mocks.createPlayer.mockResolvedValue(player)
+    const document: PuppetDocument = {
+      ...createDemoDocument(),
+      motions: [
+        {
+          duration: 1,
+          id: 'vertex-motion',
+          tracks: [
+            {
+              kind: 'vertex',
+              partId: 'mesh-preview',
+              axis: 'x',
+              vertexIndex: 0,
+              keyframes: [{time: 0, value: 0}],
+            },
+          ],
+        },
+      ],
+    }
+    const view = render(() => <PuppetEditor initialDocument={document} />)
+    expect(view.getByRole('button', {name: '기준 배치'})).toBeDisabled()
+    expect(view.container.querySelector('.mesh-mode-controls')).toHaveAttribute(
+      'data-tooltip',
+      '정점 애니메이션 트랙이 있는 파츠는 메시 편집을 지원하지 않습니다.',
+    )
+  })
+
   test('should render the editor workspace and initialize its player', async () => {
     mocks.createPlayer.mockResolvedValue(player)
 
@@ -79,14 +126,14 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('complementary', {name: '선택 작업'})).toBeVisible()
     expect(view.container.querySelector('.inspector-panel.parameter-panel')).toBeNull()
     expect(screen.getByRole('button', {name: 'JSON 내보내기'})).toBeVisible()
-    expect(view.container.querySelector('.viewport')).toContainElement(
-      view.getByRole('checkbox', {name: '마스크 경계 표시'}),
+    expect(view.getByRole('group', {name: '보기 컨트롤'})).toContainElement(
+      view.getByRole('button', {name: '마스크 경계 표시'}),
     )
     expect(view.getByRole('group', {name: '표시 설정'})).toContainElement(
-      view.getByRole('checkbox', {name: '마스크 경계 표시'}),
+      view.getByRole('button', {name: '마스크 경계 표시'}),
     )
     expect(view.container.querySelector('.toolbar')).not.toContainElement(
-      view.getByRole('checkbox', {name: '마스크 경계 표시'}),
+      view.getByRole('button', {name: '마스크 경계 표시'}),
     )
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
 
@@ -1117,4 +1164,85 @@ test('should edit original keyform properties below full influence and preserve 
     ).toBeCloseTo(0.4)
   })
   expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
+})
+
+test('should retain the first glue endpoint when selecting another part in the layer panel', () => {
+  mocks.createPlayer.mockResolvedValue(player)
+  const view = render(() => (
+    <PuppetEditor
+      initialDocument={{
+        ...createDemoDocument(),
+        motions: [],
+        parameterBindings: [],
+        parameters: [],
+      }}
+    />
+  ))
+  const vertex = view.container.querySelector('[data-part-id="mesh-preview"] circle')!
+  fireEvent(vertex, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
+  fireEvent.click(view.getByRole('button', {name: '선택 정점에서 연결 시작'}))
+  fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
+  expect(view.getByText(/A: mesh-preview · 정점 1/)).toBeVisible()
+  const target = view.container.querySelector('[data-part-id="shape-diamond"] circle')!
+  fireEvent(target, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
+  fireEvent.click(view.getByRole('button', {name: '이 정점과 붙이기'}))
+  expect(view.getByRole('spinbutton', {name: 'glue-1 붙임 강도'})).toHaveValue(100)
+})
+
+test('should hold a bound deformer edit between keys without changing the document', async () => {
+  mocks.createPlayer.mockResolvedValue(player)
+  const onDocumentChange = vi.fn()
+  const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+  fireEvent.click(view.getByRole('button', {name: '그룹'}))
+  fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
+  fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {
+    key: 'Enter',
+  })
+  fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+  fireEvent.input(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {target: {value: '30'}})
+  fireEvent.click(view.getByRole('button', {name: '현재 값에 키폼'}))
+  fireEvent.input(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {target: {value: '15'}})
+  const before = onDocumentChange.mock.calls.at(-1)![0]
+  fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {target: {value: '25'}})
+  expect(view.getByRole('button', {name: '임시 변경'})).toBeVisible()
+  expect(
+    (view.getByRole('spinbutton', {name: '자유 변형 각도'}) as HTMLInputElement).valueAsNumber,
+  ).toBeCloseTo(25)
+  expect(onDocumentChange.mock.calls.at(-1)![0]).toBe(before)
+  fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {target: {value: '40'}})
+  fireEvent.input(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {target: {value: '30'}})
+  expect(
+    (view.getByRole('spinbutton', {name: '자유 변형 각도'}) as HTMLInputElement).valueAsNumber,
+  ).toBeCloseTo(0)
+  fireEvent.mouseEnter(view.getByRole('button', {name: '임시 변경'}))
+  expect(
+    (view.getByRole('spinbutton', {name: '자유 변형 각도'}) as HTMLInputElement).valueAsNumber,
+  ).toBeCloseTo(40)
+  fireEvent.mouseLeave(view.getByRole('button', {name: '임시 변경'}))
+  expect(
+    (view.getByRole('spinbutton', {name: '자유 변형 각도'}) as HTMLInputElement).valueAsNumber,
+  ).toBeCloseTo(0)
+  fireEvent.click(view.getByRole('button', {name: '임시 변경 삭제'}))
+  fireEvent.click(view.getByRole('button', {name: '진짜 삭제?'}))
+  expect(view.queryByRole('button', {name: '임시 변경'})).not.toBeInTheDocument()
+  expect(onDocumentChange.mock.calls.at(-1)![0]).toBe(before)
+})
+
+test('should hide editing overlays without resetting the canvas or selection', async () => {
+  mocks.createPlayer.mockResolvedValue(player)
+  const view = render(() => <PuppetEditor />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
+  const canvas = view.container.querySelector('canvas')
+  const overlays = view.container.querySelector('.editing-overlays')
+  const vertex = overlays?.querySelector('circle')
+  const button = view.getByRole('button', {name: '편집 UI 표시'})
+  fireEvent.click(button)
+  expect(button).toHaveAttribute('aria-pressed', 'false')
+  expect(overlays).toHaveAttribute('aria-hidden', 'true')
+  expect(overlays).toHaveProperty('inert', true)
+  expect(view.container.querySelector('canvas')).toBe(canvas)
+  fireEvent.click(button)
+  expect(button).toHaveAttribute('aria-pressed', 'true')
+  expect(overlays).toHaveProperty('inert', false)
+  expect(overlays?.querySelector('circle')).toBe(vertex)
 })

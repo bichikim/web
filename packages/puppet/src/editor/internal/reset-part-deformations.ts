@@ -53,6 +53,9 @@ export const resetParameterPartKeyforms = (
   vertices: ReadonlyArray<number>,
 ): PuppetDocument => ({
   ...clearPartDeformerWeights(document, partId),
+  glue: document.glue?.filter(
+    (glue) => glue.first.partId !== partId && glue.second.partId !== partId,
+  ),
   parameterBindings: document.parameterBindings?.map((binding) =>
     resetParameterBinding(binding, partId, vertices),
   ),

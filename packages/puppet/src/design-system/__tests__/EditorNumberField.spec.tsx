@@ -162,3 +162,32 @@ describe('EditorNumberField', () => {
     expect(input).toHaveValue(25)
   })
 })
+
+test('should prevent text selection before scrubbing and preserve focused text editing', () => {
+  const onValueChange = vi.fn()
+  const view = render(() => (
+    <EditorNumberField label="드래그" value={10} onValueChange={onValueChange} />
+  ))
+  const input = view.getByRole('spinbutton', {name: '드래그'})
+  const down = new MouseEvent('pointerdown', {
+    bubbles: true,
+    button: 0,
+    cancelable: true,
+    clientX: 100,
+  })
+  fireEvent(input, down)
+  expect(down.defaultPrevented).toBe(true)
+  fireEvent(window, new MouseEvent('pointerup', {bubbles: true}))
+  fireEvent.click(input)
+  expect(input).toHaveFocus()
+  const focused = new MouseEvent('pointerdown', {
+    bubbles: true,
+    button: 0,
+    cancelable: true,
+    clientX: 100,
+  })
+  fireEvent(input, focused)
+  expect(focused.defaultPrevented).toBe(false)
+  fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 130}))
+  expect(onValueChange).not.toHaveBeenCalled()
+})

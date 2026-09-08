@@ -1,7 +1,8 @@
+import type {ControlSizeProps} from './control-size'
 import {untrack} from 'solid-js'
 import {Select} from '@kobalte/core/select'
 import {useEditorPortalMount} from './EditorPortalProvider'
-interface EditorSelectProps {
+interface EditorSelectProps extends ControlSizeProps {
   readonly label: string
   readonly optionLabel?: (value: string) => string
   readonly options: readonly string[]
@@ -35,7 +36,11 @@ export const EditorSelect = (props: EditorSelectProps) => {
         </Select.Item>
       )}
     >
-      <Select.Trigger aria-label={props.label} class="editor-select-trigger">
+      <Select.Trigger
+        aria-label={props.label}
+        class="editor-control editor-select-trigger"
+        data-control-size={props.size ?? 'sm'}
+      >
         <Select.Value<string>>
           {(state) => props.optionLabel?.(state.selectedOption()) ?? state.selectedOption()}
         </Select.Value>

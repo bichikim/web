@@ -369,7 +369,7 @@ test('should remove influence references when their source parameter is deleted'
     parameterBindings: [...base.parameterBindings!, target],
     parameters: [
       ...base.parameters!,
-      {id: 'other', minimum: 0, defaultValue: 0, name: 'Other', maximum: 1},
+      {id: 'other', defaultValue: 0, minimum: 0, maximum: 1, name: 'Other'},
     ],
   }
   const result = deleteParameter({bindingId: source.id, document})!

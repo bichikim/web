@@ -202,7 +202,7 @@ describe('EditorLayerPanel', () => {
       new MouseEvent('drop', {bubbles: true, cancelable: true, clientY: 139}),
     )
 
-    expect(document().scene?.roots.map((node) => node.id)).toEqual(['shapes', 'mesh-preview'])
+    expect(document().scene?.roots.map((node) => node.id)).toEqual(['mesh-preview', 'shapes'])
   })
 
   test('should ignore external drags without leaving drop feedback active', () => {
@@ -234,3 +234,101 @@ describe('EditorLayerPanel', () => {
     expect(groupRow).not.toHaveClass('drop-inside')
   })
 })
+
+test('should rename a part by double click and cancel with Escape', () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const view = render(() => (
+    <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+  ))
+  fireEvent.dblClick(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+  const input = view.getByRole('textbox', {name: 'mesh-preview 파츠 이름'})
+  fireEvent.input(input, {target: {value: '몸통'}})
+  fireEvent.keyDown(input, {key: 'Enter'})
+  expect(view.getByRole('button', {name: '몸통 레이어 선택'})).toBeVisible()
+  expect(document().parts[0]!.id).toBe('mesh-preview')
+  fireEvent.dblClick(view.getByRole('button', {name: '몸통 레이어 선택'}))
+  fireEvent.input(view.getByRole('textbox', {name: '몸통 파츠 이름'}), {target: {value: '취소'}})
+  fireEvent.keyDown(view.getByRole('textbox', {name: '몸통 파츠 이름'}), {key: 'Escape'})
+  expect(view.getByRole('button', {name: '몸통 레이어 선택'})).toBeVisible()
+})
+
+test('should show frontmost siblings first and move an upper layer in front', () => {
+  const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+  const [selection, setSelection] = createSignal<SceneSelection>({
+    activeNodeId: 'shape-circle',
+    nodeIds: ['shape-circle'],
+  })
+  const view = render(() => (
+    <EditorLayerPanel
+      document={document()}
+      onDocumentChange={setDocument}
+      selection={selection()}
+      onSelectionChange={setSelection}
+    />
+  ))
+  const names = () =>
+    view
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('aria-label'))
+      .filter((name) => name?.endsWith('레이어 선택'))
+  expect(names()).toEqual([
+    'Shapes 레이어 선택',
+    'shape-diamond 레이어 선택',
+    'shape-circle 레이어 선택',
+    'mesh-preview 레이어 선택',
+  ])
+  fireEvent.click(view.getByRole('button', {name: '선택 레이어 위로 이동'}))
+  expect(names()).toEqual([
+    'Shapes 레이어 선택',
+    'shape-circle 레이어 선택',
+    'shape-diamond 레이어 선택',
+    'mesh-preview 레이어 선택',
+  ])
+  const group = document().scene?.roots.find((node) => node.id === 'shapes')
+  expect(group).toMatchObject({children: [{id: 'shape-diamond'}, {id: 'shape-circle'}]})
+  fireEvent.click(view.getByRole('button', {name: '선택 레이어 아래로 이동'}))
+  expect(names()[1]).toBe('shape-diamond 레이어 선택')
+})
+
+test('should place a layer at the back when dropped below the root list', () => {
+  const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+  const view = render(() => (
+    <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+  ))
+  fireEvent.dragStart(
+    view.getByRole('button', {name: 'shape-circle 레이어 선택'}).closest('[role="treeitem"]')!,
+  )
+  fireEvent.drop(view.getByRole('tree', {name: '모델 레이어'}))
+  expect(document().scene?.roots.map((node) => node.id)).toEqual([
+    'shape-circle',
+    'mesh-preview',
+    'shapes',
+  ])
+})
+
+test.each(['.layers-panel', '.layer-scroll', '.layer-tree', '.layer-toolbar', '.layer-statistics'])(
+  'should clear all selected layers when clicking empty space in %s',
+  (selector) => {
+    const [selection, setSelection] = createSignal<SceneSelection>({
+      activeNodeId: 'shape-circle',
+      nodeIds: ['shape-circle', 'shapes'],
+    })
+    const onDocumentChange = vi.fn()
+    const view = render(() => (
+      <EditorLayerPanel
+        document={createDemoDocument()}
+        selection={selection()}
+        onSelectionChange={setSelection}
+        onDocumentChange={onDocumentChange}
+      />
+    ))
+    fireEvent.click(view.container.querySelector(selector)!)
+    expect(selection()).toEqual({activeNodeId: null, nodeIds: []})
+    expect(view.queryAllByRole('treeitem', {selected: true})).toHaveLength(0)
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
+    expect(selection().activeNodeId).toBe('shape-circle')
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 접기'}))
+    expect(selection().activeNodeId).toBe('shape-circle')
+  },
+)

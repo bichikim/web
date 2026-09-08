@@ -643,12 +643,13 @@ describe('createPlayer', () => {
     ])
     expect(styledMask.addChild).toHaveBeenCalledOnce()
     expect(clippedMask.addChild).toHaveBeenCalledWith(nestedMask)
-    const clippedMaskEffect = mocks.AlphaMask.mock.results[0]?.value
-    expect(nestedMaskSource.setMask).toHaveBeenCalledWith({
-      channel: 'alpha',
-      inverse: false,
-      mask: nestedMask,
-    })
+    const styledEffect = mocks.AlphaMask.mock.results[0]?.value
+    const nestedEffect = mocks.AlphaMask.mock.results[1]?.value
+    const clippedMaskEffect = mocks.AlphaMask.mock.results[2]?.value
+    expect(styledEffect).toMatchObject({channel: 'alpha', mask: styledMask})
+    expect(styledMesh.addEffect).toHaveBeenCalledWith(styledEffect)
+    expect(nestedMaskSource.addEffect).toHaveBeenCalledWith(nestedEffect)
+    expect(nestedEffect).toMatchObject({channel: 'alpha', inverse: false, mask: nestedMask})
     expect(clippedMaskEffect).toMatchObject({channel: 'alpha', inverse: false, mask: clippedMask})
     expect(clippedMesh.addEffect).toHaveBeenCalledWith(clippedMaskEffect)
     expect(root.addChild).toHaveBeenCalledWith(clippedMask)

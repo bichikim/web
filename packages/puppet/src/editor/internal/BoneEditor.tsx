@@ -1,33 +1,38 @@
+import {JointControls} from './JointControls'
 import {DeformerWeights} from './DeformerWeights'
 import {DeformerMode} from './DeformerMode'
-import {ToggleButton} from '@kobalte/core/toggle-button'
-import {Button} from '@kobalte/core/button'
+import {EditorToggleButton, EditorButton} from '../../design-system'
 import {For, Show} from 'solid-js'
 import {useBoneEditor, type UseBoneEditorProps} from './use-bone-editor'
 
 export const BoneEditor = (props: UseBoneEditorProps) => {
   const editor = useBoneEditor(props)
+  const rotation = () => props.node.deformerType === 'rotation'
   const MINIMUM_COORDINATES = 4
   const controls = (
-    <div class="bone-tools" role="group" aria-label="본 편집 도구">
+    <div
+      class="bone-tools"
+      role="group"
+      aria-label={rotation() ? '회전 편집 도구' : '본 편집 도구'}
+    >
       <div class="mask-actions">
         <DeformerMode
           mode={editor.mode()}
           restEditable={editor.restEditable()}
           onChange={editor.setMode}
         />
-        <Show when={editor.mode() === 'pose'}>
-          <ToggleButton
+        <Show when={!rotation() && editor.mode() === 'pose'}>
+          <EditorToggleButton
             class="mask-action-button"
             pressed={editor.inverse()}
             title="끝 관절을 끌면 앞쪽 관절들이 함께 따라옵니다."
             onClick={editor.toggleInverse}
           >
             끝 관절 IK
-          </ToggleButton>
+          </EditorToggleButton>
         </Show>
-        <Show when={editor.mode() === 'rest'}>
-          <Button
+        <Show when={!rotation() && editor.mode() === 'rest'}>
+          <EditorButton
             class="mask-action-button"
             disabled={
               editor.selected() === null ||
@@ -37,20 +42,25 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
             onClick={() => editor.changeRest('remove', editor.selected() ?? undefined)}
           >
             관절 삭제
-          </Button>
+          </EditorButton>
         </Show>
       </div>
       <p class="mask-empty-state">
-        <Show
-          when={editor.mode() === 'rest'}
-          fallback={
-            editor.inverse()
-              ? '끝 관절을 끌어 체인을 움직입니다. 첫 관절과 본 길이는 유지됩니다.'
-              : '관절을 끌어 본을 회전합니다. 첫 관절은 전체를 이동합니다.'
-          }
-        >
-          본 선을 더블클릭하면 중간에, 빈 곳을 더블클릭하면 끝에 관절을 추가합니다. 메시 모양은
-          유지됩니다.
+        <Show when={rotation()}>
+          중심점을 배치하고 방향 손잡이를 끌어 회전하세요. 부모의 회전은 자식 전체에 적용됩니다.
+        </Show>
+        <Show when={!rotation()}>
+          <Show
+            when={editor.mode() === 'rest'}
+            fallback={
+              editor.inverse()
+                ? '끝 관절을 끌어 체인을 움직입니다. 첫 관절과 본 길이는 유지됩니다.'
+                : '관절을 끌어 본을 회전합니다. 첫 관절은 전체를 이동합니다.'
+            }
+          >
+            본 선을 더블클릭하면 중간에, 빈 곳을 더블클릭하면 끝에 관절을 추가합니다. 메시 모양은
+            유지됩니다.
+          </Show>
         </Show>
       </p>
       <Show when={editor.bound()}>
@@ -64,12 +74,12 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
     <div class="deformer-editor">
       <svg
         ref={editor.bind}
-        aria-label="본 디포머 편집 영역"
+        aria-label={rotation() ? '회전 디포머 편집 영역' : '본 디포머 편집 영역'}
         tabindex={0}
         viewBox={editor.viewBox()}
         onKeyDown={editor.keyDown}
         onDblClick={(event) => {
-          if (event.target !== event.currentTarget) {
+          if (rotation() || event.target !== event.currentTarget) {
             return
           }
           const position = editor.eventPoint(event)
@@ -91,7 +101,7 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
                 x2={editor.point(index).x}
                 y2={editor.point(index).y}
               />
-              <Show when={editor.mode() === 'rest' && editor.editable()}>
+              <Show when={!rotation() && editor.mode() === 'rest' && editor.editable()}>
                 <line
                   class="bone-hit"
                   x1={editor.point(index - 1).x}
@@ -110,26 +120,12 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
             </>
           )}
         </For>
-        <For each={editor.indices()}>
-          {(index) => (
-            <circle
-              role="button"
-              aria-label={`본 관절 ${index + 1}`}
-              aria-pressed={editor.selected() === index}
-              aria-disabled={!editor.editable()}
-              tabindex={editor.editable() ? 0 : -1}
-              cx={editor.point(index).x}
-              cy={editor.point(index).y}
-              classList={{selected: editor.selected() === index}}
-              r={editor.radius()}
-              onFocus={() => editor.setSelected(index)}
-              onPointerDown={(event) => editor.start(event, index)}
-            />
-          )}
-        </For>
+        <JointControls editor={editor} rotation={rotation()} />
       </svg>
       {props.renderControls === undefined ? controls : props.renderControls(controls)}
-      <DeformerWeights {...props} />
+      <Show when={!rotation()}>
+        <DeformerWeights {...props} />
+      </Show>
     </div>
   )
 }

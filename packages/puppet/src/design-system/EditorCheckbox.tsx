@@ -1,5 +1,6 @@
+import type {ControlSizeProps} from './control-size'
 import {Checkbox} from '@kobalte/core/checkbox'
-interface EditorCheckboxProps {
+interface EditorCheckboxProps extends ControlSizeProps {
   readonly checked?: boolean
   readonly disabled?: boolean
   readonly label?: string
@@ -11,7 +12,8 @@ export const EditorCheckbox = (props: EditorCheckboxProps) => (
     checked={props.checked}
     disabled={props.disabled}
     onChange={(checked) => props.onChange?.(checked)}
-    class="editor-checkbox"
+    class="editor-control editor-checkbox"
+    data-control-size={props.size ?? 'sm'}
   >
     <Checkbox.Input aria-label={props.label} />
     <Checkbox.Control class="editor-checkbox-control">

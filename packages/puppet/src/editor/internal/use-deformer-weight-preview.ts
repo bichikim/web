@@ -85,12 +85,11 @@ export const useDeformerWeightPreview = (props: UseDeformerWeightPreviewProps) =
         (entry) => entry.partId === vertex?.partId && entry.vertexIndex === vertex?.vertexIndex,
       ) === true,
 
+    influence,
     viewBox: () => {
       const bounds = getEditorViewBox(props.document)
       return `${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`
     },
-    influence,
-    vertexWeights,
     segments: () =>
       Array.from(
         {
@@ -112,7 +111,8 @@ export const useDeformerWeightPreview = (props: UseDeformerWeightPreviewProps) =
           return {index, x: (start.x + end.x) / 2, y: (start.y + end.y) / 2}
         },
       ),
-    vertices,
+    vertexWeights,
     triangles,
+    vertices,
   }
 }

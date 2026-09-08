@@ -56,12 +56,12 @@ test('should paint multiple vertices as one undoable stroke and stop after captu
   const svg = view.getByLabelText('디포머 영향도 정점 선택')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
     left: 0,
-    x: 0,
     right: 960,
-    y: 0,
+    x: 0,
     bottom: 720,
-    top: 0,
+    y: 0,
     height: 720,
+    top: 0,
     toJSON: () => ({}),
     width: 960,
   })
@@ -126,12 +126,12 @@ test('should subtract influence from a single bone with the brush', () => {
   const svg = view.getByLabelText('디포머 영향도 정점 선택')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
     left: 0,
-    x: 0,
     right: 960,
-    y: 0,
+    x: 0,
     bottom: 720,
-    top: 0,
+    y: 0,
     height: 720,
+    top: 0,
     toJSON: () => ({}),
     width: 960,
   })

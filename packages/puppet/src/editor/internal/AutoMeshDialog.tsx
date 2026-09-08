@@ -1,11 +1,9 @@
 import {RadioGroup} from '@kobalte/core/radio-group'
-import {Button} from '@kobalte/core/button'
+import {EditorButton, EditorNumberField, useEditorPortalMount} from '../../design-system'
 import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {type AutoMeshSettings, getMinimumAutoMeshCellSize} from '../auto-mesh-part'
-import {EditorNumberField} from './EditorNumberField'
-import {useEditorPortalMount} from './EditorPortalProvider'
 
 type AutoMeshPreset = 'balanced' | 'custom' | 'detailed' | 'flexible'
 
@@ -64,9 +62,9 @@ const AutoMeshDialogFooter = (props: AutoMeshDialogFooterProps) => (
     <Dialog.CloseButton aria-label="취소" class="secondary">
       취소
     </Dialog.CloseButton>
-    <Button disabled={props.isGenerating || !props.canGenerate} type="submit">
+    <EditorButton disabled={props.isGenerating || !props.canGenerate} type="submit">
       {props.isGenerating ? '생성 중…' : '자동 메시 생성'}
-    </Button>
+    </EditorButton>
   </footer>
 )
 

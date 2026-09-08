@@ -1,11 +1,14 @@
-import {EditorSelect} from './EditorSelect'
+import {
+  EditorRangeInput,
+  EditorSelect,
+  EditorButton,
+  useEditorPortalMount,
+} from '../../design-system'
 import {Popover} from '@kobalte/core/popover'
-import {EditorButton} from './EditorButton'
 import {Show} from 'solid-js'
 import {InfluencePresets} from './InfluencePresets'
 import {InfluenceGraph} from './InfluenceGraph'
 import {InfluencePoints} from './InfluencePoints'
-import {useEditorPortalMount} from './EditorPortalProvider'
 import {type InfluenceRelationProps, useInfluenceSettings} from './use-influence-settings'
 
 const WHOLE_PERCENT = 100
@@ -75,8 +78,7 @@ export const InfluenceRelation = (props: InfluenceRelationProps) => {
       <Show when={settings.direction() !== 'custom'} fallback={<span>사용자 곡선</span>}>
         <label>
           최대 {Number((settings.maximum() * WHOLE_PERCENT).toFixed(1))}%
-          <input
-            type="range"
+          <EditorRangeInput
             min="0"
             max="100"
             step="1"

@@ -1,9 +1,11 @@
+import {LayerName} from './LayerName'
+import {EditorTextInput} from '../../design-system'
 import {LayerContainerIcon} from './LayerContainerIcon'
 import {ContainerKindSelect} from './ContainerKindSelect'
 import {Collapsible} from '@kobalte/core/collapsible'
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createMemo, createSignal, createUniqueId, For, Show, untrack} from 'solid-js'
+import {createMemo, createSignal, For, Show, untrack} from 'solid-js'
 
 import {
   getDocumentScene,
@@ -145,7 +147,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
   let nameInput: HTMLInputElement | undefined
 
   const startRenaming = (event: MouseEvent) => {
-    if (!isSceneContainerNode(props.node) || props.locked) {
+    if (props.locked || props.maskPicking) {
       return
     }
 
@@ -160,7 +162,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
   }
 
   const finishRenaming = () => {
-    if (!isRenaming() || !isSceneContainerNode(props.node)) {
+    if (!isRenaming()) {
       return
     }
 
@@ -173,7 +175,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
 
   return (
     <Show
-      when={isSceneContainerNode(props.node) && isRenaming()}
+      when={isRenaming()}
       fallback={
         <div class="puppet-layer-choice">
           <Show when={isSceneContainerNode(props.node)}>
@@ -194,9 +196,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
             title={
               props.maskPickDisabled
                 ? '이 레이어에는 현재 파트의 마스크를 적용할 수 없습니다.'
-                : isSceneContainerNode(props.node)
-                  ? '더블클릭하여 이름 수정'
-                  : undefined
+                : '더블클릭하여 이름 수정'
             }
             onClick={(event) => props.onSelect(event, props.node)}
             onDblClick={startRenaming}
@@ -207,7 +207,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
               </span>
             </Show>
             <span class="layer-label">
-              <strong>{props.node.name}</strong>
+              <LayerName name={props.node.name} selected={props.selected} />
               <small>
                 {isSceneContainerNode(props.node)
                   ? `${props.node.children.length} items`
@@ -225,17 +225,27 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
       }
     >
       <TextField class="puppet-layer-name-editor" value={nameDraft()} onChange={setNameDraft}>
-        <LayerContainerIcon
-          kind={props.node.kind === 'deformer' ? 'deformer' : 'group'}
-          pin={props.node.kind === 'deformer' && props.node.pins !== undefined}
-          bone={props.node.kind === 'deformer' && props.node.boneRestPoints !== undefined}
-          curve={props.node.kind === 'deformer' && props.node.curveAxis !== undefined}
-        />
-        <TextField.Input
+        <Show
+          when={props.node.kind !== 'part'}
+          fallback={
+            <span class="layer-thumbnail" aria-hidden="true">
+              <img alt="" src={part()?.texture.src} />
+            </span>
+          }
+        >
+          <LayerContainerIcon
+            kind={props.node.kind === 'deformer' ? 'deformer' : 'group'}
+            pin={props.node.kind === 'deformer' && props.node.pins !== undefined}
+            rotation={props.node.kind === 'deformer' && props.node.deformerType === 'rotation'}
+            bone={props.node.kind === 'deformer' && props.node.boneRestPoints !== undefined}
+            curve={props.node.kind === 'deformer' && props.node.curveAxis !== undefined}
+          />
+        </Show>
+        <EditorTextInput
           ref={(element) => {
             nameInput = element
           }}
-          aria-label={`${props.node.name} 그룹 이름`}
+          aria-label={`${props.node.name} ${props.node.kind === 'part' ? '파츠' : '그룹'} 이름`}
           onBlur={finishRenaming}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
@@ -375,7 +385,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
         <Show when={isSceneContainerNode(props.node)}>
           <Collapsible.Content>
             <ul role="group">
-              <For each={isSceneContainerNode(props.node) ? props.node.children : []}>
+              <For each={isSceneContainerNode(props.node) ? props.node.children.toReversed() : []}>
                 {(node) => (
                   <SceneNodeItem
                     depth={props.depth + 1}
@@ -407,7 +417,6 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
 
 // eslint-disable-next-line max-lines-per-function
 export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
-  const titleId = createUniqueId()
   const initialGroupIds = untrack(() => getContainerIds(getDocumentScene(props.document).roots))
   const [expandedGroupIds, setExpandedGroupIds] = createSignal<ReadonlySet<string>>(initialGroupIds)
   const [draggedNodeId, setDraggedNodeId] = createSignal<string | null>(null)
@@ -433,9 +442,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
       props.onMaskPick?.(node.id)
       return
     }
-
     const nextSelection = getNextSelection(selection(), event, node)
-
     props.onSelectionChange?.(nextSelection)
     if (node.kind === 'part' && nextSelection.activeNodeId === node.id) {
       props.onPartSelect?.(node.id)
@@ -462,7 +469,6 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
 
   const handleDrop = (target: LayerDropTarget) => {
     const nodeId = draggedNodeId()
-
     if (nodeId === null || nodeId.length === 0) {
       return
     }
@@ -470,10 +476,19 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
     const document = moveSceneNodeRelative({
       document: props.document,
       nodeId,
-      position: target.position,
-      targetNodeId: target.nodeId,
+      position:
+        target.nodeId === null
+          ? 'before'
+          : target.position === 'inside'
+            ? 'inside'
+            : target.position === 'before'
+              ? 'after'
+              : 'before',
+      targetNodeId:
+        target.nodeId ??
+        getDocumentScene(props.document).roots.find((node) => node.id !== nodeId)?.id ??
+        null,
     })
-
     handleDocumentChange(document)
     if (document !== undefined && target.nodeId !== null && target.position === 'inside') {
       setExpandedGroupIds(new Set([...expandedGroupIds(), target.nodeId]))
@@ -486,12 +501,18 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
     <aside
       class="panel layers-panel"
       classList={{'mask-picking': props.maskPickSourcePartId !== undefined}}
-      aria-labelledby={titleId}
+      aria-label="Layers"
+      onClick={(event) => {
+        if (
+          event.target instanceof Element &&
+          event.target.matches(
+            '.layers-panel, .layer-scroll, .layer-tree, .layer-toolbar, .layer-statistics, ul[role="group"]',
+          )
+        ) {
+          props.onSelectionChange?.({activeNodeId: null, nodeIds: []})
+        }
+      }}
     >
-      <div class="panel-heading">
-        <h2 id={titleId}>Layers</h2>
-        <span>{props.document.parts.length}</span>
-      </div>
       <EditorLayerToolbar
         activeLocked={activeLocked()}
         document={props.document}
@@ -532,7 +553,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
               }
             }}
           >
-            <For each={getDocumentScene(props.document).roots}>
+            <For each={getDocumentScene(props.document).roots.toReversed()}>
               {(node) => (
                 <SceneNodeItem
                   depth={1}
@@ -570,6 +591,10 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
           </ul>
         </Show>
       </div>
+      <footer class="layer-statistics" aria-label="전체 정점 수">
+        {props.document.parts.reduce((total, part) => total + part.mesh.vertices.length / 2, 0)}{' '}
+        vertices
+      </footer>
     </aside>
   )
 }

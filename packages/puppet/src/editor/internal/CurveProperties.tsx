@@ -1,4 +1,4 @@
-import {Button} from '@kobalte/core/button'
+import {EditorButton} from '../../design-system'
 import {Show} from 'solid-js'
 import type {PuppetDocument, PuppetSceneDeformerNode} from '../../player'
 import {editCurveTopology} from './curve-topology'
@@ -39,21 +39,21 @@ export const CurveProperties = (props: CurvePropertiesProps) => {
       <fieldset class="deformer-properties">
         <legend>곡선 · {count()}구간</legend>
         <div class="mask-actions">
-          <Button
+          <EditorButton
             class="mask-action-button"
             disabled={props.disabled || count() >= MAXIMUM_SEGMENTS}
             onClick={() => handleEdit('split')}
           >
             구간 나누기
-          </Button>
-          <Button
+          </EditorButton>
+          <EditorButton
             class="mask-action-button"
             disabled={props.disabled || !removable()}
             title="선택한 내부 연결점을 삭제합니다. 곡선 모양이 달라질 수 있습니다."
             onClick={() => handleEdit('remove')}
           >
             연결점 삭제
-          </Button>
+          </EditorButton>
         </div>
         <p class="mask-empty-state">
           곡선 위 더블클릭으로 연결점을 추가합니다. 내부 연결점을 선택하고 Backspace 또는 Delete로

@@ -1,3 +1,4 @@
+import type {ControlSizeProps} from './control-size'
 import {ColorArea} from '@kobalte/core/color-area'
 import {ColorField} from '@kobalte/core/color-field'
 import {ColorSlider} from '@kobalte/core/color-slider'
@@ -6,7 +7,7 @@ import {parseColor} from '@kobalte/core/colors'
 import {Popover} from '@kobalte/core/popover'
 import {createEffect, createSignal, untrack} from 'solid-js'
 
-export interface EditorColorFieldProps {
+export interface EditorColorFieldProps extends ControlSizeProps {
   readonly label: string
   readonly value: string
   readonly disabled?: boolean
@@ -29,7 +30,7 @@ export const EditorColorField = (props: EditorColorFieldProps) => {
   }
 
   return (
-    <div class="editor-color-field">
+    <div class="editor-control editor-color-field" data-control-size={props.size ?? 'sm'}>
       <Popover onOpenChange={(open) => (open ? props.onEditStart?.() : props.onEditEnd?.())}>
         <Popover.Trigger
           class="editor-color-trigger"

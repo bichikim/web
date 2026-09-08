@@ -92,6 +92,8 @@ export interface PuppetVertexInfluence extends PuppetVertexReference {
 }
 
 export interface PuppetDeformerShape {
+  /** A rigid pivot and direction handle represented by exactly one bone segment. */
+  readonly deformerType?: 'rotation'
   /** Per-vertex deformation amount; omission applies the full deformation. */
   readonly vertexInfluences?: ReadonlyArray<PuppetVertexInfluence>
   readonly boneWeights?: ReadonlyArray<PuppetBoneWeights>
@@ -130,7 +132,35 @@ export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase, P
   readonly binding?: PuppetDeformerBinding
 }
 
+export interface PuppetSkinMatrix {
+  readonly xx: number
+  readonly yx: number
+  readonly xy: number
+  readonly yy: number
+  readonly x: number
+  readonly y: number
+}
+
+export interface PuppetSkinInfluence {
+  readonly strength?: number
+  readonly nodeId: string
+  readonly inverseBind: PuppetSkinMatrix
+  readonly weights: ReadonlyArray<number>
+}
+
+export interface PuppetSkinOptions {
+  readonly mode?: 'joint' | 'smooth'
+  readonly range?: number
+}
+
+export interface PuppetSkinBinding extends PuppetSkinOptions {
+  readonly syncSeams?: boolean
+  readonly bind: PuppetSkinMatrix
+  readonly influences: ReadonlyArray<PuppetSkinInfluence>
+}
+
 export interface PuppetScenePartNode extends PuppetSceneNodeBase {
+  readonly skinning?: PuppetSkinBinding
   readonly kind: 'part'
 }
 
@@ -240,7 +270,21 @@ export interface PuppetMotion {
   readonly tracks: ReadonlyArray<PuppetTrack>
 }
 
+export interface PuppetEdgeReference extends PuppetVertexReference {
+  readonly edge: {readonly endIndex: number; readonly position: number}
+}
+
+export interface PuppetGlue {
+  readonly id: string
+  readonly first: PuppetVertexReference
+  readonly second: PuppetVertexReference | PuppetEdgeReference
+  /** B's share of the joined position, from zero to one. */
+  readonly weight: number
+  readonly strength: number
+}
+
 export interface PuppetDocument {
+  readonly glue?: ReadonlyArray<PuppetGlue>
   readonly format: typeof PUPPET_DOCUMENT_FORMAT
   readonly motions: ReadonlyArray<PuppetMotion>
   readonly parameterBindings?: ReadonlyArray<PuppetParameterBinding>

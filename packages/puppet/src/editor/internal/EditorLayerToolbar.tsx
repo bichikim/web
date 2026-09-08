@@ -33,7 +33,7 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
       onClick={() => {
         const nodeId = props.selection.activeNodeId
         if (nodeId !== null) {
-          props.onDocumentChange(moveSceneNodeBy(props.document, nodeId, -1))
+          props.onDocumentChange(moveSceneNodeBy(props.document, nodeId, 1))
         }
       }}
     >
@@ -46,7 +46,7 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
       onClick={() => {
         const nodeId = props.selection.activeNodeId
         if (nodeId !== null) {
-          props.onDocumentChange(moveSceneNodeBy(props.document, nodeId, 1))
+          props.onDocumentChange(moveSceneNodeBy(props.document, nodeId, -1))
         }
       }}
     >
@@ -72,5 +72,8 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
         class="puppet-icon puppet-icon-indent-decrease layer-toolbar-icon puppet-layer-toolbar-icon"
       />
     </Button>
+    <span class="layer-count" aria-label={`파츠 ${props.document.parts.length}개`}>
+      {props.document.parts.length}
+    </span>
   </div>
 )
