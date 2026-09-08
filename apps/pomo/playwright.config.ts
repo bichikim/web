@@ -27,7 +27,7 @@ export default defineConfig({
     },
     {
       name: 'apps-in-toss',
-      testIgnore: 'client-actions.spec.ts',
+      testIgnore: ['client-actions.spec.ts', 'settings.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         baseURL: appsInTossBaseUrl,

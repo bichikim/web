@@ -1,0 +1,61 @@
+name: Pomo settings E2E
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - apps/pomo/**
+      - packages/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/pomo-settings-e2e.yml
+
+concurrency:
+  group: pomo-settings-e2e-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  settings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm --filter @apps/pomo exec playwright install --with-deps chromium
+      - name: Run settings E2E with video
+        run: |
+          mkdir -p apps/pomo/e2e-evidence
+          git rev-parse HEAD > apps/pomo/e2e-evidence/commit.txt
+          printf '%s\n' 'pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --workers=1' > apps/pomo/e2e-evidence/command.txt
+          set -o pipefail
+          pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --workers=1 2>&1 | tee apps/pomo/e2e-evidence/run.log
+      - name: Upload settings videos and report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pomo-settings-e2e-${{ github.event.pull_request.head.sha }}
+          path: |
+            apps/pomo/test-results/
+            apps/pomo/playwright-report/
+            apps/pomo/e2e-evidence/
+          if-no-files-found: error
+          retention-days: 30
