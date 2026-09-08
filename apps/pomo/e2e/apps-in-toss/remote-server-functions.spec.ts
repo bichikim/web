@@ -5,9 +5,9 @@ import {promisify} from 'node:util'
 import {expect, test} from '@playwright/test'
 
 const execFileAsync = promisify(execFile)
-const FIXTURE_URL = new URL('./fixtures/remote-server-functions/', import.meta.url)
+const FIXTURE_URL = new URL('../fixtures/remote-server-functions/', import.meta.url)
 const FIXTURE_DIRECTORY = fileURLToPath(FIXTURE_URL)
-const VITE_EXECUTABLE = fileURLToPath(new URL('../node_modules/.bin/vite', import.meta.url))
+const VITE_EXECUTABLE = fileURLToPath(new URL('../../node_modules/.bin/vite', import.meta.url))
 const SSR_ORIGIN = 'http://127.0.0.1:45173'
 const SSG_ORIGIN = 'http://127.0.0.1:1420'
 const SERVER_VALUE = 'response from the running SSR server'
