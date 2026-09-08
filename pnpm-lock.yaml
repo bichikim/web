@@ -212,6 +212,9 @@ overrides:
   tar@<=7.5.20: ^7.5.21
   tar@<=7.5.9: ^7.5.10
 
+patchedDependencies:
+  '@kobalte/core@0.13.11': cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29
+
 importers:
 
   .:
@@ -383,7 +386,7 @@ importers:
         version: 1.7.6
       '@kobalte/core':
         specifier: ^0.13.11
-        version: 0.13.11(solid-js@1.9.14)
+        version: 0.13.11(patch_hash=cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29)(solid-js@1.9.14)
       '@lottiefiles/dotlottie-solid':
         specifier: ^0.5.15
         version: 0.5.15(solid-js@1.9.14)
@@ -601,7 +604,7 @@ importers:
         version: 2.24.1(typescript@7.0.2)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
       '@kobalte/core':
         specifier: ^0.13.11
-        version: 0.13.11(solid-js@1.9.14)
+        version: 0.13.11(patch_hash=cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29)(solid-js@1.9.14)
       '@neondatabase/auth':
         specifier: 0.5.0-beta
         version: 0.5.0-beta(bc79c0c9016a666032082e5f549d6efa)
@@ -14915,7 +14918,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kobalte/core@0.13.11(solid-js@1.9.14)':
+  '@kobalte/core@0.13.11(patch_hash=cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29)(solid-js@1.9.14)':
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@internationalized/date': 3.12.2
