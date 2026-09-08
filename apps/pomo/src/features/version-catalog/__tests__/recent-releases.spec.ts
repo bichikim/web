@@ -6,7 +6,7 @@ import {selectRecentUnseenReleases} from '../recent-releases'
 const catalog = {
   releases: [
     {
-      changes: ['최신 변경'],
+      changes: [{description: '최신 변경'}],
       releasedAt: '2026-09-03T00:57:00+09:00',
       title: '업데이트',
       version: '2026. 09. 03 00:57',
@@ -45,7 +45,7 @@ it('should exclude future releases and releases at or before the viewed marker',
     catalog: {
       releases: [
         {
-          changes: ['미래 변경'],
+          changes: [{description: '미래 변경'}],
           releasedAt: '2026-09-03T01:00:00+09:00',
           title: '미래 업데이트',
           version: '2026. 09. 03 01:00',

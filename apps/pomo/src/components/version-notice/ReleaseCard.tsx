@@ -1,5 +1,6 @@
-import {createUniqueId, For, Show} from 'solid-js'
+import {createUniqueId, Show} from 'solid-js'
 import * as m from '@paraglide/message'
+import {ReleaseBody} from './ReleaseBody'
 import {type VersionRelease} from '../../features/version-catalog'
 
 interface VersionReleaseCardProps {
@@ -38,34 +39,14 @@ export const VersionReleaseCard = (props: VersionReleaseCardProps) => {
         </div>
       </header>
 
-      <Show
-        fallback={
-          <p class="m-0 border-t border-solid border-border px-4 py-3.5 text-sm leading-6 text-muted-foreground">
+      <div class="border-t border-solid border-border p-4 text-foreground settings-compact:p-3.5">
+        <ReleaseBody release={props.release} />
+        <Show when={!hasChanges() && !props.release.summary && !props.release.notes?.length}>
+          <p class="m-0 text-sm leading-6 text-muted-foreground">
             {m.version_notice_initial_release()}
           </p>
-        }
-        when={hasChanges()}
-      >
-        <ul class="m-0 list-none border-t border-solid border-border p-0">
-          <For each={props.release.changes}>
-            {(change) => (
-              <li
-                class={
-                  'flex items-start gap-3 border-b border-solid border-border px-4 py-3.5 ' +
-                  'text-sm leading-6 text-foreground last:border-b-0 settings-compact:px-3.5'
-                }
-                role="listitem"
-              >
-                <span
-                  aria-hidden="true"
-                  class="i-tabler-check mt-1 size-4 flex-none text-highlight"
-                />
-                <span>{change}</span>
-              </li>
-            )}
-          </For>
-        </ul>
-      </Show>
+        </Show>
+      </div>
     </article>
   )
 }

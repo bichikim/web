@@ -19,7 +19,12 @@ it('should list release notes and provide a return link', () => {
             <VersionCatalogDocument
               catalog={{
                 releases: [
-                  {changes: ['첫 기능'], releasedAt: '2026-09-06', title: '출시', version: '1.0.0'},
+                  {
+                    changes: [{description: '첫 기능'}],
+                    releasedAt: '2026-09-06',
+                    title: '출시',
+                    version: '1.0.0',
+                  },
                 ],
               }}
             />
