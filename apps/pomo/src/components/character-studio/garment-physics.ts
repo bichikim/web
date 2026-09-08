@@ -1,18 +1,17 @@
 import type {AssetContainer} from '@babylonjs/core/assetContainer'
 import {Matrix, Quaternion, Vector3} from '@babylonjs/core/Maths/math.vector'
 import {advanceSpring} from './spring-motion'
-import rigs from './spring-rigs.json'
+import {getProfile} from './profiles'
 
 const PHYSICS = {
   drag: 0.22,
   frequency: 60,
   gravity: 0.28,
   hairGravity: 0.035,
+  looseAngle: 0.65,
   maxFrame: 0.05,
   radius: 0.01,
   seconds: 1_000,
-  looseAngle: 0.65,
-  skirtAngle: 0.22,
   stiffness: 0.5,
 }
 const SEAT_BOUNDS = {max: {x: -0.62, y: 0.6, z: 1.1}, min: {x: -1.5, y: 0.3, z: -1.2}}
@@ -23,7 +22,7 @@ const SEAT = {
 const STEP = 1 / PHYSICS.frequency
 
 export const mountGarmentPhysics = (container: AssetContainer, modelUrl: string) => {
-  const rig = modelUrl.includes('haru.vrm') ? rigs.haru : rigs.luna
+  const {rig} = getProfile(modelUrl)
   const nodes = new Map(container.transformNodes.map((node) => [node.name, node]))
   const joints = rig.springs
     .filter((spring) => spring.name !== 'Skirt')
@@ -80,22 +79,22 @@ export const mountGarmentPhysics = (container: AssetContainer, modelUrl: string)
           ]
         })
         const next = advanceSpring({
+          colliders,
           current: state.current,
-          length: Vector3.Distance(origin, rest),
           delta: STEP,
-          segmentCollision: spring.name === 'Skirt',
+          drag: Math.max(joint.dragForce ?? 0, PHYSICS.drag),
           gravity: Math.max(
             joint.gravityPower ?? 0,
             spring.name === 'Hair' ? PHYSICS.hairGravity : PHYSICS.gravity,
           ),
-          maxAngle: spring.name === 'Skirt' ? PHYSICS.skirtAngle : PHYSICS.looseAngle,
-          drag: Math.max(joint.dragForce ?? 0, PHYSICS.drag),
+          length: Vector3.Distance(origin, rest),
+          maxAngle: PHYSICS.looseAngle,
           origin,
-          colliders,
-          rest,
           previous: state.previous,
           radius: joint.hitRadius ?? PHYSICS.radius,
+          rest,
           seat: SEAT,
+          segmentCollision: false,
           stiffness: joint.stiffness ?? PHYSICS.stiffness,
         })
         const inverse = Matrix.Invert(node.getWorldMatrix())

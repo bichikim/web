@@ -7,7 +7,7 @@ import {Matrix, Vector3} from '@babylonjs/core/Maths/math.vector'
 import {Mesh} from '@babylonjs/core/Meshes/mesh'
 import {createClothRenderer} from './cloth-renderer'
 import {type ClothCapsule, createClothMotion} from './cloth-motion'
-import rigs from './spring-rigs.json'
+import {getProfile} from './profiles'
 import type {ClothTriangle} from './cloth-constraints'
 import {createClothBinding} from './cloth-binding'
 
@@ -200,6 +200,7 @@ const surfaceFaces = (state: ReturnType<typeof prepareMesh>[number]): ClothTrian
 const createSurface = (
   meshes: ReturnType<typeof prepareMesh>,
   capsules: readonly ClothCapsule[],
+  shellName: string,
 ) => {
   const welded = new Map<string, number>()
   const targets: Vector3[] = []
@@ -207,7 +208,7 @@ const createSurface = (
   const faces: ClothTriangle[] = []
   const pinned: boolean[] = []
   const edges: [number, number][] = []
-  const shell = meshes.find((state) => state.mesh.name === 'Body_primitive2')
+  const shell = meshes.find((state) => state.mesh.name === shellName)
   const shellParticles = new Set<number>()
   for (const state of meshes) {
     for (const [index, point] of state.targets.entries()) {
@@ -293,7 +294,7 @@ const renderSurface = (
 }
 
 export const mountClothContact = (container: AssetContainer, modelUrl: string) => {
-  const rig = modelUrl.includes('haru.vrm') ? rigs.haru : rigs.luna
+  const {rig, shell} = getProfile(modelUrl)
   const colliders = rig.colliders
     .filter((item) => item.node.includes('UpperLeg'))
     .flatMap((item) => {
@@ -359,7 +360,7 @@ export const mountClothContact = (container: AssetContainer, modelUrl: string) =
         )
       }
     }
-    surface ??= createSurface(meshes, capsules)
+    surface ??= createSurface(meshes, capsules, shell)
     if (seatHeight === undefined && hips !== undefined) {
       const origin = hips.getAbsolutePosition().clone()
       origin.y = SETTINGS.seatOrigin
