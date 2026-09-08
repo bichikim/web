@@ -1,7 +1,7 @@
 import initWasm, {HwpDocument} from '@rhwp/core'
 import wasmUrl from '@rhwp/core/rhwp_bg.wasm?url'
 import {createStudio, type RhwpEditor} from '@rhwp/editor'
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import {createExpenseFieldValues, type ExpenseForm} from './expense'
 import {HwpExpenseAssistant} from './HwpExpenseAssistant'
 import {type ViewerMode} from './document/viewer-mode'
@@ -154,23 +154,21 @@ const createPageChangeHandler =
     setPageSvg(renderedPage.svg)
   }
 
-export function HwpDocumentWorkspace() {
-  const [documentInstance, setDocumentInstance] = createSignal<HwpDocument | null>(null)
+const useDocumentRuntime = () => {
   const [editor, setEditor] = createSignal<RhwpEditor | null>(null)
-  const [pageCount, setPageCount] = createSignal<number | null>(null)
-  const [directPageCount, setDirectPageCount] = createSignal<number | null>(null)
-  const [directPageIndex, setDirectPageIndex] = createSignal(0)
-  const [pageSvg, setPageSvg] = createSignal<string | null>(null)
-  const [loadedFileName, setLoadedFileName] = createSignal('expense-form.hwp')
-  const [viewerMode, setViewerMode] = createSignal<ViewerMode>('direct')
   const [statusMessage, setStatusMessage] = createSignal(
     'Rust/WASM 문서 엔진과 iframe 에디터 준비 중…',
   )
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isReady, setIsReady] = createSignal(false)
-  const [isBusy, setIsBusy] = createSignal(false)
   let viewerHost: HTMLDivElement | undefined
   let disposed = false
+  let initializationFailed = false
+  const destroyEditor = () => {
+    const currentEditor = untrack(editor)
+    setEditor(null)
+    currentEditor?.destroy()
+  }
   onMount(() => {
     configureTextMeasurement()
     // rhwp's wasm-bindgen initializer exposes this snake_case option.
@@ -181,29 +179,76 @@ export function HwpDocumentWorkspace() {
         chrome: {menu: true, statusbar: true, toolbar: true},
         plugins: ['hwpctrl'],
         renderer: 'canvas2d',
-      }),
-    ])
-      .then(([, nextEditor]) => {
-        if (disposed) {
+      }).then((nextEditor) => {
+        if (disposed || initializationFailed) {
           nextEditor.destroy()
           return
         }
 
-        nextEditor.element.title = 'HWP 문서 편집기'
         setEditor(nextEditor)
+      }),
+    ])
+      .then(() => {
+        if (disposed) {
+          return
+        }
+
+        const nextEditor = untrack(editor)
+        if (nextEditor === null) {
+          return
+        }
+
+        nextEditor.element.title = 'HWP 문서 편집기'
         setIsReady(true)
         setStatusMessage('Rust/WASM 문서 엔진과 iframe 에디터 준비 완료')
       })
       .catch(() => {
+        initializationFailed = true
+        destroyEditor()
+        if (disposed) {
+          return
+        }
+
         setErrorMessage('Rust/WASM 문서 엔진 또는 iframe 에디터를 불러오지 못했어요.')
         setStatusMessage('문서 엔진을 준비하지 못했어요.')
       })
   })
-  onCleanup(() => documentInstance()?.free())
   onCleanup(() => {
     disposed = true
-    editor()?.destroy()
+    destroyEditor()
   })
+  return {
+    editor,
+    errorMessage,
+    isReady,
+    setErrorMessage,
+    setStatusMessage,
+    statusMessage,
+    viewerHost: (element: HTMLDivElement) => {
+      viewerHost = element
+    },
+  }
+}
+
+export function HwpDocumentWorkspace() {
+  const [documentInstance, setDocumentInstance] = createSignal<HwpDocument | null>(null)
+  const [pageCount, setPageCount] = createSignal<number | null>(null)
+  const [directPageCount, setDirectPageCount] = createSignal<number | null>(null)
+  const [directPageIndex, setDirectPageIndex] = createSignal(0)
+  const [pageSvg, setPageSvg] = createSignal<string | null>(null)
+  const [loadedFileName, setLoadedFileName] = createSignal('expense-form.hwp')
+  const [viewerMode, setViewerMode] = createSignal<ViewerMode>('direct')
+  const {
+    editor,
+    errorMessage,
+    isReady,
+    setErrorMessage,
+    setStatusMessage,
+    statusMessage,
+    viewerHost,
+  } = useDocumentRuntime()
+  const [isBusy, setIsBusy] = createSignal(false)
+  onCleanup(() => documentInstance()?.free())
   const loadDocument = async (bytes: Uint8Array, fileName: string) => {
     const loaded = await loadHwpDocument(bytes, fileName, editor())
     documentInstance()?.free()
@@ -301,9 +346,7 @@ export function HwpDocumentWorkspace() {
         pageSvg={pageSvg}
         statusMessage={statusMessage}
         viewerMode={viewerMode}
-        viewerHost={(element) => {
-          viewerHost = element
-        }}
+        viewerHost={viewerHost}
       />
 
       <HwpExpenseAssistant onApply={handleApply} />
