@@ -1,4 +1,4 @@
-import {EditorSelect} from './EditorSelect'
+import {EditorSelect, EditorColorField, EditorNumberField} from '../../design-system'
 import {For} from 'solid-js'
 
 import {getPartRenderProperties} from '../../deformation'
@@ -9,8 +9,6 @@ import {
   type PuppetPartBlendMode,
   type PuppetPartRenderProperties,
 } from '../../player'
-import {EditorColorField} from './EditorColorField'
-import {EditorNumberField} from './EditorNumberField'
 import {type MaskTargetOption, PartMaskProperties} from './PartMaskProperties'
 
 export type {MaskTargetOption} from './PartMaskProperties'

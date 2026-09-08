@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {createSignal} from 'solid-js'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {
@@ -11,6 +12,7 @@ import {CharacterStudio} from '../CharacterStudio'
 vi.mock('../../features/character-renderer', () => ({useCharacterRenderer: vi.fn()}))
 vi.mock('../character-studio/Viewport', () => ({
   CharacterViewport: (props: {
+    readonly eyeNarrowing?: number
     readonly modelUrl: string
     readonly onLoadError: () => void
     readonly onLoadProgress: (progress: number) => void
@@ -20,6 +22,7 @@ vi.mock('../character-studio/Viewport', () => ({
     readonly status: string
   }) => (
     <section
+      data-eye-narrowing={props.eyeNarrowing}
       data-model-url={props.modelUrl}
       data-progress={props.progress}
       data-status={props.status}
@@ -59,6 +62,68 @@ describe('CharacterStudio', () => {
     vi.clearAllMocks()
   })
 
+  it('should control and reset eye width for the default model', () => {
+    const renderer = createRenderer()
+    vi.mocked(useCharacterRenderer).mockReturnValue({
+      ...renderer,
+      modelUrl: () => '/character-studio/scene.glb',
+    })
+    render(() => <CharacterStudio />)
+    const slider = screen.getByRole('slider', {name: '눈 가로폭 좁힘 정도'})
+    fireEvent.input(slider, {target: {value: '1'}})
+    expect(document.querySelector('[data-eye-narrowing]')).toHaveAttribute(
+      'data-eye-narrowing',
+      '1',
+    )
+    fireEvent.click(screen.getByRole('button', {name: '눈 가로폭 초기화'}))
+    expect(slider).toHaveValue('0')
+    expect(document.querySelector('[data-eye-narrowing]')).toHaveAttribute(
+      'data-eye-narrowing',
+      '0',
+    )
+  })
+
+  it('should retry the selected model after a loading error', () => {
+    const renderer = createRenderer()
+    vi.mocked(useCharacterRenderer).mockReturnValue({
+      ...renderer,
+      modelUrl: () => '/character-studio/pomo.glb',
+      status: () => 'error',
+    })
+    render(() => <CharacterStudio />)
+    fireEvent.click(screen.getByRole('button', {name: 'Pomo'}))
+    expect(renderer.loadDefaultModel).toHaveBeenCalledOnce()
+  })
+
+  it('should retain VRoid settings when switching to Pomo and back', () => {
+    const [url, setUrl] = createSignal('/character-studio/scene.glb')
+    const renderer = createRenderer()
+    vi.mocked(useCharacterRenderer).mockReturnValue({
+      ...renderer,
+      loadDefaultModel: () => {
+        setUrl('/character-studio/pomo.glb')
+      },
+      loadUrl: (value) => {
+        setUrl(value)
+        return true
+      },
+      modelUrl: url,
+      status: () => 'ready',
+    })
+    render(() => <CharacterStudio />)
+    fireEvent.input(screen.getByRole('slider', {name: '눈 가로폭 좁힘 정도'}), {
+      target: {value: '0.4'},
+    })
+    fireEvent.click(screen.getByRole('button', {name: 'Pomo'}))
+    expect(screen.queryByRole('slider', {name: '눈 가로폭 좁힘 정도'})).not.toBeInTheDocument()
+    expect(document.querySelector('[data-model-url]')).toHaveAttribute(
+      'data-model-url',
+      '/character-studio/pomo.glb',
+    )
+    fireEvent.click(screen.getByRole('button', {name: 'VRoid'}))
+    expect(screen.getByRole('slider', {name: '눈 가로폭 좁힘 정도'})).toHaveValue('0.4')
+  })
+
   it('should initialize the renderer and forward viewport lifecycle events', () => {
     const renderer = createRenderer()
     vi.mocked(useCharacterRenderer).mockReturnValue(renderer)
@@ -66,7 +131,10 @@ describe('CharacterStudio', () => {
     render(() => <CharacterStudio />)
 
     expect(useCharacterRenderer).toHaveBeenCalledWith(
-      expect.objectContaining({defaultModelName: 'Blender · character-studio.blend'}),
+      expect.objectContaining({
+        defaultModelName: 'Pomo · 파츠 분리 모델',
+        defaultModelUrl: '/character-studio/pomo.glb',
+      }),
     )
     expect(screen.getByText('현재 캐릭터.glb')).toBeInTheDocument()
     expect(document.querySelector('[data-model-url]')).toHaveAttribute(

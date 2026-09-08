@@ -4,6 +4,7 @@ import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformatio
 import type {PuppetDocument} from '../player/document'
 
 export interface MeshEditorProps {
+  readonly meshEditing?: boolean
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activePartId?: string

@@ -4,8 +4,8 @@ import {getLocale, type Locale} from '@paraglide/runtime'
 import {getPublicAssetUrl} from 'src/features/public-assets'
 
 const VERSION_CATALOG_PATHS = {
-  en: '/versions/en.json',
-  ko: '/versions/ko.json',
+  en: '/versions/v2/en.json',
+  ko: '/versions/v2/ko.json',
 } as const satisfies Record<Locale, `/${string}`>
 const VERSION_PATTERN = /^\d{4}\. \d{2}\. \d{2} \d{2}:\d{2}$/u
 const RELEASE_TIMESTAMP_PATTERN =
@@ -13,8 +13,18 @@ const RELEASE_TIMESTAMP_PATTERN =
 
 const RELEASE_SCHEMA = z
   .object({
-    changes: z.array(z.string().min(1)),
+    changes: z.array(
+      z.union([
+        z.object({description: z.string().min(1), title: z.string().min(1).optional()}),
+        z
+          .string()
+          .min(1)
+          .transform((description) => ({description})),
+      ]),
+    ),
+    notes: z.array(z.string().min(1)).optional(),
     releasedAt: z.string().datetime({offset: true}),
+    summary: z.string().min(1).optional(),
     title: z.string().min(1),
     version: z.string().regex(VERSION_PATTERN),
   })
@@ -36,9 +46,16 @@ const VERSION_CATALOG_SCHEMA = z.object({
   releases: z.array(RELEASE_SCHEMA).min(1),
 })
 
+export interface VersionChange {
+  readonly description: string
+  readonly title?: string
+}
+
 export interface VersionRelease {
-  readonly changes: ReadonlyArray<string>
+  readonly changes: ReadonlyArray<VersionChange>
+  readonly notes?: ReadonlyArray<string>
   readonly releasedAt: string
+  readonly summary?: string
   readonly title: string
   readonly version: string
 }

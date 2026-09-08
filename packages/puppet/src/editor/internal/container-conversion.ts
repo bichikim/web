@@ -10,7 +10,13 @@ import {createDeformerControlPoints} from './grid-control-points'
 import {isSceneNodeLocked, removeParameterDeformerTargets} from './scene-graph'
 import {collectPartIds, findNode, updateNode} from './scene-tree'
 
-export type SceneContainerConversionTarget = 'deformer' | 'group' | 'curve' | 'bone' | 'pin'
+export type SceneContainerConversionTarget =
+  | 'deformer'
+  | 'group'
+  | 'curve'
+  | 'bone'
+  | 'pin'
+  | 'rotation'
 
 export interface SceneContainerConversion {
   readonly nodeIds: ReadonlyArray<string>
@@ -60,13 +66,15 @@ const createConvertedGroup = (node: PuppetSceneDeformerNode): PuppetSceneGroupNo
 
 export const getContainerKind = (node: PuppetSceneNode): SceneContainerConversionTarget =>
   node.kind === 'deformer'
-    ? node.pins === undefined
-      ? node.boneRestPoints === undefined
-        ? node.curveAxis === undefined
-          ? 'deformer'
-          : 'curve'
-        : 'bone'
-      : 'pin'
+    ? node.deformerType === 'rotation'
+      ? 'rotation'
+      : node.pins === undefined
+        ? node.boneRestPoints === undefined
+          ? node.curveAxis === undefined
+            ? 'deformer'
+            : 'curve'
+          : 'bone'
+        : 'pin'
     : 'group'
 
 const convertContainer = (
@@ -92,15 +100,16 @@ const convertContainer = (
     return {
       ...base,
       columns: 1,
+      controlPoints: [x, y],
+      pins: [{radius: Math.max(bounds.width, bounds.height) / 2, x, strength: 1, y}],
       rotationOrigin: undefined,
       rows: 1,
-      controlPoints: [x, y],
-      pins: [{x, radius: Math.max(bounds.width, bounds.height) / 2, y, strength: 1}],
     }
   }
   const axis = bounds.height > bounds.width ? 'y' : 'x'
   const CUBIC_POINTS = 4
-  const count = targetKind === 'bone' ? 2 : CUBIC_POINTS
+  const rigid = targetKind === 'bone' || targetKind === 'rotation'
+  const count = rigid ? 2 : CUBIC_POINTS
   const controlPoints = Array.from({length: count}, (_, index) =>
     axis === 'x'
       ? [bounds.x + (bounds.width * index) / (count - 1), bounds.y + bounds.height / 2]
@@ -108,9 +117,10 @@ const convertContainer = (
   ).flat()
   return {
     ...base,
-    boneRestPoints: targetKind === 'bone' ? controlPoints : undefined,
+    boneRestPoints: rigid ? controlPoints : undefined,
     columns: 1,
     controlPoints,
+    deformerType: targetKind === 'rotation' ? 'rotation' : undefined,
     curveAxis: targetKind === 'curve' ? axis : undefined,
     rotationOrigin: undefined,
     rows: 1,

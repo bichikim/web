@@ -256,25 +256,20 @@ export const createCurveDeformer = (
   })
 export const renameSceneNode = (
   document: PuppetDocument,
-  groupId: string,
+  nodeId: string,
   name: string,
 ): PuppetDocument | undefined => {
   const normalizedName = name.trim()
   const scene = getDocumentScene(document)
-  const node = findNode(scene.roots, groupId)
+  const node = findNode(scene.roots, nodeId)
 
-  if (
-    node === undefined ||
-    node.kind === 'part' ||
-    isSceneNodeLocked(document, groupId) ||
-    normalizedName.length === 0
-  ) {
+  if (node === undefined || isSceneNodeLocked(document, nodeId) || normalizedName.length === 0) {
     return undefined
   }
 
   return withScene(document, {
     ...scene,
-    roots: updateNode(scene.roots, groupId, (candidate) => ({
+    roots: updateNode(scene.roots, nodeId, (candidate) => ({
       ...candidate,
       name: normalizedName,
     })),

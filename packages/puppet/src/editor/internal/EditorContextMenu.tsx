@@ -1,7 +1,7 @@
 import {ContextMenu} from '@kobalte/core/context-menu'
 import {For, type JSX, Show} from 'solid-js'
 
-import {useEditorPortalMount} from './EditorPortalProvider'
+import {useEditorPortalMount} from '../../design-system'
 
 export interface EditorContextMenuAction {
   readonly disabled?: boolean

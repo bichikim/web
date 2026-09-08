@@ -7,12 +7,14 @@ import {EditorToolbar} from '../EditorToolbar'
 test('should group file and history actions in the main menu', () => {
   const onExport = vi.fn()
   const onPngImport = vi.fn()
+  const onPsdImport = vi.fn()
   const view = render(() => (
     <EditorToolbar
       playerStatus="ready"
       onExport={onExport}
       onJsonImport={vi.fn()}
       onPngImport={onPngImport}
+      onPsdImport={onPsdImport}
     />
   ))
   const trigger = view.getByRole('button', {name: '메인 메뉴'})
@@ -24,11 +26,14 @@ test('should group file and history actions in the main menu', () => {
   const file = new File(['png'], 'part.png', {type: 'image/png'})
   fireEvent.change(view.getByLabelText('PNG 불러오기'), {target: {files: [file]}})
   expect(onPngImport).toHaveBeenCalledWith(file)
+  const psd = new File(['psd'], 'layers.psd')
+  fireEvent.change(view.getByLabelText('PSD 불러오기'), {target: {files: [psd]}})
+  expect(onPsdImport).toHaveBeenCalledWith(psd)
   expect(menu).toContainElement(screen.getByRole('button', {name: '실행 취소'}))
   expect(menu).toContainElement(screen.getByRole('button', {name: '다시 실행'}))
   expect(screen.getByRole('button', {name: '실행 취소'})).toBeDisabled()
   expect(screen.getByRole('button', {name: '다시 실행'})).toBeDisabled()
-  expect(view.getByRole('navigation', {name: '편집 작업 공간'}).nextElementSibling).toHaveClass(
+  expect(view.getByRole('group', {name: '편집 작업 공간'}).nextElementSibling).toHaveClass(
     'panel-visibility-controls',
   )
 })

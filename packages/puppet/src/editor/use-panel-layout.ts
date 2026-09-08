@@ -20,6 +20,8 @@ interface PanelPreference {
   readonly size: number
 }
 
+const COLLAPSE_RATIO = 0.5
+
 const PANEL_PREFERENCE_KEY = 'puppet:editor-panel-layout:v1'
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
@@ -181,7 +183,7 @@ export const usePanelLayout = () => {
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const pointerDelta = getPointerPosition(moveEvent, position) - initialPointerPosition
       const nextSize = initialSize + pointerDelta * direction
-      collapseOnRelease = nextSize <= specification.minimumSize
+      collapseOnRelease = nextSize <= specification.minimumSize * COLLAPSE_RATIO
       resize(position, nextSize)
     }
     const handlePointerUp = () => {

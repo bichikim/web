@@ -12,8 +12,8 @@ vi.mock('@solidjs/meta', () => ({
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
-vi.mock('src/components/character-studio/ViewportCanvas', () => ({
-  CharacterViewportCanvas: (props: {modelUrl: string; trainCabin?: boolean}) => (
+vi.mock('src/components/character-studio/TrainViewportCanvas', () => ({
+  TrainViewportCanvas: (props: {modelUrl: string; trainCabin?: boolean}) => (
     <canvas
       data-model-url={props.modelUrl}
       data-train-cabin={props.trainCabin}

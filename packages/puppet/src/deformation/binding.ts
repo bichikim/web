@@ -3,6 +3,7 @@ import type {PuppetDeformerShape, PuppetSceneDeformerNode} from '../player/docum
 export const getDeformerShape = (node: PuppetDeformerShape): PuppetDeformerShape => ({
   boneRestPoints: node.boneRestPoints,
   boneWeights: node.boneWeights,
+  deformerType: node.deformerType,
   bounds: {
     height: node.bounds.height,
     width: node.bounds.width,

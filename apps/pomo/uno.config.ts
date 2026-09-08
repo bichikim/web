@@ -362,7 +362,7 @@ body {
 }
 
 .pomo-entry {
-  background: radial-gradient(
+  background: linear-gradient(155deg, rgb(7 5 4 / 65%) 0%, transparent 38%), radial-gradient(
     ellipse 125% 105% at 0% 108%,
     rgb(7 5 4 / 94%) 0%,
     rgb(7 5 4 / 82%) 28%,

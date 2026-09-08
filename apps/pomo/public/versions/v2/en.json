@@ -1,0 +1,99 @@
+{
+  "releases": [
+    {
+      "version": "2026. 09. 08 11:44",
+      "releasedAt": "2026-09-08T11:44:00+09:00",
+      "title": "Pomo update",
+      "summary": "From reminders to daily memories, there is more you can do with Pomo.",
+      "changes": [
+        {
+          "description": "Save things you want to remember and choose when to be notified. You can also set advance and repeat reminders.",
+          "title": "Memos and reminders"
+        },
+        {
+          "description": "View events from Google Calendar and Microsoft Outlook and set individual event alarms.",
+          "title": "Calendar connections"
+        },
+        {
+          "description": "Record your day with words and drawings, and browse past diary entries like turning the pages of a book. On supported devices, you can also generate AI images and draw over them. Diaries are saved on your current device.",
+          "title": "Picture diary"
+        },
+        {
+          "description": "Added English B1 and B2 word sets. Listen to individual word pronunciations and manage saved words in bulk.",
+          "title": "Language learning improvements"
+        },
+        {
+          "description": "Added 13 tracks to the morning cafe album.",
+          "title": "New music"
+        },
+        {
+          "description": "Added light mode and improved text and button readability. Added feature tooltips and a guided tour.",
+          "title": "Display and controls"
+        },
+        {
+          "description": "Install Pomo from supported browsers and open it like an app.",
+          "title": "Add to your home screen"
+        },
+        {
+          "description": "Fixed issues with chat retries, editing and deleting memo reminders and event alarms, saving settings, and collapsing playlists.",
+          "title": "Bug fixes"
+        }
+      ],
+      "notes": [
+        "Memo reminders and event alarms notify you through chat and voice while Pomo is open."
+      ]
+    },
+    {
+      "version": "2026. 09. 03 00:57",
+      "releasedAt": "2026-09-03T00:57:00+09:00",
+      "title": "Update",
+      "changes": [
+        {
+          "description": "Character movement and expressions in the focus space now feel more natural."
+        },
+        {
+          "description": "Added focus-space ambience that changes with the time and weather."
+        },
+        {
+          "description": "In Weather settings, you can now select major cities or search for cities worldwide."
+        },
+        {
+          "description": "Added language learning features and new voices."
+        },
+        {
+          "description": "Audio and music previews now let you seek and mute playback directly."
+        },
+        {
+          "description": "AI model downloads continue as you navigate, with options to view progress or stop them."
+        },
+        {
+          "description": "Feed generation status is now clearer, and in-progress tasks can be stopped directly."
+        },
+        {
+          "description": "Background music volume now adjusts naturally when a conversation begins."
+        },
+        {
+          "description": "Improved usability in fullscreen, screensaver, and desktop modes."
+        },
+        {
+          "description": "Improved reliability when saving settings and playlists."
+        },
+        {
+          "description": "Reduced errors during sign-in and session recovery."
+        },
+        {
+          "description": "Fixed duplicate and playback issues when recovering or retrying feed conversations, albums, and music."
+        },
+        {
+          "description": "Improved initial loading and the reliability of weather and music data refreshes."
+        }
+      ]
+    },
+    {
+      "version": "2026. 08. 25 05:26",
+      "releasedAt": "2026-08-25T05:26:00+09:00",
+      "title": "Initial release",
+      "changes": []
+    }
+  ]
+}

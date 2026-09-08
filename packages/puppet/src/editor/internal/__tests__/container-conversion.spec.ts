@@ -106,3 +106,28 @@ test('should switch each container kind while preserving identity and children',
     expect(parseDocument(JSON.stringify(document)).ok).toBe(true)
   }
 })
+
+test('should create a dedicated rotation container with one rigid joint and preserve its children on reload', () => {
+  const document = convertSceneContainers({
+    document: createDemoDocument(),
+    nodeIds: ['shapes'],
+    targetKind: 'rotation',
+  })!
+  const node = getDocumentScene(document).roots.find((node) => node.id === 'shapes')!
+  expect(getContainerKind(node)).toBe('rotation')
+  expect(node).toMatchObject({
+    children: [{id: 'shape-circle'}, {id: 'shape-diamond'}],
+    columns: 1,
+    deformerType: 'rotation',
+    rows: 1,
+  })
+  if (node.kind !== 'deformer') {
+    throw new Error('Expected deformer')
+  }
+  expect(node.boneRestPoints).toHaveLength(4)
+  expect(node.controlPoints).toEqual(node.boneRestPoints)
+  expect(parseDocument(JSON.stringify(document)).ok).toBe(true)
+  expect(
+    parseDocument(JSON.stringify({...document, scene: {roots: [{...node, boneWeights: []}]}})).ok,
+  ).toBe(false)
+})

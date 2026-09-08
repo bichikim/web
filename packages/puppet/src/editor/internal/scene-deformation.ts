@@ -1,3 +1,6 @@
+import {getSkinMatrix, invertSkinMatrix, transformSkinPoint} from '../../deformation/skinning'
+import {findNode} from './scene-tree'
+import {applyGlue} from '../../deformation/glue'
 import {
   applySceneNodeDeformers,
   transformDeformerPoint,
@@ -84,12 +87,30 @@ const findNodeAncestorPath = (
 
 export const applySceneDeformers = (options: ApplySceneDeformersOptions) => {
   applySceneNodeDeformers(getDocumentScene(options.document).roots, options.verticesByPartId)
+  applyGlue(options.document.glue ?? [], options.verticesByPartId)
 }
 
 export const unapplySceneDeformersPoint = (
   options: UnapplySceneDeformersPointOptions,
 ): PuppetPoint => {
-  const path = findNodeAncestorPath(getDocumentScene(options.document).roots, options.partId) ?? []
+  const roots = getDocumentScene(options.document).roots
+  const node = findNode(roots, options.partId)
+  if (node?.kind === 'part' && node.skinning !== undefined && options.vertexIndex !== undefined) {
+    const matrix = getSkinMatrix(roots, node.skinning, options.vertexIndex)
+    const inverse = matrix === undefined ? undefined : invertSkinMatrix(matrix)
+    if (inverse !== undefined) {
+      return transformSkinPoint(inverse, options.point)
+    }
+    if (matrix !== undefined) {
+      const vertices = options.document.parts.find((part) => part.id === options.partId)?.mesh
+        .vertices
+      return {
+        x: vertices?.[options.vertexIndex * 2] ?? 0,
+        y: vertices?.[options.vertexIndex * 2 + 1] ?? 0,
+      }
+    }
+  }
+  const path = findNodeAncestorPath(roots, options.partId) ?? []
   return path.reduce(
     (point, node) =>
       createInverseNodeTransform(

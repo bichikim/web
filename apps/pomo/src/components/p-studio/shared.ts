@@ -21,6 +21,13 @@ export const CLASSES = {
     'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
   ),
+  entryTitle: cx(
+    'absolute left-safe-left-mobile top-[calc(1rem_+_var(--pomo-safe-area-inset-top))]',
+    'm-0 text-[1.75rem] font-semibold tracking-[-0.055em] leading-none text-[#fff9f1]',
+    '[text-shadow:0_2px_16px_rgb(0_0_0_/_25%)] lg:text-[2rem]',
+    'lg:left-[calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
+    'lg:top-[calc(2.5rem_+_var(--pomo-safe-area-inset-top))]',
+  ),
   mediaControls: cx(
     'pomo-media-controls flex w-full min-h-0 max-h-full [flex:0_1_auto]',
     'flex-col-reverse items-end justify-start gap-3',

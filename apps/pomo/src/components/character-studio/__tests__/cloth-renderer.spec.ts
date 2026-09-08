@@ -1,39 +1,56 @@
-import {VertexBuffer} from '@babylonjs/core/Buffers/buffer'
+import {describe, expect, it} from 'vitest'
+import {AssetContainer} from '@babylonjs/core/assetContainer'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'
-import {Vector3} from '@babylonjs/core/Maths/math.vector'
-import {Mesh} from '@babylonjs/core/Meshes/mesh'
 import {Scene} from '@babylonjs/core/scene'
-import {expect, it} from 'vitest'
-import {createClothRenderer} from '../cloth-renderer'
+import {Mesh} from '@babylonjs/core/Meshes/mesh'
+import {VertexData} from '@babylonjs/core/Meshes/mesh.vertexData'
+import {attachCloth} from '../cloth-renderer'
 
-it('should render world-space fabric with matching normals and restore the original triangles', () => {
-  const engine = new NullEngine()
-  const scene = new Scene(engine)
-  const source = new Mesh('dress', scene)
-  source.setVerticesData(VertexBuffer.PositionKind, [0, 0, 0, 1, 0, 0, 0, 0, 1])
-  source.setVerticesData(VertexBuffer.UVKind, [0, 0, 1, 0, 0, 1])
-  source.setIndices([0, 2, 1])
-  const renderer = createClothRenderer(
-    source,
-    new Map([
-      [0, 0],
-      [1, 1],
-      [2, 2],
-    ]),
-    [0, 2, 1],
-  )
-  renderer.update([new Vector3(0, 2, 0), new Vector3(1, 2, 0), new Vector3(0, 2, 1)], [0, 1, 2])
-  const cloth = scene.getMeshByName('dress-cloth')!
-  expect(cloth.skeleton).toBeNull()
-  expect(cloth.getVerticesData(VertexBuffer.PositionKind)![1]).toBe(2)
-  expect(Math.abs(cloth.getVerticesData(VertexBuffer.NormalKind)![1])).toBeCloseTo(1)
-  expect(cloth.getVerticesData(VertexBuffer.UVKind)).toEqual(
-    source.getVerticesData(VertexBuffer.UVKind),
-  )
-  expect(source.getTotalIndices()).toBe(0)
-  renderer.dispose()
-  expect(scene.getMeshByName('dress-cloth')).toBeNull()
-  expect(Array.from(source.getIndices()!)).toEqual([0, 2, 1])
-  scene.dispose()
-  engine.dispose()
+describe('attachCloth', () => {
+  it('should update actual Babylon buffers and restore the original mesh when disabled', () => {
+    const engine = new NullEngine()
+    const scene = new Scene(engine)
+    const container = new AssetContainer(scene)
+    const mesh = new Mesh('cloth', scene)
+    const positions = [0, 1, 0, -0.1, 0, 0, 0.1, 0, 0]
+    const vertices = new VertexData()
+    vertices.positions = positions
+    vertices.indices = [0, 1, 2]
+    vertices.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1]
+    vertices.applyToMesh(mesh)
+    mesh.metadata = {
+      gltf: {
+        extras: {
+          pomoCloth: JSON.stringify({
+            contacts: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+            edges: [0, 1, 1, 2, 0, 2],
+            limits: {'-10000,0,0': 0.012, '0,100000,0': 0, '10000,0,0': 0.012},
+            mobility: [0, 1, 1],
+            positions,
+          }),
+        },
+      },
+    }
+    container.meshes.push(mesh)
+    const cloth = attachCloth(container)
+    expect(cloth.available).toBe(true)
+    const original = Array.from(mesh.getVerticesData('position') ?? [])
+    const originalNormals = Array.from(mesh.getVerticesData('normal') ?? [])
+    for (let index = 0; index < 120; index += 1) {
+      cloth.update(1 / 60, true, 1)
+    }
+    expect(Array.from(mesh.getVerticesData('position') ?? [])).not.toEqual(original)
+    expect(Array.from(mesh.getVerticesData('position') ?? []).slice(0, 3)).toEqual(
+      original.slice(0, 3),
+    )
+    expect(Array.from(mesh.getVerticesData('normal') ?? []).every(Number.isFinite)).toBe(true)
+    cloth.update(1 / 60, false, 0)
+    expect(Array.from(mesh.getVerticesData('normal') ?? [])).toEqual(originalNormals)
+    expect(Array.from(mesh.getVerticesData('position') ?? [])).toEqual(original)
+    cloth.update(10, false, 0)
+    expect(Array.from(mesh.getVerticesData('position') ?? [])).toEqual(original)
+    container.dispose()
+    scene.dispose()
+    engine.dispose()
+  })
 })

@@ -1,6 +1,5 @@
-import {EditorCheckbox} from './EditorCheckbox'
+import {EditorTextInput, EditorCheckbox, EditorButton} from '../../design-system'
 import {TextField} from '@kobalte/core/text-field'
-import {Button} from '@kobalte/core/button'
 import {Popover} from '@kobalte/core/popover'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
@@ -60,7 +59,7 @@ const MaskTargetPicker = (props: MaskTargetPickerProps) => {
           </Popover.CloseButton>
         </div>
         <TextField value={query()} onChange={setQuery}>
-          <TextField.Input
+          <EditorTextInput
             aria-label="적용 대상 검색"
             placeholder="레이어 이름 또는 ID 검색"
             type="search"
@@ -123,14 +122,14 @@ export const PartMaskProperties = (props: PartMaskPropertiesProps) => {
                 <span class="mask-chip">
                   <img alt="" src={option.part.texture.src} />
                   <span>{option.label}</span>
-                  <Button
+                  <EditorButton
                     aria-label={`${option.label} 적용 해제`}
                     disabled={props.staticDisabled || option.disabled}
                     type="button"
                     onClick={() => handleTargetChange(option.part.id, false)}
                   >
                     <span aria-hidden="true" class="puppet-icon puppet-icon-x" />
-                  </Button>
+                  </EditorButton>
                 </span>
               )}
             </For>
@@ -145,7 +144,7 @@ export const PartMaskProperties = (props: PartMaskPropertiesProps) => {
             onTargetChange={handleTargetChange}
           />
           <Show when={props.onMaskPickStart !== undefined}>
-            <Button
+            <EditorButton
               class="mask-action-button"
               disabled={props.staticDisabled}
               type="button"
@@ -156,7 +155,7 @@ export const PartMaskProperties = (props: PartMaskPropertiesProps) => {
               }
             >
               {props.maskPicking ? '대상 선택 취소' : '레이어에서 선택'}
-            </Button>
+            </EditorButton>
           </Show>
         </div>
         <label>

@@ -1,6 +1,6 @@
+import {EditorSegmentedField, useEditorPortalMount} from '../../design-system'
 import {FileField} from '@kobalte/core/file-field'
 import {Popover} from '@kobalte/core/popover'
-import {useEditorPortalMount} from './EditorPortalProvider'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from './EditorHelp'
 import {ToggleButton} from '@kobalte/core/toggle-button'
@@ -28,6 +28,7 @@ export interface EditorToolbarProps {
   readonly playerStatus: PlayerCanvasStatus
   readonly onExport: () => void
   readonly onJsonImport: (file: File | undefined) => void
+  readonly onPsdImport?: (file: File | undefined) => void
   readonly onPngImport: (file: File | undefined) => void
 }
 
@@ -70,6 +71,7 @@ interface ToolbarMenuProps {
   readonly onRedo?: () => void
   readonly onExport: () => void
   readonly onJsonImport: (file: File | undefined) => void
+  readonly onPsdImport?: (file: File | undefined) => void
   readonly onPngImport: (file: File | undefined) => void
 }
 
@@ -77,6 +79,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
   const [menuOpen, setMenuOpen] = createSignal(false)
   const portalMount = useEditorPortalMount()
   const [pngInput, setPngInput] = createSignal<HTMLInputElement>()
+  const [psdInput, setPsdInput] = createSignal<HTMLInputElement>()
   const [jsonInput, setJsonInput] = createSignal<HTMLInputElement>()
 
   return (
@@ -103,6 +106,15 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
             }}
           >
             JSON 가져오기
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false)
+              psdInput()?.click()
+            }}
+          >
+            PSD 불러오기
           </Button>
           <hr />
           <Button
@@ -156,6 +168,19 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
           }}
         />
       </FileField>
+      <FileField accept=".psd,image/vnd.adobe.photoshop">
+        <FileField.HiddenInput
+          ref={setPsdInput}
+          aria-label="PSD 불러오기"
+          hidden
+          type="file"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0]
+            event.currentTarget.value = ''
+            props.onPsdImport?.(file)
+          }}
+        />
+      </FileField>
       <FileField accept="application/json,.json">
         <FileField.HiddenInput
           ref={setJsonInput}
@@ -184,6 +209,7 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       onRedo={props.onRedo}
       onExport={props.onExport}
       onJsonImport={props.onJsonImport}
+      onPsdImport={props.onPsdImport}
       onPngImport={props.onPngImport}
     />
     <div class="toolbar-actions">
@@ -192,22 +218,16 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
         {STATUS_LABEL[props.playerStatus]}
       </div>
 
-      <nav class="workspace-switcher" aria-label="편집 작업 공간">
-        <ToggleButton
-          pressed={props.activeWorkspace !== 'animation'}
-          type="button"
-          onClick={() => props.onWorkspaceChange?.('modeling')}
-        >
-          모델링
-        </ToggleButton>
-        <ToggleButton
-          pressed={props.activeWorkspace === 'animation'}
-          type="button"
-          onClick={() => props.onWorkspaceChange?.('animation')}
-        >
-          애니메이션
-        </ToggleButton>
-      </nav>
+      <EditorSegmentedField<'modeling' | 'animation'>
+        label="편집 작업 공간"
+        size="md"
+        value={props.activeWorkspace ?? 'modeling'}
+        options={[
+          {label: '모델링', value: 'modeling'},
+          {label: '애니메이션', value: 'animation'},
+        ]}
+        onChange={props.onWorkspaceChange}
+      />
       <PanelVisibilityControls visibility={props.panelVisibility} />
     </div>
   </header>

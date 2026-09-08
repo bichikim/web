@@ -22,12 +22,12 @@ test('should pose a pin, preserve the result while placing it, and add and delet
   const point = {x: node().controlPoints[0]!, y: node().controlPoints[1]!}
   const svg = view.getByLabelText('핀 디포머 편집 영역')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-    top: 0,
     left: 0,
-    x: 0,
+    top: 0,
     bottom: 720,
-    y: 0,
+    x: 0,
     height: 720,
+    y: 0,
     right: 960,
     toJSON: () => ({}),
     width: 960,
@@ -103,15 +103,15 @@ test('should stop captured dragging when pointer capture is lost', () => {
   ))
   const svg = view.getByLabelText('핀 디포머 편집 영역')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-    x: 0,
     left: 0,
-    y: 0,
+    x: 0,
     right: 960,
-    top: 0,
+    y: 0,
     bottom: 720,
+    top: 0,
     height: 720,
-    width: 960,
     toJSON: () => ({}),
+    width: 960,
   })
   fireEvent(
     view.getByRole('button', {name: '핀 1'}),

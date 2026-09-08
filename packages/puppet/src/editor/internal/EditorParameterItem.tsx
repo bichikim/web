@@ -1,3 +1,4 @@
+import {EditorTextInput} from '../../design-system'
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
 import {clamp} from 'es-toolkit/math'
@@ -43,7 +44,7 @@ const ParameterNameEditor = (props: ParameterNameEditorProps) => {
       value={name() ?? props.name}
       onChange={setName}
     >
-      <TextField.Input
+      <EditorTextInput
         ref={setInput}
         aria-label="Parameter 이름"
         onBlur={commit}

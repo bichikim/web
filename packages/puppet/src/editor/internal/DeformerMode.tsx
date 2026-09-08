@@ -1,4 +1,4 @@
-import {ToggleButton} from '@kobalte/core/toggle-button'
+import {EditorSegmentedField} from '../../design-system'
 
 export type DeformerEditMode = 'rest' | 'pose'
 
@@ -9,21 +9,13 @@ export interface DeformerModeProps {
 }
 
 export const DeformerMode = (props: DeformerModeProps) => (
-  <>
-    <ToggleButton
-      class="mask-action-button"
-      pressed={props.mode === 'rest'}
-      disabled={props.restEditable === false}
-      onClick={() => props.onChange('rest')}
-    >
-      기준 배치
-    </ToggleButton>
-    <ToggleButton
-      class="mask-action-button"
-      pressed={props.mode === 'pose'}
-      onClick={() => props.onChange('pose')}
-    >
-      변형 편집
-    </ToggleButton>
-  </>
+  <EditorSegmentedField
+    label="디포머 편집 방식"
+    value={props.mode}
+    options={[
+      {label: '기준 배치', value: 'rest', disabled: props.restEditable === false},
+      {label: '변형 편집', value: 'pose'},
+    ]}
+    onChange={props.onChange}
+  />
 )

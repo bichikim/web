@@ -10,3 +10,5 @@ export * from './mesh-editor-contract'
 export * from './use-auto-mesh'
 export * from './use-mesh-editor'
 export * from './use-parameter-editor'
+
+export * from './move-mesh-vertex'

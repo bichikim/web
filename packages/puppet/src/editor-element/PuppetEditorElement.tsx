@@ -1,7 +1,7 @@
 import {render} from 'solid-js/web'
 
 import {PuppetEditor} from '../editor'
-import {EditorPortalProvider} from '../editor/internal/EditorPortalProvider'
+import {EditorPortalProvider} from '../design-system'
 import {createDemoDocument, type PuppetDocument} from '../player'
 
 export const PUPPET_EDITOR_TAG_NAME = 'puppet-editor'

@@ -3,7 +3,7 @@ import {A} from '@solidjs/router'
 import {createSignal, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
-import {CharacterViewportCanvas} from 'src/components/character-studio/ViewportCanvas'
+import {TrainViewportCanvas} from 'src/components/character-studio/TrainViewportCanvas'
 import {ExpressionControls} from 'src/components/character-studio/ExpressionControls'
 import {FaceControls} from 'src/components/character-studio/FaceControls'
 import {DEFAULT_EXPRESSIONS} from 'src/components/character-studio/expressions'
@@ -69,7 +69,7 @@ export function AiConversationPage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — AI끼리 대화</Title>
-      <CharacterViewportCanvas
+      <TrainViewportCanvas
         autoRotate={false}
         cacheModels
         trainCabin
