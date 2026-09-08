@@ -1,7 +1,8 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {For, Show} from 'solid-js'
+import {For} from 'solid-js'
 import * as m from '@paraglide/message'
+import {ReleaseBody} from '../version-notice/ReleaseBody'
 import {type VersionCatalog} from 'src/features/version-catalog'
 
 const MAIN_CLASSES = cx(
@@ -46,11 +47,9 @@ export const VersionCatalogDocument = (props: {readonly catalog: VersionCatalog}
               <h2 class="mb-0 mt-2 text-xl font-800 tracking--0.02em xs:text-2xl">
                 {release.title}
               </h2>
-              <Show when={release.changes.length > 0}>
-                <ul class="mb-0 mt-5 grid gap-3 pl-5 text-sm leading-7 text-#d8cbd9 xs:text-base">
-                  <For each={release.changes}>{(change) => <li>{change}</li>}</For>
-                </ul>
-              </Show>
+              <div class="mt-5 text-#d8cbd9">
+                <ReleaseBody release={release} />
+              </div>
             </article>
           )}
         </For>

@@ -39,7 +39,7 @@ export const CharacterControls = (props: CharacterControlsProps) => (
   <aside class={ASIDE_CLASSES}>
     <header>
       <p class="m-0 text-xs font-750 tracking-[0.22em] text-#8bd8c0 uppercase">3D character lab</p>
-      <h1 class="mb-0 mt-3 text-2xl font-800 tracking--0.03em">Blender 캐릭터 연결</h1>
+      <h1 class="mb-0 mt-3 text-2xl font-800 tracking--0.03em">3D 캐릭터 연결</h1>
       <p class="mb-0 mt-3 text-sm leading-6 text-#9ba8b1">
         Babylon.js로 표준 GLB를 렌더링해요. Blender에서 내보낸 파일을 선택하면 즉시 교체됩니다.
       </p>

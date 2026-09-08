@@ -32,7 +32,7 @@ vi.mock('../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 const catalog = {
   releases: [
     {
-      changes: ['새로운 기능을 추가했습니다.'],
+      changes: [{description: '새로운 기능을 추가했습니다.'}],
       releasedAt: '2026-09-03T00:57:00+09:00',
       title: '업데이트',
       version: '2026. 09. 03 00:57',

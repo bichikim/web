@@ -21,6 +21,7 @@ export const PEntry = (props: PEntryProps) => (
       }
     }}
   >
+    <h1 class={CLASSES.entryTitle}>Pomofi</h1>
     <div class={CLASSES.entryContent}>
       <div class="grid gap-3">
         <PButton
