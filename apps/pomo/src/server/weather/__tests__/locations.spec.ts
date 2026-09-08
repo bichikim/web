@@ -1,5 +1,6 @@
 import {expect, it} from 'vitest'
 
+import {WEATHER_CITY_SLUGS} from 'src/features/weather'
 import {getWeatherLocation} from '../locations'
 
 it('should return the configured grid location for every supported city', () => {
@@ -14,5 +15,12 @@ it('should return the configured grid location for every supported city', () => 
     gridY: 38,
     label: '제주',
     slug: 'jeju',
+  })
+  expect(WEATHER_CITY_SLUGS).toContain('miryang')
+  expect(getWeatherLocation('miryang')).toEqual({
+    gridX: 92,
+    gridY: 83,
+    label: '밀양',
+    slug: 'miryang',
   })
 })

@@ -44,6 +44,6 @@ it('should parse only registered provider location identifiers', () => {
 })
 
 it('should parse only supported weather city slugs', () => {
-  expect(parseWeatherCitySlug('jeju')).toBe('jeju')
+  expect(parseWeatherCitySlug('miryang')).toBe('miryang')
   expect(() => parseWeatherCitySlug('tokyo')).toThrow()
 })

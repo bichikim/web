@@ -3,6 +3,9 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+
+const originalGetLocale = getLocale
 
 const searchMocks = vi.hoisted(() => ({
   onQueryChange: vi.fn(),
@@ -87,6 +90,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   document.body.textContent = ''
 })
 
@@ -104,6 +108,7 @@ it('should configure unique location options and forward search and selection', 
     onInputChange: (query: string) => void
     onOpenChange: (open: boolean) => void
     open: boolean
+    modal: boolean
     options: ReadonlyArray<WeatherLocation>
     optionLabel: (location: WeatherLocation) => string
     optionTextValue: (location: WeatherLocation) => string
@@ -119,8 +124,9 @@ it('should configure unique location options and forward search and selection', 
   expect(props.defaultFilter(tokyo, 'unrelated query')).toBe(true)
   expect(props.value).toBe(seoul)
   expect(props.open).toBe(false)
+  expect(props.modal).toBe(true)
   expect(props.placeholder).not.toBe('')
-  expect(props.optionLabel(seoul)).toBe('서울')
+  expect(props.optionLabel(seoul)).toBe('서울 / Seoul')
   expect(props.optionTextValue(tokyo)).toBe('Tokyo Tokyo  Japan')
   fireEvent.focus(screen.getByRole('textbox'))
   expect(props.open).toBe(true)
@@ -141,6 +147,39 @@ it('should configure unique location options and forward search and selection', 
   expect(searchMocks.onSelect).toHaveBeenCalledWith(seoul)
   expect(searchMocks.onSelect).toHaveBeenCalledWith(tokyo)
   expect(onChange).toHaveBeenCalledWith(tokyo)
+})
+
+it.each(['ko', 'en'] as const)('should format city selection labels for %s', (locale) => {
+  overwriteGetLocale(() => locale)
+  render(() => <PWeatherLocationSearch location={seoul} />)
+  const props = comboboxMocks.rootProps as {
+    optionLabel: (location: WeatherLocation) => string
+    onInputChange: (query: string) => void
+    itemComponent: (props: {item: {rawValue: WeatherLocation}}) => JSX.Element
+  }
+  const itemView = render(() => (
+    <>{props.itemComponent({item: {rawValue: LEGACY_WEATHER_LOCATIONS.jeju}})}</>
+  ))
+  expect(itemView.container).toHaveTextContent(
+    locale === 'ko' ? '제주특별자치도 · 대한민국 / Jeju · South Korea' : 'Jeju · South Korea',
+  )
+  expect(props.optionLabel(seoul)).toBe(locale === 'ko' ? '서울 / Seoul' : 'Seoul')
+  expect(props.optionLabel(LEGACY_WEATHER_LOCATIONS.miryang)).toBe(
+    locale === 'ko' ? '밀양 / Miryang' : 'Miryang',
+  )
+  expect(props.optionLabel(tokyo)).toBe('Tokyo')
+  expect(
+    props.optionLabel({
+      country: 'US',
+      id: 'openweather:40.7128,-74.0060',
+      name: '뉴욕',
+      names: {en: 'New York', ko: '뉴욕'},
+      region: 'New York',
+    }),
+  ).toBe(locale === 'ko' ? '뉴욕 / New York' : 'New York')
+  props.onInputChange(props.optionLabel(seoul))
+  expect(searchMocks.onSelect).toHaveBeenCalledWith(seoul)
+  expect(searchMocks.onQueryChange).not.toHaveBeenCalled()
 })
 
 it.each(['searching', 'error', 'ready'] as const)(
@@ -198,6 +237,22 @@ it('should match a default city by its stable legacy slug', () => {
       (location) => location.legacyCitySlug !== selectedSeoul.legacyCitySlug,
     ),
   ])
+})
+
+it('should deduplicate a Korean provider city with the administrative suffix', () => {
+  render(() => (
+    <PWeatherLocationSearch
+      location={{
+        country: 'KR',
+        id: 'openweather:35.5038,128.7464',
+        name: 'Miryang-si',
+        names: {en: 'Miryang-si', ko: '밀양시'},
+        region: '',
+      }}
+    />
+  ))
+  const props = comboboxMocks.rootProps as {options: ReadonlyArray<WeatherLocation>}
+  expect(props.options).not.toContain(LEGACY_WEATHER_LOCATIONS.miryang)
 })
 
 it('should keep a Korean default when a foreign city has the same name', () => {

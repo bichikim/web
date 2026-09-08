@@ -9,6 +9,34 @@ export const WEATHER_CITY_SLUGS = [
   'daejeon',
   'ulsan',
   'jeju',
+  'sejong',
+  'suwon',
+  'seongnam',
+  'goyang',
+  'yongin',
+  'chuncheon',
+  'wonju',
+  'gangneung',
+  'sokcho',
+  'cheongju',
+  'chungju',
+  'cheonan',
+  'asan',
+  'jeonju',
+  'iksan',
+  'gunsan',
+  'mokpo',
+  'yeosu',
+  'suncheon',
+  'pohang',
+  'gyeongju',
+  'gumi',
+  'andong',
+  'changwon',
+  'gimhae',
+  'jinju',
+  'geoje',
+  'miryang',
 ] as const
 export type WeatherCitySlug = (typeof WEATHER_CITY_SLUGS)[number]
 const weatherCitySlugSchema = z.enum(WEATHER_CITY_SLUGS)
@@ -23,6 +51,7 @@ export interface WeatherLocation {
   readonly id: WeatherLocationId
   readonly legacyCitySlug?: WeatherCitySlug
   readonly name: string
+  readonly names?: {readonly en?: string; readonly ko?: string}
   readonly region: string
 }
 
@@ -31,6 +60,7 @@ export const weatherLocationSchema: z.ZodType<WeatherLocation> = z.object({
   id: weatherLocationIdSchema as z.ZodType<WeatherLocationId>,
   legacyCitySlug: weatherCitySlugSchema.optional(),
   name: z.string().min(1),
+  names: z.object({en: z.string().min(1).optional(), ko: z.string().min(1).optional()}).optional(),
   region: z.string(),
 })
 

@@ -43,6 +43,7 @@ export interface OpenWeatherSearchLocation {
   readonly latitude: number
   readonly longitude: number
   readonly name: string
+  readonly names?: {readonly en?: string; readonly ko?: string}
   readonly providerLocationId: string
   readonly region: string
 }
@@ -130,6 +131,10 @@ export const searchOpenWeatherLocations = async (
     latitude: location.lat,
     longitude: location.lon,
     name: location.name,
+    names: {
+      en: location.local_names?.en?.trim() || location.name,
+      ...(location.local_names?.ko?.trim() ? {ko: location.local_names.ko.trim()} : {}),
+    },
     providerLocationId: createProviderLocationId(location.lat, location.lon),
     region: location.state ?? '',
   }))

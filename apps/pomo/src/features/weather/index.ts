@@ -1,6 +1,7 @@
 export * from './condition'
 export * from './contract'
 export * from './location-client'
+export * from './location-names'
 export * from './locations'
 export * from './preference'
 export * from './presentation'

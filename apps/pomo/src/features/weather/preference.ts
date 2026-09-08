@@ -8,6 +8,7 @@ import {
 import {parseWeatherCitySlug, parseWeatherLocation, type WeatherLocation} from './contract'
 import {DEFAULT_WEATHER_LOCATION, LEGACY_WEATHER_LOCATIONS} from './locations'
 import {isWeatherSceneMode, type WeatherSceneMode} from './scene-mode'
+import {restoreWeatherLocationNames} from './location-names'
 
 const WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v2'
 const LEGACY_WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v1'
@@ -206,7 +207,22 @@ const runtimeStorage = {
 const runtimeRepository = createWeatherPreferenceRepository({storage: runtimeStorage})
 
 /** Reads the weather preference from the active browser or app runtime. */
-export const readWeatherPreference = () => runtimeRepository.read()
+export const readWeatherPreference = async (): Promise<WeatherPreference> => {
+  const saved = await runtimeRepository.read()
+  try {
+    const location = await restoreWeatherLocationNames({location: saved.location})
+    const current = await runtimeRepository.read()
+    if (location === saved.location || current.location.id !== saved.location.id) {
+      return current
+    }
+    const restored = {...current, location: {...current.location, names: location.names}}
+    await runtimeRepository.write(restored)
+    return restored
+  } catch (error) {
+    console.warn('Failed to restore localized weather location names.', error)
+    return runtimeRepository.read()
+  }
+}
 
 /** Persists the weather preference for the current runtime. */
 export const writeWeatherPreference = (preference: WeatherPreference) =>

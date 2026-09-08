@@ -43,6 +43,7 @@ it('should reserve, register, and return fixed coordinates from provider search'
     latitude: 35.69,
     longitude: 139.69,
     name: 'Tokyo',
+    names: {en: 'Tokyo', ko: '도쿄'},
     providerLocationId: '35.6900,139.6900',
     region: 'Tokyo',
   }
@@ -54,6 +55,7 @@ it('should reserve, register, and return fixed coordinates from provider search'
       country: 'Japan',
       id: 'openweather:35.6900,139.6900',
       name: 'Tokyo',
+      names: {en: 'Tokyo', ko: '도쿄'},
       region: 'Tokyo',
     },
   ])
@@ -93,6 +95,25 @@ it('should return a known provider coordinate as its stable legacy location', as
 
   await expect(searchWorldWeatherLocations({query: 'Seoul'}, mocks.database)).resolves.toEqual([
     LEGACY_WEATHER_LOCATIONS.seoul,
+  ])
+  expect(mocks.insert).not.toHaveBeenCalled()
+})
+
+it('should return a newly supported Korean city as its stable legacy location', async () => {
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+    {
+      country: 'KR',
+      latitude: 35.5038,
+      longitude: 128.7464,
+      name: 'Miryang',
+      providerLocationId: '35.5038,128.7464',
+      region: 'Gyeongsangnam-do',
+    },
+  ])
+  const mocks = createDatabase()
+
+  await expect(searchWorldWeatherLocations({query: 'Miryang'}, mocks.database)).resolves.toEqual([
+    LEGACY_WEATHER_LOCATIONS.miryang,
   ])
   expect(mocks.insert).not.toHaveBeenCalled()
 })
