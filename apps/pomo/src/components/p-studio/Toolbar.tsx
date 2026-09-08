@@ -73,25 +73,10 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       )}
     >
       <div
-        class="flex flex-wrap justify-end gap-2 [&_button[data-icon-only]]:rounded-full"
+        class="pomo-toolbar-actions flex flex-wrap justify-end gap-2 [&_button[data-icon-only]]:rounded-full"
         role="group"
         aria-label={m.scene_group_label()}
       >
-        <VersionNoticePanel sceneStyle={props.sceneStyle} />
-        <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
-          <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-            <div class="inline-flex" data-tour-step="tour">
-              <PButton
-                {...GLASS_ICON_BUTTON}
-                accessibleLabel={m.tour_open()}
-                tooltip={m.tour_open()}
-                class={cx(GLASS_ICON_BUTTON.class, 'pomo-tour-control')}
-                icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
-                onPress={() => props.onTourOpen?.()}
-              />
-            </div>
-          </PScribbleCircleControl>
-        </Show>
         <div class="inline-flex" data-tour-step="tools">
           <PTools sceneStyle={props.sceneStyle} />
         </div>
@@ -127,24 +112,43 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             weatherSceneMode={props.weatherSceneMode}
           />
         </div>
+        <div class="flex flex-none gap-2">
+          <VersionNoticePanel sceneStyle={props.sceneStyle} />
+          <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
+            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+              <div class="inline-flex" data-tour-step="tour">
+                <PButton
+                  {...GLASS_ICON_BUTTON}
+                  accessibleLabel={m.tour_open()}
+                  tooltip={m.tour_open()}
+                  class={cx(GLASS_ICON_BUTTON.class, 'pomo-tour-control')}
+                  icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
+                  onPress={() => props.onTourOpen?.()}
+                />
+              </div>
+            </PScribbleCircleControl>
+          </Show>
+        </div>
       </div>
-      <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
-      <PDesktopModeControl
-        error={props.desktopModeError}
-        isChanging={props.isDesktopModeChanging}
-        mode={props.desktopMode ?? 'normal'}
-        onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
-      />
-      <PModelDownloadStatus />
-      <Show when={props.isSceneTransitioning}>
-        <span
-          aria-live="polite"
-          class="border border-solid border-border rounded-control backdrop-blur-surface"
-          role="status"
-        >
-          <PLoadingStatus message={m.scene_transitioning()} />
-        </span>
-      </Show>
+      <div class="clear-both flex flex-col items-end gap-2">
+        <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
+        <PDesktopModeControl
+          error={props.desktopModeError}
+          isChanging={props.isDesktopModeChanging}
+          mode={props.desktopMode ?? 'normal'}
+          onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
+        />
+        <PModelDownloadStatus />
+        <Show when={props.isSceneTransitioning}>
+          <span
+            aria-live="polite"
+            class="border border-solid border-border rounded-control backdrop-blur-surface"
+            role="status"
+          >
+            <PLoadingStatus message={m.scene_transitioning()} />
+          </span>
+        </Show>
+      </div>
     </div>
   )
 }
