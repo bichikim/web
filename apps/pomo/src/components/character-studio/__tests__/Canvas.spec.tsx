@@ -13,6 +13,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {reportClientError} from '../../../features/client-error-reporter'
 import {CharacterCanvas} from '../Canvas'
+import {mountTrainCabin} from '../train-cabin'
+
+vi.mock('../train-cabin', () => ({mountTrainCabin: vi.fn()}))
 
 vi.mock('@babylonjs/core/Cameras/arcRotateCamera', () => ({ArcRotateCamera: vi.fn()}))
 vi.mock('@babylonjs/core/Engines/engine', () => ({Engine: vi.fn()}))
@@ -42,6 +45,7 @@ interface MockEngine {
 }
 
 interface MockScene {
+  onBeforeRenderObservable: {add: ReturnType<typeof vi.fn>}
   clearColor: unknown
   dispose: ReturnType<typeof vi.fn>
   getWorldExtends: ReturnType<typeof vi.fn>
@@ -50,7 +54,7 @@ interface MockScene {
 
 interface MockCamera {
   attachControl: ReturnType<typeof vi.fn>
-  autoRotationBehavior: {idleRotationSpeed: number; idleRotationWaitTime: number} | null
+  autoRotationBehavior: {idleRotationSpeed: number; idleRotationWaitTime: number} | null | undefined
   inertia: number
   lowerRadiusLimit: number
   maxZ: number
@@ -71,7 +75,7 @@ interface MockLight {
 
 interface MockContainer {
   addAllToScene: ReturnType<typeof vi.fn>
-  animationGroups: Array<{start: ReturnType<typeof vi.fn>}>
+  animationGroups: Array<{pause: ReturnType<typeof vi.fn>; start: ReturnType<typeof vi.fn>}>
   dispose: ReturnType<typeof vi.fn>
   meshes: Array<{getTotalVertices: ReturnType<typeof vi.fn>}>
   removeAllFromScene: ReturnType<typeof vi.fn>
@@ -134,6 +138,7 @@ const createScene = (): MockScene => {
         min: new Vector3(-1, -1, -1),
       }
     }),
+    onBeforeRenderObservable: {add: vi.fn()},
     render: vi.fn(),
   }
   scenes.push(scene)
@@ -167,7 +172,7 @@ const createContainer = ({
   readonly vertexCounts?: readonly number[]
 } = {}): MockContainer => ({
   addAllToScene: vi.fn(),
-  animationGroups: Array.from({length: animationCount}, () => ({start: vi.fn()})),
+  animationGroups: Array.from({length: animationCount}, () => ({pause: vi.fn(), start: vi.fn()})),
   dispose: vi.fn(),
   meshes: vertexCounts.map((count) => ({getTotalVertices: vi.fn().mockReturnValue(count)})),
   removeAllFromScene: vi.fn(),
@@ -313,6 +318,17 @@ describe('CharacterCanvas setup', () => {
     expect(cameras[0].autoRotationBehavior).toBeNull()
   })
 
+  it('should disable auto-rotation when its behavior is undefined', async () => {
+    nextAutoRotationBehavior = undefined
+    const callbacks = createCallbacks()
+
+    render(() => <CharacterCanvas autoRotate={false} modelUrl="/character.glb" {...callbacks} />)
+    await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledOnce())
+
+    expect(cameras[0].useAutoRotationBehavior).toBe(false)
+    expect(cameras[0].autoRotationBehavior).toBeUndefined()
+  })
+
   it('should return from mount when no canvas ref is available', () => {
     const callbacks = createCallbacks()
     render(() => <CharacterCanvas modelUrl="/unused.glb" {...callbacks} />)
@@ -345,6 +361,50 @@ describe('CharacterCanvas setup', () => {
 })
 
 describe('CharacterCanvas loading', () => {
+  it('should retain the cabin and its camera while switching characters', async () => {
+    const dispose = vi.fn()
+    vi.mocked(mountTrainCabin).mockReturnValueOnce(dispose)
+    const callbacks = createCallbacks()
+    const [modelUrl, setModelUrl] = createSignal('/first.glb')
+    const view = render(() => (
+      <CharacterCanvas trainCabin cacheModels modelUrl={modelUrl()} {...callbacks} />
+    ))
+    await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledTimes(1))
+    setModelUrl('/second.glb')
+    await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledTimes(2))
+    expect(mountTrainCabin).toHaveBeenCalledOnce()
+    expect(cameras[0].setTarget).not.toHaveBeenCalled()
+    expect(dispose).not.toHaveBeenCalled()
+    view.unmount()
+    expect(dispose).toHaveBeenCalledOnce()
+  })
+
+  it('should reuse cached models without loading again and dispose them on unmount', async () => {
+    const first = createContainer({animationCount: 1})
+    const second = createContainer()
+    vi.mocked(LoadAssetContainerAsync)
+      .mockResolvedValueOnce(first as never)
+      .mockResolvedValueOnce(second as never)
+    const callbacks = createCallbacks()
+    const [modelUrl, setModelUrl] = createSignal('/first.glb')
+    const view = render(() => <CharacterCanvas cacheModels modelUrl={modelUrl()} {...callbacks} />)
+    await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledTimes(1))
+    setModelUrl('/second.glb')
+    await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledTimes(2))
+    expect(first.dispose).not.toHaveBeenCalled()
+    expect(first.animationGroups[0].pause).toHaveBeenCalledOnce()
+    setModelUrl('/first.glb')
+    await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledTimes(3))
+    expect(LoadAssetContainerAsync).toHaveBeenCalledTimes(2)
+    expect(callbacks.onLoadStart).toHaveBeenCalledTimes(2)
+    expect(first.addAllToScene).toHaveBeenCalledTimes(2)
+    expect(second.removeAllFromScene).toHaveBeenCalledOnce()
+    expect(second.dispose).not.toHaveBeenCalled()
+    view.unmount()
+    expect(first.dispose).toHaveBeenCalledOnce()
+    expect(second.dispose).toHaveBeenCalledOnce()
+  })
+
   it('should emit current progress and ignore empty totals', async () => {
     const callbacks = createCallbacks()
     render(() => <CharacterCanvas modelUrl="/character.glb" {...callbacks} />)

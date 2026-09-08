@@ -16,6 +16,7 @@ vi.mock('@solidjs/meta', () => ({
 }))
 
 vi.mock('../HomePage', () => ({HomePage: createPage('home')}))
+vi.mock('../AiConversationPage', () => ({AiConversationPage: createPage('ai-conversation')}))
 vi.mock('../ImageGenerationPage', () => ({ImageGenerationPage: createPage('image-generation')}))
 vi.mock('../CharacterPage', () => ({CharacterPage: createPage('character')}))
 vi.mock('../ChatPage', () => ({ChatPage: createPage('chat')}))
@@ -36,6 +37,7 @@ afterEach(() => {
 
 it.each([
   ['/dev', 'home'],
+  ['/dev/ai-conversation', 'ai-conversation'],
   ['/dev/image-generation', 'image-generation'],
   ['/dev/character', 'character'],
   ['/dev/chat', 'chat'],

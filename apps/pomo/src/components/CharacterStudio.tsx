@@ -1,11 +1,10 @@
 import {createSignal} from 'solid-js'
 
 import {useCharacterRenderer} from '../features/character-renderer'
-import characterSceneSource from './assets/character-studio/scene.glb?url'
 import {CharacterControls} from './character-studio/Controls'
 import {CharacterViewport} from './character-studio/Viewport'
 
-const DEFAULT_MODEL_URL = `${characterSceneSource}?renderer=babylon-1`
+const DEFAULT_MODEL_URL = '/assets/character-studio/scene.glb?renderer=babylon-1'
 const DEFAULT_MODEL_NAME = 'Blender · character-studio.blend'
 
 export const CharacterStudio = () => {

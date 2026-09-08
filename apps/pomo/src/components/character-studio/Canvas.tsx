@@ -8,12 +8,24 @@ import {Color3, Color4} from '@babylonjs/core/Maths/math.color'
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
 import {Scene} from '@babylonjs/core/scene'
 import '@babylonjs/loaders/glTF'
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {createEffect, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 
 import {reportClientError} from '../../features/client-error-reporter'
+import {applyExpressions, type ExpressionSettings} from './expressions'
+import {applyFaceDeformation, type FaceSettings} from './face-deformation'
+import {type CabinStatus, mountTrainCabin} from './train-cabin'
+import {useSeatedCharacters} from './use-seated-characters'
+import {createCameraMovement} from './camera-movement'
 
 interface CharacterCanvasProps {
+  readonly autoRotate?: boolean
+  readonly cacheModels?: boolean
+  readonly expressions?: ExpressionSettings
+  readonly faceSettings?: FaceSettings
   readonly modelUrl: string
+  readonly trainCabin?: boolean
+  readonly seatedCharacters?: readonly string[]
+  readonly onCabinStatus?: (status: CabinStatus) => void
   readonly onLoadError: () => void
   readonly onLoadProgress: (progress: number) => void
   readonly onLoadStart: () => void
@@ -21,8 +33,8 @@ interface CharacterCanvasProps {
 }
 
 const CAMERA_PADDING = 1.35
-const CAMERA_ALPHA_DIVISOR = 2.35
-const CAMERA_BETA_DIVISOR = 2.3
+const CAMERA_ALPHA_DIVISOR = 2
+const CAMERA_BETA_DIVISOR = 2
 const CAMERA_BOUNDS = {
   farDistanceFactor: 100,
   maximumRadiusFactor: 3,
@@ -85,8 +97,71 @@ const fitCamera = (camera: ArcRotateCamera, scene: Scene, container: AssetContai
   )
 }
 
+const createLights = (scene: Scene) => {
+  const ambientLight = new HemisphericLight('ambient-light', new Vector3(0, 1, 0), scene)
+  ambientLight.diffuse = Color3.FromHexString(AMBIENT_LIGHT_COLOR)
+  ambientLight.groundColor = Color3.FromHexString(AMBIENT_GROUND_COLOR)
+  ambientLight.intensity = AMBIENT_LIGHT_INTENSITY
+  const keyLight = new DirectionalLight('key-light', KEY_LIGHT_DIRECTION, scene)
+  keyLight.diffuse = Color3.FromHexString(KEY_LIGHT_COLOR)
+  keyLight.intensity = KEY_LIGHT_INTENSITY
+}
+
+const configureRotation = (camera: ArcRotateCamera, enabled: boolean) => {
+  camera.useAutoRotationBehavior = enabled
+  const behavior = camera.autoRotationBehavior
+  if (behavior !== null && behavior !== undefined) {
+    behavior.idleRotationSpeed = AUTO_ROTATION.speed
+    behavior.idleRotationWaitTime = AUTO_ROTATION.waitTime
+  }
+}
+
+const createCamera = (
+  scene: Scene,
+  canvas: HTMLCanvasElement,
+  movement: ReturnType<typeof createCameraMovement>,
+) => {
+  const camera = new ArcRotateCamera(
+    'character-camera',
+    CAMERA_DEFAULTS.alpha,
+    CAMERA_DEFAULTS.beta,
+    CAMERA_DEFAULTS.radius,
+    Vector3.Zero(),
+    scene,
+  )
+  camera.attachControl(canvas, true)
+  camera.inertia = CAMERA_DEFAULTS.inertia
+  camera.panningSensibility = 0
+  camera.wheelDeltaPercentage = CAMERA_DEFAULTS.wheelDeltaPercentage
+  const milliseconds = 1000
+  scene.onBeforeRenderObservable.add(() => {
+    if (canvas.ownerDocument.hasFocus()) {
+      movement.update(camera, scene.getEngine().getDeltaTime() / milliseconds)
+    } else {
+      movement.clear()
+    }
+  })
+  return camera
+}
+
+const createEngine = (canvas: HTMLCanvasElement, onError: () => void) => {
+  try {
+    return new Engine(
+      canvas,
+      true,
+      {powerPreference: 'high-performance', preserveDrawingBuffer: false, stencil: true},
+      true,
+    )
+  } catch (error: unknown) {
+    reportClientError(error, {feature: 'character-renderer', source: 'direct'})
+    onError()
+    return undefined
+  }
+}
+
 export const CharacterCanvas = (props: CharacterCanvasProps) => {
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
+  const movement = createCameraMovement()
 
   onMount(() => {
     const renderCanvas = canvas()
@@ -95,58 +170,52 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
       return
     }
 
-    let engine: Engine
-
-    try {
-      engine = new Engine(
-        renderCanvas,
-        true,
-        {powerPreference: 'high-performance', preserveDrawingBuffer: false, stencil: true},
-        true,
-      )
-    } catch (error: unknown) {
-      reportClientError(error, {feature: 'character-renderer', source: 'direct'})
-      props.onLoadError()
+    const engine = createEngine(renderCanvas, () => props.onLoadError())
+    if (engine === undefined) {
       return
     }
 
     const scene = new Scene(engine)
     scene.clearColor = Color4.FromHexString('#111820ff')
 
-    const camera = new ArcRotateCamera(
-      'character-camera',
-      CAMERA_DEFAULTS.alpha,
-      CAMERA_DEFAULTS.beta,
-      CAMERA_DEFAULTS.radius,
-      Vector3.Zero(),
-      scene,
-    )
-    camera.attachControl(renderCanvas, true)
-    camera.inertia = CAMERA_DEFAULTS.inertia
-    camera.panningSensibility = 0
-    camera.wheelDeltaPercentage = CAMERA_DEFAULTS.wheelDeltaPercentage
-    camera.useAutoRotationBehavior = true
+    const camera = createCamera(scene, renderCanvas, movement)
+    createEffect(() => configureRotation(camera, props.autoRotate ?? true))
 
-    if (camera.autoRotationBehavior !== null) {
-      camera.autoRotationBehavior.idleRotationSpeed = AUTO_ROTATION.speed
-      camera.autoRotationBehavior.idleRotationWaitTime = AUTO_ROTATION.waitTime
-    }
+    createLights(scene)
 
-    const ambientLight = new HemisphericLight('ambient-light', new Vector3(0, 1, 0), scene)
-    ambientLight.diffuse = Color3.FromHexString(AMBIENT_LIGHT_COLOR)
-    ambientLight.groundColor = Color3.FromHexString(AMBIENT_GROUND_COLOR)
-    ambientLight.intensity = AMBIENT_LIGHT_INTENSITY
-
-    const keyLight = new DirectionalLight('key-light', KEY_LIGHT_DIRECTION, scene)
-    keyLight.diffuse = Color3.FromHexString(KEY_LIGHT_COLOR)
-    keyLight.intensity = KEY_LIGHT_INTENSITY
+    createEffect(() => {
+      if (props.trainCabin) {
+        const dispose = untrack(() =>
+          mountTrainCabin({
+            camera,
+            onStatus: (status) => props.onCabinStatus?.(status),
+            scene,
+          }),
+        )
+        onCleanup(dispose)
+      }
+    })
 
     let activeContainer: AssetContainer | null = null
+    const modelCache = new Map<string, AssetContainer>()
     let loadRevision = 0
 
+    const applyAppearance = () => {
+      applyExpressions(activeContainer, props.expressions)
+      applyFaceDeformation(activeContainer, props.faceSettings)
+    }
+    createEffect(applyAppearance)
+
+    useSeatedCharacters(scene, props)
+
     const unloadModel = () => {
+      for (const animation of activeContainer?.animationGroups ?? []) {
+        animation.pause()
+      }
       activeContainer?.removeAllFromScene()
-      activeContainer?.dispose()
+      if (activeContainer !== null && ![...modelCache.values()].includes(activeContainer)) {
+        activeContainer.dispose()
+      }
       activeContainer = null
     }
 
@@ -155,8 +224,12 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
     engine.runRenderLoop(() => scene.render())
 
     createEffect(() => {
+      if (props.seatedCharacters !== undefined) {
+        return
+      }
       /* eslint-disable prefer-destructuring -- Solid props stay tracked through direct access. */
       const modelUrl = props.modelUrl
+      const cacheModels = props.cacheModels
       const onLoadError = props.onLoadError
       const onLoadProgress = props.onLoadProgress
       const onLoadStart = props.onLoadStart
@@ -165,6 +238,31 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
       loadRevision += 1
       const revision = loadRevision
       unloadModel()
+
+      onCleanup(() => {
+        if (revision === loadRevision) {
+          loadRevision += 1
+        }
+        unloadModel()
+      })
+
+      const showModel = (container: AssetContainer) => {
+        activeContainer = container
+        container.addAllToScene()
+        untrack(applyAppearance)
+        for (const animationGroup of container.animationGroups) {
+          animationGroup.start(true)
+        }
+        if (!untrack(() => props.trainCabin)) {
+          fitCamera(camera, scene, container)
+        }
+        onLoadSuccess()
+      }
+      const cached = modelCache.get(modelUrl)
+      if (cached !== undefined) {
+        showModel(cached)
+        return
+      }
       onLoadStart()
 
       LoadAssetContainerAsync(modelUrl, scene, {
@@ -181,15 +279,10 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
             return
           }
 
-          activeContainer = container
-          container.addAllToScene()
-
-          for (const animationGroup of container.animationGroups) {
-            animationGroup.start(true)
+          if (cacheModels) {
+            modelCache.set(modelUrl, container)
           }
-
-          fitCamera(camera, scene, container)
-          onLoadSuccess()
+          showModel(container)
         })
         .catch((error: unknown) => {
           if (revision !== loadRevision) {
@@ -200,13 +293,6 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
           unloadModel()
           onLoadError()
         })
-
-      onCleanup(() => {
-        if (revision === loadRevision) {
-          loadRevision += 1
-        }
-        unloadModel()
-      })
     })
 
     onCleanup(() => {
@@ -214,10 +300,33 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
       resizeObserver.disconnect()
       engine.stopRenderLoop()
       unloadModel()
+      for (const container of modelCache.values()) {
+        container.dispose()
+      }
+      modelCache.clear()
       scene.dispose()
       engine.dispose()
     })
   })
 
-  return <canvas class="absolute inset-0 h-full w-full touch-none outline-none" ref={setCanvas} />
+  return (
+    <canvas
+      class="absolute inset-0 h-full w-full touch-none outline-none"
+      ref={setCanvas}
+      tabIndex={0}
+      aria-label="3D 장면 · WASD 이동, 마우스 드래그 시점 회전"
+      onPointerDown={(event) => event.currentTarget.focus()}
+      onBlur={() => movement.clear()}
+      onKeyDown={(event) => {
+        if (!event.ctrlKey && !event.metaKey && !event.altKey && movement.press(event.code)) {
+          event.preventDefault()
+        }
+      }}
+      onKeyUp={(event) => {
+        if (movement.release(event.code)) {
+          event.preventDefault()
+        }
+      }}
+    />
+  )
 }

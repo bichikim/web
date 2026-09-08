@@ -92,3 +92,10 @@ it('should link the development home to the HWP editor', () => {
     '/dev/hwp',
   )
 })
+it('should link the development home to the AI conversation scene', () => {
+  render(() => <HomePage />)
+
+  expect(screen.getByRole('link', {name: /AI끼리 대화/u}).getAttribute('href')).toBe(
+    '/dev/ai-conversation',
+  )
+})
