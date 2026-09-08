@@ -1,5 +1,4 @@
-import {Button} from '@kobalte/core/button'
-import {ToggleButton} from '@kobalte/core/toggle-button'
+import {EditorButton, EditorToggleButton} from '../../design-system'
 import {Show} from 'solid-js'
 import type {PuppetParameterBinding} from '../../player/document'
 
@@ -24,14 +23,14 @@ export const EditorParameterFooter = (props: EditorParameterFooterProps) => {
   return (
     <footer class="keyform-footer">
       <div class="parameter-target-actions">
-        <ToggleButton
+        <EditorToggleButton
           class="parameter-visibility-toggle"
           pressed={props.allParametersVisible === true}
           onClick={() => props.onAllParametersVisibleChange?.(props.allParametersVisible !== true)}
         >
           모든 파라미터 보기
-        </ToggleButton>
-        <Button
+        </EditorToggleButton>
+        <EditorButton
           disabled={
             props.activeBinding === undefined ||
             (props.selectedPartIds ?? []).length === 0 ||
@@ -42,8 +41,8 @@ export const EditorParameterFooter = (props: EditorParameterFooterProps) => {
           onClick={() => props.onSelectionConnect?.()}
         >
           선택 레이어 연결
-        </Button>
-        <Button
+        </EditorButton>
+        <EditorButton
           disabled={
             props.activeBinding === undefined ||
             selectedTargetCount() === 0 ||
@@ -53,7 +52,7 @@ export const EditorParameterFooter = (props: EditorParameterFooterProps) => {
           onClick={() => props.onSelectionDisconnect?.()}
         >
           선택 레이어 연결 해제
-        </Button>
+        </EditorButton>
       </div>
       <Show when={props.activeBinding}>
         {(binding) => (

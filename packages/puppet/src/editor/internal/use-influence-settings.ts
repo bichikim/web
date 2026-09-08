@@ -109,18 +109,18 @@ export const useInfluenceSettings = (props: InfluenceRelationProps) => {
   }
   return {
     endEdit,
-    startEdit,
     changeDirection,
+    startEdit,
     changeMaximum,
-    direction,
     description,
-    relation,
+    direction,
     changeSource: (id: string) => {
       setChosenDirection(null)
       props.draft.changeSource(props.index, id)
     },
-    maximum,
+    relation,
     editCurve,
+    maximum,
     expanded,
     setExpanded,
   }

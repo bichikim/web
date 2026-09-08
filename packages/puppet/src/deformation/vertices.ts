@@ -1,3 +1,4 @@
+import {blendSkinMatrix, getSkinFrames, type SkinFrame, transformSkinPoint} from './skinning'
 import type {
   PuppetPoint,
   PuppetSceneContainerNode,
@@ -47,19 +48,33 @@ const applyNodes = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   parentTransform: PointTransform,
   verticesByPartId: ReadonlyMap<string, Float32Array | number[]>,
+  frames: ReadonlyMap<string, SkinFrame>,
 ) => {
   for (const node of nodes) {
     if (node.kind === 'part') {
       const vertices = verticesByPartId.get(node.id)
 
       if (vertices !== undefined) {
-        applyTransform(node.id, vertices, parentTransform)
+        const {skinning} = node
+        applyTransform(
+          node.id,
+          vertices,
+          skinning === undefined
+            ? parentTransform
+            : (point, vertex) => {
+                const matrix = blendSkinMatrix(frames, skinning, vertex.vertexIndex)
+                return matrix === undefined
+                  ? parentTransform(point, vertex)
+                  : transformSkinPoint(matrix, point)
+              },
+        )
       }
     } else {
       applyNodes(
         node.children,
         composeTransform(parentTransform, createNodeTransform(node)),
         verticesByPartId,
+        frames,
       )
     }
   }
@@ -69,5 +84,5 @@ export const applySceneNodeDeformers = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   verticesByPartId: ReadonlyMap<string, Float32Array | number[]>,
 ) => {
-  applyNodes(nodes, (point) => point, verticesByPartId)
+  applyNodes(nodes, (point) => point, verticesByPartId, getSkinFrames(nodes))
 }

@@ -230,9 +230,8 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_.puppet-icon]:[width:1rem] [.puppet-editor_&_.puppet-icon]:[height:1rem]',
   ],
   'parameter-swipe-hint': [
-    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:50%] [.puppet-editor_&]:[right:0.625rem]',
+    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0.625rem] [.puppet-editor_&]:[right:0.625rem]',
     '[.puppet-editor_&]:[color:#596762] [.puppet-editor_&]:[font-size:0.75rem]',
-    '[.puppet-editor_&]:[transform:translateY(-50%)]',
   ],
   'parameter-swipe-row': [
     '[.puppet-editor_&]:relative [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[border-radius:0.4375rem]',

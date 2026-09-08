@@ -1,4 +1,4 @@
-import {useEditorPortalMount} from './EditorPortalProvider'
+import {useEditorPortalMount} from '../../design-system'
 import {Dialog} from '@kobalte/core/dialog'
 
 interface EditorHelpProps {

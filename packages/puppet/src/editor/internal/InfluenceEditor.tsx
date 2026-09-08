@@ -1,5 +1,5 @@
 import {Collapsible} from '@kobalte/core/collapsible'
-import {EditorButton} from './EditorButton'
+import {EditorButton} from '../../design-system'
 import {createEffect, createSignal, Index, type JSX, untrack} from 'solid-js'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetParameter, PuppetParameterInfluence} from '../../player/document'

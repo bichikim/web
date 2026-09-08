@@ -29,7 +29,11 @@ export interface WeightPaintStroke {
 
 const vertexKey = (vertex: PuppetVertexReference) =>
   JSON.stringify([vertex.partId, vertex.vertexIndex])
-const distanceToSegment = (point: PuppetPoint, start: PuppetPoint, end: PuppetPoint): number => {
+export const distanceToSegment = (
+  point: PuppetPoint,
+  start: PuppetPoint,
+  end: PuppetPoint,
+): number => {
   const horizontal = end.x - start.x
   const vertical = end.y - start.y
   const length = horizontal * horizontal + vertical * vertical

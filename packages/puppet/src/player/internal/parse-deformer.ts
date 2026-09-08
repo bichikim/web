@@ -197,7 +197,23 @@ const isBounds = (value: unknown): boolean =>
   isFiniteNumber(value.height) &&
   value.height > 0
 
+const hasValidRotation = (value: Record<string, unknown>): boolean => {
+  const ROTATION_COORDINATES = 4
+  return (
+    value.deformerType === undefined ||
+    (value.deformerType === 'rotation' &&
+      isFiniteNumberArray(value.boneRestPoints) &&
+      value.boneRestPoints.length === ROTATION_COORDINATES &&
+      value.boneWeights === undefined &&
+      value.vertexInfluences === undefined &&
+      value.pins === undefined)
+  )
+}
+
 const isDeformerShape = (value: Record<string, unknown>): boolean => {
+  if (!hasValidRotation(value)) {
+    return false
+  }
   if (
     !isBounds(value.bounds) ||
     !Number.isInteger(value.columns) ||

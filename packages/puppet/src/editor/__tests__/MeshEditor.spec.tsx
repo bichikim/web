@@ -13,6 +13,62 @@ import {
 import {createDeformer, getSceneNode} from '../internal/scene-graph'
 
 describe('MeshEditor', () => {
+  test('should edit rest topology without selecting a keyform or creating one', () => {
+    const initial = {...createDemoDocument(), motions: []}
+    const onDocumentChange = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        document={initial}
+        meshEditing
+        editMode="parameter"
+        onDocumentChange={onDocumentChange}
+      />
+    ))
+    const svg = view.container.querySelector('svg')!
+    const vertex = view.container.querySelectorAll('circle')[4]!
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+      bottom: 720,
+      height: 720,
+      left: 0,
+      right: 960,
+      toJSON: () => ({}),
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0,
+    })
+    fireEvent.pointerDown(vertex, {button: 0})
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 500, clientY: 360}))
+    fireEvent.pointerUp(svg)
+    expect(onDocumentChange).toHaveBeenCalledOnce()
+    const updated: PuppetDocument = onDocumentChange.mock.calls[0]![0]
+    expect(updated.parts[0]?.mesh.vertices).not.toEqual(initial.parts[0]?.mesh.vertices)
+    expect(updated.parts[0]?.mesh.uvs).not.toEqual(initial.parts[0]?.mesh.uvs)
+    expect(updated.parameterBindings?.[0]?.keyforms).toHaveLength(
+      initial.parameterBindings![0]!.keyforms.length,
+    )
+    expect(updated.motions).toEqual([])
+  })
+
+  test('should cancel an unfinished mesh drag when the mode changes', () => {
+    const [meshEditing, setMeshEditing] = createSignal(true)
+    const onDocumentChange = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        document={{...createDemoDocument(), motions: []}}
+        meshEditing={meshEditing()}
+        editMode="parameter"
+        onDocumentChange={onDocumentChange}
+      />
+    ))
+    const svg = view.container.querySelector('svg')!
+    fireEvent.pointerDown(view.container.querySelectorAll('circle')[4]!, {button: 0})
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 500, clientY: 360}))
+    setMeshEditing(false)
+    fireEvent.pointerUp(svg)
+    expect(onDocumentChange).not.toHaveBeenCalled()
+  })
+
   test('should render the selected example layer mesh', () => {
     const view = render(() => (
       <MeshEditor activePartId="shape-circle" document={createDemoDocument()} />
@@ -51,12 +107,13 @@ describe('MeshEditor', () => {
 
     const clippedCircle = view.container.querySelector('[data-clipped-part-id="shape-circle"]')
     const clippedDiamond = view.container.querySelector('[data-clipped-part-id="shape-diamond"]')
-    const boundaryToggle = view.getByRole('checkbox', {name: '마스크 경계 표시'})
+    const boundaryToggle = view.getByRole('button', {name: '마스크 경계 표시'})
 
     expect(clippedCircle?.querySelectorAll('.clipped-part-boundary')).toHaveLength(2)
     expect(clippedDiamond?.querySelectorAll('.clipped-part-boundary')).toHaveLength(2)
-    expect(boundaryToggle).toBeChecked()
+    expect(boundaryToggle).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(boundaryToggle)
+    expect(boundaryToggle).toHaveAttribute('aria-pressed', 'false')
     expect(view.container.querySelector('[data-clipped-part-id]')).toBeNull()
     fireEvent.click(boundaryToggle)
     expect(view.container.querySelectorAll('[data-clipped-part-id]')).toHaveLength(2)

@@ -1,5 +1,5 @@
 import {InfluenceEditor} from './InfluenceEditor'
-import {Button} from '@kobalte/core/button'
+import {EditorDiamondButton, EditorNumberField} from '../../design-system'
 import {EditorParameterFooter} from './EditorParameterFooter'
 import {
   createSignal,
@@ -23,7 +23,6 @@ import type {
   PuppetParameterInfluence,
 } from '../../player/document'
 import {EditorKeyformMarker} from './EditorKeyformMarker'
-import {EditorNumberField} from './EditorNumberField'
 import {EditorKeyformToolbar} from './EditorKeyformToolbar'
 import {EditorParameterItem} from './EditorParameterItem'
 import {
@@ -96,7 +95,7 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
   }
   onCleanup(() => removePointerListeners?.())
   return (
-    <Button
+    <EditorDiamondButton
       aria-label={`${props.parameter.name} 현재 값`}
       aria-orientation="horizontal"
       aria-valuemax={props.parameter.maximum}
@@ -212,8 +211,9 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
           const x = () => xParameter()
           const y = () => yParameter()
           return (
-            <Button
+            <EditorDiamondButton
               aria-hidden="true"
+              data-tooltip={`키폼 선택: ${keyform.values.join(', ')}`}
               class="parameter-grid-keyform"
               classList={{
                 selected:

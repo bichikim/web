@@ -1,0 +1,354 @@
+{
+  "format": "winter-love-puppet",
+  "version": 1,
+  "viewport": {
+    "width": 800,
+    "height": 500
+  },
+  "parts": [
+    {
+      "id": "upper",
+      "texture": {
+        "width": 220,
+        "height": 70,
+        "src": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22220%22%20height%3D%2270%22%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%22216%22%20height%3D%2266%22%20rx%3D%2224%22%20fill%3D%22%2361d9bf%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%223%22/%3E%3Ccircle%20cx%3D%2235.0%22%20cy%3D%2235.0%22%20r%3D%228%22%20fill%3D%22%23173d38%22/%3E%3Cpath%20d%3D%22M%2070%2035.0%20H%20202%22%20stroke%3D%22%23173d38%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E"
+      },
+      "mesh": {
+        "boundaryLoops": [[0, 1, 2, 3]],
+        "indices": [0, 1, 2, 0, 2, 3],
+        "uvs": [0, 0, 1, 0, 1, 1, 0, 1],
+        "vertices": [160, 215, 380, 215, 380, 285, 160, 285]
+      }
+    },
+    {
+      "id": "fore",
+      "texture": {
+        "width": 195,
+        "height": 56,
+        "src": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22195%22%20height%3D%2256%22%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%22191%22%20height%3D%2252%22%20rx%3D%2224%22%20fill%3D%22%23ffb85c%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%223%22/%3E%3Ccircle%20cx%3D%2228.0%22%20cy%3D%2228.0%22%20r%3D%228%22%20fill%3D%22%23173d38%22/%3E%3Cpath%20d%3D%22M%2056%2028.0%20H%20177%22%20stroke%3D%22%23173d38%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E"
+      },
+      "mesh": {
+        "boundaryLoops": [
+          [
+            0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7, 5,
+            3, 1
+          ]
+        ],
+        "indices": [
+          0, 2, 3, 0, 3, 1, 2, 4, 5, 2, 5, 3, 4, 6, 7, 4, 7, 5, 6, 8, 9, 6, 9, 7, 8, 10, 11, 8, 11,
+          9, 10, 12, 13, 10, 13, 11, 12, 14, 15, 12, 15, 13, 14, 16, 17, 14, 17, 15, 16, 18, 19, 16,
+          19, 17, 18, 20, 21, 18, 21, 19, 20, 22, 23, 20, 23, 21, 22, 24, 25, 22, 25, 23
+        ],
+        "uvs": [
+          0.0, 0, 0.0, 1, 0.08333333333333333, 0, 0.08333333333333333, 1, 0.16666666666666666, 0,
+          0.16666666666666666, 1, 0.25, 0, 0.25, 1, 0.3333333333333333, 0, 0.3333333333333333, 1,
+          0.4166666666666667, 0, 0.4166666666666667, 1, 0.5, 0, 0.5, 1, 0.5833333333333334, 0,
+          0.5833333333333334, 1, 0.6666666666666666, 0, 0.6666666666666666, 1, 0.75, 0, 0.75, 1,
+          0.8333333333333334, 0, 0.8333333333333334, 1, 0.9166666666666666, 0, 0.9166666666666666,
+          1, 1.0, 0, 1.0, 1
+        ],
+        "vertices": [
+          340.0, 222, 340.0, 278, 356.25, 222, 356.25, 278, 372.5, 222, 372.5, 278, 388.75, 222,
+          388.75, 278, 405.0, 222, 405.0, 278, 421.25, 222, 421.25, 278, 437.5, 222, 437.5, 278,
+          453.75, 222, 453.75, 278, 470.0, 222, 470.0, 278, 486.25, 222, 486.25, 278, 502.5, 222,
+          502.5, 278, 518.75, 222, 518.75, 278, 535.0, 222, 535.0, 278
+        ]
+      }
+    },
+    {
+      "id": "hand",
+      "texture": {
+        "width": 110,
+        "height": 50,
+        "src": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22110%22%20height%3D%2250%22%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%22106%22%20height%3D%2246%22%20rx%3D%2223.0%22%20fill%3D%22%23f583ab%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%223%22/%3E%3Ccircle%20cx%3D%2225.0%22%20cy%3D%2225.0%22%20r%3D%228%22%20fill%3D%22%23173d38%22/%3E%3Cpath%20d%3D%22M%2050%2025.0%20H%2092%22%20stroke%3D%22%23173d38%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E"
+      },
+      "mesh": {
+        "boundaryLoops": [[0, 1, 2, 3]],
+        "indices": [0, 1, 2, 0, 2, 3],
+        "uvs": [0, 0, 1, 0, 1, 1, 0, 1],
+        "vertices": [495, 225, 605, 225, 605, 275, 495, 275]
+      }
+    }
+  ],
+  "scene": {
+    "roots": [
+      {
+        "id": "shoulder",
+        "name": "① 어깨",
+        "kind": "deformer",
+        "deformerType": "rotation",
+        "locked": false,
+        "visible": true,
+        "children": [
+          {
+            "id": "upper",
+            "name": "위팔 · 청록",
+            "kind": "part",
+            "locked": false,
+            "visible": true
+          },
+          {
+            "id": "elbow",
+            "name": "② 팔꿈치",
+            "kind": "deformer",
+            "deformerType": "rotation",
+            "locked": false,
+            "visible": true,
+            "children": [
+              {
+                "id": "fore",
+                "name": "아래팔 · 주황",
+                "kind": "part",
+                "locked": false,
+                "visible": true,
+                "skinning": {
+                  "bind": {
+                    "xx": 0.766044443118972,
+                    "xy": -0.6427876096865481,
+                    "yx": 0.6427876096865739,
+                    "yy": 0.766044443118984,
+                    "x": 230.5837945111873,
+                    "y": -251.16991042553317
+                  },
+                  "influences": [
+                    {
+                      "inverseBind": {
+                        "xx": 0.9063077870366659,
+                        "xy": -0.4226182617406944,
+                        "yx": 0.4226182617406944,
+                        "x": 123.92454696302896,
+                        "yy": 0.9063077870366375,
+                        "y": -58.98750779859801
+                      },
+                      "nodeId": "shoulder",
+                      "weights": [
+                        0.5, 0.5, 0.5, 0.5, 0.47039473684210525, 0.47039473684210525,
+                        0.36348684210526316, 0.36348684210526316, 0.256578947368421,
+                        0.256578947368421, 0.14967105263157893, 0.14967105263157893,
+                        0.042763157894736836, 0.042763157894736836, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0
+                      ]
+                    },
+                    {
+                      "inverseBind": {
+                        "xx": 0.7660444431189626,
+                        "xy": 0.6427876096865301,
+                        "yx": -0.6427876096865559,
+                        "x": -15.18852811097142,
+                        "yy": 0.7660444431189506,
+                        "y": 340.6237202664663
+                      },
+                      "nodeId": "elbow",
+                      "weights": [
+                        0.5, 0.5, 0.5, 0.5, 0.5296052631578947, 0.5296052631578947,
+                        0.6365131578947368, 0.6365131578947368, 0.743421052631579,
+                        0.743421052631579, 0.850328947368421, 0.850328947368421, 0.9572368421052632,
+                        0.9572368421052632, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "wrist",
+                "name": "③ 손목",
+                "kind": "deformer",
+                "deformerType": "rotation",
+                "locked": false,
+                "visible": true,
+                "children": [
+                  {
+                    "id": "hand",
+                    "name": "손 · 분홍",
+                    "kind": "part",
+                    "locked": false,
+                    "visible": true
+                  }
+                ],
+                "boneRestPoints": [520, 250, 585, 250],
+                "controlPoints": [520, 250, 585, 250],
+                "columns": 1,
+                "rows": 1,
+                "bounds": {
+                  "x": 520,
+                  "y": 200,
+                  "width": 65,
+                  "height": 100
+                }
+              }
+            ],
+            "boneRestPoints": [368, 250, 520, 250],
+            "controlPoints": [368, 250, 520, 250],
+            "columns": 1,
+            "rows": 1,
+            "bounds": {
+              "x": 368,
+              "y": 200,
+              "width": 152,
+              "height": 100
+            }
+          }
+        ],
+        "boneRestPoints": [195, 250, 368, 250],
+        "controlPoints": [195, 250, 368, 250],
+        "columns": 1,
+        "rows": 1,
+        "bounds": {
+          "x": 195,
+          "y": 200,
+          "width": 173,
+          "height": 100
+        }
+      }
+    ]
+  },
+  "parameters": [
+    {
+      "id": "shoulder-angle",
+      "name": "① 어깨 각도",
+      "minimum": -90,
+      "maximum": 90,
+      "defaultValue": -25
+    },
+    {
+      "id": "elbow-angle",
+      "name": "② 팔꿈치 각도",
+      "minimum": -90,
+      "maximum": 90,
+      "defaultValue": 65
+    },
+    {
+      "id": "wrist-angle",
+      "name": "③ 손목 각도",
+      "minimum": -90,
+      "maximum": 90,
+      "defaultValue": -20
+    }
+  ],
+  "parameterBindings": [
+    {
+      "id": "shoulder-binding",
+      "parameterIds": ["shoulder-angle"],
+      "targetPartIds": [],
+      "targetDeformerIds": ["shoulder"],
+      "keyforms": [
+        {
+          "values": [-90],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "shoulder",
+              "controlPoints": [195, 250, 195, 77]
+            }
+          ]
+        },
+        {
+          "values": [0],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "shoulder",
+              "controlPoints": [195, 250, 368, 250]
+            }
+          ]
+        },
+        {
+          "values": [90],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "shoulder",
+              "controlPoints": [195, 250, 195, 423]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "elbow-binding",
+      "parameterIds": ["elbow-angle"],
+      "targetPartIds": [],
+      "targetDeformerIds": ["elbow"],
+      "keyforms": [
+        {
+          "values": [-90],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "elbow",
+              "controlPoints": [368, 250, 368, 98]
+            }
+          ]
+        },
+        {
+          "values": [0],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "elbow",
+              "controlPoints": [368, 250, 462.87767326059, 131.2472016470486]
+            }
+          ]
+        },
+        {
+          "values": [90],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "elbow",
+              "controlPoints": [368, 250, 368, 402]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wrist-binding",
+      "parameterIds": ["wrist-angle"],
+      "targetPartIds": [],
+      "targetDeformerIds": ["wrist"],
+      "keyforms": [
+        {
+          "values": [-90],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "wrist",
+              "controlPoints": [520, 250, 520, 185]
+            }
+          ]
+        },
+        {
+          "values": [0],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "wrist",
+              "controlPoints": [520, 250, 584.4378116996, 258.5304409831434]
+            }
+          ]
+        },
+        {
+          "values": [90],
+          "parts": [],
+          "deformers": [
+            {
+              "kind": "deformer",
+              "nodeId": "wrist",
+              "controlPoints": [520, 250, 520, 315]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "motions": []
+}

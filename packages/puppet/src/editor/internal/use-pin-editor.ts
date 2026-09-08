@@ -104,22 +104,21 @@ export const usePinEditor = (props: PinEditorProps) => {
       svg = element
     },
     editable,
-    influence: () => getPinInfluence(props.node, selected(), transform),
     indices: () => props.node.pins!.map((_, index) => index),
-    rest,
+    influence: () => getPinInfluence(props.node, selected(), transform),
     point: (index: number) => transform(local(index)),
-    restEditable,
+    rest,
     radius: () => {
       const HANDLE_DIVISOR = 120
       return Math.min(view().width, view().height) / HANDLE_DIVISOR
     },
-    selected,
+    restEditable,
     remove: () => {
       if (rest() && editable()) {
         layout('remove')
       }
     },
-    stop,
+    selected,
     append: (event: MouseEvent) => {
       if (event.target !== event.currentTarget || !rest() || !editable()) {
         return
@@ -129,14 +128,14 @@ export const usePinEditor = (props: PinEditorProps) => {
         layout('append', point)
       }
     },
-    selectedPin: () => props.node.pins?.[selected()],
+    stop,
     drag: (event: PointerEvent) => {
       const point = eventPoint(event)
       if (dragging && point !== undefined) {
         move(point)
       }
     },
-    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
+    selectedPin: () => props.node.pins?.[selected()],
     keyDown: createPinKeyboard({
       point: () => local(selected()),
       move,
@@ -146,9 +145,10 @@ export const usePinEditor = (props: PinEditorProps) => {
         }
       },
     }),
+    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
+    select: setSelected,
     settings: (radius?: number, strength?: number) =>
       layout('settings', undefined, radius, strength),
-    select: setSelected,
     start: (event: PointerEvent, index: number) => {
       if (event.button !== 0 || !editable()) {
         return

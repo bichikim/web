@@ -1,3 +1,4 @@
+import type {ControlSizeProps} from './control-size'
 import {NumberField} from '@kobalte/core/number-field'
 import {Button} from '@kobalte/core/button'
 import {clamp} from 'es-toolkit/math'
@@ -10,7 +11,7 @@ const FALLBACK_SCRUB_DISTANCE = 200
 const SIGNIFICANT_DIGITS = 12
 const WHOLE_PERCENT = 100
 
-export interface EditorNumberFieldProps {
+export interface EditorNumberFieldProps extends ControlSizeProps {
   readonly describedBy?: string
   readonly disabled?: boolean
   readonly label: string
@@ -192,6 +193,11 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
       return
     }
 
+    if (document.activeElement === input()) {
+      return
+    }
+    event.preventDefault()
+    ignoreNextClick = false
     const inputWidth = input()?.getBoundingClientRect().width ?? 0
     const scrubDistance = inputWidth > 0 ? inputWidth : FALLBACK_SCRUB_DISTANCE
     removeGestureListeners?.()
@@ -239,7 +245,8 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
       required={props.required}
       name={props.name}
       onChange={setDraft}
-      classList={{'editor-number-field': true, scrubbing: scrubbing()}}
+      data-control-size={props.size ?? 'sm'}
+      classList={{'editor-control': true, 'editor-number-field': true, scrubbing: scrubbing()}}
       data-bounded={isBounded() ? '' : undefined}
       style={{'--number-field-progress': `${progress()}%`}}
     >
@@ -270,6 +277,8 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
             event.preventDefault()
             ignoreNextClick = false
             input()?.blur()
+          } else {
+            input()?.focus()
           }
         }}
         onFocus={() => {
@@ -297,6 +306,8 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
             event.preventDefault()
             cancelEdit()
             input()?.blur()
+          } else {
+            input()?.focus()
           }
         }}
         onPointerDown={handlePointerDown}

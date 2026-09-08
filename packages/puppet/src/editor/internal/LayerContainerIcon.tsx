@@ -1,6 +1,7 @@
 import {Show} from 'solid-js'
 
 interface LayerContainerIconProps {
+  readonly rotation?: boolean
   readonly pin?: boolean
   readonly bone?: boolean
   readonly curve?: boolean
@@ -22,10 +23,11 @@ export const LayerContainerIcon = (props: LayerContainerIconProps) => (
       aria-hidden="true"
       class="puppet-icon layer-container-icon puppet-layer-container-icon deformer"
       classList={{
+        'puppet-icon-bone': props.bone && !props.rotation,
         'puppet-icon-pin': props.pin,
-        'puppet-icon-bone': props.bone,
         'puppet-icon-curve': props.curve,
-        'puppet-icon-mesh': !props.curve && !props.bone && !props.pin,
+        'puppet-icon-rotation': props.rotation,
+        'puppet-icon-mesh': !props.curve && !props.bone && !props.pin && !props.rotation,
       }}
       data-layer-icon="deformer"
     />

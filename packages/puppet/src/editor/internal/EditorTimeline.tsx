@@ -1,6 +1,10 @@
+import {
+  EditorDiamondButton,
+  EditorSelect,
+  EditorButton,
+  EditorNumberField,
+} from '../../design-system'
 import {Slider} from '@kobalte/core/slider'
-import {EditorSelect} from './EditorSelect'
-import {Button} from '@kobalte/core/button'
 import {sortBy} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
 import {createMemo, createSignal, createUniqueId, For, Show} from 'solid-js'
@@ -19,7 +23,6 @@ import {
   setParameterKeyframe,
   setParameterKeyframeEasing,
 } from './motion-keyframes'
-import {EditorNumberField} from './EditorNumberField'
 
 const PERCENT = 100
 const RULER_INTERVAL_COUNT = 8
@@ -123,30 +126,30 @@ const TimelineToolbar = (props: TimelineToolbarProps) => (
       <strong id={props.titleId}>{props.motionId ?? 'Static mesh'}</strong>
     </div>
     <div class="timeline-actions">
-      <Button
+      <EditorButton
         class="timeline-playback"
         disabled={props.motionId === undefined || props.onPlaybackToggle === undefined}
         type="button"
         onClick={() => props.onPlaybackToggle?.()}
       >
         {props.isPlaying === false ? '재생' : '정지'}
-      </Button>
-      <Button
+      </EditorButton>
+      <EditorButton
         class="timeline-keyframe-add"
         disabled={!props.canAddKeyframe || props.onKeyframeAdd === undefined}
         type="button"
         onClick={() => props.onKeyframeAdd?.()}
       >
         <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 현재 위치에 키프레임
-      </Button>
-      <Button
+      </EditorButton>
+      <EditorButton
         class="timeline-keyframe-delete"
         disabled={!props.canDeleteKeyframe || props.onKeyframeDelete === undefined}
         type="button"
         onClick={() => props.onKeyframeDelete?.()}
       >
         선택 키프레임 삭제
-      </Button>
+      </EditorButton>
       <label class="timeline-easing">
         <span>다음 키프레임까지</span>
         <EditorSelect
@@ -262,7 +265,7 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
                     const target = {parameterId: track.parameter.id, time: keyframe.time}
 
                     return (
-                      <Button
+                      <EditorDiamondButton
                         aria-label={`${track.parameter.name} ${keyframe.time.toFixed(2)}초 키프레임`}
                         aria-pressed={isSameSelection(props.selection, target)}
                         class="timeline-keyframe"

@@ -1,4 +1,4 @@
-import {Button} from '@kobalte/core/button'
+import {EditorButton, EditorNumberField} from '../../design-system'
 import {CurveProperties} from './CurveProperties'
 import {GridProperties} from './GridProperties'
 import {For, type JSX, Show} from 'solid-js'
@@ -27,7 +27,6 @@ import {setDeformerControlPoint, setDeformerControlPoints} from './deformer-cont
 import {getParameterEditTarget} from './parameter-edit-target'
 import {setParameterKeyformPartProperties, setPartRenderProperties} from './part-properties'
 import {setMaskTarget} from './mask-targets'
-import {EditorNumberField} from './EditorNumberField'
 import {PartProperties} from './PartProperties'
 const getMaskTargetOptions = (document: PuppetDocument, partId: string) =>
   document.parts.flatMap((part) => {
@@ -321,7 +320,7 @@ const ControlPointProperties = (props: ControlPointPropertiesProps) => {
             props.node.pins === undefined
           }
         >
-          <Button
+          <EditorButton
             aria-label={`격자 제어점 ${props.pointIndex + 1} 곡률 핸들 ${hasHandle() ? '삭제' : '추가'}`}
             class="grid-curve-button"
             disabled={props.curveEditingDisabled || props.node.curveAxis !== undefined}
@@ -335,7 +334,7 @@ const ControlPointProperties = (props: ControlPointPropertiesProps) => {
             >
               <span aria-hidden="true" class="puppet-icon puppet-icon-minus" />
             </Show>
-          </Button>
+          </EditorButton>
         </Show>
       </div>
     </fieldset>
@@ -477,17 +476,17 @@ export const EditorInspector = (props: EditorInspectorProps) => {
     <aside class="panel inspector-panel" aria-label="선택 작업">
       <Show when={props.autoMeshAvailable && props.onAutoMesh !== undefined}>
         <section aria-label="파트 작업" class="selection-actions puppet-selection-actions">
-          <Button type="button" onClick={() => props.onAutoMesh?.()}>
+          <EditorButton type="button" onClick={() => props.onAutoMesh?.()}>
             자동 메시
-          </Button>
+          </EditorButton>
         </section>
       </Show>
       <Show when={props.containerUnwrapAvailable && props.onContainerUnwrap !== undefined}>
         <section aria-label="컨테이너 작업" class="selection-actions puppet-selection-actions">
           <Show when={props.containerUnwrapAvailable && props.onContainerUnwrap !== undefined}>
-            <Button type="button" onClick={() => props.onContainerUnwrap?.()}>
+            <EditorButton type="button" onClick={() => props.onContainerUnwrap?.()}>
               컨테이너 해제
-            </Button>
+            </EditorButton>
           </Show>
         </section>
       </Show>
