@@ -26,7 +26,3 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 실제 인증정보는 필요하지 않습니다. 이 테스트는 API 응답이나 테마 저장소를 mock하지 않습니다. 시스템 색상 설정만 Playwright로
 에뮬레이션하며, Chromium과 로컬 개발 서버의 일반 웹 동작을 검증합니다. Apps in Toss
 프로젝트에서는 제외하므로 실제 네이티브 Storage나 기기 동작의 근거로 사용하지 않습니다.
-
-`settings.spec.ts`는 성공 시에도 `test-results`에 영상을 보존합니다. PR의
-`Pomo settings E2E` 워크플로는 PR head commit을 실행하고 영상·보고서·실행 명령·commit SHA를
-Actions artifact에 30일간 보존합니다. Artifact 링크는 다운로드용이며 PR 내 재생 영상이 아닙니다.

@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test'
 
-test.use({locale: 'ko-KR', video: 'on'})
+test.use({locale: 'ko-KR', video: 'off'})
 
 test('should restore the selected theme after reopening settings and reloading', async ({page}) => {
   await page.goto('/')
