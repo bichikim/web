@@ -1,10 +1,14 @@
 import {VideoLoop} from './video-loop'
+import {createMedia} from './media'
+import {calculateLayout} from './layout'
 export * from './edges'
-import {Application, Sprite, Texture, VideoSource} from 'pixi.js'
+export * from './effect'
+export * from './layout'
+export * from './media'
+import {Application, Sprite, Texture, VideoSource, type Ticker} from 'pixi.js'
 import {PhotoTransition} from './transition'
 import {VideoEdges} from './video-edges'
 import {prepareVideoBackground} from '../video-background'
-export * from './effect'
 export * from './transition'
 import {PhotoEdges} from './edges'
 export * from './video-edges'
@@ -17,7 +21,6 @@ import {
   type TransitionEffect,
 } from '../background'
 
-const MEDIA_LOAD_TIMEOUT = 30_000
 const CENTER_ANCHOR = 0.5
 
 export interface FrameRendererOptions {
@@ -45,7 +48,7 @@ export class FrameRenderer {
   #version = 0
   #kind: MediaKind | null = null
   #transition: PhotoTransition | null = null
-  #settle: ((loaded: boolean) => void) | null = null
+  #cancelLoad: (() => void) | null = null
 
   constructor(options: FrameRendererOptions) {
     this.#options = options
@@ -132,52 +135,28 @@ export class FrameRenderer {
 
   #layout(sprite: Sprite, width: number, height: number) {
     const companion = this.#companion
-    const direction =
-      companion === null
-        ? null
-        : getPairDirection({
-            first: sprite.texture,
-            second: companion.texture,
-            viewport: {height, width},
-          })
+    const layout = calculateLayout({
+      first: sprite.texture,
+      second: companion?.texture ?? null,
+      viewport: {height, width},
+    })
+    sprite.scale.set(layout.first.scale)
+    sprite.position.set(layout.first.x, layout.first.y)
     if (companion !== null) {
-      companion.visible = direction !== null
+      companion.visible = layout.second !== null
+      if (layout.second !== null) {
+        companion.scale.set(layout.second.scale)
+        companion.position.set(layout.second.x, layout.second.y)
+      }
     }
-    if (companion === null || direction === null) {
-      const scale = Math.min(width / sprite.texture.width, height / sprite.texture.height)
-      sprite.scale.set(scale)
-      sprite.position.set(width / 2, height / 2)
-      this.#edges?.resize({
-        height,
-        photoHeight: sprite.texture.height * scale,
-        photoWidth: sprite.texture.width * scale,
-        width,
-      })
-      return
-    }
-    const horizontal = direction === 'horizontal'
-    const scale = horizontal ? height / sprite.texture.height : width / sprite.texture.width
-    const secondScale = horizontal
-      ? height / companion.texture.height
-      : width / companion.texture.width
-    sprite.scale.set(scale)
-    companion.scale.set(secondScale)
-    const firstWidth = sprite.texture.width * scale
-    const firstHeight = sprite.texture.height * scale
-    const secondWidth = companion.texture.width * secondScale
-    const secondHeight = companion.texture.height * secondScale
-    const left = (width - firstWidth - (horizontal ? secondWidth : 0)) / 2
-    const top = (height - firstHeight - (horizontal ? 0 : secondHeight)) / 2
-    sprite.position.set(left + firstWidth / 2, top + firstHeight / 2)
-    companion.position.set(
-      horizontal ? left + firstWidth + secondWidth / 2 : width / 2,
-      horizontal ? height / 2 : top + firstHeight + secondHeight / 2,
-    )
     this.#edges?.resize({
-      companion: {direction, texture: companion.texture},
+      companion:
+        companion !== null && layout.direction !== null
+          ? {direction: layout.direction, texture: companion.texture}
+          : undefined,
       height,
-      photoHeight: horizontal ? height : firstHeight + secondHeight,
-      photoWidth: horizontal ? firstWidth + secondWidth : width,
+      photoHeight: layout.height,
+      photoWidth: layout.width,
       width,
     })
   }
@@ -201,7 +180,7 @@ export class FrameRenderer {
 
   cancelPending() {
     this.#version += 1
-    this.#settle?.(false)
+    this.#cancelLoad?.()
     this.#transition?.cancel()
   }
 
@@ -240,7 +219,7 @@ export class FrameRenderer {
     this.#edges = null
     this.#release?.()
     this.#release = null
-    this.#settle = null
+    this.#cancelLoad = null
     this.#sprite = null
     this.#video = null
     if (this.#initialized) {
@@ -263,37 +242,16 @@ export class FrameRenderer {
     this.#clearMedia()
     this.#kind = kind
     const version = this.#version
-    const url = URL.createObjectURL(blob)
-    const source = kind === 'photo' ? new Image() : document.createElement('video')
-    const video = source instanceof HTMLVideoElement ? source : null
     let texture: Texture | null = null
     let sprite: Sprite | null = null
-    let settle: ((loaded: boolean) => void) | null = null
-    let timeout: ReturnType<typeof setTimeout> | null = null
-    let loaded = false
     const active = () => !this.#disposed && version === this.#version
-    const ready = () => {
-      loaded = true
-      if (timeout !== null) {
-        clearTimeout(timeout)
-      }
-      settle?.(true)
-    }
-    const fail = () => {
-      if (timeout !== null) {
-        clearTimeout(timeout)
-      }
-      if (!active()) {
-        return
-      }
-      if (loaded) {
-        this.#options.onError()
-      } else {
-        settle?.(false)
-      }
-    }
-    const ended = () => {
-      if (active()) {
+    const media = createMedia({
+      blob,
+      kind,
+      onEnded: () => {
+        if (!active()) {
+          return
+        }
         if (this.#loop) {
           this.#videoLoop?.repeat().catch(() => {
             if (active()) {
@@ -303,44 +261,21 @@ export class FrameRenderer {
         } else {
           this.#options.onEnded()
         }
-      }
-    }
+      },
+      onError: () => {
+        if (active()) {
+          this.#options.onError()
+        }
+      },
+    })
+    const {source, video} = media
+    this.#cancelLoad = media.cancel
     this.#release = () => {
-      if (timeout !== null) {
-        clearTimeout(timeout)
-      }
-      settle?.(false)
-      source.removeEventListener('load', ready)
-      source.removeEventListener('loadeddata', ready)
-      source.removeEventListener('error', fail)
-      source.removeEventListener('ended', ended)
       sprite?.destroy()
       texture?.destroy(true)
-      if (video === null) {
-        source.removeAttribute('src')
-      } else {
-        video.pause()
-        video.removeAttribute('src')
-        video.load()
-      }
-      URL.revokeObjectURL(url)
+      media.dispose()
     }
-    const result = await new Promise<boolean>((resolve) => {
-      settle = resolve
-      this.#settle = resolve
-      source.addEventListener(kind === 'photo' ? 'load' : 'loadeddata', ready, {once: true})
-      source.addEventListener('error', fail)
-      source.addEventListener('ended', ended)
-      timeout = setTimeout(fail, MEDIA_LOAD_TIMEOUT)
-      if (video !== null) {
-        video.muted = true
-        video.defaultMuted = true
-        video.playsInline = true
-        video.preload = 'auto'
-      }
-      source.src = url
-      video?.load()
-    })
+    const result = await media.ready
     if (!active()) {
       return false
     }
@@ -390,7 +325,7 @@ export class FrameRenderer {
     this.#edges = edges
     this.#application.stage.addChildAt(edges.view, 0)
     this.#resize()
-    const update = () => edges.update(video.currentTime)
+    const update = (ticker: Ticker) => edges.update(video.currentTime, ticker.elapsedMS)
     this.#application.ticker.add(update)
     const release = this.#release
     this.#release = () => {

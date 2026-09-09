@@ -1,6 +1,8 @@
+/** @vitest-environment jsdom */
+import {createMedia} from '../media'
+vi.mock('../media', () => ({createMedia: vi.fn()}))
 import {VideoLoop} from '../video-loop'
 vi.mock('../video-loop', () => ({VideoLoop: vi.fn()}))
-/** @vitest-environment jsdom */
 import {Application, Sprite, Texture, VideoSource} from 'pixi.js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {FrameRenderer} from '..'
@@ -8,8 +10,16 @@ import {PhotoEdges} from '../edges'
 import {VideoEdges} from '../video-edges'
 vi.mock('../video-edges', () => ({VideoEdges: vi.fn()}))
 
-vi.mock('../effect', () => ({ScreenEffect: vi.fn()}))
+import {PhotoTransition} from '../transition'
+vi.mock('../transition', () => ({PhotoTransition: vi.fn()}))
 vi.mock('../edges', () => ({PhotoEdges: vi.fn()}))
+const transition = {
+  cancel: vi.fn(),
+  capture: vi.fn(),
+  clear: vi.fn(),
+  play: vi.fn(async () => true),
+  resize: vi.fn(),
+}
 const videoLoop = {destroy: vi.fn(), repeat: vi.fn(async () => undefined), resize: vi.fn()}
 const videoEdges = {
   destroy: vi.fn(),
@@ -20,7 +30,8 @@ const videoEdges = {
 }
 const edges = {destroy: vi.fn(), resize: vi.fn(), view: {}}
 
-vi.mock('pixi.js', () => ({
+vi.mock('pixi.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('pixi.js')>()),
   Application: vi.fn(),
   Sprite: vi.fn(),
   Texture: vi.fn(),
@@ -46,11 +57,15 @@ const sprite = {
   texture,
 }
 const source = {load: vi.fn()}
-let image: HTMLImageElement
 let video: HTMLVideoElement
+let finishMedia: (ready: boolean) => void
+const disposeMedia = vi.fn()
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(PhotoTransition).mockImplementation(function createTransition() {
+    return transition as unknown as PhotoTransition
+  })
   vi.mocked(VideoLoop).mockImplementation(function createVideoLoop() {
     return videoLoop as unknown as VideoLoop
   })
@@ -67,22 +82,24 @@ beforeEach(() => {
       disconnect() {}
     },
   )
-  vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:frame'), revokeObjectURL: vi.fn()})
-  image = document.createElement('img')
   video = document.createElement('video')
-  const createElement = document.createElement.bind(document)
-  vi.spyOn(document, 'createElement').mockImplementation((name, options) =>
-    name === 'video' ? video : createElement(name, options),
-  )
-  vi.stubGlobal(
-    'Image',
-    vi.fn(function createImage() {
-      return image
-    }),
-  )
-  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
-  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  Object.defineProperty(video, 'play', {value: vi.fn(async () => undefined)})
+  vi.mocked(createMedia).mockImplementation((options) => {
+    const ready = new Promise<boolean>((resolve) => {
+      finishMedia = resolve
+    })
+    const finish = finishMedia
+    return {
+      cancel: () => finish(false),
+      dispose: () => {
+        disposeMedia()
+        finish(false)
+      },
+      ready,
+      source: options.kind === 'photo' ? document.createElement('img') : video,
+      video: options.kind === 'photo' ? null : video,
+    }
+  })
   application.init.mockResolvedValue(undefined)
   source.load.mockResolvedValue(undefined)
   vi.mocked(Application).mockImplementation(function createApplication() {
@@ -102,16 +119,15 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
-  vi.useRealTimers()
 })
 
-it('should contain the photo in the viewport and release texture and object URL', async () => {
+it('should contain the photo in the viewport and release texture and media', async () => {
   const canvas = document.createElement('canvas')
   Object.defineProperties(canvas, {clientHeight: {value: 600}, clientWidth: {value: 300}})
   const renderer = new FrameRenderer({canvas, onEnded: vi.fn(), onError: vi.fn()})
   await renderer.initialize()
   const showing = renderer.show(new Blob(['image']), 'photo')
-  image.dispatchEvent(new Event('load'))
+  finishMedia(true)
   await expect(showing).resolves.toBe(true)
   expect(sprite.scale.set).toHaveBeenCalledWith(0.75)
   expect(sprite.position.set).toHaveBeenCalledWith(150, 300)
@@ -126,12 +142,12 @@ it('should contain the photo in the viewport and release texture and object URL'
   renderer.destroy()
   expect(edges.destroy).toHaveBeenCalledOnce()
   expect(texture.destroy).toHaveBeenCalledWith(true)
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:frame')
+  expect(disposeMedia).toHaveBeenCalledOnce()
   expect(() => renderer.clear()).not.toThrow()
   expect(application.destroy).toHaveBeenCalledOnce()
 })
 
-it('should initialize video frame updates, play muted inline, and advance only on ended', async () => {
+it('should initialize video frame updates and advance only on ended', async () => {
   const onEnded = vi.fn()
   const renderer = new FrameRenderer({
     canvas: document.createElement('canvas'),
@@ -140,20 +156,18 @@ it('should initialize video frame updates, play muted inline, and advance only o
   })
   await renderer.initialize()
   const showing = renderer.show(new Blob(['video']), 'video')
-  video.dispatchEvent(new Event('loadeddata'))
+  finishMedia(true)
   await expect(showing).resolves.toBe(true)
   expect(PhotoEdges).not.toHaveBeenCalled()
   expect(source.load).toHaveBeenCalledOnce()
-  expect(video.muted).toBe(true)
-  expect(video.playsInline).toBe(true)
   expect(video.play).toHaveBeenCalledOnce()
   expect(onEnded).not.toHaveBeenCalled()
-  video.dispatchEvent(new Event('ended'))
+  vi.mocked(createMedia).mock.calls.at(-1)![0].onEnded()
   expect(onEnded).toHaveBeenCalledOnce()
   renderer.destroy()
-  video.dispatchEvent(new Event('ended'))
+  vi.mocked(createMedia).mock.calls.at(-1)![0].onEnded()
   expect(onEnded).toHaveBeenCalledOnce()
-  expect(video.pause).toHaveBeenCalled()
+  expect(disposeMedia).toHaveBeenCalledOnce()
 })
 
 it('should cancel pending media and destroy an application that finishes initializing after disposal', async () => {
@@ -165,7 +179,7 @@ it('should cancel pending media and destroy an application that finishes initial
   await renderer.initialize()
   const showing = renderer.show(new Blob(['image']), 'photo')
   renderer.clear()
-  image.dispatchEvent(new Event('load'))
+  finishMedia(true)
   await expect(showing).resolves.toBe(false)
   expect(application.stage.addChild).not.toHaveBeenCalled()
   renderer.destroy()
@@ -187,8 +201,7 @@ it('should cancel pending media and destroy an application that finishes initial
   expect(application.destroy).toHaveBeenCalledTimes(2)
 })
 
-it('should reject stalled loading instead of hanging the playlist', async () => {
-  vi.useFakeTimers()
+it('should reject failed media readiness without mounting a sprite', async () => {
   const renderer = new FrameRenderer({
     canvas: document.createElement('canvas'),
     onEnded: vi.fn(),
@@ -196,16 +209,15 @@ it('should reject stalled loading instead of hanging the playlist', async () => 
   })
   await renderer.initialize()
   const showing = renderer.show(new Blob(['invalid']), 'photo')
-  const assertion = expect(showing).rejects.toThrow('decode')
-  await vi.advanceTimersByTimeAsync(30_000)
-  await assertion
+  finishMedia(false)
+  await expect(showing).rejects.toThrow('decode')
+  expect(application.stage.addChild).not.toHaveBeenCalled()
   renderer.destroy()
-  expect(vi.getTimerCount()).toBe(0)
+  expect(disposeMedia).toHaveBeenCalledOnce()
 })
 
 it('should preserve the outgoing photo before releasing media and cancel a pending replacement', async () => {
-  const {PhotoTransition} = await import('../transition')
-  const capture = vi.spyOn(PhotoTransition.prototype, 'capture').mockImplementation(() => undefined)
+  const {capture} = transition
   const renderer = new FrameRenderer({
     canvas: document.createElement('canvas'),
     onEnded: vi.fn(),
@@ -213,7 +225,7 @@ it('should preserve the outgoing photo before releasing media and cancel a pendi
   })
   await renderer.initialize()
   const first = renderer.show(new Blob(['first']), 'photo')
-  image.dispatchEvent(new Event('load'))
+  finishMedia(true)
   await first
   expect(capture).not.toHaveBeenCalled()
   const second = renderer.show(new Blob(['second']), 'photo')
@@ -223,7 +235,7 @@ it('should preserve the outgoing photo before releasing media and cancel a pendi
   )
   renderer.cancelPending()
   await expect(second).resolves.toBe(false)
-  image.dispatchEvent(new Event('load'))
+  finishMedia(true)
   const playing = renderer.show(new Blob(['video']), 'video')
   expect(capture).toHaveBeenCalledTimes(2)
   renderer.clear()
@@ -232,9 +244,8 @@ it('should preserve the outgoing photo before releasing media and cancel a pendi
 })
 
 it('should transition into videos, keep video rendering after completion and transition back to photos', async () => {
-  const {PhotoTransition} = await import('../transition')
-  const capture = vi.spyOn(PhotoTransition.prototype, 'capture').mockImplementation(() => undefined)
-  const play = vi.spyOn(PhotoTransition.prototype, 'play').mockResolvedValue(true)
+  const {capture} = transition
+  const {play} = transition
   const renderer = new FrameRenderer({
     canvas: document.createElement('canvas'),
     onEnded: vi.fn(),
@@ -242,17 +253,17 @@ it('should transition into videos, keep video rendering after completion and tra
   })
   await renderer.initialize()
   const first = renderer.show(new Blob(['photo']), 'photo')
-  image.dispatchEvent(new Event('load'))
+  finishMedia(true)
   await first
   const second = renderer.show(new Blob(['video']), 'video')
-  video.dispatchEvent(new Event('loadeddata'))
+  finishMedia(true)
   await second
   application.start.mockClear()
   expect(await renderer.present('fade')).toBe(true)
   expect(play).toHaveBeenCalledWith('fade')
   expect(application.start).toHaveBeenCalledOnce()
   const third = renderer.show(new Blob(['photo']), 'photo')
-  image.dispatchEvent(new Event('load'))
+  finishMedia(true)
   await third
   application.start.mockClear()
   expect(await renderer.present('cross-warp')).toBe(true)
@@ -273,7 +284,7 @@ it('should apply loop mode to the current and next video and report playback sta
   await renderer.initialize()
   renderer.setVideoLoop(true)
   const showing = renderer.show(new Blob(['video']), 'video')
-  video.dispatchEvent(new Event('loadeddata'))
+  finishMedia(true)
   await showing
   expect(video.loop).toBe(false)
   expect(onVideoStart).toHaveBeenCalledOnce()
@@ -284,4 +295,40 @@ it('should apply loop mode to the current and next video and report playback sta
   renderer.setVideoLoop(true)
   expect(videoLoop.repeat).toHaveBeenCalledOnce()
   renderer.destroy()
+})
+
+it('should ignore a replaced video that finishes texture loading late', async () => {
+  let finishTexture!: () => void
+  source.load.mockReturnValueOnce(
+    new Promise<void>((resolve) => {
+      finishTexture = resolve
+    }),
+  )
+  const onVideoStart = vi.fn()
+  const onError = vi.fn()
+  const renderer = new FrameRenderer({
+    canvas: document.createElement('canvas'),
+    onEnded: vi.fn(),
+    onError,
+    onVideoStart,
+  })
+  await renderer.initialize()
+  const stale = renderer.show(new Blob(['video']), 'video')
+  const staleCallbacks = vi.mocked(createMedia).mock.calls.at(-1)![0]
+  finishMedia(true)
+  await Promise.resolve()
+  expect(source.load).toHaveBeenCalledOnce()
+  const current = renderer.show(new Blob(['photo']), 'photo')
+  finishMedia(true)
+  await expect(current).resolves.toBe(true)
+  finishTexture()
+  await expect(stale).resolves.toBe(false)
+  staleCallbacks.onError()
+  staleCallbacks.onEnded()
+  expect(onError).not.toHaveBeenCalled()
+  expect(onVideoStart).not.toHaveBeenCalled()
+  expect(video.play).not.toHaveBeenCalled()
+  expect(application.stage.addChild).toHaveBeenCalledTimes(2)
+  renderer.destroy()
+  expect(disposeMedia).toHaveBeenCalledTimes(2)
 })

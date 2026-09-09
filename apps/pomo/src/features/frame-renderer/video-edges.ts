@@ -21,7 +21,7 @@ export class VideoEdges {
   #layout: PhotoEdgesLayout | null = null
   #time = 0
   #fade: Sprite | null = null
-  #fadeStarted = 0
+  #fadeElapsed = 0
 
   constructor(renderer: Renderer, video: HTMLVideoElement) {
     this.#renderer = renderer
@@ -51,12 +51,13 @@ export class VideoEdges {
     }
   }
 
-  update(time: number) {
-    if (time < this.#time) {
+  update(time: number, elapsed = 0) {
+    const rewound = time < this.#time
+    if (rewound) {
       this.#captureFade()
     }
     this.#time = time
-    this.#updateFade()
+    this.#updateFade(rewound ? 0 : elapsed)
     const layout = this.#layout
     if (layout === null) {
       return
@@ -101,16 +102,17 @@ export class VideoEdges {
     this.#fade = new Sprite(texture)
     this.#fade.width = layout.width
     this.#fade.height = layout.height
-    this.#fadeStarted = performance.now()
+    this.#fadeElapsed = 0
     this.view.addChild(this.#fade)
   }
 
-  #updateFade() {
+  #updateFade(elapsed: number) {
     const fade = this.#fade
     if (fade === null) {
       return
     }
-    const progress = Math.min(1, (performance.now() - this.#fadeStarted) / FADE_MILLISECONDS)
+    this.#fadeElapsed += Math.max(0, elapsed)
+    const progress = Math.min(1, this.#fadeElapsed / FADE_MILLISECONDS)
     fade.alpha = (1 + Math.cos(Math.PI * progress)) / 2
     if (progress >= 1) {
       fade.destroy({texture: true, textureSource: true})

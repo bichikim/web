@@ -19,10 +19,7 @@ vi.mock('../edges', () => ({
     }
   },
 }))
-let now = 0
 beforeEach(() => {
-  now = 0
-  vi.spyOn(performance, 'now').mockImplementation(() => now)
   vi.spyOn(Texture, 'from').mockImplementation(() => new Texture())
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
     createImageData: () => ({data: new Uint8ClampedArray(4)}),
@@ -50,20 +47,17 @@ it('should fade from the visible background when analysis arrives', () => {
   edges.setSamples(samples)
   const overlay = edges.view.children.at(-1)!
   expect(overlay.alpha).toBe(1)
-  now = 350
-  edges.update(2.5)
+  edges.update(2.5, 350)
   expect(overlay.alpha).toBeCloseTo(0.5)
   expect(generateTexture).toHaveBeenCalledOnce()
-  now = 700
-  edges.update(3)
+  edges.update(3, 350)
   expect(overlay.destroyed).toBe(true)
   edges.destroy()
 })
 it('should preserve ordinary interpolation without capturing every update and fade on rewind', () => {
   const {edges, generateTexture} = setup()
   edges.setSamples(samples)
-  now = 700
-  edges.update(7.5)
+  edges.update(7.5, 700)
   expect(edges.view.children[1].alpha).toBeCloseTo(0.5)
   edges.update(8)
   expect(generateTexture).toHaveBeenCalledOnce()
@@ -71,8 +65,7 @@ it('should preserve ordinary interpolation without capturing every update and fa
   const overlay = edges.view.children.at(-1)!
   expect(overlay.alpha).toBe(1)
   expect(generateTexture).toHaveBeenCalledTimes(2)
-  now = 1050
-  edges.update(0.35)
+  edges.update(0.35, 350)
   expect(overlay.alpha).toBeCloseTo(0.5)
   edges.destroy()
   expect(overlay.destroyed).toBe(true)
