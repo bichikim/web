@@ -144,13 +144,17 @@ const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(usePDisplayPreferences).mockReturnValue({
     dialogueComposerVisible,
     isReady: () => true,
-    onDialogueComposerVisibleChange: setDialogueComposerVisible,
-    onTourButtonVisibleChange: vi.fn(),
-    toolsButtonVisible: () => true,
     memoryAssistVisible: () => true,
-    tourButtonVisible: () => true,
+    onDialogueComposerVisibleChange: setDialogueComposerVisible,
     onMemoryAssistVisibleChange: vi.fn(),
+    onPlayerVisibleChange: vi.fn(),
+    onPomodoroVisibleChange: vi.fn(),
     onToolsButtonVisibleChange: vi.fn(),
+    onTourButtonVisibleChange: vi.fn(),
+    playerVisible: () => true,
+    pomodoroVisible: () => true,
+    toolsButtonVisible: () => true,
+    tourButtonVisible: () => true,
   })
   vi.mocked(usePScenePreferences).mockReturnValue({
     activity,

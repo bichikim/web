@@ -15,6 +15,10 @@ export const CLASSES = {
 } as const
 
 export interface PSettingsProps {
+  readonly pomodoroVisible?: boolean
+  readonly onPomodoroVisibleChange?: (visible: boolean) => void
+  readonly playerVisible?: boolean
+  readonly onPlayerVisibleChange?: (visible: boolean) => void
   readonly background?: BackgroundController
 
   readonly toolsButtonVisible?: boolean

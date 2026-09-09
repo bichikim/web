@@ -2,6 +2,7 @@
 
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createSignal, Show} from 'solid-js'
 
 import {PMusicPlayerContent} from '../Content'
 
@@ -56,6 +57,49 @@ describe('PMusicPlayerContent playback persistence', () => {
     Reflect.deleteProperty(window, 'ReactNativeWebView')
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  it('should pause and persist stopped playback when disabled on unmount', async () => {
+    const [visible, setVisible] = createSignal(true)
+    const result = render(() => (
+      <Show when={visible()}>
+        <PMusicPlayerContent stopOnUnmount={!visible()} tracks={TRACKS} />
+      </Show>
+    ))
+    const audio = getAudioElement(result.container)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('play'))
+    setVisible(false)
+    expect(audio.isConnected).toBe(false)
+    expect(audio.pause).toHaveBeenCalled()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '{}').isPlaying).toBe(
+      false,
+    )
+  })
+
+  it('should preserve the saved track and stop restoration when disabled before storage resolves', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({
+        isPlaying: true,
+        positionSeconds: 22,
+        savedAt: 1,
+        trackId: 'three',
+      }),
+    )
+    const [visible, setVisible] = createSignal(true)
+    render(() => (
+      <Show when={visible()}>
+        <PMusicPlayerContent stopOnUnmount={!visible()} tracks={TRACKS} />
+      </Show>
+    ))
+    setVisible(false)
+    await vi.waitFor(() =>
+      expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '{}')).toMatchObject(
+        {isPlaying: false, positionSeconds: 22, trackId: 'three'},
+      ),
+    )
   })
 
   it('should restore the saved track and playback position', async () => {

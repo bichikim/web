@@ -1,4 +1,9 @@
 {
+  "settings_player_visible": "플레이어 표시",
+  "settings_player_visible_description": "끄면 음악 재생이 중지돼요.",
+  "settings_pomodoro_visible": "뽀모도로 표시",
+  "settings_pomodoro_visible_description": "끄면 타이머가 중지돼요.",
+
   "settings_tour_button_visible": "투어 버튼 표시",
   "settings_tour_button_visible_description": "집중 화면에 기능을 둘러볼 수 있는 투어 버튼을 표시해요.",
   "app_return": "앱으로 돌아가기",

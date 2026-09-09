@@ -63,3 +63,41 @@ test('should follow system theme changes only while system settings is selected'
   await page.emulateMedia({colorScheme: 'light'})
   await expect(page.locator('html')).toHaveClass(/\bdark\b/u)
 })
+
+test('should unmount player and Pomodoro through general settings and restore the choices', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '시작하기'}).click()
+  const timer = page.locator('[role="group"][aria-label="포모도로 간편 조작"]')
+  const player = page.locator('.pomo-player')
+  await expect(timer).toBeVisible()
+  await expect(player).toBeVisible()
+  await page.getByRole('button', {name: '집중 시작', exact: true}).click()
+  await page.getByRole('button', {exact: true, name: '설정'}).click()
+  const dialog = page.getByRole('dialog', {name: 'Pomofi 설정'})
+  const playerSwitch = dialog.getByRole('switch', {name: '플레이어 표시', exact: true})
+  const timerSwitch = dialog.getByRole('switch', {name: '뽀모도로 표시', exact: true})
+  await expect(playerSwitch).toBeChecked()
+  await expect(timerSwitch).toBeChecked()
+  await dialog.getByText('플레이어 표시', {exact: true}).click()
+  await dialog.getByText('뽀모도로 표시', {exact: true}).click()
+  await expect(timer).toHaveCount(0)
+  await expect(player).toHaveCount(0)
+  await expect
+    .poll(() =>
+      page.evaluate(() => JSON.parse(localStorage.getItem('pomo:timer:v1') ?? '{}').status),
+    )
+    .toBe('idle')
+  await page.reload()
+  await page.getByRole('button', {exact: true, name: '설정'}).click()
+  await expect(playerSwitch).not.toBeChecked()
+  await expect(timerSwitch).not.toBeChecked()
+  await expect(timer).toHaveCount(0)
+  await expect(player).toHaveCount(0)
+  await dialog.getByText('플레이어 표시', {exact: true}).click()
+  await dialog.getByText('뽀모도로 표시', {exact: true}).click()
+  await page.keyboard.press('Escape')
+  await expect(timer).toBeVisible()
+  await expect(player).toBeVisible()
+})

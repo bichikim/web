@@ -32,6 +32,10 @@ import {PButton} from '../PButton'
 import {PTools} from '../PTools'
 
 interface SceneToolbarProps {
+  readonly pomodoroVisible?: boolean
+  readonly onPomodoroVisibleChange?: (visible: boolean) => void
+  readonly playerVisible?: boolean
+  readonly onPlayerVisibleChange?: (visible: boolean) => void
   readonly background?: BackgroundController
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
@@ -102,6 +106,10 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         </Show>
         <div class="inline-flex" data-tour-step="settings">
           <SceneSettingsPanel
+            playerVisible={props.playerVisible}
+            onPlayerVisibleChange={props.onPlayerVisibleChange}
+            pomodoroVisible={props.pomodoroVisible}
+            onPomodoroVisibleChange={props.onPomodoroVisibleChange}
             background={props.background}
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}

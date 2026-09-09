@@ -14,6 +14,7 @@ import {
   resolvePlaybackRestore,
   resolveTrackEnd,
   resolveTrackRemoval,
+  stopPPlayback,
   usePAudioVisualizer,
   usePlayerMediaSession,
   usePPlaybackPersistence,
@@ -534,7 +535,16 @@ export const useMusicPlayerController = (props: PMusicPlayerContentProps) => {
   })
 
   onCleanup(() => {
-    playbackPersistence.persistCurrentPlayback()
+    if (props.stopOnUnmount) {
+      setIsPlaying(false)
+      if (playbackRevision === 0) {
+        stopPPlayback().catch(globalThis.reportError)
+      } else {
+        playbackPersistence.persistStoppedPlayback()
+      }
+    } else {
+      playbackPersistence.persistCurrentPlayback()
+    }
     destroyed = true
     playlistRequest.abort()
     audioElement?.pause()

@@ -3,6 +3,7 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 import {PMusicPlayerPanel} from './music-player/Panel'
 
 export interface PMusicPlayerProps {
+  readonly stopOnUnmount?: boolean
   readonly expanded?: boolean
   readonly isDialogueActive?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void
@@ -13,6 +14,7 @@ export interface PMusicPlayerProps {
 
 export const PMusicPlayer = (props: PMusicPlayerProps) => (
   <PMusicPlayerPanel
+    stopOnUnmount={props.stopOnUnmount}
     expanded={props.expanded}
     isDialogueActive={props.isDialogueActive}
     onExpandedChange={(expanded) => props.onExpandedChange?.(expanded)}
