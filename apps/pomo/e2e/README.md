@@ -36,19 +36,28 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 열린 테마 목록을 PNG로 비교하고, 도구·기억보조·투어 버튼을 숨긴 뒤 새로고침해도 선택이 유지되는지
 확인합니다. 기본 E2E 수집 경로에는 포함하지 않습니다.
 
+타이머 팝업과 시간 편집 화면도 PNG로 비교합니다. 실제 입력의 범위 검증·취소·저장,
+자동 재생 설정과 일시정지 상태의 새로고침 복원, 짧은 휴식·긴 휴식 전환을 확인합니다.
+타이머 테스트는 조작으로 시간을 설정하고 Playwright 시계로 경과 시간만 제어합니다.
+새로고침 중에는 hydration이 끝나도록 시계를 진행하고, 복원 후 다시 멈춥니다.
+
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 ```
 
 [촬영 환경](rendering/evidence/manifest.json)의 OS·Chromium 버전·화면 크기·DPR·언어·시간대와
-같은 환경에서 비교해야 합니다. [기준 PNG](rendering/settings.spec.ts-snapshots)는 최초 생성 기준이며,
-검토 후 Git에 보존합니다. 다른 OS의 기준 부재나 실행 실패를 변경 없음으로 해석하지 마세요.
+같은 환경에서 비교해야 합니다. [설정 기준 PNG](rendering/settings.spec.ts-snapshots)와
+[타이머 기준 PNG](rendering/pomodoro.spec.ts-snapshots)는 Git에 보존합니다.
+설정 기준에는 병합된 배경 탭·위젯 표시 설정 변경을 반영했으며, 타이머 기준은 최초 생성입니다.
+다른 OS의 기준 부재나 실행 실패를 변경 없음으로 해석하지 마세요.
 변경이 실패하면 기준·현재·차이 이미지를 확인하고 원인이 입증되기 전에는 기준을 갱신하지 않습니다.
 
 테스트는 실제 홈 화면과 저장소를 사용합니다. 배경 재생목록은 빈 목록으로 고정하고, 장면·폰트·이미지가
 준비된 뒤 시계를 멈춰 촬영합니다. 앱의 동작 줄이기 설정과 Playwright의 애니메이션 제어를 사용하며
 설정 화면을 마스킹하거나 비교 오차를 늘리지 않습니다. 성공한 화면도 현재 PNG와 촬영 환경을
 `test-results`에 남깁니다. 대표 이미지는 [렌더링 증거](rendering/evidence)에 보존합니다. 녹화는 꺼져 있습니다.
+화면 비교는 soft assertion을 사용해 한 화면이 달라도 나머지 현재 PNG를 수집합니다.
+차이가 하나라도 있으면 테스트 전체는 실패하며 비교 허용 오차는 그대로 유지합니다.
 실제 DB·인증 서비스와 네이티브 브리지는 검증하지 않으며, 서버 환경값은 기존 로컬 설정의 테스트용 값입니다.
 
 방법은 [Playwright 화면 비교](https://playwright.dev/docs/test-snapshots)와
