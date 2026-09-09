@@ -153,13 +153,13 @@ const createSettingsTourSteps = (
   ] satisfies ReadonlyArray<PTourStep>
 
 export const useStudioTour = () => {
-  const videoDirectory = getLocale() === 'en' ? '/tour/en' : '/tour'
-  const audioDirectory = getLocale() === 'ko' ? '/tour/audio/ko' : null
+  const locale = getLocale()
+  const videoDirectory = locale === 'en' ? '/tour/en' : '/tour'
+  const audioDirectory = `/tour/audio/${locale}`
   const [isOpen, setIsOpen] = createSignal(false)
   const [studioElement, setStudioElement] = createSignal<HTMLElement | null>(null)
   const audioPlayer = createFocusRoomTourAudioPlayer()
-  const getAudio = (stepId: string) =>
-    audioDirectory === null ? undefined : {source: `${audioDirectory}/${stepId}.mp3`}
+  const getAudio = (stepId: string) => ({source: `${audioDirectory}/${stepId}.mp3`})
   const steps = createMemo(
     () =>
       [
@@ -248,6 +248,12 @@ export const useStudioTour = () => {
           title: m.tour_settings_title(),
         },
         ...createSettingsTourSteps(getAudio, videoDirectory),
+        {
+          audio: getAudio('completion'),
+          description: m.tour_completion_description(),
+          id: 'completion',
+          title: m.tour_completion_title(),
+        },
       ] satisfies ReadonlyArray<PTourStep>,
   )
   const getStepElement = (stepId: string) => {

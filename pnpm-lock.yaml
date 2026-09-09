@@ -212,6 +212,9 @@ overrides:
   tar@<=7.5.20: ^7.5.21
   tar@<=7.5.9: ^7.5.10
 
+patchedDependencies:
+  '@kobalte/core@0.13.11': cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29
+
 importers:
 
   .:
@@ -376,6 +379,40 @@ importers:
         specifier: ^4.125.0
         version: 4.125.0(@cloudflare/workers-types@5.20260822.1)
 
+  apps/ai-director:
+    dependencies:
+      '@solidjs/router':
+        specifier: 'catalog:'
+        version: 1.0.0(solid-js@1.9.14)
+      '@solidjs/start':
+        specifier: 'catalog:'
+        version: 2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@6.9.1)(crossws@0.4.10(srvx@0.11.22))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.14
+    devDependencies:
+      '@tauri-apps/cli':
+        specifier: 2.11.1
+        version: 2.11.1
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.13.3
+      '@winter-love/unocss-config':
+        specifier: workspace:*
+        version: link:../../packages/unocss-config
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260610-beta(@vercel/functions@3.9.3(ws@8.21.3))(aws4fetch@1.0.20)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.29.5)(postgres@3.4.9))(giget@3.2.0)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.5)(rollup@4.62.4)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))(wrangler@4.125.0(@cloudflare/workers-types@5.20260822.1))(xml2js@0.6.2)
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      unocss:
+        specifier: 'catalog:'
+        version: 66.7.5(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+      vite:
+        specifier: 'catalog:'
+        version: 8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
+
   apps/coong:
     dependencies:
       '@floating-ui/dom':
@@ -383,7 +420,7 @@ importers:
         version: 1.7.6
       '@kobalte/core':
         specifier: ^0.13.11
-        version: 0.13.11(solid-js@1.9.14)
+        version: 0.13.11(patch_hash=cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29)(solid-js@1.9.14)
       '@lottiefiles/dotlottie-solid':
         specifier: ^0.5.15
         version: 0.5.15(solid-js@1.9.14)
@@ -601,7 +638,7 @@ importers:
         version: 2.24.1(typescript@7.0.2)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
       '@kobalte/core':
         specifier: ^0.13.11
-        version: 0.13.11(solid-js@1.9.14)
+        version: 0.13.11(patch_hash=cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29)(solid-js@1.9.14)
       '@neondatabase/auth':
         specifier: 0.5.0-beta
         version: 0.5.0-beta(bc79c0c9016a666032082e5f549d6efa)
@@ -665,6 +702,9 @@ importers:
       h3:
         specifier: 'catalog:'
         version: 2.0.1-rc.26(crossws@0.4.10(srvx@0.11.22))
+      korean-lunar-calendar:
+        specifier: ^0.4.0
+        version: 0.4.0
       libopus-wasm:
         specifier: 0.2.0
         version: 0.2.0
@@ -9333,6 +9373,10 @@ packages:
   kolorist@1.8.0:
     resolution: {integrity: sha512-Y+60/zizpJ3HRH8DCss+q95yr6145JXZo46OTpFvDZWLfRCE4qChOyk1b26nMaNpfHHgxagk9dXT5OP0Tfe+dQ==}
 
+  korean-lunar-calendar@0.4.0:
+    resolution: {integrity: sha512-kJXyH3sI/butJxCBtsLXlMJsl5qqNKNjduf1Na0s7XXwP+D/Wdlx0R0/S5ygxPVFSXf/JZ3bBKaCP6bGWhgZ0w==}
+    engines: {node: '>= 16.14.0'}
+
   kysely@0.28.17:
     resolution: {integrity: sha512-nbD8lB9EB3wNdMhOCdx5Li8DxnLbvKByylRLcJ1h+4SkrowVeECAyZlyiKMThF7xFdRz0jSQ2MoJr+wXux2y0Q==}
     engines: {node: '>=20.0.0'}
@@ -14915,7 +14959,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kobalte/core@0.13.11(solid-js@1.9.14)':
+  '@kobalte/core@0.13.11(patch_hash=cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29)(solid-js@1.9.14)':
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@internationalized/date': 3.12.2
@@ -20569,6 +20613,8 @@ snapshots:
 
   kolorist@1.8.0: {}
 
+  korean-lunar-calendar@0.4.0: {}
+
   kysely@0.28.17: {}
 
   kysely@0.29.5: {}
@@ -24103,3 +24149,93 @@ snapshots:
   zod@4.4.3: {}
 
   zwitch@2.0.4: {}
+
+  '@solidjs/start@2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@6.9.1)(crossws@0.4.10(srvx@0.11.22))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))':
+    dependencies:
+      '@babel/core': 7.29.7
+      '@babel/traverse': 7.29.8
+      '@babel/types': 7.29.8
+      '@solidjs/meta': 0.29.4(solid-js@1.9.14)
+      '@types/babel__traverse': 7.28.0
+      '@types/micromatch': 4.0.10
+      cookie-es: 3.1.1
+      defu: 6.1.7
+      error-stack-parser: 2.1.4
+      fast-glob: 3.3.3
+      h3: 2.0.1-rc.26(crossws@0.4.10(srvx@0.11.22))
+      html-to-image: 1.11.13
+      micromatch: 4.0.8
+      oxc-parser: 0.141.0
+      path-to-regexp: 8.4.2
+      pathe: 2.0.3
+      radix3: 1.1.2
+      seroval: 1.6.2
+      seroval-plugins: 1.6.2(seroval@1.6.2)
+      shiki: 4.4.3
+      solid-js: 1.9.14
+      source-map-js: 1.2.1
+      srvx: 0.12.5
+      terracotta: 1.1.1(solid-js@1.9.14)
+      vite: 8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
+      vite-plugin-solid: 2.11.14(@testing-library/jest-dom@6.9.1)(solid-js@1.9.14)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+    optionalDependencies:
+      '@solidjs/router': 1.0.0(solid-js@1.9.14)
+    transitivePeerDependencies:
+      - '@testing-library/jest-dom'
+      - crossws
+      - supports-color
+
+  nitro@3.0.260610-beta(@vercel/functions@3.9.3(ws@8.21.3))(aws4fetch@1.0.20)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.29.5)(postgres@3.4.9))(giget@3.2.0)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.5)(rollup@4.62.4)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))(wrangler@4.125.0(@cloudflare/workers-types@5.20260822.1))(xml2js@0.6.2):
+    dependencies:
+      consola: 3.4.2
+      crossws: 0.4.10(srvx@0.11.22)
+      db0: 0.3.4(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.29.5)(postgres@3.4.9))
+      env-runner: 0.1.16(wrangler@4.125.0(@cloudflare/workers-types@5.20260822.1))
+      h3: 2.0.1-rc.22(crossws@0.4.10(srvx@0.11.22))
+      hookable: 6.1.1
+      nf3: 0.3.23
+      ocache: 0.1.5
+      ofetch: 2.0.0-alpha.3
+      ohash: 2.0.11
+      rolldown: 1.1.0
+      srvx: 0.11.22
+      unenv: 2.0.0-rc.24
+      unstorage: 2.0.0-alpha.7(@vercel/functions@3.9.3(ws@8.21.3))(aws4fetch@1.0.20)(chokidar@5.0.0)(db0@0.3.4(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.29.5)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)(lru-cache@11.3.5)(ofetch@2.0.0-alpha.3)
+    optionalDependencies:
+      dotenv: 17.4.2
+      giget: 3.2.0
+      jiti: 2.7.0
+      rollup: 4.62.4
+      vite: 8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
+      xml2js: 0.6.2
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@netlify/blobs'
+      - '@netlify/runtime'
+      - '@planetscale/database'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - better-sqlite3
+      - chokidar
+      - drizzle-orm
+      - idb-keyval
+      - ioredis
+      - lru-cache
+      - miniflare
+      - mongodb
+      - mysql2
+      - sqlite3
+      - uploadthing
+      - wrangler

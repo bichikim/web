@@ -49,6 +49,66 @@ it('should wait for explicit focus room entry before playing the greeting once',
   result.unmount()
 })
 
+it('should remember entry playback across provider remounts until the session is cleared', async () => {
+  const dialogue = createDialogue('entry')
+  const repository = createRepository(
+    [dialogue],
+    [
+      {
+        dialogueIds: [dialogue.id],
+        event: 'room-enter',
+        playbackMode: 'sequential-all',
+        version: 3,
+      },
+    ],
+  )
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+
+  const first = await renderContext()
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledOnce())
+  first.result.unmount()
+
+  const returning = await renderContext()
+  expect(returning.events.hasEnteredFocusRoom()).toBe(true)
+  expect(repository.getDialogue).toHaveBeenCalledOnce()
+  returning.result.unmount()
+
+  sessionStorage.clear()
+  const nextSession = await renderContext()
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledTimes(2))
+  nextSession.result.unmount()
+})
+
+it('should play entry once when session storage is unavailable', async () => {
+  const dialogue = createDialogue('entry')
+  const repository = createRepository(
+    [dialogue],
+    [
+      {
+        dialogueIds: [dialogue.id],
+        event: 'room-enter',
+        playbackMode: 'sequential-all',
+        version: 3,
+      },
+    ],
+  )
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    throw new DOMException('Storage unavailable', 'SecurityError')
+  })
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new DOMException('Storage unavailable', 'SecurityError')
+  })
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+
+  const {events, result} = await renderContext()
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledOnce())
+  events.enterFocusRoom()
+  expect(repository.getDialogue).toHaveBeenCalledOnce()
+  result.unmount()
+})
+
 it('should cancel playback on the editor route and not replay entry after returning', async () => {
   const [isPlaybackEnabled, setIsPlaybackEnabled] = createSignal(true)
   const dialogue = createDialogue('entry')

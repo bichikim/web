@@ -12,7 +12,10 @@ import {
   usePSceneStyle,
 } from '../features/focus-room-animation'
 import {usePEvents} from '../features/focus-room-dialogue/event-context'
-import {usePDisplayPreferences} from '../features/focus-room-display-preferences'
+import {
+  type PDisplayPreferencesController,
+  usePDisplayPreferences,
+} from '../features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import type {PViseme} from '../features/lip-sync'
 import {
@@ -258,6 +261,17 @@ const useStudioViseme = (
   return viseme
 }
 
+const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
+  get memoryAssistVisible() {
+    return preferences.memoryAssistVisible()
+  },
+  onMemoryAssistVisibleChange: preferences.onMemoryAssistVisibleChange,
+  get toolsButtonVisible() {
+    return preferences.toolsButtonVisible()
+  },
+  onToolsButtonVisibleChange: preferences.onToolsButtonVisibleChange,
+})
+
 export const PStudio = () => {
   const background = useBackground()
   const events = usePEvents()
@@ -351,6 +365,7 @@ export const PStudio = () => {
           <Show when={scenePreferences.isReady()}>
             <SceneToolbar
               background={background}
+              {...toolbarVisibility(displayPreferences)}
               activity={scenePreferences.activity()}
               canUseGyroscope={canUseGyroscope()}
               dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}

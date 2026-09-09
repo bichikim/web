@@ -56,11 +56,14 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
   const [isEnabled, setIsEnabled] = createSignal(false)
   const [isRequestPending, setIsRequestPending] = createSignal(false)
   let appsInTossRequestQueue = Promise.resolve()
+  let requestRevision = 0
   let appsInTossWakeLockRequested = false
   let disposed = false
   let sentinel: WakeLockSentinel | null = null
 
   const setAppsInTossWakeLock = (nextEnabled: boolean, reportResult = true): void => {
+    requestRevision += 1
+    const revision = requestRevision
     appsInTossWakeLockRequested ||= nextEnabled
 
     if (reportResult) {
@@ -80,14 +83,14 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
 
     request
       .then(() => {
-        if (!reportResult || disposed || isEnabled() !== nextEnabled) {
+        if (!reportResult || disposed || revision !== requestRevision) {
           return
         }
 
         setIsRequestPending(false)
       })
       .catch(() => {
-        if (!reportResult || disposed || isEnabled() !== nextEnabled) {
+        if (!reportResult || disposed || revision !== requestRevision) {
           return
         }
 

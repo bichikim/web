@@ -100,6 +100,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let audio: HTMLAudioElement | null = null
   let audioContext: AudioContext | null = null
   let audioContextSuspension: Promise<void> | null = null
+  let resumingAudio: HTMLAudioElement | null = null
   let audioEnvelope: PAudioEnvelope | null = null
   let audioSource: MediaElementAudioSourceNode | null = null
   let audioUrl: string | null = null
@@ -188,6 +189,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
 
     audioSource = null
+    resumingAudio = null
     suspendAudioContext()
     audio = null
     audioEnvelope = null
@@ -225,7 +227,21 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         return
       }
 
-      await audioContext?.resume()
+      resumingAudio = currentAudio
+      if (audioContext?.state === 'suspended') {
+        isAwaitingSceneInteraction = true
+        setIsBlocked(true)
+      }
+      try {
+        await audioContext?.resume()
+      } finally {
+        if (resumingAudio === currentAudio) {
+          resumingAudio = null
+        }
+      }
+      if (audio !== currentAudio || isDisposed) {
+        return
+      }
       await currentAudio.play()
 
       if (audio !== currentAudio || isDisposed) {
@@ -415,6 +431,19 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     finishPlayback('ended')
   }
   const stop = () => queue.finish(true)
+  const retry = () => {
+    if (!isAwaitingSceneInteraction || isDisposed) {
+      return
+    }
+
+    if (resumingAudio !== null) {
+      // Resume within the click stack without starting the waiting audio a second time.
+      audioContext?.resume().catch(reportPlaybackFailure)
+      return
+    }
+
+    start(audio!).catch(reportPlaybackFailure)
+  }
 
   return {
     activeDialogueId: () => dialogue?.id ?? null,
@@ -449,6 +478,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         return false
       }
 
+      retry()
       let isUnavailable = false
       const completion = await queue.enqueue(repository, {
         dialogueIds: [dialogueId],
@@ -460,13 +490,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       })
       return completion === 'ended' && !isUnavailable
     },
-    retry() {
-      if (!isAwaitingSceneInteraction) {
-        return
-      }
-
-      start(audio!).catch(reportPlaybackFailure)
-    },
+    retry,
     scheduledDialogueCount: queue.scheduledDialogueCount,
     skip,
     stop,

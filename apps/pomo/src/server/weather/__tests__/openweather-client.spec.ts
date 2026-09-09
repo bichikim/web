@@ -52,6 +52,7 @@ describe('searchOpenWeatherLocations', () => {
         latitude: 51.52,
         longitude: -0.11,
         name: 'London',
+        names: {en: 'London', ko: '런던'},
         providerLocationId: '51.5200,-0.1100',
         region: 'England',
       },

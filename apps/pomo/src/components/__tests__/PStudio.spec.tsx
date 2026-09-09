@@ -146,7 +146,11 @@ const configureStudio = (options: StudioOptions = {}) => {
     isReady: () => true,
     onDialogueComposerVisibleChange: setDialogueComposerVisible,
     onTourButtonVisibleChange: vi.fn(),
+    toolsButtonVisible: () => true,
+    memoryAssistVisible: () => true,
     tourButtonVisible: () => true,
+    onMemoryAssistVisibleChange: vi.fn(),
+    onToolsButtonVisibleChange: vi.fn(),
   })
   vi.mocked(usePScenePreferences).mockReturnValue({
     activity,
@@ -428,7 +432,15 @@ describe('PStudio', () => {
       'settings-feeds',
       'settings-dialogue',
       'settings-user',
+      'completion',
     ])
+    expect(tourProps.steps.at(-1)).toMatchObject({
+      audio: {source: '/tour/audio/ko/completion.mp3'},
+      description: '투어가 끝났어요. 이제 앱을 편하게 즐겨보세요!',
+      id: 'completion',
+      title: '이제 시작해 볼까요?',
+    })
+    expect(tourProps.getStepElement('completion')).toBeNull()
     expect(tourProps.steps[1]).toMatchObject({
       title: '포모도로 타이머',
       video: {source: '/tour/pomodoro-control.webm'},

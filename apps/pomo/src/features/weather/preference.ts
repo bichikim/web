@@ -8,6 +8,7 @@ import {
 import {parseWeatherCitySlug, parseWeatherLocation, type WeatherLocation} from './contract'
 import {DEFAULT_WEATHER_LOCATION, LEGACY_WEATHER_LOCATIONS} from './locations'
 import {isWeatherSceneMode, type WeatherSceneMode} from './scene-mode'
+import {restoreWeatherLocationNames} from './location-names'
 
 const WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v2'
 const LEGACY_WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v1'
@@ -33,6 +34,7 @@ export interface WeatherPreferenceRepository {
 
 export interface CreateWeatherPreferenceRepositoryOptions {
   readonly storage: WeatherPreferenceStorage
+  readonly restoreLocation?: (location: WeatherLocation) => Promise<WeatherLocation>
 }
 
 export const DEFAULT_WEATHER_PREFERENCE = {
@@ -186,7 +188,31 @@ export const createWeatherPreferenceRepository = (
     }
   }
 
-  return {read, write}
+  const readWithNames = async (): Promise<WeatherPreference> => {
+    const saved = await read()
+    const {restoreLocation} = options
+    if (restoreLocation === undefined) {
+      return saved
+    }
+    try {
+      const location = await restoreLocation(saved.location)
+      const revision = preferenceWriteRevision
+      const current = await read()
+      if (revision !== preferenceWriteRevision) {
+        return read()
+      }
+      if (location === saved.location || current.location.id !== saved.location.id) {
+        return current
+      }
+      await write({...current, location: {...current.location, names: location.names}})
+      return read()
+    } catch (error: unknown) {
+      console.warn('Failed to restore localized weather location names.', error)
+      return read()
+    }
+  }
+
+  return {read: readWithNames, write}
 }
 
 const preserveStoredValue = (value: unknown) => value
@@ -203,7 +229,10 @@ const runtimeStorage = {
     }
   },
 } satisfies WeatherPreferenceStorage
-const runtimeRepository = createWeatherPreferenceRepository({storage: runtimeStorage})
+const runtimeRepository = createWeatherPreferenceRepository({
+  restoreLocation: (location) => restoreWeatherLocationNames({location}),
+  storage: runtimeStorage,
+})
 
 /** Reads the weather preference from the active browser or app runtime. */
 export const readWeatherPreference = () => runtimeRepository.read()

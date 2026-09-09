@@ -19,7 +19,7 @@ export default defineConfig({
   projects: [
     {
       name: 'web',
-      testIgnore: 'remote-server-functions.spec.ts',
+      testMatch: ['**/e2e/shared/**/*.spec.ts', '**/e2e/web/**/*.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         baseURL: webBaseUrl,
@@ -27,7 +27,7 @@ export default defineConfig({
     },
     {
       name: 'apps-in-toss',
-      testIgnore: 'client-actions.spec.ts',
+      testMatch: ['**/e2e/shared/**/*.spec.ts', '**/e2e/apps-in-toss/**/*.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         baseURL: appsInTossBaseUrl,
@@ -51,7 +51,7 @@ export default defineConfig({
       })),
     },
     trace: 'on-first-retry',
-    video: 'retain-on-failure',
+    video: 'off',
   },
   webServer: [
     {

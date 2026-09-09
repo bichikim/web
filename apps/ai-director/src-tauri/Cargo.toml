@@ -1,0 +1,17 @@
+[package]
+name = "ai-director"
+version = "0.1.0"
+description = "Visual direction workspace for AI"
+edition = "2024"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+ort = "=2.0.0-rc.13"
+serde = { version = "1", features = ["derive"] }
+base64 = "0.22"
+tempfile = "3"
+rfd = "0.17"

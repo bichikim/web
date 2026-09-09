@@ -135,6 +135,104 @@ describe('useScreenWakeLock', () => {
     )
   })
 
+  it.each(['success', 'failure'] as const)(
+    'should ignore an older native %s while the latest enable is pending',
+    async (outcome) => {
+      const first = Promise.withResolvers<{enabled: boolean}>()
+      const latest = Promise.withResolvers<{enabled: boolean}>()
+      appsInTossMocks.setAwakeMode
+        .mockImplementationOnce(() => first.promise)
+        .mockResolvedValueOnce({enabled: false})
+        .mockImplementationOnce(() => latest.promise)
+      const {getController} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(1))
+      getController()?.onEnabledChange(false)
+      getController()?.onEnabledChange(true)
+
+      if (outcome === 'success') {
+        first.resolve({enabled: true})
+      } else {
+        first.reject(new Error('older enable failed'))
+      }
+
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(3))
+      expect(appsInTossMocks.setAwakeMode.mock.calls).toEqual([
+        [{enabled: true}],
+        [{enabled: false}],
+        [{enabled: true}],
+      ])
+      const pending = getController()?.isRequestPending()
+      const enabled = getController()?.isEnabled()
+      const error = getController()?.errorMessage()
+      latest.resolve({enabled: true})
+      await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+      expect(getController()?.isEnabled()).toBe(true)
+      expect(getController()?.errorMessage()).toBeNull()
+      expect(pending).toBe(true)
+      expect(enabled).toBe(true)
+      expect(error).toBeNull()
+    },
+  )
+
+  it('should report the latest native failure after an older enable succeeds', async () => {
+    const first = Promise.withResolvers<{enabled: boolean}>()
+    const latest = Promise.withResolvers<{enabled: boolean}>()
+    appsInTossMocks.setAwakeMode
+      .mockImplementationOnce(() => first.promise)
+      .mockResolvedValueOnce({enabled: false})
+      .mockImplementationOnce(() => latest.promise)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(1))
+    getController()?.onEnabledChange(false)
+    getController()?.onEnabledChange(true)
+    first.resolve({enabled: true})
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(3))
+    latest.reject(new Error('latest enable failed'))
+
+    await waitFor(() =>
+      expect(getController()?.errorMessage()).toBe(
+        '화면 유지 요청을 허용하지 못했어요. 앱 설정을 확인해 주세요.',
+      ),
+    )
+    expect(getController()?.isEnabled()).toBe(false)
+    expect(getController()?.isRequestPending()).toBe(false)
+  })
+
+  it.each(['success', 'failure'] as const)(
+    'should release queued native requests after unmount despite an older %s',
+    async (outcome) => {
+      const first = Promise.withResolvers<{enabled: boolean}>()
+      appsInTossMocks.setAwakeMode.mockImplementationOnce(() => first.promise)
+      const {getController, view} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(1))
+      getController()?.onEnabledChange(false)
+      getController()?.onEnabledChange(true)
+      view.unmount()
+
+      if (outcome === 'success') {
+        first.resolve({enabled: true})
+      } else {
+        first.reject(new Error('older enable failed after unmount'))
+      }
+
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(4))
+      expect(appsInTossMocks.setAwakeMode.mock.calls).toEqual([
+        [{enabled: true}],
+        [{enabled: false}],
+        [{enabled: true}],
+        [{enabled: false}],
+      ])
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.errorMessage()).toBeNull()
+    },
+  )
+
   it('should keep the browser capability boundary in a regular web build', async () => {
     let controller: ScreenWakeLockController | undefined
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
