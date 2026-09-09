@@ -13,15 +13,15 @@ const RECENT_RELEASE_DURATION_MS =
   SECONDS_PER_MINUTE *
   MILLISECONDS_PER_SECOND
 
-interface SelectRecentUnseenReleasesOptions {
+interface SelectNoticeReleasesOptions {
   readonly catalog: VersionCatalog
   readonly now: Date
   readonly viewedRelease: ViewedRelease | null
 }
 
-/** Selects unseen releases from the preceding five elapsed days. */
-export const selectRecentUnseenReleases = (
-  options: SelectRecentUnseenReleasesOptions,
+/** Selects all releases from the preceding five elapsed days when any are unseen. */
+export const selectNoticeReleases = (
+  options: SelectNoticeReleasesOptions,
 ): ReadonlyArray<VersionRelease> => {
   const now = options.now.getTime()
   const viewedAt =
@@ -29,12 +29,14 @@ export const selectRecentUnseenReleases = (
       ? Number.NEGATIVE_INFINITY
       : Date.parse(options.viewedRelease.releasedAt)
 
-  return options.catalog.releases
+  const releases = options.catalog.releases
     .filter((release) => {
       const releasedAt = Date.parse(release.releasedAt)
       const age = now - releasedAt
 
-      return age >= 0 && age < RECENT_RELEASE_DURATION_MS && releasedAt > viewedAt
+      return age >= 0 && age < RECENT_RELEASE_DURATION_MS
     })
     .sort((left, right) => Date.parse(right.releasedAt) - Date.parse(left.releasedAt))
+
+  return releases.some((release) => Date.parse(release.releasedAt) > viewedAt) ? releases : []
 }

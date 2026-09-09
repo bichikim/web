@@ -170,3 +170,18 @@ it('should remain dismissed when persisting the viewed marker fails', async () =
   )
   expect(screen.queryByRole('button', {name: '새 업데이트 보기'})).toBeNull()
 })
+
+it('should show both recent updates even when the older update was already viewed', async () => {
+  versionMocks.read.mockResolvedValue({
+    formatVersion: 1,
+    releasedAt: '2026-09-03T00:52:00+09:00',
+    version: '2026. 09. 03 00:52',
+  })
+
+  render(() => <PVersionNotice />)
+  fireEvent.click(await screen.findByRole('button', {name: '새 업데이트 보기'}))
+
+  expect(screen.getAllByRole('article')).toHaveLength(2)
+  expect(screen.getByText('2026. 09. 03 00:57')).toBeVisible()
+  expect(screen.getByText('2026. 09. 03 00:52')).toBeVisible()
+})

@@ -1,6 +1,38 @@
 {
   "releases": [
     {
+      "title": "Pomo update",
+      "summary": "Make your focus space your own with photos and videos, and try new everyday tools.",
+      "changes": [
+        {
+          "title": "Photo and video backgrounds",
+          "description": "Add your own photos and videos to a background album. Show two photos together and choose transition effects and video playback options. Yuna photo and video sets are also available."
+        },
+        {
+          "title": "Background settings in one place",
+          "description": "Manage your character, visual style, weather, and albums together in the Background settings tab."
+        },
+        {
+          "title": "Everyday tools",
+          "description": "Convert units and count characters with the new tools. You can show or hide the tools button in settings. The Korean interface also includes military discharge date calculation, lunar and solar date conversion, and traditional moving-day lookup."
+        },
+        {
+          "title": "Picture diary generation progress",
+          "description": "Preparation, download, and generation status and progress are now easier to follow while creating an AI picture in your diary."
+        },
+        {
+          "title": "A more detailed tour",
+          "description": "Expanded feature guidance and added English voice narration. The opening sequence no longer repeats when you return in the same tab."
+        },
+        {
+          "title": "Weather search and navigation improvements",
+          "description": "Weather search now offers clearer city and region labels, including Korean and English city names in the Korean interface. Improved the toolbar layout on narrow screens, long event labels, and keyboard navigation in select menus."
+        }
+      ],
+      "version": "2026. 09. 09 18:40",
+      "releasedAt": "2026-09-09T18:40:00+09:00"
+    },
+    {
       "version": "2026. 09. 08 11:44",
       "releasedAt": "2026-09-08T11:44:00+09:00",
       "title": "Pomo update",

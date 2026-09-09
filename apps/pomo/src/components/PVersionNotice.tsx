@@ -4,7 +4,7 @@ import type {PSceneStyle} from '../features/focus-room-animation'
 import {
   loadVersionCatalog,
   readViewedRelease,
-  selectRecentUnseenReleases,
+  selectNoticeReleases,
   type VersionRelease,
   writeViewedRelease,
 } from '../features/version-catalog'
@@ -31,7 +31,7 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
     Promise.all([loadVersionCatalog(), readViewedRelease()])
       .then(([catalog, viewedRelease]) => {
         if (!disposed) {
-          setReleases(selectRecentUnseenReleases({catalog, now: new Date(), viewedRelease}))
+          setReleases(selectNoticeReleases({catalog, now: new Date(), viewedRelease}))
         }
       })
       .catch((error: unknown) => console.error('Failed to prepare version notice.', error))
