@@ -42,6 +42,10 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
     const {RecoveryPage} = await import('./RecoveryPage')
     return {default: RecoveryPage}
   }),
+  '/dev/sound-generation': lazy(async () => {
+    const {SoundGenerationPage} = await import('./SoundGenerationPage')
+    return {default: SoundGenerationPage}
+  }),
   '/dev/speech-to-text': lazy(async () => {
     const {SpeechToTextPage} = await import('./SpeechToTextPage')
     return {default: SpeechToTextPage}
