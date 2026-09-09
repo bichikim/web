@@ -31,3 +31,26 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 실제 인증정보는 필요하지 않습니다. 이 테스트는 API 응답이나 테마 저장소를 mock하지 않습니다. 시스템 색상 설정만 Playwright로
 에뮬레이션합니다. Apps in Toss 검증은 SDK 로컬 브라우저 DevTools의 mock 환경이며 실제 기기나
 네이티브 Storage 검증을 대체하지 않습니다.
+
+렌더링 비교는 로컬 Chromium 전용 설정으로 따로 실행합니다. 일반 설정의 다크·라이트 화면과
+열린 테마 목록을 PNG로 비교하고, 도구·기억보조·투어 버튼을 숨긴 뒤 새로고침해도 선택이 유지되는지
+확인합니다. 기본 E2E 수집 경로에는 포함하지 않습니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
+```
+
+[촬영 환경](rendering/evidence/manifest.json)의 OS·Chromium 버전·화면 크기·DPR·언어·시간대와
+같은 환경에서 비교해야 합니다. [기준 PNG](rendering/settings.spec.ts-snapshots)는 최초 생성 기준이며,
+검토 후 Git에 보존합니다. 다른 OS의 기준 부재나 실행 실패를 변경 없음으로 해석하지 마세요.
+변경이 실패하면 기준·현재·차이 이미지를 확인하고 원인이 입증되기 전에는 기준을 갱신하지 않습니다.
+
+테스트는 실제 홈 화면과 저장소를 사용합니다. 배경 재생목록은 빈 목록으로 고정하고, 장면·폰트·이미지가
+준비된 뒤 시계를 멈춰 촬영합니다. 앱의 동작 줄이기 설정과 Playwright의 애니메이션 제어를 사용하며
+설정 화면을 마스킹하거나 비교 오차를 늘리지 않습니다. 성공한 화면도 현재 PNG와 촬영 환경을
+`test-results`에 남깁니다. 대표 이미지는 [렌더링 증거](rendering/evidence)에 보존합니다. 녹화는 꺼져 있습니다.
+실제 DB·인증 서비스와 네이티브 브리지는 검증하지 않으며, 서버 환경값은 기존 로컬 설정의 테스트용 값입니다.
+
+방법은 [Playwright 화면 비교](https://playwright.dev/docs/test-snapshots)와
+[시계 제어](https://playwright.dev/docs/clock)를 따릅니다. PR 이미지에는 로컬 파일 경로 대신
+고정 commit SHA의 GitHub 이미지 URL을 사용합니다.

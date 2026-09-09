@@ -1,0 +1,123 @@
+{
+  "source_base_sha": "3871a14eb7904a7da71eac8a91025a4e902da99e",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+  "arch": "arm64",
+  "playwright": "1.59.1",
+  "verification": "2 passed, 0 failed, 0 skipped; normal comparison after first baseline generation",
+  "rendering_result": "최초 기준 생성; no previously reviewed baseline in origin/dev",
+  "screenshots": [
+    {
+      "name": "general-dark",
+      "result": "최초 기준 생성",
+      "raw_pixels": 118,
+      "raw_max_channel_delta": 1,
+      "raw_note": "Difference only in blurred bottom-left background; cause unconfirmed, no claim of product regression",
+      "paths": {
+        "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-dark-web-darwin.png",
+        "current": "apps/pomo/e2e/rendering/evidence/general-dark-current.png",
+        "difference": "apps/pomo/e2e/rendering/evidence/general-dark-diff.png"
+      },
+      "hashes": {
+        "baseline": "58bae6ac5632f913356edb7a0a975313ccc589d0298772f5f62d54ea63cc6c1d",
+        "current": "b41c047d00dea39df244b4e7f91075149c83704b334430720ca47dbf9bad81af",
+        "difference": "beca25df81dbffdf3e75a51552c89fff1f8e4a62fbf86e10a6a68c28ae4ada0b"
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "name": "general-light",
+      "result": "최초 기준 생성",
+      "raw_pixels": 0,
+      "raw_max_channel_delta": 0,
+      "raw_note": "Pixel-identical",
+      "paths": {
+        "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-light-web-darwin.png",
+        "current": "apps/pomo/e2e/rendering/evidence/general-light-current.png"
+      },
+      "hashes": {
+        "baseline": "b646babb9c6cd28b31aa1a7e14d5ea6a5b4773938a4845edaa56432f570427cc",
+        "current": "b646babb9c6cd28b31aa1a7e14d5ea6a5b4773938a4845edaa56432f570427cc"
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "",
+        "time": "2026-09-09T00:01:01.600Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "name": "theme-menu-light",
+      "result": "최초 기준 생성",
+      "raw_pixels": 0,
+      "raw_max_channel_delta": 0,
+      "raw_note": "Pixel-identical",
+      "paths": {
+        "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/theme-menu-light-web-darwin.png",
+        "current": "apps/pomo/e2e/rendering/evidence/theme-menu-light-current.png"
+      },
+      "hashes": {
+        "baseline": "9bfc5b3c1c841c503f49e1fd0c30517793c8630b7d57568e0f851e66c1882103",
+        "current": "9bfc5b3c1c841c503f49e1fd0c30517793c8630b7d57568e0f851e66c1882103"
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "",
+        "time": "2026-09-09T00:01:02.000Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      }
+    }
+  ]
+}
