@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
 import type {PDialogue} from '../../focus-room-dialogue'

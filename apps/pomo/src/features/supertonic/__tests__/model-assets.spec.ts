@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import modelAssetsManifest from '../../../../public/models/supertonic-3/manifest.json'

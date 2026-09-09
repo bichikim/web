@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import {getPrimaryMoodIcon, PRIMARY_MOOD_IDS} from '../index'

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authenticateAppRequest: vi.fn(), readBearerToken: vi.fn()}))

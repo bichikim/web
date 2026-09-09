@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {calculateService} from '../service'
 it('should calculate modern service terms including enlistment day', () => {

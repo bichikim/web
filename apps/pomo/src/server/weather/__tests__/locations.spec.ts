@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {expect, it} from 'vitest'
 
 import {WEATHER_CITY_SLUGS} from 'src/features/weather'

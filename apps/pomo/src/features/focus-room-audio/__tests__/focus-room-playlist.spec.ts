@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {loadPAlbums, loadPTrackQueueSource, loadPTracks} from '../focus-room-playlist'

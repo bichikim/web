@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {z} from 'zod'
 import {afterEach, expect, it, vi} from 'vitest'
 

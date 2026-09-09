@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import {isGpt56Model} from '../is-gpt-56-model'

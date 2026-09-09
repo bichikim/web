@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const apiMocks = vi.hoisted(() => ({searchOpenWeatherLocations: vi.fn()}))

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 // oxlint-disable no-magic-numbers -- Compact model fixtures intentionally use explicit tensor dimensions.
 import * as runtime from 'onnxruntime-web/wasm'
 import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'

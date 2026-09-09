@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
 import {expect, it} from 'vitest'
 import {createClothBinding} from '../cloth-binding'

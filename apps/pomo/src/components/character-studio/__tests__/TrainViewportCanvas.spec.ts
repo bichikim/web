@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {clientOnly} from '@solidjs/start'
 import {beforeEach, expect, it, vi} from 'vitest'
 

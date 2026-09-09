@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import {extractMp3Preview} from '../mp3-preview'

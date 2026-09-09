@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {ArcRotateCamera} from '@babylonjs/core/Cameras/arcRotateCamera'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'
 import {Vector3} from '@babylonjs/core/Maths/math.vector'

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import {getTextModel, getTextModelImplementation, TEXT_MODELS, type TextModelId} from '../model'

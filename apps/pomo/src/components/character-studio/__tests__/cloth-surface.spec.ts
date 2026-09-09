@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {VertexBuffer} from '@babylonjs/core/Buffers/buffer'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'
 import {Vector3} from '@babylonjs/core/Maths/math.vector'

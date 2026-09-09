@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const fetchMocks = vi.hoisted(() => ({raw: vi.fn()}))

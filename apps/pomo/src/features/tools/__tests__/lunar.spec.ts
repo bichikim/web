@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {getMovingDays, lunarToSolar, solarToLunar} from '../lunar'
 it('should match KASI 2026 lunar new year and round trip a leap month', () => {

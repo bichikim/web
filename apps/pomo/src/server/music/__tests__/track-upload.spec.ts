@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 // oxlint-disable no-magic-numbers -- MP3 fixtures use fixed frame sizes and binary headers.
 import {describe, expect, it, vi} from 'vitest'
 

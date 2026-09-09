@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import {buildHistoryPrompt, HISTORY_PROMPT_VERSION} from '../prompt'

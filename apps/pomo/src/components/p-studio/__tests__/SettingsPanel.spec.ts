@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 import {PSettings} from '../../PSettings'
 import {SceneSettingsPanel} from '../SettingsPanel'

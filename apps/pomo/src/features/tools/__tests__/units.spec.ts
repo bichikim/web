@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {convertUnit, getUnits} from '../units'
 it('should convert exact length mass area and volume definitions', () => {

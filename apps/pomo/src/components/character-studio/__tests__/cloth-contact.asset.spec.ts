@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {readFile} from 'node:fs/promises'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'
 import {LoadAssetContainerAsync} from '@babylonjs/core/Loading/sceneLoader'

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {WEATHER_CITY_SLUGS} from 'src/features/weather/contract'
 import {WEATHER_COORDINATES} from '../coordinates'

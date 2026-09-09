@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {getProfile} from '../profiles'
 import rigs from '../spring-rigs.json'
