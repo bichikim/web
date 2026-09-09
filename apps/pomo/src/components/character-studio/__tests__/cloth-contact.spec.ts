@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {AssetContainer} from '@babylonjs/core/assetContainer'
 import {Bone} from '@babylonjs/core/Bones/bone'
 import {Skeleton} from '@babylonjs/core/Bones/skeleton'

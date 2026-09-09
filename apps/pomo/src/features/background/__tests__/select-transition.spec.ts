@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
 import {DEFAULT_BACKGROUND} from '../model'
 import {

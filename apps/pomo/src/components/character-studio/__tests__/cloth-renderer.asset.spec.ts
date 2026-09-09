@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {readFileSync, writeFileSync} from 'node:fs'
 import {describe, expect, it} from 'vitest'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'

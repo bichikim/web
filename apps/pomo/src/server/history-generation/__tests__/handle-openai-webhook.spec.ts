@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
 import {invalidateByTag} from '@vercel/functions'
 

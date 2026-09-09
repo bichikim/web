@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {expect, it} from 'vitest'
 import {LEGACY_WEATHER_LOCATIONS} from '../../weather'
 import {getWeatherLocationDescription} from '../weather-description'

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {AwsClient} from 'aws4fetch'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 

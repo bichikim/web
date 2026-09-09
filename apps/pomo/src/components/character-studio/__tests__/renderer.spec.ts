@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {AssetContainer} from '@babylonjs/core/assetContainer'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'

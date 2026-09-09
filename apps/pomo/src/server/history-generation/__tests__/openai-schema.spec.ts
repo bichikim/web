@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {zodTextFormat} from 'openai/helpers/zod'
 import {expect, it} from 'vitest'
 

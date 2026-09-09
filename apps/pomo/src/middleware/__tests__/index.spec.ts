@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {paraglideMiddleware} from '@paraglide/server'
 import {createMiddleware} from '@solidjs/start/middleware'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'

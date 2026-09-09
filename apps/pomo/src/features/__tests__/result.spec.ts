@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, expectTypeOf, it} from 'vitest'
 
 import {

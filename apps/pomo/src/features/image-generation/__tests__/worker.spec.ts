@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {createTransformersRuntime} from '../../text-generation/transformers-runtime'
 import {Flux2KleinPipeline} from '@winter-love/bonsai'

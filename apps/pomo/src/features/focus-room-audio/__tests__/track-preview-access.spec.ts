@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const sessionMocks = vi.hoisted(() => ({readStoredAppSession: vi.fn()}))

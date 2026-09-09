@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {HTTPError} from 'h3'
 import {beforeEach, expect, it, vi} from 'vitest'
 

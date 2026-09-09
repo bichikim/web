@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'
 import {HemisphericLight} from '@babylonjs/core/Lights/hemisphericLight'
 import {Vector3} from '@babylonjs/core/Maths/math.vector'

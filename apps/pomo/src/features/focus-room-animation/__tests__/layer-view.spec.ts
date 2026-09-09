@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {Container, Sprite, Texture} from 'pixi.js'
 import {describe, expect, it} from 'vitest'
 

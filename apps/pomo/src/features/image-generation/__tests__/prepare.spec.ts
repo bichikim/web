@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 import {isTextModelDownloaded} from '../../text-generation'
 import {createModelDownloadController, type ModelDownloadResult} from '../../model-download'
