@@ -2,7 +2,7 @@
 import {cleanup, render} from '@solidjs/testing-library'
 import {PSwitch} from 'src/components/PSwitch'
 import {afterEach, expect, it, vi} from 'vitest'
-import {PGeneralStyleSettings} from '../Style'
+import {Style} from '../Style'
 vi.mock('src/components/PSwitch', () => ({PSwitch: vi.fn()}))
 
 afterEach(() => {
@@ -12,9 +12,7 @@ afterEach(() => {
 
 it('should translate the style switch into original and scribble values', () => {
   const onSceneStyleChange = vi.fn()
-  render(() => (
-    <PGeneralStyleSettings sceneStyle="scribble" onSceneStyleChange={onSceneStyleChange} />
-  ))
+  render(() => <Style sceneStyle="scribble" onSceneStyleChange={onSceneStyleChange} />)
   const props = vi.mocked(PSwitch).mock.calls[0]![0]
   expect(props.checked).toBe(true)
   props.onChange(false)

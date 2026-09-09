@@ -5,9 +5,9 @@ import {
   getLocalizedTimeOptions,
 } from '../../../features/localization'
 import * as m from '@paraglide/message'
-import {CLASSES, type PSettingsProps} from './shared'
+import {CLASSES, type PSettingsProps} from '../general/shared'
 
-export const PGeneralSceneSettings = (props: PSettingsProps) => (
+export const Scene = (props: PSettingsProps) => (
   <section aria-label={m.settings_section_scene()} class={CLASSES.settingsSection}>
     <div class={`pomo-settings__scene ${CLASSES.settingsGrid}`}>
       <PRadioSwitch

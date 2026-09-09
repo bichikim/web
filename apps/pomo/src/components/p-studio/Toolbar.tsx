@@ -1,3 +1,4 @@
+import type {BackgroundController} from 'src/features/background'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {getPomoIconClass} from '../icon-style'
@@ -29,6 +30,7 @@ import {GLASS_ICON_BUTTON} from '../button-presets'
 import {PButton} from '../PButton'
 
 interface SceneToolbarProps {
+  readonly background?: BackgroundController
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
   readonly tourButtonVisible?: boolean
@@ -96,6 +98,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         </div>
         <div class="inline-flex" data-tour-step="settings">
           <SceneSettingsPanel
+            background={props.background}
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}
             tourButtonVisible={props.tourButtonVisible}

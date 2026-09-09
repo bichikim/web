@@ -2,7 +2,7 @@
 import {cleanup, render} from '@solidjs/testing-library'
 import {PWeatherSettings} from 'src/components/PWeatherSettings'
 import {afterEach, expect, it, vi} from 'vitest'
-import {PGeneralWeatherSettings} from '../Weather'
+import {Weather} from '../Weather'
 vi.mock('src/components/PWeatherSettings', () => ({PWeatherSettings: vi.fn()}))
 
 afterEach(() => {
@@ -14,7 +14,7 @@ it('should pass weather preferences and change callbacks to the weather controls
   const onWeatherEnabledChange = vi.fn()
   const onWeatherSceneModeChange = vi.fn()
   render(() => (
-    <PGeneralWeatherSettings
+    <Weather
       weatherEnabled
       onWeatherEnabledChange={onWeatherEnabledChange}
       onWeatherSceneModeChange={onWeatherSceneModeChange}

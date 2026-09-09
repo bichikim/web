@@ -5,7 +5,6 @@ import {type ArtStyle, useImageGeneration} from 'src/features/image-generation'
 import type {PictureDiaryImage} from 'src/features/picture-diary'
 import {PSelect} from '../../PSelect'
 import {PButton} from '../../PButton'
-import {PModelDownloadStatus} from '../../PModelDownloadStatus'
 
 const PROGRESS_CLASSES =
   'block appearance-none w-full h-1.5 mt-2.5 mb-1 overflow-hidden border-0 rounded ' +
@@ -113,9 +112,18 @@ export function Generation(props: GenerationProps) {
           </PButton>
         </Show>
       </div>
-      <PModelDownloadStatus />
-      <div role="status" aria-live="polite" class="text-sm">
-        <p class="m-0">{studio.status()}</p>
+      <div
+        role="status"
+        aria-live="polite"
+        class="rounded-xl bg-primary-soft p-3 text-sm text-foreground leading-relaxed"
+      >
+        <div class="flex items-center gap-2.5">
+          <span aria-hidden="true" class="i-tabler-palette size-5 flex-none text-highlight" />
+          <p class="m-0 min-w-0 flex-1">{studio.status()}</p>
+          <Show when={studio.busy() && studio.percentage() !== undefined}>
+            <strong class="text-highlight">{studio.percentage()}%</strong>
+          </Show>
+        </div>
         <Show when={studio.busy()}>
           <Show
             when={studio.percentage() !== undefined}

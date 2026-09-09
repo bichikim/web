@@ -194,6 +194,34 @@
           ],
           "name": "Pretendard",
           "use": "한국어와 라틴 문자 사용자 인터페이스 글꼴"
+        },
+        {
+          "name": "GL Transitions",
+          "license": "MIT",
+          "condition": "원저작자 및 MIT 라이선스 고지를 배포물에 보존합니다.",
+          "use": "앨범 사진의 방향 와이프, 크로스 워프 및 원형 펼치기 전환 셰이더",
+          "links": [
+            {
+              "label": "소스 저장소",
+              "url": "https://github.com/gl-transitions/gl-transitions"
+            },
+            {
+              "label": "라이선스 및 저작자 고지",
+              "url": "/licenses/gl-transitions.txt"
+            }
+          ]
+        },
+        {
+          "name": "rgbKineticSlider (시각 효과 참고)",
+          "license": "직접 작성한 셰이더 · 원본 코드 및 자산 미포함",
+          "condition": "원본 프로젝트의 RGB 분리 및 왜곡 연출을 참고했습니다.",
+          "use": "앨범 RGB 키네틱 전환의 시각적 참고",
+          "links": [
+            {
+              "label": "원본 프로젝트",
+              "url": "https://github.com/hmongouachon/rgbKineticSlider"
+            }
+          ]
         }
       ],
       "id": "core-software",

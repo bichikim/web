@@ -1,3 +1,4 @@
+import {useBackground} from 'src/features/background'
 import {createSignal, onMount} from 'solid-js'
 
 import {
@@ -15,6 +16,7 @@ import {DesktopSurfaceFrame} from './Frame'
 import * as m from '@paraglide/message'
 
 export const DesktopSettings = () => {
+  const background = useBackground()
   const desktopMode = useDesktopMode()
   const scenePreferences = usePScenePreferences()
   const sceneStyle = usePSceneStyle()
@@ -42,6 +44,7 @@ export const DesktopSettings = () => {
       title={m.desktop_settings_title()}
     >
       <SceneToolbar
+        background={background}
         activity={scenePreferences.activity()}
         canUseGyroscope={canUseGyroscope()}
         desktopMode={desktopMode.mode()}

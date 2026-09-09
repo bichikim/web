@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "sets": [
+    {
+      "id": "yuna-photos",
+      "title": {
+        "ko": "유나 사진 세트",
+        "en": "Yuna photo set"
+      },
+      "kind": "photo",
+      "items": [
+        {
+          "id": "cafe",
+          "bytes": 2390501,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "be2c2c3ab9cf9507db37b57795e2e13dad493e4531a57708680bfb039b9109f6",
+          "name": "yuna-cafe.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/cafe-be2c2c3ab9cf.png"
+        },
+        {
+          "id": "pool",
+          "bytes": 2501527,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "eb04752649aad0152052ac8fca54b41efef3721cbe0949d531414b0e5f828552",
+          "name": "yuna-pool.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/pool-eb04752649aa.png"
+        },
+        {
+          "id": "terrace",
+          "bytes": 2223853,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "de5c5bfb222f02d236d419a52aad9dfe557a84cbd7e9cf8100593301fe439efc",
+          "name": "yuna-terrace.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/terrace-de5c5bfb222f.png"
+        },
+        {
+          "id": "beach",
+          "bytes": 2421603,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "df4178bb1c7381032b4c2d3fcb0cfd98e3e5aa0a420a398e5cbf78b2cf6b80ad",
+          "name": "yuna-beach.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/beach-df4178bb1c73.png"
+        },
+        {
+          "id": "vertical-balcony",
+          "bytes": 2323788,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "44e81898e3d274a630487d1919400fe8c513cf73b36529c0c322f81aaee5f339",
+          "name": "yuna-vertical-balcony.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/vertical-balcony-44e81898e3d2.png"
+        },
+        {
+          "id": "vertical-beach",
+          "bytes": 2236690,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "7026ae42f4425f7044b4127575901ff8f0323025c034e87435c172586b2af62b",
+          "name": "yuna-vertical-beach.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/vertical-beach-7026ae42f442.png"
+        },
+        {
+          "id": "vertical-cafe",
+          "bytes": 2422949,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "734eec5d0fd278e26c5e3e1dfc8eeb5b28c768f7c79b0774842610ceb81fd662",
+          "name": "yuna-vertical-cafe.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/vertical-cafe-734eec5d0fd2.png"
+        },
+        {
+          "id": "vertical-garden",
+          "bytes": 2568221,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "51f76cf53abf1e98bde824d715f5f3917074503c5b0a61b8a16b04fbe669db83",
+          "name": "yuna-vertical-garden.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/vertical-garden-51f76cf53abf.png"
+        },
+        {
+          "id": "vertical-veranda",
+          "bytes": 2440597,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "e635690168e864a67fc0e3f647a1dcee590f7ec4a1f58e583b84bc277a1b24b8",
+          "name": "yuna-vertical-veranda.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/vertical-veranda-e635690168e8.png"
+        },
+        {
+          "id": "terrace-profile",
+          "bytes": 1992604,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "e2c9eff17a17a3f35ce1de8599b19112864f7b8159887a04631c204c7f2efa41",
+          "name": "yuna-terrace-profile.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/terrace-profile-e2c9eff17a17.png"
+        },
+        {
+          "id": "garden-bench",
+          "bytes": 2616887,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "41deb0b9e55b9efadf39537dfe3fbd07f34a748d28bd34e2fe56555881a53886",
+          "name": "yuna-garden-bench.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/garden-bench-41deb0b9e55b.png"
+        },
+        {
+          "id": "cafe-profile",
+          "bytes": 2364148,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "23f4b0203845b8e9390da00fe3f29e225c51974b696a4fdc7ac1b7f5c4fa52e9",
+          "name": "yuna-cafe-profile.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/cafe-profile-23f4b0203845.png"
+        },
+        {
+          "id": "rooftop",
+          "bytes": 2395904,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "d658d19becae1b59aa3b0c25972a38a0cce0356e3ad465ff27039fa7810e83ba",
+          "name": "yuna-rooftop.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/rooftop-d658d19becae.png"
+        },
+        {
+          "id": "park",
+          "bytes": 2730495,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "f0cf36d1211efd3f55f08507d749c48504fbe35b2552bef40606dc21b88aec12",
+          "name": "yuna-park.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/park-f0cf36d1211e.png"
+        },
+        {
+          "id": "cafe-night",
+          "bytes": 2198953,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "d47c84c2e83d48582195a1496437ddd9322141251077509df65a179ad2b91f6f",
+          "name": "yuna-cafe-night.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/cafe-night-d47c84c2e83d.png"
+        },
+        {
+          "id": "bookshop",
+          "bytes": 2210965,
+          "width": 1536,
+          "height": 1024,
+          "sha256": "8b0d12e667e72fef03e2a841cd93f126be7ea4d8c32ffa4b87869858e063e574",
+          "name": "yuna-bookshop.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/bookshop-8b0d12e667e7.png"
+        },
+        {
+          "id": "museum",
+          "bytes": 1865152,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "d877a10c70bc089f1774fea8759d6740f00afa73a38d32728af27ded0588c08a",
+          "name": "yuna-museum.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/museum-d877a10c70bc.png"
+        },
+        {
+          "id": "market",
+          "bytes": 2628909,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "2269a567e690042b9e5868fa6b8be40e7f6a237305e03d19c8d4d520db7ba70f",
+          "name": "yuna-market.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/market-2269a567e690.png"
+        },
+        {
+          "id": "stairs",
+          "bytes": 2959677,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "c7b4f77e9adea35d0b8c0879018f3da6f3742de16a4352016210c4ae791aad6a",
+          "name": "yuna-stairs.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/stairs-c7b4f77e9ade.png"
+        },
+        {
+          "id": "balcony-morning",
+          "bytes": 2849323,
+          "width": 1024,
+          "height": 1536,
+          "sha256": "121b39e69f858387dc64bb93cd2931b6c2ea59f671ad4f88b3d09d440c9af416",
+          "name": "yuna-balcony-morning.png",
+          "source": "https://storage.pomofi.io/background-sets/yuna-photos/balcony-morning-121b39e69f85.png"
+        }
+      ]
+    },
+    {
+      "id": "yuna-videos",
+      "title": {
+        "ko": "유나 영상 세트",
+        "en": "Yuna video set"
+      },
+      "kind": "video",
+      "items": [
+        {
+          "id": "sunset",
+          "name": "yuna-sunset.mp4",
+          "source": "https://storage.pomofi.io/background-sets/yuna-videos/sunset-4b60f2c7eaa8.mp4",
+          "bytes": 21631948,
+          "durationSeconds": 10.144,
+          "width": 1620,
+          "height": 1080,
+          "sha256": "4b60f2c7eaa8e574d2cb5eea836acc87e509ecd3c67e36fd4efe66d9e19a68fe"
+        },
+        {
+          "id": "clip-02",
+          "name": "yuna-clip-02.mp4",
+          "source": "https://storage.pomofi.io/background-sets/yuna-videos/clip-02-e8c542ffb16d.mp4",
+          "bytes": 11424335,
+          "durationSeconds": 5.184,
+          "width": 1620,
+          "height": 1080,
+          "sha256": "e8c542ffb16d436b94525c3d57d5e39e274980ed98d64bd784a2ee3aec7cdd55"
+        }
+      ]
+    }
+  ]
+}

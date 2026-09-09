@@ -36,6 +36,8 @@ import {PStudioTourHint} from '../p-studio/TourHint'
 import {useStudioScreenSaver} from '../p-studio/use-screen-saver'
 import {PScreenSaver} from '../PScreenSaver'
 import {PStudio} from '../PStudio'
+import {DEFAULT_BACKGROUND, useBackground} from '../../features/background'
+import {Player as FramePlayer} from '../frame/Player'
 import {PTour} from '../tour/PTour'
 import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 
@@ -66,6 +68,11 @@ vi.mock('../../features/desktop-mode', () => ({
   useDesktopSafeAreaTop: vi.fn(),
   useDesktopSceneSettingsListener: vi.fn(),
 }))
+vi.mock('../../features/background', () => ({
+  DEFAULT_BACKGROUND: {mode: 'character', order: 'sequential', photoSeconds: 10},
+  useBackground: vi.fn(),
+}))
+vi.mock('../frame/Player', () => ({Player: vi.fn()}))
 vi.mock('../p-studio/Entry', () => ({PEntry: vi.fn()}))
 vi.mock('../p-studio/SceneFallback', () => ({PSceneFallback: vi.fn()}))
 vi.mock('../p-studio/Scene', () => ({PStudioScene: vi.fn()}))
@@ -213,6 +220,23 @@ const expectTourStepTargets = (
 }
 
 beforeEach(() => {
+  vi.mocked(useBackground).mockReturnValue({
+    add: vi.fn(),
+    busy: () => false,
+    configure: vi.fn(),
+    error: () => null,
+    failedIds: () => [],
+    items: () => [],
+    load: vi.fn(),
+    markFailed: vi.fn(),
+    pick: vi.fn(),
+    preferences: () => DEFAULT_BACKGROUND,
+    ready: () => true,
+    remove: vi.fn(),
+    retry: vi.fn(),
+  })
+  vi.mocked(FramePlayer).mockImplementation(() => <div>frame player</div>)
+
   vi.useFakeTimers()
   vi.clearAllMocks()
   configureStudio()
@@ -537,4 +561,21 @@ describe('PStudio', () => {
     expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'true')
     expect(isDesktopBackgroundMode).toHaveBeenCalledWith('interactiveDesktop')
   })
+})
+
+it('should unmount the character scene in frame mode while keeping the timer and controls', () => {
+  configureStudio({entrySession: true})
+  const [preferences, setPreferences] = createSignal(DEFAULT_BACKGROUND)
+  const background = vi.mocked(useBackground)()
+  vi.mocked(useBackground).mockReturnValue({...background, preferences})
+  renderStudio()
+  expect(screen.getByRole('img')).toBeInTheDocument()
+  setPreferences({...DEFAULT_BACKGROUND, mode: 'frame'})
+  expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  expect(screen.getByText('frame player')).toBeInTheDocument()
+  expect(screen.getByText('포모도로')).toBeInTheDocument()
+  expect(screen.getByText('음악')).toBeInTheDocument()
+  setPreferences(DEFAULT_BACKGROUND)
+  expect(screen.getByRole('img')).toBeInTheDocument()
+  expect(screen.queryByText('frame player')).not.toBeInTheDocument()
 })

@@ -2,7 +2,7 @@
 import {render, screen} from '@solidjs/testing-library'
 import {PRadioSwitch} from 'src/components/PRadioSwitch'
 import {beforeEach, expect, it, vi} from 'vitest'
-import {PGeneralSceneSettings} from '../Scene'
+import {Scene} from '../Scene'
 vi.mock('src/components/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
 
 beforeEach(() => {
@@ -19,7 +19,7 @@ beforeEach(() => {
   ))
 })
 it('should keep time, activity, and view together in general settings at every layout size', () => {
-  render(() => <PGeneralSceneSettings />)
+  render(() => <Scene />)
 
   const timeControl = screen.getByRole('button', {name: '시간'})
   const activityControl = screen.getByRole('button', {name: '행동'})
