@@ -6,6 +6,7 @@ import {HwpCard} from './HwpCard'
 import {ImageGenerationCard} from './ImageGenerationCard'
 import {OptionsCard} from './OptionsCard'
 import {StorageCard} from './StorageCard'
+import {SoundGenerationCard} from './SoundGenerationCard'
 import {TextMoodCard} from './TextMoodCard'
 import {CARD_CLASSES} from './shared'
 
@@ -13,6 +14,7 @@ export function HomeCards() {
   return (
     <div class="mt-10 grid gap-4 md:grid-cols-2">
       <ImageGenerationCard />
+      <SoundGenerationCard />
       <A class={CARD_CLASSES} href="/dev/focus-room-layer-review">
         <div class="flex items-start justify-between gap-5">
           <div>
