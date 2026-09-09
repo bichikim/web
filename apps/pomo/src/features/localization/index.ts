@@ -8,6 +8,7 @@ import {
 import type {PSceneMotionInput, PSceneMotionMode} from '../focus-room-animation'
 import type {SceneTimeMode} from '../focus-room-time'
 import {
+  WEATHER_CITIES_BY_SLUG,
   WEATHER_CITY_SLUGS,
   WEATHER_SCENE_MODES,
   type WeatherCitySlug,
@@ -16,7 +17,8 @@ import {
   type WeatherSceneMode,
 } from '../weather'
 import * as m from '@paraglide/message'
-import type {Locale} from '@paraglide/runtime'
+import {getLocale, type Locale} from '@paraglide/runtime'
+export * from './weather-description'
 
 type LocalizationOptions = {readonly locale?: Locale}
 
@@ -148,26 +150,7 @@ export const getLocalizedWeatherLabel = (
 export const getLocalizedWeatherCityLabel = (
   citySlug: WeatherCitySlug,
   options: LocalizationOptions = {},
-) => {
-  switch (citySlug) {
-    case 'busan':
-      return m.weather_busan({}, options)
-    case 'daegu':
-      return m.weather_daegu({}, options)
-    case 'daejeon':
-      return m.weather_daejeon({}, options)
-    case 'gwangju':
-      return m.weather_gwangju({}, options)
-    case 'incheon':
-      return m.weather_incheon({}, options)
-    case 'jeju':
-      return m.weather_jeju({}, options)
-    case 'seoul':
-      return m.weather_seoul({}, options)
-    case 'ulsan':
-      return m.weather_ulsan({}, options)
-  }
-}
+) => WEATHER_CITIES_BY_SLUG[citySlug].names[options.locale ?? getLocale()]
 
 export const getLocalizedWeatherCityOptions = (options: LocalizationOptions = {}) =>
   WEATHER_CITY_SLUGS.map((citySlug) => ({
@@ -178,10 +161,23 @@ export const getLocalizedWeatherCityOptions = (options: LocalizationOptions = {}
 export const getLocalizedWeatherLocationLabel = (
   location: WeatherLocation,
   options: LocalizationOptions = {},
-): string =>
-  location.legacyCitySlug === undefined
-    ? location.name
-    : getLocalizedWeatherCityLabel(location.legacyCitySlug, options)
+): string => {
+  const locale = options.locale ?? getLocale()
+  const slug =
+    location.legacyCitySlug ??
+    (['KR', '대한민국'].includes(location.country)
+      ? WEATHER_CITY_SLUGS.find((city) =>
+          [
+            city,
+            getLocalizedWeatherCityLabel(city, {locale: 'en'}),
+            getLocalizedWeatherCityLabel(city, {locale: 'ko'}),
+          ].some((name) => name.toLowerCase() === location.name.trim().toLowerCase()),
+        )
+      : undefined)
+  return slug === undefined
+    ? (location.names?.[locale] ?? location.names?.en ?? location.name)
+    : getLocalizedWeatherCityLabel(slug, {locale})
+}
 
 const getLocalizedWeatherSceneModeLabel = (
   mode: WeatherSceneMode,

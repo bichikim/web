@@ -14,7 +14,6 @@ const pomoPublicTestEnvironment = {
   VITE_POMO_LEGACY_PRIVACY_PATH: '/privacy',
   VITE_POMO_LEGACY_TERMS_PATH: '/terms',
   VITE_POMO_PRETENDARD_BASE_PATH: '/fonts/pretendard/1.3.9',
-  VITE_POMO_PRETENDARD_STYLESHEET_PATH: '/fonts/pretendard/1.3.9/variable-subset.css',
   VITE_POMO_REFUND_PATH: '/refund-policy',
   VITE_POMO_WEB_PRIVACY_PATH: '/web/privacy',
   VITE_POMO_WEB_TERMS_PATH: '/web/terms',

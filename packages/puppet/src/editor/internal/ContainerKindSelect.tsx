@@ -1,5 +1,5 @@
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
-import {useEditorPortalMount} from './EditorPortalProvider'
+import {useEditorPortalMount} from '../../design-system'
 import {For} from 'solid-js'
 import type {PuppetDocument, PuppetSceneNode} from '../../player'
 import {
@@ -20,6 +20,7 @@ const kinds: ReadonlyArray<{value: SceneContainerConversionTarget; label: string
   {label: '일반 그룹', value: 'group'},
   {label: '자유 변형 디포머', value: 'deformer'},
   {label: '곡선 디포머', value: 'curve'},
+  {label: '회전 디포머', value: 'rotation'},
   {label: '본 디포머', value: 'bone'},
   {label: '핀 디포머', value: 'pin'},
 ]
@@ -51,6 +52,7 @@ export const ContainerKindSelect = (props: ContainerKindSelectProps) => {
           pin={getContainerKind(props.node) === 'pin'}
           kind={props.node.kind === 'deformer' ? 'deformer' : 'group'}
           bone={getContainerKind(props.node) === 'bone'}
+          rotation={getContainerKind(props.node) === 'rotation'}
           curve={getContainerKind(props.node) === 'curve'}
         />
         <span aria-hidden="true" class="kind-chevron puppet-icon puppet-icon-chevron-down" />
@@ -71,6 +73,7 @@ export const ContainerKindSelect = (props: ContainerKindSelectProps) => {
                       kind={kind.value === 'group' ? 'group' : 'deformer'}
                       pin={kind.value === 'pin'}
                       bone={kind.value === 'bone'}
+                      rotation={kind.value === 'rotation'}
                       curve={kind.value === 'curve'}
                     />
                     <DropdownMenu.ItemLabel>{kind.label}</DropdownMenu.ItemLabel>

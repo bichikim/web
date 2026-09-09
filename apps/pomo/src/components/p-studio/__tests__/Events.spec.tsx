@@ -491,3 +491,33 @@ describe('PStudioEvents', () => {
     expect(container.querySelector('[data-dialogue-active]')).toBeNull()
   })
 })
+
+it('should unmount disabled widgets and mount them again independently', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+  const [playerVisible, setPlayerVisible] = createSignal(true)
+  const [pomodoroVisible, setPomodoroVisible] = createSignal(true)
+  const result = render(() => (
+    <PStudioEvents
+      playerVisible={playerVisible()}
+      pomodoroVisible={pomodoroVisible()}
+      dialogueComposerVisible={false}
+      isPlayerExpanded={false}
+      onMusicPlayingChange={vi.fn()}
+      onPlayerExpandedChange={vi.fn()}
+      onPomodoroPresentationChange={vi.fn()}
+      onTrackChange={vi.fn()}
+      pomoSay={createPomoSay()}
+      sceneStyle="original"
+    />
+  ))
+  const player = result.container.querySelector('[data-music-scene]')
+  const timer = result.container.querySelector('[data-pomodoro-scene]')
+  setPlayerVisible(false)
+  expect(player?.isConnected).toBe(false)
+  expect(timer?.isConnected).toBe(true)
+  setPomodoroVisible(false)
+  expect(timer?.isConnected).toBe(false)
+  setPlayerVisible(true)
+  expect(result.container.querySelector('[data-music-scene]')).not.toBe(player)
+  expect(result.container.querySelector('[data-pomodoro-scene]')).toBeNull()
+})

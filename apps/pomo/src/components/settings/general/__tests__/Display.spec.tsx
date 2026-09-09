@@ -222,3 +222,45 @@ it('should omit the guide-button preference without a change callback', () => {
   render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
   expect(screen.queryByRole('button', {name: '투어 버튼 표시'})).not.toBeInTheDocument()
 })
+
+it('should show both toolbar toggles enabled by default and emit hidden choices', () => {
+  const tools = vi.fn()
+  const memory = vi.fn()
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onToolsButtonVisibleChange={tools}
+      onMemoryAssistVisibleChange={memory}
+    />
+  ))
+  for (const [label, change] of [
+    ['도구 표시', tools],
+    ['기억보조 표시', memory],
+  ] as const) {
+    const control = screen.getByRole('button', {name: label})
+    expect(control).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(control)
+    expect(change).toHaveBeenCalledWith(false)
+  }
+})
+
+it('should expose independent player and Pomodoro switches', () => {
+  const player = vi.fn()
+  const pomodoro = vi.fn()
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onPlayerVisibleChange={player}
+      onPomodoroVisibleChange={pomodoro}
+      pomodoroVisible={false}
+    />
+  ))
+  const playerSwitch = screen.getByRole('button', {name: '플레이어 표시'})
+  const pomodoroSwitch = screen.getByRole('button', {name: '뽀모도로 표시'})
+  expect(playerSwitch).toHaveAttribute('aria-pressed', 'true')
+  expect(pomodoroSwitch).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.click(playerSwitch)
+  fireEvent.click(pomodoroSwitch)
+  expect(player).toHaveBeenCalledWith(false)
+  expect(pomodoro).toHaveBeenCalledWith(true)
+})

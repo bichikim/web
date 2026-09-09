@@ -72,6 +72,7 @@ const CHARACTER_IMAGES = {
 const DEGREES_PER_CIRCLE = 360
 
 export interface PPomodoroProps {
+  readonly stopOnUnmount?: boolean
   readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
   readonly onPresentationChange?: (presentation: PPomodoroPresentation) => void
   readonly sceneStyle?: PSceneStyle
@@ -114,7 +115,7 @@ const getPrimaryIcon = (state: PomodoroTimerState, sceneStyle?: PSceneStyle) =>
   )
 
 export const PPomodoro = (props: PPomodoroProps) => {
-  const timer = usePomodoroTimer({onEvents: (events) => props.onEvents?.(events)})
+  const timer = usePomodoroTimer(props)
   const [isOpen, setIsOpen] = createSignal(false)
   const [isEditingDurations, setIsEditingDurations] = createSignal(false)
   const [actionContainer, setActionContainer] = createSignal<HTMLDivElement | null>(null)

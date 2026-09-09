@@ -1,8 +1,6 @@
 import {WeightPaintControls} from './WeightPaintControls'
-import {Button} from '@kobalte/core/button'
-import {ToggleButton} from '@kobalte/core/toggle-button'
+import {EditorButton, EditorToggleButton, EditorNumberField} from '../../design-system'
 import {For, Index, Show} from 'solid-js'
-import {EditorNumberField} from './EditorNumberField'
 import type {SelectedDeformerProps} from './DeformerEditor'
 import {useDeformerWeights} from './use-deformer-weights'
 
@@ -11,9 +9,13 @@ export const DeformerWeights = (props: SelectedDeformerProps) => {
   const PERCENT = 100
   const controls = (
     <div class="bone-tools">
-      <ToggleButton class="mask-action-button" pressed={editor.enabled()} onClick={editor.toggle}>
+      <EditorToggleButton
+        class="mask-action-button"
+        pressed={editor.enabled()}
+        onClick={editor.toggle}
+      >
         영향도 편집
-      </ToggleButton>
+      </EditorToggleButton>
       <Show when={editor.enabled()}>
         <WeightPaintControls editor={editor} />
         <Show when={editor.tool() === 'select'}>
@@ -46,13 +48,13 @@ export const DeformerWeights = (props: SelectedDeformerProps) => {
                     </label>
                   )}
                 </Index>
-                <Button
+                <EditorButton
                   class="mask-action-button"
                   disabled={editor.locked() || !editor.manual()}
                   onClick={() => editor.change(0)}
                 >
                   자동 영향도로 복원
-                </Button>
+                </EditorButton>
               </fieldset>
             )}
           </Show>

@@ -30,14 +30,26 @@ const PreferencesHarness = (props: PreferencesHarnessProps) => {
 }
 
 beforeEach(() => {
-  storageMocks.read
-    .mockReset()
-    .mockResolvedValue({dialogueComposerVisible: false, tourButtonVisible: true})
+  storageMocks.read.mockReset().mockResolvedValue({
+    dialogueComposerVisible: false,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
   storageMocks.write.mockReset().mockResolvedValue(undefined)
 })
 
 it('should start hidden and restore stored dialogue composer visibility', async () => {
-  storageMocks.read.mockResolvedValueOnce({dialogueComposerVisible: true, tourButtonVisible: true})
+  storageMocks.read.mockResolvedValueOnce({
+    dialogueComposerVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
   let controller: PDisplayPreferencesController | undefined
 
   render(() => (
@@ -71,6 +83,10 @@ it('should persist the latest dialogue composer visibility choice', async () => 
   expect(controller?.dialogueComposerVisible()).toBe(true)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
     tourButtonVisible: true,
   })
 })
@@ -93,12 +109,23 @@ it('should not overwrite a newer choice when restoration finishes late', async (
   ))
 
   controller?.onDialogueComposerVisibleChange(true)
-  completeRead({dialogueComposerVisible: false, tourButtonVisible: true})
+  completeRead({
+    dialogueComposerVisible: false,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
 
   await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
   expect(controller?.dialogueComposerVisible()).toBe(true)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
     tourButtonVisible: true,
   })
 })
@@ -120,7 +147,14 @@ it('should ignore a pending restoration after cleanup', async () => {
   ))
 
   result.unmount()
-  completeRead({dialogueComposerVisible: true, tourButtonVisible: true})
+  completeRead({
+    dialogueComposerVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
   await Promise.resolve()
   await Promise.resolve()
 
@@ -144,6 +178,10 @@ it('should show the tour by default and persist hiding it without changing the c
   expect(controller?.tourButtonVisible()).toBe(false)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: false,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
     tourButtonVisible: false,
   })
 })
@@ -151,6 +189,10 @@ it('should show the tour by default and persist hiding it without changing the c
 it('should restore the composer independently of a tour choice made during loading', async () => {
   let completeRead: (value: {
     dialogueComposerVisible: boolean
+    playerVisible: boolean
+    pomodoroVisible: boolean
+    toolsButtonVisible: true
+    memoryAssistVisible: true
     tourButtonVisible: boolean
   }) => void = () => undefined
   storageMocks.read.mockReturnValue(
@@ -167,12 +209,100 @@ it('should restore the composer independently of a tour choice made during loadi
     />
   ))
   controller?.onTourButtonVisibleChange(false)
-  completeRead({dialogueComposerVisible: true, tourButtonVisible: true})
+  completeRead({
+    dialogueComposerVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
   await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
   expect(controller?.dialogueComposerVisible()).toBe(true)
   expect(controller?.tourButtonVisible()).toBe(false)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
     tourButtonVisible: false,
   })
+})
+
+it('should preserve toolbar choices changed during restoration and persist both fields', async () => {
+  let complete: (value: PDisplayPreferences) => void = () => undefined
+  storageMocks.read.mockReturnValueOnce(
+    new Promise<PDisplayPreferences>((resolve) => {
+      complete = resolve
+    }),
+  )
+  let controller: PDisplayPreferencesController | undefined
+  render(() => (
+    <PreferencesHarness
+      onController={(value) => {
+        controller = value
+      }}
+    />
+  ))
+  expect(controller?.toolsButtonVisible()).toBe(true)
+  expect(controller?.memoryAssistVisible()).toBe(true)
+  controller?.onToolsButtonVisibleChange(false)
+  controller?.onMemoryAssistVisibleChange(false)
+  complete({
+    dialogueComposerVisible: false,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
+  await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
+  expect(controller?.toolsButtonVisible()).toBe(false)
+  expect(controller?.memoryAssistVisible()).toBe(false)
+  expect(storageMocks.write).toHaveBeenLastCalledWith({
+    dialogueComposerVisible: false,
+    memoryAssistVisible: false,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: false,
+    tourButtonVisible: true,
+  })
+})
+
+it('should keep widget choices made during restoration and persist them', async () => {
+  let complete: (value: PDisplayPreferences) => void = () => undefined
+  storageMocks.read.mockReturnValueOnce(
+    new Promise<PDisplayPreferences>((resolve) => {
+      complete = resolve
+    }),
+  )
+  let controller: PDisplayPreferencesController | undefined
+  render(() => (
+    <PreferencesHarness
+      onController={(value) => {
+        controller = value
+      }}
+    />
+  ))
+  controller?.onPlayerVisibleChange(false)
+  controller?.onPomodoroVisibleChange(false)
+  complete({
+    dialogueComposerVisible: false,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
+  await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
+  expect(controller?.playerVisible()).toBe(false)
+  expect(controller?.pomodoroVisible()).toBe(false)
+  expect(storageMocks.write).toHaveBeenLastCalledWith(
+    expect.objectContaining({playerVisible: false, pomodoroVisible: false}),
+  )
+  controller?.onPlayerVisibleChange(true)
+  expect(storageMocks.write).toHaveBeenLastCalledWith(
+    expect.objectContaining({playerVisible: true, pomodoroVisible: false}),
+  )
 })

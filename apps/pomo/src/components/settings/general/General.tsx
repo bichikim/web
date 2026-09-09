@@ -5,9 +5,6 @@ import * as m from '@paraglide/message'
 import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
 import {PHealthCheck} from '../../PHealthCheck'
 import {CLASSES, type PSettingsProps} from './shared'
-import {PGeneralSceneSettings} from './Scene'
-import {PGeneralStyleSettings} from './Style'
-import {PGeneralWeatherSettings} from './Weather'
 import {PGeneralDisplaySettings} from './Display'
 
 const LANGUAGE_OPTIONS = [
@@ -45,9 +42,6 @@ export const PGeneralSettings = (props: PGeneralSettingsProps) => {
           value={displayTheme.preference()}
         />
       </div>
-      <PGeneralSceneSettings {...props} />
-      <PGeneralStyleSettings {...props} />
-      <PGeneralWeatherSettings {...props} />
       <PGeneralDisplaySettings {...props} />
       <PHealthCheck />
     </div>

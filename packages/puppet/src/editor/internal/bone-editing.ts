@@ -74,6 +74,12 @@ export interface EditBoneRestOptions {
   readonly point?: PuppetPoint
 }
 
+const isJointIndex = (index: number, length: number) =>
+  Number.isInteger(index) && index >= 0 && index < length / 2
+
+const canEditJoint = (node: PuppetSceneDeformerNode, operation: EditBoneRestOptions['operation']) =>
+  node.deformerType !== 'rotation' || operation === 'move'
+
 export const editBoneRest = (options: EditBoneRestOptions): PuppetDocument | undefined => {
   const scene = getDocumentScene(options.document)
   const node = findNode(scene.roots, options.nodeId)
@@ -84,10 +90,13 @@ export const editBoneRest = (options: EditBoneRestOptions): PuppetDocument | und
   ) {
     return undefined
   }
+  if (!canEditJoint(node, options.operation)) {
+    return undefined
+  }
   const points = [...node.boneRestPoints]
   const index = options.index ?? points.length / 2 - 1
   const MAXIMUM_JOINTS = 33
-  if (!Number.isInteger(index) || index < 0 || index >= points.length / 2) {
+  if (!isJointIndex(index, points.length)) {
     return undefined
   }
   switch (options.operation) {

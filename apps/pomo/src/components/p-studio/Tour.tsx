@@ -9,6 +9,7 @@ export const PStudioTour = (props: PStudioTourProps) => (
   <PTour
     getStepElement={props.tour.getStepElement}
     isOpen={props.tour.isOpen()}
+    onEvent={props.tour.onEvent}
     onOpenChange={props.tour.setIsOpen}
     steps={props.tour.steps()}
   />

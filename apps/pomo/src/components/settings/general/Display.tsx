@@ -95,6 +95,48 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             />
           )}
         </Show>
+        <Show when={props.onMemoryAssistVisibleChange}>
+          {(onChange) => (
+            <PSwitch
+              checked={props.memoryAssistVisible ?? true}
+              class={CLASSES.settingsToggle}
+              label={m.settings_memory_visible()}
+              onChange={onChange()}
+            />
+          )}
+        </Show>
+        <Show when={props.onPlayerVisibleChange}>
+          {(onChange) => (
+            <PSwitch
+              checked={props.playerVisible ?? true}
+              class={CLASSES.settingsToggle}
+              label={m.settings_player_visible()}
+              description={m.settings_player_visible_description()}
+              onChange={onChange()}
+            />
+          )}
+        </Show>
+        <Show when={props.onPomodoroVisibleChange}>
+          {(onChange) => (
+            <PSwitch
+              checked={props.pomodoroVisible ?? true}
+              class={CLASSES.settingsToggle}
+              label={m.settings_pomodoro_visible()}
+              description={m.settings_pomodoro_visible_description()}
+              onChange={onChange()}
+            />
+          )}
+        </Show>
+        <Show when={props.onToolsButtonVisibleChange}>
+          {(onChange) => (
+            <PSwitch
+              checked={props.toolsButtonVisible ?? true}
+              class={CLASSES.settingsToggle}
+              label={m.settings_tools_visible()}
+              onChange={onChange()}
+            />
+          )}
+        </Show>
         <Show when={props.onTourButtonVisibleChange}>
           {(onChange) => (
             <PSwitch

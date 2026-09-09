@@ -18,8 +18,8 @@ const createDocument = () => {
   })!
   for (const vertexIndex of [0, 1, 2, 3, 4]) {
     document = setDeformerVertexWeight({
-      document,
       boneIndex: 0,
+      document,
       nodeId: 'bone',
       partId: 'mesh-preview',
       vertexIndex,
@@ -44,8 +44,8 @@ test('should cover the stroke path without event-rate-dependent buildup', () => 
   const stroke = createWeightPaintStroke({
     boneIndex: 0,
     document,
-    nodeId: 'bone',
     mode: 'add',
+    nodeId: 'bone',
     radius: 10,
     strength: 0.5,
     vertices,
@@ -63,8 +63,8 @@ test('should subtract with radial falloff without touching vertices outside the 
   const stroke = createWeightPaintStroke({
     boneIndex: 0,
     document: createDocument(),
-    nodeId: 'bone',
     mode: 'subtract',
+    nodeId: 'bone',
     radius: 30,
     strength: 1,
     vertices,
@@ -78,8 +78,8 @@ test('should subtract with radial falloff without touching vertices outside the 
 
 test('should smooth using connected mesh neighbors from the initial stroke snapshot', () => {
   const document = setDeformerVertexWeight({
-    document: createDocument(),
     boneIndex: 0,
+    document: createDocument(),
     nodeId: 'bone',
     partId: 'mesh-preview',
     vertexIndex: 4,
@@ -88,8 +88,8 @@ test('should smooth using connected mesh neighbors from the initial stroke snaps
   const stroke = createWeightPaintStroke({
     boneIndex: 0,
     document,
-    nodeId: 'bone',
     mode: 'smooth',
+    nodeId: 'bone',
     radius: 5,
     strength: 1,
     vertices,
@@ -102,8 +102,8 @@ test('should reject invalid brush settings and exclude locked parts', () => {
   const options = {
     boneIndex: 0,
     document,
-    nodeId: 'bone',
     mode: 'add' as const,
+    nodeId: 'bone',
     radius: 10,
     strength: 1,
     vertices,
@@ -137,12 +137,12 @@ test('should paint a non-bone deformer mask without creating bone weights', () =
     },
   }
   const stroke = createWeightPaintStroke({
-    document,
     boneIndex: 0,
+    document,
     nodeId: 'bone',
     radius: 10,
-    vertices,
     mode: 'subtract',
+    vertices,
     strength: 0.5,
   })
   expect(stroke).toBeDefined()

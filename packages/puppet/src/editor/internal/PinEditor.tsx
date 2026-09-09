@@ -1,8 +1,7 @@
 import {DeformerWeights} from './DeformerWeights'
-import {Button} from '@kobalte/core/button'
+import {EditorButton, EditorNumberField} from '../../design-system'
 import {For, Show} from 'solid-js'
 import {DeformerMode} from './DeformerMode'
-import {EditorNumberField} from './EditorNumberField'
 import {type PinEditorProps, usePinEditor} from './use-pin-editor'
 
 export const PinEditor = (props: PinEditorProps) => {
@@ -19,13 +18,13 @@ export const PinEditor = (props: PinEditorProps) => {
           }}
         />
         <Show when={editor.rest()}>
-          <Button
+          <EditorButton
             class="mask-action-button"
             disabled={!editor.editable() || editor.indices().length <= 1}
             onClick={editor.remove}
           >
             핀 삭제
-          </Button>
+          </EditorButton>
         </Show>
       </div>
       <p class="mask-empty-state">

@@ -1,4 +1,4 @@
-import {EditorCheckbox} from './internal/EditorCheckbox'
+import {EditorToggleButton} from '../design-system'
 import {createSignal, createUniqueId, Index, Show} from 'solid-js'
 
 import type {MeshEditorProps} from './mesh-editor-contract'
@@ -31,14 +31,15 @@ export const MeshEditor = (props: MeshEditorProps) => {
   const displayControls = (
     <div class="display-controls" role="group" aria-label="표시 설정">
       <Show when={editor.clippedPartViews().length > 0}>
-        <label class="mask-boundary-toggle">
-          <EditorCheckbox
-            label="마스크 경계 표시"
-            checked={maskBoundaryVisible()}
-            onChange={setMaskBoundaryVisible}
-          />
-          마스크 경계 표시
-        </label>
+        <EditorToggleButton
+          size="md"
+          aria-label="마스크 경계 표시"
+          title="마스크 경계 표시"
+          pressed={maskBoundaryVisible()}
+          onClick={() => setMaskBoundaryVisible(!maskBoundaryVisible())}
+        >
+          <span class="puppet-icon puppet-icon-layers-intersect" aria-hidden="true" />
+        </EditorToggleButton>
       </Show>
     </div>
   )
@@ -84,7 +85,6 @@ export const MeshEditor = (props: MeshEditorProps) => {
                       }}
                       cx={vertex().x}
                       cy={vertex().y}
-                      r={editor.vertexRadius()}
                       onPointerDown={(event) =>
                         editor.handlePointerDown(event, partView().partId, vertex())
                       }

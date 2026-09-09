@@ -1,7 +1,7 @@
 import initWasm, {HwpDocument} from '@rhwp/core'
 import wasmUrl from '@rhwp/core/rhwp_bg.wasm?url'
 import {createStudio, type RhwpEditor} from '@rhwp/editor'
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import {createExpenseFieldValues, type ExpenseForm} from './expense'
 import {HwpExpenseAssistant} from './HwpExpenseAssistant'
 import {type ViewerMode} from './document/viewer-mode'
@@ -154,23 +154,21 @@ const createPageChangeHandler =
     setPageSvg(renderedPage.svg)
   }
 
-export function HwpDocumentWorkspace() {
-  const [documentInstance, setDocumentInstance] = createSignal<HwpDocument | null>(null)
+const useDocumentRuntime = () => {
   const [editor, setEditor] = createSignal<RhwpEditor | null>(null)
-  const [pageCount, setPageCount] = createSignal<number | null>(null)
-  const [directPageCount, setDirectPageCount] = createSignal<number | null>(null)
-  const [directPageIndex, setDirectPageIndex] = createSignal(0)
-  const [pageSvg, setPageSvg] = createSignal<string | null>(null)
-  const [loadedFileName, setLoadedFileName] = createSignal('expense-form.hwp')
-  const [viewerMode, setViewerMode] = createSignal<ViewerMode>('direct')
   const [statusMessage, setStatusMessage] = createSignal(
     'Rust/WASM 문서 엔진과 iframe 에디터 준비 중…',
   )
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isReady, setIsReady] = createSignal(false)
-  const [isBusy, setIsBusy] = createSignal(false)
   let viewerHost: HTMLDivElement | undefined
   let disposed = false
+  let initializationFailed = false
+  const destroyEditor = () => {
+    const currentEditor = untrack(editor)
+    setEditor(null)
+    currentEditor?.destroy()
+  }
   onMount(() => {
     configureTextMeasurement()
     // rhwp's wasm-bindgen initializer exposes this snake_case option.
@@ -181,31 +179,104 @@ export function HwpDocumentWorkspace() {
         chrome: {menu: true, statusbar: true, toolbar: true},
         plugins: ['hwpctrl'],
         renderer: 'canvas2d',
-      }),
-    ])
-      .then(([, nextEditor]) => {
-        if (disposed) {
+      }).then((nextEditor) => {
+        if (disposed || initializationFailed) {
           nextEditor.destroy()
           return
         }
 
-        nextEditor.element.title = 'HWP 문서 편집기'
         setEditor(nextEditor)
+      }),
+    ])
+      .then(() => {
+        if (disposed) {
+          return
+        }
+
+        const nextEditor = untrack(editor)
+        if (nextEditor === null) {
+          return
+        }
+
+        nextEditor.element.title = 'HWP 문서 편집기'
         setIsReady(true)
         setStatusMessage('Rust/WASM 문서 엔진과 iframe 에디터 준비 완료')
       })
       .catch(() => {
+        initializationFailed = true
+        destroyEditor()
+        if (disposed) {
+          return
+        }
+
         setErrorMessage('Rust/WASM 문서 엔진 또는 iframe 에디터를 불러오지 못했어요.')
         setStatusMessage('문서 엔진을 준비하지 못했어요.')
       })
   })
-  onCleanup(() => documentInstance()?.free())
   onCleanup(() => {
     disposed = true
-    editor()?.destroy()
+    destroyEditor()
+  })
+  return {
+    editor,
+    errorMessage,
+    isReady,
+    setErrorMessage,
+    setStatusMessage,
+    statusMessage,
+    viewerHost: (element: HTMLDivElement) => {
+      viewerHost = element
+    },
+  }
+}
+
+const exportExpenseDocument = (document: HwpDocument, form: ExpenseForm) => {
+  const fieldNames = readFieldNames(document)
+  const values = createDocumentFieldValues(form, fieldNames)
+  if (values.length === 0) {
+    throw new Error('HWP 양식 필드를 찾지 못했어요.')
+  }
+
+  for (const field of values) {
+    assertFieldUpdateSucceeded(document.setFieldValueByName(field.name, field.value))
+  }
+  return document.exportHwp()
+}
+
+const useDocumentWorkspace = () => {
+  const [documentInstance, setDocumentInstance] = createSignal<HwpDocument | null>(null)
+  const [pageCount, setPageCount] = createSignal<number | null>(null)
+  const [directPageCount, setDirectPageCount] = createSignal<number | null>(null)
+  const [directPageIndex, setDirectPageIndex] = createSignal(0)
+  const [pageSvg, setPageSvg] = createSignal<string | null>(null)
+  const [loadedFileName, setLoadedFileName] = createSignal('expense-form.hwp')
+  const [viewerMode, setViewerMode] = createSignal<ViewerMode>('direct')
+  const {
+    editor,
+    errorMessage,
+    isReady,
+    setErrorMessage,
+    setStatusMessage,
+    statusMessage,
+    viewerHost,
+  } = useDocumentRuntime()
+  const [isBusy, setIsBusy] = createSignal(false)
+  let disposed = false
+  onCleanup(() => {
+    disposed = true
+    documentInstance()?.free()
+    setDocumentInstance(null)
   })
   const loadDocument = async (bytes: Uint8Array, fileName: string) => {
+    if (disposed) {
+      return
+    }
+
     const loaded = await loadHwpDocument(bytes, fileName, editor())
+    if (disposed) {
+      loaded.document.free()
+      return
+    }
     documentInstance()?.free()
     setDocumentInstance(loaded.document)
     setPageCount(loaded.pageCount)
@@ -219,38 +290,46 @@ export function HwpDocumentWorkspace() {
     )
     setStatusMessage(`${fileName} · ${loaded.pageCount}페이지 · iframe 에디터 준비 완료`)
   }
+  const openDocument = async (
+    readBytes: () => Promise<Uint8Array>,
+    fileName: string,
+    failureMessage: string,
+  ) => {
+    if (disposed || !isReady() || isBusy()) {
+      return
+    }
+
+    setIsBusy(true)
+    setErrorMessage(null)
+    try {
+      await loadDocument(await readBytes(), fileName)
+    } catch {
+      if (!disposed) {
+        setErrorMessage(failureMessage)
+      }
+    } finally {
+      if (!disposed) {
+        setIsBusy(false)
+      }
+    }
+  }
   const handleFileChange = async (event: Event) => {
     const file = (event.currentTarget as HTMLInputElement).files?.[0]
-    if (file === undefined || !isReady()) {
+    if (file === undefined) {
       return
     }
-
-    setIsBusy(true)
-    setErrorMessage(null)
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer())
-      await loadDocument(bytes, file.name)
-    } catch {
-      setErrorMessage('이 파일을 열지 못했어요. HWP 또는 HWPX 파일인지 확인해 주세요.')
-    } finally {
-      setIsBusy(false)
-    }
+    await openDocument(
+      async () => new Uint8Array(await file.arrayBuffer()),
+      file.name,
+      '이 파일을 열지 못했어요. HWP 또는 HWPX 파일인지 확인해 주세요.',
+    )
   }
-  const handleExampleOpen = async () => {
-    if (!isReady() || isBusy()) {
-      return
-    }
-
-    setIsBusy(true)
-    setErrorMessage(null)
-    try {
-      await loadDocument(await fetchExampleDocument(), EXAMPLE_FILE_NAME)
-    } catch {
-      setErrorMessage('예제 HWP 파일을 열지 못했어요. public 파일을 확인해 주세요.')
-    } finally {
-      setIsBusy(false)
-    }
-  }
+  const handleExampleOpen = () =>
+    openDocument(
+      fetchExampleDocument,
+      EXAMPLE_FILE_NAME,
+      '예제 HWP 파일을 열지 못했어요. public 파일을 확인해 주세요.',
+    )
 
   const handlePageChange = createPageChangeHandler(
     documentInstance,
@@ -260,53 +339,86 @@ export function HwpDocumentWorkspace() {
   )
 
   const handleApply = async (form: ExpenseForm) => {
+    if (disposed) {
+      return
+    }
+    if (isBusy()) {
+      throw new Error('진행 중인 문서 작업이 끝난 뒤 다시 적용해 주세요.')
+    }
+
     const document = documentInstance()
     const nextEditor = editor()
     if (document === null || nextEditor === null) {
       throw new Error('먼저 HWP 양식 파일을 열어 주세요.')
     }
 
-    const fieldNames = readFieldNames(document)
-    const values = createDocumentFieldValues(form, fieldNames)
-    if (values.length === 0) {
-      throw new Error('HWP 양식 필드를 찾지 못했어요.')
-    }
+    setIsBusy(true)
+    try {
+      const updatedBytes = exportExpenseDocument(document, form)
+      const result = await nextEditor.loadFile(updatedBytes, loadedFileName(), {
+        skipUnsavedGuard: true,
+        suppressDialogs: true,
+      })
+      if (disposed || documentInstance() !== document) {
+        return
+      }
 
-    for (const field of values) {
-      assertFieldUpdateSucceeded(document.setFieldValueByName(field.name, field.value))
+      setPageCount(result.pageCount)
+      setPageSvg(document.renderPageSvg(directPageIndex()))
+      setStatusMessage(`양식 필드 적용 완료 · ${result.pageCount}페이지`)
+    } catch (error) {
+      if (!disposed && documentInstance() === document) {
+        throw error
+      }
+    } finally {
+      if (!disposed) {
+        setIsBusy(false)
+      }
     }
-    const updatedBytes = document.exportHwp()
-    const result = await nextEditor.loadFile(updatedBytes, loadedFileName(), {
-      skipUnsavedGuard: true,
-      suppressDialogs: true,
-    })
-    setPageCount(result.pageCount)
-    setPageSvg(document.renderPageSvg(directPageIndex()))
-    setStatusMessage(`양식 필드 적용 완료 · ${result.pageCount}페이지`)
   }
+
+  return {
+    directPageCount,
+    directPageIndex,
+    errorMessage,
+    handleApply,
+    handleExampleOpen,
+    handleFileChange,
+    handlePageChange,
+    isBusy,
+    isReady,
+    pageCount,
+    pageSvg,
+    setViewerMode,
+    statusMessage,
+    viewerHost,
+    viewerMode,
+  }
+}
+
+export function HwpDocumentWorkspace() {
+  const workspace = useDocumentWorkspace()
 
   return (
     <div class="grid gap-5">
       <HwpDocumentPanel
-        directPageCount={directPageCount}
-        directPageIndex={directPageIndex}
-        errorMessage={errorMessage}
-        isBusy={isBusy}
-        isReady={isReady}
-        onExampleOpen={handleExampleOpen}
-        onFileChange={handleFileChange}
-        onPageChange={handlePageChange}
-        onViewerModeChange={setViewerMode}
-        pageCount={pageCount}
-        pageSvg={pageSvg}
-        statusMessage={statusMessage}
-        viewerMode={viewerMode}
-        viewerHost={(element) => {
-          viewerHost = element
-        }}
+        directPageCount={workspace.directPageCount}
+        directPageIndex={workspace.directPageIndex}
+        errorMessage={workspace.errorMessage}
+        isBusy={workspace.isBusy}
+        isReady={workspace.isReady}
+        onExampleOpen={workspace.handleExampleOpen}
+        onFileChange={workspace.handleFileChange}
+        onPageChange={workspace.handlePageChange}
+        onViewerModeChange={workspace.setViewerMode}
+        pageCount={workspace.pageCount}
+        pageSvg={workspace.pageSvg}
+        statusMessage={workspace.statusMessage}
+        viewerMode={workspace.viewerMode}
+        viewerHost={workspace.viewerHost}
       />
 
-      <HwpExpenseAssistant onApply={handleApply} />
+      <HwpExpenseAssistant onApply={workspace.handleApply} />
 
       <p class="m-0 text-xs leading-5 text-#8f8297">
         가계부 양식은 <code>date</code>, <code>item_1</code>, <code>unitPrice_1</code>,{' '}

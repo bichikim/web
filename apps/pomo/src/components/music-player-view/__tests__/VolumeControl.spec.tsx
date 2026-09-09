@@ -76,7 +76,7 @@ describe('VolumeControl', () => {
       '.pomo-player__volume-popover-trigger .i-pomo-scribble\\:volume-medium',
     )
 
-    expect(triggerIcon).toHaveClass('size-6')
+    expect(triggerIcon).toHaveClass('size-6', 'flex-none')
   })
 
   it('opens the popover only after the volume trigger is selected', () => {

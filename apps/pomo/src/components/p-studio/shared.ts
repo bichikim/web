@@ -76,11 +76,25 @@ export const CLASSES = {
     'max-lg:[&.pomo-icon-select]:hidden',
   ),
   sceneToolbar: cx(
-    'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
+    'pomo-scene-toolbar pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
     'flex flex-col items-end gap-2 xs:right-7',
     'lg:top-[calc(1.5rem+var(--pomo-safe-area-inset-top))]',
   ),
-  ui: 'pomo-ui pointer-events-none absolute inset-0',
+  ui: cx(
+    'pomo-ui pointer-events-none absolute inset-0',
+    'max-lg:pt-[calc(1rem_+_var(--pomo-safe-area-inset-top))]',
+    'max-lg:pl-[calc(1rem_+_var(--pomo-safe-area-inset-left))]',
+    'max-lg:pr-4 xs:max-lg:pr-7',
+    'max-lg:[&>.pomo-pomodoro]:static max-lg:[&>.pomo-pomodoro]:float-left',
+    'max-lg:[&>.pomo-pomodoro]:mr-2',
+    'max-lg:[&>.pomo-scene-toolbar]:static max-lg:[&>.pomo-scene-toolbar]:block',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:block',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:text-right',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:leading-[3.75rem]',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:inline-flex',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:align-top',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:ml-2',
+  ),
 } as const
 
 export type SceneTime = ScenePeriod

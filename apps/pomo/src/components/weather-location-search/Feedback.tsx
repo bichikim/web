@@ -9,6 +9,9 @@ interface WeatherLocationSearchFeedbackProps {
 
 export const WeatherLocationSearchFeedback = (props: WeatherLocationSearchFeedbackProps) => (
   <>
+    <Show when={props.status === 'searching'}>
+      <p class="m-0 px-3 py-2 text-sm text-muted-foreground">{m.weather_location_searching()}</p>
+    </Show>
     <Show when={props.status === 'input-required'}>
       <p class="m-0 px-3 py-2 text-sm text-muted-foreground">
         {m.weather_location_search_minimum()}

@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {convertSceneContainers} from '../container-conversion'
 import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
@@ -158,15 +159,15 @@ test('should stop captured dragging when pointer capture is lost', () => {
   ))
   const svg = view.getByLabelText('본 디포머 편집 영역')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-    x: 0,
     left: 0,
-    y: 0,
     right: 960,
-    top: 0,
     bottom: 720,
+    x: 0,
     height: 720,
-    width: 960,
+    y: 0,
     toJSON: () => ({}),
+    top: 0,
+    width: 960,
   })
   fireEvent(
     view.getByRole('button', {name: '본 관절 1'}),
@@ -178,4 +179,77 @@ test('should stop captured dragging when pointer capture is lost', () => {
   fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 450, clientY: 260}))
   expect(document()).toBe(before)
   expect(onEditEnd).toHaveBeenCalledTimes(1)
+})
+
+test('should expose a rotation pivot and handle with keyboard posing and no chain editing tools', () => {
+  const source = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
+  const original = getSceneNode(source, 'bone') as PuppetSceneDeformerNode
+  const rotation: PuppetSceneDeformerNode = {...original, deformerType: 'rotation' as const}
+  const [document, setDocument] = createSignal({...source, scene: {roots: [rotation]}})
+  const node = () => document().scene.roots[0]!
+  const view = render(() => (
+    <BoneEditor
+      node={node()}
+      document={document()}
+      activeNodeId="bone"
+      onDocumentChange={(next) =>
+        setDocument({
+          ...next,
+          scene: {roots: [getSceneNode(next, 'bone') as PuppetSceneDeformerNode]},
+        })
+      }
+    />
+  ))
+  const svg = view.getByLabelText('회전 디포머 편집 영역')
+  expect(view.queryByText('끝 관절 IK')).toBeNull()
+  fireEvent.focus(view.getByRole('button', {name: '회전 방향 손잡이'}))
+  fireEvent.keyDown(svg, {key: 'ArrowDown', shiftKey: true})
+  expect(node().controlPoints[3]).toBeGreaterThan(original.controlPoints[3]!)
+  expect(node().controlPoints.slice(0, 2)).toEqual(original.controlPoints.slice(0, 2))
+  fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
+  expect(view.queryByText('관절 삭제')).toBeNull()
+  fireEvent.dblClick(svg, {clientX: 850, clientY: 420})
+  expect(node().boneRestPoints).toHaveLength(4)
+})
+
+test('should save a rotation pose into the selected keyform while preserving bind joints', () => {
+  const source = convertSceneContainers({
+    document: createBoneDeformer(createDemoDocument(), ['mesh-preview'])!,
+    nodeIds: ['bone'],
+    targetKind: 'rotation',
+  })!
+  const added = addParameter({document: source, nodeIds: ['bone']})!
+  const binding = added.document.parameterBindings!.at(-1)!
+  const [document, setDocument] = createSignal(added.document)
+  const preview = () => createParameterPreview({document: document()})
+  const view = render(() => (
+    <BoneEditor
+      document={document()}
+      previewDocument={preview()}
+      node={getSceneNode(preview(), 'bone') as PuppetSceneDeformerNode}
+      activeNodeId="bone"
+      activeBindingId={binding.id}
+      activeKeyformValues={[0]}
+      editMode="parameter"
+      targetNodeIds={['bone']}
+      onDocumentChange={setDocument}
+    />
+  ))
+  expect(view.getByRole('button', {name: '기준 배치'})).toBeDisabled()
+  fireEvent.focus(view.getByRole('button', {name: '회전 방향 손잡이'}))
+  fireEvent.keyDown(view.getByLabelText('회전 디포머 편집 영역'), {
+    key: 'ArrowDown',
+    shiftKey: true,
+  })
+  expect(
+    document()
+      .parameterBindings!.at(-1)!
+      .keyforms.find((keyform) => keyform.values[0] === 0)!.deformers![0]!.controlPoints,
+  ).not.toEqual(
+    binding.keyforms.find((keyform) => keyform.values[0] === 0)!.deformers![0]!.controlPoints,
+  )
+  expect((getSceneNode(document(), 'bone') as PuppetSceneDeformerNode).boneRestPoints).toEqual(
+    (getSceneNode(source, 'bone') as PuppetSceneDeformerNode).boneRestPoints,
+  )
+  expect(parseDocument(JSON.stringify(document())).ok).toBe(true)
 })

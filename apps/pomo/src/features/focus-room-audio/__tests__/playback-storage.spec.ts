@@ -2,7 +2,7 @@
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {readPPlayback, writePPlayback} from '../playback-storage'
+import {readPPlayback, stopPPlayback, writePPlayback} from '../playback-storage'
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -274,5 +274,57 @@ describe('playback-storage', () => {
     expect(JSON.parse(repairedValue ?? '')).toMatchObject({trackId: 'track-three'})
     completions[4]?.()
     await firstWrite
+  })
+
+  it('should wait for a pending stop before restoring playback', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let resolveRead: (value: string | null) => void = () => undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveRead = resolve
+        }),
+    )
+    storageMocks.getItem.mockResolvedValue(null)
+    storageMocks.setItem.mockResolvedValue()
+    const stopping = stopPPlayback()
+    const restoring = readPPlayback()
+    await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
+    resolveRead(
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    await stopping
+    await expect(restoring).resolves.toMatchObject({
+      isPlaying: false,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+    Reflect.deleteProperty(window, 'ReactNativeWebView')
+  })
+
+  it('should preserve newer playback while a stop is reading storage', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let resolveRead: (value: string | null) => void = () => undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveRead = resolve
+        }),
+    )
+    storageMocks.getItem.mockResolvedValue(null)
+    storageMocks.setItem.mockResolvedValue()
+    const stopping = stopPPlayback()
+    await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
+    await writePPlayback({isPlaying: true, positionSeconds: 5, trackId: 'new'})
+    resolveRead(
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    await stopping
+    await expect(readPPlayback()).resolves.toMatchObject({
+      isPlaying: true,
+      positionSeconds: 5,
+      trackId: 'new',
+    })
+    Reflect.deleteProperty(window, 'ReactNativeWebView')
   })
 })

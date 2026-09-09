@@ -1,3 +1,4 @@
+import {moveMeshVertex} from './move-mesh-vertex'
 import {type Accessor, createEffect, createMemo, createSignal, type Setter, untrack} from 'solid-js'
 
 import {
@@ -93,6 +94,7 @@ interface CommitVertexMoveFailure {
 type CommitVertexMoveResult = CommitVertexMoveFailure | CommitVertexMoveSuccess
 
 const canEditSelectedKeyform = (props: MeshEditorProps) =>
+  props.meshEditing ||
   props.editMode !== 'parameter' ||
   (props.activeBindingId !== undefined &&
     props.activeKeyformValues !== null &&
@@ -216,6 +218,8 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   const [dragStartPoint, setDragStartPoint] = createSignal<VertexPoint | null>(null)
   const [focusedPartId, setFocusedPartId] = createSignal<string | null>(null)
   let activeDocument = untrack(() => props.document)
+  let activeEditing = untrack(() => props.meshEditing)
+  let activePartId = untrack(() => props.activePartId)
   const selectedPartIds = createMemo<ReadonlyArray<string>>(() => {
     if (props.selectedPartIds !== undefined) {
       return props.selectedPartIds
@@ -285,8 +289,14 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   createEffect(() => {
     const {document} = props
 
-    if (document !== activeDocument) {
+    if (
+      document !== activeDocument ||
+      props.meshEditing !== activeEditing ||
+      props.activePartId !== activePartId
+    ) {
       activeDocument = document
+      activeEditing = props.meshEditing
+      activePartId = props.activePartId
       setDraggingVertex(null)
       setDraggingTime(null)
       setDraggingValues(null)
@@ -358,13 +368,17 @@ const updatePointerDraft = (
 }
 
 const canEditMeshTopology = (props: MeshEditorProps, state: MeshEditorState) =>
-  props.editMode !== 'motion' && props.onDocumentChange !== undefined && state.part() !== undefined
+  !props.meshEditing &&
+  props.editMode !== 'motion' &&
+  props.onDocumentChange !== undefined &&
+  state.part() !== undefined
 
 const createAddVertexHandler =
   (props: MeshEditorProps, state: MeshEditorState) => (event: MouseEvent) => {
     const activePart = state.part()
     const {onDocumentChange} = props
     if (
+      props.meshEditing ||
       props.editMode === 'motion' ||
       (event.target instanceof Element && event.target.closest('circle') !== null) ||
       activePart === undefined ||
@@ -488,6 +502,21 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     resetPointerState(state)
 
     if (!hasMoved) {
+      return
+    }
+
+    if (props.meshEditing) {
+      const result = moveMeshVertex({
+        document: props.document,
+        partId: activePart.id,
+        vertexIndex,
+        ...point,
+      })
+      if (result.ok) {
+        onDocumentChange(result.document)
+      } else {
+        props.onNotice?.(result.message)
+      }
       return
     }
 

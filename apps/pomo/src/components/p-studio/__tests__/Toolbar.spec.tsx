@@ -102,6 +102,10 @@ describe('SceneToolbar', () => {
 
     screen.getByRole('button', {name: 'Pomofi 둘러보기'}).click()
     expect(baseProps.onTourOpen).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', {name: 'Pomofi 둘러보기'}).parentElement).toHaveAttribute(
+      'data-tour-step',
+      'tour',
+    )
     expect(
       vi
         .mocked(PScribbleCircleControl)
@@ -128,12 +132,12 @@ describe('SceneToolbar', () => {
     expect(MemoryAssistPanel).toHaveBeenCalledWith(
       expect.objectContaining({sceneStyle: 'original', weatherState: {status: 'disabled'}}),
     )
-    expect(vi.mocked(VersionNoticePanel).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0],
+    const settings = screen.getByText('settings control')
+    const notice = screen.getByText('version notice control')
+    expect(screen.getByText('memory assist control').compareDocumentPosition(settings)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
     )
-    expect(vi.mocked(MemoryAssistPanel).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(SceneSettingsPanel).mock.invocationCallOrder[0],
-    )
+    expect(settings.compareDocumentPosition(notice)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(PWeatherStatus).toHaveBeenCalledWith(
       expect.objectContaining({sceneStyle: 'original', state: {status: 'disabled'}}),
     )
@@ -168,4 +172,13 @@ describe('SceneToolbar', () => {
     expect(view.container.firstElementChild).toHaveClass('w-full')
     expect(view.container.firstElementChild).not.toHaveClass('absolute')
   })
+})
+
+it('should hide optional toolbar controls while keeping settings available', () => {
+  render(() => (
+    <SceneToolbar {...baseProps} toolsButtonVisible={false} memoryAssistVisible={false} />
+  ))
+  expect(screen.queryByRole('button', {name: '도구'})).not.toBeInTheDocument()
+  expect(screen.queryByText('memory assist control')).not.toBeInTheDocument()
+  expect(screen.getByText('settings control')).toBeInTheDocument()
 })

@@ -1,3 +1,4 @@
+import {createSkinDocument} from '../../../deformation/__tests__/fixtures/skin'
 import {expect, test} from 'vitest'
 
 import {
@@ -55,4 +56,29 @@ test('should restore a point through nested deformers', () => {
 
   expect(restored.x).toBeCloseTo(35, 5)
   expect(restored.y).toBeCloseTo(65, 5)
+})
+
+test('should unapply the blended skinning matrix when editing a vertex', () => {
+  const document = createSkinDocument()
+  const posed = {
+    ...document,
+    scene: {
+      roots: document.scene.roots.map((node) =>
+        node.id === 'Shoulder' && node.kind === 'deformer'
+          ? {...node, controlPoints: [0, 0, 0, 50]}
+          : node,
+      ),
+    },
+  }
+  const part = document.parts[0]!
+  const positions = new Map([[part.id, [...part.mesh.vertices]]])
+  applySceneDeformers({document: posed, verticesByPartId: positions})
+  const point = unapplySceneDeformersPoint({
+    document: posed,
+    partId: part.id,
+    point: {x: positions.get(part.id)![2]!, y: positions.get(part.id)![3]!},
+    vertexIndex: 1,
+  })
+  expect(point.x).toBeCloseTo(part.mesh.vertices[2]!)
+  expect(point.y).toBeCloseTo(part.mesh.vertices[3]!)
 })

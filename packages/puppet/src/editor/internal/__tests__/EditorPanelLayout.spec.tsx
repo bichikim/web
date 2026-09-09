@@ -64,7 +64,7 @@ test('should hold the minimum size while dragging and collapse only after releas
   rightResizer.dispatchEvent(
     new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 300}),
   )
-  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 400}))
+  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 460}))
   expect(editor).not.toHaveClass('right-panel-closed')
   expect(rightResizer).toHaveAttribute('aria-valuenow', '220')
   window.dispatchEvent(new MouseEvent('pointerup'))
@@ -73,7 +73,7 @@ test('should hold the minimum size while dragging and collapse only after releas
   bottomResizer.dispatchEvent(
     new MouseEvent('pointerdown', {bubbles: true, button: 0, clientY: 300}),
   )
-  window.dispatchEvent(new MouseEvent('pointermove', {clientY: 400}))
+  window.dispatchEvent(new MouseEvent('pointermove', {clientY: 480}))
   expect(editor).not.toHaveClass('bottom-panel-closed')
   expect(bottomResizer).toHaveAttribute('aria-valuenow', '180')
   window.dispatchEvent(new MouseEvent('pointerup'))
@@ -214,4 +214,51 @@ test('should clamp valid persisted sizes and replace malformed preferences with 
     'right-panel-closed',
     'bottom-panel-closed',
   )
+})
+
+test.each([
+  {
+    label: '왼쪽 패널 너비 조절',
+    position: 'left',
+    initial: 300,
+    direction: 1,
+    minimum: 220,
+    axis: 'clientX',
+  },
+  {
+    label: '오른쪽 패널 너비 조절',
+    position: 'right',
+    initial: 260,
+    direction: -1,
+    minimum: 220,
+    axis: 'clientX',
+  },
+  {
+    label: '아래 프레임 높이 조절',
+    position: 'bottom',
+    initial: 260,
+    direction: -1,
+    minimum: 180,
+    axis: 'clientY',
+  },
+])('should close $position only at half its minimum size on release', (panel) => {
+  const view = render(() => <EditorPanelLayout />)
+  const editor = view.container.querySelector('.puppet-editor')
+  const resizer = view.getByRole('separator', {name: panel.label})
+  resizer.dispatchEvent(
+    new MouseEvent('pointerdown', {bubbles: true, button: 0, [panel.axis]: 300}),
+  )
+  const near = 300 + (panel.minimum / 2 + 1 - panel.initial) * panel.direction
+  window.dispatchEvent(new MouseEvent('pointermove', {[panel.axis]: near}))
+  window.dispatchEvent(new MouseEvent('pointerup'))
+  expect(editor).not.toHaveClass(`${panel.position}-panel-closed`)
+  expect(resizer).toHaveAttribute('aria-valuenow', String(panel.minimum))
+  resizer.dispatchEvent(
+    new MouseEvent('pointerdown', {bubbles: true, button: 0, [panel.axis]: 300}),
+  )
+  const threshold = 300 - (panel.minimum / 2) * panel.direction
+  window.dispatchEvent(new MouseEvent('pointermove', {[panel.axis]: threshold}))
+  expect(editor).not.toHaveClass(`${panel.position}-panel-closed`)
+  window.dispatchEvent(new MouseEvent('pointerup'))
+  expect(editor).toHaveClass(`${panel.position}-panel-closed`)
 })

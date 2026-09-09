@@ -71,7 +71,11 @@ export const CalendarAgenda = (props: CalendarAgendaProps) => (
                           {event.calendarLabel} · {event.accountLabel}
                         </p>
                       </div>
-                      <CalendarAlarmControl event={event} memos={props.memos} />
+                      <CalendarAlarmControl
+                        defaultAlarmDate={props.selectedDate}
+                        event={event}
+                        memos={props.memos}
+                      />
                     </li>
                   )}
                 </For>

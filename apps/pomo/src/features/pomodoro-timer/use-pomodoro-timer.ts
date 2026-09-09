@@ -70,6 +70,7 @@ export interface PomodoroTimerController {
 }
 
 export interface UsePomodoroTimerProps {
+  readonly stopOnUnmount?: boolean
   readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
 }
 
@@ -210,6 +211,9 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     onCleanup(() => {
       isDisposed = true
       window.clearInterval(refreshTimer)
+      if (props.stopOnUnmount) {
+        writeStoredState(stopPomodoroTimer(state(), config()))
+      }
     })
   })
 

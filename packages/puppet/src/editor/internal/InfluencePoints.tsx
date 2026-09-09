@@ -1,6 +1,5 @@
-import {EditorButton} from './EditorButton'
+import {EditorButton, EditorNumberField} from '../../design-system'
 import {Index} from 'solid-js'
-import {EditorNumberField} from './EditorNumberField'
 import type {InfluenceRelationProps, useInfluenceSettings} from './use-influence-settings'
 const WHOLE_PERCENT = 100
 interface InfluencePointsProps extends InfluenceRelationProps {

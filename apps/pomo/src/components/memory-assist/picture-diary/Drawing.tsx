@@ -8,7 +8,6 @@ import {PModal} from '../../PModal'
 import {PModalTabList} from '../../PModalTabList'
 import {PictureDiaryCanvas} from './Canvas'
 import {useDrawingHistory} from './use-history'
-import './drawing.css'
 import {DrawingActions} from './Actions'
 import {DrawingTools} from './Tools'
 
@@ -48,7 +47,13 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
   const [mode, setMode] = createSignal<'draw' | 'generate'>('draw')
   const [isOpen, setIsOpen] = createSignal(false)
   const [limitReached, setLimitReached] = createSignal(false)
+  const [gestureRevision, setGestureRevision] = createSignal(0)
   const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
+  const changeHistory = (action: () => void) => {
+    action()
+    setGestureRevision((revision) => revision + 1)
+    setLimitReached(false)
+  }
   return (
     <>
       <button
@@ -97,18 +102,9 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
               canUndo={history.canUndo()}
               canRedo={history.canRedo()}
               canClear={props.strokes.length > 0}
-              onUndo={() => {
-                history.undo()
-                setLimitReached(false)
-              }}
-              onRedo={() => {
-                history.redo()
-                setLimitReached(false)
-              }}
-              onClear={() => {
-                history.clear()
-                setLimitReached(false)
-              }}
+              onUndo={() => changeHistory(history.undo)}
+              onRedo={() => changeHistory(history.redo)}
+              onClear={() => changeHistory(history.clear)}
               doneDisabled={mode() === 'generate' && generating()}
               onDone={() => {
                 const image = preview()
@@ -150,6 +146,7 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
                 color={color()}
                 thickness={thickness()}
                 tool={tool()}
+                gestureRevision={gestureRevision()}
                 onStart={history.begin}
                 onChange={props.onChange}
                 onLimit={() => setLimitReached(true)}

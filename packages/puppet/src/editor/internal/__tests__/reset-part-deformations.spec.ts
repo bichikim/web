@@ -1,3 +1,4 @@
+import {resetPartDeformations} from '../reset-part-deformations'
 import {expect, test} from 'vitest'
 import {createDemoDocument, parseDocument, serializeDocument} from '../../../player'
 import {createBoneDeformer, editBoneRest} from '../bone-editing'
@@ -10,7 +11,7 @@ const createDocument = () =>
     operation: 'append',
     point: {x: 900, y: 240},
   })!
-const options = {nodeId: 'bone', partId: 'mesh-preview', boneIndex: 0, vertexIndex: 0, weight: 0.25}
+const options = {nodeId: 'bone', boneIndex: 0, partId: 'mesh-preview', vertexIndex: 0, weight: 0.25}
 test('should clear weights on mesh topology replacement, including preserved binding steps', async () => {
   const {resetPartDeformations} = await import('../reset-part-deformations')
   const document = setDeformerVertexWeight({...options, document: createDocument()})!
@@ -25,4 +26,24 @@ test('should clear weights on mesh topology replacement, including preserved bin
   const node = getSceneNode(reset, 'bone')
   expect(node?.kind === 'deformer' && node.boneWeights).toEqual([])
   expect(parseDocument(serializeDocument(reset)).ok).toBe(true)
+})
+
+test('should detach glue on a rebuilt part while retaining unrelated connections', () => {
+  const document = {
+    ...createDemoDocument(),
+    glue: [
+      {
+        first: {partId: 'mesh-preview', vertexIndex: 0},
+        id: 'seam',
+        second: {partId: 'shape-circle', vertexIndex: 0},
+        strength: 1,
+        weight: 0.5,
+      },
+    ],
+  }
+  const reset = resetPartDeformations(document, 'mesh-preview', document.parts[0]!.mesh.vertices)
+  expect(reset.glue).toEqual([])
+  expect(
+    resetPartDeformations(document, 'shape-diamond', document.parts[0]!.mesh.vertices).glue,
+  ).toEqual(document.glue)
 })

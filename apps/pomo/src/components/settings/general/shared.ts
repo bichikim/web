@@ -1,3 +1,4 @@
+import type {BackgroundController} from 'src/features/background'
 import type {PSceneMotionInput, PSceneMotionMode} from '../../../features/focus-room-animation'
 import type {PSceneStyle} from '../../../features/focus-room-animation/scene-style'
 import type {PActivity, PGaze} from '../../../features/focus-room-scene-preferences'
@@ -14,6 +15,16 @@ export const CLASSES = {
 } as const
 
 export interface PSettingsProps {
+  readonly pomodoroVisible?: boolean
+  readonly onPomodoroVisibleChange?: (visible: boolean) => void
+  readonly playerVisible?: boolean
+  readonly onPlayerVisibleChange?: (visible: boolean) => void
+  readonly background?: BackgroundController
+
+  readonly toolsButtonVisible?: boolean
+  readonly onToolsButtonVisibleChange?: (visible: boolean) => void
+  readonly memoryAssistVisible?: boolean
+  readonly onMemoryAssistVisibleChange?: (visible: boolean) => void
   readonly tourButtonVisible?: boolean
   readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly activity?: PActivity

@@ -83,7 +83,13 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
       <Show
         when={props.appearance === 'icon' ? props.selectedIcon : undefined}
         fallback={
-          <Select.Value<PSelectOption<TValue>> class="min-w-0 break-words whitespace-normal">
+          <Select.Value<PSelectOption<TValue>>
+            class={
+              props.appearance === 'detailed'
+                ? 'min-w-0 flex-1 truncate text-left'
+                : 'min-w-0 break-words whitespace-normal'
+            }
+          >
             {(state) =>
               props.multiple
                 ? (props.selectionLabel?.(state.selectedOptions()) ??
@@ -112,7 +118,10 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
       </Show>
     </Select.Trigger>
     <Select.Portal>
-      <Select.Content class={selectContentClasses({appearance: props.appearance})}>
+      <Select.Content
+        data-kb-top-layer=""
+        class={selectContentClasses({appearance: props.appearance})}
+      >
         <Show when={props.multiple ? props.clearLabel : undefined}>
           {(clearLabel) => (
             <button

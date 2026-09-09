@@ -50,6 +50,7 @@ export interface CreatePlayerOptions {
   readonly motionId?: string
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly parameterValues?: PuppetParameterValueMap
+  readonly resolution?: number
   readonly resizeTo?: HTMLElement
   readonly viewportPadding?: number
 }
@@ -262,12 +263,8 @@ const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): RuntimePa
     return [{mask, mesh, sourcePartId: sourcePlan.partId}]
   })
 
-  const effect = meshes.some((mesh) => mesh.mask !== undefined)
-    ? new AlphaMask({mask: container})
-    : undefined
-  if (effect !== undefined) {
-    effect.channel = 'alpha'
-  }
+  const effect = new AlphaMask({mask: container})
+  effect.channel = 'alpha'
   return {container, effect, meshes}
 }
 
@@ -398,7 +395,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     backgroundAlpha: 0,
     canvas: options.canvas,
     height: options.document.viewport.height,
-    resolution: Math.min(window.devicePixelRatio, 2),
+    resolution: options.resolution ?? Math.min(window.devicePixelRatio, 2),
     width: options.document.viewport.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
   })

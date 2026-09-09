@@ -5,8 +5,8 @@ import {setMaskTarget} from '../mask-targets'
 test('should add and remove a target without changing other masks or the source', () => {
   const document = createDemoDocument()
   const next = setMaskTarget({
-    document,
     checked: true,
+    document,
     maskPartId: 'shape-circle',
     targetPartId: 'shape-diamond',
   })!
@@ -17,8 +17,8 @@ test('should add and remove a target without changing other masks or the source'
     document.parts.find((part) => part.id === 'shape-circle'),
   )
   const removed = setMaskTarget({
-    document: next,
     checked: false,
+    document: next,
     maskPartId: 'shape-circle',
     targetPartId: 'shape-diamond',
   })!
@@ -32,7 +32,7 @@ test('should reject self references, cycles, and missing targets', () => {
   const document = createDemoDocument()
   for (const targetPartId of ['shape-circle', 'mesh-preview', 'missing']) {
     expect(
-      setMaskTarget({document, checked: true, maskPartId: 'shape-circle', targetPartId}),
+      setMaskTarget({checked: true, document, maskPartId: 'shape-circle', targetPartId}),
     ).toBeUndefined()
   }
 })
@@ -53,8 +53,8 @@ test('should respect source locks and inherited target locks', () => {
     expect(
       setMaskTarget({
         document,
-        maskPartId: 'mesh-preview',
         checked: false,
+        maskPartId: 'mesh-preview',
         targetPartId: 'shape-diamond',
       }),
     ).toBeUndefined()

@@ -1,4 +1,4 @@
-import {Button} from '@kobalte/core/button'
+import {EditorButton} from '../../design-system'
 
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetParameterBinding} from '../../player/document'
@@ -22,7 +22,7 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
     <header class="keyform-toolbar">
       <div class="keyform-parameter-heading">
         <span id={props.titleId}>Parameters</span>
-        <Button
+        <EditorButton
           aria-label="1차원 Parameter 추가"
           class="panel-add-button"
           disabled={
@@ -32,8 +32,8 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
           onClick={() => props.onParameterAdd?.()}
         >
           <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 1D
-        </Button>
-        <Button
+        </EditorButton>
+        <EditorButton
           aria-label="2차원 Parameter 추가"
           class="panel-add-button"
           disabled={
@@ -44,24 +44,24 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
           onClick={() => props.onTwoDimensionalParameterAdd?.()}
         >
           <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 2D
-        </Button>
+        </EditorButton>
       </div>
       <div class="keyform-actions">
-        <Button
+        <EditorButton
           disabled={props.activeBinding === undefined || props.onKeyformAdd === undefined}
           type="button"
           onClick={() => props.onKeyformAdd?.()}
         >
           <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 현재 값에 키폼
-        </Button>
-        <Button
+        </EditorButton>
+        <EditorButton
           class="danger"
           disabled={!hasActiveKeyform() || props.onKeyformDelete === undefined}
           type="button"
           onClick={() => props.onKeyformDelete?.()}
         >
           선택 키폼 삭제
-        </Button>
+        </EditorButton>
       </div>
     </header>
   )

@@ -1,3 +1,5 @@
+import {hasValidSkinning} from './internal/parse-skinning'
+import {hasValidGlue} from './internal/parse-glue'
 import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
 import {
   PUPPET_DOCUMENT_FORMAT,
@@ -202,7 +204,10 @@ const isScene = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is Pup
     }
   }
 
-  return scenePartIds.size === parts.length
+  return (
+    scenePartIds.size === parts.length &&
+    hasValidSkinning(value.roots as ReadonlyArray<PuppetSceneNode>, parts)
+  )
 }
 
 const isParameterPartKeyform = (value: unknown): value is PuppetParameterPartKeyform =>
@@ -555,6 +560,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
   const parameterBindings = value.parameterBindings ?? []
 
   return (
+    hasValidGlue(value.glue, value.parts) &&
     hasUniqueIds(value.parts) &&
     hasValidPartMasks(value.parts) &&
     hasUniqueIds(value.motions) &&

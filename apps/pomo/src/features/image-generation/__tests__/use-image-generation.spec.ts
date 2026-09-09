@@ -1,8 +1,9 @@
 /** @vitest-environment jsdom */
-import {useModelDownload} from 'src/features/model-download'
+import {type ModelDownloadItem, useModelDownload} from 'src/features/model-download'
 import {createModelDownloadController} from 'src/features/model-download/controller'
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
+import {createSignal} from 'solid-js'
 import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {runImageGeneration} from '../client'
@@ -83,4 +84,42 @@ it('should surface a failure and allow another generation', async () => {
   expect(result.error()).toBe(null)
   expect(result.result()?.prompt).toBe('A hamburger')
   expect(result.busy()).toBe(false)
+})
+
+it('should report its model download progress and restore inference status afterward', async () => {
+  const controller = createModelDownloadController()
+  const [items, setItems] = createSignal<readonly ModelDownloadItem[]>([])
+  vi.spyOn(controller, 'downloads').mockImplementation(items)
+  vi.mocked(useModelDownload).mockReturnValue(controller)
+  const {result} = renderHook(useImageGeneration)
+  const pending = Promise.withResolvers<{blob: Blob; prompt: string}>()
+  vi.mocked(runImageGeneration).mockReturnValue(pending.promise)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('산책')
+  result.setSeed('123')
+  setItems([
+    {label: 'Voice', percentage: 90, status: 'loading', target: {kind: 'voice', modelId: 'full'}},
+    {
+      label: 'Bonsai',
+      percentage: 15,
+      status: 'loading',
+      target: {kind: 'image', modelId: 'ternary'},
+    },
+  ])
+  const task = result.generate()
+  expect(result.status()).toContain('Bonsai')
+  expect(result.percentage()).toBe(15)
+  vi.mocked(runImageGeneration).mock.lastCall![0].onUpdate({
+    label: '이미지 생성 중',
+    percentage: 25,
+    type: 'progress',
+  })
+  setItems([])
+  expect(result.status()).toBe('이미지 생성 중')
+  expect(result.percentage()).toBe(25)
+  result.stop()
+  expect(result.status()).toBe('생성을 중지했어요.')
+  expect(result.percentage()).toBeUndefined()
+  pending.resolve({blob: new Blob(['png']), prompt: 'A walk'})
+  await task
 })

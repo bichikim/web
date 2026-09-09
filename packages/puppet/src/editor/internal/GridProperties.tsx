@@ -1,6 +1,6 @@
 import {Show} from 'solid-js'
 import type {PuppetSceneDeformerNode} from '../../player'
-import {EditorNumberField} from './EditorNumberField'
+import {EditorNumberField} from '../../design-system'
 import {MAXIMUM_GRID_DIVISIONS, MINIMUM_GRID_DIVISIONS} from './grid-control-points'
 
 interface GridPropertiesProps {

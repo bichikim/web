@@ -12,7 +12,7 @@ interface PlayerIconProps {
 export const PlayerIcon = (props: PlayerIconProps) => (
   <span
     aria-hidden="true"
-    class={cx(getPomoIconClass(props.icon, props.sceneStyle), props.size)}
+    class={cx(getPomoIconClass(props.icon, props.sceneStyle), props.size, 'flex-none')}
     slot={props.slot}
   />
 )
