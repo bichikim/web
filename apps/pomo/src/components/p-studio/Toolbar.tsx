@@ -1,3 +1,4 @@
+import type {BackgroundController} from 'src/features/background'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {useToolbarWrap} from './use-toolbar-wrap'
@@ -31,6 +32,7 @@ import {PButton} from '../PButton'
 import {PTools} from '../PTools'
 
 interface SceneToolbarProps {
+  readonly background?: BackgroundController
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
   readonly toolsButtonVisible?: boolean
@@ -100,6 +102,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         </Show>
         <div class="inline-flex" data-tour-step="settings">
           <SceneSettingsPanel
+            background={props.background}
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}
             toolsButtonVisible={props.toolsButtonVisible}

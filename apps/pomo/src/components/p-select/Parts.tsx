@@ -118,7 +118,10 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
       </Show>
     </Select.Trigger>
     <Select.Portal>
-      <Select.Content class={selectContentClasses({appearance: props.appearance})}>
+      <Select.Content
+        data-kb-top-layer=""
+        class={selectContentClasses({appearance: props.appearance})}
+      >
         <Show when={props.multiple ? props.clearLabel : undefined}>
           {(clearLabel) => (
             <button

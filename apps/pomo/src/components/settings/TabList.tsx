@@ -8,6 +8,7 @@ const getItems = () =>
       label: m.settings_tab_general(),
       value: 'general',
     },
+    {icon: 'i-tabler-photo', label: m.settings_tab_background(), value: 'background'},
     {icon: 'i-tabler-bolt', label: m.settings_tab_events(), value: 'events'},
     {icon: 'i-tabler-rss', label: m.settings_tab_feeds(), value: 'feeds'},
     {

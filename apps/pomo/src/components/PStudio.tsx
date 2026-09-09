@@ -1,3 +1,5 @@
+import {type BackgroundController, useBackground} from '../features/background'
+import {Player as FramePlayer} from './frame/Player'
 import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
 
 import {
@@ -11,8 +13,8 @@ import {
 } from '../features/focus-room-animation'
 import {usePEvents} from '../features/focus-room-dialogue/event-context'
 import {
-  usePDisplayPreferences,
   type PDisplayPreferencesController,
+  usePDisplayPreferences,
 } from '../features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import type {PViseme} from '../features/lip-sync'
@@ -104,6 +106,7 @@ const createLoadingHandler =
   }
 
 interface StudioSceneViewProps {
+  readonly background: BackgroundController
   readonly activity: PActivity
   readonly activeViseme: PViseme
   readonly hasSceneRendered: boolean
@@ -121,32 +124,39 @@ interface StudioSceneViewProps {
 }
 
 const StudioSceneView = (props: StudioSceneViewProps) => (
-  <figure
-    aria-label={props.scene.label}
-    class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
-    role="img"
-  >
-    <Show when={!props.hasSceneRendered}>
-      <PSceneFallback />
+  <Show when={props.background.ready() || props.background.error() !== null}>
+    <Show
+      when={props.background.preferences().mode === 'character'}
+      fallback={<FramePlayer background={props.background} />}
+    >
+      <figure
+        aria-label={props.scene.label}
+        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
+        role="img"
+      >
+        <Show when={!props.hasSceneRendered}>
+          <PSceneFallback />
+        </Show>
+        <Show when={props.isReady && props.styleReady}>
+          <PStudioScene
+            activity={props.activity}
+            depthSource={props.scene.depthSource}
+            gaze={props.sceneGaze}
+            motionInput={props.motionInput}
+            motionMode={props.motionMode}
+            onLoadingChange={props.onLoadingChange}
+            onMotionInputChange={props.onMotionInputChange}
+            source={props.scene.source}
+            sceneId={props.scene.id}
+            sceneStyle={props.sceneStyle}
+            time={props.time}
+            viseme={props.activeViseme}
+            weatherCondition={props.weatherCondition}
+          />
+        </Show>
+      </figure>
     </Show>
-    <Show when={props.isReady && props.styleReady}>
-      <PStudioScene
-        activity={props.activity}
-        depthSource={props.scene.depthSource}
-        gaze={props.sceneGaze}
-        motionInput={props.motionInput}
-        motionMode={props.motionMode}
-        onLoadingChange={props.onLoadingChange}
-        onMotionInputChange={props.onMotionInputChange}
-        source={props.scene.source}
-        sceneId={props.scene.id}
-        sceneStyle={props.sceneStyle}
-        time={props.time}
-        viseme={props.activeViseme}
-        weatherCondition={props.weatherCondition}
-      />
-    </Show>
-  </figure>
+  </Show>
 )
 
 interface StudioOverlayProps {
@@ -236,18 +246,34 @@ const useStudioRuntime = (options: StudioRuntimeOptions) => {
   })
 }
 
+const useStudioViseme = (
+  events: ReturnType<typeof usePEvents>,
+  pomoSay: ReturnType<typeof usePSay>,
+) => {
+  const viseme = createMemo(() =>
+    resolvePSceneViseme(
+      events.activeViseme(),
+      events.isDialoguePlaying(),
+      pomoSay.speechText(),
+      pomoSay.activeViseme(),
+    ),
+  )
+  return viseme
+}
+
 const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
   get memoryAssistVisible() {
     return preferences.memoryAssistVisible()
   },
+  onMemoryAssistVisibleChange: preferences.onMemoryAssistVisibleChange,
   get toolsButtonVisible() {
     return preferences.toolsButtonVisible()
   },
-  onMemoryAssistVisibleChange: preferences.onMemoryAssistVisibleChange,
   onToolsButtonVisibleChange: preferences.onToolsButtonVisibleChange,
 })
 
 export const PStudio = () => {
+  const background = useBackground()
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
@@ -286,14 +312,7 @@ export const PStudio = () => {
   const selectedScene = createMemo(() =>
     getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), sceneStyle()),
   )
-  const activeViseme = createMemo(() =>
-    resolvePSceneViseme(
-      events.activeViseme(),
-      events.isDialoguePlaying(),
-      pomoSay.speechText(),
-      pomoSay.activeViseme(),
-    ),
-  )
+  const activeViseme = useStudioViseme(events, pomoSay)
   const handleLoadingChange = createLoadingHandler(setIsSceneLoading, setHasSceneRendered)
   const handleEntry = () => {
     if (entry.enter()) {
@@ -314,6 +333,7 @@ export const PStudio = () => {
       style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
     >
       <StudioSceneView
+        background={background}
         activity={scenePreferences.activity()}
         activeViseme={activeViseme()}
         hasSceneRendered={hasSceneRendered()}
@@ -344,12 +364,17 @@ export const PStudio = () => {
           />
           <Show when={scenePreferences.isReady()}>
             <SceneToolbar
+              background={background}
               {...toolbarVisibility(displayPreferences)}
               activity={scenePreferences.activity()}
               canUseGyroscope={canUseGyroscope()}
               dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
               gaze={sceneGaze()}
-              isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
+              isSceneTransitioning={
+                background.preferences().mode === 'character' &&
+                isSceneLoading() &&
+                hasSceneRendered()
+              }
               onActivityChange={scenePreferences.onActivityChange}
               onDialogueComposerVisibleChange={displayPreferences.onDialogueComposerVisibleChange}
               onGazeChange={scenePreferences.onGazeChange}

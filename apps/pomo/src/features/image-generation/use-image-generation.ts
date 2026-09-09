@@ -1,5 +1,5 @@
-import {useModelDownload} from '../model-download'
-import {createSignal, onCleanup} from 'solid-js'
+import {type ModelDownloadItem, useModelDownload} from '../model-download'
+import {createMemo, createSignal, onCleanup} from 'solid-js'
 import {type TextModelId} from '../text-generation'
 import {runImageGeneration} from './client'
 import {useImageSupport} from './use-support'
@@ -29,6 +29,20 @@ const parseSeed = (text: string) => {
   return text === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : Number(text)
 }
 
+interface DownloadProgressOptions {
+  readonly items: readonly ModelDownloadItem[]
+  readonly modelId: TextModelId
+  readonly variant: ImageVariant
+}
+
+const selectDownload = (options: DownloadProgressOptions) =>
+  options.items.find(
+    (item) =>
+      item.status === 'loading' &&
+      ((item.target.kind === 'image' && item.target.modelId === options.variant) ||
+        (item.target.kind === 'text' && item.target.modelId === options.modelId)),
+  )
+
 export type ImageGenerationController = ReturnType<typeof useImageGeneration>
 
 export const useImageGeneration = () => {
@@ -49,6 +63,12 @@ export const useImageGeneration = () => {
   const [result, setResult] = createSignal<ImageResult | null>(null)
   let controller: AbortController | null = null
   let disposed = false
+
+  const downloadProgress = createMemo(() =>
+    busy()
+      ? selectDownload({items: downloads.downloads(), modelId: modelId(), variant: variant()})
+      : undefined,
+  )
 
   const supported = useImageSupport({onStatus: setStatus})
 
@@ -147,7 +167,10 @@ export const useImageGeneration = () => {
     height,
     idea,
     modelId,
-    percentage,
+    percentage: () => {
+      const download = downloadProgress()
+      return download?.status === 'loading' ? download.percentage : percentage()
+    },
     prompt,
     randomizeSeed: () => setSeed(String(crypto.getRandomValues(new Uint32Array(1))[0])),
     result,
@@ -165,7 +188,10 @@ export const useImageGeneration = () => {
     setStyle,
     setVariant,
     setWidth,
-    status,
+    status: () => {
+      const download = downloadProgress()
+      return download === undefined ? status() : `${download.label} 모델을 내려받고 있어요`
+    },
     steps,
     stop,
     style,

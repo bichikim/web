@@ -1,3 +1,4 @@
+import type {BackgroundController} from 'src/features/background'
 import type {PSceneMotionInput, PSceneMotionMode} from '../../../features/focus-room-animation'
 import type {PSceneStyle} from '../../../features/focus-room-animation/scene-style'
 import type {PActivity, PGaze} from '../../../features/focus-room-scene-preferences'
@@ -14,6 +15,8 @@ export const CLASSES = {
 } as const
 
 export interface PSettingsProps {
+  readonly background?: BackgroundController
+
   readonly toolsButtonVisible?: boolean
   readonly onToolsButtonVisibleChange?: (visible: boolean) => void
   readonly memoryAssistVisible?: boolean

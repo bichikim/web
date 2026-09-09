@@ -162,6 +162,7 @@ it('should expose the guide and credits as the final settings tabs', async () =>
   expect(tabsRootProps?.value).toBe('general')
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '일반',
+    '배경',
     '이벤트',
     '피드',
     '대화',

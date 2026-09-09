@@ -1,3 +1,4 @@
+import {Background} from './background/Background'
 import {Tabs} from '@kobalte/core/tabs'
 import type {ScreenWakeLockController} from '../../features/screen-wake-lock'
 import {UserSettings} from '../UserSettings'
@@ -18,6 +19,9 @@ export const PSettingsContent = (props: PSettingsContentProps) => {
     <>
       <Tabs.Content value="general">
         <PGeneralSettings {...props} wakeLock={props.wakeLock} />
+      </Tabs.Content>
+      <Tabs.Content value="background">
+        <Background {...props} />
       </Tabs.Content>
       <PGuideSettings />
       <PCreditsSettings />

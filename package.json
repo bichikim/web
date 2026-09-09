@@ -66,6 +66,7 @@
     "cpx2": "^8.0.2",
     "eslint-plugin-solid": "^0.14.5",
     "eslint-plugin-sort-export-all": "^2.1.0",
+    "fake-indexeddb": "^6.2.5",
     "flush-promises": "^1.0.2",
     "happy-dom": "^20.9.0",
     "jsdom": "^26.1.0",

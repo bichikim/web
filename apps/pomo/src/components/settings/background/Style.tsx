@@ -7,9 +7,9 @@ import {
 } from '../../../features/localization'
 import * as m from '@paraglide/message'
 import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from '../../pomo-scene-options'
-import {CLASSES, type PSettingsProps} from './shared'
+import {CLASSES, type PSettingsProps} from '../general/shared'
 
-export const PGeneralStyleSettings = (props: PSettingsProps) => (
+export const Style = (props: PSettingsProps) => (
   <section aria-label={m.settings_section_style()} class={CLASSES.settingsSection}>
     <div class={CLASSES.settingsGrid}>
       <PSwitch

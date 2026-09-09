@@ -10,9 +10,6 @@ vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/display-theme', () => ({useDisplayTheme: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 vi.mock('src/components/PHealthCheck', () => ({PHealthCheck: vi.fn()}))
-vi.mock('../Scene', () => ({PGeneralSceneSettings: vi.fn()}))
-vi.mock('../Style', () => ({PGeneralStyleSettings: vi.fn()}))
-vi.mock('../Weather', () => ({PGeneralWeatherSettings: vi.fn()}))
 vi.mock('../Display', () => ({PGeneralDisplaySettings: vi.fn()}))
 beforeEach(() => {
   vi.clearAllMocks()
@@ -102,4 +99,10 @@ it('should show health checks in the production web runtime', () => {
 
   expect(screen.getByText('헬스 체크 진단')).toBeInTheDocument()
   vi.unstubAllEnvs()
+})
+
+it('should keep character and weather controls out of the general tab', () => {
+  render(() => <PGeneralSettings wakeLock={useScreenWakeLock()} />)
+  expect(screen.queryByText('시간')).not.toBeInTheDocument()
+  expect(screen.queryByText('창문 날씨 표시')).not.toBeInTheDocument()
 })
