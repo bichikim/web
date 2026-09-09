@@ -2,6 +2,7 @@ import type {PTrack} from '../../features/focus-room-audio'
 import type {PSceneStyle} from '../../features/focus-room-animation'
 
 export interface PMusicPlayerContentProps {
+  readonly stopOnUnmount?: boolean
   readonly expanded?: boolean
   readonly isDialogueActive?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void

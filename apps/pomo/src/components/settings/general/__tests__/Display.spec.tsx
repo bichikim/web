@@ -243,3 +243,24 @@ it('should show both toolbar toggles enabled by default and emit hidden choices'
     expect(change).toHaveBeenCalledWith(false)
   }
 })
+
+it('should expose independent player and Pomodoro switches', () => {
+  const player = vi.fn()
+  const pomodoro = vi.fn()
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onPlayerVisibleChange={player}
+      onPomodoroVisibleChange={pomodoro}
+      pomodoroVisible={false}
+    />
+  ))
+  const playerSwitch = screen.getByRole('button', {name: '플레이어 표시'})
+  const pomodoroSwitch = screen.getByRole('button', {name: '뽀모도로 표시'})
+  expect(playerSwitch).toHaveAttribute('aria-pressed', 'true')
+  expect(pomodoroSwitch).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.click(playerSwitch)
+  fireEvent.click(pomodoroSwitch)
+  expect(player).toHaveBeenCalledWith(false)
+  expect(pomodoro).toHaveBeenCalledWith(true)
+})

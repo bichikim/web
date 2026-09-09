@@ -1,4 +1,9 @@
 {
+  "settings_player_visible": "Show player",
+  "settings_player_visible_description": "Turning this off stops music playback.",
+  "settings_pomodoro_visible": "Show Pomodoro",
+  "settings_pomodoro_visible_description": "Turning this off stops the timer.",
+
   "settings_tour_button_visible": "Show tour button",
   "settings_tour_button_visible_description": "Show the tour button on the focus screen to explore app features.",
   "app_return": "Back to app",

@@ -23,6 +23,8 @@ import {useChildPresence} from './use-child-presence'
 import {useMobileLayout} from './use-mobile-layout'
 
 interface PStudioEventsProps {
+  readonly pomodoroVisible?: boolean
+  readonly playerVisible?: boolean
   readonly dialogueComposerVisible: boolean
   readonly isPlayerExpanded: boolean
   readonly onMusicPlayingChange: (isPlaying: boolean) => void
@@ -69,11 +71,14 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
 
   return (
     <>
-      <PPomodoro
-        onEvents={handlePomodoroEvents}
-        onPresentationChange={props.onPomodoroPresentationChange}
-        sceneStyle={props.sceneStyle}
-      />
+      <Show when={props.pomodoroVisible ?? true}>
+        <PPomodoro
+          stopOnUnmount={props.pomodoroVisible === false}
+          onEvents={handlePomodoroEvents}
+          onPresentationChange={props.onPomodoroPresentationChange}
+          sceneStyle={props.sceneStyle}
+        />
+      </Show>
       <div
         class={CLASSES.mediaDock}
         data-dialogue-active={isDialoguePresented() ? '' : undefined}
@@ -87,14 +92,17 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
               onSubmit={oneOffChat.submit}
             />
           </Show>
-          <PMusicPlayer
-            expanded={props.isPlayerExpanded}
-            isDialogueActive={events.isDialoguePlaying() || props.pomoSay.isPlaying()}
-            onPlayingChange={props.onMusicPlayingChange}
-            onExpandedChange={props.onPlayerExpandedChange}
-            onTrackChange={props.onTrackChange}
-            sceneStyle={props.sceneStyle}
-          />
+          <Show when={props.playerVisible ?? true}>
+            <PMusicPlayer
+              stopOnUnmount={props.playerVisible === false}
+              expanded={props.isPlayerExpanded}
+              isDialogueActive={events.isDialoguePlaying() || props.pomoSay.isPlaying()}
+              onPlayingChange={props.onMusicPlayingChange}
+              onExpandedChange={props.onPlayerExpandedChange}
+              onTrackChange={props.onTrackChange}
+              sceneStyle={props.sceneStyle}
+            />
+          </Show>
         </div>
         <div class={CLASSES.mediaMessages} ref={setMediaMessages}>
           <Show when={oneOffChat.errorMessage()}>

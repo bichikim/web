@@ -160,6 +160,7 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
 )
 
 interface StudioOverlayProps {
+  readonly displayPreferences: PDisplayPreferencesController
   readonly desktopMode: DesktopMode
   readonly entryVisible: boolean
   readonly hasEntered: boolean
@@ -189,10 +190,12 @@ const StudioOverlay = (props: StudioOverlayProps) => (
         !isDesktopBackgroundMode(props.desktopMode) &&
         props.screenSaver.isActive()
       }
-      isMusicPlaying={props.screenSaver.isMusicPlaying()}
+      isMusicPlaying={
+        props.displayPreferences.playerVisible() && props.screenSaver.isMusicPlaying()
+      }
       onDismiss={props.screenSaver.onDismiss}
-      timer={props.screenSaver.timer()}
-      track={props.screenSaver.currentTrack()}
+      timer={props.displayPreferences.pomodoroVisible() ? props.screenSaver.timer() : undefined}
+      track={props.displayPreferences.playerVisible() ? props.screenSaver.currentTrack() : null}
     />
   </>
 )
@@ -266,10 +269,18 @@ const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
     return preferences.memoryAssistVisible()
   },
   onMemoryAssistVisibleChange: preferences.onMemoryAssistVisibleChange,
+  onPlayerVisibleChange: preferences.onPlayerVisibleChange,
+  onPomodoroVisibleChange: preferences.onPomodoroVisibleChange,
+  onToolsButtonVisibleChange: preferences.onToolsButtonVisibleChange,
+  get playerVisible() {
+    return preferences.playerVisible()
+  },
+  get pomodoroVisible() {
+    return preferences.pomodoroVisible()
+  },
   get toolsButtonVisible() {
     return preferences.toolsButtonVisible()
   },
-  onToolsButtonVisibleChange: preferences.onToolsButtonVisibleChange,
 })
 
 export const PStudio = () => {
@@ -293,27 +304,25 @@ export const PStudio = () => {
   const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
   const displayPreferences = usePDisplayPreferences()
   const scenePreferences = usePScenePreferences()
-  const sceneStyleController = usePSceneStyle()
+  const style = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(scenePreferences.timeMode(), automaticPeriod()))
   const sceneGaze = useDialogueSceneGaze(
     scenePreferences.gaze,
     events.isDialoguePlaying,
     pomoSay.isPlaying,
   )
-  const {sceneStyle} = sceneStyleController
   useStudioDesktopSceneSettings({
     scenePreferences,
-    sceneStyleController,
+    sceneStyleController: style,
     screenSaver,
     setMotionInput,
     setMotionMode,
     weather,
   })
   const selectedScene = createMemo(() =>
-    getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), sceneStyle()),
+    getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), style.sceneStyle()),
   )
   const activeViseme = useStudioViseme(events, pomoSay)
-  const handleLoadingChange = createLoadingHandler(setIsSceneLoading, setHasSceneRendered)
   const handleEntry = () => {
     if (entry.enter()) {
       setIsTourHintVisible(true)
@@ -324,7 +333,6 @@ export const PStudio = () => {
     tour.setIsOpen(true)
   }
   useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
-
   return (
     <section
       aria-label="Pomo"
@@ -340,19 +348,20 @@ export const PStudio = () => {
         isReady={scenePreferences.isReady()}
         motionInput={motionInput()}
         motionMode={motionMode()}
-        onLoadingChange={handleLoadingChange}
+        onLoadingChange={createLoadingHandler(setIsSceneLoading, setHasSceneRendered)}
         onMotionInputChange={setMotionInput}
         scene={selectedScene()}
         sceneGaze={sceneGaze()}
-        sceneStyle={sceneStyleController.sceneStyle()}
-        styleReady={sceneStyleController.isReady()}
+        sceneStyle={style.sceneStyle()}
+        styleReady={style.isReady()}
         time={time()}
         weatherCondition={weather.sceneCondition()}
       />
-
       <div class={CLASSES.ui} hidden={!hasEntered() || desktopMode.mode() === 'desktop'}>
         <Show when={hasEntered() && desktopMode.mode() !== 'desktop'}>
           <PStudioEvents
+            pomodoroVisible={displayPreferences.isReady() && displayPreferences.pomodoroVisible()}
+            playerVisible={displayPreferences.isReady() && displayPreferences.playerVisible()}
             dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
             isPlayerExpanded={isPlayerExpanded()}
             onMusicPlayingChange={screenSaver.onMusicPlayingChange}
@@ -360,7 +369,7 @@ export const PStudio = () => {
             onPomodoroPresentationChange={screenSaver.onPomodoroPresentationChange}
             onTrackChange={screenSaver.onTrackChange}
             pomoSay={pomoSay}
-            sceneStyle={sceneStyleController.sceneStyle()}
+            sceneStyle={style.sceneStyle()}
           />
           <Show when={scenePreferences.isReady()}>
             <SceneToolbar
@@ -381,7 +390,7 @@ export const PStudio = () => {
               onMotionInputChange={setMotionInput}
               onMotionModeChange={setMotionMode}
               onScreenSaverDelayChange={screenSaver.onDelayChange}
-              onSceneStyleChange={sceneStyleController.onSceneStyleChange}
+              onSceneStyleChange={style.onSceneStyleChange}
               onTimeModeChange={scenePreferences.onTimeModeChange}
               onTourOpen={handleTourOpen}
               tourButtonVisible={displayPreferences.tourButtonVisible()}
@@ -390,7 +399,7 @@ export const PStudio = () => {
               onWeatherLocationChange={weather.onLocationChange}
               onWeatherSceneModeChange={weather.onSceneModeChange}
               screenSaverDelay={screenSaver.delay()}
-              sceneStyle={sceneStyleController.sceneStyle()}
+              sceneStyle={style.sceneStyle()}
               motionInput={motionInput()}
               motionMode={motionMode()}
               timeMode={scenePreferences.timeMode()}
@@ -411,6 +420,7 @@ export const PStudio = () => {
       </Show>
       <SceneModelDownloadFallback isVisible={!hasEntered() || !scenePreferences.isReady()} />
       <StudioOverlay
+        displayPreferences={displayPreferences}
         desktopMode={desktopMode.mode()}
         entryVisible={entry.isVisible()}
         hasEntered={hasEntered()}

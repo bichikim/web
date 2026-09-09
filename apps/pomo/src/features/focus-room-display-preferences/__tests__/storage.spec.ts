@@ -20,6 +20,8 @@ vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 const visiblePreferences = {
   dialogueComposerVisible: true,
   memoryAssistVisible: true,
+  playerVisible: true,
+  pomodoroVisible: true,
   toolsButtonVisible: true,
   tourButtonVisible: true,
 } as const
@@ -174,6 +176,8 @@ it('should replace a stale browser copy with the native preferences', async () =
   const hiddenPreferences = {
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: true,
   } as const
@@ -201,6 +205,8 @@ it('should restore native state after a failed native save', async () => {
   const hiddenPreferences = {
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: true,
   } as const
@@ -221,6 +227,8 @@ it('should preserve a newer choice while native preferences are loading', async 
   let nativePreferences = JSON.stringify({
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: true,
   })
@@ -242,6 +250,8 @@ it('should preserve a newer choice while native preferences are loading', async 
     JSON.stringify({
       dialogueComposerVisible: false,
       memoryAssistVisible: true,
+      playerVisible: true,
+      pomodoroVisible: true,
       toolsButtonVisible: true,
       tourButtonVisible: true,
     }),
@@ -259,6 +269,8 @@ it('should preserve native write order during rapid preference changes', async (
   const hiddenPreferences = {
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: true,
   } as const
@@ -292,6 +304,8 @@ it('should keep the tour visible for preferences saved before the tour setting e
   await expect(harness.repository.read()).resolves.toEqual({
     dialogueComposerVisible: true,
     memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: true,
   })
@@ -302,12 +316,16 @@ it('should persist and restore a hidden tour button', async () => {
   await harness.repository.write({
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: false,
   })
   await expect(harness.repository.read()).resolves.toEqual({
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: false,
   })
@@ -324,17 +342,39 @@ it.each([false, true])(
       tourButtonVisible: true,
     })
     const legacy = await harness.repository.read()
+    expect(legacy.playerVisible).toBe(true)
+    expect(legacy.pomodoroVisible).toBe(true)
     expect(legacy.toolsButtonVisible).toBe(true)
     expect(legacy.memoryAssistVisible).toBe(true)
     await harness.repository.write({
       ...legacy,
       memoryAssistVisible: false,
+      playerVisible: true,
+      pomodoroVisible: true,
       toolsButtonVisible: false,
     })
     expect(await harness.repository.read()).toEqual({
       ...legacy,
       memoryAssistVisible: false,
+      playerVisible: true,
+      pomodoroVisible: true,
       toolsButtonVisible: false,
     })
   },
 )
+
+it.each([false, true])('should persist hidden widgets (native=%s)', async (native) => {
+  const harness = createStorageHarness()
+  harness.storage.isNative.mockReturnValue(native)
+  await harness.repository.write({
+    dialogueComposerVisible: false,
+    memoryAssistVisible: true,
+    playerVisible: false,
+    pomodoroVisible: false,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
+  await expect(harness.repository.read()).resolves.toEqual(
+    expect.objectContaining({playerVisible: false, pomodoroVisible: false}),
+  )
+})

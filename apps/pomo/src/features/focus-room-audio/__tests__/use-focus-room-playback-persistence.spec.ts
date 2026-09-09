@@ -157,3 +157,27 @@ it('should throttle progress persistence and ignore storage rejection', async ()
   expect(storageMocks.write).toHaveBeenCalledTimes(2)
   vi.useRealTimers()
 })
+
+it('should stop a pending restoration while preserving its position', () => {
+  const harness = createHarness()
+  harness.persistence.setPendingPosition({isPlaying: true, positionSeconds: 42, trackId: TRACK.id})
+  harness.persistence.persistStoppedPlayback()
+  expect(storageMocks.write).toHaveBeenCalledWith({
+    isPlaying: false,
+    positionSeconds: 42,
+    trackId: TRACK.id,
+  })
+  expect(harness.persistence.applyPendingPosition()).toBeNull()
+})
+
+it('should persist current playback as stopped independently of the playing accessor', () => {
+  const harness = createHarness()
+  harness.setTrack(TRACK)
+  harness.setAudio(createAudio(12, 60))
+  harness.persistence.persistStoppedPlayback()
+  expect(storageMocks.write).toHaveBeenCalledWith({
+    isPlaying: false,
+    positionSeconds: 12,
+    trackId: TRACK.id,
+  })
+})

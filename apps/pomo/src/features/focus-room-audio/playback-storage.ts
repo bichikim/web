@@ -10,6 +10,8 @@ import {
 
 const PLAYBACK_STORAGE_KEY = 'pomo:focus-room-playback:v1'
 const nativeWriter = createLatestNativeStorageWriter(PLAYBACK_STORAGE_KEY)
+let playbackRevision = 0
+let pendingStop: Promise<void> | null = null
 
 const storedPlaybackSchema = z.object({
   isPlaying: z.boolean().default(false),
@@ -65,8 +67,7 @@ const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | nu
   return {isPlaying, positionSeconds, trackId}
 }
 
-/** Reads the latest playback position saved by either the app or browser runtime. */
-export const readPPlayback = async (): Promise<PPlaybackState | null> => {
+const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
   const webPlayback = readWebPlayback()
 
   if (!hasNativeStorageBridge()) {
@@ -81,8 +82,35 @@ export const readPPlayback = async (): Promise<PPlaybackState | null> => {
   }
 }
 
+/** Reads playback after pending stop requests have settled. */
+export const readPPlayback = (): Promise<PPlaybackState | null> => {
+  const stopping = pendingStop
+  return stopping === null ? readStoredPlayback() : stopping.then(readStoredPlayback)
+}
+
+/** Stops saved playback without changing its track or position. */
+export const stopPPlayback = (): Promise<void> => {
+  const revision = (playbackRevision += 1)
+  const stopping = (pendingStop ?? Promise.resolve()).then(async () => {
+    const playback = await readStoredPlayback()
+    if (playback !== null && revision === playbackRevision) {
+      await writePPlayback({...playback, isPlaying: false})
+    }
+  })
+  const settled = stopping
+    .catch(() => undefined)
+    .then(() => {
+      if (pendingStop === settled) {
+        pendingStop = null
+      }
+    })
+  pendingStop = settled
+  return stopping
+}
+
 /** Persists playback until the host app or browser data is removed. */
 export const writePPlayback = async (state: PPlaybackState): Promise<void> => {
+  playbackRevision += 1
   const storedState = {...state, savedAt: Date.now()} satisfies StoredPlaybackState
   writeWebPlayback(storedState)
 

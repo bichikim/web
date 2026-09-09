@@ -10,6 +10,10 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
   )
   const [tourButtonVisible, setTourButtonVisible] = createSignal<boolean>(true)
   const [toolsButtonVisible, setToolsButtonVisible] = createSignal(true)
+  const [playerVisible, setPlayerVisible] = createSignal(true)
+  let playerRevision = 0
+  const [pomodoroVisible, setPomodoroVisible] = createSignal(true)
+  let pomodoroRevision = 0
   let toolsRevision = 0
   const [memoryAssistVisible, setMemoryAssistVisible] = createSignal(true)
   let memoryRevision = 0
@@ -18,9 +22,25 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
     writePDisplayPreferences({
       dialogueComposerVisible: dialogueComposerVisible(),
       memoryAssistVisible: memoryAssistVisible(),
+      playerVisible: playerVisible(),
+      pomodoroVisible: pomodoroVisible(),
       toolsButtonVisible: toolsButtonVisible(),
       tourButtonVisible: tourButtonVisible(),
     }).catch(globalThis.reportError)
+  }
+  const onPlayerVisibleChange = (visible: boolean) => {
+    playerRevision += 1
+    setPlayerVisible(visible)
+    if (isReady()) {
+      persist()
+    }
+  }
+  const onPomodoroVisibleChange = (visible: boolean) => {
+    pomodoroRevision += 1
+    setPomodoroVisible(visible)
+    if (isReady()) {
+      persist()
+    }
   }
   const onTourButtonVisibleChange = (visible: boolean) => {
     tourRevision += 1
@@ -57,6 +77,8 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
 
   onMount(() => {
     let active = true
+    const initialPlayerRevision = playerRevision
+    const initialPomodoroRevision = pomodoroRevision
     const initialToolsRevision = toolsRevision
     const initialMemoryRevision = memoryRevision
     const initialTourRevision = tourRevision
@@ -64,6 +86,12 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
 
     readPDisplayPreferences()
       .then((storedPreferences) => {
+        if (active && playerRevision === initialPlayerRevision) {
+          setPlayerVisible(storedPreferences.playerVisible)
+        }
+        if (active && pomodoroRevision === initialPomodoroRevision) {
+          setPomodoroVisible(storedPreferences.pomodoroVisible)
+        }
         if (active && toolsRevision === initialToolsRevision) {
           setToolsButtonVisible(storedPreferences.toolsButtonVisible)
         }
@@ -84,6 +112,8 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
         }
 
         const changedDuringRestore =
+          playerRevision !== initialPlayerRevision ||
+          pomodoroRevision !== initialPomodoroRevision ||
           toolsRevision !== initialToolsRevision ||
           memoryRevision !== initialMemoryRevision ||
           visibilityRevision !== initialVisibilityRevision ||
@@ -103,12 +133,16 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
   return {
     dialogueComposerVisible,
     isReady,
+    memoryAssistVisible,
     onDialogueComposerVisibleChange,
+    onMemoryAssistVisibleChange,
+    onPlayerVisibleChange,
+    onPomodoroVisibleChange,
     onToolsButtonVisibleChange,
     onTourButtonVisibleChange,
-    memoryAssistVisible,
+    playerVisible,
+    pomodoroVisible,
     toolsButtonVisible,
-    onMemoryAssistVisibleChange,
     tourButtonVisible,
   }
 }

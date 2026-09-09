@@ -31,6 +31,8 @@ const DISPLAY_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
 const displayPreferencesSchema = z.object({
   dialogueComposerVisible: z.boolean(),
   memoryAssistVisible: z.boolean().default(true),
+  playerVisible: z.boolean().default(true),
+  pomodoroVisible: z.boolean().default(true),
   toolsButtonVisible: z.boolean().default(true),
   tourButtonVisible: z.boolean().default(true),
 })
