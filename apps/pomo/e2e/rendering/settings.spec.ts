@@ -11,7 +11,7 @@ const captureSettings = async (page: Page, information: TestInfo, name: string) 
         .map((image) => image.decode()),
     )
   })
-  await expect(page).toHaveScreenshot(`${name}.png`, {animations: 'disabled'})
+  await expect.soft(page).toHaveScreenshot(`${name}.png`, {animations: 'disabled'})
   const current = information.outputPath(`${name}-current.png`)
   await page.screenshot({animations: 'disabled', path: current})
   await information.attach(name, {contentType: 'image/png', path: current})
