@@ -6,6 +6,24 @@ import {selectEventDialogues} from '../event-playback'
 import type {PDialogueRepository} from '../repository'
 import {DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE, FOCUS_ROOM_ENTRY_EVENT} from '../schema'
 
+const ENTRY_PLAYBACK_SESSION_KEY = 'pomo:focus-room-entry-playback:v1'
+
+const readPlaybackSession = (): boolean => {
+  try {
+    return sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY) !== null
+  } catch {
+    return false
+  }
+}
+
+const writePlaybackSession = (): void => {
+  try {
+    sessionStorage.setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
+  } catch {
+    // Storage restrictions must not prevent entry dialogue playback.
+  }
+}
+
 export interface CreateEntryEventPlaybackOptions {
   readonly eventDialogueIds: Accessor<EventDialogueIds>
   readonly eventPlaybackModes: Accessor<EventPlaybackModes>
@@ -33,7 +51,8 @@ export const createEntryEventPlayback = (
       hasStarted ||
       !hasEnteredFocusRoom() ||
       !options.isPlaybackEnabled() ||
-      repository === null
+      repository === null ||
+      readPlaybackSession()
     ) {
       return
     }
@@ -48,6 +67,7 @@ export const createEntryEventPlayback = (
     }
 
     hasStarted = true
+    writePlaybackSession()
     options.playback
       .playSequence(repository, {
         dialogueIds: selectedDialogueIds,

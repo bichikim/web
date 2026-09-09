@@ -9,6 +9,7 @@ vi.mock('../../features/focus-room-dialogue/repository', () => ({
 }))
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.clearAllMocks()
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:focus-room-dialogue')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
