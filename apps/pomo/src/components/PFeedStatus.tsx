@@ -82,6 +82,7 @@ const createFeedStatusActions = (
   const [isCheckingModel, setIsCheckingModel] = createSignal(false)
   const [isCancelling, setIsCancelling] = createSignal(false)
   const [isRetrying, setIsRetrying] = createSignal(false)
+  const [hasRetryError, setHasRetryError] = createSignal(false)
   const isRetryDisabled = () =>
     isCheckingModel() ||
     isRetrying() ||
@@ -97,6 +98,7 @@ const createFeedStatusActions = (
       await feeds.retryRecovery()
     } catch (error: unknown) {
       console.error('Failed to retry feed dialogues.', error)
+      setHasRetryError(true)
     } finally {
       setIsRetrying(false)
     }
@@ -106,6 +108,7 @@ const createFeedStatusActions = (
       return
     }
 
+    setHasRetryError(false)
     setIsCheckingModel(true)
     let missingDownloads: MissingModelDownloads
 
@@ -113,6 +116,7 @@ const createFeedStatusActions = (
       missingDownloads = await getMissingModelDownloads(feeds.recoveryJobs())
     } catch (error: unknown) {
       console.error('Failed to check feed dialogue models.', error)
+      setHasRetryError(true)
       return
     } finally {
       setIsCheckingModel(false)
@@ -177,6 +181,12 @@ const createFeedStatusActions = (
   }
 
   createEffect(() => {
+    if (feeds.recoveryJobs().length === 0) {
+      setHasRetryError(false)
+    }
+  })
+
+  createEffect(() => {
     if (downloadSize() !== null && isRetryDisabled()) {
       setDownloadSize(null)
     }
@@ -189,6 +199,7 @@ const createFeedStatusActions = (
     handleDelete,
     handleListenAll,
     handleRetry,
+    hasRetryError,
     isCancelling,
     isCheckingModel,
     isRetryDisabled,
@@ -250,7 +261,9 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
               <span aria-hidden="true" class="i-tabler-refresh size-5" />
               <span class={CLASSES.feedStatusCopy}>
                 <strong>{m.feed_incomplete_count({count: feeds.recoveryJobs().length})}</strong>
-                <small>{m.feed_retry_question()}</small>
+                <small>
+                  {actions.hasRetryError() ? m.feed_retry_failed() : m.feed_retry_question()}
+                </small>
               </span>
               <span class={CLASSES.feedStatusActions}>
                 <PButton
