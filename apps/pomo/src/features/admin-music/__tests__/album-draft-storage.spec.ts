@@ -22,6 +22,8 @@ afterEach(() => {
 const createStorage = () => {
   const covers = new Map<string, Blob>()
   const coverSavedAt = new Map<string, number>()
+  let draftSessionCoverId: string | null = null
+  let draftSessionUpdatedAt = 0
   let data: string | null = null
   const storage: AlbumDraftStorage = {
     deleteCover: vi.fn(async (id) => {
@@ -31,9 +33,16 @@ const createStorage = () => {
     deleteData: vi.fn(() => {
       data = null
     }),
-    deleteExpiredCovers: vi.fn(async ({expiresBefore, protectedId}) => {
+    deleteDraftSession: vi.fn(() => {
+      draftSessionCoverId = null
+      draftSessionUpdatedAt = 0
+    }),
+    deleteExpiredCovers: vi.fn(async ({expiresBefore, protectedId, sessionExpiresBefore}) => {
+      const activeSessionCoverId =
+        draftSessionUpdatedAt >= sessionExpiresBefore ? draftSessionCoverId : null
+
       for (const [id, savedAt] of coverSavedAt) {
-        if (savedAt < expiresBefore && id !== protectedId) {
+        if (savedAt < expiresBefore && id !== protectedId && id !== activeSessionCoverId) {
           covers.delete(id)
           coverSavedAt.delete(id)
         }
@@ -47,6 +56,10 @@ const createStorage = () => {
     }),
     writeData: vi.fn((nextData) => {
       data = nextData
+    }),
+    writeDraftSession: vi.fn(({coverDraftId, lastSeenAt}) => {
+      draftSessionCoverId = coverDraftId
+      draftSessionUpdatedAt = lastSeenAt
     }),
   }
 
@@ -73,6 +86,10 @@ describe('album draft data storage', () => {
     writeAlbumDraftData(draft, storage)
 
     expect(readAlbumDraftData(storage)).toEqual(draft)
+    expect(storage.writeDraftSession).toHaveBeenCalledWith({
+      coverDraftId: draft.coverDraftId,
+      lastSeenAt: expect.any(Number),
+    })
   })
 
   it('should ignore malformed stored metadata', () => {
@@ -88,6 +105,17 @@ describe('album draft data storage', () => {
     const storage = createStorage()
     const error = new Error('session unavailable')
     vi.mocked(storage.writeData).mockImplementationOnce(() => {
+      throw error
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    expect(writeAlbumDraftData(createDraft(), storage)).toEqual({error, success: false})
+  })
+
+  it('should report draft session reference write failures', () => {
+    const storage = createStorage()
+    const error = new Error('shared storage unavailable')
+    vi.mocked(storage.writeDraftSession).mockImplementationOnce(() => {
       throw error
     })
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
@@ -148,6 +176,7 @@ describe('album draft cover storage', () => {
     await deleteAlbumDraft(draft.coverDraftId, storage)
 
     expect(readAlbumDraftData(storage)).toBeNull()
+    expect(storage.deleteDraftSession).toHaveBeenCalledOnce()
     await expect(readAlbumDraftCover(draft.coverDraftId!, storage)).resolves.toBeNull()
   })
 

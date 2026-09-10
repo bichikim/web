@@ -1,5 +1,6 @@
 import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, onMount, type Setter} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 import {z} from 'zod'
 
 import {
@@ -20,9 +21,13 @@ import {validateAlbumCover} from './cover-upload'
 const getAlbumDraftStorage = () => import('./album-draft-storage')
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
 const COVER_SELECTION_ERROR = '커버 이미지를 선택하지 못했습니다.'
-
+const MILLISECONDS_PER_SECOND = 1000
+const SECONDS_PER_MINUTE = 60
+const MINUTES_PER_HOUR = 60
+const HOURS_PER_DAY = 24
+const DRAFT_SESSION_HEARTBEAT_MILLISECONDS =
+  HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 type UseAlbumDraftProps = AlbumCreationCallbacks
-
 const clearCoverPreview = (
   currentUrl: string | null,
   setCoverPreviewUrl: Setter<string | null>,
@@ -311,6 +316,7 @@ const applyRestoredDraft = (
 
 interface RegisterDraftRestorationOptions {
   readonly applyDraft: (restoredDraft: RestoredAlbumDraft | null) => void
+  readonly getCoverDraftId: () => string | null
   readonly getIsDisposed: () => boolean
   readonly onFinished: () => void
   readonly setIsRestoringDraft: Setter<boolean>
@@ -318,7 +324,41 @@ interface RegisterDraftRestorationOptions {
 }
 
 const registerDraftRestoration = (options: RegisterDraftRestorationOptions): void => {
+  let heartbeat: ReturnType<typeof setInterval> | null = null
+  const touchSession = (): void => {
+    getAlbumDraftStorage()
+      .then(({touchAlbumDraftSession}) => {
+        touchAlbumDraftSession(options.getCoverDraftId())
+      })
+      .catch((error: unknown) => {
+        console.warn('Failed to load the album draft storage.', error)
+      })
+  }
+  const releaseSession = (): void => {
+    getAlbumDraftStorage()
+      .then(({deleteAlbumDraftSession}) => {
+        deleteAlbumDraftSession()
+      })
+      .catch((error: unknown) => {
+        console.warn('Failed to load the album draft storage.', error)
+      })
+  }
+
+  onCleanup(() => {
+    if (heartbeat !== null) {
+      clearInterval(heartbeat)
+    }
+    releaseSession()
+  })
+
   onMount(async () => {
+    useEvent(window, 'pagehide', (event) => {
+      if (!event.persisted) {
+        releaseSession()
+      }
+    })
+    useEvent(window, 'pageshow', touchSession)
+
     try {
       const restoredDraft = await restoreAlbumDraft()
 
@@ -342,6 +382,7 @@ const registerDraftRestoration = (options: RegisterDraftRestorationOptions): voi
       options.onFinished()
       if (!options.getIsDisposed()) {
         options.setIsRestoringDraft(false)
+        heartbeat = setInterval(touchSession, DRAFT_SESSION_HEARTBEAT_MILLISECONDS)
       }
     }
   })
@@ -461,6 +502,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
 
       persistRestoredEdits(editedFields, draftPersistence.persist)
     },
+    getCoverDraftId: coverDraftId,
     getIsDisposed: () => lifecycle.disposed,
     onFinished: restorationBarrier.finish,
     setIsRestoringDraft,
