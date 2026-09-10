@@ -43,13 +43,16 @@ describe('scene motion', () => {
     expect(supportsPSceneGyroscope()).toBe(false)
   })
 
-  it('should detect the global sensor API when the Window object does not expose it', () => {
-    const browserWindow = {
-      matchMedia: vi.fn(() => ({matches: true})),
+  it('should use injected sensor availability', () => {
+    const environment = {
+      getSensor: () => ({}),
+      window,
     }
-    vi.stubGlobal('window', browserWindow)
-    vi.stubGlobal('DeviceOrientationEvent', class extends Event {})
-
-    expect(supportsPSceneGyroscope()).toBe(true)
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({matches: true})),
+    )
+    expect(supportsPSceneGyroscope(environment)).toBe(true)
+    expect(supportsPSceneGyroscope({...environment, getSensor: () => null})).toBe(false)
   })
 })
