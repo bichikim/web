@@ -11,6 +11,56 @@ import {PModalTabList} from '../PModalTabList'
 
 afterEach(() => vi.restoreAllMocks())
 
+it.each([false, true, undefined])(
+  'should honor closeOnEscape=%s after switching tabs and preserve the close button',
+  async (closeOnEscape) => {
+    const onOpenChange = vi.fn()
+    render(() => (
+      <Tabs defaultValue="general">
+        <PModal
+          closeOnEscape={closeOnEscape}
+          isOpen
+          navigation={
+            <PModalTabList
+              accessibleLabel="Settings tabs"
+              items={[
+                {icon: 'i-tabler-settings', label: 'General', value: 'general'},
+                {icon: 'i-tabler-photo', label: 'Background', value: 'background'},
+              ]}
+            />
+          }
+          onOpenChange={onOpenChange}
+          title="Settings"
+        >
+          <Tabs.Content value="general">General content</Tabs.Content>
+          <Tabs.Content value="background">Background content</Tabs.Content>
+        </PModal>
+      </Tabs>
+    ))
+
+    const backgroundTab = screen.getByRole('tab', {name: 'Background'})
+    fireEvent.click(backgroundTab)
+    await waitFor(() => expect(backgroundTab).toHaveAttribute('aria-selected', 'true'))
+    backgroundTab.focus()
+    fireEvent.keyDown(backgroundTab, {key: 'Escape'})
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    const closeButton = screen.getByRole('button', {name: m.common_close()})
+    closeButton.focus()
+    fireEvent.keyDown(closeButton, {key: 'Escape'})
+    if (closeOnEscape === false) {
+      expect(onOpenChange).not.toHaveBeenCalled()
+      expect(screen.getByRole('dialog', {name: 'Settings'})).toBeInTheDocument()
+    } else {
+      expect(onOpenChange).toHaveBeenCalledWith(false)
+    }
+
+    onOpenChange.mockClear()
+    fireEvent.click(closeButton)
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  },
+)
+
 it('should omit the header while preserving the accessible dialog title', () => {
   render(() => (
     <PModal headerMode="hidden" isOpen onOpenChange={vi.fn()} title="Drawing">

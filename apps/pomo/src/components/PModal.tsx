@@ -57,6 +57,7 @@ const modalHeaderClasses = cva('flex-none', {
 export interface PModalProps {
   readonly children: JSX.Element
   readonly closeButtonVisibility?: 'hidden' | 'visible'
+  readonly closeOnEscape?: boolean
   readonly contentOverflow?: 'auto' | 'hidden'
   readonly description?: string
   readonly footer?: JSX.Element
@@ -111,6 +112,11 @@ export const PModal = (props: PModalProps) => (
 
           event.preventDefault()
           props.onCloseAutoFocus()
+        }}
+        onEscapeKeyDown={(event) => {
+          if (props.closeOnEscape === false) {
+            event.preventDefault()
+          }
         }}
         onOpenAutoFocus={(event) => {
           const initialFocus = props.getInitialFocus?.()
