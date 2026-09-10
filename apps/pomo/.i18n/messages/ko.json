@@ -605,6 +605,7 @@
   "feed_listen": "듣기",
   "feed_incomplete_count": "미완성 피드 대화 {count}개",
   "feed_retry_question": "처음부터 다시 만들까요?",
+  "feed_retry_failed": "피드 대화를 다시 만들지 못했어요. 잠시 후 다시 시도해 주세요.",
   "feed_checking": "확인 중…",
   "feed_retrying": "피드 대화를 다시 만드는 중…",
   "feed_downloading_model": "{label} 모델 받는 중 · {percentage}%",

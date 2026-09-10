@@ -451,6 +451,68 @@ it('should retry immediately when every feed model is already cached', async () 
   expect(screen.queryByRole('dialog', {name: /모델을 받을까요/})).toBeNull()
 })
 
+it.each(['cached', 'download', 'model-check'] as const)(
+  'should show retry failure and clear it on the next attempt through %s',
+  async (path) => {
+    renderModal()
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const feeds = createFeeds([], false, [RECOVERY_JOB])
+    vi.mocked(usePFeedContext).mockReturnValue(feeds)
+    vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(path !== 'download')
+    if (path === 'model-check') {
+      vi.mocked(isSupertonicModelDownloaded).mockRejectedValueOnce(new Error('check failed'))
+    } else {
+      vi.mocked(feeds.retryRecovery).mockRejectedValueOnce(new Error('retry failed'))
+    }
+    render(() => <PFeedStatus />)
+
+    fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+    if (path === 'download') {
+      fireEvent.click(await screen.findByRole('button', {name: '받고 시작'}))
+    }
+
+    const message = '피드 대화를 다시 만들지 못했어요. 잠시 후 다시 시도해 주세요.'
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(message)
+    expect(screen.getByRole('button', {name: '다시 시도'})).not.toBeDisabled()
+    expect(screen.getByRole('button', {name: '나중에'})).not.toBeDisabled()
+    expect(screen.getByRole('button', {name: '삭제'})).not.toBeDisabled()
+
+    vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+    fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+    expect(screen.queryByText(message)).toBeNull()
+    await vi.waitFor(() =>
+      expect(feeds.retryRecovery).toHaveBeenCalledTimes(path === 'model-check' ? 1 : 2),
+    )
+    await vi.waitFor(() => expect(screen.getByText('처음부터 다시 만들까요?')).toBeInTheDocument())
+  },
+)
+
+it('should clear an old retry failure when recovery jobs are dismissed', async () => {
+  const [recoveryJobs, setRecoveryJobs] = createSignal<ReadonlyArray<FeedDialogueJob>>([
+    RECOVERY_JOB,
+  ])
+  const feeds = createFeeds([], false, [], {
+    dismissRecovery: () => setRecoveryJobs([]),
+    recoveryJobs,
+    retryRecovery: vi.fn().mockRejectedValue(new Error('retry failed')),
+  })
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+  render(() => <PFeedStatus />)
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+  const message = '피드 대화를 다시 만들지 못했어요. 잠시 후 다시 시도해 주세요.'
+  await screen.findByText(message)
+
+  fireEvent.click(screen.getByRole('button', {name: '나중에'}))
+  expect(screen.queryByRole('status')).toBeNull()
+  setRecoveryJobs([{...RECOVERY_JOB, id: 'new-job'}])
+
+  expect(screen.getByText('처음부터 다시 만들까요?')).toBeInTheDocument()
+  expect(screen.queryByText(message)).toBeNull()
+})
+
 it('should restore retry actions when checking a feed model fails', async () => {
   const checkFailure = new Error('model check failed')
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)

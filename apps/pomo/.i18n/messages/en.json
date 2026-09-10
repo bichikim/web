@@ -605,6 +605,7 @@
   "feed_listen": "Listen",
   "feed_incomplete_count": "{count} incomplete feed dialogues",
   "feed_retry_question": "Create them again from the beginning?",
+  "feed_retry_failed": "Couldn't recreate the feed dialogues. Please try again shortly.",
   "feed_checking": "Checking…",
   "feed_retrying": "Recreating feed dialogues…",
   "feed_downloading_model": "Downloading the {label} model · {percentage}%",
