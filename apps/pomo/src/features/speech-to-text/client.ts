@@ -7,7 +7,7 @@ import type {
   SpeechTranscript,
 } from './recognizer'
 import {reportClientError} from '../client-error-reporter'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 import {createWorkerRpcTransport, isWorkerRpcFailure, type WorkerRpcFailure} from '../worker-rpc'
 
 const createCancelledError = (phase: SpeechRecognitionPhase): SpeechRecognitionError => ({

@@ -2,7 +2,7 @@
 import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import {type CreateOpusBlobOptions, type SupertonicClient} from '../../supertonic'
 import {type TextMoodAnalysis, type TextMoodAnalyzer, type TextMoodRuntime} from '../../text-mood'
 import type {PDialogue} from '../schema'

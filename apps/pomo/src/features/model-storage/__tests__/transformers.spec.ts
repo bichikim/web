@@ -2,7 +2,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import type {ModelStorage} from '../storage'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import {createTransformersModelCache} from '../transformers'
 
 const createStorage = (): ModelStorage => ({

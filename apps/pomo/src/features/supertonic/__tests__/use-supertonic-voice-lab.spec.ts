@@ -9,7 +9,7 @@ import {
   useSupertonicVoiceLab,
 } from '../index'
 import type {SupertonicAudioPlayer} from '../audio-player'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 const defaultRuntimeMocks = vi.hoisted(() => ({
   createAudioPlayer: vi.fn(),

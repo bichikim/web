@@ -23,7 +23,7 @@ import {
   useSpeechToText,
   type UseSpeechToTextProps,
 } from '../index'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 interface SpeechTestRoot {
   readonly controller: SpeechToTextController

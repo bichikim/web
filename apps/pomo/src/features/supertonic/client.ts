@@ -12,7 +12,7 @@ import type {
 } from './messages'
 import type {SupertonicModelId} from './model'
 import {reportClientError} from '../client-error-reporter'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 
 export interface InitializeSupertonicOptions {
   readonly modelId: SupertonicModelId

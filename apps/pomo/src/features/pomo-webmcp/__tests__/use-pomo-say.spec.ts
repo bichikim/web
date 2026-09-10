@@ -11,7 +11,7 @@ import {
   type SupertonicAudioPlayer,
   type SupertonicClient,
 } from '../../supertonic'
-import {successResult} from '../../result'
+import {successResult} from 'src/features/result'
 import {usePSay} from '../use-pomo-say'
 
 vi.mock('../../chat-voice/lazy', () => ({
