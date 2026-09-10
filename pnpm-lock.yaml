@@ -781,6 +781,9 @@ importers:
       dotenv:
         specifier: 'catalog:'
         version: 16.6.1
+      '@winter-love/server-boundary':
+        specifier: workspace:*
+        version: link:../../packages/server-boundary
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
@@ -925,6 +928,36 @@ importers:
       vite-plugin-solid:
         specifier: 'catalog:'
         version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.14)(vite@8.1.5(@types/node@25.6.0)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+
+  packages/server-boundary:
+    devDependencies:
+      '@winter-love/vite-lib-config':
+        specifier: workspace:*
+        version: link:../vite-lib-config
+      '@solidjs/router':
+        specifier: 'catalog:'
+        version: 1.0.0(solid-js@1.9.14)
+      '@solidjs/start':
+        specifier: 'catalog:'
+        version: 2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@6.9.1)(crossws@0.4.10(srvx@0.11.22))(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260610-beta(@vercel/functions@3.9.3(ws@8.21.3))(aws4fetch@1.0.20)(chokidar@5.0.0)(dotenv@16.6.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.28.17)(postgres@3.4.9))(giget@3.2.0)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.5)(rollup@4.62.4)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))(wrangler@4.125.0(@cloudflare/workers-types@5.20260822.1))(xml2js@0.6.2)
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.14
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.13.3
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vite:
+        specifier: 'catalog:'
+        version: 8.1.5(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.13.3)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.9.0)(jsdom@26.1.0)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
 
   packages/solid-components:
     dependencies:

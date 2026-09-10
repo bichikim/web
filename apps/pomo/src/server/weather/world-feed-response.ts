@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {parseWeatherLocationId} from 'src/features/weather'
 import {getWorldWeatherLocation} from './world-locations'
 import {
