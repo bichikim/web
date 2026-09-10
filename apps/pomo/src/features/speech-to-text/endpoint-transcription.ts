@@ -1,6 +1,6 @@
 import type {SpeechCaptureError} from './errors'
 import type {SpeechRecording} from './recorder'
-import {failureResult, type Result} from '../result'
+import {failureResult, type Result} from 'src/features/result'
 
 const createCancelledResult = (): Result<Float32Array, SpeechCaptureError> =>
   failureResult({code: 'capture-cancelled', retryable: true})

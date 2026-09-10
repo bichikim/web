@@ -2,7 +2,7 @@ import {createComputed, createRoot} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import type {SupertonicClient} from '../../supertonic'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import {createModelDownloadController, type ModelDownloadRuntime} from '../index'
 import type {TextModelDownloadResponse} from '../text-client'
 

@@ -10,7 +10,7 @@ import {
   type TextMoodRuntime,
   useTextMood,
 } from '../index'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 const clientMocks = vi.hoisted(() => ({createAnalyzer: vi.fn()}))
 

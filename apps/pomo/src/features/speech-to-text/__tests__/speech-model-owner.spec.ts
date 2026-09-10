@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import {
   createSpeechModelOwner,
   type CreateSpeechRecognizerOptions,

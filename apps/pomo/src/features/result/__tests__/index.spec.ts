@@ -7,7 +7,7 @@ import {
   type Result,
   successResult,
   type SuccessResult,
-} from '../result'
+} from 'src/features/result'
 
 interface TestFailure {
   readonly code: 'failed'

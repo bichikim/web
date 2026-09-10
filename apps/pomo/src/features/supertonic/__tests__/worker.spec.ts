@@ -3,7 +3,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {ModelResource} from '../../model-storage'
-import type {Result} from '../../result'
+import type {Result} from 'src/features/result'
 import type {SupertonicSessions, SupertonicVoice} from '../engine'
 import type {SupertonicError} from '../errors'
 import type {SupertonicWorkerInput, SupertonicWorkerOutput} from '../messages'
