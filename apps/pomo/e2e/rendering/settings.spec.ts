@@ -121,3 +121,58 @@ test('should restore hidden toolbar controls and allow enabling them after reloa
     await expect(page.getByRole('button', {exact: true, name})).toBeVisible()
   }
 })
+
+test('should stop a hidden timer and restore widget visibility preferences after reload', async ({
+  page,
+}, information) => {
+  await page.clock.install({time: new Date('2026-09-09T00:00:00.000Z')})
+  const settings = await openSettings(page)
+  await settings.getByRole('button', {exact: true, name: '닫기'}).click()
+  await page.clock.pauseAt(new Date('2026-09-09T00:01:00.000Z'))
+  await page.clock.runFor(1000)
+  const trigger = page.getByRole('button', {name: /^포모도로 열기,/u})
+  await trigger.click()
+  const timer = page.getByRole('dialog', {exact: true, name: '포모도로'})
+  await timer.getByRole('button', {exact: true, name: '집중 시작'}).click()
+  await page.clock.fastForward(10_000)
+  await expect(timer.locator('[data-pomo-timer-ring] strong')).toHaveText('24:50')
+  await timer.getByRole('button', {exact: true, name: '닫기'}).click()
+  await page.clock.runFor(200)
+  await page.getByRole('button', {exact: true, name: '설정'}).click()
+  for (const name of ['플레이어 표시', '뽀모도로 표시']) {
+    const toggle = settings.getByRole('switch', {exact: true, name})
+    await expect(toggle).toBeChecked()
+    await settings.locator('label').filter({hasText: name}).click()
+    await expect(toggle).not.toBeChecked()
+  }
+  await captureSettings(page, information, 'widgets-hidden-dark')
+  await settings.getByRole('button', {exact: true, name: '닫기'}).click()
+  await page.clock.runFor(200)
+  await expect(trigger).toHaveCount(0)
+  await expect(page.locator('.pomo-player-stage')).toHaveCount(0)
+
+  // Let hydration finish before freezing the clock again after the reload.
+  await page.clock.resume()
+  await page.reload()
+  await page.getByRole('button', {exact: true, name: '설정'}).click()
+  const currentTime = await page.evaluate(() => Date.now())
+  await page.clock.pauseAt(new Date(currentTime + 1000))
+  for (const name of ['플레이어 표시', '뽀모도로 표시']) {
+    await expect(settings.getByRole('switch', {exact: true, name})).not.toBeChecked()
+  }
+  await expect(page.locator('.pomo-player-stage')).toHaveCount(0)
+  await expect(trigger).toHaveCount(0)
+  for (const name of ['플레이어 표시', '뽀모도로 표시']) {
+    await settings.locator('label').filter({hasText: name}).click()
+    await expect(settings.getByRole('switch', {exact: true, name})).toBeChecked()
+  }
+  await settings.getByRole('button', {exact: true, name: '닫기'}).click()
+  await page.clock.runFor(200)
+  await expect(page.locator('.pomo-player-stage')).toBeVisible()
+  await expect(trigger).toBeVisible()
+  await trigger.click()
+  await expect(timer.locator('[data-pomo-timer-ring] strong')).toHaveText('25:00')
+  await expect(timer.getByRole('button', {exact: true, name: '집중 시작'})).toBeVisible()
+  await page.clock.fastForward(60_000)
+  await expect(timer.locator('[data-pomo-timer-ring] strong')).toHaveText('25:00')
+})
