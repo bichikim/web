@@ -25,7 +25,7 @@ vi.mock('solid-js/web', async (importOriginal) => {
 })
 vi.mock('@solidjs/start', () => ({
   clientOnly:
-    (loader: () => Promise<unknown>) =>
+    () =>
     (props: {
       readonly active: boolean
       readonly autoplay: boolean
@@ -35,7 +35,6 @@ vi.mock('@solidjs/start', () => ({
       readonly title: string
       readonly trackId: string
     }) => {
-      void loader()
       void props.fallback
       return (
         <button

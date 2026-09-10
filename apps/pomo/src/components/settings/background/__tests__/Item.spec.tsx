@@ -32,11 +32,11 @@ it('should mount visible rows, retain a focused row offscreen, and release it af
       [
         {
           boundingClientRect: row.getBoundingClientRect(),
-          isIntersecting,
           intersectionRatio: isIntersecting ? 1 : 0,
-          target: row,
           intersectionRect: row.getBoundingClientRect(),
+          isIntersecting,
           rootBounds: null,
+          target: row,
           time: 0,
         },
       ],
