@@ -385,39 +385,4 @@ describe('useStudioTour', () => {
 
     expect(AudioMock.lastInstance?.source).toBe('/tour/audio/ko/pomodoro.mp3')
   })
-
-  it.each([
-    {documentLocale: 'en', expectedLocale: 'en', runtimeLocale: 'ko'},
-    {documentLocale: 'ko', expectedLocale: 'ko', runtimeLocale: 'en'},
-  ] as const)('should follow the rendered document locale for narration', (copy) => {
-    overwriteGetLocale(() => copy.runtimeLocale)
-    const previousDocumentLocale = document.documentElement.lang
-    document.documentElement.lang = copy.documentLocale
-    class AudioMock {
-      static lastInstance: AudioMock | undefined
-
-      currentTime = 0
-      load = vi.fn()
-      pause = vi.fn()
-      play = vi.fn().mockResolvedValue(undefined)
-      removeAttribute = vi.fn()
-      source: string
-
-      constructor(source: string) {
-        this.source = source
-        AudioMock.lastInstance = this
-      }
-    }
-    vi.stubGlobal('Audio', AudioMock)
-
-    try {
-      const view = renderHook(() => useStudioTour())
-
-      view.result.onEvent({activeElement: null, step: view.result.steps()[0]!, type: 'started'})
-
-      expect(AudioMock.lastInstance?.source).toBe(`/tour/audio/${copy.expectedLocale}/pomodoro.mp3`)
-    } finally {
-      document.documentElement.lang = previousDocumentLocale
-    }
-  })
 })

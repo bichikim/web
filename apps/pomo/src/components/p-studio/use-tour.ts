@@ -3,6 +3,7 @@ import {getLocale} from '@paraglide/runtime'
 import {createMemo, createSignal, onCleanup} from 'solid-js'
 
 import {createFocusRoomTourAudioPlayer} from '../../features/focus-room-tour-audio'
+import {resolveAudioSource} from './resolve-audio-source'
 import type {TourEvent} from '@winter-love/solid-use/tour'
 import type {PTourStep} from '../tour/PTour'
 
@@ -27,13 +28,6 @@ const STEP_SELECTORS: Readonly<Record<string, string>> = {
   'settings-feeds': '[data-tour-step="settings"]',
   'settings-general': '[data-tour-step="settings"]',
   'settings-user': '[data-tour-step="settings"]',
-}
-
-const resolveCurrentAudioSource = (source: string): string => {
-  const documentLocale = document.documentElement.lang
-  const locale = documentLocale === 'en' || documentLocale === 'ko' ? documentLocale : getLocale()
-
-  return source.replace(/^\/tour\/audio\/(?:ko|en)\//u, `/tour/audio/${locale}/`)
 }
 
 const createMemoryAssistTourSteps = (
@@ -287,7 +281,13 @@ export const useStudioTour = () => {
       if (source === undefined) {
         audioPlayer.stop()
       } else {
-        audioPlayer.play(resolveCurrentAudioSource(source))
+        audioPlayer.play(
+          resolveAudioSource({
+            documentLocale: document.documentElement.lang,
+            runtimeLocale: getLocale(),
+            source,
+          }),
+        )
       }
       return
     }
