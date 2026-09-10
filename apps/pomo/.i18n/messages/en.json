@@ -935,5 +935,6 @@
   "picker_hint": "Use arrow keys to move, Enter to select, Escape to close",
   "tools_precision": "Results display up to 12 significant digits.",
   "settings_tools_visible": "Show tools",
-  "settings_memory_visible": "Show memory assist"
+  "settings_memory_visible": "Show memory assist",
+  "memory_reminder_playback_skipped": "Could not play the reminder audio: {text}. Retrying in 5 minutes."
 }

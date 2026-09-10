@@ -1,6 +1,6 @@
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
-import {createMemo, createSignal, Show} from 'solid-js'
+import {createMemo, createSignal, For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
   RANDOM_DIALOGUE_EVENT,
@@ -66,7 +66,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
     })
 
-  useMemoryReminders({events, onBeforePlayback: () => props.pomoSay.stop()})
+  const reminders = useMemoryReminders({events, onBeforePlayback: () => props.pomoSay.stop()})
   useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
 
   return (
@@ -108,6 +108,13 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
           <Show when={oneOffChat.errorMessage()}>
             {(message) => <PFormMessage tone="error">{message()}</PFormMessage>}
           </Show>
+          <For each={reminders.skippedReminders()}>
+            {(memo) => (
+              <PFormMessage tone="error">
+                {m.memory_reminder_playback_skipped({text: memo.text})}
+              </PFormMessage>
+            )}
+          </For>
           <PFeedStatus sceneStyle={props.sceneStyle} />
           <PDialoguePlayer
             externalText={props.pomoSay.speechText()}
