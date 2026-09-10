@@ -10,7 +10,7 @@ const installAnimationFrames = () => {
   const callbacks = new Map<number, FrameRequestCallback>()
   let nextFrame = 1
   const requestAnimationFrame = vi
-    .spyOn(window, 'requestAnimationFrame')
+    .spyOn(globalThis, 'requestAnimationFrame')
     .mockImplementation((callback) => {
       const frame = nextFrame
       nextFrame += 1
@@ -18,7 +18,7 @@ const installAnimationFrames = () => {
       return frame
     })
   const cancelAnimationFrame = vi
-    .spyOn(window, 'cancelAnimationFrame')
+    .spyOn(globalThis, 'cancelAnimationFrame')
     .mockImplementation((frame) => {
       callbacks.delete(frame)
     })

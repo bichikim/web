@@ -76,7 +76,7 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
     source.connect(analyser)
     context.resume().catch(() => undefined)
 
-    const intervalId = window.setInterval(() => {
+    const intervalId = globalThis.setInterval(() => {
       analyser.getFloatTimeDomainData(samples)
 
       if (state.push({energy: getRootMeanSquare(samples), timestamp: performance.now()})) {
@@ -88,7 +88,7 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
 
     return {
       dispose: () => {
-        window.clearInterval(intervalId)
+        globalThis.clearInterval(intervalId)
         listeners.clear()
         source.disconnect()
         analyser.disconnect()

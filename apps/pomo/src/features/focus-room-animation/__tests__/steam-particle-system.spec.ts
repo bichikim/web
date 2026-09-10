@@ -53,12 +53,12 @@ const createFrames = () => {
   const callbacks = new Map<number, FrameRequestCallback>()
   let frameId = 0
 
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
     frameId += 1
     callbacks.set(frameId, callback)
     return frameId
   })
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((id) => {
     callbacks.delete(id)
   })
 
@@ -133,7 +133,7 @@ describe('SteamParticleSystem', () => {
     expect(frames).toHaveLength(1)
 
     system.setReducedMotion(true)
-    expect(window.cancelAnimationFrame).toHaveBeenCalledOnce()
+    expect(globalThis.cancelAnimationFrame).toHaveBeenCalledOnce()
     expect(frames).toHaveLength(0)
     expect(onRender).toHaveBeenCalledOnce()
 
@@ -213,7 +213,7 @@ describe('SteamParticleSystem', () => {
 
     const [container] = pixiMocks.containers
     expect(container.position.set).toHaveBeenCalledWith(4, -3)
-    expect(window.cancelAnimationFrame).toHaveBeenCalledOnce()
+    expect(globalThis.cancelAnimationFrame).toHaveBeenCalledOnce()
     expect(container.removeFromParent).toHaveBeenCalledOnce()
     expect(container.destroy).toHaveBeenCalledWith({children: true})
   })

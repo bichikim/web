@@ -31,7 +31,7 @@ export const createPMouthTransitionController = (
 
   const cancel = () => {
     if (frame !== null) {
-      window.cancelAnimationFrame(frame)
+      globalThis.cancelAnimationFrame(frame)
       frame = null
     }
 
@@ -75,7 +75,7 @@ export const createPMouthTransitionController = (
       onTransitionChange()
 
       if (phase < 1) {
-        frame = window.requestAnimationFrame(renderFrame)
+        frame = globalThis.requestAnimationFrame(renderFrame)
         return
       }
 
@@ -84,7 +84,7 @@ export const createPMouthTransitionController = (
       onTransitionChange()
     }
 
-    frame = window.requestAnimationFrame(renderFrame)
+    frame = globalThis.requestAnimationFrame(renderFrame)
   }
 
   const destroy = () => {

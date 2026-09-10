@@ -21,8 +21,8 @@ export class SceneLoadingState {
 
   finishAfterPaint() {
     this.#cancelSettledFrame()
-    this.#settledFrame = window.requestAnimationFrame(() => {
-      this.#settledFrame = window.requestAnimationFrame(() => {
+    this.#settledFrame = globalThis.requestAnimationFrame(() => {
+      this.#settledFrame = globalThis.requestAnimationFrame(() => {
         this.#settledFrame = null
         this.#onChange(false)
       })
@@ -35,7 +35,7 @@ export class SceneLoadingState {
 
   #cancelSettledFrame() {
     if (this.#settledFrame !== null) {
-      window.cancelAnimationFrame(this.#settledFrame)
+      globalThis.cancelAnimationFrame(this.#settledFrame)
       this.#settledFrame = null
     }
   }

@@ -118,11 +118,11 @@ beforeEach(() => {
   vi.stubGlobal('AudioContext', undefined)
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:dialogue')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
     animationFrames.push(callback)
     return 17
   })
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined)
 })
 
 afterEach(() => {
