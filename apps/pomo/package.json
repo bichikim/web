@@ -86,6 +86,7 @@
     "@tauri-apps/cli": "2.11.1",
     "@types/node": "catalog:",
     "@unocss/vite": "catalog:",
+    "@winter-love/server-boundary": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-kit": "^0.31.10",
