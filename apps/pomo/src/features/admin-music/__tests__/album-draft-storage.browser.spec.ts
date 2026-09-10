@@ -4,8 +4,22 @@ import {beforeEach, expect, it, vi} from 'vitest'
 
 const dexie = vi.hoisted(() => {
   const records = new Map<string, {blob: Blob; id: string; updatedAt: number}>()
+  const references = new Map<
+    string,
+    {readonly coverDraftId: string | null; readonly id: string; readonly lastSeenAt: number}
+  >()
   const primaryKeys = vi.fn(async () => [...records.keys()])
   const below = vi.fn(() => ({primaryKeys}))
+  const referenceToArray = vi.fn(async () => [...references.values()])
+  const referenceBelowDelete = vi.fn(async () => {
+    references.clear()
+  })
+  const referenceBelow = vi.fn(() => ({delete: referenceBelowDelete}))
+  const referenceAboveOrEqual = vi.fn(() => ({toArray: referenceToArray}))
+  const referenceWhere = vi.fn(() => ({
+    aboveOrEqual: referenceAboveOrEqual,
+    below: referenceBelow,
+  }))
   const modify = vi.fn()
   const table = {
     bulkDelete: vi.fn(async (ids: string[]) => {
@@ -20,19 +34,61 @@ const dexie = vi.hoisted(() => {
     put: vi.fn(async (record: {blob: Blob; id: string; updatedAt: number}) => {
       records.set(record.id, record)
     }),
+    update: vi.fn(async (id: string, changes: {readonly updatedAt: number}) => {
+      const record = records.get(id)
+      if (record !== undefined) {
+        records.set(id, {...record, ...changes})
+      }
+      return record === undefined ? 0 : 1
+    }),
     where: vi.fn(() => ({below})),
+  }
+  const referenceTable = {
+    delete: vi.fn(async (id: string) => {
+      references.delete(id)
+    }),
+    put: vi.fn(async (reference: {coverDraftId: string | null; id: string; lastSeenAt: number}) => {
+      references.set(reference.id, reference)
+    }),
+    where: referenceWhere,
   }
   const stores = vi.fn()
   const upgrade = vi.fn((callback: (transaction: unknown) => unknown) =>
     callback({table: () => ({toCollection: () => ({modify})})}),
   )
 
-  return {below, modify, primaryKeys, records, stores, table, upgrade}
+  const transaction = vi.fn(async (...argumentsList: unknown[]) => {
+    const callback = argumentsList.at(-1)
+
+    if (typeof callback !== 'function') {
+      throw new TypeError('Transaction callback is missing')
+    }
+
+    return callback()
+  })
+
+  return {
+    below,
+    modify,
+    primaryKeys,
+    records,
+    references,
+    referenceTable,
+    stores,
+    table,
+    transaction,
+    upgrade,
+  }
 })
 
 vi.mock('dexie', () => ({
   default: class DexieMock {
     readonly covers = dexie.table
+    readonly draftReferences = dexie.referenceTable
+
+    transaction(...argumentsList: unknown[]) {
+      return dexie.transaction(...argumentsList)
+    }
 
     version() {
       return {
@@ -50,6 +106,7 @@ import {
   deleteExpiredAlbumDraftCovers,
   readAlbumDraftCover,
   readAlbumDraftData,
+  writeAlbumDraftReference,
   writeAlbumDraftCover,
   writeAlbumDraftData,
 } from '../album-draft-storage'
@@ -70,7 +127,7 @@ const DRAFT = {
 
 beforeEach(() => {
   dexie.records.clear()
-  localStorage.clear()
+  dexie.references.clear()
   sessionStorage.clear()
   vi.clearAllMocks()
 })
@@ -87,7 +144,7 @@ it('should use session storage and initialize the browser cover database once', 
   await expect(deleteAlbumDraft('cover')).resolves.toEqual({success: true})
   expect(readAlbumDraftData()).toBeNull()
 
-  expect(dexie.stores).toHaveBeenCalledTimes(2)
+  expect(dexie.stores).toHaveBeenCalledTimes(3)
   expect(dexie.modify).toHaveBeenCalledWith({updatedAt: expect.any(Number)})
 })
 
@@ -109,21 +166,18 @@ it('should delete expired browser covers while preserving an active cover', asyn
   expect(dexie.below).toHaveBeenCalledWith(expect.any(Number))
 })
 
-it('should remove stale tab references before deleting expired covers', async () => {
-  const staleCover = new File(['stale'], 'cover.webp', {type: 'image/webp'})
-  const staleAt = Date.UTC(2026, 7, 10)
-  const now = Date.UTC(2026, 8, 10)
-  vi.spyOn(Date, 'now').mockReturnValue(now)
-  dexie.records.set('stale', {blob: staleCover, id: 'stale', updatedAt: staleAt})
-  localStorage.setItem(
-    'pomo:admin-music:album-draft-session:v1:closed-tab',
-    JSON.stringify({coverDraftId: 'stale', lastSeenAt: staleAt}),
-  )
+it('should preserve an expired browser cover referenced by another active tab', async () => {
+  const cover = new File(['webp'], 'cover.webp', {type: 'image/webp'})
+  await writeAlbumDraftCover('other-tab-cover', cover)
+  await writeAlbumDraftReference({
+    coverDraftId: 'other-tab-cover',
+    now: () => Date.now(),
+    referenceId: 'other-tab',
+  })
 
   await expect(deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})).resolves.toEqual({
     success: true,
   })
-
-  expect(dexie.table.bulkDelete).toHaveBeenLastCalledWith(['stale'])
-  expect(localStorage.getItem('pomo:admin-music:album-draft-session:v1:closed-tab')).toBeNull()
+  expect(dexie.table.bulkDelete).toHaveBeenLastCalledWith([])
+  await expect(readAlbumDraftCover('other-tab-cover')).resolves.not.toBeNull()
 })

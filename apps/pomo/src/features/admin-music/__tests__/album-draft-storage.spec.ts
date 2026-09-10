@@ -12,6 +12,7 @@ import {
   readAlbumDraftData,
   writeAlbumDraftCover,
   writeAlbumDraftData,
+  writeAlbumDraftReference,
 } from '../album-draft-storage'
 
 afterEach(() => {
@@ -22,8 +23,10 @@ afterEach(() => {
 const createStorage = () => {
   const covers = new Map<string, Blob>()
   const coverSavedAt = new Map<string, number>()
-  let draftSessionCoverId: string | null = null
-  let draftSessionUpdatedAt = 0
+  const draftReferences = new Map<
+    string,
+    {readonly coverDraftId: string | null; readonly id: string; readonly lastSeenAt: number}
+  >()
   let data: string | null = null
   const storage: AlbumDraftStorage = {
     deleteCover: vi.fn(async (id) => {
@@ -33,18 +36,30 @@ const createStorage = () => {
     deleteData: vi.fn(() => {
       data = null
     }),
-    deleteDraftSession: vi.fn(() => {
-      draftSessionCoverId = null
-      draftSessionUpdatedAt = 0
+    deleteDraftReference: vi.fn(async (id) => {
+      draftReferences.delete(id)
     }),
-    deleteExpiredCovers: vi.fn(async ({expiresBefore, protectedId, sessionExpiresBefore}) => {
-      const activeSessionCoverId =
-        draftSessionUpdatedAt >= sessionExpiresBefore ? draftSessionCoverId : null
+    deleteExpiredCovers: vi.fn(async ({expiresBefore, protectedId}) => {
+      const referencedIds = new Set(
+        [...draftReferences.values()]
+          .filter((reference) => reference.lastSeenAt >= expiresBefore)
+          .flatMap((reference) =>
+            reference.coverDraftId === null ? [] : [reference.coverDraftId],
+          ),
+      )
+      if (protectedId !== null) {
+        referencedIds.add(protectedId)
+      }
 
       for (const [id, savedAt] of coverSavedAt) {
-        if (savedAt < expiresBefore && id !== protectedId && id !== activeSessionCoverId) {
+        if (savedAt < expiresBefore && !referencedIds.has(id)) {
           covers.delete(id)
           coverSavedAt.delete(id)
+        }
+      }
+      for (const [id, reference] of draftReferences) {
+        if (reference.lastSeenAt < expiresBefore) {
+          draftReferences.delete(id)
         }
       }
     }),
@@ -57,9 +72,8 @@ const createStorage = () => {
     writeData: vi.fn((nextData) => {
       data = nextData
     }),
-    writeDraftSession: vi.fn(({coverDraftId, lastSeenAt}) => {
-      draftSessionCoverId = coverDraftId
-      draftSessionUpdatedAt = lastSeenAt
+    writeDraftReference: vi.fn(async (reference) => {
+      draftReferences.set(reference.id, reference)
     }),
   }
 
@@ -86,10 +100,6 @@ describe('album draft data storage', () => {
     writeAlbumDraftData(draft, storage)
 
     expect(readAlbumDraftData(storage)).toEqual(draft)
-    expect(storage.writeDraftSession).toHaveBeenCalledWith({
-      coverDraftId: draft.coverDraftId,
-      lastSeenAt: expect.any(Number),
-    })
   })
 
   it('should ignore malformed stored metadata', () => {
@@ -105,17 +115,6 @@ describe('album draft data storage', () => {
     const storage = createStorage()
     const error = new Error('session unavailable')
     vi.mocked(storage.writeData).mockImplementationOnce(() => {
-      throw error
-    })
-    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-
-    expect(writeAlbumDraftData(createDraft(), storage)).toEqual({error, success: false})
-  })
-
-  it('should report draft session reference write failures', () => {
-    const storage = createStorage()
-    const error = new Error('shared storage unavailable')
-    vi.mocked(storage.writeDraftSession).mockImplementationOnce(() => {
       throw error
     })
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
@@ -161,6 +160,31 @@ describe('album draft cover storage', () => {
     expect(warn).toHaveBeenCalledOnce()
   })
 
+  it('should retain an expired cover referenced by another active draft', async () => {
+    vi.useFakeTimers()
+    const storage = createStorage()
+    const now = new Date('2026-08-25T00:00:00.000Z')
+    const oldCover = new File(['old'], 'cover.webp', {type: 'image/webp'})
+
+    vi.setSystemTime(new Date('2026-07-25T23:59:59.999Z'))
+    await writeAlbumDraftCover('other-tab-cover', oldCover, storage)
+    vi.setSystemTime(now)
+    await writeAlbumDraftReference({
+      coverDraftId: 'other-tab-cover',
+      now: () => now.getTime(),
+      referenceId: 'other-tab',
+      storage,
+    })
+
+    await deleteExpiredAlbumDraftCovers({
+      activeCoverDraftId: null,
+      now: () => now.getTime(),
+      storage,
+    })
+
+    await expect(readAlbumDraftCover('other-tab-cover', storage)).resolves.not.toBeNull()
+  })
+
   it('should restore the prepared WebP file and delete the full draft after creation', async () => {
     const storage = createStorage()
     const draft = createDraft()
@@ -176,7 +200,6 @@ describe('album draft cover storage', () => {
     await deleteAlbumDraft(draft.coverDraftId, storage)
 
     expect(readAlbumDraftData(storage)).toBeNull()
-    expect(storage.deleteDraftSession).toHaveBeenCalledOnce()
     await expect(readAlbumDraftCover(draft.coverDraftId!, storage)).resolves.toBeNull()
   })
 

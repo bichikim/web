@@ -15,13 +15,13 @@ import {useAlbumDraft} from '../use-album-draft'
 const storageMocks = vi.hoisted(() => ({
   deleteAlbumDraft: vi.fn(),
   deleteAlbumDraftCover: vi.fn(),
-  deleteAlbumDraftSession: vi.fn(),
+  deleteAlbumDraftReference: vi.fn(),
   deleteExpiredAlbumDraftCovers: vi.fn(),
   readAlbumDraftCover: vi.fn(),
   readAlbumDraftData: vi.fn(),
-  touchAlbumDraftSession: vi.fn(),
   writeAlbumDraftCover: vi.fn(),
   writeAlbumDraftData: vi.fn(),
+  writeAlbumDraftReference: vi.fn(),
 }))
 const coverMocks = vi.hoisted(() => ({
   prepareAlbumCover: vi.fn(),
@@ -79,12 +79,12 @@ beforeEach(() => {
   vi.resetAllMocks()
   storageMocks.deleteAlbumDraft.mockResolvedValue({success: true})
   storageMocks.deleteAlbumDraftCover.mockResolvedValue({success: true})
-  storageMocks.deleteAlbumDraftSession.mockReturnValue({success: true})
+  storageMocks.deleteAlbumDraftReference.mockResolvedValue({success: true})
   storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({success: true})
   storageMocks.readAlbumDraftCover.mockResolvedValue(null)
   storageMocks.readAlbumDraftData.mockReturnValue(null)
-  storageMocks.touchAlbumDraftSession.mockReturnValue({success: true})
   storageMocks.writeAlbumDraftCover.mockResolvedValue({success: true})
+  storageMocks.writeAlbumDraftReference.mockResolvedValue({success: true})
   storageMocks.writeAlbumDraftData.mockReturnValue({success: true})
   coverMocks.prepareAlbumCover.mockResolvedValue(PREPARED_COVER)
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:album-cover')

@@ -31,24 +31,6 @@ const createSessionStorage = (): Storage => {
   }
 }
 
-const cloneSessionStorage = (source: Storage): Storage => {
-  const clone = createSessionStorage()
-
-  for (let index = 0; index < source.length; index += 1) {
-    const key = source.key(index)
-
-    if (key !== null) {
-      const value = source.getItem(key)
-
-      if (value !== null) {
-        clone.setItem(key, value)
-      }
-    }
-  }
-
-  return clone
-}
-
 const replaceSessionStorage = (storage: Storage): void => {
   Object.defineProperty(globalThis, 'sessionStorage', {configurable: true, value: storage})
 }
@@ -57,13 +39,13 @@ const originalSessionStorage = globalThis.sessionStorage
 
 afterEach(() => {
   replaceSessionStorage(originalSessionStorage)
-  localStorage.clear()
   vi.restoreAllMocks()
 })
 
 it('should retain an expired cover referenced by another open tab session', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 8, 10))
   const firstTabStorage = createSessionStorage()
+  const secondTabStorage = createSessionStorage()
   const coverId = 'first-tab-active-cover'
   const database = new Dexie('pomo-admin-music-draft')
   database.version(2).stores({covers: 'id, updatedAt'})
@@ -79,24 +61,21 @@ it('should retain an expired cover referenced by another open tab session', asyn
     hasCoverFile: true,
     translations: createEmptyAlbumTranslations(),
   }
-  expect(writeAlbumDraftData(firstTabDraft)).toEqual({success: true})
+  writeAlbumDraftData(firstTabDraft)
   await covers.put({
     blob: firstTabCover,
     id: coverId,
     updatedAt: Date.UTC(2026, 7, 10),
   })
-  expect(
-    writeAlbumDraftData({
-      ...firstTabDraft,
-      coverImageUrl: 'https://example.com/edited-after-cover.webp',
-    }),
-  ).toEqual({success: true})
+  database.close()
+  writeAlbumDraftData({
+    ...firstTabDraft,
+    coverImageUrl: 'https://example.com/edited-after-cover.webp',
+  })
 
   await expect(readAlbumDraftCover(coverId)).resolves.not.toBeNull()
   expect(firstTabStorage.getItem('pomo:admin-music:album-draft:v1')).toContain(coverId)
 
-  const secondTabStorage = cloneSessionStorage(firstTabStorage)
-  secondTabStorage.removeItem('pomo:admin-music:album-draft:v1')
   replaceSessionStorage(secondTabStorage)
   const {cleanup, result} = renderHook(() =>
     useAlbumDraft({refreshCatalog: async () => undefined, setMessage: vi.fn()}),
@@ -111,5 +90,65 @@ it('should retain an expired cover referenced by another open tab session', asyn
   } finally {
     cleanup()
     database.close()
+  }
+})
+
+it('should retain an expired cover while another tab hook is still mounted', async () => {
+  vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 8, 10))
+  vi.spyOn(crypto, 'randomUUID')
+    .mockReturnValueOnce('00000000-0000-4000-8000-000000000003')
+    .mockReturnValueOnce('00000000-0000-4000-8000-000000000004')
+  const firstTabStorage = createSessionStorage()
+  const secondTabStorage = createSessionStorage()
+  const coverId = 'first-tab-active-cover'
+  const firstTabDraft = {
+    albumId: '00000000-0000-4000-8000-000000000002',
+    coverDraftId: coverId,
+    coverFallback: 'lp' as const,
+    coverImageUrl: '',
+    hasCoverFile: true,
+    translations: createEmptyAlbumTranslations(),
+  }
+  replaceSessionStorage(firstTabStorage)
+  writeAlbumDraftData(firstTabDraft)
+
+  const database = new Dexie('pomo-admin-music-draft')
+  database.version(3).stores({
+    covers: 'id, updatedAt',
+    draftReferences: 'id, coverDraftId, lastSeenAt',
+  })
+  const covers = database.table<{blob: Blob; id: string; updatedAt: number}>('covers')
+  const draftReferences = database.table<{
+    coverDraftId: string | null
+    id: string
+    lastSeenAt: number
+  }>('draftReferences')
+  await database.transaction('rw', covers, draftReferences, async () => {
+    await covers.clear()
+    await draftReferences.clear()
+    await covers.put({
+      blob: new File(['first-tab'], 'cover.webp', {type: 'image/webp'}),
+      id: coverId,
+      updatedAt: Date.UTC(2026, 7, 10),
+    })
+  })
+  database.close()
+
+  const firstTab = renderHook(() =>
+    useAlbumDraft({refreshCatalog: async () => undefined, setMessage: vi.fn()}),
+  )
+  await waitFor(() => expect(firstTab.result.isRestoringDraft()).toBe(false))
+
+  replaceSessionStorage(secondTabStorage)
+  const secondTab = renderHook(() =>
+    useAlbumDraft({refreshCatalog: async () => undefined, setMessage: vi.fn()}),
+  )
+  await waitFor(() => expect(secondTab.result.isRestoringDraft()).toBe(false))
+
+  try {
+    await expect(readAlbumDraftCover(coverId)).resolves.not.toBeNull()
+  } finally {
+    secondTab.cleanup()
+    firstTab.cleanup()
   }
 })
