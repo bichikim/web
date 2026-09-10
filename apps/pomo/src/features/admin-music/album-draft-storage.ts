@@ -51,6 +51,11 @@ export interface WriteAlbumDraftReferenceOptions {
 }
 
 const ALBUM_DRAFT_KEY = 'pomo:admin-music:album-draft:v1'
+const LEGACY_REFERENCE_PREFIX = 'pomo:admin-music:album-draft-session:v1:'
+const legacyReferenceSchema = z.object({
+  coverDraftId: z.string().min(1).nullable(),
+  lastSeenAt: z.number().finite(),
+})
 const DATABASE_NAME = 'pomo-admin-music-draft'
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
@@ -122,6 +127,33 @@ const refreshDraftCoverTimestamp = (data: string): void => {
     })
 }
 
+const readLegacyReferences = (expiresBefore: number): string[] => {
+  const coverIds: string[] = []
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index)
+    if (key !== null && key.startsWith(LEGACY_REFERENCE_PREFIX)) {
+      const value = localStorage.getItem(key)
+      if (value !== null) {
+        let data: unknown
+        try {
+          data = JSON.parse(value)
+        } catch {
+          data = null
+        }
+        const reference = legacyReferenceSchema.safeParse(data)
+        if (
+          reference.success &&
+          reference.data.lastSeenAt >= expiresBefore &&
+          reference.data.coverDraftId !== null
+        ) {
+          coverIds.push(reference.data.coverDraftId)
+        }
+      }
+    }
+  }
+  return coverIds
+}
+
 const BROWSER_STORAGE: AlbumDraftStorage = {
   deleteCover: (id) => getDatabase().covers.delete(id),
   deleteData: () => sessionStorage.removeItem(ALBUM_DRAFT_KEY),
@@ -141,6 +173,10 @@ const BROWSER_STORAGE: AlbumDraftStorage = {
 
       if (protectedId !== null) {
         protectedIds.add(protectedId)
+      }
+
+      for (const id of readLegacyReferences(expiresBefore)) {
+        protectedIds.add(id)
       }
 
       const expiredIds = await database.covers.where('updatedAt').below(expiresBefore).primaryKeys()

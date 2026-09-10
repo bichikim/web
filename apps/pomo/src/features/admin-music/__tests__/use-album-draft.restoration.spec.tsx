@@ -20,6 +20,35 @@ import {
 } from './fixtures/draft'
 
 describe('album draft restoration', () => {
+  it('should refresh the reference on pageshow and heartbeat and stop after cleanup', async () => {
+    const intervals = vi.spyOn(globalThis, 'setInterval')
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
+    const {cleanup, result} = renderAlbumDraft()
+    await waitForRestoration(result)
+    storageMocks.writeAlbumDraftReference.mockClear()
+    window.dispatchEvent(new Event('pageshow'))
+    await waitFor(() => expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledOnce())
+    const heartbeat = intervals.mock.calls.find(([, delay]) => delay === 3_600_000)?.[0]
+    if (typeof heartbeat !== 'function') {
+      throw new Error('Draft heartbeat missing')
+    }
+    heartbeat()
+    await waitFor(() => expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledTimes(2))
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: 'stored-cover',
+      referenceId: COVER_DRAFT_ID,
+    })
+    cleanup()
+    storageMocks.writeAlbumDraftReference.mockClear()
+    window.dispatchEvent(new Event('pageshow'))
+    heartbeat()
+    await flushPromises()
+    expect(storageMocks.writeAlbumDraftReference).not.toHaveBeenCalled()
+  })
+
   it('should register the current tab draft and release it on page hide', async () => {
     vi.mocked(crypto.randomUUID)
       .mockReturnValueOnce('00000000-0000-4000-8000-000000000003')

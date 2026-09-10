@@ -98,9 +98,11 @@ export const registerDraftRestoration = (options: RegisterDraftRestorationOption
       options.releaseDraftReference().catch(() => undefined)
     }
     window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('pageshow', refreshDraftReference)
     onCleanup(() => {
       globalThis.clearInterval(heartbeat)
       window.removeEventListener('pagehide', handlePageHide)
+      window.removeEventListener('pageshow', refreshDraftReference)
       options.releaseDraftReference().catch(() => undefined)
     })
 
