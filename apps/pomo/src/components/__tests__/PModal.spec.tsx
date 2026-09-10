@@ -3,11 +3,21 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
 import {PModal} from '../PModal'
 import {PModalTabList} from '../PModalTabList'
+
+beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe = vi.fn()
+      disconnect = vi.fn()
+    },
+  )
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -150,13 +160,6 @@ it('should apply custom open and close focus behavior', async () => {
 })
 
 it('should preserve the tabs context through navigation, portal, and reopening', async () => {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe = vi.fn()
-      disconnect = vi.fn()
-    },
-  )
   const readStyles = window.getComputedStyle.bind(window)
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
     const styles = readStyles(element)
