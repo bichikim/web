@@ -70,6 +70,7 @@ const DRAFT = {
 
 beforeEach(() => {
   dexie.records.clear()
+  localStorage.clear()
   sessionStorage.clear()
   vi.clearAllMocks()
 })
@@ -106,4 +107,23 @@ it('should delete expired browser covers while preserving an active cover', asyn
   })
   expect(dexie.table.bulkDelete).toHaveBeenLastCalledWith(['protected', 'old'])
   expect(dexie.below).toHaveBeenCalledWith(expect.any(Number))
+})
+
+it('should remove stale tab references before deleting expired covers', async () => {
+  const staleCover = new File(['stale'], 'cover.webp', {type: 'image/webp'})
+  const staleAt = Date.UTC(2026, 7, 10)
+  const now = Date.UTC(2026, 8, 10)
+  vi.spyOn(Date, 'now').mockReturnValue(now)
+  dexie.records.set('stale', {blob: staleCover, id: 'stale', updatedAt: staleAt})
+  localStorage.setItem(
+    'pomo:admin-music:album-draft-session:v1:closed-tab',
+    JSON.stringify({coverDraftId: 'stale', lastSeenAt: staleAt}),
+  )
+
+  await expect(deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})).resolves.toEqual({
+    success: true,
+  })
+
+  expect(dexie.table.bulkDelete).toHaveBeenLastCalledWith(['stale'])
+  expect(localStorage.getItem('pomo:admin-music:album-draft-session:v1:closed-tab')).toBeNull()
 })

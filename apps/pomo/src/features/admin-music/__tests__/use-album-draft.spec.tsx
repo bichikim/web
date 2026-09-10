@@ -19,9 +19,11 @@ import {useAlbumDraft} from '../use-album-draft'
 const storageMocks = vi.hoisted(() => ({
   deleteAlbumDraft: vi.fn(),
   deleteAlbumDraftCover: vi.fn(),
+  deleteAlbumDraftSession: vi.fn(),
   deleteExpiredAlbumDraftCovers: vi.fn(),
   readAlbumDraftCover: vi.fn(),
   readAlbumDraftData: vi.fn(),
+  touchAlbumDraftSession: vi.fn(),
   writeAlbumDraftCover: vi.fn(),
   writeAlbumDraftData: vi.fn(),
 }))
@@ -42,6 +44,7 @@ const VALID_COVER = new File(['source'], 'source.png', {type: 'image/png'})
 const PREPARED_COVER = new File(['prepared'], 'cover.webp', {type: 'image/webp'})
 const COVER_DRAFT_ID = '00000000-0000-4000-8000-000000000001'
 const RENEWED_ALBUM_ID = '00000000-0000-4000-8000-000000000002'
+const DRAFT_SESSION_HEARTBEAT_MILLISECONDS = 24 * 60 * 60 * 1000
 
 const createTranslations = (): AlbumDraftTranslations => ({
   en: {description: '', title: ''},
@@ -96,9 +99,11 @@ beforeEach(() => {
   vi.resetAllMocks()
   storageMocks.deleteAlbumDraft.mockResolvedValue({success: true})
   storageMocks.deleteAlbumDraftCover.mockResolvedValue({success: true})
+  storageMocks.deleteAlbumDraftSession.mockReturnValue({success: true})
   storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({success: true})
   storageMocks.readAlbumDraftCover.mockResolvedValue(null)
   storageMocks.readAlbumDraftData.mockReturnValue(null)
+  storageMocks.touchAlbumDraftSession.mockReturnValue({success: true})
   storageMocks.writeAlbumDraftCover.mockResolvedValue({success: true})
   storageMocks.writeAlbumDraftData.mockReturnValue({success: true})
   coverMocks.prepareAlbumCover.mockResolvedValue(PREPARED_COVER)
@@ -346,6 +351,54 @@ describe('album draft restoration', () => {
     expect(URL.createObjectURL).toHaveBeenCalledWith(PREPARED_COVER)
     cleanup()
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:album-cover')
+  })
+
+  it('should refresh the draft session after returning from bfcache and release it on page exit', async () => {
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
+    const {cleanup, result} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    window.dispatchEvent(new Event('pageshow'))
+    await waitFor(() =>
+      expect(storageMocks.touchAlbumDraftSession).toHaveBeenCalledWith('stored-cover'),
+    )
+
+    const pagehide = new Event('pagehide')
+    Object.defineProperty(pagehide, 'persisted', {value: false})
+    window.dispatchEvent(pagehide)
+    await waitFor(() => expect(storageMocks.deleteAlbumDraftSession).toHaveBeenCalledOnce())
+    cleanup()
+  })
+
+  it('should refresh the active draft session on its heartbeat', async () => {
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval')
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
+    const {cleanup, result} = renderAlbumDraft()
+
+    try {
+      await waitForRestoration(result)
+      const heartbeat = setIntervalSpy.mock.calls.find(
+        ([, delay]) => delay === DRAFT_SESSION_HEARTBEAT_MILLISECONDS,
+      )?.[0]
+      expect(heartbeat).toEqual(expect.any(Function))
+      storageMocks.touchAlbumDraftSession.mockClear()
+      if (typeof heartbeat !== 'function') {
+        throw new Error('The album draft heartbeat was not registered.')
+      }
+      heartbeat()
+      await waitFor(() =>
+        expect(storageMocks.touchAlbumDraftSession).toHaveBeenCalledWith('stored-cover'),
+      )
+    } finally {
+      cleanup()
+    }
   })
 
   it('should normalize draft data when its persisted cover is missing', async () => {
