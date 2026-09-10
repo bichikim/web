@@ -52,6 +52,7 @@ export const PSettings = (props: PSettingsProps) => {
       </PScribbleCircleControl>
       <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>
         <PModal
+          closeOnEscape={false}
           isOpen={isOpen()}
           navigation={<PSettingsTabList />}
           onCloseAutoFocus={handleCloseAutoFocus}
