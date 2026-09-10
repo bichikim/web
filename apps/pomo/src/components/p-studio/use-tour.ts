@@ -21,11 +21,19 @@ const STEP_SELECTORS: Readonly<Record<string, string>> = {
   'pomodoro-detail': '.pomo-pomodoro',
   'pomodoro-duration': '.pomo-pomodoro',
   settings: '[data-tour-step="settings"]',
+  'settings-background': '[data-tour-step="settings"]',
   'settings-dialogue': '[data-tour-step="settings"]',
   'settings-events': '[data-tour-step="settings"]',
   'settings-feeds': '[data-tour-step="settings"]',
   'settings-general': '[data-tour-step="settings"]',
   'settings-user': '[data-tour-step="settings"]',
+}
+
+const resolveCurrentAudioSource = (source: string): string => {
+  const documentLocale = document.documentElement.lang
+  const locale = documentLocale === 'en' || documentLocale === 'ko' ? documentLocale : getLocale()
+
+  return source.replace(/^\/tour\/audio\/(?:ko|en)\//u, `/tour/audio/${locale}/`)
 }
 
 const createMemoryAssistTourSteps = (
@@ -104,6 +112,17 @@ const createSettingsTourSteps = (
       video: {
         label: m.tour_settings_general_video_label(),
         source: `${videoDirectory}/settings-general.webm`,
+      },
+    },
+    {
+      audio: getAudio('settings-background'),
+      description: m.tour_settings_background_description(),
+      id: 'settings-background',
+      scrollIntoView: true,
+      title: m.settings_tab_background(),
+      video: {
+        label: m.tour_settings_background_video_label(),
+        source: `${videoDirectory}/settings-background.webm`,
       },
     },
     {
@@ -268,7 +287,7 @@ export const useStudioTour = () => {
       if (source === undefined) {
         audioPlayer.stop()
       } else {
-        audioPlayer.play(source)
+        audioPlayer.play(resolveCurrentAudioSource(source))
       }
       return
     }

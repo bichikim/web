@@ -9,7 +9,10 @@ import * as m from '@paraglide/message'
 import {PModal} from '../PModal'
 import {PModalTabList} from '../PModalTabList'
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 it('should omit the header while preserving the accessible dialog title', () => {
   render(() => (
@@ -147,6 +150,13 @@ it('should apply custom open and close focus behavior', async () => {
 })
 
 it('should preserve the tabs context through navigation, portal, and reopening', async () => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe = vi.fn()
+      disconnect = vi.fn()
+    },
+  )
   const readStyles = window.getComputedStyle.bind(window)
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
     const styles = readStyles(element)
