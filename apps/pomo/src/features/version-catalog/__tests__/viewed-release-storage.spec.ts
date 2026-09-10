@@ -69,6 +69,42 @@ it('should use Apps in Toss storage as the native source of truth', async () => 
   )
 })
 
+it.each(['2026-09-03T00:52:00+09:00', '2026-09-02T15:57:00Z'])(
+  'should preserve the web marker when an incoming release is not newer: %s',
+  async (releasedAt) => {
+    await writeViewedRelease(viewedRelease)
+
+    await writeViewedRelease({...viewedRelease, releasedAt, version: '2026. 09. 03 00:52'})
+
+    await expect(readViewedRelease()).resolves.toEqual(viewedRelease)
+  },
+)
+
+it('should advance an older web marker and replace malformed stored data', async () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({...viewedRelease, releasedAt: 'invalid'}))
+  await writeViewedRelease({...viewedRelease, releasedAt: '2026-09-03T00:52:00+09:00'})
+  await writeViewedRelease(viewedRelease)
+
+  await expect(readViewedRelease()).resolves.toEqual(viewedRelease)
+})
+
+it('should persist native values regardless of a newer browser cache', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({...viewedRelease, releasedAt: '2026-09-04T00:57:00+09:00'}),
+  )
+  nativeStorageMocks.setItem.mockResolvedValue(undefined)
+
+  await writeViewedRelease(viewedRelease)
+
+  expect(nativeStorageMocks.setItem).toHaveBeenCalledWith(
+    STORAGE_KEY,
+    JSON.stringify(viewedRelease),
+  )
+  expect(localStorage.getItem(STORAGE_KEY)).toBe(JSON.stringify(viewedRelease))
+})
+
 it('should ignore a stale browser marker when native storage has no marker', async () => {
   const storage = createStorage()
   vi.mocked(storage.isNative).mockReturnValue(true)
