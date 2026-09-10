@@ -1,5 +1,5 @@
 import {useAction, useSubmission} from '@solidjs/router'
-import {createSignal, type JSX, onCleanup, onMount, type Setter} from 'solid-js'
+import {createSignal, type JSX, onCleanup, type Setter} from 'solid-js'
 import {z} from 'zod'
 
 import {
@@ -16,6 +16,11 @@ import {
 } from './album-draft'
 import {createAdminAlbumAction, type CreateAlbumActionResult} from './actions'
 import {validateAlbumCover} from './cover-upload'
+import {registerDraftRestoration, type RestoredAlbumDraft} from './draft-reference'
+import {
+  createDraftReferenceLifecycle,
+  type DraftReferenceUpdater,
+} from './create-draft-reference-lifecycle'
 
 const getAlbumDraftStorage = () => import('./album-draft-storage')
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
@@ -36,12 +41,20 @@ const clearCoverPreview = (
 const persistDraftData = async (
   draft: AlbumDraftData,
   setMessage: Setter<string | null>,
+  updateDraftReference: DraftReferenceUpdater,
 ): Promise<void> => {
   try {
     const {writeAlbumDraftData} = await getAlbumDraftStorage()
 
     if (!writeAlbumDraftData(draft).success) {
       setMessage('브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.')
+      return
+    }
+
+    if (!(await updateDraftReference(draft.coverDraftId)).success) {
+      setMessage(
+        '브라우저 초안은 저장했지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+      )
     }
   } catch (error) {
     console.warn('Failed to load the album draft storage.', error)
@@ -49,55 +62,20 @@ const persistDraftData = async (
   }
 }
 
-interface RestoredAlbumDraft {
-  readonly coverFile: File | null
-  readonly draft: AlbumDraftData
-}
-
-const restoreAlbumDraft = async (): Promise<RestoredAlbumDraft | null> => {
-  const {
-    deleteExpiredAlbumDraftCovers,
-    readAlbumDraftCover,
-    readAlbumDraftData,
-    writeAlbumDraftData,
-  } = await getAlbumDraftStorage()
-  const draft = readAlbumDraftData()
-  await deleteExpiredAlbumDraftCovers({activeCoverDraftId: draft?.coverDraftId ?? null})
-
-  if (draft === null) {
-    return null
-  }
-
-  if (!draft.hasCoverFile || draft.coverDraftId === null) {
-    const normalizedDraft = draft.hasCoverFile ? {...draft, hasCoverFile: false} : draft
-
-    if (draft.hasCoverFile) {
-      writeAlbumDraftData(normalizedDraft)
-    }
-
-    return {coverFile: null, draft: normalizedDraft}
-  }
-
-  const coverFile = await readAlbumDraftCover(draft.coverDraftId)
-
-  if (coverFile !== null) {
-    return {coverFile, draft}
-  }
-
-  const normalizedDraft = {...draft, coverDraftId: null, hasCoverFile: false}
-  writeAlbumDraftData(normalizedDraft)
-  return {coverFile: null, draft: normalizedDraft}
-}
-
 const removePreparedCoverDraft = async (
   previousCoverDraftId: string | null,
   draft: AlbumDraftData,
+  updateDraftReference: DraftReferenceUpdater,
 ): Promise<string | null> => {
   const {deleteAlbumDraftCover, writeAlbumDraftData} = await getAlbumDraftStorage()
   const dataWriteResult = writeAlbumDraftData(draft)
 
   if (!dataWriteResult.success) {
     return '커버는 화면에서 지웠지만 브라우저 초안을 갱신하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.'
+  }
+
+  if (!(await updateDraftReference(null)).success) {
+    return '커버는 화면에서 지웠지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.'
   }
 
   if (previousCoverDraftId !== null) {
@@ -112,6 +90,7 @@ interface PersistPreparedCoverOptions {
   readonly file: File
   readonly nextCoverDraftId: string
   readonly previousCoverDraftId: string | null
+  readonly updateDraftReference: DraftReferenceUpdater
 }
 
 const persistPreparedCover = async ({
@@ -119,6 +98,7 @@ const persistPreparedCover = async ({
   file,
   nextCoverDraftId,
   previousCoverDraftId,
+  updateDraftReference,
 }: PersistPreparedCoverOptions): Promise<string> => {
   const {deleteAlbumDraftCover, writeAlbumDraftCover, writeAlbumDraftData} =
     await getAlbumDraftStorage()
@@ -133,6 +113,10 @@ const persistPreparedCover = async ({
   if (!dataWriteResult.success) {
     await deleteAlbumDraftCover(nextCoverDraftId)
     return '커버는 준비했지만 브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 앨범을 만들어 주세요.'
+  }
+
+  if (!(await updateDraftReference(nextCoverDraftId)).success) {
+    return '커버는 준비했지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.'
   }
 
   if (previousCoverDraftId !== null) {
@@ -200,12 +184,15 @@ interface DraftPersistence {
 const createDraftPersistence = (
   getDraftData: () => AlbumDraftData,
   setMessage: Setter<string | null>,
+  updateDraftReference: DraftReferenceUpdater,
 ): DraftPersistence => {
   let persistence = Promise.resolve()
   return {
     persist: () => {
       const draft = getDraftData()
-      persistence = persistence.then(() => persistDraftData(draft, setMessage))
+      persistence = persistence.then(() =>
+        persistDraftData(draft, setMessage, updateDraftReference),
+      )
     },
     wait: () => persistence,
   }
@@ -309,44 +296,6 @@ const applyRestoredDraft = (
   }
 }
 
-interface RegisterDraftRestorationOptions {
-  readonly applyDraft: (restoredDraft: RestoredAlbumDraft | null) => void
-  readonly getIsDisposed: () => boolean
-  readonly onFinished: () => void
-  readonly setIsRestoringDraft: Setter<boolean>
-  readonly setMessage: Setter<string | null>
-}
-
-const registerDraftRestoration = (options: RegisterDraftRestorationOptions): void => {
-  onMount(async () => {
-    try {
-      const restoredDraft = await restoreAlbumDraft()
-
-      if (options.getIsDisposed()) {
-        return
-      }
-
-      options.applyDraft(restoredDraft)
-      if (restoredDraft !== null) {
-        options.setMessage('작성 중이던 앨범 초안을 복원했습니다.')
-      }
-    } catch (error) {
-      if (options.getIsDisposed()) {
-        return
-      }
-      console.warn('Failed to restore the admin album draft.', error)
-      options.setMessage(
-        '브라우저 초안을 복원하지 못했습니다. 새로 입력한 내용은 이 탭에 유지됩니다.',
-      )
-    } finally {
-      options.onFinished()
-      if (!options.getIsDisposed()) {
-        options.setIsRestoringDraft(false)
-      }
-    }
-  })
-}
-
 const useCreateAlbumAction = () => ({
   submission: useSubmission(createAdminAlbumAction),
   submit: useAction(createAdminAlbumAction),
@@ -384,8 +333,17 @@ const createAlbumThroughAction = async (
 
 const createActionAlbumCreationServices = (
   albumAction: ReturnType<typeof useCreateAlbumAction>,
+  updateDraftReference: DraftReferenceUpdater,
 ): AlbumCreationServices => ({
-  clearDraft: albumCreationServices.clearDraft,
+  clearDraft: async (coverDraftId) => {
+    const didClearDraft = await albumCreationServices.clearDraft(coverDraftId)
+
+    if (didClearDraft) {
+      await updateDraftReference(null)
+    }
+
+    return didClearDraft
+  },
   createAlbum: (draft, coverFile) =>
     createAlbumThroughAction(
       albumAction.submit,
@@ -401,9 +359,101 @@ const persistRestoredEdits = (editedFields: ReadonlySet<DraftField>, persist: ()
   }
 }
 
+interface CoverPreparationState {
+  id: number
+}
+
+interface CreateCoverChangeHandlerOptions {
+  readonly clearPreparedCover: () => void
+  readonly coverPreparation: CoverPreparationState
+  readonly getCoverDraftId: () => string | null
+  readonly getCoverPreviewUrl: () => string | null
+  readonly getDraftData: () => AlbumDraftData
+  readonly getIsDisposed: () => boolean
+  readonly markCoverEdited: () => void
+  readonly restorationBarrier: DraftRestorationBarrier
+  readonly setCoverDraftId: Setter<string | null>
+  readonly setCoverPreviewUrl: Setter<string | null>
+  readonly setIsProcessingCover: Setter<boolean>
+  readonly setMessage: Setter<string | null>
+  readonly setPreparedCoverFile: Setter<File | null>
+  readonly updateDraftReference: DraftReferenceUpdater
+}
+
+const createCoverChangeHandler =
+  (options: CreateCoverChangeHandlerOptions): JSX.EventHandler<HTMLInputElement, Event> =>
+  async (event) => {
+    const file = event.currentTarget.files?.item(0) ?? null
+    const input = event.currentTarget
+    options.coverPreparation.id += 1
+    options.setMessage(null)
+
+    if (file === null) {
+      const previousCoverDraftId = options.getCoverDraftId()
+      options.markCoverEdited()
+      options.clearPreparedCover()
+      options.setCoverDraftId(null)
+      const clearingId = options.coverPreparation.id
+      await options.restorationBarrier.wait()
+      if (options.getIsDisposed() || clearingId !== options.coverPreparation.id) {
+        return
+      }
+
+      const message = await removePreparedCoverDraft(
+        previousCoverDraftId,
+        options.getDraftData(),
+        options.updateDraftReference,
+      )
+      options.setMessage(message)
+      return
+    }
+
+    const preparationId = options.coverPreparation.id
+    try {
+      validateAlbumCover(file)
+      options.setIsProcessingCover(true)
+      const {prepareAlbumCover} = await import('./cover-image')
+      const preparedFile = await prepareAlbumCover(file)
+
+      if (preparationId !== options.coverPreparation.id) {
+        return
+      }
+
+      clearCoverPreview(options.getCoverPreviewUrl(), options.setCoverPreviewUrl)
+      const previousCoverDraftId = options.getCoverDraftId()
+      const nextCoverDraftId = crypto.randomUUID()
+      options.markCoverEdited()
+      options.setPreparedCoverFile(preparedFile)
+      options.setCoverDraftId(nextCoverDraftId)
+      options.setCoverPreviewUrl(URL.createObjectURL(preparedFile))
+      await options.restorationBarrier.wait()
+
+      if (options.getIsDisposed() || preparationId !== options.coverPreparation.id) {
+        return
+      }
+
+      const message = await persistPreparedCover({
+        draft: options.getDraftData(),
+        file: preparedFile,
+        nextCoverDraftId,
+        previousCoverDraftId,
+        updateDraftReference: options.updateDraftReference,
+      })
+      options.setMessage(message)
+    } catch (error) {
+      input.value = ''
+      options.setMessage(error instanceof Error ? error.message : COVER_SELECTION_ERROR)
+    } finally {
+      if (preparationId === options.coverPreparation.id) {
+        options.setIsProcessingCover(false)
+      }
+    }
+  }
+
 export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const albumAction = useCreateAlbumAction()
   const albumCreationId = useAlbumCreationId()
+  const draftReference = createDraftReferenceLifecycle({loadStorage: getAlbumDraftStorage})
   const [isSavingAlbumWorkflow, setIsSavingAlbumWorkflow] = createSignal(false)
   const [isProcessingCover, setIsProcessingCover] = createSignal(false)
   const [isRestoringDraft, setIsRestoringDraft] = createSignal(true)
@@ -413,7 +463,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const [coverImageUrl, setCoverImageUrl] = createSignal('')
   const [coverFallback, setCoverFallback] = createSignal<AlbumDraftData['coverFallback']>('lp')
   const [coverDraftId, setCoverDraftId] = createSignal<string | null>(null)
-  let coverPreparationId = 0
+  const coverPreparation = {id: 0}
   const editedFields = new Set<DraftField>()
   const lifecycle = {disposed: false}
   const restorationBarrier = createDraftRestorationBarrier()
@@ -425,7 +475,11 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverImageUrl: coverImageUrl,
     getTranslations: albumTranslations,
   })
-  const draftPersistence = createDraftPersistence(getDraftData, props.setMessage)
+  const draftPersistence = createDraftPersistence(
+    getDraftData,
+    props.setMessage,
+    draftReference.update,
+  )
   const persistEditedDraft = createGuardedPersistence(
     () => !isRestoringDraft(),
     draftPersistence.persist,
@@ -440,7 +494,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     setTranslations: setAlbumTranslations,
   })
   const clearPreparedCover = (): void => {
-    coverPreparationId += 1
+    coverPreparation.id += 1
     clearCoverPreview(coverPreviewUrl(), setCoverPreviewUrl)
     setPreparedCoverFile(null)
     setIsProcessingCover(false)
@@ -461,10 +515,14 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
 
       persistRestoredEdits(editedFields, draftPersistence.persist)
     },
+    getDraftReferenceCoverDraftId: draftReference.getCoverDraftId,
     getIsDisposed: () => lifecycle.disposed,
     onFinished: restorationBarrier.finish,
+    releaseDraftReference: draftReference.release,
+    setDraftReferenceId: draftReference.setId,
     setIsRestoringDraft,
     setMessage: props.setMessage,
+    updateDraftReference: draftReference.update,
   })
   const handleAlbumSubmit = createAlbumSubmitHandler({
     ...props,
@@ -474,7 +532,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getDraftData,
     persistDraft: draftPersistence.persist,
     renewAlbumId: albumCreationId.renew,
-    services: createActionAlbumCreationServices(albumAction),
+    services: createActionAlbumCreationServices(albumAction, draftReference.update),
     setAlbumId: albumCreationId.set,
     setCoverDraftId,
     setCoverFallback,
@@ -483,66 +541,24 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     setTranslations: setAlbumTranslations,
     waitForDraftPersistence: draftPersistence.wait,
   })
-  const handleCoverChange: JSX.EventHandler<HTMLInputElement, Event> = async (event) => {
-    const file = event.currentTarget.files?.item(0) ?? null
-    const input = event.currentTarget
-    coverPreparationId += 1
-    props.setMessage(null)
-    if (file === null) {
-      const previousCoverDraftId = coverDraftId()
+  const handleCoverChange = createCoverChangeHandler({
+    clearPreparedCover,
+    coverPreparation,
+    getCoverDraftId: coverDraftId,
+    getCoverPreviewUrl: coverPreviewUrl,
+    getDraftData,
+    getIsDisposed: () => lifecycle.disposed,
+    markCoverEdited: () => {
       editedFields.add('cover')
-      clearPreparedCover()
-      setCoverDraftId(null)
-      const clearingId = coverPreparationId
-      await restorationBarrier.wait()
-      if (lifecycle.disposed || clearingId !== coverPreparationId) {
-        return
-      }
-
-      props.setMessage(await removePreparedCoverDraft(previousCoverDraftId, getDraftData()))
-      return
-    }
-    const preparationId = coverPreparationId
-    try {
-      validateAlbumCover(file)
-      setIsProcessingCover(true)
-      const {prepareAlbumCover} = await import('./cover-image')
-      const preparedFile = await prepareAlbumCover(file)
-
-      if (preparationId !== coverPreparationId) {
-        return
-      }
-
-      clearCoverPreview(coverPreviewUrl(), setCoverPreviewUrl)
-      const previousCoverDraftId = coverDraftId()
-      const nextCoverDraftId = crypto.randomUUID()
-      editedFields.add('cover')
-      setPreparedCoverFile(preparedFile)
-      setCoverDraftId(nextCoverDraftId)
-      setCoverPreviewUrl(URL.createObjectURL(preparedFile))
-      await restorationBarrier.wait()
-
-      if (lifecycle.disposed || preparationId !== coverPreparationId) {
-        return
-      }
-
-      props.setMessage(
-        await persistPreparedCover({
-          draft: getDraftData(),
-          file: preparedFile,
-          nextCoverDraftId,
-          previousCoverDraftId,
-        }),
-      )
-    } catch (error) {
-      input.value = ''
-      props.setMessage(error instanceof Error ? error.message : COVER_SELECTION_ERROR)
-    } finally {
-      if (preparationId === coverPreparationId) {
-        setIsProcessingCover(false)
-      }
-    }
-  }
+    },
+    restorationBarrier,
+    setCoverDraftId,
+    setCoverPreviewUrl,
+    setIsProcessingCover,
+    setMessage: props.setMessage,
+    setPreparedCoverFile,
+    updateDraftReference: draftReference.update,
+  })
   return {
     ...draftFieldHandlers,
     albumTranslations,
