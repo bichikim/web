@@ -2,6 +2,7 @@
   "model": "supertonic-3",
   "revision": "724fb5abbf5502583fb520898d45929e62f02c0b",
   "sdk": "supertonic==1.3.1",
+  "engine": "Supertonic",
   "voice": "Sarah",
   "voiceId": "F1",
   "voiceStyleUrl": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/sarah.json",
@@ -106,6 +107,12 @@
       "messageKey": "tour_settings_dialogue_description",
       "text": "In Dialogue, create dialogues and set the automatic voice model, voice, and music volume during dialogue.",
       "sha256": "29a344fbcdab7ac50f1aa94b915ca1f6236f5f4d0af7c3edc28f61c568c0f1ff"
+    },
+    {
+      "id": "settings-background",
+      "messageKey": "tour_settings_background_description",
+      "text": "In Background, use photos or videos instead of the character and set their order, timing, and transitions.",
+      "sha256": "f30fe88315c84644f5508b6d89d783c2d6bdc3ca89dd6b5fd3b3d30514c1b6fb"
     },
     {
       "id": "settings-events",

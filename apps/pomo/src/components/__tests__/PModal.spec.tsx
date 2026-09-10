@@ -3,13 +3,26 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
 import {PModal} from '../PModal'
 import {PModalTabList} from '../PModalTabList'
 
-afterEach(() => vi.restoreAllMocks())
+beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe = vi.fn()
+      disconnect = vi.fn()
+    },
+  )
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 it.each([false, true, undefined])(
   'should honor closeOnEscape=%s after switching tabs and preserve the close button',

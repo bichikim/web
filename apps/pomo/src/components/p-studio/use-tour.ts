@@ -3,6 +3,7 @@ import {getLocale} from '@paraglide/runtime'
 import {createMemo, createSignal, onCleanup} from 'solid-js'
 
 import {createFocusRoomTourAudioPlayer} from '../../features/focus-room-tour-audio'
+import {resolveAudioSource} from './resolve-audio-source'
 import type {TourEvent} from '@winter-love/solid-use/tour'
 import type {PTourStep} from '../tour/PTour'
 
@@ -21,6 +22,7 @@ const STEP_SELECTORS: Readonly<Record<string, string>> = {
   'pomodoro-detail': '.pomo-pomodoro',
   'pomodoro-duration': '.pomo-pomodoro',
   settings: '[data-tour-step="settings"]',
+  'settings-background': '[data-tour-step="settings"]',
   'settings-dialogue': '[data-tour-step="settings"]',
   'settings-events': '[data-tour-step="settings"]',
   'settings-feeds': '[data-tour-step="settings"]',
@@ -104,6 +106,17 @@ const createSettingsTourSteps = (
       video: {
         label: m.tour_settings_general_video_label(),
         source: `${videoDirectory}/settings-general.webm`,
+      },
+    },
+    {
+      audio: getAudio('settings-background'),
+      description: m.tour_settings_background_description(),
+      id: 'settings-background',
+      scrollIntoView: true,
+      title: m.settings_tab_background(),
+      video: {
+        label: m.tour_settings_background_video_label(),
+        source: `${videoDirectory}/settings-background.webm`,
       },
     },
     {
@@ -268,7 +281,13 @@ export const useStudioTour = () => {
       if (source === undefined) {
         audioPlayer.stop()
       } else {
-        audioPlayer.play(source)
+        audioPlayer.play(
+          resolveAudioSource({
+            documentLocale: document.documentElement.lang,
+            runtimeLocale: getLocale(),
+            source,
+          }),
+        )
       }
       return
     }

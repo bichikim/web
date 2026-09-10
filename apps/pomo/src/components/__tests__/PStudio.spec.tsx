@@ -432,6 +432,7 @@ describe('PStudio', () => {
       'memory-assist-calendar',
       'settings',
       'settings-general',
+      'settings-background',
       'settings-events',
       'settings-feeds',
       'settings-dialogue',
@@ -494,6 +495,7 @@ describe('PStudio', () => {
       [
         'settings',
         'settings-general',
+        'settings-background',
         'settings-events',
         'settings-feeds',
         'settings-dialogue',

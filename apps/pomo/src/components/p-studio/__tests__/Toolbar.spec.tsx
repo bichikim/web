@@ -100,9 +100,9 @@ describe('SceneToolbar', () => {
   it('should replace the direct activity selector with the tour action', () => {
     render(() => <SceneToolbar {...baseProps} />)
 
-    screen.getByRole('button', {name: 'Pomofi 둘러보기'}).click()
+    screen.getByRole('button', {name: '둘러보기'}).click()
     expect(baseProps.onTourOpen).toHaveBeenCalledOnce()
-    expect(screen.getByRole('button', {name: 'Pomofi 둘러보기'}).parentElement).toHaveAttribute(
+    expect(screen.getByRole('button', {name: '둘러보기'}).parentElement).toHaveAttribute(
       'data-tour-step',
       'tour',
     )

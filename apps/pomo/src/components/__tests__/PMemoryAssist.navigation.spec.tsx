@@ -30,6 +30,13 @@ vi.mock('../memory-assist/PictureDiary', () => ({PictureDiary: vi.fn()}))
 const originalGetLocale = getLocale
 
 beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      disconnect = vi.fn()
+      observe = vi.fn()
+    },
+  )
   vi.clearAllMocks()
   const readStyles = window.getComputedStyle.bind(window)
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
@@ -58,6 +65,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.unstubAllGlobals()
   overwriteGetLocale(originalGetLocale)
   vi.restoreAllMocks()
 })

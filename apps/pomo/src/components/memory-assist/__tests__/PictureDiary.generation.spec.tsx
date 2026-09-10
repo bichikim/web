@@ -13,6 +13,13 @@ const {createRepository, environment, finishPageTurn, turns} = setupDiary()
 it.each(['draw', 'done', 'switch-tabs'])(
   'should save and restore an image-only diary via %s',
   async (action) => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        disconnect = vi.fn()
+        observe = vi.fn()
+      },
+    )
     const getComputedStyle = window.getComputedStyle.bind(window)
     vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
       const styles = getComputedStyle(element, pseudoElement)
