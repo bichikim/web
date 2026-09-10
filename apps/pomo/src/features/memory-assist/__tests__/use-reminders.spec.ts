@@ -527,6 +527,15 @@ it('should not advance a reminder when playback is skipped', async () => {
     reminderHistory: [],
   })
   expect(mocks.updateMemos).not.toHaveBeenCalled()
+  expect(view.result.skippedReminders()).toEqual(mocks.memos)
+
+  vi.mocked(events.playDialogue).mockResolvedValue(true)
+  await vi.advanceTimersByTimeAsync(299_999)
+  expect(events.playDialogue).toHaveBeenCalledOnce()
+  await vi.advanceTimersByTimeAsync(1)
+  await flushPromises()
+  expect(events.playDialogue).toHaveBeenCalledTimes(2)
+  expect(view.result.skippedReminders()).toEqual([])
 
   view.cleanup()
 })
@@ -593,4 +602,100 @@ it('should delay retry after skipped playback instead of regenerating immediatel
   expect(events.playDialogue).toHaveBeenCalledOnce()
   expect(mocks.createDialogue).toHaveBeenCalledOnce()
   view.cleanup()
+})
+
+it.each(['edited', 'deleted', 'pending deletion'] as const)(
+  'should hide a skipped reminder when its memo is %s',
+  async (change) => {
+    const memo = {
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-04T03:00:00.000Z',
+        id: 'memo-1',
+        now: new Date('2026-09-04T02:00:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: '메모',
+      }),
+      dialogueId: 'existing-dialogue',
+    }
+    mocks.memos = [memo]
+    const events = {
+      playDialogue: vi.fn().mockResolvedValue(false),
+      refreshDialogues: vi.fn(),
+    } as unknown as PEventContextValue
+    const view = renderHook(() => useMemoryReminders({events}))
+    try {
+      await vi.advanceTimersToNextTimerAsync()
+      expect(view.result.skippedReminders()).toEqual([memo])
+      const changes = {
+        deleted: [],
+        edited: [{...memo, updatedAt: '2026-09-04T03:00:01.000Z'}],
+        'pending deletion': [{...memo, deletionPending: true as const}],
+      }
+      mocks.memos = changes[change]
+      expect(view.result.skippedReminders()).toEqual([])
+    } finally {
+      view.cleanup()
+    }
+  },
+)
+
+it('should not publish a skipped reminder after owner cleanup', async () => {
+  mocks.memos = [
+    {
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-04T03:00:00.000Z',
+        id: 'memo-1',
+        now: new Date('2026-09-04T02:00:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: '메모',
+      }),
+      dialogueId: 'existing-dialogue',
+    },
+  ]
+  const playback = Promise.withResolvers<boolean>()
+  const events = {
+    playDialogue: vi.fn().mockReturnValue(playback.promise),
+    refreshDialogues: vi.fn(),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+  await vi.advanceTimersToNextTimerAsync()
+  expect(events.playDialogue).toHaveBeenCalledOnce()
+  view.cleanup()
+  playback.resolve(false)
+  await flushPromises()
+  expect(view.result.skippedReminders()).toEqual([])
+})
+
+it('should retain independent skipped reminders without duplicating retry notices', async () => {
+  mocks.memos = ['memo-1', 'memo-2'].map((id) => ({
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id,
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: id,
+    }),
+    dialogueId: id,
+  }))
+  const playDialogue = vi.fn().mockResolvedValue(false)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn(),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+  try {
+    await vi.advanceTimersByTimeAsync(10)
+    expect(view.result.skippedReminders().map((memo) => memo.id)).toEqual(['memo-1', 'memo-2'])
+    await vi.advanceTimersByTimeAsync(300_000)
+    expect(playDialogue).toHaveBeenCalledTimes(4)
+    expect(view.result.skippedReminders().map((memo) => memo.id)).toEqual(['memo-1', 'memo-2'])
+    playDialogue.mockImplementation(async (id: string) => id === 'memo-1')
+    await vi.advanceTimersByTimeAsync(300_000)
+    expect(view.result.skippedReminders().map((memo) => memo.id)).toEqual(['memo-2'])
+  } finally {
+    view.cleanup()
+  }
 })
