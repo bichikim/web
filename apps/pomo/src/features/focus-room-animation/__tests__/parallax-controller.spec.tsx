@@ -364,6 +364,34 @@ describe('ParallaxController', () => {
     controller.destroy()
   })
 
+  it('should use the global sensor API when the Window object does not expose it', () => {
+    const browserWindow = {
+      addEventListener: vi.fn(),
+      clearTimeout: vi.fn(),
+      matchMedia: vi.fn(() => motionPreference),
+      removeEventListener: vi.fn(),
+      setTimeout: vi.fn(() => 1),
+    }
+    const onInputModeChange = vi.fn()
+    vi.stubGlobal('window', browserWindow)
+    vi.stubGlobal('DeviceOrientationEvent', TestDeviceOrientationEvent)
+
+    const controller = createController(document.createElement('div'), vi.fn(), {
+      inputMode: 'gyroscope',
+      onInputModeChange,
+    })
+
+    controller.start()
+
+    expect(onInputModeChange).not.toHaveBeenCalled()
+    expect(browserWindow.addEventListener).toHaveBeenCalledWith(
+      'deviceorientation',
+      expect.any(Function),
+      {passive: true},
+    )
+    controller.destroy()
+  })
+
   it('should exercise default fallback callbacks without custom options', () => {
     Reflect.deleteProperty(window, 'DeviceOrientationEvent')
     const controller = createController(document.createElement('div'), vi.fn(), {

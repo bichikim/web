@@ -295,7 +295,7 @@ export class ParallaxController {
   }
 
   #startGyroscopeInput() {
-    if (!('DeviceOrientationEvent' in window)) {
+    if (!('DeviceOrientationEvent' in globalThis)) {
       this.#activateDragFallback()
       return
     }

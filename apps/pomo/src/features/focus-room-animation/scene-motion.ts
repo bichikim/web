@@ -9,7 +9,7 @@ const clampHorizontalPosition = (position: number) => Math.max(-1, Math.min(1, p
 /** Reports whether this client is expected to provide device-orientation coordinates. */
 export const supportsPSceneGyroscope = () =>
   window.matchMedia('(hover: none) and (pointer: coarse)').matches &&
-  'DeviceOrientationEvent' in window
+  'DeviceOrientationEvent' in globalThis
 
 /** Maps a normalized horizontal input to the full crop range around Pomo's preferred anchor. */
 export const getPScenePanPosition = (horizontalPosition: number) => {

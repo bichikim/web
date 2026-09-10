@@ -42,4 +42,14 @@ describe('scene motion', () => {
 
     expect(supportsPSceneGyroscope()).toBe(false)
   })
+
+  it('should detect the global sensor API when the Window object does not expose it', () => {
+    const browserWindow = {
+      matchMedia: vi.fn(() => ({matches: true})),
+    }
+    vi.stubGlobal('window', browserWindow)
+    vi.stubGlobal('DeviceOrientationEvent', class extends Event {})
+
+    expect(supportsPSceneGyroscope()).toBe(true)
+  })
 })
