@@ -45,6 +45,16 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 타이머 테스트는 조작으로 시간을 설정하고 Playwright 시계로 경과 시간만 제어합니다.
 새로고침 중에는 hydration이 끝나도록 시계를 진행하고, 복원 후 다시 멈춥니다.
 
+[배경 탭 테스트](rendering/background.spec.ts)는 실제 웹 IndexedDB에 저장한 액자 모드·랜덤 재생·
+사진 두 장 표시 설정을 새로고침 후 확인하고, 캐릭터 모드로 돌아갈 수 있는지 검증합니다.
+다크·라이트 액자 설정 화면의 [최초 기준](rendering/background.spec.ts-snapshots)과
+[현재 이미지·촬영 환경](rendering/evidence/background/manifest.json)을 함께 보존합니다.
+미디어 목록은 비어 있으므로 파일 업로드·사진/영상 재생·네이티브 저장소는 검증하지 않습니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/background.spec.ts
+```
+
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 ```
