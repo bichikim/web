@@ -1,5 +1,5 @@
 import {noStoreJson} from '../http/response'
-import {getAdminSession} from './session'
+import {getAdminSession} from './get-admin-session'
 
 const HTTP_UNAUTHORIZED = 401
 const HTTP_FORBIDDEN = 403

@@ -709,6 +709,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.28.17)(postgres@3.4.9)
+      es-toolkit:
+        specifier: 'catalog:'
+        version: 1.46.1
       h3:
         specifier: 'catalog:'
         version: 2.0.1-rc.26(crossws@0.4.10(srvx@0.11.22))

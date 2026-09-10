@@ -1,7 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import {authorizeAdminRequest} from 'src/server/admin-auth/http'
+import {authorizeAdminRequest} from 'src/server/admin-auth/authorize-admin-request'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {createPendingTrack} from 'src/server/music/track-registration-repository'
