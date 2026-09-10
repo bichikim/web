@@ -92,6 +92,14 @@ export const createViewedReleaseRepository = (
     let writeError: unknown | null
 
     try {
+      const currentValue = parseViewedRelease(options.storage.readWeb())
+      if (
+        currentValue !== null &&
+        Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
+      ) {
+        return
+      }
+
       writeError = options.storage.writeWeb(parsedValue)
     } catch (error) {
       writeError = error
