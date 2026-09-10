@@ -1,4 +1,5 @@
-import {afterEach, describe, expect, it, vi} from 'vitest'
+/** @vitest-environment node */
+import {describe, expect, it, vi} from 'vitest'
 
 import {
   createPMouthTransitionController,
@@ -6,22 +7,18 @@ import {
   P_MOUTH_TRANSITION_DURATION_MS,
 } from '../mouth-transition-controller'
 
-const installAnimationFrames = () => {
+const createAnimationFrames = (now = () => 1_000) => {
   const callbacks = new Map<number, FrameRequestCallback>()
   let nextFrame = 1
-  const requestAnimationFrame = vi
-    .spyOn(globalThis, 'requestAnimationFrame')
-    .mockImplementation((callback) => {
-      const frame = nextFrame
-      nextFrame += 1
-      callbacks.set(frame, callback)
-      return frame
-    })
-  const cancelAnimationFrame = vi
-    .spyOn(globalThis, 'cancelAnimationFrame')
-    .mockImplementation((frame) => {
-      callbacks.delete(frame)
-    })
+  const requestAnimationFrame = vi.fn((callback: (timestamp: number) => void) => {
+    const frame = nextFrame
+    nextFrame += 1
+    callbacks.set(frame, callback)
+    return frame
+  })
+  const cancelAnimationFrame = vi.fn((frame: number) => {
+    callbacks.delete(frame)
+  })
   const getCallback = (frame: number) => {
     const callback = callbacks.get(frame)
 
@@ -37,12 +34,8 @@ const installAnimationFrames = () => {
     callback(timestamp)
   }
 
-  return {cancelAnimationFrame, getCallback, requestAnimationFrame, run}
+  return {getCallback, run, scheduler: {cancelAnimationFrame, now, requestAnimationFrame}}
 }
-
-afterEach(() => {
-  vi.restoreAllMocks()
-})
 
 describe('getPVisemeTransitionProgress', () => {
   it('should ease from the current mouth to the next over the co-articulation window', () => {
@@ -58,11 +51,34 @@ describe('getPVisemeTransitionProgress', () => {
 })
 
 describe('createPMouthTransitionController', () => {
+  it('should keep frame cancellation and clocks local to each scheduler', () => {
+    const firstFrames = createAnimationFrames(() => 100)
+    const secondFrames = createAnimationFrames(() => 2_000)
+    const first = createPMouthTransitionController(vi.fn(), firstFrames.scheduler)
+    const second = createPMouthTransitionController(vi.fn(), secondFrames.scheduler)
+
+    first.start('rest', 'round', false)
+    second.start('closed', 'open', false)
+    first.destroy()
+
+    expect(firstFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(1)
+    expect(secondFrames.scheduler.cancelAnimationFrame).not.toHaveBeenCalled()
+
+    secondFrames.run(1, 2_050)
+    expect(first.current).toBeNull()
+    expect(second.current).toEqual({from: 'closed', progress: 0.5, to: 'open'})
+
+    second.destroy()
+    expect(secondFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(2)
+  })
+
   it('should render and settle a complete transition', () => {
-    vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
-    const animationFrames = installAnimationFrames()
+    const animationFrames = createAnimationFrames()
     const onTransitionChange = vi.fn()
-    const controller = createPMouthTransitionController(onTransitionChange)
+    const controller = createPMouthTransitionController(
+      onTransitionChange,
+      animationFrames.scheduler,
+    )
 
     expect(controller.current).toBeNull()
 
@@ -74,7 +90,7 @@ describe('createPMouthTransitionController', () => {
     animationFrames.run(1, 1_050)
 
     expect(controller.current).toEqual({from: 'rest', progress: 0.5, to: 'round'})
-    expect(animationFrames.requestAnimationFrame).toHaveBeenCalledTimes(2)
+    expect(animationFrames.scheduler.requestAnimationFrame).toHaveBeenCalledTimes(2)
 
     animationFrames.run(2, 1_100)
 
@@ -82,27 +98,32 @@ describe('createPMouthTransitionController', () => {
     expect(onTransitionChange).toHaveBeenCalledTimes(4)
 
     controller.cancel()
-    expect(animationFrames.cancelAnimationFrame).not.toHaveBeenCalled()
+    expect(animationFrames.scheduler.cancelAnimationFrame).not.toHaveBeenCalled()
   })
 
   it('should notify immediately for reduced motion and an unchanged viseme', () => {
-    const animationFrames = installAnimationFrames()
+    const animationFrames = createAnimationFrames()
     const onTransitionChange = vi.fn()
-    const controller = createPMouthTransitionController(onTransitionChange)
+    const controller = createPMouthTransitionController(
+      onTransitionChange,
+      animationFrames.scheduler,
+    )
 
     controller.start('rest', 'round', true)
     controller.start('wide', 'wide', false)
 
     expect(controller.current).toBeNull()
     expect(onTransitionChange).toHaveBeenCalledTimes(2)
-    expect(animationFrames.requestAnimationFrame).not.toHaveBeenCalled()
+    expect(animationFrames.scheduler.requestAnimationFrame).not.toHaveBeenCalled()
   })
 
   it('should replace unrelated transitions and settle a zero-progress reversal immediately', () => {
-    vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
-    const animationFrames = installAnimationFrames()
+    const animationFrames = createAnimationFrames()
     const onTransitionChange = vi.fn()
-    const controller = createPMouthTransitionController(onTransitionChange)
+    const controller = createPMouthTransitionController(
+      onTransitionChange,
+      animationFrames.scheduler,
+    )
 
     controller.start('rest', 'round', false)
     controller.start('closed', 'open', false)
@@ -111,18 +132,20 @@ describe('createPMouthTransitionController', () => {
 
     expect(controller.current).toBeNull()
     expect(onTransitionChange).toHaveBeenCalledTimes(4)
-    expect(animationFrames.requestAnimationFrame).toHaveBeenCalledTimes(3)
-    expect(animationFrames.cancelAnimationFrame).toHaveBeenNthCalledWith(1, 1)
-    expect(animationFrames.cancelAnimationFrame).toHaveBeenNthCalledWith(2, 2)
-    expect(animationFrames.cancelAnimationFrame).toHaveBeenNthCalledWith(3, 3)
+    expect(animationFrames.scheduler.requestAnimationFrame).toHaveBeenCalledTimes(3)
+    expect(animationFrames.scheduler.cancelAnimationFrame).toHaveBeenNthCalledWith(1, 1)
+    expect(animationFrames.scheduler.cancelAnimationFrame).toHaveBeenNthCalledWith(2, 2)
+    expect(animationFrames.scheduler.cancelAnimationFrame).toHaveBeenNthCalledWith(3, 3)
   })
 
   it('should reverse from the current transition progress', () => {
     let now = 1_000
-    vi.spyOn(window.performance, 'now').mockImplementation(() => now)
-    const animationFrames = installAnimationFrames()
+    const animationFrames = createAnimationFrames(() => now)
     const onTransitionChange = vi.fn()
-    const controller = createPMouthTransitionController(onTransitionChange)
+    const controller = createPMouthTransitionController(
+      onTransitionChange,
+      animationFrames.scheduler,
+    )
 
     controller.start('narrow', 'wide', false)
     animationFrames.run(1, 1_050)
@@ -131,7 +154,7 @@ describe('createPMouthTransitionController', () => {
     controller.start('wide', 'narrow', false)
 
     expect(controller.current).toEqual({from: 'narrow', progress: 0.5, to: 'wide'})
-    expect(animationFrames.cancelAnimationFrame).toHaveBeenCalledWith(2)
+    expect(animationFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(2)
 
     animationFrames.run(3, 1_075)
     expect(controller.current).toEqual({from: 'narrow', progress: 0.25, to: 'wide'})
@@ -141,17 +164,19 @@ describe('createPMouthTransitionController', () => {
   })
 
   it('should cancel an active frame and ignore a late frame after destruction', () => {
-    vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
-    const animationFrames = installAnimationFrames()
+    const animationFrames = createAnimationFrames()
     const onTransitionChange = vi.fn()
-    const controller = createPMouthTransitionController(onTransitionChange)
+    const controller = createPMouthTransitionController(
+      onTransitionChange,
+      animationFrames.scheduler,
+    )
 
     controller.start('rest', 'round', false)
     const lateFrame = animationFrames.getCallback(1)
     controller.destroy()
 
     expect(controller.current).toBeNull()
-    expect(animationFrames.cancelAnimationFrame).toHaveBeenCalledWith(1)
+    expect(animationFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(1)
 
     lateFrame(1_050)
     expect(onTransitionChange).toHaveBeenCalledOnce()

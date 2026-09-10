@@ -10,6 +10,19 @@ export interface PMouthTransitionController {
   readonly start: (from: PViseme, to: PViseme, prefersReducedMotion: boolean) => void
 }
 
+/** Supplies asynchronous animation frames and a clock with the same time origin. */
+export interface PMouthTransitionScheduler {
+  readonly cancelAnimationFrame: (frame: number) => void
+  readonly now: () => number
+  readonly requestAnimationFrame: (callback: (timestamp: number) => void) => number
+}
+
+const DEFAULT_SCHEDULER: PMouthTransitionScheduler = {
+  cancelAnimationFrame: (frame) => globalThis.cancelAnimationFrame(frame),
+  now: () => globalThis.performance.now(),
+  requestAnimationFrame: (callback) => globalThis.requestAnimationFrame(callback),
+}
+
 const SMOOTHSTEP_SCALE = 3
 const SMOOTHSTEP_CURVE = 2
 const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
@@ -24,6 +37,7 @@ export const getPVisemeTransitionProgress = (elapsedMs: number) =>
 /** Owns the short requestAnimationFrame loop used to crossfade mouth sprites. */
 export const createPMouthTransitionController = (
   onTransitionChange: () => void,
+  scheduler: PMouthTransitionScheduler = DEFAULT_SCHEDULER,
 ): PMouthTransitionController => {
   let current: PVisemeTransition | null = null
   let frame: number | null = null
@@ -31,7 +45,7 @@ export const createPMouthTransitionController = (
 
   const cancel = () => {
     if (frame !== null) {
-      globalThis.cancelAnimationFrame(frame)
+      scheduler.cancelAnimationFrame(frame)
       frame = null
     }
 
@@ -60,7 +74,7 @@ export const createPMouthTransitionController = (
       return
     }
 
-    const startedAt = window.performance.now()
+    const startedAt = scheduler.now()
     current = {from: transitionFrom, progress: startProgress, to: transitionTo}
     onTransitionChange()
 
@@ -75,7 +89,7 @@ export const createPMouthTransitionController = (
       onTransitionChange()
 
       if (phase < 1) {
-        frame = globalThis.requestAnimationFrame(renderFrame)
+        frame = scheduler.requestAnimationFrame(renderFrame)
         return
       }
 
@@ -84,7 +98,7 @@ export const createPMouthTransitionController = (
       onTransitionChange()
     }
 
-    frame = globalThis.requestAnimationFrame(renderFrame)
+    frame = scheduler.requestAnimationFrame(renderFrame)
   }
 
   const destroy = () => {
