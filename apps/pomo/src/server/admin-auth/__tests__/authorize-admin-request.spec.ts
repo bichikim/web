@@ -3,9 +3,9 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const sessionMocks = vi.hoisted(() => ({getAdminSession: vi.fn()}))
 
-vi.mock('../session', () => sessionMocks)
+vi.mock('../get-admin-session', () => sessionMocks)
 
-import {authorizeAdminRequest} from '../http'
+import {authorizeAdminRequest} from '../authorize-admin-request'
 
 describe('admin API authorization', () => {
   beforeEach(() => {

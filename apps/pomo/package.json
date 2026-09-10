@@ -60,6 +60,7 @@
     "cross-env": "catalog:",
     "dexie": "^4.4.4",
     "drizzle-orm": "^0.45.2",
+    "es-toolkit": "catalog:",
     "h3": "catalog:",
     "korean-lunar-calendar": "^0.4.0",
     "libopus-wasm": "0.2.0",

@@ -30,6 +30,7 @@ Open and apply the reference files for the relevant section before working. For 
 19. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
 20. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
 21. Outside a feature, use one feature entrypoint per file when its cohesive API can be re-exported; keep subpaths for runtime boundaries, side effects, or cycle avoidance. Do not omit `index.ts` re-exports to hide internals.
+22. When implementing functions, prefer one primary exported function per file and name the file after that function in kebab-case.
 
 Read [references/error-contracts.md](references/error-contracts.md) when designing, changing, or normalizing error contracts.
 

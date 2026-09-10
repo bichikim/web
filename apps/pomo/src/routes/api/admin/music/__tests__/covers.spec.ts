@@ -8,7 +8,7 @@ const reservationMocks = vi.hoisted(() => ({
 }))
 const uploadMocks = vi.hoisted(() => ({storeAlbumCover: vi.fn()}))
 
-vi.mock('src/server/admin-auth/http', () => authMocks)
+vi.mock('src/server/admin-auth/authorize-admin-request', () => authMocks)
 vi.mock('src/server/music/album-cover-reservation', () => reservationMocks)
 vi.mock('src/server/music/cover-upload', () => uploadMocks)
 

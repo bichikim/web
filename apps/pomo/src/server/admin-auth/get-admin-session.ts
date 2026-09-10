@@ -1,7 +1,7 @@
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
 import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
-import {type AdminAccess, classifyAdminAccess} from './access'
+import {type AdminAccess, classifyAdminAccess} from './classify-admin-access'
 
 export interface AdminSessionResult {
   readonly access: AdminAccess
