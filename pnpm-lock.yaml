@@ -682,6 +682,9 @@ importers:
       '@vercel/functions':
         specifier: ^3.9.3
         version: 3.9.3(ws@8.21.3)
+      '@vercel/analytics':
+        specifier: ^1.6.1
+        version: 1.6.1(react@19.2.5)(vue@3.5.25(typescript@7.0.2))
       '@winter-love/bonsai':
         specifier: workspace:*
         version: link:../../packages/bonsai

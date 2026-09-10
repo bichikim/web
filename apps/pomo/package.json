@@ -50,6 +50,7 @@
     "@solidjs/start": "catalog:",
     "@tauri-apps/api": "2.11.1",
     "@unocss/reset": "catalog:",
+    "@vercel/analytics": "^1.6.1",
     "@vercel/functions": "^3.9.3",
     "@winter-love/bonsai": "workspace:*",
     "@winter-love/desktop-surface": "workspace:*",
