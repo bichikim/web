@@ -8,7 +8,7 @@ import {
   isDesktopBackgroundMode,
   useDesktopMode,
   useDesktopSafeAreaTop,
-  useDesktopSceneSettingsListener,
+  useDesktopSceneSettingsPublisher,
 } from '../../features/desktop-mode'
 import {
   getPScene,
@@ -66,7 +66,7 @@ vi.mock('../../features/desktop-mode', () => ({
   ),
   useDesktopMode: vi.fn(),
   useDesktopSafeAreaTop: vi.fn(),
-  useDesktopSceneSettingsListener: vi.fn(),
+  useDesktopSceneSettingsPublisher: vi.fn(),
 }))
 vi.mock('../../features/background', () => ({
   DEFAULT_BACKGROUND: {mode: 'character', order: 'sequential', photoSeconds: 10},
@@ -227,7 +227,10 @@ const expectTourStepTargets = (
   }
 }
 
+const publish = vi.fn()
+
 beforeEach(() => {
+  vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
   vi.mocked(useBackground).mockReturnValue({
     add: vi.fn(),
     busy: () => false,
@@ -548,7 +551,7 @@ describe('PStudio', () => {
 
     expect(screen.getByText('이벤트')).toBeInTheDocument()
     expect(SceneToolbar).toHaveBeenCalled()
-    expect(useDesktopSceneSettingsListener).toHaveBeenCalledOnce()
+    expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
   })
 
   it('should expose the desktop safe area to controls without padding the scene', () => {
@@ -596,4 +599,51 @@ it('should unmount the character scene in frame mode while keeping the timer and
   setPreferences(DEFAULT_BACKGROUND)
   expect(screen.getByRole('img')).toBeInTheDocument()
   expect(screen.queryByText('frame player')).not.toBeInTheDocument()
+})
+
+it('should publish every main toolbar setting and not echo received changes', () => {
+  configureStudio({desktopMode: 'interactiveDesktop', entrySession: true})
+  renderStudio()
+  const toolbar = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
+  if (!toolbar) {
+    throw new Error('Scene toolbar was not rendered')
+  }
+  toolbar.onActivityChange('writing')
+  toolbar.onGazeChange('user')
+  toolbar.onMotionInputChange?.('drag')
+  toolbar.onMotionModeChange?.('pan')
+  toolbar.onSceneStyleChange('scribble')
+  toolbar.onScreenSaverDelayChange?.('1h')
+  toolbar.onTimeModeChange('auto')
+  toolbar.onWeatherEnabledChange(true)
+  toolbar.onWeatherLocationChange(seoulLocation)
+  toolbar.onWeatherSceneModeChange('rain')
+  expect(publish.mock.calls.map(([setting]) => setting)).toEqual([
+    {name: 'activity', value: 'writing'},
+    {name: 'gaze', value: 'user'},
+    {name: 'motionInput', value: 'drag'},
+    {name: 'motionMode', value: 'pan'},
+    {name: 'sceneStyle', value: 'scribble'},
+    {name: 'screenSaverDelay', value: '1h'},
+    {name: 'timeMode', value: 'auto'},
+    {name: 'weatherEnabled', value: true},
+    {name: 'weatherLocation', value: seoulLocation},
+    {name: 'weatherSceneMode', value: 'rain'},
+  ])
+  publish.mockClear()
+  const handlers = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
+  if (!handlers) {
+    throw new Error('Scene settings listener was not registered')
+  }
+  handlers.onActivityChange?.('reading')
+  handlers.onGazeChange?.('focused')
+  handlers.onMotionInputChange?.('drag')
+  handlers.onMotionModeChange?.('depth')
+  handlers.onSceneStyleChange?.('original')
+  handlers.onScreenSaverDelayChange?.('off')
+  handlers.onTimeModeChange?.('day')
+  handlers.onWeatherEnabledChange?.(false)
+  handlers.onWeatherLocationChange?.(seoulLocation)
+  handlers.onWeatherSceneModeChange?.('auto')
+  expect(publish).not.toHaveBeenCalled()
 })

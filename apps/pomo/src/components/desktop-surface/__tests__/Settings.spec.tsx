@@ -23,7 +23,6 @@ vi.mock('../../../features/focus-room-scene-preferences', () => ({
 vi.mock('../../../features/screen-saver', () => ({useScreenSaver: vi.fn()}))
 vi.mock('../../../features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
-  useDesktopSceneSettingsListener: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
@@ -194,4 +193,38 @@ it('should retain drag input when the desktop has no gyroscope', () => {
   render(() => <DesktopSettings />)
 
   expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
+})
+
+it('should apply main toolbar changes without publishing them again', () => {
+  render(() => <DesktopSettings />)
+  const handlers = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
+  if (!handlers) {
+    throw new Error('Scene settings listener was not registered')
+  }
+  handlers.onActivityChange?.('writing')
+  handlers.onGazeChange?.('user')
+  handlers.onMotionInputChange?.('drag')
+  handlers.onMotionModeChange?.('pan')
+  handlers.onSceneStyleChange?.('scribble')
+  handlers.onScreenSaverDelayChange?.('1h')
+  handlers.onTimeModeChange?.('auto')
+  handlers.onWeatherEnabledChange?.(true)
+  handlers.onWeatherLocationChange?.(jejuLocation)
+  handlers.onWeatherSceneModeChange?.('rain')
+
+  const toolbar = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
+  expect(toolbar).toMatchObject({
+    activity: 'writing',
+    gaze: 'user',
+    motionInput: 'drag',
+    motionMode: 'pan',
+    sceneStyle: 'scribble',
+    timeMode: 'auto',
+  })
+  expect(vi.mocked(useScreenSaver).mock.results[0]?.value.onDelayChange).toHaveBeenCalledWith('1h')
+  const weather = vi.mocked(useWeather).mock.results[0]?.value
+  expect(weather.onEnabledChange).toHaveBeenCalledWith(true)
+  expect(weather.onLocationChange).toHaveBeenCalledWith(jejuLocation)
+  expect(weather.onSceneModeChange).toHaveBeenCalledWith('rain')
+  expect(publish).not.toHaveBeenCalled()
 })
