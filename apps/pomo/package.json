@@ -71,6 +71,7 @@
     "openai": "^7.4.0",
     "pixi.js": "^8.19.0",
     "solid-js": "catalog:",
+    "tone": "^15.1.22",
     "unocss": "catalog:",
     "vite": "catalog:",
     "wlipsync": "^1.3.1",

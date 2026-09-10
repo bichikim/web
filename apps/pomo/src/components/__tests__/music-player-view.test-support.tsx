@@ -81,7 +81,6 @@ interface RenderMusicPlayerViewOptions {
   readonly levels?: readonly number[]
   readonly onAlbumAdd?: (tracks: readonly PTrack[]) => void
   readonly onAlbumClear?: () => void
-  readonly onAudioElement?: (element: HTMLAudioElement) => void
   readonly onExpandedChange?: () => void
   readonly onNextTrack?: () => void
   readonly onPreviewEnd?: () => void
@@ -104,7 +103,6 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
         expanded={options.expanded ?? true}
         isPlaying={options.isPlaying ?? false}
         levels={options.levels ?? []}
-        onAudioElement={options.onAudioElement ?? vi.fn()}
         onAlbumAdd={options.onAlbumAdd}
         onAlbumClear={options.onAlbumClear}
         onExpandedChange={options.onExpandedChange ?? vi.fn()}

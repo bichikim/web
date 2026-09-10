@@ -638,6 +638,8 @@
   "guide_display_one": "지원되는 환경에서는 집중하는 동안 화면이 자동으로 꺼지지 않게 할 수 있어요.",
   "guide_display_two": "스크린 세이버 시간을 정하면 조작이 없을 때 화면을 검게 가리고, 터치·클릭·키 입력으로 돌아와요.",
   "guide_display_three": "일반 탭에서 장면과 움직임, 화면 유지와 스크린 세이버를 관리해요.",
+  "sound_effects_title": "효과음",
+  "sound_effects_empty": "아직 등록된 효과음이 없어요.",
   "album_open": "앨범 추가",
   "album_title": "앨범",
   "album_description": "곡 하나씩 또는 앨범 전체를 플레이어에 담아보세요.",
