@@ -205,12 +205,12 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
 
     initializeAutoStart()
 
-    const refreshTimer = window.setInterval(refresh, TIMER_REFRESH_INTERVAL)
+    const refreshTimer = globalThis.setInterval(refresh, TIMER_REFRESH_INTERVAL)
     useEvent(document, 'visibilitychange', refresh)
 
     onCleanup(() => {
       isDisposed = true
-      window.clearInterval(refreshTimer)
+      globalThis.clearInterval(refreshTimer)
       if (props.stopOnUnmount) {
         writeStoredState(stopPomodoroTimer(state(), config()))
       }

@@ -249,7 +249,7 @@ export class ParallaxController {
     this.#cancelDragReturn()
 
     if (this.#frame !== null) {
-      window.cancelAnimationFrame(this.#frame)
+      globalThis.cancelAnimationFrame(this.#frame)
       this.#frame = null
     }
 
@@ -423,7 +423,7 @@ export class ParallaxController {
 
     if (immediate) {
       if (this.#frame !== null) {
-        window.cancelAnimationFrame(this.#frame)
+        globalThis.cancelAnimationFrame(this.#frame)
         this.#frame = null
       }
 
@@ -444,7 +444,7 @@ export class ParallaxController {
     }
 
     this.#lastFrameTime ??= performance.now()
-    this.#frame = window.requestAnimationFrame((time) => this.#renderFrame(time))
+    this.#frame = globalThis.requestAnimationFrame((time) => this.#renderFrame(time))
   }
 
   #renderFrame(time: number) {

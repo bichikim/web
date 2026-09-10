@@ -276,7 +276,7 @@ it('should refresh on visibility changes and stop after owner cleanup', async ()
 })
 
 it('should persist a stopped timer when disabled on unmount', async () => {
-  const clearInterval = vi.spyOn(window, 'clearInterval')
+  const clearInterval = vi.spyOn(globalThis, 'clearInterval')
   const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
   await finishMount()
   timer.result.onStart()

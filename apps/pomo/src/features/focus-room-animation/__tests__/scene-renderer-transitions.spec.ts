@@ -365,13 +365,13 @@ beforeEach(() => {
   vi.mocked(acquireTextureGroup).mockImplementation(
     async (sources) => sources.map(createLease) as never,
   )
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
     const frameId = nextFrameId
     nextFrameId += 1
     frameCallbacks.set(frameId, callback)
     return frameId
   })
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frameId) => {
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((frameId) => {
     frameCallbacks.delete(frameId)
   })
   vi.spyOn(window.performance, 'now').mockReturnValue(100)
@@ -425,7 +425,7 @@ describe('PSceneRenderer transitions', () => {
 
     expect(transitionInstances[0].setProgress).toHaveBeenCalledWith(1)
     expect(depthFilters[0].setDepthMix).toHaveBeenCalledWith(1)
-    expect(window.requestAnimationFrame).not.toHaveBeenCalled()
+    expect(globalThis.requestAnimationFrame).not.toHaveBeenCalled()
     expect(depthFilters[0].finishDepthTransition).toHaveBeenCalled()
   })
 
@@ -448,7 +448,7 @@ describe('PSceneRenderer transitions', () => {
 
     reducedMotionChange?.(true)
 
-    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(frameId)
+    expect(globalThis.cancelAnimationFrame).toHaveBeenCalledWith(frameId)
     expect(layerScenes[0].setAnimationEnabled).toHaveBeenCalledWith(false)
     expect(layerScenes[1].setAnimationEnabled).toHaveBeenCalledWith(false)
     expect(depthFilters[0].finishDepthTransition).toHaveBeenCalled()
@@ -466,7 +466,7 @@ describe('PSceneRenderer transitions', () => {
     renderer.update(createState({depthSource: '/next-depth.webp', source: '/next.webp'}))
     await flushPromises()
 
-    expect(window.cancelAnimationFrame).not.toHaveBeenCalled()
+    expect(globalThis.cancelAnimationFrame).not.toHaveBeenCalled()
     expect(depthFilters[0].finishDepthTransition).toHaveBeenCalled()
   })
 

@@ -18,7 +18,7 @@ it('should render visible Korean text directly', () => {
 
 it('should animate and dispose the concealed refinement indicator', () => {
   vi.useFakeTimers()
-  const clearInterval = vi.spyOn(window, 'clearInterval')
+  const clearInterval = vi.spyOn(globalThis, 'clearInterval')
   const result = render(() => (
     <KoreanTextSegmentView segment={{kind: 'refining', text: '숨겨진 답변'}} />
   ))

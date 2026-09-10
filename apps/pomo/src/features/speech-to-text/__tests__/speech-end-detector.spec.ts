@@ -76,15 +76,15 @@ describe('createBrowserSpeechEndDetector', () => {
       }),
     )
     vi.spyOn(performance, 'now').mockImplementation(() => timestamps.shift() ?? 900)
-    const setInterval = vi.spyOn(window, 'setInterval').mockImplementation((callback) => {
+    const setInterval = vi.spyOn(globalThis, 'setInterval').mockImplementation((callback) => {
       const run = callback as () => void
       run()
       run()
       run()
       run()
-      return 17 as unknown as ReturnType<typeof window.setInterval>
+      return 17 as unknown as ReturnType<typeof globalThis.setInterval>
     })
-    const clearInterval = vi.spyOn(window, 'clearInterval').mockImplementation(() => undefined)
+    const clearInterval = vi.spyOn(globalThis, 'clearInterval').mockImplementation(() => undefined)
 
     const detector = createBrowserSpeechEndDetector({} as MediaStream)
     const listener = vi.fn()
