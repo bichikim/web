@@ -4,6 +4,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 
 import {ParallaxController} from '../parallax-controller'
+import {createMotionEnvironment} from '../motion-environment'
 
 const controllers = new WeakMap<HTMLElement, ParallaxController>()
 const createController = (...args: ConstructorParameters<typeof ParallaxController>) => {
@@ -362,6 +363,45 @@ describe('ParallaxController', () => {
 
     expect(onInputModeChange).toHaveBeenCalledWith('drag')
     controller.destroy()
+  })
+
+  it('should use injected sensor and event bindings and release them on destruction', () => {
+    const browserWindow = {
+      addEventListener: vi.fn(),
+      matchMedia: window.matchMedia,
+      removeEventListener: vi.fn(),
+    }
+    const onInputModeChange = vi.fn()
+    const clearTimer = vi.fn()
+    const setTimer = vi.fn(() => 1)
+
+    const controller = createController(document.createElement('div'), vi.fn(), {
+      environment: {
+        ...createMotionEnvironment(),
+        clearTimer,
+        getSensor: () => ({}),
+        setTimer,
+        window: browserWindow,
+      },
+      inputMode: 'gyroscope',
+      onInputModeChange,
+    })
+
+    controller.start()
+
+    expect(onInputModeChange).not.toHaveBeenCalled()
+    expect(browserWindow.addEventListener).toHaveBeenCalledWith(
+      'deviceorientation',
+      expect.any(Function),
+      {passive: true},
+    )
+    controller.destroy()
+    expect(setTimer).toHaveBeenCalledWith(expect.any(Function), 1_500)
+    expect(clearTimer).toHaveBeenCalledWith(1)
+    expect(browserWindow.removeEventListener).toHaveBeenCalledWith(
+      'deviceorientation',
+      expect.any(Function),
+    )
   })
 
   it('should exercise default fallback callbacks without custom options', () => {
