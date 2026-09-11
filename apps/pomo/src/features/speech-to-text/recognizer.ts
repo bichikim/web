@@ -1,6 +1,6 @@
 import type {SpeechRecognitionError} from './errors'
 import type {SpeechModelId} from './models'
-import type {Result} from '../result'
+import type {Result} from 'src/features/result'
 
 export type SpeechBackend = 'wasm' | 'webgpu'
 

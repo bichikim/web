@@ -1,7 +1,7 @@
 import {decodeSpeechRecording, type SpeechAudioDecoder} from './audio'
 import type {SpeechCaptureError} from './errors'
 import type {SpeechRecorder, SpeechRecording} from './recorder'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 import {createBrowserSpeechEndDetector, type SpeechEndDetector} from './speech-end-detector'
 
 export interface CreateBrowserSpeechRecorderOptions {

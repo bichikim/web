@@ -1,5 +1,3 @@
-import 'server-only'
-
 // oxlint-disable eslint/no-magic-numbers, eslint-js/camelcase, eslint/id-length -- OpenWeather DTO names and condition codes are fixed external contracts.
 
 import {z} from 'zod'

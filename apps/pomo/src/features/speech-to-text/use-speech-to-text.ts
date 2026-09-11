@@ -80,12 +80,12 @@ const getModelProgress = (state: SpeechModelState) => {
 }
 
 const createRecordingTimer = (setElapsedTime: Setter<number>) => {
-  let intervalId: number | null = null
+  let intervalId: ReturnType<typeof globalThis.setInterval> | null = null
   let startedAt = 0
 
   const stop = () => {
     if (intervalId !== null) {
-      window.clearInterval(intervalId)
+      globalThis.clearInterval(intervalId)
       intervalId = null
     }
   }
@@ -94,7 +94,7 @@ const createRecordingTimer = (setElapsedTime: Setter<number>) => {
     stop()
     startedAt = performance.now()
     setElapsedTime(0)
-    intervalId = window.setInterval(() => {
+    intervalId = globalThis.setInterval(() => {
       setElapsedTime((performance.now() - startedAt) / MILLISECONDS_PER_SECOND)
     }, RECORDING_INTERVAL)
   }

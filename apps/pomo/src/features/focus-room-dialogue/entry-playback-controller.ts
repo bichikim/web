@@ -116,7 +116,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   )
   const cancelFrame = () => {
     if (animationFrame !== null) {
-      window.cancelAnimationFrame(animationFrame)
+      globalThis.cancelAnimationFrame(animationFrame)
       animationFrame = null
     }
   }
@@ -161,7 +161,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       silentMouthReturn.cancel()
       setActiveViseme(nextViseme)
     }
-    animationFrame = window.requestAnimationFrame(updateSubtitle)
+    animationFrame = globalThis.requestAnimationFrame(updateSubtitle)
   }
 
   const settleCompletion = (completion: PlaybackCompletion) => {

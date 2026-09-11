@@ -1,5 +1,3 @@
-import 'server-only'
-
 import type {WeatherCitySlug} from 'src/features/weather/contract'
 
 interface WeatherCoordinates {

@@ -252,7 +252,7 @@ export class PSceneRenderer {
       requestedDepthSource !== null
     ) {
       if (this.#transitionFrame !== null) {
-        window.cancelAnimationFrame(this.#transitionFrame)
+        globalThis.cancelAnimationFrame(this.#transitionFrame)
       }
 
       this.#sceneTransitions.setProgress(1)
@@ -401,14 +401,14 @@ export class PSceneRenderer {
       this.#application.render()
 
       if (progress < 1) {
-        this.#transitionFrame = window.requestAnimationFrame(renderFrame)
+        this.#transitionFrame = globalThis.requestAnimationFrame(renderFrame)
         return
       }
 
       this.#finishTransition(source, depthSource, scene)
     }
 
-    this.#transitionFrame = window.requestAnimationFrame(renderFrame)
+    this.#transitionFrame = globalThis.requestAnimationFrame(renderFrame)
   }
 
   #finishTransition(source: string, depthSource: string, scene: Container) {
@@ -438,7 +438,7 @@ export class PSceneRenderer {
 
   #cancelTransition() {
     if (this.#transitionFrame !== null) {
-      window.cancelAnimationFrame(this.#transitionFrame)
+      globalThis.cancelAnimationFrame(this.#transitionFrame)
       this.#transitionFrame = null
     }
 

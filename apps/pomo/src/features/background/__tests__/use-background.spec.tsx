@@ -94,12 +94,17 @@ it('should serialize rapid setting changes without dropping the last selection',
 it('should reject oversized media before storage while accepting files at each limit', async () => {
   const {result, cleanup} = renderHook(useBackground)
   await waitFor(() => expect(result.ready()).toBe(true))
-  const photo = new File([new Uint8Array(3_000_000)], 'photo.png', {type: 'image/png'})
-  const video = new File([new Uint8Array(30_000_000)], 'video.mp4', {type: 'video/mp4'})
+  const createFile = (name: string, type: string, size: number) => {
+    const file = new File(['media'], name, {type})
+    Object.defineProperty(file, 'size', {value: size})
+    return file
+  }
+  const photo = createFile('photo.png', 'image/png', 3_000_000)
+  const video = createFile('video.mp4', 'video/mp4', 30_000_000)
   await result.add([
-    new File([photo, 'x'], 'large.png', {type: 'image/png'}),
+    createFile('large.png', 'image/png', 3_000_001),
     photo,
-    new File([video, 'x'], 'large.mp4', {type: 'video/mp4'}),
+    createFile('large.mp4', 'video/mp4', 30_000_001),
     video,
   ])
   expect(repository.add).toHaveBeenCalledTimes(2)

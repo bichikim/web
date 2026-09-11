@@ -42,4 +42,17 @@ describe('scene motion', () => {
 
     expect(supportsPSceneGyroscope()).toBe(false)
   })
+
+  it('should use injected sensor availability', () => {
+    const environment = {
+      getSensor: () => ({}),
+      window,
+    }
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({matches: true})),
+    )
+    expect(supportsPSceneGyroscope(environment)).toBe(true)
+    expect(supportsPSceneGyroscope({...environment, getSensor: () => null})).toBe(false)
+  })
 })

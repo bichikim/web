@@ -22,6 +22,8 @@
   "settings_tab_user": "User",
   "settings_tab_guide": "Guide",
   "settings_tab_credits": "Credits",
+  "tabs_previous": "Show previous tabs",
+  "tabs_next": "Show next tabs",
   "settings_previous_tab": "Show previous settings tab",
   "settings_next_tab": "Show next settings tab",
   "settings_open": "Open settings",
@@ -605,6 +607,7 @@
   "feed_listen": "Listen",
   "feed_incomplete_count": "{count} incomplete feed dialogues",
   "feed_retry_question": "Create them again from the beginning?",
+  "feed_retry_failed": "Couldn't recreate the feed dialogues. Please try again shortly.",
   "feed_checking": "Checking…",
   "feed_retrying": "Recreating feed dialogues…",
   "feed_downloading_model": "Downloading the {label} model · {percentage}%",
@@ -727,6 +730,8 @@
   "tour_settings_description": "Configure scenes, display, events, feeds, dialogue, user information, and more across the app.",
   "tour_settings_general_description": "In General, set the language and theme, then adjust the scene, style, weather, and display options.",
   "tour_settings_general_video_label": "How to configure the basic environment in General",
+  "tour_settings_background_description": "In Background, use photos or videos instead of the character and set their order, timing, and transitions.",
+  "tour_settings_background_video_label": "How to configure backgrounds in Background",
   "tour_settings_events_description": "In Events, connect dialogue to opening the app and focus or break transitions, and set the random event interval.",
   "tour_settings_events_video_label": "How to connect dialogue events in Events",
   "tour_settings_feeds_description": "In Feeds, add RSS or Atom feeds, choose a voice for new posts, and manage saved feeds.",
@@ -937,5 +942,6 @@
   "picker_hint": "Use arrow keys to move, Enter to select, Escape to close",
   "tools_precision": "Results display up to 12 significant digits.",
   "settings_tools_visible": "Show tools",
-  "settings_memory_visible": "Show memory assist"
+  "settings_memory_visible": "Show memory assist",
+  "memory_reminder_playback_skipped": "Could not play the reminder audio: {text}. Retrying in 5 minutes."
 }

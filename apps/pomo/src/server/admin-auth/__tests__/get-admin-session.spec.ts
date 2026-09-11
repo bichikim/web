@@ -19,7 +19,7 @@ const environmentMocks = vi.hoisted(() => ({
 vi.mock('@neondatabase/auth/server', () => authMocks)
 vi.mock('src/server/auth/neon-config', () => environmentMocks)
 
-import {getAdminSession} from '../session'
+import {getAdminSession} from '../get-admin-session'
 
 const AUTH_CONFIG = {
   baseUrl: 'https://example.neonauth.aws.neon.tech/neondb/auth',

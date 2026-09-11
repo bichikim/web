@@ -1,37 +1,41 @@
 {
-  "source_base_sha": "3871a14eb7904a7da71eac8a91025a4e902da99e",
+  "run_id": "c1e882f8-6d24-4c12-a9cb-376e0596e308",
+  "source_base_sha": "ab5b0f053a39ac7c2be6aa87d2fcac774c0db91b",
+  "current_product_sha": "ab5b0f053a39ac7c2be6aa87d2fcac774c0db91b",
   "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
   "arch": "arm64",
   "playwright": "1.59.1",
-  "verification": "2 passed, 0 failed, 0 skipped; normal comparison after first baseline generation",
-  "rendering_result": "최초 기준 생성; no previously reviewed baseline in origin/dev",
+  "command": "pnpm exec playwright test --config=playwright.rendering.config.ts --reporter=line,json",
+  "verification": "4 passed, 0 failed, 0 skipped; normal comparison with unchanged tolerances",
+  "stats": {
+    "startTime": "2026-09-09T16:17:28.009Z",
+    "duration": 26077.062,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "video": "off",
+  "trace": "off",
+  "network_scope": "Real local SolidStart home, localStorage, browser UI, bundled scene; loopback placeholder auth/DB. No external API/storage mocks in these tests; no real native/server-provider verification.",
+  "rendering_result": "Settings3 changed with merged-PR intent evidence; Timer2 first baselines",
   "screenshots": [
     {
-      "name": "general-dark",
+      "name": "timer-dark",
+      "test": "should render timer settings and preserve saved durations and automatic playback",
       "result": "최초 기준 생성",
-      "raw_pixels": 118,
-      "raw_max_channel_delta": 1,
-      "raw_note": "Difference only in blurred bottom-left background; cause unconfirmed, no claim of product regression",
-      "paths": {
-        "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-dark-web-darwin.png",
-        "current": "apps/pomo/e2e/rendering/evidence/general-dark-current.png",
-        "difference": "apps/pomo/e2e/rendering/evidence/general-dark-diff.png"
-      },
-      "hashes": {
-        "baseline": "58bae6ac5632f913356edb7a0a975313ccc589d0298772f5f62d54ea63cc6c1d",
-        "current": "b41c047d00dea39df244b4e7f91075149c83704b334430720ca47dbf9bad81af",
-        "difference": "beca25df81dbffdf3e75a51552c89fff1f8e4a62fbf86e10a6a68c28ae4ada0b"
-      },
       "environment": {
         "devicePixelRatio": 1,
         "fonts": [
           {
             "family": "Pretendard Variable",
-            "status": "unloaded"
+            "status": "unloaded",
+            "faces": 82
           },
           {
             "family": "Pretendard Variable",
-            "status": "loaded"
+            "status": "loaded",
+            "faces": 10
           }
         ],
         "locale": "ko-KR",
@@ -43,32 +47,117 @@
           "height": 960,
           "width": 1280
         }
-      }
+      },
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/timer-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/timer-dark-current.png",
+      "baseline_sha256": "50ac351c2fe55521a5604b4a86ed38b8d6905e369b6cf161352f70b74fa8e7fd",
+      "current_sha256": "50ac351c2fe55521a5604b4a86ed38b8d6905e369b6cf161352f70b74fa8e7fd",
+      "normal_comparison_raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "reason": "No prior timer/editor PNG in origin/dev; first baseline, then normal comparison."
     },
     {
-      "name": "general-light",
+      "name": "duration-editor-dark",
+      "test": "should render timer settings and preserve saved durations and automatic playback",
       "result": "최초 기준 생성",
-      "raw_pixels": 0,
-      "raw_max_channel_delta": 0,
-      "raw_note": "Pixel-identical",
-      "paths": {
-        "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-light-web-darwin.png",
-        "current": "apps/pomo/e2e/rendering/evidence/general-light-current.png"
-      },
-      "hashes": {
-        "baseline": "b646babb9c6cd28b31aa1a7e14d5ea6a5b4773938a4845edaa56432f570427cc",
-        "current": "b646babb9c6cd28b31aa1a7e14d5ea6a5b4773938a4845edaa56432f570427cc"
-      },
       "environment": {
         "devicePixelRatio": 1,
         "fonts": [
           {
             "family": "Pretendard Variable",
-            "status": "unloaded"
+            "status": "unloaded",
+            "faces": 82
           },
           {
             "family": "Pretendard Variable",
-            "status": "loaded"
+            "status": "loaded",
+            "faces": 10
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.400Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/duration-editor-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/duration-editor-dark-current.png",
+      "baseline_sha256": "3f79e85d2f22d3ed903cb9dcf1b747cb1d4c5b0c20e59777575e673fbe8b5726",
+      "current_sha256": "3f79e85d2f22d3ed903cb9dcf1b747cb1d4c5b0c20e59777575e673fbe8b5726",
+      "normal_comparison_raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "reason": "No prior timer/editor PNG in origin/dev; first baseline, then normal comparison."
+    },
+    {
+      "name": "general-dark",
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "result": "변경 있음",
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 79
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 13
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/general-dark-current.png",
+      "baseline_sha256": "b63c09d51745918dbce83ef4a17f5e34fe61cc61aa528abcca74f5c0f3eb01bd",
+      "current_sha256": "b63c09d51745918dbce83ef4a17f5e34fe61cc61aa528abcca74f5c0f3eb01bd",
+      "normal_comparison_raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "prior_baseline_commit": "ab5b0f053a39ac7c2be6aa87d2fcac774c0db91b",
+      "prior_baseline_sha256": "58bae6ac5632f913356edb7a0a975313ccc589d0298772f5f62d54ea63cc6c1d",
+      "difference": "apps/pomo/e2e/rendering/evidence/general-dark-diff.png",
+      "difference_sha256": "dd8e6bce4752bba37389fa6657c9b4c3c45c931e3a1911dfce4f9077c2bde0ad",
+      "prior_to_current_raw_difference": {
+        "pixels": 406877,
+        "max_channel_delta": 244
+      },
+      "reason": "PR #1055 moved scene/weather controls into Background; PR #1063 added player/Pomodoro visibility switches. All three prior/current/difference pairs were visually reviewed."
+    },
+    {
+      "name": "general-light",
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "result": "변경 있음",
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 79
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 13
           }
         ],
         "locale": "ko-KR",
@@ -80,32 +169,41 @@
           "height": 960,
           "width": 1280
         }
-      }
+      },
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-light-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/general-light-current.png",
+      "baseline_sha256": "077e8914b05a0553d31bfec8d61cd41211d14ec0109a5efd5b3e613dcb97121c",
+      "current_sha256": "077e8914b05a0553d31bfec8d61cd41211d14ec0109a5efd5b3e613dcb97121c",
+      "normal_comparison_raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "prior_baseline_commit": "ab5b0f053a39ac7c2be6aa87d2fcac774c0db91b",
+      "prior_baseline_sha256": "b646babb9c6cd28b31aa1a7e14d5ea6a5b4773938a4845edaa56432f570427cc",
+      "difference": "apps/pomo/e2e/rendering/evidence/general-light-diff.png",
+      "difference_sha256": "b912289dda8df409409d51dc74bf8ea033e41308c45172968b124d8345542f8d",
+      "prior_to_current_raw_difference": {
+        "pixels": 409514,
+        "max_channel_delta": 225
+      },
+      "reason": "PR #1055 moved scene/weather controls into Background; PR #1063 added player/Pomodoro visibility switches. All three prior/current/difference pairs were visually reviewed."
     },
     {
       "name": "theme-menu-light",
-      "result": "최초 기준 생성",
-      "raw_pixels": 0,
-      "raw_max_channel_delta": 0,
-      "raw_note": "Pixel-identical",
-      "paths": {
-        "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/theme-menu-light-web-darwin.png",
-        "current": "apps/pomo/e2e/rendering/evidence/theme-menu-light-current.png"
-      },
-      "hashes": {
-        "baseline": "9bfc5b3c1c841c503f49e1fd0c30517793c8630b7d57568e0f851e66c1882103",
-        "current": "9bfc5b3c1c841c503f49e1fd0c30517793c8630b7d57568e0f851e66c1882103"
-      },
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "result": "변경 있음",
       "environment": {
         "devicePixelRatio": 1,
         "fonts": [
           {
             "family": "Pretendard Variable",
-            "status": "unloaded"
+            "status": "unloaded",
+            "faces": 79
           },
           {
             "family": "Pretendard Variable",
-            "status": "loaded"
+            "status": "loaded",
+            "faces": 13
           }
         ],
         "locale": "ko-KR",
@@ -117,7 +215,24 @@
           "height": 960,
           "width": 1280
         }
-      }
+      },
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/theme-menu-light-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/theme-menu-light-current.png",
+      "baseline_sha256": "92b50102b04e80f01287a39559bbe1cd787167cc11b78cc86210c58770f03f5b",
+      "current_sha256": "92b50102b04e80f01287a39559bbe1cd787167cc11b78cc86210c58770f03f5b",
+      "normal_comparison_raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "prior_baseline_commit": "ab5b0f053a39ac7c2be6aa87d2fcac774c0db91b",
+      "prior_baseline_sha256": "9bfc5b3c1c841c503f49e1fd0c30517793c8630b7d57568e0f851e66c1882103",
+      "difference": "apps/pomo/e2e/rendering/evidence/theme-menu-light-diff.png",
+      "difference_sha256": "f72c09b9c6fb5faebf2f51deff0872aa7dbd91636223abf33019ad6cd6847797",
+      "prior_to_current_raw_difference": {
+        "pixels": 418629,
+        "max_channel_delta": 225
+      },
+      "reason": "PR #1055 moved scene/weather controls into Background; PR #1063 added player/Pomodoro visibility switches. All three prior/current/difference pairs were visually reviewed."
     }
   ]
 }

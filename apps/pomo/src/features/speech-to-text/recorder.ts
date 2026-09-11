@@ -1,5 +1,5 @@
 import type {SpeechCaptureError} from './errors'
-import type {Result} from '../result'
+import type {Result} from 'src/features/result'
 
 export interface SpeechRecording {
   readonly cancel: () => void

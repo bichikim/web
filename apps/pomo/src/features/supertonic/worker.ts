@@ -39,7 +39,7 @@ import {
 } from './model'
 import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} from './runtime'
 import {type LoadBufferOptions, loadSessions, releaseSessions} from './sessions'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 import {splitSpeechText} from './text-chunking'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
 

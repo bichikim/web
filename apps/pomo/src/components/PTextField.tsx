@@ -16,7 +16,7 @@ export interface PTextFieldProps {
   readonly rows?: number
   readonly label: string
   readonly name?: string
-  readonly onChange: (value: string) => void
+  readonly onChange?: (value: string) => void
   readonly placeholder?: string
   readonly readOnly?: boolean
   readonly required?: boolean

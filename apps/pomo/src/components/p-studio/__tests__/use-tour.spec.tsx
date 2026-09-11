@@ -54,7 +54,7 @@ describe('useStudioTour', () => {
     fireEvent.click(await screen.findByRole('button', {name: copy.next}))
     expect(await screen.findByRole('dialog', {name: copy.title})).toBeInTheDocument()
     expect(screen.getByText(copy.description)).toBeInTheDocument()
-    expect(screen.getByText('20 / 20')).toBeInTheDocument()
+    expect(screen.getByText('21 / 21')).toBeInTheDocument()
     expect(view.result.isOpen()).toBe(true)
     fireEvent.click(screen.getByRole('button', {name: copy.finish}))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
@@ -83,12 +83,13 @@ describe('useStudioTour', () => {
       '/tour/en/memory-assist-picture-diary.webm',
       '/tour/en/memory-assist-calendar.webm',
       '/tour/en/settings-general.webm',
+      '/tour/en/settings-background.webm',
       '/tour/en/settings-events.webm',
       '/tour/en/settings-feeds.webm',
       '/tour/en/settings-dialogue.webm',
       '/tour/en/settings-user.webm',
     ])
-    expect(steps).toHaveLength(20)
+    expect(steps).toHaveLength(21)
     expect(steps.map((step) => step.audio?.source)).toEqual(
       steps.map((step) => `/tour/audio/en/${step.id}.mp3`),
     )
@@ -158,6 +159,16 @@ describe('useStudioTour', () => {
         video: {
           label: 'How to configure the basic environment in General',
           source: '/tour/en/settings-general.webm',
+        },
+      },
+      {
+        description:
+          'In Background, use photos or videos instead of the character and set their order, timing, and transitions.',
+        id: 'settings-background',
+        title: 'Background',
+        video: {
+          label: 'How to configure backgrounds in Background',
+          source: '/tour/en/settings-background.webm',
         },
       },
       {
@@ -232,6 +243,7 @@ describe('useStudioTour', () => {
       '/tour/audio/ko/memory-assist-calendar.mp3',
       '/tour/audio/ko/settings.mp3',
       '/tour/audio/ko/settings-general.mp3',
+      '/tour/audio/ko/settings-background.mp3',
       '/tour/audio/ko/settings-events.mp3',
       '/tour/audio/ko/settings-feeds.mp3',
       '/tour/audio/ko/settings-dialogue.mp3',
@@ -247,6 +259,16 @@ describe('useStudioTour', () => {
         video: {
           label: '일반 탭에서 기본 환경을 설정하는 방법',
           source: '/tour/settings-general.webm',
+        },
+      },
+      {
+        description:
+          '배경 탭에서 캐릭터 대신 사진이나 영상을 사용하고, 표시 순서와 간격, 전환 효과를 설정할 수 있어요.',
+        id: 'settings-background',
+        title: '배경',
+        video: {
+          label: '배경 탭에서 배경을 설정하는 방법',
+          source: '/tour/settings-background.webm',
         },
       },
       {
@@ -294,6 +316,17 @@ describe('useStudioTour', () => {
     expect(steps.some((step) => step.id === 'settings-credits')).toBe(false)
   })
 
+  it('should keep product names out of tour copy', () => {
+    overwriteGetLocale(() => 'ko')
+
+    const view = renderHook(() => useStudioTour())
+    const tourCopy = view.result
+      .steps()
+      .flatMap((step) => [step.description ?? '', step.title, step.video?.label ?? ''])
+
+    expect(tourCopy.join(' ')).not.toMatch(/Pomo(?:fi)?/iu)
+  })
+
   it.each(['ko', 'en'] as const)(
     'should play the active %s narration when the tour starts',
     (locale) => {
@@ -324,4 +357,32 @@ describe('useStudioTour', () => {
       expect(AudioMock.lastInstance?.play).toHaveBeenCalledOnce()
     },
   )
+
+  it('should resolve the narration locale when playback starts', () => {
+    let locale: 'en' | 'ko' = 'en'
+    overwriteGetLocale(() => locale)
+    class AudioMock {
+      static lastInstance: AudioMock | undefined
+
+      currentTime = 0
+      load = vi.fn()
+      pause = vi.fn()
+      play = vi.fn().mockResolvedValue(undefined)
+      removeAttribute = vi.fn()
+      source: string
+
+      constructor(source: string) {
+        this.source = source
+        AudioMock.lastInstance = this
+      }
+    }
+    vi.stubGlobal('Audio', AudioMock)
+
+    const view = renderHook(() => useStudioTour())
+    locale = 'ko'
+
+    view.result.onEvent({activeElement: null, step: view.result.steps()[0]!, type: 'started'})
+
+    expect(AudioMock.lastInstance?.source).toBe('/tour/audio/ko/pomodoro.mp3')
+  })
 })

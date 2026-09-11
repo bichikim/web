@@ -365,13 +365,13 @@ beforeEach(() => {
   vi.mocked(acquireTextureGroup).mockImplementation(
     async (sources) => sources.map(createLease) as never,
   )
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
     const frameId = nextFrameId
     nextFrameId += 1
     frameCallbacks.set(frameId, callback)
     return frameId
   })
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frameId) => {
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((frameId) => {
     frameCallbacks.delete(frameId)
   })
   vi.spyOn(window.performance, 'now').mockReturnValue(100)

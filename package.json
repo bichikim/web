@@ -69,6 +69,7 @@
     "fake-indexeddb": "^6.2.5",
     "flush-promises": "^1.0.2",
     "happy-dom": "^20.9.0",
+    "js-yaml": "catalog:",
     "jsdom": "^26.1.0",
     "oxfmt": "^0.47.0",
     "oxlint": "^1.77.0",

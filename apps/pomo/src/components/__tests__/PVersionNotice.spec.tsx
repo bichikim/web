@@ -143,6 +143,43 @@ it('should stay hidden when the newest release was already viewed', async () => 
   expect(screen.queryByRole('button', {name: '새 업데이트 보기'})).toBeNull()
 })
 
+it('should keep a newer notice dismissed after an older open notice closes', async () => {
+  const storage = await vi.importActual<typeof import('src/features/version-catalog')>(
+    'src/features/version-catalog',
+  )
+  localStorage.clear()
+  versionMocks.read.mockImplementation(storage.readViewedRelease)
+  versionMocks.write.mockImplementation(storage.writeViewedRelease)
+  versionMocks.load.mockResolvedValueOnce({releases: [catalog.releases[1]]})
+  render(() => <PVersionNotice />)
+  render(() => <PVersionNotice />)
+
+  const triggers = await screen.findAllByRole('button', {name: '새 업데이트 보기'})
+  expect(triggers).toHaveLength(2)
+  for (const trigger of triggers) {
+    fireEvent.click(trigger)
+  }
+  const buttons = screen.getAllByRole('button', {name: '닫기'})
+  fireEvent.click(buttons[1]!)
+  await waitFor(async () =>
+    expect((await storage.readViewedRelease())?.version).toBe(catalog.releases[0].version),
+  )
+  fireEvent.click(buttons[0]!)
+  await waitFor(() => expect(versionMocks.write).toHaveBeenCalledTimes(2))
+
+  expect(
+    storage.selectNoticeReleases({
+      catalog,
+      now: new Date(),
+      viewedRelease: await storage.readViewedRelease(),
+    }),
+  ).toEqual([])
+  render(() => <PVersionNotice />)
+  await waitFor(() => expect(versionMocks.read).toHaveBeenCalledTimes(3))
+  expect(screen.queryByRole('button', {name: '새 업데이트 보기'})).toBeNull()
+  localStorage.clear()
+})
+
 it('should hide the trigger and report catalog or storage failures', async () => {
   const error = new Error('unavailable')
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)

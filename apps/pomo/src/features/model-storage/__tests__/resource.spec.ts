@@ -3,7 +3,7 @@ import {describe, expect, it, vi} from 'vitest'
 
 import {loadModelResource} from '../resource'
 import * as httpClient from '../../http-client'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import type {ModelStorage} from '../storage'
 
 const createStorage = (): ModelStorage => ({

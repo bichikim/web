@@ -1,7 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import {authorizeAdminRequest} from 'src/server/admin-auth/http'
+import {authorizeAdminRequest} from 'src/server/admin-auth/authorize-admin-request'
 import {noStoreJson} from 'src/server/http/response'
 import {createAdminPlaybackAccess} from 'src/server/music/admin-playback-access'
 import {findActiveTrackAsset} from 'src/server/music/track-registration-repository'

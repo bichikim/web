@@ -24,7 +24,7 @@ export const useFeedRefreshEvents = (props: UseFeedRefreshEventsProps) => {
         console.error('Failed to refresh changed focus room feeds.', error)
       })
     }
-    const interval = window.setInterval(() => {
+    const interval = globalThis.setInterval(() => {
       props.refresh().catch((error: unknown) => {
         console.error('Failed to poll focus room feeds.', error)
       })
@@ -38,7 +38,7 @@ export const useFeedRefreshEvents = (props: UseFeedRefreshEventsProps) => {
       props.onInitializationFailure()
     })
     onCleanup(() => {
-      window.clearInterval(interval)
+      globalThis.clearInterval(interval)
     })
   })
 }

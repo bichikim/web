@@ -26,7 +26,7 @@ const loadNativeStorage = (): Promise<NativeStorage> => {
 }
 
 /** Reports whether the current browser is hosted by the Apps in Toss native bridge. */
-export const hasNativeStorageBridge = () => 'ReactNativeWebView' in window
+export const hasNativeStorageBridge = () => 'ReactNativeWebView' in globalThis
 
 /** Parses one JSON storage value and normalizes missing, malformed, or invalid data to null. */
 export const parseStorageJson = <Value>(

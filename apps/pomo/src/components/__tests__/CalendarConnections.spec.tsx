@@ -113,3 +113,29 @@ it('should load after login and restore the login notice after logout', async ()
   expect(await screen.findByText('캘린더에 연결하기 위해 로그인하세요.')).toBeVisible()
   expect(screen.queryByText('person@example.com')).not.toBeInTheDocument()
 })
+
+it('should reload connections when the authenticated email account changes', async () => {
+  const [state, setState] = createSignal<AuthenticationState>({
+    email: 'first@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarConnections />)
+  expect(await screen.findByText('person@example.com')).toBeVisible()
+  vi.mocked(listCalendarConnections).mockResolvedValue([
+    {accountLabel: 'second-calendar@example.com', id: 'connection-2', provider: 'google'},
+  ])
+
+  setState({email: 'second@example.com', kind: 'authenticated', provider: 'email'})
+
+  expect(await screen.findByText('second-calendar@example.com')).toBeVisible()
+  expect(screen.queryByText('person@example.com')).not.toBeInTheDocument()
+  expect(listCalendarConnections).toHaveBeenCalledTimes(2)
+})

@@ -22,7 +22,6 @@ it.each([
 ])('should bootstrap the expected theme for $stored on a light OS', ({stored, dark}) => {
   let applied: boolean | undefined
   runInNewContext(DISPLAY_THEME_BOOTSTRAP_SCRIPT, {
-    localStorage: {getItem: () => stored},
     document: {
       documentElement: {
         classList: {
@@ -32,6 +31,7 @@ it.each([
         },
       },
     },
+    localStorage: {getItem: () => stored},
     matchMedia: () => ({matches: false}),
   })
   expect(applied).toBe(dark)

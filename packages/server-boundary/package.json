@@ -1,0 +1,39 @@
+{
+  "name": "@winter-love/server-boundary",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "prepare-build": "pnpm run build",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "pnpm run build && vitest run --config vitest.e2e.config.ts"
+  },
+  "devDependencies": {
+    "@solidjs/router": "catalog:",
+    "@solidjs/start": "catalog:",
+    "@types/node": "catalog:",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "nitro": "catalog:",
+    "solid-js": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "4.1.10"
+  },
+  "peerDependencies": {
+    "vite": "^8.1.5"
+  }
+}

@@ -1,20 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {classifyAdminAccess, hasAdminRole} from '../access'
-
-describe('hasAdminRole', () => {
-  it.each([
-    ['admin', true],
-    ['member, admin', true],
-    ['member', false],
-    [['member', 'admin'], true],
-    [['member'], false],
-    [null, false],
-  ] as const)('should classify %# role input', (role, expected) => {
-    expect(hasAdminRole(role)).toBe(expected)
-  })
-})
+import {classifyAdminAccess} from '../classify-admin-access'
 
 describe('classifyAdminAccess', () => {
   it.each([

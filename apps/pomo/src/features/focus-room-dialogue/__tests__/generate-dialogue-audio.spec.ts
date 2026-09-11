@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import type {SupertonicAudio, SupertonicAudioChunk, SupertonicClient} from '../../supertonic'
 import type {DialogueSegment, DialogueSegmentMood} from '../schema'
 import {

@@ -86,11 +86,11 @@ const installAudioRuntime = () => {
   }
 
   vi.stubGlobal('AudioContext', AudioContextMock)
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
     runtime.frames.push(callback)
     return runtime.frames.length
   })
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined)
   return runtime
 }
 
@@ -168,7 +168,7 @@ describe('createSupertonicAudioPlayer', () => {
     runtime.frames.shift()?.(0)
     player.dispose()
 
-    expect(window.cancelAnimationFrame).toHaveBeenCalled()
+    expect(globalThis.cancelAnimationFrame).toHaveBeenCalled()
     expect(onVisemeChange).toHaveBeenLastCalledWith('closed')
   })
 

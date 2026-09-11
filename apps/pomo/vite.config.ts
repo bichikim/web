@@ -9,6 +9,7 @@ import {PARAGLIDE_CONFIG} from './paraglide.config'
 import {createDevFeedPlugin} from './scripts/vite/dev-feed/plugin'
 import {createScribbleIconRestartPlugin} from './scripts/vite/scribble-icon/plugin'
 import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
+import {createServerBoundaryPlugin} from '@winter-love/server-boundary'
 import {createUnoCssPlugins} from './scripts/vite/uno-css/plugin'
 import {resolveContentSecurityPolicyTemplates} from './scripts/vite/content-security-policy-template'
 import {createInlineContentHashes} from './scripts/vite/prerender-security-headers'
@@ -289,6 +290,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       include: getOptimizeDepsInclude(),
     },
     plugins: [
+      createServerBoundaryPlugin({directories: ['src/server']}),
       ...(USES_APPS_IN_TOSS_DEVTOOLS
         ? [aitDevtools.vite({entryPattern: /\/entry-client\.tsx$/u, sdkVersion: '3'})]
         : []),
