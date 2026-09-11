@@ -33,10 +33,12 @@ import {usePSay} from '../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../features/weather'
 import {
   type DesktopMode,
+  type DesktopSceneSettingsHandlers,
   isDesktopBackgroundMode,
   useDesktopMode,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsListener,
+  useDesktopSceneSettingsPublisher,
 } from '../features/desktop-mode'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
@@ -209,7 +211,10 @@ interface StudioDesktopSceneSettingsOptions {
   readonly weather: ReturnType<typeof useWeather>
 }
 
-const useStudioDesktopSceneSettings = (options: StudioDesktopSceneSettingsOptions) => {
+const useStudioDesktopSceneSettings = (
+  options: StudioDesktopSceneSettingsOptions,
+): Required<DesktopSceneSettingsHandlers> => {
+  const publisher = useDesktopSceneSettingsPublisher()
   const {scenePreferences, sceneStyleController, screenSaver, weather} = options
   useDesktopSceneSettingsListener({
     onActivityChange: scenePreferences.onActivityChange,
@@ -223,6 +228,48 @@ const useStudioDesktopSceneSettings = (options: StudioDesktopSceneSettingsOption
     onWeatherLocationChange: weather.onLocationChange,
     onWeatherSceneModeChange: weather.onSceneModeChange,
   })
+  return {
+    onActivityChange: (value) => {
+      scenePreferences.onActivityChange(value)
+      publisher.publish({name: 'activity', value})
+    },
+    onGazeChange: (value) => {
+      scenePreferences.onGazeChange(value)
+      publisher.publish({name: 'gaze', value})
+    },
+    onMotionInputChange: (value) => {
+      options.setMotionInput(value)
+      publisher.publish({name: 'motionInput', value})
+    },
+    onMotionModeChange: (value) => {
+      options.setMotionMode(value)
+      publisher.publish({name: 'motionMode', value})
+    },
+    onSceneStyleChange: (value) => {
+      sceneStyleController.onSceneStyleChange(value)
+      publisher.publish({name: 'sceneStyle', value})
+    },
+    onScreenSaverDelayChange: (value) => {
+      screenSaver.onDelayChange(value)
+      publisher.publish({name: 'screenSaverDelay', value})
+    },
+    onTimeModeChange: (value) => {
+      scenePreferences.onTimeModeChange(value)
+      publisher.publish({name: 'timeMode', value})
+    },
+    onWeatherEnabledChange: (value) => {
+      weather.onEnabledChange(value)
+      publisher.publish({name: 'weatherEnabled', value})
+    },
+    onWeatherLocationChange: (value) => {
+      weather.onLocationChange(value)
+      publisher.publish({name: 'weatherLocation', value})
+    },
+    onWeatherSceneModeChange: (value) => {
+      weather.onSceneModeChange(value)
+      publisher.publish({name: 'weatherSceneMode', value})
+    },
+  }
 }
 
 interface StudioRuntimeOptions {
@@ -311,7 +358,7 @@ export const PStudio = () => {
     events.isDialoguePlaying,
     pomoSay.isPlaying,
   )
-  useStudioDesktopSceneSettings({
+  const sceneSettings = useStudioDesktopSceneSettings({
     scenePreferences,
     sceneStyleController: style,
     screenSaver,
@@ -373,6 +420,7 @@ export const PStudio = () => {
           />
           <Show when={scenePreferences.isReady()}>
             <SceneToolbar
+              {...sceneSettings}
               background={background}
               {...toolbarVisibility(displayPreferences)}
               activity={scenePreferences.activity()}
@@ -384,20 +432,10 @@ export const PStudio = () => {
                 isSceneLoading() &&
                 hasSceneRendered()
               }
-              onActivityChange={scenePreferences.onActivityChange}
               onDialogueComposerVisibleChange={displayPreferences.onDialogueComposerVisibleChange}
-              onGazeChange={scenePreferences.onGazeChange}
-              onMotionInputChange={setMotionInput}
-              onMotionModeChange={setMotionMode}
-              onScreenSaverDelayChange={screenSaver.onDelayChange}
-              onSceneStyleChange={style.onSceneStyleChange}
-              onTimeModeChange={scenePreferences.onTimeModeChange}
               onTourOpen={handleTourOpen}
               tourButtonVisible={displayPreferences.tourButtonVisible()}
               onTourButtonVisibleChange={displayPreferences.onTourButtonVisibleChange}
-              onWeatherEnabledChange={weather.onEnabledChange}
-              onWeatherLocationChange={weather.onLocationChange}
-              onWeatherSceneModeChange={weather.onSceneModeChange}
               screenSaverDelay={screenSaver.delay()}
               sceneStyle={style.sceneStyle()}
               motionInput={motionInput()}
