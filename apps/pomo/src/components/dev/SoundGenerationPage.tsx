@@ -3,7 +3,7 @@ import {A} from '@solidjs/router'
 import {createSignal, For, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
-import {useSoundGeneration} from 'src/features/sound-generation'
+import {MAX_REQUEST_SECONDS, useSoundGeneration} from 'src/features/sound-generation'
 import {ModelTerms} from './sound-generation/ModelTerms'
 
 const DEFAULT_SECONDS = 5
@@ -28,6 +28,7 @@ const PRESETS = [
 export function SoundGenerationPage() {
   const [prompt, setPrompt] = createSignal(PRESETS[0].prompt)
   const [seconds, setSeconds] = createSignal(DEFAULT_SECONDS)
+  const [repeat, setRepeat] = createSignal(false)
   const generation = useSoundGeneration()
 
   return (
@@ -36,6 +37,9 @@ export function SoundGenerationPage() {
       <div class="mx-auto max-w-4xl">
         <A class="inline-flex min-h-11 items-center text-sm text-#f4d7b5 no-underline" href="/dev">
           ← 실험실 목록
+        </A>
+        <A class="ml-5 text-sm text-#b8e8d0" href="/dev/sound-joining">
+          소리 연결 →
         </A>
         <header class="mb-8 mt-6">
           <p class="text-xs font-700 tracking-[0.2em] text-#9ed6bb uppercase">
@@ -81,20 +85,18 @@ export function SoundGenerationPage() {
           <div class="mt-5 flex flex-wrap items-end gap-4">
             <label class="grid gap-2 text-sm font-700" for="sound-duration">
               길이
-              <select
+              <input
                 class="min-h-11 rounded-xl border border-white/20 bg-#17131f px-4 text-#f8edf1"
                 id="sound-duration"
+                type="number"
+                min="1"
+                max={MAX_REQUEST_SECONDS}
+                step="1"
                 disabled={generation.busy()}
                 value={seconds()}
-                onChange={(event) => setSeconds(Number(event.currentTarget.value))}
-              >
-                <option value="1">1초 · 빠른 확인</option>
-                <option value="5">5초</option>
-                <option value="10">10초</option>
-                <option value="30">30초</option>
-                <option value="60">60초 · 1분</option>
-                <option value="120">120초 · 2분</option>
-              </select>
+                onInput={(event) => setSeconds(event.currentTarget.valueAsNumber)}
+              />
+              <span class="text-xs text-#bdb2c4">초 · 최대 3,600초 (1시간)</span>
             </label>
             <button
               class="min-h-11 rounded-xl border-0 bg-#b8e8d0 px-6 font-700 text-#17131f disabled:opacity-50"
@@ -131,7 +133,21 @@ export function SoundGenerationPage() {
                 class="mt-6 grid gap-3 border-t border-white/10 pt-6"
               >
                 <h2 class="m-0 text-lg">생성한 환경음</h2>
-                <audio aria-label="생성한 환경음 재생" class="w-full" controls src={url()} />
+                <audio
+                  aria-label="생성한 환경음 재생"
+                  class="w-full"
+                  controls
+                  loop={repeat()}
+                  src={url()}
+                />
+                <label class="inline-flex min-h-11 items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={repeat()}
+                    onChange={(event) => setRepeat(event.currentTarget.checked)}
+                  />
+                  반복 재생
+                </label>
                 <a
                   class="inline-flex min-h-11 items-center text-sm text-#b8e8d0 underline"
                   download="environment.wav"

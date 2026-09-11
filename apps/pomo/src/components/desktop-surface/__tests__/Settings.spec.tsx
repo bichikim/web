@@ -23,7 +23,6 @@ vi.mock('../../../features/focus-room-scene-preferences', () => ({
 vi.mock('../../../features/screen-saver', () => ({useScreenSaver: vi.fn()}))
 vi.mock('../../../features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
-  useDesktopSceneSettingsListener: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
@@ -187,6 +186,18 @@ it('should publish every setting change from the separate scene toolbar', () => 
     {name: 'weatherEnabled', value: true},
     {name: 'weatherSceneMode', value: 'rain'},
   ])
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
+    activity: 'writing',
+    gaze: 'user',
+    motionInput: 'drag',
+    motionMode: 'pan',
+    sceneStyle: 'scribble',
+    timeMode: 'auto',
+  })
+  expect(useScreenSaver().onDelayChange).toHaveBeenCalledWith('1h')
+  expect(useWeather().onEnabledChange).toHaveBeenCalledWith(true)
+  expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
+  expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
   expect(onModeChange).toHaveBeenCalledWith('interactiveDesktop')
 })
 it('should retain drag input when the desktop has no gyroscope', () => {
@@ -194,4 +205,39 @@ it('should retain drag input when the desktop has no gyroscope', () => {
   render(() => <DesktopSettings />)
 
   expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
+})
+
+it('should apply every received scene setting without echoing it to other WebViews', () => {
+  render(() => <DesktopSettings />)
+  expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
+  const listener = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
+  if (listener === undefined) {
+    throw new Error('Missing scene-settings listener')
+  }
+  listener.onActivityChange?.('writing')
+  listener.onGazeChange?.('user')
+  listener.onMotionInputChange?.('drag')
+  listener.onMotionModeChange?.('pan')
+  listener.onSceneStyleChange?.('scribble')
+  listener.onScreenSaverDelayChange?.('1h')
+  listener.onTimeModeChange?.('auto')
+  listener.onWeatherEnabledChange?.(true)
+  listener.onWeatherLocationChange?.(jejuLocation)
+  listener.onWeatherSceneModeChange?.('rain')
+
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
+    activity: 'writing',
+    gaze: 'user',
+    motionInput: 'drag',
+    motionMode: 'pan',
+    sceneStyle: 'scribble',
+    timeMode: 'auto',
+  })
+  expect(useScreenSaver().onDelayChange).toHaveBeenCalledWith('1h')
+  expect(useWeather().onEnabledChange).toHaveBeenCalledWith(true)
+  expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
+  expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
+  expect(publish).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', {name: '활동'}))
+  expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'activity', value: 'writing'})
 })

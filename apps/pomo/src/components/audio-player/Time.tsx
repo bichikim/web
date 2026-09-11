@@ -1,3 +1,4 @@
+import {formatDuration} from 'src/utils/format-duration'
 import {type JSX, splitProps} from 'solid-js'
 
 import {useAudioPlayer} from './context'
@@ -9,15 +10,10 @@ export interface AudioPlayerTimeProps extends JSX.HTMLAttributes<HTMLSpanElement
   readonly kind?: AudioPlayerTimeKind
 }
 
-const SECONDS_PER_MINUTE = 60
+const MILLISECONDS_PER_SECOND = 1000
 
-const formatTime = (time: number): string => {
-  const wholeSeconds = Math.max(0, Math.floor(time))
-  const minutes = Math.floor(wholeSeconds / SECONDS_PER_MINUTE)
-  const seconds = wholeSeconds % SECONDS_PER_MINUTE
-
-  return `${minutes}:${String(seconds).padStart(2, '0')}`
-}
+const formatTime = (time: number): string =>
+  formatDuration(Math.max(0, Math.floor(time)) * MILLISECONDS_PER_SECOND)
 
 export const AudioPlayerTime = (props: AudioPlayerTimeProps) => {
   const [state] = useAudioPlayer()

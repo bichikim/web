@@ -1,4 +1,4 @@
-const HOUR_MILLISECONDS = 3600000
+import {dayjs} from 'src/utils/zoned-dayjs'
 const KOREA_OFFSET_HOURS = 9
 const DAY_MILLISECONDS = 86400000
 const MONTHS_PER_YEAR = 12
@@ -55,11 +55,5 @@ export const periodEnd = (date: CivilDate, months: number): CivilDate => {
   return date.day > last ? {day: last, month, year} : addDays({day: date.day, month, year}, -1)
 }
 
-export const koreanToday = (now: Date): string => {
-  const date = new Date(now.getTime() + KOREA_OFFSET_HOURS * HOUR_MILLISECONDS)
-  return formatDate({
-    day: date.getUTCDate(),
-    month: date.getUTCMonth() + 1,
-    year: date.getUTCFullYear(),
-  })
-}
+export const koreanToday = (now: Date): string =>
+  dayjs(now).utcOffset(KOREA_OFFSET_HOURS).format('YYYY-MM-DD')

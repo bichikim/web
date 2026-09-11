@@ -22,7 +22,7 @@
 
 ## File naming
 
-- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory without repeating parent-directory context; use meaningful subdirectories for context shared by siblings.
+- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory; use meaningful subdirectories for context shared by siblings.
 - Keep authoring and generation details in archive filenames or metadata, not runtime filenames.
 
 ## Decision quality

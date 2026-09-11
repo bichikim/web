@@ -21,7 +21,7 @@ interface AlbumDraftDatabase extends Dexie {
 }
 
 export interface AlbumDraftStorage {
-  readonly deleteCover: (id: string) => Promise<void>
+  readonly deleteCover: (options: DeleteCoverOptions) => Promise<void>
   readonly deleteData: () => void
   readonly deleteDraftReference: (id: string) => Promise<void>
   readonly deleteExpiredCovers: (options: DeleteExpiredCoversOptions) => Promise<void>
@@ -30,6 +30,16 @@ export interface AlbumDraftStorage {
   readonly writeDraftReference: (reference: AlbumDraftReference) => Promise<void>
   readonly writeCover: (id: string, blob: Blob) => Promise<void>
   readonly writeData: (data: string) => void
+}
+
+export interface DeleteCoverOptions {
+  readonly expiresBefore: number
+  readonly id: string
+}
+
+export interface DeleteAlbumDraftOptions {
+  readonly now?: () => number
+  readonly storage?: AlbumDraftStorage
 }
 
 export interface DeleteExpiredCoversOptions {
@@ -155,7 +165,22 @@ const readLegacyReferences = (expiresBefore: number): string[] => {
 }
 
 const BROWSER_STORAGE: AlbumDraftStorage = {
-  deleteCover: (id) => getDatabase().covers.delete(id),
+  deleteCover: async ({id, expiresBefore}) => {
+    const database = getDatabase()
+    await database.transaction('rw', database.covers, database.draftReferences, async () => {
+      const activeReferences = await database.draftReferences
+        .where('lastSeenAt')
+        .aboveOrEqual(expiresBefore)
+        .toArray()
+      if (
+        activeReferences.some((reference) => reference.coverDraftId === id) ||
+        readLegacyReferences(expiresBefore).includes(id)
+      ) {
+        return
+      }
+      await database.covers.delete(id)
+    })
+  },
   deleteData: () => sessionStorage.removeItem(ALBUM_DRAFT_KEY),
   deleteDraftReference: (id) => getDatabase().draftReferences.delete(id),
   deleteExpiredCovers: async ({expiresBefore, protectedId}) => {
@@ -317,10 +342,12 @@ export const writeAlbumDraftCover = async (
 
 export const deleteAlbumDraftCover = async (
   id: string,
-  storage: AlbumDraftStorage = BROWSER_STORAGE,
+  options: DeleteAlbumDraftOptions = {},
 ): Promise<AlbumDraftStorageResult> => {
+  const storage = options.storage ?? BROWSER_STORAGE
+  const now = options.now ?? Date.now
   try {
-    await storage.deleteCover(id)
+    await storage.deleteCover({expiresBefore: now() - COVER_RETENTION_MILLISECONDS, id})
     return storageSuccess()
   } catch (error: unknown) {
     console.warn('Failed to delete the admin album cover draft.', error)
@@ -330,8 +357,9 @@ export const deleteAlbumDraftCover = async (
 
 export const deleteAlbumDraft = async (
   coverDraftId: string | null,
-  storage: AlbumDraftStorage = BROWSER_STORAGE,
+  options: DeleteAlbumDraftOptions = {},
 ): Promise<AlbumDraftStorageResult> => {
+  const storage = options.storage ?? BROWSER_STORAGE
   let deletionResult = storageSuccess()
 
   try {
@@ -345,6 +373,6 @@ export const deleteAlbumDraft = async (
     return deletionResult
   }
 
-  const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, storage)
+  const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, options)
   return coverDeletionResult.success ? deletionResult : coverDeletionResult
 }

@@ -34,6 +34,10 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
     const {ImageGenerationPage} = await import('./ImageGenerationPage')
     return {default: ImageGenerationPage}
   }),
+  '/dev/loop-player': lazy(async () => {
+    const {LoopPlayerPage} = await import('./LoopPlayerPage')
+    return {default: LoopPlayerPage}
+  }),
   '/dev/options': lazy(async () => {
     const {OptionResetPage} = await import('./OptionResetPage')
     return {default: OptionResetPage}
@@ -45,6 +49,18 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
   '/dev/sound-generation': lazy(async () => {
     const {SoundGenerationPage} = await import('./SoundGenerationPage')
     return {default: SoundGenerationPage}
+  }),
+  '/dev/sound-joining': lazy(async () => {
+    const {SoundJoiningPage} = await import('./SoundJoiningPage')
+    return {default: SoundJoiningPage}
+  }),
+  '/dev/sound-loop': lazy(async () => {
+    const {SoundLoopPage} = await import('./SoundLoopPage')
+    return {default: SoundLoopPage}
+  }),
+  '/dev/sound-player': lazy(async () => {
+    const {SoundPlayerPage} = await import('./SoundPlayerPage')
+    return {default: SoundPlayerPage}
   }),
   '/dev/speech-to-text': lazy(async () => {
     const {SpeechToTextPage} = await import('./SpeechToTextPage')
