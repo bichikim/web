@@ -17,7 +17,7 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 Playback belongs to `components/media-player`; playlist presentation belongs to `components/music-player` and `components/music-player-view`.
 
 - Playback order and restoration are separated into `use-playback-order.ts` and `use-playlist-restoration.ts`; `use-player-controller.ts` coordinates them.
-- The component integration tests live beside the component in `components/music-player/__tests__/PMusicPlayerContent.integration.spec.tsx`. The default component test and the persistence-specific test retain their separate scopes in that directory.
+- `PMusicPlayerContent` integration coverage is split by device, transport, preview, presentation, and queue-restoration responsibilities in `components/music-player/__tests__/`. Each file still has `PMusicPlayerContent.tsx` as its only production target; `test-support/player-fixtures.ts` provides only typed fixtures and DOM helpers, while `test-support/AlbumLibraryFixture.tsx` owns the album-library fixture component. The default component test and the persistence-specific test retain their separate scopes in that directory.
 - Shared type declarations live in each player directory’s `types.ts`.
 
 ## Execution order

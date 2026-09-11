@@ -2,112 +2,109 @@
 import {cleanup, render, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {installAudioBuffer} from './buffer'
-import {type SoundLayer, useSoundPlayer} from '../index'
+import {createSoundRuntime} from '../runtime'
+import {type SoundLayer, type SoundPlayback, type SoundVoice, useSoundPlayer} from '../index'
 
-interface MockPlayer {
-  buffer: {duration: number; get: () => AudioBuffer; set: (buffer: AudioBuffer) => void}
-  loopStart: number
-  loopEnd: number
-  loop: boolean
-  state: 'started' | 'stopped'
-  mute: boolean
-  volume: {rampTo: ReturnType<typeof vi.fn>}
-  start: ReturnType<typeof vi.fn>
-  stop: ReturnType<typeof vi.fn>
-  dispose: ReturnType<typeof vi.fn>
-  onstop: () => void
+interface TestVoice extends SoundVoice {
+  readonly finish: () => void
 }
-const runtime = vi.hoisted(() => ({
-  load: vi.fn(),
-  players: [] as MockPlayer[],
-  start: vi.fn(),
+const runtime = {
+  load: vi.fn<() => Promise<void>>(),
+  resume: vi.fn<() => Promise<void>>(),
   time: 0,
-}))
-vi.mock('tone', () => ({
-  gainToDb: (gain: number) => (gain === 0 ? -Infinity : 20 * Math.log10(gain)),
-  now: () => runtime.time,
-  Player: class {
-    buffer = {
-      duration: 10,
-      get: () => new AudioBuffer({length: 100, numberOfChannels: 1, sampleRate: 10}),
-      set: vi.fn(),
-    }
-    loopStart = 0
-    loopEnd = 10
-    now = () => runtime.time
-    loop = true
-    state: 'started' | 'stopped' = 'stopped'
-    mute = false
-    volume = {rampTo: vi.fn()}
-    start = vi.fn()
-    stop = vi.fn()
-    dispose = vi.fn()
-    onstop = () => {}
-    constructor() {
-      runtime.players.push(this)
-    }
-    toDestination() {
-      return this
-    }
-    load(source: string) {
-      return runtime.load(source)
-    }
-  },
-  start: runtime.start,
-}))
+  voices: [] as TestVoice[],
+}
+vi.mock('../runtime', () => ({createSoundRuntime: vi.fn()}))
+
+function createVoice(onEnded: () => void): TestVoice {
+  let finished = false
+  return {
+    configure: vi.fn(),
+    dispose: vi.fn(),
+    finish: () => {
+      finished = true
+      onEnded()
+    },
+    get finished() {
+      return finished
+    },
+    load: vi.fn(() => runtime.load()),
+    pause: vi.fn(),
+    play: vi.fn((_time: number, resume: boolean) => {
+      if (!resume) {
+        finished = false
+      }
+    }),
+    stop: vi.fn(() => {
+      finished = false
+    }),
+  }
+}
 beforeEach(() => {
-  installAudioBuffer()
-  runtime.players = []
+  runtime.voices = []
   runtime.time = 0
   runtime.load.mockResolvedValue(undefined)
-  runtime.start.mockResolvedValue(undefined)
+  runtime.resume.mockResolvedValue(undefined)
+  vi.mocked(createSoundRuntime).mockResolvedValue({
+    createVoice: ({onEnded}) => {
+      const voice = createVoice(onEnded)
+      runtime.voices.push(voice)
+      return voice
+    },
+    now: () => runtime.time,
+    resume: runtime.resume,
+  })
 })
 afterEach(() => {
   cleanup()
-  vi.clearAllMocks()
-  vi.unstubAllGlobals()
+  vi.resetAllMocks()
 })
-const mount = (initial: readonly SoundLayer[]) => {
+function mount(initial: readonly SoundLayer[]) {
   const [layers, setLayers] = createSignal(initial)
-  let player: ReturnType<typeof useSoundPlayer> | undefined
+  let player: SoundPlayback | undefined
   const view = render(() => {
     player = useSoundPlayer({layers})
     return null
   })
-  if (!player) {
+  if (player === undefined) {
     throw new Error('Missing player')
   }
   return {player, setLayers, unmount: view.unmount}
 }
-it('should mix loops, resume their position and reset on stop', async () => {
+it('should coordinate simultaneous playback, pause, resume, and stop using one runtime clock', async () => {
   const {player} = mount([
     {id: 'rain', source: '/rain.wav'},
     {id: 'wind', source: '/wind.wav'},
   ])
   await player.play()
-  expect(runtime.players).toHaveLength(2)
-  expect(player.status()).toBe('playing')
+  expect(runtime.voices).toHaveLength(2)
+  expect(runtime.voices[0].play).toHaveBeenLastCalledWith(0, false)
+  expect(runtime.voices[1].play).toHaveBeenLastCalledWith(0, false)
   runtime.time = 13
   player.pause()
   expect(player.status()).toBe('paused')
+  expect(runtime.voices[0].pause).toHaveBeenLastCalledWith(13)
   await player.play()
-  expect(runtime.players[0].start).toHaveBeenLastCalledWith(13, 7)
-  expect(runtime.players[0].loopStart).toBe(4)
+  expect(runtime.voices[0].play).toHaveBeenLastCalledWith(13, true)
   player.stop()
+  expect(runtime.voices[0].stop).toHaveBeenCalledOnce()
   await player.play()
-  expect(runtime.players[0].start).toHaveBeenLastCalledWith(13, 0)
+  expect(runtime.voices[0].play).toHaveBeenLastCalledWith(13, false)
+  expect(createSoundRuntime).toHaveBeenCalledOnce()
 })
-it('should apply reactive volume and loop settings without reloading sources', async () => {
-  const {player, setLayers, unmount} = mount([{id: 'rain', source: '/rain.wav'}])
+it('should configure changed layers without reloading them', async () => {
+  const {player, setLayers} = mount([{id: 'rain', source: '/rain.wav'}])
   await player.play()
-  setLayers([{enabled: false, id: 'rain', loop: false, source: '/rain.wav', volume: 0.5}])
-  expect(runtime.players[0].mute).toBe(true)
-  expect(runtime.players[0].loop).toBe(false)
-  expect(runtime.players[0].volume.rampTo).toHaveBeenLastCalledWith(20 * Math.log10(0.5), 0.05)
+  setLayers([
+    {enabled: false, id: 'rain', loop: false, overlapSeconds: 0, source: '/rain.wav', volume: 0.3},
+  ])
+  expect(runtime.voices[0].configure).toHaveBeenLastCalledWith({
+    enabled: false,
+    loop: false,
+    overlapSeconds: 0,
+    volume: 0.3,
+  })
   expect(runtime.load).toHaveBeenCalledOnce()
-  unmount()
-  expect(runtime.players[0].dispose).toHaveBeenCalledOnce()
 })
 it('should not start playback after stopping during loading', async () => {
   let finish: (() => void) | undefined
@@ -124,10 +121,10 @@ it('should not start playback after stopping during loading', async () => {
   finish?.()
   await pending
   expect(player.status()).toBe('idle')
-  expect(runtime.players[0].start).not.toHaveBeenCalled()
-  expect(runtime.players[0].dispose).toHaveBeenCalledOnce()
+  expect(runtime.voices[0].play).not.toHaveBeenCalled()
+  expect(runtime.voices[0].dispose).toHaveBeenCalledOnce()
 })
-it('should not finish a pending playback after an invalid reactive setting releases its voices', async () => {
+it('should invalidate a pending playback when reactive configuration fails', async () => {
   let finish: (() => void) | undefined
   runtime.load.mockImplementation(
     () =>
@@ -135,94 +132,103 @@ it('should not finish a pending playback after an invalid reactive setting relea
         finish = resolve
       }),
   )
-  const {player, setLayers} = mount([{id: 'rain', source: '/rain.wav', volume: 0.5}])
+  const {player, setLayers} = mount([{id: 'rain', source: '/rain.wav'}])
   const pending = player.play()
   await waitFor(() => expect(runtime.load).toHaveBeenCalledOnce())
-
   setLayers([{id: 'rain', source: '/rain.wav', volume: 2}])
   expect(player.status()).toBe('error')
   setLayers([{id: 'rain', source: '/rain.wav', volume: 0.5}])
   finish?.()
   await pending
-
   expect(player.status()).toBe('error')
-  expect(runtime.players[0].start).not.toHaveBeenCalled()
+  expect(runtime.voices[0].play).not.toHaveBeenCalled()
 })
-it('should report load failure and permit a retry', async () => {
+it('should report a load failure and allow retry', async () => {
   runtime.load.mockRejectedValueOnce(new Error('Load failed'))
   const {player} = mount([{id: 'rain', source: '/rain.wav'}])
   await player.play()
   expect(player.status()).toBe('error')
   expect(player.error()).toBe('Load failed')
+  expect(runtime.voices[0].dispose).toHaveBeenCalledOnce()
   await player.play()
   expect(player.status()).toBe('playing')
 })
-
-it('should finish non-looping sounds and avoid restarting a finished layer on resume', async () => {
+it('should become idle only after every voice finishes', async () => {
   const {player} = mount([
-    {id: 'once', loop: false, source: '/once.wav'},
-    {id: 'rain', source: '/rain.wav'},
+    {id: 'rain', loop: false, source: '/rain.wav'},
+    {id: 'wind', loop: false, source: '/wind.wav'},
   ])
   await player.play()
-  runtime.players[0].state = 'started'
-  runtime.players[0].onstop()
-  runtime.players[0].state = 'stopped'
-  await Promise.resolve()
-  player.pause()
-  await player.play()
-  expect(runtime.players[0].start).toHaveBeenCalledOnce()
-  expect(runtime.players[1].start).toHaveBeenCalledTimes(2)
-})
-it('should become idle when Tone updates a non-looping source state after reporting it stopped', async () => {
-  const {player} = mount([{id: 'once', loop: false, source: '/once.wav'}])
-  await player.play()
-
-  runtime.players[0].state = 'started'
-  runtime.players[0].onstop()
-  runtime.players[0].state = 'stopped'
-
-  await waitFor(() => expect(player.status()).toBe('idle'))
-})
-it('should not finish a non-looping source restarted by a reactive configuration change', async () => {
-  const {player, setLayers} = mount([
-    {id: 'once', loop: true, overlapSeconds: 2, source: '/once.wav'},
-  ])
-  await player.play()
-
-  runtime.players[0].state = 'started'
-  setLayers([{id: 'once', loop: false, overlapSeconds: 0, source: '/once.wav'}])
-  runtime.players[0].onstop()
-
-  await Promise.resolve()
+  runtime.voices[0].finish()
   expect(player.status()).toBe('playing')
+  runtime.voices[1].finish()
+  expect(player.status()).toBe('idle')
 })
-it('should release sources when the input changes and on disposal', async () => {
+it('should release replaced sources and dispose voices with the owner', async () => {
   const {player, setLayers, unmount} = mount([{id: 'rain', source: '/rain.wav'}])
   await player.play()
-  const first = runtime.players[0]
+  const first = runtime.voices[0]
   setLayers([{id: 'rain', source: '/other.wav'}])
-  expect(player.status()).toBe('idle')
   expect(first.dispose).toHaveBeenCalledOnce()
   await player.play()
-  expect(runtime.load).toHaveBeenLastCalledWith('/other.wav')
+  first.finish()
+  expect(player.status()).toBe('playing')
+  expect(runtime.voices[1].load).toHaveBeenCalledWith('/other.wav')
   unmount()
-  expect(runtime.players[1].dispose).toHaveBeenCalledOnce()
+  expect(runtime.voices[1].dispose).toHaveBeenCalledOnce()
 })
-it('should reject duplicate identities before loading audio', async () => {
+it('should reject duplicate identities before creating a runtime', async () => {
   const {player} = mount([
     {id: 'rain', source: '/one.wav'},
     {id: 'rain', source: '/two.wav'},
   ])
   await player.play()
   expect(player.status()).toBe('error')
-  expect(runtime.load).not.toHaveBeenCalled()
+  expect(createSoundRuntime).not.toHaveBeenCalled()
+})
+it('should not create voices when stopped while the audio runtime is resuming', async () => {
+  let finish: (() => void) | undefined
+  runtime.resume.mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve
+      }),
+  )
+  const {player} = mount([{id: 'rain', source: '/rain.wav'}])
+  const pending = player.play()
+  await waitFor(() => expect(runtime.resume).toHaveBeenCalledOnce())
+  player.stop()
+  finish?.()
+  await pending
+  expect(runtime.voices).toHaveLength(0)
+  expect(player.status()).toBe('idle')
 })
 
-it('should update overlap settings without loading the source again', async () => {
-  const {player, setLayers} = mount([{id: 'rain', overlapSeconds: 2, source: '/rain.wav'}])
+it('should report runtime activation failure and allow a retry without loading voices early', async () => {
+  runtime.resume.mockRejectedValueOnce(new Error('Activation blocked'))
+  const {player} = mount([{id: 'rain', source: '/rain.wav'}])
   await player.play()
-  expect(runtime.players[0].loopStart).toBe(2)
-  setLayers([{id: 'rain', overlapSeconds: 0, source: '/rain.wav'}])
-  expect(runtime.players[0].loopStart).toBe(0)
-  expect(runtime.load).toHaveBeenCalledOnce()
+  expect(player.error()).toBe('Activation blocked')
+  expect(player.status()).toBe('error')
+  expect(runtime.voices).toHaveLength(0)
+  await player.play()
+  expect(player.status()).toBe('playing')
+})
+
+it('should ignore a runtime factory completion after disposal', async () => {
+  const available = await createSoundRuntime()
+  let finish: ((value: typeof available) => void) | undefined
+  vi.mocked(createSoundRuntime).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  const {player, unmount} = mount([{id: 'rain', source: '/rain.wav'}])
+  const pending = player.play()
+  unmount()
+  finish?.(available)
+  await pending
+  expect(runtime.resume).not.toHaveBeenCalled()
+  expect(runtime.voices).toHaveLength(0)
 })
