@@ -7,6 +7,6 @@
 ```
 
 - **Source**: package or app name (PascalCase)
-- **Category**: e.g. `Components`, `Use`, `Utils`, `Kata` (PascalCase)
-- **SubPath**: optional subgroup, e.g. `MidiPlayer`, `HiddenPanel`
+- **Category**: category name (PascalCase)
+- **SubPath**: optional subgroup
 - **ComponentName**: component or hook name (PascalCase)

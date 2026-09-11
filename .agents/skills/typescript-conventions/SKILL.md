@@ -18,7 +18,7 @@ Open and apply the reference files for the relevant section before working. For 
 7. Read a mutable, reactive, or external getter once per decision and reuse that snapshot; repeated calls may differ and are not free.
 8. Do not make object-literal property value evaluation depend on property order through side effects, or make consuming logic depend on object key order. `sort-keys-fix` alphabetically reorders object properties; any behavior change from that is a violation of this coding contract. If evaluation order matters, use explicit statements before creating the object, and represent ordered data with arrays.
 9. Avoid `continue` (and `break` when skipping loop body logic). Prefer a straight `for...of` with one positive body or an early `return`; use array pipelines only when they are clearer and do not add wasteful passes or allocations.
-10. Make each function read as one level of story. Treat mixed reasons to change (such as parsing, policy, persistence, and logging), deep nesting, combined network/time/global test setup, and operations whose purpose is unclear from their syntax as refactoring signals. Use guard clauses to keep the normal path linear. Follow the reuse and naming workflow below; do not enforce line limits or add wrappers that only add navigation.
+10. Make each function read as one level of story. Treat mixed reasons to change, deep nesting, combined network/time/global test setup, and operations whose purpose is unclear from their syntax as refactoring signals. Use guard clauses to keep the normal path linear. Also review decomposition when a function grows to roughly 30–40 lines; this is a review signal, not a hard limit or a reason to postpone earlier decomposition. Follow the reuse and naming workflow below; do not add wrappers that only add navigation.
 11. Use exhaustive `switch` with a `never` check when dispatching a discriminated union or comparing three or more cases of one finite value (`type`, `status`, `kind`), including boolean membership written with chained `||`; reserve `if` for guards and binary conditions, and never hide cases behind a catch-all default.
 12. Use a generic only when it preserves a real relationship between values or members of a returned generic container; replace a naked type parameter used once with a concrete type or `unknown`.
 13. Never write comments on the right side of code; always write above the target code.
@@ -41,16 +41,27 @@ When designing a function's inputs, consider these steps in order:
 
 Keep the contract explicit, including empty inputs, ordering, and duplicates where they affect behavior. State the foreseeable use being supported and why the added cost is small. Preserve fixed domain invariants, avoid speculative configuration, and do not add parallel single-value and collection APIs without a concrete need.
 
+## State Modeling
+
+Where practical, represent mutually exclusive states and their required data with a discriminated union instead of independent flags and optional values. Keep independently varying state separate.
+
+## Persistence Destination
+
+Make the storage destination explicit in the persistence function name or an argument at the composition site, including when injecting a persistence callback into a reusable function or hook.
+
 ## Reuse Before Naming a Local Operation
 
-When an expression performs a distinct operation but makes readers decipher its mechanics to understand its purpose, follow this order:
+When implementing or decomposing logic, consider these levels in order:
 
-1. Check the relevant framework or library for a supported public API.
-2. Check the underlying runtime or standard library for an equivalent API.
-3. When it would help the decision, inspect similar code already in the project for reuse.
-4. If no suitable implementation exists, extract a dedicated function at the nearest appropriate scope, usually in the same file, and name it for its purpose. A single use or one-line body does not rule out extraction when the name improves comprehension.
+1. Look for a suitable public API in general-purpose utility libraries, the framework, the runtime, and existing project code. If none fits, consider creating a domain-independent function with a broadly reusable contract.
+2. Consider expressing the remaining logic as a function in a broader domain than the immediate feature.
+3. Implement the current task's domain-specific function by composing the suitable operations identified above.
 
-Verify that a candidate's input semantics and behavior match the task; similar names or private internal helpers are not sufficient. Prefer a meaningful function name over a comment that merely explains the operation. Keep comments for intent or constraints the name cannot express. Do not promote the helper to a shared module without a concrete reuse need.
+Prefer composing existing general-purpose operations over implementing a combined operation from scratch. When the composition recurs, give that composition a reusable name while retaining the underlying operations.
+
+When deciding whether to separate a function or hook, prioritize its likelihood of reuse: operations meaningful across broader contexts are stronger candidates than feature-specific sequences. Extract when that reusable contract is useful, not merely to create an encapsulation boundary. A single use or one-line body does not rule out extraction when the name improves comprehension. Do not invent speculative abstractions merely to fill all three levels.
+
+Verify that a candidate's input semantics and behavior match the task; similar names or private internal helpers are not sufficient. Prefer a meaningful function name over a comment that merely explains the operation. Keep comments for intent or constraints the name cannot express. Choose shared placement by the generality and credible reuse potential of the contract; multiple existing callers are not required.
 
 Read [references/error-contracts.md](references/error-contracts.md) when designing, changing, or normalizing error contracts.
 

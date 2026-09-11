@@ -2,34 +2,9 @@
 
 Vitest controls `setTimeout`, `setInterval`, etc. with `vi.useFakeTimers()`.
 
-## Basic pattern
+## Lifecycle
 
-```ts
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-
-describe('delayedAction', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers() // or vi.restoreAllMocks()
-  })
-
-  it('should call callback after delay', () => {
-    const callback = vi.fn()
-    setTimeout(callback, 1000)
-
-    expect(callback).not.toHaveBeenCalled()
-
-    vi.advanceTimersByTime(500)
-    expect(callback).not.toHaveBeenCalled()
-
-    vi.advanceTimersByTime(500)
-    expect(callback).toHaveBeenCalledTimes(1)
-  })
-})
-```
+Enable fake timers before each test and restore real timers afterward. Advance time explicitly and assert behavior before and after the relevant delay.
 
 ## Main APIs
 
