@@ -132,13 +132,12 @@ const useCalendarAlarmController = (
     try {
       const currentMemo = storedMemo()
       const text = m.calendar_alarm_dialogue({title: event().title})
-      if (
+      const dialogueToDelete =
         currentMemo?.dialogueId !== null &&
         currentMemo?.dialogueId !== undefined &&
         currentMemo.text !== text
-      ) {
-        await events.deleteDialogue(currentMemo.dialogueId)
-      }
+          ? currentMemo.dialogueId
+          : null
 
       const now = clock()
       const currentAlarmId = alarmId()
@@ -168,6 +167,9 @@ const useCalendarAlarmController = (
               })
         return [alarm, ...currentMemos.filter((memo) => memo.id !== currentAlarmId)]
       })
+      if (dialogueToDelete !== null) {
+        await events.deleteDialogue(dialogueToDelete)
+      }
       popoverElement()?.hidePopover()
     } catch (error: unknown) {
       console.error('Failed to save a calendar alarm.', error)

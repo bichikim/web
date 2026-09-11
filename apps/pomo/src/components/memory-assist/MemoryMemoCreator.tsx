@@ -65,6 +65,7 @@ export const MemoryMemoCreator = () => {
 
   const handleSave = async () => {
     const now = new Date()
+    const savedText = text().trim()
     const currentDraft = reminderDraft()
     const exactReminderAt = currentDraft.exactEnabled
       ? resolveReminderAt(
@@ -94,11 +95,14 @@ export const MemoryMemoCreator = () => {
       now,
       random: Math.random,
       recallMode: currentDraft.recallMode,
-      text: text(),
+      text: savedText,
     })
 
     try {
       await updateMemoryMemos((currentMemos) => [memo, ...currentMemos])
+      if (text().trim() !== savedText) {
+        return
+      }
       deleteMemoryMemoDraft()
       setText('')
       setReminderDraft(
