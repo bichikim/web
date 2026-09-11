@@ -1,35 +1,33 @@
-/** @vitest-environment jsdom */
-import {afterEach, expect, it, vi} from 'vitest'
-import {readServiceSettings, writeServiceSettings} from '../service-storage'
+import {beforeEach, expect, it, vi} from 'vitest'
+import {createServiceSettingsStorage} from '../service-storage'
+import {createStorageFixture} from './helpers/storage'
 
-const {getItem, setItem} = vi.hoisted(() => ({getItem: vi.fn(), setItem: vi.fn()}))
-vi.mock('@apps-in-toss/web-framework', () => ({Storage: {getItem, setItem}}))
-afterEach(() => {
-  localStorage.clear()
-  vi.unstubAllGlobals()
-  vi.resetAllMocks()
-  vi.restoreAllMocks()
+let fixture: ReturnType<typeof createStorageFixture>
+let repository: ReturnType<typeof createServiceSettingsStorage>
+beforeEach(() => {
+  fixture = createStorageFixture()
+  repository = createServiceSettingsStorage({storage: fixture.adapter})
 })
 it('should restore custom duration and mode along with the date and branch', async () => {
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  await writeServiceSettings(settings)
-  await expect(readServiceSettings()).resolves.toEqual(settings)
-  await writeServiceSettings({...settings, manual: false})
-  await expect(readServiceSettings()).resolves.toEqual({...settings, manual: false})
+  await repository.write(settings)
+  await expect(repository.read()).resolves.toEqual(settings)
+  await repository.write({...settings, manual: false})
+  await expect(repository.read()).resolves.toEqual({...settings, manual: false})
 })
 it('should preserve the previously saved enlistment date and reject malformed data', async () => {
-  localStorage.setItem('pomo:service-start:v1', '"2026-09-01"')
-  await expect(readServiceSettings()).resolves.toMatchObject({manual: false, start: '2026-09-01'})
-  localStorage.setItem('pomo:service-start:v1', '"2026-02-30"')
-  localStorage.setItem('pomo:service-settings:v1', '{"manual":"true"}')
-  await expect(readServiceSettings()).resolves.toMatchObject({manual: false, start: ''})
+  fixture.web.set('pomo:service-start:v1', '"2026-09-01"')
+  await expect(repository.read()).resolves.toMatchObject({manual: false, start: '2026-09-01'})
+  fixture.web.set('pomo:service-start:v1', '"2026-02-30"')
+  fixture.web.set('pomo:service-settings:v1', '{"manual":"true"}')
+  await expect(repository.read()).resolves.toMatchObject({manual: false, start: ''})
 })
 it('should use native storage and wait for saves before restoring', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   let finish: (() => void) | undefined
   const values = new Map([['pomo:service-start:v1', '"2026-08-01"']])
-  getItem.mockImplementation((key: string) => Promise.resolve(values.get(key) ?? null))
-  setItem.mockImplementation(
+  fixture.getItem.mockImplementation((key: string) => Promise.resolve(values.get(key) ?? null))
+  fixture.setItem.mockImplementation(
     (key: string, value: string) =>
       new Promise<void>((resolve) => {
         finish = () => {
@@ -38,11 +36,11 @@ it('should use native storage and wait for saves before restoring', async () => 
         }
       }),
   )
-  await expect(readServiceSettings()).resolves.toMatchObject({start: '2026-08-01'})
+  await expect(repository.read()).resolves.toMatchObject({start: '2026-08-01'})
   const settings = {branch: 'army', days: '300', manual: true, start: '2026-09-09'} as const
-  const saving = writeServiceSettings(settings)
-  await vi.waitFor(() => expect(setItem).toHaveBeenCalled())
-  const reading = readServiceSettings()
+  const saving = repository.write(settings)
+  await vi.waitFor(() => expect(fixture.setItem).toHaveBeenCalled())
+  const reading = repository.read()
   finish?.()
   await saving
   await expect(reading).resolves.toEqual(settings)
@@ -53,149 +51,151 @@ it.each([
   '{"manual":true}',
   JSON.stringify({branch: 'army', days: '', manual: false, start: ''}),
 ])('should prefer valid web settings over native %s', async (stored) => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  localStorage.setItem('pomo:service-settings:v1', JSON.stringify(settings))
-  getItem.mockResolvedValue(stored)
-  await expect(readServiceSettings()).resolves.toEqual(settings)
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(settings))
+  fixture.getItem.mockResolvedValue(stored)
+  await expect(repository.read()).resolves.toEqual(settings)
 })
 it('should restore the web copy after a native save fails', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  setItem.mockRejectedValue(new Error('native unavailable'))
-  await expect(writeServiceSettings(settings)).rejects.toThrow('native unavailable')
-  getItem.mockResolvedValue(null)
-  await expect(readServiceSettings()).resolves.toEqual(settings)
+  fixture.setItem.mockRejectedValue(new Error('native unavailable'))
+  await expect(repository.write(settings)).rejects.toThrow('native unavailable')
+  fixture.getItem.mockResolvedValue(null)
+  await expect(repository.read()).resolves.toEqual(settings)
 })
 it.each(['pomo:service-settings:v1', 'pomo:service-start:v1'])(
   'should return a save made during the native read of %s',
   async (key) => {
-    vi.stubGlobal('ReactNativeWebView', {})
+    fixture.isNative.mockReturnValue(true)
     const delayed = Promise.withResolvers<string | null>()
-    getItem.mockImplementation((requested: string) =>
+    fixture.getItem.mockImplementation((requested: string) =>
       requested === key ? delayed.promise : Promise.resolve(null),
     )
-    const reading = readServiceSettings()
-    await vi.waitFor(() => expect(getItem).toHaveBeenCalledWith(key))
+    const reading = repository.read()
+    await vi.waitFor(() => expect(fixture.getItem).toHaveBeenCalledWith(key))
     const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-    await writeServiceSettings(settings)
+    await repository.write(settings)
     delayed.resolve(null)
     await expect(reading).resolves.toEqual(settings)
   },
 )
 it('should restore the legacy web date when native values are missing', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
-  getItem.mockResolvedValue(null)
-  localStorage.setItem('pomo:service-start:v1', '"2026-09-01"')
-  await expect(readServiceSettings()).resolves.toMatchObject({start: '2026-09-01'})
+  fixture.isNative.mockReturnValue(true)
+  fixture.getItem.mockResolvedValue(null)
+  fixture.web.set('pomo:service-start:v1', '"2026-09-01"')
+  await expect(repository.read()).resolves.toMatchObject({start: '2026-09-01'})
 })
 it('should restore current native settings before a legacy web date', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
-  localStorage.setItem('pomo:service-settings:v1', '{invalid')
-  localStorage.setItem('pomo:service-start:v1', '"2026-08-01"')
+  fixture.isNative.mockReturnValue(true)
+  fixture.web.set('pomo:service-settings:v1', '{invalid')
+  fixture.web.set('pomo:service-start:v1', '"2026-08-01"')
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  getItem.mockResolvedValue(JSON.stringify(settings))
-  await expect(readServiceSettings()).resolves.toEqual(settings)
+  fixture.getItem.mockResolvedValue(JSON.stringify(settings))
+  await expect(repository.read()).resolves.toEqual(settings)
 })
 it('should retry a stale native read when browser storage is unavailable', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-    throw new Error('blocked')
-  })
+  fixture.isNative.mockReturnValue(true)
+  fixture.writeWeb.mockReturnValue(new Error('blocked'))
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   const delayed = Promise.withResolvers<string | null>()
-  getItem.mockReturnValueOnce(delayed.promise).mockResolvedValue(JSON.stringify(settings))
-  const reading = readServiceSettings()
-  await vi.waitFor(() => expect(getItem).toHaveBeenCalled())
-  await writeServiceSettings(settings)
+  fixture.getItem.mockReturnValueOnce(delayed.promise).mockResolvedValue(JSON.stringify(settings))
+  const reading = repository.read()
+  await vi.waitFor(() => expect(fixture.getItem).toHaveBeenCalled())
+  await repository.write(settings)
   delayed.resolve(null)
   await expect(reading).resolves.toEqual(settings)
 })
 it('should preserve native read errors when there is no web copy', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
-  getItem.mockRejectedValue(new Error('read failed'))
-  await expect(readServiceSettings()).rejects.toThrow('read failed')
+  fixture.isNative.mockReturnValue(true)
+  fixture.getItem.mockRejectedValue(new Error('read failed'))
+  await expect(repository.read()).rejects.toThrow('read failed')
 })
 it('should return a concurrent save even when the old native read rejects', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const delayed = Promise.withResolvers<string | null>()
-  getItem.mockReturnValueOnce(delayed.promise)
-  const reading = readServiceSettings()
-  await vi.waitFor(() => expect(getItem).toHaveBeenCalled())
+  fixture.getItem.mockReturnValueOnce(delayed.promise)
+  const reading = repository.read()
+  await vi.waitFor(() => expect(fixture.getItem).toHaveBeenCalled())
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  await writeServiceSettings(settings)
+  await repository.write(settings)
   delayed.reject(new Error('read failed'))
   await expect(reading).resolves.toEqual(settings)
 })
 it('should restore the native save when replacing an existing web copy fails', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  localStorage.setItem('pomo:service-settings:v1', JSON.stringify({...settings, days: '200'}))
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-    throw new DOMException('Quota exceeded', 'QuotaExceededError')
-  })
-  getItem.mockResolvedValue(JSON.stringify(settings))
-  await writeServiceSettings(settings)
-  await expect(readServiceSettings()).resolves.toEqual(settings)
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify({...settings, days: '200'}))
+  fixture.writeWeb.mockReturnValue(new Error('blocked'))
+  fixture.getItem.mockResolvedValue(JSON.stringify(settings))
+  await repository.write(settings)
+  await expect(repository.read()).resolves.toEqual(settings)
 })
 
 it('should preserve the existing web copy when both writes fail', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  localStorage.setItem('pomo:service-settings:v1', JSON.stringify(previous))
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-    throw new Error('blocked')
-  })
-  setItem.mockRejectedValue(new Error('native failed'))
-  await expect(writeServiceSettings(next)).rejects.toThrow('native failed')
-  await expect(readServiceSettings()).resolves.toEqual(previous)
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(previous))
+  fixture.writeWeb.mockReturnValue(new Error('blocked'))
+  fixture.setItem.mockRejectedValue(new Error('native failed'))
+  await expect(repository.write(next)).rejects.toThrow('native failed')
+  await expect(repository.read()).resolves.toEqual(previous)
 })
 it('should wait for native persistence before restoring after web replacement fails', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  localStorage.setItem('pomo:service-settings:v1', JSON.stringify(previous))
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-    throw new Error('blocked')
-  })
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(previous))
+  fixture.writeWeb.mockReturnValue(new Error('blocked'))
   const delayed = Promise.withResolvers<void>()
-  setItem.mockReturnValue(delayed.promise)
-  getItem.mockResolvedValue(JSON.stringify(next))
-  const saving = writeServiceSettings(next)
-  const reading = readServiceSettings()
+  fixture.setItem.mockReturnValue(delayed.promise)
+  fixture.getItem.mockResolvedValue(JSON.stringify(next))
+  const saving = repository.write(next)
+  const reading = repository.read()
   delayed.resolve()
   await saving
   await expect(reading).resolves.toEqual(next)
 })
 it('should retain a newer web save after an older native write completes', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  const webWrite = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
-    throw new Error('blocked')
-  })
+  fixture.writeWeb.mockReturnValueOnce(new Error('blocked'))
   const delayed = Promise.withResolvers<void>()
-  setItem.mockReturnValueOnce(delayed.promise).mockResolvedValue(undefined)
-  const first = writeServiceSettings(previous)
-  await vi.waitFor(() => expect(setItem).toHaveBeenCalled())
-  webWrite.mockRestore()
-  const second = writeServiceSettings(next)
+  fixture.setItem.mockReturnValueOnce(delayed.promise).mockResolvedValue(undefined)
+  const first = repository.write(previous)
+  await vi.waitFor(() => expect(fixture.setItem).toHaveBeenCalled())
+  const second = repository.write(next)
   delayed.resolve()
   await Promise.all([first, second])
-  expect(localStorage.getItem('pomo:service-settings:v1')).toBe(JSON.stringify(next))
-  await expect(readServiceSettings()).resolves.toEqual(next)
+  expect(fixture.web.get('pomo:service-settings:v1')).toBe(JSON.stringify(next))
+  await expect(repository.read()).resolves.toEqual(next)
 })
 it('should report an error if a readable stale web copy cannot be removed', async () => {
-  vi.stubGlobal('ReactNativeWebView', {})
+  fixture.isNative.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
-  localStorage.setItem('pomo:service-settings:v1', JSON.stringify(previous))
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-    throw new Error('blocked')
-  })
-  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
-    throw new Error('blocked')
-  })
-  await expect(writeServiceSettings(next)).rejects.toThrow('Failed to discard stale')
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(previous))
+  fixture.writeWeb.mockReturnValue(new Error('blocked'))
+  fixture.removeWeb.mockReturnValue(new Error('blocked'))
+  await expect(repository.write(next)).rejects.toThrow('Failed to discard stale')
+})
+
+it('should isolate pending writes and revisions between repositories', async () => {
+  fixture.isNative.mockReturnValue(true)
+  const delayed = Promise.withResolvers<void>()
+  fixture.setItem.mockReturnValue(delayed.promise)
+  const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
+  const saving = repository.write(settings)
+  const other = createStorageFixture()
+  other.isNative.mockReturnValue(true)
+  const independent = createServiceSettingsStorage({storage: other.adapter})
+  try {
+    await expect(independent.read()).resolves.toMatchObject({start: ''})
+  } finally {
+    delayed.resolve()
+    await saving
+  }
 })
