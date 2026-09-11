@@ -37,7 +37,6 @@ import {
   isDesktopBackgroundMode,
   useDesktopMode,
   useDesktopSafeAreaTop,
-  useDesktopSceneSettingsListener,
   useDesktopSceneSettingsPublisher,
 } from '../features/desktop-mode'
 import {PEntry} from './p-studio/Entry'
@@ -214,9 +213,8 @@ interface StudioDesktopSceneSettingsOptions {
 const useStudioDesktopSceneSettings = (
   options: StudioDesktopSceneSettingsOptions,
 ): Required<DesktopSceneSettingsHandlers> => {
-  const publisher = useDesktopSceneSettingsPublisher()
   const {scenePreferences, sceneStyleController, screenSaver, weather} = options
-  useDesktopSceneSettingsListener({
+  const handlers = {
     onActivityChange: scenePreferences.onActivityChange,
     onGazeChange: scenePreferences.onGazeChange,
     onMotionInputChange: options.setMotionInput,
@@ -227,46 +225,48 @@ const useStudioDesktopSceneSettings = (
     onWeatherEnabledChange: weather.onEnabledChange,
     onWeatherLocationChange: weather.onLocationChange,
     onWeatherSceneModeChange: weather.onSceneModeChange,
-  })
+  }
+  const publisher = useDesktopSceneSettingsPublisher({handlers})
+
   return {
     onActivityChange: (value) => {
-      scenePreferences.onActivityChange(value)
+      handlers.onActivityChange(value)
       publisher.publish({name: 'activity', value})
     },
     onGazeChange: (value) => {
-      scenePreferences.onGazeChange(value)
+      handlers.onGazeChange(value)
       publisher.publish({name: 'gaze', value})
     },
     onMotionInputChange: (value) => {
-      options.setMotionInput(value)
+      handlers.onMotionInputChange(value)
       publisher.publish({name: 'motionInput', value})
     },
     onMotionModeChange: (value) => {
-      options.setMotionMode(value)
+      handlers.onMotionModeChange(value)
       publisher.publish({name: 'motionMode', value})
     },
     onSceneStyleChange: (value) => {
-      sceneStyleController.onSceneStyleChange(value)
+      handlers.onSceneStyleChange(value)
       publisher.publish({name: 'sceneStyle', value})
     },
     onScreenSaverDelayChange: (value) => {
-      screenSaver.onDelayChange(value)
+      handlers.onScreenSaverDelayChange(value)
       publisher.publish({name: 'screenSaverDelay', value})
     },
     onTimeModeChange: (value) => {
-      scenePreferences.onTimeModeChange(value)
+      handlers.onTimeModeChange(value)
       publisher.publish({name: 'timeMode', value})
     },
     onWeatherEnabledChange: (value) => {
-      weather.onEnabledChange(value)
+      handlers.onWeatherEnabledChange(value)
       publisher.publish({name: 'weatherEnabled', value})
     },
     onWeatherLocationChange: (value) => {
-      weather.onLocationChange(value)
+      handlers.onWeatherLocationChange(value)
       publisher.publish({name: 'weatherLocation', value})
     },
     onWeatherSceneModeChange: (value) => {
-      weather.onSceneModeChange(value)
+      handlers.onWeatherSceneModeChange(value)
       publisher.publish({name: 'weatherSceneMode', value})
     },
   }
