@@ -420,6 +420,7 @@ export const PStudio = () => {
           />
           <Show when={scenePreferences.isReady()}>
             <SceneToolbar
+              {...sceneSettings}
               background={background}
               {...toolbarVisibility(displayPreferences)}
               activity={scenePreferences.activity()}
@@ -431,20 +432,10 @@ export const PStudio = () => {
                 isSceneLoading() &&
                 hasSceneRendered()
               }
-              onActivityChange={sceneSettings.onActivityChange}
               onDialogueComposerVisibleChange={displayPreferences.onDialogueComposerVisibleChange}
-              onGazeChange={sceneSettings.onGazeChange}
-              onMotionInputChange={sceneSettings.onMotionInputChange}
-              onMotionModeChange={sceneSettings.onMotionModeChange}
-              onScreenSaverDelayChange={sceneSettings.onScreenSaverDelayChange}
-              onSceneStyleChange={sceneSettings.onSceneStyleChange}
-              onTimeModeChange={sceneSettings.onTimeModeChange}
               onTourOpen={handleTourOpen}
               tourButtonVisible={displayPreferences.tourButtonVisible()}
               onTourButtonVisibleChange={displayPreferences.onTourButtonVisibleChange}
-              onWeatherEnabledChange={sceneSettings.onWeatherEnabledChange}
-              onWeatherLocationChange={sceneSettings.onWeatherLocationChange}
-              onWeatherSceneModeChange={sceneSettings.onWeatherSceneModeChange}
               screenSaverDelay={screenSaver.delay()}
               sceneStyle={style.sceneStyle()}
               motionInput={motionInput()}

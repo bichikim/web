@@ -4,7 +4,6 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {screen} from '@solidjs/testing-library'
 import {
   configureStudio,
-  publish,
   renderStudio,
   seoulLocation,
   setupStudio,
@@ -16,6 +15,8 @@ const {
   SceneToolbar,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,
+  usePScenePreferences,
+  useStudioScreenSaver,
 } = studioMocks
 
 beforeEach(setupStudio)
@@ -72,50 +73,90 @@ describe('PStudio', () => {
     expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'true')
     expect(isDesktopBackgroundMode).toHaveBeenCalledWith('interactiveDesktop')
   })
-  it('should publish every main toolbar setting and not echo received changes', () => {
-    configureStudio({desktopMode: 'interactiveDesktop', entrySession: true})
+})
+
+it.each(['interactiveDesktop', 'widget'] as const)(
+  'should synchronize scene edits without echoing in %s mode',
+  (desktopMode) => {
+    configureStudio({desktopMode, entrySession: true})
+    const location = {
+      ...seoulLocation,
+      id: 'openweather:legacy:jeju',
+      legacyCitySlug: 'jeju',
+      name: '제주',
+    } as const
+    const publish = vi.fn()
+    vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
     renderStudio()
     const toolbar = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
-    if (!toolbar) {
-      throw new Error('Scene toolbar was not rendered')
+    const listener = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
+    if (listener === undefined) {
+      throw new Error('Missing scene-settings listener')
     }
+    if (toolbar === undefined) {
+      throw new Error('Missing scene toolbar')
+    }
+    expect(publish).not.toHaveBeenCalled()
+
     toolbar.onActivityChange('writing')
     toolbar.onGazeChange('user')
-    toolbar.onMotionInputChange?.('drag')
+    toolbar.onMotionInputChange?.('gyroscope')
     toolbar.onMotionModeChange?.('pan')
     toolbar.onSceneStyleChange('scribble')
-    toolbar.onScreenSaverDelayChange?.('1h')
+    toolbar.onScreenSaverDelayChange('1h')
     toolbar.onTimeModeChange('auto')
     toolbar.onWeatherEnabledChange(true)
-    toolbar.onWeatherLocationChange(seoulLocation)
+    toolbar.onWeatherLocationChange(location)
     toolbar.onWeatherSceneModeChange('rain')
     expect(publish.mock.calls.map(([setting]) => setting)).toEqual([
       {name: 'activity', value: 'writing'},
       {name: 'gaze', value: 'user'},
-      {name: 'motionInput', value: 'drag'},
+      {name: 'motionInput', value: 'gyroscope'},
       {name: 'motionMode', value: 'pan'},
       {name: 'sceneStyle', value: 'scribble'},
       {name: 'screenSaverDelay', value: '1h'},
       {name: 'timeMode', value: 'auto'},
       {name: 'weatherEnabled', value: true},
-      {name: 'weatherLocation', value: seoulLocation},
+      {name: 'weatherLocation', value: location},
       {name: 'weatherSceneMode', value: 'rain'},
     ])
-    publish.mockClear()
-    const handlers = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
-    if (!handlers) {
-      throw new Error('Scene settings listener was not registered')
-    }
-    handlers.onActivityChange?.('reading')
-    handlers.onGazeChange?.('focused')
-    handlers.onMotionInputChange?.('drag')
-    handlers.onMotionModeChange?.('depth')
-    handlers.onSceneStyleChange?.('original')
-    handlers.onScreenSaverDelayChange?.('off')
-    handlers.onTimeModeChange?.('day')
-    handlers.onWeatherEnabledChange?.(false)
-    handlers.onWeatherLocationChange?.(seoulLocation)
-    handlers.onWeatherSceneModeChange?.('auto')
-    expect(publish).not.toHaveBeenCalled()
-  })
-})
+    expect(toolbar).toMatchObject({
+      activity: 'writing',
+      motionInput: 'gyroscope',
+      motionMode: 'pan',
+      sceneStyle: 'scribble',
+      timeMode: 'auto',
+      weatherEnabled: true,
+      weatherLocation: location,
+      weatherSceneMode: 'rain',
+    })
+    expect(usePScenePreferences().gaze()).toBe('user')
+    expect(useStudioScreenSaver().onDelayChange).toHaveBeenLastCalledWith('1h')
+    listener.onActivityChange?.('reading')
+    listener.onGazeChange?.('focused')
+    listener.onMotionInputChange?.('drag')
+    listener.onMotionModeChange?.('depth')
+    listener.onSceneStyleChange?.('original')
+    listener.onScreenSaverDelayChange?.('off')
+    listener.onTimeModeChange?.('day')
+    listener.onWeatherEnabledChange?.(false)
+    listener.onWeatherLocationChange?.(seoulLocation)
+    listener.onWeatherSceneModeChange?.('auto')
+    expect(toolbar).toMatchObject({
+      activity: 'reading',
+      motionInput: 'drag',
+      motionMode: 'depth',
+      sceneStyle: 'original',
+      timeMode: 'day',
+      weatherEnabled: false,
+      weatherLocation: seoulLocation,
+      weatherSceneMode: 'auto',
+    })
+    expect(usePScenePreferences().gaze()).toBe('focused')
+    expect(useStudioScreenSaver().onDelayChange).toHaveBeenLastCalledWith('off')
+    expect(publish).toHaveBeenCalledTimes(10)
+    toolbar.onActivityChange('writing')
+    expect(publish).toHaveBeenCalledTimes(11)
+    expect(publish).toHaveBeenLastCalledWith({name: 'activity', value: 'writing'})
+  },
+)

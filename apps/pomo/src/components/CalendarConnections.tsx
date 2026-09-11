@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {createResource, createSignal, createUniqueId, For, Show} from 'solid-js'
+import {createMemo, createResource, createSignal, createUniqueId, For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
   CALENDAR_PROVIDERS,
@@ -21,10 +21,11 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
   const popoverId = `pomo-calendar-settings-${createUniqueId()}`
   const titleId = `${popoverId}-title`
   const popoverAnchor = `--${popoverId}`
-  const [connections, {refetch}] = createResource(
-    () => authentication.session() !== null,
-    listCalendarConnections,
-  )
+  const account = createMemo(() => {
+    const session = authentication.session()
+    return session?.provider === 'email' ? session.email : (session?.provider ?? false)
+  })
+  const [connections, {refetch}] = createResource(account, listCalendarConnections)
   const [confirmingId, setConfirmingId] = createSignal<string | null>(null)
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [pendingAction, setPendingAction] = createSignal<string | null>(null)

@@ -186,6 +186,18 @@ it('should publish every setting change from the separate scene toolbar', () => 
     {name: 'weatherEnabled', value: true},
     {name: 'weatherSceneMode', value: 'rain'},
   ])
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
+    activity: 'writing',
+    gaze: 'user',
+    motionInput: 'drag',
+    motionMode: 'pan',
+    sceneStyle: 'scribble',
+    timeMode: 'auto',
+  })
+  expect(useScreenSaver().onDelayChange).toHaveBeenCalledWith('1h')
+  expect(useWeather().onEnabledChange).toHaveBeenCalledWith(true)
+  expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
+  expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
   expect(onModeChange).toHaveBeenCalledWith('interactiveDesktop')
 })
 it('should retain drag input when the desktop has no gyroscope', () => {
@@ -195,25 +207,25 @@ it('should retain drag input when the desktop has no gyroscope', () => {
   expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
 })
 
-it('should apply main toolbar changes without publishing them again', () => {
+it('should apply every received scene setting without echoing it to other WebViews', () => {
   render(() => <DesktopSettings />)
-  const handlers = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
-  if (!handlers) {
-    throw new Error('Scene settings listener was not registered')
+  expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
+  const listener = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
+  if (listener === undefined) {
+    throw new Error('Missing scene-settings listener')
   }
-  handlers.onActivityChange?.('writing')
-  handlers.onGazeChange?.('user')
-  handlers.onMotionInputChange?.('drag')
-  handlers.onMotionModeChange?.('pan')
-  handlers.onSceneStyleChange?.('scribble')
-  handlers.onScreenSaverDelayChange?.('1h')
-  handlers.onTimeModeChange?.('auto')
-  handlers.onWeatherEnabledChange?.(true)
-  handlers.onWeatherLocationChange?.(jejuLocation)
-  handlers.onWeatherSceneModeChange?.('rain')
+  listener.onActivityChange?.('writing')
+  listener.onGazeChange?.('user')
+  listener.onMotionInputChange?.('drag')
+  listener.onMotionModeChange?.('pan')
+  listener.onSceneStyleChange?.('scribble')
+  listener.onScreenSaverDelayChange?.('1h')
+  listener.onTimeModeChange?.('auto')
+  listener.onWeatherEnabledChange?.(true)
+  listener.onWeatherLocationChange?.(jejuLocation)
+  listener.onWeatherSceneModeChange?.('rain')
 
-  const toolbar = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
-  expect(toolbar).toMatchObject({
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
     activity: 'writing',
     gaze: 'user',
     motionInput: 'drag',
@@ -221,10 +233,11 @@ it('should apply main toolbar changes without publishing them again', () => {
     sceneStyle: 'scribble',
     timeMode: 'auto',
   })
-  expect(vi.mocked(useScreenSaver).mock.results[0]?.value.onDelayChange).toHaveBeenCalledWith('1h')
-  const weather = vi.mocked(useWeather).mock.results[0]?.value
-  expect(weather.onEnabledChange).toHaveBeenCalledWith(true)
-  expect(weather.onLocationChange).toHaveBeenCalledWith(jejuLocation)
-  expect(weather.onSceneModeChange).toHaveBeenCalledWith('rain')
+  expect(useScreenSaver().onDelayChange).toHaveBeenCalledWith('1h')
+  expect(useWeather().onEnabledChange).toHaveBeenCalledWith(true)
+  expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
+  expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
   expect(publish).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', {name: '활동'}))
+  expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'activity', value: 'writing'})
 })

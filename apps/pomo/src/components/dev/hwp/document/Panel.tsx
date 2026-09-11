@@ -167,7 +167,7 @@ export function HwpDocumentPanel(props: HwpDocumentPanelProps) {
           </div>
         </Show>
         <Show when={props.pageCount() !== null && props.viewerMode() === 'iframe'}>
-          {(count) => <span>{`${count()}페이지 · iframe 안에서 페이지를 이동할 수 있어요`}</span>}
+          <span>{`${props.pageCount()}페이지 · iframe 안에서 페이지를 이동할 수 있어요`}</span>
         </Show>
       </div>
     </section>

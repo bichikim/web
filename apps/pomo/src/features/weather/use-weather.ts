@@ -75,6 +75,7 @@ export const useWeather = (): WeatherController => {
     status: 'loading',
   })
   let disposed = false
+  let pendingPreference: Partial<WeatherPreference> = {}
 
   const weatherResult = createAsync<WeatherFeedQueryResult | undefined>(async () => {
     const currentPreference = preference()
@@ -145,7 +146,11 @@ export const useWeather = (): WeatherController => {
     },
   })
 
-  const persistPreference = (nextPreference: WeatherPreference) => {
+  const persistPreference = (changes: Partial<WeatherPreference>) => {
+    const nextPreference = {...preference(), ...changes}
+    if (!preferenceReady()) {
+      pendingPreference = {...pendingPreference, ...changes}
+    }
     setStatusEnabled(nextPreference.enabled)
     setPreference(nextPreference)
     writeWeatherPreference(nextPreference).catch(() => {
@@ -160,10 +165,15 @@ export const useWeather = (): WeatherController => {
           return
         }
 
+        const restoredPreference = {...storedPreference, ...pendingPreference}
         batch(() => {
-          setStatusEnabled(storedPreference.enabled)
-          setPreference(storedPreference)
+          setStatusEnabled(restoredPreference.enabled)
+          setPreference(restoredPreference)
           setPreferenceReady(true)
+          if (Object.keys(pendingPreference).length > 0) {
+            persistPreference(restoredPreference)
+          }
+          pendingPreference = {}
         })
       })
       .catch(() => {
@@ -180,9 +190,9 @@ export const useWeather = (): WeatherController => {
   return {
     enabled: () => preference().enabled,
     location: () => preference().location,
-    onEnabledChange: (enabled) => persistPreference({...preference(), enabled}),
-    onLocationChange: (location) => persistPreference({...preference(), location}),
-    onSceneModeChange: (sceneMode) => persistPreference({...preference(), sceneMode}),
+    onEnabledChange: (enabled) => persistPreference({enabled}),
+    onLocationChange: (location) => persistPreference({location}),
+    onSceneModeChange: (sceneMode) => persistPreference({sceneMode}),
     sceneCondition: () => {
       const currentState = feedState()
       const observedCondition =

@@ -1,6 +1,12 @@
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 import type {IncomingMessage, ServerResponse} from 'node:http'
 
 import {DEV_FEED_QUOTES} from './quotes'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 const FEED_INTERVAL_MINUTES = 5
 const FEED_HISTORY_SIZE = 12
@@ -46,24 +52,13 @@ const escapeXml = (value: string) =>
     .replaceAll("'", '&apos;')
 
 const getKoreaTimeLabel = (date: Date) => {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    day: 'numeric',
-    hour: '2-digit',
-    hourCycle: 'h23',
-    minute: '2-digit',
-    month: 'numeric',
-    timeZone: KOREA_TIME_ZONE,
-    year: 'numeric',
-  }).formatToParts(date)
-  const values = new Map(parts.map((part) => [part.type, part.value]))
-  const month = Number(values.get('month'))
-  const day = Number(values.get('day'))
-  const hour = Number(values.get('hour'))
-  const minute = Number(values.get('minute'))
+  const local = dayjs(date).tz(KOREA_TIME_ZONE)
+  const hour = local.hour()
+  const minute = local.minute()
   const timeParts = [hour === 0 ? null : `${hour}시`, minute === 0 ? null : `${minute}분`]
     .filter((part) => part !== null)
     .join(' ')
-  const dateLabel = `${values.get('year')}년 ${month}월 ${day}일`
+  const dateLabel = local.format('YYYY[년] M[월] D[일]')
   return timeParts.length === 0 ? dateLabel : `${dateLabel} ${timeParts}`
 }
 

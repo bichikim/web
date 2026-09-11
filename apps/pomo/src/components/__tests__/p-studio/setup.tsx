@@ -344,5 +344,7 @@ export const studioMocks = {
   useBackground,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,
+  usePScenePreferences,
+  useStudioScreenSaver,
   writeFocusRoomEntrySession,
 }

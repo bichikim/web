@@ -336,13 +336,18 @@ const createActionAlbumCreationServices = (
   updateDraftReference: DraftReferenceUpdater,
 ): AlbumCreationServices => ({
   clearDraft: async (coverDraftId) => {
-    const didClearDraft = await albumCreationServices.clearDraft(coverDraftId)
+    const didClearDraft = await albumCreationServices.clearDraft(null)
 
-    if (didClearDraft) {
-      await updateDraftReference(null)
+    if (!didClearDraft || !(await updateDraftReference(null)).success) {
+      return false
     }
 
-    return didClearDraft
+    if (coverDraftId === null) {
+      return true
+    }
+
+    const {deleteAlbumDraftCover} = await getAlbumDraftStorage()
+    return (await deleteAlbumDraftCover(coverDraftId)).success
   },
   createAlbum: (draft, coverFile) =>
     createAlbumThroughAction(

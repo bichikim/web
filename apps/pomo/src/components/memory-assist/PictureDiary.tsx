@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
@@ -21,10 +22,7 @@ import {
 } from './picture-diary/environment'
 import {PictureDiaryStatus} from './picture-diary/Status'
 
-const padNumber = (value: number) => String(value).padStart(2, '0')
-
-const getDateValue = (date: Date) =>
-  `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
+const getDateValue = (date: Date) => dayjs(date).format('YYYY-MM-DD')
 
 export interface PictureDiaryProps {
   readonly turnEnvironment?: PageTurnEnvironment
