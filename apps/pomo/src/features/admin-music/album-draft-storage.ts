@@ -155,7 +155,23 @@ const readLegacyReferences = (expiresBefore: number): string[] => {
 }
 
 const BROWSER_STORAGE: AlbumDraftStorage = {
-  deleteCover: (id) => getDatabase().covers.delete(id),
+  deleteCover: async (id) => {
+    const database = getDatabase()
+    const expiresBefore = Date.now() - COVER_RETENTION_MILLISECONDS
+    await database.transaction('rw', database.covers, database.draftReferences, async () => {
+      const activeReferences = await database.draftReferences
+        .where('lastSeenAt')
+        .aboveOrEqual(expiresBefore)
+        .toArray()
+      if (
+        activeReferences.some((reference) => reference.coverDraftId === id) ||
+        readLegacyReferences(expiresBefore).includes(id)
+      ) {
+        return
+      }
+      await database.covers.delete(id)
+    })
+  },
   deleteData: () => sessionStorage.removeItem(ALBUM_DRAFT_KEY),
   deleteDraftReference: (id) => getDatabase().draftReferences.delete(id),
   deleteExpiredCovers: async ({expiresBefore, protectedId}) => {

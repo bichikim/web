@@ -5,6 +5,7 @@ import {describe, expect, it, vi} from 'vitest'
 
 import {
   COVER_DRAFT_ID,
+  createDraft,
   createSubmitEvent,
   renderAlbumDraft,
   RENEWED_ALBUM_ID,
@@ -90,3 +91,31 @@ describe('album creation', () => {
     cleanup()
   })
 })
+
+it.each(['metadata', 'reference'] as const)(
+  'should retain the cover when %s clearing fails after album creation',
+  async (failure) => {
+    storageMocks.readAlbumDraftData.mockReturnValue(createDraft({coverDraftId: COVER_DRAFT_ID}))
+    const {cleanup, result} = renderAlbumDraft()
+    try {
+      await waitForRestoration(result)
+      if (failure === 'metadata') {
+        storageMocks.deleteAlbumDraft.mockResolvedValueOnce({
+          error: new Error('delete failed'),
+          success: false,
+        })
+      } else {
+        storageMocks.writeAlbumDraftReference.mockImplementation(async ({coverDraftId}) =>
+          coverDraftId === null
+            ? {error: new Error('reference failed'), success: false}
+            : {success: true},
+        )
+      }
+      await result.handleAlbumSubmit(createSubmitEvent().event)
+      expect(storageMocks.deleteAlbumDraft).toHaveBeenCalledWith(null)
+      expect(storageMocks.deleteAlbumDraftCover).not.toHaveBeenCalled()
+    } finally {
+      cleanup()
+    }
+  },
+)

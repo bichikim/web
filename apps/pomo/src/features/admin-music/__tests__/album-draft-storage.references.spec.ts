@@ -5,6 +5,8 @@ import 'fake-indexeddb/auto'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {
+  deleteAlbumDraft,
+  deleteAlbumDraftCover,
   deleteAlbumDraftReference,
   deleteExpiredAlbumDraftCovers,
   readAlbumDraftCover,
@@ -59,4 +61,45 @@ it('should reclaim a cover after an abandoned reference expires', async () => {
   await deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})
 
   await expect(readAlbumDraftCover('abandoned-cover')).resolves.toBeNull()
+})
+
+it.each([deleteAlbumDraftCover, deleteAlbumDraft])(
+  'should preserve a shared cover during explicit deletion until all active references release',
+  async (remove) => {
+    const id = crypto.randomUUID()
+    await writeAlbumDraftCover(id, new File(['shared'], 'cover.webp'))
+    await writeAlbumDraftReference({coverDraftId: id, referenceId: 'first'})
+    await writeAlbumDraftReference({coverDraftId: id, referenceId: 'second'})
+    await deleteAlbumDraftReference('first')
+
+    await expect(remove(id)).resolves.toEqual({success: true})
+    await expect(readAlbumDraftCover(id)).resolves.not.toBeNull()
+
+    await deleteAlbumDraftReference('second')
+    await expect(remove(id)).resolves.toEqual({success: true})
+    await expect(readAlbumDraftCover(id)).resolves.toBeNull()
+  },
+)
+
+it('should preserve a legacy reference at the retention boundary during explicit deletion', async () => {
+  vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 8, 11))
+  const id = 'explicit-legacy'
+  await writeAlbumDraftCover(id, new File(['cover'], 'cover.webp'))
+  localStorage.setItem(
+    'pomo:admin-music:album-draft-session:v1:legacy',
+    JSON.stringify({coverDraftId: id, lastSeenAt: Date.UTC(2026, 7, 12)}),
+  )
+  await deleteAlbumDraftCover(id)
+  await expect(readAlbumDraftCover(id)).resolves.not.toBeNull()
+  vi.mocked(Date.now).mockReturnValue(Date.UTC(2026, 8, 11) + 1)
+  await deleteAlbumDraftCover(id)
+  await expect(readAlbumDraftCover(id)).resolves.toBeNull()
+})
+
+it('should ignore expired IndexedDB references during explicit deletion', async () => {
+  const id = 'explicit-expired'
+  await writeAlbumDraftCover(id, new File(['cover'], 'cover.webp'))
+  await writeAlbumDraftReference({coverDraftId: id, now: () => 0, referenceId: id})
+  await deleteAlbumDraftCover(id)
+  await expect(readAlbumDraftCover(id)).resolves.toBeNull()
 })
