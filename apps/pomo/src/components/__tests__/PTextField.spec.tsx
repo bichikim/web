@@ -2,8 +2,24 @@
 
 import {fireEvent, render} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 
 import {PTextField} from '../PTextField'
+
+it.each([false, true])(
+  'should render a read-only field without a change callback (multiline: %s)',
+  (multiline) => {
+    const [value, setValue] = createSignal('처음 값')
+    const view = render(() => (
+      <PTextField label="내용" readOnly multiline={multiline} value={value()} />
+    ))
+    const input = view.getByRole('textbox', {name: '내용'})
+    expect(input).toHaveAttribute('readonly')
+    expect(input).toHaveValue('처음 값')
+    setValue('변경된 값')
+    expect(input).toHaveValue('변경된 값')
+  },
+)
 
 it('should connect its label and form contract to the native input', () => {
   const onChange = vi.fn()

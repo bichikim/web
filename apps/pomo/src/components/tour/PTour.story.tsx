@@ -121,6 +121,7 @@ const TourStory = (props: TourStoryProps) => {
 
 interface PlacementWidthStoryProps {
   readonly rootFontClass: 'text-[16px]' | 'text-[32px]'
+  readonly position?: 'top' | 'bottom'
 }
 
 const PlacementWidthStory = (props: PlacementWidthStoryProps) => {
@@ -133,7 +134,11 @@ const PlacementWidthStory = (props: PlacementWidthStoryProps) => {
 
   return (
     <main class="min-h-screen bg-background text-foreground">
-      <button class="fixed right-4 top-4" ref={setTargetElement} type="button">
+      <button
+        class={props.position === 'bottom' ? 'fixed right-4 bottom-4' : 'fixed right-4 top-4'}
+        ref={setTargetElement}
+        type="button"
+      >
         배치 대상
       </button>
       <PTour getStepElement={() => targetElement() ?? null} isOpen steps={STEPS.slice(0, 1)} />
@@ -154,7 +159,7 @@ const verifyPlacementWidth = async (canvasElement: HTMLElement, expectedWidth: n
     const rectangle = dialog.getBoundingClientRect()
 
     expect(view.getComputedStyle(dialog).width).toBe(`${expectedWidth}px`)
-    expect(dialog.style.left).toBe(`${view.innerWidth - expectedWidth - 16}px`)
+    expect(view.getComputedStyle(dialog).left).toBe(`${view.innerWidth - expectedWidth - 16}px`)
     expect(rectangle.left).toBeGreaterThanOrEqual(16)
     expect(rectangle.right).toBeLessThanOrEqual(view.innerWidth - 16)
   })
@@ -186,7 +191,12 @@ export const Default: Story = {
 
     await userEvent.click(page.getByRole('button', {name: '투어 보기'}))
     await expect(page.getByRole('dialog', {name: '집중 타이머'})).toBeVisible()
-    await expect(canvasElement.ownerDocument.querySelectorAll('[data-part="top"]')).toHaveLength(1)
+    const mask = canvasElement.ownerDocument.querySelector('[data-part="mask"]')
+    await expect(mask).toBeVisible()
+    if (mask === null) {
+      throw new Error('Tour mask is missing')
+    }
+    await expect(getComputedStyle(mask).maskImage).not.toBe('none')
 
     await userEvent.click(page.getByRole('button', {name: m.tour_next()}))
     await expect(page.getByRole('dialog', {name: '음악 플레이어'})).toBeVisible()
@@ -199,19 +209,59 @@ export const Default: Story = {
     await waitFor(() => expect(page.queryByRole('dialog')).not.toBeInTheDocument())
     await expect(args.onEvent).toHaveBeenCalledTimes(4)
     await expect(args.onOpenChange).toHaveBeenLastCalledWith(false)
+    await waitFor(() => expect(page.getByRole('button', {name: '투어 보기'})).toHaveFocus())
+    await userEvent.click(page.getByRole('button', {name: '투어 보기'}))
+    await expect(page.getByRole('dialog', {name: '집중 타이머'})).toBeVisible()
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(page.queryByRole('dialog')).not.toBeInTheDocument())
+    await waitFor(() => expect(page.getByRole('button', {name: '투어 보기'})).toHaveFocus())
   },
 }
 
 export const PlacementWidth16: Story = {
   play: async ({canvasElement}: TourPlayContext) => {
-    await verifyPlacementWidth(canvasElement, 352)
+    await verifyPlacementWidth(canvasElement, 416)
   },
   render: () => <PlacementWidthStory rootFontClass="text-[16px]" />,
 }
 
 export const PlacementWidth32: Story = {
   play: async ({canvasElement}: TourPlayContext) => {
-    await verifyPlacementWidth(canvasElement, 704)
+    await verifyPlacementWidth(canvasElement, 832)
   },
   render: () => <PlacementWidthStory rootFontClass="text-[32px]" />,
+}
+
+export const AboveTarget: Story = {
+  play: async ({canvasElement}: TourPlayContext) => {
+    await verifyPlacementWidth(canvasElement, 416)
+    const dialog = within(canvasElement.ownerDocument.body).getByRole('dialog', {
+      name: '집중 타이머',
+    })
+    await expect(dialog).toHaveAttribute('data-placement', 'top')
+    await expect(getComputedStyle(dialog).position).toBe('fixed')
+    await expect(dialog.getBoundingClientRect().top).toBeGreaterThanOrEqual(16)
+    await expect(Number.parseFloat(getComputedStyle(dialog).bottom)).toBeGreaterThan(16)
+  },
+  render: () => <PlacementWidthStory rootFontClass="text-[16px]" position="bottom" />,
+}
+
+export const Centered: Story = {
+  play: async ({canvasElement}: TourPlayContext) => {
+    const document = canvasElement.ownerDocument
+    const dialog = within(document.body).getByRole('dialog', {name: '집중 타이머'})
+    await expect(dialog).toHaveAttribute('data-placement', 'center')
+    await waitFor(() => {
+      const bounds = dialog.getBoundingClientRect()
+      expect(bounds.left + bounds.width / 2).toBeCloseTo(
+        document.documentElement.clientWidth / 2,
+        0,
+      )
+      expect(bounds.top + bounds.height / 2).toBeCloseTo(
+        document.documentElement.clientHeight / 2,
+        0,
+      )
+    })
+  },
+  render: () => <PTour getStepElement={() => null} isOpen steps={STEPS.slice(0, 1)} />,
 }

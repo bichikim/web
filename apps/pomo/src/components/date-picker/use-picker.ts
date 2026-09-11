@@ -143,19 +143,19 @@ export const usePicker = (props: UsePickerProps) => {
   })
   return {
     allowed,
+    cells,
+    changeMonth,
     maximum,
     minimum,
+    moveMonth,
     onKeyDown,
     onPanelKeyDown,
-    changeMonth,
     open,
-    cells,
-    value,
-    moveMonth,
-    view,
     select,
     setPanel,
     setTrigger,
     toggle,
+    value,
+    view,
   }
 }

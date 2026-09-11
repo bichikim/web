@@ -1,11 +1,39 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 import {HwpDocumentPanel} from '../Panel'
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+})
+
+it('should show the iframe page count and follow page count changes', () => {
+  const [pageCount, setPageCount] = createSignal<number | null>(3)
+  render(() => (
+    <HwpDocumentPanel
+      directPageCount={() => null}
+      directPageIndex={() => 0}
+      errorMessage={() => null}
+      isBusy={() => false}
+      isReady={() => true}
+      onExampleOpen={vi.fn()}
+      onFileChange={vi.fn()}
+      onPageChange={vi.fn()}
+      onViewerModeChange={vi.fn()}
+      pageCount={pageCount}
+      pageSvg={() => null}
+      statusMessage={() => '준비됨'}
+      viewerMode={() => 'iframe'}
+      viewerHost={vi.fn()}
+    />
+  ))
+  expect(screen.getByText('3페이지 · iframe 안에서 페이지를 이동할 수 있어요')).toBeVisible()
+  setPageCount(5)
+  expect(screen.getByText('5페이지 · iframe 안에서 페이지를 이동할 수 있어요')).toBeVisible()
+  setPageCount(null)
+  expect(screen.queryByText(/페이지 · iframe/)).not.toBeInTheDocument()
 })
 
 it('should render parsed SVG pages and forward page navigation', () => {

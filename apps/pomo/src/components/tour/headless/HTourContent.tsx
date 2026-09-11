@@ -1,4 +1,5 @@
 import {Dialog} from '@kobalte/core/dialog'
+import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, type JSX, onCleanup} from 'solid-js'
 
 import type {TourTargetBounds} from './types'
@@ -10,14 +11,15 @@ export interface HTourContentProps {
   readonly class?: string
   readonly gap?: number
   readonly id?: string
-  readonly style?: JSX.CSSProperties
   readonly targetBounds?: TourTargetBounds | null
   readonly viewportInset?: number
 }
 
 interface TourContentPlacement {
   readonly name: 'bottom' | 'center' | 'top'
-  readonly style: JSX.CSSProperties
+  readonly left?: number
+  readonly edge?: number
+  readonly maxHeight?: number
 }
 
 interface ResolvePlacementOptions {
@@ -36,7 +38,6 @@ const resolvePlacement = (options: ResolvePlacementOptions): TourContentPlacemen
   if (bounds === null || bounds === undefined) {
     return {
       name: 'center',
-      style: {left: '50%', position: 'fixed', top: '50%', transform: 'translate(-50%, -50%)'},
     }
   }
 
@@ -53,24 +54,18 @@ const resolvePlacement = (options: ResolvePlacementOptions): TourContentPlacemen
 
   if (spaceBelow >= spaceAbove) {
     return {
+      edge: bounds.bottom + gap,
+      left,
+      maxHeight: Math.max(0, spaceBelow - gap - viewportInset),
       name: 'bottom',
-      style: {
-        left: `${left}px`,
-        'max-height': `${Math.max(0, spaceBelow - gap - viewportInset)}px`,
-        position: 'fixed',
-        top: `${bounds.bottom + gap}px`,
-      },
     }
   }
 
   return {
+    edge: bounds.viewportHeight - bounds.top + gap,
+    left,
+    maxHeight: Math.max(0, spaceAbove - gap - viewportInset),
     name: 'top',
-    style: {
-      bottom: `${bounds.viewportHeight - bounds.top + gap}px`,
-      left: `${left}px`,
-      'max-height': `${Math.max(0, spaceAbove - gap - viewportInset)}px`,
-      position: 'fixed',
-    },
   }
 }
 
@@ -78,6 +73,23 @@ const resolvePlacement = (options: ResolvePlacementOptions): TourContentPlacemen
 export const HTourContent = (props: HTourContentProps) => {
   const [contentElement, setContentElement] = createSignal<HTMLDivElement>()
   const [contentWidth, setContentWidth] = createSignal<number | null>(null)
+  let returnTarget: HTMLElement | null = null
+  const handleOpenAutoFocus = () => {
+    const active = contentElement()?.ownerDocument.activeElement
+    returnTarget = active instanceof HTMLElement ? active : null
+  }
+  const handleCloseAutoFocus = (event: Event) => {
+    const content = contentElement()
+    const document = content?.ownerDocument
+    const active = document?.activeElement
+    if (
+      returnTarget?.isConnected &&
+      (active === document?.body || content?.contains(active ?? null))
+    ) {
+      event.preventDefault()
+      returnTarget.focus({preventScroll: true})
+    }
+  }
 
   createEffect(() => {
     const element = contentElement()
@@ -104,16 +116,34 @@ export const HTourContent = (props: HTourContentProps) => {
       viewportInset: props.viewportInset,
     }),
   )
+  const variables = createMemo(() => {
+    const current = placement()
+    return {
+      '--tour-edge': current.edge === undefined ? undefined : `${current.edge}px`,
+      '--tour-left': current.left === undefined ? undefined : `${current.left}px`,
+      '--tour-max-height': current.maxHeight === undefined ? undefined : `${current.maxHeight}px`,
+    }
+  })
 
   return (
     <Dialog.Content
       aria-label={props['aria-label']}
       aria-labelledby={props['aria-labelledby']}
-      class={props.class}
+      class={cx(
+        'fixed data-[placement=center]:left-1/2 data-[placement=center]:top-1/2 ' +
+          'data-[placement=center]:[transform:translate(-50%,-50%)] ' +
+          'data-[placement=bottom]:[left:var(--tour-left)] data-[placement=bottom]:[top:var(--tour-edge)] ' +
+          'data-[placement=top]:[left:var(--tour-left)] data-[placement=top]:[bottom:var(--tour-edge)] ' +
+          'data-[placement=bottom]:[max-height:var(--tour-max-height)] ' +
+          'data-[placement=top]:[max-height:var(--tour-max-height)]',
+        props.class,
+      )}
       data-placement={placement().name}
       id={props.id}
+      onCloseAutoFocus={handleCloseAutoFocus}
+      onOpenAutoFocus={handleOpenAutoFocus}
       ref={setContentElement}
-      style={{...placement().style, ...props.style}}
+      style={variables()}
     >
       {props.children}
     </Dialog.Content>
