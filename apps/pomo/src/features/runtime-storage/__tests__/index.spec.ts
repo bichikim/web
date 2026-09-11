@@ -9,6 +9,7 @@ import {
   parseStorageJson,
   readNativeStorageJson,
   readWebStorageJson,
+  removeWebStorageItem,
   writeWebStorageJson,
 } from '..'
 
@@ -103,4 +104,19 @@ it('should repair a native write that finishes after a newer write', async () =>
   expect(storageMocks.setItem).toHaveBeenLastCalledWith('key', '2')
   completions[2]?.()
   await firstWrite
+})
+
+it('should remove only the requested browser storage item', () => {
+  localStorage.setItem('old', '1')
+  localStorage.setItem('other', '2')
+  expect(removeWebStorageItem('old')).toBeNull()
+  expect(localStorage.getItem('old')).toBeNull()
+  expect(localStorage.getItem('other')).toBe('2')
+})
+it('should report browser storage removal failures', () => {
+  const error = new Error('blocked')
+  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+    throw error
+  })
+  expect(removeWebStorageItem('old')).toBe(error)
 })
