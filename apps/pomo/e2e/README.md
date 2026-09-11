@@ -77,3 +77,15 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 방법은 [Playwright 화면 비교](https://playwright.dev/docs/test-snapshots)와
 [시계 제어](https://playwright.dev/docs/clock)를 따릅니다. PR 이미지에는 로컬 파일 경로 대신
 고정 commit SHA의 GitHub 이미지 URL을 사용합니다.
+
+[캐릭터 장면 테스트](rendering/character.spec.ts)는 배경 탭에서 키보드로 밤을 선택하고,
+노트북 타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
+접근성 이름, canvas 준비를 확인하고 다크·라이트 설정 화면을 PNG로 비교합니다.
+두 화면은 이전 기준이 없는 최초 기준이며 [촬영 기록](rendering/evidence/character/manifest.json)에
+현재 이미지와 환경을 보존합니다. 설정값과 API 응답을 mock하지 않으며 웹 localStorage를 사용합니다.
+빈 재생목록과 고정 시각을 사용하므로 실제 오디오·대화 중 시선 전환, 네이티브 Storage 및
+데스크톱 창 간 동기화는 검증 범위가 아닙니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/character.spec.ts
+```
