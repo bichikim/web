@@ -6,15 +6,31 @@ import {HwpCard} from './HwpCard'
 import {ImageGenerationCard} from './ImageGenerationCard'
 import {OptionsCard} from './OptionsCard'
 import {StorageCard} from './StorageCard'
+import {CARD_CLASSES} from './shared'
 import {SoundGenerationCard} from './SoundGenerationCard'
 import {TextMoodCard} from './TextMoodCard'
-import {CARD_CLASSES} from './shared'
 
 export function HomeCards() {
   return (
     <div class="mt-10 grid gap-4 md:grid-cols-2">
       <ImageGenerationCard />
       <SoundGenerationCard />
+      <A class={CARD_CLASSES} href="/dev/sound-player">
+        <h2>효과음 플레이어</h2>
+        <p>여러 환경음을 함께 반복하고 개별 음량을 조절해요.</p>
+      </A>
+      <A class={CARD_CLASSES} href="/dev/loop-player">
+        <h2>크로스페이드 루프 플레이어</h2>
+        <p>같은 음원을 기본 4초씩 겹쳐 반복 재생해요.</p>
+      </A>
+      <A class={CARD_CLASSES} href="/dev/sound-loop">
+        <h2>루프 연결</h2>
+        <p>한 음원의 끝과 시작을 연결하고 반복 재생으로 비교해요.</p>
+      </A>
+      <A class={CARD_CLASSES} href="/dev/sound-joining">
+        <h2>소리 연결</h2>
+        <p>두 오디오의 연결 구간을 AI로 생성해요.</p>
+      </A>
       <A class={CARD_CLASSES} href="/dev/focus-room-layer-review">
         <div class="flex items-start justify-between gap-5">
           <div>

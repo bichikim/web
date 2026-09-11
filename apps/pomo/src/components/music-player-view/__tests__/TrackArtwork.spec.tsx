@@ -23,6 +23,11 @@ it('should hide failed artwork and omit artwork when the track has none', () => 
   expect(image).toHaveAttribute('src', '/cover.webp')
   fireEvent.error(image)
   expect(image).not.toBeVisible()
+  setTrack({...track()!, artworkUrl: '/next.webp'})
+  const nextImage = view.container.querySelector('img')!
+  expect(nextImage).not.toBe(image)
+  expect(nextImage).toBeVisible()
+  expect(nextImage).toHaveAttribute('src', '/next.webp')
   setTrack(undefined)
   expect(view.container.querySelector('img')).toBeNull()
 })

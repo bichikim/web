@@ -12,24 +12,28 @@ Review the explicit target and relevant callers, callees, types, tests, and conf
 
 Use three independent, read-only subagents on the same target; no nested delegation. Give each the scope, project instructions, and rules below. Each reads and applies skills matching the target's language, framework, and its review role:
 
-1. **Behavior bugs:** correctness, security, lifecycle, accessibility, and performance.
-2. **Refactoring:** general improvements plus declarative programming, state derivation, and side-effect boundaries.
+1. **Behavior bugs:** verify correctness, security, lifecycle, accessibility, and performance defects through consumer contracts, errors, races, and cleanup; inspect structure only as needed to establish behavior.
+2. **Refactoring:** coupling, testability, avoidable complexity, declarative programming, state derivation, and side-effect boundaries.
 3. **Naming and structure:** apply skills' naming and folder rules to names, file placement, and module organization.
 
-Each returns scope, findings with evidence and fixes (or explicitly none), and verification gaps.
+Each stays within its review role but reports any behavior defect encountered, regardless of role. Severity follows verified impact, not the reviewer's role; never downgrade verified behavior defects to P3. Each returns scope, findings with evidence and fixes (or explicitly none), and verification gaps.
 
 Wait for all three. The parent verifies evidence, resolves conflicts, and merges findings sharing a root cause and fix, preserving distinct impacts and locations. Return one report under the verification gate and output contract below. Disclose unfinished coverage; do not claim completion if an agent cannot finish.
 
-## Review rules
+## Shared review rules
 
 - Report risks and actionable alternatives, not praise.
-- Check consumer contracts, misuse risk, boundaries, coupling, errors, races, and cleanup.
-- Report verified skill-structure violations as P3, citing the rule, code, and maintenance or testability cost. Never downgrade verified behavior defects to P3.
+
+Severity: **P0** active widespread security incident, irreversible data loss, or outage; **P1** exploitable security flaw, data corruption, or core-path failure; **P2** reproducible scoped defect or concrete operational/maintainability impact; **P3** non-blocking structural improvement without current behavior impact; **P4** optional cleanup, consistency, or wording.
+
+## Refactoring and structure rules
+
+The refactoring and naming/structure reviewers apply these rules within their respective roles; they are not an additional checklist for the behavior reviewer.
+
+- Report verified skill-structure violations without behavior impact as P3, citing the rule, code, and maintenance or testability cost.
 - Require deterministic testing of production behavior and failure paths through explicit inputs and replaceable boundaries. Report invasive mocking or hidden global, time, random, network, or process dependencies as P3 even without a behavior defect.
 - Prefer deleting branches, helpers, modes, or layers over rearranging avoidable complexity.
 - Flag changed code files over 600 lines; exclude non-code assets.
-
-Severity: **P0** active widespread security incident, irreversible data loss, or outage; **P1** exploitable security flaw, data corruption, or core-path failure; **P2** reproducible scoped defect or concrete operational/maintainability impact; **P3** non-blocking structural improvement without current behavior impact; **P4** optional cleanup, consistency, or wording.
 
 - `README.md`: keep directory-wide context there; explain an item in its own file when possible, otherwise in `[filename].md`.
 - Config `.ts` files directly under `apps/pomo`, `apps/coong`, or `packages/*` roots, including `vite.config.ts`, must not import their `src/**`. Report reverse imports; ask before implementing an unavoidable exception.
@@ -44,4 +48,6 @@ Assign severity only to verified findings. Put material unproven leads under **V
 
 ## Output
 
-Start with scope, overall risk, and whether P0/P1 exists. Number findings by severity and give each: title, risk, cause, verification, observed result, fix with rationale/tradeoffs, and optional example. Then list numbered **Verification gaps** with missing evidence and material **Out of scope** items; omit empty optional sections.
+Start with scope, overall risk, and P0–P2 findings discovered, fixed, and remaining; distinguish none found from none remaining after fixes. Present P0–P2 findings first, then **Verification gaps** with missing evidence, then P3/P4 proposals. Explicitly state when there are no material verification gaps; incomplete verification is not evidence of no defects.
+
+Number findings by severity and give each: title, risk, cause, verification, observed result, and fix with rationale/tradeoffs. Number verification gaps separately. List material **Out of scope** items when present.

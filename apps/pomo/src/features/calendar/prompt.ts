@@ -1,3 +1,5 @@
+import {dayjs} from 'src/utils/zoned-dayjs'
+import 'dayjs/locale/ko'
 import type {CalendarEvent} from './types'
 
 interface CreateCalendarPromptContextOptions {
@@ -11,55 +13,15 @@ const PROVIDER_LABELS = {
   microsoft: 'Microsoft',
 } as const
 
-const createDateTimeFormatter = (timeZone: string) =>
-  new Intl.DateTimeFormat('ko-KR', {
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    month: 'numeric',
-    timeZone,
-    year: 'numeric',
-  })
-
-const createTimeFormatter = (timeZone: string) =>
-  new Intl.DateTimeFormat('ko-KR', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone,
-  })
-
-const formatParts = (formatter: Intl.DateTimeFormat, date: Date) => {
-  const parts = new Map(
-    formatter
-      .formatToParts(date)
-      .filter((part) => part.type !== 'literal')
-      .map((part) => [part.type, part.value]),
-  )
-  const dayPeriod = parts.get('dayPeriod')
-  const normalizedDayPeriod = dayPeriod === 'PM' || dayPeriod === '오후' ? '오후' : '오전'
-  const minute = parts.get('minute')?.padStart(2, '0') ?? '00'
-  return {
-    day: Number(parts.get('day')),
-    hour: Number(parts.get('hour')),
-    minute,
-    month: Number(parts.get('month')),
-    period: normalizedDayPeriod,
-    year: Number(parts.get('year')),
-  }
-}
-
 const formatEventTime = (event: CalendarEvent, timeZone: string) => {
   if (event.allDay) {
     const [year, month, day] = event.start.split('-').map(Number)
     return `${year}. ${month}. ${day}. 종일`
   }
 
-  const start = formatParts(createDateTimeFormatter(timeZone), new Date(event.start))
-  const end = formatParts(createTimeFormatter(timeZone), new Date(event.end))
-  return (
-    `${start.year}. ${start.month}. ${start.day}. ${start.period} ` +
-    `${start.hour}:${start.minute}–${end.period} ${end.hour}:${end.minute}`
-  )
+  const start = dayjs(new Date(event.start)).tz(timeZone).locale('ko')
+  const end = dayjs(new Date(event.end)).tz(timeZone).locale('ko')
+  return `${start.format('YYYY. M. D. A h:mm')}–${end.format('A h:mm')}`
 }
 
 const formatEvent = (event: CalendarEvent, timeZone: string) =>

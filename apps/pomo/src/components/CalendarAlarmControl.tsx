@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createMemo, createSignal, createUniqueId, type Setter, Show} from 'solid-js'
@@ -25,11 +26,8 @@ const INPUT_CLASSES = cx(
   'focus-visible:border-highlight focus-visible:shadow-focus',
 )
 
-const padNumber = (value: number) => String(value).padStart(2, '0')
-const getDateInputValue = (date: Date) =>
-  `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
-const getTimeInputValue = (date: Date) =>
-  `${padNumber(date.getHours())}:${padNumber(date.getMinutes())}`
+const getDateInputValue = (date: Date) => dayjs(date).format('YYYY-MM-DD')
+const getTimeInputValue = (date: Date) => dayjs(date).format('HH:mm')
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
 const systemNow = () => new Date()
 const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {

@@ -4,11 +4,7 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {
-  useDesktopMode,
-  useDesktopSceneSettingsListener,
-  useDesktopSceneSettingsPublisher,
-} from '../../../features/desktop-mode'
+import {useDesktopMode, useDesktopSceneSettingsPublisher} from '../../../features/desktop-mode'
 import {supportsPSceneGyroscope, usePSceneStyle} from '../../../features/focus-room-animation'
 import {usePScenePreferences} from '../../../features/focus-room-scene-preferences'
 import {useScreenSaver} from '../../../features/screen-saver'
@@ -27,7 +23,6 @@ vi.mock('../../../features/focus-room-scene-preferences', () => ({
 vi.mock('../../../features/screen-saver', () => ({useScreenSaver: vi.fn()}))
 vi.mock('../../../features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
-  useDesktopSceneSettingsListener: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
@@ -214,8 +209,8 @@ it('should retain drag input when the desktop has no gyroscope', () => {
 
 it('should apply every received scene setting without echoing it to other WebViews', () => {
   render(() => <DesktopSettings />)
-  expect(useDesktopSceneSettingsListener).toHaveBeenCalledOnce()
-  const listener = vi.mocked(useDesktopSceneSettingsListener).mock.calls[0]?.[0]
+  expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
+  const listener = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
   if (listener === undefined) {
     throw new Error('Missing scene-settings listener')
   }

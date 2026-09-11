@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import type {CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
@@ -30,9 +31,7 @@ const getDayStart = (date: Date, offsetMinutes?: number) => {
     return fromLocalTimestamp(getLocalDayStart(date, offsetMinutes), offsetMinutes)
   }
 
-  const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
-  return start
+  return dayjs(date).startOf('day').toDate()
 }
 
 const addLocalDays = (dayStart: Date, days: number, offsetMinutes?: number) => {
@@ -40,9 +39,7 @@ const addLocalDays = (dayStart: Date, days: number, offsetMinutes?: number) => {
     return new Date(dayStart.getTime() + days * MILLISECONDS_PER_DAY)
   }
 
-  const date = new Date(dayStart)
-  date.setDate(date.getDate() + days)
-  return date
+  return dayjs(dayStart).add(days, 'day').toDate()
 }
 
 const toRange = (start: Date, end: Date): CalendarEventRange => ({

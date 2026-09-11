@@ -1,6 +1,6 @@
 # Library-Grade Boundaries
 
-Apply these rules to public exports and to internal boundaries with independent consumers, such as feature APIs, package subpaths, service ports, repositories, adapters, and shared utilities.
+Apply these rules to public exports and to internal boundaries with independent consumers.
 
 ## Workflow
 

@@ -74,7 +74,6 @@ describe('MusicPlayerView', () => {
   it('should forward album and expanded player control events', () => {
     const onAlbumAdd = vi.fn()
     const onAlbumClear = vi.fn()
-    const onAudioElement = vi.fn()
     const onExpandedChange = vi.fn()
     const onNextTrack = vi.fn()
     const onPreviewEnd = vi.fn()
@@ -86,7 +85,6 @@ describe('MusicPlayerView', () => {
     const result = renderMusicPlayerView({
       onAlbumAdd,
       onAlbumClear,
-      onAudioElement,
       onExpandedChange,
       onNextTrack,
       onPreviewEnd,
@@ -123,7 +121,6 @@ describe('MusicPlayerView', () => {
     fireEvent.click(trackButtons[1]!)
 
     expect(onAlbumAdd).toHaveBeenCalledWith(getAddedAlbumTracks())
-    expect(onAudioElement.mock.calls[0]?.[0]).toBe(result.container.querySelector('audio'))
     expect(result.getByTestId('album-track-count')).toHaveTextContent('2')
     expect(onAlbumClear).toHaveBeenCalledOnce()
     expect(onPreviewStart).toHaveBeenCalledWith(getStopAlbumPreview())
@@ -175,7 +172,7 @@ describe('MusicPlayerView', () => {
 
   it('should keep the collapsed player layers visually present but inactive', () => {
     const result = renderMusicPlayerView({expanded: false})
-    const controller = result.container.querySelector('media-controller')
+    const controller = result.container.querySelector('.pomo-player-shell')
     const playerBase = result.container.querySelector('.pomo-player__base')
     const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
     const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
@@ -252,7 +249,7 @@ describe('MusicPlayerView', () => {
 
   it('should activate only the expanded progress range while expanded', () => {
     const result = renderMusicPlayerView()
-    const controller = result.container.querySelector('media-controller')
+    const controller = result.container.querySelector('.pomo-player-shell')
     const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
     const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
     const expandedInner = result.container.querySelector('.pomo-player__expanded-inner')
@@ -303,7 +300,7 @@ describe('MusicPlayerView', () => {
   it('should replace the regular frame only in scribble style', () => {
     const originalResult = renderMusicPlayerView()
     const originalBase = originalResult.container.querySelector('.pomo-player__base')
-    const originalController = originalResult.container.querySelector('media-controller')
+    const originalController = originalResult.container.querySelector('.pomo-player-shell')
 
     expect(originalResult.container.querySelector('.pomo-player__scribble-border')).toBeNull()
     expect(originalController?.classList.contains('pomo-scribble-mask')).toBe(false)
@@ -317,7 +314,7 @@ describe('MusicPlayerView', () => {
     const scribbleBase = scribbleResult.container.querySelector('.pomo-player__base')
     const scribbleBorder = scribbleResult.container.querySelector('.pomo-player__scribble-border')
     const scribbleFrame = scribbleResult.container.querySelector('.pomo-player-frame')
-    const scribbleController = scribbleResult.container.querySelector('media-controller')
+    const scribbleController = scribbleResult.container.querySelector('.pomo-player-shell')
 
     expect(scribbleBorder).toBeInstanceOf(SVGElement)
     expect(scribbleBorder?.getAttribute('aria-hidden')).toBe('true')
@@ -371,7 +368,7 @@ describe('MusicPlayerView', () => {
 
   it('should constrain expanded content and keep compact controls in one row', () => {
     const result = renderMusicPlayerView()
-    const controller = result.container.querySelector('media-controller') as HTMLElement
+    const controller = result.container.querySelector('.pomo-player-shell') as HTMLElement
     const expandedFrame = result.container.querySelector(
       '.pomo-player__expanded-frame',
     ) as HTMLElement

@@ -641,6 +641,8 @@
   "guide_display_one": "On supported devices, keep the screen from turning off while you focus.",
   "guide_display_two": "Set a screen saver delay to black out the display after inactivity, then return with touch, click, or a key press.",
   "guide_display_three": "Manage the scene, motion, wake lock, and screen saver from General.",
+  "sound_effects_title": "Sound effects",
+  "sound_effects_empty": "No sound effects have been added yet.",
   "album_open": "Add albums",
   "album_title": "Albums",
   "album_description": "Add individual tracks or a whole album to the player.",

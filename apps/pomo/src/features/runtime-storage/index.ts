@@ -66,6 +66,16 @@ export const writeWebStorageJson = (key: string, value: unknown): unknown | null
   }
 }
 
+/** Removes one browser storage item and returns the platform error on failure. */
+export const removeWebStorageItem = (key: string): unknown | null => {
+  try {
+    localStorage.removeItem(key)
+    return null
+  } catch (error: unknown) {
+    return error
+  }
+}
+
 /** Loads Apps in Toss storage only when a native read is actually required. */
 export const readNativeStorageJson = async <Value>(
   key: string,

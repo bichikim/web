@@ -1,11 +1,5 @@
 import {z} from 'zod'
-import {
-  hasNativeStorageBridge,
-  readNativeStorageJson,
-  readWebStorageJson,
-  writeNativeStorageJson,
-  writeWebStorageJson,
-} from 'src/features/runtime-storage'
+import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {getUnits, type UnitCategory} from './units'
 
 export interface UnitSelection {
@@ -23,6 +17,7 @@ export interface SelectionStorage<T> {
   readonly write: (value: T) => Promise<void>
 }
 const createSelectionStorage = <T>(
+  storage: ToolStorageAdapter,
   key: string,
   parse: (value: unknown) => T | null,
 ): SelectionStorage<T> => {
@@ -30,46 +25,51 @@ const createSelectionStorage = <T>(
   let writeRevision = 0
   let browserRevision = 0
   const read = async (): Promise<T | null> => {
-    if (!hasNativeStorageBridge()) {
-      return readWebStorageJson(key, parse)
-    }
     const revision = writeRevision
-    await pending
-    const webSelection = readWebStorageJson(key, parse)
-    if (webSelection !== null) {
-      return webSelection
+    const isNative = storage.isNative()
+    if (isNative) {
+      await pending
+      if (revision !== writeRevision) {
+        return read()
+      }
     }
-    const nativeSelection = await readNativeStorageJson(key, parse).catch(() => null)
-    const currentSelection = readWebStorageJson(key, parse)
-    if (currentSelection !== null) {
-      return currentSelection
+    const webValue = storage.readWeb(key, parse)
+    if (webValue !== null || !isNative) {
+      return webValue
     }
-    return revision === writeRevision ? nativeSelection : read()
+    try {
+      const nativeValue = await storage.readNative(key, parse)
+      return revision === writeRevision ? nativeValue : read()
+    } catch (error: unknown) {
+      if (revision !== writeRevision) {
+        return read()
+      }
+      throw error
+    }
   }
   return {
     read,
     async write(value) {
       writeRevision += 1
-      const error = writeWebStorageJson(key, value)
+      const error = storage.writeWeb(key, value)
       if (error === null) {
         browserRevision += 1
       }
       const revision = browserRevision
-      if (!hasNativeStorageBridge()) {
+      if (!storage.isNative()) {
         if (error !== null) {
           throw new Error('Failed to save tool selection.', {cause: error})
         }
         return
       }
       const write = pending.then(async () => {
-        await writeNativeStorageJson(key, value)
-        if (
-          error !== null &&
-          revision === browserRevision &&
-          readWebStorageJson(key, parse) !== null
-        ) {
-          // A successful native-only save must not be hidden by an older browser copy.
-          localStorage.removeItem(key)
+        await storage.writeNative(key, value)
+        // An older native completion must not discard a newer web selection.
+        if (error !== null && revision === browserRevision) {
+          const removalError = storage.removeWeb(key)
+          if (removalError !== null && storage.readWeb(key, parse) !== null) {
+            throw new Error('Failed to discard stale tool selection.', {cause: removalError})
+          }
         }
       })
       pending = write.catch(() => undefined)
@@ -98,21 +98,43 @@ const movingSchema = z.object({
     .regex(/^\d{4}$/u)
     .refine((value) => Number(value) >= FIRST_YEAR && Number(value) <= LAST_YEAR),
 })
-export const unitSelectionStorage = createSelectionStorage<UnitSelection>(
-  'pomo:tool-units:v1',
-  (value) => {
-    const result = unitSchema.safeParse(value)
-    return result.success ? result.data : null
-  },
-)
-export const lunarDirectionStorage = createSelectionStorage<LunarDirection>(
-  'pomo:tool-lunar-direction:v1',
-  (value) => (value === 'solar' || value === 'lunar' ? value : null),
-)
-export const movingSelectionStorage = createSelectionStorage<MovingSelection>(
-  'pomo:tool-moving:v1',
-  (value) => {
-    const result = movingSchema.safeParse(value)
-    return result.success ? result.data : null
-  },
-)
+export interface ToolSelectionStorages {
+  readonly unitSelectionStorage: SelectionStorage<UnitSelection>
+  readonly lunarDirectionStorage: SelectionStorage<LunarDirection>
+  readonly movingSelectionStorage: SelectionStorage<MovingSelection>
+}
+export interface CreateToolSelectionStoragesOptions {
+  readonly storage: ToolStorageAdapter
+}
+
+/** Creates independently queued selection repositories over one storage adapter. */
+export const createToolSelectionStorages = (
+  options: CreateToolSelectionStoragesOptions,
+): ToolSelectionStorages => {
+  const {storage} = options
+  const unitSelectionStorage = createSelectionStorage<UnitSelection>(
+    storage,
+    'pomo:tool-units:v1',
+    (value) => {
+      const result = unitSchema.safeParse(value)
+      return result.success ? result.data : null
+    },
+  )
+  const lunarDirectionStorage = createSelectionStorage<LunarDirection>(
+    storage,
+    'pomo:tool-lunar-direction:v1',
+    (value) => (value === 'solar' || value === 'lunar' ? value : null),
+  )
+  const movingSelectionStorage = createSelectionStorage<MovingSelection>(
+    storage,
+    'pomo:tool-moving:v1',
+    (value) => {
+      const result = movingSchema.safeParse(value)
+      return result.success ? result.data : null
+    },
+  )
+  return {lunarDirectionStorage, movingSelectionStorage, unitSelectionStorage}
+}
+
+export const {unitSelectionStorage, lunarDirectionStorage, movingSelectionStorage} =
+  createToolSelectionStorages({storage: toolStorageAdapter})

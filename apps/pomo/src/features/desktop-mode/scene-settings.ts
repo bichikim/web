@@ -45,6 +45,10 @@ export interface DesktopSceneSettingsPublisher {
   readonly publish: (setting: DesktopSceneSetting) => void
 }
 
+export interface UseDesktopSceneSettingsPublisherProps {
+  readonly handlers?: DesktopSceneSettingsHandlers
+}
+
 type DesktopWeatherSceneSetting = Extract<
   DesktopSceneSetting,
   {readonly name: 'weatherCity' | 'weatherEnabled' | 'weatherLocation' | 'weatherSceneMode'}
@@ -168,8 +172,10 @@ export const useDesktopSceneSettingsListener = (handlers: DesktopSceneSettingsHa
   })
 }
 
-/** Publishes scene-setting changes to the other desktop WebViews. */
-export const useDesktopSceneSettingsPublisher = (): DesktopSceneSettingsPublisher => {
+/** Publishes changes and optionally receives remote changes on the same desktop channel. */
+export const useDesktopSceneSettingsPublisher = (
+  props: UseDesktopSceneSettingsPublisherProps = {},
+): DesktopSceneSettingsPublisher => {
   let channel: BroadcastChannel | null = null
 
   onMount(() => {
@@ -178,6 +184,12 @@ export const useDesktopSceneSettingsPublisher = (): DesktopSceneSettingsPublishe
     }
 
     channel = new BroadcastChannel(SCENE_SETTINGS_CHANNEL)
+    channel.addEventListener('message', (event) => {
+      const {handlers} = props
+      if (handlers !== undefined && isDesktopSceneSetting(event.data)) {
+        applyDesktopSceneSetting(handlers, event.data)
+      }
+    })
     onCleanup(() => {
       channel?.close()
       channel = null

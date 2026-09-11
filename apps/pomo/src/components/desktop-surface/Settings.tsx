@@ -9,11 +9,7 @@ import {
 } from '../../features/focus-room-animation'
 import {usePScenePreferences} from '../../features/focus-room-scene-preferences'
 import {useScreenSaver} from '../../features/screen-saver'
-import {
-  useDesktopMode,
-  useDesktopSceneSettingsListener,
-  useDesktopSceneSettingsPublisher,
-} from '../../features/desktop-mode'
+import {useDesktopMode, useDesktopSceneSettingsPublisher} from '../../features/desktop-mode'
 import {useWeather} from '../../features/weather'
 import {SceneToolbar} from '../p-studio/Toolbar'
 import {DesktopSurfaceFrame} from './Frame'
@@ -26,23 +22,23 @@ export const DesktopSettings = () => {
   const sceneStyle = usePSceneStyle()
   const screenSaver = useScreenSaver()
   const weather = useWeather()
-  const publisher = useDesktopSceneSettingsPublisher()
   const [motionInput, setMotionInput] = createSignal<PSceneMotionInput>('drag')
   const [motionMode, setMotionMode] = createSignal<PSceneMotionMode>('depth')
   const [canUseGyroscope, setCanUseGyroscope] = createSignal(false)
 
-  // Received changes update local state without publishing another message.
-  useDesktopSceneSettingsListener({
-    onActivityChange: scenePreferences.onActivityChange,
-    onGazeChange: scenePreferences.onGazeChange,
-    onMotionInputChange: setMotionInput,
-    onMotionModeChange: setMotionMode,
-    onSceneStyleChange: sceneStyle.onSceneStyleChange,
-    onScreenSaverDelayChange: screenSaver.onDelayChange,
-    onTimeModeChange: scenePreferences.onTimeModeChange,
-    onWeatherEnabledChange: weather.onEnabledChange,
-    onWeatherLocationChange: weather.onLocationChange,
-    onWeatherSceneModeChange: weather.onSceneModeChange,
+  const publisher = useDesktopSceneSettingsPublisher({
+    handlers: {
+      onActivityChange: scenePreferences.onActivityChange,
+      onGazeChange: scenePreferences.onGazeChange,
+      onMotionInputChange: setMotionInput,
+      onMotionModeChange: setMotionMode,
+      onSceneStyleChange: sceneStyle.onSceneStyleChange,
+      onScreenSaverDelayChange: screenSaver.onDelayChange,
+      onTimeModeChange: scenePreferences.onTimeModeChange,
+      onWeatherEnabledChange: weather.onEnabledChange,
+      onWeatherLocationChange: weather.onLocationChange,
+      onWeatherSceneModeChange: weather.onSceneModeChange,
+    },
   })
 
   onMount(() => {

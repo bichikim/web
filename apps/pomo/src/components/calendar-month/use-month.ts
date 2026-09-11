@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
 import {
   type CalendarEvent,
@@ -59,23 +60,19 @@ interface CalendarMonthRequest {
   readonly revision: number
 }
 
-const padNumber = (value: number) => String(value).padStart(2, '0')
-
-const createLocalDateKey = (date: Date) =>
-  `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
+const createLocalDateKey = (date: Date) => dayjs(date).format('YYYY-MM-DD')
 
 const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay | null>> => {
-  const year = month.getFullYear()
-  const monthIndex = month.getMonth()
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
-  const leadingDays = new Date(year, monthIndex, 1).getDay()
+  const start = dayjs(month).startOf('month')
+  const daysInMonth = start.daysInMonth()
+  const leadingDays = start.day()
   const occupiedDays = leadingDays + daysInMonth
   const trailingDays = (WEEK_LENGTH - (occupiedDays % WEEK_LENGTH)) % WEEK_LENGTH
   const cells: ReadonlyArray<CalendarDay | null> = [
     ...Array.from({length: leadingDays}, () => null),
     ...Array.from({length: daysInMonth}, (_, index) => {
       const number = index + 1
-      const date = new Date(year, monthIndex, number)
+      const date = start.date(number).toDate()
       return {date, key: createLocalDateKey(date), number}
     }),
     ...Array.from({length: trailingDays}, () => null),
@@ -108,12 +105,12 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     return revision + 1
   }, 0)
   const today = props.environment.now()
-  const [month, setMonth] = createSignal(new Date(today.getFullYear(), today.getMonth(), 1))
+  const [month, setMonth] = createSignal(dayjs(today).startOf('month').toDate())
   const [selectedDate, setSelectedDate] = createSignal(new Date(today))
   const monthRange = createMemo(() => {
     const currentMonth = month()
-    const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
-    const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+    const start = dayjs(currentMonth).startOf('month').toDate()
+    const end = dayjs(start).add(1, 'month').toDate()
     const range = {
       end: end.toISOString(),
       start: start.toISOString(),
@@ -196,7 +193,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
 
   const changeMonth = (offset: number) => {
     const currentMonth = month()
-    const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1)
+    const nextMonth = dayjs(currentMonth).startOf('month').add(offset, 'month').toDate()
     setMonth(nextMonth)
     setSelectedDate(nextMonth)
   }

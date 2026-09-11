@@ -29,7 +29,7 @@ const createStorage = () => {
   >()
   let data: string | null = null
   const storage: AlbumDraftStorage = {
-    deleteCover: vi.fn(async (id) => {
+    deleteCover: vi.fn(async ({id}) => {
       covers.delete(id)
       coverSavedAt.delete(id)
     }),
@@ -197,7 +197,7 @@ describe('album draft cover storage', () => {
     expect(restoredCover?.name).toBe('cover.webp')
     expect(restoredCover?.type).toBe('image/webp')
 
-    await deleteAlbumDraft(draft.coverDraftId, storage)
+    await deleteAlbumDraft(draft.coverDraftId, {storage})
 
     expect(readAlbumDraftData(storage)).toBeNull()
     await expect(readAlbumDraftCover(draft.coverDraftId!, storage)).resolves.toBeNull()
@@ -210,7 +210,7 @@ describe('album draft cover storage', () => {
 
     await writeAlbumDraftCover('first-tab', firstCover, storage)
     await writeAlbumDraftCover('second-tab', secondCover, storage)
-    await deleteAlbumDraft('second-tab', storage)
+    await deleteAlbumDraft('second-tab', {storage})
 
     await expect(readAlbumDraftCover('first-tab', storage)).resolves.not.toBeNull()
     await expect(readAlbumDraftCover('second-tab', storage)).resolves.toBeNull()
@@ -241,7 +241,7 @@ describe('album draft cover storage', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
     await expect(readAlbumDraftCover('cover', storage)).resolves.toBeNull()
-    await expect(deleteAlbumDraftCover('cover', storage)).resolves.toEqual({
+    await expect(deleteAlbumDraftCover('cover', {storage})).resolves.toEqual({
       error: deleteError,
       success: false,
     })
@@ -255,14 +255,14 @@ describe('album draft cover storage', () => {
     })
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    await expect(deleteAlbumDraft(null, storage)).resolves.toEqual({
+    await expect(deleteAlbumDraft(null, {storage})).resolves.toEqual({
       error: dataError,
       success: false,
     })
 
     const coverError = new Error('cover delete failed')
     vi.mocked(storage.deleteCover).mockRejectedValueOnce(coverError)
-    await expect(deleteAlbumDraft('cover', storage)).resolves.toEqual({
+    await expect(deleteAlbumDraft('cover', {storage})).resolves.toEqual({
       error: coverError,
       success: false,
     })

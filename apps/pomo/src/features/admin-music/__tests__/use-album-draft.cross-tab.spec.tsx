@@ -3,6 +3,7 @@
 import 'fake-indexeddb/auto'
 
 import Dexie from 'dexie'
+import {useAction} from '@solidjs/router'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 
@@ -13,8 +14,16 @@ vi.mock('@solidjs/router', () => ({
 }))
 
 import {createEmptyAlbumTranslations} from '../album-draft'
-import {readAlbumDraftCover, writeAlbumDraftData} from '../album-draft-storage'
+import {
+  readAlbumDraftData,
+  writeAlbumDraftCover,
+  readAlbumDraftCover,
+  writeAlbumDraftData,
+} from '../album-draft-storage'
 import {useAlbumDraft} from '../use-album-draft'
+import {prepareAlbumCover} from '../cover-image'
+
+vi.mock('../cover-image', () => ({prepareAlbumCover: vi.fn()}))
 
 const createSessionStorage = (): Storage => {
   const values = new Map<string, string>()
@@ -150,5 +159,124 @@ it('should retain an expired cover while another tab hook is still mounted', asy
   } finally {
     secondTab.cleanup()
     firstTab.cleanup()
+  }
+})
+
+it.each(['removal', 'replacement', 'clearing'] as const)(
+  'should restore a duplicated tab cover after %s in the original tab',
+  async (operation) => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:restored-cover')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+    vi.mocked(prepareAlbumCover).mockResolvedValue(
+      new File(['replacement'], 'cover.webp', {type: 'image/webp'}),
+    )
+    vi.mocked(useAction).mockReturnValue(
+      vi.fn().mockResolvedValue({albumId: 'created', status: 'created'}),
+    )
+    const original = createSessionStorage()
+    const duplicate = createSessionStorage()
+    const coverId = crypto.randomUUID()
+    const draft = {
+      albumId: crypto.randomUUID(),
+      coverDraftId: coverId,
+      coverFallback: 'lp' as const,
+      coverImageUrl: '',
+      hasCoverFile: true,
+      translations: {...createEmptyAlbumTranslations(), ko: {description: '', title: 'Album'}},
+    }
+    await writeAlbumDraftCover(coverId, new File(['original'], 'cover.webp', {type: 'image/webp'}))
+    replaceSessionStorage(original)
+    writeAlbumDraftData(draft)
+    const first = renderHook(() =>
+      useAlbumDraft({refreshCatalog: async () => undefined, setMessage: vi.fn()}),
+    )
+    await waitFor(() => expect(first.result.isRestoringDraft()).toBe(false))
+    replaceSessionStorage(duplicate)
+    writeAlbumDraftData(draft)
+    const second = renderHook(() =>
+      useAlbumDraft({refreshCatalog: async () => undefined, setMessage: vi.fn()}),
+    )
+    await waitFor(() => expect(second.result.isRestoringDraft()).toBe(false))
+    try {
+      replaceSessionStorage(original)
+      if (operation === 'clearing') {
+        const form = document.createElement('form')
+        await first.result.handleAlbumSubmit({
+          currentTarget: form,
+          preventDefault: vi.fn(),
+          target: form,
+        } as unknown as SubmitEvent & {currentTarget: HTMLFormElement; target: Element})
+        expect(readAlbumDraftData()).toBeNull()
+      } else {
+        const input = document.createElement('input')
+        const file =
+          operation === 'replacement'
+            ? new File(['replacement'], 'source.png', {type: 'image/png'})
+            : null
+        Object.defineProperty(input, 'files', {value: {item: () => file}})
+        await first.result.handleCoverChange({
+          currentTarget: input,
+          target: input,
+        } as unknown as Event & {
+          currentTarget: HTMLInputElement
+          target: Element
+        })
+        expect(readAlbumDraftData()?.coverDraftId).not.toBe(coverId)
+      }
+      await expect(readAlbumDraftCover(coverId)).resolves.not.toBeNull()
+      replaceSessionStorage(duplicate)
+      second.cleanup()
+      const restored = renderHook(() =>
+        useAlbumDraft({refreshCatalog: async () => undefined, setMessage: vi.fn()}),
+      )
+      try {
+        await waitFor(() => expect(restored.result.isRestoringDraft()).toBe(false))
+        expect(restored.result.coverPreviewUrl()).toBe('blob:restored-cover')
+        expect(readAlbumDraftData()).toEqual(draft)
+      } finally {
+        restored.cleanup()
+      }
+    } finally {
+      second.cleanup()
+      first.cleanup()
+    }
+  },
+)
+
+it('should reclaim the sole tab cover after successful album creation', async () => {
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:cover')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  vi.mocked(useAction).mockReturnValue(
+    vi.fn().mockResolvedValue({albumId: 'created', status: 'created'}),
+  )
+  replaceSessionStorage(createSessionStorage())
+  const coverId = crypto.randomUUID()
+  await writeAlbumDraftCover(coverId, new File(['cover'], 'cover.webp', {type: 'image/webp'}))
+  writeAlbumDraftData({
+    albumId: crypto.randomUUID(),
+    coverDraftId: coverId,
+    coverFallback: 'lp',
+    coverImageUrl: '',
+    hasCoverFile: true,
+    translations: {...createEmptyAlbumTranslations(), ko: {description: '', title: 'Album'}},
+  })
+  const hook = renderHook(() =>
+    useAlbumDraft({refreshCatalog: async () => undefined, setMessage: vi.fn()}),
+  )
+  try {
+    await waitFor(() => expect(hook.result.isRestoringDraft()).toBe(false))
+    const form = document.createElement('form')
+    await hook.result.handleAlbumSubmit({
+      currentTarget: form,
+      preventDefault: vi.fn(),
+      target: form,
+    } as unknown as SubmitEvent & {
+      currentTarget: HTMLFormElement
+      target: Element
+    })
+    expect(readAlbumDraftData()).toBeNull()
+    await expect(readAlbumDraftCover(coverId)).resolves.toBeNull()
+  } finally {
+    hook.cleanup()
   }
 })
