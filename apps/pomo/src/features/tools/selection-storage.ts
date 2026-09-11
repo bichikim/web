@@ -3,6 +3,7 @@ import {
   hasNativeStorageBridge,
   readNativeStorageJson,
   readWebStorageJson,
+  removeWebStorageItem,
   writeNativeStorageJson,
   writeWebStorageJson,
 } from 'src/features/runtime-storage'
@@ -27,15 +28,35 @@ const createSelectionStorage = <T>(
   parse: (value: unknown) => T | null,
 ): SelectionStorage<T> => {
   let pending = Promise.resolve()
-  return {
-    async read() {
-      if (!hasNativeStorageBridge()) {
-        return readWebStorageJson(key, parse)
-      }
+  let writeRevision = 0
+  const read = async (): Promise<T | null> => {
+    const revision = writeRevision
+    const isNative = hasNativeStorageBridge()
+    if (isNative) {
       await pending
-      return readNativeStorageJson(key, parse)
-    },
+      if (revision !== writeRevision) {
+        return read()
+      }
+    }
+    const webValue = readWebStorageJson(key, parse)
+    if (webValue !== null || !isNative) {
+      return webValue
+    }
+    try {
+      const nativeValue = await readNativeStorageJson(key, parse)
+      return revision === writeRevision ? nativeValue : read()
+    } catch (error: unknown) {
+      if (revision !== writeRevision) {
+        return read()
+      }
+      throw error
+    }
+  }
+  return {
+    read,
     async write(value) {
+      writeRevision += 1
+      const revision = writeRevision
       const error = writeWebStorageJson(key, value)
       if (!hasNativeStorageBridge()) {
         if (error !== null) {
@@ -43,7 +64,16 @@ const createSelectionStorage = <T>(
         }
         return
       }
-      const write = pending.then(() => writeNativeStorageJson(key, value))
+      const write = pending.then(async () => {
+        await writeNativeStorageJson(key, value)
+        // An older native completion must not discard a newer web selection.
+        if (error !== null && revision === writeRevision) {
+          const removalError = removeWebStorageItem(key)
+          if (removalError !== null && readWebStorageJson(key, parse) !== null) {
+            throw new Error('Failed to discard stale tool selection.', {cause: removalError})
+          }
+        }
+      })
       pending = write.catch(() => undefined)
       await write
     },
