@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto'
 
 import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../../server/http/headers'
 
-import type {FeedFormat} from './contract'
+import type {FeedFormat, FeedProvider} from './contract'
 import type {FeedRegistry} from './feed-registry'
 import {normalizeFeed} from './normalize-feed'
 import {renderAtom} from './render-atom'
@@ -57,23 +57,31 @@ const getContentType = (format: FeedFormat): string =>
 const renderDocument = (format: FeedFormat, input: Parameters<typeof renderRss>[0]): string =>
   format === 'rss' ? renderRss(input) : renderAtom(input)
 
+interface DocumentHeadersOptions {
+  readonly cachePolicy: FeedProvider['cachePolicy']
+  readonly document: string
+  readonly format: FeedFormat
+  readonly slug: string
+  readonly updatedAt: string
+}
+
 const createDocumentHeaders = (
-  format: FeedFormat,
-  slug: string,
-  document: string,
-  updatedAt: string,
+  options: DocumentHeadersOptions,
 ): {readonly entityTag: string; readonly headers: Headers} => {
+  const {cachePolicy, document, format, slug, updatedAt} = options
   const entityTag = `"${createHash('sha256').update(document).digest('base64url')}"`
 
   return {
     entityTag,
     headers: new Headers({
-      'Cache-Control': `public, max-age=${CACHE_SECONDS}`,
+      'Cache-Control': cachePolicy === 'no-store' ? 'no-store' : `public, max-age=${CACHE_SECONDS}`,
       'Content-Type': getContentType(format),
       ETag: entityTag,
       'Last-Modified': new Date(updatedAt).toUTCString(),
-      [VERCEL_CDN_CACHE_CONTROL_HEADER]: `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`,
-      // AI_NOTE - Calendar feeds change at Korean midnight without a publish event, so long CDN freshness can serve yesterday's entries.
+      [VERCEL_CDN_CACHE_CONTROL_HEADER]:
+        cachePolicy === 'no-store'
+          ? 'no-store'
+          : `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`,
       'Vercel-Cache-Tag': `feed:${slug}`,
       'X-Content-Type-Options': 'nosniff',
     }),
@@ -86,7 +94,7 @@ const matchesEntityTag = (request: Request, entityTag: string): boolean =>
     ?.split(',')
     .some((candidate) => candidate.trim() === entityTag) ?? false
 
-/** Resolves a provider and returns its cacheable RSS or Atom representation. */
+/** Resolves a provider and returns its RSS or Atom representation with its cache policy. */
 export const createFeedResponse = async (options: CreateFeedResponseOptions): Promise<Response> => {
   if (options.request.method !== 'GET' && options.request.method !== 'HEAD') {
     return createUncachedResponse(HTTP_STATUS_METHOD_NOT_ALLOWED, {Allow: 'GET, HEAD'})
@@ -119,12 +127,13 @@ export const createFeedResponse = async (options: CreateFeedResponseOptions): Pr
       throw new RangeError('Serialized feed exceeds 512 KiB')
     }
 
-    const {entityTag, headers} = createDocumentHeaders(
-      options.format,
-      options.slug,
+    const {entityTag, headers} = createDocumentHeaders({
+      cachePolicy: provider.cachePolicy,
       document,
-      feed.updatedAt,
-    )
+      format: options.format,
+      slug: options.slug,
+      updatedAt: feed.updatedAt,
+    })
 
     if (matchesEntityTag(options.request, entityTag)) {
       return new Response(null, {headers, status: 304})
