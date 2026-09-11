@@ -34,6 +34,8 @@ const parseSettings = (value: unknown): ServiceSettings | null => {
   return result.success ? result.data : null
 }
 let pendingWrite = Promise.resolve()
+let writeRevision = 0
+let browserRevision = 0
 const parseStart = (value: unknown): string | null =>
   typeof value === 'string' && parseDate(value) !== null ? value : null
 
@@ -46,24 +48,59 @@ export const readServiceSettings = async (): Promise<ServiceSettings> => {
       }
     )
   }
+  const revision = writeRevision
   await pendingWrite
+  const webSettings = readWebStorageJson(STORAGE_KEY, parseSettings)
+  if (webSettings !== null) {
+    return webSettings
+  }
+  const nativeSettings = await readNativeStorageJson(STORAGE_KEY, parseSettings).catch(() => null)
+  const currentSettings = readWebStorageJson(STORAGE_KEY, parseSettings)
+  if (currentSettings !== null) {
+    return currentSettings
+  }
+  if (revision !== writeRevision) {
+    return readServiceSettings()
+  }
+  if (nativeSettings !== null) {
+    return nativeSettings
+  }
+  const nativeStart = await readNativeStorageJson(LEGACY_KEY, parseStart).catch(() => null)
+  if (revision !== writeRevision) {
+    return readServiceSettings()
+  }
   return (
-    (await readNativeStorageJson(STORAGE_KEY, parseSettings)) ?? {
+    readWebStorageJson(STORAGE_KEY, parseSettings) ?? {
       ...DEFAULT_SERVICE_SETTINGS,
-      start: (await readNativeStorageJson(LEGACY_KEY, parseStart)) ?? '',
+      start: readWebStorageJson(LEGACY_KEY, parseStart) ?? nativeStart ?? '',
     }
   )
 }
 
 export const writeServiceSettings = async (value: ServiceSettings): Promise<void> => {
+  writeRevision += 1
   const webError = writeWebStorageJson(STORAGE_KEY, value)
+  if (webError === null) {
+    browserRevision += 1
+  }
+  const revision = browserRevision
   if (!hasNativeStorageBridge()) {
     if (webError !== null) {
       throw new Error('Failed to persist service settings.', {cause: webError})
     }
     return
   }
-  const write = pendingWrite.then(() => writeNativeStorageJson(STORAGE_KEY, value))
+  const write = pendingWrite.then(async () => {
+    await writeNativeStorageJson(STORAGE_KEY, value)
+    if (
+      webError !== null &&
+      revision === browserRevision &&
+      readWebStorageJson(STORAGE_KEY, parseSettings) !== null
+    ) {
+      // A successful native-only save must not be hidden by an older browser copy.
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  })
   pendingWrite = write.catch(() => undefined)
   await write
 }

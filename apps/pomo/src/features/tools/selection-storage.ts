@@ -27,23 +27,51 @@ const createSelectionStorage = <T>(
   parse: (value: unknown) => T | null,
 ): SelectionStorage<T> => {
   let pending = Promise.resolve()
+  let writeRevision = 0
+  let browserRevision = 0
+  const read = async (): Promise<T | null> => {
+    if (!hasNativeStorageBridge()) {
+      return readWebStorageJson(key, parse)
+    }
+    const revision = writeRevision
+    await pending
+    const webSelection = readWebStorageJson(key, parse)
+    if (webSelection !== null) {
+      return webSelection
+    }
+    const nativeSelection = await readNativeStorageJson(key, parse).catch(() => null)
+    const currentSelection = readWebStorageJson(key, parse)
+    if (currentSelection !== null) {
+      return currentSelection
+    }
+    return revision === writeRevision ? nativeSelection : read()
+  }
   return {
-    async read() {
-      if (!hasNativeStorageBridge()) {
-        return readWebStorageJson(key, parse)
-      }
-      await pending
-      return readNativeStorageJson(key, parse)
-    },
+    read,
     async write(value) {
+      writeRevision += 1
       const error = writeWebStorageJson(key, value)
+      if (error === null) {
+        browserRevision += 1
+      }
+      const revision = browserRevision
       if (!hasNativeStorageBridge()) {
         if (error !== null) {
           throw new Error('Failed to save tool selection.', {cause: error})
         }
         return
       }
-      const write = pending.then(() => writeNativeStorageJson(key, value))
+      const write = pending.then(async () => {
+        await writeNativeStorageJson(key, value)
+        if (
+          error !== null &&
+          revision === browserRevision &&
+          readWebStorageJson(key, parse) !== null
+        ) {
+          // A successful native-only save must not be hidden by an older browser copy.
+          localStorage.removeItem(key)
+        }
+      })
       pending = write.catch(() => undefined)
       await write
     },
