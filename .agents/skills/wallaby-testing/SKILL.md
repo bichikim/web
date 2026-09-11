@@ -21,4 +21,3 @@ Open and apply the reference files for the relevant section before working.
 7. Update snapshots only when the snapshot change is expected, and verify again afterward.
 8. See ./rules/tool-reference.md for available Wallaby tools and required inputs.
 9. See ./rules/debugging-workflow.md for the step-by-step debug workflow.
-10. See ./examples/assertion-failure.md for an assertion failure example.

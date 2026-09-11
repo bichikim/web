@@ -27,7 +27,7 @@ Repeat until the next cut would change behavior:
 
 ## Extract
 
-When content helps only some invocations, move it beside the skill (`rules/`, `examples/`, `references/`, or a named `.md`). In `SKILL.md`, leave only a one-line conditional link — e.g. `See ./rules/foo.md when …`. Do not summarize the extracted body. Links stay one level deep from `SKILL.md`.
+When content helps only some invocations, move it beside the skill (`rules/`, `examples/`, `references/`, or a named `.md`). In `SKILL.md`, leave only a one-line conditional link. Do not summarize the extracted body. Links stay one level deep from `SKILL.md`.
 
 ## Delete the skill
 
