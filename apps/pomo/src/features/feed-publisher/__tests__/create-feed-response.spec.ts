@@ -3,6 +3,7 @@ import {describe, expect, it, vi} from 'vitest'
 import type {FeedEntry, FeedProvider} from '../contract'
 import {createFeedResponse} from '../create-feed-response'
 import {createFeedRegistry} from '../feed-registry'
+import {createHistoricalMomentsProvider} from '../historical-moments-provider'
 
 const ENTRY: FeedEntry = {
   contentHtml: '<p>본문</p>',
@@ -58,6 +59,63 @@ describe('createFeedResponse', () => {
     expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
     expect(response.headers.has('Set-Cookie')).toBe(false)
   })
+
+  it.each(['rss', 'atom'])(
+    'should prevent cached calendar entries crossing Korean midnight for %s',
+    async (format) => {
+      let currentDate = new Date('2026-12-31T14:59:59.000Z')
+      const provider = createHistoricalMomentsProvider({
+        now: () => currentDate,
+        origin: 'https://pomo.example',
+        source: {
+          async listPublished({day, month}) {
+            return [
+              {
+                contentHtml: '<p>History</p>',
+                publishedAt: ENTRY.publishedAt,
+                stableKey: `${month}-${day}`,
+                summary: ENTRY.summary,
+                title: `History ${month}-${day}`,
+                updatedAt: ENTRY.updatedAt ?? ENTRY.publishedAt,
+              },
+            ]
+          },
+        },
+      })
+      const url = `https://pomo.example/api/feeds/today-in-history/${format}.xml`
+      const previous = await createResponse(new Request(url), provider)
+      expect(previous.headers.get('Cache-Control')).toBe('no-store')
+      expect(previous.headers.get('Vercel-CDN-Cache-Control')).toBe('no-store')
+      await expect(previous.text()).resolves.toContain('History 12-31')
+
+      const entityTag = previous.headers.get('ETag')
+      if (entityTag === null) {
+        throw new Error('Expected an ETag')
+      }
+      const unchanged = await createResponse(
+        new Request(url, {headers: {'If-None-Match': entityTag}}),
+        provider,
+      )
+      expect(unchanged.status).toBe(304)
+      expect(unchanged.headers.get('Cache-Control')).toBe('no-store')
+      expect(unchanged.headers.get('Vercel-CDN-Cache-Control')).toBe('no-store')
+
+      currentDate = new Date('2026-12-31T15:00:00.000Z')
+      const next = await createResponse(
+        new Request(url, {headers: {'If-None-Match': entityTag}}),
+        provider,
+      )
+      expect(next.status).toBe(200)
+      await expect(next.text()).resolves.toContain('History 1-1')
+      expect(next.headers.get('ETag')).not.toBe(entityTag)
+      expect(next.headers.get('Cache-Control')).toBe('no-store')
+      expect(next.headers.get('Vercel-CDN-Cache-Control')).toBe('no-store')
+      const head = await createResponse(new Request(url, {method: 'HEAD'}), provider)
+      expect(head.headers.get('Cache-Control')).toBe('no-store')
+      expect(head.headers.get('Vercel-CDN-Cache-Control')).toBe('no-store')
+      await expect(head.text()).resolves.toBe('')
+    },
+  )
 
   it('should return Atom with the Atom content type', async () => {
     const response = await createResponse(

@@ -59,6 +59,8 @@ export const createHistoricalMomentsProvider = (
   const now = options.now ?? (() => new Date())
 
   return {
+    // Calendar membership changes without a publish event to invalidate cached documents.
+    cachePolicy: 'no-store',
     definition: {
       description: '오늘과 같은 날짜에 있었던 역사적 순간을 출처와 함께 소개합니다.',
       homeUrl: `${origin}/api/feeds`,
