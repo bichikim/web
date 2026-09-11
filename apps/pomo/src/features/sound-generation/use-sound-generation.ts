@@ -1,5 +1,7 @@
 import {createSignal, onCleanup} from 'solid-js'
-import type {SoundMessage, SoundRequest} from './worker'
+import type {LoopRequest, SoundMessage, SoundRequest} from './worker'
+
+export const MAX_REQUEST_SECONDS = 3600
 
 export function useSoundGeneration() {
   const [busy, setBusy] = createSignal(false)
@@ -25,8 +27,18 @@ export function useSoundGeneration() {
       URL.revokeObjectURL(previous)
     }
   })
-  const generate = (request: SoundRequest) => {
+  const generate = (request: SoundRequest | LoopRequest) => {
     if (busy()) {
+      return
+    }
+    if (
+      !('type' in request) &&
+      (!Number.isInteger(request.seconds) ||
+        request.seconds < 1 ||
+        request.seconds > MAX_REQUEST_SECONDS)
+    ) {
+      setError('생성 길이는 1–3,600초 사이의 정수로 입력해 주세요.')
+      setStatus('생성 길이를 확인해 주세요.')
       return
     }
     setError(null)

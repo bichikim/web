@@ -4,6 +4,7 @@
 
 - Component files use `PascalCase.tsx` and match the exported public component name.
 - Keep one public component per component file.
+- Define components at module scope in their own files, never inside another component. Pass dependencies through props rather than capturing the enclosing component scope.
 - Do not use a `.client` suffix; filenames do not create client-only runtime boundaries.
 - Do not name component files after helper, adapter, wrapper, or implementation roles.
 - Prefix styled components with `S`, headless components with `H`, and generic/base components with no prefix.

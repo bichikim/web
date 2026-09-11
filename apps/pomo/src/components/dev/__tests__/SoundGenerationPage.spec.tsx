@@ -40,7 +40,7 @@ it.each([1, 5, 10, 30, 60, 120])(
   (seconds) => {
     render(() => <SoundGenerationPage />)
     fireEvent.click(screen.getByRole('button', {name: '파도'}))
-    fireEvent.change(screen.getByRole('combobox', {name: '길이'}), {
+    fireEvent.input(screen.getByRole('spinbutton', {name: /^길이/u}), {
       target: {value: String(seconds)},
     })
     fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
@@ -59,6 +59,24 @@ it.each([1, 5, 10, 30, 60, 120])(
     expect(worker.terminate).toHaveBeenCalledOnce()
   },
 )
+
+it.each([1, 3600])('should allow a request at the %s-second boundary', (seconds) => {
+  render(() => <SoundGenerationPage />)
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^길이/u}), {
+    target: {value: String(seconds)},
+  })
+  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+
+  expect(TestWorker.current.postMessage).toHaveBeenCalledWith(expect.objectContaining({seconds}))
+})
+
+it('should reject a fractional duration before starting a worker', () => {
+  render(() => <SoundGenerationPage />)
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^길이/u}), {target: {value: '1.5'}})
+  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+
+  expect(screen.getByRole('alert')).toHaveTextContent('1–3,600초 사이의 정수')
+})
 
 it('should terminate actual work on stop and ignore a late completion', () => {
   render(() => <SoundGenerationPage />)

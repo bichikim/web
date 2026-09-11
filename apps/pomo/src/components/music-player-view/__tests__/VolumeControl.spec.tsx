@@ -3,7 +3,6 @@
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {PTooltipContent, PTooltipProvider} from '../../tooltip'
 import {VolumeControl} from '../VolumeControl'
 
 import {installTooltipBrowser} from '../../tooltip/__tests__/support/browser'
@@ -22,24 +21,7 @@ describe('VolumeControl', () => {
     vi.unstubAllGlobals()
   })
 
-  it('should attach a volume tooltip to both inline and popover sliders', () => {
-    const {container} = render(() => (
-      <PTooltipProvider>
-        <VolumeControl />
-        <PTooltipContent />
-      </PTooltipProvider>
-    ))
-    const sliders = container.querySelectorAll<HTMLElement>('media-volume-range')
-    expect(sliders).toHaveLength(2)
-    for (const slider of sliders) {
-      expect(slider).not.toHaveAttribute('title')
-      browser.setVisibleFocus(slider)
-      fireEvent.focus(slider)
-      expect(slider).toHaveAttribute('title', '음량 조절')
-    }
-  })
-
-  it('moves volume adjustment into a popover on narrow players', () => {
+  it('should use only popover volume adjustment at every player width', () => {
     const {container} = render(() => <VolumeControl />)
     const inlineMute = container.querySelector('media-mute-button')
     const ranges = container.querySelectorAll<HTMLElement>('media-volume-range')
@@ -48,29 +30,29 @@ describe('VolumeControl', () => {
     )
     const popover = container.querySelector<HTMLElement>('.pomo-player__volume-popover')
 
-    expect(inlineMute).toHaveClass('player-narrow:hidden')
-    expect(ranges[0]).toHaveClass('player-narrow:hidden')
-    expect(trigger).toHaveClass('hidden', 'player-narrow:grid')
+    expect(inlineMute).toBeNull()
+    expect(ranges).toHaveLength(1)
+    expect(trigger).toHaveClass('grid')
+    expect(trigger).not.toHaveClass('hidden', 'player-narrow:grid')
     expect(trigger).toHaveAttribute('aria-controls', popover?.id)
     expect(trigger).toHaveAttribute('popovertarget', popover?.id)
     expect(trigger?.style.getPropertyValue('--pomo-volume-popover-anchor')).toBe(`--${popover?.id}`)
     expect(trigger?.style.anchorName).toBe('')
     expect(trigger).toHaveClass('[anchor-name:var(--pomo-volume-popover-anchor)]')
-    expect(trigger).toHaveClass(
-      '[&[data-pomo-tooltip-trigger]]:[anchor-name:var(--pomo-volume-popover-anchor),var(--pomo-tooltip-anchor)]',
-    )
+    expect(trigger).toHaveAttribute('aria-label', '음량 조절')
+    expect(trigger).not.toHaveAttribute('data-pomo-tooltip-trigger')
     expect(popover).toHaveAttribute('popover', 'auto')
     expect(popover).toHaveAttribute('role', 'dialog')
     expect(popover?.style.getPropertyValue('--pomo-volume-popover-anchor')).toBe(`--${popover?.id}`)
     expect(popover?.style.positionAnchor).toBe('')
     expect(popover).toHaveClass('[position-anchor:var(--pomo-volume-popover-anchor)]')
     expect(popover).toHaveClass('mt-1', 'p-2', '[position-area:bottom]')
-    expect(ranges[1]).toHaveClass('pomo-player__volume-popover-range', 'h-6', 'min-w-24', 'w-24')
-    expect(ranges[1]).toHaveClass('[--media-control-padding:0]')
-    expect(ranges[1]).toHaveAttribute('autofocus')
+    expect(ranges[0]).toHaveClass('pomo-player__volume-popover-range', 'h-6', 'min-w-24', 'w-24')
+    expect(ranges[0]).toHaveClass('[--media-control-padding:0]')
+    expect(ranges[0]).toHaveAttribute('autofocus')
   })
 
-  it('uses the scene icon at the same visual size as the other controls', () => {
+  it('should use the scene icon at the same visual size as the other controls', () => {
     const {container} = render(() => <VolumeControl sceneStyle="scribble" />)
     const triggerIcon = container.querySelector(
       '.pomo-player__volume-popover-trigger .i-pomo-scribble\\:volume-medium',
@@ -79,7 +61,7 @@ describe('VolumeControl', () => {
     expect(triggerIcon).toHaveClass('size-6', 'flex-none')
   })
 
-  it('opens the popover only after the volume trigger is selected', () => {
+  it('should open the popover only after the volume trigger is selected', () => {
     const {container} = render(() => <VolumeControl />)
     const trigger = container.querySelector<HTMLButtonElement>(
       '.pomo-player__volume-popover-trigger',
@@ -99,31 +81,7 @@ describe('VolumeControl', () => {
     expect(showPopover).toHaveBeenCalledOnce()
   })
 
-  it('closes an open popover when the narrow trigger becomes hidden', () => {
-    const triggerStyle = document.createElement('div').style
-    triggerStyle.display = 'none'
-    vi.spyOn(window, 'getComputedStyle').mockReturnValue(triggerStyle)
-    const removeEventListener = vi.spyOn(window, 'removeEventListener')
-
-    const {container, unmount} = render(() => <VolumeControl />)
-    const popover = container.querySelector<HTMLElement>('.pomo-player__volume-popover')
-
-    if (popover === null) {
-      throw new Error('Expected the volume popover.')
-    }
-
-    const hidePopover = vi.fn()
-    Object.defineProperty(popover, 'hidePopover', {value: hidePopover})
-    vi.spyOn(popover, 'matches').mockReturnValue(true)
-
-    fireEvent(window, new Event('resize'))
-
-    expect(hidePopover).toHaveBeenCalledOnce()
-    unmount()
-    expect(removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
-  })
-
-  it('keeps an open popover when the narrow trigger remains visible during resize', () => {
+  it('should keep an open popover during resize', () => {
     const triggerStyle = document.createElement('div').style
     triggerStyle.display = 'grid'
     vi.spyOn(window, 'getComputedStyle').mockReturnValue(triggerStyle)

@@ -7,7 +7,7 @@ export interface PPlayerUtilityButtonProps {
   readonly expanded?: boolean
   readonly icon: string
   readonly onPress: (source: HTMLButtonElement) => void
-  readonly purpose?: 'album' | 'expand'
+  readonly purpose?: 'album' | 'expand' | 'sound-effects'
 }
 
 export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => {
