@@ -59,6 +59,7 @@
     "aws4fetch": "1.0.20",
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
+    "dayjs": "^1.11.23",
     "dexie": "^4.4.4",
     "drizzle-orm": "^0.45.2",
     "es-toolkit": "catalog:",

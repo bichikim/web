@@ -5,6 +5,15 @@ import {createCalendarQuery} from '../query'
 describe('createCalendarQuery', () => {
   const now = new Date('2026-09-04T10:30:00.000Z')
 
+  it('should resolve tomorrow using local calendar dates across a year boundary', () => {
+    const localNow = new Date(2026, 11, 31, 23, 30)
+    expect(createCalendarQuery({now: localNow, text: '내일 일정'})).toEqual({
+      end: new Date(2027, 0, 2).toISOString(),
+      start: new Date(2027, 0, 1).toISOString(),
+    })
+    expect(localNow.getDate()).toBe(31)
+  })
+
   it('should ignore text without a calendar intent', () => {
     expect(createCalendarQuery({now, text: '오늘 날씨 알려줘'})).toBeNull()
   })

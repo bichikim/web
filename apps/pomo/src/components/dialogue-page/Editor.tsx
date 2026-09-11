@@ -1,3 +1,5 @@
+import {createSelectionHandler} from 'src/utils/create-selection-handler'
+import {formatDuration} from 'src/utils/format-duration'
 import {PTextarea} from 'src/components/PTextarea'
 import * as m from '@paraglide/message'
 
@@ -144,18 +146,9 @@ const CLASSES = {
 } as const
 
 const MAXIMUM_TEXT_LENGTH = 3000
-const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
 
 export interface PDialogueEditorProps {
   readonly dialogueId: string | null
-}
-
-const formatDuration = (durationMs: number) => {
-  const totalSeconds = Math.round(durationMs / MILLISECONDS_PER_SECOND)
-  const minutes = Math.floor(totalSeconds / SECONDS_PER_MINUTE)
-  const seconds = totalSeconds % SECONDS_PER_MINUTE
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- The form follows one numbered authoring workflow and shares one controller.
@@ -185,48 +178,29 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
     )
   }
   const isModelDownloading = () => modelDownload.state().status === 'loading'
-  const isAudioModelDownloading = () => {
+  const audioDownload = () => {
     const downloadState = modelDownload.state()
-    return (
-      downloadState.status === 'loading' &&
+    return downloadState.status === 'loading' &&
       downloadState.target.kind === 'voice' &&
       downloadState.target.modelId === editor.modelId()
-    )
+      ? downloadState
+      : null
   }
   const isBusy = () =>
     isAudioBusy() || draftGenerationBusy() || isCheckingAudioModel() || isModelDownloading()
   const audioProgress = () => {
-    const downloadState = modelDownload.state()
-
-    if (
-      downloadState.status === 'loading' &&
-      downloadState.target.kind === 'voice' &&
-      downloadState.target.modelId === editor.modelId()
-    ) {
-      return downloadState.percentage
-    }
-
-    return editor.state().status === 'preparing' ? editor.progress() : null
+    const download = audioDownload()
+    return download === null
+      ? editor.state().status === 'preparing'
+        ? editor.progress()
+        : null
+      : download.percentage
   }
-  const audioMessage = () => {
-    const downloadError = audioDownloadError()
-
-    if (downloadError !== null) {
-      return downloadError
-    }
-
-    const downloadState = modelDownload.state()
-
-    if (
-      downloadState.status === 'loading' &&
-      downloadState.target.kind === 'voice' &&
-      downloadState.target.modelId === editor.modelId()
-    ) {
-      return '음성 모델 파일을 백그라운드에서 내려받고 있어요.'
-    }
-
-    return editor.state().message
-  }
+  const audioMessage = () =>
+    audioDownloadError() ??
+    (audioDownload() === null
+      ? editor.state().message
+      : '음성 모델 파일을 백그라운드에서 내려받고 있어요.')
   const handleSave = async () => {
     const dialogueId = await editor.save()
 
@@ -240,27 +214,18 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
       navigate('/')
     }
   }
-  const handleModelChange = (modelId: string) => {
-    const model = SUPERTONIC_MODELS.find((item) => item.id === modelId)
-
-    if (model !== undefined) {
-      editor.setModelId(model.id)
-    }
-  }
-  const handleLanguageChange = (language: string) => {
-    const option = SUPERTONIC_LANGUAGE_OPTIONS.find((item) => item.value === language)
-
-    if (option !== undefined) {
-      editor.setLanguage(option.value)
-    }
-  }
-  const handleVoiceChange = (voiceId: string) => {
-    const voice = SUPERTONIC_VOICES.find((item) => item.id === voiceId)
-
-    if (voice !== undefined) {
-      editor.setVoiceId(voice.id)
-    }
-  }
+  const handleModelChange = createSelectionHandler(
+    SUPERTONIC_MODELS.map((model) => model.id),
+    editor.setModelId,
+  )
+  const handleLanguageChange = createSelectionHandler(
+    SUPERTONIC_LANGUAGE_OPTIONS.map((option) => option.value),
+    editor.setLanguage,
+  )
+  const handleVoiceChange = createSelectionHandler(
+    SUPERTONIC_VOICES.map((voice) => voice.id),
+    editor.setVoiceId,
+  )
   const handleAudioGenerate = async () => {
     if (isBusy() || !editor.canGenerate()) {
       return
@@ -385,7 +350,7 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
           <PGenerationStatus
             kind="voice"
             message={audioMessage()}
-            onCancel={isAudioModelDownloading() ? modelDownload.cancel : undefined}
+            onCancel={audioDownload() === null ? undefined : modelDownload.cancel}
             progress={audioProgress()}
             progressLabel="음성 모델 준비 진행률"
           />

@@ -706,6 +706,9 @@ importers:
       cross-env:
         specifier: 'catalog:'
         version: 10.1.0
+      dayjs:
+        specifier: ^1.11.23
+        version: 1.11.23
       dexie:
         specifier: ^4.4.4
         version: 4.4.4
@@ -8165,6 +8168,10 @@ packages:
   debounce@3.0.0:
     resolution: {integrity: sha512-64byRbF0/AirwbuHqB3/ZpMG9/nckDa6ZA0yd6UnaQNwbbemCOwvz2sL5sjXLHhZHADyiwLm0M5qMhltUUx+TA==}
     engines: {node: '>=20'}
+
+  dayjs@1.11.23:
+    resolution: {integrity: sha512-QDTCU0M0MxR3hQfnlDJfwekQiaanm1ubOD231u73WBckQ/fsamwRLiE2GBz6D3a/xF1NgfiDLJjXBa1hYOYTtQ==}
+
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -19566,6 +19573,8 @@ snapshots:
       drizzle-orm: 0.45.2(@cloudflare/workers-types@5.20260822.1)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.29.5)(postgres@3.4.9)
 
   debounce@3.0.0: {}
+
+  dayjs@1.11.23: {}
 
   debug@2.6.9:
     dependencies:
