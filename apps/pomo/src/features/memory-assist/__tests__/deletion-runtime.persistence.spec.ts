@@ -9,24 +9,22 @@ import type {MemoryMemo} from '../schema'
 const mocks = vi.hoisted(() => ({
   audio: vi.fn(),
   native: true,
-  nativeError: null as Error | null,
-  nativeSnapshot: [] as ReadonlyArray<MemoryMemo>,
+  tossError: null as Error | null,
+  tossSnapshot: [] as ReadonlyArray<MemoryMemo>,
   webError: null as Error | null,
   webSnapshot: [] as ReadonlyArray<MemoryMemo>,
 }))
 vi.mock('../../focus-room-dialogue', () => ({deleteDialogueAudio: mocks.audio}))
-vi.mock('../../runtime-storage', async () => ({
-  ...(await vi.importActual('../../runtime-storage')),
-  createSerialNativeStorageWriter: () => ({
-    write: async (_key: string, value: ReadonlyArray<MemoryMemo>) => {
-      if (mocks.nativeError === null) {
-        mocks.nativeSnapshot = structuredClone(value)
-      }
-      return mocks.nativeError
-    },
-  }),
+vi.mock('src/utils/runtime-storage', async () => ({
+  ...(await vi.importActual('src/utils/runtime-storage')),
+  createLatestStorageWriter: () => async (value: ReadonlyArray<MemoryMemo>) => {
+    if (mocks.tossError !== null) {
+      throw mocks.tossError
+    }
+    mocks.tossSnapshot = structuredClone(value)
+  },
   hasNativeStorageBridge: () => mocks.native,
-  readNativeStorageJson: async () => structuredClone(mocks.nativeSnapshot),
+  readTossStorageJson: async () => structuredClone(mocks.tossSnapshot),
   writeWebStorageJson: (_key: string, value: ReadonlyArray<MemoryMemo>) => {
     if (mocks.webError === null) {
       mocks.webSnapshot = structuredClone(value)
@@ -49,9 +47,9 @@ const memo = {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  mocks.nativeError = null
+  mocks.tossError = null
   mocks.webError = null
-  mocks.nativeSnapshot = [memo]
+  mocks.tossSnapshot = [memo]
   mocks.webSnapshot = [memo]
   mocks.audio.mockResolvedValue(undefined)
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => JSON.stringify(mocks.webSnapshot))
@@ -62,7 +60,7 @@ it.each([true, false])(
   async (native) => {
     mocks.native = native
     if (native) {
-      mocks.nativeError = new Error('native failed')
+      mocks.tossError = new Error('native failed')
     } else {
       mocks.webError = new Error('web failed')
     }

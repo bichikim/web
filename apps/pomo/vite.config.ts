@@ -6,6 +6,8 @@ import {nitro} from 'nitro/vite'
 import {type ConfigEnv, defineConfig, loadEnv, type UserConfig} from 'vite'
 import {compileStringTemplate} from '@winter-love/utils'
 import {PARAGLIDE_CONFIG} from './paraglide.config'
+import {BROWSER_BUILD_TARGETS} from './scripts/vite/browser-targets'
+import {createPolyfillsPlugin} from './scripts/vite/polyfills'
 import {createDevFeedPlugin} from './scripts/vite/dev-feed/plugin'
 import {createScribbleIconRestartPlugin} from './scripts/vite/scribble-icon/plugin'
 import {staticNitroEntryPlugin} from './scripts/vite/static-nitro-entry/plugin'
@@ -188,6 +190,13 @@ const loadBuildEnvironment = (mode: string): BuildEnvironment => {
   return {connectSourceList, environment, publicAssetOrigin, publicOrigin}
 }
 
+const createPrerenderSecurityRules = (headers: Record<string, string>) =>
+  Object.fromEntries(
+    (IS_STATIC_BUILD ? [...SHARED_STATIC_ROUTES, '/account'] : SHARED_STATIC_ROUTES).map(
+      (route) => [route, {headers}],
+    ),
+  )
+
 const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
   const {connectSourceList, environment, publicAssetOrigin, publicOrigin} =
     loadBuildEnvironment(mode)
@@ -211,15 +220,10 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       CONNECT_SOURCES: connectSourceList,
     }),
   } as const
-  const prerenderSecurityRules = Object.fromEntries(
-    (IS_STATIC_BUILD ? [...SHARED_STATIC_ROUTES, '/account'] : SHARED_STATIC_ROUTES).map(
-      (route) => [route, {headers: staticSecurityHeaders}],
-    ),
-  )
 
   return {
     // Pixi fetches textures; desktop CSP requires bundled files instead of data URLs.
-    build: {assetsInlineLimit: IS_DESKTOP_BUILD ? 0 : undefined},
+    build: {assetsInlineLimit: IS_DESKTOP_BUILD ? 0 : undefined, target: BROWSER_BUILD_TARGETS},
     cacheDir: USES_APPS_IN_TOSS_DEVTOOLS ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
     define: createImportMetaEnvDefinitions({
       POMO_ALLOW_LOCAL_ASSET_ORIGIN: String(command === 'serve' || IS_STATIC_BUILD),
@@ -284,7 +288,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       routeRules: {
         '/**': {headers: BASE_SECURITY_HEADERS},
         '/workers/**': {headers: workerSecurityHeaders},
-        ...prerenderSecurityRules,
+        ...createPrerenderSecurityRules(staticSecurityHeaders),
       },
       ...(IS_STATIC_BUILD && command === 'build' ? {preset: 'static'} : {}),
     },
@@ -292,6 +296,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       include: getOptimizeDepsInclude(),
     },
     plugins: [
+      createPolyfillsPlugin(),
       createServerBoundaryPlugin({directories: ['src/server']}),
       ...(USES_APPS_IN_TOSS_DEVTOOLS
         ? [aitDevtools.vite({entryPattern: /\/entry-client\.tsx$/u, sdkVersion: '3'})]

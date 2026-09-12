@@ -1,12 +1,14 @@
+import {withPromiseNull} from 'src/utils/with-promise-null'
 import {z} from 'zod'
 
 import {
-  createSerialNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 import {DEFAULT_P_SCENE_PREFERENCES, type PScenePreferences} from './model'
 
@@ -17,7 +19,10 @@ const scenePreferencesSchema = z.object({
   timeMode: z.enum(['day', 'night', 'auto']),
 })
 let preferenceWriteRevision = 0
-const nativeWriter = createSerialNativeStorageWriter()
+const writeLatestToss = createLatestStorageWriter(
+  SCENE_PREFERENCES_STORAGE_KEY,
+  writeTossStorageJson,
+)
 
 const parseScenePreferences = (value: unknown): PScenePreferences | null => {
   const result = scenePreferencesSchema.safeParse(value)
@@ -39,9 +44,7 @@ export const readPScenePreferences = async (): Promise<PScenePreferences> => {
 
   if (webPreferences !== null) {
     if (hasNativeStorageBridge()) {
-      nativeWriter
-        .write(SCENE_PREFERENCES_STORAGE_KEY, webPreferences)
-        .catch(globalThis.reportError)
+      writeLatestToss(webPreferences).catch(globalThis.reportError)
     }
 
     return webPreferences
@@ -52,7 +55,7 @@ export const readPScenePreferences = async (): Promise<PScenePreferences> => {
   }
 
   try {
-    const nativePreferences = await readNativeStorageJson(
+    const tossPreferences = await readTossStorageJson(
       SCENE_PREFERENCES_STORAGE_KEY,
       parseScenePreferences,
     )
@@ -61,12 +64,12 @@ export const readPScenePreferences = async (): Promise<PScenePreferences> => {
       return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
     }
 
-    if (nativePreferences === null) {
+    if (tossPreferences === null) {
       return DEFAULT_P_SCENE_PREFERENCES
     }
 
-    writeWebPreferences(nativePreferences)
-    return nativePreferences
+    writeWebPreferences(tossPreferences)
+    return tossPreferences
   } catch {
     return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
   }
@@ -81,5 +84,5 @@ export const writePScenePreferences = async (preferences: PScenePreferences): Pr
     return
   }
 
-  await nativeWriter.write(SCENE_PREFERENCES_STORAGE_KEY, preferences)
+  await withPromiseNull(writeLatestToss(preferences))
 }

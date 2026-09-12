@@ -1,5 +1,5 @@
 import {createSignal, onCleanup, onMount} from 'solid-js'
-import {readWebStorageJson, writeWebStorageJson} from 'src/features/runtime-storage'
+import {readWebStorageJson, writeWebStorageJson} from 'src/utils/runtime-storage'
 
 const STORAGE_KEY = 'pomo:feed-auto-prepare:v1'
 const CHANGE_EVENT = 'pomo:feed-auto-prepare-change'

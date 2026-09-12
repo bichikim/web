@@ -23,7 +23,7 @@ it('should preserve the previously saved enlistment date and reject malformed da
   await expect(repository.read()).resolves.toMatchObject({manual: false, start: ''})
 })
 it('should use native storage and wait for saves before restoring', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   let finish: (() => void) | undefined
   const values = new Map([['pomo:service-start:v1', '"2026-08-01"']])
   fixture.getItem.mockImplementation((key: string) => Promise.resolve(values.get(key) ?? null))
@@ -51,14 +51,14 @@ it.each([
   '{"manual":true}',
   JSON.stringify({branch: 'army', days: '', manual: false, start: ''}),
 ])('should prefer valid web settings over native %s', async (stored) => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   fixture.web.set('pomo:service-settings:v1', JSON.stringify(settings))
   fixture.getItem.mockResolvedValue(stored)
   await expect(repository.read()).resolves.toEqual(settings)
 })
 it('should restore the web copy after a native save fails', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   fixture.setItem.mockRejectedValue(new Error('native unavailable'))
   await expect(repository.write(settings)).rejects.toThrow('native unavailable')
@@ -68,7 +68,7 @@ it('should restore the web copy after a native save fails', async () => {
 it.each(['pomo:service-settings:v1', 'pomo:service-start:v1'])(
   'should return a save made during the native read of %s',
   async (key) => {
-    fixture.isNative.mockReturnValue(true)
+    fixture.usesTossStorage.mockReturnValue(true)
     const delayed = Promise.withResolvers<string | null>()
     fixture.getItem.mockImplementation((requested: string) =>
       requested === key ? delayed.promise : Promise.resolve(null),
@@ -82,13 +82,13 @@ it.each(['pomo:service-settings:v1', 'pomo:service-start:v1'])(
   },
 )
 it('should restore the legacy web date when native values are missing', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   fixture.getItem.mockResolvedValue(null)
   fixture.web.set('pomo:service-start:v1', '"2026-09-01"')
   await expect(repository.read()).resolves.toMatchObject({start: '2026-09-01'})
 })
 it('should restore current native settings before a legacy web date', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   fixture.web.set('pomo:service-settings:v1', '{invalid')
   fixture.web.set('pomo:service-start:v1', '"2026-08-01"')
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
@@ -96,7 +96,7 @@ it('should restore current native settings before a legacy web date', async () =
   await expect(repository.read()).resolves.toEqual(settings)
 })
 it('should retry a stale native read when browser storage is unavailable', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   fixture.writeWeb.mockReturnValue(new Error('blocked'))
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   const delayed = Promise.withResolvers<string | null>()
@@ -108,12 +108,12 @@ it('should retry a stale native read when browser storage is unavailable', async
   await expect(reading).resolves.toEqual(settings)
 })
 it('should preserve native read errors when there is no web copy', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   fixture.getItem.mockRejectedValue(new Error('read failed'))
   await expect(repository.read()).rejects.toThrow('read failed')
 })
 it('should return a concurrent save even when the old native read rejects', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const delayed = Promise.withResolvers<string | null>()
   fixture.getItem.mockReturnValueOnce(delayed.promise)
   const reading = repository.read()
@@ -124,7 +124,7 @@ it('should return a concurrent save even when the old native read rejects', asyn
   await expect(reading).resolves.toEqual(settings)
 })
 it('should restore the native save when replacing an existing web copy fails', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   fixture.web.set('pomo:service-settings:v1', JSON.stringify({...settings, days: '200'}))
   fixture.writeWeb.mockReturnValue(new Error('blocked'))
@@ -134,7 +134,7 @@ it('should restore the native save when replacing an existing web copy fails', a
 })
 
 it('should preserve the existing web copy when both writes fail', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   fixture.web.set('pomo:service-settings:v1', JSON.stringify(previous))
@@ -144,7 +144,7 @@ it('should preserve the existing web copy when both writes fail', async () => {
   await expect(repository.read()).resolves.toEqual(previous)
 })
 it('should wait for native persistence before restoring after web replacement fails', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   fixture.web.set('pomo:service-settings:v1', JSON.stringify(previous))
@@ -159,7 +159,7 @@ it('should wait for native persistence before restoring after web replacement fa
   await expect(reading).resolves.toEqual(next)
 })
 it('should retain a newer web save after an older native write completes', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   fixture.writeWeb.mockReturnValueOnce(new Error('blocked'))
@@ -174,7 +174,7 @@ it('should retain a newer web save after an older native write completes', async
   await expect(repository.read()).resolves.toEqual(next)
 })
 it('should report an error if a readable stale web copy cannot be removed', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const previous = {branch: 'navy', days: '200', manual: true, start: '2026-09-01'} as const
   const next = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   fixture.web.set('pomo:service-settings:v1', JSON.stringify(previous))
@@ -184,13 +184,13 @@ it('should report an error if a readable stale web copy cannot be removed', asyn
 })
 
 it('should isolate pending writes and revisions between repositories', async () => {
-  fixture.isNative.mockReturnValue(true)
+  fixture.usesTossStorage.mockReturnValue(true)
   const delayed = Promise.withResolvers<void>()
   fixture.setItem.mockReturnValue(delayed.promise)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
   const saving = repository.write(settings)
   const other = createStorageFixture()
-  other.isNative.mockReturnValue(true)
+  other.usesTossStorage.mockReturnValue(true)
   const independent = createServiceSettingsStorage({storage: other.adapter})
   try {
     await expect(independent.read()).resolves.toMatchObject({start: ''})

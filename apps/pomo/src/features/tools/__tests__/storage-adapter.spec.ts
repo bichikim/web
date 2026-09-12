@@ -11,7 +11,7 @@ afterEach(() => {
 })
 const parseString = (value: unknown) => (typeof value === 'string' ? value : null)
 it('should write parse and remove browser values through the runtime adapter', () => {
-  expect(toolStorageAdapter.isNative()).toBe(false)
+  expect(toolStorageAdapter.usesTossStorage()).toBe(false)
   expect(toolStorageAdapter.writeWeb('selection', 'lunar')).toBeNull()
   expect(toolStorageAdapter.readWeb('selection', parseString)).toBe('lunar')
   expect(toolStorageAdapter.removeWeb('selection')).toBeNull()
@@ -20,8 +20,8 @@ it('should write parse and remove browser values through the runtime adapter', (
 it('should serialize and parse native values through the SDK boundary', async () => {
   vi.stubGlobal('ReactNativeWebView', {})
   native.getItem.mockResolvedValue('"lunar"')
-  expect(toolStorageAdapter.isNative()).toBe(true)
-  await toolStorageAdapter.writeNative('selection', 'lunar')
+  expect(toolStorageAdapter.usesTossStorage()).toBe(true)
+  await toolStorageAdapter.writeToss('selection', 'lunar')
   expect(native.setItem).toHaveBeenCalledWith('selection', '"lunar"')
-  await expect(toolStorageAdapter.readNative('selection', parseString)).resolves.toBe('lunar')
+  await expect(toolStorageAdapter.readToss('selection', parseString)).resolves.toBe('lunar')
 })

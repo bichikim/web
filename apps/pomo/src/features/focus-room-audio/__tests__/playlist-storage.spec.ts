@@ -1,193 +1,231 @@
-/** @vitest-environment jsdom */
+/** @vitest-environment node */
 
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {expect, it, vi} from 'vitest'
 
-import {readPPlaylist, writePPlaylist} from '../playlist-storage'
+import {
+  createPPlaylistStorage,
+  type PlaylistStorageAdapter,
+  type StoredPlaylist,
+} from '../playlist-storage'
 
-const storageMocks = vi.hoisted(() => ({
-  getItem: vi.fn<(key: string) => Promise<string | null>>(),
-  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
-}))
+const createStoredPlaylist = (trackIds: readonly string[], savedAt: number): StoredPlaylist => ({
+  savedAt,
+  trackIds,
+  version: 1,
+})
 
-vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
+const createStorage = ({
+  tossPlaylist = null,
+  usesTossStorage = false,
+  webPlaylist = null,
+}: {
+  readonly tossPlaylist?: StoredPlaylist | null
+  readonly usesTossStorage?: boolean
+  readonly webPlaylist?: StoredPlaylist | null
+} = {}) => {
+  let currentWebPlaylist = webPlaylist
+  const storage = {
+    readToss: vi.fn<() => Promise<StoredPlaylist | null>>().mockResolvedValue(tossPlaylist),
+    readWeb: vi.fn(() => currentWebPlaylist),
+    usesTossStorage: () => usesTossStorage,
+    writeToss: vi.fn<(playlist: StoredPlaylist) => Promise<void>>().mockResolvedValue(),
+    writeWeb: vi.fn<PlaylistStorageAdapter['writeWeb']>((playlist) => {
+      currentWebPlaylist = playlist
+      return null
+    }),
+  } satisfies PlaylistStorageAdapter
 
-describe('playlist-storage', () => {
-  beforeEach(() => {
-    localStorage.clear()
-    storageMocks.getItem.mockReset()
-    storageMocks.getItem.mockResolvedValue(null)
-    storageMocks.setItem.mockReset()
-    storageMocks.setItem.mockResolvedValue()
-    vi.spyOn(Date, 'now').mockReturnValue(20)
+  return storage
+}
+
+it('should persist and restore a browser playlist in order', async () => {
+  const storage = createStorage()
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  await playlistStorage.write(['three', 'one'])
+
+  await expect(playlistStorage.read()).resolves.toEqual(['three', 'one'])
+  expect(storage.writeWeb).toHaveBeenCalledWith(createStoredPlaylist(['three', 'one'], 20))
+})
+
+it('should preserve an explicitly emptied playlist', async () => {
+  const playlistStorage = createPPlaylistStorage(createStorage(), {now: () => 20})
+
+  await playlistStorage.write([])
+
+  await expect(playlistStorage.read()).resolves.toEqual([])
+})
+
+it('should tolerate web storage write failures', async () => {
+  const storage = createStorage()
+  storage.writeWeb.mockReturnValue(new DOMException('Storage is unavailable', 'SecurityError'))
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  await expect(playlistStorage.write(['one'])).resolves.toBeUndefined()
+  await expect(playlistStorage.read()).resolves.toBeNull()
+})
+
+it('should select and cache the newer Toss playlist', async () => {
+  const tossPlaylist = createStoredPlaylist(['toss'], 15)
+  const storage = createStorage({
+    tossPlaylist,
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['web'], 10),
   })
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
 
-  afterEach(() => {
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
-    vi.restoreAllMocks()
+  await expect(playlistStorage.read()).resolves.toEqual(['toss'])
+  expect(storage.writeWeb).toHaveBeenCalledWith(tossPlaylist)
+})
+
+it('should prefer and repair Toss storage from an equally recent browser playlist', async () => {
+  const webPlaylist = createStoredPlaylist(['web'], 15)
+  const storage = createStorage({
+    tossPlaylist: createStoredPlaylist(['toss'], 15),
+    usesTossStorage: true,
+    webPlaylist,
   })
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
 
-  it('should persist and restore the browser playlist in order', async () => {
-    await writePPlaylist(['three', 'one'])
+  await expect(playlistStorage.read()).resolves.toEqual(['web'])
+  await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledWith(webPlaylist))
+})
 
-    expect(await readPPlaylist()).toEqual(['three', 'one'])
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toEqual({
-      savedAt: 20,
-      trackIds: ['three', 'one'],
-      version: 1,
-    })
+it('should report a Toss repair failure through the injected error reporter', async () => {
+  const repairError = new Error('Toss storage is unavailable')
+  const storage = createStorage({
+    tossPlaylist: createStoredPlaylist(['toss'], 10),
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['web'], 15),
   })
+  storage.writeToss.mockRejectedValue(repairError)
+  const reportError = vi.fn()
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20}, reportError)
 
-  it('should preserve an explicitly emptied playlist', async () => {
-    await writePPlaylist([])
+  await expect(playlistStorage.read()).resolves.toEqual(['web'])
+  await vi.waitFor(() => expect(reportError).toHaveBeenCalledWith(repairError))
+})
 
-    expect(await readPPlaylist()).toEqual([])
+it('should restore a Toss playlist when the browser copy is absent', async () => {
+  const storage = createStorage({
+    tossPlaylist: createStoredPlaylist(['toss'], 15),
+    usesTossStorage: true,
   })
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
 
-  it.each([
-    ['malformed JSON', '{invalid'],
-    ['duplicate track IDs', JSON.stringify({savedAt: 10, trackIds: ['one', 'one'], version: 1})],
-    ['an unsupported version', JSON.stringify({savedAt: 10, trackIds: ['one'], version: 2})],
-  ])('should ignore %s', async (_label, storedValue) => {
-    localStorage.setItem('pomo:focus-room-playlist:v1', storedValue)
+  await expect(playlistStorage.read()).resolves.toEqual(['toss'])
+})
 
-    expect(await readPPlaylist()).toBeNull()
+it('should fall back to the browser playlist when Toss storage cannot be read', async () => {
+  const storage = createStorage({
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['web'], 10),
   })
+  storage.readToss.mockRejectedValue(new Error('Toss storage is unavailable'))
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
 
-  it('should tolerate browser storage write failures', async () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('Storage is unavailable', 'SecurityError')
-    })
+  await expect(playlistStorage.read()).resolves.toEqual(['web'])
+})
 
-    await expect(writePPlaylist(['one'])).resolves.toBeUndefined()
-    expect(await readPPlaylist()).toBeNull()
+it('should return no playlist when both storage reads are unavailable', async () => {
+  const storage = createStorage({usesTossStorage: true})
+  storage.readToss.mockRejectedValue(new Error('Toss storage is unavailable'))
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  await expect(playlistStorage.read()).resolves.toBeNull()
+})
+
+it('should not overwrite a playlist changed while Toss storage is being read', async () => {
+  let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
+  const storage = createStorage({
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['web'], 15),
   })
+  storage.readToss.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+  )
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+  const playlistRequest = playlistStorage.read()
 
-  it('should select and cache the newer native playlist', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playlist:v1',
-      JSON.stringify({savedAt: 10, trackIds: ['web'], version: 1}),
-    )
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({savedAt: 15, trackIds: ['native'], version: 1}),
-    )
+  await playlistStorage.write(['latest'])
+  completeRead?.(createStoredPlaylist(['stale'], 10))
 
-    expect(await readPPlaylist()).toEqual(['native'])
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toEqual({
-      savedAt: 15,
-      trackIds: ['native'],
-      version: 1,
-    })
+  await expect(playlistRequest).resolves.toEqual(['latest'])
+})
+
+it('should ignore a Toss read after a web write failure', async () => {
+  let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
+  const storage = createStorage({usesTossStorage: true})
+  storage.readToss.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+  )
+  storage.writeWeb.mockReturnValueOnce(new DOMException('Storage is unavailable', 'SecurityError'))
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+  const playlistRequest = playlistStorage.read()
+
+  await playlistStorage.write(['latest'])
+  completeRead?.(createStoredPlaylist(['stale'], 10))
+
+  await expect(playlistRequest).resolves.toBeNull()
+})
+
+it('should isolate a pending read from writes made through another storage instance', async () => {
+  let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
+  const firstStorage = createStorage({
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['web'], 10),
   })
-
-  it('should prefer the browser playlist when it is at least as recent', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playlist:v1',
-      JSON.stringify({savedAt: 15, trackIds: ['web'], version: 1}),
-    )
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({savedAt: 15, trackIds: ['native'], version: 1}),
-    )
-
-    expect(await readPPlaylist()).toEqual(['web'])
+  firstStorage.readToss.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+  )
+  const firstPlaylistStorage = createPPlaylistStorage(firstStorage, {now: () => 20})
+  const secondPlaylistStorage = createPPlaylistStorage(createStorage({usesTossStorage: true}), {
+    now: () => 20,
   })
+  const playlistRequest = firstPlaylistStorage.read()
 
-  it('should repair stale native storage from the newer browser playlist', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playlist:v1',
-      JSON.stringify({savedAt: 15, trackIds: ['web'], version: 1}),
-    )
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({savedAt: 10, trackIds: ['native'], version: 1}),
-    )
+  await secondPlaylistStorage.write(['second-instance'])
+  completeRead?.(createStoredPlaylist(['toss'], 15))
 
-    expect(await readPPlaylist()).toEqual(['web'])
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledOnce())
-    const [storageKey, storedValue] = storageMocks.setItem.mock.lastCall ?? []
-    expect(storageKey).toBe('pomo:focus-room-playlist:v1')
-    expect(JSON.parse(storedValue ?? '')).toMatchObject({trackIds: ['web']})
-  })
+  await expect(playlistRequest).resolves.toEqual(['toss'])
+})
 
-  it('should restore native storage when the browser copy is absent', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({savedAt: 15, trackIds: ['native'], version: 1}),
-    )
+it('should keep latest Toss writers independent for each storage instance', async () => {
+  let completeFirstWrite: (() => void) | undefined
+  const firstStorage = createStorage({usesTossStorage: true})
+  firstStorage.writeToss.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        completeFirstWrite = resolve
+      }),
+  )
+  const secondStorage = createStorage({usesTossStorage: true})
+  const firstPlaylistStorage = createPPlaylistStorage(firstStorage, {now: () => 20})
+  const secondPlaylistStorage = createPPlaylistStorage(secondStorage, {now: () => 20})
+  const firstWrite = firstPlaylistStorage.write(['first'])
 
-    expect(await readPPlaylist()).toEqual(['native'])
-  })
+  await vi.waitFor(() => expect(firstStorage.writeToss).toHaveBeenCalledOnce())
+  const secondWrite = secondPlaylistStorage.write(['second'])
 
-  it('should fall back to the browser playlist when native storage cannot be read', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playlist:v1',
-      JSON.stringify({savedAt: 10, trackIds: ['web'], version: 1}),
-    )
-    storageMocks.getItem.mockRejectedValue(new Error('Native storage is unavailable'))
+  await vi.waitFor(() => expect(secondStorage.writeToss).toHaveBeenCalledOnce())
+  completeFirstWrite?.()
+  await Promise.all([firstWrite, secondWrite])
+})
 
-    expect(await readPPlaylist()).toEqual(['web'])
-  })
+it('should persist a playlist to Toss storage when the bridge is available', async () => {
+  const storage = createStorage({usesTossStorage: true})
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
 
-  it('should return no playlist when both storage reads are unavailable', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.getItem.mockRejectedValue(new Error('Native storage is unavailable'))
+  await playlistStorage.write(['one', 'two'])
 
-    expect(await readPPlaylist()).toBeNull()
-  })
-
-  it('should not overwrite a playlist changed while native storage is being read', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    let completeRead: ((value: string | null) => void) | undefined
-    storageMocks.getItem.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          completeRead = resolve
-        }),
-    )
-    const playlistRequest = readPPlaylist()
-
-    await writePPlaylist(['latest'])
-    completeRead?.(JSON.stringify({savedAt: 10, trackIds: ['stale'], version: 1}))
-
-    expect(await playlistRequest).toEqual(['latest'])
-    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
-      trackIds: ['latest'],
-    })
-  })
-
-  it('should ignore an older native read after a browser write failure', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    let completeRead: ((value: string | null) => void) | undefined
-    storageMocks.getItem.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          completeRead = resolve
-        }),
-    )
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
-      throw new DOMException('Storage is unavailable', 'SecurityError')
-    })
-    const playlistRequest = readPPlaylist()
-
-    await writePPlaylist(['latest'])
-    completeRead?.(JSON.stringify({savedAt: 10, trackIds: ['stale'], version: 1}))
-
-    expect(await playlistRequest).toBeNull()
-  })
-
-  it('should persist the playlist to native storage in Apps in Toss', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-
-    await writePPlaylist(['one', 'two'])
-
-    const [storageKey, storedValue] = storageMocks.setItem.mock.lastCall ?? []
-    expect(storageKey).toBe('pomo:focus-room-playlist:v1')
-    expect(JSON.parse(storedValue ?? '')).toEqual({
-      savedAt: 20,
-      trackIds: ['one', 'two'],
-      version: 1,
-    })
-  })
+  expect(storage.writeToss).toHaveBeenCalledWith(createStoredPlaylist(['one', 'two'], 20))
 })

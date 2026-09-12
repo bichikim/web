@@ -2,11 +2,11 @@ import {z} from 'zod'
 
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 const STORAGE_KEY = 'pomo:viewed-version-release:v1'
 const VERSION_PATTERN = /^\d{4}\. \d{2}\. \d{2} \d{2}:\d{2}$/u
@@ -24,10 +24,10 @@ export interface ViewedRelease {
 }
 
 export interface VersionNoticeStorage {
-  readonly isNative: () => boolean
-  readonly readNative: () => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: () => Promise<unknown | null>
   readonly readWeb: () => unknown | null
-  readonly writeNative: (value: ViewedRelease) => Promise<void>
+  readonly writeToss: (value: ViewedRelease) => Promise<void>
   readonly writeWeb: (value: ViewedRelease) => unknown | null
 }
 
@@ -52,14 +52,14 @@ export const createViewedReleaseRepository = (
 
   return {
     async read() {
-      if (!options.storage.isNative()) {
+      if (!options.storage.usesTossStorage()) {
         return parseViewedRelease(options.storage.readWeb())
       }
 
       let value: ViewedRelease | null
 
       try {
-        value = parseViewedRelease(await options.storage.readNative())
+        value = parseViewedRelease(await options.storage.readToss())
       } catch (error) {
         throw new Error('Failed to read viewed version release.', {cause: error})
       }
@@ -77,18 +77,18 @@ export const createViewedReleaseRepository = (
     async write(value) {
       const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
 
-      if (options.storage.isNative()) {
+      if (options.storage.usesTossStorage()) {
         const write = writeQueue.then(async () => {
           let storedValue: ViewedRelease
           try {
-            const currentValue = parseViewedRelease(await options.storage.readNative())
+            const currentValue = parseViewedRelease(await options.storage.readToss())
             storedValue =
               currentValue !== null &&
               Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
                 ? currentValue
                 : parsedValue
             if (storedValue === parsedValue) {
-              await options.storage.writeNative(storedValue)
+              await options.storage.writeToss(storedValue)
             }
           } catch (error) {
             throw new Error('Failed to persist viewed version release.', {cause: error})
@@ -128,10 +128,10 @@ export const createViewedReleaseRepository = (
 }
 
 const runtimeStorage: VersionNoticeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: () => readNativeStorageJson(STORAGE_KEY, parseViewedRelease),
+  readToss: () => readTossStorageJson(STORAGE_KEY, parseViewedRelease),
   readWeb: () => readWebStorageJson(STORAGE_KEY, parseViewedRelease),
-  writeNative: (value) => writeNativeStorageJson(STORAGE_KEY, value),
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: (value) => writeTossStorageJson(STORAGE_KEY, value),
   writeWeb: (value) => writeWebStorageJson(STORAGE_KEY, value),
 }
 

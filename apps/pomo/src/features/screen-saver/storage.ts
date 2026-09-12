@@ -2,12 +2,12 @@ import {z} from 'zod'
 
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
   removeWebStorageItem,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 import type {ScreenSaverDelay} from './model'
 
@@ -23,12 +23,12 @@ const parseScreenSaverDelay = (value: unknown): ScreenSaverDelay | null => {
 }
 
 export interface ScreenSaverStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown>
   readonly readWeb: (key: string) => unknown
   /** Returns the storage error on failure, or null on success. */
   readonly removeWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   /** Returns the storage error on failure, or null on success. */
   readonly writeWeb: (key: string, value: unknown) => unknown | null
 }
@@ -63,26 +63,24 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
       return webPreference
     }
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       return DEFAULT_SCREEN_SAVER_DELAY
     }
 
     try {
-      const nativePreference = parseScreenSaverDelay(
-        await storage.readNative(SCREEN_SAVER_STORAGE_KEY),
-      )
+      const tossPreference = parseScreenSaverDelay(await storage.readToss(SCREEN_SAVER_STORAGE_KEY))
 
       if (preferenceWriteRevision !== initialWriteRevision) {
         return read()
       }
 
-      if (nativePreference === null) {
+      if (tossPreference === null) {
         return DEFAULT_SCREEN_SAVER_DELAY
       }
 
       // Rebuild the authoritative web copy after an app update or browser-data eviction.
-      writeWebPreference(nativePreference)
-      return nativePreference
+      writeWebPreference(tossPreference)
+      return tossPreference
     } catch {
       if (preferenceWriteRevision !== initialWriteRevision) {
         return read()
@@ -94,7 +92,7 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
   const persistScreenSaverDelay = async (delay: ScreenSaverDelay): Promise<void> => {
     const webWriteError = writeWebPreference(delay)
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist screen saver delay.', {cause: webWriteError})
       }
@@ -102,7 +100,7 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
     }
 
     try {
-      await storage.writeNative(SCREEN_SAVER_STORAGE_KEY, delay)
+      await storage.writeToss(SCREEN_SAVER_STORAGE_KEY, delay)
     } catch (error: unknown) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist screen saver delay.', {cause: error})
@@ -132,11 +130,11 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
 
 const preserveStoredValue = (value: unknown) => value
 const runtimeRepository = createScreenSaverRepository({
-  isNative: hasNativeStorageBridge,
-  readNative: (key) => readNativeStorageJson(key, preserveStoredValue),
+  readToss: (key) => readTossStorageJson(key, preserveStoredValue),
   readWeb: (key) => readWebStorageJson(key, preserveStoredValue),
   removeWeb: removeWebStorageItem,
-  writeNative: writeNativeStorageJson,
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: writeTossStorageJson,
   writeWeb: writeWebStorageJson,
 })
 

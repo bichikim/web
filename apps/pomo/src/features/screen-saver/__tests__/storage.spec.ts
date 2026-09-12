@@ -6,14 +6,14 @@ const createStorage = () => {
   let web: unknown = '10m'
   let native: unknown = '10m'
   return {
-    isNative: (): boolean => true,
-    readNative: vi.fn(async () => native),
+    readToss: vi.fn(async () => native),
     readWeb: vi.fn(() => web),
     removeWeb: vi.fn(() => {
       web = null
       return null as unknown
     }),
-    writeNative: vi.fn(async (_key: string, value: unknown) => {
+    usesTossStorage: (): boolean => true,
+    writeToss: vi.fn(async (_key: string, value: unknown) => {
       native = value
     }),
     writeWeb: vi.fn((_key: string, value: unknown) => {
@@ -38,7 +38,7 @@ describe('createScreenSaverRepository', () => {
         storage.writeWeb.mockReturnValue(new Error('web unavailable'))
       }
       if (nativeFails) {
-        storage.writeNative.mockRejectedValue(new Error('native unavailable'))
+        storage.writeToss.mockRejectedValue(new Error('native unavailable'))
       }
 
       const write = repository.write('off')
@@ -55,22 +55,22 @@ describe('createScreenSaverRepository', () => {
 
   it('should use only web persistence outside the host app and report its failure', async () => {
     const storage = createStorage()
-    storage.isNative = () => false
+    storage.usesTossStorage = () => false
     const repository = createScreenSaverRepository(storage)
     await repository.write('off')
     expect(await repository.read()).toBe('off')
     storage.writeWeb.mockReturnValue(new Error('web unavailable'))
     await expect(repository.write('1h')).rejects.toThrow('Failed to persist screen saver delay.')
-    expect(storage.writeNative).not.toHaveBeenCalled()
+    expect(storage.writeToss).not.toHaveBeenCalled()
   })
 
   it('should preserve a web-only choice on dual failure and recover the write queue', async () => {
     const storage = createStorage()
     const repository = createScreenSaverRepository(storage)
-    storage.writeNative.mockRejectedValueOnce(new Error('native unavailable'))
+    storage.writeToss.mockRejectedValueOnce(new Error('native unavailable'))
     await repository.write('off')
     storage.writeWeb.mockReturnValueOnce(new Error('web unavailable'))
-    storage.writeNative.mockRejectedValueOnce(new Error('native unavailable'))
+    storage.writeToss.mockRejectedValueOnce(new Error('native unavailable'))
     await expect(repository.write('1m')).rejects.toThrow('Failed to persist screen saver delay.')
     expect(await repository.read()).toBe('off')
     await repository.write('1h')
@@ -83,7 +83,7 @@ describe('createScreenSaverRepository', () => {
     storage.removeWeb.mockReturnValue(new Error('removal unavailable'))
     const repository = createScreenSaverRepository(storage)
     await expect(repository.write('off')).rejects.toThrow('Failed to persist screen saver delay.')
-    expect(await storage.readNative()).toBe('off')
+    expect(await storage.readToss()).toBe('off')
     expect(await repository.read()).toBe('10m')
   })
 
@@ -92,7 +92,7 @@ describe('createScreenSaverRepository', () => {
     const completion = Promise.withResolvers<void>()
     const started = Promise.withResolvers<void>()
     storage.writeWeb.mockReturnValueOnce(new Error('web unavailable'))
-    storage.writeNative.mockImplementationOnce(async () => {
+    storage.writeToss.mockImplementationOnce(async () => {
       started.resolve()
       await completion.promise
     })
@@ -105,7 +105,7 @@ describe('createScreenSaverRepository', () => {
     completion.resolve()
     await Promise.all([first, second])
     expect(await read).toBe('off')
-    expect(storage.writeNative.mock.calls.map((call) => call[1])).toEqual(['1m', 'off'])
+    expect(storage.writeToss.mock.calls.map((call) => call[1])).toEqual(['1m', 'off'])
   })
 
   it.each(['value', 'missing', 'error'] as const)(
@@ -115,7 +115,7 @@ describe('createScreenSaverRepository', () => {
       storage.readWeb.mockReturnValueOnce(null)
       const completion = Promise.withResolvers<unknown>()
       const started = Promise.withResolvers<void>()
-      storage.readNative.mockImplementationOnce(() => {
+      storage.readToss.mockImplementationOnce(() => {
         started.resolve()
         return completion.promise
       })
@@ -143,7 +143,7 @@ describe('createScreenSaverRepository', () => {
     async (value) => {
       const storage = createStorage()
       storage.readWeb.mockReturnValue(null)
-      storage.readNative.mockResolvedValue(value)
+      storage.readToss.mockResolvedValue(value)
       expect(await createScreenSaverRepository(storage).read()).toBe(
         value === '20m' ? '20m' : '10m',
       )
@@ -156,14 +156,14 @@ describe('createScreenSaverRepository', () => {
   it('should default when native reading fails', async () => {
     const storage = createStorage()
     storage.readWeb.mockReturnValue(null)
-    storage.readNative.mockRejectedValue(new Error('native unavailable'))
+    storage.readToss.mockRejectedValue(new Error('native unavailable'))
     expect(await createScreenSaverRepository(storage).read()).toBe('10m')
   })
 
   it('should keep separate repositories independent while one has a pending write', async () => {
     const firstStorage = createStorage()
     const completion = Promise.withResolvers<void>()
-    firstStorage.writeNative.mockReturnValue(completion.promise)
+    firstStorage.writeToss.mockReturnValue(completion.promise)
     const first = createScreenSaverRepository(firstStorage)
     const second = createScreenSaverRepository(createStorage())
     const pending = first.write('1h')

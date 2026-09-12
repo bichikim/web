@@ -95,13 +95,13 @@ describe('readRandomEventSettings', () => {
     async (_label, nativeValue) => {
       const nextSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
       Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-      const nativeRead = Promise.withResolvers<string | null>()
-      storageMocks.getItem.mockReturnValue(nativeRead.promise)
+      const tossRead = Promise.withResolvers<string | null>()
+      storageMocks.getItem.mockReturnValue(tossRead.promise)
       storageMocks.setItem.mockResolvedValue()
 
       const pendingRead = readRandomEventSettings()
       await writeRandomEventSettings(nextSettings)
-      nativeRead.resolve(nativeValue)
+      tossRead.resolve(nativeValue)
 
       await expect(pendingRead).resolves.toEqual(nextSettings)
       expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(
@@ -118,9 +118,9 @@ describe('readRandomEventSettings', () => {
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('Browser storage unavailable')
       })
-      const nativeRead = Promise.withResolvers<string | null>()
+      const tossRead = Promise.withResolvers<string | null>()
       storageMocks.getItem
-        .mockReturnValueOnce(nativeRead.promise)
+        .mockReturnValueOnce(tossRead.promise)
         .mockResolvedValue(JSON.stringify(nextSettings))
       storageMocks.setItem.mockResolvedValue()
 
@@ -129,9 +129,9 @@ describe('readRandomEventSettings', () => {
       await writeRandomEventSettings(nextSettings)
 
       if (result === 'resolved') {
-        nativeRead.resolve(JSON.stringify({maximumMinutes: 8, minimumMinutes: 4, version: 1}))
+        tossRead.resolve(JSON.stringify({maximumMinutes: 8, minimumMinutes: 4, version: 1}))
       } else {
-        nativeRead.reject(new Error('Native read unavailable'))
+        tossRead.reject(new Error('Native read unavailable'))
       }
 
       await expect(pendingRead).resolves.toEqual(nextSettings)

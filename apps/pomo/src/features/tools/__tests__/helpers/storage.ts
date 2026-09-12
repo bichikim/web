@@ -1,5 +1,5 @@
 import {vi} from 'vitest'
-import {parseStorageJson} from 'src/features/runtime-storage'
+import {parseStorageJson} from 'src/utils/runtime-storage'
 import {type ToolStorageAdapter} from '../../storage-adapter'
 
 export const createStorageFixture = () => {
@@ -9,7 +9,7 @@ export const createStorageFixture = () => {
   const setItem = vi.fn(async (key: string, value: string): Promise<void> => {
     native.set(key, value)
   })
-  const isNative = vi.fn(() => false)
+  const usesTossStorage = vi.fn(() => false)
   const writeWeb = vi.fn((key: string, value: unknown): unknown | null => {
     web.set(key, JSON.stringify(value))
     return null
@@ -19,12 +19,12 @@ export const createStorageFixture = () => {
     return null
   })
   const adapter: ToolStorageAdapter = {
-    isNative,
-    readNative: async (key, parse) => parseStorageJson(await getItem(key), parse),
+    readToss: async (key, parse) => parseStorageJson(await getItem(key), parse),
     readWeb: (key, parse) => parseStorageJson(web.get(key) ?? null, parse),
     removeWeb,
-    writeNative: async (key, value) => setItem(key, JSON.stringify(value)),
+    usesTossStorage,
+    writeToss: async (key, value) => setItem(key, JSON.stringify(value)),
     writeWeb,
   }
-  return {adapter, getItem, isNative, removeWeb, setItem, web, writeWeb}
+  return {adapter, getItem, removeWeb, setItem, usesTossStorage, web, writeWeb}
 }

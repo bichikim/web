@@ -47,8 +47,8 @@ export const createServiceSettingsStorage = (
   let writeRevision = 0
   const read = async (): Promise<ServiceSettings> => {
     const revision = writeRevision
-    const isNative = storage.isNative()
-    if (isNative) {
+    const usesTossStorage = storage.usesTossStorage()
+    if (usesTossStorage) {
       await pendingWrite
       if (revision !== writeRevision) {
         return read()
@@ -62,22 +62,22 @@ export const createServiceSettingsStorage = (
       ...DEFAULT_SERVICE_SETTINGS,
       start: storage.readWeb(LEGACY_KEY, parseStart) ?? '',
     })
-    if (!isNative) {
+    if (!usesTossStorage) {
       return legacySettings()
     }
     try {
-      const nativeSettings = await storage.readNative(STORAGE_KEY, parseSettings)
+      const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
       if (revision !== writeRevision) {
         return read()
       }
-      if (nativeSettings !== null) {
-        return nativeSettings
+      if (tossSettings !== null) {
+        return tossSettings
       }
       const webLegacy = legacySettings()
       if (webLegacy.start !== '') {
         return webLegacy
       }
-      const nativeStart = await storage.readNative(LEGACY_KEY, parseStart)
+      const nativeStart = await storage.readToss(LEGACY_KEY, parseStart)
       if (revision !== writeRevision) {
         return read()
       }
@@ -94,14 +94,14 @@ export const createServiceSettingsStorage = (
     writeRevision += 1
     const revision = writeRevision
     const webError = storage.writeWeb(STORAGE_KEY, value)
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       if (webError !== null) {
         throw new Error('Failed to persist service settings.', {cause: webError})
       }
       return
     }
     const write = pendingWrite.then(async () => {
-      await storage.writeNative(STORAGE_KEY, value)
+      await storage.writeToss(STORAGE_KEY, value)
       // A failed web replacement must not shadow the newly persisted native value.
       if (webError !== null && revision === writeRevision) {
         const error = storage.removeWeb(STORAGE_KEY)

@@ -1,12 +1,13 @@
 import {z} from 'zod'
 
 import {
-  createSerialNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 export const RANDOM_EVENT_SETTINGS_CHANGED_EVENT = 'pomo:random-event-settings-changed'
 
@@ -33,7 +34,7 @@ const randomEventSettingsSchema: z.ZodType<RandomEventSettings> = z
   })
   .refine((settings) => settings.minimumMinutes <= settings.maximumMinutes)
 let preferenceWriteRevision = 0
-const nativeWriter = createSerialNativeStorageWriter()
+const writeLatestToss = createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson)
 
 export const parseRandomEventSettings = (value: unknown): RandomEventSettings | null => {
   const result = randomEventSettingsSchema.safeParse(value)
@@ -62,18 +63,18 @@ export const readRandomEventSettings = async (): Promise<RandomEventSettings> =>
   }
 
   try {
-    const nativeSettings = await readNativeStorageJson(STORAGE_KEY, parseRandomEventSettings)
+    const tossSettings = await readTossStorageJson(STORAGE_KEY, parseRandomEventSettings)
 
     if (preferenceWriteRevision !== initialWriteRevision) {
       return readRandomEventSettings()
     }
 
-    if (nativeSettings === null) {
+    if (tossSettings === null) {
       return DEFAULT_RANDOM_EVENT_SETTINGS
     }
 
-    writeWebSettings(nativeSettings)
-    return nativeSettings
+    writeWebSettings(tossSettings)
+    return tossSettings
   } catch {
     if (preferenceWriteRevision !== initialWriteRevision) {
       return readRandomEventSettings()
@@ -97,9 +98,11 @@ export const writeRandomEventSettings = async (settings: RandomEventSettings): P
     return
   }
 
-  const nativeWriteError = await nativeWriter.write(STORAGE_KEY, snapshot)
-
-  if (webWriteError !== null && nativeWriteError !== null) {
-    throw new Error('Failed to persist random event settings.', {cause: nativeWriteError})
+  try {
+    await writeLatestToss(snapshot)
+  } catch (error: unknown) {
+    if (webWriteError !== null) {
+      throw new Error('Failed to persist random event settings.', {cause: error})
+    }
   }
 }

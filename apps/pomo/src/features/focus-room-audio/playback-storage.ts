@@ -1,15 +1,16 @@
 import {z} from 'zod'
 
 import {
-  createLatestNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 const PLAYBACK_STORAGE_KEY = 'pomo:focus-room-playback:v1'
-const nativeWriter = createLatestNativeStorageWriter(PLAYBACK_STORAGE_KEY)
+const writeLatestToss = createLatestStorageWriter(PLAYBACK_STORAGE_KEY, writeTossStorageJson)
 let playbackRevision = 0
 let playbackWriteRevision = 0
 let pendingStop: Promise<void> | null = null
@@ -77,7 +78,7 @@ const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
   }
 
   try {
-    const nativePlayback = await readNativeStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback)
+    const nativePlayback = await readTossStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback)
     if (playbackWriteRevision !== initialRevision) {
       return toPlaybackState(readWebPlayback())
     }
@@ -125,5 +126,5 @@ export const writePPlayback = async (state: PPlaybackState): Promise<void> => {
     return
   }
 
-  await nativeWriter.write(storedState)
+  await writeLatestToss(storedState).catch(() => undefined)
 }

@@ -259,7 +259,7 @@ describe('playback-storage', () => {
     },
   )
 
-  it('should converge native storage after older writes finish last', async () => {
+  it('should serialize native writes and finish with the latest value', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     const completions: Array<() => void> = []
     storageMocks.setItem.mockImplementation(
@@ -279,21 +279,16 @@ describe('playback-storage', () => {
       positionSeconds: 2,
       trackId: 'track-two',
     })
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
-
-    completions[1]?.()
-    await secondWrite
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(1))
     completions[0]?.()
-    await vi.waitFor(() => {
-      expect(storageMocks.setItem).toHaveBeenCalledTimes(3)
-    })
-    const repairedValue = storageMocks.setItem.mock.calls[2]?.[1]
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
+    const repairedValue = storageMocks.setItem.mock.calls[1]?.[1]
     expect(JSON.parse(repairedValue ?? '')).toMatchObject({trackId: 'track-two'})
-    completions[2]?.()
-    await firstWrite
+    completions[1]?.()
+    await Promise.all([firstWrite, secondWrite])
   })
 
-  it('should reconverge when playback changes during a repair write', async () => {
+  it('should persist playback requested while the next native write is pending', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     const completions: Array<() => void> = []
     storageMocks.setItem.mockImplementation(
@@ -302,44 +297,20 @@ describe('playback-storage', () => {
           completions.push(resolve)
         }),
     )
-
-    const firstWrite = writePPlayback({
-      isPlaying: true,
-      positionSeconds: 1,
-      trackId: 'track-one',
-    })
-    const secondWrite = writePPlayback({
-      isPlaying: true,
-      positionSeconds: 2,
-      trackId: 'track-two',
-    })
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
-    completions[1]?.()
-    await secondWrite
+    const first = writePPlayback({isPlaying: true, positionSeconds: 1, trackId: 'one'})
+    const second = writePPlayback({isPlaying: true, positionSeconds: 2, trackId: 'two'})
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(1))
     completions[0]?.()
-    await vi.waitFor(() => {
-      expect(storageMocks.setItem).toHaveBeenCalledTimes(3)
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
+    const third = writePPlayback({isPlaying: false, positionSeconds: 3, trackId: 'three'})
+    expect(storageMocks.setItem).toHaveBeenCalledTimes(2)
+    completions[1]?.()
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(3))
+    expect(JSON.parse(storageMocks.setItem.mock.calls[2]?.[1] ?? '')).toMatchObject({
+      trackId: 'three',
     })
-
-    const thirdWrite = writePPlayback({
-      isPlaying: false,
-      positionSeconds: 3,
-      trackId: 'track-three',
-    })
-    await vi.waitFor(() => {
-      expect(storageMocks.setItem).toHaveBeenCalledTimes(4)
-    })
-    completions[3]?.()
-    await thirdWrite
     completions[2]?.()
-    await vi.waitFor(() => {
-      expect(storageMocks.setItem).toHaveBeenCalledTimes(5)
-    })
-
-    const repairedValue = storageMocks.setItem.mock.calls[4]?.[1]
-    expect(JSON.parse(repairedValue ?? '')).toMatchObject({trackId: 'track-three'})
-    completions[4]?.()
-    await firstWrite
+    await Promise.all([first, second, third])
   })
 
   it('should wait for a pending stop before restoring playback', async () => {
