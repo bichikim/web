@@ -322,11 +322,11 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     }
 
     const delay = Math.min(MAXIMUM_TIMEOUT, Math.max(0, scheduled.availableAt - Date.now()))
-    const timerId = window.setTimeout(() => {
+    const timerId = globalThis.setTimeout(() => {
       runDelivery(scheduled.memo).catch(() => undefined)
     }, delay)
 
-    onCleanup(() => window.clearTimeout(timerId))
+    onCleanup(() => globalThis.clearTimeout(timerId))
   })
   return {
     skippedReminders: () => {

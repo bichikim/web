@@ -8,11 +8,11 @@ export interface PSilentMouthReturn {
 /** Debounces sustained silence before returning the rendered mouth to a closed shape. */
 export const createPSilentMouthReturn = (onReturn: () => void): PSilentMouthReturn => {
   let hasReturned = false
-  let timer: number | null = null
+  let timer: ReturnType<typeof globalThis.setTimeout> | null = null
 
   const cancel = () => {
     if (timer !== null) {
-      window.clearTimeout(timer)
+      globalThis.clearTimeout(timer)
       timer = null
     }
 
@@ -24,7 +24,7 @@ export const createPSilentMouthReturn = (onReturn: () => void): PSilentMouthRetu
       return
     }
 
-    timer = window.setTimeout(() => {
+    timer = globalThis.setTimeout(() => {
       timer = null
       hasReturned = true
       onReturn()

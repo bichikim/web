@@ -14,8 +14,11 @@ export const installPreloadErrorRecovery = (): PreloadErrorRecoveryRegistration 
     removePreloadErrorListener: (listener) =>
       window.removeEventListener('vite:preloadError', listener),
     scheduleGuardClear: (clearGuard) => {
-      const timeoutId = window.setTimeout(clearGuard, PRELOAD_RECOVERY_STABILIZATION_MILLISECONDS)
-      return () => window.clearTimeout(timeoutId)
+      const timeoutId = globalThis.setTimeout(
+        clearGuard,
+        PRELOAD_RECOVERY_STABILIZATION_MILLISECONDS,
+      )
+      return () => globalThis.clearTimeout(timeoutId)
     },
     writeGuard: (expiresAt) =>
       window.sessionStorage.setItem(PRELOAD_RECOVERY_SESSION_KEY, String(expiresAt)),
