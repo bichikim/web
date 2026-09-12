@@ -1,5 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {useAlbumTranslation} from '../../features/album-translation/use-album-translation'
 import {
   ALBUM_LOCALES,
@@ -62,7 +63,7 @@ export const AlbumTranslationFields = (props: AlbumTranslationFieldsProps) => {
           <div class="grid gap-2 sm:flex sm:items-center">
             <button
               class={TRANSLATE_BUTTON_CLASSES}
-              disabled={translation.isBusy() || props.values.ko.title.trim().length === 0}
+              disabled={translation.isBusy() || !isNonBlankString(props.values.ko.title)}
               onClick={handleTranslate}
               type="button"
             >

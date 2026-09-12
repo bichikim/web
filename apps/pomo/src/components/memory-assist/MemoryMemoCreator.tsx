@@ -1,4 +1,5 @@
 import {createMemo, createSignal, onMount} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import * as m from '@paraglide/message'
 import {
@@ -25,7 +26,7 @@ export const MemoryMemoCreator = () => {
     createReminderDraft({exactReminderAt: null, now: new Date(), recallMode: 'none'}),
   )
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
-  const canSave = createMemo(() => text().trim().length > 0)
+  const canSave = createMemo(() => isNonBlankString(text()))
 
   const handleTextInput = (nextText: string) => {
     setText(nextText)

@@ -9,6 +9,7 @@ describe('classifyAdminAccess', () => {
     [{session: null, user: null}, 'anonymous'],
     [{session: {}, user: {role: 'admin'}}, 'admin'],
     [{session: {}, user: {role: 'member'}}, 'forbidden'],
+    [{session: {}, user: {role: ['admin', 1]}}, 'forbidden'],
     [undefined, 'invalid'],
     [{session: null, user: {}}, 'invalid'],
   ] as const)('should classify %# session data', (sessionData, expected) => {

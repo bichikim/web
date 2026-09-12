@@ -1,3 +1,5 @@
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import type {PViseme} from '../lip-sync'
 import type {PVisemeTransition} from './scene-layer-state'
 
@@ -25,7 +27,6 @@ const DEFAULT_SCHEDULER: PMouthTransitionScheduler = {
 
 const SMOOTHSTEP_SCALE = 3
 const SMOOTHSTEP_CURVE = 2
-const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 const getSmoothedUnitProgress = (progress: number) => {
   const linearProgress = clampUnit(progress)
   return linearProgress * linearProgress * (SMOOTHSTEP_SCALE - SMOOTHSTEP_CURVE * linearProgress)

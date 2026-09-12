@@ -1,5 +1,6 @@
 // oxlint-disable no-magic-numbers -- PCM WAV header offsets and stereo sample layout.
 // oxlint-disable no-await-in-loop -- Each extension consumes the previous generated tail.
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import type {SoundProgress} from './assets'
 import type {InpaintAudio} from './inpaint'
 
@@ -66,7 +67,7 @@ export async function generateExtendedSound(
   overlapSeconds = DEFAULT_OVERLAP_SECONDS,
 ): Promise<Blob> {
   const plan = createGenerationPlan(seconds, overlapSeconds)
-  if (!prompt.trim()) {
+  if (!isNonBlankString(prompt)) {
     throw new Error('소리 설명을 입력해 주세요.')
   }
   if (running) {
