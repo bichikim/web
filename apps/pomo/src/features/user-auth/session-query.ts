@@ -22,7 +22,7 @@ const readTossSession = async (): Promise<boolean> => {
   }
 
   try {
-    await clearStoredAppSession()
+    await clearStoredAppSession(token)
   } catch (error: unknown) {
     console.error('Failed to clear invalid Toss session from storage', error)
   }
