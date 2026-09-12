@@ -1,0 +1,55 @@
+{
+  "consistency": [
+    {
+      "id": "retention",
+      "outcomes": ["duplicate", "duplicate", "duplicate"]
+    }
+  ],
+  "frozenUnchanged": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "actual": "duplicate",
+      "agrees": true,
+      "calls": 7,
+      "contextCharacters": 114,
+      "elapsedMs": 152633,
+      "expected": ["duplicate"],
+      "id": "retention",
+      "networkSearches": 1,
+      "referenceFound": true,
+      "referenceSelected": true,
+      "repeat": 1,
+      "searches": 1
+    },
+    {
+      "actual": "duplicate",
+      "agrees": true,
+      "calls": 7,
+      "contextCharacters": 114,
+      "elapsedMs": 93222,
+      "expected": ["duplicate"],
+      "id": "retention",
+      "networkSearches": 1,
+      "referenceFound": true,
+      "referenceSelected": true,
+      "repeat": 2,
+      "searches": 1
+    },
+    {
+      "actual": "duplicate",
+      "agrees": true,
+      "calls": 7,
+      "contextCharacters": 114,
+      "elapsedMs": 98622,
+      "expected": ["duplicate"],
+      "id": "retention",
+      "networkSearches": 1,
+      "referenceFound": true,
+      "referenceSelected": true,
+      "repeat": 3,
+      "searches": 1
+    }
+  ],
+  "snapshotUnchanged": true
+}

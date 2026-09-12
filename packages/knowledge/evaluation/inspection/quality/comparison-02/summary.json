@@ -1,0 +1,182 @@
+{
+  "labelsUnchanged": true,
+  "results": [
+    {
+      "classificationReplacements": 1,
+      "actual": "duplicate",
+      "correct": true,
+      "elapsedMs": 3440,
+      "expected": "duplicate",
+      "id": "bilingual-concurrency",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "duplicate",
+      "correct": true,
+      "elapsedMs": 4731,
+      "expected": "duplicate",
+      "id": "bilingual-timeout",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "conflict",
+      "correct": true,
+      "elapsedMs": 5065,
+      "expected": "conflict",
+      "id": "opposite-concurrency",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "conflict",
+      "correct": true,
+      "elapsedMs": 5407,
+      "expected": "conflict",
+      "id": "bilingual-opposite-concurrency",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "conflict",
+      "correct": true,
+      "elapsedMs": 4734,
+      "expected": "conflict",
+      "id": "different-timeouts",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "conflict",
+      "correct": true,
+      "elapsedMs": 4928,
+      "expected": "conflict",
+      "id": "bilingual-different-timeouts",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 13341,
+      "expected": "uncertain",
+      "id": "undefined-policy",
+      "queries": ["definition of policy r"],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 17568,
+      "expected": "uncertain",
+      "id": "bilingual-undefined-policy",
+      "queries": ["정책 r의 정의", "token refresh request must be serialized"],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 15377,
+      "expected": "uncertain",
+      "id": "production-undefined-policy",
+      "queries": ["definition of policy r", "policy r definition"],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "unrelated",
+      "correct": false,
+      "elapsedMs": 4940,
+      "expected": "uncertain",
+      "id": "staging-undefined-policy",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 4605,
+      "expected": "unrelated",
+      "id": "different-domains",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 4791,
+      "expected": "unrelated",
+      "id": "bilingual-different-domains",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 4873,
+      "expected": "unrelated",
+      "id": "complementary-audit",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 4888,
+      "expected": "unrelated",
+      "id": "bilingual-complementary-audit",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 4788,
+      "expected": "unrelated",
+      "id": "different-environments",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "classificationReplacements": 1,
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 4972,
+      "expected": "unrelated",
+      "id": "independent-timeout",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    }
+  ],
+  "snapshotUnchanged": true
+}

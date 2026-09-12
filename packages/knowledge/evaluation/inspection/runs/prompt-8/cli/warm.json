@@ -1,0 +1,191 @@
+{
+  "args": [
+    "doctor",
+    "/var/folders/x7/f3kxjy_13fd3g9jp5fhgv96h0000gn/T/knowledge-operations-CdhhwE",
+    "--model",
+    "gemma4:latest",
+    "--inspection-mode",
+    "contextual",
+    "--limit",
+    "1",
+    "--cache-dir",
+    "/tmp/knowledge-context-cli-XPiGZ5",
+    "--json"
+  ],
+  "exitCode": 0,
+  "diagnostic": {
+    "command": "doctor",
+    "checks": [
+      {
+        "counts": {
+          "units": 11
+        },
+        "name": "source",
+        "status": "pass"
+      },
+      {
+        "counts": {},
+        "name": "relations",
+        "status": "pass"
+      },
+      {
+        "counts": {
+          "units": 0
+        },
+        "name": "conflicts",
+        "status": "pass"
+      },
+      {
+        "name": "embedding",
+        "status": "pass"
+      },
+      {
+        "name": "schema",
+        "status": "pass"
+      },
+      {
+        "name": "storage",
+        "status": "pass"
+      },
+      {
+        "counts": {
+          "changed": 0,
+          "metadata": 0,
+          "missing": 0,
+          "stale": 0
+        },
+        "name": "snapshot",
+        "status": "pass"
+      }
+    ],
+    "healthy": true,
+    "semantic": {
+      "assessments": [
+        {
+          "assessment": {
+            "confidence": 0.9,
+            "kind": "uncertain",
+            "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+            "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+            "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+          },
+          "review": {
+            "citations": [],
+            "initial": {
+              "confidence": 0.9,
+              "kind": "uncertain",
+              "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+              "reason": "Both policies define a form of data persistence, but the specific conditions for '지속 저장' (left) and '영속 저장' (right) are different enough (e.g., '앱이나 브라우저를 다시 실행해도 유지' vs '앱 재시작과 정상 업데이트 후에도 유지') that a direct comparison requires clarification on the scope of '지속' vs '영속' in relation to app/browser state changes.",
+              "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+            },
+            "questions": [
+              "지속 저장과 영속 저장의 차이점은 무엇인가요?",
+              "지속 저장이 '앱이나 브라우저를 다시 실행해도 유지'하는 범위는 어느 정도인가요?",
+              "영속 저장이 '정상 업데이트 후에도 유지'하는 조건에 사용자가 직접 저장소를 지우는 행위가 포함되는지 명확히 할 수 있나요?"
+            ],
+            "selection": {
+              "eligible": 0,
+              "sources": [],
+              "truncated": false
+            },
+            "unresolved": [
+              "지속 저장과 영속 저장의 차이점은 무엇인가요?",
+              "지속 저장이 '앱이나 브라우저를 다시 실행해도 유지'하는 범위는 어느 정도인가요?",
+              "영속 저장이 '정상 업데이트 후에도 유지'하는 조건에 사용자가 직접 저장소를 지우는 행위가 포함되는지 명확히 할 수 있나요?"
+            ]
+          },
+          "cacheKey": "2f9133d22c057fdbb254387598c95a24abf064527d846c9e563ab2d93b2b3800",
+          "left": {
+            "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+            "docId": "operations/lifecycle",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+            "docId": "operations/persistence",
+            "unitId": "policy"
+          }
+        }
+      ],
+      "cached": 1,
+      "consideredUnits": 11,
+      "eligibleUnits": 11,
+      "retrieval": {
+        "candidatePairs": 55,
+        "errors": [],
+        "neighborsPerUnit": 10,
+        "seedLimit": 20
+      },
+      "totalPairs": 55,
+      "truncated": true,
+      "errors": [],
+      "limit": 1,
+      "promptVersion": 8,
+      "repoId": "demo/inspection-operations",
+      "selectedPairs": 1,
+      "sourceUnits": [
+        {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      ],
+      "status": "complete",
+      "workspaceId": "refs/heads/main",
+      "model": {
+        "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+        "name": "gemma4:latest"
+      }
+    }
+  }
+}

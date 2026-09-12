@@ -1,0 +1,937 @@
+{
+  "authority": "predeclared-synthetic-hypotheses-not-user-approved",
+  "cases": [
+    {
+      "id": "receipt",
+      "group": "source-sufficient",
+      "left": "이 규칙은 운영 환경의 결제 완료 알림에만 적용한다. 결제 완료 시 이메일을 정확히 한 번 발송한다.",
+      "right": "운영 환경에서 결제가 완료될 때 이메일 한 통을 발송한다. 이 규칙은 결제 완료 알림만을 다룬다.",
+      "references": [],
+      "expected": "duplicate",
+      "requiredEvidence": [],
+      "reason": "환경, 실행 조건, 발송 수가 명시적으로 같다.",
+      "pair": {
+        "left": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:0b542527da89f8e4f74ad1f09be04ecdc47a9617ccd64239137dde6c59f6edde",
+            "docId": "case/receipt",
+            "endLine": 11,
+            "path": "docs/cases/receipt.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 9,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 A {#left}\n\n이 규칙은 운영 환경의 결제 완료 알림에만 적용한다. 결제 완료 시 이메일을 정확히 한 번 발송한다.",
+            "title": "규칙 A",
+            "type": "rule",
+            "unitId": "left",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "1e228a10-b642-55fb-89d0-f434e9624ad6"
+        },
+        "right": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:9bc3064b59d766c74d07567a379655e9b468fb160aaa9cf1bd3ccd09710b7640",
+            "docId": "case/receipt",
+            "endLine": 15,
+            "path": "docs/cases/receipt.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 13,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 B {#right}\n\n운영 환경에서 결제가 완료될 때 이메일 한 통을 발송한다. 이 규칙은 결제 완료 알림만을 다룬다.",
+            "title": "규칙 B",
+            "type": "rule",
+            "unitId": "right",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "21b71978-5ba2-5f02-9b90-dc8a35b9f990"
+        }
+      }
+    },
+    {
+      "id": "approval",
+      "group": "source-sufficient",
+      "left": "운영 환경의 모든 수동 배포에는 실행 전 승인자 두 명의 승인이 반드시 필요하다. 예외는 없다.",
+      "right": "운영 환경에서 수동 배포를 실행할 때 승인자가 한 명뿐이어도 실행을 허용한다.",
+      "references": [],
+      "expected": "conflict",
+      "requiredEvidence": [],
+      "reason": "같은 수동 배포에서 한 명의 승인만 있는 경우 A는 금지하고 B는 허용한다.",
+      "pair": {
+        "left": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:a2ab0c837aab7589c618c9af650213874304ea9bc321d0fe282a50afdc459fcd",
+            "docId": "case/approval",
+            "endLine": 11,
+            "path": "docs/cases/approval.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 9,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 A {#left}\n\n운영 환경의 모든 수동 배포에는 실행 전 승인자 두 명의 승인이 반드시 필요하다. 예외는 없다.",
+            "title": "규칙 A",
+            "type": "rule",
+            "unitId": "left",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "1ec3e513-d61a-5f3c-b2a2-9194e8f4fb35"
+        },
+        "right": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:9f247abcdc78e278a62f12dc1e3e66aaa53bb7f5237d405edbd539350d8a6656",
+            "docId": "case/approval",
+            "endLine": 15,
+            "path": "docs/cases/approval.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 13,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 B {#right}\n\n운영 환경에서 수동 배포를 실행할 때 승인자가 한 명뿐이어도 실행을 허용한다.",
+            "title": "규칙 B",
+            "type": "rule",
+            "unitId": "right",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "2cf7564c-df66-5302-bd11-c55ff8dd65c0"
+        }
+      }
+    },
+    {
+      "id": "retention",
+      "group": "reference-required",
+      "left": "운영 환경의 감사 기록은 보존 등급 R7을 적용한다.",
+      "right": "운영 환경의 감사 기록은 생성 후 7일 동안 보존하고, 7일이 되는 즉시 삭제한다.",
+      "references": [
+        {
+          "id": "reference/retention",
+          "text": "이 평가 시스템에서 보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다. 감사 기록에도 동일하게 적용하며 별도 예외는 없다."
+        }
+      ],
+      "expected": "duplicate",
+      "requiredEvidence": ["reference/retention"],
+      "reason": "R7의 명시적 정의가 B와 같다. 이름만으로 7일 보존 및 즉시 삭제를 추정하면 안 된다.",
+      "pair": {
+        "left": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:35fe3fa7f198383840db0609e5c1496420c9108c6f4d9603c538b8cea33242e3",
+            "docId": "case/retention",
+            "endLine": 11,
+            "path": "docs/cases/retention.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 9,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 A {#left}\n\n운영 환경의 감사 기록은 보존 등급 R7을 적용한다.",
+            "title": "규칙 A",
+            "type": "rule",
+            "unitId": "left",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "dbc7c6fc-ba7b-5d18-84f9-1666b243b45b"
+        },
+        "right": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:d2318159f5ef3c20be94181b700d2da1fc2e4066b99c8cc3d989d5e0b6f81804",
+            "docId": "case/retention",
+            "endLine": 15,
+            "path": "docs/cases/retention.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 13,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 B {#right}\n\n운영 환경의 감사 기록은 생성 후 7일 동안 보존하고, 7일이 되는 즉시 삭제한다.",
+            "title": "규칙 B",
+            "type": "rule",
+            "unitId": "right",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "06ebfc7e-09d6-520d-a5d4-635a540cae92"
+        }
+      }
+    },
+    {
+      "id": "dispatch",
+      "group": "reference-required",
+      "left": "운영 환경의 주문 발송은 출고 절차 K2를 따른다.",
+      "right": "운영 환경의 주문은 검수 기록을 남기지 않은 상태에서도 발송을 허용한다.",
+      "references": [
+        {
+          "id": "reference/dispatch",
+          "text": "출고 절차 K2는 모든 주문에 대해 검수 기록을 먼저 저장한 뒤 발송하는 절차다. 검수 기록이 없는 주문은 발송할 수 없으며 예외는 없다."
+        }
+      ],
+      "expected": "conflict",
+      "requiredEvidence": ["reference/dispatch"],
+      "reason": "K2의 정의를 확인하면 검수 기록 없는 주문의 발송 허용 여부가 반대다.",
+      "pair": {
+        "left": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:0c428115742d6359232ad64f14c0ba44650574c60d75551636e7fb4f7d767fcf",
+            "docId": "case/dispatch",
+            "endLine": 11,
+            "path": "docs/cases/dispatch.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 9,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 A {#left}\n\n운영 환경의 주문 발송은 출고 절차 K2를 따른다.",
+            "title": "규칙 A",
+            "type": "rule",
+            "unitId": "left",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "80760b3c-1ae0-5f96-9fc7-bb3a8874deda"
+        },
+        "right": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:49e661f3222148bd1d7235c29fcfbb4aafe0f98cad93eebc68805c536314de12",
+            "docId": "case/dispatch",
+            "endLine": 15,
+            "path": "docs/cases/dispatch.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 13,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 B {#right}\n\n운영 환경의 주문은 검수 기록을 남기지 않은 상태에서도 발송을 허용한다.",
+            "title": "규칙 B",
+            "type": "rule",
+            "unitId": "right",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "cdc75508-db99-5998-ab98-1fa352fef086"
+        }
+      }
+    },
+    {
+      "id": "handover",
+      "group": "insufficient",
+      "left": "운영 환경의 야간 인계에는 담당자 두 명의 확인이 필요하다.",
+      "right": "운영 환경의 인계 작업 J는 담당자 한 명의 확인만으로 완료할 수 있다.",
+      "references": [
+        {
+          "id": "reference/handover",
+          "text": "인계 작업 J는 담당자 교대 시 수행한다. J가 낮에 실행되는지 밤에 실행되는지는 아직 정하지 않았다."
+        }
+      ],
+      "expected": "uncertain",
+      "requiredEvidence": [],
+      "missing": "인계 작업 J가 야간 인계에 해당하는지",
+      "reason": "J의 실행 시간에 따라 두 명 확인 규칙의 적용 여부가 달라지며 보조 문서도 시간을 확정하지 않는다.",
+      "pair": {
+        "left": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:5fd80a8fae2b8cc94416df4726155561c7411d4f9b0287371b0cf73765efd8d6",
+            "docId": "case/handover",
+            "endLine": 11,
+            "path": "docs/cases/handover.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 9,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 A {#left}\n\n운영 환경의 야간 인계에는 담당자 두 명의 확인이 필요하다.",
+            "title": "규칙 A",
+            "type": "rule",
+            "unitId": "left",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "ef6b12ee-4110-5492-ba8c-0bc88349c69f"
+        },
+        "right": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:0b52309b99a498de71b772bd73fd3cd74a319fe977da712ac6720e1561f6a958",
+            "docId": "case/handover",
+            "endLine": 15,
+            "path": "docs/cases/handover.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 13,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 B {#right}\n\n운영 환경의 인계 작업 J는 담당자 한 명의 확인만으로 완료할 수 있다.",
+            "title": "규칙 B",
+            "type": "rule",
+            "unitId": "right",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "4f6a3c0f-ba75-5e90-a15b-1ab709042f5f"
+        }
+      }
+    },
+    {
+      "id": "priority",
+      "group": "insufficient",
+      "left": "운영 환경의 고객 문의에는 응답 등급 P3을 적용한다.",
+      "right": "운영 환경의 고객 문의는 접수 후 3시간 이내에 첫 응답을 보낸다.",
+      "references": [
+        {
+          "id": "reference/priority",
+          "text": "응답 등급 목록에는 P1, P2, P3이 있다. 각 등급의 응답 시간과 우선순위는 아직 정하지 않았다."
+        }
+      ],
+      "expected": "uncertain",
+      "requiredEvidence": [],
+      "missing": "P3의 첫 응답 기한",
+      "reason": "P3이라는 이름에 숫자 3이 있어도 3시간을 뜻한다는 근거가 없다.",
+      "pair": {
+        "left": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:50ce2e9f27263a65f7332fff667f2d3c7d73afba79bceb731e40e045c724d445",
+            "docId": "case/priority",
+            "endLine": 11,
+            "path": "docs/cases/priority.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 9,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 A {#left}\n\n운영 환경의 고객 문의에는 응답 등급 P3을 적용한다.",
+            "title": "규칙 A",
+            "type": "rule",
+            "unitId": "left",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "b4e6c032-b113-527e-a042-f974d9a48f6b"
+        },
+        "right": {
+          "payload": {
+            "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+            "contentHash": "sha256:e40e3f19b396c3383a7bdce70e58abe659a7e80b2ceb235b735146b326e92ac2",
+            "docId": "case/priority",
+            "endLine": 15,
+            "path": "docs/cases/priority.md",
+            "relations": [],
+            "repoId": "demo/inspection-holdout",
+            "startLine": 13,
+            "status": "active",
+            "tags": [],
+            "text": "## 규칙 B {#right}\n\n운영 환경의 고객 문의는 접수 후 3시간 이내에 첫 응답을 보낸다.",
+            "title": "규칙 B",
+            "type": "rule",
+            "unitId": "right",
+            "workspaceId": "refs/heads/main"
+          },
+          "pointId": "27ab96a1-f44b-5d68-b682-8d8dc61678ba"
+        }
+      }
+    }
+  ],
+  "frozen": {
+    "cases": "079b698526463acbcca5a7ff3c7570955eb2f73a605e2a8331d746268b4de2fd",
+    "corpus": {
+      ".knowledge.yml": "347f215c24263d6be105c7dec0155efa17c1cac1c451c698fdd3ea32f39e466d",
+      "docs/cases/approval.md": "34744f49ad309b977b1729efb3141cb7985fc5a02dcb38e2523fdae7b32fb8ca",
+      "docs/cases/dispatch.md": "66f468b71233e8717ed4c49f5da7b3f02cc84d38b1db5b4e435887ae071fdb0a",
+      "docs/cases/handover.md": "3604d2a5862fec558ffcf68e00f89c9e91aab42a1e9830e192d8d26ac99353e8",
+      "docs/cases/priority.md": "965d66544f24c87e4cfe39eec7f43c52dfdef8a9212c98cdb89771d7f0404a4c",
+      "docs/cases/receipt.md": "67030923f3a64a4bdb0ecae8e48dadc7e8c3f68a8744b6eee6aa3194c78608ab",
+      "docs/cases/retention.md": "62715845452c51a43b103bfc07edc56bccd614e77121711c2dac16c659b69c78",
+      "docs/reference/dispatch.md": "ece0643ad10524b8de05355d7007ccb7a2f7fc9140644ab76ddcb6168527aa81",
+      "docs/reference/handover.md": "c6d2f602d99ba20ad4197a20805fed8bec7076d7dace7dc13c41682f631e4cb6",
+      "docs/reference/priority.md": "bc15f10ec64624dfba7e76268aaf998e6dd1dea68dd9e69008afb081d705d95f",
+      "docs/reference/retention.md": "9cdd7c55d603f3ce20d98ed58b745e0b9d4a5f9fa17b2b68f6bd55e34eaa7996"
+    },
+    "product": {
+      "adapters/__tests__/git.spec.ts": "ca10dcc1a0ba66a3e7ac79cad99483592a4e3d5f5e8c8e500bcb0ebc46905018",
+      "adapters/__tests__/inspection.spec.ts": "4b4c7215a8c5da6e351f0abb8e5fc1fa813e53c58d679a768220b22700e3c951",
+      "adapters/__tests__/ollama.spec.ts": "362f6f73c90f92faa0853680e595174b8daca2534b1cf1e9f2e4c9f0d4b60a36",
+      "adapters/__tests__/qdrant.neighbors.spec.ts": "799ca39f1db2a91f3d5bb5ccbbde25d5a2ae00a3b9e9fdb2c9cd06d749eb7e51",
+      "adapters/__tests__/qdrant.spec.ts": "31053febff99d200d3577c3b492f217879065326c0263ca3d88c0d64370d74bc",
+      "adapters/__tests__/questions.spec.ts": "7e5061695efab61529230a2becb22b4d2cc927ecc6fadc9ac11f471027cc3035",
+      "adapters/experimental/__tests__/audit.spec.ts": "da92b6fc64a70eb7c4aec8537471ff051abb24f1196e0d72187d5e4ec7f8ee65",
+      "adapters/experimental/__tests__/contextual.spec.ts": "c21955cadd1b4aa1307b00f37beefb7528fe5a264dd6981309902dedc2eebc3c",
+      "adapters/experimental/__tests__/research.spec.ts": "0d48ca9b71581ef587e64b7af674076650dc545731e2241ff41e6956a4c0e0b8",
+      "adapters/experimental/__tests__/separated.spec.ts": "690a43ca28a94ce90163cd6d3cdf3c7b4f5934c7229453d0fad3953f27cebeb4",
+      "adapters/experimental/audit.ts": "80d860a349533f220e67b07026bd7dc5382cfa623dc18891917c4016fc774114",
+      "adapters/experimental/contextual.ts": "973798ae26b262ad2d251b7d8ab99eef1ea5c60008533ddd79a8f7f16ef36f4d",
+      "adapters/experimental/index.ts": "aab5547f418f5c770dbe0528f84bb327b256da1038cda16d390aa712a4c274ae",
+      "adapters/experimental/README.md": "9e7d169852e44f3e4ce5da696e1bf5742462f551726e6d314002c56932e09197",
+      "adapters/experimental/research.md": "7b442ebf7014ed0ca6fc0da460b35ddcc03cf50f4087cc98cf543adf0403c176",
+      "adapters/experimental/research.ts": "6a4400419b412d05f5ad6ddf7e9f8fd652a415ac17500d8ee127e629440c8334",
+      "adapters/experimental/separated.ts": "6621571fed2720063791eb5a95c74dffefa383e927a87bf74cc7120841c9d980",
+      "adapters/git.ts": "c5a8337e7bd4626064b452f830d569709a6aa8dd94fdbf821720594f8bccba5e",
+      "adapters/index.ts": "7b6f698b2a2420e4ac92c299379f12f2486a73b8c82416394b75c2e5ae74d729",
+      "adapters/inspection.ts": "e407da38f6669260ae6804de3ee52404922edab84ea48fc6d54e1608a9506b91",
+      "adapters/ollama.ts": "294fbf22e260ae59422774fbaf3eab393474482857a5e03948271ffb3631974b",
+      "adapters/qdrant.ts": "7725a5d06b45f45eb819a0421369c5dd868bda2767b0cdc843f11e281cfac504",
+      "adapters/questions.ts": "76e43843f82aa982487f6830ff5dc51d91ce68d0ad780249188fe470c145c0d4",
+      "cli/__tests__/arguments.spec.ts": "eb5dea95b360c98192f6a05b25d779b380355771379c7e2393b8e6c40d1b2d96",
+      "cli/__tests__/artifacts.spec.ts": "70a0a9839473b902e188c35cf8ade3ad0e2a1dbd48d55b9da6513987539239ff",
+      "cli/__tests__/evaluation.spec.ts": "ffca0d6e6e1aa91684de787da7038f8cba15f2a6cf988d57f31a186609d3269f",
+      "cli/__tests__/generation.spec.ts": "c212effb8eaff366186db5e9dc0ee8c08676ee1704b837bb4425414c27dadc3a",
+      "cli/__tests__/inspection-evaluation.spec.ts": "8ce1ada14e9c0f7e94d913141e2554de31f4ef9310ba3fd34318049ae80351b0",
+      "cli/__tests__/inspection.spec.ts": "800960a01ebc62644739f7ff44d897b88d106a5918abbb2da9b205524fac1e25",
+      "cli/__tests__/links.spec.ts": "d3f304bd41259cca2e72746f7c636c0cdc2a841abd808e23bd75c3fdf51df259",
+      "cli/__tests__/lock.spec.ts": "728a1c3e0ec3312d94b09b28bd87a2079b4d5ef467f923a01e5b1136dbafdcb6",
+      "cli/__tests__/main.commands.spec.ts": "d487bf7c4320140c25627899a3bf9bf9ae26ba71a45ed1d75287ef185b7eb4ae",
+      "cli/__tests__/main.eval.spec.ts": "94a386cc36e526fb1da5b48cb606e07a3602d928e23edcb474ff5ad8583d849d",
+      "cli/__tests__/main.generation.spec.ts": "3f1f9658272fd97bb4f0a67df737a9b6bd31d453f911aa387c3868bb23026650",
+      "cli/__tests__/main.inspection-evaluation.spec.ts": "9534ed3a2ee75588b73946ff39885324472648ebf6fe6f2eb1537022101b5d17",
+      "cli/__tests__/main.inspection.spec.ts": "806153a866e2c91069de9b7878536f718e80e730977e63e8ca7c11a00505d992",
+      "cli/__tests__/main.spec.ts": "8b2e5b10d4c2257d5fee6164fa5271acb72773db8cf5b21d723a74a306ce9ebd",
+      "cli/__tests__/runtime.maintenance.spec.ts": "3967c6f6cd0841f044b8689a0bf5bef4c9b3230e6dcfae870873822818878679",
+      "cli/arguments.ts": "afa2f40a827afcb7f5ea6c3dd45e2595b97bb3496b871416b212bbc6c5a7435f",
+      "cli/artifacts.ts": "1ade1f4c3c5f0a9419cab18d74db6977ca49ada045cf0c7dd97c28b897934536",
+      "cli/evaluation.ts": "750f5f423a86e521facfc1f2dc7d6d32c00a499e83accb9f625a64c7f3b7c255",
+      "cli/generation.ts": "4164910777f00114b743dc36c54133506968c4e5d1fbf4f8492a8af5805af80e",
+      "cli/index.ts": "49860ba533e50816dc1706c465cfea404ce9cec832472c3b1a9ff5f235b08686",
+      "cli/inspection-evaluation.ts": "a522b592cdc1377b496866a203e0a0bc1f60bc8a3398b9d2c2a1ed6681549576",
+      "cli/inspection.ts": "070f19993ae80b8e36f644e79d1546a74605524b42dffbb447aabd80f2d6852c",
+      "cli/links.md": "52465fef5784588a13d6ce9e9bbfd8e07a528e8663157a38e7efe1e6a363f8f5",
+      "cli/links.ts": "54cfb15b1ab46c54f25fd5ad3d5f63cc6e7c70e9a8d310fdb0ffa49d868d374e",
+      "cli/lock.ts": "0c2719a065b84400305784ee8452dedd59ff205ac4216fec0ad4bdfc1ed0b905",
+      "cli/main.ts": "d1e6079ec77bd3c161efbc80eb5735f03d6ea53d51475d91c6b29c7859436081",
+      "cli/runtime.ts": "19170c0cedb42d333c8b3acf312a862cde06d53ad2255d6b8489949393f3682a",
+      "config/__tests__/parse.spec.ts": "07c0cd1d41edd008b7b9fcdb5209a04c10108ef4b7b94a933fb5a322208b9da4",
+      "config/__tests__/parse.yaml-error.spec.ts": "13c97ca4344c406c3dd5976c5bd1f1018e3536bf11a0dc5677e4fa90bb673991",
+      "config/__tests__/runtime.spec.ts": "2605861dd65b42c3034368ce0c417f27fe786b63579309ffbd825a23623ac8a7",
+      "config/index.ts": "4f9308fa9146f075e0166f6f00c3fe348fc8d82f4a35f3e09ba4840c08139125",
+      "config/parse.ts": "f92589bdb7efa8e377456a1cd26c063604fd5af811bf0210e9a2ba650f972da0",
+      "config/runtime.ts": "e41c83b74348a4cb772058f45ab5795894f7e1a467fe69b147540d92a15946b1",
+      "domain/__tests__/content-hash.spec.ts": "1f5fbaafe1262d6529069ae8c900a039dddfcef9a0e390ab44f29d875462f7f1",
+      "domain/__tests__/point-id.spec.ts": "c56928f0776cdaba993f77d22b2b6e43c55df100d20e60a3532bc515515863f7",
+      "domain/__tests__/repository-id.spec.ts": "d0db13b6b964d786fa1807cd8b6f691178098c25d5b4a852d8434a79bb4f7e93",
+      "domain/content-hash.ts": "8491e301e3f03b9c506356dd8d77c8e27d939a20a8cebf65d8ef13c5da6c04e8",
+      "domain/index.ts": "01ac7b739d95e684d42fd760afaecd68ddef96d685651d00ee7d0f8da1427210",
+      "domain/point-id.ts": "17bb8419f672e645fc12e541c616f51b1559171e0c4bc9637c529a88202cd9a7",
+      "domain/repository-id.ts": "224971edb532197f049850656b3df16bcd872644f0c24be88355a085c358b421",
+      "embedding/index.ts": "4a526664aab4e9706286d789dab62cac03fa2215dbbbf44c7603406291064399",
+      "embedding/provider.ts": "7284e4fb16ac5e960616f01d0d277f0bb7395b4038280f6169c111ec5e84aea1",
+      "evaluation/__tests__/generation.spec.ts": "937018d7a5a38ae4cb237c6de52ddeb60d09525da7a3bde8e66b597edbb63e29",
+      "evaluation/__tests__/inspection.spec.ts": "65d0c2f27f875962957e154333c0f732f6c97d1f49445bd5cfe3e0a503caba54",
+      "evaluation/__tests__/report.spec.ts": "6c0e9ccdb69a3566fb107a8b8fad8703a55cc9affca7119b7b89a4724dd71b84",
+      "evaluation/generation.ts": "77a2ceb13d0862ee854a9a4fa8b89c930f7f75afb7748f3115f6b2f65c764fe9",
+      "evaluation/index.ts": "b8cf99bbebf4ccb50ee3e82bd89851756d258a53ebb9c63e3b555980ea627686",
+      "evaluation/inspection.ts": "3398921f6e1ff630623b44ebdddb1dd6eda826f76bf4666024ef8a034a5f7554",
+      "evaluation/report.ts": "0b8df0c43e72f6604e7d1d5b743476ed48544e838c3bf5cef0f042177137554e",
+      "index.ts": "cde3f04e223d0cab8de6a70ce98ef3a912f84102d48ae864c589853087ce4736",
+      "indexing/__tests__/doctor.spec.ts": "f90e260b8a06b8b0ad42774feef0fb81aa66a7d6edeed0f0c9b764f7fdf5cbc8",
+      "indexing/__tests__/execute.spec.ts": "d58b5a94780b1c92a5512a22faed266aecb0d9c28219a14c1a65ea455b33f456",
+      "indexing/__tests__/plan.spec.ts": "92496f43c15f9d73436c53376706f805fc5f846828ed8cea6f0711d610d6647e",
+      "indexing/__tests__/prepare.spec.ts": "422736f8f204ed3d052cc0538762129d5a5f097a04d79a755814ca19d59d024f",
+      "indexing/__tests__/read.spec.ts": "d8d1e44bbf27353950da0ebcd02e0067b621d26a42975d8ec1d24b2082100438",
+      "indexing/__tests__/related.spec.ts": "329fee6e3ccab66ac94363e61abee7af0ec308b0883a28785202f0b306998ec8",
+      "indexing/doctor.ts": "d6e685e9c89c08440e3c05aebdd485ec22377c2f86ed6bc081153945acf15814",
+      "indexing/execute.ts": "010da5b922c1ce46507b9caa56cc4db2df0bf8c180fc94b031d308e5cf44d2c2",
+      "indexing/index.ts": "e6d829039ea9c56665f986e45a669b981b91f304e3ef85166c82ca3c328f8dc5",
+      "indexing/plan.ts": "90b135f76e3cb42248f8111bcba5174a53cf1bc1c966011d439ab9cdbdb0c669",
+      "indexing/prepare.ts": "6c899acb15bf86b1ccde375fc39345730fb40dd25857ca689201650aa4ab99be",
+      "indexing/read.ts": "e6e1132c9c45dd32135f42b99f04f3aaf48fb3a226a03af2fa11a19d848699e0",
+      "indexing/related.ts": "761a8d1cf04d43d7ecf7f07ce31a8b04e34971bce2ce451a67935946f498edb7",
+      "indexing/store.ts": "d46b794878529ddd16935391c8e8bfb3e3f63b31bb75a5a46a301c9b3ed1df62",
+      "inspection/__tests__/audit.spec.ts": "f3e562725d840683430d245a15adf76884bdc1e4d89cf25107e340f46eca3e35",
+      "inspection/__tests__/context.spec.ts": "041963c0481623062fcf3bb0828a6c68d37a366444ead3e71d230f8468030aee",
+      "inspection/__tests__/evidence.spec.ts": "0e382a6a47ab7a78e9b9fa9a3c2631057e319df5b5d69a3dace28ab1a8734c9b",
+      "inspection/__tests__/inquiry.spec.ts": "2f484179328f9ce8c532d7df781a54200a6af9bfc992e35bf577344f527c8495",
+      "inspection/__tests__/pairs.spec.ts": "538463191f136ef7e25b7dcd28dfa9dd162166c01aec03effc2152ba041bae00",
+      "inspection/__tests__/research.spec.ts": "8da4f82360e31fa3169ebe5b846508c0ef0db6d3b7ee7b0c93a005e2b382e545",
+      "inspection/__tests__/retrieval.spec.ts": "89269acb0cbef9bdd75f1725fbf4550ba8355623d79139b349449c7f91081ccf",
+      "inspection/audit.ts": "8b7e11843fd2cc1a14b0cdcd39ed5b60b4f4df5bbeccbfe8632384f46c18cb24",
+      "inspection/context.ts": "1251fe690d91d213a8624862fce5ba93f26aadac462076dc8eac538a6318c858",
+      "inspection/evidence.ts": "50c93ddb44d14188b032f2486b97071aa787318dba95df3883d94cce91088347",
+      "inspection/index.ts": "501bb09657426546670c003c227e6900a46aab6cac76ddeebd442bb9b029459b",
+      "inspection/inquiry.md": "4e37cb7d1d1fac08682f87b7f3744dc9b178b946eaa30d6e0f2049944d2ec772",
+      "inspection/inquiry.ts": "6e45b94f02b00ef6f166b1d0abcd4c929b46469d0ecd14a9bd0c0caff60671e2",
+      "inspection/pairs.ts": "eba6b096c35386ae179ccd17ee6722cd5e082e443ac91b445a00f845da080052",
+      "inspection/research.ts": "430fe480d742597a963af3dc01aee5ea94891f4e584d584c7feb172b5b08758d",
+      "inspection/retrieval.ts": "9e8cef435da6c54b7708a40a46ac9166065b4ff2039cbd8fb18dfd4f80d9c4a9",
+      "mcp/__tests__/server.spec.ts": "393fb345bf256952f1eab8f40de11e2f372963c1e62a2cc8c9215b89ae33978a",
+      "mcp/__tests__/stdio.spec.ts": "5b00394a117abc902c79dcd7c644ed425c58e1b30569415bee10e83f8ca0951a",
+      "mcp/index.ts": "6e11dc5645450517ce973bfba90ccf0586a2c3667e311e6fbe929c5e18f6b42f",
+      "mcp/server.ts": "a59c91758f46517db3729923e5598f52cbda3b9c749393fc89a11974395729e0",
+      "mcp/stdio.ts": "b1d5f5c5b557013775644f2eb20eaa297249ab8b5096a0412e70169d221d007b",
+      "parsing/__tests__/document.spec.ts": "7e526f2a247761d8dff79cc1968cc6bf2801056a8ccba087bb6b48d02f304d33",
+      "parsing/__tests__/relations.spec.ts": "9e2bf6b63524f9f984a92a84fc12f41f2aacfb4913977f34636c233b34f160b8",
+      "parsing/document.ts": "a49d5dbd23f14caa3e104381aa7670850985dd72679af654c173e9eb20197703",
+      "parsing/index.ts": "f4ec9b25eaee903e9cb0dc05370f25a1e2e14590ffa202021a5c6c29999a9eb8",
+      "parsing/relations.ts": "1fdb31a0b50c27133677efa0685e3249bbda8b4e7cf986c26acd8f43e4cc7231",
+      "source/__tests__/files.spec.ts": "d637d1e24f55b96adacbb6162ec77910799d7b2c43ed61ebb5e58bfeb8048416",
+      "source/__tests__/repository.spec.ts": "7bd442a29a12efe85c06e8c6b9deb647b636abfb9fad06e55cc017d45ab35e45",
+      "source/files.ts": "a8e14ce29a059543bb5b76475d6b17503f0f4eaecce6899e862343d50c1ae76c",
+      "source/index.ts": "faf58a8ef16b5e2ecd39ba74487f82221cd9966e6fc37aeb42b09c24007a9910",
+      "source/repository.ts": "937639cad9dc547bdab19cad7784438a1340913d0203a00f04ee75b549a20316"
+    },
+    "runner": "91b49678fa946423b7240808f378cb818fa57cd596b15230397a46032d4e52dd"
+  },
+  "indexed": {
+    "command": "index",
+    "diagnostics": [],
+    "documents": 10,
+    "points": 22,
+    "repoId": "demo/inspection-holdout",
+    "workspaceId": "refs/heads/main",
+    "deleted": 0,
+    "embedded": 22,
+    "metadata": 0,
+    "unchanged": 0
+  },
+  "model": {
+    "digest": "637cc0ff15709212de4aa694be67e3af5e80533ca538c86ad69c53c511e40840",
+    "name": "gemma4:31b-mlx"
+  },
+  "points": [
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:d2318159f5ef3c20be94181b700d2da1fc2e4066b99c8cc3d989d5e0b6f81804",
+        "docId": "case/retention",
+        "endLine": 15,
+        "path": "docs/cases/retention.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 13,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 B {#right}\n\n운영 환경의 감사 기록은 생성 후 7일 동안 보존하고, 7일이 되는 즉시 삭제한다.",
+        "title": "규칙 B",
+        "type": "rule",
+        "unitId": "right",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "06ebfc7e-09d6-520d-a5d4-635a540cae92"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:9d0e7071b901e94e5d0e2ea674f2aa4f0be192aa33f701c4e8ad3feb083b222e",
+        "docId": "reference/retention",
+        "endLine": 9,
+        "path": "docs/reference/retention.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# retention\n\n이 평가 시스템에서 보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다. 감사 기록에도 동일하게 적용하며 별도 예외는 없다.",
+        "title": "retention",
+        "type": "rule",
+        "unitId": "retention",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "0f3dea13-7b3d-5d11-97ec-17e015131af2"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:c2b7dbbbda7faebc1b5ac444ed8a58deab6269390a9255d6201f33940a4e7649",
+        "docId": "reference/dispatch",
+        "endLine": 9,
+        "path": "docs/reference/dispatch.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# dispatch\n\n출고 절차 K2는 모든 주문에 대해 검수 기록을 먼저 저장한 뒤 발송하는 절차다. 검수 기록이 없는 주문은 발송할 수 없으며 예외는 없다.",
+        "title": "dispatch",
+        "type": "rule",
+        "unitId": "dispatch",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "10c9951e-8ff2-53c4-b03e-a5b017e2ca82"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:0b542527da89f8e4f74ad1f09be04ecdc47a9617ccd64239137dde6c59f6edde",
+        "docId": "case/receipt",
+        "endLine": 11,
+        "path": "docs/cases/receipt.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 9,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 A {#left}\n\n이 규칙은 운영 환경의 결제 완료 알림에만 적용한다. 결제 완료 시 이메일을 정확히 한 번 발송한다.",
+        "title": "규칙 A",
+        "type": "rule",
+        "unitId": "left",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "1e228a10-b642-55fb-89d0-f434e9624ad6"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:a2ab0c837aab7589c618c9af650213874304ea9bc321d0fe282a50afdc459fcd",
+        "docId": "case/approval",
+        "endLine": 11,
+        "path": "docs/cases/approval.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 9,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 A {#left}\n\n운영 환경의 모든 수동 배포에는 실행 전 승인자 두 명의 승인이 반드시 필요하다. 예외는 없다.",
+        "title": "규칙 A",
+        "type": "rule",
+        "unitId": "left",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "1ec3e513-d61a-5f3c-b2a2-9194e8f4fb35"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:9bc3064b59d766c74d07567a379655e9b468fb160aaa9cf1bd3ccd09710b7640",
+        "docId": "case/receipt",
+        "endLine": 15,
+        "path": "docs/cases/receipt.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 13,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 B {#right}\n\n운영 환경에서 결제가 완료될 때 이메일 한 통을 발송한다. 이 규칙은 결제 완료 알림만을 다룬다.",
+        "title": "규칙 B",
+        "type": "rule",
+        "unitId": "right",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "21b71978-5ba2-5f02-9b90-dc8a35b9f990"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:e40e3f19b396c3383a7bdce70e58abe659a7e80b2ceb235b735146b326e92ac2",
+        "docId": "case/priority",
+        "endLine": 15,
+        "path": "docs/cases/priority.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 13,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 B {#right}\n\n운영 환경의 고객 문의는 접수 후 3시간 이내에 첫 응답을 보낸다.",
+        "title": "규칙 B",
+        "type": "rule",
+        "unitId": "right",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "27ab96a1-f44b-5d68-b682-8d8dc61678ba"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:9f247abcdc78e278a62f12dc1e3e66aaa53bb7f5237d405edbd539350d8a6656",
+        "docId": "case/approval",
+        "endLine": 15,
+        "path": "docs/cases/approval.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 13,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 B {#right}\n\n운영 환경에서 수동 배포를 실행할 때 승인자가 한 명뿐이어도 실행을 허용한다.",
+        "title": "규칙 B",
+        "type": "rule",
+        "unitId": "right",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "2cf7564c-df66-5302-bd11-c55ff8dd65c0"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:610272c4f3873a728a242ee29989f0912295ef9aa2888330bb8d7d03de2a819f",
+        "docId": "case/retention",
+        "endLine": 7,
+        "path": "docs/cases/retention.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# retention",
+        "title": "retention",
+        "type": "rule",
+        "unitId": "retention",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "461e87c4-0eb7-594b-9989-4c76cdecb27a"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:0b52309b99a498de71b772bd73fd3cd74a319fe977da712ac6720e1561f6a958",
+        "docId": "case/handover",
+        "endLine": 15,
+        "path": "docs/cases/handover.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 13,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 B {#right}\n\n운영 환경의 인계 작업 J는 담당자 한 명의 확인만으로 완료할 수 있다.",
+        "title": "규칙 B",
+        "type": "rule",
+        "unitId": "right",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "4f6a3c0f-ba75-5e90-a15b-1ab709042f5f"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:0c428115742d6359232ad64f14c0ba44650574c60d75551636e7fb4f7d767fcf",
+        "docId": "case/dispatch",
+        "endLine": 11,
+        "path": "docs/cases/dispatch.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 9,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 A {#left}\n\n운영 환경의 주문 발송은 출고 절차 K2를 따른다.",
+        "title": "규칙 A",
+        "type": "rule",
+        "unitId": "left",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "80760b3c-1ae0-5f96-9fc7-bb3a8874deda"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:74461bb9f0a13564e97b9e5add50a22bfc50528999518df8334842aff749a070",
+        "docId": "case/receipt",
+        "endLine": 7,
+        "path": "docs/cases/receipt.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# receipt",
+        "title": "receipt",
+        "type": "rule",
+        "unitId": "receipt",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "81ea4022-7479-534f-8e17-9d17f29a2f6a"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:80ddb2fb36808e4547b0d3a7fd5ba51e26cee0b2ef4f5a141563e812c6f050e3",
+        "docId": "case/handover",
+        "endLine": 7,
+        "path": "docs/cases/handover.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# handover",
+        "title": "handover",
+        "type": "rule",
+        "unitId": "handover",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "995d3388-8e56-5290-bb5f-8c9af592ee35"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:2ee688373a12f027961a598d0f163a48cb7e042fe10ecb40373f23c2c5122daf",
+        "docId": "case/dispatch",
+        "endLine": 7,
+        "path": "docs/cases/dispatch.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# dispatch",
+        "title": "dispatch",
+        "type": "rule",
+        "unitId": "dispatch",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "b00bf80c-dc17-5079-954f-b5487009a39b"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:50ce2e9f27263a65f7332fff667f2d3c7d73afba79bceb731e40e045c724d445",
+        "docId": "case/priority",
+        "endLine": 11,
+        "path": "docs/cases/priority.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 9,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 A {#left}\n\n운영 환경의 고객 문의에는 응답 등급 P3을 적용한다.",
+        "title": "규칙 A",
+        "type": "rule",
+        "unitId": "left",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "b4e6c032-b113-527e-a042-f974d9a48f6b"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:49e661f3222148bd1d7235c29fcfbb4aafe0f98cad93eebc68805c536314de12",
+        "docId": "case/dispatch",
+        "endLine": 15,
+        "path": "docs/cases/dispatch.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 13,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 B {#right}\n\n운영 환경의 주문은 검수 기록을 남기지 않은 상태에서도 발송을 허용한다.",
+        "title": "규칙 B",
+        "type": "rule",
+        "unitId": "right",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "cdc75508-db99-5998-ab98-1fa352fef086"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:8edcc81ecef6079a32b6d58f71ca6a845b309e6a182320a3075531f5925e19a3",
+        "docId": "reference/handover",
+        "endLine": 9,
+        "path": "docs/reference/handover.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# handover\n\n인계 작업 J는 담당자 교대 시 수행한다. J가 낮에 실행되는지 밤에 실행되는지는 아직 정하지 않았다.",
+        "title": "handover",
+        "type": "rule",
+        "unitId": "handover",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "d9225124-a7a3-50a6-baa9-447989e814d4"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:5c354b56c4cd975602a888c3d22ca2b086ba0858bfa2774dafecb26ea1151a4e",
+        "docId": "case/approval",
+        "endLine": 7,
+        "path": "docs/cases/approval.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# approval",
+        "title": "approval",
+        "type": "rule",
+        "unitId": "approval",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "da6c33d9-8ab1-532c-810e-023faae8834e"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:35fe3fa7f198383840db0609e5c1496420c9108c6f4d9603c538b8cea33242e3",
+        "docId": "case/retention",
+        "endLine": 11,
+        "path": "docs/cases/retention.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 9,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 A {#left}\n\n운영 환경의 감사 기록은 보존 등급 R7을 적용한다.",
+        "title": "규칙 A",
+        "type": "rule",
+        "unitId": "left",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "dbc7c6fc-ba7b-5d18-84f9-1666b243b45b"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:259bfd2b55771486fded3826ce2f2219dbf67023ce326fd2c4b9e0edc4dd4d16",
+        "docId": "case/priority",
+        "endLine": 7,
+        "path": "docs/cases/priority.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# priority",
+        "title": "priority",
+        "type": "rule",
+        "unitId": "priority",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "e0c97864-bf61-5d72-96da-c51201d633fc"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:5fd80a8fae2b8cc94416df4726155561c7411d4f9b0287371b0cf73765efd8d6",
+        "docId": "case/handover",
+        "endLine": 11,
+        "path": "docs/cases/handover.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 9,
+        "status": "active",
+        "tags": [],
+        "text": "## 규칙 A {#left}\n\n운영 환경의 야간 인계에는 담당자 두 명의 확인이 필요하다.",
+        "title": "규칙 A",
+        "type": "rule",
+        "unitId": "left",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "ef6b12ee-4110-5492-ba8c-0bc88349c69f"
+    },
+    {
+      "payload": {
+        "commit": "97ea04a314f59d5f794d9224142b9c9742327e07",
+        "contentHash": "sha256:a434b3e4f15853072052bb8e0d233b2a6d8fafaf6bbe40462ce8b68bbf686e1c",
+        "docId": "reference/priority",
+        "endLine": 9,
+        "path": "docs/reference/priority.md",
+        "relations": [],
+        "repoId": "demo/inspection-holdout",
+        "startLine": 7,
+        "status": "active",
+        "tags": [],
+        "text": "# priority\n\n응답 등급 목록에는 P1, P2, P3이 있다. 각 등급의 응답 시간과 우선순위는 아직 정하지 않았다.",
+        "title": "priority",
+        "type": "rule",
+        "unitId": "priority",
+        "workspaceId": "refs/heads/main"
+      },
+      "pointId": "fb539c45-d073-5e5b-9d88-3c0f8f2a6ac1"
+    }
+  ],
+  "repository": "/var/folders/x7/f3kxjy_13fd3g9jp5fhgv96h0000gn/T/knowledge-holdout-DgUIDn",
+  "searchMode": "live",
+  "version": 26
+}

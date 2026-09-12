@@ -1,0 +1,68 @@
+{
+  "modelUnchanged": true,
+  "results": [
+    {
+      "agrees": false,
+      "decisions": [
+        {
+          "id": "q0",
+          "keep": true,
+          "quote": "",
+          "reason": "The text does not explicitly state that 'WebView' and '조작 창' in Rule A correspond to 'background' and 'controls' in Rule B."
+        },
+        {
+          "id": "q1",
+          "keep": true,
+          "quote": "",
+          "reason": "Rule A defines the position as 'below icons', while Rule B describes both a default state (above icons) and a state when background control is off (below icons); the text does not clarify if Rule A's definition encompasses both or only one."
+        }
+      ],
+      "idsValid": true,
+      "kept": ["q0", "q1"],
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": false,
+      "decisions": [
+        {
+          "id": "q0",
+          "keep": true,
+          "quote": "",
+          "reason": "The text does not explicitly state that 'WebView' and '조작 창' in Rule A correspond to 'background' and 'controls' in Rule B."
+        },
+        {
+          "id": "q1",
+          "keep": true,
+          "quote": "",
+          "reason": "Rule A defines the position as 'below icons', while Rule B describes both a default state (above icons) and a state when background control is off (below icons); the text does not clarify if Rule A's definition encompasses both or only one."
+        }
+      ],
+      "idsValid": true,
+      "kept": ["q0", "q1"],
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": false,
+      "decisions": [
+        {
+          "id": "q0",
+          "keep": true,
+          "quote": "",
+          "reason": "The text does not explicitly state that 'WebView' and '조작 창' in Rule A correspond to 'background' and 'controls' in Rule B."
+        },
+        {
+          "id": "q1",
+          "keep": true,
+          "quote": "",
+          "reason": "Rule A defines the position as 'below icons', while Rule B describes both a default state (above icons) and a state when background control is off (below icons); the text does not clarify if Rule A's definition encompasses both or only one."
+        }
+      ],
+      "idsValid": true,
+      "kept": ["q0", "q1"],
+      "quotesValid": true,
+      "repeat": 3
+    }
+  ]
+}

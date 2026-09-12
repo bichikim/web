@@ -1,0 +1,22 @@
+{
+  "auditOnly": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "elapsedMs": 39689,
+      "id": "independent",
+      "result": {
+        "ok": true,
+        "value": [
+          {
+            "evidence": ["8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0"],
+            "missing": "",
+            "questionId": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+            "reason": "The 'BAT 규칙' (BAT rule) is defined in the provided text. Regarding the timing and frequency of subscription calculations, the text states that 'batch' defers the execution of subordinate calculations until the end of the bundle ('하위 계산의 실행을 묶음 끝까지 미룬다') and that when multiple updates are bundled, it executes once at the end instead of executing for each update ('여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다').",
+            "supported": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "labelsUnchanged": true,
+  "results": [
+    {
+      "actual": "unrelated",
+      "classificationReplacements": 0,
+      "correct": false,
+      "elapsedMs": 8592,
+      "expected": ["conflict", "uncertain"],
+      "id": "storage-backend",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    },
+    {
+      "actual": "unrelated",
+      "classificationReplacements": 0,
+      "correct": false,
+      "elapsedMs": 7180,
+      "expected": ["uncertain"],
+      "id": "cleanup-scope",
+      "queries": [],
+      "replacements": 1,
+      "variant": "candidate"
+    }
+  ],
+  "snapshotUnchanged": true
+}

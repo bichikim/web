@@ -1,0 +1,199 @@
+{
+  "startedAt": "2026-09-07T02:34:33.686Z",
+  "finishedAt": "2026-09-07T02:35:08.516Z",
+  "result": {
+    "ok": true,
+    "research": {
+      "initial": {
+        "confidence": 0.9,
+        "kind": "uncertain",
+        "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+        "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+        "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+      },
+      "rounds": [
+        {
+          "added": [
+            "78a091dd-d497-5cdc-a00b-1af0c2165025",
+            "a2f3161b-791d-539d-87ea-13565205d479",
+            "57a6dec4-49d3-531e-9812-03200d0138c5"
+          ],
+          "queries": [
+            {
+              "hits": [
+                "5eea065d-dc40-538a-84de-f1b9e672a354",
+                "78a091dd-d497-5cdc-a00b-1af0c2165025",
+                "a2f3161b-791d-539d-87ea-13565205d479"
+              ],
+              "query": "'구조화 데이터 저장소'의 공통 계약은 무엇인가요?"
+            },
+            {
+              "hits": [
+                "5eea065d-dc40-538a-84de-f1b9e672a354",
+                "f14fc26b-337c-5181-b7d9-ed709eabdef3",
+                "57a6dec4-49d3-531e-9812-03200d0138c5"
+              ],
+              "query": "앱인토스 sdk `storage`가 따르는 계약은 무엇인가요?"
+            },
+            {
+              "hits": [
+                "5eea065d-dc40-538a-84de-f1b9e672a354",
+                "78a091dd-d497-5cdc-a00b-1af0c2165025",
+                "a2f3161b-791d-539d-87ea-13565205d479"
+              ],
+              "query": "웹 브라우저·pwa의 구조화 데이터 저장소 메커니즘(dexie.js와 indexeddb)의 계약은 무엇인가요?"
+            }
+          ],
+          "questions": [
+            "재생목록 저장 시 사용되는 '구조화 데이터 저장소'의 구체적인 계약(contract)은 무엇인가요?",
+            "앱인토스 환경에서 '사용자 재생목록 저장' 시 사용되는 `Storage`가 '영속 저장 호환 계층'에서 언급된 구조화 데이터 저장소의 계약을 따르는지 명시해야 할까요?",
+            "재생목록 저장 시 사용되는 `localStorage`가 '영속 저장 호환 계층'에서 다루는 '웹 브라우저·PWA'의 구조화 데이터 저장소 메커니즘(Dexie.js와 IndexedDB)과 동일한 범주로 간주되는지 명확한 정의가 필요합니다."
+          ],
+          "decision": {
+            "citations": ["context-1-left-1", "context-2-left-1", "context-3-left-1"],
+            "proposed": {
+              "confidence": 0.9,
+              "kind": "uncertain",
+              "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+              "reason": "질문 1에 대한 '구조화 데이터 저장소'의 구체적인 계약에 대한 정보는 제공된 문맥에서 명확히 확인되지 않습니다. 질문 2와 3은 '영속 저장 호환 계층'의 정의와 '사용자 재생목록 저장'에서 사용되는 기술(localStorage)의 범주화에 대한 비교가 필요하며, 이는 현재 문맥만으로는 충분하지 않습니다. 따라서 전반적으로 불확실합니다.",
+              "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+            },
+            "unresolved": [
+              "재생목록 저장 시 사용되는 '구조화 데이터 저장소'의 구체적인 계약(contract)은 무엇인가요?",
+              "앱인토스 환경에서 '사용자 재생목록 저장' 시 사용되는 `Storage`가 '영속 저장 호환 계층'에서 언급된 구조화 데이터 저장소의 계약을 따르는지 명시해야 할까요?",
+              "재생목록 저장 시 사용되는 `localStorage`가 '영속 저장 호환 계층'에서 다루는 '웹 브라우저·PWA'의 구조화 데이터 저장소 메커니즘(Dexie.js와 IndexedDB)과 동일한 범주로 간주되는지 명확한 정의가 필요합니다."
+            ]
+          }
+        },
+        {
+          "added": ["febf38c1-4371-588b-9825-e165aedda83d", "0c3118c0-6d9e-5289-a6cc-9ced2947ae46"],
+          "queries": [
+            {
+              "hits": [
+                "5eea065d-dc40-538a-84de-f1b9e672a354",
+                "0c3118c0-6d9e-5289-a6cc-9ced2947ae46",
+                "f14fc26b-337c-5181-b7d9-ed709eabdef3"
+              ],
+              "query": "앱인토스 sdk `storage`가 따르는 구조화 데이터 저장소의 계약"
+            },
+            {
+              "hits": [
+                "5eea065d-dc40-538a-84de-f1b9e672a354",
+                "f14fc26b-337c-5181-b7d9-ed709eabdef3",
+                "78a091dd-d497-5cdc-a00b-1af0c2165025"
+              ],
+              "query": "웹 브라우저·pwa의 구조화 데이터 저장소 메커니즘과 `localstorage`의 범주화"
+            },
+            {
+              "hits": [
+                "5eea065d-dc40-538a-84de-f1b9e672a354",
+                "0c3118c0-6d9e-5289-a6cc-9ced2947ae46",
+                "febf38c1-4371-588b-9825-e165aedda83d"
+              ],
+              "query": "구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약"
+            }
+          ],
+          "questions": [
+            "재생목록 저장 시 사용되는 '구조화 데이터 저장소'의 구체적인 계약(contract)은 무엇인가요?",
+            "앱인토스 환경에서 '사용자 재생목록 저장' 시 사용되는 `Storage`가 '영속 저장 호환 계층'에서 언급된 구조화 데이터 저장소의 계약을 따르는지 명시해야 할까요?",
+            "재생목록 저장 시 사용되는 `localStorage`가 '영속 저장 호환 계층'에서 다루는 '웹 브라우저·PWA'의 구조화 데이터 저장소 메커니즘(Dexie.js와 IndexedDB)과 동일한 범주로 간주되는지 명확한 정의가 필요합니다."
+          ],
+          "decision": {
+            "citations": ["context-4-left-1"],
+            "proposed": {
+              "confidence": 0.9,
+              "kind": "uncertain",
+              "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+              "reason": "질문 1에 대한 '구조화 데이터 저장소'의 구체적인 계약에 대한 정보는 제공된 문맥에서 명확히 확인되지 않습니다. 질문 2와 3은 '영속 저장 호환 계층'의 정의와 '사용자 재생목록 저장'에서 사용되는 기술(localStorage)의 범주화에 대한 비교가 필요하며, 이는 현재 문맥만으로는 충분하지 않습니다. 따라서 전반적으로 불확실합니다.",
+              "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+            },
+            "unresolved": [
+              "재생목록 저장 시 사용되는 '구조화 데이터 저장소'의 구체적인 계약(contract)은 무엇인가요?",
+              "앱인토스 환경에서 '사용자 재생목록 저장' 시 사용되는 `Storage`가 '영속 저장 호환 계층'에서 언급된 구조화 데이터 저장소의 계약을 따르는지 명시해야 할까요?",
+              "재생목록 저장 시 사용되는 `localStorage`가 '영속 저장 호환 계층'에서 다루는 '웹 브라우저·PWA'의 구조화 데이터 저장소 메커니즘(Dexie.js와 IndexedDB)과 동일한 범주로 간주되는지 명확한 정의가 필요합니다."
+            ]
+          }
+        }
+      ],
+      "selection": {
+        "eligible": 5,
+        "sources": [
+          {
+            "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+            "docId": "operations/lifecycle",
+            "path": "docs/lifecycle.md",
+            "pointId": "78a091dd-d497-5cdc-a00b-1af0c2165025",
+            "text": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+            "title": "음악 라이브러리 지속 저장의 의미",
+            "truncated": false,
+            "unitId": "policy",
+            "startLine": 7,
+            "endLine": 10
+          },
+          {
+            "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+            "docId": "operations/deployment",
+            "path": "docs/deployment.md",
+            "pointId": "a2f3161b-791d-539d-87ea-13565205d479",
+            "text": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다.",
+            "title": "Pomo 운영 배포와 복구",
+            "truncated": false,
+            "unitId": "policy",
+            "startLine": 7,
+            "endLine": 17
+          },
+          {
+            "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+            "docId": "operations/policy",
+            "path": "docs/policy.md",
+            "pointId": "57a6dec4-49d3-531e-9812-03200d0138c5",
+            "text": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+            "title": "영속 저장 정책",
+            "truncated": false,
+            "unitId": "policy",
+            "startLine": 7,
+            "endLine": 9
+          },
+          {
+            "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+            "docId": "operations/connections",
+            "path": "docs/connections.md",
+            "pointId": "febf38c1-4371-588b-9825-e165aedda83d",
+            "text": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다.",
+            "title": "피드 연결 설정",
+            "truncated": false,
+            "unitId": "policy",
+            "startLine": 7,
+            "endLine": 16
+          },
+          {
+            "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+            "docId": "operations/remote",
+            "path": "docs/remote.md",
+            "pointId": "0c3118c0-6d9e-5289-a6cc-9ced2947ae46",
+            "text": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+            "title": "원격 함수 상태와 계약",
+            "truncated": false,
+            "unitId": "policy",
+            "startLine": 7,
+            "endLine": 11
+          }
+        ],
+        "truncated": false
+      },
+      "stop": "round-limit",
+      "unresolved": [
+        "재생목록 저장 시 사용되는 '구조화 데이터 저장소'의 구체적인 계약(contract)은 무엇인가요?",
+        "앱인토스 환경에서 '사용자 재생목록 저장' 시 사용되는 `Storage`가 '영속 저장 호환 계층'에서 언급된 구조화 데이터 저장소의 계약을 따르는지 명시해야 할까요?",
+        "재생목록 저장 시 사용되는 `localStorage`가 '영속 저장 호환 계층'에서 다루는 '웹 브라우저·PWA'의 구조화 데이터 저장소 메커니즘(Dexie.js와 IndexedDB)과 동일한 범주로 간주되는지 명확한 정의가 필요합니다."
+      ]
+    },
+    "value": {
+      "confidence": 0.9,
+      "kind": "uncertain",
+      "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+      "reason": "추가 문맥으로도 확인되지 않은 조건: 재생목록 저장 시 사용되는 '구조화 데이터 저장소'의 구체적인 계약(contract)은 무엇인가요? / 앱인토스 환경에서 '사용자 재생목록 저장' 시 사용되는 `Storage`가 '영속 저장 호환 계층'에서 언급된 구조화 데이터 저장소의 계약을 따르는지 명시해야 할까요? / 재생목록 저장 시 사용되는 `localStorage`가 '영속 저장 호환 계층'에서 다루는 '웹 브라우저·PWA'의 구조화 데이터 저장소 메커니즘(Dexie.js와 IndexedDB)과 동일한 범주로 간주되는지 명확한 정의가 필요합니다.",
+      "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+    }
+  }
+}

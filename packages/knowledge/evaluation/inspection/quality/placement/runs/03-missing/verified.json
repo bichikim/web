@@ -1,0 +1,27 @@
+{
+  "identicalInitialRequests": true,
+  "measurements": [
+    {
+      "calls": 6,
+      "id": "retention",
+      "referenceCited": false,
+      "repeat": 1,
+      "searches": 2
+    },
+    {
+      "calls": 6,
+      "id": "retention",
+      "referenceCited": false,
+      "repeat": 2,
+      "searches": 2
+    },
+    {
+      "calls": 6,
+      "id": "retention",
+      "referenceCited": false,
+      "repeat": 3,
+      "searches": 2
+    }
+  ],
+  "recordedResponseReplay": true
+}

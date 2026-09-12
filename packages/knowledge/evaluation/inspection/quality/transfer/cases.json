@@ -1,0 +1,29 @@
+{
+  "authority": "predeclared-experimental-hypotheses-not-user-approved",
+  "cases": [
+    {
+      "id": "revalidation",
+      "expected": "conflict",
+      "reference": "reference/http",
+      "reason": "같은 새 요청의 재사용에 서버 검증이 필요한데 B는 검증 없이 재사용한다."
+    },
+    {
+      "id": "lifetime",
+      "expected": "duplicate",
+      "reference": "reference/http",
+      "reason": "공유 캐시에서는 s-maxage가 max-age보다 우선하므로 A를 풀어 쓰면 B와 같다."
+    },
+    {
+      "id": "mechanism",
+      "expected": "unrelated",
+      "reference": "reference/cache-api",
+      "reason": "HTTP 캐시의 저장 금지와 헤더를 자동 적용하지 않는 Cache API의 명시적 저장은 다른 동작이다."
+    },
+    {
+      "id": "archive",
+      "expected": "uncertain",
+      "reference": "reference/archive",
+      "reason": "금지 대상은 자동 정리인데 아카이브 작업의 자동 여부가 정해지지 않았다."
+    }
+  ]
+}

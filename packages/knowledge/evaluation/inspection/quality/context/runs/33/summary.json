@@ -1,0 +1,123 @@
+{
+  "approvalsUnchanged": true,
+  "results": [
+    {
+      "actual": "duplicate",
+      "assessmentReplacements": 0,
+      "contextCharacters": 924,
+      "correct": true,
+      "elapsedMs": 149336,
+      "expected": ["duplicate"],
+      "id": "signal-update",
+      "mode": "search",
+      "promptTokens": [392, 393, 483, 565, 2006, 1510, 1584],
+      "relevantHits": [
+        "b662a7af-b5df-5b42-a067-92841189ad05",
+        "dac41115-e8f1-5277-90d0-c41bc4229521"
+      ],
+      "relevantRead": [
+        "b662a7af-b5df-5b42-a067-92841189ad05",
+        "dac41115-e8f1-5277-90d0-c41bc4229521"
+      ],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "conflict",
+      "assessmentReplacements": 0,
+      "contextCharacters": 924,
+      "correct": true,
+      "elapsedMs": 133834,
+      "expected": ["conflict"],
+      "id": "signal-suppress",
+      "mode": "search",
+      "promptTokens": [398, 398, 488, 556, 1996, 1094, 1139],
+      "relevantHits": [
+        "b662a7af-b5df-5b42-a067-92841189ad05",
+        "dac41115-e8f1-5277-90d0-c41bc4229521"
+      ],
+      "relevantRead": [
+        "b662a7af-b5df-5b42-a067-92841189ad05",
+        "dac41115-e8f1-5277-90d0-c41bc4229521"
+      ],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "duplicate",
+      "assessmentReplacements": 0,
+      "contextCharacters": 615,
+      "correct": true,
+      "elapsedMs": 123792,
+      "expected": ["duplicate"],
+      "id": "batch-once",
+      "mode": "search",
+      "promptTokens": [408, 414, 520, 561, 1900, 1163, 1207],
+      "relevantHits": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "relevantRead": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "conflict",
+      "assessmentReplacements": 0,
+      "contextCharacters": 506,
+      "correct": true,
+      "elapsedMs": 142100,
+      "expected": ["conflict"],
+      "id": "batch-twice",
+      "mode": "search",
+      "promptTokens": [411, 432, 541, 564, 1678, 1166, 1223],
+      "relevantHits": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "relevantRead": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "uncertain",
+      "assessmentReplacements": 0,
+      "contextCharacters": 1295,
+      "correct": true,
+      "elapsedMs": 120423,
+      "expected": ["conflict", "uncertain"],
+      "id": "storage-backend",
+      "mode": "search",
+      "promptTokens": [545, 531, 764, 725, 2513, 1665],
+      "relevantHits": [
+        "43493965-8725-52e8-858b-a5cb136cdd00",
+        "37ee69f0-c365-5049-b981-9feb356078d7",
+        "43493965-8725-52e8-858b-a5cb136cdd00"
+      ],
+      "relevantRead": [
+        "43493965-8725-52e8-858b-a5cb136cdd00",
+        "37ee69f0-c365-5049-b981-9feb356078d7"
+      ],
+      "searches": 2,
+      "truncated": false
+    },
+    {
+      "actual": "uncertain",
+      "assessmentReplacements": 0,
+      "contextCharacters": 2177,
+      "correct": true,
+      "elapsedMs": 183182,
+      "expected": ["uncertain"],
+      "id": "cleanup-scope",
+      "mode": "search",
+      "promptTokens": [578, 577, 575, 795, 2316, 1686, 3476],
+      "relevantHits": [
+        "43493965-8725-52e8-858b-a5cb136cdd00",
+        "e52237f1-f57a-5105-a02e-3488218174c8",
+        "6a73db77-d27b-560f-a133-19007b617dcb"
+      ],
+      "relevantRead": [
+        "43493965-8725-52e8-858b-a5cb136cdd00",
+        "6a73db77-d27b-560f-a133-19007b617dcb",
+        "e52237f1-f57a-5105-a02e-3488218174c8"
+      ],
+      "searches": 2,
+      "truncated": false
+    }
+  ],
+  "snapshotUnchanged": true
+}

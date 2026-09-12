@@ -1,0 +1,1025 @@
+{
+  "cases": [
+    {
+      "expected": "duplicate",
+      "id": "bilingual-concurrency",
+      "outcome": "correct",
+      "predicted": "duplicate"
+    },
+    {
+      "expected": "duplicate",
+      "id": "bilingual-timeout",
+      "outcome": "correct",
+      "predicted": "duplicate"
+    },
+    {
+      "expected": "conflict",
+      "id": "opposite-concurrency",
+      "outcome": "correct",
+      "predicted": "conflict"
+    },
+    {
+      "expected": "conflict",
+      "id": "bilingual-opposite-concurrency",
+      "outcome": "correct",
+      "predicted": "conflict"
+    },
+    {
+      "expected": "conflict",
+      "id": "different-timeouts",
+      "outcome": "correct",
+      "predicted": "conflict"
+    },
+    {
+      "expected": "conflict",
+      "id": "bilingual-different-timeouts",
+      "outcome": "correct",
+      "predicted": "conflict"
+    },
+    {
+      "expected": "uncertain",
+      "id": "undefined-policy",
+      "outcome": "correct",
+      "predicted": "uncertain"
+    },
+    {
+      "expected": "uncertain",
+      "id": "bilingual-undefined-policy",
+      "outcome": "misclassified",
+      "predicted": "unrelated"
+    },
+    {
+      "expected": "uncertain",
+      "id": "production-undefined-policy",
+      "outcome": "misclassified",
+      "predicted": "unrelated"
+    },
+    {
+      "expected": "uncertain",
+      "id": "staging-undefined-policy",
+      "outcome": "misclassified",
+      "predicted": "unrelated"
+    },
+    {
+      "expected": "unrelated",
+      "id": "different-domains",
+      "outcome": "correct",
+      "predicted": "unrelated"
+    },
+    {
+      "expected": "unrelated",
+      "id": "bilingual-different-domains",
+      "outcome": "correct",
+      "predicted": "unrelated"
+    },
+    {
+      "expected": "unrelated",
+      "id": "complementary-audit",
+      "outcome": "misclassified",
+      "predicted": "conflict"
+    },
+    {
+      "expected": "unrelated",
+      "id": "bilingual-complementary-audit",
+      "outcome": "correct",
+      "predicted": "unrelated"
+    },
+    {
+      "expected": "unrelated",
+      "id": "different-environments",
+      "outcome": "correct",
+      "predicted": "unrelated"
+    },
+    {
+      "expected": "unrelated",
+      "id": "independent-timeout",
+      "outcome": "correct",
+      "predicted": "unrelated"
+    }
+  ],
+  "comparison": {
+    "candidateSelectionRecallDelta": 0,
+    "classificationAccuracyDelta": 0,
+    "regressions": []
+  },
+  "datasetHash": "e87a2d3f9518154b9db7095f5f0a853f565bb21151b4adae9bb4e84146e47ea6",
+  "diagnostic": {
+    "command": "doctor",
+    "healthy": true,
+    "semantic": {
+      "assessments": [
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "duplicate"
+          },
+          "left": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "uncertain"
+          },
+          "left": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "uncertain"
+          },
+          "left": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "duplicate"
+          },
+          "left": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "duplicate"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "uncertain"
+          },
+          "left": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "duplicate"
+          },
+          "left": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "conflict"
+          },
+          "left": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+            "docId": "refresh/production",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+            "docId": "refresh/audit",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+            "docId": "refresh/unspecified",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+            "docId": "refresh/staging",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+            "docId": "refresh/korean",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+            "docId": "refresh/serial",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+            "docId": "refresh/timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+            "docId": "refresh/concurrent",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+            "docId": "refresh/long-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          }
+        },
+        {
+          "assessment": {
+            "kind": "unrelated"
+          },
+          "left": {
+            "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+            "docId": "refresh/korean-timeout",
+            "unitId": "policy"
+          },
+          "right": {
+            "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+            "docId": "payment/refund",
+            "unitId": "policy"
+          }
+        }
+      ],
+      "errors": [],
+      "limit": 100,
+      "model": {
+        "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+        "name": "gemma4:latest"
+      },
+      "promptVersion": 2,
+      "repoId": "demo/inspection-expanded",
+      "retrieval": {
+        "candidatePairs": 55,
+        "errors": [],
+        "neighborsPerUnit": 10,
+        "seedLimit": 20
+      },
+      "selectedPairs": 55,
+      "sourceUnits": [
+        {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        },
+        {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      ],
+      "status": "complete",
+      "workspaceId": "refs/heads/main"
+    }
+  },
+  "provisional": false,
+  "sourceHash": "85378472bc4d87bbb380b20b2b2e98c7e9b1bbfb6ef1f1ce8aa90c2a13ddb4ee",
+  "summary": {
+    "candidateSelectionRecall": 1,
+    "classificationAccuracy": 0.75,
+    "classified": 16,
+    "correct": 12,
+    "positivePairs": 6,
+    "selectedPositivePairs": 6,
+    "unlabelledAssessments": 39
+  },
+  "version": 1
+}

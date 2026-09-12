@@ -1,0 +1,15 @@
+{
+  "modelUnchanged": true,
+  "questionGenerationOnly": true,
+  "results": [
+    {
+      "elapsedMs": 15830,
+      "id": "operation",
+      "result": {
+        "questions": [
+          "'피드 대화'의 만료 및 정리 작업이 '영속 저장 정책'에서 금지하는 '저장소의 자동 만료나 자동 정리 정책'에 포함되는 구체적인 운영 범위에 해당합니까?"
+        ]
+      }
+    }
+  ]
+}

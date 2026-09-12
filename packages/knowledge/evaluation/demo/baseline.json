@@ -1,0 +1,74 @@
+{
+  "cases": [
+    {
+      "hits": [
+        {
+          "docId": "auth/session",
+          "unitId": "refresh"
+        },
+        {
+          "docId": "payment/refund",
+          "unitId": "refund"
+        }
+      ],
+      "id": "52bd18a26d81b1ee3f305173db314dfb22ddd67edb90a0ebe82878daed6579fa-ko",
+      "recall": 1,
+      "reciprocalRank": 1
+    },
+    {
+      "hits": [
+        {
+          "docId": "auth/session",
+          "unitId": "refresh"
+        },
+        {
+          "docId": "payment/refund",
+          "unitId": "refund"
+        }
+      ],
+      "id": "52bd18a26d81b1ee3f305173db314dfb22ddd67edb90a0ebe82878daed6579fa-en",
+      "recall": 1,
+      "reciprocalRank": 1
+    },
+    {
+      "hits": [
+        {
+          "docId": "payment/refund",
+          "unitId": "refund"
+        },
+        {
+          "docId": "auth/session",
+          "unitId": "refresh"
+        }
+      ],
+      "id": "228bdf33d13b101cd37b171fd3cd051fed537b3d898c86ffc49e19a222948c7c-ko",
+      "recall": 1,
+      "reciprocalRank": 1
+    },
+    {
+      "hits": [
+        {
+          "docId": "payment/refund",
+          "unitId": "refund"
+        },
+        {
+          "docId": "auth/session",
+          "unitId": "refresh"
+        }
+      ],
+      "id": "228bdf33d13b101cd37b171fd3cd051fed537b3d898c86ffc49e19a222948c7c-en",
+      "recall": 1,
+      "reciprocalRank": 1
+    }
+  ],
+  "comparison": null,
+  "cutoff": 2,
+  "datasetHash": "701316b8fef7aa34eadd6fb09fdae8728ea346c00bc58a041048f3ff4c45e40d",
+  "repoId": "demo/knowledge-cli",
+  "summary": {
+    "mrr": 1,
+    "recall": 1
+  },
+  "version": 1,
+  "workspaceId": "refs/heads/main"
+}

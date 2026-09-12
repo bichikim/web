@@ -1,0 +1,104 @@
+{
+  "modelUnchanged": true,
+  "results": [
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "The provided text does not define the scope of the phrase '아이콘 아래' (below icons) within 'Rule A' (규칙 A). While 'Rule B' describes different states for the background window (default vs. when background operation is off), the text does not explicitly attribute these specific operating states to the scope of the claim made in 'Rule A'."
+      },
+      "id": "absent",
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "The provided text does not define the scope of the phrase '아이콘 아래' (below icons) within 'Rule A' (규칙 A). While 'Rule B' describes different states for the background window (default vs. when background operation is off), the text does not attribute a specific scope or condition to the claim made in 'Rule A'."
+      },
+      "id": "absent",
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "The provided text does not define the scope of the phrase '아이콘 아래' (below icons) within 'Rule A' (규칙 A). While 'Rule B' describes different states for the background window (default vs. when background operation is off), the text does not explicitly attribute a specific scope or state to the claim made in 'Rule A'."
+      },
+      "id": "absent",
+      "quotesValid": true,
+      "repeat": 3
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "determined",
+        "quote": "규칙 A 요약표의 아이콘 아래 설명은 배경 조작을 끈 상태에만 적용하며 기본 상태는 포함하지 않는다.",
+        "reason": "The text explicitly defines the scope of the description 'below the icons' (아이콘 아래) in Rule A, stating it applies only to the state where background manipulation is turned off and does not include the default state."
+      },
+      "id": "off",
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "determined",
+        "quote": "규칙 A 요약표의 아이콘 아래 설명은 배경 조작을 끈 상태에만 적용하며 기본 상태는 포함하지 않는다.",
+        "reason": "The text explicitly defines the scope of the description 'below the icons' (아이콘 아래) in Rule A, stating it applies only to the state where background manipulation is turned off and does not include the default state."
+      },
+      "id": "off",
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "determined",
+        "quote": "규칙 A 요약표의 아이콘 아래 설명은 배경 조작을 끈 상태에만 적용하며 기본 상태는 포함하지 않는다.",
+        "reason": "The text explicitly defines the scope of the description 'below the icons' (아이콘 아래) in Rule A, stating it applies only to the state where background manipulation is turned off and does not include the default state."
+      },
+      "id": "off",
+      "quotesValid": true,
+      "repeat": 3
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "기본 상태와 배경 조작을 끈 상태 모두에 적용",
+        "quote": "규칙 A 요약표의 아이콘 아래 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용한다.",
+        "reason": "제시된 텍스트(scope-control)에서 규칙 A 요약표의 '아이콘 아래' 설명이 기본 상태와 배경 조작을 끈 상태 모두에 적용된다고 명시하고 있습니다."
+      },
+      "id": "default",
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "기본 상태와 배경 조작을 끈 상태 모두에 적용",
+        "quote": "규칙 A 요약표의 아이콘 아래 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용한다.",
+        "reason": "제시된 텍스트(scope-control)에서 규칙 A 요약표의 '아이콘 아래' 설명이 기본 상태와 배경 조작을 끈 상태 모두에 적용된다고 명시하고 있습니다."
+      },
+      "id": "default",
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "기본 상태와 배경 조작을 끈 상태 모두에 적용",
+        "quote": "규칙 A 요약표의 아이콘 아래 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용한다.",
+        "reason": "제공된 텍스트(scope-control)에서 규칙 A 요약표의 '아이콘 아래' 설명이 기본 상태와 배경 조작을 끈 상태 모두에 적용된다고 명시하고 있습니다."
+      },
+      "id": "default",
+      "quotesValid": true,
+      "repeat": 3
+    }
+  ]
+}

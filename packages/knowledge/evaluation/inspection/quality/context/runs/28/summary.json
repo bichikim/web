@@ -1,0 +1,22 @@
+{
+  "auditOnly": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "elapsedMs": 56295,
+      "id": "independent",
+      "result": {
+        "ok": true,
+        "value": [
+          {
+            "evidence": [],
+            "missing": "relationship between feed conversation cleanup and persistent storage policy",
+            "questionId": "3a62320d353f842128b56a5409e8f82ee5e8f91690e24d4d3e3eb251e1b7d42c",
+            "reason": "The text defines a 'Persistent Storage Policy' that prohibits automatic expiration or cleanup policies for the storage (3a62320d353f842128b56a5409e8f82ee5e8f91690e24d4d3e3eb251e1b7d42c:0) and separately defines an expiration and cleanup process for 'Feed Conversations' (3a62320d353f842128b56a5409e8f82ee5e8f91690e24d4d3e3eb251e1b7d42c:1). However, the text does not state whether the feed conversation cleanup is considered an exception to, a violation of, or distinct from the general persistent storage policy. There is no explicit textual connection establishing if the former falls within the operational scope of the latter.",
+            "supported": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,397 @@
+{
+  "results": [
+    {
+      "id": "bilingual-concurrency",
+      "variant": "baseline",
+      "expected": "duplicate",
+      "actual": "duplicate",
+      "correct": true,
+      "elapsedMs": 5387,
+      "queries": [],
+      "replacements": 0
+    },
+    {
+      "id": "bilingual-concurrency",
+      "variant": "candidate",
+      "expected": "duplicate",
+      "actual": "duplicate",
+      "correct": true,
+      "elapsedMs": 5359,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "bilingual-timeout",
+      "variant": "baseline",
+      "expected": "duplicate",
+      "actual": "duplicate",
+      "correct": true,
+      "elapsedMs": 5307,
+      "queries": [],
+      "replacements": 0
+    },
+    {
+      "id": "bilingual-timeout",
+      "variant": "candidate",
+      "expected": "duplicate",
+      "actual": "duplicate",
+      "correct": true,
+      "elapsedMs": 5221,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "opposite-concurrency",
+      "variant": "baseline",
+      "expected": "conflict",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 32232,
+      "queries": [
+        "qué significa 'serializado' en el contexto de las solicitudes de actualización de tokens",
+        "qué significa 'ejecutar concurrentemente' en el contexto de las solicitudes de actualización de tokens",
+        "condiciones para concurrencia o serialización de solicitudes de actualización de tokens",
+        "serializado solicitudes de actualización de tokens",
+        "ejecutar concurrentemente solicitudes de actualización de tokens",
+        "condiciones concurrencia serialización solicitudes de actualización de tokens"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "opposite-concurrency",
+      "variant": "candidate",
+      "expected": "conflict",
+      "actual": "conflict",
+      "correct": true,
+      "elapsedMs": 5763,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "bilingual-opposite-concurrency",
+      "variant": "baseline",
+      "expected": "conflict",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 52395,
+      "queries": [
+        "두 정책이 적용되는 시스템 또는 컨텍스트",
+        "'동시에 실행'의 동시성 수준",
+        "토큰 갱신 주체 차이",
+        "staging token refresh multiple token refresh requests must run at the same time",
+        "토큰 갱신 요청 제한 시간"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "bilingual-opposite-concurrency",
+      "variant": "candidate",
+      "expected": "conflict",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 68192,
+      "queries": [
+        "토큰 갱신 요청 순차적 실행 근거",
+        "동시 실행 갱신 요청 최대 하나 제한 근거",
+        "토큰 갱신 요청 동시 실행 근거",
+        "at most one token refresh request may run at a time"
+      ],
+      "replacements": 1
+    },
+    {
+      "id": "different-timeouts",
+      "variant": "baseline",
+      "expected": "conflict",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 39795,
+      "queries": [
+        "tipos de solicitudes de actualización de tokens",
+        "excepción tiempo de espera solicitud de actualización de tokens tipo de token usuario",
+        "requisito de tiempo de espera límite estricto valor recomendado"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "different-timeouts",
+      "variant": "candidate",
+      "expected": "conflict",
+      "actual": "conflict",
+      "correct": true,
+      "elapsedMs": 6623,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "bilingual-different-timeouts",
+      "variant": "baseline",
+      "expected": "conflict",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 43609,
+      "queries": [
+        "두 정책이 적용되는 시스템 또는 서비스의 범위",
+        "토큰 갱신 요청의 구체적인 유형이나 시나리오",
+        "토큰 갱신 제한 시간 예외 상황"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "bilingual-different-timeouts",
+      "variant": "candidate",
+      "expected": "conflict",
+      "actual": "conflict",
+      "correct": true,
+      "elapsedMs": 6725,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "undefined-policy",
+      "variant": "baseline",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 60067,
+      "queries": [
+        "definición de la política r",
+        "política r múltiples solicitudes de actualización de tokens concurrentes serialización",
+        "política r más restrictiva que la serialización prevalece",
+        "política r solicitudes de actualización de tokens concurrentes serialización"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "undefined-policy",
+      "variant": "candidate",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 24198,
+      "queries": ["definition of policy r"],
+      "replacements": 1
+    },
+    {
+      "id": "bilingual-undefined-policy",
+      "variant": "baseline",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 48897,
+      "queries": ["정책 r 정의", "정책 r 토큰 갱신 요청 동시성 제약", "토큰 갱신 요청 동시성 규칙"],
+      "replacements": 0
+    },
+    {
+      "id": "bilingual-undefined-policy",
+      "variant": "candidate",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 21528,
+      "queries": ["policy r 정의"],
+      "replacements": 1
+    },
+    {
+      "id": "production-undefined-policy",
+      "variant": "baseline",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 43574,
+      "queries": [
+        "regla de concurrencia de la izquierda solo en producción o implicaciones para otros entornos",
+        "política r regla de concurrencia solo en producción o en todos los entornos",
+        "relación superposición regla de concurrencia de producción y política r",
+        "regla de concurrencia de la izquierda en otros entornos",
+        "aplicación de política r regla de concurrencia en diferentes entornos",
+        "superposición regla de concurrencia de producción y política r"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "production-undefined-policy",
+      "variant": "candidate",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 17817,
+      "queries": ["definition of policy r", "policy r definition"],
+      "replacements": 1
+    },
+    {
+      "id": "staging-undefined-policy",
+      "variant": "baseline",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 33495,
+      "queries": [
+        "政策 r 适用环境",
+        "政策 r 并发性规定",
+        "非 staging 环境 token refresh 请求并发性规定"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "staging-undefined-policy",
+      "variant": "candidate",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "correct": true,
+      "elapsedMs": 15739,
+      "queries": ["definition of policy r", "policy r definition"],
+      "replacements": 1
+    },
+    {
+      "id": "different-domains",
+      "variant": "baseline",
+      "expected": "unrelated",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 44433,
+      "queries": [
+        "serialización de solicitudes de actualización de token aprobación de reembolsos o cancelaciones de pagos",
+        "reembolso actualización de token regla de serialización",
+        "aprobación de un reembolso desencadenar o requerir actualización de token serializada",
+        "serialización de solicitudes de actualización de token",
+        "aprobación de un reembolso actualización de token serializada"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "different-domains",
+      "variant": "candidate",
+      "expected": "unrelated",
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 5338,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "bilingual-different-domains",
+      "variant": "baseline",
+      "expected": "unrelated",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 34789,
+      "queries": [
+        "요청 또는 처리의 순서 제약 조건",
+        "적용되는 시스템 또는 비즈니스 프로세스의 범위",
+        "공통적으로 다루는 '요청' 또는 '처리'의 순서 제약 조건"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "bilingual-different-domains",
+      "variant": "candidate",
+      "expected": "unrelated",
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 4932,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "complementary-audit",
+      "variant": "baseline",
+      "expected": "unrelated",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 33929,
+      "queries": [
+        "serialización de las solicitudes de actualización de tokens y entradas de registro de auditoría",
+        "solicitudes de actualización de tokens concurrentemente entrada de registro de auditoría",
+        "excepción serialización solicitudes de actualización de tokens registro de auditoría",
+        "serialización de solicitudes de actualización de tokens y entradas de registro de auditoría"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "complementary-audit",
+      "variant": "candidate",
+      "expected": "unrelated",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 15781,
+      "queries": [
+        "token refresh requests must be serialized: at most one refresh request may run at a time.",
+        "right policy audit log upon completion concurrency constraints"
+      ],
+      "replacements": 1
+    },
+    {
+      "id": "bilingual-complementary-audit",
+      "variant": "baseline",
+      "expected": "unrelated",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 23393,
+      "queries": [
+        "토큰 갱신 요청 순차적 실행 최대 하나",
+        "토큰 갱신 요청 완료 후 감사 로그 항목 생성 시점"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "bilingual-complementary-audit",
+      "variant": "candidate",
+      "expected": "unrelated",
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 5264,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "different-environments",
+      "variant": "baseline",
+      "expected": "unrelated",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 29452,
+      "queries": [
+        "esta regla aplica a otros entornos además de producción",
+        "esta regla aplica a otros entornos además de staging",
+        "superposición de entornos reglas"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "different-environments",
+      "variant": "candidate",
+      "expected": "unrelated",
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 5065,
+      "queries": [],
+      "replacements": 1
+    },
+    {
+      "id": "independent-timeout",
+      "variant": "baseline",
+      "expected": "unrelated",
+      "actual": "uncertain",
+      "correct": false,
+      "elapsedMs": 31342,
+      "queries": [
+        "serialización de solicitudes de actualización de token operaciones relacionadas con el token",
+        "tiempo de espera de 30 segundos solicitudes de actualización de token en curso",
+        "excepción serialización tiempo de espera 30 segundos"
+      ],
+      "replacements": 0
+    },
+    {
+      "id": "independent-timeout",
+      "variant": "candidate",
+      "expected": "unrelated",
+      "actual": "unrelated",
+      "correct": true,
+      "elapsedMs": 5357,
+      "queries": [],
+      "replacements": 1
+    }
+  ],
+  "labelsUnchanged": true,
+  "snapshotUnchanged": true
+}

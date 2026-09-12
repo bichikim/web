@@ -1,0 +1,55 @@
+{
+  "consistency": [
+    {
+      "id": "revalidation",
+      "outcomes": ["uncertain", "uncertain", "uncertain"]
+    }
+  ],
+  "frozenUnchanged": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 5,
+      "contextCharacters": 0,
+      "elapsedMs": 47272,
+      "expected": "uncertain",
+      "id": "revalidation",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 1,
+      "searches": 2
+    },
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 5,
+      "contextCharacters": 0,
+      "elapsedMs": 33306,
+      "expected": "uncertain",
+      "id": "revalidation",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 2,
+      "searches": 2
+    },
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 5,
+      "contextCharacters": 0,
+      "elapsedMs": 35920,
+      "expected": "uncertain",
+      "id": "revalidation",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 3,
+      "searches": 2
+    }
+  ],
+  "snapshotUnchanged": true
+}

@@ -1,0 +1,173 @@
+{
+  "modelUnchanged": true,
+  "results": [
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": [],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "The provided text for Rule B (and the corresponding evidence) describes the 'background' window's behavior: by default, it is a key window 'immediately above desktop icons' (데스크톱 아이콘 바로 위의 키 윈도), and when background operation is turned off, it moves 'below desktop icons' (데스크톱 아이콘보다 아래로 내려). However, the provided evidence does not contain the text for 'Rule A' (규칙 A), which is necessary to determine if its description of 'below icons' (아이콘 아래) refers specifically to the 'off' state or the default state.",
+          "missing": "The content of 'Rule A' (규칙 A) is missing from the provided evidence, making it impossible to compare its 'below icons' description with the states defined in Rule B.",
+          "supported": false
+        }
+      ],
+      "id": "absent",
+      "repeat": 1
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": [],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "The provided text for Rule B (and the corresponding evidence) describes the 'background' window's behavior: by default, it is a key window 'immediately above desktop icons' (데스크톱 아이콘 바로 위의 키 윈도), and when background operation is turned off, it moves 'below desktop icons' (데스크톱 아이콘보다 아래로 내려). However, the provided evidence does not contain the text for 'Rule A' (규칙 A), which is necessary to determine if its description of 'below icons' (아이콘 아래) refers specifically to the 'off' state or the default state.",
+          "missing": "The content of 'Rule A' (규칙 A) is not provided in the evidence to compare with Rule B.",
+          "supported": false
+        }
+      ],
+      "id": "absent",
+      "repeat": 2
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": [],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "The provided text for Rule B (and the corresponding evidence) describes the 'background' window's behavior: by default, it is a key window 'immediately above desktop icons' (데스크톱 아이콘 바로 위의 키 윈도), and when background operation is turned off, it moves 'below desktop icons' (데스크톱 아이콘보다 아래로 내려). However, the provided evidence does not contain the text for 'Rule A' (규칙 A), which is necessary to determine if its description of 'below icons' (아이콘 아래) refers specifically to the 'off' state or the default state.",
+          "missing": "The content of 'Rule A' (규칙 A) is missing from the provided evidence, making it impossible to compare its 'below icons' description with the states defined in Rule B.",
+          "supported": false
+        }
+      ],
+      "id": "absent",
+      "repeat": 3
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0"],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "규칙 B(제시된 텍스트의 바탕화면 모드 설명)에 따르면, 기본 상태는 '데스크톱 아이콘 바로 위의 키 윈도'이며, 사용자가 '배경 조작을 끄면' '데스크톱 아이콘보다 아래로 내려' 입력을 통과시킨다고 명시되어 있습니다. 따라서 규칙 A의 '아이콘 아래' 설명은 배경 조작을 끈 상태에 적용되는 것입니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "off",
+      "repeat": 1
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0"],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "규칙 B(제공된 텍스트의 background 설명 부분)에 따르면, 기본 상태는 '데스크톱 아이콘 바로 위의 키 윈도'이며, 사용자가 '배경 조작을 끄면' '데스크톱 아이콘보다 아래로 내려' 입력을 통과시킨다고 명시되어 있습니다. 따라서 '아이콘 아래'는 배경 조작을 끈 상태에 적용되는 설정입니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "off",
+      "repeat": 2
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0"],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "규칙 B(제시된 텍스트의 바탕화면 모드 설명)에 따르면, 기본 상태는 '데스크톱 아이콘 바로 위의 키 윈도'이며, 사용자가 '배경 조작을 끄면' '데스크톱 아이콘보다 아래로 내려' 입력을 통과시킨다고 명시되어 있습니다. 따라서 '아이콘 아래'는 배경 조작을 끈 상태에 적용되는 설정입니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "off",
+      "repeat": 3
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["scope-control"],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "제공된 텍스트(scope-control)에 따르면 규칙 A 요약표의 '아이콘 아래' 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용됩니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "default",
+      "repeat": 1
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["scope-control"],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "제공된 텍스트(scope-control)에 따르면 규칙 A 요약표의 '아이콘 아래' 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용됩니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "default",
+      "repeat": 2
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["scope-control"],
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "제공된 텍스트(scope-control)에 따르면 규칙 A 요약표의 '아이콘 아래' 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용됩니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "default",
+      "repeat": 3
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0"],
+          "questionId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16",
+          "reason": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙임이 명시되어 있습니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "retention",
+      "repeat": 1
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0"],
+          "questionId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16",
+          "reason": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙임이 명시되어 있습니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "retention",
+      "repeat": 2
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "evidence": ["b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0"],
+          "questionId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16",
+          "reason": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙임이 명시되어 있습니다.",
+          "missing": "",
+          "supported": true
+        }
+      ],
+      "id": "retention",
+      "repeat": 3
+    }
+  ]
+}

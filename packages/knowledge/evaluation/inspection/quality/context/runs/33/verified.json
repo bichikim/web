@@ -1,0 +1,960 @@
+{
+  "actualNetworkRun": "packages/knowledge/evaluation/inspection/quality/context/runs/33",
+  "baseline": "packages/knowledge/evaluation/inspection/quality/context/runs/32",
+  "baselinePassed": 6,
+  "candidatePassed": 6,
+  "errors": 0,
+  "measurements": [
+    {
+      "audits": 1,
+      "before": "duplicate",
+      "beforeCorrect": true,
+      "calls": 7,
+      "correct": true,
+      "id": "signal-update",
+      "independent": 1,
+      "mode": "search",
+      "queries": 1,
+      "replayed": {
+        "ok": true,
+        "research": {
+          "initial": {
+            "confidence": 0.8,
+            "kind": "uncertain",
+            "leftQuote": "# signal 실험 기준 {#base}\n\n실험 S는 SIG 규칙을 따라야 한다. 초기값은 7이고 setter에 다시 7을 전달한다. 구독 계산의 실행 여부는 SIG 규칙을 따라야 한다.",
+            "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+            "rightQuote": "# signal 갱신 요구 {#update}\n\n실험 S에서 초기값 7인 signal의 setter에 7을 전달하면 구독 계산을 한 번 실행해야 한다."
+          },
+          "rounds": [
+            {
+              "added": [
+                "b662a7af-b5df-5b42-a067-92841189ad05",
+                "dac41115-e8f1-5277-90d0-c41bc4229521"
+              ],
+              "queries": [
+                {
+                  "hits": [
+                    "b662a7af-b5df-5b42-a067-92841189ad05",
+                    "e0eafef5-8669-5399-9ba1-cb93cc8b954c",
+                    "dac41115-e8f1-5277-90d0-c41bc4229521"
+                  ],
+                  "query": "sig 규칙 구독 계산 실행 여부"
+                }
+              ],
+              "questions": [
+                "'SIG 규칙'에 따라 초기값과 동일한 값을 setter에 전달했을 때 구독 계산을 실행해야 하는지 여부는 무엇입니까?"
+              ],
+              "decision": {
+                "citations": ["context-1-left-1", "context-2-left-1"],
+                "proposed": {
+                  "confidence": 1,
+                  "kind": "duplicate",
+                  "leftQuote": "# signal 실험 기준 {#base}\n\n실험 S는 SIG 규칙을 따라야 한다. 초기값은 7이고 setter에 다시 7을 전달한다. 구독 계산의 실행 여부는 SIG 규칙을 따라야 한다.",
+                  "reason": "SIG 규칙에 따라 초기값과 동일한 값을 전달했을 때 구독 계산을 실행해야 한다는 점이 retrieved knowledge를 통해 확인되었으며, 이는 left-1의 'SIG 규칙을 따라야 한다'는 조건과 right-1의 '구독 계산을 한 번 실행해야 한다'는 요구사항이 동일한 결과(실행)를 지향함을 의미한다.",
+                  "rightQuote": "# signal 갱신 요구 {#update}\n\n실험 S에서 초기값 7인 signal의 setter에 7을 전달하면 구독 계산을 한 번 실행해야 한다."
+                },
+                "unresolved": [],
+                "audits": [
+                  {
+                    "evidence": [
+                      "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df:1"
+                    ],
+                    "questionId": "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df",
+                    "reason": "The evidence explicitly defines the 'SIG rule' as specifying `equals: false` in createSignal, which ensures that updates are delivered even if the value is the same as the previous one.",
+                    "missing": "",
+                    "supported": true,
+                    "answer": "SIG 규칙은 createSignal에 `equals: false`를 지정하는 것을 의미하며, 이 경우 이전 값과 같더라도 갱신을 전달한다. 실험 S에서 초기값 7인 signal의 setter에 7을 전달했을 때 구독 계산이 한 번 실행되는 것이 확인되었다.",
+                    "question": "'SIG 규칙'에 따라 초기값과 동일한 값을 setter에 전달했을 때 구독 계산을 실행해야 하는지 여부는 무엇입니까?",
+                    "sources": [
+                      {
+                        "id": "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df:0",
+                        "text": "# SIG 실험 S의 실행값 {#policy}\n\n실험 기록이며 SolidJS 공식 문서의 인용이 아니다. 2026-09-08, 설치된 SolidJS 1.9.14 클라이언트 반응성 런타임을 Node의 browser export 조건으로 실행했다.\n\nSIG 규칙에 따라 `equals: false`를 지정했다. 초기값 7인 signal을 createComputed 하나가 이미 구독한 뒤 setter에 7을 한 번 전달했다. batch는 사용하지 않았고 초기 구독 실행은 횟수에서 제외했다. 측정 결과, 구독 계산이 한 번 실행됐다. 같은 값의 갱신이 이 실험에서 구독 계산의 재실행으로 이어지는 것을 확인했다.\n\n측정 코드: packages/knowledge/evaluation/inspection/quality/context/measure.mjs. signalCalls는 1이며 assertion을 통과했다. 이 실행값은 실험 S의 조건에 한정한다."
+                      },
+                      {
+                        "id": "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df:1",
+                        "text": "# SIG 규칙: SolidJS createSignal의 명시적 equals 옵션 {#policy}\n\n공식 설명 요약: createSignal에 `equals: false`를 지정하면 이전 값과 같더라도 갱신을 전달한다. 사용자 비교 함수가 true를 반환하면 갱신을 막고, false를 반환하면 갱신을 전달한다.\n\n실험용 정의: SIG 규칙은 `equals: false`를 지정한 createSignal을 뜻한다. SIG 실험은 이미 구독이 성립한 계산 하나를 관찰한다. setter를 한 번 호출하고 batch를 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/basic-reactivity/create-signal\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다."
+                      }
+                    ],
+                    "checks": {
+                      "answers": {
+                        "evidence": [
+                          "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df:1"
+                        ],
+                        "questionId": "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df",
+                        "reason": "The evidence explicitly defines the 'SIG rule' as specifying `equals: false` in createSignal, which ensures that updates are delivered even if the value is the same as the previous one.",
+                        "missing": "",
+                        "supported": true
+                      },
+                      "evidence": {
+                        "evidence": [
+                          "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df:1"
+                        ],
+                        "questionId": "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df",
+                        "reason": "The text explicitly defines the 'SIG rule' as specifying `equals: false` in createSignal, and states that when `equals: false` is specified, the update is delivered even if it is the same as the previous value.",
+                        "missing": "",
+                        "supported": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "selection": {
+            "eligible": 2,
+            "sources": [
+              {
+                "contentHash": "sha256:75324a5ef1190370295415bc6b3659d8eb9e9c0ab81cbe7418bb95e80347d699",
+                "docId": "measurement/signal",
+                "path": "docs/measurements/signal.md",
+                "pointId": "b662a7af-b5df-5b42-a067-92841189ad05",
+                "text": "# SIG 실험 S의 실행값 {#policy}\n\n실험 기록이며 SolidJS 공식 문서의 인용이 아니다. 2026-09-08, 설치된 SolidJS 1.9.14 클라이언트 반응성 런타임을 Node의 browser export 조건으로 실행했다.\n\nSIG 규칙에 따라 `equals: false`를 지정했다. 초기값 7인 signal을 createComputed 하나가 이미 구독한 뒤 setter에 7을 한 번 전달했다. batch는 사용하지 않았고 초기 구독 실행은 횟수에서 제외했다. 측정 결과, 구독 계산이 한 번 실행됐다. 같은 값의 갱신이 이 실험에서 구독 계산의 재실행으로 이어지는 것을 확인했다.\n\n측정 코드: packages/knowledge/evaluation/inspection/quality/context/measure.mjs. signalCalls는 1이며 assertion을 통과했다. 이 실행값은 실험 S의 조건에 한정한다.",
+                "title": "SIG 실험 S의 실행값",
+                "truncated": false,
+                "unitId": "policy",
+                "startLine": 7,
+                "endLine": 13
+              },
+              {
+                "contentHash": "sha256:5a010cd96b6230146ec5aaad053b356e8d5a79c5862be3aa0103d8a3c7d0ba3c",
+                "docId": "reference/signal",
+                "path": "docs/reference/signal.md",
+                "pointId": "dac41115-e8f1-5277-90d0-c41bc4229521",
+                "text": "# SIG 규칙: SolidJS createSignal의 명시적 equals 옵션 {#policy}\n\n공식 설명 요약: createSignal에 `equals: false`를 지정하면 이전 값과 같더라도 갱신을 전달한다. 사용자 비교 함수가 true를 반환하면 갱신을 막고, false를 반환하면 갱신을 전달한다.\n\n실험용 정의: SIG 규칙은 `equals: false`를 지정한 createSignal을 뜻한다. SIG 실험은 이미 구독이 성립한 계산 하나를 관찰한다. setter를 한 번 호출하고 batch를 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/basic-reactivity/create-signal\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                "title": "SIG 규칙: SolidJS createSignal의 명시적 equals 옵션",
+                "truncated": false,
+                "unitId": "policy",
+                "startLine": 7,
+                "endLine": 14
+              }
+            ],
+            "truncated": false
+          },
+          "stop": "resolved",
+          "unresolved": [],
+          "journal": {
+            "fingerprint": "574551fdc2023fc19b0324a513e5c8d4bb85f59ad140a370d2e4f2605fd7f619",
+            "questions": [
+              {
+                "attempts": [
+                  {
+                    "clues": [],
+                    "query": "sig 규칙 구독 계산 실행 여부"
+                  }
+                ],
+                "confirmed": "SIG 규칙은 createSignal에 `equals: false`를 지정하는 것을 의미하며, 이 경우 이전 값과 같더라도 갱신을 전달한다. 실험 S에서 초기값 7인 signal의 setter에 7을 전달했을 때 구독 계산이 한 번 실행되는 것이 확인되었다.",
+                "evidence": [
+                  {
+                    "contentHash": "sha256:75324a5ef1190370295415bc6b3659d8eb9e9c0ab81cbe7418bb95e80347d699",
+                    "passage": "# SIG 실험 S의 실행값 {#policy}\n\n실험 기록이며 SolidJS 공식 문서의 인용이 아니다. 2026-09-08, 설치된 SolidJS 1.9.14 클라이언트 반응성 런타임을 Node의 browser export 조건으로 실행했다.\n\nSIG 규칙에 따라 `equals: false`를 지정했다. 초기값 7인 signal을 createComputed 하나가 이미 구독한 뒤 setter에 7을 한 번 전달했다. batch는 사용하지 않았고 초기 구독 실행은 횟수에서 제외했다. 측정 결과, 구독 계산이 한 번 실행됐다. 같은 값의 갱신이 이 실험에서 구독 계산의 재실행으로 이어지는 것을 확인했다.\n\n측정 코드: packages/knowledge/evaluation/inspection/quality/context/measure.mjs. signalCalls는 1이며 assertion을 통과했다. 이 실행값은 실험 S의 조건에 한정한다.",
+                    "pointId": "b662a7af-b5df-5b42-a067-92841189ad05"
+                  },
+                  {
+                    "contentHash": "sha256:5a010cd96b6230146ec5aaad053b356e8d5a79c5862be3aa0103d8a3c7d0ba3c",
+                    "passage": "# SIG 규칙: SolidJS createSignal의 명시적 equals 옵션 {#policy}\n\n공식 설명 요약: createSignal에 `equals: false`를 지정하면 이전 값과 같더라도 갱신을 전달한다. 사용자 비교 함수가 true를 반환하면 갱신을 막고, false를 반환하면 갱신을 전달한다.\n\n실험용 정의: SIG 규칙은 `equals: false`를 지정한 createSignal을 뜻한다. SIG 실험은 이미 구독이 성립한 계산 하나를 관찰한다. setter를 한 번 호출하고 batch를 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/basic-reactivity/create-signal\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                    "pointId": "dac41115-e8f1-5277-90d0-c41bc4229521"
+                  }
+                ],
+                "id": "547aee5f8d453426a66a038eb0749d8a4fe40a352da1a1b43bcbf94613d087df",
+                "remaining": "",
+                "text": "'SIG 규칙'에 따라 초기값과 동일한 값을 setter에 전달했을 때 구독 계산을 실행해야 하는지 여부는 무엇입니까?"
+              }
+            ]
+          }
+        },
+        "value": {
+          "confidence": 1,
+          "kind": "duplicate",
+          "leftQuote": "# signal 실험 기준 {#base}\n\n실험 S는 SIG 규칙을 따라야 한다. 초기값은 7이고 setter에 다시 7을 전달한다. 구독 계산의 실행 여부는 SIG 규칙을 따라야 한다.",
+          "reason": "SIG 규칙에 따라 초기값과 동일한 값을 전달했을 때 구독 계산을 실행해야 한다는 점이 retrieved knowledge를 통해 확인되었으며, 이는 left-1의 'SIG 규칙을 따라야 한다'는 조건과 right-1의 '구독 계산을 한 번 실행해야 한다'는 요구사항이 동일한 결과(실행)를 지향함을 의미한다.",
+          "rightQuote": "# signal 갱신 요구 {#update}\n\n실험 S에서 초기값 7인 signal의 setter에 7을 전달하면 구독 계산을 한 번 실행해야 한다."
+        }
+      }
+    },
+    {
+      "audits": 1,
+      "before": "conflict",
+      "beforeCorrect": true,
+      "calls": 7,
+      "correct": true,
+      "id": "signal-suppress",
+      "independent": 1,
+      "mode": "search",
+      "queries": 1,
+      "replayed": {
+        "ok": true,
+        "research": {
+          "initial": {
+            "confidence": 0.8,
+            "kind": "uncertain",
+            "leftQuote": "# signal 실험 기준 {#base}\n\n실험 S는 SIG 규칙을 따라야 한다. 초기값은 7이고 setter에 다시 7을 전달한다. 구독 계산의 실행 여부는 SIG 규칙을 따라야 한다.",
+            "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+            "rightQuote": "# signal 갱신 억제 요구 {#suppress}\n\n실험 S에서 초기값 7인 signal의 setter에 7을 전달하면 구독 계산을 실행하면 안 된다."
+          },
+          "rounds": [
+            {
+              "added": [
+                "b662a7af-b5df-5b42-a067-92841189ad05",
+                "dac41115-e8f1-5277-90d0-c41bc4229521"
+              ],
+              "queries": [
+                {
+                  "hits": [
+                    "b662a7af-b5df-5b42-a067-92841189ad05",
+                    "e0eafef5-8669-5399-9ba1-cb93cc8b954c",
+                    "dac41115-e8f1-5277-90d0-c41bc4229521"
+                  ],
+                  "query": "sig 규칙 구독 계산 실행 여부"
+                }
+              ],
+              "questions": [
+                "'SIG 규칙'에서 초기값과 동일한 값을 setter에 전달했을 때 구독 계산의 실행 여부를 어떻게 정의하고 있습니까?"
+              ],
+              "decision": {
+                "citations": ["context-2-left-1"],
+                "proposed": {
+                  "confidence": 1,
+                  "kind": "conflict",
+                  "leftQuote": "# signal 실험 기준 {#base}\n\n실험 S는 SIG 규칙을 따라야 한다. 초기값은 7이고 setter에 다시 7을 전달한다. 구독 계산의 실행 여부는 SIG 규칙을 따라야 한다.",
+                  "reason": "SIG 규칙에 따르면 동일한 값의 갱신 시에도 구독 계산이 실행되어야 하므로(context-2-left-1), 이를 따라야 한다는 left-1과 실행하면 안 된다는 right-1은 서로 충돌한다.",
+                  "rightQuote": "# signal 갱신 억제 요구 {#suppress}\n\n실험 S에서 초기값 7인 signal의 setter에 7을 전달하면 구독 계산을 실행하면 안 된다."
+                },
+                "unresolved": [],
+                "audits": [
+                  {
+                    "evidence": [
+                      "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda:0"
+                    ],
+                    "questionId": "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda",
+                    "reason": "The evidence states that the SIG rule means specifying `equals: false` in createSignal, and in this case, updates are delivered even if the value is the same as the previous one.",
+                    "missing": "",
+                    "supported": true,
+                    "answer": "SIG 규칙은 createSignal에 `equals: false`를 지정한 것을 뜻하며, 이 경우 이전 값과 같더라도 갱신을 전달한다.",
+                    "question": "'SIG 규칙'에서 초기값과 동일한 값을 setter에 전달했을 때 구독 계산의 실행 여부를 어떻게 정의하고 있습니까?",
+                    "sources": [
+                      {
+                        "id": "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda:0",
+                        "text": "# SIG 규칙: SolidJS createSignal의 명시적 equals 옵션 {#policy}\n\n공식 설명 요약: createSignal에 `equals: false`를 지정하면 이전 값과 같더라도 갱신을 전달한다. 사용자 비교 함수가 true를 반환하면 갱신을 막고, false를 반환하면 갱신을 전달한다.\n\n실험용 정의: SIG 규칙은 `equals: false`를 지정한 createSignal을 뜻한다. SIG 실험은 이미 구독이 성립한 계산 하나를 관찰한다. setter를 한 번 호출하고 batch를 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/basic-reactivity/create-signal\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다."
+                      }
+                    ],
+                    "checks": {
+                      "answers": {
+                        "evidence": [
+                          "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda:0"
+                        ],
+                        "questionId": "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda",
+                        "reason": "The evidence states that the SIG rule means specifying `equals: false` in createSignal, and in this case, updates are delivered even if the value is the same as the previous one.",
+                        "missing": "",
+                        "supported": true
+                      },
+                      "evidence": {
+                        "evidence": [
+                          "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda:0"
+                        ],
+                        "questionId": "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda",
+                        "reason": "The text defines the 'SIG rule' as a createSignal with `equals: false`, and explicitly states that if `equals: false` is specified, the update is delivered even if it is the same as the previous value.",
+                        "missing": "",
+                        "supported": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "selection": {
+            "eligible": 2,
+            "sources": [
+              {
+                "contentHash": "sha256:75324a5ef1190370295415bc6b3659d8eb9e9c0ab81cbe7418bb95e80347d699",
+                "docId": "measurement/signal",
+                "path": "docs/measurements/signal.md",
+                "pointId": "b662a7af-b5df-5b42-a067-92841189ad05",
+                "text": "# SIG 실험 S의 실행값 {#policy}\n\n실험 기록이며 SolidJS 공식 문서의 인용이 아니다. 2026-09-08, 설치된 SolidJS 1.9.14 클라이언트 반응성 런타임을 Node의 browser export 조건으로 실행했다.\n\nSIG 규칙에 따라 `equals: false`를 지정했다. 초기값 7인 signal을 createComputed 하나가 이미 구독한 뒤 setter에 7을 한 번 전달했다. batch는 사용하지 않았고 초기 구독 실행은 횟수에서 제외했다. 측정 결과, 구독 계산이 한 번 실행됐다. 같은 값의 갱신이 이 실험에서 구독 계산의 재실행으로 이어지는 것을 확인했다.\n\n측정 코드: packages/knowledge/evaluation/inspection/quality/context/measure.mjs. signalCalls는 1이며 assertion을 통과했다. 이 실행값은 실험 S의 조건에 한정한다.",
+                "title": "SIG 실험 S의 실행값",
+                "truncated": false,
+                "unitId": "policy",
+                "startLine": 7,
+                "endLine": 13
+              },
+              {
+                "contentHash": "sha256:5a010cd96b6230146ec5aaad053b356e8d5a79c5862be3aa0103d8a3c7d0ba3c",
+                "docId": "reference/signal",
+                "path": "docs/reference/signal.md",
+                "pointId": "dac41115-e8f1-5277-90d0-c41bc4229521",
+                "text": "# SIG 규칙: SolidJS createSignal의 명시적 equals 옵션 {#policy}\n\n공식 설명 요약: createSignal에 `equals: false`를 지정하면 이전 값과 같더라도 갱신을 전달한다. 사용자 비교 함수가 true를 반환하면 갱신을 막고, false를 반환하면 갱신을 전달한다.\n\n실험용 정의: SIG 규칙은 `equals: false`를 지정한 createSignal을 뜻한다. SIG 실험은 이미 구독이 성립한 계산 하나를 관찰한다. setter를 한 번 호출하고 batch를 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/basic-reactivity/create-signal\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                "title": "SIG 규칙: SolidJS createSignal의 명시적 equals 옵션",
+                "truncated": false,
+                "unitId": "policy",
+                "startLine": 7,
+                "endLine": 14
+              }
+            ],
+            "truncated": false
+          },
+          "stop": "resolved",
+          "unresolved": [],
+          "journal": {
+            "fingerprint": "b313e188bd3c54a5b67ccece9142437dd0273abf1a5652779cdcbb82fa174299",
+            "questions": [
+              {
+                "attempts": [
+                  {
+                    "clues": [],
+                    "query": "sig 규칙 구독 계산 실행 여부"
+                  }
+                ],
+                "confirmed": "SIG 규칙은 createSignal에 `equals: false`를 지정한 것을 뜻하며, 이 경우 이전 값과 같더라도 갱신을 전달한다.",
+                "evidence": [
+                  {
+                    "contentHash": "sha256:5a010cd96b6230146ec5aaad053b356e8d5a79c5862be3aa0103d8a3c7d0ba3c",
+                    "passage": "# SIG 규칙: SolidJS createSignal의 명시적 equals 옵션 {#policy}\n\n공식 설명 요약: createSignal에 `equals: false`를 지정하면 이전 값과 같더라도 갱신을 전달한다. 사용자 비교 함수가 true를 반환하면 갱신을 막고, false를 반환하면 갱신을 전달한다.\n\n실험용 정의: SIG 규칙은 `equals: false`를 지정한 createSignal을 뜻한다. SIG 실험은 이미 구독이 성립한 계산 하나를 관찰한다. setter를 한 번 호출하고 batch를 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/basic-reactivity/create-signal\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                    "pointId": "dac41115-e8f1-5277-90d0-c41bc4229521"
+                  }
+                ],
+                "id": "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda",
+                "remaining": "",
+                "text": "'SIG 규칙'에서 초기값과 동일한 값을 setter에 전달했을 때 구독 계산의 실행 여부를 어떻게 정의하고 있습니까?"
+              }
+            ]
+          }
+        },
+        "value": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# signal 실험 기준 {#base}\n\n실험 S는 SIG 규칙을 따라야 한다. 초기값은 7이고 setter에 다시 7을 전달한다. 구독 계산의 실행 여부는 SIG 규칙을 따라야 한다.",
+          "reason": "SIG 규칙에 따르면 동일한 값의 갱신 시에도 구독 계산이 실행되어야 하므로(context-2-left-1), 이를 따라야 한다는 left-1과 실행하면 안 된다는 right-1은 서로 충돌한다.",
+          "rightQuote": "# signal 갱신 억제 요구 {#suppress}\n\n실험 S에서 초기값 7인 signal의 setter에 7을 전달하면 구독 계산을 실행하면 안 된다."
+        }
+      }
+    },
+    {
+      "audits": 1,
+      "before": "duplicate",
+      "beforeCorrect": true,
+      "calls": 7,
+      "correct": true,
+      "id": "batch-once",
+      "independent": 1,
+      "mode": "search",
+      "queries": 1,
+      "replayed": {
+        "ok": true,
+        "research": {
+          "initial": {
+            "confidence": 0.8,
+            "kind": "uncertain",
+            "leftQuote": "# batch 실험 기준 {#base}\n\n실험 B는 BAT 규칙을 따라야 한다. 첫 signal은 1로, 둘째 signal은 5로 바꾼다. 구독 계산의 실행 시점과 횟수는 BAT 규칙을 따라야 한다.",
+            "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+            "rightQuote": "# batch 한 번 실행 요구 {#once}\n\n실험 B에서 첫 signal을 1로, 둘째 signal을 5로 바꾸는 동안 구독 계산은 두 변경이 끝난 뒤 한 번 실행해야 한다."
+          },
+          "rounds": [
+            {
+              "added": [
+                "eabaccd4-f3a3-5695-b617-a5d0ecd2bf99",
+                "362738a3-fdaf-589d-abbf-fa7f52b5c425"
+              ],
+              "queries": [
+                {
+                  "hits": [
+                    "3a1a5600-b979-5c92-9448-703b8c044cee",
+                    "eabaccd4-f3a3-5695-b617-a5d0ecd2bf99",
+                    "362738a3-fdaf-589d-abbf-fa7f52b5c425"
+                  ],
+                  "query": "bat 규칙 구독 계산 실행 시점 횟수"
+                }
+              ],
+              "questions": ["'BAT 규칙'에서 정의하는 구독 계산의 실행 시점과 횟수는 무엇인가요?"],
+              "decision": {
+                "citations": ["context-1-left-1"],
+                "proposed": {
+                  "confidence": 1,
+                  "kind": "duplicate",
+                  "leftQuote": "# batch 실험 기준 {#base}\n\n실험 B는 BAT 규칙을 따라야 한다. 첫 signal은 1로, 둘째 signal은 5로 바꾼다. 구독 계산의 실행 시점과 횟수는 BAT 규칙을 따라야 한다.",
+                  "reason": "BAT 규칙은 갱신을 묶음 끝에서 한 번 실행하는 것이며, 이는 right-1의 '두 변경이 끝난 뒤 한 번 실행'하는 요구사항과 동일하다.",
+                  "rightQuote": "# batch 한 번 실행 요구 {#once}\n\n실험 B에서 첫 signal을 1로, 둘째 signal을 5로 바꾸는 동안 구독 계산은 두 변경이 끝난 뒤 한 번 실행해야 한다."
+                },
+                "unresolved": [],
+                "audits": [
+                  {
+                    "evidence": [
+                      "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0"
+                    ],
+                    "questionId": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                    "reason": "The evidence explicitly states that under the BAT rule (batch), execution is deferred until the end of the bundle and occurs once instead of for each update.",
+                    "missing": "",
+                    "supported": true,
+                    "answer": "BAT 규칙에 따르면, 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 묶음 끝에서 한 번 실행한다.",
+                    "question": "'BAT 규칙'에서 정의하는 구독 계산의 실행 시점과 횟수는 무엇인가요?",
+                    "sources": [
+                      {
+                        "id": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0",
+                        "text": "# BAT 규칙: SolidJS batch의 동기 갱신 {#policy}\n\n공식 설명 요약: batch는 하위 계산의 실행을 묶음 끝까지 미룬다. 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다. 중첩된 batch는 하나의 큰 묶음으로 동작한다. 묶음 안에서 오래된 값을 직접 읽으면 필요에 따라 계산한다. 비동기 함수에서는 첫 await 이전까지만 묶는다.\n\n실험용 정의: BAT 규칙은 하나의 동기 batch 안에서 두 signal의 setter를 각각 한 번 호출하는 절차다. 이미 두 signal을 구독한 계산 하나를 관찰한다. 두 초기값은 모두 0이다. 묶음 안에서 계산값을 읽지 않고 await도 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/reactive-utilities/batch\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다."
+                      }
+                    ],
+                    "checks": {
+                      "answers": {
+                        "evidence": [
+                          "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0"
+                        ],
+                        "questionId": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                        "reason": "The evidence explicitly states that under the BAT rule (batch), execution is deferred until the end of the bundle and occurs once instead of for each update.",
+                        "missing": "",
+                        "supported": true
+                      },
+                      "evidence": {
+                        "evidence": [
+                          "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0"
+                        ],
+                        "questionId": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                        "reason": "The text defines the execution timing as being deferred until the end of the batch ('묶음 끝까지 미룬다') and the frequency as executing once at the end instead of for each update ('각 갱신마다 실행하는 대신 끝에서 한 번 실행한다').",
+                        "missing": "",
+                        "supported": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "selection": {
+            "eligible": 2,
+            "sources": [
+              {
+                "contentHash": "sha256:8b473b8570f573540ab96e9c73a73f2012b65b08e3f368860830028dc58eda08",
+                "docId": "reference/batch",
+                "path": "docs/reference/batch.md",
+                "pointId": "eabaccd4-f3a3-5695-b617-a5d0ecd2bf99",
+                "text": "# BAT 규칙: SolidJS batch의 동기 갱신 {#policy}\n\n공식 설명 요약: batch는 하위 계산의 실행을 묶음 끝까지 미룬다. 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다. 중첩된 batch는 하나의 큰 묶음으로 동작한다. 묶음 안에서 오래된 값을 직접 읽으면 필요에 따라 계산한다. 비동기 함수에서는 첫 await 이전까지만 묶는다.\n\n실험용 정의: BAT 규칙은 하나의 동기 batch 안에서 두 signal의 setter를 각각 한 번 호출하는 절차다. 이미 두 signal을 구독한 계산 하나를 관찰한다. 두 초기값은 모두 0이다. 묶음 안에서 계산값을 읽지 않고 await도 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/reactive-utilities/batch\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                "title": "BAT 규칙: SolidJS batch의 동기 갱신",
+                "truncated": false,
+                "unitId": "policy",
+                "startLine": 7,
+                "endLine": 14
+              },
+              {
+                "contentHash": "sha256:8f24536f6dbbd200ae68878284524b6e8a8cdb9ac11e5c9707464a103e1153fa",
+                "docId": "case/batch",
+                "path": "docs/cases/batch.md",
+                "pointId": "362738a3-fdaf-589d-abbf-fa7f52b5c425",
+                "text": "# batch 두 번 실행 요구 {#twice}\n\n실험 B에서 첫 signal을 1로, 둘째 signal을 5로 바꾸는 동안 구독 계산은 각 setter 직후 한 번씩, 총 두 번 실행해야 한다.",
+                "title": "batch 두 번 실행 요구",
+                "truncated": false,
+                "unitId": "twice",
+                "startLine": 15,
+                "endLine": 17
+              }
+            ],
+            "truncated": false
+          },
+          "stop": "resolved",
+          "unresolved": [],
+          "journal": {
+            "fingerprint": "f505a6376faf078d6d3e5496156398be4c3b209990a9dd3606977f62d6c4baf0",
+            "questions": [
+              {
+                "attempts": [
+                  {
+                    "clues": [],
+                    "query": "bat 규칙 구독 계산 실행 시점 횟수"
+                  }
+                ],
+                "confirmed": "BAT 규칙에 따르면, 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 묶음 끝에서 한 번 실행한다.",
+                "evidence": [
+                  {
+                    "contentHash": "sha256:8b473b8570f573540ab96e9c73a73f2012b65b08e3f368860830028dc58eda08",
+                    "passage": "# BAT 규칙: SolidJS batch의 동기 갱신 {#policy}\n\n공식 설명 요약: batch는 하위 계산의 실행을 묶음 끝까지 미룬다. 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다. 중첩된 batch는 하나의 큰 묶음으로 동작한다. 묶음 안에서 오래된 값을 직접 읽으면 필요에 따라 계산한다. 비동기 함수에서는 첫 await 이전까지만 묶는다.\n\n실험용 정의: BAT 규칙은 하나의 동기 batch 안에서 두 signal의 setter를 각각 한 번 호출하는 절차다. 이미 두 signal을 구독한 계산 하나를 관찰한다. 두 초기값은 모두 0이다. 묶음 안에서 계산값을 읽지 않고 await도 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/reactive-utilities/batch\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                    "pointId": "eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"
+                  }
+                ],
+                "id": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                "remaining": "",
+                "text": "'BAT 규칙'에서 정의하는 구독 계산의 실행 시점과 횟수는 무엇인가요?"
+              }
+            ]
+          }
+        },
+        "value": {
+          "confidence": 1,
+          "kind": "duplicate",
+          "leftQuote": "# batch 실험 기준 {#base}\n\n실험 B는 BAT 규칙을 따라야 한다. 첫 signal은 1로, 둘째 signal은 5로 바꾼다. 구독 계산의 실행 시점과 횟수는 BAT 규칙을 따라야 한다.",
+          "reason": "BAT 규칙은 갱신을 묶음 끝에서 한 번 실행하는 것이며, 이는 right-1의 '두 변경이 끝난 뒤 한 번 실행'하는 요구사항과 동일하다.",
+          "rightQuote": "# batch 한 번 실행 요구 {#once}\n\n실험 B에서 첫 signal을 1로, 둘째 signal을 5로 바꾸는 동안 구독 계산은 두 변경이 끝난 뒤 한 번 실행해야 한다."
+        }
+      }
+    },
+    {
+      "audits": 1,
+      "before": "conflict",
+      "beforeCorrect": true,
+      "calls": 7,
+      "correct": true,
+      "id": "batch-twice",
+      "independent": 1,
+      "mode": "search",
+      "queries": 1,
+      "replayed": {
+        "ok": true,
+        "research": {
+          "initial": {
+            "confidence": 0.8,
+            "kind": "uncertain",
+            "leftQuote": "# batch 실험 기준 {#base}\n\n실험 B는 BAT 규칙을 따라야 한다. 첫 signal은 1로, 둘째 signal은 5로 바꾼다. 구독 계산의 실행 시점과 횟수는 BAT 규칙을 따라야 한다.",
+            "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+            "rightQuote": "# batch 두 번 실행 요구 {#twice}\n\n실험 B에서 첫 signal을 1로, 둘째 signal을 5로 바꾸는 동안 구독 계산은 각 setter 직후 한 번씩, 총 두 번 실행해야 한다."
+          },
+          "rounds": [
+            {
+              "added": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+              "queries": [
+                {
+                  "hits": [
+                    "3a1a5600-b979-5c92-9448-703b8c044cee",
+                    "eabaccd4-f3a3-5695-b617-a5d0ecd2bf99",
+                    "362738a3-fdaf-589d-abbf-fa7f52b5c425"
+                  ],
+                  "query": "bat 규칙 구독 계산 실행 시점 횟수"
+                }
+              ],
+              "questions": ["'BAT 규칙'에서 정의하는 구독 계산의 실행 시점과 횟수는 무엇인가요?"],
+              "decision": {
+                "citations": ["context-1-left-1"],
+                "proposed": {
+                  "confidence": 1,
+                  "kind": "conflict",
+                  "leftQuote": "# batch 실험 기준 {#base}\n\n실험 B는 BAT 규칙을 따라야 한다. 첫 signal은 1로, 둘째 signal은 5로 바꾼다. 구독 계산의 실행 시점과 횟수는 BAT 규칙을 따라야 한다.",
+                  "reason": "BAT 규칙은 묶음 끝에서 한 번 실행하는 것이나, right-1은 각 setter 직후 총 두 번 실행할 것을 요구하므로 상충한다.",
+                  "rightQuote": "# batch 두 번 실행 요구 {#twice}\n\n실험 B에서 첫 signal을 1로, 둘째 signal을 5로 바꾸는 동안 구독 계산은 각 setter 직후 한 번씩, 총 두 번 실행해야 한다."
+                },
+                "unresolved": [],
+                "audits": [
+                  {
+                    "evidence": [
+                      "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0"
+                    ],
+                    "questionId": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                    "reason": "The provided text explicitly states that under the BAT rule (batch), execution is deferred until the end of the bundle and occurs once at the end instead of after each update.",
+                    "missing": "",
+                    "supported": true,
+                    "answer": "BAT 규칙에 따르면 batch는 하위 계산의 실행을 묶음 끝까지 미루며, 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다.",
+                    "question": "'BAT 규칙'에서 정의하는 구독 계산의 실행 시점과 횟수는 무엇인가요?",
+                    "sources": [
+                      {
+                        "id": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0",
+                        "text": "# BAT 규칙: SolidJS batch의 동기 갱신 {#policy}\n\n공식 설명 요약: batch는 하위 계산의 실행을 묶음 끝까지 미룬다. 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다. 중첩된 batch는 하나의 큰 묶음으로 동작한다. 묶음 안에서 오래된 값을 직접 읽으면 필요에 따라 계산한다. 비동기 함수에서는 첫 await 이전까지만 묶는다.\n\n실험용 정의: BAT 규칙은 하나의 동기 batch 안에서 두 signal의 setter를 각각 한 번 호출하는 절차다. 이미 두 signal을 구독한 계산 하나를 관찰한다. 두 초기값은 모두 0이다. 묶음 안에서 계산값을 읽지 않고 await도 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/reactive-utilities/batch\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다."
+                      }
+                    ],
+                    "checks": {
+                      "answers": {
+                        "evidence": [
+                          "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0"
+                        ],
+                        "questionId": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                        "reason": "The provided text explicitly states that under the BAT rule (batch), execution is deferred until the end of the bundle and occurs once at the end instead of after each update.",
+                        "missing": "",
+                        "supported": true
+                      },
+                      "evidence": {
+                        "evidence": [
+                          "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e:0"
+                        ],
+                        "questionId": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                        "reason": "The text defines the BAT rule's execution timing as delaying the execution of subordinate calculations until the end of the batch ('묶음 끝까지 미룬다') and the frequency as executing once at the end instead of for each update ('끝에서 한 번 실행한다').",
+                        "missing": "",
+                        "supported": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "selection": {
+            "eligible": 1,
+            "sources": [
+              {
+                "contentHash": "sha256:8b473b8570f573540ab96e9c73a73f2012b65b08e3f368860830028dc58eda08",
+                "docId": "reference/batch",
+                "path": "docs/reference/batch.md",
+                "pointId": "eabaccd4-f3a3-5695-b617-a5d0ecd2bf99",
+                "text": "# BAT 규칙: SolidJS batch의 동기 갱신 {#policy}\n\n공식 설명 요약: batch는 하위 계산의 실행을 묶음 끝까지 미룬다. 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다. 중첩된 batch는 하나의 큰 묶음으로 동작한다. 묶음 안에서 오래된 값을 직접 읽으면 필요에 따라 계산한다. 비동기 함수에서는 첫 await 이전까지만 묶는다.\n\n실험용 정의: BAT 규칙은 하나의 동기 batch 안에서 두 signal의 setter를 각각 한 번 호출하는 절차다. 이미 두 signal을 구독한 계산 하나를 관찰한다. 두 초기값은 모두 0이다. 묶음 안에서 계산값을 읽지 않고 await도 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/reactive-utilities/batch\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                "title": "BAT 규칙: SolidJS batch의 동기 갱신",
+                "truncated": false,
+                "unitId": "policy",
+                "startLine": 7,
+                "endLine": 14
+              }
+            ],
+            "truncated": false
+          },
+          "stop": "resolved",
+          "unresolved": [],
+          "journal": {
+            "fingerprint": "3b66cb61a4ded028e5932df72fb06b907ef4936fa919717b44d7dac2c2b2634e",
+            "questions": [
+              {
+                "attempts": [
+                  {
+                    "clues": [],
+                    "query": "bat 규칙 구독 계산 실행 시점 횟수"
+                  }
+                ],
+                "confirmed": "BAT 규칙에 따르면 batch는 하위 계산의 실행을 묶음 끝까지 미루며, 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다.",
+                "evidence": [
+                  {
+                    "contentHash": "sha256:8b473b8570f573540ab96e9c73a73f2012b65b08e3f368860830028dc58eda08",
+                    "passage": "# BAT 규칙: SolidJS batch의 동기 갱신 {#policy}\n\n공식 설명 요약: batch는 하위 계산의 실행을 묶음 끝까지 미룬다. 여러 갱신을 묶으면 각 갱신마다 실행하는 대신 끝에서 한 번 실행한다. 중첩된 batch는 하나의 큰 묶음으로 동작한다. 묶음 안에서 오래된 값을 직접 읽으면 필요에 따라 계산한다. 비동기 함수에서는 첫 await 이전까지만 묶는다.\n\n실험용 정의: BAT 규칙은 하나의 동기 batch 안에서 두 signal의 setter를 각각 한 번 호출하는 절차다. 이미 두 signal을 구독한 계산 하나를 관찰한다. 두 초기값은 모두 0이다. 묶음 안에서 계산값을 읽지 않고 await도 사용하지 않는다. 초기 구독 실행은 횟수에서 제외한다.\n\n출처: https://docs.solidjs.com/reference/reactive-utilities/batch\n확인일: 2026-09-08. 공식 설명과 별도의 실험 정의를 구분한 요약이며 공식 원문 전체가 아니다.",
+                    "pointId": "eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"
+                  }
+                ],
+                "id": "8511831fda3c0766fbecd9a22d1aa1d369ec1477722b5a27f93c53db3bf6219e",
+                "remaining": "",
+                "text": "'BAT 규칙'에서 정의하는 구독 계산의 실행 시점과 횟수는 무엇인가요?"
+              }
+            ]
+          }
+        },
+        "value": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# batch 실험 기준 {#base}\n\n실험 B는 BAT 규칙을 따라야 한다. 첫 signal은 1로, 둘째 signal은 5로 바꾼다. 구독 계산의 실행 시점과 횟수는 BAT 규칙을 따라야 한다.",
+          "reason": "BAT 규칙은 묶음 끝에서 한 번 실행하는 것이나, right-1은 각 setter 직후 총 두 번 실행할 것을 요구하므로 상충한다.",
+          "rightQuote": "# batch 두 번 실행 요구 {#twice}\n\n실험 B에서 첫 signal을 1로, 둘째 signal을 5로 바꾸는 동안 구독 계산은 각 setter 직후 한 번씩, 총 두 번 실행해야 한다."
+        }
+      }
+    },
+    {
+      "audits": 0,
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "calls": 6,
+      "correct": true,
+      "id": "storage-backend",
+      "independent": 0,
+      "mode": "search",
+      "queries": 2,
+      "replayed": {
+        "ok": true,
+        "research": {
+          "initial": {
+            "confidence": 1,
+            "kind": "uncertain",
+            "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+            "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+            "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+          },
+          "rounds": [
+            {
+              "added": [
+                "43493965-8725-52e8-858b-a5cb136cdd00",
+                "37ee69f0-c365-5049-b981-9feb356078d7"
+              ],
+              "queries": [
+                {
+                  "hits": [
+                    "3980061d-fdaa-53e9-99a9-b3d01f111ffb",
+                    "43493965-8725-52e8-858b-a5cb136cdd00",
+                    "37ee69f0-c365-5049-b981-9feb356078d7"
+                  ],
+                  "query": "'구조화 데이터 저장소' 정의 '영속 저장 호환 계층'"
+                }
+              ],
+              "questions": [
+                "'사용자 재생목록 저장'이 '영속 저장 호환 계층' 정책의 적용 대상인 '구조화 데이터 저장소'에 포함됩니까?"
+              ],
+              "decision": {
+                "citations": ["context-1-left-1"],
+                "proposed": {
+                  "confidence": 1,
+                  "kind": "uncertain",
+                  "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+                  "reason": "사용자 재생목록 저장이 앱인토스에서 `Storage`를 사용한다는 점은 영속 저장 호환 계층의 구조화 데이터 정의와 일치하지만, 웹에서 사용하는 `localStorage`는 해당 계층의 구조화 데이터(Dexie.js와 IndexedDB)와 다르며, 재생목록 자체가 이 정책의 적용 대상인지 명시되어 있지 않습니다.",
+                  "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+                },
+                "unresolved": [
+                  "사용자 재생목록 저장이 웹에서 사용하는 `localStorage`를 구조화 데이터 저장소의 범위로 보는지, 혹은 전체적으로 이 정책의 적용 대상인지에 대한 명시적 정의가 부족함"
+                ]
+              }
+            },
+            {
+              "added": [],
+              "queries": [
+                {
+                  "hits": [
+                    "3980061d-fdaa-53e9-99a9-b3d01f111ffb",
+                    "43493965-8725-52e8-858b-a5cb136cdd00",
+                    "74989632-4de5-5020-b0ca-35cc9a22463d"
+                  ],
+                  "query": "웹 브라우저 pwa 'localstorage' '구조화 데이터 저장소'"
+                }
+              ],
+              "questions": [
+                "사용자 재생목록 저장이 웹에서 사용하는 `localStorage`를 구조화 데이터 저장소의 범위로 보는지, 혹은 전체적으로 이 정책의 적용 대상인지에 대한 명시적 정의가 부족함"
+              ]
+            }
+          ],
+          "selection": {
+            "eligible": 2,
+            "sources": [
+              {
+                "contentHash": "sha256:a06befeda743ef644403e67cec5f0e050957e49a5fb5c70ffe96b420f58174ed",
+                "docId": "docs/original/architecture.md",
+                "path": "docs/original/architecture.md",
+                "pointId": "43493965-8725-52e8-858b-a5cb136cdd00",
+                "text": "## 영속 저장 호환 계층\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다.\n\n타이머 설정과 사용자 대사는 구조화 데이터 저장소에, TTS 모델과 생성된 음성 파일은 바이너리 저장소에 저장한다. 영속 저장소에서 읽은 데이터는 애플리케이션 경계에서 Zod 스키마로 검증한다.\n\n설정 변경은 즉시 적용하고 자동 저장한다. 진행 중인 동작에 별도 적용 시점이 필요한 설정은 해당 기능의 계획에 명시한다.\n\n최초 출시에서는 로그인과 기기 간 동기화를 제공하지 않고 모든 사용자 데이터를 현재 기기에만 저장한다. 계정과 동기화는 추후 구현한다.",
+                "title": "영속 저장 호환 계층",
+                "truncated": false,
+                "unitId": "영속-저장-호환-계층",
+                "startLine": 25,
+                "endLine": 43
+              },
+              {
+                "contentHash": "sha256:472b24ed2f2972f24bfd6e1dddd257814d86c25a6fbf409e0775ca129f45d371",
+                "docId": "docs/original/architecture.md",
+                "path": "docs/original/architecture.md",
+                "pointId": "37ee69f0-c365-5049-b981-9feb356078d7",
+                "text": "## 플랫폼 API 호환 계층\n\n기능 코드는 앱인토스 SDK를 직접 호출하지 않고 공통 플랫폼 API 계약만 사용한다. 앱인토스 어댑터는 토스 SDK를 호출하고, 일반 브라우저 어댑터는 대응하는 Web API를 사용한다.\n\n앱인토스 SDK import는 앱인토스 어댑터 내부로 제한한다. 지원되지 않는 기능은 공통 계약에서 명시적인 미지원 결과를 반환한다. 호환 구현이 불가능하거나 복잡도가 큰 경우 기능을 임의로 제한하지 않고 가능한 대안과 영향 범위를 먼저 확인하며, 사용자 결정 후에만 제한 사항을 계획에 반영한다.\n\nSSR 중에는 브라우저와 앱인토스 API를 호출하지 않는다. 클라이언트가 시작될 때 실행 환경을 판별해 해당 플랫폼 어댑터를 선택한다.",
+                "title": "플랫폼 API 호환 계층",
+                "truncated": false,
+                "unitId": "플랫폼-api-호환-계층",
+                "startLine": 17,
+                "endLine": 23
+              }
+            ],
+            "truncated": false
+          },
+          "stop": "no-new-evidence",
+          "unresolved": [
+            "사용자 재생목록 저장이 웹에서 사용하는 `localStorage`를 구조화 데이터 저장소의 범위로 보는지, 혹은 전체적으로 이 정책의 적용 대상인지에 대한 명시적 정의가 부족함"
+          ],
+          "journal": {
+            "fingerprint": "34dc59711747c5a2e5b5936ebbf5445e76796544ba0d80cc43f406efd9db4e07",
+            "questions": [
+              {
+                "attempts": [
+                  {
+                    "clues": [],
+                    "query": "'구조화 데이터 저장소' 정의 '영속 저장 호환 계층'"
+                  },
+                  {
+                    "clues": ["05caba414f0800f27779be06edba0edb6abc2b67e45a52a66bba5efee4783a80"],
+                    "query": "웹 브라우저 pwa 'localstorage' '구조화 데이터 저장소'"
+                  }
+                ],
+                "confirmed": "영속 저장 호환 계층의 구조화 데이터 저장소는 앱인토스 플랫폼에서 앱인토스 SDK `Storage`를 사용한다.",
+                "evidence": [
+                  {
+                    "contentHash": "sha256:a06befeda743ef644403e67cec5f0e050957e49a5fb5c70ffe96b420f58174ed",
+                    "passage": "## 영속 저장 호환 계층\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다.\n\n타이머 설정과 사용자 대사는 구조화 데이터 저장소에, TTS 모델과 생성된 음성 파일은 바이너리 저장소에 저장한다. 영속 저장소에서 읽은 데이터는 애플리케이션 경계에서 Zod 스키마로 검증한다.\n\n설정 변경은 즉시 적용하고 자동 ",
+                    "pointId": "43493965-8725-52e8-858b-a5cb136cdd00"
+                  }
+                ],
+                "id": "7b33d9477bc15a565be37b8dc058803e3885ce41918fc4bbb018f6107f0b085a",
+                "remaining": "사용자 재생목록 저장이 웹에서 사용하는 `localStorage`를 구조화 데이터 저장소의 범위로 보는지, 혹은 전체적으로 이 정책의 적용 대상인지에 대한 명시적 정의가 부족함",
+                "text": "'사용자 재생목록 저장'이 '영속 저장 호환 계층' 정책의 적용 대상인 '구조화 데이터 저장소'에 포함됩니까?"
+              }
+            ]
+          }
+        },
+        "value": {
+          "confidence": 1,
+          "kind": "uncertain",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "추가 문맥으로도 확인되지 않은 조건: 사용자 재생목록 저장이 웹에서 사용하는 `localStorage`를 구조화 데이터 저장소의 범위로 보는지, 혹은 전체적으로 이 정책의 적용 대상인지에 대한 명시적 정의가 부족함",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        }
+      }
+    },
+    {
+      "audits": 0,
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "calls": 7,
+      "correct": true,
+      "id": "cleanup-scope",
+      "independent": 0,
+      "mode": "search",
+      "queries": 2,
+      "replayed": {
+        "ok": true,
+        "research": {
+          "initial": {
+            "confidence": 1,
+            "kind": "uncertain",
+            "leftQuote": "",
+            "reason": "추가로 확인할 조건이 있지만 조회 가능한 보조 문맥이 없습니다.",
+            "rightQuote": ""
+          },
+          "rounds": [
+            {
+              "added": [
+                "43493965-8725-52e8-858b-a5cb136cdd00",
+                "3980061d-fdaa-53e9-99a9-b3d01f111ffb"
+              ],
+              "queries": [
+                {
+                  "hits": [
+                    "25f498a5-cd22-5d65-a2bc-51e15fe7c7ae",
+                    "43493965-8725-52e8-858b-a5cb136cdd00",
+                    "3980061d-fdaa-53e9-99a9-b3d01f111ffb"
+                  ],
+                  "query": "영속 저장 정책 저장소의 자동 만료나 자동 정리 정책 범위"
+                }
+              ],
+              "questions": [
+                "'피드 대화'의 만료 및 정리 작업이 '영속 저장 정책'에서 금지하는 '저장소의 자동 만료나 자동 정리 정책'에 포함되는 구체적인 운영 범위에 해당합니까?"
+              ],
+              "decision": {
+                "citations": ["context-1-left-1"],
+                "proposed": {
+                  "confidence": 1,
+                  "kind": "uncertain",
+                  "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+                  "reason": "영속 저장 정책에서 저장소의 자동 만료나 자동 정리 정책을 금지하고 있으며, 피드 대화 정책에서는 특정 조건(48시간 경과 및 동기화 성공) 시 정리를 수행한다고 명시되어 있으나, 이 피드 대화 정리 작업이 영속 저장 정책이 금지하는 '저장소 수준의 자동 정리' 범위에 포함되는지에 대한 명시적인 판단 근거가 부족합니다.",
+                  "rightQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다."
+                },
+                "unresolved": [
+                  "'피드 대화'의 만료 및 정리 작업이 '영속 저장 정책'에서 금지하는 '저장소의 자동 만료나 자동 정리 정책'에 포함되는 구체적인 운영 범위에 해당합니까?"
+                ]
+              }
+            },
+            {
+              "added": [
+                "6a73db77-d27b-560f-a133-19007b617dcb",
+                "e52237f1-f57a-5105-a02e-3488218174c8"
+              ],
+              "queries": [
+                {
+                  "hits": [
+                    "c5351fd6-4651-5a48-9076-b261b1f59808",
+                    "e52237f1-f57a-5105-a02e-3488218174c8",
+                    "6a73db77-d27b-560f-a133-19007b617dcb"
+                  ],
+                  "query": "피드 대화 만료 정리 작업"
+                }
+              ],
+              "questions": [
+                "'피드 대화'의 만료 및 정리 작업이 '영속 저장 정책'에서 금지하는 '저장소의 자동 만료나 자동 정리 정책'에 포함되는 구체적인 운영 범위에 해당합니까?"
+              ],
+              "decision": {
+                "citations": ["context-1-left-1", "context-3-left-1"],
+                "proposed": {
+                  "confidence": 1,
+                  "kind": "uncertain",
+                  "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+                  "reason": "영속 저장 정책은 저장소의 자동 만료/정리를 금지하고, 피드 대화 정책은 특정 조건 하에 정리를 수행하도록 규정하고 있으나, 피드 대화의 정리가 영속 저장 정책이 금지하는 '저장소 수준'의 자동 정리 범위에 해당하는지에 대한 명시적인 정의나 연결 고리가 제공되지 않았습니다.",
+                  "rightQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다."
+                },
+                "unresolved": [
+                  "피드 대화의 정리 작업이 영속 저장 정책에서 금지하는 '저장소 수준의 자동 정리' 범위에 포함되는지에 대한 명시적인 판단 근거가 부족함"
+                ]
+              }
+            }
+          ],
+          "selection": {
+            "eligible": 4,
+            "sources": [
+              {
+                "contentHash": "sha256:a06befeda743ef644403e67cec5f0e050957e49a5fb5c70ffe96b420f58174ed",
+                "docId": "docs/original/architecture.md",
+                "path": "docs/original/architecture.md",
+                "pointId": "43493965-8725-52e8-858b-a5cb136cdd00",
+                "text": "## 영속 저장 호환 계층\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다.\n\n타이머 설정과 사용자 대사는 구조화 데이터 저장소에, TTS 모델과 생성된 음성 파일은 바이너리 저장소에 저장한다. 영속 저장소에서 읽은 데이터는 애플리케이션 경계에서 Zod 스키마로 검증한다.\n\n설정 변경은 즉시 적용하고 자동 저장한다. 진행 중인 동작에 별도 적용 시점이 필요한 설정은 해당 기능의 계획에 명시한다.\n\n최초 출시에서는 로그인과 기기 간 동기화를 제공하지 않고 모든 사용자 데이터를 현재 기기에만 저장한다. 계정과 동기화는 추후 구현한다.",
+                "title": "영속 저장 호환 계층",
+                "truncated": false,
+                "unitId": "영속-저장-호환-계층",
+                "startLine": 25,
+                "endLine": 43
+              },
+              {
+                "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+                "docId": "operations/storage",
+                "path": "docs/operations/storage.md",
+                "pointId": "3980061d-fdaa-53e9-99a9-b3d01f111ffb",
+                "text": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+                "title": "영속 저장 호환 계층",
+                "truncated": false,
+                "unitId": "policy",
+                "startLine": 7,
+                "endLine": 15
+              },
+              {
+                "contentHash": "sha256:8374687ce9163b453599c0415c44337b3720e88f0226691e5738879cdca762c0",
+                "docId": "docs/original/feed-dialogues.md",
+                "path": "docs/original/feed-dialogues.md",
+                "pointId": "6a73db77-d27b-560f-a133-19007b617dcb",
+                "text": "## 만료와 정리\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+                "title": "만료와 정리",
+                "truncated": false,
+                "unitId": "만료와-정리",
+                "startLine": 160,
+                "endLine": 169
+              },
+              {
+                "contentHash": "sha256:45c2de3ece9d4de49ad5184ca662c3268c9ccb01a9b6b6dc409eacd8cc5f89f7",
+                "docId": "docs/original/feed-dialogues.md",
+                "path": "docs/original/feed-dialogues.md",
+                "pointId": "e52237f1-f57a-5105-a02e-3488218174c8",
+                "text": "## 구현 단계\n\n1. 피드 연결 목록, 주소·음성 영속 설정과 주소 검증\n2. 피드 항목 식별과 전체 본문 정제 계약\n3. 피드 메타데이터·미완성 작업 저장소와 기존 Dexie 데이터의 additive migration\n4. 3,000자 전체 읽기 검증과 초과·본문 확보 실패 상태\n5. 입장·체류·탭 활성화 시 피드 동기화와 기존 음성 생성기로 작업 실행\n6. 생성 상태, 중단 복구와 완성 알림 UI\n7. 피드 대화 목록, 기존 대화창 재생과 원문 이동\n8. 48시간 만료 판정과 다음 동기화 기반 정리\n9. 기존 수동 대화 호환, 중복 방지, 중단·재입장과 만료 정리 테스트",
+                "title": "구현 단계",
+                "truncated": false,
+                "unitId": "구현-단계",
+                "startLine": 171,
+                "endLine": 181
+              }
+            ],
+            "truncated": false
+          },
+          "stop": "round-limit",
+          "unresolved": [
+            "피드 대화의 정리 작업이 영속 저장 정책에서 금지하는 '저장소 수준의 자동 정리' 범위에 포함되는지에 대한 명시적인 판단 근거가 부족함"
+          ],
+          "journal": {
+            "fingerprint": "68c632c18c731bb785ea8fe55f1b91f77748a19eb81dafaca5fa92529612e2c2",
+            "questions": [
+              {
+                "attempts": [
+                  {
+                    "clues": [],
+                    "query": "영속 저장 정책 저장소의 자동 만료나 자동 정리 정책 범위"
+                  },
+                  {
+                    "clues": ["05caba414f0800f27779be06edba0edb6abc2b67e45a52a66bba5efee4783a80"],
+                    "query": "피드 대화 만료 정리 작업"
+                  }
+                ],
+                "confirmed": "영속 저장 정책은 저장소에 자동 만료나 자동 정리 정책을 두지 않는다고 명시하고 있으며, 피드 대화 정책은 48시간 경과 및 동기화 성공 시 만료된 피드 대화를 정리한다고 명시하고 있다.",
+                "evidence": [
+                  {
+                    "contentHash": "sha256:a06befeda743ef644403e67cec5f0e050957e49a5fb5c70ffe96b420f58174ed",
+                    "passage": "## 영속 저장 호환 계층\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다.\n\n타이머 설정과 사용자 대사는 구조화 데이터 저장소에, TTS 모델과 생성된 음성 파일은 바이너리 저장소에 저장한다. 영속 저장소에서 읽은 데이터는 애플리케이션 경계에서 Zod 스키마로 검증한다.\n\n설정 변경은 즉시 적용하고 자동 ",
+                    "pointId": "43493965-8725-52e8-858b-a5cb136cdd00"
+                  },
+                  {
+                    "contentHash": "sha256:8374687ce9163b453599c0415c44337b3720e88f0226691e5738879cdca762c0",
+                    "passage": "## 만료와 정리\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+                    "pointId": "6a73db77-d27b-560f-a133-19007b617dcb"
+                  }
+                ],
+                "id": "3a62320d353f842128b56a5409e8f82ee5e8f91690e24d4d3e3eb251e1b7d42c",
+                "remaining": "피드 대화의 정리 작업이 영속 저장 정책에서 금지하는 '저장소 수준의 자동 정리' 범위에 포함되는지에 대한 명시적인 판단 근거가 부족함",
+                "text": "'피드 대화'의 만료 및 정리 작업이 '영속 저장 정책'에서 금지하는 '저장소의 자동 만료나 자동 정리 정책'에 포함되는 구체적인 운영 범위에 해당합니까?"
+              }
+            ]
+          }
+        },
+        "value": {
+          "confidence": 1,
+          "kind": "uncertain",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "추가 문맥으로도 확인되지 않은 조건: 피드 대화의 정리 작업이 영속 저장 정책에서 금지하는 '저장소 수준의 자동 정리' 범위에 포함되는지에 대한 명시적인 판단 근거가 부족함",
+          "rightQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다."
+        }
+      }
+    }
+  ],
+  "recordedResponseReplay": true,
+  "samePointsCasesModelAndInitialRequest": true,
+  "searchAndAuditBoundsVerified": true,
+  "total": 6
+}

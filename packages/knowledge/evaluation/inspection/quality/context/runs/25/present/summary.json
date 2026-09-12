@@ -1,0 +1,22 @@
+{
+  "auditOnly": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "elapsedMs": 36569,
+      "id": "generated",
+      "result": {
+        "ok": true,
+        "value": [
+          {
+            "evidence": ["b75abf6cf9d20e6789910cd8b6cfc9649941a2ddff4244e22aaeb66b16f43529:0"],
+            "missing": "",
+            "questionId": "b75abf6cf9d20e6789910cd8b6cfc9649941a2ddff4244e22aaeb66b16f43529",
+            "reason": "The text explicitly states that the storage for feed conversation records and WAVs is subject to the persistent storage policy, and that the 48-hour expiration and cleanup of feed conversations are not exceptions to the rule prohibiting automatic expiration and cleanup policies.",
+            "supported": true
+          }
+        ]
+      }
+    }
+  ]
+}

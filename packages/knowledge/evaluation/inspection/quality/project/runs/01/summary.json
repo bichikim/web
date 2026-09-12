@@ -1,0 +1,156 @@
+{
+  "consistency": [
+    {
+      "id": "audio-owner",
+      "outcomes": ["duplicate", "duplicate", "duplicate"]
+    },
+    {
+      "id": "cors-scope",
+      "outcomes": ["unrelated", "unrelated", "unrelated"]
+    },
+    {
+      "id": "desktop-layer",
+      "outcomes": ["uncertain", "uncertain", "uncertain"]
+    }
+  ],
+  "frozenUnchanged": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "actual": "duplicate",
+      "agrees": true,
+      "calls": 3,
+      "contextCharacters": 0,
+      "elapsedMs": 21259,
+      "expected": ["duplicate"],
+      "group": "shared-contract",
+      "id": "audio-owner",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 1,
+      "searches": 0
+    },
+    {
+      "actual": "unrelated",
+      "agrees": true,
+      "calls": 3,
+      "contextCharacters": 0,
+      "elapsedMs": 14990,
+      "expected": ["unrelated"],
+      "group": "distinct-scope",
+      "id": "cors-scope",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 1,
+      "searches": 0
+    },
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 6,
+      "contextCharacters": 1350,
+      "elapsedMs": 122732,
+      "expected": ["conflict", "uncertain"],
+      "group": "ambiguous-scope",
+      "id": "desktop-layer",
+      "networkSearches": 1,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 1,
+      "searches": 1
+    },
+    {
+      "actual": "duplicate",
+      "agrees": true,
+      "calls": 3,
+      "contextCharacters": 0,
+      "elapsedMs": 19102,
+      "expected": ["duplicate"],
+      "group": "shared-contract",
+      "id": "audio-owner",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 2,
+      "searches": 0
+    },
+    {
+      "actual": "unrelated",
+      "agrees": true,
+      "calls": 3,
+      "contextCharacters": 0,
+      "elapsedMs": 24234,
+      "expected": ["unrelated"],
+      "group": "distinct-scope",
+      "id": "cors-scope",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 2,
+      "searches": 0
+    },
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 6,
+      "contextCharacters": 1350,
+      "elapsedMs": 105366,
+      "expected": ["conflict", "uncertain"],
+      "group": "ambiguous-scope",
+      "id": "desktop-layer",
+      "networkSearches": 1,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 2,
+      "searches": 1
+    },
+    {
+      "actual": "duplicate",
+      "agrees": true,
+      "calls": 3,
+      "contextCharacters": 0,
+      "elapsedMs": 13753,
+      "expected": ["duplicate"],
+      "group": "shared-contract",
+      "id": "audio-owner",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 3,
+      "searches": 0
+    },
+    {
+      "actual": "unrelated",
+      "agrees": true,
+      "calls": 3,
+      "contextCharacters": 0,
+      "elapsedMs": 20912,
+      "expected": ["unrelated"],
+      "group": "distinct-scope",
+      "id": "cors-scope",
+      "networkSearches": 0,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 3,
+      "searches": 0
+    },
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 6,
+      "contextCharacters": 1350,
+      "elapsedMs": 104213,
+      "expected": ["conflict", "uncertain"],
+      "group": "ambiguous-scope",
+      "id": "desktop-layer",
+      "networkSearches": 1,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 3,
+      "searches": 1
+    }
+  ],
+  "snapshotUnchanged": true
+}

@@ -1,0 +1,117 @@
+{
+  "approvalsUnchanged": true,
+  "results": [
+    {
+      "actual": "duplicate",
+      "assessmentReplacements": 0,
+      "contextCharacters": 924,
+      "correct": true,
+      "elapsedMs": 138524,
+      "expected": ["duplicate"],
+      "id": "signal-update",
+      "mode": "search",
+      "promptTokens": [392, 393, 488, 519, 1956, 1074, 1158],
+      "relevantHits": [
+        "dac41115-e8f1-5277-90d0-c41bc4229521",
+        "b662a7af-b5df-5b42-a067-92841189ad05"
+      ],
+      "relevantRead": [
+        "b662a7af-b5df-5b42-a067-92841189ad05",
+        "dac41115-e8f1-5277-90d0-c41bc4229521"
+      ],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "conflict",
+      "assessmentReplacements": 0,
+      "contextCharacters": 924,
+      "correct": true,
+      "elapsedMs": 128924,
+      "expected": ["conflict"],
+      "id": "signal-suppress",
+      "mode": "search",
+      "promptTokens": [398, 396, 491, 532, 1975, 1097, 1142],
+      "relevantHits": [
+        "dac41115-e8f1-5277-90d0-c41bc4229521",
+        "b662a7af-b5df-5b42-a067-92841189ad05"
+      ],
+      "relevantRead": [
+        "b662a7af-b5df-5b42-a067-92841189ad05",
+        "dac41115-e8f1-5277-90d0-c41bc4229521"
+      ],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "duplicate",
+      "assessmentReplacements": 0,
+      "contextCharacters": 615,
+      "correct": true,
+      "elapsedMs": 125535,
+      "expected": ["duplicate"],
+      "id": "batch-once",
+      "mode": "search",
+      "promptTokens": [408, 414, 525, 561, 1900, 1163, 1207],
+      "relevantHits": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "relevantRead": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "conflict",
+      "assessmentReplacements": 0,
+      "contextCharacters": 506,
+      "correct": true,
+      "elapsedMs": 136392,
+      "expected": ["conflict"],
+      "id": "batch-twice",
+      "mode": "search",
+      "promptTokens": [411, 432, 546, 564, 1678, 1166, 1223],
+      "relevantHits": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "relevantRead": ["eabaccd4-f3a3-5695-b617-a5d0ecd2bf99"],
+      "searches": 1,
+      "truncated": false
+    },
+    {
+      "actual": "uncertain",
+      "assessmentReplacements": 0,
+      "contextCharacters": 1672,
+      "correct": true,
+      "elapsedMs": 180502,
+      "expected": ["conflict", "uncertain"],
+      "id": "storage-backend",
+      "mode": "search",
+      "promptTokens": [545, 531, 769, 703, 2498, 1626, 2911],
+      "relevantHits": [
+        "43493965-8725-52e8-858b-a5cb136cdd00",
+        "9c7c94d9-47df-53da-978e-a7aa40e4d4d8",
+        "b071613a-28cb-5a9d-897e-5c9fa97ebfbd",
+        "43493965-8725-52e8-858b-a5cb136cdd00"
+      ],
+      "relevantRead": [
+        "43493965-8725-52e8-858b-a5cb136cdd00",
+        "9c7c94d9-47df-53da-978e-a7aa40e4d4d8",
+        "b071613a-28cb-5a9d-897e-5c9fa97ebfbd"
+      ],
+      "searches": 2,
+      "truncated": false
+    },
+    {
+      "actual": "unrelated",
+      "assessmentReplacements": 0,
+      "contextCharacters": 0,
+      "correct": false,
+      "elapsedMs": 24345,
+      "expected": ["uncertain"],
+      "id": "cleanup-scope",
+      "mode": "search",
+      "promptTokens": [578, 577, 580],
+      "relevantHits": [],
+      "relevantRead": [],
+      "searches": 0,
+      "truncated": false
+    }
+  ],
+  "snapshotUnchanged": true
+}

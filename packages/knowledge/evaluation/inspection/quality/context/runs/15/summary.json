@@ -1,0 +1,41 @@
+{
+  "baselineUnchanged": true,
+  "errors": 0,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "accepted": true,
+      "before": "duplicate",
+      "beforeCorrect": true,
+      "elapsedMs": 30025,
+      "findings": [
+        {
+          "evidence": ["701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda:0"],
+          "missing": "",
+          "questionId": "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda",
+          "reason": "The evidence explicitly defines the SIG rule as specifying `equals: false` in createSignal, which ensures that updates are delivered even if the value is the same as the previous one.",
+          "supported": true
+        }
+      ],
+      "id": "signal-update",
+      "mode": "direct"
+    },
+    {
+      "accepted": false,
+      "before": "conflict",
+      "beforeCorrect": false,
+      "elapsedMs": 22995,
+      "findings": [
+        {
+          "evidence": [],
+          "missing": "whether feed dialogue storage is included in the scope of the persistent storage policy",
+          "questionId": "b75abf6cf9d20e6789910cd8b6cfc9649941a2ddff4244e22aaeb66b16f43529",
+          "reason": "The proposed answer describes the persistent storage policy and the feed dialogue expiration logic, but it does not explicitly state whether the feed dialogue storage is included within the scope of the persistent storage policy. It merely lists two different sets of rules without establishing the relationship (inclusion or exclusion) between them.",
+          "supported": false
+        }
+      ],
+      "id": "cleanup-scope",
+      "mode": "direct"
+    }
+  ]
+}

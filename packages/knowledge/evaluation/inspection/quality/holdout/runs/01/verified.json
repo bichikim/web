@@ -1,0 +1,132 @@
+{
+  "identicalInitialRequests": true,
+  "measurements": [
+    {
+      "calls": 3,
+      "id": "receipt",
+      "referenceCited": false,
+      "repeat": 1,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "approval",
+      "referenceCited": false,
+      "repeat": 1,
+      "searches": 0
+    },
+    {
+      "calls": 7,
+      "id": "retention",
+      "referenceCited": true,
+      "repeat": 1,
+      "searches": 1
+    },
+    {
+      "calls": 7,
+      "id": "dispatch",
+      "referenceCited": true,
+      "repeat": 1,
+      "searches": 1
+    },
+    {
+      "calls": 6,
+      "id": "handover",
+      "referenceCited": false,
+      "repeat": 1,
+      "searches": 2
+    },
+    {
+      "calls": 6,
+      "id": "priority",
+      "referenceCited": false,
+      "repeat": 1,
+      "searches": 1
+    },
+    {
+      "calls": 3,
+      "id": "receipt",
+      "referenceCited": false,
+      "repeat": 2,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "approval",
+      "referenceCited": false,
+      "repeat": 2,
+      "searches": 0
+    },
+    {
+      "calls": 7,
+      "id": "retention",
+      "referenceCited": true,
+      "repeat": 2,
+      "searches": 1
+    },
+    {
+      "calls": 7,
+      "id": "dispatch",
+      "referenceCited": true,
+      "repeat": 2,
+      "searches": 1
+    },
+    {
+      "calls": 6,
+      "id": "handover",
+      "referenceCited": false,
+      "repeat": 2,
+      "searches": 2
+    },
+    {
+      "calls": 6,
+      "id": "priority",
+      "referenceCited": false,
+      "repeat": 2,
+      "searches": 1
+    },
+    {
+      "calls": 3,
+      "id": "receipt",
+      "referenceCited": false,
+      "repeat": 3,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "approval",
+      "referenceCited": false,
+      "repeat": 3,
+      "searches": 0
+    },
+    {
+      "calls": 7,
+      "id": "retention",
+      "referenceCited": true,
+      "repeat": 3,
+      "searches": 1
+    },
+    {
+      "calls": 7,
+      "id": "dispatch",
+      "referenceCited": true,
+      "repeat": 3,
+      "searches": 1
+    },
+    {
+      "calls": 6,
+      "id": "handover",
+      "referenceCited": false,
+      "repeat": 3,
+      "searches": 2
+    },
+    {
+      "calls": 6,
+      "id": "priority",
+      "referenceCited": false,
+      "repeat": 3,
+      "searches": 1
+    }
+  ],
+  "recordedResponseReplay": true
+}

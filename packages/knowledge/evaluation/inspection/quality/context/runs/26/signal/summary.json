@@ -1,0 +1,22 @@
+{
+  "auditOnly": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "elapsedMs": 38084,
+      "id": "independent",
+      "result": {
+        "ok": true,
+        "value": [
+          {
+            "evidence": ["701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda:0"],
+            "missing": "",
+            "questionId": "701157e6f5c5d44ccbd3747bb44259ca80a22c22fa558bcad983a9da2be34dda",
+            "reason": "The text defines the 'SIG rule' as a createSignal with `equals: false`, and explicitly states that if `equals: false` is specified, the update is delivered even if the value is the same as the previous value.",
+            "supported": true
+          }
+        ]
+      }
+    }
+  ]
+}

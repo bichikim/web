@@ -1,0 +1,119 @@
+{
+  "startedAt": "2026-09-07T02:16:13.405Z",
+  "finishedAt": "2026-09-07T02:16:31.671Z",
+  "result": {
+    "ok": true,
+    "review": {
+      "citations": ["context-1-left-1", "context-3-left-1"],
+      "initial": {
+        "confidence": 1,
+        "kind": "unrelated",
+        "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+        "reason": "The left policy states that the storage does not have automatic expiration or cleanup policies. The right policy details specific expiration and cleanup rules for feed conversations.",
+        "rightQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다."
+      },
+      "questions": [
+        "저장소의 '자동 만료나 자동 정리 정책'이 구체적으로 어떤 종류의 데이터를 대상으로 하는지 명시되어 있습니까?",
+        "피드 대화의 만료 및 정리 정책이 적용되는 '저장소'의 범위는 무엇이며, 이 범위가 '영속 저장 정책'에서 언급하는 저장소와 동일한가요?",
+        "만약 '영속 저장 정책'이 적용되는 저장소에 피드 대화와 같은 특정 유형의 데이터가 저장될 경우, 두 정책 중 어느 것이 우선순위를 가지나요?"
+      ],
+      "selection": {
+        "eligible": 19,
+        "sources": [
+          {
+            "contentHash": "sha256:a06befeda743ef644403e67cec5f0e050957e49a5fb5c70ffe96b420f58174ed",
+            "docId": "operations/policy",
+            "path": "apps/pomo/docs/plan/development/architecture.md",
+            "pointId": "57a6dec4-49d3-531e-9812-03200d0138c5:영속-저장-호환-계층",
+            "text": "## 영속 저장 호환 계층\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다.\n\n타이머 설정과 사용자 대사는 구조화 데이터 저장소에, TTS 모델과 생성된 음성 파일은 바이너리 저장소에 저장한다. 영속 저장소에서 읽은 데이터는 애플리케이션 경계에서 Zod 스키마로 검증한다.\n\n설정 변경은 즉시 적용하고 자동 저장한다. 진행 중인 동작에 별도 적용 시점이 필요한 설정은 해당 기능의 계획에 명시한다.\n\n최초 출시에서는 로그인과 기기 간 동기화를 제공하지 않고 모든 사용자 데이터를 현재 기기에만 저장한다. 계정과 동기화는 추후 구현한다.",
+            "title": "영속 저장 호환 계층",
+            "truncated": false,
+            "unitId": "context:영속-저장-호환-계층",
+            "startLine": 25,
+            "endLine": 43
+          },
+          {
+            "contentHash": "sha256:d7cbd46ac421fd3c03246ee3a225164447c452d1cc61cce9ae07697b57f94234",
+            "docId": "operations/expiry",
+            "path": "apps/pomo/docs/plan/development/feed-dialogues.md",
+            "pointId": "1cb93e3a-fb8b-561e-ac4a-2febcc2f3c39:피드-연결-설정",
+            "text": "## 피드 연결 설정\n\nPomo 설정에 `피드` 탭을 두고 사용자가 여러 피드 주소를 리스트로 추가한다. 음성 모델은 `대화`\n탭의 자동 음성 생성 설정을 공통으로 사용하고, 저장된 목록에서는 피드별 음성을 변경할 수 있다.\n피드 음성의 `기본값`은 대화 탭의 자동 음성 생성 목소리를 따라간다.\n\n```ts\ninterface FeedConnection {\n  readonly createdAt: string\n  readonly id: string\n  readonly updatedAt: string\n  readonly url: string\n  readonly version: 1\n  readonly voiceId: 'default' | SupertonicVoiceId\n}\n```\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다.",
+            "title": "피드 연결 설정",
+            "truncated": false,
+            "unitId": "context:피드-연결-설정",
+            "startLine": 26,
+            "endLine": 50
+          },
+          {
+            "contentHash": "sha256:8374687ce9163b453599c0415c44337b3720e88f0226691e5738879cdca762c0",
+            "docId": "operations/expiry",
+            "path": "apps/pomo/docs/plan/development/feed-dialogues.md",
+            "pointId": "1cb93e3a-fb8b-561e-ac4a-2febcc2f3c39:만료와-정리",
+            "text": "## 만료와 정리\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+            "title": "만료와 정리",
+            "truncated": false,
+            "unitId": "context:만료와-정리",
+            "startLine": 160,
+            "endLine": 169
+          },
+          {
+            "contentHash": "sha256:45c2de3ece9d4de49ad5184ca662c3268c9ccb01a9b6b6dc409eacd8cc5f89f7",
+            "docId": "operations/expiry",
+            "path": "apps/pomo/docs/plan/development/feed-dialogues.md",
+            "pointId": "1cb93e3a-fb8b-561e-ac4a-2febcc2f3c39:구현-단계",
+            "text": "## 구현 단계\n\n1. 피드 연결 목록, 주소·음성 영속 설정과 주소 검증\n2. 피드 항목 식별과 전체 본문 정제 계약\n3. 피드 메타데이터·미완성 작업 저장소와 기존 Dexie 데이터의 additive migration\n4. 3,000자 전체 읽기 검증과 초과·본문 확보 실패 상태\n5. 입장·체류·탭 활성화 시 피드 동기화와 기존 음성 생성기로 작업 실행\n6. 생성 상태, 중단 복구와 완성 알림 UI\n7. 피드 대화 목록, 기존 대화창 재생과 원문 이동\n8. 48시간 만료 판정과 다음 동기화 기반 정리\n9. 기존 수동 대화 호환, 중복 방지, 중단·재입장과 만료 정리 테스트",
+            "title": "구현 단계",
+            "truncated": false,
+            "unitId": "context:구현-단계",
+            "startLine": 171,
+            "endLine": 181
+          },
+          {
+            "contentHash": "sha256:397ff797387db360e7c59119c63f40b35e183748451b743c3393d0d6c4e4996f",
+            "docId": "operations/expiry",
+            "path": "apps/pomo/docs/plan/development/feed-dialogues.md",
+            "pointId": "1cb93e3a-fb8b-561e-ac4a-2febcc2f3c39:개발-테스트-피드",
+            "text": "## 개발 테스트 피드\n\nPomo Vite 개발 서버는 RSS와 Atom 동기화를 검증할 수 있는 로컬 피드를 제공한다. 프로덕션 및\n앱인토스 정적 빌드에는 이 경로를 포함하지 않는다.\n\n```text\nRSS  http://localhost:<port>/__dev/feeds/rss.xml\nAtom http://localhost:<port>/__dev/feeds/atom.xml\n```\n\n- 최근 12개 항목을 제공하며 5분 경계마다 새 항목 하나가 추가된다.\n- 각 항목의 제목과 본문은 짧은 명언, 출처와 한국 날짜·시간으로 구성한다. 시간의 앞자리 0과 값이\n  0인 시·분 단위는 표시하지 않는다.\n- 외국어 명언은 공개 원문을 대조해 개발 피드에 맞는 짧은 한국어로 옮기고 작품과 장을 함께 표시한다.\n- 같은 5분 구간에서는 항목 ID와 문서 내용이 유지되어 중복 감지 테스트가 가능하다.\n- 응답은 캐시하지 않아 매 요청에서 현재 5분 구간을 바로 반영한다.\n- 개발 환경의 빈 피드 목록에는 RSS와 Atom을 추천 피드로 표시한다. 추천 항목을 `추가`하면 기본값\n  음성으로 일반 저장 피드 항목으로 전환되며, 추가하지 않은 추천 항목은 계속 표시한다.",
+            "title": "개발 테스트 피드",
+            "truncated": false,
+            "unitId": "context:개발-테스트-피드",
+            "startLine": 52,
+            "endLine": 69
+          },
+          {
+            "contentHash": "sha256:ae2ad524395a0c8b51a7fced509a670bfedadfbd43af1d9ff1054c4da1be9516",
+            "docId": "operations/expiry",
+            "path": "apps/pomo/docs/plan/development/feed-dialogues.md",
+            "pointId": "1cb93e3a-fb8b-561e-ac4a-2febcc2f3c39:생성과-중단-복구",
+            "text": "## 생성과 중단 복구\n\n1. 새 항목의 전체 원문을 확보하고 3,000자 정책을 검증한다.\n2. 음성 생성 전에 읽을 원문, 모델과 목소리를 `FeedDialogueJob`으로 저장한다.\n3. 작업을 `generating`으로 바꾸고 기존 Supertonic 생성 흐름으로 전체 음성과 타임라인을 만든다.\n4. 기존 저장소 계약으로 `FocusRoomDialogue`와 WAV를 저장한다.\n5. `FeedDialogueMetadata`를 저장하고 미완성 작업을 제거한다.\n6. 사용자에게 새 피드 대화가 준비됐다고 알린다.\n\n페이지 이탈, 새로고침이나 앱 종료로 생성이 끊기면 부분 결과를 버린다. 다음 실행에서 남아 있는\n`generating` 작업은 중단된 작업으로 간주하고 다음 선택을 한 번 제공한다.\n\n- `다시 만들기`: 저장된 원문으로 음성을 처음부터 다시 만든다.\n- `나중에`: 작업을 유지하고 이번 입장에서는 다시 묻지 않는다.\n- `삭제`: 작업을 제거하고 해당 항목의 생성을 취소한다.\n\n여러 미완성 작업이 있으면 개별 확인창을 연속으로 표시하지 않고 하나의 복구 안내에서 묶어 보여준다.",
+            "title": "생성과 중단 복구",
+            "truncated": false,
+            "unitId": "context:생성과-중단-복구",
+            "startLine": 126,
+            "endLine": 142
+          }
+        ],
+        "truncated": true
+      },
+      "unresolved": [
+        "저장소의 '자동 만료나 자동 정리 정책'이 구체적으로 어떤 종류의 데이터를 대상으로 하는지 명시되어 있습니까?",
+        "피드 대화의 만료 및 정리 정책이 적용되는 '저장소'의 범위는 무엇이며, 이 범위가 '영속 저장 정책'에서 언급하는 저장소와 동일한가요?",
+        "만약 '영속 저장 정책'이 적용되는 저장소에 피드 대화와 같은 특정 유형의 데이터가 저장될 경우, 두 정책 중 어느 것이 우선순위를 가지나요?"
+      ],
+      "proposed": {
+        "confidence": 0.9,
+        "kind": "conflict",
+        "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+        "reason": "Left policy states no automatic expiration/cleanup, while right policy details specific 48-hour expiration and cleanup for feed dialogues. This suggests a conflict regarding data retention policies.",
+        "rightQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다."
+      }
+    },
+    "value": {
+      "confidence": 0.9,
+      "kind": "uncertain",
+      "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+      "reason": "추가 문맥으로도 확인되지 않은 조건: 저장소의 '자동 만료나 자동 정리 정책'이 구체적으로 어떤 종류의 데이터를 대상으로 하는지 명시되어 있습니까? / 피드 대화의 만료 및 정리 정책이 적용되는 '저장소'의 범위는 무엇이며, 이 범위가 '영속 저장 정책'에서 언급하는 저장소와 동일한가요? / 만약 '영속 저장 정책'이 적용되는 저장소에 피드 대화와 같은 특정 유형의 데이터가 저장될 경우, 두 정책 중 어느 것이 우선순위를 가지나요?",
+      "rightQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다."
+    }
+  }
+}

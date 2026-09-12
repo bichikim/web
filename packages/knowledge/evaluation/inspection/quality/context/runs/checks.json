@@ -1,0 +1,24 @@
+{
+  "runs": [
+    {
+      "run": "01",
+      "completed": 18,
+      "errors": 0
+    },
+    {
+      "run": "02",
+      "completed": 8,
+      "errors": 0
+    },
+    {
+      "run": "03",
+      "completed": 6,
+      "errors": 0
+    }
+  ],
+  "onlyTwoMeasurementUnitsAdded": true,
+  "candidateChangesOnlyReassessmentInstruction": true,
+  "sameModelAndPromptVersion": true,
+  "samePairHashesAndExpectedLabels": true,
+  "allRunSnapshotsAndApprovalsUnchanged": true
+}

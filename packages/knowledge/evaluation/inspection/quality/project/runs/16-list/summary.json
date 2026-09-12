@@ -1,0 +1,104 @@
+{
+  "modelUnchanged": true,
+  "results": [
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "규칙 A는 바탕화면 모드에서 WebView가 '아이콘 아래'에 위치한다고 명시하고 있으나, 이것이 기본 상태인지 배경 조작을 끈 상태인지에 대한 구체적인 조건이나 범위(scope)를 정의하고 있지 않습니다."
+      },
+      "id": "absent",
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "규칙 A는 바탕화면 모드에서 WebView가 '아이콘 아래'에 위치한다고 명시하고 있으나, 이것이 기본 상태인지 배경 조작을 끈 상태인지에 대한 구체적인 조건이나 범위(scope)를 정의하고 있지 않습니다."
+      },
+      "id": "absent",
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "규칙 A는 바탕화면 모드에서 WebView가 '아이콘 아래'에 위치한다고 명시하고 있으나, 이것이 기본 상태인지 배경 조작을 끈 상태인지에 대한 구체적인 조건이나 범위(scope)를 정의하고 있지 않습니다."
+      },
+      "id": "absent",
+      "quotesValid": true,
+      "repeat": 3
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "규칙 A의 '아이콘 아래'라는 설명이 배경 조작을 끈 상태에만 적용되는지 아니면 기본 상태를 포함하는지에 대해 텍스트 내에서 명시적으로 정의하거나 속성을 부여하는 내용이 없습니다."
+      },
+      "id": "off",
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "The text does not attribute a specific scope to the claim that the 'below icons' description in Rule A applies only to the state where background operation is off; it only describes the behavior of the 'background' window in Rule B across different states."
+      },
+      "id": "off",
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "The text does not attribute a specific scope to the claim that the 'below icons' description in Rule A applies only to the state where background operation is off; it only describes the behavior of the 'background' window in Rule B across different states."
+      },
+      "id": "off",
+      "quotesValid": true,
+      "repeat": 3
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "규칙 A의 '아이콘 아래' 설명이 기본 상태와 배경 조작을 끈 상태 중 어디에 적용되는지에 대해 텍스트 내에서 명시적으로 정의하거나 속성을 부여하는 내용이 없습니다."
+      },
+      "id": "default",
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "규칙 A의 '아이콘 아래' 설명이 기본 상태와 배경 조작을 끈 상태 중 어디에 적용되는지에 대해 텍스트 내에서 명시적으로 정의하거나 속성을 부여하는 내용이 없습니다."
+      },
+      "id": "default",
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": null,
+      "answer": {
+        "choice": "undetermined",
+        "quote": "",
+        "reason": "규칙 A의 '아이콘 아래' 설명이 기본 상태와 배경 조작을 끈 상태 중 어디에 적용되는지에 대해 텍스트 내에서 명시적으로 정의하거나 속성을 부여하는 내용이 없습니다."
+      },
+      "id": "default",
+      "quotesValid": true,
+      "repeat": 3
+    }
+  ]
+}

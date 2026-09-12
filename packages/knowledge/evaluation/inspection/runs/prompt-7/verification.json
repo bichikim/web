@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-09-06T15:02:36.781Z",
+  "defaultPromptVersion": 3,
+  "restoredRequestMatchesArchive": true,
+  "requestCheck": "Captured request body with a mocked HTTP failure; not a new v3 model evaluation.",
+  "candidateSha256": "6621571fed2720063791eb5a95c74dffefa383e927a87bf74cc7120841c9d980",
+  "model": {
+    "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+    "name": "gemma4:latest"
+  },
+  "repetitions": 2,
+  "consistentPairs": 93,
+  "sourcePayloadHashesVerified": true,
+  "results": [
+    {
+      "name": "expanded",
+      "correct": 15,
+      "total": 16,
+      "errors": 0,
+      "regressions": []
+    },
+    {
+      "name": "original",
+      "correct": 4,
+      "total": 4,
+      "errors": 0,
+      "regressions": []
+    },
+    {
+      "name": "workplace",
+      "correct": 7,
+      "total": 8,
+      "errors": 0,
+      "regressions": []
+    }
+  ]
+}

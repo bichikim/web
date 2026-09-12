@@ -1,0 +1,27 @@
+{
+  "currentVersion": 26,
+  "directory": "packages/knowledge/evaluation/inspection/quality/transfer/runs/07-withheld",
+  "exactRequestsAndResults": true,
+  "measurements": [
+    {
+      "calls": 5,
+      "id": "revalidation",
+      "repeat": 1,
+      "searches": 2
+    },
+    {
+      "calls": 5,
+      "id": "revalidation",
+      "repeat": 2,
+      "searches": 2
+    },
+    {
+      "calls": 5,
+      "id": "revalidation",
+      "repeat": 3,
+      "searches": 2
+    }
+  ],
+  "networkCalls": 0,
+  "recordedVersion": 25
+}

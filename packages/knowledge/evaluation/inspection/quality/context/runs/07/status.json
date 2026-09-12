@@ -1,0 +1,5 @@
+{
+  "status": "interrupted",
+  "reason": "Evaluation output guard included internal reasoning tokens; not a complete quality score.",
+  "replacement": "../09"
+}

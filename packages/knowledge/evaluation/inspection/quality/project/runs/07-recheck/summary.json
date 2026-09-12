@@ -1,0 +1,58 @@
+{
+  "consistency": [
+    {
+      "id": "desktop-layer",
+      "outcomes": ["uncertain", "uncertain", "uncertain"]
+    }
+  ],
+  "frozenUnchanged": true,
+  "modelUnchanged": true,
+  "results": [
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 9,
+      "contextCharacters": 1545,
+      "elapsedMs": 229338,
+      "expected": ["conflict", "uncertain"],
+      "group": "ambiguous-scope",
+      "id": "desktop-layer",
+      "networkSearches": 3,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 1,
+      "searches": 3
+    },
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 9,
+      "contextCharacters": 1545,
+      "elapsedMs": 182460,
+      "expected": ["conflict", "uncertain"],
+      "group": "ambiguous-scope",
+      "id": "desktop-layer",
+      "networkSearches": 3,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 2,
+      "searches": 3
+    },
+    {
+      "actual": "uncertain",
+      "agrees": true,
+      "calls": 9,
+      "contextCharacters": 1545,
+      "elapsedMs": 150841,
+      "expected": ["conflict", "uncertain"],
+      "group": "ambiguous-scope",
+      "id": "desktop-layer",
+      "networkSearches": 3,
+      "referenceFound": false,
+      "referenceSelected": false,
+      "repeat": 3,
+      "searches": 3
+    }
+  ],
+  "snapshotUnchanged": true
+}

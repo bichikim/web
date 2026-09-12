@@ -1,0 +1,5 @@
+{
+  "status": "interrupted",
+  "reason": "Two reassessment requests reached the 120-second request deadline. Awaiting user choice on a longer max evaluation deadline; this is not a complete quality score.",
+  "failedConditions": ["signal-update-direct", "signal-update-search"]
+}

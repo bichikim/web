@@ -1,0 +1,27 @@
+{
+  "identicalInitialRequests": true,
+  "measurements": [
+    {
+      "calls": 8,
+      "id": "desktop-layer",
+      "referenceCited": false,
+      "repeat": 1,
+      "searches": 2
+    },
+    {
+      "calls": 8,
+      "id": "desktop-layer",
+      "referenceCited": false,
+      "repeat": 2,
+      "searches": 2
+    },
+    {
+      "calls": 8,
+      "id": "desktop-layer",
+      "referenceCited": false,
+      "repeat": 3,
+      "searches": 2
+    }
+  ],
+  "recordedResponseReplay": true
+}

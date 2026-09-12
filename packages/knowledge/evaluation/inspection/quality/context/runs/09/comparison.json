@@ -1,0 +1,220 @@
+{
+  "baselineModel": "gpt-5.6-luna",
+  "baselinePassed": 15,
+  "candidateModel": "gpt-5.6-luna",
+  "candidatePassed": 14,
+  "errors": 0,
+  "measurements": [
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "signal-update",
+      "mode": "excerpt",
+      "outputTokens": 2165,
+      "reasoningTokens": 1723,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": false,
+      "correct": false,
+      "id": "signal-update",
+      "mode": "direct",
+      "outputTokens": 4204,
+      "reasoningTokens": 3095,
+      "requests": 6
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": false,
+      "correct": false,
+      "id": "signal-update",
+      "mode": "search",
+      "outputTokens": 9150,
+      "reasoningTokens": 7693,
+      "requests": 7
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "signal-suppress",
+      "mode": "excerpt",
+      "outputTokens": 1429,
+      "reasoningTokens": 1115,
+      "requests": 5
+    },
+    {
+      "actual": "conflict",
+      "before": "uncertain",
+      "beforeCorrect": false,
+      "correct": true,
+      "id": "signal-suppress",
+      "mode": "direct",
+      "outputTokens": 4316,
+      "reasoningTokens": 3856,
+      "requests": 4
+    },
+    {
+      "actual": "conflict",
+      "before": "conflict",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "signal-suppress",
+      "mode": "search",
+      "outputTokens": 2258,
+      "reasoningTokens": 1831,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "batch-once",
+      "mode": "excerpt",
+      "outputTokens": 1687,
+      "reasoningTokens": 1378,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "duplicate",
+      "beforeCorrect": true,
+      "correct": false,
+      "id": "batch-once",
+      "mode": "direct",
+      "outputTokens": 6000,
+      "reasoningTokens": 5203,
+      "requests": 6
+    },
+    {
+      "actual": "duplicate",
+      "before": "duplicate",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "batch-once",
+      "mode": "search",
+      "outputTokens": 1706,
+      "reasoningTokens": 1296,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "batch-twice",
+      "mode": "excerpt",
+      "outputTokens": 1555,
+      "reasoningTokens": 1135,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "conflict",
+      "beforeCorrect": true,
+      "correct": false,
+      "id": "batch-twice",
+      "mode": "direct",
+      "outputTokens": 3690,
+      "reasoningTokens": 2893,
+      "requests": 6
+    },
+    {
+      "actual": "conflict",
+      "before": "conflict",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "batch-twice",
+      "mode": "search",
+      "outputTokens": 1774,
+      "reasoningTokens": 1353,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "storage-backend",
+      "mode": "excerpt",
+      "outputTokens": 3109,
+      "reasoningTokens": 2646,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "storage-backend",
+      "mode": "direct",
+      "outputTokens": 8052,
+      "reasoningTokens": 7117,
+      "requests": 6
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "storage-backend",
+      "mode": "search",
+      "outputTokens": 6989,
+      "reasoningTokens": 5366,
+      "requests": 7
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "cleanup-scope",
+      "mode": "excerpt",
+      "outputTokens": 3329,
+      "reasoningTokens": 2670,
+      "requests": 5
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "cleanup-scope",
+      "mode": "direct",
+      "outputTokens": 5714,
+      "reasoningTokens": 4496,
+      "requests": 6
+    },
+    {
+      "actual": "uncertain",
+      "before": "uncertain",
+      "beforeCorrect": true,
+      "correct": true,
+      "id": "cleanup-scope",
+      "mode": "search",
+      "outputTokens": 5499,
+      "reasoningTokens": 4285,
+      "requests": 6
+    }
+  ],
+  "provider": {
+    "digestMeaning": "pi-catalog-and-version-hash-not-model-weights",
+    "model": "gpt-5.6-luna",
+    "outputLimit": "non-reasoning-tokens-checked-after-response",
+    "provider": "openai-codex",
+    "reasoning": "xhigh",
+    "temperature": "omitted-provider-rejected-zero",
+    "version": "0.84.3"
+  },
+  "sameInitialPromptsAndSchemas": true,
+  "samePointsCasesAndPromptVersion": true,
+  "searchBoundsVerified": true,
+  "total": 18
+}

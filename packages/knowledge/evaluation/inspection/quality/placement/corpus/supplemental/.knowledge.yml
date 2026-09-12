@@ -1,0 +1,6 @@
+version: 1
+repoId: demo/inspection-placement/supplemental
+embedding:
+  model: bge-m3
+include:
+  - docs/**/*.md

@@ -1,0 +1,70 @@
+{
+  "scope": "Two approved pairs, real adapter and persisted link path; not CLI candidate-selection evaluation.",
+  "excludedUnapproved": 12,
+  "rows": [
+    {
+      "case": "storage-backend",
+      "phase": "cold",
+      "accepted": ["conflict", "uncertain"],
+      "matchesApproved": true,
+      "kind": "uncertain",
+      "searches": 6,
+      "reused": 0,
+      "stored": 1,
+      "generations": 7,
+      "promptTokens": 8178,
+      "outputTokens": 1042,
+      "elapsedMs": 29201,
+      "stop": "round-limit",
+      "unresolved": 3
+    },
+    {
+      "case": "storage-backend",
+      "phase": "warm",
+      "accepted": ["conflict", "uncertain"],
+      "matchesApproved": true,
+      "kind": "uncertain",
+      "searches": 6,
+      "reused": 1,
+      "stored": 5,
+      "generations": 7,
+      "promptTokens": 8309,
+      "outputTokens": 985,
+      "elapsedMs": 25699,
+      "stop": "no-new-evidence",
+      "unresolved": 3
+    },
+    {
+      "case": "cleanup-scope",
+      "phase": "cold",
+      "accepted": ["uncertain"],
+      "matchesApproved": true,
+      "kind": "uncertain",
+      "searches": 6,
+      "reused": 0,
+      "stored": 3,
+      "generations": 6,
+      "promptTokens": 6212,
+      "outputTokens": 626,
+      "elapsedMs": 18370,
+      "stop": "no-new-evidence",
+      "unresolved": 3
+    },
+    {
+      "case": "cleanup-scope",
+      "phase": "warm",
+      "accepted": ["uncertain"],
+      "matchesApproved": true,
+      "kind": "uncertain",
+      "searches": 6,
+      "reused": 3,
+      "stored": 2,
+      "generations": 7,
+      "promptTokens": 10084,
+      "outputTokens": 899,
+      "elapsedMs": 25556,
+      "stop": "no-new-evidence",
+      "unresolved": 3
+    }
+  ]
+}

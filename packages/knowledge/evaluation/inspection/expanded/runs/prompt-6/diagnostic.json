@@ -1,0 +1,1230 @@
+{
+  "command": "doctor",
+  "checks": [
+    {
+      "counts": {
+        "units": 11
+      },
+      "name": "source",
+      "status": "pass"
+    },
+    {
+      "counts": {},
+      "name": "relations",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "units": 0
+      },
+      "name": "conflicts",
+      "status": "pass"
+    },
+    {
+      "name": "embedding",
+      "status": "pass"
+    },
+    {
+      "name": "schema",
+      "status": "pass"
+    },
+    {
+      "name": "storage",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "changed": 0,
+        "metadata": 0,
+        "missing": 0,
+        "stale": 0
+      },
+      "name": "snapshot",
+      "status": "pass"
+    }
+  ],
+  "healthy": true,
+  "semantic": {
+    "assessments": [
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The two sources specify different required timeout values for token refresh requests (60 seconds vs 30 seconds).",
+          "rightQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds."
+        },
+        "cacheKey": "2200daa38f7d68a120ffdda91939c539eada777524a03caba5a8cb9f94d54618",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time.",
+          "reason": "The left source states that token refresh requests must run concurrently, while the right source states that they must be serialized, meaning at most one can run at a time.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "c08544db5a840fe44b1b52e596bb0a86f4f537de8e7cc86e7bce9eb80d29e88f",
+        "left": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments.",
+          "reason": "The left source discusses production environments, while the right source discusses staging environments. They address different subjects/conditions.",
+          "rightQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "41af55c8ff63fddc8bb146ced66cd0117c0a6bc4862847228dd0cc5a1c9ef545",
+        "left": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "duplicate",
+          "leftQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments.",
+          "reason": "Both sources state a limitation on the number of concurrent token refresh requests, specifically limiting it to at most one at a time.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "cf47fc239d2da029a33c99a1372ec36e2593ec45161884bda4ef5cd4cbbbf202",
+        "left": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "uncertain",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time.",
+          "reason": "The left source states a general rule for token refresh concurrency, while the right source limits this rule to staging environments, making a direct comparison uncertain without knowing the context of the comparison.",
+          "rightQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "7e6ef922f0b22491b55d55e84a8aa21402d45dcc7ccf126976929424fcc63073",
+        "left": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "uncertain",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time.",
+          "reason": "The left source states that token refresh requests must run concurrently, while the right source refers to a policy R without defining it, making a direct comparison uncertain.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "51cb86b13e9f98d74e2bd4c825a08aa4ff48e1a757b9fdcb2b1aeecfd2d8086d",
+        "left": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments.",
+          "reason": "The left source states that at most one token refresh request may run at a time in production, while the right source states that multiple refresh requests must run at the same time.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "f6ddf34a741b4e2f14a028772938036c4a830b1929cd9bdcdfd8b113ea0223f6",
+        "left": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments.",
+          "reason": "The left source specifies a rule only for staging environments regarding multiple token refresh requests running at the same time, while the right source imposes a general serialization rule for all token refresh requests.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "d7c092b417d9133598d7f53697332520e5ce37b8602e313a096c8764e45eee17",
+        "left": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently.",
+          "reason": "The left source states that the requirement does not specify whether refresh requests run sequentially or concurrently, while the right source explicitly mandates that token refresh requests must run concurrently.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "fb1b7a5c2242a96e06f9cb27a3635145e694cb549a0940052c3169c93116a5e8",
+        "left": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다.",
+          "reason": "The left source states that token refresh requests must run sequentially and only one can run concurrently. The right source states that token refresh requests must run concurrently and multiple requests must run at the same time.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "dc64dd774c3b2cfb46c5fbd7f4c89f4b54400733d309437d3a4acddb6b185aff",
+        "left": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "duplicate",
+          "leftQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다.",
+          "reason": "Both sources state that token refresh requests must be serialized, meaning only one can run at a time.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "9521aedae267f5b81b6bcc9a992d1750250ee5700d5ef1bcde91f668158c0d72",
+        "left": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "duplicate",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "Both sources specify the exact timeout duration for token refresh requests as 30 seconds.",
+          "rightQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds."
+        },
+        "cacheKey": "f03bce3567683a4cb8c1d1b52c7ada53d86c4cbf2ea1cf29c4a5da4f109b7535",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency requirement for token refresh. These are different aspects of the process.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "47543dc9bb25142d9341b5ac439f95e9caa7a731a1c967d786db6fbe1cde2444",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments.",
+          "reason": "The left source specifies a concurrency rule for production environments, while the right source refers to an external policy R without detailing any specific rules.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "91aea593a6ef865e6c8e56e871868b93f7a58318e43e0b44eec12835d5316db7",
+        "left": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments.",
+          "reason": "The left source specifies a concurrency rule only for staging environments, while the right source refers to a general policy R without specifying any concurrency rules or environments.",
+          "rightQuote": ""
+        },
+        "cacheKey": "382ab44731f839f694387abf3994f32ca94dbbaf3aa3b22a3894fb52077498cf",
+        "left": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency requirement for token refresh. These are different aspects of the process.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "38695823756899b677df3d6923249f755580e5fbea33a982ee5b94e034f6b542",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source specifies a token refresh timeout of exactly 30 seconds, while the right source specifies a timeout of exactly 60 seconds for the same subject.",
+          "rightQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds."
+        },
+        "cacheKey": "6960e2b9753273d0ab2954c985eee155b968aceae50b2dfea10d994bf47ebe28",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently.",
+          "reason": "The left source states that the audit log requirement does not specify concurrency, while the right source explicitly mandates serialization (at most one at a time).",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "c3fbc66fe8e9c61dfa03fcb44b7d6e9648392b90b31e9b105a10f19e0b89c1e8",
+        "left": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "uncertain",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time.",
+          "reason": "The left source states a specific requirement (serialization), while the right source refers to an undefined policy R, making a direct comparison uncertain.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "0cbb91e3956746fb3970790bcf60de3e3642d4f732cb4bfbd635d9849f1d3c40",
+        "left": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source discusses the time limit for token renewal requests, while the right source discusses the concurrency of token renewal requests. They address different aspects of the renewal process.",
+          "rightQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다."
+        },
+        "cacheKey": "c567ab1c92e5dd5bc5438ee0fe1eb1e17225fea0ea3eaa42282a5106765237c6",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently.",
+          "reason": "The left source mandates an audit log entry for token refresh requests, while the right source discusses the concurrency of these requests without specifying audit logging requirements.",
+          "rightQuote": ""
+        },
+        "cacheKey": "ab2e3f9357adab83db82ee8d7c7b028f32f0923d864602a51a2564f67ea056c6",
+        "left": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency requirement for token refresh. These are different aspects of the process.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "250e1d2e3a16d8bdbbe18877f1b367a724d1f957bfafd8ef785e94f346768220",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently.",
+          "reason": "The left source mandates an audit log for every token refresh request, while the right source specifies concurrency rules only for staging environments and makes no general statement about auditing.",
+          "rightQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "94bf27d6e76def94c2663832e974ccdee8d0aa29ae220b099f5fd42d86db0b5c",
+        "left": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments.",
+          "reason": "The left source discusses concurrency limits in production, while the right source discusses the requirement for an audit log entry after a refresh request, with no mention of concurrency rules.",
+          "rightQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently."
+        },
+        "cacheKey": "54562c41aff0385dbee41b9225bffeb7aa97ac6c89b1db6ce9cdd052ce2b2d78",
+        "left": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency requirement for token refresh. These are different aspects of the process.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "3fd30f4a6c778844d895a5d41771e790bbee80a63c42d3ceab44b9d1177f71fe",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "duplicate",
+          "leftQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments.",
+          "reason": "Both sources state a limitation on the number of concurrent token refresh requests, specifying a maximum of one at a time.",
+          "rightQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다."
+        },
+        "cacheKey": "335f2de30c5274ffdf8cb145333a619102b9692e6d43d1e331b09883177a6ca5",
+        "left": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency rule for token refresh in production. These are different aspects of the process.",
+          "rightQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "f832e3fa1bc9a58b47759f3e0c46285ec4ea576921185436069f2fdef3beb537",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency rule for token refresh in production. These are different aspects of the process.",
+          "rightQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "3e3513577bca5bf7a0ced2428370ec338854acbed093d1bdcdcd85094745992c",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source specifies a timeout requirement, while the right source specifies an audit logging requirement. These are different aspects of token refresh requests.",
+          "rightQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently."
+        },
+        "cacheKey": "681f50345514673a41db231af4bd84c2bdfeb1eeb8ca8254a7312c9fa2706d0a",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다.",
+          "reason": "The left source discusses the sequential execution of token refresh requests, while the right source discusses the requirement for an audit log entry after completion, without specifying concurrency constraints.",
+          "rightQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently."
+        },
+        "cacheKey": "7ff19e8f8c6e6a13b707d5bd7a0d00ef751cb26bfd1fb76fd44ed3464973b715",
+        "left": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다.",
+          "reason": "The left source states that token refresh requests must run sequentially and only one can run concurrently. The right source states that in staging, multiple token refresh requests must run at the same time.",
+          "rightQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "21726ac13b089f7e4436e08b0a2072728cadcc85101818444a59d193d51d36a6",
+        "left": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source specifies a timeout requirement, while the right source specifies an audit logging requirement. These are different aspects of token refresh requests.",
+          "rightQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently."
+        },
+        "cacheKey": "ecc28106af0195bd719bea4797d2050917651e60519bf808d6585af20bff7699",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source discusses concurrency and references an undefined policy R. They address different aspects of token refresh.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "5b723dbd3aa58b2de8a362645713499262196ab84aa638b596810f3a86de5699",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency rule only for staging environments. These are different subjects/requirements.",
+          "rightQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "9c2bbe77c90b7469201c97f07f4913f7255433d0c5a8012b8b66033a81dbbf8b",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source specifies a required timeout for token refresh requests, while the right source discusses concurrency rules only for staging environments and makes no general statement about timeouts.",
+          "rightQuote": ""
+        },
+        "cacheKey": "0751d1e876b1b79199eec996ebbcb8bd9f0898483fe9275be039983ad9fd54f3",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source discusses concurrency and references an undefined policy R. They address different aspects of token refresh.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "fbd602f2c9906544e2ae88ee51ff7b5b58fa502fbfb133cfd68907cdc611da05",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency requirement for token refresh. These are different aspects of the process.",
+          "rightQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다."
+        },
+        "cacheKey": "ccad2107342bc43196b9a7c6432045557fe462da2890a7540750e130187b8531",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다.",
+          "reason": "The left source discusses token refresh requests must run sequentially and only one can run concurrently. The right source mentions token refresh requests follow policy R, but does not specify the policy's details.",
+          "rightQuote": ""
+        },
+        "cacheKey": "e3b21e8d792c0091a8d9db782423a9911d563c36dee69e3ab5ff2309bc519412",
+        "left": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source specifies a timeout requirement for token refresh, while the right source specifies a concurrency requirement for token refresh. These are different aspects of the process.",
+          "rightQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다."
+        },
+        "cacheKey": "f0362ce56d424f751faad327a46180e305aaa1f300f352c99a1979c79db8f586",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source specifies a time limit for token refresh requests, while the right source specifies a concurrency requirement for token refresh requests. These are different aspects of the process.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "290f177f521edcefbe2f6bfc0ccad6de2a02dc0b0a5eb50d861ef00519e3141f",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source specifies a time limit for token refresh requests, while the right source specifies a concurrency rule for production environments. They address different aspects of token refresh.",
+          "rightQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "bdf3e5703f1f775237eccf0fdca513408df575e874ead0236b11c99b7b55f4a8",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source specifies a time limit for token refresh requests, while the right source specifies a concurrency requirement for token refresh requests. These are different aspects of the process.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "b11363c6dd7dd396243e4ac677faa2c98fd272c142e2424a3baa05ce47c4f729",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source specifies a time limit for token refresh requests, while the right source specifies an audit logging requirement for token refresh requests. These are different subjects/requirements.",
+          "rightQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently."
+        },
+        "cacheKey": "a2507a64b79fd7a9c3d1ec5368280594120dd3e63769df78ab60f73c2aa8d2b4",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source specifies a time limit for token refresh requests, while the right source specifies a concurrency rule only for staging environments. They address different aspects of token refresh.",
+          "rightQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "8251ed31f067d71163cc4c22213c31f60499aae600171099959ede9528ccc3fb",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The two sources discuss entirely different topics: refund approval and production token refresh.",
+          "rightQuote": "# Production token refresh {#policy}\n\nThis rule applies only in production: at most one token refresh request may run at a time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "d38b33734e38fc7306d8f71f1e0430f4e9f7416d625b1fd2440b0a2184e6a1d7",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+          "docId": "refresh/production",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The left source discusses refund approval, while the right source discusses token refresh audit requirements. They cover different subjects.",
+          "rightQuote": "# Token refresh audit {#policy}\n\nEvery token refresh request must produce an audit log entry after it completes. This requirement does not specify whether refresh requests run sequentially or concurrently."
+        },
+        "cacheKey": "4c1f538054c6b81b09efe8d4173d38b9c4ebbd0f4c815b4372ac1ab77809fe83",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+          "docId": "refresh/audit",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source specifies a time limit for token refresh requests, while the right source discusses a policy for token refresh concurrency without specifying a time limit.",
+          "rightQuote": ""
+        },
+        "cacheKey": "28156225a2f0cba98420fe27ad1bfcaffba70294fcb2f38096f8a25213c29dc5",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The left source discusses refund approval, while the right source discusses token refresh concurrency. These are different subjects.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "15e8b45f7260d2d602af62fe1511634935f84ec0668be6f66eaebf2b131455cb",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The two sources discuss entirely different topics: one about refund approval and the other about staging token refresh rules.",
+          "rightQuote": "# Staging token refresh {#policy}\n\nThis rule applies only in staging: multiple token refresh requests must run at the same time. This document sets no concurrency rule for other environments."
+        },
+        "cacheKey": "c8c4cdca6db1a5130a1ad8f38027dcc784a6265a8351fc1f4cec04eb9b2e3549",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+          "docId": "refresh/staging",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The left source discusses refund approval, while the right source discusses token renewal concurrency. These are different subjects.",
+          "rightQuote": "# 토큰 갱신 동시성 {#policy}\n\n토큰 갱신 요청은 순차적으로 실행해야 한다. 동시에 실행할 수 있는 갱신 요청은 최대 하나다."
+        },
+        "cacheKey": "48cbfeeb3d820a8c6b1bc0630752a1e80ae54bb24300b14b518ef23e150b1a02",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+          "docId": "refresh/korean",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The left source discusses refund approval, while the right source discusses token refresh concurrency. These are different subjects.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time."
+        },
+        "cacheKey": "7fb5e1002c4f7a7b82efac10e7041821f4e0bf519e23b9a4f24e1250bcbdf824",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 30 seconds.",
+          "reason": "The left source discusses token refresh timeouts, while the right source discusses refund approval processes. These are different subjects.",
+          "rightQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved."
+        },
+        "cacheKey": "d7d8049ab697b7ef5a2e4a887f747c543e284c65666431ecbf18c05cc7b71441",
+        "left": {
+          "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+          "docId": "refresh/timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The left source discusses refund approval, while the right source discusses token refresh concurrency. These are different subjects.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "d55a358652a263bc9342b1674901c5772a1340fd5ca7e8fcc52c75d1c63f55a5",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh timeout {#policy}\n\nEvery token refresh request must have a timeout of exactly 60 seconds.",
+          "reason": "The left source discusses token refresh timeouts, while the right source discusses refund approval processes. These are different subjects.",
+          "rightQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved."
+        },
+        "cacheKey": "10c37faf6d76a8d1f5770c40c79388ff3a3bf399917542f9ddcf3196a8ea95a8",
+        "left": {
+          "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+          "docId": "refresh/long-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 토큰 갱신 제한 시간 {#policy}\n\n모든 토큰 갱신 요청의 제한 시간은 정확히 30초여야 한다.",
+          "reason": "The left source discusses token refresh time limits, while the right source discusses refund approval conditions. They cover completely different subjects.",
+          "rightQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved."
+        },
+        "cacheKey": "9430c925f78b234538939b6f69e10aa6392e161e5e33568b0b404f41e476c236",
+        "left": {
+          "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+          "docId": "refresh/korean-timeout",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        }
+      }
+    ],
+    "cached": 0,
+    "consideredUnits": 11,
+    "eligibleUnits": 11,
+    "retrieval": {
+      "candidatePairs": 55,
+      "errors": [],
+      "neighborsPerUnit": 10,
+      "seedLimit": 20
+    },
+    "totalPairs": 55,
+    "truncated": false,
+    "errors": [],
+    "limit": 100,
+    "promptVersion": 6,
+    "repoId": "demo/inspection-expanded",
+    "selectedPairs": 55,
+    "sourceUnits": [
+      {
+        "contentHash": "sha256:734681d703b9a3bc4e4075628e76502ef7927b951b45fd1825587a83760baf50",
+        "docId": "refresh/korean-timeout",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:bd4c1199e81e4b258879a8ac1ffb4550334bc73c3d8f490dc050ff943066098e",
+        "docId": "refresh/long-timeout",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:f3d5431936d524d9e323d498f2c8b8cb84808bed2d5d9aaf6679cf631f084795",
+        "docId": "refresh/timeout",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+        "docId": "payment/refund",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:4971c7b6538a4e73a18bddb37d3e60bf414148f5ed37f19efc77b358a4c79513",
+        "docId": "refresh/production",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:9e5b9702c17328e5837cdaea1ad94429e1dbb73be277596b9a7a79cfa4692b4c",
+        "docId": "refresh/korean",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:48d9689b1b666eb92957557c82465940f5b75d7fa6b6c53c7b3bdbc83ade2927",
+        "docId": "refresh/audit",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+        "docId": "refresh/concurrent",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:9fd3256aef4958f00cd27fe726c9257fa1fd425a77561d8e24e1b9e3ee493272",
+        "docId": "refresh/staging",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+        "docId": "refresh/serial",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+        "docId": "refresh/unspecified",
+        "unitId": "policy"
+      }
+    ],
+    "status": "complete",
+    "workspaceId": "refs/heads/main",
+    "model": {
+      "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+      "name": "gemma4:latest"
+    }
+  }
+}

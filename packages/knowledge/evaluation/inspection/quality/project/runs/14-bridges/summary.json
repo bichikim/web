@@ -1,0 +1,296 @@
+{
+  "modelUnchanged": true,
+  "results": [
+    {
+      "agrees": false,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0"],
+          "facts": [
+            {
+              "evidenceId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0",
+              "fact": "기본 상태에서는 데스크톱 아이콘 바로 위의 키 윈도로 전환되어 입력을 받는다.",
+              "quote": "기본은 데스크톱 아이콘 바로 위의 키 윈도로 전환해 WebView 입력을 받는다."
+            },
+            {
+              "evidenceId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0",
+              "fact": "배경 조작을 끄면 데스크톱 아이콘보다 아래로 내려 입력을 통과시킨다.",
+              "quote": "사용자가 배경 조작을 끄면 시스템 배경보다 위·데스크톱 아이콘보다 아래로 내려 입력을 통과시킨다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "규칙 B(및 증거 문서)에 따르면, 기본 상태에서는 '데스크톱 아이콘 바로 위'에 위치하며, '배경 조작을 끈 상태'에서만 '데스크톱 아이콘보다 아래'로 내려갑니다. 따라서 규칙 A의 '아이콘 아래'는 배경 조작을 끈 상태에만 적용됩니다.",
+          "supported": true
+        }
+      ],
+      "id": "absent",
+      "repeat": 1,
+      "structureValid": false
+    },
+    {
+      "agrees": false,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0"],
+          "facts": [
+            {
+              "evidenceId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0",
+              "fact": "기본 상태에서는 데스크톱 아이콘 바로 위의 키 윈도로 전환되어 입력을 받는다.",
+              "quote": "기본은 데스크톱 아이콘 바로 위의 키 윈도로 전환해 WebView 입력을 받는다."
+            },
+            {
+              "evidenceId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0",
+              "fact": "배경 조작을 끄면 데스크톱 아이콘보다 아래로 내려 입력을 통과시킨다.",
+              "quote": "사용자가 배경 조작을 끄면 시스템 배경보다 위·데스크톱 아이콘보다 아래로 내려 입력을 통과시킨다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "규칙 B(및 증거 문서)에 따르면, 기본 상태에서는 '데스크톱 아이콘 바로 위'에 위치하며, '배경 조작을 끈 상태'에서만 '데스크톱 아이콘보다 아래'로 내려갑니다. 따라서 규칙 A의 '아이콘 아래'는 배경 조작을 끈 상태에만 적용됩니다.",
+          "supported": true
+        }
+      ],
+      "id": "absent",
+      "repeat": 2,
+      "structureValid": false
+    },
+    {
+      "agrees": false,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0"],
+          "facts": [
+            {
+              "evidenceId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0",
+              "fact": "기본 상태에서 background 창은 데스크톱 아이콘 바로 위의 키 윈도로 전환된다.",
+              "quote": "기본은 데스크톱 아이콘 바로 위의 키 윈도로 전환해 WebView 입력을 받는다."
+            },
+            {
+              "evidenceId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c:0",
+              "fact": "사용자가 배경 조작을 끄면 background 창은 데스크톱 아이콘보다 아래로 내려간다.",
+              "quote": "사용자가 배경 조작을 끄면 시스템 배경보다 위·데스크톱 아이콘보다 아래로 내려 입력을 통과시킨다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "규칙 B(및 증거 문서)에 따르면, 기본 상태에서는 '데스크톱 아이콘 바로 위'에 위치하며, '배경 조작을 끈 상태'에서만 '데스크톱 아이콘보다 아래'로 내려갑니다. 따라서 규칙 A의 '아이콘 아래' 설명은 배경 조작을 끈 상태에만 적용됩니다.",
+          "supported": true
+        }
+      ],
+      "id": "absent",
+      "repeat": 3,
+      "structureValid": false
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["scope-control"],
+          "facts": [
+            {
+              "evidenceId": "scope-control",
+              "fact": "규칙 A 요약표의 '아이콘 아래' 설명은 배경 조작을 끈 상태에만 적용되며 기본 상태는 포함하지 않는다.",
+              "quote": "규칙 A 요약표의 아이콘 아래 설명은 배경 조작을 끈 상태에만 적용하며 기본 상태는 포함하지 않는다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "제공된 증거(scope-control)에서 규칙 A의 '아이콘 아래' 설명이 배경 조작을 끈 상태에만 적용되고 기본 상태는 포함하지 않는다고 명시적으로 정의하고 있습니다.",
+          "supported": true
+        }
+      ],
+      "id": "off",
+      "repeat": 1,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["scope-control"],
+          "facts": [
+            {
+              "evidenceId": "scope-control",
+              "fact": "규칙 A 요약표의 '아이콘 아래' 설명은 배경 조작을 끈 상태에만 적용되며 기본 상태는 포함하지 않는다.",
+              "quote": "규칙 A 요약표의 아이콘 아래 설명은 배경 조작을 끈 상태에만 적용하며 기본 상태는 포함하지 않는다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "제공된 증거(scope-control)에서 규칙 A의 '아이콘 아래' 설명이 배경 조작을 끈 상태에만 적용되고 기본 상태는 포함하지 않는다고 명시적으로 정의하고 있습니다.",
+          "supported": true
+        }
+      ],
+      "id": "off",
+      "repeat": 2,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["scope-control"],
+          "facts": [
+            {
+              "evidenceId": "scope-control",
+              "fact": "규칙 A 요약표의 '아이콘 아래' 설명은 배경 조작을 끈 상태에만 적용되며 기본 상태는 포함하지 않는다.",
+              "quote": "규칙 A 요약표의 아이콘 아래 설명은 배경 조작을 끈 상태에만 적용하며 기본 상태는 포함하지 않는다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "제공된 증거(scope-control)에서 규칙 A의 '아이콘 아래' 설명이 배경 조작을 끈 상태에만 적용되고 기본 상태는 포함하지 않는다고 명시적으로 정의하고 있습니다.",
+          "supported": true
+        }
+      ],
+      "id": "off",
+      "repeat": 3,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["scope-control"],
+          "facts": [
+            {
+              "evidenceId": "scope-control",
+              "fact": "The description 'below icons' in Rule A's summary table applies to both the default state and the state where background operation is turned off.",
+              "quote": "규칙 A 요약표의 아이콘 아래 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용한다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "The provided evidence explicitly states that the 'below icons' description in Rule A applies to both the default state and the state where background operation is disabled.",
+          "supported": true
+        }
+      ],
+      "id": "default",
+      "repeat": 1,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["scope-control"],
+          "facts": [
+            {
+              "evidenceId": "scope-control",
+              "fact": "The description 'below icons' in Rule A's summary table applies to both the default state and the state where background operation is turned off.",
+              "quote": "규칙 A 요약표의 아이콘 아래 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용한다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "The provided evidence explicitly states that the 'below icons' description in Rule A applies to both the default state and the state where background operation is disabled.",
+          "supported": true
+        }
+      ],
+      "id": "default",
+      "repeat": 2,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["scope-control"],
+          "facts": [
+            {
+              "evidenceId": "scope-control",
+              "fact": "The description 'below icons' in Rule A's summary table applies to both the default state and the state where background operation is turned off.",
+              "quote": "규칙 A 요약표의 아이콘 아래 설명은 기본 상태와 배경 조작을 끈 상태 모두에 적용한다."
+            }
+          ],
+          "missing": "",
+          "questionId": "2db1c6f55a37a50e8df05ffb96953d2112a5af622090c687b426a3f5fa69562c",
+          "reason": "The provided evidence explicitly states that the 'below icons' description in Rule A applies to both the default state and the state where background operation is disabled.",
+          "supported": true
+        }
+      ],
+      "id": "default",
+      "repeat": 3,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0"],
+          "facts": [
+            {
+              "evidenceId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0",
+              "fact": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다.",
+              "quote": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다."
+            }
+          ],
+          "missing": "",
+          "questionId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16",
+          "reason": "보존 등급 R7의 보존 기간(생성 후 7일 동안 보존)과 삭제 조건(정확히 7일이 되는 시점에 삭제)이 명시되어 있습니다.",
+          "supported": true
+        }
+      ],
+      "id": "retention",
+      "repeat": 1,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0"],
+          "facts": [
+            {
+              "evidenceId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0",
+              "fact": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다.",
+              "quote": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다."
+            }
+          ],
+          "missing": "",
+          "questionId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16",
+          "reason": "보존 등급 R7의 보존 기간(생성 후 7일 동안 보존)과 삭제 조건(정확히 7일이 되는 시점에 삭제)이 명시되어 있습니다.",
+          "supported": true
+        }
+      ],
+      "id": "retention",
+      "repeat": 2,
+      "structureValid": true
+    },
+    {
+      "agrees": true,
+      "findings": [
+        {
+          "assumptions": [],
+          "evidence": ["b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0"],
+          "facts": [
+            {
+              "evidenceId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16:0",
+              "fact": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다.",
+              "quote": "보존 등급 R7은 기록을 생성 후 7일 동안 보존하고 정확히 7일이 되는 시점에 삭제하는 규칙이다."
+            }
+          ],
+          "missing": "",
+          "questionId": "b5e7bed81e707257b27becfde42396e48994b45976f19c8cdb378ff17857df16",
+          "reason": "보존 등급 R7의 보존 기간(생성 후 7일 동안 보존)과 삭제 조건(정확히 7일이 되는 시점에 삭제)이 명시되어 있습니다.",
+          "supported": true
+        }
+      ],
+      "id": "retention",
+      "repeat": 3,
+      "structureValid": true
+    }
+  ]
+}

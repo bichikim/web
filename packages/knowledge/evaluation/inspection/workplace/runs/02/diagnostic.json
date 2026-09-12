@@ -1,0 +1,660 @@
+{
+  "command": "doctor",
+  "checks": [
+    {
+      "counts": {
+        "units": 8
+      },
+      "name": "source",
+      "status": "pass"
+    },
+    {
+      "counts": {},
+      "name": "relations",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "units": 0
+      },
+      "name": "conflicts",
+      "status": "pass"
+    },
+    {
+      "name": "embedding",
+      "status": "pass"
+    },
+    {
+      "name": "schema",
+      "status": "pass"
+    },
+    {
+      "name": "storage",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "changed": 0,
+        "metadata": 0,
+        "missing": 0,
+        "stale": 0
+      },
+      "name": "snapshot",
+      "status": "pass"
+    }
+  ],
+  "healthy": true,
+  "semantic": {
+    "assessments": [
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "duplicate",
+          "leftQuote": "package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다.",
+          "reason": "Both policies state that changes to source or dependency without a version bump prevent release.",
+          "rightQuote": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다."
+        },
+        "cacheKey": "e26f8ed1ef53b865f9ab02b6f4119b668a1b04751f0937f28862b9f876435579",
+        "left": {
+          "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+          "docId": "workplace/unchanged-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+          "docId": "workplace/unchanged-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "conflict",
+          "leftQuote": "일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.",
+          "reason": "The left text specifies that general web server functions use `/_server`, while the right text specifies that only Toss client bundle server functions use `POMO_PUBLIC_ORIGIN/_server`, suggesting different or conflicting conditions for the origin used.",
+          "rightQuote": "토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다."
+        },
+        "cacheKey": "838d7840d57dbe91e64638c47712346e7e3626182f597ea3b08530ae7f566e09",
+        "left": {
+          "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+          "docId": "workplace/web-origin",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+          "docId": "workplace/toss-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "duplicate",
+          "leftQuote": "더 높은 patch는 소스 변경 없이도 배포된다.",
+          "reason": "Both policies state that a higher patch version can be released even without source changes.",
+          "rightQuote": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다. 소스 외 빌드 설정이나 metadata 변경을 배포해야 할 때도 사람이 patch를 올린다."
+        },
+        "cacheKey": "00e29d70ad60b5e1f8044d192fd03073d4374685fb1d9c1cba46a56bae903812",
+        "left": {
+          "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+          "docId": "workplace/patch-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+          "docId": "workplace/patch-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "더 높은 patch는 소스 변경 없이도 배포된다.",
+          "reason": "The left policy states that a higher patch can be released without source changes, while the right policy states that a release will not happen without increasing the package version or changing dependencies.",
+          "rightQuote": "package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다."
+        },
+        "cacheKey": "d2a4c7cb446dcfc6971233cb37fb0c243ef9d2eb1660988179255ac807e4770b",
+        "left": {
+          "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+          "docId": "workplace/patch-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+          "docId": "workplace/unchanged-plan",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "더 높은 patch는 소스 변경 없이도 배포된다.",
+          "reason": "The left policy states that a higher patch version can be released without source changes, while the right policy states that if the repository and npm version are the same, it will not be deployed even if source, dependency, build settings, or README change. These are contradictory statements regarding deployment conditions.",
+          "rightQuote": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다."
+        },
+        "cacheKey": "bbe30bbd809019d6b49f75a63b6e92953f0ceb46d73f48b658295db0c0a86d4e",
+        "left": {
+          "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+          "docId": "workplace/patch-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+          "docId": "workplace/unchanged-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "conflict",
+          "leftQuote": "package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다.",
+          "reason": "The left policy states that changes without incrementing the package version are not deployed, while the right policy states that a higher patch version is deployed regardless of source changes.",
+          "rightQuote": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다."
+        },
+        "cacheKey": "6ab4f5060b58a1c48309f54e6b773985734087abd29149a3d847ea8342ae9ea2",
+        "left": {
+          "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+          "docId": "workplace/unchanged-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+          "docId": "workplace/patch-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다.",
+          "reason": "The left policy states that if the npm version is the same, it will not be deployed even if source, dependency, build settings, or README change. The right policy states that a higher patch version will be deployed regardless of source changes, and that a person will manually increment the patch when build settings or metadata change, suggesting deployment even with changes that might otherwise be restricted.",
+          "rightQuote": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다. 소스 외 빌드 설정이나 metadata 변경을 배포해야 할 때도 사람이 patch를 올린다."
+        },
+        "cacheKey": "5c648ac05763bf88528ae48dc0be68f98506a2b92c5e4c879dc4ddd1290b38c2",
+        "left": {
+          "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+          "docId": "workplace/unchanged-guide",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+          "docId": "workplace/patch-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "태그는 배포 트리거가 아니라 해당 npm 버전의 소스를 보존하는 기록이다. GitHub Release는 같은 태그에 사람이 읽을 수 있는 배포 기록을 붙인다. 태그는 이동, 재사용 또는 강제 push하지 않는다.",
+          "reason": "The left text discusses npm package release tags and GitHub Releases, while the right text discusses when not to deploy even if source, dependency, build settings, or README change. They cover different topics.",
+          "rightQuote": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다."
+        },
+        "cacheKey": "c858fb5d2327fd8967d7e4ea2a79d2f895c95f1ba325840716a1a41a39f870d1",
+        "left": {
+          "contentHash": "sha256:b6ba9e7a0aba92d873151c860b86cd9d176dd9df9d33e958b7b238b72bcddbac",
+          "docId": "workplace/tags-guide",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+          "docId": "workplace/unchanged-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "버전 태그는 배포 트리거가 아니라 성공한 배포의 소스 기준점이다. 한번 만든 버전 태그는 이동하거나 덮어쓰지 않는다.",
+          "reason": "The left text discusses version tagging as a source baseline after a successful deployment, while the right text specifies a condition for deployment related to package version updates. They address different aspects of the release process.",
+          "rightQuote": "- package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다."
+        },
+        "cacheKey": "e8be0fef64fabfe00371c8bb2f40930696b92fda4cdd8cb7caf72f06daac66c1",
+        "left": {
+          "contentHash": "sha256:be2869bc4a8fd5ed0e078f0ed4a50b49bf98a757c5ffa5885cd92abe07fc8485",
+          "docId": "workplace/tags-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+          "docId": "workplace/unchanged-plan",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다.",
+          "reason": "The left text specifies a condition for package release based on version updates, while the right text discusses the nature of tags and GitHub Releases, which are different topics.",
+          "rightQuote": "태그는 배포 트리거가 아니라 해당 npm 버전의 소스를 보존하는 기록이다."
+        },
+        "cacheKey": "678c1ff1d2b598a1d320f583c72cbcf8a6028ee607f656204a2dcc7fd5872f14",
+        "left": {
+          "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+          "docId": "workplace/unchanged-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:b6ba9e7a0aba92d873151c860b86cd9d176dd9df9d33e958b7b238b72bcddbac",
+          "docId": "workplace/tags-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "버전 태그는 배포 트리거가 아니라 성공한 배포의 소스 기준점이다. 한번 만든 버전 태그는 이동하거나 덮어쓰지 않는다.",
+          "reason": "The left text discusses version tags as source baselines, while the right text discusses conditions for *not* deploying when the version remains the same despite changes in other files. They address different aspects of the release process.",
+          "rightQuote": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다."
+        },
+        "cacheKey": "708c24c5624c7b4504bd9e605b529411be0490f42208fb5bd717aecd6432268a",
+        "left": {
+          "contentHash": "sha256:be2869bc4a8fd5ed0e078f0ed4a50b49bf98a757c5ffa5885cd92abe07fc8485",
+          "docId": "workplace/tags-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+          "docId": "workplace/unchanged-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "태그는 배포 트리거가 아니라 해당 npm 버전의 소스를 보존하는 기록이다. GitHub Release는 같은 태그에 사람이 읽을 수 있는 배포 기록을 붙인다. 태그는 이동, 재사용 또는 강제 push하지 않는다.",
+          "reason": "The left text discusses npm package release tags and GitHub Releases, while the right text discusses npm package release patches. They cover different aspects of releases.",
+          "rightQuote": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다. 소스 외 빌드 설정이나 metadata 변경을 배포해야 할 때도 사람이 patch를 올린다."
+        },
+        "cacheKey": "5c560e95320c893b99e59a31e20460b6dd1fc7c1c5d416d357fb80fd069bf20f",
+        "left": {
+          "contentHash": "sha256:b6ba9e7a0aba92d873151c860b86cd9d176dd9df9d33e958b7b238b72bcddbac",
+          "docId": "workplace/tags-guide",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+          "docId": "workplace/patch-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "- 더 높은 patch는 소스 변경 없이도 배포된다.",
+          "reason": "The left text discusses patch version release criteria, while the right text discusses version tagging as a source reference point for successful deployments. They address different aspects of the release process.",
+          "rightQuote": "버전 태그는 배포 트리거가 아니라 성공한 배포의 소스 기준점이다. 한번 만든 버전 태그는 이동하거나 덮어쓰지 않는다."
+        },
+        "cacheKey": "483730fe6152ca62eb7b32a8f23be6184ea2ab0c0aaae1f209982ac3dbaf5954",
+        "left": {
+          "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+          "docId": "workplace/patch-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:be2869bc4a8fd5ed0e078f0ed4a50b49bf98a757c5ffa5885cd92abe07fc8485",
+          "docId": "workplace/tags-plan",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "- 더 높은 patch는 소스 변경 없이도 배포된다.",
+          "reason": "The left text discusses the condition for npm package release completion, specifically regarding patch versions. The right text discusses the nature of npm release tags and GitHub Releases, which are different topics.",
+          "rightQuote": "태그는 배포 트리거가 아니라 해당 npm 버전의 소스를 보존하는 기록이다. GitHub Release는 같은 태그에 사람이 읽을 수 있는 배포 기록을 붙인다. 태그는 이동, 재사용 또는 강제 push하지 않는다."
+        },
+        "cacheKey": "74fc2f4f3171d5b92af31f1971a5bf42396975021b9e6a85cdf8ca1e31846972",
+        "left": {
+          "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+          "docId": "workplace/patch-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:b6ba9e7a0aba92d873151c860b86cd9d176dd9df9d33e958b7b238b72bcddbac",
+          "docId": "workplace/tags-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "버전 태그는 배포 트리거가 아니라 성공한 배포의 소스 기준점이다. 한번 만든 버전 태그는 이동하거나 덮어쓰지 않는다.",
+          "reason": "The left text discusses version tagging as a source baseline after a successful deployment, while the right text discusses when a patch release is triggered, mentioning 'src' changes and metadata changes. They address different aspects of the release process.",
+          "rightQuote": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다. 소스 외 빌드 설정이나 metadata 변경을 배포해야 할 때도 사람이 patch를 올린다."
+        },
+        "cacheKey": "986768b1ca4f30f340684fa263bd58210a22fae664ebb7de862ea63d73d2b1e4",
+        "left": {
+          "contentHash": "sha256:be2869bc4a8fd5ed0e078f0ed4a50b49bf98a757c5ffa5885cd92abe07fc8485",
+          "docId": "workplace/tags-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+          "docId": "workplace/patch-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "- 더 높은 patch는 소스 변경 없이도 배포된다.",
+          "reason": "The two policies discuss completely different topics: one about npm package release criteria, and the other about remote function sharing function completion conditions.",
+          "rightQuote": "- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다."
+        },
+        "cacheKey": "3b134b0cb4a4308a449cf9eb6d8e6d9006b830f9817455925df0049f0e2af4a5",
+        "left": {
+          "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+          "docId": "workplace/patch-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+          "docId": "workplace/toss-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다.",
+          "reason": "The two policies discuss completely different topics: one about npm package release criteria, and the other about remote function sharing function completion conditions.",
+          "rightQuote": "토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다."
+        },
+        "cacheKey": "4ce6287edc795bcf3ce635b8ed2688d29a9c573f41bc08e024041e9847a33a28",
+        "left": {
+          "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+          "docId": "workplace/unchanged-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+          "docId": "workplace/toss-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "- 더 높은 patch는 소스 변경 없이도 배포된다.",
+          "reason": "The two policies discuss completely different topics: one about npm package release criteria, and the other about remote function sharing function completion conditions.",
+          "rightQuote": "- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다."
+        },
+        "cacheKey": "7edc95c96983a58c25f770ef39631755f0357f5226a4b14adccbc4621098b86f",
+        "left": {
+          "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+          "docId": "workplace/patch-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+          "docId": "workplace/web-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.99,
+          "kind": "unrelated",
+          "leftQuote": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다.",
+          "reason": "The two policies discuss completely different topics: one about npm package release versions, and the other about server function usage for shared functions.",
+          "rightQuote": "- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다."
+        },
+        "cacheKey": "e9d28f5ba29fcc28654493b0cc2b6e4c29e8171115c3e584b72408176ec6c8b5",
+        "left": {
+          "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+          "docId": "workplace/unchanged-guide",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+          "docId": "workplace/toss-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "unrelated",
+          "leftQuote": "토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.",
+          "reason": "The two policies discuss completely different topics: one about server function usage in a client bundle, and the other about npm package release patching rules.",
+          "rightQuote": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다. 소스 외 빌드 설정이나 metadata 변경을 배포해야 할 때도 사람이 patch를 올린다."
+        },
+        "cacheKey": "0f5a8a8c52cbcaeb79beb5e459f2b827769394905df3469b9ffb7e627e718c90",
+        "left": {
+          "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+          "docId": "workplace/toss-origin",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+          "docId": "workplace/patch-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.99,
+          "kind": "unrelated",
+          "leftQuote": "버전 태그는 배포 트리거가 아니라 성공한 배포의 소스 기준점이다. 한번 만든 버전 태그는 이동하거나 덮어쓰지 않는다.",
+          "reason": "The two policies discuss completely different topics: one about npm package release version tagging, and the other about server function usage for shared functions.",
+          "rightQuote": "- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다."
+        },
+        "cacheKey": "5b642a3a68484a79c00e37a5681ba79f025b228ea5dd73f3d0939fc38d5f9972",
+        "left": {
+          "contentHash": "sha256:be2869bc4a8fd5ed0e078f0ed4a50b49bf98a757c5ffa5885cd92abe07fc8485",
+          "docId": "workplace/tags-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+          "docId": "workplace/toss-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "unrelated",
+          "leftQuote": "버전 태그는 배포 트리거가 아니라 성공한 배포의 소스 기준점이다. 한번 만든 버전 태그는 이동하거나 덮어쓰지 않는다.",
+          "reason": "The two policies discuss completely different technical domains: one about npm package release versioning, and the other about server function origins.",
+          "rightQuote": "- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다."
+        },
+        "cacheKey": "e5eb8f0722b24503c49b09ced0217e749bc16409aa98d585aa73842f0fe57287",
+        "left": {
+          "contentHash": "sha256:be2869bc4a8fd5ed0e078f0ed4a50b49bf98a757c5ffa5885cd92abe07fc8485",
+          "docId": "workplace/tags-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+          "docId": "workplace/web-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다.",
+          "reason": "The two policies discuss completely different topics: one about npm package release criteria, and the other about remote function sharing function completion conditions.",
+          "rightQuote": "일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다."
+        },
+        "cacheKey": "cd7bd85c07338b64f607249afc0a7eaf3d27d5f94b20c4fb7e61bfd3a91816d4",
+        "left": {
+          "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+          "docId": "workplace/unchanged-plan",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+          "docId": "workplace/web-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.",
+          "reason": "The two policies discuss completely different topics: one about server function completion conditions and the other about npm package release patches.",
+          "rightQuote": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다. 소스 외 빌드 설정이나 metadata 변경을 배포해야 할 때도 사람이 patch를 올린다."
+        },
+        "cacheKey": "5515d30e33ecdb246bb79fd182046db9891eda04f8ed96bfcfa3b00f6faf7067",
+        "left": {
+          "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+          "docId": "workplace/web-origin",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+          "docId": "workplace/patch-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "unrelated",
+          "leftQuote": "일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.",
+          "reason": "The two policies discuss completely different topics: one about server function origins and the other about npm package release conditions.",
+          "rightQuote": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다."
+        },
+        "cacheKey": "ebfc67f651f3833245691d3983519e7ad52acd7e0a9fd2d9a74142f5d87001d9",
+        "left": {
+          "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+          "docId": "workplace/web-origin",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+          "docId": "workplace/unchanged-guide",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.99,
+          "kind": "unrelated",
+          "leftQuote": "태그는 배포 트리거가 아니라 해당 npm 버전의 소스를 보존하는 기록이다. GitHub Release는 같은 태그에 사람이 읽을 수 있는 배포 기록을 붙인다. 태그는 이동, 재사용 또는 강제 push하지 않는다.",
+          "reason": "The two texts discuss completely different technical topics: one about npm package release tags and GitHub Releases, and the other about server functions using a specific origin.",
+          "rightQuote": "- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다."
+        },
+        "cacheKey": "f175006b72a07656d0cb17c3728b4bf38f6002059c185d1b632b3b8a3d6dd93b",
+        "left": {
+          "contentHash": "sha256:b6ba9e7a0aba92d873151c860b86cd9d176dd9df9d33e958b7b238b72bcddbac",
+          "docId": "workplace/tags-guide",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+          "docId": "workplace/toss-origin",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.99,
+          "kind": "unrelated",
+          "leftQuote": "태그는 배포 트리거가 아니라 해당 npm 버전의 소스를 보존하는 기록이다. GitHub Release는 같은 태그에 사람이 읽을 수 있는 배포 기록을 붙인다. 태그는 이동, 재사용 또는 강제 push하지 않는다.",
+          "reason": "The two texts discuss completely different technical topics: one about npm package release tags and GitHub Releases, and the other about server functions and origins.",
+          "rightQuote": "- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다."
+        },
+        "cacheKey": "18ae582d712f8db24d403e5e78270909fe3a160abd5ec2245cc8a0d0320961c7",
+        "left": {
+          "contentHash": "sha256:b6ba9e7a0aba92d873151c860b86cd9d176dd9df9d33e958b7b238b72bcddbac",
+          "docId": "workplace/tags-guide",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+          "docId": "workplace/web-origin",
+          "unitId": "policy"
+        }
+      }
+    ],
+    "cached": 0,
+    "consideredUnits": 8,
+    "eligibleUnits": 8,
+    "retrieval": {
+      "candidatePairs": 28,
+      "errors": [],
+      "neighborsPerUnit": 10,
+      "seedLimit": 20
+    },
+    "totalPairs": 28,
+    "truncated": false,
+    "errors": [
+      {
+        "cacheKey": "76dbea96464a8695dc875d1a0a25ebc2b687042c875b83b51872c8953ab9b05f",
+        "code": "invalid-inspection-response"
+      }
+    ],
+    "limit": 100,
+    "promptVersion": 3,
+    "repoId": "demo/inspection-workplace",
+    "selectedPairs": 28,
+    "sourceUnits": [
+      {
+        "contentHash": "sha256:b6d9474b9a599b90c75cad9c851446e2145124eb0fc05c46a29ef30cdff72fa1",
+        "docId": "workplace/patch-plan",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:be2869bc4a8fd5ed0e078f0ed4a50b49bf98a757c5ffa5885cd92abe07fc8485",
+        "docId": "workplace/tags-plan",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:28cd9213fd2e2704ef8749c31c339ad3ae2f85623080f68caf7451255ac6984f",
+        "docId": "workplace/unchanged-plan",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:b6ba9e7a0aba92d873151c860b86cd9d176dd9df9d33e958b7b238b72bcddbac",
+        "docId": "workplace/tags-guide",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:a5446f3d69282b419f1d2aed8f59786d6b6b13a2d71c61feffe2e959a9833fc9",
+        "docId": "workplace/web-origin",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:081823f2d637c1bfad0a721b8e67eea9020d355634f6f304585e16eeee6bea82",
+        "docId": "workplace/unchanged-guide",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:fdfd7379b78fee442b917b970e88c8324fab6f26f23cb1d8f7943d4bafc5a488",
+        "docId": "workplace/toss-origin",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:a6bcfc5d6e6dff41f3f43f856b960ea342c0ba2cdef321e83b8b9860c3ddaa74",
+        "docId": "workplace/patch-guide",
+        "unitId": "policy"
+      }
+    ],
+    "status": "partial",
+    "workspaceId": "refs/heads/main",
+    "model": {
+      "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+      "name": "gemma4:latest"
+    }
+  }
+}

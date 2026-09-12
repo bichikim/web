@@ -1,0 +1,10 @@
+{
+  "startedAt": "2026-09-07T02:12:03.106Z",
+  "finishedAt": "2026-09-07T02:12:24.838Z",
+  "result": {
+    "error": {
+      "code": "invalid-inspection-context"
+    },
+    "ok": false
+  }
+}

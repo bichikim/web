@@ -1,0 +1,68 @@
+{
+  "modelUnchanged": true,
+  "results": [
+    {
+      "agrees": true,
+      "decisions": [
+        {
+          "id": "q0",
+          "keep": false,
+          "quote": "이 문서에서 규칙 A의 WebView는 규칙 B의 background 창을 뜻하고, 규칙 A의 조작 창은 규칙 B의 controls 창을 뜻한다.",
+          "reason": "The text explicitly states the correspondence between the terms in Rule A and Rule B."
+        },
+        {
+          "id": "q1",
+          "keep": true,
+          "quote": "",
+          "reason": "Rule A mentions 'below icons' for the desktop mode, and Rule B describes both a default state (above icons) and a state when background control is off (below icons), but it is not explicitly stated if Rule A's definition refers only to the latter or includes the former."
+        }
+      ],
+      "idsValid": true,
+      "kept": ["q1"],
+      "quotesValid": true,
+      "repeat": 1
+    },
+    {
+      "agrees": true,
+      "decisions": [
+        {
+          "id": "q0",
+          "keep": false,
+          "quote": "이 문서에서 규칙 A의 WebView는 규칙 B의 background 창을 뜻하고, 규칙 A의 조작 창은 규칙 B의 controls 창을 뜻한다.",
+          "reason": "The text explicitly states the correspondence between the terms in Rule A and Rule B."
+        },
+        {
+          "id": "q1",
+          "keep": true,
+          "quote": "",
+          "reason": "Rule A mentions 'below icons' for the desktop mode, and Rule B describes both a default state (above icons) and a state when background control is off (below icons), but it is not explicitly stated if Rule A's definition refers only to the latter or includes the former."
+        }
+      ],
+      "idsValid": true,
+      "kept": ["q1"],
+      "quotesValid": true,
+      "repeat": 2
+    },
+    {
+      "agrees": true,
+      "decisions": [
+        {
+          "id": "q0",
+          "keep": false,
+          "quote": "이 문서에서 규칙 A의 WebView는 규칙 B의 background 창을 뜻하고, 규칙 A의 조작 창은 규칙 B의 controls 창을 뜻한다.",
+          "reason": "The text explicitly states the correspondence between the terms in Rule A and Rule B."
+        },
+        {
+          "id": "q1",
+          "keep": true,
+          "quote": "",
+          "reason": "Rule A mentions 'below icons' for the desktop mode, and Rule B describes both a default state (above icons) and a state when background control is off (below icons), but it is not explicitly stated if Rule A's definition refers only to the latter or includes the former."
+        }
+      ],
+      "idsValid": true,
+      "kept": ["q1"],
+      "quotesValid": true,
+      "repeat": 3
+    }
+  ]
+}

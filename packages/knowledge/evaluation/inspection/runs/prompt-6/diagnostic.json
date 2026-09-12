@@ -1,0 +1,300 @@
+{
+  "command": "doctor",
+  "checks": [
+    {
+      "counts": {
+        "units": 5
+      },
+      "name": "source",
+      "status": "pass"
+    },
+    {
+      "counts": {},
+      "name": "relations",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "units": 0
+      },
+      "name": "conflicts",
+      "status": "pass"
+    },
+    {
+      "name": "embedding",
+      "status": "pass"
+    },
+    {
+      "name": "schema",
+      "status": "pass"
+    },
+    {
+      "name": "storage",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "changed": 0,
+        "metadata": 0,
+        "missing": 0,
+        "stale": 0
+      },
+      "name": "snapshot",
+      "status": "pass"
+    }
+  ],
+  "healthy": true,
+  "semantic": {
+    "assessments": [
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "duplicate",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time.",
+          "reason": "Both sources state that token refresh requests must be serialized, meaning only one can run at a time.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nOnly one token refresh request is allowed to run at a time; all refresh requests must execute sequentially."
+        },
+        "cacheKey": "98ace2000ff9d64a18a205beae204e5272f27aa3dc336696bd2d9ba969310c00",
+        "left": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:d7d392335eb9ffacb1339ff51047d2ba017b09d2ee2a44426547e55a12e661ee",
+          "docId": "refresh/duplicate",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nOnly one token refresh request is allowed to run at a time; all refresh requests must execute sequentially.",
+          "reason": "The left source states that only one token refresh request is allowed to run at a time and that all requests must execute sequentially, which directly contradicts the right source's statement that requests must run concurrently.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "3749651c61e008af53aaef6ec60495634f9f56bc01a60cbf81234c71c350f990",
+        "left": {
+          "contentHash": "sha256:d7d392335eb9ffacb1339ff51047d2ba017b09d2ee2a44426547e55a12e661ee",
+          "docId": "refresh/duplicate",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "conflict",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time.",
+          "reason": "The left source states that token refresh requests must be serialized (at most one at a time), while the right source states they must run concurrently (multiple at the same time).",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time."
+        },
+        "cacheKey": "c28f85452288cf2498b29825317be2e3addaf9651fe2aebee85fd51a0a4f097f",
+        "left": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "uncertain",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time.",
+          "reason": "The left source states that token refresh requests must run concurrently, while the right source refers to a policy R without defining it, making a direct comparison uncertain.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "44794568f5f3b67079b652dad5c59b96603713f8b84b56b578b4745de574195b",
+        "left": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "uncertain",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nOnly one token refresh request is allowed to run at a time; all refresh requests must execute sequentially.",
+          "reason": "The left source specifies that only one token refresh request is allowed to run at a time and that all must execute sequentially. The right source refers to a policy R without defining it, making a direct comparison of the rule impossible.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "347f34819e72ce35d1013ade197403d7f242567ea1f4e313ab2df481b22269ac",
+        "left": {
+          "contentHash": "sha256:d7d392335eb9ffacb1339ff51047d2ba017b09d2ee2a44426547e55a12e661ee",
+          "docId": "refresh/duplicate",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "uncertain",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time.",
+          "reason": "The left source states a specific requirement (serialization), while the right source refers to an undefined policy R, making a direct comparison uncertain.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "19f77f6b2c61ded6234435c08237ec779a2d9aea86af82bf51cb2ac3fd7ba7dc",
+        "left": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nOnly one token refresh request is allowed to run at a time; all refresh requests must execute sequentially.",
+          "reason": "The left source discusses token refresh concurrency, while the right source discusses refund approval. These are different subjects.",
+          "rightQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved."
+        },
+        "cacheKey": "d13c9f2d1fa1012ff5e6a42a0b19e9d251cf7281c7331efb60e835c7bbb186df",
+        "left": {
+          "contentHash": "sha256:d7d392335eb9ffacb1339ff51047d2ba017b09d2ee2a44426547e55a12e661ee",
+          "docId": "refresh/duplicate",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved.",
+          "reason": "The left source discusses refund approval, while the right source discusses token refresh concurrency. These are different subjects.",
+          "rightQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests follow policy R. The definition of policy R is not included in this document."
+        },
+        "cacheKey": "584ffb96dcecf6df25c8a65fecb6345e7039c7c5c7a43f97df632a8847027f3c",
+        "left": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+          "docId": "refresh/unspecified",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must be serialized: at most one refresh request may run at a time.",
+          "reason": "The left source discusses token refresh concurrency, while the right source discusses refund approval. These are different subjects.",
+          "rightQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved."
+        },
+        "cacheKey": "96d7c72bdd8218cabe2e31eb66f74c49ca371af5e7a5b56d659a623f0a98a9b0",
+        "left": {
+          "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+          "docId": "refresh/serial",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Token refresh concurrency {#policy}\n\nToken refresh requests must run concurrently: multiple refresh requests must run at the same time.",
+          "reason": "The left source discusses token refresh concurrency, while the right source discusses refund approval. These are different subjects.",
+          "rightQuote": "# Refund approval {#policy}\n\nRefunds are issued only after the payment cancellation is approved."
+        },
+        "cacheKey": "19ce375c07af0ea919276550c9afd8b6556a5cc711fbedee4bd77d2f5ce58226",
+        "left": {
+          "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+          "docId": "refresh/concurrent",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+          "docId": "payment/refund",
+          "unitId": "policy"
+        }
+      }
+    ],
+    "cached": 0,
+    "consideredUnits": 5,
+    "eligibleUnits": 5,
+    "retrieval": {
+      "candidatePairs": 10,
+      "errors": [],
+      "neighborsPerUnit": 10,
+      "seedLimit": 20
+    },
+    "totalPairs": 10,
+    "truncated": false,
+    "errors": [],
+    "limit": 10,
+    "promptVersion": 6,
+    "repoId": "demo/inspection-evaluation",
+    "selectedPairs": 10,
+    "sourceUnits": [
+      {
+        "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de",
+        "docId": "refresh/serial",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:d7d392335eb9ffacb1339ff51047d2ba017b09d2ee2a44426547e55a12e661ee",
+        "docId": "refresh/duplicate",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176",
+        "docId": "refresh/concurrent",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261",
+        "docId": "payment/refund",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760",
+        "docId": "refresh/unspecified",
+        "unitId": "policy"
+      }
+    ],
+    "status": "complete",
+    "workspaceId": "refs/heads/main",
+    "model": {
+      "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+      "name": "gemma4:latest"
+    }
+  }
+}

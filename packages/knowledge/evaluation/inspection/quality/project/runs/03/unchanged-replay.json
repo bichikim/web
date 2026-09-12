@@ -1,0 +1,45 @@
+{
+  "currentVersion": 28,
+  "directory": "packages/knowledge/evaluation/inspection/quality/project/runs/01",
+  "exactRequestsAndResults": true,
+  "measurements": [
+    {
+      "calls": 3,
+      "id": "audio-owner",
+      "repeat": 1,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "cors-scope",
+      "repeat": 1,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "audio-owner",
+      "repeat": 2,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "cors-scope",
+      "repeat": 2,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "audio-owner",
+      "repeat": 3,
+      "searches": 0
+    },
+    {
+      "calls": 3,
+      "id": "cors-scope",
+      "repeat": 3,
+      "searches": 0
+    }
+  ],
+  "networkCalls": 0,
+  "recordedVersion": 26
+}
