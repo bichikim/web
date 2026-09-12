@@ -413,56 +413,65 @@ describe('MeshEditor', () => {
     expect(document().motions[0]?.tracks).toHaveLength(1)
   })
 
-  test.each([0, 0.5])('should store a drag at time %s without changing rest vertices', (time) => {
-    const initialDocument = setVertexKeyframe({
-      document: createDemoDocument(),
-      motionId: 'idle-deform',
-      partId: 'mesh-preview',
-      point: {x: 320, y: 240},
-      time,
-      vertexIndex: 4,
-    })!
-    const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
-    const onVertexEditStart = vi.fn()
-    const view = render(() => (
-      <MeshEditor
-        document={document()}
-        onDocumentChange={setDocument}
-        onVertexEditStart={onVertexEditStart}
-        previewTime={time}
-      />
-    ))
-    const svg = view.container.querySelector('svg')
-    const centerVertex = view.container.querySelectorAll('circle')[4]
+  test.each([
+    {existing: false, time: 0.5},
+    {existing: true, time: 0},
+    {existing: true, time: 0.5},
+  ])(
+    'should store a drag at $time with existing=$existing without changing rest vertices',
+    ({existing, time}) => {
+      const initialDocument = existing
+        ? setVertexKeyframe({
+            document: createDemoDocument(),
+            motionId: 'idle-deform',
+            partId: 'mesh-preview',
+            point: {x: 320, y: 240},
+            time,
+            vertexIndex: 4,
+          })!
+        : createDemoDocument()
+      const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
+      const onVertexEditStart = vi.fn()
+      const view = render(() => (
+        <MeshEditor
+          document={document()}
+          onDocumentChange={setDocument}
+          onVertexEditStart={onVertexEditStart}
+          previewTime={time}
+        />
+      ))
+      const svg = view.container.querySelector('svg')
+      const centerVertex = view.container.querySelectorAll('circle')[4]
 
-    expect(centerVertex).not.toBeNull()
+      expect(centerVertex).not.toBeNull()
 
-    if (svg !== null && centerVertex !== undefined) {
-      vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-        bottom: 720,
-        height: 720,
-        left: 0,
-        right: 960,
-        toJSON: () => ({}),
-        top: 0,
-        width: 960,
-        x: 0,
-        y: 0,
-      })
-      fireEvent(centerVertex, new MouseEvent('pointerdown', {bubbles: true}))
-      fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 470, clientY: 320}))
-      fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
-    }
+      if (svg !== null && centerVertex !== undefined) {
+        vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+          bottom: 720,
+          height: 720,
+          left: 0,
+          right: 960,
+          toJSON: () => ({}),
+          top: 0,
+          width: 960,
+          x: 0,
+          y: 0,
+        })
+        fireEvent(centerVertex, new MouseEvent('pointerdown', {bubbles: true}))
+        fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 470, clientY: 320}))
+        fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
+      }
 
-    expect(view.container.querySelectorAll('circle')[4]).toHaveAttribute('cx', '310')
-    expect(view.container.querySelectorAll('circle')[4]).toHaveAttribute('cy', '200')
-    expect(document().parts[0]?.mesh.vertices[8]).toBe(320)
-    expect(onVertexEditStart).toHaveBeenCalledOnce()
-    expect(document().parts[0]?.mesh.vertices).toBe(initialDocument.parts[0]?.mesh.vertices)
-    const vertexTracks = document().motions[0]?.tracks.filter((track) => track.kind === 'vertex')
-    expect(vertexTracks?.[0]?.keyframes[0]).toEqual({time, value: 310})
-    expect(vertexTracks?.[1]?.keyframes).toEqual([{time, value: 200}])
-  })
+      expect(view.container.querySelectorAll('circle')[4]).toHaveAttribute('cx', '310')
+      expect(view.container.querySelectorAll('circle')[4]).toHaveAttribute('cy', '200')
+      expect(document().parts[0]?.mesh.vertices[8]).toBe(320)
+      expect(onVertexEditStart).toHaveBeenCalledOnce()
+      expect(document().parts[0]?.mesh.vertices).toBe(initialDocument.parts[0]?.mesh.vertices)
+      const vertexTracks = document().motions[0]?.tracks.filter((track) => track.kind === 'vertex')
+      expect(vertexTracks?.[0]?.keyframes[0]).toEqual({time, value: 310})
+      expect(vertexTracks?.[1]?.keyframes).toEqual([{time, value: 200}])
+    },
+  )
 
   test.each([0, 0.5, 1])('should edit the original selected keyform at influence %s', (weight) => {
     const source = createDemoDocument()
