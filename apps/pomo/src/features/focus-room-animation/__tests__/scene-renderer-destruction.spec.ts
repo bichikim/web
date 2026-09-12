@@ -374,7 +374,6 @@ beforeEach(() => {
   vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((frameId) => {
     frameCallbacks.delete(frameId)
   })
-  vi.spyOn(globalThis.performance, 'now').mockReturnValue(100)
   vi.stubGlobal('reportError', vi.fn())
 })
 

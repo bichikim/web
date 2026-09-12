@@ -374,7 +374,6 @@ beforeEach(() => {
   vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((frameId) => {
     frameCallbacks.delete(frameId)
   })
-  vi.spyOn(globalThis.performance, 'now').mockReturnValue(100)
   vi.stubGlobal('reportError', vi.fn())
 })
 
@@ -384,35 +383,43 @@ afterEach(() => {
 })
 
 describe('PSceneRenderer transitions', () => {
-  it('should animate a static scene transition and release the previous scene', async () => {
-    const {renderer} = createRenderer()
-    await renderer.initialize(createState())
-    const previousScene = containers.at(-1)
-    vi.clearAllMocks()
+  it.each([0, 10_000])(
+    'should animate from the first frame at %i and release the previous scene',
+    async (startedAt) => {
+      const {renderer} = createRenderer()
+      await renderer.initialize(createState())
+      const previousScene = containers.at(-1)
+      vi.clearAllMocks()
 
-    renderer.update(createState({depthSource: '/next-depth.webp', source: '/next.webp'}))
-    await flushPromises()
+      renderer.update(createState({depthSource: '/next-depth.webp', source: '/next.webp'}))
+      await flushPromises()
 
-    expect(transitionInstances[0].capture).toHaveBeenCalledWith(previousScene)
-    expect(depthFilters[0].setDepthTransition).toHaveBeenCalledWith({source: '/next-depth.webp'})
-    expect(transitionInstances[0].start).toHaveBeenCalled()
-    expect(frameCallbacks.size).toBe(1)
+      expect(transitionInstances[0].capture).toHaveBeenCalledWith(previousScene)
+      expect(depthFilters[0].setDepthTransition).toHaveBeenCalledWith({source: '/next-depth.webp'})
+      expect(transitionInstances[0].start).toHaveBeenCalled()
+      expect(frameCallbacks.size).toBe(1)
 
-    const firstFrame = [...frameCallbacks.values()][0]
-    firstFrame?.(400)
-    expect(transitionInstances[0].setProgress).toHaveBeenCalledWith(0.5)
-    expect(depthFilters[0].setDepthMix).toHaveBeenCalledWith(0.5)
+      const firstFrame = [...frameCallbacks.values()][0]
+      firstFrame?.(startedAt)
+      expect(transitionInstances[0].setProgress).toHaveBeenLastCalledWith(0)
+      expect(depthFilters[0].setDepthMix).toHaveBeenLastCalledWith(0)
 
-    const finalFrame = [...frameCallbacks.values()].at(-1)
-    finalFrame?.(700)
-    expect(transitionInstances[0].restore).toHaveBeenCalled()
-    expect(depthFilters[0].finishDepthTransition).toHaveBeenCalled()
-    expect(releaseTextureGroup).toHaveBeenCalledWith([
-      createLease('/scene.webp'),
-      createLease('/depth.webp'),
-    ])
-    expect(loadings[0].finishAfterPaint).toHaveBeenCalled()
-  })
+      const middleFrame = [...frameCallbacks.values()].at(-1)
+      middleFrame?.(startedAt + 300)
+      expect(transitionInstances[0].setProgress).toHaveBeenCalledWith(0.5)
+      expect(depthFilters[0].setDepthMix).toHaveBeenCalledWith(0.5)
+
+      const finalFrame = [...frameCallbacks.values()].at(-1)
+      finalFrame?.(startedAt + 600)
+      expect(transitionInstances[0].restore).toHaveBeenCalled()
+      expect(depthFilters[0].finishDepthTransition).toHaveBeenCalled()
+      expect(releaseTextureGroup).toHaveBeenCalledWith([
+        createLease('/scene.webp'),
+        createLease('/depth.webp'),
+      ])
+      expect(loadings[0].finishAfterPaint).toHaveBeenCalled()
+    },
+  )
 
   it('should finish a transition immediately when reduced motion is already preferred', async () => {
     const {renderer} = createRenderer()
