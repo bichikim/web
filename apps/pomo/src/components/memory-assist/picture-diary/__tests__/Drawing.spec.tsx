@@ -8,6 +8,13 @@ import {PictureDiaryDrawing} from '../Drawing'
 const getComputedStyle = window.getComputedStyle.bind(window)
 
 beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      disconnect = vi.fn()
+      observe = vi.fn()
+    },
+  )
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
     const styles = getComputedStyle(element, pseudoElement)
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
@@ -18,6 +25,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 it('should edit in a popup, retain the drawing ratio, and update the page preview', async () => {

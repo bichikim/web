@@ -37,4 +37,6 @@ export type {
 export * from './actions'
 export * from './catalog-query'
 export * from './commands'
+export * from './create-draft-reference-lifecycle'
+export * from './draft-reference'
 export * from './track-playback-access'

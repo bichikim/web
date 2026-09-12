@@ -193,6 +193,72 @@ describe('playback-storage', () => {
     })
   })
 
+  describe.each([false, true])('pending read with existing browser copy: %s', (hasBrowserCopy) => {
+    it.each([
+      {
+        name: 'an older native snapshot with a higher timestamp',
+        value: JSON.stringify({
+          isPlaying: false,
+          positionSeconds: 22,
+          savedAt: 100,
+          trackId: 'native-track',
+        }),
+      },
+      {name: 'missing native data', value: null},
+      {name: 'a native read failure', value: new Error('Native storage is unavailable')},
+    ])('should return playback saved during $name', async ({value}) => {
+      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      if (hasBrowserCopy) {
+        localStorage.setItem(
+          'pomo:focus-room-playback:v1',
+          JSON.stringify({isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'web-track'}),
+        )
+      }
+      const pendingRead = Promise.withResolvers<string | null>()
+      storageMocks.getItem.mockReturnValueOnce(pendingRead.promise)
+      storageMocks.setItem.mockResolvedValue()
+      const reading = readPPlayback()
+      await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalledOnce())
+      const latestPlayback = {isPlaying: true, positionSeconds: 5, trackId: 'new-track'}
+      await writePPlayback(latestPlayback)
+      if (value instanceof Error) {
+        pendingRead.reject(value)
+      } else {
+        pendingRead.resolve(value)
+      }
+      await expect(reading).resolves.toEqual(latestPlayback)
+      expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? 'null')).toEqual({
+        ...latestPlayback,
+        savedAt: 20,
+      })
+    })
+  })
+
+  it.each([false, true])(
+    'should preserve native playback after a failed browser write with existing copy %s',
+    async (hasBrowserCopy) => {
+      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      if (hasBrowserCopy) {
+        localStorage.setItem(
+          'pomo:focus-room-playback:v1',
+          JSON.stringify({isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old-web'}),
+        )
+      }
+      const pendingRead = Promise.withResolvers<string | null>()
+      storageMocks.getItem.mockReturnValueOnce(pendingRead.promise)
+      storageMocks.setItem.mockResolvedValue()
+      const reading = readPPlayback()
+      await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalledOnce())
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('Storage is unavailable', 'SecurityError')
+      })
+      const latestPlayback = {isPlaying: true, positionSeconds: 5, trackId: 'new-native'}
+      await writePPlayback(latestPlayback)
+      pendingRead.resolve(JSON.stringify({...latestPlayback, savedAt: 20}))
+      await expect(reading).resolves.toEqual(latestPlayback)
+    },
+  )
+
   it('should converge native storage after older writes finish last', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     const completions: Array<() => void> = []

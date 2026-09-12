@@ -102,7 +102,7 @@ test('should restore hidden toolbar controls and allow enabling them after reloa
   }
   await dialog.getByRole('button', {exact: true, name: '닫기'}).click()
   await expect(dialog).not.toBeVisible()
-  for (const name of ['도구', '기억보조', 'Pomofi 둘러보기']) {
+  for (const name of ['도구', '기억보조', '둘러보기']) {
     await expect(page.getByRole('button', {exact: true, name})).toHaveCount(0)
   }
 
@@ -119,7 +119,7 @@ test('should restore hidden toolbar controls and allow enabling them after reloa
   }
   await dialog.getByRole('button', {exact: true, name: '닫기'}).click()
   await expect(dialog).not.toBeVisible()
-  for (const name of ['도구', '기억보조', 'Pomofi 둘러보기']) {
+  for (const name of ['도구', '기억보조', '둘러보기']) {
     await expect(page.getByRole('button', {exact: true, name})).toBeVisible()
   }
 })

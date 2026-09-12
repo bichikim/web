@@ -15,6 +15,7 @@ import {SafeArea} from './components/SafeArea'
 import {DisplayThemeProvider} from './features/display-theme'
 import {AuthProvider} from './features/auth'
 import {PModelDownloadProvider} from './features/model-download'
+import {Analytics} from './components/vercel'
 
 export default function App() {
   const applicationRecovery = useApplicationRecovery()
@@ -25,6 +26,7 @@ export default function App() {
       <Router
         root={(props) => (
           <MetaProvider>
+            <Analytics />
             <PDocumentMetadata />
             <DisplayThemeProvider>
               <PTooltipProvider>

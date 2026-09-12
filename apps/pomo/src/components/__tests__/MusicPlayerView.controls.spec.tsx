@@ -10,7 +10,7 @@ describe('MusicPlayerView controls', () => {
 
   it('should name player controls without tooltips when no provider is installed', () => {
     const result = renderMusicPlayerView()
-    const controller = result.container.querySelector('media-controller')
+    const controller = result.container.querySelector('.pomo-player-shell')
 
     if (!(controller instanceof HTMLElement)) {
       throw new TypeError('Expected the Pomo media controller to be rendered')
@@ -29,9 +29,9 @@ describe('MusicPlayerView controls', () => {
     for (const button of mediaButtons) {
       expect(button.hasAttribute('notooltip')).toBe(true)
     }
-    expect(controller.querySelector('media-mute-button')?.getAttribute('aria-label')).toBe(
-      '음소거 켜기/끄기',
-    )
+    expect(
+      controller.querySelector('.pomo-player__volume-popover-trigger')?.getAttribute('aria-label'),
+    ).toBe('음량 조절')
     expect(
       controller.querySelector('[aria-label="앨범 추가"]')?.getAttribute('data-player-utility'),
     ).toBe('album')
@@ -40,12 +40,12 @@ describe('MusicPlayerView controls', () => {
     ).toBe('expand')
   })
 
-  it('should keep album and expand buttons at the primary utility size', () => {
+  it('should keep utility buttons at the primary utility size', () => {
     const result = renderMusicPlayerView()
     const utilityButtons =
       result.container.querySelectorAll<HTMLButtonElement>('[data-player-utility]')
 
-    expect(utilityButtons).toHaveLength(2)
+    expect(utilityButtons).toHaveLength(3)
     for (const utilityButton of utilityButtons) {
       expect(utilityButton).toHaveClass('size-10')
     }
@@ -171,31 +171,17 @@ describe('MusicPlayerView controls', () => {
 
   it('should reveal the volume thumb only while interacting with the range', () => {
     const result = renderMusicPlayerView()
-    const muteButton = result.container.querySelector('media-mute-button')
     const volumeRange = result.container.querySelector('media-volume-range')
-    const volumeGroup = result.container.querySelector('.pomo-player__volume-group')
+    const trigger = result.container.querySelector('.pomo-player__volume-popover-trigger')
 
-    if (
-      !(muteButton instanceof HTMLElement) ||
-      !(volumeRange instanceof HTMLElement) ||
-      !(volumeGroup instanceof HTMLElement)
-    ) {
-      throw new TypeError('Expected the Pomo volume controls to be rendered')
+    expect(result.container.querySelector('media-mute-button')).toBeNull()
+    expect(trigger).toHaveClass('grid')
+    if (!(volumeRange instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo volume range to be rendered')
     }
-
-    expect(volumeGroup.classList.contains('gap-0')).toBe(true)
-    expect(muteButton.classList.contains('size-10')).toBe(true)
-    expect(muteButton.classList.contains('player-compact:size-9')).toBe(true)
-    expect(muteButton.classList.contains('[--media-control-padding:0.625rem]')).toBe(true)
-    expect(volumeRange.classList.contains('pomo-player__volume')).toBe(true)
-    expect(volumeRange.classList.contains('max-sm:hidden')).toBe(false)
+    expect(volumeRange).toHaveClass('pomo-player__volume-popover-range')
+    expect(volumeRange.closest('[popover]')).not.toBeNull()
     expect(volumeRange.getAttribute('aria-label')).toBe('음량 조절')
-    expect(volumeRange).not.toHaveAttribute('title')
-    expect(volumeRange.classList.contains('w-[clamp(3rem,_18cqi,_4.75rem)]')).toBe(true)
-    expect(volumeRange.classList.contains('player-compact:min-w-6')).toBe(true)
-    expect(volumeRange.classList.contains('player-compact:w-[clamp(1.5rem,_8cqi,_2rem)]')).toBe(
-      true,
-    )
     expect(volumeRange.classList.contains('[--media-range-padding-left:0.25rem]')).toBe(true)
     expect(volumeRange.classList.contains('[--media-range-padding-right:0.25rem]')).toBe(true)
     expect(volumeRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)

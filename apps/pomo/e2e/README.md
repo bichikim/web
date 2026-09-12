@@ -48,6 +48,16 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 타이머 테스트는 조작으로 시간을 설정하고 Playwright 시계로 경과 시간만 제어합니다.
 새로고침 중에는 hydration이 끝나도록 시계를 진행하고, 복원 후 다시 멈춥니다.
 
+[배경 탭 테스트](rendering/background.spec.ts)는 실제 웹 IndexedDB에 저장한 액자 모드·랜덤 재생·
+사진 두 장 표시 설정을 새로고침 후 확인하고, 캐릭터 모드로 돌아갈 수 있는지 검증합니다.
+다크·라이트 액자 설정 화면의 [최초 기준](rendering/background.spec.ts-snapshots)과
+[현재 이미지·촬영 환경](rendering/evidence/background/manifest.json)을 함께 보존합니다.
+미디어 목록은 비어 있으므로 파일 업로드·사진/영상 재생·네이티브 저장소는 검증하지 않습니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/background.spec.ts
+```
+
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 ```
@@ -73,3 +83,28 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 
 설정 Esc 동작 보강 시 실행한 [렌더링 비교 기록](rendering/evidence/dismissal/manifest.json)은
 기존 여섯 기준을 유지하며 대표 현재 PNG를 보존합니다. 정확한 커밋의 로컬 실행 결과는 해당 PR 본문에 기록합니다.
+
+[캐릭터 장면 테스트](rendering/character.spec.ts)는 배경 탭에서 키보드로 밤을 선택하고,
+노트북 타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
+접근성 이름, canvas 준비를 확인하고 다크·라이트 설정 화면을 PNG로 비교합니다.
+두 화면은 이전 기준이 없는 최초 기준이며 [촬영 기록](rendering/evidence/character/manifest.json)에
+현재 이미지와 환경을 보존합니다. 설정값과 API 응답을 mock하지 않으며 웹 localStorage를 사용합니다.
+빈 재생목록과 고정 시각을 사용하므로 실제 오디오·대화 중 시선 전환, 네이티브 Storage 및
+데스크톱 창 간 동기화는 검증 범위가 아닙니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/character.spec.ts
+```
+
+[재생목록 테스트](rendering/playlist.spec.ts)는 실제 홈 화면에서 목록 비우기·되돌리기와
+새로고침 후 빈 목록 유지를 검증합니다. 앨범 팝업의 완료 안내·되돌리기 버튼과 빈 플레이어를
+PNG로 비교하고, 팝업을 닫은 뒤 포커스 복원과 재생·곡 이동 비활성화도 확인합니다.
+목록 조작과 웹 localStorage는 실제 구현을 사용합니다. 번들·공개 카탈로그 HTTP 응답은
+두 곡의 테스트 데이터로 고정하고 음원 요청에는 1초 무음 WAV fixture를 반환합니다.
+실제 음원 재생·R2·구매 권한·네이티브 저장소는 검증 범위가 아닙니다.
+두 화면은 이전 기준이 없는 최초 기준이며, [촬영 기록](rendering/evidence/playlist/manifest.json)에
+기준·현재 이미지와 실행 환경을 보존합니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/playlist.spec.ts
+```

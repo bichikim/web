@@ -9,18 +9,37 @@ interface AlbumCoverRecord {
   readonly updatedAt: number
 }
 
+export interface AlbumDraftReference {
+  readonly coverDraftId: string | null
+  readonly id: string
+  readonly lastSeenAt: number
+}
+
 interface AlbumDraftDatabase extends Dexie {
   readonly covers: Table<AlbumCoverRecord, string>
+  readonly draftReferences: Table<AlbumDraftReference, string>
 }
 
 export interface AlbumDraftStorage {
-  readonly deleteCover: (id: string) => Promise<void>
+  readonly deleteCover: (options: DeleteCoverOptions) => Promise<void>
   readonly deleteData: () => void
+  readonly deleteDraftReference: (id: string) => Promise<void>
   readonly deleteExpiredCovers: (options: DeleteExpiredCoversOptions) => Promise<void>
   readonly readCover: (id: string) => Promise<Blob | null>
   readonly readData: () => string | null
+  readonly writeDraftReference: (reference: AlbumDraftReference) => Promise<void>
   readonly writeCover: (id: string, blob: Blob) => Promise<void>
   readonly writeData: (data: string) => void
+}
+
+export interface DeleteCoverOptions {
+  readonly expiresBefore: number
+  readonly id: string
+}
+
+export interface DeleteAlbumDraftOptions {
+  readonly now?: () => number
+  readonly storage?: AlbumDraftStorage
 }
 
 export interface DeleteExpiredCoversOptions {
@@ -34,7 +53,19 @@ export interface DeleteExpiredAlbumDraftCoversOptions {
   readonly storage?: AlbumDraftStorage
 }
 
+export interface WriteAlbumDraftReferenceOptions {
+  readonly coverDraftId: string | null
+  readonly now?: () => number
+  readonly referenceId: string
+  readonly storage?: AlbumDraftStorage
+}
+
 const ALBUM_DRAFT_KEY = 'pomo:admin-music:album-draft:v1'
+const LEGACY_REFERENCE_PREFIX = 'pomo:admin-music:album-draft-session:v1:'
+const legacyReferenceSchema = z.object({
+  coverDraftId: z.string().min(1).nullable(),
+  lastSeenAt: z.number().finite(),
+})
 const DATABASE_NAME = 'pomo-admin-music-draft'
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
@@ -44,6 +75,7 @@ const MILLISECONDS_PER_DAY =
   HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 const COVER_RETENTION_DAYS = 30
 const COVER_RETENTION_MILLISECONDS = COVER_RETENTION_DAYS * MILLISECONDS_PER_DAY
+const DATABASE_VERSION_WITH_REFERENCES = 3
 const translationSchema = z.object({description: z.string(), title: z.string()})
 const albumDraftSchema = z.object({
   albumId: z.string().uuid().optional(),
@@ -74,27 +106,128 @@ const getDatabase = (): AlbumDraftDatabase => {
           .toCollection()
           .modify({updatedAt: Date.now()}),
       )
+    database.version(DATABASE_VERSION_WITH_REFERENCES).stores({
+      covers: 'id, updatedAt',
+      draftReferences: 'id, coverDraftId, lastSeenAt',
+    })
   }
 
   return database
 }
 
+const refreshDraftCoverTimestamp = (data: string): void => {
+  let parsedData: unknown
+
+  try {
+    parsedData = JSON.parse(data)
+  } catch {
+    return
+  }
+
+  const parsedDraft = albumDraftSchema.safeParse(parsedData)
+
+  if (!parsedDraft.success || parsedDraft.data.coverDraftId === null) {
+    return
+  }
+
+  getDatabase()
+    .covers.update(parsedDraft.data.coverDraftId, {updatedAt: Date.now()})
+    .catch((error: unknown) => {
+      console.warn('Failed to refresh the admin album cover draft.', error)
+    })
+}
+
+const readLegacyReferences = (expiresBefore: number): string[] => {
+  const coverIds: string[] = []
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index)
+    if (key !== null && key.startsWith(LEGACY_REFERENCE_PREFIX)) {
+      const value = localStorage.getItem(key)
+      if (value !== null) {
+        let data: unknown
+        try {
+          data = JSON.parse(value)
+        } catch {
+          data = null
+        }
+        const reference = legacyReferenceSchema.safeParse(data)
+        if (
+          reference.success &&
+          reference.data.lastSeenAt >= expiresBefore &&
+          reference.data.coverDraftId !== null
+        ) {
+          coverIds.push(reference.data.coverDraftId)
+        }
+      }
+    }
+  }
+  return coverIds
+}
+
 const BROWSER_STORAGE: AlbumDraftStorage = {
-  deleteCover: (id) => getDatabase().covers.delete(id),
+  deleteCover: async ({id, expiresBefore}) => {
+    const database = getDatabase()
+    await database.transaction('rw', database.covers, database.draftReferences, async () => {
+      const activeReferences = await database.draftReferences
+        .where('lastSeenAt')
+        .aboveOrEqual(expiresBefore)
+        .toArray()
+      if (
+        activeReferences.some((reference) => reference.coverDraftId === id) ||
+        readLegacyReferences(expiresBefore).includes(id)
+      ) {
+        return
+      }
+      await database.covers.delete(id)
+    })
+  },
   deleteData: () => sessionStorage.removeItem(ALBUM_DRAFT_KEY),
+  deleteDraftReference: (id) => getDatabase().draftReferences.delete(id),
   deleteExpiredCovers: async ({expiresBefore, protectedId}) => {
     const database = getDatabase()
-    const expiredIds = await database.covers.where('updatedAt').below(expiresBefore).primaryKeys()
-    const deletableIds =
-      protectedId === null ? expiredIds : expiredIds.filter((id) => id !== protectedId)
-    await database.covers.bulkDelete(deletableIds)
+    await database.transaction('rw', database.covers, database.draftReferences, async () => {
+      const activeReferences = await database.draftReferences
+        .where('lastSeenAt')
+        .aboveOrEqual(expiresBefore)
+        .toArray()
+      const protectedIds = new Set(
+        activeReferences.flatMap((reference) =>
+          reference.coverDraftId === null ? [] : [reference.coverDraftId],
+        ),
+      )
+
+      if (protectedId !== null) {
+        protectedIds.add(protectedId)
+      }
+
+      for (const id of readLegacyReferences(expiresBefore)) {
+        protectedIds.add(id)
+      }
+
+      const expiredIds = await database.covers.where('updatedAt').below(expiresBefore).primaryKeys()
+      const deletableIds = expiredIds.filter((id) => !protectedIds.has(id))
+      await database.covers.bulkDelete(deletableIds)
+      await database.draftReferences.where('lastSeenAt').below(expiresBefore).delete()
+    })
   },
   readCover: async (id) => (await getDatabase().covers.get(id))?.blob ?? null,
   readData: () => sessionStorage.getItem(ALBUM_DRAFT_KEY),
   writeCover: async (id, blob) => {
     await getDatabase().covers.put({blob, id, updatedAt: Date.now()})
   },
-  writeData: (data) => sessionStorage.setItem(ALBUM_DRAFT_KEY, data),
+  writeData: (data) => {
+    sessionStorage.setItem(ALBUM_DRAFT_KEY, data)
+    refreshDraftCoverTimestamp(data)
+  },
+  writeDraftReference: async (reference) => {
+    const database = getDatabase()
+    await database.transaction('rw', database.covers, database.draftReferences, async () => {
+      await database.draftReferences.put(reference)
+      if (reference.coverDraftId !== null) {
+        await database.covers.update(reference.coverDraftId, {updatedAt: reference.lastSeenAt})
+      }
+    })
+  },
 }
 
 export type AlbumDraftStorageResult =
@@ -103,6 +236,38 @@ export type AlbumDraftStorageResult =
 
 const storageSuccess = (): AlbumDraftStorageResult => ({success: true})
 const storageFailure = (error: unknown): AlbumDraftStorageResult => ({error, success: false})
+
+export const writeAlbumDraftReference = async (
+  options: WriteAlbumDraftReferenceOptions,
+): Promise<AlbumDraftStorageResult> => {
+  const now = options.now ?? Date.now
+  const storage = options.storage ?? BROWSER_STORAGE
+
+  try {
+    await storage.writeDraftReference({
+      coverDraftId: options.coverDraftId,
+      id: options.referenceId,
+      lastSeenAt: now(),
+    })
+    return storageSuccess()
+  } catch (error: unknown) {
+    console.warn('Failed to update the admin album draft reference.', error)
+    return storageFailure(error)
+  }
+}
+
+export const deleteAlbumDraftReference = async (
+  referenceId: string,
+  storage: AlbumDraftStorage = BROWSER_STORAGE,
+): Promise<AlbumDraftStorageResult> => {
+  try {
+    await storage.deleteDraftReference(referenceId)
+    return storageSuccess()
+  } catch (error: unknown) {
+    console.warn('Failed to delete the admin album draft reference.', error)
+    return storageFailure(error)
+  }
+}
 
 /** Deletes unreferenced browser-local cover drafts after the retention period. */
 export const deleteExpiredAlbumDraftCovers = async (
@@ -177,10 +342,12 @@ export const writeAlbumDraftCover = async (
 
 export const deleteAlbumDraftCover = async (
   id: string,
-  storage: AlbumDraftStorage = BROWSER_STORAGE,
+  options: DeleteAlbumDraftOptions = {},
 ): Promise<AlbumDraftStorageResult> => {
+  const storage = options.storage ?? BROWSER_STORAGE
+  const now = options.now ?? Date.now
   try {
-    await storage.deleteCover(id)
+    await storage.deleteCover({expiresBefore: now() - COVER_RETENTION_MILLISECONDS, id})
     return storageSuccess()
   } catch (error: unknown) {
     console.warn('Failed to delete the admin album cover draft.', error)
@@ -190,8 +357,9 @@ export const deleteAlbumDraftCover = async (
 
 export const deleteAlbumDraft = async (
   coverDraftId: string | null,
-  storage: AlbumDraftStorage = BROWSER_STORAGE,
+  options: DeleteAlbumDraftOptions = {},
 ): Promise<AlbumDraftStorageResult> => {
+  const storage = options.storage ?? BROWSER_STORAGE
   let deletionResult = storageSuccess()
 
   try {
@@ -205,6 +373,6 @@ export const deleteAlbumDraft = async (
     return deletionResult
   }
 
-  const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, storage)
+  const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, options)
   return coverDeletionResult.success ? deletionResult : coverDeletionResult
 }

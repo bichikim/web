@@ -11,6 +11,7 @@ import {
 const PLAYBACK_STORAGE_KEY = 'pomo:focus-room-playback:v1'
 const nativeWriter = createLatestNativeStorageWriter(PLAYBACK_STORAGE_KEY)
 let playbackRevision = 0
+let playbackWriteRevision = 0
 let pendingStop: Promise<void> | null = null
 
 const storedPlaybackSchema = z.object({
@@ -40,7 +41,7 @@ const readWebPlayback = () => {
 }
 
 const writeWebPlayback = (state: StoredPlaybackState) => {
-  writeWebStorageJson(PLAYBACK_STORAGE_KEY, state)
+  return writeWebStorageJson(PLAYBACK_STORAGE_KEY, state)
 }
 
 const selectLatestPlayback = (
@@ -68,6 +69,7 @@ const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | nu
 }
 
 const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
+  const initialRevision = playbackWriteRevision
   const webPlayback = readWebPlayback()
 
   if (!hasNativeStorageBridge()) {
@@ -76,9 +78,12 @@ const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
 
   try {
     const nativePlayback = await readNativeStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback)
+    if (playbackWriteRevision !== initialRevision) {
+      return toPlaybackState(readWebPlayback())
+    }
     return toPlaybackState(selectLatestPlayback(webPlayback, nativePlayback))
   } catch {
-    return toPlaybackState(webPlayback)
+    return toPlaybackState(readWebPlayback())
   }
 }
 
@@ -112,7 +117,9 @@ export const stopPPlayback = (): Promise<void> => {
 export const writePPlayback = async (state: PPlaybackState): Promise<void> => {
   playbackRevision += 1
   const storedState = {...state, savedAt: Date.now()} satisfies StoredPlaybackState
-  writeWebPlayback(storedState)
+  if (writeWebPlayback(storedState) === null) {
+    playbackWriteRevision += 1
+  }
 
   if (!hasNativeStorageBridge()) {
     return

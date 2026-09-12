@@ -4,9 +4,9 @@ import {render} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
 import {PMusicPlayer} from '../PMusicPlayer'
-import {PMusicPlayerPanel} from '../music-player/Panel'
+import {PMusicPlayerPanel} from '../music-player/PMusicPlayerPanel'
 
-vi.mock('../music-player/Panel', () => ({PMusicPlayerPanel: vi.fn()}))
+vi.mock('../music-player/PMusicPlayerPanel', () => ({PMusicPlayerPanel: vi.fn()}))
 
 it('should forward player state and events', () => {
   const onExpandedChange = vi.fn()

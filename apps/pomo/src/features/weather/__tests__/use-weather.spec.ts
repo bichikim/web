@@ -33,6 +33,7 @@ vi.mock('../preference', () => ({
 vi.mock('../query', () => queryMocks)
 
 import {type WeatherController, useWeather} from '../use-weather'
+import type {WeatherPreference} from '../preference'
 
 const NOW = new Date('2026-08-23T03:00:00.000Z')
 const seoulLocation = preferenceMocks.seoulLocation
@@ -321,4 +322,35 @@ it('should ignore stored preferences and query results after disposal', async ()
   weatherRequest.resolve(availableResult)
   await flushPromises()
   expect(queryRoot.controller.state()).toEqual({location: seoulLocation, status: 'loading'})
+})
+
+it('should retain incoming changes while restoring untouched weather preferences', async () => {
+  const stored = Promise.withResolvers<WeatherPreference>()
+  preferenceMocks.readWeatherPreference.mockReturnValueOnce(stored.promise)
+  const root = createWeatherRoot()
+  root.controller.onLocationChange(busanLocation)
+  stored.resolve({enabled: false, location: seoulLocation, sceneMode: 'rain'})
+  await flushPromises()
+
+  expect(root.controller.location()).toEqual(busanLocation)
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.sceneMode()).toBe('rain')
+  expect(preferenceMocks.writeWeatherPreference).toHaveBeenLastCalledWith({
+    enabled: false,
+    location: busanLocation,
+    sceneMode: 'rain',
+  })
+  root.dispose()
+})
+
+it('should retain incoming weather visibility and scene mode during restoration', async () => {
+  const root = createWeatherRoot()
+  root.controller.onEnabledChange(false)
+  root.controller.onSceneModeChange('rain')
+  await flushPromises()
+
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.sceneMode()).toBe('rain')
+  expect(root.controller.location()).toEqual(seoulLocation)
+  root.dispose()
 })

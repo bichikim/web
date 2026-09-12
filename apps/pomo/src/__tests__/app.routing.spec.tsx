@@ -26,6 +26,7 @@ const componentMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@solidjs/meta', () => ({MetaProvider: componentMocks.metaProvider}))
+vi.mock('../components/vercel', () => ({Analytics: vi.fn()}))
 vi.mock('@solidjs/router', () => ({
   Router: componentMocks.router,
   useNavigate: vi.fn(),

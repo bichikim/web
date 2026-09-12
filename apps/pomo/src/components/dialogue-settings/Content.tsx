@@ -1,3 +1,4 @@
+import {formatDuration} from 'src/utils/format-duration'
 import {cx} from 'class-variance-authority'
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, createSignal, For, Show} from 'solid-js'
@@ -71,16 +72,6 @@ const CLASSES = {
     'leading-[1.5] text-center',
   ),
 } as const
-
-const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
-
-const formatDuration = (durationMs: number) => {
-  const totalSeconds = Math.round(durationMs / MILLISECONDS_PER_SECOND)
-  const minutes = Math.floor(totalSeconds / SECONDS_PER_MINUTE)
-  const seconds = totalSeconds % SECONDS_PER_MINUTE
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
-}
 
 const getVoiceLabel = (voiceId: PDialogue['voiceId']) =>
   SUPERTONIC_VOICES.find((voice) => voice.id === voiceId)?.label ?? voiceId

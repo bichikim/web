@@ -3,12 +3,16 @@ import {PTooltip} from '../PTooltip'
 import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
-import {PlayerIcon} from './Icon'
-import {CLASSES, type MusicPlayerViewProps} from './shared'
+import {PlayerIcon} from './PlayerIcon'
+import {CLASSES} from './styles'
+import type {MusicPlayerViewProps} from './types'
 
-export const SummaryPlayButton = (
-  props: Pick<MusicPlayerViewProps, 'currentTrack' | 'isPlaying' | 'sceneStyle'>,
-) => {
+export interface SummaryPlayButtonProps extends Pick<
+  MusicPlayerViewProps,
+  'currentTrack' | 'isPlaying' | 'sceneStyle'
+> {}
+
+export const SummaryPlayButton = (props: SummaryPlayButtonProps) => {
   const tooltip = useTooltipTrigger()
   return (
     <div class={CLASSES.playerPlaySummaryFrame}>
@@ -21,7 +25,7 @@ export const SummaryPlayButton = (
           ref={tooltip.setTarget}
           aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
           class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
-          disabled={!props.currentTrack}
+          disabled={props.currentTrack === undefined}
           attr:notooltip=""
         >
           <PlayerIcon

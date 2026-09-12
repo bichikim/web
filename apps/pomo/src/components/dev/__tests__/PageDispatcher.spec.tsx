@@ -23,10 +23,14 @@ vi.mock('../ChatPage', () => ({ChatPage: createPage('chat')}))
 vi.mock('../DialoguePage', () => ({DialoguePage: createPage('dialogue')}))
 vi.mock('../HwpPage', () => ({HwpPage: createPage('hwp')}))
 vi.mock('../LayerReviewPage', () => ({LayerReviewPage: createPage('layer-review')}))
+vi.mock('../LoopPlayerPage', () => ({LoopPlayerPage: createPage('loop-player')}))
 vi.mock('../OptionResetPage', () => ({OptionResetPage: createPage('option-reset')}))
 vi.mock('../RecoveryPage', () => ({RecoveryPage: createPage('recovery')}))
 vi.mock('../SpeechToTextPage', () => ({SpeechToTextPage: createPage('speech-to-text')}))
 vi.mock('../StoragePage', () => ({StoragePage: createPage('storage')}))
+vi.mock('../SoundJoiningPage', () => ({SoundJoiningPage: createPage('sound-joining')}))
+vi.mock('../SoundLoopPage', () => ({SoundLoopPage: createPage('sound-loop')}))
+vi.mock('../SoundPlayerPage', () => ({SoundPlayerPage: createPage('sound-player')}))
 vi.mock('../TermsPage', () => ({TermsPage: createPage('terms')}))
 vi.mock('../TextMoodPage', () => ({TextMoodPage: createPage('text-mood')}))
 vi.mock('../VoicePage', () => ({VoicePage: createPage('voice')}))
@@ -44,8 +48,12 @@ it.each([
   ['/dev/dialogue', 'dialogue'],
   ['/dev/hwp', 'hwp'],
   ['/dev/focus-room-layer-review', 'layer-review'],
+  ['/dev/loop-player', 'loop-player'],
   ['/dev/options', 'option-reset'],
   ['/dev/recovery', 'recovery'],
+  ['/dev/sound-joining', 'sound-joining'],
+  ['/dev/sound-loop', 'sound-loop'],
+  ['/dev/sound-player', 'sound-player'],
   ['/dev/speech-to-text', 'speech-to-text'],
   ['/dev/storage', 'storage'],
   ['/dev/terms', 'terms'],

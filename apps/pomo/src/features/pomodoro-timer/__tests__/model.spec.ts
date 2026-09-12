@@ -290,5 +290,8 @@ describe('formatPomodoroTime', () => {
   it('should format clamped whole seconds as tabular timer text', () => {
     expect(formatPomodoroTime(1_502.9)).toBe('25:02')
     expect(formatPomodoroTime(-2)).toBe('00:00')
+    expect(formatPomodoroTime(59.9)).toBe('00:59')
+    expect(formatPomodoroTime(3661)).toBe('61:01')
+    expect(formatPomodoroTime(90061)).toBe('1501:01')
   })
 })

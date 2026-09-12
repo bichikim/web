@@ -22,11 +22,12 @@
 
 ## File naming
 
-- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory without repeating parent-directory context; use meaningful subdirectories for context shared by siblings.
+- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory; use meaningful subdirectories for context shared by siblings.
 - Keep authoring and generation details in archive filenames or metadata, not runtime filenames.
 
 ## Decision quality
 
+- **Declarative programming (required)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
 - Do not treat prevalence as evidence of quality.

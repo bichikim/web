@@ -180,6 +180,10 @@ function useMidiPlayerCore(defaultProps: MergedMidiPlayerProviderProps): MidiPla
       return
     }
 
+    if (defaultProps.playState.playingId === id) {
+      defaultProps.pianoController?.stop()
+    }
+
     if (selectedId() === id) {
       const prevItem = _playList[index - 1]
       const nextItem = _playList[index + 1]

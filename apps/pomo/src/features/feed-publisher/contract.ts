@@ -21,6 +21,7 @@ export interface FeedEntry {
 }
 
 export interface FeedProvider {
+  readonly cachePolicy?: 'no-store' | 'public'
   readonly definition: FeedDefinition
   readonly listEntries: () => Promise<ReadonlyArray<FeedEntry>>
 }

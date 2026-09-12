@@ -22,10 +22,24 @@ export const DesktopSettings = () => {
   const sceneStyle = usePSceneStyle()
   const screenSaver = useScreenSaver()
   const weather = useWeather()
-  const publisher = useDesktopSceneSettingsPublisher()
   const [motionInput, setMotionInput] = createSignal<PSceneMotionInput>('drag')
   const [motionMode, setMotionMode] = createSignal<PSceneMotionMode>('depth')
   const [canUseGyroscope, setCanUseGyroscope] = createSignal(false)
+
+  const publisher = useDesktopSceneSettingsPublisher({
+    handlers: {
+      onActivityChange: scenePreferences.onActivityChange,
+      onGazeChange: scenePreferences.onGazeChange,
+      onMotionInputChange: setMotionInput,
+      onMotionModeChange: setMotionMode,
+      onSceneStyleChange: sceneStyle.onSceneStyleChange,
+      onScreenSaverDelayChange: screenSaver.onDelayChange,
+      onTimeModeChange: scenePreferences.onTimeModeChange,
+      onWeatherEnabledChange: weather.onEnabledChange,
+      onWeatherLocationChange: weather.onLocationChange,
+      onWeatherSceneModeChange: weather.onSceneModeChange,
+    },
+  })
 
   onMount(() => {
     const gyroscopeAvailable = supportsPSceneGyroscope()

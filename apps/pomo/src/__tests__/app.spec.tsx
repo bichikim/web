@@ -7,6 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {PRecoveryBoundaryProps} from '../components/PRecoveryBoundary'
 import {useApplicationRecovery} from '../features/application-recovery'
 import {SafeArea} from '../components/SafeArea'
+import {Analytics} from '../components/vercel'
 
 const componentMocks = vi.hoisted(() => ({
   authProvider: vi.fn(),
@@ -21,6 +22,7 @@ const componentMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@solidjs/meta', () => ({MetaProvider: componentMocks.metaProvider}))
+vi.mock('../components/vercel', () => ({Analytics: vi.fn()}))
 vi.mock('@solidjs/router', () => ({Router: componentMocks.router}))
 vi.mock('@solidjs/start/router', () => ({FileRoutes: componentMocks.fileRoutes}))
 vi.mock('../components/PDocumentMetadata', () => ({PDocumentMetadata: componentMocks.metadata}))
@@ -107,6 +109,7 @@ describe('App', () => {
     render(() => <App />)
 
     expect(SafeArea).toHaveBeenCalledOnce()
+    expect(Analytics).toHaveBeenCalledOnce()
     expect(useApplicationRecovery).toHaveBeenCalledOnce()
     expect(componentMocks.router).toHaveBeenCalledOnce()
     expect(componentMocks.metaProvider).toHaveBeenCalledOnce()

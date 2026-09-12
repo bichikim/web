@@ -1,4 +1,5 @@
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
+import {hasNativeStorageBridge} from '../runtime-storage'
 
 interface OptionResetGroupDefinitionBase {
   readonly description: string
@@ -396,7 +397,7 @@ const runtimeStorage: OptionResetStorage = {
     const storage = await loadNativeStorage()
     return storage.getItem(key)
   },
-  isNative: () => 'ReactNativeWebView' in window,
+  isNative: hasNativeStorageBridge,
   async removeNative(key) {
     const storage = await loadNativeStorage()
     await storage.removeItem(key)
