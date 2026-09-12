@@ -89,3 +89,16 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/character.spec.ts
 ```
+
+[재생목록 테스트](rendering/playlist.spec.ts)는 실제 홈 화면에서 목록 비우기·되돌리기와
+새로고침 후 빈 목록 유지를 검증합니다. 앨범 팝업의 완료 안내·되돌리기 버튼과 빈 플레이어를
+PNG로 비교하고, 팝업을 닫은 뒤 포커스 복원과 재생·곡 이동 비활성화도 확인합니다.
+목록 조작과 웹 localStorage는 실제 구현을 사용합니다. 번들·공개 카탈로그 HTTP 응답은
+두 곡의 테스트 데이터로 고정하고 음원 요청에는 1초 무음 WAV fixture를 반환합니다.
+실제 음원 재생·R2·구매 권한·네이티브 저장소는 검증 범위가 아닙니다.
+두 화면은 이전 기준이 없는 최초 기준이며, [촬영 기록](rendering/evidence/playlist/manifest.json)에
+기준·현재 이미지와 실행 환경을 보존합니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/playlist.spec.ts
+```
