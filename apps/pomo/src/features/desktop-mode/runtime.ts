@@ -121,7 +121,17 @@ const enterDesktopMode = async (): Promise<void> => {
 
   try {
     await setBackgroundSurface({interaction: 'passThrough', label: BACKGROUND_LABEL})
-    await Promise.all(surfaces.map((options) => openControlSurface(options)))
+    const results = await Promise.allSettled(surfaces.map((options) => openControlSurface(options)))
+    const errors = results.flatMap((result) =>
+      result.status === 'rejected' ? [result.reason] : [],
+    )
+
+    if (errors.length === 1) {
+      throw errors[0]
+    }
+    if (errors.length > 1) {
+      throw new AggregateError(errors, 'One or more desktop control surfaces could not be opened')
+    }
   } catch (error: unknown) {
     const cleanupResults = await Promise.allSettled([
       closeSurfaces([...CONTENT_SURFACE_LABELS, SETTINGS_SURFACE_LABEL]),
