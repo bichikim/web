@@ -1,7 +1,10 @@
 /** @vitest-environment node */
+import {mkdtemp, rm} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {createContext, runInContext} from 'node:vm'
-import {build} from 'vite'
+import {build, createServer} from 'vite'
 import {expect, it} from 'vitest'
 import {BROWSER_BUILD_TARGETS} from '../../scripts/vite/browser-targets'
 import {createPolyfillsPlugin} from '../../scripts/vite/polyfills'
@@ -70,4 +73,25 @@ it('should leave server bundles on the supported Node runtime without browser po
     .join('\n')
   expect(code).toContain('Promise.withResolvers')
   expect(code).not.toContain('core-js')
+})
+
+it('should prebundle injected CommonJS polyfills in the dev server', async () => {
+  const cacheDir = await mkdtemp(join(tmpdir(), 'pomo-polyfills-'))
+  const server = await createServer({
+    cacheDir,
+    configFile: false,
+    logLevel: 'silent',
+    plugins: [createPolyfillsPlugin()],
+    root: fileURLToPath(new URL('../../', import.meta.url)),
+    server: {port: 0},
+  })
+  try {
+    await server.listen()
+    const result = await server.transformRequest('/src/utils/create-latest-async-task/index.ts')
+    expect(result?.code).toMatch(/deps\/core-js/u)
+    expect(result?.code).not.toMatch(/@fs\/.*core-js\/modules/u)
+  } finally {
+    await server.close()
+    await rm(cacheDir, {force: true, recursive: true})
+  }
 })

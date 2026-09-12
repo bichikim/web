@@ -16,8 +16,8 @@ export const createPolyfillsPlugin = async (): Promise<Plugin> => {
             [
               fileURLToPath(import.meta.resolve('babel-plugin-polyfill-corejs3')),
               {
-                // Resolve shared workspace code against Pomo's installed polyfills.
-                absoluteImports: fileURLToPath(new URL('../../', import.meta.url)),
+                // Keep package imports visible to Vite's CommonJS dependency optimizer.
+                absoluteImports: false,
                 method: 'usage-global',
                 version,
               },
@@ -31,6 +31,9 @@ export const createPolyfillsPlugin = async (): Promise<Plugin> => {
     ],
     targets: BROWSER_TARGETS,
   })) as Plugin
+
+  // Resolve polyfills injected into linked workspace packages from the app root.
+  plugin.config = () => ({resolve: {dedupe: ['core-js']}})
 
   const {transform} = plugin
   if (typeof transform !== 'object' || transform === null) {

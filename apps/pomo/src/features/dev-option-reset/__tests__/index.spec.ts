@@ -21,6 +21,7 @@ vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 afterEach(() => {
   document.cookie = `${cookieName}=; path=/; max-age=0`
   localStorage.clear()
+  sessionStorage.clear()
   Reflect.deleteProperty(window, 'ReactNativeWebView')
   storageMocks.getItem.mockReset()
   storageMocks.removeItem.mockReset()
@@ -41,7 +42,7 @@ const createManager = (
   storage: OptionResetStorage,
   resetLocale = vi.fn(async () => undefined),
 ) => ({
-  manager: createOptionResetManager({resetLocale, storage}),
+  manager: createOptionResetManager({resetEntrySession: vi.fn(), resetLocale, storage}),
   resetLocale,
 })
 
@@ -429,4 +430,42 @@ it('should use the preferred browser locale on the next web bootstrap after rese
   expect(document.cookie).not.toContain(`${cookieName}=ko`)
   expect(localStorage.getItem(localStorageKey)).toBe('ko')
   expect(getLocale()).toBe('en')
+})
+
+it.each(['entry', 'all'] as const)(
+  'should clear durable and session entry records for %s reset',
+  async (group) => {
+    localStorage.setItem('pomo:focus-room-entry-history:v1', 'true')
+    sessionStorage.setItem('pomo:focus-room-entry:v1', 'true')
+    localStorage.setItem('pomo:focus-room-playlist:v1', 'preserve')
+    const manager = createRuntimeOptionResetManager()
+    const result = await (group === 'all' ? manager.resetAll() : manager.reset(group))
+    expect(result.status).toBe('complete')
+    expect(localStorage.getItem('pomo:focus-room-entry-history:v1')).toBeNull()
+    expect(sessionStorage.getItem('pomo:focus-room-entry:v1')).toBeNull()
+    expect(localStorage.getItem('pomo:focus-room-playlist:v1')).toBe('preserve')
+  },
+)
+
+it('should remove native entry history as part of the entry reset', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.getItem.mockResolvedValue('true')
+  storageMocks.removeItem.mockResolvedValue()
+  localStorage.setItem('pomo:focus-room-entry-history:v1', 'true')
+  sessionStorage.setItem('pomo:focus-room-entry:v1', 'true')
+  await expect(createRuntimeOptionResetManager().reset('entry')).resolves.toEqual({
+    status: 'complete',
+  })
+  expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:focus-room-entry-history:v1')
+  expect(localStorage.getItem('pomo:focus-room-entry-history:v1')).toBeNull()
+  expect(sessionStorage.getItem('pomo:focus-room-entry:v1')).toBeNull()
+})
+
+it('should report a session reset failure without clearing durable entry history', async () => {
+  localStorage.setItem('pomo:focus-room-entry-history:v1', 'true')
+  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+    throw new Error('blocked')
+  })
+  await expect(createRuntimeOptionResetManager().reset('entry')).rejects.toThrow('Failed to reset')
+  expect(localStorage.getItem('pomo:focus-room-entry-history:v1')).toBe('true')
 })

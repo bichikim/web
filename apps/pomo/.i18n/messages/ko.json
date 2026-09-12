@@ -697,7 +697,7 @@
   "tour_completion_title": "이제 시작해 볼까요?",
   "tour_completion_description": "투어가 끝났어요. 이제 앱을 편하게 즐겨보세요!",
   "tour_finish": "완료",
-  "tour_first_visit_hint_description": "시작했으니 오른쪽 위의 ‘둘러보기’를 눌러 사용법을 확인해 보세요.",
+  "tour_first_visit_hint_description": "시작했으니 오른쪽 위의 ‘[icon:tour] 둘러보기’를 눌러 사용법을 확인해 보세요.",
   "tour_first_visit_hint_title": "처음 오셨나요?",
   "tour_next": "다음",
   "tour_open": "둘러보기",

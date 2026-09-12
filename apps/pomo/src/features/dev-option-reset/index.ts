@@ -1,3 +1,4 @@
+import {settleEntryHistoryWrites} from '../focus-room-entry-history'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
 
@@ -22,6 +23,7 @@ type OptionResetGroupDefinition =
   | StorageOptionResetGroupDefinition
 
 export type OptionResetGroupId =
+  | 'entry'
   | 'desktop'
   | 'dialogue'
   | 'focus-room'
@@ -65,6 +67,7 @@ export interface OptionResetStorage {
 }
 
 interface CreateOptionResetManagerOptions {
+  readonly resetEntrySession: () => void | Promise<void>
   readonly resetLocale: () => Promise<void>
   readonly storage: OptionResetStorage
 }
@@ -102,6 +105,13 @@ const withResetError = async <Result>(operation: () => Promise<Result>): Promise
 }
 
 const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
+  {
+    description:
+      '첫 입장 이력과 현재 탭의 입장 기록을 지웁니다. Pomofi 화면을 새로 열면 시작 화면과 둘러보기 안내를 다시 볼 수 있어요.',
+    id: 'entry',
+    label: '첫 입장 안내',
+    storageKeys: ['pomo:focus-room-entry-history:v1'],
+  },
   {
     description: '행동·시선·시간·날씨·장면 스타일과 화면 보호기 설정',
     id: 'focus-room',
@@ -350,7 +360,12 @@ export const createOptionResetManager = (
       return resetLocale()
     }
 
-    return resetKeys(group.storageKeys)
+    return withResetError(async () => {
+      if (group.id === 'entry') {
+        await options.resetEntrySession()
+      }
+      return resetKeys(group.storageKeys)
+    })
   }
 
   const getGroup = (groupId: OptionResetGroupId): OptionResetGroupDefinition => {
@@ -367,6 +382,7 @@ export const createOptionResetManager = (
     reset: (groupId) => resetGroup(getGroup(groupId)),
     resetAll: () =>
       withResetError(async () => {
+        await options.resetEntrySession()
         const storageResult = await removeKeys(options.storage, getAllKeys())
         if (storageResult.status === 'partial') {
           return {
@@ -418,6 +434,10 @@ const runtimeLocaleStorage = {
 
 export const createRuntimeOptionResetManager = (): OptionResetManager =>
   createOptionResetManager({
+    resetEntrySession: async () => {
+      await settleEntryHistoryWrites()
+      sessionStorage.removeItem('pomo:focus-room-entry:v1')
+    },
     resetLocale: () => resetLocaleStorage(runtimeLocaleStorage),
     storage: runtimeStorage,
   })
