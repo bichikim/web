@@ -1,3 +1,5 @@
+import {useModelDownload} from 'src/features/model-download'
+import {createFeeds, createModelDownload} from '../../__tests__/feed-status/fixtures'
 /** @vitest-environment jsdom */
 
 import {Tabs} from '@kobalte/core/tabs'
@@ -7,9 +9,10 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/PSelect'
-import {PFeedContext, type PFeedController} from 'src/features/focus-room-feed'
+import {PFeedContext} from 'src/features/focus-room-feed'
 import {PFeedSettingsContent} from '../Content'
 
+vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
 
@@ -17,6 +20,7 @@ const renderSettings = () => render(() => <PFeedSettingsContent />)
 const originalGetLocale = getLocale
 
 beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownload())
   overwriteGetLocale(() => 'ko')
   localStorage.clear()
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
@@ -164,11 +168,9 @@ it('should omit development recommendations in production', () => {
 })
 
 it('should render saved dialogues when a feed runtime is available', () => {
-  const runtime = {
-    dialogues: () => [],
-    issues: () => [],
-    syncNow: vi.fn().mockResolvedValue(undefined),
-  } as unknown as PFeedController
+  const runtime = createFeeds([], false, [], {
+    state: () => ({message: '음성 준비 중', progress: 25, status: 'preparing'}),
+  })
 
   render(() => (
     <PFeedContext.Provider value={runtime}>
@@ -176,7 +178,11 @@ it('should render saved dialogues when a feed runtime is available', () => {
     </PFeedContext.Provider>
   ))
 
-  expect(screen.getByRole('heading', {name: '피드 대화'})).toBeDefined()
+  const heading = screen.getByRole('heading', {name: '피드 대화'})
+  expect(screen.getByRole('status').compareDocumentPosition(heading)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  )
+  expect(screen.getByRole('button', {name: '중지'})).toBeInTheDocument()
   expect(
     screen.getByText('아직 완성된 피드 대화가 없어요. 새 항목을 확인하면 자동으로 만들어요.'),
   ).toBeDefined()
@@ -193,4 +199,25 @@ it('should apply compact spacing to feed settings groups', () => {
   expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
   expect(list).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
+})
+
+it('should persist the feed reading progress visibility switch', () => {
+  const first = renderSettings()
+  const toggle = screen.getByRole('switch', {name: '피드 읽는 중 표시'})
+  expect(toggle).toBeChecked()
+  fireEvent.click(toggle)
+  expect(toggle).not.toBeChecked()
+  first.unmount()
+  renderSettings()
+  expect(screen.getByRole('switch', {name: '피드 읽는 중 표시'})).not.toBeChecked()
+})
+
+it('should save the automatic feed audio preparation switch', () => {
+  const first = renderSettings()
+  const toggle = screen.getByRole('switch', {name: '새 피드 음성 자동 준비'})
+  expect(toggle).toBeChecked()
+  fireEvent.click(toggle)
+  first.unmount()
+  renderSettings()
+  expect(screen.getByRole('switch', {name: '새 피드 음성 자동 준비'})).not.toBeChecked()
 })

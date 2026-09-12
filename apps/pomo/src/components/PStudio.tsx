@@ -1,3 +1,5 @@
+import {useStudioTourHint} from './p-studio/use-studio-tour-hint'
+import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {useStudioDesktopSceneSettings} from './p-studio/use-studio-desktop-scene-settings'
 import {type BackgroundController, useBackground} from '../features/background'
 import {Player as FramePlayer} from './frame/Player'
@@ -160,6 +162,7 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
 )
 
 interface StudioOverlayProps {
+  readonly uiAutoHideEnabled?: boolean
   readonly displayPreferences: PDisplayPreferencesController
   readonly desktopMode: DesktopMode
   readonly entryVisible: boolean
@@ -187,6 +190,7 @@ const StudioOverlay = (props: StudioOverlayProps) => (
     <PScreenSaver
       isActive={
         props.hasEntered &&
+        !props.uiAutoHideEnabled &&
         !isDesktopBackgroundMode(props.desktopMode) &&
         props.screenSaver.isActive()
       }
@@ -259,6 +263,7 @@ const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
 })
 
 export const PStudio = () => {
+  const uiAutoHide = useUiAutoHide()
   const background = useBackground()
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -269,7 +274,6 @@ export const PStudio = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
-  const [isTourHintVisible, setIsTourHintVisible] = createSignal(false)
   const tour = useStudioTour()
   const hasEntered = events.hasEnteredFocusRoom
   const entry = useStudioEntry(events)
@@ -306,15 +310,7 @@ export const PStudio = () => {
     getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), style.sceneStyle()),
   )
   const activeViseme = useStudioViseme(events, pomoSay)
-  const handleEntry = () => {
-    if (entry.enter()) {
-      setIsTourHintVisible(true)
-    }
-  }
-  const handleTourOpen = () => {
-    setIsTourHintVisible(false)
-    tour.setIsOpen(true)
-  }
+  const tourHint = useStudioTourHint(entry.enter, () => tour.setIsOpen(true))
   useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
   return (
     <section
@@ -340,7 +336,11 @@ export const PStudio = () => {
         time={time()}
         weatherCondition={weather.sceneCondition()}
       />
-      <div class={CLASSES.ui} hidden={!hasEntered() || desktopMode.mode() === 'desktop'}>
+      <div
+        class={CLASSES.ui}
+        classList={{'!hidden': uiAutoHide.hidden()}}
+        hidden={!hasEntered() || desktopMode.mode() === 'desktop' || uiAutoHide.hidden()}
+      >
         <Show when={hasEntered() && desktopMode.mode() !== 'desktop'}>
           <PStudioEvents
             pomodoroVisible={displayPreferences.isReady() && displayPreferences.pomodoroVisible()}
@@ -356,6 +356,7 @@ export const PStudio = () => {
           />
           <Show when={scenePreferences.isReady() && displayPreferences.isReady()}>
             <SceneToolbar
+              uiAutoHide={uiAutoHide}
               {...sceneSettings}
               background={background}
               {...toolbarVisibility(displayPreferences)}
@@ -369,7 +370,7 @@ export const PStudio = () => {
                 hasSceneRendered()
               }
               onDialogueComposerVisibleChange={displayPreferences.onDialogueComposerVisibleChange}
-              onTourOpen={handleTourOpen}
+              onTourOpen={tourHint.openTour}
               tourButtonVisible={displayPreferences.tourButtonVisible()}
               onTourButtonVisibleChange={displayPreferences.onTourButtonVisibleChange}
               screenSaverDelay={screenSaver.delay()}
@@ -390,20 +391,23 @@ export const PStudio = () => {
         </Show>
       </div>
       <Show when={entry.isVisible()}>
-        <PEntry isExiting={hasEntered()} onEnter={handleEntry} onExitComplete={entry.hide} />
+        <PEntry isExiting={hasEntered()} onEnter={tourHint.enter} onExitComplete={entry.hide} />
       </Show>
       <SceneModelDownloadFallback isVisible={!hasEntered() || !scenePreferences.isReady()} />
-      <StudioOverlay
-        displayPreferences={displayPreferences}
-        desktopMode={desktopMode.mode()}
-        entryVisible={entry.isVisible()}
-        hasEntered={hasEntered()}
-        isTourHintVisible={isTourHintVisible()}
-        onDismissTourHint={() => setIsTourHintVisible(false)}
-        screenSaver={screenSaver}
-        tour={tour}
-        tourButtonVisible={displayPreferences.tourButtonVisible()}
-      />
+      <div hidden={uiAutoHide.hidden()}>
+        <StudioOverlay
+          uiAutoHideEnabled={uiAutoHide.enabled()}
+          displayPreferences={displayPreferences}
+          desktopMode={desktopMode.mode()}
+          entryVisible={entry.isVisible()}
+          hasEntered={hasEntered()}
+          isTourHintVisible={tourHint.visible()}
+          onDismissTourHint={tourHint.dismiss}
+          screenSaver={screenSaver}
+          tour={tour}
+          tourButtonVisible={displayPreferences.tourButtonVisible()}
+        />
+      </div>
     </section>
   )
 }
