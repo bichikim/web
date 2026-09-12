@@ -6,6 +6,7 @@ import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument, type PuppetDocument} from '../../player'
 import {MeshEditor} from '../MeshEditor'
+import {setVertexKeyframe} from '../internal/motion-keyframes'
 import {
   connectParameterNodes,
   setParameterKeyformDeformerControlPoints,
@@ -412,8 +413,15 @@ describe('MeshEditor', () => {
     expect(document().motions[0]?.tracks).toHaveLength(1)
   })
 
-  test('should store an animated drag as a keyframe without changing rest vertices', () => {
-    const initialDocument = createDemoDocument()
+  test.each([0, 0.5])('should store a drag at time %s without changing rest vertices', (time) => {
+    const initialDocument = setVertexKeyframe({
+      document: createDemoDocument(),
+      motionId: 'idle-deform',
+      partId: 'mesh-preview',
+      point: {x: 320, y: 240},
+      time,
+      vertexIndex: 4,
+    })!
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
     const onVertexEditStart = vi.fn()
     const view = render(() => (
@@ -421,7 +429,7 @@ describe('MeshEditor', () => {
         document={document()}
         onDocumentChange={setDocument}
         onVertexEditStart={onVertexEditStart}
-        previewTime={0.5}
+        previewTime={time}
       />
     ))
     const svg = view.container.querySelector('svg')
@@ -442,15 +450,18 @@ describe('MeshEditor', () => {
         y: 0,
       })
       fireEvent(centerVertex, new MouseEvent('pointerdown', {bubbles: true}))
-      fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 480, clientY: 320}))
+      fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 470, clientY: 320}))
       fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
     }
 
+    expect(view.container.querySelectorAll('circle')[4]).toHaveAttribute('cx', '310')
+    expect(view.container.querySelectorAll('circle')[4]).toHaveAttribute('cy', '200')
+    expect(document().parts[0]?.mesh.vertices[8]).toBe(320)
     expect(onVertexEditStart).toHaveBeenCalledOnce()
     expect(document().parts[0]?.mesh.vertices).toBe(initialDocument.parts[0]?.mesh.vertices)
     const vertexTracks = document().motions[0]?.tracks.filter((track) => track.kind === 'vertex')
-    expect(vertexTracks?.[0]?.keyframes[0]).toEqual({time: 0.5, value: 320})
-    expect(vertexTracks?.[1]?.keyframes).toEqual([{time: 0.5, value: 200}])
+    expect(vertexTracks?.[0]?.keyframes[0]).toEqual({time, value: 310})
+    expect(vertexTracks?.[1]?.keyframes).toEqual([{time, value: 200}])
   })
 
   test.each([0, 0.5, 1])('should edit the original selected keyform at influence %s', (weight) => {
