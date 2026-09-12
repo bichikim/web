@@ -799,6 +799,7 @@
   "calendar_alarm_button": "Alarm",
   "calendar_alarm_button_active": "Edit alarm",
   "calendar_alarm_title": "Event alarm",
+  "calendar_alarm_legacy_notice": "An earlier calendar alarm is still scheduled separately. It may overlap with a new alarm. Review or remove it in the Memory Assist memo list.",
   "calendar_alarm_description": "When the app is open, it will notify you with dialogue and voice at the chosen time.",
   "calendar_alarm_date": "Date",
   "calendar_alarm_time": "Time",

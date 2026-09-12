@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createMemo, createSignal, createUniqueId, type Setter} from 'solid-js'
 import * as m from '@paraglide/message'
-import type {CalendarEvent} from '../calendar'
+import {type CalendarEvent, getLegacyEventId} from '../calendar'
 import {usePEvents} from '../focus-room-dialogue'
 import {type MemoryMemo, memoryMemoDeletion, updateMemoryMemos} from '../memory-assist'
 import {createCalendarAlarmSaver} from './create-calendar-alarm-saver'
@@ -30,6 +30,7 @@ const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
 
 interface CalendarAlarmController {
   readonly active: Accessor<boolean>
+  readonly legacyAlarm: Accessor<boolean>
   readonly date: Accessor<string>
   readonly message: Accessor<string | null>
   readonly pending: Accessor<boolean>
@@ -70,6 +71,18 @@ export const useCalendarAlarmController = (
   const [message, setMessage] = createSignal<string | null>(null)
   const [pending, setPending] = createSignal(false)
   const storedMemo = createMemo(() => memos().find((memo) => memo.id === alarmId()))
+  const legacyAlarm = createMemo(() => {
+    const legacyId = getLegacyEventId(event())
+    return (
+      legacyId !== null &&
+      memos().some(
+        (memo) =>
+          memo.id === getMemoId(legacyId) &&
+          memo.nextExactReminderAt !== null &&
+          memo.deletionPending !== true,
+      )
+    )
+  })
   const activeAlarm = createMemo(() => {
     const exactReminderAt = storedMemo()?.exactReminderAt
     return exactReminderAt !== null && exactReminderAt !== undefined
@@ -152,6 +165,7 @@ export const useCalendarAlarmController = (
   return {
     active: activeAlarm,
     date,
+    legacyAlarm,
     message,
     pending,
     popoverAnchor,

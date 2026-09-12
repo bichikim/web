@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
+import {createSignal, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {CalendarEvent} from '../../features/calendar'
@@ -13,16 +13,25 @@ import {
 } from '../../features/memory-assist'
 import {CalendarAlarmControl} from '../CalendarAlarmControl'
 
+interface ButtonProps {
+  readonly accessibleLabel?: string
+  readonly children: JSX.Element
+  readonly disabled?: boolean
+  readonly onPress?: () => void
+}
+
 const mocks = vi.hoisted(() => ({
+  button: vi.fn<(props: ButtonProps) => JSX.Element>(),
   deleteAudio: vi.fn(),
   deleteDialogue: vi.fn(),
   memos: [] as ReadonlyArray<MemoryMemo>,
   updateMemos: vi.fn(),
+  usePEvents: vi.fn(),
 }))
 
 vi.mock('../../features/focus-room-dialogue', () => ({
   deleteDialogueAudio: mocks.deleteAudio,
-  usePEvents: () => ({deleteDialogue: mocks.deleteDialogue}),
+  usePEvents: mocks.usePEvents,
 }))
 vi.mock('../../features/memory-assist/repository', async () => {
   const actual = await vi.importActual('../../features/memory-assist/repository')
@@ -33,16 +42,7 @@ vi.mock('../../features/memory-assist/repository', async () => {
   }
 })
 vi.mock('../PButton', () => ({
-  PButton: (props: {
-    accessibleLabel?: string
-    children: JSX.Element
-    disabled?: boolean
-    onPress?: () => void
-  }) => (
-    <button aria-label={props.accessibleLabel} disabled={props.disabled} onClick={props.onPress}>
-      {props.children}
-    </button>
-  ),
+  PButton: mocks.button,
 }))
 
 const event: CalendarEvent = {
@@ -61,6 +61,12 @@ const matches = HTMLElement.prototype.matches
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.usePEvents.mockReturnValue({deleteDialogue: mocks.deleteDialogue})
+  mocks.button.mockImplementation((props) => (
+    <button aria-label={props.accessibleLabel} disabled={props.disabled} onClick={props.onPress}>
+      {props.children}
+    </button>
+  ))
   currentTime = new Date('2026-09-04T03:00:00.000Z')
   localStorage.clear()
   mocks.deleteAudio.mockResolvedValue(undefined)
@@ -363,6 +369,72 @@ it('should use the current injected clock when saving after the editor opens', a
   fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
   await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
   expect(mocks.memos[0]?.createdAt).toBe(currentTime.toISOString())
+})
+
+it('should save, edit and remove scoped alarms independently while preserving a legacy alarm', async () => {
+  const legacy = createMemoryMemo({
+    exactReminderAt: new Date('2026-09-05T09:00').toISOString(),
+    id: 'calendar-alarm:connection-1:abcde12345',
+    now: now(),
+    random: () => 0,
+    recallMode: 'none',
+    text: '기존 일정 알람',
+  })
+  const [memos, setMemos] = createSignal<ReadonlyArray<MemoryMemo>>([legacy])
+  mocks.memos = memos()
+  mocks.updateMemos.mockImplementation(async (update) => {
+    mocks.memos = update(memos())
+    setMemos(mocks.memos)
+    return mocks.memos
+  })
+  const work = {...event, id: 'connection-1:["work","abcde12345"]', title: 'Work'}
+  const personal = {...event, id: 'connection-1:["personal","abcde12345"]', title: 'Personal'}
+  const workView = render(() => <CalendarAlarmControl now={now} event={work} memos={memos} />)
+  const personalView = render(() => (
+    <CalendarAlarmControl now={now} event={personal} memos={memos} />
+  ))
+  const workControl = within(workView.container)
+  const personalControl = within(personalView.container)
+  expect(
+    workControl.getByText(
+      '이전 일정 알람이 별도로 남아 있어요. 새 알람과 중복될 수 있으니 기억 도우미의 메모 목록에서 확인하거나 해제해 주세요.',
+    ),
+  ).toBeInTheDocument()
+  fireEvent.click(workControl.getByRole('button', {name: 'Work 알람 설정'}))
+  fireEvent.click(workControl.getByRole('button', {name: '알람 저장'}))
+  await waitFor(() => expect(memos()).toHaveLength(2))
+  expect(personalControl.getByRole('button', {name: 'Personal 알람 설정'})).toBeInTheDocument()
+  fireEvent.click(personalControl.getByRole('button', {name: 'Personal 알람 설정'}))
+  fireEvent.click(personalControl.getByRole('button', {name: '알람 저장'}))
+  await waitFor(() => expect(memos()).toHaveLength(3))
+  const personalMemo = memos().find((memo) => memo.id === `calendar-alarm:${personal.id}`)
+  expect(personalMemo).toBeDefined()
+
+  await waitFor(() => expect(workControl.getByRole('button', {name: '알람 저장'})).toBeEnabled())
+  fireEvent.click(workControl.getByRole('button', {name: 'Work 알람 수정'}))
+  fireEvent.input(workControl.getByLabelText('시간'), {target: {value: '10:30'}})
+  fireEvent.click(workControl.getByRole('button', {name: '알람 저장'}))
+  await waitFor(() =>
+    expect(memos().find((memo) => memo.id === `calendar-alarm:${work.id}`)?.exactReminderAt).toBe(
+      new Date('2026-09-05T10:30').toISOString(),
+    ),
+  )
+  expect(memos()).toContainEqual(personalMemo)
+  await waitFor(() => expect(workControl.getByRole('button', {name: '알람 해제'})).toBeEnabled())
+  fireEvent.click(workControl.getByRole('button', {name: '알람 해제'}))
+  await waitFor(() => expect(memos()).toEqual([personalMemo, legacy]))
+  expect(workControl.getByRole('button', {name: 'Work 알람 설정'})).toBeInTheDocument()
+  expect(personalControl.getByRole('button', {name: 'Personal 알람 수정'})).toBeInTheDocument()
+  expect(workControl.getByRole('status')).toHaveTextContent('이전 일정 알람')
+  setMemos(
+    memos().map((memo) => (memo.id === legacy.id ? {...memo, nextExactReminderAt: null} : memo)),
+  )
+  expect(workControl.queryByRole('status')).not.toBeInTheDocument()
+  setMemos(memos().map((memo) => (memo.id === legacy.id ? legacy : memo)))
+  expect(workControl.getByRole('status')).toHaveTextContent('이전 일정 알람')
+  setMemos(memos().filter((memo) => memo.id !== legacy.id))
+  expect(workControl.queryByRole('status')).not.toBeInTheDocument()
+  expect(personalControl.queryByRole('status')).not.toBeInTheDocument()
 })
 
 it('should preserve owned dialogue when renamed-event alarm persistence fails', async () => {

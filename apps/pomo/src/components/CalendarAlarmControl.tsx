@@ -82,6 +82,12 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
           {m.calendar_alarm_description()}
         </p>
 
+        <Show when={alarm.legacyAlarm()}>
+          <p class="mb-4 mt-0 text-sm text-danger" role="status">
+            {m.calendar_alarm_legacy_notice()}
+          </p>
+        </Show>
+
         <div class="grid grid-cols-1 gap-3">
           <label class="grid gap-1.5 text-sm font-650">
             <span>{m.calendar_alarm_date()}</span>

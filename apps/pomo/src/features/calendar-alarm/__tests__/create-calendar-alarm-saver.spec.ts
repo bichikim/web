@@ -15,12 +15,12 @@ const options: CalendarAlarmSaveOptions = {
 }
 const memo = {
   ...createMemoryMemo({
+    exactReminderAt: options.alarmAt.toISOString(),
     id: options.memoId,
     now: options.now,
     random: options.random,
     recallMode: 'none',
     text: 'Old alarm',
-    exactReminderAt: options.alarmAt.toISOString(),
   }),
   dialogueId: 'memory-memo-calendar-alarm:event',
 }
@@ -59,8 +59,8 @@ it('should persist retirement before cleanup and report cleanup failure without 
   await expect(save(options)).resolves.toBeUndefined()
   expect(snapshot[0]).toMatchObject({
     dialogueId: null,
-    text: options.text,
     retiredDialogueIds: [memo.dialogueId],
+    text: options.text,
   })
   expect(reportError).toHaveBeenCalledExactlyOnceWith(error)
 })

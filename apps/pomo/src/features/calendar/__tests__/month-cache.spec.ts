@@ -61,3 +61,19 @@ it('should ignore legacy entries without an account', () => {
   )
   expect(readCalendarMonthCache(range)).toBeNull()
 })
+
+it('should ignore account-scoped version 2 entries with unscoped Google event IDs', () => {
+  sessionStorage.setItem(
+    'pomo:calendar-month-cache:v1',
+    JSON.stringify({
+      entries: [
+        {
+          key: JSON.stringify([range.accountKey, range.start, range.end, range.timeZone]),
+          value: calendar,
+        },
+      ],
+      version: 2,
+    }),
+  )
+  expect(readCalendarMonthCache(range)).toBeNull()
+})
