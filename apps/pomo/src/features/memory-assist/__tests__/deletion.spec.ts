@@ -161,3 +161,45 @@ it('should delete generation-specific dialogue and audio owned by the memo', asy
   expect(mocks.deleteDialogue).toHaveBeenCalledExactlyOnceWith(dialogueId)
   expect(mocks.audio).toHaveBeenCalledExactlyOnceWith(dialogueId)
 })
+
+it.each(['dialogue', 'audio', 'persistence'])(
+  'should retain retired dialogue cleanup across %s failure and controller recreation',
+  async (failure) => {
+    const retired = memo.dialogueId
+    const active = `${retired}:61f5d718-00b9-4187-a01e-c4a9792d7c31`
+    mocks.memos = [{...memo, dialogueId: active, retiredDialogueIds: [retired]}]
+    if (failure === 'dialogue') {
+      mocks.deleteDialogue.mockRejectedValueOnce(new Error('cleanup failed'))
+    }
+    if (failure === 'audio') {
+      mocks.audio.mockRejectedValueOnce(new Error('cleanup failed'))
+    }
+    if (failure === 'persistence') {
+      mocks.update.mockRejectedValueOnce(new Error('cleanup failed'))
+    }
+    await expect(deletion.retry(mocks.deleteDialogue)).rejects.toThrow()
+    expect(mocks.memos[0]?.retiredDialogueIds).toEqual([retired])
+    await createDeletion().retry(mocks.deleteDialogue)
+    expect(mocks.memos[0]).toMatchObject({dialogueId: active, retiredDialogueIds: []})
+    expect(mocks.deleteDialogue).toHaveBeenLastCalledWith(retired)
+    expect(mocks.audio).toHaveBeenLastCalledWith(retired)
+    expect(mocks.deleteDialogue).not.toHaveBeenCalledWith(active)
+  },
+)
+
+it('should preserve active and unowned dialogue IDs during retired cleanup', async () => {
+  mocks.memos = [{...memo, retiredDialogueIds: [memo.dialogueId, 'user-dialogue']}]
+  await deletion.retry(mocks.deleteDialogue)
+  expect(mocks.deleteDialogue).not.toHaveBeenCalled()
+  expect(mocks.audio).not.toHaveBeenCalled()
+})
+
+it('should finish retired cleanup before removing its owning memo', async () => {
+  mocks.memos = [{...memo, dialogueId: null, retiredDialogueIds: [memo.dialogueId]}]
+  mocks.audio.mockRejectedValueOnce(new Error('cleanup failed'))
+  await expect(remove()).resolves.toBe('cleanupPending')
+  expect(mocks.memos[0]?.retiredDialogueIds).toEqual([memo.dialogueId])
+  await deletion.retry(mocks.deleteDialogue)
+  expect(mocks.memos).toEqual([])
+  expect(mocks.audio).toHaveBeenLastCalledWith(memo.dialogueId)
+})

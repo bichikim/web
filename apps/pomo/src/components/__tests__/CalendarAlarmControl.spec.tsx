@@ -28,6 +28,7 @@ vi.mock('../../features/memory-assist/repository', async () => {
   const actual = await vi.importActual('../../features/memory-assist/repository')
   return {
     ...actual,
+    readMemoryMemos: async () => mocks.memos,
     updateMemoryMemos: mocks.updateMemos,
   }
 })
@@ -278,37 +279,6 @@ it('should rearm a consumed alarm and preserve its reminder history', async () =
   expect(getDueMemoryReminder(saved, newTime)).toBe('exact')
 })
 
-it('should preserve owned dialogue when renamed-event alarm persistence fails', async () => {
-  const memo = ownedAlarm()
-  mocks.memos = [memo]
-  const actual = await vi.importActual<typeof import('../../features/memory-assist/repository')>(
-    '../../features/memory-assist/repository',
-  )
-  localStorage.setItem('pomo:memory-memos:v1', JSON.stringify([memo]))
-  const setItem = Storage.prototype.setItem
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
-    function persistItem(this: Storage, key, value) {
-      if (key === 'pomo:memory-memos:v1') {
-        throw new DOMException('storage full', 'QuotaExceededError')
-      }
-      setItem.call(this, key, value)
-    },
-  )
-  mocks.updateMemos.mockImplementation(actual.updateMemoryMemos)
-  render(() => (
-    <CalendarAlarmControl
-      now={now}
-      event={{...event, title: '변경된 팀 회의'}}
-      memos={() => mocks.memos}
-    />
-  ))
-  fireEvent.click(screen.getByRole('button', {name: '변경된 팀 회의 알람 수정'}))
-  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
-  await screen.findByText('알람을 저장하지 못했어요.')
-  expect(JSON.parse(localStorage.getItem('pomo:memory-memos:v1') ?? '[]')).toEqual([memo])
-  expect(mocks.deleteDialogue).not.toHaveBeenCalled()
-})
-
 it('should preserve owned dialogue when alarm removal persistence fails', async () => {
   const memo = ownedAlarm()
   mocks.memos = [memo]
@@ -393,4 +363,67 @@ it('should use the current injected clock when saving after the editor opens', a
   fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
   await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
   expect(mocks.memos[0]?.createdAt).toBe(currentTime.toISOString())
+})
+
+it('should preserve owned dialogue when renamed-event alarm persistence fails', async () => {
+  const memo = ownedAlarm()
+  mocks.memos = [memo]
+  const actual = await vi.importActual<typeof import('../../features/memory-assist/repository')>(
+    '../../features/memory-assist/repository',
+  )
+  localStorage.setItem('pomo:memory-memos:v1', JSON.stringify([memo]))
+  const setItem = Storage.prototype.setItem
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
+    function persistItem(this: Storage, key, value) {
+      if (key === 'pomo:memory-memos:v1') {
+        throw new DOMException('storage full', 'QuotaExceededError')
+      }
+      setItem.call(this, key, value)
+    },
+  )
+  mocks.updateMemos.mockImplementation(actual.updateMemoryMemos)
+  render(() => (
+    <CalendarAlarmControl
+      now={now}
+      event={{...event, title: '변경된 팀 회의'}}
+      memos={() => mocks.memos}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '변경된 팀 회의 알람 수정'}))
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+  await screen.findByText('알람을 저장하지 못했어요.')
+  expect(JSON.parse(localStorage.getItem('pomo:memory-memos:v1') ?? '[]')).toEqual([memo])
+  expect(mocks.deleteDialogue).not.toHaveBeenCalled()
+  expect(mocks.deleteAudio).not.toHaveBeenCalled()
+})
+
+it('should commit renamed alarm before cleanup and retain failed cleanup for retry', async () => {
+  const memo = ownedAlarm()
+  mocks.memos = [memo]
+  let cleanupSnapshot: ReadonlyArray<MemoryMemo> = []
+  mocks.deleteDialogue.mockImplementationOnce(async () => {
+    cleanupSnapshot = mocks.memos
+    throw new Error('cleanup failed')
+  })
+  render(() => (
+    <CalendarAlarmControl
+      now={now}
+      event={{...event, title: '변경된 팀 회의'}}
+      memos={() => mocks.memos}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '변경된 팀 회의 알람 수정'}))
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+  await waitFor(() => expect(HTMLElement.prototype.hidePopover).toHaveBeenCalledOnce())
+  expect(mocks.deleteDialogue).toHaveBeenCalledExactlyOnceWith(memo.dialogueId)
+  expect(cleanupSnapshot[0]).toMatchObject({
+    dialogueId: null,
+    retiredDialogueIds: [memo.dialogueId],
+    text: '변경된 팀 회의 일정 알람이에요.',
+  })
+  expect(mocks.memos[0]?.retiredDialogueIds).toEqual([memo.dialogueId])
+  expect(screen.queryByText('알람을 저장하지 못했어요.')).not.toBeInTheDocument()
+  const {memoryMemoDeletion} = await import('../../features/memory-assist')
+  await memoryMemoDeletion.retry(mocks.deleteDialogue)
+  expect(mocks.memos[0]).toMatchObject({dialogueId: null, retiredDialogueIds: []})
 })
