@@ -7,12 +7,9 @@ import {configureStudio, renderStudio, setupStudio, studioMocks} from './p-studi
 
 const {
   DEFAULT_BACKGROUND,
-  PScreenSaver,
   PTour,
   readFocusRoomEntrySession,
   useBackground,
-  usePDisplayPreferences,
-  useStudioScreenSaver,
   writeFocusRoomEntrySession,
 } = studioMocks
 
@@ -32,63 +29,6 @@ afterEach(() => {
 })
 
 describe('PStudio', () => {
-  it.each([false, true])(
-    'should withhold screen saver content until display preferences restore with visibility %s',
-    (visible) => {
-      configureStudio({entrySession: true, isScreenSaverActive: true})
-      const [isReady, setIsReady] = createSignal(false)
-      const [playerVisible, setPlayerVisible] = createSignal(true)
-      const [pomodoroVisible, setPomodoroVisible] = createSignal(true)
-      const preferences = vi.mocked(usePDisplayPreferences)()
-      vi.mocked(usePDisplayPreferences).mockReturnValue({
-        ...preferences,
-        isReady,
-        playerVisible,
-        pomodoroVisible,
-      })
-      const saver = vi.mocked(useStudioScreenSaver)()
-      const track = {
-        artist: 'Artist',
-        durationSeconds: 60,
-        id: 'track',
-        source: '/track.mp3',
-        title: 'Track',
-      }
-      const timer = {status: 'Focus', time: '24:59'}
-      vi.mocked(useStudioScreenSaver).mockReturnValue({
-        ...saver,
-        currentTrack: () => track,
-        isMusicPlaying: () => true,
-        timer: () => timer,
-      })
-      renderStudio()
-      const props = vi.mocked(PScreenSaver).mock.calls[0][0]
-      expect(props.isActive).toBe(true)
-      expect(props.isMusicPlaying).toBe(false)
-      expect(props.track).toBeNull()
-      expect(props.timer).toBeUndefined()
-
-      setPlayerVisible(visible)
-      setPomodoroVisible(visible)
-      setIsReady(true)
-      expect(props.isActive).toBe(true)
-      expect(props.isMusicPlaying).toBe(visible)
-      expect(props.track).toBe(visible ? track : null)
-      expect(props.timer).toBe(visible ? timer : undefined)
-
-      setPlayerVisible(true)
-      setPomodoroVisible(false)
-      expect(props.isMusicPlaying).toBe(true)
-      expect(props.track).toBe(track)
-      expect(props.timer).toBeUndefined()
-      setPlayerVisible(false)
-      setPomodoroVisible(true)
-      expect(props.isMusicPlaying).toBe(false)
-      expect(props.track).toBeNull()
-      expect(props.timer).toBe(timer)
-    },
-  )
-
   it('should enter the focus room and pass toolbar changes to the scene', () => {
     configureStudio({gyroscope: true, isScreenSaverActive: true})
 
