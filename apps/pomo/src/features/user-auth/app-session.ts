@@ -45,15 +45,30 @@ export const readStoredAppSession = async (): Promise<string | null> => {
   return Storage.getItem(APP_SESSION_STORAGE_KEY)
 }
 
-export const storeAppSession = async (token: string): Promise<void> => {
-  const {Storage} = await import('@apps-in-toss/web-framework')
-  await Storage.setItem(APP_SESSION_STORAGE_KEY, token)
+let storageMutation: Promise<void> = Promise.resolve()
+
+const mutateStoredSession = (operation: () => Promise<void>): Promise<void> => {
+  const result = storageMutation.then(operation)
+  // A failed native operation must not block subsequent session writes.
+  storageMutation = result.catch(() => undefined)
+  return result
 }
 
-export const clearStoredAppSession = async (): Promise<void> => {
-  const {Storage} = await import('@apps-in-toss/web-framework')
-  await Storage.removeItem(APP_SESSION_STORAGE_KEY)
-}
+export const storeAppSession = (token: string): Promise<void> =>
+  mutateStoredSession(async () => {
+    const {Storage} = await import('@apps-in-toss/web-framework')
+    await Storage.setItem(APP_SESSION_STORAGE_KEY, token)
+  })
+
+/** Removes the stored session only when it still belongs to the supplied token. */
+export const clearStoredAppSession = (token: string): Promise<void> =>
+  mutateStoredSession(async () => {
+    const {Storage} = await import('@apps-in-toss/web-framework')
+    const storedToken = await Storage.getItem(APP_SESSION_STORAGE_KEY)
+    if (storedToken === token) {
+      await Storage.removeItem(APP_SESSION_STORAGE_KEY)
+    }
+  })
 
 export const validateAppSession = async (token: string): Promise<boolean> => {
   const response = await apiFetch('app-auth/session', {
@@ -107,7 +122,7 @@ export const createTossLoginSession = async (): Promise<string> => {
       return storedToken
     }
 
-    await clearStoredAppSession()
+    await clearStoredAppSession(storedToken)
   }
 
   const {TossAuth} = await import('@apps-in-toss/web-framework')
@@ -135,7 +150,7 @@ export const createTossLoginSession = async (): Promise<string> => {
   await storeAppSession(body.token)
 
   if (!(await activateStoredSession(body.token))) {
-    await clearStoredAppSession()
+    await clearStoredAppSession(body.token)
     throw new Error('App session activation failed')
   }
 
@@ -148,7 +163,7 @@ export const revokeTossLoginSession = async (
   await revokeServerSession(token)
 
   try {
-    await clearStoredAppSession()
+    await clearStoredAppSession(token)
     return {storageStatus: 'cleared'}
   } catch (storageError: unknown) {
     console.error('Failed to clear revoked Toss session from storage', storageError)

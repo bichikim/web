@@ -116,7 +116,7 @@ it('should clear a Toss session only after activation also rejects it', async ()
 
   await expect(tossSessionQuery()).resolves.toBe(false)
   expect(appSessionMocks.activateStoredSession).toHaveBeenCalledExactlyOnceWith('expired-token')
-  expect(appSessionMocks.clearStoredAppSession).toHaveBeenCalledOnce()
+  expect(appSessionMocks.clearStoredAppSession).toHaveBeenCalledExactlyOnceWith('expired-token')
 })
 
 it('should preserve a pending Toss token when activation is unavailable', async () => {
