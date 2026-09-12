@@ -101,7 +101,7 @@ const matchesEntityTag = (request: Request, entityTag: string): boolean => {
   // RFC 9110 allows commas inside opaque tags and empty elements in tag lists.
   const tagPattern = /(?:W\/)?"[\x21\x23-\x7E\x80-\xFF]*"/gu
   const listPattern = new RegExp(
-    `^[ \t]*(?:${tagPattern.source})?[ \t]*(?:,[ \t]*(?:${tagPattern.source})?[ \t]*)*$`,
+    `^[ \t]*(?:${tagPattern.source}[ \t]*)?(?:,[ \t]*(?:${tagPattern.source}[ \t]*)?)*$`,
     'u',
   )
 

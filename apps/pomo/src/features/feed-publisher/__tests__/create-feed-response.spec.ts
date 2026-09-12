@@ -181,6 +181,7 @@ describe('createFeedResponse', () => {
         ['missing separator', '"other" $tag', 200],
         ['invalid tag character', '"bad tag", $tag', 200],
         ['trailing garbage', '$tag garbage', 200],
+        ['long malformed whitespace', `,${' '.repeat(8000)}x`, 200],
       ])('should handle %s', async (_label, condition, status) => {
         const url = `https://pomo.example/api/feeds/today-in-history/${format}.xml`
         const initial = await createResponse(new Request(url))
