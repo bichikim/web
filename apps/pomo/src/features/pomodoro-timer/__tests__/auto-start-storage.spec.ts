@@ -175,6 +175,60 @@ describe('auto-start-storage', () => {
     },
   )
 
+  it.each([false, true])(
+    'should retain a newer native result when a concurrent browser write fails after a successful write: %s',
+    async (writeFirst) => {
+      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      localStorage.setItem(
+        'pomo:timer-auto-start:v2',
+        JSON.stringify({isEnabled: false, savedAt: 10}),
+      )
+      const pendingRead = Promise.withResolvers<string | null>()
+      storageMocks.getItem.mockReturnValue(pendingRead.promise)
+      storageMocks.setItem.mockResolvedValue()
+      const reading = readAutoStartPreference()
+      await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
+      if (writeFirst) {
+        await writeAutoStartPreference(false)
+      }
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('browser storage unavailable')
+      })
+      vi.mocked(Date.now).mockReturnValue(21)
+      await writeAutoStartPreference(true)
+      pendingRead.resolve(JSON.stringify({isEnabled: true, savedAt: 21}))
+
+      expect(await reading).toBe(true)
+      expect(storageMocks.setItem).toHaveBeenCalledWith(
+        'pomo:timer-auto-start:v2',
+        JSON.stringify({isEnabled: true, savedAt: 21}),
+      )
+    },
+  )
+
+  it('should compare the current browser value after a later write fails', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(
+      'pomo:timer-auto-start:v2',
+      JSON.stringify({isEnabled: false, savedAt: 10}),
+    )
+    const pendingRead = Promise.withResolvers<string | null>()
+    storageMocks.getItem.mockReturnValue(pendingRead.promise)
+    storageMocks.setItem.mockResolvedValue()
+
+    const reading = readAutoStartPreference()
+    await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
+    await writeAutoStartPreference(true)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('browser storage unavailable')
+    })
+    storageMocks.setItem.mockRejectedValue(new Error('native storage unavailable'))
+    await writeAutoStartPreference(false)
+    pendingRead.resolve(JSON.stringify({isEnabled: false, savedAt: 10}))
+
+    expect(await reading).toBe(true)
+  })
+
   it('should converge native storage after older writes finish last', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     const completions: Array<() => void> = []

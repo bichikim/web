@@ -11,7 +11,7 @@ import {
 const AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v2'
 const LEGACY_AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v1'
 const nativeWriter = createLatestNativeStorageWriter(AUTO_START_STORAGE_KEY)
-let preferenceWriteRevision = 0
+let latestWebWrite: StoredPreference | null = null
 
 const legacyPreferenceSchema = z.boolean()
 const storedPreferenceSchema = z.object({
@@ -52,7 +52,7 @@ const readNativePreference = async () => {
 }
 
 const writeWebPreference = (preference: StoredPreference) => {
-  writeWebStorageJson(AUTO_START_STORAGE_KEY, preference)
+  return writeWebStorageJson(AUTO_START_STORAGE_KEY, preference)
 }
 
 const selectLatestPreference = (
@@ -72,7 +72,7 @@ const selectLatestPreference = (
 
 /** Reads the latest auto-start preference saved by the app or browser runtime. */
 export const readAutoStartPreference = async () => {
-  const initialWriteRevision = preferenceWriteRevision
+  const initialWebWrite = latestWebWrite
   const webPreference = readWebPreference()
 
   if (!hasNativeStorageBridge()) {
@@ -82,11 +82,11 @@ export const readAutoStartPreference = async () => {
   try {
     const nativePreference = await readNativePreference()
 
-    if (preferenceWriteRevision !== initialWriteRevision) {
+    if (latestWebWrite !== initialWebWrite && latestWebWrite !== null) {
       return readWebPreference()?.isEnabled ?? false
     }
 
-    return selectLatestPreference(webPreference, nativePreference)?.isEnabled ?? false
+    return selectLatestPreference(readWebPreference(), nativePreference)?.isEnabled ?? false
   } catch {
     return readWebPreference()?.isEnabled ?? false
   }
@@ -94,9 +94,10 @@ export const readAutoStartPreference = async () => {
 
 /** Persists the auto-start preference until the host app or browser data is removed. */
 export const writeAutoStartPreference = async (isEnabled: boolean) => {
-  preferenceWriteRevision += 1
   const preference = {isEnabled, savedAt: Date.now()} satisfies StoredPreference
-  writeWebPreference(preference)
+  const webWriteError = writeWebPreference(preference)
+
+  latestWebWrite = webWriteError === null ? preference : null
 
   if (!hasNativeStorageBridge()) {
     return
