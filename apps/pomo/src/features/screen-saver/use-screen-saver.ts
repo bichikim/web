@@ -86,8 +86,8 @@ export const useScreenSaver = (): ScreenSaverController => {
         return
       }
 
-      const timeout = window.setTimeout(() => setIsActive(true), delayMilliseconds)
-      onCleanup(() => window.clearTimeout(timeout))
+      const timeout = globalThis.setTimeout(() => setIsActive(true), delayMilliseconds)
+      onCleanup(() => globalThis.clearTimeout(timeout))
     })
 
     onCleanup(() => {

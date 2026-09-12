@@ -13,14 +13,17 @@ export interface MotionEnvironment {
   readonly now: () => number
   readonly requestFrame: (callback: FrameRequestCallback) => number
   readonly cancelFrame: (handle: number) => void
-  readonly setTimer: (callback: () => void, delay: number) => number
-  readonly clearTimer: (handle: number) => void
+  readonly setTimer: (
+    callback: () => void,
+    delay: number,
+  ) => ReturnType<typeof globalThis.setTimeout>
+  readonly clearTimer: (handle: ReturnType<typeof globalThis.setTimeout>) => void
 }
 
 /** Creates browser bindings borrowed by a motion controller; the controller owns its listeners and timers. */
 export const createMotionEnvironment = (): MotionEnvironment => ({
   cancelFrame: (handle) => globalThis.cancelAnimationFrame(handle),
-  clearTimer: (handle) => window.clearTimeout(handle),
+  clearTimer: (handle) => globalThis.clearTimeout(handle),
   document,
   getAngle: () => globalThis.screen.orientation?.angle ?? globalThis.orientation ?? 0,
   getSensor: () =>
@@ -30,6 +33,6 @@ export const createMotionEnvironment = (): MotionEnvironment => ({
   now: () => performance.now(),
   orientation: globalThis.screen.orientation,
   requestFrame: (callback) => globalThis.requestAnimationFrame(callback),
-  setTimer: (callback, delay) => window.setTimeout(callback, delay),
+  setTimer: (callback, delay) => globalThis.setTimeout(callback, delay),
   window,
 })

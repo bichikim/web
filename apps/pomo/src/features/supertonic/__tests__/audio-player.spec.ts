@@ -192,7 +192,7 @@ describe('createSupertonicAudioPlayer', () => {
   it('should cancel a pending rest return and skip closing an already closed context', () => {
     vi.useFakeTimers()
     const runtime = installAudioRuntime()
-    const clearTimeout = vi.spyOn(window, 'clearTimeout')
+    const clearTimeout = vi.spyOn(globalThis, 'clearTimeout')
     const player = createSupertonicAudioPlayer()
 
     player.finish()

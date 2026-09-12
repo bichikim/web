@@ -142,12 +142,12 @@ export const RandomEventSettings = () => {
     }
 
     pendingInterval = nextInterval
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = globalThis.setTimeout(() => {
       pendingInterval = null
       saveSettings({...untrack(settings), ...nextInterval})
     }, SAVE_DEBOUNCE_MILLISECONDS)
 
-    onCleanup(() => window.clearTimeout(timeoutId))
+    onCleanup(() => globalThis.clearTimeout(timeoutId))
   })
 
   return (

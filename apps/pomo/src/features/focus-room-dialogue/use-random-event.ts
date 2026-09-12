@@ -77,7 +77,7 @@ export const useRandomEvent = (props: UseRandomEventProps) => {
       return
     }
 
-    const timerId = window.setTimeout(
+    const timerId = globalThis.setTimeout(
       () => {
         setIsEventPending(true)
         Promise.resolve()
@@ -95,7 +95,7 @@ export const useRandomEvent = (props: UseRandomEventProps) => {
     )
 
     onCleanup(() => {
-      window.clearTimeout(timerId)
+      globalThis.clearTimeout(timerId)
     })
   })
 }

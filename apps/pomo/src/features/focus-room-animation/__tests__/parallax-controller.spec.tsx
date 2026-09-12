@@ -366,14 +366,15 @@ describe('ParallaxController', () => {
   })
 
   it('should use injected sensor and event bindings and release them on destruction', () => {
+    vi.useFakeTimers()
     const browserWindow = {
       addEventListener: vi.fn(),
       matchMedia: window.matchMedia,
       removeEventListener: vi.fn(),
     }
     const onInputModeChange = vi.fn()
-    const clearTimer = vi.fn()
-    const setTimer = vi.fn(() => 1)
+    const clearTimer = vi.fn(globalThis.clearTimeout)
+    const setTimer = vi.fn(globalThis.setTimeout)
 
     const controller = createController(document.createElement('div'), vi.fn(), {
       environment: {
@@ -397,7 +398,7 @@ describe('ParallaxController', () => {
     )
     controller.destroy()
     expect(setTimer).toHaveBeenCalledWith(expect.any(Function), 1_500)
-    expect(clearTimer).toHaveBeenCalledWith(1)
+    expect(clearTimer).toHaveBeenCalledWith(setTimer.mock.results[0].value)
     expect(browserWindow.removeEventListener).toHaveBeenCalledWith(
       'deviceorientation',
       expect.any(Function),

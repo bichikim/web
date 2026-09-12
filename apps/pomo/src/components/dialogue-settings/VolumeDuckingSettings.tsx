@@ -47,7 +47,7 @@ export const DialogueVolumeDuckingSettings = () => {
   const [message, setMessage] = createSignal<string | null>(null)
   let disposed = false
   let pendingSettings: DialogueVolumeDuckingSettingsValue | null = null
-  let saveTimeout: number | null = null
+  let saveTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
 
   const persistSettings = async (nextSettings: DialogueVolumeDuckingSettingsValue) => {
     try {
@@ -70,10 +70,10 @@ export const DialogueVolumeDuckingSettings = () => {
     pendingSettings = nextSettings
 
     if (saveTimeout !== null) {
-      window.clearTimeout(saveTimeout)
+      globalThis.clearTimeout(saveTimeout)
     }
 
-    saveTimeout = window.setTimeout(() => {
+    saveTimeout = globalThis.setTimeout(() => {
       saveTimeout = null
       pendingSettings = null
       persistSettings(nextSettings)
@@ -105,7 +105,7 @@ export const DialogueVolumeDuckingSettings = () => {
     disposed = true
 
     if (saveTimeout !== null) {
-      window.clearTimeout(saveTimeout)
+      globalThis.clearTimeout(saveTimeout)
     }
 
     const nextSettings = pendingSettings

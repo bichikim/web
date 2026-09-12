@@ -152,7 +152,7 @@ export class ParallaxController {
   #destroyed = false
   #deviceOrientationListening = false
   #dragListening = false
-  #dragReturnTimer: number | null = null
+  #dragReturnTimer: ReturnType<typeof globalThis.setTimeout> | null = null
   #dragStartOffsetX = 0
   #dragStartOffsetY = 0
   #dragStartX = 0
@@ -163,7 +163,7 @@ export class ParallaxController {
   #lastFrameTime: number | null = null
   #orientationBaseline: OrientationAxes | null = null
   #sensorActivationListening = false
-  #sensorFallbackTimer: number | null = null
+  #sensorFallbackTimer: ReturnType<typeof globalThis.setTimeout> | null = null
   #started = false
   #targetX = 0
   #targetY = 0
