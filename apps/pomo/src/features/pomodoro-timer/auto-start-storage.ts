@@ -11,6 +11,7 @@ import {
 const AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v2'
 const LEGACY_AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v1'
 const nativeWriter = createLatestNativeStorageWriter(AUTO_START_STORAGE_KEY)
+let preferenceWriteRevision = 0
 
 const legacyPreferenceSchema = z.boolean()
 const storedPreferenceSchema = z.object({
@@ -71,6 +72,7 @@ const selectLatestPreference = (
 
 /** Reads the latest auto-start preference saved by the app or browser runtime. */
 export const readAutoStartPreference = async () => {
+  const initialWriteRevision = preferenceWriteRevision
   const webPreference = readWebPreference()
 
   if (!hasNativeStorageBridge()) {
@@ -79,14 +81,20 @@ export const readAutoStartPreference = async () => {
 
   try {
     const nativePreference = await readNativePreference()
+
+    if (preferenceWriteRevision !== initialWriteRevision) {
+      return readWebPreference()?.isEnabled ?? false
+    }
+
     return selectLatestPreference(webPreference, nativePreference)?.isEnabled ?? false
   } catch {
-    return webPreference?.isEnabled ?? false
+    return readWebPreference()?.isEnabled ?? false
   }
 }
 
 /** Persists the auto-start preference until the host app or browser data is removed. */
 export const writeAutoStartPreference = async (isEnabled: boolean) => {
+  preferenceWriteRevision += 1
   const preference = {isEnabled, savedAt: Date.now()} satisfies StoredPreference
   writeWebPreference(preference)
 
