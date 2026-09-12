@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
 import {transformDeformerPoint} from '../../../deformation'
-import {createDemoDocument, parseDocument} from '../../../player'
+import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '../../../player'
 import {addDeformerCurveHandle, setDeformerCurveHandle} from '../deformer-curve-handles'
 import {
   addParameter,
@@ -283,6 +283,62 @@ describe('scene graph', () => {
     expect(
       resizeDeformer({columns: 2, document: locked, nodeId: deformer.id, rows: 2}),
     ).toBeUndefined()
+  })
+
+  test('should bound sparse curve error in resized rest and stored parameter keyforms', () => {
+    const node: PuppetSceneDeformerNode = {
+      bounds: {height: 100, width: 100, x: 0, y: 0},
+      children: getDocumentScene(createDemoDocument()).roots,
+      columns: 1,
+      controlPoints: [0, 0, 100, 0, 0, 100, 100, 100],
+      curveHandles: [
+        {horizontal: {x: 100 + 100 / 3, y: -100}, pointIndex: 1, vertical: {x: 0, y: 100 / 3}},
+        {horizontal: {x: 100 / 3, y: 0}, pointIndex: 2, vertical: {x: -100, y: 100 + 100 / 3}},
+      ],
+      id: 'sparse',
+      kind: 'deformer',
+      locked: false,
+      name: 'Sparse',
+      rows: 1,
+      visible: true,
+    }
+    const source = {
+      ...createDemoDocument(),
+      motions: [],
+      parameterBindings: [],
+      parameters: [],
+      scene: {roots: [node]},
+    }
+    const added = addParameter({document: source, nodeIds: [node.id]})!
+    const resized = resizeDeformer({
+      columns: 1,
+      document: added.document,
+      nodeId: node.id,
+      rows: 2,
+    })!
+    const parsed = parseDocument(JSON.stringify(resized))
+    expect(parsed).toMatchObject({ok: true})
+    if (!parsed.ok) {
+      throw new Error('Expected serialized deformer document')
+    }
+    const rest = getDocumentScene(parsed.document).roots[0]
+    if (rest.kind !== 'deformer') {
+      throw new Error('Expected resized deformer')
+    }
+    const keyforms = parsed.document.parameterBindings![0].keyforms.flatMap(
+      (keyform) => keyform.deformers ?? [],
+    )
+    expect(keyforms.length).toBeGreaterThan(0)
+    const shapes = [rest, ...keyforms.map((keyform) => ({...rest, ...keyform}))]
+    for (const shape of shapes) {
+      for (let y = 0; y <= 100; y += 5) {
+        for (let x = 0; x <= 100; x += 5) {
+          const before = transformDeformerPoint(node, {x, y})
+          const after = transformDeformerPoint(shape, {x, y})
+          expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeLessThan(4)
+        }
+      }
+    }
   })
 
   test('should resample rest and parameter keyforms from the curved surface', () => {
