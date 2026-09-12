@@ -77,7 +77,6 @@ describe('SteamParticleSystem', () => {
   beforeEach(() => {
     pixiMocks.containers.length = 0
     pixiMocks.sprites.length = 0
-    vi.spyOn(globalThis.performance, 'now').mockReturnValue(100)
   })
 
   afterEach(() => {
@@ -140,10 +139,42 @@ describe('SteamParticleSystem', () => {
     system.setReducedMotion(true)
     system.setReducedMotion(false)
     expect(frames).toHaveLength(1)
-    expect(globalThis.performance.now).toHaveBeenCalledTimes(2)
 
     system.destroy()
   })
+
+  it.each(['visibility', 'reduced motion'])(
+    'should restart frame timing after %s changes',
+    (mode) => {
+      const frames = createFrames()
+      const {system} = createSystem()
+      const renderFrame = (timestamp: number) => {
+        const frame = frames.values().next().value
+        frames.clear()
+        frame?.(timestamp)
+      }
+
+      system.start()
+      renderFrame(0)
+      expect(pixiMocks.sprites[0].alpha).toBe(0)
+      renderFrame(1_500)
+      expect(pixiMocks.sprites[0].alpha).toBeGreaterThan(0)
+
+      if (mode === 'visibility') {
+        system.setVisible(false)
+        system.setVisible(true)
+      } else {
+        system.setReducedMotion(true)
+        system.setReducedMotion(false)
+      }
+
+      renderFrame(10_000)
+      expect(pixiMocks.sprites[0].alpha).toBe(0)
+      renderFrame(11_500)
+      expect(pixiMocks.sprites[0].alpha).toBeGreaterThan(0)
+      system.destroy()
+    },
+  )
 
   it('should defer reduced-motion rendering until a hidden system becomes visible', () => {
     const frames = createFrames()

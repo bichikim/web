@@ -42,7 +42,7 @@ export class SteamParticleSystem {
   #destroyed = false
   #frame: number | null = null
   #started = false
-  #startedAt = 0
+  #startedAt: number | undefined
   #visible = true
 
   constructor(options: SteamParticleSystemOptions) {
@@ -73,7 +73,7 @@ export class SteamParticleSystem {
     }
 
     this.#started = true
-    this.#startedAt = globalThis.performance.now()
+    this.#startedAt = undefined
 
     if (!this.#visible) {
       return
@@ -114,7 +114,7 @@ export class SteamParticleSystem {
       return
     }
 
-    this.#startedAt = globalThis.performance.now()
+    this.#startedAt = undefined
     this.#requestFrame()
   }
 
@@ -140,7 +140,7 @@ export class SteamParticleSystem {
       return
     }
 
-    this.#startedAt = globalThis.performance.now()
+    this.#startedAt = undefined
 
     if (this.#prefersReducedMotion) {
       this.#renderParticles(MINIMUM_LIFETIME * 0.42)
@@ -179,6 +179,7 @@ export class SteamParticleSystem {
 
     this.#frame = globalThis.requestAnimationFrame((timestamp) => {
       this.#frame = null
+      this.#startedAt ??= timestamp
       this.#renderParticles(timestamp - this.#startedAt)
       this.#onRender()
       this.#requestFrame()
