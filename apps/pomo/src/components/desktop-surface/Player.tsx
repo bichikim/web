@@ -1,3 +1,4 @@
+import {usePDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {cx} from 'class-variance-authority'
 import {usePSceneStyle} from '../../features/focus-room-animation'
 import {useDesktopMode, useDesktopSceneSettingsListener} from '../../features/desktop-mode'
@@ -7,6 +8,7 @@ import * as m from '@paraglide/message'
 
 export const DesktopPlayer = () => {
   const desktopMode = useDesktopMode()
+  const displayPreferences = usePDisplayPreferences()
   const sceneStyle = usePSceneStyle()
   useDesktopSceneSettingsListener({onSceneStyleChange: sceneStyle.onSceneStyleChange})
 
@@ -17,7 +19,11 @@ export const DesktopPlayer = () => {
         'flex items-end [&_.pomo-player-stage]:relative',
         '[&_.pomo-player-stage]:inset-auto [&_.pomo-player-stage]:w-full',
       )}
-      isVisible={desktopMode.mode() === 'desktop'}
+      isVisible={
+        desktopMode.mode() === 'desktop' &&
+        displayPreferences.isReady() &&
+        displayPreferences.playerVisible()
+      }
       title={m.desktop_player_title()}
     >
       <PMusicPlayer expanded sceneStyle={sceneStyle.sceneStyle()} />
