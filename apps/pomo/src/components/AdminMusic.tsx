@@ -14,6 +14,25 @@ export const AdminMusic = () => {
       <Title>음악 / 앨범 관리 · 앱</Title>
       <AdminMusicHeader model={model} />
 
+      <Show when={model.catalogRefreshMessage()}>
+        {(refreshMessage) => (
+          <div
+            role="status"
+            class="mx-auto mt-6 w-full max-w-6xl rounded-3 bg-white/7 px-4 py-3 text-sm"
+          >
+            <p>{refreshMessage()}</p>
+            <button
+              type="button"
+              class="mt-3 rounded-2 bg-white/10 px-3 py-2 disabled:opacity-50"
+              disabled={model.isRefreshingCatalog()}
+              onClick={model.handleCatalogRetry}
+            >
+              {model.isRefreshingCatalog() ? '목록 갱신 중…' : '목록 새로고침'}
+            </button>
+          </div>
+        )}
+      </Show>
+
       <Show when={model.message()}>
         {(currentMessage) => (
           <p class="mx-auto mt-6 w-full max-w-6xl rounded-3 bg-white/7 px-4 py-3 text-sm">

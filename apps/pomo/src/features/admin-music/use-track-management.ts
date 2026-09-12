@@ -19,6 +19,49 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
   const [trackResetVersion, setTrackResetVersion] = createSignal(0)
   const [trackTitle, setTrackTitle] = createSignal('')
 
+  const [catalogRefreshMessage, setCatalogRefreshMessage] = createSignal<string | null>(null)
+  const [isRefreshingCatalog, setIsRefreshingCatalog] = createSignal(false)
+  let catalogRevision = 0
+
+  const refreshTrackCatalog = async (message: string): Promise<void> => {
+    catalogRevision += 1
+    const revision = catalogRevision
+    setCatalogRefreshMessage(null)
+    props.setMessage(message)
+    try {
+      await props.refreshCatalog()
+      if (revision === catalogRevision) {
+        setCatalogRefreshMessage(null)
+        props.setMessage(message)
+      }
+    } catch {
+      if (revision === catalogRevision) {
+        setCatalogRefreshMessage(`${message} 목록을 새로고침하지 못했습니다.`)
+      }
+    }
+  }
+
+  const handleCatalogRetry = async (): Promise<void> => {
+    if (isRefreshingCatalog() || catalogRefreshMessage() === null) {
+      return
+    }
+
+    catalogRevision += 1
+    const revision = catalogRevision
+    setIsRefreshingCatalog(true)
+    try {
+      await props.refreshCatalog()
+      if (revision === catalogRevision) {
+        setCatalogRefreshMessage(null)
+        props.setMessage('목록을 새로고침했습니다.')
+      }
+    } catch {
+      // Preserve the completed mutation notice while another catalog retry is needed.
+    } finally {
+      setIsRefreshingCatalog(false)
+    }
+  }
+
   const handleTrackSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
     event.preventDefault()
     const trackForm = event.currentTarget
@@ -59,8 +102,7 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       setTrackTitle('')
       setTrackResetVersion((version) => version + 1)
       trackForm.reset()
-      await props.refreshCatalog()
-      props.setMessage('곡과 MP3를 앨범에 추가하고 활성화했습니다.')
+      await refreshTrackCatalog('곡과 MP3를 앨범에 추가하고 활성화했습니다.')
       return
     }
 
@@ -74,8 +116,7 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       .filter((submission) => !submission.pending && submission.input[0] === trackId)
       .forEach((submission) => submission.clear())
     if (result.status === 'succeeded') {
-      await props.refreshCatalog()
-      props.setMessage('수록곡과 MP3 파일을 삭제했습니다.')
+      await refreshTrackCatalog('수록곡과 MP3 파일을 삭제했습니다.')
       return
     }
 
@@ -89,8 +130,7 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       .filter((submission) => !submission.pending && submission.input[0] === assetId)
       .forEach((submission) => submission.clear())
     if (result.status !== 'rejected') {
-      await props.refreshCatalog()
-      props.setMessage(
+      await refreshTrackCatalog(
         result.status === 'active'
           ? 'MP3 등록을 확인하고 수록곡을 활성화했습니다.'
           : '등록 결과를 아직 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -103,8 +143,10 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
   }
 
   return {
+    catalogRefreshMessage,
     confirmingAssetId: () =>
       confirmTrackSubmissions.findLast((submission) => submission.pending)?.input[0] ?? null,
+    handleCatalogRetry,
     handleTrackConfirmation,
     handleTrackRemove,
     handleTrackSubmit,
@@ -112,6 +154,7 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       confirmTrackSubmissions.some(
         (submission) => submission.pending && submission.input[0] === assetId,
       ),
+    isRefreshingCatalog,
     isRemovingTrack: (trackId: string) =>
       removeTrackSubmissions.some(
         (submission) => submission.pending && submission.input[0] === trackId,
