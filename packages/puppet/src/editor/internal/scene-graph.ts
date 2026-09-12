@@ -18,6 +18,7 @@ import {
   resampleDeformerGrid,
   resampleGridControlPoints,
   resampleGridCurveHandles,
+  SURFACE_RESAMPLE_ERROR_RATIO,
 } from './grid-control-points'
 import {
   collectNodeIds,
@@ -345,6 +346,8 @@ export const resizeDeformer = (options: ResizeDeformerOptions): PuppetDocument |
                 columns: node.columns,
                 controlPoints: deformer.controlPoints,
                 curveHandles: deformer.curveHandles,
+                maximumError:
+                  Math.max(node.bounds.width, node.bounds.height) * SURFACE_RESAMPLE_ERROR_RATIO,
                 nextColumns: options.columns,
                 nextRows: options.rows,
                 rows: node.rows,
