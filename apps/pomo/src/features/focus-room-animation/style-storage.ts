@@ -31,7 +31,7 @@ export const readPSceneStyle = async (): Promise<PSceneStyle> => {
 
   if (webPreference !== null) {
     if (hasNativeStorageBridge()) {
-      nativeWriter.write(SCENE_STYLE_STORAGE_KEY, webPreference).catch(globalThis.reportError)
+      nativeWriter.write(SCENE_STYLE_STORAGE_KEY, webPreference)
     }
 
     return webPreference
