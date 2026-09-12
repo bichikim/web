@@ -170,3 +170,123 @@ it('should deliver changes to the other endpoint without replaying them locally'
     remote.cleanup()
   }
 })
+
+it('should hydrate each reopened settings endpoint from the current owner motion', async () => {
+  vi.stubGlobal('BroadcastChannel', NativeBroadcastChannel)
+  let motionMode = 'pan' as 'pan' | 'depth'
+  const ownerChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange: ownerChange},
+      snapshot: () => [
+        {name: 'motionMode', value: motionMode},
+        {name: 'motionInput', value: 'drag'},
+      ],
+    }),
+  )
+  const checkReopened = async (expected: 'pan' | 'depth') => {
+    motionMode = expected
+    const onMotionModeChange = vi.fn()
+    const onMotionInputChange = vi.fn()
+    const surface = renderHook(() =>
+      useDesktopSceneSettingsPublisher({
+        handlers: {onMotionInputChange, onMotionModeChange},
+        requestSnapshot: true,
+      }),
+    )
+    try {
+      await vi.waitFor(() => expect(onMotionModeChange).toHaveBeenCalledExactlyOnceWith(expected))
+      expect(onMotionInputChange).toHaveBeenCalledExactlyOnceWith('drag')
+      expect(ownerChange).not.toHaveBeenCalled()
+    } finally {
+      surface.cleanup()
+    }
+  }
+  try {
+    await checkReopened('pan')
+    await checkReopened('depth')
+  } finally {
+    owner.cleanup()
+  }
+})
+
+it('should preserve edits made while the initial snapshot is in flight', () => {
+  const ownerChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange: ownerChange},
+      snapshot: () => [
+        {name: 'motionMode', value: 'pan'},
+        {name: 'motionInput', value: 'gyroscope'},
+      ],
+    }),
+  )
+  const receivedMode = vi.fn()
+  const receivedInput = vi.fn()
+  const surface = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionInputChange: receivedInput, onMotionModeChange: receivedMode},
+      requestSnapshot: true,
+    }),
+  )
+  const [ownerChannel, surfaceChannel] = TestBroadcastChannel.instances
+  ownerChannel?.dispatch(surfaceChannel?.postMessage.mock.calls[0]?.[0])
+  surface.result.publish({name: 'motionMode', value: 'depth'})
+  ownerChannel?.dispatch(surfaceChannel?.postMessage.mock.calls[1]?.[0])
+  surfaceChannel?.dispatch(ownerChannel?.postMessage.mock.calls[0]?.[0])
+  expect(ownerChange).toHaveBeenCalledExactlyOnceWith('depth')
+  expect(receivedMode).not.toHaveBeenCalled()
+  expect(receivedInput).toHaveBeenCalledExactlyOnceWith('gyroscope')
+  surfaceChannel?.dispatch({name: 'motionMode', value: 'pan'})
+  expect(receivedMode).toHaveBeenCalledExactlyOnceWith('pan')
+  owner.cleanup()
+  surface.cleanup()
+})
+
+it('should ignore unsolicited, malformed, and repeated snapshots', () => {
+  const ownerChange = vi.fn()
+  const remoteChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({handlers: {onMotionModeChange: ownerChange}}),
+  )
+  const surface = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange: remoteChange},
+      requestSnapshot: true,
+    }),
+  )
+  const [ownerChannel, surfaceChannel] = TestBroadcastChannel.instances
+  const snapshot = {settings: [{name: 'motionMode', value: 'pan'}], type: 'snapshot'}
+  ownerChannel?.dispatch(snapshot)
+  surfaceChannel?.dispatch({settings: [{name: 'motionMode', value: 'invalid'}], type: 'snapshot'})
+  expect(remoteChange).not.toHaveBeenCalled()
+  surfaceChannel?.dispatch(snapshot)
+  surfaceChannel?.dispatch(snapshot)
+  expect(ownerChange).not.toHaveBeenCalled()
+  expect(remoteChange).toHaveBeenCalledExactlyOnceWith('pan')
+  owner.cleanup()
+  surface.cleanup()
+})
+
+it('should preserve a received update ahead of an older snapshot', () => {
+  const onMotionModeChange = vi.fn()
+  const onMotionInputChange = vi.fn()
+  const surface = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionInputChange, onMotionModeChange},
+      requestSnapshot: true,
+    }),
+  )
+  const channel = TestBroadcastChannel.instances[0]
+  channel?.dispatch({name: 'motionMode', value: 'depth'})
+  channel?.dispatch({
+    settings: [
+      {name: 'motionMode', value: 'pan'},
+      {name: 'motionInput', value: 'gyroscope'},
+    ],
+    type: 'snapshot',
+  })
+  expect(onMotionModeChange).toHaveBeenCalledExactlyOnceWith('depth')
+  expect(onMotionInputChange).toHaveBeenCalledExactlyOnceWith('gyroscope')
+  surface.cleanup()
+})

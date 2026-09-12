@@ -96,3 +96,36 @@ it.each([true, false])(
     expect(mocks.audio).toHaveBeenCalledTimes(2)
   },
 )
+
+it.each([true, false])(
+  'should recover retired audio while preserving the edited memo (native: %s)',
+  async (native) => {
+    mocks.native = native
+    const {updateMemoryMemos} = await import('..')
+    await updateMemoryMemos((memos) =>
+      memos.map((current) => ({
+        ...current,
+        dialogueId: null,
+        retiredDialogueIds: [memo.dialogueId],
+        text: '변경된 메모',
+      })),
+    )
+    const deleteDialogue = vi.fn().mockResolvedValue(undefined)
+    mocks.audio.mockRejectedValueOnce(new Error('cache failed'))
+    await expect(memoryMemoDeletion.cleanup({deleteDialogue, memoId: memo.id})).rejects.toThrow(
+      'cache failed',
+    )
+    expect((await readMemoryMemos())[0]).toMatchObject({
+      dialogueId: null,
+      retiredDialogueIds: [memo.dialogueId],
+      text: '변경된 메모',
+    })
+    await memoryMemoDeletion.retry(deleteDialogue)
+    expect((await readMemoryMemos())[0]).toMatchObject({
+      dialogueId: null,
+      retiredDialogueIds: [],
+      text: '변경된 메모',
+    })
+    expect(mocks.audio).toHaveBeenCalledTimes(2)
+  },
+)
