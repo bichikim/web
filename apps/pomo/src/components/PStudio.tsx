@@ -354,7 +354,7 @@ export const PStudio = () => {
             pomoSay={pomoSay}
             sceneStyle={style.sceneStyle()}
           />
-          <Show when={scenePreferences.isReady()}>
+          <Show when={scenePreferences.isReady() && displayPreferences.isReady()}>
             <SceneToolbar
               {...sceneSettings}
               background={background}
