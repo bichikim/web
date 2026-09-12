@@ -1,3 +1,4 @@
+import {useStudioDesktopSceneSettings} from './p-studio/use-studio-desktop-scene-settings'
 import {type BackgroundController, useBackground} from '../features/background'
 import {Player as FramePlayer} from './frame/Player'
 import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
@@ -33,11 +34,9 @@ import {usePSay} from '../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../features/weather'
 import {
   type DesktopMode,
-  type DesktopSceneSettingsHandlers,
   isDesktopBackgroundMode,
   useDesktopMode,
   useDesktopSafeAreaTop,
-  useDesktopSceneSettingsPublisher,
 } from '../features/desktop-mode'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
@@ -201,77 +200,6 @@ const StudioOverlay = (props: StudioOverlayProps) => (
   </>
 )
 
-interface StudioDesktopSceneSettingsOptions {
-  readonly scenePreferences: ReturnType<typeof usePScenePreferences>
-  readonly sceneStyleController: ReturnType<typeof usePSceneStyle>
-  readonly screenSaver: ReturnType<typeof useStudioScreenSaver>
-  readonly setMotionInput: Setter<PSceneMotionInput>
-  readonly setMotionMode: Setter<PSceneMotionMode>
-  readonly weather: ReturnType<typeof useWeather>
-}
-
-const useStudioDesktopSceneSettings = (
-  options: StudioDesktopSceneSettingsOptions,
-): Required<DesktopSceneSettingsHandlers> => {
-  const {scenePreferences, sceneStyleController, screenSaver, weather} = options
-  const handlers = {
-    onActivityChange: scenePreferences.onActivityChange,
-    onGazeChange: scenePreferences.onGazeChange,
-    onMotionInputChange: options.setMotionInput,
-    onMotionModeChange: options.setMotionMode,
-    onSceneStyleChange: sceneStyleController.onSceneStyleChange,
-    onScreenSaverDelayChange: screenSaver.onDelayChange,
-    onTimeModeChange: scenePreferences.onTimeModeChange,
-    onWeatherEnabledChange: weather.onEnabledChange,
-    onWeatherLocationChange: weather.onLocationChange,
-    onWeatherSceneModeChange: weather.onSceneModeChange,
-  }
-  const publisher = useDesktopSceneSettingsPublisher({handlers})
-
-  return {
-    onActivityChange: (value) => {
-      handlers.onActivityChange(value)
-      publisher.publish({name: 'activity', value})
-    },
-    onGazeChange: (value) => {
-      handlers.onGazeChange(value)
-      publisher.publish({name: 'gaze', value})
-    },
-    onMotionInputChange: (value) => {
-      handlers.onMotionInputChange(value)
-      publisher.publish({name: 'motionInput', value})
-    },
-    onMotionModeChange: (value) => {
-      handlers.onMotionModeChange(value)
-      publisher.publish({name: 'motionMode', value})
-    },
-    onSceneStyleChange: (value) => {
-      handlers.onSceneStyleChange(value)
-      publisher.publish({name: 'sceneStyle', value})
-    },
-    onScreenSaverDelayChange: (value) => {
-      handlers.onScreenSaverDelayChange(value)
-      publisher.publish({name: 'screenSaverDelay', value})
-    },
-    onTimeModeChange: (value) => {
-      handlers.onTimeModeChange(value)
-      publisher.publish({name: 'timeMode', value})
-    },
-    onWeatherEnabledChange: (value) => {
-      handlers.onWeatherEnabledChange(value)
-      publisher.publish({name: 'weatherEnabled', value})
-    },
-    onWeatherLocationChange: (value) => {
-      handlers.onWeatherLocationChange(value)
-      publisher.publish({name: 'weatherLocation', value})
-    },
-    onWeatherSceneModeChange: (value) => {
-      handlers.onWeatherSceneModeChange(value)
-      publisher.publish({name: 'weatherSceneMode', value})
-    },
-  }
-}
-
 interface StudioRuntimeOptions {
   readonly entry: ReturnType<typeof useStudioEntry>
   readonly setAutomaticPeriod: Setter<ScenePeriod>
@@ -359,12 +287,20 @@ export const PStudio = () => {
     pomoSay.isPlaying,
   )
   const sceneSettings = useStudioDesktopSceneSettings({
-    scenePreferences,
-    sceneStyleController: style,
-    screenSaver,
-    setMotionInput,
-    setMotionMode,
-    weather,
+    handlers: {
+      onActivityChange: scenePreferences.onActivityChange,
+      onGazeChange: scenePreferences.onGazeChange,
+      onMotionInputChange: setMotionInput,
+      onMotionModeChange: setMotionMode,
+      onSceneStyleChange: style.onSceneStyleChange,
+      onScreenSaverDelayChange: screenSaver.onDelayChange,
+      onTimeModeChange: scenePreferences.onTimeModeChange,
+      onWeatherEnabledChange: weather.onEnabledChange,
+      onWeatherLocationChange: weather.onLocationChange,
+      onWeatherSceneModeChange: weather.onSceneModeChange,
+    },
+    motionInput,
+    motionMode,
   })
   const selectedScene = createMemo(() =>
     getSceneAsset(time(), scenePreferences.activity(), sceneGaze(), style.sceneStyle()),
@@ -396,7 +332,7 @@ export const PStudio = () => {
         motionInput={motionInput()}
         motionMode={motionMode()}
         onLoadingChange={createLoadingHandler(setIsSceneLoading, setHasSceneRendered)}
-        onMotionInputChange={setMotionInput}
+        onMotionInputChange={sceneSettings.onMotionInputChange}
         scene={selectedScene()}
         sceneGaze={sceneGaze()}
         sceneStyle={style.sceneStyle()}

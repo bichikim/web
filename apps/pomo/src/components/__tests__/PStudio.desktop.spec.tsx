@@ -11,6 +11,7 @@ import {
 } from './p-studio/setup'
 
 const {
+  PStudioScene,
   isDesktopBackgroundMode,
   SceneToolbar,
   useDesktopSafeAreaTop,
@@ -160,3 +161,13 @@ it.each(['interactiveDesktop', 'widget'] as const)(
     expect(publish).toHaveBeenLastCalledWith({name: 'activity', value: 'writing'})
   },
 )
+
+it('should connect renderer input fallback to desktop publishing', () => {
+  configureStudio({desktopMode: 'interactiveDesktop', entrySession: true, gyroscope: true})
+  const publish = vi.fn()
+  vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
+  renderStudio()
+  vi.mocked(PStudioScene).mock.calls[0]?.[0].onMotionInputChange?.('drag')
+  expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'motionInput', value: 'drag'})
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
+})
