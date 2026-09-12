@@ -76,6 +76,12 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
     props.onDismiss?.()
   }
 
+  const handleKeyDown = (event: KeyboardEvent) => {
+    // Keep the dismissal key from also closing a dialog behind the screen saver.
+    event.preventDefault()
+    handleDismiss()
+  }
+
   onMount(() => {
     createEffect(() => {
       if (props.isActive ?? false) {
@@ -99,7 +105,7 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
         event.preventDefault()
         handleDismiss()
       }}
-      onKeyDown={handleDismiss}
+      onKeyDown={handleKeyDown}
       onPointerDown={handleDismiss}
       ref={(element) => {
         dialogElement = element

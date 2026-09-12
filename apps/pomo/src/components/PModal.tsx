@@ -1,6 +1,6 @@
 import {Dialog} from '@kobalte/core/dialog'
 import {cva, cx} from 'class-variance-authority'
-import {type JSX, Show} from 'solid-js'
+import {type JSX, Show, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
@@ -89,150 +89,172 @@ const resolveHeaderLayout = (
   return titleVisibility === 'visually-hidden' ? 'navigationVisuallyHidden' : 'navigation'
 }
 
-export const PModal = (props: PModalProps) => (
-  <Dialog modal onOpenChange={props.onOpenChange} open={props.isOpen}>
-    <Dialog.Portal>
-      <Dialog.Overlay
-        class={
-          'fixed inset-0 bg-backdrop backdrop-blur-[0.75rem] ' +
-          'animate-modal-overlay-in motion-reduce:animate-none'
-        }
-      />
-      <Dialog.Content
-        class={modalContentClasses({
-          placement: props.placement ?? 'center',
-          size: props.size ?? 'regular',
-        })}
-        data-placement={props.placement ?? 'center'}
-        data-size={props.size ?? 'regular'}
-        onCloseAutoFocus={(event) => {
-          if (props.onCloseAutoFocus === undefined) {
-            return
-          }
+const handleModalEscape = (event: KeyboardEvent, props: PModalProps) => {
+  if (props.closeOnEscape === false) {
+    event.preventDefault()
+    return
+  }
+  // Kobalte tabs consume Escape even though their selection cannot be cleared.
+  if (
+    event.defaultPrevented &&
+    event.target instanceof Element &&
+    event.target.matches('[role="tab"]')
+  ) {
+    props.onOpenChange(false)
+  }
+}
 
-          event.preventDefault()
-          props.onCloseAutoFocus()
-        }}
-        onEscapeKeyDown={(event) => {
-          if (props.closeOnEscape === false) {
+export const PModal = (props: PModalProps) => {
+  const handleOpenAutoFocus = (event: Event) => {
+    const initialFocus = props.getInitialFocus?.()
+
+    if (initialFocus === undefined || initialFocus === null) {
+      return
+    }
+
+    event.preventDefault()
+    // Let the parent focus scope finish pausing before moving into the child portal.
+    queueMicrotask(() => {
+      if (untrack(() => props.isOpen) && initialFocus.isConnected) {
+        initialFocus.focus()
+      }
+    })
+  }
+
+  return (
+    <Dialog modal onOpenChange={props.onOpenChange} open={props.isOpen}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          class={
+            'fixed inset-0 bg-backdrop backdrop-blur-[0.75rem] ' +
+            'animate-modal-overlay-in motion-reduce:animate-none'
+          }
+        />
+        <Dialog.Content
+          class={modalContentClasses({
+            placement: props.placement ?? 'center',
+            size: props.size ?? 'regular',
+          })}
+          data-placement={props.placement ?? 'center'}
+          data-size={props.size ?? 'regular'}
+          onCloseAutoFocus={(event) => {
+            if (props.onCloseAutoFocus === undefined) {
+              return
+            }
+
             event.preventDefault()
-          }
-        }}
-        onOpenAutoFocus={(event) => {
-          const initialFocus = props.getInitialFocus?.()
-
-          if (initialFocus === undefined || initialFocus === null) {
-            return
-          }
-
-          event.preventDefault()
-          initialFocus.focus()
-        }}
-      >
-        <Show
-          when={props.headerMode !== 'hidden'}
-          fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
+            props.onCloseAutoFocus()
+          }}
+          onEscapeKeyDown={(event) => handleModalEscape(event, props)}
+          onOpenAutoFocus={handleOpenAutoFocus}
         >
-          <header
-            class={modalHeaderClasses({
-              layout: resolveHeaderLayout(
-                props.headerMode,
-                props.navigation !== undefined,
-                props.titleVisibility,
-              ),
-            })}
-            data-has-navigation={props.navigation === undefined ? undefined : ''}
-            data-mode={props.headerMode ?? 'default'}
-            data-title-visibility={props.titleVisibility ?? 'visible'}
+          <Show
+            when={props.headerMode !== 'hidden'}
+            fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
           >
-            <Show
-              fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
-              when={(props.headerMode ?? 'default') === 'default'}
+            <header
+              class={modalHeaderClasses({
+                layout: resolveHeaderLayout(
+                  props.headerMode,
+                  props.navigation !== undefined,
+                  props.titleVisibility,
+                ),
+              })}
+              data-has-navigation={props.navigation === undefined ? undefined : ''}
+              data-mode={props.headerMode ?? 'default'}
+              data-title-visibility={props.titleVisibility ?? 'visible'}
             >
-              <div
-                class={cx(
-                  'min-w-0',
-                  props.titleVisibility === 'visually-hidden' && 'sr-only',
-                  props.navigation !== undefined && 'self-center',
-                )}
+              <Show
+                fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
+                when={(props.headerMode ?? 'default') === 'default'}
               >
-                <Dialog.Title class="m-0 text-lg font-750 leading-6 text-foreground">
-                  {props.title}
-                </Dialog.Title>
-                <Show when={props.description}>
-                  {(description) => (
-                    <Dialog.Description
-                      class={
-                        'mb-0 ml-0 mr-0 mt-1.5 text-modal-detail leading-5 ' +
-                        'text-muted-foreground empty:hidden'
-                      }
-                    >
-                      {description()}
-                    </Dialog.Description>
-                  )}
-                </Show>
-              </div>
-            </Show>
-            <Show when={props.navigation}>
-              {(navigation) => (
                 <div
                   class={cx(
-                    'min-w-0 overflow-hidden',
-                    props.titleVisibility === 'visually-hidden'
-                      ? 'max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
-                      : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
+                    'min-w-0',
+                    props.titleVisibility === 'visually-hidden' && 'sr-only',
+                    props.navigation !== undefined && 'self-center',
                   )}
                 >
-                  {navigation()}
+                  <Dialog.Title class="m-0 text-lg font-750 leading-6 text-foreground">
+                    {props.title}
+                  </Dialog.Title>
+                  <Show when={props.description}>
+                    {(description) => (
+                      <Dialog.Description
+                        class={
+                          'mb-0 ml-0 mr-0 mt-1.5 text-modal-detail leading-5 ' +
+                          'text-muted-foreground empty:hidden'
+                        }
+                      >
+                        {description()}
+                      </Dialog.Description>
+                    )}
+                  </Show>
                 </div>
-              )}
-            </Show>
-            <Show when={(props.closeButtonVisibility ?? 'visible') === 'visible'}>
-              <div
-                class={cx(
-                  'flex flex-none items-center justify-center',
-                  props.navigation !== undefined && 'self-stretch',
-                  props.navigation !== undefined &&
-                    props.titleVisibility === 'visually-hidden' &&
-                    'border-l border-solid border-border px-3 ' +
-                      'max-md:col-start-2 max-md:row-start-1 ' +
-                      'max-md:px-2',
+              </Show>
+              <Show when={props.navigation}>
+                {(navigation) => (
+                  <div
+                    class={cx(
+                      'min-w-0 overflow-hidden',
+                      props.titleVisibility === 'visually-hidden'
+                        ? 'max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
+                        : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
+                    )}
+                  >
+                    {navigation()}
+                  </div>
                 )}
-              >
-                <Dialog.CloseButton
-                  aria-label={m.common_close()}
+              </Show>
+              <Show when={(props.closeButtonVisibility ?? 'visible') === 'visible'}>
+                <div
                   class={cx(
-                    'grid flex-none cursor-pointer place-items-center border-0 ' +
-                      'rounded-full bg-transparent text-muted-foreground ' +
-                      'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
-                      'hover:bg-secondary-soft hover:text-foreground ' +
-                      'focus-visible:shadow-focus motion-reduce:transition-none size-11',
+                    'flex flex-none items-center justify-center',
+                    props.navigation !== undefined && 'self-stretch',
+                    props.navigation !== undefined &&
+                      props.titleVisibility === 'visually-hidden' &&
+                      'border-l border-solid border-border px-3 ' +
+                        'max-md:col-start-2 max-md:row-start-1 ' +
+                        'max-md:px-2',
                   )}
                 >
-                  <span aria-hidden="true" class="i-tabler-x size-5" />
-                </Dialog.CloseButton>
-              </div>
-            </Show>
-          </header>
-        </Show>
-        <div
-          class={cx(
-            'min-h-0 overscroll-contain p-5 ' +
-              '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]',
-            props.navigation !== undefined && 'settings-compact:p-4',
-            (props.contentOverflow ?? 'auto') === 'hidden' ? 'overflow-hidden' : 'overflow-y-auto',
-          )}
-        >
-          {props.children}
-        </div>
-        <Show when={props.footer}>
-          {(footer) => (
-            <footer class="flex-none border-t border-solid border-border px-5 py-3">
-              {footer()}
-            </footer>
-          )}
-        </Show>
-      </Dialog.Content>
-    </Dialog.Portal>
-  </Dialog>
-)
+                  <Dialog.CloseButton
+                    aria-label={m.common_close()}
+                    class={cx(
+                      'grid flex-none cursor-pointer place-items-center border-0 ' +
+                        'rounded-full bg-transparent text-muted-foreground ' +
+                        'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
+                        'hover:bg-secondary-soft hover:text-foreground ' +
+                        'focus-visible:shadow-focus motion-reduce:transition-none size-11',
+                    )}
+                  >
+                    <span aria-hidden="true" class="i-tabler-x size-5" />
+                  </Dialog.CloseButton>
+                </div>
+              </Show>
+            </header>
+          </Show>
+          <div
+            class={cx(
+              'min-h-0 overscroll-contain p-5 ' +
+                '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]',
+              props.navigation !== undefined && 'settings-compact:p-4',
+              (props.contentOverflow ?? 'auto') === 'hidden'
+                ? 'overflow-hidden'
+                : 'overflow-y-auto',
+            )}
+          >
+            {props.children}
+          </div>
+          <Show when={props.footer}>
+            {(footer) => (
+              <footer class="flex-none border-t border-solid border-border px-5 py-3">
+                {footer()}
+              </footer>
+            )}
+          </Show>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+  )
+}
