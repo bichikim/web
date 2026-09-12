@@ -1,7 +1,5 @@
 import {createHash} from 'node:crypto'
 
-import {hasStringListItem} from 'src/utils/has-string-list-item'
-
 import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../../server/http/headers'
 
 import type {FeedFormat, FeedProvider} from './contract'
@@ -92,7 +90,27 @@ const createDocumentHeaders = (
 
 const matchesEntityTag = (request: Request, entityTag: string): boolean => {
   const ifNoneMatch = request.headers.get('If-None-Match')
-  return ifNoneMatch !== null && hasStringListItem(ifNoneMatch, entityTag)
+  if (ifNoneMatch === null) {
+    return false
+  }
+
+  if (ifNoneMatch === '*') {
+    return true
+  }
+
+  // RFC 9110 allows commas inside opaque tags and empty elements in tag lists.
+  const tagPattern = /(?:W\/)?"[\x21\x23-\x7E\x80-\xFF]*"/gu
+  const listPattern = new RegExp(
+    `^[ \t]*(?:${tagPattern.source}[ \t]*)?(?:,[ \t]*(?:${tagPattern.source}[ \t]*)?)*$`,
+    'u',
+  )
+
+  return (
+    listPattern.test(ifNoneMatch) &&
+    [...ifNoneMatch.matchAll(tagPattern)].some(
+      ([candidate]) => candidate.replace(/^W\//u, '') === entityTag,
+    )
+  )
 }
 
 /** Resolves a provider and returns its RSS or Atom representation with its cache policy. */

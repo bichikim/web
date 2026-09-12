@@ -163,6 +163,48 @@ describe('createFeedResponse', () => {
     await expect(response.text()).resolves.toBe('')
   })
 
+  describe.each(['rss', 'atom'])('%s conditional requests', (format) => {
+    describe.each(['GET', 'HEAD'])('%s', (method) => {
+      it.each([
+        ['wildcard', '*', 304],
+        ['weak', 'W/$tag', 304],
+        ['strong', '$tag', 304],
+        ['mixed list', '"other,tag", W/$tag, "last"', 304],
+        ['empty list elements', ', , W/$tag,', 304],
+        ['whitespace', '\t W/$tag \t', 304],
+        ['different tags', '"other", W/"different"', 200],
+        ['quoted wildcard', '"*"', 200],
+        ['mixed wildcard', '*, $tag', 200],
+        ['lowercase weak prefix', 'w/$tag', 200],
+        ['space after weak prefix', 'W/ $tag', 200],
+        ['unclosed tag', '"broken, $tag', 200],
+        ['missing separator', '"other" $tag', 200],
+        ['invalid tag character', '"bad tag", $tag', 200],
+        ['trailing garbage', '$tag garbage', 200],
+        ['long malformed whitespace', `,${' '.repeat(8000)}x`, 200],
+      ])('should handle %s', async (_label, condition, status) => {
+        const url = `https://pomo.example/api/feeds/today-in-history/${format}.xml`
+        const initial = await createResponse(new Request(url))
+        const entityTag = initial.headers.get('ETag')
+        if (entityTag === null) {
+          throw new Error('Expected an ETag')
+        }
+        const response = await createResponse(
+          new Request(url, {
+            headers: {'If-None-Match': condition.replace('$tag', entityTag)},
+            method,
+          }),
+        )
+
+        expect(response.status).toBe(status)
+        expect([...response.headers]).toEqual([...initial.headers])
+        await expect(response.text()).resolves.toBe(
+          status === 304 || method === 'HEAD' ? '' : await initial.text(),
+        )
+      })
+    })
+  })
+
   it('should redirect query variants to the canonical URL without long-lived caching', async () => {
     const response = await createResponse(
       new Request('https://pomo.example/api/feeds/today-in-history/rss.xml?source=reader'),
