@@ -1,10 +1,10 @@
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 import {parseWeatherCitySlug, parseWeatherLocation, type WeatherLocation} from './contract'
 import {DEFAULT_WEATHER_LOCATION, LEGACY_WEATHER_LOCATIONS} from './locations'
 import {isWeatherSceneMode, type WeatherSceneMode} from './scene-mode'
@@ -20,10 +20,10 @@ export interface WeatherPreference {
 }
 
 export interface WeatherPreferenceStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
 
@@ -91,7 +91,7 @@ export const createWeatherPreferenceRepository = (
 ): WeatherPreferenceRepository => {
   const {storage} = options
   let preferenceWriteRevision = 0
-  let nativeWriteQueue = Promise.resolve()
+  let tossWriteQueue = Promise.resolve()
 
   const writeWebPreference = (preference: WeatherPreference) => {
     try {
@@ -120,9 +120,9 @@ export const createWeatherPreferenceRepository = (
     return legacyPreference
   }
 
-  const readNativePreference = async (): Promise<WeatherPreference | null> => {
+  const readTossPreference = async (): Promise<WeatherPreference | null> => {
     const preference = parseWeatherPreference(
-      await storage.readNative(WEATHER_PREFERENCE_STORAGE_KEY),
+      await storage.readToss(WEATHER_PREFERENCE_STORAGE_KEY),
     )
 
     if (preference !== null) {
@@ -130,28 +130,28 @@ export const createWeatherPreferenceRepository = (
     }
 
     return parseLegacyWeatherPreference(
-      await storage.readNative(LEGACY_WEATHER_PREFERENCE_STORAGE_KEY),
+      await storage.readToss(LEGACY_WEATHER_PREFERENCE_STORAGE_KEY),
     )
   }
 
-  const enqueueNativeWrite = (preference: WeatherPreference) => {
-    const nativeWrite = nativeWriteQueue.then(() =>
-      storage.writeNative(WEATHER_PREFERENCE_STORAGE_KEY, preference),
+  const enqueueTossWrite = (preference: WeatherPreference) => {
+    const tossWrite = tossWriteQueue.then(() =>
+      storage.writeToss(WEATHER_PREFERENCE_STORAGE_KEY, preference),
     )
-    nativeWriteQueue = nativeWrite.catch(() => undefined)
-    return nativeWrite
+    tossWriteQueue = tossWrite.catch(() => undefined)
+    return tossWrite
   }
 
   const read = async (): Promise<WeatherPreference> => {
     const initialWriteRevision = preferenceWriteRevision
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       return readWebPreference() ?? DEFAULT_WEATHER_PREFERENCE
     }
 
     try {
-      await nativeWriteQueue
-      const restoredPreference = await readNativePreference()
+      await tossWriteQueue
+      const restoredPreference = await readTossPreference()
 
       if (preferenceWriteRevision !== initialWriteRevision) {
         return read()
@@ -173,7 +173,7 @@ export const createWeatherPreferenceRepository = (
     preferenceWriteRevision += 1
     const webWriteError = writeWebPreference(preference)
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist weather preference.', {cause: webWriteError})
       }
@@ -182,7 +182,7 @@ export const createWeatherPreferenceRepository = (
     }
 
     try {
-      await enqueueNativeWrite(preference)
+      await enqueueTossWrite(preference)
     } catch (error: unknown) {
       throw new Error('Failed to persist weather preference.', {cause: error})
     }
@@ -217,10 +217,10 @@ export const createWeatherPreferenceRepository = (
 
 const preserveStoredValue = (value: unknown) => value
 const runtimeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
+  readToss: (key: string) => readTossStorageJson(key, preserveStoredValue),
   readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  writeNative: writeNativeStorageJson,
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: writeTossStorageJson,
   writeWeb(key: string, value: unknown) {
     const error = writeWebStorageJson(key, value)
 

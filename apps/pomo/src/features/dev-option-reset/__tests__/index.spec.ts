@@ -29,12 +29,12 @@ afterEach(() => {
 })
 
 const createStorage = (): OptionResetStorage => ({
-  getNative: vi.fn(async () => null),
-  isNative: vi.fn(() => false),
-  removeNative: vi.fn(async () => undefined),
+  getToss: vi.fn(async () => null),
+  removeToss: vi.fn(async () => undefined),
   removeWeb: vi.fn(),
-  setNative: vi.fn(async () => undefined),
+  setToss: vi.fn(async () => undefined),
   setWeb: vi.fn(),
+  usesTossStorage: vi.fn(() => false),
 })
 
 const createManager = (
@@ -58,7 +58,7 @@ it('should reset only the storage keys owned by one option group', async () => {
     'pomo:weather-preference:v1',
     'pomo:screen-saver-delay:v1',
   ])
-  expect(storage.removeNative).not.toHaveBeenCalled()
+  expect(storage.removeToss).not.toHaveBeenCalled()
 })
 
 it('should reset every option without deleting account or user-created data', async () => {
@@ -84,42 +84,42 @@ it('should reset every option without deleting account or user-created data', as
   expect(removedKeys).not.toContain('pomo:language-learning:words:v1')
 })
 
-it('should remove native values before their browser copies', async () => {
+it('should remove toss values before their browser copies', async () => {
   const storage = createStorage()
-  vi.mocked(storage.isNative).mockReturnValue(true)
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
   const {manager} = createManager(storage)
 
   await manager.reset('updates')
 
-  expect(storage.removeNative).toHaveBeenCalledWith('pomo:viewed-version-release:v1')
-  expect(vi.mocked(storage.removeNative).mock.invocationCallOrder[0]).toBeLessThan(
+  expect(storage.removeToss).toHaveBeenCalledWith('pomo:viewed-version-release:v1')
+  expect(vi.mocked(storage.removeToss).mock.invocationCallOrder[0]).toBeLessThan(
     vi.mocked(storage.removeWeb).mock.invocationCallOrder[0],
   )
 })
 
-it('should preserve browser copies when native reset fails', async () => {
+it('should preserve browser copies when toss reset fails', async () => {
   const storage = createStorage()
-  vi.mocked(storage.isNative).mockReturnValue(true)
-  vi.mocked(storage.removeNative).mockRejectedValue(new Error('native unavailable'))
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+  vi.mocked(storage.removeToss).mockRejectedValue(new Error('toss unavailable'))
   const {manager} = createManager(storage)
 
   await expect(manager.reset('updates')).rejects.toThrow('Failed to reset Pomo options.')
   expect(storage.removeWeb).not.toHaveBeenCalled()
 })
 
-it('should restore native values when a middle deletion fails', async () => {
+it('should restore toss values when a middle deletion fails', async () => {
   const storage = createStorage()
-  const nativeValues = new Map<string, string>()
-  vi.mocked(storage.isNative).mockReturnValue(true)
-  vi.mocked(storage.getNative).mockImplementation(async (key) => nativeValues.get(key) ?? null)
-  vi.mocked(storage.removeNative).mockImplementation(async (key) => {
-    nativeValues.delete(key)
+  const tossValues = new Map<string, string>()
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+  vi.mocked(storage.getToss).mockImplementation(async (key) => tossValues.get(key) ?? null)
+  vi.mocked(storage.removeToss).mockImplementation(async (key) => {
+    tossValues.delete(key)
     if (key === 'pomo:weather-preference:v2') {
-      throw new Error('native unavailable')
+      throw new Error('toss unavailable')
     }
   })
-  vi.mocked(storage.setNative).mockImplementation(async (key, value) => {
-    nativeValues.set(key, value)
+  vi.mocked(storage.setToss).mockImplementation(async (key, value) => {
+    tossValues.set(key, value)
   })
   for (const groupKey of [
     'pomo:focus-room-scene-preferences:v1',
@@ -128,32 +128,32 @@ it('should restore native values when a middle deletion fails', async () => {
     'pomo:weather-preference:v1',
     'pomo:screen-saver-delay:v1',
   ]) {
-    nativeValues.set(groupKey, `${groupKey}:value`)
+    tossValues.set(groupKey, `${groupKey}:value`)
   }
-  const originalValues = new Map(nativeValues)
+  const originalValues = new Map(tossValues)
   const {manager} = createManager(storage)
 
   await expect(manager.reset('focus-room')).rejects.toThrow('Failed to reset Pomo options.')
 
-  expect(nativeValues).toEqual(originalValues)
-  expect(storage.setNative).toHaveBeenCalledTimes(3)
+  expect(tossValues).toEqual(originalValues)
+  expect(storage.setToss).toHaveBeenCalledTimes(3)
   expect(storage.removeWeb).not.toHaveBeenCalled()
   expect(storage.setWeb).not.toHaveBeenCalled()
 })
 
-it('should restore native values when the last deletion fails', async () => {
+it('should restore toss values when the last deletion fails', async () => {
   const storage = createStorage()
-  const nativeValues = new Map<string, string>()
-  vi.mocked(storage.isNative).mockReturnValue(true)
-  vi.mocked(storage.getNative).mockImplementation(async (key) => nativeValues.get(key) ?? null)
-  vi.mocked(storage.removeNative).mockImplementation(async (key) => {
-    nativeValues.delete(key)
+  const tossValues = new Map<string, string>()
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+  vi.mocked(storage.getToss).mockImplementation(async (key) => tossValues.get(key) ?? null)
+  vi.mocked(storage.removeToss).mockImplementation(async (key) => {
+    tossValues.delete(key)
     if (key === 'pomo:screen-saver-delay:v1') {
-      throw new Error('native unavailable')
+      throw new Error('toss unavailable')
     }
   })
-  vi.mocked(storage.setNative).mockImplementation(async (key, value) => {
-    nativeValues.set(key, value)
+  vi.mocked(storage.setToss).mockImplementation(async (key, value) => {
+    tossValues.set(key, value)
   })
   for (const groupKey of [
     'pomo:focus-room-scene-preferences:v1',
@@ -162,38 +162,38 @@ it('should restore native values when the last deletion fails', async () => {
     'pomo:weather-preference:v1',
     'pomo:screen-saver-delay:v1',
   ]) {
-    nativeValues.set(groupKey, `${groupKey}:value`)
+    tossValues.set(groupKey, `${groupKey}:value`)
   }
-  const originalValues = new Map(nativeValues)
+  const originalValues = new Map(tossValues)
   const {manager} = createManager(storage)
 
   await expect(manager.reset('focus-room')).rejects.toThrow('Failed to reset Pomo options.')
 
-  expect(nativeValues).toEqual(originalValues)
-  expect(storage.setNative).toHaveBeenCalledTimes(5)
+  expect(tossValues).toEqual(originalValues)
+  expect(storage.setToss).toHaveBeenCalledTimes(5)
   expect(storage.removeWeb).not.toHaveBeenCalled()
   expect(storage.setWeb).not.toHaveBeenCalled()
 })
 
 it('should converge web values and report a partial reset when restoration fails', async () => {
   const storage = createStorage()
-  const nativeValues = new Map<string, string>()
+  const tossValues = new Map<string, string>()
   const firstKey = 'pomo:focus-room-scene-preferences:v1'
   const failedKey = 'pomo:weather-preference:v2'
-  vi.mocked(storage.isNative).mockReturnValue(true)
-  vi.mocked(storage.getNative).mockImplementation(async (key) => nativeValues.get(key) ?? null)
-  vi.mocked(storage.removeNative).mockImplementation(async (key) => {
-    nativeValues.delete(key)
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+  vi.mocked(storage.getToss).mockImplementation(async (key) => tossValues.get(key) ?? null)
+  vi.mocked(storage.removeToss).mockImplementation(async (key) => {
+    tossValues.delete(key)
     if (key === failedKey) {
-      throw new Error('native unavailable')
+      throw new Error('toss unavailable')
     }
   })
-  vi.mocked(storage.setNative).mockImplementation(async (key, value) => {
+  vi.mocked(storage.setToss).mockImplementation(async (key, value) => {
     if (key === firstKey) {
-      throw new Error('native restoration unavailable')
+      throw new Error('toss restoration unavailable')
     }
 
-    nativeValues.set(key, value)
+    tossValues.set(key, value)
   })
   for (const groupKey of [
     firstKey,
@@ -202,7 +202,7 @@ it('should converge web values and report a partial reset when restoration fails
     'pomo:weather-preference:v1',
     'pomo:screen-saver-delay:v1',
   ]) {
-    nativeValues.set(groupKey, `${groupKey}:value`)
+    tossValues.set(groupKey, `${groupKey}:value`)
   }
   const {manager} = createManager(storage)
 
@@ -217,10 +217,10 @@ it('should converge web values and report a partial reset when restoration fails
   expect(storage.setWeb).toHaveBeenCalledWith(failedKey, `${failedKey}:value`)
 })
 
-it('should report an unresolved web value without hiding completed native deletions', async () => {
+it('should report an unresolved web value without hiding completed toss deletions', async () => {
   const storage = createStorage()
   const unresolvedKey = 'pomo:weather-preference:v2'
-  vi.mocked(storage.isNative).mockReturnValue(true)
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
   vi.mocked(storage.removeWeb).mockImplementation((key) => {
     if (key === unresolvedKey) {
       throw new Error('web unavailable')
@@ -236,33 +236,33 @@ it('should report an unresolved web value without hiding completed native deleti
   })
 })
 
-it('should preserve readable recovery results when one native verification fails', async () => {
+it('should preserve readable recovery results when one toss verification fails', async () => {
   const storage = createStorage()
-  const nativeValues = new Map<string, string>()
+  const tossValues = new Map<string, string>()
   const firstKey = 'pomo:focus-room-scene-preferences:v1'
   const unreadableKey = 'pomo:weather-preference:v2'
   let isRecovering = false
-  vi.mocked(storage.isNative).mockReturnValue(true)
-  vi.mocked(storage.getNative).mockImplementation(async (key) => {
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+  vi.mocked(storage.getToss).mockImplementation(async (key) => {
     if (isRecovering && key === unreadableKey) {
-      throw new Error('native read unavailable')
+      throw new Error('toss read unavailable')
     }
 
-    return nativeValues.get(key) ?? null
+    return tossValues.get(key) ?? null
   })
-  vi.mocked(storage.removeNative).mockImplementation(async (key) => {
-    nativeValues.delete(key)
+  vi.mocked(storage.removeToss).mockImplementation(async (key) => {
+    tossValues.delete(key)
     if (key === unreadableKey) {
-      throw new Error('native unavailable')
+      throw new Error('toss unavailable')
     }
   })
-  vi.mocked(storage.setNative).mockImplementation(async (key, value) => {
+  vi.mocked(storage.setToss).mockImplementation(async (key, value) => {
     if (key === firstKey) {
       isRecovering = true
-      throw new Error('native restoration unavailable')
+      throw new Error('toss restoration unavailable')
     }
 
-    nativeValues.set(key, value)
+    tossValues.set(key, value)
   })
   for (const groupKey of [
     firstKey,
@@ -271,7 +271,7 @@ it('should preserve readable recovery results when one native verification fails
     'pomo:weather-preference:v1',
     'pomo:screen-saver-delay:v1',
   ]) {
-    nativeValues.set(groupKey, `${groupKey}:value`)
+    tossValues.set(groupKey, `${groupKey}:value`)
   }
   const {manager} = createManager(storage)
 
@@ -313,7 +313,7 @@ it('should report a partial reset when locale cleanup fails after other options 
 it('should report language as preserved when reset all stops after a partial storage reset', async () => {
   const storage = createStorage()
   const unresolvedKey = 'pomo:weather-preference:v2'
-  vi.mocked(storage.isNative).mockReturnValue(true)
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
   vi.mocked(storage.removeWeb).mockImplementation((key) => {
     if (key === unresolvedKey) {
       throw new Error('web unavailable')
@@ -341,7 +341,7 @@ it('should delegate language reset to the locale feature', async () => {
   await manager.reset('language')
 
   expect(resetLocale).toHaveBeenCalledOnce()
-  expect(storage.removeNative).not.toHaveBeenCalled()
+  expect(storage.removeToss).not.toHaveBeenCalled()
   expect(storage.removeWeb).not.toHaveBeenCalled()
 })
 
@@ -364,8 +364,8 @@ it('should remove the Paraglide cookie through the runtime manager', async () =>
   expect(localStorage.getItem(localStorageKey)).toBe('en')
 })
 
-it('should converge runtime web storage with native values after restoration fails', async () => {
-  const nativeValues = new Map<string, string>()
+it('should converge runtime web storage with toss values after restoration fails', async () => {
+  const tossValues = new Map<string, string>()
   const firstKey = 'pomo:focus-room-scene-preferences:v1'
   const failedKey = 'pomo:weather-preference:v2'
   const groupKeys = [
@@ -377,22 +377,22 @@ it('should converge runtime web storage with native values after restoration fai
   ]
   Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
   for (const groupKey of groupKeys) {
-    nativeValues.set(groupKey, `${groupKey}:native`)
+    tossValues.set(groupKey, `${groupKey}:toss`)
     localStorage.setItem(groupKey, `${groupKey}:web`)
   }
-  storageMocks.getItem.mockImplementation(async (key) => nativeValues.get(key) ?? null)
+  storageMocks.getItem.mockImplementation(async (key) => tossValues.get(key) ?? null)
   storageMocks.removeItem.mockImplementation(async (key) => {
-    nativeValues.delete(key)
+    tossValues.delete(key)
     if (key === failedKey) {
-      throw new Error('native unavailable')
+      throw new Error('toss unavailable')
     }
   })
   storageMocks.setItem.mockImplementation(async (key, value) => {
     if (key === firstKey) {
-      throw new Error('native restoration unavailable')
+      throw new Error('toss restoration unavailable')
     }
 
-    nativeValues.set(key, value)
+    tossValues.set(key, value)
   })
 
   await expect(createRuntimeOptionResetManager().reset('focus-room')).resolves.toEqual({
@@ -402,7 +402,7 @@ it('should converge runtime web storage with native values after restoration fai
     unresolvedCount: 0,
   })
   expect(localStorage.getItem(firstKey)).toBeNull()
-  expect(localStorage.getItem(failedKey)).toBe(`${failedKey}:native`)
+  expect(localStorage.getItem(failedKey)).toBe(`${failedKey}:toss`)
 })
 
 it('should remove the Paraglide cookie when every option is reset', async () => {

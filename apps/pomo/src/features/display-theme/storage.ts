@@ -2,11 +2,11 @@ import {z} from 'zod'
 
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 import {
   DEFAULT_DISPLAY_THEME,
@@ -15,10 +15,10 @@ import {
 } from './model'
 
 export interface DisplayThemePreferenceStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
 
@@ -44,7 +44,7 @@ export const createDisplayThemePreferenceRepository = (
 ): DisplayThemePreferenceRepository => {
   const {storage} = options
   let preferenceWriteRevision = 0
-  let nativeWriteQueue = Promise.resolve()
+  let tossWriteQueue = Promise.resolve()
 
   const readWebPreference = () =>
     parseDisplayThemePreference(storage.readWeb(DISPLAY_THEME_STORAGE_KEY))
@@ -58,32 +58,32 @@ export const createDisplayThemePreferenceRepository = (
     }
   }
 
-  const enqueueNativeWrite = (preference: DisplayThemePreference) => {
-    const nativeWrite = nativeWriteQueue.then(() =>
-      storage.writeNative(DISPLAY_THEME_STORAGE_KEY, preference),
+  const enqueueTossWrite = (preference: DisplayThemePreference) => {
+    const tossWrite = tossWriteQueue.then(() =>
+      storage.writeToss(DISPLAY_THEME_STORAGE_KEY, preference),
     )
-    nativeWriteQueue = nativeWrite.catch(() => undefined)
-    return nativeWrite
+    tossWriteQueue = tossWrite.catch(() => undefined)
+    return tossWrite
   }
 
   const read = async (): Promise<DisplayThemePreference> => {
     const initialWriteRevision = preferenceWriteRevision
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       return readWebPreference() ?? DEFAULT_DISPLAY_THEME
     }
 
     try {
-      await nativeWriteQueue
-      const nativePreference = parseDisplayThemePreference(
-        await storage.readNative(DISPLAY_THEME_STORAGE_KEY),
+      await tossWriteQueue
+      const tossPreference = parseDisplayThemePreference(
+        await storage.readToss(DISPLAY_THEME_STORAGE_KEY),
       )
 
       if (preferenceWriteRevision !== initialWriteRevision) {
         return read()
       }
 
-      const restoredPreference = nativePreference ?? DEFAULT_DISPLAY_THEME
+      const restoredPreference = tossPreference ?? DEFAULT_DISPLAY_THEME
       writeWebPreference(restoredPreference)
       return restoredPreference
     } catch (error: unknown) {
@@ -95,7 +95,7 @@ export const createDisplayThemePreferenceRepository = (
     preferenceWriteRevision += 1
     const webWriteError = writeWebPreference(preference)
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist display theme preference.', {cause: webWriteError})
       }
@@ -104,7 +104,7 @@ export const createDisplayThemePreferenceRepository = (
     }
 
     try {
-      await enqueueNativeWrite(preference)
+      await enqueueTossWrite(preference)
     } catch (error: unknown) {
       throw new Error('Failed to persist display theme preference.', {cause: error})
     }
@@ -115,10 +115,10 @@ export const createDisplayThemePreferenceRepository = (
 
 const preserveStoredValue = (value: unknown) => value
 const runtimeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
+  readToss: (key: string) => readTossStorageJson(key, preserveStoredValue),
   readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  writeNative: writeNativeStorageJson,
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: writeTossStorageJson,
   writeWeb(key: string, value: unknown) {
     const error = writeWebStorageJson(key, value)
 

@@ -2,19 +2,19 @@ import {z} from 'zod'
 
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 import {DEFAULT_P_DISPLAY_PREFERENCES, type PDisplayPreferences} from './model'
 
 export interface PDisplayPreferencesStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
 
@@ -48,7 +48,7 @@ export const createPDisplayPreferencesRepository = (
 ): PDisplayPreferencesRepository => {
   const {storage} = options
   let preferenceWriteRevision = 0
-  let nativeWriteQueue = Promise.resolve()
+  let tossWriteQueue = Promise.resolve()
 
   const readWebPreferences = () =>
     parseDisplayPreferences(storage.readWeb(DISPLAY_PREFERENCES_STORAGE_KEY))
@@ -62,32 +62,32 @@ export const createPDisplayPreferencesRepository = (
     }
   }
 
-  const enqueueNativeWrite = (preferences: PDisplayPreferences) => {
-    const nativeWrite = nativeWriteQueue.then(() =>
-      storage.writeNative(DISPLAY_PREFERENCES_STORAGE_KEY, preferences),
+  const enqueueTossWrite = (preferences: PDisplayPreferences) => {
+    const tossWrite = tossWriteQueue.then(() =>
+      storage.writeToss(DISPLAY_PREFERENCES_STORAGE_KEY, preferences),
     )
-    nativeWriteQueue = nativeWrite.catch(() => undefined)
-    return nativeWrite
+    tossWriteQueue = tossWrite.catch(() => undefined)
+    return tossWrite
   }
 
   const read = async (): Promise<PDisplayPreferences> => {
     const initialWriteRevision = preferenceWriteRevision
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       return readWebPreferences() ?? DEFAULT_P_DISPLAY_PREFERENCES
     }
 
     try {
-      await nativeWriteQueue
-      const nativePreferences = parseDisplayPreferences(
-        await storage.readNative(DISPLAY_PREFERENCES_STORAGE_KEY),
+      await tossWriteQueue
+      const tossPreferences = parseDisplayPreferences(
+        await storage.readToss(DISPLAY_PREFERENCES_STORAGE_KEY),
       )
 
       if (preferenceWriteRevision !== initialWriteRevision) {
         return read()
       }
 
-      const restoredPreferences = nativePreferences ?? DEFAULT_P_DISPLAY_PREFERENCES
+      const restoredPreferences = tossPreferences ?? DEFAULT_P_DISPLAY_PREFERENCES
       writeWebPreferences(restoredPreferences)
       return restoredPreferences
     } catch (error: unknown) {
@@ -100,7 +100,7 @@ export const createPDisplayPreferencesRepository = (
     const snapshot = displayPreferencesSchema.parse(preferences)
     const webWriteError = writeWebPreferences(snapshot)
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist focus-room display preferences.', {
           cause: webWriteError,
@@ -111,7 +111,7 @@ export const createPDisplayPreferencesRepository = (
     }
 
     try {
-      await enqueueNativeWrite(snapshot)
+      await enqueueTossWrite(snapshot)
     } catch (error: unknown) {
       throw new Error('Failed to persist focus-room display preferences.', {cause: error})
     }
@@ -122,10 +122,10 @@ export const createPDisplayPreferencesRepository = (
 
 const preserveStoredValue = (value: unknown) => value
 const runtimeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
+  readToss: (key: string) => readTossStorageJson(key, preserveStoredValue),
   readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  writeNative: writeNativeStorageJson,
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: writeTossStorageJson,
   writeWeb(key: string, value: unknown) {
     const error = writeWebStorageJson(key, value)
 

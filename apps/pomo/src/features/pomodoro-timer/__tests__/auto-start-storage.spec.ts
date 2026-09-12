@@ -2,7 +2,24 @@
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {readAutoStartPreference, writeAutoStartPreference} from '../auto-start-storage'
+import {
+  type AutoStartStorage,
+  createAutoStartStorage,
+  readAutoStartPreference as readRuntimePreference,
+  writeAutoStartPreference as writeRuntimePreference,
+} from '../auto-start-storage'
+import {
+  hasNativeStorageBridge,
+  readTossStorageJson,
+  readWebStorageJson,
+  writeTossStorageJson,
+  writeWebStorageJson,
+} from 'src/utils/runtime-storage'
+
+let repository: AutoStartStorage
+const now = vi.fn<() => number>()
+const readAutoStartPreference = () => repository.read()
+const writeAutoStartPreference = (isEnabled: boolean) => repository.write(isEnabled)
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -18,12 +35,32 @@ describe('auto-start-storage', () => {
     localStorage.clear()
     storageMocks.getItem.mockReset()
     storageMocks.setItem.mockReset()
-    vi.spyOn(Date, 'now').mockReturnValue(20)
+    now.mockReturnValue(20)
+    repository = createAutoStartStorage({
+      now,
+      storage: {
+        readToss: readTossStorageJson,
+        readWeb: readWebStorageJson,
+        usesTossStorage: hasNativeStorageBridge,
+        writeToss: writeTossStorageJson,
+        writeWeb: writeWebStorageJson,
+      },
+    })
   })
 
   afterEach(() => {
     Reflect.deleteProperty(window, 'ReactNativeWebView')
     vi.restoreAllMocks()
+  })
+
+  it('should expose browser persistence through the default runtime instance', async () => {
+    await writeRuntimePreference(true)
+    expect(await readRuntimePreference()).toBe(true)
+    expect(JSON.parse(localStorage.getItem('pomo:timer-auto-start:v2') ?? '')).toEqual({
+      isEnabled: true,
+      savedAt: expect.any(Number),
+    })
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 
   it('should use browser storage outside the host app', async () => {
@@ -194,7 +231,7 @@ describe('auto-start-storage', () => {
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('browser storage unavailable')
       })
-      vi.mocked(Date.now).mockReturnValue(21)
+      now.mockReturnValue(21)
       await writeAutoStartPreference(true)
       pendingRead.resolve(JSON.stringify({isEnabled: true, savedAt: 21}))
 
@@ -229,7 +266,7 @@ describe('auto-start-storage', () => {
     expect(await reading).toBe(true)
   })
 
-  it('should converge native storage after older writes finish last', async () => {
+  it('should serialize native writes and finish with the latest value', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     const completions: Array<() => void> = []
     storageMocks.setItem.mockImplementation(
@@ -241,17 +278,94 @@ describe('auto-start-storage', () => {
 
     const firstWrite = writeAutoStartPreference(true)
     const secondWrite = writeAutoStartPreference(false)
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
-
-    completions[1]?.()
-    await secondWrite
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(1))
     completions[0]?.()
-    await vi.waitFor(() => {
-      expect(storageMocks.setItem).toHaveBeenCalledTimes(3)
-    })
-    const repairedValue = storageMocks.setItem.mock.calls[2]?.[1]
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
+    const repairedValue = storageMocks.setItem.mock.calls[1]?.[1]
     expect(JSON.parse(repairedValue ?? '')).toMatchObject({isEnabled: false})
-    completions[2]?.()
-    await firstWrite
+    completions[1]?.()
+    await Promise.all([firstWrite, secondWrite])
+  })
+  it('should isolate native convergence and clocks between instances', async () => {
+    const pending = Promise.withResolvers<void>()
+    const firstToss = vi
+      .fn<(key: string, value: unknown) => Promise<void>>()
+      .mockResolvedValue()
+      .mockImplementationOnce(() => pending.promise)
+    const secondToss = vi.fn<(key: string, value: unknown) => Promise<void>>().mockResolvedValue()
+    const firstWeb = vi.fn().mockReturnValue(null)
+    const secondWeb = vi.fn().mockReturnValue(null)
+    const first = createAutoStartStorage({
+      now: () => 10,
+      storage: {
+        readToss: async () => null,
+        readWeb: () => null,
+        usesTossStorage: () => true,
+        writeToss: firstToss,
+        writeWeb: firstWeb,
+      },
+    })
+    const second = createAutoStartStorage({
+      now: () => 30,
+      storage: {
+        readToss: async () => null,
+        readWeb: () => null,
+        usesTossStorage: () => true,
+        writeToss: secondToss,
+        writeWeb: secondWeb,
+      },
+    })
+    const saving = first.write(true)
+    const latest = first.write(false)
+    await second.write(true)
+    pending.resolve()
+    await Promise.all([saving, latest])
+    expect(firstToss).toHaveBeenCalledTimes(2)
+    expect(firstToss).toHaveBeenLastCalledWith('pomo:timer-auto-start:v2', {
+      isEnabled: false,
+      savedAt: 10,
+    })
+    expect(secondToss).toHaveBeenCalledExactlyOnceWith('pomo:timer-auto-start:v2', {
+      isEnabled: true,
+      savedAt: 30,
+    })
+    expect(firstWeb).toHaveBeenLastCalledWith('pomo:timer-auto-start:v2', {
+      isEnabled: false,
+      savedAt: 10,
+    })
+    expect(secondWeb).toHaveBeenCalledExactlyOnceWith('pomo:timer-auto-start:v2', {
+      isEnabled: true,
+      savedAt: 30,
+    })
+  })
+  it('should retain native read selection when another instance writes', async () => {
+    const pending = Promise.withResolvers<void>()
+    const first = createAutoStartStorage({
+      now: () => 10,
+      storage: {
+        readToss: async (_key, parse) => {
+          await pending.promise
+          return parse({isEnabled: true, savedAt: 20})
+        },
+        readWeb: (_key, parse) => parse({isEnabled: false, savedAt: 1}),
+        usesTossStorage: () => true,
+        writeToss: async () => {},
+        writeWeb: () => null,
+      },
+    })
+    const second = createAutoStartStorage({
+      now: () => 30,
+      storage: {
+        readToss: async () => null,
+        readWeb: () => null,
+        usesTossStorage: () => false,
+        writeToss: async () => {},
+        writeWeb: () => null,
+      },
+    })
+    const reading = first.read()
+    await second.write(false)
+    pending.resolve()
+    expect(await reading).toBe(true)
   })
 })

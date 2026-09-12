@@ -25,19 +25,19 @@ const createSelectionStorage = <T>(
   let writeRevision = 0
   const read = async (): Promise<T | null> => {
     const revision = writeRevision
-    const isNative = storage.isNative()
-    if (isNative) {
+    const usesTossStorage = storage.usesTossStorage()
+    if (usesTossStorage) {
       await pending
       if (revision !== writeRevision) {
         return read()
       }
     }
     const webValue = storage.readWeb(key, parse)
-    if (webValue !== null || !isNative) {
+    if (webValue !== null || !usesTossStorage) {
       return webValue
     }
     try {
-      const nativeValue = await storage.readNative(key, parse)
+      const nativeValue = await storage.readToss(key, parse)
       return revision === writeRevision ? nativeValue : read()
     } catch (error: unknown) {
       if (revision !== writeRevision) {
@@ -52,14 +52,14 @@ const createSelectionStorage = <T>(
       writeRevision += 1
       const revision = writeRevision
       const error = storage.writeWeb(key, value)
-      if (!storage.isNative()) {
+      if (!storage.usesTossStorage()) {
         if (error !== null) {
           throw new Error('Failed to save tool selection.', {cause: error})
         }
         return
       }
       const write = pending.then(async () => {
-        await storage.writeNative(key, value)
+        await storage.writeToss(key, value)
         // An older native completion must not discard a newer web selection.
         if (error !== null && revision === writeRevision) {
           const removalError = storage.removeWeb(key)

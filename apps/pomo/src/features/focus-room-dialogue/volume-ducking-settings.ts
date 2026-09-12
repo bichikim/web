@@ -1,12 +1,12 @@
 import {z} from 'zod'
 
 import {
-  createSerialNativeStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 export const DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT =
   'pomo:dialogue-volume-ducking-settings-changed'
@@ -18,10 +18,10 @@ export interface DialogueVolumeDuckingSettings {
 }
 
 export interface DialogueVolumeDuckingSettingsStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
 
@@ -95,7 +95,7 @@ export const createDialogueVolumeDuckingSettingsRepository = (
 ): DialogueVolumeDuckingSettingsRepository => {
   const {storage} = options
   let preferenceWriteRevision = 0
-  let nativeWriteQueue = Promise.resolve()
+  let tossWriteQueue = Promise.resolve()
 
   const writeWebSettings = (settings: DialogueVolumeDuckingSettings) => {
     try {
@@ -124,45 +124,45 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     return migratedSettings
   }
 
-  const readNativeSettings = async (): Promise<DialogueVolumeDuckingSettings | null> => {
-    const settings = parseDialogueVolumeDuckingSettings(await storage.readNative(STORAGE_KEY))
+  const readTossSettings = async (): Promise<DialogueVolumeDuckingSettings | null> => {
+    const settings = parseDialogueVolumeDuckingSettings(await storage.readToss(STORAGE_KEY))
 
     if (settings !== null) {
       return settings
     }
 
-    const legacySettings = parseLegacySettings(await storage.readNative(LEGACY_STORAGE_KEY))
+    const legacySettings = parseLegacySettings(await storage.readToss(LEGACY_STORAGE_KEY))
     return legacySettings === null ? null : migrateLegacySettings(legacySettings)
   }
 
-  const enqueueNativeWrite = (settings: DialogueVolumeDuckingSettings) => {
-    const nativeWrite = nativeWriteQueue.then(() => storage.writeNative(STORAGE_KEY, settings))
-    nativeWriteQueue = nativeWrite.catch(() => undefined)
-    return nativeWrite
+  const enqueueTossWrite = (settings: DialogueVolumeDuckingSettings) => {
+    const tossWrite = tossWriteQueue.then(() => storage.writeToss(STORAGE_KEY, settings))
+    tossWriteQueue = tossWrite.catch(() => undefined)
+    return tossWrite
   }
 
   const read = async (): Promise<DialogueVolumeDuckingSettings> => {
     const initialWriteRevision = preferenceWriteRevision
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       return readWebSettings() ?? DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
     }
 
     try {
-      await nativeWriteQueue
-      const nativeSettings = await readNativeSettings()
+      await tossWriteQueue
+      const tossSettings = await readTossSettings()
 
       if (preferenceWriteRevision !== initialWriteRevision) {
         return read()
       }
 
-      if (nativeSettings === null) {
+      if (tossSettings === null) {
         writeWebSettings(DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
         return DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
       }
 
-      writeWebSettings(nativeSettings)
-      return nativeSettings
+      writeWebSettings(tossSettings)
+      return tossSettings
     } catch (error: unknown) {
       throw new Error('Failed to read dialogue volume ducking settings.', {cause: error})
     }
@@ -173,7 +173,7 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     preferenceWriteRevision += 1
     const webWriteError = writeWebSettings(snapshot)
 
-    if (!storage.isNative()) {
+    if (!storage.usesTossStorage()) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist dialogue volume ducking settings.', {
           cause: webWriteError,
@@ -184,7 +184,7 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     }
 
     try {
-      await enqueueNativeWrite(snapshot)
+      await enqueueTossWrite(snapshot)
     } catch (error: unknown) {
       throw new Error('Failed to persist dialogue volume ducking settings.', {
         cause: error,
@@ -195,19 +195,12 @@ export const createDialogueVolumeDuckingSettingsRepository = (
   return {read, write}
 }
 
-const nativeWriter = createSerialNativeStorageWriter()
 const preserveStoredValue = (value: unknown) => value
 const runtimeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
+  readToss: (key: string) => readTossStorageJson(key, preserveStoredValue),
   readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  async writeNative(key: string, value: unknown) {
-    const error = await nativeWriter.write(key, value)
-
-    if (error !== null) {
-      throw error
-    }
-  },
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: writeTossStorageJson,
   writeWeb(key: string, value: unknown) {
     const error = writeWebStorageJson(key, value)
 

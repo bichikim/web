@@ -1,6 +1,6 @@
 import {z} from 'zod'
 
-import {readWebStorageJson, writeWebStorageJson} from '../runtime-storage'
+import {readWebStorageJson, writeWebStorageJson} from 'src/utils/runtime-storage'
 import type {LanguageLearningWordSource} from './word-selection'
 
 const STORAGE_KEY = 'pomo:language-learning:word-source:v1'

@@ -1,20 +1,21 @@
 import {
-  createSerialNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
   parseStorageJson,
-  readNativeStorageJson,
+  readTossStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from '../runtime-storage'
+} from 'src/utils/runtime-storage'
 import {type MemoryMemo, parseMemoryMemos} from './schema'
 
 const STORAGE_KEY = 'pomo:memory-memos:v1'
 export const MEMORY_MEMOS_CHANGED_EVENT = 'pomo:memory-memos-changed'
 
 export interface MemoryMemoStorage {
-  readonly hasNative: () => boolean
-  readonly readNative: () => Promise<ReadonlyArray<MemoryMemo> | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: () => Promise<ReadonlyArray<MemoryMemo> | null>
   readonly readWeb: () => ReadonlyArray<MemoryMemo> | null
-  readonly writeNative: (memos: ReadonlyArray<MemoryMemo>) => Promise<unknown | null>
+  readonly writeToss: (memos: ReadonlyArray<MemoryMemo>) => Promise<void>
   readonly writeWeb: (memos: ReadonlyArray<MemoryMemo>) => unknown | null
 }
 
@@ -23,13 +24,13 @@ export interface MemoryMemoRepository {
   readonly write: (memos: ReadonlyArray<MemoryMemo>) => Promise<void>
 }
 
-const runtimeNativeWriter = createSerialNativeStorageWriter()
+const runtimeTossWriter = createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson)
 
 const runtimeStorage = {
-  hasNative: hasNativeStorageBridge,
-  readNative: () => readNativeStorageJson(STORAGE_KEY, parseMemoryMemos),
+  readToss: () => readTossStorageJson(STORAGE_KEY, parseMemoryMemos),
   readWeb: () => parseStorageJson(localStorage.getItem(STORAGE_KEY), parseMemoryMemos),
-  writeNative: (memos) => runtimeNativeWriter.write(STORAGE_KEY, memos),
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: runtimeTossWriter,
   writeWeb: (memos) => writeWebStorageJson(STORAGE_KEY, memos),
 } satisfies MemoryMemoStorage
 
@@ -37,16 +38,16 @@ export const createMemoryMemoRepository = (
   storage: MemoryMemoStorage = runtimeStorage,
 ): MemoryMemoRepository => ({
   async read() {
-    if (!storage.hasNative()) {
+    if (!storage.usesTossStorage()) {
       return storage.readWeb() ?? []
     }
 
     try {
-      const nativeMemos = await storage.readNative()
+      const tossMemos = await storage.readToss()
 
-      if (nativeMemos !== null) {
-        storage.writeWeb(nativeMemos)
-        return nativeMemos
+      if (tossMemos !== null) {
+        storage.writeWeb(tossMemos)
+        return tossMemos
       }
     } catch (error) {
       throw new Error('Failed to read memory memos.', {cause: error})
@@ -64,7 +65,7 @@ export const createMemoryMemoRepository = (
 
     const webError = storage.writeWeb(snapshot)
 
-    if (!storage.hasNative()) {
+    if (!storage.usesTossStorage()) {
       if (webError !== null) {
         throw new Error('Failed to persist memory memos.', {cause: webError})
       }
@@ -72,10 +73,10 @@ export const createMemoryMemoRepository = (
       return
     }
 
-    const nativeError = await storage.writeNative(snapshot)
-
-    if (nativeError !== null) {
-      throw new Error('Failed to persist memory memos.', {cause: nativeError})
+    try {
+      await storage.writeToss(snapshot)
+    } catch (error) {
+      throw new Error('Failed to persist memory memos.', {cause: error})
     }
   },
 })

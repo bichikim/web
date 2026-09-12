@@ -1,5 +1,5 @@
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
-import {hasNativeStorageBridge} from '../runtime-storage'
+import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
 
 interface OptionResetGroupDefinitionBase {
   readonly description: string
@@ -56,11 +56,11 @@ export interface OptionResetManager {
 }
 
 export interface OptionResetStorage {
-  readonly getNative: (key: string) => Promise<string | null>
-  readonly isNative: () => boolean
-  readonly removeNative: (key: string) => Promise<void>
+  readonly getToss: (key: string) => Promise<string | null>
+  readonly usesTossStorage: () => boolean
+  readonly removeToss: (key: string) => Promise<void>
   readonly removeWeb: (key: string) => void
-  readonly setNative: (key: string, value: string) => Promise<void>
+  readonly setToss: (key: string, value: string) => Promise<void>
   readonly setWeb: (key: string, value: string) => void
 }
 
@@ -69,28 +69,28 @@ interface CreateOptionResetManagerOptions {
   readonly storage: OptionResetStorage
 }
 
-interface NativeSnapshot {
+interface TossSnapshot {
   readonly key: string
   readonly value: string | null
 }
 
-interface NativeOptionResetStorage {
+interface TossOptionResetStorage {
   readonly getItem: (key: string) => Promise<string | null>
   readonly removeItem: (key: string) => Promise<void>
   readonly setItem: (key: string, value: string) => Promise<void>
 }
 
-interface NativeReadResult {
-  readonly snapshots: ReadonlyArray<NativeSnapshot>
+interface TossReadResult {
+  readonly snapshots: ReadonlyArray<TossSnapshot>
   readonly unresolvedKeys: ReadonlyArray<string>
 }
 
 const COMPLETE_RESET_RESULT: CompleteOptionResetResult = {status: 'complete'}
-let nativeStoragePromise: Promise<NativeOptionResetStorage> | null = null
+let tossStoragePromise: Promise<TossOptionResetStorage> | null = null
 
-const loadNativeStorage = (): Promise<NativeOptionResetStorage> => {
-  nativeStoragePromise ??= import('@apps-in-toss/web-framework').then(({Storage}) => Storage)
-  return nativeStoragePromise
+const loadTossStorage = (): Promise<TossOptionResetStorage> => {
+  tossStoragePromise ??= import('@apps-in-toss/web-framework').then(({Storage}) => Storage)
+  return tossStoragePromise
 }
 
 const withResetError = async <Result>(operation: () => Promise<Result>): Promise<Result> => {
@@ -174,48 +174,47 @@ const getAllKeys = (): ReadonlyArray<string> => [
   ),
 ]
 
-const readNativeSnapshots = (
+const readTossSnapshots = (
   storage: OptionResetStorage,
   keys: ReadonlyArray<string>,
-): Promise<ReadonlyArray<NativeSnapshot>> =>
+): Promise<ReadonlyArray<TossSnapshot>> =>
   Promise.all(
     keys.map(async (key) => ({
       key,
-      value: await storage.getNative(key),
+      value: await storage.getToss(key),
     })),
   )
 
-const restoreNativeSnapshots = async (
+const restoreTossSnapshots = async (
   storage: OptionResetStorage,
-  snapshots: ReadonlyArray<NativeSnapshot>,
+  snapshots: ReadonlyArray<TossSnapshot>,
 ): Promise<boolean> => {
   const restorationResults = await Promise.allSettled(
     snapshots
       .filter(
-        (snapshot): snapshot is NativeSnapshot & {readonly value: string} =>
-          snapshot.value !== null,
+        (snapshot): snapshot is TossSnapshot & {readonly value: string} => snapshot.value !== null,
       )
       .toReversed()
-      .map((snapshot) => storage.setNative(snapshot.key, snapshot.value)),
+      .map((snapshot) => storage.setToss(snapshot.key, snapshot.value)),
   )
 
   return restorationResults.every((result) => result.status === 'fulfilled')
 }
 
-const readAvailableNativeSnapshots = async (
+const readAvailableTossSnapshots = async (
   storage: OptionResetStorage,
   keys: ReadonlyArray<string>,
-): Promise<NativeReadResult> => {
+): Promise<TossReadResult> => {
   const readResults = await Promise.allSettled(
-    keys.map(async (key) => ({key, value: await storage.getNative(key)})),
+    keys.map(async (key) => ({key, value: await storage.getToss(key)})),
   )
-  const snapshots: Array<NativeSnapshot> = []
+  const snapshots: Array<TossSnapshot> = []
   const unresolvedKeys: Array<string> = []
 
   for (const [index, readResult] of readResults.entries()) {
     const key = keys[index]
     if (key === undefined) {
-      throw new Error('Native storage read result has no matching key.')
+      throw new Error('Toss storage read result has no matching key.')
     }
 
     if (readResult.status === 'fulfilled') {
@@ -230,7 +229,7 @@ const readAvailableNativeSnapshots = async (
 
 const convergeWebStorage = (
   storage: OptionResetStorage,
-  snapshots: ReadonlyArray<NativeSnapshot>,
+  snapshots: ReadonlyArray<TossSnapshot>,
   initialUnresolvedKeys: ReadonlyArray<string> = [],
 ): OptionResetResult => {
   const preservedKeys: Array<string> = []
@@ -263,18 +262,18 @@ const convergeWebStorage = (
   }
 }
 
-const recoverNativeDeletion = async (
+const recoverTossDeletion = async (
   storage: OptionResetStorage,
-  attemptedSnapshots: ReadonlyArray<NativeSnapshot>,
-  originalSnapshots: ReadonlyArray<NativeSnapshot>,
+  attemptedSnapshots: ReadonlyArray<TossSnapshot>,
+  originalSnapshots: ReadonlyArray<TossSnapshot>,
   deletionError: unknown,
 ): Promise<OptionResetResult> => {
-  const isRestored = await restoreNativeSnapshots(storage, attemptedSnapshots)
+  const isRestored = await restoreTossSnapshots(storage, attemptedSnapshots)
   if (isRestored) {
     throw deletionError
   }
 
-  const currentRead = await readAvailableNativeSnapshots(
+  const currentRead = await readAvailableTossSnapshots(
     storage,
     originalSnapshots.map((snapshot) => snapshot.key),
   )
@@ -290,22 +289,22 @@ const recoverNativeDeletion = async (
   return convergeWebStorage(storage, currentRead.snapshots, currentRead.unresolvedKeys)
 }
 
-const removeNativeKeys = async (
+const removeTossKeys = async (
   storage: OptionResetStorage,
   keys: ReadonlyArray<string>,
 ): Promise<OptionResetResult> => {
-  const originalSnapshots = await readNativeSnapshots(storage, keys)
-  const attemptedSnapshots: Array<NativeSnapshot> = []
+  const originalSnapshots = await readTossSnapshots(storage, keys)
+  const attemptedSnapshots: Array<TossSnapshot> = []
 
   try {
     for (const snapshot of originalSnapshots) {
       attemptedSnapshots.push(snapshot)
       // Deletions stay serial so a failure has a bounded rollback set.
       // eslint-disable-next-line no-await-in-loop
-      await storage.removeNative(snapshot.key)
+      await storage.removeToss(snapshot.key)
     }
   } catch (error) {
-    return recoverNativeDeletion(storage, attemptedSnapshots, originalSnapshots, error)
+    return recoverTossDeletion(storage, attemptedSnapshots, originalSnapshots, error)
   }
 
   return COMPLETE_RESET_RESULT
@@ -315,10 +314,10 @@ const removeKeys = async (
   storage: OptionResetStorage,
   keys: ReadonlyArray<string>,
 ): Promise<OptionResetResult> => {
-  if (storage.isNative()) {
-    const nativeResult = await removeNativeKeys(storage, keys)
-    if (nativeResult.status === 'partial') {
-      return nativeResult
+  if (storage.usesTossStorage()) {
+    const tossResult = await removeTossKeys(storage, keys)
+    if (tossResult.status === 'partial') {
+      return tossResult
     }
 
     return convergeWebStorage(
@@ -393,21 +392,21 @@ export const createOptionResetManager = (
 }
 
 const runtimeStorage: OptionResetStorage = {
-  async getNative(key) {
-    const storage = await loadNativeStorage()
+  async getToss(key) {
+    const storage = await loadTossStorage()
     return storage.getItem(key)
   },
-  isNative: hasNativeStorageBridge,
-  async removeNative(key) {
-    const storage = await loadNativeStorage()
+  async removeToss(key) {
+    const storage = await loadTossStorage()
     await storage.removeItem(key)
   },
   removeWeb: (key) => localStorage.removeItem(key),
-  async setNative(key, value) {
-    const storage = await loadNativeStorage()
+  async setToss(key, value) {
+    const storage = await loadTossStorage()
     await storage.setItem(key, value)
   },
   setWeb: (key, value) => localStorage.setItem(key, value),
+  usesTossStorage: hasNativeStorageBridge,
 }
 
 const runtimeLocaleStorage = {

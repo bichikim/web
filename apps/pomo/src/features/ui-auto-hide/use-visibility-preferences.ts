@@ -1,12 +1,13 @@
 import {createSignal, onCleanup, onMount} from 'solid-js'
 import {z} from 'zod'
 import {
-  createSerialNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 const MIN_SECONDS = 5
 const MAX_SECONDS = 3600
@@ -19,7 +20,7 @@ const parsePreferences = (value: unknown) => {
   const result = preferencesSchema.safeParse(value)
   return result.success ? result.data : null
 }
-const nativeWriter = createSerialNativeStorageWriter()
+const writeLatestToss = createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson)
 
 export const useVisibilityPreferences = () => {
   const [preferences, setPreferences] = createSignal({enabled: false, seconds: 30})
@@ -32,11 +33,7 @@ export const useVisibilityPreferences = () => {
       globalThis.reportError(error)
     }
     if (hasNativeStorageBridge()) {
-      nativeWriter.write(STORAGE_KEY, snapshot).then((failure) => {
-        if (failure !== null) {
-          globalThis.reportError(failure)
-        }
-      })
+      writeLatestToss(snapshot).catch(globalThis.reportError)
     }
   }
   const onEnabledChange = (enabled: boolean) => {
@@ -57,7 +54,7 @@ export const useVisibilityPreferences = () => {
       setPreferences(stored)
     }
     if (hasNativeStorageBridge()) {
-      readNativeStorageJson(STORAGE_KEY, parsePreferences)
+      readTossStorageJson(STORAGE_KEY, parsePreferences)
         .then((value) => {
           if (!disposed && !edited && value !== null) {
             setPreferences(value)
