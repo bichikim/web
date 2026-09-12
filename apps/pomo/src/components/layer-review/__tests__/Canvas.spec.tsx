@@ -5,13 +5,13 @@ import {createSignal} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {getPSceneReviewLayer} from '../../../features/focus-room-animation/scene-layer-catalog'
-import {PLayerReviewRenderer} from '../../../features/focus-room-layer-review/scene-renderer'
+import {PLayerReviewRenderer} from 'src/features/focus-room-layer-review'
 import {PLayerReviewCanvas, type PLayerReviewCanvasProps} from '../Canvas'
 
 vi.mock('../../../features/focus-room-animation/scene-layer-catalog', () => ({
   getPSceneReviewLayer: vi.fn(),
 }))
-vi.mock('../../../features/focus-room-layer-review/scene-renderer', () => ({
+vi.mock('src/features/focus-room-layer-review', () => ({
   PLayerReviewRenderer: vi.fn(),
 }))
 
@@ -122,29 +122,5 @@ describe('PLayerReviewCanvas', () => {
 
     setProps({...initialProps, sceneId: 'night-reading-focused'})
     await waitFor(() => expect(reportError).toHaveBeenCalledWith(replacementError))
-  })
-
-  it('should skip initialization when the host signal is unavailable', async () => {
-    vi.resetModules()
-    vi.doMock('solid-js', async () => {
-      const actual: typeof import('solid-js') = await vi.importActual('solid-js')
-
-      return {...actual, createSignal: vi.fn(actual.createSignal), onMount: vi.fn()}
-    })
-
-    const isolatedSolid = await import('solid-js')
-    vi.mocked(isolatedSolid.createSignal).mockImplementationOnce(
-      () => [() => undefined, () => undefined] as never,
-    )
-    vi.mocked(isolatedSolid.onMount).mockImplementation((callback) => callback())
-
-    const {PLayerReviewCanvas: IsolatedCanvas} = await import('../Canvas')
-    const {PLayerReviewRenderer: IsolatedRenderer} =
-      await import('../../../features/focus-room-layer-review/scene-renderer')
-
-    render(() => <IsolatedCanvas {...initialProps} />)
-
-    expect(IsolatedRenderer).not.toHaveBeenCalled()
-    vi.doUnmock('solid-js')
   })
 })

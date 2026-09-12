@@ -3,7 +3,7 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 import type {PEyeMode} from '../../../features/focus-room-animation'
-import type {PReviewMouthFrame} from '../../../features/focus-room-layer-review/scene-renderer'
+import type {PReviewMouthFrame} from 'src/features/focus-room-layer-review'
 import type {PViseme} from '../../../features/lip-sync'
 
 vi.mock('../LayerToggle', () => ({

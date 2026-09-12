@@ -1,5 +1,5 @@
 import {P_MOUTH_TRANSITION_PATHS} from '../../features/focus-room-animation/index'
-import type {PReviewMouthFrame} from '../../features/focus-room-layer-review/scene-renderer'
+import type {PReviewMouthFrame} from 'src/features/focus-room-layer-review'
 import {P_VISEMES} from '../../features/lip-sync/index'
 import {PSelect} from '../PSelect'
 import {LayerToggle} from './LayerToggle'

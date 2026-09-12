@@ -1,8 +1,11 @@
 /** @vitest-environment jsdom */
 
 import {beforeEach, expect, it, vi} from 'vitest'
+import {Application} from 'pixi.js'
+import {PEyeController} from '../../focus-room-animation/eye-animation-controller'
+import {PixiLayerScene} from '../../focus-room-animation/layer-scene'
 
-const rendererHarness = vi.hoisted(() => {
+const rendererHarness = (() => {
   type Reject = (reason?: unknown) => void
   type Resolve = () => void
 
@@ -69,83 +72,83 @@ const rendererHarness = vi.hoisted(() => {
       update: ReturnType<typeof vi.fn>
     }>,
   }
-})
+})()
 
-const mouthHarness = vi.hoisted(() => ({onUpdate: null as null | (() => void)}))
+const mouthHarness = {onUpdate: null as null | (() => void)}
 
-vi.mock('pixi.js', () => ({
-  Application: class ApplicationMock {
-    readonly canvas = document.createElement('canvas')
-    readonly stage = rendererHarness.createContainer()
+vi.mock('pixi.js', () => ({Application: vi.fn()}))
 
-    constructor() {
-      rendererHarness.applications.push(this)
-    }
+class ApplicationMock {
+  readonly canvas = document.createElement('canvas')
+  readonly stage = rendererHarness.createContainer()
 
-    readonly destroy = vi.fn(() => this.canvas.remove())
-    readonly init = vi.fn(() =>
-      rendererHarness.deferApplication
-        ? new Promise<void>((resolve) => {
-            rendererHarness.applicationResolver = resolve
-          })
-        : Promise.resolve(),
-    )
-    readonly render = vi.fn()
-  },
-}))
+  constructor() {
+    rendererHarness.applications.push(this)
+  }
 
-vi.mock('../../focus-room-animation/eye-animation-controller', () => ({
-  PEyeController: class PEyeControllerMock {
-    readonly container = rendererHarness.createContainer()
-    readonly destroy = vi.fn(() => this.container.destroy())
-    readonly initialize = vi.fn(() =>
-      rendererHarness.eyeInitializationError === null
-        ? Promise.resolve()
-        : Promise.reject(rendererHarness.eyeInitializationError),
-    )
-    readonly setMode = vi.fn()
-    readonly setSceneReady = vi.fn()
-    readonly update = vi.fn()
-    readonly onRender: () => void
+  readonly destroy = vi.fn(() => this.canvas.remove())
+  readonly init = vi.fn(() =>
+    rendererHarness.deferApplication
+      ? new Promise<void>((resolve) => {
+          rendererHarness.applicationResolver = resolve
+        })
+      : Promise.resolve(),
+  )
+  readonly render = vi.fn()
+}
 
-    constructor(onRender: () => void) {
-      this.onRender = onRender
-      rendererHarness.eyes.push(this)
-    }
-  },
-}))
+vi.mock('../../focus-room-animation/eye-animation-controller', () => ({PEyeController: vi.fn()}))
 
-vi.mock('../../focus-room-animation/layer-scene', () => ({
-  PixiLayerScene: class PixiLayerSceneMock {
-    readonly container = rendererHarness.createContainer()
-    readonly definitionId: string
-    destroyed = false
+class PEyeControllerMock {
+  readonly container = rendererHarness.createContainer()
+  readonly destroy = vi.fn(() => this.container.destroy())
+  readonly initialize = vi.fn(() =>
+    rendererHarness.eyeInitializationError === null
+      ? Promise.resolve()
+      : Promise.reject(rendererHarness.eyeInitializationError),
+  )
+  readonly setMode = vi.fn()
+  readonly setSceneReady = vi.fn()
+  readonly update = vi.fn()
+  readonly onRender: () => void
 
-    constructor(definition: {readonly id: string}, options: {readonly onRender: () => void}) {
-      this.definitionId = definition.id
-      this.onRender = options.onRender
-      rendererHarness.scenes.push(this)
-    }
+  constructor(onRender: () => void) {
+    this.onRender = onRender
+    rendererHarness.eyes.push(this)
+  }
+}
 
-    readonly destroy = vi.fn(() => {
-      this.destroyed = true
-      this.container.destroy()
-    })
-    readonly getAttachment = vi.fn(() => null)
-    readonly initialize = vi.fn(() => {
-      const error = rendererHarness.sceneInitializationErrors.get(this.definitionId)
+vi.mock('../../focus-room-animation/layer-scene', () => ({PixiLayerScene: vi.fn()}))
 
-      return error === undefined
-        ? new Promise<void>((resolve, reject) => {
-            rendererHarness.rejecters.set(this.definitionId, reject)
-            rendererHarness.resolvers.set(this.definitionId, resolve)
-          })
-        : Promise.reject(error)
-    })
-    readonly update = vi.fn()
-    readonly onRender: () => void
-  },
-}))
+class PixiLayerSceneMock {
+  readonly container = rendererHarness.createContainer()
+  readonly definitionId: string
+  destroyed = false
+
+  constructor(definition: {readonly id: string}, options: {readonly onRender: () => void}) {
+    this.definitionId = definition.id
+    this.onRender = options.onRender
+    rendererHarness.scenes.push(this)
+  }
+
+  readonly destroy = vi.fn(() => {
+    this.destroyed = true
+    this.container.destroy()
+  })
+  readonly getAttachment = vi.fn(() => null)
+  readonly initialize = vi.fn(() => {
+    const error = rendererHarness.sceneInitializationErrors.get(this.definitionId)
+
+    return error === undefined
+      ? new Promise<void>((resolve, reject) => {
+          rendererHarness.rejecters.set(this.definitionId, reject)
+          rendererHarness.resolvers.set(this.definitionId, resolve)
+        })
+      : Promise.reject(error)
+  })
+  readonly update = vi.fn()
+  readonly onRender: () => void
+}
 
 vi.mock('../../focus-room-animation/mouth-transition-controller', () => ({
   createPMouthTransitionController: vi.fn(),
@@ -190,12 +193,12 @@ vi.mock('../../focus-room-animation/scene-catalog-channels', () => ({
 }))
 
 vi.mock('../../focus-room-animation/scene-layer-state', () => ({
-  createFocusRoomLayerState: vi.fn(() => ({channels: {}})),
+  createFocusRoomLayerState: vi.fn(),
 }))
 
 import {createFocusRoomLayerState} from '../../focus-room-animation/scene-layer-state'
 import {createPMouthTransitionController} from '../../focus-room-animation/mouth-transition-controller'
-import {PLayerReviewRenderer, type PLayerReviewState} from '../scene-renderer'
+import {PLayerReviewRenderer, type PLayerReviewState} from '..'
 
 const state: PLayerReviewState = {
   activity: 'reading',
@@ -222,6 +225,15 @@ const createDefinition = (id: string) => ({
 })
 
 beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(createFocusRoomLayerState).mockReturnValue({animationEnabled: true, channels: {}})
+  vi.mocked(PixiLayerScene).mockImplementation(
+    PixiLayerSceneMock as unknown as typeof PixiLayerScene,
+  )
+  vi.mocked(PEyeController).mockImplementation(
+    PEyeControllerMock as unknown as typeof PEyeController,
+  )
+  vi.mocked(Application).mockImplementation(ApplicationMock as unknown as typeof Application)
   rendererHarness.applicationResolver = null
   rendererHarness.applications.length = 0
   rendererHarness.deferApplication = false

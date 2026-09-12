@@ -1,7 +1,7 @@
 import {Slider} from '@kobalte/core/slider'
 import {cx} from 'class-variance-authority'
 import {type PEyeMode, type PSceneStyle} from '../../features/focus-room-animation/index'
-import type {PReviewMouthFrame} from '../../features/focus-room-layer-review/scene-renderer'
+import type {PReviewMouthFrame} from 'src/features/focus-room-layer-review'
 import {type PViseme} from '../../features/lip-sync/index'
 import {EyeModePicker} from './EyeModePicker'
 import {LayerToggle} from './LayerToggle'
