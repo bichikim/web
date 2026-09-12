@@ -4,7 +4,9 @@
 import {render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
-import {type MidiPlayerContextProps, MidiPlayerProvider, useMidiPlayer} from '../context'
+import {type MidiPlayerContextProps} from '../types'
+import {MidiPlayerProvider} from '../MidiPlayerProvider'
+import {useMidiPlayer} from '../use-midi-player'
 import type {MusicInfo} from '../SFileItem'
 import type {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/instruments'
 
@@ -63,7 +65,7 @@ const renderPlayer = (ids: string[]) => {
     </MidiPlayerProvider>
   ))
 
-  return {controller, onMusicsChange, player}
+  return {controller, onMusicsChange, player, setMusics}
 }
 
 describe('MidiPlayerProvider', () => {
@@ -122,6 +124,57 @@ describe('MidiPlayerProvider', () => {
     expect(onMusicsChange).not.toHaveBeenCalled()
     expect(player.playingId()).toBe('first')
     expect(player.playList()).toEqual([createMusic('first')])
+  })
+
+  it.each([
+    {ids: ['second'], suspended: false},
+    {ids: [], suspended: false},
+    {ids: ['second'], suspended: true},
+  ])(
+    'should stop removed playback when syncing $ids (suspended=$suspended)',
+    ({ids, suspended}) => {
+      const {controller, onMusicsChange, player, setMusics} = renderPlayer(['first', 'second'])
+
+      player.handlePlay('first')
+      player.handleSelect('second')
+      if (suspended) {
+        player.handleSuspend()
+      }
+
+      setMusics(ids.map(createMusic))
+
+      expect(controller.stop).toHaveBeenCalledExactlyOnceWith()
+      expect(controller.play).toHaveBeenCalledExactlyOnceWith(createMusic('first'))
+      expect(player.playingId()).toBe('')
+      expect(player.isPlaying()).toBe(false)
+      expect(player.isSuspend()).toBe(false)
+      expect(player.playList()).toEqual(ids.map(createMusic))
+      expect(player.selectedId()).toBe(ids[0] ?? '')
+      expect(onMusicsChange).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should preserve playback when the playing song remains in the synced list', () => {
+    const {controller, player, setMusics} = renderPlayer(['first', 'second'])
+
+    player.handlePlay('first')
+    player.handleSelect('second')
+    setMusics(['third', 'first'].map(createMusic))
+
+    expect(controller.stop).not.toHaveBeenCalled()
+    expect(player.playingId()).toBe('first')
+    expect(player.isPlaying()).toBe(true)
+    expect(player.selectedId()).toBe('third')
+    expect(player.playList()).toEqual(['third', 'first'].map(createMusic))
+  })
+
+  it('should sync an idle playlist without stopping the controller', () => {
+    const {controller, player, setMusics} = renderPlayer(['first'])
+
+    setMusics([createMusic('second')])
+
+    expect(controller.stop).not.toHaveBeenCalled()
+    expect(player.selectedId()).toBe('second')
   })
 
   it('should reconcile the playlist and selection when input musics change', () => {

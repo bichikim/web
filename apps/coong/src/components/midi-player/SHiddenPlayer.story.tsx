@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {splitProps} from 'solid-js'
-import {MidiPlayerProvider, type MidiPlayerProviderProps} from './context'
+import {MidiPlayerProvider} from './MidiPlayerProvider'
+import {type MidiPlayerProviderProps} from './types'
 import {SHiddenPlayer, type SHiddenPlayerProps} from './SHiddenPlayer'
 import midiData from './hidden-teenieping.json'
 
