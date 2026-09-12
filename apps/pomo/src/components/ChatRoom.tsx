@@ -26,7 +26,7 @@ export const ChatRoom = () => {
   const [endpointing, setEndpointing] = createSignal(false)
   const [speakBeforeRefining, setSpeakBeforeRefining] = createSignal(false)
   let spokenMessageId: string | null = null
-  let speakDraftForReply = false
+  let replySpeech: 'streaming' | 'completed' | 'stopped' = 'completed'
 
   const speech = useSpeechToText({
     accumulateText: false,
@@ -43,11 +43,18 @@ export const ChatRoom = () => {
     onSendStarted: () => {
       voice.arm()
       speechBuffer.reset()
-      speakDraftForReply = speakBeforeRefining()
+      replySpeech = speakBeforeRefining() ? 'streaming' : 'completed'
     },
     refineAnswer: () => !disableRefining(),
     speech,
   })
+  const sidebarVoice = {
+    ...voice,
+    stop: () => {
+      replySpeech = 'stopped'
+      voice.stop()
+    },
+  }
   const handlePrepare = () => {
     chat.prepare()
     voice.prepare().catch(console.error)
@@ -86,7 +93,11 @@ export const ChatRoom = () => {
 
     const latestMessage = messages.at(-1)
 
-    if (speakDraftForReply) {
+    if (replySpeech === 'stopped') {
+      return
+    }
+
+    if (replySpeech === 'streaming') {
       for (const sentence of speechBuffer.update(streamingText)) {
         voice.speak(sentence).catch(console.error)
       }
@@ -143,7 +154,7 @@ export const ChatRoom = () => {
           onPrepare={handlePrepare}
           onSpeakBeforeRefiningChange={setSpeakBeforeRefining}
           speakBeforeRefining={speakBeforeRefining()}
-          voice={voice}
+          voice={sidebarVoice}
         />
       </div>
     </section>
