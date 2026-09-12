@@ -134,27 +134,29 @@ it('should retain a successful browser save when native storage is unavailable',
   ).resolves.toBeUndefined()
 })
 
-it('should not let a pending native read replace a newer browser copy', async () => {
-  const settings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
-  const nextSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  let completeRead: (value: string) => void = () => undefined
-  storageMocks.getItem.mockReturnValue(
-    new Promise((resolve) => {
-      completeRead = resolve
-    }),
-  )
-  storageMocks.setItem.mockResolvedValue()
+it.each([
+  ['stale', JSON.stringify({maximumMinutes: 8, minimumMinutes: 4, version: 1})],
+  ['empty', null],
+  ['invalid', JSON.stringify({maximumMinutes: 2, minimumMinutes: 4, version: 1})],
+])(
+  'should return the newer browser copy when a pending native read is %s',
+  async (_label, nativeValue) => {
+    const nextSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    const nativeRead = Promise.withResolvers<string | null>()
+    storageMocks.getItem.mockReturnValue(nativeRead.promise)
+    storageMocks.setItem.mockResolvedValue()
 
-  const pendingRead = readRandomEventSettings()
-  await writeRandomEventSettings(nextSettings)
-  completeRead(JSON.stringify(settings))
+    const pendingRead = readRandomEventSettings()
+    await writeRandomEventSettings(nextSettings)
+    nativeRead.resolve(nativeValue)
 
-  await expect(pendingRead).resolves.toEqual(settings)
-  expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(
-    nextSettings,
-  )
-})
+    await expect(pendingRead).resolves.toEqual(nextSettings)
+    expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(
+      nextSettings,
+    )
+  },
+)
 
 it('should preserve native write order during rapid settings changes', async () => {
   const firstSettings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
