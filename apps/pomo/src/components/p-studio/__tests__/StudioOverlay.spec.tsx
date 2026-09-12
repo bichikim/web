@@ -57,6 +57,18 @@ const createOptions = (): ComponentProps<typeof StudioOverlay> => ({
 beforeEach(() => vi.clearAllMocks())
 
 describe('StudioOverlay', () => {
+  it('should suppress the screen saver while UI auto hide is enabled', () => {
+    const options = createOptions()
+    const [enabled, setEnabled] = createSignal(false)
+    render(() => <StudioOverlay {...options} uiAutoHideEnabled={enabled()} />)
+    const props = vi.mocked(PScreenSaver).mock.calls[0][0]
+    expect(props.isActive).toBe(true)
+    setEnabled(true)
+    expect(props.isActive).toBe(false)
+    setEnabled(false)
+    expect(props.isActive).toBe(true)
+  })
+
   it.each([false, true])(
     'should withhold screen saver content until display preferences restore with visibility %s',
     (visible) => {

@@ -299,3 +299,42 @@ it('should dismiss only the nested modal when Escape is pressed on its tab', () 
   expect(innerChange).toHaveBeenCalledExactlyOnceWith(false)
   expect(outerChange).not.toHaveBeenCalled()
 })
+
+it('should focus the requested input after opening a nested modal', async () => {
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [input, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+  render(() => (
+    <PModal isOpen onOpenChange={vi.fn()} title="Parent">
+      <button onClick={() => setIsOpen(true)} type="button">
+        Create memo
+      </button>
+      <PModal getInitialFocus={input} isOpen={isOpen()} onOpenChange={setIsOpen} title="Memo">
+        <textarea aria-label="Memo text" ref={setInput} />
+      </PModal>
+    </PModal>
+  ))
+  const trigger = screen.getByRole('button', {name: 'Create memo'})
+  await waitFor(() => expect(screen.getByRole('button', {name: m.common_close()})).toHaveFocus())
+  trigger.focus()
+  fireEvent.click(trigger)
+  await waitFor(() => expect(screen.getByRole('textbox', {name: 'Memo text'})).toHaveFocus())
+})
+
+it.each(['close', 'unmount'])('should cancel pending initial focus on %s', async (action) => {
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [input, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+  const {unmount} = render(() => (
+    <PModal getInitialFocus={input} isOpen={isOpen()} onOpenChange={setIsOpen} title="Memo">
+      <textarea aria-label="Memo text" ref={setInput} />
+    </PModal>
+  ))
+  setIsOpen(true)
+  const focus = vi.spyOn(screen.getByRole('textbox', {name: 'Memo text'}), 'focus')
+  if (action === 'close') {
+    setIsOpen(false)
+  } else {
+    unmount()
+  }
+  await Promise.resolve()
+  expect(focus).not.toHaveBeenCalled()
+})

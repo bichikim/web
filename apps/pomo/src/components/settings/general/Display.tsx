@@ -1,3 +1,4 @@
+import {PUiAutoHideSettings} from './UiAutoHide'
 import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {createMemo, Show} from 'solid-js'
 import {PSelect, type PSelectOption} from '../../PSelect'
@@ -84,6 +85,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
   return (
     <section aria-label={m.settings_section_display()} class={CLASSES.settingsSection}>
       <div class={CLASSES.settingsGrid}>
+        <PUiAutoHideSettings controller={props.uiAutoHide} />
         <Show when={props.onDialogueComposerVisibleChange}>
           {(onDialogueComposerVisibleChange) => (
             <PSwitch

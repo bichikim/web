@@ -1,4 +1,4 @@
-import {onCleanup, onMount} from 'solid-js'
+import {type Accessor, onCleanup, onMount} from 'solid-js'
 
 import type {PSceneMotionInput, PSceneMotionMode, PSceneStyle} from '../focus-room-animation'
 import type {PActivity, PGaze} from '../focus-room-scene-preferences'
@@ -47,6 +47,8 @@ export interface DesktopSceneSettingsPublisher {
 
 export interface UseDesktopSceneSettingsPublisherProps {
   readonly handlers?: DesktopSceneSettingsHandlers
+  readonly requestSnapshot?: boolean
+  readonly snapshot?: Accessor<ReadonlyArray<DesktopSceneSetting>>
 }
 
 type DesktopWeatherSceneSetting = Extract<
@@ -101,6 +103,20 @@ const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSetting => 
       return false
   }
 }
+
+interface DesktopSceneSnapshot {
+  readonly type: 'snapshot'
+  readonly settings: ReadonlyArray<DesktopSceneSetting>
+}
+
+const isDesktopSceneSnapshot = (value: unknown): value is DesktopSceneSnapshot =>
+  typeof value === 'object' &&
+  value !== null &&
+  'type' in value &&
+  value.type === 'snapshot' &&
+  'settings' in value &&
+  Array.isArray(value.settings) &&
+  value.settings.every(isDesktopSceneSetting)
 
 const applyDesktopWeatherSceneSetting = (
   handlers: DesktopSceneSettingsHandlers,
@@ -177,6 +193,8 @@ export const useDesktopSceneSettingsPublisher = (
   props: UseDesktopSceneSettingsPublisherProps = {},
 ): DesktopSceneSettingsPublisher => {
   let channel: BroadcastChannel | null = null
+  const editedSettings = new Set<DesktopSceneSetting['name']>()
+  let awaitingSnapshot = props.requestSnapshot === true
 
   onMount(() => {
     if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
@@ -185,16 +203,44 @@ export const useDesktopSceneSettingsPublisher = (
 
     channel = new BroadcastChannel(SCENE_SETTINGS_CHANNEL)
     channel.addEventListener('message', (event) => {
+      if (event.data === 'request-snapshot') {
+        const settings = props.snapshot?.()
+        if (settings !== undefined) {
+          channel?.postMessage({settings, type: 'snapshot'})
+        }
+        return
+      }
       const {handlers} = props
+      const message: unknown = event.data
+      if (isDesktopSceneSnapshot(message)) {
+        if (awaitingSnapshot && handlers !== undefined) {
+          awaitingSnapshot = false
+          for (const setting of message.settings) {
+            if (!editedSettings.has(setting.name)) {
+              applyDesktopSceneSetting(handlers, setting)
+            }
+          }
+        }
+        return
+      }
       if (handlers !== undefined && isDesktopSceneSetting(event.data)) {
+        editedSettings.add(event.data.name)
         applyDesktopSceneSetting(handlers, event.data)
       }
     })
+    if (props.requestSnapshot) {
+      channel.postMessage('request-snapshot')
+    }
     onCleanup(() => {
       channel?.close()
       channel = null
     })
   })
 
-  return {publish: (setting) => channel?.postMessage(setting)}
+  return {
+    publish: (setting) => {
+      editedSettings.add(setting.name)
+      channel?.postMessage(setting)
+    },
+  }
 }

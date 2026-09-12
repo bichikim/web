@@ -8,6 +8,7 @@ import type {useStudioScreenSaver} from './use-screen-saver'
 import type {useStudioTour} from './use-tour'
 
 interface StudioOverlayProps {
+  readonly uiAutoHideEnabled?: boolean
   readonly displayPreferences: PDisplayPreferencesController
   readonly desktopMode: DesktopMode
   readonly entryVisible: boolean
@@ -35,6 +36,7 @@ export const StudioOverlay = (props: StudioOverlayProps) => (
     <PScreenSaver
       isActive={
         props.hasEntered &&
+        !props.uiAutoHideEnabled &&
         !isDesktopBackgroundMode(props.desktopMode) &&
         props.screenSaver.isActive()
       }

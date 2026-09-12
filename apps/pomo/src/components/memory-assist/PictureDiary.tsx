@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import * as m from '@paraglide/message'
@@ -22,8 +22,6 @@ import {
   type PictureDiaryEnvironment,
 } from './picture-diary/environment'
 import {PictureDiaryStatus} from './picture-diary/Status'
-
-const getDateValue = (date: Date) => dayjs(date).format('YYYY-MM-DD')
 
 export interface PictureDiaryProps {
   readonly turnEnvironment?: PageTurnEnvironment
@@ -100,7 +98,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     repository,
   })
   const [view, setView] = createSignal<PictureDiaryView>({kind: 'writing'})
-  const [date, setDate] = createSignal(getDateValue(environment.now()))
+  const [date, setDate] = createSignal(formatLocalDate(environment.now()))
   const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
   const [image, setImage] = createSignal<PictureDiaryImage>()
   const [text, setText] = createSignal('')
@@ -171,7 +169,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         strokes() === snapshot.strokes &&
         text() === snapshot.text
       ) {
-        setDate(getDateValue(environment.now()))
+        setDate(formatLocalDate(environment.now()))
         setStrokes([])
         setImage(undefined)
         setText('')

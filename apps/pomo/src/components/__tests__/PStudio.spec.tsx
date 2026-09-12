@@ -8,8 +8,10 @@ import {configureStudio, renderStudio, setupStudio, studioMocks} from './p-studi
 const {
   DEFAULT_BACKGROUND,
   PTour,
+  SceneToolbar,
   readFocusRoomEntrySession,
   useBackground,
+  usePDisplayPreferences,
   writeFocusRoomEntrySession,
 } = studioMocks
 
@@ -29,6 +31,41 @@ afterEach(() => {
 })
 
 describe('PStudio', () => {
+  it.each([false, true])(
+    'should wait for display restoration before mounting the toolbar with visibility %s',
+    (visible) => {
+      configureStudio({entrySession: true})
+      const preferences = vi.mocked(usePDisplayPreferences)()
+      const [isReady, setIsReady] = createSignal(false)
+      const [visibility, setVisibility] = createSignal(true)
+      vi.mocked(usePDisplayPreferences).mockReturnValue({
+        ...preferences,
+        isReady,
+        memoryAssistVisible: visibility,
+        toolsButtonVisible: visibility,
+        tourButtonVisible: visibility,
+      })
+
+      renderStudio()
+
+      expect(SceneToolbar).not.toHaveBeenCalled()
+      setVisibility(visible)
+      expect(SceneToolbar).not.toHaveBeenCalled()
+      setIsReady(true)
+
+      expect(SceneToolbar).toHaveBeenCalledOnce()
+      const toolbar = vi.mocked(SceneToolbar).mock.calls[0][0]
+      expect(toolbar.memoryAssistVisible).toBe(visible)
+      expect(toolbar.toolsButtonVisible).toBe(visible)
+      expect(toolbar.tourButtonVisible).toBe(visible)
+
+      setVisibility(!visible)
+      expect(toolbar.memoryAssistVisible).toBe(!visible)
+      expect(toolbar.toolsButtonVisible).toBe(!visible)
+      expect(toolbar.tourButtonVisible).toBe(!visible)
+    },
+  )
+
   it('should enter the focus room and pass toolbar changes to the scene', () => {
     configureStudio({gyroscope: true, isScreenSaverActive: true})
 
@@ -204,6 +241,7 @@ describe('PStudio', () => {
     expect(screen.getByText('이벤트')).toBeInTheDocument()
     expect(screen.queryByText('입장')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
+    expect(SceneToolbar).not.toHaveBeenCalled()
   })
 })
 

@@ -1,3 +1,5 @@
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 export type WorkerRpcFailureCode = 'disposed' | 'message-error' | 'send-error' | 'worker-error'
 
 export interface WorkerRpcFailure {
@@ -63,20 +65,6 @@ class WorkerRpcError extends Error implements WorkerRpcFailure {
   }
 }
 
-const getErrorDetail = (error: unknown, fallback: string) => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof error.message === 'string' &&
-    error.message.length > 0
-  ) {
-    return error.message
-  }
-
-  return fallback
-}
-
 /** Owns request correlation and the fatal lifecycle of one Worker. */
 export const createWorkerRpcTransport = <Request, Response>(
   options: CreateWorkerRpcTransportOptions<Response>,
@@ -136,7 +124,7 @@ export const createWorkerRpcTransport = <Request, Response>(
       handleResponse(event.data)
     } catch (error) {
       fail(
-        new WorkerRpcError('message-error', getErrorDetail(error, 'Worker 응답 처리 오류'), error),
+        new WorkerRpcError('message-error', getErrorMessage(error, 'Worker 응답 처리 오류'), error),
       )
     }
   })
@@ -166,7 +154,7 @@ export const createWorkerRpcTransport = <Request, Response>(
       } catch (error) {
         pendingRequests.delete(requestId)
         reject(
-          new WorkerRpcError('send-error', getErrorDetail(error, 'Worker 요청 전송 오류'), error),
+          new WorkerRpcError('send-error', getErrorMessage(error, 'Worker 요청 전송 오류'), error),
         )
       }
     })

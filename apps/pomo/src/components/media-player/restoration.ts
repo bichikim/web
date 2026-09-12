@@ -9,19 +9,16 @@ export interface RestorePPlayerStateOptions {
   readonly tracks: readonly PTrack[]
 }
 
-/** Restores playlist and playback state independently as their runtime stores settle. */
+/** Restores the playlist as it settles and applies playback only to the resolved queue. */
 export const restorePPlayerState = async (options: RestorePPlayerStateOptions): Promise<void> => {
   let playlistResolved = false
-  let playbackApplied = false
   let restoredTracks = options.defaultTracks
   let storedPlayback: PPlaybackState | null = null
   const restorePlayback = options.playbackRequest.then((playback) => {
     storedPlayback = playback
-    const trackIsAvailable = restoredTracks.some((track) => track.id === playback?.trackId)
 
-    if (playback !== null && (playlistResolved || trackIsAvailable) && options.canRestore()) {
+    if (playback !== null && playlistResolved && options.canRestore()) {
       options.onRestore(restoredTracks, playback)
-      playbackApplied = true
     }
   })
   const restorePlaylist = options.playlistRequest.then((storedTrackIds) => {
@@ -35,7 +32,7 @@ export const restorePPlayerState = async (options: RestorePPlayerStateOptions): 
       })
     }
 
-    const shouldRestore = storedTrackIds !== null || (storedPlayback !== null && !playbackApplied)
+    const shouldRestore = storedTrackIds !== null || storedPlayback !== null
 
     if (shouldRestore && options.canRestore()) {
       options.onRestore(restoredTracks, storedPlayback)

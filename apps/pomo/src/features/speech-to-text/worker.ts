@@ -8,6 +8,8 @@ import {
   type ProgressInfo,
 } from '@huggingface/transformers'
 
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import type {SpeechRecognitionError, SpeechRecognitionPhase} from './errors'
 import type {SpeechWorkerRequest, SpeechWorkerResponse} from './messages'
 import {getSpeechModel, type SpeechModelDefinition, type SpeechModelId} from './models'
@@ -24,15 +26,12 @@ let preparePromise: Promise<SpeechBackend> | null = null
 
 const sendResponse = (response: SpeechWorkerResponse) => workerScope.postMessage(response)
 
-const getErrorDetail = (error: unknown) =>
-  error instanceof Error && error.message.length > 0 ? error.message : '알 수 없는 오류'
-
 const createModelError = (
   error: unknown,
   phase: SpeechRecognitionPhase,
 ): SpeechRecognitionError => ({
   code: 'model-failed',
-  detail: getErrorDetail(error),
+  detail: getErrorMessage(error, '알 수 없는 오류'),
   phase,
   retryable: true,
 })
@@ -147,7 +146,7 @@ const transcribe = async (request: Extract<SpeechWorkerRequest, {readonly type: 
     sendResponse({
       error: {
         code: 'transcription-failed',
-        detail: getErrorDetail(error),
+        detail: getErrorMessage(error, '알 수 없는 오류'),
         phase: 'transcribe',
         retryable: true,
       },
@@ -173,7 +172,7 @@ workerScope.addEventListener('message', (event: MessageEvent<SpeechWorkerRequest
     sendResponse({
       error: {
         code: 'worker-failed',
-        detail: getErrorDetail(error),
+        detail: getErrorMessage(error, '알 수 없는 오류'),
         phase: event.data.type === 'prepare' ? 'prepare' : 'transcribe',
         retryable: true,
       },

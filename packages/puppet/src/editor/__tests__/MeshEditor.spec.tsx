@@ -448,10 +448,75 @@ describe('MeshEditor', () => {
 
     expect(onVertexEditStart).toHaveBeenCalledOnce()
     expect(document().parts[0]?.mesh.vertices).toBe(initialDocument.parts[0]?.mesh.vertices)
+    expect(document().parts[0]?.mesh.uvs).toBe(initialDocument.parts[0]?.mesh.uvs)
     const vertexTracks = document().motions[0]?.tracks.filter((track) => track.kind === 'vertex')
     expect(vertexTracks?.[0]?.keyframes[0]).toEqual({time: 0.5, value: 320})
     expect(vertexTracks?.[1]?.keyframes).toEqual([{time: 0.5, value: 200}])
   })
+
+  test.each([0, 0.5])(
+    'should move an existing motion vertex at time %s while retaining its texture attachment',
+    (time) => {
+      const source = createDemoDocument()
+      const initial: PuppetDocument = {
+        ...source,
+        motions: [
+          {
+            ...source.motions[0]!,
+            tracks: [
+              {
+                axis: 'x',
+                keyframes: [
+                  {time: 0, value: 320},
+                  {time: 2, value: 340},
+                ],
+                kind: 'vertex',
+                partId: 'mesh-preview',
+                vertexIndex: 4,
+              },
+            ],
+          },
+        ],
+      }
+      const [document, setDocument] = createSignal(initial)
+      const view = render(() => (
+        <MeshEditor
+          document={document()}
+          editMode="motion"
+          onDocumentChange={setDocument}
+          previewTime={time}
+        />
+      ))
+      const svg = view.container.querySelector('svg')!
+      const vertex = view.container.querySelectorAll('circle')[4]!
+      vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+        bottom: 720,
+        height: 720,
+        left: 0,
+        right: 960,
+        toJSON: () => ({}),
+        top: 0,
+        width: 960,
+        x: 0,
+        y: 0,
+      })
+      fireEvent.pointerDown(vertex, {button: 0})
+      fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 440, clientY: 320}))
+      fireEvent.pointerUp(svg)
+
+      expect(document().parts).toBe(initial.parts)
+      expect(document().parts[0]!.mesh.uvs.slice(8)).toEqual([0.5, 0.5])
+      expect(document().parameterBindings).toBe(initial.parameterBindings)
+      expect(document().scene).toBe(initial.scene)
+      const tracks = document().motions[0]!.tracks
+      expect(tracks).toHaveLength(2)
+      expect(tracks[0]!.keyframes).toContainEqual({time, value: 280})
+      expect(tracks[0]!.keyframes).toContainEqual({time: 2, value: 340})
+      expect(tracks[1]!.keyframes).toEqual([{time, value: 200}])
+      expect(vertex).toHaveAttribute('cx', '280')
+      expect(vertex).toHaveAttribute('cy', '200')
+    },
+  )
 
   test.each([0, 0.5, 1])('should edit the original selected keyform at influence %s', (weight) => {
     const source = createDemoDocument()

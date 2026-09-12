@@ -1,0 +1,42 @@
+import {expect, test} from '@playwright/test'
+
+test('should focus the nested memo editor and restore focus when closed', async ({page}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'pomo:focus-room-playlist:v1',
+      JSON.stringify({savedAt: 1788912000000, trackIds: [], version: 1}),
+    )
+  })
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '시작하기'}).click()
+  await expect(page.locator('.pomo-scene canvas')).toBeVisible()
+  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  const trigger = page.getByRole('button', {exact: true, name: '기억보조'})
+  await trigger.click()
+  const parent = page.getByRole('dialog', {exact: true, name: 'Pomofi 기억 보조'})
+  await parent.getByRole('tab', {exact: true, name: '메모'}).click()
+  const create = parent.getByRole('button', {exact: true, name: '새 메모'})
+  await create.click()
+  const editor = page.getByRole('dialog', {exact: true, name: '새 메모 만들기'})
+  const input = editor.getByRole('textbox', {name: '기억할 메모'})
+  await expect(input).toBeFocused()
+  await page.keyboard.type('키보드 입력 확인')
+  await expect(input).toHaveValue('키보드 입력 확인')
+  const close = editor.getByRole('button', {exact: true, name: '닫기'})
+  await page.keyboard.press('Shift+Tab')
+  await expect(close).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  const save = editor.getByRole('button', {exact: true, name: '메모 저장'})
+  await expect(save).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(close).toBeFocused()
+  await close.click()
+  await expect(editor).not.toBeVisible()
+  await expect(create).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(input).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(editor).not.toBeVisible()
+  await expect(create).toBeFocused()
+  await expect(parent).toBeVisible()
+})

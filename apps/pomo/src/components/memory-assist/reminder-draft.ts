@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {
   MEMORY_REINFORCEMENT_INTERVALS,
   type MemoryMemo,
@@ -10,8 +11,6 @@ const [DEFAULT_REMINDER_DELAY] = MEMORY_REINFORCEMENT_INTERVALS
 const DEFAULT_EXACT_REPEAT_INTERVAL_MINUTES = 10
 const DEFAULT_EXACT_REPEAT_UNTIL_MINUTES = 60
 const MILLISECONDS_PER_MINUTE = 60_000
-
-export const getDateInputValue = (date: Date) => dayjs(date).format('YYYY-MM-DD')
 
 const getTimeInputValue = (date: Date) => dayjs(date).format('HH:mm')
 
@@ -28,7 +27,7 @@ export const resolveReminderAt = (
     .add(day === 'tomorrow' ? 1 : 0, 'day')
     .toDate()
 
-  const dateValue = day === 'custom' ? customDate : getDateInputValue(date)
+  const dateValue = day === 'custom' ? customDate : formatLocalDate(date)
   const reminder = new Date(`${dateValue}T${time}`)
   return Number.isNaN(reminder.getTime()) ? null : reminder.toISOString()
 }
@@ -55,8 +54,8 @@ export const createReminderDraft = (options: CreateReminderDraftOptions): Remind
     options.exactReminderAt === null
       ? getDefaultReminderDate(options.now)
       : new Date(options.exactReminderAt)
-  const reminderDate = getDateInputValue(reminder)
-  const today = getDateInputValue(options.now)
+  const reminderDate = formatLocalDate(reminder)
+  const today = formatLocalDate(options.now)
   const tomorrowDate = dayjs(options.now).add(1, 'day').format('YYYY-MM-DD')
   const reminderDay =
     reminderDate === today ? 'today' : reminderDate === tomorrowDate ? 'tomorrow' : 'custom'
