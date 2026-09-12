@@ -4,7 +4,7 @@
 import {describe, expect, it} from 'vitest'
 import {createRoot, createSignal} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
-import {useTargetElement} from '@winter-love/solid-use/target-element'
+import {useTargetElement} from '../index'
 
 describe('useTargetElement', () => {
   it('should return an element found by the selector when a string is passed', () => {
