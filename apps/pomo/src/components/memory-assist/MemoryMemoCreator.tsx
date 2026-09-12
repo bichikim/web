@@ -1,4 +1,4 @@
-import {createMemo, createSignal, onMount} from 'solid-js'
+import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import * as m from '@paraglide/message'
@@ -26,19 +26,26 @@ export const MemoryMemoCreator = () => {
     createReminderDraft({exactReminderAt: null, now: new Date(), recallMode: 'none'}),
   )
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
+  let draftRevision = 0
+  onCleanup(() => {
+    draftRevision += 1
+  })
   const canSave = createMemo(() => isNonBlankString(text()))
 
   const handleTextInput = (nextText: string) => {
+    draftRevision += 1
     setText(nextText)
     persistCreationDraft(nextText, reminderDraft())
   }
 
   const handleReminderChange = (nextReminderDraft: ReminderDraft) => {
+    draftRevision += 1
     setReminderDraft(nextReminderDraft)
     persistCreationDraft(text(), nextReminderDraft)
   }
 
   const handleOpen = (source: HTMLButtonElement) => {
+    draftRevision += 1
     setTriggerElement(source)
     setMessage(null)
     setIsOpen(true)
@@ -65,6 +72,7 @@ export const MemoryMemoCreator = () => {
   })
 
   const handleSave = async () => {
+    const savedRevision = draftRevision
     const now = new Date()
     const currentDraft = reminderDraft()
     const exactReminderAt = currentDraft.exactEnabled
@@ -100,6 +108,9 @@ export const MemoryMemoCreator = () => {
 
     try {
       await updateMemoryMemos((currentMemos) => [memo, ...currentMemos])
+      if (savedRevision !== draftRevision) {
+        return
+      }
       deleteMemoryMemoDraft()
       setText('')
       setReminderDraft(
@@ -109,7 +120,9 @@ export const MemoryMemoCreator = () => {
       setIsOpen(false)
     } catch (error: unknown) {
       console.error('Failed to save a memory memo.', error)
-      setMessage(m.memory_memo_save_failed())
+      if (savedRevision === draftRevision) {
+        setMessage(m.memory_memo_save_failed())
+      }
     }
   }
 
