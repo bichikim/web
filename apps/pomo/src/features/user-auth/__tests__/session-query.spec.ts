@@ -4,6 +4,7 @@ import {afterEach, expect, it, vi} from 'vitest'
 
 const sessionMocks = vi.hoisted(() => ({readAccountSession: vi.fn()}))
 const appSessionMocks = vi.hoisted(() => ({
+  activateStoredSession: vi.fn(),
   clearStoredAppSession: vi.fn(),
   readStoredAppSession: vi.fn(),
   validateAppSession: vi.fn(),
@@ -11,6 +12,7 @@ const appSessionMocks = vi.hoisted(() => ({
 
 vi.mock('../web-session', () => ({readAccountSession: sessionMocks.readAccountSession}))
 vi.mock('../app-session', () => ({
+  activateStoredSession: appSessionMocks.activateStoredSession,
   clearStoredAppSession: appSessionMocks.clearStoredAppSession,
   readStoredAppSession: appSessionMocks.readStoredAppSession,
   validateAppSession: appSessionMocks.validateAppSession,
@@ -21,7 +23,7 @@ import {accountSessionQuery, tossSessionQuery} from '../session-query'
 afterEach(() => {
   query.clear()
   vi.restoreAllMocks()
-  vi.clearAllMocks()
+  vi.resetAllMocks()
 })
 
 it('should return the current browser account session', async () => {
@@ -58,11 +60,12 @@ it('should preserve the existing session adapter rejection contract', () => {
   return expect(accountSessionQuery()).rejects.toBe(error)
 })
 
-it('should resolve a valid Toss session', () => {
+it('should resolve a valid Toss session without activation', async () => {
   appSessionMocks.readStoredAppSession.mockResolvedValue('token')
   appSessionMocks.validateAppSession.mockResolvedValue(true)
 
-  return expect(tossSessionQuery()).resolves.toBe(true)
+  await expect(tossSessionQuery()).resolves.toBe(true)
+  expect(appSessionMocks.activateStoredSession).not.toHaveBeenCalled()
 })
 
 it('should resolve an absent Toss session without validation', async () => {
@@ -70,12 +73,14 @@ it('should resolve an absent Toss session without validation', async () => {
 
   await expect(tossSessionQuery()).resolves.toBe(false)
   expect(appSessionMocks.validateAppSession).not.toHaveBeenCalled()
+  expect(appSessionMocks.activateStoredSession).not.toHaveBeenCalled()
 })
 
 it('should resolve a rejected Toss session as anonymous when storage cleanup fails', async () => {
   const cleanupError = new Error('storage unavailable')
   appSessionMocks.readStoredAppSession.mockResolvedValue('expired')
   appSessionMocks.validateAppSession.mockResolvedValue(false)
+  appSessionMocks.activateStoredSession.mockResolvedValue(false)
   appSessionMocks.clearStoredAppSession.mockRejectedValue(cleanupError)
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
@@ -91,4 +96,35 @@ it('should preserve Toss session infrastructure failures', () => {
   appSessionMocks.readStoredAppSession.mockRejectedValue(error)
 
   return expect(tossSessionQuery()).rejects.toBe(error)
+})
+
+it('should activate a stored pending Toss session before discarding it', async () => {
+  appSessionMocks.readStoredAppSession.mockResolvedValue('pending-token')
+  appSessionMocks.validateAppSession.mockResolvedValue(false)
+  appSessionMocks.activateStoredSession.mockResolvedValueOnce(true)
+
+  await expect(tossSessionQuery()).resolves.toBe(true)
+  expect(appSessionMocks.activateStoredSession).toHaveBeenCalledExactlyOnceWith('pending-token')
+  expect(appSessionMocks.clearStoredAppSession).not.toHaveBeenCalled()
+})
+
+it('should clear a Toss session only after activation also rejects it', async () => {
+  appSessionMocks.readStoredAppSession.mockResolvedValue('expired-token')
+  appSessionMocks.validateAppSession.mockResolvedValue(false)
+  appSessionMocks.activateStoredSession.mockResolvedValueOnce(false)
+  appSessionMocks.clearStoredAppSession.mockResolvedValueOnce(undefined)
+
+  await expect(tossSessionQuery()).resolves.toBe(false)
+  expect(appSessionMocks.activateStoredSession).toHaveBeenCalledExactlyOnceWith('expired-token')
+  expect(appSessionMocks.clearStoredAppSession).toHaveBeenCalledOnce()
+})
+
+it('should preserve a pending Toss token when activation is unavailable', async () => {
+  const error = new Error('activation unavailable')
+  appSessionMocks.readStoredAppSession.mockResolvedValue('pending-token')
+  appSessionMocks.validateAppSession.mockResolvedValue(false)
+  appSessionMocks.activateStoredSession.mockRejectedValueOnce(error)
+
+  await expect(tossSessionQuery()).rejects.toBe(error)
+  expect(appSessionMocks.clearStoredAppSession).not.toHaveBeenCalled()
 })
