@@ -1,46 +1,9 @@
 /** @vitest-environment jsdom */
 
-import {renderHook} from '@solidjs/testing-library'
+import {MemoryRouter} from '@solidjs/router'
+import {createComponent, type ParentProps} from 'solid-js'
+import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-
-const routerMocks = vi.hoisted(() => {
-  interface TestSubmission {
-    readonly clear: () => void
-    readonly input: ReadonlyArray<unknown>
-    pending: boolean
-  }
-
-  const submissions = new Map<string, Array<TestSubmission>>()
-  const getSubmissions = (clientAction: Function) => {
-    const current = submissions.get(clientAction.name) ?? []
-    submissions.set(clientAction.name, current)
-    return current
-  }
-
-  return {getSubmissions, submissions}
-})
-
-vi.mock('@solidjs/router', () => ({
-  action: vi.fn((clientAction) => clientAction),
-  useAction: vi.fn((clientAction: (...input: ReadonlyArray<unknown>) => Promise<unknown>) => {
-    return async (...input: ReadonlyArray<unknown>) => {
-      const submission = {clear: vi.fn(), input, pending: true}
-      routerMocks.getSubmissions(clientAction).push(submission)
-      try {
-        return await clientAction(...input)
-      } finally {
-        submission.pending = false
-      }
-    }
-  }),
-  useSubmission: vi.fn((clientAction: Function) => ({
-    clear: vi.fn(),
-    get pending() {
-      return routerMocks.getSubmissions(clientAction).some((submission) => submission.pending)
-    },
-  })),
-  useSubmissions: vi.fn((clientAction: Function) => routerMocks.getSubmissions(clientAction)),
-}))
 
 import {useTrackManagement} from '../use-track-management'
 
@@ -93,18 +56,22 @@ const createSubmitEvent = (
   return {event, preventDefault, reset}
 }
 
+const RouterWrapper = (props: ParentProps) =>
+  createComponent(MemoryRouter, {root: () => props.children})
+
 const renderTrackManagement = (
   refreshCatalog: () => Promise<void> = vi.fn().mockResolvedValue(undefined),
 ) => {
   const setMessage = vi.fn()
-  const hook = renderHook(() => useTrackManagement({refreshCatalog, setMessage}))
+  const hook = renderHook(() => useTrackManagement({refreshCatalog, setMessage}), {
+    wrapper: RouterWrapper,
+  })
 
   return {...hook, refreshCatalog, setMessage}
 }
 
 beforeEach(() => {
   vi.resetAllMocks()
-  routerMocks.submissions.clear()
   creationMocks.createTrackWithAudio.mockResolvedValue({success: true})
   creationMocks.removeTrack.mockResolvedValue(undefined)
   uploadMocks.confirmTrackAudioRegistration.mockResolvedValue({status: 'active'})
@@ -161,6 +128,106 @@ describe('useTrackManagement', () => {
     expect(result.trackTitle()).toBe('')
     expect(result.trackResetVersion()).toBe(1)
     expect(result.isSavingTrack()).toBe(false)
+    cleanup()
+  })
+
+  it.each(['create', 'remove'] as const)(
+    'should preserve %s success and retry only the catalog after refresh failure',
+    async (operation) => {
+      const refreshCatalog = vi.fn().mockRejectedValue(new Error('catalog HTTP 500'))
+      const {cleanup, result} = renderTrackManagement(refreshCatalog)
+      const {event, reset} = createSubmitEvent()
+      result.setTrackTitle('Title')
+      result.setTrackArtist('Artist')
+
+      if (operation === 'create') {
+        await result.handleTrackSubmit(event)
+        expect(reset).toHaveBeenCalledOnce()
+        expect(result.trackTitle()).toBe('')
+        expect(result.trackArtist()).toBe('')
+        expect(result.isSavingTrack()).toBe(false)
+      } else {
+        await result.handleTrackRemove('track-one')
+        expect(result.isRemovingTrack('track-one')).toBe(false)
+      }
+
+      const message =
+        operation === 'create'
+          ? '곡과 MP3를 앨범에 추가하고 활성화했습니다.'
+          : '수록곡과 MP3 파일을 삭제했습니다.'
+      expect(result.catalogRefreshMessage()).toBe(`${message} 목록을 새로고침하지 못했습니다.`)
+      await result.handleCatalogRetry()
+      expect(result.catalogRefreshMessage()).toContain(message)
+
+      const refresh = Promise.withResolvers<void>()
+      refreshCatalog.mockReturnValueOnce(refresh.promise)
+      const retry = result.handleCatalogRetry()
+      expect(result.isRefreshingCatalog()).toBe(true)
+      await result.handleCatalogRetry()
+      expect(refreshCatalog).toHaveBeenCalledTimes(3)
+      refresh.resolve()
+      await retry
+
+      expect(result.catalogRefreshMessage()).toBeNull()
+      expect(result.isRefreshingCatalog()).toBe(false)
+      expect(creationMocks.createTrackWithAudio).toHaveBeenCalledTimes(
+        operation === 'create' ? 1 : 0,
+      )
+      expect(creationMocks.removeTrack).toHaveBeenCalledTimes(operation === 'remove' ? 1 : 0)
+      cleanup()
+    },
+  )
+
+  it.each(['ready', 'failed'] as const)(
+    'should ignore an older %s refresh result after a newer track operation refresh',
+    async (olderStatus) => {
+      const olderRefresh = Promise.withResolvers<void>()
+      const refreshCatalog = vi.fn().mockReturnValueOnce(olderRefresh.promise)
+      if (olderStatus === 'ready') {
+        refreshCatalog.mockRejectedValueOnce(new Error('newer refresh failed'))
+      } else {
+        refreshCatalog.mockResolvedValueOnce(undefined)
+      }
+      const {cleanup, result, setMessage} = renderTrackManagement(refreshCatalog)
+      const first = result.handleTrackRemove('track-one')
+      await waitFor(() => expect(refreshCatalog).toHaveBeenCalledOnce())
+      await result.handleTrackRemove('track-two')
+      const latestMessage = result.catalogRefreshMessage()
+      setMessage.mockClear()
+
+      if (olderStatus === 'ready') {
+        olderRefresh.resolve()
+      } else {
+        olderRefresh.reject(new Error('older refresh failed'))
+      }
+      await first
+
+      expect(result.catalogRefreshMessage()).toBe(latestMessage)
+      expect(setMessage).not.toHaveBeenCalled()
+      cleanup()
+    },
+  )
+
+  it('should retire an old retry notice while refreshing a newer confirmation', async () => {
+    const confirmationRefresh = Promise.withResolvers<void>()
+    const refreshCatalog = vi
+      .fn()
+      .mockRejectedValue(new Error('retry failed'))
+      .mockRejectedValueOnce(new Error('deletion refresh failed'))
+      .mockReturnValueOnce(confirmationRefresh.promise)
+    const {cleanup, result} = renderTrackManagement(refreshCatalog)
+    await result.handleTrackRemove('track-one')
+    const confirmation = result.handleTrackConfirmation('asset-one')
+    await waitFor(() => expect(refreshCatalog).toHaveBeenCalledTimes(2))
+
+    expect(result.catalogRefreshMessage()).toBeNull()
+    await result.handleCatalogRetry()
+    expect(refreshCatalog).toHaveBeenCalledTimes(2)
+    confirmationRefresh.reject(new Error('confirmation refresh failed'))
+    await confirmation
+    expect(result.catalogRefreshMessage()).toBe(
+      'MP3 등록을 확인하고 수록곡을 활성화했습니다. 목록을 새로고침하지 못했습니다.',
+    )
     cleanup()
   })
 
@@ -269,6 +336,26 @@ describe('useTrackManagement', () => {
     expect(result.confirmingAssetId()).toBeNull()
     cleanup()
   })
+
+  it.each(['active', 'unconfirmed'] as const)(
+    'should preserve an %s confirmation result when catalog refresh fails',
+    async (status) => {
+      uploadMocks.confirmTrackAudioRegistration.mockResolvedValueOnce({status})
+      const {cleanup, result} = renderTrackManagement(
+        vi.fn().mockRejectedValue(new Error('catalog HTTP 500')),
+      )
+
+      await result.handleTrackConfirmation('asset-one')
+
+      expect(result.catalogRefreshMessage()).toBe(
+        status === 'active'
+          ? 'MP3 등록을 확인하고 수록곡을 활성화했습니다. 목록을 새로고침하지 못했습니다.'
+          : '등록 결과를 아직 확인하지 못했습니다. 잠시 후 다시 시도해 주세요. 목록을 새로고침하지 못했습니다.',
+      )
+      expect(result.isConfirmingAsset('asset-one')).toBe(false)
+      cleanup()
+    },
+  )
 
   it('should preserve and explain an ambiguously confirmed asset', async () => {
     uploadMocks.confirmTrackAudioRegistration.mockResolvedValueOnce({
