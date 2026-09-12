@@ -51,7 +51,8 @@ export const PPrivacyPolicy = (props: PPrivacyPolicyProps) => (
         <h2 class="m-0 text-base font-750 text-#ffd4de">핵심 안내</h2>
         <p class="mb-0 mt-2 text-sm leading-7 text-#d8cbd9">
           대화문, 기기에서 생성한 음성과 집중 설정은 현재 서버에 업로드되지 않습니다. 계정 운영에
-          필요한 식별정보와 세션 정보만 서버에서 처리합니다.
+          필요한 식별정보와 세션 정보를 서버에서 처리하며, Google Calendar를 연결하면 계정
+          연결정보와 요청한 기간의 일정도 캘린더 기능 제공을 위해 서버에서 처리합니다.
         </p>
       </aside>
       <div class="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
