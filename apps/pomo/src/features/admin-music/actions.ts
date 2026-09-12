@@ -6,7 +6,10 @@ import type {AlbumStatusAction} from './catalog'
 import {changeAlbumStatus, connectAlbumOffer} from './commands'
 import {createTrackWithAudio, removeTrack} from './track-creation'
 import {confirmTrackAudioRegistration, validateTrackAudio} from './track-upload'
-import {requestAdminTrackPlaybackAccess} from './track-playback-access'
+import {
+  type AdminTrackPlaybackAccess,
+  requestAdminTrackPlaybackAccess,
+} from './track-playback-access'
 
 type FormValues = FormData | URLSearchParams
 
@@ -59,9 +62,15 @@ export type ConfirmTrackActionResult =
   | {readonly detail: string; readonly status: 'rejected'}
   | {readonly status: 'unconfirmed'}
 
-export type AdminTrackPlaybackActionResult =
-  | {readonly status: 'granted'; readonly url: string}
-  | {readonly status: 'unavailable'}
+interface TrackPlaybackGranted extends AdminTrackPlaybackAccess {
+  readonly status: 'granted'
+}
+
+interface TrackPlaybackUnavailable {
+  readonly status: 'unavailable'
+}
+
+export type AdminTrackPlaybackActionResult = TrackPlaybackGranted | TrackPlaybackUnavailable
 
 const getString = (values: FormValues, name: string): string =>
   values.get(name)?.toString().trim() ?? ''
@@ -171,7 +180,7 @@ const runRequestTrackPlayback = async (
 ): Promise<AdminTrackPlaybackActionResult> => {
   try {
     const access = await requestAdminTrackPlaybackAccess(trackId)
-    return {status: 'granted', url: access.url}
+    return {expiresAt: access.expiresAt, status: 'granted', url: access.url}
   } catch {
     return {status: 'unavailable'}
   }
