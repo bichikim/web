@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {getBoneChannels, moveBoneJoint, poseBoneChannels} from '../../../deformation/bone'
 import {convertSceneContainers} from '../container-conversion'
 import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
@@ -7,7 +8,7 @@ import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '.
 import {BoneEditor} from '../BoneEditor'
 import {createBoneDeformer, editBoneRest} from '../bone-editing'
 import {getSceneNode} from '../scene-graph'
-import {addParameter} from '../parameter-keyforms'
+import {addParameter, setParameterKeyformDeformerControlPoints} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 
 test('should place bind joints, pose a chain with fixed lengths, and preserve the document contract', () => {
@@ -160,12 +161,12 @@ test('should stop captured dragging when pointer capture is lost', () => {
   const svg = view.getByLabelText('본 디포머 편집 영역')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
     left: 0,
-    right: 960,
     bottom: 720,
-    x: 0,
+    right: 960,
     height: 720,
-    y: 0,
+    x: 0,
     toJSON: () => ({}),
+    y: 0,
     top: 0,
     width: 960,
   })
@@ -250,6 +251,72 @@ test('should save a rotation pose into the selected keyform while preserving bin
   )
   expect((getSceneNode(document(), 'bone') as PuppetSceneDeformerNode).boneRestPoints).toEqual(
     (getSceneNode(source, 'bone') as PuppetSceneDeformerNode).boneRestPoints,
+  )
+  expect(parseDocument(JSON.stringify(document())).ok).toBe(true)
+})
+
+test('should edit composed bone translation and rotation in binding channels', () => {
+  const initial = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
+  const rest = getSceneNode(initial, 'bone') as PuppetSceneDeformerNode
+  const first = addParameter({document: initial, nodeIds: ['bone']})!
+  const channels = getBoneChannels(rest.boneRestPoints!, rest.controlPoints)
+  const firstPose = setParameterKeyformDeformerControlPoints({
+    bindingId: first.binding.id,
+    document: first.document,
+    nodeId: 'bone',
+    controlPoints: poseBoneChannels(rest.boneRestPoints!, [
+      channels[0]! + 10,
+      channels[1]!,
+      Math.PI / 6,
+    ]),
+    values: [0],
+  })!
+  const second = addParameter({document: firstPose, nodeIds: ['bone']})!
+  const source = setParameterKeyformDeformerControlPoints({
+    bindingId: second.binding.id,
+    document: second.document,
+    nodeId: 'bone',
+    controlPoints: poseBoneChannels(rest.boneRestPoints!, [
+      channels[0]! + 20,
+      channels[1]!,
+      Math.PI / 6,
+    ]),
+    values: [0],
+  })!
+  const [document, setDocument] = createSignal(source)
+  const node = () =>
+    getSceneNode(
+      createParameterPreview({document: document(), editingBindingId: first.binding.id}),
+      'bone',
+    ) as PuppetSceneDeformerNode
+  const view = render(() => (
+    <BoneEditor
+      document={document()}
+      node={node()}
+      activeNodeId="bone"
+      editMode="parameter"
+      activeBindingId={first.binding.id}
+      activeKeyformValues={[0]}
+      targetNodeIds={['bone']}
+      onDocumentChange={setDocument}
+    />
+  ))
+  const svg = view.getByLabelText('본 디포머 편집 영역')
+  fireEvent.focus(view.getByRole('button', {name: '본 관절 1'}))
+  fireEvent.keyDown(svg, {key: 'ArrowRight'})
+  expect(node().controlPoints[0]).toBeCloseTo(channels[0]! + 31)
+  expect(getBoneChannels(rest.boneRestPoints!, node().controlPoints)[2]).toBeCloseTo(Math.PI / 3)
+  const before = node()
+  const expected = moveBoneJoint({
+    index: 1,
+    node: before,
+    point: {x: before.controlPoints[2]!, y: before.controlPoints[3]! + 1},
+  })
+  fireEvent.focus(view.getByRole('button', {name: '본 관절 2'}))
+  fireEvent.keyDown(svg, {key: 'ArrowDown'})
+  node().controlPoints.forEach((value, index) => expect(value).toBeCloseTo(expected[index]!))
+  expect(document().parameterBindings?.find((binding) => binding.id === second.binding.id)).toEqual(
+    source.parameterBindings.find((binding) => binding.id === second.binding.id),
   )
   expect(parseDocument(JSON.stringify(document())).ok).toBe(true)
 })
