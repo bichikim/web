@@ -8,8 +8,8 @@ import {PModal} from '../../PModal'
 import {PModalTabList} from '../../PModalTabList'
 import {PictureDiaryCanvas} from './Canvas'
 import {useDrawingHistory} from './use-history'
-import {DrawingActions} from './Actions'
-import {DrawingTools} from './Tools'
+import {Actions} from './Actions'
+import {Tools} from './Tools'
 
 const Generation = clientOnly(
   async () => {
@@ -97,7 +97,7 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
           title={m.picture_diary_edit_drawing()}
           titleVisibility="visually-hidden"
           footer={
-            <DrawingActions
+            <Actions
               drawing={mode() === 'draw'}
               canUndo={history.canUndo()}
               canRedo={history.canRedo()}
@@ -114,7 +114,7 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
                 setIsOpen(false)
               }}
             >
-              <DrawingTools
+              <Tools
                 color={color()}
                 thickness={thickness()}
                 tool={tool()}
@@ -122,7 +122,7 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
                 onThickness={setThickness}
                 onTool={setTool}
               />
-            </DrawingActions>
+            </Actions>
           }
         >
           <Show when={props.image && props.onImageChange}>

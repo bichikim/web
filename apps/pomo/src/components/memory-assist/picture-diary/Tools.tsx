@@ -5,7 +5,7 @@ import {PSelect} from '../../PSelect'
 import {PButton} from '../../PButton'
 import {DRAWING_COLORS} from './brush-classes'
 
-interface DrawingToolsProps {
+interface ToolsProps {
   readonly color: NonNullable<PictureDiaryStroke['color']>
   readonly thickness: NonNullable<PictureDiaryStroke['thickness']>
   readonly tool: 'pen' | 'eraser'
@@ -29,64 +29,67 @@ const thicknesses = () =>
     {label: m.drawing_medium(), value: 'medium'},
     {label: m.drawing_thick(), value: 'thick'},
   ] as const
-export const DrawingTools = (props: DrawingToolsProps) => (
-  <div class="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-2 max-sm:order-3 max-sm:basis-full">
-    <div class="flex gap-1">
-      <PButton
-        size="small"
-        tone="secondary"
-        bordered
-        transparent
-        class="aria-pressed:border-highlight aria-pressed:bg-secondary-soft"
-        pressed={props.tool === 'pen'}
-        icon="i-tabler-pencil"
-        onPress={() => props.onTool('pen')}
-      >
-        {m.drawing_pen()}
-      </PButton>
-      <PButton
-        size="small"
-        tone="secondary"
-        bordered
-        transparent
-        class="aria-pressed:border-highlight aria-pressed:bg-secondary-soft"
-        pressed={props.tool === 'eraser'}
-        icon="i-tabler-eraser"
-        onPress={() => props.onTool('eraser')}
-      >
-        {m.drawing_eraser()}
-      </PButton>
+export const Tools = (props: ToolsProps) => {
+  const handleColorChange = (color: NonNullable<PictureDiaryStroke['color']>) => {
+    props.onColor(color)
+    props.onTool('pen')
+  }
+  return (
+    <div class="col-span-2 flex min-w-0 flex-wrap items-center justify-center gap-2 xl:col-span-1 xl:col-start-2">
+      <div class="flex items-center gap-1">
+        <PButton
+          size="small"
+          tone="secondary"
+          bordered
+          transparent
+          class="aria-pressed:border-highlight aria-pressed:bg-secondary-soft"
+          pressed={props.tool === 'pen'}
+          icon="i-tabler-pencil"
+          onPress={() => props.onTool('pen')}
+        >
+          {m.drawing_pen()}
+        </PButton>
+        <PButton
+          size="small"
+          tone="secondary"
+          bordered
+          transparent
+          class="aria-pressed:border-highlight aria-pressed:bg-secondary-soft"
+          pressed={props.tool === 'eraser'}
+          icon="i-tabler-eraser"
+          onPress={() => props.onTool('eraser')}
+        >
+          {m.drawing_eraser()}
+        </PButton>
+        <PSelect
+          appearance="icon"
+          hideLabel
+          label={m.drawing_colors()}
+          options={colors().map((color) => ({
+            ...color,
+            icon: `i-tabler-circle-filled ${DRAWING_COLORS[color.value]}`,
+          }))}
+          value={props.color}
+          onChange={handleColorChange}
+        />
+      </div>
+      <div role="group" aria-label={m.drawing_thickness()} class="flex gap-1">
+        <For each={thicknesses()}>
+          {(thickness) => (
+            <PButton
+              size="small"
+              tone="secondary"
+              bordered
+              transparent
+              class="aria-pressed:border-highlight aria-pressed:bg-secondary-soft"
+              pressed={props.thickness === thickness.value}
+              onPress={() => props.onThickness(thickness.value)}
+            >
+              {thickness.label}
+            </PButton>
+          )}
+        </For>
+      </div>
     </div>
-    <PSelect
-      appearance="icon"
-      hideLabel
-      label={m.drawing_colors()}
-      options={colors().map((color) => ({
-        ...color,
-        icon: `i-tabler-circle-filled ${DRAWING_COLORS[color.value]}`,
-      }))}
-      value={props.color}
-      onChange={(color) => {
-        props.onColor(color)
-        props.onTool('pen')
-      }}
-    />
-    <div role="group" aria-label={m.drawing_thickness()} class="flex gap-1">
-      <For each={thicknesses()}>
-        {(thickness) => (
-          <PButton
-            size="small"
-            tone="secondary"
-            bordered
-            transparent
-            class="aria-pressed:border-highlight aria-pressed:bg-secondary-soft"
-            pressed={props.thickness === thickness.value}
-            onPress={() => props.onThickness(thickness.value)}
-          >
-            {thickness.label}
-          </PButton>
-        )}
-      </For>
-    </div>
-  </div>
-)
+  )
+}
