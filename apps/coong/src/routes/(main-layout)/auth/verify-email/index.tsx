@@ -5,7 +5,7 @@ import {SAuroraText} from 'src/components/text'
 import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
 import {A, RouteDefinition, useLocation, useNavigate} from '@solidjs/router'
-import {createSignal, onMount, Show} from 'solid-js'
+import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
@@ -72,6 +72,11 @@ export default function VerifyEmailPage() {
   const {token_hash: tokenHashParameter, type: typeParameter} = location.query
   const navigate = useNavigate()
 
+  let disposed = false
+  onCleanup(() => {
+    disposed = true
+  })
+
   const afterNavigate = useCountdown(20_000, () => navigate('/'))
 
   const tokenHash = () => (tokenHashParameter ? queryToString(tokenHashParameter) : '')
@@ -104,6 +109,10 @@ export default function VerifyEmailPage() {
 
     try {
       await verifyOtp({tokenHash: hash, type})
+      if (disposed) {
+        return
+      }
+
       setVerificationStatus('success')
 
       if (type === 'recovery') {
@@ -114,6 +123,10 @@ export default function VerifyEmailPage() {
       navigate(location.pathname, {replace: true, state: {emailVerified: true}})
       afterNavigate.start()
     } catch (error) {
+      if (disposed) {
+        return
+      }
+
       setVerificationStatus('error')
       setVerificationError(error instanceof Error ? error.message : '이메일 인증에 실패했습니다.')
     }

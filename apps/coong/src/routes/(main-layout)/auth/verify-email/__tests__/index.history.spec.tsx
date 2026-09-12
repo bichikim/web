@@ -38,6 +38,28 @@ describe('VerifyEmailPage browser history', () => {
     verifyOtp.mockResolvedValueOnce({id: 'user-1'}).mockRejectedValue(new Error('Already used'))
   })
 
+  it('should preserve the destination when verification finishes after leaving the page', async () => {
+    const verification = Promise.withResolvers<{id: string}>()
+    verifyOtp.mockReset().mockReturnValue(verification.promise)
+    render(() => (
+      <Router>
+        <Route path="/auth/verify-email" component={VerifyEmailPage} />
+        <Route path="/auth/sign-in" component={() => <p>Sign in destination</p>} />
+      </Router>
+    ))
+    await waitFor(() => expect(verifyOtp).toHaveBeenCalledTimes(1))
+    window.history.pushState({destination: true}, '', '/auth/sign-in?redirect=%2Fprotected')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    await screen.findByText('Sign in destination')
+    verification.resolve({id: 'user-1'})
+    await verification.promise
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    expect(window.location.search).toBe('?redirect=%2Fprotected')
+    expect(window.history.state).toMatchObject({destination: true})
+  })
+
   it('should restore success from browser history when the router remounts after refresh', async () => {
     const mount = () =>
       render(() => (
