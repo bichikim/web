@@ -174,3 +174,32 @@ it('should preserve native write order during rapid settings changes', async () 
 
   expect(nativeWrites).toEqual([JSON.stringify(firstSettings), JSON.stringify(secondSettings)])
 })
+
+it.each(['resolved', 'rejected'])(
+  'should reload the newest native settings when browser persistence fails and the pending read is %s',
+  async (result) => {
+    const nextSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Browser storage unavailable')
+    })
+    const nativeRead = Promise.withResolvers<string | null>()
+    storageMocks.getItem
+      .mockReturnValueOnce(nativeRead.promise)
+      .mockResolvedValue(JSON.stringify(nextSettings))
+    storageMocks.setItem.mockResolvedValue()
+
+    const pendingRead = readRandomEventSettings()
+    await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalledTimes(1))
+    await writeRandomEventSettings(nextSettings)
+
+    if (result === 'resolved') {
+      nativeRead.resolve(JSON.stringify({maximumMinutes: 8, minimumMinutes: 4, version: 1}))
+    } else {
+      nativeRead.reject(new Error('Native read unavailable'))
+    }
+
+    await expect(pendingRead).resolves.toEqual(nextSettings)
+    expect(storageMocks.getItem).toHaveBeenCalledTimes(2)
+  },
+)

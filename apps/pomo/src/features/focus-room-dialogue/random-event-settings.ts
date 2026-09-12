@@ -65,7 +65,7 @@ export const readRandomEventSettings = async (): Promise<RandomEventSettings> =>
     const nativeSettings = await readNativeStorageJson(STORAGE_KEY, parseRandomEventSettings)
 
     if (preferenceWriteRevision !== initialWriteRevision) {
-      return readWebSettings() ?? DEFAULT_RANDOM_EVENT_SETTINGS
+      return readRandomEventSettings()
     }
 
     if (nativeSettings === null) {
@@ -75,6 +75,10 @@ export const readRandomEventSettings = async (): Promise<RandomEventSettings> =>
     writeWebSettings(nativeSettings)
     return nativeSettings
   } catch {
+    if (preferenceWriteRevision !== initialWriteRevision) {
+      return readRandomEventSettings()
+    }
+
     return readWebSettings() ?? DEFAULT_RANDOM_EVENT_SETTINGS
   }
 }
