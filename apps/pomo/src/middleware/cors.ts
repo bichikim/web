@@ -1,5 +1,7 @@
 import type {Middleware} from 'h3'
 
+import {stringToStringList} from 'src/utils/string-to-string-list'
+
 const STATIC_ALLOWED_ORIGINS = new Set([
   'http://127.0.0.1:1420',
   'http://tauri.localhost',
@@ -105,12 +107,8 @@ const getAllowedOrigin = (request: Request): string | undefined => {
 }
 
 const appendVaryHeaders = (headers: Headers, values: ReadonlyArray<string>): void => {
-  const existingValues =
-    headers
-      .get('Vary')
-      ?.split(',')
-      .map((value) => value.trim())
-      .filter(Boolean) ?? []
+  const existingVary = headers.get('Vary')
+  const existingValues = existingVary === null ? [] : stringToStringList(existingVary)
   headers.set('Vary', [...new Set([...existingValues, ...values])].join(', '))
 }
 

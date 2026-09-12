@@ -2,11 +2,14 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {createSignal, Show} from 'solid-js'
 import {useSoundJoining} from 'src/features/sound-joining'
+import {noneEmptyString} from 'src/utils/none-empty-string'
 import {ModelTerms} from './sound-generation/ModelTerms'
 import {Source} from './sound-joining/Source'
 import {Introduction} from './sound-joining/Introduction'
 
 const DEFAULT_TRANSITION = 4
+const DEFAULT_PROMPT =
+  'Continuous gentle rain ambience, consistent texture and loudness, no silence, no music, no speech.'
 const INPUT = 'min-h-11 rounded-xl border border-white/20 bg-#17131f p-3 text-#f8edf1'
 export function SoundJoiningPage() {
   const [first, setFirst] = createSignal<File | null>(null)
@@ -15,9 +18,7 @@ export function SoundJoiningPage() {
   const [trimStart, setTrimStart] = createSignal(2)
   const [transition, setTransition] = createSignal(DEFAULT_TRANSITION)
   const [repeat, setRepeat] = createSignal(false)
-  const [prompt, setPrompt] = createSignal(
-    'Continuous gentle rain ambience, consistent texture and loudness, no silence, no music, no speech.',
-  )
+  const [prompt, setPrompt] = createSignal(DEFAULT_PROMPT)
   const joining = useSoundJoining()
   const generate = () => {
     const firstFile = first()
@@ -103,7 +104,9 @@ export function SoundJoiningPage() {
           <button
             class="min-h-11 rounded-xl border-0 bg-#b8e8d0 px-6 text-#17131f font-700 disabled:opacity-50"
             type="button"
-            disabled={joining.busy() || first() === null || second() === null || !prompt().trim()}
+            disabled={
+              joining.busy() || first() === null || second() === null || !noneEmptyString(prompt())
+            }
             onClick={generate}
           >
             {joining.busy() ? '연결 생성 중…' : 'AI로 연결하기'}

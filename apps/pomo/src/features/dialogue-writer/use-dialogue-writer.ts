@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {noneEmptyString} from 'src/utils/none-empty-string'
 
 import {createDialogueClient, type CreateDialogueClientOptions, type DialogueClient} from './client'
 import type {DialogueWorkerResponse} from './messages'
@@ -120,7 +121,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     const currentState = state()
     return currentState.status === 'idle' || currentState.status === 'error'
   })
-  const canGenerate = createMemo(() => isModelReady() && !isBusy() && request().trim().length > 0)
+  const canGenerate = createMemo(() => isModelReady() && !isBusy() && noneEmptyString(request()))
   const canCopy = createMemo(() => !isBusy() && output().length > 0)
   const progress = createMemo(() => {
     const currentState = state()
@@ -230,7 +231,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   }
 
   const generateWithPreparation = () => {
-    if (isBusy() || request().trim().length === 0 || state().status === 'unsupported') {
+    if (isBusy() || !noneEmptyString(request()) || state().status === 'unsupported') {
       return
     }
 

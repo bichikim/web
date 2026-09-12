@@ -1,3 +1,5 @@
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import type {PViseme} from './index'
 
 export interface PAudioEnvelope {
@@ -42,8 +44,6 @@ const FORMAT_CHUNK_MINIMUM_SIZE = 16
 const PCM_FORMAT = 1
 const MONO_CHANNEL_COUNT = 1
 const PCM_16_BITS = 16
-
-const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 
 const getRootMeanSquare = (samples: Float32Array, start: number, end: number) => {
   let squareTotal = 0

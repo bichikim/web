@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {hasListItem} from '../has-list-item'
+import {hasListItem} from '..'
 
 describe('hasListItem', () => {
   it.each([

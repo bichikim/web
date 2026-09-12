@@ -1,6 +1,7 @@
 /* ignore file coverage -- Wallaby mismerges this fully covered TSX module across test workers. */
 import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {children, type JSX, Show} from 'solid-js'
+import {noneEmptyString} from 'src/utils/none-empty-string'
 import {PTooltip} from './PTooltip'
 import {useTooltipTrigger} from './tooltip'
 
@@ -146,7 +147,7 @@ export const PButton = (props: PButtonProps) => {
       .toArray()
       .some((child) =>
         typeof child === 'string'
-          ? child.trim().length > 0
+          ? noneEmptyString(child)
           : child !== null && child !== undefined && typeof child !== 'boolean',
       )
   return (

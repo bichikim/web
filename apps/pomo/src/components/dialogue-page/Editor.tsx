@@ -1,5 +1,4 @@
 import {useAudioGeneration} from './use-audio-generation'
-import {createSelectionHandler} from 'src/utils/create-selection-handler'
 import {formatDuration} from 'src/utils/format-duration'
 import {PTextarea} from 'src/components/PTextarea'
 import * as m from '@paraglide/message'
@@ -172,18 +171,6 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
       navigate('/')
     }
   }
-  const handleModelChange = createSelectionHandler(
-    SUPERTONIC_MODELS.map((model) => model.id),
-    editor.setModelId,
-  )
-  const handleLanguageChange = createSelectionHandler(
-    SUPERTONIC_LANGUAGE_OPTIONS.map((option) => option.value),
-    editor.setLanguage,
-  )
-  const handleVoiceChange = createSelectionHandler(
-    SUPERTONIC_VOICES.map((voice) => voice.id),
-    editor.setVoiceId,
-  )
 
   return (
     <main class={CLASSES.dialogueEditor}>
@@ -244,21 +231,21 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
             <PSelect
               label="목소리"
               disabled={audio.busy()}
-              onChange={handleVoiceChange}
+              onChange={(voiceId) => editor.setVoiceId(voiceId)}
               value={editor.voiceId()}
               options={SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id}))}
             />
             <PSelect
               label="언어"
               disabled={audio.busy()}
-              onChange={handleLanguageChange}
+              onChange={(language) => editor.setLanguage(language)}
               value={editor.language()}
               options={SUPERTONIC_LANGUAGE_OPTIONS}
             />
             <PSelect
               label="모델"
               disabled={audio.busy()}
-              onChange={handleModelChange}
+              onChange={(modelId) => editor.setModelId(modelId)}
               value={editor.modelId()}
               options={SUPERTONIC_MODELS.map((model) => ({label: model.label, value: model.id}))}
             />

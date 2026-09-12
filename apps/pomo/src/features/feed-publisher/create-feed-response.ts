@@ -1,5 +1,7 @@
 import {createHash} from 'node:crypto'
 
+import {hasStringListItem} from 'src/utils/has-string-list-item'
+
 import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../../server/http/headers'
 
 import type {FeedFormat, FeedProvider} from './contract'
@@ -88,11 +90,10 @@ const createDocumentHeaders = (
   }
 }
 
-const matchesEntityTag = (request: Request, entityTag: string): boolean =>
-  request.headers
-    .get('If-None-Match')
-    ?.split(',')
-    .some((candidate) => candidate.trim() === entityTag) ?? false
+const matchesEntityTag = (request: Request, entityTag: string): boolean => {
+  const ifNoneMatch = request.headers.get('If-None-Match')
+  return ifNoneMatch !== null && hasStringListItem(ifNoneMatch, entityTag)
+}
 
 /** Resolves a provider and returns its RSS or Atom representation with its cache policy. */
 export const createFeedResponse = async (options: CreateFeedResponseOptions): Promise<Response> => {

@@ -1,3 +1,5 @@
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import type {MemoryMemo, MemoryRecallMode} from './schema'
 
 const MINUTE = 60_000
@@ -63,7 +65,7 @@ export interface AdvanceMemoryMemoOptions {
 }
 
 const getRandomInterval = (random: () => number) => {
-  const ratio = Math.min(1, Math.max(0, random()))
+  const ratio = clampUnit(random())
   return RANDOM_MINIMUM + ratio * (RANDOM_MAXIMUM - RANDOM_MINIMUM)
 }
 

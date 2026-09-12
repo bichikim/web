@@ -1,9 +1,10 @@
+import {noneEmptyString} from 'src/utils/none-empty-string'
 import type {FeedProvider} from './contract'
 
 const FEED_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u
 
 const requireText = (value: string, field: string): void => {
-  if (value.trim().length === 0) {
+  if (!noneEmptyString(value)) {
     throw new TypeError(`Feed ${field} must not be empty`)
   }
 }

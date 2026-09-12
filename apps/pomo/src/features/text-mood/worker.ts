@@ -9,6 +9,7 @@ import {
   type ProgressInfo,
 } from '@huggingface/transformers'
 
+import {noneEmptyString} from 'src/utils/none-empty-string'
 import {classifyTextMood, classifyTextSufficiency} from './classifier'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
@@ -96,7 +97,7 @@ const prepare = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
 const getEmbeddingText = (request: Extract<TextMoodWorkerRequest, {readonly type: 'analyze'}>) => {
   const text = request.text.trim()
 
-  if (request.context === undefined || request.context.trim().length === 0) {
+  if (request.context === undefined || !noneEmptyString(request.context)) {
     return text
   }
 

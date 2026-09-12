@@ -4,6 +4,7 @@ import {createSignal, For, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
 import {MAX_REQUEST_SECONDS, useSoundGeneration} from 'src/features/sound-generation'
+import {noneEmptyString} from 'src/utils/none-empty-string'
 import {ModelTerms} from './sound-generation/ModelTerms'
 
 const DEFAULT_SECONDS = 5
@@ -100,7 +101,7 @@ export function SoundGenerationPage() {
             </label>
             <button
               class="min-h-11 rounded-xl border-0 bg-#b8e8d0 px-6 font-700 text-#17131f disabled:opacity-50"
-              disabled={generation.busy() || !prompt().trim()}
+              disabled={generation.busy() || !noneEmptyString(prompt())}
               onClick={() => generation.generate({prompt: prompt(), seconds: seconds()})}
               type="button"
             >

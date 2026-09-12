@@ -1,3 +1,5 @@
+import {noneEmptyString} from 'src/utils/none-empty-string'
+
 export type ClientErrorSource =
   | 'direct'
   | 'error-boundary'
@@ -171,12 +173,12 @@ const normalizeStack = (value: string | undefined): string | undefined => {
 
 const getErrorName = (value: object): string => {
   const name = readSafeString(value, 'name')
-  return name === undefined || name.trim().length === 0 ? 'Error' : redactText(name)
+  return name === undefined || !noneEmptyString(name) ? 'Error' : redactText(name)
 }
 
 const getErrorMessage = (value: object): string => {
   const message = readSafeString(value, 'message')
-  return message === undefined || message.trim().length === 0
+  return message === undefined || !noneEmptyString(message)
     ? 'No error message'
     : truncate(redactText(message), MAXIMUM_MESSAGE_LENGTH)
 }

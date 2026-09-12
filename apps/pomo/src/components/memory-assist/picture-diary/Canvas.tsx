@@ -1,5 +1,7 @@
 import {type Accessor, createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
 
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import {findErasedStrokes} from './erase-path'
 import {DRAWING_COLORS, DRAWING_THICKNESSES} from './brush-classes'
 
@@ -34,8 +36,8 @@ const getPoint = (event: PointerEvent & {currentTarget: SVGSVGElement}): Picture
   const x = bounds.width === 0 ? 0 : (event.clientX - bounds.left) / bounds.width
   const y = bounds.height === 0 ? 0 : (event.clientY - bounds.top) / bounds.height
   return {
-    x: Math.min(1, Math.max(0, x)),
-    y: Math.min(1, Math.max(0, y)),
+    x: clampUnit(x),
+    y: clampUnit(y),
   }
 }
 
