@@ -1,6 +1,14 @@
 import {type BackgroundController, useBackground} from '../features/background'
 import {Player as FramePlayer} from './frame/Player'
-import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
+import {
+  type Accessor,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  type Setter,
+  Show,
+} from 'solid-js'
 
 import {
   getPScene,
@@ -202,6 +210,8 @@ const StudioOverlay = (props: StudioOverlayProps) => (
 )
 
 interface StudioDesktopSceneSettingsOptions {
+  readonly motionInput: Accessor<PSceneMotionInput>
+  readonly motionMode: Accessor<PSceneMotionMode>
   readonly scenePreferences: ReturnType<typeof usePScenePreferences>
   readonly sceneStyleController: ReturnType<typeof usePSceneStyle>
   readonly screenSaver: ReturnType<typeof useStudioScreenSaver>
@@ -226,7 +236,13 @@ const useStudioDesktopSceneSettings = (
     onWeatherLocationChange: weather.onLocationChange,
     onWeatherSceneModeChange: weather.onSceneModeChange,
   }
-  const publisher = useDesktopSceneSettingsPublisher({handlers})
+  const publisher = useDesktopSceneSettingsPublisher({
+    handlers,
+    snapshot: () => [
+      {name: 'motionInput', value: options.motionInput()},
+      {name: 'motionMode', value: options.motionMode()},
+    ],
+  })
 
   return {
     onActivityChange: (value) => {
@@ -359,6 +375,8 @@ export const PStudio = () => {
     pomoSay.isPlaying,
   )
   const sceneSettings = useStudioDesktopSceneSettings({
+    motionInput,
+    motionMode,
     scenePreferences,
     sceneStyleController: style,
     screenSaver,
@@ -396,7 +414,7 @@ export const PStudio = () => {
         motionInput={motionInput()}
         motionMode={motionMode()}
         onLoadingChange={createLoadingHandler(setIsSceneLoading, setHasSceneRendered)}
-        onMotionInputChange={setMotionInput}
+        onMotionInputChange={sceneSettings.onMotionInputChange}
         scene={selectedScene()}
         sceneGaze={sceneGaze()}
         sceneStyle={style.sceneStyle()}

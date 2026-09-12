@@ -338,6 +338,7 @@ export const setupStudio = () => {
 export const studioMocks = {
   DEFAULT_BACKGROUND,
   isDesktopBackgroundMode,
+  PStudioScene,
   PTour,
   readFocusRoomEntrySession,
   SceneToolbar,

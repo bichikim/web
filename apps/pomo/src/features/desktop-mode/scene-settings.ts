@@ -1,4 +1,4 @@
-import {onCleanup, onMount} from 'solid-js'
+import {type Accessor, onCleanup, onMount} from 'solid-js'
 
 import type {PSceneMotionInput, PSceneMotionMode, PSceneStyle} from '../focus-room-animation'
 import type {PActivity, PGaze} from '../focus-room-scene-preferences'
@@ -47,6 +47,8 @@ export interface DesktopSceneSettingsPublisher {
 
 export interface UseDesktopSceneSettingsPublisherProps {
   readonly handlers?: DesktopSceneSettingsHandlers
+  readonly requestSnapshot?: boolean
+  readonly snapshot?: Accessor<ReadonlyArray<DesktopSceneSetting>>
 }
 
 type DesktopWeatherSceneSetting = Extract<
@@ -185,11 +187,20 @@ export const useDesktopSceneSettingsPublisher = (
 
     channel = new BroadcastChannel(SCENE_SETTINGS_CHANNEL)
     channel.addEventListener('message', (event) => {
+      if (event.data === 'request-snapshot') {
+        for (const setting of props.snapshot?.() ?? []) {
+          channel?.postMessage(setting)
+        }
+        return
+      }
       const {handlers} = props
       if (handlers !== undefined && isDesktopSceneSetting(event.data)) {
         applyDesktopSceneSetting(handlers, event.data)
       }
     })
+    if (props.requestSnapshot) {
+      channel.postMessage('request-snapshot')
+    }
     onCleanup(() => {
       channel?.close()
       channel = null

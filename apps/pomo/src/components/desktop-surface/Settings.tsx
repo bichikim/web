@@ -39,15 +39,13 @@ export const DesktopSettings = () => {
       onWeatherLocationChange: weather.onLocationChange,
       onWeatherSceneModeChange: weather.onSceneModeChange,
     },
+    requestSnapshot: true,
   })
 
   onMount(() => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
 
     setCanUseGyroscope(gyroscopeAvailable)
-    if (gyroscopeAvailable) {
-      setMotionInput('gyroscope')
-    }
   })
 
   return (

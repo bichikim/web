@@ -170,3 +170,42 @@ it('should deliver changes to the other endpoint without replaying them locally'
     remote.cleanup()
   }
 })
+
+it('should hydrate each reopened settings endpoint from the current owner motion', async () => {
+  vi.stubGlobal('BroadcastChannel', NativeBroadcastChannel)
+  let motionMode = 'pan' as 'pan' | 'depth'
+  const ownerChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange: ownerChange},
+      snapshot: () => [
+        {name: 'motionMode', value: motionMode},
+        {name: 'motionInput', value: 'drag'},
+      ],
+    }),
+  )
+  const checkReopened = async (expected: 'pan' | 'depth') => {
+    motionMode = expected
+    const onMotionModeChange = vi.fn()
+    const onMotionInputChange = vi.fn()
+    const surface = renderHook(() =>
+      useDesktopSceneSettingsPublisher({
+        handlers: {onMotionInputChange, onMotionModeChange},
+        requestSnapshot: true,
+      }),
+    )
+    try {
+      await vi.waitFor(() => expect(onMotionModeChange).toHaveBeenCalledExactlyOnceWith(expected))
+      expect(onMotionInputChange).toHaveBeenCalledExactlyOnceWith('drag')
+      expect(ownerChange).not.toHaveBeenCalled()
+    } finally {
+      surface.cleanup()
+    }
+  }
+  try {
+    await checkReopened('pan')
+    await checkReopened('depth')
+  } finally {
+    owner.cleanup()
+  }
+})

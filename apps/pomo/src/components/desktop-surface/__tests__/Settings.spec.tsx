@@ -241,3 +241,14 @@ it('should apply every received scene setting without echoing it to other WebVie
   fireEvent.click(screen.getByRole('button', {name: '활동'}))
   expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'activity', value: 'writing'})
 })
+
+it('should request owner motion without choosing gyroscope locally', () => {
+  vi.mocked(supportsPSceneGyroscope).mockReturnValue(true)
+  render(() => <DesktopSettings />)
+  expect(vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.requestSnapshot).toBe(true)
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
+    canUseGyroscope: true,
+    motionInput: 'drag',
+  })
+  expect(publish).not.toHaveBeenCalled()
+})
