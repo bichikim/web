@@ -48,7 +48,10 @@ export const SharingAndProcessingSections = () => (
         <h3 class={CARD_HEADING_CLASSES}>Neon, LLC</h3>
         <ul class={LIST_CLASSES}>
           <li>국가 및 연락처: 싱가포르, privacy@neon.tech</li>
-          <li>항목: 계정 식별정보, 이메일 인증정보, 세션 해시값, 구매·환불 기록</li>
+          <li>
+            항목: 계정 식별정보, 이메일 인증정보, 세션 해시값, 구매·환불 기록, Google 계정
+            연결정보와 암호화된 토큰
+          </li>
           <li>목적: 데이터베이스 저장, 회원 인증과 인증 이메일 발송</li>
           <li>시기·방법: 서비스 이용 시 암호화된 네트워크로 수시 전송</li>
           <li>기간: 제4항의 항목별 보유기간 또는 위탁계약 종료 시까지</li>
@@ -58,7 +61,10 @@ export const SharingAndProcessingSections = () => (
         <h3 class={CARD_HEADING_CLASSES}>Vercel Inc.</h3>
         <ul class={LIST_CLASSES}>
           <li>국가 및 연락처: 미국, privacy@vercel.com</li>
-          <li>항목: IP 주소, 접속·요청·오류 기록 및 서비스 요청에 포함된 계정·세션 정보</li>
+          <li>
+            항목: IP 주소, 접속·요청·오류 기록 및 서비스 요청에 포함된 계정·세션 정보, Google
+            Calendar 연결 및 일정 조회 처리에 필요한 정보
+          </li>
           <li>목적: 웹·API 호스팅, 서비스 전송, 장애 대응과 보안</li>
           <li>시기·방법: 서비스 접속 및 API 이용 시 암호화된 네트워크로 수시 전송</li>
           <li>기간: 제4항의 항목별 보유기간 또는 위탁계약 종료 시까지</li>
