@@ -1,3 +1,4 @@
+import type {useUiAutoHide} from 'src/features/ui-auto-hide'
 import type {BackgroundController} from 'src/features/background'
 import type {PSceneMotionInput, PSceneMotionMode} from '../../../features/focus-room-animation'
 import type {PSceneStyle} from '../../../features/focus-room-animation/scene-style'
@@ -15,6 +16,7 @@ export const CLASSES = {
 } as const
 
 export interface PSettingsProps {
+  readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
   readonly pomodoroVisible?: boolean
   readonly onPomodoroVisibleChange?: (visible: boolean) => void
   readonly playerVisible?: boolean

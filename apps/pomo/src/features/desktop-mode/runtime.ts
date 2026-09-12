@@ -1,3 +1,5 @@
+import {readPDisplayPreferences} from 'src/features/focus-room-display-preferences'
+
 import type {DesktopMode} from './model'
 
 const BACKGROUND_LABEL = 'background'
@@ -109,11 +111,17 @@ const restoreNormalMode = async (): Promise<void> => {
 const enterDesktopMode = async (): Promise<void> => {
   const {openControlSurface, restoreSurface, setBackgroundSurface} = await getSurfaceApi()
 
+  const preferences = await readPDisplayPreferences()
+  const visibility = {
+    'desktop-player': preferences.playerVisible,
+    'desktop-pomodoro': preferences.pomodoroVisible,
+    'desktop-settings': true,
+  }
+  const surfaces = getControlSurfaceOptions().filter(({label}) => visibility[label])
+
   try {
     await setBackgroundSurface({interaction: 'passThrough', label: BACKGROUND_LABEL})
-    const results = await Promise.allSettled(
-      getControlSurfaceOptions().map((options) => openControlSurface(options)),
-    )
+    const results = await Promise.allSettled(surfaces.map((options) => openControlSurface(options)))
     const errors = results.flatMap((result) =>
       result.status === 'rejected' ? [result.reason] : [],
     )

@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {createReminderDraft, getDateInputValue, resolveReminderAt} from '../reminder-draft'
+import {createReminderDraft, resolveReminderAt} from '../reminder-draft'
 
 describe('reminder draft dates', () => {
   it('should resolve tomorrow across a local year boundary without changing now', () => {
@@ -9,7 +9,6 @@ describe('reminder draft dates', () => {
       new Date(2027, 0, 1, 9, 5).toISOString(),
     )
     expect(now.getTime()).toBe(timestamp)
-    expect(getDateInputValue(now)).toBe('2026-12-31')
   })
   it('should classify leap day as tomorrow and preserve the selected minute', () => {
     const draft = createReminderDraft({

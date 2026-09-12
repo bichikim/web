@@ -8,6 +8,10 @@ import {
   setWidgetSurface,
 } from '@winter-love/desktop-surface'
 import {
+  DEFAULT_P_DISPLAY_PREFERENCES,
+  writePDisplayPreferences,
+} from '../../focus-room-display-preferences'
+import {
   applyDesktopMode,
   finishDesktopModeTransition,
   prepareDesktopModeTransition,
@@ -22,6 +26,7 @@ vi.mock('@winter-love/desktop-surface', () => ({
 }))
 
 beforeEach(() => {
+  localStorage.clear()
   vi.stubGlobal('screen', {availHeight: 900, availLeft: 0, availTop: 0, availWidth: 1440})
   vi.mocked(closeControlSurface).mockResolvedValue()
   vi.mocked(openControlSurface).mockResolvedValue({created: true})
@@ -120,6 +125,27 @@ describe('applyDesktopMode', () => {
       vi.mocked(openControlSurface).mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
     )
   })
+
+  it.each([
+    {labels: ['desktop-settings'], playerVisible: false, pomodoroVisible: false},
+    {labels: ['desktop-player', 'desktop-settings'], playerVisible: true, pomodoroVisible: false},
+    {labels: ['desktop-pomodoro', 'desktop-settings'], playerVisible: false, pomodoroVisible: true},
+  ])(
+    'should open only enabled surfaces for $playerVisible / $pomodoroVisible',
+    async ({playerVisible, pomodoroVisible, labels}) => {
+      await writePDisplayPreferences({
+        ...DEFAULT_P_DISPLAY_PREFERENCES,
+        playerVisible,
+        pomodoroVisible,
+      })
+
+      await applyDesktopMode('desktop')
+
+      expect(vi.mocked(openControlSurface).mock.calls.map(([options]) => options.label)).toEqual(
+        labels,
+      )
+    },
+  )
 
   it('should roll back the background and controls when desktop entry fails', async () => {
     const error = new Error('native transition failed')

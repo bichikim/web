@@ -1,4 +1,12 @@
 {
+  "feed_stop_failed": "Could not stop feed processing. Please try again.",
+  "settings_feed_auto_prepare": "Automatically prepare new feed audio",
+  "settings_feed_auto_prepare_description": "Create audio when new feeds arrive. When off, select Prepare first, then Listen after preparation finishes. Work already in progress continues.",
+  "feed_pending_count": "{count} feed dialogues to prepare",
+  "feed_prepare_description": "Prepare audio to listen to these feed dialogues.",
+  "feed_prepare": "Prepare",
+  "settings_feed_reading_visible": "Show feed reading progress",
+  "settings_feed_reading_visible_description": "Hide the progress card when off. Feed reading continues, and errors and retry notices remain visible.",
   "settings_player_visible": "Show player",
   "settings_player_visible_description": "Turning this off stops music playback.",
   "settings_pomodoro_visible": "Show Pomodoro",

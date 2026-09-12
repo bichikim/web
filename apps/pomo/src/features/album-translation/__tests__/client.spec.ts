@@ -1,6 +1,10 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+const reportClientError = vi.hoisted(() => vi.fn())
+
+vi.mock('../../client-error-reporter/reporter', () => ({reportClientError}))
+
 import {createAlbumTranslationClient} from '../client'
 import type {AlbumTranslationWorkerResponse} from '../messages'
 
@@ -26,6 +30,12 @@ class FakeWorker {
   emitError(message: string) {
     for (const listener of this.#listeners.get('error') ?? []) {
       listener({message} as ErrorEvent)
+    }
+  }
+
+  emitMessageError() {
+    for (const listener of this.#listeners.get('messageerror') ?? []) {
+      listener({} as MessageEvent<AlbumTranslationWorkerResponse>)
     }
   }
 }
@@ -64,10 +74,21 @@ describe('createAlbumTranslationClient', () => {
       restartRequired: true,
       type: 'error',
     })
+    expect(reportClientError).toHaveBeenCalledWith(
+      {message: 'Worker execution failed', name: 'WorkerError'},
+      {feature: 'album-translation', source: 'worker'},
+    )
 
     FakeWorker.current?.emitError('')
     expect(onResponse).toHaveBeenLastCalledWith({
       message: 'Gemma 4 번역 Worker 실행 오류',
+      restartRequired: true,
+      type: 'error',
+    })
+
+    FakeWorker.current?.emitMessageError()
+    expect(onResponse).toHaveBeenLastCalledWith({
+      message: 'Worker 응답을 읽지 못했습니다.',
       restartRequired: true,
       type: 'error',
     })

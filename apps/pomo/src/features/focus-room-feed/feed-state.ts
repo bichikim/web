@@ -7,7 +7,11 @@ import {
   type PFeedState,
 } from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
-import type {FeedDialogueJob, FeedItemRecord} from './feed-dialogue-schema'
+import {
+  type FeedDialogueJob,
+  type FeedItemRecord,
+  isFeedJobAwaitingAction,
+} from './feed-dialogue-schema'
 import {
   deleteExpiredFeedDialogues,
   loadFeedDialogueList,
@@ -85,11 +89,7 @@ export const createFeedStateController = (
 
     if (!isDisposed) {
       setRecoveryJobs(
-        jobs.filter(
-          (job) =>
-            (job.status === 'failed' || job.status === 'interrupted') &&
-            !dismissedRecoveryIds.has(job.id),
-        ),
+        jobs.filter((job) => isFeedJobAwaitingAction(job) && !dismissedRecoveryIds.has(job.id)),
       )
     }
   }

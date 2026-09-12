@@ -2,6 +2,8 @@
 
 // oxlint-disable no-await-in-loop -- Contaminated sentences share one WebGPU model and must be refined sequentially.
 
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import {
   containsForeignCjk,
   createForeignCjkTokenIds,
@@ -43,14 +45,6 @@ const getTextRuntime = () => {
   return textRuntimePromise
 }
 let suppressedCjkTokenIds: Array<number> | null = null
-
-const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message
-  }
-
-  return '채팅 모델을 실행하지 못했어요.'
-}
 
 const prepareModel = async (modelId: TextModelId) => {
   const textRuntime = await getTextRuntime()
@@ -229,6 +223,10 @@ const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
 
 workerScope.addEventListener('message', (event: MessageEvent<ChatWorkerRequest>) => {
   handleRequest(event.data).catch((error: unknown) => {
-    sendResponse({message: getErrorMessage(error), restartRequired: false, type: 'error'})
+    sendResponse({
+      message: getErrorMessage(error, '채팅 모델을 실행하지 못했어요.'),
+      restartRequired: false,
+      type: 'error',
+    })
   })
 })

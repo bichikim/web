@@ -7,6 +7,7 @@ import {
 } from '../month-cache'
 
 const range = {
+  accountKey: 'email:a@example.com',
   end: '2026-09-30T15:00:00.000Z',
   start: '2026-08-31T15:00:00.000Z',
   timeZone: 'Asia/Seoul',

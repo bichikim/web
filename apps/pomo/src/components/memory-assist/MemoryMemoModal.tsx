@@ -7,7 +7,7 @@ import {MAXIMUM_MEMORY_MEMO_LENGTH} from '../../features/memory-assist'
 import {PButton} from '../PButton'
 import {PModal} from '../PModal'
 import {type ReminderDraft, ReminderFields} from './ReminderFields'
-import {getDateInputValue} from './reminder-draft'
+import {formatLocalDate} from 'src/utils/format-local-date'
 
 const TEXTAREA_CLASSES = cx(
   'box-border min-h-24 w-full resize-y rounded-5 border border-solid border-border',
@@ -75,7 +75,7 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
 
         <ReminderFields
           draft={props.reminderDraft}
-          minimumDate={getDateInputValue(new Date())}
+          minimumDate={formatLocalDate(new Date())}
           onChange={props.onReminderChange}
         />
 

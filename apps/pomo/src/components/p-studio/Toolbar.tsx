@@ -1,3 +1,4 @@
+import type {useUiAutoHide} from 'src/features/ui-auto-hide'
 import type {BackgroundController} from 'src/features/background'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
@@ -32,6 +33,7 @@ import {PButton} from '../PButton'
 import {PTools} from '../PTools'
 
 interface SceneToolbarProps {
+  readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
   readonly pomodoroVisible?: boolean
   readonly onPomodoroVisibleChange?: (visible: boolean) => void
   readonly playerVisible?: boolean
@@ -106,6 +108,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         </Show>
         <div class="inline-flex" data-tour-step="settings">
           <SceneSettingsPanel
+            uiAutoHide={props.uiAutoHide}
             playerVisible={props.playerVisible}
             onPlayerVisibleChange={props.onPlayerVisibleChange}
             pomodoroVisible={props.pomodoroVisible}
