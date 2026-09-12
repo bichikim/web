@@ -1,4 +1,4 @@
-import {SEARCH_CONFIG} from '../features/search-discovery/canonical'
+import {SEARCH_CONFIG} from 'src/features/search-discovery'
 
 const POMO_LAYOUT_PATHS: ReadonlySet<string> = new Set(['/', '/dialogue'])
 const SEARCH_INDEXABLE_PATHS: ReadonlySet<string> = new Set(SEARCH_CONFIG.indexablePaths)

@@ -1,9 +1,12 @@
 import {describe, expect, it, vi} from 'vitest'
 
-import type {FeedEntry, FeedProvider} from '../contract'
+import {
+  createFeedRegistry,
+  createHistoricalMomentsProvider,
+  type FeedEntry,
+  type FeedProvider,
+} from 'src/features/feed-publisher'
 import {createFeedResponse} from '../create-feed-response'
-import {createFeedRegistry} from '../feed-registry'
-import {createHistoricalMomentsProvider} from '../historical-moments-provider'
 
 const ENTRY: FeedEntry = {
   contentHtml: '<p>본문</p>',

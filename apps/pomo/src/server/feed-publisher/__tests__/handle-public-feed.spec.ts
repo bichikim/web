@@ -7,7 +7,7 @@ const feedMocks = vi.hoisted(() => ({
   createPublicFeedRegistry: vi.fn(),
 }))
 
-vi.mock('src/features/feed-publisher', () => ({createFeedResponse: feedMocks.createFeedResponse}))
+vi.mock('../create-feed-response', () => ({createFeedResponse: feedMocks.createFeedResponse}))
 vi.mock('../public-feed-registry', () => ({
   createPublicFeedRegistry: feedMocks.createPublicFeedRegistry,
 }))
