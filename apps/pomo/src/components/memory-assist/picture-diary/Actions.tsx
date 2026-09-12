@@ -2,7 +2,7 @@ import {type JSX, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {PButton} from '../../PButton'
 
-interface DrawingActionsProps {
+interface ActionsProps {
   readonly children?: JSX.Element
   readonly onDone: () => void
   readonly doneDisabled: boolean
@@ -15,10 +15,11 @@ interface DrawingActionsProps {
   readonly onClear: () => void
 }
 
-export const DrawingActions = (props: DrawingActionsProps) => (
-  <div class="flex flex-wrap items-center gap-2">
+export const Actions = (props: ActionsProps) => (
+  <div class="grid grid-cols-[1fr_auto] items-center gap-3 xl:grid-cols-[auto_1fr_auto]">
     <Show when={props.drawing}>
-      <div class="flex shrink-0 gap-2">
+      {props.children}
+      <div class="flex shrink-0 gap-2 xl:col-start-1 xl:row-start-1">
         <PButton
           bordered
           transparent
@@ -53,11 +54,10 @@ export const DrawingActions = (props: DrawingActionsProps) => (
           onPress={props.onClear}
         />
       </div>
-      {props.children}
     </Show>
     <PButton
       raised
-      class="ml-auto"
+      class="col-start-2 justify-self-end xl:col-start-3 xl:row-start-1"
       size="small"
       disabled={props.doneDisabled}
       onPress={props.onDone}
