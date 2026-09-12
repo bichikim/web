@@ -7,7 +7,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {isTwoDimensionalParameterBinding} from '../../../deformation'
 import {createDemoDocument, getDocumentScene, type PuppetDocument} from '../../../player'
 import {getDeformerAngle} from '../deformer-transform'
-import {addParameter, insertParameterKeyform} from '../parameter-keyforms'
+import {
+  addParameter,
+  insertParameterKeyform,
+  setParameterKeyformDeformerControlPoints,
+} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 import {createDeformer, setSceneNodeState} from '../scene-graph'
 import {EditorInspector} from '../EditorInspector'
@@ -405,6 +409,67 @@ describe('EditorInspector', () => {
       45,
     )
     expect(rest?.kind === 'deformer' ? getDeformerAngle(rest) : undefined).toBeCloseTo(0)
+  })
+
+  test('should retain other parameter contributions through inspector point, origin and angle input', () => {
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const deformerDocument = createDeformer(source, ['mesh-preview'])!
+    const rest = getDocumentScene(deformerDocument).roots[0]!
+    if (rest.kind !== 'deformer') {
+      throw new Error('Expected a deformer')
+    }
+    const first = addParameter({document: deformerDocument, nodeIds: [rest.id]})!
+    const second = addParameter({document: first.document, nodeIds: [rest.id]})!
+    const posed = setParameterKeyformDeformerControlPoints({
+      bindingId: second.binding.id,
+      document: second.document,
+      controlPoints: rest.controlPoints.map((value, index) => value + (index % 2 === 0 ? 20 : 5)),
+      nodeId: rest.id,
+      rotationOrigin: {x: 200, y: 200},
+      values: [0],
+    })!
+    const [document, setDocument] = createSignal(posed)
+    const preview = () =>
+      createParameterPreview({document: document(), editingBindingId: first.binding.id})
+    const view = render(() => (
+      <EditorInspector
+        activeBindingId={first.binding.id}
+        activeKeyformValues={[0]}
+        activeNodeId={rest.id}
+        document={document()}
+        editMode="parameter"
+        previewDocument={preview()}
+        onDocumentChange={setDocument}
+        targetNodeIds={[rest.id]}
+        selectedControlPointIndices={[0]}
+      />
+    ))
+    const firstX = rest.controlPoints[0]! + 20
+    const firstY = rest.controlPoints[1]! + 5
+    fireEvent.input(view.getByRole('spinbutton', {name: '격자 제어점 1 X'}), {
+      target: {value: String(firstX + 1)},
+    })
+    const pointNode = getDocumentScene(preview()).roots[0]!
+    expect(pointNode.kind === 'deformer' ? pointNode.controlPoints.slice(0, 2) : []).toEqual([
+      firstX + 1,
+      firstY,
+    ])
+    fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 회전 중심 X'}), {
+      target: {value: '201'},
+    })
+    const originNode = getDocumentScene(preview()).roots[0]!
+    expect(originNode.kind === 'deformer' ? originNode.rotationOrigin : undefined).toEqual({
+      x: 201,
+      y: 200,
+    })
+    expect(originNode.kind === 'deformer' ? originNode.controlPoints : []).toEqual(
+      pointNode.kind === 'deformer' ? pointNode.controlPoints : [],
+    )
+    fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {target: {value: '45'}})
+    const rotated = getDocumentScene(preview()).roots[0]!
+    expect(rotated.kind === 'deformer' ? getDeformerAngle(rotated) : undefined).toBeCloseTo(45)
+    expect(document().parameterBindings?.[1]).toEqual(posed.parameterBindings?.[1])
+    expect(document().scene).toEqual(posed.scene)
   })
 
   test('should edit the rest deformer outside the active parameter', () => {

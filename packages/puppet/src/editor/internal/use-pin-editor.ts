@@ -107,18 +107,17 @@ export const usePinEditor = (props: PinEditorProps) => {
     indices: () => props.node.pins!.map((_, index) => index),
     influence: () => getPinInfluence(props.node, selected(), transform),
     point: (index: number) => transform(local(index)),
-    rest,
     radius: () => {
       const HANDLE_DIVISOR = 120
       return Math.min(view().width, view().height) / HANDLE_DIVISOR
     },
-    restEditable,
+    rest,
     remove: () => {
       if (rest() && editable()) {
         layout('remove')
       }
     },
-    selected,
+    restEditable,
     append: (event: MouseEvent) => {
       if (event.target !== event.currentTarget || !rest() || !editable()) {
         return
@@ -128,14 +127,14 @@ export const usePinEditor = (props: PinEditorProps) => {
         layout('append', point)
       }
     },
-    stop,
+    selected,
     drag: (event: PointerEvent) => {
       const point = eventPoint(event)
       if (dragging && point !== undefined) {
         move(point)
       }
     },
-    selectedPin: () => props.node.pins?.[selected()],
+    stop,
     keyDown: createPinKeyboard({
       point: () => local(selected()),
       move,
@@ -145,8 +144,9 @@ export const usePinEditor = (props: PinEditorProps) => {
         }
       },
     }),
-    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
+    selectedPin: () => props.node.pins?.[selected()],
     select: setSelected,
+    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
     settings: (radius?: number, strength?: number) =>
       layout('settings', undefined, radius, strength),
     start: (event: PointerEvent, index: number) => {
@@ -233,6 +233,7 @@ const savePinPose = (props: PinEditorProps, index: number, point: PuppetPoint) =
       ? setParameterKeyformDeformerControlPoints({
           ...options,
           bindingId: editTarget.bindingId,
+          previewDeformer: props.node,
           values: editTarget.values,
         })
       : setDeformerControlPoints(options)

@@ -24,6 +24,7 @@ interface UpdateDraggedDeformerOptions {
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly deformer?: PuppetSceneDeformerNode
+  readonly previewDeformer?: PuppetSceneDeformerNode
   readonly document: PuppetDocument
   readonly editMode?: 'motion' | 'parameter'
   readonly nodeId: string
@@ -49,6 +50,7 @@ export const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => 
           document: options.document,
           nodeId: options.nodeId,
           pointIndex: options.target.pointIndex,
+          previewDeformer: options.previewDeformer ?? options.deformer,
           values: editTarget.values,
           x: options.point.x,
           y: options.point.y,
@@ -81,6 +83,7 @@ export const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => 
           nodeId: options.nodeId,
           point,
           pointIndex: options.target.pointIndex,
+          previewDeformer: options.previewDeformer ?? options.deformer,
           values: editTarget.values,
         })
       : setDeformerCurveHandle({
@@ -109,6 +112,7 @@ export const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => 
           bindingId: editTarget.bindingId,
           document: options.document,
           nodeId: options.nodeId,
+          previewDeformer: options.previewDeformer ?? options.deformer,
           values: editTarget.values,
           ...geometry,
         })
@@ -153,6 +157,7 @@ export const updateDraggedDeformer = (options: UpdateDraggedDeformerOptions) => 
         curveHandles,
         document: options.document,
         nodeId: options.nodeId,
+        previewDeformer: options.previewDeformer ?? options.deformer,
         rotationOrigin,
         values: editTarget.values,
       })

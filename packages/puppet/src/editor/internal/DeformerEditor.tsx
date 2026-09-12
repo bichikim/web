@@ -290,6 +290,7 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
       editMode: props.editMode,
       nodeId: activeNodeId,
       point: untransformPoint(point),
+      previewDeformer: deformer(),
       rotationAngle: target.kind === 'rotation' ? rotationStart?.angle : undefined,
       target,
       targetNodeIds: props.targetNodeIds,

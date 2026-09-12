@@ -169,6 +169,7 @@ const updateInspectorTransform = (
     ...geometry,
     document: props.document,
     nodeId: node.id,
+    previewDeformer: node,
     values: editTarget.values,
   })
 }
@@ -212,6 +213,7 @@ const updateInspectorGrid = (options: UpdateInspectorGridOptions) => {
     document: options.props.document,
     nodeId: options.node.id,
     pointIndex: options.pointIndex,
+    previewDeformer: options.node,
     values: editTarget.values,
     x,
     y,
