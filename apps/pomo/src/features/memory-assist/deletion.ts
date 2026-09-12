@@ -18,6 +18,7 @@ export interface MemoryMemoDeletionOptions {
 }
 
 export interface MemoryMemoDeletion {
+  readonly cleanup: (options: DeleteMemoryMemoOptions) => Promise<void>
   readonly delete: (options: DeleteMemoryMemoOptions) => Promise<MemoryMemoDeletionResult>
   readonly retry: (deleteDialogue: DeleteMemoryMemoOptions['deleteDialogue']) => Promise<void>
 }
@@ -27,6 +28,44 @@ export const createMemoryMemoDeletion = (
   dependencies: MemoryMemoDeletionOptions,
 ): MemoryMemoDeletion => {
   const pendingDeletions = new Map<string, Promise<MemoryMemoDeletionResult>>()
+
+  const pendingCleanups = new Map<string, Promise<void>>()
+
+  const cleanRetiredDialogues = async (options: DeleteMemoryMemoOptions): Promise<void> => {
+    const memos = await dependencies.read()
+    const memo = memos.find((current) => current.id === options.memoId)
+    const retired = memo?.retiredDialogueIds ?? []
+    await retired
+      .filter(
+        (dialogueId) =>
+          dialogueId !== memo?.dialogueId && isMemoryMemoOwnedDialogue(dialogueId, options.memoId),
+      )
+      .reduce(async (previous, dialogueId) => {
+        await previous
+        await options.deleteDialogue(dialogueId)
+        await dependencies.deleteAudio(dialogueId)
+        const removeRetired = (current: MemoryMemo): MemoryMemo =>
+          current.id === options.memoId
+            ? {
+                ...current,
+                retiredDialogueIds: current.retiredDialogueIds?.filter((id) => id !== dialogueId),
+              }
+            : current
+        await dependencies.update((currentMemos) => currentMemos.map(removeRetired))
+      }, Promise.resolve())
+  }
+
+  const cleanup = (options: DeleteMemoryMemoOptions): Promise<void> => {
+    const existing = pendingCleanups.get(options.memoId)
+    if (existing !== undefined) {
+      return existing
+    }
+    const pending = cleanRetiredDialogues(options).finally(() =>
+      pendingCleanups.delete(options.memoId),
+    )
+    pendingCleanups.set(options.memoId, pending)
+    return pending
+  }
 
   const persistDeletion = async (
     options: DeleteMemoryMemoOptions,
@@ -41,6 +80,7 @@ export const createMemoryMemoDeletion = (
     }
 
     try {
+      await cleanup(options)
       if (memo.dialogueId !== null && isMemoryMemoOwnedDialogue(memo.dialogueId, memo.id)) {
         await options.deleteDialogue(memo.dialogueId)
         // Metadata may already be gone after an earlier attempt; retain the owned audio key until both formats are removed.
@@ -80,8 +120,14 @@ export const createMemoryMemoDeletion = (
 
     const results = await Promise.allSettled(
       memos
-        .filter((memo) => memo.deletionPending === true)
-        .map((memo) => deleteMemoryMemo({deleteDialogue, memoId: memo.id})),
+        .filter(
+          (memo) => memo.deletionPending === true || (memo.retiredDialogueIds?.length ?? 0) > 0,
+        )
+        .map((memo) =>
+          memo.deletionPending === true
+            ? deleteMemoryMemo({deleteDialogue, memoId: memo.id})
+            : cleanup({deleteDialogue, memoId: memo.id}),
+        ),
     )
     const errors = results.flatMap((result) =>
       result.status === 'rejected' ? [result.reason] : [],
@@ -92,5 +138,5 @@ export const createMemoryMemoDeletion = (
     }
   }
 
-  return {delete: deleteMemoryMemo, retry: retryMemoryMemoDeletions}
+  return {cleanup, delete: deleteMemoryMemo, retry: retryMemoryMemoDeletions}
 }

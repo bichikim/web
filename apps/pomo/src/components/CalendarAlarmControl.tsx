@@ -10,6 +10,7 @@ import {usePEvents} from '../features/focus-room-dialogue'
 import {
   createMemoryMemo,
   editMemoryMemo,
+  isMemoryMemoOwnedDialogue,
   type MemoryMemo,
   memoryMemoDeletion,
   updateMemoryMemos,
@@ -130,16 +131,7 @@ const useCalendarAlarmController = (
     setPending(true)
     setMessage(null)
     try {
-      const currentMemo = storedMemo()
       const text = m.calendar_alarm_dialogue({title: event().title})
-      if (
-        currentMemo?.dialogueId !== null &&
-        currentMemo?.dialogueId !== undefined &&
-        currentMemo.text !== text
-      ) {
-        await events.deleteDialogue(currentMemo.dialogueId)
-      }
-
       const now = clock()
       const currentAlarmId = alarmId()
       await updateMemoryMemos((currentMemos) => {
@@ -166,8 +158,29 @@ const useCalendarAlarmController = (
                 recallMode: 'none',
                 text,
               })
+        if (
+          existingMemo?.dialogueId !== null &&
+          existingMemo?.dialogueId !== undefined &&
+          alarm.dialogueId !== existingMemo.dialogueId &&
+          isMemoryMemoOwnedDialogue(existingMemo.dialogueId, existingMemo.id)
+        ) {
+          return [
+            {
+              ...alarm,
+              retiredDialogueIds: [
+                ...new Set([...(existingMemo.retiredDialogueIds ?? []), existingMemo.dialogueId]),
+              ],
+            },
+            ...currentMemos.filter((memo) => memo.id !== currentAlarmId),
+          ]
+        }
         return [alarm, ...currentMemos.filter((memo) => memo.id !== currentAlarmId)]
       })
+      await memoryMemoDeletion
+        .cleanup({deleteDialogue: events.deleteDialogue, memoId: currentAlarmId})
+        .catch((error: unknown) => {
+          console.error('Calendar alarm saved; retired dialogue cleanup will retry.', error)
+        })
       popoverElement()?.hidePopover()
     } catch (error: unknown) {
       console.error('Failed to save a calendar alarm.', error)
