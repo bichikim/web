@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {readPSceneStyle, writePSceneStyle} from '../style-storage'
@@ -159,4 +160,60 @@ it('should preserve native write order during rapid preference changes', async (
   await Promise.all([writePSceneStyle('scribble'), writePSceneStyle('original')])
 
   expect(nativeWrites).toEqual(['"scribble"', '"original"'])
+})
+
+it.each(['"original"', null])(
+  'should repair native storage containing %s from the web choice',
+  async (initialValue) => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let nativeValue = initialValue
+    storageMocks.getItem.mockImplementation(async () => nativeValue)
+    storageMocks.setItem.mockImplementation(async (_key, value) => {
+      nativeValue = value
+    })
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+
+    expect(await readPSceneStyle()).toBe('scribble')
+    await flushPromises()
+    expect(nativeValue).toBe('"scribble"')
+    expect(storageMocks.getItem).not.toHaveBeenCalled()
+
+    localStorage.clear()
+    expect(await readPSceneStyle()).toBe('scribble')
+  },
+)
+
+it('should retry a failed native repair on the next read', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+  storageMocks.setItem.mockRejectedValueOnce(new Error('unavailable')).mockResolvedValue()
+
+  await expect(readPSceneStyle()).resolves.toBe('scribble')
+  await flushPromises()
+  await expect(readPSceneStyle()).resolves.toBe('scribble')
+  await flushPromises()
+
+  expect(storageMocks.setItem).toHaveBeenCalledTimes(2)
+  expect(storageMocks.setItem).toHaveBeenLastCalledWith(
+    'pomo:focus-room-scene-style:v1',
+    '"scribble"',
+  )
+})
+
+it('should return the web choice before repair completes and persist a newer choice last', async () => {
+  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+  const repair = Promise.withResolvers<void>()
+  storageMocks.setItem.mockReturnValueOnce(repair.promise).mockResolvedValue()
+
+  await expect(readPSceneStyle()).resolves.toBe('scribble')
+  await flushPromises()
+  const pendingWrite = writePSceneStyle('original')
+  repair.resolve()
+  await pendingWrite
+
+  expect(storageMocks.setItem.mock.calls).toEqual([
+    ['pomo:focus-room-scene-style:v1', '"scribble"'],
+    ['pomo:focus-room-scene-style:v1', '"original"'],
+  ])
 })
