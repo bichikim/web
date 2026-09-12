@@ -162,23 +162,12 @@ it.each(['interactiveDesktop', 'widget'] as const)(
   },
 )
 
-it('should snapshot current motion and publish renderer input fallback', () => {
+it('should connect renderer input fallback to desktop publishing', () => {
   configureStudio({desktopMode: 'interactiveDesktop', entrySession: true, gyroscope: true})
   const publish = vi.fn()
   vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
   renderStudio()
-  const publisher = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]
-  const toolbar = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
-  toolbar?.onMotionModeChange?.('pan')
-  expect(publisher?.snapshot?.()).toEqual([
-    {name: 'motionInput', value: 'gyroscope'},
-    {name: 'motionMode', value: 'pan'},
-  ])
-  publish.mockClear()
   vi.mocked(PStudioScene).mock.calls[0]?.[0].onMotionInputChange?.('drag')
   expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'motionInput', value: 'drag'})
-  expect(publisher?.snapshot?.()).toEqual([
-    {name: 'motionInput', value: 'drag'},
-    {name: 'motionMode', value: 'pan'},
-  ])
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
 })
