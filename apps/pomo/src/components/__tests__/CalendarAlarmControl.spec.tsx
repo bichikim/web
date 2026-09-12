@@ -278,6 +278,37 @@ it('should rearm a consumed alarm and preserve its reminder history', async () =
   expect(getDueMemoryReminder(saved, newTime)).toBe('exact')
 })
 
+it('should preserve owned dialogue when renamed-event alarm persistence fails', async () => {
+  const memo = ownedAlarm()
+  mocks.memos = [memo]
+  const actual = await vi.importActual<typeof import('../../features/memory-assist/repository')>(
+    '../../features/memory-assist/repository',
+  )
+  localStorage.setItem('pomo:memory-memos:v1', JSON.stringify([memo]))
+  const setItem = Storage.prototype.setItem
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
+    function persistItem(this: Storage, key, value) {
+      if (key === 'pomo:memory-memos:v1') {
+        throw new DOMException('storage full', 'QuotaExceededError')
+      }
+      setItem.call(this, key, value)
+    },
+  )
+  mocks.updateMemos.mockImplementation(actual.updateMemoryMemos)
+  render(() => (
+    <CalendarAlarmControl
+      now={now}
+      event={{...event, title: '변경된 팀 회의'}}
+      memos={() => mocks.memos}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '변경된 팀 회의 알람 수정'}))
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+  await screen.findByText('알람을 저장하지 못했어요.')
+  expect(JSON.parse(localStorage.getItem('pomo:memory-memos:v1') ?? '[]')).toEqual([memo])
+  expect(mocks.deleteDialogue).not.toHaveBeenCalled()
+})
+
 it('should preserve owned dialogue when alarm removal persistence fails', async () => {
   const memo = ownedAlarm()
   mocks.memos = [memo]
