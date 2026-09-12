@@ -1,9 +1,16 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
+const reportClientError = vi.hoisted(() => vi.fn())
+
+vi.mock('../../client-error-reporter/reporter', () => ({reportClientError}))
+
 interface CapturedTransportOptions {
-  readonly createErrorResponse: (event: {readonly message: string}) => unknown
-  readonly feature: string
+  readonly onFailure: (failure: {
+    readonly cause: unknown
+    readonly code: 'message-error' | 'worker-error'
+    readonly detail: string
+  }) => void
   readonly onResponse: (response: unknown) => void
   readonly worker: Worker
 }
@@ -18,7 +25,7 @@ const {createWorkerTransport, dispose, send} = vi.hoisted(() => {
   }
 })
 
-vi.mock('../../text-generation/worker-transport', () => ({createWorkerTransport}))
+vi.mock('../../../utils/worker-transport', () => ({createWorkerTransport}))
 
 import {createChatClient} from '../client'
 
@@ -45,17 +52,33 @@ it('should own the chat worker transport and forward all client commands', () =>
   const transportOptions = createWorkerTransport.mock.calls[0]![0]
 
   expect(TestWorker.instances[0]?.options).toEqual({name: 'pomo-chat', type: 'module'})
-  expect(transportOptions).toMatchObject({feature: 'chat-model', onResponse})
+  expect(transportOptions).toMatchObject({onResponse})
   expect(transportOptions.worker).toBe(TestWorker.instances[0])
-  expect(transportOptions.createErrorResponse({message: 'worker failed'})).toEqual({
+  transportOptions.onFailure({
+    cause: new Error('worker failed'),
+    code: 'worker-error',
+    detail: 'worker failed',
+  })
+  expect(onResponse).toHaveBeenCalledWith({
     message: 'worker failed',
     restartRequired: true,
     type: 'error',
   })
-  expect(transportOptions.createErrorResponse({message: ''})).toEqual({
+  transportOptions.onFailure({cause: new Error(), code: 'worker-error', detail: ''})
+  expect(onResponse).toHaveBeenLastCalledWith({
     message: '채팅 모델 Worker 실행 오류',
     restartRequired: true,
     type: 'error',
+  })
+  transportOptions.onFailure({cause: new Error(), code: 'message-error', detail: ''})
+  expect(onResponse).toHaveBeenLastCalledWith({
+    message: 'Worker 응답을 읽지 못했습니다.',
+    restartRequired: true,
+    type: 'error',
+  })
+  expect(reportClientError).toHaveBeenCalledWith(expect.any(Error), {
+    feature: 'chat-model',
+    source: 'worker',
   })
 
   const context = {messages: [], summary: ''}

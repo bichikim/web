@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createMemo, createSignal, createUniqueId, type Setter} from 'solid-js'
 import * as m from '@paraglide/message'
 import type {CalendarEvent} from '../calendar'
@@ -8,7 +9,6 @@ import {createCalendarAlarmSaver} from './create-calendar-alarm-saver'
 const CALENDAR_ALARM_ID_PREFIX = 'calendar-alarm:'
 const ALL_DAY_ALARM_HOUR = 9
 const DATE_KEY_LENGTH = 10
-const getDateInputValue = (date: Date) => dayjs(date).format('YYYY-MM-DD')
 const getTimeInputValue = (date: Date) => dayjs(date).format('HH:mm')
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
 const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
@@ -81,7 +81,7 @@ export const useCalendarAlarmController = (
       storedAlarmAt === null || storedAlarmAt === undefined
         ? getEventAlarmAt(event(), defaultAlarmDate())
         : new Date(storedAlarmAt)
-    setDate(getDateInputValue(alarmAt))
+    setDate(formatLocalDate(alarmAt))
     setTime(getTimeInputValue(alarmAt))
     setMessage(null)
   }
