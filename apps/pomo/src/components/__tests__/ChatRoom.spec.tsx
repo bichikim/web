@@ -330,28 +330,6 @@ describe('ChatRoom', () => {
     expect(chat.send).not.toHaveBeenCalled()
   })
 
-  it('should speak completed streaming text and flush each answer once', async () => {
-    vi.mocked(speechBuffer.update).mockReturnValue(['first sentence', 'second sentence'])
-    vi.mocked(speechBuffer.flush).mockReturnValue('remaining text')
-    render(() => <ChatRoom />)
-    sidebarProps.onSpeakBeforeRefiningChange(true)
-    composerProps.onSend()
-
-    controls.setStreamingText('streaming answer')
-    controls.setAnswerDraft({content: 'final answer', id: 'answer-1'})
-
-    await waitFor(() => expect(speechBuffer.update).toHaveBeenCalledWith('streaming answer'))
-    expect(voice.speak).toHaveBeenCalledWith('first sentence')
-    expect(voice.speak).toHaveBeenCalledWith('second sentence')
-    expect(speechBuffer.flush).toHaveBeenCalledWith('streaming answer')
-    expect(voice.speak).toHaveBeenCalledWith('remaining text')
-    expect(voice.finish).toHaveBeenCalledOnce()
-
-    controls.setStreamingText('streaming answer updated')
-    await Promise.resolve()
-    expect(voice.finish).toHaveBeenCalledOnce()
-  })
-
   it.each([true, false])(
     'should keep a stopped reply silent through completion and allow the next send (streaming: %s)',
     async (streaming) => {
@@ -379,9 +357,13 @@ describe('ChatRoom', () => {
       await transcriptProps.voice.speak('명시적으로 재생한 내용')
       expect(voice.speak).toHaveBeenCalledWith('명시적으로 재생한 내용')
       vi.mocked(voice.speak).mockClear()
-      controls.setAnswerDraft(null)
-      controls.setMessages([{content: '새 질문', id: 'user-2', role: 'user'}])
+      vi.mocked(chat.send).mockImplementationOnce(() => {
+        controls.setMessages([{content: '새 질문', id: 'user-2', role: 'user'}])
+        controls.setAnswerDraft(null)
+        controls.setStreamingText('')
+      })
       await composerProps.onSend()
+      expect(voice.speak).not.toHaveBeenCalled()
       controls.setStreamingText('새 답변입니다.')
       controls.setAnswerDraft({content: '새 답변입니다.', id: 'answer-2'})
       controls.setMessages([{content: '새 답변입니다.', id: 'answer-2', role: 'assistant'}])
@@ -389,32 +371,4 @@ describe('ChatRoom', () => {
       expect(voice.finish).toHaveBeenCalledOnce()
     },
   )
-
-  it('should flush final answer content and skip empty buffered text', async () => {
-    render(() => <ChatRoom />)
-    sidebarProps.onSpeakBeforeRefiningChange(true)
-    composerProps.onSend()
-
-    controls.setAnswerDraft({content: 'final answer', id: 'answer-2'})
-
-    await waitFor(() => expect(speechBuffer.flush).toHaveBeenCalledWith('final answer'))
-    expect(voice.speak).not.toHaveBeenCalled()
-    expect(voice.finish).toHaveBeenCalledOnce()
-  })
-
-  it('should speak only each latest completed assistant message once', async () => {
-    render(() => <ChatRoom />)
-
-    controls.setMessages([{content: 'user message', id: 'user-1', role: 'user'}])
-    await Promise.resolve()
-    expect(voice.speak).not.toHaveBeenCalled()
-
-    controls.setMessages([{content: 'assistant message', id: 'assistant-1', role: 'assistant'}])
-    await waitFor(() => expect(voice.speak).toHaveBeenCalledWith('assistant message'))
-    expect(voice.finish).toHaveBeenCalledOnce()
-
-    controls.setDraft('updated draft')
-    await Promise.resolve()
-    expect(voice.speak).toHaveBeenCalledOnce()
-  })
 })

@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import {createEffect, createSignal} from 'solid-js'
 
 import {useChat} from '../features/chat'
-import {createStreamingSpeechBuffer, useChatVoice} from '../features/chat-voice'
+import {useChatVoice} from '../features/chat-voice'
 import {appendSpeechTranscript, useSpeechToText} from '../features/speech-to-text'
 import {getTextModel, type TextModelId} from '../features/text-generation'
 import {ChatComposer} from './chat-room/Composer'
@@ -10,6 +10,7 @@ import {ChatHeader} from './chat-room/Header'
 import {ChatTranscript} from './chat-room/Transcript'
 import {ContextSidebar} from './chat-room/ContextSidebar'
 import {MAXIMUM_DRAFT_LENGTH} from './chat-room/shared'
+import {useReplySpeech} from './chat-room/use-reply-speech'
 import {useSend} from './chat-room/use-send'
 const PANEL_CLASSES = cx(
   'overflow-hidden rounded-8 border border-white/10 bg-#211a2b/88',
@@ -20,13 +21,11 @@ export const ChatRoom = () => {
   const chat = useChat({modelId: 'qwen-4b'})
   const model = () => getTextModel(chat.modelId())
   const voice = useChatVoice()
-  const speechBuffer = createStreamingSpeechBuffer({locale: 'ko'})
   const [messageList, setMessageList] = createSignal<HTMLDivElement>()
   const [disableRefining, setDisableRefining] = createSignal(false)
   const [endpointing, setEndpointing] = createSignal(false)
   const [speakBeforeRefining, setSpeakBeforeRefining] = createSignal(false)
-  let spokenMessageId: string | null = null
-  let replySpeech: 'streaming' | 'completed' | 'stopped' = 'completed'
+  const replySpeech = useReplySpeech({chat, speakBeforeRefining, voice})
 
   const speech = useSpeechToText({
     accumulateText: false,
@@ -40,20 +39,13 @@ export const ChatRoom = () => {
 
   const sending = useSend({
     chat,
-    onSendStarted: () => {
-      voice.arm()
-      speechBuffer.reset()
-      replySpeech = speakBeforeRefining() ? 'streaming' : 'completed'
-    },
+    onSendStarted: replySpeech.start,
     refineAnswer: () => !disableRefining(),
     speech,
   })
   const sidebarVoice = {
     ...voice,
-    stop: () => {
-      replySpeech = 'stopped'
-      voice.stop()
-    },
+    stop: replySpeech.stop,
   }
   const handlePrepare = () => {
     chat.prepare()
@@ -61,8 +53,7 @@ export const ChatRoom = () => {
   }
   const handleModelChange = (modelId: TextModelId) => {
     sending.invalidate()
-    voice.stop()
-    speechBuffer.reset()
+    replySpeech.reset()
     chat.selectModel(modelId)
   }
   const handleClear = () => {
@@ -83,46 +74,13 @@ export const ChatRoom = () => {
   }
 
   createEffect(() => {
-    const messages = chat.messages()
-    const answerDraft = chat.answerDraft()
-    const streamingText = chat.streamingText()
+    chat.messages()
+    chat.answerDraft()
+    chat.streamingText()
     const element = messageList()
     queueMicrotask(() => {
       element?.scrollTo({behavior: 'smooth', top: element.scrollHeight})
     })
-
-    const latestMessage = messages.at(-1)
-
-    if (replySpeech === 'stopped') {
-      return
-    }
-
-    if (replySpeech === 'streaming') {
-      for (const sentence of speechBuffer.update(streamingText)) {
-        voice.speak(sentence).catch(console.error)
-      }
-
-      if (answerDraft !== null && answerDraft.id !== spokenMessageId) {
-        const remainingText = speechBuffer.flush(
-          streamingText.length > 0 ? streamingText : answerDraft.content,
-        )
-
-        if (remainingText !== null) {
-          voice.speak(remainingText).catch(console.error)
-        }
-
-        voice.finish()
-        spokenMessageId = answerDraft.id
-      }
-
-      return
-    }
-
-    if (latestMessage?.role === 'assistant' && latestMessage.id !== spokenMessageId) {
-      spokenMessageId = latestMessage.id
-      voice.speak(latestMessage.content).catch(console.error)
-      voice.finish()
-    }
   })
 
   return (
