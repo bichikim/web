@@ -2,13 +2,18 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
-import type {CalendarEvents, CalendarMonthRange} from 'src/features/calendar'
+import type {
+  CalendarEvents,
+  CalendarMonthCacheRange,
+  CalendarMonthRange,
+} from 'src/features/calendar'
+import type {AuthenticatedSession} from 'src/features/auth/machine'
 import type {AuthController} from 'src/features/auth/controller'
 import {type MonthEnvironment, useMonth} from '../use-month'
 
 const authentication: AuthController = {
-  session: () => ({kind: 'authenticated', provider: 'toss'}),
-  state: () => ({kind: 'authenticated', provider: 'toss'}),
+  session: () => ({email: 'person@example.com', kind: 'authenticated', provider: 'email'}),
+  state: () => ({email: 'person@example.com', kind: 'authenticated', provider: 'email'}),
 }
 const emptyCalendar: CalendarEvents = {
   connectedConnections: 1,
@@ -23,11 +28,13 @@ const createEnvironment = () =>
       .fn<(range: CalendarMonthRange) => Promise<CalendarEvents>>()
       .mockResolvedValue(emptyCalendar),
     now: () => new Date(2024, 1, 29, 12),
-    readCache: vi.fn<(range: CalendarMonthRange) => CalendarEvents | null>().mockReturnValue(null),
+    readCache: vi
+      .fn<(range: CalendarMonthCacheRange) => CalendarEvents | null>()
+      .mockReturnValue(null),
     reportError: vi.fn<(message: string, error: unknown) => void>(),
     timeZone: () => 'Asia/Seoul',
     writeCache: vi
-      .fn<(range: CalendarMonthRange, value: CalendarEvents) => unknown | null>()
+      .fn<(range: CalendarMonthCacheRange, value: CalendarEvents) => unknown | null>()
       .mockReturnValue(null),
   }) satisfies MonthEnvironment
 
@@ -103,4 +110,69 @@ it('should skip storage and network access for an anonymous session', () => {
   expect(result.calendar()).toBeNull()
   expect(environment.load).not.toHaveBeenCalled()
   expect(environment.readCache).not.toHaveBeenCalled()
+})
+
+it('should fetch without caching when the session has no account identifier', async () => {
+  const environment = createEnvironment()
+  const {result} = renderHook(() =>
+    useMonth({
+      authentication: {
+        session: () => ({kind: 'authenticated', provider: 'toss'}),
+        state: () => ({kind: 'authenticated', provider: 'toss'}),
+      },
+      environment,
+    }),
+  )
+  await waitFor(() => expect(result.calendar()).toEqual(emptyCalendar))
+  expect(environment.readCache).not.toHaveBeenCalled()
+  expect(environment.writeCache).not.toHaveBeenCalled()
+})
+
+it('should not write an account A response into account B cache after switching accounts', async () => {
+  const environment = createEnvironment()
+  const pending = Promise.withResolvers<CalendarEvents>()
+  environment.load.mockReturnValueOnce(pending.promise)
+  const [session, setSession] = createSignal<AuthenticatedSession>({
+    email: 'a@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
+  const {result} = renderHook(() =>
+    useMonth({
+      authentication: {session, state: session},
+      environment,
+    }),
+  )
+  setSession({email: 'b@example.com', kind: 'authenticated', provider: 'email'})
+  await waitFor(() => expect(environment.writeCache).toHaveBeenCalledOnce())
+  expect(environment.writeCache).toHaveBeenCalledWith(
+    expect.objectContaining({accountKey: 'email:b@example.com'}),
+    emptyCalendar,
+  )
+  pending.resolve({...emptyCalendar, connectedConnections: 2})
+  await pending.promise
+  expect(result.calendar()).toEqual(emptyCalendar)
+  expect(environment.writeCache).toHaveBeenCalledOnce()
+})
+
+it('should discard loaded events when an unidentified session is replaced', async () => {
+  const environment = createEnvironment()
+  const [session, setSession] = createSignal<AuthenticatedSession>({
+    kind: 'authenticated',
+    provider: 'toss',
+  })
+  const {result} = renderHook(() =>
+    useMonth({
+      authentication: {session, state: session},
+      environment,
+    }),
+  )
+  await waitFor(() => expect(result.calendar()).toEqual(emptyCalendar))
+  const pending = Promise.withResolvers<CalendarEvents>()
+  environment.load.mockReturnValueOnce(pending.promise)
+  setSession({kind: 'authenticated', provider: 'toss'})
+  expect(result.calendar()).toBeNull()
+  pending.reject(new Error('offline'))
+  await waitFor(() => expect(result.failed()).toBe(true))
+  expect(result.calendar()).toBeNull()
 })

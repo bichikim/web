@@ -1,6 +1,6 @@
 import type {SupertonicClient} from '../supertonic'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
-import type {FeedDialogueJob} from './feed-dialogue-schema'
+import {type FeedDialogueJob, isFeedJobAwaitingAction} from './feed-dialogue-schema'
 import type {ScheduledFeedJob} from './generation-queue'
 
 interface CancelFeedProcessingBaseOptions {
@@ -44,9 +44,6 @@ export const cancelFeedProcessing = async (options: CancelFeedProcessingOptions)
       : (jobId: string) => options.dismissedRecoveryIds.has(jobId)
 
   options.onRecovery(
-    jobs.filter(
-      (job) =>
-        (job.status === 'failed' || job.status === 'interrupted') && !isRecoveryDismissed(job.id),
-    ),
+    jobs.filter((job) => isFeedJobAwaitingAction(job) && !isRecoveryDismissed(job.id)),
   )
 }

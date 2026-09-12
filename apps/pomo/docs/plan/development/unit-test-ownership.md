@@ -212,7 +212,6 @@ Playback belongs to `components/media-player`; playlist presentation belongs to 
 - [ ] `apps/pomo/src/features/text-generation/messages.ts`
 - [ ] `apps/pomo/src/features/text-generation/qwen-model.ts`
 - [ ] `apps/pomo/src/features/text-generation/runtime.ts`
-- [ ] `apps/pomo/src/features/text-generation/worker-transport.ts`
 - [ ] `apps/pomo/src/features/text-mood/analysis.ts`
 - [ ] `apps/pomo/src/features/text-mood/classifier-info.ts`
 - [ ] `apps/pomo/src/features/text-mood/index.ts`

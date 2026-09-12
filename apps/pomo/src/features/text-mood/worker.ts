@@ -9,6 +9,7 @@ import {
   type ProgressInfo,
 } from '@huggingface/transformers'
 
+import {getErrorMessage} from 'src/utils/get-error-message'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {classifyTextMood, classifyTextSufficiency} from './classifier'
 import type {TextMoodError, TextMoodPhase} from './errors'
@@ -30,16 +31,13 @@ let preparePromise: Promise<void> | null = null
 
 const sendResponse = (response: TextMoodWorkerResponse) => workerScope.postMessage(response)
 
-const getErrorDetail = (error: unknown) =>
-  error instanceof Error && error.message.length > 0 ? error.message : '알 수 없는 오류'
-
 const createError = (
   error: unknown,
   code: TextMoodError['code'],
   phase: TextMoodPhase,
 ): TextMoodError => ({
   code,
-  detail: getErrorDetail(error),
+  detail: getErrorMessage(error, '알 수 없는 오류'),
   phase,
   retryable: code !== 'invalid-input',
 })

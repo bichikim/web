@@ -1,116 +1,15 @@
-import {createMemo, createSignal, onMount} from 'solid-js'
-import {isNonBlankString} from 'src/utils/is-non-blank-string'
-
+import {createSignal} from 'solid-js'
 import * as m from '@paraglide/message'
-import {
-  createMemoryMemo,
-  deleteMemoryMemoDraft,
-  readMemoryMemoDraft,
-  updateMemoryMemos,
-  writeMemoryMemoDraft,
-} from '../../features/memory-assist'
 import {PButton} from '../PButton'
 import {MemoryMemoModal} from './MemoryMemoModal'
-import type {ReminderDraft} from './ReminderFields'
-import {createReminderDraft, isFirstReminderInFuture, resolveReminderAt} from './reminder-draft'
-
-const persistCreationDraft = (text: string, reminderDraft: ReminderDraft) => {
-  writeMemoryMemoDraft({...reminderDraft, text, version: 1})
-}
+import {useMemoCreator} from './use-memo-creator'
 
 export const MemoryMemoCreator = () => {
-  const [isOpen, setIsOpen] = createSignal(false)
-  const [message, setMessage] = createSignal<string | null>(null)
-  const [text, setText] = createSignal('')
-  const [reminderDraft, setReminderDraft] = createSignal(
-    createReminderDraft({exactReminderAt: null, now: new Date(), recallMode: 'none'}),
-  )
+  const creator = useMemoCreator()
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
-  const canSave = createMemo(() => isNonBlankString(text()))
-
-  const handleTextInput = (nextText: string) => {
-    setText(nextText)
-    persistCreationDraft(nextText, reminderDraft())
-  }
-
-  const handleReminderChange = (nextReminderDraft: ReminderDraft) => {
-    setReminderDraft(nextReminderDraft)
-    persistCreationDraft(text(), nextReminderDraft)
-  }
-
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
-    setMessage(null)
-    setIsOpen(true)
-  }
-
-  onMount(() => {
-    const storedDraft = readMemoryMemoDraft()
-    if (storedDraft === null) {
-      return
-    }
-
-    setText(storedDraft.text)
-    setReminderDraft({
-      customDate: storedDraft.customDate,
-      exactEnabled: storedDraft.exactEnabled,
-      exactReminderAdvanceMinutes: storedDraft.exactReminderAdvanceMinutes,
-      exactReminderRepeatEnabled: storedDraft.exactReminderRepeatEnabled,
-      exactReminderRepeatIntervalMinutes: storedDraft.exactReminderRepeatIntervalMinutes,
-      exactReminderRepeatUntilMinutes: storedDraft.exactReminderRepeatUntilMinutes,
-      recallMode: storedDraft.recallMode,
-      reminderDay: storedDraft.reminderDay,
-      reminderTime: storedDraft.reminderTime,
-    })
-  })
-
-  const handleSave = async () => {
-    const now = new Date()
-    const currentDraft = reminderDraft()
-    const exactReminderAt = currentDraft.exactEnabled
-      ? resolveReminderAt(
-          currentDraft.reminderDay,
-          currentDraft.customDate,
-          currentDraft.reminderTime,
-          now,
-        )
-      : null
-
-    if (
-      currentDraft.exactEnabled &&
-      !isFirstReminderInFuture(exactReminderAt, currentDraft.exactReminderAdvanceMinutes, now)
-    ) {
-      setMessage(m.memory_memo_invalid_time())
-      return
-    }
-
-    const memo = createMemoryMemo({
-      exactReminderAdvanceMinutes: currentDraft.exactReminderAdvanceMinutes,
-      exactReminderAt,
-      exactReminderRepeatIntervalMinutes: currentDraft.exactReminderRepeatEnabled
-        ? currentDraft.exactReminderRepeatIntervalMinutes
-        : null,
-      exactReminderRepeatUntilMinutes: currentDraft.exactReminderRepeatUntilMinutes,
-      id: crypto.randomUUID(),
-      now,
-      random: Math.random,
-      recallMode: currentDraft.recallMode,
-      text: text(),
-    })
-
-    try {
-      await updateMemoryMemos((currentMemos) => [memo, ...currentMemos])
-      deleteMemoryMemoDraft()
-      setText('')
-      setReminderDraft(
-        createReminderDraft({exactReminderAt: null, now: new Date(), recallMode: 'none'}),
-      )
-      setMessage(null)
-      setIsOpen(false)
-    } catch (error: unknown) {
-      console.error('Failed to save a memory memo.', error)
-      setMessage(m.memory_memo_save_failed())
-    }
+    creator.changeOpen(true)
   }
 
   return (
@@ -127,16 +26,16 @@ export const MemoryMemoCreator = () => {
       </PButton>
 
       <MemoryMemoModal
-        canSave={canSave()}
-        isOpen={isOpen()}
-        message={message}
-        onOpenChange={setIsOpen}
-        onReminderChange={handleReminderChange}
-        onSave={handleSave}
-        onTextInput={handleTextInput}
-        reminderDraft={reminderDraft}
+        canSave={creator.canSave()}
+        isOpen={creator.isOpen()}
+        message={creator.message}
+        onOpenChange={creator.changeOpen}
+        onReminderChange={creator.changeReminder}
+        onSave={creator.save}
+        onTextInput={creator.changeText}
+        reminderDraft={creator.reminderDraft}
         saveLabel={m.memory_memo_save()}
-        text={text}
+        text={creator.text}
         title={m.memory_memo_create_title()}
         triggerElement={triggerElement}
       />

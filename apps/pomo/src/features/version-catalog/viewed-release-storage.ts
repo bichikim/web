@@ -47,68 +47,85 @@ const parseViewedRelease = (value: unknown): ViewedRelease | null => {
 
 export const createViewedReleaseRepository = (
   options: CreateViewedReleaseRepositoryOptions,
-): ViewedReleaseRepository => ({
-  async read() {
-    if (!options.storage.isNative()) {
-      return parseViewedRelease(options.storage.readWeb())
-    }
+): ViewedReleaseRepository => {
+  let writeQueue = Promise.resolve()
 
-    let value: ViewedRelease | null
-
-    try {
-      value = parseViewedRelease(await options.storage.readNative())
-    } catch (error) {
-      throw new Error('Failed to read viewed version release.', {cause: error})
-    }
-
-    if (value !== null) {
-      try {
-        options.storage.writeWeb(value)
-      } catch {
-        // Browser storage is only a cache when native storage is authoritative.
+  return {
+    async read() {
+      if (!options.storage.isNative()) {
+        return parseViewedRelease(options.storage.readWeb())
       }
-    }
 
-    return value
-  },
-  async write(value) {
-    const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
+      let value: ViewedRelease | null
 
-    if (options.storage.isNative()) {
       try {
-        await options.storage.writeNative(parsedValue)
+        value = parseViewedRelease(await options.storage.readNative())
       } catch (error) {
-        throw new Error('Failed to persist viewed version release.', {cause: error})
+        throw new Error('Failed to read viewed version release.', {cause: error})
       }
+
+      if (value !== null) {
+        try {
+          options.storage.writeWeb(value)
+        } catch {
+          // Browser storage is only a cache when native storage is authoritative.
+        }
+      }
+
+      return value
+    },
+    async write(value) {
+      const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
+
+      if (options.storage.isNative()) {
+        const write = writeQueue.then(async () => {
+          let storedValue: ViewedRelease
+          try {
+            const currentValue = parseViewedRelease(await options.storage.readNative())
+            storedValue =
+              currentValue !== null &&
+              Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
+                ? currentValue
+                : parsedValue
+            if (storedValue === parsedValue) {
+              await options.storage.writeNative(storedValue)
+            }
+          } catch (error) {
+            throw new Error('Failed to persist viewed version release.', {cause: error})
+          }
+
+          try {
+            options.storage.writeWeb(storedValue)
+          } catch {
+            // Browser storage is only a cache when native storage is authoritative.
+          }
+        })
+        // A failed write must not block later attempts; its caller still receives the rejection.
+        writeQueue = write.catch(() => undefined)
+        return write
+      }
+
+      let writeError: unknown | null
 
       try {
-        options.storage.writeWeb(parsedValue)
-      } catch {
-        // Browser storage is only a cache when native storage is authoritative.
+        const currentValue = parseViewedRelease(options.storage.readWeb())
+        if (
+          currentValue !== null &&
+          Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
+        ) {
+          return
+        }
+
+        writeError = options.storage.writeWeb(parsedValue)
+      } catch (error) {
+        writeError = error
       }
-      return
-    }
-
-    let writeError: unknown | null
-
-    try {
-      const currentValue = parseViewedRelease(options.storage.readWeb())
-      if (
-        currentValue !== null &&
-        Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
-      ) {
-        return
+      if (writeError !== null) {
+        throw new Error('Failed to persist viewed version release.', {cause: writeError})
       }
-
-      writeError = options.storage.writeWeb(parsedValue)
-    } catch (error) {
-      writeError = error
-    }
-    if (writeError !== null) {
-      throw new Error('Failed to persist viewed version release.', {cause: writeError})
-    }
-  },
-})
+    },
+  }
+}
 
 const runtimeStorage: VersionNoticeStorage = {
   isNative: hasNativeStorageBridge,

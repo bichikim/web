@@ -1,9 +1,16 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
+const reportClientError = vi.hoisted(() => vi.fn())
+
+vi.mock('../../client-error-reporter/reporter', () => ({reportClientError}))
+
 interface CapturedTransportOptions {
-  readonly createErrorResponse: (event: {readonly message: string}) => unknown
-  readonly feature: string
+  readonly onFailure: (failure: {
+    readonly cause: unknown
+    readonly code: 'message-error' | 'worker-error'
+    readonly detail: string
+  }) => void
   readonly onResponse: (response: unknown) => void
   readonly worker: Worker
 }
@@ -18,7 +25,7 @@ const mocks = vi.hoisted(() => {
   }
 })
 
-vi.mock('../../text-generation/worker-transport', () => ({
+vi.mock('../../../utils/worker-transport', () => ({
   createWorkerTransport: mocks.createWorkerTransport,
 }))
 
@@ -51,17 +58,33 @@ it('should own the text download worker and expose its transport', () => {
     name: 'pomo-text-model-download',
     type: 'module',
   })
-  expect(transportOptions).toMatchObject({feature: 'text-model-download', onResponse})
+  expect(transportOptions).toMatchObject({onResponse})
   expect(transportOptions.worker).toBe(TestWorker.instances[0])
-  expect(transportOptions.createErrorResponse({message: 'download failed'})).toEqual({
+  transportOptions.onFailure({
+    cause: new Error('download failed'),
+    code: 'worker-error',
+    detail: 'download failed',
+  })
+  expect(onResponse).toHaveBeenCalledWith({
     message: 'download failed',
     restartRequired: true,
     type: 'error',
   })
-  expect(transportOptions.createErrorResponse({message: ''})).toEqual({
+  transportOptions.onFailure({cause: new Error(), code: 'worker-error', detail: ''})
+  expect(onResponse).toHaveBeenLastCalledWith({
     message: '모델 다운로드 Worker 실행 오류',
     restartRequired: true,
     type: 'error',
+  })
+  transportOptions.onFailure({cause: new Error(), code: 'message-error', detail: ''})
+  expect(onResponse).toHaveBeenLastCalledWith({
+    message: 'Worker 응답을 읽지 못했습니다.',
+    restartRequired: true,
+    type: 'error',
+  })
+  expect(reportClientError).toHaveBeenCalledWith(expect.any(Error), {
+    feature: 'text-model-download',
+    source: 'worker',
   })
 
   client.prepare(request)

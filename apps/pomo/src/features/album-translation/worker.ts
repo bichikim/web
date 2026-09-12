@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import {type TextGenerationRuntime, trimRepetitiveTail} from '../text-generation'
 import type {AlbumTranslationWorkerRequest, AlbumTranslationWorkerResponse} from './messages'
 import {parseAlbumTranslation} from './output'
@@ -21,11 +23,6 @@ const getTextRuntime = () => {
   return textRuntimePromise
 }
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error && error.message.length > 0
-    ? error.message
-    : 'Gemma 4 번역을 실행하지 못했습니다.'
-
 const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
   const textRuntime = await getTextRuntime()
   await textRuntime.prepare('gemma-4-e2b')
@@ -44,6 +41,10 @@ const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
 
 workerScope.addEventListener('message', (event: MessageEvent<AlbumTranslationWorkerRequest>) => {
   translateAlbum(event.data).catch((error: unknown) => {
-    sendResponse({message: getErrorMessage(error), restartRequired: false, type: 'error'})
+    sendResponse({
+      message: getErrorMessage(error, 'Gemma 4 번역을 실행하지 못했습니다.'),
+      restartRequired: false,
+      type: 'error',
+    })
   })
 })

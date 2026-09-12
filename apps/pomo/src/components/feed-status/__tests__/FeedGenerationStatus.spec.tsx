@@ -1,13 +1,30 @@
-/** @vitest-environment jsdom */
 import * as m from '@paraglide/message'
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+/** @vitest-environment jsdom */
+import {cleanup, fireEvent, render, renderHook, screen} from '@solidjs/testing-library'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
 import {FeedGenerationStatus} from '../FeedGenerationStatus'
-
-afterEach(() => {
-  cleanup()
-  vi.restoreAllMocks()
+beforeEach(() => localStorage.clear())
+afterEach(cleanup)
+it('should hide the progress card and restore its stop action when enabled again', () => {
+  const {result} = renderHook(useReadingStatusPreference)
+  const onCancel = vi.fn()
+  render(() => (
+    <FeedGenerationStatus
+      cancelDisabled={false}
+      message="음성 생성 중"
+      onCancel={onCancel}
+      state="generating"
+    />
+  ))
+  expect(screen.getByText('피드 읽는 중')).toBeInTheDocument()
+  result.onVisibleChange(false)
+  expect(screen.queryByRole('status')).toBeNull()
+  expect(onCancel).not.toHaveBeenCalled()
+  result.onVisibleChange(true)
+  fireEvent.click(screen.getByRole('button', {name: '중지'}))
+  expect(onCancel).toHaveBeenCalledOnce()
 })
 
 it('should show progress and forward cancellation only while enabled', () => {

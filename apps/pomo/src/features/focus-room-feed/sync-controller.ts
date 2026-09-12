@@ -6,6 +6,9 @@ import type {FeedConnection} from './schema'
 import {beginFeedSync, createFeedSyncGate, finishFeedSync} from './sync-gate'
 
 export interface CreateFeedSyncControllerOptions {
+  readonly getState?: () => PFeedState
+  readonly autoPrepare?: () => boolean
+  readonly onSynchronized?: () => Promise<void>
   readonly cleanupExpiredDialogues: (now: Date) => Promise<void>
   readonly createFetcher: () => FeedFetcher
   readonly createId: () => string
@@ -36,6 +39,14 @@ interface FeedSyncContext {
   readonly options: CreateFeedSyncControllerOptions
 }
 
+const setSyncState = (context: FeedSyncContext, state: PFeedState) => {
+  const current = context.options.getState?.()
+  if (current?.status === 'generating' || current?.status === 'preparing') {
+    return
+  }
+  context.options.setState(state)
+}
+
 const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
   if (context.isDisposed || !beginFeedSync(context.gate)) {
     return
@@ -53,19 +64,21 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
     await context.options.reloadIssues()
 
     if (connections.length === 0) {
-      context.options.setState({
+      setSyncState(context, {
         message: '설정에서 구독 피드를 추가해 주세요.',
         status: 'idle',
       })
       return
     }
 
-    context.options.setState({
+    setSyncState(context, {
       message: '새 피드를 확인하고 있어요…',
       progress: null,
       status: 'syncing',
     })
+    const autoPrepare = context.options.autoPrepare?.() ?? true
     const summary = await context.options.synchronize({
+      autoPrepare,
       connections,
       createId: context.options.createId,
       fetcher: context.options.createFetcher(),
@@ -75,18 +88,21 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
     })
 
     if (summary.failures.length > 0) {
-      context.options.setState({
+      setSyncState(context, {
         message: `${summary.failures.length}개 피드를 가져오지 못했어요. 주소나 CORS 설정을 확인해 주세요.`,
         status: 'error',
       })
     } else if (summary.queuedJobIds.length === 0) {
-      context.options.setState({message: '새 피드가 없어요.', status: 'idle'})
+      setSyncState(context, {message: '새 피드가 없어요.', status: 'idle'})
     }
 
+    if (!autoPrepare) {
+      await context.options.onSynchronized?.()
+    }
     context.options.scheduleJobs(summary.queuedJobIds)
   } catch (error: unknown) {
     console.error('Failed to synchronize focus room feeds.', error)
-    context.options.setState({message: '피드를 확인하지 못했어요.', status: 'error'})
+    setSyncState(context, {message: '피드를 확인하지 못했어요.', status: 'error'})
   } finally {
     if (finishFeedSync(context.gate) && !context.isDisposed) {
       await runFeedSync(context)

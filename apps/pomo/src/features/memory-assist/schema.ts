@@ -19,6 +19,7 @@ const memoryMemoSchema = z.object({
   recallMode: z.enum(MEMORY_RECALL_MODES),
   reinforcementIndex: z.number().int().nonnegative(),
   reminderHistory: z.array(z.iso.datetime()).readonly(),
+  retiredDialogueIds: z.array(z.string().min(1)).readonly().optional(),
   text: z.string().trim().min(1).max(MAXIMUM_MEMORY_MEMO_LENGTH),
   updatedAt: z.iso.datetime(),
   version: z.literal(1),

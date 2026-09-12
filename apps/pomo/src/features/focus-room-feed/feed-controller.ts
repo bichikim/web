@@ -1,3 +1,4 @@
+import type {useAutoPreparePreference} from './use-auto-prepare-preference'
 import type {Accessor} from 'solid-js'
 
 import type {PDialogue, PEventContextValue} from '../focus-room-dialogue'
@@ -27,6 +28,7 @@ export interface FeedDialogueListItem {
 }
 
 export interface PFeedController {
+  readonly automaticPreparation?: ReturnType<typeof useAutoPreparePreference>
   readonly cancelProcessing: () => Promise<void>
   readonly dialogues: Accessor<ReadonlyArray<FeedDialogueListItem>>
   readonly dismissRecovery: () => void
