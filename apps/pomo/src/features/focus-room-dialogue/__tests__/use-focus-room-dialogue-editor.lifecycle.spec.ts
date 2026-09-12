@@ -1,216 +1,20 @@
 // oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
-import {createRoot, createSignal} from 'solid-js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-
+import {describe, expect, it, vi} from 'vitest'
 import {failureResult, successResult} from 'src/features/result'
-import {type CreateOpusBlobOptions, type SupertonicClient} from '../../supertonic'
-import {type TextMoodAnalysis, type TextMoodAnalyzer, type TextMoodRuntime} from '../../text-mood'
+
 import type {PDialogue} from '../schema'
-import {type PDialogueEditorController, usePDialogueEditor} from '../use-focus-room-dialogue-editor'
-
-const supertonicMocks = vi.hoisted(() => ({
-  createClient: vi.fn(),
-  createOpusBlob: vi.fn(),
-}))
-const repositoryMocks = vi.hoisted(() => ({
-  dispose: vi.fn(),
-  getAudio: vi.fn(),
-  getDialogue: vi.fn(),
-  saveDialogue: vi.fn(async () => undefined),
-}))
-const moodAnalyzerMocks = {
-  analyze: vi.fn<TextMoodAnalyzer['analyze']>(),
-  dispose: vi.fn(),
-  prepare: vi.fn<TextMoodAnalyzer['prepare']>(),
-}
-const moodRuntime: TextMoodRuntime = {createAnalyzer: vi.fn(() => moodAnalyzerMocks)}
-const NativeUrl = globalThis.URL
-
-const cheerfulAnalysis: TextMoodAnalysis = {
-  margin: 0.6,
-  modifiers: [],
-  primary: {id: 'cheerful', probability: 0.8},
-  scores: [
-    {id: 'cheerful', probability: 0.8},
-    {id: 'hopeful', probability: 0.2},
-  ],
-  secondary: {id: 'hopeful', probability: 0.2},
-  uncertain: false,
-}
-
-vi.mock('../../supertonic', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../supertonic')>()
-  return {
-    ...actual,
-    createOpusBlob: supertonicMocks.createOpusBlob,
-    createSupertonicClient: supertonicMocks.createClient,
-  }
-})
-
-vi.mock('../repository', () => ({
-  createPDialogueRepository: () => repositoryMocks,
-}))
-
-interface DialogueEditorTestRoot {
-  readonly controller: PDialogueEditorController
-  readonly dispose: () => void
-  readonly navigate: (id: string | null) => void
-}
-
-const createAudio = () => ({
-  generationTime: 1,
-  sampleRate: 24_000,
-  samples: Float32Array.of(0),
-})
-
-const createStoredDialogue = (id = 'stored-dialogue', text = '저장된 대사'): PDialogue => ({
-  audioKey: `${id}-audio`,
-  createdAt: '2026-08-13T00:00:00.000Z',
-  durationMs: 1000,
-  id,
-  language: 'ko',
-  modelId: 'full',
-  segments: [{durationMs: 1000, index: 0, startMs: 0, text}],
-  text,
-  updatedAt: '2026-08-13T00:00:00.000Z',
-  version: 1,
-  voiceId: 'Yuna',
-})
-
-const createClient = (calls: Array<string>): SupertonicClient => ({
-  cancelGeneration: vi.fn(),
-  dispose: vi.fn(),
-  generate: vi.fn(async () => successResult(createAudio())),
-  generateStream: vi.fn(async function* generateStream() {
-    calls.push('generate')
-    yield successResult({
-      audio: {...createAudio(), index: 0, total: 1},
-      type: 'chunk' as const,
-    })
-    yield successResult({audio: createAudio(), type: 'complete' as const})
-  }),
-  initialize: vi.fn(async () => {
-    calls.push('prepare')
-    return successResult(undefined)
-  }),
-})
-
-const createEditorRoot = (dialogueId: string | null = null): DialogueEditorTestRoot => {
-  let disposeRoot: () => void = () => undefined
-  const [selectedId, navigate] = createSignal(dialogueId)
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return usePDialogueEditor({dialogueId: selectedId, moodRuntime})
-  })
-
-  return {controller, dispose: disposeRoot, navigate}
-}
-
-const createDefaultMoodEditorRoot = (): DialogueEditorTestRoot => {
-  let disposeRoot: () => void = () => undefined
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return usePDialogueEditor({dialogueId: () => null})
-  })
-
-  return {controller, dispose: disposeRoot, navigate: () => undefined}
-}
-
-beforeEach(() => {
-  vi.clearAllMocks()
-  supertonicMocks.createOpusBlob.mockResolvedValue(
-    new Blob(['opus'], {type: 'audio/ogg; codecs=opus'}),
-  )
-  moodAnalyzerMocks.analyze.mockResolvedValue(
-    successResult({
-      elapsedMilliseconds: 1,
-      status: 'insufficient',
-      sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
-    }),
-  )
-  sessionStorage.clear()
-  vi.stubGlobal(
-    'URL',
-    class extends NativeUrl {
-      static createObjectURL = vi.fn(() => 'blob:dialogue')
-      static revokeObjectURL = vi.fn()
-    },
-  )
-  vi.stubGlobal('crypto', {randomUUID: vi.fn(() => 'dialogue-id')})
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-})
+import {
+  createAudio,
+  createClient,
+  createEditorRoot,
+  createStoredDialogue,
+  moodAnalyzerMocks,
+  moodRuntime,
+  repositoryMocks,
+  supertonicMocks,
+} from './support/editor'
 
 describe('usePDialogueEditor', () => {
-  it('should switch saved dialogues and keep drafts scoped to the selected route', async () => {
-    repositoryMocks.getDialogue.mockImplementation(async (id) =>
-      createStoredDialogue(id, `text-${id}`),
-    )
-    repositoryMocks.getAudio.mockResolvedValue(new Blob(['stored audio']))
-    const editor = createEditorRoot('a')
-    await vi.waitFor(() => expect(editor.controller.text()).toBe('text-a'))
-    editor.controller.setText('draft-a')
-    editor.navigate('b')
-    await vi.waitFor(() => expect(editor.controller.text()).toBe('text-b'))
-    expect(editor.controller.dialogueId()).toBe('b')
-    await expect(editor.controller.save()).resolves.toBe('b')
-    expect(repositoryMocks.saveDialogue).toHaveBeenLastCalledWith({
-      audio: undefined,
-      dialogue: expect.objectContaining({id: 'b', text: 'text-b'}),
-    })
-    editor.navigate('a')
-    await vi.waitFor(() => expect(editor.controller.text()).toBe('draft-a'))
-    expect(editor.controller.audioUrl()).toBeNull()
-    editor.navigate(null)
-    expect(editor.controller.text()).toBe('')
-    expect(editor.controller.dialogueId()).toBeNull()
-    expect(editor.controller.segments()).toEqual([])
-    expect(editor.controller.durationMs()).toBe(0)
-    editor.controller.setText('new draft')
-    editor.navigate('b')
-    await vi.waitFor(() => expect(editor.controller.text()).toBe('text-b'))
-    editor.navigate(null)
-    expect(editor.controller.text()).toBe('new draft')
-    editor.dispose()
-  })
-
-  it.each(['metadata', 'audio', 'failure'])(
-    'should ignore stale %s after navigation',
-    async (phase) => {
-      const deferred = Promise.withResolvers<PDialogue | Blob | null>()
-      repositoryMocks.getDialogue.mockImplementation(async (id) => {
-        if (id === 'a' && phase !== 'audio') {
-          return deferred.promise
-        }
-        return createStoredDialogue(id, `text-${id}`)
-      })
-      repositoryMocks.getAudio.mockImplementation(async (key) =>
-        key === 'a-audio' ? deferred.promise : new Blob(['audio-b']),
-      )
-      const editor = createEditorRoot('a')
-      await vi.waitFor(() => expect(repositoryMocks.getDialogue).toHaveBeenCalledWith('a'))
-      if (phase === 'audio') {
-        await vi.waitFor(() => expect(repositoryMocks.getAudio).toHaveBeenCalledWith('a-audio'))
-      }
-      editor.navigate('b')
-      await vi.waitFor(() => expect(editor.controller.text()).toBe('text-b'))
-      if (phase === 'failure') {
-        deferred.reject(new Error('stale failure'))
-      } else {
-        deferred.resolve(phase === 'audio' ? new Blob(['audio-a']) : createStoredDialogue('a'))
-      }
-      await new Promise((resolve) => {
-        setTimeout(resolve, 0)
-      })
-      expect(editor.controller.text()).toBe('text-b')
-      expect(editor.controller.state().status).toBe('idle')
-      editor.dispose()
-    },
-  )
-
   it('should ignore a direct generation request with empty text', async () => {
     const client = createClient([])
     supertonicMocks.createClient.mockReturnValue(client)
@@ -220,41 +24,6 @@ describe('usePDialogueEditor', () => {
 
     expect(client.initialize).not.toHaveBeenCalled()
     expect(client.generateStream).not.toHaveBeenCalled()
-    editor.dispose()
-  })
-
-  it('should keep the selected dialogue when an earlier save completes', async () => {
-    repositoryMocks.getDialogue.mockImplementation(async (id) =>
-      createStoredDialogue(id, `text-${id}`),
-    )
-    repositoryMocks.getAudio.mockResolvedValue(new Blob(['audio']))
-    const pending = Promise.withResolvers<undefined>()
-    repositoryMocks.saveDialogue.mockReturnValueOnce(pending.promise)
-    const editor = createEditorRoot('a')
-    await vi.waitFor(() => expect(editor.controller.canSave()).toBe(true))
-    const saving = editor.controller.save()
-    editor.navigate('b')
-    await vi.waitFor(() => expect(editor.controller.text()).toBe('text-b'))
-    pending.resolve(undefined)
-    await expect(saving).resolves.toBeNull()
-    expect(editor.controller.dialogueId()).toBe('b')
-    expect(editor.controller.state().status).toBe('idle')
-    editor.dispose()
-  })
-
-  it('should clear previous audio when navigating to a missing dialogue', async () => {
-    repositoryMocks.getDialogue
-      .mockResolvedValueOnce(createStoredDialogue('a'))
-      .mockResolvedValueOnce(null)
-    repositoryMocks.getAudio.mockResolvedValueOnce(new Blob(['audio']))
-    const editor = createEditorRoot('a')
-    await vi.waitFor(() => expect(editor.controller.canSave()).toBe(true))
-    editor.navigate('missing')
-    expect(editor.controller.audioUrl()).toBeNull()
-    expect(editor.controller.canSave()).toBe(false)
-    await vi.waitFor(() => expect(editor.controller.state().status).toBe('error'))
-    expect(editor.controller.text()).toBe('')
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:dialogue')
     editor.dispose()
   })
 
