@@ -3,6 +3,7 @@ import {type Accessor, createEffect, createMemo, createResource, createSignal} f
 import {
   type CalendarEvent,
   type CalendarEvents,
+  type CalendarMonthCacheRange,
   type CalendarMonthRange,
   groupCalendarEvents,
 } from 'src/features/calendar'
@@ -12,10 +13,10 @@ import {type CalendarDay, WEEK_LENGTH} from './dates'
 export interface MonthEnvironment {
   readonly load: (range: CalendarMonthRange) => Promise<CalendarEvents>
   readonly now: () => Date
-  readonly readCache: (range: CalendarMonthRange) => CalendarEvents | null
+  readonly readCache: (range: CalendarMonthCacheRange) => CalendarEvents | null
   readonly reportError: (message: string, error: unknown) => void
   readonly timeZone: () => string
-  readonly writeCache: (range: CalendarMonthRange, value: CalendarEvents) => unknown | null
+  readonly writeCache: (range: CalendarMonthCacheRange, value: CalendarEvents) => unknown | null
 }
 
 export interface UseMonthProps {
@@ -98,10 +99,10 @@ const loadCalendarMonth = async (
 export const useMonth = (props: UseMonthProps): MonthController => {
   const accountKey = createMemo(() => {
     const session = props.authentication.session()
-    return session?.provider === 'email' ? session.email : (session?.provider ?? null)
+    return session?.provider === 'email' ? `email:${session.email}` : null
   })
   const sessionRevision = createMemo((revision: number) => {
-    accountKey()
+    props.authentication.session()
     return revision + 1
   }, 0)
   const today = props.environment.now()
@@ -134,14 +135,21 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     (request) => loadCalendarMonth(request, props.environment),
     {initialValue: null},
   )
-  const cachedCalendar = createMemo(() =>
-    accountKey() === null ? null : props.environment.readCache(monthRange().range),
-  )
+  const cacheRange = createMemo(() => {
+    const key = accountKey()
+    return key === null ? null : {...monthRange().range, accountKey: key}
+  })
+  const cachedCalendar = createMemo(() => {
+    const range = cacheRange()
+    return range === null ? null : props.environment.readCache(range)
+  })
   let lastCachedResult: LoadedCalendarMonth | null = null
   createEffect(() => {
     const request = monthRange()
+    const range = cacheRange()
     const result = calendarResult.latest
     if (
+      range === null ||
       props.authentication.session() === null ||
       result?.kind !== 'loaded' ||
       result.requestKey !== request.requestKey ||
@@ -151,7 +159,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     }
 
     lastCachedResult = result
-    const cacheError = props.environment.writeCache(request.range, result.value)
+    const cacheError = props.environment.writeCache(range, result.value)
     if (cacheError !== null) {
       props.environment.reportError('Failed to cache calendar month', cacheError)
     }
