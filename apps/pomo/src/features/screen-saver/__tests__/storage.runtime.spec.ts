@@ -52,6 +52,26 @@ describe('screen-saver storage', () => {
     expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"1h"')
   })
 
+  it('should return the latest saved choice when a pending native read returns an older value', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    const completion = Promise.withResolvers<string | null>()
+    const started = Promise.withResolvers<void>()
+    storageMocks.getItem.mockImplementationOnce(() => {
+      started.resolve()
+      return completion.promise
+    })
+    storageMocks.setItem.mockResolvedValue()
+
+    const read = readScreenSaverDelay()
+    await started.promise
+    await writeScreenSaverDelay('off')
+    completion.resolve('"20m"')
+
+    expect(await read).toBe('off')
+    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
+    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:screen-saver-delay:v1', '"off"')
+  })
+
   it('should restore a native choice after a failed web write and module reload', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem('pomo:screen-saver-delay:v1', '"10m"')
