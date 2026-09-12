@@ -56,7 +56,12 @@ it.each([false, true, undefined])(
     await waitFor(() => expect(backgroundTab).toHaveAttribute('aria-selected', 'true'))
     backgroundTab.focus()
     fireEvent.keyDown(backgroundTab, {key: 'Escape'})
-    expect(onOpenChange).not.toHaveBeenCalled()
+    if (closeOnEscape === false) {
+      expect(onOpenChange).not.toHaveBeenCalled()
+    } else {
+      expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false)
+    }
+    onOpenChange.mockClear()
 
     const closeButton = screen.getByRole('button', {name: m.common_close()})
     closeButton.focus()
@@ -253,4 +258,44 @@ it('should preserve the tabs context through navigation, portal, and reopening',
   expect(screen.getByRole('tabpanel')).toHaveTextContent('Guide content')
   fireEvent.click(screen.getByRole('tab', {name: 'General'}))
   await waitFor(() => expect(screen.getByRole('tabpanel')).toHaveTextContent('General content'))
+})
+
+it('should preserve Escape cancellation from an input', () => {
+  const onOpenChange = vi.fn()
+  render(() => (
+    <PModal isOpen onOpenChange={onOpenChange} title="Editor">
+      <input aria-label="Draft" onKeyDown={(event) => event.preventDefault()} />
+    </PModal>
+  ))
+  fireEvent.keyDown(screen.getByRole('textbox', {name: 'Draft'}), {key: 'Escape'})
+  expect(onOpenChange).not.toHaveBeenCalled()
+})
+
+it('should dismiss only the nested modal when Escape is pressed on its tab', () => {
+  const [innerOpen, setInnerOpen] = createSignal(false)
+  const outerChange = vi.fn()
+  const innerChange = vi.fn()
+  render(() => (
+    <PModal isOpen onOpenChange={outerChange} title="Outer">
+      <Tabs defaultValue="general">
+        <PModal
+          isOpen={innerOpen()}
+          onOpenChange={innerChange}
+          title="Inner"
+          navigation={
+            <PModalTabList
+              accessibleLabel="Inner tabs"
+              items={[{icon: 'i-tabler-settings', label: 'General', value: 'general'}]}
+            />
+          }
+        >
+          <Tabs.Content value="general">General content</Tabs.Content>
+        </PModal>
+      </Tabs>
+    </PModal>
+  ))
+  setInnerOpen(true)
+  fireEvent.keyDown(screen.getByRole('tab', {name: 'General'}), {key: 'Escape'})
+  expect(innerChange).toHaveBeenCalledExactlyOnceWith(false)
+  expect(outerChange).not.toHaveBeenCalled()
 })

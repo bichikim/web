@@ -89,6 +89,21 @@ const resolveHeaderLayout = (
   return titleVisibility === 'visually-hidden' ? 'navigationVisuallyHidden' : 'navigation'
 }
 
+const handleModalEscape = (event: KeyboardEvent, props: PModalProps) => {
+  if (props.closeOnEscape === false) {
+    event.preventDefault()
+    return
+  }
+  // Kobalte tabs consume Escape even though their selection cannot be cleared.
+  if (
+    event.defaultPrevented &&
+    event.target instanceof Element &&
+    event.target.matches('[role="tab"]')
+  ) {
+    props.onOpenChange(false)
+  }
+}
+
 export const PModal = (props: PModalProps) => (
   <Dialog modal onOpenChange={props.onOpenChange} open={props.isOpen}>
     <Dialog.Portal>
@@ -113,11 +128,7 @@ export const PModal = (props: PModalProps) => (
           event.preventDefault()
           props.onCloseAutoFocus()
         }}
-        onEscapeKeyDown={(event) => {
-          if (props.closeOnEscape === false) {
-            event.preventDefault()
-          }
-        }}
+        onEscapeKeyDown={(event) => handleModalEscape(event, props)}
         onOpenAutoFocus={(event) => {
           const initialFocus = props.getInitialFocus?.()
 

@@ -103,7 +103,7 @@ test('should unmount player and Pomodoro through general settings and restore th
   await expect(player).toBeVisible()
 })
 
-test('should keep settings open on Escape and restore focus after explicit keyboard dismissal', async ({
+test('should close settings with Escape after switching tabs and restore trigger focus', async ({
   page,
 }) => {
   await page.goto('/')
@@ -112,35 +112,38 @@ test('should keep settings open on Escape and restore focus after explicit keybo
   await trigger.focus()
   await page.keyboard.press('Enter')
   const dialog = page.getByRole('dialog', {name: 'Pomofi 설정'})
-  const theme = dialog.getByRole('button', {name: /^테마 /u})
-  await theme.focus()
-  await page.keyboard.press('ArrowDown')
-  await expect(page.locator('[role=option]')).toHaveCount(3)
+  await dialog.getByRole('tab', {exact: true, name: '배경'}).click()
   await page.keyboard.press('Escape')
-  await expect(page.locator('[role=option]')).toHaveCount(0)
-  await expect(theme).toBeFocused()
-  await expect(dialog).toBeVisible()
-  await page.keyboard.press('Escape')
-  await expect(dialog).toBeVisible()
-  await expect(theme).toBeFocused()
-
-  const background = dialog.getByRole('tab', {exact: true, name: '배경'})
-  await background.click()
-  await expect(background).toHaveAttribute('aria-selected', 'true')
-  await background.focus()
-  await page.keyboard.press('Escape')
-  await expect(dialog).toBeVisible()
-  await expect(background).toBeFocused()
-
-  const close = dialog.getByRole('button', {exact: true, name: '닫기'})
-  await close.focus()
-  await page.keyboard.press('Escape')
-  await expect(dialog).toBeVisible()
-  await expect(close).toBeFocused()
-  await page.keyboard.press('Enter')
   await expect(dialog).not.toBeVisible()
   await expect(trigger).toBeFocused()
   await page.keyboard.press('Enter')
+  await expect(dialog.getByRole('tab', {exact: true, name: '배경'})).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await dialog.getByRole('button', {exact: true, name: '닫기'}).focus()
+  await page.keyboard.press('Enter')
+  await expect(dialog).not.toBeVisible()
+  await expect(trigger).toBeFocused()
+})
+
+test('should dismiss the theme menu before settings with successive Escape presses', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '시작하기'}).click()
+  const trigger = page.getByRole('button', {exact: true, name: '설정'})
+  await trigger.click()
+  const dialog = page.getByRole('dialog', {name: 'Pomofi 설정'})
+  const theme = dialog.getByRole('button', {name: /^테마 /u})
+  await theme.focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.getByRole('option')).toHaveCount(3)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('option')).toHaveCount(0)
   await expect(dialog).toBeVisible()
-  await expect(background).toHaveAttribute('aria-selected', 'true')
+  await expect(theme).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).not.toBeVisible()
+  await expect(trigger).toBeFocused()
 })
