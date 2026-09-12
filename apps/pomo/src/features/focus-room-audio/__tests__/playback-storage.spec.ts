@@ -1,125 +1,71 @@
-/** @vitest-environment jsdom */
+/** @vitest-environment node */
 
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {
+  createPPlaybackStorage,
+  type PlaybackStorageAdapter,
+  type StoredPlaybackState,
+} from '../playback-storage'
 
-import {readPPlayback, stopPPlayback, writePPlayback} from '../playback-storage'
+interface StorageState {
+  web: StoredPlaybackState | null
+}
 
-const storageMocks = vi.hoisted(() => ({
-  getItem: vi.fn<(key: string) => Promise<string | null>>(),
-  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
-}))
-
-vi.mock('@apps-in-toss/web-framework', () => ({
-  Storage: storageMocks,
-}))
+const createStorage = () => {
+  const state: StorageState = {web: null}
+  const adapter = {
+    readToss: vi.fn<PlaybackStorageAdapter['readToss']>().mockResolvedValue(null),
+    readWeb: vi.fn(() => state.web),
+    usesTossStorage: vi.fn(() => false),
+    writeToss: vi.fn<PlaybackStorageAdapter['writeToss']>().mockResolvedValue(),
+    writeWeb: vi.fn<PlaybackStorageAdapter['writeWeb']>((value) => {
+      state.web = value
+      return null
+    }),
+  } satisfies PlaybackStorageAdapter
+  return {adapter, state}
+}
 
 describe('playback-storage', () => {
+  let storage: ReturnType<typeof createStorage>
+  let playbackStorage: ReturnType<typeof createPPlaybackStorage>
+  let currentTime: number
   beforeEach(() => {
-    localStorage.clear()
-    storageMocks.getItem.mockReset()
-    storageMocks.setItem.mockReset()
-    vi.spyOn(Date, 'now').mockReturnValue(20)
+    storage = createStorage()
+    currentTime = 20
+    playbackStorage = createPPlaybackStorage({now: () => currentTime}, storage.adapter)
   })
 
-  afterEach(() => {
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
-    vi.restoreAllMocks()
-  })
+  it('should read the injected clock for each write and stop', async () => {
+    await playbackStorage.write({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
+    expect(storage.state.web).toMatchObject({savedAt: 20})
 
-  it('should persist playback in browser storage', async () => {
-    await writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
+    currentTime = 30
+    await playbackStorage.write({isPlaying: true, positionSeconds: 13, trackId: 'track-one'})
+    expect(storage.state.web).toMatchObject({savedAt: 30})
 
-    expect(await readPPlayback()).toEqual({
-      isPlaying: true,
-      positionSeconds: 12,
-      trackId: 'track-one',
-    })
-  })
-
-  it('should ignore malformed playback data', async () => {
-    localStorage.setItem('pomo:focus-room-playback:v1', '{invalid')
-
-    expect(await readPPlayback()).toBeNull()
-  })
-
-  it('should ignore playback data that does not satisfy the stored schema', async () => {
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({positionSeconds: -1, savedAt: 10, trackId: ''}),
-    )
-
-    expect(await readPPlayback()).toBeNull()
+    currentTime = 40
+    await playbackStorage.stop()
+    expect(storage.state.web).toMatchObject({isPlaying: false, savedAt: 40})
   })
 
   it('should return null after browser playback storage is removed', async () => {
-    await writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
-    localStorage.removeItem('pomo:focus-room-playback:v1')
+    await playbackStorage.write({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
+    storage.state.web = null
 
-    expect(await readPPlayback()).toBeNull()
-  })
-
-  it('should tolerate browser storage write failures', async () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('Storage is unavailable', 'SecurityError')
-    })
-
-    await expect(
-      writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'}),
-    ).resolves.toBeUndefined()
-    expect(await readPPlayback()).toBeNull()
-  })
-
-  it('should treat playback saved before autoplay support as paused', async () => {
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({positionSeconds: 4, savedAt: 10, trackId: 'legacy-track'}),
-    )
-
-    expect(await readPPlayback()).toEqual({
-      isPlaying: false,
-      positionSeconds: 4,
-      trackId: 'legacy-track',
-    })
-  })
-
-  it('should select the latest app or browser copy', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({positionSeconds: 4, savedAt: 10, trackId: 'web-track'}),
-    )
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({positionSeconds: 8, savedAt: 15, trackId: 'native-track'}),
-    )
-
-    expect(await readPPlayback()).toMatchObject({
-      positionSeconds: 8,
-      trackId: 'native-track',
-    })
-
-    await writePPlayback({isPlaying: true, positionSeconds: 9, trackId: 'latest-track'})
-    const [storageKey, storedValue] = storageMocks.setItem.mock.calls[0] ?? []
-    expect(storageKey).toBe('pomo:focus-room-playback:v1')
-    expect(JSON.parse(storedValue ?? '')).toEqual({
-      isPlaying: true,
-      positionSeconds: 9,
-      savedAt: 20,
-      trackId: 'latest-track',
-    })
+    expect(await playbackStorage.read()).toBeNull()
   })
 
   it('should restore native playback when browser storage is empty', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({
-        isPlaying: true,
-        positionSeconds: 8,
-        savedAt: 15,
-        trackId: 'native-track',
-      }),
-    )
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.adapter.readToss.mockResolvedValue({
+      isPlaying: true,
+      positionSeconds: 8,
+      savedAt: 15,
+      trackId: 'native-track',
+    })
 
-    expect(await readPPlayback()).toEqual({
+    expect(await playbackStorage.read()).toEqual({
       isPlaying: true,
       positionSeconds: 8,
       trackId: 'native-track',
@@ -127,19 +73,16 @@ describe('playback-storage', () => {
   })
 
   it('should keep browser playback when native storage is empty', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({
-        isPlaying: true,
-        positionSeconds: 4,
-        savedAt: 10,
-        trackId: 'web-track',
-      }),
-    )
-    storageMocks.getItem.mockResolvedValue(null)
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {
+      isPlaying: true,
+      positionSeconds: 4,
+      savedAt: 10,
+      trackId: 'web-track',
+    }
+    storage.adapter.readToss.mockResolvedValue(null)
 
-    expect(await readPPlayback()).toEqual({
+    expect(await playbackStorage.read()).toEqual({
       isPlaying: true,
       positionSeconds: 4,
       trackId: 'web-track',
@@ -147,26 +90,21 @@ describe('playback-storage', () => {
   })
 
   it('should prefer browser playback when timestamps are equal', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({
-        isPlaying: true,
-        positionSeconds: 4,
-        savedAt: 10,
-        trackId: 'web-track',
-      }),
-    )
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({
-        isPlaying: false,
-        positionSeconds: 8,
-        savedAt: 10,
-        trackId: 'native-track',
-      }),
-    )
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {
+      isPlaying: true,
+      positionSeconds: 4,
+      savedAt: 10,
+      trackId: 'web-track',
+    }
+    storage.adapter.readToss.mockResolvedValue({
+      isPlaying: false,
+      positionSeconds: 8,
+      savedAt: 10,
+      trackId: 'native-track',
+    })
 
-    expect(await readPPlayback()).toEqual({
+    expect(await playbackStorage.read()).toEqual({
       isPlaying: true,
       positionSeconds: 4,
       trackId: 'web-track',
@@ -174,19 +112,16 @@ describe('playback-storage', () => {
   })
 
   it('should fall back to browser playback when native storage cannot be read', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(
-      'pomo:focus-room-playback:v1',
-      JSON.stringify({
-        isPlaying: true,
-        positionSeconds: 4,
-        savedAt: 10,
-        trackId: 'web-track',
-      }),
-    )
-    storageMocks.getItem.mockRejectedValue(new Error('Native storage is unavailable'))
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {
+      isPlaying: true,
+      positionSeconds: 4,
+      savedAt: 10,
+      trackId: 'web-track',
+    }
+    storage.adapter.readToss.mockRejectedValue(new Error('Native storage is unavailable'))
 
-    expect(await readPPlayback()).toEqual({
+    expect(await playbackStorage.read()).toEqual({
       isPlaying: true,
       positionSeconds: 4,
       trackId: 'web-track',
@@ -197,37 +132,39 @@ describe('playback-storage', () => {
     it.each([
       {
         name: 'an older native snapshot with a higher timestamp',
-        value: JSON.stringify({
+        value: {
           isPlaying: false,
           positionSeconds: 22,
           savedAt: 100,
           trackId: 'native-track',
-        }),
+        },
       },
       {name: 'missing native data', value: null},
       {name: 'a native read failure', value: new Error('Native storage is unavailable')},
     ])('should return playback saved during $name', async ({value}) => {
-      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      storage.adapter.usesTossStorage.mockReturnValue(true)
       if (hasBrowserCopy) {
-        localStorage.setItem(
-          'pomo:focus-room-playback:v1',
-          JSON.stringify({isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'web-track'}),
-        )
+        storage.state.web = {
+          isPlaying: false,
+          positionSeconds: 1,
+          savedAt: 10,
+          trackId: 'web-track',
+        }
       }
-      const pendingRead = Promise.withResolvers<string | null>()
-      storageMocks.getItem.mockReturnValueOnce(pendingRead.promise)
-      storageMocks.setItem.mockResolvedValue()
-      const reading = readPPlayback()
-      await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalledOnce())
+      const pendingRead = Promise.withResolvers<StoredPlaybackState | null>()
+      storage.adapter.readToss.mockReturnValueOnce(pendingRead.promise)
+      storage.adapter.writeToss.mockResolvedValue()
+      const reading = playbackStorage.read()
+      await vi.waitFor(() => expect(storage.adapter.readToss).toHaveBeenCalledOnce())
       const latestPlayback = {isPlaying: true, positionSeconds: 5, trackId: 'new-track'}
-      await writePPlayback(latestPlayback)
+      await playbackStorage.write(latestPlayback)
       if (value instanceof Error) {
         pendingRead.reject(value)
       } else {
         pendingRead.resolve(value)
       }
       await expect(reading).resolves.toEqual(latestPlayback)
-      expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? 'null')).toEqual({
+      expect(storage.state.web).toEqual({
         ...latestPlayback,
         savedAt: 20,
       })
@@ -237,76 +174,71 @@ describe('playback-storage', () => {
   it.each([false, true])(
     'should preserve native playback after a failed browser write with existing copy %s',
     async (hasBrowserCopy) => {
-      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      storage.adapter.usesTossStorage.mockReturnValue(true)
       if (hasBrowserCopy) {
-        localStorage.setItem(
-          'pomo:focus-room-playback:v1',
-          JSON.stringify({isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old-web'}),
-        )
+        storage.state.web = {isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old-web'}
       }
-      const pendingRead = Promise.withResolvers<string | null>()
-      storageMocks.getItem.mockReturnValueOnce(pendingRead.promise)
-      storageMocks.setItem.mockResolvedValue()
-      const reading = readPPlayback()
-      await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalledOnce())
-      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-        throw new DOMException('Storage is unavailable', 'SecurityError')
-      })
+      const pendingRead = Promise.withResolvers<StoredPlaybackState | null>()
+      storage.adapter.readToss.mockReturnValueOnce(pendingRead.promise)
+      storage.adapter.writeToss.mockResolvedValue()
+      const reading = playbackStorage.read()
+      await vi.waitFor(() => expect(storage.adapter.readToss).toHaveBeenCalledOnce())
+      storage.adapter.writeWeb.mockReturnValue(new Error('Storage is unavailable'))
       const latestPlayback = {isPlaying: true, positionSeconds: 5, trackId: 'new-native'}
-      await writePPlayback(latestPlayback)
-      pendingRead.resolve(JSON.stringify({...latestPlayback, savedAt: 20}))
+      await playbackStorage.write(latestPlayback)
+      pendingRead.resolve({...latestPlayback, savedAt: 20})
       await expect(reading).resolves.toEqual(latestPlayback)
     },
   )
 
   it('should serialize native writes and finish with the latest value', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storage.adapter.usesTossStorage.mockReturnValue(true)
     const completions: Array<() => void> = []
-    storageMocks.setItem.mockImplementation(
+    storage.adapter.writeToss.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
           completions.push(resolve)
         }),
     )
 
-    const firstWrite = writePPlayback({
+    const firstWrite = playbackStorage.write({
       isPlaying: true,
       positionSeconds: 1,
       trackId: 'track-one',
     })
-    const secondWrite = writePPlayback({
+    const secondWrite = playbackStorage.write({
       isPlaying: false,
       positionSeconds: 2,
       trackId: 'track-two',
     })
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(storage.adapter.writeToss).toHaveBeenCalledTimes(1))
     completions[0]?.()
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
-    const repairedValue = storageMocks.setItem.mock.calls[1]?.[1]
-    expect(JSON.parse(repairedValue ?? '')).toMatchObject({trackId: 'track-two'})
+    await vi.waitFor(() => expect(storage.adapter.writeToss).toHaveBeenCalledTimes(2))
+    const repairedValue = storage.adapter.writeToss.mock.calls[1]?.[0]
+    expect(repairedValue).toMatchObject({trackId: 'track-two'})
     completions[1]?.()
     await Promise.all([firstWrite, secondWrite])
   })
 
   it('should persist playback requested while the next native write is pending', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storage.adapter.usesTossStorage.mockReturnValue(true)
     const completions: Array<() => void> = []
-    storageMocks.setItem.mockImplementation(
+    storage.adapter.writeToss.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
           completions.push(resolve)
         }),
     )
-    const first = writePPlayback({isPlaying: true, positionSeconds: 1, trackId: 'one'})
-    const second = writePPlayback({isPlaying: true, positionSeconds: 2, trackId: 'two'})
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(1))
+    const first = playbackStorage.write({isPlaying: true, positionSeconds: 1, trackId: 'one'})
+    const second = playbackStorage.write({isPlaying: true, positionSeconds: 2, trackId: 'two'})
+    await vi.waitFor(() => expect(storage.adapter.writeToss).toHaveBeenCalledTimes(1))
     completions[0]?.()
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(2))
-    const third = writePPlayback({isPlaying: false, positionSeconds: 3, trackId: 'three'})
-    expect(storageMocks.setItem).toHaveBeenCalledTimes(2)
+    await vi.waitFor(() => expect(storage.adapter.writeToss).toHaveBeenCalledTimes(2))
+    const third = playbackStorage.write({isPlaying: false, positionSeconds: 3, trackId: 'three'})
+    expect(storage.adapter.writeToss).toHaveBeenCalledTimes(2)
     completions[1]?.()
-    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(3))
-    expect(JSON.parse(storageMocks.setItem.mock.calls[2]?.[1] ?? '')).toMatchObject({
+    await vi.waitFor(() => expect(storage.adapter.writeToss).toHaveBeenCalledTimes(3))
+    expect(storage.adapter.writeToss.mock.calls[2]?.[0]).toMatchObject({
       trackId: 'three',
     })
     completions[2]?.()
@@ -314,54 +246,106 @@ describe('playback-storage', () => {
   })
 
   it('should wait for a pending stop before restoring playback', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    let resolveRead: (value: string | null) => void = () => undefined
-    storageMocks.getItem.mockImplementationOnce(
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    let resolveRead: (value: StoredPlaybackState | null) => void = () => undefined
+    storage.adapter.readToss.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
           resolveRead = resolve
         }),
     )
-    storageMocks.getItem.mockResolvedValue(null)
-    storageMocks.setItem.mockResolvedValue()
-    const stopping = stopPPlayback()
-    const restoring = readPPlayback()
-    await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
-    resolveRead(
-      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
-    )
+    storage.adapter.readToss.mockResolvedValue(null)
+    storage.adapter.writeToss.mockResolvedValue()
+    const stopping = playbackStorage.stop()
+    const restoring = playbackStorage.read()
+    await vi.waitFor(() => expect(storage.adapter.readToss).toHaveBeenCalled())
+    resolveRead({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'})
     await stopping
     await expect(restoring).resolves.toMatchObject({
       isPlaying: false,
       positionSeconds: 22,
       trackId: 'three',
     })
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
   })
 
   it('should preserve newer playback while a stop is reading storage', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    let resolveRead: (value: string | null) => void = () => undefined
-    storageMocks.getItem.mockImplementationOnce(
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    let resolveRead: (value: StoredPlaybackState | null) => void = () => undefined
+    storage.adapter.readToss.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
           resolveRead = resolve
         }),
     )
-    storageMocks.getItem.mockResolvedValue(null)
-    storageMocks.setItem.mockResolvedValue()
-    const stopping = stopPPlayback()
-    await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
-    await writePPlayback({isPlaying: true, positionSeconds: 5, trackId: 'new'})
-    resolveRead(
-      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
-    )
+    storage.adapter.readToss.mockResolvedValue(null)
+    storage.adapter.writeToss.mockResolvedValue()
+    const stopping = playbackStorage.stop()
+    await vi.waitFor(() => expect(storage.adapter.readToss).toHaveBeenCalled())
+    await playbackStorage.write({isPlaying: true, positionSeconds: 5, trackId: 'new'})
+    resolveRead({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'})
     await stopping
-    await expect(readPPlayback()).resolves.toMatchObject({
+    await expect(playbackStorage.read()).resolves.toMatchObject({
       isPlaying: true,
       positionSeconds: 5,
       trackId: 'new',
     })
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+  })
+  it('should keep a pending read independent from another instance write', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    const pending = Promise.withResolvers<StoredPlaybackState | null>()
+    storage.adapter.readToss.mockReturnValueOnce(pending.promise)
+    const reading = playbackStorage.read()
+    const other = createStorage()
+    const otherPlayback = createPPlaybackStorage({now: () => 50}, other.adapter)
+    await otherPlayback.write({isPlaying: true, positionSeconds: 5, trackId: 'other'})
+    pending.resolve({isPlaying: true, positionSeconds: 1, savedAt: 10, trackId: 'first'})
+    await expect(reading).resolves.toMatchObject({trackId: 'first'})
+    expect(other.state.web).toMatchObject({savedAt: 50, trackId: 'other'})
+  })
+
+  it('should keep pending stops and stop revisions independent between instances', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    const pending = Promise.withResolvers<StoredPlaybackState | null>()
+    storage.adapter.readToss.mockReturnValueOnce(pending.promise)
+    const stopping = playbackStorage.stop()
+    await vi.waitFor(() => expect(storage.adapter.readToss).toHaveBeenCalledOnce())
+    const other = createStorage()
+    const otherPlayback = createPPlaybackStorage({now: () => 50}, other.adapter)
+    await otherPlayback.write({isPlaying: true, positionSeconds: 5, trackId: 'other'})
+    await expect(otherPlayback.read()).resolves.toMatchObject({isPlaying: true, trackId: 'other'})
+    await otherPlayback.stop()
+    pending.resolve({isPlaying: true, positionSeconds: 1, savedAt: 10, trackId: 'first'})
+    await stopping
+    expect(storage.state.web).toMatchObject({isPlaying: false, savedAt: 20, trackId: 'first'})
+    expect(other.state.web).toMatchObject({isPlaying: false, savedAt: 50, trackId: 'other'})
+  })
+
+  it('should let another instance write while one Toss writer is pending', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    const pending = Promise.withResolvers<void>()
+    storage.adapter.writeToss.mockReturnValueOnce(pending.promise)
+    const writing = playbackStorage.write({isPlaying: true, positionSeconds: 1, trackId: 'first'})
+    const other = createStorage()
+    other.adapter.usesTossStorage.mockReturnValue(true)
+    const otherPlayback = createPPlaybackStorage({now: () => 50}, other.adapter)
+    await otherPlayback.write({isPlaying: true, positionSeconds: 5, trackId: 'other'})
+    expect(other.adapter.writeToss).toHaveBeenCalledWith({
+      isPlaying: true,
+      positionSeconds: 5,
+      savedAt: 50,
+      trackId: 'other',
+    })
+    pending.resolve()
+    await writing
+    expect(storage.adapter.writeToss).toHaveBeenCalledOnce()
+  })
+
+  it('should tolerate Toss write failure and retain the browser copy', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.adapter.writeToss.mockRejectedValue(new Error('Toss write failed'))
+    await expect(
+      playbackStorage.write({isPlaying: true, positionSeconds: 1, trackId: 'first'}),
+    ).resolves.toBeUndefined()
+    await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'first'})
   })
 })
