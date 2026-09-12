@@ -21,6 +21,7 @@ describe('screen-saver storage', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     Reflect.deleteProperty(window, 'ReactNativeWebView')
   })
 
@@ -61,23 +62,141 @@ describe('screen-saver storage', () => {
     expect(await readScreenSaverDelay()).toBe('off')
   })
 
-  it('should not let a pending native read overwrite a newer preference', async () => {
+  it('should restore a native choice after a failed web write and module reload', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    let completeRead: (value: string) => void = () => undefined
-    storageMocks.getItem.mockReturnValue(
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-    )
-    storageMocks.setItem.mockResolvedValue()
+    localStorage.setItem('pomo:screen-saver-delay:v1', '"10m"')
+    let stored = '"10m"'
+    storageMocks.getItem.mockImplementation(async () => stored)
+    storageMocks.setItem.mockImplementation(async (_key, value) => {
+      stored = value
+    })
+    const webWrite = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('storage full', 'QuotaExceededError')
+    })
 
-    const pendingRead = readScreenSaverDelay()
     await writeScreenSaverDelay('off')
-    completeRead('"20m"')
+    expect(stored).toBe('"off"')
+    webWrite.mockRestore()
+    vi.resetModules()
+    const restored = await import('../storage')
 
-    expect(await pendingRead).toBe('20m')
+    expect(await restored.readScreenSaverDelay()).toBe('off')
     expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
   })
+
+  it('should wait for a pending native-only write before restoring the preference', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:screen-saver-delay:v1', '"10m"')
+    let stored = '"10m"'
+    const completion = Promise.withResolvers<void>()
+    storageMocks.getItem.mockImplementation(async () => stored)
+    storageMocks.setItem.mockImplementation(async (_key, value) => {
+      await completion.promise
+      stored = value
+    })
+    const webWrite = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('web unavailable')
+    })
+    const pendingWrite = writeScreenSaverDelay('off')
+
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalled())
+    webWrite.mockRestore()
+    const pendingRead = readScreenSaverDelay()
+    completion.resolve()
+    await pendingWrite
+
+    expect(await pendingRead).toBe('off')
+    expect(await readScreenSaverDelay()).toBe('off')
+  })
+
+  it('should reject when browser persistence fails outside the host app', async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('web unavailable')
+    })
+
+    await expect(writeScreenSaverDelay('off')).rejects.toThrow(
+      'Failed to persist screen saver delay.',
+    )
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+  })
+
+  it('should reject when both stores fail to persist the preference', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('web unavailable')
+    })
+    storageMocks.setItem.mockRejectedValue(new Error('native unavailable'))
+
+    await expect(writeScreenSaverDelay('off')).rejects.toThrow(
+      'Failed to persist screen saver delay.',
+    )
+  })
+
+  it('should preserve the previous web-only preference when both later writes fail', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockResolvedValue('"10m"')
+    storageMocks.setItem.mockRejectedValue(new Error('native unavailable'))
+    await writeScreenSaverDelay('off')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('web unavailable')
+    })
+
+    await expect(writeScreenSaverDelay('1m')).rejects.toThrow(
+      'Failed to persist screen saver delay.',
+    )
+
+    expect(await readScreenSaverDelay()).toBe('off')
+    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
+    vi.restoreAllMocks()
+    storageMocks.setItem.mockResolvedValue()
+    await writeScreenSaverDelay('1h')
+    expect(await readScreenSaverDelay()).toBe('1h')
+  })
+
+  it('should reject when a successful native write cannot invalidate the stale web copy', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:screen-saver-delay:v1', '"10m"')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('web unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('removal unavailable')
+    })
+
+    await expect(writeScreenSaverDelay('off')).rejects.toThrow(
+      'Failed to persist screen saver delay.',
+    )
+    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:screen-saver-delay:v1', '"off"')
+    expect(await readScreenSaverDelay()).toBe('10m')
+  })
+
+  it.each(['value', 'missing', 'error'] as const)(
+    'should retry a pending native read returning %s after a newer preference is saved',
+    async (outcome) => {
+      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      const completion = Promise.withResolvers<string | null>()
+      storageMocks.getItem.mockReturnValue(completion.promise)
+      storageMocks.setItem.mockResolvedValue()
+
+      const pendingRead = readScreenSaverDelay()
+      await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
+      await writeScreenSaverDelay('off')
+      switch (outcome) {
+        case 'value':
+          completion.resolve('"20m"')
+          break
+        case 'missing':
+          completion.resolve(null)
+          break
+        case 'error':
+          completion.reject(new Error('native unavailable'))
+          break
+      }
+
+      expect(await pendingRead).toBe('off')
+      expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
+    },
+  )
 
   it('should preserve native write order during rapid preference changes', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
