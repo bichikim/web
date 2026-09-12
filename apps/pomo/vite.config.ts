@@ -218,6 +218,8 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
   )
 
   return {
+    // Pixi fetches textures; desktop CSP requires bundled files instead of data URLs.
+    build: {assetsInlineLimit: IS_DESKTOP_BUILD ? 0 : undefined},
     cacheDir: USES_APPS_IN_TOSS_DEVTOOLS ? 'node_modules/.vite-apps-in-toss' : 'node_modules/.vite',
     define: createImportMetaEnvDefinitions({
       POMO_ALLOW_LOCAL_ASSET_ORIGIN: String(command === 'serve' || IS_STATIC_BUILD),

@@ -15,9 +15,48 @@ const createTexture = (source: string) => ({source}) as never
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('acquireTexture', () => {
+  it.each([
+    [
+      'tauri://localhost/',
+      '/_build/assets/scene.webp',
+      'tauri://localhost/_build/assets/scene.webp',
+    ],
+    [
+      'tauri://localhost/desktop/player/',
+      '/_build/assets/scene.webp',
+      'tauri://localhost/_build/assets/scene.webp',
+    ],
+    ['https://example.com/room/', './scene.webp', 'https://example.com/room/scene.webp'],
+    [
+      'https://example.com/',
+      'https://cdn.example.com/scene.webp',
+      'https://cdn.example.com/scene.webp',
+    ],
+    ['tauri://localhost/', 'blob:tauri://localhost/texture', 'blob:tauri://localhost/texture'],
+    ['tauri://localhost/', 'data:image/png;base64,AA==', 'data:image/png;base64,AA=='],
+  ])(
+    'should preserve URL authority when loading and unloading from %s: %s',
+    async (baseURI, source, expected) => {
+      vi.stubGlobal('document', {baseURI})
+      vi.mocked(Assets.load).mockResolvedValue(createTexture(source))
+      vi.mocked(Assets.unload).mockResolvedValue(undefined)
+      const lease = await acquireTexture(source)
+
+      try {
+        expect(Assets.load).toHaveBeenCalledWith(expected)
+        expect(lease.source).toBe(source)
+      } finally {
+        lease.release()
+      }
+      expect(Assets.unload).toHaveBeenCalledWith(expected)
+      await vi.waitFor(() => expect(Assets.unload).toHaveResolved())
+    },
+  )
+
   it('should retain a shared texture until its final consumer releases it', async () => {
     vi.mocked(Assets.load).mockImplementation(async (source) => createTexture(String(source)))
     vi.mocked(Assets.unload).mockResolvedValue(undefined)
