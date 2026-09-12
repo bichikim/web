@@ -697,7 +697,7 @@
   "tour_completion_title": "You're all set!",
   "tour_completion_description": "That wraps up the tour. Enjoy the app at your own pace!",
   "tour_finish": "Done",
-  "tour_first_visit_hint_description": "You’re in. Select Tour in the top-right corner to see how the app works.",
+  "tour_first_visit_hint_description": "You’re in. Select [icon:tour] Tour in the top-right corner to see how the app works.",
   "tour_first_visit_hint_title": "New to the app?",
   "tour_next": "Next",
   "tour_open": "Take a tour of the app",

@@ -324,3 +324,13 @@ it('should expose a reactive pressed state for tool selection', () => {
   setPressed(true)
   expect(button).toHaveAttribute('aria-pressed', 'true')
 })
+
+it('should allow responsive content to participate directly in button layout', () => {
+  const {getByRole} = render(() => (
+    <PButton accessibleLabel="안내" icon="i-tabler-route" contentClass="contents">
+      <span class="hidden">안내</span>
+    </PButton>
+  ))
+  expect(getByRole('button').lastElementChild).toHaveClass('contents')
+  expect(getByRole('button').lastElementChild?.firstElementChild).toHaveClass('hidden')
+})

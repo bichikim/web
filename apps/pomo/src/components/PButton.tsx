@@ -126,6 +126,7 @@ export interface PButtonProps extends VariantProps<typeof pButtonClasses> {
   readonly accessibleLabel?: string
   readonly children?: JSX.Element
   readonly class?: string
+  readonly contentClass?: string
   readonly disabled?: boolean
   readonly icon?: string
   readonly iconClass?: string
@@ -210,7 +211,7 @@ export const PButton = (props: PButtonProps) => {
           )}
         </Show>
         <Show when={hasContent()}>
-          <span>{content()}</span>
+          <span class={props.contentClass}>{content()}</span>
         </Show>
         <Show when={props.trailingIcon}>
           {(icon) => (

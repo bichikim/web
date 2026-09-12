@@ -1,6 +1,7 @@
 import * as m from '@paraglide/message'
 
 import {PButton} from '../PButton'
+import {InlineIconText} from '../InlineIconText'
 
 export interface PStudioTourHintProps {
   readonly onDismiss: () => void
@@ -27,7 +28,10 @@ export const PStudioTourHint = (props: PStudioTourHintProps) => (
       <div class="min-w-0 flex-1">
         <p class="m-0 text-sm font-750">{m.tour_first_visit_hint_title()}</p>
         <p class="mb-0 mt-1 text-sm leading-5 text-muted-foreground">
-          {m.tour_first_visit_hint_description()}
+          <InlineIconText
+            text={m.tour_first_visit_hint_description()}
+            icons={{tour: 'i-tabler-route'}}
+          />
         </p>
       </div>
       <PButton

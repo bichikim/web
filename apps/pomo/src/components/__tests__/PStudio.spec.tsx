@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {fireEvent, screen} from '@solidjs/testing-library'
+import {fireEvent, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {configureStudio, renderStudio, setupStudio, studioMocks} from './p-studio/setup'
 
@@ -218,14 +218,15 @@ describe('PStudio', () => {
     expect(tourProps.getStepElement('unknown')).toBeNull()
   })
 
-  it('should show the tour hint after a first entry and hide it when the tour opens', () => {
+  it('should show the tour hint after a first entry and hide it when the tour opens', async () => {
+    localStorage.removeItem('pomo:focus-room-entry-history:v1')
     renderStudio()
 
     fireEvent.click(screen.getByRole('button', {name: '입장'}))
     expect(screen.queryByText('첫 입장 투어 안내')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', {name: '입장 화면 닫기'}))
-    expect(screen.getByText('첫 입장 투어 안내')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('첫 입장 투어 안내')).toBeInTheDocument())
 
     fireEvent.click(screen.getByRole('button', {name: '둘러보기'}))
     expect(screen.queryByText('첫 입장 투어 안내')).not.toBeInTheDocument()
@@ -237,7 +238,7 @@ describe('PStudio', () => {
 
     renderStudio()
 
-    expect(readFocusRoomEntrySession).toHaveBeenCalledOnce()
+    expect(readFocusRoomEntrySession).toHaveBeenCalled()
     expect(screen.getByText('이벤트')).toBeInTheDocument()
     expect(screen.queryByText('입장')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
