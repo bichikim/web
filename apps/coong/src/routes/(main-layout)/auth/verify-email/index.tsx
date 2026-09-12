@@ -57,6 +57,10 @@ const isEmailOtpType = (value: string): value is EmailOtpType => {
   return (ALLOWED_OTP_TYPES as ReadonlySet<string>).has(value)
 }
 
+interface VerificationHistory {
+  emailVerified?: boolean
+}
+
 type VerificationStatus = 'idle' | 'verifying' | 'success' | 'error'
 
 export default function VerifyEmailPage() {
@@ -64,7 +68,7 @@ export default function VerifyEmailPage() {
   const [verificationStatus, setVerificationStatus] = createSignal<VerificationStatus>('idle')
   const [verificationError, setVerificationError] = createSignal<string | null>(null)
 
-  const location = useLocation()
+  const location = useLocation<VerificationHistory | null>()
   const {token_hash: tokenHashParameter, type: typeParameter} = location.query
   const navigate = useNavigate()
 
@@ -84,6 +88,12 @@ export default function VerifyEmailPage() {
     const hash = tokenHash()
     const type = otpType()
 
+    if (!hash && !typeParameter && location.state?.emailVerified === true) {
+      setVerificationStatus('success')
+      afterNavigate.start()
+      return
+    }
+
     if (!hash || !type) {
       setVerificationStatus('error')
       setVerificationError('유효하지 않은 인증 링크입니다.')
@@ -101,6 +111,7 @@ export default function VerifyEmailPage() {
         return
       }
 
+      navigate(location.pathname, {replace: true, state: {emailVerified: true}})
       afterNavigate.start()
     } catch (error) {
       setVerificationStatus('error')
@@ -164,13 +175,11 @@ export default function VerifyEmailPage() {
           </Show>
           <Show when={verificationStatus() === 'success' && user()}>
             <span class="text-sm text-gray-500">
-              <Show when={tokenHash()} fallback={'Go to the '}>
-                Redirecting to the{' '}
-              </Show>
+              Redirecting to the{' '}
               <A href="/" class="text-gray-700 underline font-bold text-lg">
                 Root page
               </A>{' '}
-              <Show when={tokenHash()}>in {countSeconds()} seconds</Show>
+              in {countSeconds()} seconds
             </span>
           </Show>
         </Show>
