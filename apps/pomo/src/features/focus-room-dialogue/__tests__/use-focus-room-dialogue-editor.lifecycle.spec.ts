@@ -1,146 +1,18 @@
 // oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
-import {createRoot} from 'solid-js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-
+import {describe, expect, it, vi} from 'vitest'
 import {failureResult, successResult} from 'src/features/result'
-import {type CreateOpusBlobOptions, type SupertonicClient} from '../../supertonic'
-import {type TextMoodAnalysis, type TextMoodAnalyzer, type TextMoodRuntime} from '../../text-mood'
+
 import type {PDialogue} from '../schema'
-import {type PDialogueEditorController, usePDialogueEditor} from '../use-focus-room-dialogue-editor'
-
-const supertonicMocks = vi.hoisted(() => ({
-  createClient: vi.fn(),
-  createOpusBlob: vi.fn(),
-}))
-const repositoryMocks = vi.hoisted(() => ({
-  dispose: vi.fn(),
-  getAudio: vi.fn(),
-  getDialogue: vi.fn(),
-  saveDialogue: vi.fn(async () => undefined),
-}))
-const moodAnalyzerMocks = {
-  analyze: vi.fn<TextMoodAnalyzer['analyze']>(),
-  dispose: vi.fn(),
-  prepare: vi.fn<TextMoodAnalyzer['prepare']>(),
-}
-const moodRuntime: TextMoodRuntime = {createAnalyzer: vi.fn(() => moodAnalyzerMocks)}
-const NativeUrl = globalThis.URL
-
-const cheerfulAnalysis: TextMoodAnalysis = {
-  margin: 0.6,
-  modifiers: [],
-  primary: {id: 'cheerful', probability: 0.8},
-  scores: [
-    {id: 'cheerful', probability: 0.8},
-    {id: 'hopeful', probability: 0.2},
-  ],
-  secondary: {id: 'hopeful', probability: 0.2},
-  uncertain: false,
-}
-
-vi.mock('../../supertonic', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../supertonic')>()
-  return {
-    ...actual,
-    createOpusBlob: supertonicMocks.createOpusBlob,
-    createSupertonicClient: supertonicMocks.createClient,
-  }
-})
-
-vi.mock('../repository', () => ({
-  createPDialogueRepository: () => repositoryMocks,
-}))
-
-interface DialogueEditorTestRoot {
-  readonly controller: PDialogueEditorController
-  readonly dispose: () => void
-}
-
-const createAudio = () => ({
-  generationTime: 1,
-  sampleRate: 24_000,
-  samples: Float32Array.of(0),
-})
-
-const createStoredDialogue = (id = 'stored-dialogue', text = '저장된 대사'): PDialogue => ({
-  audioKey: `${id}-audio`,
-  createdAt: '2026-08-13T00:00:00.000Z',
-  durationMs: 1000,
-  id,
-  language: 'ko',
-  modelId: 'full',
-  segments: [{durationMs: 1000, index: 0, startMs: 0, text}],
-  text,
-  updatedAt: '2026-08-13T00:00:00.000Z',
-  version: 1,
-  voiceId: 'Yuna',
-})
-
-const createClient = (calls: Array<string>): SupertonicClient => ({
-  cancelGeneration: vi.fn(),
-  dispose: vi.fn(),
-  generate: vi.fn(async () => successResult(createAudio())),
-  generateStream: vi.fn(async function* generateStream() {
-    calls.push('generate')
-    yield successResult({
-      audio: {...createAudio(), index: 0, total: 1},
-      type: 'chunk' as const,
-    })
-    yield successResult({audio: createAudio(), type: 'complete' as const})
-  }),
-  initialize: vi.fn(async () => {
-    calls.push('prepare')
-    return successResult(undefined)
-  }),
-})
-
-const createEditorRoot = (dialogueId: string | null = null): DialogueEditorTestRoot => {
-  let disposeRoot: () => void = () => undefined
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return usePDialogueEditor({dialogueId: () => dialogueId, moodRuntime})
-  })
-
-  return {controller, dispose: disposeRoot}
-}
-
-const createDefaultMoodEditorRoot = (): DialogueEditorTestRoot => {
-  let disposeRoot: () => void = () => undefined
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return usePDialogueEditor({dialogueId: () => null})
-  })
-
-  return {controller, dispose: disposeRoot}
-}
-
-beforeEach(() => {
-  vi.clearAllMocks()
-  supertonicMocks.createOpusBlob.mockResolvedValue(
-    new Blob(['opus'], {type: 'audio/ogg; codecs=opus'}),
-  )
-  moodAnalyzerMocks.analyze.mockResolvedValue(
-    successResult({
-      elapsedMilliseconds: 1,
-      status: 'insufficient',
-      sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
-    }),
-  )
-  sessionStorage.clear()
-  vi.stubGlobal(
-    'URL',
-    class extends NativeUrl {
-      static createObjectURL = vi.fn(() => 'blob:dialogue')
-      static revokeObjectURL = vi.fn()
-    },
-  )
-  vi.stubGlobal('crypto', {randomUUID: vi.fn(() => 'dialogue-id')})
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-})
+import {
+  createAudio,
+  createClient,
+  createEditorRoot,
+  createStoredDialogue,
+  moodAnalyzerMocks,
+  moodRuntime,
+  repositoryMocks,
+  supertonicMocks,
+} from './support/editor'
 
 describe('usePDialogueEditor', () => {
   it('should ignore a direct generation request with empty text', async () => {
@@ -235,27 +107,33 @@ describe('usePDialogueEditor', () => {
     expect(client.generateStream).not.toHaveBeenCalled()
   })
 
-  it('should ignore generation chunks from a client invalidated during generation', async () => {
-    const client = createClient([])
-    vi.mocked(client.generateStream).mockImplementationOnce(async function* generateStream() {
-      editor.controller.setModelId('int8')
-      yield successResult({
-        audio: {...createAudio(), index: 0, total: 1},
-        type: 'chunk' as const,
+  it.each(['model', 'route'])(
+    'should ignore generation chunks from a client invalidated during generation (%s)',
+    async (change) => {
+      repositoryMocks.getDialogue.mockImplementation(
+        () => Promise.withResolvers<PDialogue | null>().promise,
+      )
+      const client = createClient([])
+      vi.mocked(client.generateStream).mockImplementationOnce(async function* generateStream() {
+        change === 'model' ? editor.controller.setModelId('int8') : editor.navigate('next')
+        yield successResult({
+          audio: {...createAudio(), index: 0, total: 1},
+          type: 'chunk' as const,
+        })
+        yield successResult({audio: createAudio(), type: 'complete' as const})
       })
-      yield successResult({audio: createAudio(), type: 'complete' as const})
-    })
-    supertonicMocks.createClient.mockReturnValue(client)
-    const editor = createEditorRoot()
-    editor.controller.setText('생성 중 모델을 바꾸는 대사')
+      supertonicMocks.createClient.mockReturnValue(client)
+      const editor = createEditorRoot()
+      editor.controller.setText('생성 중 모델을 바꾸는 대사')
 
-    await editor.controller.generate()
+      await editor.controller.generate()
 
-    expect(editor.controller.audioUrl()).toBeNull()
-    expect(editor.controller.modelId()).toBe('int8')
-    expect(editor.controller.state().status).toBe('idle')
-    editor.dispose()
-  })
+      expect(editor.controller.audioUrl()).toBeNull()
+      expect(editor.controller.modelId()).toBe(change === 'model' ? 'int8' : 'full')
+      expect(editor.controller.state().status).toBe(change === 'model' ? 'idle' : 'loading')
+      editor.dispose()
+    },
+  )
 
   it('should report a generated preview creation failure', async () => {
     const client = createClient([])
@@ -323,34 +201,40 @@ describe('usePDialogueEditor', () => {
     editor.dispose()
   })
 
-  it('should ignore mood analysis completed for an invalidated client', async () => {
-    const client = createClient([])
-    const insufficient = successResult({
-      elapsedMilliseconds: 1,
-      status: 'insufficient' as const,
-      sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
-    })
-    let resolveAnalysis: (result: typeof insufficient) => void = () => undefined
-    moodAnalyzerMocks.analyze.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveAnalysis = resolve
-        }),
-    )
-    supertonicMocks.createClient.mockReturnValue(client)
-    const editor = createEditorRoot()
-    editor.controller.setText('분석 중 모델을 바꾸는 대사')
+  it.each(['model', 'route'])(
+    'should ignore mood analysis completed for an invalidated client (%s)',
+    async (change) => {
+      repositoryMocks.getDialogue.mockImplementation(
+        () => Promise.withResolvers<PDialogue | null>().promise,
+      )
+      const client = createClient([])
+      const insufficient = successResult({
+        elapsedMilliseconds: 1,
+        status: 'insufficient' as const,
+        sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
+      })
+      let resolveAnalysis: (result: typeof insufficient) => void = () => undefined
+      moodAnalyzerMocks.analyze.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveAnalysis = resolve
+          }),
+      )
+      supertonicMocks.createClient.mockReturnValue(client)
+      const editor = createEditorRoot()
+      editor.controller.setText('분석 중 모델을 바꾸는 대사')
 
-    const generating = editor.controller.generate()
-    await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
-    editor.controller.setModelId('int8')
-    resolveAnalysis(insufficient)
-    await generating
+      const generating = editor.controller.generate()
+      await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
+      change === 'model' ? editor.controller.setModelId('int8') : editor.navigate('next')
+      resolveAnalysis(insufficient)
+      await generating
 
-    expect(editor.controller.modelId()).toBe('int8')
-    expect(editor.controller.segments()).toEqual([])
-    editor.dispose()
-  })
+      expect(editor.controller.modelId()).toBe(change === 'model' ? 'int8' : 'full')
+      expect(editor.controller.segments()).toEqual([])
+      editor.dispose()
+    },
+  )
 
   it('should report segment regeneration failures and preview errors', async () => {
     const client = createClient([])
@@ -379,23 +263,29 @@ describe('usePDialogueEditor', () => {
     editor.dispose()
   })
 
-  it('should ignore regeneration completed by an invalidated client', async () => {
-    const client = createClient([])
-    supertonicMocks.createClient.mockReturnValue(client)
-    const editor = createEditorRoot()
-    editor.controller.setText('재생성 중 모델을 바꿀 대사')
-    await editor.controller.generate()
-    vi.mocked(client.generate).mockImplementationOnce(async () => {
-      editor.controller.setModelId('int8')
-      return successResult(createAudio())
-    })
+  it.each(['model', 'route'])(
+    'should ignore regeneration completed by an invalidated client (%s)',
+    async (change) => {
+      repositoryMocks.getDialogue.mockImplementation(
+        () => Promise.withResolvers<PDialogue | null>().promise,
+      )
+      const client = createClient([])
+      supertonicMocks.createClient.mockReturnValue(client)
+      const editor = createEditorRoot()
+      editor.controller.setText('재생성 중 모델을 바꿀 대사')
+      await editor.controller.generate()
+      vi.mocked(client.generate).mockImplementationOnce(async () => {
+        change === 'model' ? editor.controller.setModelId('int8') : editor.navigate('next')
+        return successResult(createAudio())
+      })
 
-    await editor.controller.regenerateSegment(0)
+      await editor.controller.regenerateSegment(0)
 
-    expect(editor.controller.regeneratingSegmentIndex()).toBe(0)
-    expect(editor.controller.modelId()).toBe('int8')
-    editor.dispose()
-  })
+      expect(editor.controller.regeneratingSegmentIndex()).toBe(change === 'model' ? 0 : null)
+      expect(editor.controller.modelId()).toBe(change === 'model' ? 'int8' : 'full')
+      editor.dispose()
+    },
+  )
 
   it('should save loaded audio without re-encoding and preserve its identity', async () => {
     const dialogue = createStoredDialogue()
