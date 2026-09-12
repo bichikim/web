@@ -1,3 +1,4 @@
+import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {type BackgroundController, useBackground} from '../features/background'
 import {Player as FramePlayer} from './frame/Player'
 import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
@@ -161,6 +162,7 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
 )
 
 interface StudioOverlayProps {
+  readonly uiAutoHideEnabled?: boolean
   readonly displayPreferences: PDisplayPreferencesController
   readonly desktopMode: DesktopMode
   readonly entryVisible: boolean
@@ -188,6 +190,7 @@ const StudioOverlay = (props: StudioOverlayProps) => (
     <PScreenSaver
       isActive={
         props.hasEntered &&
+        !props.uiAutoHideEnabled &&
         !isDesktopBackgroundMode(props.desktopMode) &&
         props.screenSaver.isActive()
       }
@@ -331,6 +334,7 @@ const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
 })
 
 export const PStudio = () => {
+  const uiAutoHide = useUiAutoHide()
   const background = useBackground()
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
@@ -404,7 +408,11 @@ export const PStudio = () => {
         time={time()}
         weatherCondition={weather.sceneCondition()}
       />
-      <div class={CLASSES.ui} hidden={!hasEntered() || desktopMode.mode() === 'desktop'}>
+      <div
+        class={CLASSES.ui}
+        classList={{'!hidden': uiAutoHide.hidden()}}
+        hidden={!hasEntered() || desktopMode.mode() === 'desktop' || uiAutoHide.hidden()}
+      >
         <Show when={hasEntered() && desktopMode.mode() !== 'desktop'}>
           <PStudioEvents
             pomodoroVisible={displayPreferences.isReady() && displayPreferences.pomodoroVisible()}
@@ -420,6 +428,7 @@ export const PStudio = () => {
           />
           <Show when={scenePreferences.isReady()}>
             <SceneToolbar
+              uiAutoHide={uiAutoHide}
               {...sceneSettings}
               background={background}
               {...toolbarVisibility(displayPreferences)}
@@ -457,17 +466,20 @@ export const PStudio = () => {
         <PEntry isExiting={hasEntered()} onEnter={handleEntry} onExitComplete={entry.hide} />
       </Show>
       <SceneModelDownloadFallback isVisible={!hasEntered() || !scenePreferences.isReady()} />
-      <StudioOverlay
-        displayPreferences={displayPreferences}
-        desktopMode={desktopMode.mode()}
-        entryVisible={entry.isVisible()}
-        hasEntered={hasEntered()}
-        isTourHintVisible={isTourHintVisible()}
-        onDismissTourHint={() => setIsTourHintVisible(false)}
-        screenSaver={screenSaver}
-        tour={tour}
-        tourButtonVisible={displayPreferences.tourButtonVisible()}
-      />
+      <div hidden={uiAutoHide.hidden()}>
+        <StudioOverlay
+          uiAutoHideEnabled={uiAutoHide.enabled()}
+          displayPreferences={displayPreferences}
+          desktopMode={desktopMode.mode()}
+          entryVisible={entry.isVisible()}
+          hasEntered={hasEntered()}
+          isTourHintVisible={isTourHintVisible()}
+          onDismissTourHint={() => setIsTourHintVisible(false)}
+          screenSaver={screenSaver}
+          tour={tour}
+          tourButtonVisible={displayPreferences.tourButtonVisible()}
+        />
+      </div>
     </section>
   )
 }

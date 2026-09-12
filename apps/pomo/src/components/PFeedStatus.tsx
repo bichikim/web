@@ -213,6 +213,73 @@ const getRetryStatusMessage = (download: ReturnType<typeof getRecoveryModelDownl
     ? m.feed_retrying()
     : m.feed_downloading_model({label: download.label, percentage: download.percentage})
 
+interface FeedRecoveryNoticeProps {
+  readonly feeds: ReturnType<typeof usePFeedContext>
+  readonly actions: ReturnType<typeof createFeedStatusActions>
+  readonly sceneStyle?: PSceneStyle
+}
+const FeedRecoveryNotice = (props: FeedRecoveryNoticeProps) => {
+  const hasPending = () => props.feeds.recoveryJobs().some((job) => job.status === 'pending')
+  return (
+    <FeedStatusSurface sceneStyle={props.sceneStyle} state="recovery">
+      <span aria-hidden="true" class="i-tabler-refresh size-5" />
+      <span class={CLASSES.feedStatusCopy}>
+        <strong>
+          {hasPending()
+            ? m.feed_pending_count({count: props.feeds.recoveryJobs().length})
+            : m.feed_incomplete_count({count: props.feeds.recoveryJobs().length})}
+        </strong>
+        <small>
+          {props.actions.hasRetryError()
+            ? m.feed_retry_failed()
+            : hasPending()
+              ? m.feed_prepare_description()
+              : m.feed_retry_question()}
+        </small>
+      </span>
+      <span class={CLASSES.feedStatusActions}>
+        <PButton
+          bordered
+          transparent
+          class={CLASSES.feedStatusAction}
+          disabled={props.actions.isRetryDisabled()}
+          onPress={props.actions.handleRetry}
+          size="small"
+          tone="secondary"
+        >
+          {props.actions.isCheckingModel()
+            ? m.feed_checking()
+            : hasPending()
+              ? m.feed_prepare()
+              : m.feed_retry()}
+        </PButton>
+        <PButton
+          bordered
+          transparent
+          class={CLASSES.feedStatusAction}
+          disabled={props.actions.isCheckingModel()}
+          onPress={props.feeds.dismissRecovery}
+          size="small"
+          tone="secondary"
+        >
+          {m.feed_later()}
+        </PButton>
+        <PButton
+          bordered
+          transparent
+          class={CLASSES.feedStatusAction}
+          disabled={props.actions.isCheckingModel()}
+          onPress={props.actions.handleDelete}
+          size="small"
+          tone="danger"
+        >
+          {m.feed_delete()}
+        </PButton>
+      </span>
+    </FeedStatusSurface>
+  )
+}
+
 export const PFeedStatus = (props: PFeedStatusProps) => {
   const feeds = usePFeedContext()
   const modelDownload = useModelDownload()
@@ -257,50 +324,7 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
             )}
           </Match>
           <Match when={feeds.recoveryJobs().length > 0}>
-            <FeedStatusSurface sceneStyle={props.sceneStyle} state="recovery">
-              <span aria-hidden="true" class="i-tabler-refresh size-5" />
-              <span class={CLASSES.feedStatusCopy}>
-                <strong>{m.feed_incomplete_count({count: feeds.recoveryJobs().length})}</strong>
-                <small>
-                  {actions.hasRetryError() ? m.feed_retry_failed() : m.feed_retry_question()}
-                </small>
-              </span>
-              <span class={CLASSES.feedStatusActions}>
-                <PButton
-                  bordered
-                  transparent
-                  class={CLASSES.feedStatusAction}
-                  disabled={actions.isRetryDisabled()}
-                  onPress={actions.handleRetry}
-                  size="small"
-                  tone="secondary"
-                >
-                  {actions.isCheckingModel() ? m.feed_checking() : m.feed_retry()}
-                </PButton>
-                <PButton
-                  bordered
-                  transparent
-                  class={CLASSES.feedStatusAction}
-                  disabled={actions.isCheckingModel()}
-                  onPress={feeds.dismissRecovery}
-                  size="small"
-                  tone="secondary"
-                >
-                  {m.feed_later()}
-                </PButton>
-                <PButton
-                  bordered
-                  transparent
-                  class={CLASSES.feedStatusAction}
-                  disabled={actions.isCheckingModel()}
-                  onPress={actions.handleDelete}
-                  size="small"
-                  tone="danger"
-                >
-                  {m.feed_delete()}
-                </PButton>
-              </span>
-            </FeedStatusSurface>
+            <FeedRecoveryNotice feeds={feeds} actions={actions} sceneStyle={props.sceneStyle} />
           </Match>
           <Match when={feeds.latestReady()}>
             {(ready) => (
