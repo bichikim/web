@@ -53,7 +53,7 @@ Make the storage destination explicit in the persistence function name or an arg
 
 When implementing or decomposing logic, consider these levels in order:
 
-1. Look for a suitable public API in general-purpose utility libraries, the framework, the runtime, and existing project code. If none fits, consider creating a domain-independent function with a broadly reusable contract.
+1. Prefer JavaScript built-in functions and APIs when they satisfy the required semantics and target runtime support. Otherwise, look for a suitable public API in general-purpose utility libraries, the framework, the runtime, and existing project code. If none fits, consider creating a domain-independent function with a broadly reusable contract.
 2. Consider expressing the remaining logic as a function in a broader domain than the immediate feature.
 3. Implement the current task's domain-specific function by composing the suitable operations identified above.
 
