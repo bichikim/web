@@ -20,7 +20,7 @@ test('delivers browser Worker messages and failures through the shared transport
       URL.createObjectURL(new Blob([source], {type: 'text/javascript'}))
 
     const messageWorkerUrl = createWorkerUrl(
-      'self.onmessage = (event) => self.postMessage(`received:${event.data}`)',
+      String.raw`self.onmessage = (event) => self.postMessage(\`received:\${event.data}\`)`,
     )
     const errorWorkerUrl = createWorkerUrl(
       'self.onmessage = () => { throw new Error("worker failed") }',
