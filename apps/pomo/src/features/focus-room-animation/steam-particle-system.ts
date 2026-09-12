@@ -73,7 +73,7 @@ export class SteamParticleSystem {
     }
 
     this.#started = true
-    this.#startedAt = window.performance.now()
+    this.#startedAt = globalThis.performance.now()
 
     if (!this.#visible) {
       return
@@ -114,7 +114,7 @@ export class SteamParticleSystem {
       return
     }
 
-    this.#startedAt = window.performance.now()
+    this.#startedAt = globalThis.performance.now()
     this.#requestFrame()
   }
 
@@ -140,7 +140,7 @@ export class SteamParticleSystem {
       return
     }
 
-    this.#startedAt = window.performance.now()
+    this.#startedAt = globalThis.performance.now()
 
     if (this.#prefersReducedMotion) {
       this.#renderParticles(MINIMUM_LIFETIME * 0.42)

@@ -389,7 +389,7 @@ export class PSceneRenderer {
       return
     }
 
-    const startedAt = window.performance.now()
+    const startedAt = globalThis.performance.now()
     const renderFrame = (timestamp: number) => {
       if (this.#destroyed || version !== this.#transitionVersion) {
         return

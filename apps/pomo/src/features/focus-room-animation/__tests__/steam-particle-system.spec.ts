@@ -77,7 +77,7 @@ describe('SteamParticleSystem', () => {
   beforeEach(() => {
     pixiMocks.containers.length = 0
     pixiMocks.sprites.length = 0
-    vi.spyOn(window.performance, 'now').mockReturnValue(100)
+    vi.spyOn(globalThis.performance, 'now').mockReturnValue(100)
   })
 
   afterEach(() => {
@@ -140,7 +140,7 @@ describe('SteamParticleSystem', () => {
     system.setReducedMotion(true)
     system.setReducedMotion(false)
     expect(frames).toHaveLength(1)
-    expect(window.performance.now).toHaveBeenCalledTimes(2)
+    expect(globalThis.performance.now).toHaveBeenCalledTimes(2)
 
     system.destroy()
   })
