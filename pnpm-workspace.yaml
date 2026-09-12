@@ -34,7 +34,7 @@ catalog:
   class-variance-authority: ^0.7.1
   cross-env: ^10.1.0
   dotenv: ^16.6.1
-  es-toolkit: ^1.46.1
+  es-toolkit: ^1.52.0
   execa: ^9.6.1
   h3: 2.0.1-rc.26
   js-cookie: ^3.0.8

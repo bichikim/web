@@ -1,3 +1,5 @@
+import {hasStringListItem} from './has-string-list-item'
+
 export interface CorsPolicy {
   readonly allowedOrigins: string
   readonly allowedOriginSuffixes: string
@@ -10,9 +12,7 @@ export const getAllowedOrigin = (request: Request, policy: CorsPolicy): string |
     return null
   }
 
-  const allowedOrigins = policy.allowedOrigins.split(',').map((value) => value.trim())
-
-  if (allowedOrigins.includes(origin)) {
+  if (hasStringListItem(policy.allowedOrigins, origin)) {
     return origin
   }
 

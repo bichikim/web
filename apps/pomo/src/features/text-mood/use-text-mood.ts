@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import type {TextMoodAnalysis} from './analysis'
 import {
@@ -85,7 +86,7 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
     const {status} = state()
     return status === 'analyzing' || status === 'loading'
   })
-  const canAnalyze = createMemo(() => !isBusy() && text().trim().length > 0)
+  const canAnalyze = createMemo(() => !isBusy() && isNonBlankString(text()))
   const progress = createMemo(() => {
     const currentState = state()
     return currentState.status === 'loading' ? currentState.progress : 0

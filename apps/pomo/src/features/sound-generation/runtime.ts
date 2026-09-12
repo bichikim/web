@@ -2,6 +2,7 @@
 // oxlint-disable no-await-in-loop -- Each diffusion step consumes the previous step output.
 import {PreTrainedTokenizer} from '@huggingface/transformers'
 import * as ort from 'onnxruntime-web/webgpu'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {ASSET_LABELS, loadAsset, type SoundProgress} from './assets'
 import {
   createInpaintCondition,
@@ -100,7 +101,12 @@ export async function generateSound(
   progress: SoundProgress,
   inpaint?: InpaintAudio,
 ): Promise<Blob> {
-  if (!prompt.trim() || !Number.isInteger(seconds) || seconds < 1 || seconds > MAX_SECONDS) {
+  if (
+    !isNonBlankString(prompt) ||
+    !Number.isInteger(seconds) ||
+    seconds < 1 ||
+    seconds > MAX_SECONDS
+  ) {
     throw new Error('소리 설명과 1–120초 사이의 길이를 입력해 주세요.')
   }
   if (inpaint !== undefined) {

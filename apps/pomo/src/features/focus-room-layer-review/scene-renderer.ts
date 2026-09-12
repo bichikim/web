@@ -1,6 +1,8 @@
 import 'pixi.js/unsafe-eval'
 import {Application} from 'pixi.js'
 
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import {
   PEyeController,
   type PEyeMode,
@@ -36,7 +38,6 @@ export interface PLayerReviewRendererOptions {
   readonly definition: PixiLayerSceneDefinition
 }
 
-const clampOpacity = (value: number) => Math.min(1, Math.max(0, value))
 const COMPARISON_MOUTH_OPACITY = 0.5
 const MOUTH_CHANNELS = [
   ...Object.values(FOCUS_ROOM_MOUTH_CHANNELS),
@@ -291,7 +292,7 @@ export class PLayerReviewRenderer {
   }
 
   #toSceneState(state: PLayerReviewState) {
-    const referenceOpacity = clampOpacity(state.referenceOpacity)
+    const referenceOpacity = clampUnit(state.referenceOpacity)
     const mouthState = createFocusRoomLayerState(
       state.viseme,
       false,

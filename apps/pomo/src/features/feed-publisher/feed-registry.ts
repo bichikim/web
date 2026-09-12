@@ -1,9 +1,10 @@
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import type {FeedProvider} from './contract'
 
 const FEED_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u
 
 const requireText = (value: string, field: string): void => {
-  if (value.trim().length === 0) {
+  if (!isNonBlankString(value)) {
     throw new TypeError(`Feed ${field} must not be empty`)
   }
 }

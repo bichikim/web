@@ -1,4 +1,5 @@
 import {createEffect, createMemo, createUniqueId, on, onCleanup, untrack} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {useTooltip} from './tooltip/context'
 
 export interface PTooltipProps {
@@ -10,7 +11,7 @@ export interface PTooltipProps {
 export const PTooltip = (props: PTooltipProps) => {
   const tooltip = useTooltip()
   const owner = createUniqueId()
-  const hasText = createMemo(() => (props.text?.trim().length ?? 0) > 0)
+  const hasText = createMemo(() => isNonBlankString(props.text ?? ''))
   createEffect(
     on(
       () => props.target,

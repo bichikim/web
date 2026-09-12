@@ -22,6 +22,9 @@ Client action E2E fixture는 production action과 API adapter를 직접 import�
 
 설정 테마 회귀 테스트는 일반 웹과 Apps in Toss 로컬 모드의 홈 화면에서 설정을 열고 테마를 선택합니다.
 설정 재진입·새로고침 후 복원, 키보드 선택, 시스템 테마 변경 반영과 고정 테마 유지를 검증합니다.
+설정은 Esc로 닫히지 않는 현재 동작을 확인하며, 열린 테마 목록만 Esc로 닫힌 뒤 선택 버튼으로
+포커스가 돌아오는지 검증합니다. 배경 탭과 닫기 버튼에 포커스가 있을 때도 설정이 유지되고,
+닫기 버튼을 Enter로 실행하면 설정을 연 버튼으로 포커스가 복원되는지 확인합니다.
 
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --workers=1
@@ -77,6 +80,9 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 방법은 [Playwright 화면 비교](https://playwright.dev/docs/test-snapshots)와
 [시계 제어](https://playwright.dev/docs/clock)를 따릅니다. PR 이미지에는 로컬 파일 경로 대신
 고정 commit SHA의 GitHub 이미지 URL을 사용합니다.
+
+설정 Esc 동작 보강 시 실행한 [렌더링 비교 기록](rendering/evidence/dismissal/manifest.json)은
+기존 여섯 기준을 유지하며 대표 현재 PNG를 보존합니다. 정확한 커밋의 로컬 실행 결과는 해당 PR 본문에 기록합니다.
 
 [캐릭터 장면 테스트](rendering/character.spec.ts)는 배경 탭에서 키보드로 밤을 선택하고,
 노트북 타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
