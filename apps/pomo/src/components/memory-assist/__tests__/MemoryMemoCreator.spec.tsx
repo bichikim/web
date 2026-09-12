@@ -131,27 +131,31 @@ it.each(['new text', 'reminder', 'restored text', 'reopened', 'inline text'])(
   },
 )
 
-it.each([false, true])(
+it.each(['unchanged', 'reopen', 'edit'])(
   'should show a late failure only in its original editing session (%s)',
-  async (reopen) => {
+  async (change) => {
     const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
     mocks.updateMemos.mockReturnValueOnce(persistence.promise)
     render(() => <MemoryMemoCreator />)
     fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
     fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '저장할 메모'}})
     fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
-    if (reopen) {
+    if (change === 'reopen') {
       fireEvent.click(screen.getByRole('button', {name: '닫기'}))
       fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
     }
+    if (change === 'edit') {
+      fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '새 초안'}})
+    }
+    const expectedText = change === 'edit' ? '새 초안' : '저장할 메모'
     persistence.reject(new Error('write failed'))
     await waitFor(() => expect(screen.getByRole('button', {name: '메모 저장'})).toBeEnabled())
-    expect(screen.getByLabelText('기억할 메모')).toHaveValue('저장할 메모')
-    expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toContain('저장할 메모')
-    if (reopen) {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    } else {
+    expect(screen.getByLabelText('기억할 메모')).toHaveValue(expectedText)
+    expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toContain(expectedText)
+    if (change === 'unchanged') {
       expect(screen.getByRole('status')).toHaveTextContent('메모를 저장하지 못했어요.')
+    } else {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
     }
   },
 )
