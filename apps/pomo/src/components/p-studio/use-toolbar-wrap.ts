@@ -9,11 +9,16 @@ export const useToolbarWrap = () => {
       return
     }
     const toolbar = actions.parentElement
-    const pomodoro = toolbar?.parentElement?.querySelector<HTMLElement>('.pomo-pomodoro')
-    if (!toolbar || !pomodoro) {
+    const container = toolbar?.parentElement
+    if (!toolbar || !container) {
       return
     }
+    let pomodoro: HTMLElement | null = null
     const measure = () => {
+      if (!pomodoro) {
+        setWrap(false)
+        return
+      }
       const children = Array.from(actions.children).filter(
         (child) => child.getBoundingClientRect().width > 0,
       )
@@ -31,15 +36,18 @@ export const useToolbarWrap = () => {
     const resize = new ResizeObserver(measure)
     const observe = () => {
       resize.disconnect()
+      pomodoro = container.querySelector<HTMLElement>('.pomo-pomodoro')
       resize.observe(toolbar)
-      resize.observe(pomodoro)
+      if (pomodoro) {
+        resize.observe(pomodoro)
+      }
       for (const child of actions.children) {
         resize.observe(child)
       }
       measure()
     }
     const mutation = new MutationObserver(observe)
-    mutation.observe(actions, {childList: true, subtree: true})
+    mutation.observe(container, {childList: true, subtree: true})
     observe()
     onCleanup(() => {
       resize.disconnect()
