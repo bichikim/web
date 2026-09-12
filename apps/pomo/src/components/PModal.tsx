@@ -1,6 +1,6 @@
 import {Dialog} from '@kobalte/core/dialog'
 import {cva, cx} from 'class-variance-authority'
-import {type JSX, Show} from 'solid-js'
+import {type JSX, Show, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
@@ -137,7 +137,12 @@ export const PModal = (props: PModalProps) => (
           }
 
           event.preventDefault()
-          initialFocus.focus()
+          // Let the parent focus scope finish pausing before moving into the child portal.
+          queueMicrotask(() => {
+            if (untrack(() => props.isOpen) && initialFocus.isConnected) {
+              initialFocus.focus()
+            }
+          })
         }}
       >
         <Show
