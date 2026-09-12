@@ -1,97 +1,15 @@
 import {
-  Accessor,
-  createContext,
+  type Accessor,
   createEffect,
   createMemo,
   createSignal,
   mergeProps,
-  ParentProps,
-  Setter,
+  type Setter,
   untrack,
-  useContext,
 } from 'solid-js'
-import {MusicInfo} from 'src/components/midi-player/SFileItem'
-import {RepeatType} from 'src/components/midi-player/types'
-import {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/instruments'
-
-export interface MidiPlayerContextProps {
-  handleAddPlayItem: (musics: MusicInfo[]) => void
-  handleChangeRepeat: (value: RepeatType) => void
-  handleDelete: (id: string) => void
-  /**
-   * Play the music
-   * if id is not provided, play selected music
-   * @param id - The id of the music to play
-   */
-  handlePlay: (id?: string) => void
-  handleResume: () => void
-  handleSeek: (time: number) => void
-  handleSelect: (id: string) => void
-  handleStop: () => void
-  handleSuspend: () => void
-  handleTryRepeat: () => void
-  isPlaying: Accessor<boolean>
-  isSuspend: Accessor<boolean>
-  playList: Accessor<MusicInfo[]>
-  playedTime: Accessor<number>
-  playingId: Accessor<string>
-  repeat: Accessor<RepeatType>
-  selectedId: Accessor<string>
-  totalDuration: Accessor<number>
-}
-
-export interface MidiPlayerProviderProps extends ParentProps {
-  initMusics?: MusicInfo[]
-  onMusicsChange?: (musics: MusicInfo[]) => void
-  onSetting?: () => void
-  pianoController?: SplendidGrandPianoController
-  playState?: SplendidGrandPianoState
-}
-
-export const MidiPlayerContext = createContext<MidiPlayerContextProps>({
-  handleAddPlayItem: () => {
-    //
-  },
-  handleChangeRepeat: () => {
-    //
-  },
-  handleDelete: () => {
-    //
-  },
-  handlePlay: () => {
-    //
-  },
-  handleResume: () => {
-    //
-  },
-  handleSeek: () => {
-    //
-  },
-  handleSelect: () => {
-    //
-  },
-  handleStop: () => {
-    //
-  },
-  handleSuspend: () => {
-    //
-  },
-  handleTryRepeat: () => {
-    //
-  },
-  isPlaying: () => false,
-  isSuspend: () => false,
-  playedTime: () => 0,
-  playingId: () => '',
-  playList: () => [],
-  repeat: () => 'no' as const,
-  selectedId: () => '',
-  totalDuration: () => 0,
-})
-
-export const useMidiPlayer = () => {
-  return useContext(MidiPlayerContext)
-}
+import type {MusicInfo} from './SFileItem'
+import type {MidiPlayerContextProps, MidiPlayerProviderProps, RepeatType} from './types'
+import type {SplendidGrandPianoState} from 'src/use/instruments'
 
 interface MergedMidiPlayerProviderProps extends MidiPlayerProviderProps {
   playState: SplendidGrandPianoState
@@ -342,7 +260,7 @@ function useMidiPlayerDerived(core: MidiPlayerCore): MidiPlayerDerived {
   }
 }
 
-export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
+export const useMidiPlayerState = (props: MidiPlayerProviderProps): MidiPlayerContextProps => {
   const defaultProps = mergeProps(
     {
       playState: {
@@ -390,7 +308,5 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     totalDuration: derived.totalDuration,
   }
 
-  return (
-    <MidiPlayerContext.Provider value={contextValue}>{props.children}</MidiPlayerContext.Provider>
-  )
+  return contextValue
 }

@@ -4,7 +4,9 @@
 import {render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
-import {type MidiPlayerContextProps, MidiPlayerProvider, useMidiPlayer} from '../context'
+import {type MidiPlayerContextProps} from '../types'
+import {MidiPlayerProvider} from '../MidiPlayerProvider'
+import {useMidiPlayer} from '../use-midi-player'
 import type {MusicInfo} from '../SFileItem'
 import type {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/instruments'
 
