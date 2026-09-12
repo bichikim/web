@@ -5,7 +5,7 @@ import {type Accessor, createMemo, createSignal, createUniqueId, type Setter, Sh
 
 import * as m from '@paraglide/message'
 
-import type {CalendarEvent} from '../features/calendar'
+import {type CalendarEvent, getLegacyEventId} from '../features/calendar'
 import {usePEvents} from '../features/focus-room-dialogue'
 import {
   createMemoryMemo,
@@ -56,6 +56,7 @@ interface CalendarAlarmControlProps {
 
 interface CalendarAlarmController {
   readonly active: Accessor<boolean>
+  readonly legacyAlarm: Accessor<boolean>
   readonly date: Accessor<string>
   readonly message: Accessor<string | null>
   readonly pending: Accessor<boolean>
@@ -89,6 +90,18 @@ const useCalendarAlarmController = (
   const [message, setMessage] = createSignal<string | null>(null)
   const [pending, setPending] = createSignal(false)
   const storedMemo = createMemo(() => memos().find((memo) => memo.id === alarmId()))
+  const legacyAlarm = createMemo(() => {
+    const legacyId = getLegacyEventId(event())
+    return (
+      legacyId !== null &&
+      memos().some(
+        (memo) =>
+          memo.id === getMemoId(legacyId) &&
+          memo.nextExactReminderAt !== null &&
+          memo.deletionPending !== true,
+      )
+    )
+  })
   const activeAlarm = createMemo(() => {
     const exactReminderAt = storedMemo()?.exactReminderAt
     return exactReminderAt !== null && exactReminderAt !== undefined
@@ -202,6 +215,7 @@ const useCalendarAlarmController = (
   return {
     active: activeAlarm,
     date,
+    legacyAlarm,
     message,
     pending,
     popoverAnchor,
@@ -278,6 +292,12 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
         <p class="mb-4 mt-0 text-modal-detail leading-5 text-muted-foreground">
           {m.calendar_alarm_description()}
         </p>
+
+        <Show when={alarm.legacyAlarm()}>
+          <p class="mb-4 mt-0 text-sm text-danger" role="status">
+            {m.calendar_alarm_legacy_notice()}
+          </p>
+        </Show>
 
         <div class="grid grid-cols-1 gap-3">
           <label class="grid gap-1.5 text-sm font-650">

@@ -39,3 +39,14 @@ it('should preserve truncation when restoring cached events', () => {
   writeCalendarMonthCache(range, {...calendar, truncated: true})
   expect(readCalendarMonthCache(range)?.truncated).toBe(true)
 })
+
+it('should ignore the previous cache version with unscoped Google event IDs', () => {
+  sessionStorage.setItem(
+    'pomo:calendar-month-cache:v1',
+    JSON.stringify({
+      entries: [{key: JSON.stringify([range.start, range.end, range.timeZone]), value: calendar}],
+      version: 1,
+    }),
+  )
+  expect(readCalendarMonthCache(range)).toBeNull()
+})

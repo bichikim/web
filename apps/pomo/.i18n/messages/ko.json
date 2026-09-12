@@ -791,6 +791,7 @@
   "calendar_alarm_button": "알람",
   "calendar_alarm_button_active": "알람 수정",
   "calendar_alarm_title": "일정 알람",
+  "calendar_alarm_legacy_notice": "이전 일정 알람이 별도로 남아 있어요. 새 알람과 중복될 수 있으니 기억 도우미의 메모 목록에서 확인하거나 해제해 주세요.",
   "calendar_alarm_description": "앱 화면이 열려 있으면 지정한 때 대화와 음성으로 알려줘요.",
   "calendar_alarm_date": "날짜",
   "calendar_alarm_time": "시간",

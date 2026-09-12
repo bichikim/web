@@ -4,7 +4,7 @@ import {CALENDAR_PROVIDERS, type CalendarEventRange} from './types'
 import type {CalendarEvents} from './client'
 
 const STORAGE_KEY = 'pomo:calendar-month-cache:v1'
-const CACHE_VERSION = 1
+const CACHE_VERSION = 2
 const MAXIMUM_CACHED_MONTHS = 6
 
 export interface CalendarMonthRange extends CalendarEventRange {
