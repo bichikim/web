@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {createEffect, onMount, Show} from 'solid-js'
+import {createEffect, createSignal, onMount, Show} from 'solid-js'
 
 import {POverflowMarquee} from './POverflowMarquee'
 import * as m from '@paraglide/message'
@@ -11,7 +11,7 @@ const CLASSES = {
     'pr-[max(1.5rem,_var(--pomo-safe-area-inset-right))]',
     'pb-[max(1.5rem,_var(--pomo-safe-area-inset-bottom))]',
     'pl-[max(1.5rem,_var(--pomo-safe-area-inset-left))]',
-    'text-[rgb(255_255_255_/_48%)] cursor-pointer outline-none overscroll-none',
+    'text-[rgb(255_255_255_/_48%)] cursor-pointer pointer-events-auto outline-none overscroll-none',
     '[&::backdrop]:bg-[#000]',
   ),
   screenSaverContent: cx(
@@ -67,13 +67,19 @@ export interface PScreenSaverTrack {
 }
 
 export const PScreenSaver = (props: PScreenSaverProps) => {
-  let dialogElement: HTMLDialogElement | undefined
+  const [dialogElement, setDialogElement] = createSignal<HTMLDialogElement | null>(null)
 
   const handleDismiss = () => {
-    if (dialogElement?.open) {
-      dialogElement.close()
+    const dialog = dialogElement()
+    if (dialog?.open) {
+      dialog.close()
     }
     props.onDismiss?.()
+  }
+
+  const handleCancel = (event: Event) => {
+    event.preventDefault()
+    handleDismiss()
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -82,17 +88,24 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
     handleDismiss()
   }
 
+  const handlePointerDown = (event: PointerEvent) => {
+    // Keep the pointer default action from clearing focus restored by dialog.close().
+    event.preventDefault()
+    handleDismiss()
+  }
+
   onMount(() => {
     createEffect(() => {
+      const dialog = dialogElement()
       if (props.isActive ?? false) {
-        if (!dialogElement?.open) {
-          dialogElement?.showModal()
+        if (!dialog?.open) {
+          dialog?.showModal()
         }
         return
       }
 
-      if (dialogElement?.open) {
-        dialogElement.close()
+      if (dialog?.open) {
+        dialog.close()
       }
     })
   })
@@ -101,15 +114,11 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
     <dialog
       aria-label={m.screen_saver_label()}
       class={CLASSES.screenSaver}
-      onCancel={(event) => {
-        event.preventDefault()
-        handleDismiss()
-      }}
+      data-kb-top-layer=""
+      onCancel={handleCancel}
       onKeyDown={handleKeyDown}
-      onPointerDown={handleDismiss}
-      ref={(element) => {
-        dialogElement = element
-      }}
+      onPointerDown={handlePointerDown}
+      ref={setDialogElement}
     >
       <div class={CLASSES.screenSaverSafeArea}>
         <div class={CLASSES.screenSaverContent}>
