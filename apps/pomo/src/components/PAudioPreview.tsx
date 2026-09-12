@@ -21,6 +21,13 @@ export interface PAudioPreviewProps {
   readonly autoplay?: boolean
   readonly class?: string
   readonly loading?: boolean
+  readonly onPauseRequest?: () => void
+  readonly onBeforePlayback?: (
+    time: number,
+    playing: boolean,
+    operation: 'play' | 'seek',
+  ) => boolean
+  readonly onLoadedMetadata?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
   readonly onCanPlay?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
   readonly onEnded?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
   readonly onError?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
@@ -58,7 +65,12 @@ export const PAudioPreview = (props: PAudioPreviewProps) => {
       when={props.src}
     >
       {(source) => (
-        <AudioPlayer.Root autoplay={props.autoplay} paused={props.paused}>
+        <AudioPlayer.Root
+          autoplay={props.autoplay}
+          onBeforePlayback={props.onBeforePlayback}
+          onPauseRequest={props.onPauseRequest}
+          paused={props.paused}
+        >
           <div
             class={cx(
               PREVIEW_CLASSES,
@@ -71,6 +83,7 @@ export const PAudioPreview = (props: PAudioPreviewProps) => {
               onCanPlay={props.onCanPlay}
               onEnded={props.onEnded}
               onError={props.onError}
+              onLoadedMetadata={props.onLoadedMetadata}
               onPause={props.onPause}
               onPlay={props.onPlay}
               preload={props.preload ?? 'metadata'}
