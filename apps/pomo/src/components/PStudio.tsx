@@ -192,11 +192,21 @@ const StudioOverlay = (props: StudioOverlayProps) => (
         props.screenSaver.isActive()
       }
       isMusicPlaying={
-        props.displayPreferences.playerVisible() && props.screenSaver.isMusicPlaying()
+        props.displayPreferences.isReady() &&
+        props.displayPreferences.playerVisible() &&
+        props.screenSaver.isMusicPlaying()
       }
       onDismiss={props.screenSaver.onDismiss}
-      timer={props.displayPreferences.pomodoroVisible() ? props.screenSaver.timer() : undefined}
-      track={props.displayPreferences.playerVisible() ? props.screenSaver.currentTrack() : null}
+      timer={
+        props.displayPreferences.isReady() && props.displayPreferences.pomodoroVisible()
+          ? props.screenSaver.timer()
+          : undefined
+      }
+      track={
+        props.displayPreferences.isReady() && props.displayPreferences.playerVisible()
+          ? props.screenSaver.currentTrack()
+          : null
+      }
     />
   </>
 )
