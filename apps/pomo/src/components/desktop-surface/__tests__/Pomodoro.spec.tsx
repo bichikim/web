@@ -13,8 +13,13 @@ import {supportsPSceneGyroscope, usePSceneStyle} from '../../../features/focus-r
 import {usePScenePreferences} from '../../../features/focus-room-scene-preferences'
 import {useScreenSaver} from '../../../features/screen-saver'
 import {useWeather, type WeatherLocation} from '../../../features/weather'
+import {usePDisplayPreferences} from '../../../features/focus-room-display-preferences'
 import {PPomodoro} from '../../PPomodoro'
 import {DesktopPomodoro} from '../Pomodoro'
+
+vi.mock('../../../features/focus-room-display-preferences', () => ({
+  usePDisplayPreferences: vi.fn(),
+}))
 
 vi.mock('@solidjs/meta', () => ({Title: (props: {readonly children?: unknown}) => props.children}))
 vi.mock('../../../features/focus-room-animation', () => ({
@@ -108,6 +113,21 @@ let mode: 'desktop' | 'normal' = 'desktop'
 beforeEach(() => {
   vi.useFakeTimers()
   vi.clearAllMocks()
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    dialogueComposerVisible: () => false,
+    isReady: () => true,
+    memoryAssistVisible: () => true,
+    onDialogueComposerVisibleChange: vi.fn(),
+    onMemoryAssistVisibleChange: vi.fn(),
+    onPlayerVisibleChange: vi.fn(),
+    onPomodoroVisibleChange: vi.fn(),
+    onToolsButtonVisibleChange: vi.fn(),
+    onTourButtonVisibleChange: vi.fn(),
+    playerVisible: () => true,
+    pomodoroVisible: () => true,
+    toolsButtonVisible: () => true,
+    tourButtonVisible: () => true,
+  })
   mode = 'desktop'
   vi.mocked(useDesktopMode).mockImplementation(() => ({
     error: () => null,
@@ -166,5 +186,25 @@ it('should synchronize scene style and hide a non-desktop surface', () => {
   view.unmount()
   mode = 'normal'
   render(() => <DesktopPomodoro />)
+  expect(screen.queryByText('포모도로')).not.toBeInTheDocument()
+})
+
+it('should wait for preferences and honor restored visibility', () => {
+  const [ready, setReady] = createSignal(false)
+  const [visible, setVisible] = createSignal(true)
+  const preferences = usePDisplayPreferences()
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    ...preferences,
+    isReady: ready,
+    pomodoroVisible: visible,
+  })
+  render(() => <DesktopPomodoro />)
+  expect(screen.queryByText('포모도로')).not.toBeInTheDocument()
+  setVisible(false)
+  setReady(true)
+  expect(screen.queryByText('포모도로')).not.toBeInTheDocument()
+  setVisible(true)
+  expect(screen.getByText('포모도로')).toBeInTheDocument()
+  setVisible(false)
   expect(screen.queryByText('포모도로')).not.toBeInTheDocument()
 })
