@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {PInput} from 'src/components/PInput'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createMemo, createSignal, createUniqueId, type Setter, Show} from 'solid-js'
@@ -26,7 +27,6 @@ const INPUT_CLASSES = cx(
   'focus-visible:border-highlight focus-visible:shadow-focus',
 )
 
-const getDateInputValue = (date: Date) => dayjs(date).format('YYYY-MM-DD')
 const getTimeInputValue = (date: Date) => dayjs(date).format('HH:mm')
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
 const systemNow = () => new Date()
@@ -100,7 +100,7 @@ const useCalendarAlarmController = (
       storedAlarmAt === null || storedAlarmAt === undefined
         ? getEventAlarmAt(event(), defaultAlarmDate())
         : new Date(storedAlarmAt)
-    setDate(getDateInputValue(alarmAt))
+    setDate(formatLocalDate(alarmAt))
     setTime(getTimeInputValue(alarmAt))
     setMessage(null)
   }
@@ -285,7 +285,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
             <PInput
               unstyled
               class={INPUT_CLASSES}
-              min={getDateInputValue(clock())}
+              min={formatLocalDate(clock())}
               onInput={(event) => alarm.setDate(event.currentTarget.value)}
               type="date"
               value={alarm.date()}

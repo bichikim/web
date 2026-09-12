@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import {type TextGenerationRuntime, type TextModelId, trimRepetitiveTail} from '../text-generation'
 import {normalizeKoreanSpeechStyle} from './answer'
 import {createForeignTokenIds} from './foreign-tokens'
@@ -21,14 +23,6 @@ const getTextRuntime = () => {
   return textRuntimePromise
 }
 let suppressedTokenIds: Array<number> | undefined
-
-const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message
-  }
-
-  return '대화문 모델을 실행하지 못했어요.'
-}
 
 const prepareModel = async (modelId: TextModelId) => {
   const textRuntime = await getTextRuntime()
@@ -77,6 +71,10 @@ const handleRequest = (request: DialogueWorkerRequest): Promise<void> => {
 
 workerScope.addEventListener('message', (event: MessageEvent<DialogueWorkerRequest>) => {
   handleRequest(event.data).catch((error: unknown) => {
-    sendResponse({message: getErrorMessage(error), restartRequired: false, type: 'error'})
+    sendResponse({
+      message: getErrorMessage(error, '대화문 모델을 실행하지 못했어요.'),
+      restartRequired: false,
+      type: 'error',
+    })
   })
 })

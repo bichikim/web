@@ -1,4 +1,6 @@
 // oxlint-disable no-await-in-loop -- A response stream must be read and size-checked in order.
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import type {FeedGenerationSettings} from './generation-settings'
 import type {FeedConnection} from './schema'
 import {
@@ -57,8 +59,6 @@ export interface FeedSyncSummary {
   readonly successfulConnections: number
 }
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error && error.message.length > 0 ? error.message : '피드를 가져오지 못했어요.'
 const readResponseText = async (response: Response, maximumBytes: number) => {
   const contentLength = Number(response.headers.get('content-length'))
 
@@ -187,7 +187,7 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     const item = {
       ...recordBase,
       contentLength: 0,
-      message: getErrorMessage(error),
+      message: getErrorMessage(error, '피드를 가져오지 못했어요.'),
       status: 'failed' as const,
     } satisfies FeedItemRecord
     await options.repository.saveItems([item])
@@ -368,7 +368,14 @@ export const synchronizeFeeds = async (
   )
   const queuedJobIds = results.flatMap((result) => (result.ok ? result.jobIds : []))
   const failures = results.flatMap((result) =>
-    result.ok ? [] : [{connectionId: result.connection.id, message: getErrorMessage(result.error)}],
+    result.ok
+      ? []
+      : [
+          {
+            connectionId: result.connection.id,
+            message: getErrorMessage(result.error, '피드를 가져오지 못했어요.'),
+          },
+        ],
   )
 
   return {

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
 import {
   type CalendarEvent,
@@ -60,8 +61,6 @@ interface CalendarMonthRequest {
   readonly revision: number
 }
 
-const createLocalDateKey = (date: Date) => dayjs(date).format('YYYY-MM-DD')
-
 const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay | null>> => {
   const start = dayjs(month).startOf('month')
   const daysInMonth = start.daysInMonth()
@@ -73,7 +72,7 @@ const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay |
     ...Array.from({length: daysInMonth}, (_, index) => {
       const number = index + 1
       const date = start.date(number).toDate()
-      return {date, key: createLocalDateKey(date), number}
+      return {date, key: formatLocalDate(date), number}
     }),
     ...Array.from({length: trailingDays}, () => null),
   ]
@@ -179,9 +178,9 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     )
     return groupCalendarEvents(result.events, visibleDates, result.timeZone)
   })
-  const selectedKey = createMemo(() => createLocalDateKey(selectedDate()))
+  const selectedKey = createMemo(() => formatLocalDate(selectedDate()))
   const selectedEvents = createMemo(() => eventsByDay().get(selectedKey()) ?? [])
-  const todayKey = createLocalDateKey(today)
+  const todayKey = formatLocalDate(today)
   const refreshFailed = createMemo(() => {
     const result = calendarResult.latest
     return (
