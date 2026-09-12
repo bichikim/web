@@ -1,7 +1,7 @@
 import type {useUiAutoHide} from 'src/features/ui-auto-hide'
 import type {BackgroundController} from 'src/features/background'
 import {cx} from 'class-variance-authority'
-import {Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 import {useToolbarWrap} from './use-toolbar-wrap'
 import {getPomoIconClass} from '../icon-style'
 import {
@@ -79,7 +79,8 @@ interface SceneToolbarProps {
 }
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
-  const wrapping = useToolbarWrap()
+  const [actions, setActions] = createSignal<HTMLDivElement | null>(null)
+  const wrap = useToolbarWrap(actions)
   return (
     <div
       class={cx(
@@ -87,8 +88,8 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       )}
     >
       <div
-        ref={wrapping.setElement}
-        data-wrap={wrapping.wrap() ? '' : undefined}
+        ref={setActions}
+        data-wrap={wrap() ? '' : undefined}
         class={cx(
           'pomo-toolbar-actions flex flex-wrap justify-end gap-2',
           '[&:not([data-wrap])>.pomo-toolbar-secondary]:order-first [&_button[data-icon-only]]:rounded-full',
