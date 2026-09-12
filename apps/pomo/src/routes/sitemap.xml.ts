@@ -1,6 +1,6 @@
 import type {APIEvent} from '@solidjs/start/server'
 
-import {createSitemapResponse} from 'src/features/search-discovery'
+import {createSitemapResponse} from 'src/server/search-discovery/create-sitemap-response'
 
 export const GET = (event: APIEvent): Response => createSitemapResponse(event.request)
 

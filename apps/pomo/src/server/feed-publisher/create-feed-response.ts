@@ -1,12 +1,14 @@
 import {createHash} from 'node:crypto'
 
-import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../../server/http/headers'
-
-import type {FeedFormat, FeedProvider} from './contract'
-import type {FeedRegistry} from './feed-registry'
-import {normalizeFeed} from './normalize-feed'
-import {renderAtom} from './render-atom'
-import {renderRss} from './render-rss'
+import {
+  type FeedFormat,
+  type FeedProvider,
+  type FeedRegistry,
+  normalizeFeed,
+  renderAtom,
+  renderRss,
+} from 'src/features/feed-publisher'
+import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../http/headers'
 
 const BYTES_PER_KIBIBYTE = 1024
 const MAX_DOCUMENT_KIBIBYTES = 512
