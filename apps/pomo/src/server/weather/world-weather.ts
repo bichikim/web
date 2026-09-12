@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {type WeatherFeed, type WeatherLocationId} from 'src/features/weather'
 import {type Database, getDatabase, withTransactionalDatabase} from '../database'
 import {fetchOpenWeatherCurrent} from './openweather-client'

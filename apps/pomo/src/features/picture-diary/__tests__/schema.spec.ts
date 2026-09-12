@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {describe, expect, it} from 'vitest'
 
 import {createPictureDiaryEntry, parsePictureDiaryEntries, sortPictureDiaryEntries} from '../schema'

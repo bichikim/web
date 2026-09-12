@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {LEGACY_WEATHER_LOCATIONS} from '../locations'
@@ -18,16 +19,16 @@ const disabledPreference = {
 } as const
 
 const createStorageHarness = () => {
-  const nativeValues = new Map<string, unknown>()
+  const tossValues = new Map<string, unknown>()
   const webValues = new Map<string, unknown>()
   const storage = {
-    isNative: vi.fn(() => false),
-    readNative: vi.fn<(key: string) => Promise<unknown | null>>(async (key) => {
-      return nativeValues.get(key) ?? null
+    readToss: vi.fn<(key: string) => Promise<unknown | null>>(async (key) => {
+      return tossValues.get(key) ?? null
     }),
     readWeb: vi.fn<(key: string) => unknown | null>((key) => webValues.get(key) ?? null),
-    writeNative: vi.fn(async (key: string, value: unknown) => {
-      nativeValues.set(key, value)
+    usesTossStorage: vi.fn(() => false),
+    writeToss: vi.fn(async (key: string, value: unknown) => {
+      tossValues.set(key, value)
     }),
     writeWeb: vi.fn((key: string, value: unknown) => {
       webValues.set(key, value)
@@ -35,20 +36,20 @@ const createStorageHarness = () => {
   } satisfies WeatherPreferenceStorage
 
   return {
-    nativeValues,
     repository: createWeatherPreferenceRepository({storage}),
     storage,
+    tossValues,
     webValues,
   }
 }
 
-let nativeValues: Map<string, unknown>
+let tossValues: Map<string, unknown>
 let repository: WeatherPreferenceRepository
 let storage: ReturnType<typeof createStorageHarness>['storage']
 let webValues: Map<string, unknown>
 
 beforeEach(() => {
-  ;({nativeValues, repository, storage, webValues} = createStorageHarness())
+  ;({tossValues, repository, storage, webValues} = createStorageHarness())
 })
 
 it('should use the default when browser storage is missing or invalid', async () => {
@@ -96,30 +97,30 @@ it('should persist and restore a browser preference', async () => {
 
   await expect(repository.read()).resolves.toEqual(disabledPreference)
   expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
-  expect(storage.writeNative).not.toHaveBeenCalled()
+  expect(storage.writeToss).not.toHaveBeenCalled()
 })
 
-it('should restore a native preference and rebuild the browser copy', async () => {
-  storage.isNative.mockReturnValue(true)
-  nativeValues.set(STORAGE_KEY, disabledPreference)
+it('should restore a toss preference and rebuild the browser copy', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
+  tossValues.set(STORAGE_KEY, disabledPreference)
 
   await expect(repository.read()).resolves.toEqual(disabledPreference)
   expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
-it('should replace a stale browser copy with the native preference', async () => {
-  storage.isNative.mockReturnValue(true)
+it('should replace a stale browser copy with the toss preference', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
   webValues.set(STORAGE_KEY, DEFAULT_WEATHER_PREFERENCE)
-  nativeValues.set(STORAGE_KEY, disabledPreference)
+  tossValues.set(STORAGE_KEY, disabledPreference)
 
   await expect(repository.read()).resolves.toEqual(disabledPreference)
-  expect(storage.readNative).toHaveBeenCalledWith(STORAGE_KEY)
+  expect(storage.readToss).toHaveBeenCalledWith(STORAGE_KEY)
   expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
-it('should migrate a native legacy city preference', async () => {
-  storage.isNative.mockReturnValue(true)
-  nativeValues.set(LEGACY_STORAGE_KEY, {
+it('should migrate a toss legacy city preference', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
+  tossValues.set(LEGACY_STORAGE_KEY, {
     citySlug: 'jeju',
     enabled: false,
     sceneMode: 'snow',
@@ -132,53 +133,53 @@ it('should migrate a native legacy city preference', async () => {
   })
 })
 
-it('should use defaults when native storage is empty or invalid', async () => {
-  storage.isNative.mockReturnValue(true)
+it('should use defaults when toss storage is empty or invalid', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
   webValues.set(STORAGE_KEY, disabledPreference)
-  nativeValues.set(LEGACY_STORAGE_KEY, {})
+  tossValues.set(LEGACY_STORAGE_KEY, {})
 
   await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
   expect(webValues.get(STORAGE_KEY)).toEqual(DEFAULT_WEATHER_PREFERENCE)
   await expect(repository.read()).resolves.toEqual(DEFAULT_WEATHER_PREFERENCE)
 })
 
-it('should mirror a preference to native storage', async () => {
-  storage.isNative.mockReturnValue(true)
+it('should mirror a preference to toss storage', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
 
   await repository.write(disabledPreference)
 
-  expect(storage.writeNative).toHaveBeenCalledWith(STORAGE_KEY, disabledPreference)
-  expect(nativeValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+  expect(storage.writeToss).toHaveBeenCalledWith(STORAGE_KEY, disabledPreference)
+  expect(tossValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
-it('should persist through native storage when browser storage fails', async () => {
-  storage.isNative.mockReturnValue(true)
+it('should persist through toss storage when browser storage fails', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
   webValues.set(STORAGE_KEY, DEFAULT_WEATHER_PREFERENCE)
   storage.writeWeb.mockImplementationOnce(() => {
     throw new Error('Browser storage unavailable')
   })
 
   await expect(repository.write(disabledPreference)).resolves.toBeUndefined()
-  expect(nativeValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+  expect(tossValues.get(STORAGE_KEY)).toEqual(disabledPreference)
   await expect(repository.read()).resolves.toEqual(disabledPreference)
   expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
-it('should reject a native save when native storage fails', async () => {
-  storage.isNative.mockReturnValue(true)
-  storage.writeNative.mockRejectedValue(new Error('Native storage unavailable'))
+it('should reject a toss save when toss storage fails', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
+  storage.writeToss.mockRejectedValue(new Error('Toss storage unavailable'))
 
   await expect(repository.write(disabledPreference)).rejects.toThrow(
     'Failed to persist weather preference.',
   )
 })
 
-it('should reject a native save when both storage writes fail', async () => {
-  storage.isNative.mockReturnValue(true)
+it('should reject a toss save when both storage writes fail', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
   storage.writeWeb.mockImplementation(() => {
     throw new Error('Browser storage unavailable')
   })
-  storage.writeNative.mockRejectedValue(new Error('Native storage unavailable'))
+  storage.writeToss.mockRejectedValue(new Error('Toss storage unavailable'))
 
   await expect(repository.write(disabledPreference)).rejects.toThrow(
     'Failed to persist weather preference.',
@@ -195,18 +196,18 @@ it('should reject a browser save when browser storage fails', async () => {
   )
 })
 
-it('should reject a native read failure instead of using the browser copy', async () => {
-  storage.isNative.mockReturnValue(true)
+it('should reject a toss read failure instead of using the browser copy', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
   webValues.set(STORAGE_KEY, disabledPreference)
-  storage.readNative.mockRejectedValue(new Error('Native storage unavailable'))
+  storage.readToss.mockRejectedValue(new Error('Toss storage unavailable'))
 
   await expect(repository.read()).rejects.toThrow('Failed to read weather preference.')
 })
 
-it('should not let a pending native read replace a newer preference', async () => {
-  storage.isNative.mockReturnValue(true)
+it('should not let a pending toss read replace a newer preference', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
   let completeRead: (value: unknown) => void = () => undefined
-  storage.readNative.mockReturnValueOnce(
+  storage.readToss.mockReturnValueOnce(
     new Promise<unknown>((resolve) => {
       completeRead = resolve
     }),
@@ -220,14 +221,14 @@ it('should not let a pending native read replace a newer preference', async () =
   expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 
-it('should preserve native write order during rapid preference changes', async () => {
-  storage.isNative.mockReturnValue(true)
-  const nativeWrites: unknown[] = []
+it('should preserve toss write order during rapid preference changes', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
+  const tossWrites: unknown[] = []
   let completeFirstWrite: () => void = () => undefined
-  storage.writeNative.mockImplementation(async (_key, value) => {
-    nativeWrites.push(value)
+  storage.writeToss.mockImplementation(async (_key, value) => {
+    tossWrites.push(value)
 
-    if (nativeWrites.length === 1) {
+    if (tossWrites.length === 1) {
       await new Promise<void>((resolve) => {
         completeFirstWrite = resolve
       })
@@ -236,36 +237,36 @@ it('should preserve native write order during rapid preference changes', async (
 
   const firstWrite = repository.write(disabledPreference)
   const secondWrite = repository.write(DEFAULT_WEATHER_PREFERENCE)
-  await vi.waitFor(() => expect(nativeWrites.length).toBeGreaterThan(0))
+  await vi.waitFor(() => expect(tossWrites.length).toBeGreaterThan(0))
 
-  expect(nativeWrites).toEqual([disabledPreference])
+  expect(tossWrites).toEqual([disabledPreference])
   completeFirstWrite()
   await Promise.all([firstWrite, secondWrite])
-  expect(nativeWrites).toEqual([disabledPreference, DEFAULT_WEATHER_PREFERENCE])
+  expect(tossWrites).toEqual([disabledPreference, DEFAULT_WEATHER_PREFERENCE])
 })
 
-it('should wait for an active native write before reading the preference', async () => {
-  storage.isNative.mockReturnValue(true)
-  nativeValues.set(STORAGE_KEY, DEFAULT_WEATHER_PREFERENCE)
+it('should wait for an active toss write before reading the preference', async () => {
+  storage.usesTossStorage.mockReturnValue(true)
+  tossValues.set(STORAGE_KEY, DEFAULT_WEATHER_PREFERENCE)
   let completeWrite: () => void = () => undefined
-  storage.writeNative.mockImplementation(
+  storage.writeToss.mockImplementation(
     (key, value) =>
       new Promise((resolve) => {
         completeWrite = () => {
-          nativeValues.set(key, value)
+          tossValues.set(key, value)
           resolve()
         }
       }),
   )
 
   const pendingWrite = repository.write(disabledPreference)
-  await vi.waitFor(() => expect(storage.writeNative).toHaveBeenCalledOnce())
+  await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
   const pendingRead = repository.read()
   completeWrite()
 
   await expect(pendingWrite).resolves.toBeUndefined()
   await expect(pendingRead).resolves.toEqual(disabledPreference)
-  expect(storage.readNative).toHaveBeenCalledOnce()
+  expect(storage.readToss).toHaveBeenCalledOnce()
 })
 
 const storedLocation = {
@@ -278,18 +279,18 @@ const storedPreference = {...DEFAULT_WEATHER_PREFERENCE, location: storedLocatio
 const restoredLocation = {...storedLocation, names: {en: 'New York', ko: '뉴욕'}}
 
 it.each([false, true])(
-  'should persist restored names through the repository with native=%s',
-  async (native) => {
-    storage.isNative.mockReturnValue(native)
+  'should persist restored names through the repository with toss=%s',
+  async (toss) => {
+    storage.usesTossStorage.mockReturnValue(toss)
     webValues.set(STORAGE_KEY, storedPreference)
-    nativeValues.set(STORAGE_KEY, storedPreference)
+    tossValues.set(STORAGE_KEY, storedPreference)
     const restoreLocation = vi.fn().mockResolvedValue(restoredLocation)
     const restoring = createWeatherPreferenceRepository({restoreLocation, storage})
     expect(await restoring.read()).toEqual({...storedPreference, location: restoredLocation})
     expect(restoreLocation).toHaveBeenCalledWith(storedLocation)
     expect(webValues.get(STORAGE_KEY)).toEqual({...storedPreference, location: restoredLocation})
-    if (native) {
-      expect(nativeValues.get(STORAGE_KEY)).toEqual(webValues.get(STORAGE_KEY))
+    if (toss) {
+      expect(tossValues.get(STORAGE_KEY)).toEqual(webValues.get(STORAGE_KEY))
     }
   },
 )
@@ -347,24 +348,24 @@ it('should avoid writing when lookup does not enrich the stored city', async () 
 })
 
 it('should return a newer selection written while restored names are being persisted', async () => {
-  storage.isNative.mockReturnValue(true)
-  nativeValues.set(STORAGE_KEY, storedPreference)
+  storage.usesTossStorage.mockReturnValue(true)
+  tossValues.set(STORAGE_KEY, storedPreference)
   const pending = Promise.withResolvers<void>()
-  storage.writeNative.mockImplementationOnce(async (key, value) => {
+  storage.writeToss.mockImplementationOnce(async (key, value) => {
     await pending.promise
-    nativeValues.set(key, value)
+    tossValues.set(key, value)
   })
   const restoring = createWeatherPreferenceRepository({
     restoreLocation: async () => restoredLocation,
     storage,
   })
   const reading = restoring.read()
-  await vi.waitFor(() => expect(storage.writeNative).toHaveBeenCalledOnce())
+  await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
   const selection = restoring.write(disabledPreference)
   pending.resolve()
   await selection
   expect(await reading).toEqual(disabledPreference)
-  expect(nativeValues.get(STORAGE_KEY)).toEqual(disabledPreference)
+  expect(tossValues.get(STORAGE_KEY)).toEqual(disabledPreference)
   expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
 })
 

@@ -1,3 +1,4 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
@@ -27,7 +28,7 @@ export const useScreenSaver = (): ScreenSaverController => {
       setIsActive(false)
     }
 
-    const currentTime = performance.now()
+    const currentTime = getMonotonicTime()
     if (!wasActive && currentTime - lastActivityTime < ACTIVITY_THROTTLE_MILLISECONDS) {
       return
     }
@@ -86,8 +87,8 @@ export const useScreenSaver = (): ScreenSaverController => {
         return
       }
 
-      const timeout = window.setTimeout(() => setIsActive(true), delayMilliseconds)
-      onCleanup(() => window.clearTimeout(timeout))
+      const timeout = globalThis.setTimeout(() => setIsActive(true), delayMilliseconds)
+      onCleanup(() => globalThis.clearTimeout(timeout))
     })
 
     onCleanup(() => {

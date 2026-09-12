@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {
   MEMORY_REINFORCEMENT_INTERVALS,
   type MemoryMemo,
@@ -10,19 +12,10 @@ const DEFAULT_EXACT_REPEAT_INTERVAL_MINUTES = 10
 const DEFAULT_EXACT_REPEAT_UNTIL_MINUTES = 60
 const MILLISECONDS_PER_MINUTE = 60_000
 
-const padNumber = (value: number) => String(value).padStart(2, '0')
+const getTimeInputValue = (date: Date) => dayjs(date).format('HH:mm')
 
-export const getDateInputValue = (date: Date) =>
-  `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
-
-const getTimeInputValue = (date: Date) =>
-  `${padNumber(date.getHours())}:${padNumber(date.getMinutes())}`
-
-const getDefaultReminderDate = (now: Date) => {
-  const date = new Date(now.getTime() + DEFAULT_REMINDER_DELAY)
-  date.setSeconds(0, 0)
-  return date
-}
+const getDefaultReminderDate = (now: Date) =>
+  dayjs(now).add(DEFAULT_REMINDER_DELAY, 'millisecond').startOf('minute').toDate()
 
 export const resolveReminderAt = (
   day: ReminderDay,
@@ -30,13 +23,11 @@ export const resolveReminderAt = (
   time: string,
   now: Date,
 ) => {
-  const date = new Date(now)
+  const date = dayjs(now)
+    .add(day === 'tomorrow' ? 1 : 0, 'day')
+    .toDate()
 
-  if (day === 'tomorrow') {
-    date.setDate(date.getDate() + 1)
-  }
-
-  const dateValue = day === 'custom' ? customDate : getDateInputValue(date)
+  const dateValue = day === 'custom' ? customDate : formatLocalDate(date)
   const reminder = new Date(`${dateValue}T${time}`)
   return Number.isNaN(reminder.getTime()) ? null : reminder.toISOString()
 }
@@ -63,11 +54,9 @@ export const createReminderDraft = (options: CreateReminderDraftOptions): Remind
     options.exactReminderAt === null
       ? getDefaultReminderDate(options.now)
       : new Date(options.exactReminderAt)
-  const reminderDate = getDateInputValue(reminder)
-  const today = getDateInputValue(options.now)
-  const tomorrow = new Date(options.now)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowDate = getDateInputValue(tomorrow)
+  const reminderDate = formatLocalDate(reminder)
+  const today = formatLocalDate(options.now)
+  const tomorrowDate = dayjs(options.now).add(1, 'day').format('YYYY-MM-DD')
   const reminderDay =
     reminderDate === today ? 'today' : reminderDate === tomorrowDate ? 'tomorrow' : 'custom'
 

@@ -1,18 +1,11 @@
 import {Show} from 'solid-js'
-import {type MusicPlayerViewProps} from './shared'
+import type {MusicPlayerViewProps} from './types'
+import {TrackArtworkImage} from './TrackArtworkImage'
 
-export const TrackArtwork = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => (
+export interface TrackArtworkProps extends Pick<MusicPlayerViewProps, 'currentTrack'> {}
+
+export const TrackArtwork = (props: TrackArtworkProps) => (
   <Show keyed when={props.currentTrack?.artworkUrl}>
-    {(artworkUrl) => (
-      <img
-        alt=""
-        class="pomo-player__artwork size-11 shrink-0 rounded-control object-cover
-          player-compact:hidden"
-        onError={({currentTarget}) => {
-          currentTarget.hidden = true
-        }}
-        src={artworkUrl}
-      />
-    )}
+    {(source) => <TrackArtworkImage source={source} />}
   </Show>
 )

@@ -114,7 +114,11 @@ test.describe('client action workflows', () => {
     await expect(page.getByTestId('admin-result')).toHaveText(JSON.stringify({status: 'active'}))
     await page.getByRole('button', {name: 'Request admin playback'}).click()
     await expect(page.getByTestId('admin-result')).toHaveText(
-      JSON.stringify({status: 'granted', url: 'https://audio.example/admin.mp3'}),
+      JSON.stringify({
+        expiresAt: '2026-09-03T12:00:00.000Z',
+        status: 'granted',
+        url: 'https://audio.example/admin.mp3',
+      }),
     )
     await page.getByRole('button', {name: 'Remove track-one'}).click()
     await expect(page.getByTestId('admin-result')).toHaveText(JSON.stringify({status: 'succeeded'}))

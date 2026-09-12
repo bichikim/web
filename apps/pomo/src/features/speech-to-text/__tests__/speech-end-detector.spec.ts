@@ -1,3 +1,7 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {createBrowserSpeechEndDetector, createSpeechEndState} from '../speech-end-detector'
@@ -75,16 +79,16 @@ describe('createBrowserSpeechEndDetector', () => {
         return context
       }),
     )
-    vi.spyOn(performance, 'now').mockImplementation(() => timestamps.shift() ?? 900)
-    const setInterval = vi.spyOn(window, 'setInterval').mockImplementation((callback) => {
+    vi.mocked(getMonotonicTime).mockImplementation(() => timestamps.shift() ?? 900)
+    const setInterval = vi.spyOn(globalThis, 'setInterval').mockImplementation((callback) => {
       const run = callback as () => void
       run()
       run()
       run()
       run()
-      return 17 as unknown as ReturnType<typeof window.setInterval>
+      return 17 as unknown as ReturnType<typeof globalThis.setInterval>
     })
-    const clearInterval = vi.spyOn(window, 'clearInterval').mockImplementation(() => undefined)
+    const clearInterval = vi.spyOn(globalThis, 'clearInterval').mockImplementation(() => undefined)
 
     const detector = createBrowserSpeechEndDetector({} as MediaStream)
     const listener = vi.fn()

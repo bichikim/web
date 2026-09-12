@@ -8,7 +8,7 @@ import {
   type SupertonicAudioPlayer,
   type SupertonicClient,
 } from '../../supertonic'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import {type PViseme} from '../../lip-sync'
 
 vi.mock('solid-js', async () => {

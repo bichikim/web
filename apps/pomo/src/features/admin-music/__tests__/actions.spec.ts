@@ -192,6 +192,7 @@ describe('row and access actions', () => {
     await expect(removeAdminTrackAction('track-one')).resolves.toEqual({status: 'succeeded'})
     await expect(confirmAdminTrackAction('asset-one')).resolves.toEqual({status: 'active'})
     await expect(requestAdminTrackPlaybackAction('track-one')).resolves.toEqual({
+      expiresAt: '2026-09-02T12:00:00.000Z',
       status: 'granted',
       url: 'https://audio.example/track.mp3',
     })

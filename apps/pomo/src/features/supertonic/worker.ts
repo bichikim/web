@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 // oxlint-disable no-await-in-loop -- Model streams and sessions are loaded sequentially to cap peak browser memory.
 
@@ -39,7 +40,7 @@ import {
 } from './model'
 import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} from './runtime'
 import {type LoadBufferOptions, loadSessions, releaseSessions} from './sessions'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 import {splitSpeechText} from './text-chunking'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
 
@@ -409,7 +410,7 @@ const generate = async (
   const abortController = new AbortController()
   activeAbortController = abortController
   activeGenerationAbortController = abortController
-  const startedAt = performance.now()
+  const startedAt = getMonotonicTime()
 
   try {
     const voiceResult = await getVoice(message.voice, abortController.signal)
@@ -423,7 +424,7 @@ const generate = async (
 
     for (const [chunkIndex, text] of textChunks.entries()) {
       const chunkNumber = chunkIndex + 1
-      const chunkStartedAt = performance.now()
+      const chunkStartedAt = getMonotonicTime()
       const samples = await currentEngine.generate({
         language: message.language,
         onProgress: (step, total) => {
@@ -438,7 +439,7 @@ const generate = async (
       })
       audioChunks.push(samples)
       postMessage({
-        generationTime: Math.round(performance.now() - chunkStartedAt),
+        generationTime: Math.round(getMonotonicTime() - chunkStartedAt),
         index: chunkIndex,
         requestId: message.requestId,
         sampleRate: currentEngine.sampleRate,
@@ -463,7 +464,7 @@ const generate = async (
     }
 
     return successResult({
-      generationTime: Math.round(performance.now() - startedAt),
+      generationTime: Math.round(getMonotonicTime() - startedAt),
       sampleRate: currentEngine.sampleRate,
       samples,
     })

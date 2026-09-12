@@ -1,6 +1,7 @@
 /* ignore file coverage -- Wallaby mismerges this fully covered TSX module across test workers. */
 import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {children, type JSX, Show} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {PTooltip} from './PTooltip'
 import {useTooltipTrigger} from './tooltip'
 
@@ -125,6 +126,7 @@ export interface PButtonProps extends VariantProps<typeof pButtonClasses> {
   readonly accessibleLabel?: string
   readonly children?: JSX.Element
   readonly class?: string
+  readonly contentClass?: string
   readonly disabled?: boolean
   readonly icon?: string
   readonly iconClass?: string
@@ -146,7 +148,7 @@ export const PButton = (props: PButtonProps) => {
       .toArray()
       .some((child) =>
         typeof child === 'string'
-          ? child.trim().length > 0
+          ? isNonBlankString(child)
           : child !== null && child !== undefined && typeof child !== 'boolean',
       )
   return (
@@ -209,7 +211,7 @@ export const PButton = (props: PButtonProps) => {
           )}
         </Show>
         <Show when={hasContent()}>
-          <span>{content()}</span>
+          <span class={props.contentClass}>{content()}</span>
         </Show>
         <Show when={props.trailingIcon}>
           {(icon) => (

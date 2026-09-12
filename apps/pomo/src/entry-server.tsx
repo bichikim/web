@@ -23,7 +23,7 @@ export default createHandler(
             <script nonce={event.locals.securityNonce}>{DISPLAY_THEME_BOOTSTRAP_SCRIPT}</script>
             {/* Keep font faces in the document so code-split CSS assets do not duplicate them. */}
             <style nonce={event.locals.securityNonce}>{pretendardFontFaceStyles}</style>
-            <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+            <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
             <InstallationMetadata />
             {props.assets}
           </head>

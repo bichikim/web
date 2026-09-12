@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {readFile} from 'node:fs/promises'
 import {VertexBuffer} from '@babylonjs/core/Buffers/buffer'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'

@@ -1,14 +1,14 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const sessionMocks = vi.hoisted(() => ({getAdminSession: vi.fn()}))
 
-vi.mock('../../server/admin-auth/session', () => sessionMocks)
+vi.mock('../../server/admin-auth/get-admin-session', () => sessionMocks)
 
 import {
   classifyAdminAccess,
   getCleanAuthCallbackUrl,
   handleAdminAuthRequest,
-  hasAdminRole,
   isProtectedAdminPath,
 } from '../admin-auth'
 
@@ -27,18 +27,6 @@ it.each([
   ['/feeds/today-in-history/rss.xml', false],
 ])('should classify %s protection as %s', (pathname, expected) => {
   expect(isProtectedAdminPath(pathname)).toBe(expected)
-})
-
-it.each([
-  ['admin', true],
-  ['user,admin', true],
-  ['admin, user', true],
-  [['user', 'admin'], true],
-  ['user', false],
-  ['', false],
-  [null, false],
-])('should classify role %j admin membership as %s', (role, expected) => {
-  expect(hasAdminRole(role)).toBe(expected)
 })
 
 it.each([

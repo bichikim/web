@@ -16,6 +16,12 @@ import {
 
 export interface AudioPlayerRootProps extends ParentProps {
   readonly autoplay?: boolean
+  readonly onPauseRequest?: () => void
+  readonly onBeforePlayback?: (
+    time: number,
+    playing: boolean,
+    operation: 'play' | 'seek',
+  ) => boolean
   readonly onPlayError?: (error: unknown) => void
   readonly paused?: boolean
 }
@@ -85,7 +91,12 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
       return
     }
 
-    audioElement.currentTime = Math.min(Math.max(time, 0), getDuration(audioElement))
+    const position = Math.min(Math.max(time, 0), getDuration(audioElement))
+    if (props.onBeforePlayback?.(position, !audioElement.paused, 'seek') === false) {
+      return
+    }
+
+    audioElement.currentTime = position
     setCurrentTime(audioElement.currentTime)
   }
 
@@ -108,10 +119,14 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
     }
 
     if (audioElement.paused) {
+      if (props.onBeforePlayback?.(audioElement.currentTime, true, 'play') === false) {
+        return
+      }
       audioElement.play().catch(handlePlayFailure)
       return
     }
 
+    props.onPauseRequest?.()
     audioElement.pause()
   }
 

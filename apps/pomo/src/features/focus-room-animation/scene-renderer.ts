@@ -252,7 +252,7 @@ export class PSceneRenderer {
       requestedDepthSource !== null
     ) {
       if (this.#transitionFrame !== null) {
-        window.cancelAnimationFrame(this.#transitionFrame)
+        globalThis.cancelAnimationFrame(this.#transitionFrame)
       }
 
       this.#sceneTransitions.setProgress(1)
@@ -389,11 +389,13 @@ export class PSceneRenderer {
       return
     }
 
-    const startedAt = window.performance.now()
+    let startedAt: number | undefined
     const renderFrame = (timestamp: number) => {
       if (this.#destroyed || version !== this.#transitionVersion) {
         return
       }
+
+      startedAt ??= timestamp
 
       const progress = Math.min(1, (timestamp - startedAt) / SCENE_TRANSITION_DURATION)
       this.#sceneTransitions.setProgress(progress)
@@ -401,14 +403,14 @@ export class PSceneRenderer {
       this.#application.render()
 
       if (progress < 1) {
-        this.#transitionFrame = window.requestAnimationFrame(renderFrame)
+        this.#transitionFrame = globalThis.requestAnimationFrame(renderFrame)
         return
       }
 
       this.#finishTransition(source, depthSource, scene)
     }
 
-    this.#transitionFrame = window.requestAnimationFrame(renderFrame)
+    this.#transitionFrame = globalThis.requestAnimationFrame(renderFrame)
   }
 
   #finishTransition(source: string, depthSource: string, scene: Container) {
@@ -438,7 +440,7 @@ export class PSceneRenderer {
 
   #cancelTransition() {
     if (this.#transitionFrame !== null) {
-      window.cancelAnimationFrame(this.#transitionFrame)
+      globalThis.cancelAnimationFrame(this.#transitionFrame)
       this.#transitionFrame = null
     }
 

@@ -1,16 +1,18 @@
+import {withPromiseNull} from 'src/utils/with-promise-null'
 import {
-  createSerialNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 import {getDefaultPSceneStyle, type PSceneStyle} from './scene-style'
 
 const SCENE_STYLE_STORAGE_KEY = 'pomo:focus-room-scene-style:v1'
 let preferenceWriteRevision = 0
-const nativeWriter = createSerialNativeStorageWriter()
+const writeLatestToss = createLatestStorageWriter(SCENE_STYLE_STORAGE_KEY, writeTossStorageJson)
 
 const parseSceneStyle = (value: unknown): PSceneStyle | null => {
   return value === 'original' || value === 'scribble' ? value : null
@@ -30,6 +32,10 @@ export const readPSceneStyle = async (): Promise<PSceneStyle> => {
   const webPreference = readWebPreference()
 
   if (webPreference !== null) {
+    if (hasNativeStorageBridge()) {
+      withPromiseNull(writeLatestToss(webPreference))
+    }
+
     return webPreference
   }
 
@@ -38,18 +44,18 @@ export const readPSceneStyle = async (): Promise<PSceneStyle> => {
   }
 
   try {
-    const nativePreference = await readNativeStorageJson(SCENE_STYLE_STORAGE_KEY, parseSceneStyle)
+    const tossPreference = await readTossStorageJson(SCENE_STYLE_STORAGE_KEY, parseSceneStyle)
 
     if (preferenceWriteRevision !== initialWriteRevision) {
       return readWebPreference() ?? getDefaultPSceneStyle()
     }
 
-    if (nativePreference === null) {
+    if (tossPreference === null) {
       return getDefaultPSceneStyle()
     }
 
-    writeWebPreference(nativePreference)
-    return nativePreference
+    writeWebPreference(tossPreference)
+    return tossPreference
   } catch {
     return readWebPreference() ?? getDefaultPSceneStyle()
   }
@@ -64,5 +70,5 @@ export const writePSceneStyle = async (sceneStyle: PSceneStyle): Promise<void> =
     return
   }
 
-  await nativeWriter.write(SCENE_STYLE_STORAGE_KEY, sceneStyle)
+  await withPromiseNull(writeLatestToss(sceneStyle))
 }

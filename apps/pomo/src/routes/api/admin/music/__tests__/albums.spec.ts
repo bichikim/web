@@ -1,10 +1,11 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({createAlbum: vi.fn()}))
 const storageMocks = vi.hoisted(() => ({isManagedAlbumCoverUrl: vi.fn()}))
 
-vi.mock('src/server/admin-auth/http', () => authMocks)
+vi.mock('src/server/admin-auth/authorize-admin-request', () => authMocks)
 vi.mock('src/server/music/album-creation-repository', () => repositoryMocks)
 vi.mock('src/server/music/cover-upload', () => storageMocks)
 

@@ -110,13 +110,18 @@ const commitDeliveredMemo = async (options: CommitDeliveredMemoOptions) => {
   return wasReplaced
 }
 
+export interface MemoryReminders {
+  readonly skippedReminders: () => ReadonlyArray<MemoryMemo>
+}
+
 /** Runs persisted memo reminders while the Pomo room is mounted. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One owner coordinates reminder scheduling, delivery, and asynchronous resource cleanup.
-export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
+export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryReminders => {
   const memos = useMemoryMemos()
   useDeletionRecovery(() => memoryMemoDeletion.retry(props.events.deleteDialogue))
   const [clockRevision, setClockRevision] = createSignal(0)
   const [isPending, setIsPending] = createSignal(false)
+  const [skippedMemos, setSkippedMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
   const retryAfter = new Map<string, number>()
   let client: SupertonicClient | null = null
   let clientModelId: SupertonicModelId | null = null
@@ -219,13 +224,20 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
       props.onBeforePlayback?.()
       const played = await props.events.playDialogue(dialogueId)
 
+      if (isDisposed || !memoIsCurrent()) {
+        return
+      }
+
       if (!played) {
+        setSkippedMemos((current) => [...current.filter((item) => item.id !== memo.id), memo])
         retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
       }
 
-      if (!played || isDisposed || !memoIsCurrent()) {
+      if (!played) {
         return
       }
+
+      setSkippedMemos((current) => current.filter((item) => item.id !== memo.id))
 
       const wasReplaced = await commitDeliveredMemo({
         deliveredMemo: memo,
@@ -310,10 +322,22 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps) => {
     }
 
     const delay = Math.min(MAXIMUM_TIMEOUT, Math.max(0, scheduled.availableAt - Date.now()))
-    const timerId = window.setTimeout(() => {
+    const timerId = globalThis.setTimeout(() => {
       runDelivery(scheduled.memo).catch(() => undefined)
     }, delay)
 
-    onCleanup(() => window.clearTimeout(timerId))
+    onCleanup(() => globalThis.clearTimeout(timerId))
   })
+  return {
+    skippedReminders: () => {
+      const currentMemos = memos()
+      return skippedMemos().filter(
+        (memo) =>
+          isMemoryMemoCurrent(currentMemos, memo) &&
+          currentMemos.some(
+            (current) => current.id === memo.id && current.deletionPending !== true,
+          ),
+      )
+    },
+  }
 }

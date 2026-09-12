@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const storageMocks = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ vi.mock('@apps-in-toss/web-framework', () => ({
 }))
 
 import {
+  activateStoredSession,
   clearStoredAppSession,
   createTossLoginSession,
   readStoredAppSession,
@@ -50,10 +52,128 @@ describe('app session lifecycle', () => {
 
     await expect(readStoredAppSession()).resolves.toBe('stored-token')
     await expect(storeAppSession('next-token')).resolves.toBeUndefined()
-    await expect(clearStoredAppSession()).resolves.toBeUndefined()
+    await expect(clearStoredAppSession('stored-token')).resolves.toBeUndefined()
     expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:app-session:v1')
     expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'next-token')
     expect(storageMocks.removeItem).toHaveBeenCalledWith('pomo:app-session:v1')
+  })
+
+  it('should preserve a replacement token during stale cleanup', async () => {
+    storageMocks.getItem.mockResolvedValue('newer-token')
+
+    await clearStoredAppSession('older-token')
+
+    expect(storageMocks.removeItem).not.toHaveBeenCalled()
+  })
+
+  it('should finish removal before a replacement write can reach native storage', async () => {
+    const removal = Promise.withResolvers<void>()
+    const started = Promise.withResolvers<void>()
+    storageMocks.getItem.mockResolvedValue('older-token')
+    storageMocks.removeItem.mockImplementationOnce(() => {
+      started.resolve()
+      return removal.promise
+    })
+
+    const cleanup = clearStoredAppSession('older-token')
+    await started.promise
+    const replacement = storeAppSession('newer-token')
+    await Promise.resolve()
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+    removal.resolve()
+    await Promise.all([cleanup, replacement])
+    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'newer-token')
+  })
+
+  it('should preserve a write queued while cleanup is checking token ownership', async () => {
+    const reading = Promise.withResolvers<string | null>()
+    const started = Promise.withResolvers<void>()
+    let stored: string | null = 'older-token'
+    storageMocks.getItem.mockImplementationOnce(() => {
+      started.resolve()
+      return reading.promise
+    })
+    storageMocks.removeItem.mockImplementationOnce(async () => {
+      stored = null
+    })
+    storageMocks.setItem.mockImplementationOnce(async (_key, token) => {
+      stored = token
+    })
+
+    const cleanup = clearStoredAppSession('older-token')
+    await started.promise
+    const replacement = storeAppSession('newer-token')
+    reading.resolve('older-token')
+    await Promise.all([cleanup, replacement])
+
+    expect(stored).toBe('newer-token')
+  })
+
+  it('should allow a later write after native cleanup fails', async () => {
+    const failure = new Error('remove failed')
+    storageMocks.getItem.mockResolvedValue('older-token')
+    storageMocks.removeItem.mockRejectedValueOnce(failure)
+
+    await expect(clearStoredAppSession('older-token')).rejects.toBe(failure)
+    await expect(storeAppSession('newer-token')).resolves.toBeUndefined()
+    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:app-session:v1', 'newer-token')
+  })
+
+  it('should check ownership after an earlier native write finishes', async () => {
+    const writing = Promise.withResolvers<void>()
+    const started = Promise.withResolvers<void>()
+    let stored: string | null = 'older-token'
+    storageMocks.getItem.mockImplementation(async () => stored)
+    storageMocks.setItem.mockImplementationOnce(async (_key, token) => {
+      started.resolve()
+      await writing.promise
+      stored = token
+    })
+    storageMocks.removeItem.mockImplementationOnce(async () => {
+      stored = null
+    })
+
+    const replacement = storeAppSession('newer-token')
+    await started.promise
+    const cleanup = clearStoredAppSession('older-token')
+    writing.resolve()
+    await Promise.all([replacement, cleanup])
+
+    expect(stored).toBe('newer-token')
+    expect(storageMocks.removeItem).not.toHaveBeenCalled()
+  })
+
+  it('should allow cleanup after a native write fails', async () => {
+    const failure = new Error('write failed')
+    storageMocks.setItem.mockRejectedValueOnce(failure)
+    storageMocks.getItem.mockResolvedValue('older-token')
+
+    await expect(storeAppSession('newer-token')).rejects.toBe(failure)
+    await expect(clearStoredAppSession('older-token')).resolves.toBeUndefined()
+    expect(storageMocks.removeItem).toHaveBeenCalledOnce()
+  })
+
+  it('should preserve another login token when logout completes late', async () => {
+    storageMocks.getItem.mockResolvedValue('newer-token')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
+
+    await expect(revokeTossLoginSession('older-token')).resolves.toEqual({storageStatus: 'cleared'})
+    expect(storageMocks.removeItem).not.toHaveBeenCalled()
+  })
+
+  it('should clear a newly stored token when activation rejects it', async () => {
+    storageMocks.getItem.mockResolvedValueOnce(null).mockResolvedValueOnce('session-token')
+    tossAuthMocks.login.mockResolvedValue({authorizationCode: 'authorization', referrer: 'DEFAULT'})
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(Response.json({token: 'session-token'}))
+        .mockResolvedValueOnce(new Response(null, {status: 401})),
+    )
+
+    await expect(createTossLoginSession()).rejects.toThrow('App session activation failed')
+    expect(storageMocks.removeItem).toHaveBeenCalledOnce()
   })
 
   it('should accept a valid server session', async () => {
@@ -70,6 +190,7 @@ describe('app session lifecycle', () => {
   })
 
   it('should clear an already invalid server session during logout', async () => {
+    storageMocks.getItem.mockResolvedValue('token')
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 401})))
 
     await expect(revokeTossLoginSession('token')).resolves.toEqual({storageStatus: 'cleared'})
@@ -77,6 +198,7 @@ describe('app session lifecycle', () => {
   })
 
   it('should revoke a valid server session before clearing storage', async () => {
+    storageMocks.getItem.mockResolvedValue('token')
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null)))
 
     await expect(revokeTossLoginSession('token')).resolves.toEqual({storageStatus: 'cleared'})
@@ -84,6 +206,7 @@ describe('app session lifecycle', () => {
   })
 
   it('should report pending storage cleanup after revoking the server session', async () => {
+    storageMocks.getItem.mockResolvedValue('token')
     const storageError = new Error('native storage unavailable')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null))
@@ -290,4 +413,31 @@ describe('app session lifecycle', () => {
       })
     },
   )
+})
+
+describe('activateStoredSession', () => {
+  it.each([200, 401, 503])('should classify activation HTTP status %s', async (status) => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      const activation = activateStoredSession('pending-token')
+      if (status === 503) {
+        await expect(activation).rejects.toThrow('App session activation failed')
+      } else {
+        await expect(activation).resolves.toBe(status === 200)
+      }
+      expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+        '/api/app-auth/session',
+        expect.objectContaining({
+          method: 'PATCH',
+        }),
+      )
+      expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get('Authorization')).toBe(
+        'Bearer pending-token',
+      )
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
 })

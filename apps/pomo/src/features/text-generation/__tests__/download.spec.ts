@@ -1,8 +1,9 @@
+/** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
 import type {ModelStorage} from '../../model-storage'
 import * as modelStorage from '../../model-storage'
-import {successResult} from '../../result'
+import {successResult} from 'src/features/result'
 import {isTextModelDownloaded} from '../download'
 
 const createStorage = (): ModelStorage => ({

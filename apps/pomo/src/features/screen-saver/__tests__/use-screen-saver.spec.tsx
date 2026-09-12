@@ -1,5 +1,13 @@
 /** @vitest-environment jsdom */
 
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
+beforeEach(() => {
+  vi.mocked(getMonotonicTime).mockImplementation(() => Date.now())
+})
+
 import {render} from '@solidjs/testing-library'
 import {createEffect} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -174,6 +182,30 @@ describe('useScreenSaver', () => {
     controller?.onDismiss()
     vi.advanceTimersByTime(60_000)
 
+    expect(controller?.isActive()).toBe(true)
+  })
+
+  it('should honor activity after the system clock moves backwards', async () => {
+    vi.setSystemTime(100_000)
+    vi.mocked(getMonotonicTime).mockReturnValue(0)
+    let controller: ScreenSaverController | undefined
+    render(() => (
+      <ScreenSaverHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+    await Promise.resolve()
+    controller?.onDismiss()
+    vi.advanceTimersByTime(30_000)
+    vi.setSystemTime(10_000)
+    vi.mocked(getMonotonicTime).mockReturnValue(30_000)
+    controller?.onDismiss()
+    vi.advanceTimersByTime(30_000)
+    expect(controller?.isActive()).toBe(false)
+    vi.advanceTimersByTime(30_000)
     expect(controller?.isActive()).toBe(true)
   })
 

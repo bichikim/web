@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {AssetContainer} from '@babylonjs/core/assetContainer'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'
 import {Quaternion} from '@babylonjs/core/Maths/math.vector'

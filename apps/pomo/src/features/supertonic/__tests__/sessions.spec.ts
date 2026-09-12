@@ -1,6 +1,7 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 import type {SupertonicError} from '../errors'
 import type {SupertonicModel, SupertonicModelFile} from '../model'
 import type {SupertonicRuntime} from '../runtime'

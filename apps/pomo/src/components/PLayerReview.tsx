@@ -11,7 +11,7 @@ import {
   type PSceneId,
   type PSceneStyle,
 } from '../features/focus-room-animation'
-import type {PReviewMouthFrame} from '../features/focus-room-layer-review/scene-renderer'
+import type {PReviewMouthFrame} from '../features/focus-room-layer-review'
 import {type PViseme} from '../features/lip-sync'
 import {PLayerReviewViewport} from './layer-review/Viewport'
 import {ReviewControls} from './layer-review/Controls'

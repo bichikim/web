@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import {MILLISECONDS_PER_SECOND} from '../shared'

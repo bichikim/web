@@ -51,12 +51,9 @@ describe('HTourContent', () => {
     const content = screen.getByRole('dialog')
 
     expect(content).toHaveAttribute('data-placement', 'bottom')
-    expect(content).toHaveStyle({
-      left: '40px',
-      maxHeight: '464px',
-      position: 'fixed',
-      top: '120px',
-    })
+    expect(content.style.getPropertyValue('--tour-left')).toBe('40px')
+    expect(content.style.getPropertyValue('--tour-max-height')).toBe('464px')
+    expect(content.style.getPropertyValue('--tour-edge')).toBe('120px')
   })
 
   it('should center content when target bounds are unavailable', () => {
@@ -69,12 +66,9 @@ describe('HTourContent', () => {
     const content = screen.getByRole('dialog')
 
     expect(content).toHaveAttribute('data-placement', 'center')
-    expect(content).toHaveStyle({
-      left: '50%',
-      position: 'fixed',
-      top: '50%',
-      transform: 'translate(-50%, -50%)',
-    })
+    expect(content.style.left).toBe('')
+    expect(content.style.top).toBe('')
+    expect(content.style.transform).toBe('')
   })
 
   it('should place content above the target when more space is available above', () => {
@@ -87,12 +81,9 @@ describe('HTourContent', () => {
     const content = screen.getByRole('dialog')
 
     expect(content).toHaveAttribute('data-placement', 'top')
-    expect(content).toHaveStyle({
-      bottom: '112px',
-      left: '40px',
-      maxHeight: '472px',
-      position: 'fixed',
-    })
+    expect(content.style.getPropertyValue('--tour-edge')).toBe('112px')
+    expect(content.style.getPropertyValue('--tour-left')).toBe('40px')
+    expect(content.style.getPropertyValue('--tour-max-height')).toBe('472px')
   })
 
   it('should constrain content to the larger side of a centered target', () => {
@@ -102,7 +93,8 @@ describe('HTourContent', () => {
       </Dialog>
     ))
 
-    expect(screen.getByRole('dialog')).toHaveStyle({maxHeight: '248px', top: '336px'})
+    expect(screen.getByRole('dialog').style.getPropertyValue('--tour-max-height')).toBe('248px')
+    expect(screen.getByRole('dialog').style.getPropertyValue('--tour-edge')).toBe('336px')
   })
 
   it('should keep content within the viewport using its rendered width', () => {
@@ -118,7 +110,7 @@ describe('HTourContent', () => {
     content.getBoundingClientRect = () => new DOMRect(432, 120, 704, 200)
     TestResizeObserver.instances[0]?.trigger()
 
-    expect(content).toHaveStyle({left: '80px'})
+    expect(content.style.getPropertyValue('--tour-left')).toBe('80px')
     expect(80 + content.getBoundingClientRect().width).toBeLessThanOrEqual(784)
   })
 })

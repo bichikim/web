@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 // Vite provides the default string export for raw source imports.
 // oxlint-disable-next-line import/default
 import progressSource from '../src/components/memory-assist/picture-diary/Generation.tsx?raw'

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import {VERCEL_CDN_CACHE_CONTROL_HEADER} from '../headers'

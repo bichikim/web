@@ -8,6 +8,12 @@
       "messageKey": "tour_completion_description",
       "text": "투어가 끝났어요. 이제 앱을 편하게 즐겨보세요!",
       "sha256": "242a2f6d0df0f2e85def1e4e1e436e252594b3f1135687d5689220c54ea78222"
+    },
+    {
+      "id": "settings-background",
+      "messageKey": "tour_settings_background_description",
+      "text": "배경 탭에서 캐릭터 대신 사진이나 영상을 사용하고, 표시 순서와 간격, 전환 효과를 설정할 수 있어요.",
+      "sha256": "c4400b90cccf1d1d324af74c39528b0822f708d70768c6b85d907f7a5e53f36b"
     }
   ],
   "model": "supertonic-3",

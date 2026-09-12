@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {createSignal, Show} from 'solid-js'
+import {createEffect, createSignal, on, Show} from 'solid-js'
 import {type AdminAlbum, getAlbumTranslation} from '../../features/admin-music'
 
 const ARTWORK_CLASSES = cx(
@@ -13,6 +13,17 @@ interface AlbumArtworkProps {
 
 export const AlbumArtwork = (props: AlbumArtworkProps) => {
   const [didImageFail, setDidImageFail] = createSignal(false)
+
+  createEffect(
+    on(
+      () => props.album.coverImageUrl,
+      (coverImageUrl, previousUrl) => {
+        if (coverImageUrl !== previousUrl) {
+          setDidImageFail(false)
+        }
+      },
+    ),
+  )
 
   return (
     <div class={ARTWORK_CLASSES}>

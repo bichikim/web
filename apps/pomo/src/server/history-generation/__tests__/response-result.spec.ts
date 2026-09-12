@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import type {Response as OpenAiResponse} from 'openai/resources/responses/responses'
 import {beforeEach, expect, it, vi} from 'vitest'
 

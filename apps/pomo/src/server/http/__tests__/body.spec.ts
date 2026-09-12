@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import type {APIEvent} from '@solidjs/start/server'
 import {mockEvent} from 'h3'
 import {afterEach, describe, expect, it, vi} from 'vitest'

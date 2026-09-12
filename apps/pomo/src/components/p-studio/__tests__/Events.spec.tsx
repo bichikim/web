@@ -9,6 +9,8 @@ import {
   usePEvents,
   useRandomEvent,
 } from '../../../features/focus-room-dialogue'
+import * as m from '@paraglide/message'
+import {createMemoryMemo} from '../../../features/memory-assist/schedule'
 import {useMemoryReminders} from '../../../features/memory-assist'
 import type {PSayController} from '../../../features/pomo-webmcp'
 import {PStudioEvents} from '../Events'
@@ -30,7 +32,9 @@ vi.mock('../../../features/focus-room-dialogue', () => ({
   usePEvents: vi.fn(),
   useRandomEvent: vi.fn(),
 }))
-vi.mock('../../../features/memory-assist', () => ({useMemoryReminders: vi.fn()}))
+vi.mock('../../../features/memory-assist', () => ({
+  useMemoryReminders: vi.fn(() => ({skippedReminders: () => []})),
+}))
 vi.mock('../use-one-off-chat', () => ({
   ONE_OFF_CHAT_MODEL: {downloadSize: '3.7GB'},
   useOneOffChat: vi.fn(() => oneOffChatMocks),
@@ -191,11 +195,31 @@ const renderEvents = (
 describe('PStudioEvents', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useMemoryReminders).mockReturnValue({skippedReminders: () => []})
     vi.mocked(useChildPresence).mockReturnValue(() => false)
     vi.mocked(useMobileLayout).mockReturnValue(() => false)
     oneOffChatMocks.downloadConsentOpen.mockReturnValue(false)
     oneOffChatMocks.errorMessage.mockReturnValue(null)
     oneOffChatMocks.isBusy.mockReturnValue(false)
+  })
+
+  it('should show skipped reminder text and remove its alert after recovery', () => {
+    const memo = createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    })
+    const [skippedReminders, setSkippedReminders] = createSignal([memo])
+    vi.mocked(useMemoryReminders).mockReturnValue({skippedReminders})
+    renderEvents()
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      m.memory_reminder_playback_skipped({text: memo.text}),
+    )
+    setSkippedReminders([])
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('should auto-expand the composer on mobile only when dialogue messages are absent', () => {

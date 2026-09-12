@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import type {Sprite} from 'pixi.js'
 import {describe, expect, it} from 'vitest'
 

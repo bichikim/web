@@ -1,3 +1,5 @@
+import {getBoneChannels, poseBoneChannels} from '../../deformation/bone'
+import {getDeformerPoint, getDeformerRotationOrigin} from './deformer-transform'
 import {moveCurveHandles} from './curve-control-points'
 import {
   isTwoDimensionalParameterBinding,
@@ -10,6 +12,7 @@ import type {
   PuppetParameterDeformerKeyform,
   PuppetParameterKeyform,
   PuppetPoint,
+  PuppetSceneDeformerNode,
 } from '../../player'
 import {
   getDocumentParameterBindings,
@@ -22,8 +25,22 @@ interface ParameterDeformerValuesTarget {
   readonly bindingId: string
   readonly document: PuppetDocument
   readonly nodeId: string
+  /** Displayed geometry with the active binding at full influence. */
+  readonly previewDeformer?: PuppetSceneDeformerNode
   readonly values: PuppetParameterValues
 }
+
+const toKeyformCoordinate = (value: number, preview: number | undefined, stored: number) =>
+  preview === undefined ? value : stored + value - preview
+
+const toKeyformPoint = (
+  point: PuppetPoint,
+  preview: PuppetPoint | undefined,
+  stored: PuppetPoint,
+): PuppetPoint => ({
+  x: toKeyformCoordinate(point.x, preview?.x, stored.x),
+  y: toKeyformCoordinate(point.y, preview?.y, stored.y),
+})
 
 const isFinitePoint = (point: PuppetPoint) => Number.isFinite(point.x) && Number.isFinite(point.y)
 
@@ -66,6 +83,74 @@ export interface SetParameterKeyformDeformerControlPointsOptions extends Paramet
   readonly rotationOrigin?: PuppetPoint
 }
 
+const toKeyformControlPoints = (
+  options: SetParameterKeyformDeformerControlPointsOptions,
+  deformer: PuppetParameterDeformerKeyform,
+): ReadonlyArray<number> => {
+  const preview = options.previewDeformer
+  if (preview === undefined) {
+    return options.controlPoints
+  }
+  const rest = preview.boneRestPoints
+  if (rest === undefined) {
+    return options.controlPoints.map((value, index) =>
+      toKeyformCoordinate(value, preview.controlPoints[index], deformer.controlPoints[index]!),
+    )
+  }
+  const desired = getBoneChannels(rest, options.controlPoints)
+  const displayed = getBoneChannels(rest, preview.controlPoints)
+  const stored = getBoneChannels(rest, deformer.controlPoints)
+  return poseBoneChannels(
+    rest,
+    desired.map((value, index) => toKeyformCoordinate(value, displayed[index], stored[index]!)),
+  )
+}
+
+const toKeyformGeometry = (
+  options: SetParameterKeyformDeformerControlPointsOptions,
+  deformer: PuppetParameterDeformerKeyform,
+): PuppetParameterDeformerKeyform => {
+  const preview = options.previewDeformer
+  const node = getSceneNode(options.document, options.nodeId)
+  const origin =
+    deformer.rotationOrigin ??
+    (node?.kind === 'deformer' ? getDeformerRotationOrigin(node) : {x: 0, y: 0})
+  return {
+    ...deformer,
+    controlPoints: toKeyformControlPoints(options, deformer),
+    ...(options.curveHandles === undefined
+      ? {}
+      : {
+          curveHandles: options.curveHandles.map((handle) => {
+            const stored = deformer.curveHandles!.find(
+              (candidate) => candidate.pointIndex === handle.pointIndex,
+            )!
+            const displayed = preview?.curveHandles?.find(
+              (candidate) => candidate.pointIndex === handle.pointIndex,
+            )
+            return {
+              ...handle,
+              horizontal: toKeyformPoint(
+                handle.horizontal,
+                displayed?.horizontal,
+                stored.horizontal,
+              ),
+              vertical: toKeyformPoint(handle.vertical, displayed?.vertical, stored.vertical),
+            }
+          }),
+        }),
+    ...(options.rotationOrigin === undefined
+      ? {}
+      : {
+          rotationOrigin: toKeyformPoint(
+            options.rotationOrigin,
+            preview === undefined ? undefined : getDeformerRotationOrigin(preview),
+            origin,
+          ),
+        }),
+  }
+}
+
 export const setParameterKeyformDeformerControlPoints = (
   options: SetParameterKeyformDeformerControlPointsOptions,
 ) => {
@@ -98,12 +183,12 @@ export const setParameterKeyformDeformerControlPoints = (
     return undefined
   }
 
-  return replaceKeyformDeformer(options.document, binding.id, options.values, {
-    ...deformer,
-    controlPoints: options.controlPoints,
-    ...(options.curveHandles === undefined ? {} : {curveHandles: options.curveHandles}),
-    ...(options.rotationOrigin === undefined ? {} : {rotationOrigin: options.rotationOrigin}),
-  })
+  return replaceKeyformDeformer(
+    options.document,
+    binding.id,
+    options.values,
+    toKeyformGeometry(options, deformer),
+  )
 }
 
 export interface SetParameterKeyformDeformerPointOptions extends ParameterDeformerValuesTarget {
@@ -128,8 +213,7 @@ export const setParameterKeyformDeformerPoint = (
     !Number.isInteger(options.pointIndex) ||
     options.pointIndex < 0 ||
     options.pointIndex >= deformer.controlPoints.length / 2 ||
-    !Number.isFinite(options.x) ||
-    !Number.isFinite(options.y)
+    !isFinitePoint(options)
   ) {
     return undefined
   }
@@ -137,14 +221,21 @@ export const setParameterKeyformDeformerPoint = (
   let controlPoints = [...deformer.controlPoints]
   const previousX = controlPoints[options.pointIndex * 2] ?? 0
   const previousY = controlPoints[options.pointIndex * 2 + 1] ?? 0
-  controlPoints[options.pointIndex * 2] = options.x
-  controlPoints[options.pointIndex * 2 + 1] = options.y
+  const {x, y} = toKeyformPoint(
+    options,
+    options.previewDeformer === undefined
+      ? undefined
+      : getDeformerPoint(options.previewDeformer, options.pointIndex),
+    {x: previousX, y: previousY},
+  )
+  controlPoints[options.pointIndex * 2] = x
+  controlPoints[options.pointIndex * 2 + 1] = y
   const node = getSceneNode(options.document, options.nodeId)
   if (node?.kind === 'deformer' && node.curveAxis !== undefined) {
     controlPoints = moveCurveHandles({
       controlPoints,
-      offsetX: options.x - previousX,
-      offsetY: options.y - previousY,
+      offsetX: x - previousX,
+      offsetY: y - previousY,
       pointIndex: options.pointIndex,
     })
   }
@@ -156,12 +247,12 @@ export const setParameterKeyformDeformerPoint = (
         ? {
             ...handle,
             horizontal: {
-              x: handle.horizontal.x + options.x - previousX,
-              y: handle.horizontal.y + options.y - previousY,
+              x: handle.horizontal.x + x - previousX,
+              y: handle.horizontal.y + y - previousY,
             },
             vertical: {
-              x: handle.vertical.x + options.x - previousX,
-              y: handle.vertical.y + options.y - previousY,
+              x: handle.vertical.x + x - previousX,
+              y: handle.vertical.y + y - previousY,
             },
           }
         : handle,
@@ -199,7 +290,16 @@ export const setParameterKeyformDeformerCurveHandle = (
     ...deformer,
     curveHandles: deformer.curveHandles.map((handle) =>
       handle.pointIndex === options.pointIndex
-        ? {...handle, [options.axis]: options.point}
+        ? {
+            ...handle,
+            [options.axis]: toKeyformPoint(
+              options.point,
+              options.previewDeformer?.curveHandles?.find(
+                (candidate) => candidate.pointIndex === options.pointIndex,
+              )?.[options.axis],
+              handle[options.axis],
+            ),
+          }
         : handle,
     ),
   })

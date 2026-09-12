@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {AlphaFilter, Container} from 'pixi.js'
 import {describe, expect, it, vi} from 'vitest'
 

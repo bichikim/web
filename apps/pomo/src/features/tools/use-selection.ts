@@ -43,5 +43,5 @@ export const useSelection = <T>(options: UseSelectionOptions<T>) => {
       console.warn('Failed to save tool selection.', error)
     })
   }
-  return {ready, onChange, value}
+  return {onChange, ready, value}
 }

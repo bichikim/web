@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
@@ -9,6 +10,8 @@ import {
   type ProgressInfo,
 } from '@huggingface/transformers'
 
+import {getErrorMessage} from 'src/utils/get-error-message'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {classifyTextMood, classifyTextSufficiency} from './classifier'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
@@ -29,16 +32,13 @@ let preparePromise: Promise<void> | null = null
 
 const sendResponse = (response: TextMoodWorkerResponse) => workerScope.postMessage(response)
 
-const getErrorDetail = (error: unknown) =>
-  error instanceof Error && error.message.length > 0 ? error.message : '알 수 없는 오류'
-
 const createError = (
   error: unknown,
   code: TextMoodError['code'],
   phase: TextMoodPhase,
 ): TextMoodError => ({
   code,
-  detail: getErrorDetail(error),
+  detail: getErrorMessage(error, '알 수 없는 오류'),
   phase,
   retryable: code !== 'invalid-input',
 })
@@ -96,7 +96,7 @@ const prepare = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
 const getEmbeddingText = (request: Extract<TextMoodWorkerRequest, {readonly type: 'analyze'}>) => {
   const text = request.text.trim()
 
-  if (request.context === undefined || request.context.trim().length === 0) {
+  if (request.context === undefined || !isNonBlankString(request.context)) {
     return text
   }
 
@@ -139,7 +139,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     return
   }
 
-  const startedAt = performance.now()
+  const startedAt = getMonotonicTime()
 
   try {
     const output = await extractor(getEmbeddingText(request), {
@@ -151,7 +151,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
 
     if (sufficiency.insufficient) {
       sendResponse({
-        elapsedMilliseconds: performance.now() - startedAt,
+        elapsedMilliseconds: getMonotonicTime() - startedAt,
         requestId: request.requestId,
         sufficiency,
         type: 'insufficient',
@@ -162,7 +162,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     const analysis = classifyTextMood(embedding)
     sendResponse({
       analysis,
-      elapsedMilliseconds: performance.now() - startedAt,
+      elapsedMilliseconds: getMonotonicTime() - startedAt,
       requestId: request.requestId,
       type: 'complete',
     })

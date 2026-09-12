@@ -1,4 +1,6 @@
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
@@ -20,11 +22,6 @@ import {
   type PictureDiaryEnvironment,
 } from './picture-diary/environment'
 import {PictureDiaryStatus} from './picture-diary/Status'
-
-const padNumber = (value: number) => String(value).padStart(2, '0')
-
-const getDateValue = (date: Date) =>
-  `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
 
 export interface PictureDiaryProps {
   readonly turnEnvironment?: PageTurnEnvironment
@@ -101,7 +98,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     repository,
   })
   const [view, setView] = createSignal<PictureDiaryView>({kind: 'writing'})
-  const [date, setDate] = createSignal(getDateValue(environment.now()))
+  const [date, setDate] = createSignal(formatLocalDate(environment.now()))
   const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
   const [image, setImage] = createSignal<PictureDiaryImage>()
   const [text, setText] = createSignal('')
@@ -112,7 +109,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     () =>
       !saving() &&
       date().length > 0 &&
-      (text().trim().length > 0 || strokes().length > 0 || image() !== undefined),
+      (isNonBlankString(text()) || strokes().length > 0 || image() !== undefined),
   )
   const backCoverClosed = createMemo(() => view().kind === 'back-cover')
   const pagination = createMemo(() =>
@@ -172,7 +169,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         strokes() === snapshot.strokes &&
         text() === snapshot.text
       ) {
-        setDate(getDateValue(environment.now()))
+        setDate(formatLocalDate(environment.now()))
         setStrokes([])
         setImage(undefined)
         setText('')

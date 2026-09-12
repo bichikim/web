@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import {getPrimaryMood, PRIMARY_MOOD_IDS, PRIMARY_MOODS} from '../labels'

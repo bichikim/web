@@ -30,6 +30,13 @@ vi.mock('../memory-assist/PictureDiary', () => ({PictureDiary: vi.fn()}))
 const originalGetLocale = getLocale
 
 beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      disconnect = vi.fn()
+      observe = vi.fn()
+    },
+  )
   vi.clearAllMocks()
   const readStyles = window.getComputedStyle.bind(window)
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
@@ -40,8 +47,8 @@ beforeEach(() => {
   sessionStorage.clear()
   overwriteGetLocale(() => 'ko')
   vi.mocked(useAuth).mockReturnValue({
-    session: () => ({kind: 'authenticated', provider: 'toss'}),
-    state: () => ({kind: 'authenticated', provider: 'toss'}),
+    session: () => ({email: 'person@example.com', kind: 'authenticated', provider: 'email'}),
+    state: () => ({email: 'person@example.com', kind: 'authenticated', provider: 'email'}),
   })
   vi.mocked(LanguageLearningLibrary).mockImplementation(() => <p>문장 내용</p>)
   vi.mocked(LanguageLearningWords).mockImplementation(() => <p>단어 내용</p>)
@@ -58,6 +65,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.unstubAllGlobals()
   overwriteGetLocale(originalGetLocale)
   vi.restoreAllMocks()
 })
@@ -96,7 +104,12 @@ it('should show cached events and the month grid before the refresh resolves', a
   const end = new Date(today.getFullYear(), today.getMonth() + 1, 1)
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
   writeCalendarMonthCache(
-    {end: end.toISOString(), start: start.toISOString(), timeZone},
+    {
+      accountKey: 'email:person@example.com',
+      end: end.toISOString(),
+      start: start.toISOString(),
+      timeZone,
+    },
     {
       connectedConnections: 1,
       events: [

@@ -1,9 +1,10 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({createPendingTrack: vi.fn()}))
 
-vi.mock('src/server/admin-auth/http', () => authMocks)
+vi.mock('src/server/admin-auth/authorize-admin-request', () => authMocks)
 vi.mock('src/server/music/track-registration-repository', () => repositoryMocks)
 
 import {POST} from '../tracks'

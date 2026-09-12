@@ -140,3 +140,13 @@ it('should render its development page content', () => {
   render(() => <OptionResetPage />)
   expect(screen.getAllByText('각종 옵션 초기화', {exact: false}).length).toBeGreaterThan(0)
 })
+
+it('should offer and confirm the first-entry reset', async () => {
+  const manager = createManager()
+  render(() => <OptionResetPage manager={manager} />)
+  fireEvent.click(screen.getByRole('button', {name: '첫 입장 안내 옵션 초기화'}))
+  expect(screen.getByRole('dialog')).toHaveTextContent('첫 입장 안내 옵션을 초기화할까요?')
+  fireEvent.click(screen.getByRole('button', {name: '초기화'}))
+  await waitFor(() => expect(manager.reset).toHaveBeenCalledWith('entry'))
+  expect(await screen.findByRole('status')).toHaveTextContent('첫 입장 안내 옵션을 초기화했습니다.')
+})

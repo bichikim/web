@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import type {PictureDiaryEntry} from '../../../../features/picture-diary'
 import {getBookPagination} from '../pagination'

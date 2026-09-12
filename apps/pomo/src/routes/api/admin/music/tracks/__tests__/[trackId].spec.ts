@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
@@ -8,7 +9,7 @@ const repositoryMocks = vi.hoisted(() => ({
 }))
 const deletionMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
-vi.mock('src/server/admin-auth/http', () => authMocks)
+vi.mock('src/server/admin-auth/authorize-admin-request', () => authMocks)
 vi.mock('src/server/music/track-deletion-repository', () => repositoryMocks)
 vi.mock('src/server/music/track-storage-deletion', () => deletionMocks)
 

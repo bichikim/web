@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'

@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {lte, sql, type SQL} from 'drizzle-orm'
 
 import {type Database, getDatabase, weather} from '../database'

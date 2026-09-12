@@ -1,4 +1,6 @@
 // oxlint-disable no-await-in-loop -- A response stream must be read and size-checked in order.
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import type {FeedGenerationSettings} from './generation-settings'
 import type {FeedConnection} from './schema'
 import {
@@ -36,6 +38,7 @@ export interface FeedFetcher {
 }
 
 export interface SynchronizeFeedsOptions {
+  readonly autoPrepare?: boolean
   readonly connections: ReadonlyArray<FeedConnection>
   readonly createId: () => string
   readonly fetcher: FeedFetcher
@@ -57,8 +60,6 @@ export interface FeedSyncSummary {
   readonly successfulConnections: number
 }
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error && error.message.length > 0 ? error.message : '피드를 가져오지 못했어요.'
 const readResponseText = async (response: Response, maximumBytes: number) => {
   const contentLength = Number(response.headers.get('content-length'))
 
@@ -150,6 +151,7 @@ const sortItems = (items: ReadonlyArray<ParsedFeedItem>) =>
   })
 
 interface ProcessFeedItemOptions {
+  readonly autoPrepare?: boolean
   readonly connection: FeedConnection
   readonly createId: () => string
   readonly feedTitle: string
@@ -187,7 +189,7 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     const item = {
       ...recordBase,
       contentLength: 0,
-      message: getErrorMessage(error),
+      message: getErrorMessage(error, '피드를 가져오지 못했어요.'),
       status: 'failed' as const,
     } satisfies FeedItemRecord
     await options.repository.saveItems([item])
@@ -243,13 +245,13 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     script,
     sourceTitle: recordBase.sourceTitle,
     sourceUrl: recordBase.sourceUrl,
-    status: 'queued',
+    status: options.autoPrepare === false ? 'pending' : 'queued',
     updatedAt: options.nowIso,
     version: 1,
     voiceId: generationSettings.voiceId,
   } satisfies FeedDialogueJob
   await options.repository.queue(job, item)
-  return jobId
+  return options.autoPrepare === false ? null : jobId
 }
 
 interface CreateIgnoredItemOptions {
@@ -335,6 +337,7 @@ const synchronizeConnection = async (
   const queuedIds = await Promise.all(
     itemsToProcess.map((item) =>
       processFeedItem({
+        autoPrepare: options.autoPrepare,
         connection,
         createId: options.createId,
         feedTitle: feed.title,
@@ -368,7 +371,14 @@ export const synchronizeFeeds = async (
   )
   const queuedJobIds = results.flatMap((result) => (result.ok ? result.jobIds : []))
   const failures = results.flatMap((result) =>
-    result.ok ? [] : [{connectionId: result.connection.id, message: getErrorMessage(result.error)}],
+    result.ok
+      ? []
+      : [
+          {
+            connectionId: result.connection.id,
+            message: getErrorMessage(result.error, '피드를 가져오지 못했어요.'),
+          },
+        ],
   )
 
   return {

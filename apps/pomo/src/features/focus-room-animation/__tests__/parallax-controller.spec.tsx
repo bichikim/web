@@ -4,6 +4,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 
 import {ParallaxController} from '../parallax-controller'
+import {createMotionEnvironment} from '../motion-environment'
 
 const controllers = new WeakMap<HTMLElement, ParallaxController>()
 const createController = (...args: ConstructorParameters<typeof ParallaxController>) => {
@@ -98,6 +99,8 @@ const runDragAnimation = (frameDuration: number) => {
   startDrag(host)
   moveDrag(host, 15, 50)
 
+  animationFrames.shift()?.(0)
+
   for (let frameIndex = 1; frameIndex <= frameCount; frameIndex += 1) {
     animationFrames.shift()?.(frameIndex * frameDuration)
   }
@@ -113,7 +116,6 @@ describe('ParallaxController', () => {
 
   beforeEach(() => {
     motionPreference.matches = false
-    vi.spyOn(performance, 'now').mockReturnValue(0)
     vi.stubGlobal(
       'matchMedia',
       vi.fn(() => motionPreference),
@@ -161,6 +163,7 @@ describe('ParallaxController', () => {
     controller.start()
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}))
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}))
+    animationFrames.shift()?.(0)
     animationFrames.shift()?.(1_000 / 60)
 
     expect(renderOffset.mock.lastCall?.[0]).toBeCloseTo(0.0442, 4)
@@ -247,6 +250,8 @@ describe('ParallaxController', () => {
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}))
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}))
     animationFrames.shift()?.(32)
+    expect(renderOffset.mock.lastCall?.[0]).toBe(0)
+    animationFrames.shift()?.(48)
 
     expect(renderOffset.mock.lastCall?.[0]).toBeGreaterThan(0)
 
@@ -362,6 +367,46 @@ describe('ParallaxController', () => {
 
     expect(onInputModeChange).toHaveBeenCalledWith('drag')
     controller.destroy()
+  })
+
+  it('should use injected sensor and event bindings and release them on destruction', () => {
+    vi.useFakeTimers()
+    const browserWindow = {
+      addEventListener: vi.fn(),
+      matchMedia: window.matchMedia,
+      removeEventListener: vi.fn(),
+    }
+    const onInputModeChange = vi.fn()
+    const clearTimer = vi.fn(globalThis.clearTimeout)
+    const setTimer = vi.fn(globalThis.setTimeout)
+
+    const controller = createController(document.createElement('div'), vi.fn(), {
+      environment: {
+        ...createMotionEnvironment(),
+        clearTimer,
+        getSensor: () => ({}),
+        setTimer,
+        window: browserWindow,
+      },
+      inputMode: 'gyroscope',
+      onInputModeChange,
+    })
+
+    controller.start()
+
+    expect(onInputModeChange).not.toHaveBeenCalled()
+    expect(browserWindow.addEventListener).toHaveBeenCalledWith(
+      'deviceorientation',
+      expect.any(Function),
+      {passive: true},
+    )
+    controller.destroy()
+    expect(setTimer).toHaveBeenCalledWith(expect.any(Function), 1_500)
+    expect(clearTimer).toHaveBeenCalledWith(setTimer.mock.results[0].value)
+    expect(browserWindow.removeEventListener).toHaveBeenCalledWith(
+      'deviceorientation',
+      expect.any(Function),
+    )
   })
 
   it('should exercise default fallback callbacks without custom options', () => {

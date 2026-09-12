@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const maintenanceMocks = vi.hoisted(() => ({runAlbumCoverMaintenance: vi.fn()}))

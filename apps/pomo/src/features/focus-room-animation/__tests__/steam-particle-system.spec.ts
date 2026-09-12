@@ -53,12 +53,12 @@ const createFrames = () => {
   const callbacks = new Map<number, FrameRequestCallback>()
   let frameId = 0
 
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
     frameId += 1
     callbacks.set(frameId, callback)
     return frameId
   })
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((id) => {
     callbacks.delete(id)
   })
 
@@ -77,7 +77,6 @@ describe('SteamParticleSystem', () => {
   beforeEach(() => {
     pixiMocks.containers.length = 0
     pixiMocks.sprites.length = 0
-    vi.spyOn(window.performance, 'now').mockReturnValue(100)
   })
 
   afterEach(() => {
@@ -133,17 +132,49 @@ describe('SteamParticleSystem', () => {
     expect(frames).toHaveLength(1)
 
     system.setReducedMotion(true)
-    expect(window.cancelAnimationFrame).toHaveBeenCalledOnce()
+    expect(globalThis.cancelAnimationFrame).toHaveBeenCalledOnce()
     expect(frames).toHaveLength(0)
     expect(onRender).toHaveBeenCalledOnce()
 
     system.setReducedMotion(true)
     system.setReducedMotion(false)
     expect(frames).toHaveLength(1)
-    expect(window.performance.now).toHaveBeenCalledTimes(2)
 
     system.destroy()
   })
+
+  it.each(['visibility', 'reduced motion'])(
+    'should restart frame timing after %s changes',
+    (mode) => {
+      const frames = createFrames()
+      const {system} = createSystem()
+      const renderFrame = (timestamp: number) => {
+        const frame = frames.values().next().value
+        frames.clear()
+        frame?.(timestamp)
+      }
+
+      system.start()
+      renderFrame(0)
+      expect(pixiMocks.sprites[0].alpha).toBe(0)
+      renderFrame(1_500)
+      expect(pixiMocks.sprites[0].alpha).toBeGreaterThan(0)
+
+      if (mode === 'visibility') {
+        system.setVisible(false)
+        system.setVisible(true)
+      } else {
+        system.setReducedMotion(true)
+        system.setReducedMotion(false)
+      }
+
+      renderFrame(10_000)
+      expect(pixiMocks.sprites[0].alpha).toBe(0)
+      renderFrame(11_500)
+      expect(pixiMocks.sprites[0].alpha).toBeGreaterThan(0)
+      system.destroy()
+    },
+  )
 
   it('should defer reduced-motion rendering until a hidden system becomes visible', () => {
     const frames = createFrames()
@@ -213,7 +244,7 @@ describe('SteamParticleSystem', () => {
 
     const [container] = pixiMocks.containers
     expect(container.position.set).toHaveBeenCalledWith(4, -3)
-    expect(window.cancelAnimationFrame).toHaveBeenCalledOnce()
+    expect(globalThis.cancelAnimationFrame).toHaveBeenCalledOnce()
     expect(container.removeFromParent).toHaveBeenCalledOnce()
     expect(container.destroy).toHaveBeenCalledWith({children: true})
   })

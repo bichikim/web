@@ -48,8 +48,8 @@ const getMaximumSurfaceDistance = (
 ) => {
   let maximumDistance = 0
 
-  for (let y = 0; y <= 100; y += 5) {
-    for (let x = 0; x <= 100; x += 5) {
+  for (let y = 0; y <= 100; y += 2.5) {
+    for (let x = 0; x <= 100; x += 2.5) {
       const sourcePoint = transformDeformerPoint(source, {x, y})
       const resizedPoint = transformDeformerPoint(resized, {x, y})
       maximumDistance = Math.max(
@@ -175,6 +175,43 @@ describe('grid control points', () => {
       ) / Math.max(source.bounds.width, source.bounds.height)
 
     expect(maximumError).toBeLessThan(MAXIMUM_SURFACE_RESAMPLE_ERROR_RATIO)
+  })
+
+  test.each([
+    {columns: 1, rows: 2},
+    {columns: 2, rows: 1},
+    {columns: 2, rows: 2},
+    {columns: 32, rows: 32},
+  ])('should bound sparse diagonal curve error when resizing to $columns × $rows', (divisions) => {
+    const source = createCurvedDeformer([
+      {
+        horizontal: {x: 100 + 100 / 3, y: -100},
+        pointIndex: 1,
+        vertical: {x: 0, y: 100 / 3},
+      },
+      {
+        horizontal: {x: 100 / 3, y: 0},
+        pointIndex: 2,
+        vertical: {x: -100, y: 100 + 100 / 3},
+      },
+    ])
+    const resized = resampleDeformerGrid({...divisions, node: source})
+    const reduced = resampleDeformerGrid({columns: 1, node: resized, rows: 1})
+
+    expect(resized.columns).toBe(divisions.columns)
+    expect(resized.rows).toBe(divisions.rows)
+    expect(getMaximumSurfaceDistance(source, resized)).toBeLessThan(4)
+    expect(getMaximumSurfaceDistance(resized, reduced)).toBeLessThan(4)
+  })
+
+  test('should preserve a half-strength sparse curve whose peak falls between fit samples', () => {
+    const source = createCurvedDeformer([
+      {horizontal: {x: 100 + 100 / 3, y: -50}, pointIndex: 1, vertical: {x: 50, y: 100 / 3}},
+      {horizontal: {x: 100 / 3, y: 50}, pointIndex: 2, vertical: {x: -50, y: 100 + 100 / 3}},
+    ])
+    const resized = resampleDeformerGrid({columns: 1, node: source, rows: 2})
+
+    expect(getMaximumSurfaceDistance(source, resized)).toBeLessThan(4)
   })
 
   test('should retain curve influence while reducing both divisions', () => {

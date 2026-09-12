@@ -1,5 +1,7 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
+import {createGoogleCalendarProvider} from '../providers/google'
 import type {CalendarProvider} from '../providers/types'
 import {type CalendarRepository, createCalendarService} from '../service'
 import type {TokenVault} from '../token-vault'
@@ -230,4 +232,44 @@ it('should preserve more than forty events for the calendar view', async () => {
   })
 
   expect(result.events).toHaveLength(41)
+})
+
+it('should keep the same Google event independent across calendars and connections', async () => {
+  vi.mocked(repository.listConnections).mockResolvedValue(
+    ['connection-1', 'connection-2'].map((id) => ({
+      accountLabel: 'Account',
+      encryptedTokens: 'tokens',
+      id,
+      provider: 'google' as const,
+    })),
+  )
+  vi.mocked(vault.open).mockReturnValue({
+    accessToken: 'access',
+    expiresAt: null,
+    refreshToken: null,
+  })
+  const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) =>
+    Response.json({
+      items: new URL(String(input)).pathname.endsWith('/calendarList')
+        ? [
+            {id: 'work', summary: 'Calendar'},
+            {id: 'personal', summary: 'Calendar'},
+          ]
+        : [{end: {date: '2026-09-06'}, id: 'abcde12345', start: {date: '2026-09-05'}}],
+    }),
+  )
+  const provider = createGoogleCalendarProvider({clientId: 'client', clientSecret: 'secret', fetch})
+  const service = createCalendarService({providerFor: () => provider, repository, vault})
+  const result = await service.listEvents({
+    end: '2026-10-01T00:00:00Z',
+    start: '2026-09-01T00:00:00Z',
+    userId: 'user-1',
+  })
+  expect(result.unavailableConnections).toBe(0)
+  expect(result.events.map((event) => event.id).sort()).toEqual([
+    'connection-1:["personal","abcde12345"]',
+    'connection-1:["work","abcde12345"]',
+    'connection-2:["personal","abcde12345"]',
+    'connection-2:["work","abcde12345"]',
+  ])
 })

@@ -1,6 +1,7 @@
 import type {ChatContext, ChatWorkerRequest, ChatWorkerResponse} from './messages'
+import {reportClientError} from '../client-error-reporter/reporter'
 import type {TextModelId} from '../text-generation/model'
-import {createWorkerTransport} from '../text-generation/worker-transport'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 
 export interface CreateChatClientOptions {
   readonly modelId: TextModelId
@@ -25,12 +26,17 @@ export const createChatClient = (options: CreateChatClientOptions): ChatClient =
     type: 'module',
   })
   const transport = createWorkerTransport<ChatWorkerRequest, ChatWorkerResponse>({
-    createErrorResponse: (event) => ({
-      message: event.message || '채팅 모델 Worker 실행 오류',
-      restartRequired: true,
-      type: 'error',
-    }),
-    feature: 'chat-model',
+    onFailure: (failure) => {
+      reportClientError(failure.cause, {feature: 'chat-model', source: 'worker'})
+      options.onResponse({
+        message:
+          failure.code === 'message-error'
+            ? 'Worker 응답을 읽지 못했습니다.'
+            : failure.detail || '채팅 모델 Worker 실행 오류',
+        restartRequired: true,
+        type: 'error',
+      })
+    },
     onResponse: options.onResponse,
     worker,
   })

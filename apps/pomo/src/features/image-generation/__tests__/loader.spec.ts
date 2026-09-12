@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {Flux2KleinPipeline, type LoadingProgress} from '@winter-love/bonsai'
 import {afterEach, expect, it, vi} from 'vitest'
 import {loadImageModel} from '../loader'

@@ -1,16 +1,16 @@
 import {z} from 'zod'
 
 import {
-  createLatestNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 const AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v2'
 const LEGACY_AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v1'
-const nativeWriter = createLatestNativeStorageWriter(AUTO_START_STORAGE_KEY)
 
 const legacyPreferenceSchema = z.boolean()
 const storedPreferenceSchema = z.object({
@@ -33,66 +33,117 @@ const parseLegacyPreference = (value: unknown): StoredPreference | null => {
   return result.success ? {isEnabled: result.data, savedAt: 0} : null
 }
 
-const readWebPreference = () => {
-  return (
-    readWebStorageJson(AUTO_START_STORAGE_KEY, parsePreference) ??
-    readWebStorageJson(LEGACY_AUTO_START_STORAGE_KEY, parseLegacyPreference)
-  )
-}
-
-const readNativePreference = async () => {
-  const preference = await readNativeStorageJson(AUTO_START_STORAGE_KEY, parsePreference)
-
-  if (preference !== null) {
-    return preference
-  }
-
-  return readNativeStorageJson(LEGACY_AUTO_START_STORAGE_KEY, parseLegacyPreference)
-}
-
-const writeWebPreference = (preference: StoredPreference) => {
-  writeWebStorageJson(AUTO_START_STORAGE_KEY, preference)
-}
-
 const selectLatestPreference = (
   webPreference: StoredPreference | null,
-  nativePreference: StoredPreference | null,
+  tossPreference: StoredPreference | null,
 ) => {
   if (webPreference === null) {
-    return nativePreference
+    return tossPreference
   }
 
-  if (nativePreference === null || webPreference.savedAt >= nativePreference.savedAt) {
+  if (tossPreference === null || webPreference.savedAt >= tossPreference.savedAt) {
     return webPreference
   }
 
-  return nativePreference
+  return tossPreference
 }
 
-/** Reads the latest auto-start preference saved by the app or browser runtime. */
-export const readAutoStartPreference = async () => {
-  const webPreference = readWebPreference()
-
-  if (!hasNativeStorageBridge()) {
-    return webPreference?.isEnabled ?? false
-  }
-
-  try {
-    const nativePreference = await readNativePreference()
-    return selectLatestPreference(webPreference, nativePreference)?.isEnabled ?? false
-  } catch {
-    return webPreference?.isEnabled ?? false
-  }
+export interface AutoStartStorage {
+  read(): Promise<boolean>
+  write(isEnabled: boolean): Promise<void>
 }
 
-/** Persists the auto-start preference until the host app or browser data is removed. */
-export const writeAutoStartPreference = async (isEnabled: boolean) => {
-  const preference = {isEnabled, savedAt: Date.now()} satisfies StoredPreference
-  writeWebPreference(preference)
+export interface AutoStartStorageAdapter {
+  readonly usesTossStorage: typeof hasNativeStorageBridge
+  readonly readWeb: typeof readWebStorageJson
+  readonly readToss: typeof readTossStorageJson
+  readonly writeWeb: typeof writeWebStorageJson
+  readonly writeToss: typeof writeTossStorageJson
+}
 
-  if (!hasNativeStorageBridge()) {
-    return
+interface AutoStartStorageOptions {
+  readonly storage: AutoStartStorageAdapter
+  readonly now: () => number
+}
+
+/** Creates auto-start persistence with instance-owned read and write coordination. */
+export const createAutoStartStorage = ({
+  storage,
+  now,
+}: AutoStartStorageOptions): AutoStartStorage => {
+  const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
+  let latestWebWrite: StoredPreference | null = null
+
+  const readWebPreference = () => {
+    return (
+      storage.readWeb(AUTO_START_STORAGE_KEY, parsePreference) ??
+      storage.readWeb(LEGACY_AUTO_START_STORAGE_KEY, parseLegacyPreference)
+    )
   }
 
-  await nativeWriter.write(preference)
+  const readTossPreference = async () => {
+    const preference = await storage.readToss(AUTO_START_STORAGE_KEY, parsePreference)
+
+    if (preference !== null) {
+      return preference
+    }
+
+    return storage.readToss(LEGACY_AUTO_START_STORAGE_KEY, parseLegacyPreference)
+  }
+
+  const writeWebPreference = (preference: StoredPreference) => {
+    return storage.writeWeb(AUTO_START_STORAGE_KEY, preference)
+  }
+
+  /** Reads the latest auto-start preference saved by the app or browser runtime. */
+  const read = async () => {
+    const initialWebWrite = latestWebWrite
+    const webPreference = readWebPreference()
+
+    if (!storage.usesTossStorage()) {
+      return webPreference?.isEnabled ?? false
+    }
+
+    try {
+      const tossPreference = await readTossPreference()
+
+      if (latestWebWrite !== initialWebWrite && latestWebWrite !== null) {
+        return readWebPreference()?.isEnabled ?? false
+      }
+
+      return selectLatestPreference(readWebPreference(), tossPreference)?.isEnabled ?? false
+    } catch {
+      return readWebPreference()?.isEnabled ?? false
+    }
+  }
+
+  /** Persists the auto-start preference until the host app or browser data is removed. */
+  const write = async (isEnabled: boolean) => {
+    const preference = {isEnabled, savedAt: now()} satisfies StoredPreference
+    const webWriteError = writeWebPreference(preference)
+
+    latestWebWrite = webWriteError === null ? preference : null
+
+    if (!storage.usesTossStorage()) {
+      return
+    }
+
+    await writeLatestToss(preference).catch(() => undefined)
+  }
+
+  return {read, write}
 }
+
+const runtimeStorage = createAutoStartStorage({
+  now: () => Date.now(),
+  storage: {
+    readToss: readTossStorageJson,
+    readWeb: readWebStorageJson,
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: writeTossStorageJson,
+    writeWeb: writeWebStorageJson,
+  },
+})
+
+export const readAutoStartPreference = runtimeStorage.read
+export const writeAutoStartPreference = runtimeStorage.write

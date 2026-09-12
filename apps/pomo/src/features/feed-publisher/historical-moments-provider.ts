@@ -1,3 +1,4 @@
+import {dayjs} from 'src/utils/zoned-dayjs'
 import type {FeedEntry, FeedProvider} from './contract'
 
 const KOREA_TIME_ZONE = 'Asia/Seoul'
@@ -32,16 +33,8 @@ export interface HistoricalMomentsProviderOptions {
 }
 
 const getKoreaCalendarDate = (date: Date): Pick<HistoricalMomentQuery, 'day' | 'month'> => {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    day: 'numeric',
-    month: 'numeric',
-    timeZone: KOREA_TIME_ZONE,
-  }).formatToParts(date)
-  const values = new Map(parts.map((part) => [part.type, part.value]))
-  const day = Number(values.get('day'))
-  const month = Number(values.get('month'))
-
-  return {day, month}
+  const local = dayjs(date).tz(KOREA_TIME_ZONE)
+  return {day: local.date(), month: local.month() + 1}
 }
 
 const createEntry = (origin: string, record: HistoricalMomentRecord): FeedEntry => {
@@ -66,6 +59,8 @@ export const createHistoricalMomentsProvider = (
   const now = options.now ?? (() => new Date())
 
   return {
+    // Calendar membership changes without a publish event to invalidate cached documents.
+    cachePolicy: 'no-store',
     definition: {
       description: '오늘과 같은 날짜에 있었던 역사적 순간을 출처와 함께 소개합니다.',
       homeUrl: `${origin}/api/feeds`,

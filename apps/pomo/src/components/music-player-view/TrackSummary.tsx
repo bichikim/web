@@ -3,9 +3,12 @@ import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 import {PTooltip} from '../PTooltip'
 import {POverflowMarquee} from '../POverflowMarquee'
-import {CLASSES, type MusicPlayerViewProps} from './shared'
+import {CLASSES} from './styles'
+import type {MusicPlayerViewProps} from './types'
 
-export const TrackSummary = (props: Pick<MusicPlayerViewProps, 'currentTrack'>) => {
+export interface TrackSummaryProps extends Pick<MusicPlayerViewProps, 'currentTrack'> {}
+
+export const TrackSummary = (props: TrackSummaryProps) => {
   const tooltip = useTooltipTrigger()
   return (
     <div

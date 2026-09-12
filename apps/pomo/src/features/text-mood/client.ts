@@ -3,7 +3,7 @@ import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
 import {reportClientError} from '../client-error-reporter'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 
 export interface AnalyzeTextMoodOptions {
   readonly context?: string

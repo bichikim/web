@@ -85,6 +85,13 @@ it('should show segment progress and stop the current dialogue playback', () => 
 
   const result = render(() => <PDialoguePlayer />)
 
+  expect(screen.getByRole('button', {name: '대화 건너뛰기'}).lastElementChild).toHaveClass(
+    'contents',
+  )
+  expect(screen.getByRole('button', {name: '3개 모두 중지'}).lastElementChild).toHaveClass(
+    'contents',
+  )
+
   const activeBubble = result.container.querySelector('.pomo-dialogue-bubble')
 
   expect(activeBubble?.classList.contains('border-highlight')).toBe(true)

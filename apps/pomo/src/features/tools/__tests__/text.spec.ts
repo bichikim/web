@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {countText} from '../text'
 it('should count visible characters and UTF-8 bytes separately', () => {

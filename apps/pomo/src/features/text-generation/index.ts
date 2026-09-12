@@ -21,4 +21,3 @@ export type {
   TextGenerationRuntime,
   TextTokenVocabulary,
 } from './runtime'
-export {createWorkerTransport} from './worker-transport'

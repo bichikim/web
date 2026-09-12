@@ -1,3 +1,4 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {
   type Accessor,
   createMemo,
@@ -80,22 +81,22 @@ const getModelProgress = (state: SpeechModelState) => {
 }
 
 const createRecordingTimer = (setElapsedTime: Setter<number>) => {
-  let intervalId: number | null = null
+  let intervalId: ReturnType<typeof globalThis.setInterval> | null = null
   let startedAt = 0
 
   const stop = () => {
     if (intervalId !== null) {
-      window.clearInterval(intervalId)
+      globalThis.clearInterval(intervalId)
       intervalId = null
     }
   }
 
   const start = () => {
     stop()
-    startedAt = performance.now()
+    startedAt = getMonotonicTime()
     setElapsedTime(0)
-    intervalId = window.setInterval(() => {
-      setElapsedTime((performance.now() - startedAt) / MILLISECONDS_PER_SECOND)
+    intervalId = globalThis.setInterval(() => {
+      setElapsedTime((getMonotonicTime() - startedAt) / MILLISECONDS_PER_SECOND)
     }, RECORDING_INTERVAL)
   }
 

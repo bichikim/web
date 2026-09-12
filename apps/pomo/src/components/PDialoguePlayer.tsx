@@ -62,12 +62,8 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
   )
   const stopLabel = () => m.dialogue_stop_all({count: connectedSpeechCount()})
   const handleStop = () => {
-    if (isExternalSpeech()) {
-      props.onStopExternalSpeech?.()
-      return
-    }
-
-    events.onStopDialoguePlayback()
+    const stop = isExternalSpeech() ? props.onStopExternalSpeech : events.onStopDialoguePlayback
+    stop?.()
   }
   const handleSkip = () => events.skipDialoguePlayback()
   const segmentProgress = createMemo(() => {
@@ -142,6 +138,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                       transparent
                       accessibleLabel={m.dialogue_skip()}
                       class={SKIP_BUTTON_CLASS}
+                      contentClass="contents"
                       icon="i-tabler-player-track-next"
                       onPress={handleSkip}
                       size="small"
@@ -158,6 +155,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                     transparent
                     accessibleLabel={stopLabel()}
                     class={STOP_BUTTON_CLASS}
+                    contentClass="contents"
                     icon="i-tabler-player-stop"
                     onPress={handleStop}
                     size="small"

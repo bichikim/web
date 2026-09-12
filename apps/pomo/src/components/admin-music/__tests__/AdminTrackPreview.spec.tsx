@@ -40,6 +40,7 @@ const SECOND_PLAYBACK_URL = 'https://audio.pomofi.io/tracks/asset/second.mp3?tok
 
 beforeEach(() => {
   previewMocks.controller = undefined
+  vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-23T00:00:00.000Z'))
   vi.stubGlobal(
     'fetch',
     vi
@@ -79,14 +80,180 @@ describe('AdminTrackPreview', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
+  it.each(['play', 'seek', 'error'])(
+    'should renew expired access on %s and restore the position',
+    async (operation) => {
+      const result = render(() => <AdminTrackPreview autoplay={false} trackId={TRACK_ID} />)
+      fireEvent.click(screen.getByRole('button', {name: '수록곡 미리 듣기'}))
+      await waitFor(() => expect(result.container.querySelector('audio')?.src).toBe(PLAYBACK_URL))
+      const audio = result.container.querySelector('audio')!
+      Object.defineProperty(audio, 'duration', {configurable: true, value: 180})
+      audio.currentTime = 42
+      fireEvent.loadedMetadata(audio)
+      vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-23T00:16:00.000Z'))
+      vi.mocked(fetch).mockResolvedValue(
+        Response.json({
+          expiresAt: '2026-08-23T00:31:00.000Z',
+          url: SECOND_PLAYBACK_URL,
+        }),
+      )
+      if (operation === 'play') {
+        fireEvent.click(screen.getByRole('button', {name: '수록곡 재생'}))
+      } else if (operation === 'seek') {
+        fireEvent.input(screen.getByRole('slider'), {target: {value: '73'}})
+      } else {
+        fireEvent.error(audio)
+      }
+      await waitFor(() => expect(audio.src).toBe(SECOND_PLAYBACK_URL))
+      expect(fetch).toHaveBeenCalledTimes(2)
+      audio.currentTime = 0
+      fireEvent.loadedMetadata(audio)
+      expect(audio.currentTime).toBe(operation === 'seek' ? 73 : 42)
+      expect(screen.queryByRole('status')).toBeNull()
+      expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(operation === 'play' ? 1 : 0)
+      fireEvent.error(audio)
+      expect(fetch).toHaveBeenCalledTimes(2)
+      expect(screen.getByRole('status')).toBeInTheDocument()
+    },
+  )
+
+  it('should coalesce renewal requests near expiry and retain the latest seek without autoplay', async () => {
+    const response = Promise.withResolvers<Response>()
+    const result = render(() => <AdminTrackPreview autoplay={false} trackId={TRACK_ID} />)
+    fireEvent.click(screen.getByRole('button', {name: '수록곡 미리 듣기'}))
+    await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
+    const audio = result.container.querySelector('audio')!
+    Object.defineProperty(audio, 'duration', {configurable: true, value: 180})
+    fireEvent.loadedMetadata(audio)
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-23T00:14:30.000Z'))
+    vi.mocked(fetch).mockReturnValue(response.promise)
+    fireEvent.input(screen.getByRole('slider'), {target: {value: '40'}})
+    fireEvent.input(screen.getByRole('slider'), {target: {value: '70'}})
+    fireEvent.error(audio)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    response.resolve(
+      Response.json({expiresAt: '2026-08-23T00:30:00.000Z', url: SECOND_PLAYBACK_URL}),
+    )
+    await waitFor(() => expect(audio.src).toBe(SECOND_PLAYBACK_URL))
+    fireEvent.loadedMetadata(audio)
+    expect(audio.currentTime).toBe(70)
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
+  })
+
+  it.each(['pause', 'inactive'])(
+    'should not resume when %s occurs during renewal',
+    async (operation) => {
+      const response = Promise.withResolvers<Response>()
+      const [active, setActive] = createSignal(true)
+      const result = render(() => (
+        <AdminTrackPreview active={active()} autoplay={false} trackId={TRACK_ID} />
+      ))
+      fireEvent.click(screen.getByRole('button', {name: '수록곡 미리 듣기'}))
+      await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
+      const audio = result.container.querySelector('audio')!
+      Object.defineProperty(audio, 'duration', {configurable: true, value: 180})
+      Object.defineProperty(audio, 'paused', {configurable: true, value: false})
+      fireEvent.loadedMetadata(audio)
+      fireEvent.play(audio)
+      vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-23T00:16:00.000Z'))
+      vi.mocked(fetch).mockReturnValue(response.promise)
+      fireEvent.input(screen.getByRole('slider'), {target: {value: '70'}})
+      if (operation === 'pause') {
+        fireEvent.click(screen.getByRole('button', {name: '수록곡 일시정지'}))
+      } else {
+        setActive(false)
+      }
+      response.resolve(
+        Response.json({expiresAt: '2026-08-23T00:31:00.000Z', url: SECOND_PLAYBACK_URL}),
+      )
+      await waitFor(() => expect(audio.src).toBe(SECOND_PLAYBACK_URL))
+      fireEvent.loadedMetadata(audio)
+      expect(audio.currentTime).toBe(70)
+      expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should resume an explicitly selected inactive track after renewal', async () => {
+    const [active, setActive] = createSignal(true)
+    const [autoplay, setAutoplay] = createSignal(false)
+    const result = render(() => (
+      <AdminTrackPreview
+        active={active()}
+        autoplay={autoplay()}
+        onRequest={() => setAutoplay(true)}
+        trackId={TRACK_ID}
+      />
+    ))
+    fireEvent.click(screen.getByRole('button', {name: '수록곡 미리 듣기'}))
+    await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
+    const audio = result.container.querySelector('audio')!
+    fireEvent.play(audio)
+    vi.mocked(HTMLMediaElement.prototype.play).mockClear()
+    setActive(false)
+    setAutoplay(false)
+    fireEvent.pause(audio)
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-23T00:16:00.000Z'))
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json({expiresAt: '2026-08-23T00:31:00.000Z', url: SECOND_PLAYBACK_URL}),
+    )
+    fireEvent.click(screen.getByRole('button', {name: '수록곡 재생'}))
+    await waitFor(() => expect(audio.src).toBe(SECOND_PLAYBACK_URL))
+    fireEvent.loadedMetadata(audio)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+  })
+
+  it.each(['seek-first', 'play-first'])(
+    'should merge pending play and seek commands in %s order',
+    async (order) => {
+      const response = Promise.withResolvers<Response>()
+      const result = render(() => <AdminTrackPreview autoplay={false} trackId={TRACK_ID} />)
+      fireEvent.click(screen.getByRole('button', {name: '수록곡 미리 듣기'}))
+      await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
+      const audio = result.container.querySelector('audio')!
+      Object.defineProperty(audio, 'duration', {configurable: true, value: 180})
+      fireEvent.loadedMetadata(audio)
+      vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-23T00:16:00.000Z'))
+      vi.mocked(fetch).mockReturnValue(response.promise)
+      if (order === 'seek-first') {
+        fireEvent.input(screen.getByRole('slider'), {target: {value: '70'}})
+        fireEvent.click(screen.getByRole('button', {name: '수록곡 재생'}))
+      } else {
+        fireEvent.click(screen.getByRole('button', {name: '수록곡 재생'}))
+        fireEvent.input(screen.getByRole('slider'), {target: {value: '70'}})
+      }
+      response.resolve(
+        Response.json({expiresAt: '2026-08-23T00:31:00.000Z', url: SECOND_PLAYBACK_URL}),
+      )
+      await waitFor(() => expect(audio.src).toBe(SECOND_PLAYBACK_URL))
+      fireEvent.loadedMetadata(audio)
+      expect(audio.currentTime).toBe(70)
+      expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+    },
+  )
+
+  it('should show a retry error when renewal fails', async () => {
+    const result = render(() => <AdminTrackPreview autoplay={false} trackId={TRACK_ID} />)
+    fireEvent.click(screen.getByRole('button', {name: '수록곡 미리 듣기'}))
+    await waitFor(() => expect(result.container.querySelector('audio')).not.toBeNull())
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-23T00:16:00.000Z'))
+    vi.mocked(fetch).mockResolvedValue(new Response(null, {status: 503}))
+    fireEvent.click(screen.getByRole('button', {name: '수록곡 재생'}))
+    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument())
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(result.container.querySelector('audio')).toBeNull()
+  })
+
   it('should absorb a rejecting playback controller', async () => {
     const startPlayback = vi.fn().mockRejectedValue(new Error('controller unavailable'))
     previewMocks.controller = {
+      cancelResume: vi.fn(),
       errorMessage: () => null,
       loading: () => false,
       onPlaybackError: vi.fn(),
       onPlaybackReady: vi.fn(),
       playbackUrl: () => null,
+      preparePlayback: vi.fn(),
+      restorePlayback: vi.fn(),
       startPlayback,
     }
     render(() => <AdminTrackPreview title="첫 곡" trackId={TRACK_ID} />)

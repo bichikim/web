@@ -16,11 +16,12 @@ const installBrowserRuntime = () => {
     return 17
   })
 
+  vi.stubGlobal('clearTimeout', clearTimeout)
+  vi.stubGlobal('setTimeout', setTimeout)
   vi.stubGlobal('window', {
     addEventListener: vi.fn((_type: string, nextListener: (event: Event) => void) => {
       listener = nextListener
     }),
-    clearTimeout,
     location: {reload},
     removeEventListener,
     sessionStorage: {
@@ -28,7 +29,6 @@ const installBrowserRuntime = () => {
       removeItem: (key: string) => storage.delete(key),
       setItem: (key: string, value: string) => storage.set(key, value),
     },
-    setTimeout,
   })
 
   return {

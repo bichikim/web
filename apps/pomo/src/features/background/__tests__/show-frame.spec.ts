@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 import type {FrameRenderer} from '../../frame-renderer'
 import {findCompanion} from '../companion'

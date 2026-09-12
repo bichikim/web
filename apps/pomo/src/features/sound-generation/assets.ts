@@ -6,6 +6,7 @@ const MEGABYTE = 1_000_000
 export const ASSET_LABELS: Readonly<Record<string, string>> = {
   'onnx/sa3-sm-sfx/dit_fp16.onnx': '환경음 생성 모델',
   'onnx/same-s/dec_bf16.onnx': '오디오 디코더',
+  'onnx/same-s/enc_bf16.onnx': '오디오 이해 모델',
   'onnx/t5gemma/encoder.onnx': '텍스트 이해 모델',
   'tensorRT/sm_90/t5gemma/tokenizer.json': '프롬프트 분석 파일',
 }

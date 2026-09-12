@@ -1,4 +1,5 @@
 import {Tabs} from '@kobalte/core/tabs'
+import * as m from '@paraglide/message'
 import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
 
@@ -72,10 +73,6 @@ export const PModalTabList = (props: PModalTabListProps) => {
   }
 
   createEffect(() => {
-    if (props.scrollControls === undefined) {
-      return
-    }
-
     const element = listElement()
 
     if (element === undefined) {
@@ -106,9 +103,9 @@ export const PModalTabList = (props: PModalTabListProps) => {
           )}
         </For>
       </Tabs.List>
-      <Show when={props.scrollControls !== undefined && canScrollLeft()}>
+      <Show when={canScrollLeft()}>
         <button
-          aria-label={props.scrollControls?.previousLabel}
+          aria-label={props.scrollControls?.previousLabel ?? m.tabs_previous()}
           class={
             `${TAB_SCROLL_BUTTON_CLASSES} left-0 w-6 justify-start ` +
             'bg-gradient-to-r from-surface-strong to-transparent'
@@ -119,9 +116,9 @@ export const PModalTabList = (props: PModalTabListProps) => {
           <span aria-hidden="true" class="i-tabler-chevron-left size-4" />
         </button>
       </Show>
-      <Show when={props.scrollControls !== undefined && canScrollRight()}>
+      <Show when={canScrollRight()}>
         <button
-          aria-label={props.scrollControls?.nextLabel}
+          aria-label={props.scrollControls?.nextLabel ?? m.tabs_next()}
           class={
             `${TAB_SCROLL_BUTTON_CLASSES} right-0 w-10 justify-end ` +
             'bg-gradient-to-r from-transparent to-surface-strong'

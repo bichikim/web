@@ -1,4 +1,5 @@
 import {PTextarea} from 'src/components/PTextarea'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, Show} from 'solid-js'
 import {useChat} from '../../../features/chat'
@@ -133,7 +134,7 @@ export function HwpExpenseAssistant(props: HwpExpenseAssistantProps) {
           fallback={
             <button
               class={PRIMARY_BUTTON_CLASSES}
-              disabled={chat.isBusy() || !chat.isModelReady() || inputText().trim().length === 0}
+              disabled={chat.isBusy() || !chat.isModelReady() || !isNonBlankString(inputText())}
               onClick={handleInterpret}
               type="button"
             >

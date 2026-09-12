@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {type Container, type Texture} from 'pixi.js'
 import {beforeEach, expect, it, vi} from 'vitest'
 

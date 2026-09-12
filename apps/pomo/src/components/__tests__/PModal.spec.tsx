@@ -3,13 +3,81 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
 import {PModal} from '../PModal'
 import {PModalTabList} from '../PModalTabList'
 
-afterEach(() => vi.restoreAllMocks())
+beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe = vi.fn()
+      disconnect = vi.fn()
+    },
+  )
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+it.each([false, true, undefined])(
+  'should honor closeOnEscape=%s after switching tabs and preserve the close button',
+  async (closeOnEscape) => {
+    const onOpenChange = vi.fn()
+    render(() => (
+      <Tabs defaultValue="general">
+        <PModal
+          closeOnEscape={closeOnEscape}
+          isOpen
+          navigation={
+            <PModalTabList
+              accessibleLabel="Settings tabs"
+              items={[
+                {icon: 'i-tabler-settings', label: 'General', value: 'general'},
+                {icon: 'i-tabler-photo', label: 'Background', value: 'background'},
+              ]}
+            />
+          }
+          onOpenChange={onOpenChange}
+          title="Settings"
+        >
+          <Tabs.Content value="general">General content</Tabs.Content>
+          <Tabs.Content value="background">Background content</Tabs.Content>
+        </PModal>
+      </Tabs>
+    ))
+
+    const backgroundTab = screen.getByRole('tab', {name: 'Background'})
+    fireEvent.click(backgroundTab)
+    await waitFor(() => expect(backgroundTab).toHaveAttribute('aria-selected', 'true'))
+    backgroundTab.focus()
+    fireEvent.keyDown(backgroundTab, {key: 'Escape'})
+    if (closeOnEscape === false) {
+      expect(onOpenChange).not.toHaveBeenCalled()
+    } else {
+      expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false)
+    }
+    onOpenChange.mockClear()
+
+    const closeButton = screen.getByRole('button', {name: m.common_close()})
+    closeButton.focus()
+    fireEvent.keyDown(closeButton, {key: 'Escape'})
+    if (closeOnEscape === false) {
+      expect(onOpenChange).not.toHaveBeenCalled()
+      expect(screen.getByRole('dialog', {name: 'Settings'})).toBeInTheDocument()
+    } else {
+      expect(onOpenChange).toHaveBeenCalledWith(false)
+    }
+
+    onOpenChange.mockClear()
+    fireEvent.click(closeButton)
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  },
+)
 
 it('should omit the header while preserving the accessible dialog title', () => {
   render(() => (
@@ -190,4 +258,83 @@ it('should preserve the tabs context through navigation, portal, and reopening',
   expect(screen.getByRole('tabpanel')).toHaveTextContent('Guide content')
   fireEvent.click(screen.getByRole('tab', {name: 'General'}))
   await waitFor(() => expect(screen.getByRole('tabpanel')).toHaveTextContent('General content'))
+})
+
+it('should preserve Escape cancellation from an input', () => {
+  const onOpenChange = vi.fn()
+  render(() => (
+    <PModal isOpen onOpenChange={onOpenChange} title="Editor">
+      <input aria-label="Draft" onKeyDown={(event) => event.preventDefault()} />
+    </PModal>
+  ))
+  fireEvent.keyDown(screen.getByRole('textbox', {name: 'Draft'}), {key: 'Escape'})
+  expect(onOpenChange).not.toHaveBeenCalled()
+})
+
+it('should dismiss only the nested modal when Escape is pressed on its tab', () => {
+  const [innerOpen, setInnerOpen] = createSignal(false)
+  const outerChange = vi.fn()
+  const innerChange = vi.fn()
+  render(() => (
+    <PModal isOpen onOpenChange={outerChange} title="Outer">
+      <Tabs defaultValue="general">
+        <PModal
+          isOpen={innerOpen()}
+          onOpenChange={innerChange}
+          title="Inner"
+          navigation={
+            <PModalTabList
+              accessibleLabel="Inner tabs"
+              items={[{icon: 'i-tabler-settings', label: 'General', value: 'general'}]}
+            />
+          }
+        >
+          <Tabs.Content value="general">General content</Tabs.Content>
+        </PModal>
+      </Tabs>
+    </PModal>
+  ))
+  setInnerOpen(true)
+  fireEvent.keyDown(screen.getByRole('tab', {name: 'General'}), {key: 'Escape'})
+  expect(innerChange).toHaveBeenCalledExactlyOnceWith(false)
+  expect(outerChange).not.toHaveBeenCalled()
+})
+
+it('should focus the requested input after opening a nested modal', async () => {
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [input, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+  render(() => (
+    <PModal isOpen onOpenChange={vi.fn()} title="Parent">
+      <button onClick={() => setIsOpen(true)} type="button">
+        Create memo
+      </button>
+      <PModal getInitialFocus={input} isOpen={isOpen()} onOpenChange={setIsOpen} title="Memo">
+        <textarea aria-label="Memo text" ref={setInput} />
+      </PModal>
+    </PModal>
+  ))
+  const trigger = screen.getByRole('button', {name: 'Create memo'})
+  await waitFor(() => expect(screen.getByRole('button', {name: m.common_close()})).toHaveFocus())
+  trigger.focus()
+  fireEvent.click(trigger)
+  await waitFor(() => expect(screen.getByRole('textbox', {name: 'Memo text'})).toHaveFocus())
+})
+
+it.each(['close', 'unmount'])('should cancel pending initial focus on %s', async (action) => {
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [input, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+  const {unmount} = render(() => (
+    <PModal getInitialFocus={input} isOpen={isOpen()} onOpenChange={setIsOpen} title="Memo">
+      <textarea aria-label="Memo text" ref={setInput} />
+    </PModal>
+  ))
+  setIsOpen(true)
+  const focus = vi.spyOn(screen.getByRole('textbox', {name: 'Memo text'}), 'focus')
+  if (action === 'close') {
+    setIsOpen(false)
+  } else {
+    unmount()
+  }
+  await Promise.resolve()
+  expect(focus).not.toHaveBeenCalled()
 })

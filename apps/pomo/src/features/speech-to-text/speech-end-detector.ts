@@ -1,3 +1,4 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const DETECTION_INTERVAL = 50
 const REQUIRED_SPEECH_SAMPLES = 3
@@ -76,10 +77,10 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
     source.connect(analyser)
     context.resume().catch(() => undefined)
 
-    const intervalId = window.setInterval(() => {
+    const intervalId = globalThis.setInterval(() => {
       analyser.getFloatTimeDomainData(samples)
 
-      if (state.push({energy: getRootMeanSquare(samples), timestamp: performance.now()})) {
+      if (state.push({energy: getRootMeanSquare(samples), timestamp: getMonotonicTime()})) {
         for (const listener of listeners) {
           listener()
         }
@@ -88,7 +89,7 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
 
     return {
       dispose: () => {
-        window.clearInterval(intervalId)
+        globalThis.clearInterval(intervalId)
         listeners.clear()
         source.disconnect()
         analyser.disconnect()

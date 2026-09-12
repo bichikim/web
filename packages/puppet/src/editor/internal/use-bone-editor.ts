@@ -170,26 +170,26 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
   onCleanup(stop)
   return {
     bound,
-    editable,
     changeRest,
+    editable,
     eventPoint,
     indices,
     inverse,
-    keyDown: createBoneKeyboard({editable, changeRest, mode, local, selected, move}),
-    mode,
+    keyDown: createBoneKeyboard({changeRest, editable, local, mode, move, selected}),
     bind: (element: SVGSVGElement) => {
       svg = element
     },
-    toggleInverse: () => {
-      stop()
-      setInverse((value) => !value)
-    },
+    mode,
     drag: (event: PointerEvent) => {
       const index = selected()
       const position = eventPoint(event)
       if (dragging && index !== null && position !== undefined) {
         move(index, position)
       }
+    },
+    toggleInverse: () => {
+      stop()
+      setInverse((value) => !value)
     },
     point,
     points,
@@ -231,6 +231,7 @@ const saveBonePose = (props: UseBoneEditorProps, controlPoints: ReadonlyArray<nu
       ? setParameterKeyformDeformerControlPoints({
           ...options,
           bindingId: editTarget.bindingId,
+          previewDeformer: props.node,
           values: editTarget.values,
         })
       : setDeformerControlPoints(options)

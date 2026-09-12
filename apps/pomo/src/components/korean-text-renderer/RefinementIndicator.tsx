@@ -8,10 +8,10 @@ export const RefinementIndicator = () => {
   const [frame, setFrame] = createSignal(0)
 
   onMount(() => {
-    const interval = window.setInterval(() => {
+    const interval = globalThis.setInterval(() => {
       setFrame((value) => (value + 1) % REFINEMENT_FRAMES.length)
     }, FRAME_INTERVAL)
-    onCleanup(() => window.clearInterval(interval))
+    onCleanup(() => globalThis.clearInterval(interval))
   })
 
   return (

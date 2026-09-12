@@ -1,3 +1,5 @@
+import {clampUnit} from 'src/utils/clamp-unit'
+import {formatDuration} from 'src/utils/format-duration'
 export interface PomodoroTimerConfig {
   readonly focusSeconds: number
   readonly focusSessionsPerCycle: number
@@ -209,13 +211,13 @@ export const getPomodoroProgress = (
   const duration = getPomodoroPhaseDuration(state.phase, config)
   const remaining = getPomodoroRemainingSeconds(state, now)
 
-  return Math.min(1, Math.max(0, (duration - remaining) / duration))
+  return clampUnit((duration - remaining) / duration)
 }
 
-export const formatPomodoroTime = (seconds: number) => {
-  const clampedSeconds = Math.max(0, Math.floor(seconds))
-  const minutes = Math.floor(clampedSeconds / SECONDS_PER_MINUTE)
-  const remainder = clampedSeconds % SECONDS_PER_MINUTE
+const TIMER_DIGITS = 5
 
-  return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
-}
+export const formatPomodoroTime = (seconds: number) =>
+  formatDuration(Math.max(0, Math.floor(seconds)) * MILLISECONDS_PER_SECOND).padStart(
+    TIMER_DIGITS,
+    '0',
+  )

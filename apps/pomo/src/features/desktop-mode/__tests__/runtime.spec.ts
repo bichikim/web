@@ -8,6 +8,10 @@ import {
   setWidgetSurface,
 } from '@winter-love/desktop-surface'
 import {
+  DEFAULT_P_DISPLAY_PREFERENCES,
+  writePDisplayPreferences,
+} from '../../focus-room-display-preferences'
+import {
   applyDesktopMode,
   finishDesktopModeTransition,
   prepareDesktopModeTransition,
@@ -22,6 +26,7 @@ vi.mock('@winter-love/desktop-surface', () => ({
 }))
 
 beforeEach(() => {
+  localStorage.clear()
   vi.stubGlobal('screen', {availHeight: 900, availLeft: 0, availTop: 0, availWidth: 1440})
   vi.mocked(closeControlSurface).mockResolvedValue()
   vi.mocked(openControlSurface).mockResolvedValue({created: true})
@@ -121,6 +126,27 @@ describe('applyDesktopMode', () => {
     )
   })
 
+  it.each([
+    {labels: ['desktop-settings'], playerVisible: false, pomodoroVisible: false},
+    {labels: ['desktop-player', 'desktop-settings'], playerVisible: true, pomodoroVisible: false},
+    {labels: ['desktop-pomodoro', 'desktop-settings'], playerVisible: false, pomodoroVisible: true},
+  ])(
+    'should open only enabled surfaces for $playerVisible / $pomodoroVisible',
+    async ({playerVisible, pomodoroVisible, labels}) => {
+      await writePDisplayPreferences({
+        ...DEFAULT_P_DISPLAY_PREFERENCES,
+        playerVisible,
+        pomodoroVisible,
+      })
+
+      await applyDesktopMode('desktop')
+
+      expect(vi.mocked(openControlSurface).mock.calls.map(([options]) => options.label)).toEqual(
+        labels,
+      )
+    },
+  )
+
   it('should roll back the background and controls when desktop entry fails', async () => {
     const error = new Error('native transition failed')
     vi.mocked(setBackgroundSurface).mockRejectedValue(error)
@@ -131,6 +157,79 @@ describe('applyDesktopMode', () => {
     expect(closeControlSurface).toHaveBeenCalledWith({label: 'desktop-settings'})
     expect(restoreSurface).toHaveBeenCalledWith({label: 'background'})
   })
+
+  it('should wait for delayed creation before rollback and allow a subsequent entry', async () => {
+    const player = Promise.withResolvers<void>()
+    const settings = Promise.withResolvers<void>()
+    const windows = new Set<string>()
+    const error = new Error('settings creation failed')
+    vi.mocked(openControlSurface).mockImplementation(async ({label}) => {
+      if (label === 'desktop-player') {
+        await player.promise
+      }
+      if (label === 'desktop-settings') {
+        await settings.promise
+      }
+      windows.add(label)
+      return {created: true}
+    })
+    vi.mocked(closeControlSurface).mockImplementation(async ({label}) => {
+      windows.delete(label)
+    })
+    const transition = applyDesktopMode('desktop')
+    const outcome = transition.catch((failure: unknown) => failure)
+    await vi.waitFor(() => expect(openControlSurface).toHaveBeenCalledTimes(3))
+    settings.reject(error)
+    // Drain the failed open and its rollback before allowing the late native creation.
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    const earlyCleanup = vi.mocked(closeControlSurface).mock.calls.length
+    player.resolve()
+    expect(await outcome).toBe(error)
+    expect(earlyCleanup).toBe(0)
+    expect([...windows]).toEqual([])
+    expect(restoreSurface).toHaveBeenCalledWith({label: 'background'})
+
+    await applyDesktopMode('normal')
+    await prepareDesktopModeTransition('normal')
+    await finishDesktopModeTransition('normal')
+    vi.mocked(openControlSurface).mockImplementation(async ({label}) => {
+      windows.add(label)
+      return {created: true}
+    })
+    await applyDesktopMode('desktop')
+    expect([...windows].sort()).toEqual(['desktop-player', 'desktop-pomodoro', 'desktop-settings'])
+  })
+
+  it.each([false, true])(
+    'should preserve multiple open failures with cleanup failure %s',
+    async (cleanupFails) => {
+      const playerError = new Error('player creation failed')
+      const settingsError = new Error('settings creation failed')
+      const cleanupError = new Error('player close failed')
+      const restoreError = new Error('background restore failed')
+      vi.mocked(openControlSurface)
+        .mockRejectedValueOnce(playerError)
+        .mockResolvedValueOnce({created: true})
+        .mockRejectedValueOnce(settingsError)
+      if (cleanupFails) {
+        vi.mocked(closeControlSurface).mockRejectedValueOnce(cleanupError)
+        vi.mocked(restoreSurface).mockRejectedValueOnce(restoreError)
+      }
+      const entryError = new AggregateError(
+        [playerError, settingsError],
+        'One or more desktop control surfaces could not be opened',
+      )
+      await expect(applyDesktopMode('desktop')).rejects.toMatchObject(
+        cleanupFails
+          ? {errors: [entryError, cleanupError, restoreError]}
+          : {errors: [playerError, settingsError]},
+      )
+      expect(closeControlSurface).toHaveBeenCalledTimes(3)
+      expect(restoreSurface).toHaveBeenCalledWith({label: 'background'})
+    },
+  )
 
   it('should make the desktop background interactive without opening auxiliary surfaces', async () => {
     await applyDesktopMode('interactiveDesktop')

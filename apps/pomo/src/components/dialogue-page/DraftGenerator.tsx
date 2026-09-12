@@ -1,4 +1,5 @@
 import {PInput} from 'src/components/PInput'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
 import {
   type Accessor,
@@ -236,7 +237,7 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
   const canGenerate = () =>
     !props.disabled() &&
     !isBusy() &&
-    props.topic().trim().length > 0 &&
+    isNonBlankString(props.topic()) &&
     writer.state().status !== 'unsupported'
   const downloadAndGenerate = async () => {
     const result = await modelDownload.startTextModel(GEMMA_MODEL_ID)

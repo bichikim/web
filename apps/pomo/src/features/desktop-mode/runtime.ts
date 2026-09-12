@@ -1,3 +1,5 @@
+import {readPDisplayPreferences} from 'src/features/focus-room-display-preferences'
+
 import type {DesktopMode} from './model'
 
 const BACKGROUND_LABEL = 'background'
@@ -109,9 +111,27 @@ const restoreNormalMode = async (): Promise<void> => {
 const enterDesktopMode = async (): Promise<void> => {
   const {openControlSurface, restoreSurface, setBackgroundSurface} = await getSurfaceApi()
 
+  const preferences = await readPDisplayPreferences()
+  const visibility = {
+    'desktop-player': preferences.playerVisible,
+    'desktop-pomodoro': preferences.pomodoroVisible,
+    'desktop-settings': true,
+  }
+  const surfaces = getControlSurfaceOptions().filter(({label}) => visibility[label])
+
   try {
     await setBackgroundSurface({interaction: 'passThrough', label: BACKGROUND_LABEL})
-    await Promise.all(getControlSurfaceOptions().map((options) => openControlSurface(options)))
+    const results = await Promise.allSettled(surfaces.map((options) => openControlSurface(options)))
+    const errors = results.flatMap((result) =>
+      result.status === 'rejected' ? [result.reason] : [],
+    )
+
+    if (errors.length === 1) {
+      throw errors[0]
+    }
+    if (errors.length > 1) {
+      throw new AggregateError(errors, 'One or more desktop control surfaces could not be opened')
+    }
   } catch (error: unknown) {
     const cleanupResults = await Promise.allSettled([
       closeSurfaces([...CONTENT_SURFACE_LABELS, SETTINGS_SURFACE_LABEL]),

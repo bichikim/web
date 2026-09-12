@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PDatabase} from '../../focus-room-dialogue/database'
@@ -434,17 +435,20 @@ describe('feed dialogue repository reads and recovery', () => {
     const queued = createJob()
     const generating = createJob({id: 'job-2', status: 'generating'})
     const failed = createJob({id: 'job-3', status: 'failed'})
-    feedDialogueJobs.toArray.mockResolvedValue([queued, generating, failed])
+    const pending = createJob({id: 'job-4', status: 'pending'})
+    feedDialogueJobs.toArray.mockResolvedValue([queued, generating, failed, pending])
 
     await expect(repository.interruptUnfinishedJobs(UPDATED_AT)).resolves.toEqual([
       {...queued, status: 'interrupted', updatedAt: UPDATED_AT},
       {...generating, status: 'interrupted', updatedAt: UPDATED_AT},
       failed,
+      pending,
     ])
     expect(feedDialogueJobs.bulkPut).toHaveBeenCalledWith([
       {...queued, status: 'interrupted', updatedAt: UPDATED_AT},
       {...generating, status: 'interrupted', updatedAt: UPDATED_AT},
       failed,
+      pending,
     ])
   })
 

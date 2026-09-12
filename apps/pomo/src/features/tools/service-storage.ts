@@ -1,12 +1,6 @@
 import {z} from 'zod'
 import {type ServiceBranch} from './service'
-import {
-  hasNativeStorageBridge,
-  readNativeStorageJson,
-  readWebStorageJson,
-  writeNativeStorageJson,
-  writeWebStorageJson,
-} from 'src/features/runtime-storage'
+import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {parseDate} from '../civil-date'
 
 const STORAGE_KEY = 'pomo:service-settings:v1'
@@ -33,37 +27,95 @@ const parseSettings = (value: unknown): ServiceSettings | null => {
   const result = settingsSchema.safeParse(value)
   return result.success ? result.data : null
 }
-let pendingWrite = Promise.resolve()
 const parseStart = (value: unknown): string | null =>
   typeof value === 'string' && parseDate(value) !== null ? value : null
 
-export const readServiceSettings = async (): Promise<ServiceSettings> => {
-  if (!hasNativeStorageBridge()) {
-    return (
-      readWebStorageJson(STORAGE_KEY, parseSettings) ?? {
-        ...DEFAULT_SERVICE_SETTINGS,
-        start: readWebStorageJson(LEGACY_KEY, parseStart) ?? '',
-      }
-    )
-  }
-  await pendingWrite
-  return (
-    (await readNativeStorageJson(STORAGE_KEY, parseSettings)) ?? {
-      ...DEFAULT_SERVICE_SETTINGS,
-      start: (await readNativeStorageJson(LEGACY_KEY, parseStart)) ?? '',
-    }
-  )
+export interface ServiceSettingsStorage {
+  read(): Promise<ServiceSettings>
+  write(value: ServiceSettings): Promise<void>
+}
+export interface CreateServiceSettingsStorageOptions {
+  readonly storage: ToolStorageAdapter
 }
 
-export const writeServiceSettings = async (value: ServiceSettings): Promise<void> => {
-  const webError = writeWebStorageJson(STORAGE_KEY, value)
-  if (!hasNativeStorageBridge()) {
-    if (webError !== null) {
-      throw new Error('Failed to persist service settings.', {cause: webError})
+/** Creates service settings persistence with an isolated write queue and revision. */
+export const createServiceSettingsStorage = (
+  options: CreateServiceSettingsStorageOptions,
+): ServiceSettingsStorage => {
+  const {storage} = options
+  let pendingWrite = Promise.resolve()
+  let writeRevision = 0
+  const read = async (): Promise<ServiceSettings> => {
+    const revision = writeRevision
+    const usesTossStorage = storage.usesTossStorage()
+    if (usesTossStorage) {
+      await pendingWrite
+      if (revision !== writeRevision) {
+        return read()
+      }
     }
-    return
+    const webSettings = storage.readWeb(STORAGE_KEY, parseSettings)
+    if (webSettings !== null) {
+      return webSettings
+    }
+    const legacySettings = () => ({
+      ...DEFAULT_SERVICE_SETTINGS,
+      start: storage.readWeb(LEGACY_KEY, parseStart) ?? '',
+    })
+    if (!usesTossStorage) {
+      return legacySettings()
+    }
+    try {
+      const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
+      if (revision !== writeRevision) {
+        return read()
+      }
+      if (tossSettings !== null) {
+        return tossSettings
+      }
+      const webLegacy = legacySettings()
+      if (webLegacy.start !== '') {
+        return webLegacy
+      }
+      const nativeStart = await storage.readToss(LEGACY_KEY, parseStart)
+      if (revision !== writeRevision) {
+        return read()
+      }
+      return {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
+    } catch (error: unknown) {
+      if (revision !== writeRevision) {
+        return read()
+      }
+      throw error
+    }
   }
-  const write = pendingWrite.then(() => writeNativeStorageJson(STORAGE_KEY, value))
-  pendingWrite = write.catch(() => undefined)
-  await write
+
+  const write = async (value: ServiceSettings): Promise<void> => {
+    writeRevision += 1
+    const revision = writeRevision
+    const webError = storage.writeWeb(STORAGE_KEY, value)
+    if (!storage.usesTossStorage()) {
+      if (webError !== null) {
+        throw new Error('Failed to persist service settings.', {cause: webError})
+      }
+      return
+    }
+    const write = pendingWrite.then(async () => {
+      await storage.writeToss(STORAGE_KEY, value)
+      // A failed web replacement must not shadow the newly persisted native value.
+      if (webError !== null && revision === writeRevision) {
+        const error = storage.removeWeb(STORAGE_KEY)
+        if (error !== null && storage.readWeb(STORAGE_KEY, parseSettings) !== null) {
+          throw new Error('Failed to discard stale service settings.', {cause: error})
+        }
+      }
+    })
+    pendingWrite = write.catch(() => undefined)
+    await write
+  }
+  return {read, write}
 }
+
+const runtimeStorage = createServiceSettingsStorage({storage: toolStorageAdapter})
+export const readServiceSettings = runtimeStorage.read
+export const writeServiceSettings = runtimeStorage.write

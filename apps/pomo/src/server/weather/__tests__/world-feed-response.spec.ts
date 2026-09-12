@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const locationMocks = vi.hoisted(() => ({getWorldWeatherLocation: vi.fn()}))

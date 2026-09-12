@@ -33,6 +33,11 @@ export const PTooltipContent = () => {
     const document = target.ownerDocument
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        const modal = event.target instanceof Element ? event.target.closest(':modal') : null
+        if (modal !== null && !modal.contains(target)) {
+          close()
+          return
+        }
         event.preventDefault()
         event.stopPropagation()
         close()

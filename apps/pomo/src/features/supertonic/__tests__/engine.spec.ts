@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 // oxlint-disable no-magic-numbers -- Compact model fixtures intentionally use explicit tensor dimensions.
 import * as runtime from 'onnxruntime-web/wasm'
 import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'
@@ -10,7 +11,7 @@ import {
   SupertonicEngine,
   type SupertonicSessions,
 } from '../engine'
-import type {Result} from '../../result'
+import type {Result} from 'src/features/result'
 
 const createConfig = () => ({
   ae: {base_chunk_size: 2, sample_rate: 4},

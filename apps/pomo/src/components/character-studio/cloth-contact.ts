@@ -1,3 +1,4 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import type {FloatArray} from '@babylonjs/core/types'
 import type {AbstractMesh} from '@babylonjs/core/Meshes/abstractMesh'
 import type {AssetContainer} from '@babylonjs/core/assetContainer'
@@ -316,7 +317,7 @@ export const mountClothContact = (container: AssetContainer, modelUrl: string) =
   const hips = container.transformNodes.find((node) => node.name === 'J_Bip_C_Hips')
   const blended = new Float32Array(SETTINGS.matrixSize)
   const observer = container.scene.onBeforeRenderObservable.add(() => {
-    const started = performance.now()
+    const started = getMonotonicTime()
     const capsules = colliders.map((collider, index) => {
       const world = collider.node.computeWorldMatrix(true)
       const next = colliders[index + 1]
@@ -379,7 +380,7 @@ export const mountClothContact = (container: AssetContainer, modelUrl: string) =
       seatHeight,
     )
     renderSurface(meshes, surface)
-    samples.push(performance.now() - started)
+    samples.push(getMonotonicTime() - started)
     if (samples.length === measurement.window) {
       samples.sort((left, right) => left - right)
       canvas?.setAttribute(

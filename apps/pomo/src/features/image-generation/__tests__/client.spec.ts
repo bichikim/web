@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {prepareImageModels} from '../prepare'
 import {createModelDownloadController} from '../../model-download/controller'

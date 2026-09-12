@@ -1,11 +1,8 @@
 import type {PuppetDeformerShape, PuppetPoint} from '../../player/document'
+import {type CurveWeights, getSurfaceWeights} from './get-surface-weights'
 
 const BEZIER_TANGENT_MULTIPLIER = 3
 const COORDINATES_PER_POINT = 2
-const CUBIC_CURVE_WEIGHT = 3
-const CURVE_DERIVATIVE_WEIGHT = 6
-const DOUBLE_CURVE_WEIGHT = 2
-const START_TANGENT_DERIVATIVE_WEIGHT = 4
 
 interface CurveSample {
   readonly point: PuppetPoint
@@ -68,50 +65,38 @@ const interpolatePoint = (first: PuppetPoint, second: PuppetPoint, progress: num
 interface SampleCurveOptions {
   readonly end: PuppetPoint
   readonly endTangent: PuppetPoint
-  readonly progress: number
+  readonly weights: CurveWeights
   readonly start: PuppetPoint
   readonly startTangent: PuppetPoint
 }
 
 const sampleCurve = (options: SampleCurveOptions): CurveSample => {
-  const squared = options.progress * options.progress
-  const cubed = squared * options.progress
-  const startWeight = DOUBLE_CURVE_WEIGHT * cubed - CUBIC_CURVE_WEIGHT * squared + 1
-  const startTangentWeight = cubed - DOUBLE_CURVE_WEIGHT * squared + options.progress
-  const endWeight = -DOUBLE_CURVE_WEIGHT * cubed + CUBIC_CURVE_WEIGHT * squared
-  const endTangentWeight = cubed - squared
-  const startDerivativeWeight =
-    CURVE_DERIVATIVE_WEIGHT * squared - CURVE_DERIVATIVE_WEIGHT * options.progress
-  const startTangentDerivativeWeight =
-    CUBIC_CURVE_WEIGHT * squared - START_TANGENT_DERIVATIVE_WEIGHT * options.progress + 1
-  const endDerivativeWeight =
-    -CURVE_DERIVATIVE_WEIGHT * squared + CURVE_DERIVATIVE_WEIGHT * options.progress
-  const endTangentDerivativeWeight = CUBIC_CURVE_WEIGHT * squared - 2 * options.progress
+  const {point, tangent} = options.weights
 
   return {
     point: {
       x:
-        options.start.x * startWeight +
-        options.startTangent.x * startTangentWeight +
-        options.end.x * endWeight +
-        options.endTangent.x * endTangentWeight,
+        options.start.x * point.start +
+        options.startTangent.x * point.startTangent +
+        options.end.x * point.end +
+        options.endTangent.x * point.endTangent,
       y:
-        options.start.y * startWeight +
-        options.startTangent.y * startTangentWeight +
-        options.end.y * endWeight +
-        options.endTangent.y * endTangentWeight,
+        options.start.y * point.start +
+        options.startTangent.y * point.startTangent +
+        options.end.y * point.end +
+        options.endTangent.y * point.endTangent,
     },
     tangent: {
       x:
-        options.start.x * startDerivativeWeight +
-        options.startTangent.x * startTangentDerivativeWeight +
-        options.end.x * endDerivativeWeight +
-        options.endTangent.x * endTangentDerivativeWeight,
+        options.start.x * tangent.start +
+        options.startTangent.x * tangent.startTangent +
+        options.end.x * tangent.end +
+        options.endTangent.x * tangent.endTangent,
       y:
-        options.start.y * startDerivativeWeight +
-        options.startTangent.y * startTangentDerivativeWeight +
-        options.end.y * endDerivativeWeight +
-        options.endTangent.y * endTangentDerivativeWeight,
+        options.start.y * tangent.start +
+        options.startTangent.y * tangent.startTangent +
+        options.end.y * tangent.end +
+        options.endTangent.y * tangent.endTangent,
     },
   }
 }
@@ -133,29 +118,32 @@ export const sampleDeformerSurface = (
   const topRightIndex = topLeftIndex + 1
   const bottomLeftIndex = (row + 1) * (options.node.columns + 1) + column
   const bottomRightIndex = bottomLeftIndex + 1
+  const weights = getSurfaceWeights({
+    bottomHasHandle:
+      getCurveHandle(options.node, bottomLeftIndex) !== undefined ||
+      getCurveHandle(options.node, bottomRightIndex) !== undefined,
+    horizontalProgress: columnProgress,
+    topHasHandle:
+      getCurveHandle(options.node, topLeftIndex) !== undefined ||
+      getCurveHandle(options.node, topRightIndex) !== undefined,
+    verticalProgress: rowProgress,
+  })
   const topDifference = subtractPoint(topRight, topLeft)
   const bottomDifference = subtractPoint(bottomRight, bottomLeft)
   const top = sampleCurve({
     end: topRight,
     endTangent: getAxisTangent(options.node, topRightIndex, 'horizontal', topDifference),
-    progress: columnProgress,
     start: topLeft,
     startTangent: getAxisTangent(options.node, topLeftIndex, 'horizontal', topDifference),
+    weights: weights.horizontal,
   })
   const bottom = sampleCurve({
     end: bottomRight,
     endTangent: getAxisTangent(options.node, bottomRightIndex, 'horizontal', bottomDifference),
-    progress: columnProgress,
     start: bottomLeft,
     startTangent: getAxisTangent(options.node, bottomLeftIndex, 'horizontal', bottomDifference),
+    weights: weights.horizontal,
   })
-  const verticalDifference = subtractPoint(bottom.point, top.point)
-  const topHasVerticalHandle =
-    getCurveHandle(options.node, topLeftIndex) !== undefined ||
-    getCurveHandle(options.node, topRightIndex) !== undefined
-  const bottomHasVerticalHandle =
-    getCurveHandle(options.node, bottomLeftIndex) !== undefined ||
-    getCurveHandle(options.node, bottomRightIndex) !== undefined
   const topLeftVertical = getAxisTangent(
     options.node,
     topLeftIndex,
@@ -180,31 +168,23 @@ export const sampleDeformerSurface = (
     'vertical',
     subtractPoint(bottomRight, topRight),
   )
-  const topTangent = topHasVerticalHandle
-    ? interpolatePoint(topLeftVertical, topRightVertical, columnProgress)
-    : verticalDifference
-  const bottomTangent = bottomHasVerticalHandle
-    ? interpolatePoint(bottomLeftVertical, bottomRightVertical, columnProgress)
-    : verticalDifference
-  const topTangentDerivative = topHasVerticalHandle
-    ? subtractPoint(topRightVertical, topLeftVertical)
-    : subtractPoint(bottom.tangent, top.tangent)
-  const bottomTangentDerivative = bottomHasVerticalHandle
-    ? subtractPoint(bottomRightVertical, bottomLeftVertical)
-    : subtractPoint(bottom.tangent, top.tangent)
+  const topTangent = interpolatePoint(topLeftVertical, topRightVertical, columnProgress)
+  const bottomTangent = interpolatePoint(bottomLeftVertical, bottomRightVertical, columnProgress)
+  const topTangentDerivative = subtractPoint(topRightVertical, topLeftVertical)
+  const bottomTangentDerivative = subtractPoint(bottomRightVertical, bottomLeftVertical)
   const surface = sampleCurve({
     end: bottom.point,
     endTangent: bottomTangent,
-    progress: rowProgress,
     start: top.point,
     startTangent: topTangent,
+    weights: weights.vertical,
   })
   const horizontal = sampleCurve({
     end: bottom.tangent,
     endTangent: bottomTangentDerivative,
-    progress: rowProgress,
     start: top.tangent,
     startTangent: topTangentDerivative,
+    weights: weights.vertical,
   })
 
   return {

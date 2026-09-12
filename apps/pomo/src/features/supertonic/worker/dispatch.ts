@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import {type Result} from '../../result'
+import {type Result} from 'src/features/result'
 import {getErrorDetail, type SupertonicError, type WorkerFailedError} from '../errors'
 import type {SupertonicWorkerInput, SupertonicWorkerOutput} from '../messages'
 import {getSupertonicModel} from '../model'

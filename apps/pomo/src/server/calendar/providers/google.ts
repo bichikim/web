@@ -43,6 +43,7 @@ const googleAccountSchema = z.object({email: z.string().email(), sub: z.string()
 
 const normalizeEvent = (
   event: z.infer<typeof googleEventSchema>,
+  calendarId: string,
   calendarLabel: string,
 ): ProviderEvent | null => {
   if (event.status === 'cancelled') {
@@ -54,7 +55,7 @@ const normalizeEvent = (
       allDay: true,
       calendarLabel,
       end: event.end.date,
-      id: event.id,
+      id: JSON.stringify([calendarId, event.id]),
       start: event.start.date,
       title: event.summary?.trim() || '제목 없는 일정',
     }
@@ -68,7 +69,7 @@ const normalizeEvent = (
     allDay: false,
     calendarLabel,
     end: new Date(event.end.dateTime).toISOString(),
-    id: event.id,
+    id: JSON.stringify([calendarId, event.id]),
     start: new Date(event.start.dateTime).toISOString(),
     title: event.summary?.trim() || '제목 없는 일정',
   }
@@ -102,7 +103,7 @@ const listCalendarEvents = async (
 
     const body = googleEventsSchema.parse(await response.json())
     const normalizedEvents = body.items.flatMap((event) => {
-      const normalized = normalizeEvent(event, calendarLabel)
+      const normalized = normalizeEvent(event, calendarId, calendarLabel)
       return normalized === null ? [] : [normalized]
     })
     const remainingEvents = MAXIMUM_EVENTS_PER_CALENDAR - events.length

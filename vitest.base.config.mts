@@ -56,7 +56,11 @@ export const unitTestProject = {
     // 테스트 런타임 환경 (DOM API 제공)
     environment: 'jsdom',
     // 테스트로 포함할 파일 glob 패턴
-    exclude: [...stressTestFiles, ...buildIntegrationTestFiles],
+    exclude: [
+      ...stressTestFiles,
+      ...buildIntegrationTestFiles,
+      'packages/server-boundary/src/__tests__/plugin.e2e.spec.ts',
+    ],
     include: [
       'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',

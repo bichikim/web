@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {describe, expect, it} from 'vitest'
 
 import type {PActivity, PixiLayerSceneDefinition, PTime} from '../../focus-room-animation'

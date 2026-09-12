@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
 import {type Accessor, type JSX, Show, splitProps} from 'solid-js'
 import type {SelectMenuController} from './use-select-menu'
@@ -61,6 +62,13 @@ export const HSelectContent = (props: HSelectContentProps) => {
     }
   }
 
+  const positionClass = () =>
+    cx(local.class, {
+      'left-[var(--select-menu-left)]!': local.controller !== undefined || local.left !== undefined,
+      'top-[var(--select-menu-top)]!': local.controller !== undefined || local.top !== undefined,
+      'w-[var(--select-menu-width)]!': local.widthPx !== undefined,
+    })
+
   return (
     <Show
       when={local.controller}
@@ -70,11 +78,11 @@ export const HSelectContent = (props: HSelectContentProps) => {
             {...contentProps}
             id={local.id}
             role={local.role ?? 'menu'}
-            class={local.class}
+            class={positionClass()}
             style={{
-              left: local.left ? `${local.left()}px` : undefined,
-              top: local.top ? `${local.top()}px` : undefined,
-              width: local.widthPx === undefined ? undefined : `${local.widthPx}px`,
+              '--select-menu-left': local.left ? `${local.left()}px` : undefined,
+              '--select-menu-top': local.top ? `${local.top()}px` : undefined,
+              '--select-menu-width': local.widthPx === undefined ? undefined : `${local.widthPx}px`,
             }}
             onKeyDown={local.onKeyDown}
           >
@@ -89,12 +97,12 @@ export const HSelectContent = (props: HSelectContentProps) => {
           ref={controller().registerPanel}
           id={local.id}
           role={local.role ?? 'menu'}
-          class={local.class}
+          class={positionClass()}
           popover={local.popover ?? 'auto'}
           style={{
-            left: `${local.left?.() ?? controller().left()}px`,
-            top: `${local.top?.() ?? controller().top()}px`,
-            width: local.widthPx === undefined ? undefined : `${local.widthPx}px`,
+            '--select-menu-left': `${local.left?.() ?? controller().left()}px`,
+            '--select-menu-top': `${local.top?.() ?? controller().top()}px`,
+            '--select-menu-width': local.widthPx === undefined ? undefined : `${local.widthPx}px`,
           }}
           onKeyDown={handleLegacyKeyDown}
           onToggle={handleLegacyToggle}

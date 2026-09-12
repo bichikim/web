@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {WEATHER_CITIES_BY_SLUG, WEATHER_CITY_CATALOG, WEATHER_CITY_SLUGS} from '../catalog'
 

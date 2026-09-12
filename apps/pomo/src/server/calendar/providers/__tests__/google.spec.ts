@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
 import {createGoogleCalendarProvider} from '../google'
@@ -169,7 +170,7 @@ it('should expand recurring Google events and normalize timed and all-day values
         allDay: false,
         calendarLabel: '업무',
         end: '2026-09-05T01:00:00.000Z',
-        id: 'timed',
+        id: '["work","timed"]',
         start: '2026-09-05T00:00:00.000Z',
         title: '회의',
       },
@@ -177,7 +178,7 @@ it('should expand recurring Google events and normalize timed and all-day values
         allDay: true,
         calendarLabel: '업무',
         end: '2026-09-07',
-        id: 'all-day',
+        id: '["work","all-day"]',
         start: '2026-09-06',
         title: '제목 없는 일정',
       },
@@ -226,3 +227,46 @@ it('should page through every Google calendar before loading events', async () =
   expect(new URL(String(fetch.mock.calls[2]?.[0])).pathname).toContain('/calendars/work/events')
   expect(new URL(String(fetch.mock.calls[3]?.[0])).pathname).toContain('/calendars/personal/events')
 })
+
+it.each([false, true])(
+  'should scope Google event identity to stable calendar IDs for all-day=%s',
+  async (allDay) => {
+    let label = 'Same label'
+    const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) => {
+      const url = new URL(String(input))
+      return Response.json({
+        items: url.pathname.endsWith('/calendarList')
+          ? [
+              {id: 'work', summary: label},
+              {id: 'personal', summary: label},
+            ]
+          : [
+              {
+                end: allDay ? {date: '2026-09-06'} : {dateTime: '2026-09-05T10:00:00Z'},
+                id: 'abcde12345',
+                start: allDay ? {date: '2026-09-05'} : {dateTime: '2026-09-05T09:00:00Z'},
+              },
+            ],
+      })
+    })
+    const provider = createGoogleCalendarProvider({
+      clientId: 'client',
+      clientSecret: 'secret',
+      fetch,
+    })
+    const range = {
+      accessToken: 'access',
+      end: '2026-10-01T00:00:00Z',
+      start: '2026-09-01T00:00:00Z',
+    }
+    const first = await provider.listEvents(range)
+    expect(first.events.map((event) => event.id)).toEqual([
+      '["work","abcde12345"]',
+      '["personal","abcde12345"]',
+    ])
+    label = 'Renamed calendar'
+    const renamed = await provider.listEvents(range)
+    expect(renamed.events.map((event) => event.id)).toEqual(first.events.map((event) => event.id))
+    expect(renamed.events.every((event) => event.calendarLabel === label)).toBe(true)
+  },
+)

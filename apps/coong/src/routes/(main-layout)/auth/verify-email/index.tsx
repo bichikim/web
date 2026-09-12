@@ -5,7 +5,7 @@ import {SAuroraText} from 'src/components/text'
 import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
 import {A, RouteDefinition, useLocation, useNavigate} from '@solidjs/router'
-import {createSignal, onMount, Show} from 'solid-js'
+import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
@@ -21,7 +21,7 @@ const ClientOnlyLottie = clientOnly(() =>
 const rootStyle = `:uno:
 elative flex flex-col items-center justify-center h-screen before:content-[''] before:absolute
 before:inset-0 before:bg-[linear-gradient(to_bottom,#ffffff_0px,#ffffff_30%,rgba(255,255,255,0.4)_100%)]
- before:pointer-events-none
+ before:pointer-events-none bg-[image:var(--verify-email-bg)] bg-left-top bg-repeat
 `
 
 const emailStyle = `:uno:
@@ -57,6 +57,10 @@ const isEmailOtpType = (value: string): value is EmailOtpType => {
   return (ALLOWED_OTP_TYPES as ReadonlySet<string>).has(value)
 }
 
+interface VerificationHistory {
+  emailVerified?: boolean
+}
+
 type VerificationStatus = 'idle' | 'verifying' | 'success' | 'error'
 
 export default function VerifyEmailPage() {
@@ -64,9 +68,14 @@ export default function VerifyEmailPage() {
   const [verificationStatus, setVerificationStatus] = createSignal<VerificationStatus>('idle')
   const [verificationError, setVerificationError] = createSignal<string | null>(null)
 
-  const location = useLocation()
+  const location = useLocation<VerificationHistory | null>()
   const {token_hash: tokenHashParameter, type: typeParameter} = location.query
   const navigate = useNavigate()
+
+  let disposed = false
+  onCleanup(() => {
+    disposed = true
+  })
 
   const afterNavigate = useCountdown(20_000, () => navigate('/'))
 
@@ -84,6 +93,12 @@ export default function VerifyEmailPage() {
     const hash = tokenHash()
     const type = otpType()
 
+    if (!hash && !typeParameter && location.state?.emailVerified === true) {
+      setVerificationStatus('success')
+      afterNavigate.start()
+      return
+    }
+
     if (!hash || !type) {
       setVerificationStatus('error')
       setVerificationError('유효하지 않은 인증 링크입니다.')
@@ -94,6 +109,10 @@ export default function VerifyEmailPage() {
 
     try {
       await verifyOtp({tokenHash: hash, type})
+      if (disposed) {
+        return
+      }
+
       setVerificationStatus('success')
 
       if (type === 'recovery') {
@@ -101,8 +120,13 @@ export default function VerifyEmailPage() {
         return
       }
 
+      navigate(location.pathname, {replace: true, state: {emailVerified: true}})
       afterNavigate.start()
     } catch (error) {
+      if (disposed) {
+        return
+      }
+
       setVerificationStatus('error')
       setVerificationError(error instanceof Error ? error.message : '이메일 인증에 실패했습니다.')
     }
@@ -118,9 +142,7 @@ export default function VerifyEmailPage() {
     <div
       class={rootStyle}
       style={{
-        'background-image': `url('${bg}')`,
-        'background-position': 'top left',
-        'background-repeat': 'repeat',
+        '--verify-email-bg': `url('${bg}')`,
       }}
     >
       <div class="absolute top--10rem left-0 right-0 bottom-0">
@@ -164,13 +186,11 @@ export default function VerifyEmailPage() {
           </Show>
           <Show when={verificationStatus() === 'success' && user()}>
             <span class="text-sm text-gray-500">
-              <Show when={tokenHash()} fallback={'Go to the '}>
-                Redirecting to the{' '}
-              </Show>
+              Redirecting to the{' '}
               <A href="/" class="text-gray-700 underline font-bold text-lg">
                 Root page
               </A>{' '}
-              <Show when={tokenHash()}>in {countSeconds()} seconds</Show>
+              in {countSeconds()} seconds
             </span>
           </Show>
         </Show>
