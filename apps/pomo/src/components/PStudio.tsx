@@ -34,25 +34,18 @@ import {
 } from '../features/focus-room-time'
 import {usePSay} from '../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../features/weather'
-import {
-  type DesktopMode,
-  isDesktopBackgroundMode,
-  useDesktopMode,
-  useDesktopSafeAreaTop,
-} from '../features/desktop-mode'
+import {useDesktopMode, useDesktopSafeAreaTop} from '../features/desktop-mode'
 import {PEntry} from './p-studio/Entry'
 import {resolvePSceneViseme} from './pomo-scene-options'
 import {PSceneFallback} from './p-studio/SceneFallback'
 import {SceneModelDownloadFallback} from './p-studio/ModelDownloadFallback'
-import {PScreenSaver} from './PScreenSaver'
 import {CLASSES, SceneTime} from './p-studio/shared'
 import {PStudioScene} from './p-studio/Scene'
 import {PStudioEvents} from './p-studio/Events'
 import {SceneToolbar} from './p-studio/Toolbar'
 import {useStudioScreenSaver} from './p-studio/use-screen-saver'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
-import {PStudioTour} from './p-studio/Tour'
-import {PStudioTourHint} from './p-studio/TourHint'
+import {StudioOverlay} from './p-studio/StudioOverlay'
 import {useStudioTour} from './p-studio/use-tour'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
@@ -159,49 +152,6 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
       </figure>
     </Show>
   </Show>
-)
-
-interface StudioOverlayProps {
-  readonly uiAutoHideEnabled?: boolean
-  readonly displayPreferences: PDisplayPreferencesController
-  readonly desktopMode: DesktopMode
-  readonly entryVisible: boolean
-  readonly hasEntered: boolean
-  readonly isTourHintVisible: boolean
-  readonly onDismissTourHint: () => void
-  readonly screenSaver: ReturnType<typeof useStudioScreenSaver>
-  readonly tour: ReturnType<typeof useStudioTour>
-  readonly tourButtonVisible: boolean
-}
-
-const StudioOverlay = (props: StudioOverlayProps) => (
-  <>
-    <PStudioTour tour={props.tour} />
-    <Show
-      when={
-        props.isTourHintVisible &&
-        !props.entryVisible &&
-        props.tourButtonVisible &&
-        props.desktopMode !== 'desktop'
-      }
-    >
-      <PStudioTourHint onDismiss={props.onDismissTourHint} />
-    </Show>
-    <PScreenSaver
-      isActive={
-        props.hasEntered &&
-        !props.uiAutoHideEnabled &&
-        !isDesktopBackgroundMode(props.desktopMode) &&
-        props.screenSaver.isActive()
-      }
-      isMusicPlaying={
-        props.displayPreferences.playerVisible() && props.screenSaver.isMusicPlaying()
-      }
-      onDismiss={props.screenSaver.onDismiss}
-      timer={props.displayPreferences.pomodoroVisible() ? props.screenSaver.timer() : undefined}
-      track={props.displayPreferences.playerVisible() ? props.screenSaver.currentTrack() : null}
-    />
-  </>
 )
 
 interface StudioRuntimeOptions {
