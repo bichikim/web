@@ -1,4 +1,6 @@
 /** @vitest-environment node */
+
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {readFile} from 'node:fs/promises'
 import {NullEngine} from '@babylonjs/core/Engines/nullEngine'
 import {LoadAssetContainerAsync} from '@babylonjs/core/Loading/sceneLoader'
@@ -23,9 +25,9 @@ it('should keep the real Luna garment finite throughout seated gestures', async 
   const dispose = mountClothContact(container, '/vroid.glb')
   const durations: number[] = []
   for (let frame = 0; frame < 2880; frame += 1) {
-    const start = Date.now()
+    const start = getMonotonicTime()
     scene.onBeforeRenderObservable.notifyObservers(scene)
-    durations.push(Date.now() - start)
+    durations.push(getMonotonicTime() - start)
   }
   const clothMeshes = scene.meshes.filter((mesh) => mesh.name.endsWith('-cloth'))
   expect(clothMeshes.length).toBeGreaterThan(0)

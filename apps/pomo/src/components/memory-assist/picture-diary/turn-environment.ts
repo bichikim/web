@@ -1,3 +1,4 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import type {Accessor} from 'solid-js'
 
 export interface PageMetrics {
@@ -54,7 +55,7 @@ export const createBrowserTurnEnvironment = (options: BrowserTurnOptions): PageT
       window.removeEventListener('pointercancel', handlers.cancel)
     }
   },
-  now: () => Date.now(),
+  now: () => getMonotonicTime(),
   prefersReducedMotion: () =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   requestFrame: (callback) => requestAnimationFrame(callback),

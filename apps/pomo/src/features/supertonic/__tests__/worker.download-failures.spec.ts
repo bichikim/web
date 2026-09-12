@@ -1,5 +1,9 @@
 /** @vitest-environment jsdom */
 
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {ModelResource} from '../../model-storage'
@@ -221,7 +225,7 @@ beforeEach(() => {
   sessionMocks.load.mockResolvedValue(success(sessions))
   sessionMocks.release.mockResolvedValue(undefined)
   textMocks.split.mockImplementation((text: string) => [text])
-  vi.spyOn(Date, 'now').mockReturnValue(100)
+  vi.mocked(getMonotonicTime).mockReturnValue(100)
 })
 
 afterEach(() => {
