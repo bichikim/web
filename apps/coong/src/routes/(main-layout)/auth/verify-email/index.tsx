@@ -21,7 +21,7 @@ const ClientOnlyLottie = clientOnly(() =>
 const rootStyle = `:uno:
 elative flex flex-col items-center justify-center h-screen before:content-[''] before:absolute
 before:inset-0 before:bg-[linear-gradient(to_bottom,#ffffff_0px,#ffffff_30%,rgba(255,255,255,0.4)_100%)]
- before:pointer-events-none
+ before:pointer-events-none bg-[image:var(--verify-email-bg)] bg-left-top bg-repeat
 `
 
 const emailStyle = `:uno:
@@ -142,9 +142,7 @@ export default function VerifyEmailPage() {
     <div
       class={rootStyle}
       style={{
-        'background-image': `url('${bg}')`,
-        'background-position': 'top left',
-        'background-repeat': 'repeat',
+        '--verify-email-bg': `url('${bg}')`,
       }}
     >
       <div class="absolute top--10rem left-0 right-0 bottom-0">
