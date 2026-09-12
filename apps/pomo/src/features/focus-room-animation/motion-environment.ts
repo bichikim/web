@@ -10,7 +10,6 @@ export interface MotionEnvironment {
     | undefined
   readonly getSensor: () => MotionSensor | null
   readonly getAngle: () => number
-  readonly now: () => number
   readonly requestFrame: (callback: FrameRequestCallback) => number
   readonly cancelFrame: (handle: number) => void
   readonly setTimer: (
@@ -30,7 +29,6 @@ export const createMotionEnvironment = (): MotionEnvironment => ({
     'DeviceOrientationEvent' in globalThis
       ? (DeviceOrientationEvent as typeof DeviceOrientationEvent & MotionSensor)
       : null,
-  now: () => performance.now(),
   orientation: globalThis.screen.orientation,
   requestFrame: (callback) => globalThis.requestAnimationFrame(callback),
   setTimer: (callback, delay) => globalThis.setTimeout(callback, delay),

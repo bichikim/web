@@ -33,18 +33,18 @@ const serializeMesh = (mesh: PuppetMesh) => {
 
 test('should parse a 50 by 50 regular grid within the browser import budget', () => {
   const source = serializeMesh(createGridMesh(50))
-  const startedAt = performance.now()
+  const startedAt = new Event('measurement').timeStamp
 
   expect(parseDocument(source).ok).toBe(true)
-  expect(performance.now() - startedAt).toBeLessThan(MAXIMUM_PARSE_DURATION_MS)
+  expect(new Event('measurement').timeStamp - startedAt).toBeLessThan(MAXIMUM_PARSE_DURATION_MS)
 })
 
 test('should keep the browser responsive while validating a 5,000 triangle fan', async () => {
   const source = serializeMesh(createFanMesh(5_000))
-  const startedAt = performance.now()
+  const startedAt = new Event('measurement').timeStamp
   const parsing = preparePuppetDocument({source})
   const tickDuration = await new Promise<number>((resolve) => {
-    window.setTimeout(() => resolve(performance.now() - startedAt), 0)
+    window.setTimeout(() => resolve(new Event('measurement').timeStamp - startedAt), 0)
   })
 
   expect(tickDuration).toBeLessThan(MAXIMUM_PARSE_DURATION_MS)

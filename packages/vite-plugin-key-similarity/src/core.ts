@@ -1,5 +1,6 @@
 import {readFile, stat} from 'node:fs/promises'
 import path from 'node:path'
+import {hrtime} from 'node:process'
 import {glob} from 'tinyglobby'
 import {CachedEmbeddingProvider, createLocalE5Provider} from './embedding'
 import {extractKeys} from './extractor'
@@ -13,7 +14,8 @@ import type {
   SimilarityDiagnostic,
 } from './types'
 
-const now = (): number => performance.now()
+const NANOSECONDS_PER_MILLISECOND = 1_000_000
+const now = (): number => Number(hrtime.bigint()) / NANOSECONDS_PER_MILLISECOND
 
 const entryIdentifier = (entry: KeyEntry): string => `${entry.filePath}\0${entry.literalStart}`
 

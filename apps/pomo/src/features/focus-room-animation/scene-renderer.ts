@@ -389,11 +389,13 @@ export class PSceneRenderer {
       return
     }
 
-    const startedAt = window.performance.now()
+    let startedAt: number | undefined
     const renderFrame = (timestamp: number) => {
       if (this.#destroyed || version !== this.#transitionVersion) {
         return
       }
+
+      startedAt ??= timestamp
 
       const progress = Math.min(1, (timestamp - startedAt) / SCENE_TRANSITION_DURATION)
       this.#sceneTransitions.setProgress(progress)

@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
@@ -138,7 +139,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     return
   }
 
-  const startedAt = performance.now()
+  const startedAt = getMonotonicTime()
 
   try {
     const output = await extractor(getEmbeddingText(request), {
@@ -150,7 +151,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
 
     if (sufficiency.insufficient) {
       sendResponse({
-        elapsedMilliseconds: performance.now() - startedAt,
+        elapsedMilliseconds: getMonotonicTime() - startedAt,
         requestId: request.requestId,
         sufficiency,
         type: 'insufficient',
@@ -161,7 +162,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     const analysis = classifyTextMood(embedding)
     sendResponse({
       analysis,
-      elapsedMilliseconds: performance.now() - startedAt,
+      elapsedMilliseconds: getMonotonicTime() - startedAt,
       requestId: request.requestId,
       type: 'complete',
     })

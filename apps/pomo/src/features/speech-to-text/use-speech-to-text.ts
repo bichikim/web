@@ -1,3 +1,4 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {
   type Accessor,
   createMemo,
@@ -92,10 +93,10 @@ const createRecordingTimer = (setElapsedTime: Setter<number>) => {
 
   const start = () => {
     stop()
-    startedAt = performance.now()
+    startedAt = getMonotonicTime()
     setElapsedTime(0)
     intervalId = globalThis.setInterval(() => {
-      setElapsedTime((performance.now() - startedAt) / MILLISECONDS_PER_SECOND)
+      setElapsedTime((getMonotonicTime() - startedAt) / MILLISECONDS_PER_SECOND)
     }, RECORDING_INTERVAL)
   }
 

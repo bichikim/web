@@ -459,7 +459,6 @@ export class ParallaxController {
       return
     }
 
-    this.#lastFrameTime ??= this.#environment.now()
     this.#frame = this.#environment.requestFrame((time) => this.#renderFrame(time))
   }
 

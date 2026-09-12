@@ -1,5 +1,9 @@
 /** @vitest-environment jsdom */
 
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
 import {afterEach, expect, it, vi} from 'vitest'
 import {createBrowserTurnEnvironment} from '../turn-environment'
 
@@ -83,8 +87,8 @@ it('should read the current reduced-motion preference', () => {
   expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)')
 })
 
-it('should delegate the monotonic clock and frame scheduling to the browser', () => {
-  vi.spyOn(performance, 'now').mockReturnValue(123)
+it('should delegate the gesture clock and frame scheduling to the browser', () => {
+  vi.mocked(getMonotonicTime).mockReturnValue(123)
   const request = vi.fn(() => 42)
   const cancel = vi.fn()
   vi.stubGlobal('requestAnimationFrame', request)
