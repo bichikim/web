@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest'
-import {getPresetData, getPresetEnforceMusics, isKnownPresetId} from '../index'
+import {getPresetData} from 'src/server/preset'
+import {getPresetEnforceMusics, isKnownPresetId} from '../index'
 
 describe('isKnownPresetId', () => {
   it('should return true for a registered preset id', () => {
