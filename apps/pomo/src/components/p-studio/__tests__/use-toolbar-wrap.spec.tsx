@@ -37,14 +37,15 @@ it('should measure a late pomodoro and follow its removal and replacement', asyn
   const [visible, setVisible] = createSignal(false)
   let wrapping: ReturnType<typeof useToolbarWrap> | undefined
   const view = render(() => {
-    wrapping = useToolbarWrap()
+    const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+    wrapping = useToolbarWrap(element)
     return (
       <div>
         <Show when={visible()}>
           <div class="pomo-pomodoro" />
         </Show>
         <div class="toolbar">
-          <div ref={wrapping.setElement}>
+          <div ref={setElement}>
             <div />
             <div />
             <div />
@@ -53,18 +54,18 @@ it('should measure a late pomodoro and follow its removal and replacement', asyn
       </div>
     )
   })
-  expect(wrapping?.wrap()).toBe(false)
+  expect(wrapping?.()).toBe(false)
   setVisible(true)
   await Promise.resolve()
   const original = view.container.querySelector('.pomo-pomodoro')
   expect(original).not.toBeNull()
   expect(observe).toHaveBeenCalledWith(original)
-  expect(wrapping?.wrap()).toBe(true)
+  expect(wrapping?.()).toBe(true)
 
   observe.mockClear()
   setVisible(false)
   await Promise.resolve()
-  expect(wrapping?.wrap()).toBe(false)
+  expect(wrapping?.()).toBe(false)
   expect(observe).not.toHaveBeenCalledWith(original)
 
   setVisible(true)
@@ -72,7 +73,7 @@ it('should measure a late pomodoro and follow its removal and replacement', asyn
   const replacement = view.container.querySelector('.pomo-pomodoro')
   expect(replacement).not.toBe(original)
   expect(observe).toHaveBeenCalledWith(replacement)
-  expect(wrapping?.wrap()).toBe(true)
+  expect(wrapping?.()).toBe(true)
   disconnect.mockClear()
   view.unmount()
   expect(disconnect).toHaveBeenCalledOnce()
@@ -122,12 +123,13 @@ it('should remeasure available space and added controls, then disconnect on unmo
   }))
   let wrapping: ReturnType<typeof useToolbarWrap> | undefined
   const view = render(() => {
-    wrapping = useToolbarWrap()
+    const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+    wrapping = useToolbarWrap(element)
     return (
       <div>
         <div class="pomo-pomodoro" />
         <div class="toolbar">
-          <div ref={wrapping.setElement}>
+          <div ref={setElement}>
             <div />
             <div />
             <div />
@@ -136,19 +138,19 @@ it('should remeasure available space and added controls, then disconnect on unmo
       </div>
     )
   })
-  expect(wrapping?.wrap()).toBe(false)
+  expect(wrapping?.()).toBe(false)
   available = 280
   resizeCallback()
-  expect(wrapping?.wrap()).toBe(true)
+  expect(wrapping?.()).toBe(true)
   available = 300
   resizeCallback()
-  expect(wrapping?.wrap()).toBe(false)
+  expect(wrapping?.()).toBe(false)
   const actions = view.container.querySelector('.toolbar')?.firstElementChild
   const control = document.createElement('div')
   actions?.append(control)
   mutationCallback()
   expect(observeResize).toHaveBeenCalledWith(control)
-  expect(wrapping?.wrap()).toBe(true)
+  expect(wrapping?.()).toBe(true)
   disconnectResize.mockClear()
   view.unmount()
   expect(disconnectResize).toHaveBeenCalledOnce()
