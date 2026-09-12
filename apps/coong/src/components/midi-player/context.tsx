@@ -318,6 +318,14 @@ function useMidiPlayerDerived(core: MidiPlayerCore): MidiPlayerDerived {
   createEffect(() => {
     const musics = defaultProps.initMusics ?? []
 
+    untrack(() => {
+      const {playingId} = defaultProps.playState
+
+      if (playingId && !musics.some((music) => music.id === playingId)) {
+        defaultProps.pianoController?.stop()
+      }
+    })
+
     core.setPlayList(musics)
 
     if (!musics.some((music) => music.id === core.selectedId())) {
