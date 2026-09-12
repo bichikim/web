@@ -513,26 +513,35 @@ describe('PMusicPlayerContent control paths', () => {
     )
   })
 
-  it('should restore stored playback without waiting for playlist storage', async () => {
+  it('should apply stored playback once after playlist storage resolves', async () => {
     const storedPlayback = {
       isPlaying: false,
       positionSeconds: 7,
       trackId: 'two',
     } satisfies PPlaybackState
     featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
-    featureMocks.readPPlaylist.mockReturnValue(
-      new Promise(() => {
-        // Intentionally pending to reproduce an unresponsive native playlist read.
-      }),
-    )
+    const playlist = Promise.withResolvers<readonly string[] | null>()
+    const restoredTracks = TRACKS.filter((track) => track.id === storedPlayback.trackId)
+    featureMocks.readPPlaylist.mockReturnValue(playlist.promise)
+    featureMocks.resolvePPlaylist.mockReturnValue(restoredTracks)
 
     render(() => <PMusicPlayerContent />)
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledWith(
-      expect.objectContaining({storedPlayback}),
+    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({storedPlayback: null, tracks: TRACKS}),
+    )
+
+    playlist.resolve([storedPlayback.trackId])
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledTimes(2)
+    expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
+      expect.objectContaining({storedPlayback, tracks: restoredTracks}),
     )
   })
 })

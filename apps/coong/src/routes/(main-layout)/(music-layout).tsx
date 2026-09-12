@@ -19,7 +19,7 @@ import {useCookieStorage} from 'src/use/storage'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
 import {getPresetEnforceMusics, type Preset} from 'src/server/preset'
-import {MidiPlayerProvider} from 'src/components/midi-player/context'
+import {MidiPlayerProvider} from 'src/components/midi-player/MidiPlayerProvider'
 
 export const route = {
   info: {

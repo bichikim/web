@@ -1,5 +1,8 @@
 export const CLASSES = {
-  feedSettings: 'pomo-feed-settings grid gap-4.5 settings-compact:gap-4',
+  feedSettings: cx(
+    'pomo-feed-settings grid gap-4.5 settings-compact:gap-4',
+    '[&_.pomo-feed-status-frame]:w-full [&_.pomo-feed-status]:w-full',
+  ),
   feedSettingsAddress: cx(
     'pomo-feed-settings__address flex min-w-0 min-h-10 items-center gap-[0.6rem]',
     'text-highlight settings-compact:col-span-full',

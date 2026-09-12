@@ -1,3 +1,5 @@
+import {createSignal} from 'solid-js'
+import {isSupertonicModelDownloaded} from 'src/features/supertonic'
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
@@ -5,7 +7,12 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {usePFeedContext} from 'src/features/focus-room-feed'
 import {useModelDownload} from 'src/features/model-download'
 import {PFeedStatus} from '../PFeedStatus'
-import {createFeeds, createModelDownload, READY_DIALOGUE} from './feed-status/fixtures'
+import {
+  createFeeds,
+  createModelDownload,
+  READY_DIALOGUE,
+  RECOVERY_JOB,
+} from './feed-status/fixtures'
 
 vi.mock('src/features/focus-room-feed', () => ({
   usePFeedContext: vi.fn(),
@@ -119,4 +126,35 @@ it('should render an error and let users retry a failed feed check', () => {
   expect(screen.getByRole('status')).toHaveAttribute('data-state', 'error')
   fireEvent.click(errorResult.container.querySelector('button')!)
   expect(errorFeeds.syncNow).toHaveBeenCalledOnce()
+})
+
+it('should offer preparation for a pending feed without calling it incomplete', async () => {
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+  const feeds = createFeeds([], false, [{...RECOVERY_JOB, status: 'pending'}])
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  render(() => <PFeedStatus />)
+  expect(screen.getByText('준비할 피드 대화 1개')).toBeInTheDocument()
+  expect(screen.queryByText('미완성 피드 대화 1개')).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: '준비하기'}))
+  await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledOnce())
+})
+
+it('should replace preparation with listening after the feed audio is ready', async () => {
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+  const [ready, setReady] = createSignal(false)
+  const feeds = createFeeds([], false, [], {
+    latestReady: () => (ready() ? READY_DIALOGUE : null),
+    recoveryJobs: () => (ready() ? [] : [{...RECOVERY_JOB, status: 'pending'}]),
+    retryRecovery: vi.fn(async () => {
+      setReady(true)
+    }),
+    unlistenedDialogues: () => (ready() ? [READY_DIALOGUE] : []),
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  render(() => <PFeedStatus />)
+  fireEvent.click(screen.getByRole('button', {name: '준비하기'}))
+  await vi.waitFor(() => expect(screen.getByRole('button', {name: '듣기'})).toBeInTheDocument())
+  expect(screen.queryByRole('button', {name: '준비하기'})).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: '듣기'}))
+  expect(feeds.listenAll).toHaveBeenCalledOnce()
 })

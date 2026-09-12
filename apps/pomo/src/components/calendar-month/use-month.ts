@@ -1,8 +1,10 @@
 import dayjs from 'dayjs'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
 import {
   type CalendarEvent,
   type CalendarEvents,
+  type CalendarMonthCacheRange,
   type CalendarMonthRange,
   groupCalendarEvents,
 } from 'src/features/calendar'
@@ -12,10 +14,10 @@ import {type CalendarDay, WEEK_LENGTH} from './dates'
 export interface MonthEnvironment {
   readonly load: (range: CalendarMonthRange) => Promise<CalendarEvents>
   readonly now: () => Date
-  readonly readCache: (range: CalendarMonthRange) => CalendarEvents | null
+  readonly readCache: (range: CalendarMonthCacheRange) => CalendarEvents | null
   readonly reportError: (message: string, error: unknown) => void
   readonly timeZone: () => string
-  readonly writeCache: (range: CalendarMonthRange, value: CalendarEvents) => unknown | null
+  readonly writeCache: (range: CalendarMonthCacheRange, value: CalendarEvents) => unknown | null
 }
 
 export interface UseMonthProps {
@@ -60,8 +62,6 @@ interface CalendarMonthRequest {
   readonly revision: number
 }
 
-const createLocalDateKey = (date: Date) => dayjs(date).format('YYYY-MM-DD')
-
 const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay | null>> => {
   const start = dayjs(month).startOf('month')
   const daysInMonth = start.daysInMonth()
@@ -73,7 +73,7 @@ const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay |
     ...Array.from({length: daysInMonth}, (_, index) => {
       const number = index + 1
       const date = start.date(number).toDate()
-      return {date, key: createLocalDateKey(date), number}
+      return {date, key: formatLocalDate(date), number}
     }),
     ...Array.from({length: trailingDays}, () => null),
   ]
@@ -98,10 +98,10 @@ const loadCalendarMonth = async (
 export const useMonth = (props: UseMonthProps): MonthController => {
   const accountKey = createMemo(() => {
     const session = props.authentication.session()
-    return session?.provider === 'email' ? session.email : (session?.provider ?? null)
+    return session?.provider === 'email' ? `email:${session.email}` : null
   })
   const sessionRevision = createMemo((revision: number) => {
-    accountKey()
+    props.authentication.session()
     return revision + 1
   }, 0)
   const today = props.environment.now()
@@ -134,14 +134,21 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     (request) => loadCalendarMonth(request, props.environment),
     {initialValue: null},
   )
-  const cachedCalendar = createMemo(() =>
-    accountKey() === null ? null : props.environment.readCache(monthRange().range),
-  )
+  const cacheRange = createMemo(() => {
+    const key = accountKey()
+    return key === null ? null : {...monthRange().range, accountKey: key}
+  })
+  const cachedCalendar = createMemo(() => {
+    const range = cacheRange()
+    return range === null ? null : props.environment.readCache(range)
+  })
   let lastCachedResult: LoadedCalendarMonth | null = null
   createEffect(() => {
     const request = monthRange()
+    const range = cacheRange()
     const result = calendarResult.latest
     if (
+      range === null ||
       props.authentication.session() === null ||
       result?.kind !== 'loaded' ||
       result.requestKey !== request.requestKey ||
@@ -151,7 +158,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     }
 
     lastCachedResult = result
-    const cacheError = props.environment.writeCache(request.range, result.value)
+    const cacheError = props.environment.writeCache(range, result.value)
     if (cacheError !== null) {
       props.environment.reportError('Failed to cache calendar month', cacheError)
     }
@@ -179,9 +186,9 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     )
     return groupCalendarEvents(result.events, visibleDates, result.timeZone)
   })
-  const selectedKey = createMemo(() => createLocalDateKey(selectedDate()))
+  const selectedKey = createMemo(() => formatLocalDate(selectedDate()))
   const selectedEvents = createMemo(() => eventsByDay().get(selectedKey()) ?? [])
-  const todayKey = createLocalDateKey(today)
+  const todayKey = formatLocalDate(today)
   const refreshFailed = createMemo(() => {
     const result = calendarResult.latest
     return (

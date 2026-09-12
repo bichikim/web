@@ -1,3 +1,5 @@
+import {useAutoPreparePreference} from './use-auto-prepare-preference'
+import {isFeedJobAwaitingAction} from './feed-dialogue-schema'
 import {onCleanup} from 'solid-js'
 
 import {
@@ -26,6 +28,7 @@ import {useFeedRefreshEvents} from './use-feed-refresh-events'
 const listFeedConnections = () => createFeedConnectionRepository(window.localStorage).list()
 
 export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
+  const automaticPreparation = useAutoPreparePreference()
   let dialogueRepository: PDialogueRepository | null = null
   let feedRepository: FeedDialogueRepository | null = null
   let generationController: FeedGenerationController | null = null
@@ -68,12 +71,15 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     getGenerationController().schedule({allowModelDownload, jobIds})
   }
   const syncController = createFeedSyncController({
+    autoPrepare: automaticPreparation.enabled,
     cleanupExpiredDialogues: feedState.cleanupExpiredDialogues,
     createFetcher: createFeedFetcher,
+    getState: feedState.state,
     createId: () => crypto.randomUUID(),
     discardMissingConnections: discardJobsForMissingConnections,
     getConnections: listFeedConnections,
     getRepository: () => getRepositories().feedRepository,
+    onSynchronized: feedState.reloadRecovery,
     now: () => new Date(),
     reloadIssues: feedState.reloadIssues,
     resolveGenerationSettings: resolveCurrentGenerationSettings,
@@ -129,9 +135,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       const jobs = await getRepositories().feedRepository.interruptUnfinishedJobs(
         new Date().toISOString(),
       )
-      feedState.setRecoveryJobs(
-        jobs.filter((job) => job.status === 'failed' || job.status === 'interrupted'),
-      )
+      feedState.setRecoveryJobs(jobs.filter((job) => isFeedJobAwaitingAction(job)))
       await feedState.reloadDialogues()
       await syncNow()
     },
@@ -153,6 +157,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   })
 
   return {
+    automaticPreparation,
     async cancelProcessing() {
       await getGenerationController().cancel()
     },

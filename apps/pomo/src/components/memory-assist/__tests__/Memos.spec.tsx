@@ -131,6 +131,56 @@ it('should save a memo with random recall enabled', async () => {
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toBeNull()
 })
 
+it('should preserve a newer creation draft when an earlier save completes late', async () => {
+  const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
+  mocks.updateMemos.mockReturnValue(persistence.promise)
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '먼저 저장할 메모'}})
+  fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+
+  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {
+    target: {value: '아직 저장하지 않은 새 초안'},
+  })
+  expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toContain(
+    '아직 저장하지 않은 새 초안',
+  )
+
+  persistence.resolve(mocks.memos)
+  await persistence.promise
+
+  expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toContain(
+    '아직 저장하지 않은 새 초안',
+  )
+  expect(screen.getByLabelText('기억할 메모')).toHaveValue('아직 저장하지 않은 새 초안')
+})
+
+it('should preserve reminder changes when an earlier save completes with unchanged text', async () => {
+  const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
+  mocks.updateMemos.mockReturnValue(persistence.promise)
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '여권 갱신하기'}})
+  fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
+  expect(mocks.updateMemos).toHaveBeenCalledOnce()
+  fireEvent.change(screen.getByLabelText('기억 반복'), {target: {value: 'random'}})
+
+  persistence.resolve([])
+  await persistence.promise
+
+  expect(JSON.parse(sessionStorage.getItem('pomo:memory-memo:draft:v1') ?? 'null')).toMatchObject({
+    recallMode: 'random',
+    text: '여권 갱신하기',
+  })
+  expect(screen.getByLabelText('기억 반복')).toHaveValue('random')
+  expect(screen.getByLabelText('기억할 메모')).toHaveValue('여권 갱신하기')
+})
+
 it('should submit a memo only once while persistence is pending', async () => {
   const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
   mocks.updateMemos.mockReturnValue(persistence.promise)

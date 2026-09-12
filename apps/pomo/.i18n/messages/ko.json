@@ -1,4 +1,12 @@
 {
+  "feed_stop_failed": "피드 작업을 중지하지 못했어요. 다시 시도해 주세요.",
+  "settings_feed_auto_prepare": "새 피드 음성 자동 준비",
+  "settings_feed_auto_prepare_description": "새 피드를 받으면 바로 음성을 만듭니다. 끄면 준비하기를 누른 뒤 음성을 만들고, 완료되면 들을 수 있습니다. 이미 준비 중인 작업은 계속됩니다.",
+  "feed_pending_count": "준비할 피드 대화 {count}개",
+  "feed_prepare_description": "음성을 준비하면 피드 대화를 들을 수 있어요.",
+  "feed_prepare": "준비하기",
+  "settings_feed_reading_visible": "피드 읽는 중 표시",
+  "settings_feed_reading_visible_description": "끄면 피드 읽기 진행 표시를 숨깁니다. 피드 읽기는 계속되며, 오류와 재시도 안내는 표시됩니다.",
   "settings_player_visible": "플레이어 표시",
   "settings_player_visible_description": "끄면 음악 재생이 중지돼요.",
   "settings_pomodoro_visible": "뽀모도로 표시",

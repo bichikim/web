@@ -1,3 +1,5 @@
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import {isSupertonicModelDownloaded, type SupertonicModelId} from '../supertonic'
 import {isTextModelDownloaded} from '../text-generation'
 import type {ModelDownloadController, ModelDownloadTarget} from './controller'
@@ -52,11 +54,6 @@ export interface CreateModelAssetManagerOptions {
   readonly isModelDownloaded?: (target: ModelDownloadTarget) => Promise<boolean>
 }
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error && error.message.length > 0
-    ? error.message
-    : '모델 자산 작업을 실행하지 못했어요.'
-
 /** Runs a waiting task after a model asset is present, joining an active download when possible. */
 export const createModelAssetManager = (
   options: CreateModelAssetManagerOptions,
@@ -93,7 +90,10 @@ export const createModelAssetManager = (
     try {
       downloaded = await checkModel(taskOptions.target)
     } catch (error: unknown) {
-      return {message: getErrorMessage(error), status: 'error'}
+      return {
+        message: getErrorMessage(error, '모델 자산 작업을 실행하지 못했어요.'),
+        status: 'error',
+      }
     }
 
     if (!downloaded) {
@@ -116,7 +116,10 @@ export const createModelAssetManager = (
     try {
       return {status: 'complete', value: await taskOptions.task()}
     } catch (error: unknown) {
-      return {message: getErrorMessage(error), status: 'error'}
+      return {
+        message: getErrorMessage(error, '모델 자산 작업을 실행하지 못했어요.'),
+        status: 'error',
+      }
     }
   }
 

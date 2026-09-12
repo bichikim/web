@@ -1,6 +1,7 @@
 import type {DialogueWorkerRequest, DialogueWorkerResponse} from './messages'
+import {reportClientError} from '../client-error-reporter/reporter'
 import type {TextModelId} from '../text-generation/model'
-import {createWorkerTransport} from '../text-generation/worker-transport'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 import type {DialogueOutputLanguage} from './prompt'
 
 export interface CreateDialogueClientOptions {
@@ -21,12 +22,17 @@ export const createDialogueClient = (options: CreateDialogueClientOptions): Dial
     type: 'module',
   })
   const transport = createWorkerTransport<DialogueWorkerRequest, DialogueWorkerResponse>({
-    createErrorResponse: (event) => ({
-      message: event.message || '대화문 모델 Worker 실행 오류',
-      restartRequired: true,
-      type: 'error',
-    }),
-    feature: 'dialogue-model',
+    onFailure: (failure) => {
+      reportClientError(failure.cause, {feature: 'dialogue-model', source: 'worker'})
+      options.onResponse({
+        message:
+          failure.code === 'message-error'
+            ? 'Worker 응답을 읽지 못했습니다.'
+            : failure.detail || '대화문 모델 Worker 실행 오류',
+        restartRequired: true,
+        type: 'error',
+      })
+    },
     onResponse: options.onResponse,
     worker,
   })

@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 import type {
   PrepareTextModelRequest,
   TextGenerationErrorResponse,
@@ -16,14 +18,6 @@ const workerScope = self as DedicatedWorkerGlobalScope
 const sendResponse = (response: TextModelDownloadWorkerResponse) =>
   workerScope.postMessage(response)
 
-const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message
-  }
-
-  return '모델 파일을 내려받지 못했어요.'
-}
-
 const prepareModel = async (request: PrepareTextModelRequest) => {
   const {createTransformersRuntime} = await import('../text-generation/transformers-runtime')
   const runtime = createTransformersRuntime({
@@ -35,6 +29,10 @@ const prepareModel = async (request: PrepareTextModelRequest) => {
 
 workerScope.addEventListener('message', (event: MessageEvent<PrepareTextModelRequest>) => {
   prepareModel(event.data).catch((error: unknown) => {
-    sendResponse({message: getErrorMessage(error), restartRequired: false, type: 'error'})
+    sendResponse({
+      message: getErrorMessage(error, '모델 파일을 내려받지 못했어요.'),
+      restartRequired: false,
+      type: 'error',
+    })
   })
 })

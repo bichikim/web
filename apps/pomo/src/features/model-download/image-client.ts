@@ -1,6 +1,7 @@
 import type {GenerationResponse, PrepareImageRequest} from '../image-generation/messages'
 import type {ImageVariant} from '../image-generation/settings'
-import {createWorkerTransport} from '../text-generation/worker-transport'
+import {reportClientError} from '../client-error-reporter/reporter'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 import type {ModelDownloadCallbacks, ModelDownloadClient} from './controller'
 
 export interface CreateImageModelDownloadOptions {
@@ -16,11 +17,14 @@ export const createImageModelDownloadClient = (
     type: 'module',
   })
   const transport = createWorkerTransport<PrepareImageRequest, GenerationResponse>({
-    createErrorResponse: (event) => ({
-      message: event.message || '이미지 모델을 내려받지 못했어요.',
-      type: 'error',
-    }),
-    feature: 'image-model-download',
+    onFailure: (failure) => {
+      reportClientError(failure.cause, {feature: 'image-model-download', source: 'worker'})
+      options.callbacks.onError(
+        failure.code === 'message-error'
+          ? 'Worker 응답을 읽지 못했습니다.'
+          : failure.detail || '이미지 모델을 내려받지 못했어요.',
+      )
+    },
     onResponse: (response) => {
       switch (response.type) {
         case 'progress':

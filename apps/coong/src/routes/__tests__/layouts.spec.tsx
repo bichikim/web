@@ -36,7 +36,7 @@ vi.mock('src/use/instruments', async () => {
   const actual = await vi.importActual<typeof import('src/use/instruments')>('src/use/instruments')
   return {...actual, createSplendidGrandPiano: vi.fn()}
 })
-vi.mock('src/components/midi-player/context', () => ({
+vi.mock('src/components/midi-player/MidiPlayerProvider', () => ({
   MidiPlayerProvider: (props: {children: JSX.Element}) => <>{props.children}</>,
 }))
 vi.mock('src/components/midi-player', async () => {

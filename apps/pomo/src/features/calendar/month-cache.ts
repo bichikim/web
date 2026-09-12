@@ -4,11 +4,15 @@ import {CALENDAR_PROVIDERS, type CalendarEventRange} from './types'
 import type {CalendarEvents} from './client'
 
 const STORAGE_KEY = 'pomo:calendar-month-cache:v1'
-const CACHE_VERSION = 2
+const CACHE_VERSION = 3
 const MAXIMUM_CACHED_MONTHS = 6
 
 export interface CalendarMonthRange extends CalendarEventRange {
   readonly timeZone: string
+}
+
+export interface CalendarMonthCacheRange extends CalendarMonthRange {
+  readonly accountKey: string
 }
 
 const calendarEventSchema = z.object({
@@ -39,8 +43,8 @@ const cacheSchema = z.object({
 
 type CalendarMonthCache = z.infer<typeof cacheSchema>
 
-const createCacheKey = (range: CalendarMonthRange) =>
-  JSON.stringify([range.start, range.end, range.timeZone])
+const createCacheKey = (range: CalendarMonthCacheRange) =>
+  JSON.stringify([range.accountKey, range.start, range.end, range.timeZone])
 
 const resolveStorage = (storage?: Storage): Storage | null => {
   if (storage !== undefined) {
@@ -66,7 +70,7 @@ const readCache = (storage: Storage): CalendarMonthCache | null => {
 }
 
 export const readCalendarMonthCache = (
-  range: CalendarMonthRange,
+  range: CalendarMonthCacheRange,
   storage?: Storage,
 ): CalendarEvents | null => {
   const resolvedStorage = resolveStorage(storage)
@@ -79,7 +83,7 @@ export const readCalendarMonthCache = (
 }
 
 export const writeCalendarMonthCache = (
-  range: CalendarMonthRange,
+  range: CalendarMonthCacheRange,
   value: CalendarEvents,
   storage?: Storage,
 ): unknown | null => {

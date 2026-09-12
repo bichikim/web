@@ -1,3 +1,6 @@
+import {PFeedProgress} from './Progress'
+import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
+import {PSwitch} from '../PSwitch'
 import {PInput} from 'src/components/PInput'
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, For, Show} from 'solid-js'
@@ -7,6 +10,7 @@ import {PSettingsActionButton} from '../settings/ActionButton'
 import {
   DEFAULT_FEED_VOICE_ID,
   type FeedVoiceId,
+  useAutoPreparePreference,
   useFeedConnections,
   useOptionalPFeeds,
 } from '../../features/focus-room-feed'
@@ -46,8 +50,10 @@ const getRecommendedDevFeeds = () =>
   ] as const
 
 export function PFeedSettingsContent() {
-  const feeds = useFeedConnections()
   const runtime = useOptionalPFeeds()
+  const automatic = runtime?.automaticPreparation ?? useAutoPreparePreference()
+  const preference = useReadingStatusPreference()
+  const feeds = useFeedConnections()
   const usesRemotePublicOrigin =
     import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
     import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
@@ -79,6 +85,20 @@ export function PFeedSettingsContent() {
   return (
     <Tabs.Content value="feeds">
       <section class={CLASSES.feedSettings}>
+        <Show when={automatic.isReady() && preference.isReady()}>
+          <PSwitch
+            checked={automatic.enabled()}
+            onChange={automatic.onEnabledChange}
+            label={m.settings_feed_auto_prepare()}
+            description={m.settings_feed_auto_prepare_description()}
+          />
+          <PSwitch
+            checked={preference.visible()}
+            onChange={preference.onVisibleChange}
+            label={m.settings_feed_reading_visible()}
+            description={m.settings_feed_reading_visible_description()}
+          />
+        </Show>
         <form class={CLASSES.feedSettingsForm} onSubmit={handleSubmit}>
           <label class={CLASSES.feedSettingsUrlField} for="pomo-feed-url">
             <span>{m.settings_feed_url()}</span>
@@ -169,7 +189,12 @@ export function PFeedSettingsContent() {
         </Show>
 
         <Show when={runtime}>
-          {(controller) => <PFeedDialogueList controller={controller()} />}
+          {(controller) => (
+            <>
+              <PFeedProgress controller={controller()} />
+              <PFeedDialogueList controller={controller()} />
+            </>
+          )}
         </Show>
       </section>
     </Tabs.Content>

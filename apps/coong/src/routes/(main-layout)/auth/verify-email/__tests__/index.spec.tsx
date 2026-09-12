@@ -8,6 +8,7 @@ import {CHANGE_PASSWORD_PATH} from 'src/requests/auth/reset-password/redirect-ur
 
 const navigate = vi.fn()
 const verifyOtp = vi.fn()
+const locationState = vi.fn((): unknown => null)
 const locationQuery = vi.fn((): {token_hash?: string; type?: string} => ({
   token_hash: 'recovery-hash',
   type: 'recovery',
@@ -16,7 +17,9 @@ const locationQuery = vi.fn((): {token_hash?: string; type?: string} => ({
 vi.mock('@solidjs/router', () => ({
   A: (props: {href: string; children: string}) => <a href={props.href}>{props.children}</a>,
   useLocation: () => ({
+    pathname: '/auth/verify-email',
     query: locationQuery(),
+    state: locationState(),
   }),
   useNavigate: () => navigate,
 }))
@@ -50,11 +53,43 @@ vi.mock('../_components/bg.png', () => ({
 describe('VerifyEmailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    locationState.mockReturnValue(null)
     locationQuery.mockReturnValue({
       token_hash: 'recovery-hash',
       type: 'recovery',
     })
     verifyOtp.mockResolvedValue({id: 'user-1'})
+  })
+
+  it.each(['signup', 'invite', 'magiclink', 'email_change', 'email'])(
+    'should preserve %s success after refreshing without consuming the OTP again',
+    async (type) => {
+      locationQuery.mockReturnValue({token_hash: 'one-time-hash', type})
+      verifyOtp.mockResolvedValueOnce({id: 'user-1'}).mockRejectedValue(new Error('Already used'))
+      const page = render(() => <VerifyEmailPage />)
+
+      await waitFor(() => {
+        expect(navigate).toHaveBeenCalledWith('/auth/verify-email', {
+          replace: true,
+          state: {emailVerified: true},
+        })
+      })
+      expect(screen.getByText('user@example.com')).toBeInTheDocument()
+      page.unmount()
+      locationQuery.mockReturnValue({})
+      locationState.mockReturnValue(navigate.mock.calls[0][1].state)
+      render(() => <VerifyEmailPage />)
+
+      expect(await screen.findByText('user@example.com')).toBeInTheDocument()
+      expect(screen.queryByText('인증에 실패했습니다')).not.toBeInTheDocument()
+      expect(verifyOtp).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it('should verify a new token even when history contains an earlier success', async () => {
+    locationState.mockReturnValue({emailVerified: true})
+    render(() => <VerifyEmailPage />)
+    await waitFor(() => expect(verifyOtp).toHaveBeenCalledTimes(1))
   })
 
   it('should redirect to change-password after successful recovery verification', async () => {

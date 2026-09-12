@@ -82,7 +82,7 @@ const revokeServerSession = async (token: string): Promise<void> => {
   }
 }
 
-const activateStoredSession = async (token: string): Promise<boolean> => {
+export const activateStoredSession = async (token: string): Promise<boolean> => {
   const response = await apiFetch('app-auth/session', {
     headers: getAuthorizationHeaders(token),
     method: 'PATCH',

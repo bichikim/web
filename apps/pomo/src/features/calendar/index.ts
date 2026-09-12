@@ -16,7 +16,7 @@ export {
   readCalendarMonthCache,
   writeCalendarMonthCache,
 } from './month-cache'
-export type {CalendarMonthRange} from './month-cache'
+export type {CalendarMonthCacheRange, CalendarMonthRange} from './month-cache'
 export {groupCalendarEvents} from './group-events'
 
 export {getLegacyEventId} from './get-legacy-event-id'
