@@ -138,7 +138,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     return
   }
 
-  const startedAt = performance.now()
+  const startedAt = Date.now()
 
   try {
     const output = await extractor(getEmbeddingText(request), {
@@ -150,7 +150,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
 
     if (sufficiency.insufficient) {
       sendResponse({
-        elapsedMilliseconds: performance.now() - startedAt,
+        elapsedMilliseconds: Date.now() - startedAt,
         requestId: request.requestId,
         sufficiency,
         type: 'insufficient',
@@ -161,7 +161,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     const analysis = classifyTextMood(embedding)
     sendResponse({
       analysis,
-      elapsedMilliseconds: performance.now() - startedAt,
+      elapsedMilliseconds: Date.now() - startedAt,
       requestId: request.requestId,
       type: 'complete',
     })

@@ -12,16 +12,14 @@ export interface PMouthTransitionController {
   readonly start: (from: PViseme, to: PViseme, prefersReducedMotion: boolean) => void
 }
 
-/** Supplies asynchronous animation frames and a clock with the same time origin. */
+/** Supplies asynchronous animation frames and cancellation. */
 export interface PMouthTransitionScheduler {
   readonly cancelAnimationFrame: (frame: number) => void
-  readonly now: () => number
   readonly requestAnimationFrame: (callback: (timestamp: number) => void) => number
 }
 
 const DEFAULT_SCHEDULER: PMouthTransitionScheduler = {
   cancelAnimationFrame: (frame) => globalThis.cancelAnimationFrame(frame),
-  now: () => globalThis.performance.now(),
   requestAnimationFrame: (callback) => globalThis.requestAnimationFrame(callback),
 }
 
@@ -75,7 +73,7 @@ export const createPMouthTransitionController = (
       return
     }
 
-    const startedAt = scheduler.now()
+    let startedAt: number | undefined
     current = {from: transitionFrom, progress: startProgress, to: transitionTo}
     onTransitionChange()
 
@@ -83,6 +81,8 @@ export const createPMouthTransitionController = (
       if (destroyed) {
         return
       }
+
+      startedAt ??= timestamp
 
       const phase = getSmoothedUnitProgress((timestamp - startedAt) / durationMs)
       const progress = startProgress + (endProgress - startProgress) * phase

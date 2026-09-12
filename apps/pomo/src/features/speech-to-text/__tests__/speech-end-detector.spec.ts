@@ -75,7 +75,7 @@ describe('createBrowserSpeechEndDetector', () => {
         return context
       }),
     )
-    vi.spyOn(performance, 'now').mockImplementation(() => timestamps.shift() ?? 900)
+    vi.spyOn(Date, 'now').mockImplementation(() => timestamps.shift() ?? 900)
     const setInterval = vi.spyOn(globalThis, 'setInterval').mockImplementation((callback) => {
       const run = callback as () => void
       run()

@@ -27,7 +27,7 @@ export const useScreenSaver = (): ScreenSaverController => {
       setIsActive(false)
     }
 
-    const currentTime = performance.now()
+    const currentTime = Date.now()
     if (!wasActive && currentTime - lastActivityTime < ACTIVITY_THROTTLE_MILLISECONDS) {
       return
     }

@@ -92,10 +92,10 @@ const createRecordingTimer = (setElapsedTime: Setter<number>) => {
 
   const start = () => {
     stop()
-    startedAt = performance.now()
+    startedAt = Date.now()
     setElapsedTime(0)
     intervalId = globalThis.setInterval(() => {
-      setElapsedTime((performance.now() - startedAt) / MILLISECONDS_PER_SECOND)
+      setElapsedTime((Date.now() - startedAt) / MILLISECONDS_PER_SECOND)
     }, RECORDING_INTERVAL)
   }
 

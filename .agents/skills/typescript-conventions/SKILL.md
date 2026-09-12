@@ -31,6 +31,7 @@ Open and apply the reference files for the relevant section before working. For 
 20. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
 21. Outside a feature, use one feature entrypoint per file when its cohesive API can be re-exported; keep subpaths for runtime boundaries, side effects, or cycle avoidance. Do not omit `index.ts` re-exports to hide internals.
 22. When implementing functions, prefer one primary exported function per file and name the file after that function in kebab-case.
+23. Do not directly use the built-in `performance` API or `eval` function, including through `globalThis` or `window`.
 
 ## Low-Cost Parameterization
 
@@ -53,7 +54,7 @@ Make the storage destination explicit in the persistence function name or an arg
 
 When implementing or decomposing logic, consider these levels in order:
 
-1. Prefer JavaScript built-in functions and APIs when they satisfy the required semantics and target runtime support. Otherwise, look for a suitable public API in general-purpose utility libraries, the framework, the runtime, and existing project code. If none fits, consider creating a domain-independent function with a broadly reusable contract.
+1. Prefer JavaScript built-in functions and APIs when they satisfy the required semantics and target runtime support, excluding the prohibited `performance` and `eval`. Otherwise, look for a suitable public API in general-purpose utility libraries, the framework, the runtime, and existing project code. If none fits, consider creating a domain-independent function with a broadly reusable contract.
 2. Consider expressing the remaining logic as a function in a broader domain than the immediate feature.
 3. Implement the current task's domain-specific function by composing the suitable operations identified above.
 

@@ -316,7 +316,7 @@ export const mountClothContact = (container: AssetContainer, modelUrl: string) =
   const hips = container.transformNodes.find((node) => node.name === 'J_Bip_C_Hips')
   const blended = new Float32Array(SETTINGS.matrixSize)
   const observer = container.scene.onBeforeRenderObservable.add(() => {
-    const started = performance.now()
+    const started = Date.now()
     const capsules = colliders.map((collider, index) => {
       const world = collider.node.computeWorldMatrix(true)
       const next = colliders[index + 1]
@@ -379,7 +379,7 @@ export const mountClothContact = (container: AssetContainer, modelUrl: string) =
       seatHeight,
     )
     renderSurface(meshes, surface)
-    samples.push(performance.now() - started)
+    samples.push(Date.now() - started)
     if (samples.length === measurement.window) {
       samples.sort((left, right) => left - right)
       canvas?.setAttribute(

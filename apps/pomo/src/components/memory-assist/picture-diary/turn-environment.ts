@@ -14,7 +14,7 @@ export interface PageTurnPointerHandlers {
   readonly cancel: (event: PointerEvent) => void
 }
 
-/** Supplies one monotonic timeline, live page measurements, and scoped pointer subscriptions. */
+/** Supplies a gesture clock, animation frames, live page measurements, and pointer subscriptions. */
 export interface PageTurnEnvironment {
   readonly now: () => number
   readonly requestFrame: (callback: FrameRequestCallback) => number
@@ -54,7 +54,7 @@ export const createBrowserTurnEnvironment = (options: BrowserTurnOptions): PageT
       window.removeEventListener('pointercancel', handlers.cancel)
     }
   },
-  now: () => performance.now(),
+  now: () => Date.now(),
   prefersReducedMotion: () =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   requestFrame: (callback) => requestAnimationFrame(callback),

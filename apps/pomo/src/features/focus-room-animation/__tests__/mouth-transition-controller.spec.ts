@@ -7,7 +7,7 @@ import {
   P_MOUTH_TRANSITION_DURATION_MS,
 } from '../mouth-transition-controller'
 
-const createAnimationFrames = (now = () => 1_000) => {
+const createAnimationFrames = () => {
   const callbacks = new Map<number, FrameRequestCallback>()
   let nextFrame = 1
   const requestAnimationFrame = vi.fn((callback: (timestamp: number) => void) => {
@@ -34,7 +34,7 @@ const createAnimationFrames = (now = () => 1_000) => {
     callback(timestamp)
   }
 
-  return {getCallback, run, scheduler: {cancelAnimationFrame, now, requestAnimationFrame}}
+  return {getCallback, run, scheduler: {cancelAnimationFrame, requestAnimationFrame}}
 }
 
 describe('getPVisemeTransitionProgress', () => {
@@ -52,8 +52,8 @@ describe('getPVisemeTransitionProgress', () => {
 
 describe('createPMouthTransitionController', () => {
   it('should keep frame cancellation and clocks local to each scheduler', () => {
-    const firstFrames = createAnimationFrames(() => 100)
-    const secondFrames = createAnimationFrames(() => 2_000)
+    const firstFrames = createAnimationFrames()
+    const secondFrames = createAnimationFrames()
     const first = createPMouthTransitionController(vi.fn(), firstFrames.scheduler)
     const second = createPMouthTransitionController(vi.fn(), secondFrames.scheduler)
 
@@ -64,12 +64,13 @@ describe('createPMouthTransitionController', () => {
     expect(firstFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(1)
     expect(secondFrames.scheduler.cancelAnimationFrame).not.toHaveBeenCalled()
 
-    secondFrames.run(1, 2_050)
+    secondFrames.run(1, 2_000)
+    secondFrames.run(2, 2_050)
     expect(first.current).toBeNull()
     expect(second.current).toEqual({from: 'closed', progress: 0.5, to: 'open'})
 
     second.destroy()
-    expect(secondFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(2)
+    expect(secondFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(3)
   })
 
   it('should render and settle a complete transition', () => {
@@ -87,15 +88,16 @@ describe('createPMouthTransitionController', () => {
     expect(controller.current).toEqual({from: 'rest', progress: 0, to: 'round'})
     expect(onTransitionChange).toHaveBeenCalledOnce()
 
-    animationFrames.run(1, 1_050)
+    animationFrames.run(1, 1_000)
+    animationFrames.run(2, 1_050)
 
     expect(controller.current).toEqual({from: 'rest', progress: 0.5, to: 'round'})
-    expect(animationFrames.scheduler.requestAnimationFrame).toHaveBeenCalledTimes(2)
+    expect(animationFrames.scheduler.requestAnimationFrame).toHaveBeenCalledTimes(3)
 
-    animationFrames.run(2, 1_100)
+    animationFrames.run(3, 1_100)
 
     expect(controller.current).toBeNull()
-    expect(onTransitionChange).toHaveBeenCalledTimes(4)
+    expect(onTransitionChange).toHaveBeenCalledTimes(5)
 
     controller.cancel()
     expect(animationFrames.scheduler.cancelAnimationFrame).not.toHaveBeenCalled()
@@ -139,8 +141,7 @@ describe('createPMouthTransitionController', () => {
   })
 
   it('should reverse from the current transition progress', () => {
-    let now = 1_000
-    const animationFrames = createAnimationFrames(() => now)
+    const animationFrames = createAnimationFrames()
     const onTransitionChange = vi.fn()
     const controller = createPMouthTransitionController(
       onTransitionChange,
@@ -148,18 +149,19 @@ describe('createPMouthTransitionController', () => {
     )
 
     controller.start('narrow', 'wide', false)
-    animationFrames.run(1, 1_050)
+    animationFrames.run(1, 1_000)
+    animationFrames.run(2, 1_050)
 
-    now = 1_050
     controller.start('wide', 'narrow', false)
 
     expect(controller.current).toEqual({from: 'narrow', progress: 0.5, to: 'wide'})
-    expect(animationFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(2)
+    expect(animationFrames.scheduler.cancelAnimationFrame).toHaveBeenCalledWith(3)
 
-    animationFrames.run(3, 1_075)
+    animationFrames.run(4, 1_050)
+    animationFrames.run(5, 1_075)
     expect(controller.current).toEqual({from: 'narrow', progress: 0.25, to: 'wide'})
 
-    animationFrames.run(4, 1_100)
+    animationFrames.run(6, 1_100)
     expect(controller.current).toBeNull()
   })
 

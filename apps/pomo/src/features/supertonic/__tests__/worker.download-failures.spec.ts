@@ -221,7 +221,7 @@ beforeEach(() => {
   sessionMocks.load.mockResolvedValue(success(sessions))
   sessionMocks.release.mockResolvedValue(undefined)
   textMocks.split.mockImplementation((text: string) => [text])
-  vi.spyOn(performance, 'now').mockReturnValue(100)
+  vi.spyOn(Date, 'now').mockReturnValue(100)
 })
 
 afterEach(() => {

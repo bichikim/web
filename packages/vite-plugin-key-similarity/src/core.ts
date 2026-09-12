@@ -13,7 +13,7 @@ import type {
   SimilarityDiagnostic,
 } from './types'
 
-const now = (): number => performance.now()
+const now = (): number => Date.now()
 
 const entryIdentifier = (entry: KeyEntry): string => `${entry.filePath}\0${entry.literalStart}`
 

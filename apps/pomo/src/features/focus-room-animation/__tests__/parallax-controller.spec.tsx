@@ -99,6 +99,8 @@ const runDragAnimation = (frameDuration: number) => {
   startDrag(host)
   moveDrag(host, 15, 50)
 
+  animationFrames.shift()?.(0)
+
   for (let frameIndex = 1; frameIndex <= frameCount; frameIndex += 1) {
     animationFrames.shift()?.(frameIndex * frameDuration)
   }
@@ -114,7 +116,6 @@ describe('ParallaxController', () => {
 
   beforeEach(() => {
     motionPreference.matches = false
-    vi.spyOn(performance, 'now').mockReturnValue(0)
     vi.stubGlobal(
       'matchMedia',
       vi.fn(() => motionPreference),
@@ -162,6 +163,7 @@ describe('ParallaxController', () => {
     controller.start()
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}))
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}))
+    animationFrames.shift()?.(0)
     animationFrames.shift()?.(1_000 / 60)
 
     expect(renderOffset.mock.lastCall?.[0]).toBeCloseTo(0.0442, 4)
@@ -248,6 +250,8 @@ describe('ParallaxController', () => {
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}))
     window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}))
     animationFrames.shift()?.(32)
+    expect(renderOffset.mock.lastCall?.[0]).toBe(0)
+    animationFrames.shift()?.(48)
 
     expect(renderOffset.mock.lastCall?.[0]).toBeGreaterThan(0)
 

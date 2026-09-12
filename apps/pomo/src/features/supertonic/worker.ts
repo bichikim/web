@@ -409,7 +409,7 @@ const generate = async (
   const abortController = new AbortController()
   activeAbortController = abortController
   activeGenerationAbortController = abortController
-  const startedAt = performance.now()
+  const startedAt = Date.now()
 
   try {
     const voiceResult = await getVoice(message.voice, abortController.signal)
@@ -423,7 +423,7 @@ const generate = async (
 
     for (const [chunkIndex, text] of textChunks.entries()) {
       const chunkNumber = chunkIndex + 1
-      const chunkStartedAt = performance.now()
+      const chunkStartedAt = Date.now()
       const samples = await currentEngine.generate({
         language: message.language,
         onProgress: (step, total) => {
@@ -438,7 +438,7 @@ const generate = async (
       })
       audioChunks.push(samples)
       postMessage({
-        generationTime: Math.round(performance.now() - chunkStartedAt),
+        generationTime: Math.round(Date.now() - chunkStartedAt),
         index: chunkIndex,
         requestId: message.requestId,
         sampleRate: currentEngine.sampleRate,
@@ -463,7 +463,7 @@ const generate = async (
     }
 
     return successResult({
-      generationTime: Math.round(performance.now() - startedAt),
+      generationTime: Math.round(Date.now() - startedAt),
       sampleRate: currentEngine.sampleRate,
       samples,
     })

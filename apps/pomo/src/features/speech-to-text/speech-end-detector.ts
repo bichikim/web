@@ -79,7 +79,7 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
     const intervalId = globalThis.setInterval(() => {
       analyser.getFloatTimeDomainData(samples)
 
-      if (state.push({energy: getRootMeanSquare(samples), timestamp: performance.now()})) {
+      if (state.push({energy: getRootMeanSquare(samples), timestamp: Date.now()})) {
         for (const listener of listeners) {
           listener()
         }

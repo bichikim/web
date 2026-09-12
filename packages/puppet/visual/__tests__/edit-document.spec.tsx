@@ -17,7 +17,7 @@ test('should move a vertex in a 5,000 triangle fan within the browser edit budge
   }
 
   const fanDocument = {...document, parts: [{...part, mesh: createFanMesh(5_000)}]}
-  const startedAt = performance.now()
+  const startedAt = Date.now()
   const result = movePartVertex({
     document: fanDocument,
     partId: part.id,
@@ -27,5 +27,5 @@ test('should move a vertex in a 5,000 triangle fan within the browser edit budge
   })
 
   expect(result.ok).toBe(true)
-  expect(performance.now() - startedAt).toBeLessThan(MAXIMUM_EDIT_DURATION_MS)
+  expect(Date.now() - startedAt).toBeLessThan(MAXIMUM_EDIT_DURATION_MS)
 })
