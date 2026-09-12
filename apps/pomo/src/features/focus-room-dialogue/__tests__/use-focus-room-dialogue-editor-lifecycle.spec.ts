@@ -338,27 +338,33 @@ describe('usePDialogueEditor', () => {
     expect(client.generateStream).not.toHaveBeenCalled()
   })
 
-  it('should ignore generation chunks from a client invalidated during generation', async () => {
-    const client = createClient([])
-    vi.mocked(client.generateStream).mockImplementationOnce(async function* generateStream() {
-      editor.controller.setModelId('int8')
-      yield successResult({
-        audio: {...createAudio(), index: 0, total: 1},
-        type: 'chunk' as const,
+  it.each(['model', 'route'])(
+    'should ignore generation chunks from a client invalidated during generation (%s)',
+    async (change) => {
+      repositoryMocks.getDialogue.mockImplementation(
+        () => Promise.withResolvers<PDialogue | null>().promise,
+      )
+      const client = createClient([])
+      vi.mocked(client.generateStream).mockImplementationOnce(async function* generateStream() {
+        change === 'model' ? editor.controller.setModelId('int8') : editor.navigate('next')
+        yield successResult({
+          audio: {...createAudio(), index: 0, total: 1},
+          type: 'chunk' as const,
+        })
+        yield successResult({audio: createAudio(), type: 'complete' as const})
       })
-      yield successResult({audio: createAudio(), type: 'complete' as const})
-    })
-    supertonicMocks.createClient.mockReturnValue(client)
-    const editor = createEditorRoot()
-    editor.controller.setText('생성 중 모델을 바꾸는 대사')
+      supertonicMocks.createClient.mockReturnValue(client)
+      const editor = createEditorRoot()
+      editor.controller.setText('생성 중 모델을 바꾸는 대사')
 
-    await editor.controller.generate()
+      await editor.controller.generate()
 
-    expect(editor.controller.audioUrl()).toBeNull()
-    expect(editor.controller.modelId()).toBe('int8')
-    expect(editor.controller.state().status).toBe('idle')
-    editor.dispose()
-  })
+      expect(editor.controller.audioUrl()).toBeNull()
+      expect(editor.controller.modelId()).toBe(change === 'model' ? 'int8' : 'full')
+      expect(editor.controller.state().status).toBe(change === 'model' ? 'idle' : 'loading')
+      editor.dispose()
+    },
+  )
 
   it('should report a generated preview creation failure', async () => {
     const client = createClient([])
@@ -426,34 +432,40 @@ describe('usePDialogueEditor', () => {
     editor.dispose()
   })
 
-  it('should ignore mood analysis completed for an invalidated client', async () => {
-    const client = createClient([])
-    const insufficient = successResult({
-      elapsedMilliseconds: 1,
-      status: 'insufficient' as const,
-      sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
-    })
-    let resolveAnalysis: (result: typeof insufficient) => void = () => undefined
-    moodAnalyzerMocks.analyze.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveAnalysis = resolve
-        }),
-    )
-    supertonicMocks.createClient.mockReturnValue(client)
-    const editor = createEditorRoot()
-    editor.controller.setText('분석 중 모델을 바꾸는 대사')
+  it.each(['model', 'route'])(
+    'should ignore mood analysis completed for an invalidated client (%s)',
+    async (change) => {
+      repositoryMocks.getDialogue.mockImplementation(
+        () => Promise.withResolvers<PDialogue | null>().promise,
+      )
+      const client = createClient([])
+      const insufficient = successResult({
+        elapsedMilliseconds: 1,
+        status: 'insufficient' as const,
+        sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
+      })
+      let resolveAnalysis: (result: typeof insufficient) => void = () => undefined
+      moodAnalyzerMocks.analyze.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveAnalysis = resolve
+          }),
+      )
+      supertonicMocks.createClient.mockReturnValue(client)
+      const editor = createEditorRoot()
+      editor.controller.setText('분석 중 모델을 바꾸는 대사')
 
-    const generating = editor.controller.generate()
-    await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
-    editor.controller.setModelId('int8')
-    resolveAnalysis(insufficient)
-    await generating
+      const generating = editor.controller.generate()
+      await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
+      change === 'model' ? editor.controller.setModelId('int8') : editor.navigate('next')
+      resolveAnalysis(insufficient)
+      await generating
 
-    expect(editor.controller.modelId()).toBe('int8')
-    expect(editor.controller.segments()).toEqual([])
-    editor.dispose()
-  })
+      expect(editor.controller.modelId()).toBe(change === 'model' ? 'int8' : 'full')
+      expect(editor.controller.segments()).toEqual([])
+      editor.dispose()
+    },
+  )
 
   it('should report segment regeneration failures and preview errors', async () => {
     const client = createClient([])
@@ -482,23 +494,29 @@ describe('usePDialogueEditor', () => {
     editor.dispose()
   })
 
-  it('should ignore regeneration completed by an invalidated client', async () => {
-    const client = createClient([])
-    supertonicMocks.createClient.mockReturnValue(client)
-    const editor = createEditorRoot()
-    editor.controller.setText('재생성 중 모델을 바꿀 대사')
-    await editor.controller.generate()
-    vi.mocked(client.generate).mockImplementationOnce(async () => {
-      editor.controller.setModelId('int8')
-      return successResult(createAudio())
-    })
+  it.each(['model', 'route'])(
+    'should ignore regeneration completed by an invalidated client (%s)',
+    async (change) => {
+      repositoryMocks.getDialogue.mockImplementation(
+        () => Promise.withResolvers<PDialogue | null>().promise,
+      )
+      const client = createClient([])
+      supertonicMocks.createClient.mockReturnValue(client)
+      const editor = createEditorRoot()
+      editor.controller.setText('재생성 중 모델을 바꿀 대사')
+      await editor.controller.generate()
+      vi.mocked(client.generate).mockImplementationOnce(async () => {
+        change === 'model' ? editor.controller.setModelId('int8') : editor.navigate('next')
+        return successResult(createAudio())
+      })
 
-    await editor.controller.regenerateSegment(0)
+      await editor.controller.regenerateSegment(0)
 
-    expect(editor.controller.regeneratingSegmentIndex()).toBe(0)
-    expect(editor.controller.modelId()).toBe('int8')
-    editor.dispose()
-  })
+      expect(editor.controller.regeneratingSegmentIndex()).toBe(change === 'model' ? 0 : null)
+      expect(editor.controller.modelId()).toBe(change === 'model' ? 'int8' : 'full')
+      editor.dispose()
+    },
+  )
 
   it('should save loaded audio without re-encoding and preserve its identity', async () => {
     const dialogue = createStoredDialogue()
