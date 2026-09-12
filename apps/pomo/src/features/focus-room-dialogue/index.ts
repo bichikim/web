@@ -63,6 +63,9 @@ export {
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
 } from './automatic-dialogue-settings-contract'
 export {
+  createRandomEventSettingsRepository,
+  type RandomEventSettingsRepository,
+  type RandomEventSettingsStorage,
   DEFAULT_RANDOM_EVENT_SETTINGS,
   RANDOM_EVENT_SETTINGS_CHANGED_EVENT,
   readRandomEventSettings,

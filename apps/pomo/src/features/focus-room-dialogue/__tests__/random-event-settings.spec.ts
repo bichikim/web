@@ -3,8 +3,10 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
+  createRandomEventSettingsRepository,
   DEFAULT_RANDOM_EVENT_SETTINGS,
   parseRandomEventSettings,
+  type RandomEventSettingsStorage,
   readRandomEventSettings,
   writeRandomEventSettings,
 } from '../random-event-settings'
@@ -209,5 +211,49 @@ describe('writeRandomEventSettings', () => {
     ])
 
     expect(nativeWrites).toEqual([JSON.stringify(firstSettings), JSON.stringify(secondSettings)])
+  })
+})
+
+describe('createRandomEventSettingsRepository', () => {
+  const createStorage = (): RandomEventSettingsStorage => ({
+    isNative: () => true,
+    readToss: async () => null,
+    readWeb: () => null,
+    writeToss: async () => undefined,
+    writeWeb: () => null,
+  })
+
+  it('should keep another repository write from restarting a pending read', async () => {
+    const pending = Promise.withResolvers<typeof DEFAULT_RANDOM_EVENT_SETTINGS>()
+    const readToss = vi.fn(() => pending.promise)
+    const first = createRandomEventSettingsRepository({...createStorage(), readToss})
+    const second = createRandomEventSettingsRepository(createStorage())
+    const read = first.read()
+
+    await second.write({maximumMinutes: 4, minimumMinutes: 2, version: 1})
+    pending.resolve(DEFAULT_RANDOM_EVENT_SETTINGS)
+
+    expect(await read).toEqual(DEFAULT_RANDOM_EVENT_SETTINGS)
+    expect(readToss).toHaveBeenCalledTimes(1)
+  })
+
+  it('should let another repository finish while retaining only the latest pending write', async () => {
+    const pending = Promise.withResolvers<void>()
+    const writeToss = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(undefined)
+    const first = createRandomEventSettingsRepository({...createStorage(), writeToss})
+    const secondWrite = vi.fn().mockResolvedValue(undefined)
+    const second = createRandomEventSettingsRepository({...createStorage(), writeToss: secondWrite})
+    const initial = {maximumMinutes: 2, minimumMinutes: 1, version: 1} as const
+    const middle = {...initial, maximumMinutes: 3}
+    const latest = {...initial, maximumMinutes: 4}
+    const writes = [first.write(initial), first.write(middle), first.write(latest)]
+
+    await second.write(middle)
+    expect(secondWrite).toHaveBeenCalledExactlyOnceWith(middle)
+    expect(writeToss).toHaveBeenCalledExactlyOnceWith(initial)
+
+    pending.resolve()
+    await Promise.all(writes)
+    expect(writeToss.mock.calls).toEqual([[initial], [latest]])
   })
 })
