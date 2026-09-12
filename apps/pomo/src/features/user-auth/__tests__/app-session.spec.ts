@@ -294,27 +294,29 @@ describe('app session lifecycle', () => {
   )
 })
 
-it.each([200, 401, 503])('should classify activation HTTP status %s', async (status) => {
-  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status}))
-  vi.stubGlobal('fetch', fetchMock)
+describe('activateStoredSession', () => {
+  it.each([200, 401, 503])('should classify activation HTTP status %s', async (status) => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status}))
+    vi.stubGlobal('fetch', fetchMock)
 
-  try {
-    const activation = activateStoredSession('pending-token')
-    if (status === 503) {
-      await expect(activation).rejects.toThrow('App session activation failed')
-    } else {
-      await expect(activation).resolves.toBe(status === 200)
+    try {
+      const activation = activateStoredSession('pending-token')
+      if (status === 503) {
+        await expect(activation).rejects.toThrow('App session activation failed')
+      } else {
+        await expect(activation).resolves.toBe(status === 200)
+      }
+      expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+        '/api/app-auth/session',
+        expect.objectContaining({
+          method: 'PATCH',
+        }),
+      )
+      expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get('Authorization')).toBe(
+        'Bearer pending-token',
+      )
+    } finally {
+      vi.unstubAllGlobals()
     }
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
-      '/api/app-auth/session',
-      expect.objectContaining({
-        method: 'PATCH',
-      }),
-    )
-    expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get('Authorization')).toBe(
-      'Bearer pending-token',
-    )
-  } finally {
-    vi.unstubAllGlobals()
-  }
+  })
 })
