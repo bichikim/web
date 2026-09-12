@@ -107,6 +107,70 @@ afterEach(() => {
 })
 
 describe('createSplendidGrandPiano', () => {
+  it('should stop playback polling on disposal and start only one poller after remount', () => {
+    vi.useFakeTimers()
+    const piano = createPianoFixture()
+    vi.mocked(getAudioContext).mockReturnValue(createAudioContextFixture())
+    vi.mocked(createSplendidGrandPianoExtended).mockReturnValue(
+      piano as unknown as SplendidGrandPianoExtended,
+    )
+    const root = createPianoRoot()
+    root.controller.play({id: 'song', midi: [[]], totalDuration: 10})
+
+    vi.advanceTimersByTime(250)
+    expect(piano.getPlayedTime).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(1)
+
+    root.dispose()
+    const disposedState = root.state()
+
+    expect(vi.getTimerCount()).toBe(0)
+    vi.advanceTimersByTime(1000)
+    expect(piano.getPlayedTime).toHaveBeenCalledOnce()
+    expect(root.state()).toBe(disposedState)
+
+    const remounted = createPianoRoot()
+    remounted.controller.play({id: 'song', midi: [[]], totalDuration: 10})
+    vi.advanceTimersByTime(250)
+
+    expect(vi.getTimerCount()).toBe(1)
+    expect(piano.getPlayedTime).toHaveBeenCalledTimes(2)
+    remounted.dispose()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('should release polling while suspended, stopped, or ended', () => {
+    vi.useFakeTimers()
+    const piano = createPianoFixture()
+    vi.mocked(getAudioContext).mockReturnValue(createAudioContextFixture())
+    vi.mocked(createSplendidGrandPianoExtended).mockReturnValue(
+      piano as unknown as SplendidGrandPianoExtended,
+    )
+    const root = createPianoRoot()
+    root.controller.play({id: 'song', midi: [[]], totalDuration: 10})
+    root.controller.suspend()
+
+    expect(vi.getTimerCount()).toBe(0)
+    vi.advanceTimersByTime(1000)
+    expect(piano.getPlayedTime).not.toHaveBeenCalled()
+
+    root.controller.resume()
+    vi.advanceTimersByTime(250)
+    expect(piano.getPlayedTime).toHaveBeenCalledOnce()
+
+    root.controller.stop()
+    expect(vi.getTimerCount()).toBe(0)
+    vi.advanceTimersByTime(1000)
+    expect(piano.getPlayedTime).toHaveBeenCalledOnce()
+
+    root.controller.play({id: 'song', midi: [[]], totalDuration: 10})
+    piano.getLeftTime.mockReturnValue(0)
+    vi.advanceTimersByTime(250)
+    expect(vi.getTimerCount()).toBe(0)
+    expect(piano.getPlayedTime).toHaveBeenCalledTimes(2)
+    root.dispose()
+  })
+
   it('should initialize, publish loaded state, and release audio resources', async () => {
     const audioContext = createAudioContextFixture()
     const piano = createPianoFixture()
