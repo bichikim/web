@@ -24,6 +24,7 @@ export default defineConfig({
       '@paraglide/runtime': fileURLToPath(
         new URL('../../../.i18n/paraglide/runtime.js', import.meta.url),
       ),
+      src: fileURLToPath(new URL('../../../src', import.meta.url)),
     },
   },
   root: fixtureDirectory,
