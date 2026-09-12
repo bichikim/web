@@ -1,5 +1,5 @@
 import {PInput} from 'src/components/PInput'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
 
 const INPUT_CLASSES = cx(
@@ -77,7 +77,7 @@ export const CharacterControls = (props: CharacterControlsProps) => (
         type="url"
         value={props.urlInput}
       />
-      <button class={BUTTON_CLASSES} disabled={!noneEmptyString(props.urlInput)} type="submit">
+      <button class={BUTTON_CLASSES} disabled={!isNonBlankString(props.urlInput)} type="submit">
         URL 모델 불러오기
       </button>
     </form>

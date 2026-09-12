@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {createSignal, Show} from 'solid-js'
 import {useSoundJoining} from 'src/features/sound-joining'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {ModelTerms} from './sound-generation/ModelTerms'
 import {Source} from './sound-joining/Source'
 import {Introduction} from './sound-joining/Introduction'
@@ -105,7 +105,7 @@ export function SoundJoiningPage() {
             class="min-h-11 rounded-xl border-0 bg-#b8e8d0 px-6 text-#17131f font-700 disabled:opacity-50"
             type="button"
             disabled={
-              joining.busy() || first() === null || second() === null || !noneEmptyString(prompt())
+              joining.busy() || first() === null || second() === null || !isNonBlankString(prompt())
             }
             onClick={generate}
           >

@@ -1,4 +1,4 @@
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
   readonly amount: number
@@ -62,7 +62,7 @@ const readDate = (value: unknown) => {
     return null
   }
 
-  return typeof value === 'string' && noneEmptyString(value) ? value.trim() : null
+  return typeof value === 'string' && isNonBlankString(value) ? value.trim() : null
 }
 
 const readQuestions = (value: unknown) => {
@@ -84,7 +84,7 @@ const readItems = (value: unknown) => {
 
   const items: Array<ExpenseItem> = []
   for (const item of value) {
-    if (!isRecord(item) || typeof item.name !== 'string' || !noneEmptyString(item.name)) {
+    if (!isRecord(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
       return null
     }
 

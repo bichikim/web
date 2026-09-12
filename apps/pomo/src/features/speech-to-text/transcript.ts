@@ -1,4 +1,4 @@
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 /** Appends one recognized utterance without disturbing editable text around it. */
 export const appendSpeechTranscript = (current: string, next: string) => {
@@ -8,5 +8,5 @@ export const appendSpeechTranscript = (current: string, next: string) => {
     return current
   }
 
-  return noneEmptyString(current) ? `${current.trimEnd()} ${trimmedText}` : trimmedText
+  return isNonBlankString(current) ? `${current.trimEnd()} ${trimmedText}` : trimmedText
 }

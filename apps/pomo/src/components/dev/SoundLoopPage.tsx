@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {createEffect, createSignal, on, onCleanup, Show} from 'solid-js'
 import {useSoundGeneration} from 'src/features/sound-generation'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {ModelTerms} from './sound-generation/ModelTerms'
 import {Preview} from './sound-loop/Preview'
 
@@ -113,7 +113,7 @@ export function SoundLoopPage() {
             disabled={
               generation.busy() ||
               source() === null ||
-              !noneEmptyString(prompt()) ||
+              !isNonBlankString(prompt()) ||
               !Number.isFinite(transition()) ||
               transition() < 1 ||
               transition() > MAX_TRANSITION

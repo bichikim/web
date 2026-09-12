@@ -1,9 +1,9 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {noneEmptyString} from '..'
+import {isNonBlankString} from '..'
 
-describe('noneEmptyString', () => {
+describe('isNonBlankString', () => {
   it.each([
     ['hello', true],
     [' hello ', true],
@@ -14,6 +14,6 @@ describe('noneEmptyString', () => {
     ['\n', false],
     [' \t\n ', false],
   ] as const)('should treat %j as %s', (value, result) => {
-    expect(noneEmptyString(value)).toBe(result)
+    expect(isNonBlankString(value)).toBe(result)
   })
 })

@@ -1,4 +1,4 @@
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export type ClientErrorSource =
   | 'direct'
@@ -173,12 +173,12 @@ const normalizeStack = (value: string | undefined): string | undefined => {
 
 const getErrorName = (value: object): string => {
   const name = readSafeString(value, 'name')
-  return name === undefined || !noneEmptyString(name) ? 'Error' : redactText(name)
+  return name === undefined || !isNonBlankString(name) ? 'Error' : redactText(name)
 }
 
 const getErrorMessage = (value: object): string => {
   const message = readSafeString(value, 'message')
-  return message === undefined || !noneEmptyString(message)
+  return message === undefined || !isNonBlankString(message)
     ? 'No error message'
     : truncate(redactText(message), MAXIMUM_MESSAGE_LENGTH)
 }

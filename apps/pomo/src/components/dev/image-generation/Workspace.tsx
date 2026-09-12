@@ -1,5 +1,5 @@
 import {PTextarea} from 'src/components/PTextarea'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {Preview} from './Preview'
 import {For, Show} from 'solid-js'
 import {useImageGeneration} from 'src/features/image-generation'
@@ -79,7 +79,7 @@ export function Workspace() {
             <button
               class="image-studio-generate"
               type="submit"
-              disabled={studio.busy() || !studio.supported() || !noneEmptyString(studio.idea())}
+              disabled={studio.busy() || !studio.supported() || !isNonBlankString(studio.idea())}
             >
               {studio.busy() ? '이미지를 만들고 있어요…' : '이미지 생성'}
             </button>

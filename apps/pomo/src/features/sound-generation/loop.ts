@@ -1,5 +1,5 @@
 // oxlint-disable no-magic-numbers -- Canonical PCM WAV header fields and stereo sample layout.
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import type {SoundProgress} from './assets'
 import {MAX_GENERATION_SECONDS} from './extension'
 
@@ -95,7 +95,7 @@ export async function generateLoopSound(
   transitionSeconds = DEFAULT_TRANSITION,
 ): Promise<Blob> {
   if (
-    !noneEmptyString(prompt) ||
+    !isNonBlankString(prompt) ||
     !Number.isFinite(transitionSeconds) ||
     transitionSeconds < 1 ||
     transitionSeconds > MAX_TRANSITION

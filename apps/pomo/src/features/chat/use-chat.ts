@@ -1,5 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {type ChatClient, createChatClient, type CreateChatClientOptions} from './client'
 import type {ChatAnswerDraft, ChatContext, ChatMessage, ChatWorkerResponse} from './messages'
@@ -173,7 +173,7 @@ export const useChat = (props: UseChatProps): ChatController => {
       (currentState.status === 'error' && !currentState.modelReady)
     )
   })
-  const canSend = createMemo(() => isModelReady() && !isBusy() && noneEmptyString(draft()))
+  const canSend = createMemo(() => isModelReady() && !isBusy() && isNonBlankString(draft()))
   const canClear = createMemo(() => !isBusy() && messages().length > 0)
   const statusMessage = createMemo(() => getStatusMessage(state(), modelId()))
 

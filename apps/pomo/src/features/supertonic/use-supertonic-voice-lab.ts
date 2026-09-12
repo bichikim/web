@@ -1,5 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, type Setter, untrack} from 'solid-js'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {createSupertonicAudioPlayer, type SupertonicAudioPlayer} from './audio-player'
 import {createSupertonicClient} from './client'
@@ -212,7 +212,7 @@ const createVoiceLabSelectors = (options: CreateVoiceLabSelectorsOptions): Voice
     )
   })
   const canGenerate = createMemo(
-    () => !isBusy() && isModelReady() && noneEmptyString(options.text()),
+    () => !isBusy() && isModelReady() && isNonBlankString(options.text()),
   )
   const canPrepare = createMemo(() => !isBusy() && !isModelReady())
   const errorMessage = createMemo(() => {

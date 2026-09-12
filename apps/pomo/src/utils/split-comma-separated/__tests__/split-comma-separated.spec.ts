@@ -1,9 +1,9 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {stringToList} from '..'
+import {splitCommaSeparated} from '..'
 
-describe('stringToList', () => {
+describe('splitCommaSeparated', () => {
   it.each([
     ['admin,member', ['admin', 'member']],
     ['admin', ['admin']],
@@ -12,6 +12,6 @@ describe('stringToList', () => {
     ['', ['']],
     ['a,,b', ['a', '', 'b']],
   ] as const)('should split %j into %j', (values, result) => {
-    expect(stringToList(values)).toEqual([...result])
+    expect(splitCommaSeparated(values)).toEqual([...result])
   })
 })

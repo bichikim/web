@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
@@ -111,7 +111,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     () =>
       !saving() &&
       date().length > 0 &&
-      (noneEmptyString(text()) || strokes().length > 0 || image() !== undefined),
+      (isNonBlankString(text()) || strokes().length > 0 || image() !== undefined),
   )
   const backCoverClosed = createMemo(() => view().kind === 'back-cover')
   const pagination = createMemo(() =>

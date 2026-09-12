@@ -1,5 +1,5 @@
 import {createSignal, onCleanup} from 'solid-js'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import type {SoundMessage} from '../sound-generation/worker'
 import {assembleJoin, prepareJoin, type StereoAudio} from './audio'
 
@@ -65,7 +65,7 @@ export function useSoundJoining() {
     setError(null)
     setStatus('파일을 읽고 연결 구간을 준비하고 있어요…')
     try {
-      if (!noneEmptyString(request.prompt)) {
+      if (!isNonBlankString(request.prompt)) {
         throw new Error('영어 소리 설명을 입력해 주세요.')
       }
       const [first, second] = await Promise.all([decode(request.first), decode(request.second)])

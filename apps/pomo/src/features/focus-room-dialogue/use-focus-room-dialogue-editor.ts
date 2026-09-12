@@ -1,5 +1,5 @@
 import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {
   createOpusBlob,
@@ -125,7 +125,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
   const isBusy = createMemo(() => isDialogueEditorBusy(state()))
   const currentGenerationKey = () => getGenerationKey(language(), modelId(), voiceId(), text())
   const hasCurrentAudio = () => audioBlob !== null && generatedKey === currentGenerationKey()
-  const canGenerate = createMemo(() => !isBusy() && noneEmptyString(text()))
+  const canGenerate = createMemo(() => !isBusy() && isNonBlankString(text()))
   const canRegenerateSegments = createMemo(
     () => !isBusy() && editableAudio() !== null && hasCurrentAudio(),
   )

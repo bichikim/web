@@ -1,5 +1,5 @@
 import {PInput} from 'src/components/PInput'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {useEvent} from '@winter-love/solid-use'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createEffect, createSignal, type Setter, Show} from 'solid-js'
@@ -86,7 +86,7 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
     setExpanded: setIsExpanded,
   })
   const isDisabled = () => Boolean(props.disabled || props.loading)
-  const canSubmit = () => noneEmptyString(draft())
+  const canSubmit = () => isNonBlankString(draft())
   const expand = () => {
     if (isDisabled()) {
       return

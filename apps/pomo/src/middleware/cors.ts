@@ -1,6 +1,6 @@
 import type {Middleware} from 'h3'
 
-import {stringToStringList} from 'src/utils/string-to-string-list'
+import {parseCommaSeparated} from 'src/utils/parse-comma-separated'
 
 const STATIC_ALLOWED_ORIGINS = new Set([
   'http://127.0.0.1:1420',
@@ -108,7 +108,7 @@ const getAllowedOrigin = (request: Request): string | undefined => {
 
 const appendVaryHeaders = (headers: Headers, values: ReadonlyArray<string>): void => {
   const existingVary = headers.get('Vary')
-  const existingValues = existingVary === null ? [] : stringToStringList(existingVary)
+  const existingValues = existingVary === null ? [] : parseCommaSeparated(existingVary)
   headers.set('Vary', [...new Set([...existingValues, ...values])].join(', '))
 }
 

@@ -1,12 +1,13 @@
 import {getWindow} from '@winter-love/utils'
 
-export const visibility = (callback: (isVisible: boolean) => void) => {
-  const notifyIfHidden = (): void => {
+/** Reports document visibility changes with true for hidden and false for visible. */
+export const visibility = (callback: (isHidden: boolean) => void) => {
+  const notifyVisibilityChange = (): void => {
     callback(document.hidden)
   }
-  getWindow()?.addEventListener('visibilitychange', notifyIfHidden)
+  getWindow()?.addEventListener('visibilitychange', notifyVisibilityChange)
 
   return () => {
-    getWindow()?.removeEventListener('visibilitychange', notifyIfHidden)
+    getWindow()?.removeEventListener('visibilitychange', notifyVisibilityChange)
   }
 }

@@ -1,5 +1,5 @@
 import {PTextarea} from 'src/components/PTextarea'
-import {noneEmptyString} from 'src/utils/none-empty-string'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {createEffect, onCleanup, Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type ArtStyle, useImageGeneration} from 'src/features/image-generation'
@@ -97,7 +97,7 @@ export function Generation(props: GenerationProps) {
         <PButton
           raised
           size="small"
-          disabled={studio.busy() || !studio.supported() || !noneEmptyString(studio.idea())}
+          disabled={studio.busy() || !studio.supported() || !isNonBlankString(studio.idea())}
           onPress={studio.generate}
         >
           {m.picture_diary_generate()}
