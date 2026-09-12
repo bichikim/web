@@ -47,8 +47,8 @@ vi.mock('../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
 
 beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue({
-    session: () => ({kind: 'authenticated', provider: 'toss'}),
-    state: () => ({kind: 'authenticated', provider: 'toss'}),
+    session: () => ({email: 'person@example.com', kind: 'authenticated', provider: 'email'}),
+    state: () => ({email: 'person@example.com', kind: 'authenticated', provider: 'email'}),
   })
   vi.clearAllMocks()
   sessionStorage.clear()
@@ -162,6 +162,7 @@ it('should show calendar loading failures', async () => {
 it('should show cached events before replacing them with refreshed events', async () => {
   const currentMonth = new Date(2026, 8, 1)
   const range = {
+    accountKey: 'email:person@example.com',
     end: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1).toISOString(),
     start: currentMonth.toISOString(),
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -211,6 +212,7 @@ it('should retain cached events when the background refresh fails', async () => 
   const currentMonth = new Date(2026, 8, 1)
   writeCalendarMonthCache(
     {
+      accountKey: 'email:person@example.com',
       end: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1).toISOString(),
       start: currentMonth.toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -261,6 +263,7 @@ it('should not let an obsolete refresh overwrite the latest month cache', async 
   const [revision, setRevision] = createSignal(0)
   const currentMonth = new Date(2026, 8, 1)
   const range = {
+    accountKey: 'email:person@example.com',
     end: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1).toISOString(),
     start: currentMonth.toISOString(),
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -341,7 +344,7 @@ it('should load after login and restore the login notice after logout', async ()
   expect(
     await screen.findByText('일정을 불러오기 위해 로그인하고 캘린더를 연결하세요.'),
   ).toBeVisible()
-  expect(screen.queryByText('팀 회의')).not.toBeInTheDocument()
+  expect(screen.queryAllByText('팀 회의')).toHaveLength(0)
 })
 
 it('should not restore the previous session events while a new login is loading', async () => {
@@ -400,4 +403,30 @@ it.each([
       '선택한 날짜에 일정이 없습니다.',
     ),
   ).toBeVisible()
+})
+
+it('should hide account A events while account B loads and after its request fails', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const [state, setState] = createSignal<AuthenticationState>({
+    email: 'a@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarMonth />)
+  expect(await screen.findByText('팀 회의', {selector: 'p'})).toBeVisible()
+  const refresh = Promise.withResolvers<CalendarEvents>()
+  vi.mocked(listCalendarEvents).mockReturnValueOnce(refresh.promise)
+  setState({email: 'b@example.com', kind: 'authenticated', provider: 'email'})
+  await waitFor(() => expect(listCalendarEvents).toHaveBeenCalledTimes(2))
+  expect(screen.queryAllByText('팀 회의')).toHaveLength(0)
+  refresh.reject(new Error('offline'))
+  expect(await screen.findByRole('alert')).toHaveTextContent('일정을 불러오지 못했습니다.')
+  expect(screen.queryAllByText('팀 회의')).toHaveLength(0)
 })
