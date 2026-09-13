@@ -113,7 +113,9 @@ export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
               </Match>
             </Switch>
             <footer>
-              <Dialog.CloseButton class="secondary">취소</Dialog.CloseButton>
+              <Dialog.CloseButton class="secondary" aria-label="취소">
+                취소
+              </Dialog.CloseButton>
               <EditorButton type="submit" disabled={props.controller.selection().count === 0}>
                 적용 {props.controller.selection().count}개
               </EditorButton>
