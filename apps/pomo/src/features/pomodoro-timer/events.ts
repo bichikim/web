@@ -1,4 +1,9 @@
-import type {PomodoroTimerState} from './model'
+import {
+  advancePomodoroTimer,
+  POMODORO_TIMER_CONFIG,
+  type PomodoroTimerConfig,
+  type PomodoroTimerState,
+} from './model'
 
 export type PomodoroTimerEvent =
   | 'break-end'
@@ -40,9 +45,30 @@ const getStartEvent = (state: PomodoroTimerState): PomodoroTimerEvent => {
 export const getPomodoroTimerEvents = (
   previousState: PomodoroTimerState,
   nextState: PomodoroTimerState,
+  config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
 ): ReadonlyArray<PomodoroTimerEvent> => {
   const phaseChanged = previousState.phase !== nextState.phase
   const events: Array<PomodoroTimerEvent> = []
+
+  if (
+    previousState.status === 'running' &&
+    nextState.status !== 'idle' &&
+    (nextState.completedFocusSessions > previousState.completedFocusSessions ||
+      (phaseChanged && nextState.status === 'paused'))
+  ) {
+    let currentState: PomodoroTimerState = previousState
+
+    while (
+      currentState.completedFocusSessions < nextState.completedFocusSessions ||
+      currentState.phase !== nextState.phase
+    ) {
+      events.push(getEndEvent(currentState))
+      currentState = advancePomodoroTimer(currentState, config)
+      events.push(getStartEvent(currentState))
+    }
+
+    return events
+  }
 
   if (previousState.status !== 'idle' && (phaseChanged || nextState.status === 'idle')) {
     events.push(getEndEvent(previousState))
