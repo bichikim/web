@@ -2,26 +2,30 @@
 import {afterEach, expect, test, vi} from 'vitest'
 import {createPsdDocument} from '../psd-document'
 
-const pixels = () => ({height: 8, data: new Uint8ClampedArray(8 * 8 * 4).fill(255), width: 8})
+const pixels = () => ({data: new Uint8ClampedArray(8 * 8 * 4).fill(255), height: 8, width: 8})
 afterEach(() => vi.restoreAllMocks())
 
 test('should retain layer hierarchy, paint order, names, offsets and visibility', () => {
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
     createImageData: (width: number, height: number) => ({
-      height,
       data: new Uint8ClampedArray(width * height * 4),
+      height,
       width,
     }),
     putImageData: vi.fn(),
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
   vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = createPsdDocument({
-    height: 80,
     children: [
-      {hidden: true, name: '그룹', children: [{left: -2, name: '뒤', imageData: pixels(), top: 3}]},
+      {
+        hidden: true,
+        name: '그룹',
+        children: [{id: 42, left: -2, name: '뒤', imageData: pixels(), top: 3}],
+      },
       {left: 10, name: '기준', imageData: pixels(), top: 18},
       {left: 12, name: '앞', opacity: 0.5, top: 20, clipping: true, imageData: pixels()},
     ],
+    height: 80,
     width: 100,
   })
   expect(result.ok).toBe(true)
@@ -40,17 +44,25 @@ test('should retain layer hierarchy, paint order, names, offsets and visibility'
     opacity: 0.5,
   })
   expect(result.document.parts[0]?.mesh.vertices.slice(0, 2)).toEqual([-2, 3])
+  expect(result.document.parts[0]?.psdSource).toEqual({
+    layerId: 42,
+    path: ['그룹', '뒤'],
+    x: -2,
+    width: 8,
+    y: 3,
+    height: 8,
+  })
   expect(result.warnings).toEqual([])
 })
 
 test('should reject oversized layer bounds before decoding', () => {
   expect(
-    createPsdDocument({height: 100, children: [{bottom: 100000, right: 100000}], width: 100}),
+    createPsdDocument({children: [{bottom: 100000, right: 100000}], height: 100, width: 100}),
   ).toEqual({error: {code: 'too-large'}, ok: false})
 })
 
 test('should reject a document without usable pixel layers', () => {
-  expect(createPsdDocument({height: 100, children: [{name: 'empty'}], width: 100})).toEqual({
+  expect(createPsdDocument({children: [{name: 'empty'}], height: 100, width: 100})).toEqual({
     error: {code: 'empty-document'},
     ok: false,
   })
@@ -67,25 +79,25 @@ test('should connect group clipping bases and preserve nested clipping inside cl
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
   vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = createPsdDocument({
-    width: 100,
     height: 100,
+    width: 100,
     children: [
       {
-        name: 'base group',
         children: [
           {name: 'left', imageData: pixels()},
           {name: 'right', imageData: pixels()},
         ],
+        name: 'base group',
       },
       {
-        name: 'clipped group',
         clipping: true,
+        name: 'clipped group',
         children: [
-          {name: 'eye', imageData: pixels()},
-          {name: 'shine', clipping: true, imageData: pixels()},
+          {imageData: pixels(), name: 'eye'},
+          {clipping: true, name: 'shine', imageData: pixels()},
         ],
       },
-      {name: 'shadow', clipping: true, imageData: pixels()},
+      {clipping: true, name: 'shadow', imageData: pixels()},
     ],
   })
   expect(result.ok).toBe(true)

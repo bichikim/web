@@ -49,11 +49,13 @@ interface ConversionContext {
   count: number
 }
 interface LayerContext {
+  readonly path?: ReadonlyArray<string>
   readonly clippingBase?: ReadonlyArray<string>
   readonly opacity: number
   readonly masks: ReadonlyArray<Layer>
 }
 interface PartOptions {
+  readonly path: ReadonlyArray<string>
   readonly layer: Layer
   readonly masks: ReadonlyArray<Layer>
   readonly context: ConversionContext
@@ -97,6 +99,14 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
   }
   return {
     id,
+    psdSource: {
+      layerId: layer.id,
+      path: options.path,
+      x: layer.left ?? 0,
+      y: layer.top ?? 0,
+      width: pixels.width,
+      height: pixels.height,
+    },
     mesh: {
       ...mesh.mesh,
       vertices: mesh.mesh.vertices.map(
@@ -158,7 +168,15 @@ const convertLayers = (
     const appliedMask = layer.clipping ? clippingBase : parent.clippingBase
     warnLayer(layer, context.warnings)
     if (layer.children === undefined) {
-      const part = convertPart({context, id, layer, clippingBase: appliedMask, masks, opacity})
+      const part = convertPart({
+        context,
+        id,
+        layer,
+        clippingBase: appliedMask,
+        masks,
+        opacity,
+        path: [...(parent.path ?? []), name],
+      })
       if (part !== undefined) {
         context.parts.push(part)
         nodes.push({...base, kind: 'part'})
@@ -174,6 +192,7 @@ const convertLayers = (
         context.warnings.add('그룹 합성은 파츠별 불투명도로 근사합니다.')
       }
       const children = convertLayers(layer.children, context, {
+        path: [...(parent.path ?? []), name],
         clippingBase: appliedMask,
         masks,
         opacity,

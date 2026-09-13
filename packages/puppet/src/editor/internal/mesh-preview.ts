@@ -1,3 +1,4 @@
+import {composeParameterGlue} from '../../deformation/parameter-glue'
 import {getRestPreview} from './rest-preview'
 import {getParameterEditingDocument} from './parameter-sampling'
 import {
@@ -69,6 +70,13 @@ export const getDeformerPreviewDocument = (props: MeshEditorProps): PuppetDocume
     ? getRestPreview(props.document)
     : {
         ...props.document,
+        glue: composeParameterGlue({
+          document: getParameterEditingDocument(
+            props.document,
+            props.editMode === 'parameter' ? props.activeBindingId : undefined,
+          ),
+          parameterValues: getPreviewParameterValues(props),
+        }),
         scene: composeParameterScene(
           getParameterEditingDocument(
             props.document,

@@ -160,6 +160,9 @@ export const layoutShortcuts = {
   ],
   'toolbar-menu': ['[.puppet-editor_&]:[anchor-scope:\\-\\-toolbar-menu]'],
   'toolbar-menu-content': [
+    '[&_button.file-menu-action]:[display:flex] [&_button.file-menu-action]:[flex-direction:column]',
+    '[&_button.file-menu-action]:[align-items:flex-start] [&_button.file-menu-action]:[gap:0.25rem]',
+    '[&_button.file-menu-action_small]:[font-size:0.6875rem] [&_button.file-menu-action_small]:[color:#b9c9c3]',
     'grid m-0 min-w-44 p-1.5 rounded-lg border border-solid border-[#35413d] bg-[#171e1b] text-[#e9f3ef]',
     'shadow-[0_8px_24px_#0006] [&[data-closed]]:hidden',
     '[&_button]:[padding:0.625rem_0.75rem] [&_button]:[border:0]',

@@ -83,7 +83,7 @@ describe('PuppetEditor', () => {
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
 
-    fireEvent.change(view.getByLabelText('JSON 가져오기'), {
+    fireEvent.change(screen.getByLabelText('불러오기'), {
       target: {
         files: [
           new File([serializeDocument(document)], 'two-dimensional.json', {

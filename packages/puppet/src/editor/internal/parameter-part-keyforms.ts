@@ -75,7 +75,14 @@ export const setParameterKeyformVertex = (options: SetParameterKeyformVertexOpti
     const replaceKeyform = <Keyform extends PuppetParameterKeyform>(value: Keyform): Keyform =>
       value.values.length === keyform.values.length &&
       value.values.every((coordinate, index) => coordinate === keyform.values[index])
-        ? {...value, parts: replacePart(value.parts, {partId: part.id, vertices})}
+        ? {
+            ...value,
+            parts: replacePart(value.parts, {
+              ...value.parts.find((candidate) => candidate.partId === part.id),
+              partId: part.id,
+              vertices,
+            }),
+          }
         : value
     return isTwoDimensionalParameterBinding(candidate)
       ? {...candidate, keyforms: candidate.keyforms.map(replaceKeyform)}

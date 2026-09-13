@@ -40,7 +40,7 @@ export const calculateService = (options: CalculateServiceOptions): ServiceResul
   const remaining = Math.max(0, (dateEpoch(end) - dateEpoch(today)) / DAY_MILLISECONDS)
   return {
     end: formatDate(end),
-    progress: Math.min(PERCENT_SCALE, Math.max(0, (elapsed / total) * PERCENT_SCALE)),
+    progress: remaining === 0 ? PERCENT_SCALE : Math.max(0, (elapsed / total) * PERCENT_SCALE),
     remaining,
     total,
   }
