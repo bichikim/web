@@ -41,7 +41,7 @@ const createEnvironment = () =>
 it('should use explicit time and storage boundaries for leap months and navigation', async () => {
   const environment = createEnvironment()
   const {result} = renderHook(() => useMonth({authentication, environment}))
-  expect(result.todayKey).toBe('2024-02-29')
+  expect(result.todayKey()).toBe('2024-02-29')
   expect(result.selectedKey()).toBe('2024-02-29')
   expect(
     result

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import {useLocalDate} from 'src/utils/use-local-date'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
 import {
@@ -40,7 +41,7 @@ export interface MonthController {
   readonly selectedEvents: Accessor<ReadonlyArray<CalendarEvent>>
   readonly selectedKey: Accessor<string>
   readonly selectDate: (date: Date) => void
-  readonly todayKey: string
+  readonly todayKey: Accessor<string>
 }
 
 interface LoadedCalendarMonth {
@@ -105,6 +106,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     return revision + 1
   }, 0)
   const today = props.environment.now()
+  const todayKey = useLocalDate({initialDate: today, now: () => props.environment.now()})
   const [month, setMonth] = createSignal(dayjs(today).startOf('month').toDate())
   const [selectedDate, setSelectedDate] = createSignal(new Date(today))
   const monthRange = createMemo(() => {
@@ -188,7 +190,6 @@ export const useMonth = (props: UseMonthProps): MonthController => {
   })
   const selectedKey = createMemo(() => formatLocalDate(selectedDate()))
   const selectedEvents = createMemo(() => eventsByDay().get(selectedKey()) ?? [])
-  const todayKey = formatLocalDate(today)
   const refreshFailed = createMemo(() => {
     const result = calendarResult.latest
     return (
