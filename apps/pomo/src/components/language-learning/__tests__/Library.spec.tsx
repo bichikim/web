@@ -111,8 +111,9 @@ beforeEach(() => {
   })
 })
 
-it('should use the shared language select and filter saved sentences', () => {
+it('should use the shared language select and filter saved sentences', async () => {
   const events = createEvents()
+  vi.mocked(events.getAudio).mockResolvedValue(new Blob(['audio']))
   const onRequestClose = vi.fn()
   vi.mocked(usePEvents).mockReturnValue(events)
   writeLanguageLearningSentences([
@@ -174,7 +175,7 @@ it('should use the shared language select and filter saved sentences', () => {
   expect(screen.getByRole('button', {name: '삭제'})).toBeDefined()
 
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
-  expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja')
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja'))
   expect(onRequestClose).toHaveBeenCalledOnce()
 
   fireEvent.click(screen.getByRole('button', {name: '삭제'}))
