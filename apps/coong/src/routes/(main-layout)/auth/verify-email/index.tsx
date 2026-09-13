@@ -9,7 +9,7 @@ import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
-import {CHANGE_PASSWORD_PATH} from 'src/requests/auth/reset-password/redirect-url'
+import {CHANGE_PASSWORD_PATH} from 'src/features/auth/redirect-url'
 import type {EmailOtpType} from '@supabase/supabase-js'
 
 const ClientOnlyLottie = clientOnly(() =>

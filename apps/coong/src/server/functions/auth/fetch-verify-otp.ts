@@ -1,15 +1,9 @@
-import {action} from '@solidjs/router'
-import type {EmailOtpType} from '@supabase/supabase-js'
+'use server'
+
+import type {VerifyOtpPayload} from 'src/features/auth/types'
 import {createSupabase} from 'src/utils/supabase'
 
-export interface VerifyOtpPayload {
-  tokenHash: string
-  type: EmailOtpType
-}
-
 export const fetchVerifyOtp = async ({tokenHash, type}: VerifyOtpPayload) => {
-  'use server'
-
   const supabase = createSupabase()
 
   // Supabase `verifyOtp` expects snake_case property names.
@@ -22,5 +16,3 @@ export const fetchVerifyOtp = async ({tokenHash, type}: VerifyOtpPayload) => {
 
   return data.user
 }
-
-export const verifyOtpAction = action(fetchVerifyOtp, 'auth/verify-otp')

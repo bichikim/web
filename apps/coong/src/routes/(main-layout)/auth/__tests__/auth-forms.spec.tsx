@@ -19,7 +19,7 @@ vi.mock('@solidjs/router', () => ({
 }))
 
 vi.mock('src/store/auth', () => ({useAuth: vi.fn()}))
-vi.mock('src/requests/auth/sign-up', () => ({signUpAction: vi.fn()}))
+vi.mock('src/features/auth', () => ({signUpAction: vi.fn()}))
 
 const changePassword = vi.fn()
 const deleteAccount = vi.fn()

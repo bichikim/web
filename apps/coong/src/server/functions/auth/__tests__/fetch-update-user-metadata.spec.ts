@@ -2,10 +2,9 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({createSupabase: vi.fn()}))
 
-vi.mock('@solidjs/router', () => ({action: vi.fn()}))
 vi.mock('src/utils/supabase', () => ({createSupabase: mocks.createSupabase}))
 
-import {fetchUpdateUserMetadata} from '../index'
+import {fetchUpdateUserMetadata} from '../fetch-update-user-metadata'
 
 describe('fetchUpdateUserMetadata', () => {
   beforeEach(() => {

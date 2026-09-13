@@ -1,17 +1,11 @@
-import {action} from '@solidjs/router'
+'use server'
+
+import type {SignUpPayload} from 'src/features/auth/types'
 import {createSupabase} from 'src/utils/supabase'
 import {getSelfUrl} from 'src/env'
 import {joinURL} from 'ufo'
 
-export interface SignUpPayload {
-  email: string
-  password: string
-  redirectTo: string
-}
-
 export const fetchSignUp = async ({email, password, redirectTo}: SignUpPayload) => {
-  'use server'
-
   const supabase = createSupabase()
 
   const {data, error} = await supabase.auth.signUp({
@@ -28,5 +22,3 @@ export const fetchSignUp = async ({email, password, redirectTo}: SignUpPayload) 
 
   return data
 }
-
-export const signUpAction = action(fetchSignUp, 'auth/sign-up')

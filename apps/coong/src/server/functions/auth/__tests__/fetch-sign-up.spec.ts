@@ -2,11 +2,10 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({createSupabase: vi.fn(), getSelfUrl: vi.fn()}))
 
-vi.mock('@solidjs/router', () => ({action: vi.fn()}))
 vi.mock('src/env', () => ({getSelfUrl: mocks.getSelfUrl}))
 vi.mock('src/utils/supabase', () => ({createSupabase: mocks.createSupabase}))
 
-import {fetchSignUp} from '../index'
+import {fetchSignUp} from '../fetch-sign-up'
 
 describe('fetchSignUp', () => {
   beforeEach(() => {

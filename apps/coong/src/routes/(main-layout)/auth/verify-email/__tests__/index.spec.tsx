@@ -4,7 +4,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render, screen, waitFor} from '@solidjs/testing-library'
 import VerifyEmailPage from '../index'
-import {CHANGE_PASSWORD_PATH} from 'src/requests/auth/reset-password/redirect-url'
+import {CHANGE_PASSWORD_PATH} from 'src/features/auth/redirect-url'
 
 const navigate = vi.fn()
 const verifyOtp = vi.fn()
