@@ -6,6 +6,7 @@ import {
   createRandomEventSettingsRepository,
   DEFAULT_RANDOM_EVENT_SETTINGS,
   parseRandomEventSettings,
+  type RandomEventSettings,
   type RandomEventSettingsStorage,
   readRandomEventSettings,
   writeRandomEventSettings,
@@ -62,6 +63,26 @@ describe('readRandomEventSettings', () => {
       settings,
     )
   })
+
+  it.each([null, JSON.stringify({maximumMinutes: 8, minimumMinutes: 4, version: 1})])(
+    'should repair native settings from the browser copy before browser storage is cleared (%s)',
+    async (initialNativeValue) => {
+      const settings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+      let nativeValue = initialNativeValue
+      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      localStorage.setItem('pomo:random-event-settings:v1', JSON.stringify(settings))
+      storageMocks.getItem.mockImplementation(async () => nativeValue)
+      storageMocks.setItem.mockImplementation(async (_key, value) => {
+        nativeValue = value
+      })
+
+      await expect(readRandomEventSettings()).resolves.toEqual(settings)
+      await vi.waitFor(() => expect(nativeValue).toBe(JSON.stringify(settings)))
+      localStorage.clear()
+
+      await expect(readRandomEventSettings()).resolves.toEqual(settings)
+    },
+  )
 
   it('should use defaults when native settings are empty or unreadable', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
@@ -221,6 +242,127 @@ describe('createRandomEventSettingsRepository', () => {
     readWeb: () => null,
     writeToss: async () => undefined,
     writeWeb: () => null,
+  })
+
+  it('should return browser settings while native repair is pending and preserve a newer write', async () => {
+    const initial = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+    const latest = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+    const pending = Promise.withResolvers<void>()
+    const writeToss = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(undefined)
+    const repository = createRandomEventSettingsRepository({
+      ...createStorage(),
+      readWeb: () => initial,
+      writeToss,
+    })
+
+    await expect(repository.read()).resolves.toEqual(initial)
+    expect(writeToss).toHaveBeenCalledExactlyOnceWith(initial)
+    const write = repository.write(latest)
+    pending.resolve()
+    await write
+
+    expect(writeToss.mock.calls).toEqual([[initial], [latest]])
+  })
+
+  it('should retain browser settings after native repair fails and retry on the next read', async () => {
+    const settings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+    const writeToss = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('unavailable'))
+      .mockResolvedValue(undefined)
+    const repository = createRandomEventSettingsRepository({
+      ...createStorage(),
+      readWeb: () => settings,
+      writeToss,
+    })
+
+    await expect(repository.read()).resolves.toEqual(settings)
+    await expect(repository.read()).resolves.toEqual(settings)
+
+    expect(writeToss.mock.calls).toEqual([[settings], [settings]])
+  })
+
+  it.each(['completed', 'pending', 'superseded'])(
+    'should preserve a native-only save when reading a stale browser copy (%s)',
+    async (timing) => {
+      const initial = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+      const latest = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+      const pending = Promise.withResolvers<void>()
+      let nativeSettings: RandomEventSettings = initial
+      const repository = createRandomEventSettingsRepository({
+        ...createStorage(),
+        readToss: async () => nativeSettings,
+        readWeb: () => initial,
+        writeToss: async (settings) => {
+          await pending.promise
+          nativeSettings = settings
+        },
+        writeWeb: () => new Error('Browser storage unavailable'),
+      })
+      const write = repository.write(latest)
+
+      if (timing === 'completed') {
+        pending.resolve()
+        await write
+      }
+
+      const read = repository.read()
+      const expected = timing === 'superseded' ? {...latest, maximumMinutes: 40} : latest
+      const newerWrite = timing === 'superseded' ? repository.write(expected) : Promise.resolve()
+      pending.resolve()
+      await Promise.all([write, newerWrite])
+
+      await expect(read).resolves.toEqual(expected)
+      await expect(repository.read()).resolves.toEqual(expected)
+      expect(nativeSettings).toEqual(expected)
+    },
+  )
+
+  it('should retain the previous settings when both stores reject a new save', async () => {
+    const initial = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+    const repository = createRandomEventSettingsRepository({
+      ...createStorage(),
+      readWeb: () => initial,
+      writeToss: async () => {
+        throw new Error('Native storage unavailable')
+      },
+      writeWeb: () => new Error('Browser storage unavailable'),
+    })
+
+    await expect(
+      repository.write({maximumMinutes: 30, minimumMinutes: 15, version: 1}),
+    ).rejects.toThrow('Failed to persist random event settings.')
+    await expect(repository.read()).resolves.toEqual(initial)
+  })
+
+  it('should resume browser repair after browser persistence recovers', async () => {
+    const initial = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
+    const latest = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+    let webSettings: RandomEventSettings = initial
+    let nativeSettings: RandomEventSettings = initial
+    const writeWeb = vi
+      .fn<RandomEventSettingsStorage['writeWeb']>((settings) => {
+        webSettings = settings
+        return null
+      })
+      .mockReturnValueOnce(new Error('Browser storage unavailable'))
+    const repository = createRandomEventSettingsRepository({
+      ...createStorage(),
+      readToss: async () => nativeSettings,
+      readWeb: () => webSettings,
+      writeToss: async (settings) => {
+        nativeSettings = settings
+      },
+      writeWeb,
+    })
+
+    await repository.write(latest)
+    await expect(repository.read()).resolves.toEqual(latest)
+    expect(webSettings).toEqual(latest)
+    nativeSettings = initial
+
+    await expect(repository.read()).resolves.toEqual(latest)
+    expect(nativeSettings).toEqual(latest)
   })
 
   it('should keep another repository write from restarting a pending read', async () => {
