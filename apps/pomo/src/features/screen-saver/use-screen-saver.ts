@@ -57,7 +57,7 @@ export const useScreenSaver = (): ScreenSaverController => {
         }
       })
       .catch(() => {
-        // Storage adapters already recover to a safe default; this only guards unexpected failures.
+        // Storage adapters already recover to a default value; this only guards unexpected failures.
       })
 
     const handleVisibilityChange = () => {
