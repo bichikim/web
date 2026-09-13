@@ -430,3 +430,69 @@ it('should hide account A events while account B loads and after its request fai
   expect(await screen.findByRole('alert')).toHaveTextContent('일정을 불러오지 못했습니다.')
   expect(screen.queryAllByText('팀 회의')).toHaveLength(0)
 })
+
+it.each([
+  {day: 4, month: 8, year: 2026},
+  {day: 30, month: 8, year: 2026},
+  {day: 31, month: 11, year: 2026},
+])(
+  'should update the current date at local midnight after $year/$month/$day without changing selection',
+  async (date) => {
+    vi.useFakeTimers({toFake: ['Date', 'setTimeout', 'clearTimeout']})
+    vi.setSystemTime(new Date(date.year, date.month, date.day, 23, 59, 59))
+    const {container} = render(() => <CalendarMonth />)
+    const previous = container.querySelector('[aria-current="date"]')
+    expect(previous).toHaveAttribute('aria-pressed', 'true')
+    const heading = screen.getByRole('heading', {level: 2}).textContent
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(previous).toHaveAttribute('aria-current', 'date')
+    await vi.advanceTimersByTimeAsync(1)
+
+    expect(previous).not.toHaveAttribute('aria-current')
+    expect(previous).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('heading', {level: 2})).toHaveTextContent(heading ?? '')
+    if (date.day === 4) {
+      expect(screen.getByRole('button', {name: '2026년 9월 5일, 일정 1개'})).toHaveAttribute(
+        'aria-current',
+        'date',
+      )
+      await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000)
+      expect(screen.getByRole('button', {name: '2026년 9월 6일, 일정 0개'})).toHaveAttribute(
+        'aria-current',
+        'date',
+      )
+    } else {
+      expect(container.querySelector('[aria-current="date"]')).toBeNull()
+      fireEvent.click(screen.getByRole('button', {name: '다음 달'}))
+      expect(container.querySelector('[aria-current="date"]')).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+    }
+  },
+)
+
+it('should recover the current date on visibility change and dispose its timer and listener', async () => {
+  vi.useFakeTimers({toFake: ['Date', 'setTimeout', 'clearTimeout']})
+  const {container, unmount} = render(() => <CalendarMonth />)
+  await vi.advanceTimersByTimeAsync(0)
+  const previous = container.querySelector('[aria-current="date"]')
+  const remove = vi.spyOn(document, 'removeEventListener')
+  vi.setSystemTime(new Date(2026, 8, 7, 23, 59, 59))
+  fireEvent(document, new Event('visibilitychange'))
+  expect(previous).not.toHaveAttribute('aria-current')
+  expect(previous).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', {name: '2026년 9월 7일, 일정 0개'})).toHaveAttribute(
+    'aria-current',
+    'date',
+  )
+  await vi.advanceTimersByTimeAsync(1000)
+  expect(screen.getByRole('button', {name: '2026년 9월 8일, 일정 0개'})).toHaveAttribute(
+    'aria-current',
+    'date',
+  )
+  unmount()
+  expect(vi.getTimerCount()).toBe(0)
+  expect(remove).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
+})
