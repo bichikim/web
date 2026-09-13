@@ -14,7 +14,7 @@ export const FOCUS_ROOM_TIME_OPTIONS = [
 export const FOCUS_ROOM_ACTIVITY_OPTIONS = [
   {icon: 'i-tabler-book-2', label: '책 읽기', value: 'reading'},
   {icon: 'i-tabler-pencil', label: '글쓰기', value: 'writing'},
-  {icon: 'i-tabler-keyboard', label: '노트북 타이핑', value: 'typing'},
+  {icon: 'i-tabler-keyboard', label: '타이핑', value: 'typing'},
 ] as const satisfies readonly SceneOption<PActivity>[]
 
 export const FOCUS_ROOM_GAZE_OPTIONS = [

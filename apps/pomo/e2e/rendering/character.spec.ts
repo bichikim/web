@@ -60,15 +60,15 @@ test('should restore character choices after reload and render the selected scen
   await time.getByRole('radio', {exact: true, name: '낮'}).press('ArrowRight')
   await expect(time.getByRole('radio', {exact: true, name: '밤'})).toBeChecked()
   await expect(time.getByRole('radio', {exact: true, name: '밤'})).toBeFocused()
-  await activity.getByText('노트북 타이핑', {exact: true}).click()
-  await expect(activity.getByRole('radio', {exact: true, name: '노트북 타이핑'})).toBeChecked()
+  await activity.getByText('타이핑', {exact: true}).click()
+  await expect(activity.getByRole('radio', {exact: true, name: '타이핑'})).toBeChecked()
   await gaze.getByText('사용자 보기', {exact: true}).click()
   await expect(gaze.getByRole('radio', {exact: true, name: '사용자 보기'})).toBeChecked()
   await dialog.getByRole('button', {exact: true, name: '닫기'}).click()
   await expect(dialog).not.toBeVisible()
   await expect(page.locator('.pomo-scene')).toHaveAttribute(
     'aria-label',
-    '밤 · 노트북 타이핑 · 사용자 보기',
+    '밤 · 타이핑 · 사용자 보기',
   )
 
   await page.reload()
@@ -76,12 +76,12 @@ test('should restore character choices after reload and render the selected scen
   await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
   await expect(page.locator('.pomo-scene')).toHaveAttribute(
     'aria-label',
-    '밤 · 노트북 타이핑 · 사용자 보기',
+    '밤 · 타이핑 · 사용자 보기',
   )
   await page.getByRole('button', {exact: true, name: '설정'}).click()
   await background.click()
   await expect(time.getByRole('radio', {exact: true, name: '밤'})).toBeChecked()
-  await expect(activity.getByRole('radio', {exact: true, name: '노트북 타이핑'})).toBeChecked()
+  await expect(activity.getByRole('radio', {exact: true, name: '타이핑'})).toBeChecked()
   await expect(gaze.getByRole('radio', {exact: true, name: '사용자 보기'})).toBeChecked()
   // Freeze after hydration and the restored scene have finished loading.
   await page.clock.pauseAt(new Date('2026-09-09T00:01:00.000Z'))
@@ -103,6 +103,6 @@ test('should restore character choices after reload and render the selected scen
   await expect(dialog).not.toBeVisible()
   await expect(page.locator('.pomo-scene')).toHaveAttribute(
     'aria-label',
-    '밤 · 노트북 타이핑 · 사용자 보기',
+    '밤 · 타이핑 · 사용자 보기',
   )
 })

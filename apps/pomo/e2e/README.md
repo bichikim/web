@@ -85,7 +85,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 기존 여섯 기준을 유지하며 대표 현재 PNG를 보존합니다. 정확한 커밋의 로컬 실행 결과는 해당 PR 본문에 기록합니다.
 
 [캐릭터 장면 테스트](rendering/character.spec.ts)는 배경 탭에서 키보드로 밤을 선택하고,
-노트북 타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
+타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
 접근성 이름, canvas 준비를 확인하고 다크·라이트 설정 화면을 PNG로 비교합니다.
 두 화면은 이전 기준이 없는 최초 기준이며 [촬영 기록](rendering/evidence/character/manifest.json)에
 현재 이미지와 환경을 보존합니다. 설정값과 API 응답을 mock하지 않으며 웹 localStorage를 사용합니다.
