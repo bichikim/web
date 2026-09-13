@@ -60,6 +60,13 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
     const webPreference = readWebPreference()
 
     if (webPreference !== null) {
+      if (storage.usesTossStorage()) {
+        // Share the write queue so a repair cannot overwrite a newer user choice.
+        writeQueue = writeQueue
+          .then(() => storage.writeToss(SCREEN_SAVER_STORAGE_KEY, webPreference))
+          // Keep the authoritative web choice available and retry repair on the next read.
+          .catch(() => undefined)
+      }
       return webPreference
     }
 
