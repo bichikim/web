@@ -5,20 +5,7 @@ import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
 import {initialSceneFallbackShortcuts} from './scripts/unocss/loading'
 import {pomoComponentStylePreflight} from './scripts/unocss/component-styles'
-import {typographyShortcuts} from './scripts/unocss/typography'
-
-const sansFontFamily = [
-  "'Pretendard Variable'",
-  'Pretendard',
-  'system-ui',
-  '-apple-system',
-  'BlinkMacSystemFont',
-  "'Segoe UI'",
-  "'Apple SD Gothic Neo'",
-  "'Noto Sans KR'",
-  "'Malgun Gothic'",
-  'sans-serif',
-].join(', ')
+import {sansFontFamily, typographyShortcuts} from './scripts/unocss/typography'
 
 const colors = {
   backdrop: 'rgb(var(--pomo-color-backdrop-channels) / var(--pomo-color-backdrop-opacity))',
@@ -172,6 +159,10 @@ const config = mergeConfigs([
         'control-md': controlMedium,
         'control-sm': controlSmall,
       }
+    },
+    outputToCssLayers: {
+      allLayers: true,
+      cssLayerName: (layer) => (layer === 'icons' ? 'pomo-icons' : null),
     },
     preflights: [
       pomoComponentStylePreflight,

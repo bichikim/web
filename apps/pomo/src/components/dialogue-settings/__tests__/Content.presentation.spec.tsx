@@ -336,9 +336,9 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
 })
 
-it('should queue a saved dialogue through the character without stopping existing playback', () => {
+it('should queue a saved dialogue through the character without stopping existing playback', async () => {
   const onRequestClose = vi.fn()
-  const events = createEvents()
+  const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
   const pauseAudio = vi
     .spyOn(HTMLMediaElement.prototype, 'pause')
     .mockImplementation(() => undefined)
@@ -351,7 +351,7 @@ it('should queue a saved dialogue through the character without stopping existin
   expect(pauseAudio).toHaveBeenCalledOnce()
   expect(loadAudio).toHaveBeenCalledOnce()
   expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
-  expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
   expect(events.setEventDialogues).not.toHaveBeenCalled()
   expect(onRequestClose).toHaveBeenCalledOnce()
 })

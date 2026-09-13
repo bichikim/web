@@ -119,7 +119,7 @@
   "settings_dialogue_delete": "Delete",
   "settings_dialogue_cancel": "Cancel",
   "settings_dialogue_delete_confirm": "Confirm deletion",
-  "settings_dialogue_audio_missing": "The saved audio couldn't be found. Edit the dialogue again.",
+  "settings_dialogue_audio_missing": "This dialogue has no audio. Select Edit to generate the voice again.",
   "settings_dialogue_player_failed": "Couldn't prepare the audio player.",
   "settings_dialogue_playback_failed": "Couldn't play the audio.",
   "settings_dialogue_delete_failed": "Couldn't delete the dialogue.",
