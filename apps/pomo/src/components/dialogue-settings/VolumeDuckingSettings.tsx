@@ -1,16 +1,10 @@
 import {cx} from 'class-variance-authority'
-import {createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {type JSX, Show} from 'solid-js'
 
-import {
-  DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
-  DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT,
-  type DialogueVolumeDuckingSettings as DialogueVolumeDuckingSettingsValue,
-  readDialogueVolumeDuckingSettings,
-  writeDialogueVolumeDuckingSettings,
-} from '../../features/focus-room-dialogue'
 import * as m from '@paraglide/message'
 import {PSwitch} from '../p-switch/PSwitch'
 import {PSettingsSectionHeading} from '../settings/SectionHeading'
+import {useVolumeDucking} from './use-volume-ducking'
 
 const CLASSES = {
   field: cx(
@@ -31,91 +25,10 @@ const CLASSES = {
 
 const MINIMUM_PLAYER_VOLUME_PERCENT = 0
 const MAXIMUM_PLAYER_VOLUME_PERCENT = 100
-const SAVE_DEBOUNCE_MILLISECONDS = 300
-
-const dispatchSettingsChange = (settings: DialogueVolumeDuckingSettingsValue) => {
-  window.dispatchEvent(
-    new CustomEvent(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, {detail: settings}),
-  )
-}
-
 export const DialogueVolumeDuckingSettings = () => {
-  const [settings, setSettings] = createSignal<DialogueVolumeDuckingSettingsValue>(
-    DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
-  )
-  const [isLoading, setIsLoading] = createSignal(true)
-  const [message, setMessage] = createSignal<string | null>(null)
-  let disposed = false
-  let pendingSettings: DialogueVolumeDuckingSettingsValue | null = null
-  let saveTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
-
-  const persistSettings = async (nextSettings: DialogueVolumeDuckingSettingsValue) => {
-    try {
-      await writeDialogueVolumeDuckingSettings(nextSettings)
-      if (!disposed) {
-        setMessage(m.settings_dialogue_volume_saved())
-      }
-    } catch (error: unknown) {
-      console.error('Failed to save dialogue volume ducking settings.', error)
-      if (!disposed) {
-        setMessage(m.settings_dialogue_volume_save_failed())
-      }
-    }
-  }
-
-  const scheduleSave = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
-    setSettings(nextSettings)
-    setMessage(null)
-    dispatchSettingsChange(nextSettings)
-    pendingSettings = nextSettings
-
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-    }
-
-    saveTimeout = globalThis.setTimeout(() => {
-      saveTimeout = null
-      pendingSettings = null
-      persistSettings(nextSettings)
-    }, SAVE_DEBOUNCE_MILLISECONDS)
-  }
-
-  onMount(() => {
-    readDialogueVolumeDuckingSettings()
-      .then((storedSettings) => {
-        if (!disposed) {
-          setSettings(storedSettings)
-          dispatchSettingsChange(storedSettings)
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to load dialogue volume ducking settings.', error)
-        if (!disposed) {
-          setMessage(m.settings_dialogue_volume_loaded_failed())
-        }
-      })
-      .finally(() => {
-        if (!disposed) {
-          setIsLoading(false)
-        }
-      })
-  })
-
-  onCleanup(() => {
-    disposed = true
-
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-    }
-
-    const nextSettings = pendingSettings
-    pendingSettings = null
-    if (nextSettings !== null) {
-      writeDialogueVolumeDuckingSettings(nextSettings).catch((error: unknown) => {
-        console.error('Failed to save dialogue volume ducking settings.', error)
-      })
-    }
-  })
+  const {settings, isLoading, message, changeEnabled, changeVolume} = useVolumeDucking()
+  const handleVolumeInput: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) =>
+    changeVolume(event.currentTarget.valueAsNumber)
 
   return (
     <section aria-labelledby="pomo-dialogue-volume-title" class="grid gap-3">
@@ -130,7 +43,7 @@ export const DialogueVolumeDuckingSettings = () => {
           description={m.settings_dialogue_ducking_description()}
           disabled={isLoading()}
           label={m.settings_dialogue_ducking()}
-          onChange={(enabled) => scheduleSave({...settings(), enabled})}
+          onChange={changeEnabled}
         />
         <label class={CLASSES.field}>
           <span class="text-modal-detail font-bold text-muted-foreground">
@@ -146,12 +59,7 @@ export const DialogueVolumeDuckingSettings = () => {
             id="pomo-dialogue-player-volume"
             max={MAXIMUM_PLAYER_VOLUME_PERCENT}
             min={MINIMUM_PLAYER_VOLUME_PERCENT}
-            onInput={(event) =>
-              scheduleSave({
-                ...settings(),
-                playerVolumePercent: event.currentTarget.valueAsNumber,
-              })
-            }
+            onInput={handleVolumeInput}
             step="1"
             type="range"
             value={settings().playerVolumePercent}
