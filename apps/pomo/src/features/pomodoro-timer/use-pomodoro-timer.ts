@@ -133,7 +133,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const applyState = (nextState: PomodoroTimerState) => {
     const previousState = state()
     setState(nextState)
-    const events = getPomodoroTimerEvents(previousState, nextState)
+    const events = getPomodoroTimerEvents(previousState, nextState, config())
 
     if (events.length > 0) {
       props.onEvents?.(events)

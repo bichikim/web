@@ -289,3 +289,65 @@ it('should persist a stopped timer when disabled on unmount', async () => {
   expect(restored.result.state().status).toBe('idle')
   restored.cleanup()
 })
+
+it.each(['refresh', 'pause'] as const)(
+  'should publish every elapsed phase once when a delayed %s lands on focus',
+  async (action) => {
+    const onEvents = vi.fn()
+    const view = renderHook(() => usePomodoroTimer({onEvents}))
+    await finishMount()
+    view.result.onConfigChange(CONFIG)
+    view.result.onAutoStartChange(true)
+    view.result.onStart()
+    onEvents.mockClear()
+
+    vi.setSystemTime(15_000)
+    if (action === 'pause') {
+      view.result.onPause()
+    } else {
+      document.dispatchEvent(new Event('visibilitychange'))
+    }
+
+    expect(view.result.state()).toMatchObject({
+      completedFocusSessions: 1,
+      phase: 'focus',
+      status: action === 'pause' ? 'paused' : 'running',
+    })
+    expect(onEvents).toHaveBeenCalledExactlyOnceWith([
+      'focus-end',
+      'break-start',
+      'break-end',
+      'focus-start',
+    ])
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(onEvents).toHaveBeenCalledTimes(1)
+    view.cleanup()
+  },
+)
+
+it.each([
+  {completedFocusSessions: 1, phase: 'shortBreak', endEvent: 'break-end'},
+  {completedFocusSessions: 2, phase: 'longBreak', endEvent: 'long-break-end'},
+] as const)('should publish focus start when pausing after $phase expires', async (scenario) => {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(
+    STATE_STORAGE_KEY,
+    JSON.stringify({
+      completedFocusSessions: scenario.completedFocusSessions,
+      endsAt: 4_000,
+      phase: scenario.phase,
+      status: 'running',
+    }),
+  )
+  autoStartMocks.read.mockResolvedValue(true)
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  await finishMount()
+  vi.setSystemTime(5_000)
+  view.result.onPause()
+  expect(view.result.state()).toMatchObject({phase: 'focus', remainingSeconds: 9, status: 'paused'})
+  expect(onEvents).toHaveBeenCalledExactlyOnceWith([scenario.endEvent, 'focus-start'])
+  view.result.onStart()
+  expect(onEvents).toHaveBeenCalledTimes(1)
+  view.cleanup()
+})
