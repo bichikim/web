@@ -79,6 +79,19 @@ const HOURS_PER_DAY = 24
 const DAYS_PER_YEAR = 365
 const PRETENDARD_VERSION = '1.3.9'
 
+const SSR_ENVIRONMENT = {
+  build: {
+    rolldownOptions: {
+      output: {
+        // Keep shared helpers from eagerly loading server modules during prerendering.
+        codeSplitting: {
+          groups: [{name: 'runtime', test: /\0rolldown\/runtime\.js$/u}],
+        },
+      },
+    },
+  },
+}
+
 const IS_APPS_IN_TOSS_BUILD = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 const IS_DESKTOP_BUILD = process.env.POMO_BUILD_TARGET === 'desktop'
 const IS_STATIC_BUILD = IS_APPS_IN_TOSS_BUILD || IS_DESKTOP_BUILD
@@ -248,6 +261,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       VITE_POMO_WEB_PRIVACY_PATH: SERVICE_POLICY_PATHS.web.privacy,
       VITE_POMO_WEB_TERMS_PATH: SERVICE_POLICY_PATHS.web.terms,
     }),
+    environments: {ssr: SSR_ENVIRONMENT},
     nitro: {
       hooks: {
         'prerender:generate'(route, nitroInstance) {
@@ -319,7 +333,10 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       ...(IS_STATIC_BUILD ? [createRemoteServerFunctionsPlugin({publicOrigin})] : []),
       solidStart({
         devOverlay: false,
-        middleware: './src/middleware/index.ts',
+        middleware:
+          IS_STATIC_BUILD && command === 'build'
+            ? './src/middleware/prerender.ts'
+            : './src/middleware/index.ts',
         ssr: !IS_DESKTOP_BUILD,
       }),
       createDevFeedPlugin(),
