@@ -1,6 +1,40 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
-import {calculateService} from '../service'
+import {calculateService} from '../calculate-service'
+it.each([
+  {branch: 'army', end: '2027-06-30', total: 546},
+  {branch: 'marines', end: '2027-06-30', total: 546},
+  {branch: 'navy', end: '2027-08-31', total: 608},
+  {branch: 'air', end: '2027-09-30', total: 638},
+  {branch: 'army', days: 300, end: '2026-10-27', total: 300},
+  {branch: 'army', days: 1, end: '2026-01-01', total: 1},
+] as const)('should complete $branch service on discharge day with $total days', (period) => {
+  expect(calculateService({...period, start: '2026-01-01', today: period.end})).toMatchObject({
+    end: period.end,
+    progress: 100,
+    remaining: 0,
+    total: period.total,
+  })
+})
+
+it.each([
+  {progress: 0, remaining: 300, today: '2025-12-31'},
+  {progress: 0, remaining: 299, today: '2026-01-01'},
+  {progress: 50, remaining: 149, today: '2026-05-31'},
+  {progress: (298 / 300) * 100, remaining: 1, today: '2026-10-26'},
+  {progress: 100, remaining: 0, today: '2026-10-28'},
+])('should preserve elapsed-day progress before discharge and clamp after it on $today', (day) => {
+  expect(
+    calculateService({branch: 'army', days: 300, start: '2026-01-01', today: day.today}),
+  ).toMatchObject({progress: day.progress, remaining: day.remaining})
+})
+
+it('should keep a one-day service incomplete before enlistment', () => {
+  expect(
+    calculateService({branch: 'army', days: 1, start: '2026-01-01', today: '2025-12-31'}),
+  ).toMatchObject({progress: 0, remaining: 1})
+})
+
 it('should calculate modern service terms including enlistment day', () => {
   expect(
     calculateService({branch: 'army', start: '2026-01-01', today: '2026-01-01'}),
