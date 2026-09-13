@@ -3,7 +3,7 @@
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {readPSceneStyle, writePSceneStyle} from '../style-storage'
+import {createPSceneStyleRepository, readPSceneStyle, writePSceneStyle} from '../style-storage'
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -219,5 +219,54 @@ describe('writePSceneStyle', () => {
     await Promise.all([writePSceneStyle('scribble'), writePSceneStyle('original')])
 
     expect(nativeWrites).toEqual(['"scribble"', '"original"'])
+  })
+})
+
+describe('createPSceneStyleRepository', () => {
+  const createStorage = () => ({
+    getDefault: () => 'original' as const,
+    readToss: vi.fn<(key: string) => Promise<unknown>>().mockResolvedValue(null),
+    readWeb: vi.fn<(key: string) => unknown>().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss: vi.fn<(key: string, value: unknown) => Promise<void>>().mockResolvedValue(),
+    writeWeb: vi.fn<(key: string, value: unknown) => void>(),
+  })
+
+  it('should restore a pending read despite writes in another repository', async () => {
+    const firstStorage = createStorage()
+    const secondStorage = createStorage()
+    const nativeRead = Promise.withResolvers<unknown>()
+    firstStorage.readToss.mockReturnValue(nativeRead.promise)
+    const first = createPSceneStyleRepository(firstStorage)
+    const second = createPSceneStyleRepository(secondStorage)
+
+    const pendingRead = first.read()
+    await second.write('original')
+    nativeRead.resolve('scribble')
+
+    await expect(pendingRead).resolves.toBe('scribble')
+    expect(firstStorage.writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1', 'scribble')
+  })
+
+  it('should complete writes independently while another repository has a pending write', async () => {
+    const firstStorage = createStorage()
+    const secondStorage = createStorage()
+    const nativeWrite = Promise.withResolvers<void>()
+    firstStorage.writeToss.mockReturnValue(nativeWrite.promise)
+    const first = createPSceneStyleRepository(firstStorage)
+    const second = createPSceneStyleRepository(secondStorage)
+
+    const pendingWrite = first.write('scribble')
+    try {
+      await second.write('original')
+      expect(secondStorage.writeToss).toHaveBeenCalledWith(
+        'pomo:focus-room-scene-style:v1',
+        'original',
+      )
+      expect(firstStorage.writeToss).toHaveBeenCalledTimes(1)
+    } finally {
+      nativeWrite.resolve()
+      await pendingWrite
+    }
   })
 })
