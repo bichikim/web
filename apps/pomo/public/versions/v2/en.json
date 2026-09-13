@@ -2,6 +2,50 @@
   "releases": [
     {
       "title": "Pomo update",
+      "summary": "Customize your focus screen and enjoy more control over feed audio, memos, and drawing.",
+      "changes": [
+        {
+          "title": "Player and timer visibility",
+          "description": "Choose whether to show the music player and Pomodoro timer separately in settings. Hiding either one also stops its music playback or timer."
+        },
+        {
+          "title": "Automatically hide controls",
+          "description": "Keep just the background visible after a period of inactivity. Choose how long to wait, then move the mouse or touch the screen to bring the controls back."
+        },
+        {
+          "title": "Feed audio preparation and progress settings",
+          "description": "Choose whether to prepare audio for new feeds automatically or start it with the Prepare button. You can also hide reading progress while keeping error and retry notices visible."
+        },
+        {
+          "title": "Picture diary drawing controls",
+          "description": "The pen, eraser, colors, and Done button now adapt to the screen size. Choosing a color while using the eraser switches back to the pen."
+        },
+        {
+          "title": "Memo and event alarm improvements",
+          "description": "Text and reminder settings edited while a memo is saving are now preserved. Alarms for events in different Google calendars are kept separate, with a notice when an older alarm needs review."
+        },
+        {
+          "title": "Stopped chat speech stays stopped",
+          "description": "Sending a new message no longer makes a previously stopped reply start reading aloud again."
+        },
+        {
+          "title": "Desktop background and screen saver improvements",
+          "description": "Character, weather, and scene settings now sync in both directions between the desktop background and settings window. Dismissing the screen saver restores focus to the control you were using."
+        },
+        {
+          "title": "First-visit guidance and dialogue controls",
+          "description": "Pomo remembers when you have seen the first-entry hint so it does not repeat on later visits. Guidance now includes button icons, and dialogue skip and stop controls fit better on narrow screens."
+        },
+        {
+          "title": "Toss login persistence",
+          "description": "Fixed an issue where cleaning up an older login could also remove a newer login."
+        }
+      ],
+      "version": "2026. 09. 13 10:43",
+      "releasedAt": "2026-09-13T10:43:00+09:00"
+    },
+    {
+      "title": "Pomo update",
       "summary": "Make your focus space your own with photos and videos, and try new everyday tools.",
       "changes": [
         {
