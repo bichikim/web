@@ -19,6 +19,7 @@ class Media {
   currentTime = 0
   paused = true
   preload = ''
+  ontimeupdate: (() => void) | null = null
   onended: (() => void) | null = null
   onerror: (() => void) | null = null
   onloadedmetadata: (() => void) | null = null
@@ -68,14 +69,18 @@ it('should start the next copy at zero and crossfade both gains over four second
   const player = createLoopPlayer('blob:audio', status, vi.fn())
   await player.play()
   media[0].currentTime = 116
-  await vi.advanceTimersByTimeAsync(50)
+  media[0].ontimeupdate?.()
+  await Promise.resolve()
   expect(media[1].play).toHaveBeenCalledOnce()
   expect(media[1].currentTime).toBe(0)
   expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, 14)
   expect(gains[1].gain.linearRampToValueAtTime).toHaveBeenCalledWith(1, 14)
+  media[0].paused = true
   media[0].onended?.()
+  await Promise.resolve()
   media[1].currentTime = 116
-  await vi.advanceTimersByTimeAsync(50)
+  media[1].ontimeupdate?.()
+  await Promise.resolve()
   expect(media[0].play).toHaveBeenCalledTimes(2)
   await player.close()
 })
@@ -102,7 +107,8 @@ it('should stop both copies and report a rejected overlap playback', async () =>
   await player.play()
   media[1].play.mockRejectedValueOnce(new Error('blocked'))
   media[0].currentTime = 116
-  await vi.advanceTimersByTimeAsync(50)
+  media[0].ontimeupdate?.()
+  await Promise.resolve()
   expect(status).toHaveBeenLastCalledWith('blocked', false)
   expect(media.every((item) => item.paused)).toBe(true)
   await player.close()
@@ -113,7 +119,8 @@ it('should seek during crossfade, cancel both ramps and resume only at the selec
   const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn(), position)
   await player.play()
   media[0].currentTime = 116
-  await vi.advanceTimersByTimeAsync(50)
+  media[0].ontimeupdate?.()
+  await Promise.resolve()
   await player.seek(60)
   expect(media[0].currentTime).toBe(60)
   expect(media[0].paused).toBe(false)
@@ -133,5 +140,91 @@ it('should seek while stopped without autoplay and wrap an end-position seek to 
   expect(media[0].currentTime).toBe(0)
   await expect(player.seek(NaN)).rejects.toThrow()
   await expect(player.seek(121)).rejects.toThrow()
+  await player.close()
+})
+
+it('should use time updates without timers and ignore inactive or early updates', async () => {
+  const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn())
+  await player.play()
+  expect(vi.getTimerCount()).toBe(0)
+  media[1].currentTime = 119
+  media[1].ontimeupdate?.()
+  media[0].currentTime = 115
+  media[0].ontimeupdate?.()
+  expect(media[1].play).not.toHaveBeenCalled()
+  media[0].currentTime = 116
+  media[0].ontimeupdate?.()
+  media[0].ontimeupdate?.()
+  await Promise.resolve()
+  expect(media[1].play).toHaveBeenCalledOnce()
+  await player.close()
+  expect(media.every((item) => item.ontimeupdate === null)).toBe(true)
+})
+
+it('should ignore time updates and ended events after stopping', async () => {
+  const status = vi.fn()
+  const player = createLoopPlayer('blob:audio', status, vi.fn())
+  await player.play()
+  player.stop()
+  status.mockClear()
+  media[0].currentTime = 120
+  media[0].ontimeupdate?.()
+  media[0].onended?.()
+  await Promise.resolve()
+  expect(media[1].play).not.toHaveBeenCalled()
+  expect(status).not.toHaveBeenCalled()
+  await player.close()
+})
+
+it('should continue a short overlap when time updates miss its transition window', async () => {
+  const status = vi.fn()
+  const player = createLoopPlayer('blob:audio', status, vi.fn())
+  await player.play(0.1)
+  media[0].currentTime = 119.75
+  media[0].ontimeupdate?.()
+  expect(media[1].play).not.toHaveBeenCalled()
+  media[0].currentTime = 120
+  media[0].paused = true
+  media[0].onended?.()
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(media[0].play).toHaveBeenCalledTimes(2)
+  expect(status).toHaveBeenLastCalledWith('루프 재생 중', true)
+  await player.close()
+})
+
+it('should wait for pending handoff and ignore it after stop', async () => {
+  const status = vi.fn()
+  const player = createLoopPlayer('blob:audio', status, vi.fn())
+  await player.play()
+  const pending = Promise.withResolvers<void>()
+  media[1].play.mockReturnValueOnce(pending.promise)
+  media[0].currentTime = 116
+  media[0].ontimeupdate?.()
+  media[0].paused = true
+  media[0].onended?.()
+  player.stop()
+  status.mockClear()
+  pending.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(status).not.toHaveBeenCalled()
+  await player.close()
+})
+
+it('should ignore a pending transition completion after stop', async () => {
+  const status = vi.fn()
+  const player = createLoopPlayer('blob:audio', status, vi.fn())
+  await player.play()
+  const pending = Promise.withResolvers<void>()
+  media[1].play.mockReturnValueOnce(pending.promise)
+  media[0].currentTime = 116
+  media[0].ontimeupdate?.()
+  player.stop()
+  status.mockClear()
+  pending.resolve()
+  await Promise.resolve()
+  expect(status).not.toHaveBeenCalled()
+  expect(gains[1].gain.linearRampToValueAtTime).not.toHaveBeenCalled()
   await player.close()
 })

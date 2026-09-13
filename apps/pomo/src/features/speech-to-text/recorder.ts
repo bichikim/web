@@ -10,5 +10,7 @@ export interface SpeechRecording {
 
 export interface SpeechRecorder {
   readonly isSupported: () => boolean
-  readonly start: () => Promise<Result<SpeechRecording, SpeechCaptureError>>
+  readonly start: (
+    onDataAvailable?: () => void,
+  ) => Promise<Result<SpeechRecording, SpeechCaptureError>>
 }

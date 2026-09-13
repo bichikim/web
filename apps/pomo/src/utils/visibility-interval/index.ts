@@ -1,7 +1,17 @@
 import {getDocument} from '@winter-love/utils'
 import {visibility} from 'src/utils/visibility'
 
-export const visibilityInterval = (callback: () => void, interval: number) => {
+/** Pauses while hidden; optionally runs once on return when the previous deadline has passed. */
+export const visibilityInterval = (
+  callback: () => void,
+  interval: number,
+  runOverdueOnVisible = false,
+) => {
+  let nextExecution = Date.now() + interval
+  const run = () => {
+    nextExecution = Date.now() + interval
+    callback()
+  }
   let intervalId: ReturnType<typeof globalThis.setInterval> | null = null
 
   const startInterval = () => {
@@ -9,7 +19,12 @@ export const visibilityInterval = (callback: () => void, interval: number) => {
       return
     }
 
-    intervalId = globalThis.setInterval(callback, interval)
+    const isOverdue = Date.now() >= nextExecution
+    nextExecution = Date.now() + interval
+    intervalId = globalThis.setInterval(run, interval)
+    if (runOverdueOnVisible && isOverdue) {
+      run()
+    }
   }
 
   const stopInterval = () => {

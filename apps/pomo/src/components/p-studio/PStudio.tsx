@@ -1,3 +1,4 @@
+import {visibilityInterval} from 'src/utils/visibility-interval'
 import {useStudioTourHint} from './use-studio-tour-hint'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {useStudioDesktopSceneSettings} from './use-studio-desktop-scene-settings'
@@ -169,7 +170,11 @@ const useStudioRuntime = (options: StudioRuntimeOptions) => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
     const updateAutomaticPeriod = () =>
       options.setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
-    const timer = globalThis.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
+    const stopPeriodRefresh = visibilityInterval(
+      updateAutomaticPeriod,
+      AUTOMATIC_PERIOD_REFRESH,
+      true,
+    )
     options.entry.restore()
     options.setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {
@@ -177,7 +182,7 @@ const useStudioRuntime = (options: StudioRuntimeOptions) => {
     }
 
     updateAutomaticPeriod()
-    onCleanup(() => globalThis.clearInterval(timer))
+    onCleanup(stopPeriodRefresh)
   })
 }
 

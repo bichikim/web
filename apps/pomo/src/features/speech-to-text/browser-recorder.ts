@@ -35,7 +35,10 @@ interface RecordingSegment {
   readonly stop: (onStopped: () => void) => Promise<Result<Float32Array, SpeechCaptureError>>
 }
 
+const RECORDING_TIMESLICE = 250
+
 interface CreateRecordingSegmentOptions {
+  readonly onDataAvailable: () => void
   readonly decodeRecording: SpeechAudioDecoder
   readonly stream: MediaStream
 }
@@ -53,11 +56,12 @@ const createRecordingSegment = (options: CreateRecordingSegmentOptions): Recordi
   })
 
   recorder.addEventListener('dataavailable', (event) => {
+    options.onDataAvailable()
     if (event.data.size > 0) {
       chunks.push(event.data)
     }
   })
-  recorder.start()
+  recorder.start(RECORDING_TIMESLICE)
 
   const finish = (onStopped: () => void) => {
     recorder.addEventListener(
@@ -100,7 +104,9 @@ export const createBrowserSpeechRecorder = (
   const decodeRecording = options.decodeRecording ?? decodeSpeechRecording
   let activeSession: symbol | null = null
 
-  const start = async (): Promise<Result<SpeechRecording, SpeechCaptureError>> => {
+  const start = async (
+    onDataAvailable?: () => void,
+  ): Promise<Result<SpeechRecording, SpeechCaptureError>> => {
     if (!isRecordingSupported()) {
       return failureResult({code: 'unsupported', retryable: false})
     }
@@ -117,8 +123,14 @@ export const createBrowserSpeechRecorder = (
       const acquiredStream = await navigator.mediaDevices.getUserMedia({audio: true})
       stream = acquiredStream
       let closed = false
+      const notifyData = () => {
+        if (!closed) {
+          onDataAvailable?.()
+        }
+      }
       let currentSegment: RecordingSegment | null = createRecordingSegment({
         decodeRecording,
+        onDataAvailable: notifyData,
         stream: acquiredStream,
       })
       let speechEndDetector: SpeechEndDetector | null = null
@@ -194,6 +206,7 @@ export const createBrowserSpeechRecorder = (
               try {
                 currentSegment = createRecordingSegment({
                   decodeRecording,
+                  onDataAvailable: notifyData,
                   stream: acquiredStream,
                 })
               } catch (error) {

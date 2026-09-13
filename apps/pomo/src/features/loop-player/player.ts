@@ -1,4 +1,3 @@
-const POLL_MS = 50
 const DEFAULT_OVERLAP = 4
 
 export interface LoopPlayback {
@@ -18,19 +17,18 @@ export function createLoopPlayer(
   const context = new AudioContext()
   const audio = [new Audio(url), new Audio(url)]
   const gains = connectPlayers(context, audio)
-  let timer: ReturnType<typeof setInterval> | undefined
+  let playing = false
   let revision = 0
   let current = 0
   let transitioning = false
-  let nextReady = false
+  let nextPlayback: Promise<void> | null = null
   let overlap = DEFAULT_OVERLAP
   let closed = false
   const stop = () => {
     revision += 1
-    clearInterval(timer)
-    timer = undefined
+    playing = false
     transitioning = false
-    nextReady = false
+    nextPlayback = null
     for (const [index, element] of audio.entries()) {
       element.pause()
       gains[index].gain.cancelScheduledValues(context.currentTime)
@@ -43,29 +41,28 @@ export function createLoopPlayer(
   }
   const transition = async () => {
     const active = audio[current]
-    if (transitioning || active.paused || active.duration - active.currentTime > overlap) {
+    if (
+      !playing ||
+      transitioning ||
+      active.paused ||
+      active.duration - active.currentTime > overlap
+    ) {
       return
     }
     transitioning = true
-    nextReady = false
+    nextPlayback = null
     const token = revision
     const next = 1 - current
     audio[next].currentTime = 0
     gains[next].gain.setValueAtTime(0, context.currentTime)
     try {
-      await audio[next].play()
+      nextPlayback = audio[next].play()
+      await nextPlayback
       if (token !== revision) {
         return
       }
-      nextReady = true
       const remaining = Math.max(0, active.duration - active.currentTime)
-      const now = context.currentTime
-      gains[current].gain.cancelScheduledValues(now)
-      gains[current].gain.setValueAtTime(1, now)
-      gains[current].gain.linearRampToValueAtTime(0, now + remaining)
-      gains[next].gain.cancelScheduledValues(now)
-      gains[next].gain.setValueAtTime(0, now)
-      gains[next].gain.linearRampToValueAtTime(1, now + remaining)
+      crossfade(context, gains[current], gains[next], remaining)
       onStatus(`${overlap}초 크로스페이드 중`, true)
     } catch (cause) {
       if (token === revision) {
@@ -73,34 +70,39 @@ export function createLoopPlayer(
       }
     }
   }
+  observeAudio(audio, onReady, fail, () => closed)
   audio.forEach((element, index) => {
-    element.onloadedmetadata = () => {
-      if (!closed && audio.every((item) => Number.isFinite(item.duration))) {
-        onReady(audio[0].duration)
-      }
-    }
     element.ontimeupdate = () => {
       if (index === current) {
         onPosition?.(element.currentTime)
+        transition().catch(fail)
       }
     }
     element.onended = () => {
-      if (timer === undefined || index !== current) {
+      if (!playing || index !== current) {
         return
       }
-      if (!nextReady) {
-        fail(new Error('다음 재생을 준비하지 못했습니다. 다시 재생해 주세요.'))
-        return
+      const token = revision
+      const finish = async () => {
+        if (nextPlayback === null) {
+          await play(overlap).catch(fail)
+          return
+        }
+        await nextPlayback
+        if (token !== revision) {
+          return
+        }
+        current = 1 - current
+        transitioning = false
+        nextPlayback = null
+        onPosition?.(audio[current].currentTime)
+        onStatus('루프 재생 중', true)
       }
-      current = 1 - current
-      transitioning = false
-      onPosition?.(audio[current].currentTime)
-      onStatus('루프 재생 중', true)
-    }
-    element.onerror = () => {
-      if (!closed) {
-        fail(new Error('이 오디오 파일을 재생할 수 없습니다.'))
-      }
+      finish().catch((cause: unknown) => {
+        if (token === revision) {
+          fail(cause)
+        }
+      })
     }
   })
   const play = async (seconds = DEFAULT_OVERLAP, preview = false, position = 0) => {
@@ -114,11 +116,7 @@ export function createLoopPlayer(
     if (token !== revision) {
       return
     }
-    audio[0].currentTime = preview
-      ? Math.max(0, duration - seconds - 1)
-      : position === duration
-        ? 0
-        : position
+    audio[0].currentTime = getStartPosition(duration, seconds, preview, position)
     onPosition?.(audio[0].currentTime)
     gains[0].gain.setValueAtTime(1, context.currentTime)
     try {
@@ -126,9 +124,7 @@ export function createLoopPlayer(
       if (token !== revision) {
         return
       }
-      timer = setInterval(() => {
-        transition().catch(fail)
-      }, POLL_MS)
+      playing = true
       onStatus('루프 재생 중', true)
     } catch (cause) {
       if (token === revision) {
@@ -139,7 +135,7 @@ export function createLoopPlayer(
   }
   const seek = async (seconds: number) => {
     validatePosition(seconds, audio[0].duration, closed)
-    if (timer !== undefined) {
+    if (playing) {
       await play(overlap, false, seconds)
       return
     }
@@ -204,4 +200,41 @@ function validatePosition(position: number, duration: number, closed: boolean) {
   ) {
     throw new Error('재생 위치가 올바르지 않습니다.')
   }
+}
+
+function crossfade(context: AudioContext, active: GainNode, next: GainNode, remaining: number) {
+  const now = context.currentTime
+  active.gain.cancelScheduledValues(now)
+  active.gain.setValueAtTime(1, now)
+  active.gain.linearRampToValueAtTime(0, now + remaining)
+  next.gain.cancelScheduledValues(now)
+  next.gain.setValueAtTime(0, now)
+  next.gain.linearRampToValueAtTime(1, now + remaining)
+}
+
+function observeAudio(
+  audio: HTMLAudioElement[],
+  onReady: (duration: number) => void,
+  onError: (cause: unknown) => void,
+  isClosed: () => boolean,
+) {
+  for (const element of audio) {
+    element.onloadedmetadata = () => {
+      if (!isClosed() && audio.every((item) => Number.isFinite(item.duration))) {
+        onReady(audio[0].duration)
+      }
+    }
+    element.onerror = () => {
+      if (!isClosed()) {
+        onError(new Error('이 오디오 파일을 재생할 수 없습니다.'))
+      }
+    }
+  }
+}
+
+function getStartPosition(duration: number, overlap: number, preview: boolean, position: number) {
+  if (preview) {
+    return Math.max(0, duration - overlap - 1)
+  }
+  return position === duration ? 0 : position
 }
