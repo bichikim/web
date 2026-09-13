@@ -86,6 +86,12 @@ export const createConfig = ({
       plugins: [
         solidPlugin(),
         dts({
+          afterDiagnostic(diagnostics) {
+            // TypeScript DiagnosticCategory.Error 값으로 오류만 빌드 실패에 반영한다.
+            if (diagnostics.some((diagnostic) => diagnostic.category === 1)) {
+              throw new Error('Declaration generation failed; see TypeScript diagnostics above.')
+            }
+          },
           compilerOptions: {
             checkJs: false,
             declaration: true,
@@ -96,9 +102,18 @@ export const createConfig = ({
             preserveSymlinks: false,
             skipLibCheck: true,
           },
-          entryRoot: './src',
-          exclude: ['**/__tests__/*', '**/__stories__/*', '**/*.story.tsx', '**/*.spec.ts'],
-          include: ['**/*.ts', '**/*.tsx'],
+          entryRoot: path.join(root, 'src'),
+          exclude: [
+            '**/__tests__/**',
+            '**/__stories__/**',
+            '**/e2e/**',
+            '**/*.story.tsx',
+            '**/*.spec.ts',
+            '**/*.spec.tsx',
+            '**/*.test.ts',
+            '**/*.test.tsx',
+          ],
+          include: [path.join(root, 'src/**/*.ts'), path.join(root, 'src/**/*.tsx')],
         }),
         ...plugins,
       ],
