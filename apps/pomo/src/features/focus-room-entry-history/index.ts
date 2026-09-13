@@ -12,6 +12,14 @@ const parseEntryHistory = (value: unknown): true | null => (value === true ? tru
 /** Reads whether a previous entry was persisted for this browser or host app. */
 export const readFocusRoomEntryHistory = async (): Promise<boolean> => {
   if (readWebStorageJson(STORAGE_KEY, parseEntryHistory) === true) {
+    if (hasNativeStorageBridge()) {
+      pendingWrite = pendingWrite
+        .then(() => writeTossStorageJson(STORAGE_KEY, true))
+        .catch((error: unknown) => {
+          console.warn('Failed to repair native focus room entry history.', error)
+        })
+      await pendingWrite
+    }
     return true
   }
   if (!hasNativeStorageBridge()) {
