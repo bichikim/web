@@ -138,3 +138,14 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/fullscreen.spec.ts
 ```
+
+기억보조의 학습 단어는 [단어 관리 E2E](rendering/words.spec.ts)에서 실제 입력과 버튼 조작으로
+저장·대소문자 중복 제거·다중 선택·외움 상태 이동·필터·삭제·새로고침 후 복원을 검증합니다.
+다중 선택 화면과 외운 단어 필터 화면은 최초 PNG 기준이며, 생성 후 일반 비교로 다시 확인했습니다.
+[촬영 환경과 비교 기록](rendering/evidence/words/manifest.json)에 기준과 현재 이미지의 해시를 보존합니다.
+빈 재생목록만 준비하고 단어 저장소·UI·외부 API를 mock하지 않습니다. 영어 단어와 로컬 Chromium
+웹 환경을 검증하며, 발음 생성·오디오 재생·다른 탭과의 동기화·네이티브 저장소는 범위 밖입니다.
+
+```sh
+pnpm --filter @apps/pomo exec playwright test --config playwright.rendering.config.ts e2e/rendering/words.spec.ts
+```
