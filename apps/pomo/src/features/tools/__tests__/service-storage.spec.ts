@@ -2,11 +2,13 @@ import {beforeEach, expect, it, vi} from 'vitest'
 import {createServiceSettingsStorage} from '../service-storage'
 import {createStorageFixture} from './helpers/storage'
 
+let reportRepairError: ReturnType<typeof vi.fn<(error: unknown) => void>>
 let fixture: ReturnType<typeof createStorageFixture>
 let repository: ReturnType<typeof createServiceSettingsStorage>
 beforeEach(() => {
+  reportRepairError = vi.fn()
   fixture = createStorageFixture()
-  repository = createServiceSettingsStorage({storage: fixture.adapter})
+  repository = createServiceSettingsStorage({reportRepairError, storage: fixture.adapter})
 })
 it('should restore custom duration and mode along with the date and branch', async () => {
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
@@ -191,11 +193,69 @@ it('should isolate pending writes and revisions between repositories', async () 
   const saving = repository.write(settings)
   const other = createStorageFixture()
   other.usesTossStorage.mockReturnValue(true)
-  const independent = createServiceSettingsStorage({storage: other.adapter})
+  const independent = createServiceSettingsStorage({
+    reportRepairError: vi.fn(),
+    storage: other.adapter,
+  })
   try {
     await expect(independent.read()).resolves.toMatchObject({start: ''})
   } finally {
     delayed.resolve()
     await saving
   }
+})
+
+it.each([null, JSON.stringify({branch: 'army', days: '', manual: false, start: ''} as const)])(
+  'should repair native %s before web data is cleared',
+  async (stored) => {
+    fixture.usesTossStorage.mockReturnValue(true)
+    const latest = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
+    fixture.web.set('pomo:service-settings:v1', JSON.stringify(latest))
+    let nativeValue = stored
+    fixture.getItem.mockImplementation(async () => nativeValue)
+    fixture.setItem.mockImplementation(async (_key, value) => {
+      nativeValue = value
+    })
+    await expect(repository.read()).resolves.toEqual(latest)
+    fixture.web.clear()
+    await expect(repository.read()).resolves.toEqual(latest)
+  },
+)
+it('should retry a failed repair on the next read while preserving the web value', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const latest = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
+  const error = new Error('repair failed')
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(latest))
+  fixture.setItem.mockRejectedValueOnce(error)
+  await expect(repository.read()).resolves.toEqual(latest)
+  await expect(repository.read()).resolves.toEqual(latest)
+  fixture.web.clear()
+  await expect(repository.read()).resolves.toEqual(latest)
+  expect(reportRepairError).toHaveBeenCalledExactlyOnceWith(error)
+})
+it('should serialize a newer save after an unfinished read repair', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const previous = {branch: 'army', days: '', manual: false, start: ''} as const
+  const latest = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
+  const delayed = Promise.withResolvers<void>()
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(previous))
+  fixture.setItem.mockImplementationOnce(async () => delayed.promise)
+  await expect(repository.read()).resolves.toEqual(previous)
+  await vi.waitFor(() => expect(fixture.setItem).toHaveBeenCalledTimes(1))
+  const saving = repository.write(latest)
+  expect(fixture.setItem).toHaveBeenCalledTimes(1)
+  delayed.resolve()
+  await saving
+  fixture.web.clear()
+  await expect(repository.read()).resolves.toEqual(latest)
+  expect(fixture.setItem.mock.calls.map((call) => call[1])).toEqual([
+    JSON.stringify(previous),
+    JSON.stringify(latest),
+  ])
+})
+it('should avoid native repair on the regular web', async () => {
+  const latest = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(latest))
+  await expect(repository.read()).resolves.toEqual(latest)
+  expect(fixture.setItem).not.toHaveBeenCalled()
 })

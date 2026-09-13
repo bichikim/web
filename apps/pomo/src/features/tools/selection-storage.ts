@@ -20,6 +20,7 @@ const createSelectionStorage = <T>(
   storage: ToolStorageAdapter,
   key: string,
   parse: (value: unknown) => T | null,
+  reportRepairError: (error: unknown) => void,
 ): SelectionStorage<T> => {
   let pending = Promise.resolve()
   let writeRevision = 0
@@ -34,6 +35,9 @@ const createSelectionStorage = <T>(
     }
     const webValue = storage.readWeb(key, parse)
     if (webValue !== null || !usesTossStorage) {
+      if (webValue !== null && usesTossStorage) {
+        pending = pending.then(() => storage.writeToss(key, webValue)).catch(reportRepairError)
+      }
       return webValue
     }
     try {
@@ -101,13 +105,14 @@ export interface ToolSelectionStorages {
 }
 export interface CreateToolSelectionStoragesOptions {
   readonly storage: ToolStorageAdapter
+  readonly reportRepairError: (error: unknown) => void
 }
 
 /** Creates independently queued selection repositories over one storage adapter. */
 export const createToolSelectionStorages = (
   options: CreateToolSelectionStoragesOptions,
 ): ToolSelectionStorages => {
-  const {storage} = options
+  const {storage, reportRepairError} = options
   const unitSelectionStorage = createSelectionStorage<UnitSelection>(
     storage,
     'pomo:tool-units:v1',
@@ -115,11 +120,13 @@ export const createToolSelectionStorages = (
       const result = unitSchema.safeParse(value)
       return result.success ? result.data : null
     },
+    reportRepairError,
   )
   const lunarDirectionStorage = createSelectionStorage<LunarDirection>(
     storage,
     'pomo:tool-lunar-direction:v1',
     (value) => (value === 'solar' || value === 'lunar' ? value : null),
+    reportRepairError,
   )
   const movingSelectionStorage = createSelectionStorage<MovingSelection>(
     storage,
@@ -128,9 +135,15 @@ export const createToolSelectionStorages = (
       const result = movingSchema.safeParse(value)
       return result.success ? result.data : null
     },
+    reportRepairError,
   )
   return {lunarDirectionStorage, movingSelectionStorage, unitSelectionStorage}
 }
 
 export const {unitSelectionStorage, lunarDirectionStorage, movingSelectionStorage} =
-  createToolSelectionStorages({storage: toolStorageAdapter})
+  createToolSelectionStorages({
+    reportRepairError: (error) => {
+      console.warn('Failed to repair native tool selection.', error)
+    },
+    storage: toolStorageAdapter,
+  })
