@@ -1,3 +1,5 @@
+export * from './create-p-scene-preferences-repository'
+export * from './storage'
 export {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
