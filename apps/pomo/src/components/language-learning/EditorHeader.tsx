@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {PAppReturnLink} from '../PAppReturnLink'
+import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
 
 export const LanguageLearningEditorHeader = () => (
   <header class="flex flex-wrap items-center justify-between gap-4">

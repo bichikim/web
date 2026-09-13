@@ -4,11 +4,11 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {PButton} from '../../PButton'
-import {PServicePolicyLinks} from '../../PServicePolicyLinks'
+import {PButton} from '../../p-button/PButton'
+import {PServicePolicyLinks} from '../../p-service-policy-links/PServicePolicyLinks'
 import {PEntry} from '../Entry'
 
-vi.mock('../../PButton', () => ({
+vi.mock('../../p-button/PButton', () => ({
   PButton: vi.fn((props: {children?: JSX.Element; disabled?: boolean; onPress?: () => void}) => {
     Object.values(props)
     return (
@@ -18,7 +18,9 @@ vi.mock('../../PButton', () => ({
     )
   }),
 }))
-vi.mock('../../PServicePolicyLinks', () => ({PServicePolicyLinks: vi.fn(() => null)}))
+vi.mock('../../p-service-policy-links/PServicePolicyLinks', () => ({
+  PServicePolicyLinks: vi.fn(() => null),
+}))
 
 afterEach(() => {
   vi.clearAllMocks()

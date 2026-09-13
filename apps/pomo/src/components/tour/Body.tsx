@@ -1,6 +1,6 @@
 import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 import {HTour, type HTourController} from './headless'
 import {PTourMask} from './PTourMask'
 import {type PTourStep} from './step'

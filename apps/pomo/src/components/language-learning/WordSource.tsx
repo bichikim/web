@@ -7,7 +7,7 @@ import {
   MAXIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
   MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
 } from '../../features/language-learning'
-import {PRadioSwitch} from '../PRadioSwitch'
+import {PRadioSwitch} from '../p-radio-switch/PRadioSwitch'
 import {LanguageLearningTagInput} from './TagInput'
 
 const getWordSourceOptions = (savedWordsAvailable: boolean) =>

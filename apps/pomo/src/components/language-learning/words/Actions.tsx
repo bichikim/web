@@ -1,6 +1,6 @@
 import * as m from '@paraglide/message'
 import {type LanguageLearningWord} from '../../../features/language-learning'
-import {PButton} from '../../PButton'
+import {PButton} from '../../p-button/PButton'
 
 interface LanguageLearningWordActionsProps {
   readonly onDelete: (words: ReadonlyArray<LanguageLearningWord>) => void

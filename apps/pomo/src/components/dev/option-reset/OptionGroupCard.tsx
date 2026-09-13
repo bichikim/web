@@ -1,4 +1,4 @@
-import {PButton} from 'src/components/PButton'
+import {PButton} from 'src/components/p-button/PButton'
 import {type OptionResetGroup} from 'src/features/dev-option-reset'
 
 interface OptionGroupCardProps {

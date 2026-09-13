@@ -14,7 +14,7 @@ import {
   useModelDownload,
 } from '../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../features/supertonic'
-import type {PModelDownloadConsentProps} from '../PModelDownloadConsent'
+import type {PModelDownloadConsentProps} from '../p-model-download-consent/PModelDownloadConsent'
 import {PDialogueEditor} from '../dialogue-page/Editor'
 
 vi.mock('@solidjs/router', () => ({
@@ -46,7 +46,7 @@ vi.mock('../../features/supertonic', async () => {
 })
 
 vi.mock('../dialogue-page/DraftGenerator', () => ({PDialogueDraftGenerator: () => null}))
-vi.mock('../PModelDownloadConsent', () => ({
+vi.mock('../p-model-download-consent/PModelDownloadConsent', () => ({
   PModelDownloadConsent: (props: PModelDownloadConsentProps) => (
     <Show when={props.isOpen}>
       <button onClick={props.onConfirm} type="button">

@@ -1,0 +1,196 @@
+/** @vitest-environment jsdom */
+
+import {cleanup} from '@solidjs/testing-library'
+import {afterEach, describe, expect, it} from 'vitest'
+
+import {renderMusicPlayerView} from '../../__tests__/music-player-view.test-support.tsx'
+
+describe('MusicPlayerView controls', () => {
+  afterEach(() => cleanup())
+
+  it('should name player controls without tooltips when no provider is installed', () => {
+    const result = renderMusicPlayerView()
+    const controller = result.container.querySelector('.pomo-player-shell')
+
+    if (!(controller instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo media controller to be rendered')
+    }
+
+    const controls = controller.querySelectorAll(
+      'button, media-play-button, media-mute-button, media-time-range, media-volume-range',
+    )
+    const mediaButtons = controller.querySelectorAll('media-play-button, media-mute-button')
+
+    expect(controls.length).toBeGreaterThan(0)
+    for (const control of controls) {
+      expect(control.hasAttribute('title')).toBe(false)
+      expect(control.hasAttribute('data-pomo-tooltip-trigger')).toBe(false)
+    }
+    for (const button of mediaButtons) {
+      expect(button.hasAttribute('notooltip')).toBe(true)
+    }
+    expect(
+      controller.querySelector('.pomo-player__volume-popover-trigger')?.getAttribute('aria-label'),
+    ).toBe('음량 조절')
+    expect(
+      controller.querySelector('[aria-label="앨범 추가"]')?.getAttribute('data-player-utility'),
+    ).toBe('album')
+    expect(
+      controller.querySelector('[aria-label="플레이어 접기"]')?.getAttribute('data-player-utility'),
+    ).toBe('expand')
+  })
+
+  it('should keep utility buttons at the primary utility size', () => {
+    const result = renderMusicPlayerView()
+    const utilityButtons =
+      result.container.querySelectorAll<HTMLButtonElement>('[data-player-utility]')
+
+    expect(utilityButtons).toHaveLength(3)
+    for (const utilityButton of utilityButtons) {
+      expect(utilityButton).toHaveClass('size-10')
+    }
+  })
+
+  it('should keep the summary play button stationary on hover', () => {
+    const collapsedResult = renderMusicPlayerView({expanded: false})
+    const summaryPlayButton = collapsedResult.container.querySelector('.pomo-player__play--summary')
+
+    if (!(summaryPlayButton instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo summary play button to be rendered')
+    }
+
+    expect(summaryPlayButton.classList.contains('[&:hover]:translate-y-[-0.0625rem]')).toBe(false)
+    expect(summaryPlayButton.classList.contains('[transition:filter_160ms_ease]')).toBe(true)
+
+    cleanup()
+
+    const expandedResult = renderMusicPlayerView()
+    const expandedPlayButton = expandedResult.container.querySelector('.pomo-player__play--large')
+
+    if (!(expandedPlayButton instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo expanded play button to be rendered')
+    }
+
+    expect(expandedPlayButton.classList.contains('[&:hover]:translate-y-[-0.0625rem]')).toBe(true)
+    expect(
+      expandedPlayButton.classList.contains('[transition:transform_160ms_ease,_filter_160ms_ease]'),
+    ).toBe(true)
+  })
+
+  it('should keep player icons from shrinking in compact layouts', () => {
+    const result = renderMusicPlayerView()
+    const icons = result.container.querySelectorAll<HTMLElement>(
+      '.pomo-player [class*="i-tabler-"], .pomo-player [class*="i-pomo-"]',
+    )
+
+    expect(icons.length).toBeGreaterThan(0)
+    for (const icon of icons) {
+      expect(icon).toHaveClass('flex-none')
+    }
+  })
+
+  it('should replace the compact summary artwork with the collapsed play button', () => {
+    const result = renderMusicPlayerView()
+    const summary = result.container.querySelector('.pomo-player__summary')
+    const summaryTitle = result.container.querySelector('.pomo-player__title')
+    const transportPlayFrame = result.container.querySelector('.pomo-player__transport-play-frame')
+    const summaryArtwork = result.container.querySelector('.pomo-player__artwork')
+    const compactSummaryPlay = result.container.querySelector('.pomo-player__compact-summary-play')
+    const summaryPlayButton = compactSummaryPlay?.querySelector('media-play-button')
+    const summaryPlayIcon = summaryPlayButton?.querySelector('[slot="play"]')
+    const summaryPauseIcon = summaryPlayButton?.querySelector('[slot="pause"]')
+
+    for (const element of [
+      transportPlayFrame,
+      summary,
+      summaryTitle,
+      summaryArtwork,
+      compactSummaryPlay,
+      summaryPlayButton,
+      summaryPlayIcon,
+      summaryPauseIcon,
+    ]) {
+      expect(element).toBeInstanceOf(HTMLElement)
+    }
+
+    expect(transportPlayFrame?.classList.contains('player-compact:hidden')).toBe(true)
+    expect(summary?.classList.contains('player-compact:gap-2')).toBe(true)
+    expect(summaryTitle?.classList.contains('player-compact:px-1')).toBe(true)
+    expect(summaryArtwork?.classList.contains('player-compact:hidden')).toBe(true)
+    expect(compactSummaryPlay?.classList.contains('hidden')).toBe(true)
+    expect(compactSummaryPlay?.classList.contains('player-compact:block')).toBe(true)
+    expect(summaryPlayButton?.getAttribute('aria-label')).toBe('재생')
+    expect(summaryPlayButton?.classList.contains('pomo-player__play--summary')).toBe(true)
+    expect(summaryPlayIcon?.classList.contains('size-6')).toBe(true)
+    expect(summaryPauseIcon?.classList.contains('size-6')).toBe(true)
+    expect(summaryPlayIcon?.classList.contains('flex-none')).toBe(true)
+    expect(summaryPauseIcon?.classList.contains('flex-none')).toBe(true)
+
+    cleanup()
+
+    const withoutArtwork = renderMusicPlayerView({
+      currentTrack: {
+        artist: 'Artist',
+        durationSeconds: 1,
+        id: 'without-artwork',
+        source: '/without-artwork.mp3',
+        title: 'Without Artwork',
+      },
+    })
+
+    expect(
+      withoutArtwork.container.querySelector(
+        '.pomo-player__compact-summary-play media-play-button',
+      ),
+    ).toBeInstanceOf(HTMLElement)
+  })
+
+  it('should marquee the current track labels in the summary and playlist', () => {
+    const result = renderMusicPlayerView()
+    const summaryMarquees = result.container.querySelectorAll(
+      '.pomo-player__title .pomo-overflow-marquee',
+    )
+    const currentTrackMarquees = result.container.querySelectorAll(
+      ".pomo-player__track[aria-current='true'] .pomo-overflow-marquee",
+    )
+    const idleTrackMarquees = result.container.querySelectorAll(
+      ".pomo-player__track:not([aria-current='true']) .pomo-overflow-marquee",
+    )
+
+    expect(summaryMarquees).toHaveLength(2)
+    expect(currentTrackMarquees).toHaveLength(2)
+    expect(idleTrackMarquees).toHaveLength(0)
+    expect(currentTrackMarquees[0]?.hasAttribute('tabindex')).toBe(false)
+    expect(currentTrackMarquees[1]?.hasAttribute('tabindex')).toBe(false)
+    expect(
+      result.container
+        .querySelector(".pomo-player__track[aria-current='true']")
+        ?.classList.contains('group'),
+    ).toBe(true)
+  })
+
+  it('should reveal the volume thumb only while interacting with the range', () => {
+    const result = renderMusicPlayerView()
+    const volumeRange = result.container.querySelector('media-volume-range')
+    const trigger = result.container.querySelector('.pomo-player__volume-popover-trigger')
+
+    expect(result.container.querySelector('media-mute-button')).toBeNull()
+    expect(trigger).toHaveClass('grid')
+    if (!(volumeRange instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo volume range to be rendered')
+    }
+    expect(volumeRange).toHaveClass('pomo-player__volume-popover-range')
+    expect(volumeRange.closest('[popover]')).not.toBeNull()
+    expect(volumeRange.getAttribute('aria-label')).toBe('음량 조절')
+    expect(volumeRange.classList.contains('[--media-range-padding-left:0.25rem]')).toBe(true)
+    expect(volumeRange.classList.contains('[--media-range-padding-right:0.25rem]')).toBe(true)
+    expect(volumeRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
+    expect(volumeRange.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(true)
+    expect(volumeRange.classList.contains('focus-within:[--media-range-thumb-opacity:1]')).toBe(
+      true,
+    )
+    expect(
+      volumeRange.classList.contains('motion-reduce:[--media-range-thumb-transition:none]'),
+    ).toBe(true)
+  })
+})

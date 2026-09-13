@@ -1,4 +1,4 @@
-import {PPrivacyPolicy} from 'src/components/PPrivacyPolicy'
+import {PPrivacyPolicy} from 'src/components/p-privacy-policy/PPrivacyPolicy'
 
 export default function WebPrivacyPage() {
   return <PPrivacyPolicy platform="web" />

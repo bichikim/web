@@ -8,7 +8,7 @@ import AccountRoute from '../account'
 const mocks = vi.hoisted(() => ({search: {} as Record<string, string | string[] | undefined>}))
 
 vi.mock('@solidjs/router', () => ({useSearchParams: () => [mocks.search]}))
-vi.mock('../../components/AccountPage', () => ({
+vi.mock('../../components/account-page/AccountPage', () => ({
   AccountPage: (props: {connectedCalendarProvider?: string}) => (
     <p>{props.connectedCalendarProvider ?? 'account'}</p>
   ),

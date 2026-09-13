@@ -8,9 +8,9 @@ import {
   signOutAccountSessionAction,
 } from '../../features/auth/actions'
 import {useWebAccount} from '../../features/user-auth/use-web-account'
-import {PButton, pButtonClasses} from '../PButton'
-import {PFormMessage} from '../PFormMessage'
-import {PTextField} from '../PTextField'
+import {P_BUTTON_CLASSES, PButton} from '../p-button/PButton'
+import {PFormMessage} from '../p-form-message/PFormMessage'
+import {PTextField} from '../p-text-field/PTextField'
 
 export const WebAccount = () => {
   const account = useWebAccount()
@@ -68,7 +68,7 @@ export const WebAccount = () => {
               </div>
               <div class="flex flex-wrap items-center gap-3">
                 <a
-                  class={pButtonClasses({class: 'no-underline', raised: true, size: 'small'})}
+                  class={P_BUTTON_CLASSES({class: 'no-underline', raised: true, size: 'small'})}
                   href="/"
                 >
                   {m.app_return()}

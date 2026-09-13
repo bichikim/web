@@ -1,7 +1,7 @@
 import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
-const textClasses = cva(
+const TEXT_CLASSES = cva(
   [
     'min-w-0 overflow-hidden m-0 text-foreground text-modal-body font-[650] leading-[1.5]',
     'text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [white-space:normal]',
@@ -55,7 +55,7 @@ const CLASSES = {
   summary: 'min-w-0 flex-1',
 } as const
 
-export interface DialogueLibraryItemProps extends VariantProps<typeof textClasses> {
+export interface DialogueLibraryItemProps extends VariantProps<typeof TEXT_CLASSES> {
   readonly actions?: JSX.Element
   readonly metadata?: JSX.Element
   readonly text: string
@@ -65,7 +65,7 @@ export const DialogueLibraryItem = (props: DialogueLibraryItemProps) => (
   <li class={CLASSES.item}>
     <div class={CLASSES.layout}>
       <div class={CLASSES.summary}>
-        <p class={textClasses({lineLimit: props.lineLimit})}>{props.text}</p>
+        <p class={TEXT_CLASSES({lineLimit: props.lineLimit})}>{props.text}</p>
         <Show when={props.metadata}>
           <span class={CLASSES.metadata}>{props.metadata}</span>
         </Show>

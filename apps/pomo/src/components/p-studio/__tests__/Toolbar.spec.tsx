@@ -5,7 +5,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {WeatherLocation} from '../../../features/weather'
 import {getPomoIconClass} from '../../icon-style'
-import {PWeatherStatus} from '../../PWeatherStatus'
+import {PWeatherStatus} from '../../p-weather-status/PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
 import {MemoryAssistPanel} from '../MemoryAssistPanel'
 import {SceneSettingsPanel} from '../SettingsPanel'
@@ -13,8 +13,8 @@ import {SceneToolbar} from '../Toolbar'
 import {VersionNoticePanel} from '../VersionNoticePanel'
 
 vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
-vi.mock('../../PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
-vi.mock('../../PDesktopModeControl', () => ({
+vi.mock('../../p-weather-status/PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
+vi.mock('../../p-desktop-mode-control/PDesktopModeControl', () => ({
   PDesktopModeControl: (props: {
     readonly mode: string
     readonly onModeChange: (mode: 'widget') => Promise<void>
@@ -25,7 +25,9 @@ vi.mock('../../PDesktopModeControl', () => ({
   },
 }))
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
-vi.mock('../../PModelDownloadStatus', () => ({PModelDownloadStatus: () => null}))
+vi.mock('../../p-model-download-status/PModelDownloadStatus', () => ({
+  PModelDownloadStatus: () => null,
+}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
 vi.mock('../MemoryAssistPanel', () => ({MemoryAssistPanel: vi.fn()}))
 vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: vi.fn()}))

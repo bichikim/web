@@ -1,0 +1,340 @@
+/** @vitest-environment jsdom */
+
+import {Tabs} from '@kobalte/core/tabs'
+import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import * as m from '@paraglide/message'
+import {PModal} from '../PModal'
+import {PModalTabList} from '../../p-modal-tab-list/PModalTabList'
+
+beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe = vi.fn()
+      disconnect = vi.fn()
+    },
+  )
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+it.each([false, true, undefined])(
+  'should honor closeOnEscape=%s after switching tabs and preserve the close button',
+  async (closeOnEscape) => {
+    const onOpenChange = vi.fn()
+    render(() => (
+      <Tabs defaultValue="general">
+        <PModal
+          closeOnEscape={closeOnEscape}
+          isOpen
+          navigation={
+            <PModalTabList
+              accessibleLabel="Settings tabs"
+              items={[
+                {icon: 'i-tabler-settings', label: 'General', value: 'general'},
+                {icon: 'i-tabler-photo', label: 'Background', value: 'background'},
+              ]}
+            />
+          }
+          onOpenChange={onOpenChange}
+          title="Settings"
+        >
+          <Tabs.Content value="general">General content</Tabs.Content>
+          <Tabs.Content value="background">Background content</Tabs.Content>
+        </PModal>
+      </Tabs>
+    ))
+
+    const backgroundTab = screen.getByRole('tab', {name: 'Background'})
+    fireEvent.click(backgroundTab)
+    await waitFor(() => expect(backgroundTab).toHaveAttribute('aria-selected', 'true'))
+    backgroundTab.focus()
+    fireEvent.keyDown(backgroundTab, {key: 'Escape'})
+    if (closeOnEscape === false) {
+      expect(onOpenChange).not.toHaveBeenCalled()
+    } else {
+      expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false)
+    }
+    onOpenChange.mockClear()
+
+    const closeButton = screen.getByRole('button', {name: m.common_close()})
+    closeButton.focus()
+    fireEvent.keyDown(closeButton, {key: 'Escape'})
+    if (closeOnEscape === false) {
+      expect(onOpenChange).not.toHaveBeenCalled()
+      expect(screen.getByRole('dialog', {name: 'Settings'})).toBeInTheDocument()
+    } else {
+      expect(onOpenChange).toHaveBeenCalledWith(false)
+    }
+
+    onOpenChange.mockClear()
+    fireEvent.click(closeButton)
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  },
+)
+
+it('should omit the header while preserving the accessible dialog title', () => {
+  render(() => (
+    <PModal headerMode="hidden" isOpen onOpenChange={vi.fn()} title="Drawing">
+      Canvas
+    </PModal>
+  ))
+  const dialog = screen.getByRole('dialog', {name: 'Drawing'})
+  expect(dialog.querySelector('header')).toBeNull()
+  expect(screen.getByText('Drawing')).toHaveClass('sr-only')
+  expect(screen.queryByRole('button', {name: m.common_close()})).not.toBeInTheDocument()
+  expect(screen.getByText('Canvas')).toBeInTheDocument()
+})
+
+it('should render and close the default modal content', async () => {
+  const onOpenChange = vi.fn()
+
+  render(() => (
+    <PModal
+      description="Modal description"
+      footer={<div>Modal footer</div>}
+      isOpen
+      onOpenChange={onOpenChange}
+      title="Modal title"
+    >
+      <p>Modal body</p>
+    </PModal>
+  ))
+
+  const dialog = screen.getByRole('dialog', {name: 'Modal title'})
+  expect(dialog).toHaveAttribute('data-placement', 'center')
+  expect(dialog).toHaveAttribute('data-size', 'regular')
+  expect(dialog).toHaveClass('bg-modal-surface')
+  expect(screen.getByText('Modal description')).toBeInTheDocument()
+  expect(screen.getByText('Modal footer')).toBeInTheDocument()
+  expect(screen.getByText('Modal body').parentElement).toHaveClass('overflow-y-auto')
+
+  fireEvent.click(screen.getByRole('button', {name: m.common_close()}))
+  await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+})
+
+it('should render visually hidden navigation with compact close controls', () => {
+  render(() => (
+    <PModal
+      contentOverflow="hidden"
+      isOpen
+      navigation={<nav>Settings navigation</nav>}
+      onOpenChange={vi.fn()}
+      placement="top"
+      size="full"
+      title="Settings"
+      titleVisibility="visually-hidden"
+    >
+      <p>Settings content</p>
+    </PModal>
+  ))
+
+  const dialog = screen.getByRole('dialog', {name: 'Settings'})
+  expect(dialog).toHaveAttribute('data-placement', 'top')
+  expect(dialog).toHaveAttribute('data-size', 'full')
+  const navigation = screen.getByText('Settings navigation')
+  expect(navigation).toBeInTheDocument()
+  expect(navigation.parentElement).not.toHaveClass('pl-1')
+  expect(screen.getByText('Settings content').parentElement).toHaveClass('overflow-hidden')
+  expect(screen.getByRole('button', {name: m.common_close()})).toBeInTheDocument()
+})
+
+it('should render close-only and visible-title navigation layouts', () => {
+  const {unmount} = render(() => (
+    <PModal
+      closeButtonVisibility="hidden"
+      headerMode="closeOnly"
+      isOpen
+      navigation={<nav>Close-only navigation</nav>}
+      onOpenChange={vi.fn()}
+      size="wide"
+      title="Close-only modal"
+    >
+      Content
+    </PModal>
+  ))
+
+  expect(screen.getByRole('dialog', {name: 'Close-only modal'})).toHaveAttribute(
+    'data-size',
+    'wide',
+  )
+  expect(screen.getByText('Close-only navigation')).toBeInTheDocument()
+  expect(screen.queryByRole('button', {name: m.common_close()})).not.toBeInTheDocument()
+
+  unmount()
+  render(() => (
+    <PModal
+      isOpen
+      navigation={<nav>Visible navigation</nav>}
+      onOpenChange={vi.fn()}
+      title="Navigation modal"
+    >
+      Content
+    </PModal>
+  ))
+
+  expect(screen.getByText('Navigation modal')).toBeVisible()
+  expect(screen.getByText('Visible navigation')).toBeInTheDocument()
+})
+
+it('should apply custom open and close focus behavior', async () => {
+  const onCloseAutoFocus = vi.fn()
+  let initialFocus: HTMLButtonElement | undefined
+
+  const Harness = () => {
+    const [isOpen, setIsOpen] = createSignal(true)
+    return (
+      <PModal
+        getInitialFocus={() => initialFocus ?? null}
+        isOpen={isOpen()}
+        onCloseAutoFocus={onCloseAutoFocus}
+        onOpenChange={setIsOpen}
+        title="Focus modal"
+      >
+        <button ref={initialFocus} type="button">
+          Initial action
+        </button>
+      </PModal>
+    )
+  }
+
+  const {unmount} = render(() => <Harness />)
+
+  await waitFor(() => expect(screen.getByRole('button', {name: 'Initial action'})).toHaveFocus())
+  const dialog = screen.getByRole('dialog', {name: 'Focus modal'})
+  fireEvent.click(screen.getByRole('button', {name: m.common_close()}))
+  fireEvent.animationEnd(dialog)
+  unmount()
+  await waitFor(() => expect(onCloseAutoFocus).toHaveBeenCalledOnce())
+})
+
+it('should preserve the tabs context through navigation, portal, and reopening', async () => {
+  const readStyles = window.getComputedStyle.bind(window)
+  vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+    const styles = readStyles(element)
+    Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
+    return styles
+  })
+  const [isOpen, setIsOpen] = createSignal(false)
+  render(() => (
+    <Tabs defaultValue="general">
+      <PModal
+        isOpen={isOpen()}
+        navigation={
+          <PModalTabList
+            accessibleLabel="Settings tabs"
+            items={[
+              {icon: 'i-tabler-settings', label: 'General', value: 'general'},
+              {icon: 'i-tabler-help', label: 'Guide', value: 'guide'},
+            ]}
+          />
+        }
+        onOpenChange={setIsOpen}
+        title="Settings"
+      >
+        <Tabs.Content value="general">General content</Tabs.Content>
+        <Tabs.Content value="guide">Guide content</Tabs.Content>
+      </PModal>
+    </Tabs>
+  ))
+
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  setIsOpen(true)
+  await screen.findByRole('dialog', {name: 'Settings'})
+  expect(screen.getByRole('tabpanel')).toHaveTextContent('General content')
+  fireEvent.click(screen.getByRole('tab', {name: 'Guide'}))
+  await waitFor(() => expect(screen.getByRole('tabpanel')).toHaveTextContent('Guide content'))
+  expect(screen.getByRole('tab', {name: 'Guide'})).toHaveAttribute('aria-selected', 'true')
+  fireEvent.click(screen.getByRole('button', {name: m.common_close()}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  setIsOpen(true)
+  await screen.findByRole('dialog', {name: 'Settings'})
+  expect(screen.getByRole('tabpanel')).toHaveTextContent('Guide content')
+  fireEvent.click(screen.getByRole('tab', {name: 'General'}))
+  await waitFor(() => expect(screen.getByRole('tabpanel')).toHaveTextContent('General content'))
+})
+
+it('should preserve Escape cancellation from an input', () => {
+  const onOpenChange = vi.fn()
+  render(() => (
+    <PModal isOpen onOpenChange={onOpenChange} title="Editor">
+      <input aria-label="Draft" onKeyDown={(event) => event.preventDefault()} />
+    </PModal>
+  ))
+  fireEvent.keyDown(screen.getByRole('textbox', {name: 'Draft'}), {key: 'Escape'})
+  expect(onOpenChange).not.toHaveBeenCalled()
+})
+
+it('should dismiss only the nested modal when Escape is pressed on its tab', () => {
+  const [innerOpen, setInnerOpen] = createSignal(false)
+  const outerChange = vi.fn()
+  const innerChange = vi.fn()
+  render(() => (
+    <PModal isOpen onOpenChange={outerChange} title="Outer">
+      <Tabs defaultValue="general">
+        <PModal
+          isOpen={innerOpen()}
+          onOpenChange={innerChange}
+          title="Inner"
+          navigation={
+            <PModalTabList
+              accessibleLabel="Inner tabs"
+              items={[{icon: 'i-tabler-settings', label: 'General', value: 'general'}]}
+            />
+          }
+        >
+          <Tabs.Content value="general">General content</Tabs.Content>
+        </PModal>
+      </Tabs>
+    </PModal>
+  ))
+  setInnerOpen(true)
+  fireEvent.keyDown(screen.getByRole('tab', {name: 'General'}), {key: 'Escape'})
+  expect(innerChange).toHaveBeenCalledExactlyOnceWith(false)
+  expect(outerChange).not.toHaveBeenCalled()
+})
+
+it('should focus the requested input after opening a nested modal', async () => {
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [input, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+  render(() => (
+    <PModal isOpen onOpenChange={vi.fn()} title="Parent">
+      <button onClick={() => setIsOpen(true)} type="button">
+        Create memo
+      </button>
+      <PModal getInitialFocus={input} isOpen={isOpen()} onOpenChange={setIsOpen} title="Memo">
+        <textarea aria-label="Memo text" ref={setInput} />
+      </PModal>
+    </PModal>
+  ))
+  const trigger = screen.getByRole('button', {name: 'Create memo'})
+  await waitFor(() => expect(screen.getByRole('button', {name: m.common_close()})).toHaveFocus())
+  trigger.focus()
+  fireEvent.click(trigger)
+  await waitFor(() => expect(screen.getByRole('textbox', {name: 'Memo text'})).toHaveFocus())
+})
+
+it.each(['close', 'unmount'])('should cancel pending initial focus on %s', async (action) => {
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [input, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+  const {unmount} = render(() => (
+    <PModal getInitialFocus={input} isOpen={isOpen()} onOpenChange={setIsOpen} title="Memo">
+      <textarea aria-label="Memo text" ref={setInput} />
+    </PModal>
+  ))
+  setIsOpen(true)
+  const focus = vi.spyOn(screen.getByRole('textbox', {name: 'Memo text'}), 'focus')
+  if (action === 'close') {
+    setIsOpen(false)
+  } else {
+    unmount()
+  }
+  await Promise.resolve()
+  expect(focus).not.toHaveBeenCalled()
+})

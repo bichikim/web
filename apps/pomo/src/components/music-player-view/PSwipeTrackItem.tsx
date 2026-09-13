@@ -4,8 +4,8 @@ import {type JSX, Show} from 'solid-js'
 import {useSwipeTrackGesture} from './use-swipe-track-gesture'
 
 import type {PTrack} from '../../features/focus-room-audio'
-import {POverflowMarquee} from '../POverflowMarquee'
-import {PTooltip} from '../PTooltip'
+import {POverflowMarquee} from '../p-overflow-marquee/POverflowMarquee'
+import {PTooltip} from '../p-tooltip/PTooltip'
 
 const TRACK_CLASSES = cx(
   'pomo-player__track text-muted-foreground',

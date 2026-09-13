@@ -1,15 +1,15 @@
 /** @vitest-environment jsdom */
 import {render, screen} from '@solidjs/testing-library'
-import {PHealthCheck} from 'src/components/PHealthCheck'
-import {PSelect, type PSelectSingleProps} from 'src/components/PSelect'
+import {PHealthCheck} from 'src/components/p-health-check/PHealthCheck'
+import {PSelect, type PSelectSingleProps} from 'src/components/p-select/PSelect'
 import {type DisplayThemePreference, useDisplayTheme} from 'src/features/display-theme'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {PGeneralSettings} from '../General'
-vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/display-theme', () => ({useDisplayTheme: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
-vi.mock('src/components/PHealthCheck', () => ({PHealthCheck: vi.fn()}))
+vi.mock('src/components/p-health-check/PHealthCheck', () => ({PHealthCheck: vi.fn()}))
 vi.mock('../Display', () => ({PGeneralDisplaySettings: vi.fn()}))
 beforeEach(() => {
   vi.clearAllMocks()

@@ -1,4 +1,4 @@
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {For, type JSX, Show} from 'solid-js'
 import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../../features/supertonic/index'

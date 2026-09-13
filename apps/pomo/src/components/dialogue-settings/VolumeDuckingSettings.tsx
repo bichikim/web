@@ -9,7 +9,7 @@ import {
   writeDialogueVolumeDuckingSettings,
 } from '../../features/focus-room-dialogue'
 import * as m from '@paraglide/message'
-import {PSwitch} from '../PSwitch'
+import {PSwitch} from '../p-switch/PSwitch'
 import {PSettingsSectionHeading} from '../settings/SectionHeading'
 
 const CLASSES = {

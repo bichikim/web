@@ -15,7 +15,7 @@ const reporterMocks = vi.hoisted(() => ({reportClientError: vi.fn()}))
 
 vi.mock('../Content', () => ({PAlbumLibraryContent: componentMocks.content}))
 vi.mock('../Footer', () => ({PlaylistFooter: componentMocks.footer}))
-vi.mock('../../PModal', () => ({PModal: componentMocks.modal}))
+vi.mock('../../p-modal/PModal', () => ({PModal: componentMocks.modal}))
 vi.mock('../../../features/client-error-reporter', () => reporterMocks)
 
 import {PAlbumLibraryPanel} from '../Panel'

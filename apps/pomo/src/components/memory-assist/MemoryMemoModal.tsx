@@ -1,11 +1,11 @@
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createSignal, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {MAXIMUM_MEMORY_MEMO_LENGTH} from '../../features/memory-assist'
-import {PButton} from '../PButton'
-import {PModal} from '../PModal'
+import {PButton} from '../p-button/PButton'
+import {PModal} from '../p-modal/PModal'
 import {type ReminderDraft, ReminderFields} from './ReminderFields'
 import {formatLocalDate} from 'src/utils/format-local-date'
 

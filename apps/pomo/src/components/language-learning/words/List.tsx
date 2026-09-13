@@ -5,7 +5,7 @@ import {PSettingsEmptyState} from '../../settings/EmptyState'
 import {LanguageLearningWordPronunciationButton} from './PronunciationButton'
 import {LanguageLearningWordActions} from './Actions'
 
-const wordClasses = cva(
+const WORD_CLASSES = cva(
   'inline-flex min-h-7 max-w-full items-stretch overflow-hidden rounded-control border border-solid',
   {
     defaultVariants: {selected: false},
@@ -57,7 +57,7 @@ export const LanguageLearningWordList = (props: LanguageLearningWordListProps) =
               props.selectedWords().some((selectedWord) => selectedWord.value === word.value)
 
             return (
-              <li class={wordClasses({selected: selected()})}>
+              <li class={WORD_CLASSES({selected: selected()})}>
                 <button
                   aria-label={word.value}
                   aria-pressed={selected()}

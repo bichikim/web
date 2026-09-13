@@ -1,6 +1,6 @@
 import {useAudioGeneration} from './use-audio-generation'
 import {formatDuration} from 'src/utils/format-duration'
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import * as m from '@paraglide/message'
 
 import {A, useNavigate} from '@solidjs/router'
@@ -22,11 +22,11 @@ import {
 } from '../../features/supertonic'
 import {getPrimaryMood} from '../../features/text-mood'
 import {PDialogueDraftGenerator} from './DraftGenerator'
-import {PSelect} from '../PSelect'
-import {PFaceIcon} from '../PFaceIcon'
-import {PGenerationStatus} from '../PGenerationStatus'
-import {PAudioPreview} from '../PAudioPreview'
-import {PModelDownloadConsent} from '../PModelDownloadConsent'
+import {PSelect} from '../p-select/PSelect'
+import {PFaceIcon} from '../p-face-icon/PFaceIcon'
+import {PGenerationStatus} from '../p-generation-status/PGenerationStatus'
+import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
+import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 
 const CLASSES = {
   dialogueEditor: cx(

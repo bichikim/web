@@ -1,11 +1,11 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import type {MemoryRecallMode} from '../../features/memory-assist'
-import {PSelect, type PSelectOption} from '../PSelect'
-import {PSwitch} from '../PSwitch'
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
+import {PSwitch} from '../p-switch/PSwitch'
 
 export type ReminderDay = 'custom' | 'today' | 'tomorrow'
 

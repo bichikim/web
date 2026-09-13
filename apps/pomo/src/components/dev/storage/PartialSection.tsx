@@ -1,5 +1,5 @@
 import {Show} from 'solid-js'
-import {PButton} from 'src/components/PButton'
+import {PButton} from 'src/components/p-button/PButton'
 
 interface PartialSectionProps {
   readonly busy: boolean

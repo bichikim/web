@@ -1,7 +1,7 @@
 import {cva, type VariantProps} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
-const policyLinkClasses = cva('rounded-sm text-inherit', {
+const POLICY_LINK_CLASSES = cva('rounded-sm text-inherit', {
   defaultVariants: {
     current: false,
     tone: 'surface',
@@ -21,7 +21,7 @@ const policyLinkClasses = cva('rounded-sm text-inherit', {
   },
 })
 
-interface PolicyLinkProps extends VariantProps<typeof policyLinkClasses> {
+interface PolicyLinkProps extends VariantProps<typeof POLICY_LINK_CLASSES> {
   href: string
   label: string
 }
@@ -29,13 +29,13 @@ interface PolicyLinkProps extends VariantProps<typeof policyLinkClasses> {
 export const PolicyLink = (props: PolicyLinkProps) => (
   <Show
     fallback={
-      <a class={policyLinkClasses({tone: props.tone})} href={props.href}>
+      <a class={POLICY_LINK_CLASSES({tone: props.tone})} href={props.href}>
         {props.label}
       </a>
     }
     when={props.current}
   >
-    <span aria-current="page" class={policyLinkClasses({current: true, tone: props.tone})}>
+    <span aria-current="page" class={POLICY_LINK_CLASSES({current: true, tone: props.tone})}>
       {props.label}
     </span>
   </Show>

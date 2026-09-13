@@ -1,12 +1,12 @@
 import {clientOnly} from '@solidjs/start'
 import {Show} from 'solid-js'
 
-import {AppsInTossLoadingPage} from '../components/AppsInTossLoadingPage'
-import {PHomePage} from '../components/PHomePage'
+import {AppsInTossLoadingPage} from '../components/apps-in-toss-loading-page/AppsInTossLoadingPage'
+import {PHomePage} from '../components/p-home-page/PHomePage'
 
 const AppsInTossHomePage = clientOnly(
   async () => {
-    const homeModule = await import('../components/AppsInTossHomePage')
+    const homeModule = await import('../components/apps-in-toss-home-page/AppsInTossHomePage')
     return {default: homeModule.AppsInTossHomePage}
   },
   {lazy: true},

@@ -9,9 +9,9 @@ import {
   unitSelectionStorage,
   useSelection,
 } from 'src/features/tools'
-import {PInput} from '../PInput'
-import {PSelect} from '../PSelect'
-import {PButton} from '../PButton'
+import {PInput} from '../p-input/PInput'
+import {PSelect} from '../p-select/PSelect'
+import {PButton} from '../p-button/PButton'
 import {Result} from './Result'
 
 const SYMBOLS: Readonly<Record<string, string>> = {

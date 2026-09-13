@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import {cleanup, render} from '@solidjs/testing-library'
-import {PSwitch} from 'src/components/PSwitch'
+import {PSwitch} from 'src/components/p-switch/PSwitch'
 import {afterEach, expect, it, vi} from 'vitest'
 import {Style} from '../Style'
-vi.mock('src/components/PSwitch', () => ({PSwitch: vi.fn()}))
+vi.mock('src/components/p-switch/PSwitch', () => ({PSwitch: vi.fn()}))
 
 afterEach(() => {
   cleanup()

@@ -2,7 +2,7 @@ import {usePDisplayPreferences} from 'src/features/focus-room-display-preference
 import {cx} from 'class-variance-authority'
 import {usePSceneStyle} from '../../features/focus-room-animation'
 import {useDesktopMode, useDesktopSceneSettingsListener} from '../../features/desktop-mode'
-import {PMusicPlayer} from '../PMusicPlayer'
+import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
 import {DesktopSurfaceFrame} from './Frame'
 import * as m from '@paraglide/message'
 

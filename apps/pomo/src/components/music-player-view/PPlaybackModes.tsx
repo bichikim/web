@@ -1,5 +1,5 @@
 import {useTooltipTrigger} from '../tooltip'
-import {PTooltip} from '../PTooltip'
+import {PTooltip} from '../p-tooltip/PTooltip'
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 

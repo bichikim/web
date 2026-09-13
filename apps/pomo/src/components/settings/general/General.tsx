@@ -1,9 +1,9 @@
-import {PSelect, type PSelectOption} from '../../PSelect'
+import {PSelect, type PSelectOption} from '../../p-select/PSelect'
 import {type DisplayThemePreference, useDisplayTheme} from '../../../features/display-theme'
 import {type ScreenWakeLockController} from '../../../features/screen-wake-lock'
 import * as m from '@paraglide/message'
 import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
-import {PHealthCheck} from '../../PHealthCheck'
+import {PHealthCheck} from '../../p-health-check/PHealthCheck'
 import {CLASSES, type PSettingsProps} from './shared'
 import {PGeneralDisplaySettings} from './Display'
 

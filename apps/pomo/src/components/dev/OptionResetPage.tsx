@@ -2,8 +2,8 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createSignal, For, Show, untrack} from 'solid-js'
-import {PButton} from 'src/components/PButton'
-import {PModal} from 'src/components/PModal'
+import {PButton} from 'src/components/p-button/PButton'
+import {PModal} from 'src/components/p-modal/PModal'
 import {
   createRuntimeOptionResetManager,
   OPTION_RESET_GROUPS,

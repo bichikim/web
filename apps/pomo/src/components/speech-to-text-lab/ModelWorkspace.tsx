@@ -1,4 +1,4 @@
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {type JSX, Match, Show, Switch, untrack} from 'solid-js'
 import {type SpeechModelDefinition, useSpeechToText} from '../../features/speech-to-text/index'

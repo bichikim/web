@@ -1,7 +1,7 @@
 import * as m from '@paraglide/message'
 
-import {PButton} from '../PButton'
-import {InlineIconText} from '../InlineIconText'
+import {PButton} from '../p-button/PButton'
+import {InlineIconText} from '../inline-icon-text/InlineIconText'
 
 export interface PStudioTourHintProps {
   readonly onDismiss: () => void

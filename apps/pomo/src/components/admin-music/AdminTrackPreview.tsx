@@ -1,6 +1,6 @@
 import {createEffect, createSignal, type JSX, Show} from 'solid-js'
 
-import {PAudioPreview} from '../PAudioPreview'
+import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
 import {useAdminTrackPreview} from '../../features/admin-music'
 
 export interface AdminTrackPreviewProps {

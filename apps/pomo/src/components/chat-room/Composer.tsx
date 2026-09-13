@@ -1,4 +1,4 @@
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {type ChatController} from '../../features/chat/index'

@@ -1,7 +1,7 @@
 import {P_MOUTH_TRANSITION_PATHS} from '../../features/focus-room-animation/index'
 import type {PReviewMouthFrame} from 'src/features/focus-room-layer-review'
 import {P_VISEMES} from '../../features/lip-sync/index'
-import {PSelect} from '../PSelect'
+import {PSelect} from '../p-select/PSelect'
 import {LayerToggle} from './LayerToggle'
 import {VISEME_LABELS} from './shared'
 

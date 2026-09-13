@@ -1,1 +1,1 @@
-export {PMemoryAssist as MemoryAssistPanel} from '../PMemoryAssist'
+export {PMemoryAssist as MemoryAssistPanel} from '../p-memory-assist/PMemoryAssist'

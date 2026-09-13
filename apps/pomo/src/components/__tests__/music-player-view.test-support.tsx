@@ -4,8 +4,8 @@ import {vi} from 'vitest'
 
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import type {PTrack} from '../../features/focus-room-audio'
-import {MusicPlayerView} from '../MusicPlayerView'
-import type {PAlbumLibraryProps} from '../PAlbumLibrary'
+import {MusicPlayerView} from '../music-player-view/MusicPlayerView'
+import type {PAlbumLibraryProps} from '../p-album-library/PAlbumLibrary'
 
 vi.mock('media-chrome', () => ({}))
 
@@ -25,7 +25,7 @@ const albumLibraryMocks = vi.hoisted(() => ({
 export const getAddedAlbumTracks = () => albumLibraryMocks.addedTracks
 export const getStopAlbumPreview = () => albumLibraryMocks.stopPreview
 
-vi.mock('../PAlbumLibrary', () => ({
+vi.mock('../p-album-library/PAlbumLibrary', () => ({
   PAlbumLibrary: (props: PAlbumLibraryProps) => (
     <>
       <button

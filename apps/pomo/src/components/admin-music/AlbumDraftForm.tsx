@@ -1,4 +1,4 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'

@@ -1,6 +1,6 @@
 import {cva} from 'class-variance-authority'
 
-export const settingsActionClasses = cva(
+export const SETTINGS_ACTION_CLASSES = cva(
   'inline-flex box-border flex-none cursor-pointer items-center justify-center gap-[0.35rem] ' +
     'rounded-control border border-solid border-highlight [background-color:transparent] px-3 ' +
     'text-modal-detail font-bold text-foreground no-underline [font:inherit] ' +

@@ -13,15 +13,17 @@ import {
   useModelDownload,
 } from '../../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
-import {PSelect} from '../../PSelect'
+import {PSelect} from '../../p-select/PSelect'
 import {LanguageLearningWords} from '../Words'
 import {generateLanguageLearningWordPronunciation} from '../word-pronunciation'
 
 const audioRepositoryMocks = vi.hoisted(() => ({create: vi.fn()}))
 const originalGetLocale = getLocale
 
-vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
-vi.mock('../../PModelDownloadConsent', () => ({PModelDownloadConsent: vi.fn(() => null)}))
+vi.mock('../../p-select/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('../../p-model-download-consent/PModelDownloadConsent', () => ({
+  PModelDownloadConsent: vi.fn(() => null),
+}))
 vi.mock('../../settings/ActionLink', () => ({
   PSettingsActionLink: (props: {readonly children: string; readonly href: string}) => (
     <a href={props.href}>{props.children}</a>

@@ -1,6 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
-import {PButton} from 'src/components/PButton'
+import {PButton} from 'src/components/p-button/PButton'
 import {getEntryLabel} from './deletion'
 
 interface CacheSectionProps {

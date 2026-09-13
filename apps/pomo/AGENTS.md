@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Component prefixes
+
+- Styled components normally use the `S` prefix and headless components use `H`; in Pomo, styled components use `P` instead of `S`.
+
 ## SolidStart, not Next.js or React
 
 - Pomo is SolidStart on Solid.js. Do not apply Next.js or React folder layouts, file conventions, APIs, or component patterns.

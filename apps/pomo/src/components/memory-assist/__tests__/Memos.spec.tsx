@@ -29,7 +29,7 @@ vi.mock('../../../features/memory-assist/repository', async () => ({
   ...(await vi.importActual('../../../features/memory-assist/repository')),
   updateMemoryMemos: mocks.updateMemos,
 }))
-vi.mock('../../PButton', () => ({
+vi.mock('../../p-button/PButton', () => ({
   PButton: (props: {
     accessibleLabel?: string
     children: JSX.Element
@@ -46,7 +46,7 @@ vi.mock('../../PButton', () => ({
     </button>
   ),
 }))
-vi.mock('../../PSelect', () => ({
+vi.mock('../../p-select/PSelect', () => ({
   PSelect: (props: {
     label: string
     onChange: (value: string) => void
@@ -63,7 +63,7 @@ vi.mock('../../PSelect', () => ({
     </label>
   ),
 }))
-vi.mock('../../PSwitch', () => ({
+vi.mock('../../p-switch/PSwitch', () => ({
   PSwitch: (props: {checked: boolean; label: string; onChange: (value: boolean) => void}) => (
     <label>
       {props.label}

@@ -29,7 +29,7 @@ vi.mock('@solidjs/start', () => ({clientOnly: vi.fn(() => renderFallback)}))
 vi.mock('src/features/admin-music/cover-image', () => coverImageMocks)
 vi.mock('src/features/admin-music/catalog-query', () => catalogQueryMocks)
 
-import {AdminMusic} from '../../AdminMusic'
+import {AdminMusic} from '../../admin-music/AdminMusic'
 
 export const catalogWithAlbum = {
   albums: [

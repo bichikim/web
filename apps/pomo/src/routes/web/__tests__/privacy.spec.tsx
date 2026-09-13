@@ -5,7 +5,7 @@ import {expect, it, vi} from 'vitest'
 
 const policyMocks = vi.hoisted(() => ({PPrivacyPolicy: vi.fn()}))
 
-vi.mock('src/components/PPrivacyPolicy', () => policyMocks)
+vi.mock('src/components/p-privacy-policy/PPrivacyPolicy', () => policyMocks)
 
 import WebPrivacyPage from '../privacy'
 

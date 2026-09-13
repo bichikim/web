@@ -26,14 +26,14 @@ vi.mock('../../../features/desktop-mode', () => ({
   useDesktopSceneSettingsPublisher: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
-vi.mock('../../PMusicPlayer', () => ({
+vi.mock('../../p-music-player/PMusicPlayer', () => ({
   PMusicPlayer: vi.fn((props) => (
     <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
       플레이어
     </div>
   )),
 }))
-vi.mock('../../PPomodoro', () => ({
+vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: vi.fn((props) => <div data-style={props.sceneStyle}>포모도로</div>),
 }))
 vi.mock('../../p-studio/Toolbar', () => ({

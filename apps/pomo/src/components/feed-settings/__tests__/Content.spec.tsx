@@ -8,13 +8,13 @@ import {For} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import {PSelect} from 'src/components/PSelect'
+import {PSelect} from 'src/components/p-select/PSelect'
 import {PFeedContext} from 'src/features/focus-room-feed'
 import {PFeedSettingsContent} from '../Content'
 
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
-vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 
 const renderSettings = () => render(() => <PFeedSettingsContent />)
 const originalGetLocale = getLocale

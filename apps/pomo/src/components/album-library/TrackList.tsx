@@ -1,6 +1,6 @@
 import {useAction, useSubmissions} from '@solidjs/router'
 import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
-import {PTag} from '../PTag'
+import {PTag} from '../p-tag/PTag'
 import {
   type PTrack,
   type PTrackListing,

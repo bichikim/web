@@ -27,7 +27,7 @@ vi.mock('../../../features/focus-room-audio', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../features/focus-room-audio')>()),
   ...audioMocks,
 }))
-vi.mock('../../PModal', () => ({
+vi.mock('../../p-modal/PModal', () => ({
   PModal: (props: {
     readonly children: JSX.Element
     readonly footer?: JSX.Element
