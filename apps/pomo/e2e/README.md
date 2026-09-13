@@ -123,3 +123,18 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/screen-saver.spec.ts
 ```
+
+[전체 화면 테스트](rendering/fullscreen.spec.ts)는 일반 설정의 스위치로 실제 브라우저 전체 화면에
+진입하고, 탭 전환과 설정 재진입 후 상태가 유지되는지 확인합니다. 스위치로 해제한 뒤 다시
+진입하고, 외부 `document.exitFullscreen()`의 상태 변화도 UI에 반영되는지 검증합니다.
+브라우저 API와 이벤트는 모킹하지 않습니다. 마지막 닫기에서 설정 버튼의 포커스 복원도 확인합니다.
+
+전체 화면이 켜진 다크 설정 화면은 이전 기준이 없는 최초 PNG이며, 생성 후 일반 비교를 다시
+실행했습니다. [촬영 기록](rendering/evidence/fullscreen/manifest.json)은 대표 현재 이미지와
+기존 일반 설정의 기준·현재·차이 이미지를 포함합니다. 기존 일반 설정의 흐린 배경 차이는
+원인 미확인으로 남기며 기준을 갱신하지 않습니다. 빈 재생목록과 고정 시각을 사용하고,
+실제 OS 창 장식·하드웨어 화면 유지·네이티브 플랫폼은 검증 범위에 포함하지 않습니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/fullscreen.spec.ts
+```
