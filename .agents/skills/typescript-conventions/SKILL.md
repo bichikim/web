@@ -29,7 +29,7 @@ Open and apply the reference files for the relevant section before working. For 
 18. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
 19. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
 20. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
-21. Outside a feature, use one feature entrypoint per file when its cohesive API can be re-exported; keep subpaths for runtime boundaries, side effects, or cycle avoidance. Do not omit `index.ts` re-exports to hide internals.
+21. Group cohesive feature APIs in an entrypoint and prefer importing through it from outside the feature when practical. Direct subpath imports are also allowed; bypassing an available entrypoint alone is not a violation. Do not omit `index.ts` re-exports to hide internals.
 22. When implementing functions, prefer one primary exported function per file and name the file after that function in kebab-case.
 23. Do not directly use the built-in `performance` API or `eval` function, including through `globalThis` or `window`.
 
