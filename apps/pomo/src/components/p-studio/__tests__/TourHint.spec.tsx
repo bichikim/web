@@ -3,10 +3,10 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {PButton} from '../../PButton'
+import {PButton} from '../../p-button/PButton'
 import {PStudioTourHint} from '../TourHint'
 
-vi.mock('../../PButton', () => ({
+vi.mock('../../p-button/PButton', () => ({
   PButton: vi.fn((props: {readonly accessibleLabel?: string; readonly onPress?: () => void}) => (
     <button aria-label={props.accessibleLabel} onClick={props.onPress} type="button" />
   )),

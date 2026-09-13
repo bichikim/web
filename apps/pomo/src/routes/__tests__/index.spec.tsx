@@ -15,13 +15,13 @@ vi.mock('@solidjs/start', () => ({
     return (props: {readonly fallback: JSX.Element}) => <>{props.fallback}</>
   },
 }))
-vi.mock('../../components/AppsInTossHomePage', () => ({
+vi.mock('../../components/apps-in-toss-home-page/AppsInTossHomePage', () => ({
   AppsInTossHomePage: () => <p>Apps in Toss home</p>,
 }))
-vi.mock('../../components/AppsInTossLoadingPage', () => ({
+vi.mock('../../components/apps-in-toss-loading-page/AppsInTossLoadingPage', () => ({
   AppsInTossLoadingPage: () => <p>Apps in Toss loading</p>,
 }))
-vi.mock('../../components/PHomePage', () => ({PHomePage: () => <p>web home</p>}))
+vi.mock('../../components/p-home-page/PHomePage', () => ({PHomePage: () => <p>web home</p>}))
 
 afterEach(() => {
   cleanup()

@@ -2,7 +2,7 @@
 import {clientOnly} from '@solidjs/start'
 import {beforeEach, expect, it, vi} from 'vitest'
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
-vi.mock('src/components/SpeechToTextLab', () => ({SpeechToTextLab: vi.fn()}))
+vi.mock('src/components/speech-to-text-lab/SpeechToTextLab', () => ({SpeechToTextLab: vi.fn()}))
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()

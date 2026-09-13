@@ -1,8 +1,8 @@
 import {For} from 'solid-js'
 import * as m from '@paraglide/message'
 import type {PictureDiaryStroke} from '../../../features/picture-diary'
-import {PSelect} from '../../PSelect'
-import {PButton} from '../../PButton'
+import {PSelect} from '../../p-select/PSelect'
+import {PButton} from '../../p-button/PButton'
 import {DRAWING_COLORS} from './brush-classes'
 
 interface ToolsProps {

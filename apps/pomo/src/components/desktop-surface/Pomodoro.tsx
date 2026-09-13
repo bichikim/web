@@ -1,7 +1,7 @@
 import {usePDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {usePSceneStyle} from '../../features/focus-room-animation'
 import {useDesktopMode, useDesktopSceneSettingsListener} from '../../features/desktop-mode'
-import {PPomodoro} from '../PPomodoro'
+import {PPomodoro} from '../p-pomodoro/PPomodoro'
 import {DesktopSurfaceFrame} from './Frame'
 import * as m from '@paraglide/message'
 

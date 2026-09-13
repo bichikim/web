@@ -3,7 +3,7 @@ import {cva, cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {PSelectAppearance, PSelectOption} from './shared'
 
-const selectItemClasses = cva(
+const SELECT_ITEM_CLASSES = cva(
   'min-h-10 min-w-0 cursor-pointer items-center gap-3 rounded-3 px-3 py-2 outline-none ' +
     'transition-[background-color_120ms_ease,color_120ms_ease] ' +
     'ui-highlighted:bg-secondary-soft motion-reduce:transition-none',
@@ -24,7 +24,7 @@ const selectItemClasses = cva(
   },
 )
 
-const selectItemIndicatorClasses = cva('inline-flex flex-none items-center justify-center', {
+const SELECT_ITEM_INDICATOR_CLASSES = cva('inline-flex flex-none items-center justify-center', {
   defaultVariants: {appearance: 'default'},
   variants: {
     appearance: {
@@ -37,7 +37,7 @@ const selectItemIndicatorClasses = cva('inline-flex flex-none items-center justi
   },
 })
 
-const selectItemTextClasses = cva('min-w-0', {
+const SELECT_ITEM_TEXT_CLASSES = cva('min-w-0', {
   defaultVariants: {appearance: 'default'},
   variants: {
     appearance: {
@@ -72,7 +72,7 @@ export const PSelectItem = <TValue extends string>(props: PSelectItemProps<TValu
   }
 
   return (
-    <Select.Item class={selectItemClasses({appearance: props.appearance})} item={props.item}>
+    <Select.Item class={SELECT_ITEM_CLASSES({appearance: props.appearance})} item={props.item}>
       <Show when={props.appearance === 'icon' ? props.item.rawValue.icon : undefined}>
         {(icon) => (
           <span
@@ -81,7 +81,7 @@ export const PSelectItem = <TValue extends string>(props: PSelectItemProps<TValu
           />
         )}
       </Show>
-      <span class={selectItemTextClasses({appearance: props.appearance})}>
+      <span class={SELECT_ITEM_TEXT_CLASSES({appearance: props.appearance})}>
         <Select.ItemLabel class="block overflow-hidden text-ellipsis whitespace-nowrap">
           {props.item.rawValue.label}
         </Select.ItemLabel>
@@ -94,7 +94,7 @@ export const PSelectItem = <TValue extends string>(props: PSelectItemProps<TValu
         </Show>
       </span>
       <Select.ItemIndicator
-        class={selectItemIndicatorClasses({appearance: props.appearance})}
+        class={SELECT_ITEM_INDICATOR_CLASSES({appearance: props.appearance})}
         forceMount={props.forceIndicator}
       >
         <span aria-hidden="true" class={indicatorIconClass()} />

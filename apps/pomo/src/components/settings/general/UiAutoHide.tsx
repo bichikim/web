@@ -1,7 +1,7 @@
 import {Show} from 'solid-js'
 import type {useUiAutoHide} from 'src/features/ui-auto-hide'
-import {PSelect} from '../../PSelect'
-import {PSwitch} from '../../PSwitch'
+import {PSelect} from '../../p-select/PSelect'
+import {PSwitch} from '../../p-switch/PSwitch'
 
 interface PUiAutoHideSettingsProps {
   readonly controller?: ReturnType<typeof useUiAutoHide>

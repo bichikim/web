@@ -1,7 +1,7 @@
 import {Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type BackgroundError, useBackground} from 'src/features/background'
-import {PRadioSwitch} from '../../PRadioSwitch'
+import {PRadioSwitch} from '../../p-radio-switch/PRadioSwitch'
 import {PSettingsActionButton} from '../ActionButton'
 import {CLASSES, type PSettingsProps} from '../general/shared'
 import {Scene} from './Scene'

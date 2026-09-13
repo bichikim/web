@@ -6,7 +6,7 @@
 
 집중 중 필요한 계산·변환을 Pomo 안에서 해결한다. 보조 메뉴 순서는 `도구 → 기억 보조 → 설정`으로 한다. `도구`는 새 버튼이라는 의미이며, NEW 배지와 표시 기간은 이번 범위에 포함하지 않는다.
 
-도구 버튼을 누르면 도구 선택과 작업 영역이 있는 모달을 연다. 기존 [기억 보조](../../../src/components/PMemoryAssist.tsx), [설정](../../../src/components/PSettings.tsx), [모달](../../../src/components/PModal.tsx)의 버튼·표면·포커스 처리와 일관되게 설계한다. 640px 미만 화면에서는 선택 메뉴로 도구를 전환하고, 넓은 화면에서는 목록과 상세 화면을 함께 표시한다.
+도구 버튼을 누르면 도구 선택과 작업 영역이 있는 모달을 연다. 기존 [기억 보조](../../../src/components/p-memory-assist/PMemoryAssist.tsx), [설정](../../../src/components/p-settings/PSettings.tsx), [모달](../../../src/components/p-modal/PModal.tsx)의 버튼·표면·포커스 처리와 일관되게 설계한다. 640px 미만 화면에서는 선택 메뉴로 도구를 전환하고, 넓은 화면에서는 목록과 상세 화면을 함께 표시한다.
 
 대상은 일반 웹과 앱인토스다. 각 단계에서 앱인토스 공식 문서를 확인하고 파일 선택·결과 저장 등 플랫폼 차이를 검증한다. 도구를 열거나 닫아도 진행 중인 집중 타이머와 음악을 유지한다.
 
@@ -100,8 +100,8 @@
 
 ## 1차 구현 기록
 
-- 진입점: [PTools](../../../src/components/PTools.tsx), [도구 목록](../../../src/components/tools/Content.tsx). 한국어에서 다섯 도구, 영어에서 두 공통 도구를 표시한다.
-- 공용 입력: [PDatePicker](../../../src/components/PDatePicker.tsx)는 직접 그린 달력, [PTimePicker](../../../src/components/PTimePicker.tsx)는 24시간 시·분 선택이다. 네이티브 date/time input을 사용하지 않는다. 현재 공용 헤드리스 패키지와 설치된 Kobalte 0.13.11에 날짜·시간 전용 구현이 없어, 연도·월·시·분은 기존 Kobalte 기반 [PSelect](../../../src/components/PSelect.tsx)를 재사용했다.
+- 진입점: [PTools](../../../src/components/p-tools/PTools.tsx), [도구 목록](../../../src/components/tools/Content.tsx). 한국어에서 다섯 도구, 영어에서 두 공통 도구를 표시한다.
+- 공용 입력: [PDatePicker](../../../src/components/p-date-picker/PDatePicker.tsx)는 직접 그린 달력, [PTimePicker](../../../src/components/p-time-picker/PTimePicker.tsx)는 24시간 시·분 선택이다. 네이티브 date/time input을 사용하지 않는다. 현재 공용 헤드리스 패키지와 설치된 Kobalte 0.13.11에 날짜·시간 전용 구현이 없어, 연도·월·시·분은 기존 Kobalte 기반 [PSelect](../../../src/components/p-select/PSelect.tsx)를 재사용했다.
 - 날짜 선택기는 ISO 날짜, 선택 범위, 이전·다음 달, 연도·월 선택, 방향키·PageUp·PageDown·Home·End·Escape, 선택 후 포커스 복귀를 제공한다. 기본 범위는 1900~2100년이며 소비자는 유효한 ISO min/max를 오름차순으로 전달한다.
 - 계산 계약: [날짜 연산](../../../src/features/civil-date/index.ts), [단위·글자·복무·음력 변환](../../../src/features/tools/index.ts). 입력과 결과는 기기에서 처리한다. 음력 지원 범위는 양력 1900-01-01~2050-12-31이며, 경계 날짜의 역변환을 위해 음력 연도 선택은 1899년부터 제공한다.
 - 복사: 웹 Clipboard API와 앱인토스 Clipboard.setText를 분기한다. 앱인토스 설정에 clipboard/write 권한을 선언했고 거부·실패 시 수동 복사 안내를 표시한다.
@@ -136,7 +136,7 @@
 검증 명령:
 
 ```sh
-wallaby run apps/pomo/src/features/tools/__tests__/*.spec.ts apps/pomo/src/features/civil-date/__tests__/*.spec.ts apps/pomo/src/components/tools/__tests__/*.spec.tsx apps/pomo/src/components/__tests__/PDatePicker.spec.tsx apps/pomo/src/components/__tests__/PTimePicker.spec.tsx apps/pomo/src/components/__tests__/PSideTabs.spec.tsx apps/pomo/src/components/p-studio/__tests__/Toolbar.spec.tsx --config wallaby.js
+wallaby run apps/pomo/src/features/tools/__tests__/*.spec.ts apps/pomo/src/features/civil-date/__tests__/*.spec.ts apps/pomo/src/components/tools/__tests__/*.spec.tsx apps/pomo/src/components/p-date-picker/__tests__/PDatePicker.spec.tsx apps/pomo/src/components/p-time-picker/__tests__/PTimePicker.spec.tsx apps/pomo/src/components/p-side-tabs/__tests__/PSideTabs.spec.tsx apps/pomo/src/components/p-studio/__tests__/Toolbar.spec.tsx --config wallaby.js
 pnpm --filter @apps/pomo typecheck
 pnpm lint
 pnpm format
@@ -158,7 +158,7 @@ pnpm --filter @apps/pomo build:apps-in-toss-ssg
 후속 전체 리뷰 2회에서 재현된 P0/P1/P2는 없었다. 관찰자의 너비 변경·버튼 추가 재계산·해제 시 disconnect 회귀 테스트를 추가했다. 아래 테스트는 47개 모두 통과했다.
 
 ```sh
-wallaby run apps/pomo/src/features/focus-room-display-preferences/__tests__/*.spec.* apps/pomo/src/components/settings/general/__tests__/Display.spec.tsx apps/pomo/src/components/p-studio/__tests__/Toolbar.spec.tsx apps/pomo/src/components/p-studio/__tests__/use-toolbar-wrap.spec.tsx apps/pomo/src/components/__tests__/PStudio.spec.tsx --config wallaby.js
+wallaby run apps/pomo/src/features/focus-room-display-preferences/__tests__/*.spec.* apps/pomo/src/components/settings/general/__tests__/Display.spec.tsx apps/pomo/src/components/p-studio/__tests__/Toolbar.spec.tsx apps/pomo/src/components/p-studio/__tests__/use-toolbar-wrap.spec.tsx apps/pomo/src/components/p-studio/__tests__/PStudio.spec.tsx --config wallaby.js
 pnpm --filter @apps/pomo typecheck
 pnpm lint
 pnpm format

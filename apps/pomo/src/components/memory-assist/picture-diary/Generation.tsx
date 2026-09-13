@@ -1,11 +1,11 @@
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {createEffect, onCleanup, Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type ArtStyle, useImageGeneration} from 'src/features/image-generation'
 import type {PictureDiaryImage} from 'src/features/picture-diary'
-import {PSelect} from '../../PSelect'
-import {PButton} from '../../PButton'
+import {PSelect} from '../../p-select/PSelect'
+import {PButton} from '../../p-button/PButton'
 
 const PROGRESS_CLASSES =
   'block appearance-none w-full h-1.5 mt-2.5 mb-1 overflow-hidden border-0 rounded ' +

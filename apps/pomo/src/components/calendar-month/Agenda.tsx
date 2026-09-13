@@ -3,7 +3,7 @@ import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
 import {type CalendarEvent, type CalendarEvents} from '../../features/calendar'
 import {useMemoryMemos} from '../../features/memory-assist'
-import {CalendarAlarmControl} from '../CalendarAlarmControl'
+import {CalendarAlarmControl} from '../calendar-alarm-control/CalendarAlarmControl'
 import {formatDate} from './dates'
 
 const formatEventTime = (event: CalendarEvent, timeZone: string) =>

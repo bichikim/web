@@ -4,11 +4,11 @@ import {render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
 import {useKoreanTextSegments} from '../../../features/korean-text-postprocessor'
-import {KoreanTextRenderer} from '../../KoreanTextRenderer'
+import {KoreanTextRenderer} from '../../korean-text-renderer/KoreanTextRenderer'
 import {ProcessedKoreanText} from '../ProcessedKoreanText'
 
 vi.mock('../../../features/korean-text-postprocessor', () => ({useKoreanTextSegments: vi.fn()}))
-vi.mock('../../KoreanTextRenderer', () => ({KoreanTextRenderer: vi.fn()}))
+vi.mock('../../korean-text-renderer/KoreanTextRenderer', () => ({KoreanTextRenderer: vi.fn()}))
 
 it('should process and render reactive Korean text segments', () => {
   vi.mocked(useKoreanTextSegments).mockImplementation((props) => () => [

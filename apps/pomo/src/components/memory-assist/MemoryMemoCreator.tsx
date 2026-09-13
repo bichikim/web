@@ -1,6 +1,6 @@
 import {createSignal} from 'solid-js'
 import * as m from '@paraglide/message'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 import {MemoryMemoModal} from './MemoryMemoModal'
 import {useMemoCreator} from './use-memo-creator'
 

@@ -4,7 +4,7 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {createSignal, type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/components/PModal'
+import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import {type ModelDownloadState, useModelDownload} from 'src/features/model-download'
 import type {ModelStorageManager} from 'src/features/model-storage'
 import {failureResult, successResult} from 'src/features/result'
@@ -16,7 +16,7 @@ vi.mock('@solidjs/meta', () => ({
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
-vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 let setDownloadState: (value: ModelDownloadState) => ModelDownloadState

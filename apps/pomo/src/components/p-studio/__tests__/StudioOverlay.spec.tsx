@@ -4,9 +4,9 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal} from 'solid-js'
 import {StudioOverlay} from '../StudioOverlay'
-import {PScreenSaver} from '../../PScreenSaver'
+import {PScreenSaver} from '../../p-screen-saver/PScreenSaver'
 
-vi.mock('../../PScreenSaver', () => ({PScreenSaver: vi.fn()}))
+vi.mock('../../p-screen-saver/PScreenSaver', () => ({PScreenSaver: vi.fn()}))
 vi.mock('../Tour', () => ({PStudioTour: vi.fn()}))
 vi.mock('../TourHint', () => ({PStudioTourHint: vi.fn()}))
 

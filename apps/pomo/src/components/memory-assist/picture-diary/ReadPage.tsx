@@ -4,7 +4,7 @@ import * as m from '@paraglide/message'
 import {type PictureDiaryEntry} from '../../../features/picture-diary'
 import {getLocalizedWeatherLabel} from '../../../features/localization'
 import {getWeatherPresentation} from '../../../features/weather'
-import {HConfirmButton} from '../../HConfirmButton'
+import {HConfirmButton} from '../../h-confirm-button/HConfirmButton'
 import {PictureDiaryCanvas} from './Canvas'
 import {type PageSide} from './editor-props'
 

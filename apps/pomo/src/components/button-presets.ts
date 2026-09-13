@@ -1,4 +1,4 @@
-import type {PButtonProps} from './PButton'
+import type {PButtonProps} from './p-button/PButton'
 
 export const GLASS_ICON_BUTTON = {
   backdropBlur: true,

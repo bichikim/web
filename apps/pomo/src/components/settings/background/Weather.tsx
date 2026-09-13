@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {PWeatherSettings} from '../../PWeatherSettings'
+import {PWeatherSettings} from '../../p-weather-settings/PWeatherSettings'
 import {CLASSES, type PSettingsProps} from '../general/shared'
 
 export const Weather = (props: PSettingsProps) => (

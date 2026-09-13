@@ -4,9 +4,9 @@ import {cleanup, render, screen} from '@solidjs/testing-library'
 import type {Accessor, Component, JSX} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import type {PRecoveryBoundaryProps} from '../components/PRecoveryBoundary'
+import type {PRecoveryBoundaryProps} from '../components/p-recovery-boundary/PRecoveryBoundary'
 import {useApplicationRecovery} from '../features/application-recovery'
-import {SafeArea} from '../components/SafeArea'
+import {SafeArea} from '../components/safe-area/SafeArea'
 import {Analytics} from '../components/vercel'
 
 const componentMocks = vi.hoisted(() => ({
@@ -25,15 +25,17 @@ vi.mock('@solidjs/meta', () => ({MetaProvider: componentMocks.metaProvider}))
 vi.mock('../components/vercel', () => ({Analytics: vi.fn()}))
 vi.mock('@solidjs/router', () => ({Router: componentMocks.router}))
 vi.mock('@solidjs/start/router', () => ({FileRoutes: componentMocks.fileRoutes}))
-vi.mock('../components/PDocumentMetadata', () => ({PDocumentMetadata: componentMocks.metadata}))
-vi.mock('../components/PFocusRoomLayout', () => ({
+vi.mock('../components/p-document-metadata/PDocumentMetadata', () => ({
+  PDocumentMetadata: componentMocks.metadata,
+}))
+vi.mock('../components/p-focus-room-layout/PFocusRoomLayout', () => ({
   PFocusRoomLayout: componentMocks.focusRoomLayout,
 }))
-vi.mock('../components/PRecoveryBoundary', () => ({
+vi.mock('../components/p-recovery-boundary/PRecoveryBoundary', () => ({
   PRecoveryBoundary: componentMocks.recoveryBoundary,
 }))
 vi.mock('../features/application-recovery', () => ({useApplicationRecovery: vi.fn()}))
-vi.mock('../components/SafeArea', () => ({SafeArea: vi.fn()}))
+vi.mock('../components/safe-area/SafeArea', () => ({SafeArea: vi.fn()}))
 vi.mock('../features/display-theme', () => ({
   DisplayThemeProvider: componentMocks.displayThemeProvider,
 }))

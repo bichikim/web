@@ -6,7 +6,7 @@ import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import {PSelect} from 'src/components/PSelect'
+import {PSelect} from 'src/components/p-select/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
@@ -35,7 +35,7 @@ vi.mock('@solidjs/router', () => ({
     </a>
   ),
 }))
-vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/focus-room-dialogue', async () => {
   const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
     'src/features/focus-room-dialogue',

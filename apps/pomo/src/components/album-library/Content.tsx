@@ -1,5 +1,5 @@
 import {createMemo, ErrorBoundary, For, Show, Suspense} from 'solid-js'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 import {reportClientError} from '../../features/client-error-reporter'
 import {type PResolvedAlbum, type PTrack, useTrackPreview} from '../../features/focus-room-audio'
 import {AlbumCard} from './Card'

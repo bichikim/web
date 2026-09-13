@@ -1,7 +1,7 @@
 import {createSignal, type JSX, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {copyToolResult} from 'src/features/tools'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 
 interface ResultProps {
   readonly children?: JSX.Element

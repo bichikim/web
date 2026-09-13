@@ -3,7 +3,7 @@
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {PAlbumLibrary} from '../../PAlbumLibrary'
+import {PAlbumLibrary} from '../../p-album-library/PAlbumLibrary'
 import {PMusicPlayerContent} from '../PMusicPlayerContent'
 import {AlbumLibraryFixture} from './test-support/AlbumLibraryFixture'
 import {
@@ -20,7 +20,7 @@ const storageMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('media-chrome', () => ({}))
-vi.mock('../../PAlbumLibrary', () => ({PAlbumLibrary: vi.fn()}))
+vi.mock('../../p-album-library/PAlbumLibrary', () => ({PAlbumLibrary: vi.fn()}))
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
 const stubPlaylistFetch = (loadCount: number) => {

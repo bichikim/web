@@ -1,7 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 
-import {PSelect, type PSelectOption} from '../PSelect'
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
   type AutomaticDialogueSettingsRepository,

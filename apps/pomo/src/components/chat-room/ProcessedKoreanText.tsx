@@ -1,5 +1,5 @@
 import {useKoreanTextSegments} from '../../features/korean-text-postprocessor/index'
-import {KoreanTextRenderer} from '../KoreanTextRenderer'
+import {KoreanTextRenderer} from '../korean-text-renderer/KoreanTextRenderer'
 
 interface ProcessedKoreanTextProps {
   readonly text: string

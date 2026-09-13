@@ -2,7 +2,7 @@
 import {clientOnly} from '@solidjs/start'
 import {beforeEach, expect, it, vi} from 'vitest'
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
-vi.mock('src/components/TextMoodLab', () => ({TextMoodLab: vi.fn()}))
+vi.mock('src/components/text-mood-lab/TextMoodLab', () => ({TextMoodLab: vi.fn()}))
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()

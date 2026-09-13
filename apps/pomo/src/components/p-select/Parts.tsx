@@ -4,7 +4,7 @@ import {cva, cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {PSelectAppearance, PSelectOption} from './shared'
 
-const selectContentClasses = cva(
+const SELECT_CONTENT_CLASSES = cva(
   'max-h-[min(18rem,var(--kb-popper-available-height))] border border-solid border-border ' +
     'backdrop-blur-surface overflow-hidden rounded-4 bg-surface-strong p-2 text-foreground ' +
     'shadow-panel [transform-origin:var(--kb-select-content-transform-origin)] ' +
@@ -21,7 +21,7 @@ const selectContentClasses = cva(
   },
 )
 
-const selectTriggerClasses = cva(
+const SELECT_TRIGGER_CLASSES = cva(
   'border border-solid border-border backdrop-blur-surface group overflow-hidden rounded-control ' +
     'bg-surface text-foreground outline-none ' +
     'transition-[border-color_160ms_ease,background-color_160ms_ease] ' +
@@ -78,7 +78,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
     </Show>
     <Select.Trigger
       aria-label={props.accessibleLabel}
-      class={selectTriggerClasses({appearance: props.appearance})}
+      class={SELECT_TRIGGER_CLASSES({appearance: props.appearance})}
     >
       <Show
         when={props.appearance === 'icon' ? props.selectedIcon : undefined}
@@ -120,7 +120,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
     <Select.Portal>
       <Select.Content
         data-kb-top-layer=""
-        class={selectContentClasses({appearance: props.appearance})}
+        class={SELECT_CONTENT_CLASSES({appearance: props.appearance})}
       >
         <Show when={props.multiple ? props.clearLabel : undefined}>
           {(clearLabel) => (

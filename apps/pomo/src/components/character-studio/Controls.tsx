@@ -1,4 +1,4 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
 

@@ -2,7 +2,7 @@
 import {cva, type VariantProps} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
-const sectionHeadingClasses = cva(
+const SECTION_HEADING_CLASSES = cva(
   [
     'flex items-center gap-[0.45rem]',
     '[&_h3]:m-0 [&_h3]:text-base [&_h3]:font-[750] [&_h3]:text-foreground',
@@ -19,7 +19,7 @@ const sectionHeadingClasses = cva(
   },
 )
 
-export interface PSettingsSectionHeadingProps extends VariantProps<typeof sectionHeadingClasses> {
+export interface PSettingsSectionHeadingProps extends VariantProps<typeof SECTION_HEADING_CLASSES> {
   readonly actions?: JSX.Element
   readonly class?: string
   readonly count?: JSX.Element
@@ -28,7 +28,7 @@ export interface PSettingsSectionHeadingProps extends VariantProps<typeof sectio
 }
 
 export const PSettingsSectionHeading = (props: PSettingsSectionHeadingProps) => (
-  <div class={sectionHeadingClasses({class: props.class, divider: props.divider})}>
+  <div class={SECTION_HEADING_CLASSES({class: props.class, divider: props.divider})}>
     <h3 id={props.titleId}>{props.title}</h3>
     <Show when={props.count !== undefined}>
       <span>{props.count}</span>

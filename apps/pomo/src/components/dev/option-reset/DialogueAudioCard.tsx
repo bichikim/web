@@ -1,5 +1,5 @@
 import {createSignal, Show} from 'solid-js'
-import {PButton} from 'src/components/PButton'
+import {PButton} from 'src/components/p-button/PButton'
 import {
   deleteStoredDialogueAudio,
   type DialogueAudioDeletionResult,

@@ -33,7 +33,7 @@ vi.mock('@solidjs/router', async () => {
   return {...actual, revalidate: revalidationMocks.revalidate}
 })
 vi.mock('../../../features/client-error-reporter', () => reporterMocks)
-vi.mock('../../PButton', () => ({PButton: componentMocks.button}))
+vi.mock('../../p-button/PButton', () => ({PButton: componentMocks.button}))
 vi.mock('../Card', () => ({AlbumCard: componentMocks.albumCard}))
 
 import {PAlbumLibraryContent} from '../Content'

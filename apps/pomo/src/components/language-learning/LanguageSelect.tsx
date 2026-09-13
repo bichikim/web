@@ -4,7 +4,7 @@ import {
   LANGUAGE_LEARNING_LANGUAGES,
   type LanguageLearningLanguage,
 } from '../../features/language-learning'
-import {PSelect, type PSelectOption} from '../PSelect'
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
 
 const getLanguageLabel = (language: LanguageLearningLanguage) => {
   switch (language) {

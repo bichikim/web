@@ -4,7 +4,7 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
-vi.mock('../../PRadioSwitch', () => ({
+vi.mock('../../p-radio-switch/PRadioSwitch', () => ({
   PRadioSwitch: (props: {
     readonly disabled?: boolean
     readonly label: string

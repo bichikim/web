@@ -1,4 +1,4 @@
-import {AdminMusic} from '../../components/AdminMusic'
+import {AdminMusic} from '../../components/admin-music/AdminMusic'
 
 export default function AdminMusicPage() {
   return <AdminMusic />

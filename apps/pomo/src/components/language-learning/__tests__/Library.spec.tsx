@@ -13,10 +13,10 @@ import {
   readLanguageLearningSentences,
   writeLanguageLearningSentences,
 } from '../../../features/language-learning'
-import {PSelect} from '../../PSelect'
+import {PSelect} from '../../p-select/PSelect'
 import {LanguageLearningLibrary} from '../Library'
 
-vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('../../p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('../../../features/focus-room-dialogue', async () => {
   const actual: typeof import('../../../features/focus-room-dialogue') = await vi.importActual(
     '../../../features/focus-room-dialogue',

@@ -1,4 +1,4 @@
-import {PSelect, type PSelectOption} from '../PSelect'
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import type {PDialogue} from '../../features/focus-room-dialogue/schema'
 import * as m from '@paraglide/message'
 

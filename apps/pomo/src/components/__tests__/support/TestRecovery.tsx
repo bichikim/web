@@ -1,6 +1,6 @@
 import {type JSX} from 'solid-js'
 
-import {PRecoveryBoundary} from 'src/components/PRecoveryBoundary'
+import {PRecoveryBoundary} from 'src/components/p-recovery-boundary/PRecoveryBoundary'
 import {useApplicationRecovery} from 'src/features/application-recovery'
 
 interface TestRecoveryProps {

@@ -8,7 +8,7 @@ type VersionNoticeLoader = () => Promise<{default: Component}>
 const startMocks = vi.hoisted(() => ({clientOnly: vi.fn()}))
 
 vi.mock('@solidjs/start', () => startMocks)
-vi.mock('../../PVersionNotice', () => ({PVersionNotice: vi.fn()}))
+vi.mock('../../p-version-notice/PVersionNotice', () => ({PVersionNotice: vi.fn()}))
 
 afterEach(() => {
   vi.clearAllMocks()

@@ -1,6 +1,6 @@
 import {Show} from 'solid-js'
 import {vi} from 'vitest'
-import {PModal, type PModalProps} from 'src/components/PModal'
+import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import type {
   FeedDialogueJob,
   FeedDialogueListItem,

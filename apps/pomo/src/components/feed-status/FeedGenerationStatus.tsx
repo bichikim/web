@@ -1,6 +1,6 @@
 import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
 import {type JSX, Show} from 'solid-js'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import * as m from '@paraglide/message'
 import {FeedStatusSurface} from './Surface'

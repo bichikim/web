@@ -103,8 +103,8 @@ const SCRIBBLE_ICON_SET_PATH = fileURLToPath(
 )
 // 첫 홈 로드나 늦은 dynamic import에서 발견하면 Vite가 재최적화 후 페이지를 새로고침한다.
 const DEV_CLIENT_WARMUP_FILES = [
-  './src/components/PHomePage.tsx',
-  './src/components/PStudio.tsx',
+  './src/components/p-home-page/PHomePage.tsx',
+  './src/components/p-studio/PStudio.tsx',
   './src/components/p-studio/SceneCanvas.tsx',
   './src/entry-client.tsx',
   './src/routes/index.tsx',

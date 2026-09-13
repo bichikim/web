@@ -4,7 +4,7 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/components/PModal'
+import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import type {OptionResetManager} from 'src/features/dev-option-reset'
 import {OptionResetPage} from '../OptionResetPage'
 
@@ -14,7 +14,7 @@ vi.mock('@solidjs/meta', () => ({
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
-vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 
 const createManager = (): OptionResetManager => ({
   reset: vi.fn(async () => ({status: 'complete'}) as const),

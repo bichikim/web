@@ -12,7 +12,7 @@ import {
 import type {WeatherLocation} from '../../../features/weather'
 import {SceneToolbar} from '../Toolbar'
 
-vi.mock('../../PSelect', () => ({PSelect: () => null}))
+vi.mock('../../p-select/PSelect', () => ({PSelect: () => null}))
 vi.mock('../MemoryAssistPanel', () => ({MemoryAssistPanel: () => null}))
 vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: () => null}))
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: () => null}))

@@ -1,11 +1,11 @@
 import {PFeedProgress} from './Progress'
 import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
-import {PSwitch} from '../PSwitch'
-import {PInput} from 'src/components/PInput'
+import {PSwitch} from '../p-switch/PSwitch'
+import {PInput} from 'src/components/p-input/PInput'
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, For, Show} from 'solid-js'
 
-import {PSelect, type PSelectOption} from '../PSelect'
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {PSettingsActionButton} from '../settings/ActionButton'
 import {
   DEFAULT_FEED_VOICE_ID,

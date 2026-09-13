@@ -1,13 +1,13 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {PSelect} from 'src/components/PSelect'
-import {PSwitch} from 'src/components/PSwitch'
+import {PSelect} from 'src/components/p-select/PSelect'
+import {PSwitch} from 'src/components/p-switch/PSwitch'
 import {useFullscreen} from 'src/features/fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {PGeneralDisplaySettings} from '../Display'
-vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
-vi.mock('src/components/PSwitch', () => ({PSwitch: vi.fn()}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/p-switch/PSwitch', () => ({PSwitch: vi.fn()}))
 vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 

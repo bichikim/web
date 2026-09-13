@@ -6,9 +6,9 @@ import {
   solarToLunar,
   useSelection,
 } from 'src/features/tools'
-import {PDatePicker} from '../PDatePicker'
-import {PSelect} from '../PSelect'
-import {PSwitch} from '../PSwitch'
+import {PDatePicker} from '../p-date-picker/PDatePicker'
+import {PSelect} from '../p-select/PSelect'
+import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
 
 const MAXIMUM_DAY = 30

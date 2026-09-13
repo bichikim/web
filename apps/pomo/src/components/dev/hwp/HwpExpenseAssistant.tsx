@@ -1,4 +1,4 @@
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, Show} from 'solid-js'

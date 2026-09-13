@@ -1,4 +1,4 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {For} from 'solid-js'
 import {ASPECT_RATIOS, type ImageGenerationController} from 'src/features/image-generation'
 

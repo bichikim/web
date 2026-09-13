@@ -1,5 +1,5 @@
-import {PButton} from 'src/components/PButton'
-import {PModal} from 'src/components/PModal'
+import {PButton} from 'src/components/p-button/PButton'
+import {PModal} from 'src/components/p-modal/PModal'
 import {type DeletionRequest} from './deletion'
 
 interface DeletionModalProps {

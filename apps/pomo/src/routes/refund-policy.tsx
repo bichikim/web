@@ -4,7 +4,7 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
-import {PServicePolicyLinks} from 'src/components/PServicePolicyLinks'
+import {PServicePolicyLinks} from 'src/components/p-service-policy-links/PServicePolicyLinks'
 import {PolicyArticle} from '../components/refund-policy/PolicyArticle'
 import {PolicyIntro} from '../components/refund-policy/PolicyIntro'
 import {PolicyNavigation} from '../components/refund-policy/PolicyNavigation'

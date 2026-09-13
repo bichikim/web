@@ -82,7 +82,7 @@ vi.mock('../../../features/focus-room-audio', () => ({
   }),
   writePPlaylist: featureMocks.writePPlaylist,
 }))
-vi.mock('../../MusicPlayerView', () => ({
+vi.mock('../../music-player-view/MusicPlayerView', () => ({
   MusicPlayerView: (props: MusicPlayerViewProps) => {
     viewMocks.capture(props)
     return <div data-testid="player-view" />

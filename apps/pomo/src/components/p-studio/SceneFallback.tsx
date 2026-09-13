@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {PLoadingStatus} from '../PLoadingStatus'
+import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 
 export const PSceneFallback = () => (
   <div aria-live="polite" class="pomo-scene-fallback" role="status">

@@ -7,7 +7,7 @@ import {createSignal, Show} from 'solid-js'
 import {PMusicPlayerContent} from '../PMusicPlayerContent'
 
 vi.mock('media-chrome', () => ({}))
-vi.mock('../../PAlbumLibrary', () => ({PAlbumLibrary: () => null}))
+vi.mock('../../p-album-library/PAlbumLibrary', () => ({PAlbumLibrary: () => null}))
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),

@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 import type {LicenseEntry} from 'src/features/licenses'
 import * as m from '@paraglide/message'
-import {PTag} from '../PTag'
+import {PTag} from '../p-tag/PTag'
 
 const CREDIT_ITEM_CLASS = cx(
   'rounded-panel border border-solid border-content-border',

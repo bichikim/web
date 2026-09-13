@@ -1,4 +1,4 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
 import {createSignal} from 'solid-js'
 

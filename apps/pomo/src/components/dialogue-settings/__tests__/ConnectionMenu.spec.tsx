@@ -4,10 +4,10 @@ import {render} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import type {PDialogue} from '../../../features/focus-room-dialogue/schema'
-import {PSelect, type PSelectOption} from '../../PSelect'
+import {PSelect, type PSelectOption} from '../../p-select/PSelect'
 import {DialogueConnectionMenu} from '../ConnectionMenu'
 
-vi.mock('../../PSelect', () => ({
+vi.mock('../../p-select/PSelect', () => ({
   PSelect: vi.fn((props: Parameters<typeof PSelect>[0]) => {
     Object.values(props)
     return null

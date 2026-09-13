@@ -3,10 +3,10 @@
 import {render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-import {PSelect} from '../../PSelect'
+import {PSelect} from '../../p-select/PSelect'
 import {ChatHeader} from '../Header'
 
-vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('../../p-select/PSelect', () => ({PSelect: vi.fn()}))
 
 it('should render model information and forward model selection', () => {
   const onModelChange = vi.fn()

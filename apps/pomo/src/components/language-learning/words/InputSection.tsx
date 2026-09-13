@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {PButton} from '../../PButton'
+import {PButton} from '../../p-button/PButton'
 import {LanguageLearningTagInput} from '../TagInput'
 
 interface LanguageLearningWordInputSectionProps {

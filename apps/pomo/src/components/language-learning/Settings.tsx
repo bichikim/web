@@ -1,4 +1,4 @@
-import {PSelect} from '../PSelect'
+import {PSelect} from '../p-select/PSelect'
 
 import * as m from '@paraglide/message'
 import type {LanguageLearningLanguage} from '../../features/language-learning'

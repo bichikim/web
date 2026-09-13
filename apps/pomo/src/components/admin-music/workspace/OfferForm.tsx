@@ -1,4 +1,4 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
 import {BUTTON_CLASSES} from '../button-classes'
 import {type AlbumTaskFormProps} from './form-props'

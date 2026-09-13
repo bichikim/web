@@ -1,3 +1,4 @@
+import '@unocss/reset/tailwind.css'
 import 'uno.css'
 
 document.documentElement.classList.add('dark')

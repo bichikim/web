@@ -1,4 +1,4 @@
-import {PTextarea} from 'src/components/PTextarea'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {Preview} from './Preview'
 import {For, Show} from 'solid-js'
