@@ -1,9 +1,8 @@
+'use server'
+
 import {createSupabase} from 'src/utils/supabase'
-import {action} from '@solidjs/router'
 
 export const fetchDeleteAccount = async () => {
-  'use server'
-
   const supabase = createSupabase()
 
   const {error: deleteError} = await supabase.rpc('delete_account')
@@ -20,5 +19,3 @@ export const fetchDeleteAccount = async () => {
 
   return {success: true}
 }
-
-export const deleteAccountAction = action(fetchDeleteAccount, 'auth/delete-account')

@@ -1,9 +1,8 @@
+'use server'
+
 import {createSupabase} from 'src/utils/supabase'
-import {action} from '@solidjs/router'
 
 export const fetchUpdateUserMetadata = async (metadata: Record<string, unknown>) => {
-  'use server'
-
   const supabase = createSupabase()
 
   // Get current user
@@ -28,5 +27,3 @@ export const fetchUpdateUserMetadata = async (metadata: Record<string, unknown>)
 
   return data
 }
-
-export const updateUserMetadataAction = action(fetchUpdateUserMetadata, 'auth/update-user-metadata')

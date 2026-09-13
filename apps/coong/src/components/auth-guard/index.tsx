@@ -5,7 +5,7 @@ import {
   Navigate,
   useCurrentMatches,
 } from '@solidjs/router'
-import {userQuery} from 'src/requests/auth/user'
+import {userQuery} from 'src/features/auth'
 import {evaluateRouteAccess, resolveAuthRedirectUrl, resolveAuthSession} from './allow'
 
 export type {AuthSessionState, IsAllowAllResult, NotAllowType, RouteAccessResult} from './allow'
