@@ -7,6 +7,6 @@ export const createConfig: (payload?: {
   target?: 'modules' | string
   plugins?: import('vite').Plugin[]
   rollupOutputPlugins?: import('rollup').OutputPluginOption[]
-}) => import('vite')['UserConfig']
+}) => import('vite').UserConfigFnObject
 
 export const targets: string

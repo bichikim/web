@@ -11,9 +11,11 @@
   "types": "index.d.ts",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.mjs"
     },
     "./require": {
+      "types": "./require.d.ts",
       "import": "./require.mjs"
     },
     "./*": "./*"
