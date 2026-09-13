@@ -108,3 +108,18 @@ PNG로 비교하고, 팝업을 닫은 뒤 포커스 복원과 재생·곡 이동
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/playlist.spec.ts
 ```
+
+[화면 보호기 테스트](rendering/screen-saver.spec.ts)는 실제 홈 설정에서 1분을 선택한 뒤 새로고침해
+설정이 복원되는지 확인합니다. 실제 타이머로 자동 진입·Escape 해제·다시 진입·제자리 포인터 해제를
+검증하고, 끄기를 저장한 뒤 다시 로드해 61초 동안 나타나지 않는지도 확인합니다. 날짜 표시만 고정하며
+타이머와 입력 이벤트는 모의 구현으로 대체하지 않습니다. 빈 재생목록과 초기 포모도로 상태를 사용하므로
+음악 재생·네이티브 Storage·실제 인증 서버는 검증 범위가 아닙니다.
+
+화면 보호기의 다크 화면은 이전 기준이 없는 최초 PNG입니다. 폰트와 이미지·장면 준비를 기다리고,
+촬영할 때만 CSS 애니메이션을 고정합니다. [실행 기록](rendering/evidence/screen-saver/manifest.json)에
+기준·현재 이미지와 환경을 보존합니다. 빈 재생목록의 기존 PNG는 병합된 `5959c865e1d7`의
+둘러보기 안내 아이콘 추가를 반영하며, 갱신 전·현재·차이 PNG를 같은 폴더에 보존합니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/screen-saver.spec.ts
+```
