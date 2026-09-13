@@ -1,5 +1,5 @@
 import {createMemo, createSignal} from 'solid-js'
-import {signUpAction} from 'src/requests/auth/sign-up'
+import {signUpAction} from 'src/features/auth'
 import {A, useAction, useNavigate, useSubmission} from '@solidjs/router'
 import {AuthSubmitButton} from '../../_components/AuthSubmitButton'
 import {AuthSurface} from '../../_components/AuthSurface'

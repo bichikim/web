@@ -5,7 +5,7 @@ import {
   readTossStorageJson,
   writeTossStorageJson,
 } from 'src/utils/runtime-storage'
-import {readFocusRoomEntryHistory, writeFocusRoomEntryHistory} from '..'
+import {readFocusRoomEntryHistory, settleEntryHistoryWrites, writeFocusRoomEntryHistory} from '..'
 
 vi.mock('src/utils/runtime-storage', async () => {
   const actual = await vi.importActual<typeof import('src/utils/runtime-storage')>(
@@ -47,6 +47,37 @@ describe('focus room entry history', () => {
     vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
     vi.mocked(readTossStorageJson).mockResolvedValue(null)
     expect(await readFocusRoomEntryHistory()).toBe(false)
+  })
+
+  it('should repair native history after a failed write and retain entry when web storage clears', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    let nativeHistory: true | null = null
+    vi.mocked(readTossStorageJson).mockImplementation(async () => nativeHistory)
+    vi.mocked(writeTossStorageJson)
+      .mockRejectedValueOnce(new Error('native unavailable'))
+      .mockImplementation(async () => {
+        nativeHistory = true
+      })
+    await writeFocusRoomEntryHistory()
+    expect(nativeHistory).toBeNull()
+    expect(await readFocusRoomEntryHistory()).toBe(true)
+    localStorage.clear()
+    expect(await readFocusRoomEntryHistory()).toBe(true)
+  })
+
+  it('should include native repair in writes settled before reset', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    localStorage.setItem('pomo:focus-room-entry-history:v1', 'true')
+    const pending = Promise.withResolvers<void>()
+    vi.mocked(writeTossStorageJson).mockReturnValue(pending.promise)
+    const reading = readFocusRoomEntryHistory()
+    const settled = vi.fn()
+    const settling = settleEntryHistoryWrites().then(settled)
+    await vi.waitFor(() => expect(writeTossStorageJson).toHaveBeenCalledOnce())
+    expect(settled).not.toHaveBeenCalled()
+    pending.resolve()
+    await settling
+    expect(await reading).toBe(true)
   })
 
   it('should read native entry history without writing a stale web copy', async () => {

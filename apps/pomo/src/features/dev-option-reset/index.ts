@@ -1,3 +1,8 @@
+export {
+  deleteStoredDialogueAudio,
+  type DialogueAudioDeletionResult,
+  type DialogueAudioStorage,
+} from './delete-stored-dialogue-audio'
 import {settleEntryHistoryWrites} from '../focus-room-entry-history'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'

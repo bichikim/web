@@ -11,6 +11,7 @@ import {
   type OptionResetGroupId,
   type OptionResetManager,
 } from 'src/features/dev-option-reset'
+import {DialogueAudioCard} from './option-reset/DialogueAudioCard'
 import {OptionGroupCard} from './option-reset/OptionGroupCard'
 
 const MAIN_CLASSES = cx(
@@ -150,6 +151,8 @@ export function OptionResetPage(props: OptionResetPageProps) {
             </p>
           )}
         </Show>
+
+        <DialogueAudioCard />
 
         <ul class="m-0 grid list-none gap-3 p-0">
           <For each={OPTION_RESET_GROUPS}>

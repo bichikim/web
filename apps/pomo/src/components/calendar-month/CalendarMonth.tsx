@@ -33,7 +33,7 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
         eventsByDay={month.eventsByDay()}
         onSelect={month.selectDate}
         selectedKey={month.selectedKey()}
-        todayKey={month.todayKey}
+        todayKey={month.todayKey()}
       />
       <CalendarAgenda
         calendar={month.calendar()}

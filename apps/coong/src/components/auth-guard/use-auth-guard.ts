@@ -1,6 +1,6 @@
 import {createMemo} from 'solid-js'
 import {createAsync, useCurrentMatches} from '@solidjs/router'
-import {userQuery} from 'src/requests/auth/user'
+import {userQuery} from 'src/features/auth'
 import {evaluateRouteAccess} from './evaluate-route-access'
 import {resolveAuthSession} from './allow'
 

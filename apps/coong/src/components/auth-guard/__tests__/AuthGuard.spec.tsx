@@ -13,7 +13,7 @@ vi.mock('@solidjs/router', () => ({
   useCurrentMatches: vi.fn(),
 }))
 
-vi.mock('src/requests/auth/user', () => ({
+vi.mock('src/features/auth', () => ({
   userQuery: vi.fn(),
 }))
 

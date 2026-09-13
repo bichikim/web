@@ -37,6 +37,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
   const events = usePEvents()
   const [playingDialogueId, setPlayingDialogueId] = createSignal<string | null>(null)
   const [audioElement, setAudioElement] = createSignal<HTMLAudioElement | undefined>()
+  const [missingDialogueId, setMissingDialogueId] = createSignal<string | null>(null)
   const [message, setMessage] = createSignal<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = createSignal<string | null>(null)
   let playbackUrl: string | null = null
@@ -58,6 +59,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
     }
 
     setPlayingDialogueId(null)
+    setMissingDialogueId(null)
   }
 
   onCleanup(stopPlayback)
@@ -79,7 +81,8 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
       }
 
       if (audio === null) {
-        setMessage(m.settings_dialogue_audio_missing())
+        setMessage(null)
+        setMissingDialogueId(dialogue.id)
         return
       }
 
@@ -106,14 +109,35 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
     }
   }
 
-  const handleCharacterPlayback = (dialogue: PDialogue) => {
+  const handleCharacterPlayback = async (dialogue: PDialogue) => {
     stopPlayback()
-    const playback = events.playDialogue(dialogue.id)
+    const currentRequestId = playbackRequestId
 
-    props.onRequestClose?.()
-    playback.catch((error: unknown) => {
+    try {
+      const audio = await events.getAudio(dialogue.audioKey)
+
+      if (currentRequestId !== playbackRequestId) {
+        return
+      }
+
+      if (audio === null) {
+        setMessage(null)
+        setMissingDialogueId(dialogue.id)
+        return
+      }
+
+      setMessage(null)
+      const playback = events.playDialogue(dialogue.id)
+      props.onRequestClose?.()
+      await playback
+    } catch (error: unknown) {
+      if (currentRequestId !== playbackRequestId) {
+        return
+      }
+
       console.error('Failed to play saved dialogue through the character.', error)
-    })
+      setMessage(m.settings_dialogue_playback_failed())
+    }
   }
 
   const handleDelete = async (dialogue: PDialogue) => {
@@ -137,6 +161,15 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
             <DialogueLibraryItem
               actions={
                 <>
+                  <Show when={missingDialogueId() === entry.dialogue.id}>
+                    <p
+                      aria-live="polite"
+                      class="m-0 basis-full text-modal-detail leading-relaxed text-danger"
+                      role="status"
+                    >
+                      {m.settings_dialogue_audio_missing()}
+                    </p>
+                  </Show>
                   <DialoguePlaybackButton
                     isPlaying={playingDialogueId() === entry.dialogue.id}
                     onPress={() => handlePlayback(entry.dialogue)}

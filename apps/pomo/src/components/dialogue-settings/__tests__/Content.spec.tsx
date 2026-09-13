@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {Tabs} from '@kobalte/core/tabs'
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal, type JSX} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -224,7 +224,7 @@ describe('PDialogueSettingsContent', () => {
     expect(screen.getAllByText('저장소 오류')).toHaveLength(2)
   })
 
-  it('should handle saved audio playback, character playback, and missing audio', async () => {
+  it('should keep the library open and explain how to recreate missing audio', async () => {
     const onRequestClose = vi.fn()
     const missingAudioEvents = createEvents()
     vi.mocked(usePEvents).mockReturnValue(missingAudioEvents)
@@ -233,12 +233,74 @@ describe('PDialogueSettingsContent', () => {
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     await vi.waitFor(() =>
       expect(
-        screen.getAllByText('저장된 음성을 찾을 수 없어요. 대화를 다시 편집해 주세요.'),
+        screen.getAllByText('음성이 없는 대화예요. 편집을 눌러 음성을 다시 만들어 주세요.'),
       ).toHaveLength(1),
     )
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
-    expect(missingAudioEvents.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
-    expect(onRequestClose).toHaveBeenCalledOnce()
+    await vi.waitFor(() => expect(missingAudioEvents.getAudio).toHaveBeenCalledTimes(2))
+    expect(missingAudioEvents.playDialogue).not.toHaveBeenCalled()
+    expect(onRequestClose).not.toHaveBeenCalled()
+    expect(
+      screen.getByText('음성이 없는 대화예요. 편집을 눌러 음성을 다시 만들어 주세요.'),
+    ).toHaveAttribute('role', 'status')
+    expect(screen.getByRole('link', {name: '편집'})).toHaveAttribute(
+      'href',
+      `/dialogue?dialogueId=${DIALOGUE.id}`,
+    )
+  })
+
+  it('should show missing audio guidance beside the affected dialogue controls', async () => {
+    const events = createEvents({
+      dialogues: () => [DIALOGUE, {...DIALOGUE, id: 'second', text: '다른 대화'}],
+    })
+    vi.mocked(usePEvents).mockReturnValue(events)
+    render(() => <PDialogueSettingsContent />)
+    const rows = within(screen.getByRole('list', {name: '저장된 대화'})).getAllByRole('listitem')
+    fireEvent.click(within(rows[0]!).getByRole('button', {name: '캐릭터로 듣기'}))
+    expect(await within(rows[0]!).findByRole('status')).toHaveTextContent(
+      '음성이 없는 대화예요. 편집을 눌러 음성을 다시 만들어 주세요.',
+    )
+    expect(within(rows[1]!).queryByRole('status')).toBeNull()
+    expect(within(rows[0]!).getByRole('link', {name: '편집'})).toHaveAttribute(
+      'href',
+      `/dialogue?dialogueId=${DIALOGUE.id}`,
+    )
+  })
+
+  it('should keep the library open when character audio cannot be loaded', async () => {
+    const onRequestClose = vi.fn()
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const events = createEvents({
+      getAudio: vi.fn(async () => {
+        throw new Error('storage unavailable')
+      }),
+    })
+    vi.mocked(usePEvents).mockReturnValue(events)
+    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+
+    fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
+
+    await vi.waitFor(() =>
+      expect(screen.getByText('음성을 재생하지 못했어요.')).toHaveAttribute('role', 'status'),
+    )
+    expect(onRequestClose).not.toHaveBeenCalled()
+    expect(events.playDialogue).not.toHaveBeenCalled()
+  })
+
+  it('should discard a character audio check after the library unmounts', async () => {
+    const onRequestClose = vi.fn()
+    const audio = Promise.withResolvers<Blob>()
+    const events = createEvents({getAudio: vi.fn(() => audio.promise)})
+    vi.mocked(usePEvents).mockReturnValue(events)
+    const view = render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+
+    fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
+    view.unmount()
+    audio.resolve(new Blob(['audio']))
+    await audio.promise
+
+    expect(events.playDialogue).not.toHaveBeenCalled()
+    expect(onRequestClose).not.toHaveBeenCalled()
   })
 
   it('should report when stored audio resolves before a player can be captured', async () => {
