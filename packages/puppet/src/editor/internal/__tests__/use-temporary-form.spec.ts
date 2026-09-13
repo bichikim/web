@@ -1,3 +1,4 @@
+import {addGlue, setGlueKeyform} from '../glue'
 /** @vitest-environment jsdom */
 import {createRoot, createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
@@ -88,5 +89,41 @@ test('should preserve ordinary part properties without committing the temporary 
     expect(session.form()).toBeUndefined()
     expect(onChange.mock.calls[0]![0].parameterBindings).toBe(document.parameterBindings)
     expect(onChange.mock.calls[0]![0].parts[0].properties.blendMode).toBe('screen')
+    dispose()
+  }))
+
+test('should retain Glue as a temporary form until explicitly saved to a selected key', () =>
+  createRoot((dispose) => {
+    const source = addGlue(
+      createDemoDocument(),
+      {partId: 'mesh-preview', vertexIndex: 0},
+      {partId: 'shape-diamond', vertexIndex: 0},
+    )!
+    const [key, setKey] = createSignal<readonly [number, number] | null>(null)
+    const onChange = vi.fn()
+    const session = useTemporaryForm({
+      bindingId: () => source.parameterBindings![0]!.id,
+      document: () => source,
+      keyformValues: key,
+      enabled: () => true,
+      nodeId: () => 'mesh-preview',
+      onDocumentChange: onChange,
+      parameterValues: () => [15, 0],
+    })
+    const target = session.target()!
+    session.update(
+      setGlueKeyform({...target, changes: {strength: 0.4, weight: 0.5}, glueId: 'glue-1'})!,
+    )
+    expect(onChange).not.toHaveBeenCalled()
+    expect(session.form()!.parts[0]!.glue).toEqual([{id: 'glue-1', strength: 0.4, weight: 0.5}])
+    setKey([30, 0])
+    expect(session.save()).toBe(true)
+    const saved = onChange.mock.calls[0]![0]
+    expect(
+      saved.parameterBindings[0].keyforms.find(
+        (form: {values: number[]}) => form.values[0] === 30 && form.values[1] === 0,
+      ).parts[0].glue,
+    ).toEqual([{id: 'glue-1', strength: 0.4, weight: 0.5}])
+    expect(saved.glue[0].strength).toBe(1)
     dispose()
   }))
