@@ -1,3 +1,4 @@
+import {PsdReimportDialog} from './internal/PsdReimportDialog'
 import {useEditorImports} from './use-editor-imports'
 import {EditorModelingKeyformPanel} from './internal/EditorModelingKeyformPanel'
 import {useTemporaryForm} from './internal/use-temporary-form'
@@ -113,6 +114,8 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
   </Show>
 )
 
+const WORKSPACE_EDIT_MODES = {animation: 'motion', modeling: 'parameter'} as const
+
 // eslint-disable-next-line max-lines-per-function
 export const PuppetEditor = (props: PuppetEditorProps) => {
   const initialDocument = untrack(() => props.initialDocument ?? createDemoDocument())
@@ -177,7 +180,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const partId = document.parts[0]?.id ?? null
     batch(() => {
       temporary.reset()
-      history.resetDocument(document)
+      history.setDocument(document)
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
@@ -187,6 +190,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     })
   }
   const editorImports = useEditorImports({
+    document: sourceDocument,
+    onReimportDocumentChange: history.setDocument,
     onDocumentChange: resetEditorDocument,
     onNotice: setNotice,
   })
@@ -309,7 +314,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             autoMeshAvailable={workspace() === 'modeling' && autoMesh.targets().length > 0}
             containerUnwrapAvailable={selectionActions().containerIds.length > 0}
             document={temporary.document()}
-            editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
+            editMode={WORKSPACE_EDIT_MODES[workspace()]}
             maskPickSourcePartId={maskPickSourcePartId() ?? undefined}
             notice={notice()}
             onAutoMesh={() => autoMesh.onOpenChange(true)}
@@ -344,6 +349,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
               onEditEnd={history.endTransaction}
             />
             <GlueEditor
+              activeBindingId={temporary.bindingId()}
+              activeKeyformValues={temporary.values()}
+              editingDocument={temporary.document()}
+              editMode={WORKSPACE_EDIT_MODES[workspace()]}
+              onKeyformChange={temporary.update}
               selectedPartIds={selectedPartIds()}
               targetPartId={layerSelection().activeNodeId ?? undefined}
               sourceVertex={glueVertex()}
@@ -388,9 +398,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             playerStatus={playerStatus()}
             onRedo={handleRedo}
             onExport={() => downloadDocument(sourceDocument())}
-            onJsonImport={editorImports.handleImport}
-            onPsdImport={editorImports.handlePsdImport}
-            onPngImport={editorImports.handlePngImport}
+            onFileImport={editorImports.handleImport}
+            onPsdReimport={editorImports.reimport.load}
+            onFileOpen={editorImports.handleOpen}
             onUndo={handleUndo}
             onWorkspaceChange={(nextWorkspace) => {
               pausePlayback()
@@ -445,7 +455,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             currentTime={currentTime()}
             deformerControlSelection={deformerControlSelection}
             document={temporary.document()}
-            editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
+            editMode={WORKSPACE_EDIT_MODES[workspace()]}
             onDeformerEditEnd={history.endTransaction}
             onDeformerEditStart={handleDocumentEditStart}
             onDocumentChange={temporary.update}
@@ -463,6 +473,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
           />
         }
       />
+      <PsdReimportDialog controller={editorImports.reimport} />
       <EditorAutoMeshDialog autoMesh={autoMesh} />
     </SkinSessionContext.Provider>
   )

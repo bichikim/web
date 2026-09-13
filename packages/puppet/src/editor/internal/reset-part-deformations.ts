@@ -1,3 +1,4 @@
+import {reconcileGlueKeyforms} from './glue'
 import {clearPartDeformerWeights} from './deformer-weights'
 import {isTwoDimensionalParameterBinding} from '../../deformation'
 import type {
@@ -51,15 +52,16 @@ export const resetParameterPartKeyforms = (
   document: PuppetDocument,
   partId: string,
   vertices: ReadonlyArray<number>,
-): PuppetDocument => ({
-  ...clearPartDeformerWeights(document, partId),
-  glue: document.glue?.filter(
-    (glue) => glue.first.partId !== partId && glue.second.partId !== partId,
-  ),
-  parameterBindings: document.parameterBindings?.map((binding) =>
-    resetParameterBinding(binding, partId, vertices),
-  ),
-})
+): PuppetDocument =>
+  reconcileGlueKeyforms({
+    ...clearPartDeformerWeights(document, partId),
+    glue: document.glue?.filter(
+      (glue) => glue.first.partId !== partId && glue.second.partId !== partId,
+    ),
+    parameterBindings: document.parameterBindings?.map((binding) =>
+      resetParameterBinding(binding, partId, vertices),
+    ),
+  })
 
 export const resetPartDeformations = (
   document: PuppetDocument,

@@ -122,6 +122,10 @@ export const canvasShortcuts = {
     '[&[data-stretched=true]]:[stroke-width:3px] [&[data-flipped=true]]:[stroke:#ff6268]',
     '[&[data-flipped=true]]:[stroke-width:3px] [&[data-flipped=true]]:[stroke-dasharray:4_2]',
   ],
+  'glue-properties': [
+    '[.puppet-editor_&]:[font-size:0.6875rem] [.puppet-editor_&]:[line-height:1rem]',
+    '[.puppet-editor_&_>_span]:[font-size:0.625rem] [.puppet-editor_&_>_span]:[color:#84918c]',
+  ],
   'deformer-properties': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.5rem] [.puppet-editor_&]:[margin:0.875rem_0_0]',
     '[.puppet-editor_&]:[padding:0.625rem] [.puppet-editor_&]:[border:0.0625rem_solid_#313b37]',

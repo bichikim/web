@@ -54,7 +54,23 @@ export const importPsd = async (file: File): Promise<ImportPsdResult> => {
     if (psd.bitsPerChannel !== CHANNEL_BITS || psd.colorMode !== RGB_MODE) {
       return {error: {code: 'unsupported-mode'}, ok: false}
     }
-    return createPsdDocument(psd)
+    const result = createPsdDocument(psd)
+    if (!result.ok) {
+      return result
+    }
+    return {
+      ...result,
+      document: {
+        ...result.document,
+        parts: result.document.parts.map((part) => ({
+          ...part,
+          psdSource:
+            part.psdSource === undefined
+              ? undefined
+              : {...part.psdSource, documentId: file.name, fileName: file.name},
+        })),
+      },
+    }
   } catch {
     return {error: {code: 'decode-failed'}, ok: false}
   }

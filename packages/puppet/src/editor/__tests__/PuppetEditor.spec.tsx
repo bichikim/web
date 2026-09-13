@@ -451,7 +451,7 @@ describe('PuppetEditor', () => {
     mocks.importPng.mockReturnValueOnce(firstImport).mockReturnValueOnce(secondImport)
 
     const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
-    const input = view.getByLabelText('PNG 불러오기')
+    const input = screen.getByLabelText('불러오기')
 
     fireEvent.change(input, {
       target: {files: [new File(['first'], 'first.png', {type: 'image/png'})]},
@@ -477,7 +477,7 @@ describe('PuppetEditor', () => {
     const view = render(() => <PuppetEditor />)
 
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
-    fireEvent.change(view.getByLabelText('PNG 불러오기'), {
+    fireEvent.change(screen.getByLabelText('불러오기'), {
       target: {files: [new File(['replacement'], 'replacement.png', {type: 'image/png'})]},
     })
 

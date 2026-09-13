@@ -1,6 +1,6 @@
 import {expect, test} from 'vitest'
 import {createDemoDocument, parseDocument, serializeDocument} from '../../../player'
-import {addGlue, canGlueVertex, updateGlue} from '../glue'
+import {addGlue, canGlueVertex, setGlueKeyform, updateGlue} from '../glue'
 import {setSceneNodeState} from '../scene-graph'
 
 const first = {partId: 'mesh-preview', vertexIndex: 0}
@@ -21,4 +21,55 @@ test('should reject interior points, reused vertices, self connections and locke
   const locked = setSceneNodeState({document, locked: true, nodeId: first.partId})!
   expect(addGlue(locked, first, second)).toBeUndefined()
   expect(updateGlue(joined, joined.glue![0]!.id, {strength: 1, weight: NaN})).toBeUndefined()
+})
+
+const keyedDocument = () => {
+  const document = addGlue(createDemoDocument(), first, second)!
+  return setGlueKeyform({
+    bindingId: document.parameterBindings![0]!.id,
+    changes: {strength: 0.3, weight: 0.2},
+    document,
+    glueId: 'glue-1',
+    values: [0, 0],
+  })!
+}
+test('should save only the selected keyform and round trip Glue controls', () => {
+  const document = keyedDocument()
+  expect(document.glue![0]).toMatchObject({strength: 1, weight: 0.5})
+  const parsed = parseDocument(serializeDocument(document))
+  expect(parsed.ok).toBe(true)
+  if (!parsed.ok) {
+    throw new Error('Expected valid document')
+  }
+  const samples = parsed.document.parameterBindings![0]!.keyforms.flatMap((form) =>
+    form.parts.flatMap((part) => part.glue ?? []),
+  )
+  expect(samples).toEqual([{id: 'glue-1', strength: 0.3, weight: 0.2}])
+})
+test('should reject missing keyforms, locked endpoints and invalid values', () => {
+  const document = keyedDocument()
+  const options = {
+    bindingId: document.parameterBindings![0]!.id,
+    changes: {strength: 1, weight: 0.5},
+    document,
+    glueId: 'glue-1',
+    values: [0, 0] as const,
+  }
+  expect(setGlueKeyform({...options, values: [1, 1]})).toBeUndefined()
+  expect(setGlueKeyform({...options, changes: {strength: -1, weight: 0.5}})).toBeUndefined()
+  expect(
+    setGlueKeyform({
+      ...options,
+      document: setSceneNodeState({document, locked: true, nodeId: second.partId})!,
+    }),
+  ).toBeUndefined()
+})
+test('should remove stored samples when unlinking a connection', () => {
+  const document = updateGlue(keyedDocument(), 'glue-1', null)!
+  expect(
+    document.parameterBindings![0]!.keyforms.flatMap((form) =>
+      form.parts.flatMap((part) => part.glue ?? []),
+    ),
+  ).toEqual([])
+  expect(parseDocument(serializeDocument(document)).ok).toBe(true)
 })

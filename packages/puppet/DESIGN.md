@@ -108,6 +108,8 @@ Keep coordinate rulers at the top and left of the canvas. Pan and zoom change th
 
 Floating controls must remain inside the visible canvas and must not collide. Place temporary-change status at the upper-right, with other display controls stacked separately. Temporary-change actions use compact 10px labels and `sm` controls, with a square dismiss action joined to the status button: no gap, one outer outline, and an internal divider. When deletion confirmation hides the dismiss action, restore all corners of the remaining button. Mask-boundary visibility is an icon toggle beside the lower-right view actions, using the same 28px square size and a visible pressed state. Keep its accessible name and tooltip; do not restore the text card. Keep the parameter row's return arrow at the upper-right of its control area.
 
+Glue controls reuse the existing number fields and keyform/temporary-form workflow. Without a parameter targeting the A part, edit B ratio and attachment strength directly as static settings. Otherwise store them on the connection's A-part keyform. Show only connections related to the selected parts. When the B part is selected, identify the A part that owns editing. Edge attachments expose strength only. Creating or removing a connection remains a structural edit.
+
 ## Temporary changes
 
 Reference: [TemporaryFormButton](src/editor/internal/TemporaryFormButton.tsx), [temporary form session](src/editor/internal/use-temporary-form.ts).

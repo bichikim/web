@@ -1,15 +1,15 @@
 export * from './binding'
 export * from './composition'
-export * from './grid'
 export * from './vertices'
-export * from './parameter'
+export * from './grid'
 export * from './part-properties'
+export * from './parameter'
 
-export * from './pin'
+export * from './weights'
 
 export * from './scene'
 
-export * from './weights'
+export * from './pin'
 
 export * from './influence'
 
@@ -18,3 +18,4 @@ export * from './glue'
 export * from './skinning'
 
 export * from './rigid-blend'
+export * from './parameter-glue'

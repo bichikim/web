@@ -66,7 +66,8 @@ it('should style toolbar menu buttons and separators outside the editor root', a
   style.textContent = result.css
   const menu = document.createElement('div')
   menu.className = 'toolbar-menu-content'
-  menu.innerHTML = '<button>JSON 가져오기</button><hr><button disabled>Redo</button>'
+  menu.innerHTML = `<button class="file-menu-action"><span>가져오기</span><small>기존 문서에 추가</small></button>
+    <hr><button disabled>Redo</button>`
   document.head.append(style)
   document.body.append(menu)
   try {
@@ -74,6 +75,8 @@ it('should style toolbar menu buttons and separators outside the editor root', a
     expect(button.backgroundColor).toBe('rgba(0, 0, 0, 0)')
     expect(button.fontSize).toBe('0.75rem')
     expect(button.textAlign).toBe('left')
+    expect(button.display).toBe('flex')
+    expect(button.flexDirection).toBe('column')
     expect(getComputedStyle(menu.querySelector('button:disabled')!).opacity).toBe('0.42')
     expect(getComputedStyle(menu.querySelector('hr')!).width).toBe('100%')
   } finally {
