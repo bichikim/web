@@ -14,6 +14,7 @@ export interface UsePPlaybackPersistenceProps {
 export interface PPlaybackPersistence {
   readonly applyPendingPosition: () => PPlaybackState | null
   readonly persistCurrentPlayback: () => void
+  readonly persistPlaybackIntent: (isPlaying: boolean) => void
   readonly persistStoppedPlayback: () => void
   readonly persistPlaybackProgress: () => void
   readonly setPendingPosition: (state: PPlaybackState | null) => void
@@ -34,7 +35,7 @@ export const usePPlaybackPersistence = (
     pendingPosition = state
   }
 
-  const persistPlayback = (isPlaying: boolean) => {
+  const persistPlayback = (isPlaying: boolean, updatePendingIntent: boolean) => {
     // oxlint-disable-next-line solid/reactivity -- Called from media events to read their latest state.
     const track = props.currentTrack()
 
@@ -44,7 +45,7 @@ export const usePPlaybackPersistence = (
 
     const pendingPlayback = pendingPosition
     if (pendingPlayback?.trackId === track.id) {
-      if (pendingPlayback.isPlaying === isPlaying) {
+      if (!updatePendingIntent || pendingPlayback.isPlaying === isPlaying) {
         return
       }
 
@@ -66,7 +67,8 @@ export const usePPlaybackPersistence = (
     })
   }
 
-  const persistCurrentPlayback = () => persistPlayback(props.isPlaying())
+  const persistCurrentPlayback = () => persistPlayback(props.isPlaying(), false)
+  const persistPlaybackIntent = (isPlaying: boolean) => persistPlayback(isPlaying, true)
 
   const persistStoppedPlayback = () => {
     if (pendingPosition !== null) {
@@ -74,7 +76,7 @@ export const usePPlaybackPersistence = (
       pendingPosition = null
       return
     }
-    persistPlayback(false)
+    persistPlayback(false, false)
   }
 
   const applyPendingPosition = () => {
@@ -124,6 +126,7 @@ export const usePPlaybackPersistence = (
   return {
     applyPendingPosition,
     persistCurrentPlayback,
+    persistPlaybackIntent,
     persistPlaybackProgress,
     persistStoppedPlayback,
     setPendingPosition,
