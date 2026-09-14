@@ -71,6 +71,13 @@ describe('editMemoryMemo', () => {
         text: '여권 갱신하기',
       }),
       dialogueId: 'memory-memo-memo-1',
+      reminderEvents: [
+        {
+          deliveredAt: '2026-09-04T03:10:00.000Z',
+          kind: 'recall' as const,
+          scheduledAt: '2026-09-04T03:10:00.000Z',
+        },
+      ],
       reminderHistory: ['2026-09-04T03:10:00.000Z'],
     }
 
@@ -207,7 +214,91 @@ describe('advanceMemoryMemo', () => {
       exactReminderAt: null,
       nextRecallAt: null,
       reinforcementIndex: 0,
+      reminderEvents: [
+        {
+          deliveredAt: '2026-09-04T03:10:00.000Z',
+          kind: 'exact' as const,
+          scheduledAt: '2026-09-04T03:10:00.000Z',
+        },
+      ],
       reminderHistory: ['2026-09-04T03:10:00.000Z'],
+    })
+  })
+
+  it('should record the scheduled and delivered times for a delayed exact reminder', () => {
+    const memo = createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:10:00.000Z',
+      id: 'memo-1',
+      now: NOW,
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    })
+
+    expect(
+      advanceMemoryMemo({
+        kind: 'exact',
+        memo,
+        now: new Date('2026-09-04T03:15:00.000Z'),
+        random: () => 0,
+      }),
+    ).toMatchObject({
+      reminderEvents: [
+        {
+          deliveredAt: '2026-09-04T03:15:00.000Z',
+          kind: 'exact',
+          scheduledAt: '2026-09-04T03:10:00.000Z',
+        },
+      ],
+      reminderHistory: ['2026-09-04T03:15:00.000Z'],
+    })
+  })
+
+  it.each(['exact', 'recall'] as const)(
+    'should reject a %s delivery without a schedule',
+    (kind) => {
+      const memo = createMemoryMemo({
+        exactReminderAt: null,
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'none',
+        text: '여권 갱신하기',
+      })
+
+      expect(() => advanceMemoryMemo({kind, memo, now: NOW, random: () => 0})).toThrow(
+        'Cannot record a reminder without its scheduled time.',
+      )
+      expect(memo.reminderEvents).toEqual([])
+    },
+  )
+
+  it('should record the scheduled and delivered times for a recall reminder', () => {
+    const memo = createMemoryMemo({
+      exactReminderAt: null,
+      id: 'memo-1',
+      now: NOW,
+      random: () => 0,
+      recallMode: 'random',
+      text: '여권 갱신하기',
+    })
+
+    expect(
+      advanceMemoryMemo({
+        kind: 'recall',
+        memo,
+        now: new Date('2026-09-04T03:15:00.000Z'),
+        random: () => 0,
+      }),
+    ).toMatchObject({
+      reminderEvents: [
+        {
+          deliveredAt: '2026-09-04T03:15:00.000Z',
+          kind: 'recall',
+          scheduledAt: '2026-09-04T03:10:00.000Z',
+        },
+      ],
+      reminderHistory: ['2026-09-04T03:15:00.000Z'],
     })
   })
 
@@ -241,7 +332,22 @@ describe('advanceMemoryMemo', () => {
       nextExactReminderAt: '2026-09-04T03:40:00.000Z',
       nextRecallAt: null,
     })
-    expect(final.nextExactReminderAt).toBeNull()
+    expect(final).toMatchObject({
+      nextExactReminderAt: null,
+      reminderEvents: [
+        {
+          deliveredAt: '2026-09-04T03:30:00.000Z',
+          kind: 'exact',
+          scheduledAt: '2026-09-04T03:30:00.000Z',
+        },
+        {
+          deliveredAt: '2026-09-04T04:20:00.000Z',
+          kind: 'exact',
+          scheduledAt: '2026-09-04T04:20:00.000Z',
+        },
+      ],
+      reminderHistory: ['2026-09-04T03:30:00.000Z', '2026-09-04T04:20:00.000Z'],
+    })
   })
 
   it('should preserve the configured cadence when a repeated exact reminder runs late', () => {

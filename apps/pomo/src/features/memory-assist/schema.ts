@@ -5,6 +5,17 @@ export const MAXIMUM_MEMORY_MEMO_LENGTH = 200
 
 export type MemoryRecallMode = (typeof MEMORY_RECALL_MODES)[number]
 
+const MEMORY_REMINDER_KINDS = ['exact', 'recall'] as const
+export type MemoryReminderKind = (typeof MEMORY_REMINDER_KINDS)[number]
+
+const memoryReminderEventSchema = z.object({
+  deliveredAt: z.iso.datetime(),
+  kind: z.enum(MEMORY_REMINDER_KINDS),
+  scheduledAt: z.iso.datetime(),
+})
+
+export type MemoryReminderEvent = z.infer<typeof memoryReminderEventSchema>
+
 const memoryMemoSchema = z.object({
   createdAt: z.iso.datetime(),
   deletionPending: z.literal(true).optional(),
@@ -18,6 +29,9 @@ const memoryMemoSchema = z.object({
   nextRecallAt: z.iso.datetime().nullable(),
   recallMode: z.enum(MEMORY_RECALL_MODES),
   reinforcementIndex: z.number().int().nonnegative(),
+  // Preserve occurrence times for deliveries recorded by this version.
+  reminderEvents: z.array(memoryReminderEventSchema).readonly().default([]),
+  // Keep delivery-only timestamps for readers that only understand the v1 shape.
   reminderHistory: z.array(z.iso.datetime()).readonly(),
   retiredDialogueIds: z.array(z.string().min(1)).readonly().optional(),
   text: z.string().trim().min(1).max(MAXIMUM_MEMORY_MEMO_LENGTH),

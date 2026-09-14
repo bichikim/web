@@ -42,6 +42,7 @@ export default defineConfig({
     contextOptions: {
       reducedMotion: 'reduce',
     },
+    locale: 'ko-KR',
     screenshot: 'only-on-failure',
     storageState: {
       cookies: [],
@@ -55,20 +56,20 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'pnpm exec vite dev --host 127.0.0.1 --port 44173',
+      command: 'pnpm exec vite dev --host 127.0.0.1 --port 44173 --strictPort',
       reuseExistingServer: false,
       timeout: 120_000,
       url: webBaseUrl,
     },
     {
       command:
-        'pnpm exec cross-env POMO_PUBLIC_ORIGIN=http://127.0.0.1:44173 POMO_RUNTIME_TARGET=apps-in-toss POMO_APPS_IN_TOSS_DEVTOOLS=true pnpm exec vite dev --host 127.0.0.1 --port 44174',
+        'pnpm exec cross-env POMO_PUBLIC_ORIGIN=http://127.0.0.1:44173 pnpm run dev:apps-in-toss --host 127.0.0.1 --port 44174 --strictPort',
       reuseExistingServer: false,
       timeout: 120_000,
       url: appsInTossBaseUrl,
     },
     {
-      command: 'pnpm exec vite dev --host 127.0.0.1 --port 44175',
+      command: 'pnpm exec vite dev --host 127.0.0.1 --port 44175 --strictPort',
       cwd: clientActionsFixtureDirectory,
       reuseExistingServer: false,
       timeout: 120_000,
