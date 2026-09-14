@@ -129,7 +129,7 @@ describe('createCharacterRenderer', () => {
 
   it('should attach and reset cloth on the actual runtime GLB', async () => {
     const {engine, renderer, events, loader} = setup()
-    const bytes = readFileSync('apps/pomo/public/character-studio/pomo.glb')
+    const bytes = readFileSync('apps/pomo/dev-public/character-studio/pomo.glb')
     loader.mockImplementation((_source, scene, options) =>
       LoadAssetContainerAsync(bytes, scene, {
         ...options,

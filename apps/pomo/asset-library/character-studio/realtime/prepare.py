@@ -5,7 +5,7 @@ import numpy as np
 from mathutils.bvhtree import BVHTree
 
 ROOT=Path(__file__).resolve().parent
-source=Path(os.environ.get('CLOTH_SOURCE', str(ROOT.parents[2]/'public/character-studio/pomo.glb')))
+source=Path(os.environ.get('CLOTH_SOURCE', str(ROOT.parents[2]/'dev-public/character-studio/pomo.glb')))
 thickness=float(os.environ.get('CLOTH_THICKNESS', '.005'))
 assert math.isfinite(thickness) and 0 < thickness <= .02
 data=source.read_bytes()
