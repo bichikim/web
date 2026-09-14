@@ -20,11 +20,11 @@ Otherwise keep it in the parent, especially when short, sequential, ambiguous, d
 
 ## Model Routing
 
-- Use `gpt-5.6-luna` `low` for deterministic execution and collection, `medium` for bounded classification or synthesis, and `high`/`max` for difficult but tightly specified work with cheap objective verification. Raising Luna effort does not replace Terra when judgment scope broadens.
-- Use `gpt-5.6-terra` `medium` for ordinary cross-file analysis, review, implementation, and unit tests; use `high` when complex logic or edge cases justify more checking.
-- Use `gpt-5.6-sol` `high` or above only for an independent difficult workstream that materially reduces parent work. Keep ambiguous architecture, high-risk decisions, integration, and final review in the parent.
+- Use `gpt-5.6-luna` with `max` for ordinary coding, cross-file analysis, review, implementation, unit tests, mechanical execution, and other bounded work.
+- Use `gpt-6-astra` with `high` for complex design, ambiguous bugs, high-risk decisions, difficult logic, and final integration review.
+- The parent retains authorization, integration ownership, and final judgment; Astra performs the high-risk or final review when that route is selected.
 
-Use `fork_turns: "none"` and send only required context. Start with the least expensive route that meets the quality bar. Escalate only for contradictory evidence, failed checks, unclear behavior, repeated scope drift, or out-of-bound reasoning; never rerun successful work automatically on a stronger model.
+Use `fork_turns: "none"` and send only required context. Start with Luna `max` by default. Route to Astra `high` only when complexity, ambiguity, risk, or final integration review requires it; never rerun successful work automatically on a stronger model.
 
 Read [model-routing.md](references/model-routing.md) when the model or effort is not obvious, or when concrete comparison examples would change the route.
 

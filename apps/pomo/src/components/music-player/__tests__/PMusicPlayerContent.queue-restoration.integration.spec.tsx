@@ -80,6 +80,82 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
   })
 
+  it('should preserve pending auto-resume when lifecycle persistence runs before metadata', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    await Promise.resolve()
+    await Promise.resolve()
+    result.unmount()
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+    expect(audio.pause).toHaveBeenCalled()
+  })
+
+  it('should preserve a user play intent while restoring a pending position', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('play'))
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(22)
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+
+    result.unmount()
+  })
+
+  it('should persist a media control pause intent while restoring a pending position', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+    const controller = audio.parentElement
+
+    if (controller === null) {
+      throw new Error('Missing media controller')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('play'))
+    controller.dispatchEvent(new Event('mediapauserequest', {bubbles: true}))
+    fireEvent(audio, new Event('pause'))
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(22)
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: false,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+
+    result.unmount()
+  })
+
   it('should remain paused when the browser blocks restored playback', async () => {
     vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(
       new DOMException('Playback requires user interaction', 'NotAllowedError'),
