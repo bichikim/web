@@ -65,6 +65,14 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 [촬영 환경](rendering/evidence/manifest.json)의 OS·Chromium 버전·화면 크기·DPR·언어·시간대와
 같은 환경에서 비교해야 합니다. [설정 기준 PNG](rendering/settings.spec.ts-snapshots)와
 [타이머 기준 PNG](rendering/pomodoro.spec.ts-snapshots)는 Git에 보존합니다.
+
+[포모도로 테스트](rendering/pomodoro.spec.ts)의 빠른 제어·세션 초기화 시나리오는
+실제 버튼으로 시작·일시정지·재개하고, 완료 횟수가 있는 휴식 도중 세션을 초기화합니다.
+새로고침 뒤에도 완료 횟수는 0이며 저장한 시간 설정은 유지되고, 타이머는 멈춰 있어야 합니다.
+타이머 상태나 저장소는 모킹하지 않으며 비교와 무관한 재생목록만 비웁니다.
+브라우저 시계는 고정하고, 다이얼로그 포커스와 일시정지·완료 상태의 PNG도 확인합니다.
+두 상태는 이전 기준이 없는 최초 기준입니다. [촬영 기록](rendering/evidence/timer-controls/manifest.json)에
+현재 이미지와 환경을 보존하며, 실제 Toss·데스크톱 앱·원격 DB·음성 재생 검증은 포함하지 않습니다.
 설정 기준에는 병합된 배경 탭·위젯 표시 설정 변경을 반영했으며, 타이머 기준은 최초 생성입니다.
 다른 OS의 기준 부재나 실행 실패를 변경 없음으로 해석하지 마세요.
 변경이 실패하면 기준·현재·차이 이미지를 확인하고 원인이 입증되기 전에는 기준을 갱신하지 않습니다.
