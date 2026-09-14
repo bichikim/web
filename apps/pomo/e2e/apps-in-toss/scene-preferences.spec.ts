@@ -1,5 +1,7 @@
 import {expect, test} from '@playwright/test'
 
+import {openSettings} from '../helpers/settings'
+
 test('should restore scene choices from Toss dev storage after removing the browser copy', async ({
   page,
 }, information) => {
@@ -10,11 +12,9 @@ test('should restore scene choices from Toss dev storage after removing the brow
   })
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
-  await page.getByRole('button', {exact: true, name: '설정'}).click()
-  const dialog = page.getByRole('dialog', {name: 'Pomofi 설정'})
-  await dialog.getByRole('tab', {exact: true, name: '배경'}).click()
+  const dialog = await openSettings(page, '배경')
   await dialog.getByText('밤', {exact: true}).click()
-  await dialog.getByText('노트북 타이핑', {exact: true}).click()
+  await dialog.getByText('타이핑', {exact: true}).click()
   await dialog.getByText('사용자 보기', {exact: true}).click()
 
   const key = 'pomo:focus-room-scene-preferences:v1'
@@ -22,19 +22,18 @@ test('should restore scene choices from Toss dev storage after removing the brow
   await expect
     .poll(() => page.evaluate((key) => localStorage.getItem(`__ait_storage:${key}`), key))
     .toBe(JSON.stringify(preferences))
-  expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(
-    JSON.stringify(preferences),
-  )
+  await expect
+    .poll(() => page.evaluate((key) => localStorage.getItem(key), key))
+    .toBe(JSON.stringify(preferences))
 
   await page.evaluate((key) => localStorage.removeItem(key), key)
   await page.reload()
-  await page.getByRole('button', {exact: true, name: '설정'}).click()
-  await dialog.getByRole('tab', {exact: true, name: '배경'}).click()
+  await openSettings(page, '배경')
   await expect(dialog.getByRole('radio', {exact: true, name: '밤'})).toBeChecked()
-  await expect(dialog.getByRole('radio', {exact: true, name: '노트북 타이핑'})).toBeChecked()
+  await expect(dialog.getByRole('radio', {exact: true, name: '타이핑'})).toBeChecked()
   await expect(dialog.getByRole('radio', {exact: true, name: '사용자 보기'})).toBeChecked()
-  expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(
-    JSON.stringify(preferences),
-  )
+  await expect
+    .poll(() => page.evaluate((key) => localStorage.getItem(key), key))
+    .toBe(JSON.stringify(preferences))
   await page.screenshot({path: information.outputPath('restored.png')})
 })

@@ -106,6 +106,13 @@ const createStoredMemo = (): MemoryMemo => ({
   nextRecallAt: '2026-09-04T03:10:00.000Z',
   recallMode: 'reinforcement',
   reinforcementIndex: 1,
+  reminderEvents: [
+    {
+      deliveredAt: '2026-09-04T03:10:00.000Z',
+      kind: 'recall',
+      scheduledAt: '2026-09-04T03:10:00.000Z',
+    },
+  ],
   reminderHistory: ['2026-09-04T03:10:00.000Z'],
   text: '여권 갱신하기',
   updatedAt: '2026-09-04T03:10:00.000Z',
