@@ -14,7 +14,7 @@ it.each(['vroid.glb', 'haru.vrm'])(
   async (filename) => {
     const engine = new NullEngine()
     const scene = new Scene(engine)
-    const bytes = await readFile(`apps/pomo/public/assets/character-studio/${filename}`)
+    const bytes = await readFile(`apps/pomo/dev-public/assets/character-studio/${filename}`)
     const container = await LoadAssetContainerAsync(bytes, scene, {
       pluginExtension: '.glb',
       pluginOptions: {gltf: {skipMaterials: true}},
