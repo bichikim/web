@@ -1,3 +1,4 @@
+import {visibilityInterval} from 'src/utils/visibility-interval'
 import {onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
@@ -12,33 +13,27 @@ export interface UseFeedRefreshEventsProps {
 
 export const useFeedRefreshEvents = (props: UseFeedRefreshEventsProps) => {
   onMount(() => {
-    const refreshVisibleFeeds = () => {
-      if (document.visibilityState === 'visible') {
-        props.refresh().catch((error: unknown) => {
-          console.error('Failed to refresh visible focus room feeds.', error)
-        })
-      }
-    }
     const refreshChangedFeeds = () => {
       props.refresh().catch((error: unknown) => {
         console.error('Failed to refresh changed focus room feeds.', error)
       })
     }
-    const interval = globalThis.setInterval(() => {
-      props.refresh().catch((error: unknown) => {
-        console.error('Failed to poll focus room feeds.', error)
-      })
-    }, props.pollingIntervalMs)
+    const stopPolling = visibilityInterval(
+      () => {
+        props.refresh().catch((error: unknown) => {
+          console.error('Failed to poll focus room feeds.', error)
+        })
+      },
+      props.pollingIntervalMs,
+      true,
+    )
 
-    useEvent(document, 'visibilitychange', refreshVisibleFeeds)
     useEvent(window, props.connectionChangedEvent, refreshChangedFeeds)
     useEvent(window, props.settingsChangedEvent, refreshChangedFeeds)
     props.initialize().catch((error: unknown) => {
       console.error('Failed to initialize focus room feeds.', error)
       props.onInitializationFailure()
     })
-    onCleanup(() => {
-      globalThis.clearInterval(interval)
-    })
+    onCleanup(stopPolling)
   })
 }

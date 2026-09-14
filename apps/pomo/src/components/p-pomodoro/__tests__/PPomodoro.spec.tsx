@@ -214,6 +214,7 @@ describe('PPomodoro', () => {
     expect(characterEmotion?.getAttribute('data-active')).toBe('')
 
     vi.advanceTimersByTime(1_000)
+    vi.advanceTimersToNextFrame()
     expect(within(dialog).getByText('24:59')).toBeDefined()
     expect(onPresentationChange).toHaveBeenLastCalledWith({
       phaseLabel: '집중',
@@ -305,24 +306,28 @@ describe('PPomodoro', () => {
 
     fireEvent.click(within(dialog).getByRole('button', {name: '집중 시작'}))
     vi.advanceTimersByTime(1_000)
+    vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
     expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'break-start'])
 
     vi.advanceTimersByTime(1_000)
+    vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
     ).toBeDefined()
     expect(onEvents).toHaveBeenLastCalledWith(['break-end', 'focus-start'])
 
     vi.advanceTimersByTime(1_000)
+    vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 긴 휴식 중, 00:01'}),
     ).toBeDefined()
     expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'long-break-start'])
 
     vi.advanceTimersByTime(1_000)
+    vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
     ).toBeDefined()

@@ -1,106 +1,67 @@
-import {getMonotonicTime} from 'src/utils/get-monotonic-time'
-/* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
-const DETECTION_INTERVAL = 50
-const REQUIRED_SPEECH_SAMPLES = 3
-const SILENCE_DURATION = 800
-const SILENCE_THRESHOLD = 0.01
-const SPEECH_THRESHOLD = 0.018
+// Vite provides the default URL export for worker assets.
+// oxlint-disable-next-line import/default
+import processorUrl from './speech-end-processor.ts?worker&url'
+export {createSpeechEndState} from './speech-end-state'
+export type {SpeechEndSample, SpeechEndState} from './speech-end-state'
 
 export interface SpeechEndDetector {
   readonly dispose: () => void
   readonly subscribe: (onSpeechEnd: () => void) => () => void
 }
 
-export interface SpeechEndSample {
-  readonly energy: number
-  readonly timestamp: number
-}
-
-export interface SpeechEndState {
-  readonly push: (sample: SpeechEndSample) => boolean
-}
-
-export const createSpeechEndState = (): SpeechEndState => {
-  let consecutiveSpeech = 0
-  let lastSpeechAt = 0
-  let speechActive = false
-
-  const push = (sample: SpeechEndSample) => {
-    if (sample.energy >= SPEECH_THRESHOLD) {
-      consecutiveSpeech += 1
-      lastSpeechAt = sample.timestamp
-      speechActive ||= consecutiveSpeech >= REQUIRED_SPEECH_SAMPLES
-      return false
-    }
-
-    consecutiveSpeech = 0
-
-    if (!speechActive) {
-      return false
-    }
-
-    if (sample.energy >= SILENCE_THRESHOLD) {
-      lastSpeechAt = sample.timestamp
-      return false
-    }
-
-    if (sample.timestamp - lastSpeechAt < SILENCE_DURATION) {
-      return false
-    }
-
-    speechActive = false
-    return true
-  }
-
-  return {push}
-}
-
-const getRootMeanSquare = (samples: Float32Array) => {
-  const energy = samples.reduce((sum, sample) => sum + sample * sample, 0) / samples.length
-  return Math.sqrt(energy)
-}
-
-/** Observes microphone energy without routing audio to an output device. */
+/** Observes microphone activity without playing microphone audio. */
 export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDetector | null => {
-  if (typeof AudioContext === 'undefined') {
+  if (typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') {
     return null
   }
-
+  let context: AudioContext
   try {
-    const context = new AudioContext()
-    const analyser = context.createAnalyser()
-    const source = context.createMediaStreamSource(stream)
-    analyser.fftSize = 1024
-    const samples = new Float32Array(analyser.fftSize)
-    const state = createSpeechEndState()
-    const listeners = new Set<() => void>()
-    source.connect(analyser)
-    context.resume().catch(() => undefined)
-
-    const intervalId = globalThis.setInterval(() => {
-      analyser.getFloatTimeDomainData(samples)
-
-      if (state.push({energy: getRootMeanSquare(samples), timestamp: getMonotonicTime()})) {
+    context = new AudioContext()
+  } catch {
+    return null
+  }
+  let disposed = false
+  let source: MediaStreamAudioSourceNode | undefined
+  let processor: AudioWorkletNode | undefined
+  const listeners = new Set<() => void>()
+  const dispose = () => {
+    if (disposed) {
+      return
+    }
+    disposed = true
+    listeners.clear()
+    source?.disconnect()
+    if (processor !== undefined) {
+      processor.port.onmessage = null
+      processor.port.close()
+      processor.disconnect()
+    }
+    context.close().catch(() => undefined)
+  }
+  const initialize = async () => {
+    await context.audioWorklet.addModule(processorUrl)
+    if (disposed) {
+      return
+    }
+    processor = new AudioWorkletNode(context, 'speech-end', {numberOfOutputs: 0})
+    processor.port.onmessage = (event: MessageEvent<unknown>) => {
+      if (!disposed && event.data === 'speech-end') {
         for (const listener of listeners) {
           listener()
         }
       }
-    }, DETECTION_INTERVAL)
-
-    return {
-      dispose: () => {
-        globalThis.clearInterval(intervalId)
-        listeners.clear()
-        source.disconnect()
-        analyser.disconnect()
-        context.close().catch(() => undefined)
-      },
-      subscribe: (onSpeechEnd) => {
-        listeners.add(onSpeechEnd)
-        return () => listeners.delete(onSpeechEnd)
-      },
     }
-  } catch {
-    return null
+    processor.onprocessorerror = dispose
+    source = context.createMediaStreamSource(stream)
+    source.connect(processor)
+    await context.resume()
+  }
+  initialize().catch(dispose)
+  return {
+    dispose,
+    subscribe: (onSpeechEnd) => {
+      listeners.add(onSpeechEnd)
+      return () => listeners.delete(onSpeechEnd)
+    },
   }
 }

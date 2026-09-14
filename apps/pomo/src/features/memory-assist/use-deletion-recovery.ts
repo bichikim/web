@@ -1,5 +1,5 @@
 import {onCleanup, onMount} from 'solid-js'
-import {useEvent} from '@winter-love/solid-use/event'
+import {visibilityInterval} from 'src/utils/visibility-interval'
 
 const RETRY_DELAY = 300_000
 
@@ -12,12 +12,6 @@ export const useDeletionRecovery = (retryDeletions: () => Promise<void>) => {
       })
     }
     retry()
-    const timer = setInterval(retry, RETRY_DELAY)
-    useEvent(document, 'visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        retry()
-      }
-    })
-    onCleanup(() => clearInterval(timer))
+    onCleanup(visibilityInterval(retry, RETRY_DELAY, true))
   })
 }

@@ -110,10 +110,12 @@ describe('recording lifecycle', () => {
     await root.controller.startRecording()
     await vi.advanceTimersByTimeAsync(500)
 
+    vi.mocked(recorder.start).mock.calls[0][0]?.()
     expect(root.controller.elapsedTime()).toBe(0.5)
     await root.controller.stopRecording()
     const stoppedAt = root.controller.elapsedTime()
     await vi.advanceTimersByTimeAsync(500)
+    vi.mocked(recorder.start).mock.calls[0][0]?.()
     expect(root.controller.elapsedTime()).toBe(stoppedAt)
     root.dispose()
   })
@@ -136,6 +138,7 @@ describe('recording lifecycle', () => {
       vi.mocked(getMonotonicTime).mockReturnValue(1_000)
       await vi.advanceTimersByTimeAsync(500)
 
+      vi.mocked(recorder.start).mock.calls[0][0]?.()
       expect(root.controller.elapsedTime()).toBe(1)
       root.dispose()
     },

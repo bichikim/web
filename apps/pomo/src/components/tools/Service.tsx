@@ -6,18 +6,17 @@ import {
   type ServiceSettings,
   writeServiceSettings,
 } from 'src/features/tools'
-import {koreanToday} from 'src/features/civil-date'
+import {useKoreanToday} from 'src/features/civil-date'
 import {PDatePicker} from '../p-date-picker/PDatePicker'
 import {PSelect} from '../p-select/PSelect'
 import {PInput} from '../p-input/PInput'
 import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
 
-const CLOCK_INTERVAL = 60000
 export const Service = () => {
   const [settings, setSettings] = createSignal(DEFAULT_SERVICE_SETTINGS)
   const [ready, setReady] = createSignal(false)
-  const [today, setToday] = createSignal('')
+  const today = useKoreanToday()
   const start = () => settings().start
   const manual = () => settings().manual
   const branch = () => settings().branch
@@ -47,9 +46,6 @@ export const Service = () => {
           setReady(true)
         }
       })
-    setToday(koreanToday(new Date()))
-    const interval = setInterval(() => setToday(koreanToday(new Date())), CLOCK_INTERVAL)
-    onCleanup(() => clearInterval(interval))
   })
   const serviceDays = () => (/^\d+$/u.test(settings().days) ? Number(settings().days) : NaN)
   const result = createMemo(() =>
