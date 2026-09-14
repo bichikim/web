@@ -45,7 +45,7 @@ beforeEach(() => {
   storageMocks.write.mockReset().mockResolvedValue(undefined)
 })
 
-it('should persist only valid current playback without overwriting a pending position', () => {
+it('should persist only valid current playback and skip unchanged pending playback', () => {
   const harness = createHarness()
 
   harness.persistence.persistCurrentPlayback()
@@ -53,7 +53,7 @@ it('should persist only valid current playback without overwriting a pending pos
   harness.persistence.persistCurrentPlayback()
   harness.setAudio(createAudio(Number.NaN, 10))
   harness.persistence.persistCurrentPlayback()
-  harness.persistence.setPendingPosition({isPlaying: false, positionSeconds: 3, trackId: TRACK.id})
+  harness.persistence.setPendingPosition({isPlaying: true, positionSeconds: 3, trackId: TRACK.id})
   harness.setAudio(createAudio(4, 10))
   harness.persistence.persistCurrentPlayback()
   expect(storageMocks.write).not.toHaveBeenCalled()
@@ -65,6 +65,27 @@ it('should persist only valid current playback without overwriting a pending pos
   expect(storageMocks.write).toHaveBeenCalledWith({
     isPlaying: false,
     positionSeconds: 0,
+    trackId: TRACK.id,
+  })
+})
+
+it('should persist a changed play intent while keeping the pending position', () => {
+  const harness = createHarness()
+  harness.setTrack(TRACK)
+  harness.setAudio(createAudio(4, 10))
+  harness.persistence.setPendingPosition({isPlaying: false, positionSeconds: 3, trackId: TRACK.id})
+  harness.setPlaying(true)
+
+  harness.persistence.persistCurrentPlayback()
+
+  expect(storageMocks.write).toHaveBeenCalledWith({
+    isPlaying: true,
+    positionSeconds: 3,
+    trackId: TRACK.id,
+  })
+  expect(harness.persistence.applyPendingPosition()).toEqual({
+    isPlaying: true,
+    positionSeconds: 3,
     trackId: TRACK.id,
   })
 })
