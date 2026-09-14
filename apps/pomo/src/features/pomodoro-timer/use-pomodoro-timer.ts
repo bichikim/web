@@ -3,7 +3,12 @@ import {useEvent} from '@winter-love/solid-use/event'
 import {z} from 'zod'
 
 import {readAutoStartPreference, writeAutoStartPreference} from './auto-start-storage'
-import {getPomodoroTimerEvents, type PomodoroTimerEvent} from './events'
+import {
+  getPomodoroTimerEvents,
+  MAX_POMODORO_TIMER_CATCH_UP_EVENTS,
+  type PomodoroTimerEvent,
+  type PomodoroTimerEventDeliveryOptions,
+} from './events'
 import {
   advancePomodoroTimer,
   createPomodoroTimerState,
@@ -70,7 +75,14 @@ export interface PomodoroTimerController {
 
 export interface UsePomodoroTimerProps {
   readonly stopOnUnmount?: boolean
-  readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
+  readonly onEvents?: (
+    events: ReadonlyArray<PomodoroTimerEvent>,
+    options?: PomodoroTimerEventDeliveryOptions,
+  ) => void
+}
+
+interface ApplyStateOptions {
+  readonly isCatchUp?: boolean
 }
 
 const readStoredState = (): PomodoroTimerState | null => {
@@ -129,13 +141,22 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const [now, setNow] = createSignal(0)
   const [isStorageReady, setIsStorageReady] = createSignal(false)
 
-  const applyState = (nextState: PomodoroTimerState) => {
+  const applyState = (nextState: PomodoroTimerState, options: ApplyStateOptions = {}) => {
     const previousState = state()
     setState(nextState)
-    const events = getPomodoroTimerEvents(previousState, nextState, config())
+    const events = getPomodoroTimerEvents(
+      previousState,
+      nextState,
+      config(),
+      options.isCatchUp ? {maxEventCount: MAX_POMODORO_TIMER_CATCH_UP_EVENTS} : undefined,
+    )
 
     if (events.length > 0) {
-      props.onEvents?.(events)
+      if (options.isCatchUp) {
+        props.onEvents?.(events, {isCatchUp: true})
+      } else {
+        props.onEvents?.(events)
+      }
     }
   }
 
@@ -156,6 +177,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       synchronizePomodoroTimer(currentState, currentTime, config(), {
         autoStartNextPhase: isAutoStartEnabled(),
       }),
+      {isCatchUp: true},
     )
   }
 
@@ -164,7 +186,6 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     const currentTime = Date.now()
     const storedConfig = readStoredConfig() ?? POMODORO_TIMER_CONFIG
     const storedState = readStoredState() ?? createPomodoroTimerState(storedConfig)
-    const wasRunningAtMount = storedState.status === 'running' && storedState.endsAt > currentTime
 
     setConfig(storedConfig)
     setNow(currentTime)
@@ -191,12 +212,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         const synchronizedState = synchronizePomodoroTimer(storedState, restoredAt, storedConfig, {
           autoStartNextPhase,
         })
-
-        if (wasRunningAtMount) {
-          applyState(synchronizedState)
-        } else {
-          setState(synchronizedState)
-        }
+        applyState(synchronizedState, {isCatchUp: true})
       }
 
       setIsStorageReady(true)
@@ -243,6 +259,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       pausePomodoroTimer(state(), currentTime, config(), {
         autoStartNextPhase: isAutoStartEnabled(),
       }),
+      {isCatchUp: true},
     )
   }
   const onConfigChange = (nextConfig: PomodoroTimerConfig) => {

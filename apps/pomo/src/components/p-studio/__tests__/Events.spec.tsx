@@ -106,7 +106,10 @@ vi.mock('../../p-music-player/PMusicPlayer', () => ({
 }))
 vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: (props: {
-    readonly onEvents: (eventIds: ReadonlyArray<string>) => void
+    readonly onEvents: (
+      eventIds: ReadonlyArray<string>,
+      options?: {readonly isCatchUp: true},
+    ) => void
     readonly onPresentationChange: (presentation: {
       readonly phaseLabel: string
       readonly statusLabel: string
@@ -117,6 +120,9 @@ vi.mock('../../p-pomodoro/PPomodoro', () => ({
     <div data-pomodoro-scene={props.sceneStyle}>
       <button onClick={() => props.onEvents(['focus-start'])} type="button">
         집중 시작 이벤트
+      </button>
+      <button onClick={() => props.onEvents(['focus-end'], {isCatchUp: true})} type="button">
+        복원 이벤트
       </button>
       <button
         onClick={() =>
@@ -340,6 +346,7 @@ describe('PStudioEvents', () => {
     expect(pomoSay.speak).toHaveBeenCalledWith({text: '천천히 시작해 봐요.'})
 
     fireEvent.click(screen.getByRole('button', {name: '집중 시작 이벤트'}))
+    fireEvent.click(screen.getByRole('button', {name: '복원 이벤트'}))
     fireEvent.click(screen.getByRole('button', {name: '타이머 표시 갱신'}))
     fireEvent.click(screen.getByRole('button', {name: '음악 재생'}))
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
@@ -348,6 +355,9 @@ describe('PStudioEvents', () => {
     await Promise.resolve()
 
     expect(events.playDialogueEvents).toHaveBeenCalledWith(['focus-start'], pomoSay.stop)
+    expect(events.playDialogueEvents).toHaveBeenCalledWith(['focus-end'], pomoSay.stop, {
+      replacementPolicy: 'latest',
+    })
     expect(onPomodoroPresentationChange).toHaveBeenCalledWith({
       phaseLabel: '집중',
       statusLabel: '진행 중',

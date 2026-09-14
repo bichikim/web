@@ -2,8 +2,20 @@ import type {DialogueEventPlaybackMode} from './schema'
 
 export interface SelectEventDialoguesOptions {
   readonly dialogueIds: ReadonlyArray<string>
+  readonly maxLatestDialogueIds?: number
   readonly playbackMode: DialogueEventPlaybackMode
   readonly random?: () => number
+}
+
+const takeLatestDialogueIds = (
+  dialogueIds: ReadonlyArray<string>,
+  maxLatestDialogueIds?: number,
+) => {
+  if (maxLatestDialogueIds === undefined) {
+    return [...dialogueIds]
+  }
+
+  return maxLatestDialogueIds <= 0 ? [] : dialogueIds.slice(-maxLatestDialogueIds)
 }
 
 const shuffleDialogues = (dialogueIds: ReadonlyArray<string>, random: () => number) => {
@@ -25,17 +37,25 @@ export const selectEventDialogues = (
 ): ReadonlyArray<string> => {
   switch (options.playbackMode) {
     case 'sequential-all':
-      return [...options.dialogueIds]
+      return takeLatestDialogueIds(options.dialogueIds, options.maxLatestDialogueIds)
     case 'random-all':
-      return shuffleDialogues(options.dialogueIds, options.random ?? Math.random)
+      return shuffleDialogues(
+        takeLatestDialogueIds(options.dialogueIds, options.maxLatestDialogueIds),
+        options.random ?? Math.random,
+      )
     case 'random-one': {
-      if (options.dialogueIds.length === 0) {
+      const latestDialogueIds = takeLatestDialogueIds(
+        options.dialogueIds,
+        options.maxLatestDialogueIds,
+      )
+
+      if (latestDialogueIds.length === 0) {
         return []
       }
 
       const random = options.random ?? Math.random
-      const position = Math.floor(random() * options.dialogueIds.length)
-      return [options.dialogueIds[position] as string]
+      const position = Math.floor(random() * latestDialogueIds.length)
+      return [latestDialogueIds[position] as string]
     }
     default: {
       const exhaustiveMode: never = options.playbackMode

@@ -1,5 +1,6 @@
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
+import type {PomodoroTimerEventDeliveryOptions} from '../../features/pomodoro-timer'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
@@ -61,10 +62,21 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
 
     return hasVisibleContent || (wasPresented && events.scheduledDialogueCount() > 0)
   }, false)
-  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) =>
-    events.playDialogueEvents(eventIds, props.pomoSay.stop).catch((error: unknown) => {
+  const handlePomodoroEvents = (
+    eventIds: Parameters<typeof events.playDialogueEvents>[0],
+    options?: PomodoroTimerEventDeliveryOptions,
+  ) => {
+    const dialogueOptions =
+      options?.isCatchUp === true ? {replacementPolicy: 'latest' as const} : undefined
+    const playback =
+      dialogueOptions === undefined
+        ? events.playDialogueEvents(eventIds, props.pomoSay.stop)
+        : events.playDialogueEvents(eventIds, props.pomoSay.stop, dialogueOptions)
+
+    return playback.catch((error: unknown) => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
     })
+  }
 
   const reminders = useMemoryReminders({events, onBeforePlayback: () => props.pomoSay.stop()})
   useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
