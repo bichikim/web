@@ -37,14 +37,25 @@ export const usePPlaybackPersistence = (
   const persistPlayback = (isPlaying: boolean) => {
     // oxlint-disable-next-line solid/reactivity -- Called from media events to read their latest state.
     const track = props.currentTrack()
-    const positionSeconds = props.getAudioElement()?.currentTime
 
-    if (
-      track === undefined ||
-      positionSeconds === undefined ||
-      !Number.isFinite(positionSeconds) ||
-      pendingPosition?.trackId === track.id
-    ) {
+    if (track === undefined) {
+      return
+    }
+
+    const pendingPlayback = pendingPosition
+    if (pendingPlayback?.trackId === track.id) {
+      if (pendingPlayback.isPlaying === isPlaying) {
+        return
+      }
+
+      const updatedPlayback = {...pendingPlayback, isPlaying}
+      pendingPosition = updatedPlayback
+      writePlayback(updatedPlayback)
+      return
+    }
+
+    const positionSeconds = props.getAudioElement()?.currentTime
+    if (positionSeconds === undefined || !Number.isFinite(positionSeconds)) {
       return
     }
 
