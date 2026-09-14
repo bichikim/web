@@ -27,9 +27,7 @@ describe('handleLegacyRedirectRequest', () => {
         new Request(`https://pomo.example${pathname}?link_token=secret&verifier=secret`),
       )
 
-      expect(response?.headers.get('Location')).toBe(
-        '/?link_token=secret&verifier=secret',
-      )
+      expect(response?.headers.get('Location')).toBe('/?link_token=secret&verifier=secret')
     },
   )
 
