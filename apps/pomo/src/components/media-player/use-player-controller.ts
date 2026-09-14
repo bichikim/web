@@ -72,7 +72,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       playbackPersistence.persistCurrentPlayback()
       props.onError?.(error)
     },
-    onPause: (wasPlaying) => handlePause(wasPlaying),
+    onPause: (wasPlaying, isUserIntent) => handlePause(wasPlaying, isUserIntent),
     onPlay: () => handlePlay(),
   })
   const {isPlaying} = playback
@@ -145,7 +145,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const playAudio = playback.play
   const previewPlayback = createPreviewPlayback({
     isPlaying,
-    pausePlayer: playback.pause,
+    pausePlayer: () => playback.pause({isUserIntent: false}),
     playPlayer: playAudio,
   })
 
@@ -197,16 +197,20 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     if (audioElement !== undefined) {
       visualizer.start(audioElement)
     }
-    playbackPersistence.persistCurrentPlayback()
+    playbackPersistence.persistPlaybackIntent(true)
   }
 
-  const handlePause = (wasPlaying: boolean) => {
+  const handlePause = (wasPlaying: boolean, isUserIntent: boolean) => {
     if (wasPlaying) {
       playback.invalidate()
       playbackRevision += 1
     }
     visualizer.stop()
-    playbackPersistence.persistCurrentPlayback()
+    if (isUserIntent) {
+      playbackPersistence.persistPlaybackIntent(false)
+    } else {
+      playbackPersistence.persistCurrentPlayback()
+    }
   }
 
   const addTracksToQueue = (tracksToAdd: readonly PTrack[]) => {
