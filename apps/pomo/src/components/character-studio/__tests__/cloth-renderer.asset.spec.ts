@@ -12,7 +12,7 @@ describe('attachCloth with the fitted sweater', () => {
   it('should load elastic contacts, preserve fixed regions and restore the accepted shape', async () => {
     const engine = new NullEngine()
     const scene = new Scene(engine)
-    const bytes = readFileSync('apps/pomo/public/character-studio/pomo.glb')
+    const bytes = readFileSync('apps/pomo/dev-public/character-studio/pomo.glb')
     const container = await LoadAssetContainerAsync(bytes, scene, {
       pluginExtension: '.glb',
       pluginOptions: {gltf: {skipMaterials: true}},

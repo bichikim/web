@@ -111,6 +111,11 @@ const RELEASE =
 const FONT_CACHE_MAX_AGE = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * DAYS_PER_YEAR
 const PRETENDARD_BASE_PATH = `/fonts/pretendard/${PRETENDARD_VERSION}`
 const PRETENDARD_PUBLIC_DIRECTORY = `./public${PRETENDARD_BASE_PATH}`
+const PRETENDARD_PUBLIC_ASSET = {
+  baseURL: PRETENDARD_BASE_PATH,
+  dir: PRETENDARD_PUBLIC_DIRECTORY,
+  maxAge: FONT_CACHE_MAX_AGE,
+}
 const SCRIBBLE_ICON_SET_PATH = fileURLToPath(
   new URL('./scripts/unocss/scribble.json', import.meta.url),
 )
@@ -293,11 +298,8 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
             : SHARED_STATIC_ROUTES,
       },
       publicAssets: [
-        {
-          baseURL: PRETENDARD_BASE_PATH,
-          dir: PRETENDARD_PUBLIC_DIRECTORY,
-          maxAge: FONT_CACHE_MAX_AGE,
-        },
+        ...(command === 'serve' ? [{baseURL: '/', dir: './dev-public', maxAge: 0}] : []),
+        PRETENDARD_PUBLIC_ASSET,
       ],
       routeRules: {
         '/**': {headers: BASE_SECURITY_HEADERS},

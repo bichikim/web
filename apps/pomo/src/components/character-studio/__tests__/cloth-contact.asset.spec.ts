@@ -15,7 +15,7 @@ it('should keep the real Luna garment finite throughout seated gestures', async 
   const engine = new NullEngine()
   vi.spyOn(engine, 'getDeltaTime').mockReturnValue(1000 / 60)
   const scene = new Scene(engine)
-  const bytes = await readFile('apps/pomo/public/assets/character-studio/vroid.glb')
+  const bytes = await readFile('apps/pomo/dev-public/assets/character-studio/vroid.glb')
   const container = await LoadAssetContainerAsync(bytes, scene, {
     pluginExtension: '.glb',
     pluginOptions: {gltf: {skipMaterials: true}},

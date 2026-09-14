@@ -1,6 +1,6 @@
 # 실시간 옷 물리 데이터
 
-웹에서 사용하는 원본은 `../../../public/character-studio/pomo.glb`입니다.
+웹에서 사용하는 원본은 `../../../dev-public/character-studio/pomo.glb`입니다.
 Blender 작업 이력과 중간 렌더·캐시는 로컬에 보존하며 Git에 포함하지 않습니다.
 
 `prepare.py`를 Blender Python으로 실행하면 원본의 메시·재질 바이너리를 유지한 채
