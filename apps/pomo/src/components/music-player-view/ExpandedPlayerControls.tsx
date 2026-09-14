@@ -17,6 +17,8 @@ const SKIP_BUTTON_CLASSES = cx(
 
 interface ExpandedPlayerControlsProps extends Pick<
   MusicPlayerViewProps,
+  | 'canNavigateNextTrack'
+  | 'canNavigatePreviousTrack'
   | 'isPlaying'
   | 'onNextTrack'
   | 'onPreviousTrack'
@@ -26,7 +28,6 @@ interface ExpandedPlayerControlsProps extends Pick<
   | 'sceneStyle'
   | 'shuffleEnabled'
 > {
-  readonly canSkip: boolean
   readonly hasTrack: boolean
   readonly actions?: JSX.Element
 }
@@ -61,7 +62,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
           ref={previousTooltip.setTarget}
           aria-label={m.player_previous()}
           class={SKIP_BUTTON_CLASSES}
-          disabled={!props.canSkip}
+          disabled={!props.canNavigatePreviousTrack}
           onClick={() => props.onPreviousTrack()}
           type="button"
         >
@@ -115,7 +116,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
           ref={nextTooltip.setTarget}
           aria-label={m.player_next()}
           class={SKIP_BUTTON_CLASSES}
-          disabled={!props.canSkip}
+          disabled={!props.canNavigateNextTrack}
           onClick={() => props.onNextTrack()}
           type="button"
         >

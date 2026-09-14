@@ -16,9 +16,11 @@ const eventMocks = vi.hoisted(() => ({
 const featureMocks = vi.hoisted(() => ({
   appendUniqueTracks: vi.fn(),
   applyPendingPosition: vi.fn(),
+  canNavigateManually: vi.fn(),
   createInitialPlaybackState: vi.fn(),
   createShuffleQueue: vi.fn(),
   loadPTrackQueueSource: vi.fn(),
+  normalizeTrackIndex: vi.fn(),
   persistCurrentPlayback: vi.fn(),
   persistPlaybackIntent: vi.fn(),
   persistPlaybackProgress: vi.fn(),
@@ -59,9 +61,11 @@ vi.mock('@winter-love/solid-use/event', () => ({
 }))
 vi.mock('../../../features/focus-room-audio', () => ({
   appendUniqueTracks: featureMocks.appendUniqueTracks,
+  canNavigateManually: featureMocks.canNavigateManually,
   createInitialPlaybackState: featureMocks.createInitialPlaybackState,
   createShuffleQueue: featureMocks.createShuffleQueue,
   loadPTrackQueueSource: featureMocks.loadPTrackQueueSource,
+  normalizeTrackIndex: featureMocks.normalizeTrackIndex,
   readPPlayback: featureMocks.readPPlayback,
   readPPlaylist: featureMocks.readPPlaylist,
   resolvePlaybackRestore: featureMocks.resolvePlaybackRestore,
@@ -161,6 +165,7 @@ beforeEach(() => {
       queue: trackCount > 1 ? [2, 0] : [],
     }),
   )
+  featureMocks.canNavigateManually.mockReturnValue(true)
   featureMocks.createShuffleQueue.mockReturnValue([2, 0])
   featureMocks.appendUniqueTracks.mockImplementation(
     (current: readonly PTrack[], added: readonly PTrack[]) =>
@@ -187,6 +192,13 @@ beforeEach(() => {
   })
   featureMocks.readPPlaylist.mockResolvedValue(null)
   featureMocks.readPPlayback.mockResolvedValue(null)
+  featureMocks.normalizeTrackIndex.mockImplementation((index: number, trackCount: number) => {
+    if (trackCount < 1 || !Number.isInteger(trackCount) || !Number.isInteger(index)) {
+      return undefined
+    }
+    const remainder = index % trackCount
+    return remainder < 0 ? remainder + trackCount : remainder
+  })
   featureMocks.resolvePPlaylist.mockImplementation(
     ({defaultTracks}: {readonly defaultTracks: readonly PTrack[]}) => defaultTracks,
   )
@@ -372,9 +384,32 @@ describe('PMusicPlayerContent control paths', () => {
     latestViewProps().onShuffleChange()
     latestViewProps().onShuffleChange()
     latestViewProps().onNextTrack()
-    const pop = vi.spyOn(Array.prototype, 'pop').mockReturnValueOnce(undefined)
     latestViewProps().onPreviousTrack()
-    pop.mockRestore()
+  })
+
+  it('should suppress denied manual transport commands without controller side effects', () => {
+    featureMocks.canNavigateManually.mockReturnValue(false)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = createAudio()
+    expect(latestViewProps().canNavigateNextTrack).toBe(false)
+    expect(latestViewProps().canNavigatePreviousTrack).toBe(false)
+    emit('play')
+    const initialIndex = latestController().currentIndex()
+    const writeCount = featureMocks.writePlayback.mock.calls.length
+    const pendingCount = featureMocks.setPendingPosition.mock.calls.length
+    const loadCount = vi.mocked(audio.load).mock.calls.length
+    const pauseCount = vi.mocked(audio.pause).mock.calls.length
+    const playCount = vi.mocked(audio.play).mock.calls.length
+
+    latestViewProps().onNextTrack()
+    latestViewProps().onPreviousTrack()
+
+    expect(latestController().currentIndex()).toBe(initialIndex)
+    expect(featureMocks.writePlayback).toHaveBeenCalledTimes(writeCount)
+    expect(featureMocks.setPendingPosition).toHaveBeenCalledTimes(pendingCount)
+    expect(audio.load).toHaveBeenCalledTimes(loadCount)
+    expect(audio.pause).toHaveBeenCalledTimes(pauseCount)
+    expect(audio.play).toHaveBeenCalledTimes(playCount)
   })
 
   it('should reject invalid queue edits and handle unchanged and empty removals', async () => {
