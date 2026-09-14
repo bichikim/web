@@ -79,6 +79,7 @@ interface CompleteCalendarConnectionOptions {
 }
 
 interface ListCalendarEventsOptions extends CalendarEventRange {
+  readonly displayTimeZone: string
   readonly userId: string
 }
 
@@ -110,7 +111,7 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
 
   const readConnectionEvents = async (
     connection: CalendarConnectionRecord,
-    range: CalendarEventRange,
+    range: Omit<ListCalendarEventsOptions, 'userId'>,
   ): Promise<ConnectionEventsResult> => {
     const provider = options.providerFor(connection.provider)
     let tokens = options.vault.open(connection.encryptedTokens)
