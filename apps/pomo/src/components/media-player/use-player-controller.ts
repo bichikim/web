@@ -12,6 +12,7 @@ import {useEvent} from '@winter-love/solid-use/event'
 import {
   appendUniqueTracks,
   createInitialPlaybackState,
+  normalizeTrackIndex,
   type PPlaybackState,
   type PTrack,
   resolvePlaybackRestore,
@@ -177,7 +178,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
 
     const shouldResume = options.shouldResume ?? isPlaying()
-    const nextIndex = (options.index + trackList.length) % trackList.length
+    const nextIndex = normalizeTrackIndex(options.index, trackList.length)
+
+    if (nextIndex === undefined) {
+      return
+    }
+
     const nextTrack = trackList[nextIndex]
     const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
     playback.invalidate()
@@ -384,6 +390,8 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   return {
     addTracksToQueue,
     canEditQueue: () => props.tracks === undefined,
+    canNavigateNextTrack: order.canNavigateNextTrack,
+    canNavigatePreviousTrack: order.canNavigatePreviousTrack,
     clearTrackQueue,
     currentIndex,
     currentTrack,

@@ -1,7 +1,12 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {resolveTrackEnd, resolveTrackRemoval} from '../playback-policy'
+import {
+  canNavigateManually,
+  normalizeTrackIndex,
+  resolveTrackEnd,
+  resolveTrackRemoval,
+} from '../playback-policy'
 
 describe('resolveTrackRemoval', () => {
   it('should preserve the current track when removing a later track', () => {
@@ -37,6 +42,118 @@ describe('resolveTrackRemoval', () => {
       currentTrackChanged: true,
       nextCurrentIndex: 0,
     })
+  })
+})
+
+describe('canNavigateManually', () => {
+  it.each([
+    {
+      currentIndex: 1,
+      direction: 'next',
+      expected: true,
+      hasShuffleHistory: false,
+      repeatMode: 'none',
+      shuffleEnabled: false,
+      shuffleRemaining: 0,
+      trackCount: 3,
+    },
+    {
+      currentIndex: 2,
+      direction: 'next',
+      expected: false,
+      hasShuffleHistory: false,
+      repeatMode: 'none',
+      shuffleEnabled: false,
+      shuffleRemaining: 0,
+      trackCount: 3,
+    },
+    {
+      currentIndex: 1,
+      direction: 'previous',
+      expected: true,
+      hasShuffleHistory: false,
+      repeatMode: 'none',
+      shuffleEnabled: false,
+      shuffleRemaining: 0,
+      trackCount: 3,
+    },
+    {
+      currentIndex: 0,
+      direction: 'previous',
+      expected: false,
+      hasShuffleHistory: false,
+      repeatMode: 'none',
+      shuffleEnabled: false,
+      shuffleRemaining: 0,
+      trackCount: 3,
+    },
+    {
+      currentIndex: 2,
+      direction: 'next',
+      expected: true,
+      hasShuffleHistory: false,
+      repeatMode: 'none',
+      shuffleEnabled: true,
+      shuffleRemaining: 1,
+      trackCount: 3,
+    },
+    {
+      currentIndex: 2,
+      direction: 'next',
+      expected: false,
+      hasShuffleHistory: false,
+      repeatMode: 'none',
+      shuffleEnabled: true,
+      shuffleRemaining: 0,
+      trackCount: 3,
+    },
+    {
+      currentIndex: 0,
+      direction: 'previous',
+      expected: true,
+      hasShuffleHistory: true,
+      repeatMode: 'none',
+      shuffleEnabled: true,
+      shuffleRemaining: 0,
+      trackCount: 3,
+    },
+    {
+      currentIndex: 0,
+      direction: 'next',
+      expected: false,
+      hasShuffleHistory: false,
+      repeatMode: 'none',
+      shuffleEnabled: false,
+      shuffleRemaining: 0,
+      trackCount: 1,
+    },
+    {
+      currentIndex: 2,
+      direction: 'next',
+      expected: true,
+      hasShuffleHistory: false,
+      repeatMode: 'repeat-all',
+      shuffleEnabled: false,
+      shuffleRemaining: 0,
+      trackCount: 3,
+    },
+  ] as const)(
+    'should return $expected for repeat mode $repeatMode and $direction navigation',
+    (options) => {
+      expect(canNavigateManually(options)).toBe(options.expected)
+    },
+  )
+})
+
+describe('normalizeTrackIndex', () => {
+  it.each([
+    {expected: 0, index: 0, trackCount: 3},
+    {expected: 0, index: 3, trackCount: 3},
+    {expected: 2, index: -1, trackCount: 3},
+    {expected: undefined, index: 1.5, trackCount: 3},
+    {expected: undefined, index: 0, trackCount: 0},
+  ] as const)('should normalize $index with $trackCount tracks to $expected', (options) => {
+    expect(normalizeTrackIndex(options.index, options.trackCount)).toBe(options.expected)
   })
 })
 
