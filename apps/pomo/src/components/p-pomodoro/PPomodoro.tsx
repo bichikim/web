@@ -12,6 +12,7 @@ import {
   formatPomodoroTime,
   type PomodoroPhase,
   type PomodoroTimerEvent,
+  type PomodoroTimerEventDeliveryOptions,
   type PomodoroTimerState,
   usePomodoroTimer,
 } from '../../features/pomodoro-timer'
@@ -73,7 +74,10 @@ const DEGREES_PER_CIRCLE = 360
 
 export interface PPomodoroProps {
   readonly stopOnUnmount?: boolean
-  readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
+  readonly onEvents?: (
+    events: ReadonlyArray<PomodoroTimerEvent>,
+    options?: PomodoroTimerEventDeliveryOptions,
+  ) => void
   readonly onPresentationChange?: (presentation: PPomodoroPresentation) => void
   readonly sceneStyle?: PSceneStyle
 }

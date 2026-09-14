@@ -5,10 +5,14 @@ export type {
   SaveDialogueOptions,
 } from './repository'
 export {PEventContext, usePEvents} from './event-context'
-export type {PEventContextValue} from './event-context'
+export type {PEventContextValue, PlayDialogueEventsOptions} from './event-context'
 export {usePEventController} from './use-p-event-controller'
 export type {UsePEventControllerProps} from './use-p-event-controller'
 export type {PlayPDialogueSequenceOptions} from './entry-playback-controller'
+export {
+  MAX_LATEST_REPLACEMENT_DIALOGUE_IDS,
+  type DialogueSequenceReplacementPolicy,
+} from './dialogue-playback-policy'
 export {deleteDialogueRecord} from './dialogue-record'
 export {
   dialogueEventBindingSchema,

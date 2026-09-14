@@ -310,28 +310,32 @@ describe('PPomodoro', () => {
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'break-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'break-start'], {isCatchUp: true})
 
     vi.advanceTimersByTime(1_000)
     vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['break-end', 'focus-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['break-end', 'focus-start'], {isCatchUp: true})
 
     vi.advanceTimersByTime(1_000)
     vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 긴 휴식 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'long-break-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'long-break-start'], {
+      isCatchUp: true,
+    })
 
     vi.advanceTimersByTime(1_000)
     vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['long-break-end', 'focus-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['long-break-end', 'focus-start'], {
+      isCatchUp: true,
+    })
   })
 
   it('should report focus and break lifecycle events without replaying starts on resume', async () => {
@@ -421,7 +425,7 @@ describe('PPomodoro', () => {
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'])
+    expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'], {isCatchUp: true})
   })
 
   it('should preserve an unsupported runtime timer status for exhaustive diagnostics', async () => {

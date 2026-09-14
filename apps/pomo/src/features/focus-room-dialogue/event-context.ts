@@ -1,6 +1,7 @@
 import {type Accessor, createContext, useContext} from 'solid-js'
 
 import type {PViseme} from '../lip-sync'
+import type {DialogueSequenceReplacementPolicy} from './dialogue-playback-policy'
 import type {PlayPDialogueSequenceOptions} from './entry-playback-controller'
 import type {
   DialogueEventId,
@@ -16,6 +17,10 @@ export type EventDialogueIds = Readonly<Partial<Record<DialogueEventId, Readonly
 export type EventPlaybackModes = Readonly<
   Partial<Record<DialogueEventId, DialogueEventPlaybackMode>>
 >
+
+export interface PlayDialogueEventsOptions {
+  readonly replacementPolicy?: DialogueSequenceReplacementPolicy
+}
 
 export interface PEventContextValue {
   readonly activeDialogueId: Accessor<string | null>
@@ -45,6 +50,7 @@ export interface PEventContextValue {
   readonly playDialogueEvents: (
     eventIds: ReadonlyArray<DialogueEventId>,
     onBeforePlayback?: () => void,
+    options?: PlayDialogueEventsOptions,
   ) => Promise<void>
   readonly playDialogueSequence: (options: PlayPDialogueSequenceOptions) => Promise<void>
   readonly refreshDialogues: () => Promise<void>
