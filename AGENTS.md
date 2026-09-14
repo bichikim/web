@@ -27,6 +27,7 @@
 
 ## Decision quality
 
+- Use `setInterval` only when necessary, after explaining the need and obtaining explicit user approval.
 - **Declarative programming (required)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.

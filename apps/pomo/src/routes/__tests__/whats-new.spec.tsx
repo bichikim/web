@@ -27,7 +27,15 @@ it('should show the newest changes and the first release from the public catalog
   render(() => <WhatsNewPage />)
 
   expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeTruthy()
-  expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(2)
+  expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(3)
+  expect(screen.getByText('2026. 09. 13 10:43')).toBeVisible()
+  expect(
+    screen.getByText(
+      '집중 화면을 원하는 대로 정리하고, 피드 음성과 기록 기능을 더 편하게 사용해 보세요.',
+    ),
+  ).toBeVisible()
+  expect(screen.getByText('플레이어와 타이머 표시 설정')).toBeVisible()
+  expect(screen.getByText('토스 로그인 유지 개선')).toBeVisible()
   expect(screen.getByText('2026. 09. 09 18:40')).toBeVisible()
   expect(screen.getByText('사진과 동영상으로 꾸미는 배경')).toBeVisible()
   expect(
@@ -38,7 +46,7 @@ it('should show the newest changes and the first release from the public catalog
   expect(
     screen.getByText('집중 공간의 캐릭터 움직임과 표정을 더 자연스럽게 다듬었습니다.'),
   ).toBeTruthy()
-  expect(screen.getAllByRole('listitem')).toHaveLength(27)
+  expect(screen.getAllByRole('listitem')).toHaveLength(36)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   expect(screen.getByText('2026. 08. 25 05:26')).toBeTruthy()
   expect(screen.getAllByRole('link', {name: '앱으로 돌아가기'})).toHaveLength(2)

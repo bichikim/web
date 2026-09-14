@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
 import * as m from '@paraglide/message'
-import {PAudioPreview} from '../PAudioPreview'
+import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
 import type {LanguageLearningCandidate} from './candidate'
 
 const REGENERATE_CLASS = cx(

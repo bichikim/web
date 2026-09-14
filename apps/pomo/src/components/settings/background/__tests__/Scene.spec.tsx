@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import {render, screen} from '@solidjs/testing-library'
-import {PRadioSwitch} from 'src/components/PRadioSwitch'
+import {PRadioSwitch} from 'src/components/p-radio-switch/PRadioSwitch'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {Scene} from '../Scene'
-vi.mock('src/components/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
+vi.mock('src/components/p-radio-switch/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
 
 beforeEach(() => {
   vi.clearAllMocks()

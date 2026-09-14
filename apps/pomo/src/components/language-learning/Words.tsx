@@ -11,7 +11,7 @@ import {
   useLanguageLearningWords,
 } from '../../features/language-learning'
 import {getSupertonicModel} from '../../features/supertonic'
-import {PModelDownloadConsent} from '../PModelDownloadConsent'
+import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 import {LanguageLearningLanguageSelect} from './LanguageSelect'
 import {useLanguageLearningWordPronunciation} from './use-word-pronunciation'
 import {type LanguageLearningWordFilter, type LanguageLearningWordFilterView} from './words/filter'

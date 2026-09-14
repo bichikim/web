@@ -2,8 +2,8 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createSignal, For, Show, untrack} from 'solid-js'
-import {PButton} from 'src/components/PButton'
-import {PModal} from 'src/components/PModal'
+import {PButton} from 'src/components/p-button/PButton'
+import {PModal} from 'src/components/p-modal/PModal'
 import {
   createRuntimeOptionResetManager,
   OPTION_RESET_GROUPS,
@@ -11,6 +11,7 @@ import {
   type OptionResetGroupId,
   type OptionResetManager,
 } from 'src/features/dev-option-reset'
+import {DialogueAudioCard} from './option-reset/DialogueAudioCard'
 import {OptionGroupCard} from './option-reset/OptionGroupCard'
 
 const MAIN_CLASSES = cx(
@@ -150,6 +151,8 @@ export function OptionResetPage(props: OptionResetPageProps) {
             </p>
           )}
         </Show>
+
+        <DialogueAudioCard />
 
         <ul class="m-0 grid list-none gap-3 p-0">
           <For each={OPTION_RESET_GROUPS}>

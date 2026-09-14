@@ -196,3 +196,19 @@ it('should extract diary progress selectors from component constants', async () 
   expect(css).toContain('::-moz-progress-bar')
   expect(css).toContain('@media (prefers-reduced-motion: reduce)')
 })
+
+it('should isolate icon defaults from sizing utilities across independent CSS chunks', async () => {
+  const uno = await createGenerator(unoConfig)
+  const options = {preflights: false, safelist: false}
+  const icons = await uno.generate('i-tabler-player-play i-pomo-scribble:play', options)
+  const sizing = await uno.generate('size-6 w-8 h-5', options)
+
+  expect(icons.css).toContain('@layer pomo-icons{')
+  expect(getRuleBody(icons.css, 'i-tabler-player-play')).toContain('width:1em;')
+  expect(icons.matched).toContain('i-pomo-scribble:play')
+  expect(sizing.css).toContain('@layer pomo-icons;')
+  expect(sizing.css).not.toMatch(/@layer[^;{]*\{/u)
+  expect(getRuleBody(sizing.css, 'size-6')).toContain('width:1.5rem;')
+  expect(getRuleBody(sizing.css, 'w-8')).toContain('width:2rem;')
+  expect(getRuleBody(sizing.css, 'h-5')).toContain('height:1.25rem;')
+})

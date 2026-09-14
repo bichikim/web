@@ -1,1 +1,1 @@
-export {PSettings as SceneSettingsPanel} from '../PSettings'
+export {PSettings as SceneSettingsPanel} from '../p-settings/PSettings'

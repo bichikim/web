@@ -6,7 +6,7 @@ import {
   useSelection,
 } from 'src/features/tools'
 import {daysInMonth, formatDate, koreanToday, parseDate} from 'src/features/civil-date'
-import {PSelect} from '../PSelect'
+import {PSelect} from '../p-select/PSelect'
 import {Result} from './Result'
 
 const DAY_OFFSET = -2

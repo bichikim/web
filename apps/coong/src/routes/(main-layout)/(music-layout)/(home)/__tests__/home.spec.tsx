@@ -15,7 +15,7 @@ vi.mock('@solidjs/router', () => ({
   useNavigate: vi.fn(),
 }))
 vi.mock('src/store/auth', () => ({useAuth: vi.fn()}))
-vi.mock('src/requests/auth/update-user-metadata', () => ({
+vi.mock('src/features/auth', () => ({
   updateUserMetadataAction: vi.fn(),
 }))
 

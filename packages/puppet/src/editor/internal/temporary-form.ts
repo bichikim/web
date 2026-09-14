@@ -1,3 +1,4 @@
+import {reconcileGlueKeyforms} from './glue'
 import {
   isTwoDimensionalParameterBinding,
   parameterValuesEqual,
@@ -118,10 +119,10 @@ export const applyTemporaryForm = (
   const next = isTwoDimensionalParameterBinding(binding)
     ? {...binding, keyforms: binding.keyforms.map(replace)}
     : {...binding, keyforms: binding.keyforms.map(replace)}
-  return {
+  return reconcileGlueKeyforms({
     ...options.document,
     parameterBindings: options.document.parameterBindings?.map((candidate) =>
       candidate.id === binding.id ? next : candidate,
     ),
-  }
+  })
 }

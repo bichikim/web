@@ -1,5 +1,5 @@
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
-import {useEvent} from '@winter-love/solid-use/event'
+import {browserWakeLock} from './browser-wake-lock'
 
 export type ScreenWakeLockAvailability = 'checking' | 'supported' | 'unsupported'
 
@@ -15,9 +15,16 @@ export interface ScreenWakeLockController {
   readonly onEnabledChange: (isEnabled: boolean) => void
 }
 
-const loadAppsInTossWakeLockModule = () => import('@apps-in-toss/web-framework')
+const requestAppsInTossWakeLock = async (enabled: boolean) => {
+  const {Screen} = await import('@apps-in-toss/web-framework')
+  const result = await Screen.setAwakeMode({enabled})
 
-interface BrowserWakeLockLifecycleOptions {
+  if (result.enabled !== enabled) {
+    throw new Error('Apps in Toss returned an unexpected screen awake state')
+  }
+}
+
+interface WakeLockLifecycleOptions {
   readonly isEnabled: Accessor<boolean>
   readonly onAvailabilityChange: (availability: ScreenWakeLockAvailability) => void
   readonly onDispose: () => void
@@ -25,10 +32,9 @@ interface BrowserWakeLockLifecycleOptions {
 }
 
 const startBrowserWakeLockLifecycle = (
-  options: BrowserWakeLockLifecycleOptions,
+  options: WakeLockLifecycleOptions,
 ): (() => void) | undefined => {
-  const supportsWakeLock =
-    'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function'
+  const supportsWakeLock = browserWakeLock.isSupported()
 
   if (!supportsWakeLock) {
     options.onAvailabilityChange('unsupported')
@@ -37,17 +43,37 @@ const startBrowserWakeLockLifecycle = (
 
   options.onAvailabilityChange('supported')
   const handleVisibilityChange = () => {
-    if (document.visibilityState === 'visible' && options.isEnabled()) {
+    if (browserWakeLock.isVisible() && options.isEnabled()) {
       options.onVisible()
     }
   }
 
-  document.addEventListener('visibilitychange', handleVisibilityChange)
+  const unsubscribe = browserWakeLock.subscribeVisibility(handleVisibilityChange)
 
   return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange)
+    unsubscribe()
     options.onDispose()
   }
+}
+
+const startAppsInTossWakeLockLifecycle = (options: WakeLockLifecycleOptions) => {
+  options.onAvailabilityChange('supported')
+  const handleVisibilityChange = () => {
+    if (browserWakeLock.isVisible() && options.isEnabled()) {
+      options.onVisible()
+    }
+  }
+
+  onCleanup(browserWakeLock.subscribeVisibility(handleVisibilityChange))
+  onCleanup(options.onDispose)
+}
+
+const releaseBrowserWakeLock = (sentinel: WakeLockSentinel | null, onError: () => void) => {
+  if (sentinel === null || sentinel.released) {
+    return
+  }
+
+  sentinel.release().catch(onError)
 }
 
 export const useScreenWakeLock = (): ScreenWakeLockController => {
@@ -71,14 +97,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
       setErrorMessage(null)
     }
 
-    const request = appsInTossRequestQueue.then(async () => {
-      const {Screen} = await loadAppsInTossWakeLockModule()
-      const result = await Screen.setAwakeMode({enabled: nextEnabled})
-
-      if (result.enabled !== nextEnabled) {
-        throw new Error('Apps in Toss returned an unexpected screen awake state')
-      }
-    })
+    const request = appsInTossRequestQueue.then(() => requestAppsInTossWakeLock(nextEnabled))
     appsInTossRequestQueue = request.catch(() => undefined)
 
     request
@@ -104,17 +123,17 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     const currentSentinel = sentinel
     sentinel = null
 
-    if (currentSentinel === null || currentSentinel.released) {
-      return
-    }
-
-    currentSentinel.release().catch(() => {
-      setErrorMessage(SCREEN_WAKE_LOCK_DISABLE_ERROR)
+    const revision = requestRevision
+    releaseBrowserWakeLock(currentSentinel, () => {
+      if (!disposed && revision === requestRevision) {
+        setErrorMessage(SCREEN_WAKE_LOCK_DISABLE_ERROR)
+      }
     })
   }
 
   const acquireWakeLock = async () => {
     if (
+      disposed ||
       availability() !== 'supported' ||
       !isEnabled() ||
       isRequestPending() ||
@@ -123,13 +142,14 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
       return
     }
 
+    const revision = requestRevision
     setIsRequestPending(true)
     setErrorMessage(null)
 
     try {
-      const acquiredSentinel = await navigator.wakeLock.request('screen')
+      const acquiredSentinel = await browserWakeLock.request()
 
-      if (!isEnabled()) {
+      if (disposed || revision !== requestRevision || !isEnabled()) {
         await acquiredSentinel.release()
         return
       }
@@ -143,7 +163,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
           }
 
           sentinel = null
-          if (isEnabled() && document.visibilityState === 'visible') {
+          if (isEnabled() && browserWakeLock.isVisible()) {
             setIsEnabled(false)
             setErrorMessage('화면 유지가 해제되었어요. 다시 켜 주세요.')
           }
@@ -151,10 +171,14 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
         {once: true},
       )
     } catch {
-      setIsEnabled(false)
-      setErrorMessage('화면 유지 요청을 허용하지 못했어요. 브라우저 설정을 확인해 주세요.')
+      if (!disposed && revision === requestRevision) {
+        setIsEnabled(false)
+        setErrorMessage('화면 유지 요청을 허용하지 못했어요. 브라우저 설정을 확인해 주세요.')
+      }
     } finally {
-      setIsRequestPending(false)
+      if (!disposed && revision === requestRevision) {
+        setIsRequestPending(false)
+      }
     }
   }
 
@@ -171,6 +195,9 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
       return
     }
 
+    requestRevision += 1
+    setIsRequestPending(false)
+
     if (nextEnabled) {
       requestWakeLock()
       return
@@ -181,21 +208,18 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
 
   onMount(() => {
     if (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') {
-      setAvailability('supported')
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible' && isEnabled()) {
-          setAppsInTossWakeLock(true)
-        }
-      }
+      startAppsInTossWakeLockLifecycle({
+        isEnabled,
+        onAvailabilityChange: setAvailability,
+        onDispose: () => {
+          disposed = true
+          setIsEnabled(false)
 
-      useEvent(document, 'visibilitychange', handleVisibilityChange)
-      onCleanup(() => {
-        disposed = true
-        setIsEnabled(false)
-
-        if (appsInTossWakeLockRequested) {
-          setAppsInTossWakeLock(false, false)
-        }
+          if (appsInTossWakeLockRequested) {
+            setAppsInTossWakeLock(false, false)
+          }
+        },
+        onVisible: () => setAppsInTossWakeLock(true),
       })
       return
     }
@@ -204,6 +228,9 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
       isEnabled,
       onAvailabilityChange: setAvailability,
       onDispose: () => {
+        disposed = true
+        requestRevision += 1
+        setIsRequestPending(false)
         setIsEnabled(false)
         releaseWakeLock()
       },

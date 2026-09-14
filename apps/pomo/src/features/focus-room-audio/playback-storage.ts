@@ -90,13 +90,23 @@ const systemClock: PlaybackClock = {now: Date.now}
 export const createPPlaybackStorage = (
   clock: PlaybackClock = systemClock,
   storage: PlaybackStorageAdapter = runtimeStorage,
+  reportError: (error: unknown) => void = globalThis.reportError,
 ): PPlaybackStorage => {
-  const writeLatestToss = createLatestAsyncTask(storage.writeToss)
+  const writeLatestToss = createLatestAsyncTask(async (state: StoredPlaybackState) => {
+    try {
+      await storage.writeToss(state)
+    } catch (error: unknown) {
+      reportError(error)
+    }
+  })
   let playbackRevision = 0
   let playbackWriteRevision = 0
+  let pendingNativeWrites = 0
   let pendingStop: Promise<void> | null = null
 
   const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
+    const initialPlaybackRevision = playbackRevision
+    const hadPendingWrite = pendingNativeWrites > 0
     const initialRevision = playbackWriteRevision
     const webPlayback = storage.readWeb()
 
@@ -109,7 +119,16 @@ export const createPPlaybackStorage = (
       if (playbackWriteRevision !== initialRevision) {
         return toPlaybackState(storage.readWeb())
       }
-      return toPlaybackState(selectLatestPlayback(webPlayback, nativePlayback))
+      const latestPlayback = selectLatestPlayback(webPlayback, nativePlayback)
+      if (
+        latestPlayback !== null &&
+        latestPlayback === webPlayback &&
+        !hadPendingWrite &&
+        playbackRevision === initialPlaybackRevision
+      ) {
+        writeLatestToss(latestPlayback)
+      }
+      return toPlaybackState(latestPlayback)
     } catch {
       return toPlaybackState(storage.readWeb())
     }
@@ -153,7 +172,12 @@ export const createPPlaybackStorage = (
       return
     }
 
-    await writeLatestToss(storedState).catch(() => undefined)
+    pendingNativeWrites += 1
+    try {
+      await writeLatestToss(storedState)
+    } finally {
+      pendingNativeWrites -= 1
+    }
   }
 
   return {read, stop, write}

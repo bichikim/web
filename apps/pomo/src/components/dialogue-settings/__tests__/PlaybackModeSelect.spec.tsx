@@ -3,10 +3,10 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {PSelect} from '../../PSelect'
+import {PSelect} from '../../p-select/PSelect'
 import {DialoguePlaybackModeSelect} from '../PlaybackModeSelect'
 
-vi.mock('../../PSelect', () => ({
+vi.mock('../../p-select/PSelect', () => ({
   PSelect: vi.fn((props) => (
     <button onClick={() => props.onChange('random-one')} type="button">
       {props.accessibleLabel}:{props.value}

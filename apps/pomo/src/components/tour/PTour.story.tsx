@@ -3,7 +3,7 @@ import {expect, fn, userEvent, waitFor, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 import * as m from '@paraglide/message'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 import {PTour, type PTourProps, type PTourStep} from './PTour'
 
 interface DemoStep extends PTourStep {

@@ -54,6 +54,10 @@ export const useVisibilityPreferences = () => {
       setPreferences(stored)
     }
     if (hasNativeStorageBridge()) {
+      if (stored !== null) {
+        writeLatestToss(stored).catch(globalThis.reportError)
+        return
+      }
       readTossStorageJson(STORAGE_KEY, parsePreferences)
         .then((value) => {
           if (!disposed && !edited && value !== null) {

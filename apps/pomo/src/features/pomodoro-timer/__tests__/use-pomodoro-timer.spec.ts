@@ -276,16 +276,106 @@ it('should refresh on visibility changes and stop after owner cleanup', async ()
 })
 
 it('should persist a stopped timer when disabled on unmount', async () => {
-  const clearInterval = vi.spyOn(globalThis, 'clearInterval')
+  const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame')
   const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
   await finishMount()
   timer.result.onStart()
   expect(timer.result.state().status).toBe('running')
   timer.cleanup()
   expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}').status).toBe('idle')
-  expect(clearInterval).toHaveBeenCalledTimes(1)
+  expect(cancelFrame).toHaveBeenCalledTimes(1)
   const restored = renderHook(() => usePomodoroTimer())
   await finishMount()
   expect(restored.result.state().status).toBe('idle')
   restored.cleanup()
+})
+
+it('should synchronize an expired phase on the next frame without duplicate events', async () => {
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  await finishMount()
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+  onEvents.mockClear()
+  vi.setSystemTime(12_000)
+  vi.advanceTimersToNextFrame()
+  expect(view.result.state()).toMatchObject({phase: 'shortBreak', status: 'idle'})
+  expect(onEvents).toHaveBeenCalledTimes(1)
+  vi.advanceTimersToNextFrame()
+  expect(onEvents).toHaveBeenCalledTimes(1)
+  view.cleanup()
+})
+
+it('should stop frame updates after cleanup', async () => {
+  const view = renderHook(usePomodoroTimer)
+  await finishMount()
+  view.result.onStart()
+  vi.setSystemTime(1_000)
+  vi.advanceTimersToNextFrame()
+  const remaining = view.result.remainingSeconds()
+  view.cleanup()
+  vi.setSystemTime(2_000)
+  vi.advanceTimersToNextFrame()
+  expect(view.result.remainingSeconds()).toBe(remaining)
+})
+it.each(['refresh', 'pause'] as const)(
+  'should publish every elapsed phase once when a delayed %s lands on focus',
+  async (action) => {
+    const onEvents = vi.fn()
+    const view = renderHook(() => usePomodoroTimer({onEvents}))
+    await finishMount()
+    view.result.onConfigChange(CONFIG)
+    view.result.onAutoStartChange(true)
+    view.result.onStart()
+    onEvents.mockClear()
+
+    vi.setSystemTime(15_000)
+    if (action === 'pause') {
+      view.result.onPause()
+    } else {
+      document.dispatchEvent(new Event('visibilitychange'))
+    }
+
+    expect(view.result.state()).toMatchObject({
+      completedFocusSessions: 1,
+      phase: 'focus',
+      status: action === 'pause' ? 'paused' : 'running',
+    })
+    expect(onEvents).toHaveBeenCalledExactlyOnceWith([
+      'focus-end',
+      'break-start',
+      'break-end',
+      'focus-start',
+    ])
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(onEvents).toHaveBeenCalledTimes(1)
+    view.cleanup()
+  },
+)
+
+it.each([
+  {completedFocusSessions: 1, endEvent: 'break-end', phase: 'shortBreak'},
+  {completedFocusSessions: 2, endEvent: 'long-break-end', phase: 'longBreak'},
+] as const)('should publish focus start when pausing after $phase expires', async (scenario) => {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(
+    STATE_STORAGE_KEY,
+    JSON.stringify({
+      completedFocusSessions: scenario.completedFocusSessions,
+      endsAt: 4_000,
+      phase: scenario.phase,
+      status: 'running',
+    }),
+  )
+  autoStartMocks.read.mockResolvedValue(true)
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  await finishMount()
+  vi.setSystemTime(5_000)
+  view.result.onPause()
+  expect(view.result.state()).toMatchObject({phase: 'focus', remainingSeconds: 9, status: 'paused'})
+  expect(onEvents).toHaveBeenCalledExactlyOnceWith([scenario.endEvent, 'focus-start'])
+  view.result.onStart()
+  expect(onEvents).toHaveBeenCalledTimes(1)
+  view.cleanup()
 })

@@ -1,6 +1,17 @@
 import {numberFieldDescendants} from './controls'
 
 export const dialogsShortcuts = {
+  'psd-reimport-dialog':
+    '[&_footer_button]:[height:2rem] [font-size:0.75rem] [line-height:1.5] [&_p]:m-0 [&_p]:text-[#a8bbb4]',
+  'psd-reimport-file': 'break-all',
+  'psd-reimport-add': 'flex items-center gap-2',
+  'psd-reimport-list': [
+    'm-0 p-0 list-none grid gap-3 max-h-72 overflow-y-auto',
+    '[&_li]:grid [&_li]:grid-cols-[4rem_minmax(0,1fr)] [&_li]:gap-2 [&_li>span]:text-[#91cbb8]',
+    '[&_strong]:block [&_strong]:break-words [&_strong]:font-medium',
+    '[&_small]:block [&_small]:text-[#91a09a] [&_small]:text-[0.6875rem]',
+  ],
+
   'auto-mesh-dialog-content': [
     '[&[data-closed]]:hidden',
     'fixed [top:50%] [left:50%] [width:min(32.5rem,_calc(100vw_-_2rem))] [max-height:calc(100vh_-_2rem)]',

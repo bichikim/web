@@ -1,4 +1,4 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
 import {
@@ -21,8 +21,8 @@ import {
 } from '../../features/focus-room-dialogue'
 import {type ModelDownloadState, useModelDownload} from '../../features/model-download'
 import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
-import {PGenerationStatus} from '../PGenerationStatus'
-import {PModelDownloadConsent} from '../PModelDownloadConsent'
+import {PGenerationStatus} from '../p-generation-status/PGenerationStatus'
+import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 
 const DEFAULT_TOPIC = '오늘 힘이 나는 말 한마디'
 const GEMMA_MODEL_ID = 'gemma-4-e2b'

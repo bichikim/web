@@ -1,5 +1,5 @@
 import {EditorSegmentedField, useEditorPortalMount} from '../../design-system'
-import {FileField} from '@kobalte/core/file-field'
+import {FileAction} from './FileAction'
 import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from './EditorHelp'
@@ -27,9 +27,9 @@ export interface EditorToolbarProps {
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
   readonly onExport: () => void
-  readonly onJsonImport: (file: File | undefined) => void
-  readonly onPsdImport?: (file: File | undefined) => void
-  readonly onPngImport: (file: File | undefined) => void
+  readonly onFileImport: (file: File | undefined) => void
+  readonly onPsdReimport?: (file: File | undefined) => void
+  readonly onFileOpen: (file: File | undefined) => void
 }
 
 interface PanelVisibilityControlsProps {
@@ -70,17 +70,14 @@ interface ToolbarMenuProps {
   readonly onUndo?: () => void
   readonly onRedo?: () => void
   readonly onExport: () => void
-  readonly onJsonImport: (file: File | undefined) => void
-  readonly onPsdImport?: (file: File | undefined) => void
-  readonly onPngImport: (file: File | undefined) => void
+  readonly onFileImport: (file: File | undefined) => void
+  readonly onPsdReimport?: (file: File | undefined) => void
+  readonly onFileOpen: (file: File | undefined) => void
 }
 
 const ToolbarMenu = (props: ToolbarMenuProps) => {
   const [menuOpen, setMenuOpen] = createSignal(false)
   const portalMount = useEditorPortalMount()
-  const [pngInput, setPngInput] = createSignal<HTMLInputElement>()
-  const [psdInput, setPsdInput] = createSignal<HTMLInputElement>()
-  const [jsonInput, setJsonInput] = createSignal<HTMLInputElement>()
 
   return (
     <Popover forceMount open={menuOpen()} onOpenChange={setMenuOpen}>
@@ -89,33 +86,25 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
       </Popover.Trigger>
       <Popover.Portal mount={portalMount}>
         <Popover.Content aria-label="파일 및 편집 작업" class="toolbar-menu-content">
-          <Button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false)
-              pngInput()?.click()
-            }}
-          >
-            PNG 불러오기
-          </Button>
-          <Button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false)
-              jsonInput()?.click()
-            }}
-          >
-            JSON 가져오기
-          </Button>
-          <Button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false)
-              psdInput()?.click()
-            }}
-          >
-            PSD 불러오기
-          </Button>
+          <FileAction
+            label="가져오기"
+            description="기존 문서에 추가 · PNG, PSD, JSON"
+            onClose={() => setMenuOpen(false)}
+            onImport={props.onFileImport}
+          />
+          <FileAction
+            label="불러오기"
+            description="현재 문서 교체 · 실행 취소 가능"
+            onClose={() => setMenuOpen(false)}
+            onImport={props.onFileOpen}
+          />
+          <FileAction
+            label="PSD 재가져오기"
+            description="기존 리깅 유지 · 변경 내용 확인"
+            accept=".psd,image/vnd.adobe.photoshop"
+            onClose={() => setMenuOpen(false)}
+            onImport={props.onPsdReimport}
+          />
           <hr />
           <Button
             type="button"
@@ -155,45 +144,6 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
           <EditorHelp onOpen={() => setMenuOpen(false)} />
         </Popover.Content>
       </Popover.Portal>
-      <FileField accept="image/png,.png">
-        <FileField.HiddenInput
-          ref={setPngInput}
-          aria-label="PNG 불러오기"
-          hidden
-          type="file"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0]
-            event.currentTarget.value = ''
-            props.onPngImport(file)
-          }}
-        />
-      </FileField>
-      <FileField accept=".psd,image/vnd.adobe.photoshop">
-        <FileField.HiddenInput
-          ref={setPsdInput}
-          aria-label="PSD 불러오기"
-          hidden
-          type="file"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0]
-            event.currentTarget.value = ''
-            props.onPsdImport?.(file)
-          }}
-        />
-      </FileField>
-      <FileField accept="application/json,.json">
-        <FileField.HiddenInput
-          ref={setJsonInput}
-          aria-label="JSON 가져오기"
-          hidden
-          type="file"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0]
-            event.currentTarget.value = ''
-            props.onJsonImport(file)
-          }}
-        />
-      </FileField>
     </Popover>
   )
 }
@@ -208,9 +158,9 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       onUndo={props.onUndo}
       onRedo={props.onRedo}
       onExport={props.onExport}
-      onJsonImport={props.onJsonImport}
-      onPsdImport={props.onPsdImport}
-      onPngImport={props.onPngImport}
+      onFileImport={props.onFileImport}
+      onPsdReimport={props.onPsdReimport}
+      onFileOpen={props.onFileOpen}
     />
     <div class="toolbar-actions">
       <div class="renderer-status" data-status={props.playerStatus}>

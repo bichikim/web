@@ -1,7 +1,7 @@
 import {A, useAction, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
-import {updateUserMetadataAction} from 'src/requests/auth/update-user-metadata'
+import {updateUserMetadataAction} from 'src/features/auth'
 import {useAuth} from 'src/store/auth'
 import {AccountMenu} from './AccountMenu'
 

@@ -1,10 +1,23 @@
 import {getBoundaryEdges} from '../../mesh/boundary'
-import type {PuppetEdgeReference, PuppetGlue, PuppetPart, PuppetVertexReference} from '../document'
+import type {
+  PuppetEdgeReference,
+  PuppetGlue,
+  PuppetParameterBinding,
+  PuppetPart,
+  PuppetVertexReference,
+} from '../document'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 const isRatio = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+const isGlueKeyform = (value: unknown): boolean =>
+  isRecord(value) &&
+  typeof value.id === 'string' &&
+  value.id.length > 0 &&
+  isRatio(value.weight) &&
+  isRatio(value.strength)
+
 const isReference = (value: unknown): value is PuppetVertexReference =>
   isRecord(value) &&
   typeof value.partId === 'string' &&
@@ -107,3 +120,31 @@ export const hasValidGlue = (
     return true
   })
 }
+
+export const hasValidGlueKeyforms = (
+  glue: unknown,
+  bindings: ReadonlyArray<PuppetParameterBinding>,
+  parts: ReadonlyArray<PuppetPart>,
+): boolean => {
+  if (!hasValidGlue(glue, parts)) {
+    return false
+  }
+  const owners = new Map((glue ?? []).map((connection) => [connection.id, connection]))
+  const samples = bindings.flatMap((binding) => binding.keyforms.flatMap((form) => form.parts))
+  return samples.every((part) =>
+    (part.glue ?? []).every((sample) => {
+      const connection = owners.get(sample.id)
+      return (
+        connection !== undefined &&
+        connection.first.partId === part.partId &&
+        (!('edge' in connection.second) || sample.weight === 1)
+      )
+    }),
+  )
+}
+
+export const isGlueKeyforms = (value: unknown): boolean =>
+  value === undefined ||
+  (Array.isArray(value) &&
+    value.every(isGlueKeyform) &&
+    new Set(value.map((sample) => sample.id)).size === value.length)

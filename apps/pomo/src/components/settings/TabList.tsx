@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {type PModalTabItem, PModalTabList} from '../PModalTabList'
+import {type PModalTabItem, PModalTabList} from '../p-modal-tab-list/PModalTabList'
 
 const getItems = () =>
   [

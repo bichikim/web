@@ -1,5 +1,6 @@
+import {isPsdSource} from './internal/parse-psd-source'
 import {hasValidSkinning} from './internal/parse-skinning'
-import {hasValidGlue} from './internal/parse-glue'
+import {hasValidGlueKeyforms, isGlueKeyforms} from './internal/parse-glue'
 import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
 import {
   PUPPET_DOCUMENT_FORMAT,
@@ -66,9 +67,6 @@ const isFiniteNumber = (value: unknown): value is number =>
 const isFiniteNumberArray = (value: unknown): value is ReadonlyArray<number> =>
   Array.isArray(value) && value.every(isFiniteNumber)
 
-const isBoundaryLoops = (value: unknown): value is ReadonlyArray<ReadonlyArray<number>> =>
-  Array.isArray(value) && value.every(isFiniteNumberArray)
-
 const isViewport = (value: unknown): value is PuppetViewport =>
   isRecord(value) &&
   isFiniteNumber(value.width) &&
@@ -93,7 +91,8 @@ const isMesh = (value: unknown): value is PuppetMesh => {
     !isFiniteNumberArray(value.vertices) ||
     !isFiniteNumberArray(value.uvs) ||
     !isFiniteNumberArray(value.indices) ||
-    (value.boundaryLoops !== undefined && !isBoundaryLoops(value.boundaryLoops))
+    (value.boundaryLoops !== undefined &&
+      (!Array.isArray(value.boundaryLoops) || !value.boundaryLoops.every(isFiniteNumberArray)))
   ) {
     return false
   }
@@ -137,6 +136,7 @@ const isPartRenderProperties = (value: unknown): value is PuppetPartRenderProper
 
 const isPart = (value: unknown): value is PuppetPart =>
   isRecord(value) &&
+  isPsdSource(value.psdSource) &&
   typeof value.id === 'string' &&
   value.id.length > 0 &&
   (value.properties === undefined || isPartRenderProperties(value.properties)) &&
@@ -212,6 +212,7 @@ const isScene = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is Pup
 
 const isParameterPartKeyform = (value: unknown): value is PuppetParameterPartKeyform =>
   isRecord(value) &&
+  isGlueKeyforms(value.glue) &&
   typeof value.partId === 'string' &&
   value.partId.length > 0 &&
   (value.properties === undefined ||
@@ -560,7 +561,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
   const parameterBindings = value.parameterBindings ?? []
 
   return (
-    hasValidGlue(value.glue, value.parts) &&
+    hasValidGlueKeyforms(value.glue, parameterBindings, value.parts) &&
     hasUniqueIds(value.parts) &&
     hasValidPartMasks(value.parts) &&
     hasUniqueIds(value.motions) &&

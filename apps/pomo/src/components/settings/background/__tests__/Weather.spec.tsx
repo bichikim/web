@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import {cleanup, render} from '@solidjs/testing-library'
-import {PWeatherSettings} from 'src/components/PWeatherSettings'
+import {PWeatherSettings} from 'src/components/p-weather-settings/PWeatherSettings'
 import {afterEach, expect, it, vi} from 'vitest'
 import {Weather} from '../Weather'
-vi.mock('src/components/PWeatherSettings', () => ({PWeatherSettings: vi.fn()}))
+vi.mock('src/components/p-weather-settings/PWeatherSettings', () => ({PWeatherSettings: vi.fn()}))
 
 afterEach(() => {
   cleanup()

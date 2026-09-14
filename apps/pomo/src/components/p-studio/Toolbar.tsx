@@ -18,19 +18,19 @@ import {
   type WeatherState,
 } from '../../features/weather/index'
 import * as m from '@paraglide/message'
-import {PLoadingStatus} from '../PLoadingStatus'
-import {PModelDownloadStatus} from '../PModelDownloadStatus'
+import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
+import {PModelDownloadStatus} from '../p-model-download-status/PModelDownloadStatus'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES} from './shared'
-import {PWeatherStatus} from '../PWeatherStatus'
-import {PDesktopModeControl} from '../PDesktopModeControl'
+import {PWeatherStatus} from '../p-weather-status/PWeatherStatus'
+import {PDesktopModeControl} from '../p-desktop-mode-control/PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
 import {GLASS_ICON_BUTTON} from '../button-presets'
-import {PButton} from '../PButton'
-import {PTools} from '../PTools'
+import {PButton} from '../p-button/PButton'
+import {PTools} from '../p-tools/PTools'
 
 interface SceneToolbarProps {
   readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>

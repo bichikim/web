@@ -25,7 +25,9 @@ it.each(['pending', 'completed'] as const)(
     const completion = Promise.withResolvers<void>()
     native.getItem.mockImplementation(async () => stored)
     native.setItem.mockImplementation(async (_key: string, value: string) => {
-      await completion.promise
+      if (value === '"off"') {
+        await completion.promise
+      }
       stored = value
     })
     const first = renderHook(() => useScreenSaver())
@@ -35,7 +37,9 @@ it.each(['pending', 'completed'] as const)(
     })
 
     first.result.onDelayChange('off')
-    await vi.waitFor(() => expect(native.setItem).toHaveBeenCalled())
+    await vi.waitFor(() =>
+      expect(native.setItem).toHaveBeenCalledWith('pomo:screen-saver-delay:v1', '"off"'),
+    )
     if (phase === 'completed') {
       completion.resolve()
       await vi.waitFor(() => expect(stored).toBe('"off"'))

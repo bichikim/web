@@ -6,18 +6,17 @@ import {
   type ServiceSettings,
   writeServiceSettings,
 } from 'src/features/tools'
-import {koreanToday} from 'src/features/civil-date'
-import {PDatePicker} from '../PDatePicker'
-import {PSelect} from '../PSelect'
-import {PInput} from '../PInput'
-import {PSwitch} from '../PSwitch'
+import {useKoreanToday} from 'src/features/civil-date'
+import {PDatePicker} from '../p-date-picker/PDatePicker'
+import {PSelect} from '../p-select/PSelect'
+import {PInput} from '../p-input/PInput'
+import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
 
-const CLOCK_INTERVAL = 60000
 export const Service = () => {
   const [settings, setSettings] = createSignal(DEFAULT_SERVICE_SETTINGS)
   const [ready, setReady] = createSignal(false)
-  const [today, setToday] = createSignal('')
+  const today = useKoreanToday()
   const start = () => settings().start
   const manual = () => settings().manual
   const branch = () => settings().branch
@@ -47,9 +46,6 @@ export const Service = () => {
           setReady(true)
         }
       })
-    setToday(koreanToday(new Date()))
-    const interval = setInterval(() => setToday(koreanToday(new Date())), CLOCK_INTERVAL)
-    onCleanup(() => clearInterval(interval))
   })
   const serviceDays = () => (/^\d+$/u.test(settings().days) ? Number(settings().days) : NaN)
   const result = createMemo(() =>
@@ -123,7 +119,7 @@ export const Service = () => {
       <p class="m-0 text-sm leading-6 text-muted-foreground">
         한국 날짜 {today()} 기준. 자동 계산은 2022년 이후 입대하는 현역병의 현재 복무기간을 적용한
         예상치입니다. 입대일을 포함하며 복무 제외 기간·개인별 조정은 자동 반영하지 않습니다.
-        진행률은 완료한 날짜 기준입니다.
+        진행률은 완료한 날짜를 기준으로 계산하며, 예상 전역일부터 100%로 표시합니다.
       </p>
     </div>
   )

@@ -2,8 +2,8 @@ import {createSignal, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import {getPomoIconClass} from '../icon-style'
-import {PModal} from '../PModal'
-import {PPlayerUtilityButton} from '../PPlayerUtilityButton'
+import {PModal} from '../p-modal/PModal'
+import {PPlayerUtilityButton} from '../p-player-utility-button/PPlayerUtilityButton'
 
 interface SoundEffectsProps {
   readonly sceneStyle?: PSceneStyle

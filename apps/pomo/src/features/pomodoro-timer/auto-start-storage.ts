@@ -73,6 +73,8 @@ export const createAutoStartStorage = ({
 }: AutoStartStorageOptions): AutoStartStorage => {
   const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
   let latestWebWrite: StoredPreference | null = null
+  let writeRevision = 0
+  let pendingWrites = 0
 
   const readWebPreference = () => {
     return (
@@ -98,6 +100,8 @@ export const createAutoStartStorage = ({
   /** Reads the latest auto-start preference saved by the app or browser runtime. */
   const read = async () => {
     const initialWebWrite = latestWebWrite
+    const initialWriteRevision = writeRevision
+    const hadPendingWrite = pendingWrites > 0
     const webPreference = readWebPreference()
 
     if (!storage.usesTossStorage()) {
@@ -111,7 +115,20 @@ export const createAutoStartStorage = ({
         return readWebPreference()?.isEnabled ?? false
       }
 
-      return selectLatestPreference(readWebPreference(), tossPreference)?.isEnabled ?? false
+      const currentWebPreference = readWebPreference()
+      const latestPreference = selectLatestPreference(currentWebPreference, tossPreference)
+
+      if (
+        latestPreference !== null &&
+        latestPreference === currentWebPreference &&
+        writeRevision === initialWriteRevision &&
+        !hadPendingWrite
+      ) {
+        // Keep native persistence current without delaying timer initialization on a repair.
+        writeLatestToss(latestPreference).catch(() => undefined)
+      }
+
+      return latestPreference?.isEnabled ?? false
     } catch {
       return readWebPreference()?.isEnabled ?? false
     }
@@ -119,6 +136,7 @@ export const createAutoStartStorage = ({
 
   /** Persists the auto-start preference until the host app or browser data is removed. */
   const write = async (isEnabled: boolean) => {
+    writeRevision += 1
     const preference = {isEnabled, savedAt: now()} satisfies StoredPreference
     const webWriteError = writeWebPreference(preference)
 
@@ -128,7 +146,12 @@ export const createAutoStartStorage = ({
       return
     }
 
-    await writeLatestToss(preference).catch(() => undefined)
+    pendingWrites += 1
+    try {
+      await writeLatestToss(preference).catch(() => undefined)
+    } finally {
+      pendingWrites -= 1
+    }
   }
 
   return {read, write}

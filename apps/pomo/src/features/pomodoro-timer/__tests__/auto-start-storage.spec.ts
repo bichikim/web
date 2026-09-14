@@ -158,6 +158,93 @@ describe('auto-start-storage', () => {
     expect(await readAutoStartPreference()).toBe(true)
   })
 
+  it.each([100, 200, null])(
+    'should preserve the browser winner after clearing web storage with native timestamp %s',
+    async (savedAt) => {
+      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      const preference = {isEnabled: true, savedAt: 200}
+      let nativeValue = savedAt === null ? null : JSON.stringify({isEnabled: false, savedAt})
+      localStorage.setItem('pomo:timer-auto-start:v2', JSON.stringify(preference))
+      storageMocks.getItem.mockImplementation(async () => nativeValue)
+      storageMocks.setItem.mockImplementation(async (_key, value) => {
+        nativeValue = value
+      })
+
+      expect(await readAutoStartPreference()).toBe(true)
+      await vi.waitFor(() => expect(nativeValue).toBe(JSON.stringify(preference)))
+      localStorage.clear()
+      expect(await readAutoStartPreference()).toBe(true)
+    },
+  )
+
+  it('should finish a pending read repair with the later user preference', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:timer-auto-start:v2', JSON.stringify({isEnabled: true, savedAt: 10}))
+    storageMocks.getItem.mockResolvedValue(null)
+    const pendingRepair = Promise.withResolvers<void>()
+    storageMocks.setItem.mockResolvedValue().mockImplementationOnce(() => pendingRepair.promise)
+
+    expect(await readAutoStartPreference()).toBe(true)
+    await vi.waitFor(() => expect(storageMocks.setItem).toHaveBeenCalledTimes(1))
+    const writing = writeAutoStartPreference(false)
+    pendingRepair.resolve()
+    await writing
+
+    expect(storageMocks.setItem).toHaveBeenLastCalledWith(
+      'pomo:timer-auto-start:v2',
+      JSON.stringify({isEnabled: false, savedAt: 20}),
+    )
+  })
+
+  it('should not repair a stale read over a concurrent native write when web persistence fails', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(
+      'pomo:timer-auto-start:v2',
+      JSON.stringify({isEnabled: false, savedAt: 10}),
+    )
+    const pendingRead = Promise.withResolvers<string | null>()
+    storageMocks.getItem.mockReturnValue(pendingRead.promise)
+    storageMocks.setItem.mockResolvedValue()
+    const reading = readAutoStartPreference()
+    await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalled())
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('browser storage unavailable')
+    })
+
+    await writeAutoStartPreference(true)
+    pendingRead.resolve(JSON.stringify({isEnabled: false, savedAt: 10}))
+    await reading
+
+    expect(storageMocks.setItem).toHaveBeenCalledExactlyOnceWith(
+      'pomo:timer-auto-start:v2',
+      JSON.stringify({isEnabled: true, savedAt: 20}),
+    )
+  })
+
+  it('should skip repair when a native-only user write was pending before the read', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(
+      'pomo:timer-auto-start:v2',
+      JSON.stringify({isEnabled: false, savedAt: 10}),
+    )
+    const pendingWrite = Promise.withResolvers<void>()
+    storageMocks.setItem.mockImplementation(() => pendingWrite.promise)
+    storageMocks.getItem.mockResolvedValue(JSON.stringify({isEnabled: false, savedAt: 10}))
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('browser storage unavailable')
+    })
+
+    const writing = writeAutoStartPreference(true)
+    await readAutoStartPreference()
+    pendingWrite.resolve()
+    await writing
+
+    expect(storageMocks.setItem).toHaveBeenCalledExactlyOnceWith(
+      'pomo:timer-auto-start:v2',
+      JSON.stringify({isEnabled: true, savedAt: 20}),
+    )
+  })
+
   it('should select a newer native value', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem(

@@ -132,7 +132,7 @@ const SCENE_SOURCES = {
 } satisfies Record<PTime, Record<PActivity, Record<PGaze, SceneSourcePair>>>
 
 const LABELS = {
-  activity: {reading: '책 읽기', typing: '노트북 타이핑', writing: '글쓰기'},
+  activity: {reading: '책 읽기', typing: '타이핑', writing: '글쓰기'},
   gaze: {focused: '작업에 집중', user: '사용자 보기'},
   time: {day: '낮', night: '밤'},
 } as const

@@ -1,9 +1,9 @@
-import {PInput} from 'src/components/PInput'
-import {PTextarea} from 'src/components/PTextarea'
+import {PInput} from 'src/components/p-input/PInput'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {MAXIMUM_PICTURE_DIARY_TEXT_LENGTH} from '../../../features/picture-diary'
-import {PButton} from '../../PButton'
+import {PButton} from '../../p-button/PButton'
 import {PictureDiaryDrawing} from './Drawing'
 import {type PageSide, type PictureDiaryEditorProps} from './editor-props'
 

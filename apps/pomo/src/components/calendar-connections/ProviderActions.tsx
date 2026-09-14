@@ -1,7 +1,7 @@
 import {For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type CalendarConnection} from '../../features/calendar'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 
 const PROVIDER_LABELS = {
   google: 'Google Calendar',

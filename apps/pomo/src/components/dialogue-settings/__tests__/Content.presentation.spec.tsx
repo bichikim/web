@@ -6,7 +6,7 @@ import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import {PSelect} from 'src/components/PSelect'
+import {PSelect} from 'src/components/p-select/PSelect'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
@@ -35,7 +35,7 @@ vi.mock('@solidjs/router', () => ({
     </a>
   ),
 }))
-vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/focus-room-dialogue', async () => {
   const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
     'src/features/focus-room-dialogue',
@@ -336,9 +336,9 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
 })
 
-it('should queue a saved dialogue through the character without stopping existing playback', () => {
+it('should queue a saved dialogue through the character without stopping existing playback', async () => {
   const onRequestClose = vi.fn()
-  const events = createEvents()
+  const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
   const pauseAudio = vi
     .spyOn(HTMLMediaElement.prototype, 'pause')
     .mockImplementation(() => undefined)
@@ -351,7 +351,7 @@ it('should queue a saved dialogue through the character without stopping existin
   expect(pauseAudio).toHaveBeenCalledOnce()
   expect(loadAudio).toHaveBeenCalledOnce()
   expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
-  expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
   expect(events.setEventDialogues).not.toHaveBeenCalled()
   expect(onRequestClose).toHaveBeenCalledOnce()
 })

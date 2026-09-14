@@ -13,10 +13,10 @@ import {
   readLanguageLearningSentences,
   writeLanguageLearningSentences,
 } from '../../../features/language-learning'
-import {PSelect} from '../../PSelect'
+import {PSelect} from '../../p-select/PSelect'
 import {LanguageLearningLibrary} from '../Library'
 
-vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('../../p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('../../../features/focus-room-dialogue', async () => {
   const actual: typeof import('../../../features/focus-room-dialogue') = await vi.importActual(
     '../../../features/focus-room-dialogue',
@@ -111,8 +111,9 @@ beforeEach(() => {
   })
 })
 
-it('should use the shared language select and filter saved sentences', () => {
+it('should use the shared language select and filter saved sentences', async () => {
   const events = createEvents()
+  vi.mocked(events.getAudio).mockResolvedValue(new Blob(['audio']))
   const onRequestClose = vi.fn()
   vi.mocked(usePEvents).mockReturnValue(events)
   writeLanguageLearningSentences([
@@ -174,7 +175,7 @@ it('should use the shared language select and filter saved sentences', () => {
   expect(screen.getByRole('button', {name: '삭제'})).toBeDefined()
 
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
-  expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja')
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja'))
   expect(onRequestClose).toHaveBeenCalledOnce()
 
   fireEvent.click(screen.getByRole('button', {name: '삭제'}))

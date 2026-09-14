@@ -2,7 +2,7 @@ import {createSignal, ErrorBoundary, lazy, Suspense} from 'solid-js'
 
 import {reportClientError} from '../../features/client-error-reporter'
 import type {PTrack} from '../../features/focus-room-audio'
-import {PModal} from '../PModal'
+import {PModal} from '../p-modal/PModal'
 import {PlaylistFooter} from './Footer'
 import {LoadingStatus} from './LoadingStatus'
 import * as m from '@paraglide/message'

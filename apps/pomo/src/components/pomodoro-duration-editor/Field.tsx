@@ -1,4 +1,4 @@
-import {PInput} from 'src/components/PInput'
+import {PInput} from 'src/components/p-input/PInput'
 import {NumberField} from '@kobalte/core/number-field'
 import {CLASSES} from './shared'
 

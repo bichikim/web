@@ -1,8 +1,8 @@
 import {createMemo, createSignal} from 'solid-js'
 import * as m from '@paraglide/message'
 import {countText} from 'src/features/tools'
-import {PTextarea} from '../PTextarea'
-import {PButton} from '../PButton'
+import {PTextarea} from '../p-textarea/PTextarea'
+import {PButton} from '../p-button/PButton'
 import {Result} from './Result'
 export const Text = () => {
   const [text, setText] = createSignal('')

@@ -1,8 +1,8 @@
 import {useTooltipTrigger} from '../tooltip'
 import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
-import {PTooltip} from '../PTooltip'
-import {POverflowMarquee} from '../POverflowMarquee'
+import {PTooltip} from '../p-tooltip/PTooltip'
+import {POverflowMarquee} from '../p-overflow-marquee/POverflowMarquee'
 import {CLASSES} from './styles'
 import type {MusicPlayerViewProps} from './types'
 

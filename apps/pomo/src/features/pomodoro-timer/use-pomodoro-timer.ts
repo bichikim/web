@@ -24,7 +24,6 @@ const MAX_DURATION_MINUTES = 120
 const MAX_FOCUS_SESSIONS = 12
 const SECONDS_PER_MINUTE = 60
 const MAX_DURATION_SECONDS = MAX_DURATION_MINUTES * SECONDS_PER_MINUTE
-const TIMER_REFRESH_INTERVAL = 250
 const phaseSchema = z.union([z.literal('focus'), z.literal('longBreak'), z.literal('shortBreak')])
 const stateBaseSchema = {
   completedFocusSessions: z.number().int().nonnegative(),
@@ -133,7 +132,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const applyState = (nextState: PomodoroTimerState) => {
     const previousState = state()
     setState(nextState)
-    const events = getPomodoroTimerEvents(previousState, nextState)
+    const events = getPomodoroTimerEvents(previousState, nextState, config())
 
     if (events.length > 0) {
       props.onEvents?.(events)
@@ -205,12 +204,18 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
 
     initializeAutoStart()
 
-    const refreshTimer = globalThis.setInterval(refresh, TIMER_REFRESH_INTERVAL)
+    const refreshFrame = () => {
+      refresh()
+      if (!isDisposed) {
+        frame = globalThis.requestAnimationFrame(refreshFrame)
+      }
+    }
+    let frame = globalThis.requestAnimationFrame(refreshFrame)
     useEvent(document, 'visibilitychange', refresh)
 
     onCleanup(() => {
       isDisposed = true
-      globalThis.clearInterval(refreshTimer)
+      globalThis.cancelAnimationFrame(frame)
       if (props.stopOnUnmount) {
         writeStoredState(stopPomodoroTimer(state(), config()))
       }

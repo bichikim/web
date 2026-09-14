@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
-import {VoiceGenerator} from 'src/components/VoiceGenerator'
+import {VoiceGenerator} from 'src/components/voice-generator/VoiceGenerator'
 import {SERVICE_POLICY_PATHS} from 'src/features/service-terms/policy-paths'
 
 const MAIN_CLASSES = cx(

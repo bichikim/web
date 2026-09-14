@@ -6,7 +6,7 @@ import {
   type PEventContextValue,
   usePEvents,
 } from '../../../features/focus-room-dialogue/event-context'
-import {PEventProvider} from '../../PEventProvider'
+import {PEventProvider} from '../../p-event-provider/PEventProvider'
 
 export interface RenderContextOptions {
   readonly enter?: boolean

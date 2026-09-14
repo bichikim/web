@@ -1,6 +1,6 @@
 import {Title} from '@solidjs/meta'
 
-import {PLayerReview} from 'src/components/PLayerReview'
+import {PLayerReview} from 'src/components/p-layer-review/PLayerReview'
 
 export function LayerReviewPage() {
   return (

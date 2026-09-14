@@ -2,9 +2,9 @@ import {type JSX, Show} from 'solid-js'
 
 import {useTossAccount} from '../../features/user-auth/use-toss-account'
 import * as m from '@paraglide/message'
-import {PButton} from '../PButton'
-import {PFormMessage} from '../PFormMessage'
-import {PTextField} from '../PTextField'
+import {PButton} from '../p-button/PButton'
+import {PFormMessage} from '../p-form-message/PFormMessage'
+import {PTextField} from '../p-text-field/PTextField'
 
 export const TossAccount = () => {
   const account = useTossAccount()

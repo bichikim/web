@@ -45,6 +45,7 @@ export const stressTestFiles = [
 ] as const
 
 const buildIntegrationTestFiles = [
+  'packages/vite-lib-config/__tests__/index.build.spec.ts',
   'packages/sw/src/__tests__/build-output.spec.ts',
   'packages/vite-plugin-monorepo-alias/__tests__/*.spec.ts',
 ]

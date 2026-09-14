@@ -3,8 +3,8 @@ import {createHandler, StartServer} from '@solidjs/start/server'
 
 import {getLocale, getTextDirection} from '@paraglide/runtime'
 
-import {InstallationMetadata} from './components/InstallationMetadata'
-import {ViewportMetadata} from './components/ViewportMetadata'
+import {InstallationMetadata} from './components/installation-metadata/InstallationMetadata'
+import {ViewportMetadata} from './components/viewport-metadata/ViewportMetadata'
 
 import {DISPLAY_THEME_BOOTSTRAP_SCRIPT} from './features/display-theme/bootstrap'
 import {pretendardFontFaceStyles} from '../scripts/unocss/pretendard'

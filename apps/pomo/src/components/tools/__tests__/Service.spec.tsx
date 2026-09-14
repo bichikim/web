@@ -3,7 +3,9 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it} from 'vitest'
 import {Service} from '../Service'
 
-afterEach(() => localStorage.clear())
+afterEach(() => {
+  localStorage.clear()
+})
 it('should not mark valid service days invalid while the enlistment date is empty', async () => {
   localStorage.clear()
   render(() => <Service />)

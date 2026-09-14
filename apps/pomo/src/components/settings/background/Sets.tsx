@@ -2,7 +2,7 @@ import {createSignal, Show, Suspense} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type BackgroundController} from 'src/features/background'
 import {Catalog} from './Catalog'
-import {PModal} from '../../PModal'
+import {PModal} from '../../p-modal/PModal'
 import {PSettingsActionButton} from '../ActionButton'
 
 export interface SetsProps {

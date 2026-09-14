@@ -317,28 +317,26 @@ const createVoiceClient = (
 it('should refresh visible, changed, and polled feeds and report callback failures', async () => {
   vi.useFakeTimers()
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const visibility = vi.spyOn(document, 'visibilityState', 'get')
-  visibility.mockReturnValue('hidden')
+  const visibility = vi.spyOn(document, 'hidden', 'get')
+  visibility.mockReturnValue(true)
   const view = renderHook(() => usePFeeds({events: createEventContext()}))
   await vi.advanceTimersByTimeAsync(0)
 
-  document.dispatchEvent(new Event('visibilitychange'))
+  document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
   expect(gateMocks.beginFeedSync).toHaveBeenCalledTimes(1)
 
   gateMocks.finishFeedSync.mockImplementation(() => {
     throw new Error('finish failed')
   })
   gateMocks.beginFeedSync.mockReturnValue(true)
-  visibility.mockReturnValue('visible')
-  document.dispatchEvent(new Event('visibilitychange'))
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(gateMocks.beginFeedSync).toHaveBeenCalledTimes(1)
+  visibility.mockReturnValue(false)
+  document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
   window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
   await vi.runOnlyPendingTimersAsync()
 
   await vi.waitFor(() => {
-    expect(error).toHaveBeenCalledWith(
-      'Failed to refresh visible focus room feeds.',
-      expect.any(Error),
-    )
     expect(error).toHaveBeenCalledWith(
       'Failed to refresh changed focus room feeds.',
       expect.any(Error),

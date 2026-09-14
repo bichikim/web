@@ -225,13 +225,13 @@ Playback belongs to `components/media-player`; playlist presentation belongs to 
 
 ## components/\*\* (133)
 
-- [ ] `apps/pomo/src/components/AdminDashboard.tsx`
-- [ ] `apps/pomo/src/components/AdminLogin.tsx`
-- [ ] `apps/pomo/src/components/PDialogueSettings.tsx`
-- [ ] `apps/pomo/src/components/PLoadingStatus.tsx`
-- [ ] `apps/pomo/src/components/PModalTabList.tsx`
-- [ ] `apps/pomo/src/components/PPanel.tsx`
-- [ ] `apps/pomo/src/components/PPlayerUtilityButton.tsx`
+- [ ] `apps/pomo/src/components/admin-dashboard/AdminDashboard.tsx`
+- [ ] `apps/pomo/src/components/admin-login/AdminLogin.tsx`
+- [ ] `apps/pomo/src/components/p-dialogue-settings/PDialogueSettings.tsx`
+- [ ] `apps/pomo/src/components/p-loading-status/PLoadingStatus.tsx`
+- [ ] `apps/pomo/src/components/p-modal-tab-list/PModalTabList.tsx`
+- [ ] `apps/pomo/src/components/p-panel/PPanel.tsx`
+- [ ] `apps/pomo/src/components/p-player-utility-button/PPlayerUtilityButton.tsx`
 - [ ] `apps/pomo/src/components/admin-auth/styles.ts`
 - [ ] `apps/pomo/src/components/admin-music/AlbumWorkspace.tsx`
 - [ ] `apps/pomo/src/components/admin-music/PendingTrackList.tsx`

@@ -1,4 +1,4 @@
-import {PSelect, type PSelectOption} from '../PSelect'
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import type {DialogueEventPlaybackMode} from '../../features/focus-room-dialogue'
 import * as m from '@paraglide/message'
 import {DialogueEventSettingRow} from './EventSettingRow'

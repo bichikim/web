@@ -1,6 +1,6 @@
 import {createConfig, targets} from '@winter-love/vite-lib-config'
 import {getBabelOutputPlugin} from '@rollup/plugin-babel'
-import {type ConfigEnv, defineConfig, type UserConfig} from 'vite'
+import {defineConfig} from 'vite'
 
 const createBaseConfig = createConfig({
   entry: {
@@ -28,13 +28,8 @@ const createBaseConfig = createConfig({
   root: import.meta.dirname,
 })
 
-// The generator copies only sw.mjs, so the service worker runtime must not depend on sibling chunks.
-const createBaseConfigFactory = createBaseConfig as unknown as (
-  env: ConfigEnv,
-) => UserConfig | Promise<UserConfig>
-
-export default defineConfig(async (env) => {
-  const config = await createBaseConfigFactory(env)
+export default defineConfig((env) => {
+  const config = createBaseConfig(env)
   const output = config.build?.rollupOptions?.output
 
   return {
@@ -43,6 +38,7 @@ export default defineConfig(async (env) => {
       ...config.build,
       rollupOptions: {
         ...config.build?.rollupOptions,
+        // The generator copies only sw.mjs, so the runtime must not depend on sibling chunks.
         output: Array.isArray(output)
           ? output.map((entry) => ({...entry, preserveModules: false}))
           : output,

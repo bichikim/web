@@ -2,7 +2,7 @@
 import {clientOnly} from '@solidjs/start'
 import {beforeEach, expect, it, vi} from 'vitest'
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
-vi.mock('src/components/ChatRoom', () => ({ChatRoom: vi.fn()}))
+vi.mock('src/components/chat-room/ChatRoom', () => ({ChatRoom: vi.fn()}))
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()

@@ -2,13 +2,15 @@ import {beforeEach, expect, it, vi} from 'vitest'
 import {createToolSelectionStorages, type ToolSelectionStorages} from '../selection-storage'
 import {createStorageFixture} from './helpers/storage'
 
+let reportRepairError: ReturnType<typeof vi.fn<(error: unknown) => void>>
 let fixture: ReturnType<typeof createStorageFixture>
 let unitSelectionStorage: ToolSelectionStorages['unitSelectionStorage']
 let lunarDirectionStorage: ToolSelectionStorages['lunarDirectionStorage']
 let movingSelectionStorage: ToolSelectionStorages['movingSelectionStorage']
 beforeEach(() => {
+  reportRepairError = vi.fn()
   fixture = createStorageFixture()
-  const repositories = createToolSelectionStorages({storage: fixture.adapter})
+  const repositories = createToolSelectionStorages({reportRepairError, storage: fixture.adapter})
   unitSelectionStorage = repositories.unitSelectionStorage
   lunarDirectionStorage = repositories.lunarDirectionStorage
   movingSelectionStorage = repositories.movingSelectionStorage
@@ -65,9 +67,10 @@ it.each([
   },
 ])('should restore the web copy for $key when native is missing', async ({storage, key, value}) => {
   fixture.usesTossStorage.mockReturnValue(true)
-  fixture.getItem.mockResolvedValue(null)
   fixture.web.set(key, JSON.stringify(value))
-  const repositories = createToolSelectionStorages({storage: fixture.adapter})
+  const repositories = createToolSelectionStorages({reportRepairError, storage: fixture.adapter})
+  await expect(repositories[storage].read()).resolves.toEqual(value)
+  fixture.web.clear()
   await expect(repositories[storage].read()).resolves.toEqual(value)
 })
 it.each(['"solar"', '{invalid', '"unknown"'])(
@@ -194,7 +197,10 @@ it('should isolate pending writes between repository instances and selection key
   const saving = lunarDirectionStorage.write('lunar')
   const other = createStorageFixture()
   other.usesTossStorage.mockReturnValue(true)
-  const independent = createToolSelectionStorages({storage: other.adapter})
+  const independent = createToolSelectionStorages({
+    reportRepairError: vi.fn(),
+    storage: other.adapter,
+  })
   try {
     await expect(independent.lunarDirectionStorage.read()).resolves.toBeNull()
     await expect(movingSelectionStorage.read()).resolves.toBeNull()
@@ -202,4 +208,59 @@ it('should isolate pending writes between repository instances and selection key
     delayed.resolve()
     await saving
   }
+})
+
+it.each([null, JSON.stringify('solar')])(
+  'should repair native %s before web data is cleared',
+  async (stored) => {
+    fixture.usesTossStorage.mockReturnValue(true)
+    const latest = 'lunar'
+    fixture.web.set('pomo:tool-lunar-direction:v1', JSON.stringify(latest))
+    let nativeValue = stored
+    fixture.getItem.mockImplementation(async () => nativeValue)
+    fixture.setItem.mockImplementation(async (_key, value) => {
+      nativeValue = value
+    })
+    await expect(lunarDirectionStorage.read()).resolves.toEqual(latest)
+    fixture.web.clear()
+    await expect(lunarDirectionStorage.read()).resolves.toEqual(latest)
+  },
+)
+it('should retry a failed repair on the next read while preserving the web value', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const latest = 'lunar'
+  const error = new Error('repair failed')
+  fixture.web.set('pomo:tool-lunar-direction:v1', JSON.stringify(latest))
+  fixture.setItem.mockRejectedValueOnce(error)
+  await expect(lunarDirectionStorage.read()).resolves.toEqual(latest)
+  await expect(lunarDirectionStorage.read()).resolves.toEqual(latest)
+  fixture.web.clear()
+  await expect(lunarDirectionStorage.read()).resolves.toEqual(latest)
+  expect(reportRepairError).toHaveBeenCalledExactlyOnceWith(error)
+})
+it('should serialize a newer save after an unfinished read repair', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const previous = 'solar'
+  const latest = 'lunar'
+  const delayed = Promise.withResolvers<void>()
+  fixture.web.set('pomo:tool-lunar-direction:v1', JSON.stringify(previous))
+  fixture.setItem.mockImplementationOnce(async () => delayed.promise)
+  await expect(lunarDirectionStorage.read()).resolves.toEqual(previous)
+  await vi.waitFor(() => expect(fixture.setItem).toHaveBeenCalledTimes(1))
+  const saving = lunarDirectionStorage.write(latest)
+  expect(fixture.setItem).toHaveBeenCalledTimes(1)
+  delayed.resolve()
+  await saving
+  fixture.web.clear()
+  await expect(lunarDirectionStorage.read()).resolves.toEqual(latest)
+  expect(fixture.setItem.mock.calls.map((call) => call[1])).toEqual([
+    JSON.stringify(previous),
+    JSON.stringify(latest),
+  ])
+})
+it('should avoid native repair on the regular web', async () => {
+  const latest = 'lunar'
+  fixture.web.set('pomo:tool-lunar-direction:v1', JSON.stringify(latest))
+  await expect(lunarDirectionStorage.read()).resolves.toEqual(latest)
+  expect(fixture.setItem).not.toHaveBeenCalled()
 })

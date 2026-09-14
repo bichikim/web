@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({createRepository: vi.fn()}))
 vi.mock('../../../features/focus-room-dialogue/automatic-dialogue-settings', () => ({
   createAutomaticDialogueSettingsRepository: mocks.createRepository,
 }))
-vi.mock('../../PSelect', () => ({
+vi.mock('../../p-select/PSelect', () => ({
   PSelect: (props: {
     readonly accessibleLabel?: string
     readonly label: string

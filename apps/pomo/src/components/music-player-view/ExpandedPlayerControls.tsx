@@ -1,6 +1,6 @@
 import type {JSX} from 'solid-js'
 import {useTooltipTrigger} from '../tooltip'
-import {PTooltip} from '../PTooltip'
+import {PTooltip} from '../p-tooltip/PTooltip'
 import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 import {PPlaybackModes} from './PPlaybackModes'

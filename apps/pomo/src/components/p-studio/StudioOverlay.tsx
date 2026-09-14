@@ -1,7 +1,7 @@
 import {Show} from 'solid-js'
 import {type DesktopMode, isDesktopBackgroundMode} from 'src/features/desktop-mode'
 import type {PDisplayPreferencesController} from 'src/features/focus-room-display-preferences'
-import {PScreenSaver} from '../PScreenSaver'
+import {PScreenSaver} from '../p-screen-saver/PScreenSaver'
 import {PStudioTour} from './Tour'
 import {PStudioTourHint} from './TourHint'
 import type {useStudioScreenSaver} from './use-screen-saver'

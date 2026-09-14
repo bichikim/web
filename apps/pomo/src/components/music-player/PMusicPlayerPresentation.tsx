@@ -1,6 +1,6 @@
 import {createSignal} from 'solid-js'
 import {useMediaPlayer} from '../media-player/context'
-import {MusicPlayerView} from '../MusicPlayerView'
+import {MusicPlayerView} from '../music-player-view/MusicPlayerView'
 import type {PMusicPlayerContentProps} from './types'
 
 export interface PMusicPlayerPresentationProps extends Pick<

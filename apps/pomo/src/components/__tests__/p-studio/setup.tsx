@@ -27,8 +27,8 @@ import {PSceneFallback} from 'src/components/p-studio/SceneFallback'
 import {SceneToolbar} from 'src/components/p-studio/Toolbar'
 import {PStudioTourHint} from 'src/components/p-studio/TourHint'
 import {useStudioScreenSaver} from 'src/components/p-studio/use-screen-saver'
-import {PScreenSaver} from 'src/components/PScreenSaver'
-import {PStudio} from 'src/components/PStudio'
+import {PScreenSaver} from 'src/components/p-screen-saver/PScreenSaver'
+import {PStudio} from 'src/components/p-studio/PStudio'
 import {DEFAULT_BACKGROUND, useBackground} from 'src/features/background'
 import {Player as FramePlayer} from 'src/components/frame/Player'
 import {PTour} from 'src/components/tour/PTour'
@@ -73,7 +73,7 @@ vi.mock('src/components/p-studio/Events', () => ({PStudioEvents: vi.fn()}))
 vi.mock('src/components/p-studio/Toolbar', () => ({SceneToolbar: vi.fn()}))
 vi.mock('src/components/p-studio/TourHint', () => ({PStudioTourHint: vi.fn()}))
 vi.mock('src/components/p-studio/use-screen-saver', () => ({useStudioScreenSaver: vi.fn()}))
-vi.mock('src/components/PScreenSaver', () => ({PScreenSaver: vi.fn()}))
+vi.mock('src/components/p-screen-saver/PScreenSaver', () => ({PScreenSaver: vi.fn()}))
 vi.mock('src/components/tour/PTour', () => ({PTour: vi.fn()}))
 vi.mock('src/components/use-dialogue-scene-gaze', () => ({useDialogueSceneGaze: vi.fn()}))
 

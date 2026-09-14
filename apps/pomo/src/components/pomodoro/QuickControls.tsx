@@ -1,8 +1,11 @@
 import {useTooltipTrigger} from '../tooltip'
-import {PTooltip} from '../PTooltip'
+import {PTooltip} from '../p-tooltip/PTooltip'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
-import {PCharacterEmotion, type PCharacterEmotionType} from '../PCharacterEmotion'
+import {
+  PCharacterEmotion,
+  type PCharacterEmotionType,
+} from '../p-character-emotion/PCharacterEmotion'
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import {type PomodoroPhase} from '../../features/pomodoro-timer/index'
 import * as m from '@paraglide/message'

@@ -24,6 +24,47 @@ const createStorage = () => {
 }
 
 describe('createScreenSaverRepository', () => {
+  it('should repair native storage before restoring an evicted web preference', async () => {
+    const storage = createStorage()
+    storage.writeWeb('pomo:screen-saver-delay:v1', 'off')
+    const repository = createScreenSaverRepository(storage)
+
+    expect(await repository.read()).toBe('off')
+    storage.removeWeb()
+    expect(await repository.read()).toBe('off')
+    expect(await storage.readToss()).toBe('off')
+  })
+
+  it('should retain the web choice after repair failure and retry on the next read', async () => {
+    const storage = createStorage()
+    storage.writeWeb('pomo:screen-saver-delay:v1', 'off')
+    storage.writeToss.mockRejectedValueOnce(new Error('native unavailable'))
+    const repository = createScreenSaverRepository(storage)
+
+    expect(await repository.read()).toBe('off')
+    expect(await repository.read()).toBe('off')
+    storage.removeWeb()
+    expect(await repository.read()).toBe('off')
+  })
+
+  it('should return the web choice during repair and serialize a newer write after it', async () => {
+    const storage = createStorage()
+    const completion = Promise.withResolvers<void>()
+    const persist = storage.writeToss.getMockImplementation()!
+    storage.writeToss.mockImplementationOnce(async (key, value) => {
+      await completion.promise
+      await persist(key, value)
+    })
+    const repository = createScreenSaverRepository(storage)
+
+    expect(await repository.read()).toBe('10m')
+    const write = repository.write('off')
+    completion.resolve()
+    await write
+    expect(await storage.readToss()).toBe('off')
+    expect(storage.writeToss.mock.calls.map((call) => call[1])).toEqual(['10m', 'off'])
+  })
+
   it.each([
     [false, false],
     [false, true],
@@ -105,7 +146,7 @@ describe('createScreenSaverRepository', () => {
     completion.resolve()
     await Promise.all([first, second])
     expect(await read).toBe('off')
-    expect(storage.writeToss.mock.calls.map((call) => call[1])).toEqual(['1m', 'off'])
+    expect(storage.writeToss.mock.calls.map((call) => call[1])).toEqual(['1m', 'off', 'off'])
   })
 
   it.each(['value', 'missing', 'error'] as const)(

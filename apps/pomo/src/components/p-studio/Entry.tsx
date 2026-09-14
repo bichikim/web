@@ -1,5 +1,5 @@
-import {PButton} from '../PButton'
-import {PServicePolicyLinks} from '../PServicePolicyLinks'
+import {PButton} from '../p-button/PButton'
+import {PServicePolicyLinks} from '../p-service-policy-links/PServicePolicyLinks'
 import * as m from '@paraglide/message'
 import smilingFaceSource from '../assets/pomodoro-status-icons/break.webp'
 import {CLASSES} from './shared'

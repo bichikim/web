@@ -39,7 +39,19 @@ export interface PuppetPartRenderProperties {
   readonly screenColor?: PuppetColor
 }
 
+export interface PuppetPsdSource {
+  readonly documentId?: string
+  readonly fileName?: string
+  readonly layerId?: number
+  readonly path: ReadonlyArray<string>
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
+}
+
 export interface PuppetPart {
+  readonly psdSource?: PuppetPsdSource
   readonly id: string
   readonly mesh: PuppetMesh
   readonly properties?: PuppetPartRenderProperties
@@ -172,7 +184,14 @@ export interface PuppetScene {
   readonly roots: ReadonlyArray<PuppetSceneNode>
 }
 
+export interface PuppetGlueKeyform {
+  readonly id: string
+  readonly strength: number
+  readonly weight: number
+}
+
 export interface PuppetParameterPartKeyform {
+  readonly glue?: ReadonlyArray<PuppetGlueKeyform>
   readonly partId: string
   readonly properties?: Pick<
     PuppetPartRenderProperties,

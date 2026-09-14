@@ -14,7 +14,7 @@ import {usePScenePreferences} from '../../../features/focus-room-scene-preferenc
 import {useScreenSaver} from '../../../features/screen-saver'
 import {useWeather, type WeatherLocation} from '../../../features/weather'
 import {usePDisplayPreferences} from '../../../features/focus-room-display-preferences'
-import {PPomodoro} from '../../PPomodoro'
+import {PPomodoro} from '../../p-pomodoro/PPomodoro'
 import {DesktopPomodoro} from '../Pomodoro'
 
 vi.mock('../../../features/focus-room-display-preferences', () => ({
@@ -36,14 +36,14 @@ vi.mock('../../../features/desktop-mode', () => ({
   useDesktopSceneSettingsPublisher: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
-vi.mock('../../PMusicPlayer', () => ({
+vi.mock('../../p-music-player/PMusicPlayer', () => ({
   PMusicPlayer: vi.fn((props) => (
     <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
       플레이어
     </div>
   )),
 }))
-vi.mock('../../PPomodoro', () => ({
+vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: vi.fn((props) => <div data-style={props.sceneStyle}>포모도로</div>),
 }))
 vi.mock('../../p-studio/Toolbar', () => ({

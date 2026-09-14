@@ -1,6 +1,6 @@
 import {For, Show} from 'solid-js'
 import {getSupertonicModel, type SupertonicVoiceResult} from '../../features/supertonic/index'
-import {PAudioPreview} from '../PAudioPreview'
+import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
 import {MILLISECONDS_PER_SECOND} from './shared'
 
 interface AudioResultsProps {

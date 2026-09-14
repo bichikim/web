@@ -33,7 +33,7 @@ describe('playback-storage', () => {
   beforeEach(() => {
     storage = createStorage()
     currentTime = 20
-    playbackStorage = createPPlaybackStorage({now: () => currentTime}, storage.adapter)
+    playbackStorage = createPPlaybackStorage({now: () => currentTime}, storage.adapter, vi.fn())
   })
 
   it('should read the injected clock for each write and stop', async () => {
@@ -109,6 +109,63 @@ describe('playback-storage', () => {
       positionSeconds: 4,
       trackId: 'web-track',
     })
+  })
+
+  it.each([null, 100, 200])(
+    'should repair native playback at timestamp %s and restore it after browser removal',
+    async (savedAt) => {
+      storage.adapter.usesTossStorage.mockReturnValue(true)
+      const latest = {isPlaying: true, positionSeconds: 12, savedAt: 200, trackId: 'new'}
+      storage.state.web = latest
+      let native: StoredPlaybackState | null =
+        savedAt === null ? null : {isPlaying: false, positionSeconds: 1, savedAt, trackId: 'old'}
+      storage.adapter.readToss.mockImplementation(async () => native)
+      storage.adapter.writeToss.mockImplementation(async (value) => {
+        native = value
+      })
+
+      await expect(playbackStorage.read()).resolves.toEqual({
+        isPlaying: true,
+        positionSeconds: 12,
+        trackId: 'new',
+      })
+      expect(storage.adapter.writeToss).toHaveBeenCalledWith(latest)
+      storage.state.web = null
+      await expect(playbackStorage.read()).resolves.toEqual({
+        isPlaying: true,
+        positionSeconds: 12,
+        trackId: 'new',
+      })
+    },
+  )
+
+  it('should leave newer native playback untouched', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old'}
+    storage.adapter.readToss.mockResolvedValue({
+      isPlaying: true,
+      positionSeconds: 12,
+      savedAt: 200,
+      trackId: 'new',
+    })
+    await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'new'})
+    expect(storage.adapter.writeToss).not.toHaveBeenCalled()
+  })
+
+  it('should return browser playback while repair is pending and serialize a newer write', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {isPlaying: true, positionSeconds: 1, savedAt: 10, trackId: 'old'}
+    const repair = Promise.withResolvers<void>()
+    storage.adapter.writeToss.mockReturnValueOnce(repair.promise)
+
+    await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'old'})
+    expect(storage.adapter.writeToss).toHaveBeenCalledOnce()
+    const latest = {isPlaying: false, positionSeconds: 12, trackId: 'new'}
+    const writing = playbackStorage.write(latest)
+    expect(storage.adapter.writeToss).toHaveBeenCalledOnce()
+    repair.resolve()
+    await writing
+    expect(storage.adapter.writeToss).toHaveBeenLastCalledWith({...latest, savedAt: 20})
   })
 
   it('should fall back to browser playback when native storage cannot be read', async () => {
@@ -190,6 +247,34 @@ describe('playback-storage', () => {
       await expect(reading).resolves.toEqual(latestPlayback)
     },
   )
+
+  it('should not repair a stale read over a native write when the browser write fails', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old'}
+    const pending = Promise.withResolvers<StoredPlaybackState | null>()
+    storage.adapter.readToss.mockReturnValueOnce(pending.promise)
+    const reading = playbackStorage.read()
+    storage.adapter.writeWeb.mockReturnValue(new Error('Storage is unavailable'))
+    const latest = {isPlaying: true, positionSeconds: 5, trackId: 'new'}
+    await playbackStorage.write(latest)
+    pending.resolve(null)
+    await reading
+    expect(storage.adapter.writeToss).toHaveBeenCalledExactlyOnceWith({...latest, savedAt: 20})
+  })
+
+  it('should not queue stale repair behind a native write already pending at read start', async () => {
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old'}
+    storage.adapter.writeWeb.mockReturnValue(new Error('Storage is unavailable'))
+    const pending = Promise.withResolvers<void>()
+    storage.adapter.writeToss.mockReturnValueOnce(pending.promise)
+    const latest = {isPlaying: true, positionSeconds: 5, trackId: 'new'}
+    const writing = playbackStorage.write(latest)
+    await playbackStorage.read()
+    pending.resolve()
+    await writing
+    expect(storage.adapter.writeToss).toHaveBeenCalledExactlyOnceWith({...latest, savedAt: 20})
+  })
 
   it('should serialize native writes and finish with the latest value', async () => {
     storage.adapter.usesTossStorage.mockReturnValue(true)
@@ -338,6 +423,37 @@ describe('playback-storage', () => {
     pending.resolve()
     await writing
     expect(storage.adapter.writeToss).toHaveBeenCalledOnce()
+  })
+
+  it('should report failed native repair and keep returning browser playback', async () => {
+    const reportError = vi.fn()
+    playbackStorage = createPPlaybackStorage({now: () => currentTime}, storage.adapter, reportError)
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    storage.state.web = {isPlaying: true, positionSeconds: 1, savedAt: 10, trackId: 'web'}
+    const error = new Error('Repair failed')
+    storage.adapter.writeToss.mockRejectedValue(error)
+    await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'web'})
+    await vi.waitFor(() => expect(reportError).toHaveBeenCalledExactlyOnceWith(error))
+  })
+
+  it('should report each failed native operation once when writes share the queue', async () => {
+    const reportError = vi.fn()
+    playbackStorage = createPPlaybackStorage({now: () => currentTime}, storage.adapter, reportError)
+    storage.adapter.usesTossStorage.mockReturnValue(true)
+    const pending = Promise.withResolvers<void>()
+    storage.adapter.writeToss.mockReturnValueOnce(pending.promise)
+    const first = playbackStorage.write({isPlaying: true, positionSeconds: 1, trackId: 'one'})
+    const second = playbackStorage.write({isPlaying: false, positionSeconds: 2, trackId: 'two'})
+    const error = new Error('Native write failed')
+    pending.reject(error)
+    await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined])
+    expect(reportError).toHaveBeenCalledExactlyOnceWith(error)
+    expect(storage.adapter.writeToss).toHaveBeenLastCalledWith({
+      isPlaying: false,
+      positionSeconds: 2,
+      savedAt: 20,
+      trackId: 'two',
+    })
   })
 
   it('should tolerate Toss write failure and retain the browser copy', async () => {

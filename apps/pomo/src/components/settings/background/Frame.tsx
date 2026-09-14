@@ -5,9 +5,9 @@ import {
   getTransitionSelection,
   transitionSelectionPatch,
 } from 'src/features/background'
-import {PRadioSwitch} from '../../PRadioSwitch'
-import {PSwitch} from '../../PSwitch'
-import {PSelect} from '../../PSelect'
+import {PRadioSwitch} from '../../p-radio-switch/PRadioSwitch'
+import {PSwitch} from '../../p-switch/PSwitch'
+import {PSelect} from '../../p-select/PSelect'
 import {PSettingsActionButton} from '../ActionButton'
 import {Item} from './Item'
 import {Upload} from './Upload'

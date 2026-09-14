@@ -45,7 +45,7 @@ vi.mock('../use-mobile-layout', () => ({
 vi.mock('../use-child-presence', () => ({
   useChildPresence: vi.fn(() => () => false),
 }))
-vi.mock('../../PDialogueComposer', () => ({
+vi.mock('../../p-dialogue-composer/PDialogueComposer', () => ({
   PDialogueComposer: (props: {
     readonly autoExpand?: boolean
     readonly loading?: boolean
@@ -59,10 +59,10 @@ vi.mock('../../PDialogueComposer', () => ({
     </form>
   ),
 }))
-vi.mock('../../PModelDownloadConsent', () => ({
+vi.mock('../../p-model-download-consent/PModelDownloadConsent', () => ({
   PModelDownloadConsent: () => null,
 }))
-vi.mock('../../PDialoguePlayer', () => ({
+vi.mock('../../p-dialogue-player/PDialoguePlayer', () => ({
   PDialoguePlayer: (props: {
     readonly externalText: string | null
     readonly onStopExternalSpeech: () => void
@@ -75,10 +75,10 @@ vi.mock('../../PDialoguePlayer', () => ({
     </div>
   ),
 }))
-vi.mock('../../PFeedStatus', () => ({
+vi.mock('../../p-feed-status/PFeedStatus', () => ({
   PFeedStatus: (props: {readonly sceneStyle: string}) => <div data-feed-scene={props.sceneStyle} />,
 }))
-vi.mock('../../PMusicPlayer', () => ({
+vi.mock('../../p-music-player/PMusicPlayer', () => ({
   PMusicPlayer: (props: {
     readonly expanded: boolean
     readonly isDialogueActive: boolean
@@ -104,7 +104,7 @@ vi.mock('../../PMusicPlayer', () => ({
     </div>
   ),
 }))
-vi.mock('../../PPomodoro', () => ({
+vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: (props: {
     readonly onEvents: (eventIds: ReadonlyArray<string>) => void
     readonly onPresentationChange: (presentation: {

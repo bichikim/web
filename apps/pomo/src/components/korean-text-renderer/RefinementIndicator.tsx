@@ -8,10 +8,14 @@ export const RefinementIndicator = () => {
   const [frame, setFrame] = createSignal(0)
 
   onMount(() => {
-    const interval = globalThis.setInterval(() => {
-      setFrame((value) => (value + 1) % REFINEMENT_FRAMES.length)
-    }, FRAME_INTERVAL)
-    onCleanup(() => globalThis.clearInterval(interval))
+    const startedAt = Date.now()
+    const animate = () => {
+      const elapsed = Date.now() - startedAt
+      setFrame(Math.floor(elapsed / FRAME_INTERVAL) % REFINEMENT_FRAMES.length)
+      animation = globalThis.requestAnimationFrame(animate)
+    }
+    let animation = globalThis.requestAnimationFrame(animate)
+    onCleanup(() => globalThis.cancelAnimationFrame(animation))
   })
 
   return (

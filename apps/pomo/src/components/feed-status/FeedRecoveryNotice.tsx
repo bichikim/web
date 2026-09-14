@@ -1,6 +1,6 @@
 import type {PSceneStyle} from 'src/features/focus-room-animation'
 import type {usePFeedContext} from 'src/features/focus-room-feed'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 import {FeedStatusSurface} from './Surface'
 import {CLASSES} from './shared'
 import * as m from '@paraglide/message'

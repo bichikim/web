@@ -2,8 +2,8 @@ import {createSignal, ErrorBoundary, lazy, Show, Suspense} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {getLocale} from '@paraglide/runtime'
 import * as m from '@paraglide/message'
-import {PSideTabs} from '../PSideTabs'
-import {PLoadingStatus} from '../PLoadingStatus'
+import {PSideTabs} from '../p-side-tabs/PSideTabs'
+import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 const TOOLS = [
   {
     component: lazy(() => import('./Units').then((module) => ({default: module.Units}))),

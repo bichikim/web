@@ -65,6 +65,14 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 [촬영 환경](rendering/evidence/manifest.json)의 OS·Chromium 버전·화면 크기·DPR·언어·시간대와
 같은 환경에서 비교해야 합니다. [설정 기준 PNG](rendering/settings.spec.ts-snapshots)와
 [타이머 기준 PNG](rendering/pomodoro.spec.ts-snapshots)는 Git에 보존합니다.
+
+[포모도로 테스트](rendering/pomodoro.spec.ts)의 빠른 제어·세션 초기화 시나리오는
+실제 버튼으로 시작·일시정지·재개하고, 완료 횟수가 있는 휴식 도중 세션을 초기화합니다.
+새로고침 뒤에도 완료 횟수는 0이며 저장한 시간 설정은 유지되고, 타이머는 멈춰 있어야 합니다.
+타이머 상태나 저장소는 모킹하지 않으며 비교와 무관한 재생목록만 비웁니다.
+브라우저 시계는 고정하고, 다이얼로그 포커스와 일시정지·완료 상태의 PNG도 확인합니다.
+두 상태는 이전 기준이 없는 최초 기준입니다. [촬영 기록](rendering/evidence/timer-controls/manifest.json)에
+현재 이미지와 환경을 보존하며, 실제 Toss·데스크톱 앱·원격 DB·음성 재생 검증은 포함하지 않습니다.
 설정 기준에는 병합된 배경 탭·위젯 표시 설정 변경을 반영했으며, 타이머 기준은 최초 생성입니다.
 다른 OS의 기준 부재나 실행 실패를 변경 없음으로 해석하지 마세요.
 변경이 실패하면 기준·현재·차이 이미지를 확인하고 원인이 입증되기 전에는 기준을 갱신하지 않습니다.
@@ -85,7 +93,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 기존 여섯 기준을 유지하며 대표 현재 PNG를 보존합니다. 정확한 커밋의 로컬 실행 결과는 해당 PR 본문에 기록합니다.
 
 [캐릭터 장면 테스트](rendering/character.spec.ts)는 배경 탭에서 키보드로 밤을 선택하고,
-노트북 타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
+타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
 접근성 이름, canvas 준비를 확인하고 다크·라이트 설정 화면을 PNG로 비교합니다.
 두 화면은 이전 기준이 없는 최초 기준이며 [촬영 기록](rendering/evidence/character/manifest.json)에
 현재 이미지와 환경을 보존합니다. 설정값과 API 응답을 mock하지 않으며 웹 localStorage를 사용합니다.
@@ -107,4 +115,34 @@ PNG로 비교하고, 팝업을 닫은 뒤 포커스 복원과 재생·곡 이동
 
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/playlist.spec.ts
+```
+
+[화면 보호기 테스트](rendering/screen-saver.spec.ts)는 실제 홈 설정에서 1분을 선택한 뒤 새로고침해
+설정이 복원되는지 확인합니다. 실제 타이머로 자동 진입·Escape 해제·다시 진입·제자리 포인터 해제를
+검증하고, 끄기를 저장한 뒤 다시 로드해 61초 동안 나타나지 않는지도 확인합니다. 날짜 표시만 고정하며
+타이머와 입력 이벤트는 모의 구현으로 대체하지 않습니다. 빈 재생목록과 초기 포모도로 상태를 사용하므로
+음악 재생·네이티브 Storage·실제 인증 서버는 검증 범위가 아닙니다.
+
+화면 보호기의 다크 화면은 이전 기준이 없는 최초 PNG입니다. 폰트와 이미지·장면 준비를 기다리고,
+촬영할 때만 CSS 애니메이션을 고정합니다. [실행 기록](rendering/evidence/screen-saver/manifest.json)에
+기준·현재 이미지와 환경을 보존합니다. 빈 재생목록의 기존 PNG는 병합된 `5959c865e1d7`의
+둘러보기 안내 아이콘 추가를 반영하며, 갱신 전·현재·차이 PNG를 같은 폴더에 보존합니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/screen-saver.spec.ts
+```
+
+[전체 화면 테스트](rendering/fullscreen.spec.ts)는 일반 설정의 스위치로 실제 브라우저 전체 화면에
+진입하고, 탭 전환과 설정 재진입 후 상태가 유지되는지 확인합니다. 스위치로 해제한 뒤 다시
+진입하고, 외부 `document.exitFullscreen()`의 상태 변화도 UI에 반영되는지 검증합니다.
+브라우저 API와 이벤트는 모킹하지 않습니다. 마지막 닫기에서 설정 버튼의 포커스 복원도 확인합니다.
+
+전체 화면이 켜진 다크 설정 화면은 이전 기준이 없는 최초 PNG이며, 생성 후 일반 비교를 다시
+실행했습니다. [촬영 기록](rendering/evidence/fullscreen/manifest.json)은 대표 현재 이미지와
+기존 일반 설정의 기준·현재·차이 이미지를 포함합니다. 기존 일반 설정의 흐린 배경 차이는
+원인 미확인으로 남기며 기준을 갱신하지 않습니다. 빈 재생목록과 고정 시각을 사용하고,
+실제 OS 창 장식·하드웨어 화면 유지·네이티브 플랫폼은 검증 범위에 포함하지 않습니다.
+
+```sh
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/fullscreen.spec.ts
 ```

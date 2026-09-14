@@ -3,7 +3,7 @@
 import {render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
-vi.mock('../../PLoadingStatus', () => ({
+vi.mock('../../p-loading-status/PLoadingStatus', () => ({
   PLoadingStatus: (props: {readonly message: string}) => <span>{props.message}</span>,
 }))
 

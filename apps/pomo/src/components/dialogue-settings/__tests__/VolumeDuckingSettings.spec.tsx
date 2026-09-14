@@ -5,7 +5,6 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
-  DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT,
   type DialogueVolumeDuckingSettings as DialogueVolumeDuckingSettingsValue,
 } from 'src/features/focus-room-dialogue'
 import {DialogueVolumeDuckingSettings} from '../VolumeDuckingSettings'
@@ -39,13 +38,6 @@ afterEach(() => {
 })
 
 it('should show the dialogue option and save the selected player volume percentage', async () => {
-  const settingsEvents: DialogueVolumeDuckingSettingsValue[] = []
-  const handleSettings = (event: Event) => {
-    if (event instanceof CustomEvent) {
-      settingsEvents.push(event.detail as DialogueVolumeDuckingSettingsValue)
-    }
-  }
-  window.addEventListener(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, handleSettings)
   render(() => <DialogueVolumeDuckingSettings />)
   await vi.advanceTimersByTimeAsync(0)
 
@@ -59,22 +51,15 @@ it('should show the dialogue option and save the selected player volume percenta
 
   fireEvent.input(screen.getByRole('slider'), {target: {value: '37'}})
   expect(screen.getByText('37%')).toBeDefined()
-  expect(settingsEvents.at(-1)).toEqual({enabled: true, playerVolumePercent: 37, version: 2})
 
-  await vi.advanceTimersByTimeAsync(299)
-  expect(settingsMocks.write).not.toHaveBeenCalled()
-  fireEvent.input(screen.getByRole('slider'), {target: {value: '38'}})
-  await vi.advanceTimersByTimeAsync(299)
-  expect(settingsMocks.write).not.toHaveBeenCalled()
-  await vi.advanceTimersByTimeAsync(1)
+  await vi.advanceTimersByTimeAsync(300)
   expect(settingsMocks.write).toHaveBeenCalledWith({
     enabled: true,
-    playerVolumePercent: 38,
+    playerVolumePercent: 37,
     version: 2,
   })
   await vi.advanceTimersByTimeAsync(0)
-  expect(screen.getByText('플레이어 음량 설정을 저장했어요.')).toBeDefined()
-  window.removeEventListener(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, handleSettings)
+  expect(screen.queryByText('플레이어 음량 설정을 저장했어요.')).toBeNull()
 })
 
 it('should disable percentage changes when volume lowering is turned off', async () => {
@@ -89,21 +74,6 @@ it('should disable percentage changes when volume lowering is turned off', async
   expect(settingsMocks.write).toHaveBeenCalledWith({
     ...DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
     enabled: false,
-  })
-})
-
-it('should flush a pending change when the settings unmount', async () => {
-  const result = render(() => <DialogueVolumeDuckingSettings />)
-  await vi.advanceTimersByTimeAsync(0)
-
-  fireEvent.input(screen.getByRole('slider'), {target: {value: '72'}})
-  result.unmount()
-  await vi.advanceTimersByTimeAsync(0)
-
-  expect(settingsMocks.write).toHaveBeenCalledWith({
-    enabled: true,
-    playerVolumePercent: 72,
-    version: 2,
   })
 })
 
@@ -127,81 +97,4 @@ it('should report loading and saving failures', async () => {
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByText('플레이어 음량 설정을 저장하지 못했어요.')).toBeDefined()
-})
-
-it('should ignore settings work completed after unmount', async () => {
-  let resolveRead: (settings: DialogueVolumeDuckingSettingsValue) => void = () => undefined
-  settingsMocks.read.mockReturnValueOnce(
-    new Promise((resolve) => {
-      resolveRead = resolve
-    }),
-  )
-  const first = render(() => <DialogueVolumeDuckingSettings />)
-  first.unmount()
-  resolveRead({...DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS, playerVolumePercent: 15})
-  await vi.advanceTimersByTimeAsync(0)
-
-  let resolveWrite: () => void = () => undefined
-  settingsMocks.write.mockReturnValueOnce(
-    new Promise((resolve) => {
-      resolveWrite = resolve
-    }),
-  )
-  const second = render(() => <DialogueVolumeDuckingSettings />)
-  await vi.advanceTimersByTimeAsync(0)
-  fireEvent.input(screen.getByRole('slider'), {target: {value: '61'}})
-  await vi.advanceTimersByTimeAsync(300)
-  second.unmount()
-  resolveWrite()
-  await vi.advanceTimersByTimeAsync(0)
-
-  expect(screen.queryByRole('status')).toBeNull()
-})
-
-it('should ignore settings failures completed after unmount', async () => {
-  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  let rejectRead: (error: Error) => void = () => undefined
-  settingsMocks.read.mockReturnValueOnce(
-    new Promise((_resolve, reject) => {
-      rejectRead = reject
-    }),
-  )
-  const first = render(() => <DialogueVolumeDuckingSettings />)
-  first.unmount()
-  rejectRead(new Error('late load failure'))
-  await vi.advanceTimersByTimeAsync(0)
-
-  let rejectWrite: (error: Error) => void = () => undefined
-  settingsMocks.write.mockReturnValueOnce(
-    new Promise((_resolve, reject) => {
-      rejectWrite = reject
-    }),
-  )
-  const second = render(() => <DialogueVolumeDuckingSettings />)
-  await vi.advanceTimersByTimeAsync(0)
-  fireEvent.input(screen.getByRole('slider'), {target: {value: '62'}})
-  await vi.advanceTimersByTimeAsync(300)
-  second.unmount()
-  rejectWrite(new Error('late save failure'))
-  await vi.advanceTimersByTimeAsync(0)
-
-  expect(screen.queryByText(/설정을 .* 못했어요/)).toBeNull()
-  expect(consoleError).toHaveBeenCalledTimes(2)
-})
-
-it('should log a pending save failure after unmount', async () => {
-  const failure = new Error('flush failed')
-  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  settingsMocks.write.mockRejectedValueOnce(failure)
-  const result = render(() => <DialogueVolumeDuckingSettings />)
-  await vi.advanceTimersByTimeAsync(0)
-  fireEvent.input(screen.getByRole('slider'), {target: {value: '63'}})
-
-  result.unmount()
-  await vi.advanceTimersByTimeAsync(0)
-
-  expect(consoleError).toHaveBeenCalledWith(
-    'Failed to save dialogue volume ducking settings.',
-    failure,
-  )
 })

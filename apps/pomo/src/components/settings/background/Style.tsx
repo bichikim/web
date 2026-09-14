@@ -1,6 +1,6 @@
 import {Show} from 'solid-js'
-import {PRadioSwitch} from '../../PRadioSwitch'
-import {PSwitch} from '../../PSwitch'
+import {PRadioSwitch} from '../../p-radio-switch/PRadioSwitch'
+import {PSwitch} from '../../p-switch/PSwitch'
 import {
   getLocalizedMotionInputOptions,
   getLocalizedMotionOptions,

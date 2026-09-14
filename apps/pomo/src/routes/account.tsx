@@ -1,6 +1,6 @@
 import {useSearchParams} from '@solidjs/router'
 
-import {AccountPage} from '../components/AccountPage'
+import {AccountPage} from '../components/account-page/AccountPage'
 import {isCalendarProviderId} from '../features/calendar'
 
 const AccountRoute = () => {

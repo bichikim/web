@@ -1,4 +1,4 @@
-import {PRadioSwitch} from '../../PRadioSwitch'
+import {PRadioSwitch} from '../../p-radio-switch/PRadioSwitch'
 import {
   getLocalizedActivityOptions,
   getLocalizedGazeOptions,

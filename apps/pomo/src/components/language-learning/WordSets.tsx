@@ -4,7 +4,7 @@ import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import type {AppendLanguageLearningWordsResult} from 'src/features/language-learning'
 import * as m from '@paraglide/message'
-import {PAppReturnLink} from '../PAppReturnLink'
+import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
 import {PSettingsEmptyState} from '../settings/EmptyState'
 
 const CLASSES = {

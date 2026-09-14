@@ -4,7 +4,7 @@ import {render, screen} from '@solidjs/testing-library'
 import {Suspense} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
-vi.mock('../../PStudio', () => ({PStudio: () => <p>studio loaded</p>}))
+vi.mock('../../p-studio/PStudio', () => ({PStudio: () => <p>studio loaded</p>}))
 
 import {HomeStudio} from '../Studio'
 

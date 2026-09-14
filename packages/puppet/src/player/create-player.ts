@@ -1,3 +1,4 @@
+import {composeParameterGlue} from '../deformation/parameter-glue'
 import {
   AlphaMask,
   Application,
@@ -455,7 +456,11 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     }
 
     applySceneDeformers({
-      document: {...document, scene: composeParameterScene(document, frameParameterValues)},
+      document: {
+        ...document,
+        glue: composeParameterGlue({document, parameterValues: frameParameterValues}),
+        scene: composeParameterScene(document, frameParameterValues),
+      },
       verticesByPartId: new Map(
         [...partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
       ),

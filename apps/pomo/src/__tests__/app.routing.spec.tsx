@@ -5,7 +5,7 @@ import {useNavigate} from '@solidjs/router'
 import {type Component, createSignal, type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import type {PRecoveryBoundaryProps} from '../components/PRecoveryBoundary'
+import type {PRecoveryBoundaryProps} from '../components/p-recovery-boundary/PRecoveryBoundary'
 import {SceneModelDownloadFallback} from '../components/p-studio/ModelDownloadFallback'
 import {
   type ModelDownloadController,
@@ -32,16 +32,18 @@ vi.mock('@solidjs/router', () => ({
   useNavigate: vi.fn(),
 }))
 vi.mock('@solidjs/start/router', () => ({FileRoutes: componentMocks.fileRoutes}))
-vi.mock('../components/PDocumentMetadata', () => ({PDocumentMetadata: componentMocks.metadata}))
-vi.mock('../components/PFocusRoomLayout', () => ({
+vi.mock('../components/p-document-metadata/PDocumentMetadata', () => ({
+  PDocumentMetadata: componentMocks.metadata,
+}))
+vi.mock('../components/p-focus-room-layout/PFocusRoomLayout', () => ({
   PFocusRoomLayout: componentMocks.focusRoomLayout,
 }))
-vi.mock('../components/PRecoveryBoundary', () => ({
+vi.mock('../components/p-recovery-boundary/PRecoveryBoundary', () => ({
   PRecoveryBoundary: componentMocks.recoveryBoundary,
 }))
 vi.mock('../features/application-recovery', () => ({useApplicationRecovery: vi.fn()}))
 vi.mock('../features/apps-in-toss-devtools', () => ({useAppsInTossDevtools: vi.fn()}))
-vi.mock('../components/SafeArea', () => ({SafeArea: vi.fn()}))
+vi.mock('../components/safe-area/SafeArea', () => ({SafeArea: vi.fn()}))
 vi.mock('../features/display-theme', () => ({
   DisplayThemeProvider: componentMocks.displayThemeProvider,
 }))

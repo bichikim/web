@@ -23,6 +23,7 @@ import {
   createDeformerKeyform,
   createParameterPreview,
   sampleParameterDeformer,
+  samplePartKeyform,
 } from './parameter-sampling'
 
 const COORDINATES_PER_VERTEX = 2
@@ -330,15 +331,7 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
     return undefined
   }
 
-  const partsKeyforms = parts.map((part) => ({
-    partId: part.id,
-    vertices: sampleParameterVertices({
-      binding,
-      partId: part.id,
-      restVertices: part.mesh.vertices,
-      values: options.values,
-    }),
-  }))
+  const partsKeyforms = parts.map((part) => samplePartKeyform({...options, binding, part}))
   const deformerKeyforms = deformers.map((deformer) =>
     sampleParameterDeformer({binding, deformer, values: options.values}),
   )

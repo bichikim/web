@@ -1,5 +1,5 @@
 import {createEffect} from 'solid-js'
-import {PButton} from '../PButton'
+import {PButton} from '../p-button/PButton'
 import {reportClientError} from '../../features/client-error-reporter'
 import * as m from '@paraglide/message'
 

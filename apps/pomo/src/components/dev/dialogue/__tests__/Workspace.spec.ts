@@ -2,7 +2,7 @@
 import {clientOnly} from '@solidjs/start'
 import {beforeEach, expect, it, vi} from 'vitest'
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
-vi.mock('src/components/DialogueWriter', () => ({DialogueWriter: vi.fn()}))
+vi.mock('src/components/dialogue-writer/DialogueWriter', () => ({DialogueWriter: vi.fn()}))
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()

@@ -1,6 +1,6 @@
 import {type JSX, Show} from 'solid-js'
 import * as m from '@paraglide/message'
-import {PButton} from '../../PButton'
+import {PButton} from '../../p-button/PButton'
 
 interface ActionsProps {
   readonly children?: JSX.Element

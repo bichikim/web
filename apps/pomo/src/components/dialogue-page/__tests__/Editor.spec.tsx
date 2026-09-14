@@ -21,9 +21,9 @@ import {
 import {formatModelDownloadSize} from '../../../features/model-storage'
 import {getSupertonicModel, isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {getPrimaryMood} from '../../../features/text-mood'
-import {PFaceIcon} from '../../PFaceIcon'
-import {PGenerationStatus} from '../../PGenerationStatus'
-import {PModelDownloadConsent} from '../../PModelDownloadConsent'
+import {PFaceIcon} from '../../p-face-icon/PFaceIcon'
+import {PGenerationStatus} from '../../p-generation-status/PGenerationStatus'
+import {PModelDownloadConsent} from '../../p-model-download-consent/PModelDownloadConsent'
 import {PDialogueDraftGenerator} from '../DraftGenerator'
 import {PDialogueEditor} from '../Editor'
 
@@ -48,9 +48,11 @@ vi.mock('../../../features/supertonic', async () => {
 })
 vi.mock('../../../features/text-mood', () => ({getPrimaryMood: vi.fn()}))
 vi.mock('../DraftGenerator', () => ({PDialogueDraftGenerator: vi.fn()}))
-vi.mock('../../PFaceIcon', () => ({PFaceIcon: vi.fn()}))
-vi.mock('../../PGenerationStatus', () => ({PGenerationStatus: vi.fn()}))
-vi.mock('../../PModelDownloadConsent', () => ({PModelDownloadConsent: vi.fn()}))
+vi.mock('../../p-face-icon/PFaceIcon', () => ({PFaceIcon: vi.fn()}))
+vi.mock('../../p-generation-status/PGenerationStatus', () => ({PGenerationStatus: vi.fn()}))
+vi.mock('../../p-model-download-consent/PModelDownloadConsent', () => ({
+  PModelDownloadConsent: vi.fn(),
+}))
 
 interface DraftGeneratorProps {
   readonly disabled?: boolean

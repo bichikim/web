@@ -26,7 +26,6 @@ import {appendSpeechTranscript} from './transcript'
 const MAXIMUM_PROGRESS = 100
 const MILLISECONDS_PER_SECOND = 1000
 const MINIMUM_SAMPLE_COUNT = 4_000
-const RECORDING_INTERVAL = 250
 const TRANSCRIPTION_LANGUAGE = 'korean'
 
 export type SpeechActivity = 'checking' | 'idle' | 'processing' | 'recording' | 'requesting'
@@ -81,26 +80,26 @@ const getModelProgress = (state: SpeechModelState) => {
 }
 
 const createRecordingTimer = (setElapsedTime: Setter<number>) => {
-  let intervalId: ReturnType<typeof globalThis.setInterval> | null = null
+  let active = false
   let startedAt = 0
 
   const stop = () => {
-    if (intervalId !== null) {
-      globalThis.clearInterval(intervalId)
-      intervalId = null
-    }
+    active = false
   }
 
   const start = () => {
-    stop()
     startedAt = getMonotonicTime()
+    active = true
     setElapsedTime(0)
-    intervalId = globalThis.setInterval(() => {
-      setElapsedTime((getMonotonicTime() - startedAt) / MILLISECONDS_PER_SECOND)
-    }, RECORDING_INTERVAL)
   }
 
-  return {start, stop}
+  const refresh = () => {
+    if (active) {
+      setElapsedTime((getMonotonicTime() - startedAt) / MILLISECONDS_PER_SECOND)
+    }
+  }
+
+  return {refresh, start, stop}
 }
 
 interface RecorderReference {
@@ -138,7 +137,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     options.setActivity('requesting')
     options.setErrorMessage(null)
 
-    const result = await options.recorder.current.start()
+    const result = await options.recorder.current.start(options.timer.refresh)
 
     if (options.isDisposed()) {
       if (result.ok) {

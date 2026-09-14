@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {type ServiceBranch} from './service'
+import {type ServiceBranch} from './calculate-service'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {parseDate} from '../civil-date'
 
@@ -36,13 +36,14 @@ export interface ServiceSettingsStorage {
 }
 export interface CreateServiceSettingsStorageOptions {
   readonly storage: ToolStorageAdapter
+  readonly reportRepairError: (error: unknown) => void
 }
 
 /** Creates service settings persistence with an isolated write queue and revision. */
 export const createServiceSettingsStorage = (
   options: CreateServiceSettingsStorageOptions,
 ): ServiceSettingsStorage => {
-  const {storage} = options
+  const {storage, reportRepairError} = options
   let pendingWrite = Promise.resolve()
   let writeRevision = 0
   const read = async (): Promise<ServiceSettings> => {
@@ -56,6 +57,11 @@ export const createServiceSettingsStorage = (
     }
     const webSettings = storage.readWeb(STORAGE_KEY, parseSettings)
     if (webSettings !== null) {
+      if (usesTossStorage) {
+        pendingWrite = pendingWrite
+          .then(() => storage.writeToss(STORAGE_KEY, webSettings))
+          .catch(reportRepairError)
+      }
       return webSettings
     }
     const legacySettings = () => ({
@@ -116,6 +122,11 @@ export const createServiceSettingsStorage = (
   return {read, write}
 }
 
-const runtimeStorage = createServiceSettingsStorage({storage: toolStorageAdapter})
+const runtimeStorage = createServiceSettingsStorage({
+  reportRepairError: (error) => {
+    console.warn('Failed to repair native service settings.', error)
+  },
+  storage: toolStorageAdapter,
+})
 export const readServiceSettings = runtimeStorage.read
 export const writeServiceSettings = runtimeStorage.write
