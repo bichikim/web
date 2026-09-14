@@ -20,6 +20,7 @@ const featureMocks = vi.hoisted(() => ({
   createShuffleQueue: vi.fn(),
   loadPTrackQueueSource: vi.fn(),
   persistCurrentPlayback: vi.fn(),
+  persistPlaybackIntent: vi.fn(),
   persistPlaybackProgress: vi.fn(),
   readPPlayback: vi.fn(),
   readPPlaylist: vi.fn(),
@@ -76,6 +77,7 @@ vi.mock('../../../features/focus-room-audio', () => ({
   usePPlaybackPersistence: () => ({
     applyPendingPosition: featureMocks.applyPendingPosition,
     persistCurrentPlayback: featureMocks.persistCurrentPlayback,
+    persistPlaybackIntent: featureMocks.persistPlaybackIntent,
     persistPlaybackProgress: featureMocks.persistPlaybackProgress,
     setPendingPosition: featureMocks.setPendingPosition,
     writePlayback: featureMocks.writePlayback,
