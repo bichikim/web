@@ -69,20 +69,37 @@ it('should persist only valid current playback and skip unchanged pending playba
   })
 })
 
-it('should persist a changed play intent while keeping the pending position', () => {
+it('should persist a changed playback intent while keeping the pending position', () => {
   const harness = createHarness()
   harness.setTrack(TRACK)
   harness.setAudio(createAudio(4, 10))
   harness.persistence.setPendingPosition({isPlaying: false, positionSeconds: 3, trackId: TRACK.id})
   harness.setPlaying(true)
 
-  harness.persistence.persistCurrentPlayback()
+  harness.persistence.persistPlaybackIntent(true)
 
   expect(storageMocks.write).toHaveBeenCalledWith({
     isPlaying: true,
     positionSeconds: 3,
     trackId: TRACK.id,
   })
+  expect(harness.persistence.applyPendingPosition()).toEqual({
+    isPlaying: true,
+    positionSeconds: 3,
+    trackId: TRACK.id,
+  })
+})
+
+it('should preserve pending playback intent during ordinary persistence', () => {
+  const harness = createHarness()
+  harness.setTrack(TRACK)
+  harness.setAudio(createAudio(4, 10))
+  harness.persistence.setPendingPosition({isPlaying: true, positionSeconds: 3, trackId: TRACK.id})
+  harness.setPlaying(false)
+
+  harness.persistence.persistCurrentPlayback()
+
+  expect(storageMocks.write).not.toHaveBeenCalled()
   expect(harness.persistence.applyPendingPosition()).toEqual({
     isPlaying: true,
     positionSeconds: 3,
