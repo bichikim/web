@@ -5,20 +5,17 @@ import {SERVICE_POLICY_PATHS} from '../../features/service-terms'
 import * as m from '@paraglide/message'
 import {PolicyLink} from '../service-terms/PolicyLink'
 
-const POLICY_LINKS_CLASSES = cva(
-  'flex flex-wrap items-center gap-x-2 gap-y-1 text-modal-detail leading-5',
-  {
-    defaultVariants: {
-      tone: 'surface',
-    },
-    variants: {
-      tone: {
-        overlay: 'text-[#fff9f1]/80 [text-shadow:0_0.0625rem_0.1875rem_rgb(0_0_0_/_55%)]',
-        surface: 'text-muted-foreground',
-      },
+const POLICY_LINKS_CLASSES = cva('flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-5', {
+  defaultVariants: {
+    tone: 'surface',
+  },
+  variants: {
+    tone: {
+      overlay: 'text-[#fff9f1]/80 [text-shadow:0_0.0625rem_0.1875rem_rgb(0_0_0_/_55%)]',
+      surface: 'text-muted-foreground',
     },
   },
-)
+})
 
 export interface PServicePolicyLinksProps extends VariantProps<typeof POLICY_LINKS_CLASSES> {
   currentPolicy?: 'privacy' | 'refund' | 'terms'

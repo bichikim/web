@@ -48,7 +48,7 @@ test('should restore character choices after reload and render the selected scen
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   await page.getByRole('button', {exact: true, name: '설정'}).click()
   const dialog = page.getByRole('dialog', {name: 'Pomofi 설정'})
   const background = dialog.getByRole('tab', {exact: true, name: '배경'})
@@ -73,7 +73,7 @@ test('should restore character choices after reload and render the selected scen
 
   await page.reload()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   await expect(page.locator('.pomo-scene')).toHaveAttribute(
     'aria-label',
     '밤 · 타이핑 · 사용자 보기',

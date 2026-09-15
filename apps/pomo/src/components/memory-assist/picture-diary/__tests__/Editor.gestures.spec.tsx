@@ -22,13 +22,13 @@ it('should animate a short fold back without changing the page', () => {
   const onGoOlder = vi.fn()
   renderEditor({canGoOlder: true, onGoOlder, previousEntry: sampleEntry('previous')})
   const book = screen.getByLabelText('일기장')
+  const pager = screen.getByRole('button', {name: '이전 일기 보기'}).parentElement!
   fireEvent.pointerDown(book.querySelector('[data-picture-diary-edge="older"]')!, {
     button: 0,
     clientX: 0,
     clientY: 200,
     pointerId: 1,
   })
-  const pager = book.parentElement!.querySelector('.picture-diary-book__pager')!
   expect(pager).not.toBeVisible()
   fireEvent.pointerMove(window, {clientX: 20, clientY: 200, pointerId: 1})
   expect(pager).not.toBeVisible()

@@ -38,12 +38,12 @@ describe('PMusicPlayerContent presentation integration', () => {
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
     expect(result.container.querySelector('media-time-display')).toBeNull()
-    const expandedPlayButton = result.container.querySelector(
-      '.pomo-player__transport-play-frame media-play-button',
-    )
-    const compactPlayButton = result.container.querySelector(
-      '.pomo-player__compact-summary-play media-play-button',
-    )
+    const expandedPlayButton = screen
+      .getByRole('button', {name: '이전 곡'})
+      .parentElement?.querySelector('media-play-button')
+    const compactPlayButton = result.container
+      .querySelector('[data-player-summary]')
+      ?.querySelector('media-play-button')
 
     for (const playButton of [expandedPlayButton, compactPlayButton]) {
       expect(playButton).toBeInstanceOf(HTMLElement)
@@ -54,8 +54,8 @@ describe('PMusicPlayerContent presentation integration', () => {
 
   it('should replace the summary play button without a collapse animation when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
-    const summary = result.container.querySelector('.pomo-player__summary')
-    const summaryPlayFrame = summary?.querySelector(':scope > .pomo-player__play-summary-frame')
+    const summary = result.container.querySelector('[data-player-summary]')
+    const summaryPlayFrame = summary?.querySelector('[data-player-play-summary-frame]')
 
     if (!(summaryPlayFrame instanceof HTMLElement)) {
       throw new TypeError('Expected the Pomo summary play button frame to be rendered')
@@ -70,9 +70,10 @@ describe('PMusicPlayerContent presentation integration', () => {
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
-    expect(summary?.querySelector(':scope > .pomo-player__play-summary-frame')).toBeNull()
-    expect(
-      summary?.querySelector('.pomo-player__compact-summary-play .pomo-player__play-summary-frame'),
-    ).toBeInstanceOf(HTMLElement)
+    const directSummaryPlayFrame = [...(summary?.children ?? [])].find(
+      (child) => child.getAttribute('data-player-play-summary-frame') !== null,
+    )
+    expect(directSummaryPlayFrame).toBeUndefined()
+    expect(summary?.querySelectorAll('[data-player-play-summary-frame]')).toHaveLength(1)
   })
 })

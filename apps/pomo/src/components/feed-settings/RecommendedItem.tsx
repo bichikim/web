@@ -20,7 +20,7 @@ export const RecommendedFeedItem = (props: RecommendedFeedItemProps) => {
       </div>
       <PSettingsActionButton
         accessibleLabel={m.settings_feed_recommendation_add_label({feed: props.feed.label})}
-        class="pomo-feed-settings__add max-sm:w-full"
+        class="max-sm:w-full"
         icon="i-tabler-plus"
         onPress={() => props.onAdd(props.feed.url)}
         size="medium"

@@ -31,7 +31,6 @@ export const PCharacterEmotion = (props: PCharacterEmotionProps) => (
     )}
     data-active={props.active ? '' : undefined}
     data-emotion={props.emotion}
-    data-pomo-character-emotion=""
   >
     <img
       alt=""

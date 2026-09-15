@@ -11,9 +11,5 @@ const getItems = () =>
   ] satisfies ReadonlyArray<PModalTabItem>
 
 export const PMemoryAssistTabList = () => (
-  <PModalTabList
-    accessibleLabel={m.memory_assist_category_label()}
-    class="pomo-memory-assist__tabs"
-    items={getItems()}
-  />
+  <PModalTabList accessibleLabel={m.memory_assist_category_label()} items={getItems()} />
 )

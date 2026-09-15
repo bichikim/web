@@ -2,6 +2,12 @@
 // Vite provides the default string export for raw source imports.
 // oxlint-disable-next-line import/default
 import progressSource from '../src/components/memory-assist/picture-diary/Generation.tsx?raw'
+// oxlint-disable-next-line import/default
+import loadingSource from '../src/components/p-loading-status/PLoadingStatus.tsx?raw'
+// oxlint-disable-next-line import/default
+import sceneFallbackSource from '../src/components/p-studio/SceneFallback.tsx?raw'
+// oxlint-disable-next-line import/default
+import typographySource from '../src/components/typography-classes.ts?raw'
 import {createGenerator} from 'unocss'
 import {expect, it} from 'vitest'
 
@@ -27,9 +33,20 @@ const getColorSchemeBody = (css: string, scheme: 'dark' | 'light') => {
   return match?.[1] ?? ''
 }
 
-it('should generate initial scene fallback shortcuts without extracted source', async () => {
+it('should extract loading and scene fallback utilities from component constants', async () => {
   const uno = await createGenerator(unoConfig)
-  const {css, matched} = await uno.generate('', {safelist: true})
+  const {css, matched} = await uno.generate(`${loadingSource}\n${sceneFallbackSource}`, {
+    safelist: false,
+  })
+
+  for (const utility of [
+    'min-h-control-sm',
+    'animate-spin',
+    'pointer-events-none',
+    'backdrop-blur-surface',
+  ]) {
+    expect(matched).toContain(utility)
+  }
 
   for (const shortcut of [
     'pomo-loading',
@@ -37,30 +54,22 @@ it('should generate initial scene fallback shortcuts without extracted source', 
     'pomo-scene-fallback',
     'pomo-scene-fallback__panel',
   ]) {
-    expect(matched).toContain(shortcut)
+    expect(matched).not.toContain(shortcut)
+    expect(css).not.toContain(`.${shortcut}`)
   }
+})
 
-  const loadingRule = getRuleBody(css, 'pomo-loading')
-  const spinnerRule = getRuleBody(css, 'pomo-loading__spinner')
-  const sceneFallbackRule = getRuleBody(css, 'pomo-scene-fallback')
-  const panelRule = getRuleBody(css, 'pomo-scene-fallback__panel')
+it('should generate CSS for typography constants', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css, matched} = await uno.generate(typographySource, {safelist: false})
 
-  expect(loadingRule).toContain('padding-top:0;')
-  expect(loadingRule).toContain('padding-bottom:0;')
-  expect(loadingRule).toContain('padding-left:0.75rem;')
-  expect(loadingRule).toContain('padding-right:0.75rem;')
-  expect(loadingRule).toContain('font-size:0.875rem;')
-  expect(loadingRule).toContain('line-height:1.25rem;')
-  expect(loadingRule).toContain('font-weight:650;')
-  expect(spinnerRule).toContain('width:1.125rem;')
-  expect(spinnerRule).toContain('height:1.125rem;')
-  expect(spinnerRule).toContain('animation:spin 1s linear infinite;')
-  expect(sceneFallbackRule).toContain('position:absolute;')
-  expect(sceneFallbackRule).toContain('inset:0;')
-  expect(sceneFallbackRule).toContain('display:grid;')
-  expect(sceneFallbackRule).toContain('place-items:center;')
-  expect(panelRule).toContain('border-style:solid;')
-  expect(panelRule).toContain('backdrop-filter:')
+  for (const utility of ['text-base', 'leading-6', 'text-sm', 'leading-5']) {
+    expect(matched).toContain(utility)
+  }
+  expect(css).toContain('font-size:1rem')
+  expect(css).toContain('line-height:1.5rem')
+  expect(css).toContain('font-size:0.875rem')
+  expect(css).toContain('line-height:1.25rem')
 })
 
 it('should generate the narrow player container variant', async () => {

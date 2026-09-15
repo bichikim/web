@@ -19,7 +19,7 @@ it('should choose cover, writing, and saved-entry content for the requested page
   const view = render(() => (
     <PictureDiaryPage editor={createEditorProps()} page={page()} side="previous" />
   ))
-  expect(view.container.querySelector('.picture-diary-book__back-cover')).toBeInTheDocument()
+  expect(view.container.firstElementChild).toHaveClass('picture-diary-book__back-cover')
   setPage({kind: 'writing'})
   expect(screen.getByRole('textbox')).toBeVisible()
   setPage({entry: ENTRY, kind: 'entry'})

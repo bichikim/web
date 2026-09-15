@@ -81,14 +81,14 @@ export const POverflowMarquee = (props: POverflowMarqueeProps) => {
           ? `${props.text}. 포커스하거나 마우스를 올리면 흐름이 일시 정지됩니다.`
           : undefined
       }
-      class={cx('pomo-overflow-marquee group block min-w-0 overflow-hidden', props.class)}
+      class={cx('group block min-w-0 overflow-hidden', props.class)}
       data-overflowing={measurement().overflowing ? 'true' : undefined}
       ref={setViewportElement}
       tabindex={measurement().overflowing && props.focusable !== false ? 0 : undefined}
     >
       <span
         class={cx(
-          'pomo-overflow-marquee__track flex w-max whitespace-nowrap',
+          'flex w-max whitespace-nowrap',
           measurement().overflowing && 'animate-overflow-marquee',
           '[animation-duration:var(--pomo-marquee-duration)]',
           'group-hover:[animation-play-state:paused]',
@@ -101,16 +101,13 @@ export const POverflowMarquee = (props: POverflowMarqueeProps) => {
         }}
       >
         <span
-          class="pomo-overflow-marquee__content block shrink-0 motion-reduce:max-w-full motion-reduce:truncate"
+          class="block shrink-0 motion-reduce:max-w-full motion-reduce:truncate"
           ref={setContentElement}
         >
           {props.text}
         </span>
         <Show when={measurement().overflowing}>
-          <span
-            aria-hidden="true"
-            class="pomo-overflow-marquee__clone ml-8 block shrink-0 motion-reduce:hidden"
-          >
+          <span aria-hidden="true" class="ml-8 block shrink-0 motion-reduce:hidden">
             {props.text}
           </span>
         </Show>

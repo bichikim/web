@@ -1,18 +1,31 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent} from '@solidjs/testing-library'
+import {cleanup, fireEvent, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createSignal} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
   getAddedAlbumTracks,
+  getPlayerFrame,
+  getPlayerShell,
   getProgressRanges,
   getStopAlbumPreview,
   renderMusicPlayerView,
 } from '../../__tests__/music-player-view.test-support.tsx'
 
 import {installTooltipBrowser} from '../../tooltip/__tests__/support/browser'
+
+const hasIcon = (icons: readonly HTMLElement[], className: string) =>
+  icons.some((icon) => icon.classList.contains(className))
+
+const getHTMLElement = (element: Element | null | undefined) => {
+  if (!(element instanceof HTMLElement)) {
+    throw new TypeError('Expected an HTML element to be rendered')
+  }
+
+  return element
+}
 
 describe('MusicPlayerView', () => {
   let browser: ReturnType<typeof installTooltipBrowser>
@@ -59,12 +72,12 @@ describe('MusicPlayerView', () => {
   it('should render the current track artwork only in the expanded player', () => {
     const collapsedResult = renderMusicPlayerView({expanded: false})
 
-    expect(collapsedResult.container.querySelector('.pomo-player__artwork')).toBeNull()
+    expect(collapsedResult.container.querySelector('img')).toBeNull()
 
     cleanup()
 
     const expandedResult = renderMusicPlayerView()
-    const artwork = expandedResult.container.querySelector('.pomo-player__artwork')
+    const artwork = expandedResult.container.querySelector('img')
 
     expect(artwork).toBeInstanceOf(HTMLImageElement)
     expect(artwork?.getAttribute('src')).toBe('/audio/artwork/one.jpg')
@@ -94,14 +107,18 @@ describe('MusicPlayerView', () => {
       onShuffleChange,
       onTrackSelect,
     })
-    const expandButton = result.container.querySelector('[data-player-utility="expand"]')
-    const modeButtons = result.container.querySelectorAll('.pomo-player__modes button')
-    const transportButtons = result.container.querySelectorAll('.pomo-player__transport button')
-    const trackButtons = result.container.querySelectorAll('button.pomo-player__track')
+    const expandButton = result.getByRole('button', {name: '플레이어 접기'})
+    const repeatModeGroup = result.getByRole('group', {name: m.player_repeat_mode()})
+    const repeatModeButtons = within(repeatModeGroup).getAllByRole('button')
+    const shuffleButton = result.getByRole('button', {name: m.player_shuffle()})
+    const transportButtons = [
+      result.getByRole('button', {name: m.player_previous()}),
+      result.getByRole('button', {name: m.player_next()}),
+    ]
+    const trackButtons = within(result.getByRole('list')).getAllByRole('button')
 
     if (
-      !(expandButton instanceof HTMLButtonElement) ||
-      modeButtons.length !== 3 ||
+      repeatModeButtons.length !== 2 ||
       transportButtons.length !== 2 ||
       trackButtons.length !== 2
     ) {
@@ -113,11 +130,11 @@ describe('MusicPlayerView', () => {
     fireEvent.click(result.getByTestId('album-preview-start'))
     fireEvent.click(result.getByTestId('album-preview-end'))
     fireEvent.click(expandButton)
-    fireEvent.click(modeButtons[0]!)
-    fireEvent.click(modeButtons[1]!)
-    fireEvent.click(modeButtons[2]!)
-    fireEvent.click(transportButtons[0]!)
-    fireEvent.click(transportButtons[1]!)
+    fireEvent.click(repeatModeButtons[0]!)
+    fireEvent.click(repeatModeButtons[1]!)
+    fireEvent.click(shuffleButton)
+    fireEvent.click(transportButtons[0])
+    fireEvent.click(transportButtons[1])
     fireEvent.click(trackButtons[1]!)
 
     expect(onAlbumAdd).toHaveBeenCalledWith(getAddedAlbumTracks())
@@ -154,10 +171,11 @@ describe('MusicPlayerView', () => {
 
   it('should show audio levels and fallback labels for an absent current track', () => {
     const idleResult = renderMusicPlayerView({currentTrack: null, levels: [25, 75]})
-    const idleLevels = idleResult.container.querySelectorAll('.pomo-level')
-    const summaryLabels = idleResult.container.querySelectorAll(
-      '.pomo-player__title .pomo-overflow-marquee',
+    const idleLevels = idleResult.getByLabelText(m.player_audio_levels()).querySelectorAll('span')
+    const summaryTitle = getHTMLElement(
+      idleResult.container.querySelector('[data-pomo-player-title]'),
     )
+    const summaryLabels = summaryTitle.querySelectorAll(':scope > p > span')
 
     expect(idleLevels).toHaveLength(2)
     expect(idleLevels[0]?.getAttribute('style')).toContain('--pomo-level-height: 25%')
@@ -171,7 +189,7 @@ describe('MusicPlayerView', () => {
     cleanup()
 
     const playingResult = renderMusicPlayerView({isPlaying: true, levels: [50]})
-    const playingLevel = playingResult.container.querySelector('.pomo-level')
+    const playingLevel = playingResult.getByLabelText(m.player_audio_levels()).querySelector('span')
 
     expect(playingLevel?.getAttribute('style')).toContain('--pomo-level-height: 50%')
     expect(playingLevel?.classList.contains('[height:var(--pomo-level-height)]')).toBe(true)
@@ -182,11 +200,12 @@ describe('MusicPlayerView', () => {
 
   it('should keep the collapsed player layers visually present but inactive', () => {
     const result = renderMusicPlayerView({expanded: false})
-    const controller = result.container.querySelector('.pomo-player-shell')
-    const playerBase = result.container.querySelector('.pomo-player__base')
-    const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
-    const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
-    const expandedInner = result.container.querySelector('.pomo-player__expanded-inner')
+    const controller = getPlayerShell(result.container)
+    const playerBase = controller.firstElementChild
+    const visualizerFrame = controller.children[1]
+    const {expandedRange} = getProgressRanges(result.container)
+    const expandedFrame = expandedRange.nextElementSibling
+    const expandedInner = expandedFrame?.firstElementChild
 
     for (const element of [controller, playerBase, visualizerFrame, expandedFrame, expandedInner]) {
       expect(element).toBeInstanceOf(HTMLElement)
@@ -259,11 +278,11 @@ describe('MusicPlayerView', () => {
 
   it('should activate only the expanded progress range while expanded', () => {
     const result = renderMusicPlayerView()
-    const controller = result.container.querySelector('.pomo-player-shell')
-    const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
-    const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
-    const expandedInner = result.container.querySelector('.pomo-player__expanded-inner')
+    const controller = getPlayerShell(result.container)
+    const visualizerFrame = controller.children[1]
     const {collapsedRange, expandedRange} = getProgressRanges(result.container)
+    const expandedFrame = expandedRange.nextElementSibling
+    const expandedInner = expandedFrame?.firstElementChild
 
     expect(controller?.classList.contains('overflow-hidden')).toBe(false)
     expect(controller?.classList.contains('overflow-visible')).toBe(true)
@@ -309,22 +328,23 @@ describe('MusicPlayerView', () => {
 
   it('should replace the regular frame only in scribble style', () => {
     const originalResult = renderMusicPlayerView()
-    const originalBase = originalResult.container.querySelector('.pomo-player__base')
-    const originalController = originalResult.container.querySelector('.pomo-player-shell')
+    const originalController = getPlayerShell(originalResult.container)
+    const originalBase = originalController.firstElementChild
+    const originalFrame = getPlayerFrame(originalResult.container)
 
-    expect(originalResult.container.querySelector('.pomo-player__scribble-border')).toBeNull()
-    expect(originalController?.classList.contains('pomo-scribble-mask')).toBe(false)
-    expect(originalController?.classList.contains('rounded-panel')).toBe(true)
-    expect(originalController?.classList.contains('rounded-none')).toBe(false)
+    expect(originalFrame.querySelector('svg')).toBeNull()
+    expect(originalController.classList.contains('pomo-scribble-mask')).toBe(false)
+    expect(originalController.classList.contains('rounded-panel')).toBe(true)
+    expect(originalController.classList.contains('rounded-none')).toBe(false)
     expect(originalBase?.classList.contains('border-border')).toBe(true)
     expect(originalBase?.classList.contains('border-transparent')).toBe(false)
 
     cleanup()
     const scribbleResult = renderMusicPlayerView({sceneStyle: 'scribble'})
-    const scribbleBase = scribbleResult.container.querySelector('.pomo-player__base')
-    const scribbleBorder = scribbleResult.container.querySelector('.pomo-player__scribble-border')
-    const scribbleFrame = scribbleResult.container.querySelector('.pomo-player-frame')
-    const scribbleController = scribbleResult.container.querySelector('.pomo-player-shell')
+    const scribbleController = getPlayerShell(scribbleResult.container)
+    const scribbleBase = scribbleController.firstElementChild
+    const scribbleFrame = getPlayerFrame(scribbleResult.container)
+    const scribbleBorder = scribbleFrame?.lastElementChild
 
     expect(scribbleBorder).toBeInstanceOf(SVGElement)
     expect(scribbleBorder?.getAttribute('aria-hidden')).toBe('true')
@@ -332,8 +352,8 @@ describe('MusicPlayerView', () => {
     expect(scribbleBorder?.querySelectorAll('path')[0]?.getAttribute('stroke-width')).toBe('6')
     expect(scribbleBorder?.querySelectorAll('path')[1]?.getAttribute('stroke-width')).toBe('3')
     expect(scribbleBorder?.parentElement).toBe(scribbleFrame)
-    expect(scribbleController?.contains(scribbleBorder)).toBe(false)
-    expect(scribbleController?.classList.contains('pomo-scribble-mask')).toBe(true)
+    expect(scribbleController.contains(scribbleBorder)).toBe(false)
+    expect(scribbleController.classList.contains('pomo-scribble-mask')).toBe(true)
     expect(scribbleController).not.toHaveAttribute('style')
     expect(scribbleController?.classList.contains('rounded-none')).toBe(true)
     expect(scribbleController?.classList.contains('rounded-panel')).toBe(false)
@@ -343,57 +363,60 @@ describe('MusicPlayerView', () => {
 
   it('should replace player controls only in scribble style', () => {
     const originalResult = renderMusicPlayerView()
-
-    expect(originalResult.container.querySelector('.i-tabler-player-play')).toBeInstanceOf(
-      HTMLElement,
+    const originalFrame = getPlayerFrame(originalResult.container)
+    const originalIcons = Array.from(
+      getPlayerShell(originalResult.container).querySelectorAll<HTMLElement>(
+        'span[aria-hidden="true"]',
+      ),
     )
-    expect(originalResult.container.querySelector('.i-pomo-scribble\\:play')).toBeNull()
-    expect(originalResult.container.querySelector('.i-tabler-album')).toBeInstanceOf(HTMLElement)
-    expect(originalResult.container.querySelector('.i-pomo-scribble\\:album')).toBeNull()
-    expect(
-      originalResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
-    ).toHaveLength(0)
+
+    expect(hasIcon(originalIcons, 'i-tabler-player-play')).toBe(true)
+    expect(hasIcon(originalIcons, 'i-pomo-scribble:play')).toBe(false)
+    expect(hasIcon(originalIcons, 'i-tabler-album')).toBe(true)
+    expect(hasIcon(originalIcons, 'i-pomo-scribble:album')).toBe(false)
+    expect(originalFrame.querySelectorAll('svg')).toHaveLength(0)
 
     cleanup()
     const scribbleResult = renderMusicPlayerView({sceneStyle: 'scribble'})
+    const scribbleFrame = getPlayerFrame(scribbleResult.container)
+    const scribbleIcons = Array.from(
+      getPlayerShell(scribbleResult.container).querySelectorAll<HTMLElement>(
+        'span[aria-hidden="true"]',
+      ),
+    )
 
-    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:play')).toBeInstanceOf(
-      HTMLElement,
-    )
-    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:repeat')).toBeInstanceOf(
-      HTMLElement,
-    )
-    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:shuffle')).toBeInstanceOf(
-      HTMLElement,
-    )
-    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:album')).toBeInstanceOf(
-      HTMLElement,
-    )
-    expect(scribbleResult.container.querySelector('.i-tabler-player-play')).toBeNull()
-    expect(scribbleResult.container.querySelector('.i-tabler-album')).toBeNull()
+    expect(hasIcon(scribbleIcons, 'i-pomo-scribble:play')).toBe(true)
+    expect(hasIcon(scribbleIcons, 'i-pomo-scribble:repeat')).toBe(true)
+    expect(hasIcon(scribbleIcons, 'i-pomo-scribble:shuffle')).toBe(true)
+    expect(hasIcon(scribbleIcons, 'i-pomo-scribble:album')).toBe(true)
+    expect(hasIcon(scribbleIcons, 'i-tabler-player-play')).toBe(false)
+    expect(hasIcon(scribbleIcons, 'i-tabler-album')).toBe(false)
     expect(
-      scribbleResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
+      [...(scribbleFrame?.querySelectorAll('svg') ?? [])].filter(
+        (svg) => svg.parentElement !== scribbleFrame,
+      ),
     ).toHaveLength(2)
   })
 
   it('should constrain expanded content and keep compact controls in one row', () => {
     const result = renderMusicPlayerView()
-    const controller = result.container.querySelector('.pomo-player-shell') as HTMLElement
-    const expandedFrame = result.container.querySelector(
-      '.pomo-player__expanded-frame',
-    ) as HTMLElement
-    const expandedInner = result.container.querySelector(
-      '.pomo-player__expanded-inner',
-    ) as HTMLElement
-    const expandedPanel = result.container.querySelector('.pomo-player__expanded') as HTMLElement
-    const controls = result.container.querySelector(
-      '.pomo-player__expanded-controls',
-    ) as HTMLElement
-    const playlist = result.container.querySelector('.pomo-player__playlist') as HTMLElement
-    const track = result.container.querySelector('.pomo-player__track') as HTMLElement
-    const modes = result.container.querySelector('.pomo-player__modes') as HTMLElement
-    const transport = result.container.querySelector('.pomo-player__transport') as HTMLElement
-    const volumeGroup = result.container.querySelector('.pomo-player__volume-group') as HTMLElement
+    const controller = getPlayerShell(result.container)
+    const {expandedRange} = getProgressRanges(result.container)
+    const expandedFrame = getHTMLElement(expandedRange.nextElementSibling)
+    const expandedInner = getHTMLElement(expandedFrame.firstElementChild)
+    const expandedPanel = getHTMLElement(expandedInner.firstElementChild)
+    const controls = getHTMLElement(expandedPanel.firstElementChild)
+    const playlist = result.getByRole('list')
+    const track = within(playlist).getAllByRole('button')[0]
+    const modes = getHTMLElement(
+      result.getByRole('group', {name: m.player_repeat_mode()}).parentElement,
+    )
+    const transport = getHTMLElement(
+      result.getByRole('button', {name: m.player_previous()}).parentElement,
+    )
+    const volumeGroup = getHTMLElement(
+      result.getByRole('button', {name: m.player_volume()}).parentElement,
+    )
 
     for (const element of [
       controller,

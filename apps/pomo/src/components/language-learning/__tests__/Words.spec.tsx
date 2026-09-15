@@ -111,9 +111,9 @@ it('should add several unknown words at once and filter them by language', () =>
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   expect(input.parentElement?.className).toContain('bg-surface')
-  expect(result.container.querySelector('.pomo-learning-words > div')).toHaveClass(
-    'bg-content-surface',
-  )
+  expect(
+    result.container.querySelector('section')?.firstElementChild?.nextElementSibling,
+  ).toHaveClass('bg-content-surface')
   expect(screen.getByRole('button', {name: '단어 저장'}).className).toContain('rounded-control')
   expect(vi.mocked(PSelect).mock.calls[0]?.[0].class).toBe('w-full')
 

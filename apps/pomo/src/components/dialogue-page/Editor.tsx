@@ -30,7 +30,7 @@ import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadC
 
 const CLASSES = {
   dialogueEditor: cx(
-    'pomo-dialogue-editor min-h-dvh box-border',
+    'min-h-dvh box-border',
     '[background:var(--pomo-editor-background)]',
     'pt-[max(1.25rem,_var(--pomo-safe-area-inset-top))]',
     'pr-[max(1.25rem,_var(--pomo-safe-area-inset-right))]',
@@ -39,28 +39,28 @@ const CLASSES = {
     'text-foreground',
   ),
   dialogueEditorBack: cx(
-    'pomo-dialogue-editor__back flex min-h-11 box-border flex-none items-center gap-2',
+    'flex min-h-11 box-border flex-none items-center gap-2',
     'border border-solid border-border rounded-full py-0 px-4 text-foreground no-underline',
     'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-highlight',
     'focus-visible:outline-offset-2',
     'max-xl:[justify-self:start]',
   ),
   dialogueEditorButton: cx(
-    'pomo-dialogue-editor__button focus-visible:outline-2 focus-visible:outline-solid',
+    'focus-visible:outline-2 focus-visible:outline-solid',
     'focus-visible:outline-highlight focus-visible:outline-offset-2 min-h-11 cursor-pointer border-0 rounded-full py-0',
     'px-[1.2rem] font-[750] [&:disabled]:[cursor:not-allowed] [&:disabled]:[opacity:0.4]',
   ),
-  dialogueEditorButtonPrimary: 'pomo-dialogue-editor__button--primary bg-highlight text-background',
+  dialogueEditorButtonPrimary: 'bg-highlight text-background',
   dialogueEditorButtonSecondary: cx(
-    'pomo-dialogue-editor__button--secondary border border-solid border-border',
+    'border border-solid border-border',
     'bg-transparent text-foreground',
   ),
   dialogueEditorEmpty: cx(
-    'pomo-dialogue-editor__empty m-0 text-muted-foreground text-[0.85rem] leading-[1.6] rounded-xl',
+    'm-0 text-muted-foreground text-[0.85rem] leading-[1.6] rounded-xl',
     'bg-content-surface p-6 text-center',
   ),
   dialogueEditorField: cx(
-    'pomo-dialogue-editor__field grid gap-2 text-foreground text-[0.82rem] font-bold',
+    'grid gap-2 text-foreground text-[0.82rem] font-bold',
     '[&_small]:text-muted-foreground [&_small]:font-[550] [&_select]:w-full [&_select]:box-border',
     '[&_select]:border [&_select]:border-solid [&_select]:border-border [&_select]:rounded-xl',
     '[&_select]:bg-surface-strong [&_select]:text-foreground [&_select]:[font:inherit]',
@@ -77,70 +77,69 @@ const CLASSES = {
     '[&_textarea:focus-visible]:outline-highlight',
     '[&_textarea:focus-visible]:[outline-offset:2px]',
   ),
-  dialogueEditorFieldLabel: 'pomo-dialogue-editor__field-label flex justify-between gap-4',
+  dialogueEditorFieldLabel: 'flex justify-between gap-4',
   dialogueEditorFooter: cx(
-    'pomo-dialogue-editor__footer w-[min(100%,_68rem)] [margin:1rem_auto_0] flex justify-end',
+    'w-[min(100%,_68rem)] [margin:1rem_auto_0] flex justify-end',
     'gap-3 items-center border border-solid border-border rounded-2xl',
     'bg-modal-surface p-3 shadow-panel backdrop-blur-surface [&_p]:m-[0_auto_0_0]',
     '[&_p]:text-muted-foreground [&_p]:text-xs max-xl:[&_p]:hidden',
   ),
   dialogueEditorHeader: cx(
-    'pomo-dialogue-editor__header w-[min(100%,_68rem)] [margin-inline:auto] flex items-center',
+    'w-[min(100%,_68rem)] [margin-inline:auto] flex items-center',
     'justify-between gap-8 pb-4 [&_h1]:m-0',
     '[&_h1]:text-[clamp(1.75rem,_4vw,_2.5rem)] [&_h1]:leading-[1.2]',
     'max-xl:gap-4',
   ),
   dialogueEditorLayout: cx(
-    'pomo-dialogue-editor__layout w-[min(100%,_68rem)] [margin-inline:auto] grid',
+    'w-[min(100%,_68rem)] [margin-inline:auto] grid',
     'grid-cols-[repeat(2,_minmax(0,_1fr))] gap-4 max-xl:grid-cols-[1fr]',
   ),
   dialogueEditorMood: cx(
-    'pomo-dialogue-editor__mood grid grid-cols-[2.75rem_minmax(0,_1fr)] items-center',
+    'grid grid-cols-[2.75rem_minmax(0,_1fr)] items-center',
     'gap-[0.55rem] text-muted-foreground [&_img]:w-11 [&_img]:h-11 [&_img]:object-contain',
     '[&_span]:text-foreground [&_span]:leading-[1.35]',
   ),
   dialogueEditorPanel: cx(
-    'pomo-dialogue-editor__panel grid content-start gap-5',
+    'grid content-start gap-5',
     'border border-solid border-border rounded-[1.25rem] bg-modal-surface',
     'p-[clamp(1.1rem,_3vw,_1.5rem)] shadow-panel backdrop-blur-surface',
   ),
   dialogueEditorPreview: cx(
-    'pomo-dialogue-editor__preview grid gap-3 [&_>_div]:flex [&_>_div]:justify-between',
+    'grid gap-3 [&_>_div]:flex [&_>_div]:justify-between',
     '[&_>_div]:gap-4 [&_>_div]:text-[0.8rem] [&_span]:text-muted-foreground',
   ),
   dialogueEditorSectionHeading: cx(
-    'pomo-dialogue-editor__section-heading flex items-start gap-3 [&_>_span]:grid [&_>_span]:w-8',
+    'flex items-start gap-3 [&_>_span]:grid [&_>_span]:w-8',
     '[&_>_span]:h-8 [&_>_span]:flex-none [&_>_span]:place-items-center [&_>_span]:rounded-full',
     '[&_>_span]:bg-highlight [&_>_span]:text-background [&_>_span]:text-[0.8rem]',
     '[&_>_span]:font-extrabold [&_h2]:m-0 [&_h2]:text-[1.05rem] [&_p]:m-[0.3rem_0_0]',
     '[&_p]:text-muted-foreground [&_p]:text-[0.8rem] [&_p]:leading-[1.5]',
   ),
   dialogueEditorSegmentButton: cx(
-    'pomo-dialogue-editor__segment-button min-h-9 px-[0.9rem] text-xs whitespace-nowrap',
+    'min-h-9 px-[0.9rem] text-xs whitespace-nowrap',
     'flex-none max-sm:ml-auto',
   ),
   dialogueEditorSegmentContent: cx(
-    'pomo-dialogue-editor__segment-content grid min-w-0',
+    'grid min-w-0',
     'grid-cols-[minmax(0,_1fr)_auto] items-center gap-3 max-xl:grid-cols-[1fr]',
   ),
   dialogueEditorSegmentMeta: cx(
-    'pomo-dialogue-editor__segment-meta flex min-w-0 items-center justify-between gap-3',
+    'flex min-w-0 items-center justify-between gap-3',
     'max-sm:flex-wrap',
   ),
   dialogueEditorSegments: cx(
-    'pomo-dialogue-editor__segments grid gap-[0.6rem] m-0 p-0 list-none [&_li]:grid',
+    'grid gap-[0.6rem] m-0 p-0 list-none [&_li]:grid',
     '[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)] [&_li]:items-center [&_li]:gap-3',
     '[&_li]:rounded-xl [&_li]:bg-content-surface [&_li]:p-3 [&_span]:text-highlight',
     '[&_span]:text-xs [&_span]:font-[750] [&_p]:m-0 [&_p]:text-foreground [&_p]:text-[0.85rem]',
     '[&_p]:leading-[1.6]',
   ),
   dialogueEditorSelects: cx(
-    'pomo-dialogue-editor__selects grid grid-cols-[repeat(3,_minmax(0,_1fr))] gap-3',
+    'grid grid-cols-[repeat(3,_minmax(0,_1fr))] gap-3',
     'max-sm:grid-cols-[1fr]',
   ),
-  dialogueEditorTimelinePanel:
-    'pomo-dialogue-editor__timeline-panel col-span-full max-xl:[grid-column:auto]',
-  dialogueEditorVoiceActions: 'pomo-dialogue-editor__voice-actions flex justify-end gap-3',
+  dialogueEditorTimelinePanel: 'col-span-full max-xl:[grid-column:auto]',
+  dialogueEditorVoiceActions: 'flex justify-end gap-3',
 } as const
 
 const MAXIMUM_TEXT_LENGTH = 3000
@@ -292,11 +291,7 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
 
         <section
           aria-labelledby="dialogue-timeline-title"
-          class={cx(
-            CLASSES.dialogueEditorPanel,
-            CLASSES.dialogueEditorTimelinePanel,
-            editor.segments().length === 0 && 'pomo-dialogue-editor__timeline-panel--empty',
-          )}
+          class={cx(CLASSES.dialogueEditorPanel, CLASSES.dialogueEditorTimelinePanel)}
         >
           <div class={CLASSES.dialogueEditorSectionHeading}>
             <span>3</span>

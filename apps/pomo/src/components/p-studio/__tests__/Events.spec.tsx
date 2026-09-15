@@ -232,7 +232,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useMobileLayout).mockReturnValue(() => true)
     const idleResult = renderEvents()
 
-    expect(idleResult.container.querySelector('.pomo-dialogue-composer')).toHaveAttribute(
+    expect(screen.getByRole('textbox', {name: '대화 입력'}).closest('form')).toHaveAttribute(
       'data-auto-expand',
       '',
     )
@@ -241,7 +241,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useChildPresence).mockReturnValue(() => true)
     const activeResult = renderEvents()
 
-    expect(activeResult.container.querySelector('.pomo-dialogue-composer')).not.toHaveAttribute(
+    expect(screen.getByRole('textbox', {name: '대화 입력'}).closest('form')).not.toHaveAttribute(
       'data-auto-expand',
     )
     activeResult.unmount()
@@ -249,7 +249,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useMobileLayout).mockReturnValue(() => false)
     const desktopResult = renderEvents()
 
-    expect(desktopResult.container.querySelector('.pomo-dialogue-composer')).not.toHaveAttribute(
+    expect(screen.getByRole('textbox', {name: '대화 입력'}).closest('form')).not.toHaveAttribute(
       'data-auto-expand',
     )
   })
@@ -293,10 +293,10 @@ describe('PStudioEvents', () => {
       'data-feed-scene',
       'original',
     )
-    const dialogueComposer = container.querySelector('.pomo-dialogue-composer')
-    const mediaDock = container.querySelector('.pomo-media-dock')
-    const mediaControls = container.querySelector('.pomo-media-controls')
-    const mediaMessages = container.querySelector('.pomo-media-messages')
+    const dialogueComposer = screen.getByRole('textbox', {name: '대화 입력'}).closest('form')
+    const mediaControls = dialogueComposer?.parentElement
+    const mediaDock = mediaControls?.parentElement
+    const mediaMessages = mediaDock?.lastElementChild
     expect(mediaDock).toHaveClass('[&_.pomo-player-stage]:[flex:0_1_auto]')
     expect(mediaDock).not.toHaveClass('[&[data-player-expanded]_.pomo-player-stage]:[flex:1_1_0%]')
     expect(mediaDock).toHaveClass('[&[data-player-expanded]_.pomo-player-stage]:h-[19.875rem]')

@@ -30,7 +30,7 @@ export interface FrameProps extends Pick<
 
 export const Frame = (props: FrameProps) => (
   <div
-    class="pomo-player-frame relative w-full overflow-visible [&[data-expanded=true]]:h-full"
+    class="relative w-full overflow-visible [&[data-expanded=true]]:h-full"
     data-expanded={props.expanded}
   >
     <div
@@ -53,7 +53,7 @@ export const Frame = (props: FrameProps) => (
 
       <div
         class={cx(
-          'pomo-player__visualizer-frame pointer-events-none absolute inset-x-0 top-0',
+          'pointer-events-none absolute inset-x-0 top-0',
           'overflow-hidden',
           props.expanded ? 'h-18 rounded-t-panel' : 'bottom-0 rounded-panel',
         )}
@@ -89,7 +89,7 @@ export const Frame = (props: FrameProps) => (
         bool:disabled={true}
       />
 
-      <div class={CLASSES.playerSummary}>
+      <div class={CLASSES.playerSummary} data-player-summary="">
         <Show when={!props.expanded}>
           <SummaryPlayButton
             isPlaying={props.isPlaying}
@@ -136,7 +136,7 @@ export const Frame = (props: FrameProps) => (
       </div>
     </div>
     <Show when={props.sceneStyle === 'scribble'}>
-      <PScribbleFrame class="pomo-player__scribble-border" />
+      <PScribbleFrame />
     </Show>
   </div>
 )

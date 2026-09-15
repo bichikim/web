@@ -60,7 +60,7 @@ export const UserSettings = () => {
             <Match when={settings.state().kind === 'anonymous'}>
               <div class="grid gap-2">
                 <p class="m-0 text-sm font-750 text-foreground">{m.user_anonymous()}</p>
-                <p class="m-0 text-modal-detail leading-5 text-muted-foreground">
+                <p class="m-0 text-sm leading-5 text-muted-foreground">
                   {m.user_anonymous_description()}
                 </p>
               </div>
@@ -95,7 +95,7 @@ export const UserSettings = () => {
             title={m.user_service_information()}
             titleId="pomo-service-information-title"
           />
-          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-modal-detail leading-5 text-muted-foreground">
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-5 text-muted-foreground">
             <PServicePolicyLinks />
             <span class="inline-flex items-center gap-2">
               <span aria-hidden="true">·</span>

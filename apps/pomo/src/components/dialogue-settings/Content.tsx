@@ -31,27 +31,27 @@ import {PSettingsEmptyState} from '../settings/EmptyState'
 import {PSettingsSectionHeading} from '../settings/SectionHeading'
 
 const CLASSES = {
-  dialogueSettings: 'pomo-dialogue-settings grid gap-4.5 settings-compact:gap-4',
+  dialogueSettings: 'grid gap-4.5 settings-compact:gap-4',
   dialogueSettingsEventHeading: cx(
-    'pomo-dialogue-settings__event-heading grid min-w-0 grid-cols-[auto_minmax(0,_1fr)]',
+    'grid min-w-0 grid-cols-[auto_minmax(0,_1fr)]',
     'items-center gap-[0.7rem] settings-compact:gap-2 [&_>_div:nth-child(2)]:min-w-0',
     '[&_>_div:nth-child(2)_>_div]:min-w-0 [&_>_div:nth-child(2)_>_div]:flex',
     '[&_>_div:nth-child(2)_>_div]:items-center [&_>_div:nth-child(2)_>_div]:gap-[0.45rem]',
-    '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-modal-body [&_h5]:font-[750]',
+    '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-base [&_h5]:leading-6 [&_h5]:font-[750]',
     '[&_>_div:nth-child(2)_>_div_>_span]:rounded-full',
     '[&_>_div:nth-child(2)_>_div_>_span]:bg-content-surface',
     '[&_>_div:nth-child(2)_>_div_>_span]:px-2 [&_>_div:nth-child(2)_>_div_>_span]:py-1',
     '[&_>_div:nth-child(2)_>_div_>_span]:text-muted-foreground',
-    '[&_>_div:nth-child(2)_>_div_>_span]:text-modal-detail',
+    '[&_>_div:nth-child(2)_>_div_>_span]:text-sm [&_>_div:nth-child(2)_>_div_>_span]:leading-5',
     '[&_>_div:nth-child(2)_>_div_>_span]:font-bold [&_p]:m-[0.2rem_0_0]',
-    '[&_p]:text-muted-foreground [&_p]:text-modal-detail [&_p]:leading-[1.4]',
+    '[&_p]:text-muted-foreground [&_p]:text-sm [&_p]:leading-[1.4]',
   ),
   dialogueSettingsEventSymbol: cx(
-    'pomo-dialogue-settings__event-symbol grid w-9 h-9 place-items-center rounded-full',
+    'grid w-9 h-9 place-items-center rounded-full',
     'bg-secondary-soft text-highlight',
   ),
   dialogueSettingsList: cx(
-    'pomo-dialogue-settings__list grid gap-3 m-0 p-0 list-none [&_>_li]:grid [&_>_li]:gap-3',
+    'grid gap-3 m-0 p-0 list-none [&_>_li]:grid [&_>_li]:gap-3',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:border [&_>_li]:border-solid [&_>_li]:border-content-border',
     '[&_>_li]:rounded-panel [&_>_li]:bg-content-surface',
@@ -60,15 +60,15 @@ const CLASSES = {
     '[&_>_li[data-disabled]]:bg-content-surface-disabled',
   ),
   dialogueSettingsLoading: cx(
-    'pomo-dialogue-settings__loading m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-modal-detail settings-compact:p-4',
+    'm-0 rounded-panel',
+    'bg-content-surface p-5 text-muted-foreground text-sm settings-compact:p-4',
     'leading-[1.5] text-center flex items-center justify-center gap-2',
     '[&_>_span]:animate-dialogue-settings-spin',
     'motion-reduce:[&_>_span]:animate-[none]',
   ),
   dialogueSettingsMessage: cx(
-    'pomo-dialogue-settings__message m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-modal-detail settings-compact:p-4',
+    'm-0 rounded-panel',
+    'bg-content-surface p-5 text-muted-foreground text-sm settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
 } as const
@@ -143,7 +143,6 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
       <Tabs.Content value="events">
         <section class={CLASSES.dialogueSettings}>
           <PSettingsSectionHeading
-            class="pomo-dialogue-settings__library-heading"
             count={m.settings_count({count: dialogueEvents.length})}
             divider="none"
             title={m.settings_events_title()}
@@ -190,7 +189,7 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
 
                       <div class="grid min-w-0 gap-2 border-t border-solid border-border pt-3">
                         <Show when={eventDialogues().length === 0}>
-                          <p class="m-0 text-muted-foreground text-modal-detail">
+                          <p class="m-0 text-muted-foreground text-sm leading-5">
                             {m.settings_event_dialogue_create_first()}
                           </p>
                         </Show>
@@ -242,15 +241,10 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
 
           <PSettingsSectionHeading
             actions={
-              <PSettingsActionLink
-                class="pomo-dialogue-settings__create ml-auto"
-                href="/dialogue"
-                icon="i-tabler-plus"
-              >
+              <PSettingsActionLink class="ml-auto" href="/dialogue" icon="i-tabler-plus">
                 {m.settings_dialogue_new()}
               </PSettingsActionLink>
             }
-            class="pomo-dialogue-settings__library-heading"
             count={m.settings_count({count: libraryDialogues().length})}
             title={m.settings_dialogue_saved_title()}
             titleId="pomo-dialogue-library-list-title"
@@ -266,11 +260,7 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
           <Show when={!events.isLoading()}>
             <Show
               when={libraryDialogues().length > 0}
-              fallback={
-                <PSettingsEmptyState class="pomo-dialogue-settings__empty">
-                  {m.settings_dialogue_empty()}
-                </PSettingsEmptyState>
-              }
+              fallback={<PSettingsEmptyState>{m.settings_dialogue_empty()}</PSettingsEmptyState>}
             >
               <DialogueLibrary entries={libraryEntries()} onRequestClose={props.onRequestClose} />
             </Show>

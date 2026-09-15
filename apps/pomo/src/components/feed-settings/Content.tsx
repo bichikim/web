@@ -114,7 +114,7 @@ export function PFeedSettingsContent() {
             />
           </label>
           <PSettingsActionButton
-            class="pomo-feed-settings__add max-sm:w-full"
+            class="max-sm:w-full"
             disabled={feeds.isLoading()}
             icon="i-tabler-plus"
             size="medium"

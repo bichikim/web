@@ -17,9 +17,7 @@ const createRepository = (entries: ReadonlyArray<PictureDiaryEntry> = []) =>
   }) satisfies PictureDiaryRepository
 
 const getSpread = () => {
-  const spread = screen
-    .getByLabelText('일기장')
-    .querySelector<HTMLElement>('.picture-diary-book__spread')
+  const spread = screen.getByLabelText('일기장').firstElementChild as HTMLElement | null
 
   expect(spread).toBeInTheDocument()
   return spread!

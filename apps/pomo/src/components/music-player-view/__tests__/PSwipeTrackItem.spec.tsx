@@ -89,7 +89,7 @@ describe('PSwipeTrackItem', () => {
           <PTooltipContent />
         </PTooltipProvider>
       ))
-      const title = container.querySelector('button > span.min-w-0.flex-1')
+      const title = container.querySelector('button')?.firstElementChild?.nextElementSibling
       expect(title).not.toBeNull()
       fireEvent.pointerEnter(title!)
       vi.advanceTimersByTime(400)

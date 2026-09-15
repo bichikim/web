@@ -14,7 +14,7 @@ afterEach(() => {
 })
 
 it('should expand the initial dialogue button into a focused input', async () => {
-  const {container} = render(() => <PDialogueComposer />)
+  render(() => <PDialogueComposer />)
 
   const trigger = screen.getByRole('button', {name: '대화 시작하기'})
   expect(trigger).toHaveAttribute('aria-expanded', 'false')
@@ -23,7 +23,7 @@ it('should expand the initial dialogue button into a focused input', async () =>
   fireEvent.click(trigger)
 
   const input = screen.getByRole('textbox', {name: '대화 입력'})
-  const composer = container.querySelector('.pomo-dialogue-composer')
+  const composer = input.closest('form')
   expect(input).toHaveAttribute('placeholder', '어떤 대화를 나눌까요?')
   expect(input).toHaveValue('')
   expect(composer).toHaveClass('[&[data-expanded]]:w-full', '[&[data-expanded]]:[flex:none]')
@@ -143,7 +143,7 @@ it('should preserve the submitted draft when the submission is rejected', async 
 it('should keep focus and accept the next draft while dialogue creation is busy', async () => {
   const [loading, setLoading] = createSignal(false)
   const onSubmit = vi.fn()
-  const {container} = render(() => <PDialogueComposer loading={loading()} onSubmit={onSubmit} />)
+  render(() => <PDialogueComposer loading={loading()} onSubmit={onSubmit} />)
   fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
   const input = screen.getByRole('textbox', {name: '대화 입력'})
   await waitFor(() => expect(input).toHaveFocus())
@@ -157,19 +157,21 @@ it('should keep focus and accept the next draft while dialogue creation is busy'
   expect(input).toHaveValue('다음에 보낼 대화')
   const submitButton = screen.getByRole('button', {name: '대화 준비 중'})
   expect(submitButton).toBeDisabled()
-  fireEvent.submit(container.querySelector('.pomo-dialogue-composer')!)
+  const composer = input.closest('form')
+  fireEvent.submit(composer!)
   expect(onSubmit).not.toHaveBeenCalled()
-  expect(submitButton.querySelector('.i-tabler-loader-2')).toHaveClass('animate-spin')
-  expect(container.querySelector('.pomo-dialogue-composer')).toHaveAttribute('aria-busy', 'true')
+  expect(submitButton.querySelector('span[aria-hidden="true"]')).toHaveClass('animate-spin')
+  expect(composer).toHaveAttribute('aria-busy', 'true')
 })
 
 it('should replace the collapsed dialogue button with a disabled loading indicator', () => {
-  const {container} = render(() => <PDialogueComposer loading />)
+  render(() => <PDialogueComposer loading />)
 
   const trigger = screen.getByRole('button', {name: '대화 준비 중'})
+  const composer = trigger.closest('form')
   expect(trigger).toBeDisabled()
-  expect(trigger.querySelector('.i-tabler-loader-2')).toHaveClass('animate-spin')
-  expect(container.querySelector('.pomo-dialogue-composer')).toHaveAttribute('aria-busy', 'true')
+  expect(trigger.querySelector('span[aria-hidden="true"]')).toHaveClass('animate-spin')
+  expect(composer).toHaveAttribute('aria-busy', 'true')
 })
 
 it('should collapse an empty input after focus leaves the composer', () => {

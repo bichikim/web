@@ -182,7 +182,7 @@ export const PModal = (props: PModalProps) => {
                     {(description) => (
                       <Dialog.Description
                         class={
-                          'mb-0 ml-0 mr-0 mt-1.5 text-modal-detail leading-5 ' +
+                          'mb-0 ml-0 mr-0 mt-1.5 text-sm leading-5 ' +
                           'text-muted-foreground empty:hidden'
                         }
                       >

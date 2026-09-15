@@ -273,7 +273,7 @@ export const PStudio = () => {
   return (
     <section
       aria-label="Pomo"
-      class="pomo-studio relative h-dvh w-full overflow-hidden"
+      class="relative h-dvh w-full overflow-hidden"
       ref={tour.setStudioElement}
       style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
     >

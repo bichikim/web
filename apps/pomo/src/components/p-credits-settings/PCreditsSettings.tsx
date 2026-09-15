@@ -25,7 +25,7 @@ const CREATOR_DETAILS_CLASS = cx(
 
 const NOTICE_CLASS = cx(
   'rounded-panel border border-solid border-content-border bg-content-surface p-4',
-  'text-modal-detail leading-5 text-muted-foreground',
+  'text-sm leading-5 text-muted-foreground',
 )
 
 export const PCreditsSettings = () => {

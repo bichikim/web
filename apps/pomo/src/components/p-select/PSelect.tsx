@@ -45,10 +45,7 @@ const renderSingleSelect = <TValue extends string>(props: PSelectSingleProps<TVa
 
   return (
     <Select<PSelectOption<TValue>>
-      class={cx(
-        appearance() === 'icon' ? 'pomo-icon-select block' : 'grid w-full min-w-0 gap-1.5',
-        props.class,
-      )}
+      class={cx(appearance() === 'icon' ? 'block' : 'grid w-full min-w-0 gap-1.5', props.class)}
       disallowEmptySelection
       disabled={props.disabled}
       gutter={6}

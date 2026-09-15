@@ -5,11 +5,13 @@ import {expect, it, vi} from 'vitest'
 
 import {PLoadingStatus} from '../PLoadingStatus'
 
-it('should render the loading message and spinner with the configured shortcuts', () => {
-  const {container} = render(() => <PLoadingStatus message="장면 준비 중" />)
+it('should render the loading message and spinner with component class constants', () => {
+  const message = '장면 준비 중'
+  render(() => <PLoadingStatus message={message} />)
+  const loading = screen.getByText(message).parentElement
 
-  expect(screen.getByText('장면 준비 중').parentElement).toHaveClass('pomo-loading')
-  expect(container.querySelector('.pomo-loading__spinner')).toHaveAttribute('aria-hidden', 'true')
+  expect(loading).toHaveClass('flex', 'min-h-control-sm', 'rounded-control')
+  expect(loading?.querySelector('span[aria-hidden="true"]')).toHaveAttribute('aria-hidden', 'true')
   expect(screen.queryByRole('button')).toBeNull()
 })
 

@@ -10,14 +10,14 @@ import * as m from '@paraglide/message'
 
 const CLASSES = {
   playerMode: cx(
-    'pomo-player__mode text-muted-foreground [&:not(.is-active):hover]:text-foreground',
+    'text-muted-foreground [&:not(.is-active):hover]:text-foreground',
     '[&:not(.is-active):hover]:bg-secondary-soft [&.is-active]:text-white',
     '[&.is-active:hover]:brightness-110',
     '[&.is-active]:bg-primary [&.is-active]:shadow-[0_0.25rem_0.75rem_rgb(125_49_29_/_28%)]',
     '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
     '[&:focus-visible]:[outline-offset:0.125rem]',
   ),
-  playerModes: 'pomo-player__modes border border-solid border-border bg-surface-overlay',
+  playerModes: 'border border-solid border-border bg-surface-overlay',
 } as const
 
 const REPEAT_MODES = [

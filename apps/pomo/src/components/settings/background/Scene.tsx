@@ -9,7 +9,7 @@ import {CLASSES, type PSettingsProps} from '../general/shared'
 
 export const Scene = (props: PSettingsProps) => (
   <section aria-label={m.settings_section_scene()} class={CLASSES.settingsSection}>
-    <div class={`pomo-settings__scene ${CLASSES.settingsGrid}`}>
+    <div class={CLASSES.settingsGrid}>
       <PRadioSwitch
         label={m.settings_time()}
         onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}

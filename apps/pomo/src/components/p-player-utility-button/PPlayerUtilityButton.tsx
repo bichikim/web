@@ -20,7 +20,7 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => {
         aria-expanded={props.expanded}
         aria-label={props.accessibleLabel}
         class={cx(
-          'pomo-player__utility relative grid size-10 shrink-0 place-items-center rounded-full',
+          'relative grid size-10 shrink-0 place-items-center rounded-full',
           'text-muted-foreground transition hover:bg-secondary-soft hover:text-foreground',
           'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-primary',
           'focus-visible:[outline-offset:0.125rem]',

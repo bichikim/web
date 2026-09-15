@@ -163,7 +163,7 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(screen.queryByText('저장된 대화를 듣거나 관리할 수 있어요.')).toBeNull()
   const library = screen.getByRole('list', {name: '저장된 대화'})
   const summary = within(library).getByText(DIALOGUE.text)
-  const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
+  const row = summary.parentElement?.parentElement
   const listenButton = within(library).getByRole('button', {name: '듣기'})
   const createLink = screen.getByRole('link', {name: '새 대화'})
 
@@ -172,7 +172,6 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
   expect(createLink.getAttribute('href')).toBe('/dialogue')
-  expect(createLink.closest('.pomo-dialogue-settings__library-heading')).not.toBeNull()
   const inactiveEvent = screen.getByRole('heading', {name: '포모도르 집중 시작'}).closest('li')
   const eventList = inactiveEvent?.parentElement
   expect(inactiveEvent).not.toHaveAttribute('data-connected')
@@ -235,16 +234,13 @@ it('should hide learning dialogues only from the saved dialogue library', () => 
 it('should apply compact spacing to dialogue settings groups', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  const result = render(() => <PDialogueSettingsContent />)
-  const section = result.container.querySelector('.pomo-dialogue-settings') as HTMLElement
-  const list = result.container.querySelector('.pomo-dialogue-settings__list') as HTMLElement
-  const automatic = result.container.querySelector(
-    '.pomo-dialogue-settings__automatic',
-  ) as HTMLElement
+  render(() => <PDialogueSettingsContent />)
+  const [list] = screen.getAllByRole('list')
+  const section = list?.parentElement
+  const automatic = screen.getByRole('region', {name: '자동 음성 생성'})
 
-  expect(section.classList.contains('settings-compact:gap-4')).toBe(true)
-  expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
-  expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+  expect(section).toHaveClass('settings-compact:gap-4')
+  expect(list).toHaveClass('settings-compact:gap-2', 'settings-compact:[&_>_li]:gap-2')
   expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
 })
 
@@ -304,16 +300,14 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
-  const result = render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />)
 
   const modeSelect = screen.getByRole('combobox', {name: '포모도르 집중 시작 재생 방식'})
-  const settingRows = result.container.querySelectorAll(
-    '.pomo-dialogue-settings__event-setting-row',
-  )
-  const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
+  const modeLayout = modeSelect.parentElement?.parentElement?.parentElement
   const modeControlLayout = modeLayout?.lastElementChild
   expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
-  expect(settingRows).toHaveLength(2)
+  expect(screen.getByText('발생 간격')).toBeInTheDocument()
+  expect(modeLayout?.firstElementChild).toHaveTextContent('재생 방식')
   expect(screen.queryByText('대화 연결')).toBeNull()
   expect(screen.queryByText('이 이벤트에서 재생할 대화를 선택해요.')).toBeNull()
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')

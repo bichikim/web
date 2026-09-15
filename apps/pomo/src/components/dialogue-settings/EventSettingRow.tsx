@@ -9,19 +9,17 @@ export interface DialogueEventSettingRowProps {
 export const DialogueEventSettingRow = (props: DialogueEventSettingRowProps) => (
   <div
     class={
-      'pomo-dialogue-settings__event-setting-row grid ' +
+      'grid ' +
       'grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)] items-center gap-4 ' +
       'border-t border-solid border-border pt-3 ' +
       'settings-compact:grid-cols-[1fr] settings-compact:gap-2'
     }
   >
     <div class="min-w-0">
-      <span class="block text-muted-foreground text-modal-body font-bold">{props.label}</span>
+      <span class="block text-muted-foreground text-base leading-6 font-bold">{props.label}</span>
       <Show when={props.description}>
         {(description) => (
-          <p class="m-[0.2rem_0_0] text-muted-foreground text-modal-detail leading-[1.5]">
-            {description()}
-          </p>
+          <p class="m-[0.2rem_0_0] text-muted-foreground text-sm leading-[1.5]">{description()}</p>
         )}
       </Show>
     </div>

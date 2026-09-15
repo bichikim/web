@@ -3,6 +3,7 @@
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import * as m from '@paraglide/message'
 import {PMusicPlayerContent} from '../PMusicPlayerContent'
 import {getAudioElement, markAudioMetadataReady, TRACKS} from './test-support/player-fixtures'
 
@@ -60,7 +61,9 @@ describe('PMusicPlayerContent transport integration', () => {
     await Promise.resolve()
     await Promise.resolve()
 
-    const firstLevel = result.container.querySelector<HTMLElement>('.pomo-level')
+    const firstLevel = screen
+      .getByLabelText(m.player_audio_levels())
+      .querySelector<HTMLElement>('span')
     expect(firstLevel?.classList.contains('opacity-76')).toBe(true)
     expect(firstLevel?.style.opacity).toBe('')
   })

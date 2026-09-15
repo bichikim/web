@@ -25,7 +25,7 @@ it('should compose artwork and compact playback for the current track', () => {
     />
   ))
   expect(view.container.querySelector('img')).toHaveAttribute('src', '/cover.webp')
-  expect(view.container.querySelector('.pomo-player__compact-summary-play')).toBeInTheDocument()
+  expect(view.container.querySelector('img')?.nextElementSibling).toBeInTheDocument()
   expect(view.container.querySelector('media-play-button')).toHaveAttribute(
     'aria-label',
     '일시 정지',
