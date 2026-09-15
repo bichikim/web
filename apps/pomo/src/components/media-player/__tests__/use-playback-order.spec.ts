@@ -1,13 +1,36 @@
 /** @vitest-environment jsdom */
 import {createRenderEffect, createRoot, createSignal} from 'solid-js'
 import {describe, expect, it} from 'vitest'
-import {usePlaybackOrder, type UsePlaybackOrderProps} from '../use-playback-order'
+import {
+  type ShuffleQueueFactory,
+  usePlaybackOrder,
+  type UsePlaybackOrderProps,
+} from '../use-playback-order'
+
+type TestPlaybackOrderProps = Omit<UsePlaybackOrderProps, 'createShuffleQueue'>
+
+const createTestShuffleQueue: ShuffleQueueFactory = ({currentIndex, trackCount}) =>
+  Array.from({length: trackCount}, (_value, index) => index).filter(
+    (index) => index !== currentIndex,
+  )
+
+const createOrder = (
+  props: TestPlaybackOrderProps,
+  createShuffleQueue: ShuffleQueueFactory = createTestShuffleQueue,
+) =>
+  usePlaybackOrder({
+    ...props,
+    createShuffleQueue,
+    onRestart: () => props.onRestart(),
+    onSelect: (options) => props.onSelect(options),
+    onStop: () => props.onStop(),
+  })
 
 describe('manual navigation', () => {
   it('should retain previous-track history when a shuffled cycle restarts', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(0)
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => undefined,
@@ -31,7 +54,7 @@ describe('manual navigation', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(0)
       let selections = 0
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => undefined,
@@ -57,7 +80,7 @@ describe('manual navigation', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(0)
       const selections: number[] = []
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => undefined,
@@ -82,7 +105,7 @@ describe('manual navigation', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(0)
       const selections: number[] = []
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => undefined,
@@ -105,7 +128,7 @@ describe('manual navigation', () => {
     await new Promise<void>((resolve) => {
       createRoot((dispose) => {
         const [index, setIndex] = createSignal(0)
-        const order = usePlaybackOrder({
+        const order = createOrder({
           currentIndex: index,
           initialQueue: [1, 0],
           onRestart: () => undefined,
@@ -150,8 +173,8 @@ describe('manual navigation', () => {
         },
         onStop: () => undefined,
         trackCount: () => 2,
-      } satisfies UsePlaybackOrderProps
-      const order = usePlaybackOrder(navigationProps)
+      } satisfies TestPlaybackOrderProps
+      const order = createOrder(navigationProps)
 
       order.toggleShuffle()
       navigationProps.onSelect = (selection) => {
@@ -180,8 +203,8 @@ describe('manual navigation', () => {
         onSelect: () => undefined,
         onStop: () => undefined,
         trackCount: () => 1,
-      } satisfies UsePlaybackOrderProps
-      const order = usePlaybackOrder(navigationProps)
+      } satisfies TestPlaybackOrderProps
+      const order = createOrder(navigationProps)
 
       navigationProps.onRestart = () => {
         replacementRestarts += 1
@@ -200,7 +223,7 @@ describe('manual navigation', () => {
       let selections = 0
       let restarts = 0
       let stops = 0
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => {
@@ -237,7 +260,7 @@ describe('manual navigation', () => {
       let selections = 0
       let restarts = 0
       let stops = 0
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => {
@@ -268,7 +291,7 @@ describe('manual navigation', () => {
       const selections: Array<{index: number; shouldResume?: boolean}> = []
       let restarts = 0
       let stops = 0
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [2, 1],
         onRestart: () => {
@@ -321,7 +344,7 @@ describe('manual navigation', () => {
       let restarts = 0
       let selections = 0
       let stops = 0
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [],
         onRestart: () => {
@@ -348,6 +371,33 @@ describe('manual navigation', () => {
       dispose()
     })
   })
+
+  it('should use the injected shuffle queue factory when a manual cycle resets', () => {
+    createRoot((dispose) => {
+      const [index, setIndex] = createSignal(2)
+      const factoryCalls: Array<{currentIndex: number; trackCount: number}> = []
+      const order = createOrder(
+        {
+          currentIndex: index,
+          initialQueue: [],
+          onRestart: () => undefined,
+          onSelect: (selection) => setIndex(selection.index),
+          onStop: () => undefined,
+          trackCount: () => 3,
+        },
+        (options) => {
+          factoryCalls.push(options)
+          return [0, 1]
+        },
+      )
+
+      order.selectNextTrack()
+
+      expect(factoryCalls).toEqual([{currentIndex: 2, trackCount: 3}])
+      expect(index()).toBe(0)
+      dispose()
+    })
+  })
 })
 
 describe('ended playback', () => {
@@ -355,7 +405,7 @@ describe('ended playback', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(0)
       const selections: Array<{index: number; shouldResume?: boolean}> = []
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => undefined,
@@ -378,7 +428,7 @@ describe('ended playback', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(0)
       const selections: Array<{index: number; shouldResume?: boolean}> = []
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => undefined,
@@ -403,7 +453,7 @@ describe('ended playback', () => {
     createRoot((dispose) => {
       let currentIndexReads = 0
       const selections: Array<{index: number; shouldResume?: boolean}> = []
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: () => {
           currentIndexReads += 1
           return currentIndexReads === 1 ? 0 : 1
@@ -425,7 +475,7 @@ describe('ended playback', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(1)
       const selections: Array<{index: number; shouldResume?: boolean}> = []
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [0],
         onRestart: () => undefined,
@@ -448,7 +498,7 @@ describe('ended playback', () => {
       const [index, setIndex] = createSignal(0)
       let restarts = 0
       let stops = 0
-      const order = usePlaybackOrder({
+      const order = createOrder({
         currentIndex: index,
         initialQueue: [1],
         onRestart: () => {
