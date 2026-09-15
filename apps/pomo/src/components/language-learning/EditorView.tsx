@@ -17,7 +17,10 @@ const TEXT_MODEL = getTextModel(TEXT_MODEL_ID)
 const CLASSES = {
   page:
     'min-h-dvh box-border [background:var(--pomo-editor-background)] ' +
-    'p-[max(1.25rem,var(--pomo-safe-area-inset-top))] text-foreground',
+    'pt-safe-top-compact ' +
+    'pr-[max(1.25rem,var(--pomo-safe-area-inset-right))] ' +
+    'pb-safe-bottom-compact ' +
+    'pl-[max(1.25rem,var(--pomo-safe-area-inset-left))] text-foreground',
   panel: 'grid gap-5 rounded-5 border border-solid border-border bg-surface p-5',
 } as const
 

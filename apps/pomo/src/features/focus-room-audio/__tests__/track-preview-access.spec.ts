@@ -19,7 +19,9 @@ describe('loadTrackPreviewSource', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
     vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+    vi.stubEnv('VITE_POMO_IS_MOBILE', '')
     vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    vi.stubGlobal('window', {location: new URL('http://127.0.0.1:1425/')})
     sessionMocks.readStoredAppSession.mockReset().mockResolvedValue(null)
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pomo-track-preview')
     vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined)
@@ -34,9 +36,11 @@ describe('loadTrackPreviewSource', () => {
   it.each([
     ['Apps in Toss', 'VITE_POMO_IS_APPS_IN_TOSS'],
     ['desktop', 'VITE_POMO_IS_DESKTOP'],
+    ['Android/iOS mobile', 'VITE_POMO_IS_MOBILE'],
   ] as const)(
     'should use the Pomo API origin for %s preview access and audio',
     async (_name, key) => {
+      vi.stubEnv('DEV', false)
       vi.stubEnv(key, 'true')
       vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
       sessionMocks.readStoredAppSession.mockResolvedValue('app-token')
@@ -74,15 +78,53 @@ describe('loadTrackPreviewSource', () => {
     },
   )
 
-  it('should load a signed bounded preview Blob for a logged-in user without entitlement', async () => {
+  it.each(['', 'true'])(
+    'should load a same-origin preview in development with mobile=%s',
+    async (mobile) => {
+      vi.stubEnv('DEV', true)
+      vi.stubEnv('VITE_POMO_IS_MOBILE', mobile)
+      const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(
+          Response.json({
+            mode: 'preview',
+            url: `/api/music/tracks/${TRACK_ID}/preview?asset=${ASSET_ID}&token=preview-token`,
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response('preview', {
+            headers: {'Content-Length': '7', 'Content-Type': 'audio/mpeg'},
+          }),
+        )
+      vi.stubGlobal('fetch', fetcher)
+
+      await expect(loadTrackPreviewSource(TRACK_ID)).resolves.toMatchObject({
+        ok: true,
+        source: 'blob:pomo-track-preview',
+      })
+      expect(fetcher).toHaveBeenNthCalledWith(1, `/api/music/tracks/${TRACK_ID}/access`, {
+        cache: 'no-store',
+        credentials: 'include',
+        headers: undefined,
+      })
+      expect(fetcher).toHaveBeenNthCalledWith(
+        2,
+        `/api/music/tracks/${TRACK_ID}/preview?asset=${ASSET_ID}&token=preview-token`,
+      )
+    },
+  )
+
+  it.each([
+    {accepted: true, origin: 'http://127.0.0.1:1425'},
+    {accepted: false, origin: 'https://www.pomofi.io'},
+    {accepted: false, origin: 'https://attacker.example'},
+  ])('should validate mobile development preview origin $origin', async ({origin, accepted}) => {
+    vi.stubEnv('DEV', true)
+    vi.stubEnv('VITE_POMO_IS_MOBILE', 'true')
+    const source = `${origin}/api/music/tracks/${TRACK_ID}/preview?asset=${ASSET_ID}&token=preview-token`
     const fetcher = vi
       .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        Response.json({
-          mode: 'preview',
-          url: `/api/music/tracks/${TRACK_ID}/preview?asset=${ASSET_ID}&token=preview-token`,
-        }),
-      )
+      .mockResolvedValueOnce(Response.json({mode: 'preview', url: source}))
       .mockResolvedValueOnce(
         new Response('preview', {
           headers: {'Content-Length': '7', 'Content-Type': 'audio/mpeg'},
@@ -90,19 +132,14 @@ describe('loadTrackPreviewSource', () => {
       )
     vi.stubGlobal('fetch', fetcher)
 
-    await expect(loadTrackPreviewSource(TRACK_ID)).resolves.toMatchObject({
-      ok: true,
-      source: 'blob:pomo-track-preview',
-    })
-    expect(fetcher).toHaveBeenNthCalledWith(1, `/api/music/tracks/${TRACK_ID}/access`, {
-      cache: 'no-store',
-      credentials: 'include',
-      headers: undefined,
-    })
-    expect(fetcher).toHaveBeenNthCalledWith(
-      2,
-      `/api/music/tracks/${TRACK_ID}/preview?asset=${ASSET_ID}&token=preview-token`,
-    )
+    if (accepted) {
+      await expect(loadTrackPreviewSource(TRACK_ID)).resolves.toMatchObject({ok: true})
+      expect(fetcher).toHaveBeenNthCalledWith(2, source)
+      return
+    }
+
+    await expect(loadTrackPreviewSource(TRACK_ID)).rejects.toThrow('invalid format')
+    expect(fetcher).toHaveBeenCalledOnce()
   })
 
   it('should report that login is required for an anonymous user', async () => {

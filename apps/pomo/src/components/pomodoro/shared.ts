@@ -8,9 +8,9 @@ const COMPACT_ACTION = cx(
 
 export const CLASSES = {
   pomodoro: cx(
-    'pomo-pomodoro absolute top-[calc(1rem_+_var(--pomo-safe-area-inset-top))]',
+    'pomo-pomodoro absolute top-safe-top-mobile',
     'left-[calc(1rem_+_var(--pomo-safe-area-inset-left))]',
-    'lg:top-[calc(1.5rem_+_var(--pomo-safe-area-inset-top))]',
+    'lg:top-safe-top',
     'lg:left-[1.75rem] pointer-events-auto',
   ),
   pomodoroActionIcon: 'pomo-pomodoro__action-icon w-4 h-4',

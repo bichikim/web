@@ -57,6 +57,16 @@ describe('PStudio', () => {
     expect(screen.getByRole('img')).not.toHaveStyle({paddingTop: '24px'})
   })
 
+  it('should preserve the CSS safe area when no native desktop inset is measured', () => {
+    configureStudio({entrySession: true})
+    vi.mocked(useDesktopSafeAreaTop).mockReturnValue(() => 0)
+
+    renderStudio()
+
+    const studio = screen.getByLabelText('Pomo')
+    expect(studio.style.getPropertyValue('--pomo-safe-area-inset-top')).toBe('')
+  })
+
   it('should suspend the screen saver only while the window is the desktop background', () => {
     const {setDesktopMode} = configureStudio({entrySession: true, isScreenSaverActive: true})
 

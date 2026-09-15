@@ -28,6 +28,7 @@
     "prepare-build": "pnpm run i18n:compile",
     "preview:apps-in-toss-ssg": "vite preview --config preview.config.ts --host --outDir .output/public",
     "preview:web": "node .output/server/index.mjs",
+    "tauri": "tauri",
     "test:e2e": "playwright test",
     "test:e2e:apps-in-toss": "playwright test --project=apps-in-toss",
     "test:e2e:install": "playwright install chromium",
