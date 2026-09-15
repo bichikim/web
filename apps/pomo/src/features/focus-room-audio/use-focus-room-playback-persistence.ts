@@ -14,22 +14,42 @@ export interface UsePPlaybackPersistenceProps {
 export interface PPlaybackPersistence {
   readonly applyPendingPosition: () => PPlaybackState | null
   readonly persistCurrentPlayback: () => void
+  readonly persistPlaybackError: () => void
   readonly persistPlaybackIntent: (isPlaying: boolean) => void
+  readonly persistSeekedPlayback: () => void
   readonly persistStoppedPlayback: () => void
   readonly persistPlaybackProgress: () => void
   readonly setPendingPosition: (state: PPlaybackState | null) => void
   readonly writePlayback: (state: PPlaybackState) => void
 }
 
-const writePlayback = (state: PPlaybackState) => {
+interface RestoredPlaybackSeek {
+  readonly positionSeconds: number
+  readonly trackId: string
+}
+
+const writeStoredPlayback = (state: PPlaybackState) => {
   writePPlayback(state).catch(() => undefined)
 }
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- Playback persistence coordinates restore, seek and stop lifecycles behind one consumer contract.
 export const usePPlaybackPersistence = (
   props: UsePPlaybackPersistenceProps,
 ): PPlaybackPersistence => {
   let pendingPosition: PPlaybackState | null = null
+  let pendingRestoredPlay: PPlaybackState | null = null
+  let pendingRestoredSeek: RestoredPlaybackSeek | null = null
   let lastProgressSavedAt = 0
+
+  const clearRestoredPlayback = () => {
+    pendingRestoredPlay = null
+    pendingRestoredSeek = null
+  }
+
+  const writePlayback = (state: PPlaybackState) => {
+    clearRestoredPlayback()
+    writeStoredPlayback(state)
+  }
 
   const setPendingPosition = (state: PPlaybackState | null) => {
     pendingPosition = state
@@ -67,10 +87,77 @@ export const usePPlaybackPersistence = (
     })
   }
 
-  const persistCurrentPlayback = () => persistPlayback(props.isPlaying(), false)
-  const persistPlaybackIntent = (isPlaying: boolean) => persistPlayback(isPlaying, true)
+  const persistRestoredPlayback = () => {
+    const pendingPlay = pendingRestoredPlay
+    if (pendingPlay === null) {
+      return false
+    }
+
+    // oxlint-disable-next-line solid/reactivity -- Called from media events to read their latest state.
+    const track = props.currentTrack()
+    if (track?.id !== pendingPlay.trackId) {
+      clearRestoredPlayback()
+      return false
+    }
+
+    const positionSeconds = props.getAudioElement()?.currentTime
+    if (positionSeconds === undefined || !Number.isFinite(positionSeconds)) {
+      return true
+    }
+
+    const updatedPlayback = {...pendingPlay, positionSeconds: Math.max(0, positionSeconds)}
+    pendingRestoredPlay = updatedPlayback
+    writeStoredPlayback(updatedPlayback)
+    return true
+  }
+
+  const shouldDeferRestoredSeekPersistence = () => {
+    const pendingSeek = pendingRestoredSeek
+    if (pendingSeek === null) {
+      return false
+    }
+
+    // oxlint-disable-next-line solid/reactivity -- Called from media events to read their latest state.
+    const track = props.currentTrack()
+    const positionSeconds = props.getAudioElement()?.currentTime
+    if (track?.id === pendingSeek.trackId && positionSeconds === pendingSeek.positionSeconds) {
+      return true
+    }
+
+    pendingRestoredSeek = null
+    return false
+  }
+
+  const persistCurrentPlayback = () => {
+    if (shouldDeferRestoredSeekPersistence()) {
+      return
+    }
+
+    if (persistRestoredPlayback()) {
+      return
+    }
+
+    persistPlayback(props.isPlaying(), false)
+  }
+  const persistPlaybackError = () => {
+    clearRestoredPlayback()
+    persistPlayback(false, true)
+  }
+  const persistPlaybackIntent = (isPlaying: boolean) => {
+    clearRestoredPlayback()
+    persistPlayback(isPlaying, true)
+  }
+
+  const persistSeekedPlayback = () => {
+    if (shouldDeferRestoredSeekPersistence()) {
+      return
+    }
+
+    persistCurrentPlayback()
+  }
 
   const persistStoppedPlayback = () => {
+    clearRestoredPlayback()
     if (pendingPosition !== null) {
       writePlayback({...pendingPosition, isPlaying: false})
       pendingPosition = null
@@ -104,7 +191,9 @@ export const usePPlaybackPersistence = (
       audioElement.currentTime = positionSeconds
       pendingPosition = null
       const restoredPlayback = {...playback, positionSeconds}
-      writePlayback(restoredPlayback)
+      writeStoredPlayback(restoredPlayback)
+      pendingRestoredPlay = restoredPlayback.isPlaying ? restoredPlayback : null
+      pendingRestoredSeek = {positionSeconds, trackId: restoredPlayback.trackId}
       return restoredPlayback
     } catch {
       // Metadata may not be ready yet; loadedmetadata will retry the restoration.
@@ -126,8 +215,10 @@ export const usePPlaybackPersistence = (
   return {
     applyPendingPosition,
     persistCurrentPlayback,
+    persistPlaybackError,
     persistPlaybackIntent,
     persistPlaybackProgress,
+    persistSeekedPlayback,
     persistStoppedPlayback,
     setPendingPosition,
     writePlayback,
