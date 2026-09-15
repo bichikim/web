@@ -19,6 +19,7 @@ export interface UsePlaylistRestorationProps {
   readonly playbackRevision: Accessor<number>
   readonly queueRevision: Accessor<number>
   readonly onLoad: (loaded: PlaylistLoad) => readonly PTrack[]
+  readonly onLoadSettled: () => void
   readonly onRestore: (tracks: readonly PTrack[], playback: PPlaybackState | null) => void
   readonly onError: (error: unknown) => void
 }
@@ -67,6 +68,7 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
           defaultTracks: source.defaultTracks,
           queueChanged: props.queueRevision() !== restoreQueueRevision,
         })
+        props.onLoadSettled()
         return restorePPlayerState({
           canRestore: () =>
             !disposed &&
@@ -79,7 +81,12 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
           tracks: source.tracks,
         })
       })
-      .catch(handleError)
+      .catch((error: unknown) => {
+        if (!disposed) {
+          props.onLoadSettled()
+        }
+        handleError(error)
+      })
   })
 
   onCleanup(() => {
