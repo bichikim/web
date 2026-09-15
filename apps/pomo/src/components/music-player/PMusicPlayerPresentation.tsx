@@ -28,6 +28,7 @@ export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
       currentTrack={player.currentTrack()}
       expanded={expanded()}
       isPlaying={player.isPlaying()}
+      isPlaylistLoading={player.isPlaylistLoading()}
       levels={player.levels()}
       onAlbumAdd={player.addTracksToQueue}
       onAlbumClear={player.canEditQueue() ? player.clearTrackQueue : undefined}

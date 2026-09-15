@@ -80,6 +80,7 @@ interface RenderMusicPlayerViewOptions {
   readonly currentTrack?: PTrack | null
   readonly expanded?: boolean
   readonly isPlaying?: boolean
+  readonly isPlaylistLoading?: boolean
   readonly levels?: readonly number[]
   readonly onAlbumAdd?: (tracks: readonly PTrack[]) => void
   readonly onAlbumClear?: () => void
@@ -106,6 +107,7 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
         }
         expanded={options.expanded ?? true}
         isPlaying={options.isPlaying ?? false}
+        isPlaylistLoading={options.isPlaylistLoading ?? false}
         levels={options.levels ?? []}
         onAlbumAdd={options.onAlbumAdd}
         onAlbumClear={options.onAlbumClear}

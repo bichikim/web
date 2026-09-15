@@ -340,6 +340,52 @@ describe('PMusicPlayerContent control paths', () => {
     expect(audio.play).toHaveBeenCalled()
   })
 
+  it('should expose playlist preparation only while the uncontrolled source loads', async () => {
+    const source = Promise.withResolvers<{
+      readonly defaultTracks: readonly PTrack[]
+      readonly tracks: readonly PTrack[]
+    }>()
+    featureMocks.loadPTrackQueueSource.mockReturnValueOnce(source.promise)
+
+    render(() => <PMusicPlayerContent />)
+
+    expect(latestViewProps().isPlaylistLoading).toBe(true)
+
+    source.resolve({defaultTracks: TRACKS, tracks: TRACKS})
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(latestViewProps().isPlaylistLoading).toBe(false)
+
+    cleanup()
+    render(() => <PMusicPlayerContent tracks={[]} />)
+
+    expect(latestViewProps().isPlaylistLoading).toBe(false)
+  })
+
+  it('should keep playlist preparation visible when stored queue loading fails first', async () => {
+    const source = Promise.withResolvers<{
+      readonly defaultTracks: readonly PTrack[]
+      readonly tracks: readonly PTrack[]
+    }>()
+    const storageFailure = new Error('Stored playlist unavailable')
+    featureMocks.loadPTrackQueueSource.mockReturnValueOnce(source.promise)
+    featureMocks.readPPlaylist.mockRejectedValueOnce(storageFailure)
+    const onError = vi.fn()
+
+    render(() => <PMusicPlayerContent onError={onError} />)
+    await Promise.resolve()
+
+    expect(latestViewProps().isPlaylistLoading).toBe(true)
+    expect(onError).toHaveBeenCalledWith(storageFailure)
+
+    source.resolve({defaultTracks: TRACKS, tracks: TRACKS})
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(latestViewProps().isPlaylistLoading).toBe(false)
+  })
+
   it('should ignore abort errors, current errors after cleanup, and obsolete play failures', async () => {
     featureMocks.applyPendingPosition.mockReturnValue({
       isPlaying: true,
