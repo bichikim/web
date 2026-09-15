@@ -70,7 +70,7 @@ test('should unmount player and Pomodoro through general settings and restore th
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   const timer = page.locator('[role="group"][aria-label="포모도로 간편 조작"]')
-  const player = page.locator('.pomo-player')
+  const player = page.locator('.pomo-player-stage')
   await expect(timer).toBeVisible()
   await expect(player).toBeVisible()
   await page.getByRole('button', {exact: true, name: '집중 시작'}).click()

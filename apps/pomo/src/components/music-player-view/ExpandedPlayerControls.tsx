@@ -11,7 +11,7 @@ import type {MusicPlayerViewProps} from './types'
 import {VolumeControl} from './VolumeControl'
 
 const SKIP_BUTTON_CLASSES = cx(
-  'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
+  'grid size-10 shrink-0 place-items-center rounded-full transition',
   'disabled:opacity-35 player-compact:size-9',
 )
 
@@ -39,7 +39,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
   return (
     <div
       class={cx(
-        'pomo-player__expanded-controls grid min-w-0 flex-none grid-cols-[1fr_auto_1fr]',
+        'grid min-w-0 flex-none grid-cols-[1fr_auto_1fr]',
         'items-center gap-2 px-1',
         'player-compact:grid-cols-[max-content_max-content_max-content]',
         'player-compact:justify-evenly',
@@ -56,7 +56,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         />
       </div>
 
-      <div class="pomo-player__transport flex items-center justify-center gap-1">
+      <div class="flex items-center justify-center gap-1">
         <button
           ref={previousTooltip.setTarget}
           aria-label={m.player_previous()}
@@ -83,8 +83,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         />
 
         <PScribbleCircleControl
-          class="pomo-player__play-scribble-frame pomo-player__transport-play-frame
-            player-compact:hidden"
+          class="player-compact:hidden"
           enabled={props.sceneStyle === 'scribble'}
         >
           <media-play-button
@@ -141,7 +140,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         <PTooltip target={nextTooltip.target()} show={nextTooltip.show()} text={m.player_next()} />
       </div>
 
-      <div class="pomo-player__libraries flex min-w-0 items-center justify-end">
+      <div class="flex min-w-0 items-center justify-end">
         <VolumeControl sceneStyle={props.sceneStyle} />
         {props.actions}
       </div>

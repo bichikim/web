@@ -200,9 +200,13 @@ it('should render saved dialogues when a feed runtime is available', () => {
 
 it('should apply compact spacing to feed settings groups', () => {
   const result = renderSettings()
-  const section = result.container.querySelector('.pomo-feed-settings') as HTMLElement
-  const form = result.container.querySelector('.pomo-feed-settings__form') as HTMLElement
-  const list = result.container.querySelector('.pomo-feed-settings__list') as HTMLElement
+  const section = result.container.firstElementChild
+  const form = screen.getByRole('textbox', {name: '피드 주소'}).closest('form')
+  const list = screen.getByRole('list', {name: '추천 피드'})
+
+  if (!(section instanceof HTMLElement) || !(form instanceof HTMLFormElement)) {
+    throw new TypeError('Expected the feed settings layout to be rendered')
+  }
 
   expect(section.classList.contains('settings-compact:gap-4')).toBe(true)
   expect(form.classList.contains('settings-compact:gap-2')).toBe(true)

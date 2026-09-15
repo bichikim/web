@@ -27,7 +27,7 @@ const CLASSES = {
   setActions: 'flex shrink-0 items-center gap-2',
   setLanguage: cx(
     'shrink-0 rounded-full bg-secondary-soft px-2.5 py-1',
-    'text-modal-detail font-700 text-muted-foreground',
+    'text-sm leading-5 font-700 text-muted-foreground',
   ),
   tab: cx(
     'inline-flex min-h-10 cursor-pointer items-center justify-center rounded-control',

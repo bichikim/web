@@ -92,21 +92,18 @@ it('should show segment progress and stop the current dialogue playback', () => 
     'contents',
   )
 
-  const activeBubble = result.container.querySelector('.pomo-dialogue-bubble')
+  const activeStatus = screen.getByRole('status')
+  const activeBubble = activeStatus.parentElement
 
   expect(activeBubble?.classList.contains('border-highlight')).toBe(true)
   expect(activeBubble?.classList.contains('bg-surface-interactive')).toBe(true)
   expect(screen.getByRole('img', {name: '총 3개 중 2번째 대사 읽는 중'})).toBeDefined()
-  expect(result.container.querySelector('.pomo-dialogue-bubble__speaker-group')).toHaveClass(
-    'gap-3.5',
-  )
+  expect(activeBubble?.firstElementChild?.firstElementChild).toHaveClass('gap-3.5')
   expect(screen.getByRole('img', {name: '밝음·즐거움 감정'}).classList).toContain('scale-[1.5556]')
   expect(screen.queryByText('Pomo')).toBeNull()
   expect(screen.getByRole('status').textContent).toBe('집중을 시작해 볼까요? AI 음성')
-  expect(screen.getByText('AI 음성').getAttribute('data-pomo-tag')).toBe('')
-  expect(
-    result.container.querySelectorAll('.pomo-dialogue-bubble__progress-dot[data-complete]'),
-  ).toHaveLength(2)
+  expect(screen.getByText('AI 음성').tagName).toBe('SPAN')
+  expect(activeStatus.parentElement?.querySelectorAll('[data-complete]')).toHaveLength(2)
   fireEvent.click(screen.getByRole('button', {name: '대화 건너뛰기'}))
   expect(skipDialoguePlayback).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', {name: '3개 모두 중지'}))
@@ -141,26 +138,23 @@ it('should replace the dialogue border only in scribble style', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents({activeText: () => '하찮은 대화'}))
 
   const originalResult = render(() => <PDialoguePlayer />)
-  const originalBubble = originalResult.container.querySelector('.pomo-dialogue-bubble')
+  const originalStatus = screen.getByRole('status')
+  const originalBubble = originalStatus.parentElement
 
-  expect(
-    originalResult.container.querySelector('.pomo-dialogue-bubble__scribble-border'),
-  ).toBeNull()
+  expect(originalBubble?.parentElement?.parentElement?.querySelector('svg')).toBeNull()
   expect(originalBubble?.classList).toContain('rounded-2xl')
   expect(originalBubble?.classList).toContain('border')
 
   originalResult.unmount()
-  const scribbleResult = render(() => <PDialoguePlayer sceneStyle="scribble" />)
-  const scribbleBubble = scribbleResult.container.querySelector('.pomo-dialogue-bubble')
-  const scribbleBorder = scribbleResult.container.querySelector(
-    '.pomo-dialogue-bubble__scribble-border',
-  )
-  const scribbleSurface = scribbleResult.container.querySelector(
-    '.pomo-dialogue-bubble-frame .pomo-scribble-panel__surface',
-  ) as HTMLElement
+  render(() => <PDialoguePlayer sceneStyle="scribble" />)
+  const scribbleStatus = screen.getByRole('status')
+  const scribbleBubble = scribbleStatus.parentElement
+  const scribbleSurface = scribbleBubble?.parentElement as HTMLElement
+  const scribbleFrame = scribbleSurface.parentElement as HTMLElement
+  const scribbleBorder = scribbleFrame.querySelector('svg')
 
   expect(scribbleBorder).toBeInstanceOf(SVGElement)
-  expect(scribbleBorder?.parentElement?.classList).toContain('pomo-dialogue-bubble-frame')
+  expect(scribbleFrame.classList).toContain('pomo-dialogue-bubble-frame')
   expect(scribbleSurface.classList).toContain('pomo-scribble-mask')
   expect(scribbleSurface).not.toHaveAttribute('style')
   expect(scribbleSurface.contains(scribbleBorder)).toBe(false)
@@ -201,19 +195,19 @@ it('should keep one dialogue container between queued dialogue items', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents({activeText, scheduledDialogueCount}))
 
   const result = render(() => <PDialoguePlayer />)
-  const dialogueBubble = result.container.querySelector('.pomo-dialogue-bubble')
+  const dialogueBubble = screen.getByRole('status').parentElement
 
   setActiveText(null)
-  expect(result.container.querySelector('.pomo-dialogue-bubble')).toBe(dialogueBubble)
+  expect(screen.getByRole('status').parentElement).toBe(dialogueBubble)
   expect(screen.getByRole('status').textContent).toBe('첫 번째 대화 AI 음성')
 
   setActiveText('두 번째 대화')
-  expect(result.container.querySelector('.pomo-dialogue-bubble')).toBe(dialogueBubble)
+  expect(screen.getByRole('status').parentElement).toBe(dialogueBubble)
   expect(screen.getByRole('status').textContent).toBe('두 번째 대화 AI 음성')
 
   setActiveText(null)
   setScheduledDialogueCount(0)
-  expect(result.container.querySelector('.pomo-dialogue-bubble')).toBeNull()
+  expect(screen.queryByRole('status')).toBeNull()
 })
 
 it('should retry blocked playback from the static focus surface', () => {

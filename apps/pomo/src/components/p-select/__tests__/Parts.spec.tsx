@@ -75,7 +75,9 @@ it('should render labels, single and multiple values, icons, and clearing contro
   expect(screen.getByText('숨김')).toHaveClass('sr-only')
   expect(screen.getAllByText('하나')).toHaveLength(2)
   expect(screen.getByText('2개 선택됨')).toBeInTheDocument()
-  expect(result.container.querySelector('.resolved-icon')).toHaveClass('size-6')
+  expect(
+    screen.getByRole('button', {name: '아이콘 선택'}).querySelector('span[aria-hidden="true"]'),
+  ).toHaveClass('resolved-icon', 'size-6')
   fireEvent.click(screen.getByRole('button', {name: '모두 지우기'}))
   expect(onClear).toHaveBeenCalledOnce()
 })
@@ -110,6 +112,8 @@ it('should hide duplicate labels, preserve icon fallbacks, and disable clearing 
 
   expect(screen.queryByText('숨은 라벨')).toBeNull()
   expect(screen.getByText('스크린 리더 라벨')).toHaveClass('sr-only')
-  expect(result.container.querySelector('.i-tabler-moon')).not.toBeNull()
+  expect(
+    screen.getByRole('button', {name: '숨은 선택'}).querySelector('span[aria-hidden="true"]'),
+  ).toHaveClass('i-tabler-moon')
   expect(screen.getByRole('button', {name: '비활성 지우기'})).toBeDisabled()
 })

@@ -12,7 +12,7 @@ it('should omit the scribble circle when disabled', () => {
     </PScribbleCircleControl>
   ))
 
-  expect(result.container.querySelector('.pomo-scribble-circle-border')).toBeNull()
+  expect(result.container.querySelector('svg')).toBeNull()
 })
 
 it('should draw a circular scribble that follows the control size when enabled', () => {
@@ -21,13 +21,12 @@ it('should draw a circular scribble that follows the control size when enabled',
       <button type="button">제어</button>
     </PScribbleCircleControl>
   ))
-  const wrapper = result.container.querySelector('.pomo-scribble-circle-control')
-  const frame = result.container.querySelector<SVGElement>('.pomo-scribble-circle-border')
+  const wrapper = result.container.firstElementChild
+  const frame = wrapper?.lastElementChild
   const paths = frame?.querySelectorAll('path')
 
   expect(wrapper?.lastElementChild).toBe(frame)
-  expect(frame?.classList.contains('h-full')).toBe(true)
-  expect(frame?.classList.contains('w-full')).toBe(true)
+  expect(frame).toHaveClass('h-full', 'w-full')
   expect(frame?.getAttribute('preserveAspectRatio')).toBe('none')
   expect(paths).toHaveLength(2)
   expect(paths?.[0]?.getAttribute('stroke-width')).toBe('6')

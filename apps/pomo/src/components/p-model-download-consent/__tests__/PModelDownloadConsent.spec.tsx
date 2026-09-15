@@ -34,7 +34,7 @@ it('should explain download size and possible network charges before confirmatio
   expect(dialog.textContent).not.toContain('브라우저')
   expect(dialog.querySelectorAll('p')).toHaveLength(2)
   expect(dialog.querySelectorAll('button')).toHaveLength(2)
-  expect(dialog.querySelector('.i-tabler-download')).toBeNull()
+  expect(dialog.querySelector('span[aria-hidden="true"]')).toBeNull()
   expect(vi.mocked(PModal).mock.lastCall?.[0].closeButtonVisibility).toBe('hidden')
   vi.mocked(PModal).mock.lastCall?.[0].onOpenChange?.(true)
   expect(onCancel).not.toHaveBeenCalled()

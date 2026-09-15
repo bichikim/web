@@ -85,7 +85,6 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
           <PScribblePanel
             class="pomo-dialogue-bubble-frame flex w-full min-h-0 max-h-full [flex:0_1_auto]"
             enabled={props.sceneStyle === 'scribble'}
-            frameClass="pomo-dialogue-bubble__scribble-border"
           >
             <div
               class={cx(

@@ -30,7 +30,7 @@ vi.mock('../p-album-library/PAlbumLibrary', () => ({
     <>
       <button
         aria-label="앨범 추가"
-        class="pomo-player__utility relative grid size-10 shrink-0 place-items-center rounded-full"
+        class="relative grid size-10 shrink-0 place-items-center rounded-full"
         data-player-utility="album"
         onClick={() => props.onAddTracks(albumLibraryMocks.addedTracks)}
         type="button"
@@ -129,9 +129,29 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
     </PTooltipProvider>
   ))
 
+export const getPlayerShell = (container: HTMLElement) => {
+  const shell = getPlayerFrame(container).firstElementChild
+
+  if (!(shell instanceof HTMLElement)) {
+    throw new TypeError('Expected the Pomo media controller to be rendered')
+  }
+
+  return shell
+}
+
+export const getPlayerFrame = (container: HTMLElement) => {
+  const frame = container.firstElementChild?.firstElementChild
+
+  if (!(frame instanceof HTMLElement)) {
+    throw new TypeError('Expected the Pomo player frame to be rendered')
+  }
+
+  return frame
+}
+
 export const getProgressRanges = (container: HTMLElement) => {
-  const collapsedRange = container.querySelector('.pomo-player__progress--collapsed')
-  const expandedRange = container.querySelector('.pomo-player__progress--expanded')
+  const ranges = container.querySelectorAll<HTMLElement>('media-time-range')
+  const [collapsedRange, expandedRange] = ranges
 
   if (!(collapsedRange instanceof HTMLElement) || !(expandedRange instanceof HTMLElement)) {
     throw new TypeError('Expected both Pomo progress ranges to be rendered')

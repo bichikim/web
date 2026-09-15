@@ -11,39 +11,29 @@ export const CLASSES = {
     '[&_p]:leading-[1.65] [&_p]:[overscroll-behavior:contain]',
     '[&_p]:[scrollbar-color:rgb(255_250_241_/_24%)_transparent] [&_p]:[scrollbar-width:thin]',
   ),
-  dialogueBubbleActions: 'pomo-dialogue-bubble__actions inline-flex items-center gap-1',
-  dialogueBubbleHeader: 'pomo-dialogue-bubble__header flex items-center justify-between gap-3',
-  dialogueBubbleMessage: cx(
-    'pomo-dialogue-bubble--message grid grid-rows-[auto_minmax(0,_1fr)]',
-    'gap-y-2',
-  ),
-  dialogueBubbleMood:
-    'pomo-dialogue-bubble__mood block w-9 h-9 flex-none scale-[1.5556] object-contain',
+  dialogueBubbleActions: 'inline-flex items-center gap-1',
+  dialogueBubbleHeader: 'flex items-center justify-between gap-3',
+  dialogueBubbleMessage: cx('grid grid-rows-[auto_minmax(0,_1fr)]', 'gap-y-2'),
+  dialogueBubbleMood: 'block w-9 h-9 flex-none scale-[1.5556] object-contain',
   dialogueBubblePlay: cx(
-    'pomo-dialogue-bubble--play flex cursor-pointer items-center gap-3',
+    'flex cursor-pointer items-center gap-3',
     '[font:inherit] text-left [&_>_span:last-child]:grid',
     '[&_>_span:last-child]:gap-1 [&_strong]:text-lg',
     '[&_small]:text-muted-foreground [&_small]:text-sm [&_small]:leading-[1.5]',
   ),
   dialogueBubblePlayIcon: cx(
-    'pomo-dialogue-bubble__play-icon grid w-9 h-9 flex-none place-items-center rounded-full',
+    'grid w-9 h-9 flex-none place-items-center rounded-full',
     'bg-secondary-soft text-highlight',
   ),
-  dialogueBubbleProgress: cx(
-    'pomo-dialogue-bubble__progress inline-flex flex-wrap items-center',
-    'gap-1',
-  ),
+  dialogueBubbleProgress: cx('inline-flex flex-wrap items-center', 'gap-1'),
   dialogueBubbleProgressDot: cx(
-    'pomo-dialogue-bubble__progress-dot w-1.5 h-1.5 box-border flex-none',
+    'w-1.5 h-1.5 box-border flex-none',
     'border border-solid border-border-hover rounded-full bg-transparent',
     '[&[data-complete]]:border-highlight [&[data-complete]]:bg-highlight',
   ),
-  dialogueBubbleSkip: 'pomo-dialogue-bubble__skip flex-none whitespace-nowrap',
-  dialogueBubbleSpeakerGroup: cx(
-    'pomo-dialogue-bubble__speaker-group inline-flex min-w-0 items-center',
-    'gap-3.5',
-  ),
-  dialogueBubbleStop: 'pomo-dialogue-bubble__stop flex-none whitespace-nowrap',
+  dialogueBubbleSkip: 'flex-none whitespace-nowrap',
+  dialogueBubbleSpeakerGroup: cx('inline-flex min-w-0 items-center', 'gap-3.5'),
+  dialogueBubbleStop: 'flex-none whitespace-nowrap',
 } as const
 
 export const getDialogueBubbleShapeClasses = (sceneStyle?: PSceneStyle) =>

@@ -10,7 +10,7 @@ test('should focus the nested memo editor and restore focus when closed', async 
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   const trigger = page.getByRole('button', {exact: true, name: '기억보조'})
   await trigger.click()
   const parent = page.getByRole('dialog', {exact: true, name: 'Pomofi 기억 보조'})

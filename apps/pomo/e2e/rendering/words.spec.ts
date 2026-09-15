@@ -52,7 +52,7 @@ test('should persist saved words, memorized filters, and deletion after reload',
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   const dialog = await openWords(page)
   const input = dialog.getByRole('textbox', {name: '모르는 단어'})
   await input.fill('Home,home,wave,asset')

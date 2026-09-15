@@ -151,7 +151,7 @@ export const LanguageLearningWords = () => {
   }
 
   return (
-    <section class="pomo-learning-words grid gap-4.5 settings-compact:gap-4">
+    <section class="grid gap-4.5 settings-compact:gap-4">
       <LanguageLearningLanguageSelect
         class="w-full"
         onChange={handleLanguageChange}

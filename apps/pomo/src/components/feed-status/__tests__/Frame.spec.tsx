@@ -11,7 +11,7 @@ it('should match the music player maximum width', () => {
       <span>피드 상태</span>
     </FeedStatusFrame>
   ))
-  const frame = container.querySelector('.pomo-feed-status-frame')
+  const frame = container.firstElementChild
 
   expect(frame).toHaveClass('w-[min(29rem,_100%)]')
   expect(frame).not.toHaveClass('w-[min(36rem,_100%)]')

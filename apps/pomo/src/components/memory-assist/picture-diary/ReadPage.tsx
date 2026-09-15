@@ -16,7 +16,7 @@ const DELETE_CLASSES =
 const ACTION_CLASSES =
   'box-border inline-flex min-w-8 min-h-8 cursor-pointer items-center justify-center ' +
   'border border-solid border-transparent rounded-[999rem] outline-none bg-transparent ' +
-  '[color:rgb(var(--picture-diary-muted-ink))] [font:inherit] text-modal-detail font-700 leading-none ' +
+  '[color:rgb(var(--picture-diary-muted-ink))] [font:inherit] text-sm leading-5 font-700 leading-none ' +
   'p-[0.4rem] whitespace-nowrap [transition:color_160ms_ease,border-color_160ms_ease,background-color_160ms_ease] ' +
   'hover:[background:rgb(var(--picture-diary-rule)/8%)] hover:[color:rgb(var(--picture-diary-ink))] ' +
   'focus-visible:[box-shadow:0_0_0_0.125rem_rgb(var(--pomo-color-primary-channels)/72%)]'

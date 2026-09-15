@@ -20,7 +20,7 @@ for (const freeze of [false, true]) {
     await page.keyboard.press('Control')
     await expect(page.getByRole('tooltip')).toBeVisible()
     await page.waitForFunction(
-      () => document.querySelector('dialog.pomo-screen-saver')?.hasAttribute('open'),
+      () => document.querySelector('dialog[aria-label="스크린 세이버"]')?.hasAttribute('open'),
       null,
       {polling: 'raf', timeout: 8000},
     )
@@ -46,7 +46,7 @@ for (const input of ['pointer', 'touch', 'Escape'] as const) {
     await page.getByRole('option', {exact: true, name: '5초 후'}).click()
     const close = settings.getByRole('button', {exact: true, name: '닫기'})
     await close.focus()
-    const saver = page.locator('dialog.pomo-screen-saver')
+    const saver = page.getByRole('dialog', {exact: true, name: '스크린 세이버'})
     await expect(saver).toBeVisible({timeout: 8000})
     switch (input) {
       case 'pointer':
@@ -158,7 +158,7 @@ test('should persist screen saver settings and support keyboard and pointer dism
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   const settings = page.getByRole('dialog', {name: 'Pomofi 설정'})
   const trigger = page.getByRole('button', {exact: true, name: '설정'})
   await trigger.click()
@@ -170,7 +170,7 @@ test('should persist screen saver settings and support keyboard and pointer dism
 
   await page.reload()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   await trigger.click()
   await expect(delay).toContainText('1분 후')
   await settings.getByRole('button', {exact: true, name: '닫기'}).click()

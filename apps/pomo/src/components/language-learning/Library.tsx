@@ -34,7 +34,7 @@ export const LanguageLearningLibrary = (props: LanguageLearningLibraryProps) => 
   )
 
   return (
-    <section class="pomo-learning-library grid gap-4.5 settings-compact:gap-4">
+    <section class="grid gap-4.5 settings-compact:gap-4">
       <div class="flex flex-col items-stretch gap-3 md:flex-row md:items-end md:justify-between">
         <LanguageLearningLanguageSelect
           class="min-w-40"

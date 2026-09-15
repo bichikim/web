@@ -405,7 +405,7 @@ export const PStudio = () => {
   return (
     <section
       aria-label="Pomo"
-      class="pomo-studio relative h-dvh w-full overflow-hidden"
+      class="relative h-dvh w-full overflow-hidden"
       classList={{
         'pointer-events-none': isDesktopWallpaper(),
         'rounded-panel': isDesktopWidget(),

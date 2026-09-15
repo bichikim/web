@@ -31,13 +31,13 @@ export const VolumeControl = (props: VolumeControlProps) => {
   }
 
   return (
-    <div class="pomo-player__volume-group flex min-w-0 items-center justify-end gap-0">
+    <div class="flex min-w-0 items-center justify-end gap-0">
       <button
         aria-controls={popoverId}
         aria-haspopup="dialog"
         aria-label={m.player_volume()}
         class={cx(
-          'pomo-player__volume-popover-trigger grid size-9 shrink-0 place-items-center',
+          'grid size-9 shrink-0 place-items-center',
           'rounded-full text-muted-foreground transition',
           'hover:bg-secondary-soft hover:text-foreground',
           '[anchor-name:var(--pomo-volume-popover-anchor)]',
@@ -53,7 +53,7 @@ export const VolumeControl = (props: VolumeControlProps) => {
       <div
         aria-label={m.player_volume()}
         class={cx(
-          'pomo-player__volume-popover fixed inset-auto m-0 mt-1 box-border',
+          'fixed inset-auto m-0 mt-1 box-border',
           'border border-solid border-border rounded-control bg-surface-interactive p-2',
           'text-foreground shadow-panel',
           '[position-area:bottom]',

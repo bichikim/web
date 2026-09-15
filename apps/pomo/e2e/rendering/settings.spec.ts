@@ -42,7 +42,7 @@ const openSettings = async (page: Page) => {
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   await page.getByRole('button', {exact: true, name: '설정'}).click()
   const dialog = page.getByRole('dialog', {name: 'Pomofi 설정'})
   await expect(dialog.getByRole('tab', {exact: true, name: '일반'})).toHaveAttribute(

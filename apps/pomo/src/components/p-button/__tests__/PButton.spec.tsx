@@ -20,8 +20,8 @@ describe('PButton', () => {
       </PButton>
     ))
     const button = result.getByRole('button', {name: '입장하기'})
-    const image = result.container.querySelector('[data-pomo-button-leading-image]')
-    const trailingIcon = result.container.querySelector('[data-pomo-button-trailing-icon]')
+    const image = button.querySelector('img')
+    const trailingIcon = button.lastElementChild
 
     expect(button.tagName).toBe('BUTTON')
     expect(button).toHaveClass('rounded-control')
@@ -38,7 +38,7 @@ describe('PButton', () => {
         입장하기
       </PButton>
     ))
-    const image = result.container.querySelector('[data-pomo-button-leading-image]')
+    const image = result.getByRole('button', {name: '입장하기'}).querySelector('img')
 
     expect(image?.classList.contains('size-8')).toBe(true)
   })
@@ -176,7 +176,7 @@ it.each(['image', 'icon'] as const)('should toggle leading overflow for %s', (ki
   ))
   const button = result.getByRole('button', {name: '시작'})
   const leading = button.firstElementChild
-  const trailing = button.querySelector('[data-pomo-button-trailing-icon]')
+  const trailing = button.lastElementChild
   expect(leading).toHaveClass(kind === 'image' ? 'size-8' : 'size-6')
   setOverflow(true)
   expect(leading).toHaveClass('size-16', '[margin-block:-1.25rem]')
@@ -293,7 +293,7 @@ it('should update a customized leading icon without changing its button or acces
     <PButton accessibleLabel="설정 열기" icon="i-tabler-settings" iconClass={iconClass()} />
   ))
   const button = result.getByRole('button', {name: '설정 열기'})
-  const icon = button.querySelector('[data-pomo-button-icon]')
+  const icon = button.querySelector('span[aria-hidden="true"]')
   expect(icon).toHaveClass('size-6', 'text-highlight')
   setIconClass('size-4 text-danger')
   expect(icon).toHaveClass('size-4', 'text-danger')

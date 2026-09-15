@@ -163,7 +163,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
                   {...GLASS_ICON_BUTTON}
                   accessibleLabel={m.tour_open()}
                   tooltip={m.tour_open()}
-                  class={cx(GLASS_ICON_BUTTON.class, 'pomo-tour-control')}
+                  class={GLASS_ICON_BUTTON.class}
                   icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
                   onPress={() => props.onTourOpen?.()}
                 />

@@ -23,11 +23,9 @@ it('should share dialogue text, metadata, and actions in one library item', () =
     'border-content-border',
     'bg-content-surface',
   )
-  expect(
-    screen
-      .getByText('I feel at home here.')
-      .closest('.pomo-dialogue-settings__selected-dialogue--library')?.className,
-  ).toContain('flex-col')
+  expect(screen.getByText('I feel at home here.').parentElement?.parentElement).toHaveClass(
+    'flex-col',
+  )
   expect(screen.getByText('I feel at home here.').className).toContain('[-webkit-line-clamp:3]')
 })
 

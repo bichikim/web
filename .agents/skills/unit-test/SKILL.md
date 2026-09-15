@@ -17,6 +17,18 @@ Complete these steps in order before final verification:
 2. Review the tests against the specification and observable contract for missing cases, then add the missing coverage. Passing tests or high code coverage alone do not establish completeness.
 3. Review the resulting tests for excessive scope, redundancy, or assertions that do not detect the intended regression. Remove, merge, or revise them while preserving distinct required behaviors and failure cases.
 
+## Component DOM Query Priority
+
+For Solid component tests, find elements in this order:
+
+1. Role-based query: use `screen.getByRole` or the corresponding `getAllByRole`/`queryByRole` query, with the accessible name or state when needed.
+2. Role-based query plus an element selector: first find the semantic owner with a role query, then scope an element selector such as `img`, `svg`, or `input` to that element when the nested part has no independent accessible query.
+3. `data-testid`: use `screen.getByTestId` or the corresponding test-id query only when the first two options cannot express the contract, such as for dynamic or otherwise non-semantic content. Add `data-testid` as an explicit stable test contract when this fallback is necessary.
+
+Avoid locating elements with CSS class selectors whenever possible, including `querySelector('.class-name')`; prefer semantic queries, scoped element selectors, or `data-testid`. Use a class selector only as a last resort when no stable alternative can express the contract, and make that reason explicit. Do not use arbitrary custom `data-*` attributes as a substitute for `data-testid`. Class assertions are allowed only when the class output itself is the behavior under test.
+
+See the [Testing Library query priority guide](https://testing-library.com/docs/queries/about/) and the [`@solidjs/testing-library` documentation](https://github.com/solidjs/solid-testing-library) for the underlying guidance.
+
 ## Core Rules
 
 1. Before changes, check relevant existing test results. Resolve failures relevant to the changed path within the authorized scope; report unrelated pre-existing failures with evidence without making their repair a prerequisite for adding tests.

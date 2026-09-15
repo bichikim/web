@@ -10,11 +10,11 @@ export const CLASSES = {
     'motion-reduce:[&[data-exiting]]:[animation-duration:1ms]',
   ),
   entryAction: cx(
-    'pomo-entry__action [button&]:min-w-[min(17rem,_100%)] [button&]:min-h-14',
+    '[button&]:min-w-[min(17rem,_100%)] [button&]:min-h-14',
     '[button&]:[padding-inline:1.5rem] [button&]:text-[0.9375rem]',
   ),
   entryContent: cx(
-    'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
+    'flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
     'box-border flex-col items-start gap-4',
     '[margin-block-end:calc(9rem_+_var(--pomo-safe-area-inset-bottom))]',
     '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
@@ -54,8 +54,8 @@ export const CLASSES = {
     // oxlint-disable-next-line eslint-js/max-len -- UnoCSS must extract the complete arbitrary-variant utility.
     '[&:has(.pomo-media-messages:not(:empty)):has(.pomo-dialogue-composer:not([data-expanded]))_.pomo-media-messages]:w-[min(36rem,_calc(100%_-_4rem))]',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
-    '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player__summary]:justify-center',
-    '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player__play-summary-frame]:hidden',
+    '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-summary]]:justify-center',
+    '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-play-summary-frame]]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-utility=album]]:hidden',
     '[&[data-player-expanded]_.pomo-player-stage]:[container-type:size]',
@@ -71,17 +71,13 @@ export const CLASSES = {
     'pomo-media-messages flex w-[min(36rem,_100%)] min-h-0 max-h-full [flex:0_1_auto] flex-col self-start',
     'gap-3 overflow-hidden pointer-events-none [&_>_*]:pointer-events-auto',
   ),
-  sceneControl: cx(
-    'pomo-scene-control max-lg:[&[data-icon-only]]:hidden',
-    'max-lg:[&.pomo-icon-select]:hidden',
-  ),
   sceneToolbar: cx(
     'pomo-scene-toolbar pointer-events-auto absolute right-4 top-safe-top-mobile',
     'flex flex-col items-end gap-2 xs:right-7',
     'lg:top-safe-top',
   ),
   ui: cx(
-    'pomo-ui pointer-events-none absolute inset-0',
+    'pointer-events-none absolute inset-0',
     'max-lg:pt-safe-top-mobile',
     'max-lg:pl-[calc(1rem_+_var(--pomo-safe-area-inset-left))]',
     'max-lg:pr-4 xs:max-lg:pr-7',

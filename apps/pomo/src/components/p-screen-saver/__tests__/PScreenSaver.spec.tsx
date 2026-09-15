@@ -50,7 +50,7 @@ describe('PScreenSaver', () => {
     const dialog = screen.getByRole('dialog', {name: '스크린 세이버'})
     expect(showModal).toHaveBeenCalledOnce()
     expect((dialog as HTMLDialogElement).open).toBe(true)
-    const content = dialog.querySelector('.pomo-screen-saver__content')
+    const content = dialog.firstElementChild?.firstElementChild
     const timerRegion = screen.getByRole('region', {name: '포모도로 상태'})
     expect(content?.classList).toContain('justify-items-stretch')
     expect(content?.classList).toContain('text-left')
@@ -64,8 +64,7 @@ describe('PScreenSaver', () => {
     expect(trackRegion.textContent).toContain('Sunday Morning Coffee')
     expect(trackRegion.textContent).toContain('rainymonday')
     expect(trackRegion.textContent).toContain('음악 재생 중')
-    expect(trackRegion.querySelectorAll('.pomo-overflow-marquee')).toHaveLength(2)
-    const playbackIcon = trackRegion.querySelector('.pomo-screen-saver__playback-icon')
+    const playbackIcon = trackRegion.querySelector('p > span[aria-hidden="true"]')
     expect(playbackIcon?.classList).toContain('i-tabler-player-play')
 
     setIsMusicPlaying(false)
@@ -115,7 +114,7 @@ describe('PScreenSaver', () => {
     render(() => <PScreenSaver track={{artist: 'rainymonday', title: 'Sunday Morning Coffee'}} />)
     const dialog = screen.getByRole('dialog', {hidden: true})
     const trackRegion = screen.getByRole('region', {hidden: true, name: '현재 음악'})
-    const playbackIcon = trackRegion.querySelector('.pomo-screen-saver__playback-icon')
+    const playbackIcon = trackRegion.querySelector('p > span[aria-hidden="true"]')
 
     expect(trackRegion.textContent).toContain('음악 일시 정지')
     expect(playbackIcon?.classList).toContain('i-tabler-player-pause')

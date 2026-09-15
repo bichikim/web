@@ -3,9 +3,8 @@ import baseConfig from '@winter-love/unocss-config'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
-import {initialSceneFallbackShortcuts} from './scripts/unocss/loading'
 import {pomoComponentStylePreflight} from './scripts/unocss/component-styles'
-import {sansFontFamily, typographyShortcuts} from './scripts/unocss/typography'
+import {sansFontFamily} from './scripts/unocss/typography'
 import {createSafeAreaMaxHeight, createSafeAreaSpacing} from './scripts/unocss/safe-area-spacing'
 
 const colors = {
@@ -427,15 +426,7 @@ body {
         },
       ],
     ],
-    // The SSR fallback must be styled before lazy client modules extend the generated CSS.
-    safelist: [
-      ...Object.keys(initialSceneFallbackShortcuts),
-      ...albumData.albums.map((album) => album.icon),
-    ],
-    shortcuts: {
-      ...initialSceneFallbackShortcuts,
-      ...typographyShortcuts,
-    },
+    safelist: albumData.albums.map((album) => album.icon),
     theme: {
       animation: {
         counts: {

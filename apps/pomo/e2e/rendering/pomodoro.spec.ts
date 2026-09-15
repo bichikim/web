@@ -12,7 +12,7 @@ const openHome = async (page: Page) => {
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   await page.clock.pauseAt(new Date('2026-09-09T00:01:00.000Z'))
   await page.clock.runFor(1000)
 }

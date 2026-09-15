@@ -8,9 +8,9 @@ import type {ScreenSaverDelay} from '../../../features/screen-saver'
 import type {WeatherLocation, WeatherSceneMode} from '../../../features/weather'
 
 export const CLASSES = {
-  settingsContent: 'pomo-settings__content grid gap-5',
+  settingsContent: 'grid gap-5',
   settingsGrid: 'grid gap-4 min-[60rem]:grid-cols-2',
-  settingsScreenSaver: 'pomo-settings__screen-saver grid gap-2 [&_>_div]:w-full',
+  settingsScreenSaver: 'grid gap-2 [&_>_div]:w-full',
   settingsSection: 'grid gap-4 border-t border-solid border-border pt-5',
   settingsToggle: 'min-h-12',
 } as const

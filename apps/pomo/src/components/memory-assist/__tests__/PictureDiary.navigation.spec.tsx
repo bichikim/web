@@ -63,9 +63,7 @@ it('should keep saved entries read-only and preserve the draft through newer nav
   await finishPageTurn()
   expect(screen.queryByLabelText('그림일기 내용')).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
-  expect(getSpread().querySelector('.picture-diary-book__page--current')).toHaveClass(
-    'picture-diary-book__back-cover--inside',
-  )
+  expect(getSpread().lastElementChild).toHaveClass('picture-diary-book__back-cover--inside')
   expect(
     screen
       .getByLabelText('일기장')
@@ -78,9 +76,7 @@ it('should keep saved entries read-only and preserve the draft through newer nav
     'previous',
   )
   expect(within(getSpread()).queryByText('처음 쓴 글')).not.toBeInTheDocument()
-  expect(getSpread().querySelector('.picture-diary-book__page--current')).toHaveClass(
-    'picture-diary-book__back-cover--inside',
-  )
+  expect(getSpread().lastElementChild).toHaveClass('picture-diary-book__back-cover--inside')
   expect(repository.save).not.toHaveBeenCalled()
 })
 
@@ -155,10 +151,8 @@ it.each([0, 2, 4])(
     fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
     await finishPageTurn()
     expect(screen.queryByLabelText('그림일기 내용')).not.toBeInTheDocument()
-    expect(getSpread().querySelector('.picture-diary-book__page--previous')).toHaveTextContent('')
-    expect(getSpread().querySelector('.picture-diary-book__page--current')).toHaveClass(
-      'picture-diary-book__back-cover--inside',
-    )
+    expect(getSpread().querySelector('[data-picture-diary-page="previous"]')).toHaveTextContent('')
+    expect(getSpread().lastElementChild).toHaveClass('picture-diary-book__back-cover--inside')
     fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
     await finishPageTurn()
     expect(getSpread().querySelector('[data-picture-diary-cover="front"]')).toBeInTheDocument()
@@ -189,9 +183,7 @@ it('should close the right cover and reopen the writing page without losing the 
     />
   ))
   await waitFor(() =>
-    expect(getSpread().querySelector('.picture-diary-book__page--current')).toHaveClass(
-      'picture-diary-book__back-cover--inside',
-    ),
+    expect(getSpread().lastElementChild).toHaveClass('picture-diary-book__back-cover--inside'),
   )
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '보존할 초안'}})
   const closeButton = screen.getByRole('button', {name: '다음 일기 보기'})
@@ -205,9 +197,7 @@ it('should close the right cover and reopen the writing page without losing the 
   expect(within(getSpread()).getByLabelText('그림일기 내용')).toHaveValue('보존할 초안')
   await finishPageTurn()
   expect(screen.getByLabelText('그림일기 내용')).toHaveValue('보존할 초안')
-  expect(getSpread().querySelector('.picture-diary-book__page--current')).toHaveClass(
-    'picture-diary-book__back-cover--inside',
-  )
+  expect(getSpread().lastElementChild).toHaveClass('picture-diary-book__back-cover--inside')
 })
 
 it('should close an empty diary and reopen its unchanged draft', async () => {
@@ -232,7 +222,7 @@ it('should close an empty diary and reopen its unchanged draft', async () => {
   expect(within(getSpread()).getByLabelText('그림일기 내용')).toHaveValue('작성 중인 초안')
   await finishPageTurn()
   expect(screen.getByLabelText('그림일기 내용')).toHaveValue('작성 중인 초안')
-  expect(getSpread().querySelector('.picture-diary-book__back-cover--inside')).toBeInTheDocument()
+  expect(getSpread().firstElementChild).toHaveClass('picture-diary-book__back-cover--inside')
   expect(repository.save).not.toHaveBeenCalled()
 })
 

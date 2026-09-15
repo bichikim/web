@@ -23,6 +23,5 @@ it.each([false, true])('should render the home studio for Toss=%s', async (isApp
   expect(screen.getByText('studio ready')).toBeInTheDocument()
   expect(screen.queryByRole('status')).toBeNull()
   const main = screen.getByRole('main')
-  expect(main.classList.contains('pomo-home')).toBe(true)
   expect(main.className.includes('radial-gradient')).toBe(!isAppsInToss)
 })

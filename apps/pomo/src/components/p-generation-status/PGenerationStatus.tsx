@@ -3,7 +3,7 @@ import {Show} from 'solid-js'
 import {PProgress} from '../p-progress/PProgress'
 
 const STATUS_CLASSES = cx(
-  'pomo-generation-status flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
+  'flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
   'bg-primary-soft p-3 text-foreground text-[0.8rem] leading-[1.4]',
   '[&_strong]:text-highlight',
 )

@@ -10,7 +10,7 @@ export const TrackArtworkImage = (props: TrackArtworkImageProps) => {
   return (
     <img
       alt=""
-      class="pomo-player__artwork size-11 shrink-0 rounded-control object-cover player-compact:hidden"
+      class="size-11 shrink-0 rounded-control object-cover player-compact:hidden"
       hidden={failed()}
       onError={handleError}
       src={props.source}

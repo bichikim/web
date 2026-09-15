@@ -84,7 +84,7 @@ describe('PSelect', () => {
 
     const props = getSelectProps()
     expect(props).toMatchObject({
-      class: 'pomo-icon-select block scene-select',
+      class: 'block scene-select',
       placement: 'bottom-end',
       value: options[0],
     })

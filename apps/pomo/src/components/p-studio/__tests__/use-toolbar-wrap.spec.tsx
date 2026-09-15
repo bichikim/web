@@ -42,9 +42,9 @@ it('should measure a late pomodoro and follow its removal and replacement', asyn
     return (
       <div>
         <Show when={visible()}>
-          <div class="pomo-pomodoro" />
+          <div class="pomo-pomodoro" data-testid="pomo-pomodoro" />
         </Show>
-        <div class="toolbar">
+        <div class="toolbar" data-testid="toolbar">
           <div ref={setElement}>
             <div />
             <div />
@@ -57,7 +57,7 @@ it('should measure a late pomodoro and follow its removal and replacement', asyn
   expect(wrapping?.()).toBe(false)
   setVisible(true)
   await Promise.resolve()
-  const original = view.container.querySelector('.pomo-pomodoro')
+  const original = view.getByTestId('pomo-pomodoro')
   expect(original).not.toBeNull()
   expect(observe).toHaveBeenCalledWith(original)
   expect(wrapping?.()).toBe(true)
@@ -70,7 +70,7 @@ it('should measure a late pomodoro and follow its removal and replacement', asyn
 
   setVisible(true)
   await Promise.resolve()
-  const replacement = view.container.querySelector('.pomo-pomodoro')
+  const replacement = view.getByTestId('pomo-pomodoro')
   expect(replacement).not.toBe(original)
   expect(observe).toHaveBeenCalledWith(replacement)
   expect(wrapping?.()).toBe(true)
@@ -127,8 +127,8 @@ it('should remeasure available space and added controls, then disconnect on unmo
     wrapping = useToolbarWrap(element)
     return (
       <div>
-        <div class="pomo-pomodoro" />
-        <div class="toolbar">
+        <div class="pomo-pomodoro" data-testid="pomo-pomodoro" />
+        <div class="toolbar" data-testid="toolbar">
           <div ref={setElement}>
             <div />
             <div />
@@ -145,7 +145,7 @@ it('should remeasure available space and added controls, then disconnect on unmo
   available = 300
   resizeCallback()
   expect(wrapping?.()).toBe(false)
-  const actions = view.container.querySelector('.toolbar')?.firstElementChild
+  const actions = view.getByTestId('toolbar').firstElementChild
   const control = document.createElement('div')
   actions?.append(control)
   mutationCallback()

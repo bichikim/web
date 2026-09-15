@@ -337,17 +337,21 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
       ).toBeTruthy(),
     )
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
-    expect(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeTruthy()
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
 
     completeRead?.(null)
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeTruthy()
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
   })
 
   it('should restore album additions after the player remounts', async () => {
@@ -356,11 +360,13 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
       ).toBeTruthy(),
     )
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
-    expect(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeTruthy()
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
       trackIds: ['one', 'two', 'three', 'added'],
       version: 1,
@@ -371,7 +377,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
       ).toBeTruthy(),
     )
   })
@@ -382,13 +388,18 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
       ).toBeTruthy(),
     )
-    fireEvent.keyDown(screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}), {
-      key: 'Delete',
-    })
-    expect(screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      {
+        key: 'Delete',
+      },
+    )
+    expect(
+      screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+    ).toBeNull()
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
       trackIds: ['one', 'three'],
       version: 1,
@@ -399,12 +410,12 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Three · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.getByRole('button', {hidden: true, name: 'Three · Artist · 밀어서 삭제'}),
       ).toBeTruthy(),
     )
     await waitFor(() =>
       expect(
-        screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
       ).toBeNull(),
     )
   })
@@ -415,7 +426,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
       ).toBeTruthy(),
     )
     fireEvent.click(screen.getByRole('button', {name: '재생목록 모두 비우기'}))
@@ -432,10 +443,10 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
+    expect(screen.getAllByRole('paragraph')[0]).toHaveTextContent('집중 음악을 준비 중이에요')
     expect(
-      screen.getByText('집중 음악을 준비 중이에요', {selector: '.pomo-overflow-marquee__content'}),
-    ).toBeTruthy()
-    expect(screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
+      screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+    ).toBeNull()
   })
 
   it('should preserve a removal made before the initial playlist finishes loading', async () => {
@@ -462,9 +473,10 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     render(() => <PMusicPlayerContent />)
 
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
-    fireEvent.keyDown(screen.getByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'}), {
-      key: 'Delete',
-    })
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+      {key: 'Delete'},
+    )
     completeTrackCatalog?.({
       json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
       ok: true,
@@ -472,10 +484,12 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}),
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
       ).toBeTruthy(),
     )
-    expect(screen.queryByLabelText('Added · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
+    expect(
+      screen.queryByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeNull()
   })
 
   it('should stop playback and clear every loaded track from the album library', async () => {
@@ -502,9 +516,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     expect(audio.getAttribute('src')).toBeNull()
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
-    expect(
-      screen.getByText('집중 음악을 준비 중이에요', {selector: '.pomo-overflow-marquee__content'}),
-    ).toBeTruthy()
+    expect(screen.getAllByRole('paragraph')[0]).toHaveTextContent('집중 음악을 준비 중이에요')
   })
 
   it('should stop restored playback before clearing every loaded track', async () => {
@@ -566,9 +578,10 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       trackId: 'two',
     })
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
-    fireEvent.keyDown(screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}), {
-      key: 'Delete',
-    })
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      {key: 'Delete'},
+    )
     await Promise.resolve()
 
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
@@ -597,11 +610,14 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
-    fireEvent.keyDown(screen.getByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'}), {
-      key: 'Delete',
-    })
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      {key: 'Delete'},
+    )
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/three.mp3'))
-    expect(screen.queryByLabelText('Two · Artist · 밀어서 삭제', {selector: 'button'})).toBeNull()
+    expect(
+      screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+    ).toBeNull()
   })
 })

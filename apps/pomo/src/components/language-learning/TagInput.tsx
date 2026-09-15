@@ -80,7 +80,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
       onChange={handleInputChange}
       value={props.inputValue}
     >
-      <TextField.Label class="text-modal-detail font-650 leading-5 text-muted-foreground">
+      <TextField.Label class="text-sm leading-5 font-650 text-muted-foreground">
         {props.label ?? m.learning_editor_tags()}
       </TextField.Label>
       <div
@@ -134,7 +134,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
           ref={setInputElement}
         />
       </div>
-      <TextField.Description class="text-modal-detail font-400 leading-5 text-muted-foreground">
+      <TextField.Description class="text-sm leading-5 font-400 text-muted-foreground">
         {props.description ?? m.learning_editor_tags_hint()}
       </TextField.Description>
     </TextField>

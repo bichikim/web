@@ -143,9 +143,7 @@ it('should open a Korean memory assist modal', async () => {
     '일기장',
     '캘린더',
   ])
-  expect(screen.getByRole('tablist', {name: '기억 보조 종류'}).className).toContain(
-    'pomo-memory-assist__tabs',
-  )
+  expect(screen.getByRole('tablist', {name: '기억 보조 종류'})).toBeInTheDocument()
   expect(screen.getAllByRole('tab')[0]?.className).toContain('ui-selected:shadow-tab-active')
   expect(await screen.findByText('language learning library')).toBeInTheDocument()
   expect(screen.getByText('language learning words')).toBeInTheDocument()

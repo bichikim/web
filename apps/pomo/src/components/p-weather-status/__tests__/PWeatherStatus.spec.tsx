@@ -24,26 +24,23 @@ const createFeed = (overrides: Partial<WeatherFeed['current']> = {}): WeatherFee
 })
 
 it('should render the city, Korean condition, zero temperature, and icon', () => {
-  const originalResult = render(() => (
-    <PWeatherStatus state={{feed: createFeed(), status: 'ready'}} />
-  ))
+  render(() => <PWeatherStatus state={{feed: createFeed(), status: 'ready'}} />)
 
   const status = screen.getByRole('status')
   expect(status.textContent).toContain('서울 · 맑음 · 0°')
   expect(status).toHaveClass('text-sm')
-  expect(status.querySelector('.i-tabler-sun')).toHaveClass('size-4.5')
-  expect(originalResult.container.querySelector('.pomo-weather-status__scribble-border')).toBeNull()
+  expect(status.querySelector('span[aria-hidden="true"]')).toHaveClass('i-tabler-sun', 'size-4.5')
+  expect(status.parentElement?.parentElement?.querySelector('svg')).toBeNull()
 })
 
 it('should draw the shared hand-drawn frame in scribble style', () => {
-  const result = render(() => (
+  render(() => (
     <PWeatherStatus sceneStyle="scribble" state={{feed: createFeed(), status: 'ready'}} />
   ))
   const status = screen.getByRole('status')
-  const border = result.container.querySelector('.pomo-weather-status__scribble-border')
-  const surface = result.container.querySelector(
-    '.pomo-weather-status-frame .pomo-scribble-panel__surface',
-  ) as HTMLElement
+  const surface = status.parentElement as HTMLElement
+  const frame = surface.parentElement as HTMLElement
+  const border = frame.querySelector('svg')
 
   expect(border).toBeInstanceOf(SVGElement)
   expect(border?.querySelectorAll('path')).toHaveLength(2)
@@ -71,13 +68,19 @@ it('should show loading and error states for the selected city', () => {
     <PWeatherStatus state={{location: LEGACY_WEATHER_LOCATIONS.busan, status: 'loading'}} />
   ))
   expect(screen.getByRole('status').textContent).toContain('부산')
-  expect(screen.getByRole('status').querySelector('.i-tabler-loader-2')).toHaveClass('size-4.5')
+  expect(screen.getByRole('status').querySelector('span[aria-hidden="true"]')).toHaveClass(
+    'i-tabler-loader-2',
+    'size-4.5',
+  )
   unmount()
   render(() => (
     <PWeatherStatus state={{location: LEGACY_WEATHER_LOCATIONS.jeju, status: 'error'}} />
   ))
   expect(screen.getByRole('status').textContent).toContain('제주')
-  expect(screen.getByRole('status').querySelector('.i-tabler-cloud-off')).toHaveClass('size-4.5')
+  expect(screen.getByRole('status').querySelector('span[aria-hidden="true"]')).toHaveClass(
+    'i-tabler-cloud-off',
+    'size-4.5',
+  )
 })
 
 it('should omit temperature when the feed has no measured temperature', () => {

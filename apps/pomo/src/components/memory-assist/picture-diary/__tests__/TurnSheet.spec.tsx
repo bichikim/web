@@ -38,5 +38,5 @@ it('should render inert preview faces and switch to cover faces for cover turns'
   expect(view.container.querySelector('textarea')).toBeDisabled()
   setKind('cover')
   expect(sheet).toHaveAttribute('data-picture-diary-cover-turn')
-  expect(view.container.querySelectorAll('.picture-diary-book__back-cover')).toHaveLength(2)
+  expect(view.container.querySelectorAll('section')).toHaveLength(2)
 })

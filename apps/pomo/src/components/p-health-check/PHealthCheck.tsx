@@ -44,7 +44,7 @@ export const PHealthCheck = () => {
         </PButton>
         <p
           aria-live="polite"
-          class="m-0 flex flex-wrap gap-x-3 gap-y-1 text-modal-detail text-muted-foreground"
+          class="m-0 flex flex-wrap gap-x-3 gap-y-1 text-sm leading-5 text-muted-foreground"
           role="status"
         >
           <Switch fallback={<span>{m.settings_health_idle()}</span>}>

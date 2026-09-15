@@ -47,25 +47,22 @@ it('should show a ready feed notice', () => {
   expect(screen.getByText('새 피드 대화가 준비됐어요')).toBeDefined()
   expect(feeds.listen).not.toHaveBeenCalled()
   expect(feeds.listenAll).not.toHaveBeenCalled()
-  expect(originalResult.container.querySelector('.pomo-feed-status__scribble-border')).toBeNull()
+  expect(screen.getByRole('status').parentElement?.parentElement?.querySelector('svg')).toBeNull()
 
   originalResult.unmount()
-  const scribbleResult = render(() => <PFeedStatus sceneStyle="scribble" />)
-  const scribbleStatus = scribbleResult.container.querySelector('.pomo-feed-status')
-  const scribbleBorder = scribbleResult.container.querySelector(
-    '.pomo-feed-status__scribble-border',
-  )
-  const scribbleSurface = scribbleResult.container.querySelector(
-    '.pomo-feed-status-frame .pomo-scribble-panel__surface',
-  ) as HTMLElement
+  render(() => <PFeedStatus sceneStyle="scribble" />)
+  const scribbleStatus = screen.getByRole('status')
+  const scribbleSurface = scribbleStatus.parentElement as HTMLElement
+  const scribbleFrame = scribbleSurface.parentElement as HTMLElement
+  const scribbleBorder = scribbleFrame.querySelector('svg')
 
   expect(scribbleBorder).toBeInstanceOf(SVGElement)
-  expect(scribbleBorder?.parentElement?.classList).toContain('pomo-feed-status-frame')
+  expect(scribbleFrame.classList).toContain('pomo-feed-status-frame')
   expect(scribbleSurface.classList).toContain('pomo-scribble-mask')
   expect(scribbleSurface).not.toHaveAttribute('style')
   expect(scribbleSurface.contains(scribbleBorder)).toBe(false)
-  expect(scribbleStatus?.classList).toContain('rounded-none')
-  expect(scribbleStatus?.classList).toContain('border-0')
+  expect(scribbleStatus.classList).toContain('rounded-none')
+  expect(scribbleStatus.classList).toContain('border-0')
 })
 
 it('should play all accumulated feed dialogues with one action', () => {
