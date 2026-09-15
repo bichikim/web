@@ -65,15 +65,24 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   let queueRevision = 0
   let initialPlaylistResolved = untrack(() => props.tracks !== undefined)
   let clearedBeforeLoad = false
+  let restartPlaybackPending = false
+  let restartSeekPending = false
   const removedBeforeLoad = new Set<string>()
   const playback = usePlayback({
     element: props.element,
     onError: (error) => {
+      cancelPendingRestart()
       visualizer.stop()
       playbackPersistence.persistCurrentPlayback()
       props.onError?.(error)
     },
     onPause: (wasPlaying, isUserIntent) => handlePause(wasPlaying, isUserIntent),
+    onPauseRequest: (isUserIntent) => {
+      clearPendingRestart()
+      if (isUserIntent) {
+        playbackPersistence.persistPlaybackIntent(false)
+      }
+    },
     onPlay: () => handlePlay(),
   })
   const {isPlaying} = playback
@@ -103,8 +112,18 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     writePPlaylist(queue.map((track) => track.id)).catch(handleStorageError)
   }
 
+  const clearPendingRestart = () => {
+    restartPlaybackPending = false
+    restartSeekPending = false
+  }
+  const cancelPendingRestart = () => {
+    clearPendingRestart()
+    playback.cancelPendingPlay()
+  }
+
   createEffect(() => {
     const track = currentTrack() ?? null
+    cancelPendingRestart()
     untrack(() => props.onTrackChange?.(track))
   })
 
@@ -186,6 +205,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
     const nextTrack = trackList[nextIndex]
     const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+    cancelPendingRestart()
     playback.invalidate()
     playbackRevision += 1
     playbackPersistence.setPendingPosition(nextPlayback)
@@ -195,6 +215,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
 
   const handlePlay = () => {
+    clearPendingRestart()
     previewPlayback.stopBeforePlayback()
 
     playback.invalidate()
@@ -207,6 +228,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
 
   const handlePause = (wasPlaying: boolean, isUserIntent: boolean) => {
+    clearPendingRestart()
     if (wasPlaying) {
       playback.invalidate()
       playbackRevision += 1
@@ -263,6 +285,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       removedBeforeLoad.add(removedTrack.id)
     }
 
+    cancelPendingRestart()
     playback.invalidate()
     playbackRevision += 1
     queueRevision += 1
@@ -304,6 +327,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       clearedBeforeLoad = true
     }
 
+    cancelPendingRestart()
     playback.invalidate()
     playbackRevision += 1
     queueRevision += 1
@@ -325,9 +349,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       return
     }
 
+    const track = currentTrack()
+    const shouldWaitForPlay = track !== undefined && !isPlaying()
+    restartPlaybackPending = shouldWaitForPlay
+    restartSeekPending = shouldWaitForPlay
     playback.seek(0)
     playbackRevision += 1
-    const track = currentTrack()
     if (track !== undefined) {
       playbackPersistence.writePlayback({isPlaying: true, positionSeconds: 0, trackId: track.id})
     }
@@ -336,6 +363,13 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
   const handleSeeking = () => {
     playbackRevision += 1
+    if (restartSeekPending) {
+      restartSeekPending = false
+      playbackPersistence.setPendingPosition(null)
+      return
+    }
+
+    cancelPendingRestart()
     playbackPersistence.setPendingPosition(null)
   }
 
@@ -369,8 +403,31 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   })
 
   const {window} = globalThis
+  const persistCurrentPlayback = () => {
+    if (restartPlaybackPending) {
+      return
+    }
+
+    playbackPersistence.persistCurrentPlayback()
+  }
+  const handleSeeked = () => {
+    if (restartPlaybackPending) {
+      restartSeekPending = false
+      return
+    }
+
+    persistCurrentPlayback()
+  }
+  const persistPlaybackProgress = () => {
+    if (restartPlaybackPending) {
+      return
+    }
+
+    playbackPersistence.persistPlaybackProgress()
+  }
+
   if (typeof window !== 'undefined') {
-    useEvent(window, 'pagehide', playbackPersistence.persistCurrentPlayback)
+    useEvent(window, 'pagehide', persistCurrentPlayback)
   }
 
   onCleanup(() => {
@@ -382,7 +439,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
         playbackPersistence.persistStoppedPlayback()
       }
     } else {
-      playbackPersistence.persistCurrentPlayback()
+      persistCurrentPlayback()
     }
     destroyed = true
   })
@@ -400,9 +457,9 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     mediaEvents: {
       onEnded: order.handleEnded,
       onLoadedMetadata: restorePendingPlayback,
-      onSeeked: playbackPersistence.persistCurrentPlayback,
+      onSeeked: handleSeeked,
       onSeeking: handleSeeking,
-      onTimeUpdate: playbackPersistence.persistPlaybackProgress,
+      onTimeUpdate: persistPlaybackProgress,
     },
     playback,
     previewPlayback,

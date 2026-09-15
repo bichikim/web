@@ -3,6 +3,7 @@ import {type Accessor, createSignal, onCleanup} from 'solid-js'
 export interface UsePlaybackProps {
   readonly element: Accessor<HTMLAudioElement | undefined>
   readonly onPlay?: () => void
+  readonly onPauseRequest?: (isUserIntent: boolean) => void
   readonly onPause?: (wasPlaying: boolean, isUserIntent: boolean) => void
   readonly onError?: (error: unknown) => void
 }
@@ -18,6 +19,7 @@ export interface PlaybackEvents {
 }
 
 export interface Playback {
+  readonly cancelPendingPlay: () => void
   readonly events: PlaybackEvents
   readonly handleError: (error?: unknown) => void
   readonly invalidate: () => void
@@ -35,6 +37,9 @@ export const usePlayback = (props: UsePlaybackProps): Playback => {
   let revision = 0
   let disposed = false
   let pauseIntent: boolean | null = null
+  let pauseWasPlaying: boolean | null = null
+  let pendingPlay = false
+  let ignorePendingPlayEvent = false
   const invalidate = () => {
     revision += 1
   }
@@ -42,38 +47,80 @@ export const usePlayback = (props: UsePlaybackProps): Playback => {
     if (disposed || (error instanceof DOMException && error.name === 'AbortError')) {
       return
     }
+    pendingPlay = false
+    ignorePendingPlayEvent = false
     pauseIntent = null
+    pauseWasPlaying = null
     setIsPlaying(false)
     props.onError?.(error)
   }
+  const cancelPendingPlayRequest = () => {
+    if (!pendingPlay) {
+      return false
+    }
+
+    pendingPlay = false
+    ignorePendingPlayEvent = true
+    invalidate()
+    return true
+  }
+  const cancelPendingPlay = () => {
+    if (cancelPendingPlayRequest()) {
+      props.element()?.pause()
+    }
+  }
   const play = () => {
     const request = (revision += 1)
+    pendingPlay = true
     pauseIntent = null
+    pauseWasPlaying = null
     const element = props.element()
     element?.play().catch((error: unknown) => {
       if (request === revision && element === props.element()) {
+        pendingPlay = false
         handleError(error)
       }
     })
   }
-  const pause = (options: PlaybackPauseOptions = {}) => {
-    pauseIntent = options.isUserIntent ?? true
+  const requestPause = (isUserIntent: boolean) => {
+    if (pauseWasPlaying === null) {
+      pauseWasPlaying = isPlaying()
+    }
+    pauseIntent = isUserIntent
+    props.onPauseRequest?.(isUserIntent)
+    cancelPendingPlayRequest()
     invalidate()
+    setIsPlaying(false)
+  }
+  const pause = (options: PlaybackPauseOptions = {}) => {
+    requestPause(options.isUserIntent ?? true)
     props.element()?.pause()
   }
   const markPauseIntent = () => {
-    pauseIntent = true
+    requestPause(true)
   }
   const handlePlay = () => {
+    if (ignorePendingPlayEvent) {
+      if (props.element()?.paused !== false) {
+        ignorePendingPlayEvent = false
+        return
+      }
+      ignorePendingPlayEvent = false
+    }
+
+    pendingPlay = false
     pauseIntent = null
+    pauseWasPlaying = null
     invalidate()
     setIsPlaying(true)
     props.onPlay?.()
   }
   const handlePause = () => {
-    const wasPlaying = isPlaying()
+    cancelPendingPlayRequest()
+    const wasPlaying = pauseWasPlaying ?? isPlaying()
     const isUserIntent = pauseIntent === true
     pauseIntent = null
+    pauseWasPlaying = null
     if (wasPlaying) {
       invalidate()
     }
@@ -82,6 +129,8 @@ export const usePlayback = (props: UsePlaybackProps): Playback => {
   }
   const stop = () => {
     pauseIntent = null
+    pauseWasPlaying = null
+    cancelPendingPlayRequest()
     invalidate()
     setIsPlaying(false)
     if (!disposed) {
@@ -94,6 +143,7 @@ export const usePlayback = (props: UsePlaybackProps): Playback => {
     props.element()?.pause()
   })
   return {
+    cancelPendingPlay,
     events: {onError: handleError, onPause: handlePause, onPlay: handlePlay},
     handleError,
     invalidate,
