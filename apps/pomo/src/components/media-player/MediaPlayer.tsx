@@ -48,6 +48,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     currentIndex: player.currentIndex,
     currentTrack: player.currentTrack,
     isPlaying: player.isPlaying,
+    isPlaylistLoading: player.isPlaylistLoading,
     levels: player.levels,
     previewPlayback: player.previewPlayback,
     removeTrackFromQueue: player.removeTrackFromQueue,
@@ -60,12 +61,20 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     toggleShuffle: player.toggleShuffle,
     tracks: player.tracks,
   }
-  useEvent(controller, 'mediapauserequest', player.markPauseIntent)
+  const handlePauseRequest = () => {
+    player.previewPlayback.preventResume()
+    player.markPauseIntent()
+  }
+  const handlePause = () => {
+    player.previewPlayback.preventResume()
+    player.pause()
+  }
+  useEvent(controller, 'mediapauserequest', handlePauseRequest)
   usePlayerMediaSession({
     currentTrack: player.currentTrack,
     isPlaying: player.isPlaying,
     onNextTrack: player.selectNextTrack,
-    onPause: pause,
+    onPause: handlePause,
     onPlay: play,
     onPreviousTrack: player.selectPreviousTrack,
   })
@@ -98,7 +107,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     })
   }
   return (
-    <MediaPlayerContext.Provider value={{...controls, pause, play, seek}}>
+    <MediaPlayerContext.Provider value={{...controls, pause: handlePause, play, seek}}>
       <media-controller ref={setController} audio="" class={props.class}>
         <audio
           ref={setElement}

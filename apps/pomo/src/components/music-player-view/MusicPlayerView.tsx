@@ -70,6 +70,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
             />
             <PTrackList
               currentIndex={props.currentIndex}
+              isPlaylistLoading={props.isPlaylistLoading}
               onTrackRemove={props.onTrackRemove}
               onTrackSelect={props.onTrackSelect}
               tracks={props.tracks}
