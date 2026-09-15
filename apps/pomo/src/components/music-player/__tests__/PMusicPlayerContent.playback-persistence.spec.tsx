@@ -119,6 +119,129 @@ describe('PMusicPlayerContent playback persistence', () => {
     expect(audio.currentTime).toBe(22)
   })
 
+  it('should preserve a restored playing intent when seeked arrives before play', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    fireEvent(audio, new Event('seeked'))
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+  })
+
+  it('should preserve restored playback through pagehide before play starts', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    fireEvent(audio, new Event('seeked'))
+    fireEvent(window, new Event('pagehide'))
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+  })
+
+  it('should preserve restored playback when detached before play starts', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const [visible, setVisible] = createSignal(true)
+    const result = render(() => (
+      <Show when={visible()}>
+        <PMusicPlayerContent tracks={TRACKS} />
+      </Show>
+    ))
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    fireEvent(audio, new Event('seeked'))
+    setVisible(false)
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+  })
+
+  it('should persist a user seek that completes before restored seek', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    audio.currentTime = 8
+    fireEvent(audio, new Event('seeking'))
+    fireEvent(audio, new Event('seeked'))
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 8,
+      trackId: 'three',
+    })
+  })
+
+  it('should persist a user seek before pagehide completes restored seek', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    audio.currentTime = 8
+    fireEvent(audio, new Event('seeking'))
+    fireEvent(window, new Event('pagehide'))
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 8,
+      trackId: 'three',
+    })
+    result.unmount()
+  })
+
   it('should ignore an obsolete blocked-autoplay result after playback starts', async () => {
     let rejectPlayback: ((error: DOMException) => void) | undefined
     vi.mocked(HTMLMediaElement.prototype.play).mockImplementationOnce(

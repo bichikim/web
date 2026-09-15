@@ -70,7 +70,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     element: props.element,
     onError: (error) => {
       visualizer.stop()
-      playbackPersistence.persistCurrentPlayback()
+      playbackPersistence.persistPlaybackError()
       props.onError?.(error)
     },
     onPause: (wasPlaying, isUserIntent) => handlePause(wasPlaying, isUserIntent),
@@ -271,7 +271,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
       playbackPersistence.setPendingPosition(nextPlayback)
       playbackPersistence.writePlayback(nextPlayback)
-    } else if (nextTrack === undefined) {
+    }
+
+    if (nextTrack === undefined) {
+      visualizer.stop()
+      playback.stop()
+      playbackPersistence.persistStoppedPlayback()
       playbackPersistence.setPendingPosition(null)
     }
 
@@ -283,8 +288,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     order.resetOrder()
 
     if (nextTrack === undefined) {
-      visualizer.stop()
-      playback.stop()
       return
     }
 
@@ -308,6 +311,9 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackRevision += 1
     queueRevision += 1
     previewPlayback.preventResume()
+    visualizer.stop()
+    playback.stop()
+    playbackPersistence.persistStoppedPlayback()
     playbackPersistence.setPendingPosition(null)
 
     batch(() => {
@@ -316,8 +322,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     })
     persistTrackQueue([])
     order.clearShuffleQueue()
-    visualizer.stop()
-    playback.stop()
   }
 
   const restartCurrentTrack = () => {
@@ -400,7 +404,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     mediaEvents: {
       onEnded: order.handleEnded,
       onLoadedMetadata: restorePendingPlayback,
-      onSeeked: playbackPersistence.persistCurrentPlayback,
+      onSeeked: playbackPersistence.persistSeekedPlayback,
       onSeeking: handleSeeking,
       onTimeUpdate: playbackPersistence.persistPlaybackProgress,
     },
