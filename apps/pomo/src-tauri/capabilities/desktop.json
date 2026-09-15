@@ -2,6 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "desktop",
   "description": "Allows Pomofi windows to manage desktop and control surfaces.",
+  "platforms": ["linux", "macOS", "windows"],
   "windows": [
     "background",
     "controls",

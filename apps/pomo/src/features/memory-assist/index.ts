@@ -15,7 +15,7 @@ export {
 } from './schedule'
 export type {MemoryReminderKind} from './schedule'
 export {MAXIMUM_MEMORY_MEMO_LENGTH, MEMORY_RECALL_MODES, parseMemoryMemos} from './schema'
-export type {MemoryMemo, MemoryRecallMode} from './schema'
+export type {MemoryMemo, MemoryRecallMode, MemoryReminderEvent} from './schema'
 export {useMemoryMemos} from './use-memos'
 export {useMemoryReminders, type MemoryReminders} from './use-reminders'
 export type {UseMemoryRemindersProps} from './use-reminders'

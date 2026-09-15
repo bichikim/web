@@ -9,6 +9,7 @@ export interface ProviderEvent {
 
 export interface ListProviderEventsOptions {
   readonly accessToken: string
+  readonly displayTimeZone: string
   readonly end: string
   readonly start: string
 }

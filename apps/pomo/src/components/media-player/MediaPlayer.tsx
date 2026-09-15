@@ -1,5 +1,6 @@
 import 'media-chrome'
 import {createSignal, type JSX, mergeProps} from 'solid-js'
+import {useEvent} from '@winter-love/solid-use/event'
 import {MediaPlayerContext} from './context'
 import type {MediaPlayerOptions, PlayerState} from './types'
 import {usePlayerController} from './use-player-controller'
@@ -22,6 +23,7 @@ const readDuration = (element: HTMLAudioElement) => {
  */
 export const MediaPlayer = (props: MediaPlayerProps) => {
   const [element, setElement] = createSignal<HTMLAudioElement>()
+  const [controller, setController] = createSignal<HTMLElement>()
   const options = mergeProps(props, {element})
   const player = usePlayerController(options)
   const {
@@ -40,6 +42,8 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
   const controls: PlayerState = {
     addTracksToQueue: player.addTracksToQueue,
     canEditQueue: player.canEditQueue,
+    canNavigateNextTrack: player.canNavigateNextTrack,
+    canNavigatePreviousTrack: player.canNavigatePreviousTrack,
     clearTrackQueue: player.clearTrackQueue,
     currentIndex: player.currentIndex,
     currentTrack: player.currentTrack,
@@ -56,6 +60,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     toggleShuffle: player.toggleShuffle,
     tracks: player.tracks,
   }
+  useEvent(controller, 'mediapauserequest', player.markPauseIntent)
   usePlayerMediaSession({
     currentTrack: player.currentTrack,
     isPlaying: player.isPlaying,
@@ -94,7 +99,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
   }
   return (
     <MediaPlayerContext.Provider value={{...controls, pause, play, seek}}>
-      <media-controller audio="" class={props.class}>
+      <media-controller ref={setController} audio="" class={props.class}>
         <audio
           ref={setElement}
           crossorigin="anonymous"

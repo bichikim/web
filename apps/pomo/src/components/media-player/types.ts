@@ -37,6 +37,8 @@ export interface SelectRandomTrackOptions {
 }
 
 export interface PlayerState {
+  readonly canNavigateNextTrack: Accessor<boolean>
+  readonly canNavigatePreviousTrack: Accessor<boolean>
   readonly tracks: Accessor<readonly PTrack[]>
   readonly currentIndex: Accessor<number>
   readonly currentTrack: Accessor<PTrack | undefined>

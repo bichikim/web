@@ -1,6 +1,7 @@
 import {clampUnit} from 'src/utils/clamp-unit'
 
-import type {MemoryMemo, MemoryRecallMode} from './schema'
+import type {MemoryMemo, MemoryRecallMode, MemoryReminderKind} from './schema'
+export type {MemoryReminderKind} from './schema'
 
 const MINUTE = 60_000
 const MINUTES_PER_HOUR = 60
@@ -23,8 +24,6 @@ export const MEMORY_REINFORCEMENT_INTERVALS = [
   DAY * 30,
 ] as const
 // oxlint-enable eslint/no-magic-numbers
-
-export type MemoryReminderKind = 'exact' | 'recall'
 
 export interface GetNextRecallAtOptions {
   readonly mode: MemoryRecallMode
@@ -63,6 +62,9 @@ export interface AdvanceMemoryMemoOptions {
   readonly now: Date
   readonly random: () => number
 }
+
+const getScheduledReminderAt = (memo: MemoryMemo, kind: MemoryReminderKind) =>
+  kind === 'exact' ? memo.nextExactReminderAt : memo.nextRecallAt
 
 const getRandomInterval = (random: () => number) => {
   const ratio = clampUnit(random())
@@ -146,6 +148,7 @@ export const createMemoryMemo = (options: CreateMemoryMemoOptions): MemoryMemo =
     }),
     recallMode,
     reinforcementIndex: 0,
+    reminderEvents: [],
     reminderHistory: [],
     text: options.text.trim(),
     updatedAt: timestamp,
@@ -205,6 +208,12 @@ export const getDueMemoryReminder = (memo: MemoryMemo, now: Date): MemoryReminde
 }
 
 export const advanceMemoryMemo = (options: AdvanceMemoryMemoOptions): MemoryMemo => {
+  const scheduledAt = getScheduledReminderAt(options.memo, options.kind)
+
+  if (scheduledAt === null) {
+    throw new Error('Cannot record a reminder without its scheduled time.')
+  }
+
   const shouldAdvanceRecall =
     options.kind === 'recall' ||
     (options.memo.nextRecallAt !== null &&
@@ -223,7 +232,7 @@ export const advanceMemoryMemo = (options: AdvanceMemoryMemoOptions): MemoryMemo
     }
 
     const interval = options.memo.exactReminderRepeatIntervalMinutes * MINUTE
-    const scheduledTime = Date.parse(options.memo.nextExactReminderAt ?? options.now.toISOString())
+    const scheduledTime = Date.parse(scheduledAt)
     const elapsedIntervals = Math.floor(
       Math.max(0, options.now.getTime() - scheduledTime) / interval,
     )
@@ -250,6 +259,14 @@ export const advanceMemoryMemo = (options: AdvanceMemoryMemoOptions): MemoryMemo
         })
       : options.memo.nextRecallAt,
     reinforcementIndex: nextReinforcementIndex,
+    reminderEvents: [
+      ...options.memo.reminderEvents,
+      {
+        deliveredAt: options.now.toISOString(),
+        kind: options.kind,
+        scheduledAt,
+      },
+    ],
     reminderHistory: [...options.memo.reminderHistory, options.now.toISOString()],
     updatedAt: options.now.toISOString(),
   }

@@ -25,9 +25,17 @@ it.each([
     desktop: 'true',
     target: 'desktop',
   },
+  {
+    appsInToss: '',
+    content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+    desktop: '',
+    mobile: 'true',
+    target: 'mobile',
+  },
 ])('should render the viewport metadata for $target', (scenario) => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', scenario.appsInToss)
   vi.stubEnv('VITE_POMO_IS_DESKTOP', scenario.desktop)
+  vi.stubEnv('VITE_POMO_IS_MOBILE', scenario.mobile ?? '')
 
   const {container} = render(() => <ViewportMetadata />)
   const metadata = container.querySelectorAll('meta[name="viewport"]')

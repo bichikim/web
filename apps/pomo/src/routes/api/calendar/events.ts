@@ -67,6 +67,7 @@ export const GET = async (event: APIEvent): Promise<Response> => {
 
   try {
     const result = await getCalendarService().listEvents({
+      displayTimeZone: parsed.data.timeZone,
       end: parsed.data.end,
       start: parsed.data.start,
       userId: identity.userId,

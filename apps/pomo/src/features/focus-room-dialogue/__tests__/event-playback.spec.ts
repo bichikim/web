@@ -12,6 +12,16 @@ describe('selectEventDialogues', () => {
     ).toEqual(DIALOGUE_IDS)
   })
 
+  it('should keep only the latest dialogue IDs when a selection limit is provided', () => {
+    expect(
+      selectEventDialogues({
+        dialogueIds: DIALOGUE_IDS,
+        maxLatestDialogueIds: 2,
+        playbackMode: 'sequential-all',
+      }),
+    ).toEqual(['second', 'third'])
+  })
+
   it('should play every dialogue in a randomized order in random-all mode', () => {
     const randomValues = [0, 0.5]
 
@@ -30,6 +40,17 @@ describe('selectEventDialogues', () => {
         dialogueIds: DIALOGUE_IDS,
         playbackMode: 'random-one',
         random: () => 0.5,
+      }),
+    ).toEqual(['second'])
+  })
+
+  it('should choose random-one from the latest dialogue IDs when limited', () => {
+    expect(
+      selectEventDialogues({
+        dialogueIds: DIALOGUE_IDS,
+        maxLatestDialogueIds: 2,
+        playbackMode: 'random-one',
+        random: () => 0,
       }),
     ).toEqual(['second'])
   })

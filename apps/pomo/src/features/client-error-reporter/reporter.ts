@@ -15,7 +15,7 @@ export interface ClientErrorRoute {
 
 export interface ClientErrorContext {
   readonly environment: string
-  readonly platform: 'apps-in-toss' | 'web'
+  readonly platform: 'android' | 'apps-in-toss' | 'ios' | 'web'
   readonly release: string
   readonly route: ClientErrorRoute
 }
@@ -252,9 +252,22 @@ const getCurrentRoute = (): ClientErrorRoute => {
   return {origin: location.origin, template: getRouteTemplate(location.pathname)}
 }
 
+const getClientPlatform = (): ClientErrorContext['platform'] => {
+  switch (import.meta.env.VITE_POMO_RUNTIME_TARGET) {
+    case 'android':
+      return 'android'
+    case 'apps-in-toss':
+      return 'apps-in-toss'
+    case 'ios':
+      return 'ios'
+    default:
+      return import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'apps-in-toss' : 'web'
+  }
+}
+
 const getClientErrorContext = (): ClientErrorContext => ({
   environment: import.meta.env.VITE_POMO_ENVIRONMENT ?? import.meta.env.MODE ?? 'unknown',
-  platform: import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'apps-in-toss' : 'web',
+  platform: getClientPlatform(),
   release: import.meta.env.VITE_POMO_RELEASE ?? 'local',
   route: getCurrentRoute(),
 })

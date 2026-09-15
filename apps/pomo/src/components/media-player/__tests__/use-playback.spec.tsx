@@ -98,3 +98,34 @@ it('should read the current element from the input accessor for each command', a
   result.unmount()
   expect(pauseSecond).toHaveBeenCalledTimes(2)
 })
+
+it('should report whether a pause came from an explicit playback command', () => {
+  const [element, setElement] = createSignal<HTMLAudioElement>()
+  const onPause = vi.fn()
+  let playback: Playback | undefined
+  render(() => {
+    playback = usePlayback({element, onPause})
+    return null
+  })
+  if (playback === undefined) {
+    throw new Error('Missing playback')
+  }
+
+  const audio = document.createElement('audio')
+  vi.spyOn(audio, 'pause').mockImplementation(() => undefined)
+  setElement(audio)
+  playback.onPlay()
+  playback.pause({isUserIntent: false})
+  playback.onPause()
+  expect(onPause).toHaveBeenLastCalledWith(true, false)
+
+  playback.onPlay()
+  playback.pause()
+  playback.onPause()
+  expect(onPause).toHaveBeenLastCalledWith(true, true)
+
+  playback.onPlay()
+  playback.markPauseIntent()
+  playback.onPause()
+  expect(onPause).toHaveBeenLastCalledWith(true, true)
+})

@@ -12,6 +12,7 @@ import {useEvent} from '@winter-love/solid-use/event'
 import {
   appendUniqueTracks,
   createInitialPlaybackState,
+  normalizeTrackIndex,
   type PPlaybackState,
   type PTrack,
   resolvePlaybackRestore,
@@ -34,6 +35,7 @@ export interface UsePlayerControllerProps extends MediaPlayerOptions {
 
 export interface PlayerController extends PlayerState {
   readonly invalidate: Playback['invalidate']
+  readonly markPauseIntent: Playback['markPauseIntent']
   readonly onEnded: () => void
   readonly onError: Playback['onError']
   readonly onLoadedMetadata: () => void
@@ -72,10 +74,10 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     element: props.element,
     onError: (error) => {
       visualizer.stop()
-      playbackPersistence.persistCurrentPlayback()
+      playbackPersistence.persistPlaybackError()
       props.onError?.(error)
     },
-    onPause: (wasPlaying) => handlePause(wasPlaying),
+    onPause: (wasPlaying, isUserIntent) => handlePause(wasPlaying, isUserIntent),
     onPlay: () => handlePlay(),
   })
   const {isPlaying} = playback
@@ -148,7 +150,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const playAudio = playback.play
   const previewPlayback = createPreviewPlayback({
     isPlaying,
-    pausePlayer: playback.pause,
+    pausePlayer: () => playback.pause({isUserIntent: false}),
     playPlayer: playAudio,
   })
 
@@ -180,7 +182,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
 
     const shouldResume = options.shouldResume ?? isPlaying()
-    const nextIndex = (options.index + trackList.length) % trackList.length
+    const nextIndex = normalizeTrackIndex(options.index, trackList.length)
+
+    if (nextIndex === undefined) {
+      return
+    }
+
     const nextTrack = trackList[nextIndex]
     const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
     playback.invalidate()
@@ -200,16 +207,20 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     if (audioElement !== undefined) {
       visualizer.start(audioElement)
     }
-    playbackPersistence.persistCurrentPlayback()
+    playbackPersistence.persistPlaybackIntent(true)
   }
 
-  const handlePause = (wasPlaying: boolean) => {
+  const handlePause = (wasPlaying: boolean, isUserIntent: boolean) => {
     if (wasPlaying) {
       playback.invalidate()
       playbackRevision += 1
     }
     visualizer.stop()
-    playbackPersistence.persistCurrentPlayback()
+    if (isUserIntent) {
+      playbackPersistence.persistPlaybackIntent(false)
+    } else {
+      playbackPersistence.persistCurrentPlayback()
+    }
   }
 
   const addTracksToQueue = (tracksToAdd: readonly PTrack[]) => {
@@ -264,7 +275,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
       playbackPersistence.setPendingPosition(nextPlayback)
       playbackPersistence.writePlayback(nextPlayback)
-    } else if (nextTrack === undefined) {
+    }
+
+    if (nextTrack === undefined) {
+      visualizer.stop()
+      playback.stop()
+      playbackPersistence.persistStoppedPlayback()
       playbackPersistence.setPendingPosition(null)
     }
 
@@ -276,8 +292,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     order.resetOrder()
 
     if (nextTrack === undefined) {
-      visualizer.stop()
-      playback.stop()
       return
     }
 
@@ -301,6 +315,9 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackRevision += 1
     queueRevision += 1
     previewPlayback.preventResume()
+    visualizer.stop()
+    playback.stop()
+    playbackPersistence.persistStoppedPlayback()
     playbackPersistence.setPendingPosition(null)
 
     batch(() => {
@@ -309,8 +326,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     })
     persistTrackQueue([])
     order.clearShuffleQueue()
-    visualizer.stop()
-    playback.stop()
   }
 
   const restartCurrentTrack = () => {
@@ -383,18 +398,21 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   return {
     addTracksToQueue,
     canEditQueue: () => props.tracks === undefined,
+    canNavigateNextTrack: order.canNavigateNextTrack,
+    canNavigatePreviousTrack: order.canNavigatePreviousTrack,
     clearTrackQueue,
     currentIndex,
     currentTrack,
     invalidate: playback.invalidate,
     isPlaying,
     levels: visualizer.levels,
+    markPauseIntent: playback.markPauseIntent,
     onEnded: order.handleEnded,
     onError: playback.onError,
     onLoadedMetadata: restorePendingPlayback,
     onPause: playback.onPause,
     onPlay: playback.onPlay,
-    onSeeked: playbackPersistence.persistCurrentPlayback,
+    onSeeked: playbackPersistence.persistSeekedPlayback,
     onSeeking: handleSeeking,
     onTimeUpdate: playbackPersistence.persistPlaybackProgress,
     pause: playback.pause,

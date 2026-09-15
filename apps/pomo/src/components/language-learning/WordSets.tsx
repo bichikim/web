@@ -8,7 +8,12 @@ import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
 import {PSettingsEmptyState} from '../settings/EmptyState'
 
 const CLASSES = {
-  page: 'min-h-dvh box-border bg-background p-[max(1.25rem,var(--pomo-safe-area-inset-top))] text-foreground',
+  page:
+    'min-h-dvh box-border bg-background ' +
+    'pt-safe-top-compact ' +
+    'pr-[max(1.25rem,var(--pomo-safe-area-inset-right))] ' +
+    'pb-safe-bottom-compact ' +
+    'pl-[max(1.25rem,var(--pomo-safe-area-inset-left))] text-foreground',
   panel: 'grid gap-4 rounded-5 border border-solid border-border bg-surface p-5',
   set: cx(
     'flex min-h-16 items-center justify-between gap-3 rounded-control border',

@@ -5,7 +5,8 @@ import {createEffect, createMemo, on, onMount} from 'solid-js'
 export const Analytics = () => {
   if (
     import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
-    import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
+    import.meta.env.VITE_POMO_IS_DESKTOP === 'true' ||
+    import.meta.env.VITE_POMO_IS_MOBILE === 'true'
   ) {
     return null
   }

@@ -24,6 +24,7 @@ export const isSearchIndexablePath = (pathname: string) => {
 
   return (
     !(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') &&
+    !(import.meta.env.VITE_POMO_IS_MOBILE === 'true') &&
     SEARCH_INDEXABLE_PATHS.has(canonicalPathname)
   )
 }

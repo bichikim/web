@@ -6,6 +6,7 @@ import albumData from './public/audio/albums.json'
 import {initialSceneFallbackShortcuts} from './scripts/unocss/loading'
 import {pomoComponentStylePreflight} from './scripts/unocss/component-styles'
 import {sansFontFamily, typographyShortcuts} from './scripts/unocss/typography'
+import {createSafeAreaMaxHeight, createSafeAreaSpacing} from './scripts/unocss/safe-area-spacing'
 
 const colors = {
   backdrop: 'rgb(var(--pomo-color-backdrop-channels) / var(--pomo-color-backdrop-opacity))',
@@ -67,7 +68,6 @@ const createParentVariant = (name: string, parent: string): Variant => {
     }
   }
 }
-
 const isPresetNamed = (preset: unknown, name: string) =>
   typeof preset === 'object' && preset !== null && 'name' in preset && preset.name === name
 const config = mergeConfigs([
@@ -80,7 +80,8 @@ const config = mergeConfigs([
       },
     },
     extendTheme: (theme) => {
-      const spacing = (units: string) => `calc(${theme.spacing?.DEFAULT ?? '1rem'} / 4 * ${units})`
+      const defaultSpacing = theme.spacing?.DEFAULT ?? '1rem'
+      const spacing = (units: string) => `calc(${defaultSpacing} / 4 * ${units})`
       const controlMedium = spacing('11')
       const controlSmall = spacing('8')
       const layoutSpacing = spacing('6')
@@ -125,9 +126,9 @@ const config = mergeConfigs([
       }
       theme.maxHeight = {
         ...theme.maxHeight,
-        modal: `calc(100dvh - (${layoutSpacing} * 2) - ${safeAreaTop} - ${safeAreaBottom})`,
-        'modal-top': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacing} * 2))`,
-        'modal-top-compact': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacingCompact} * 2))`,
+        modal: createSafeAreaMaxHeight(layoutSpacing),
+        'modal-top': createSafeAreaMaxHeight(modalSpacing),
+        'modal-top-compact': createSafeAreaMaxHeight(modalSpacingCompact),
       }
       theme.minHeight = {
         ...theme.minHeight,
@@ -141,18 +142,24 @@ const config = mergeConfigs([
       }
       theme.spacing = {
         ...theme.spacing,
+        'entry-bottom': createSafeAreaSpacing(spacing('10'), safeAreaBottom),
+        'entry-top': createSafeAreaSpacing(spacing('10'), safeAreaTop),
         layout: layoutSpacing,
         'layout-mobile': mobileLayoutSpacing,
-        'modal-top': `calc(${safeAreaTop} + ${modalSpacing})`,
-        'modal-top-compact': `calc(${safeAreaTop} + ${modalSpacingCompact})`,
-        'player-bottom': `calc(${layoutSpacing} + ${safeAreaBottom})`,
-        'player-bottom-mobile': `calc(${mobileLayoutSpacing} + ${safeAreaBottom})`,
-        'safe-bottom': `max(${layoutSpacing}, calc(${layoutSpacing} + ${safeAreaBottom}))`,
-        'safe-bottom-mobile': `max(${mobileLayoutSpacing}, calc(${mobileLayoutSpacing} + ${safeAreaBottom}))`,
+        'modal-top': createSafeAreaSpacing(modalSpacing, safeAreaTop),
+        'modal-top-compact': createSafeAreaSpacing(modalSpacingCompact, safeAreaTop),
+        'player-bottom': createSafeAreaSpacing(layoutSpacing, safeAreaBottom),
+        'player-bottom-mobile': createSafeAreaSpacing(mobileLayoutSpacing, safeAreaBottom),
+        'safe-bottom': createSafeAreaSpacing(layoutSpacing, safeAreaBottom),
+        'safe-bottom-compact': createSafeAreaSpacing(modalSpacingCompact, safeAreaBottom),
+        'safe-bottom-mobile': createSafeAreaSpacing(mobileLayoutSpacing, safeAreaBottom),
         'safe-left': `max(${layoutSpacing}, ${safeAreaLeft})`,
         'safe-left-mobile': `max(${mobileLayoutSpacing}, ${safeAreaLeft})`,
         'safe-right': `max(${layoutSpacing}, ${safeAreaRight})`,
         'safe-right-mobile': `max(${mobileLayoutSpacing}, ${safeAreaRight})`,
+        'safe-top': createSafeAreaSpacing(layoutSpacing, safeAreaTop),
+        'safe-top-compact': createSafeAreaSpacing(modalSpacingCompact, safeAreaTop),
+        'safe-top-mobile': createSafeAreaSpacing(mobileLayoutSpacing, safeAreaTop),
       }
       theme.width = {
         ...theme.width,

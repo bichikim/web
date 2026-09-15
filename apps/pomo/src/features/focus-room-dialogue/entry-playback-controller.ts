@@ -18,8 +18,8 @@ import type {DialogueSegmentMood, PDialogue} from './schema'
 import {getDialoguePositionAtTime, getDialogueVisemeAtTime} from './timeline'
 import {
   createDialoguePlaybackQueue,
+  type DialoguePlaybackRequest,
   type PlaybackCompletion,
-  type PlaybackQueueRequest,
   type PlayPDialogueSequenceOptions,
 } from './entry-playback-controller/queue'
 
@@ -372,16 +372,24 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   }
 
   const playRequest = async (
-    request: PlaybackQueueRequest,
+    request: DialoguePlaybackRequest,
     generation: number,
     onProgress: () => void,
   ): Promise<PlaybackCompletion> => {
-    for (const [position, dialogueId] of request.dialogueIds.entries()) {
+    while (true) {
+      if (request.applyPendingReplacement()) {
+        onProgress()
+      }
+
+      const dialogueId = request.getCurrentDialogueId()
+      if (dialogueId === undefined) {
+        return 'ended'
+      }
+
       if (isDisposed || generation !== playbackGeneration) {
         return 'cancelled'
       }
 
-      request.nextDialoguePosition = position
       onProgress()
       const completion = await playSequenceItem({
         dialogueId,
@@ -394,7 +402,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       switch (completion) {
         case 'ended':
         case 'missing':
-          request.nextDialoguePosition = position + 1
+          request.advanceDialogue()
           onProgress()
           break
         case 'cancelled':
@@ -403,8 +411,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
           return completion
       }
     }
-
-    return 'ended'
   }
 
   const queue = createDialoguePlaybackQueue({

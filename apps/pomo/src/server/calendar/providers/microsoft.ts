@@ -8,6 +8,7 @@ import type {
   ProviderEventsResult,
 } from './types'
 import {mapInBatches} from './batch'
+import {formatCalendarDate} from './format-calendar-date'
 import {requestTokens} from './oauth'
 
 const MICROSOFT_ACCOUNT_API =
@@ -25,7 +26,7 @@ const CALENDAR_PAGE_SIZE = 250
 const MAXIMUM_CALENDAR_PAGES = 20
 const MAXIMUM_CALENDARS = 100
 const EVENT_REQUEST_CONCURRENCY = 4
-const ISO_DATE_LENGTH = 10
+const CALENDAR_DATE_LENGTH = 10
 const graphDateTimeSchema = z.object({dateTime: z.string(), timeZone: z.string()})
 const graphEventSchema = z.object({
   end: graphDateTimeSchema,
@@ -58,22 +59,38 @@ const toUtcIso = (value: z.infer<typeof graphDateTimeSchema>) => {
   return new Date(dateTime).toISOString()
 }
 
+const toDisplayCalendarDate = (
+  value: z.infer<typeof graphDateTimeSchema>,
+  displayTimeZoneFormatter: Intl.DateTimeFormat,
+) => {
+  if (value.timeZone !== 'UTC') {
+    return z.iso.date().parse(value.dateTime.slice(0, CALENDAR_DATE_LENGTH))
+  }
+
+  return formatCalendarDate({date: new Date(toUtcIso(value)), formatter: displayTimeZoneFormatter})
+}
+
 const normalizeEvent = (
   event: z.infer<typeof graphEventSchema>,
   calendarLabel: string,
+  displayTimeZoneFormatter: Intl.DateTimeFormat,
 ): ProviderEvent | null => {
   if (event.isCancelled === true) {
     return null
   }
 
-  const start = toUtcIso(event.start)
-  const end = toUtcIso(event.end)
+  const start = event.isAllDay
+    ? toDisplayCalendarDate(event.start, displayTimeZoneFormatter)
+    : toUtcIso(event.start)
+  const end = event.isAllDay
+    ? toDisplayCalendarDate(event.end, displayTimeZoneFormatter)
+    : toUtcIso(event.end)
   return {
     allDay: event.isAllDay,
     calendarLabel,
-    end: event.isAllDay ? end.slice(0, ISO_DATE_LENGTH) : end,
+    end,
     id: event.id,
-    start: event.isAllDay ? start.slice(0, ISO_DATE_LENGTH) : start,
+    start,
     title: event.subject?.trim() || '제목 없는 일정',
   }
 }
@@ -90,16 +107,25 @@ const readNextUrl = (nextLink: string | undefined): URL | null => {
   return nextUrl
 }
 
-const listCalendarEvents = async (
-  calendarId: string,
-  calendarLabel: string,
-  options: ListProviderEventsOptions,
-  fetch: typeof globalThis.fetch,
-): Promise<ProviderEventsResult> => {
+interface ListCalendarEventsOptions {
+  readonly calendarId: string
+  readonly calendarLabel: string
+  readonly displayTimeZoneFormatter: Intl.DateTimeFormat
+  readonly eventOptions: ListProviderEventsOptions
+  readonly fetch: typeof globalThis.fetch
+}
+
+const listCalendarEvents = async ({
+  calendarId,
+  calendarLabel,
+  displayTimeZoneFormatter,
+  eventOptions,
+  fetch,
+}: ListCalendarEventsOptions): Promise<ProviderEventsResult> => {
   const events: Array<ProviderEvent> = []
   let truncated = false
   const headers = {
-    Authorization: `Bearer ${options.accessToken}`,
+    Authorization: `Bearer ${eventOptions.accessToken}`,
     Prefer: 'outlook.timezone="UTC"',
   }
   const initialUrl = new URL(
@@ -108,8 +134,8 @@ const listCalendarEvents = async (
   initialUrl.searchParams.set('$orderby', 'start/dateTime')
   initialUrl.searchParams.set('$select', 'id,subject,start,end,isAllDay,isCancelled')
   initialUrl.searchParams.set('$top', String(EVENT_PAGE_SIZE))
-  initialUrl.searchParams.set('endDateTime', options.end)
-  initialUrl.searchParams.set('startDateTime', options.start)
+  initialUrl.searchParams.set('endDateTime', eventOptions.end)
+  initialUrl.searchParams.set('startDateTime', eventOptions.start)
   const loadPage = async (url: URL, pageCount: number): Promise<void> => {
     const response = await fetch(url, {headers})
     if (!response.ok) {
@@ -118,7 +144,7 @@ const listCalendarEvents = async (
 
     const body = graphEventsSchema.parse(await response.json())
     const normalizedEvents = body.value.flatMap((event) => {
-      const normalized = normalizeEvent(event, calendarLabel)
+      const normalized = normalizeEvent(event, calendarLabel, displayTimeZoneFormatter)
       return normalized === null ? [] : [normalized]
     })
     const remainingEvents = MAXIMUM_EVENTS_PER_CALENDAR - events.length
@@ -183,9 +209,21 @@ const listEvents = async (
   options: ListProviderEventsOptions,
   fetch: typeof globalThis.fetch,
 ): Promise<ProviderEventsResult> => {
+  const displayTimeZoneFormatter = new Intl.DateTimeFormat('en', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: options.displayTimeZone,
+    year: 'numeric',
+  })
   const result = await listCalendars(options.accessToken, fetch)
   const eventLists = await mapInBatches(result.calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
-    listCalendarEvents(calendar.id, calendar.name, options, fetch),
+    listCalendarEvents({
+      calendarId: calendar.id,
+      calendarLabel: calendar.name,
+      displayTimeZoneFormatter,
+      eventOptions: options,
+      fetch,
+    }),
   )
   return {
     events: eventLists.flatMap((result) => result.events),

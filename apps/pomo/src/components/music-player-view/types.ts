@@ -3,6 +3,8 @@ import type {PTrack, RepeatMode} from '../../features/focus-room-audio'
 
 export interface MusicPlayerViewProps {
   readonly backdropBlur?: boolean
+  readonly canNavigateNextTrack: boolean
+  readonly canNavigatePreviousTrack: boolean
   readonly currentIndex: number
   readonly currentTrack?: PTrack
   readonly expanded: boolean

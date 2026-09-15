@@ -22,6 +22,8 @@ export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
 
   return (
     <MusicPlayerView
+      canNavigateNextTrack={player.canNavigateNextTrack()}
+      canNavigatePreviousTrack={player.canNavigatePreviousTrack()}
       backdropBlur={props.backdropBlur}
       currentIndex={player.currentIndex()}
       currentTrack={player.currentTrack()}

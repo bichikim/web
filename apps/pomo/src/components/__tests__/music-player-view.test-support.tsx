@@ -76,6 +76,8 @@ const TRACKS = [
 
 interface RenderMusicPlayerViewOptions {
   readonly backdropBlur?: boolean
+  readonly canNavigateNextTrack?: boolean
+  readonly canNavigatePreviousTrack?: boolean
   readonly currentTrack?: PTrack | null
   readonly expanded?: boolean
   readonly isPlaying?: boolean
@@ -97,6 +99,8 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
   render(() => (
     <PTooltipProvider>
       <MusicPlayerView
+        canNavigateNextTrack={options.canNavigateNextTrack ?? true}
+        canNavigatePreviousTrack={options.canNavigatePreviousTrack ?? true}
         currentIndex={0}
         currentTrack={
           options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])

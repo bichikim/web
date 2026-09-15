@@ -166,6 +166,7 @@ it('should refresh expired tokens and preserve events from another provider fail
 
   await expect(
     service.listEvents({
+      displayTimeZone: 'Asia/Seoul',
       end: '2026-09-05T00:00:00.000Z',
       start: '2026-09-04T10:00:00.000Z',
       userId: 'user-1',
@@ -189,6 +190,7 @@ it('should refresh expired tokens and preserve events from another provider fail
   })
   expect(googleProvider.listEvents).toHaveBeenCalledWith({
     accessToken: 'fresh',
+    displayTimeZone: 'Asia/Seoul',
     end: '2026-09-05T00:00:00.000Z',
     start: '2026-09-04T10:00:00.000Z',
   })
@@ -226,6 +228,7 @@ it('should preserve more than forty events for the calendar view', async () => {
   const service = createCalendarService({providerFor, repository, vault})
 
   const result = await service.listEvents({
+    displayTimeZone: 'UTC',
     end: '2026-10-01T00:00:00.000Z',
     start: '2026-09-01T00:00:00.000Z',
     userId: 'user-1',
@@ -261,6 +264,7 @@ it('should keep the same Google event independent across calendars and connectio
   const provider = createGoogleCalendarProvider({clientId: 'client', clientSecret: 'secret', fetch})
   const service = createCalendarService({providerFor: () => provider, repository, vault})
   const result = await service.listEvents({
+    displayTimeZone: 'UTC',
     end: '2026-10-01T00:00:00Z',
     start: '2026-09-01T00:00:00Z',
     userId: 'user-1',

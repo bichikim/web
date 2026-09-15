@@ -57,6 +57,9 @@ import {DesktopSurfaceHandle} from '../desktop-surface/DesktopSurfaceHandle'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
+const getDesktopSafeAreaStyle = (inset: number) =>
+  inset > 0 ? {'--pomo-safe-area-inset-top': `${inset}px`} : undefined
+
 interface SceneAsset {
   readonly depthSource: string
   readonly id: PSceneId
@@ -408,7 +411,7 @@ export const PStudio = () => {
         'rounded-panel': isDesktopWidget(),
       }}
       ref={tour.setStudioElement}
-      style={{'--pomo-safe-area-inset-top': `${desktopSafeAreaTop()}px`}}
+      style={getDesktopSafeAreaStyle(desktopSafeAreaTop())}
     >
       <StudioSceneView
         background={background}

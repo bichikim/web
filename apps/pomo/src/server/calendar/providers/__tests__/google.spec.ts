@@ -24,6 +24,7 @@ it.each([100, 101])(
     })
     const result = await provider.listEvents({
       accessToken: 'access',
+      displayTimeZone: 'UTC',
       end: '2026-10-01T00:00:00.000Z',
       start: '2026-09-01T00:00:00.000Z',
     })
@@ -57,6 +58,7 @@ it.each([false, true])(
     })
     const result = await provider.listEvents({
       accessToken: 'access',
+      displayTimeZone: 'UTC',
       end: '2026-10-01T00:00:00.000Z',
       start: '2026-09-01T00:00:00.000Z',
     })
@@ -161,6 +163,7 @@ it('should expand recurring Google events and normalize timed and all-day values
   await expect(
     provider.listEvents({
       accessToken: 'access',
+      displayTimeZone: 'UTC',
       end: '2026-09-08T00:00:00.000Z',
       start: '2026-09-04T00:00:00.000Z',
     }),
@@ -217,6 +220,7 @@ it('should page through every Google calendar before loading events', async () =
 
   await provider.listEvents({
     accessToken: 'access',
+    displayTimeZone: 'UTC',
     end: '2026-09-08T00:00:00.000Z',
     start: '2026-09-04T00:00:00.000Z',
   })
@@ -256,6 +260,7 @@ it.each([false, true])(
     })
     const range = {
       accessToken: 'access',
+      displayTimeZone: 'UTC',
       end: '2026-10-01T00:00:00Z',
       start: '2026-09-01T00:00:00Z',
     }

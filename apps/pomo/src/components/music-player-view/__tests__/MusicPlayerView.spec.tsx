@@ -142,6 +142,16 @@ describe('MusicPlayerView', () => {
     ).not.toThrow()
   })
 
+  it('should disable each transport direction independently', () => {
+    const result = renderMusicPlayerView({
+      canNavigateNextTrack: false,
+      canNavigatePreviousTrack: true,
+    })
+
+    expect(result.getByRole('button', {name: '이전 곡'})).not.toBeDisabled()
+    expect(result.getByRole('button', {name: '다음 곡'})).toBeDisabled()
+  })
+
   it('should show audio levels and fallback labels for an absent current track', () => {
     const idleResult = renderMusicPlayerView({currentTrack: null, levels: [25, 75]})
     const idleLevels = idleResult.container.querySelectorAll('.pomo-level')
