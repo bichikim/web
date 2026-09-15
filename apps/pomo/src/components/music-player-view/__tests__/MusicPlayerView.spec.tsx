@@ -232,6 +232,21 @@ describe('MusicPlayerView', () => {
     expect(expandedInner?.classList.contains('is-expanded')).toBe(false)
   })
 
+  it('should allow native desktop surfaces to disable backdrop blur', () => {
+    const webResult = renderMusicPlayerView()
+    const webBase = webResult.getByTestId('player-background')
+
+    expect(webBase).toHaveClass('backdrop-blur-surface')
+
+    cleanup()
+
+    const desktopResult = renderMusicPlayerView({backdropBlur: false})
+    const desktopBase = desktopResult.getByTestId('player-background')
+
+    expect(desktopBase).not.toHaveClass('backdrop-blur-surface')
+    expect(desktopBase).toHaveClass('bg-player-surface')
+  })
+
   it('should disable both progress ranges while collapsed', () => {
     const result = renderMusicPlayerView({expanded: false})
     const {collapsedRange, expandedRange} = getProgressRanges(result.container)

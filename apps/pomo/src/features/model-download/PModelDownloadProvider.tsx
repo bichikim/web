@@ -1,19 +1,13 @@
-import {createContext, type JSX, onCleanup, untrack, useContext} from 'solid-js'
+import {type JSX, onCleanup, untrack, useContext} from 'solid-js'
 
-import {
-  createModelDownloadController,
-  type ModelDownloadController,
-  type ModelDownloadRuntime,
-} from './controller'
-import {createModelAssetManager, type ModelAssetManager} from './asset-manager'
+import {createModelDownloadController, type ModelDownloadRuntime} from './controller'
+import {createModelAssetManager} from './asset-manager'
+import {ModelAssetContext, ModelDownloadContext} from './context'
 
 export interface PModelDownloadProviderProps {
   readonly children: JSX.Element
   readonly runtime?: ModelDownloadRuntime
 }
-
-const ModelDownloadContext = createContext<ModelDownloadController>()
-const ModelAssetContext = createContext<ModelAssetManager>()
 
 export const PModelDownloadProvider = (props: PModelDownloadProviderProps) => {
   const runtime = untrack(() => props.runtime)

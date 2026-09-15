@@ -2,7 +2,7 @@ import 'media-chrome'
 import {createSignal, type JSX, mergeProps} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 import {MediaPlayerContext} from './context'
-import type {MediaPlayerOptions} from './types'
+import type {MediaPlayerOptions, PlayerState} from './types'
 import {usePlayerController} from './use-player-controller'
 import {usePlayerMediaSession} from './use-session'
 
@@ -26,33 +26,75 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
   const [controller, setController] = createSignal<HTMLElement>()
   const options = mergeProps(props, {element})
   const player = usePlayerController(options)
-  const {playback, mediaEvents, ...controls} = player
-  useEvent(controller, 'mediapauserequest', playback.markPauseIntent)
+  const {
+    onEnded,
+    onError,
+    onLoadedMetadata,
+    onPause,
+    onPlay,
+    onSeeked,
+    onSeeking,
+    onTimeUpdate,
+    pause,
+    play,
+    seek,
+  } = player
+  const controls: PlayerState = {
+    addTracksToQueue: player.addTracksToQueue,
+    canEditQueue: player.canEditQueue,
+    canNavigateNextTrack: player.canNavigateNextTrack,
+    canNavigatePreviousTrack: player.canNavigatePreviousTrack,
+    clearTrackQueue: player.clearTrackQueue,
+    currentIndex: player.currentIndex,
+    currentTrack: player.currentTrack,
+    isPlaying: player.isPlaying,
+    isPlaylistLoading: player.isPlaylistLoading,
+    levels: player.levels,
+    previewPlayback: player.previewPlayback,
+    removeTrackFromQueue: player.removeTrackFromQueue,
+    repeatMode: player.repeatMode,
+    selectChosenTrack: player.selectChosenTrack,
+    selectNextTrack: player.selectNextTrack,
+    selectPreviousTrack: player.selectPreviousTrack,
+    shuffleEnabled: player.shuffleEnabled,
+    toggleRepeatMode: player.toggleRepeatMode,
+    toggleShuffle: player.toggleShuffle,
+    tracks: player.tracks,
+  }
+  const handlePauseRequest = () => {
+    player.previewPlayback.preventResume()
+    player.markPauseIntent()
+  }
+  const handlePause = () => {
+    player.previewPlayback.preventResume()
+    player.pause()
+  }
+  useEvent(controller, 'mediapauserequest', handlePauseRequest)
   usePlayerMediaSession({
     currentTrack: player.currentTrack,
     isPlaying: player.isPlaying,
     onNextTrack: player.selectNextTrack,
-    onPause: playback.pause,
-    onPlay: playback.play,
+    onPause: handlePause,
+    onPlay: play,
     onPreviousTrack: player.selectPreviousTrack,
   })
   const handleEnded = () => {
     const endedTrack = player.currentTrack() ?? null
-    mediaEvents.onEnded()
+    onEnded()
     props.onEnded?.(endedTrack)
   }
   const handleError: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
-    playback.handleError(event.currentTarget.error ?? new Error('Audio playback failed'))
+    onError(event.currentTarget.error ?? new Error('Audio playback failed'))
   }
   const handleLoadedMetadata: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
-    mediaEvents.onLoadedMetadata()
+    onLoadedMetadata()
     props.onDurationChange?.(readDuration(event.currentTarget))
   }
   const handleDurationChange: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     props.onDurationChange?.(readDuration(event.currentTarget))
   }
   const handleTimeUpdate: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
-    mediaEvents.onTimeUpdate()
+    onTimeUpdate()
     props.onTimeUpdate?.({
       currentTime: event.currentTarget.currentTime,
       duration: readDuration(event.currentTarget),
@@ -65,9 +107,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     })
   }
   return (
-    <MediaPlayerContext.Provider
-      value={{...controls, pause: playback.pause, play: playback.play, seek: playback.seek}}
-    >
+    <MediaPlayerContext.Provider value={{...controls, pause: handlePause, play, seek}}>
       <media-controller ref={setController} audio="" class={props.class}>
         <audio
           ref={setElement}
@@ -75,14 +115,14 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
           preload="metadata"
           slot="media"
           src={player.currentTrack()?.source}
-          onPlay={playback.events.onPlay}
-          onPause={playback.events.onPause}
+          onPlay={onPlay}
+          onPause={onPause}
           onEnded={handleEnded}
           onError={handleError}
           onLoadedMetadata={handleLoadedMetadata}
           onDurationChange={handleDurationChange}
-          onSeeking={mediaEvents.onSeeking}
-          onSeeked={mediaEvents.onSeeked}
+          onSeeking={onSeeking}
+          onSeeked={onSeeked}
           onTimeUpdate={handleTimeUpdate}
           onVolumeChange={handleVolumeChange}
         />

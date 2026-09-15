@@ -12,11 +12,13 @@ afterEach(() => {
 })
 
 it('should update the icon when audio paused changes', () => {
-  const [state, setState] = createSignal({paused: true})
-  vi.mocked(useAudioPlayer).mockReturnValue([state] as unknown as ReturnType<typeof useAudioPlayer>)
+  const [paused, setPaused] = createSignal(true)
+  vi.mocked(useAudioPlayer).mockReturnValue({paused} as unknown as ReturnType<
+    typeof useAudioPlayer
+  >)
   const view = render(() => <PlaybackIcon />)
   expect(view.container.firstElementChild).toHaveClass('i-tabler-player-play')
   expect(view.container.firstElementChild).toHaveAttribute('aria-hidden', 'true')
-  setState({paused: false})
+  setPaused(false)
   expect(view.container.firstElementChild).toHaveClass('i-tabler-player-pause')
 })

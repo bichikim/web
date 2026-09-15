@@ -121,6 +121,35 @@ it('should generate reusable CSS for static runtime surfaces', async () => {
   expect(css).toContain('transform:translateX(var(--pomo-swipe-offset))')
 })
 
+it('should keep the default vertical spacing and quarter it beside a safe-area inset', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css, matched} = await uno.generate(
+    'top-safe-top top-safe-top-mobile bottom-safe-bottom bottom-safe-bottom-mobile',
+  )
+
+  for (const utility of [
+    'top-safe-top',
+    'top-safe-top-mobile',
+    'bottom-safe-bottom',
+    'bottom-safe-bottom-mobile',
+  ]) {
+    expect(matched).toContain(utility)
+  }
+
+  for (const [selector, property, inset, baseUnits] of [
+    ['top-safe-top', 'top', 'top', 6],
+    ['top-safe-top-mobile', 'top', 'top', 4],
+    ['bottom-safe-bottom', 'bottom', 'bottom', 6],
+    ['bottom-safe-bottom-mobile', 'bottom', 'bottom', 4],
+  ] as const) {
+    const expectedRule = [
+      `${property}:calc(var(--pomo-safe-area-inset-${inset}) + calc(1rem / 4 * ${baseUnits}) * `,
+      `(1 - 0.75 * sin(atan2(var(--pomo-safe-area-inset-${inset}), 0px))));`,
+    ].join('')
+    expect(getRuleBody(css, selector)).toContain(expectedRule)
+  }
+})
+
 it('should generate CSS for Tabler icons used by settings, weather, and modal close', async () => {
   const uno = await createGenerator(unoConfig)
   const {css, matched} = await uno.generate('i-tabler-x i-tabler-bolt i-tabler-cloud-rain', {

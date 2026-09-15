@@ -15,8 +15,14 @@ import {PModal} from '../p-modal/PModal'
 import {POrbitBorder} from '../p-orbit-border/POrbitBorder'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {VersionReleaseCard} from '../version-notice/ReleaseCard'
+import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
+import {DesktopDialogFrame} from '../desktop-dialog/Frame'
+import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
 
 export interface PVersionNoticeProps {
+  readonly desktopDialog?: boolean
+  readonly desktopSurface?: boolean
+  readonly onRequestClose?: () => void
   readonly sceneStyle?: PSceneStyle
 }
 
@@ -43,6 +49,14 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
 
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
+
+    if (props.desktopSurface) {
+      openDesktopDialog('versionNotice').catch((error: unknown) => {
+        console.error('Failed to open the desktop version notice dialog.', error)
+      })
+      return
+    }
+
     setIsOpen(true)
   }
   const handleOpenChange = (nextIsOpen: boolean) => {
@@ -64,33 +78,55 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
     triggerElement()?.focus()
     setReleases([])
   }
+  const releaseContent = () => (
+    <Show
+      when={releases().length > 0}
+      fallback={<PLoadingStatus message={m.modal_content_loading()} />}
+    >
+      <div class="grid gap-4">
+        <For each={releases()}>{(release) => <VersionReleaseCard release={release} />}</For>
+      </div>
+    </Show>
+  )
 
   return (
-    <Show when={releases().length > 0}>
-      <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-        <POrbitBorder>
-          <PButton
-            {...GLASS_ICON_BUTTON}
-            accessibleLabel={m.version_notice_open()}
-            tooltip={m.version_notice_open()}
-            icon={getPomoIconClass('i-tabler-gift', props.sceneStyle)}
-            onPress={handleOpen}
-          />
-        </POrbitBorder>
-      </PScribbleCircleControl>
-      <PModal
-        description={m.version_notice_description()}
-        isOpen={isOpen()}
-        onCloseAutoFocus={handleCloseAutoFocus}
-        onOpenChange={handleOpenChange}
-        placement="top"
-        size="wide"
-        title={m.version_notice_title()}
+    <Show when={props.desktopDialog || releases().length > 0}>
+      <Show
+        fallback={
+          <>
+            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+              <POrbitBorder>
+                <PButton
+                  {...GLASS_ICON_BUTTON}
+                  accessibleLabel={m.version_notice_open()}
+                  tooltip={m.version_notice_open()}
+                  icon={getPomoIconClass('i-tabler-gift', props.sceneStyle)}
+                  onPress={handleOpen}
+                />
+              </POrbitBorder>
+            </PScribbleCircleControl>
+            <PModal
+              description={m.version_notice_description()}
+              isOpen={isOpen()}
+              onCloseAutoFocus={handleCloseAutoFocus}
+              onOpenChange={handleOpenChange}
+              placement="top"
+              size="wide"
+              title={m.version_notice_title()}
+            >
+              {releaseContent()}
+            </PModal>
+          </>
+        }
+        when={props.desktopDialog}
       >
-        <div class="grid gap-4">
-          <For each={releases()}>{(release) => <VersionReleaseCard release={release} />}</For>
-        </div>
-      </PModal>
+        <DesktopDialogFrame
+          onClose={() => props.onRequestClose?.()}
+          title={m.version_notice_title()}
+        >
+          {releaseContent()}
+        </DesktopDialogFrame>
+      </Show>
     </Show>
   )
 }

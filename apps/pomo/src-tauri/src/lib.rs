@@ -1,3 +1,4 @@
+#[cfg(desktop)]
 use tauri::{
     Emitter, Manager, WindowEvent,
     menu::{Menu, MenuItem, PredefinedMenuItem},
@@ -7,14 +8,17 @@ use tauri::{
 #[cfg(desktop)]
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
+#[cfg(desktop)]
 const MODE_EVENT: &str = "desktop-mode-requested";
 
+#[cfg(desktop)]
 fn emit_mode(app: &tauri::AppHandle, mode: &str) {
     if let Err(error) = app.emit(MODE_EVENT, mode) {
         eprintln!("failed to emit desktop mode {mode}: {error}");
     }
 }
 
+#[cfg(desktop)]
 fn show_background(app: &tauri::AppHandle) {
     let Some(window) = app.get_webview_window("background") else {
         return;
@@ -25,6 +29,7 @@ fn show_background(app: &tauri::AppHandle) {
     }
 }
 
+#[cfg(desktop)]
 fn preserve_background_window(window: &tauri::WebviewWindow) {
     let background = window.clone();
     window.on_window_event(move |event| {
@@ -37,6 +42,7 @@ fn preserve_background_window(window: &tauri::WebviewWindow) {
     });
 }
 
+#[cfg(desktop)]
 fn install_tray(app: &tauri::App) -> tauri::Result<()> {
     let normal = MenuItem::with_id(app, "normal", "일반 창", true, None::<&str>)?;
     let widget = MenuItem::with_id(app, "widget", "미니 위젯", true, None::<&str>)?;
@@ -107,12 +113,15 @@ fn install_restore_shortcut(app: &tauri::App) -> tauri::Result<()> {
     Ok(())
 }
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    #[cfg(desktop)]
+    let builder = builder
         .plugin(tauri_plugin_desktop_surface::init())
         .setup(|app| {
             install_tray(app)?;
-            #[cfg(desktop)]
             install_restore_shortcut(app)?;
 
             if let Some(window) = app.get_webview_window("background") {
@@ -122,7 +131,9 @@ pub fn run() {
             }
 
             Ok(())
-        })
+        });
+
+    builder
         .run(tauri::generate_context!())
-        .expect("Pomofi desktop runtime failed");
+        .expect("Pomofi runtime failed");
 }

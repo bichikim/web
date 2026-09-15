@@ -171,7 +171,7 @@ describe('SceneToolbar', () => {
   it('should use flow layout inside a transparent desktop surface', () => {
     const view = render(() => <SceneToolbar {...baseProps} layout="surface" />)
 
-    expect(view.container.firstElementChild).toHaveClass('w-full')
+    expect(view.container.firstElementChild).toHaveClass('w-fit')
     expect(view.container.firstElementChild).not.toHaveClass('absolute')
   })
 })

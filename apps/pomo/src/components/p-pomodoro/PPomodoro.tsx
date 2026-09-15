@@ -1,7 +1,8 @@
 import {cx} from 'class-variance-authority'
-import {createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
 
 import {getPomoIconClass} from '../icon-style'
+import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
 import {PButton} from '../p-button/PButton'
 import {type PCharacterEmotionType} from '../p-character-emotion/PCharacterEmotion'
 import {GLASS_ICON_BUTTON} from '../button-presets'
@@ -73,6 +74,8 @@ const CHARACTER_IMAGES = {
 const DEGREES_PER_CIRCLE = 360
 
 export interface PPomodoroProps {
+  readonly desktopDialog?: boolean
+  readonly desktopSurface?: boolean
   readonly stopOnUnmount?: boolean
   readonly onEvents?: (
     events: ReadonlyArray<PomodoroTimerEvent>,
@@ -118,6 +121,105 @@ const getPrimaryIcon = (state: PomodoroTimerState, sceneStyle?: PSceneStyle) =>
     sceneStyle,
   )
 
+interface PomodoroPanelProps {
+  readonly actionContainer: (element: HTMLDivElement) => void
+  readonly completedInCycle: Accessor<number>
+  readonly isEditingDurations: Accessor<boolean>
+  readonly onEditingDurationsChange: (isEditing: boolean) => void
+  readonly phasePresentation: Accessor<PhasePresentation>
+  readonly primaryIcon: Accessor<string>
+  readonly primaryLabel: Accessor<string>
+  readonly progressDegrees: Accessor<string>
+  readonly sceneStyle?: PSceneStyle
+  readonly statusLabel: Accessor<string>
+  readonly timeLabel: Accessor<string>
+  readonly timer: ReturnType<typeof usePomodoroTimer>
+}
+
+const PomodoroPanel = (props: PomodoroPanelProps) => (
+  <section
+    aria-label={m.pomodoro_timer_label()}
+    class={CLASSES.pomodoroPanel}
+    data-phase={props.timer.state().phase}
+  >
+    <Show when={!props.isEditingDurations()}>
+      <PomodoroTimerRing
+        icon={getPomoIconClass(props.phasePresentation().icon, props.sceneStyle)}
+        label={props.phasePresentation().label}
+        progress={props.progressDegrees()}
+        timeLabel={props.timeLabel()}
+      />
+
+      <PomodoroSessionProgress
+        completedCount={props.completedInCycle()}
+        onReset={props.timer.onReset}
+        positions={Array.from(
+          {length: props.timer.config().focusSessionsPerCycle},
+          (_, position) => position,
+        )}
+        sceneStyle={props.sceneStyle}
+        sessionCount={props.timer.config().focusSessionsPerCycle}
+      />
+    </Show>
+
+    <p aria-live="polite" class="sr-only">
+      {props.phasePresentation().label}, {props.statusLabel()}
+    </p>
+
+    <div class={CLASSES.pomodoroPanelActions} ref={props.actionContainer}>
+      <PButton
+        raised
+        class={CLASSES.pomodoroPanelPrimaryAction}
+        icon={props.primaryIcon()}
+        onPress={() => {
+          if (props.timer.state().status === 'running') {
+            props.timer.onPause()
+            return
+          }
+
+          props.timer.onStart()
+        }}
+        tone="primary"
+      >
+        {props.primaryLabel()}
+      </PButton>
+      <PButton
+        {...GLASS_ICON_BUTTON}
+        accessibleLabel={m.pomodoro_next_phase()}
+        tooltip={m.pomodoro_next_phase()}
+        class={CLASSES.pomodoroPanelCompactAction}
+        icon={getPomoIconClass('i-tabler-player-track-next', props.sceneStyle)}
+        onPress={props.timer.onNextPhase}
+      />
+      <Show when={props.timer.state().status !== 'idle'}>
+        <PButton
+          {...GLASS_ICON_BUTTON}
+          accessibleLabel={m.pomodoro_end_session()}
+          tooltip={m.pomodoro_end_session()}
+          class={CLASSES.pomodoroPanelCompactActionDanger}
+          icon={getPomoIconClass('i-tabler-square', props.sceneStyle)}
+          onPress={props.timer.onStop}
+        />
+      </Show>
+    </div>
+
+    <PSwitch
+      checked={props.timer.isAutoStartEnabled()}
+      class={CLASSES.pomodoroPanelAutoStart}
+      description={m.pomodoro_auto_play_description()}
+      label={m.pomodoro_auto_play()}
+      onChange={props.timer.onAutoStartChange}
+    />
+
+    <PPomodoroDurationEditor
+      config={props.timer.config()}
+      isEditing={props.isEditingDurations()}
+      onChange={props.timer.onConfigChange}
+      onEditingChange={props.onEditingDurationsChange}
+    />
+  </section>
+)
+
 export const PPomodoro = (props: PPomodoroProps) => {
   const timer = usePomodoroTimer(props)
   const [isOpen, setIsOpen] = createSignal(false)
@@ -129,9 +231,6 @@ export const PPomodoro = (props: PPomodoroProps) => {
   const timeLabel = createMemo(() => formatPomodoroTime(timer.remainingSeconds()))
   const completedInCycle = createMemo(() =>
     getCompletedInCycle(timer.state(), timer.config().focusSessionsPerCycle),
-  )
-  const sessionPositions = createMemo(() =>
-    Array.from({length: timer.config().focusSessionsPerCycle}, (_, position) => position),
   )
   const progressDegrees = createMemo(() => `${timer.progress() * DEGREES_PER_CIRCLE}deg`)
   const primaryLabel = createMemo(() => {
@@ -152,6 +251,14 @@ export const PPomodoro = (props: PPomodoroProps) => {
   }
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
+
+    if (props.desktopSurface) {
+      openDesktopDialog('pomodoro').catch((error: unknown) => {
+        console.error('Failed to open the desktop Pomodoro dialog.', error)
+      })
+      return
+    }
+
     handleOpenChange(true)
   }
   const handlePrimaryPress = () => {
@@ -176,106 +283,62 @@ export const PPomodoro = (props: PPomodoroProps) => {
     untrack(() => props.onPresentationChange)?.(presentation)
   })
 
+  const panel = () => (
+    <PomodoroPanel
+      actionContainer={setActionContainer}
+      completedInCycle={completedInCycle}
+      isEditingDurations={isEditingDurations}
+      onEditingDurationsChange={setIsEditingDurations}
+      phasePresentation={phasePresentation}
+      primaryIcon={primaryIcon}
+      primaryLabel={primaryLabel}
+      progressDegrees={progressDegrees}
+      sceneStyle={props.sceneStyle}
+      statusLabel={statusLabel}
+      timeLabel={timeLabel}
+      timer={timer}
+    />
+  )
+
   return (
     <>
-      <div class={CLASSES.pomodoro}>
-        <PomodoroQuickControls
-          characterEmotion={phasePresentation().characterEmotion}
-          characterImage={
-            CHARACTER_IMAGES[props.sceneStyle ?? 'original'][phasePresentation().characterEmotion]
-          }
-          isActive={timer.state().status === 'running'}
-          onOpen={handleOpen}
-          onPrimaryPress={handlePrimaryPress}
-          phase={timer.state().phase}
-          primaryIcon={primaryIcon()}
-          primaryLabel={primaryLabel()}
-          sceneStyle={props.sceneStyle}
-          statusLabel={statusLabel()}
-          timeLabel={timeLabel()}
-        />
-      </div>
+      <Show when={!props.desktopDialog}>
+        <div class={CLASSES.pomodoro}>
+          <PomodoroQuickControls
+            characterEmotion={phasePresentation().characterEmotion}
+            characterImage={
+              CHARACTER_IMAGES[props.sceneStyle ?? 'original'][phasePresentation().characterEmotion]
+            }
+            isActive={timer.state().status === 'running'}
+            onOpen={handleOpen}
+            onPrimaryPress={handlePrimaryPress}
+            phase={timer.state().phase}
+            primaryIcon={primaryIcon()}
+            primaryLabel={primaryLabel()}
+            sceneStyle={props.sceneStyle}
+            statusLabel={statusLabel()}
+            timeLabel={timeLabel()}
+          />
+        </div>
+      </Show>
 
-      <PModal
-        getInitialFocus={getInitialFocus}
-        headerMode="closeOnly"
-        isOpen={isOpen()}
-        onCloseAutoFocus={handleCloseAutoFocus}
-        onOpenChange={handleOpenChange}
-        title={m.pomodoro_title()}
+      <Show
+        fallback={
+          <PModal
+            getInitialFocus={getInitialFocus}
+            headerMode="closeOnly"
+            isOpen={isOpen()}
+            onCloseAutoFocus={handleCloseAutoFocus}
+            onOpenChange={handleOpenChange}
+            title={m.pomodoro_title()}
+          >
+            {panel()}
+          </PModal>
+        }
+        when={props.desktopDialog}
       >
-        <section
-          aria-label={m.pomodoro_timer_label()}
-          class={CLASSES.pomodoroPanel}
-          data-phase={timer.state().phase}
-        >
-          <Show when={!isEditingDurations()}>
-            <PomodoroTimerRing
-              icon={getPomoIconClass(phasePresentation().icon, props.sceneStyle)}
-              label={phasePresentation().label}
-              progress={progressDegrees()}
-              timeLabel={timeLabel()}
-            />
-
-            <PomodoroSessionProgress
-              completedCount={completedInCycle()}
-              onReset={timer.onReset}
-              positions={sessionPositions()}
-              sceneStyle={props.sceneStyle}
-              sessionCount={timer.config().focusSessionsPerCycle}
-            />
-          </Show>
-
-          <p aria-live="polite" class="sr-only">
-            {phasePresentation().label}, {statusLabel()}
-          </p>
-
-          <div class={CLASSES.pomodoroPanelActions} ref={setActionContainer}>
-            <PButton
-              raised
-              class={CLASSES.pomodoroPanelPrimaryAction}
-              icon={primaryIcon()}
-              onPress={handlePrimaryPress}
-              tone="primary"
-            >
-              {primaryLabel()}
-            </PButton>
-            <PButton
-              {...GLASS_ICON_BUTTON}
-              accessibleLabel={m.pomodoro_next_phase()}
-              tooltip={m.pomodoro_next_phase()}
-              class={CLASSES.pomodoroPanelCompactAction}
-              icon={getPomoIconClass('i-tabler-player-track-next', props.sceneStyle)}
-              onPress={timer.onNextPhase}
-            />
-            <Show when={timer.state().status !== 'idle'}>
-              <PButton
-                {...GLASS_ICON_BUTTON}
-                accessibleLabel={m.pomodoro_end_session()}
-                tooltip={m.pomodoro_end_session()}
-                class={CLASSES.pomodoroPanelCompactActionDanger}
-                icon={getPomoIconClass('i-tabler-square', props.sceneStyle)}
-                onPress={timer.onStop}
-              />
-            </Show>
-          </div>
-
-          <PSwitch
-            checked={timer.isAutoStartEnabled()}
-            class={CLASSES.pomodoroPanelAutoStart}
-            description={m.pomodoro_auto_play_description()}
-            label={m.pomodoro_auto_play()}
-            onChange={timer.onAutoStartChange}
-          />
-
-          <PPomodoroDurationEditor
-            config={timer.config()}
-            isEditing={isEditingDurations()}
-            onChange={timer.onConfigChange}
-            onEditingChange={setIsEditingDurations}
-          />
-        </section>
-      </PModal>
+        {panel()}
+      </Show>
     </>
   )
 }

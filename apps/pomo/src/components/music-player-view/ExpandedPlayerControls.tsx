@@ -58,12 +58,16 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
 
       <div class="flex items-center justify-center gap-1">
         <button
-          {...previousTooltip.events}
           ref={previousTooltip.setTarget}
           aria-label={m.player_previous()}
           class={SKIP_BUTTON_CLASSES}
           disabled={!props.canNavigatePreviousTrack}
           onClick={() => props.onPreviousTrack()}
+          onBlur={previousTooltip.onBlur}
+          onFocus={previousTooltip.onFocus}
+          onPointerDown={previousTooltip.onPointerDown}
+          onPointerEnter={previousTooltip.onPointerEnter}
+          onPointerLeave={previousTooltip.onPointerLeave}
           type="button"
         >
           <PlayerIcon
@@ -83,11 +87,15 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
           enabled={props.sceneStyle === 'scribble'}
         >
           <media-play-button
-            {...playTooltip.events}
             ref={playTooltip.setTarget}
             aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
             class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge)}
             disabled={!props.hasTrack}
+            onBlur={playTooltip.onBlur}
+            onFocus={playTooltip.onFocus}
+            onPointerDown={playTooltip.onPointerDown}
+            onPointerEnter={playTooltip.onPointerEnter}
+            onPointerLeave={playTooltip.onPointerLeave}
             attr:notooltip=""
           >
             <PlayerIcon
@@ -111,12 +119,16 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         </PScribbleCircleControl>
 
         <button
-          {...nextTooltip.events}
           ref={nextTooltip.setTarget}
           aria-label={m.player_next()}
           class={SKIP_BUTTON_CLASSES}
           disabled={!props.canNavigateNextTrack}
           onClick={() => props.onNextTrack()}
+          onBlur={nextTooltip.onBlur}
+          onFocus={nextTooltip.onFocus}
+          onPointerDown={nextTooltip.onPointerDown}
+          onPointerEnter={nextTooltip.onPointerEnter}
+          onPointerLeave={nextTooltip.onPointerLeave}
           type="button"
         >
           <PlayerIcon

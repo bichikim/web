@@ -17,7 +17,7 @@ it('should link the manifest and Apple icon on the web', () => {
   )
 })
 
-it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'])(
+it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP', 'VITE_POMO_IS_MOBILE'])(
   'should omit installation metadata for %s',
   (target) => {
     vi.stubEnv(target, 'true')

@@ -32,9 +32,9 @@ const CLASSES = {
   dialogueEditor: cx(
     'min-h-dvh box-border',
     '[background:var(--pomo-editor-background)]',
-    'pt-[max(1.25rem,_var(--pomo-safe-area-inset-top))]',
+    'pt-safe-top-compact',
     'pr-[max(1.25rem,_var(--pomo-safe-area-inset-right))]',
-    'pb-[max(1.25rem,_calc(1.25rem_+_var(--pomo-safe-area-inset-bottom)))]',
+    'pb-safe-bottom-compact',
     'pl-[max(1.25rem,_var(--pomo-safe-area-inset-left))]',
     'text-foreground',
   ),

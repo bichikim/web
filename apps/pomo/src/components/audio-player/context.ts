@@ -7,6 +7,13 @@ export interface AudioPlayerState {
   readonly paused: boolean
 }
 
+export interface AudioPlayerStateAccessors {
+  readonly currentTime: Accessor<AudioPlayerState['currentTime']>
+  readonly duration: Accessor<AudioPlayerState['duration']>
+  readonly muted: Accessor<AudioPlayerState['muted']>
+  readonly paused: Accessor<AudioPlayerState['paused']>
+}
+
 export interface AudioPlayerActions {
   readonly seek: (time: number) => void
   readonly toggleMuted: () => void
@@ -25,11 +32,8 @@ export interface AudioPlayerMediaBindings {
   readonly onVolumeChange: JSX.EventHandler<HTMLAudioElement, Event>
 }
 
-export type AudioPlayerContextValue = readonly [
-  Accessor<AudioPlayerState>,
-  AudioPlayerActions,
-  AudioPlayerMediaBindings,
-]
+export interface AudioPlayerContextValue
+  extends AudioPlayerActions, AudioPlayerMediaBindings, AudioPlayerStateAccessors {}
 
 export const AudioPlayerContext = createContext<AudioPlayerContextValue>()
 

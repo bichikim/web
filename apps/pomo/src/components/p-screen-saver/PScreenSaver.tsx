@@ -7,9 +7,9 @@ import * as m from '@paraglide/message'
 const CLASSES = {
   screenSaver: cx(
     'w-screen max-w-[none] h-dvh max-h-[none] box-border m-0 border-0 bg-[#000]',
-    'pt-[max(1.5rem,_var(--pomo-safe-area-inset-top))]',
+    'pt-safe-top',
     'pr-[max(1.5rem,_var(--pomo-safe-area-inset-right))]',
-    'pb-[max(1.5rem,_var(--pomo-safe-area-inset-bottom))]',
+    'pb-safe-bottom',
     'pl-[max(1.5rem,_var(--pomo-safe-area-inset-left))]',
     'text-[rgb(255_255_255_/_48%)] cursor-pointer pointer-events-auto outline-none overscroll-none',
     '[&::backdrop]:bg-[#000]',
@@ -26,9 +26,9 @@ const CLASSES = {
   ),
   screenSaverSafeArea: cx(
     'absolute',
-    'top-[max(1.5rem,_var(--pomo-safe-area-inset-top))]',
+    'top-safe-top',
     'right-[max(1.5rem,_var(--pomo-safe-area-inset-right))]',
-    'bottom-[max(1.5rem,_var(--pomo-safe-area-inset-bottom))]',
+    'bottom-safe-bottom',
     'left-[max(1.5rem,_var(--pomo-safe-area-inset-left))]',
     'grid place-items-center pointer-events-none',
   ),

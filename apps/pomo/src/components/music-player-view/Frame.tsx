@@ -22,7 +22,13 @@ const getBaseClasses = (sceneStyle?: PSceneStyle) =>
 
 export interface FrameProps extends Pick<
   MusicPlayerViewProps,
-  'currentTrack' | 'expanded' | 'isPlaying' | 'levels' | 'onExpandedChange' | 'sceneStyle'
+  | 'backdropBlur'
+  | 'currentTrack'
+  | 'expanded'
+  | 'isPlaying'
+  | 'levels'
+  | 'onExpandedChange'
+  | 'sceneStyle'
 > {
   readonly summaryActions?: JSX.Element
   readonly expandedContent?: JSX.Element
@@ -46,9 +52,11 @@ export const Frame = (props: FrameProps) => (
         aria-hidden="true"
         class={cx(
           CLASSES.playerBase,
-          'border border-solid backdrop-blur-surface pointer-events-none absolute inset-0',
+          'border border-solid pointer-events-none absolute inset-0',
+          props.backdropBlur !== false && 'backdrop-blur-surface',
           getBaseClasses(props.sceneStyle),
         )}
+        data-testid="player-background"
       />
 
       <div

@@ -17,6 +17,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
       )}
     >
       <Frame
+        backdropBlur={props.backdropBlur}
         currentTrack={props.currentTrack}
         expanded={props.expanded}
         isPlaying={props.isPlaying}
@@ -69,6 +70,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
             />
             <PTrackList
               currentIndex={props.currentIndex}
+              isPlaylistLoading={props.isPlaylistLoading}
               onTrackRemove={props.onTrackRemove}
               onTrackSelect={props.onTrackSelect}
               tracks={props.tracks}

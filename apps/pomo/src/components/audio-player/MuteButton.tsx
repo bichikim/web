@@ -12,7 +12,7 @@ export interface AudioPlayerMuteButtonProps extends Omit<
 }
 
 export const AudioPlayerMuteButton = (props: AudioPlayerMuteButtonProps) => {
-  const [state, actions] = useAudioPlayer()
+  const player = useAudioPlayer()
   const [localProps, restProps] = splitProps(props, [
     'children',
     'muteLabel',
@@ -24,7 +24,7 @@ export const AudioPlayerMuteButton = (props: AudioPlayerMuteButtonProps) => {
     localProps.onClick?.(event)
 
     if (!event.defaultPrevented) {
-      actions.toggleMuted()
+      player.toggleMuted()
     }
   }
 
@@ -32,12 +32,12 @@ export const AudioPlayerMuteButton = (props: AudioPlayerMuteButtonProps) => {
     <button
       {...restProps}
       aria-label={
-        state().muted
+        player.muted()
           ? (localProps.unmuteLabel ?? 'Unmute audio')
           : (localProps.muteLabel ?? 'Mute audio')
       }
-      aria-pressed={state().muted}
-      data-muted={state().muted}
+      aria-pressed={player.muted()}
+      data-muted={player.muted()}
       onClick={handleClick}
       type={localProps.type ?? 'button'}
     >
