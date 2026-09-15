@@ -30,7 +30,7 @@ vi.mock('../p-album-library/PAlbumLibrary', () => ({
     <>
       <button
         aria-label="앨범 추가"
-        class="pomo-player__utility relative grid size-10 shrink-0 place-items-center rounded-full"
+        class="relative grid size-10 shrink-0 place-items-center rounded-full"
         data-player-utility="album"
         onClick={() => props.onAddTracks(albumLibraryMocks.addedTracks)}
         type="button"
@@ -75,9 +75,13 @@ const TRACKS = [
 ] as const
 
 interface RenderMusicPlayerViewOptions {
+  readonly backdropBlur?: boolean
+  readonly canNavigateNextTrack?: boolean
+  readonly canNavigatePreviousTrack?: boolean
   readonly currentTrack?: PTrack | null
   readonly expanded?: boolean
   readonly isPlaying?: boolean
+  readonly isPlaylistLoading?: boolean
   readonly levels?: readonly number[]
   readonly onAlbumAdd?: (tracks: readonly PTrack[]) => void
   readonly onAlbumClear?: () => void
@@ -96,12 +100,16 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
   render(() => (
     <PTooltipProvider>
       <MusicPlayerView
+        canNavigateNextTrack={options.canNavigateNextTrack ?? true}
+        canNavigatePreviousTrack={options.canNavigatePreviousTrack ?? true}
         currentIndex={0}
         currentTrack={
           options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])
         }
+        backdropBlur={options.backdropBlur}
         expanded={options.expanded ?? true}
         isPlaying={options.isPlaying ?? false}
+        isPlaylistLoading={options.isPlaylistLoading ?? false}
         levels={options.levels ?? []}
         onAlbumAdd={options.onAlbumAdd}
         onAlbumClear={options.onAlbumClear}
@@ -121,9 +129,29 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
     </PTooltipProvider>
   ))
 
+export const getPlayerShell = (container: HTMLElement) => {
+  const shell = getPlayerFrame(container).firstElementChild
+
+  if (!(shell instanceof HTMLElement)) {
+    throw new TypeError('Expected the Pomo media controller to be rendered')
+  }
+
+  return shell
+}
+
+export const getPlayerFrame = (container: HTMLElement) => {
+  const frame = container.firstElementChild?.firstElementChild
+
+  if (!(frame instanceof HTMLElement)) {
+    throw new TypeError('Expected the Pomo player frame to be rendered')
+  }
+
+  return frame
+}
+
 export const getProgressRanges = (container: HTMLElement) => {
-  const collapsedRange = container.querySelector('.pomo-player__progress--collapsed')
-  const expandedRange = container.querySelector('.pomo-player__progress--expanded')
+  const ranges = container.querySelectorAll<HTMLElement>('media-time-range')
+  const [collapsedRange, expandedRange] = ranges
 
   if (!(collapsedRange instanceof HTMLElement) || !(expandedRange instanceof HTMLElement)) {
     throw new TypeError('Expected both Pomo progress ranges to be rendered')

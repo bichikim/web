@@ -4,6 +4,7 @@ import {children, type JSX, Show} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {HButton} from '../h-button'
 import {PTooltip} from '../p-tooltip/PTooltip'
+import {TEXT_DETAIL} from '../typography-classes'
 import {useTooltipTrigger} from '../tooltip'
 
 // oxlint-disable-next-line eslint-js/max-len -- UnoCSS must extract the complete arbitrary-value utility.
@@ -103,10 +104,12 @@ export const P_BUTTON_CLASSES = cva(
           'min-h-control-md px-5 py-3 text-sm ' +
           'data-[icon-only]:h-control-md data-[icon-only]:min-w-control-md ' +
           'data-[icon-only]:px-0 data-[icon-only]:py-0',
-        small:
-          'min-h-control-sm px-3.5 py-2 text-modal-detail ' +
-          'data-[icon-only]:h-control-sm data-[icon-only]:min-w-control-sm ' +
+        small: cx(
+          'min-h-control-sm px-3.5 py-2',
+          TEXT_DETAIL,
+          'data-[icon-only]:h-control-sm data-[icon-only]:min-w-control-sm',
           'data-[icon-only]:px-0 data-[icon-only]:py-0',
+        ),
       },
       tone: {
         danger: '',
@@ -146,7 +149,7 @@ export interface PButtonProps extends VariantProps<typeof P_BUTTON_CLASSES> {
 export const PButton = (props: PButtonProps) => {
   const tooltip = useTooltipTrigger()
   const handleBlur: JSX.EventHandler<HTMLButtonElement, FocusEvent> = (event) => {
-    tooltip.events.onBlur()
+    tooltip.onBlur()
     props.onBlur?.(event)
   }
   const content = children(() => props.children)
@@ -161,7 +164,6 @@ export const PButton = (props: PButtonProps) => {
   return (
     <>
       <HButton.Root
-        {...tooltip.events}
         ref={tooltip.setTarget}
         aria-label={props.accessibleLabel}
         aria-pressed={props.pressed}
@@ -179,15 +181,19 @@ export const PButton = (props: PButtonProps) => {
         data-icon-only={hasContent() ? undefined : ''}
         disabled={props.disabled}
         onBlur={handleBlur}
+        onFocus={tooltip.onFocus}
         onKeyDown={props.onKeyDown}
         onClick={(event) => props.onPress?.(event.currentTarget)}
+        onPointerDown={tooltip.onPointerDown}
+        onPointerEnter={tooltip.onPointerEnter}
+        onPointerLeave={tooltip.onPointerLeave}
         type={props.type ?? 'button'}
       >
         <Show when={props.leadingImage}>
           {(source) => (
             <HButton.LeadingImage
               class={cx(
-                'pomo-button__leading-image flex-none object-contain',
+                'flex-none object-contain',
                 props.leadingOverflow
                   ? LEADING_OVERFLOW
                   : (props.leadingImageClass ??
@@ -196,7 +202,6 @@ export const PButton = (props: PButtonProps) => {
                         : 'size-8 [margin-block:-0.25rem]')),
                 props.leadingOverflow && props.leadingImageClass,
               )}
-              data-pomo-button-leading-image=""
               src={source()}
             />
           )}
@@ -223,7 +228,6 @@ export const PButton = (props: PButtonProps) => {
           {(icon) => (
             <HButton.Icon
               class={cx(icon(), props.size === 'small' ? 'size-4.5' : 'size-6', 'flex-none')}
-              data-pomo-button-trailing-icon=""
             />
           )}
         </Show>

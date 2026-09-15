@@ -8,7 +8,7 @@ import {POverflowMarquee} from '../p-overflow-marquee/POverflowMarquee'
 import {PTooltip} from '../p-tooltip/PTooltip'
 
 const TRACK_CLASSES = cx(
-  'pomo-player__track text-muted-foreground',
+  'text-muted-foreground',
   "[&[aria-current='true']]:text-foreground",
   "[&[aria-current='true']]:shadow-track-active",
   '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid',
@@ -45,13 +45,13 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
 
   return (
     <li
-      class="pomo-player__swipe-track relative min-w-0 overflow-clip rounded-3"
+      class="relative min-w-0 overflow-clip rounded-3"
       style={{'--pomo-swipe-offset': `${gesture.offset()}px`}}
     >
       <div
         aria-hidden="true"
-        class="pomo-player__track-delete-start pointer-events-none absolute inset-y-0 left-0 grid
-          place-items-center overflow-hidden text-danger w-[max(0px,var(--pomo-swipe-offset))]"
+        class="pointer-events-none absolute inset-y-0 left-0 grid place-items-center overflow-hidden
+          text-danger w-[max(0px,var(--pomo-swipe-offset))]"
       >
         <span
           class={
@@ -63,9 +63,8 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       </div>
       <div
         aria-hidden="true"
-        class="pomo-player__track-delete-end pointer-events-none absolute inset-y-0 right-0 grid
-          place-items-center overflow-hidden text-danger
-          w-[max(0px,calc(-1*var(--pomo-swipe-offset)))]"
+        class="pointer-events-none absolute inset-y-0 right-0 grid place-items-center overflow-hidden
+          text-danger w-[max(0px,calc(-1*var(--pomo-swipe-offset)))]"
       >
         <span
           class={
@@ -104,7 +103,15 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         type="button"
       >
         <span class="w-4 text-center tabular-nums">{props.index + 1}</span>
-        <span {...tooltip.events} ref={tooltip.setTarget} class="min-w-0 flex-1">
+        <span
+          ref={tooltip.setTarget}
+          class="min-w-0 flex-1"
+          onBlur={tooltip.onBlur}
+          onFocus={tooltip.onFocus}
+          onPointerDown={tooltip.onPointerDown}
+          onPointerEnter={tooltip.onPointerEnter}
+          onPointerLeave={tooltip.onPointerLeave}
+        >
           <Show
             fallback={<span class="block truncate">{props.track.title}</span>}
             when={props.current}

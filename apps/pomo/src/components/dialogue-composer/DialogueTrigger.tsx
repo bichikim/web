@@ -23,12 +23,16 @@ export const DialogueTrigger = (props: DialogueTriggerProps) => {
   return (
     <>
       <button
-        {...tooltip.events}
         aria-expanded="false"
         aria-label={label()}
         class={TRIGGER_CLASSES}
         disabled={props.disabled}
         onClick={() => props.onClick()}
+        onBlur={tooltip.onBlur}
+        onFocus={tooltip.onFocus}
+        onPointerDown={tooltip.onPointerDown}
+        onPointerEnter={tooltip.onPointerEnter}
+        onPointerLeave={tooltip.onPointerLeave}
         ref={(element) => {
           tooltip.setTarget(element)
           props.onMount(element)

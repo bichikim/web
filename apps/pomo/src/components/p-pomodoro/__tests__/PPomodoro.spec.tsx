@@ -94,24 +94,19 @@ describe('PPomodoro', () => {
     const originalResult = render(() => <PPomodoro />)
     const originalControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
 
-    expect(originalResult.container.querySelector('.pomo-pomodoro__scribble-border')).toBeNull()
-    expect(
-      originalResult.container.querySelector('.pomo-pomodoro__action-scribble-border'),
-    ).toBeNull()
+    expect(originalControls.parentElement?.querySelector('svg')).toBeNull()
     expect(originalControls.classList.contains('rounded-panel')).toBe(true)
     expect(originalControls.classList.contains('border-border')).toBe(true)
 
     originalResult.unmount()
-    const scribbleResult = render(() => <PPomodoro sceneStyle="scribble" />)
+    render(() => <PPomodoro sceneStyle="scribble" />)
     const scribbleControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
-    const scribbleBorder = scribbleResult.container.querySelector('.pomo-pomodoro__scribble-border')
-    const scribbleFrame = scribbleResult.container.querySelector('.pomo-pomodoro-frame')
-    const scribbleSurface = scribbleResult.container.querySelector(
-      '.pomo-pomodoro__scribble-surface',
-    )
-    const actionBorder = scribbleResult.container.querySelector(
-      '.pomo-pomodoro__action-scribble-border',
-    )
+    const scribbleFrame = scribbleControls.parentElement as HTMLElement
+    const scribbleBorder = scribbleFrame.querySelector('svg')
+    const scribbleSurface = scribbleFrame.firstElementChild
+    const primaryButton = within(scribbleControls).getByRole('button', {name: '집중 시작'})
+    const actionIndicator = primaryButton.lastElementChild
+    const actionBorder = actionIndicator?.querySelector('svg')
 
     expect(scribbleBorder).toBeInstanceOf(SVGElement)
     expect(scribbleFrame?.classList.contains('inline-flex')).toBe(true)
@@ -119,7 +114,7 @@ describe('PPomodoro', () => {
     expect(scribbleBorder?.querySelectorAll('path')[0]?.getAttribute('stroke-width')).toBe('6')
     expect(scribbleBorder?.querySelectorAll('path')[1]?.getAttribute('stroke-width')).toBe('3')
     expect(actionBorder).toBeInstanceOf(SVGElement)
-    expect(actionBorder?.parentElement?.classList).toContain('pomo-pomodoro__action-indicator')
+    expect(actionBorder?.parentElement).toBe(actionIndicator)
     expect(scribbleControls.contains(scribbleBorder)).toBe(false)
     expect(scribbleBorder?.compareDocumentPosition(scribbleControls)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
@@ -135,9 +130,7 @@ describe('PPomodoro', () => {
 
   it('should use the status icon set matching the scene style', () => {
     const getCharacterImage = () =>
-      screen
-        .getByRole('group', {name: '포모도로 간편 조작'})
-        .querySelector<HTMLImageElement>('[data-pomo-character-emotion] img')
+      screen.getByRole('group', {name: '포모도로 간편 조작'}).querySelector<HTMLImageElement>('img')
 
     const originalResult = render(() => <PPomodoro />)
 
@@ -170,26 +163,26 @@ describe('PPomodoro', () => {
     const timeTrigger = within(quickControls).getByRole('button', {
       name: '포모도로 열기, 집중 준비, 25:00',
     })
-    expect(quickControls.querySelector('.pomo-pomodoro__trigger-status')).toBeNull()
-    const characterEmotion = quickControls.querySelector('[data-pomo-character-emotion]')
-    const actionIndicator = quickControls.querySelector('.pomo-pomodoro__action-indicator')
+    const primaryButton = within(quickControls).getByRole('button', {name: '집중 시작'})
+    const characterEmotion = primaryButton.querySelector('img')?.parentElement
+    const actionIndicator = primaryButton.lastElementChild
     expect(characterEmotion?.getAttribute('data-emotion')).toBe('focus')
     expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
-    const playIcon = actionIndicator?.querySelector('.i-tabler-player-play')
+    const playIcon = actionIndicator?.lastElementChild
     expect(playIcon).toBeInstanceOf(HTMLElement)
-    expect(playIcon).toHaveClass('w-4', 'h-4')
+    expect(playIcon).toHaveClass('i-tabler-player-play', 'w-4', 'h-4')
 
     fireEvent.click(within(quickControls).getByRole('button', {name: '집중 시작'}))
     expect(within(quickControls).getByRole('button', {name: '일시정지'})).toBeDefined()
     expect(characterEmotion?.getAttribute('data-active')).toBe('')
-    const pauseIcon = actionIndicator?.querySelector('.i-tabler-player-pause')
+    const pauseIcon = actionIndicator?.lastElementChild
     expect(pauseIcon).toBeInstanceOf(HTMLElement)
-    expect(pauseIcon).toHaveClass('w-4', 'h-4')
+    expect(pauseIcon).toHaveClass('i-tabler-player-pause', 'w-4', 'h-4')
 
     fireEvent.click(within(quickControls).getByRole('button', {name: '일시정지'}))
     expect(within(quickControls).getByRole('button', {name: '계속하기'})).toBeDefined()
     expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
-    expect(actionIndicator?.querySelector('.i-tabler-player-play')).toBeInstanceOf(HTMLElement)
+    expect(actionIndicator?.lastElementChild).toHaveClass('i-tabler-player-play')
 
     fireEvent.click(timeTrigger)
 
@@ -310,28 +303,32 @@ describe('PPomodoro', () => {
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'break-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'break-start'], {isCatchUp: true})
 
     vi.advanceTimersByTime(1_000)
     vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['break-end', 'focus-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['break-end', 'focus-start'], {isCatchUp: true})
 
     vi.advanceTimersByTime(1_000)
     vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 긴 휴식 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'long-break-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-end', 'long-break-start'], {
+      isCatchUp: true,
+    })
 
     vi.advanceTimersByTime(1_000)
     vi.advanceTimersToNextFrame()
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenLastCalledWith(['long-break-end', 'focus-start'])
+    expect(onEvents).toHaveBeenLastCalledWith(['long-break-end', 'focus-start'], {
+      isCatchUp: true,
+    })
   })
 
   it('should report focus and break lifecycle events without replaying starts on resume', async () => {
@@ -421,7 +418,7 @@ describe('PPomodoro', () => {
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
-    expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'])
+    expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'], {isCatchUp: true})
   })
 
   it('should preserve an unsupported runtime timer status for exhaustive diagnostics', async () => {

@@ -60,12 +60,12 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
   const actionTooltip = useTooltipTrigger()
   const openTooltip = useTooltipTrigger()
   return (
-    <div class="pomo-pomodoro-frame relative inline-flex w-fit overflow-visible">
+    <div class="relative inline-flex w-fit overflow-visible">
       <Show when={props.sceneStyle === 'scribble'}>
         <div
           aria-hidden="true"
           class={cx(
-            'pomo-pomodoro__scribble-surface pointer-events-none absolute inset-0',
+            'pointer-events-none absolute inset-0',
             'bg-surface backdrop-blur-surface',
             SCRIBBLE_MASK_CLASSES,
           )}
@@ -73,7 +73,7 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
       </Show>
 
       <Show when={props.sceneStyle === 'scribble'}>
-        <PScribbleFrame class="pomo-pomodoro__scribble-border" />
+        <PScribbleFrame />
       </Show>
 
       <div
@@ -83,7 +83,6 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
         role="group"
       >
         <button
-          {...actionTooltip.events}
           ref={actionTooltip.setTarget}
           aria-label={props.primaryLabel}
           class={cx(
@@ -93,6 +92,11 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
           )}
           data-glass-part=""
           onClick={() => props.onPrimaryPress()}
+          onBlur={actionTooltip.onBlur}
+          onFocus={actionTooltip.onFocus}
+          onPointerDown={actionTooltip.onPointerDown}
+          onPointerEnter={actionTooltip.onPointerEnter}
+          onPointerLeave={actionTooltip.onPointerLeave}
           type="button"
         >
           <PCharacterEmotion
@@ -102,7 +106,7 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
           />
           <span aria-hidden="true" class={CLASSES.pomodoroActionIndicator}>
             <Show when={props.sceneStyle === 'scribble'}>
-              <PScribbleCircleFrame class="pomo-pomodoro__action-scribble-border" />
+              <PScribbleCircleFrame />
             </Show>
             <span class={cx(props.primaryIcon, CLASSES.pomodoroActionIcon)} />
           </span>
@@ -114,7 +118,6 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
         />
 
         <button
-          {...openTooltip.events}
           ref={openTooltip.setTarget}
           aria-haspopup="dialog"
           aria-label={m.pomodoro_open({status: props.statusLabel, time: props.timeLabel})}
@@ -126,6 +129,11 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
           data-glass-part=""
           data-glass-trigger=""
           onClick={(event) => props.onOpen(event.currentTarget)}
+          onBlur={openTooltip.onBlur}
+          onFocus={openTooltip.onFocus}
+          onPointerDown={openTooltip.onPointerDown}
+          onPointerEnter={openTooltip.onPointerEnter}
+          onPointerLeave={openTooltip.onPointerLeave}
           type="button"
         >
           <span class={CLASSES.pomodoroTriggerTime}>{props.timeLabel}</span>

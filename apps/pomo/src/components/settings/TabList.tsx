@@ -24,7 +24,6 @@ const getItems = () =>
 export const PSettingsTabList = () => (
   <PModalTabList
     accessibleLabel={m.settings_category_label()}
-    class="pomo-settings__tabs"
     items={getItems()}
     scrollControls={{
       nextLabel: m.settings_next_tab(),

@@ -56,7 +56,8 @@ describe('PSelectItem', () => {
 
     expect(screen.getByText('낮')).toBeInTheDocument()
     expect(screen.getByText('밝은 화면으로 전환합니다')).toBeInTheDocument()
-    expect(container.querySelector('.i-tabler-check.size-4')).not.toBeNull()
+    const [indicator] = container.querySelectorAll('span[aria-hidden="true"]')
+    expect(indicator).toHaveClass('i-tabler-check', 'size-4')
     expect(container.firstElementChild).toHaveClass('flex')
   })
 
@@ -70,7 +71,8 @@ describe('PSelectItem', () => {
     ))
 
     expect(screen.getByText('자동')).toBeInTheDocument()
-    expect(container.querySelector('.i-tabler-check.size-3\\.5')).not.toBeNull()
+    const [indicator] = container.querySelectorAll('span[aria-hidden="true"]')
+    expect(indicator).toHaveClass('i-tabler-check', 'size-3.5')
     expect(container.firstElementChild).toHaveClass('grid')
     expect(container.querySelector('[data-force-mount="true"]')).not.toBeNull()
   })
@@ -86,8 +88,9 @@ describe('PSelectItem', () => {
     ))
 
     expect(screen.getByText('밤')).toBeInTheDocument()
-    expect(container.querySelector('.resolved-i-tabler-moon')).not.toBeNull()
-    expect(container.querySelector('.resolved-i-tabler-check.size-4')).not.toBeNull()
+    const [itemIcon, indicator] = container.querySelectorAll('span[aria-hidden="true"]')
+    expect(itemIcon).toHaveClass('resolved-i-tabler-moon')
+    expect(indicator).toHaveClass('resolved-i-tabler-check', 'size-4')
     expect(getIconClass).toHaveBeenCalledWith('i-tabler-check')
     expect(getIconClass).toHaveBeenCalledWith('i-tabler-moon')
   })

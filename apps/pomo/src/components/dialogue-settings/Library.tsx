@@ -8,14 +8,11 @@ import {DialogueLibraryItem, type DialogueLibraryItemProps} from './LibraryItem'
 import {DialoguePlaybackButton} from './PlaybackButton'
 
 const CLASSES = {
-  audio: 'pomo-dialogue-settings__audio hidden',
-  list: cx(
-    'pomo-dialogue-settings__list pomo-dialogue-settings__list--library',
-    'm-0 grid list-none gap-3 p-0 settings-compact:gap-2',
-  ),
+  audio: 'hidden',
+  list: cx('m-0 grid list-none gap-3 p-0 settings-compact:gap-2'),
   message: cx(
-    'pomo-dialogue-settings__message m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-modal-detail settings-compact:p-4',
+    'm-0 rounded-panel',
+    'bg-content-surface p-5 text-muted-foreground text-sm settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
 } as const
@@ -164,7 +161,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                   <Show when={missingDialogueId() === entry.dialogue.id}>
                     <p
                       aria-live="polite"
-                      class="m-0 basis-full text-modal-detail leading-relaxed text-danger"
+                      class="m-0 basis-full text-sm leading-relaxed text-danger"
                       role="status"
                     >
                       {m.settings_dialogue_audio_missing()}
@@ -194,7 +191,6 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                       {m.settings_dialogue_cancel()}
                     </button>
                     <button
-                      class="pomo-dialogue-settings__delete-confirm"
                       data-pomo-dialogue-delete-confirm=""
                       onClick={() => handleDelete(entry.dialogue)}
                       type="button"

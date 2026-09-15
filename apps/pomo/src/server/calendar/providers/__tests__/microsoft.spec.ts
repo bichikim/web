@@ -21,6 +21,7 @@ it.each([100, 101])(
     })
     const result = await provider.listEvents({
       accessToken: 'access',
+      displayTimeZone: 'UTC',
       end: '2026-10-01T00:00:00.000Z',
       start: '2026-09-01T00:00:00.000Z',
     })
@@ -58,6 +59,7 @@ it.each([false, true])(
     })
     const result = await provider.listEvents({
       accessToken: 'access',
+      displayTimeZone: 'UTC',
       end: '2026-10-01T00:00:00.000Z',
       start: '2026-09-01T00:00:00.000Z',
     })
@@ -165,6 +167,7 @@ it('should use calendarView to expand occurrences and normalize UTC values', asy
   await expect(
     provider.listEvents({
       accessToken: 'access',
+      displayTimeZone: 'UTC',
       end: '2026-09-08T00:00:00.000Z',
       start: '2026-09-04T00:00:00.000Z',
     }),
@@ -222,6 +225,7 @@ it('should page through every Microsoft calendar before loading events', async (
 
   await provider.listEvents({
     accessToken: 'access',
+    displayTimeZone: 'UTC',
     end: '2026-09-08T00:00:00.000Z',
     start: '2026-09-04T00:00:00.000Z',
   })
@@ -235,4 +239,57 @@ it('should page through every Microsoft calendar before loading events', async (
   expect(new URL(String(fetch.mock.calls[3]?.[0])).pathname).toContain(
     '/calendars/personal/calendarView',
   )
+})
+
+it('should preserve civil dates from non-UTC all-day payloads', async () => {
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockResolvedValueOnce(Response.json({value: [{id: 'work', name: '업무'}]}))
+    .mockResolvedValueOnce(
+      Response.json({
+        value: [
+          {
+            end: {dateTime: '2026-09-06T00:00:00.0000000', timeZone: 'Pacific Standard Time'},
+            id: 'all-day',
+            isAllDay: true,
+            start: {dateTime: '2026-09-05T00:00:00.0000000', timeZone: 'Pacific Standard Time'},
+          },
+        ],
+      }),
+    )
+  const provider = createMicrosoftCalendarProvider({
+    clientId: 'client',
+    clientSecret: 'secret',
+    fetch,
+  })
+
+  await expect(
+    provider.listEvents({
+      accessToken: 'access',
+      displayTimeZone: 'America/Los_Angeles',
+      end: '2026-09-08T00:00:00.000Z',
+      start: '2026-09-04T00:00:00.000Z',
+    }),
+  ).resolves.toMatchObject({
+    events: [{allDay: true, end: '2026-09-06', id: 'all-day', start: '2026-09-05'}],
+  })
+})
+
+it('should reject an invalid display time zone before requesting calendars', async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>()
+  const provider = createMicrosoftCalendarProvider({
+    clientId: 'client',
+    clientSecret: 'secret',
+    fetch,
+  })
+
+  await expect(
+    provider.listEvents({
+      accessToken: 'access',
+      displayTimeZone: 'Invalid/TimeZone',
+      end: '2026-09-08T00:00:00.000Z',
+      start: '2026-09-04T00:00:00.000Z',
+    }),
+  ).rejects.toThrow(RangeError)
+  expect(fetch).not.toHaveBeenCalled()
 })

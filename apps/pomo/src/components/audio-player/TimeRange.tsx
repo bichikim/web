@@ -15,15 +15,15 @@ const formatValueText = (currentTime: number, duration: number) =>
   `${currentTime.toFixed(1)} / ${duration.toFixed(1)} seconds`
 
 export const AudioPlayerTimeRange = (props: AudioPlayerTimeRangeProps) => {
-  const [state, actions] = useAudioPlayer()
+  const player = useAudioPlayer()
   const [localProps, restProps] = splitProps(props, ['formatValueText', 'onInput', 'step'])
   const valueText = () =>
-    (localProps.formatValueText ?? formatValueText)(state().currentTime, state().duration)
+    (localProps.formatValueText ?? formatValueText)(player.currentTime(), player.duration())
   const handleInput: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
     localProps.onInput?.(event)
 
     if (!event.defaultPrevented) {
-      actions.seek(event.currentTarget.valueAsNumber)
+      player.seek(event.currentTarget.valueAsNumber)
     }
   }
 
@@ -31,13 +31,13 @@ export const AudioPlayerTimeRange = (props: AudioPlayerTimeRangeProps) => {
     <input
       {...restProps}
       aria-valuetext={valueText()}
-      disabled={state().duration <= 0 || restProps.disabled}
-      max={state().duration}
+      disabled={player.duration() <= 0 || restProps.disabled}
+      max={player.duration()}
       min={0}
       onInput={handleInput}
       step={localProps.step ?? DEFAULT_TIME_STEP_SECONDS}
       type="range"
-      value={state().currentTime}
+      value={player.currentTime()}
     />
   )
 }

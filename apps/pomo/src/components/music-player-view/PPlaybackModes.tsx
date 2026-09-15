@@ -10,14 +10,14 @@ import * as m from '@paraglide/message'
 
 const CLASSES = {
   playerMode: cx(
-    'pomo-player__mode text-muted-foreground [&:not(.is-active):hover]:text-foreground',
+    'text-muted-foreground [&:not(.is-active):hover]:text-foreground',
     '[&:not(.is-active):hover]:bg-secondary-soft [&.is-active]:text-white',
     '[&.is-active:hover]:brightness-110',
     '[&.is-active]:bg-primary [&.is-active]:shadow-[0_0.25rem_0.75rem_rgb(125_49_29_/_28%)]',
     '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
     '[&:focus-visible]:[outline-offset:0.125rem]',
   ),
-  playerModes: 'pomo-player__modes border border-solid border-border bg-surface-overlay',
+  playerModes: 'border border-solid border-border bg-surface-overlay',
 } as const
 
 const REPEAT_MODES = [
@@ -50,7 +50,6 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => {
             return (
               <>
                 <button
-                  {...repeatTooltip.events}
                   ref={repeatTooltip.setTarget}
                   aria-label={mode.label()}
                   aria-pressed={props.repeatMode === mode.value}
@@ -60,6 +59,11 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => {
                     props.repeatMode === mode.value && 'is-active',
                   )}
                   onClick={() => props.onRepeatModeChange(mode.value)}
+                  onBlur={repeatTooltip.onBlur}
+                  onFocus={repeatTooltip.onFocus}
+                  onPointerDown={repeatTooltip.onPointerDown}
+                  onPointerEnter={repeatTooltip.onPointerEnter}
+                  onPointerLeave={repeatTooltip.onPointerLeave}
                   type="button"
                 >
                   <span
@@ -80,7 +84,6 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => {
       <span aria-hidden="true" class="mx-0.5 h-5 w-[0.0625rem] bg-border player-narrow:mx-0" />
 
       <button
-        {...shuffleTooltip.events}
         ref={shuffleTooltip.setTarget}
         aria-label={m.player_shuffle()}
         aria-pressed={props.shuffleEnabled}
@@ -90,6 +93,11 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => {
           props.shuffleEnabled && 'is-active',
         )}
         onClick={() => props.onShuffleChange()}
+        onBlur={shuffleTooltip.onBlur}
+        onFocus={shuffleTooltip.onFocus}
+        onPointerDown={shuffleTooltip.onPointerDown}
+        onPointerEnter={shuffleTooltip.onPointerEnter}
+        onPointerLeave={shuffleTooltip.onPointerLeave}
         type="button"
       >
         <span

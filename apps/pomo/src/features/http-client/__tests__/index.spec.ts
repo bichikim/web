@@ -114,3 +114,20 @@ it('should resolve API, audio, and other relative assets from the public origin 
     expect.any(Object),
   )
 })
+
+it.each([
+  {development: false, expected: 'https://pomo.example/api/account'},
+  {development: true, expected: '/api/account'},
+])('should resolve mobile API requests with development=$development', async (scenario) => {
+  vi.stubEnv('DEV', scenario.development)
+  vi.stubEnv('VITE_POMO_IS_MOBILE', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://pomo.example')
+  vi.resetModules()
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', fetchMock)
+  const mobileClient = await import('..')
+
+  await mobileClient.apiFetch('account')
+
+  expect(fetchMock).toHaveBeenCalledWith(scenario.expected, expect.any(Object))
+})

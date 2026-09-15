@@ -153,7 +153,7 @@ it('should synchronize a running stored timer and publish mount events', async (
     phase: 'shortBreak',
     status: 'running',
   })
-  expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'])
+  expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'], {isCatchUp: true})
   view.cleanup()
 })
 
@@ -180,6 +180,34 @@ it('should restore an already expired running timer as an inactive next phase', 
   view.cleanup()
 })
 
+it('should publish transitions when restoring an expired timer with auto-start enabled', async () => {
+  const runningState = {
+    completedFocusSessions: 0,
+    endsAt: 1,
+    phase: 'focus',
+    status: 'running',
+  } satisfies PomodoroTimerState
+  const onEvents = vi.fn()
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningState))
+  autoStartMocks.read.mockResolvedValue(true)
+  vi.setSystemTime(1_000)
+
+  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  await finishMount()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    endsAt: 4_001,
+    phase: 'shortBreak',
+    status: 'running',
+  })
+  expect(onEvents).toHaveBeenCalledExactlyOnceWith(['focus-end', 'break-start'], {
+    isCatchUp: true,
+  })
+  view.cleanup()
+})
+
 it('should preserve changes made while the auto-start preference is loading', async () => {
   const preference = createDeferred<boolean>()
   autoStartMocks.read.mockReturnValue(preference.promise)
@@ -199,6 +227,34 @@ it('should preserve changes made while the auto-start preference is loading', as
   expect(view.result.isAutoStartEnabled()).toBe(true)
   expect(view.result.state().status).toBe('running')
   view.cleanup()
+})
+
+it('should synchronize timer actions between mounted controllers', async () => {
+  const first = renderHook(() => usePomodoroTimer())
+  const second = renderHook(() => usePomodoroTimer())
+  await finishMount()
+
+  first.result.onConfigChange(CONFIG)
+  first.result.onStart()
+
+  await vi.waitFor(() => {
+    expect(second.result.config()).toEqual(CONFIG)
+    expect(second.result.state()).toMatchObject({endsAt: 10_000, status: 'running'})
+  })
+
+  second.result.onPause()
+
+  await vi.waitFor(() => {
+    expect(first.result.state()).toEqual({
+      completedFocusSessions: 0,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'paused',
+    })
+  })
+
+  first.cleanup()
+  second.cleanup()
 })
 
 it('should abandon pending preference restoration after cleanup', async () => {
@@ -341,12 +397,10 @@ it.each(['refresh', 'pause'] as const)(
       phase: 'focus',
       status: action === 'pause' ? 'paused' : 'running',
     })
-    expect(onEvents).toHaveBeenCalledExactlyOnceWith([
-      'focus-end',
-      'break-start',
-      'break-end',
-      'focus-start',
-    ])
+    expect(onEvents).toHaveBeenCalledExactlyOnceWith(
+      ['focus-end', 'break-start', 'break-end', 'focus-start'],
+      {isCatchUp: true},
+    )
     document.dispatchEvent(new Event('visibilitychange'))
     expect(onEvents).toHaveBeenCalledTimes(1)
     view.cleanup()
@@ -374,7 +428,9 @@ it.each([
   vi.setSystemTime(5_000)
   view.result.onPause()
   expect(view.result.state()).toMatchObject({phase: 'focus', remainingSeconds: 9, status: 'paused'})
-  expect(onEvents).toHaveBeenCalledExactlyOnceWith([scenario.endEvent, 'focus-start'])
+  expect(onEvents).toHaveBeenCalledExactlyOnceWith([scenario.endEvent, 'focus-start'], {
+    isCatchUp: true,
+  })
   view.result.onStart()
   expect(onEvents).toHaveBeenCalledTimes(1)
   view.cleanup()

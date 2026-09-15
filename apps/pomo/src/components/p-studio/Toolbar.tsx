@@ -84,7 +84,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
   return (
     <div
       class={cx(
-        props.layout === 'surface' ? 'flex w-full flex-col items-end gap-2' : CLASSES.sceneToolbar,
+        props.layout === 'surface' ? 'flex w-fit flex-col items-end gap-2' : CLASSES.sceneToolbar,
       )}
     >
       <div
@@ -99,16 +99,21 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       >
         <Show when={props.toolsButtonVisible ?? true}>
           <div class="inline-flex" data-tour-step="tools">
-            <PTools sceneStyle={props.sceneStyle} />
+            <PTools desktopSurface={props.layout === 'surface'} sceneStyle={props.sceneStyle} />
           </div>
         </Show>
         <Show when={props.memoryAssistVisible ?? true}>
           <div class="inline-flex" data-tour-step="memory-assist">
-            <MemoryAssistPanel sceneStyle={props.sceneStyle} weatherState={props.weatherState} />
+            <MemoryAssistPanel
+              desktopSurface={props.layout === 'surface'}
+              sceneStyle={props.sceneStyle}
+              weatherState={props.weatherState}
+            />
           </div>
         </Show>
         <div class="inline-flex" data-tour-step="settings">
           <SceneSettingsPanel
+            desktopSurface={props.layout === 'surface'}
             uiAutoHide={props.uiAutoHide}
             playerVisible={props.playerVisible}
             onPlayerVisibleChange={props.onPlayerVisibleChange}
@@ -147,7 +152,10 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           />
         </div>
         <div class="pomo-toolbar-secondary flex flex-none gap-2">
-          <VersionNoticePanel sceneStyle={props.sceneStyle} />
+          <VersionNoticePanel
+            desktopSurface={props.layout === 'surface'}
+            sceneStyle={props.sceneStyle}
+          />
           <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
             <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
               <div class="inline-flex" data-tour-step="tour">
@@ -155,7 +163,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
                   {...GLASS_ICON_BUTTON}
                   accessibleLabel={m.tour_open()}
                   tooltip={m.tour_open()}
-                  class={cx(GLASS_ICON_BUTTON.class, 'pomo-tour-control')}
+                  class={GLASS_ICON_BUTTON.class}
                   icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
                   onPress={() => props.onTourOpen?.()}
                 />

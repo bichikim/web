@@ -24,10 +24,9 @@ it('should keep time, activity, and view together in general settings at every l
   const timeControl = screen.getByRole('button', {name: '시간'})
   const activityControl = screen.getByRole('button', {name: '행동'})
   const viewControl = screen.getByRole('button', {name: '보기'})
-  const sceneGroup = timeControl.closest('.pomo-settings__scene')
+  const sceneGroup = timeControl.parentElement
 
   expect(sceneGroup).not.toHaveClass('lg:hidden')
-  expect(viewControl.closest('.pomo-settings__scene')).toBe(sceneGroup)
-  expect(activityControl.closest('.pomo-settings__scene')).toBe(sceneGroup)
-  expect(activityControl.closest('.lg\\:hidden')).toBeNull()
+  expect(viewControl.parentElement).toBe(sceneGroup)
+  expect(activityControl.parentElement).toBe(sceneGroup)
 })

@@ -4,6 +4,8 @@ import {render} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
 import type {ModelDownloadController, ModelDownloadRuntime} from '../controller'
+import {ModelAssetContext, ModelDownloadContext} from '../context'
+import {createModelAssetManager} from '../asset-manager'
 
 const controllerMocks = vi.hoisted(() => ({createModelDownloadController: vi.fn()}))
 
@@ -54,4 +56,27 @@ it('should provide one controller and dispose it on cleanup', () => {
   expect(observedAssets?.runAfterVoiceModel).toBeTypeOf('function')
   result.unmount()
   expect(dispose).toHaveBeenCalledOnce()
+})
+
+it('should consume the contexts shared independently of the provider module', () => {
+  const controller = {dispose: vi.fn()} as unknown as ModelDownloadController
+  const assets = createModelAssetManager({controller})
+  let observedController: ReturnType<typeof useModelDownload> | undefined
+  let observedAssets: ReturnType<typeof useModelAssetManager> | undefined
+  const Consumer = () => {
+    observedController = useModelDownload()
+    observedAssets = useModelAssetManager()
+    return null
+  }
+
+  render(() => (
+    <ModelDownloadContext.Provider value={controller}>
+      <ModelAssetContext.Provider value={assets}>
+        <Consumer />
+      </ModelAssetContext.Provider>
+    </ModelDownloadContext.Provider>
+  ))
+
+  expect(observedController).toBe(controller)
+  expect(observedAssets).toBe(assets)
 })

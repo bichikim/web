@@ -17,13 +17,13 @@ const getFeedIssueMessage = (item: FeedIssueMessageSource) =>
 
 const CLASSES = {
   feedSettingsDialogueActions: cx(
-    'pomo-feed-settings__dialogue-actions flex flex-none gap-[0.4rem]',
+    'flex flex-none gap-[0.4rem]',
     '[&_button]:inline-flex [&_button]:min-h-8 [&_button]:box-border',
     '[&_button]:cursor-pointer [&_button]:items-center',
     '[&_button]:border [&_button]:border-solid [&_button]:border-border',
     '[&_button]:rounded-control [&_button]:bg-transparent [&_button]:py-0',
     '[&_button]:px-3 [&_button]:text-foreground',
-    '[&_button]:[font:inherit] [&_button]:text-modal-detail [&_button]:font-bold',
+    '[&_button]:[font:inherit] [&_button]:text-sm [&_button]:leading-5 [&_button]:font-bold',
     '[&_button]:no-underline [&_button:hover]:border-highlight',
     '[&_[data-pomo-feed-delete-confirm]]:border-danger/50',
     '[&_[data-pomo-feed-delete-confirm]]:text-danger',
@@ -34,13 +34,13 @@ const CLASSES = {
     'max-sm:[&_button]:justify-center',
   ),
   feedSettingsDialogueCopy: cx(
-    'pomo-feed-settings__dialogue-copy grid min-w-0 flex-1 gap-[0.2rem]',
-    '[&_strong]:overflow-hidden [&_strong]:text-foreground [&_strong]:text-modal-body',
+    'grid min-w-0 flex-1 gap-[0.2rem]',
+    '[&_strong]:overflow-hidden [&_strong]:text-foreground [&_strong]:text-base [&_strong]:leading-6',
     '[&_strong]:text-ellipsis [&_strong]:whitespace-nowrap',
-    '[&_small]:text-muted-foreground [&_small]:text-modal-detail [&_small]:leading-[1.45]',
+    '[&_small]:text-muted-foreground [&_small]:text-sm [&_small]:leading-[1.45]',
   ),
   feedSettingsDialogueList: cx(
-    'pomo-feed-settings__dialogue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
+    'grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:border [&_>_li]:border-solid',
     '[&_>_li]:border-content-border [&_>_li]:rounded-panel [&_>_li]:bg-content-surface',
@@ -48,63 +48,63 @@ const CLASSES = {
     'max-sm:[&_>_li]:items-stretch max-sm:[&_>_li]:flex-col',
   ),
   feedSettingsEmpty: cx(
-    'pomo-feed-settings__empty m-0 rounded-panel bg-content-surface',
-    'p-5 text-muted-foreground text-modal-detail leading-[1.5] text-center settings-compact:p-4',
+    'm-0 rounded-panel bg-content-surface',
+    'p-5 text-muted-foreground text-sm leading-[1.5] text-center settings-compact:p-4',
     'border border-dashed border-border',
   ),
   feedSettingsIssueHeading: cx(
-    'pomo-feed-settings__issue-heading flex items-center gap-[0.45rem] [&_h4]:m-0',
-    '[&_h4]:text-foreground [&_h4]:text-modal-body [&_span]:text-muted-foreground',
-    '[&_span]:text-modal-detail',
+    'flex items-center gap-[0.45rem] [&_h4]:m-0',
+    '[&_h4]:text-foreground [&_h4]:text-base [&_h4]:leading-6 [&_span]:text-muted-foreground',
+    '[&_span]:text-sm [&_span]:leading-5',
   ),
   feedSettingsIssueList: cx(
-    'pomo-feed-settings__issue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
+    'grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:border [&_>_li]:border-solid',
     '[&_>_li]:border-content-border [&_>_li]:rounded-panel [&_>_li]:bg-content-surface',
     '[&_>_li]:px-4 [&_>_li]:py-3 [&_>_li_>_span]:grid',
     '[&_>_li_>_span]:min-w-0 [&_>_li_>_span]:flex-1 [&_>_li_>_span]:gap-[0.2rem]',
-    '[&_strong]:overflow-hidden [&_strong]:text-foreground [&_strong]:text-modal-body',
+    '[&_strong]:overflow-hidden [&_strong]:text-foreground [&_strong]:text-base [&_strong]:leading-6',
     '[&_strong]:text-ellipsis [&_strong]:whitespace-nowrap',
-    '[&_small]:text-muted-foreground [&_small]:text-modal-detail [&_small]:leading-[1.45]',
+    '[&_small]:text-muted-foreground [&_small]:text-sm [&_small]:leading-[1.45]',
     '[&_a]:inline-flex [&_a]:min-h-8 [&_a]:box-border [&_a]:cursor-pointer [&_a]:items-center',
     '[&_a]:border [&_a]:border-solid [&_a]:border-border [&_a]:rounded-control',
     '[&_a]:bg-transparent [&_a]:py-0 [&_a]:px-3',
-    '[&_a]:text-foreground [&_a]:[font:inherit] [&_a]:text-modal-detail [&_a]:font-bold',
+    '[&_a]:text-foreground [&_a]:[font:inherit] [&_a]:text-sm [&_a]:leading-5 [&_a]:font-bold',
     '[&_a]:no-underline [&_a:hover]:border-highlight',
     '[&_>_li]:border-[rgb(232_174_114_/_22%)] max-sm:[&_>_li]:items-stretch',
     'max-sm:[&_>_li]:flex-col max-sm:[&_a]:w-full',
     'max-sm:[&_a]:justify-center',
   ),
   feedSettingsListenedState: cx(
-    'pomo-feed-settings__listened-state text-highlight font-bold',
+    'text-highlight font-bold',
     '[&[data-listened]]:text-muted-foreground',
   ),
   feedSettingsListHeading: cx(
-    'pomo-feed-settings__list-heading [&_h4]:m-0 [&_h4]:text-foreground',
-    '[&_h4]:text-modal-body [&_h4]:font-[750] flex items-center gap-[0.45rem]',
+    '[&_h4]:m-0 [&_h4]:text-foreground',
+    '[&_h4]:text-base [&_h4]:leading-6 [&_h4]:font-[750] flex items-center gap-[0.45rem]',
     'border-t border-solid border-border pt-4',
-    '[&_>_span]:text-muted-foreground [&_>_span]:text-modal-detail',
+    '[&_>_span]:text-muted-foreground [&_>_span]:text-sm [&_>_span]:leading-5',
   ),
   feedSettingsLoadMore: cx(
-    'pomo-feed-settings__load-more min-h-9 cursor-pointer justify-self-center',
+    'min-h-9 cursor-pointer justify-self-center',
     'border border-solid border-border rounded-control bg-transparent',
     'py-0 px-4 text-muted-foreground [font:inherit]',
-    'text-modal-detail font-bold [&:hover]:border-highlight',
+    'text-sm leading-5 font-bold [&:hover]:border-highlight',
     '[&:hover]:text-foreground [&:focus-visible]:outline-2 ' +
       '[&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
     '[&:focus-visible]:[outline-offset:0.125rem]',
   ),
   feedSettingsMessage: cx(
-    'pomo-feed-settings__message m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-modal-detail settings-compact:p-4',
+    'm-0 rounded-panel',
+    'bg-content-surface p-5 text-muted-foreground text-sm settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
   feedSettingsRefresh: cx(
-    'pomo-feed-settings__refresh inline-flex min-h-8 cursor-pointer items-center gap-[0.3rem]',
+    'inline-flex min-h-8 cursor-pointer items-center gap-[0.3rem]',
     'ml-auto border border-solid border-border rounded-control',
     'bg-transparent py-0 px-3 text-muted-foreground [font:inherit]',
-    'text-modal-detail font-bold [&:hover]:border-highlight',
+    'text-sm leading-5 font-bold [&:hover]:border-highlight',
     '[&:hover]:text-foreground [&:focus-visible]:outline-2 ' +
       '[&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
     '[&:focus-visible]:[outline-offset:0.125rem]',
@@ -232,7 +232,6 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                       aria-label={m.settings_feed_dialogue_delete_confirm_label({
                         title: item.metadata.itemTitle,
                       })}
-                      class="pomo-feed-settings__delete-confirm"
                       data-pomo-feed-delete-confirm=""
                       onClick={() => handleDelete(item.dialogue.id)}
                       type="button"

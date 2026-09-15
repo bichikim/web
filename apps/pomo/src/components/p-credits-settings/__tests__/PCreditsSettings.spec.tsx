@@ -92,7 +92,10 @@ it('should credit the creator and disclose current software and model licenses',
   expect(openSourceCredit).not.toBeNull()
   expect(openSourceCredit?.className).toContain('rounded-panel')
   expect(openSourceCredit?.className).toContain('border')
-  expect(openSourceCredit?.querySelector('[data-pomo-tag]')).not.toBeNull()
+  expect(
+    screen.getByRole('heading', {name: 'PixiJS · UnoCSS · class-variance-authority'})
+      .nextElementSibling,
+  ).toBeInstanceOf(HTMLSpanElement)
   expect(screen.getByRole('heading', {name: 'media-chrome'})).toBeTruthy()
   expect(screen.getByRole('heading', {name: 'wLipSync'})).toBeTruthy()
   expect(screen.getByRole('link', {name: 'wLipSync 라이선스 원문 새 창에서 열기'})).toBeTruthy()

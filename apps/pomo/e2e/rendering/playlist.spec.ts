@@ -102,10 +102,10 @@ test('should undo clearing a playlist and preserve an intentionally empty queue 
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
   await expect(page.locator('.pomo-scene canvas')).toBeVisible()
-  await expect(page.locator('.pomo-scene-fallback')).toHaveCount(0)
+  await expect(page.getByRole('status', {name: /장면 준비/u})).toHaveCount(0)
   const player = page.locator('.pomo-player-stage')
   await player.getByRole('button', {exact: true, name: '플레이어 펼치기'}).click()
-  const queue = player.locator('.pomo-player__playlist')
+  const queue = player.getByRole('list')
   await expect(queue.getByRole('button')).toHaveText([
     '1First TrackE2E Artist',
     '2Second TrackE2E Artist',

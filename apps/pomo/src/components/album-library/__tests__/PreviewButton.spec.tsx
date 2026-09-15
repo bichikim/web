@@ -37,5 +37,7 @@ it('should show pending feedback instead of a play icon', () => {
   const view = render(() => (
     <PreviewButton title="곡" isLimited={false} isPending isPlaying={false} onPress={vi.fn()} />
   ))
-  expect(view.container.querySelector('.i-tabler-loader-2')).toBeInTheDocument()
+  expect(screen.getByRole('button').querySelector('span[aria-hidden="true"]')).toHaveClass(
+    'i-tabler-loader-2',
+  )
 })

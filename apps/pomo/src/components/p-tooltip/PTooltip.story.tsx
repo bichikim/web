@@ -15,7 +15,15 @@ const meta = {
     const trigger = useTooltipTrigger()
     return (
       <div class="grid min-h-48 place-items-center">
-        <button {...trigger.events} ref={trigger.setTarget} type="button">
+        <button
+          ref={trigger.setTarget}
+          onBlur={trigger.onBlur}
+          onFocus={trigger.onFocus}
+          onPointerDown={trigger.onPointerDown}
+          onPointerEnter={trigger.onPointerEnter}
+          onPointerLeave={trigger.onPointerLeave}
+          type="button"
+        >
           툴팁 대상
         </button>
         <PTooltip target={trigger.target()} show={args.show || trigger.show()} text={args.text} />

@@ -1,6 +1,7 @@
 import {Select, type SelectRootItemComponentProps} from '@kobalte/core/select'
 import {cva, cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
+import {TEXT_BODY, TEXT_DETAIL} from '../typography-classes'
 import {PSelectAppearance, PSelectOption} from './shared'
 
 const SELECT_ITEM_CLASSES = cva(
@@ -11,14 +12,19 @@ const SELECT_ITEM_CLASSES = cva(
     defaultVariants: {appearance: 'default'},
     variants: {
       appearance: {
-        default:
-          'flex justify-between text-modal-body font-600 text-muted-foreground ' +
-          'ui-highlighted:text-foreground ui-selected:bg-primary-soft ui-selected:text-foreground',
-        detailed: 'grid grid-cols-[auto_minmax(0,_1fr)] text-modal-detail text-foreground',
-        icon:
-          'grid grid-cols-[auto_minmax(0,_1fr)_auto] whitespace-nowrap text-modal-body font-600 ' +
-          'leading-5 text-muted-foreground ui-highlighted:text-foreground ' +
+        default: cx(
+          'flex justify-between',
+          TEXT_BODY,
+          'font-600 text-muted-foreground ui-highlighted:text-foreground',
           'ui-selected:bg-primary-soft ui-selected:text-foreground',
+        ),
+        detailed: cx('grid grid-cols-[auto_minmax(0,_1fr)]', TEXT_DETAIL, 'text-foreground'),
+        icon: cx(
+          'grid grid-cols-[auto_minmax(0,_1fr)_auto] whitespace-nowrap',
+          TEXT_BODY,
+          'font-600 leading-5 text-muted-foreground ui-highlighted:text-foreground',
+          'ui-selected:bg-primary-soft ui-selected:text-foreground',
+        ),
       },
     },
   },
@@ -48,8 +54,10 @@ const SELECT_ITEM_TEXT_CLASSES = cva('min-w-0', {
   },
 })
 
-const SELECT_ITEM_DESCRIPTION_CLASS =
-  'overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground text-modal-detail'
+const SELECT_ITEM_DESCRIPTION_CLASS = cx(
+  'overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground',
+  TEXT_DETAIL,
+)
 
 interface PSelectItemProps<TValue extends string> extends SelectRootItemComponentProps<
   PSelectOption<TValue>

@@ -378,7 +378,7 @@ export const StationaryHover: Story = {
     for (const button of buttons) {
       await userEvent.hover(button)
       await expect(getComputedStyle(button).transform).toBe('none')
-      const icon = button.querySelector('[data-pomo-button-trailing-icon]')!
+      const icon = button.lastElementChild!
       await expect(getComputedStyle(icon).transform).toBe('none')
       await userEvent.unhover(button)
     }

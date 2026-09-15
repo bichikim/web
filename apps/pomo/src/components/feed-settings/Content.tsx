@@ -56,7 +56,8 @@ export function PFeedSettingsContent() {
   const feeds = useFeedConnections()
   const usesRemotePublicOrigin =
     import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
-    import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
+    import.meta.env.VITE_POMO_IS_DESKTOP === 'true' ||
+    (import.meta.env.VITE_POMO_IS_MOBILE === 'true' && !import.meta.env.DEV)
   const publicOrigin = usesRemotePublicOrigin
     ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN
     : window.location.origin
@@ -114,7 +115,7 @@ export function PFeedSettingsContent() {
             />
           </label>
           <PSettingsActionButton
-            class="pomo-feed-settings__add max-sm:w-full"
+            class="max-sm:w-full"
             disabled={feeds.isLoading()}
             icon="i-tabler-plus"
             size="medium"

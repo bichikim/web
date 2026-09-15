@@ -180,11 +180,10 @@ it('should map the scribble style switch to the scene style value', async () => 
 
   const settingsTrigger = screen.getByRole('button', {name: '설정'})
 
-  expect(settingsTrigger.parentElement?.classList).toContain('pomo-scribble-circle-control')
-  expect(
-    settingsTrigger.parentElement?.querySelector('.pomo-scribble-circle-border'),
-  ).not.toBeNull()
-  expect(settingsTrigger.querySelector('.i-pomo-scribble\\:settings')).not.toBeNull()
+  expect(settingsTrigger.parentElement?.querySelector('svg')).not.toBeNull()
+  expect(settingsTrigger.querySelector('[aria-hidden="true"]')).toHaveClass(
+    'i-pomo-scribble:settings',
+  )
 
   await waitFor(() => expect(PSwitch).toHaveBeenCalled())
   const styleSwitch = vi
@@ -273,6 +272,6 @@ it('should forward every scene, weather, and modal action', async () => {
 
 it('should keep the settings icon at its explicit toolbar size', () => {
   render(() => <PSettings />)
-  const icon = screen.getByRole('button', {name: '설정'}).querySelector('[data-pomo-button-icon]')
+  const icon = screen.getByRole('button', {name: '설정'}).querySelector('span[aria-hidden="true"]')
   expect(icon).toHaveClass('size-6!')
 })

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {A, useNavigate} from '@solidjs/router'
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -569,12 +569,14 @@ describe('PDialogueEditor saving and timeline', () => {
       '전체 음성을 새로 만든 뒤 사용할 수 있어요.',
     )
     expect(regenerateButton).not.toHaveAttribute('title')
-    expect(screen.getByText('둘째 문장').parentElement).toHaveClass(
-      'pomo-dialogue-editor__segment-content',
-    )
-    expect(screen.getByTestId('face-icon').parentElement?.parentElement).toHaveClass(
-      'pomo-dialogue-editor__segment-meta',
-    )
+    const segment = screen.getByText('둘째 문장').closest('li')
+    if (!(segment instanceof HTMLLIElement)) {
+      throw new TypeError('Expected the dialogue segment to be rendered as a list item')
+    }
+    expect(
+      within(segment).getByRole('button', {name: '2번 말풍선 음성 다시 만들기'}),
+    ).toHaveTextContent('만드는 중…')
+    expect(within(segment).getByTestId('face-icon')).toBeInTheDocument()
 
     fireEvent.click(regenerateButton)
     fireEvent.click(screen.getByRole('button', {name: '2번 말풍선 음성 다시 만들기'}))

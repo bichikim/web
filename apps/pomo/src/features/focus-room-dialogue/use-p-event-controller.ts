@@ -1,10 +1,12 @@
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {createEntryPlaybackController} from './entry-playback-controller'
+import {MAX_LATEST_REPLACEMENT_DIALOGUE_IDS} from './dialogue-playback-policy'
 import {
   type EventDialogueIds,
   type EventPlaybackModes,
   type PEventContextValue,
+  type PlayDialogueEventsOptions,
 } from './event-context'
 import {selectEventDialogues} from './event-playback'
 import {createEntryEventPlayback} from './use-p-event-controller/entry-playback'
@@ -71,6 +73,25 @@ const updateEventPlaybackMode = (
 
   return nextModes
 }
+
+const selectDialogueIdsForEvents = (
+  eventIds: ReadonlyArray<DialogueEventId>,
+  bindings: EventDialogueIds,
+  playbackModes: EventPlaybackModes,
+  maxLatestDialogueIds?: number,
+): ReadonlyArray<string> =>
+  eventIds.reduce<Array<string>>((dialogueIds, eventId) => {
+    const selectedDialogueIds = selectEventDialogues({
+      dialogueIds: bindings[eventId] ?? [],
+      maxLatestDialogueIds,
+      playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+    })
+    const nextDialogueIds = [...dialogueIds, ...selectedDialogueIds]
+
+    return maxLatestDialogueIds === undefined
+      ? nextDialogueIds
+      : nextDialogueIds.slice(-maxLatestDialogueIds)
+  }, [])
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook coordinates repository initialization, bindings, and queued playback lifecycle.
 export const usePEventController = (props: UsePEventControllerProps): PEventContextValue => {
@@ -267,7 +288,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
       return playback.prepare(repository, dialogueId)
     },
-    async playDialogueEvents(eventIds, onBeforePlayback) {
+    async playDialogueEvents(eventIds, onBeforePlayback, options?: PlayDialogueEventsOptions) {
       if (!isPlaybackEnabled()) {
         return
       }
@@ -282,20 +303,24 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
       const bindings = eventDialogueIds()
       const playbackModes = eventPlaybackModes()
-      const dialogueIds = eventIds.flatMap((eventId) =>
-        selectEventDialogues({
-          dialogueIds: bindings[eventId] ?? [],
-          playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
-        }),
+      const dialogueIds = selectDialogueIdsForEvents(
+        eventIds,
+        bindings,
+        playbackModes,
+        options?.replacementPolicy === 'latest' ? MAX_LATEST_REPLACEMENT_DIALOGUE_IDS : undefined,
       )
 
       if (dialogueIds.length > 0) {
         onBeforePlayback?.()
-        await playback.playSequence(repository, {
+        const sequenceOptions = {
           dialogueIds,
           onDialogueStart: () => undefined,
           onSequenceStop: () => undefined,
-        })
+          ...(options?.replacementPolicy === 'latest'
+            ? {replacementPolicy: 'latest' as const}
+            : {}),
+        }
+        await playback.playSequence(repository, sequenceOptions)
       }
     },
     async playDialogueSequence(options) {

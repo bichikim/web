@@ -10,12 +10,10 @@ interface PScribbleCircleControlProps {
 }
 
 export const PScribbleCircleControl = (props: PScribbleCircleControlProps) => (
-  <span
-    class={cx('pomo-scribble-circle-control relative inline-flex overflow-visible', props.class)}
-  >
+  <span class={cx('relative inline-flex overflow-visible', props.class)}>
     {props.children}
     <Show when={props.enabled}>
-      <PScribbleCircleFrame class="pomo-scribble-circle-border" />
+      <PScribbleCircleFrame />
     </Show>
   </span>
 )

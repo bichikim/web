@@ -69,7 +69,7 @@ it('should show the signed-in email and account management entry', async () => {
   })
   await waitFor(() => expect(screen.queryByText('pomo@example.com')).not.toBeNull())
   expect(screen.queryByText('이메일 링크')).not.toBeNull()
-  expect(screen.getByText('pomo@example.com').closest('div.rounded-panel')).toHaveClass(
+  expect(screen.getByRole('link', {name: '계정 관리'}).parentElement).toHaveClass(
     'border-content-border',
     'bg-content-surface',
   )
@@ -85,7 +85,7 @@ it('should provide the login entry for an anonymous user', async () => {
   render(() => <UserSettings />)
 
   await waitFor(() => expect(screen.queryByText('로그인하지 않았어요.')).not.toBeNull())
-  expect(screen.getByText('로그인하지 않았어요.').closest('div.rounded-panel')).not.toBeNull()
+  expect(screen.getByRole('link', {name: '로그인 / 가입'}).parentElement).not.toBeNull()
   expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe('/account')
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
     '/web/terms',

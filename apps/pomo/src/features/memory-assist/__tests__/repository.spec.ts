@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
-import {createMemoryMemo} from '../schedule'
+import {advanceMemoryMemo, createMemoryMemo} from '../schedule'
 import {createMemoryMemoRepository, type MemoryMemoStorage} from '../repository'
 import type {MemoryMemo} from '../schema'
 
@@ -28,6 +28,37 @@ it('should persist memo snapshots to web and Toss storage', async () => {
 
   expect(writeWeb).toHaveBeenCalledWith([memo])
   expect(writeToss).toHaveBeenCalledWith([memo])
+})
+
+it('should persist structured reminder events to web and Toss storage', async () => {
+  const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
+  const writeWeb = vi.fn().mockReturnValue(null)
+  const repository = createMemoryMemoRepository({
+    readToss: vi.fn().mockResolvedValue(null),
+    readWeb: vi.fn().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss,
+    writeWeb,
+  })
+  const memo = createMemoryMemo({
+    exactReminderAt: '2026-09-04T03:10:00.000Z',
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '예약 기록을 보존할 메모',
+  })
+  const deliveredMemo = advanceMemoryMemo({
+    kind: 'exact',
+    memo,
+    now: new Date('2026-09-04T03:15:00.000Z'),
+    random: () => 0,
+  })
+
+  await repository.write([deliveredMemo])
+
+  expect(writeWeb).toHaveBeenCalledWith([deliveredMemo])
+  expect(writeToss).toHaveBeenCalledWith([deliveredMemo])
 })
 
 it('should restore Toss memos and converge the web snapshot', async () => {

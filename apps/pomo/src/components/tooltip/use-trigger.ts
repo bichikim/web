@@ -12,45 +12,43 @@ export const useTooltipTrigger = () => {
     clearTimeout(timer)
     timer = undefined
   }
-  const events = {
-    onBlur: () => {
-      visibleFocus = false
+  const onBlur = () => {
+    visibleFocus = false
+    cancel()
+    setShow(false)
+  }
+  const onFocus = ((event) => {
+    visibleFocus = event.currentTarget.matches(':focus-visible')
+    if (visibleFocus) {
       cancel()
+      setShow(true)
+    }
+  }) satisfies JSX.EventHandler<HTMLElement, FocusEvent>
+  const onPointerDown = () => {
+    visibleFocus = false
+    cancel()
+    setShow(false)
+  }
+  const onPointerEnter = ((event) => {
+    if (event.pointerType === 'touch') {
+      return
+    }
+    cancel()
+    if (visibleFocus) {
+      setShow(true)
+      return
+    }
+    timer = setTimeout(() => {
+      timer = undefined
+      setShow(true)
+    }, OPEN_DELAY)
+  }) satisfies JSX.EventHandler<HTMLElement, PointerEvent>
+  const onPointerLeave = () => {
+    cancel()
+    if (!visibleFocus) {
       setShow(false)
-    },
-    onFocus: ((event) => {
-      visibleFocus = event.currentTarget.matches(':focus-visible')
-      if (visibleFocus) {
-        cancel()
-        setShow(true)
-      }
-    }) satisfies JSX.EventHandler<HTMLElement, FocusEvent>,
-    onPointerDown: () => {
-      visibleFocus = false
-      cancel()
-      setShow(false)
-    },
-    onPointerEnter: ((event) => {
-      if (event.pointerType === 'touch') {
-        return
-      }
-      cancel()
-      if (visibleFocus) {
-        setShow(true)
-        return
-      }
-      timer = setTimeout(() => {
-        timer = undefined
-        setShow(true)
-      }, OPEN_DELAY)
-    }) satisfies JSX.EventHandler<HTMLElement, PointerEvent>,
-    onPointerLeave: () => {
-      cancel()
-      if (!visibleFocus) {
-        setShow(false)
-      }
-    },
+    }
   }
   onCleanup(cancel)
-  return {events, setTarget, show, target}
+  return {onBlur, onFocus, onPointerDown, onPointerEnter, onPointerLeave, setTarget, show, target}
 }

@@ -10,7 +10,7 @@ export interface ExpandedSummaryPlaybackProps extends Pick<
 export const ExpandedSummaryPlayback = (props: ExpandedSummaryPlaybackProps) => (
   <>
     <TrackArtwork currentTrack={props.currentTrack} />
-    <div class="pomo-player__compact-summary-play hidden size-11 shrink-0 player-compact:block">
+    <div class="hidden size-11 shrink-0 player-compact:block">
       <SummaryPlayButton
         isPlaying={props.isPlaying}
         currentTrack={props.currentTrack}

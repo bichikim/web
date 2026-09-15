@@ -5,7 +5,7 @@ import type {PMusicPlayerContentProps} from './types'
 
 export interface PMusicPlayerPresentationProps extends Pick<
   PMusicPlayerContentProps,
-  'expanded' | 'onExpandedChange' | 'sceneStyle'
+  'backdropBlur' | 'expanded' | 'onExpandedChange' | 'sceneStyle'
 > {}
 
 export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
@@ -22,10 +22,14 @@ export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
 
   return (
     <MusicPlayerView
+      canNavigateNextTrack={player.canNavigateNextTrack()}
+      canNavigatePreviousTrack={player.canNavigatePreviousTrack()}
+      backdropBlur={props.backdropBlur}
       currentIndex={player.currentIndex()}
       currentTrack={player.currentTrack()}
       expanded={expanded()}
       isPlaying={player.isPlaying()}
+      isPlaylistLoading={player.isPlaylistLoading()}
       levels={player.levels()}
       onAlbumAdd={player.addTracksToQueue}
       onAlbumClear={player.canEditQueue() ? player.clearTrackQueue : undefined}

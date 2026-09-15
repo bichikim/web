@@ -56,7 +56,7 @@ describe('POverflowMarquee', () => {
 
     const result = render(() => <MarqueeWithoutRefs text="Track title" />)
 
-    expect(result.container.querySelector('.pomo-overflow-marquee')).not.toBeNull()
+    expect(result.container.firstElementChild).not.toBeNull()
     expect(resizeObservers).toHaveLength(0)
   })
 
@@ -65,15 +65,15 @@ describe('POverflowMarquee', () => {
 
     const result = render(() => <POverflowMarquee text="Track title" />)
 
-    expect(result.container.querySelector('.pomo-overflow-marquee')).not.toBeNull()
+    expect(result.container.firstElementChild).not.toBeNull()
     expect(resizeObservers).toHaveLength(0)
   })
 
   it('should animate only when the text exceeds its viewport', () => {
     const result = render(() => <POverflowMarquee text="A long track title" />)
-    const viewport = result.container.querySelector('.pomo-overflow-marquee')
-    const track = result.container.querySelector('.pomo-overflow-marquee__track')
-    const content = result.container.querySelector('.pomo-overflow-marquee__content')
+    const viewport = result.container.firstElementChild
+    const track = viewport?.firstElementChild
+    const content = track?.firstElementChild
 
     if (
       !(viewport instanceof HTMLElement) ||
@@ -98,7 +98,7 @@ describe('POverflowMarquee', () => {
     expect(track.style.getPropertyValue('--pomo-marquee-distance')).toBe('144px')
     expect(track.style.getPropertyValue('--pomo-marquee-duration')).toBe('6s')
     expect(track.style.animationDuration).toBe('')
-    const clone = result.container.querySelector('.pomo-overflow-marquee__clone')
+    const clone = track.lastElementChild
     expect(clone?.getAttribute('aria-hidden')).toBe('true')
     expect(clone?.textContent).toBe('A long track title')
 
@@ -109,7 +109,7 @@ describe('POverflowMarquee', () => {
     expect(track.classList.contains('animate-overflow-marquee')).toBe(false)
     expect(viewport.hasAttribute('tabindex')).toBe(false)
     expect(viewport.hasAttribute('aria-label')).toBe(false)
-    expect(result.container.querySelector('.pomo-overflow-marquee__clone')).toBeNull()
+    expect(track.lastElementChild).toBe(content)
   })
 
   it('should observe both measured elements and disconnect on cleanup', () => {
@@ -123,7 +123,7 @@ describe('POverflowMarquee', () => {
 
   it('should leave the viewport width constraint to its caller', () => {
     const result = render(() => <POverflowMarquee class="max-w-[40%]" text="Track artist" />)
-    const viewport = result.container.querySelector('.pomo-overflow-marquee')
+    const viewport = result.container.firstElementChild
 
     expect(viewport?.classList.contains('max-w-[40%]')).toBe(true)
     expect(viewport?.classList.contains('max-w-full')).toBe(false)
@@ -131,8 +131,9 @@ describe('POverflowMarquee', () => {
 
   it('should delegate keyboard pausing to a focusable parent when requested', () => {
     const result = render(() => <POverflowMarquee focusable={false} text="Track title" />)
-    const viewport = result.container.querySelector('.pomo-overflow-marquee')
-    const content = result.container.querySelector('.pomo-overflow-marquee__content')
+    const viewport = result.container.firstElementChild
+    const track = viewport?.firstElementChild
+    const content = track?.firstElementChild
 
     if (!(viewport instanceof HTMLElement) || !(content instanceof HTMLElement)) {
       throw new TypeError('Expected the overflow marquee elements to be rendered')

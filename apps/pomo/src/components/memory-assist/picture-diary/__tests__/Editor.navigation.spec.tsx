@@ -25,13 +25,13 @@ it('should keep the receiving cover underneath the moving page until the turn se
   })
   const book = screen.getByLabelText('일기장')
   fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
-  const spread = book.querySelector('.picture-diary-book__spread')!
-  expect(spread.querySelector('.picture-diary-book__back-cover--inside')).toBeInTheDocument()
+  const spread = book.firstElementChild!
+  expect(spread.firstElementChild).toHaveClass('picture-diary-book__back-cover--inside')
   expect(spread.querySelector('[data-picture-diary-page="previous"]')).toBeNull()
   expect(spread).toHaveTextContent('newer')
   expect(book.querySelector('[data-picture-diary-turn-face="front"]')).toHaveTextContent('oldest')
   turns.advance(300)
-  expect(spread.querySelector('.picture-diary-book__back-cover--inside')).toBeInTheDocument()
+  expect(spread.firstElementChild).toHaveClass('picture-diary-book__back-cover--inside')
 })
 
 it('should keep the right page unchanged underneath an older turn', () => {
@@ -43,7 +43,7 @@ it('should keep the right page unchanged underneath an older turn', () => {
   })
   const book = screen.getByLabelText('일기장')
   fireEvent.click(screen.getByRole('button', {name: '이전 일기 보기'}))
-  const spread = book.querySelector('.picture-diary-book__spread')!
+  const spread = book.firstElementChild!
   expect(spread.querySelector('[data-picture-diary-page="current"]')).toHaveTextContent('current')
   expect(spread.querySelector('[data-picture-diary-page="previous"]')).toHaveTextContent('older')
 })
@@ -57,10 +57,9 @@ it('should turn the visible outgoing page on a compact older turn', () => {
   })
   const book = screen.getByLabelText('일기장')
   fireEvent.click(screen.getByRole('button', {name: '이전 일기 보기'}))
+  const spread = book.firstElementChild!
   expect(book.querySelector('[data-picture-diary-turn-face="front"]')).toHaveTextContent('visible')
-  expect(
-    book.querySelector('.picture-diary-book__spread [data-picture-diary-page="current"]'),
-  ).toHaveTextContent('incoming')
+  expect(spread.querySelector('[data-picture-diary-page="current"]')).toHaveTextContent('incoming')
 })
 
 it('should show the previous complete entry and animate turns through diary entries', () => {
@@ -184,10 +183,8 @@ it('should close the back cover after the last entry and reopen it toward that e
   })
 
   const closedBook = screen.getByLabelText('일기장')
-  const closedSpread = closedBook.querySelector('.picture-diary-book__spread')
-  expect(closedBook.closest('.picture-diary-book__frame')).toHaveAttribute(
-    'data-picture-diary-cover-closed',
-  )
+  const closedSpread = closedBook.firstElementChild
+  expect(closedBook.parentElement).toHaveAttribute('data-picture-diary-cover-closed')
   expect(closedSpread).toHaveClass('picture-diary-book__spread--closed')
   expect(closedSpread?.children).toHaveLength(1)
   expect(closedBook.querySelector('[data-picture-diary-cover="back"]')).toBeInTheDocument()

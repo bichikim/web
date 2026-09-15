@@ -13,8 +13,10 @@ import {PModal} from '../p-modal/PModal'
 import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
 import {PMemoryAssistTabList} from '../memory-assist/TabList'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
+import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
 
 export interface PMemoryAssistProps {
+  readonly desktopSurface?: boolean
   readonly sceneStyle?: PSceneStyle
   readonly weatherState?: WeatherState
 }
@@ -42,6 +44,14 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
   const refreshCalendar = () => setCalendarRevision((revision) => revision + 1)
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
+
+    if (props.desktopSurface) {
+      openDesktopDialog('memoryAssist').catch((error: unknown) => {
+        console.error('Failed to open the desktop memory assist dialog.', error)
+      })
+      return
+    }
+
     if (activeTab() === 'calendar') {
       refreshCalendar()
     }

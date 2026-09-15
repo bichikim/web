@@ -15,17 +15,18 @@ export interface SummaryPlayButtonProps extends Pick<
 export const SummaryPlayButton = (props: SummaryPlayButtonProps) => {
   const tooltip = useTooltipTrigger()
   return (
-    <div class={CLASSES.playerPlaySummaryFrame}>
-      <PScribbleCircleControl
-        class="pomo-player__play-scribble-frame"
-        enabled={props.sceneStyle === 'scribble'}
-      >
+    <div class={CLASSES.playerPlaySummaryFrame} data-player-play-summary-frame="">
+      <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
         <media-play-button
-          {...tooltip.events}
           ref={tooltip.setTarget}
           aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
-          class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
+          class={cx(CLASSES.playerPlay, 'shrink-0')}
           disabled={props.currentTrack === undefined}
+          onBlur={tooltip.onBlur}
+          onFocus={tooltip.onFocus}
+          onPointerDown={tooltip.onPointerDown}
+          onPointerEnter={tooltip.onPointerEnter}
+          onPointerLeave={tooltip.onPointerLeave}
           attr:notooltip=""
         >
           <PlayerIcon

@@ -106,7 +106,10 @@ vi.mock('../../p-music-player/PMusicPlayer', () => ({
 }))
 vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: (props: {
-    readonly onEvents: (eventIds: ReadonlyArray<string>) => void
+    readonly onEvents: (
+      eventIds: ReadonlyArray<string>,
+      options?: {readonly isCatchUp: true},
+    ) => void
     readonly onPresentationChange: (presentation: {
       readonly phaseLabel: string
       readonly statusLabel: string
@@ -117,6 +120,9 @@ vi.mock('../../p-pomodoro/PPomodoro', () => ({
     <div data-pomodoro-scene={props.sceneStyle}>
       <button onClick={() => props.onEvents(['focus-start'])} type="button">
         집중 시작 이벤트
+      </button>
+      <button onClick={() => props.onEvents(['focus-end'], {isCatchUp: true})} type="button">
+        복원 이벤트
       </button>
       <button
         onClick={() =>
@@ -226,7 +232,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useMobileLayout).mockReturnValue(() => true)
     const idleResult = renderEvents()
 
-    expect(idleResult.container.querySelector('.pomo-dialogue-composer')).toHaveAttribute(
+    expect(screen.getByRole('textbox', {name: '대화 입력'}).closest('form')).toHaveAttribute(
       'data-auto-expand',
       '',
     )
@@ -235,7 +241,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useChildPresence).mockReturnValue(() => true)
     const activeResult = renderEvents()
 
-    expect(activeResult.container.querySelector('.pomo-dialogue-composer')).not.toHaveAttribute(
+    expect(screen.getByRole('textbox', {name: '대화 입력'}).closest('form')).not.toHaveAttribute(
       'data-auto-expand',
     )
     activeResult.unmount()
@@ -243,7 +249,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useMobileLayout).mockReturnValue(() => false)
     const desktopResult = renderEvents()
 
-    expect(desktopResult.container.querySelector('.pomo-dialogue-composer')).not.toHaveAttribute(
+    expect(screen.getByRole('textbox', {name: '대화 입력'}).closest('form')).not.toHaveAttribute(
       'data-auto-expand',
     )
   })
@@ -287,10 +293,10 @@ describe('PStudioEvents', () => {
       'data-feed-scene',
       'original',
     )
-    const dialogueComposer = container.querySelector('.pomo-dialogue-composer')
-    const mediaDock = container.querySelector('.pomo-media-dock')
-    const mediaControls = container.querySelector('.pomo-media-controls')
-    const mediaMessages = container.querySelector('.pomo-media-messages')
+    const dialogueComposer = screen.getByRole('textbox', {name: '대화 입력'}).closest('form')
+    const mediaControls = dialogueComposer?.parentElement
+    const mediaDock = mediaControls?.parentElement
+    const mediaMessages = mediaDock?.lastElementChild
     expect(mediaDock).toHaveClass('[&_.pomo-player-stage]:[flex:0_1_auto]')
     expect(mediaDock).not.toHaveClass('[&[data-player-expanded]_.pomo-player-stage]:[flex:1_1_0%]')
     expect(mediaDock).toHaveClass('[&[data-player-expanded]_.pomo-player-stage]:h-[19.875rem]')
@@ -340,6 +346,7 @@ describe('PStudioEvents', () => {
     expect(pomoSay.speak).toHaveBeenCalledWith({text: '천천히 시작해 봐요.'})
 
     fireEvent.click(screen.getByRole('button', {name: '집중 시작 이벤트'}))
+    fireEvent.click(screen.getByRole('button', {name: '복원 이벤트'}))
     fireEvent.click(screen.getByRole('button', {name: '타이머 표시 갱신'}))
     fireEvent.click(screen.getByRole('button', {name: '음악 재생'}))
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
@@ -348,6 +355,9 @@ describe('PStudioEvents', () => {
     await Promise.resolve()
 
     expect(events.playDialogueEvents).toHaveBeenCalledWith(['focus-start'], pomoSay.stop)
+    expect(events.playDialogueEvents).toHaveBeenCalledWith(['focus-end'], pomoSay.stop, {
+      replacementPolicy: 'latest',
+    })
     expect(onPomodoroPresentationChange).toHaveBeenCalledWith({
       phaseLabel: '집중',
       statusLabel: '진행 중',

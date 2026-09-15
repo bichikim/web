@@ -22,14 +22,14 @@ describe('PCharacterEmotion', () => {
       const result = render(() => (
         <PCharacterEmotion active emotion={emotion} image={`${emotion}.png`} />
       ))
-      const emotionElement = result.container.querySelector('[data-pomo-character-emotion]')
       const imageElement = result.container.querySelector('img')
-      const symbolElement = result.container.querySelector(`.${iconClass}`)
+      const emotionElement = imageElement?.parentElement
+      const symbolElement = emotionElement?.lastElementChild
 
       expect(emotionElement?.getAttribute('data-active')).toBe('')
       expect(emotionElement?.getAttribute('data-emotion')).toBe(emotion)
       expect(imageElement?.getAttribute('src')).toBe(`${emotion}.png`)
-      expect(symbolElement?.classList.contains(iconClass)).toBe(true)
+      expect(symbolElement).toHaveClass(iconClass)
     },
   )
 })

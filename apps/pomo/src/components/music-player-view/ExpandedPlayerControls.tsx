@@ -11,12 +11,14 @@ import type {MusicPlayerViewProps} from './types'
 import {VolumeControl} from './VolumeControl'
 
 const SKIP_BUTTON_CLASSES = cx(
-  'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
+  'grid size-10 shrink-0 place-items-center rounded-full transition',
   'disabled:opacity-35 player-compact:size-9',
 )
 
 interface ExpandedPlayerControlsProps extends Pick<
   MusicPlayerViewProps,
+  | 'canNavigateNextTrack'
+  | 'canNavigatePreviousTrack'
   | 'isPlaying'
   | 'onNextTrack'
   | 'onPreviousTrack'
@@ -26,7 +28,6 @@ interface ExpandedPlayerControlsProps extends Pick<
   | 'sceneStyle'
   | 'shuffleEnabled'
 > {
-  readonly canSkip: boolean
   readonly hasTrack: boolean
   readonly actions?: JSX.Element
 }
@@ -38,7 +39,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
   return (
     <div
       class={cx(
-        'pomo-player__expanded-controls grid min-w-0 flex-none grid-cols-[1fr_auto_1fr]',
+        'grid min-w-0 flex-none grid-cols-[1fr_auto_1fr]',
         'items-center gap-2 px-1',
         'player-compact:grid-cols-[max-content_max-content_max-content]',
         'player-compact:justify-evenly',
@@ -55,14 +56,18 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         />
       </div>
 
-      <div class="pomo-player__transport flex items-center justify-center gap-1">
+      <div class="flex items-center justify-center gap-1">
         <button
-          {...previousTooltip.events}
           ref={previousTooltip.setTarget}
           aria-label={m.player_previous()}
           class={SKIP_BUTTON_CLASSES}
-          disabled={!props.canSkip}
+          disabled={!props.canNavigatePreviousTrack}
           onClick={() => props.onPreviousTrack()}
+          onBlur={previousTooltip.onBlur}
+          onFocus={previousTooltip.onFocus}
+          onPointerDown={previousTooltip.onPointerDown}
+          onPointerEnter={previousTooltip.onPointerEnter}
+          onPointerLeave={previousTooltip.onPointerLeave}
           type="button"
         >
           <PlayerIcon
@@ -78,16 +83,19 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         />
 
         <PScribbleCircleControl
-          class="pomo-player__play-scribble-frame pomo-player__transport-play-frame
-            player-compact:hidden"
+          class="player-compact:hidden"
           enabled={props.sceneStyle === 'scribble'}
         >
           <media-play-button
-            {...playTooltip.events}
             ref={playTooltip.setTarget}
             aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
             class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge)}
             disabled={!props.hasTrack}
+            onBlur={playTooltip.onBlur}
+            onFocus={playTooltip.onFocus}
+            onPointerDown={playTooltip.onPointerDown}
+            onPointerEnter={playTooltip.onPointerEnter}
+            onPointerLeave={playTooltip.onPointerLeave}
             attr:notooltip=""
           >
             <PlayerIcon
@@ -111,12 +119,16 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         </PScribbleCircleControl>
 
         <button
-          {...nextTooltip.events}
           ref={nextTooltip.setTarget}
           aria-label={m.player_next()}
           class={SKIP_BUTTON_CLASSES}
-          disabled={!props.canSkip}
+          disabled={!props.canNavigateNextTrack}
           onClick={() => props.onNextTrack()}
+          onBlur={nextTooltip.onBlur}
+          onFocus={nextTooltip.onFocus}
+          onPointerDown={nextTooltip.onPointerDown}
+          onPointerEnter={nextTooltip.onPointerEnter}
+          onPointerLeave={nextTooltip.onPointerLeave}
           type="button"
         >
           <PlayerIcon
@@ -128,7 +140,7 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
         <PTooltip target={nextTooltip.target()} show={nextTooltip.show()} text={m.player_next()} />
       </div>
 
-      <div class="pomo-player__libraries flex min-w-0 items-center justify-end">
+      <div class="flex min-w-0 items-center justify-end">
         <VolumeControl sceneStyle={props.sceneStyle} />
         {props.actions}
       </div>

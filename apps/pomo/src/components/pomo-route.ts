@@ -1,6 +1,14 @@
 import {SEARCH_CONFIG} from 'src/features/search-discovery'
 
-const POMO_LAYOUT_PATHS: ReadonlySet<string> = new Set(['/', '/dialogue'])
+const POMO_LAYOUT_PATHS: ReadonlySet<string> = new Set([
+  '/',
+  '/dialogue',
+  '/desktop/dialog/memory-assist',
+  '/desktop/dialog/settings',
+  '/desktop/player',
+  '/desktop/pomodoro',
+  '/desktop/settings',
+])
 const SEARCH_INDEXABLE_PATHS: ReadonlySet<string> = new Set(SEARCH_CONFIG.indexablePaths)
 
 export const normalizePathname = (pathname: string) => {
@@ -16,6 +24,7 @@ export const isSearchIndexablePath = (pathname: string) => {
 
   return (
     !(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') &&
+    !(import.meta.env.VITE_POMO_IS_MOBILE === 'true') &&
     SEARCH_INDEXABLE_PATHS.has(canonicalPathname)
   )
 }

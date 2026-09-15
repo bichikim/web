@@ -16,9 +16,13 @@ export const TrackSummary = (props: TrackSummaryProps) => {
       data-pomo-player-title=""
     >
       <p
-        {...tooltip.events}
         ref={tooltip.setTarget}
         class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}
+        onBlur={tooltip.onBlur}
+        onFocus={tooltip.onFocus}
+        onPointerDown={tooltip.onPointerDown}
+        onPointerEnter={tooltip.onPointerEnter}
+        onPointerLeave={tooltip.onPointerLeave}
       >
         <POverflowMarquee text={props.currentTrack?.title ?? m.player_fallback_title()} />
       </p>

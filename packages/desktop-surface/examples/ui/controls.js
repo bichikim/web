@@ -95,7 +95,7 @@ const restoreBackground = async () => {
 
 const verifyWidget = async () => {
   await invoke('plugin:desktop-surface|set_widget_surface', {
-    options: {height: 520, label: 'background', width: 420},
+    options: {cornerRadius: 20, height: 520, label: 'background', width: 420},
   })
   await invoke('assert_widget')
   await invoke('plugin:desktop-surface|restore_surface', {label: 'background'})

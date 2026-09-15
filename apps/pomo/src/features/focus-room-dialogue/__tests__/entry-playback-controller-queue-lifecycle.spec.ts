@@ -162,6 +162,34 @@ describe('createEntryPlaybackController', () => {
     expect(started).toEqual(['first', 'second'])
   })
 
+  it('should replace active latest playback with the latest sequence', async () => {
+    const controller = createEntryPlaybackController()
+    const first = controller.playSequence(createRepository(), {
+      dialogueIds: ['first', 'stale'],
+      onDialogueStart: vi.fn(),
+      onSequenceStop: vi.fn(),
+      replacementPolicy: 'latest',
+    })
+
+    await flush()
+    const second = controller.playSequence(createRepository(), {
+      dialogueIds: ['latest'],
+      onDialogueStart: vi.fn(),
+      onSequenceStop: vi.fn(),
+      replacementPolicy: 'latest',
+    })
+    await second
+
+    latestAudio().dispatchEvent(new Event('ended'))
+    await flush()
+    await flush()
+    expect(TestAudio.instances).toHaveLength(2)
+
+    latestAudio().dispatchEvent(new Event('ended'))
+    await flush()
+    await first
+  })
+
   it('should cancel loading and a pending play without reviving stale playback', async () => {
     let resolveDialogue: ((dialogue: PDialogue | null) => void) | undefined
     const repository = createRepository()

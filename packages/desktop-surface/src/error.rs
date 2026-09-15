@@ -9,6 +9,8 @@ pub(crate) enum Error {
     InvalidPosition,
     #[error("control surface size must be finite and greater than zero")]
     InvalidSize,
+    #[error("surface corner radius must be finite and non-negative")]
+    InvalidCornerRadius,
     #[error("surface label must not be empty")]
     InvalidLabel,
     #[error("window '{0}' is not an active background surface")]
@@ -33,6 +35,7 @@ impl From<Error> for CommandError {
     fn from(error: Error) -> Self {
         let code = match error {
             Error::InvalidLabel
+            | Error::InvalidCornerRadius
             | Error::InvalidPath
             | Error::InvalidPosition
             | Error::InvalidSize => "invalid-configuration",
