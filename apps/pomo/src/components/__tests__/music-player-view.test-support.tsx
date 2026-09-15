@@ -75,6 +75,7 @@ const TRACKS = [
 ] as const
 
 interface RenderMusicPlayerViewOptions {
+  readonly backdropBlur?: boolean
   readonly canNavigateNextTrack?: boolean
   readonly canNavigatePreviousTrack?: boolean
   readonly currentTrack?: PTrack | null
@@ -105,6 +106,7 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
         currentTrack={
           options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])
         }
+        backdropBlur={options.backdropBlur}
         expanded={options.expanded ?? true}
         isPlaying={options.isPlaying ?? false}
         isPlaylistLoading={options.isPlaylistLoading ?? false}

@@ -21,7 +21,10 @@ const render: typeof baseRender = (ui, options) =>
 const Trigger = (props: {
   label: string
   children: (
-    bindings: ReturnType<typeof useTooltipTrigger>['events'] & {
+    bindings: Pick<
+      ReturnType<typeof useTooltipTrigger>,
+      'onBlur' | 'onFocus' | 'onPointerDown' | 'onPointerEnter' | 'onPointerLeave'
+    > & {
       ref: (element: HTMLElement) => void
     },
   ) => JSX.Element
@@ -29,7 +32,14 @@ const Trigger = (props: {
   const trigger = useTooltipTrigger()
   return (
     <>
-      {props.children({...trigger.events, ref: trigger.setTarget})}
+      {props.children({
+        onBlur: trigger.onBlur,
+        onFocus: trigger.onFocus,
+        onPointerDown: trigger.onPointerDown,
+        onPointerEnter: trigger.onPointerEnter,
+        onPointerLeave: trigger.onPointerLeave,
+        ref: trigger.setTarget,
+      })}
       <PTooltip target={trigger.target()} show={trigger.show()} text={props.label} />
     </>
   )

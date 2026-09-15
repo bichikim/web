@@ -23,3 +23,8 @@ Open and apply the linked rule for the task. TypeScript naming, typing, formatti
 - Receive hook input values through parameters, not through returned setter or registration functions.
 - Receive reactive inputs as Solid `Accessor<T>` parameters so the hook reads their current values.
 - Return reactive results and behavior commands; do not use the return value as a separate input-injection API.
+
+## Hook return shapes
+
+- Return a shallow, consumer-oriented object. Expose state and behavior commands at the top level; do not group them in nested objects merely for naming or categorization.
+- If a nested return shape is genuinely required by an external contract or independent lifecycle, ask the user before introducing it.

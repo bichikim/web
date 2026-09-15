@@ -50,7 +50,6 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
             return (
               <>
                 <button
-                  {...tooltip.events}
                   ref={tooltip.setTarget}
                   aria-label={option.label}
                   aria-pressed={props.mode === option.value}
@@ -62,6 +61,11 @@ export const PDesktopModeControl = (props: PDesktopModeControlProps) => {
                   )}
                   disabled={props.isChanging}
                   onClick={() => requestMode(option.value)}
+                  onBlur={tooltip.onBlur}
+                  onFocus={tooltip.onFocus}
+                  onPointerDown={tooltip.onPointerDown}
+                  onPointerEnter={tooltip.onPointerEnter}
+                  onPointerLeave={tooltip.onPointerLeave}
                   type="button"
                 >
                   <span aria-hidden="true" class={`${option.icon} size-4`} />

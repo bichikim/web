@@ -31,7 +31,7 @@ it('should ignore a rejected old play request after a new request or pause', asy
   setElement(audio)
   playback.play()
   playback.play()
-  playback.events.onPlay()
+  playback.onPlay()
   rejectOld?.(new Error('Old source failed'))
   await Promise.resolve()
   expect(playback.isPlaying()).toBe(true)
@@ -44,7 +44,7 @@ it('should ignore a rejected old play request after a new request or pause', asy
   )
   playback.play()
   playback.pause()
-  playback.events.onPause()
+  playback.onPause()
   rejectOld?.(new Error('Cancelled playback'))
   await Promise.resolve()
   expect(playback.isPlaying()).toBe(false)
@@ -75,7 +75,7 @@ it('should ignore a late play event after cancelling a pending play request', ()
 
   playback.play()
   playback.cancelPendingPlay()
-  playback.events.onPlay()
+  playback.onPlay()
 
   expect(playback.isPlaying()).toBe(false)
   expect(pause).toHaveBeenCalledOnce()
@@ -98,8 +98,8 @@ it('should ignore a late play event after an external pause', () => {
   setElement(audio)
 
   playback.play()
-  playback.events.onPause()
-  playback.events.onPlay()
+  playback.onPause()
+  playback.onPlay()
 
   expect(playback.isPlaying()).toBe(false)
 })
@@ -123,11 +123,11 @@ it('should keep a cancelled play event separate from a later play request', () =
   playback.play()
   playback.cancelPendingPlay()
   playback.play()
-  playback.events.onPlay()
+  playback.onPlay()
   expect(playback.isPlaying()).toBe(false)
 
   Object.defineProperty(audio, 'paused', {configurable: true, value: false})
-  playback.events.onPlay()
+  playback.onPlay()
   expect(playback.isPlaying()).toBe(true)
 })
 
@@ -146,7 +146,7 @@ it('should mark playback paused before the native pause event arrives', () => {
   vi.spyOn(audio, 'pause').mockImplementation(() => undefined)
   setElement(audio)
 
-  playback.events.onPlay()
+  playback.onPlay()
   playback.pause()
 
   expect(playback.isPlaying()).toBe(false)
@@ -165,7 +165,7 @@ it('should apply a media-controller pause intent before the native pause event a
 
   const audio = document.createElement('audio')
   setElement(audio)
-  playback.events.onPlay()
+  playback.onPlay()
   playback.markPauseIntent()
 
   expect(playback.isPlaying()).toBe(false)
@@ -228,18 +228,18 @@ it('should report whether a pause came from an explicit playback command', () =>
   const audio = document.createElement('audio')
   vi.spyOn(audio, 'pause').mockImplementation(() => undefined)
   setElement(audio)
-  playback.events.onPlay()
+  playback.onPlay()
   playback.pause({isUserIntent: false})
-  playback.events.onPause()
+  playback.onPause()
   expect(onPause).toHaveBeenLastCalledWith(true, false)
 
-  playback.events.onPlay()
+  playback.onPlay()
   playback.pause()
-  playback.events.onPause()
+  playback.onPause()
   expect(onPause).toHaveBeenLastCalledWith(true, true)
 
-  playback.events.onPlay()
+  playback.onPlay()
   playback.markPauseIntent()
-  playback.events.onPause()
+  playback.onPause()
   expect(onPause).toHaveBeenLastCalledWith(true, true)
 })

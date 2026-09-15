@@ -108,27 +108,27 @@ afterEach(() => {
 it('should preserve restart playback intent until the play event follows seeked', () => {
   const {audio, controller} = renderController()
 
-  controller.mediaEvents.onEnded()
+  controller.onEnded()
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: true,
     positionSeconds: 0,
     trackId: TRACK.id,
   })
 
-  controller.mediaEvents.onSeeking()
+  controller.onSeeking()
   window.dispatchEvent(new Event('pagehide'))
-  controller.mediaEvents.onSeeked()
-  controller.mediaEvents.onTimeUpdate()
+  controller.onSeeked()
+  controller.onTimeUpdate()
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: true,
     positionSeconds: 0,
     trackId: TRACK.id,
   })
 
-  controller.playback.events.onPlay()
+  controller.onPlay()
   expect(audio.pause).not.toHaveBeenCalled()
   audio.currentTime = 8
-  controller.mediaEvents.onSeeked()
+  controller.onSeeked()
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: true,
     positionSeconds: 8,
@@ -139,8 +139,8 @@ it('should preserve restart playback intent until the play event follows seeked'
 it('should persist a failed restart as paused after releasing the pending intent', () => {
   const {controller} = renderController()
 
-  controller.mediaEvents.onEnded()
-  controller.playback.events.onError(new Error('Playback failed'))
+  controller.onEnded()
+  controller.onError(new Error('Playback failed'))
 
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: false,
@@ -152,10 +152,10 @@ it('should persist a failed restart as paused after releasing the pending intent
 it('should keep persistence active when restarting an already-playing track', () => {
   const {audio, controller} = renderController()
 
-  controller.playback.events.onPlay()
+  controller.onPlay()
   controller.selectNextTrack()
   audio.currentTime = 6
-  controller.mediaEvents.onSeeked()
+  controller.onSeeked()
 
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: true,
@@ -175,7 +175,7 @@ it('should release pending restart persistence when track selection cancels play
   controller.selectChosenTrack(0)
   await Promise.resolve()
   audio.currentTime = 12
-  controller.mediaEvents.onSeeked()
+  controller.onSeeked()
 
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: false,
@@ -187,9 +187,9 @@ it('should release pending restart persistence when track selection cancels play
 it('should ignore a late play event after track selection cancels a restart', () => {
   const {controller} = renderController()
 
-  controller.mediaEvents.onEnded()
+  controller.onEnded()
   controller.selectChosenTrack(0)
-  controller.playback.events.onPlay()
+  controller.onPlay()
 
   expect(controller.isPlaying()).toBe(false)
   expect(readStoredPlayback()).toMatchObject({
@@ -202,10 +202,10 @@ it('should ignore a late play event after track selection cancels a restart', ()
 it('should persist a user pause when it cancels a pending restart', () => {
   const {controller} = renderController()
 
-  controller.mediaEvents.onEnded()
-  controller.playback.pause()
+  controller.onEnded()
+  controller.pause()
   window.dispatchEvent(new Event('pagehide'))
-  controller.mediaEvents.onSeeked()
+  controller.onSeeked()
 
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: false,
@@ -217,8 +217,8 @@ it('should persist a user pause when it cancels a pending restart', () => {
 it('should persist a media-controller pause intent without a native pause event', () => {
   const {controller} = renderController()
 
-  controller.mediaEvents.onEnded()
-  controller.playback.markPauseIntent()
+  controller.onEnded()
+  controller.markPauseIntent()
   window.dispatchEvent(new Event('pagehide'))
 
   expect(readStoredPlayback()).toMatchObject({
@@ -231,11 +231,11 @@ it('should persist a media-controller pause intent without a native pause event'
 it('should release pending restart persistence when controlled tracks change', async () => {
   const {audio, controller, setTracks} = renderControlledController()
 
-  controller.mediaEvents.onEnded()
+  controller.onEnded()
   setTracks([NEXT_TRACK])
   await Promise.resolve()
   audio.currentTime = 12
-  controller.mediaEvents.onSeeked()
+  controller.onSeeked()
 
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: false,

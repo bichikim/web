@@ -144,6 +144,11 @@ const DESKTOP_STATIC_ROUTES = [
   '/desktop/player',
   '/desktop/pomodoro',
   '/desktop/settings',
+  '/desktop/dialog/memory-assist',
+  '/desktop/dialog/pomodoro',
+  '/desktop/dialog/settings',
+  '/desktop/dialog/tools',
+  '/desktop/dialog/version-notice',
 ]
 const MOBILE_STATIC_ROUTES = [
   ...SHARED_STATIC_ROUTES,

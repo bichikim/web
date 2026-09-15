@@ -60,6 +60,58 @@ const isModeFailedMessage = (value: unknown): value is ModeFailedMessage =>
   typeof value.requestId === 'string' &&
   typeof value.message === 'string'
 
+interface ModeChannelMessageContext {
+  readonly channel: BroadcastChannel
+  readonly getPendingRequest: () => PendingModeRequest | null
+  readonly isSurfaceOwner: boolean
+  readonly onModeChangeRequested: (mode: DesktopMode) => Promise<void>
+  readonly onModeReceived: (mode: DesktopMode) => void
+  readonly onRequestFailed: (message: string) => void
+  readonly setPendingRequest: (request: PendingModeRequest | null) => void
+}
+
+const handleModeChannelMessage = (
+  event: MessageEvent<unknown>,
+  context: ModeChannelMessageContext,
+): void => {
+  if (isDesktopMode(event.data)) {
+    context.onModeReceived(event.data)
+    return
+  }
+
+  if (context.isSurfaceOwner && isModeRequestMessage(event.data)) {
+    const request = event.data
+    context
+      .onModeChangeRequested(request.mode)
+      .then(() =>
+        context.channel.postMessage({requestId: request.requestId, type: 'mode-change-completed'}),
+      )
+      .catch((requestError: unknown) =>
+        context.channel.postMessage({
+          message: getDesktopErrorMessage(requestError),
+          requestId: request.requestId,
+          type: 'mode-change-failed',
+        }),
+      )
+    return
+  }
+
+  const activeRequest = context.getPendingRequest()
+  if (activeRequest === null) {
+    return
+  }
+
+  if (isModeCompletedMessage(event.data) && event.data.requestId === activeRequest.requestId) {
+    context.setPendingRequest(null)
+    activeRequest.resolve()
+  } else if (isModeFailedMessage(event.data) && event.data.requestId === activeRequest.requestId) {
+    context.setPendingRequest(null)
+    const requestError = new Error(event.data.message)
+    context.onRequestFailed(requestError.message)
+    activeRequest.reject(requestError)
+  }
+}
+
 const createModeQueue = (changeMode: (mode: DesktopMode) => Promise<void>) => {
   let transitionQueue = Promise.resolve()
 
@@ -127,12 +179,17 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
     setError(null)
     const previousMode = mode()
     try {
+      // Surface windows read the mode during their first mount, before the owner can broadcast it.
+      if (nextMode === 'desktop') {
+        writeDesktopMode(nextMode)
+      }
       await applyDesktopMode(nextMode)
       await prepareDesktopModeTransition(nextMode)
       publishMode(nextMode)
       await finishDesktopModeTransition(nextMode)
     } catch (transitionError: unknown) {
       let reportedError = transitionError
+      writeDesktopMode(previousMode)
 
       try {
         await restoreMode(previousMode)
@@ -186,48 +243,24 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
       return
     }
 
-    channel = new BroadcastChannel(MODE_CHANNEL)
-    channel.addEventListener('message', (event: MessageEvent<unknown>) => {
-      if (isDesktopMode(event.data)) {
-        setError(null)
-        setMode(event.data)
-        return
-      }
-
-      if (surfaceOwner && isModeRequestMessage(event.data)) {
-        const request = event.data
-        queueModeChange(request.mode)
-          .then(() =>
-            channel?.postMessage({requestId: request.requestId, type: 'mode-change-completed'}),
-          )
-          .catch((requestError: unknown) =>
-            channel?.postMessage({
-              message: getDesktopErrorMessage(requestError),
-              requestId: request.requestId,
-              type: 'mode-change-failed',
-            }),
-          )
-        return
-      }
-
-      const activeRequest = pendingRequest
-      if (activeRequest === null) {
-        return
-      }
-
-      if (isModeCompletedMessage(event.data) && event.data.requestId === activeRequest.requestId) {
-        pendingRequest = null
-        activeRequest.resolve()
-      } else if (
-        isModeFailedMessage(event.data) &&
-        event.data.requestId === activeRequest.requestId
-      ) {
-        pendingRequest = null
-        const requestError = new Error(event.data.message)
-        setError(requestError.message)
-        activeRequest.reject(requestError)
-      }
-    })
+    const activeChannel = new BroadcastChannel(MODE_CHANNEL)
+    channel = activeChannel
+    activeChannel.addEventListener('message', (event: MessageEvent<unknown>) =>
+      handleModeChannelMessage(event, {
+        channel: activeChannel,
+        getPendingRequest: () => pendingRequest,
+        isSurfaceOwner: surfaceOwner,
+        onModeChangeRequested: queueModeChange,
+        onModeReceived: (nextMode) => {
+          setError(null)
+          setMode(nextMode)
+        },
+        onRequestFailed: (message) => setError(message),
+        setPendingRequest: (request) => {
+          pendingRequest = request
+        },
+      }),
+    )
 
     if (surfaceOwner) {
       const storedMode = readCleanExit() ? readDesktopMode() : 'normal'

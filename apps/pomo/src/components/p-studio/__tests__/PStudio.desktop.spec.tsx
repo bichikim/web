@@ -22,17 +22,41 @@ const {
 
 beforeEach(setupStudio)
 afterEach(() => {
+  vi.unstubAllEnvs()
   vi.useRealTimers()
 })
 
 describe('PStudio', () => {
+  it('should enter the focus room without showing the entry screen in the desktop app', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    configureStudio({desktopMode: 'normal'})
+
+    renderStudio()
+
+    expect(screen.queryByRole('button', {name: '입장'})).not.toBeInTheDocument()
+    expect(screen.getByText('이벤트')).toBeInTheDocument()
+  })
+
+  it('should keep the entry screen in the web app', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+    configureStudio({desktopMode: 'normal'})
+
+    renderStudio()
+
+    expect(screen.getByRole('button', {name: '입장'})).toBeInTheDocument()
+  })
+
   it('should keep only the scene visible while the window is the desktop background', () => {
     configureStudio({desktopMode: 'desktop', entrySession: true})
 
     renderStudio()
 
-    expect(screen.getByRole('img')).toBeInTheDocument()
+    expect(screen.getByLabelText('Pomo')).toHaveClass('pointer-events-none')
+    expect(screen.queryByText('장면 대기')).not.toBeInTheDocument()
     expect(screen.queryByText('이벤트')).not.toBeInTheDocument()
+    expect(screen.queryByText('투어')).not.toBeInTheDocument()
+    expect(screen.queryByText('화면 보호기')).not.toBeInTheDocument()
+    expect(vi.mocked(PStudioScene).mock.calls[0]?.[0].interactive).toBe(false)
     expect(SceneToolbar).not.toHaveBeenCalled()
   })
 
@@ -41,9 +65,23 @@ describe('PStudio', () => {
 
     renderStudio()
 
+    expect(screen.getByLabelText('Pomo')).not.toHaveClass('pointer-events-none')
+    expect(vi.mocked(PStudioScene).mock.calls[0]?.[0].interactive).toBe(true)
     expect(screen.getByText('이벤트')).toBeInTheDocument()
     expect(SceneToolbar).toHaveBeenCalled()
     expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
+  })
+
+  it('should render a move handle on the mini widget surface', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    configureStudio({desktopMode: 'widget', entrySession: true})
+
+    renderStudio()
+
+    expect(screen.getByLabelText('Pomo')).toHaveClass('rounded-panel')
+    const handle = screen.getByRole('button', {name: '미니 위젯 이동 손잡이'})
+    expect(handle).toHaveAttribute('data-tauri-drag-region')
+    expect(handle).toHaveClass('cursor-move')
   })
 
   it('should expose the desktop safe area to controls without padding the scene', () => {
@@ -75,7 +113,7 @@ describe('PStudio', () => {
     expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'true')
 
     setDesktopMode('desktop')
-    expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'false')
+    expect(screen.queryByText('화면 보호기')).not.toBeInTheDocument()
 
     setDesktopMode('interactiveDesktop')
     expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'false')

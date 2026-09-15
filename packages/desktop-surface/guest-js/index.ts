@@ -17,6 +17,7 @@ export interface BackgroundSurfaceOptions extends SurfaceTarget {
 }
 
 export interface OpenControlSurfaceOptions extends SurfaceTarget {
+  readonly cornerRadius?: number
   readonly height?: number
   readonly path: string
   readonly width?: number
@@ -29,6 +30,7 @@ export interface ControlSurfaceStatus {
 }
 
 export interface WidgetSurfaceOptions extends SurfaceTarget {
+  readonly cornerRadius?: number
   readonly height?: number
   readonly width?: number
 }
