@@ -7,8 +7,10 @@ import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 import {GLASS_ICON_BUTTON} from '../button-presets'
 import {getPomoIconClass} from '../icon-style'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
+import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
 const Content = lazy(() => import('../tools/Content').then((module) => ({default: module.Content})))
 export interface PToolsProps {
+  readonly desktopSurface?: boolean
   readonly sceneStyle?: PSceneStyle
 }
 export const PTools = (props: PToolsProps) => {
@@ -25,6 +27,14 @@ export const PTools = (props: PToolsProps) => {
           icon={getPomoIconClass('i-tabler-tool', props.sceneStyle)}
           onPress={(element) => {
             setTrigger(element)
+
+            if (props.desktopSurface) {
+              openDesktopDialog('tools').catch((error: unknown) => {
+                console.error('Failed to open the desktop tools dialog.', error)
+              })
+              return
+            }
+
             setOpen(true)
           }}
         />

@@ -17,7 +17,7 @@ const callEventHandler = (
 }
 
 export const AudioPlayerMedia = (props: AudioPlayerMediaProps) => {
-  const [, , media] = useAudioPlayer()
+  const player = useAudioPlayer()
   const [localProps, restProps] = splitProps(props, [
     'children',
     'onDurationChange',
@@ -30,42 +30,42 @@ export const AudioPlayerMedia = (props: AudioPlayerMediaProps) => {
     'onVolumeChange',
   ])
 
-  onCleanup(() => media.ref(null))
+  onCleanup(() => player.ref(null))
 
   return (
     <audio
       {...restProps}
-      ref={media.ref}
+      ref={player.ref}
       onDurationChange={(event) => {
-        media.onDurationChange(event)
+        player.onDurationChange(event)
         callEventHandler(localProps.onDurationChange, event)
       }}
       onEmptied={(event) => {
-        media.onEmptied(event)
+        player.onEmptied(event)
         callEventHandler(localProps.onEmptied, event)
       }}
       onEnded={(event) => {
-        media.onEnded(event)
+        player.onEnded(event)
         callEventHandler(localProps.onEnded, event)
       }}
       onLoadedMetadata={(event) => {
-        media.onLoadedMetadata(event)
+        player.onLoadedMetadata(event)
         callEventHandler(localProps.onLoadedMetadata, event)
       }}
       onPause={(event) => {
-        media.onPause(event)
+        player.onPause(event)
         callEventHandler(localProps.onPause, event)
       }}
       onPlay={(event) => {
-        media.onPlay(event)
+        player.onPlay(event)
         callEventHandler(localProps.onPlay, event)
       }}
       onTimeUpdate={(event) => {
-        media.onTimeUpdate(event)
+        player.onTimeUpdate(event)
         callEventHandler(localProps.onTimeUpdate, event)
       }}
       onVolumeChange={(event) => {
-        media.onVolumeChange(event)
+        player.onVolumeChange(event)
         callEventHandler(localProps.onVolumeChange, event)
       }}
     >

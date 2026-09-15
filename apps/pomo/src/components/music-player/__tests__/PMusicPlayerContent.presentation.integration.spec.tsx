@@ -52,6 +52,14 @@ describe('PMusicPlayerContent presentation integration', () => {
     }
   })
 
+  it('should keep the native desktop presentation free of backdrop blur', () => {
+    const result = render(() => <PMusicPlayerContent backdropBlur={false} tracks={TRACKS} />)
+
+    expect(result.container.querySelector('.pomo-player__base')).not.toHaveClass(
+      'backdrop-blur-surface',
+    )
+  })
+
   it('should replace the summary play button without a collapse animation when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const summary = result.container.querySelector('.pomo-player__summary')

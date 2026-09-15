@@ -2,6 +2,7 @@ import type {PSceneStyle} from '../../features/focus-room-animation'
 import type {PTrack, RepeatMode} from '../../features/focus-room-audio'
 
 export interface MusicPlayerViewProps {
+  readonly backdropBlur?: boolean
   readonly canNavigateNextTrack: boolean
   readonly canNavigatePreviousTrack: boolean
   readonly currentIndex: number

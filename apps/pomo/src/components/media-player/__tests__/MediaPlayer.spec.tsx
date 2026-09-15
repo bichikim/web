@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {useMediaPlayer} from '../context'
 import {MediaPlayer} from '../index'
 
 vi.mock('media-chrome', () => ({}))
@@ -35,6 +36,11 @@ it('should publish playback, time, duration, volume and errors without exposing 
   const onDurationChange = vi.fn()
   const onVolumeChange = vi.fn()
   const onError = vi.fn()
+  const observeControls = vi.fn()
+  const ContextProbe = () => {
+    observeControls(useMediaPlayer())
+    return null
+  }
   const result = render(() => (
     <MediaPlayer
       tracks={TRACKS}
@@ -46,8 +52,12 @@ it('should publish playback, time, duration, volume and errors without exposing 
       onError={onError}
     >
       <media-play-button />
+      <ContextProbe />
     </MediaPlayer>
   ))
+  const controls = observeControls.mock.lastCall?.[0]
+  expect(controls).not.toHaveProperty('invalidate')
+  expect(controls).not.toHaveProperty('stop')
   const audio = result.container.querySelector('audio')!
   expect(audio.parentElement?.tagName).toBe('MEDIA-CONTROLLER')
   expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[0])

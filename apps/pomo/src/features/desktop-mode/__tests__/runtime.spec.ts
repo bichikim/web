@@ -52,6 +52,7 @@ describe('applyDesktopMode', () => {
 
     expect(closeControlSurface).not.toHaveBeenCalled()
     expect(setWidgetSurface).toHaveBeenCalledWith({
+      cornerRadius: 20,
       height: 520,
       label: 'background',
       width: 420,

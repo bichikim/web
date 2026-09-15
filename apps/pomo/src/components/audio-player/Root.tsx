@@ -1,12 +1,4 @@
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  type JSX,
-  onCleanup,
-  type ParentProps,
-  untrack,
-} from 'solid-js'
+import {createEffect, createSignal, type JSX, onCleanup, type ParentProps, untrack} from 'solid-js'
 
 import {
   AudioPlayerContext,
@@ -136,13 +128,16 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
     }
   })
 
-  const state = createMemo(() => ({
-    currentTime: currentTime(),
-    duration: duration(),
-    muted: muted(),
-    paused: paused(),
-  }))
-  const value: AudioPlayerContextValue = [state, {seek, toggleMuted, togglePlayback}, media]
+  const value: AudioPlayerContextValue = {
+    currentTime,
+    duration,
+    muted,
+    paused,
+    seek,
+    toggleMuted,
+    togglePlayback,
+    ...media,
+  }
 
   return <AudioPlayerContext.Provider value={value}>{props.children}</AudioPlayerContext.Provider>
 }

@@ -97,7 +97,14 @@ pub(crate) async fn set_widget_surface<R: Runtime>(
     {
         let options = ValidatedWidgetSurface::try_from(options)?;
         let window = find_window(&app, options.label.clone())?;
-        crate::macos::set_widget(&state, &window, options.width, options.height).map_err(Into::into)
+        crate::macos::set_widget(
+            &state,
+            &window,
+            options.width,
+            options.height,
+            options.corner_radius,
+        )
+        .map_err(Into::into)
     }
 }
 
@@ -114,6 +121,11 @@ pub(crate) async fn open_control_surface<R: Runtime>(
         let options = ValidatedControlSurface::try_from(options)?;
 
         if let Some(window) = app.get_webview_window(&options.label) {
+            window.set_visible_on_all_workspaces(false)?;
+            if let Some(corner_radius) = options.corner_radius {
+                crate::macos::set_control_surface_corner_radius(&window, corner_radius)?;
+            }
+            crate::macos::set_control_surface_shadow(&window)?;
             window.show()?;
             window.set_focus()?;
             return Ok(ControlSurfaceStatus { created: false });
@@ -126,10 +138,10 @@ pub(crate) async fn open_control_surface<R: Runtime>(
                 .focused(true)
                 .inner_size(options.width, options.height)
                 .resizable(false)
-                .shadow(false)
+                .shadow(true)
                 .skip_taskbar(true)
                 .transparent(true)
-                .visible_on_all_workspaces(true);
+                .visible_on_all_workspaces(false);
 
         if let Some((x, y)) = options.position {
             builder = builder.position(x, y);
@@ -138,6 +150,10 @@ pub(crate) async fn open_control_surface<R: Runtime>(
         }
 
         let window = builder.build()?;
+        if let Some(corner_radius) = options.corner_radius {
+            crate::macos::set_control_surface_corner_radius(&window, corner_radius)?;
+        }
+        crate::macos::set_control_surface_shadow(&window)?;
         window.show()?;
         window.set_focus()?;
 

@@ -16,9 +16,9 @@ const formatTime = (time: number): string =>
   formatDuration(Math.max(0, Math.floor(time)) * MILLISECONDS_PER_SECOND)
 
 export const AudioPlayerTime = (props: AudioPlayerTimeProps) => {
-  const [state] = useAudioPlayer()
+  const player = useAudioPlayer()
   const [localProps, restProps] = splitProps(props, ['children', 'format', 'kind'])
-  const value = () => (localProps.kind === 'duration' ? state().duration : state().currentTime)
+  const value = () => (localProps.kind === 'duration' ? player.duration() : player.currentTime())
 
   return <span {...restProps}>{(localProps.format ?? formatTime)(value())}</span>
 }

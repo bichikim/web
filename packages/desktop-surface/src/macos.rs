@@ -13,7 +13,7 @@ use block2::RcBlock;
 use objc2::MainThreadMarker;
 use objc2_app_kit::{
     NSApp, NSApplicationActivationPolicy, NSApplicationDidChangeScreenParametersNotification,
-    NSScreen, NSView, NSWindow, NSWindowCollectionBehavior, NSWindowLevel, NSWorkspace,
+    NSColor, NSScreen, NSView, NSWindow, NSWindowCollectionBehavior, NSWindowLevel, NSWorkspace,
     NSWorkspaceDidWakeNotification, NSWorkspaceScreensDidSleepNotification,
     NSWorkspaceScreensDidWakeNotification, NSWorkspaceSessionDidBecomeActiveNotification,
     NSWorkspaceSessionDidResignActiveNotification, NSWorkspaceWillSleepNotification,
@@ -216,6 +216,62 @@ pub(crate) fn get_background_interaction(
     active_background_interaction(state, label)
 }
 
+pub(crate) fn set_control_surface_corner_radius<R: Runtime>(
+    window: &WebviewWindow<R>,
+    radius: f64,
+) -> Result<()> {
+    with_native_window(window, move |window| -> Result<()> {
+        window.setOpaque(false);
+        let clear = NSColor::clearColor();
+        window.setBackgroundColor(Some(&clear));
+
+        let content_view = window.contentView().ok_or_else(|| {
+            Error::WindowOperation("native window has no content view".to_owned())
+        })?;
+        content_view.setWantsLayer(true);
+        let layer = content_view.layer().ok_or_else(|| {
+            Error::WindowOperation("native window content view has no layer".to_owned())
+        })?;
+        layer.setCornerRadius(radius);
+        layer.setMasksToBounds(true);
+
+        Ok(())
+    })??;
+
+    Ok(())
+}
+
+fn reset_surface_corner_radius<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> {
+    with_native_window(window, |window| -> Result<()> {
+        window.setOpaque(true);
+        let background = NSColor::windowBackgroundColor();
+        window.setBackgroundColor(Some(&background));
+
+        let content_view = window.contentView().ok_or_else(|| {
+            Error::WindowOperation("native window has no content view".to_owned())
+        })?;
+        content_view.setWantsLayer(true);
+        let layer = content_view.layer().ok_or_else(|| {
+            Error::WindowOperation("native window content view has no layer".to_owned())
+        })?;
+        layer.setCornerRadius(0.0);
+        layer.setMasksToBounds(false);
+
+        Ok(())
+    })??;
+
+    Ok(())
+}
+
+pub(crate) fn set_control_surface_shadow<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> {
+    with_native_window(window, |window| {
+        window.setHasShadow(true);
+        window.invalidateShadow();
+    })?;
+
+    Ok(())
+}
+
 fn with_native_window<R: Runtime, T>(
     window: &WebviewWindow<R>,
     operation: impl FnOnce(&NSWindow) -> T + Send + 'static,
@@ -275,6 +331,7 @@ fn apply_background<R: Runtime>(
         .or(window.primary_monitor()?)
         .ok_or_else(|| Error::WindowOperation("no monitor is available".to_owned()))?;
 
+    reset_surface_corner_radius(window)?;
     window.set_decorations(false)?;
     window.set_resizable(false)?;
     window.set_always_on_top(false)?;
@@ -334,6 +391,19 @@ fn apply_background<R: Runtime>(
     Ok(())
 }
 
+fn show_background_surface<R: Runtime>(
+    window: &WebviewWindow<R>,
+    interaction: BackgroundInteraction,
+) -> Result<()> {
+    window.show()?;
+
+    if interaction == BackgroundInteraction::PassThrough {
+        apply_background(window, interaction)?;
+    }
+
+    Ok(())
+}
+
 fn wait_for_logical_size<R: Runtime>(
     window: &WebviewWindow<R>,
     width: f64,
@@ -380,7 +450,7 @@ pub(crate) fn set_background<R: Runtime>(
     if state.suspended.load(Ordering::Acquire) {
         window.hide()?;
     } else {
-        window.show()?;
+        show_background_surface(window, interaction)?;
     }
 
     Ok(())
@@ -397,7 +467,7 @@ fn refresh_backgrounds_unlocked<R: Runtime>(
         };
 
         apply_background(&window, interaction)?;
-        window.show()?;
+        show_background_surface(&window, interaction)?;
     }
 
     Ok(())
@@ -513,6 +583,7 @@ pub(crate) fn set_widget<R: Runtime>(
     window: &WebviewWindow<R>,
     width: f64,
     height: f64,
+    corner_radius: Option<f64>,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;
     set_background_state(state, window.label(), None)?;
@@ -523,6 +594,12 @@ pub(crate) fn set_widget<R: Runtime>(
     window.set_always_on_top(true)?;
     window.set_size(LogicalSize::new(width, height))?;
     wait_for_logical_size(window, width, height)?;
+    if let Some(corner_radius) = corner_radius {
+        set_control_surface_corner_radius(window, corner_radius)?;
+    } else {
+        reset_surface_corner_radius(window)?;
+    }
+    set_control_surface_shadow(window)?;
     window.center()?;
     window.show()?;
     window.set_focus()?;
@@ -541,6 +618,7 @@ pub(crate) fn restore<R: Runtime>(state: &SurfaceState, window: &WebviewWindow<R
 
     if let Some(snapshot) = snapshot {
         apply_snapshot(window, snapshot)?;
+        reset_surface_corner_radius(window)?;
         window.show()?;
         window.set_focus()?;
         state

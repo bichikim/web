@@ -30,7 +30,7 @@ const interaction = await getBackgroundInteraction({label: 'background'})
 
 수동 하네스에서는 다음 순서로 확인한다.
 
-1. `Enter widget mode`를 누르고 `Widget verified: 420×520, always on top, borderless`를 확인한다.
+1. `Enter widget mode`를 누르고 `Widget verified: 420×520, always on top, borderless, rounded, native shadow`를 확인한다.
 2. `Restore window`를 눌러 최초 위치와 속성이 복원되는지 확인한다.
 3. `Enter desktop mode`를 누르고 별도 투명 조작 창이 열리는지 확인한다.
 4. 배경 창의 `Background clicks` 카운터가 바탕화면 모드 진입 직후부터 클릭에 반응하는지 확인한다.
@@ -42,7 +42,8 @@ WebView 입력 상태에서 각각 올바른 계층인지, 그림자 제거, 일
 앱 전환을 확인한다. 창
 속성과 크기를 고의로 변경한 뒤 화면 구성 변경 알림으로 복원되는지, 화면 sleep/wake 알림에서
 숨김과 재표시가 순서대로 적용되는지도 검사한다. 미니 위젯의 크기, 항상 위와 무테두리 속성을
-검증하고, 조작 창에서 복구 명령이 실행된 뒤 창과 앱 표시 정책이 최초 속성과 동일한지 비교한다.
+검증하고, 네이티브 그림자와 라운드 클리핑을 적용한 뒤 조작 창에서 복구 명령이 실행된 뒤 창과 앱 표시
+정책이 최초 속성과 동일한지 비교한다.
 
 ## macOS 구현 경계
 

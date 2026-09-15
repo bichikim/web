@@ -229,6 +229,34 @@ it('should preserve changes made while the auto-start preference is loading', as
   view.cleanup()
 })
 
+it('should synchronize timer actions between mounted controllers', async () => {
+  const first = renderHook(() => usePomodoroTimer())
+  const second = renderHook(() => usePomodoroTimer())
+  await finishMount()
+
+  first.result.onConfigChange(CONFIG)
+  first.result.onStart()
+
+  await vi.waitFor(() => {
+    expect(second.result.config()).toEqual(CONFIG)
+    expect(second.result.state()).toMatchObject({endsAt: 10_000, status: 'running'})
+  })
+
+  second.result.onPause()
+
+  await vi.waitFor(() => {
+    expect(first.result.state()).toEqual({
+      completedFocusSessions: 0,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'paused',
+    })
+  })
+
+  first.cleanup()
+  second.cleanup()
+})
+
 it('should abandon pending preference restoration after cleanup', async () => {
   const preference = createDeferred<boolean>()
   autoStartMocks.read.mockReturnValue(preference.promise)

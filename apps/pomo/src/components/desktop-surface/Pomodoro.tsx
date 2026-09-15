@@ -14,7 +14,7 @@ export const DesktopPomodoro = () => {
   return (
     <DesktopSurfaceFrame
       accessibleLabel={m.desktop_pomodoro_label()}
-      class="relative [&_.pomo-pomodoro]:relative [&_.pomo-pomodoro]:inset-auto"
+      class="w-fit [&_.pomo-pomodoro]:relative [&_.pomo-pomodoro]:inset-auto"
       isVisible={
         desktopMode.mode() === 'desktop' &&
         displayPreferences.isReady() &&
@@ -22,7 +22,7 @@ export const DesktopPomodoro = () => {
       }
       title={m.desktop_pomodoro_title()}
     >
-      <PPomodoro sceneStyle={sceneStyle.sceneStyle()} />
+      <PPomodoro desktopSurface sceneStyle={sceneStyle.sceneStyle()} />
     </DesktopSurfaceFrame>
   )
 }

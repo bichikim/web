@@ -12,7 +12,7 @@ export interface AudioPlayerPlayButtonProps extends Omit<
 }
 
 export const AudioPlayerPlayButton = (props: AudioPlayerPlayButtonProps) => {
-  const [state, actions] = useAudioPlayer()
+  const player = useAudioPlayer()
   const [localProps, restProps] = splitProps(props, [
     'children',
     'onClick',
@@ -24,7 +24,7 @@ export const AudioPlayerPlayButton = (props: AudioPlayerPlayButtonProps) => {
     localProps.onClick?.(event)
 
     if (!event.defaultPrevented) {
-      actions.togglePlayback()
+      player.togglePlayback()
     }
   }
 
@@ -32,12 +32,12 @@ export const AudioPlayerPlayButton = (props: AudioPlayerPlayButtonProps) => {
     <button
       {...restProps}
       aria-label={
-        state().paused
+        player.paused()
           ? (localProps.playLabel ?? 'Play audio')
           : (localProps.pauseLabel ?? 'Pause audio')
       }
-      aria-pressed={!state().paused}
-      data-state={state().paused ? 'paused' : 'playing'}
+      aria-pressed={!player.paused()}
+      data-state={player.paused() ? 'paused' : 'playing'}
       onClick={handleClick}
       type={localProps.type ?? 'button'}
     >

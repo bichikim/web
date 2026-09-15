@@ -34,6 +34,7 @@ vi.mock('../../../features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
   useDesktopSceneSettingsListener: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
+  useDesktopSurfaceSize: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
 vi.mock('../../p-music-player/PMusicPlayer', () => ({

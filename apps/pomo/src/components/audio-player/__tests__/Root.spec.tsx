@@ -17,8 +17,8 @@ afterEach(() => vi.restoreAllMocks())
 describe('AudioPlayerRoot', () => {
   it('should expose media handlers without attaching listeners through its ref', () => {
     const Media = () => {
-      const [, , media] = useAudioPlayer()
-      return <audio ref={media.ref} onDurationChange={media.onDurationChange} />
+      const player = useAudioPlayer()
+      return <audio ref={player.ref} onDurationChange={player.onDurationChange} />
     }
     const result = render(() => (
       <AudioPlayer.Root>
