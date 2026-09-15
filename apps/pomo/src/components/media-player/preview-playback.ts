@@ -42,13 +42,14 @@ export const createPreviewPlayback = (options: CreatePreviewPlaybackOptions): Pr
     },
     start(stopPreview) {
       const previousStop = activeStop
+      const shouldResume = resumeAfterPreview || options.isPlaying()
 
       if (previousStop !== null) {
         reset()
         previousStop()
       }
 
-      resumeAfterPreview = options.isPlaying()
+      resumeAfterPreview = shouldResume
       activeStop = stopPreview
       options.pausePlayer()
     },

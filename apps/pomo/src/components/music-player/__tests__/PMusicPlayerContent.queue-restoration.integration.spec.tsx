@@ -156,6 +156,25 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     result.unmount()
   })
 
+  it('should cancel preview resume when a media pause request arrives during preview', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+    const controller = audio.parentElement
+
+    if (controller === null) {
+      throw new Error('Missing media controller')
+    }
+
+    fireEvent.play(audio)
+    fireEvent.click(screen.getAllByRole('button', {name: '미리듣기 시작'})[0]!)
+    controller.dispatchEvent(new Event('mediapauserequest', {bubbles: true}))
+    fireEvent.click(screen.getAllByRole('button', {name: '미리듣기 종료'})[0]!)
+
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
+
+    result.unmount()
+  })
+
   it('should remain paused when the browser blocks restored playback', async () => {
     vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(
       new DOMException('Playback requires user interaction', 'NotAllowedError'),
