@@ -17,6 +17,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
       )}
     >
       <Frame
+        backdropBlur={props.backdropBlur}
         currentTrack={props.currentTrack}
         expanded={props.expanded}
         isPlaying={props.isPlaying}

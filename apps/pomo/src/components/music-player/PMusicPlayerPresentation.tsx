@@ -5,7 +5,7 @@ import type {PMusicPlayerContentProps} from './types'
 
 export interface PMusicPlayerPresentationProps extends Pick<
   PMusicPlayerContentProps,
-  'expanded' | 'onExpandedChange' | 'sceneStyle'
+  'backdropBlur' | 'expanded' | 'onExpandedChange' | 'sceneStyle'
 > {}
 
 export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
@@ -22,6 +22,7 @@ export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
 
   return (
     <MusicPlayerView
+      backdropBlur={props.backdropBlur}
       currentIndex={player.currentIndex()}
       currentTrack={player.currentTrack()}
       expanded={expanded()}

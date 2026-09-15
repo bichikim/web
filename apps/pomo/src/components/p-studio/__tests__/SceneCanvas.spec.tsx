@@ -108,6 +108,22 @@ describe('PSceneCanvas', () => {
     expect(renderers[0].onPointerCancel).toHaveBeenCalledOnce()
   })
 
+  it('should not forward pointer events for a non-interactive scene', () => {
+    const view = render(() => <PSceneCanvas {...initialProps} interactive={false} />)
+    const host = view.container.firstElementChild!
+
+    fireEvent.pointerDown(host)
+    fireEvent.pointerMove(host)
+    fireEvent.pointerUp(host)
+    fireEvent.pointerCancel(host)
+
+    expect(host).toHaveClass('pointer-events-none')
+    expect(renderers[0].onPointerDown).not.toHaveBeenCalled()
+    expect(renderers[0].onPointerMove).not.toHaveBeenCalled()
+    expect(renderers[0].onPointerUp).not.toHaveBeenCalled()
+    expect(renderers[0].onPointerCancel).not.toHaveBeenCalled()
+  })
+
   it('should initialize, reactively update, and destroy the scene renderer', async () => {
     const onLoadingChange = vi.fn()
     const onMotionInputChange = vi.fn()

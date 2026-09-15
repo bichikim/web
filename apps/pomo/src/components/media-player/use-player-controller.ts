@@ -32,17 +32,20 @@ export interface UsePlayerControllerProps extends MediaPlayerOptions {
   readonly element: Accessor<HTMLAudioElement | undefined>
 }
 
-export interface PlayerMediaEvents {
+export interface PlayerController extends PlayerState {
+  readonly invalidate: Playback['invalidate']
   readonly onEnded: () => void
+  readonly onError: Playback['onError']
   readonly onLoadedMetadata: () => void
+  readonly onPause: Playback['onPause']
+  readonly onPlay: Playback['onPlay']
   readonly onSeeked: () => void
   readonly onSeeking: () => void
   readonly onTimeUpdate: () => void
-}
-
-export interface PlayerController extends PlayerState {
-  readonly playback: Playback
-  readonly mediaEvents: PlayerMediaEvents
+  readonly pause: Playback['pause']
+  readonly play: Playback['play']
+  readonly seek: Playback['seek']
+  readonly stop: Playback['stop']
 }
 
 /** 음악 목록, 곡 선택·반복·셔플 정책, 저장된 재생 위치 복원과 미리듣기를 조율한다. */
@@ -87,7 +90,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     initialQueue: initialState.queue,
     onRestart: () => restartCurrentTrack(),
     onSelect: (options) => selectTrack(options),
-    onStop: playback.events.onPause,
+    onStop: playback.onPause,
     trackCount: () => tracks().length,
   })
   const handleStorageError = (error: unknown) => {
@@ -141,7 +144,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     queueMicrotask(restorePendingPlayback)
   }
 
-  const handleAudioError = playback.handleError
+  const handleAudioError = playback.onError
   const playAudio = playback.play
   const previewPlayback = createPreviewPlayback({
     isPlaying,
@@ -383,23 +386,28 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     clearTrackQueue,
     currentIndex,
     currentTrack,
+    invalidate: playback.invalidate,
     isPlaying,
     levels: visualizer.levels,
-    mediaEvents: {
-      onEnded: order.handleEnded,
-      onLoadedMetadata: restorePendingPlayback,
-      onSeeked: playbackPersistence.persistCurrentPlayback,
-      onSeeking: handleSeeking,
-      onTimeUpdate: playbackPersistence.persistPlaybackProgress,
-    },
-    playback,
+    onEnded: order.handleEnded,
+    onError: playback.onError,
+    onLoadedMetadata: restorePendingPlayback,
+    onPause: playback.onPause,
+    onPlay: playback.onPlay,
+    onSeeked: playbackPersistence.persistCurrentPlayback,
+    onSeeking: handleSeeking,
+    onTimeUpdate: playbackPersistence.persistPlaybackProgress,
+    pause: playback.pause,
+    play: playback.play,
     previewPlayback,
     removeTrackFromQueue,
     repeatMode: order.repeatMode,
+    seek: playback.seek,
     selectChosenTrack: order.selectChosenTrack,
     selectNextTrack: order.selectNextTrack,
     selectPreviousTrack: order.selectPreviousTrack,
     shuffleEnabled: order.shuffleEnabled,
+    stop: playback.stop,
     toggleRepeatMode: order.toggleRepeatMode,
     toggleShuffle: order.toggleShuffle,
     tracks,

@@ -7,17 +7,12 @@ export interface UsePlaybackProps {
   readonly onError?: (error: unknown) => void
 }
 
-export interface PlaybackEvents {
+export interface Playback {
+  readonly invalidate: () => void
+  readonly isPlaying: Accessor<boolean>
   readonly onError: (error?: unknown) => void
   readonly onPause: () => void
   readonly onPlay: () => void
-}
-
-export interface Playback {
-  readonly events: PlaybackEvents
-  readonly handleError: (error?: unknown) => void
-  readonly invalidate: () => void
-  readonly isPlaying: Accessor<boolean>
   readonly pause: () => void
   readonly play: () => void
   readonly seek: (seconds: number) => void
@@ -78,10 +73,11 @@ export const usePlayback = (props: UsePlaybackProps): Playback => {
     props.element()?.pause()
   })
   return {
-    events: {onError: handleError, onPause: handlePause, onPlay: handlePlay},
-    handleError,
     invalidate,
     isPlaying,
+    onError: handleError,
+    onPause: handlePause,
+    onPlay: handlePlay,
     pause,
     play,
     seek: (seconds: number) => {

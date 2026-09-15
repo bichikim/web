@@ -24,6 +24,7 @@ vi.mock('../../../features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
   useDesktopSceneSettingsListener: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
+  useDesktopSurfaceSize: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
 vi.mock('../../p-music-player/PMusicPlayer', () => ({
@@ -160,7 +161,10 @@ it('should render frame content only while its surface is visible', () => {
       <p>내용</p>
     </DesktopSurfaceFrame>
   ))
-  expect(hidden.container.querySelector('main')).toHaveClass('pomo-desktop-surface')
+  expect(hidden.container.querySelector('main')).toHaveClass(
+    'pomo-desktop-surface',
+    '[&_*:not(:focus-visible)]:shadow-none',
+  )
   expect(document.documentElement.style.getPropertyValue('background')).toBe('')
   expect(document.body.style.getPropertyValue('background')).toBe('red')
   expect(screen.queryByText('내용')).not.toBeInTheDocument()
@@ -168,13 +172,21 @@ it('should render frame content only while its surface is visible', () => {
   hidden.unmount()
   expect(document.body.style.getPropertyValue('background')).toBe('red')
   render(() => (
-    <DesktopSurfaceFrame accessibleLabel="표면" class="custom" isVisible title="제목">
+    <DesktopSurfaceFrame
+      accessibleLabel="표면"
+      class="custom"
+      contentClass="w-full"
+      isVisible
+      title="제목"
+    >
       <p>내용</p>
     </DesktopSurfaceFrame>
   ))
-  expect(screen.getByRole('region', {name: '표면'})).toHaveAttribute(
-    'data-tauri-drag-region',
-    'deep',
-  )
-  expect(screen.getByRole('region', {name: '표면'})).toHaveClass('custom')
+  const region = screen.getByRole('region', {name: '표면'})
+  const handle = screen.getByRole('button', {name: '제목 이동 손잡이'})
+  expect(region).not.toHaveAttribute('data-tauri-drag-region')
+  expect(handle).toHaveAttribute('data-tauri-drag-region')
+  expect(handle).toHaveClass('cursor-move')
+  expect(region).toHaveClass('custom')
+  expect(region.firstElementChild?.nextElementSibling).toHaveClass('w-full')
 })

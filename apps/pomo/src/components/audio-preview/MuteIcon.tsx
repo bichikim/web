@@ -1,12 +1,12 @@
 import {useAudioPlayer} from '../audio-player'
 
 export const MuteIcon = () => {
-  const [state] = useAudioPlayer()
+  const player = useAudioPlayer()
 
   return (
     <span
       aria-hidden="true"
-      class={state().muted ? 'i-tabler-volume-off size-4' : 'i-tabler-volume size-4'}
+      class={player.muted() ? 'i-tabler-volume-off size-4' : 'i-tabler-volume size-4'}
     />
   )
 }

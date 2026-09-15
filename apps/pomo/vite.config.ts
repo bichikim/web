@@ -153,6 +153,11 @@ const DESKTOP_STATIC_ROUTES = [
   '/desktop/player',
   '/desktop/pomodoro',
   '/desktop/settings',
+  '/desktop/dialog/memory-assist',
+  '/desktop/dialog/pomodoro',
+  '/desktop/dialog/settings',
+  '/desktop/dialog/tools',
+  '/desktop/dialog/version-notice',
 ]
 
 const createElementSources = (hashes: ReadonlyArray<string>): ReadonlyArray<string> => [

@@ -20,6 +20,7 @@ import {
 
 const STORAGE_KEY = 'pomo:timer:v1'
 const CONFIG_STORAGE_KEY = 'pomo:timer-config:v1'
+const TIMER_SYNC_CHANNEL = 'pomo:pomodoro-timer:v1'
 const MAX_DURATION_MINUTES = 120
 const MAX_FOCUS_SESSIONS = 12
 const SECONDS_PER_MINUTE = 60
@@ -52,6 +53,46 @@ const timerConfigSchema = z.object({
   longBreakSeconds: z.number().int().positive().max(MAX_DURATION_SECONDS),
   shortBreakSeconds: z.number().int().positive().max(MAX_DURATION_SECONDS),
 })
+const timerSyncMessageSchema = z.object({
+  config: timerConfigSchema,
+  isAutoStartEnabled: z.boolean(),
+  state: timerStateSchema,
+})
+
+interface TimerSyncSnapshot {
+  readonly config: PomodoroTimerConfig
+  readonly isAutoStartEnabled: boolean
+  readonly state: PomodoroTimerState
+}
+
+interface TimerSyncController {
+  readonly close: () => void
+  readonly publish: (snapshot: TimerSyncSnapshot) => void
+}
+
+const createTimerSyncController = (onMessage: (message: unknown) => void): TimerSyncController => {
+  if (typeof BroadcastChannel !== 'function') {
+    return {close: () => undefined, publish: () => undefined}
+  }
+
+  try {
+    const channel = new BroadcastChannel(TIMER_SYNC_CHANNEL)
+    channel.onmessage = (event: MessageEvent<unknown>) => onMessage(event.data)
+
+    return {
+      close: () => channel.close(),
+      publish: (snapshot) => {
+        try {
+          channel.postMessage(snapshot)
+        } catch {
+          // Cross-window synchronization is an enhancement; timer operation must continue when it is unavailable.
+        }
+      },
+    }
+  } catch {
+    return {close: () => undefined, publish: () => undefined}
+  }
+}
 
 export interface PomodoroTimerController {
   readonly config: Accessor<PomodoroTimerConfig>
@@ -119,8 +160,59 @@ const writeStoredConfig = (config: PomodoroTimerConfig) => {
   }
 }
 
+interface TimerInitializationOptions {
+  readonly applyState: (nextState: PomodoroTimerState) => void
+  readonly getAutoStartEnabled: Accessor<boolean>
+  readonly getAutoStartRevision: () => number
+  readonly getState: Accessor<PomodoroTimerState>
+  readonly isDisposed: () => boolean
+  readonly setAutoStartEnabled: (isEnabled: boolean) => void
+  readonly setNow: (now: number) => void
+  readonly setState: (state: PomodoroTimerState) => void
+  readonly setStorageReady: (isReady: boolean) => void
+  readonly storedConfig: PomodoroTimerConfig
+  readonly storedState: PomodoroTimerState
+  readonly wasRunningAtMount: boolean
+}
+
+const initializeTimer = async (options: TimerInitializationOptions) => {
+  const initialRevision = options.getAutoStartRevision()
+  const storedAutoStart = await readAutoStartPreference()
+
+  if (options.isDisposed()) {
+    return
+  }
+
+  if (options.getAutoStartRevision() === initialRevision) {
+    options.setAutoStartEnabled(storedAutoStart)
+  }
+
+  const autoStartNextPhase = options.getAutoStartEnabled()
+  const restoredAt = Date.now()
+  options.setNow(restoredAt)
+  const currentState = options.getState()
+
+  if (currentState === options.storedState) {
+    const synchronizedState = synchronizePomodoroTimer(
+      options.storedState,
+      restoredAt,
+      options.storedConfig,
+      {autoStartNextPhase},
+    )
+
+    if (options.wasRunningAtMount) {
+      options.applyState(synchronizedState)
+    } else {
+      options.setState(synchronizedState)
+    }
+  }
+
+  options.setStorageReady(true)
+}
+
 export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTimerController => {
   let autoStartRevision = 0
+  let syncController: TimerSyncController | null = null
   const [config, setConfig] = createSignal<PomodoroTimerConfig>(POMODORO_TIMER_CONFIG)
   const [isAutoStartEnabled, setIsAutoStartEnabled] = createSignal(false)
   const [state, setState] = createSignal<PomodoroTimerState>(
@@ -129,13 +221,24 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const [now, setNow] = createSignal(0)
   const [isStorageReady, setIsStorageReady] = createSignal(false)
 
-  const applyState = (nextState: PomodoroTimerState) => {
+  const publishSnapshot = () =>
+    syncController?.publish({
+      config: config(),
+      isAutoStartEnabled: isAutoStartEnabled(),
+      state: state(),
+    })
+
+  const applyState = (nextState: PomodoroTimerState, publish = true) => {
     const previousState = state()
     setState(nextState)
     const events = getPomodoroTimerEvents(previousState, nextState, config())
 
     if (events.length > 0) {
       props.onEvents?.(events)
+    }
+
+    if (publish && nextState !== previousState) {
+      publishSnapshot()
     }
   }
 
@@ -152,11 +255,13 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
 
     const currentTime = Date.now()
     setNow(currentTime)
-    applyState(
-      synchronizePomodoroTimer(currentState, currentTime, config(), {
-        autoStartNextPhase: isAutoStartEnabled(),
-      }),
-    )
+    const nextState = synchronizePomodoroTimer(currentState, currentTime, config(), {
+      autoStartNextPhase: isAutoStartEnabled(),
+    })
+
+    if (nextState !== currentState) {
+      applyState(nextState)
+    }
   }
 
   onMount(() => {
@@ -170,39 +275,34 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     setNow(currentTime)
     setState(storedState)
 
-    const initializeAutoStart = async () => {
-      const initialRevision = autoStartRevision
-      const storedAutoStart = await readAutoStartPreference()
+    syncController = createTimerSyncController((message) => {
+      const result = timerSyncMessageSchema.safeParse(message)
 
-      if (isDisposed) {
+      if (!result.success) {
         return
       }
 
-      if (autoStartRevision === initialRevision) {
-        setIsAutoStartEnabled(storedAutoStart)
-      }
+      autoStartRevision += 1
+      setConfig(result.data.config)
+      setIsAutoStartEnabled(result.data.isAutoStartEnabled)
+      setNow(Date.now())
+      setState(result.data.state)
+    })
 
-      const autoStartNextPhase = isAutoStartEnabled()
-      const restoredAt = Date.now()
-      setNow(restoredAt)
-      const currentState = state()
-
-      if (currentState === storedState) {
-        const synchronizedState = synchronizePomodoroTimer(storedState, restoredAt, storedConfig, {
-          autoStartNextPhase,
-        })
-
-        if (wasRunningAtMount) {
-          applyState(synchronizedState)
-        } else {
-          setState(synchronizedState)
-        }
-      }
-
-      setIsStorageReady(true)
-    }
-
-    initializeAutoStart()
+    initializeTimer({
+      applyState,
+      getAutoStartEnabled: isAutoStartEnabled,
+      getAutoStartRevision: () => autoStartRevision,
+      getState: state,
+      isDisposed: () => isDisposed,
+      setAutoStartEnabled: setIsAutoStartEnabled,
+      setNow,
+      setState,
+      setStorageReady: setIsStorageReady,
+      storedConfig,
+      storedState,
+      wasRunningAtMount,
+    })
 
     const refreshFrame = () => {
       refresh()
@@ -216,6 +316,8 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     onCleanup(() => {
       isDisposed = true
       globalThis.cancelAnimationFrame(frame)
+      syncController?.close()
+      syncController = null
       if (props.stopOnUnmount) {
         writeStoredState(stopPomodoroTimer(state(), config()))
       }
@@ -253,6 +355,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     autoStartRevision += 1
     setIsAutoStartEnabled(isEnabled)
     writeAutoStartPreference(isEnabled)
+    publishSnapshot()
   }
   const onNextPhase = () => applyState(advancePomodoroTimer(state(), config()))
   const onReset = () => applyState(createPomodoroTimerState(config()))

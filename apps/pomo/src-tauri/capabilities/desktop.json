@@ -2,6 +2,22 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "desktop",
   "description": "Allows Pomofi windows to manage desktop and control surfaces.",
-  "windows": ["background", "controls"],
-  "permissions": ["core:default", "desktop-surface:default"]
+  "windows": [
+    "background",
+    "controls",
+    "desktop-player",
+    "desktop-pomodoro",
+    "desktop-settings",
+    "desktop-dialog-memory-assist",
+    "desktop-dialog-pomodoro",
+    "desktop-dialog-settings",
+    "desktop-dialog-tools",
+    "desktop-dialog-version-notice"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-size",
+    "core:window:allow-start-dragging",
+    "desktop-surface:default"
+  ]
 }

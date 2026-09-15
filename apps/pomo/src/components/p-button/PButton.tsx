@@ -146,7 +146,7 @@ export interface PButtonProps extends VariantProps<typeof P_BUTTON_CLASSES> {
 export const PButton = (props: PButtonProps) => {
   const tooltip = useTooltipTrigger()
   const handleBlur: JSX.EventHandler<HTMLButtonElement, FocusEvent> = (event) => {
-    tooltip.events.onBlur()
+    tooltip.onBlur()
     props.onBlur?.(event)
   }
   const content = children(() => props.children)
@@ -161,7 +161,6 @@ export const PButton = (props: PButtonProps) => {
   return (
     <>
       <HButton.Root
-        {...tooltip.events}
         ref={tooltip.setTarget}
         aria-label={props.accessibleLabel}
         aria-pressed={props.pressed}
@@ -179,8 +178,12 @@ export const PButton = (props: PButtonProps) => {
         data-icon-only={hasContent() ? undefined : ''}
         disabled={props.disabled}
         onBlur={handleBlur}
+        onFocus={tooltip.onFocus}
         onKeyDown={props.onKeyDown}
         onClick={(event) => props.onPress?.(event.currentTarget)}
+        onPointerDown={tooltip.onPointerDown}
+        onPointerEnter={tooltip.onPointerEnter}
+        onPointerLeave={tooltip.onPointerLeave}
         type={props.type ?? 'button'}
       >
         <Show when={props.leadingImage}>

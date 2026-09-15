@@ -16,6 +16,7 @@ export const CLASSES = {
 } as const
 
 export interface PSettingsProps {
+  readonly desktopSurface?: boolean
   readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
   readonly pomodoroVisible?: boolean
   readonly onPomodoroVisibleChange?: (visible: boolean) => void

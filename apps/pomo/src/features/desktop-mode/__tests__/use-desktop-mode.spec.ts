@@ -112,6 +112,19 @@ it('should process the latest native request received during a transition', asyn
   expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'widget')
 })
 
+it('should persist desktop mode before opening surface windows', async () => {
+  let modeDuringNativeTransition: string | null = null
+  vi.mocked(applyDesktopMode).mockImplementationOnce(async () => {
+    modeDuringNativeTransition = localStorage.getItem('pomo:desktop-mode:v1')
+  })
+  const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+
+  await view.result.onModeChange('desktop')
+
+  expect(modeDuringNativeTransition).toBe('desktop')
+  expect(localStorage.getItem('pomo:desktop-mode:v1')).toBe('desktop')
+})
+
 it('should expose native request failures without rejecting the event listener', async () => {
   const transitionError = new Error('native transition failed')
   const rollbackError = new Error('native rollback failed')

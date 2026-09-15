@@ -33,6 +33,7 @@ pub(crate) struct BackgroundSurfaceOptions {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ControlSurfaceOptions {
+    pub(crate) corner_radius: Option<f64>,
     pub(crate) height: Option<f64>,
     pub(crate) label: String,
     pub(crate) path: String,
@@ -43,6 +44,7 @@ pub(crate) struct ControlSurfaceOptions {
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ValidatedControlSurface {
+    pub(crate) corner_radius: Option<f64>,
     pub(crate) height: f64,
     pub(crate) label: String,
     pub(crate) path: PathBuf,
@@ -59,6 +61,7 @@ pub(crate) struct ControlSurfaceStatus {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WidgetSurfaceOptions {
+    pub(crate) corner_radius: Option<f64>,
     pub(crate) height: Option<f64>,
     pub(crate) label: String,
     pub(crate) width: Option<f64>,
@@ -66,6 +69,7 @@ pub(crate) struct WidgetSurfaceOptions {
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ValidatedWidgetSurface {
+    pub(crate) corner_radius: Option<f64>,
     pub(crate) height: f64,
     pub(crate) label: String,
     pub(crate) width: f64,
@@ -102,6 +106,8 @@ impl TryFrom<ControlSurfaceOptions> for ValidatedControlSurface {
         let width = options.width.unwrap_or(DEFAULT_CONTROL_WIDTH);
         let height = options.height.unwrap_or(DEFAULT_CONTROL_HEIGHT);
 
+        let corner_radius = validate_corner_radius(options.corner_radius)?;
+
         if !width.is_finite() || !height.is_finite() || width <= 0.0 || height <= 0.0 {
             return Err(Error::InvalidSize);
         }
@@ -113,6 +119,7 @@ impl TryFrom<ControlSurfaceOptions> for ValidatedControlSurface {
         };
 
         Ok(Self {
+            corner_radius,
             height,
             label,
             path,
@@ -129,17 +136,31 @@ impl TryFrom<WidgetSurfaceOptions> for ValidatedWidgetSurface {
         let label = validate_label(options.label)?;
         let width = options.width.unwrap_or(DEFAULT_WIDGET_WIDTH);
         let height = options.height.unwrap_or(DEFAULT_WIDGET_HEIGHT);
+        let corner_radius = validate_corner_radius(options.corner_radius)?;
 
         if !width.is_finite() || !height.is_finite() || width <= 0.0 || height <= 0.0 {
             return Err(Error::InvalidSize);
         }
 
         Ok(Self {
+            corner_radius,
             height,
             label,
             width,
         })
     }
+}
+
+fn validate_corner_radius(corner_radius: Option<f64>) -> Result<Option<f64>> {
+    corner_radius
+        .map(|radius| {
+            if radius.is_finite() && radius >= 0.0 {
+                Ok(radius)
+            } else {
+                Err(Error::InvalidCornerRadius)
+            }
+        })
+        .transpose()
 }
 
 #[cfg(test)]
@@ -151,6 +172,7 @@ mod tests {
 
     fn options() -> ControlSurfaceOptions {
         ControlSurfaceOptions {
+            corner_radius: None,
             height: None,
             label: "controls".to_owned(),
             path: "/desktop/controls".to_owned(),
@@ -218,8 +240,19 @@ mod tests {
     }
 
     #[test]
+    fn should_reject_invalid_corner_radius() {
+        for radius in [Some(-1.0), Some(f64::NAN), Some(f64::INFINITY)] {
+            let mut options = options();
+            options.corner_radius = radius;
+
+            assert!(ValidatedControlSurface::try_from(options).is_err());
+        }
+    }
+
+    #[test]
     fn should_validate_widget_surface_options() {
         let surface = ValidatedWidgetSurface::try_from(WidgetSurfaceOptions {
+            corner_radius: None,
             height: None,
             label: "background".to_owned(),
             width: None,
@@ -228,14 +261,30 @@ mod tests {
 
         assert_eq!(surface.width, 420.0);
         assert_eq!(surface.height, 520.0);
+        assert_eq!(surface.corner_radius, None);
 
         assert!(
             ValidatedWidgetSurface::try_from(WidgetSurfaceOptions {
+                corner_radius: None,
                 height: Some(f64::NAN),
                 label: "background".to_owned(),
                 width: None,
             })
             .is_err()
         );
+    }
+
+    #[test]
+    fn should_reject_invalid_widget_corner_radius() {
+        for radius in [Some(-1.0), Some(f64::NAN), Some(f64::INFINITY)] {
+            let options = WidgetSurfaceOptions {
+                corner_radius: radius,
+                height: None,
+                label: "background".to_owned(),
+                width: None,
+            };
+
+            assert!(ValidatedWidgetSurface::try_from(options).is_err());
+        }
     }
 }

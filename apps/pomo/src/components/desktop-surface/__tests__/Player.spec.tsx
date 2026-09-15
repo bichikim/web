@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -34,11 +34,15 @@ vi.mock('../../../features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
   useDesktopSceneSettingsListener: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
+  useDesktopSurfaceSize: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
 vi.mock('../../p-music-player/PMusicPlayer', () => ({
   PMusicPlayer: vi.fn((props) => (
     <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
+      <button onClick={() => props.onExpandedChange?.(!props.expanded)} type="button">
+        {props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
+      </button>
       플레이어
     </div>
   )),
@@ -182,11 +186,24 @@ it('should synchronize scene style and hide a non-desktop surface', () => {
   const view = render(() => <DesktopPlayer />)
   expect(screen.getByText('플레이어')).toHaveAttribute('data-style', 'original')
   expect(PMusicPlayer).toHaveBeenCalledOnce()
+  expect(vi.mocked(PMusicPlayer).mock.calls[0]?.[0].backdropBlur).toBe(false)
   expect(useDesktopSceneSettingsListener).toHaveBeenCalledOnce()
   view.unmount()
   mode = 'normal'
   render(() => <DesktopPlayer />)
   expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+})
+
+it('should allow the desktop player to switch from expanded to compact mode', () => {
+  render(() => <DesktopPlayer />)
+
+  expect(screen.getByText('플레이어').parentElement).toHaveClass('h-[19.875rem]')
+  expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', {name: '플레이어 접기'}))
+
+  expect(screen.getByText('플레이어').parentElement).toHaveClass('h-fit')
+  expect(screen.getByRole('button', {name: '플레이어 펼치기'})).toBeInTheDocument()
 })
 
 it('should wait for preferences and honor restored visibility', () => {

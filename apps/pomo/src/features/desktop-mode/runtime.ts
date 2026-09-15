@@ -3,6 +3,7 @@ import {readPDisplayPreferences} from 'src/features/focus-room-display-preferenc
 import type {DesktopMode} from './model'
 
 const BACKGROUND_LABEL = 'background'
+const DESKTOP_WIDGET_CORNER_RADIUS = 20
 const SURFACE_MARGIN = 24
 
 interface DesktopWorkArea {
@@ -163,7 +164,12 @@ export const applyDesktopMode = async (mode: DesktopMode): Promise<void> => {
       return
     case 'widget':
       const {setWidgetSurface} = await getSurfaceApi()
-      await setWidgetSurface({height: 520, label: BACKGROUND_LABEL, width: 420})
+      await setWidgetSurface({
+        cornerRadius: DESKTOP_WIDGET_CORNER_RADIUS,
+        height: 520,
+        label: BACKGROUND_LABEL,
+        width: 420,
+      })
       return
   }
 

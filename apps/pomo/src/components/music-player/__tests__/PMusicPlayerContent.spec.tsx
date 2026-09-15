@@ -113,9 +113,16 @@ const latestViewProps = () => {
 }
 
 const emit = (event: string, value: unknown = new Event(event)) => {
+  const controller = latestController()
   const entry = Object.entries({
-    ...latestController().playback?.events,
-    ...latestController().mediaEvents,
+    onEnded: controller.onEnded,
+    onError: controller.onError,
+    onLoadedMetadata: controller.onLoadedMetadata,
+    onPause: controller.onPause,
+    onPlay: controller.onPlay,
+    onSeeked: controller.onSeeked,
+    onSeeking: controller.onSeeking,
+    onTimeUpdate: controller.onTimeUpdate,
   }).find(([name]) => name.slice(2).toLowerCase() === event)
   const handler = entry?.[1] ?? eventMocks.handlers.get(event)
 
@@ -229,8 +236,8 @@ describe('PMusicPlayerContent control paths', () => {
     latestViewProps().onExpandedChange()
     expect(onExpandedChange).toHaveBeenCalledWith(true)
 
-    latestController().playback?.pause()
-    latestController().playback?.play()
+    latestController().pause()
+    latestController().play()
     latestViewProps().onNextTrack()
     latestViewProps().onPreviousTrack()
     emit('pause')
