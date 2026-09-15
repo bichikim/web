@@ -52,6 +52,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const initialTracks = untrack(() => props.tracks ?? [])
   const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
   const [loadedTracks, setLoadedTracks] = createSignal<readonly PTrack[]>(initialTracks)
+  const [isPlaylistLoading, setIsPlaylistLoading] = createSignal(props.tracks === undefined)
   const tracks = () => props.tracks ?? loadedTracks()
   const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
   const visualizer = usePAudioVisualizer()
@@ -362,6 +363,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       }
       return availableTracks
     },
+    onLoadSettled: () => setIsPlaylistLoading(false),
     onRestore: initializePlayback,
     playbackRevision: () => playbackRevision,
     queueRevision: () => queueRevision,
@@ -396,6 +398,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     currentIndex,
     currentTrack,
     isPlaying,
+    isPlaylistLoading,
     levels: visualizer.levels,
     mediaEvents: {
       onEnded: order.handleEnded,
