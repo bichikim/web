@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "io.pomofi.app",
+  "build": {
+    "beforeBuildCommand": "pnpm exec cross-env POMO_BUILD_TARGET=ios POMO_RUNTIME_TARGET=ios pnpm exec vite build",
+    "beforeDevCommand": "pnpm exec cross-env POMO_RUNTIME_TARGET=ios pnpm exec vite dev --host 127.0.0.1 --port 1420",
+    "devUrl": "http://127.0.0.1:1420/"
+  },
+  "app": {
+    "macOSPrivateApi": false,
+    "windows": [
+      {
+        "height": 800,
+        "label": "main",
+        "minHeight": 520,
+        "minWidth": 320,
+        "title": "Pomofi",
+        "url": "/",
+        "width": 420
+      }
+    ],
+    "security": {
+      "capabilities": ["mobile"],
+      "csp": {
+        "connect-src": "'self' ipc: http://ipc.localhost http://tauri.localhost https://tauri.localhost https://www.pomofi.io https://pomofi.io https://storage.pomofi.io https://audio.pomofi.io https://huggingface.co https://us.aws.cdn.hf.co https://cdn.jsdelivr.net https://pub-0e34511083544f8aaad14d0590013528.r2.dev blob:",
+        "default-src": "'self'",
+        "font-src": "'self' data:",
+        "img-src": "'self' asset: http://asset.localhost blob: data: https:",
+        "media-src": "'self' blob: data: https://www.pomofi.io https://pomofi.io https://storage.pomofi.io https://audio.pomofi.io",
+        "script-src": "'self' 'wasm-unsafe-eval'",
+        "style-src": "'self' 'unsafe-inline'",
+        "worker-src": "'self' blob:"
+      }
+    }
+  }
+}

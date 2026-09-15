@@ -52,7 +52,8 @@ const createResponseFetch = (fetchInstance: $Fetch): typeof fetch =>
 
 const usesRemotePublicOrigin =
   import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
-  import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
+  import.meta.env.VITE_POMO_IS_DESKTOP === 'true' ||
+  (import.meta.env.VITE_POMO_IS_MOBILE === 'true' && !import.meta.env.DEV)
 const publicBaseURL = usesRemotePublicOrigin ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN : undefined
 const sharedFetch = ofetch.create({
   baseURL: publicBaseURL,

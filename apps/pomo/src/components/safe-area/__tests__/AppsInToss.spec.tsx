@@ -98,7 +98,7 @@ it('should ignore an SDK import rejection after disposal', async () => {
   expect(subscribe).not.toHaveBeenCalled()
 })
 
-it('should apply native inset updates while excluding the Toss header', async () => {
+it('should exclude the Toss utility header while applying native inset updates', async () => {
   render(() => <AppsInToss />)
   await vi.waitFor(() => expect(loadFramework).toHaveBeenCalledOnce())
   loading.resolve(framework)
