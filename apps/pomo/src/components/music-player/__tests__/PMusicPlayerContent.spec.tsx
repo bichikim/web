@@ -212,6 +212,23 @@ afterEach(() => {
 })
 
 describe('PMusicPlayerContent control paths', () => {
+  it('should cancel preview resume after a user pause', () => {
+    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = createAudio()
+    const firstStopPreview = vi.fn()
+    const secondStopPreview = vi.fn()
+    const controller = latestController()
+
+    controller.playback.events.onPlay()
+    latestViewProps().onPreviewStart?.(firstStopPreview)
+    controller.playback.pause()
+    controller.playback.events.onPause()
+    latestViewProps().onPreviewStart?.(secondStopPreview)
+    latestViewProps().onPreviewEnd?.()
+
+    expect(audio.play).not.toHaveBeenCalled()
+  })
+
   it('should exercise preview, transport, shuffle, repeat, expansion, and playback controls', async () => {
     const onExpandedChange = vi.fn()
     const result = render(() => (

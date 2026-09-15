@@ -213,6 +213,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
     visualizer.stop()
     if (isUserIntent) {
+      previewPlayback.preventResume()
       playbackPersistence.persistPlaybackIntent(false)
     } else {
       playbackPersistence.persistCurrentPlayback()
