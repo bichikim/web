@@ -2,14 +2,14 @@ import type {APIEvent} from '@solidjs/start/server'
 
 import {deleteCalendarConnection} from 'src/server/calendar/runtime'
 import {noStoreEmpty, noStoreJson} from 'src/server/http/response'
-import {authenticateUserRequest} from 'src/server/user-auth/request'
+import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
 
 const HTTP_NOT_FOUND = 404
 const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
 
 export const DELETE = async (event: APIEvent): Promise<Response> => {
-  const identity = await authenticateUserRequest(event.request)
+  const identity = await resolveUserRequest(event.request)
   if (identity.userId === null) {
     return noStoreJson(
       {error: 'unauthorized'},

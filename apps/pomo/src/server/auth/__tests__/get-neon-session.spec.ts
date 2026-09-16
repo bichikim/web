@@ -8,7 +8,7 @@ vi.mock('src/server/auth/neon-config', () => ({
   readNeonAuthProxyConfig: () => ({baseUrl: 'https://auth.example', cookieSecret: 'secret'}),
 }))
 
-import {getNeonSession} from '../neon-session'
+import {getNeonSession} from '../get-neon-session'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -22,7 +22,12 @@ const createResponse = (body: BodyInit | null, status = 200): Response => {
 
 it('should request a fresh session without entity headers', async () => {
   authMocks.handleAuthProxyRequest.mockResolvedValue(
-    createResponse(JSON.stringify({user: {email: 'user@example.com', id: 'user-1'}})),
+    createResponse(
+      JSON.stringify({
+        session: {id: 'session-1'},
+        user: {email: 'user@example.com', id: 'user-1', role: 'member'},
+      }),
+    ),
   )
   const request = new Request('https://pomo.example/api/account?source=web', {
     body: '{}',
@@ -36,8 +41,10 @@ it('should request a fresh session without entity headers', async () => {
   })
 
   await expect(getNeonSession(request)).resolves.toEqual({
-    cookies: ['session=refreshed; Path=/'],
+    access: 'user',
     identity: {email: 'user@example.com', id: 'user-1'},
+    provider: 'neon',
+    setCookies: ['session=refreshed; Path=/'],
   })
   const input = authMocks.handleAuthProxyRequest.mock.calls[0]?.[0]
   expect(input).toMatchObject({baseUrl: 'https://auth.example', path: 'get-session'})
@@ -55,8 +62,10 @@ it('should preserve cookies and ignore an unsuccessful session response', () => 
   authMocks.handleAuthProxyRequest.mockResolvedValue(createResponse('unauthorized', 401))
 
   return expect(getNeonSession(new Request('https://pomo.example/account'))).resolves.toEqual({
-    cookies: ['session=refreshed; Path=/'],
+    access: 'invalid',
     identity: null,
+    provider: 'neon',
+    setCookies: ['session=refreshed; Path=/'],
   })
 })
 
@@ -83,4 +92,16 @@ it('should ignore an invalid JSON session payload', () => {
       identity: null,
     },
   )
+})
+
+it('should preserve separate refresh and cleanup cookies', async () => {
+  const cookies = ['session=updated; Path=/; HttpOnly', 'challenge=; Path=/; Max-Age=0']
+  authMocks.handleAuthProxyRequest.mockResolvedValue(
+    Response.json(null, {
+      headers: cookies.map((cookie) => ['Set-Cookie', cookie]),
+    }),
+  )
+  await expect(getNeonSession(new Request('https://pomo.example/account'))).resolves.toMatchObject({
+    setCookies: cookies,
+  })
 })

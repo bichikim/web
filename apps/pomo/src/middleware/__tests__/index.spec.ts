@@ -4,6 +4,7 @@ import {createMiddleware} from '@solidjs/start/middleware'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {handleAdminAuthRequest} from '../admin-auth'
+import {authenticationMiddleware} from '../authentication'
 import {corsMiddleware} from '../cors'
 import {handleLegacyRedirectRequest} from '../legacy-redirect'
 import {securityHeadersMiddleware} from '../security-headers'
@@ -19,6 +20,10 @@ vi.mock('@solidjs/start/middleware', () => ({
 
 vi.mock('../admin-auth', () => ({
   handleAdminAuthRequest: vi.fn(),
+}))
+
+vi.mock('../authentication', () => ({
+  authenticationMiddleware: vi.fn(),
 }))
 
 vi.mock('../cors', () => ({
@@ -95,7 +100,8 @@ describe('middleware index', () => {
     const nextResponse = new Response('next')
     const next = vi.fn(async () => nextResponse)
 
-    expect(middleware).toHaveLength(4)
+    expect(middleware).toHaveLength(5)
+    expect(middleware[3]).toBe(authenticationMiddleware)
     expect(middleware[0]).toBe(securityHeadersMiddleware)
     expect(middleware[1]).toBe(corsMiddleware)
 
@@ -111,7 +117,7 @@ describe('middleware index', () => {
     const event = createEvent()
     const next = vi.fn(async () => new Response('next'))
 
-    await expect(middleware[3]?.(event, next)).resolves.toBe(legacyRedirect)
+    await expect(middleware[4]?.(event, next)).resolves.toBe(legacyRedirect)
     expect(handleLegacyRedirectRequest).toHaveBeenCalledWith(event.req)
     expect(handleUserAuthRequest).not.toHaveBeenCalled()
     expect(handleAdminAuthRequest).not.toHaveBeenCalled()
@@ -125,7 +131,7 @@ describe('middleware index', () => {
     const event = createEvent()
     const next = vi.fn(async () => new Response('next'))
 
-    await expect(middleware[3]?.(event, next)).resolves.toBe(userAuthResponse)
+    await expect(middleware[4]?.(event, next)).resolves.toBe(userAuthResponse)
     expect(handleLegacyRedirectRequest).toHaveBeenCalledWith(event.req)
     expect(handleUserAuthRequest).toHaveBeenCalledWith({
       request: event.req,
@@ -143,7 +149,7 @@ describe('middleware index', () => {
     const event = createEvent()
     const next = vi.fn(async () => new Response('next'))
 
-    await expect(middleware[3]?.(event, next)).resolves.toBe(adminAuthResponse)
+    await expect(middleware[4]?.(event, next)).resolves.toBe(adminAuthResponse)
     expect(handleAdminAuthRequest).toHaveBeenCalledWith({
       request: event.req,
       responseHeaders: event.res.headers,
@@ -158,7 +164,7 @@ describe('middleware index', () => {
     const nextResponse = new Response('next')
     const next = vi.fn(async () => nextResponse)
 
-    await expect(middleware[3]?.(event, next)).resolves.toBe(nextResponse)
+    await expect(middleware[4]?.(event, next)).resolves.toBe(nextResponse)
     expect(handleLegacyRedirectRequest).toHaveBeenCalledWith(event.req)
     expect(handleUserAuthRequest).toHaveBeenCalledOnce()
     expect(handleAdminAuthRequest).toHaveBeenCalledOnce()
@@ -171,7 +177,7 @@ describe('middleware index', () => {
     const nextResponse = new Response('next')
     const next = vi.fn(async () => nextResponse)
 
-    await expect(middleware[3]?.(event, next)).resolves.toBe(nextResponse)
+    await expect(middleware[4]?.(event, next)).resolves.toBe(nextResponse)
     expect(handleLegacyRedirectRequest).not.toHaveBeenCalled()
     expect(handleUserAuthRequest).toHaveBeenCalledOnce()
     expect(handleAdminAuthRequest).toHaveBeenCalledOnce()

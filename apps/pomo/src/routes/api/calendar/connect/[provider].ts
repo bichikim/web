@@ -3,7 +3,7 @@ import type {APIEvent} from '@solidjs/start/server'
 import {isCalendarProviderId} from 'src/features/calendar'
 import {getCalendarService} from 'src/server/calendar/runtime'
 import {noStoreJson} from 'src/server/http/response'
-import {authenticateUserRequest} from 'src/server/user-auth/request'
+import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
 
 const HTTP_BAD_REQUEST = 400
 const HTTP_UNAUTHORIZED = 401
@@ -14,7 +14,7 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     return noStoreJson({error: 'unsupported_calendar_provider'}, {status: HTTP_BAD_REQUEST})
   }
 
-  const identity = await authenticateUserRequest(event.request)
+  const identity = await resolveUserRequest(event.request)
   if (identity.userId === null) {
     return noStoreJson(
       {error: 'unauthorized'},

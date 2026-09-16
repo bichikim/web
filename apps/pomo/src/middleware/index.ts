@@ -1,12 +1,14 @@
 import {createMiddleware} from '@solidjs/start/middleware'
 
 import {handleAdminAuthRequest} from './admin-auth'
+import {authenticationMiddleware} from './authentication'
 import {handleLegacyRedirectRequest} from './legacy-redirect'
 import {DOCUMENT_MIDDLEWARE} from './document'
 import {handleUserAuthRequest} from './user-auth'
 
 export default createMiddleware([
   ...DOCUMENT_MIDDLEWARE,
+  authenticationMiddleware,
   async (event, next) => {
     if (!(import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true')) {
       const legacyRedirect = handleLegacyRedirectRequest(event.req)
