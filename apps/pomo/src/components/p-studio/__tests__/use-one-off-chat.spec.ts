@@ -30,7 +30,11 @@ const createChat = () => {
     canClear: () =>
       messages().length > 0 &&
       !['compacting', 'generating', 'loading', 'refining'].includes(state().status),
-    clear: vi.fn(() => setMessages([])),
+    clear: vi.fn(() => {
+      if (chat.canClear()) {
+        setMessages([])
+      }
+    }),
     draft,
     isBusy: () => ['compacting', 'generating', 'loading', 'refining'].includes(state().status),
     isModelReady: () => state().status === 'ready',
@@ -102,8 +106,10 @@ describe('useOneOffChat', () => {
 
     await result.submit('짧게 인사해 줘')
     setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
     const reply = {content: '반가워요.', id: 'reply-1', role: 'assistant'} as const
     setMessages([{content: '짧게 인사해 줘', id: 'user-1', role: 'user'}, reply])
+    setState({status: 'ready'})
 
     await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith('반가워요.'))
     await vi.waitFor(() => expect(chat.clear).toHaveBeenCalledOnce())
