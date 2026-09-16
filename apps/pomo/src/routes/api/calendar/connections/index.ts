@@ -2,13 +2,13 @@ import type {APIEvent} from '@solidjs/start/server'
 
 import {listCalendarConnections} from 'src/server/calendar/runtime'
 import {noStoreJson} from 'src/server/http/response'
-import {authenticateUserRequest} from 'src/server/user-auth/request'
+import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
 
 const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
 
 export const GET = async (event: APIEvent): Promise<Response> => {
-  const identity = await authenticateUserRequest(event.request)
+  const identity = await resolveUserRequest(event.request)
   if (identity.userId === null) {
     return noStoreJson(
       {error: 'unauthorized'},

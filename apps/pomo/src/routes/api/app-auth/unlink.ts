@@ -6,7 +6,7 @@ import {z} from 'zod'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreEmpty, noStoreText} from 'src/server/http/response'
 import {env} from 'src/env'
-import {revokeTossAppSessions} from 'src/server/user-auth/repository'
+import {revokeTossAppSessions} from 'src/server/auth/repository'
 
 const MAXIMUM_BODY_SIZE = 4096
 const MAXIMUM_USER_KEY_LENGTH = 255

@@ -6,7 +6,7 @@ const environmentMocks = vi.hoisted(() => ({
   env: {CRON_SECRET: 'cron-secret-1234'},
 }))
 
-vi.mock('src/server/user-auth/maintenance', () => maintenanceMocks)
+vi.mock('src/server/auth/maintenance', () => maintenanceMocks)
 vi.mock('src/env', () => ({
   env: environmentMocks.env,
 }))

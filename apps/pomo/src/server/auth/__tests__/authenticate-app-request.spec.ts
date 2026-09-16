@@ -9,7 +9,7 @@ const {getAppSessionUserId, readBearerToken} = vi.hoisted(() => ({
 vi.mock('../repository', () => ({getAppSessionUserId}))
 vi.mock('../token', () => ({readBearerToken}))
 
-import {authenticateAppRequest} from '../http'
+import {authenticateAppRequest} from '../authenticate-app-request'
 
 const request = new Request('https://example.com')
 

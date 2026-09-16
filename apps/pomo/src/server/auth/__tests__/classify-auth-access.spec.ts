@@ -1,18 +1,18 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {classifyAdminAccess} from '../classify-admin-access'
+import {classifyAuthAccess} from '../classify-auth-access'
 
-describe('classifyAdminAccess', () => {
+describe('classifyAuthAccess', () => {
   it.each([
     [null, 'anonymous'],
     [{session: null, user: null}, 'anonymous'],
     [{session: {}, user: {role: 'admin'}}, 'admin'],
-    [{session: {}, user: {role: 'member'}}, 'forbidden'],
-    [{session: {}, user: {role: ['admin', 1]}}, 'forbidden'],
+    [{session: {}, user: {role: 'member'}}, 'user'],
+    [{session: {}, user: {role: ['admin', 1]}}, 'user'],
     [undefined, 'invalid'],
     [{session: null, user: {}}, 'invalid'],
   ] as const)('should classify %# session data', (sessionData, expected) => {
-    expect(classifyAdminAccess(sessionData)).toBe(expected)
+    expect(classifyAuthAccess(sessionData)).toBe(expected)
   })
 })

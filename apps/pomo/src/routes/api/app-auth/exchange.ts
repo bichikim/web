@@ -3,12 +3,12 @@ import {z} from 'zod'
 
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {exchangeTossAuthorization} from 'src/server/toss-auth/client'
+import {exchangeTossAuthorization} from 'src/server/auth/exchange-toss-authorization'
 import {
   type AppSession,
   createPendingTossAppSession,
   createTossAppSession,
-} from 'src/server/user-auth/repository'
+} from 'src/server/auth/repository'
 
 const MAXIMUM_BODY_SIZE = 8192
 const MAX_AUTHORIZATION_CODE_LENGTH = 2048

@@ -24,7 +24,7 @@ vi.mock('src/env', () => ({
   env: dependencyMocks.env,
 }))
 
-import {exchangeTossAuthorization} from '../client'
+import {exchangeTossAuthorization} from '../exchange-toss-authorization'
 
 class MockResponse extends EventEmitter {
   public readonly destroy = vi.fn((error?: Error) => {

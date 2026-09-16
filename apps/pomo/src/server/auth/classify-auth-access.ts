@@ -1,12 +1,11 @@
 import {isPlainObject} from 'es-toolkit/predicate'
 
 import {hasListItem} from 'src/utils/has-list-item'
-
-export type AdminAccess = 'admin' | 'anonymous' | 'forbidden' | 'invalid'
+import type {AuthAccess} from './types'
 
 const ADMIN_ROLE = 'admin'
 
-export const classifyAdminAccess = (sessionData: unknown): AdminAccess => {
+export const classifyAuthAccess = (sessionData: unknown): AuthAccess => {
   if (sessionData === null) {
     return 'anonymous'
   }
@@ -25,5 +24,5 @@ export const classifyAdminAccess = (sessionData: unknown): AdminAccess => {
     return 'invalid'
   }
 
-  return hasListItem(user.role, ADMIN_ROLE) ? 'admin' : 'forbidden'
+  return hasListItem(user.role, ADMIN_ROLE) ? 'admin' : 'user'
 }

@@ -8,31 +8,13 @@ import {
 } from 'src/server/music/catalog-repository'
 import {createPlaybackAccess} from 'src/server/music/playback-access'
 import {createPreviewAccess} from 'src/server/music/preview-access'
-import {authenticateAppRequest} from 'src/server/user-auth/http'
-import {getNeonSession} from 'src/server/user-auth/neon-session'
-import {findOrCreateNeonUser} from 'src/server/user-auth/repository'
+import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
 
 const HTTP_BAD_REQUEST = 400
 const HTTP_NOT_FOUND = 404
 const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
 const trackIdSchema = z.string().uuid()
-
-interface OptionalIdentity {
-  readonly cookies: ReadonlyArray<string>
-  readonly userId: string | null
-}
-
-const resolveOptionalIdentity = async (request: Request): Promise<OptionalIdentity> => {
-  if (request.headers.has('Authorization')) {
-    const identity = await authenticateAppRequest(request)
-    return {cookies: [], userId: identity?.userId ?? null}
-  }
-
-  const session = await getNeonSession(request)
-  const userId = session.identity === null ? null : await findOrCreateNeonUser(session.identity.id)
-  return {cookies: session.cookies, userId}
-}
 
 export const GET = async (event: APIEvent): Promise<Response> => {
   const parsedTrackId = trackIdSchema.safeParse(event.params.trackId)
@@ -42,7 +24,7 @@ export const GET = async (event: APIEvent): Promise<Response> => {
   }
 
   try {
-    const identity = await resolveOptionalIdentity(event.request)
+    const identity = await resolveUserRequest(event.request)
 
     if (identity.userId === null) {
       return noStoreJson(

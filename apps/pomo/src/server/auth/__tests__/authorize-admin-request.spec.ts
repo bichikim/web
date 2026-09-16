@@ -1,31 +1,39 @@
 /** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-const sessionMocks = vi.hoisted(() => ({getAdminSession: vi.fn()}))
+const sessionMocks = vi.hoisted(() => ({getAuthSession: vi.fn()}))
 
-vi.mock('../get-admin-session', () => sessionMocks)
+vi.mock('../get-auth-session', () => sessionMocks)
 
 import {authorizeAdminRequest} from '../authorize-admin-request'
 
 describe('admin API authorization', () => {
   beforeEach(() => {
-    sessionMocks.getAdminSession.mockReset()
+    sessionMocks.getAuthSession.mockReset()
   })
 
   it('should authorize only an admin session', async () => {
-    sessionMocks.getAdminSession.mockResolvedValue({access: 'admin', cookies: ['session=updated']})
+    sessionMocks.getAuthSession.mockResolvedValue({
+      access: 'admin',
+      setCookies: ['session=updated'],
+    })
+    const request = new Request('https://pomo.example/api/admin/music', {
+      headers: {Authorization: 'Bearer app-token'},
+    })
 
-    await expect(
-      authorizeAdminRequest(new Request('https://pomo.example/api/admin/music')),
-    ).resolves.toEqual({authorized: true, cookies: ['session=updated']})
+    await expect(authorizeAdminRequest(request)).resolves.toEqual({
+      authorized: true,
+      cookies: ['session=updated'],
+    })
+    expect(sessionMocks.getAuthSession).toHaveBeenCalledWith(request, {provider: 'neon'})
   })
 
   it.each([
     ['anonymous', 401, 'unauthorized'],
-    ['forbidden', 403, 'forbidden'],
+    ['user', 403, 'forbidden'],
     ['invalid', 503, 'authentication_unavailable'],
   ] as const)('should map %s access to an API rejection', async (access, status, error) => {
-    sessionMocks.getAdminSession.mockResolvedValue({access, cookies: []})
+    sessionMocks.getAuthSession.mockResolvedValue({access, setCookies: []})
 
     const result = await authorizeAdminRequest(new Request('https://pomo.example/api/admin/music'))
 
@@ -40,7 +48,7 @@ describe('admin API authorization', () => {
   })
 
   it('should preserve an unexpected access value at the exhaustive fallback', async () => {
-    sessionMocks.getAdminSession.mockResolvedValue({access: 'unexpected', cookies: []})
+    sessionMocks.getAuthSession.mockResolvedValue({access: 'unexpected', setCookies: []})
 
     await expect(
       authorizeAdminRequest(new Request('https://pomo.example/api/admin/music')),
@@ -50,7 +58,7 @@ describe('admin API authorization', () => {
   it('should return service unavailable when authentication throws', async () => {
     const error = new Error('provider unavailable')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    sessionMocks.getAdminSession.mockRejectedValue(error)
+    sessionMocks.getAuthSession.mockRejectedValue(error)
 
     const result = await authorizeAdminRequest(new Request('https://pomo.example/api/admin/music'))
     expect(consoleError).toHaveBeenCalledWith('Pomo admin API authentication is unavailable', error)
