@@ -240,6 +240,7 @@ describe('useChat', () => {
       assistantMessage,
     ])
     expect(result.streamingText()).toBe('')
+    expect(result.answerDraft()).toBeNull()
     expect(result.contextTokens()).toBe(8)
     expect(result.summaryCount()).toBe(1)
     expect(result.canClear()).toBe(true)
