@@ -131,6 +131,32 @@ it('should keep a cancelled play event separate from a later play request', () =
   expect(playback.isPlaying()).toBe(true)
 })
 
+it('should preserve playback through the native pause caused by a track change', () => {
+  const [element, setElement] = createSignal<HTMLAudioElement>()
+  const [pauseProtected, setPauseProtected] = createSignal(false)
+  let playback: Playback | undefined
+  render(() => {
+    playback = usePlayback({element, shouldIgnoreNativePause: pauseProtected})
+    return null
+  })
+  if (playback === undefined) {
+    throw new Error('Missing playback')
+  }
+
+  const audio = document.createElement('audio')
+  const pause = vi.spyOn(audio, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(audio, 'play').mockResolvedValue()
+  setElement(audio)
+
+  playback.onPlay()
+  setPauseProtected(true)
+  playback.play()
+  playback.onPause()
+
+  expect(playback.isPlaying()).toBe(true)
+  expect(pause).not.toHaveBeenCalled()
+})
+
 it('should mark playback paused before the native pause event arrives', () => {
   const [element, setElement] = createSignal<HTMLAudioElement>()
   let playback: Playback | undefined

@@ -17,10 +17,12 @@ import type {PlaybackOrder} from './use-playback-order'
 
 export interface CreatePlayerQueueControllerOptions {
   readonly cancelPendingRestart: () => void
+  readonly clearPlaybackTransition: () => void
   readonly isPlaying: Accessor<boolean>
   readonly isQueueControlled: Accessor<boolean>
   readonly onPlaybackRevisionChange: () => void
   readonly order: Pick<PlaybackOrder, 'clearShuffleQueue' | 'resetOrder'>
+  readonly prepareTrackChange: (shouldResume: boolean, trackId: string) => void
   readonly persistTrackQueue: (tracks: readonly PTrack[]) => void
   readonly playback: Pick<Playback, 'invalidate' | 'stop'>
   readonly playbackPersistence: Pick<
@@ -43,6 +45,13 @@ export interface PlayerQueueController {
   readonly onLoad: (loaded: PlaylistLoad) => readonly PTrack[]
   readonly queueRevision: Accessor<number>
   readonly removeTrackFromQueue: (removeIndex: number) => void
+}
+
+const stopPlayback = (options: CreatePlayerQueueControllerOptions) => {
+  options.visualizer.stop()
+  options.playback.stop()
+  options.playbackPersistence.persistStoppedPlayback()
+  options.playbackPersistence.setPendingPosition(null)
 }
 
 /** Coordinates playlist state changes without owning transport or navigation policy. */
@@ -133,15 +142,14 @@ export const createPlayerQueueController = (
 
     if (resolution.currentTrackChanged && nextTrack !== undefined) {
       const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+      options.prepareTrackChange(shouldResume, nextTrack.id)
       options.playbackPersistence.setPendingPosition(nextPlayback)
       options.playbackPersistence.writePlayback(nextPlayback)
     }
 
     if (nextTrack === undefined) {
-      options.visualizer.stop()
-      options.playback.stop()
-      options.playbackPersistence.persistStoppedPlayback()
-      options.playbackPersistence.setPendingPosition(null)
+      options.clearPlaybackTransition()
+      stopPlayback(options)
     }
 
     batch(() => {
@@ -172,14 +180,12 @@ export const createPlayerQueueController = (
     }
 
     options.cancelPendingRestart()
+    options.clearPlaybackTransition()
     options.playback.invalidate()
     options.onPlaybackRevisionChange()
     queueRevision += 1
     options.previewPlayback.preventResume()
-    options.visualizer.stop()
-    options.playback.stop()
-    options.playbackPersistence.persistStoppedPlayback()
-    options.playbackPersistence.setPendingPosition(null)
+    stopPlayback(options)
 
     batch(() => {
       options.setLoadedTracks([])

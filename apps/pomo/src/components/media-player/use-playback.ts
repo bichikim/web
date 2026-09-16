@@ -2,6 +2,7 @@ import {type Accessor, createSignal, onCleanup} from 'solid-js'
 
 export interface UsePlaybackProps {
   readonly element: Accessor<HTMLAudioElement | undefined>
+  readonly shouldIgnoreNativePause?: () => boolean
   readonly onPlay?: () => void
   readonly onPauseRequest?: (isUserIntent: boolean) => void
   readonly onPause?: (wasPlaying: boolean, isUserIntent: boolean) => void
@@ -111,6 +112,10 @@ export const usePlayback = (props: UsePlaybackProps): Playback => {
     props.onPlay?.()
   }
   const handlePause = () => {
+    if (props.shouldIgnoreNativePause?.() && pauseIntent === null) {
+      return
+    }
+
     cancelPendingPlayRequest()
     const wasPlaying = pauseWasPlaying ?? isPlaying()
     const isUserIntent = pauseIntent === true
