@@ -3,13 +3,13 @@ import type {APIEvent} from '@solidjs/start/server'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const dependencyMocks = vi.hoisted(() => ({
-  authenticateUserRequest: vi.fn(),
   beginConnection: vi.fn(),
   getCalendarService: vi.fn(),
+  resolveUserRequest: vi.fn(),
 }))
 
-vi.mock('src/server/user-auth/request', () => ({
-  authenticateUserRequest: dependencyMocks.authenticateUserRequest,
+vi.mock('src/server/auth/resolve-user-request', () => ({
+  resolveUserRequest: dependencyMocks.resolveUserRequest,
 }))
 vi.mock('src/server/calendar/runtime', () => ({
   getCalendarService: dependencyMocks.getCalendarService,
@@ -27,7 +27,7 @@ const createEvent = (provider: string): APIEvent =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dependencyMocks.authenticateUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  dependencyMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
   dependencyMocks.getCalendarService.mockReturnValue({
     beginConnection: dependencyMocks.beginConnection,
   })
@@ -38,7 +38,7 @@ it('should reject an unsupported provider', async () => {
   const response = await POST(createEvent('apple'))
 
   expect(response.status).toBe(400)
-  expect(dependencyMocks.authenticateUserRequest).not.toHaveBeenCalled()
+  expect(dependencyMocks.resolveUserRequest).not.toHaveBeenCalled()
 })
 
 it('should create an authorization URL for the authenticated user', async () => {

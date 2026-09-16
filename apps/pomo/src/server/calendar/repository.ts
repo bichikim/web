@@ -7,7 +7,7 @@ import {
   getDatabase,
   withTransactionalDatabase,
 } from 'src/server/database'
-import {createOpaqueToken, hashOpaqueToken} from 'src/server/user-auth/token'
+import {createOpaqueToken, hashOpaqueToken} from 'src/server/auth/token'
 
 import type {CalendarRepository} from './service'
 

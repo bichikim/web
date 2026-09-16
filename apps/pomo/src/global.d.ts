@@ -2,6 +2,7 @@
 /// <reference types="vite/client" />
 
 import type {JSX} from 'solid-js'
+import type {RequestAuthentication} from './server/auth/types'
 
 interface ImportMetaEnv {
   readonly CRON_SECRET?: string
@@ -47,6 +48,7 @@ interface ImportMetaEnv {
 
 declare namespace App {
   interface RequestEventLocals {
+    authentication?: RequestAuthentication
     securityNonce: string
   }
 }

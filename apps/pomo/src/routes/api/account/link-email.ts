@@ -3,12 +3,12 @@ import {z} from 'zod'
 
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {authenticateAppRequest} from 'src/server/user-auth/http'
-import {sendAccountLinkEmail} from 'src/server/user-auth/magic-link'
+import {authenticateAppRequest} from 'src/server/auth/authenticate-app-request'
+import {sendAccountLinkEmail} from 'src/server/auth/magic-link'
 import {
   createAccountLinkChallenge,
   invalidateAccountLinkChallenge,
-} from 'src/server/user-auth/repository'
+} from 'src/server/auth/repository'
 
 const MAXIMUM_BODY_SIZE = 4096
 const MAX_EMAIL_LENGTH = 320

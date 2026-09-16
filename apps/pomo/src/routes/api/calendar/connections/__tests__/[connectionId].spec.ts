@@ -3,12 +3,12 @@ import type {APIEvent} from '@solidjs/start/server'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const dependencyMocks = vi.hoisted(() => ({
-  authenticateUserRequest: vi.fn(),
   deleteConnection: vi.fn(),
+  resolveUserRequest: vi.fn(),
 }))
 
-vi.mock('src/server/user-auth/request', () => ({
-  authenticateUserRequest: dependencyMocks.authenticateUserRequest,
+vi.mock('src/server/auth/resolve-user-request', () => ({
+  resolveUserRequest: dependencyMocks.resolveUserRequest,
 }))
 vi.mock('src/server/calendar/runtime', () => ({
   deleteCalendarConnection: dependencyMocks.deleteConnection,
@@ -18,7 +18,7 @@ import {DELETE} from '../[connectionId]'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dependencyMocks.authenticateUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  dependencyMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
   dependencyMocks.deleteConnection.mockResolvedValue(true)
 })
 

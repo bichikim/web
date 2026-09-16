@@ -1,5 +1,5 @@
 import {noStoreJson} from '../http/response'
-import {getAdminSession} from './get-admin-session'
+import {getAuthSession} from './get-auth-session'
 
 const HTTP_UNAUTHORIZED = 401
 const HTTP_FORBIDDEN = 403
@@ -19,25 +19,25 @@ export type AdminAuthorization = AuthorizedAdminRequest | RejectedAdminRequest
 
 export const authorizeAdminRequest = async (request: Request): Promise<AdminAuthorization> => {
   try {
-    const result = await getAdminSession(request)
+    const result = await getAuthSession(request, {provider: 'neon'})
 
     switch (result.access) {
       case 'admin':
-        return {authorized: true, cookies: result.cookies}
+        return {authorized: true, cookies: result.setCookies}
       case 'anonymous':
         return {
           authorized: false,
           response: noStoreJson(
             {error: 'unauthorized'},
-            {cookies: result.cookies, status: HTTP_UNAUTHORIZED},
+            {cookies: result.setCookies, status: HTTP_UNAUTHORIZED},
           ),
         }
-      case 'forbidden':
+      case 'user':
         return {
           authorized: false,
           response: noStoreJson(
             {error: 'forbidden'},
-            {cookies: result.cookies, status: HTTP_FORBIDDEN},
+            {cookies: result.setCookies, status: HTTP_FORBIDDEN},
           ),
         }
       case 'invalid':
@@ -45,7 +45,7 @@ export const authorizeAdminRequest = async (request: Request): Promise<AdminAuth
           authorized: false,
           response: noStoreJson(
             {error: 'authentication_unavailable'},
-            {cookies: result.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+            {cookies: result.setCookies, status: HTTP_SERVICE_UNAVAILABLE},
           ),
         }
       default: {

@@ -3,8 +3,8 @@ import {z} from 'zod'
 
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {getNeonSession} from 'src/server/user-auth/neon-session'
-import {completeAccountLink} from 'src/server/user-auth/repository'
+import {getAuthSession} from 'src/server/auth/get-auth-session'
+import {completeAccountLink} from 'src/server/auth/repository'
 
 const MAXIMUM_BODY_SIZE = 4096
 const MINIMUM_TOKEN_LENGTH = 32
@@ -30,12 +30,12 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     )
   }
 
-  const session = await getNeonSession(event.request)
+  const session = await getAuthSession(event.request, {provider: 'neon'})
 
   if (session.identity === null) {
     return noStoreJson(
       {error: 'unauthorized'},
-      {cookies: session.cookies, status: HTTP_UNAUTHORIZED},
+      {cookies: session.setCookies, status: HTTP_UNAUTHORIZED},
     )
   }
 
@@ -47,18 +47,18 @@ export const POST = async (event: APIEvent): Promise<Response> => {
 
   switch (result.status) {
     case 'linked': {
-      return noStoreJson({linked: true, userId: result.userId}, {cookies: session.cookies})
+      return noStoreJson({linked: true, userId: result.userId}, {cookies: session.setCookies})
     }
     case 'identity-conflict': {
       return noStoreJson(
         {error: 'identity_conflict'},
-        {cookies: session.cookies, status: HTTP_CONFLICT},
+        {cookies: session.setCookies, status: HTTP_CONFLICT},
       )
     }
     case 'invalid-challenge': {
       return noStoreJson(
         {error: 'invalid_challenge'},
-        {cookies: session.cookies, status: HTTP_GONE},
+        {cookies: session.setCookies, status: HTTP_GONE},
       )
     }
     default: {

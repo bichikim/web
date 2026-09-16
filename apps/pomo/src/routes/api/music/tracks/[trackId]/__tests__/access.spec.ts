@@ -14,9 +14,9 @@ const userMocks = vi.hoisted(() => ({findOrCreateNeonUser: vi.fn()}))
 vi.mock('src/server/music/catalog-repository', () => repositoryMocks)
 vi.mock('src/server/music/playback-access', () => playbackMocks)
 vi.mock('src/server/music/preview-access', () => previewMocks)
-vi.mock('src/server/user-auth/http', () => authMocks)
-vi.mock('src/server/user-auth/neon-session', () => neonMocks)
-vi.mock('src/server/user-auth/repository', () => userMocks)
+vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
+vi.mock('src/server/auth/get-neon-session', () => neonMocks)
+vi.mock('src/server/auth/repository', () => userMocks)
 
 import {GET} from '../access'
 import {invokeApiRoute} from '../../../../__tests__/invoke'
@@ -36,7 +36,7 @@ const createRequest = (authorization?: string): Request =>
 describe('track access route', () => {
   beforeEach(() => {
     authMocks.authenticateAppRequest.mockReset().mockResolvedValue(null)
-    neonMocks.getNeonSession.mockReset().mockResolvedValue({cookies: [], identity: null})
+    neonMocks.getNeonSession.mockReset().mockResolvedValue({identity: null, setCookies: []})
     playbackMocks.createPlaybackAccess.mockReset().mockResolvedValue({
       expiresAt: new Date('2026-08-23T01:15:00.000Z'),
       url: 'https://audio.pomofi.io/tracks/asset/source.mp3?token=signed',
@@ -61,8 +61,8 @@ describe('track access route', () => {
 
   it('should issue a bounded preview URL for an authenticated web user without entitlement', async () => {
     neonMocks.getNeonSession.mockResolvedValue({
-      cookies: ['neon-session=refreshed'],
       identity: {id: 'neon-user-id'},
+      setCookies: ['neon-session=refreshed'],
     })
 
     const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
@@ -119,8 +119,8 @@ describe('track access route', () => {
 
   it('should report a missing published preview asset', async () => {
     neonMocks.getNeonSession.mockResolvedValue({
-      cookies: [],
       identity: {id: 'neon-user-id'},
+      setCookies: [],
     })
     repositoryMocks.findPublishedTrackPreviewAsset.mockResolvedValue(null)
 
