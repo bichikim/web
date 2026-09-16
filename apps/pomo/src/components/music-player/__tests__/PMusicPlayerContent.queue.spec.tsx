@@ -106,6 +106,37 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     expect(audio.pause).not.toHaveBeenCalled()
   })
 
+  it('should complete a repeat-one restart after removing a non-current track', () => {
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
+      () =>
+        new Promise(() => {
+          // Intentionally pending to isolate the queue edit.
+        }),
+    )
+    render(() => <PMusicPlayerContent />)
+    const audio = createAudio()
+
+    latestViewProps().onAlbumAdd?.([ADDED_TRACK, TRACKS[0], TRACKS[1]])
+    latestViewProps().onRepeatModeChange('repeat-one')
+    featureMocks.resolveTrackEnd.mockReturnValueOnce('restart-current')
+    emit('ended')
+    expect(featureMocks.resolveTrackEnd).toHaveBeenCalledWith(
+      expect.objectContaining({repeatMode: 'repeat-one'}),
+    )
+    expect(audio.play).toHaveBeenCalledOnce()
+
+    vi.mocked(audio.pause).mockClear()
+    featureMocks.resolveTrackRemoval.mockReturnValueOnce({
+      currentTrackChanged: false,
+      nextCurrentIndex: 0,
+    })
+    latestViewProps().onTrackRemove?.(1)
+    emit('play')
+
+    expect(audio.pause).not.toHaveBeenCalled()
+    expect(latestViewProps().isPlaying).toBe(true)
+  })
+
   it('should clear before initial loading and merge a concurrently added active track', async () => {
     let resolveClearedTracks: ((tracks: readonly PTrack[]) => void) | undefined
     featureMocks.loadPTrackQueueSource.mockImplementationOnce(
