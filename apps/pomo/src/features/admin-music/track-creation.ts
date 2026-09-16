@@ -23,18 +23,46 @@ interface CreateTrackWithAudioFailure {
 
 export type CreateTrackWithAudioResult = CreateTrackWithAudioFailure | CreateTrackWithAudioSuccess
 
-const createTrack = async (body: Readonly<Record<string, unknown>>): Promise<string> => {
-  const response = await fetch('/api/admin/music/tracks', {
-    body: JSON.stringify(body),
-    headers: {'Content-Type': 'application/json'},
-    method: 'POST',
-  })
+interface CreatedTrack {
+  readonly status: 'created'
+  readonly id: string
+}
+interface UnconfirmedTrack {
+  readonly status: 'unconfirmed'
+  readonly error: unknown
+}
 
-  if (!response.ok) {
-    throw new Error('곡 정보를 저장하지 못했습니다.')
+interface RejectedTrack {
+  readonly status: 'rejected'
+  readonly error: Error
+}
+
+const HTTP_BAD_REQUEST = 400
+const HTTP_SERVER_ERROR = 500
+
+const createTrack = async (
+  body: Readonly<Record<string, unknown>>,
+): Promise<CreatedTrack | UnconfirmedTrack | RejectedTrack> => {
+  try {
+    const response = await fetch('/api/admin/music/tracks', {
+      body: JSON.stringify(body),
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+    if (!response.ok) {
+      const error = new Error('곡 정보를 저장하지 못했습니다.')
+      return {
+        error,
+        status:
+          response.status >= HTTP_BAD_REQUEST && response.status < HTTP_SERVER_ERROR
+            ? 'rejected'
+            : 'unconfirmed',
+      }
+    }
+    return {id: createdTrackSchema.parse(await response.json()).id, status: 'created'}
+  } catch (error) {
+    return {error, status: 'unconfirmed'}
   }
-
-  return createdTrackSchema.parse(await response.json()).id
 }
 
 export const removeTrack = async (trackId: string): Promise<void> => {
@@ -50,11 +78,19 @@ export const removeTrack = async (trackId: string): Promise<void> => {
 export const createTrackWithAudio = async (
   input: CreateTrackWithAudioInput,
 ): Promise<CreateTrackWithAudioResult> => {
-  const trackId = await createTrack({
+  const track = await createTrack({
     albumId: input.albumId,
     artist: input.artist,
     title: input.title,
   })
+
+  if (track.status === 'rejected') {
+    throw track.error
+  }
+  if (track.status === 'unconfirmed') {
+    return {cleanupStatus: 'preserved', error: track.error, success: false}
+  }
+  const trackId = track.id
 
   try {
     const uploadResult = await uploadTrackAudio({file: input.audio, trackId})

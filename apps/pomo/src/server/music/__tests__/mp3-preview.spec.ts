@@ -131,7 +131,7 @@ describe('MP3 header boundaries', () => {
     expect(() => extractMp3Preview(id3, 1000)).toThrow('invalid_mp3_id3')
   })
 
-  it('should reject ID3 metadata beyond the maximum size', () => {
+  it('should reject large ID3 metadata missing its declared body', () => {
     const id3 = new Uint8Array(10)
     id3.set([0x49, 0x44, 0x33, 0x04, 0, 0, 0, 0x20, 0, 0])
 

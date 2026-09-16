@@ -81,6 +81,7 @@ export const listAdminMusic = async () => {
       .orderBy(asc(musicTrackRegistrations.albumId), asc(musicTrackRegistrations.createdAt)),
     database
       .select({
+        artworkUrl: musicTrackAssets.artworkUrl,
         id: musicTrackAssets.id,
         status: musicTrackAssets.status,
         trackId: musicTrackAssets.trackId,

@@ -1,5 +1,10 @@
 import {createSignal} from 'solid-js'
-import type {AdminAlbum, AdminCatalog, AdminMusicModel} from 'src/features/admin-music'
+import type {
+  AdminAlbum,
+  AdminCatalog,
+  AdminMusicModel,
+  TrackImportTask,
+} from 'src/features/admin-music'
 import {vi} from 'vitest'
 export const createAlbum = (
   status: AdminAlbum['status'] = 'draft',
@@ -75,18 +80,15 @@ interface ModelHarness {
   readonly setConfirmingAssetId: (id: string | null) => void
   readonly setRemovingTrackId: (id: string | null) => void
   readonly setSavingOffer: (saving: boolean) => void
-  readonly setSavingTrack: (saving: boolean) => void
   readonly setUpdatingAlbumId: (id: string | null) => void
 }
-
-const TRACK_RESET_VERSION = 3
 
 export const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG): ModelHarness => {
   const [catalog, setCatalog] = createSignal(initialCatalog)
   const [confirmingAssetId, setConfirmingAssetId] = createSignal<string | null>(null)
   const [removingTrackId, setRemovingTrackId] = createSignal<string | null>(null)
   const [savingOffer, setSavingOffer] = createSignal(false)
-  const [savingTrack, setSavingTrack] = createSignal(false)
+  const [importingTracks, setImportingTracks] = createSignal(false)
   const [updatingAlbumId, setUpdatingAlbumId] = createSignal<string | null>(null)
   const model = {
     catalog,
@@ -95,18 +97,21 @@ export const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG):
     handleOfferSubmit: vi.fn(),
     handleTrackConfirmation: vi.fn().mockResolvedValue(undefined),
     handleTrackRemove: vi.fn().mockResolvedValue(undefined),
-    handleTrackSubmit: vi.fn(),
     isConfirmingAsset: (assetId: string) => confirmingAssetId() === assetId,
+    isImportingTracks: importingTracks,
     isRemovingTrack: (trackId: string) => removingTrackId() === trackId,
     isSavingOffer: savingOffer,
-    isSavingTrack: savingTrack,
     isUpdatingAlbum: (albumId: string) => updatingAlbumId() === albumId,
     removingTrackId,
-    setTrackArtist: vi.fn(),
-    setTrackTitle: vi.fn(),
-    trackArtist: () => '기존 가수',
-    trackResetVersion: () => TRACK_RESET_VERSION,
-    trackTitle: () => '기존 제목',
+    runTrackImport: async (importTracks: TrackImportTask) => {
+      setImportingTracks(true)
+      try {
+        await importTracks()
+      } finally {
+        setImportingTracks(false)
+      }
+    },
+    submitTrack: vi.fn().mockResolvedValue({status: 'created'}),
     updatingAlbumId,
   } as unknown as AdminMusicModel
 
@@ -116,7 +121,6 @@ export const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG):
     setConfirmingAssetId,
     setRemovingTrackId,
     setSavingOffer,
-    setSavingTrack,
     setUpdatingAlbumId,
   }
 }
