@@ -243,3 +243,19 @@ it('should release pending restart persistence when controlled tracks change', a
     trackId: NEXT_TRACK.id,
   })
 })
+
+it('should preserve playback when controlled tracks replace the current source', async () => {
+  const {controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  controller.onPause()
+
+  expect(controller.isPlaying()).toBe(true)
+  expect(readStoredPlayback()).toMatchObject({
+    isPlaying: true,
+    positionSeconds: 0,
+    trackId: NEXT_TRACK.id,
+  })
+})

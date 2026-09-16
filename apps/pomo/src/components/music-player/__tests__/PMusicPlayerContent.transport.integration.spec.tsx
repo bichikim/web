@@ -36,14 +36,17 @@ describe('PMusicPlayerContent transport integration', () => {
 
     fireEvent(audio, new Event('ended'))
     await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
     expect(audio.getAttribute('src')).toBe('/three.mp3')
 
     fireEvent(audio, new Event('ended'))
     await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
     expect(audio.getAttribute('src')).toBe('/one.mp3')
 
     fireEvent(audio, new Event('ended'))
     await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
     expect(audio.getAttribute('src')).toBe('/three.mp3')
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(3)
   })
@@ -66,6 +69,40 @@ describe('PMusicPlayerContent transport integration', () => {
       .querySelector<HTMLElement>('span')
     expect(firstLevel?.classList.contains('opacity-76')).toBe(true)
     expect(firstLevel?.style.opacity).toBe('')
+  })
+
+  it('should resume the next track after the source replacement pause', async () => {
+    localStorage.clear()
+    const onPlayingChange = vi.fn()
+    const result = render(() => (
+      <PMusicPlayerContent onPlayingChange={onPlayingChange} tracks={TRACKS} />
+    ))
+    const audio = getAudioElement(result.container)
+
+    vi.spyOn(audio, 'load').mockImplementation(() => undefined)
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('play'))
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.click(screen.getByRole('button', {name: '다음 곡'}))
+    await Promise.resolve()
+    fireEvent(audio, new Event('pause'))
+
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
+    expect(onPlayingChange).toHaveBeenLastCalledWith(true)
+    expect(
+      screen
+        .getByRole('button', {name: '이전 곡'})
+        .parentElement?.querySelector('media-play-button')
+        ?.getAttribute('aria-label'),
+    ).toBe('일시 정지')
+
+    fireEvent(audio, new Event('loadedmetadata'))
+    await Promise.resolve()
+    fireEvent(audio, new Event('seeking'))
+
+    expect(audio.load).toHaveBeenCalledOnce()
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+    expect(audio.pause).not.toHaveBeenCalled()
   })
 
   it('should report the current track when selection changes', async () => {
