@@ -9,6 +9,7 @@ import {
   createAudio,
   emit,
   getFeatureMocks,
+  latestController,
   latestViewProps,
   TRACKS,
 } from './PMusicPlayerContent.test-support'
@@ -81,6 +82,28 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     expect(featureMocks.writePPlaylist).toHaveBeenCalledWith([ADDED_TRACK.id])
     expect(onError).toHaveBeenCalledWith(failure)
     expect(latestViewProps().isPlaying).toBe(true)
+  })
+
+  it('should keep pending playback when removing a non-current track', () => {
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
+      () =>
+        new Promise(() => {
+          // Intentionally pending to isolate the queue edit.
+        }),
+    )
+    render(() => <PMusicPlayerContent />)
+    const audio = createAudio()
+
+    latestViewProps().onAlbumAdd?.([ADDED_TRACK, TRACKS[0], TRACKS[1]])
+    latestController().play()
+    vi.mocked(audio.pause).mockClear()
+    featureMocks.resolveTrackRemoval.mockReturnValueOnce({
+      currentTrackChanged: false,
+      nextCurrentIndex: 0,
+    })
+    latestViewProps().onTrackRemove?.(1)
+
+    expect(audio.pause).not.toHaveBeenCalled()
   })
 
   it('should clear before initial loading and merge a concurrently added active track', async () => {
@@ -185,5 +208,133 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
       expect.objectContaining({storedPlayback, tracks: restoredTracks}),
     )
+  })
+
+  it('should restore stored playback after a queue edit during initial loading', async () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 42,
+      trackId: 'two',
+    } satisfies PPlaybackState
+    featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
+    let resolveTracks: ((tracks: readonly PTrack[]) => void) | undefined
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
+        }),
+    )
+    featureMocks.resolvePlaybackRestore.mockImplementationOnce(
+      ({
+        storedPlayback,
+        tracks,
+      }: {
+        readonly storedPlayback: PPlaybackState
+        readonly tracks: readonly PTrack[]
+      }) => ({
+        currentIndex: tracks.findIndex((track) => track.id === storedPlayback.trackId),
+        playback: storedPlayback,
+        shouldPersist: false,
+      }),
+    )
+
+    render(() => <PMusicPlayerContent />)
+    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
+    resolveTracks?.(TRACKS)
+    await vi.waitFor(() =>
+      expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          storedPlayback,
+          tracks: [...TRACKS, ADDED_TRACK],
+        }),
+      ),
+    )
+    expect(latestViewProps().currentTrack).toBe(TRACKS[1])
+    expect(latestViewProps().tracks).toEqual([...TRACKS, ADDED_TRACK])
+  })
+
+  it('should preserve initial queue edits while the saved playlist is pending', async () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 42,
+      trackId: 'two',
+    } satisfies PPlaybackState
+    featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
+    const playlist = Promise.withResolvers<readonly string[] | null>()
+    featureMocks.readPPlaylist.mockReturnValue(playlist.promise)
+    let resolveTracks: ((tracks: readonly PTrack[]) => void) | undefined
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveTracks = (tracks) =>
+            resolve({defaultTracks: tracks, tracks: [...tracks, ADDED_TRACK]})
+        }),
+    )
+    featureMocks.resolvePlaybackRestore.mockImplementationOnce(
+      ({
+        storedPlayback,
+        tracks,
+      }: {
+        readonly storedPlayback: PPlaybackState
+        readonly tracks: readonly PTrack[]
+      }) => ({
+        currentIndex: tracks.findIndex((track) => track.id === storedPlayback.trackId),
+        playback: storedPlayback,
+        shouldPersist: false,
+      }),
+    )
+
+    render(() => <PMusicPlayerContent />)
+    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
+    resolveTracks?.(TRACKS)
+    await vi.waitFor(() => expect(latestViewProps().tracks).toEqual([...TRACKS, ADDED_TRACK]))
+    expect(featureMocks.resolvePPlaylist).not.toHaveBeenCalled()
+    expect(latestViewProps().currentTrack).toBe(TRACKS[1])
+
+    playlist.resolve([storedPlayback.trackId])
+    await Promise.resolve()
+    expect(latestViewProps().tracks).toEqual([...TRACKS, ADDED_TRACK])
+  })
+
+  it('should restore playback after removing a non-current track during initial loading', async () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 42,
+      trackId: 'two',
+    } satisfies PPlaybackState
+    featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
+    let resolveTracks: ((tracks: readonly PTrack[]) => void) | undefined
+    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
+        }),
+    )
+    featureMocks.resolvePlaybackRestore.mockImplementationOnce(
+      ({
+        storedPlayback,
+        tracks,
+      }: {
+        readonly storedPlayback: PPlaybackState
+        readonly tracks: readonly PTrack[]
+      }) => ({
+        currentIndex: tracks.findIndex((track) => track.id === storedPlayback.trackId),
+        playback: storedPlayback,
+        shouldPersist: false,
+      }),
+    )
+
+    render(() => <PMusicPlayerContent />)
+    latestViewProps().onAlbumAdd?.([ADDED_TRACK, TRACKS[0]])
+    featureMocks.resolveTrackRemoval.mockReturnValueOnce({
+      currentTrackChanged: false,
+      nextCurrentIndex: 0,
+    })
+    latestViewProps().onTrackRemove?.(1)
+    resolveTracks?.(TRACKS)
+    await vi.waitFor(() =>
+      expect(latestViewProps().tracks).toEqual([TRACKS[1], TRACKS[2], ADDED_TRACK]),
+    )
+    expect(latestViewProps().currentTrack).toBe(TRACKS[1])
   })
 })
