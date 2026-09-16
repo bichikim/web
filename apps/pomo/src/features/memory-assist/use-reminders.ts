@@ -45,8 +45,66 @@ const getReminderTime = (memo: MemoryMemo) => {
   return timestamps.length === 0 ? null : Math.min(...timestamps)
 }
 
-const isMemoryMemoCurrent = (memos: ReadonlyArray<MemoryMemo>, deliveredMemo: MemoryMemo) =>
-  memos.some((memo) => memo.id === deliveredMemo.id && memo.updatedAt === deliveredMemo.updatedAt)
+const getScheduledReminderTime = (memo: MemoryMemo, kind: MemoryReminderKind) => {
+  const scheduledAt = kind === 'exact' ? memo.nextExactReminderAt : memo.nextRecallAt
+  return scheduledAt === null ? null : Date.parse(scheduledAt)
+}
+
+const getReminderScheduleIdentity = (memo: MemoryMemo, kind: MemoryReminderKind) =>
+  kind === 'exact'
+    ? JSON.stringify([
+        memo.exactReminderAdvanceMinutes,
+        memo.exactReminderAt,
+        memo.exactReminderRepeatIntervalMinutes,
+        memo.exactReminderRepeatUntilMinutes,
+      ])
+    : JSON.stringify([memo.recallMode, memo.reinforcementIndex])
+
+const applyReminderSchedule = (memo: MemoryMemo, scheduledMemo: MemoryMemo): MemoryMemo => ({
+  ...memo,
+  exactReminderAt: scheduledMemo.exactReminderAt,
+  nextExactReminderAt: scheduledMemo.nextExactReminderAt,
+  nextRecallAt: scheduledMemo.nextRecallAt,
+  reinforcementIndex: scheduledMemo.reinforcementIndex,
+})
+
+interface GetMemoAfterSkippingReminderOptions {
+  readonly kind: MemoryReminderKind
+  readonly memo: MemoryMemo
+  readonly now: Date
+  readonly random: () => number
+}
+
+const getMemoAfterSkippingReminder = (options: GetMemoAfterSkippingReminderOptions): MemoryMemo => {
+  const advancedMemo = advanceMemoryMemo(options)
+
+  return applyReminderSchedule(options.memo, advancedMemo)
+}
+
+const getMemoryMemoDeliverySnapshot = (memo: MemoryMemo) =>
+  JSON.stringify({
+    createdAt: memo.createdAt,
+    deletionPending: memo.deletionPending,
+    dialogueId: memo.dialogueId,
+    exactReminderAdvanceMinutes: memo.exactReminderAdvanceMinutes,
+    exactReminderAt: memo.exactReminderAt,
+    exactReminderRepeatIntervalMinutes: memo.exactReminderRepeatIntervalMinutes,
+    exactReminderRepeatUntilMinutes: memo.exactReminderRepeatUntilMinutes,
+    id: memo.id,
+    recallMode: memo.recallMode,
+    retiredDialogueIds: memo.retiredDialogueIds,
+    text: memo.text,
+    updatedAt: memo.updatedAt,
+    version: memo.version,
+  })
+
+const isMemoryMemoDeliverySnapshotCurrent = (
+  memos: ReadonlyArray<MemoryMemo>,
+  deliveredMemo: MemoryMemo,
+) => {
+  const deliveredSnapshot = getMemoryMemoDeliverySnapshot(deliveredMemo)
+  return memos.some((memo) => getMemoryMemoDeliverySnapshot(memo) === deliveredSnapshot)
+}
 
 interface ReplaceDeliveredMemoOptions {
   readonly deliveredMemo: MemoryMemo
@@ -62,12 +120,69 @@ interface ReplaceDeliveredMemoResult {
   readonly wasReplaced: boolean
 }
 
+interface InvalidatedReminder {
+  readonly kind: MemoryReminderKind
+  readonly memo: MemoryMemo
+  readonly scheduledAt: number
+  readonly scheduleIdentity: string
+}
+
+interface VerifyMemoAfterPlaybackOptions {
+  readonly currentMemos: ReadonlyArray<MemoryMemo>
+  readonly deliveredMemo: MemoryMemo
+  readonly invalidatedReminders: Map<string, InvalidatedReminder>
+  readonly kind: MemoryReminderKind
+  readonly played: boolean
+  readonly random: () => number
+}
+
+const verifyMemoAfterPlayback = (options: VerifyMemoAfterPlaybackOptions) => {
+  if (isMemoryMemoDeliverySnapshotCurrent(options.currentMemos, options.deliveredMemo)) {
+    return true
+  }
+
+  if (!options.played) {
+    return false
+  }
+
+  const currentMemo = options.currentMemos.find((memo) => memo.id === options.deliveredMemo.id)
+  const scheduledAt = getScheduledReminderTime(options.deliveredMemo, options.kind)
+  const invalidatedReminder = options.invalidatedReminders.get(options.deliveredMemo.id)
+  const currentScheduledAt =
+    currentMemo === undefined ? null : getScheduledReminderTime(currentMemo, options.kind)
+  const isVirtualOccurrence =
+    currentMemo !== undefined &&
+    invalidatedReminder?.kind === options.kind &&
+    getScheduledReminderTime(invalidatedReminder.memo, options.kind) === scheduledAt &&
+    getReminderScheduleIdentity(currentMemo, options.kind) === invalidatedReminder.scheduleIdentity
+
+  if (
+    currentMemo === undefined ||
+    scheduledAt === null ||
+    (!isVirtualOccurrence && currentScheduledAt !== scheduledAt)
+  ) {
+    return false
+  }
+
+  options.invalidatedReminders.set(options.deliveredMemo.id, {
+    kind: options.kind,
+    memo: getMemoAfterSkippingReminder({
+      kind: options.kind,
+      memo: currentMemo,
+      now: new Date(),
+      random: options.random,
+    }),
+    scheduledAt: isVirtualOccurrence ? invalidatedReminder.scheduledAt : scheduledAt,
+    scheduleIdentity: getReminderScheduleIdentity(currentMemo, options.kind),
+  })
+  return false
+}
+
 const replaceDeliveredMemo = (options: ReplaceDeliveredMemoOptions): ReplaceDeliveredMemoResult => {
   const currentMemo = options.memos.find(
     (memo) =>
-      memo.id === options.deliveredMemo.id &&
-      memo.updatedAt === options.deliveredMemo.updatedAt &&
-      memo.deletionPending !== true,
+      memo.deletionPending !== true &&
+      isMemoryMemoDeliverySnapshotCurrent([memo], options.deliveredMemo),
   )
 
   if (currentMemo === undefined) {
@@ -79,7 +194,10 @@ const replaceDeliveredMemo = (options: ReplaceDeliveredMemoOptions): ReplaceDeli
       memo === currentMemo
         ? advanceMemoryMemo({
             kind: options.kind,
-            memo: {...memo, dialogueId: options.dialogueId},
+            memo: {
+              ...applyReminderSchedule(currentMemo, options.deliveredMemo),
+              dialogueId: options.dialogueId,
+            },
             now: options.now,
             random: options.random,
           })
@@ -123,6 +241,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   const [isPending, setIsPending] = createSignal(false)
   const [skippedMemos, setSkippedMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
   const retryAfter = new Map<string, number>()
+  const invalidatedReminders = new Map<string, InvalidatedReminder>()
   let client: SupertonicClient | null = null
   let clientModelId: SupertonicModelId | null = null
   let clientPreparation: Promise<SupertonicClient> | null = null
@@ -166,6 +285,11 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     return clientPreparation
   }
 
+  const markSkippedMemo = (memo: MemoryMemo) => {
+    setSkippedMemos((current) => [...current.filter((item) => item.id !== memo.id), memo])
+    retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+  }
+
   const deliver = async (memo: MemoryMemo) => {
     const now = new Date()
     const kind = getDueMemoryReminder(memo, now)
@@ -183,8 +307,6 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
         await repository?.deleteDialogue(generatedDialogueId)
       }
     }
-
-    const memoIsCurrent = () => isMemoryMemoCurrent(memos(), memo)
 
     if (dialogueId === null) {
       const settings = await (props.loadSettings ?? loadAutomaticDialogueSettings)()
@@ -211,29 +333,36 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     }
 
     try {
-      if (isDisposed || !memoIsCurrent()) {
+      if (isDisposed || !isMemoryMemoDeliverySnapshotCurrent(memos(), memo)) {
         return
       }
 
       await props.events.refreshDialogues()
 
-      if (isDisposed || !memoIsCurrent()) {
+      if (isDisposed || !isMemoryMemoDeliverySnapshotCurrent(memos(), memo)) {
         return
       }
 
       props.onBeforePlayback?.()
       const played = await props.events.playDialogue(dialogueId)
 
-      if (isDisposed || !memoIsCurrent()) {
+      if (isDisposed) {
         return
       }
 
-      if (!played) {
-        setSkippedMemos((current) => [...current.filter((item) => item.id !== memo.id), memo])
-        retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
-      }
+      const isCurrentAfterPlayback = verifyMemoAfterPlayback({
+        currentMemos: memos(),
+        deliveredMemo: memo,
+        invalidatedReminders,
+        kind,
+        played,
+        random: props.random ?? Math.random,
+      })
 
-      if (!played) {
+      if (!isCurrentAfterPlayback || !played) {
+        if (!played) {
+          markSkippedMemo(memo)
+        }
         return
       }
 
@@ -248,6 +377,14 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       })
 
       if (!wasReplaced) {
+        verifyMemoAfterPlayback({
+          currentMemos: memos(),
+          deliveredMemo: memo,
+          invalidatedReminders,
+          kind,
+          played: true,
+          random: props.random ?? Math.random,
+        })
         return
       }
 
@@ -304,16 +441,39 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       return
     }
 
+    const currentMemoIds = new Set(currentMemos.map((memo) => memo.id))
+    for (const memoId of invalidatedReminders.keys()) {
+      if (!currentMemoIds.has(memoId)) {
+        invalidatedReminders.delete(memoId)
+      }
+    }
+
     const scheduledMemos = currentMemos
-      .map((memo) => {
-        const reminderTime = getReminderTime(memo)
-        const availableAt = Math.max(
-          reminderTime ?? Number.POSITIVE_INFINITY,
-          retryAfter.get(memo.id) ?? 0,
-        )
-        return {availableAt, memo}
+      .flatMap((memo) => {
+        const invalidatedMemo = invalidatedReminders.get(memo.id)
+        let scheduledMemo = memo
+
+        if (invalidatedMemo !== undefined) {
+          if (
+            getScheduledReminderTime(memo, invalidatedMemo.kind) === invalidatedMemo.scheduledAt &&
+            getReminderScheduleIdentity(memo, invalidatedMemo.kind) ===
+              invalidatedMemo.scheduleIdentity
+          ) {
+            scheduledMemo = applyReminderSchedule(memo, invalidatedMemo.memo)
+          } else {
+            invalidatedReminders.delete(memo.id)
+          }
+        }
+
+        const reminderTime = getReminderTime(scheduledMemo)
+
+        if (reminderTime === null) {
+          return []
+        }
+
+        const availableAt = Math.max(reminderTime, retryAfter.get(memo.id) ?? 0)
+        return Number.isFinite(availableAt) ? [{availableAt, memo: scheduledMemo}] : []
       })
-      .filter((item) => Number.isFinite(item.availableAt))
       .sort((left, right) => left.availableAt - right.availableAt)
     const [scheduled] = scheduledMemos
 
@@ -333,7 +493,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       const currentMemos = memos()
       return skippedMemos().filter(
         (memo) =>
-          isMemoryMemoCurrent(currentMemos, memo) &&
+          isMemoryMemoDeliverySnapshotCurrent(currentMemos, memo) &&
           currentMemos.some(
             (current) => current.id === memo.id && current.deletionPending !== true,
           ),
