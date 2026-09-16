@@ -1,7 +1,8 @@
 /** @vitest-environment node */
 import type {APIEvent} from '@solidjs/start/server'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {UserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
 const dependencyMocks = vi.hoisted(() => ({
   listConnections: vi.fn(),
   resolveUserRequest: vi.fn(),
@@ -24,6 +25,10 @@ beforeEach(() => {
   ])
 })
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 it('should list calendar accounts without returning stored tokens', async () => {
   const response = await GET({
     request: new Request('https://www.pomofi.io/api/calendar/connections'),
@@ -33,4 +38,21 @@ it('should list calendar accounts without returning stored tokens', async () => 
     connections: [{accountLabel: 'person@example.com', id: 'connection-1', provider: 'google'}],
   })
   expect(dependencyMocks.listConnections).toHaveBeenCalledWith('user-1')
+})
+
+it('should preserve refreshed cookies when user resolution fails', async () => {
+  const error = new Error('user mapping down')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  dependencyMocks.resolveUserRequest.mockRejectedValue(
+    new UserRequestResolutionError(['session=refreshed'], error),
+  )
+
+  const response = await GET({
+    request: new Request('https://www.pomofi.io/api/calendar/connections'),
+  } as APIEvent)
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'calendar_connections_unavailable'})
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(consoleError).toHaveBeenCalledWith('Failed to resolve calendar user', error)
 })

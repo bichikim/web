@@ -1,7 +1,8 @@
 /** @vitest-environment node */
 import type {APIEvent} from '@solidjs/start/server'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {UserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
 const dependencyMocks = vi.hoisted(() => ({
   beginConnection: vi.fn(),
   getCalendarService: vi.fn(),
@@ -34,6 +35,10 @@ beforeEach(() => {
   dependencyMocks.beginConnection.mockResolvedValue('https://accounts.google.com/authorize')
 })
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 it('should reject an unsupported provider', async () => {
   const response = await POST(createEvent('apple'))
 
@@ -53,4 +58,19 @@ it('should create an authorization URL for the authenticated user', async () => 
     redirectUri: 'https://www.pomofi.io/api/calendar/callback/google',
     userId: 'user-1',
   })
+})
+
+it('should preserve refreshed cookies when user resolution fails', async () => {
+  const error = new Error('user mapping down')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  dependencyMocks.resolveUserRequest.mockRejectedValue(
+    new UserRequestResolutionError(['session=refreshed'], error),
+  )
+
+  const response = await POST(createEvent('google'))
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'calendar_connection_unavailable'})
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(consoleError).toHaveBeenCalledWith('Failed to resolve calendar user', error)
 })
