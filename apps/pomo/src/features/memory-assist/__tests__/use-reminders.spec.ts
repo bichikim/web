@@ -207,6 +207,37 @@ it('should reuse compressed dialogue audio for a later recall', async () => {
   view.cleanup()
 })
 
+it('should not schedule a reminder for a memo pending deletion', async () => {
+  mocks.memos = [
+    {
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-04T03:00:00.000Z',
+        id: 'memo-1',
+        now: new Date('2026-09-04T02:00:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: '삭제한 메모',
+      }),
+      deletionPending: true as const,
+      dialogueId: 'memory-memo-memo-1',
+    },
+  ]
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(true),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+
+  await flushPromises()
+
+  expect(vi.getTimerCount()).toBe(0)
+  expect(events.refreshDialogues).not.toHaveBeenCalled()
+  expect(events.playDialogue).not.toHaveBeenCalled()
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+
+  view.cleanup()
+})
+
 it.each(['persistence', 'refresh', 'playback'] as const)(
   'should discard generated audio when %s fails',
   async (stage) => {

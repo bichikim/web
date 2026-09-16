@@ -17,6 +17,7 @@ import {
 import {useDeletionRecovery} from './use-deletion-recovery'
 import {memoryMemoDeletion} from './deletion-runtime'
 import {createMemoryMemoDialogue} from './dialogue'
+import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import {updateMemoryMemos} from './repository'
 import {advanceMemoryMemo, getDueMemoryReminder, type MemoryReminderKind} from './schedule'
 import type {MemoryMemo} from './schema'
@@ -46,7 +47,12 @@ const getReminderTime = (memo: MemoryMemo) => {
 }
 
 const isMemoryMemoCurrent = (memos: ReadonlyArray<MemoryMemo>, deliveredMemo: MemoryMemo) =>
-  memos.some((memo) => memo.id === deliveredMemo.id && memo.updatedAt === deliveredMemo.updatedAt)
+  memos.some(
+    (memo) =>
+      memo.id === deliveredMemo.id &&
+      memo.updatedAt === deliveredMemo.updatedAt &&
+      !isMemoryMemoDeletionPending(memo),
+  )
 
 interface ReplaceDeliveredMemoOptions {
   readonly deliveredMemo: MemoryMemo
@@ -67,7 +73,7 @@ const replaceDeliveredMemo = (options: ReplaceDeliveredMemoOptions): ReplaceDeli
     (memo) =>
       memo.id === options.deliveredMemo.id &&
       memo.updatedAt === options.deliveredMemo.updatedAt &&
-      memo.deletionPending !== true,
+      !isMemoryMemoDeletionPending(memo),
   )
 
   if (currentMemo === undefined) {
@@ -305,6 +311,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     }
 
     const scheduledMemos = currentMemos
+      .filter((memo) => !isMemoryMemoDeletionPending(memo))
       .map((memo) => {
         const reminderTime = getReminderTime(memo)
         const availableAt = Math.max(
@@ -331,13 +338,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   return {
     skippedReminders: () => {
       const currentMemos = memos()
-      return skippedMemos().filter(
-        (memo) =>
-          isMemoryMemoCurrent(currentMemos, memo) &&
-          currentMemos.some(
-            (current) => current.id === memo.id && current.deletionPending !== true,
-          ),
-      )
+      return skippedMemos().filter((memo) => isMemoryMemoCurrent(currentMemos, memo))
     },
   }
 }

@@ -1,4 +1,5 @@
 import {isMemoryMemoOwnedDialogue} from './dialogue-id'
+import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import type {MemoryMemo} from './schema'
 
 export interface DeleteMemoryMemoOptions {
@@ -88,7 +89,7 @@ export const createMemoryMemoDeletion = (
       }
 
       await dependencies.update((memos) =>
-        memos.filter((current) => current.id !== memo.id || current.deletionPending !== true),
+        memos.filter((current) => current.id !== memo.id || !isMemoryMemoDeletionPending(current)),
       )
       return 'deleted'
     } catch (error: unknown) {
@@ -121,10 +122,10 @@ export const createMemoryMemoDeletion = (
     const results = await Promise.allSettled(
       memos
         .filter(
-          (memo) => memo.deletionPending === true || (memo.retiredDialogueIds?.length ?? 0) > 0,
+          (memo) => isMemoryMemoDeletionPending(memo) || (memo.retiredDialogueIds?.length ?? 0) > 0,
         )
         .map((memo) =>
-          memo.deletionPending === true
+          isMemoryMemoDeletionPending(memo)
             ? deleteMemoryMemo({deleteDialogue, memoId: memo.id})
             : cleanup({deleteDialogue, memoId: memo.id}),
         ),

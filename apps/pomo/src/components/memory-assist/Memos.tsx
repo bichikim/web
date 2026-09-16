@@ -4,6 +4,7 @@ import * as m from '@paraglide/message'
 import {usePEvents} from '../../features/focus-room-dialogue'
 import {
   editMemoryMemo,
+  isMemoryMemoDeletionPending,
   type MemoryMemo,
   memoryMemoDeletion,
   updateMemoryMemos,
@@ -45,7 +46,7 @@ export const MemoryMemoList = () => {
     try {
       await updateMemoryMemos((currentMemos) =>
         currentMemos.map((currentMemo) => {
-          if (currentMemo.id !== memo.id || currentMemo.deletionPending === true) {
+          if (currentMemo.id !== memo.id || isMemoryMemoDeletionPending(currentMemo)) {
             return currentMemo
           }
 

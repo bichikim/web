@@ -24,6 +24,11 @@ export interface MemoryMemoRepository {
   readonly write: (memos: ReadonlyArray<MemoryMemo>) => Promise<void>
 }
 
+export interface MemoryMemosChangedEventDetail {
+  readonly memos: ReadonlyArray<MemoryMemo>
+  readonly revision: number
+}
+
 const runtimeTossWriter = createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson)
 
 const runtimeStorage = {
@@ -83,12 +88,15 @@ export const createMemoryMemoRepository = (
 
 const runtimeRepository = createMemoryMemoRepository()
 let updateQueue = Promise.resolve<ReadonlyArray<MemoryMemo>>([])
+let memoryMemosRevision = 0
 
 export const readMemoryMemos = () => runtimeRepository.read()
 
 export const writeMemoryMemos = async (memos: ReadonlyArray<MemoryMemo>) => {
   await runtimeRepository.write(memos)
-  window.dispatchEvent(new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {detail: memos}))
+  const revision = (memoryMemosRevision += 1)
+  const detail: MemoryMemosChangedEventDetail = {memos, revision}
+  window.dispatchEvent(new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {detail}))
 }
 
 export const updateMemoryMemos = (

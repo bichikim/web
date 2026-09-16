@@ -1,5 +1,6 @@
 import {clampUnit} from 'src/utils/clamp-unit'
 
+import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import type {MemoryMemo, MemoryRecallMode, MemoryReminderKind} from './schema'
 export type {MemoryReminderKind} from './schema'
 
@@ -194,6 +195,10 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
 }
 
 export const getDueMemoryReminder = (memo: MemoryMemo, now: Date): MemoryReminderKind | null => {
+  if (isMemoryMemoDeletionPending(memo)) {
+    return null
+  }
+
   const nowTime = now.getTime()
 
   if (memo.nextExactReminderAt !== null && Date.parse(memo.nextExactReminderAt) <= nowTime) {
