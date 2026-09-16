@@ -147,6 +147,267 @@ it.each([
   },
 )
 
+it('should continue an exact repeat after invalidating an edited playback occurrence', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      exactReminderRepeatIntervalMinutes: 10,
+      exactReminderRepeatUntilMinutes: 20,
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const playback = Promise.withResolvers<boolean>()
+  const playDialogue = vi.fn().mockReturnValue(playback.promise)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(playDialogue).toHaveBeenCalledOnce()
+
+    const editedMemo = {...memo, updatedAt: '2026-09-04T03:00:01.000Z'}
+    mocks.memos = [editedMemo]
+    playback.resolve(true)
+    await flushPromises()
+
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    await flushPromises()
+
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+    expect(mocks.memos[0]?.nextExactReminderAt).toBe('2026-09-04T03:20:00.000Z')
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should retain an invalidated occurrence across later edits to the same schedule', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      exactReminderRepeatIntervalMinutes: 10,
+      exactReminderRepeatUntilMinutes: 20,
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const playback = Promise.withResolvers<boolean>()
+  const playDialogue = vi.fn().mockReturnValue(playback.promise)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(playDialogue).toHaveBeenCalledOnce()
+
+    const firstEdit = {...memo, updatedAt: '2026-09-04T03:00:01.000Z'}
+    mocks.memos = [firstEdit]
+    playback.resolve(true)
+    await flushPromises()
+
+    const secondEdit = {
+      ...firstEdit,
+      text: '두 번째 수정',
+      updatedAt: '2026-09-04T03:00:02.000Z',
+    }
+    mocks.memos = [secondEdit]
+    Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'visible'})
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(playDialogue).toHaveBeenCalledOnce()
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    await flushPromises()
+
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+    expect(mocks.memos[0]?.nextExactReminderAt).toBe('2026-09-04T03:20:00.000Z')
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should advance a later invalidated occurrence after editing during its playback', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      exactReminderRepeatIntervalMinutes: 10,
+      exactReminderRepeatUntilMinutes: 30,
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const firstPlayback = Promise.withResolvers<boolean>()
+  const secondPlayback = Promise.withResolvers<boolean>()
+  const playDialogue = vi
+    .fn()
+    .mockReturnValueOnce(firstPlayback.promise)
+    .mockReturnValueOnce(secondPlayback.promise)
+    .mockResolvedValue(true)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(playDialogue).toHaveBeenCalledOnce()
+
+    const firstEdit = {...memo, updatedAt: '2026-09-04T03:00:01.000Z'}
+    mocks.memos = [firstEdit]
+    firstPlayback.resolve(true)
+    await flushPromises()
+
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+
+    mocks.memos = [
+      {
+        ...firstEdit,
+        dialogueId: null,
+        text: '반복 중 수정된 메모',
+        updatedAt: '2026-09-04T03:10:01.000Z',
+      },
+    ]
+    secondPlayback.resolve(true)
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+    expect(vi.getTimerCount()).toBe(1)
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    await flushPromises()
+    await vi.waitFor(() => expect(playDialogue).toHaveBeenCalledTimes(3))
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should discard an invalidated occurrence when its schedule is edited', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      exactReminderRepeatIntervalMinutes: 10,
+      exactReminderRepeatUntilMinutes: 20,
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const playback = Promise.withResolvers<boolean>()
+  const playDialogue = vi.fn().mockReturnValueOnce(playback.promise).mockResolvedValue(true)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(playDialogue).toHaveBeenCalledOnce()
+
+    const firstEdit = {...memo, updatedAt: '2026-09-04T03:00:01.000Z'}
+    mocks.memos = [firstEdit]
+    playback.resolve(true)
+    await flushPromises()
+
+    const scheduleEdit = {
+      ...firstEdit,
+      exactReminderRepeatIntervalMinutes: 20,
+      updatedAt: '2026-09-04T03:00:02.000Z',
+    }
+    mocks.memos = [scheduleEdit]
+    Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'visible'})
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(0)
+    await flushPromises()
+
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+    expect(mocks.memos[0]?.nextExactReminderAt).toBe('2026-09-04T03:20:00.000Z')
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should delay a skipped invalidated repeat before retrying it', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      exactReminderRepeatIntervalMinutes: 10,
+      exactReminderRepeatUntilMinutes: 20,
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const firstPlayback = Promise.withResolvers<boolean>()
+  const secondPlayback = Promise.withResolvers<boolean>()
+  const playDialogue = vi
+    .fn()
+    .mockReturnValueOnce(firstPlayback.promise)
+    .mockReturnValueOnce(secondPlayback.promise)
+    .mockResolvedValue(true)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(playDialogue).toHaveBeenCalledOnce()
+
+    const firstEdit = {...memo, updatedAt: '2026-09-04T03:00:01.000Z'}
+    mocks.memos = [firstEdit]
+    firstPlayback.resolve(true)
+    await flushPromises()
+
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+
+    mocks.memos = [{...firstEdit, updatedAt: '2026-09-04T03:10:01.000Z'}]
+    secondPlayback.resolve(false)
+    await flushPromises()
+
+    await vi.advanceTimersByTimeAsync(5 * 60_000 - 1)
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1)
+    await flushPromises()
+    expect(playDialogue).toHaveBeenCalledTimes(3)
+  } finally {
+    view.cleanup()
+  }
+})
+
 it('should not advance a reminder when playback is skipped', async () => {
   mocks.memos = [
     createMemoryMemo({

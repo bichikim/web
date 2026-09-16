@@ -103,6 +103,93 @@ it('should preserve an edit made while reminder persistence is waiting', async (
   view.cleanup()
 })
 
+it('should not replay a reminder when its edit is persisted after playback', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const persistence = Promise.withResolvers<void>()
+  mocks.updateMemos.mockImplementation(async (update) => {
+    await persistence.promise
+    mocks.memos = update(mocks.memos)
+    return mocks.memos
+  })
+  const playDialogue = vi.fn().mockResolvedValue(true)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    await vi.waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+
+    const editedMemo = {
+      ...memo,
+      text: '수정된 메모',
+      updatedAt: '2026-09-04T03:00:01.000Z',
+    }
+    mocks.memos = [editedMemo]
+    persistence.resolve()
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(playDialogue).toHaveBeenCalledOnce()
+    expect(mocks.memos).toEqual([editedMemo])
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should preserve a same-timestamp memo edit when reminder persistence is queued', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const persistence = Promise.withResolvers<void>()
+  mocks.updateMemos.mockImplementation(async (update) => {
+    await persistence.promise
+    mocks.memos = update(mocks.memos)
+    return mocks.memos
+  })
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(true),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    await vi.waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+
+    const editedMemo = {...memo, dialogueId: null, text: '같은 시각에 수정된 메모'}
+    mocks.memos = [editedMemo]
+    persistence.resolve()
+    await flushPromises()
+
+    expect(mocks.memos).toEqual([editedMemo])
+  } finally {
+    view.cleanup()
+  }
+})
+
 it('should not resurrect a deleted memo when reminder persistence was already queued', async () => {
   const memo = {
     ...createMemoryMemo({
