@@ -14,6 +14,40 @@ export const AdminMusic = () => {
       <Title>음악 / 앨범 관리 · 앱</Title>
       <AdminMusicHeader model={model} />
 
+      <Show when={model.isLeaveRequested()}>
+        <section
+          aria-label="화면 이동 확인"
+          class="mx-auto mt-6 w-full max-w-6xl rounded-3 bg-white/7 px-4 py-3 text-sm"
+          role="alert"
+        >
+          <p>
+            <Show
+              when={model.isImportingTracks()}
+              fallback="등록 작업이 끝났습니다. 요청한 화면으로 이동할까요?"
+            >
+              이동하면 대기 중인 곡은 등록되지 않습니다. 이미 보낸 요청은 완료될 수 있으므로, 나중에
+              목록에서 등록 상태를 확인해 주세요.
+            </Show>
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              class="rounded-2 bg-white/10 px-3 py-2"
+              onClick={model.cancelLeave}
+              type="button"
+            >
+              현재 화면에 머무르기
+            </button>
+            <button
+              class="rounded-2 bg-white/10 px-3 py-2"
+              onClick={model.confirmLeave}
+              type="button"
+            >
+              확인하고 이동
+            </button>
+          </div>
+        </section>
+      </Show>
+
       <Show when={model.catalogRefreshMessage()}>
         {(refreshMessage) => (
           <div
@@ -59,6 +93,7 @@ export const AdminMusic = () => {
         <section class="mx-auto mt-8 grid w-full max-w-6xl items-start gap-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
           <AlbumNavigation
             albums={model.catalog().albums}
+            disabled={model.isImportingTracks()}
             onAlbumSelect={model.setSelectedAlbumId}
             selectedAlbumId={model.selectedAlbumId()}
             trackCount={model.getTrackCount}

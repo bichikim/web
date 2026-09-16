@@ -32,6 +32,8 @@ export const TrackPanel = (props: TrackPanelProps) => {
   const [requestedTrackId, setRequestedTrackId] = createSignal<string | null>(null)
   const activeTrackIds = () =>
     new Set(props.assets.filter((asset) => asset.status === 'active').map((asset) => asset.trackId))
+  const trackArtwork = (trackId: string) =>
+    props.assets.find((asset) => asset.trackId === trackId && asset.status === 'active')?.artworkUrl
   const playableTracks = () =>
     props.tracks
       .filter((track) => activeTrackIds().has(track.id))
@@ -61,6 +63,7 @@ export const TrackPanel = (props: TrackPanelProps) => {
         </div>
         <button
           class={isFormOpen() ? SECONDARY_BUTTON_CLASSES : BUTTON_CLASSES}
+          disabled={props.model.isImportingTracks()}
           onClick={() => setIsFormOpen((isOpen) => !isOpen)}
           type="button"
         >
@@ -73,7 +76,9 @@ export const TrackPanel = (props: TrackPanelProps) => {
           <TrackForm
             albumId={props.albumId}
             albumTitle={props.albumTitle}
-            model={props.model}
+            isImporting={props.model.isImportingTracks}
+            submitTrack={props.model.submitTrack}
+            runTrackImport={props.model.runTrackImport}
             onCancel={() => setIsFormOpen(false)}
           />
         </div>
@@ -115,9 +120,23 @@ export const TrackPanel = (props: TrackPanelProps) => {
                   <span class="pt-2 text-center text-xs font-700 tabular-nums text-white/35">
                     {String(index() + 1).padStart(2, '0')}
                   </span>
-                  <span class="min-w-0 pt-1">
-                    <span class="block truncate text-sm font-750 text-white/90">{track.title}</span>
-                    <span class="mt-1 block truncate text-xs text-white/45">{track.artist}</span>
+                  <span class="flex min-w-0 items-center gap-3 pt-1">
+                    <Show when={trackArtwork(track.id)}>
+                      {(artwork) => (
+                        <img
+                          alt={`${track.title} 곡 이미지`}
+                          class="size-12 shrink-0 rounded-3 object-cover"
+                          loading="lazy"
+                          src={artwork()}
+                        />
+                      )}
+                    </Show>
+                    <span class="min-w-0">
+                      <span class="block truncate text-sm font-750 text-white/90">
+                        {track.title}
+                      </span>
+                      <span class="mt-1 block truncate text-xs text-white/45">{track.artist}</span>
+                    </span>
                   </span>
                   <button
                     aria-label={`${track.title} 수록곡 삭제`}

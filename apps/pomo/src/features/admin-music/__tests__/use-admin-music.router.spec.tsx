@@ -95,3 +95,55 @@ it('should retain a newer catalog refresh failure when an older retry settles', 
     '수록곡과 MP3 파일을 삭제했습니다. 목록을 새로고침하지 못했습니다.',
   )
 })
+
+it.each([false, true])(
+  'should retain the newest catalog when the older response finishes last: %s',
+  async (olderLast) => {
+    const older = Promise.withResolvers<Response>()
+    const newer = Promise.withResolvers<Response>()
+    const updatedCatalog = {
+      ...catalog,
+      albums: [
+        {
+          coverFallback: 'music',
+          id: 'new-album',
+          coverImageUrl: null,
+          status: 'draft',
+          release: {blockers: [], ready: false},
+          translations: [{albumId: 'new-album', locale: 'ko', description: '', title: '새 앨범'}],
+        },
+      ],
+    }
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json(catalog))
+    vi.stubGlobal('fetch', fetcher)
+    const model = renderAdminMusic()
+    await waitFor(() => expect(model.isLoading()).toBe(false))
+    let reads = 0
+    fetcher.mockImplementation(async (_input, options) => {
+      if (options?.method === 'DELETE') {
+        return Response.json({success: true})
+      }
+      reads += 1
+      if (reads === 1) {
+        return older.promise
+      }
+      return reads === 2 ? newer.promise : Response.json(updatedCatalog)
+    })
+    const importing = model.runTrackImport(async () => ({created: 1, failed: 0, preserved: 0}))
+    await waitFor(() => expect(reads).toBe(1))
+    const removal = model.handleTrackRemove('old-track')
+    await waitFor(() => expect(reads).toBeGreaterThanOrEqual(2))
+    if (olderLast) {
+      newer.resolve(Response.json(updatedCatalog))
+      await newer.promise
+      older.resolve(Response.json(catalog))
+    } else {
+      older.resolve(Response.json(catalog))
+      await older.promise
+      newer.resolve(Response.json(updatedCatalog))
+    }
+    await Promise.all([importing, removal])
+    expect(model.catalog()).toEqual(updatedCatalog)
+    expect(await adminCatalogQuery()).toEqual({catalog: updatedCatalog, status: 'ready'})
+  },
+)

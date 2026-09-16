@@ -3,6 +3,7 @@ import {For, Show} from 'solid-js'
 import {type AdminAlbum, getAlbumTranslation} from '../../features/admin-music'
 
 interface AlbumNavigationProps {
+  readonly disabled?: boolean
   readonly albums: ReadonlyArray<AdminAlbum>
   readonly onAlbumSelect: (albumId: string) => void
   readonly selectedAlbumId: string | null
@@ -23,6 +24,7 @@ export const AlbumNavigation = (props: AlbumNavigationProps) => (
 
           return (
             <button
+              disabled={props.disabled}
               aria-pressed={isSelected()}
               class={cx(
                 'flex w-full items-center gap-3 rounded-4 border px-3 py-3 text-left transition',

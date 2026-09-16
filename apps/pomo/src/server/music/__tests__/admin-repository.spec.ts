@@ -1,6 +1,7 @@
 /** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {musicTrackAssets} from '../../database'
 import {connectAlbumOffer, listAdminMusic, updateAlbumStatus} from '../admin-repository'
 
 const databaseMocks = vi.hoisted(() => ({getDatabase: vi.fn(), withTransactionalDatabase: vi.fn()}))
@@ -151,7 +152,12 @@ describe('listAdminMusic', () => {
       {albumId: 'album-1', artist: 'Artist', id: 'track-2', position: 1, title: 'Two'},
     ]
     const assets = [
-      {id: 'asset-1', status: 'active', trackId: 'track-1'},
+      {
+        artworkUrl: 'https://storage.pomofi.io/track-artwork/asset-1/cover',
+        id: 'asset-1',
+        status: 'active',
+        trackId: 'track-1',
+      },
       {id: 'asset-2', status: 'pending', trackId: 'track-2'},
     ]
     const pendingTracks = [
@@ -178,6 +184,9 @@ describe('listAdminMusic', () => {
       pendingTracks,
       tracks,
     })
+    expect(readSelect).toHaveBeenCalledWith(
+      expect.objectContaining({artworkUrl: musicTrackAssets.artworkUrl}),
+    )
   })
 
   it('should return empty collections for an empty database', async () => {
