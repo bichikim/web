@@ -1,8 +1,13 @@
-import {getRequestEvent} from 'solid-js/web'
 import {z} from 'zod'
 
+import {
+  loadPublicJson,
+  type LoadPublicJsonOptions,
+  type PublicAssetPath,
+} from 'src/features/public-assets'
+
 const WORD_SET_DIRECTORY = '/word-sets/'
-const WORD_SET_INDEX_PATH = `${WORD_SET_DIRECTORY}index.json`
+const WORD_SET_INDEX_PATH: PublicAssetPath = `${WORD_SET_DIRECTORY}index.json`
 
 const languageLearningWordSetIndexSchema = z.object({
   sets: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*\.json$/u)),
@@ -52,29 +57,15 @@ export interface LocalizedLanguageLearningWordSet extends Omit<
   readonly title: string
 }
 
-const getWordSetAssetUrl = (path: string): string => {
-  const requestUrl = getRequestEvent()?.request.url
-  return requestUrl === undefined ? path : new URL(path, requestUrl).href
-}
+const getWordSetAssetPath = (filename: string): PublicAssetPath =>
+  `${WORD_SET_DIRECTORY}${filename}`
 
-const loadJsonAsset = async (path: string): Promise<unknown> => {
-  let response: Response
-
-  try {
-    response = await fetch(getWordSetAssetUrl(path))
-  } catch (error: unknown) {
-    throw new Error(`Failed to fetch language learning word set asset: ${path}`, {cause: error})
-  }
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch language learning word set asset: ${response.status}`)
-  }
-
-  try {
-    return await response.json()
-  } catch (error: unknown) {
-    throw new Error(`Failed to parse language learning word set asset: ${path}`, {cause: error})
-  }
+const WORD_SET_ASSET_OPTIONS: LoadPublicJsonOptions = {
+  formatFetchFailure: ({path, status}) =>
+    status === undefined
+      ? `Failed to fetch language learning word set asset: ${path}`
+      : `Failed to fetch language learning word set asset: ${status}`,
+  formatParseFailure: ({path}) => `Failed to parse language learning word set asset: ${path}`,
 }
 
 export const parseLanguageLearningWordSetIndex = (value: unknown): LanguageLearningWordSetIndex => {
@@ -110,11 +101,19 @@ export const localizeLanguageLearningWordSet = (
 export const loadLanguageLearningWordSets = async (): Promise<
   ReadonlyArray<LanguageLearningWordSet>
 > => {
-  const index = parseLanguageLearningWordSetIndex(await loadJsonAsset(WORD_SET_INDEX_PATH))
+  const index = await loadPublicJson(
+    WORD_SET_INDEX_PATH,
+    parseLanguageLearningWordSetIndex,
+    WORD_SET_ASSET_OPTIONS,
+  )
 
   return Promise.all(
-    index.sets.map(async (filename) =>
-      parseLanguageLearningWordSet(await loadJsonAsset(`${WORD_SET_DIRECTORY}${filename}`)),
+    index.sets.map((filename) =>
+      loadPublicJson(
+        getWordSetAssetPath(filename),
+        parseLanguageLearningWordSet,
+        WORD_SET_ASSET_OPTIONS,
+      ),
     ),
   )
 }
