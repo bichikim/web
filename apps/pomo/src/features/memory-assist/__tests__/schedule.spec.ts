@@ -164,6 +164,22 @@ describe('getDueMemoryReminder', () => {
 
     expect(getDueMemoryReminder(memo, new Date('2026-09-04T03:05:00.000Z'))).toBeNull()
   })
+
+  it('should ignore a due reminder while deletion is pending', () => {
+    const memo = {
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-04T02:30:00.000Z',
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'none',
+        text: '여권 갱신하기',
+      }),
+      deletionPending: true as const,
+    }
+
+    expect(getDueMemoryReminder(memo, NOW)).toBeNull()
+  })
 })
 
 describe('getNextRecallAt', () => {

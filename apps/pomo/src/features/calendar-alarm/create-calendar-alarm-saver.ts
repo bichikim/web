@@ -1,3 +1,4 @@
+import {isMemoryMemoDeletionPending} from '../memory-assist'
 import {createMemoryMemo, editMemoryMemo} from '../memory-assist/schedule'
 import {isMemoryMemoOwnedDialogue} from '../memory-assist/dialogue-id'
 import type {MemoryMemo} from '../memory-assist/schema'
@@ -24,7 +25,7 @@ export const createCalendarAlarmSaver =
   async (options: CalendarAlarmSaveOptions): Promise<void> => {
     await dependencies.updateMemos((currentMemos) => {
       const existingMemo = currentMemos.find((memo) => memo.id === options.memoId)
-      if (existingMemo?.deletionPending === true) {
+      if (existingMemo !== undefined && isMemoryMemoDeletionPending(existingMemo)) {
         throw new Error('Calendar alarm cleanup must finish before rearming.')
       }
 

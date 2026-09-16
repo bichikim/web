@@ -348,7 +348,7 @@ it('should ignore duplicate removal clicks while cleanup is pending', async () =
 it('should reject rearming an alarm while its previous cleanup is pending', async () => {
   const memo = {...ownedAlarm(), deletionPending: true as const}
   mocks.memos = [memo]
-  render(() => <CalendarAlarmControl now={now} event={event} memos={() => []} />)
+  render(() => <CalendarAlarmControl now={now} event={event} memos={() => mocks.memos} />)
   fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
   fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
   await screen.findByText('알람을 저장하지 못했어요.')

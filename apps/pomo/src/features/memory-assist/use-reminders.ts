@@ -17,6 +17,7 @@ import {
 import {useDeletionRecovery} from './use-deletion-recovery'
 import {memoryMemoDeletion} from './deletion-runtime'
 import {createMemoryMemoDialogue} from './dialogue'
+import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import {updateMemoryMemos} from './repository'
 import {advanceMemoryMemo, getDueMemoryReminder, type MemoryReminderKind} from './schedule'
 import type {MemoryMemo} from './schema'
@@ -103,7 +104,11 @@ const isMemoryMemoDeliverySnapshotCurrent = (
   deliveredMemo: MemoryMemo,
 ) => {
   const deliveredSnapshot = getMemoryMemoDeliverySnapshot(deliveredMemo)
-  return memos.some((memo) => getMemoryMemoDeliverySnapshot(memo) === deliveredSnapshot)
+  return memos.some(
+    (memo) =>
+      !isMemoryMemoDeletionPending(memo) &&
+      getMemoryMemoDeliverySnapshot(memo) === deliveredSnapshot,
+  )
 }
 
 interface ReplaceDeliveredMemoOptions {
@@ -145,7 +150,9 @@ const verifyMemoAfterPlayback = (options: VerifyMemoAfterPlaybackOptions) => {
     return false
   }
 
-  const currentMemo = options.currentMemos.find((memo) => memo.id === options.deliveredMemo.id)
+  const currentMemo = options.currentMemos.find(
+    (memo) => memo.id === options.deliveredMemo.id && !isMemoryMemoDeletionPending(memo),
+  )
   const scheduledAt = getScheduledReminderTime(options.deliveredMemo, options.kind)
   const invalidatedReminder = options.invalidatedReminders.get(options.deliveredMemo.id)
   const currentScheduledAt =
@@ -181,7 +188,7 @@ const verifyMemoAfterPlayback = (options: VerifyMemoAfterPlaybackOptions) => {
 const replaceDeliveredMemo = (options: ReplaceDeliveredMemoOptions): ReplaceDeliveredMemoResult => {
   const currentMemo = options.memos.find(
     (memo) =>
-      memo.deletionPending !== true &&
+      !isMemoryMemoDeletionPending(memo) &&
       isMemoryMemoDeliverySnapshotCurrent([memo], options.deliveredMemo),
   )
 
@@ -450,6 +457,10 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
 
     const scheduledMemos = currentMemos
       .flatMap((memo) => {
+        if (isMemoryMemoDeletionPending(memo)) {
+          return []
+        }
+
         const invalidatedMemo = invalidatedReminders.get(memo.id)
         let scheduledMemo = memo
 
@@ -495,7 +506,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
         (memo) =>
           isMemoryMemoDeliverySnapshotCurrent(currentMemos, memo) &&
           currentMemos.some(
-            (current) => current.id === memo.id && current.deletionPending !== true,
+            (current) => current.id === memo.id && !isMemoryMemoDeletionPending(current),
           ),
       )
     },
