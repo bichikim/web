@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authenticateAppRequest: vi.fn()}))
 const neonMocks = vi.hoisted(() => ({getNeonSession: vi.fn()}))
@@ -48,6 +48,10 @@ describe('track access route', () => {
     repositoryMocks.findPublishedTrackPreviewAsset.mockReset().mockResolvedValue(ASSET)
     repositoryMocks.findEntitledTrackPlaybackAsset.mockReset().mockResolvedValue(null)
     userMocks.findOrCreateNeonUser.mockReset().mockResolvedValue('web-user-id')
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('should reject an anonymous preview request before catalog access', async () => {
@@ -129,6 +133,41 @@ describe('track access route', () => {
     expect(response.status).toBe(404)
     await expect(response.json()).resolves.toEqual({error: 'track_not_found'})
     expect(previewMocks.createPreviewAccess).not.toHaveBeenCalled()
+  })
+
+  it('should preserve refreshed session cookies when access resolution fails', async () => {
+    const error = new Error('catalog down')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    neonMocks.getNeonSession.mockResolvedValue({
+      identity: {id: 'neon-user-id'},
+      setCookies: ['neon-session=refreshed'],
+    })
+    repositoryMocks.findEntitledTrackPlaybackAsset.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'track_access_unavailable'})
+    expect(response.headers.getSetCookie()).toEqual(['neon-session=refreshed'])
+    expect(consoleError).toHaveBeenCalledWith('Failed to resolve music track access', error)
+  })
+
+  it('should preserve refreshed session cookies when user resolution fails', async () => {
+    const error = new Error('user mapping down')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    neonMocks.getNeonSession.mockResolvedValue({
+      identity: {id: 'neon-user-id'},
+      setCookies: ['neon-session=refreshed'],
+    })
+    userMocks.findOrCreateNeonUser.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'track_access_unavailable'})
+    expect(response.headers.getSetCookie()).toEqual(['neon-session=refreshed'])
+    expect(consoleError).toHaveBeenCalledTimes(1)
+    expect(consoleError).toHaveBeenCalledWith('Failed to resolve music track access', error)
   })
 
   it('should hide access resolution failures behind a stable service error', async () => {
