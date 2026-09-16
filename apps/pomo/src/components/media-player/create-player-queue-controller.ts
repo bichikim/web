@@ -135,9 +135,11 @@ export const createPlayerQueueController = (
       removedBeforeLoad.add(removedTrack.id)
     }
 
-    options.cancelPendingRestart()
-    options.playback.invalidate()
-    options.onPlaybackRevisionChange()
+    if (resolution.currentTrackChanged) {
+      options.cancelPendingRestart()
+      options.playback.invalidate()
+      options.onPlaybackRevisionChange()
+    }
     queueRevision += 1
 
     if (resolution.currentTrackChanged && nextTrack !== undefined) {
@@ -215,7 +217,7 @@ export const createPlayerQueueController = (
     })
     options.persistTrackQueue(mergedTracks)
     options.order.resetOrder()
-    return availableTracks
+    return mergedTracks
   }
 
   return {

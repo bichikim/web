@@ -19,6 +19,12 @@ import {PMusicPlayerContent} from '../PMusicPlayerContent'
 const featureMocks = getFeatureMocks()
 
 describe('PMusicPlayerContent control paths', () => {
+  it('should skip stored playlist loading for a controlled queue', () => {
+    render(() => <PMusicPlayerContent onError={vi.fn()} tracks={TRACKS} />)
+
+    expect(featureMocks.readPPlaylist).not.toHaveBeenCalled()
+  })
+
   it('should cancel preview resume after a user pause', () => {
     render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const audio = createAudio()

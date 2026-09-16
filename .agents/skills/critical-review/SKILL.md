@@ -8,19 +8,21 @@ disable-model-invocation: true
 
 Review the explicit target and relevant callers, callees, types, tests, and configuration. Ask for an anchor if unclear.
 
-## Three-agent review
+## Review perspectives
 
-Use three independent, read-only subagents on the same target; no nested delegation. Spawn each with `model = "gpt-5.6-luna"` and `model_reasoning_effort = "max"`; do not leave either setting implicit so a reviewer cannot silently inherit the parent model. If the client cannot accept both overrides, report routing as unverified instead of silently using the parent model. Give each the scope, project instructions, and rules below. Each reads and applies skills matching the target's language, framework, and its review role:
+For ordinary code and configuration targets, use three independent, read-only subagents on the same target; no nested delegation. Spawn each with `model = "gpt-5.6-luna"` and `model_reasoning_effort = "max"`; do not leave either setting implicit so a reviewer cannot silently inherit the parent model. If the client cannot accept both overrides, report routing as unverified instead of silently using the parent model. Give each the scope, project instructions, and rules below. Each reads and applies skills matching the target's language, framework, and its review role.
+
+For a skill or skill-instruction target, do not create or invoke review subagents. The parent model applies the same three review perspectives directly:
 
 1. **Behavior bugs:** verify correctness, security, lifecycle, accessibility, and performance defects through consumer contracts, errors, races, and cleanup; inspect structure only as needed to establish behavior.
 2. **Refactoring:** coupling, testability, avoidable complexity, declarative programming, state derivation, and side-effect boundaries.
 3. **Naming and structure:** apply skills' naming and folder rules to names, file placement, and module organization.
 
-Each stays within its review role but reports any behavior defect encountered, regardless of role. Severity follows verified impact, not the reviewer's role; never downgrade verified behavior defects to P3. Each returns scope, findings with evidence and fixes (or explicitly none), and verification gaps.
+Each reviewer or review perspective stays within its role but reports any behavior defect encountered, regardless of role. Severity follows verified impact, not the reviewer's role; never downgrade verified behavior defects to P3. Each returns scope, findings with evidence and fixes (or explicitly none), and verification gaps.
 
-Reviewers must not modify repository files or perform external mutations. They may inspect the target and run non-mutating diagnostics when needed, but they return proposed fixes rather than applying them. Report any permission, setup, or verification blocker without changing the environment to work around it.
+Delegated reviewers must not modify repository files or perform external mutations. They may inspect the target and run non-mutating diagnostics when needed, but they return proposed fixes rather than applying them. Report any permission, setup, or verification blocker without changing the environment to work around it.
 
-Wait for all three. The parent model that spawned the reviewers owns evidence verification, conflict resolution, authorization, all file changes, integration, and final judgment. It merges findings sharing a root cause and fix, preserving distinct impacts and locations. Return one report under the verification gate and output contract below. Disclose unfinished coverage; do not claim completion if an agent cannot finish.
+For delegated reviews, wait for all three. The parent model that spawned the reviewers owns evidence verification, conflict resolution, authorization, all file changes, integration, and final judgment. For direct skill reviews, complete all three perspectives in the parent model before producing the report. In either mode, merge findings sharing a root cause and fix, preserving distinct impacts and locations. Return one report under the verification gate and output contract below. Disclose unfinished coverage; do not claim completion if a delegated reviewer cannot finish.
 
 ## Shared review rules
 

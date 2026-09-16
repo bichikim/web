@@ -1,5 +1,6 @@
 import {getAuthSession} from './get-auth-session'
 import {findOrCreateNeonUser} from './repository'
+import {UserRequestResolutionError} from './user-request-resolution-error'
 
 export interface UserRequestIdentity {
   readonly cookies: ReadonlyArray<string>
@@ -13,6 +14,16 @@ export const resolveUserRequest = async (request: Request): Promise<UserRequestI
     return {cookies: session.setCookies, userId: session.userId}
   }
 
-  const userId = session.identity === null ? null : await findOrCreateNeonUser(session.identity.id)
+  if (session.identity === null) {
+    return {cookies: session.setCookies, userId: null}
+  }
+
+  let userId: string
+  try {
+    userId = await findOrCreateNeonUser(session.identity.id)
+  } catch (error) {
+    throw new UserRequestResolutionError(session.setCookies, error)
+  }
+
   return {cookies: session.setCookies, userId}
 }

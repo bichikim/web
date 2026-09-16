@@ -37,12 +37,12 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
   // 복원 콜백이 오디오 요소를 사용하므로 ref가 연결된 뒤 복원을 시작한다.
   onMount(() => {
     const restoreRevision = props.playbackRevision()
-    const restoreQueueRevision = props.queueRevision()
+    const initialQueueRevision = props.queueRevision()
+    let resolvedQueueRevision = initialQueueRevision
     const playbackRequest = readPPlayback().catch((error: unknown) => {
       handleError(error)
       return null
     })
-
     if (props.isQueueControlled()) {
       playbackRequest
         .then((playback) => {
@@ -59,25 +59,30 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
       handleError(error)
       return null
     })
+
     loadPTrackQueueSource({signal: request.signal})
       .then((source) => {
         if (disposed) {
           return
         }
-        const defaultTracks = props.onLoad({
+        const queueChanged = props.queueRevision() !== initialQueueRevision
+        const resolvedTracks = props.onLoad({
           defaultTracks: source.defaultTracks,
-          queueChanged: props.queueRevision() !== restoreQueueRevision,
+          queueChanged,
         })
         props.onLoadSettled()
+        resolvedQueueRevision = props.queueRevision()
+        // 초기 로드 중 바뀐 큐는 저장 목록보다 최신이므로 저장 목록 대기를 생략한다.
+        const effectivePlaylistRequest = queueChanged ? Promise.resolve(null) : playlistRequest
         return restorePPlayerState({
           canRestore: () =>
             !disposed &&
             props.playbackRevision() === restoreRevision &&
-            props.queueRevision() === restoreQueueRevision,
-          defaultTracks,
+            props.queueRevision() === resolvedQueueRevision,
+          defaultTracks: resolvedTracks,
           onRestore: (tracks, playback) => props.onRestore(tracks, playback),
           playbackRequest,
-          playlistRequest,
+          playlistRequest: effectivePlaylistRequest,
           tracks: source.tracks,
         })
       })

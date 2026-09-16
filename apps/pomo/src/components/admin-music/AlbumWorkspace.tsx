@@ -59,6 +59,9 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
         offer.status === 'active',
     ).length
   const handlePublicSettingsSelect = () => {
+    if (props.model.isImportingTracks()) {
+      return
+    }
     setActiveTab('sales')
     setIsStatusReviewOpen(true)
   }
@@ -66,6 +69,9 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
     <Tabs
       class="grid gap-4"
       onChange={(value) => {
+        if (props.model.isImportingTracks()) {
+          return
+        }
         setActiveTab(value as WorkspaceTab)
         setIsStatusReviewOpen(false)
       }}
@@ -73,6 +79,7 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
     >
       <AlbumReleaseCard
         activeOfferCount={activeOfferCount()}
+        disabled={props.model.isImportingTracks()}
         album={props.album}
         onPublicSettingsSelect={handlePublicSettingsSelect}
         trackCount={activeTrackCount()}
@@ -85,6 +92,7 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
           <For each={WORKSPACE_TABS}>
             {(tab) => (
               <Tabs.Trigger
+                disabled={props.model.isImportingTracks() && activeTab() !== tab.id}
                 class={cx(
                   TAB_CLASSES,
                   activeTab() === tab.id

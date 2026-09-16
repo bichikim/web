@@ -34,3 +34,49 @@ it('should count active tracks and require confirmation before removal', async (
   fireEvent.click(button)
   await waitFor(() => expect(model.handleTrackRemove).toHaveBeenCalledWith('one'))
 })
+
+it('should show each active track artwork without using an inactive asset image', () => {
+  const {model} = createModelHarness()
+  render(() => (
+    <TrackPanel
+      albumId="album"
+      albumTitle="앨범"
+      albumStatus="draft"
+      model={model}
+      pendingTracks={[]}
+      tracks={BASE_CATALOG.tracks.filter((track) => track.albumId === 'album')}
+      assets={[
+        {
+          artworkUrl: 'https://images.example/old.png',
+
+          id: 'old',
+          status: 'retired',
+          trackId: 'one',
+        },
+        {
+          artworkUrl: 'https://images.example/one.png',
+
+          id: 'first',
+          status: 'active',
+          trackId: 'one',
+        },
+        {
+          artworkUrl: 'https://images.example/two.png',
+
+          id: 'second',
+          status: 'active',
+          trackId: 'two',
+        },
+      ]}
+    />
+  ))
+  expect(screen.getByRole('img', {name: 'Track one 곡 이미지'})).toHaveAttribute(
+    'src',
+    'https://images.example/one.png',
+  )
+  expect(screen.getByRole('img', {name: 'Track two 곡 이미지'})).toHaveAttribute(
+    'src',
+    'https://images.example/two.png',
+  )
+  expect(screen.getAllByRole('img')).toHaveLength(2)
+})

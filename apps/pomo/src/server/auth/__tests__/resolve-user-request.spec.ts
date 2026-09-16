@@ -35,6 +35,20 @@ it('should resolve a Neon identity and preserve refreshed cookies', async () => 
   expect(mocks.findOrCreateNeonUser).toHaveBeenCalledWith('neon-user')
 })
 
+it('should preserve refreshed cookies when creating a Neon user fails', async () => {
+  const error = new Error('database unavailable')
+  mocks.getAuthSession.mockResolvedValue({
+    identity: {email: 'person@example.com', id: 'neon-user'},
+    provider: 'neon',
+    setCookies: ['session=refreshed'],
+  })
+  mocks.findOrCreateNeonUser.mockRejectedValue(error)
+
+  await expect(
+    resolveUserRequest(new Request('https://pomo.example/api/calendar/events')),
+  ).rejects.toMatchObject({cause: error, cookies: ['session=refreshed']})
+})
+
 it('should preserve anonymous cookies without creating a user', async () => {
   mocks.getAuthSession.mockResolvedValue({
     identity: null,

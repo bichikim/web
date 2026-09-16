@@ -54,3 +54,27 @@ it('should reject invalid catalog data without exposing it to the component', as
 
   await expect(adminCatalogQuery()).resolves.toMatchObject({status: 'failed'})
 })
+
+it('should retain the saved artwork URL for each track asset', async () => {
+  const catalog = {
+    ...emptyCatalog,
+    assets: [
+      {
+        artworkUrl: 'https://storage.pomofi.io/track-artwork/first/cover',
+
+        id: 'first',
+        status: 'active',
+        trackId: 'track-one',
+      },
+      {
+        artworkUrl: 'https://storage.pomofi.io/track-artwork/second/cover',
+
+        id: 'second',
+        status: 'active',
+        trackId: 'track-two',
+      },
+    ],
+  }
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalog)))
+  await expect(adminCatalogQuery()).resolves.toEqual({catalog, status: 'ready'})
+})

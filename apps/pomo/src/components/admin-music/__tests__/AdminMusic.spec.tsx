@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, screen, waitFor} from '@solidjs/testing-library'
+import {cleanup, fireEvent, screen, waitFor, within} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 
 import {
@@ -25,7 +25,8 @@ describe('AdminMusic', () => {
 
     const audioInput = screen.getByLabelText(/^MP3 파일/u)
     expect(audioInput.getAttribute('type')).toBe('file')
-    expect(audioInput.hasAttribute('required')).toBe(true)
+    expect(audioInput.hasAttribute('multiple')).toBe(true)
+    expect(screen.getByRole('button', {name: '0곡 추가'})).toBeDisabled()
   })
 
   it('should report HTTP and unknown catalog loading failures', async () => {
@@ -83,9 +84,9 @@ describe('AdminMusic', () => {
     renderAdminMusic()
 
     await screen.findByText('제목 없음')
-    expect(document.querySelector('nav img')?.getAttribute('src')).toBe(
-      'https://example.com/cover.webp',
-    )
+    expect(
+      within(screen.getByRole('navigation', {name: '등록된 앨범'})).getByAltText(''),
+    ).toHaveAttribute('src', 'https://example.com/cover.webp')
     expect(screen.getByText('♪')).toBeTruthy()
     expect(screen.getByText('제목 없음')).toBeTruthy()
     expect(screen.getByText('보관')).toBeTruthy()

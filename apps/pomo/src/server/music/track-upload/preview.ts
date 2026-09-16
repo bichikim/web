@@ -1,3 +1,4 @@
+import {getMp3AudioOffset} from '../get-mp3-audio-offset'
 import {extractMp3Preview} from '../mp3-preview'
 import {createTrackObjectUrl, signTrackObjectRequest, type TrackStorageOptions} from './storage'
 
@@ -7,6 +8,7 @@ const PREVIEW_DURATION_MS = PREVIEW_DURATION_SECONDS * MILLISECONDS_PER_SECOND
 // oxlint-disable-next-line eslint/no-magic-numbers -- Binary size units use 1024 bytes.
 const BYTES_PER_MEBIBYTE = 1024 * 1024
 const MAXIMUM_PREVIEW_INPUT_BYTES = 2 * BYTES_PER_MEBIBYTE
+const MAXIMUM_INLINE_METADATA_BYTES = BYTES_PER_MEBIBYTE / 2
 const HTTP_NOT_FOUND = 404
 
 export interface TrackPreviewOptions extends TrackStorageOptions {
@@ -64,18 +66,25 @@ export const createTrackPreviewObject = async (
   }
 
   const environment = options.environment ?? process.env
-  const sourceRequest = new Request(createTrackObjectUrl(objectKey, environment), {
-    headers: {Range: `bytes=0-${MAXIMUM_PREVIEW_INPUT_BYTES - 1}`},
-  })
-  const signedSourceRequest = await signTrackObjectRequest(
-    sourceRequest,
-    environment,
-    false,
-    options.signRequest,
-  )
-  const sourceResponse = await (options.fetcher ?? fetch)(signedSourceRequest)
-  const sourceBytes = await requireBoundedAudioResponse(sourceResponse, MAXIMUM_PREVIEW_INPUT_BYTES)
-  const previewBytes = extractMp3Preview(sourceBytes, Math.min(durationMs, PREVIEW_DURATION_MS))
+  const readSource = async (offset: number): Promise<Uint8Array> => {
+    const sourceRequest = new Request(createTrackObjectUrl(objectKey, environment), {
+      headers: {Range: `bytes=${offset}-${offset + MAXIMUM_PREVIEW_INPUT_BYTES - 1}`},
+    })
+    const signedSourceRequest = await signTrackObjectRequest(
+      sourceRequest,
+      environment,
+      false,
+      options.signRequest,
+    )
+    const sourceResponse = await (options.fetcher ?? fetch)(signedSourceRequest)
+    return requireBoundedAudioResponse(sourceResponse, MAXIMUM_PREVIEW_INPUT_BYTES)
+  }
+  const sourceBytes = await readSource(0)
+  const audioOffset = getMp3AudioOffset(sourceBytes)
+  // Skip metadata tags in storage to reserve the bounded read window for audio.
+  const audioBytes =
+    audioOffset > MAXIMUM_INLINE_METADATA_BYTES ? await readSource(audioOffset) : sourceBytes
+  const previewBytes = extractMp3Preview(audioBytes, Math.min(durationMs, PREVIEW_DURATION_MS))
   const previewBody = new ArrayBuffer(previewBytes.byteLength)
   new Uint8Array(previewBody).set(previewBytes)
   const previewRequest = new Request(

@@ -18,15 +18,15 @@ export const useFeedRefreshEvents = (props: UseFeedRefreshEventsProps) => {
         console.error('Failed to refresh changed focus room feeds.', error)
       })
     }
-    const stopPolling = visibilityInterval(
-      () => {
+    const stopPolling = visibilityInterval({
+      callback: () => {
         props.refresh().catch((error: unknown) => {
           console.error('Failed to poll focus room feeds.', error)
         })
       },
-      props.pollingIntervalMs,
-      true,
-    )
+      interval: props.pollingIntervalMs,
+      runOverdueOnVisible: true,
+    })
 
     useEvent(window, props.connectionChangedEvent, refreshChangedFeeds)
     useEvent(window, props.settingsChangedEvent, refreshChangedFeeds)

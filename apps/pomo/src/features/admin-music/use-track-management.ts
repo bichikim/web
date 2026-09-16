@@ -1,7 +1,13 @@
 import {useAction, useSubmission, useSubmissions} from '@solidjs/router'
-import {createSignal, type JSX} from 'solid-js'
+import {createSignal} from 'solid-js'
+import type {TrackImportSummary} from './types'
 
-import {confirmAdminTrackAction, createAdminTrackAction, removeAdminTrackAction} from './actions'
+import {
+  confirmAdminTrackAction,
+  createAdminTrackAction,
+  type CreateTrackActionResult,
+  removeAdminTrackAction,
+} from './actions'
 
 interface UseTrackManagementProps {
   readonly refreshCatalog: () => Promise<void>
@@ -15,10 +21,6 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
   const removeTrackSubmissions = useSubmissions(removeAdminTrackAction)
   const confirmTrack = useAction(confirmAdminTrackAction)
   const confirmTrackSubmissions = useSubmissions(confirmAdminTrackAction)
-  const [trackArtist, setTrackArtist] = createSignal('')
-  const [trackResetVersion, setTrackResetVersion] = createSignal(0)
-  const [trackTitle, setTrackTitle] = createSignal('')
-
   const [catalogRefreshMessage, setCatalogRefreshMessage] = createSignal<string | null>(null)
   const [isRefreshingCatalog, setIsRefreshingCatalog] = createSignal(false)
   let catalogRevision = 0
@@ -62,52 +64,18 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
     }
   }
 
-  const handleTrackSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
-    event.preventDefault()
-    const trackForm = event.currentTarget
-    props.setMessage(null)
-    const form = new FormData(trackForm)
-    const result = await createTrack(form)
-    createTrackSubmission.clear()
-
-    if (result.status === 'failed') {
-      await props.refreshCatalog().catch(() => undefined)
-
-      switch (result.cleanupStatus) {
-        case 'failed':
-          props.setMessage(
-            `${result.detail} 생성된 곡 정보를 정리하지 못했습니다. 다시 삭제해 주세요.`,
-          )
-          break
-        case 'preserved':
-          props.setMessage(
-            `${result.detail} 등록 결과가 확정되지 않아 곡은 삭제하지 않았습니다. 목록에서 상태를 확인해 주세요.`,
-          )
-          break
-        case 'succeeded':
-          props.setMessage(`${result.detail} 생성된 곡 정보는 정리했습니다.`)
-          break
-        // The result union cannot reach this exhaustive guard.
-        /* v8 ignore next 4 */
-        default: {
-          const exhaustiveCleanupStatus: never = result.cleanupStatus
-          return exhaustiveCleanupStatus
-        }
-      }
-      return
+  const submitTrack = async (form: FormData): Promise<CreateTrackActionResult> => {
+    try {
+      return await createTrack(form)
+    } finally {
+      createTrackSubmission.clear()
     }
-
-    if (result.status === 'created') {
-      setTrackArtist('')
-      setTrackTitle('')
-      setTrackResetVersion((version) => version + 1)
-      trackForm.reset()
-      await refreshTrackCatalog('곡과 MP3를 앨범에 추가하고 활성화했습니다.')
-      return
-    }
-
-    props.setMessage(result.detail)
   }
+
+  const completeTrackImport = (summary: TrackImportSummary): Promise<void> =>
+    refreshTrackCatalog(
+      `등록 완료 ${summary.created}곡 · 등록 실패 ${summary.failed}곡 · 상태 확인 필요 ${summary.preserved}곡`,
+    )
 
   const handleTrackRemove = async (trackId: string): Promise<void> => {
     props.setMessage(null)
@@ -144,12 +112,12 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
 
   return {
     catalogRefreshMessage,
+    completeTrackImport,
     confirmingAssetId: () =>
       confirmTrackSubmissions.findLast((submission) => submission.pending)?.input[0] ?? null,
     handleCatalogRetry,
     handleTrackConfirmation,
     handleTrackRemove,
-    handleTrackSubmit,
     isConfirmingAsset: (assetId: string) =>
       confirmTrackSubmissions.some(
         (submission) => submission.pending && submission.input[0] === assetId,
@@ -159,13 +127,8 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       removeTrackSubmissions.some(
         (submission) => submission.pending && submission.input[0] === trackId,
       ),
-    isSavingTrack: () => createTrackSubmission.pending === true,
     removingTrackId: () =>
       removeTrackSubmissions.findLast((submission) => submission.pending)?.input[0] ?? null,
-    setTrackArtist,
-    setTrackTitle,
-    trackArtist,
-    trackResetVersion,
-    trackTitle,
+    submitTrack,
   }
 }

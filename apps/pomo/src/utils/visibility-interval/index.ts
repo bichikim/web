@@ -1,28 +1,61 @@
 import {getDocument} from '@winter-love/utils'
 import {visibility} from 'src/utils/visibility'
 
-/** Pauses while hidden; optionally runs once on return when the previous deadline has passed. */
-export const visibilityInterval = (
+export interface VisibilityIntervalOptions {
+  readonly callback: () => void
+  readonly interval: number
+  readonly runOnVisible?: boolean
+  readonly runOverdueOnVisible?: boolean
+}
+
+/** Pauses the interval while hidden and restarts it when the document is visible. */
+export function visibilityInterval(options: VisibilityIntervalOptions): () => void
+export function visibilityInterval(
   callback: () => void,
   interval: number,
+  runOverdueOnVisible?: boolean,
+): () => void
+export function visibilityInterval(
+  optionsOrCallback: VisibilityIntervalOptions | (() => void),
+  interval?: number,
   runOverdueOnVisible = false,
-) => {
-  let nextExecution = Date.now() + interval
+) {
+  let options: VisibilityIntervalOptions
+  if (typeof optionsOrCallback === 'function') {
+    if (interval === undefined) {
+      throw new TypeError('visibilityInterval requires an interval.')
+    }
+
+    options = {
+      callback: optionsOrCallback,
+      interval,
+      runOverdueOnVisible,
+    }
+  } else {
+    options = optionsOrCallback
+  }
+
+  let nextExecution = Date.now() + options.interval
   const run = () => {
-    nextExecution = Date.now() + interval
-    callback()
+    const now = Date.now()
+    nextExecution = now + options.interval
+    options.callback()
   }
   let intervalId: ReturnType<typeof globalThis.setInterval> | null = null
 
-  const startInterval = () => {
+  const startInterval = (isReturningToVisible: boolean) => {
     if (intervalId !== null) {
       return
     }
 
-    const isOverdue = Date.now() >= nextExecution
-    nextExecution = Date.now() + interval
-    intervalId = globalThis.setInterval(run, interval)
-    if (runOverdueOnVisible && isOverdue) {
+    const now = Date.now()
+    const isOverdue = now >= nextExecution
+    nextExecution = now + options.interval
+    intervalId = globalThis.setInterval(run, options.interval)
+    if (
+      isReturningToVisible &&
+      (options.runOnVisible === true || (options.runOverdueOnVisible === true && isOverdue))
+    ) {
       run()
     }
   }
@@ -42,11 +75,11 @@ export const visibilityInterval = (
       return
     }
 
-    startInterval()
+    startInterval(true)
   })
 
   if (getDocument()?.hidden === false) {
-    startInterval()
+    startInterval(false)
   }
 
   return () => {

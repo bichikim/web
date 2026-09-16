@@ -12,6 +12,12 @@ export const useDeletionRecovery = (retryDeletions: () => Promise<void>) => {
       })
     }
     retry()
-    onCleanup(visibilityInterval(retry, RETRY_DELAY, true))
+    onCleanup(
+      visibilityInterval({
+        callback: retry,
+        interval: RETRY_DELAY,
+        runOverdueOnVisible: true,
+      }),
+    )
   })
 }

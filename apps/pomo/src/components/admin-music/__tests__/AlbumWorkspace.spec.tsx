@@ -123,15 +123,17 @@ describe('AlbumWorkspace', () => {
 
     fireEvent.click(screen.getByRole('button', {name: '+ 곡 추가'}))
     expect(screen.getByText('새 곡 추가')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(/^MP3 파일 여러/u), {
+      target: {files: [new File(['mp3'], 'track.mp3')]},
+    })
     fireEvent.click(screen.getByRole('button', {name: '가수 변경'}))
     fireEvent.click(screen.getByRole('button', {name: '제목 변경'}))
-    expect(harness.model.setTrackArtist).toHaveBeenCalledWith('새 가수')
-    expect(harness.model.setTrackTitle).toHaveBeenCalledWith('새 제목')
-    fireEvent.submit(screen.getByText('새 곡 추가').closest('form')!)
-    expect(harness.model.handleTrackSubmit).toHaveBeenCalledOnce()
-
-    harness.setSavingTrack(true)
-    expect(screen.getByRole('button', {name: '곡 저장·MP3 검증 중…'})).toBeDisabled()
+    expect(screen.getByText('새 가수')).toBeInTheDocument()
+    expect(screen.getByText('새 제목')).toBeInTheDocument()
+    fireEvent.submit(screen.getByRole('form', {name: '곡 추가'}))
+    expect(harness.model.submitTrack).toHaveBeenCalledOnce()
+    await waitFor(() => expect(screen.getByRole('button', {name: '닫기'})).toBeEnabled())
+    expect(screen.getByText('등록 완료')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', {name: '닫기'}))
     expect(screen.queryByText('새 곡 추가')).not.toBeInTheDocument()
 
@@ -223,7 +225,7 @@ describe('AlbumWorkspace', () => {
 
     render(() => <AlbumWorkspace album={createAlbum('draft', [])} model={harness.model} />)
     fireEvent.click(screen.getByRole('button', {name: '+ 곡 추가'}))
-    expect(screen.getByText(/MP3 하나가 ‘제목 없음’/)).toBeInTheDocument()
+    expect(screen.getByText(/파일마다 ‘제목 없음’/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', {name: '기본 정보'}))
     expect(screen.getByText('등록된 선택 언어가 없습니다.')).toBeInTheDocument()
   })
@@ -246,7 +248,7 @@ describe('AlbumWorkspace', () => {
     )
     expect(screen.queryByRole('region', {name: '앨범 상태 변경 확인'})).not.toBeInTheDocument()
 
-    fireEvent.submit(screen.getByText('일회성 상품 연결').closest('form')!)
+    fireEvent.submit(screen.getByRole('form', {name: '일회성 상품 연결'}))
     expect(harness.model.handleOfferSubmit).toHaveBeenCalledOnce()
     harness.setSavingOffer(true)
     expect(screen.getByRole('button', {name: '연결 중…'})).toBeDisabled()
