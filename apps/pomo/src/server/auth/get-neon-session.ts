@@ -1,21 +1,13 @@
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
 import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
-
-interface NeonSessionIdentity {
-  readonly email: string
-  readonly id: string
-}
-
-export interface NeonSessionResult {
-  readonly cookies: ReadonlyArray<string>
-  readonly identity: NeonSessionIdentity | null
-}
+import {classifyAuthAccess} from './classify-auth-access'
+import type {NeonIdentity, NeonSession} from './types'
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null
 
-const parseIdentity = (value: unknown): NeonSessionIdentity | null => {
+const parseIdentity = (value: unknown): NeonIdentity | null => {
   if (!isRecord(value) || !isRecord(value.user)) {
     return null
   }
@@ -37,20 +29,28 @@ const createSessionRequest = (request: Request): Request => {
   return new Request(url, {headers, method: 'GET'})
 }
 
-export const getNeonSession = async (request: Request): Promise<NeonSessionResult> => {
+export const getNeonSession = async (request: Request): Promise<NeonSession> => {
   const response = await handleAuthProxyRequest({
     ...readNeonAuthProxyConfig(),
     path: 'get-session',
     request: createSessionRequest(request),
   })
-  const cookies = response.headers.getSetCookie()
+  const setCookies = response.headers.getSetCookie()
 
   if (!response.ok) {
-    return {cookies, identity: null}
+    return {
+      access: 'invalid',
+      identity: null,
+      provider: 'neon',
+      setCookies,
+    }
   }
 
+  const data: unknown = await response.json().catch(() => undefined)
   return {
-    cookies,
-    identity: parseIdentity(await response.json().catch(() => null)),
+    access: classifyAuthAccess(data),
+    identity: parseIdentity(data),
+    provider: 'neon',
+    setCookies,
   }
 }

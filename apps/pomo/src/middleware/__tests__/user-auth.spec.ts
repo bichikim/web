@@ -74,7 +74,7 @@ describe('handleUserAuthRequest', () => {
       'https://pomo.example',
     )
     const response = await handleUserAuthRequest({
-      request: new Request(url),
+      request: new Request(url, {headers: {Authorization: 'Bearer app-token'}}),
       responseHeaders: new Headers(),
       url,
     })
@@ -125,6 +125,21 @@ describe('handleUserAuthRequest', () => {
     expect(response?.status).toBe(503)
     expect(response?.headers.get('Location')).toBeNull()
     expect(response?.headers.getSetCookie()).toEqual(['session=; Max-Age=0'])
+  })
+
+  it('should keep the verifier available when the session payload is invalid', async () => {
+    authMocks.handleAuthProxyRequest.mockResolvedValue(Response.json({user: null}))
+    const url = new URL(
+      'https://pomo.example/account?link_token=challenge&neon_auth_session_verifier=verifier',
+    )
+    const response = await handleUserAuthRequest({
+      request: new Request(url),
+      responseHeaders: new Headers(),
+      url,
+    })
+
+    expect(response?.status).toBe(503)
+    expect(response?.headers.get('Location')).toBeNull()
   })
 
   it('should return a controlled response when the session exchange throws', async () => {

@@ -1,22 +1,11 @@
-import {
-  type Accessor,
-  batch,
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  untrack,
-} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
 import {
-  appendUniqueTracks,
   createInitialPlaybackState,
+  createShuffleQueue,
   normalizeTrackIndex,
-  type PPlaybackState,
   type PTrack,
-  resolvePlaybackRestore,
-  resolveTrackRemoval,
   stopPPlayback,
   usePAudioVisualizer,
   usePPlaybackPersistence,
@@ -24,6 +13,7 @@ import {
 } from '../../features/focus-room-audio'
 import {usePlayerVolumeDucking} from '../../features/focus-room-dialogue'
 import type {MediaPlayerOptions, PlayerState, SelectTrackOptions} from './types'
+import {createPlayerQueueController} from './create-player-queue-controller'
 import {type Playback, usePlayback} from './use-playback'
 import {usePlaylistRestoration} from './use-playlist-restoration'
 import {usePlaybackOrder} from './use-playback-order'
@@ -57,7 +47,7 @@ export interface PlayerController extends PlayerState {
 }
 
 /** 음악 목록, 곡 선택·반복·셔플 정책, 저장된 재생 위치 복원과 미리듣기를 조율한다. */
-// oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Queue edits coordinate selection, transport invalidation and persistence in the same transaction.
+// oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Transport, persistence, and lifecycle callbacks remain coordinated here; playlist queue mutations are extracted to create-player-queue-controller.
 export const usePlayerController = (props: UsePlayerControllerProps): PlayerController => {
   const initialTracks = untrack(() => props.tracks ?? [])
   const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
@@ -73,13 +63,9 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const currentTrack = createMemo(() => tracks()[currentIndex()])
   let destroyed = false
   let playbackRevision = 0
-  let queueRevision = 0
-  let initialPlaylistResolved = untrack(() => props.tracks !== undefined)
-  let clearedBeforeLoad = false
   let restartPlaybackPending = false
   let restartSeekPending = false
   let playbackTransition: PlaybackTransition | null = null
-  const removedBeforeLoad = new Set<string>()
   const shouldIgnoreNativePause = () =>
     getCurrentPlaybackTransition(playbackTransition, currentTrack()?.id)?.pauseProtected === true
   const playback = usePlayback({
@@ -120,6 +106,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       writePlayback: playbackPersistence.writePlayback,
     })
   const order = usePlaybackOrder({
+    createShuffleQueue,
     currentIndex,
     initialQueue: initialState.queue,
     onRestart: () => restartCurrentTrack(),
@@ -156,34 +143,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     const currentIsPlaying = isPlaying()
     untrack(() => props.onPlayingChange?.(currentIsPlaying))
   })
-  const initializePlayback = (
-    nextTracks: readonly PTrack[],
-    storedPlayback: PPlaybackState | null,
-  ) => {
-    const fallbackIndex =
-      storedPlayback === null
-        ? createInitialPlaybackState({trackCount: nextTracks.length}).currentIndex
-        : currentIndex()
-    const restoration = resolvePlaybackRestore({
-      fallbackIndex,
-      storedPlayback,
-      tracks: nextTracks,
-    })
-
-    playbackPersistence.setPendingPosition(restoration.playback)
-
-    batch(() => {
-      setLoadedTracks(nextTracks)
-      setCurrentIndex(restoration.currentIndex)
-    })
-    order.resetOrder()
-
-    if (restoration.shouldPersist && restoration.playback !== null) {
-      playbackPersistence.writePlayback(restoration.playback)
-    }
-
-    queueMicrotask(restorePendingPlayback)
-  }
   const handleAudioError = playback.onError
   const playAudio = playback.play
   const previewPlayback = createPreviewPlayback({
@@ -226,6 +185,29 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
     playAudio()
   }
+  const queueController = createPlayerQueueController({
+    cancelPendingRestart,
+    clearPlaybackTransition: () => {
+      playbackTransition = null
+    },
+    isPlaying,
+    isQueueControlled: () => props.tracks !== undefined,
+    onPlaybackRevisionChange: () => {
+      playbackRevision += 1
+    },
+    order,
+    persistTrackQueue,
+    playback,
+    playbackPersistence,
+    prepareTrackChange,
+    previewPlayback,
+    readCurrentIndex: currentIndex,
+    readTracks: tracks,
+    restorePendingPlayback,
+    setCurrentIndex,
+    setLoadedTracks,
+    visualizer,
+  })
   const selectTrack = (options: SelectTrackOptions) => {
     const trackList = tracks()
 
@@ -296,116 +278,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
   }
 
-  const addTracksToQueue = (tracksToAdd: readonly PTrack[]) => {
-    if (props.tracks !== undefined || tracksToAdd.length === 0) {
-      return
-    }
-
-    const currentTracks = tracks()
-    const nextTracks = appendUniqueTracks(currentTracks, tracksToAdd)
-
-    if (nextTracks === currentTracks) {
-      return
-    }
-
-    queueRevision += 1
-    setLoadedTracks(nextTracks)
-    persistTrackQueue(nextTracks)
-    order.resetOrder()
-  }
-
-  const removeTrackFromQueue = (removeIndex: number) => {
-    const currentTracks = tracks()
-
-    if (
-      props.tracks !== undefined ||
-      !Number.isInteger(removeIndex) ||
-      removeIndex < 0 ||
-      removeIndex >= currentTracks.length
-    ) {
-      return
-    }
-
-    const resolution = resolveTrackRemoval({
-      currentIndex: currentIndex(),
-      removeIndex,
-      trackCount: currentTracks.length,
-    })
-    const nextTracks = currentTracks.filter((_track, index) => index !== removeIndex)
-    const removedTrack = currentTracks[removeIndex]
-    const nextTrack = nextTracks[resolution.nextCurrentIndex]
-    const shouldResume = isPlaying()
-
-    if (!initialPlaylistResolved && removedTrack !== undefined) {
-      removedBeforeLoad.add(removedTrack.id)
-    }
-
-    cancelPendingRestart()
-    playback.invalidate()
-    playbackRevision += 1
-    queueRevision += 1
-
-    if (resolution.currentTrackChanged && nextTrack !== undefined) {
-      const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
-      prepareTrackChange(shouldResume, nextTrack.id)
-      playbackPersistence.setPendingPosition(nextPlayback)
-      playbackPersistence.writePlayback(nextPlayback)
-    }
-
-    if (nextTrack === undefined) {
-      playbackTransition = null
-      visualizer.stop()
-      playback.stop()
-      playbackPersistence.persistStoppedPlayback()
-      playbackPersistence.setPendingPosition(null)
-    }
-
-    batch(() => {
-      setLoadedTracks(nextTracks)
-      setCurrentIndex(resolution.nextCurrentIndex)
-    })
-    persistTrackQueue(nextTracks)
-    order.resetOrder()
-
-    if (nextTrack === undefined) {
-      return
-    }
-
-    if (resolution.currentTrackChanged) {
-      queueMicrotask(restorePendingPlayback)
-    }
-  }
-
-  const clearTrackQueue = () => {
-    const currentTracks = tracks()
-
-    if (props.tracks !== undefined || currentTracks.length === 0) {
-      return
-    }
-
-    if (!initialPlaylistResolved) {
-      clearedBeforeLoad = true
-    }
-
-    cancelPendingRestart()
-    playbackTransition = null
-    playback.invalidate()
-    playbackRevision += 1
-    queueRevision += 1
-    previewPlayback.preventResume()
-    visualizer.stop()
-    playback.stop()
-    playbackPersistence.persistStoppedPlayback()
-    playbackPersistence.setPendingPosition(null)
-
-    batch(() => {
-      setLoadedTracks([])
-      setCurrentIndex(0)
-    })
-    persistTrackQueue([])
-    order.clearShuffleQueue()
-  }
-
   const restartCurrentTrack = () => {
     if (props.element() === undefined) {
       return
@@ -459,30 +331,11 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   usePlaylistRestoration({
     isQueueControlled: () => props.tracks !== undefined,
     onError: handleAudioError,
-    onLoad: (loaded) => {
-      initialPlaylistResolved = true
-      const availableTracks = clearedBeforeLoad
-        ? []
-        : loaded.defaultTracks.filter((track) => !removedBeforeLoad.has(track.id))
-      if (loaded.queueChanged) {
-        const activeTrackId = currentTrack()?.id
-        const mergedTracks = appendUniqueTracks(availableTracks, tracks())
-        const activeIndex = mergedTracks.findIndex((track) => track.id === activeTrackId)
-        batch(() => {
-          setLoadedTracks(mergedTracks)
-          setCurrentIndex(activeIndex < 0 ? 0 : activeIndex)
-        })
-        persistTrackQueue(mergedTracks)
-        order.resetOrder()
-      } else {
-        initializePlayback(availableTracks, null)
-      }
-      return availableTracks
-    },
+    onLoad: queueController.onLoad,
     onLoadSettled: () => setIsPlaylistLoading(false),
-    onRestore: initializePlayback,
+    onRestore: queueController.initializePlayback,
     playbackRevision: () => playbackRevision,
-    queueRevision: () => queueRevision,
+    queueRevision: queueController.queueRevision,
     tracks,
   })
 
@@ -562,11 +415,11 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   })
 
   return {
-    addTracksToQueue,
+    addTracksToQueue: queueController.addTracksToQueue,
     canEditQueue: () => props.tracks === undefined,
     canNavigateNextTrack: order.canNavigateNextTrack,
     canNavigatePreviousTrack: order.canNavigatePreviousTrack,
-    clearTrackQueue,
+    clearTrackQueue: queueController.clearTrackQueue,
     currentIndex,
     currentTrack,
     invalidate: playback.invalidate,
@@ -585,7 +438,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     pause: playback.pause,
     play: playback.play,
     previewPlayback,
-    removeTrackFromQueue,
+    removeTrackFromQueue: queueController.removeTrackFromQueue,
     repeatMode: order.repeatMode,
     seek: playback.seek,
     selectChosenTrack: order.selectChosenTrack,

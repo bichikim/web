@@ -3,7 +3,7 @@ import {z} from 'zod'
 
 import {getCalendarService} from 'src/server/calendar/runtime'
 import {noStoreJson} from 'src/server/http/response'
-import {authenticateUserRequest} from 'src/server/user-auth/request'
+import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
 
 const HTTP_BAD_REQUEST = 400
 const HTTP_UNAUTHORIZED = 401
@@ -37,7 +37,7 @@ const isValidTimeZone = (timeZone: string) => {
 }
 
 export const GET = async (event: APIEvent): Promise<Response> => {
-  const identity = await authenticateUserRequest(event.request)
+  const identity = await resolveUserRequest(event.request)
 
   if (identity.userId === null) {
     return noStoreJson(

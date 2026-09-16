@@ -7,9 +7,9 @@ const repositoryMocks = vi.hoisted(() => ({
   revokeAppSession: vi.fn(),
 }))
 
-vi.mock('src/server/user-auth/http', () => authMocks)
-vi.mock('src/server/user-auth/repository', () => repositoryMocks)
-vi.mock('src/server/user-auth/token', () => ({readBearerToken: authMocks.readBearerToken}))
+vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
+vi.mock('src/server/auth/repository', () => repositoryMocks)
+vi.mock('src/server/auth/token', () => ({readBearerToken: authMocks.readBearerToken}))
 
 import {DELETE, GET, PATCH} from '../session'
 import {invokeApiRoute} from '../../__tests__/invoke'

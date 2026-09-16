@@ -2,7 +2,7 @@ import type {APIEvent} from '@solidjs/start/server'
 
 import {isAuthorizedCronRequest} from 'src/server/cron/environment'
 import {noStoreJson, noStoreText} from 'src/server/http/response'
-import {runAuthMaintenance} from 'src/server/user-auth/maintenance'
+import {runAuthMaintenance} from 'src/server/auth/maintenance'
 
 const HTTP_UNAUTHORIZED = 401
 const HTTP_INTERNAL_SERVER_ERROR = 500

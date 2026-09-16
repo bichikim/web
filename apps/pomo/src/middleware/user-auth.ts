@@ -1,6 +1,4 @@
-import {handleAuthProxyRequest} from '@neondatabase/auth/server'
-
-import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
+import {getAuthSession} from 'src/server/auth/get-auth-session'
 
 const ACCOUNT_PATH = '/account'
 const ACCOUNT_PATH_WITH_TRAILING_SLASH = `${ACCOUNT_PATH}/`
@@ -19,18 +17,6 @@ const appendCookies = (headers: Headers, cookies: ReadonlyArray<string>): void =
   }
 }
 
-const createSessionRequest = (request: Request): Request => {
-  const url = new URL(request.url)
-  const headers = new Headers(request.headers)
-
-  url.searchParams.set('disableCookieCache', 'true')
-  headers.delete('Content-Length')
-  headers.delete('Content-Type')
-  headers.delete('Transfer-Encoding')
-
-  return new Request(url, {headers, method: 'GET'})
-}
-
 export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Response | null> => {
   if (!ACCOUNT_PATHS.has(input.url.pathname)) {
     return null
@@ -44,14 +30,10 @@ export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Res
   }
 
   try {
-    const sessionResponse = await handleAuthProxyRequest({
-      ...readNeonAuthProxyConfig(),
-      path: 'get-session',
-      request: createSessionRequest(input.request),
-    })
+    const sessionResponse = await getAuthSession(input.request, {provider: 'neon'})
 
-    if (!sessionResponse.ok) {
-      appendCookies(input.responseHeaders, sessionResponse.headers.getSetCookie())
+    if (sessionResponse.access === 'invalid') {
+      appendCookies(input.responseHeaders, sessionResponse.setCookies)
       return new Response('Authentication is unavailable', {
         headers: input.responseHeaders,
         status: 503,
@@ -63,7 +45,7 @@ export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Res
 
     cleanUrl.searchParams.delete(SESSION_VERIFIER_PARAM)
     headers.set('Location', cleanUrl.toString())
-    appendCookies(headers, sessionResponse.headers.getSetCookie())
+    appendCookies(headers, sessionResponse.setCookies)
 
     return new Response(null, {headers, status: 302})
   } catch (error) {
