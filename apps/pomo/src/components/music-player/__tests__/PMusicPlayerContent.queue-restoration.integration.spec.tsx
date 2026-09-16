@@ -449,6 +449,55 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     ).toBeNull()
   })
 
+  it('should restore saved playback after an album addition before the catalog loads', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'two'}),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playlist:v1',
+      JSON.stringify({savedAt: 1, trackIds: ['two'], version: 1}),
+    )
+    let completeTrackCatalog: ((value: unknown) => void) | undefined
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              completeTrackCatalog = resolve
+            }),
+        )
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />)
+    const audio = getAudioElement(result.container)
+
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
+    completeTrackCatalog?.({
+      json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
+      ok: true,
+    })
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(22)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalled()
+    result.unmount()
+  })
+
   it('should preserve a removal made before the initial playlist finishes loading', async () => {
     let completeTrackCatalog: ((value: unknown) => void) | undefined
     vi.stubGlobal(
