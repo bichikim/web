@@ -368,7 +368,7 @@ describe('createPlayer', () => {
       })),
       parameters: [
         ...motionDocument.parameters!,
-        {id: 'control', minimum: 0, name: 'Control', defaultValue: 0, maximum: 1},
+        {defaultValue: 0, id: 'control', maximum: 1, minimum: 0, name: 'Control'},
       ],
     })
     expect(player.updateDocument(influencedDocument)).toBe(true)
@@ -381,6 +381,282 @@ describe('createPlayer', () => {
     player.setParameterValues({control: 0, shift: 1})
     expect(createdMesh!.vertices[2]).toBeCloseTo(0)
     expect(createdMesh!.vertices[3]).toBeCloseTo(125)
+    player.destroy()
+  })
+
+  test('should apply pendulum output to parameter deformation at a fixed simulation step', async () => {
+    let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
+    const application = {
+      destroy: vi.fn(),
+      init: vi.fn().mockResolvedValue(undefined),
+      render: vi.fn(),
+      resize: vi.fn(),
+      screen: {height: 100, width: 200},
+      stage: {addChild: vi.fn()},
+      start: vi.fn(),
+      stop: vi.fn(),
+      ticker: {
+        add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
+          tick = handler
+        }),
+      },
+    }
+    const root = {
+      addChild: vi.fn(),
+      position: {set: vi.fn()},
+      scale: {set: vi.fn()},
+    }
+    const runtimeMesh = {
+      geometry: {
+        indices: new Uint32Array(),
+        positions: new Float32Array(),
+        uvs: new Float32Array(),
+      },
+      vertices: new Float32Array(),
+    }
+    const texture = {destroy: vi.fn()}
+    const physicsDocument: PuppetDocument = {
+      ...puppetDocument,
+      parameterBindings: [
+        {
+          id: 'output-binding',
+          keyforms: [
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 100]}],
+              values: [0],
+            },
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 200]}],
+              values: [30],
+            },
+          ],
+          parameterIds: ['output'],
+          targetPartIds: ['part'],
+        },
+      ],
+      parameters: [
+        {defaultValue: 0, id: 'input', maximum: 30, minimum: -30, name: 'Input'},
+        {defaultValue: 0, id: 'output', maximum: 30, minimum: 0, name: 'Output'},
+      ],
+      parts: [
+        {
+          id: 'part',
+          mesh: {
+            boundaryLoops: [[0, 1, 2]],
+            indices: [0, 1, 2],
+            uvs: [0, 0, 1, 0, 0, 1],
+            vertices: [0, 0, 100, 0, 0, 100],
+          },
+          texture: {height: 100, src: 'part.png', width: 100},
+        },
+      ],
+      physics: {
+        pendulums: [
+          {
+            damping: 1.2,
+            gravity: 9.8,
+            id: 'swing',
+            inputParameterId: 'input',
+            inputScale: 1,
+            length: 1,
+            outputParameterId: 'output',
+            outputScale: 1,
+          },
+        ],
+      },
+    }
+
+    vi.stubGlobal(
+      'Image',
+      class {
+        decoding = ''
+        src = ''
+        decode = vi.fn().mockResolvedValue(undefined)
+      },
+    )
+    mocks.Application.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, application)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.Container.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, root)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.MeshSimple.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, runtimeMesh)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.TextureFrom.mockReturnValue(texture)
+
+    const player = await createPlayer({
+      canvas: document.createElement('canvas'),
+      document: prepareDocument(physicsDocument),
+      parameterValues: {input: 30, output: 0},
+    })
+    const createdMesh = mocks.MeshSimple.mock.results[0]?.value as
+      | {readonly vertices: Float32Array}
+      | undefined
+    const initialY = createdMesh?.vertices[5]
+
+    for (let frame = 0; frame < 60; frame += 1) {
+      tick?.({deltaMS: 1_000 / 60})
+    }
+
+    expect(createdMesh?.vertices[5]).toBeGreaterThan(initialY ?? 0)
+    player.destroy()
+  })
+
+  test('should preserve Physics behavior across seek, playback controls, and document replacement', async () => {
+    let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
+    const application = {
+      destroy: vi.fn(),
+      init: vi.fn().mockResolvedValue(undefined),
+      render: vi.fn(),
+      resize: vi.fn(),
+      screen: {height: 100, width: 200},
+      stage: {addChild: vi.fn()},
+      start: vi.fn(),
+      stop: vi.fn(),
+      ticker: {
+        add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
+          tick = handler
+        }),
+      },
+    }
+    const root = {
+      addChild: vi.fn(),
+      position: {set: vi.fn()},
+      scale: {set: vi.fn()},
+    }
+    const runtimeMesh = {
+      geometry: {
+        indices: new Uint32Array(),
+        positions: new Float32Array(),
+        uvs: new Float32Array(),
+      },
+      vertices: new Float32Array(),
+    }
+    const texture = {destroy: vi.fn()}
+    const onFrame = vi.fn()
+    const physicsDocument: PuppetDocument = {
+      ...puppetDocument,
+      parameterBindings: [
+        {
+          id: 'output-binding',
+          keyforms: [
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 100]}],
+              values: [0],
+            },
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 200]}],
+              values: [30],
+            },
+          ],
+          parameterIds: ['output'],
+          targetPartIds: ['part'],
+        },
+      ],
+      parameters: [
+        {defaultValue: 0, id: 'input', maximum: 30, minimum: -30, name: 'Input'},
+        {defaultValue: 0, id: 'output', maximum: 30, minimum: 0, name: 'Output'},
+      ],
+      parts: [
+        {
+          id: 'part',
+          mesh: {
+            boundaryLoops: [[0, 1, 2]],
+            indices: [0, 1, 2],
+            uvs: [0, 0, 1, 0, 0, 1],
+            vertices: [0, 0, 100, 0, 0, 100],
+          },
+          texture: {height: 100, src: 'part.png', width: 100},
+        },
+      ],
+      physics: {
+        pendulums: [
+          {
+            damping: 1.2,
+            gravity: 9.8,
+            id: 'swing',
+            inputParameterId: 'input',
+            inputScale: 1,
+            length: 1,
+            outputParameterId: 'output',
+            outputScale: 1,
+          },
+        ],
+      },
+      scene: {
+        roots: [{id: 'part', kind: 'part', locked: false, name: 'Part', visible: true}],
+      },
+    }
+
+    vi.stubGlobal(
+      'Image',
+      class {
+        decoding = ''
+        src = ''
+        decode = vi.fn().mockResolvedValue(undefined)
+      },
+    )
+    mocks.Application.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, application)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.Container.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, root)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.MeshSimple.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, runtimeMesh)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.TextureFrom.mockReturnValue(texture)
+
+    const player = await createPlayer({
+      canvas: document.createElement('canvas'),
+      document: prepareDocument(physicsDocument),
+      onFrame,
+      parameterValues: {input: 30, output: 0},
+    })
+    const createdMesh = mocks.MeshSimple.mock.results[0]?.value as
+      | {readonly vertices: Float32Array}
+      | undefined
+
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
+    tick?.({deltaMS: 1_000 / 60})
+    expect(createdMesh?.vertices[5]).toBeGreaterThan(100)
+
+    player.pause()
+    player.play()
+    expect(application.stop).toHaveBeenCalledOnce()
+    expect(application.start).toHaveBeenCalledOnce()
+
+    player.seek(0.5)
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 0, motionId: null, time: 0.5})
+
+    const replacementDocument = prepareDocument({...physicsDocument, physics: undefined})
+    expect(player.updateDocument(replacementDocument)).toBe(true)
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
     player.destroy()
   })
 })

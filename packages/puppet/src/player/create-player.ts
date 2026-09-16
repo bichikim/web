@@ -16,11 +16,13 @@ import {
   type ResolvedPartRenderProperties,
 } from '../deformation'
 import type {PuppetDocument, PuppetMotion} from './document'
+import type {PendulumState} from './physics'
 import {
   assertPreparedPuppetDocument,
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
 import {applyMotionVertices, sampleMotionParameterValues} from './internal/motion'
+import {createPhysicsState, evaluatePhysics} from './internal/physics'
 import {
   canReusePartResources,
   getPartRenderPlans,
@@ -28,6 +30,7 @@ import {
   type PartRenderPlan,
 } from './internal/render-plan'
 import {applySceneDeformers} from './internal/scene-deformation'
+import {layoutPlayerRoot} from './internal/layout-player-root'
 
 export interface Player {
   destroy(): void
@@ -184,7 +187,6 @@ const applyPartRenderProperties = (
 }
 
 const MILLISECONDS_PER_SECOND = 1000
-const VIEWPORT_PADDING = 1
 const APPLICATION_DESTROY_OPTIONS = {
   children: true,
   context: false,
@@ -359,29 +361,84 @@ const getMotion = (document: PuppetDocument, motionId: string | undefined) =>
     ? document.motions[0]
     : document.motions.find((motion) => motion.id === motionId)
 
-interface LayoutPlayerRootOptions {
+interface ApplyRuntimeFrameOptions {
+  readonly activeMotion: PuppetMotion | undefined
+  readonly deltaTime: number
   readonly document: PuppetDocument
+  readonly layoutRoot: () => void
+  readonly onFrame?: (frame: PlayerFrame) => void
+  readonly parameterValues?: PuppetParameterValueMap
+  readonly partById: ReadonlyMap<string, RuntimePart>
+  readonly physicsState: ReadonlyMap<string, PendulumState>
   readonly root: Container
-  readonly screen: {
-    readonly height: number
-    readonly width: number
-  }
-  readonly viewportPadding?: number
+  readonly time: number
 }
 
-const layoutPlayerRoot = (options: LayoutPlayerRootOptions) => {
-  const viewportPadding = Math.max(0, options.viewportPadding ?? 0)
-  const viewportWidth = options.document.viewport.width * (1 + viewportPadding * 2)
-  const viewportHeight = options.document.viewport.height * (1 + viewportPadding * 2)
-  const scale =
-    Math.min(options.screen.width / viewportWidth, options.screen.height / viewportHeight) *
-    VIEWPORT_PADDING
+const applyRuntimeFrame = (
+  options: ApplyRuntimeFrameOptions,
+): ReadonlyMap<string, PendulumState> => {
+  const motionParameterValues = sampleMotionParameterValues({
+    motion: options.activeMotion,
+    parameterValues: options.parameterValues,
+    time: options.time,
+  })
+  const physicsResult = evaluatePhysics({
+    deltaTime: options.deltaTime,
+    document: options.document,
+    parameterValues: motionParameterValues,
+    physicsState: options.physicsState,
+  })
+  const frameParameterValues = physicsResult.parameterValues
+  const renderPlans = getPartRenderPlans(options.document, frameParameterValues)
+  const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
 
-  options.root.scale.set(scale)
-  options.root.position.set(
-    (options.screen.width - options.document.viewport.width * scale) / 2,
-    (options.screen.height - options.document.viewport.height * scale) / 2,
-  )
+  for (const [partId, runtimePart] of options.partById) {
+    applyFrameVertices({
+      document: options.document,
+      motion: options.activeMotion,
+      parameterValues: frameParameterValues,
+      partId,
+      runtimePart,
+      time: options.time,
+    })
+  }
+
+  applySceneDeformers({
+    document: {
+      ...options.document,
+      glue: composeParameterGlue({
+        document: options.document,
+        parameterValues: frameParameterValues,
+      }),
+      scene: composeParameterScene(options.document, frameParameterValues),
+    },
+    verticesByPartId: new Map(
+      [...options.partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
+    ),
+  })
+
+  for (const runtimePart of options.partById.values()) {
+    runtimePart.mesh.vertices = runtimePart.vertices
+    const plan = planById.get(runtimePart.partId)
+    if (plan !== undefined) {
+      applyPartRenderProperties(plan.properties, runtimePart)
+    }
+  }
+
+  for (const runtimePart of options.partById.values()) {
+    if (runtimePart.mask !== undefined) {
+      updateRuntimeMask({
+        mask: runtimePart.mask,
+        partById: options.partById,
+        planById,
+      })
+    }
+  }
+
+  applyDocumentScene(renderPlans, options.partById, options.root)
+  options.layoutRoot()
+  options.onFrame?.(createPlayerFrame(options.activeMotion, options.time))
+  return physicsResult.physicsState
 }
 
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
@@ -406,6 +463,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   let {document} = options
   let motion = getMotion(document, options.motionId)
   let {parameterValues} = options
+  let physicsState = createPhysicsState(document)
   let elapsedTime = 0
   let destroyed = false
 
@@ -435,58 +493,19 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     })
   }
 
-  const applyFrame = (activeMotion: PuppetMotion | undefined, time: number) => {
-    const frameParameterValues = sampleMotionParameterValues({
-      motion: activeMotion,
+  const applyFrame = (activeMotion: PuppetMotion | undefined, time: number, deltaTime = 0) => {
+    physicsState = applyRuntimeFrame({
+      activeMotion,
+      deltaTime,
+      document,
+      layoutRoot,
+      onFrame: options.onFrame,
       parameterValues,
+      partById,
+      physicsState,
+      root,
       time,
     })
-    const renderPlans = getPartRenderPlans(document, frameParameterValues)
-    const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
-
-    for (const [partId, runtimePart] of partById) {
-      applyFrameVertices({
-        document,
-        motion: activeMotion,
-        parameterValues: frameParameterValues,
-        partId,
-        runtimePart,
-        time,
-      })
-    }
-
-    applySceneDeformers({
-      document: {
-        ...document,
-        glue: composeParameterGlue({document, parameterValues: frameParameterValues}),
-        scene: composeParameterScene(document, frameParameterValues),
-      },
-      verticesByPartId: new Map(
-        [...partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
-      ),
-    })
-
-    for (const runtimePart of partById.values()) {
-      runtimePart.mesh.vertices = runtimePart.vertices
-      const plan = planById.get(runtimePart.partId)
-      if (plan !== undefined) {
-        applyPartRenderProperties(plan.properties, runtimePart)
-      }
-    }
-
-    for (const runtimePart of partById.values()) {
-      if (runtimePart.mask !== undefined) {
-        updateRuntimeMask({
-          mask: runtimePart.mask,
-          partById,
-          planById,
-        })
-      }
-    }
-
-    applyDocumentScene(renderPlans, partById, root)
-    layoutRoot()
-    options.onFrame?.(createPlayerFrame(activeMotion, time))
   }
 
   application.ticker.add((ticker) => {
@@ -494,7 +513,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       elapsedTime = (elapsedTime + ticker.deltaMS / MILLISECONDS_PER_SECOND) % motion.duration
     }
 
-    applyFrame(motion, elapsedTime)
+    applyFrame(motion, elapsedTime, ticker.deltaMS / MILLISECONDS_PER_SECOND)
   })
 
   applyFrame(motion, elapsedTime)
@@ -511,6 +530,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
 
     document = nextDocument
     motion = getMotion(document, options.motionId)
+    physicsState = createPhysicsState(document)
 
     for (const part of document.parts) {
       const runtimePart = partById.get(part.id)

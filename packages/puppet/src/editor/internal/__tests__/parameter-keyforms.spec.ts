@@ -18,6 +18,7 @@ import {
   renameParameter,
   setParameterKeyformVertex,
 } from '../parameter-keyforms'
+import {updatePhysics} from '../physics'
 
 describe('parameter keyform editing', () => {
   test('should return the union of parameter bindings connected to selected nodes', () => {
@@ -156,12 +157,14 @@ describe('parameter keyform editing', () => {
 
   test('should delete a binding together with its scalar parameter definitions', () => {
     const document = createDemoDocument()
-    const deleted = deleteParameter({bindingId: 'angle-xy', document})
+    const withPhysics = updatePhysics({document, operation: {kind: 'add'}})!
+    const deleted = deleteParameter({bindingId: 'angle-xy', document: withPhysics})
 
     expect(document.parameterBindings?.[0]?.keyforms).toHaveLength(9)
     expect(deleted?.parameterBindings).toEqual([])
     expect(deleted?.parameters).toEqual([])
     expect(deleted?.motions[0]?.tracks).toEqual([])
+    expect(deleted?.physics).toBeUndefined()
     expect(deleteParameter({bindingId: 'missing', document})).toBeUndefined()
   })
 
@@ -369,7 +372,7 @@ test('should remove influence references when their source parameter is deleted'
     parameterBindings: [...base.parameterBindings!, target],
     parameters: [
       ...base.parameters!,
-      {id: 'other', defaultValue: 0, minimum: 0, maximum: 1, name: 'Other'},
+      {defaultValue: 0, id: 'other', maximum: 1, minimum: 0, name: 'Other'},
     ],
   }
   const result = deleteParameter({bindingId: source.id, document})!
