@@ -315,6 +315,45 @@ it('should recover auto-start catch-up after a cross-tab update while loading', 
   receiver.cleanup()
 })
 
+it('should preserve a cross-tab reset while the auto-start preference is loading', async () => {
+  const preference = createDeferred<boolean>()
+  const runningState = {
+    completedFocusSessions: 0,
+    endsAt: 1,
+    phase: 'focus',
+    status: 'running',
+  } satisfies PomodoroTimerState
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningState))
+  autoStartMocks.read.mockReturnValue(preference.promise)
+  vi.setSystemTime(40_000)
+
+  const source = renderHook(usePomodoroTimer)
+  const receiver = renderHook(usePomodoroTimer)
+  source.result.onReset()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'idle',
+    })
+  })
+
+  preference.resolve(true)
+  await finishMount()
+
+  expect(receiver.result.state()).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  source.cleanup()
+  receiver.cleanup()
+})
+
 it('should preserve a configuration change after pausing an expired restore while loading', async () => {
   const preference = createDeferred<boolean>()
   const runningState = {
