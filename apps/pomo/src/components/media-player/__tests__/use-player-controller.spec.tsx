@@ -260,6 +260,66 @@ it('should preserve playback when controlled tracks replace the current source',
   })
 })
 
+it('should preserve playback when seeking before metadata during track replacement', async () => {
+  const {controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  controller.onSeeking()
+  controller.onPause()
+
+  expect(controller.isPlaying()).toBe(true)
+  expect(readStoredPlayback()).toMatchObject({
+    isPlaying: true,
+    positionSeconds: 0,
+    trackId: NEXT_TRACK.id,
+  })
+})
+
+it('should resume the media element after seeking before metadata during track replacement', async () => {
+  const {audio, controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  await Promise.resolve()
+  audio.currentTime = 8
+  controller.onSeeking()
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  controller.onLoadedMetadata()
+
+  expect(audio.play).toHaveBeenCalled()
+})
+
+it('should honor an explicit pause after seeking before metadata during track replacement', async () => {
+  const {audio, controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  await Promise.resolve()
+  audio.currentTime = 8
+  controller.onSeeking()
+  controller.pause()
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  controller.onLoadedMetadata()
+
+  expect(controller.isPlaying()).toBe(false)
+  expect(audio.play).not.toHaveBeenCalled()
+  expect(readStoredPlayback()).toMatchObject({
+    isPlaying: false,
+    positionSeconds: 8,
+    trackId: NEXT_TRACK.id,
+  })
+})
+
 it('should not reload when controlled tracks refresh with identical track identity', async () => {
   const {audio, controller, setTracks} = renderControlledController()
 
