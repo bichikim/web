@@ -318,11 +318,11 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
     const transition = getPlaybackTransition()
     if (transition?.phase === 'restoring') {
-      const positionSeconds = readPlaybackPosition(props.element())
-      if (transition.seekPending && positionSeconds === transition.playback.positionSeconds) {
+      if (transition.seekPending) {
         return
       }
 
+      const positionSeconds = readPlaybackPosition(props.element())
       playbackTransition =
         positionSeconds === null
           ? null
