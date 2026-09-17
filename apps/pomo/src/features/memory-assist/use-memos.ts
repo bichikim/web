@@ -30,6 +30,7 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
   const [memos, setMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
   let isDisposed = false
   let storageRevision = 0
+  const deletionTombstones = new Map<string, Set<string>>()
 
   onMount(() => {
     const initialRevision = storageRevision
@@ -41,6 +42,13 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
       const change = parseMemoryMemosChangedEvent(event.detail)
 
       if (change !== null && change.revision > storageRevision) {
+        for (const memo of change.memos) {
+          if (isMemoryMemoDeletionPending(memo)) {
+            const createdAtValues = deletionTombstones.get(memo.id) ?? new Set<string>()
+            createdAtValues.add(memo.createdAt)
+            deletionTombstones.set(memo.id, createdAtValues)
+          }
+        }
         storageRevision = change.revision
         setMemos(change.memos)
       }
@@ -62,5 +70,9 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
     })
   })
 
-  return () => memos().filter((memo) => !isMemoryMemoDeletionPending(memo))
+  const isHiddenMemo = (memo: MemoryMemo) =>
+    isMemoryMemoDeletionPending(memo) ||
+    deletionTombstones.get(memo.id)?.has(memo.createdAt) === true
+
+  return () => memos().filter((memo) => !isHiddenMemo(memo))
 }

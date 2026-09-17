@@ -1,12 +1,15 @@
 import {useTooltipTrigger} from '../tooltip'
 import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
+import {Show} from 'solid-js'
 import {PTooltip} from '../p-tooltip/PTooltip'
 import {POverflowMarquee} from '../p-overflow-marquee/POverflowMarquee'
 import {CLASSES} from './styles'
 import type {MusicPlayerViewProps} from './types'
 
-export interface TrackSummaryProps extends Pick<MusicPlayerViewProps, 'currentTrack'> {}
+export interface TrackSummaryProps extends Pick<MusicPlayerViewProps, 'currentTrack'> {
+  readonly isPreparing?: boolean
+}
 
 export const TrackSummary = (props: TrackSummaryProps) => {
   const tooltip = useTooltipTrigger()
@@ -32,9 +35,28 @@ export const TrackSummary = (props: TrackSummaryProps) => {
         text={props.currentTrack?.title ?? m.player_fallback_title()}
       />
 
-      <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
-        <POverflowMarquee text={props.currentTrack?.artist ?? m.player_fallback_artist()} />
-      </p>
+      <Show
+        when={props.isPreparing === true}
+        fallback={
+          <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
+            <POverflowMarquee text={props.currentTrack?.artist ?? m.player_fallback_artist()} />
+          </p>
+        }
+      >
+        <p
+          aria-busy="true"
+          aria-live="polite"
+          class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 flex min-w-0 items-center gap-1.5')}
+          data-player-status="preparing"
+          role="status"
+        >
+          <span
+            aria-hidden="true"
+            class="i-tabler-loader-2 size-3.5 flex-none animate-spin motion-reduce:animate-none"
+          />
+          <span class="min-w-0 truncate">{m.player_next_track_preparing()}</span>
+        </p>
+      </Show>
     </div>
   )
 }

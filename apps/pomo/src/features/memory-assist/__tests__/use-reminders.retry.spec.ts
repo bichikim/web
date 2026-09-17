@@ -5,7 +5,7 @@ import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {PEventContextValue} from '../../focus-room-dialogue'
-import {createMemoryMemo} from '../schedule'
+import {createMemoryMemo, editMemoryMemo} from '../schedule'
 import type {MemoryMemo} from '../schema'
 import {useMemoryReminders} from '../use-reminders'
 
@@ -110,6 +110,52 @@ it('should delay a skipped invalidated repeat before retrying it', async () => {
     await vi.advanceTimersByTimeAsync(1)
     await flushPromises()
     expect(playDialogue).toHaveBeenCalledTimes(3)
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should retry at an edited reminder time instead of retaining the old backoff', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const playDialogue = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(playDialogue).toHaveBeenCalledOnce()
+
+    const editedMemo = editMemoryMemo({
+      exactReminderAt: '2026-09-04T03:01:00.000Z',
+      memo,
+      now: new Date('2026-09-04T03:00:01.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: memo.text,
+    })
+    mocks.memos = [editedMemo]
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    await vi.advanceTimersByTimeAsync(59_999)
+    expect(playDialogue).toHaveBeenCalledOnce()
+    await vi.advanceTimersByTimeAsync(1)
+    await flushPromises()
+
+    expect(playDialogue).toHaveBeenCalledTimes(2)
   } finally {
     view.cleanup()
   }

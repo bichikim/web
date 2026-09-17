@@ -580,6 +580,7 @@
   "player_play": "Play",
   "player_pause": "Pause",
   "player_next": "Next track",
+  "player_next_track_preparing": "Preparing the next track",
   "player_mute": "Mute",
   "player_toggle_mute": "Toggle mute",
   "player_volume": "Adjust volume",
