@@ -100,7 +100,9 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
           <Show when={props.dialogueComposerVisible}>
             <PDialogueComposer
               autoExpand={isMobileLayout() && !hasMediaMessages()}
+              draft={oneOffChat.draft}
               loading={oneOffChat.isBusy() || props.pomoSay.isPreparing()}
+              onDraftChange={oneOffChat.setDraft}
               onSubmit={oneOffChat.submit}
             />
           </Show>

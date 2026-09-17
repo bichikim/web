@@ -21,8 +21,10 @@ import {useOneOffChat} from '../use-one-off-chat'
 const oneOffChatMocks = vi.hoisted(() => ({
   cancelDownloadConsent: vi.fn(),
   downloadConsentOpen: vi.fn(() => false),
+  draft: vi.fn(() => ''),
   errorMessage: vi.fn((): string | null => null),
   isBusy: vi.fn(() => false),
+  setDraft: vi.fn(),
   startDownload: vi.fn(async () => undefined),
   submit: vi.fn(async () => undefined),
 }))
@@ -48,11 +50,17 @@ vi.mock('../use-child-presence', () => ({
 vi.mock('../../p-dialogue-composer/PDialogueComposer', () => ({
   PDialogueComposer: (props: {
     readonly autoExpand?: boolean
+    readonly draft?: () => string
     readonly loading?: boolean
+    readonly onDraftChange?: (text: string) => void
     readonly onSubmit?: (text: string) => void
   }) => (
     <form class="pomo-dialogue-composer" data-auto-expand={props.autoExpand ? '' : undefined}>
-      <input aria-label="대화 입력" />
+      <input
+        aria-label="대화 입력"
+        onInput={(event) => props.onDraftChange?.(event.currentTarget.value)}
+        value={props.draft?.() ?? ''}
+      />
       <button disabled={props.loading} onClick={() => props.onSubmit?.('집중 방법')} type="button">
         대화 보내기
       </button>
@@ -205,6 +213,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useChildPresence).mockReturnValue(() => false)
     vi.mocked(useMobileLayout).mockReturnValue(() => false)
     oneOffChatMocks.downloadConsentOpen.mockReturnValue(false)
+    oneOffChatMocks.draft.mockReturnValue('')
     oneOffChatMocks.errorMessage.mockReturnValue(null)
     oneOffChatMocks.isBusy.mockReturnValue(false)
   })
@@ -426,6 +435,14 @@ describe('PStudioEvents', () => {
     renderEvents()
 
     expect(screen.getByRole('alert')).toHaveTextContent('모델 준비 실패')
+  })
+
+  it('should connect the one-off chat draft to the dialogue composer', () => {
+    oneOffChatMocks.draft.mockReturnValue('복구된 대화')
+
+    renderEvents()
+
+    expect(screen.getByRole('textbox', {name: '대화 입력'})).toHaveValue('복구된 대화')
   })
 
   it('should queue an input reply after the existing dialogue stack', async () => {
