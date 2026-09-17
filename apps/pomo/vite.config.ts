@@ -8,9 +8,11 @@ import {resolveContentSecurityPolicyTemplates} from './scripts/vite/content-secu
 import {getOptimizeDepsInclude} from './scripts/vite/optimize-deps'
 import {createNitroConfig} from './scripts/vite/create-nitro-config'
 import {createPlugins} from './scripts/vite/create-plugins'
+import {resolveDistributionTarget} from './scripts/vite/distribution-target'
 import {resolveRuntimeTarget} from './scripts/vite/runtime-target'
 import {loadBuildEnvironment} from './scripts/vite/load-build-environment'
 import {getEnvironmentValue} from './scripts/vite/get-environment-value'
+import {validateSteamAssets} from './scripts/vite/validate-steam-assets'
 
 const SERVICE_POLICY_PATHS = {
   appsInToss: {
@@ -77,6 +79,10 @@ const POMO_RUNTIME_TARGET = resolveRuntimeTarget(
   REQUESTED_BUILD_TARGET,
   getEnvironmentValue({environment: process.env, name: 'POMO_RUNTIME_TARGET'}),
 )
+const POMO_DISTRIBUTION_TARGET = resolveDistributionTarget(
+  POMO_RUNTIME_TARGET,
+  getEnvironmentValue({environment: process.env, name: 'POMO_DISTRIBUTION_TARGET'}),
+)
 const POMO_BUILD_TARGET = REQUESTED_BUILD_TARGET === undefined ? 'web' : POMO_RUNTIME_TARGET
 const IS_APPS_IN_TOSS_BUILD = POMO_BUILD_TARGET === 'apps-in-toss'
 const IS_DESKTOP_BUILD = POMO_BUILD_TARGET === 'desktop'
@@ -86,9 +92,12 @@ const IS_MOBILE_BUILD = IS_ANDROID_BUILD || IS_IOS_BUILD
 const IS_STATIC_BUILD = IS_APPS_IN_TOSS_BUILD || IS_DESKTOP_BUILD || IS_MOBILE_BUILD
 const IS_APPS_IN_TOSS_RUNTIME = POMO_RUNTIME_TARGET === 'apps-in-toss'
 const IS_DESKTOP_RUNTIME = POMO_RUNTIME_TARGET === 'desktop'
+const IS_STEAM_RUNTIME = POMO_DISTRIBUTION_TARGET === 'steam'
 const IS_ANDROID_RUNTIME = POMO_RUNTIME_TARGET === 'android'
 const IS_IOS_RUNTIME = POMO_RUNTIME_TARGET === 'ios'
 const IS_MOBILE_RUNTIME = IS_ANDROID_RUNTIME || IS_IOS_RUNTIME
+const VALIDATE_STEAM_ASSETS =
+  getEnvironmentValue({environment: process.env, name: 'POMO_VALIDATE_STEAM_ASSETS'}) === 'true'
 const USES_APPS_IN_TOSS_DEVTOOLS =
   IS_APPS_IN_TOSS_RUNTIME && process.env.POMO_APPS_IN_TOSS_DEVTOOLS === 'true'
 const DEPLOYMENT_ENVIRONMENT =
@@ -100,6 +109,12 @@ const RELEASE =
   process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, SHORT_COMMIT_HASH_LENGTH) ||
   'local'
 const FONT_CACHE_MAX_AGE = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * DAYS_PER_YEAR
+const STEAM_ASSET_PUBLIC_ASSET = {
+  baseURL: '/assets-steam',
+  dir: './assets-steam',
+  maxAge: FONT_CACHE_MAX_AGE,
+} as const
+const STEAM_ASSETS_DIRECTORY = fileURLToPath(new URL('./assets-steam/', import.meta.url))
 const PRETENDARD_BASE_PATH = `/fonts/pretendard/${PRETENDARD_VERSION}`
 const PRETENDARD_PUBLIC_DIRECTORY = `./public${PRETENDARD_BASE_PATH}`
 const PRETENDARD_PUBLIC_ASSET = {
@@ -164,6 +179,13 @@ const BASE_SECURITY_HEADERS = {
 } as const
 
 const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
+  if (IS_STEAM_RUNTIME) {
+    validateSteamAssets({
+      assetsDirectory: STEAM_ASSETS_DIRECTORY,
+      strict: VALIDATE_STEAM_ASSETS,
+    })
+  }
+
   const {connectSourceList, environment, publicAssetOrigin, publicOrigin} = loadBuildEnvironment({
     environmentDirectory: fileURLToPath(new URL('.', import.meta.url)),
     mode,
@@ -208,6 +230,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE: templates.worker,
       VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: SERVICE_POLICY_PATHS.appsInToss.privacy,
       VITE_POMO_APPS_IN_TOSS_TERMS_PATH: SERVICE_POLICY_PATHS.appsInToss.terms,
+      VITE_POMO_DISTRIBUTION_TARGET: POMO_DISTRIBUTION_TARGET,
       VITE_POMO_ENVIRONMENT: DEPLOYMENT_ENVIRONMENT,
       VITE_POMO_IS_APPS_IN_TOSS: String(IS_APPS_IN_TOSS_RUNTIME),
       VITE_POMO_IS_DESKTOP: String(IS_DESKTOP_RUNTIME),
@@ -233,6 +256,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       mobileStaticRoutes: MOBILE_STATIC_ROUTES,
       sharedStaticRoutes: SHARED_STATIC_ROUTES,
       staticSecurityHeaders,
+      steamAsset: IS_STEAM_RUNTIME ? STEAM_ASSET_PUBLIC_ASSET : undefined,
       target: POMO_BUILD_TARGET,
       workerSecurityHeaders,
     }),

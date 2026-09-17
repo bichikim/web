@@ -1,3 +1,5 @@
+import {POMO_R2_ASSET_HOST} from '../product-assets'
+
 const DEVELOPMENT_TEXT_MODEL_IDS = ['qwen-0.8b', 'qwen-2b', 'qwen-4b'] as const
 
 const PRODUCTION_TEXT_MODEL_IDS = ['gemma-4-e2b', 'gemma-4-e2b-mobile'] as const
@@ -36,11 +38,10 @@ const HUGGING_FACE_MODEL_SOURCE = {
   revision: 'main',
 } as const
 
-const POMO_R2_MODEL_HOST = 'https://storage.pomofi.io/'
 const POMO_R2_TEXT_MODEL_PATH_TEMPLATE = 'models/text-generation/{model}/{revision}/'
 
 const createPomoR2ModelSource = (revision: string): TextModelAssetSource => ({
-  host: POMO_R2_MODEL_HOST,
+  host: POMO_R2_ASSET_HOST,
   pathTemplate: POMO_R2_TEXT_MODEL_PATH_TEMPLATE,
   revision,
 })
