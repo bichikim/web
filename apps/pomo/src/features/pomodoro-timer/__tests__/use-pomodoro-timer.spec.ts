@@ -362,6 +362,34 @@ it('should synchronize an expired phase on the next frame without duplicate even
   view.cleanup()
 })
 
+it('should synchronize an expired running break before applying configuration changes', async () => {
+  const runningBreak = {
+    completedFocusSessions: 1,
+    endsAt: 4_000,
+    phase: 'shortBreak',
+    status: 'running',
+  } satisfies PomodoroTimerState
+  const nextConfig = {...CONFIG, shortBreakSeconds: 8}
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
+  autoStartMocks.read.mockResolvedValue(true)
+
+  const view = renderHook(usePomodoroTimer)
+  await finishMount()
+  vi.setSystemTime(5_000)
+
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.config()).toEqual(nextConfig)
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
 it('should stop frame updates after cleanup', async () => {
   const view = renderHook(usePomodoroTimer)
   await finishMount()
