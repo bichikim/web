@@ -5,7 +5,7 @@ const sessionMocks = vi.hoisted(() => ({getAuthSession: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({completeAccountLink: vi.fn()}))
 
 vi.mock('src/server/auth/get-auth-session', () => sessionMocks)
-vi.mock('src/server/auth/repository', () => repositoryMocks)
+vi.mock('src/server/repositories/auth', () => repositoryMocks)
 
 import {POST} from '../complete-link'
 import {invokeApiRoute} from '../../__tests__/invoke'

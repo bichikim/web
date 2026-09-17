@@ -1,7 +1,7 @@
 import type {
   markGenerationSubmissionUnknown,
   markGenerationSubmitted,
-} from './generation-repository'
+} from '../repositories/history-generation'
 
 type MarkGenerationSubmitted = typeof markGenerationSubmitted
 type MarkGenerationSubmissionUnknown = typeof markGenerationSubmissionUnknown

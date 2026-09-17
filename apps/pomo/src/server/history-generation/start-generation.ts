@@ -8,7 +8,7 @@ import {
   markGenerationSubmissionUnknown,
   markGenerationSubmitted,
   prepareGenerationRun,
-} from './generation-repository'
+} from '../repositories/history-generation'
 import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
 import {
   persistGenerationSubmission,

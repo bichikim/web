@@ -4,7 +4,7 @@ import {z} from 'zod'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {getAuthSession} from 'src/server/auth/get-auth-session'
-import {completeAccountLink} from 'src/server/auth/repository'
+import {completeAccountLink} from 'src/server/repositories/auth'
 
 const MAXIMUM_BODY_SIZE = 4096
 const MINIMUM_TOKEN_LENGTH = 32

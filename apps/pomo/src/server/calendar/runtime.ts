@@ -4,7 +4,7 @@ import type {CalendarProviderId} from 'src/features/calendar'
 import {createGoogleCalendarProvider} from './providers/google'
 import {createMicrosoftCalendarProvider} from './providers/microsoft'
 import type {CalendarProvider} from './providers/types'
-import {calendarRepository} from './repository'
+import {calendarRepository} from '../repositories/calendar'
 import {
   type CalendarConnectionSummary,
   type CalendarService,

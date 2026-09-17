@@ -2,7 +2,7 @@ import type {APIEvent} from '@solidjs/start/server'
 
 import {noStoreJson} from 'src/server/http/response'
 import {getAuthSession} from 'src/server/auth/get-auth-session'
-import {findOrCreateNeonUser} from 'src/server/auth/repository'
+import {findOrCreateNeonUser} from 'src/server/repositories/auth'
 
 const HTTP_UNAUTHORIZED = 401
 

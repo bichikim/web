@@ -8,7 +8,7 @@ import {
   type AppSession,
   createPendingTossAppSession,
   createTossAppSession,
-} from 'src/server/auth/repository'
+} from 'src/server/repositories/auth'
 
 const MAXIMUM_BODY_SIZE = 8192
 const MAX_AUTHORIZATION_CODE_LENGTH = 2048

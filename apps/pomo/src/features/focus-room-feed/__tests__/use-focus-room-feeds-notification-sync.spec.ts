@@ -342,6 +342,8 @@ it('should preserve expired dialogues that are active or queued for playback', (
 })
 
 it('should refresh from lifecycle events and remove every listener on cleanup', async () => {
+  const documentAdd = vi.spyOn(document, 'addEventListener')
+  const documentRemove = vi.spyOn(document, 'removeEventListener')
   const windowAdd = vi.spyOn(window, 'addEventListener')
   const windowRemove = vi.spyOn(window, 'removeEventListener')
   const refreshDialogues = vi.fn(async () => undefined)
@@ -357,7 +359,7 @@ it('should refresh from lifecycle events and remove every listener on cleanup', 
   await vi.waitFor(() =>
     expect(repositoryMocks.listConnections.mock.calls.length).toBeGreaterThan(listCount),
   )
-  expect(windowAdd).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
+  expect(documentAdd).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
   expect(windowAdd).toHaveBeenCalledWith(FEED_CONNECTIONS_CHANGED_EVENT, expect.any(Function), {})
   expect(windowAdd).toHaveBeenCalledWith(
     feedGenerationRuntime.settingsChangedEvent,
@@ -367,7 +369,7 @@ it('should refresh from lifecycle events and remove every listener on cleanup', 
 
   view.cleanup()
 
-  expect(windowRemove).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
+  expect(documentRemove).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
   expect(windowRemove).toHaveBeenCalledWith(
     FEED_CONNECTIONS_CHANGED_EVENT,
     expect.any(Function),

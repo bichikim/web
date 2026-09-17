@@ -4,7 +4,7 @@ import {z} from 'zod'
 import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {createPendingTrack} from 'src/server/music/track-registration-repository'
+import {createPendingTrack} from 'src/server/repositories/music-track-registration'
 
 const MAXIMUM_BODY_SIZE = 8192
 const MAXIMUM_TEXT_LENGTH = 120

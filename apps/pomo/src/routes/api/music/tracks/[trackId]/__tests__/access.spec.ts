@@ -11,12 +11,12 @@ const repositoryMocks = vi.hoisted(() => ({
 }))
 const userMocks = vi.hoisted(() => ({findOrCreateNeonUser: vi.fn()}))
 
-vi.mock('src/server/music/catalog-repository', () => repositoryMocks)
+vi.mock('src/server/repositories/music-catalog', () => repositoryMocks)
 vi.mock('src/server/music/playback-access', () => playbackMocks)
 vi.mock('src/server/music/preview-access', () => previewMocks)
 vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
 vi.mock('src/server/auth/get-neon-session', () => neonMocks)
-vi.mock('src/server/auth/repository', () => userMocks)
+vi.mock('src/server/repositories/auth', () => userMocks)
 
 import {GET} from '../access'
 import {invokeApiRoute} from '../../../../__tests__/invoke'

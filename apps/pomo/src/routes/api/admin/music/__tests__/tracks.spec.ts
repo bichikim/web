@@ -5,7 +5,7 @@ const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({createPendingTrack: vi.fn()}))
 
 vi.mock('src/server/auth/authorize-admin-request', () => authMocks)
-vi.mock('src/server/music/track-registration-repository', () => repositoryMocks)
+vi.mock('src/server/repositories/music-track-registration', () => repositoryMocks)
 
 import {POST} from '../tracks'
 import {invokeApiRoute} from '../../../__tests__/invoke'

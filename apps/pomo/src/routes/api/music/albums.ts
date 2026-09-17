@@ -1,4 +1,4 @@
-import {listPublishedAlbums, type PublishedAlbumLocale} from 'src/server/music/catalog-repository'
+import {listPublishedAlbums, type PublishedAlbumLocale} from 'src/server/repositories/music-catalog'
 
 const HTTP_INTERNAL_SERVER_ERROR = 500
 
