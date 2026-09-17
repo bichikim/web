@@ -99,6 +99,11 @@ const getMemoryMemoDeliverySnapshot = (memo: MemoryMemo) =>
     version: memo.version,
   })
 
+interface RetryAfter {
+  readonly availableAt: number
+  readonly reminderTime: number | null
+}
+
 const isMemoryMemoDeliverySnapshotCurrent = (
   memos: ReadonlyArray<MemoryMemo>,
   deliveredMemo: MemoryMemo,
@@ -247,7 +252,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   const [clockRevision, setClockRevision] = createSignal(0)
   const [isPending, setIsPending] = createSignal(false)
   const [skippedMemos, setSkippedMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
-  const retryAfter = new Map<string, number>()
+  const retryAfter = new Map<string, RetryAfter>()
   const invalidatedReminders = new Map<string, InvalidatedReminder>()
   let client: SupertonicClient | null = null
   let clientModelId: SupertonicModelId | null = null
@@ -292,9 +297,31 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     return clientPreparation
   }
 
+  const setRetryAfter = (memo: MemoryMemo) => {
+    retryAfter.set(memo.id, {
+      availableAt: Date.now() + RETRY_DELAY,
+      reminderTime: getReminderTime(memo),
+    })
+  }
+
+  const getMemoRetryAfter = (memo: MemoryMemo) => {
+    const retry = retryAfter.get(memo.id)
+
+    if (retry === undefined) {
+      return 0
+    }
+
+    if (getReminderTime(memo) !== retry.reminderTime) {
+      retryAfter.delete(memo.id)
+      return 0
+    }
+
+    return retry.availableAt
+  }
+
   const markSkippedMemo = (memo: MemoryMemo) => {
     setSkippedMemos((current) => [...current.filter((item) => item.id !== memo.id), memo])
-    retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+    setRetryAfter(memo)
   }
 
   const deliver = async (memo: MemoryMemo) => {
@@ -412,7 +439,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     } catch (error: unknown) {
       console.error('Failed to deliver a memory memo reminder.', error)
       if (isDisposed) {
-        retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+        setRetryAfter(memo)
       } else {
         markSkippedMemo(memo)
       }
@@ -486,7 +513,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
           return []
         }
 
-        const availableAt = Math.max(reminderTime, retryAfter.get(memo.id) ?? 0)
+        const availableAt = Math.max(reminderTime, getMemoRetryAfter(scheduledMemo))
         return Number.isFinite(availableAt) ? [{availableAt, memo: scheduledMemo}] : []
       })
       .sort((left, right) => left.availableAt - right.availableAt)
