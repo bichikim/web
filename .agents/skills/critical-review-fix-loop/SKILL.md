@@ -15,3 +15,5 @@ disable-model-invocation: true
 Mark absent applicable test or `typecheck` scripts as not applicable with a reason. Stop as blocked when a required check cannot run or a fix needs product direction, new authority, destructive action, or external change.
 
 Follow `$critical-review`'s output order. Summarize P0–P2 findings discovered across all passes, fixed, and remaining; retain each fixed finding's cause and before/after verification. Report pass count, exact test and `typecheck` commands/results, other checks, and final status (`no remaining P0/P1/P2 findings` or `blocked`). Then report verification gaps and remaining P3/P4 proposals. Give each remaining P3/P4 one unique number in a single consecutive list across severities so the user can authorize by number; write `none` when empty.
+
+Explicitly state whether this workflow updated an existing PR. If it did, say so clearly and identify the PR; if it did not, state that no PR was updated.
