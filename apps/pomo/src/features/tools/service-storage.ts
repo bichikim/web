@@ -1,5 +1,6 @@
 import {z} from 'zod'
 import {type ServiceBranch} from './calculate-service'
+import {normalizeServiceDays} from './service-days'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {parseDate} from '../civil-date'
 
@@ -16,13 +17,6 @@ export const DEFAULT_SERVICE_SETTINGS: ServiceSettings = {
   days: '',
   manual: false,
   start: '',
-}
-const normalizeServiceDays = (value: string): string => {
-  if (value === '') {
-    return value
-  }
-  const numericValue = /^\d+$/u.test(value) ? Number(value) : NaN
-  return Number.isSafeInteger(numericValue) && numericValue > 0 ? value : ''
 }
 const settingsSchema = z.object({
   branch: z.enum(['army', 'marines', 'navy', 'air']),
