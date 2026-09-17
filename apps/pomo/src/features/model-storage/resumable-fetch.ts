@@ -351,6 +351,9 @@ const resumePartialDownload = async (
     }
   }
 
+  if (response.status === HTTP_PARTIAL_CONTENT_STATUS) {
+    await response.body?.cancel()
+  }
   await deletePartial(options.storage, options.url)
   return response.status === HTTP_PARTIAL_CONTENT_STATUS
     ? null

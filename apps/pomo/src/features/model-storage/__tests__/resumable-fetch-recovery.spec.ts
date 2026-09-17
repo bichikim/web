@@ -309,6 +309,27 @@ describe('createResumableModelFetch recovery', () => {
     expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
+  it('should cancel an invalid partial-content response before restarting', async () => {
+    const url = 'https://models.test/model.onnx'
+    const partial = createPartialStorage({
+      body: new TextEncoder().encode('part'),
+      metadata: createMetadata(url),
+    })
+    const cancel = vi.fn()
+    const invalidResponse = new Response(new ReadableStream({cancel}), {
+      headers: {'content-range': 'bytes 3-7/8'},
+      status: 206,
+    })
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(invalidResponse)
+      .mockResolvedValueOnce(new Response('complete', {headers: createHeaders(8)}))
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    expect(await (await resumable.fetch(url)).text()).toBe('complete')
+    expect(cancel).toHaveBeenCalledOnce()
+  })
+
   it.each(['invalid', 'bytes 3-7/8', 'bytes 4-7/9'])(
     'should discard an invalid partial-content response with range %s',
     async (contentRange) => {
