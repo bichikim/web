@@ -86,6 +86,19 @@ it('should revalidate when a long-delay timer fires after its due time', async (
   root.dispose()
 })
 
+it('should cancel the remaining long-delay timer when disposed', async () => {
+  const root = createSchedulerRoot({
+    kind: 'after-delay',
+    milliseconds: MAXIMUM_TIMEOUT_DELAY_MILLISECONDS + 1,
+  })
+
+  await vi.advanceTimersByTimeAsync(MAXIMUM_TIMEOUT_DELAY_MILLISECONDS)
+  root.dispose()
+  await vi.advanceTimersByTimeAsync(1)
+
+  expect(revalidate).not.toHaveBeenCalled()
+})
+
 it('should calculate an absolute revalidation time and clamp past times', async () => {
   const futureRoot = createSchedulerRoot({
     kind: 'at-time',
