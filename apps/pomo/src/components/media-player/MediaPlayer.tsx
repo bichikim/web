@@ -49,6 +49,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     currentTrack: player.currentTrack,
     isPlaying: player.isPlaying,
     isPlaylistLoading: player.isPlaylistLoading,
+    isPreparing: player.isPreparing,
     levels: player.levels,
     previewPlayback: player.previewPlayback,
     removeTrackFromQueue: player.removeTrackFromQueue,

@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, render} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
 import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
@@ -118,7 +119,10 @@ describe('PMusicPlayerContent control paths', () => {
     const audio = createAudio()
     setAudioReadyState(audio, HTMLMediaElement.HAVE_NOTHING)
 
+    emit('play')
     emit('ended')
+    expect(latestViewProps().isPlaying).toBe(true)
+    expect(latestViewProps().isPreparing).toBe(true)
     await Promise.resolve()
     expect(audio.load).toHaveBeenCalledOnce()
     expect(audio.play).not.toHaveBeenCalled()
@@ -126,6 +130,51 @@ describe('PMusicPlayerContent control paths', () => {
     setAudioReadyState(audio, HTMLMediaElement.HAVE_METADATA)
     emit('loadedmetadata')
     expect(audio.play).toHaveBeenCalledOnce()
+    expect(latestViewProps().isPlaying).toBe(true)
+    expect(latestViewProps().isPreparing).toBe(true)
+
+    emit('play')
+    expect(latestViewProps().isPlaying).toBe(true)
+    expect(latestViewProps().isPreparing).toBe(false)
+  })
+
+  it('should clear next-track preparation when the user pauses before metadata loads', async () => {
+    featureMocks.resolveTrackEnd.mockReturnValue('play-next')
+    featureMocks.applyPendingPosition.mockReturnValue({
+      isPlaying: true,
+      positionSeconds: 0,
+      trackId: TRACKS[2].id,
+    })
+    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = createAudio()
+    setAudioReadyState(audio, HTMLMediaElement.HAVE_NOTHING)
+
+    emit('play')
+    emit('ended')
+    await Promise.resolve()
+
+    expect(latestViewProps().isPlaying).toBe(true)
+    expect(latestViewProps().isPreparing).toBe(true)
+
+    latestController().pause()
+
+    expect(latestViewProps().isPlaying).toBe(false)
+    expect(latestViewProps().isPreparing).toBe(false)
+    expect(audio.pause).toHaveBeenCalled()
+  })
+
+  it('should clear next-track preparation when a controlled queue becomes empty', async () => {
+    const [tracks, setTracks] = createSignal<readonly PTrack[]>(TRACKS)
+    render(() => <PMusicPlayerContent tracks={tracks()} />)
+
+    emit('play')
+    latestViewProps().onNextTrack()
+    expect(latestViewProps().isPreparing).toBe(true)
+
+    setTracks([])
+    await Promise.resolve()
+
+    expect(latestViewProps().isPreparing).toBe(false)
   })
 
   it('should handle empty and single-track transport before metadata loads', () => {
