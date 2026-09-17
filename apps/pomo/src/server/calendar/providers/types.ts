@@ -17,6 +17,7 @@ export interface ListProviderEventsOptions {
 export interface ProviderEventsResult {
   readonly events: ReadonlyArray<ProviderEvent>
   readonly truncated: boolean
+  readonly unavailableCalendars: number
 }
 
 export interface CalendarProvider {

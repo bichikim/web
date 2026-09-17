@@ -161,9 +161,13 @@ const listCalendarEvents = async ({
     }
   }
 
-  await loadPage(initialUrl, 0)
+  try {
+    await loadPage(initialUrl, 0)
+  } catch {
+    return {events, truncated: false, unavailableCalendars: 1}
+  }
 
-  return {events, truncated}
+  return {events, truncated, unavailableCalendars: 0}
 }
 
 interface CalendarListResult {
@@ -215,19 +219,26 @@ const listEvents = async (
     timeZone: options.displayTimeZone,
     year: 'numeric',
   })
-  const result = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(result.calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
-    listCalendarEvents({
-      calendarId: calendar.id,
-      calendarLabel: calendar.name,
-      displayTimeZoneFormatter,
-      eventOptions: options,
-      fetch,
-    }),
+  const calendarList = await listCalendars(options.accessToken, fetch)
+  const eventLists = await mapInBatches(
+    calendarList.calendars,
+    EVENT_REQUEST_CONCURRENCY,
+    (calendar) =>
+      listCalendarEvents({
+        calendarId: calendar.id,
+        calendarLabel: calendar.name,
+        displayTimeZoneFormatter,
+        eventOptions: options,
+        fetch,
+      }),
   )
   return {
-    events: eventLists.flatMap((result) => result.events),
-    truncated: result.truncated || eventLists.some((result) => result.truncated),
+    events: eventLists.flatMap((eventList) => eventList.events),
+    truncated: calendarList.truncated || eventLists.some((eventList) => eventList.truncated),
+    unavailableCalendars: eventLists.reduce(
+      (count, eventList) => count + eventList.unavailableCalendars,
+      0,
+    ),
   }
 }
 
