@@ -334,7 +334,10 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       syncController?.close()
       syncController = null
       if (props.stopOnUnmount) {
-        writeStoredState(stopPomodoroTimer(state(), config()))
+        const currentTime = Date.now()
+        const currentConfig = config()
+        const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig)
+        writeStoredState(stopPomodoroTimer(synchronizedState, currentConfig))
       }
     })
   })
