@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {type PreferenceStorage, webLocalStorage} from 'src/utils/preference-storage'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -7,9 +8,6 @@ import {
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
-
-export const DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT =
-  'pomo:dialogue-volume-ducking-settings-changed'
 
 export interface DialogueVolumeDuckingSettings {
   readonly enabled: boolean
@@ -94,8 +92,6 @@ export const createDialogueVolumeDuckingSettingsRepository = (
   options: CreateDialogueVolumeDuckingSettingsRepositoryOptions,
 ): DialogueVolumeDuckingSettingsRepository => {
   const {storage} = options
-  let preferenceWriteRevision = 0
-  let tossWriteQueue = Promise.resolve()
 
   const writeWebSettings = (settings: DialogueVolumeDuckingSettings) => {
     try {
@@ -135,26 +131,13 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     return legacySettings === null ? null : migrateLegacySettings(legacySettings)
   }
 
-  const enqueueTossWrite = (settings: DialogueVolumeDuckingSettings) => {
-    const tossWrite = tossWriteQueue.then(() => storage.writeToss(STORAGE_KEY, settings))
-    tossWriteQueue = tossWrite.catch(() => undefined)
-    return tossWrite
-  }
-
   const read = async (): Promise<DialogueVolumeDuckingSettings> => {
-    const initialWriteRevision = preferenceWriteRevision
-
     if (!storage.usesTossStorage()) {
       return readWebSettings() ?? DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
     }
 
     try {
-      await tossWriteQueue
       const tossSettings = await readTossSettings()
-
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
-      }
 
       if (tossSettings === null) {
         writeWebSettings(DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
@@ -170,7 +153,6 @@ export const createDialogueVolumeDuckingSettingsRepository = (
 
   const write = async (settings: DialogueVolumeDuckingSettings): Promise<void> => {
     const snapshot = settingsSchema.parse(settings)
-    preferenceWriteRevision += 1
     const webWriteError = writeWebSettings(snapshot)
 
     if (!storage.usesTossStorage()) {
@@ -184,7 +166,7 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     }
 
     try {
-      await enqueueTossWrite(snapshot)
+      await storage.writeToss(STORAGE_KEY, snapshot)
     } catch (error: unknown) {
       throw new Error('Failed to persist dialogue volume ducking settings.', {
         cause: error,
@@ -195,22 +177,48 @@ export const createDialogueVolumeDuckingSettingsRepository = (
   return {read, write}
 }
 
-const preserveStoredValue = (value: unknown) => value
-const runtimeStorage = {
-  readToss: (key: string) => readTossStorageJson(key, preserveStoredValue),
-  readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  usesTossStorage: hasNativeStorageBridge,
-  writeToss: writeTossStorageJson,
-  writeWeb(key: string, value: unknown) {
-    const error = writeWebStorageJson(key, value)
-
-    if (error !== null) {
-      throw error
-    }
-  },
-} satisfies DialogueVolumeDuckingSettingsStorage
 const runtimeRepository = createDialogueVolumeDuckingSettingsRepository({
-  storage: runtimeStorage,
+  storage: {
+    readToss: (key) => readTossStorageJson(key, (value) => value),
+    readWeb: (key) => readWebStorageJson(key, (value) => value),
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: writeTossStorageJson,
+    writeWeb(key, value) {
+      const error = writeWebStorageJson(key, value)
+      if (error !== null) {
+        throw error
+      }
+    },
+  },
+})
+
+const preferenceStorage: PreferenceStorage = {
+  read: () => runtimeRepository.read(),
+  subscribe: webLocalStorage.subscribe,
+  write: (_key, value) => {
+    const settings = parseDialogueVolumeDuckingSettings(value)
+
+    return settings === null
+      ? new Error('Invalid dialogue volume ducking settings.')
+      : runtimeRepository.write(settings).then(() => undefined)
+  },
+}
+
+export interface DialogueVolumeDuckingPreferenceOptions {
+  readonly onError?: (error: unknown) => void
+  readonly onSaved?: () => void
+}
+
+/** Creates the shared preference definition for dialogue volume settings. */
+export const createDialogueVolumeDuckingPreferenceOptions = (
+  options: DialogueVolumeDuckingPreferenceOptions = {},
+) => ({
+  defaultValue: DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+  key: STORAGE_KEY,
+  onError: options.onError,
+  onSaved: options.onSaved,
+  parse: parseDialogueVolumeDuckingSettings,
+  storage: preferenceStorage,
 })
 
 /** Reads the dialogue volume setting from the authoritative storage for the current runtime. */

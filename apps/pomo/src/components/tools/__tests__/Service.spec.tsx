@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {Service} from '../Service'
@@ -9,7 +10,11 @@ afterEach(() => {
 })
 it('should not mark valid service days invalid while the enlistment date is empty', async () => {
   localStorage.clear()
-  render(() => <Service />)
+  render(() => (
+    <PreferenceProvider>
+      <Service />
+    </PreferenceProvider>
+  ))
   const manual = screen.getByRole('switch', {name: '복무기간 직접 입력'})
   await waitFor(() => expect(manual).toBeEnabled())
   fireEvent.click(manual)
@@ -23,6 +28,10 @@ it('should not mark valid service days invalid while the enlistment date is empt
 it('should display the device date at a year boundary', () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(2026, 11, 31, 23, 30))
-  render(() => <Service />)
+  render(() => (
+    <PreferenceProvider>
+      <Service />
+    </PreferenceProvider>
+  ))
   expect(screen.getByText(/현재 기기의 날짜 2026-12-31 기준/u)).toBeVisible()
 })

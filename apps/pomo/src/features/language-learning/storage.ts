@@ -6,9 +6,32 @@ const STORAGE_KEY = 'pomo:language-learning:sentences:v1'
 export const LANGUAGE_LEARNING_SENTENCES_CHANGED_EVENT = 'pomo:language-learning:sentences-changed'
 const storedSentencesSchema = z.array(languageLearningSentenceSchema).readonly()
 
-export const readLanguageLearningSentences = (): ReadonlyArray<LanguageLearningSentence> => {
+export interface LanguageLearningStorage {
+  readonly getItem: (key: string) => string | null
+  readonly setItem: (key: string, value: string) => void
+}
+
+export type LanguageLearningEventTarget = Pick<
+  EventTarget,
+  'addEventListener' | 'dispatchEvent' | 'removeEventListener'
+>
+
+export interface LanguageLearningStorageOptions {
+  readonly events?: LanguageLearningEventTarget
+  readonly storage?: LanguageLearningStorage
+}
+
+const getStorage = (storage?: LanguageLearningStorage): LanguageLearningStorage =>
+  storage ?? globalThis.localStorage
+
+const getEvents = (events?: LanguageLearningEventTarget): LanguageLearningEventTarget =>
+  events ?? globalThis
+
+export const readLanguageLearningSentences = (
+  options?: LanguageLearningStorageOptions,
+): ReadonlyArray<LanguageLearningSentence> => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = getStorage(options?.storage).getItem(STORAGE_KEY)
     return stored === null ? [] : storedSentencesSchema.parse(JSON.parse(stored))
   } catch (error: unknown) {
     console.warn('Failed to read language learning sentences.', error)
@@ -18,17 +41,26 @@ export const readLanguageLearningSentences = (): ReadonlyArray<LanguageLearningS
 
 export const writeLanguageLearningSentences = (
   sentences: ReadonlyArray<LanguageLearningSentence>,
-) => {
+  options?: LanguageLearningStorageOptions,
+): void => {
   const parsed = storedSentencesSchema.parse(sentences)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-  window.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_SENTENCES_CHANGED_EVENT))
+  getStorage(options?.storage).setItem(STORAGE_KEY, JSON.stringify(parsed))
+  getEvents(options?.events).dispatchEvent(
+    new CustomEvent(LANGUAGE_LEARNING_SENTENCES_CHANGED_EVENT),
+  )
 }
 
 export const appendLanguageLearningSentences = (
   sentences: ReadonlyArray<LanguageLearningSentence>,
-) => writeLanguageLearningSentences([...readLanguageLearningSentences(), ...sentences])
+  options?: LanguageLearningStorageOptions,
+): void =>
+  writeLanguageLearningSentences([...readLanguageLearningSentences(options), ...sentences], options)
 
-export const deleteLanguageLearningSentence = (dialogueId: string) =>
+export const deleteLanguageLearningSentence = (
+  dialogueId: string,
+  options?: LanguageLearningStorageOptions,
+): void =>
   writeLanguageLearningSentences(
-    readLanguageLearningSentences().filter((sentence) => sentence.dialogueId !== dialogueId),
+    readLanguageLearningSentences(options).filter((sentence) => sentence.dialogueId !== dialogueId),
+    options,
   )

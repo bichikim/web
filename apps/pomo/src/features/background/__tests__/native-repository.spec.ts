@@ -3,12 +3,35 @@ import {DEFAULT_BACKGROUND} from '../model'
 /** @vitest-environment jsdom */
 import {Storage} from '@apps-in-toss/web-framework'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {createNativeRepository} from '../native-repository'
+import {
+  createNativeRepository,
+  type NativeBackgroundCache,
+  type NativeBackgroundStorage,
+} from '../native-repository'
 
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: {getItem: vi.fn(), setItem: vi.fn()}}))
 let manifest: string | null
 const entries = new Map<string, Response>()
 const cache = {delete: vi.fn(), match: vi.fn(), put: vi.fn()}
+
+const createBackend = () => {
+  let manifest: string | null = null
+  const entries = new Map<string, Response>()
+  const storage: NativeBackgroundStorage = {
+    getItem: vi.fn(async () => manifest),
+    setItem: vi.fn(async (_key, value) => {
+      manifest = value
+    }),
+  }
+  const cache: NativeBackgroundCache = {
+    delete: vi.fn(async (request) => entries.delete(String(request))),
+    match: vi.fn(async (request) => entries.get(String(request))?.clone()),
+    put: vi.fn(async (request, response) => {
+      entries.set(String(request), response.clone())
+    }),
+  }
+  return {cache, entries, mediaUrl: (id: string) => `https://backend.test/${id}`, storage}
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -166,4 +189,126 @@ it('should serialize duplicate checks across repository instances', async () => 
     ),
   )
   expect((await createNativeRepository().read()).items).toHaveLength(1)
+})
+
+it('should share the default coordinator when only the media URL is injected', async () => {
+  let releaseFirstPut: (() => void) | undefined
+  let putCount = 0
+  cache.put.mockImplementation(async (url: string, response: Response) => {
+    entries.set(url, response)
+    putCount += 1
+    if (putCount === 1) {
+      await new Promise<void>((resolve) => {
+        releaseFirstPut = resolve
+      })
+    }
+  })
+  const firstRepository = createNativeRepository({
+    mediaUrl: (id) => `https://default.test/${id}`,
+  })
+  const secondRepository = createNativeRepository({
+    mediaUrl: (id) => `https://default.test/${id}`,
+  })
+
+  const firstAdd = firstRepository.add(new File(['first'], 'first.jpg'), 'photo')
+  await vi.waitFor(() => expect(cache.put).toHaveBeenCalledOnce())
+  const secondAdd = secondRepository.add(new File(['second'], 'second.jpg'), 'photo')
+
+  expect(cache.put).toHaveBeenCalledOnce()
+  releaseFirstPut?.()
+  await Promise.all([firstAdd, secondAdd])
+  expect(cache.put).toHaveBeenCalledTimes(2)
+})
+
+it('should share the default coordinator when only the cache is injected', async () => {
+  let releaseFirstPut: (() => void) | undefined
+  let putCount = 0
+  const backend = createBackend()
+  vi.mocked(backend.cache.put).mockImplementation(async (request, response) => {
+    backend.entries.set(String(request), response.clone())
+    putCount += 1
+    if (putCount === 1) {
+      await new Promise<void>((resolve) => {
+        releaseFirstPut = resolve
+      })
+    }
+  })
+  const firstRepository = createNativeRepository({cache: backend.cache})
+  const secondRepository = createNativeRepository({cache: backend.cache})
+
+  const firstAdd = firstRepository.add(new File(['first'], 'first.jpg'), 'photo')
+  await vi.waitFor(() => expect(backend.cache.put).toHaveBeenCalledOnce())
+  const secondAdd = secondRepository.add(new File(['second'], 'second.jpg'), 'photo')
+
+  expect(backend.cache.put).toHaveBeenCalledOnce()
+  releaseFirstPut?.()
+  await Promise.all([firstAdd, secondAdd])
+  expect(backend.cache.put).toHaveBeenCalledTimes(2)
+})
+
+it('should not assimilate the SDK Storage proxy as a promise', async () => {
+  Object.defineProperty(Storage, 'then', {
+    configurable: true,
+    get: () => {
+      throw new Error('Storage.then is not mocked')
+    },
+  })
+
+  try {
+    await expect(createNativeRepository().read()).resolves.toEqual({
+      items: [],
+      preferences: DEFAULT_BACKGROUND,
+    })
+  } finally {
+    Reflect.deleteProperty(Storage, 'then')
+  }
+})
+
+it('should keep custom native backends independently writable', async () => {
+  let releaseFirstPut: (() => void) | undefined
+  const firstBackend = createBackend()
+  const secondBackend = createBackend()
+  vi.mocked(firstBackend.cache.put).mockImplementationOnce(async (request, response) => {
+    firstBackend.entries.set(String(request), response.clone())
+    await new Promise<void>((resolve) => {
+      releaseFirstPut = resolve
+    })
+  })
+  const firstRepository = createNativeRepository(firstBackend)
+  const secondRepository = createNativeRepository(secondBackend)
+
+  const firstAdd = firstRepository.add(new File(['first'], 'first.jpg'), 'photo')
+  await vi.waitFor(() => expect(firstBackend.cache.put).toHaveBeenCalledOnce())
+  const secondAdd = secondRepository.add(new File(['second'], 'second.jpg'), 'photo')
+
+  await expect(secondAdd).resolves.toBeUndefined()
+  expect(secondBackend.storage.setItem).toHaveBeenCalledOnce()
+  releaseFirstPut?.()
+  await expect(firstAdd).resolves.toBeUndefined()
+})
+
+it('should share coordination for repositories using the same injected manifest storage', async () => {
+  let releaseFirstPut: (() => void) | undefined
+  const firstBackend = createBackend()
+  const secondBackend = createBackend()
+  vi.mocked(firstBackend.cache.put).mockImplementationOnce(async (request, response) => {
+    firstBackend.entries.set(String(request), response.clone())
+    await new Promise<void>((resolve) => {
+      releaseFirstPut = resolve
+    })
+  })
+  const firstRepository = createNativeRepository(firstBackend)
+  const secondRepository = createNativeRepository({
+    cache: secondBackend.cache,
+    mediaUrl: secondBackend.mediaUrl,
+    storage: firstBackend.storage,
+  })
+
+  const firstAdd = firstRepository.add(new File(['first'], 'first.jpg'), 'photo')
+  await vi.waitFor(() => expect(firstBackend.cache.put).toHaveBeenCalledOnce())
+  const secondAdd = secondRepository.add(new File(['second'], 'second.jpg'), 'photo')
+
+  expect(secondBackend.cache.put).not.toHaveBeenCalled()
+  releaseFirstPut?.()
+  await Promise.all([firstAdd, secondAdd])
 })

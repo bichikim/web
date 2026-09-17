@@ -33,9 +33,18 @@ const memoryMemoDraftSchema = z
 
 export type MemoryMemoDraft = z.infer<typeof memoryMemoDraftSchema>
 
-export const readMemoryMemoDraft = (): MemoryMemoDraft | null => {
+export interface MemoryMemoDraftStorage {
+  readonly getItem: (key: string) => string | null
+  readonly removeItem: (key: string) => void
+  readonly setItem: (key: string, value: string) => void
+}
+
+const getStorage = (storage?: MemoryMemoDraftStorage): MemoryMemoDraftStorage =>
+  storage ?? globalThis.sessionStorage
+
+export const readMemoryMemoDraft = (storage?: MemoryMemoDraftStorage): MemoryMemoDraft | null => {
   try {
-    const storedDraft = sessionStorage.getItem(MEMORY_MEMO_DRAFT_KEY)
+    const storedDraft = getStorage(storage).getItem(MEMORY_MEMO_DRAFT_KEY)
     if (storedDraft === null) {
       return null
     }
@@ -48,17 +57,17 @@ export const readMemoryMemoDraft = (): MemoryMemoDraft | null => {
   }
 }
 
-export const writeMemoryMemoDraft = (draft: MemoryMemoDraft) => {
+export const writeMemoryMemoDraft = (draft: MemoryMemoDraft, storage?: MemoryMemoDraftStorage) => {
   try {
-    sessionStorage.setItem(MEMORY_MEMO_DRAFT_KEY, JSON.stringify(draft))
+    getStorage(storage).setItem(MEMORY_MEMO_DRAFT_KEY, JSON.stringify(draft))
   } catch (error: unknown) {
     console.warn('Failed to save the memory memo draft.', error)
   }
 }
 
-export const deleteMemoryMemoDraft = () => {
+export const deleteMemoryMemoDraft = (storage?: MemoryMemoDraftStorage): void => {
   try {
-    sessionStorage.removeItem(MEMORY_MEMO_DRAFT_KEY)
+    getStorage(storage).removeItem(MEMORY_MEMO_DRAFT_KEY)
   } catch (error: unknown) {
     console.warn('Failed to delete the memory memo draft.', error)
   }

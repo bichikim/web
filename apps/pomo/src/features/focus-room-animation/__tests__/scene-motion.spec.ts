@@ -46,7 +46,7 @@ describe('scene motion', () => {
   it('should use injected sensor availability', () => {
     const environment = {
       getSensor: () => ({}),
-      window,
+      window: globalThis.window,
     }
     vi.stubGlobal(
       'matchMedia',

@@ -1,9 +1,10 @@
 import {createSignal, onCleanup} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
 
 import * as m from '@paraglide/message'
 import {
   type AutomaticDialogueSettings,
-  createAutomaticDialogueSettingsRepository,
+  createAutomaticDialoguePreferenceOptions,
 } from '../../features/focus-room-dialogue/automatic-dialogue-settings'
 import {
   createLanguageLearningWordAudioRepository,
@@ -196,6 +197,7 @@ export interface LanguageLearningWordPronunciationState {
 // oxlint-disable-next-line eslint/max-lines-per-function -- Owns one pronunciation request lifecycle and its reactive state.
 export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPronunciationState => {
   const modelAssets = useModelAssetManager()
+  const [automaticSettings] = usePreference(createAutomaticDialoguePreferenceOptions())
   const [audioUrls, setAudioUrls] = createSignal<AudioUrlMap>({})
   const [autoplayKey, setAutoplayKey] = createSignal<string | null>(null)
   const [error, setError] = createSignal<string | null>(null)
@@ -279,7 +281,10 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
           return
         }
 
-        const settings = createAutomaticDialogueSettingsRepository(globalThis.localStorage).load()
+        const settings = automaticSettings()
+        if (settings === null) {
+          throw new Error('자동 음성 생성 설정이 아직 준비되지 않았어요.')
+        }
         const downloaded = await isSupertonicModelDownloaded({modelId: settings.modelId})
         if (disposed || requestRevisions.get(key) !== revision) {
           return

@@ -14,7 +14,7 @@ type TextModelDownloadWorkerResponse =
   | TextGenerationLoadingResponse
   | TextGenerationReadyResponse
 
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const sendResponse = (response: TextModelDownloadWorkerResponse) =>
   workerScope.postMessage(response)
 

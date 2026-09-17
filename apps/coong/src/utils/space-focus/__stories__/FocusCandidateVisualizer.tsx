@@ -94,12 +94,12 @@ const DraggableBox: Component<DraggableBoxProps> = (props) => {
 
     const handleMouseUp = () => {
       setIsDragging(false)
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+      globalThis.removeEventListener('mousemove', handleMouseMove)
+      globalThis.removeEventListener('mouseup', handleMouseUp)
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
+    globalThis.addEventListener('mousemove', handleMouseMove)
+    globalThis.addEventListener('mouseup', handleMouseUp)
   }
 
   const boxClass = createMemo(() =>

@@ -5,7 +5,7 @@ beforeEach(() => {
   localStorage.clear()
 })
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
   vi.restoreAllMocks()
 })
 it('should normalize browser storage failures', () => {

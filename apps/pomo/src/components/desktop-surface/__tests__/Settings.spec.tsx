@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -155,7 +157,11 @@ afterEach(() => {
   document.body.style.removeProperty('background')
 })
 it('should publish every setting change from the separate scene toolbar', () => {
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
 
   expect(SceneToolbar).toHaveBeenCalledOnce()
   expect(screen.getByText('설정')).toHaveAttribute('data-layout', 'surface')
@@ -203,13 +209,21 @@ it('should publish every setting change from the separate scene toolbar', () => 
 })
 it('should retain drag input when the desktop has no gyroscope', () => {
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(false)
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
 
   expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
 })
 
 it('should apply every received scene setting without echoing it to other WebViews', () => {
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
   expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
   const listener = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
   if (listener === undefined) {
@@ -245,7 +259,11 @@ it('should apply every received scene setting without echoing it to other WebVie
 
 it('should request owner motion without choosing gyroscope locally', () => {
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(true)
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
   expect(vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.requestSnapshot).toBe(true)
   expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
     canUseGyroscope: true,

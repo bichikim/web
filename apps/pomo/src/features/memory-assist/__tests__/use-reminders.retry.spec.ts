@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -33,6 +34,9 @@ vi.mock('../../supertonic', () => ({
   createSupertonicClient: mocks.createClient,
   getSupertonicErrorMessage: () => 'voice failed',
 }))
+
+const renderReminders = <Value>(callback: () => Value) =>
+  renderHook(callback, {wrapper: PreferenceProvider})
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -87,7 +91,7 @@ it('should delay a skipped invalidated repeat before retrying it', async () => {
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -133,7 +137,7 @@ it('should retry at an edited reminder time instead of retaining the old backoff
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -176,7 +180,7 @@ it('should not advance a reminder when playback is skipped', async () => {
     playDialogue: vi.fn().mockResolvedValue(false),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() =>
+  const view = renderReminders(() =>
     useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
   )
 
@@ -223,7 +227,7 @@ it('should expose a skipped reminder and retry after playback throws', async () 
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -266,7 +270,7 @@ it('should clear retry delay when a skipped memo is replaced after removal with 
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -315,7 +319,7 @@ it('should clear retry delay when a removed memo is replaced during playback wit
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -358,7 +362,7 @@ it('should delay retry after skipped playback instead of regenerating immediatel
     playDialogue: vi.fn().mockResolvedValue(false),
     refreshDialogues: vi.fn(),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, loadSettings: mocks.loadSettings}))
+  const view = renderReminders(() => useMemoryReminders({events, loadSettings: mocks.loadSettings}))
   await vi.advanceTimersToNextTimerAsync()
   await flushPromises()
   await vi.advanceTimersByTimeAsync(100)
@@ -384,7 +388,7 @@ it('should retain independent skipped reminders without duplicating retry notice
     playDialogue,
     refreshDialogues: vi.fn(),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
   try {
     await vi.advanceTimersByTimeAsync(10)
     expect(view.result.skippedReminders().map((memo) => memo.id)).toEqual(['memo-1', 'memo-2'])

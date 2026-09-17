@@ -1,6 +1,5 @@
 import {withPromiseNull} from 'src/utils/with-promise-null'
 import {
-  createLatestStorageWriter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
@@ -29,11 +28,8 @@ export interface PSceneStyleRepository {
   readonly write: (sceneStyle: PSceneStyle) => Promise<void>
 }
 
-/** Creates an independent scene-style coordinator over the supplied runtime storage. */
+/** Reads and writes scene styles using the supplied runtime storage. */
 export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PSceneStyleRepository => {
-  let preferenceWriteRevision = 0
-  const writeLatestToss = createLatestStorageWriter(SCENE_STYLE_STORAGE_KEY, storage.writeToss)
-
   const readWebPreference = (): PSceneStyle | null => {
     return parseSceneStyle(storage.readWeb(SCENE_STYLE_STORAGE_KEY))
   }
@@ -44,12 +40,11 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
 
   /** Reads the scene style from storage whose lifetime matches the current runtime. */
   const read = async (): Promise<PSceneStyle> => {
-    const initialWriteRevision = preferenceWriteRevision
     const webPreference = readWebPreference()
 
     if (webPreference !== null) {
       if (storage.usesTossStorage()) {
-        withPromiseNull(writeLatestToss(webPreference))
+        await withPromiseNull(storage.writeToss(SCENE_STYLE_STORAGE_KEY, webPreference))
       }
 
       return webPreference
@@ -61,10 +56,6 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
 
     try {
       const tossPreference = parseSceneStyle(await storage.readToss(SCENE_STYLE_STORAGE_KEY))
-
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return readWebPreference() ?? storage.getDefault()
-      }
 
       if (tossPreference === null) {
         return storage.getDefault()
@@ -79,24 +70,22 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
 
   /** Persists the scene style until the host app or browser data is removed. */
   const write = async (sceneStyle: PSceneStyle): Promise<void> => {
-    preferenceWriteRevision += 1
     writeWebPreference(sceneStyle)
 
     if (!storage.usesTossStorage()) {
       return
     }
 
-    await withPromiseNull(writeLatestToss(sceneStyle))
+    await withPromiseNull(storage.writeToss(SCENE_STYLE_STORAGE_KEY, sceneStyle))
   }
 
   return {read, write}
 }
 
-const preserveStoredValue = (value: unknown) => value
 const runtimeRepository = createPSceneStyleRepository({
   getDefault: getDefaultPSceneStyle,
-  readToss: (key) => readTossStorageJson(key, preserveStoredValue),
-  readWeb: (key) => readWebStorageJson(key, preserveStoredValue),
+  readToss: (key) => readTossStorageJson(key, (value) => value),
+  readWeb: (key) => readWebStorageJson(key, (value) => value),
   usesTossStorage: hasNativeStorageBridge,
   writeToss: writeTossStorageJson,
   writeWeb: writeWebStorageJson,

@@ -8,7 +8,7 @@ import {parseAlbumTranslation} from './output'
 import {createAlbumTranslationMessages} from './prompt'
 
 const MAXIMUM_NEW_TOKENS = 900
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: AlbumTranslationWorkerResponse) => workerScope.postMessage(response)
 let textRuntimePromise: Promise<TextGenerationRuntime> | null = null

@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -9,52 +10,71 @@ import {
 const STORAGE_KEY = 'pomo:focus-room-entry-history:v1'
 const parseEntryHistory = (value: unknown): true | null => (value === true ? true : null)
 
-/** Reads whether a previous entry was persisted for this browser or host app. */
-export const readFocusRoomEntryHistory = async (): Promise<boolean> => {
-  if (readWebStorageJson(STORAGE_KEY, parseEntryHistory) === true) {
-    if (hasNativeStorageBridge()) {
-      pendingWrite = pendingWrite
-        .then(() => writeTossStorageJson(STORAGE_KEY, true))
-        .catch((error: unknown) => {
-          console.warn('Failed to repair native focus room entry history.', error)
-        })
-      await pendingWrite
-    }
-    return true
-  }
-  if (!hasNativeStorageBridge()) {
-    return false
-  }
-  const entered = await readTossStorageJson(STORAGE_KEY, parseEntryHistory)
-  return entered === true
+export interface EntryHistoryStorage {
+  readonly usesNative: () => boolean
+  readonly readWeb: () => true | null
+  readonly readToss: () => Promise<true | null>
+  readonly writeWeb: () => unknown | null
+  readonly writeToss: () => Promise<void>
+}
+export interface EntryHistoryRepository {
+  readonly read: () => Promise<boolean>
+  readonly write: () => Promise<void>
+  readonly settle: () => Promise<void>
 }
 
-const persistRuntimeEntryHistory = async (): Promise<void> => {
-  const webError = writeWebStorageJson(STORAGE_KEY, true)
-  if (hasNativeStorageBridge()) {
-    try {
-      await writeTossStorageJson(STORAGE_KEY, true)
-      return
-    } catch (error: unknown) {
-      if (webError !== null) {
-        throw new Error('Failed to persist focus room entry history.', {cause: error})
+/** Owns entry-history writes, native repairs, and pending-write completion for one store. */
+export const createEntryHistoryRepository = (
+  storage: EntryHistoryStorage,
+): EntryHistoryRepository => {
+  const queue = createSerialTaskQueue()
+  /** Reads whether a previous entry was persisted for this browser or host app. */
+  const read = async (): Promise<boolean> => {
+    if (storage.readWeb() === true) {
+      if (storage.usesNative()) {
+        await queue
+          .run(() => storage.writeToss())
+          .catch((error: unknown) => {
+            console.warn('Failed to repair native focus room entry history.', error)
+          })
       }
-      return
+      return true
+    }
+    if (!storage.usesNative()) {
+      return false
+    }
+    const entered = await storage.readToss()
+    return entered === true
+  }
+
+  const persistRuntimeEntryHistory = async (): Promise<void> => {
+    const webError = storage.writeWeb()
+    if (storage.usesNative()) {
+      try {
+        await storage.writeToss()
+        return
+      } catch (error: unknown) {
+        if (webError !== null) {
+          throw new Error('Failed to persist focus room entry history.', {cause: error})
+        }
+        return
+      }
+    }
+    if (webError !== null) {
+      throw new Error('Failed to persist focus room entry history.', {cause: webError})
     }
   }
-  if (webError !== null) {
-    throw new Error('Failed to persist focus room entry history.', {cause: webError})
-  }
+
+  return {read, settle: queue.settle, write: () => queue.run(persistRuntimeEntryHistory)}
 }
 
-let pendingWrite = Promise.resolve()
-
-/** Persists completed entry in runtime storage, serializing native writes. */
-export const writeFocusRoomEntryHistory = (): Promise<void> => {
-  const write = pendingWrite.then(persistRuntimeEntryHistory)
-  pendingWrite = write.catch(() => undefined)
-  return write
-}
-
-/** Settles writes already requested before resetting runtime entry storage. */
-export const settleEntryHistoryWrites = (): Promise<void> => pendingWrite
+const runtimeRepository = createEntryHistoryRepository({
+  readToss: () => readTossStorageJson(STORAGE_KEY, parseEntryHistory),
+  readWeb: () => readWebStorageJson(STORAGE_KEY, parseEntryHistory),
+  usesNative: hasNativeStorageBridge,
+  writeToss: () => writeTossStorageJson(STORAGE_KEY, true),
+  writeWeb: () => writeWebStorageJson(STORAGE_KEY, true),
+})
+export const readFocusRoomEntryHistory = () => runtimeRepository.read()
+export const writeFocusRoomEntryHistory = () => runtimeRepository.write()
+export const settleEntryHistoryWrites = () => runtimeRepository.settle()

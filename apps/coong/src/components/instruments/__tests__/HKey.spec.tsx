@@ -17,10 +17,10 @@ describe('HKey', () => {
       </HPianoRoot>
     ))
 
-    window.dispatchEvent(
+    globalThis.dispatchEvent(
       new CustomEvent('global-touch__C4', {detail: {down: true, renderOnly: false}}),
     )
-    window.dispatchEvent(
+    globalThis.dispatchEvent(
       new CustomEvent('global-touch__C4', {detail: {down: false, renderOnly: false}}),
     )
 

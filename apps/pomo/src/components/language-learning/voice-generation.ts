@@ -2,12 +2,12 @@ import * as m from '@paraglide/message'
 import {generateCompressedDialogueAudio} from '../../features/focus-room-dialogue'
 import type {LanguageLearningLanguage} from '../../features/language-learning'
 import {
-  createSupertonicClient,
   getSupertonicErrorMessage,
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from '../../features/supertonic'
 import {type LanguageLearningCandidate, revokeLanguageLearningAudioUrls} from './candidate'
+import {runLanguageLearningSupertonic} from './supertonic-lifecycle'
 
 interface VoiceGenerationOptions {
   readonly isDisposed: () => boolean
@@ -58,61 +58,63 @@ export type RegenerateCandidateVoiceResult =
 export const generateVoiceCandidates = async (
   options: GenerateVoiceCandidatesOptions,
 ): Promise<GenerateVoiceCandidatesResult> => {
-  const client = createSupertonicClient()
   const candidates: Array<LanguageLearningCandidate> = []
   let retainedCandidates = false
 
   try {
-    const initialized = await client.initialize({
+    const result = await runLanguageLearningSupertonic<GenerateVoiceCandidatesResult>({
+      isCancelled: options.isDisposed,
       modelId: options.modelId,
       onProgress: () => undefined,
       onStatus: options.onStatus,
+      run: async (client) => {
+        for (const [index, sentence] of options.sentences.entries()) {
+          options.onProgress(index + 1, options.sentences.length)
+          // oxlint-disable-next-line eslint/no-await-in-loop -- One local voice client generates queued sentences sequentially.
+          const generated = await generateCompressedDialogueAudio({
+            client,
+            language: options.language,
+            modelId: options.modelId,
+            onChunk: () => undefined,
+            text: sentence,
+            voiceId: options.voiceId,
+          })
+
+          if (options.isDisposed()) {
+            return {status: 'cancelled'}
+          }
+
+          if (!generated.ok) {
+            return {message: generated.message, status: 'error'}
+          }
+
+          candidates.push({
+            audio: generated.value.audio,
+            audioKey: crypto.randomUUID(),
+            audioUrl: URL.createObjectURL(generated.value.audio),
+            durationMs: generated.value.durationMs,
+            id: crypto.randomUUID(),
+            modelId: options.modelId,
+            segments: generated.value.segments,
+            selected: true,
+            text: sentence,
+            voiceId: options.voiceId,
+          })
+        }
+
+        return {candidates, status: 'complete'}
+      },
     })
 
-    if (options.isDisposed()) {
-      return {status: 'cancelled'}
+    switch (result.status) {
+      case 'cancelled':
+        return result
+      case 'initialization-error':
+        return {message: getSupertonicErrorMessage(result.error), status: 'error'}
+      case 'complete':
+        retainedCandidates = result.value.status === 'complete'
+        return result.value
     }
-
-    if (!initialized.ok) {
-      return {message: getSupertonicErrorMessage(initialized.error), status: 'error'}
-    }
-
-    for (const [index, sentence] of options.sentences.entries()) {
-      options.onProgress(index + 1, options.sentences.length)
-      // oxlint-disable-next-line eslint/no-await-in-loop -- One local voice client generates queued sentences sequentially.
-      const generated = await generateCompressedDialogueAudio({
-        client,
-        language: options.language,
-        modelId: options.modelId,
-        onChunk: () => undefined,
-        text: sentence,
-        voiceId: options.voiceId,
-      })
-
-      if (options.isDisposed()) {
-        return {status: 'cancelled'}
-      }
-
-      if (!generated.ok) {
-        return {message: generated.message, status: 'error'}
-      }
-
-      candidates.push({
-        audio: generated.value.audio,
-        audioKey: crypto.randomUUID(),
-        audioUrl: URL.createObjectURL(generated.value.audio),
-        durationMs: generated.value.durationMs,
-        id: crypto.randomUUID(),
-        modelId: options.modelId,
-        segments: generated.value.segments,
-        selected: true,
-        text: sentence,
-        voiceId: options.voiceId,
-      })
-    }
-
-    retainedCandidates = true
-    return {candidates, status: 'complete'}
   } catch (error: unknown) {
     console.error('Failed to generate language learning audio.', error)
     return {message: m.learning_editor_voice_failed(), status: 'error'}
@@ -120,63 +122,61 @@ export const generateVoiceCandidates = async (
     if (!retainedCandidates) {
       revokeLanguageLearningAudioUrls(candidates)
     }
-    client.dispose()
   }
 }
 
 export const regenerateCandidateVoice = async (
   options: RegenerateCandidateVoiceOptions,
 ): Promise<RegenerateCandidateVoiceResult> => {
-  const client = createSupertonicClient()
-
   try {
-    const initialized = await client.initialize({
+    const result = await runLanguageLearningSupertonic<RegenerateCandidateVoiceResult>({
+      isCancelled: options.isDisposed,
       modelId: options.modelId,
       onProgress: () => undefined,
       onStatus: options.onStatus,
-    })
+      run: async (client) => {
+        const generated = await generateCompressedDialogueAudio({
+          client,
+          language: options.language,
+          modelId: options.modelId,
+          onChunk: () => undefined,
+          text: options.candidate.text,
+          voiceId: options.voiceId,
+        })
 
-    if (options.isDisposed()) {
-      return {status: 'cancelled'}
-    }
+        if (options.isDisposed()) {
+          return {status: 'cancelled'}
+        }
 
-    if (!initialized.ok) {
-      return {message: getSupertonicErrorMessage(initialized.error), status: 'error'}
-    }
+        if (!generated.ok) {
+          return {message: generated.message, status: 'error'}
+        }
 
-    const generated = await generateCompressedDialogueAudio({
-      client,
-      language: options.language,
-      modelId: options.modelId,
-      onChunk: () => undefined,
-      text: options.candidate.text,
-      voiceId: options.voiceId,
-    })
-
-    if (options.isDisposed()) {
-      return {status: 'cancelled'}
-    }
-
-    if (!generated.ok) {
-      return {message: generated.message, status: 'error'}
-    }
-
-    return {
-      candidate: {
-        ...options.candidate,
-        audio: generated.value.audio,
-        audioUrl: URL.createObjectURL(generated.value.audio),
-        durationMs: generated.value.durationMs,
-        modelId: options.modelId,
-        segments: generated.value.segments,
-        voiceId: options.voiceId,
+        return {
+          candidate: {
+            ...options.candidate,
+            audio: generated.value.audio,
+            audioUrl: URL.createObjectURL(generated.value.audio),
+            durationMs: generated.value.durationMs,
+            modelId: options.modelId,
+            segments: generated.value.segments,
+            voiceId: options.voiceId,
+          },
+          status: 'complete',
+        }
       },
-      status: 'complete',
+    })
+
+    switch (result.status) {
+      case 'cancelled':
+        return result
+      case 'initialization-error':
+        return {message: getSupertonicErrorMessage(result.error), status: 'error'}
+      case 'complete':
+        return result.value
     }
   } catch (error: unknown) {
     console.error('Failed to regenerate language learning audio.', error)
     return {message: m.learning_editor_voice_failed(), status: 'error'}
-  } finally {
-    client.dispose()
   }
 }

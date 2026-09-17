@@ -10,8 +10,8 @@ const DEFAULT_PORT = 3000
  * Get absolute URL for API requests (required for SSR fetch)
  */
 export const getApiBaseUrl = (): string => {
-  if (typeof window !== 'undefined') {
-    return window.location.origin
+  if (typeof globalThis.window !== 'undefined') {
+    return globalThis.location.origin
   }
   const event = getRequestEvent?.()
 

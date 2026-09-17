@@ -1,13 +1,12 @@
 import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
-import {createEffect, createMemo, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
+import {createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
 import {
+  createRandomEventPreferenceOptions,
   DEFAULT_RANDOM_EVENT_SETTINGS,
-  RANDOM_EVENT_SETTINGS_CHANGED_EVENT,
   type RandomEventSettings as RandomEventSettingsValue,
-  readRandomEventSettings,
-  writeRandomEventSettings,
 } from '../../features/focus-room-dialogue'
 import * as m from '@paraglide/message'
 import {DialogueEventSettingRow} from './EventSettingRow'
@@ -65,55 +64,55 @@ export const RandomEventSettings = () => {
     DEFAULT_RANDOM_EVENT_SETTINGS,
   )
   const [draft, setDraft] = createSignal(createIntervalDraft(DEFAULT_RANDOM_EVENT_SETTINGS))
-  const [isLoading, setIsLoading] = createSignal(true)
   const [message, setMessage] = createSignal<string | null>(null)
   const interval = createMemo(() => parseInterval(draft()))
+  let edited = false
   let isDisposed = false
   let pendingInterval: RandomEventInterval | null = null
 
-  onMount(() => {
-    readRandomEventSettings()
-      .then((storedSettings) => {
-        if (!isDisposed) {
-          setSettings(storedSettings)
-          setDraft(createIntervalDraft(storedSettings))
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to load random event settings.', error)
+  const handlePreferenceError = (error: unknown) => {
+    const isSaveError = edited
+    console.error(
+      isSaveError
+        ? 'Failed to save random event settings.'
+        : 'Failed to load random event settings.',
+      error,
+    )
 
-        if (!isDisposed) {
-          setMessage(m.settings_random_load_failed())
-        }
-      })
-      .finally(() => {
-        if (!isDisposed) {
-          setIsLoading(false)
-        }
-      })
+    if (!isDisposed) {
+      setMessage(isSaveError ? m.settings_random_save_failed() : m.settings_random_load_failed())
+    }
+  }
+  const handlePreferenceSaved = () => {
+    if (!isDisposed && message() !== m.settings_random_saved()) {
+      setMessage(null)
+    }
+  }
+  const [storedSettings, setStoredSettings] = usePreference(
+    createRandomEventPreferenceOptions({
+      onError: handlePreferenceError,
+      onSaved: handlePreferenceSaved,
+    }),
+  )
+  const isLoading = () => storedSettings() === null
 
-    onCleanup(() => {
-      isDisposed = true
-    })
+  createEffect(() => {
+    const nextSettings = storedSettings()
+
+    if (nextSettings === null || pendingInterval !== null) {
+      return
+    }
+
+    setSettings(nextSettings)
+    setDraft(createIntervalDraft(nextSettings))
   })
 
-  const saveSettings = async (nextSettings: RandomEventSettingsValue): Promise<void> => {
-    try {
-      await writeRandomEventSettings(nextSettings)
-      window.dispatchEvent(
-        new CustomEvent(RANDOM_EVENT_SETTINGS_CHANGED_EVENT, {detail: nextSettings}),
-      )
+  const saveSettings = (nextSettings: RandomEventSettingsValue) => {
+    setStoredSettings(nextSettings)
 
-      if (!isDisposed) {
-        setSettings(nextSettings)
-        setMessage(m.settings_random_saved())
-      }
-    } catch (error: unknown) {
-      console.error('Failed to save random event settings.', error)
-
-      if (!isDisposed) {
-        setMessage(m.settings_random_save_failed())
-      }
+    if (!isDisposed) {
+      setSettings(nextSettings)
+      setMessage(m.settings_random_saved())
     }
   }
 
@@ -168,6 +167,7 @@ export const RandomEventSettings = () => {
               max={MAXIMUM_INTERVAL_MINUTES}
               min={MINIMUM_INTERVAL_MINUTES}
               onInput={(event) => {
+                edited = true
                 setMessage(null)
                 setDraft((current) => ({...current, minimum: event.currentTarget.value}))
               }}
@@ -186,6 +186,7 @@ export const RandomEventSettings = () => {
               max={MAXIMUM_INTERVAL_MINUTES}
               min={MINIMUM_INTERVAL_MINUTES}
               onInput={(event) => {
+                edited = true
                 setMessage(null)
                 setDraft((current) => ({...current, maximum: event.currentTarget.value}))
               }}

@@ -37,7 +37,7 @@ const signOut = vi.fn()
 describe('AdminDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    window.history.replaceState(null, '', '/admin')
+    globalThis.history.replaceState(null, '', '/admin')
     setPending(false)
     setResult(undefined)
     signOut.mockReset()

@@ -1,6 +1,7 @@
 import {type Accessor, createSignal, onMount} from 'solid-js'
 
-import {createFeedConnectionRepository, type FeedConnectionRepository} from './repository'
+import {type FeedConnectionRepository} from './repository'
+import {feedSettingsRuntime, type FeedSettingsRuntime} from './settings-runtime'
 import {DEFAULT_FEED_VOICE_ID, type FeedConnection, normalizeFeedUrl} from './schema'
 import * as m from '@paraglide/message'
 
@@ -31,7 +32,9 @@ const requestPersistentStorage = () => {
 }
 
 /** Owns persistent feed connection settings for the browser-only settings tab. */
-export const useFeedConnections = (): FeedConnectionController => {
+export const useFeedConnections = (
+  runtime: FeedSettingsRuntime = feedSettingsRuntime,
+): FeedConnectionController => {
   const [connections, setConnections] = createSignal<ReadonlyArray<FeedConnection>>([])
   const [draftUrl, setDraftUrl] = createSignal('')
   const [isLoading, setIsLoading] = createSignal(true)
@@ -49,7 +52,7 @@ export const useFeedConnections = (): FeedConnectionController => {
     try {
       currentRepository.save(nextConnections)
       setConnections(nextConnections)
-      window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+      globalThis.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
       return true
     } catch (error: unknown) {
       console.error('Failed to save focus room feed connections.', error)
@@ -60,7 +63,7 @@ export const useFeedConnections = (): FeedConnectionController => {
 
   onMount(() => {
     try {
-      const nextRepository = createFeedConnectionRepository(window.localStorage)
+      const nextRepository = runtime.createConnections()
       repository = nextRepository
       setConnections(nextRepository.list())
     } catch (error: unknown) {

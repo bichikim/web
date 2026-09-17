@@ -1,19 +1,16 @@
 import {createAsync} from '@solidjs/router'
-import {
-  type Accessor,
-  batch,
-  createEffect,
-  createSignal,
-  onCleanup,
-  onMount,
-  untrack,
-} from 'solid-js'
+import {type Accessor, createEffect, createSignal, untrack} from 'solid-js'
+
+import {usePreference} from 'src/hooks/use-preference'
+import type {PreferenceStorage} from 'src/utils/preference-storage'
 
 import {createQueryRevalidationScheduler} from '../query-revalidation'
 import type {WeatherFeed, WeatherLocation} from './contract'
 import {
   DEFAULT_WEATHER_PREFERENCE,
+  parseWeatherPreference,
   readWeatherPreference,
+  WEATHER_PREFERENCE_STORAGE_KEY,
   type WeatherPreference,
   writeWeatherPreference,
 } from './preference'
@@ -26,6 +23,16 @@ import {
 } from './scene-mode'
 
 const DISABLED_WEATHER_STATE = {status: 'disabled'} as const
+
+const weatherPreferenceStorage: PreferenceStorage = {
+  read: () => readWeatherPreference(),
+  write: (_key, value) => {
+    const preference = parseWeatherPreference(value)
+    return preference === null
+      ? new Error('Invalid weather preference.')
+      : writeWeatherPreference(preference)
+  },
+}
 
 export type WeatherState =
   | {readonly status: 'disabled'}
@@ -67,15 +74,19 @@ const getRetainedFeedState = (
 
 /** Owns weather preferences, presentation state, and the feed required by automatic scenes. */
 export const useWeather = (): WeatherController => {
-  const [preference, setPreference] = createSignal<WeatherPreference>(DEFAULT_WEATHER_PREFERENCE)
-  const [preferenceReady, setPreferenceReady] = createSignal(false)
-  const [statusEnabled, setStatusEnabled] = createSignal(true)
+  const [storedPreference, setStoredPreference] = usePreference({
+    defaultValue: DEFAULT_WEATHER_PREFERENCE,
+    key: WEATHER_PREFERENCE_STORAGE_KEY,
+    onError: () => undefined,
+    parse: parseWeatherPreference,
+    storage: weatherPreferenceStorage,
+  })
   const [feedState, setFeedState] = createSignal<WeatherState>({
     location: DEFAULT_WEATHER_PREFERENCE.location,
     status: 'loading',
   })
-  let disposed = false
-  let pendingPreference: Partial<WeatherPreference> = {}
+  const preference = () => storedPreference() ?? DEFAULT_WEATHER_PREFERENCE
+  const preferenceReady = () => storedPreference() !== null
 
   const weatherResult = createAsync<WeatherFeedQueryResult | undefined>(async () => {
     const currentPreference = preference()
@@ -147,45 +158,8 @@ export const useWeather = (): WeatherController => {
   })
 
   const persistPreference = (changes: Partial<WeatherPreference>) => {
-    const nextPreference = {...preference(), ...changes}
-    if (!preferenceReady()) {
-      pendingPreference = {...pendingPreference, ...changes}
-    }
-    setStatusEnabled(nextPreference.enabled)
-    setPreference(nextPreference)
-    writeWeatherPreference(nextPreference).catch(() => {
-      // Keep the in-memory preference active when persistence is unavailable.
-    })
+    setStoredPreference({...preference(), ...changes})
   }
-
-  onMount(() => {
-    readWeatherPreference()
-      .then((storedPreference) => {
-        if (disposed) {
-          return
-        }
-
-        const restoredPreference = {...storedPreference, ...pendingPreference}
-        batch(() => {
-          setStatusEnabled(restoredPreference.enabled)
-          setPreference(restoredPreference)
-          setPreferenceReady(true)
-          if (Object.keys(pendingPreference).length > 0) {
-            persistPreference(restoredPreference)
-          }
-          pendingPreference = {}
-        })
-      })
-      .catch(() => {
-        if (!disposed) {
-          setPreferenceReady(true)
-        }
-      })
-
-    onCleanup(() => {
-      disposed = true
-    })
-  })
 
   return {
     enabled: () => preference().enabled,
@@ -201,6 +175,6 @@ export const useWeather = (): WeatherController => {
       return resolveWeatherSceneCondition(preference().sceneMode, observedCondition)
     },
     sceneMode: () => preference().sceneMode,
-    state: () => (statusEnabled() ? feedState() : DISABLED_WEATHER_STATE),
+    state: () => (preference().enabled ? feedState() : DISABLED_WEATHER_STATE),
   }
 }

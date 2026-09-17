@@ -99,15 +99,15 @@ export const createPPlaybackStorage = (
       reportError(error)
     }
   })
+  let latestWebWrite: StoredPlaybackState | null = null
   let playbackRevision = 0
-  let playbackWriteRevision = 0
   let pendingNativeWrites = 0
   let pendingStop: Promise<void> | null = null
 
   const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
+    const initialWebWrite = latestWebWrite
     const initialPlaybackRevision = playbackRevision
     const hadPendingWrite = pendingNativeWrites > 0
-    const initialRevision = playbackWriteRevision
     const webPlayback = storage.readWeb()
 
     if (!storage.usesTossStorage()) {
@@ -116,7 +116,7 @@ export const createPPlaybackStorage = (
 
     try {
       const nativePlayback = await storage.readToss()
-      if (playbackWriteRevision !== initialRevision) {
+      if (latestWebWrite !== initialWebWrite) {
         return toPlaybackState(storage.readWeb())
       }
       const latestPlayback = selectLatestPlayback(webPlayback, nativePlayback)
@@ -165,7 +165,7 @@ export const createPPlaybackStorage = (
     playbackRevision += 1
     const storedState = {...state, savedAt: clock.now()} satisfies StoredPlaybackState
     if (storage.writeWeb(storedState) === null) {
-      playbackWriteRevision += 1
+      latestWebWrite = storedState
     }
 
     if (!storage.usesTossStorage()) {

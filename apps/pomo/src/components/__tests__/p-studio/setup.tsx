@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {vi} from 'vitest'
@@ -105,9 +107,11 @@ export const seoulLocation = {
 
 export const renderStudio = () =>
   render(() => (
-    <PModelDownloadProvider runtime={modelDownloadRuntime}>
-      <PStudio />
-    </PModelDownloadProvider>
+    <PreferenceProvider>
+      <PModelDownloadProvider runtime={modelDownloadRuntime}>
+        <PStudio />
+      </PModelDownloadProvider>
+    </PreferenceProvider>
   ))
 
 export const configureStudio = (options: StudioOptions = {}) => {

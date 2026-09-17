@@ -210,12 +210,12 @@ it('should keep a deleted calendar alarm inactive after a newer storage event', 
     return <CalendarAlarmControl now={now} event={event} memos={memos} />
   })
 
-  window.dispatchEvent(
+  globalThis.dispatchEvent(
     new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {
       detail: {memos: [{...memo, deletionPending: true as const}], revision: 2},
     }),
   )
-  window.dispatchEvent(
+  globalThis.dispatchEvent(
     new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {
       detail: {memos: [memo], revision: 3},
     }),

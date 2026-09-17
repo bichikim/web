@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
@@ -21,13 +22,15 @@ const featureMocks = getFeatureMocks()
 
 describe('PMusicPlayerContent control paths', () => {
   it('should skip stored playlist loading for a controlled queue', () => {
-    render(() => <PMusicPlayerContent onError={vi.fn()} tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent onError={vi.fn()} tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
 
     expect(featureMocks.readPPlaylist).not.toHaveBeenCalled()
   })
 
   it('should cancel preview resume after a user pause', () => {
-    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />, {wrapper: PreferenceProvider})
     const audio = createAudio()
     const firstStopPreview = vi.fn()
     const secondStopPreview = vi.fn()
@@ -45,9 +48,10 @@ describe('PMusicPlayerContent control paths', () => {
 
   it('should exercise preview, transport, shuffle, repeat, expansion, and playback controls', async () => {
     const onExpandedChange = vi.fn()
-    const result = render(() => (
-      <PMusicPlayerContent onExpandedChange={onExpandedChange} tracks={TRACKS} />
-    ))
+    const result = render(
+      () => <PMusicPlayerContent onExpandedChange={onExpandedChange} tracks={TRACKS} />,
+      {wrapper: PreferenceProvider},
+    )
     const audio = createAudio()
     const firstStop = vi.fn()
     const secondStop = vi.fn()
@@ -88,7 +92,7 @@ describe('PMusicPlayerContent control paths', () => {
   })
 
   it('should dispatch every track-end action and reject an impossible action', () => {
-    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />, {wrapper: PreferenceProvider})
     const audio = createAudio()
 
     for (const action of [
@@ -115,7 +119,7 @@ describe('PMusicPlayerContent control paths', () => {
       positionSeconds: 0,
       trackId: TRACKS[2].id,
     })
-    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />, {wrapper: PreferenceProvider})
     const audio = createAudio()
     setAudioReadyState(audio, HTMLMediaElement.HAVE_NOTHING)
 
@@ -145,7 +149,7 @@ describe('PMusicPlayerContent control paths', () => {
       positionSeconds: 0,
       trackId: TRACKS[2].id,
     })
-    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />, {wrapper: PreferenceProvider})
     const audio = createAudio()
     setAudioReadyState(audio, HTMLMediaElement.HAVE_NOTHING)
 
@@ -165,7 +169,7 @@ describe('PMusicPlayerContent control paths', () => {
 
   it('should clear next-track preparation when a controlled queue becomes empty', async () => {
     const [tracks, setTracks] = createSignal<readonly PTrack[]>(TRACKS)
-    render(() => <PMusicPlayerContent tracks={tracks()} />)
+    render(() => <PMusicPlayerContent tracks={tracks()} />, {wrapper: PreferenceProvider})
 
     emit('play')
     latestViewProps().onNextTrack()
@@ -178,7 +182,7 @@ describe('PMusicPlayerContent control paths', () => {
   })
 
   it('should handle empty and single-track transport before metadata loads', () => {
-    const empty = render(() => <PMusicPlayerContent tracks={[]} />)
+    const empty = render(() => <PMusicPlayerContent tracks={[]} />, {wrapper: PreferenceProvider})
     latestViewProps().onTrackSelect(0)
     latestViewProps().onNextTrack()
     const emptyAudio = createAudio()
@@ -188,7 +192,7 @@ describe('PMusicPlayerContent control paths', () => {
     expect(emptyAudio.play).toHaveBeenCalled()
     empty.unmount()
 
-    render(() => <PMusicPlayerContent tracks={[TRACKS[0]]} />)
+    render(() => <PMusicPlayerContent tracks={[TRACKS[0]]} />, {wrapper: PreferenceProvider})
     const audio = createAudio()
     latestViewProps().onNextTrack()
     featureMocks.resolveTrackEnd.mockReturnValueOnce('play-shuffled')
@@ -203,7 +207,7 @@ describe('PMusicPlayerContent control paths', () => {
     }>()
     featureMocks.loadPTrackQueueSource.mockReturnValueOnce(source.promise)
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     expect(latestViewProps().isPlaylistLoading).toBe(true)
 
@@ -214,7 +218,7 @@ describe('PMusicPlayerContent control paths', () => {
     expect(latestViewProps().isPlaylistLoading).toBe(false)
 
     cleanup()
-    render(() => <PMusicPlayerContent tracks={[]} />)
+    render(() => <PMusicPlayerContent tracks={[]} />, {wrapper: PreferenceProvider})
 
     expect(latestViewProps().isPlaylistLoading).toBe(false)
   })
@@ -229,11 +233,11 @@ describe('PMusicPlayerContent control paths', () => {
     featureMocks.readPPlaylist.mockRejectedValueOnce(storageFailure)
     const onError = vi.fn()
 
-    render(() => <PMusicPlayerContent onError={onError} />)
+    render(() => <PMusicPlayerContent onError={onError} />, {wrapper: PreferenceProvider})
     await Promise.resolve()
 
     expect(latestViewProps().isPlaylistLoading).toBe(true)
-    expect(onError).toHaveBeenCalledWith(storageFailure)
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(storageFailure))
 
     source.resolve({defaultTracks: TRACKS, tracks: TRACKS})
     await Promise.resolve()
@@ -248,7 +252,9 @@ describe('PMusicPlayerContent control paths', () => {
       positionSeconds: 0,
       trackId: 'one',
     })
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = createAudio()
 
     emit('error', new DOMException('aborted', 'AbortError'))
@@ -274,7 +280,9 @@ describe('PMusicPlayerContent control paths', () => {
       playback: null,
       shouldPersist: true,
     })
-    const first = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const first = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     await Promise.resolve()
     await Promise.resolve()
     first.unmount()
@@ -285,7 +293,7 @@ describe('PMusicPlayerContent control paths', () => {
       playback: storedPlayback,
       shouldPersist: true,
     })
-    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />, {wrapper: PreferenceProvider})
     await Promise.resolve()
     await Promise.resolve()
     expect(featureMocks.writePlayback).toHaveBeenCalledWith(storedPlayback)
@@ -294,7 +302,7 @@ describe('PMusicPlayerContent control paths', () => {
   it('should handle transport branches with no audio, no resume, and empty shuffle queues', async () => {
     featureMocks.createInitialPlaybackState.mockReturnValueOnce({currentIndex: 0, queue: []})
     featureMocks.createShuffleQueue.mockReturnValue([])
-    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />, {wrapper: PreferenceProvider})
     const stopPreview = vi.fn()
 
     latestViewProps().onPreviewStart?.(stopPreview)
@@ -314,7 +322,7 @@ describe('PMusicPlayerContent control paths', () => {
 
   it('should suppress denied manual transport commands without controller side effects', () => {
     featureMocks.resolveManualNavigation.mockReturnValue({type: 'none'})
-    render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    render(() => <PMusicPlayerContent tracks={TRACKS} />, {wrapper: PreferenceProvider})
     const audio = createAudio()
     expect(latestViewProps().canNavigateNextTrack).toBe(false)
     expect(latestViewProps().canNavigatePreviousTrack).toBe(false)

@@ -1,6 +1,6 @@
 const {
   core: {invoke},
-} = window.__TAURI__
+} = globalThis.__TAURI__
 const status = document.querySelector('#status')
 const backgroundClickButton = document.querySelector('#background-click')
 const ASSERTION_RETRY_DELAY_MILLISECONDS = 50

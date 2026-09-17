@@ -32,10 +32,10 @@ describe('createAnimationLoop', () => {
     cancelAnimationFrameMock = vi.fn()
 
     requestAnimationFrameSpy = vi
-      .spyOn(window, 'requestAnimationFrame')
+      .spyOn(globalThis, 'requestAnimationFrame')
       .mockImplementation(requestAnimationFrameMock)
     cancelAnimationFrameSpy = vi
-      .spyOn(window, 'cancelAnimationFrame')
+      .spyOn(globalThis, 'cancelAnimationFrame')
       .mockImplementation(cancelAnimationFrameMock)
   })
 

@@ -1,10 +1,13 @@
 import {createModelStorage, type ModelStorage, type ModelStorageError} from '../model-storage'
+import {createKeyedTaskQueue, type KeyedTaskQueue} from 'src/utils/create-keyed-task-queue'
 import type {LanguageLearningWord} from './word-schema'
 
 const AUDIO_CACHE_NAME = 'pomo-language-learning-word-audio-v1'
 const AUDIO_OWNER_HEADER = 'X-Pomo-Word-Audio-Owner'
 const AUDIO_PATH_PREFIX = '/__pomo/language-learning-word-audio'
-const audioOperationQueues = new Map<string, Promise<void>>()
+
+const defaultAudioCoordinator = createKeyedTaskQueue()
+const injectedAudioCoordinators = new WeakMap<ModelStorage, KeyedTaskQueue>()
 
 export interface LanguageLearningWordAudioRepository {
   readonly delete: (word: LanguageLearningWord, owner?: string) => Promise<void>
@@ -30,32 +33,33 @@ const throwStorageError = (error: ModelStorageError): never => {
   throw new LanguageLearningWordAudioStorageError(error.operation, {cause: error.cause})
 }
 
+const getInjectedAudioCoordinator = (storage: ModelStorage): KeyedTaskQueue => {
+  const existingCoordinator = injectedAudioCoordinators.get(storage)
+  if (existingCoordinator !== undefined) {
+    return existingCoordinator
+  }
+
+  const createdCoordinator = createKeyedTaskQueue()
+  injectedAudioCoordinators.set(storage, createdCoordinator)
+  return createdCoordinator
+}
+
 /** Persists compressed word pronunciation audio in the browser cache. */
 export const createLanguageLearningWordAudioRepository = (
-  storage: ModelStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME}),
+  storage?: ModelStorage,
+  coordinator?: KeyedTaskQueue,
 ): LanguageLearningWordAudioRepository => {
-  const runOperation = <Value>(key: string, operation: () => Promise<Value>): Promise<Value> => {
-    const previousOperation = audioOperationQueues.get(key) ?? Promise.resolve()
-    const result = previousOperation.then(operation)
-    const completion = result.then(
-      () => undefined,
-      () => undefined,
-    )
-    audioOperationQueues.set(key, completion)
-
-    return result.finally(() => {
-      if (audioOperationQueues.get(key) === completion) {
-        audioOperationQueues.delete(key)
-      }
-    })
-  }
+  const resolvedStorage = storage ?? createModelStorage({cacheName: AUDIO_CACHE_NAME})
+  const resolvedCoordinator =
+    coordinator ??
+    (storage === undefined ? defaultAudioCoordinator : getInjectedAudioCoordinator(resolvedStorage))
 
   return {
     delete(word, owner) {
       const path = getAudioPath(word)
-      return runOperation(path, async () => {
+      return resolvedCoordinator.run(path, async () => {
         if (owner !== undefined) {
-          const storedResult = await storage.get(path)
+          const storedResult = await resolvedStorage.get(path)
           if (!storedResult.ok) {
             return throwStorageError(storedResult.error)
           }
@@ -67,7 +71,7 @@ export const createLanguageLearningWordAudioRepository = (
           }
         }
 
-        const result = await storage.delete(path)
+        const result = await resolvedStorage.delete(path)
 
         if (!result.ok) {
           throwStorageError(result.error)
@@ -76,8 +80,8 @@ export const createLanguageLearningWordAudioRepository = (
     },
     get(word) {
       const path = getAudioPath(word)
-      return runOperation(path, async () => {
-        const result = await storage.get(path)
+      return resolvedCoordinator.run(path, async () => {
+        const result = await resolvedStorage.get(path)
 
         if (!result.ok) {
           return throwStorageError(result.error)
@@ -92,8 +96,8 @@ export const createLanguageLearningWordAudioRepository = (
     },
     save(word, audio, owner) {
       const path = getAudioPath(word)
-      return runOperation(path, async () => {
-        const result = await storage.set(
+      return resolvedCoordinator.run(path, async () => {
+        const result = await resolvedStorage.set(
           path,
           new Response(audio, {
             headers: {

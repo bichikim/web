@@ -23,7 +23,7 @@ export const useUiAutoHide = () => {
       seconds: () => settings.preferences().seconds,
     })
     for (const event of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll'] as const) {
-      useEvent(window, event, inactivity.wake, {capture: true, passive: true})
+      useEvent(globalThis.window, event, inactivity.wake, {capture: true, passive: true})
     }
     useEvent(document, 'visibilitychange', inactivity.wake)
     createEffect(inactivity.wake)

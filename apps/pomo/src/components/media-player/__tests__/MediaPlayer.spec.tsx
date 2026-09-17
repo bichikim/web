@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useMediaPlayer} from '../context'
@@ -41,20 +42,23 @@ it('should publish playback, time, duration, volume and errors without exposing 
     observeControls(useMediaPlayer())
     return null
   }
-  const result = render(() => (
-    <MediaPlayer
-      tracks={TRACKS}
-      onPlayingChange={onPlayingChange}
-      onTrackChange={onTrackChange}
-      onTimeUpdate={onTimeUpdate}
-      onDurationChange={onDurationChange}
-      onVolumeChange={onVolumeChange}
-      onError={onError}
-    >
-      <media-play-button />
-      <ContextProbe />
-    </MediaPlayer>
-  ))
+  const result = render(
+    () => (
+      <MediaPlayer
+        tracks={TRACKS}
+        onPlayingChange={onPlayingChange}
+        onTrackChange={onTrackChange}
+        onTimeUpdate={onTimeUpdate}
+        onDurationChange={onDurationChange}
+        onVolumeChange={onVolumeChange}
+        onError={onError}
+      >
+        <media-play-button />
+        <ContextProbe />
+      </MediaPlayer>
+    ),
+    {wrapper: PreferenceProvider},
+  )
   const controls = observeControls.mock.lastCall?.[0]
   expect(controls).not.toHaveProperty('invalidate')
   expect(controls).not.toHaveProperty('stop')
@@ -102,14 +106,17 @@ it('should select the next track internally on end and device requests and relea
   const onEnded = vi.fn()
   const onError = vi.fn()
   const onTrackChange = vi.fn()
-  const result = render(() => (
-    <MediaPlayer
-      tracks={TRACKS}
-      onEnded={onEnded}
-      onTrackChange={onTrackChange}
-      onError={onError}
-    />
-  ))
+  const result = render(
+    () => (
+      <MediaPlayer
+        tracks={TRACKS}
+        onEnded={onEnded}
+        onTrackChange={onTrackChange}
+        onError={onError}
+      />
+    ),
+    {wrapper: PreferenceProvider},
+  )
   const audio = result.container.querySelector('audio')!
   Object.defineProperty(audio, 'readyState', {value: HTMLMediaElement.HAVE_METADATA})
   await Promise.resolve()

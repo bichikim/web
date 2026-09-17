@@ -271,7 +271,10 @@ describe('AdminTrackPreview', () => {
     fireEvent.click(screen.getByRole('button', {name: '첫 곡 미리 듣기'}))
 
     await waitFor(() => expect(result.container.querySelector('audio')?.src).toBe(PLAYBACK_URL))
-    expect(fetch).toHaveBeenCalledWith(`/api/admin/music/tracks/${TRACK_ID}/playback`)
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/admin/music/tracks/${TRACK_ID}/playback`,
+      expect.objectContaining({retry: 0}),
+    )
     expect(HTMLMediaElement.prototype.load).toHaveBeenCalled()
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled()
     expect(screen.getByRole('slider', {name: '첫 곡 재생 위치'})).toBeDefined()

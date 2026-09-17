@@ -40,8 +40,8 @@ beforeEach(() => {
     },
   )
   vi.clearAllMocks()
-  const readStyles = window.getComputedStyle.bind(window)
-  vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+  const readStyles = globalThis.getComputedStyle.bind(globalThis)
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
     const styles = readStyles(element)
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles

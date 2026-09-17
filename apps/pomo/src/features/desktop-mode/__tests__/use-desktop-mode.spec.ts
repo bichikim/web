@@ -70,7 +70,7 @@ it('should recover normal mode after an unclean exit and mark a clean unload', a
 
   expect(view.result.mode()).toBe('normal')
   expect(localStorage.getItem('pomo:desktop-clean-exit:v1')).toBe('false')
-  window.dispatchEvent(new Event('beforeunload'))
+  globalThis.dispatchEvent(new Event('beforeunload'))
   expect(localStorage.getItem('pomo:desktop-clean-exit:v1')).toBe('true')
 
   view.cleanup()

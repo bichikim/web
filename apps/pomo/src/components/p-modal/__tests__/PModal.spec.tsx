@@ -215,8 +215,8 @@ it('should apply custom open and close focus behavior', async () => {
 })
 
 it('should preserve the tabs context through navigation, portal, and reopening', async () => {
-  const readStyles = window.getComputedStyle.bind(window)
-  vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+  const readStyles = globalThis.getComputedStyle.bind(globalThis)
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
     const styles = readStyles(element)
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles

@@ -25,12 +25,12 @@ describe('AdminMusic', () => {
       return Response.json(publishedCatalog)
     })
     vi.stubGlobal('fetch', fetcher)
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(true)
     renderAdminMusic()
 
     fireEvent.click(await screen.findByRole('button', {name: '첫 곡 수록곡 삭제'}))
 
-    expect(window.confirm).toHaveBeenCalledWith(
+    expect(globalThis.confirm).toHaveBeenCalledWith(
       '‘첫 곡’을 삭제할까요?\n현재 공개 중인 앨범에서도 즉시 사라지며, R2의 MP3 파일도 영구 삭제됩니다.',
     )
     await waitFor(() => {
@@ -51,7 +51,7 @@ describe('AdminMusic', () => {
       .mockResolvedValueOnce(new Response(null, {status: 500}))
       .mockResolvedValueOnce(Response.json(catalogWithAlbum))
     vi.stubGlobal('fetch', fetcher)
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(true)
     renderAdminMusic()
 
     fireEvent.click(await screen.findByRole('button', {name: '첫 곡 수록곡 삭제'}))

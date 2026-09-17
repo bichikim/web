@@ -1,11 +1,11 @@
-import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
+import {createMemo, Show} from 'solid-js'
 import {
   calculateService,
   DEFAULT_SERVICE_SETTINGS,
   parseServiceDays,
-  readServiceSettings,
+  servicePreference,
   type ServiceSettings,
-  writeServiceSettings,
 } from 'src/features/tools'
 import {useLocalDate} from 'src/features/civil-date'
 import {PDatePicker} from '../p-date-picker/PDatePicker'
@@ -15,39 +15,19 @@ import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
 
 export const Service = () => {
-  const [settings, setSettings] = createSignal(DEFAULT_SERVICE_SETTINGS)
-  const [ready, setReady] = createSignal(false)
+  const [preference, setPreference] = usePreference({
+    ...servicePreference,
+    onError: (error) => console.warn('Failed to persist service settings.', error),
+  })
+  const settings = createMemo(() => preference() ?? DEFAULT_SERVICE_SETTINGS)
+  const ready = () => preference() !== null
   const today = useLocalDate()
   const start = () => settings().start
   const manual = () => settings().manual
   const branch = () => settings().branch
-  let disposed = false
-  onCleanup(() => {
-    disposed = true
-  })
   const handleChange = (changes: Partial<ServiceSettings>) => {
-    const next = {...settings(), ...changes}
-    setSettings(next)
-    writeServiceSettings(next).catch((error: unknown) => {
-      console.warn('Failed to save service settings.', error)
-    })
+    setPreference({...settings(), ...changes})
   }
-  onMount(() => {
-    readServiceSettings()
-      .then((value) => {
-        if (!disposed) {
-          setSettings(value)
-        }
-      })
-      .catch((error: unknown) => {
-        console.warn('Failed to restore service settings.', error)
-      })
-      .finally(() => {
-        if (!disposed) {
-          setReady(true)
-        }
-      })
-  })
   const serviceDays = createMemo(() => parseServiceDays(settings().days))
   const result = createMemo(() =>
     calculateService({

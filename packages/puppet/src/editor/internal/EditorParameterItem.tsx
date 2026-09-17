@@ -139,14 +139,14 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
     // The stored callback only removes native gesture listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removeGestureListeners = () => {
-      window.removeEventListener('pointercancel', handlePointerCancel)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', handlePointerUp)
+      globalThis.removeEventListener('pointercancel', handlePointerCancel)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', handlePointerUp)
       removeGestureListeners = undefined
     }
-    window.addEventListener('pointercancel', handlePointerCancel)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', handlePointerUp)
+    globalThis.addEventListener('pointercancel', handlePointerCancel)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', handlePointerUp)
   }
   const startNameEdit = () => {
     if (props.onNameChange === undefined) {
