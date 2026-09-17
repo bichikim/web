@@ -11,6 +11,8 @@ interface QueryRevalidationAtTime {
   readonly timestamp: number
 }
 
+const MAXIMUM_TIMEOUT_DELAY_MILLISECONDS = 2_147_483_647
+
 export type QueryRevalidationSchedule = QueryRevalidationAfterDelay | QueryRevalidationAtTime | null
 
 export interface CreateQueryRevalidationSchedulerProps {
@@ -43,9 +45,23 @@ export const createQueryRevalidationScheduler = (
       return
     }
 
-    const timer = setTimeout(() => {
-      revalidate(key).catch(() => undefined)
-    }, getScheduleDelay(schedule))
+    let remainingDelay = getScheduleDelay(schedule)
+    let timer: ReturnType<typeof setTimeout>
+
+    const scheduleTimer = (): void => {
+      const delay = Math.min(remainingDelay, MAXIMUM_TIMEOUT_DELAY_MILLISECONDS)
+      timer = setTimeout(() => {
+        remainingDelay -= delay
+        if (remainingDelay > 0) {
+          scheduleTimer()
+          return
+        }
+
+        revalidate(key).catch(() => undefined)
+      }, delay)
+    }
+
+    scheduleTimer()
 
     onCleanup(() => clearTimeout(timer))
   })

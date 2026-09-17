@@ -8,6 +8,7 @@ import {revalidate} from '@solidjs/router'
 import {createQueryRevalidationScheduler, type QueryRevalidationSchedule} from '../scheduler'
 
 const NOW = new Date('2026-09-02T09:00:00.000Z')
+const MAXIMUM_TIMEOUT_DELAY_MILLISECONDS = 2_147_483_647
 
 interface SchedulerRoot {
   readonly dispose: () => void
@@ -55,6 +56,20 @@ it('should revalidate the selected query after the requested delay', async () =>
   await vi.advanceTimersByTimeAsync(1)
   expect(revalidate).toHaveBeenCalledOnce()
   expect(revalidate).toHaveBeenCalledWith('weather-feed["seoul"]')
+  root.dispose()
+})
+
+it('should keep delays above the timer maximum pending until their due time', async () => {
+  const root = createSchedulerRoot({
+    kind: 'after-delay',
+    milliseconds: MAXIMUM_TIMEOUT_DELAY_MILLISECONDS + 1,
+  })
+
+  await vi.advanceTimersByTimeAsync(MAXIMUM_TIMEOUT_DELAY_MILLISECONDS)
+  expect(revalidate).not.toHaveBeenCalled()
+
+  await vi.advanceTimersByTimeAsync(1)
+  expect(revalidate).toHaveBeenCalledOnce()
   root.dispose()
 })
 
