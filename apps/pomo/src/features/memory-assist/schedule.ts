@@ -177,10 +177,12 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
         options.memo.exactReminderAt,
         options.memo.exactReminderAdvanceMinutes,
       )
+  const shouldRearmExactReminder =
+    options.exactReminderAt !== null && options.memo.nextExactReminderAt === null
   const nextExactReminderAt =
-    !exactScheduleChanged || hasConsumedExactReminder
-      ? options.memo.nextExactReminderAt
-      : exactSchedule.nextExactReminderAt
+    shouldRearmExactReminder || (exactScheduleChanged && !hasConsumedExactReminder)
+      ? exactSchedule.nextExactReminderAt
+      : options.memo.nextExactReminderAt
 
   return {
     ...options.memo,
