@@ -41,6 +41,15 @@ it('should use shared routes and development assets without a static preset when
   ])
 })
 
+it('should expose Steam assets only when the Steam distribution is configured', () => {
+  const steamAsset = {baseURL: '/assets-steam', dir: './assets-steam', maxAge: 123}
+
+  expect(createNitroConfig({...options, steamAsset}).publicAssets).toEqual([
+    steamAsset,
+    options.fontAsset,
+  ])
+})
+
 it('should merge generated HTML security headers without dropping route rules', () => {
   const renderPolicy = vi.fn().mockReturnValue('hashed policy')
   const config = createNitroConfig({...options, createContentSecurityPolicy: renderPolicy})

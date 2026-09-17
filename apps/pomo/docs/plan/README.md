@@ -4,6 +4,8 @@
 
 합의한 개발 규칙은 [개발 기술 계획](./development.md)에서 관리한다.
 
+Steam용 Windows 배포와 유료 출시 계획은 [Steam 출시 계획](./steam.md)에서 관리한다.
+
 ## 1. 제품 정의
 
 **Pomo — Focus for more.**

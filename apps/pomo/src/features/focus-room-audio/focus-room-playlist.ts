@@ -1,4 +1,5 @@
 import {audioFetch, httpFetch} from '../http-client'
+import {resolvePomoAssetUrl} from '../product-assets'
 import * as m from '@paraglide/message'
 import type {Locale} from '@paraglide/runtime'
 
@@ -149,6 +150,11 @@ const resolveAlbumTracks = (album: PAlbum, tracks: readonly PTrack[]): readonly 
         : {...track, artworkUrl: album.coverImageUrl},
   )
 
+const resolveBundledTrack = (track: PTrack): PTrack => ({
+  ...track,
+  source: resolvePomoAssetUrl(track.source),
+})
+
 const createRequestInit = (signal?: AbortSignal): RequestInit => ({
   cache: import.meta.env.DEV ? 'no-store' : 'default',
   signal,
@@ -232,9 +238,10 @@ export const loadBundledPAlbums = async (
     throw new TypeError('Focus-room albums have an invalid format')
   }
 
+  const tracks = trackCollection.tracks.map(resolveBundledTrack)
   const bundledAlbums = albumCollection.albums.map((album) => ({
     ...localizeBundledAlbum(album, options.locale),
-    tracks: resolveAlbumTracks(album, trackCollection.tracks),
+    tracks: resolveAlbumTracks(album, tracks),
   }))
   return bundledAlbums
 }
@@ -277,13 +284,14 @@ export const loadPTrackQueueSource = async (
     throw new TypeError('Focus-room playlist has an invalid format')
   }
 
+  const tracks = collection.tracks.map(resolveBundledTrack)
   return {
     defaultTracks: resolveTrackIds(
       playlist.trackIds,
-      collection.tracks,
+      tracks,
       'Focus-room playlist references unknown tracks',
     ),
-    tracks: collection.tracks,
+    tracks,
   }
 }
 

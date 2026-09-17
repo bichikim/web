@@ -27,6 +27,8 @@ import {
   createTransformersModelCache,
   reportModelStorageError,
 } from '../model-storage'
+import {httpFetch} from '../http-client'
+import {createPomoAssetFetcher, isPomoSteamRuntime} from '../product-assets'
 
 const CHAT_TEMPLATE_OPTIONS = {
   add_generation_prompt: true,
@@ -71,7 +73,10 @@ const loadModel = (
 export const createTransformersRuntime = (
   options: CreateTextGenerationRuntimeOptions,
 ): TextGenerationRuntime => {
-  const resumableModelFetch = createResumableModelFetch()
+  const modelAssetFetcher = isPomoSteamRuntime() ? globalThis.fetch : httpFetch
+  const resumableModelFetch = createResumableModelFetch({
+    fetcher: createPomoAssetFetcher(modelAssetFetcher),
+  })
   const versionedCacheKeys = new Map<string, string>()
   env.fetch = resumableModelFetch.fetch
   env.useBrowserCache = false

@@ -31,6 +31,7 @@ interface ImportMetaEnv {
   readonly VERCEL_ENV?: string
   readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
   readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string
+  readonly VITE_POMO_DISTRIBUTION_TARGET: string
   readonly VITE_POMO_ENVIRONMENT: string
   readonly VITE_POMO_IS_APPS_IN_TOSS: string
   readonly VITE_POMO_IS_DESKTOP: string
