@@ -28,7 +28,11 @@ const createEvent = (provider: string): APIEvent =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dependencyMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'user',
+    cookies: [],
+    userId: 'user-1',
+  })
   dependencyMocks.getCalendarService.mockReturnValue({
     beginConnection: dependencyMocks.beginConnection,
   })
@@ -58,6 +62,21 @@ it('should create an authorization URL for the authenticated user', async () => 
     redirectUri: 'https://www.pomofi.io/api/calendar/callback/google',
     userId: 'user-1',
   })
+})
+
+it('should report when the Neon session is invalid', async () => {
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'invalid',
+    cookies: ['session=refreshed'],
+    userId: null,
+  })
+
+  const response = await POST(createEvent('google'))
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(dependencyMocks.beginConnection).not.toHaveBeenCalled()
 })
 
 it('should preserve refreshed cookies when user resolution fails', async () => {

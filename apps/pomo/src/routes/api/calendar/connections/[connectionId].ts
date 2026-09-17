@@ -23,6 +23,13 @@ export const DELETE = async (event: APIEvent): Promise<Response> => {
       {cookies: error.cookies, status: HTTP_SERVICE_UNAVAILABLE},
     )
   }
+  if (identity.access === 'invalid') {
+    return noStoreJson(
+      {error: 'authentication_unavailable'},
+      {cookies: identity.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
+  }
+
   if (identity.userId === null) {
     return noStoreJson(
       {error: 'unauthorized'},

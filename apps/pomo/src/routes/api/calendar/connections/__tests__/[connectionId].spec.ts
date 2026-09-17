@@ -19,7 +19,11 @@ import {DELETE} from '../[connectionId]'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dependencyMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'user',
+    cookies: [],
+    userId: 'user-1',
+  })
   dependencyMocks.deleteConnection.mockResolvedValue(true)
 })
 
@@ -37,6 +41,26 @@ it('should delete only the authenticated user connection', async () => {
 
   expect(response.status).toBe(204)
   expect(dependencyMocks.deleteConnection).toHaveBeenCalledWith('user-1', 'connection-1')
+})
+
+it('should report when the Neon session is invalid', async () => {
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'invalid',
+    cookies: ['session=refreshed'],
+    userId: null,
+  })
+
+  const response = await DELETE({
+    params: {connectionId: 'connection-1'},
+    request: new Request('https://www.pomofi.io/api/calendar/connections/connection-1', {
+      method: 'DELETE',
+    }),
+  } as unknown as APIEvent)
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(dependencyMocks.deleteConnection).not.toHaveBeenCalled()
 })
 
 it('should preserve refreshed cookies when user resolution fails', async () => {
