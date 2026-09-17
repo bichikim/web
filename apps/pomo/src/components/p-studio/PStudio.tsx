@@ -84,9 +84,10 @@ const getSceneAsset = (
 }
 
 const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
-  const [isVisible, setIsVisible] = createSignal(false)
+  const [isVisible, setIsVisible] = createSignal(import.meta.env.VITE_POMO_IS_DESKTOP !== 'true')
   const restore = () => {
     if (import.meta.env.VITE_POMO_IS_DESKTOP === 'true') {
+      setIsVisible(false)
       if (!events.hasEnteredFocusRoom()) {
         events.enterFocusRoom()
       }
@@ -94,6 +95,7 @@ const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
     }
 
     if (events.hasEnteredFocusRoom() || readFocusRoomEntrySession()) {
+      setIsVisible(false)
       events.enterFocusRoom()
     } else {
       setIsVisible(true)
