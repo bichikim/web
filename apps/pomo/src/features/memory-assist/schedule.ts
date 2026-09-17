@@ -160,7 +160,8 @@ export const createMemoryMemo = (options: CreateMemoryMemoOptions): MemoryMemo =
 export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
   const nextText = options.text.trim()
   const recallMode = options.exactReminderAt === null ? options.recallMode : 'none'
-  const recallChanged = recallMode !== options.memo.recallMode
+  const textChanged = nextText !== options.memo.text
+  const recallScheduleChanged = textChanged || recallMode !== options.memo.recallMode
   const exactSchedule = getExactReminderSchedule(options)
   const exactScheduleChanged =
     options.exactReminderAt !== options.memo.exactReminderAt ||
@@ -171,7 +172,7 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
 
   return {
     ...options.memo,
-    dialogueId: nextText === options.memo.text ? options.memo.dialogueId : null,
+    dialogueId: textChanged ? null : options.memo.dialogueId,
     exactReminderAdvanceMinutes: exactSchedule.exactReminderAdvanceMinutes,
     exactReminderAt: options.exactReminderAt,
     exactReminderRepeatIntervalMinutes: exactSchedule.exactReminderRepeatIntervalMinutes,
@@ -179,7 +180,7 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
     nextExactReminderAt: exactScheduleChanged
       ? exactSchedule.nextExactReminderAt
       : options.memo.nextExactReminderAt,
-    nextRecallAt: recallChanged
+    nextRecallAt: recallScheduleChanged
       ? getNextRecallAt({
           mode: recallMode,
           now: options.now,
@@ -188,7 +189,7 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
         })
       : options.memo.nextRecallAt,
     recallMode,
-    reinforcementIndex: recallChanged ? 0 : options.memo.reinforcementIndex,
+    reinforcementIndex: recallScheduleChanged ? 0 : options.memo.reinforcementIndex,
     text: nextText,
     updatedAt: options.now.toISOString(),
   }

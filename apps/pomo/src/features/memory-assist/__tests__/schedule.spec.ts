@@ -103,6 +103,40 @@ describe('editMemoryMemo', () => {
     })
   })
 
+  it('should restart a reinforcement schedule when text changes without changing recall mode', () => {
+    const memo = {
+      ...createMemoryMemo({
+        exactReminderAt: null,
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'reinforcement' as const,
+        text: '여권 갱신하기',
+      }),
+      dialogueId: 'memory-memo-memo-1',
+      nextRecallAt: '2026-09-11T03:00:00.000Z',
+      reinforcementIndex: 4,
+    }
+
+    expect(
+      editMemoryMemo({
+        exactReminderAt: null,
+        memo,
+        now: new Date('2026-09-04T03:30:00.000Z'),
+        random: () => 0,
+        recallMode: 'reinforcement',
+        text: '여권과 사진 갱신하기',
+      }),
+    ).toEqual({
+      ...memo,
+      dialogueId: null,
+      nextRecallAt: '2026-09-04T03:40:00.000Z',
+      reinforcementIndex: 0,
+      text: '여권과 사진 갱신하기',
+      updatedAt: '2026-09-04T03:30:00.000Z',
+    })
+  })
+
   it('should stop recall progress when an exact schedule is enabled', () => {
     const memo = {
       ...createMemoryMemo({

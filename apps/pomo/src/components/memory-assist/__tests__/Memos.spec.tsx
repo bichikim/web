@@ -319,6 +319,8 @@ it('should cancel or save a memo edit and discard audio generated from old text'
     {
       ...createStoredMemo(),
       dialogueId: null,
+      nextRecallAt: '2026-09-04T03:40:00.000Z',
+      reinforcementIndex: 0,
       text: '여권과 사진 갱신하기',
       updatedAt: '2026-09-04T03:30:00.000Z',
     },
