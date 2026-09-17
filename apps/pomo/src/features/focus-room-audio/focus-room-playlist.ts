@@ -1,4 +1,5 @@
 import {audioFetch, httpFetch} from '../http-client'
+import {resolvePomoAssetUrl} from '../product-assets'
 import * as m from '@paraglide/message'
 import type {Locale} from '@paraglide/runtime'
 
@@ -112,6 +113,11 @@ const resolveAlbumTracks = (album: PAlbum, tracks: readonly PTrack[]): readonly 
         : {...track, artworkUrl: album.coverImageUrl},
   )
 
+const resolveBundledTrack = (track: PTrack): PTrack => ({
+  ...track,
+  source: resolvePomoAssetUrl(track.source),
+})
+
 const createRequestInit = (signal?: AbortSignal): RequestInit => ({
   cache: import.meta.env.DEV ? 'no-store' : 'default',
   signal,
@@ -169,7 +175,7 @@ const fetchAudioJson = (
 export const loadBundledPAlbums = async (
   options: LoadBundledPAlbumsOptions = {},
 ): Promise<readonly PResolvedAlbum[]> => {
-  const [tracks, albumsResponse] = await Promise.all([
+  const [catalogTracks, albumsResponse] = await Promise.all([
     loadPTrackCatalog({signal: options.signal, tracksUrl: options.tracksUrl}),
     fetchAudioJson('albums.json', options.albumsUrl, options.signal),
   ])
@@ -184,6 +190,7 @@ export const loadBundledPAlbums = async (
     throw new TypeError('Focus-room albums have an invalid format')
   }
 
+  const tracks = catalogTracks.map(resolveBundledTrack)
   const bundledAlbums = albumCollection.albums.map((album) => ({
     ...localizeBundledAlbum(album, options.locale),
     tracks: resolveAlbumTracks(album, tracks),
@@ -203,7 +210,7 @@ export const loadPAlbums = async (options: LoadPAlbumsOptions = {}): Promise<PAl
 export const loadPTrackQueueSource = async (
   options: LoadPTracksOptions = {},
 ): Promise<PTrackQueueSource> => {
-  const [tracks, playlistResponse] = await Promise.all([
+  const [catalogTracks, playlistResponse] = await Promise.all([
     loadPTrackCatalog({signal: options.signal, tracksUrl: options.tracksUrl}),
     fetchAudioJson('playlist.json', options.playlistUrl, options.signal),
   ])
@@ -218,6 +225,7 @@ export const loadPTrackQueueSource = async (
     throw new TypeError('Focus-room playlist has an invalid format')
   }
 
+  const tracks = catalogTracks.map(resolveBundledTrack)
   return {
     defaultTracks: resolveTrackIds(
       playlist.trackIds,

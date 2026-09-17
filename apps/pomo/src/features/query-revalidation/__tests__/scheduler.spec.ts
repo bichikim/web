@@ -8,6 +8,7 @@ import {revalidate} from '@solidjs/router'
 import {createQueryRevalidationScheduler, type QueryRevalidationSchedule} from '../scheduler'
 
 const NOW = new Date('2026-09-02T09:00:00.000Z')
+const MAXIMUM_TIMEOUT_DELAY_MILLISECONDS = 2_147_483_647
 
 interface SchedulerRoot {
   readonly dispose: () => void
@@ -56,6 +57,46 @@ it('should revalidate the selected query after the requested delay', async () =>
   expect(revalidate).toHaveBeenCalledOnce()
   expect(revalidate).toHaveBeenCalledWith('weather-feed["seoul"]')
   root.dispose()
+})
+
+it('should keep delays above the timer maximum pending until their due time', async () => {
+  const root = createSchedulerRoot({
+    kind: 'after-delay',
+    milliseconds: MAXIMUM_TIMEOUT_DELAY_MILLISECONDS + 1,
+  })
+
+  await vi.advanceTimersByTimeAsync(MAXIMUM_TIMEOUT_DELAY_MILLISECONDS)
+  expect(revalidate).not.toHaveBeenCalled()
+
+  await vi.advanceTimersByTimeAsync(1)
+  expect(revalidate).toHaveBeenCalledOnce()
+  root.dispose()
+})
+
+it('should revalidate when a long-delay timer fires after its due time', async () => {
+  const root = createSchedulerRoot({
+    kind: 'after-delay',
+    milliseconds: MAXIMUM_TIMEOUT_DELAY_MILLISECONDS + 1,
+  })
+
+  vi.setSystemTime(new Date(NOW.getTime() + MAXIMUM_TIMEOUT_DELAY_MILLISECONDS + 1))
+  await vi.advanceTimersByTimeAsync(MAXIMUM_TIMEOUT_DELAY_MILLISECONDS)
+
+  expect(revalidate).toHaveBeenCalledOnce()
+  root.dispose()
+})
+
+it('should cancel the remaining long-delay timer when disposed', async () => {
+  const root = createSchedulerRoot({
+    kind: 'after-delay',
+    milliseconds: MAXIMUM_TIMEOUT_DELAY_MILLISECONDS + 1,
+  })
+
+  await vi.advanceTimersByTimeAsync(MAXIMUM_TIMEOUT_DELAY_MILLISECONDS)
+  root.dispose()
+  await vi.advanceTimersByTimeAsync(1)
+
+  expect(revalidate).not.toHaveBeenCalled()
 })
 
 it('should calculate an absolute revalidation time and clamp past times', async () => {

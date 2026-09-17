@@ -1,4 +1,5 @@
 import {createModelStorage, type ModelStorage} from '../model-storage'
+import {isPomoAssetBundled} from '../product-assets'
 import {getTextModelImplementation, type TextModelId} from './model'
 
 const MODEL_WEIGHT_NAMES = ['embed_tokens', 'decoder_model_merged'] as const
@@ -30,9 +31,12 @@ const getModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
 export const isTextModelDownloaded = async (
   options: IsTextModelDownloadedOptions,
 ): Promise<boolean> => {
+  const modelWeightUrls = getModelWeightUrls(options.modelId)
+  if (modelWeightUrls.every(isPomoAssetBundled)) {
+    return true
+  }
+
   const storage = options.storage ?? createModelStorage()
-  const results = await Promise.all(
-    getModelWeightUrls(options.modelId).map((url) => storage.get(url)),
-  )
+  const results = await Promise.all(modelWeightUrls.map((url) => storage.get(url)))
   return results.every((result) => result.ok && result.value !== null)
 }

@@ -53,16 +53,18 @@ const createStorage = (): EntryPlaybackSessionStorage => {
   }
 }
 
-it('should persist entry playback before starting one sequence per session', () => {
+it('should persist completed entry playback in the injected session storage', async () => {
   const storage = createStorage()
   const repository = createRepository()
   const eventDialogueIds: EventDialogueIds = {[FOCUS_ROOM_ENTRY_EVENT]: ['dialogue-1']}
   const eventPlaybackModes: EventPlaybackModes = {
     [FOCUS_ROOM_ENTRY_EVENT]: 'sequential-all',
   }
-  const playSequence = vi.fn<EntryPlaybackController['playSequence']>(async () => undefined)
+  const completion =
+    Promise.withResolvers<Awaited<ReturnType<EntryPlaybackController['playSequence']>>>()
+  const playSequence = vi.fn<EntryPlaybackController['playSequence']>(() => completion.promise)
   const playback = createPlayback(async (...args) => {
-    expect(storage.getItem('pomo:focus-room-entry-playback:v1')).toBe('true')
+    expect(storage.getItem('pomo:focus-room-entry-playback:v1')).toBeNull()
     return playSequence(...args)
   })
 
@@ -82,4 +84,9 @@ it('should persist entry playback before starting one sequence per session', () 
   })
 
   expect(playSequence).toHaveBeenCalledOnce()
+  expect(storage.getItem('pomo:focus-room-entry-playback:v1')).toBeNull()
+  completion.resolve('ended')
+  await vi.waitFor(() => {
+    expect(storage.getItem('pomo:focus-room-entry-playback:v1')).toBe('true')
+  })
 })

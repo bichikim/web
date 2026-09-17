@@ -30,6 +30,7 @@ export interface CreateFeedSyncControllerOptions {
 
 export interface FeedSyncController {
   readonly dispose: () => void
+  readonly isSyncing: () => boolean
   readonly sync: () => Promise<void>
 }
 
@@ -123,6 +124,7 @@ export const createFeedSyncController = (
     dispose() {
       context.isDisposed = true
     },
+    isSyncing: () => !context.isDisposed && context.gate.isActive,
     sync: () => runFeedSync(context),
   }
 }

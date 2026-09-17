@@ -1,45 +1,16 @@
-import dayjs from 'dayjs'
+import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|이번 주).*(?:뭐|무엇).*(?:있|하)/u
-const MILLISECONDS_PER_MINUTE = 60_000
 const MILLISECONDS_PER_DAY = 86_400_000
 const NEXT_EVENT_WINDOW_DAYS = 30
 const DAYS_PER_WEEK = 7
-const NOON_HOUR = 12
 
 interface CreateCalendarQueryOptions {
   readonly now?: Date
   readonly text: string
-  readonly timeZoneOffsetMinutes?: number
-}
-
-const toLocalTimestamp = (date: Date, offsetMinutes: number) =>
-  date.getTime() + offsetMinutes * MILLISECONDS_PER_MINUTE
-
-const fromLocalTimestamp = (timestamp: number, offsetMinutes: number) =>
-  new Date(timestamp - offsetMinutes * MILLISECONDS_PER_MINUTE)
-
-const getLocalDayStart = (date: Date, offsetMinutes: number) => {
-  const localDate = new Date(toLocalTimestamp(date, offsetMinutes))
-  return Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), localDate.getUTCDate())
-}
-
-const getDayStart = (date: Date, offsetMinutes?: number) => {
-  if (offsetMinutes !== undefined) {
-    return fromLocalTimestamp(getLocalDayStart(date, offsetMinutes), offsetMinutes)
-  }
-
-  return dayjs(date).startOf('day').toDate()
-}
-
-const addLocalDays = (dayStart: Date, days: number, offsetMinutes?: number) => {
-  if (offsetMinutes !== undefined) {
-    return new Date(dayStart.getTime() + days * MILLISECONDS_PER_DAY)
-  }
-
-  return dayjs(dayStart).add(days, 'day').toDate()
+  readonly timeZone?: string
 }
 
 const toRange = (start: Date, end: Date): CalendarEventRange => ({
@@ -47,7 +18,7 @@ const toRange = (start: Date, end: Date): CalendarEventRange => ({
   start: start.toISOString(),
 })
 
-/** Resolves a bounded calendar range only when the text asks about calendar events. */
+/** Resolves a bounded calendar range in the requested time zone. */
 export const createCalendarQuery = (
   options: CreateCalendarQueryOptions,
 ): CalendarEventRange | null => {
@@ -59,36 +30,26 @@ export const createCalendarQuery = (
   }
 
   const now = options.now ?? new Date()
-  const offsetMinutes = options.timeZoneOffsetMinutes
-  const localDayStart = getDayStart(now, offsetMinutes)
+  const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  const local = dayjs(now).tz(timeZone)
+  // Reparse each calendar boundary so DST offsets belong to that date, not to today.
+  const boundary = (days: number, time = '00:00:00') => {
+    const date = dayjs.utc(local.format('YYYY-MM-DD')).add(days, 'day').format('YYYY-MM-DD')
+    return dayjs.tz(`${date}T${time}`, timeZone).toDate()
+  }
 
   if (options.text.includes('내일')) {
-    const tomorrowStart = addLocalDays(localDayStart, 1, offsetMinutes)
-    const tomorrowEnd = addLocalDays(tomorrowStart, 1, offsetMinutes)
-
-    if (options.text.includes('오전')) {
-      tomorrowEnd.setTime(
-        offsetMinutes === undefined
-          ? new Date(tomorrowStart).setHours(NOON_HOUR)
-          : tomorrowStart.getTime() + MILLISECONDS_PER_DAY / 2,
-      )
-    }
-
-    return toRange(tomorrowStart, tomorrowEnd)
+    return toRange(
+      boundary(1),
+      options.text.includes('오전') ? boundary(1, '12:00:00') : boundary(2),
+    )
   }
-
   if (options.text.includes('오늘')) {
-    return toRange(now, addLocalDays(localDayStart, 1, offsetMinutes))
+    return toRange(now, boundary(1))
   }
-
   if (options.text.includes('이번 주')) {
-    const localWeekday =
-      offsetMinutes === undefined
-        ? localDayStart.getDay()
-        : new Date(toLocalTimestamp(localDayStart, offsetMinutes)).getUTCDay()
-    const daysUntilMonday = localWeekday === 0 ? 1 : DAYS_PER_WEEK + 1 - localWeekday
-    return toRange(now, addLocalDays(localDayStart, daysUntilMonday, offsetMinutes))
+    const weekday = local.day()
+    return toRange(now, boundary(weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday))
   }
-
   return toRange(now, new Date(now.getTime() + NEXT_EVENT_WINDOW_DAYS * MILLISECONDS_PER_DAY))
 }

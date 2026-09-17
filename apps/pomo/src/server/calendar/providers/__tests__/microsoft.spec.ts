@@ -69,6 +69,68 @@ it.each([false, true])(
   },
 )
 
+it.each(['complete', 'page'] as const)(
+  'should retain readable Microsoft events when a sibling calendar %s fails',
+  async (failureMode) => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) => {
+      const url = new URL(String(input))
+      if (url.pathname.endsWith('/me/calendars')) {
+        return Response.json({
+          value: [
+            {id: 'readable', name: 'Readable'},
+            {id: 'unavailable', name: 'Unavailable'},
+          ],
+        })
+      }
+      if (url.pathname.includes('/calendars/readable/calendarView')) {
+        return Response.json({
+          value: [
+            {
+              end: {dateTime: '2026-09-05T00:00:00', timeZone: 'UTC'},
+              id: 'readable-event',
+              isAllDay: true,
+              start: {dateTime: '2026-09-04T00:00:00', timeZone: 'UTC'},
+            },
+          ],
+        })
+      }
+      if (failureMode === 'page' && !url.searchParams.has('$skiptoken')) {
+        return Response.json({
+          '@odata.nextLink':
+            'https://graph.microsoft.com/v1.0/me/calendars/unavailable/calendarView?$skiptoken=next',
+          value: [
+            {
+              end: {dateTime: '2026-09-07T00:00:00', timeZone: 'UTC'},
+              id: 'partial-event',
+              isAllDay: true,
+              start: {dateTime: '2026-09-06T00:00:00', timeZone: 'UTC'},
+            },
+          ],
+        })
+      }
+      return Response.json({error: {code: 'ErrorAccessDenied'}}, {status: 403})
+    })
+    const provider = createMicrosoftCalendarProvider({
+      clientId: 'client',
+      clientSecret: 'secret',
+      fetch,
+    })
+
+    const result = await provider.listEvents({
+      accessToken: 'access',
+      displayTimeZone: 'UTC',
+      end: '2026-09-08T00:00:00.000Z',
+      start: '2026-09-03T00:00:00.000Z',
+    })
+
+    expect(result.events.map((event) => event.id)).toEqual(
+      failureMode === 'page' ? ['readable-event', 'partial-event'] : ['readable-event'],
+    )
+    expect(result.truncated).toBe(false)
+    expect(result.unavailableCalendars).toBe(1)
+  },
+)
+
 it('should create a Microsoft read-only authorization request with offline access and PKCE', () => {
   const provider = createMicrosoftCalendarProvider({
     clientId: 'microsoft-client',
@@ -191,6 +253,7 @@ it('should use calendarView to expand occurrences and normalize UTC values', asy
       },
     ],
     truncated: false,
+    unavailableCalendars: 0,
   })
 
   const requestUrl = new URL(String(fetch.mock.calls[1]?.[0]))

@@ -20,11 +20,14 @@ interface FeedDialogueJobRepository extends Pick<
   'deleteJobs' | 'listJobs'
 > {}
 
-interface FeedDialogueLookupRepository extends Pick<FeedDialogueRepository, 'listMetadata'> {}
+interface FeedDialogueListRepository extends Pick<
+  FeedDialogueRepository,
+  'listMetadata' | 'removeItem' | 'removeMetadata'
+> {}
 
 export interface LoadFeedDialogueListOptions {
   readonly dialogueRepository: DialogueLookupRepository
-  readonly feedRepository: FeedDialogueLookupRepository
+  readonly feedRepository: FeedDialogueListRepository
 }
 
 export interface DeleteExpiredFeedDialoguesOptions {
@@ -45,20 +48,25 @@ export interface DiscardFeedJobsOptions {
   readonly updatedAt: string
 }
 
-/** Loads feed metadata joined with every dialogue record that is still available. */
+/** Loads available feed dialogues and removes records whose dialogue was deleted. */
 export const loadFeedDialogueList = async (
   options: LoadFeedDialogueListOptions,
 ): Promise<ReadonlyArray<FeedDialogueListItem>> => {
   const metadata = await options.feedRepository.listMetadata()
   const loaded = await Promise.all(
-    metadata.map(async (item) => ({
-      dialogue: await options.dialogueRepository.getDialogue(item.dialogueId),
-      metadata: item,
-    })),
+    metadata.map(async (item) => {
+      const dialogue = await options.dialogueRepository.getDialogue(item.dialogueId)
+
+      if (dialogue === null) {
+        await options.feedRepository.removeItem(item.feedConnectionId, item.feedItemId)
+        await options.feedRepository.removeMetadata(item.dialogueId)
+        return null
+      }
+
+      return {dialogue, metadata: item}
+    }),
   )
-  return loaded.flatMap((item) =>
-    item.dialogue === null ? [] : [{dialogue: item.dialogue, metadata: item.metadata}],
-  )
+  return loaded.flatMap((item) => (item === null ? [] : [item]))
 }
 
 /** Loads failed or over-limit feed items in newest-first order. */

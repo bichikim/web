@@ -47,7 +47,6 @@ it('should skip the API for a question without calendar intent', async () => {
       now: new Date('2026-09-04T10:30:00.000Z'),
       text: '오늘 날씨 알려줘',
       timeZone: 'Asia/Seoul',
-      timeZoneOffsetMinutes: 540,
     }),
   ).resolves.toBeNull()
   expect(apiJson).not.toHaveBeenCalled()
@@ -67,7 +66,6 @@ it('should fetch only the resolved range and create grounded prompt context', as
       now: new Date('2026-09-04T10:30:00.000Z'),
       text: '오늘 일정 알려줘',
       timeZone: 'Asia/Seoul',
-      timeZoneOffsetMinutes: 540,
     }),
   ).resolves.toContain('조회 기간에 등록된 일정이 없습니다.')
   const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')

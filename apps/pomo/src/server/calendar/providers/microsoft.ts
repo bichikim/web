@@ -129,26 +129,36 @@ const listCalendarEvents = async ({
   initialUrl.searchParams.set('$top', String(PAGINATION_LIMITS.events.pageSize))
   initialUrl.searchParams.set('endDateTime', eventOptions.end)
   initialUrl.searchParams.set('startDateTime', eventOptions.start)
+  let unavailableCalendars = 0
   const result = await paginate<ProviderEvent, URL>({
     loadPage: async (nextUrl) => {
-      const url = nextUrl ?? initialUrl
-      const response = await fetch(url, {headers})
-      if (!response.ok) {
-        throw new Error(`Microsoft Calendar events request failed with status ${response.status}`)
-      }
+      try {
+        const url = nextUrl ?? initialUrl
+        const response = await fetch(url, {headers})
+        if (!response.ok) {
+          throw new Error(`Microsoft Calendar events request failed with status ${response.status}`)
+        }
 
-      const body = graphEventsSchema.parse(await response.json())
-      const items = body.value.flatMap((event) => {
-        const normalized = normalizeEvent(event, calendarLabel, displayTimeZoneFormatter)
-        return normalized === null ? [] : [normalized]
-      })
-      return {items, nextCursor: readNextUrl(body['@odata.nextLink'])}
+        const body = graphEventsSchema.parse(await response.json())
+        const items = body.value.flatMap((event) => {
+          const normalized = normalizeEvent(event, calendarLabel, displayTimeZoneFormatter)
+          return normalized === null ? [] : [normalized]
+        })
+        return {items, nextCursor: readNextUrl(body['@odata.nextLink'])}
+      } catch {
+        unavailableCalendars = 1
+        return {items: [], nextCursor: null}
+      }
     },
     maximumItems: PAGINATION_LIMITS.events.maximumItems,
     maximumPages: PAGINATION_LIMITS.events.maximumPages,
   })
 
-  return {events: result.items, truncated: result.truncated}
+  return {
+    events: result.items,
+    truncated: unavailableCalendars === 0 && result.truncated,
+    unavailableCalendars,
+  }
 }
 
 interface CalendarListResult {
@@ -191,19 +201,26 @@ const listEvents = async (
     timeZone: options.displayTimeZone,
     year: 'numeric',
   })
-  const result = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(result.calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
-    listCalendarEvents({
-      calendarId: calendar.id,
-      calendarLabel: calendar.name,
-      displayTimeZoneFormatter,
-      eventOptions: options,
-      fetch,
-    }),
+  const calendarList = await listCalendars(options.accessToken, fetch)
+  const eventLists = await mapInBatches(
+    calendarList.calendars,
+    EVENT_REQUEST_CONCURRENCY,
+    (calendar) =>
+      listCalendarEvents({
+        calendarId: calendar.id,
+        calendarLabel: calendar.name,
+        displayTimeZoneFormatter,
+        eventOptions: options,
+        fetch,
+      }),
   )
   return {
-    events: eventLists.flatMap((result) => result.events),
-    truncated: result.truncated || eventLists.some((result) => result.truncated),
+    events: eventLists.flatMap((eventList) => eventList.events),
+    truncated: calendarList.truncated || eventLists.some((eventList) => eventList.truncated),
+    unavailableCalendars: eventLists.reduce(
+      (count, eventList) => count + eventList.unavailableCalendars,
+      0,
+    ),
   }
 }
 

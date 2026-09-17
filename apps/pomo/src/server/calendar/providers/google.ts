@@ -77,38 +77,48 @@ const listCalendarEvents = async (
   fetch: typeof globalThis.fetch,
 ): Promise<ProviderEventsResult> => {
   const headers = {Authorization: `Bearer ${options.accessToken}`}
+  let unavailableCalendars = 0
   const result = await paginate<ProviderEvent, string>({
     loadPage: async (pageToken) => {
-      const url = new URL(
-        `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`,
-      )
-      url.searchParams.set('maxResults', String(PAGINATION_LIMITS.events.pageSize))
-      url.searchParams.set('orderBy', 'startTime')
-      url.searchParams.set('showDeleted', 'false')
-      url.searchParams.set('singleEvents', 'true')
-      url.searchParams.set('timeMax', options.end)
-      url.searchParams.set('timeMin', options.start)
-      if (pageToken !== null) {
-        url.searchParams.set('pageToken', pageToken)
-      }
-      const response = await fetch(url, {headers})
+      try {
+        const url = new URL(
+          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`,
+        )
+        url.searchParams.set('maxResults', String(PAGINATION_LIMITS.events.pageSize))
+        url.searchParams.set('orderBy', 'startTime')
+        url.searchParams.set('showDeleted', 'false')
+        url.searchParams.set('singleEvents', 'true')
+        url.searchParams.set('timeMax', options.end)
+        url.searchParams.set('timeMin', options.start)
+        if (pageToken !== null) {
+          url.searchParams.set('pageToken', pageToken)
+        }
+        const response = await fetch(url, {headers})
 
-      if (!response.ok) {
-        throw new Error(`Google Calendar events request failed with status ${response.status}`)
-      }
+        if (!response.ok) {
+          throw new Error(`Google Calendar events request failed with status ${response.status}`)
+        }
 
-      const body = googleEventsSchema.parse(await response.json())
-      const items = body.items.flatMap((event) => {
-        const normalized = normalizeEvent(event, calendarId, calendarLabel)
-        return normalized === null ? [] : [normalized]
-      })
-      return {items, nextCursor: body.nextPageToken ?? null}
+        const body = googleEventsSchema.parse(await response.json())
+        const items = body.items.flatMap((event) => {
+          const normalized = normalizeEvent(event, calendarId, calendarLabel)
+          return normalized === null ? [] : [normalized]
+        })
+        return {items, nextCursor: body.nextPageToken ?? null}
+      } catch {
+        unavailableCalendars = 1
+        return {items: [], nextCursor: null}
+      }
     },
     maximumItems: PAGINATION_LIMITS.events.maximumItems,
     maximumPages: PAGINATION_LIMITS.events.maximumPages,
   })
 
-  return {events: result.items, truncated: result.truncated}
+  return {
+    events: result.items,
+    truncated: unavailableCalendars === 0 && result.truncated,
+    unavailableCalendars,
+  }
 }
 
 interface CalendarListResult {
@@ -148,13 +158,19 @@ const listEvents = async (
   options: ListProviderEventsOptions,
   fetch: typeof globalThis.fetch,
 ): Promise<ProviderEventsResult> => {
-  const result = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(result.calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
-    listCalendarEvents(calendar.id, calendar.summary, options, fetch),
+  const calendarList = await listCalendars(options.accessToken, fetch)
+  const eventLists = await mapInBatches(
+    calendarList.calendars,
+    EVENT_REQUEST_CONCURRENCY,
+    (calendar) => listCalendarEvents(calendar.id, calendar.summary, options, fetch),
   )
   return {
-    events: eventLists.flatMap((result) => result.events),
-    truncated: result.truncated || eventLists.some((result) => result.truncated),
+    events: eventLists.flatMap((eventList) => eventList.events),
+    truncated: calendarList.truncated || eventLists.some((eventList) => eventList.truncated),
+    unavailableCalendars: eventLists.reduce(
+      (count, eventList) => count + eventList.unavailableCalendars,
+      0,
+    ),
   }
 }
 

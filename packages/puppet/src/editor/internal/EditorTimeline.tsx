@@ -1,13 +1,22 @@
 import {
-  EditorDiamondButton,
-  EditorSelect,
   EditorButton,
+  EditorDiamondButton,
   EditorNumberField,
+  EditorSelect,
 } from '../../design-system'
 import {Slider} from '@kobalte/core/slider'
 import {sortBy} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
-import {createMemo, createSignal, createUniqueId, For, Show} from 'solid-js'
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  createUniqueId,
+  For,
+  Index,
+  on,
+  Show,
+} from 'solid-js'
 
 import {getDefaultParameterValueMap, type PuppetParameterValueMap} from '../../deformation'
 import {
@@ -52,9 +61,11 @@ export interface EditorTimelineProps {
   readonly currentTime?: number
   readonly document: PuppetDocument
   readonly isPlaying?: boolean
+  readonly motionId?: string
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
+  readonly onMotionChange?: (motionId: string) => void
   readonly onPlaybackToggle?: () => void
   readonly onSeek?: (time: number) => void
   readonly parameterValues?: PuppetParameterValueMap
@@ -81,10 +92,39 @@ const getParameterTracks = (
     }
   })
 
+const getActiveMotion = (document: PuppetDocument, motionId: string | undefined) =>
+  document.motions.find((motion) => motion.id === motionId) ?? document.motions[0]
+
 const getFrame = (time: number) => Math.round(time * FRAMES_PER_SECOND)
 
 const snapToFrame = (time: number, duration: number) =>
   Math.min(getFrame(time) / FRAMES_PER_SECOND, duration)
+
+const getTimelineTime = (event: MouseEvent, duration: number) => {
+  const bounds = (event.currentTarget as HTMLDivElement).getBoundingClientRect()
+  const position = bounds.width === 0 ? 0 : (event.clientX - bounds.left) / bounds.width
+
+  return snapToFrame(clamp(position, 0, 1) * duration, duration)
+}
+
+const getKeyframeSelectionAtTime = (
+  tracks: ReadonlyArray<ParameterTimelineTrack>,
+  time: number,
+  selectedParameterId: string | null,
+): KeyframeSelection | null => {
+  if (selectedParameterId === null) {
+    return null
+  }
+
+  const matchesTime = (keyframe: ParameterTimelineKeyframe) =>
+    getFrame(keyframe.time) === getFrame(time)
+  const track = tracks.find((candidate) => candidate.parameter.id === selectedParameterId)
+  const keyframe = track?.keyframes.find(matchesTime)
+
+  return track === undefined || keyframe === undefined
+    ? null
+    : {parameterId: track.parameter.id, time: keyframe.time}
+}
 
 const getSelectedKeyframe = (
   selection: KeyframeSelection | null,
@@ -103,6 +143,57 @@ const getSelectedKeyframe = (
     : {easing: keyframe.easing, hasNext: keyframeIndex < track.keyframes.length - 1}
 }
 
+interface DeleteKeyframeOptions {
+  readonly document: PuppetDocument
+  readonly motion?: PuppetMotion
+  readonly selection: KeyframeSelection | null
+}
+
+const getDeletedKeyframeDocument = (options: DeleteKeyframeOptions) => {
+  if (options.motion === undefined || options.selection === null) {
+    return undefined
+  }
+
+  return deleteParameterKeyframe({
+    ...options.selection,
+    document: options.document,
+    motionId: options.motion.id,
+  })
+}
+
+interface EasingChangeOptions {
+  readonly document: PuppetDocument
+  readonly motion?: PuppetMotion
+  readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly selection: KeyframeSelection | null
+  readonly value: string
+}
+
+const updateSelectedKeyframeEasing = (options: EasingChangeOptions) => {
+  const easing = PUPPET_EASINGS.find((candidate) => candidate === options.value)
+  const {onDocumentChange} = options
+
+  if (
+    options.motion === undefined ||
+    options.selection === null ||
+    easing === undefined ||
+    onDocumentChange === undefined
+  ) {
+    return
+  }
+
+  const document = setParameterKeyframeEasing({
+    ...options.selection,
+    document: options.document,
+    easing,
+    motionId: options.motion.id,
+  })
+
+  if (document !== undefined) {
+    onDocumentChange(document)
+  }
+}
+
 interface TimelineToolbarProps {
   readonly canAddKeyframe: boolean
   readonly canDeleteKeyframe: boolean
@@ -111,7 +202,9 @@ interface TimelineToolbarProps {
   readonly easing: PuppetEasing
   readonly hasEditableSelection: boolean
   readonly isPlaying?: boolean
+  readonly motionIds: ReadonlyArray<string>
   readonly motionId?: string
+  readonly onMotionChange?: (motionId: string) => void
   readonly onEasingChange?: (value: string) => void
   readonly onKeyframeAdd?: () => void
   readonly onKeyframeDelete?: () => void
@@ -126,6 +219,15 @@ const TimelineToolbar = (props: TimelineToolbarProps) => (
       <strong id={props.titleId}>{props.motionId ?? 'Static mesh'}</strong>
     </div>
     <div class="timeline-actions">
+      <div class="timeline-motion-controls">
+        <EditorSelect
+          label="모션 선택"
+          options={props.motionIds}
+          value={props.motionId}
+          disabled={props.motionIds.length === 0 || props.onMotionChange === undefined}
+          onChange={props.onMotionChange}
+        />
+      </div>
       <EditorButton
         class="timeline-playback"
         disabled={props.motionId === undefined || props.onPlaybackToggle === undefined}
@@ -179,7 +281,8 @@ interface TimelineDopesheetProps {
   ) => void
   readonly onParameterValueChange?: (track: ParameterTimelineTrack, value: number) => void
   readonly onParameterSelect?: (parameterId: string) => void
-  readonly onSeek?: (time: number) => void
+  readonly onSeek?: (time: number, preferredParameterId?: string) => void
+  readonly selectedParameterId?: string | null
   readonly selection: KeyframeSelection | null
   readonly tracks: ReadonlyArray<ParameterTimelineTrack>
   readonly values: Readonly<Record<string, number>>
@@ -187,6 +290,10 @@ interface TimelineDopesheetProps {
 
 const TimelineDopesheet = (props: TimelineDopesheetProps) => {
   const progress = () => (props.duration === 0 ? 0 : (props.currentTime / props.duration) * PERCENT)
+  const handleTrackClick = (event: MouseEvent, parameterId: string) => {
+    props.onParameterSelect?.(parameterId)
+    props.onSeek?.(getTimelineTime(event, props.duration), parameterId)
+  }
   const rulerTimes = createMemo(() => {
     const timelineDuration = props.duration
     return Array.from(
@@ -200,7 +307,7 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
       class="timeline-dopesheet"
       style={{'--timeline-frame-count': Math.max(1, getFrame(props.duration))}}
     >
-      <div class="timeline-ruler-label">Parameter / 값</div>
+      <div class="timeline-ruler-label">Parameter</div>
       <div class="timeline-ruler">
         <For each={rulerTimes()}>
           {(time) => (
@@ -237,66 +344,84 @@ const TimelineDopesheet = (props: TimelineDopesheetProps) => {
         when={props.tracks.length > 0}
         fallback={<p class="timeline-empty">Parameter가 없습니다.</p>}
       >
-        <For each={props.tracks}>
-          {(track) => (
-            <>
-              <label class="timeline-row-label">
-                <strong>{track.parameter.name}</strong>
-                <EditorNumberField
-                  disabled={
-                    props.motion === undefined || props.onParameterValueChange === undefined
-                  }
-                  label={`${track.parameter.name} 현재 값`}
-                  maximum={track.parameter.maximum}
-                  minimum={track.parameter.minimum}
-                  step="any"
-                  value={props.values[track.parameter.id] ?? track.parameter.defaultValue}
-                  onEditEnd={props.onEditEnd}
-                  onEditStart={() => {
-                    props.onParameterSelect?.(track.parameter.id)
-                    props.onEditStart?.()
-                  }}
-                  onValueChange={(value) => props.onParameterValueChange?.(track, value)}
-                />
-              </label>
-              <div class="timeline-row" aria-label={`${track.parameter.name} 트랙`}>
-                <For each={track.keyframes}>
-                  {(keyframe) => {
-                    const target = {parameterId: track.parameter.id, time: keyframe.time}
+        <Index each={props.tracks}>
+          {(track) => {
+            const parameterId = () => track().parameter.id
+            const parameterName = () => track().parameter.name
 
-                    return (
-                      <EditorDiamondButton
-                        aria-label={`${track.parameter.name} ${keyframe.time.toFixed(2)}초 키프레임`}
-                        aria-pressed={isSameSelection(props.selection, target)}
-                        class="timeline-keyframe"
-                        style={{
-                          left: `${props.duration === 0 ? 0 : (keyframe.time / props.duration) * PERCENT}%`,
-                        }}
-                        type="button"
-                        onClick={() => props.onKeyframeSelect?.(track, keyframe)}
-                      />
-                    )
-                  }}
-                </For>
-                <span
-                  aria-hidden="true"
-                  class="timeline-row-playhead"
-                  style={{left: `${progress()}%`}}
-                />
-              </div>
-            </>
-          )}
-        </For>
+            return (
+              <>
+                <div
+                  class="timeline-row-label"
+                  data-selected={props.selectedParameterId === parameterId() ? '' : undefined}
+                  onClick={() => props.onParameterSelect?.(parameterId())}
+                >
+                  <strong>{parameterName()}</strong>
+                  <EditorNumberField
+                    disabled={
+                      props.motion === undefined || props.onParameterValueChange === undefined
+                    }
+                    label={`${parameterName()} 현재 값`}
+                    maximum={track().parameter.maximum}
+                    minimum={track().parameter.minimum}
+                    step="any"
+                    value={props.values[parameterId()] ?? track().parameter.defaultValue}
+                    onEditEnd={props.onEditEnd}
+                    onEditStart={() => {
+                      props.onParameterSelect?.(parameterId())
+                      props.onEditStart?.()
+                    }}
+                    onValueChange={(value) => props.onParameterValueChange?.(track(), value)}
+                  />
+                </div>
+                <div
+                  class="timeline-row"
+                  aria-label={`${parameterName()} 트랙`}
+                  data-selected={props.selectedParameterId === parameterId() ? '' : undefined}
+                  onClick={(event) => handleTrackClick(event, parameterId())}
+                >
+                  <For each={track().keyframes}>
+                    {(keyframe) => {
+                      const target = {parameterId: parameterId(), time: keyframe.time}
+
+                      return (
+                        <EditorDiamondButton
+                          aria-label={`${parameterName()} ${keyframe.time.toFixed(2)}초 키프레임`}
+                          aria-pressed={isSameSelection(props.selection, target)}
+                          class="timeline-keyframe"
+                          style={{
+                            left: `${props.duration === 0 ? 0 : (keyframe.time / props.duration) * PERCENT}%`,
+                          }}
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            props.onKeyframeSelect?.(track(), keyframe)
+                          }}
+                        />
+                      )
+                    }}
+                  </For>
+                  <span
+                    aria-hidden="true"
+                    class="timeline-row-playhead"
+                    style={{left: `${progress()}%`}}
+                  />
+                </div>
+              </>
+            )
+          }}
+        </Index>
       </Show>
     </div>
   )
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const EditorTimeline = (props: EditorTimelineProps) => {
   const titleId = createUniqueId()
   const [selection, setSelection] = createSignal<KeyframeSelection | null>(null)
   const [activeParameterId, setActiveParameterId] = createSignal<string | null>(null)
-  const motion = () => props.document.motions[0]
+  const motion = () => getActiveMotion(props.document, props.motionId)
   const duration = () => motion()?.duration ?? 0
   const currentTime = () => clamp(props.currentTime ?? 0, 0, duration())
   const parameterTracks = createMemo(() => getParameterTracks(props.document, motion()))
@@ -308,6 +433,48 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     }),
   )
   const selectedKeyframe = createMemo(() => getSelectedKeyframe(selection(), parameterTracks()))
+
+  const handleParameterSelect = (parameterId: string) => {
+    setActiveParameterId(parameterId)
+    setSelection(getKeyframeSelectionAtTime(parameterTracks(), currentTime(), parameterId))
+  }
+
+  const handleSeek = (time: number, parameterId?: string) => {
+    const selectedParameterId = parameterId ?? activeParameterId()
+    const nextSelection = getKeyframeSelectionAtTime(parameterTracks(), time, selectedParameterId)
+
+    if (parameterId !== undefined) {
+      setActiveParameterId(parameterId)
+    }
+    setSelection(nextSelection)
+
+    props.onSeek?.(time)
+  }
+
+  createEffect(
+    on(
+      () => props.currentTime,
+      (time) => {
+        setSelection(
+          getKeyframeSelectionAtTime(
+            parameterTracks(),
+            clamp(time ?? 0, 0, duration()),
+            activeParameterId(),
+          ),
+        )
+      },
+    ),
+  )
+
+  createEffect(
+    on(
+      () => props.motionId,
+      () => {
+        setSelection(null)
+      },
+      {defer: true},
+    ),
+  )
 
   const updateParameterKeyframe = (parameterId: string, value: number) => {
     const activeMotion = motion()
@@ -341,9 +508,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     keyframe: ParameterTimelineKeyframe,
   ) => {
     const parameterId = track.parameter.id
-    setActiveParameterId(parameterId)
-    setSelection({parameterId, time: keyframe.time})
-    props.onSeek?.(keyframe.time)
+    handleSeek(keyframe.time, parameterId)
   }
 
   const handleKeyframeAdd = () => {
@@ -356,21 +521,14 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   }
 
   const handleKeyframeDelete = () => {
-    const activeMotion = motion()
-    const activeSelection = selection()
-
-    if (
-      activeMotion === undefined ||
-      activeSelection === null ||
-      props.onDocumentChange === undefined
-    ) {
+    if (props.onDocumentChange === undefined) {
       return
     }
 
-    const document = deleteParameterKeyframe({
-      ...activeSelection,
+    const document = getDeletedKeyframeDocument({
       document: props.document,
-      motionId: activeMotion.id,
+      motion: motion(),
+      selection: selection(),
     })
 
     if (document !== undefined) {
@@ -380,29 +538,13 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   }
 
   const handleEasingChange = (value: string) => {
-    const activeMotion = motion()
-    const activeSelection = selection()
-    const easing = PUPPET_EASINGS.find((candidate) => candidate === value)
-
-    if (
-      activeMotion === undefined ||
-      activeSelection === null ||
-      easing === undefined ||
-      props.onDocumentChange === undefined
-    ) {
-      return
-    }
-
-    const document = setParameterKeyframeEasing({
-      ...activeSelection,
+    updateSelectedKeyframeEasing({
       document: props.document,
-      easing,
-      motionId: activeMotion.id,
+      motion: motion(),
+      onDocumentChange: props.onDocumentChange,
+      selection: selection(),
+      value,
     })
-
-    if (document !== undefined) {
-      props.onDocumentChange(document)
-    }
   }
 
   return (
@@ -413,7 +555,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
           parameterTracks().length > 0 &&
           props.onDocumentChange !== undefined
         }
-        canDeleteKeyframe={selection() !== null && props.onDocumentChange !== undefined}
+        canDeleteKeyframe={selectedKeyframe() !== null && props.onDocumentChange !== undefined}
         currentTime={currentTime()}
         duration={duration()}
         easing={(selectedKeyframe()?.easing ?? 'linear') satisfies PuppetEasing}
@@ -421,7 +563,9 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
           selectedKeyframe()?.hasNext === true && props.onDocumentChange !== undefined
         }
         isPlaying={props.isPlaying}
+        motionIds={props.document.motions.map((candidate) => candidate.id)}
         motionId={motion()?.id}
+        onMotionChange={props.onMotionChange}
         onEasingChange={handleEasingChange}
         onKeyframeAdd={handleKeyframeAdd}
         onKeyframeDelete={handleKeyframeDelete}
@@ -438,8 +582,9 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
         onParameterValueChange={(track, value) =>
           updateParameterKeyframe(track.parameter.id, value)
         }
-        onParameterSelect={setActiveParameterId}
-        onSeek={props.onSeek}
+        onParameterSelect={handleParameterSelect}
+        onSeek={handleSeek}
+        selectedParameterId={activeParameterId()}
         selection={selection()}
         tracks={parameterTracks()}
         values={parameterValues()}

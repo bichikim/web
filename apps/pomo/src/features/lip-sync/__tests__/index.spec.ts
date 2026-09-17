@@ -20,6 +20,12 @@ describe('createPVisemeTrack', () => {
     expect(cues.at(-1)?.endMs).toBe(1_000)
   })
 
+  it('should map the Korean tense bilabial onset to a closed mouth shape', () => {
+    const cues = createPVisemeTrack({durationMs: 1_000, text: '빠'})
+
+    expect(cues.map((cue) => cue.viseme)).toEqual(['closed', 'open'])
+  })
+
   it('should preserve pauses and fit every cue to the rendered duration', () => {
     const cues = createPVisemeTrack({durationMs: 600, text: '아, 오.'})
 

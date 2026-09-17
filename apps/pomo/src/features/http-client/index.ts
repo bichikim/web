@@ -59,6 +59,7 @@ const createResponseFetch = (fetchInstance: $Fetch): HttpFetch =>
     }
   }
 
+const usesBundledProductAssets = import.meta.env.VITE_POMO_DISTRIBUTION_TARGET === 'steam'
 const publicBaseURL = usesRemotePublicOrigin() ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN : undefined
 const sharedFetch = ofetch.create({
   baseURL: publicBaseURL,
@@ -74,8 +75,10 @@ const apiBaseURL = usesRemotePublicOrigin()
 
 export const apiFetch = createResponseFetch(sharedFetch.create({baseURL: apiBaseURL}))
 
-const audioBaseURL = usesRemotePublicOrigin()
-  ? new URL('/audio/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
-  : '/audio/'
+const audioBaseURL = usesBundledProductAssets
+  ? '/audio/'
+  : usesRemotePublicOrigin()
+    ? new URL('/audio/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
+    : '/audio/'
 
 export const audioFetch = createResponseFetch(sharedFetch.create({baseURL: audioBaseURL}))

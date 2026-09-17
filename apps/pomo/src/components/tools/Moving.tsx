@@ -1,3 +1,4 @@
+import {formatLocalDate} from 'src/utils/format-local-date'
 import {createMemo, For} from 'solid-js'
 import {
   getMovingDays,
@@ -5,7 +6,7 @@ import {
   movingSelectionStorage,
   useSelection,
 } from 'src/features/tools'
-import {daysInMonth, formatDate, koreanToday, parseDate} from 'src/features/civil-date'
+import {daysInMonth, formatDate, parseDate} from 'src/features/civil-date'
 import {PSelect} from '../p-select/PSelect'
 import {Result} from './Result'
 
@@ -22,7 +23,7 @@ const options = (start: number, count: number) =>
 export const Moving = () => {
   const selection = useSelection<MovingSelection>({
     getDefault: () => {
-      const date = parseDate(koreanToday(new Date()))
+      const date = parseDate(formatLocalDate(new Date()))
       return date !== null && date.year >= FIRST_YEAR && date.year <= LAST_YEAR
         ? {month: String(date.month), year: String(date.year)}
         : {month: '1', year: '2026'}

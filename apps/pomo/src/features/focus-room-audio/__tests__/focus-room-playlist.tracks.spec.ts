@@ -7,6 +7,15 @@ const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},
   {artist: 'Artist', durationSeconds: 2, id: 'two', source: '/two.mp3', title: 'Two'},
 ] as const
+const STEAM_TRACKS = [
+  {
+    artist: 'Artist',
+    durationSeconds: 1,
+    id: 'one',
+    source: 'https://storage.pomofi.io/tracks/one.mp3?v=20260918',
+    title: 'One',
+  },
+] as const
 
 const createJsonResponse = (value: unknown) => ({
   json: () => Promise.resolve(value),
@@ -46,6 +55,24 @@ describe('loadPTracks', () => {
       expect.objectContaining({cache: 'no-store', signal: undefined}),
     )
     return expect(result).resolves.toEqual([TRACKS[1], TRACKS[0]])
+  })
+
+  it('should resolve R2 track sources into the Steam bundle', async () => {
+    vi.stubEnv('VITE_POMO_DISTRIBUTION_TARGET', 'steam')
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks: STEAM_TRACKS, version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({trackIds: ['one'], version: 1})),
+    )
+
+    await expect(loadPTracks()).resolves.toEqual([
+      {
+        ...STEAM_TRACKS[0],
+        source: '/assets-steam/audio/tracks/one.mp3?v=20260918',
+      },
+    ])
   })
 
   it('should expose the complete catalog when the default playlist is a subset', () => {

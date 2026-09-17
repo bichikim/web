@@ -10,7 +10,11 @@ import {
   type PEventContextValue,
   usePEvents,
 } from '../../../features/focus-room-dialogue'
-import {type PFeedController, usePFeedContext} from '../../../features/focus-room-feed'
+import {
+  type FeedDialogueListItem,
+  type PFeedController,
+  usePFeedContext,
+} from '../../../features/focus-room-feed'
 import {PreferenceProvider} from '../../../hooks/use-preference'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
@@ -207,7 +211,46 @@ describe('PDialogueSettingsContent', () => {
 
     expect(events.setEventDialogues).toHaveBeenCalledWith('focus-start', [DIALOGUE.id, second.id])
     expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
-    expect(events.deleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+    expect(FEEDS.onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+    expect(events.deleteDialogue).not.toHaveBeenCalled()
+  })
+
+  it('should use feed deletion lifecycle for a feed dialogue in the library', async () => {
+    const feedDialogue: FeedDialogueListItem = {
+      dialogue: DIALOGUE,
+      metadata: {
+        createdAt: '2026-08-15T00:00:00.000Z',
+        dialogueId: DIALOGUE.id,
+        expiresAt: '2026-08-17T00:00:00.000Z',
+        feedConnectionId: 'feed-1',
+        feedItemId: 'item-1',
+        itemTitle: '피드 대화',
+        listenedAt: null,
+        publishedAt: '2026-08-15T00:00:00.000Z',
+        sourceTitle: '테스트 피드',
+        sourceUrl: 'https://example.com/article',
+        version: 1,
+      },
+    }
+    const events = createEvents()
+    const onDeleteDialogue = vi.fn(async () => undefined)
+    vi.mocked(usePEvents).mockReturnValue(events)
+    vi.mocked(usePFeedContext).mockReturnValue({
+      ...FEEDS,
+      dialogues: () => [feedDialogue],
+      onDeleteDialogue,
+    })
+    render(() => (
+      <PreferenceProvider>
+        <PDialogueSettingsContent />
+      </PreferenceProvider>
+    ))
+
+    fireEvent.click(screen.getByRole('button', {name: '삭제'}))
+    fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+
+    await vi.waitFor(() => expect(onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+    expect(events.deleteDialogue).not.toHaveBeenCalled()
   })
 
   it('should report loading, empty, and failed event updates', async () => {
@@ -411,10 +454,8 @@ describe('PDialogueSettingsContent', () => {
 
   it('should report failed event changes and dialogue deletion', async () => {
     const second = {...DIALOGUE, id: 'second-dialogue'} satisfies PDialogue
+    vi.mocked(FEEDS.onDeleteDialogue).mockRejectedValueOnce(new Error('delete'))
     const events = createEvents({
-      deleteDialogue: vi.fn(async () => {
-        throw new Error('delete')
-      }),
       dialogues: () => [DIALOGUE, second],
       eventDialogueIds: () => ({'focus-start': [DIALOGUE.id, second.id]}),
       setEventDialogues: vi.fn(async () => {

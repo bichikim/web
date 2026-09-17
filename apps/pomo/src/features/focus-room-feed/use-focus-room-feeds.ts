@@ -89,7 +89,6 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     setState: feedState.setState,
     synchronize: synchronizeFeeds,
   })
-  const syncNow = syncController.sync
   const playback = createFeedPlaybackController({
     createId: () => crypto.randomUUID(),
     dialogues: feedState.dialogues,
@@ -113,6 +112,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         getConnections: settingsRuntime.listConnections,
         getState: feedState.state,
         isRecoveryDismissed: (jobId) => feedState.isRecoveryDismissed(jobId),
+        isSyncing: syncController.isSyncing,
         now: () => new Date(),
         onCompleted: async () => {
           await Promise.all([
@@ -134,18 +134,18 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         setState: feedState.setState,
       })
       await feedState.repairMalformedDialogues()
-      const jobs = await getRepositories().feedRepository.interruptUnfinishedJobs(
+      const jobs = await repositories.feedRepository.interruptUnfinishedJobs(
         new Date().toISOString(),
       )
       feedState.setRecoveryJobs(jobs.filter((job) => isFeedJobAwaitingAction(job)))
       await feedState.reloadDialogues()
-      await syncNow()
+      await syncController.sync()
     },
     onInitializationFailure() {
       feedState.setState({message: '피드 기능을 시작하지 못했어요.', status: 'error'})
     },
     pollingIntervalMs: FEED_POLLING_INTERVAL_MS,
-    refresh: syncNow,
+    refresh: syncController.sync,
     settings: automaticSettings,
   })
 
@@ -179,7 +179,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       }
     },
     state: feedState.state,
-    syncNow,
+    syncNow: syncController.sync,
     unlistenedDialogues: feedState.unlistenedDialogues,
   }
 }

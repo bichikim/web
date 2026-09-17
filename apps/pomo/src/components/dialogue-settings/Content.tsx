@@ -110,6 +110,7 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
       metadata: getDialogueMetadata(dialogue),
     })),
   )
+  const handleLibraryDelete = (dialogue: PDialogue) => feeds.onDeleteDialogue(dialogue.id)
   const [message, setMessage] = createSignal<string | null>(null)
 
   const handleEventBinding = async (
@@ -262,7 +263,11 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
               when={libraryDialogues().length > 0}
               fallback={<PSettingsEmptyState>{m.settings_dialogue_empty()}</PSettingsEmptyState>}
             >
-              <DialogueLibrary entries={libraryEntries()} onRequestClose={props.onRequestClose} />
+              <DialogueLibrary
+                entries={libraryEntries()}
+                onDelete={handleLibraryDelete}
+                onRequestClose={props.onRequestClose}
+              />
             </Show>
           </Show>
 
