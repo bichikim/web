@@ -27,6 +27,19 @@ export interface CreateFeedDialogueRepositoryOptions {
   readonly deleteDialogueAudio: (audioKey: string) => Promise<void>
 }
 
+export interface DismissFeedItemOptions {
+  readonly fallback?: {
+    readonly itemTitle: string
+    readonly publishedAt: string
+    readonly sourceTitle: string
+    readonly sourceUrl: string
+  }
+  readonly feedConnectionId: string
+  readonly feedItemId: string
+  readonly message: string
+  readonly updatedAt: string
+}
+
 export interface FailedFeedDialogueJob extends FeedDialogueJob {
   readonly status: 'failed'
 }
@@ -47,6 +60,7 @@ export interface GeneratingFeedDialogueJob extends FeedDialogueJob {
 export interface FeedDialogueRepository {
   readonly complete: (options: CompleteFeedDialogueOptions) => Promise<void>
   readonly deleteJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
+  readonly dismissItem: (options: DismissFeedItemOptions) => Promise<void>
   readonly dispose: () => void
   readonly failJob: (options: FailFeedDialogueJobOptions) => Promise<boolean>
   readonly interruptUnfinishedJobs: (updatedAt: string) => Promise<ReadonlyArray<FeedDialogueJob>>
@@ -180,6 +194,41 @@ export const createFeedDialogueRepository = (
     },
     deleteJobs: (jobIds, updatedAt) =>
       updateRecoverableJobs(database, jobIds, updatedAt, 'dismissed'),
+    async dismissItem(options) {
+      const itemId = getFeedItemRecordId(options.feedConnectionId, options.feedItemId)
+      const storedValue = await database.feedItems.get(itemId)
+
+      if (storedValue !== undefined) {
+        const item = feedItemRecordSchema.parse(storedValue)
+        await database.feedItems.put({
+          ...item,
+          message: options.message,
+          status: 'dismissed',
+          updatedAt: options.updatedAt,
+        })
+        return
+      }
+
+      if (options.fallback === undefined) {
+        return
+      }
+
+      await database.feedItems.put({
+        contentLength: 0,
+        discoveredAt: options.updatedAt,
+        feedConnectionId: options.feedConnectionId,
+        feedItemId: options.feedItemId,
+        id: itemId,
+        itemTitle: options.fallback.itemTitle,
+        message: options.message,
+        publishedAt: options.fallback.publishedAt,
+        sourceTitle: options.fallback.sourceTitle,
+        sourceUrl: options.fallback.sourceUrl,
+        status: 'dismissed',
+        updatedAt: options.updatedAt,
+        version: 1,
+      })
+    },
     dispose() {
       database.close()
     },
