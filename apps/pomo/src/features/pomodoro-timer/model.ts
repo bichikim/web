@@ -208,16 +208,15 @@ export const stopPomodoroTimer = (
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
   options: PomodoroStopOptions = {},
 ): PomodoroTimerState => {
+  const now = options.now ?? Date.now()
   const synchronizedState =
-    state.status === 'running'
-      ? synchronizePomodoroTimer(state, options.now ?? Date.now(), config)
-      : state
+    state.status === 'running' ? synchronizePomodoroTimer(state, now, config) : state
 
-  if (options.preserveRemainingProgress && synchronizedState.status !== 'running') {
+  if (options.preserveRemainingProgress) {
     return {
       completedFocusSessions: synchronizedState.completedFocusSessions,
       phase: synchronizedState.phase,
-      remainingSeconds: synchronizedState.remainingSeconds,
+      remainingSeconds: getPomodoroRemainingSeconds(synchronizedState, now),
       status: 'idle',
     }
   }
