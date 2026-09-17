@@ -86,3 +86,20 @@ jobs:
 
       - name: Run unit tests
         run: pnpm test:vitest
+
+  tests:
+    name: Tests
+    needs:
+      - typecheck
+      - unit-tests
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required checks
+        env:
+          TYPECHECK_RESULT: ${{ needs.typecheck.result }}
+          UNIT_TESTS_RESULT: ${{ needs.unit-tests.result }}
+        run: |
+          if [[ "$TYPECHECK_RESULT" != 'success' || "$UNIT_TESTS_RESULT" != 'success' ]]; then
+            exit 1
+          fi
