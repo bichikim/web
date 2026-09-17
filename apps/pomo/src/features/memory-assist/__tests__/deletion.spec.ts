@@ -232,6 +232,33 @@ it('should preserve active and unowned dialogue IDs during retired cleanup', asy
   expect(mocks.audio).not.toHaveBeenCalled()
 })
 
+it('should preserve recreated memo audio during retired dialogue cleanup', async () => {
+  const retiredDialogueId = memo.dialogueId
+  const activeDialogueId = `${retiredDialogueId}:61f5d718-00b9-4187-a01e-c4a9792d7c31`
+  const recreatedMemo = {
+    ...createMemoryMemo({
+      exactReminderAt: null,
+      id: memo.id,
+      now: new Date('2026-09-04T04:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'random',
+      text: '새 메모',
+    }),
+    dialogueId: retiredDialogueId,
+  }
+  mocks.memos = [{...memo, dialogueId: activeDialogueId, retiredDialogueIds: [retiredDialogueId]}]
+  mocks.deleteDialogue.mockImplementation(async (dialogueId) => {
+    if (dialogueId === retiredDialogueId) {
+      mocks.memos = [recreatedMemo]
+    }
+  })
+
+  await deletion.cleanup({deleteDialogue: mocks.deleteDialogue, memoId: memo.id})
+
+  expect(mocks.audio).not.toHaveBeenCalledWith(retiredDialogueId)
+  expect(mocks.memos).toEqual([recreatedMemo])
+})
+
 it('should finish retired cleanup before removing its owning memo', async () => {
   mocks.memos = [{...memo, dialogueId: null, retiredDialogueIds: [memo.dialogueId]}]
   mocks.audio.mockRejectedValueOnce(new Error('cleanup failed'))

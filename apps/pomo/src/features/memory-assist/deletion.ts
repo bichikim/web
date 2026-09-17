@@ -44,7 +44,11 @@ export const createMemoryMemoDeletion = (
       .reduce(async (previous, dialogueId) => {
         await previous
         await options.deleteDialogue(dialogueId)
-        await dependencies.deleteAudio(dialogueId)
+        const currentMemos = await dependencies.read()
+        const currentMemo = currentMemos.find((current) => current.id === options.memoId)
+        if (currentMemo !== undefined && currentMemo.createdAt === memo?.createdAt) {
+          await dependencies.deleteAudio(dialogueId)
+        }
         const removeRetired = (current: MemoryMemo): MemoryMemo =>
           current.id === options.memoId
             ? {
