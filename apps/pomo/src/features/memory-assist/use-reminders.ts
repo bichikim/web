@@ -411,7 +411,11 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       await deliver(memo)
     } catch (error: unknown) {
       console.error('Failed to deliver a memory memo reminder.', error)
-      retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+      if (isDisposed) {
+        retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+      } else {
+        markSkippedMemo(memo)
+      }
     } finally {
       if (isDisposed) {
         repository?.dispose()

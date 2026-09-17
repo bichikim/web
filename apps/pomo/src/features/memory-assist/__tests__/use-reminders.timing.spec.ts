@@ -545,6 +545,47 @@ it('should not advance a reminder when playback is skipped', async () => {
   view.cleanup()
 })
 
+it('should expose a skipped reminder and retry after playback throws', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '여권 갱신하기',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const playDialogue = vi
+    .fn()
+    .mockRejectedValueOnce(new Error('playback failed'))
+    .mockResolvedValue(true)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    await flushPromises()
+
+    expect(view.result.skippedReminders()).toEqual([memo])
+
+    await vi.advanceTimersByTimeAsync(5 * 60_000 - 1)
+    expect(playDialogue).toHaveBeenCalledOnce()
+    await vi.advanceTimersByTimeAsync(1)
+    await flushPromises()
+
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+    expect(view.result.skippedReminders()).toEqual([])
+  } finally {
+    view.cleanup()
+  }
+})
+
 it('should delay retry after skipped playback instead of regenerating immediately', async () => {
   mocks.memos = [
     createMemoryMemo({
