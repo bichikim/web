@@ -11,7 +11,6 @@ import type {PScenePreferences} from './model'
 
 const preserveStoredValue = (value: unknown) => value
 const runtimeRepository = createPScenePreferencesRepository({
-  reportError: (error) => globalThis.reportError(error),
   storage: {
     readToss: (key) => readTossStorageJson(key, preserveStoredValue),
     readWeb: (key) => readWebStorageJson(key, preserveStoredValue),

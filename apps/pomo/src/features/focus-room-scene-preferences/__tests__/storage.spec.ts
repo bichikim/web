@@ -108,17 +108,21 @@ describe('runtime scene preference persistence', () => {
     await expect(pendingRead).resolves.toEqual(preferences)
   })
 
-  it('should repair the native copy from authoritative browser preferences', async () => {
+  it('should replace a stale browser copy with native preferences', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem('pomo:focus-room-scene-preferences:v1', JSON.stringify(preferences))
-    storageMocks.setItem.mockResolvedValue()
+    const stalePreferences = {
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    } as const
+    localStorage.setItem('pomo:focus-room-scene-preferences:v1', JSON.stringify(stalePreferences))
+    storageMocks.getItem.mockResolvedValue(JSON.stringify(preferences))
 
     await expect(readPScenePreferences()).resolves.toEqual(preferences)
-    await vi.waitFor(() =>
-      expect(storageMocks.setItem).toHaveBeenCalledWith(
-        'pomo:focus-room-scene-preferences:v1',
-        JSON.stringify(preferences),
-      ),
+    expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:focus-room-scene-preferences:v1')
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+    expect(localStorage.getItem('pomo:focus-room-scene-preferences:v1')).toBe(
+      JSON.stringify(preferences),
     )
   })
 
