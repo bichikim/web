@@ -373,7 +373,23 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     writeAutoStartPreference(isEnabled)
     publishSnapshot()
   }
-  const onNextPhase = () => applyState(advancePomodoroTimer(state(), config()))
+  const onNextPhase = () => {
+    const currentTime = Date.now()
+    const currentState = state()
+    const currentConfig = config()
+    const autoStartNextPhase = isAutoStartEnabled()
+    setNow(currentTime)
+
+    const synchronizedState = synchronizePomodoroTimer(currentState, currentTime, currentConfig, {
+      autoStartNextPhase,
+    })
+    const nextState =
+      synchronizedState === currentState
+        ? advancePomodoroTimer(currentState, currentConfig)
+        : synchronizedState
+
+    applyState(nextState, synchronizedState === currentState ? undefined : {isCatchUp: true})
+  }
   const onReset = () => applyState(createPomodoroTimerState(config()))
   const onStop = () => applyState(stopPomodoroTimer(state(), config()))
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))
