@@ -16,7 +16,9 @@ const storageMocks = vi.hoisted(() => ({
   deleteAlbumDraftReference: vi.fn(),
   deleteExpiredAlbumDraftCovers: vi.fn(),
   readAlbumDraftCover: vi.fn(),
+  readAlbumDraftCoverResult: vi.fn(),
   readAlbumDraftData: vi.fn(),
+  readAlbumDraftDataResult: vi.fn(),
   writeAlbumDraftCover: vi.fn(),
   writeAlbumDraftData: vi.fn(),
   writeAlbumDraftReference: vi.fn(),
@@ -97,7 +99,21 @@ beforeEach(() => {
   storageMocks.deleteAlbumDraftReference.mockResolvedValue({success: true})
   storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({success: true})
   storageMocks.readAlbumDraftCover.mockResolvedValue(null)
+  storageMocks.readAlbumDraftCoverResult.mockImplementation(async (id: string) => {
+    try {
+      return {data: await storageMocks.readAlbumDraftCover(id), success: true as const}
+    } catch (error: unknown) {
+      return {error, success: false as const}
+    }
+  })
   storageMocks.readAlbumDraftData.mockReturnValue(null)
+  storageMocks.readAlbumDraftDataResult.mockImplementation(() => {
+    try {
+      return {data: storageMocks.readAlbumDraftData(), success: true as const}
+    } catch (error: unknown) {
+      return {error, success: false as const}
+    }
+  })
   storageMocks.writeAlbumDraftCover.mockResolvedValue({success: true})
   storageMocks.writeAlbumDraftReference.mockResolvedValue({success: true})
   storageMocks.writeAlbumDraftData.mockReturnValue({success: true})

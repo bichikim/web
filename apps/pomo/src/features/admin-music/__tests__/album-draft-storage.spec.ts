@@ -9,7 +9,9 @@ import {
   deleteAlbumDraftCover,
   deleteExpiredAlbumDraftCovers,
   readAlbumDraftCover,
+  readAlbumDraftCoverResult,
   readAlbumDraftData,
+  readAlbumDraftDataResult,
   writeAlbumDraftCover,
   writeAlbumDraftData,
   writeAlbumDraftReference,
@@ -107,6 +109,11 @@ describe('album draft data storage', () => {
     storage.writeData('{invalid')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
+    expect(readAlbumDraftDataResult(storage)).toEqual({
+      error: expect.any(Error),
+      success: false,
+    })
+    warn.mockClear()
     expect(readAlbumDraftData(storage)).toBeNull()
     expect(warn).toHaveBeenCalledOnce()
   })
@@ -124,6 +131,19 @@ describe('album draft data storage', () => {
 })
 
 describe('album draft cover storage', () => {
+  it('should report cover read failures without treating them as missing covers', async () => {
+    const storage = createStorage()
+    const error = new Error('indexed db unavailable')
+    vi.mocked(storage.readCover).mockRejectedValueOnce(error)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await expect(readAlbumDraftCoverResult('broken', storage)).resolves.toEqual({
+      error,
+      success: false,
+    })
+    expect(warn).toHaveBeenCalledOnce()
+  })
+
   it('should delete covers older than 30 days while preserving the active draft', async () => {
     vi.useFakeTimers()
     const storage = createStorage()
