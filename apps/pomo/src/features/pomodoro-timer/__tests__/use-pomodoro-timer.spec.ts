@@ -362,6 +362,46 @@ it('should synchronize an expired phase on the next frame without duplicate even
   view.cleanup()
 })
 
+it('should synchronize an expired phase before applying a new configuration', async () => {
+  const view = renderHook(usePomodoroTimer)
+  await finishMount()
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+
+  vi.setSystemTime(12_000)
+  const nextConfig = {...CONFIG, focusSeconds: 20}
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.config()).toEqual(nextConfig)
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
+it('should stop after the first expired phase when applying configuration changes', async () => {
+  const view = renderHook(usePomodoroTimer)
+  await finishMount()
+  view.result.onConfigChange(CONFIG)
+  view.result.onAutoStartChange(true)
+  view.result.onStart()
+
+  vi.setSystemTime(25_000)
+  const nextConfig = {...CONFIG, focusSeconds: 20}
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
 it('should stop frame updates after cleanup', async () => {
   const view = renderHook(usePomodoroTimer)
   await finishMount()
