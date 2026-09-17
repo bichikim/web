@@ -45,7 +45,7 @@ jobs:
         run: pnpm install
 
       - name: Test
-        run: pnpm run test
+        run: pnpm test:vitest
 
   # Build Client
   build-client:
