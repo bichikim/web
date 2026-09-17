@@ -1,6 +1,7 @@
 import {PButton} from '../p-button/PButton'
 import {PServicePolicyLinks} from '../p-service-policy-links/PServicePolicyLinks'
 import * as m from '@paraglide/message'
+import {A} from '@solidjs/router'
 import smilingFaceSource from '../assets/pomodoro-status-icons/break.webp'
 import {CLASSES} from './shared'
 
@@ -23,6 +24,7 @@ export const PEntry = (props: PEntryProps) => (
   >
     <h1 class={CLASSES.entryTitle}>Pomofi</h1>
     <div class={CLASSES.entryContent}>
+      <p class={CLASSES.entryDescription}>{m.app_home_description()}</p>
       <div class="grid gap-3">
         <PButton
           pill
@@ -37,6 +39,9 @@ export const PEntry = (props: PEntryProps) => (
         >
           {m.scene_start_action()}
         </PButton>
+        <A class={CLASSES.entryWhatsNewLink} href="/whats-new">
+          {m.version_notice_title()} <span aria-hidden="true">→</span>
+        </A>
         <PServicePolicyLinks tone="overlay" />
       </div>
     </div>

@@ -1,4 +1,3 @@
-import {Title} from '@solidjs/meta'
 import {cx} from 'class-variance-authority'
 
 import {PStudio} from '../p-studio/PStudio'
@@ -11,7 +10,6 @@ const MAIN_CLASSES = cx(
 
 export const PHomePage = () => (
   <main class={MAIN_CLASSES}>
-    <Title>Pomofi</Title>
     <div class="relative h-full w-full">
       <PStudio />
     </div>
