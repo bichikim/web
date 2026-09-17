@@ -28,6 +28,9 @@ vi.mock('../../p-modal/PModal', () => ({PModal: vi.fn()}))
 vi.mock('../../p-button/PButton', () => ({PButton: vi.fn()}))
 vi.mock('../../p-orbit-border/POrbitBorder', () => ({POrbitBorder: vi.fn()}))
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
+vi.mock('../../p-feature-request/PFeatureRequest', () => ({
+  PFeatureRequest: vi.fn(() => <button type="button">기능 요청</button>),
+}))
 
 const catalog = {
   releases: [
@@ -130,7 +133,7 @@ it('should show recent releases in a gift modal and persist the newest marker on
   })
 })
 
-it('should stay hidden when the newest release was already viewed', async () => {
+it('should show the feature request trigger when the newest release was already viewed', async () => {
   versionMocks.read.mockResolvedValue({
     formatVersion: 1,
     releasedAt: '2026-09-03T00:57:00+09:00',
@@ -139,8 +142,23 @@ it('should stay hidden when the newest release was already viewed', async () => 
 
   render(() => <PVersionNotice />)
 
-  await waitFor(() => expect(versionMocks.read).toHaveBeenCalledOnce())
-  expect(screen.queryByRole('button', {name: '새 업데이트 보기'})).toBeNull()
+  await waitFor(() => {
+    expect(versionMocks.read).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', {name: '새 업데이트 보기'})).toBeNull()
+    expect(screen.getByRole('button', {name: '기능 요청'})).toBeVisible()
+  })
+})
+
+it('should show feature requests in the desktop dialog when no release is available', async () => {
+  versionMocks.read.mockResolvedValue({
+    formatVersion: 1,
+    releasedAt: '2026-09-03T00:57:00+09:00',
+    version: '2026. 09. 03 00:57',
+  })
+
+  render(() => <PVersionNotice desktopDialog sceneStyle="original" />)
+
+  await waitFor(() => expect(screen.getByRole('button', {name: '기능 요청'})).toBeVisible())
 })
 
 it('should keep a newer notice dismissed after an older open notice closes', async () => {

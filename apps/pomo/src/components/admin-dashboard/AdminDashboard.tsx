@@ -61,6 +61,16 @@ export const AdminDashboard = () => {
             관리 페이지 열기 →
           </span>
         </A>
+        <A class={MUSIC_CARD_CLASSES} href="/admin/feature-requests">
+          <p class="m-0 text-xs font-750 tracking-[0.18em] text-#e8bc88 uppercase">Community</p>
+          <h2 class="mb-0 mt-3 text-lg font-750">기능 요청 관리</h2>
+          <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-white/60">
+            사용자 요청을 확인하고 투표·개발 상태와 목표 표 수를 관리합니다.
+          </p>
+          <span class="mt-6 inline-block text-sm font-700 text-#f3d1a9 group-hover:underline">
+            관리 페이지 열기 →
+          </span>
+        </A>
       </section>
     </main>
   )
