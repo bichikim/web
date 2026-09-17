@@ -303,6 +303,40 @@ describe('useChat', () => {
     cleanup()
   })
 
+  it('should preserve a newer draft after a recoverable generation error', () => {
+    const {clients, runtime} = createRuntime()
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+    result.prepare()
+    const clientRecord = clients[0]
+    clientRecord?.respond({type: 'ready'})
+    result.setDraft('첫 질문')
+
+    result.send({refineAnswer: false})
+    result.setDraft('다음 질문')
+    clientRecord?.respond({message: '생성에 실패했어요.', restartRequired: false, type: 'error'})
+
+    expect(result.draft()).toBe('다음 질문')
+    expect(result.messages()).toEqual([])
+    cleanup()
+  })
+
+  it('should preserve an intentionally cleared draft after a recoverable generation error', () => {
+    const {clients, runtime} = createRuntime()
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+    result.prepare()
+    const clientRecord = clients[0]
+    clientRecord?.respond({type: 'ready'})
+    result.setDraft('첫 질문')
+
+    result.send({refineAnswer: false})
+    result.setDraft('')
+    clientRecord?.respond({message: '생성에 실패했어요.', restartRequired: false, type: 'error'})
+
+    expect(result.draft()).toBe('')
+    expect(result.messages()).toEqual([])
+    cleanup()
+  })
+
   it('should distinguish recoverable loading errors from restart-required errors', () => {
     const {clients, runtime} = createRuntime()
     const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))

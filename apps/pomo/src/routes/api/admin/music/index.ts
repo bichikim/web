@@ -2,7 +2,7 @@ import type {APIEvent} from '@solidjs/start/server'
 
 import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {noStoreJson} from 'src/server/http/response'
-import {listAdminMusic} from 'src/server/music/admin-repository'
+import {listAdminMusic} from 'src/server/repositories/music-admin'
 
 const HTTP_INTERNAL_SERVER_ERROR = 500
 

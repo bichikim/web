@@ -9,7 +9,7 @@ import {
   failTrackAsset,
   findTrackAsset,
   reserveTrackAsset,
-} from 'src/server/music/track-registration-repository'
+} from 'src/server/repositories/music-track-registration'
 import {storeTrackArtwork} from 'src/server/music/cover-upload'
 import {deleteTrackAssetStorage} from 'src/server/music/track-storage-deletion'
 import {

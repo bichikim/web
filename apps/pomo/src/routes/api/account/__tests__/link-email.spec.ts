@@ -16,7 +16,7 @@ vi.mock('src/server/auth/authenticate-app-request', async () => {
   return {...actual, authenticateAppRequest: authMocks.authenticateAppRequest}
 })
 vi.mock('src/server/auth/magic-link', () => emailMocks)
-vi.mock('src/server/auth/repository', () => repositoryMocks)
+vi.mock('src/server/repositories/auth', () => repositoryMocks)
 
 import {POST} from '../link-email'
 import {invokeApiRoute} from '../../__tests__/invoke'

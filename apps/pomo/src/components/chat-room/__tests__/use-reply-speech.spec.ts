@@ -24,7 +24,7 @@ const setup = (streaming = true) => {
       voice,
     }),
   )
-  return {...hook, setMessages, setAnswerDraft, voice, setStreamingText}
+  return {...hook, setAnswerDraft, setMessages, setStreamingText, voice}
 }
 
 afterEach(() => vi.restoreAllMocks())

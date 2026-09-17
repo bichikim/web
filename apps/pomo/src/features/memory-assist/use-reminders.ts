@@ -467,8 +467,13 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       await deliver(memo)
     } catch (error: unknown) {
       console.error('Failed to deliver a memory memo reminder.', error)
-      if (deliveryState().status !== 'removed') {
+      if (deliveryState().status === 'removed') {
+        return
+      }
+      if (isDisposed) {
         retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+      } else {
+        markSkippedMemo(memo)
       }
     } finally {
       setDeliveryState((currentState) => transitionDeliveryState(currentState, {type: 'finish'}))

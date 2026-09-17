@@ -1,7 +1,7 @@
 import {WEATHER_CITY_SLUGS, type WeatherCitySlug} from 'src/features/weather'
+import {getWeatherFeedState, type WeatherFeedState} from './get-weather-feed-state'
 import {ingestWeatherCity, type WeatherIngestionResult} from './ingest-weather'
 import {getSecondsUntilNextKmaAvailability} from './kma-time'
-import {getWeatherFeedState, type WeatherFeedState} from './repository'
 
 const HTTP_NOT_FOUND = 404
 const HTTP_SERVICE_UNAVAILABLE = 503

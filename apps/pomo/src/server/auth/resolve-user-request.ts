@@ -1,5 +1,5 @@
+import {findOrCreateNeonUser} from '../repositories/auth'
 import {getAuthSession} from './get-auth-session'
-import {findOrCreateNeonUser} from './repository'
 import {UserRequestResolutionError} from './user-request-resolution-error'
 
 export interface UserRequestIdentity {

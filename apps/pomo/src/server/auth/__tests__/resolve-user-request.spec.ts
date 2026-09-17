@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({findOrCreateNeonUser: vi.fn(), getAuthSession: 
 vi.mock('src/server/auth/get-auth-session', () => ({
   getAuthSession: mocks.getAuthSession,
 }))
-vi.mock('../repository', () => ({findOrCreateNeonUser: mocks.findOrCreateNeonUser}))
+vi.mock('../../repositories/auth', () => ({findOrCreateNeonUser: mocks.findOrCreateNeonUser}))
 
 beforeEach(() => vi.resetAllMocks())
 

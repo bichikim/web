@@ -3,7 +3,7 @@ import {
   listRecoverableGenerationRuns,
   type RecoverableGenerationRun,
   type RecoveryCutoffs,
-} from './generation-recovery-repository'
+} from '../repositories/history-generation-recovery'
 import {handleOpenAiResponseEvent} from './handle-openai-webhook'
 import {retrieveHistoryResponse} from './response-result'
 import {startHistoryGeneration} from './start-generation'

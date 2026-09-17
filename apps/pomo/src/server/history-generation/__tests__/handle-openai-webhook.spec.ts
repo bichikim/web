@@ -14,7 +14,7 @@ import {
   findGenerationRun,
   publishHistoryResponse,
   rejectHistoryResponse,
-} from '../generation-repository'
+} from '../../repositories/history-generation'
 import {handleOpenAiResponseEvent} from '../handle-openai-webhook'
 import {retrieveHistoryResponse} from '../response-result'
 
@@ -26,7 +26,7 @@ vi.mock('src/features/history-generation', async () => {
 
   return {...actual, validateHistoryOutput: vi.fn()}
 })
-vi.mock('../generation-repository', () => ({
+vi.mock('../../repositories/history-generation', () => ({
   associateGenerationResponse: vi.fn(),
   failHistoryResponse: vi.fn(),
   findGenerationRun: vi.fn(),

@@ -13,7 +13,7 @@ const play = vi.fn()
 const previewPosition = vi.fn()
 const seek = vi.fn()
 const select = vi.fn()
-const setOverlap = vi.fn()
+const setConnectionSeconds = vi.fn()
 const stop = vi.fn()
 const [playing, setPlaying] = createSignal(false)
 
@@ -25,15 +25,15 @@ beforeEach(() => {
   vi.mocked(Title).mockImplementation(() => null)
   vi.mocked(A).mockImplementation((props) => props.children)
   vi.mocked(useLoopPlayer).mockReturnValue({
+    connectionSeconds: () => 4,
     duration: () => 12,
-    overlap: () => 4,
     play,
     playing,
     position: () => 0,
     previewPosition,
     seek,
     select,
-    setOverlap,
+    setConnectionSeconds,
     status: () => '재생 준비 완료',
     stop,
   })
@@ -42,11 +42,11 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
-it('should delegate file selection, overlap changes, playback, preview, and seeking to the loop player', () => {
+it('should delegate file selection, connection changes, playback, preview, and seeking to the loop player', () => {
   render(() => <LoopPlayerPage />)
   const file = new File(['audio'], 'rain.wav', {type: 'audio/wav'})
   fireEvent.change(screen.getByLabelText('오디오 파일'), {target: {files: [file]}})
-  fireEvent.input(screen.getByRole('spinbutton', {name: '겹쳐 재생할 시간 (초)'}), {
+  fireEvent.input(screen.getByRole('spinbutton', {name: '연결 구간 (초)'}), {
     target: {value: '3.5'},
   })
   const position = screen.getByRole('slider', {name: '재생 위치'})
@@ -56,7 +56,7 @@ it('should delegate file selection, overlap changes, playback, preview, and seek
   fireEvent.click(screen.getByRole('button', {name: '연결 직전부터 듣기'}))
 
   expect(select).toHaveBeenCalledWith(file)
-  expect(setOverlap).toHaveBeenCalledWith(3.5)
+  expect(setConnectionSeconds).toHaveBeenCalledWith(3.5)
   expect(previewPosition).toHaveBeenCalledWith(4)
   expect(seek).toHaveBeenCalledOnce()
   expect(play).toHaveBeenNthCalledWith(1, false)

@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
-import {visibilityInterval} from '..'
+import {visibilityInterval} from '../visibility-interval'
 
 it('should not start an interval during server rendering', () => {
   const callback = vi.fn()

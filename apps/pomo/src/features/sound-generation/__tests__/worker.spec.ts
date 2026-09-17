@@ -40,7 +40,7 @@ it('should forward progress and the generated blob for the requested prompt and 
     request.prompt,
     request.seconds,
     expect.any(Function),
-    undefined,
+    {chunkNoiseMode: undefined, connectionSeconds: undefined},
   )
   expect(scope.postMessage.mock.calls).toEqual([
     [{message: 'generation step', type: 'progress'}],
@@ -60,22 +60,36 @@ it.each([new Error('download failed'), 'download failed'])(
   },
 )
 
-it('should forward custom overlap to the extension module', async () => {
-  await scope.onmessage?.({data: {...request, overlapSeconds: 8}})
+it.each([0, 8])(
+  'should forward custom connection duration %s to the extension module',
+  async (connectionSeconds) => {
+    await scope.onmessage?.({data: {...request, connectionSeconds}})
+    expect(generateExtendedSound).toHaveBeenCalledWith(
+      request.prompt,
+      request.seconds,
+      expect.any(Function),
+      {chunkNoiseMode: undefined, connectionSeconds},
+    )
+  },
+)
+
+it('should route a loop request with its source and connection duration to loop generation', async () => {
+  const source = new Blob(['source'])
+  const result = new Blob(['loop'])
+  vi.mocked(generateLoopSound).mockResolvedValue(result)
+  await scope.onmessage?.({data: {connectionSeconds: 6, prompt: 'rain', source, type: 'loop'}})
+  expect(generateLoopSound).toHaveBeenCalledWith(source, 'rain', expect.any(Function), 6)
+  expect(scope.postMessage).toHaveBeenCalledWith({blob: result, type: 'result'})
+  expect(generateExtendedSound).not.toHaveBeenCalled()
+})
+
+it('should forward the selected chunk noise mode to extended generation', async () => {
+  await scope.onmessage?.({data: {...request, chunkNoiseMode: 'repeat'}})
+
   expect(generateExtendedSound).toHaveBeenCalledWith(
     request.prompt,
     request.seconds,
     expect.any(Function),
-    8,
+    {chunkNoiseMode: 'repeat', connectionSeconds: undefined},
   )
-})
-
-it('should route a loop request with its source and transition to loop generation', async () => {
-  const source = new Blob(['source'])
-  const result = new Blob(['loop'])
-  vi.mocked(generateLoopSound).mockResolvedValue(result)
-  await scope.onmessage?.({data: {prompt: 'rain', source, transitionSeconds: 6, type: 'loop'}})
-  expect(generateLoopSound).toHaveBeenCalledWith(source, 'rain', expect.any(Function), 6)
-  expect(scope.postMessage).toHaveBeenCalledWith({blob: result, type: 'result'})
-  expect(generateExtendedSound).not.toHaveBeenCalled()
 })

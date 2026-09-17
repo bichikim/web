@@ -4,8 +4,8 @@ const HTTP_PERMANENT_REDIRECT = 308
 const LEGACY_FOCUS_ROOM_PATH = '/focus-room'
 const LEGACY_DIALOGUE_PATH = '/focus-room-dialogue'
 const LEGACY_REDIRECT_PATHS: Readonly<Record<string, string>> = {
-  [LEGACY_FOCUS_ROOM_PATH]: '/',
   [LEGACY_DIALOGUE_PATH]: '/dialogue',
+  [LEGACY_FOCUS_ROOM_PATH]: '/',
   [SERVICE_POLICY_PATHS.legacy.privacy]: SERVICE_POLICY_PATHS.web.privacy,
   [SERVICE_POLICY_PATHS.legacy.terms]: SERVICE_POLICY_PATHS.web.terms,
 }

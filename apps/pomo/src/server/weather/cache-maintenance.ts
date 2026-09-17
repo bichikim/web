@@ -1,4 +1,4 @@
-import {createWeatherCacheMaintenanceRepository} from './cache-maintenance-repository'
+import {createWeatherCacheMaintenanceRepository} from '../repositories/weather-cache-maintenance'
 
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60

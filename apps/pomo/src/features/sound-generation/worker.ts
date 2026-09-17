@@ -3,18 +3,20 @@ import {generateSound} from './runtime'
 import {generateExtendedSound} from './extension'
 import {generateLoopSound} from './loop'
 import type {InpaintAudio} from './inpaint'
+import type {ChunkNoiseMode} from './noise'
 
 export interface SoundRequest {
   readonly prompt: string
   readonly seconds: number
   readonly inpaint?: InpaintAudio
-  readonly overlapSeconds?: number
+  readonly connectionSeconds?: number
+  readonly chunkNoiseMode?: ChunkNoiseMode
 }
 export interface LoopRequest {
   readonly type: 'loop'
   readonly source: Blob
   readonly prompt: string
-  readonly transitionSeconds?: number
+  readonly connectionSeconds?: number
 }
 export interface SoundProgressMessage {
   readonly type: 'progress'
@@ -39,20 +41,20 @@ scope.onmessage = async (event: MessageEvent<SoundRequest | LoopRequest>) => {
         event.data.source,
         event.data.prompt,
         progress,
-        event.data.transitionSeconds,
+        event.data.connectionSeconds,
       )
       send({blob, type: 'result'})
       return
     }
     const blob =
       event.data.inpaint === undefined
-        ? await generateExtendedSound(
-            event.data.prompt,
-            event.data.seconds,
-            progress,
-            event.data.overlapSeconds,
-          )
-        : await generateSound(event.data.prompt, event.data.seconds, progress, event.data.inpaint)
+        ? await generateExtendedSound(event.data.prompt, event.data.seconds, progress, {
+            chunkNoiseMode: event.data.chunkNoiseMode,
+            connectionSeconds: event.data.connectionSeconds,
+          })
+        : await generateSound(event.data.prompt, event.data.seconds, progress, {
+            inpaint: event.data.inpaint,
+          })
     send({blob, type: 'result'})
   } catch (error) {
     send({message: error instanceof Error ? error.message : String(error), type: 'error'})

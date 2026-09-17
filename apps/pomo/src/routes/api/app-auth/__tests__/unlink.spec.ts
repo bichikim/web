@@ -10,7 +10,7 @@ const environmentMocks = vi.hoisted(() => {
   return {env}
 })
 
-vi.mock('src/server/auth/repository', () => repositoryMocks)
+vi.mock('src/server/repositories/auth', () => repositoryMocks)
 vi.mock('src/env', () => ({
   env: environmentMocks.env,
 }))
